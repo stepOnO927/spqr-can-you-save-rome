@@ -16,6 +16,7 @@ try{
  await page.locator('#person-travel-feedback button').click();
  assert.match(await page.locator('#command-detail').innerText(),/正在旅行/);
  await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click();
+ assert.equal(await page.locator('#claimant-support').isDisabled(),true,'an unreported claimant must not be exposed');
  await page.locator('#inquiry-subject').selectOption('leaders');await page.locator('#send-inquiry').click();
  assert.match(await page.locator('#command-detail').innerText(),/等待回信/);
  await page.locator('[data-mission="spy"]').click();await page.locator('#mission-feedback button').first().click();
