@@ -39,3 +39,7 @@ Browser-tested switching between political, terrain, military, supply, economy a
 ## Dated army sightings
 
 Automated tests verify that an unseen foreign move does not change a player report, frontier observation updates it, and an army disappearing from the world does not silently erase an old sighting. Browser-tested the atlas tutorial and an original campaign opening after this change. Sightings are coarse strategic theater reports, not detailed line-of-sight simulation.
+
+## Roman campaign selection
+
+Browser-tested starting the Senate/Pompeian command at standard difficulty, its own military counters and limited foreign intelligence, its strategic objectives and its commander profile. The player choices are restricted to the two Roman commands. The interactive opening tutorial currently teaches the Caesarian campaign; the Senate campaign starts in free play.
