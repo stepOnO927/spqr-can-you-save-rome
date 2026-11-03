@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame} from '../engine.js';
 import {createCharacterUI} from '../map-lab/character-ui.js';
 import {addReport} from '../character-system.js';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js';
 
 // A small DOM stub exercises the real handler without requiring a network listener.
 // It does not replace a browser or layout test.
@@ -32,6 +33,15 @@ test('claimants are identified as reports and source reliability is visible in b
 test('foreign character profiles show recorded claims without revealing actual health',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cleopatra.health='seriously_ill';addReport(s,'senate','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'envoy',confidence:'unverified'});globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'en',inspect:()=>{}});ui.show('cleopatra');const dossier=panel.children.find(x=>x.className==='help-list');assert.match(dossier.innerHTML,/Healthy · Envoy/);assert.match(dossier.innerHTML,/Unverified/);assert.doesNotMatch(dossier.innerHTML,/Seriously ill|battle wounds|Illness episodes/);assert.match(panel.innerHTML,/Simulated health<\/span><b>Unknown/);assert.match(dossier.innerHTML,/HISTORICAL ENCYCLOPEDIA \(NOT GAME INTELLIGENCE\)/)}finally{globalThis.document=prior}
+});
+test('a personal meeting is visible only to its sender and never proves current foreign authority',()=>{
+ const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cicero.location='egypt';s.world.intelSeed=1000;
+ assert.equal(requestPersonalMeeting(s,'cicero','cleopatra').ok,true);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');
+ s.world.leadership.egypt=['ptolemy'];s.world.characters.cleopatra.health='seriously_ill';
+ globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
+ try{for(const language of ['en','zh']){panel.children=[];const ui=createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}});ui.show('cleopatra');const dossier=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(dossier,language==='zh'?/亲自会面记录/:/PERSONAL MEETING RECORDS/);assert.match(dossier,language==='zh'?/不能证明此人目前的身份、职权或健康/:/does not prove current identity, authority or health/);assert.doesNotMatch(dossier,/Seriously ill|重病/)}
+ s.player='caesar';panel.children=[];createCharacterUI({getState:()=>s,getLanguage:()=> 'en',inspect:()=>{}}).show('cleopatra');assert.doesNotMatch(panel.children.find(x=>x.className==='help-list').innerHTML,/PERSONAL MEETING RECORDS/)
+ }finally{globalThis.document=prior}
 });
 test('own character dossier shows actual game command and political role',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('caesar');globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
