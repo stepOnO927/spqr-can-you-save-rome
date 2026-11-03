@@ -1,3 +1,4 @@
+import {IDENTITIES,factionMark} from './identity.js?v=1';
 import land from './land.js?v=7';
 import rivers from './rivers.js?v=7';
 import historical from './historical-territories.js?v=7';
@@ -16,7 +17,7 @@ const LAND=landPath(),RIVERS=riverPath();
 function geoPath(g){return rings(g).map(r=>r.map((p,i)=>{const [x,y]=project(p);return `${i?'L':'M'}${x.toFixed(1)} ${y.toFixed(1)}`}).join('')+'Z').join('')}
 const shapes=historical.features.map(f=>({...f,path:geoPath(f.geometry)}));
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const colors={caesar:'#873c37',senate:'#c2a871',egypt:'#709e98',numidia:'#b29560',mauretania:'#92966d',armenia:'#9f9090',parthia:'#617a64',rebels:'#806b5a'};
+const colors=Object.fromEntries(Object.entries(IDENTITIES).map(([id,kit])=>[id,kit.map]));
 const terrain={plain:'#b8b292',hills:'#a59a7e',forest:'#879680',urban:'#c7bca1',desert:'#d4c29c'};
 
 export function drawMap(s,{selectedRegion,selectedArmy,mode,lang,view,reachable=[]}){
@@ -29,6 +30,6 @@ export function drawMap(s,{selectedRegion,selectedArmy,mode,lang,view,reachable=
  const illyricumMarker=`<g data-map-group="illyricum" class="evidence-command ${selectedRegion==='illyricum'?'selected':''}" transform="translate(${ix} ${iy})" role="button" tabindex="0" aria-label="${lang==='zh'?'选择伊利里库姆战区，边界不确定':'Select Illyricum theater, boundary uncertain'}"><circle r="9"/><circle r="5"/><title>${lang==='zh'?'伊利里库姆：点击选择；实际管辖边界未确定':'Illyricum: click to select; historical boundary uncertain'}</title></g>`;
  const moves=s.armies.filter(a=>a.move).map(a=>{const [x,y]=mapPoint(a.region),[u,v]=mapPoint(a.move.to);return `<path d="M${x} ${y} L${u} ${v}" class="march-arrow" marker-end="url(#arrow)"/>`}).join('');
  const markerOffsets={cisalpine:[-38,-32],italiaN:[12,4],roma:[10,5],italiaS:[12,5]};
- const markers=s.armies.filter(a=>a.men>0).map(a=>{const [x,y]=mapPoint(a.region), peers=s.armies.filter(b=>b.region===a.region),idx=peers.findIndex(b=>b.id===a.id),[dx,dy]=markerOffsets[a.region]||[9,-7];return `<g data-army="${a.id}" class="unit ${selectedArmy===a.id?'selected':''}" transform="translate(${x+dx+idx*36} ${y+dy})"><rect width="34" height="22" rx="1" fill="${colors[a.owner]}"/><path d="M3 3h28v16H3z"/><text x="17" y="15">${Math.round(a.men/1000)}k</text><title>${escape(a.name[lang==='zh'?1:0])} · ${escape(a.commander[lang==='zh'?1:0])} · ${a.men}</title></g>`}).join('');
+ const markers=s.armies.filter(a=>a.men>0).map(a=>{const [x,y]=mapPoint(a.region), peers=s.armies.filter(b=>b.region===a.region),idx=peers.findIndex(b=>b.id===a.id),[dx,dy]=markerOffsets[a.region]||[9,-7];return `<g data-army="${a.id}" class="unit ${selectedArmy===a.id?'selected':''}" transform="translate(${x+dx+idx*55} ${y+dy})"><rect width="52" height="22" rx="1" fill="${colors[a.owner]}"/><path d="M2 2h48v18H2z"/>${factionMark(a.owner,'insignia').replace('<svg ','<svg x="3" y="2" width="18" height="18" ')}<text x="36" y="15">${Math.round(a.men/1000)}k</text><title>${escape(a.name[lang==='zh'?1:0])} · ${escape(a.commander[lang==='zh'?1:0])} · ${a.men}</title></g>`}).join('');
  return `<svg id="map-svg" class="${view[2]>500?'overview':''}" viewBox="${view.join(' ')}" role="img" aria-label="${lang==='zh'?'约公元前49年历史政体地图':'Historical polity map around 49 BCE'}"><defs><clipPath id="landclip"><path d="${LAND}" fill-rule="evenodd"/></clipPath>${patterns.join('')}<pattern id="grain" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 1l3 2M5 7l2 -1" stroke="#eee2bd" stroke-opacity=".13"/></pattern><marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6Z" fill="#f7e6ba"/></marker></defs><rect width="1200" height="650" fill="#485f69"/><path d="${LAND}" fill="#b3ad91" stroke="#323e3a" stroke-width="1.2" fill-rule="evenodd"/><g clip-path="url(#landclip)">${areas}<rect width="1200" height="650" fill="url(#grain)" pointer-events="none"/><path d="${RIVERS}" fill="none" stroke="#788e91" stroke-width="1" opacity=".75" pointer-events="none"/></g><text x="400" y="465" class="sea-name">MARE INTERNVM</text><g pointer-events="none">${labels}</g>${evidence}${illyricumMarker}${moves}${markers}</svg>`;
 }

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js';
 import historical from './historical-territories.js';
 import {REGIONS} from './data.js';
+import {identity,factionMark} from './identity.js';
 
 test('49 BCE opens with opposing Roman commands and independent Egypt',()=>{
   const s=newGame();
@@ -11,6 +12,17 @@ test('49 BCE opens with opposing Roman commands and independent Egypt',()=>{
   assert.equal(army(s,'xiii').commander[0],'Julius Caesar');
   assert.equal(army(s,'pompey').region,'roma');
   assert.ok(isWar(s,'caesar','senate'));
+});
+
+test('major powers retain distinct, usable visual identities',()=>{
+  const ids=['caesar','senate','egypt','parthia','armenia'];
+  assert.equal(new Set(ids.map(id=>identity(id).map)).size,ids.length);
+  assert.equal(new Set(ids.map(id=>identity(id).motif)).size,ids.length);
+  for(const id of ids)for(const type of ['insignia','banner','standard']){
+    assert.match(factionMark(id,type),/^<svg /);
+    assert.ok(factionMark(id,type).includes(identity(id).primary));
+  }
+  assert.notEqual(identity('shared').primary,identity('caesar').primary);
 });
 
 test('historical polygons map known theaters and leave unmapped Illyricum explicit',()=>{

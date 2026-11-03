@@ -9,3 +9,7 @@
 ## Phase V operational-flow check
 
 At 1366 × 768 the opening camera, army selection, legal-destination highlight, route preview, confirmation, monthly advance, AI movement, casualties, owner/loyalty changes, and battle report were exercised in the browser. Screenshots A, B and C show the opening, preview, and battle result. Battle calculations occur immediately within a month; a live multi-tick battle and smooth animated travel are not simulated. The existing campaign remains a separate screen. Chinese and English army and battle panels were checked. The 17 Node tests pass, including preview purity and saved battle evidence. Historic boundaries and Rubicon location remain approximate, as documented in SOURCES.md.
+
+## Phase VI faction identities
+
+At 1366 × 768, inspected the default campaign, selected Caesarian and Senatorial armies, faction directory, and a zoomed northern Italian view. Separately inspected Ptolemaic, Parthian and Armenian faction information and map locations. Tested a Caesarian movement and battle, Chinese language switching, and the original campaign's diplomacy panel. The 18 Node tests include a check that major powers have distinct identity colors and motifs. The artwork is original interpretive UI, not a reconstruction of documented flags; see SOURCES.md for historical inspiration and qualifications.

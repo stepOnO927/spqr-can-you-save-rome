@@ -13,3 +13,9 @@ This is an experimental scene, separate from the playable campaign. It uses a se
 Map tiles and fonts require a network connection. No ancient vegetation layer, detailed dated province subdivision, archaeological road alignment, or exact 49 BCE control survey is claimed.
 
 - html2canvas 1.4.1 (MIT), loaded on demand for screenshot export: https://github.com/niklasvh/html2canvas/blob/master/LICENSE
+
+## Faction identity art direction
+
+All faction marks, banners and counters are original vector drawings used as modern game identifiers; their colors, compositions, and use as faction flags are not claimed as historically attested. Caesar and the Senate are opposing Roman commands, not separate ancient states. Roman stacked discs evoke military standards and the Senate mark evokes the fasces of Republican magistrates. Roman standards and unit shield devices are discussed by the Metropolitan Museum: https://www.metmuseum.org/essays/the-decoration-of-european-armor .
+
+The Egyptian cornucopia is inspired by Ptolemaic coin types: https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf . The Parthian bow evokes Arsacid archer coin types: https://www.metmuseum.org/essays/the-parthian-empire-247-b-c-224-a-d . The Armenian tiara is inspired by the contemporary Artavasdes II coinage documented by the Central Bank of Armenia: https://www.cba.am/en/history-ancient-to-1918 . The remaining spear, palm, and unmarked bands are deliberately general gameplay identifiers, not attributed to any specific historical standard. Mixed-control Roman areas use a neutral shared treatment rather than implying a third sovereign faction.
