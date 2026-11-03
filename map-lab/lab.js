@@ -1,10 +1,10 @@
 import historical from '../historical-territories.js';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission} from '../engine.js?v=11';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission} from '../engine.js?v=12';
 import {FACTIONS} from '../data.js?v=8';
 import {identity,factionMark} from '../identity.js?v=1';
 import {CHARACTER_CATALOG,knownLeaders} from '../characters.js?v=1';
-import {createCharacterUI} from './character-ui.js?v=2';
+import {createCharacterUI} from './character-ui.js?v=3';
 import {createTutorial} from './tutorial.js?v=2';
 
 let state = newGame();

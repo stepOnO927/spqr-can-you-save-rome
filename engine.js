@@ -1,6 +1,6 @@
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=1';
-import {queueMission,advanceOperations,advanceCharacters,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport} from './character-system.js?v=1';
+import {queueMission,advanceOperations,advanceCharacters,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport} from './character-system.js?v=2';
 export {queueMission};
 
 const clone = value => JSON.parse(JSON.stringify(value));
