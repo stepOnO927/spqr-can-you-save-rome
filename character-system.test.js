@@ -64,6 +64,23 @@ test('old version 3 saves are migrated without resetting their campaign data',()
 test('a contested joint rule leaves foreign reports stale and hostile courts may conceal the dispute',()=>{
  let found=false;for(let seed=1;seed<100&&!found;seed++){const s=newGame();assert.equal(contestLeadership(s,'egypt','cleopatra'),true);assert.deepEqual(s.world.leadership.egypt,['ptolemy']);assert.deepEqual(knownLeaders(s,'caesar','egypt'),['cleopatra','ptolemy']);assert.equal(diplomacy(s,'caesar','egypt','war'),true);s.seed=(seed*7000013)>>>0;assert.equal(sendInquiry(s,'caesar','egypt').ok,true);s.inquiries[0].remaining=1;tick(s);if(s.inquiries[0].status==='answered'){found=true;assert.match(s.inquiries[0].claim[0],/Cleopatra/);assert.deepEqual(s.world.leadership.egypt,['ptolemy']);assert.equal(s.inquiries[0].confidence,'unverified')}}assert.equal(found,true);
 });
+test('a contested court can circulate an outdated leadership claim without changing the true government',()=>{
+ const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
+ const s=newGame();contestLeadership(s,'egypt','cleopatra');
+ assert.equal(queueMission(s,'caesar','egypt','envoy','leaders').ok,true);s.world.intelSeed=seedFor(.40,.44);
+ for(let i=0;i<3;i++)advanceOperations(s);
+ assert.equal(s.operations[0].status,'complete');assert.deepEqual(s.world.leadership.egypt,['ptolemy']);
+ assert.deepEqual(s.knowledge.caesar.egypt.reports[0].leaders,['cleopatra','ptolemy']);
+ assert.equal(s.knowledge.caesar.egypt.reports[0].verified,false);assert.equal(s.knowledge.senate.egypt.reports.length,0);
+ assert.equal(queueMission(s,'caesar','egypt','spy','leaders').ok,true);s.world.intelSeed=seedFor(.7,.8);
+ for(let i=0;i<4;i++)advanceOperations(s);
+ assert.deepEqual(s.knowledge.caesar.egypt.reports[0].leaders,['ptolemy']);
+ assert.ok(s.knowledge.caesar.egypt.reports.every(r=>r.confidence==='disputed'&&!r.verified));
+ const peaceful=newGame();peaceful.world.leadership.egypt=['ptolemy'];
+ assert.equal(queueMission(peaceful,'caesar','egypt','envoy','leaders').ok,true);peaceful.world.intelSeed=seedFor(.40,.44);
+ for(let i=0;i<3;i++)advanceOperations(peaceful);
+ assert.deepEqual(peaceful.knowledge.caesar.egypt.reports[0].leaders,['ptolemy']);
+});
 
 
 test('different inquiry questions persist and do not overwrite leadership knowledge',()=>{
