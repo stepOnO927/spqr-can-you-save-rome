@@ -22,7 +22,8 @@ export const OPENING_LEADERS={caesar:['caesar'],senate:['pompey'],egypt:['cleopa
 const SUCCESSORS={caesar:['antony','lepidus'],senate:['cato','scipio','labienus','cicero'],egypt:['cleopatra','ptolemy'],parthia:['pacorus'],armenia:[],numidia:[],mauretania:['bocchus','bogud'],rebels:[]};
 const clone=x=>JSON.parse(JSON.stringify(x));
 export function initializeWorld(s){
- if(!s.world){s.world={characters:Object.fromEntries(Object.entries(CHARACTER_CATALOG).map(([id,c])=>[id,{id,faction:c.faction,health:'healthy',location:null,alive:true}])),leadership:clone(OPENING_LEADERS),intelSeed:874913};}
+ if(!s.world){s.world={characters:Object.fromEntries(Object.entries(CHARACTER_CATALOG).map(([id,c])=>[id,{id,faction:c.faction,health:'healthy',location:null,alive:true,loyalty:75,influence:50}])),leadership:clone(OPENING_LEADERS),intelSeed:874913};}
+ for(const c of Object.values(s.world.characters)){if(c.loyalty===undefined)c.loyalty=75;if(c.influence===undefined)c.influence=50}
  if(!s.world.claimants)s.world.claimants={};
  if(!s.knowledge){s.knowledge=Object.fromEntries(Object.keys(s.factions).map(actor=>[actor,Object.fromEntries(Object.keys(s.factions).map(target=>[target,{reportedLeaders:clone(OPENING_LEADERS[target]||[]),reports:[]}]))]));}
  if(!s.operations)s.operations=[];
@@ -32,3 +33,25 @@ export function ageRange(id,year){const b=CHARACTER_CATALOG[id]?.birth;if(!b)ret
 export function successorFor(s,faction){return (SUCCESSORS[faction]||[]).filter(id=>s.world.characters[id]?.alive&&!s.world.leadership[faction].includes(id));}
 export function assignSuccession(s,faction){const current=s.world.leadership[faction].filter(id=>s.world.characters[id]?.alive);if(!current.length){const next=successorFor(s,faction)[0];if(next)current.push(next)}s.world.leadership[faction]=current;if(s.world.claimants[faction])s.world.claimants[faction]=s.world.claimants[faction].filter(id=>!current.includes(id)&&s.world.characters[id]?.alive);return current}
 export function knownLeaders(s,viewer,target){initializeWorld(s);return s.knowledge[viewer]?.[target]?.reportedLeaders||[]}
+
+// Historical encyclopedia text; later campaign events and health are simulated.
+export const HISTORICAL_BIO={
+ caesar:['Roman general and politician whose crossing of the Rubicon preceded civil war in 49 BCE.','罗马将领与政治家；他越过卢比孔河后，公元前49年的内战随之爆发。'],
+ pompey:['Roman general and political leader who aligned with the Senate against Caesar.','罗马将领和政治领袖，在内战中与元老院方面站在一起。'],
+ antony:['Roman officer and politician who supported Caesar during the civil war.','罗马军官与政治人物，在内战中支持凯撒。'],
+ cicero:['Roman statesman, lawyer and orator active in the final decades of the Republic.','罗马共和国晚期的政治家、律师和演说家。'],
+ cato:['Roman senator and political opponent of Caesar in the late Republic.','罗马共和国晚期元老、凯撒的政治对手。'],
+ labienus:['Roman commander who had served under Caesar before joining his opponents.','罗马指挥官，曾在凯撒麾下服役，后来加入其对手。'],
+ lepidus:['Roman politician who supported Caesar and was praetor in 49 BCE.','罗马政治人物，支持凯撒，公元前49年任裁判官。'],
+ scipio:['Roman senator, consul in 52 BCE, and a leading supporter of Pompey.','罗马元老，公元前52年任执政官，是庞培的重要支持者。'],
+ cleopatra:['Ptolemaic queen who initially shared the throne with her brother Ptolemy XIII.','托勒密王朝女王，最初与弟弟托勒密十三世共同统治。'],
+ ptolemy:['Ptolemaic king and co-ruler with Cleopatra VII in the opening period of the civil war.','托勒密王朝国王，在内战初期与克娄巴特拉七世共同统治。'],
+ orodes:['Arsacid king of Parthia during the period following the Roman defeat at Carrhae.','安息阿尔沙克王朝国王，在罗马于卡莱战败后的时期统治。'],
+ pacorus:['Arsacid prince and son of Orodes II, associated with Parthian military affairs.','阿尔沙克王朝王子、奥罗德二世之子，参与安息军事事务。'],
+ artavasdes:['King of Armenia whose position between Rome and Parthia required careful diplomacy.','亚美尼亚国王，身处罗马与安息之间，需要谨慎处理外交。'],
+ juba:['King of Numidia and a participant on the Pompeian side of the civil war.','努米底亚国王，在内战中参与庞培方面的行动。'],
+ bocchus:['One of the contemporary Mauretanian rulers; the region was not a single unified court.','当时的毛里塔尼亚统治者之一；该地区并非由单一宫廷统一统治。'],
+ bogud:['A Mauretanian ruler contemporary with Bocchus II.','与博库斯二世同时代的毛里塔尼亚统治者。'],
+ deiotarus:['A Galatian ruler and Roman ally involved in the politics of the eastern Mediterranean.','加拉太统治者和罗马盟友，参与东地中海地区的政治。'],
+ pharnaces:['King of the Bosporan kingdom during the Roman civil war.','罗马内战时期博斯普鲁斯王国的国王。']
+};

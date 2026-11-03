@@ -63,3 +63,8 @@ test('contradictory and expired intelligence cannot produce false confidence',()
  const s=newGame();addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'spy',confidence:'unverified'});addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'envoy',confidence:'unverified'});addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'travelers',confidence:'rumor'});assert.equal(s.knowledge.caesar.egypt.reports[0].confidence,'disputed');
  const q=newGame();addReport(q,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'spy',confidence:'unverified'});q.year+=3;addReport(q,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'envoy',confidence:'unverified'});assert.equal(q.knowledge.caesar.egypt.reports[0].confidence,'unverified');
 });
+
+
+test('low domestic stability reduces simulated loyalty without exposing it to other factions',()=>{
+ const s=newGame();s.factions.caesar.stability=20;const before=s.world.characters.antony.loyalty;s.month=1;advanceCharacters(s);assert.equal(s.world.characters.antony.loyalty,before-4);assert.equal(s.knowledge.senate.caesar.reports.length,0);
+});
