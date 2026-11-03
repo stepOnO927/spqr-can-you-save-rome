@@ -1,9 +1,9 @@
-import {reportedClaimants,supportClaimant,availableAgents,requestAgentRelease} from '../character-system.js?v=13';
+import {reportedClaimants,supportClaimant,availableAgents,requestAgentRelease} from '../character-system.js?v=14';
 import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession} from '../governance.js?v=5';
 import {FACTIONS} from '../data.js?v=8';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=8';
-import {queueMission} from '../engine.js?v=25';
-import {previewPersonTravel,startPersonTravel,requestPersonalMeeting} from '../personal-diplomacy.js?v=10';
+import {queueMission} from '../engine.js?v=26';
+import {previewPersonTravel,startPersonTravel,requestPersonalMeeting} from '../personal-diplomacy.js?v=11';
 const portraits=new Set(['caesar','pompey','cleopatra','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function createCharacterUI({getState,getLanguage,inspect,onShowCharacter=()=>{},onGovernmentChanged=()=>{},onStateChanged=()=>{}}){
