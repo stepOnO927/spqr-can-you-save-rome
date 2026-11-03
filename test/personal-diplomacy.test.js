@@ -3,6 +3,18 @@ import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick} from '../engine.js';
 import {previewPersonTravel,startPersonTravel,requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js';
 
+test('meeting requests follow the reported court, not hidden allegiance or historical affiliation',()=>{
+ const s=newGame('senate');s.world.characters.cicero.location='italia';
+ s.knowledge.senate.caesar.reportedLeaders=['antony'];s.world.characters.antony.faction='caesar';
+ assert.equal(requestPersonalMeeting(s,'cicero','antony','caesar').ok,true);
+ assert.equal(s.meetings[0].targetFaction,'caesar');
+ const stale=newGame('senate');stale.knowledge.senate.caesar.reportedLeaders=['antony'];stale.world.characters.antony.faction='senate';
+ assert.equal(requestPersonalMeeting(stale,'cicero','antony','caesar').ok,true);
+ advancePersonalDiplomacy(stale);advancePersonalDiplomacy(stale);
+ assert.equal(stale.meetings[0].status,'no_contact');
+ const unknown=newGame('senate');assert.equal(requestPersonalMeeting(unknown,'cicero','antony','egypt').ok,false);
+});
+
 test('civilian journeys cost resources, take time, and survive a save',()=>{
  let s=newGame('senate');const p=previewPersonTravel(s,'cicero','epirus');assert.equal(p.ok,true);assert.ok(p.months>1);const treasury=s.factions.senate.treasury;assert.equal(startPersonTravel(s,'cicero','epirus').ok,true);assert.equal(s.factions.senate.treasury,treasury-p.cost);assert.equal(s.world.characters.cicero.location,'roma');s=upgradeSave(JSON.parse(JSON.stringify(s)));for(let i=0;i<p.months-1;i++)advancePersonalDiplomacy(s);assert.notEqual(s.world.characters.cicero.location,'epirus');advancePersonalDiplomacy(s);assert.equal(s.world.characters.cicero.location,'epirus');assert.equal(s.world.characters.cicero.travel,undefined);
 });

@@ -18,10 +18,15 @@ export function previewPersonTravel(s,id,destination){
  if(!paths[destination])return {ok:false,reason:'route'};const legs=paths[destination],cost=3+legs.filter(x=>x.sea).length*8;if(s.factions[owner].treasury<cost)return {ok:false,reason:'treasury'};return {ok:true,legs,months:distances[destination],cost};
 }
 export function startPersonTravel(s,id,destination){const p=previewPersonTravel(s,id,destination);if(!p.ok)return p;s.factions[s.player].treasury-=p.cost;s.world.characters[id].travel={destination,legs:p.legs,remaining:p.legs[0].months};return p}
-export function requestPersonalMeeting(s,id,target){
- initializeWorld(s);const c=s.world.characters[id],t=CHARACTER_CATALOG[target];if(!c||c.faction!==s.player||!c.alive||!c.location||c.travel||['seriously_ill','dying','deceased'].includes(c.health)||!t?.faction||t.faction===s.player||!knownLeaders(s,s.player,t.faction).includes(target))return {ok:false,reason:'unavailable'};
+export function requestPersonalMeeting(s,id,target,targetFaction){
+ initializeWorld(s);const c=s.world.characters[id];
+ // Address the court from the sender's reports, even if they are stale or wrong.
+ // The recipient's actual allegiance is checked only when the request resolves.
+ const reported=Object.keys(s.factions).filter(f=>f!==s.player&&knownLeaders(s,s.player,f).includes(target));
+ const court=targetFaction??(reported.length===1?reported[0]:null);
+ if(!c||c.faction!==s.player||!c.alive||!c.location||c.travel||['seriously_ill','dying','deceased'].includes(c.health)||!CHARACTER_CATALOG[target]||!court||!reported.includes(court))return {ok:false,reason:'unavailable'};
  if(s.meetings.some(m=>m.person===id&&m.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[s.player].treasury<3)return {ok:false,reason:'treasury'};
- s.factions[s.player].treasury-=3;s.meetings.unshift({actor:s.player,person:id,target,targetFaction:t.faction,location:c.location,status:'pending',remaining:2,year:s.year,month:s.month});return {ok:true};
+ s.factions[s.player].treasury-=3;s.meetings.unshift({actor:s.player,person:id,target,targetFaction:court,location:c.location,status:'pending',remaining:2,year:s.year,month:s.month});return {ok:true};
 }
 export function advancePersonalDiplomacy(s){
  initializeWorld(s);for(const c of Object.values(s.world.characters)){const t=c.travel;if(!t)continue;if(!c.alive||['seriously_ill','dying','deceased'].includes(c.health)){delete c.travel;continue}const next=t.legs[0],r=s.regions.find(x=>x.id===next?.to);if(!r||atWar(s,c.faction,r.owner)){delete c.travel;if(c.faction===s.player)log(s,'A personal journey stopped because the route is no longer safe.','人物行程因路线不再安全而中止。');continue}if(--t.remaining>0)continue;c.location=next.to;t.legs.shift();if(t.legs.length)t.remaining=t.legs[0].months;else{delete c.travel;if(c.faction===s.player)log(s,`${CHARACTER_CATALOG[c.id].name[0]} arrived in ${r.name[0]}.`,`${CHARACTER_CATALOG[c.id].name[1]}抵达${r.name[1]}。`)}}
