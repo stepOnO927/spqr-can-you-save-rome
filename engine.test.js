@@ -158,3 +158,12 @@ test('Egyptian diplomacy changes access and peace cancels only relevant hostile 
   assert.ok(army(s,'xiii').move);
   assert.ok(army(s,'egyptguard').move);
 });
+
+
+test('defeat records the actual outcome and leaves the defending theater unchanged',()=>{
+ const s=newGame(),a=army(s,'xiii'),d=army(s,'italy'),target=region(s,'italiaN');
+ a.men=500;d.men=20000;const originalOwner=target.owner;
+ assert.equal(resolveBattle(s,a,d,target),false);
+ assert.equal(target.owner,originalOwner);assert.equal(s.battles[0].attackerWins,false);
+ assert.equal(s.battles[0].attacker.men,500);assert.ok(s.battles[0].lossA>0);
+});

@@ -35,3 +35,5 @@
 .action-cancel{width:100%;margin-top:6px;padding:9px;background:transparent;color:#e3d2a9;border:1px solid #8d8064;font:12px Manrope;cursor:pointer}
 
 #status{align-items:center;gap:6px}#status .faction-mark{width:21px;height:21px;flex:none}
+
+.intro-leader{display:flex;gap:15px;align-items:flex-start}.intro-leader svg{width:72px;height:81px;flex:none;border:1px solid #b99c67}.intro-leader p{margin:0 0 12px}.objective-highlight{filter:brightness(1.5) drop-shadow(0 0 8px #ffe18b)!important;outline:3px solid #ffe18b;outline-offset:3px}.start-dialog{max-height:94vh;overflow:auto}#status{max-width:400px;line-height:1.5}

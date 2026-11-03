@@ -17,3 +17,7 @@ At 1366 × 768, inspected the default campaign, selected Caesarian and Senatoria
 ## Phase VII onboarding and help
 
 At 1366 × 768, exercised the Chinese beginner flow from a new game through selecting Rome and Legio XIII, previewing and confirming a legal march, advancing into a real battle, opening the battle report and resource explanation, and entering free play. Checked automatic time progression and battle pause, speed controls, wrong-action feedback, standard starting resources, tutorial restart/skip, help search and mid-tutorial language switching. These checks were performed by the developer; no independent novice playtest has yet been conducted. The tutorial belongs to the separate map-lab prototype; the original campaign remains available. Commander loyalty, research and construction are not implemented in the prototype, and supply limits are informational.
+
+## Phase VIII interaction checks
+
+Browser-checked the guided Caesar campaign in Chinese and English: select the legion, inspect statistics, preview and confirm a march, advance a month, inspect the real battle and city, and open resource guidance. Tested the Chronicle, save/load, restarting the tutorial, and language switching. An automated defeat test and the existing peace/interrupted-order test exercise alternate outcomes at engine level. The full UX still needs independent novice testing; the prototype remains separate from the original campaign, and its help identifies commands only available in the original campaign.
