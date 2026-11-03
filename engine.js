@@ -7,9 +7,15 @@ export const adjacent = (id) => ROUTES.filter(r=>r[0]===id||r[1]===id).map(r=>({
 const rnd = s => {s.seed=(Math.imul(s.seed,1664525)+1013904223)>>>0;return s.seed/4294967296};
 const log = (s,en,zh) => {s.log.unshift({month:s.month,year:s.year,en,zh});s.log=s.log.slice(0,80)};
 export const isWar = (s,a,b) => a!==b && s.wars.some(w=>w.includes(a)&&w.includes(b));
+export const PLAYABLE = ['caesar','senate','egypt','numidia','mauretania','armenia','parthia'];
+const pair = (a,b) => [a,b].sort().join(':');
+export const relation = (s,a,b) => s.relations[pair(a,b)] ?? 0;
+export const isAllied = (s,a,b) => s.alliances.some(p=>p.includes(a)&&p.includes(b));
+const strength = (s,id) => s.armies.filter(a=>a.owner===id).reduce((v,a)=>v+a.men,0);
 
-export function newGame(){
-  return {version:2,seed:49049,year:-49,month:1,mode:'historical',player:'caesar',relations:{egypt:0,numidia:-30,mauretania:20,armenia:0,parthia:-10},alliances:[],
+export function newGame(player='caesar'){
+  if(!PLAYABLE.includes(player))throw new Error('Invalid playable faction');
+  return {version:3,seed:49049,year:-49,month:1,mode:'historical',player,relations:{'caesar:numidia':-30,'caesar:mauretania':20,'caesar:parthia':-10,'numidia:senate':25},alliances:[],
     regions:clone(REGIONS),armies:clone(INITIAL_ARMIES).map(a=>({...a,move:null,siege:null})),
     factions:{
       caesar:{treasury:90,food:65,manpower:22000,stability:58,legitimacy:49,tax:'normal',research:0},
@@ -18,6 +24,15 @@ export function newGame(){
       ...Object.fromEntries(['numidia','mauretania','armenia','parthia'].map(id=>[id,{treasury:60,food:60,manpower:9000,stability:65,legitimacy:60,tax:'normal',research:0}])),
       rebels:{treasury:10,food:15,manpower:0,stability:50,legitimacy:0,tax:'normal',research:0}
     },wars:[['caesar','senate']],log:[],victory:false,nextArmy:1};
+}
+
+export function upgradeSave(s){
+  if(s.version===3)return s;
+  if(s.version!==2)throw new Error('Unsupported save');
+  const old=s.relations||{}, oldAllies=s.alliances||[];
+  s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));
+  s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3;
+  return s;
 }
 
 export function moveArmy(s,armyId,destination){
@@ -40,9 +55,10 @@ export function recruit(s,regionId,owner=s.player){
   if(!r||r.owner!==owner||f.treasury<24||f.manpower<3000||f.food<6)return false;
   f.treasury-=24;f.manpower-=3000;f.food-=6;
   const id=`levy${s.nextArmy++}`;
-  s.armies.push({id,name:['Newly raised legion','新编军团'],owner,region:regionId,men:3000,morale:58,skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null});
+  const roman=owner==='caesar'||owner==='senate';
+  s.armies.push({id,name:roman?['Newly raised legion','新编军团']:['Newly raised forces','新征召军队'],owner,region:regionId,men:3000,morale:58,skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null});
   r.loyalty=Math.max(0,r.loyalty-3);
-  log(s,`A new legion was raised in ${r.name[0]}.`,`在${r.name[1]}组建了新军团。`);
+  log(s,`New forces were raised in ${r.name[0]}.`,`在${r.name[1]}征召了新军队。`);
   return true;
 }
 
@@ -54,20 +70,25 @@ export function setTax(s,owner,level){
 }
 
 export function diplomacy(s, actor, target, action){
-  if(actor===target || !s.factions[actor] || !s.factions[target] || target==='rebels')return false;
-  if(action==='improve' && actor==='caesar' && !isWar(s,actor,target) && s.factions[actor].treasury>=10){s.factions[actor].treasury-=10;s.relations[target]=Math.min(100,(s.relations[target]||0)+15);log(s,`Relations improved with ${FACTIONS[target].short[0]}.`,`与${FACTIONS[target].short[1]}的关系改善。`);return true}
-  if(action==='alliance' && actor==='caesar' && !isWar(s,actor,target) && (s.relations[target]||0)>=30 && !s.alliances.includes(target)){s.alliances.push(target);log(s,`An alliance was formed with ${FACTIONS[target].short[0]}.`,`与${FACTIONS[target].short[1]}结盟。`);return true}
-  if(action==='break' && actor==='caesar' && s.alliances.includes(target)){s.alliances=s.alliances.filter(x=>x!==target);s.relations[target]-=20;return true}
+  if(actor===target || !s.factions[actor] || !s.factions[target] || target==='rebels'||actor==='rebels' || !s.regions.some(r=>r.owner===actor) || !s.regions.some(r=>r.owner===target))return false;
+  const key=pair(actor,target);
+  if(action==='improve' && !isWar(s,actor,target) && s.factions[actor].treasury>=10){s.factions[actor].treasury-=10;s.relations[key]=Math.min(100,relation(s,actor,target)+15);log(s,`${FACTIONS[actor].short[0]} improved relations with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}改善了与${FACTIONS[target].short[1]}的关系。`);return true}
+  if(action==='alliance' && !isWar(s,actor,target) && relation(s,actor,target)>=30 && !isAllied(s,actor,target) && !s.wars.some(w=>(w.includes(actor)&&isAllied(s,target,w.find(x=>x!==actor)))||(w.includes(target)&&isAllied(s,actor,w.find(x=>x!==target))))){s.alliances.push([actor,target]);log(s,`${FACTIONS[actor].short[0]} allied with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}结盟。`);return true}
+  if(action==='break' && isAllied(s,actor,target)){s.alliances=s.alliances.filter(p=>!(p.includes(actor)&&p.includes(target)));s.relations[key]=relation(s,actor,target)-20;log(s,`${FACTIONS[actor].short[0]} broke its alliance with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}解除了与${FACTIONS[target].short[1]}的同盟。`);return true}
   if(action==='war' && !isWar(s,actor,target)){
-    if(actor==='caesar' && s.alliances.includes(target))return false;
+    if(isAllied(s,actor,target))return false;
     s.wars.push([actor,target]);
-    if(actor==='caesar')for(const ally of s.alliances){if(ally!==target&&!isWar(s,ally,target))s.wars.push([ally,target])}
+    for(const p of s.alliances.filter(p=>p.includes(target))){const ally=p.find(x=>x!==target);if(ally!==actor&&!isWar(s,ally,actor)&&!isAllied(s,ally,actor))s.wars.push([ally,actor])}
+    for(const p of s.alliances.filter(p=>p.includes(actor))){const ally=p.find(x=>x!==actor);if(ally!==target&&!isWar(s,ally,target)&&!isAllied(s,ally,target))s.wars.push([ally,target])}
+    s.relations[key]=-60;
     s.factions[actor].legitimacy=Math.max(0,s.factions[actor].legitimacy-5);
     log(s,`${FACTIONS[actor].short[0]} declared war on ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}向${FACTIONS[target].short[1]}宣战。`);
     return true;
   }
   if(action==='peace' && isWar(s,actor,target)){
+    if(strength(s,actor)<strength(s,target)*.6 && s.factions[target].stability>35)return false;
     s.wars=s.wars.filter(w=>!(w.includes(actor)&&w.includes(target)));
+    s.relations[key]=-20;
     for(const a of s.armies.filter(a=>a.owner===actor||a.owner===target)){
       const other=a.owner===actor?target:actor;
       if(a.move && region(s,a.move.to).owner===other)a.move=null;
@@ -95,9 +116,8 @@ export function resolveBattle(s,attacker,defender,target){
   if(attackerWins){
     defender.region=adjacent(target.id).map(e=>region(s,e.to)).find(r=>r.owner===defender.owner)?.id||target.id;
     if(defender.region===target.id)defender.men=0;
-    attacker.region=target.id;
-    target.owner=attacker.owner;
-    target.loyalty=38;
+    const remaining=s.armies.some(other=>other.id!==attacker.id&&other.id!==defender.id&&other.men>0&&other.region===target.id&&!other.move&&isWar(s,attacker.owner,other.owner));
+    if(!remaining){attacker.region=target.id;target.owner=attacker.owner;target.loyalty=38}
   } else {
     attacker.region=adjacent(target.id).map(e=>region(s,e.to)).find(r=>r.owner===attacker.owner)?.id||attacker.region;
   }
@@ -159,13 +179,22 @@ function aiTurn(s,owner){
   const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&a.men>1200);
   for(const a of available){
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y)})).sort((x,y)=>x.d-y.d);
-    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){moveArmy(s,a.id,step);break}}
+    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const defenders=s.armies.filter(x=>x.region===step&&isWar(s,owner,x.owner)&&!x.move).reduce((n,x)=>n+x.men,0);if(defenders>a.men*1.35||f.food<0)continue;moveArmy(s,a.id,step);break}}
   }
   if(f.treasury>65&&f.manpower>5500&&s.month%4===0){
     const border=owned.find(r=>adjacent(r.id).some(e=>isWar(s,owner,region(s,e.to).owner)));
     if(border)recruit(s,border.id,owner);
   }
   if(f.stability<45&&f.treasury>25){f.treasury-=10;f.stability+=3}
+  if(owner!=='rebels' && s.month===12){
+    const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);
+    if(enemy && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=strength(s,enemy)*.6)diplomacy(s,owner,enemy,'peace');
+    if(!enemy && f.treasury>35){const neighbor=owned.flatMap(r=>adjacent(r.id).map(e=>region(s,e.to))).find(r=>r.owner!==owner&&r.owner!=='rebels'&&relation(s,owner,r.owner)>=0&&!isAllied(s,owner,r.owner));if(neighbor && rnd(s)<.2)diplomacy(s,owner,neighbor.owner,'improve')}
+  }
+  if(owner!=='rebels' && s.month%6===0 && f.treasury>40 && f.food>10 && strength(s,owner)>2000){
+    const border=owned.flatMap(r=>adjacent(r.id).map(e=>region(s,e.to))).find(r=>r.owner!==owner&&r.owner!=='rebels'&&!isWar(s,owner,r.owner)&&!isAllied(s,owner,r.owner)&&strength(s,owner)>strength(s,r.owner)*1.5&&relation(s,owner,r.owner)<0);
+    if(border&&rnd(s)<.18)diplomacy(s,owner,border.owner,'war');
+  }
 }
 
 export function tick(s){
@@ -173,12 +202,13 @@ export function tick(s){
   economy(s);
   // Travel and sieges resolve before new AI orders.
   for(const a of [...s.armies]){
+    if(!s.armies.includes(a))continue;
     if(a.move){a.move.remaining--;if(a.move.remaining<=0)arrive(s,a)}
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region);r.owner=a.owner;r.loyalty=36;a.siege=null;log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   rebellion(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
-  if(!s.victory&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
+  if(!s.victory&&s.player==='caesar'&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
   return s;
 }
 

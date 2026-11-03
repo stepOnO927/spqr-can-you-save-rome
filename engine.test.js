@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,moveArmy,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar} from './engine.js';
+import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js';
 
 test('49 BCE opens with opposing Roman commands and independent Egypt',()=>{
   const s=newGame();
@@ -61,7 +61,38 @@ test('complete state is JSON serializable for local save slots',()=>{
   const s=newGame();recruit(s,'gaul');tick(s);
   const restored=JSON.parse(JSON.stringify(s));
   assert.deepEqual(restored,s);
-  assert.equal(restored.version,2);
+  assert.equal(restored.version,3);
+});
+
+test('each playable faction can be controlled and the former player becomes AI',()=>{
+  for(const id of PLAYABLE){const s=newGame(id);assert.equal(s.player,id);assert.ok(s.regions.some(r=>r.owner===id));assert.ok(s.armies.some(a=>a.owner===id));tick(s)}
+  const s=newGame('senate');tick(s);assert.ok(s.armies.some(a=>a.owner==='caesar'&&a.move));
+});
+
+test('pairwise diplomacy supports a kingdom player and defensive alliances',()=>{
+  const s=newGame('egypt');
+  assert.ok(diplomacy(s,'egypt','armenia','improve'));assert.ok(diplomacy(s,'egypt','armenia','improve'));
+  assert.equal(relation(s,'armenia','egypt'),30);assert.ok(diplomacy(s,'egypt','armenia','alliance'));
+  assert.ok(isAllied(s,'armenia','egypt'));assert.ok(diplomacy(s,'parthia','egypt','war'));
+  assert.ok(isWar(s,'parthia','armenia'));assert.equal(isWar(s,'egypt','armenia'),false);
+});
+
+test('stronger powers can reject peace and diplomatic relations are pair-specific',()=>{
+  const s=newGame('egypt');diplomacy(s,'egypt','senate','war');
+  assert.equal(diplomacy(s,'egypt','senate','peace'),false);
+  assert.ok(isWar(s,'egypt','senate'));assert.equal(relation(s,'egypt','senate'),-60);
+  assert.equal(relation(s,'egypt','caesar'),0);
+});
+
+test('version 2 saves migrate relationships without resetting campaign',()=>{
+  const s=newGame();s.version=2;s.relations={egypt:25};s.alliances=['egypt'];s.month=8;
+  upgradeSave(s);assert.equal(s.version,3);assert.equal(s.month,8);assert.equal(relation(s,'caesar','egypt'),25);assert.ok(isAllied(s,'egypt','caesar'));
+});
+
+test('battle cannot capture a theater while another defender remains',()=>{
+  const s=newGame(),a=army(s,'xiii'),d=army(s,'italy');a.men=20000;d.men=1000;
+  army(s,'pompey').region='italiaN';resolveBattle(s,a,d,region(s,'italiaN'));
+  assert.equal(region(s,'italiaN').owner,'senate');assert.equal(a.region,'cisalpine');
 });
 
 test('neighboring alliances join declared wars and remain independent factions',()=>{
