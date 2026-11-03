@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG,initializeWorld,assignSuccession,ageRange} from './characters.js?v=2';
-import {FACTIONS} from './data.js?v=8';
+import {CHARACTER_CATALOG,initializeWorld,assignSuccession,ageRange} from './characters.js?v=3';
+import {FACTIONS,ROUTES} from './data.js?v=8';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const notify=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
@@ -36,3 +36,7 @@ export function advanceCharacters(s){initializeWorld(s);if(s.month!==1)return;fo
 export function battlefieldWound(s,a){initializeWorld(s);const c=s.world.characters[a.characterId];if(c?.alive&&c.health==='healthy'&&rand(s)<.07)c.health='wounded';}
 export function commandFactor(s,a){const c=s.world?.characters?.[a.characterId];return !c?1:({healthy:1,recovering:.96,wounded:.9,ill:.9,seriously_ill:.8,dying:.7,deceased:.7}[c.health]||1)}
 export function linkCommanders(s){initializeWorld(s);const present=new Set();for(const a of s.armies){if(a.characterId===undefined){a.characterId=a.id==='xiii'?'caesar':a.id==='pompey'?'pompey':null}if(a.characterId&&s.world.characters[a.characterId]){s.world.characters[a.characterId].location=a.region;present.add(a.characterId)}}for(const id of ['caesar','pompey'])if(!present.has(id)&&s.world.characters[id])s.world.characters[id].location=null}
+
+// Local reports update only at a controlled frontier; unseen reports remain stale.
+export function observeArmies(s){initializeWorld(s);for(const viewer of Object.keys(s.knowledge)){for(const unit of s.armies){if(unit.owner===viewer||unit.move||!s.knowledge[viewer]?.[unit.owner])continue;const local=s.regions.some(r=>r.owner===viewer&&(r.id===unit.region||ROUTES.some(x=>(x[0]===r.id&&x[1]===unit.region)||(x[1]===r.id&&x[0]===unit.region))));if(local)s.knowledge[viewer][unit.owner].sightings[unit.id]={id:unit.id,name:[...unit.name],owner:unit.owner,region:unit.region,year:s.year,month:s.month}}}}
+export function reportedArmies(s,viewer){initializeWorld(s);const result=[];for(const [owner,k] of Object.entries(s.knowledge[viewer]||{})){if(owner===viewer)continue;for(const x of Object.values(k.sightings||{}))result.push({...x,reported:true})}return result}

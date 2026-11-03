@@ -1,6 +1,6 @@
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=2';
-import {queueMission,advanceOperations,advanceCharacters,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport} from './character-system.js?v=4';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=3';
+import {queueMission,advanceOperations,advanceCharacters,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies} from './character-system.js?v=5';
 export {queueMission};
 
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -254,6 +254,7 @@ export function tick(s){
   }
   rebellion(s);
   resolveInquiries(s);advanceOperations(s);advanceCharacters(s);linkCommanders(s);
+  observeArmies(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
   if(!s.victory&&s.player==='caesar'&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
   return s;

@@ -1,3 +1,4 @@
+import {INITIAL_ARMIES} from './data.js?v=8';
 export const CHARACTER_CATALOG = {
  caesar:{name:['Gaius Julius Caesar','盖乌斯·尤利乌斯·凯撒'],birth:[-100,-100],faction:'caesar',role:['Roman political and military leader','罗马政治与军事领袖'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Julius-Caesar-Roman-ruler'},
  pompey:{name:['Gnaeus Pompeius Magnus','格奈乌斯·庞培'],birth:[-106,-106],faction:'senate',role:['Roman commander allied with the Senate','元老院方面的罗马统帅'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Pompey-the-Great'},
@@ -26,6 +27,7 @@ export function initializeWorld(s){
  for(const c of Object.values(s.world.characters)){if(c.loyalty===undefined)c.loyalty=75;if(c.influence===undefined)c.influence=50}
  if(!s.world.claimants)s.world.claimants={};
  if(!s.knowledge){s.knowledge=Object.fromEntries(Object.keys(s.factions).map(actor=>[actor,Object.fromEntries(Object.keys(s.factions).map(target=>[target,{reportedLeaders:clone(OPENING_LEADERS[target]||[]),reports:[]}]))]));}
+ for(const [observer,targets] of Object.entries(s.knowledge))for(const [target,k] of Object.entries(targets)){if(!k.sightings)k.sightings=Object.fromEntries(INITIAL_ARMIES.filter(a=>a.owner===target&&target!==observer).map(a=>[a.id,{id:a.id,name:[...a.name],owner:a.owner,region:a.region,year:-49,month:1}]))}
  if(!s.operations)s.operations=[];
  return s;
 }

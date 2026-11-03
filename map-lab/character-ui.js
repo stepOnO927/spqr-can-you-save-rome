@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG,knownLeaders,ageRange} from '../characters.js?v=2';
-import {queueMission} from '../engine.js?v=14';
+import {CHARACTER_CATALOG,knownLeaders,ageRange} from '../characters.js?v=3';
+import {queueMission} from '../engine.js?v=15';
 const portraits=new Set(['caesar','pompey','cleopatra','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function createCharacterUI({getState,getLanguage,inspect}){

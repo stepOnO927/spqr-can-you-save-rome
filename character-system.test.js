@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy} from './engine.js';
 import {assignSuccession,knownLeaders,ageRange} from './characters.js';
-import {addReport,commandFactor,advanceCharacters,contestLeadership} from './character-system.js';
+import {addReport,commandFactor,advanceCharacters,contestLeadership,observeArmies,reportedArmies} from './character-system.js';
 
 test('foreign intelligence is independent from actual leadership and other observers',()=>{
  const s=newGame(),opening=knownLeaders(s,'caesar','egypt');
@@ -67,4 +67,13 @@ test('contradictory and expired intelligence cannot produce false confidence',()
 
 test('low domestic stability reduces simulated loyalty without exposing it to other factions',()=>{
  const s=newGame();s.factions.caesar.stability=20;const before=s.world.characters.antony.loyalty;s.month=1;advanceCharacters(s);assert.equal(s.world.characters.antony.loyalty,before-4);assert.equal(s.knowledge.senate.caesar.reports.length,0);
+});
+
+
+test('foreign army markers use old sightings until a controlled frontier observes them',()=>{
+ const s=newGame(),pompey=s.armies.find(a=>a.id==='pompey');pompey.region='africa';observeArmies(s);
+ assert.equal(reportedArmies(s,'caesar').find(a=>a.id==='pompey').region,'roma');
+ pompey.region='italiaN';s.month=2;observeArmies(s);assert.equal(reportedArmies(s,'caesar').find(a=>a.id==='pompey').region,'italiaN');
+ pompey.region='africa';s.month=3;observeArmies(s);const stale=reportedArmies(s,'caesar').find(a=>a.id==='pompey');assert.equal(stale.region,'italiaN');assert.equal(stale.month,2);
+ s.armies=s.armies.filter(a=>a.id!=='pompey');assert.ok(reportedArmies(s,'caesar').some(a=>a.id==='pompey'));
 });
