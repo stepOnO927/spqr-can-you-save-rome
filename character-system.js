@@ -5,6 +5,16 @@ const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+101390422
 const notify=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
 const configs={spy:{cost:12,months:4},envoy:{cost:8,months:3},travelers:{cost:4,months:2},audience:{cost:10,months:4},exchange:{cost:6,months:3}};
 export const MISSION_RULES=configs;
+// This is a theater-graph estimate, not a reconstruction of an actual ancient route.
+export function missionDuration(s,actor,target,type){
+ const cfg=configs[type];if(!cfg)return null;
+ if(type!=='envoy'&&type!=='audience')return cfg.months;
+ const starts=s.regions.filter(r=>r.owner===actor).map(r=>r.id),goals=new Set(s.regions.filter(r=>r.owner===target).map(r=>r.id));
+ if(!starts.length||!goals.size)return null;
+ const queue=starts.map(id=>[id,0]),seen=new Set(starts);let distance=null;
+ for(let i=0;i<queue.length;i++){const [id,steps]=queue[i];if(goals.has(id)){distance=steps;break}for(const edge of ROUTES){const next=edge[0]===id?edge[1]:edge[1]===id?edge[0]:null;if(next&&!seen.has(next)){seen.add(next);queue.push([next,steps+1])}}}
+ return cfg.months+(distance===null?2:distance>=5?2:distance>=3?1:0);
+}
 export function availableAgents(s,actor){initializeWorld(s);const held=s.world.captives.filter(c=>c.owner===actor&&c.state==='held').length,pending=s.operations.filter(o=>o.actor===actor&&o.type==='spy'&&o.status==='pending').length;return Math.max(0,3-held-pending)}
 export function requestAgentRelease(s,actor,captiveId){
  initializeWorld(s);const c=s.world.captives.find(x=>x.id===captiveId&&x.owner===actor&&x.state==='held');if(actor!==s.player||!c)return {ok:false,reason:'unavailable'};
@@ -49,8 +59,8 @@ export function queueMission(s,actor,target,type,subject='health',partnerId=null
  if(type==='spy'&&!availableAgents(s,actor))return {ok:false,reason:'agents'};
  if(s.factions[actor].treasury<cfg.cost)return {ok:false,reason:'treasury'};
  if(s.operations.some(x=>x.actor===actor&&x.target===target&&x.status==='pending'&&x.type===type))return {ok:false,reason:'pending'};
- s.factions[actor].treasury-=cfg.cost;s.operations.unshift({actor,target,type,subject,partner:type==='exchange'?(partnerId||partners[0]):undefined,remaining:cfg.months,status:'pending',sentYear:s.year,sentMonth:s.month});
- if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${cfg.months} months.`,`已派出${({spy:'间谍',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${cfg.months}个月。`);return {ok:true};
+ const duration=missionDuration(s,actor,target,type);s.factions[actor].treasury-=cfg.cost;s.operations.unshift({actor,target,type,subject,partner:type==='exchange'?(partnerId||partners[0]):undefined,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month});
+ if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months.`,`已派出${({spy:'间谍',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月。`);return {ok:true,duration};
 }
 export function advanceOperations(s){initializeWorld(s);for(const op of s.operations){if(op.status!=='pending'||--op.remaining>0)continue;const q=rand(s),id=(s.world.leadership[op.target]||[])[0],person=s.world.characters[id];
  if(op.type==='support'){
@@ -60,7 +70,9 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  }
  if(!s.regions.some(r=>r.owner===op.target)||q<.18){op.status='failed';continue}
  if(op.type==='spy'&&q<.33){op.status=q<.24?'captured':'detected';if(op.status==='captured'){op.captiveId='captive'+s.world.nextCaptive++;s.world.captives.push({id:op.captiveId,owner:op.actor,holder:op.target,state:'held',year:s.year,month:s.month})}const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,`A spy from ${FACTIONS[op.actor].short[0]} was discovered by ${FACTIONS[op.target].short[0]}.`,`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现，双方关系恶化。`);continue}
- if((op.type==='audience'||op.type==='envoy')&&q<.38){op.status='declined';continue}
+ const relation=s.relations[[op.actor,op.target].sort().join(':')]||0,atWar=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target));
+ const refusal=Math.max(.23,Math.min(.70,.38-relation*.0015+(atWar?.18:0)+(s.factions[op.target].stability<35?.08:0)));
+ if((op.type==='audience'||op.type==='envoy')&&q<refusal){op.status='declined';continue}
  if(op.type==='exchange'){
   const partner=op.partner,stillAllied=s.alliances.some(x=>x.includes(op.actor)&&x.includes(partner)),prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>r.kind===op.subject);
   if(!stillAllied||!prior){op.status='failed';continue}

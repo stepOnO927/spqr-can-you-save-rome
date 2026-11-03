@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy} from './engine.js';
 import {assignSuccession,knownLeaders,ageRange} from './characters.js';
-import {addReport,commandFactor,advanceCharacters,advanceOperations,contestLeadership,observeArmies,reportedArmies} from './character-system.js';
+import {addReport,commandFactor,advanceCharacters,advanceOperations,contestLeadership,observeArmies,reportedArmies,missionDuration} from './character-system.js';
 
 test('foreign intelligence is independent from actual leadership and other observers',()=>{
  const s=newGame(),opening=knownLeaders(s,'caesar','egypt');
@@ -68,7 +68,7 @@ test('a contested court can circulate an outdated leadership claim without chang
  const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
  const s=newGame();contestLeadership(s,'egypt','cleopatra');
  assert.equal(queueMission(s,'caesar','egypt','envoy','leaders').ok,true);s.world.intelSeed=seedFor(.40,.44);
- for(let i=0;i<3;i++)advanceOperations(s);
+ for(let i=0;i<s.operations[0].duration;i++)advanceOperations(s);
  assert.equal(s.operations[0].status,'complete');assert.deepEqual(s.world.leadership.egypt,['ptolemy']);
  assert.deepEqual(s.knowledge.caesar.egypt.reports[0].leaders,['cleopatra','ptolemy']);
  assert.equal(s.knowledge.caesar.egypt.reports[0].verified,false);assert.equal(s.knowledge.senate.egypt.reports.length,0);
@@ -78,8 +78,17 @@ test('a contested court can circulate an outdated leadership claim without chang
  assert.ok(s.knowledge.caesar.egypt.reports.every(r=>r.confidence==='disputed'&&!r.verified));
  const peaceful=newGame();peaceful.world.leadership.egypt=['ptolemy'];
  assert.equal(queueMission(peaceful,'caesar','egypt','envoy','leaders').ok,true);peaceful.world.intelSeed=seedFor(.40,.44);
- for(let i=0;i<3;i++)advanceOperations(peaceful);
+ for(let i=0;i<peaceful.operations[0].duration;i++)advanceOperations(peaceful);
  assert.deepEqual(peaceful.knowledge.caesar.egypt.reports[0].leaders,['ptolemy']);
+});
+test('envoy journeys reflect distance and court cooperation depends on relations at arrival',()=>{
+ const s=newGame('caesar');assert.ok(missionDuration(s,'caesar','egypt','envoy')>missionDuration(s,'senate','egypt','envoy'));
+ const dispatched=queueMission(s,'caesar','egypt','envoy','leaders');assert.equal(dispatched.duration,missionDuration(s,'caesar','egypt','envoy'));
+ let loaded=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(loaded.operations[0].remaining,dispatched.duration);
+ for(let i=1;i<dispatched.duration;i++)advanceOperations(loaded);assert.equal(loaded.operations[0].status,'pending');
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.39&&q<.40});
+ const warm=JSON.parse(JSON.stringify(loaded)),cold=JSON.parse(JSON.stringify(loaded));warm.relations['caesar:egypt']=80;cold.relations['caesar:egypt']=-80;warm.world.intelSeed=seed;cold.world.intelSeed=seed;
+ advanceOperations(warm);advanceOperations(cold);assert.equal(warm.operations[0].status,'complete');assert.equal(cold.operations[0].status,'declined');assert.equal(cold.knowledge.caesar.egypt.reports.length,0);
 });
 
 
