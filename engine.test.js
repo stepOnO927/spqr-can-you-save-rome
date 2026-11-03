@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js';
+import historical from './historical-territories.js';
+import {REGIONS} from './data.js';
 
 test('49 BCE opens with opposing Roman commands and independent Egypt',()=>{
   const s=newGame();
@@ -9,6 +11,13 @@ test('49 BCE opens with opposing Roman commands and independent Egypt',()=>{
   assert.equal(army(s,'xiii').commander[0],'Julius Caesar');
   assert.equal(army(s,'pompey').region,'roma');
   assert.ok(isWar(s,'caesar','senate'));
+});
+
+test('historical polygons map known theaters and leave unmapped Illyricum explicit',()=>{
+  const groups=historical.features.flatMap(f=>f.properties.regions);
+  for(const r of REGIONS)assert.equal(groups.filter(x=>x===r.id).length,r.id==='illyricum'?0:1,`${r.id} mapping must reflect available source coverage`);
+  for(const id of ['egypt','numidia','mauretania','armenia','parthia']){const f=historical.features.find(x=>x.properties.id===id);assert.ok(f.properties.period[0]<=-49&&f.properties.period[1]>=-49);assert.ok(f.geometry.coordinates.length)}
+  assert.ok(adjacent('italiaS').find(e=>e.to==='illyricum').sea);
 });
 
 test('movement uses connected routes, time, and sea transport cost',()=>{

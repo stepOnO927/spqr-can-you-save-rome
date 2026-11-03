@@ -24,7 +24,7 @@ export const REGIONS = [
 // Sea routes require transport and take longer. All others represent adjoining land theaters.
 export const ROUTES = [
   ['gaul','narbo'],['narbo','cisalpine'],['narbo','hispaniaN'],['hispaniaN','hispaniaS'],
-  ['cisalpine','italiaN'],['italiaN','roma'],['roma','italiaS'],['italiaS','illyricum'],
+  ['cisalpine','italiaN'],['italiaN','roma'],['roma','italiaS'],['italiaS','illyricum','sea'],
   ['illyricum','epirus'],['epirus','achaia'],['anatolia','syria'],['syria','egypt'],
   ['italiaS','sicilia','sea'],['sicilia','africa','sea'],['africa','hispaniaS','sea'],
   ['achaia','anatolia','sea'],['italiaS','epirus','sea'],['africa','numidia'],['numidia','mauretania'],['mauretania','hispaniaS','sea'],['anatolia','armenia'],['armenia','parthia'],['parthia','syria']
@@ -53,6 +53,7 @@ export const INITIAL_ARMIES = [
 
 export const SOURCES = [
   {title:'Natural Earth · Public domain geographic data',url:'https://www.naturalearthdata.com/about/terms-of-use/'},
+  {title:'Seshat · Cliopatria historical polity dataset (CC BY 4.0)',url:'https://github.com/Seshat-Global-History-Databank/cliopatria'},
   {title:'Ancient World Mapping Center · Roman extent c. 60 BCE (ODbL 1.0)',url:'https://github.com/AWMC/geodata/tree/master/Cultural-Data/political_shading/roman_empire_bce_60'},
   {title:'University of Birmingham · The Late Republic in 5 Timelines',url:'https://www.birmingham.ac.uk/Documents/college-artslaw/caha/classroom/The-Late-Republic-in-5-timelines-teacher-guide-and-notes.pdf'},
   {title:'Macquarie University · Crossing the Rubicon',url:'https://www.mq.edu.au/faculty-of-arts/schools/school-of-humanities/our-research/australian-centre-for-ancient-numismatic-studies/digital-exhibitions/the-coinage-of-julius-caesar/the-civil-wars/crossing-the-rubicon-the-coins-of-49-bc'},
