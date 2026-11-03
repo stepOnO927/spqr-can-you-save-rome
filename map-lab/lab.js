@@ -1,12 +1,12 @@
 import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=1';
 import historical from '../historical-territories.js';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=22';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=23';
 import {FACTIONS} from '../data.js?v=8';
 import {identity,factionMark} from '../identity.js?v=1';
-import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=7';
-import {createCharacterUI} from './character-ui.js?v=13';
-import {reportedArmies} from '../character-system.js?v=11';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=8';
+import {createCharacterUI} from './character-ui.js?v=14';
+import {reportedArmies} from '../character-system.js?v=12';
 import {createTutorial} from './tutorial.js?v=4';
 
 let state = newGame();
@@ -152,7 +152,7 @@ const helpEntries=[
  {kind:'game',en:'Diplomacy and control',zh:'外交与控制',enBody:'Different powers may be at war, allied or at peace. Open Factions, choose a power and use diplomacy. Official inquiries are sent by letter and take months; no reply or refusal is possible.',zhBody:'各势力可能交战、结盟或和平。点击势力并选择国家即可进行外交。直接询问需要寄信，数月后可能收到答复、拒答或没有回信。'},
  {kind:'game',en:'Provincial loyalty and unrest',zh:'地方忠诚与叛乱',enBody:'Theater loyalty affects tax income. High taxes lower it; low taxes restore it. Below 25 loyalty and 60 stability, an undefended theater may rebel.',zhBody:'战区忠诚度影响税收。高税会降低忠诚度，低税可恢复。当忠诚低于25、稳定度低于60且没有守军时，战区可能叛乱。'},
  {kind:'game',en:'Turns, saving and objectives',zh:'回合、存档与目标',enBody:'Advance one month to resolve movement, economy, sieges and AI. The Chronicle records events. Select a save slot and press Save or Load. Click an objective for guidance; it will not issue orders.',zhBody:'推进一个月以结算行军、经济、围攻与AI行动。战报记录事件；选择存档栏后点击保存或读取。点击目标可查看指引，不会自动下令。'},
- {kind:'game',en:'Commander loyalty',zh:'将领忠诚',control:'#factions',enBody:'Friendly character profiles have simulated loyalty, separate from theater loyalty. Low faction stability reduces personal loyalty each year. Defections are not yet modeled.',zhBody:'己方人物档案中的模拟忠诚度与战区忠诚度不同。势力稳定度低时，个人忠诚每年下降。目前尚未模拟人物倒戈。'},
+ {kind:'game',en:'Commander loyalty',zh:'将领忠诚',control:'#factions',enBody:'Friendly character profiles have simulated loyalty, separate from theater loyalty. Low faction stability reduces personal loyalty each year. During the Roman civil war, a non-leading officer without an army may defect when loyalty reaches 20 or below.',zhBody:'己方人物档案中的模拟忠诚度与战区忠诚度不同。势力稳定度低时，个人忠诚每年下降。罗马内战期间，忠诚不高于20、未领导派系且未指挥军队的官员可能倒戈。'},
  {kind:'game',en:'Reports and uncertainty',zh:'情报报告与不确定性',control:'#factions',enBody:'Open Factions, choose another power, then Letters & Intelligence. Reports show source, observation date, reliability and confidence. Conflicting reports remain visible; old reports may be wrong. Your save contains the true simulated world and is not a secrecy boundary.',zhBody:'打开“势力”，选择其他势力，再打开“书信与情报”。报告显示来源、观察日期、可靠性和可信度；冲突报告会保留，旧报告可能错误。本地存档包含真实模拟状态，并非保密边界。'},
  {kind:'game',en:'Letters and direct questions',zh:'书信与直接询问',control:'#factions',enBody:'A direct inquiry costs 3 treasury and normally takes 2–5 months. A letter or reply may be lost; the court may refuse, and its answer is unverified. Other diplomatic buttons currently resolve immediately.',zhBody:'直接询问消耗3国库，通常需要2至5个月。信件或回信可能遗失，对方可能拒答，官方答复未经独立核实。其他外交按钮目前即时结算。'},
  {kind:'game',en:'Spies, captured agents and release',zh:'间谍、被俘与释放',control:'#factions',enBody:'A spy costs 12 treasury and takes 4 months; discovery or capture harms relations. Each faction has three agents: missions and captivity occupy capacity. A release letter costs 8 treasury and takes about 4 months; it may be refused or unanswered.',zhBody:'派遣间谍消耗12国库、需要4个月；被发现或被捕会损害关系。每个势力有3名情报人员，执行任务或被俘会占用人手。请求释放需8国库，约4个月后可能被拒或没有回信。'},
