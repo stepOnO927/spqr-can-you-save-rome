@@ -1,4 +1,4 @@
-import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=6';
+import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=7';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 export const region = (s,id) => s.regions.find(r=>r.id===id);
@@ -211,4 +211,3 @@ export function tick(s){
   if(!s.victory&&s.player==='caesar'&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
   return s;
 }
-

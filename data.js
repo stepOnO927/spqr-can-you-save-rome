@@ -52,6 +52,11 @@ export const INITIAL_ARMIES = [
 ];
 
 export const SOURCES = [
+  {title:'Džino · Caesar and the construction of Illyricum',url:'https://www.cambridge.org/core/books/abs/illyricum-in-roman-politics-229-bcad-68/construction-of-illyricum-caesar-in-illyricum-and-the-civil-wars-5944-bc/8C06B68D9FE789689625316A7B7A4E5B'},
+  {title:'Šačić Beća · Origins and division of Illyricum',url:'https://hrcak.srce.hr/file/443309'},
+  {title:'Archaeological Museum Split · Salona and the Civil War',url:'https://www.armus.hr/en/collections/roman-provincial-collection'},
+  {title:'Pleiades · Rubico and uncertainty of its modern location',url:'https://pleiades.stoa.org/indexes-old/river/late-antique?b_start%3Aint=360'},
+  {title:'Castulo and the Republican provinces of Hispania',url:'https://www.mdpi.com/2071-1050/14/18/11581'},
   {title:'Natural Earth · Public domain geographic data',url:'https://www.naturalearthdata.com/about/terms-of-use/'},
   {title:'Seshat · Cliopatria historical polity dataset (CC BY 4.0)',url:'https://github.com/Seshat-Global-History-Databank/cliopatria'},
   {title:'Ancient World Mapping Center · Roman extent c. 60 BCE (ODbL 1.0)',url:'https://github.com/AWMC/geodata/tree/master/Cultural-Data/political_shading/roman_empire_bce_60'},
@@ -63,4 +68,3 @@ export const SOURCES = [
   {title:'Encyclopaedia Iranica · Orodes II',url:'https://www.iranicaonline.org/articles/orodes-ii/'},
   {title:'Armenian Numismatic Research · Artavasdes II',url:'https://armnumres.org/collections/show/91'}
 ];
-

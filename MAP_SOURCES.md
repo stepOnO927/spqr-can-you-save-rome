@@ -16,3 +16,10 @@ The underlying source datasets have different source scales and chronologies. Co
 
 To reproduce the adapted file, download and unzip the Cliopatria v0.2.1 GeoJSON and download the AWMC `roman_empire_bce_60.geojson` file at the links above. From the project directory, install `polygon-clipping` as a local development dependency and run `node tools/build-historical.cjs <cliopatria.geojson> <awmc60.geojson> historical-territories.js`. The tool selects dated records, groups AWMC feature IDs by geographic location, intersects shapes and rounds coordinates. The original datasets remain available from their respective publishers under the licences above.
 
+
+## Internal boundaries and Illyricum research
+
+* Džino, *Illyricum in Roman Politics*, chapter 5, describes Caesar’s eastern Adriatic command as lacking strictly defined borders: https://www.cambridge.org/core/books/abs/illyricum-in-roman-politics-229-bcad-68/construction-of-illyricum-caesar-in-illyricum-and-the-civil-wars-5944-bc/8C06B68D9FE789689625316A7B7A4E5B. Šačić Beća discusses the lack of fixed borders and regular administration: https://hrcak.srce.hr/file/443309. The selectable Salona marker represents a game theater, not a territorial polygon. Salona and Issa had different allegiances during the war: https://www.armus.hr/en/collections/roman-provincial-collection. Starting ownership is a game simplification.
+* The Rubicon was a boundary of Cisalpine Gaul, but its modern identification is disputed: https://pleiades.stoa.org/indexes-old/river/late-antique?b_start%3Aint=360. The diamond marks the approximate modern Rubicone area, not a surveyed ancient course.
+* Castulo / Saltus Castulonensis is a cited reference for the division between Republican Spanish provinces: https://www.mdpi.com/2071-1050/14/18/11581. The diamond marks the approximate Castulo area; a complete boundary cannot be inferred from this point.
+* Both diamonds are approximate visual references, not reconstructed border lines.
