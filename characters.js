@@ -46,6 +46,8 @@ export function ageRange(id,year){const b=CHARACTER_CATALOG[id]?.birth;if(!b)ret
 export function successorFor(s,faction){return (SUCCESSORS[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!(s.world.leadership[faction]||[]).includes(id));}
 export function assignSuccession(s,faction){const current=s.world.leadership[faction].filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);if(!current.length){const candidates=successorFor(s,faction),preferred=s.world.successionPlans?.[faction],next=candidates.includes(preferred)?preferred:candidates[0];if(next)current.push(next)}s.world.leadership[faction]=current;if(s.world.claimants[faction])s.world.claimants[faction]=s.world.claimants[faction].filter(id=>!current.includes(id)&&s.world.characters[id]?.alive);return current}
 export function knownLeaders(s,viewer,target){initializeWorld(s);return s.knowledge[viewer]?.[target]?.reportedLeaders||[]}
+// Derive a public-facing description only from the reported names, never the hidden government state.
+export function leadershipTitle(faction,reported){if(!reported?.length)return ['Authority unconfirmed','领导身份未确认'];if(faction==='caesar'||faction==='senate')return ['Roman faction leadership','罗马派系领袖'];if(faction==='egypt'&&reported.length>1)return ['Joint rulers','共同统治者'];if(faction==='mauretania')return ['Rulers of separate kingdoms','各王国统治者'];return ['Ruler','统治者']}
 
 // Historical encyclopedia text; later campaign events and health are simulated.
 export const HISTORICAL_BIO={

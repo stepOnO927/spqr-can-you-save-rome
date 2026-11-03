@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
 import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession} from '../governance.js';
-import {assignSuccession,knownLeaders} from '../characters.js';
+import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js';
 import {advanceCharacters,commandFactor} from '../character-system.js';
 import {previewPersonTravel} from '../personal-diplomacy.js';
 
@@ -42,4 +42,7 @@ test('succession plans are saved and select an eligible designated successor onl
 test('succession plans cannot displace a surviving co-ruler or appoint a foreign defector',()=>{
  const s=newGame('egypt');assert.equal(planSuccession(s,'ptolemy').reason,'unavailable');s.world.characters.cleopatra.alive=false;assignSuccession(s,'egypt');assert.deepEqual(s.world.leadership.egypt,['ptolemy']);
  const roman=newGame('caesar');roman.world.characters.lepidus.faction='senate';assert.equal(planSuccession(roman,'lepidus').reason,'unavailable');assert.equal(roman.factions.caesar.treasury,90);
+});
+test('reported titles distinguish Roman factions, Egyptian joint rule and separate Mauretanian kingdoms',()=>{
+ assert.equal(leadershipTitle('caesar',['caesar'])[1],'罗马派系领袖');assert.equal(leadershipTitle('egypt',['cleopatra','ptolemy'])[1],'共同统治者');assert.equal(leadershipTitle('egypt',['ptolemy'])[1],'统治者');assert.equal(leadershipTitle('mauretania',['bocchus','bogud'])[1],'各王国统治者');assert.equal(leadershipTitle('egypt',[])[1],'领导身份未确认');
 });

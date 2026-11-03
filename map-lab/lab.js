@@ -1,12 +1,12 @@
 import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=1';
 import historical from '../historical-territories.js';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=21';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=22';
 import {FACTIONS} from '../data.js?v=8';
 import {identity,factionMark} from '../identity.js?v=1';
-import {CHARACTER_CATALOG,knownLeaders,HISTORICAL_BIO} from '../characters.js?v=6';
-import {createCharacterUI} from './character-ui.js?v=12';
-import {reportedArmies} from '../character-system.js?v=10';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=7';
+import {createCharacterUI} from './character-ui.js?v=13';
+import {reportedArmies} from '../character-system.js?v=11';
 import {createTutorial} from './tutorial.js?v=4';
 
 let state = newGame();
@@ -45,7 +45,7 @@ function updateControl(){
  pairs.push(f.properties.id,color)}
  map.setPaintProperty('control','fill-color',['match',['get','id'],...pairs,'#aa9c75']);map.setPaintProperty('control','fill-opacity',currentMapMode==='terrain'?.08:currentMapMode==='political'?.30:.38);
 }
-function renderLeaders(){leaderMarkers.forEach(m=>m.remove());leaderMarkers=[];for(const id of ['caesar','senate','egypt','parthia','armenia','numidia','mauretania']){const place=({caesar:'cisalpine',senate:'roma',egypt:'egypt',parthia:'parthia',armenia:'armenia',numidia:'numidia',mauretania:'mauretania'})[id],ids=id===state.player?state.world.leadership[id]:knownLeaders(state,state.player,id),el=document.createElement('button');el.className='leader-map-label';el.innerHTML=`${factionMark(id,'insignia')}<span><strong>${esc(n(FACTIONS[id].short))}</strong><small>${esc(ids.map(cid=>n(CHARACTER_CATALOG[cid]?.name)).filter(Boolean).join(' · ')||(lang==='zh'?'领袖未知':'Leader unknown'))}</small></span>`;el.title=lang==='zh'?'公开传闻，可能过时；点击查看':'Publicly reported, may be outdated; click to inspect';el.onclick=e=>{e.stopPropagation();showFaction(id)};leaderMarkers.push(marker(el,namedPoints[place],'bottom'))}}
+function renderLeaders(){leaderMarkers.forEach(m=>m.remove());leaderMarkers=[];for(const id of ['caesar','senate','egypt','parthia','armenia','numidia','mauretania']){const place=({caesar:'cisalpine',senate:'roma',egypt:'egypt',parthia:'parthia',armenia:'armenia',numidia:'numidia',mauretania:'mauretania'})[id],ids=id===state.player?state.world.leadership[id]:knownLeaders(state,state.player,id),el=document.createElement('button');el.className='leader-map-label';el.innerHTML=`${factionMark(id,'insignia')}<span><strong>${esc(n(FACTIONS[id].short))}</strong><small>${esc(n(leadershipTitle(id,ids))+' · '+(ids.map(cid=>n(CHARACTER_CATALOG[cid]?.name)).filter(Boolean).join(' · ')||(lang==='zh'?'领袖未知':'Leader unknown')))}</small></span>`;el.title=lang==='zh'?'公开传闻，可能过时；点击查看':'Publicly reported, may be outdated; click to inspect';el.onclick=e=>{e.stopPropagation();showFaction(id)};leaderMarkers.push(marker(el,namedPoints[place],'bottom'))}}
 function renderArmies(){
  updateControl();renderLeaders();
  armyMarkers.forEach(m=>m.remove());armyMarkers=[];
@@ -84,7 +84,7 @@ function showFaction(id,section='diplomacy'){
  factionSection=section;const faction=FACTIONS[id];if(!faction)return;activeInfo=null;activeFaction=id;activeArmy=null;activeBattle=null;previewDestination='';clearReach();const own=state.regions.filter(r=>r.owner===id),zh=lang==='zh',me=state.player,war=isWar(state,me,id),allied=isAllied(state,me,id),rel=relation(state,me,id),f=state.factions[me];
  document.querySelector('.selection').style.setProperty('--selection-accent',identity(id).accent);inspect(n(faction.name),zh?'仅查看该势力；你仍指挥自己的罗马阵营。':'Viewing a faction does not change your Roman command.');
  const relationText=id===me?(zh?'玩家指挥':'Player command'):war?(zh?'交战中':'At war'):allied?(zh?'同盟':'Allied'):(zh?'和平':'At peace');
- const panel=document.querySelector('#command-detail');panel.innerHTML=`<div class="identity-header faction-focus">${factionMark(id,'banner')}<span><small>${zh?'势力与外交':'FACTION & DIPLOMACY'}</small><strong>${esc(n(faction.short))}</strong></span></div><div class="detail-grid"><span>${zh?'公开报告的领导者（可能过时）':'Reported leader (may be outdated)'}</span><b>${esc((id===me?state.world.leadership[id]:knownLeaders(state,me,id)).map(cid=>n(CHARACTER_CATALOG[cid]?.name)).filter(Boolean).join(lang==='zh'?'、':', ')||(lang==='zh'?'未知':'Unknown'))}</b><span>${zh?'外交状态':'Diplomatic status'}</span><b>${relationText}</b>${id!==me?`<span>${zh?'关系':'Relations'}</span><b>${rel}</b>`:''}</div><button class="identity-focus-map" id="focus-faction">${zh?'定位战区':'FOCUS ON THEATER'}</button>`;
+ const panel=document.querySelector('#command-detail');panel.innerHTML=`<div class="identity-header faction-focus">${factionMark(id,'banner')}<span><small>${zh?'势力与外交':'FACTION & DIPLOMACY'}</small><strong>${esc(n(faction.short))}</strong></span></div><div class="detail-grid"><span>${zh?'公开报告的领导者（可能过时）':'Reported leader (may be outdated)'}</span><b>${esc((id===me?state.world.leadership[id]:knownLeaders(state,me,id)).map(cid=>n(CHARACTER_CATALOG[cid]?.name)).filter(Boolean).join(lang==='zh'?'、':', ')||(lang==='zh'?'未知':'Unknown'))}</b><span>${zh?'报告的身份':'Reported position'}</span><b>${esc(n(leadershipTitle(id,id===me?state.world.leadership[id]:knownLeaders(state,me,id))))}</b><span>${zh?'外交状态':'Diplomatic status'}</span><b>${relationText}</b>${id!==me?`<span>${zh?'关系':'Relations'}</span><b>${rel}</b>`:''}</div><button class="identity-focus-map" id="focus-faction">${zh?'定位战区':'FOCUS ON THEATER'}</button>`;
  panel.querySelector('#focus-faction').onclick=()=>{const r=own.find(x=>namedPoints[x.id]);if(r)map.flyTo({center:namedPoints[r.id],zoom:5.3})};characterUI.addLeaders(panel,id);if(id===me)return;
  const nav=document.createElement('div');nav.className='diplomacy-tabs';nav.innerHTML=`<button data-page="diplomacy">${zh?'外交':'DIPLOMACY'}</button><button data-page="intelligence">${zh?'书信与情报':'LETTERS & INTELLIGENCE'}</button>`;panel.append(nav);nav.querySelectorAll('button').forEach(b=>b.onclick=()=>showFaction(id,b.dataset.page));
  const content=document.createElement('div');content.className='diplomacy-content';panel.append(content);
