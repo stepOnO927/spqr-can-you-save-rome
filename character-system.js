@@ -1,10 +1,17 @@
-import {CHARACTER_CATALOG,initializeWorld,assignSuccession,ageRange} from './characters.js?v=5';
+import {CHARACTER_CATALOG,initializeWorld,assignSuccession,ageRange} from './characters.js?v=6';
 import {FACTIONS,ROUTES} from './data.js?v=8';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const notify=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
 const configs={spy:{cost:12,months:4},envoy:{cost:8,months:3},travelers:{cost:4,months:2},audience:{cost:10,months:4},exchange:{cost:6,months:3}};
 export const MISSION_RULES=configs;
+export function availableAgents(s,actor){initializeWorld(s);const held=s.world.captives.filter(c=>c.owner===actor&&c.state==='held').length,pending=s.operations.filter(o=>o.actor===actor&&o.type==='spy'&&o.status==='pending').length;return Math.max(0,3-held-pending)}
+export function requestAgentRelease(s,actor,captiveId){
+ initializeWorld(s);const c=s.world.captives.find(x=>x.id===captiveId&&x.owner===actor&&x.state==='held');if(actor!==s.player||!c)return {ok:false,reason:'unavailable'};
+ if(s.releaseRequests.some(x=>x.captiveId===captiveId&&x.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<8)return {ok:false,reason:'treasury'};
+ s.factions[actor].treasury-=8;s.releaseRequests.unshift({actor,holder:c.holder,captiveId,remaining:4,status:'pending',year:s.year,month:s.month});notify(s,'A release request was sent; a reply may take four months.','已寄出释放请求；回信可能需要四个月。');return {ok:true};
+}
+export function advanceAgentRequests(s){initializeWorld(s);for(const request of s.releaseRequests){if(request.status!=='pending'||--request.remaining>0)continue;const c=s.world.captives.find(x=>x.id===request.captiveId),q=rand(s),war=s.wars.some(w=>w.includes(request.actor)&&w.includes(request.holder));if(!c||c.state!=='held'||!s.regions.some(r=>r.owner===request.holder)||q<.2)request.status='no_reply';else if(q<(war?.65:.45))request.status='refused';else{request.status='released';c.state='released';c.releasedYear=s.year;c.releasedMonth=s.month}if(request.actor===s.player)notify(s,request.status==='released'?'The unnamed agent was released and is available again.':request.status==='refused'?'The court refused to release the agent.':'No response arrived; the correspondence may have been lost.',request.status==='released'?'未具名人员获释，情报人手恢复。':request.status==='refused'?'对方拒绝释放人员。':'未收到回信；书信可能遗失。')}}
 const sourceFamily=r=>r.originSource||({official:'court',envoy:'court',audience:'court'}[r.source]||r.source);
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
 export function addReport(s,actor,target,report){
@@ -31,6 +38,7 @@ export function queueMission(s,actor,target,type,subject='health',partnerId=null
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
  const partners=s.alliances.filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)).filter(id=>id!==target&&s.factions[id]);
  if(type==='exchange'&&(!partners.length||(partnerId&&!partners.includes(partnerId))))return {ok:false,reason:'alliance'};
+ if(type==='spy'&&!availableAgents(s,actor))return {ok:false,reason:'agents'};
  if(s.factions[actor].treasury<cfg.cost)return {ok:false,reason:'treasury'};
  if(s.operations.some(x=>x.actor===actor&&x.target===target&&x.status==='pending'&&x.type===type))return {ok:false,reason:'pending'};
  s.factions[actor].treasury-=cfg.cost;s.operations.unshift({actor,target,type,subject,partner:type==='exchange'?(partnerId||partners[0]):undefined,remaining:cfg.months,status:'pending',sentYear:s.year,sentMonth:s.month});
@@ -43,7 +51,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   if(op.actor===s.player)notify(s,op.status==='complete'?'The claimant accepted support; relations with the court worsened.':op.status==='declined'?'The claimant declined the offer.':'No reply arrived; the offer or response may have been lost.',op.status==='complete'?'竞争者接受支持；与宫廷的关系恶化。':op.status==='declined'?'竞争者拒绝了提议。':'未收到回信；提议或回信可能遗失。');continue
  }
  if(!s.regions.some(r=>r.owner===op.target)||q<.18){op.status='failed';continue}
- if(op.type==='spy'&&q<.33){op.status=q<.24?'captured':'detected';const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,`A spy from ${FACTIONS[op.actor].short[0]} was discovered by ${FACTIONS[op.target].short[0]}.`,`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现，双方关系恶化。`);continue}
+ if(op.type==='spy'&&q<.33){op.status=q<.24?'captured':'detected';if(op.status==='captured'){op.captiveId='captive'+s.world.nextCaptive++;s.world.captives.push({id:op.captiveId,owner:op.actor,holder:op.target,state:'held',year:s.year,month:s.month})}const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,`A spy from ${FACTIONS[op.actor].short[0]} was discovered by ${FACTIONS[op.target].short[0]}.`,`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现，双方关系恶化。`);continue}
  if((op.type==='audience'||op.type==='envoy')&&q<.38){op.status='declined';continue}
  if(op.type==='exchange'){
   const partner=op.partner,stillAllied=s.alliances.some(x=>x.includes(op.actor)&&x.includes(partner)),prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>r.kind===op.subject);
