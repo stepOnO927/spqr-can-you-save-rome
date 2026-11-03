@@ -12,6 +12,7 @@ try{
  await page.locator('#roman-faction').selectOption('senate');await page.locator('#start-free').click();
  await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();
  await page.locator('[data-character="cicero"]').click();
+ assert.match(await page.locator('#command-detail').innerText(),/游戏战伤次数/);
  await page.locator('#person-destination').selectOption('epirus');await page.locator('#person-travel').click();
  await page.locator('#person-travel-feedback button').click();
  assert.match(await page.locator('#command-detail').innerText(),/正在旅行/);
