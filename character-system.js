@@ -16,11 +16,19 @@ const sourceFamily=r=>r.originSource||({official:'court',envoy:'court',audience:
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
 export function addReport(s,actor,target,report){
  initializeWorld(s);const k=s.knowledge[actor]?.[target];if(!k)return;
- const r={...report,year:s.year,month:s.month,verified:false},known=x=>x.value!=='unknown'&&x.value!=null||x.kind==='leaders'||x.kind==='claimants';
+ const r={...report,year:s.year,month:s.month,baseConfidence:report.baseConfidence||report.confidence||'unverified',verified:false},known=x=>x.value!=='unknown'&&x.value!=null||x.kind==='leaders'||x.kind==='claimants';
  const comparable=known(r)&&reportAge(s,r)<=24?k.reports.filter(x=>known(x)&&x.kind===r.kind&&x.character===r.character&&reportAge(s,x)<=24):[];
- const value=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?x.leaders:x.value);
- for(const old of comparable){if(value(old)!==value(r)){old.confidence='disputed';old.verified=false;r.confidence='disputed';r.verified=false}else if(sourceFamily(old)!==sourceFamily(r)&&old.confidence!=='disputed'&&r.confidence!=='disputed'){old.confidence='credible';r.confidence='credible'}}
- const agreeing=comparable.filter(old=>value(old)===value(r));if(known(r)&&r.confidence!=='disputed'&&new Set([sourceFamily(r),...agreeing.map(sourceFamily)]).size>=3){r.confidence='confirmed';r.verified=true;for(const old of agreeing){old.confidence='confirmed';old.verified=true}}
+ // Leadership and claimant reports describe sets; co-ruler order carries no meaning.
+ const value=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?[...new Set(x.leaders||[])].sort():x.value);
+ if(known(r)&&reportAge(s,r)<=24){
+  const group=[...comparable,r],disputed=group.some(x=>value(x)!==value(r))||group.some(x=>x.baseConfidence==='disputed');
+  const families=new Set(group.map(sourceFamily)).size;
+  for(const item of group){
+   const base=item.baseConfidence||(item.confidence==='rumor'?'rumor':'unverified');
+   item.confidence=disputed?'disputed':families>=3?'confirmed':families>=2?'credible':base;
+   item.verified=!disputed&&families>=3;
+  }
+ }
  // An older forwarded message may be useful evidence but must not replace a newer report.
  const newerLeader=r.kind==='leaders'&&k.reports.some(x=>x.kind==='leaders'&&reportAge(s,x)<reportAge(s,r));
  k.reports.unshift(r);k.reports=k.reports.slice(0,30);if(r.kind==='leaders'&&r.leaders&&reportAge(s,r)<=24&&!newerLeader)k.reportedLeaders=[...r.leaders];return r
