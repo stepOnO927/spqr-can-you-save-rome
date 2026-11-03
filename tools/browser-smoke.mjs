@@ -10,6 +10,8 @@ try{
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});
  await page.locator('#roman-faction').selectOption('senate');await page.locator('#start-free').click();
+ await page.locator('#help').click();await page.locator('#help-search').fill('被俘');assert.match(await page.locator('#help-results').innerText(),/8国库/);
+ await page.locator('#language').click();await page.locator('#help-search').fill('captured agents');assert.match(await page.locator('#help-results').innerText(),/8 treasury/);await page.locator('#language').click();
  await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();
  await page.locator('[data-character="cicero"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/游戏战伤次数/);
