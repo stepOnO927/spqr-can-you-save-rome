@@ -1,4 +1,4 @@
-import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=3';
+import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=4';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 export const region = (s,id) => s.regions.find(r=>r.id===id);

@@ -52,6 +52,7 @@ export const INITIAL_ARMIES = [
 ];
 
 export const SOURCES = [
+  {title:'Natural Earth · Public domain geographic data',url:'https://www.naturalearthdata.com/about/terms-of-use/'},
   {title:'University of Birmingham · The Late Republic in 5 Timelines',url:'https://www.birmingham.ac.uk/Documents/college-artslaw/caha/classroom/The-Late-Republic-in-5-timelines-teacher-guide-and-notes.pdf'},
   {title:'Macquarie University · Crossing the Rubicon',url:'https://www.mq.edu.au/faculty-of-arts/schools/school-of-humanities/our-research/australian-centre-for-ancient-numismatic-studies/digital-exhibitions/the-coinage-of-julius-caesar/the-civil-wars/crossing-the-rubicon-the-coins-of-49-bc'},
   {title:'World History Encyclopedia · Pompey',url:'https://www.worldhistory.org/pompey/'},
