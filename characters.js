@@ -35,6 +35,10 @@ export function initializeWorld(s){
  if(!s.knowledge){s.knowledge=Object.fromEntries(Object.keys(s.factions).map(actor=>[actor,Object.fromEntries(Object.keys(s.factions).map(target=>[target,{reportedLeaders:clone(OPENING_LEADERS[target]||[]),reports:[]}]))]));}
  for(const [observer,targets] of Object.entries(s.knowledge))for(const [target,k] of Object.entries(targets)){if(!k.sightings)k.sightings=Object.fromEntries(INITIAL_ARMIES.filter(a=>a.owner===target&&target!==observer).map(a=>[a.id,{id:a.id,name:[...a.name],owner:a.owner,region:a.region,year:-49,month:1}]))}
  if(!s.operations)s.operations=[];
+ if(!s.world.captives)s.world.captives=[];
+ if(!s.world.nextCaptive)s.world.nextCaptive=1;
+ if(!s.releaseRequests)s.releaseRequests=[];
+ if(!s.world.captiveMigration){for(const op of s.operations.filter(x=>x.type==='spy'&&x.status==='captured'&&!x.captiveId)){const id='captive'+s.world.nextCaptive++;op.captiveId=id;s.world.captives.push({id,owner:op.actor,holder:op.target,state:'held',year:op.sentYear??s.year,month:op.sentMonth??s.month})}s.world.captiveMigration=true}
  return s;
 }
 // Birthdays are not specified in the catalog: either side of the birthday may apply.
