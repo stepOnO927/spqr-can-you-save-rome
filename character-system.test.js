@@ -22,6 +22,28 @@ test('only independently sourced matching reports improve confidence and conflic
  addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'travelers',confidence:'rumor'});
  assert.ok(s.knowledge.caesar.egypt.reports.every(r=>r.confidence==='disputed'));
 });
+test('joint ruler order is immaterial and all current claims reflect an unresolved conflict',()=>{
+ const s=newGame();
+ addReport(s,'caesar','egypt',{kind:'leaders',leaders:['cleopatra','ptolemy'],source:'spy',confidence:'unverified'});
+ addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy','cleopatra'],source:'envoy',confidence:'unverified'});
+ assert.ok(s.knowledge.caesar.egypt.reports.every(r=>r.confidence==='credible'));
+ addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy'],source:'travelers',confidence:'rumor'});
+ assert.ok(s.knowledge.caesar.egypt.reports.every(r=>r.confidence==='disputed'&&!r.verified));
+ addReport(s,'caesar','egypt',{kind:'leaders',leaders:['cleopatra','ptolemy'],source:'meeting',confidence:'unverified'});
+ assert.ok(s.knowledge.caesar.egypt.reports.every(r=>r.confidence==='disputed'&&!r.verified));
+});
+test('fresh reports may recover after a conflict expires without treating forwarded evidence as independent',()=>{
+ const s=newGame();
+ addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'spy',confidence:'unverified'});
+ addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'envoy',confidence:'unverified'});
+ s.year+=3;
+ addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'spy',confidence:'unverified'});
+ addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'exchange',originSource:'spy',confidence:'unverified'});
+ assert.equal(s.knowledge.caesar.egypt.reports[0].confidence,'unverified');assert.equal(s.knowledge.caesar.egypt.reports[0].verified,false);
+ addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'envoy',confidence:'unverified'});
+ assert.ok(s.knowledge.caesar.egypt.reports.slice(0,3).every(r=>r.confidence==='credible'&&!r.verified));
+ assert.ok(s.knowledge.caesar.egypt.reports.slice(3).every(r=>r.confidence==='disputed'));
+});
 test('spies cost resources and resolve by month with isolated records',()=>{
  const s=newGame(),cash=s.factions.caesar.treasury;assert.equal(queueMission(s,'caesar','egypt','spy','health').ok,true);assert.equal(s.factions.caesar.treasury,cash-12);
  assert.equal(queueMission(s,'caesar','egypt','spy','health').reason,'pending');for(let i=0;i<3;i++)tick(s);
