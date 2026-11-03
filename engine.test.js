@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js';
+import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js';
 import historical from './historical-territories.js';
 import {REGIONS} from './data.js';
 
@@ -31,6 +31,26 @@ test('movement uses connected routes, time, and sea transport cost',()=>{
   assert.ok(italy.men<7200);
   assert.ok(s.log.some(e=>e.en.includes('Casualties')));
   assert.ok(adjacent('italiaS').some(e=>e.to==='sicilia'&&e.sea));
+});
+
+test('march previews preserve state and match the eventual order',()=>{
+  const s=newGame(), before=JSON.stringify(s);
+  assert.equal(previewMarch(s,'xiii','egypt').ok,false);
+  const plan=previewMarch(s,'xiii','italiaN');
+  assert.equal(plan.ok,true);assert.equal(plan.hostile,true);
+  assert.equal(JSON.stringify(s),before);
+  assert.equal(moveArmy(s,'xiii','italiaN').ok,true);
+  assert.equal(army(s,'xiii').move.remaining,plan.months);
+});
+
+test('battle reports preserve pre-battle evidence and calculated losses',()=>{
+  const s=newGame();moveArmy(s,'xiii','italiaN');tick(s);
+  const report=s.battles[0];
+  assert.equal(report.region,'italiaN');assert.equal(report.attacker.men,7200);
+  assert.equal(report.defender.men,5200);assert.equal(report.attacker.commander[0],'Julius Caesar');
+  assert.equal(army(s,'xiii').men,report.attacker.men-report.lossA);
+  assert.ok(report.attacker.power>0&&report.defender.power>0);
+  assert.deepEqual(JSON.parse(JSON.stringify(s)).battles,s.battles);
 });
 
 test('recruitment spends actual resources and creates an army',()=>{
@@ -126,4 +146,3 @@ test('Egyptian diplomacy changes access and peace cancels only relevant hostile 
   assert.ok(army(s,'xiii').move);
   assert.ok(army(s,'egyptguard').move);
 });
-

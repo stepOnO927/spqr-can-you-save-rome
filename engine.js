@@ -35,7 +35,7 @@ export function upgradeSave(s){
   return s;
 }
 
-export function moveArmy(s,armyId,destination){
+export function previewMarch(s,armyId,destination){
   const a=army(s,armyId); const target=region(s,destination);
   if(!a||!target||a.men<=0||a.move||a.siege)return {ok:false,reason:'unavailable'};
   const link=adjacent(a.region).find(e=>e.to===destination);
@@ -43,8 +43,16 @@ export function moveArmy(s,armyId,destination){
   if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner))return {ok:false,reason:'peace'};
   const faction=s.factions[a.owner];
   if(link.sea&&faction.treasury<8)return {ok:false,reason:'transport'};
-  if(link.sea)faction.treasury-=8;
   const months=(link.sea?3:1)+(target.terrain==='hills'?1:0)+(target.terrain==='desert'?1:0);
+  return {ok:true,months,sea:!!link.sea,terrain:target.terrain,hostile:target.owner!==a.owner,food:faction.food,supply:target.supply};
+}
+
+export function moveArmy(s,armyId,destination){
+  const estimate=previewMarch(s,armyId,destination);
+  if(!estimate.ok)return estimate;
+  const a=army(s,armyId),target=region(s,destination),link=adjacent(a.region).find(e=>e.to===destination);
+  if(link.sea)s.factions[a.owner].treasury-=8;
+  const months=estimate.months;
   a.move={to:destination,remaining:months,sea:link.sea};
   log(s,`${a.name[0]} marched toward ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}向${target.name[1]}行军（${months}个月）。`);
   return {ok:true};
@@ -110,6 +118,8 @@ export function resolveBattle(s,attacker,defender,target){
   const attackerWins=powerA*roll>powerD;
   const lossA=Math.min(attacker.men,Math.round(defender.men*(attackerWins?.19:.31)*(powerD/powerA)**.25));
   const lossD=Math.min(defender.men,Math.round(attacker.men*(attackerWins?.34:.19)*(powerA/powerD)**.25));
+  const report={year:s.year,month:s.month,region:target.id,attacker:{name:[...attacker.name],commander:[...attacker.commander],owner:attacker.owner,men:attacker.men,morale:attacker.morale,food:s.factions[attacker.owner].food,power:Math.round(powerA)},defender:{name:[...defender.name],commander:[...defender.commander],owner:defender.owner,men:defender.men,morale:defender.morale,food:s.factions[defender.owner].food,power:Math.round(powerD)},terrain:target.terrain,fort:target.fort,roll,attackerWins,lossA,lossD};
+  (s.battles ||= []).unshift(report);s.battles=s.battles.slice(0,20);
   attacker.men-=lossA;defender.men-=lossD;
   attacker.morale=Math.max(20,attacker.morale+(attackerWins?7:-16));
   defender.morale=Math.max(20,defender.morale+(attackerWins?-16:7));
