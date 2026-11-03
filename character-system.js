@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG,initializeWorld,assignSuccession,ageRange} from './characters.js?v=8';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=8';
 import {FACTIONS,ROUTES} from './data.js?v=8';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
@@ -71,7 +71,15 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.subject==='health'){const value=person?(falsehood?'healthy':person.health):'unknown';report={kind:'health',character:id||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='claimants'){const candidates=falsehood?[]:[...(s.world.claimants[op.target]||[])];report={kind:'claimants',leaders:candidates,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='strength'){let count=s.armies.filter(a=>a.owner===op.target).reduce((x,a)=>x+a.men,0);if(falsehood)count=Math.round(count*.65/1000)*1000;else count=Math.round(count/1000)*1000;report={kind:'strength',value:count,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
- else {const leaders=[...(s.world.leadership[op.target]||[])];report={kind:'leaders',leaders,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
+ else {
+  const current=s.world.leadership[op.target]||[],opening=OPENING_LEADERS[op.target]||[];
+  // A threatened or contested court may circulate an outdated public arrangement.
+  // A covert agent or traveler can pick up that cover story too; the recipient
+  // sees an ordinary report, not the hidden reason why it is inaccurate.
+  const oldArrangement=(hostile||contested)&&q<.45&&opening.length&&opening.some(id=>!current.includes(id));
+  const leaders=[...(oldArrangement?opening:current)];
+  report={kind:'leaders',leaders,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
+ }
  if(op.type==='audience'){op.meeting='envoy';const k=[op.actor,op.target].sort().join(':');s.relations[k]=Math.min(100,(s.relations[k]||0)+3)}addReport(s,op.actor,op.target,report);if(op.actor===s.player)notify(s,`An intelligence report from ${FACTIONS[op.target].short[0]} has arrived.`,`一份来自${FACTIONS[op.target].short[1]}的情报报告已送达。`);
 }}
 export function contestLeadership(s,faction,claimant){initializeWorld(s);const leaders=s.world.leadership[faction]||[];if(faction!=='egypt'||leaders.length<2||!leaders.includes(claimant)||!s.world.characters[claimant]?.alive)return false;s.world.leadership[faction]=leaders.filter(id=>id!==claimant);const claimants=s.world.claimants[faction]||=[];if(!claimants.includes(claimant))claimants.push(claimant);s.world.disputes[faction]={months:0};if(s.factions[faction])s.factions[faction].stability=Math.max(0,s.factions[faction].stability-5);if(faction===s.player)notify(s,'A leadership dispute has created a rival claimant.','执政权争议产生了一位竞争者。');return true}
