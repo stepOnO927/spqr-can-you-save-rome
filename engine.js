@@ -1,4 +1,7 @@
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=1';
+import {queueMission,advanceOperations,advanceCharacters,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport} from './character-system.js?v=1';
+export {queueMission};
 
 const clone = value => JSON.parse(JSON.stringify(value));
 export const region = (s,id) => s.regions.find(r=>r.id===id);
@@ -15,7 +18,7 @@ const strength = (s,id) => s.armies.filter(a=>a.owner===id).reduce((v,a)=>v+a.me
 
 export function newGame(player='caesar'){
   if(!PLAYABLE.includes(player))throw new Error('Invalid playable faction');
-  return {version:3,seed:49049,year:-49,month:1,mode:'historical',player,relations:{'caesar:numidia':-30,'caesar:mauretania':20,'caesar:parthia':-10,'numidia:senate':25},alliances:[],
+  const s=initializeWorld({version:3,seed:49049,year:-49,month:1,mode:'historical',player,relations:{'caesar:numidia':-30,'caesar:mauretania':20,'caesar:parthia':-10,'numidia:senate':25},alliances:[],
     regions:clone(REGIONS),armies:clone(INITIAL_ARMIES).map(a=>({...a,move:null,siege:null})),
     factions:{
       caesar:{treasury:90,food:65,manpower:22000,stability:58,legitimacy:49,tax:'normal',research:0},
@@ -23,16 +26,17 @@ export function newGame(player='caesar'){
       egypt:{treasury:85,food:90,manpower:9000,stability:64,legitimacy:60,tax:'normal',research:0},
       ...Object.fromEntries(['numidia','mauretania','armenia','parthia'].map(id=>[id,{treasury:60,food:60,manpower:9000,stability:65,legitimacy:60,tax:'normal',research:0}])),
       rebels:{treasury:10,food:15,manpower:0,stability:50,legitimacy:0,tax:'normal',research:0}
-    },wars:[['caesar','senate']],log:[],victory:false,nextArmy:1};
+    },wars:[['caesar','senate']],log:[],victory:false,nextArmy:1});
+  linkCommanders(s);return s;
 }
 
 export function upgradeSave(s){
-  if(s.version===3)return s;
+  if(s.version===3)return initializeWorld(s);
   if(s.version!==2)throw new Error('Unsupported save');
   const old=s.relations||{}, oldAllies=s.alliances||[];
   s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));
   s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3;
-  return s;
+  return initializeWorld(s);
 }
 
 export function previewMarch(s,armyId,destination){
@@ -117,12 +121,13 @@ const courtReports={
  armenia:['Artavasdes II, king','阿尔塔瓦兹德二世，国王'],parthia:['Orodes II, king','奥罗德二世，国王']
 };
 const letterMonths={senate:2,caesar:2,egypt:4,numidia:3,mauretania:4,armenia:5,parthia:5};
-export function sendInquiry(s,actor,target){
+export function sendInquiry(s,actor,target,subject='leaders'){
+ if(!['leaders','successor','availability','representative'].includes(subject))return {ok:false,reason:'subject'};
  if(actor===target||!s.factions[actor]||!courtReports[target]||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
  if(s.factions[actor].treasury<3)return {ok:false,reason:'treasury'};
  if((s.inquiries||[]).some(x=>x.actor===actor&&x.target===target&&x.status==='pending'))return {ok:false,reason:'pending'};
  const duration=letterMonths[target]||4;s.factions[actor].treasury-=3;
- (s.inquiries||=[]).unshift({actor,target,sentYear:s.year,sentMonth:s.month,remaining:duration,duration,status:'pending',source:'official court',confidence:'unverified'});
+ (s.inquiries||=[]).unshift({actor,target,sentYear:s.year,sentMonth:s.month,remaining:duration,duration,subject,status:'pending',source:'official court',confidence:'unverified'});
  log(s,`A letter was sent to ${FACTIONS[target].short[0]}; a reply may take ${duration} months.`,`已向${FACTIONS[target].short[1]}寄信；等待回信约需${duration}个月。`);
  return {ok:true,duration};
 }
@@ -132,7 +137,7 @@ function resolveInquiries(s){
   const roll=rnd(s),hostile=isWar(s,letter.actor,letter.target),rel=relation(s,letter.actor,letter.target);
   if(roll<.18||!s.regions.some(r=>r.owner===letter.target)){letter.status='no_reply';log(s,`No reply has arrived from ${FACTIONS[letter.target].short[0]}; the letter or answer may have been lost.`,`来自${FACTIONS[letter.target].short[1]}的回信尚未到达；书信或回信可能遗失。`)}
   else if(roll<(hostile?.65:rel<0?.46:.34)){letter.status='refused';log(s,`A reply from ${FACTIONS[letter.target].short[0]} declined to answer.`,`${FACTIONS[letter.target].short[1]}回信表示不愿回答。`)}
-  else{letter.status='answered';letter.claim=[...courtReports[letter.target]];letter.reportYear=s.year;letter.reportMonth=s.month;log(s,`An unverified official response arrived from ${FACTIONS[letter.target].short[0]}.`,`收到${FACTIONS[letter.target].short[1]}的官方答复，内容尚未经独立核实。`)}
+  else{letter.status='answered';const current=s.world.leadership[letter.target]||[],opening=OPENING_LEADERS[letter.target]||[];const conceal=isWar(s,letter.actor,letter.target)&&opening.some(id=>!current.includes(id));const stated=conceal?opening:current;const claimants=s.world.claimants[letter.target]||[],subject=letter.subject||'leaders';letter.claim=subject==='successor'?(claimants.length?[`Reported claimant(s): ${claimants.map(id=>CHARACTER_CATALOG[id].name[0]).join(', ')}`,`对方报告的竞争者：${claimants.map(id=>CHARACTER_CATALOG[id].name[1]).join('、')}`]:['No successor was named in the reply.','回信没有指明继承人。']):subject==='availability'?['The court has made no binding commitment to a meeting.','宫廷尚未就会面作出承诺。']:subject==='representative'?['An unnamed official may represent the court.','一名未具名官员可代表宫廷。']:stated.length?[stated.map(id=>CHARACTER_CATALOG[id].name[0]).join(', '),stated.map(id=>CHARACTER_CATALOG[id].name[1]).join('、')]:['Authority uncertain','执政者不明'];letter.reportYear=s.year;letter.reportMonth=s.month;if(subject==='leaders')addReport(s,letter.actor,letter.target,{kind:'leaders',leaders:[...stated],source:'official',confidence:'unverified',reliability:'unknown'});log(s,`An unverified official response arrived from ${FACTIONS[letter.target].short[0]}.`,`收到${FACTIONS[letter.target].short[1]}的官方答复，内容尚未经独立核实。`)}
  }
 }
 
@@ -140,15 +145,15 @@ export function resolveBattle(s,attacker,defender,target){
   const terrain={plain:1,hills:1.2,forest:1.12,urban:1.25,desert:1.06}[target.terrain];
   const supplyA=Math.min(1,Math.max(.65,s.factions[attacker.owner].food/20));
   const supplyD=Math.min(1,Math.max(.65,s.factions[defender.owner].food/20));
-  const powerA=attacker.men*(.65+attacker.morale/200+attacker.skill*.055+attacker.experience*.025)*supplyA;
-  const powerD=defender.men*(.65+defender.morale/200+defender.skill*.055+defender.experience*.025)*terrain*(1+target.fort*.12)*supplyD;
+  linkCommanders(s);const powerA=attacker.men*(.65+attacker.morale/200+attacker.skill*.055+attacker.experience*.025)*supplyA*commandFactor(s,attacker);
+  const powerD=defender.men*(.65+defender.morale/200+defender.skill*.055+defender.experience*.025)*terrain*(1+target.fort*.12)*supplyD*commandFactor(s,defender);
   const roll=.85+rnd(s)*.3;
   const attackerWins=powerA*roll>powerD;
   const lossA=Math.min(attacker.men,Math.round(defender.men*(attackerWins?.19:.31)*(powerD/powerA)**.25));
   const lossD=Math.min(defender.men,Math.round(attacker.men*(attackerWins?.34:.19)*(powerA/powerD)**.25));
   const report={year:s.year,month:s.month,region:target.id,attacker:{name:[...attacker.name],commander:[...attacker.commander],owner:attacker.owner,men:attacker.men,morale:attacker.morale,food:s.factions[attacker.owner].food,power:Math.round(powerA)},defender:{name:[...defender.name],commander:[...defender.commander],owner:defender.owner,men:defender.men,morale:defender.morale,food:s.factions[defender.owner].food,power:Math.round(powerD)},terrain:target.terrain,fort:target.fort,roll,attackerWins,lossA,lossD};
   (s.battles ||= []).unshift(report);s.battles=s.battles.slice(0,20);
-  attacker.men-=lossA;defender.men-=lossD;
+  attacker.men-=lossA;defender.men-=lossD;battlefieldWound(s,attacker);battlefieldWound(s,defender);
   attacker.morale=Math.max(20,attacker.morale+(attackerWins?7:-16));
   defender.morale=Math.max(20,defender.morale+(attackerWins?-16:7));
   if(attackerWins){
@@ -210,6 +215,7 @@ function shortestStep(s,start,goal,owner){
   return null;
 }
 
+function estimatedStrength(s,observer,target){const reports=s.knowledge?.[observer]?.[target]?.reports||[],latest=reports.find(x=>x.kind==='strength');if(latest)return latest.value;return INITIAL_ARMIES.filter(a=>a.owner===target).reduce((v,a)=>v+a.men,0)}
 function aiTurn(s,owner){
   const f=s.factions[owner],owned=s.regions.filter(r=>r.owner===owner);
   if(!owned.length)return;
@@ -217,25 +223,27 @@ function aiTurn(s,owner){
   const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&a.men>1200);
   for(const a of available){
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y)})).sort((x,y)=>x.d-y.d);
-    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const defenders=s.armies.filter(x=>x.region===step&&isWar(s,owner,x.owner)&&!x.move).reduce((n,x)=>n+x.men,0);if(defenders>a.men*1.35||f.food<0)continue;moveArmy(s,a.id,step);break}}
+    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const defenderOwner=region(s,step).owner;const defenders=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/Math.max(1,s.regions.filter(x=>x.owner===defenderOwner).length):0;if(defenders>a.men*1.35||f.food<0)continue;moveArmy(s,a.id,step);break}}
   }
   if(f.treasury>65&&f.manpower>5500&&s.month%4===0){
     const border=owned.find(r=>adjacent(r.id).some(e=>isWar(s,owner,region(s,e.to).owner)));
     if(border)recruit(s,border.id,owner);
   }
   if(f.stability<45&&f.treasury>25){f.treasury-=10;f.stability+=3}
+  if(owner!=='rebels' && s.month===8 && f.treasury>=25){const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);if(enemy&&enemy!=='rebels')queueMission(s,owner,enemy,'spy','strength')}
   if(owner!=='rebels' && s.month===12){
     const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);
-    if(enemy && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=strength(s,enemy)*.6)diplomacy(s,owner,enemy,'peace');
+    if(enemy && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=estimatedStrength(s,owner,enemy)*.6)diplomacy(s,owner,enemy,'peace');
     if(!enemy && f.treasury>35){const neighbor=owned.flatMap(r=>adjacent(r.id).map(e=>region(s,e.to))).find(r=>r.owner!==owner&&r.owner!=='rebels'&&relation(s,owner,r.owner)>=0&&!isAllied(s,owner,r.owner));if(neighbor && rnd(s)<.2)diplomacy(s,owner,neighbor.owner,'improve')}
   }
   if(owner!=='rebels' && s.month%6===0 && f.treasury>40 && f.food>10 && strength(s,owner)>2000){
-    const border=owned.flatMap(r=>adjacent(r.id).map(e=>region(s,e.to))).find(r=>r.owner!==owner&&r.owner!=='rebels'&&!isWar(s,owner,r.owner)&&!isAllied(s,owner,r.owner)&&strength(s,owner)>strength(s,r.owner)*1.5&&relation(s,owner,r.owner)<0);
+    const border=owned.flatMap(r=>adjacent(r.id).map(e=>region(s,e.to))).find(r=>r.owner!==owner&&r.owner!=='rebels'&&!isWar(s,owner,r.owner)&&!isAllied(s,owner,r.owner)&&strength(s,owner)>estimatedStrength(s,owner,r.owner)*1.5&&relation(s,owner,r.owner)<0);
     if(border&&rnd(s)<.18)diplomacy(s,owner,border.owner,'war');
   }
 }
 
 export function tick(s){
+  initializeWorld(s);linkCommanders(s);
   s.month++;if(s.month>12){s.month=1;s.year++}
   economy(s);
   // Travel and sieges resolve before new AI orders.
@@ -245,7 +253,7 @@ export function tick(s){
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region);r.owner=a.owner;r.loyalty=36;a.siege=null;log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   rebellion(s);
-  resolveInquiries(s);
+  resolveInquiries(s);advanceOperations(s);advanceCharacters(s);linkCommanders(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
   if(!s.victory&&s.player==='caesar'&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
   return s;
