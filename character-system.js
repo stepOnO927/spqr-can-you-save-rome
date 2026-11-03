@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG,initializeWorld,assignSuccession,ageRange} from './characters.js?v=7';
+import {CHARACTER_CATALOG,initializeWorld,assignSuccession,ageRange} from './characters.js?v=8';
 import {FACTIONS,ROUTES} from './data.js?v=8';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
@@ -80,10 +80,17 @@ export function advanceDisputes(s){
 }
 // Simulation probabilities only; these do not assert historical diagnoses.
 export function illnessRisk(s,id){initializeWorld(s);const c=s.world.characters[id];if(!c)return 0;const age=ageRange(id,s.year)?.[0],military=s.armies.some(a=>a.characterId===id),shortage=(s.factions[c.faction]?.food??0)<0;return Math.min(.18,(age>=65?.04:.018)+(military?.01:0)+(shortage?.025:0)+(c.travel?.01:0)+Math.min(.02,c.wounds*.01))}
+// Alternate-history defection is restricted to unattached Roman officers, never fabricated identities.
+export function considerDefection(s,id){
+ initializeWorld(s);const c=s.world.characters[id],from=c?.faction,to=from==='caesar'?'senate':from==='senate'?'caesar':null;
+ if(!to||!c.alive||c.loyalty>20||['seriously_ill','dying','deceased'].includes(c.health)||(s.world.leadership[from]||[]).includes(id)||s.armies.some(a=>a.characterId===id)||!s.regions.some(r=>r.owner===to)||!s.wars.some(w=>w.includes(from)&&w.includes(to)))return false;
+ if(rand(s)>=.18)return false;c.faction=to;c.loyalty=45;delete c.travel;s.factions[from].stability=Math.max(0,s.factions[from].stability-2);s.factions[to].stability=Math.min(100,s.factions[to].stability+1);
+ s.world.defections.unshift({id,from,to,year:s.year,month:s.month});s.world.defections=s.world.defections.slice(0,30);if(s.player===from||s.player===to)notify(s,`${CHARACTER_CATALOG[id].name[0]} changed allegiance in the simulation.`,`${CHARACTER_CATALOG[id].name[1]}在游戏中改变了政治立场。`);return true;
+}
 export function advanceCharacters(s){initializeWorld(s);if(s.month!==1)return;for(const [id,c] of Object.entries(s.world.characters)){if(!c.alive||!c.faction)continue;const r=rand(s),previous=c.health,age=ageRange(id,s.year)?.[0],illChance=illnessRisk(s,id),frailChance=age>=65?.025:0;c.loyalty=Math.max(0,Math.min(100,c.loyalty+(s.factions[c.faction]?.stability<35?-4:1)));if(c.health==='dying'&&r<.45)c.health='deceased';else if(c.health==='seriously_ill'&&r<.22)c.health='dying';else if(c.health==='healthy'&&r<frailChance)c.health='frail';else if(c.health==='healthy'&&r<frailChance+illChance)c.health='ill';else if(c.health==='frail'&&r<.08)c.health='seriously_ill';else if(c.health==='ill'&&r<.22)c.health='seriously_ill';else if((c.health==='ill'||c.health==='wounded')&&r>.45)c.health='recovering';else if(c.health==='recovering'&&r>.25)c.health='healthy';
  if((previous==='healthy'&&c.health==='ill')||(previous==='frail'&&c.health==='seriously_ill'))c.illnessEpisodes++;
  if(c.health==='deceased'){c.alive=false;if(s.factions[c.faction])s.factions[c.faction].stability=Math.max(0,s.factions[c.faction].stability-3);const lead=s.world.leadership[c.faction]||[];if(lead.includes(id))assignSuccession(s,c.faction);for(const a of s.armies.filter(a=>a.characterId===id)){a.characterId=null;a.commander=['Unnamed officer','未具名军官'];a.skill=Math.min(a.skill,1)}if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[id].name[0]} died in the simulation; leadership was reassigned.`,`${CHARACTER_CATALOG[id].name[1]}在模拟中去世，指挥权已调整。`)}
- else if(previous!==c.health&&c.faction===s.player)notify(s,`${CHARACTER_CATALOG[id].name[0]}: simulated health changed to ${c.health}.`,`${CHARACTER_CATALOG[id].name[1]}的游戏健康状态发生变化。`);
+ else {if(previous!==c.health&&c.faction===s.player)notify(s,`${CHARACTER_CATALOG[id].name[0]}: simulated health changed to ${c.health}.`,`${CHARACTER_CATALOG[id].name[1]}的游戏健康状态发生变化。`);considerDefection(s,id)}
  }if((s.world.leadership.egypt||[]).length>1&&rand(s)<(s.world.characters.cleopatra.loyalty<40?.18:.08))contestLeadership(s,'egypt','cleopatra');}
 export function battlefieldWound(s,a){initializeWorld(s);const c=s.world.characters[a.characterId];if(!c?.alive||!['healthy','recovering','frail','wounded'].includes(c.health))return;const risk=Math.min(.14,.07+((s.factions[a.owner]?.food??0)<0?.03:0)+Math.min(.04,c.wounds*.01));if(rand(s)<risk){c.health='wounded';c.wounds++;if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[c.id].name[0]} was wounded in battle (simulated).`,`${CHARACTER_CATALOG[c.id].name[1]}在游戏战斗中受伤。`)}}
 export function commandFactor(s,a){const c=s.world?.characters?.[a.characterId];return !c?1:({healthy:1,recovering:.96,wounded:.9,ill:.9,frail:.88,seriously_ill:.8,dying:.7,deceased:.7}[c.health]||1)}
