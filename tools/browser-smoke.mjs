@@ -31,6 +31,15 @@ try{
  for(let i=0;i<4;i++)await page.locator('#advance').click();
  await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/间谍/);
+ // The open city and theater must reflect monthly changes, not a stale snapshot.
+ await page.locator('[data-help="treasury"]').click();await page.locator('[data-tax="high"]').click();
+ await page.locator('[data-city="ROMA"]').click({force:true});
+ const cityBefore=await page.locator('#command-detail').innerText();assert.match(cityBefore,/政治领导（公开报告）/);
+ await page.locator('#advance').click();const cityAfter=await page.locator('#command-detail').innerText();
+ assert.match(cityAfter,/政治领导（公开报告）/);assert.notEqual(cityAfter,cityBefore,'city loyalty must refresh on the next month');
+ await page.locator('#city-region').click();const regionBefore=await page.locator('#command-detail').innerText();
+ await page.locator('#advance').click();const regionAfter=await page.locator('#command-detail').innerText();
+ assert.match(regionAfter,/征召军队/);assert.notEqual(regionAfter,regionBefore,'theater loyalty must refresh on the next month');
  await page.screenshot({path:'browser-smoke-1920x1080.png'});
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});await page.locator('#app').waitFor();
  assert.deepEqual(errors,[],'uncaught browser errors');console.log('Browser smoke passed: atlas, travel, correspondence, spy, turns, and original campaign.');
