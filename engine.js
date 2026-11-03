@@ -58,7 +58,7 @@ export function moveArmy(s,armyId,destination){
   if(link.sea)s.factions[a.owner].treasury-=8;
   const months=estimate.months;
   a.move={to:destination,remaining:months,sea:link.sea};
-  log(s,`${a.name[0]} marched toward ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}向${target.name[1]}行军（${months}个月）。`);
+  if(a.owner===s.player)log(s,`${a.name[0]} marched toward ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}向${target.name[1]}行军（${months}个月）。`);
   return {ok:true};
 }
 
@@ -70,7 +70,7 @@ export function recruit(s,regionId,owner=s.player){
   const roman=owner==='caesar'||owner==='senate';
   s.armies.push({id,name:roman?['Newly raised legion','新编军团']:['Newly raised forces','新征召军队'],owner,region:regionId,men:3000,morale:58,skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null});
   r.loyalty=Math.max(0,r.loyalty-3);
-  log(s,`New forces were raised in ${r.name[0]}.`,`在${r.name[1]}征召了新军队。`);
+  if(owner===s.player)log(s,`New forces were raised in ${r.name[0]}.`,`在${r.name[1]}征召了新军队。`);
   return true;
 }
 
@@ -166,7 +166,7 @@ export function resolveBattle(s,attacker,defender,target){
   }
   attacker.move=null;attacker.experience=Math.min(5,attacker.experience+1);
   defender.experience=Math.min(5,defender.experience+1);
-  log(s,`${FACTIONS[attacker.owner].short[0]} ${attackerWins?'won':'lost'} at ${target.name[0]}. Casualties: ${lossA.toLocaleString()} / ${lossD.toLocaleString()}.`,`${FACTIONS[attacker.owner].short[1]}在${target.name[1]}${attackerWins?'获胜':'战败'}。伤亡：${lossA.toLocaleString()} / ${lossD.toLocaleString()}。`);
+  if(attacker.owner===s.player||defender.owner===s.player)log(s,`${FACTIONS[attacker.owner].short[0]} ${attackerWins?'won':'lost'} at ${target.name[0]}. Casualties: ${lossA.toLocaleString()} / ${lossD.toLocaleString()}.`,`${FACTIONS[attacker.owner].short[1]}在${target.name[1]}${attackerWins?'获胜':'战败'}。伤亡：${lossA.toLocaleString()} / ${lossD.toLocaleString()}。`);
   s.armies=s.armies.filter(a=>a.men>0);
   return attackerWins;
 }

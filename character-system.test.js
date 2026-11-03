@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry} from './engine.js';
+import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy} from './engine.js';
 import {assignSuccession,knownLeaders,ageRange} from './characters.js';
 import {addReport,commandFactor,advanceCharacters,contestLeadership} from './character-system.js';
 
@@ -51,4 +51,9 @@ test('different inquiry questions persist and do not overwrite leadership knowle
 
 test('surviving joint ruler remains in office when a co-ruler dies',()=>{
  const s=newGame();s.world.characters.cleopatra.alive=false;assert.deepEqual(assignSuccession(s,'egypt'),['ptolemy']);assert.deepEqual(knownLeaders(s,'caesar','egypt'),['cleopatra','ptolemy']);
+});
+
+
+test('foreign movement orders do not publish exact routes in the player chronicle',()=>{
+ const s=newGame();assert.equal(moveArmy(s,'pompey','italiaN').ok,true);assert.equal(s.log.length,0);
 });
