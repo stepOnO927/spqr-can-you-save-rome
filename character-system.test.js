@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy} from './engine.js';
 import {assignSuccession,knownLeaders,ageRange} from './characters.js';
-import {addReport,commandFactor,advanceCharacters,contestLeadership,observeArmies,reportedArmies} from './character-system.js';
+import {addReport,commandFactor,advanceCharacters,advanceOperations,contestLeadership,observeArmies,reportedArmies} from './character-system.js';
 
 test('foreign intelligence is independent from actual leadership and other observers',()=>{
  const s=newGame(),opening=knownLeaders(s,'caesar','egypt');
@@ -31,7 +31,7 @@ test('spies cost resources and resolve by month with isolated records',()=>{
 test('health has gameplay impact and deceased commanders are succeeded without revealing foreign changes',()=>{
  const s=newGame(),a=s.armies.find(x=>x.id==='xiii');s.world.characters.caesar.health='seriously_ill';assert.ok(commandFactor(s,a)<1);
  let died=false;for(let seed=1;seed<500&&!died;seed++){const trial=newGame();trial.world.characters.orodes.health='dying';trial.world.intelSeed=(seed*900001)>>>0;trial.month=1;advanceCharacters(trial);if(!trial.world.characters.orodes.alive){died=true;assert.deepEqual(trial.world.leadership.parthia,['pacorus']);assert.deepEqual(knownLeaders(trial,'caesar','parthia'),['orodes'])}}assert.equal(died,true);
- assert.deepEqual(ageRange('caesar',-49),[51,51]);assert.equal(ageRange('ptolemy',-49),null);
+ assert.deepEqual(ageRange('caesar',-49),[50,51]);assert.equal(ageRange('ptolemy',-49),null);
 });
 test('old version 3 saves are migrated without resetting their campaign data',()=>{
  const s=newGame();s.month=7;s.factions.caesar.treasury=42;delete s.world;delete s.knowledge;delete s.operations;
@@ -76,4 +76,51 @@ test('foreign army markers use old sightings until a controlled frontier observe
  pompey.region='italiaN';s.month=2;observeArmies(s);assert.equal(reportedArmies(s,'caesar').find(a=>a.id==='pompey').region,'italiaN');
  pompey.region='africa';s.month=3;observeArmies(s);const stale=reportedArmies(s,'caesar').find(a=>a.id==='pompey');assert.equal(stale.region,'italiaN');assert.equal(stale.month,2);
  s.armies=s.armies.filter(a=>a.id!=='pompey');assert.ok(reportedArmies(s,'caesar').some(a=>a.id==='pompey'));
+});
+
+test('allied exchanges forward only the ally’s knowledge and preserve its original provenance',()=>{
+ const s=newGame();s.alliances.push(['caesar','numidia']);s.world.characters.cleopatra.health='seriously_ill';
+ addReport(s,'numidia','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'spy',confidence:'unverified'});
+ addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'spy',confidence:'unverified'});
+ assert.equal(queueMission(s,'caesar','egypt','exchange','health').ok,true);s.world.intelSeed=1000;
+ for(let i=0;i<3;i++)advanceOperations(s);
+ const r=s.knowledge.caesar.egypt.reports[0];assert.equal(r.value,'healthy');assert.equal(r.source,'exchange');assert.equal(r.originSource,'spy');assert.equal(r.fromFaction,'numidia');assert.equal(r.confidence,'unverified');assert.equal(r.verified,false);
+});
+test('allied exchange cannot invent knowledge or refresh an old observation',()=>{
+ const s=newGame();s.alliances.push(['caesar','numidia']);addReport(s,'numidia','egypt',{kind:'leaders',leaders:['ptolemy'],source:'envoy',confidence:'unverified'});s.year+=3;s.world.intelSeed=1000;
+ assert.equal(queueMission(s,'caesar','egypt','exchange','leaders').ok,true);for(let i=0;i<3;i++)advanceOperations(s);
+ assert.equal(s.knowledge.caesar.egypt.reports[0].observationYear,-49);assert.deepEqual(knownLeaders(s,'caesar','egypt'),['cleopatra','ptolemy']);
+ assert.equal(queueMission(s,'caesar','egypt','exchange','strength').ok,true);s.world.intelSeed=1000;for(let i=0;i<3;i++)advanceOperations(s);assert.equal(s.operations[0].status,'failed');assert.equal(s.knowledge.caesar.egypt.reports.some(r=>r.kind==='strength'),false);
+});
+test('official court responses and an envoy do not independently corroborate one another',()=>{
+ const s=newGame();for(const source of ['official','envoy','audience'])addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'healthy',source,confidence:'unverified'});assert.equal(s.knowledge.caesar.egypt.reports[0].confidence,'unverified');assert.equal(s.knowledge.caesar.egypt.reports[0].verified,false);
+});
+test('peace decisions use the responder’s knowledge rather than hidden enemy troop totals',()=>{
+ const s=newGame('egypt');diplomacy(s,'egypt','senate','war');s.armies.find(a=>a.owner==='egypt').men=100000;
+ assert.equal(diplomacy(s,'egypt','senate','peace'),false);
+ addReport(s,'senate','egypt',{kind:'strength',value:100000,source:'spy',confidence:'unverified'});
+ assert.equal(diplomacy(s,'egypt','senate','peace'),true);
+});
+test('the chosen ally must be valid and can cease cooperating before an exchange completes',()=>{
+ const s=newGame();s.alliances.push(['caesar','numidia'],['caesar','armenia']);
+ assert.equal(queueMission(s,'caesar','egypt','exchange','health','parthia').reason,'alliance');
+ addReport(s,'armenia','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'spy',confidence:'unverified'});
+ assert.equal(queueMission(s,'caesar','egypt','exchange','health','armenia').ok,true);s.alliances=s.alliances.filter(x=>!x.includes('armenia'));s.world.intelSeed=1000;
+ for(let i=0;i<3;i++)advanceOperations(s);assert.equal(s.operations[0].status,'failed');assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+});
+test('an unknown observation neither contradicts a claim nor independently verifies another unknown',()=>{
+ const s=newGame();addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'spy',confidence:'unverified'});
+ for(const source of ['meeting','envoy','travelers'])addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'unknown',source,confidence:'unverified'});
+ const reports=s.knowledge.caesar.egypt.reports;assert.equal(reports.find(r=>r.value==='ill').confidence,'unverified');assert.ok(reports.filter(r=>r.value==='unknown').every(r=>!r.verified&&r.confidence==='unverified'));
+});
+test('a recently forwarded but older leadership report cannot overwrite a newer observation',()=>{
+ const s=newGame();s.month=6;addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy'],source:'spy',confidence:'unverified'});
+ s.month=7;addReport(s,'caesar','egypt',{kind:'leaders',leaders:['cleopatra'],source:'exchange',originSource:'court',observationYear:-49,observationMonth:2,confidence:'unverified'});
+ assert.deepEqual(knownLeaders(s,'caesar','egypt'),['ptolemy']);assert.equal(s.knowledge.caesar.egypt.reports[0].confidence,'disputed');
+});
+test('diplomatic AI bases its estimate on observation time, not when an older report was forwarded',()=>{
+ const s=newGame('egypt');diplomacy(s,'egypt','senate','war');s.month=6;
+ addReport(s,'senate','egypt',{kind:'strength',value:100000,source:'spy',confidence:'unverified'});s.month=7;
+ addReport(s,'senate','egypt',{kind:'strength',value:1000,source:'exchange',originSource:'court',observationYear:-49,observationMonth:2,confidence:'unverified'});
+ assert.equal(diplomacy(s,'egypt','senate','peace'),true);
 });
