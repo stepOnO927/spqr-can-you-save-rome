@@ -9,7 +9,7 @@ export function createTutorial({language,onReset,onMode}){
   ['Choose a destination','Choose Northern Italy from the destination list. It is hostile and controls the route toward Rome.'],
   ['Confirm the march','Check the route, travel time and food warning, then confirm the order.'],
   ['Advance time','Advance one month. Play and pause run time automatically; the speed button changes the rate. The march resolves on the monthly tick.'],
-  ['Understand the battle','The enemy is encountered when the army arrives. Open the latest battle report to compare forces and casualties.'],
+  ['Understand the battle','The enemy is encountered when the army arrives. Open the report to see your forces and losses; exact enemy details remain unknown.'],
   ['Territory and cities','Select Ariminum. Cities are historical locations; control belongs to strategic regions. A fort may require a siege before control changes.'],
   ['Manage the republic','Open the resource explanation. Treasury, food and stability influence the real simulation.'],
   ['Your campaign','You are in command. Secure Latium, watch food and loyalty, and use the Chronicle for developments.']
@@ -20,7 +20,7 @@ export function createTutorial({language,onReset,onMode}){
   ['选择目的地','在目的地下拉框中选择意大利北部。这里属于敌方，是通往罗马的要地。'],
   ['确认行军','检查路线、所需月份和粮食提示，然后确认命令。'],
   ['推进时间','点击推进月份。开始／暂停可自动推进；倍速按钮改变速度。行军按月结算。'],
-  ['理解战斗','抵达时会遭遇敌军。打开最近战斗报告，对比双方兵力和伤亡。'],
+  ['理解战斗','抵达时会遭遇敌军。打开战报查看己方兵力与伤亡；敌方确切数据仍未知。'],
   ['战区与城市','点击阿里米努姆。城市是历史地点，控制权属于战区；有工事时可能需要围攻才能占领。'],
   ['管理共和国','打开资源说明。国库、粮食和稳定度会影响实际模拟。'],
   ['独立指挥','现在由你决定。争取拉丁姆，留意粮食和忠诚度，并用战报查看局势。']
