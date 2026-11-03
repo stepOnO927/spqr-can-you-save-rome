@@ -1,6 +1,6 @@
-import {initializeWorld, CHARACTER_CATALOG, knownLeaders} from './characters.js?v=6';
+import {initializeWorld, CHARACTER_CATALOG, knownLeaders} from './characters.js?v=7';
 import {ROUTES} from './data.js?v=8';
-import {addReport} from './character-system.js?v=10';
+import {addReport} from './character-system.js?v=11';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
