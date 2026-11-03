@@ -21,3 +21,11 @@ test('personal audience may be refused or unanswered and records persist',()=>{
 test('ordinary campaign month advancement progresses personal requests',()=>{
  const s=newGame('senate');s.world.characters.cicero.location='egypt';assert.equal(requestPersonalMeeting(s,'cicero','cleopatra').ok,true);tick(s);assert.equal(s.meetings[0].remaining,1);tick(s);assert.notEqual(s.meetings[0].status,'pending');
 });
+test('successful meetings improve bilateral relations and trust affects later acceptance',()=>{
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>.34&&q<.36});
+ function trial(trust,relations){const s=newGame('senate');s.world.characters.cicero.location='egypt';s.world.personalRelations['cicero:cleopatra']={trust,meetings:trust?1:0};s.relations['egypt:senate']=relations;requestPersonalMeeting(s,'cicero','cleopatra');s.world.intelSeed=seed;advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);return s}
+ const cold=trial(0,0),warm=trial(50,50);assert.equal(cold.meetings[0].status,'declined');assert.equal(cold.relations['egypt:senate'],0);assert.equal(warm.meetings[0].status,'met');assert.equal(warm.world.personalRelations['cicero:cleopatra'].trust,55);assert.equal(warm.relations['egypt:senate'],53);
+});
+test('an incapacitated or departed envoy cannot complete a pending personal meeting',()=>{
+ for(const change of [c=>c.health='dying',c=>c.faction='caesar']){const s=newGame('senate');s.world.characters.cicero.location='egypt';requestPersonalMeeting(s,'cicero','cleopatra');change(s.world.characters.cicero);s.world.intelSeed=1000;advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'no_contact');assert.deepEqual(s.world.personalRelations,{});assert.equal(s.relations['egypt:senate'],undefined)}
+});
