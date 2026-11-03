@@ -34,6 +34,9 @@ try{
  // The open city and theater must reflect monthly changes, not a stale snapshot.
  await page.locator('[data-help="treasury"]').click();await page.locator('[data-tax="high"]').click();
  await page.locator('[data-city="ROMA"]').click({force:true});
+ const localPeople=await page.locator('#city-personnel').innerText();assert.match(localPeople,/己方人物（同一战区）/);assert.match(localPeople,/小加图/);assert.doesNotMatch(localPeople,/西塞罗|克娄巴特拉/);
+ await page.locator('[data-local-person="cato"]').click();assert.match(await page.locator('#selection-title').innerText(),/小加图/);
+ await page.locator('[data-city="ROMA"]').click({force:true});
  const cityBefore=await page.locator('#command-detail').innerText();assert.match(cityBefore,/政治领导（公开报告）/);
  await page.locator('#advance').click();const cityAfter=await page.locator('#command-detail').innerText();
  assert.match(cityAfter,/政治领导（公开报告）/);assert.notEqual(cityAfter,cityBefore,'city loyalty must refresh on the next month');
