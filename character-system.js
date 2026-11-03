@@ -19,6 +19,12 @@ export function addReport(s,actor,target,report){
  k.reports.unshift(r);k.reports=k.reports.slice(0,30);if(r.kind==='leaders'&&r.leaders&&reportAge(s,r)<=24&&!newerLeader)k.reportedLeaders=[...r.leaders];return r
 }
 export function publicLeaderClaim(s,target){initializeWorld(s);const ids=s.world.leadership[target]||[];return [ids.length?names(ids,0):'Authority uncertain',ids.length?names(ids,1):'执政者不明']}
+export function reportedClaimants(s,actor,target){initializeWorld(s);return [...new Set((s.knowledge[actor]?.[target]?.reports||[]).filter(r=>r.kind==='claimants').flatMap(r=>r.leaders||[]).filter(id=>CHARACTER_CATALOG[id]?.faction===target))]}
+export function supportClaimant(s,actor,target,claimant){
+ initializeWorld(s);if(actor!==s.player||actor===target||target!=='egypt'||!reportedClaimants(s,actor,target).includes(claimant)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
+ if(s.operations.some(o=>o.actor===actor&&o.target===target&&o.type==='support'&&o.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<10)return {ok:false,reason:'treasury'};
+ s.factions[actor].treasury-=10;s.operations.unshift({actor,target,type:'support',claimant,remaining:4,status:'pending',sentYear:s.year,sentMonth:s.month});notify(s,'An offer of support was sent; a response may take four months.','已寄出支持提议；回信可能需要四个月。');return {ok:true};
+}
 export function queueMission(s,actor,target,type,subject='health',partnerId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||actor===target||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
  if(!['health','leaders','strength','claimants'].includes(subject))return {ok:false,reason:'subject'};
@@ -31,6 +37,11 @@ export function queueMission(s,actor,target,type,subject='health',partnerId=null
  if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${cfg.months} months.`,`已派出${({spy:'间谍',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${cfg.months}个月。`);return {ok:true};
 }
 export function advanceOperations(s){initializeWorld(s);for(const op of s.operations){if(op.status!=='pending'||--op.remaining>0)continue;const q=rand(s),id=(s.world.leadership[op.target]||[])[0],person=s.world.characters[id];
+ if(op.type==='support'){
+  const claimant=s.world.characters[op.claimant],valid=s.regions.some(r=>r.owner===op.target)&&claimant?.alive&&(s.world.claimants[op.target]||[]).includes(op.claimant);
+  if(!valid||q<.2)op.status='no_reply';else if(q<.45)op.status='declined';else{op.status='complete';const dispute=s.world.disputes[op.target]||={months:0};dispute.support||={};dispute.support[op.claimant]=Math.min(30,(dispute.support[op.claimant]||0)+15);const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-10)}
+  if(op.actor===s.player)notify(s,op.status==='complete'?'The claimant accepted support; relations with the court worsened.':op.status==='declined'?'The claimant declined the offer.':'No reply arrived; the offer or response may have been lost.',op.status==='complete'?'竞争者接受支持；与宫廷的关系恶化。':op.status==='declined'?'竞争者拒绝了提议。':'未收到回信；提议或回信可能遗失。');continue
+ }
  if(!s.regions.some(r=>r.owner===op.target)||q<.18){op.status='failed';continue}
  if(op.type==='spy'&&q<.33){op.status=q<.24?'captured':'detected';const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,`A spy from ${FACTIONS[op.actor].short[0]} was discovered by ${FACTIONS[op.target].short[0]}.`,`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现，双方关系恶化。`);continue}
  if((op.type==='audience'||op.type==='envoy')&&q<.38){op.status='declined';continue}
@@ -54,9 +65,9 @@ export function advanceDisputes(s){
  initializeWorld(s);const faction='egypt',leaders=s.world.leadership[faction]||[],claimants=(s.world.claimants[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!leaders.includes(id));s.world.claimants[faction]=claimants;
  if(!claimants.length||!leaders.length||!s.regions.some(r=>r.owner===faction)){delete s.world.disputes[faction];return}
  const dispute=s.world.disputes[faction]||={months:0};if(++dispute.months<6)return;dispute.months=0;
- const claimant=claimants[0],person=s.world.characters[claimant],stability=s.factions[faction].stability,q=rand(s);let outcome;
- if(stability>=45&&person.loyalty>=55&&q<.12){s.world.leadership[faction]=[...leaders,claimant];s.world.claimants[faction]=claimants.filter(id=>id!==claimant);s.factions[faction].stability=Math.min(100,stability+2);outcome='reconciliation';delete s.world.disputes[faction]}
- else if(q<(stability<45?.22:.08)){s.world.leadership[faction]=[claimant];s.world.claimants[faction]=[...new Set([...claimants.filter(id=>id!==claimant),...leaders.filter(id=>s.world.characters[id]?.alive)])];s.factions[faction].stability=Math.max(0,stability-4);outcome='takeover'}
+ const claimant=claimants[0],person=s.world.characters[claimant],stability=s.factions[faction].stability,support=dispute.support?.[claimant]||0,q=rand(s);let outcome;
+ if(stability>=45&&person.loyalty>=55&&support===0&&q<.12){s.world.leadership[faction]=[...leaders,claimant];s.world.claimants[faction]=claimants.filter(id=>id!==claimant);s.factions[faction].stability=Math.min(100,stability+2);outcome='reconciliation';delete s.world.disputes[faction]}
+ else if(q<(stability<45?.22:.08)+support/100){s.world.leadership[faction]=[claimant];s.world.claimants[faction]=[...new Set([...claimants.filter(id=>id!==claimant),...leaders.filter(id=>s.world.characters[id]?.alive)])];s.factions[faction].stability=Math.max(0,stability-4);outcome='takeover';dispute.support={}}
  if(outcome){s.world.disputeHistory.unshift({faction,claimant,outcome,year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);if(faction===s.player)notify(s,outcome==='reconciliation'?'A simulated court settlement restored joint rule.':'A simulated court struggle changed the ruling authority.',outcome==='reconciliation'?'游戏中的宫廷和解恢复了共同统治。':'游戏中的宫廷斗争改变了执政者。')}
 }
 export function advanceCharacters(s){initializeWorld(s);if(s.month!==1)return;for(const [id,c] of Object.entries(s.world.characters)){if(!c.alive||!c.faction)continue;const r=rand(s),previous=c.health,age=ageRange(id,s.year)?.[0],illChance=age>=65?.04:.018,frailChance=age>=65?.025:0;c.loyalty=Math.max(0,Math.min(100,c.loyalty+(s.factions[c.faction]?.stability<35?-4:1)));if(c.health==='dying'&&r<.45)c.health='deceased';else if(c.health==='seriously_ill'&&r<.22)c.health='dying';else if(c.health==='healthy'&&r<frailChance)c.health='frail';else if(c.health==='healthy'&&r<frailChance+illChance)c.health='ill';else if(c.health==='frail'&&r<.08)c.health='seriously_ill';else if(c.health==='ill'&&r<.22)c.health='seriously_ill';else if((c.health==='ill'||c.health==='wounded')&&r>.45)c.health='recovering';else if(c.health==='recovering'&&r>.25)c.health='healthy';
