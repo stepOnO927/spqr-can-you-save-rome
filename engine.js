@@ -1,6 +1,8 @@
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=2';
+import {initializeGovernments,advanceGovernments} from './governance.js?v=1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=3';
-import {queueMission,advanceOperations,advanceCharacters,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies} from './character-system.js?v=5';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=4';
+import {queueMission,advanceOperations,advanceCharacters,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies} from './character-system.js?v=7';
 export {queueMission};
 
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -27,16 +29,16 @@ export function newGame(player='caesar'){
       ...Object.fromEntries(['numidia','mauretania','armenia','parthia'].map(id=>[id,{treasury:60,food:60,manpower:9000,stability:65,legitimacy:60,tax:'normal',research:0}])),
       rebels:{treasury:10,food:15,manpower:0,stability:50,legitimacy:0,tax:'normal',research:0}
     },wars:[['caesar','senate']],log:[],victory:false,nextArmy:1});
-  linkCommanders(s);return s;
+  linkCommanders(s);return initializeGovernments(s);
 }
 
 export function upgradeSave(s){
-  if(s.version===3)return initializeWorld(s);
+  if(s.version===3)return initializeGovernments(s);
   if(s.version!==2)throw new Error('Unsupported save');
   const old=s.relations||{}, oldAllies=s.alliances||[];
   s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));
   s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3;
-  return initializeWorld(s);
+  return initializeGovernments(s);
 }
 
 export function previewMarch(s,armyId,destination){
@@ -98,7 +100,8 @@ export function diplomacy(s, actor, target, action){
     return true;
   }
   if(action==='peace' && isWar(s,actor,target)){
-    if(strength(s,actor)<strength(s,target)*.6 && s.factions[target].stability>35)return false;
+    // The responding government knows its own forces, but judges the sender by its reports.
+    if(estimatedStrength(s,target,actor)<strength(s,target)*.6 && s.factions[target].stability>35)return false;
     s.wars=s.wars.filter(w=>!(w.includes(actor)&&w.includes(target)));
     s.relations[key]=-20;
     for(const a of s.armies.filter(a=>a.owner===actor||a.owner===target)){
@@ -166,7 +169,7 @@ export function resolveBattle(s,attacker,defender,target){
   }
   attacker.move=null;attacker.experience=Math.min(5,attacker.experience+1);
   defender.experience=Math.min(5,defender.experience+1);
-  if(attacker.owner===s.player||defender.owner===s.player)log(s,`${FACTIONS[attacker.owner].short[0]} ${attackerWins?'won':'lost'} at ${target.name[0]}. Casualties: ${lossA.toLocaleString()} / ${lossD.toLocaleString()}.`,`${FACTIONS[attacker.owner].short[1]}在${target.name[1]}${attackerWins?'获胜':'战败'}。伤亡：${lossA.toLocaleString()} / ${lossD.toLocaleString()}。`);
+  if(attacker.owner===s.player||defender.owner===s.player){const ownLoss=attacker.owner===s.player?lossA:lossD;log(s,`${FACTIONS[attacker.owner].short[0]} ${attackerWins?'won':'lost'} at ${target.name[0]}. Casualties: own ${ownLoss.toLocaleString()}; enemy unknown.`,`${FACTIONS[attacker.owner].short[1]}在${target.name[1]}${attackerWins?'获胜':'战败'}。己方伤亡：${ownLoss.toLocaleString()}；敌方伤亡未知。`)}
   s.armies=s.armies.filter(a=>a.men>0);
   return attackerWins;
 }
@@ -178,8 +181,8 @@ function arrive(s,a){
   if(enemy){resolveBattle(s,a,enemy,target);return}
   a.region=target.id;a.move=null;
   if(target.owner!==a.owner){
-    if(target.fort>0){a.siege={region:target.id,remaining:target.fort*2};log(s,`${a.name[0]} began a siege at ${target.name[0]}.`,`${a.name[1]}开始围攻${target.name[1]}。`)}
-    else {target.owner=a.owner;target.loyalty=38;log(s,`${FACTIONS[a.owner].short[0]} occupied ${target.name[0]}.`,`${FACTIONS[a.owner].short[1]}占领了${target.name[1]}。`)}
+    if(target.fort>0){a.siege={region:target.id,remaining:target.fort*2};if(a.owner===s.player||target.owner===s.player)log(s,`${a.name[0]} began a siege at ${target.name[0]}.`,`${a.name[1]}开始围攻${target.name[1]}。`)}
+    else {const witnessed=a.owner===s.player||target.owner===s.player;target.owner=a.owner;target.loyalty=38;if(witnessed)log(s,`${FACTIONS[a.owner].short[0]} occupied ${target.name[0]}.`,`${FACTIONS[a.owner].short[1]}占领了${target.name[1]}。`)}
   }
 }
 
@@ -215,7 +218,7 @@ function shortestStep(s,start,goal,owner){
   return null;
 }
 
-function estimatedStrength(s,observer,target){const reports=s.knowledge?.[observer]?.[target]?.reports||[],latest=reports.find(x=>x.kind==='strength');if(latest)return latest.value;return INITIAL_ARMIES.filter(a=>a.owner===target).reduce((v,a)=>v+a.men,0)}
+function estimatedStrength(s,observer,target){const reports=s.knowledge?.[observer]?.[target]?.reports||[],latest=reports.filter(x=>x.kind==='strength'&&Number.isFinite(x.value)).sort((a,b)=>((b.observationYear??b.year)*12+(b.observationMonth??b.month))-((a.observationYear??a.year)*12+(a.observationMonth??a.month)))[0];if(latest)return latest.value;return INITIAL_ARMIES.filter(a=>a.owner===target).reduce((v,a)=>v+a.men,0)}
 function aiTurn(s,owner){
   const f=s.factions[owner],owned=s.regions.filter(r=>r.owner===owner);
   if(!owned.length)return;
@@ -250,10 +253,10 @@ export function tick(s){
   for(const a of [...s.armies]){
     if(!s.armies.includes(a))continue;
     if(a.move){a.move.remaining--;if(a.move.remaining<=0)arrive(s,a)}
-    else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region);r.owner=a.owner;r.loyalty=36;a.siege=null;log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
+    else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   rebellion(s);
-  resolveInquiries(s);advanceOperations(s);advanceCharacters(s);linkCommanders(s);
+  resolveInquiries(s);advanceOperations(s);advanceCharacters(s);advanceDisputes(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);
   observeArmies(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
   if(!s.victory&&s.player==='caesar'&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
