@@ -13,3 +13,7 @@ At 1366 × 768 the opening camera, army selection, legal-destination highlight, 
 ## Phase VI faction identities
 
 At 1366 × 768, inspected the default campaign, selected Caesarian and Senatorial armies, faction directory, and a zoomed northern Italian view. Separately inspected Ptolemaic, Parthian and Armenian faction information and map locations. Tested a Caesarian movement and battle, Chinese language switching, and the original campaign's diplomacy panel. The 18 Node tests include a check that major powers have distinct identity colors and motifs. The artwork is original interpretive UI, not a reconstruction of documented flags; see SOURCES.md for historical inspiration and qualifications.
+
+## Phase VII onboarding and help
+
+At 1366 × 768, exercised the Chinese beginner flow from a new game through selecting Rome and Legio XIII, previewing and confirming a legal march, advancing into a real battle, opening the battle report and resource explanation, and entering free play. Checked automatic time progression and battle pause, speed controls, wrong-action feedback, standard starting resources, tutorial restart/skip, help search and mid-tutorial language switching. These checks were performed by the developer; no independent novice playtest has yet been conducted. The tutorial belongs to the separate map-lab prototype; the original campaign remains available. Commander loyalty, research and construction are not implemented in the prototype, and supply limits are informational.
