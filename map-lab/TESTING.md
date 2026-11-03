@@ -43,3 +43,7 @@ Automated tests verify that an unseen foreign move does not change a player repo
 ## Roman campaign selection
 
 Browser-tested starting the Senate/Pompeian command at standard difficulty, its own military counters and limited foreign intelligence, its strategic objectives and its commander profile. The player choices are restricted to the two Roman commands. The interactive opening tutorial currently teaches the Caesarian campaign; the Senate campaign starts in free play.
+
+## Atlas taxation
+
+Browser-tested selecting a tax rate in the resources panel, advancing a month, and observing the actual treasury, food and selected-tax state. Tax and loyalty changes use the existing shared campaign engine.
