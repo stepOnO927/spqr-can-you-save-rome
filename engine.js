@@ -1,4 +1,4 @@
-import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=7';
+import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 export const region = (s,id) => s.regions.find(r=>r.id===id);
@@ -106,6 +106,34 @@ export function diplomacy(s, actor, target, action){
     return true;
   }
   return false;
+}
+
+// Official letters are simulated per sender and persist in compatible saves.
+const courtReports={
+ caesar:['Julius Caesar, military and political leader','尤利乌斯·凯撒，政治与军事领袖'],
+ senate:['Pompey, commander aligned with the Senate','庞培，元老院方面军事统帅'],
+ egypt:['Cleopatra VII and Ptolemy XIII, joint rulers','克娄巴特拉七世与托勒密十三世，共同统治者'],
+ numidia:['Juba I, king','朱巴一世，国王'],mauretania:['Bocchus II and Bogud, rulers of separate kingdoms','博库斯二世与博古德，各自统治不同王国'],
+ armenia:['Artavasdes II, king','阿尔塔瓦兹德二世，国王'],parthia:['Orodes II, king','奥罗德二世，国王']
+};
+const letterMonths={senate:2,caesar:2,egypt:4,numidia:3,mauretania:4,armenia:5,parthia:5};
+export function sendInquiry(s,actor,target){
+ if(actor===target||!s.factions[actor]||!courtReports[target]||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
+ if(s.factions[actor].treasury<3)return {ok:false,reason:'treasury'};
+ if((s.inquiries||[]).some(x=>x.actor===actor&&x.target===target&&x.status==='pending'))return {ok:false,reason:'pending'};
+ const duration=letterMonths[target]||4;s.factions[actor].treasury-=3;
+ (s.inquiries||=[]).unshift({actor,target,sentYear:s.year,sentMonth:s.month,remaining:duration,duration,status:'pending',source:'official court',confidence:'unverified'});
+ log(s,`A letter was sent to ${FACTIONS[target].short[0]}; a reply may take ${duration} months.`,`已向${FACTIONS[target].short[1]}寄信；等待回信约需${duration}个月。`);
+ return {ok:true,duration};
+}
+function resolveInquiries(s){
+ for(const letter of s.inquiries||[]){
+  if(letter.status!=='pending'||--letter.remaining>0)continue;
+  const roll=rnd(s),hostile=isWar(s,letter.actor,letter.target),rel=relation(s,letter.actor,letter.target);
+  if(roll<.18||!s.regions.some(r=>r.owner===letter.target)){letter.status='no_reply';log(s,`No reply has arrived from ${FACTIONS[letter.target].short[0]}; the letter or answer may have been lost.`,`来自${FACTIONS[letter.target].short[1]}的回信尚未到达；书信或回信可能遗失。`)}
+  else if(roll<(hostile?.65:rel<0?.46:.34)){letter.status='refused';log(s,`A reply from ${FACTIONS[letter.target].short[0]} declined to answer.`,`${FACTIONS[letter.target].short[1]}回信表示不愿回答。`)}
+  else{letter.status='answered';letter.claim=[...courtReports[letter.target]];letter.reportYear=s.year;letter.reportMonth=s.month;log(s,`An unverified official response arrived from ${FACTIONS[letter.target].short[0]}.`,`收到${FACTIONS[letter.target].short[1]}的官方答复，内容尚未经独立核实。`)}
+ }
 }
 
 export function resolveBattle(s,attacker,defender,target){
@@ -217,6 +245,7 @@ export function tick(s){
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region);r.owner=a.owner;r.loyalty=36;a.siege=null;log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   rebellion(s);
+  resolveInquiries(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
   if(!s.victory&&s.player==='caesar'&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
   return s;

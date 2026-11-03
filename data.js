@@ -33,7 +33,7 @@ export const ROUTES = [
 export const FACTIONS = {
   caesar:{name:['Caesarian command','凯撒派军队'],short:['Caesar','凯撒'],color:'#a74737',ruler:['Gaius Julius Caesar','盖乌斯·尤利乌斯·凯撒']},
   senate:{name:['Senate and Pompeian command','元老院与庞培派军队'],short:['Senate','元老院'],color:'#c1a576',ruler:['Gnaeus Pompeius Magnus','格奈乌斯·庞培·马格努斯']},
-  egypt:{name:['Ptolemaic Egypt','托勒密埃及'],short:['Egypt','埃及'],color:'#8ca490',ruler:['Ptolemy XIII','托勒密十三世']},
+  egypt:{name:['Ptolemaic Egypt','托勒密埃及'],short:['Egypt','埃及'],color:'#8ca490',ruler:['Cleopatra VII and Ptolemy XIII','克娄巴特拉七世与托勒密十三世']},
   numidia:{name:['Kingdom of Numidia','努米底亚王国'],short:['Numidia','努米底亚'],color:'#ad8e51',ruler:['Juba I','朱巴一世']},
   mauretania:{name:['Mauretanian kingdoms','毛里塔尼亚诸王国'],short:['Mauretania','毛里塔尼亚'],color:'#849063',ruler:['Bocchus II and Bogud','博库斯二世与博古德']},
   armenia:{name:['Kingdom of Armenia','亚美尼亚王国'],short:['Armenia','亚美尼亚'],color:'#967d91',ruler:['Artavasdes II','阿尔塔瓦兹德二世']},

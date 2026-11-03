@@ -21,3 +21,7 @@ At 1366 × 768, exercised the Chinese beginner flow from a new game through sele
 ## Phase VIII interaction checks
 
 Browser-checked the guided Caesar campaign in Chinese and English: select the legion, inspect statistics, preview and confirm a march, advance a month, inspect the real battle and city, and open resource guidance. Tested the Chronicle, save/load, restarting the tutorial, and language switching. An automated defeat test and the existing peace/interrupted-order test exercise alternate outcomes at engine level. The full UX still needs independent novice testing; the prototype remains separate from the original campaign, and its help identifies commands only available in the original campaign.
+
+## Phase VIII completion and Phase IX correspondence foundation
+
+Browser-tested recruiting in Cisalpine Gaul, selecting the resulting army, improving relations with Egypt, sending a letter, advancing four months to an actual declined response, and loading an earlier save with the letter pending. Tested the searchable gameplay/history categories and control highlight, and opened the original campaign. Engine tests cover costs, delay, pending saves, separate senders, disappearance of a government, refusal, no reply, and unverified responses. Ordinary diplomacy still resolves immediately; only direct inquiry is delayed. Full character, private-intelligence, espionage, succession and portrait systems are not implemented. No independent novice test has yet been conducted.

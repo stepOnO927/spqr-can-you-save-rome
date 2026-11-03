@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js';
+import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry} from './engine.js';
 import historical from './historical-territories.js';
 import {REGIONS} from './data.js';
 import {identity,factionMark} from './identity.js';
@@ -166,4 +166,31 @@ test('defeat records the actual outcome and leaves the defending theater unchang
  assert.equal(resolveBattle(s,a,d,target),false);
  assert.equal(target.owner,originalOwner);assert.equal(s.battles[0].attackerWins,false);
  assert.equal(s.battles[0].attacker.men,500);assert.ok(s.battles[0].lossA>0);
+});
+
+
+test('official inquiries cost treasury and resolve only after months; saves retain pending letters',()=>{
+ const s=newGame(),start=s.factions.caesar.treasury;const sent=sendInquiry(s,'caesar','egypt');
+ assert.equal(sent.ok,true);assert.equal(sent.duration,4);assert.equal(s.factions.caesar.treasury,start-3);
+ assert.equal(sendInquiry(s,'caesar','egypt').reason,'pending');
+ tick(s);tick(s);tick(s);assert.equal(s.inquiries[0].status,'pending');
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));tick(loaded);
+ assert.ok(['answered','refused','no_reply'].includes(loaded.inquiries[0].status));
+ if(loaded.inquiries[0].status==='answered'){assert.equal(loaded.inquiries[0].confidence,'unverified');assert.match(loaded.inquiries[0].claim[0],/Cleopatra/)}
+});
+
+test('official inquiries can produce unanswered, declined and unverified responses',()=>{
+ const outcomes=new Set();for(let seed=1;seed<600&&outcomes.size<3;seed++){const s=newGame();s.seed=(seed*7000013)>>>0;sendInquiry(s,'caesar','egypt');s.inquiries[0].remaining=1;tick(s);outcomes.add(s.inquiries[0].status)}
+ assert.deepEqual([...outcomes].sort(),['answered','no_reply','refused']);
+});
+
+
+test('letters are private to each sender and validate costs and active governments',()=>{
+ const s=newGame();s.factions.caesar.treasury=2;assert.equal(sendInquiry(s,'caesar','egypt').reason,'treasury');
+ s.factions.caesar.treasury=30;assert.equal(sendInquiry(s,'caesar','egypt').ok,true);
+ assert.equal(sendInquiry(s,'senate','egypt').ok,true);
+ assert.deepEqual(s.inquiries.map(x=>x.actor).sort(),['caesar','senate']);
+ for(const r of s.regions.filter(r=>r.owner==='egypt'))r.owner='senate';
+ assert.equal(sendInquiry(s,'caesar','egypt').reason,'unavailable');
+ s.inquiries[0].remaining=1;tick(s);assert.equal(s.inquiries[0].status,'no_reply');
 });

@@ -37,3 +37,5 @@
 #status{align-items:center;gap:6px}#status .faction-mark{width:21px;height:21px;flex:none}
 
 .intro-leader{display:flex;gap:15px;align-items:flex-start}.intro-leader svg{width:72px;height:81px;flex:none;border:1px solid #b99c67}.intro-leader p{margin:0 0 12px}.objective-highlight{filter:brightness(1.5) drop-shadow(0 0 8px #ffe18b)!important;outline:3px solid #ffe18b;outline-offset:3px}.start-dialog{max-height:94vh;overflow:auto}#status{max-width:400px;line-height:1.5}
+
+.diplomacy-tabs,.diplomacy-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.diplomacy-tabs button,.diplomacy-actions button,#send-inquiry,#city-region,#recruit-region,.help-list button{background:#344b40;border:1px solid #b6a26e;color:#f5e8c8;padding:7px 9px;font:12px Manrope,'Microsoft YaHei',sans-serif;cursor:pointer}.diplomacy-content button:disabled,#recruit-region:disabled{opacity:.48;cursor:not-allowed}#recruit-feedback,#diplomacy-feedback,#letter-feedback{color:#eec590;font-size:12px;margin-top:6px}.help-list button{font-size:11px}
