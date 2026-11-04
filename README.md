@@ -26,6 +26,8 @@ Some simulation theaters share a source polygon. Stripes indicate mixed military
 
 The map prototype includes historical characters, interpretive portraits, health, succession, espionage, and dated faction-specific intelligence. Letters and audiences can take time, be lost, or receive no useful reply. These are evolving gameplay models, not complete historical reconstructions. Precise province geography, broader AI and diplomacy, and a fully integrated campaign interface remain incomplete. Other era bookmarks and long-term systems such as research and religion are outside the current slice. Older supported saves are upgraded when loaded.
 
+New campaigns begin with foreign army sightings only in a faction's own theaters or adjacent theaters, including linked sea routes. Later observations update these dated reports; a disappeared or moved army can leave an outdated sighting. This is a coarse gameplay model, not literal visibility or a historical claim. Existing saves retain their accumulated reports.
+
 ## Code layout
 
 - `data.js` — theaters, routes, factions, initial armies, sources
@@ -38,3 +40,4 @@ The map prototype includes historical characters, interpretive portraits, health
 - `engine.test.js` — gameplay checks
 
 No commercial game art or maps are copied. The schematic coastline and interface are original.
+
