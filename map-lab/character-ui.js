@@ -1,4 +1,4 @@
-import {HISTORICAL_DEATHS} from '../historical-reference.js?v=1';
+import {HISTORICAL_DEATHS} from '../historical-reference.js?v=2';
 import {officeOf} from '../office-system.js?v=2';
 import {reportedClaimants,reportedHealthSubjects,supportClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=36';
 import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor} from '../governance.js?v=10';
