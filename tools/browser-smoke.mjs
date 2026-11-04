@@ -79,6 +79,11 @@ try{
  await page.locator('[data-army="xiii"]').click({force:true});
  assert.match(await page.locator('.selected-army').innerText(),/第十三军团/);
  assert.match(await page.locator('.selected-army').innerText(),/上次报告.*当前位置、兵力和状态未知/);
+ await page.locator('#new').click();await page.locator('#faction-choice').selectOption('caesar');await page.locator('#start-campaign').click();
+ assert.equal(await page.locator('[data-army="italy"]').count(),1,'frontier armies can be reported');
+ assert.equal(await page.locator('[data-army="egyptguard"]').count(),0,'distant armies are not automatically revealed');
+ await page.locator('#open-atlas').click();await page.waitForFunction(()=>document.querySelector('[data-army="italy"]'));
+ assert.equal(await page.locator('[data-army="egyptguard"]').count(),0,'both map views use the same limited intelligence');
  assert.deepEqual(errors,[],'uncaught browser errors');console.log('Browser smoke passed: atlas, travel, correspondence, spy, turns, and campaign view handoff.');
 } finally {await browser.close()}
 
