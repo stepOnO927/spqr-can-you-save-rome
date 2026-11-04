@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=28';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=29';
 import {initializeGovernments,advanceGovernments} from './governance.js?v=9';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=11';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant} from './character-system.js?v=29';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant} from './character-system.js?v=30';
 import {advanceOffices,officeEffects} from './office-system.js?v=2';
 import {advanceConspiracies} from './conspiracies.js?v=2';
 export {queueMission};
@@ -165,7 +165,7 @@ export function resolveBattle(s,attacker,defender,target){
   const terrain={plain:1,hills:1.2,forest:1.12,urban:1.25,desert:1.06}[target.terrain];
   const supplyA=Math.min(1,Math.max(.65,s.factions[attacker.owner].food/20));
   const supplyD=Math.min(1,Math.max(.65,s.factions[defender.owner].food/20));
-  linkCommanders(s);const powerA=attacker.men*(.65+attacker.morale/200+attacker.skill*.055+attacker.experience*.025)*supplyA*commandFactor(s,attacker);
+  linkCommanders(s);relieveIncapacitatedCommanders(s);const powerA=attacker.men*(.65+attacker.morale/200+attacker.skill*.055+attacker.experience*.025)*supplyA*commandFactor(s,attacker);
   const powerD=defender.men*(.65+defender.morale/200+defender.skill*.055+defender.experience*.025)*terrain*(1+target.fort*.12)*supplyD*commandFactor(s,defender);
   const roll=.85+rnd(s)*.3;
   const attackerWins=powerA*roll>powerD;
@@ -280,7 +280,7 @@ function aiTurn(s,owner){
 }
 
 export function tick(s){
-  initializeWorld(s);linkCommanders(s);
+  initializeWorld(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
   s.month++;if(s.month>12){s.month=1;s.year++}
   advanceOffices(s);economy(s);
   // Travel and sieges resolve before new AI orders.
@@ -290,7 +290,7 @@ export function tick(s){
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   rebellion(s);
-  resolveInquiries(s);advanceOperations(s);advanceAgentRequests(s);advanceCharacters(s);advanceMissingCommanders(s);advanceDisputes(s);advanceConspiracies(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);
+  resolveInquiries(s);advanceOperations(s);advanceAgentRequests(s);advanceCharacters(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);advanceDisputes(s);advanceConspiracies(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);
   observeArmies(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
   if(!s.victory&&s.player==='caesar'&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
