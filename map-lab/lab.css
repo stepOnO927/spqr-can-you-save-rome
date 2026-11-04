@@ -47,3 +47,6 @@
 .intro-leader img{width:72px;height:81px;object-fit:cover;flex:none;border:1px solid #b99c67}
 
 .map-mode-label{display:block;margin:15px 0 5px;color:#d4b977;font:700 10px Manrope,'Microsoft YaHei',sans-serif}#map-mode{width:100%;padding:6px;color:#eee1c3;background:#263b32;border:1px solid #897959;font:12px Manrope,'Microsoft YaHei',sans-serif}.brief #map-mode-note{font:11px/1.45 Manrope,'Microsoft YaHei',sans-serif;color:#c9c3ae;margin:5px 0 10px}
+
+.map-controls #relief-toggle{font:700 10px Manrope,'Microsoft YaHei',sans-serif}.map-controls #relief-toggle[aria-pressed="false"]{color:#a6a69b;background:#18211f}
+
