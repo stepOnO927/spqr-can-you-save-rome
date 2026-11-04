@@ -55,3 +55,19 @@ test('appointments reject remote, occupied, travelling, incapacitated and foreig
  for(const id of ['cato','scipio','labienus','pompey','cleopatra'])assert.equal(appointCommander(s,unit.id,id).ok,false);
  unit.move={to:'italiaS',remaining:1};assert.deepEqual(availableCommanders(s,unit.id),[]);assert.equal(s.factions.senate.treasury,cash);
 });
+test('a seriously ill commander is relieved before the army moves or fights',()=>{
+ const s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii'),person=s.world.characters.caesar,skill=unit.skill;unit.move={to:'italiaN',remaining:1};person.health='seriously_ill';tick(s);
+ assert.equal(unit.characterId,null);assert.deepEqual(unit.commander,['Unnamed officer','未具名军官']);assert.equal(person.location,'cisalpine');assert.equal(unit.skill,skill);assert.equal(s.battles[0].attacker.commander[1],'未具名军官');assert.equal(s.world.governments.caesar.kind,'acting_command');assert.ok(s.log.some(x=>x.zh.includes('重病无法指挥')));
+});
+test('death leaves the army rating intact and an eligible successor can be assigned',()=>{
+ const s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii'),skill=unit.skill;s.world.characters.caesar.health='dying';s.world.intelSeed=0;advanceCharacters(s);
+ assert.equal(s.world.characters.caesar.alive,false);assert.equal(unit.characterId,null);assert.equal(unit.skill,skill);assert.equal(appointCommander(s,unit.id,'antony').ok,true);assert.equal(unit.skill,skill);assert.equal(unit.characterId,'antony');
+});
+test('a missing commander in an old save is detached without revealing a location',()=>{
+ let s=newGame('caesar'),person=s.world.characters.caesar;person.location=null;person.missing={origin:'cisalpine',remaining:3,year:s.year,month:s.month};s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);
+ assert.equal(s.world.characters.caesar.location,null);assert.equal(s.armies.find(a=>a.id==='xiii').characterId,null);assert.equal(s.world.governments.caesar.kind,'acting_command');
+});
+test('unseen foreign illness does not create a public report of a command change',()=>{
+ const s=newGame('caesar'),unit=s.armies.find(a=>a.id==='pompey');s.world.characters.pompey.health='seriously_ill';const before=JSON.stringify(s.knowledge.caesar.senate.sightings.pompey);tick(s);
+ assert.equal(unit.characterId,null);assert.equal(JSON.stringify(s.knowledge.caesar.senate.sightings.pompey),before);assert.ok(!s.log.some(e=>e.en.includes('simulated illness')&&e.en.includes('Pompey')));
+});
