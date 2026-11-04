@@ -1,12 +1,12 @@
 import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=1';
 import historical from '../historical-territories.js';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=33';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=34';
 import {FACTIONS} from '../data.js?v=8';
 import {identity,factionMark} from '../identity.js?v=1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=10';
-import {createCharacterUI} from './character-ui.js?v=25';
-import {reportedArmies} from '../character-system.js?v=21';
+import {createCharacterUI} from './character-ui.js?v=26';
+import {reportedArmies} from '../character-system.js?v=22';
 import {createTutorial} from './tutorial.js?v=4';
 import {friendlyPersonnelInTheater} from './personnel.js?v=1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=1';
@@ -160,7 +160,7 @@ const helpEntries=[
  {kind:'game',en:'Turns, saving and objectives',zh:'回合、存档与目标',enBody:'Advance one month to resolve movement, economy, sieges and AI. The Chronicle records events. Select a save slot and press Save or Load. Click an objective for guidance; it will not issue orders.',zhBody:'推进一个月以结算行军、经济、围攻与AI行动。战报记录事件；选择存档栏后点击保存或读取。点击目标可查看指引，不会自动下令。'},
  {kind:'game',en:'Appointing a commander',zh:'任命军队指挥官',enBody:'Select a stationary friendly army to appoint an available person in the same theater or relieve its commander. The former commander remains in the theater; the army’s base command rating stays unchanged, health affects combat, and no person may command two armies.',zhBody:'选择未行动的己方军队，可任命同战区的可用己方人物，也可解除当前指挥。原指挥官留在战区；军队基础指挥评级不变，人物健康影响战斗，一人不能同时指挥两支军队。'},
  {kind:'game',en:'Commander loyalty',zh:'将领忠诚',control:'#factions',enBody:'Friendly character profiles have simulated loyalty, separate from theater loyalty. Low faction stability reduces personal loyalty each year. During the Roman civil war, a non-leading officer without an army may defect when loyalty reaches 20 or below.',zhBody:'己方人物档案中的模拟忠诚度与战区忠诚度不同。势力稳定度低时，个人忠诚每年下降。罗马内战期间，忠诚不高于20、未领导派系且未指挥军队的官员可能倒戈。'},
- {kind:'game',en:'Reports and uncertainty',zh:'情报报告与不确定性',control:'#factions',enBody:'Open Factions, choose another power, then Letters & Intelligence. Reports show source, observation date, reliability and confidence. Political stability can be investigated as a broad estimate. Conflicting reports remain visible; old reports may be wrong. Your save contains the true simulated world and is not a secrecy boundary.',zhBody:'打开“势力”，选择其他势力，再打开“书信与情报”。报告显示来源、观察日期、可靠性和可信度；可以调查政治稳定度，但得到的是宽泛估计。冲突报告会保留，旧报告可能错误。本地存档包含真实模拟状态，并非保密边界。'},
+ {kind:'game',en:'Reports and uncertainty',zh:'情报报告与不确定性',control:'#factions',enBody:'Open Factions, choose another power, then Letters & Intelligence. Reports show source, observation date, reliability and confidence. Political stability and possible succession plans can be investigated; no information does not prove no plan exists. Conflicting reports remain visible; old reports may be wrong. Your save contains the true simulated world and is not a secrecy boundary.',zhBody:'打开“势力”，选择其他势力，再打开“书信与情报”。报告显示来源、观察日期、可靠性和可信度；可以调查政治稳定度和可能的继任安排；没有消息不等于没有计划。冲突报告会保留，旧报告可能错误。本地存档包含真实模拟状态，并非保密边界。'},
  {kind:'game',en:'Letters and direct questions',zh:'书信与直接询问',control:'#factions',enBody:'A direct inquiry costs 3 treasury and normally takes 2–5 months. A letter or reply may be lost; the court may refuse, and its answer is unverified. Other diplomatic buttons currently resolve immediately.',zhBody:'直接询问消耗3国库，通常需要2至5个月。信件或回信可能遗失，对方可能拒答，官方答复未经独立核实。其他外交按钮目前即时结算。'},
  {kind:'game',en:'Spies, captured agents and release',zh:'间谍、被俘与释放',control:'#factions',enBody:'A spy costs 12 treasury and takes 4 months; discovery or capture harms relations. Each faction has three agents: missions and captivity occupy capacity. A release letter costs 8 treasury and takes about 4 months; it may be refused or unanswered.',zhBody:'派遣间谍消耗12国库、需要4个月；被发现或被捕会损害关系。每个势力有3名情报人员，执行任务或被俘会占用人手。请求释放需8国库，约4个月后可能被拒或没有回信。'},
  {kind:'game',en:'Personal meetings and travel',zh:'人物旅行与个人会面',control:'#factions',enBody:'Open your faction and select an independent character to plan a journey. Army commanders and seriously ill characters cannot travel independently; wounds and frailty slow each leg. A personal audience costs 3 treasury and takes 2 months; both people must actually be in the same theater and may not meet. Trust and relations affect acceptance; a successful meeting improves relations by 3.',zhBody:'打开己方势力并选择独立人物以规划旅行。随军指挥官和重病人物不能单独出行，受伤或衰弱会拖慢每段行程。个人会面请求消耗3国库、需要2个月；双方须实际位于同一战区，也可能无法会面。已有信任及势力关系影响接受意愿；成功会面使双方关系提高3。'},
