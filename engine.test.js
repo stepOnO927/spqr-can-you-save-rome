@@ -249,3 +249,17 @@ test('legacy campaigns acquire new courts without resetting people, reports, tre
  let t=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(t.factions.caesar.treasury,17);assert.equal(t.world.characters.deiotarus.loyalty,37);assert.equal(t.world.characters.deiotarus.faction,'galatia');assert.equal(t.world.characters.pharnaces.alive,false);assert.deepEqual(t.world.leadership.bosporus,[]);assert.equal(t.knowledge.caesar.egypt.reports.length,1);assert.equal(t.inquiries[0].remaining,2);assert.ok(t.knowledge.galatia.caesar);assert.ok(t.knowledge.caesar.galatia);
  t.regions.find(x=>x.id==='galatia').owner='senate';t=upgradeSave(JSON.parse(JSON.stringify(t)));assert.equal(t.regions.find(x=>x.id==='galatia').owner,'senate');assert.equal(t.regions.filter(x=>x.id==='galatia').length,1);
 });
+
+test('a composed answer or refusal can be lost on the return journey without leaking its contents',()=>{
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q<.08});
+ for(const status of ['answered','refused']){
+  let s=newGame('caesar');sendInquiry(s,'caesar','egypt');const letter=s.inquiries[0];letter.remaining=1;letter.sealed={status,year:s.year,month:s.month,claim:['Secret answer','秘密答复'],report:{kind:'leaders',leaders:['ptolemy']}};
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));s.seed=seed;tick(s);
+  assert.equal(s.inquiries[0].status,'no_reply');assert.equal(s.inquiries[0].claim,undefined);assert.equal(s.inquiries[0].sealed,undefined);assert.equal(s.knowledge.caesar.egypt.reports.length,0);assert.match(s.log.find(x=>/回信尚未到达/.test(x.zh)).zh,/可能遗失/);
+ }
+});
+test('war increases the chance of a reply being lost on its return journey',()=>{
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.08&&q<.18});
+ function trial(war){const s=newGame('caesar');sendInquiry(s,'caesar','egypt');s.inquiries[0].remaining=1;s.inquiries[0].sealed={status:'answered',year:s.year,month:s.month,claim:['An answer','一封答复'],report:{kind:'leaders',leaders:['ptolemy']}};if(war)s.wars.push(['caesar','egypt']);s.seed=seed;tick(s);return s}
+ const peace=trial(false),war=trial(true);assert.equal(peace.inquiries[0].status,'answered');assert.equal(peace.knowledge.caesar.egypt.reports.length,1);assert.equal(war.inquiries[0].status,'no_reply');assert.equal(war.knowledge.caesar.egypt.reports.length,0);assert.equal(war.inquiries[0].claim,undefined);
+});
