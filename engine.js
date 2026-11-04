@@ -1,10 +1,10 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=44';
-import {initializeGovernments,advanceGovernments} from './governance.js?v=13';
-import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=13';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=45';
-import {advanceOffices,officeEffects} from './office-system.js?v=3';
-import {advanceConspiracies} from './conspiracies.js?v=5';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=45';
+import {initializeGovernments,advanceGovernments} from './governance.js?v=14';
+import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=9';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=14';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=46';
+import {advanceOffices,officeEffects} from './office-system.js?v=4';
+import {advanceConspiracies} from './conspiracies.js?v=6';
 export {queueMission};
 
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -14,7 +14,7 @@ export const adjacent = (id) => ROUTES.filter(r=>r[0]===id||r[1]===id).map(r=>({
 const rnd = s => {s.seed=(Math.imul(s.seed,1664525)+1013904223)>>>0;return s.seed/4294967296};
 const log = (s,en,zh) => {s.log.unshift({month:s.month,year:s.year,en,zh});s.log=s.log.slice(0,80)};
 export const isWar = (s,a,b) => a!==b && s.wars.some(w=>w.includes(a)&&w.includes(b));
-export const PLAYABLE = ['caesar','senate','egypt','numidia','mauretania','armenia','parthia'];
+export const PLAYABLE = ['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair = (a,b) => [a,b].sort().join(':');
 export const relation = (s,a,b) => s.relations[pair(a,b)] ?? 0;
 export const isAllied = (s,a,b) => s.alliances.some(p=>p.includes(a)&&p.includes(b));
@@ -22,13 +22,13 @@ const strength = (s,id) => s.armies.filter(a=>a.owner===id).reduce((v,a)=>v+a.me
 
 export function newGame(player='caesar'){
   if(!PLAYABLE.includes(player))throw new Error('Invalid playable faction');
-  const s=initializeWorld({version:3,seed:49049,year:-49,month:1,mode:'historical',player,relations:{'caesar:numidia':-30,'caesar:mauretania':20,'caesar:parthia':-10,'numidia:senate':25},alliances:[],
+  const s=initializeWorld({version:3,seed:49049,year:-49,month:1,mode:'historical',player,relations:{'caesar:numidia':-30,'caesar:mauretania':20,'caesar:parthia':-10,'numidia:senate':25,'galatia:senate':25},alliances:[],
     regions:clone(REGIONS),armies:clone(INITIAL_ARMIES).map(a=>({...a,move:null,siege:null})),
     factions:{
       caesar:{treasury:90,food:65,manpower:22000,stability:58,legitimacy:49,tax:'normal',research:0},
       senate:{treasury:135,food:100,manpower:34000,stability:57,legitimacy:68,tax:'normal',research:0},
       egypt:{treasury:85,food:90,manpower:9000,stability:64,legitimacy:60,tax:'normal',research:0},
-      ...Object.fromEntries(['numidia','mauretania','armenia','parthia'].map(id=>[id,{treasury:60,food:60,manpower:9000,stability:65,legitimacy:60,tax:'normal',research:0}])),
+      ...Object.fromEntries(['numidia','mauretania','armenia','parthia','galatia','bosporus'].map(id=>[id,{treasury:60,food:60,manpower:9000,stability:65,legitimacy:60,tax:'normal',research:0}])),
       rebels:{treasury:10,food:15,manpower:0,stability:50,legitimacy:0,tax:'normal',research:0}
     },wars:[['caesar','senate']],log:[],victory:false,nextArmy:1});
   // A new campaign starts with frontier observations, not every foreign army's
@@ -37,13 +37,14 @@ export function newGame(player='caesar'){
   linkCommanders(s);observeArmies(s);return initializeGovernments(s);
 }
 
+// Add newly modeled courts to older campaigns without resetting existing people or territory.
+function migrateRegionalPowers(s){
+ initializeWorld(s);const added=[];for(const id of ['galatia','bosporus']){if(s.factions[id])continue;added.push(id);s.factions[id]={treasury:60,food:60,manpower:9000,stability:65,legitimacy:60,tax:'normal',research:0};if(!s.regions.some(r=>r.id===id))s.regions.push(clone(REGIONS.find(r=>r.id===id)));if(!s.armies.some(a=>a.id===id+'army'))s.armies.push({...clone(INITIAL_ARMIES.find(a=>a.id===id+'army')),move:null,siege:null});const leader=OPENING_LEADERS[id][0],person=s.world.characters[leader];s.world.leadership[id]=person?.alive?[leader]:[];if(person&&person.faction==null){person.faction=id;if(person.location==null&&!person.missing)person.location=id}}
+ if(added.length){for(const actor of Object.keys(s.factions)){s.knowledge[actor]||={};for(const target of Object.keys(s.factions)){if(!s.knowledge[actor][target])s.knowledge[actor][target]={reportedLeaders:clone(OPENING_LEADERS[target]||[]),reports:[],sightings:{}}}}if(added.includes('galatia')&&s.relations['galatia:senate']===undefined)s.relations['galatia:senate']=25}
+}
 export function upgradeSave(s){
-  if(s.version===3)return refreshReportConfidence(initializeGovernments(s));
-  if(s.version!==2)throw new Error('Unsupported save');
-  const old=s.relations||{}, oldAllies=s.alliances||[];
-  s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));
-  s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3;
-  return refreshReportConfidence(initializeGovernments(s));
+ if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
+ if(s.version!==3)throw new Error('Unsupported save');migrateRegionalPowers(s);return refreshReportConfidence(initializeGovernments(s));
 }
 
 export function previewMarch(s,armyId,destination){
@@ -126,9 +127,9 @@ const courtReports={
  senate:['Pompey, commander aligned with the Senate','庞培，元老院方面军事统帅'],
  egypt:['Cleopatra VII and Ptolemy XIII, joint rulers','克娄巴特拉七世与托勒密十三世，共同统治者'],
  numidia:['Juba I, king','朱巴一世，国王'],mauretania:['Bocchus II and Bogud, rulers of separate kingdoms','博库斯二世与博古德，各自统治不同王国'],
- armenia:['Artavasdes II, king','阿尔塔瓦兹德二世，国王'],parthia:['Orodes II, king','奥罗德二世，国王']
+ armenia:['Artavasdes II, king','阿尔塔瓦兹德二世，国王'],parthia:['Orodes II, king','奥罗德二世，国王'],galatia:['Deiotarus, Galatian king','代奥塔鲁斯，加拉太国王'],bosporus:['Pharnaces II, king','法尔纳刻斯二世，国王']
 };
-const letterMonths={senate:2,caesar:2,egypt:4,numidia:3,mauretania:4,armenia:5,parthia:5};
+const letterMonths={senate:2,caesar:2,egypt:4,numidia:3,mauretania:4,armenia:5,parthia:5,galatia:4,bosporus:5};
 export function sendInquiry(s,actor,target,subject='leaders'){
  if(!['leaders','successor','availability','representative'].includes(subject))return {ok:false,reason:'subject'};
  if(actor===target||!s.factions[actor]||!courtReports[target]||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
