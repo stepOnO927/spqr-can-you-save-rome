@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=23';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=24';
 import {initializeGovernments,advanceGovernments} from './governance.js?v=8';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=10';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies} from './character-system.js?v=25';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant} from './character-system.js?v=26';
 import {advanceOffices,officeEffects} from './office-system.js?v=1';
 import {advanceConspiracies} from './conspiracies.js?v=1';
 export {queueMission};
@@ -257,6 +257,10 @@ function aiTurn(s,owner){
   }
   if(f.stability<45&&f.treasury>25){f.treasury-=10;f.stability+=3}
   if(owner!=='rebels' && s.month===8 && f.treasury>=25){const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);if(enemy&&enemy!=='rebels')queueMission(s,owner,enemy,'spy','strength')}
+  // Rival Roman commands investigate and act on their own reports, not on the
+  // concealed state of the Egyptian court. An old report may lead nowhere.
+  if(['caesar','senate'].includes(owner)&&s.month===6&&f.treasury>45)queueMission(s,owner,'egypt','spy','claimants');
+  if(['caesar','senate'].includes(owner)&&s.month===12&&f.treasury>35){const claimant=reportedClaimants(s,owner,'egypt')[0];if(claimant)supportClaimant(s,owner,'egypt',claimant)}
   if(owner!=='rebels' && s.month===12){
     const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);
     if(enemy && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=estimatedStrength(s,owner,enemy)*.6)diplomacy(s,owner,enemy,'peace');
