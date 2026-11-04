@@ -167,3 +167,9 @@ test('friendly commander experience is shown as game history without exposing fo
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cato.battlesCommanded=2;s.world.characters.cleopatra.battlesCommanded=37;globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('cato');const own=panel.children.find(x=>x.className==='help-list');assert.match(own.innerHTML,/游戏指挥战斗次数: 2/);assert.match(own.innerHTML,/最多10%/);panel.children=[];ui.show('cleopatra');const foreign=panel.children.find(x=>x.className==='help-list');assert.doesNotMatch(foreign.innerHTML,/游戏指挥战斗次数|37/)}finally{globalThis.document=prior}
 });
+
+
+test('name reports distinguish incomplete lists from a source claiming completeness in both languages',()=>{
+ const prior=globalThis.document,s=newGame('caesar');addReport(s,'caesar','egypt',{kind:'leaders',leaders:['cleopatra'],exhaustive:true,source:'official'});addReport(s,'caesar','egypt',{kind:'claimants',leaders:['ptolemy'],source:'spy'});globalThis.document={createElement:tag=>new Element(tag)};
+ try{for(const language of ['zh','en']){const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,language==='zh'?/来源声称名单完整；仍可能有误/:/Source claims the list is complete; it may be wrong/);assert.match(html,language==='zh'?/名单可能不完整/:/List may be incomplete/)}}finally{globalThis.document=prior}
+});

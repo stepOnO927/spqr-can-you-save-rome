@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
-import {addReport,reportEvidence} from '../character-system.js';
+import {addReport,reportEvidence,queueMission,advanceOperations} from '../character-system.js';
 import {leadershipIntelligence} from '../map-lab/intelligence-summary.js';
 
 test('evidence identifies independent support and conflicts without counting forwarded duplicates',()=>{
@@ -72,4 +72,17 @@ test('overlapping age estimates are compatible but do not independently corrobor
  assert.equal(first.confidence,'unverified');assert.equal(first.verified,false);let e=reportEvidence(s,'caesar',t,first);assert.deepEqual(e.conflict,[]);assert.deepEqual(e.compatible.map(x=>x.family),['court']);assert.deepEqual(e.support.map(x=>x.family),['meeting']);
  addReport(s,'caesar',t,{kind:'age',character:'ptolemy',value:[19,21],source:'spy'});assert.equal(first.confidence,'credible');
  addReport(s,'caesar',t,{kind:'age',character:'ptolemy',value:[23,25],source:'travelers'});assert.equal(first.confidence,'disputed');e=reportEvidence(s,'caesar',t,first);assert.deepEqual(e.conflict.map(x=>x.family),['travelers']);
+});
+
+
+test('partial name lists can coexist, but an asserted complete list can conflict',()=>{
+ const s=newGame('caesar'),t='egypt';const cleo=addReport(s,'caesar',t,{kind:'leaders',leaders:['cleopatra'],source:'travelers',confidence:'rumor'});const ptolemy=addReport(s,'caesar',t,{kind:'leaders',leaders:['ptolemy'],source:'spy',confidence:'unverified'});assert.equal(cleo.confidence,'rumor');assert.equal(ptolemy.confidence,'unverified');assert.deepEqual(reportEvidence(s,'caesar',t,cleo).conflict,[]);assert.deepEqual(reportEvidence(s,'caesar',t,cleo).compatible.map(x=>x.family),['spy']);
+ const full=addReport(s,'caesar',t,{kind:'leaders',leaders:['cleopatra'],exhaustive:true,source:'envoy',confidence:'unverified'});assert.equal(full.confidence,'disputed');assert.equal(ptolemy.confidence,'disputed');assert.deepEqual(reportEvidence(s,'caesar',t,full).conflict.map(x=>x.family),['spy']);assert.ok(!full.verified);
+});
+test('a partial matching list cannot independently verify an asserted complete roster',()=>{
+ const s=newGame('caesar'),t='egypt';const full=addReport(s,'caesar',t,{kind:'claimants',leaders:['ptolemy'],exhaustive:true,source:'envoy',confidence:'unverified'});addReport(s,'caesar',t,{kind:'claimants',leaders:['ptolemy'],source:'spy',confidence:'unverified'});assert.equal(full.confidence,'unverified');assert.deepEqual(reportEvidence(s,'caesar',t,full).compatible.map(x=>x.family),['spy']);
+ const again=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(again.knowledge.caesar.egypt.reports.find(r=>r.exhaustive).confidence,'unverified');
+});
+test('allied forwarding retains a source claim of completeness without treating it as truth',()=>{
+ const s=newGame('caesar');s.alliances.push(['caesar','numidia']);addReport(s,'numidia','egypt',{kind:'leaders',leaders:['ptolemy'],exhaustive:true,source:'envoy',confidence:'unverified'});assert.equal(queueMission(s,'caesar','egypt','exchange','leaders','numidia').ok,true);s.world.intelSeed=1972+5000;for(let i=0;i<3;i++)advanceOperations(s);const copied=s.knowledge.caesar.egypt.reports[0];assert.equal(copied.exhaustive,true);assert.equal(copied.originSource,'court');assert.equal(copied.verified,false);
 });
