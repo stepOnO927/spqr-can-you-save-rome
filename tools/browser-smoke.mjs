@@ -33,6 +33,7 @@ try{
  await page.locator('#help-search').fill('将领忠诚');assert.match(await page.locator('#help-results').innerText(),/可能倒戈/);
  await page.locator('#help-search').fill('对手掌握的情报');assert.match(await page.locator('#help-results').innerText(),/两年后逐渐失去影响/);
  await page.locator('#help-search').fill('人物健康与继任');assert.match(await page.locator('#help-results').innerText(),/三个月后可重新取得联系/);
+ assert.match(await page.locator('#help-results').innerText(),/重病或垂危的将领会在行军或战斗前卸下军职/);
  await page.locator('#language').click();await page.locator('#help-search').fill('captured agents');assert.match(await page.locator('#help-results').innerText(),/8 treasury/);await page.locator('#language').click();
  await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();
  const cashBeforeOffice=Number((await page.locator('[data-help="treasury"] b').innerText()).replace(/,/g,''));
