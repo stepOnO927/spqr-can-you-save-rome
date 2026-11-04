@@ -1,8 +1,9 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=21';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=22';
 import {initializeGovernments,advanceGovernments} from './governance.js?v=8';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=10';
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies} from './character-system.js?v=24';
+import {advanceOffices,officeEffects} from './office-system.js?v=1';
 export {queueMission};
 
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -208,10 +209,12 @@ function arrive(s,a){
 function economy(s){
   for(const [id,f] of Object.entries(s.factions)){
     const owned=s.regions.filter(r=>r.owner===id);
+    const offices=officeEffects(s,id);
     const troops=s.armies.filter(a=>a.owner===id).reduce((n,a)=>n+a.men,0);
     const rate={low:.65,normal:1,high:1.4}[f.tax];
-    f.treasury+=Math.round(owned.reduce((n,r)=>n+r.tax*rate*(r.loyalty/100),0)-troops/1100);
-    f.food+=Math.round(owned.reduce((n,r)=>n+r.food,0)-troops/1200-owned.length*2);
+    f.treasury+=Math.round(owned.reduce((n,r)=>n+r.tax*rate*(r.loyalty/100),0)-troops/1100)+offices.treasury;
+    f.food+=Math.round(owned.reduce((n,r)=>n+r.food,0)-troops/1200-owned.length*2)+offices.food;
+    f.stability=Math.min(100,f.stability+offices.stability);
     f.manpower+=owned.length*170;
     if(f.treasury<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.morale=Math.max(20,a.morale-4))}
     if(f.food<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.men=Math.max(1,Math.round(a.men*.96)))}
@@ -267,7 +270,7 @@ function aiTurn(s,owner){
 export function tick(s){
   initializeWorld(s);linkCommanders(s);
   s.month++;if(s.month>12){s.month=1;s.year++}
-  economy(s);
+  advanceOffices(s);economy(s);
   // Travel and sieges resolve before new AI orders.
   for(const a of [...s.armies]){
     if(!s.armies.includes(a))continue;

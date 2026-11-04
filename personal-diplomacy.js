@@ -1,6 +1,7 @@
 import {initializeWorld, CHARACTER_CATALOG, knownLeaders} from './characters.js?v=10';
 import {ROUTES} from './data.js?v=8';
 import {addReport} from './character-system.js?v=24';
+import {officeOf} from './office-system.js?v=1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
@@ -9,7 +10,7 @@ const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.l
 // Civilian journeys use the campaign theater graph, not precise historical roads.
 export function previewPersonTravel(s,id,destination){
  initializeWorld(s);const c=s.world.characters[id],owner=s.player;
- if(!c||c.faction!==owner||!c.alive||!c.location||c.travel||['seriously_ill','dying','deceased'].includes(c.health)||s.armies.some(a=>a.characterId===id))return {ok:false,reason:'unavailable'};
+ if(!c||c.faction!==owner||!c.alive||!c.location||c.travel||officeOf(s,owner,id)||['seriously_ill','dying','deceased'].includes(c.health)||s.armies.some(a=>a.characterId===id))return {ok:false,reason:'unavailable'};
  if(c.location===destination||!s.regions.some(r=>r.id===destination))return {ok:false,reason:'destination'};
  const distances={[c.location]:0},paths={[c.location]:[]},unvisited=new Set(s.regions.map(r=>r.id));
  while(unvisited.size){const current=[...unvisited].filter(x=>distances[x]!==undefined).sort((a,b)=>distances[a]-distances[b])[0];if(!current)break;unvisited.delete(current);if(current===destination)break;
