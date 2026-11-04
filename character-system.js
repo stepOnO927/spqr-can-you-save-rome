@@ -50,13 +50,14 @@ export function reportedHealthSubjects(s,actor,target){
  initializeWorld(s);return [...new Set([...(s.knowledge[actor]?.[target]?.reportedLeaders||[]),...reportedClaimants(s,actor,target)].filter(id=>CHARACTER_CATALOG[id]))];
 }
 export function supportClaimant(s,actor,target,claimant){
- initializeWorld(s);if(actor!==s.player||actor===target||target!=='egypt'||!reportedClaimants(s,actor,target).includes(claimant)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
+ initializeWorld(s);if(!['caesar','senate'].includes(actor)||actor===target||target!=='egypt'||!reportedClaimants(s,actor,target).includes(claimant)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(s.operations.some(o=>o.actor===actor&&o.target===target&&o.type==='support'&&o.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<10)return {ok:false,reason:'treasury'};
- s.factions[actor].treasury-=10;s.operations.unshift({actor,target,type:'support',claimant,remaining:4,status:'pending',sentYear:s.year,sentMonth:s.month});notify(s,'An offer of support was sent; a response may take four months.','已寄出支持提议；回信可能需要四个月。');return {ok:true};
+ s.factions[actor].treasury-=10;s.operations.unshift({actor,target,type:'support',claimant,remaining:4,status:'pending',sentYear:s.year,sentMonth:s.month});if(actor===s.player)notify(s,'An offer of support was sent; a response may take four months.','已寄出支持提议；回信可能需要四个月。');return {ok:true};
 }
 export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
- if(!['health','leaders','strength','claimants','stability','succession','conspiracy'].includes(subject))return {ok:false,reason:'subject'};
+ if(!['health','leaders','strength','claimants','stability','succession','conspiracy','contacts'].includes(subject))return {ok:false,reason:'subject'};
+ if(subject==='contacts'&&(!['spy','exchange'].includes(type)||target!=='egypt'))return {ok:false,reason:'subject'};
  if(type==='counter'&&subject!=='conspiracy'||subject==='conspiracy'&&(!['spy','counter','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
  if(subject==='health'&&type!=='exchange'&&characterId&&!reportedHealthSubjects(s,actor,target).includes(characterId))return {ok:false,reason:'identity'};
@@ -77,6 +78,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.type==='support'){
   const claimant=s.world.characters[op.claimant],valid=s.regions.some(r=>r.owner===op.target)&&claimant?.alive&&(s.world.claimants[op.target]||[]).includes(op.claimant);
   if(!valid||q<.2)op.status='no_reply';else if(q<.45)op.status='declined';else{op.status='complete';const dispute=s.world.disputes[op.target]||={months:0};dispute.support||={};dispute.support[op.claimant]=Math.min(30,(dispute.support[op.claimant]||0)+15);const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-10)}
+  op.resolvedYear=s.year;op.resolvedMonth=s.month;
   if(op.actor===s.player)notify(s,op.status==='complete'?'The claimant accepted support; relations with the court worsened.':op.status==='declined'?'The claimant declined the offer.':'No reply arrived; the offer or response may have been lost.',op.status==='complete'?'竞争者接受支持；与宫廷的关系恶化。':op.status==='declined'?'竞争者拒绝了提议。':'未收到回信；提议或回信可能遗失。');continue
  }
  if(!s.regions.some(r=>r.owner===op.target)||q<.18){op.status='failed';continue}
@@ -92,7 +94,15 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  }
  const healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(reportedHealthSubjects(s,op.actor,op.target)[0]||null),healthPerson=s.world.characters[healthId];
  op.status='complete';const source=op.type,low=op.type==='travelers',hostile=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target)),contested=(s.world.claimants[op.target]||[]).length>0,investigated=op.subject==='health'?healthPerson:person,concealment=hostile||contested||investigated?.health==='seriously_ill'||investigated?.health==='dying',falsehood=q<.45&&concealment;let report;
- if(op.subject==='conspiracy'){
+ if(op.subject==='contacts'){
+  // Only accepted support offers are simulated contacts. A lack of evidence is
+  // never a claim that no contact exists; the observer cannot see its own offer.
+  const contact=s.operations.find(x=>{const year=x.resolvedYear??x.sentYear,month=x.resolvedMonth??x.sentMonth,age=(s.year-year)*12+s.month-month;return x.type==='support'&&x.status==='complete'&&x.target===op.target&&x.actor!==op.actor&&Number.isFinite(age)&&age>=0&&age<=(x.resolvedYear==null?28:24)});
+  const alternative=['caesar','senate'].find(id=>id!==op.actor&&id!==contact?.actor);
+  const sponsor=q>=.6?contact?.actor:((contested||hostile)&&q<.45?alternative:null);
+  report={kind:'contacts',value:sponsor||'unknown',source,confidence:'unverified',reliability:'moderate'};
+ }
+ else if(op.subject==='conspiracy'){
   const actual=s.world.conspiracies?.[op.target]?.person||null,alternative=potentialConspirators(s,op.target).find(candidate=>candidate!==actual)||null;
   // Discontent can produce a false accusation; silence is not proof of safety.
   const suspect=q>=.6?actual:(q>=.34&&s.factions[op.target].stability<45?alternative:null);
