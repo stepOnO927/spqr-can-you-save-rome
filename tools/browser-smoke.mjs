@@ -103,7 +103,7 @@ try{
  await page.locator('[data-character="cicero"]').click();assert.match(await page.locator('#command-detail').innerText(),/65 \/ 100/,'character state survives both switches');
  // An old enemy sighting remains inspectable even when the real unit no longer exists.
  await page.locator('#save-slot').selectOption('2');await page.locator('#save').click();
- await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-save-2'));state.armies=state.armies.filter(a=>a.id!=='xiii');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state}));});
+ await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-save-2'));state.armies=state.armies.filter(a=>a.id!=='xiii');state.regions.find(r=>r.id==='narbo').owner='caesar';state.regions.find(r=>r.id==='gaul').owner='caesar';state.knowledge.senate.caesar.sightings.xiii={id:'xiii',name:['Legio XIII','第十三军团'],owner:'caesar',region:'gaul',year:state.year,month:state.month,commanderId:'caesar'};sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state}));});
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});await page.locator('#open-atlas').waitFor();
  await page.locator('[data-army="xiii"]').click({force:true});
  assert.match(await page.locator('.selected-army').innerText(),/第十三军团/);
