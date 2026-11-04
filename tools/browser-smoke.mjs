@@ -65,7 +65,8 @@ try{
  await page.evaluate(()=>localStorage.setItem('spqr-save-3','preserve-existing-slot'));
  await page.locator('#return-campaign').click();await page.locator('#open-atlas').waitFor();
  assert.equal((await page.locator('.top-stats .stat strong').first().innerText()).replace(/\D/g,''),atlasTreasury.replace(/\D/g,''),'treasury survives the switch to campaign');
- await page.locator('#open-atlas').click();await page.locator('#turn-date').waitFor();
+ await page.locator('#open-atlas').click();
+ await page.waitForFunction(date=>document.querySelector('#turn-date')?.innerText===date,atlasDate);
  assert.equal(await page.locator('#turn-date').innerText(),atlasDate,'date survives the round trip');
  assert.equal(await page.locator('#start-overlay').isHidden(),true,'transferred game is not replaced by onboarding');
  assert.equal(await page.evaluate(()=>localStorage.getItem('spqr-save-3')),'preserve-existing-slot','switching does not overwrite save slots');
@@ -73,3 +74,4 @@ try{
  await page.locator('[data-character="cicero"]').click();assert.match(await page.locator('#command-detail').innerText(),/65 \/ 100/,'character state survives both switches');
  assert.deepEqual(errors,[],'uncaught browser errors');console.log('Browser smoke passed: atlas, travel, correspondence, spy, turns, and campaign view handoff.');
 } finally {await browser.close()}
+
