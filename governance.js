@@ -2,7 +2,7 @@ import {initializeWorld,successorFor,CHARACTER_CATALOG} from './characters.js?v=
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
-export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>!unable(s.world.characters[id])&&!s.world.characters[id].travel);
+export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>!unable(s.world.characters[id])&&!s.world.characters[id].travel&&!(s.world.claimants?.[faction]||[]).includes(id));
 
 // This describes the simulated arrangement, not a historical medical or constitutional claim.
 export function deriveGovernment(s,faction){
