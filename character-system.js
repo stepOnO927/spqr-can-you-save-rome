@@ -23,26 +23,33 @@ export function requestAgentRelease(s,actor,captiveId){
  s.factions[actor].treasury-=8;s.releaseRequests.unshift({actor,holder:c.holder,captiveId,remaining:4,status:'pending',year:s.year,month:s.month});notify(s,'A release request was sent; a reply may take four months.','已寄出释放请求；回信可能需要四个月。');return {ok:true};
 }
 export function advanceAgentRequests(s){initializeWorld(s);for(const request of s.releaseRequests){if(request.status!=='pending'||--request.remaining>0)continue;const c=s.world.captives.find(x=>x.id===request.captiveId),q=rand(s),war=s.wars.some(w=>w.includes(request.actor)&&w.includes(request.holder));if(!c||c.state!=='held'||!s.regions.some(r=>r.owner===request.holder)||q<.2)request.status='no_reply';else if(q<(war?.65:.45))request.status='refused';else{request.status='released';c.state='released';c.releasedYear=s.year;c.releasedMonth=s.month}if(request.actor===s.player)notify(s,request.status==='released'?'The unnamed agent was released and is available again.':request.status==='refused'?'The court refused to release the agent.':'No response arrived; the correspondence may have been lost.',request.status==='released'?'未具名人员获释，情报人手恢复。':request.status==='refused'?'对方拒绝释放人员。':'未收到回信；书信可能遗失。')}}
-const sourceFamily=r=>r.originSource||({official:'court',envoy:'court',audience:'court'}[r.source]||r.source);
+const sourceFamily=r=>{const source=r.originSource||r.source;return ({official:'court',envoy:'court',audience:'court',exchange:'unknown'}[source]||source||'unknown')};
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
+const knownReport=x=>x.value!=='unknown'&&x.value!=null||x.kind==='leaders'||x.kind==='claimants';
+const reportValue=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?[...new Set(x.leaders||[])].sort():x.value);
+const sameSubject=(a,b)=>a.kind===b.kind&&a.character===b.character&&(a.kind!=='age'||((a.observationYear??a.year)===(b.observationYear??b.year)&&(a.observationMonth??a.month)===(b.observationMonth??b.month)));
+
+// Explain confidence only from the observer's own recent evidence. A forwarded
+// report keeps the original family; an unknown is neither support nor rebuttal.
+export function reportEvidence(s,actor,target,report){
+ const reports=s.knowledge?.[actor]?.[target]?.reports||[];
+ if(!reports.includes(report)||!knownReport(report)||reportAge(s,report)>24)return {support:[],conflict:[],unattributed:0,inheritedDispute:false,unavailable:true};
+ const comparable=reports.filter(r=>knownReport(r)&&sameSubject(report,r)&&reportAge(s,r)<=24),summarize=list=>{
+  const byFamily=new Map();for(const r of list){const family=sourceFamily(r);if(family==='unknown')continue;const current=byFamily.get(family);if(!current||reportAge(s,r)<reportAge(s,current))byFamily.set(family,r)}
+  return [...byFamily].map(([family,r])=>({family,year:r.observationYear??r.year,month:r.observationMonth??r.month}));
+ };
+ return {support:summarize(comparable.filter(r=>reportValue(r)===reportValue(report))),conflict:summarize(comparable.filter(r=>reportValue(r)!==reportValue(report))),unattributed:comparable.filter(r=>sourceFamily(r)==='unknown').length,inheritedDispute:comparable.some(r=>r.baseConfidence==='disputed'),unavailable:false};
+}
 export function addReport(s,actor,target,report){
  initializeWorld(s);const k=s.knowledge[actor]?.[target];if(!k)return;
- const r={...report,year:s.year,month:s.month,baseConfidence:report.baseConfidence||report.confidence||'unverified',verified:false},known=x=>x.value!=='unknown'&&x.value!=null||x.kind==='leaders'||x.kind==='claimants';
- const comparable=known(r)&&reportAge(s,r)<=24?k.reports.filter(x=>known(x)&&x.kind===r.kind&&x.character===r.character&&reportAge(s,x)<=24&&(r.kind!=='age'||((x.observationYear??x.year)===(r.observationYear??r.year)&&(x.observationMonth??x.month)===(r.observationMonth??r.month)))):[];
- // Leadership and claimant reports describe sets; co-ruler order carries no meaning.
- const value=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?[...new Set(x.leaders||[])].sort():x.value);
- if(known(r)&&reportAge(s,r)<=24){
-  const group=[...comparable,r],disputed=group.some(x=>value(x)!==value(r))||group.some(x=>x.baseConfidence==='disputed');
-  const families=new Set(group.map(sourceFamily)).size;
-  for(const item of group){
-   const base=item.baseConfidence||(item.confidence==='rumor'?'rumor':'unverified');
-   item.confidence=disputed?'disputed':families>=3?'confirmed':families>=2?'credible':base;
-   item.verified=!disputed&&families>=3;
-  }
- }
+ const r={...report,year:s.year,month:s.month,baseConfidence:report.baseConfidence||report.confidence||'unverified',verified:false};
  // An older forwarded message may be useful evidence but must not replace a newer report.
  const newerLeader=r.kind==='leaders'&&k.reports.some(x=>x.kind==='leaders'&&reportAge(s,x)<reportAge(s,r));
- k.reports.unshift(r);k.reports=k.reports.slice(0,30);if(r.kind==='leaders'&&r.leaders&&reportAge(s,r)<=24&&!newerLeader)k.reportedLeaders=[...r.leaders];return r
+ k.reports.unshift(r);k.reports=k.reports.slice(0,30);
+ // Recalculate after trimming so a source that is no longer retained cannot
+ // silently keep a current report marked as independently corroborated.
+ for(const item of k.reports){if(!knownReport(item)||reportAge(s,item)>24)continue;const group=k.reports.filter(x=>knownReport(x)&&sameSubject(item,x)&&reportAge(s,x)<=24),disputed=group.some(x=>reportValue(x)!==reportValue(item))||group.some(x=>x.baseConfidence==='disputed'),families=new Set(group.map(sourceFamily).filter(f=>f!=='unknown')).size,base=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';item.confidence=disputed?'disputed':families>=3?'confirmed':families>=2?'credible':base;item.verified=!disputed&&families>=3}
+ if(r.kind==='leaders'&&r.leaders&&reportAge(s,r)<=24&&!newerLeader)k.reportedLeaders=[...r.leaders];return r
 }
 export function publicLeaderClaim(s,target){initializeWorld(s);const ids=s.world.leadership[target]||[];return [ids.length?names(ids,0):'Authority uncertain',ids.length?names(ids,1):'执政者不明']}
 export function reportedClaimants(s,actor,target){initializeWorld(s);return [...new Set((s.knowledge[actor]?.[target]?.reports||[]).filter(r=>r.kind==='claimants').flatMap(r=>r.leaders||[]).filter(id=>CHARACTER_CATALOG[id]?.faction===target))]}
