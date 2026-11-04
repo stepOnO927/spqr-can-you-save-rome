@@ -7,11 +7,11 @@ import assert from 'node:assert/strict';
 
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1920,height:1080},deviceScaleFactor:1});
-const errors=[],tiles={ok:0,httpError:0,failed:0};
+const errors=[],tiles={ok:0,httpError:0,failed:0,cancelled:0};
 const tile=url=>/server\.arcgisonline\.com|elevation-tiles-prod\.s3\.amazonaws\.com|s3\.amazonaws\.com\/elevation-tiles-prod/.test(url);
 page.on('pageerror',error=>errors.push(error.message));
 page.on('response',response=>{if(tile(response.url())){if(response.ok())tiles.ok++;else tiles.httpError++}});
-page.on('requestfailed',request=>{if(tile(request.url()))tiles.failed++});
+page.on('requestfailed',request=>{if(tile(request.url())){if(request.failure()?.errorText?.includes('ERR_ABORTED'))tiles.cancelled++;else tiles.failed++}});
 
 async function sample(durationMs){
  return page.evaluate(ms=>new Promise(resolve=>{
