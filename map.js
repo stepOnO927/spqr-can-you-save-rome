@@ -3,7 +3,7 @@ import land from './land.js?v=7';
 import rivers from './rivers.js?v=7';
 import historical from './historical-territories.js?v=7';
 import {FACTIONS} from './data.js?v=7';
-import {reportedArmies} from './character-system.js?v=20';
+import {reportedArmies} from './character-system.js?v=21';
 
 // Anchors identify playable theaters within a historical polygon; they do not create borders.
 const locations={gaul:[4.50,47.54],narbo:[3.00,43.18],cisalpine:[12.20,44.42],hispaniaN:[1.25,41.12],hispaniaS:[-4.78,37.88],italiaN:[12.57,44.06],roma:[12.50,41.89],italiaS:[17.95,40.64],sicilia:[15.29,37.08],africa:[10.05,37.05],illyricum:[16.49,43.54],epirus:[19.45,41.31],achaia:[23.73,37.98],anatolia:[27.34,37.94],syria:[36.16,36.20],egypt:[29.92,31.20],numidia:[6.61,36.37],mauretania:[2.19,36.60],armenia:[44.55,39.95],parthia:[44.5,33.1]};
