@@ -154,11 +154,21 @@ test('low domestic stability reduces simulated loyalty without exposing it to ot
 
 
 test('foreign army markers use old sightings until a controlled frontier observes them',()=>{
- const s=newGame(),pompey=s.armies.find(a=>a.id==='pompey');pompey.region='africa';observeArmies(s);
- assert.equal(reportedArmies(s,'caesar').find(a=>a.id==='pompey').region,'roma');
+ const s=newGame(),pompey=s.armies.find(a=>a.id==='pompey');pompey.region='italiaN';observeArmies(s);
+ pompey.region='africa';observeArmies(s);assert.equal(reportedArmies(s,'caesar').find(a=>a.id==='pompey').region,'italiaN');
  pompey.region='italiaN';s.month=2;observeArmies(s);assert.equal(reportedArmies(s,'caesar').find(a=>a.id==='pompey').region,'italiaN');
  pompey.region='africa';s.month=3;observeArmies(s);const stale=reportedArmies(s,'caesar').find(a=>a.id==='pompey');assert.equal(stale.region,'italiaN');assert.equal(stale.month,2);
  s.armies=s.armies.filter(a=>a.id!=='pompey');assert.ok(reportedArmies(s,'caesar').some(a=>a.id==='pompey'));
+});
+
+test('new campaigns seed each faction only with its own frontier observations',()=>{
+ const s=newGame('caesar'),caesar=reportedArmies(s,'caesar'),egypt=reportedArmies(s,'egypt');
+ assert.ok(caesar.some(a=>a.id==='italy'));
+ assert.ok(!caesar.some(a=>a.id==='egyptguard'));
+ assert.ok(!egypt.some(a=>a.id==='xiii'));
+ assert.notDeepEqual(caesar.map(a=>a.id).sort(),egypt.map(a=>a.id).sort());
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(reportedArmies(loaded,'caesar'),caesar);
 });
 
 test('allied exchanges forward only the ally’s knowledge and preserve its original provenance',()=>{
@@ -207,3 +217,4 @@ test('diplomatic AI bases its estimate on observation time, not when an older re
  addReport(s,'senate','egypt',{kind:'strength',value:1000,source:'exchange',originSource:'court',observationYear:-49,observationMonth:2,confidence:'unverified'});
  assert.equal(diplomacy(s,'egypt','senate','peace'),true);
 });
+
