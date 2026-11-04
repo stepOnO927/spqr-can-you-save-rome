@@ -41,3 +41,12 @@ test('allied age observations retain their original source and date without reve
  assert.equal(queueMission(s,'senate','egypt','spy','age').reason,'subject');assert.equal(queueMission(s,'senate','egypt','exchange','age','parthia').ok,true);for(let i=0;i<3;i++)advanceOperations(s);
  const r=s.knowledge.senate.egypt.reports[0];assert.deepEqual(r.value,[19,21]);assert.notEqual(r.value,original.value);assert.equal(r.originSource,'meeting');assert.equal(r.observationMonth,1);assert.equal(r.verified,false);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
 });
+
+test('allied exchanges request a reported person without disclosing the ally’s private holdings',()=>{
+ const s=newGame('senate');s.alliances.push(['senate','parthia']);s.world.intelSeed=seedFor(.7,.8);
+ addReport(s,'parthia','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'spy',confidence:'unverified'});addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'healthy',source:'spy',confidence:'unverified'});
+ assert.equal(queueMission(s,'senate','egypt','exchange','health','parthia','cleopatra').ok,true);assert.equal(s.operations[0].subjectCharacter,'cleopatra');for(let i=0;i<3;i++)advanceOperations(s);assert.equal(s.knowledge.senate.egypt.reports[0].character,'cleopatra');assert.equal(s.knowledge.senate.egypt.reports[0].value,'ill');
+ const t=newGame('senate');t.alliances.push(['senate','parthia']);t.world.intelSeed=seedFor(.7,.8);addReport(t,'parthia','egypt',{kind:'age',character:'cleopatra',value:[19,21],source:'meeting',confidence:'unverified'});
+ assert.equal(queueMission(t,'senate','egypt','exchange','age','parthia','ptolemy').ok,true);for(let i=0;i<3;i++)advanceOperations(t);assert.equal(t.operations[0].status,'failed');assert.equal(t.knowledge.senate.egypt.reports.length,0);
+ const u=newGame('senate');u.alliances.push(['senate','parthia']);u.knowledge.senate.egypt.reportedLeaders=['cleopatra'];assert.equal(queueMission(u,'senate','egypt','exchange','health','parthia','ptolemy').reason,'identity');assert.equal(u.operations.length,0);
+});
