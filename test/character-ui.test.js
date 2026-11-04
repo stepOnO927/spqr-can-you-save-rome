@@ -69,7 +69,7 @@ test('an unknown succession report does not reveal the actual candidate',()=>{
 });
 test('foreign character profiles show recorded claims without revealing actual health',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cleopatra.health='seriously_ill';addReport(s,'senate','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'envoy',confidence:'unverified'});globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
- try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'en',inspect:()=>{}});ui.show('cleopatra');const dossier=panel.children.find(x=>x.className==='help-list');assert.match(dossier.innerHTML,/Healthy · Envoy/);assert.match(dossier.innerHTML,/Unverified/);assert.doesNotMatch(dossier.innerHTML,/Seriously ill|battle wounds|Illness episodes/);assert.match(panel.innerHTML,/Simulated health<\/span><b>Unknown/);assert.match(dossier.innerHTML,/HISTORICAL ENCYCLOPEDIA \(NOT GAME INTELLIGENCE\)/)}finally{globalThis.document=prior}
+ try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'en',inspect:()=>{}});ui.show('cleopatra');const dossier=panel.children.find(x=>x.className==='help-list');assert.match(dossier.innerHTML,/Healthy · Investigated court: Egypt · Envoy/);assert.match(dossier.innerHTML,/Unverified/);assert.doesNotMatch(dossier.innerHTML,/Seriously ill|battle wounds|Illness episodes/);assert.match(panel.innerHTML,/Simulated health<\/span><b>Unknown/);assert.match(dossier.innerHTML,/HISTORICAL ENCYCLOPEDIA \(NOT GAME INTELLIGENCE\)/)}finally{globalThis.document=prior}
 });
 test('historical reference is opt-in, sourced, and marks dates not yet verified',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
@@ -123,6 +123,23 @@ test('foreign leadership cards use reported arrangements rather than hidden lead
 test('foreign age estimates identify direct and forwarded sources and their age',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
  try{addReport(s,'senate','egypt',{kind:'age',character:'cleopatra',value:[19,21],source:'meeting',confidence:'unverified'});addReport(s,'senate','egypt',{kind:'age',character:'cleopatra',value:[18,20],source:'exchange',originSource:'audience',fromFaction:'parthia',observationYear:-52,observationMonth:1,confidence:'unverified'});createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{},onShowCharacter:()=>{}}).show('cleopatra');const dossier=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(dossier,/个人会面/);assert.match(dossier,/盟友转交/);assert.match(dossier,/使者会面/);assert.match(dossier,/情报过期/);assert.match(dossier,/未经核实/)}finally{globalThis.document=prior}
+});
+
+test('foreign health dossiers show the investigated court, forwarded origin, and both dates',()=>{
+ const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cleopatra.health='dying';
+ globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
+ try{
+  s.month=5;addReport(s,'senate','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'exchange',originSource:'spy',fromFaction:'parthia',observationYear:-49,observationMonth:2,reliability:'low'});
+  addReport(s,'senate','parthia',{kind:'health',character:'cleopatra',value:'unknown',source:'travelers',reliability:'unknown'});
+  for(const language of ['zh','en']){panel.children=[];createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).show('cleopatra');const html=panel.children.find(x=>x.className==='help-list').innerHTML;
+   assert.match(html,language==='zh'?/调查档案: 埃及/:/Investigated court: Egypt/);
+   assert.match(html,language==='zh'?/转交方: 帕提亚/:/Forwarded by: Parthia/);
+   assert.match(html,language==='zh'?/原始来源: 间谍/:/Original source: Spy/);
+   assert.match(html,language==='zh'?/观察 2\/49 BCE · 收到 5\/49 BCE/:/Observed 2\/49 BCE · Received 5\/49 BCE/);
+   assert.match(html,language==='zh'?/来源可靠性: 低/:/Source reliability: Low/);
+   assert.doesNotMatch(html,language==='zh'?/垂危/:/Dying/);
+  }
+ }finally{globalThis.document=prior}
 });
 
 test('allied exchanges confirm and remember the selected reported person',()=>{
