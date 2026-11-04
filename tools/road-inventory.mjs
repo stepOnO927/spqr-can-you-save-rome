@@ -1,5 +1,4 @@
 const url='https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/roads/roads.geojson';
 const res=await fetch(url);if(!res.ok)throw Error('Road data HTTP '+res.status);
-const data=await res.json();const features=data.features||[],types={},periods={},names=[];
-for(const f of features){const p=f.properties||{};for(const k of Object.keys(p))types[k]=(types[k]||0)+1;const period=p.timeperiod??p.period??null;if(period)periods[String(period)]=(periods[String(period)]||0)+1;if(/flamin|appia|aemilia|aurelia|cassia/i.test(JSON.stringify(p))&&names.length<12)names.push(p)}
-console.log(JSON.stringify({count:features.length,first:features.slice(0,5).map(f=>f.properties),fields:types,periods,namedSamples:names},null,2));
+const data=await res.json();const selected=data.features.filter(f=>/^via[ _](flaminia|aemilia|appia)$/i.test(f.properties?.Name||''));
+for(const f of selected){let lines=f.geometry.type==='LineString'?[f.geometry.coordinates]:f.geometry.coordinates;let coords=lines.flat();const xs=coords.map(p=>p[0]),ys=coords.map(p=>p[1]);console.log(JSON.stringify({id:f.properties.OBJECTID,name:f.properties.Name,period:f.properties.timeperiod,known:f.properties.Known_or_a,source:f.properties.Source,type:f.geometry.type,points:coords.length,bbox:[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)],first:coords[0],last:coords.at(-1)}))}
