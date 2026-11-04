@@ -1,7 +1,7 @@
-import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=10';
+import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=11';
 import {ROUTES} from './data.js?v=8';
-import {addReport,reportedHealthSubjects} from './character-system.js?v=27';
-import {officeOf} from './office-system.js?v=1';
+import {addReport,reportedHealthSubjects} from './character-system.js?v=28';
+import {officeOf} from './office-system.js?v=2';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
