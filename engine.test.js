@@ -179,6 +179,24 @@ test('official inquiries cost treasury and resolve only after months; saves reta
  if(loaded.inquiries[0].status==='answered'){assert.equal(loaded.inquiries[0].confidence,'unverified');assert.match(loaded.inquiries[0].claim[0],/Cleopatra/)}
 });
 
+test('a reply records the court at composition time and reaches the sender only after the return journey',()=>{
+ let s=newGame('caesar');assert.equal(sendInquiry(s,'caesar','egypt').ok,true);tick(s);
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.8&&q<.9});
+ s.seed=seed;tick(s);const letter=s.inquiries[0];assert.equal(letter.status,'pending');assert.equal(letter.remaining,2);assert.equal(letter.claim,undefined);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+ const responseDate={year:s.year,month:s.month};s.world.leadership.egypt=['ptolemy'];s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ tick(s);assert.equal(s.inquiries[0].status,'pending');assert.equal(s.knowledge.caesar.egypt.reports.length,0);tick(s);
+ assert.equal(s.inquiries[0].status,'answered');assert.match(s.inquiries[0].claim[0],/Cleopatra/);assert.deepEqual(s.world.leadership.egypt,['ptolemy']);
+ const report=s.knowledge.caesar.egypt.reports.find(r=>r.source==='official');assert.deepEqual(report.leaders,['cleopatra','ptolemy']);assert.equal(report.observationYear,responseDate.year);assert.equal(report.observationMonth,responseDate.month);assert.equal(s.inquiries[0].responseMonth,responseDate.month);assert.equal(s.inquiries[0].reportMonth,s.month);assert.equal(s.knowledge.senate.egypt.reports.length,0);
+});
+test('a lost or refused inquiry remains indistinguishable from a pending one until the expected return',()=>{
+ for(const outcome of ['no_reply','refused']){
+  const start=newGame('caesar');sendInquiry(start,'caesar','egypt');tick(start);let s;
+  for(let i=1;i<200&&!s;i++){const trial=upgradeSave(JSON.parse(JSON.stringify(start)));trial.seed=(i*7000013)>>>0;tick(trial);if(trial.inquiries[0].sealed?.status===outcome)s=trial}
+  assert.ok(s,'expected a simulation with the selected outcome');assert.equal(s.inquiries[0].status,'pending');assert.equal(s.inquiries[0].claim,undefined);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);assert.equal(s.inquiries[0].status,'pending');tick(s);assert.equal(s.inquiries[0].status,outcome);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+ }
+});
+
 test('official inquiries can produce unanswered, declined and unverified responses',()=>{
  const outcomes=new Set();for(let seed=1;seed<600&&outcomes.size<3;seed++){const s=newGame();s.seed=(seed*7000013)>>>0;sendInquiry(s,'caesar','egypt');s.inquiries[0].remaining=1;tick(s);outcomes.add(s.inquiries[0].status)}
  assert.deepEqual([...outcomes].sort(),['answered','no_reply','refused']);
