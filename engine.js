@@ -177,7 +177,13 @@ function resolveInquiries(s){
    letter.sealed=sealed;
   }
   if(letter.remaining>0)continue;
-  const reply=letter.sealed;letter.status=reply.status;delete letter.sealed;
+  // A reply can be lost on its return journey, even if the court answered or
+  // refused. The sender sees only silence, never the sealed contents. War at
+  // delivery makes the return route riskier. Previously saved pending letters
+  // use the same rule without changing their already-composed response.
+  let reply=letter.sealed;
+  if(reply.status!=='no_reply'&&rnd(s)<(isWar(s,letter.actor,letter.target) ? 0.18 : 0.08))reply={status:'no_reply'};
+  letter.status=reply.status;delete letter.sealed;
   if(reply.status==='no_reply'){if(letter.actor===s.player)log(s,`No reply has arrived from ${FACTIONS[letter.target].short[0]}; the letter or answer may have been lost.`,`来自${FACTIONS[letter.target].short[1]}的回信尚未到达；书信或回信可能遗失。`)}
   else if(reply.status==='refused'){if(letter.actor===s.player)log(s,`A reply from ${FACTIONS[letter.target].short[0]} declined to answer.`,`${FACTIONS[letter.target].short[1]}回信表示不愿回答。`)}
   else{letter.claim=reply.claim;letter.responseYear=reply.year;letter.responseMonth=reply.month;letter.reportYear=s.year;letter.reportMonth=s.month;
