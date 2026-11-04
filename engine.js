@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=16';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=17';
 import {initializeGovernments,advanceGovernments} from './governance.js?v=6';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=9';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies} from './character-system.js?v=19';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies} from './character-system.js?v=20';
 export {queueMission};
 
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -170,6 +170,10 @@ export function resolveBattle(s,attacker,defender,target){
   attacker.move=null;attacker.experience=Math.min(5,attacker.experience+1);
   defender.experience=Math.min(5,defender.experience+1);
   if(attacker.owner===s.player||defender.owner===s.player){const ownLoss=attacker.owner===s.player?lossA:lossD;log(s,`${FACTIONS[attacker.owner].short[0]} ${attackerWins?'won':'lost'} at ${target.name[0]}. Casualties: own ${ownLoss.toLocaleString()}; enemy unknown.`,`${FACTIONS[attacker.owner].short[1]}在${target.name[1]}${attackerWins?'获胜':'战败'}。己方伤亡：${ownLoss.toLocaleString()}；敌方伤亡未知。`)}
+  for(const lost of s.armies.filter(a=>a.men<=0&&a.characterId)){
+    const person=s.world.characters[lost.characterId];if(!person)continue;person.location=null;
+    if(lost.owner===s.player)log(s,`${CHARACTER_CATALOG[person.id].name[0]}'s location is unknown after the army was destroyed.`,`${CHARACTER_CATALOG[person.id].name[1]}的军队覆灭后，其位置不明。`);
+  }
   s.armies=s.armies.filter(a=>a.men>0);
   return attackerWins;
 }

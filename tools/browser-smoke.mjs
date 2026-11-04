@@ -26,6 +26,9 @@ try{
  await page.locator('[data-city="ROMA"]').click({force:true});await page.locator('#city-region').click();await page.locator('#recruit-region').click();
  await page.locator('[data-army="levy1"]').click({force:true});await page.locator('#commander-choice').selectOption('cato');await page.locator('#commander-appoint').click();
  await page.locator('#commander-feedback button').click();assert.match(await page.locator('#selection-detail').innerText(),/小加图/);
+ await page.locator('#commander-choice').selectOption('scipio');await page.locator('#commander-appoint').click();await page.locator('#commander-feedback button').click();assert.match(await page.locator('#selection-detail').innerText(),/西庇阿/);
+ await page.locator('#commander-release').click();await page.locator('#commander-release-feedback button').click();assert.match(await page.locator('#selection-detail').innerText(),/未具名军官/);
+ await page.locator('#commander-choice').selectOption('cato');await page.locator('#commander-appoint').click();await page.locator('#commander-feedback button').click();
  await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();
  assert.match(await page.locator('#leader-intelligence-summary').innerText(),/当前领袖报告：未经核实/);
  assert.match(await page.locator('#leader-intelligence-summary').innerText(),/上次领袖报告获独立佐证（可能不是当前说法）：未知/);
