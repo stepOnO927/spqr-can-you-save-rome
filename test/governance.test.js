@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
 import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor} from '../governance.js';
 import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js';
-import {advanceCharacters,commandFactor} from '../character-system.js';
+import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js';
 import {previewPersonTravel} from '../personal-diplomacy.js';
 
 test('a sick Roman commander retains nominal office while an available officer acts temporarily',()=>{
@@ -53,6 +53,18 @@ test('backing a candidate changes fallback authority at a cost without publishin
 });
 test('an explicit succession plan remains decisive over a better-connected candidate',()=>{
  const s=newGame('caesar');assert.equal(planSuccession(s,'antony').ok,true);assert.equal(supportSuccessor(s,'lepidus').ok,true);s.world.characters.caesar.alive=false;assert.deepEqual(assignSuccession(s,'caesar'),['antony']);
+});
+test('an NPC may privately prepare succession and a later spy report can reveal it',()=>{
+ const s=newGame('caesar');s.month=6;s.factions.senate.stability=40;const cash=s.factions.senate.treasury;
+ advanceGovernments(s);assert.equal(s.world.successionPlans.senate,'cato');assert.equal(s.factions.senate.treasury,cash-5);assert.equal(s.knowledge.caesar.senate.reports.length,0);assert.ok(!s.log.some(e=>e.en.includes('successor')));
+ const probe=queueMission(s,'caesar','senate','spy','succession');assert.equal(probe.ok,true);s.world.intelSeed=1000;for(let i=0;i<probe.duration;i++)advanceOperations(s);
+ const report=s.knowledge.caesar.senate.reports[0];assert.equal(report.kind,'succession');assert.equal(report.value,'cato');assert.equal(report.verified,false);assert.equal(s.knowledge.egypt.senate.reports.length,0);
+ const later=JSON.parse(JSON.stringify(s));later.world.characters.pompey.alive=false;assert.deepEqual(assignSuccession(later,'senate'),['cato']);
+});
+test('an unknown succession report does not prove a plan is absent',()=>{
+ const s=newGame('caesar');s.world.successionPlans.parthia='pacorus';const mission=queueMission(s,'caesar','parthia','envoy','succession');assert.equal(mission.ok,true);
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.5&&q<.6});s.world.intelSeed=seed;for(let i=0;i<mission.duration;i++)advanceOperations(s);
+ assert.equal(s.knowledge.caesar.parthia.reports[0].value,'unknown');assert.equal(s.world.successionPlans.parthia,'pacorus');assert.equal(s.knowledge.caesar.parthia.reports[0].verified,false);
 });
 test('reported titles distinguish Roman factions, Egyptian joint rule and separate Mauretanian kingdoms',()=>{
  assert.equal(leadershipTitle('caesar',['caesar'])[1],'罗马派系领袖');assert.equal(leadershipTitle('egypt',['cleopatra','ptolemy'])[1],'共同统治者');assert.equal(leadershipTitle('egypt',['ptolemy'])[1],'统治者');assert.equal(leadershipTitle('mauretania',['bocchus','bogud'])[1],'各王国统治者');assert.equal(leadershipTitle('egypt',[])[1],'领导身份未确认');
