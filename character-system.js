@@ -30,7 +30,7 @@ const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observ
 const knownReport=x=>['leaders','claimants'].includes(x.kind)?Array.isArray(x.leaders)&&x.leaders.length>0:x.value!=='unknown'&&x.value!=null;
 const reportValue=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?[...new Set(x.leaders||[])].sort():x.kind==='authority'&&x.value&&typeof x.value==='object'?{kind:x.value.kind,actors:[...new Set(x.value.actors||[])].sort()}:x.value);
 // Partially overlapping age estimates are compatible, but do not independently verify the same range.
-const evidenceRelation=(a,b)=>{if((a.observationYear??a.year)!==(b.observationYear??b.year)||(a.observationMonth??a.month)!==(b.observationMonth??b.month))return 'different_time';if(reportValue(a)===reportValue(b))return 'support';if(a.kind==='age'&&Array.isArray(a.value)&&Array.isArray(b.value)&&a.value.length===2&&b.value.length===2&&a.value.every(Number.isFinite)&&b.value.every(Number.isFinite)&&Math.max(a.value[0],b.value[0])<=Math.min(a.value[1],b.value[1]))return 'compatible';return 'conflict'};
+const evidenceRelation=(a,b)=>{if((a.observationYear??a.year)!==(b.observationYear??b.year)||(a.observationMonth??a.month)!==(b.observationMonth??b.month))return 'different_time';if(['leaders','claimants'].includes(a.kind)){const aa=new Set(a.leaders||[]),bb=new Set(b.leaders||[]),same=reportValue(a)===reportValue(b);if((a.exhaustive&&[...bb].some(id=>!aa.has(id)))||(b.exhaustive&&[...aa].some(id=>!bb.has(id))))return 'conflict';if(same&&(!a.exhaustive||b.exhaustive))return 'support';return 'compatible'}if(reportValue(a)===reportValue(b))return 'support';if(a.kind==='age'&&Array.isArray(a.value)&&Array.isArray(b.value)&&a.value.length===2&&b.value.length===2&&a.value.every(Number.isFinite)&&b.value.every(Number.isFinite)&&Math.max(a.value[0],b.value[0])<=Math.min(a.value[1],b.value[1]))return 'compatible';return 'conflict'};
 const sameSubject=(a,b)=>a.kind===b.kind&&a.character===b.character;
 function refreshKnowledge(s,k){
  const reports=k.reports||[];for(const item of reports){if(!knownReport(item)){item.verified=false;item.confidence=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';continue}if(reportAge(s,item)>24)continue;const group=reports.filter(x=>knownReport(x)&&sameSubject(item,x)&&reportAge(s,x)<=24),disputed=group.some(x=>evidenceRelation(item,x)==='conflict')||group.some(x=>evidenceRelation(item,x)!=='different_time'&&x.baseConfidence==='disputed'),families=new Set(group.filter(x=>evidenceRelation(item,x)==='support').map(sourceFamily).filter(f=>f!=='unknown')).size,base=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';item.confidence=disputed?'disputed':families>=3?'confirmed':families>=2?'credible':base;item.verified=!disputed&&families>=3}
@@ -111,7 +111,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.type==='exchange'){
   const partner=op.partner,stillAllied=s.alliances.some(x=>x.includes(op.actor)&&x.includes(partner)),prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter));
   if(!stillAllied||!prior){op.status='failed';continue}
-  const copy={kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'};
+  const copy={kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,exhaustive:prior.exhaustive===true,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'};
   addReport(s,op.actor,op.target,copy);op.status='complete';if(op.actor===s.player)notify(s,'An ally forwarded an existing report; its original date and source still matter.','盟友转交了一份既有报告；仍需留意原始日期与来源。');continue
  }
  const healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(reportedHealthSubjects(s,op.actor,op.target)[0]||null),healthPerson=s.world.characters[healthId];
@@ -131,7 +131,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   report={kind:'conspiracy',character:suspect,value:suspect?'suspected':'unknown',source,confidence:'unverified',reliability:'moderate'};
  }
  else if(op.subject==='health'){const value=healthPerson?(falsehood?'healthy':healthPerson.health):'unknown';report={kind:'health',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
- else if(op.subject==='claimants'){const candidates=falsehood?[]:[...(s.world.claimants[op.target]||[])];report={kind:'claimants',leaders:candidates,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
+ else if(op.subject==='claimants'){const candidates=falsehood?[]:[...(s.world.claimants[op.target]||[])];report={kind:'claimants',leaders:candidates,exhaustive:op.type==='spy'&&q>=.7,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='strength'){let count=s.armies.filter(a=>a.owner===op.target).reduce((x,a)=>x+a.men,0);if(falsehood)count=Math.round(count*.65/1000)*1000;else count=Math.round(count/1000)*1000;report={kind:'strength',value:count,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='stability'){
   const stability=s.factions[op.target].stability,actual=stability<35?'fragile':stability<60?'strained':'stable';
@@ -159,8 +159,8 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   // A covert agent or traveler can pick up that cover story too; the recipient
   // sees an ordinary report, not the hidden reason why it is inaccurate.
   const oldArrangement=(hostile||contested)&&q<.45&&opening.length&&opening.some(id=>!current.includes(id));
-  const leaders=[...(oldArrangement?opening:current)];
-  report={kind:'leaders',leaders,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
+  const leaders=[...(oldArrangement?opening:current)];if(low&&q<.7&&leaders.length>1)leaders.splice(1);
+  report={kind:'leaders',leaders,exhaustive:op.type==='envoy'||op.type==='audience'||op.type==='spy'&&q>=.7,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
  }
  if(op.type==='audience'){
   op.meeting='envoy';const k=[op.actor,op.target].sort().join(':');s.relations[k]=Math.min(100,(s.relations[k]||0)+3);
