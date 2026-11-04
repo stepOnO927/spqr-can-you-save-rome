@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js';
-import {commandFactor} from '../character-system.js';
+import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js';
+import {deriveGovernment} from '../governance.js';
+import {successorFor} from '../characters.js';
 
 test('a local friendly person may command a vacant army and the appointment survives saving',()=>{
  let s=newGame('senate');assert.equal(recruit(s,'roma'),true);const unit=s.armies.find(a=>a.id==='levy1');
@@ -23,6 +25,29 @@ test('a destroyed army leaves its commander location unknown without claiming de
  for(const edge of adjacent('roma'))region(s,edge.to).owner='caesar';resolveBattle(s,a,d,r);
  assert.ok(!s.armies.some(x=>x.id==='pompey'));assert.equal(s.world.characters.pompey.location,null);assert.equal(s.world.characters.pompey.alive,true);
  tick(s);assert.equal(s.world.characters.pompey.location,null);assert.ok(!s.log.some(e=>e.en.includes("Pompey")&&e.en.includes('location is unknown')));
+});
+test('a missing leader temporarily cannot govern, then may re-establish contact without informing foreign observers',()=>{
+ let s=newGame('senate'),a=s.armies.find(x=>x.id==='xiii'),d=s.armies.find(x=>x.id==='pompey'),r=region(s,'roma');a.men=500000;
+ for(const edge of adjacent('roma'))region(s,edge.to).owner='caesar';resolveBattle(s,a,d,r);
+ assert.equal(s.world.characters.pompey.location,null);assert.equal(deriveGovernment(s,'senate').kind,'acting_command');assert.deepEqual(s.world.leadership.senate,['pompey']);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));for(let i=0;i<2;i++){s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.pompey.location,null)}
+ s.month++;advanceMissingCommanders(s);assert.ok(s.world.characters.pompey.location);assert.equal(s.world.characters.pompey.missing,undefined);assert.equal(deriveGovernment(s,'senate').kind,'normal');
+ assert.ok(s.log.some(x=>x.zh.includes('重新取得联系')));assert.equal(s.knowledge.caesar.senate.reports.length,0);
+});
+test('a missing person cannot return without controlled territory or be chosen for succession',()=>{
+ const s=newGame('caesar');s.world.characters.antony.missing={origin:'cisalpine',remaining:1,year:s.year,month:s.month};s.world.characters.antony.location=null;
+ for(const r of s.regions)if(r.owner==='caesar')r.owner='senate';s.world.characters.caesar.alive=false;
+ s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.antony.location,null);assert.equal(s.world.characters.antony.missing.remaining,0);
+ assert.equal(deriveGovernment(s,'caesar').kind,'vacant');assert.ok(!successorFor(s,'caesar').includes('antony'));
+ region(s,'gaul').owner='caesar';s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.antony.location,'gaul');
+});
+test('health events pause while a commander is missing',()=>{
+ const s=newGame('senate'),c=s.world.characters.cicero;c.location=null;c.health='dying';c.missing={origin:'roma',remaining:1,year:-50,month:12};s.world.intelSeed=0;
+ advanceCharacters(s);assert.equal(c.health,'dying');assert.equal(c.alive,true);assert.ok(!s.log.some(x=>x.en.includes('Cicero')&&x.en.includes('died')));
+});
+test('normal campaign months advance loss of contact and restore the leader after the third month',()=>{
+ const s=newGame('caesar'),person=s.world.characters.caesar,army=s.armies.find(x=>x.id==='xiii');army.characterId=null;army.commander=['Unnamed officer','未具名军官'];person.location=null;person.missing={origin:'cisalpine',remaining:3,year:s.year,month:s.month};
+ tick(s);assert.equal(person.location,null);assert.equal(s.world.governments.caesar.kind,'acting_command');tick(s);assert.equal(person.location,null);tick(s);assert.equal(person.missing,undefined);assert.ok(person.location);assert.equal(s.world.governments.caesar.kind,'normal');
 });
 test('appointments reject remote, occupied, travelling, incapacitated and foreign people without spending resources',()=>{
  const s=newGame('senate');recruit(s,'roma');const unit=s.armies.find(a=>a.id==='levy1'),cash=s.factions.senate.treasury;

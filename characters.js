@@ -44,7 +44,7 @@ export function initializeWorld(s){
 }
 // Birthdays are not specified in the catalog: either side of the birthday may apply.
 export function ageRange(id,year){const b=CHARACTER_CATALOG[id]?.birth;if(!b)return null;return [year-b[1]-1,year-b[0]]}
-export function successorFor(s,faction){return (SUCCESSORS[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!(s.world.leadership[faction]||[]).includes(id)).sort((a,b)=>(s.world.characters[b].influence??50)-(s.world.characters[a].influence??50));}
+export function successorFor(s,faction){return (SUCCESSORS[faction]||[]).filter(id=>s.world.characters[id]?.alive&&!s.world.characters[id].missing&&s.world.characters[id].faction===faction&&!(s.world.leadership[faction]||[]).includes(id)).sort((a,b)=>(s.world.characters[b].influence??50)-(s.world.characters[a].influence??50));}
 export function assignSuccession(s,faction){const current=s.world.leadership[faction].filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);if(!current.length){const candidates=successorFor(s,faction),preferred=s.world.successionPlans?.[faction],next=candidates.includes(preferred)?preferred:candidates[0];if(next)current.push(next)}s.world.leadership[faction]=current;if(s.world.claimants[faction])s.world.claimants[faction]=s.world.claimants[faction].filter(id=>!current.includes(id)&&s.world.characters[id]?.alive);return current}
 export function knownLeaders(s,viewer,target){initializeWorld(s);return s.knowledge[viewer]?.[target]?.reportedLeaders||[]}
 // Derive a public-facing description only from the reported names, never the hidden government state.

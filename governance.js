@@ -1,6 +1,6 @@
-import {initializeWorld,successorFor,CHARACTER_CATALOG} from './characters.js?v=9';
+import {initializeWorld,successorFor,CHARACTER_CATALOG} from './characters.js?v=10';
 
-const unable=c=>!c?.alive||['seriously_ill','dying','deceased'].includes(c.health);
+const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
 export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>!unable(s.world.characters[id])&&!s.world.characters[id].travel);
 
