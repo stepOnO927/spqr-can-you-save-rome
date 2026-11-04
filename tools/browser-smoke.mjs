@@ -60,6 +60,18 @@ try{
  await page.locator('#advance').click();const regionAfter=await page.locator('#command-detail').innerText();
  assert.match(regionAfter,/征召军队/);assert.notEqual(regionAfter,regionBefore,'theater loyalty must refresh on the next month');
  await page.screenshot({path:'browser-smoke-1920x1080.png'});
- await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});await page.locator('#app').waitFor();
- assert.deepEqual(errors,[],'uncaught browser errors');console.log('Browser smoke passed: atlas, travel, correspondence, spy, turns, and original campaign.');
+ const atlasDate=await page.locator('#turn-date').innerText();
+ const atlasTreasury=await page.locator('[data-help="treasury"] b').innerText();
+ await page.evaluate(()=>localStorage.setItem('spqr-save-3','preserve-existing-slot'));
+ await page.locator('#return-campaign').click();await page.locator('#open-atlas').waitFor();
+ assert.equal((await page.locator('.top-stats .stat strong').first().innerText()).replace(/\D/g,''),atlasTreasury.replace(/\D/g,''),'treasury survives the switch to campaign');
+ await page.locator('#open-atlas').click();
+ await page.waitForFunction(date=>document.querySelector('#turn-date')?.innerText===date,atlasDate);
+ assert.equal(await page.locator('#turn-date').innerText(),atlasDate,'date survives the round trip');
+ assert.equal(await page.locator('#start-overlay').isHidden(),true,'transferred game is not replaced by onboarding');
+ assert.equal(await page.evaluate(()=>localStorage.getItem('spqr-save-3')),'preserve-existing-slot','switching does not overwrite save slots');
+ await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();
+ await page.locator('[data-character="cicero"]').click();assert.match(await page.locator('#command-detail').innerText(),/65 \/ 100/,'character state survives both switches');
+ assert.deepEqual(errors,[],'uncaught browser errors');console.log('Browser smoke passed: atlas, travel, correspondence, spy, turns, and campaign view handoff.');
 } finally {await browser.close()}
+

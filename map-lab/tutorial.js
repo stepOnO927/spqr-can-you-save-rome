@@ -1,5 +1,5 @@
 // The tutorial advances only when actual campaign actions are reported by the UI.
-export function createTutorial({language,onReset,onMode}){
+export function createTutorial({language,onReset,onMode,skipInitial=false}){
  let step=-1, running=false, previous=null, pulseTimer=null;
  const $=s=>document.querySelector(s), box=$('#guide'), arrow=$('#guide-pointer');
  const copy={en:{skip:'Skip',continue:'Continue',finish:'Begin independent play',step:'GUIDED CAMPAIGN',invalid:'That action is unavailable. Choose the highlighted option.',wrong:'That is not the current tutorial step. Choose the highlighted option.',steps:[
@@ -43,6 +43,6 @@ export function createTutorial({language,onReset,onMode}){
  $('#start-game').onclick=()=>{const mode=$('#difficulty').value;onReset(mode,'caesar');onMode(mode);start.hidden=true;localStorage.setItem('spqr-onboarded','1');begin()};
  $('#start-free').onclick=()=>{const mode=$('#difficulty').value;onReset(mode,$('#roman-faction').value);onMode(mode);start.hidden=true;localStorage.setItem('spqr-onboarded','1');stop()};
  $('#guide-restart').onclick=openStart;
- if(!localStorage.getItem('spqr-onboarded'))openStart();
+ if(!skipInitial&&!localStorage.getItem('spqr-onboarded'))openStart();
  return {refresh(){renderStart();if(running)render()},stop,isRunning:()=>running};
 }
