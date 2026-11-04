@@ -9,7 +9,7 @@ export const CHARACTER_CATALOG = {
  lepidus:{name:['Marcus Aemilius Lepidus','马尔库斯·埃米利乌斯·雷必达'],birth:null,faction:'caesar',role:['Roman politician','罗马政治人物'],culture:['Roman','罗马'],source:'https://brockhaus.de/ecs/enzy/article/lepidus-20'},
  scipio:{name:['Quintus Caecilius Metellus Scipio','梅特卢斯·西庇阿'],birth:null,faction:'senate',role:['Roman senator and commander','罗马元老与指挥官'],culture:['Roman','罗马'],source:'https://academic.oup.com/edited-volume/61673/chapter-abstract/548509305'},
  cleopatra:{name:['Cleopatra VII','克娄巴特拉七世'],birth:[-70,-69],faction:'egypt',role:['Ptolemaic co-ruler','托勒密王朝共同统治者'],culture:['Ptolemaic Egyptian','托勒密埃及'],source:'https://www.metmuseum.org/toah/hd/ptol/hd_ptol.htm'},
- ptolemy:{name:['Ptolemy XIII','托勒密十三世'],birth:null,faction:'egypt',role:['Ptolemaic co-ruler','托勒密王朝共同统治者'],culture:['Ptolemaic Egyptian','托勒密埃及'],source:'https://www.metmuseum.org/toah/hd/gkru/hd_gkru.htm'},
+ ptolemy:{name:['Ptolemy XIII','托勒密十三世'],birth:[-62,-61],faction:'egypt',role:['Ptolemaic co-ruler','托勒密王朝共同统治者'],culture:['Ptolemaic Egyptian','托勒密埃及'],source:'https://www.metmuseum.org/toah/hd/gkru/hd_gkru.htm'},
  orodes:{name:['Orodes II','奥罗德二世'],birth:null,faction:'parthia',role:['Arsacid king','安息阿尔沙克王朝国王'],culture:['Parthian','帕提亚'],source:'https://www.iranicaonline.org/articles/orodes-ii/'},
  pacorus:{name:['Pacorus I','帕科鲁斯一世'],birth:null,faction:'parthia',role:['Arsacid prince','安息王子'],culture:['Parthian','帕提亚'],source:'https://www.iranicaonline.org/articles/armenia-ii/'},
  artavasdes:{name:['Artavasdes II','阿尔塔瓦兹德二世'],birth:null,faction:'armenia',role:['King of Armenia','亚美尼亚国王'],culture:['Armenian','亚美尼亚'],source:'https://www.iranicaonline.org/articles/armenia-ii/'},
