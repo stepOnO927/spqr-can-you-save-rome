@@ -129,7 +129,7 @@ test('age estimates from different dates are not treated as contradictory curren
 
 test('different inquiry questions persist and do not overwrite leadership knowledge',()=>{
  const s=newGame();assert.equal(sendInquiry(s,'caesar','egypt','successor').ok,true);assert.equal(s.inquiries[0].subject,'successor');s.inquiries[0].remaining=1;
- for(let i=0;i<20;i++){const probe=JSON.parse(JSON.stringify(s));probe.seed=(i*7000013)>>>0;tick(probe);if(probe.inquiries[0].status==='answered'){assert.match(probe.inquiries[0].claim[0],/successor/i);assert.equal(probe.knowledge.caesar.egypt.reports.length,0);return}}assert.fail('No answered inquiry in test seeds');
+ for(let i=0;i<20;i++){const probe=JSON.parse(JSON.stringify(s));probe.seed=(i*7000013)>>>0;tick(probe);if(probe.inquiries[0].status==='answered'){assert.match(probe.inquiries[0].claim[0],/successor/i);assert.equal(probe.knowledge.caesar.egypt.reports[0].kind,'succession');assert.equal(probe.knowledge.caesar.egypt.reports[0].value,'unknown');assert.deepEqual(knownLeaders(probe,'caesar','egypt'),['cleopatra','ptolemy']);return}}assert.fail('No answered inquiry in test seeds');
 });
 
 test('surviving joint ruler remains in office when a co-ruler dies',()=>{
