@@ -11,6 +11,9 @@ try{
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});await page.locator('#start-free').click();
  await page.locator('[data-city="ROMA"]').waitFor();await page.waitForTimeout(8000);
+ const library='**/html2canvas@1.4.1/**';await page.route(library,route=>route.abort());await page.locator('#capture').click();
+ await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('截图失败')&&!document.querySelector('#capture')?.disabled);
+ await page.unroute(library);
  const [download]=await Promise.all([page.waitForEvent('download',{timeout:90000}),page.locator('#capture').click()]);
  assert.equal(download.suggestedFilename(),'spqr-map-1920x1080.png');
  await download.saveAs('capture-control-1920x1080.png');
