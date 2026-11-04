@@ -1,16 +1,16 @@
 import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=1';
 import historical from '../historical-territories.js';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=32';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=33';
 import {FACTIONS} from '../data.js?v=8';
 import {identity,factionMark} from '../identity.js?v=1';
-import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=9';
-import {createCharacterUI} from './character-ui.js?v=24';
-import {reportedArmies} from '../character-system.js?v=20';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=10';
+import {createCharacterUI} from './character-ui.js?v=25';
+import {reportedArmies} from '../character-system.js?v=21';
 import {createTutorial} from './tutorial.js?v=4';
 import {friendlyPersonnelInTheater} from './personnel.js?v=1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=1';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=2';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=3';
 
 let state = newGame();
 let objectivesOpen=true;let currentMapMode='political';
@@ -164,7 +164,7 @@ const helpEntries=[
  {kind:'game',en:'Letters and direct questions',zh:'书信与直接询问',control:'#factions',enBody:'A direct inquiry costs 3 treasury and normally takes 2–5 months. A letter or reply may be lost; the court may refuse, and its answer is unverified. Other diplomatic buttons currently resolve immediately.',zhBody:'直接询问消耗3国库，通常需要2至5个月。信件或回信可能遗失，对方可能拒答，官方答复未经独立核实。其他外交按钮目前即时结算。'},
  {kind:'game',en:'Spies, captured agents and release',zh:'间谍、被俘与释放',control:'#factions',enBody:'A spy costs 12 treasury and takes 4 months; discovery or capture harms relations. Each faction has three agents: missions and captivity occupy capacity. A release letter costs 8 treasury and takes about 4 months; it may be refused or unanswered.',zhBody:'派遣间谍消耗12国库、需要4个月；被发现或被捕会损害关系。每个势力有3名情报人员，执行任务或被俘会占用人手。请求释放需8国库，约4个月后可能被拒或没有回信。'},
  {kind:'game',en:'Personal meetings and travel',zh:'人物旅行与个人会面',control:'#factions',enBody:'Open your faction and select an independent character to plan a journey. Army commanders and seriously ill characters cannot travel independently; wounds and frailty slow each leg. A personal audience costs 3 treasury and takes 2 months; both people must actually be in the same theater and may not meet. Trust and relations affect acceptance; a successful meeting improves relations by 3.',zhBody:'打开己方势力并选择独立人物以规划旅行。随军指挥官和重病人物不能单独出行，受伤或衰弱会拖慢每段行程。个人会面请求消耗3国库、需要2个月；双方须实际位于同一战区，也可能无法会面。已有信任及势力关系影响接受意愿；成功会面使双方关系提高3。'},
- {kind:'game',en:'Character health and succession',zh:'人物健康与继任',control:'#factions',enBody:'Game health, wounds and illness are simulated, not historical diagnoses. Wounds, service and shortages affect risk. In your faction panel designate a possible successor for 5 treasury; when a leader is incapacitated, changing the acting deputy costs 5. A living co-leader remains in office.',zhBody:'健康、战伤和疾病是游戏模拟，并非历史诊断。战伤、军旅与粮食短缺会影响风险。在己方势力面板可用5国库指定可能的继任者；领导人无法履职时，更换代行官员需5国库。仍在任的共同领导者不会被替换。'},
+ {kind:'game',en:'Character health and succession',zh:'人物健康与继任',control:'#factions',enBody:'Game health, wounds and illness are simulated, not historical diagnoses. Wounds, service and shortages affect risk. In your faction panel designate a possible successor for 5 treasury; when a leader is incapacitated, changing the acting deputy costs 5. A living co-leader remains in office. A commander missing after defeat may regain contact after three months if the faction controls a theater; health events pause while missing.',zhBody:'健康、战伤和疾病是游戏模拟，并非历史诊断。战伤、军旅与粮食短缺会影响风险。在己方势力面板可用5国库指定可能的继任者；领导人无法履职时，更换代行官员需5国库。仍在任的共同领导者不会被替换。战败后失联的指挥官如仍有己方战区，三个月后可重新取得联系；失联期间暂停健康事件。'},
  {kind:'game',en:'Supporting a reported claimant',zh:'支持已报告的竞争者',control:'#factions',enBody:'In Egypt’s Letters & Intelligence panel, investigate claimants before making an offer. It costs 10 treasury and takes 4 months; it may be accepted, refused or unanswered. Acceptance can increase the claimant’s chance of taking power and reduces court relations by 10. Reports can be outdated or false.',zhBody:'在埃及的“书信与情报”中先调查竞争者，再寄出支持提议。费用10国库、需要4个月，可能被接受、拒绝或没有回信。接受可能增加竞争者夺权机会，并使宫廷关系降低10；报告也可能过时或错误。'},
  {kind:'game',en:'Research and construction',zh:'研究与建设',enBody:'Research and construction are not implemented in this campaign slice.',zhBody:'当前战役片段尚未实现研究与建设。'},
  {kind:'history',en:'Who was Julius Caesar?',zh:'尤利乌斯·凯撒是谁？',enBody:'Julius Caesar was a Roman general and politician. In 49 BCE his crossing of the Rubicon preceded the civil war against Pompey and the Senate.',zhBody:'尤利乌斯·凯撒是罗马将领和政治人物。公元前49年，他越过卢比孔河，随后与庞培和元老院爆发内战。'},
