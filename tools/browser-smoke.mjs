@@ -72,6 +72,13 @@ try{
  assert.equal(await page.evaluate(()=>localStorage.getItem('spqr-save-3')),'preserve-existing-slot','switching does not overwrite save slots');
  await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();
  await page.locator('[data-character="cicero"]').click();assert.match(await page.locator('#command-detail').innerText(),/65 \/ 100/,'character state survives both switches');
+ // An old enemy sighting remains inspectable even when the real unit no longer exists.
+ await page.locator('#save-slot').selectOption('2');await page.locator('#save').click();
+ await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-save-2'));state.armies=state.armies.filter(a=>a.id!=='xiii');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state}));});
+ await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});await page.locator('#open-atlas').waitFor();
+ await page.locator('[data-army="xiii"]').click({force:true});
+ assert.match(await page.locator('.selected-army').innerText(),/第十三军团/);
+ assert.match(await page.locator('.selected-army').innerText(),/上次报告.*当前位置、兵力和状态未知/);
  assert.deepEqual(errors,[],'uncaught browser errors');console.log('Browser smoke passed: atlas, travel, correspondence, spy, turns, and campaign view handoff.');
 } finally {await browser.close()}
 
