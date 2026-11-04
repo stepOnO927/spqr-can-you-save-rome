@@ -34,14 +34,14 @@ test('a forwarded report with missing provenance does not count as an independen
 test('a single report cannot promote itself to confirmed without independent evidence',()=>{
  const s=newGame('caesar'),r=addReport(s,'caesar','egypt',{kind:'stability',value:'stable',source:'envoy',confidence:'confirmed'});assert.equal(r.confidence,'unverified');assert.equal(r.verified,false);assert.equal(reportEvidence(s,'caesar','egypt',r).support.length,1);
 });
-test('monthly time expires a supporting source and updates the visible leadership confidence',()=>{
- const s=newGame('caesar'),t='egypt';for(const [month,source] of [[1,'spy'],[8,'envoy'],[12,'travelers']]){s.month=month;addReport(s,'caesar',t,{kind:'leaders',leaders:['ptolemy'],source,confidence:'unverified'})}
+test('same-month independent reports expire together as evidence ages',()=>{
+ const s=newGame('caesar'),t='egypt';for(const source of ['spy','envoy','travelers'])addReport(s,'caesar',t,{kind:'leaders',leaders:['ptolemy'],source,confidence:'unverified'});
  const current=s.knowledge.caesar.egypt.reports[0];assert.equal(current.confidence,'confirmed');s.year=-47;s.month=1;tick(s);
- assert.equal(current.confidence,'credible');assert.equal(current.verified,false);assert.deepEqual(reportEvidence(s,'caesar',t,current).support.map(x=>x.family).sort(),['court','travelers']);assert.equal(leadershipIntelligence(s,'caesar',t).confidence,'credible');assert.equal(s.knowledge.senate.egypt.reports.length,0);
+ assert.equal(leadershipIntelligence(s,'caesar',t).confidence,'outdated');assert.equal(reportEvidence(s,'caesar',t,current).unavailable,true);assert.equal(s.knowledge.senate.egypt.reports.length,0);
 });
-test('a conflict can expire on a normal turn without a new mission',()=>{
- const s=newGame('caesar');s.month=1;addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'spy',confidence:'unverified'});s.month=2;const newer=addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'envoy',confidence:'unverified'});assert.equal(newer.confidence,'disputed');
- s.year=-47;s.month=1;tick(s);assert.equal(newer.confidence,'unverified');assert.deepEqual(reportEvidence(s,'caesar','egypt',newer).conflict,[]);
+test('reports observed in different months form a timeline rather than a contradiction or corroboration',()=>{
+ const s=newGame('caesar');s.month=1;const old=addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'spy',confidence:'unverified'});s.month=2;const newer=addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'envoy',confidence:'unverified'});assert.equal(newer.confidence,'unverified');let e=reportEvidence(s,'caesar','egypt',newer);assert.deepEqual(e.conflict,[]);assert.deepEqual(e.differentTime.map(x=>x.family),['spy']);
+ addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'travelers',confidence:'rumor'});assert.equal(newer.confidence,'credible');e=reportEvidence(s,'caesar','egypt',newer);assert.deepEqual(e.support.map(x=>x.family).sort(),['court','travelers']);assert.equal(old.confidence,'unverified');
 });
 test('loading an old save recalculates fresh confidence without deleting old reports',()=>{
  const s=newGame('caesar');for(const source of ['spy','envoy','travelers'])addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy'],source,confidence:'unverified'});s.year=-47;s.month=2;
