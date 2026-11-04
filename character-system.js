@@ -45,6 +45,9 @@ export function addReport(s,actor,target,report){
 }
 export function publicLeaderClaim(s,target){initializeWorld(s);const ids=s.world.leadership[target]||[];return [ids.length?names(ids,0):'Authority uncertain',ids.length?names(ids,1):'执政者不明']}
 export function reportedClaimants(s,actor,target){initializeWorld(s);return [...new Set((s.knowledge[actor]?.[target]?.reports||[]).filter(r=>r.kind==='claimants').flatMap(r=>r.leaders||[]).filter(id=>CHARACTER_CATALOG[id]?.faction===target))]}
+export function reportedHealthSubjects(s,actor,target){
+ initializeWorld(s);return [...new Set([...(s.knowledge[actor]?.[target]?.reportedLeaders||[]),...reportedClaimants(s,actor,target)].filter(id=>CHARACTER_CATALOG[id]))];
+}
 export function supportClaimant(s,actor,target,claimant){
  initializeWorld(s);if(actor!==s.player||actor===target||target!=='egypt'||!reportedClaimants(s,actor,target).includes(claimant)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(s.operations.some(o=>o.actor===actor&&o.target===target&&o.type==='support'&&o.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<10)return {ok:false,reason:'treasury'};
@@ -54,7 +57,7 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||actor===target||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
  if(!['health','leaders','strength','claimants','stability','succession'].includes(subject))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
- if(subject==='health'&&type!=='exchange'&&characterId&&!s.knowledge[actor]?.[target]?.reportedLeaders?.includes(characterId))return {ok:false,reason:'identity'};
+ if(subject==='health'&&type!=='exchange'&&characterId&&!reportedHealthSubjects(s,actor,target).includes(characterId))return {ok:false,reason:'identity'};
  const partners=s.alliances.filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)).filter(id=>id!==target&&s.factions[id]);
  if(type==='exchange'&&(!partners.length||(partnerId&&!partners.includes(partnerId))))return {ok:false,reason:'alliance'};
  if(type==='spy'&&!availableAgents(s,actor))return {ok:false,reason:'agents'};
@@ -64,7 +67,7 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
 }
 export function queueMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;
- const {duration,partner,cost}=plan,subjectCharacter=subject==='health'&&type!=='exchange'?(characterId||s.knowledge[actor]?.[target]?.reportedLeaders?.[0]||null):null;
+ const {duration,partner,cost}=plan,subjectCharacter=subject==='health'&&type!=='exchange'?(characterId||reportedHealthSubjects(s,actor,target)[0]||null):null;
  s.factions[actor].treasury-=cost;s.operations.unshift({actor,target,type,subject,partner,subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month});
  if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months.`,`已派出${({spy:'间谍',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月。`);return {ok:true,duration};
 }
@@ -85,7 +88,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   const copy={kind:prior.kind,character:prior.character,value:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'};
   addReport(s,op.actor,op.target,copy);op.status='complete';if(op.actor===s.player)notify(s,'An ally forwarded an existing report; its original date and source still matter.','盟友转交了一份既有报告；仍需留意原始日期与来源。');continue
  }
- const healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(s.knowledge[op.actor]?.[op.target]?.reportedLeaders?.[0]||null),healthPerson=s.world.characters[healthId];
+ const healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(reportedHealthSubjects(s,op.actor,op.target)[0]||null),healthPerson=s.world.characters[healthId];
  op.status='complete';const source=op.type,low=op.type==='travelers',hostile=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target)),contested=(s.world.claimants[op.target]||[]).length>0,investigated=op.subject==='health'?healthPerson:person,concealment=hostile||contested||investigated?.health==='seriously_ill'||investigated?.health==='dying',falsehood=q<.45&&concealment;let report;
  if(op.subject==='health'){const value=healthPerson?(falsehood?'healthy':healthPerson.health):'unknown';report={kind:'health',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='claimants'){const candidates=falsehood?[]:[...(s.world.claimants[op.target]||[])];report={kind:'claimants',leaders:candidates,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
