@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=45';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=46';
 import {initializeGovernments,advanceGovernments} from './governance.js?v=14';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=9';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=14';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=46';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=47';
 import {advanceOffices,officeEffects} from './office-system.js?v=4';
 import {advanceConspiracies} from './conspiracies.js?v=6';
 export {queueMission};
@@ -156,7 +156,7 @@ function resolveInquiries(s){
     addReport(s,letter.actor,letter.target,{kind:'succession',value:disclose?plan:'unknown',source:'official',confidence:'unverified',reliability:'unknown'});
    }else if(subject==='availability')letter.claim=['The court has made no binding commitment to a meeting.','宫廷尚未就会面作出承诺。'];
    else if(subject==='representative')letter.claim=['An unnamed official may represent the court.','一名未具名官员可代表宫廷。'];
-   else{letter.claim=stated.length?[stated.map(id=>CHARACTER_CATALOG[id].name[0]).join(', '),stated.map(id=>CHARACTER_CATALOG[id].name[1]).join('、')]:['Authority uncertain','执政者不明'];addReport(s,letter.actor,letter.target,{kind:'leaders',leaders:[...stated],source:'official',confidence:'unverified',reliability:'unknown'})}
+   else{letter.claim=stated.length?[stated.map(id=>CHARACTER_CATALOG[id].name[0]).join(', '),stated.map(id=>CHARACTER_CATALOG[id].name[1]).join('、')]:['Authority uncertain','执政者不明'];addReport(s,letter.actor,letter.target,{kind:'leaders',leaders:[...stated],exhaustive:true,source:'official',confidence:'unverified',reliability:'unknown'})}
    letter.reportYear=s.year;letter.reportMonth=s.month;if(letter.actor===s.player)log(s,`An unverified official response arrived from ${FACTIONS[letter.target].short[0]}.`,`收到${FACTIONS[letter.target].short[1]}的官方答复，内容尚未经独立核实。`);
   }
  }
