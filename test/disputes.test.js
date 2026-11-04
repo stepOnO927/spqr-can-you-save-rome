@@ -46,3 +46,17 @@ test('accepted backing can affect a claimant’s chance without guaranteeing suc
  function trial(support,seed){const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.world.characters.ptolemy.alive=false;assignSuccession(s,'egypt');s.month=2;s.world.disputes.egypt.months=5;s.world.disputes.egypt.support={cleopatra:support};s.world.intelSeed=seed;advanceDisputes(s);return s}
  const q=seedFor(.6,.62);assert.deepEqual(trial(0,q).world.leadership.egypt,[]);assert.deepEqual(trial(30,q).world.leadership.egypt,['cleopatra']);assert.deepEqual(trial(30,seedFor(.9,.95)).world.leadership.egypt,[]);
 });
+
+test('a rival claimant is not automatically installed as regent over an incapacitated incumbent',()=>{
+ const s=newGame('caesar');assert.equal(contestLeadership(s,'egypt','cleopatra'),true);s.world.characters.ptolemy.health='seriously_ill';const g=deriveGovernment(s,'egypt');assert.equal(g.kind,'regency');assert.deepEqual(g.nominal,['ptolemy']);assert.deepEqual(g.acting,[]);assert.deepEqual(s.world.claimants.egypt,['cleopatra']);assert.deepEqual(knownLeaders(s,'caesar','egypt'),['cleopatra','ptolemy']);
+});
+test('an incapacitated or traveling claimant cannot establish authority until available',()=>{
+ for(const change of [c=>c.health='seriously_ill',c=>c.health='dying',c=>c.travel={destination:'egypt',legs:[],remaining:1},c=>c.missing={year:-49,month:1}]){
+  const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.world.characters.ptolemy.alive=false;assignSuccession(s,'egypt');s.month=2;change(s.world.characters.cleopatra);s.world.disputes.egypt.months=5;s.world.intelSeed=seedFor(.3,.35);advanceDisputes(s);assert.deepEqual(s.world.leadership.egypt,[]);assert.deepEqual(s.world.claimants.egypt,['cleopatra']);
+  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));restored.world.characters.cleopatra.health='healthy';delete restored.world.characters.cleopatra.travel;delete restored.world.characters.cleopatra.missing;restored.world.disputes.egypt.months=5;restored.world.intelSeed=seedFor(.3,.35);advanceDisputes(restored);assert.deepEqual(restored.world.leadership.egypt,['cleopatra']);
+ }
+});
+test('an unavailable claimant cannot instigate or resolve a court struggle',()=>{
+ const opening=newGame('caesar');opening.world.characters.cleopatra.health='seriously_ill';assert.equal(contestLeadership(opening,'egypt','cleopatra'),false);
+ for(const change of [c=>c.health='seriously_ill',c=>c.travel={destination:'egypt',legs:[],remaining:1}]){const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');change(s.world.characters.cleopatra);s.factions.egypt.stability=20;s.world.disputes.egypt.months=5;s.world.intelSeed=seedFor(.1,.12);advanceDisputes(s);assert.deepEqual(s.world.leadership.egypt,['ptolemy']);assert.deepEqual(s.world.claimants.egypt,['cleopatra']);assert.equal(s.world.disputeHistory.length,0)}
+});
