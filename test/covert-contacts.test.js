@@ -34,3 +34,10 @@ test('old reports can be forwarded without becoming fresh evidence and expired c
  const r=s.knowledge.senate.egypt.reports[0];assert.equal(r.value,'caesar');assert.equal(r.observationYear,-52);assert.equal(r.originSource,'spy');assert.equal(r.verified,false);
  const t=newGame('senate');t.operations.push({type:'support',status:'complete',actor:'caesar',target:'egypt',sentYear:-52,sentMonth:1});queueMission(t,'senate','egypt','spy','contacts');t.world.intelSeed=seedFor(.7,.8);for(let i=0;i<4;i++)advanceOperations(t);assert.equal(t.knowledge.senate.egypt.reports[0].value,'unknown');
 });
+
+test('allied age observations retain their original source and date without revealing hidden facts',()=>{
+ const s=newGame('senate');s.alliances.push(['senate','parthia']);s.world.intelSeed=seedFor(.7,.8);
+ const original=addReport(s,'parthia','egypt',{kind:'age',character:'cleopatra',value:[19,21],source:'meeting',confidence:'unverified',observationYear:-49,observationMonth:1});
+ assert.equal(queueMission(s,'senate','egypt','spy','age').reason,'subject');assert.equal(queueMission(s,'senate','egypt','exchange','age','parthia').ok,true);for(let i=0;i<3;i++)advanceOperations(s);
+ const r=s.knowledge.senate.egypt.reports[0];assert.deepEqual(r.value,[19,21]);assert.notEqual(r.value,original.value);assert.equal(r.originSource,'meeting');assert.equal(r.observationMonth,1);assert.equal(r.verified,false);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+});

@@ -72,7 +72,8 @@ export function supportClaimant(s,actor,target,claimant,representative=null){
 }
 export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
- if(!['health','leaders','strength','claimants','stability','succession','conspiracy','contacts'].includes(subject))return {ok:false,reason:'subject'};
+ if(!['health','age','leaders','strength','claimants','stability','succession','conspiracy','contacts'].includes(subject))return {ok:false,reason:'subject'};
+ if(subject==='age'&&type!=='exchange')return {ok:false,reason:'subject'};
  if(subject==='contacts'&&(!['spy','exchange'].includes(type)||target!=='egypt'))return {ok:false,reason:'subject'};
  if(type==='counter'&&subject!=='conspiracy'||subject==='conspiracy'&&(!['spy','counter','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
@@ -106,7 +107,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.type==='exchange'){
   const partner=op.partner,stillAllied=s.alliances.some(x=>x.includes(op.actor)&&x.includes(partner)),prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>r.kind===op.subject);
   if(!stillAllied||!prior){op.status='failed';continue}
-  const copy={kind:prior.kind,character:prior.character,value:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'};
+  const copy={kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'};
   addReport(s,op.actor,op.target,copy);op.status='complete';if(op.actor===s.player)notify(s,'An ally forwarded an existing report; its original date and source still matter.','盟友转交了一份既有报告；仍需留意原始日期与来源。');continue
  }
  const healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(reportedHealthSubjects(s,op.actor,op.target)[0]||null),healthPerson=s.world.characters[healthId];
