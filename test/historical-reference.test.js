@@ -12,3 +12,7 @@ test('sourced historical death years preserve disputed and unknown entries',()=>
 test('a historical death year does not determine a simulated character’s lifespan',()=>{
  const s=newGame('caesar');s.year=-40;s.month=1;s.world.characters.caesar.health='healthy';advanceCharacters(s);assert.equal(s.world.characters.caesar.alive,true);assert.equal(s.world.leadership.caesar.includes('caesar'),true);
 });
+
+test('approximate single-year birth references remain unbounded and do not create precise simulation ages',async()=>{
+ const {HISTORICAL_BIRTH_ESTIMATES}=await import('../historical-reference.js');const {ageRange}=await import('../characters.js');assert.equal(ageRange('labienus',-49),null);assert.equal(ageRange('lepidus',-49),null);assert.deepEqual(ageRange('ptolemy',-49),[11,13]);assert.match(HISTORICAL_BIRTH_ESTIMATES.labienus.text[1],/误差范围不明/);assert.ok(HISTORICAL_BIRTH_ESTIMATES.ptolemy.sources.length);
+});
