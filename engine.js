@@ -1,9 +1,10 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=22';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=23';
 import {initializeGovernments,advanceGovernments} from './governance.js?v=8';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=10';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies} from './character-system.js?v=24';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies} from './character-system.js?v=25';
 import {advanceOffices,officeEffects} from './office-system.js?v=1';
+import {advanceConspiracies} from './conspiracies.js?v=1';
 export {queueMission};
 
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -278,10 +279,9 @@ export function tick(s){
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   rebellion(s);
-  resolveInquiries(s);advanceOperations(s);advanceAgentRequests(s);advanceCharacters(s);advanceMissingCommanders(s);advanceDisputes(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);
+  resolveInquiries(s);advanceOperations(s);advanceAgentRequests(s);advanceCharacters(s);advanceMissingCommanders(s);advanceDisputes(s);advanceConspiracies(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);
   observeArmies(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
   if(!s.victory&&s.player==='caesar'&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
   return s;
 }
-
