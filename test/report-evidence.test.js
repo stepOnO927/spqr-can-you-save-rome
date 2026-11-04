@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
-import {addReport,reportEvidence,queueMission,advanceOperations} from '../character-system.js';
+import {addReport,reportEvidence,queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js';
 import {leadershipIntelligence} from '../map-lab/intelligence-summary.js';
 
 test('evidence identifies independent support and conflicts without counting forwarded duplicates',()=>{
@@ -85,4 +85,27 @@ test('a partial matching list cannot independently verify an asserted complete r
 });
 test('allied forwarding retains a source claim of completeness without treating it as truth',()=>{
  const s=newGame('caesar');s.alliances.push(['caesar','numidia']);addReport(s,'numidia','egypt',{kind:'leaders',leaders:['ptolemy'],exhaustive:true,source:'envoy',confidence:'unverified'});assert.equal(queueMission(s,'caesar','egypt','exchange','leaders','numidia').ok,true);s.world.intelSeed=1972+5000;for(let i=0;i<3;i++)advanceOperations(s);const copied=s.knowledge.caesar.egypt.reports[0];assert.equal(copied.exhaustive,true);assert.equal(copied.originSource,'court');assert.equal(copied.verified,false);
+});
+
+test('names in older partial reports remain investigable leads, without becoming current leaders',()=>{
+ let s=newGame('caesar');s.month=2;addReport(s,'caesar','egypt',{kind:'leaders',leaders:['cleopatra'],source:'travelers'});
+ s.month=3;addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy'],source:'spy'});
+ assert.deepEqual(s.knowledge.caesar.egypt.reportedLeaders,['ptolemy']);
+ assert.ok(reportedHealthSubjects(s,'caesar','egypt').includes('cleopatra'));
+ assert.equal(queueMission(s,'caesar','egypt','spy','health',null,'cleopatra').ok,true);
+ assert.ok(!reportedHealthSubjects(s,'senate','egypt').includes('antony'));
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(s.knowledge.caesar.egypt.reportedLeaders,['ptolemy']);
+ assert.ok(reportedHealthSubjects(s,'caesar','egypt').includes('cleopatra'));
+});
+
+test('lead eligibility comes from the observer’s records, not the simulated court',()=>{
+ const s=newGame('caesar');s.knowledge.caesar.egypt.reportedLeaders=[];s.knowledge.senate.egypt.reportedLeaders=[];
+ s.world.leadership.egypt=['cleopatra'];s.world.claimants.egypt=['ptolemy'];
+ assert.deepEqual(reportedHealthSubjects(s,'caesar','egypt'),[]);
+ addReport(s,'senate','egypt',{kind:'claimants',leaders:['ptolemy'],source:'travelers'});
+ assert.deepEqual(reportedHealthSubjects(s,'caesar','egypt'),[]);
+ assert.deepEqual(reportedHealthSubjects(s,'senate','egypt'),['ptolemy']);
+ addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'unknown',source:'spy'});
+ assert.deepEqual(reportedHealthSubjects(s,'caesar','egypt'),['cleopatra']);
 });
