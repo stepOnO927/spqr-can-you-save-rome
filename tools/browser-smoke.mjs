@@ -41,7 +41,7 @@ try{
  assert.match(await page.locator('#office-feedback').innerText(),/费用5国库/);await page.locator('#office-feedback button').click();
  assert.equal(Number((await page.locator('[data-help="treasury"] b').innerText()).replace(/,/g,'')),cashBeforeOffice-5);
  await page.locator('[data-character="cicero"]').click();assert.match(await page.locator('#command-detail').innerText(),/财务专员/);
- assert.equal(await page.locator('.historical-entry').getAttribute('open'),null);await page.locator('.historical-entry summary').click();assert.match(await page.locator('.historical-entry').innerText(),/不决定模拟人物的寿命/);assert.match(await page.locator('.historical-entry').innerText(),/待进一步核实/);assert.match(await page.locator('.historical-entry').innerText(),/本项目尚未收录可核验资料/);
+ assert.equal(await page.locator('.historical-entry').getAttribute('open'),null);await page.locator('.historical-entry summary').click();assert.match(await page.locator('.historical-entry').innerText(),/不决定模拟人物的寿命/);assert.match(await page.locator('.historical-entry').innerText(),/待进一步核实/);assert.match(await page.locator('.historical-entry').innerText(),/历史卒年: 公元前43年/);assert.match(await page.locator('.historical-entry').innerText(),/卒年来源/);
  await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();await page.locator('[data-office-dismiss="finance"]').click();await page.locator('#office-feedback button').click();
  await page.locator('#succession-choice').selectOption('cicero');await page.locator('#succession-support').click();
  assert.match(await page.locator('#succession-feedback').innerText(),/其他候选人忠诚降低3/);await page.locator('#succession-feedback button').click();
