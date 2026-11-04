@@ -1,6 +1,6 @@
 import {initializeWorld, CHARACTER_CATALOG, knownLeaders} from './characters.js?v=10';
 import {ROUTES} from './data.js?v=8';
-import {addReport} from './character-system.js?v=25';
+import {addReport} from './character-system.js?v=26';
 import {officeOf} from './office-system.js?v=1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
