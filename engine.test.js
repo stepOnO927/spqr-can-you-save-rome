@@ -27,7 +27,7 @@ test('major powers retain distinct, usable visual identities',()=>{
 
 test('historical polygons map known theaters and leave unmapped Illyricum explicit',()=>{
   const groups=historical.features.flatMap(f=>f.properties.regions);
-  for(const r of REGIONS)assert.equal(groups.filter(x=>x===r.id).length,r.id==='illyricum'?0:1,`${r.id} mapping must reflect available source coverage`);
+  for(const r of REGIONS)assert.equal(groups.filter(x=>x===r.id).length,['illyricum','galatia','bosporus'].includes(r.id)?0:1,`${r.id} mapping must reflect available source coverage`);
   for(const id of ['egypt','numidia','mauretania','armenia','parthia']){const f=historical.features.find(x=>x.properties.id===id);assert.ok(f.properties.period[0]<=-49&&f.properties.period[1]>=-49);assert.ok(f.geometry.coordinates.length)}
   assert.ok(adjacent('italiaS').find(e=>e.to==='illyricum').sea);
 });
@@ -205,4 +205,15 @@ test('succession letters can disclose an unverified plan or answer evasively aft
 test('another faction’s outgoing and resolved letters are not published in the player log',()=>{
  const s=newGame('caesar');assert.equal(sendInquiry(s,'senate','egypt','leaders').ok,true);assert.equal(s.log.length,0);s.inquiries[0].remaining=1;s.seed=2500;tick(s);
  assert.notEqual(s.inquiries[0].status,'pending');assert.ok(!s.log.some(e=>/letter|reply|response/i.test(e.en)));assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+});
+
+
+test('new neighboring courts have reported leaders, distinct identities, and delayed inquiries',()=>{
+ const s=newGame('caesar');for(const [id,leader] of [['galatia','deiotarus'],['bosporus','pharnaces']]){assert.equal(region(s,id).owner,id);assert.deepEqual(s.world.leadership[id],[leader]);assert.deepEqual(s.knowledge.caesar[id].reportedLeaders,[leader]);assert.ok(identity(id).abbr);const inquiry=sendInquiry(s,'caesar',id,'leaders');assert.equal(inquiry.ok,true);assert.ok(inquiry.duration>=2);assert.equal(s.inquiries[0].status,'pending')}
+ assert.equal(s.relations['galatia:senate'],25);assert.equal(isAllied(s,'galatia','senate'),false);
+});
+test('legacy campaigns acquire new courts without resetting people, reports, treasury or conquered territory',()=>{
+ const s=newGame('caesar');s.year=-47;s.factions.caesar.treasury=17;s.world.characters.deiotarus.loyalty=37;s.world.characters.pharnaces.alive=false;s.knowledge.caesar.egypt.reports.push({kind:'health',value:'ill',source:'spy',year:-47,month:1});s.inquiries=[{actor:'caesar',target:'egypt',remaining:2,status:'pending'}];for(const id of ['galatia','bosporus']){delete s.factions[id];delete s.world.leadership[id];delete s.knowledge[id];for(const k of Object.values(s.knowledge))delete k[id];s.regions=s.regions.filter(x=>x.id!==id);s.armies=s.armies.filter(x=>x.owner!==id)}s.world.characters.deiotarus.faction=null;s.world.characters.pharnaces.faction=null;s.world.characters.deiotarus.location=null;s.world.characters.pharnaces.location=null;
+ let t=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(t.factions.caesar.treasury,17);assert.equal(t.world.characters.deiotarus.loyalty,37);assert.equal(t.world.characters.deiotarus.faction,'galatia');assert.equal(t.world.characters.pharnaces.alive,false);assert.deepEqual(t.world.leadership.bosporus,[]);assert.equal(t.knowledge.caesar.egypt.reports.length,1);assert.equal(t.inquiries[0].remaining,2);assert.ok(t.knowledge.galatia.caesar);assert.ok(t.knowledge.caesar.galatia);
+ t.regions.find(x=>x.id==='galatia').owner='senate';t=upgradeSave(JSON.parse(JSON.stringify(t)));assert.equal(t.regions.find(x=>x.id==='galatia').owner,'senate');assert.equal(t.regions.filter(x=>x.id==='galatia').length,1);
 });
