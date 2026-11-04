@@ -51,6 +51,13 @@ export function advanceGovernments(s){
  initializeGovernments(s);for(const faction of Object.keys(s.world.governments)){
   if(!s.factions[faction]||!s.regions.some(r=>r.owner===faction))continue;
   const before=s.world.governments[faction],after=deriveGovernment(s,faction);s.world.governments[faction]=after;
+  // NPC preparations are internal game state, not an announcement to the player.
+  if(faction!==s.player&&s.month%6===0){
+   const candidates=successorFor(s,faction),current=s.world.successionPlans[faction],leaders=after.nominal.map(id=>s.world.characters[id]);
+   if(current&&!candidates.includes(current))delete s.world.successionPlans[faction];
+   const concern=s.factions[faction].stability<45||leaders.some(c=>c.missing||['frail','seriously_ill','dying'].includes(c.health));
+   if(concern&&leaders.length&&candidates.length&&!s.world.successionPlans[faction]&&s.factions[faction].treasury>=5){s.factions[faction].treasury-=5;s.world.successionPlans[faction]=candidates[0]}
+  }
   if(faction===s.player&&(before.kind!==after.kind||before.acting.join(':')!==after.acting.join(':'))){
    const name=after.acting.map(id=>CHARACTER_CATALOG[id]?.name).filter(Boolean),en=name.map(x=>x[0]).join(', ')||'an unnamed authority',zh=name.map(x=>x[1]).join('、')||'未具名临时官员';
    const text=after.kind==='normal'?['The normal leadership arrangement resumed.','正常领导安排已恢复。']:after.kind==='vacant'?['Leadership is vacant; an unnamed authority administers the government.','领导职位空缺，由未具名临时官员维持政府运作。']:after.kind==='constituent_unavailable'?['One Mauretanian ruler is unable to govern; the separate kingdoms remain distinct.','一位毛里塔尼亚统治者无法履职；两个王国仍各自独立。']:after.kind==='co_ruler_acting'?[`${en} assumes the duties of an incapacitated co-ruler.`,`${zh}代行无法履职的共同统治者职责。`]:after.kind==='acting_command'?[`${en} temporarily assumes the political command.`,`${zh}暂时代行政治指挥职责。`]:[`${en} exercises temporary authority during the ruler’s incapacity.`,`${zh}在统治者无法履职期间暂时代行政务。`];
