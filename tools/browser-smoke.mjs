@@ -1,6 +1,7 @@
 // Runs in CI with Playwright installed separately; the application stays dependency-free.
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+import roads from '../republican-roads.js';
 
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1920,height:1080},deviceScaleFactor:1});
@@ -10,6 +11,13 @@ try{
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});
  await page.locator('#roman-faction').selectOption('senate');await page.locator('#start-free').click();
+ await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
+ const road=roads.features.find(f=>f.properties.id===1550).geometry.coordinates[0][85],mercY=lat=>.5-Math.log((1+Math.sin(lat*Math.PI/180))/(1-Math.sin(lat*Math.PI/180)))/(4*Math.PI);
+ const romeBox=await page.locator('[data-city="ROMA"]').boundingBox(),narboBox=await page.locator('[data-city="NARBO"]').boundingBox(),world=(romeBox.x-narboBox.x)*360/(12.4964-3.003);
+ const roadPoint={x:romeBox.x+world*(road[0]-12.4964)/360,y:romeBox.y+romeBox.height/2+world*(mercY(road[1])-mercY(41.9028))};
+ console.log('Road click calibration',JSON.stringify({romeBox,narboBox,roadPoint,world}));
+ await page.mouse.click(roadPoint.x,roadPoint.y);
+ assert.match(await page.locator('#selection-title').innerText(),/弗拉米尼亚道/);assert.match(await page.locator('#command-detail').innerText(),/不能视为公元前49年逐段实测/);
  await page.locator('#zoom-out').click();await page.waitForFunction(()=>document.body.classList.contains('leader-overview'));
  const labels=(await page.locator('.leader-map-label').allTextContents()).join(' ');assert.match(labels,/共同统治者/);assert.match(labels,/各王国统治者/);assert.match(labels,/罗马派系领袖/);
  await page.locator('#help').click();await page.locator('#help-search').fill('被俘');assert.match(await page.locator('#help-results').innerText(),/8国库/);
