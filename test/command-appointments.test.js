@@ -60,7 +60,7 @@ test('a seriously ill commander is relieved before the army moves or fights',()=
  assert.equal(unit.characterId,null);assert.deepEqual(unit.commander,['Unnamed officer','未具名军官']);assert.equal(person.location,'cisalpine');assert.equal(unit.skill,skill);assert.equal(s.battles[0].attacker.commander[1],'未具名军官');assert.equal(s.world.governments.caesar.kind,'acting_command');assert.ok(s.log.some(x=>x.zh.includes('重病无法指挥')));
 });
 test('death leaves the army rating intact and an eligible successor can be assigned',()=>{
- const s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii'),skill=unit.skill;s.world.characters.caesar.health='dying';s.world.intelSeed=0;advanceCharacters(s);
+ const s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii'),skill=unit.skill;s.world.characters.caesar.health='dying';s.world.intelSeed=1972;advanceCharacters(s);
  assert.equal(s.world.characters.caesar.alive,false);assert.equal(unit.characterId,null);assert.equal(unit.skill,skill);assert.equal(appointCommander(s,unit.id,'antony').ok,true);assert.equal(unit.skill,skill);assert.equal(unit.characterId,'antony');
 });
 test('a missing commander in an old save is detached without revealing a location',()=>{
