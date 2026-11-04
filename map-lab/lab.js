@@ -1,18 +1,18 @@
-import {renderSecurity} from './security-ui.js?v=17';
+import {renderSecurity} from './security-ui.js?v=18';
 import {renderOffices} from './offices-ui.js?v=4';
 import {officeEffects} from '../office-system.js?v=4';
 import {waitForMapIdle} from './capture-wait.js?v=1';
 import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=1';
-import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=21';
+import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=22';
 import historical from '../historical-territories.js';
 import republicanRoads from '../republican-roads.js?v=1';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=69';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=70';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=14';
-import {createCharacterUI} from './character-ui.js?v=67';
-import {reportedArmies} from '../character-system.js?v=50';
+import {createCharacterUI} from './character-ui.js?v=68';
+import {reportedArmies} from '../character-system.js?v=51';
 import {createTutorial} from './tutorial.js?v=6';
 import {friendlyPersonnelInTheater} from './personnel.js?v=1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=2';
@@ -105,6 +105,7 @@ function showFaction(id,section='diplomacy'){
  const content=document.createElement('div');content.className='diplomacy-content';panel.append(content);
  if(section==='intelligence'){
   const letters=(state.inquiries||[]).filter(x=>x.actor===me&&x.target===id);content.innerHTML=`<p class="battle-note">${zh?'直接询问：寄信询问执政者、继承人、会面或代表资格。费用3国库；预计2至5个月，取决于目的地。信件可能丢失，对方可能拒答或含糊答复；答复在途中写成，到达时可能已经过时，也未经独立核实。宫廷有时会指名行使政务的人，但这不保证其拥有谈判权限。':'Ask about leadership, succession, an audience or representation: send a letter for 3 treasury. A reply takes an estimated 2–5 months depending on destination; letters may be lost, declined or answered evasively. A reply is composed before delivery and may be outdated; official claims are not independently verified. A court may name an acting authority, but this does not guarantee negotiating powers.'}</p><select id="inquiry-subject" aria-label="${zh?'询问内容':'Inquiry subject'}"><option value="leaders">${zh?'谁在执政':'Who governs?'}</option><option value="successor">${zh?'谁是继承人':'Who is the successor?'}</option><option value="availability">${zh?'是否可以会面':'Is an audience possible?'}</option><option value="representative">${zh?'谁能代表政府':'Who may represent the court?'}</option></select><button id="send-inquiry">${zh?'寄信询问':'SEND INQUIRY'}</button><div id="letter-feedback" role="status"></div><div class="help-list">${letters.length?letters.map(x=>`<article><small>${x.sentMonth}/${Math.abs(x.sentYear)} BCE · ${zh?'来源：官方书信':'SOURCE: OFFICIAL LETTER'} · ${zh?({leaders:'执政者',successor:'继承人',availability:'会面',representative:'代表资格'}[x.subject||'leaders']):({leaders:'Leadership',successor:'Succession',availability:'Audience',representative:'Representation'}[x.subject||'leaders'])}</small><strong>${x.status==='pending'?(zh?`等待回信 · 约余${x.remaining}个月`:`Awaiting reply · about ${x.remaining} month(s)`):x.status==='no_reply'?(zh?'未收到回信：可能遗失或无人回复':'No reply: correspondence may be lost or unanswered'):x.status==='refused'?(zh?'对方回信拒绝回答':'The court declined to answer'):(zh?'官方答复 · 未经核实':'OFFICIAL RESPONSE · UNVERIFIED')}</strong>${x.claim?`<p>${esc(n(x.claim))}</p><small>${x.responseYear!=null?(zh?'作答':'Composed')+' '+x.responseMonth+'/'+Math.abs(x.responseYear)+' BCE · ':''}${zh?'收到':'Received'} ${x.reportMonth}/${Math.abs(x.reportYear)} BCE · ${zh?'游戏内官方说法，可能已过时，未独立核实':'in-game official claim; may be outdated and is not independently verified'}</small>`:''}</article>`).join(''):`<p>${zh?'尚无书信记录。':'No correspondence yet.'}</p>`}</div>`;
+  const history=(state.knowledge?.[me]?.[id]?.sightingHistory||[]).slice(0,8);if(history.length){const box=document.createElement('div');box.className='help-list';box.id='sighting-history';box.innerHTML=`<strong>${zh?'旧军队目击记录':'PAST ARMY SIGHTINGS'}</strong><p>${zh?'再次观察原战区时未发现该军队；去向和命运未知。':'The army was not found when its former theater was rechecked; its destination and fate are unknown.'}</p>`+history.map(x=>`<p>${esc(n(x.name))} · ${esc(n(region(state,x.region)?.name)||(zh?'未知战区':'Unknown theater'))} · ${zh?'目击':'Seen'} ${x.month}/${Math.abs(x.year)} BCE · ${zh?'复查':'Rechecked'} ${x.checkedMonth}/${Math.abs(x.checkedYear)} BCE</p>`).join('');content.append(box)}
   characterUI.addMissions(content,id);
   const btn=content.querySelector('#send-inquiry');btn.disabled=letters.some(x=>x.status==='pending')||f.treasury<3;btn.title=btn.disabled?(zh?'已有待回复信件或国库不足3。':'A letter is pending or treasury is below 3.'):'';btn.onclick=()=>{const result=sendInquiry(state,me,id,content.querySelector('#inquiry-subject').value);if(result.ok){renderHud();showFaction(id,'intelligence')}else content.querySelector('#letter-feedback').textContent=zh?'无法寄信，请检查国库及待回复信件。':'Cannot send; check treasury and pending letters.'};return;
  }
