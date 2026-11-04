@@ -50,10 +50,11 @@ export function supportClaimant(s,actor,target,claimant){
  if(s.operations.some(o=>o.actor===actor&&o.target===target&&o.type==='support'&&o.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<10)return {ok:false,reason:'treasury'};
  s.factions[actor].treasury-=10;s.operations.unshift({actor,target,type:'support',claimant,remaining:4,status:'pending',sentYear:s.year,sentMonth:s.month});notify(s,'An offer of support was sent; a response may take four months.','已寄出支持提议；回信可能需要四个月。');return {ok:true};
 }
-export function previewMission(s,actor,target,type,subject='health',partnerId=null){
+export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||actor===target||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
  if(!['health','leaders','strength','claimants','stability','succession'].includes(subject))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
+ if(subject==='health'&&type!=='exchange'&&characterId&&!s.knowledge[actor]?.[target]?.reportedLeaders?.includes(characterId))return {ok:false,reason:'identity'};
  const partners=s.alliances.filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)).filter(id=>id!==target&&s.factions[id]);
  if(type==='exchange'&&(!partners.length||(partnerId&&!partners.includes(partnerId))))return {ok:false,reason:'alliance'};
  if(type==='spy'&&!availableAgents(s,actor))return {ok:false,reason:'agents'};
@@ -61,9 +62,10 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
  if(s.operations.some(x=>x.actor===actor&&x.target===target&&x.status==='pending'&&x.type===type))return {ok:false,reason:'pending'};
  return {ok:true,cost:cfg.cost,duration:missionDuration(s,actor,target,type),partner:type==='exchange'?(partnerId||partners[0]):undefined};
 }
-export function queueMission(s,actor,target,type,subject='health',partnerId=null){
- const plan=previewMission(s,actor,target,type,subject,partnerId);if(!plan.ok)return plan;
- const {duration,partner,cost}=plan;s.factions[actor].treasury-=cost;s.operations.unshift({actor,target,type,subject,partner,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month});
+export function queueMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
+ const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;
+ const {duration,partner,cost}=plan,subjectCharacter=subject==='health'&&type!=='exchange'?(characterId||s.knowledge[actor]?.[target]?.reportedLeaders?.[0]||null):null;
+ s.factions[actor].treasury-=cost;s.operations.unshift({actor,target,type,subject,partner,subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month});
  if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months.`,`已派出${({spy:'间谍',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月。`);return {ok:true,duration};
 }
 export function advanceOperations(s){initializeWorld(s);for(const op of s.operations){if(op.status!=='pending'||--op.remaining>0)continue;const q=rand(s),id=(s.world.leadership[op.target]||[])[0],person=s.world.characters[id];
@@ -83,8 +85,9 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   const copy={kind:prior.kind,character:prior.character,value:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'};
   addReport(s,op.actor,op.target,copy);op.status='complete';if(op.actor===s.player)notify(s,'An ally forwarded an existing report; its original date and source still matter.','盟友转交了一份既有报告；仍需留意原始日期与来源。');continue
  }
- op.status='complete';const source=op.type,low=op.type==='travelers',hostile=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target)),contested=(s.world.claimants[op.target]||[]).length>0,concealment=hostile||contested||person?.health==='seriously_ill'||person?.health==='dying',falsehood=q<.45&&concealment;let report;
- if(op.subject==='health'){const value=person?(falsehood?'healthy':person.health):'unknown';report={kind:'health',character:id||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
+ const healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(s.knowledge[op.actor]?.[op.target]?.reportedLeaders?.[0]||null),healthPerson=s.world.characters[healthId];
+ op.status='complete';const source=op.type,low=op.type==='travelers',hostile=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target)),contested=(s.world.claimants[op.target]||[]).length>0,investigated=op.subject==='health'?healthPerson:person,concealment=hostile||contested||investigated?.health==='seriously_ill'||investigated?.health==='dying',falsehood=q<.45&&concealment;let report;
+ if(op.subject==='health'){const value=healthPerson?(falsehood?'healthy':healthPerson.health):'unknown';report={kind:'health',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='claimants'){const candidates=falsehood?[]:[...(s.world.claimants[op.target]||[])];report={kind:'claimants',leaders:candidates,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='strength'){let count=s.armies.filter(a=>a.owner===op.target).reduce((x,a)=>x+a.men,0);if(falsehood)count=Math.round(count*.65/1000)*1000;else count=Math.round(count/1000)*1000;report={kind:'strength',value:count,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='stability'){
@@ -168,3 +171,4 @@ export function advanceMissingCommanders(s){
 // Local reports update only at a controlled frontier; unseen reports remain stale.
 export function observeArmies(s){initializeWorld(s);for(const viewer of Object.keys(s.knowledge)){for(const unit of s.armies){if(unit.owner===viewer||unit.move||!s.knowledge[viewer]?.[unit.owner])continue;const local=s.regions.some(r=>r.owner===viewer&&(r.id===unit.region||ROUTES.some(x=>(x[0]===r.id&&x[1]===unit.region)||(x[1]===r.id&&x[0]===unit.region))));if(local)s.knowledge[viewer][unit.owner].sightings[unit.id]={id:unit.id,name:[...unit.name],owner:unit.owner,region:unit.region,year:s.year,month:s.month}}}}
 export function reportedArmies(s,viewer){initializeWorld(s);const result=[];for(const [owner,k] of Object.entries(s.knowledge[viewer]||{})){if(owner===viewer)continue;for(const x of Object.values(k.sightings||{}))result.push({...x,reported:true})}return result}
+
