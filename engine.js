@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=30';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=31';
 import {initializeGovernments,advanceGovernments} from './governance.js?v=9';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=11';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant} from './character-system.js?v=31';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=32';
 import {advanceOffices,officeEffects} from './office-system.js?v=2';
 import {advanceConspiracies} from './conspiracies.js?v=2';
 export {queueMission};
@@ -38,12 +38,12 @@ export function newGame(player='caesar'){
 }
 
 export function upgradeSave(s){
-  if(s.version===3)return initializeGovernments(s);
+  if(s.version===3)return refreshReportConfidence(initializeGovernments(s));
   if(s.version!==2)throw new Error('Unsupported save');
   const old=s.relations||{}, oldAllies=s.alliances||[];
   s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));
   s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3;
-  return initializeGovernments(s);
+  return refreshReportConfidence(initializeGovernments(s));
 }
 
 export function previewMarch(s,armyId,destination){
@@ -282,6 +282,7 @@ function aiTurn(s,owner){
 export function tick(s){
   initializeWorld(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
   s.month++;if(s.month>12){s.month=1;s.year++}
+  refreshReportConfidence(s);
   advanceOffices(s);economy(s);
   // Travel and sieges resolve before new AI orders.
   for(const a of [...s.armies]){
