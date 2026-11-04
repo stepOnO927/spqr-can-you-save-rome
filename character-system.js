@@ -47,7 +47,7 @@ export function addReport(s,actor,target,report){
 export function publicLeaderClaim(s,target){initializeWorld(s);const ids=s.world.leadership[target]||[];return [ids.length?names(ids,0):'Authority uncertain',ids.length?names(ids,1):'执政者不明']}
 export function reportedClaimants(s,actor,target){initializeWorld(s);return [...new Set((s.knowledge[actor]?.[target]?.reports||[]).filter(r=>r.kind==='claimants').flatMap(r=>r.leaders||[]).filter(id=>CHARACTER_CATALOG[id]?.faction===target))]}
 export function reportedHealthSubjects(s,actor,target){
- initializeWorld(s);return [...new Set([...(s.knowledge[actor]?.[target]?.reportedLeaders||[]),...reportedClaimants(s,actor,target)].filter(id=>CHARACTER_CATALOG[id]))];
+ initializeWorld(s);const knowledge=s.knowledge[actor]?.[target];return [...new Set([...(knowledge?.reportedLeaders||[]),...reportedClaimants(s,actor,target),...Object.values(knowledge?.sightings||{}).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).map(x=>x.commanderId)].filter(id=>CHARACTER_CATALOG[id]))];
 }
 export function supportClaimant(s,actor,target,claimant){
  initializeWorld(s);if(!['caesar','senate'].includes(actor)||actor===target||target!=='egypt'||!reportedClaimants(s,actor,target).includes(claimant)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
@@ -190,5 +190,5 @@ export function advanceMissingCommanders(s){
 }
 
 // Local reports update only at a controlled frontier; unseen reports remain stale.
-export function observeArmies(s){initializeWorld(s);for(const viewer of Object.keys(s.knowledge)){for(const unit of s.armies){if(unit.owner===viewer||unit.move||!s.knowledge[viewer]?.[unit.owner])continue;const local=s.regions.some(r=>r.owner===viewer&&(r.id===unit.region||ROUTES.some(x=>(x[0]===r.id&&x[1]===unit.region)||(x[1]===r.id&&x[0]===unit.region))));if(local)s.knowledge[viewer][unit.owner].sightings[unit.id]={id:unit.id,name:[...unit.name],owner:unit.owner,region:unit.region,year:s.year,month:s.month}}}}
+export function observeArmies(s){initializeWorld(s);for(const viewer of Object.keys(s.knowledge)){for(const unit of s.armies){if(unit.owner===viewer||unit.move||!s.knowledge[viewer]?.[unit.owner])continue;const local=s.regions.some(r=>r.owner===viewer&&(r.id===unit.region||ROUTES.some(x=>(x[0]===r.id&&x[1]===unit.region)||(x[1]===r.id&&x[0]===unit.region))));if(local){const k=s.knowledge[viewer][unit.owner],commanderId=CHARACTER_CATALOG[unit.characterId]?unit.characterId:null;k.sightings[unit.id]={id:unit.id,name:[...unit.name],owner:unit.owner,region:unit.region,year:s.year,month:s.month,commanderId};if(commanderId){k.commanderReports=(k.commanderReports||[]).filter(r=>r.commanderId!==commanderId||r.armyId!==unit.id);k.commanderReports.unshift({commanderId,armyId:unit.id,armyName:[...unit.name],year:s.year,month:s.month});k.commanderReports=k.commanderReports.slice(0,30)}}}}}
 export function reportedArmies(s,viewer){initializeWorld(s);const result=[];for(const [owner,k] of Object.entries(s.knowledge[viewer]||{})){if(owner===viewer)continue;for(const x of Object.values(k.sightings||{}))result.push({...x,reported:true})}return result}

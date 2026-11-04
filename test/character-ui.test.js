@@ -67,6 +67,10 @@ test('foreign character profiles show recorded claims without revealing actual h
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cleopatra.health='seriously_ill';addReport(s,'senate','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'envoy',confidence:'unverified'});globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'en',inspect:()=>{}});ui.show('cleopatra');const dossier=panel.children.find(x=>x.className==='help-list');assert.match(dossier.innerHTML,/Healthy · Envoy/);assert.match(dossier.innerHTML,/Unverified/);assert.doesNotMatch(dossier.innerHTML,/Seriously ill|battle wounds|Illness episodes/);assert.match(panel.innerHTML,/Simulated health<\/span><b>Unknown/);assert.match(dossier.innerHTML,/HISTORICAL ENCYCLOPEDIA \(NOT GAME INTELLIGENCE\)/)}finally{globalThis.document=prior}
 });
+test('foreign commander dossier shows dated observations, not an unseen reassignment',()=>{
+ const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.armies.find(x=>x.id==='xiii').characterId='antony';globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).show('caesar');const dossier=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(dossier,/指挥官目击记录/);assert.match(dossier,/第十三军团/);assert.match(dossier,/不证明目前的职务或位置/);assert.doesNotMatch(dossier,/安东尼/)}finally{globalThis.document=prior}
+});
 test('foreign dossier and intelligence panel show a dated age estimate rather than current certainty',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('senate'),content=new Element();
  addReport(s,'senate','egypt',{kind:'age',character:'cleopatra',value:[19,21],source:'audience',confidence:'unverified',reliability:'low'});

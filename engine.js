@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=25';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=26';
 import {initializeGovernments,advanceGovernments} from './governance.js?v=8';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=10';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant} from './character-system.js?v=26';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant} from './character-system.js?v=27';
 import {advanceOffices,officeEffects} from './office-system.js?v=1';
 import {advanceConspiracies} from './conspiracies.js?v=1';
 export {queueMission};
@@ -34,7 +34,7 @@ export function newGame(player='caesar'){
   // A new campaign starts with frontier observations, not every foreign army's
   // exact opening location. Existing saves keep their accumulated sightings.
   for(const targets of Object.values(s.knowledge))for(const knowledge of Object.values(targets))knowledge.sightings={};
-  observeArmies(s);linkCommanders(s);return initializeGovernments(s);
+  linkCommanders(s);observeArmies(s);return initializeGovernments(s);
 }
 
 export function upgradeSave(s){
