@@ -1,4 +1,4 @@
-import {queueMission,availableAgents} from '../character-system.js?v=31';
+import {queueMission,availableAgents} from '../character-system.js?v=32';
 import {reassurePerson} from '../conspiracies.js?v=2';
 import {CHARACTER_CATALOG} from '../characters.js?v=11';
 
