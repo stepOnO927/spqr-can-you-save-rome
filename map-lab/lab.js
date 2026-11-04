@@ -1,18 +1,18 @@
-import {renderSecurity} from './security-ui.js?v=5';
+import {renderSecurity} from './security-ui.js?v=6';
 import {renderOffices} from './offices-ui.js?v=2';
 import {officeEffects} from '../office-system.js?v=2';
 import {waitForMapIdle} from './capture-wait.js?v=1';
 import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=1';
-import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=9';
+import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=10';
 import historical from '../historical-territories.js';
 import republicanRoads from '../republican-roads.js?v=1';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=46';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=47';
 import {FACTIONS} from '../data.js?v=8';
 import {identity,factionMark} from '../identity.js?v=1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=11';
-import {createCharacterUI} from './character-ui.js?v=40';
-import {reportedArmies} from '../character-system.js?v=29';
+import {createCharacterUI} from './character-ui.js?v=41';
+import {reportedArmies} from '../character-system.js?v=30';
 import {createTutorial} from './tutorial.js?v=6';
 import {friendlyPersonnelInTheater} from './personnel.js?v=1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=1';
@@ -176,7 +176,7 @@ const helpEntries=[
  {kind:'game',en:'Letters and direct questions',zh:'书信与直接询问',control:'#factions',enBody:'A direct inquiry costs 3 treasury and normally takes 2–5 months. A letter or reply may be lost; the court may refuse, and its answer is unverified. Other diplomatic buttons currently resolve immediately.',zhBody:'直接询问消耗3国库，通常需要2至5个月。信件或回信可能遗失，对方可能拒答，官方答复未经独立核实。其他外交按钮目前即时结算。'},
  {kind:'game',en:'Spies, captured agents and release',zh:'间谍、被俘与释放',control:'#factions',enBody:'A spy costs 12 treasury and takes 4 months; discovery or capture harms relations. Each faction has three agents: missions and captivity occupy capacity. A release letter costs 8 treasury and takes about 4 months; it may be refused or unanswered.',zhBody:'派遣间谍消耗12国库、需要4个月；被发现或被捕会损害关系。每个势力有3名情报人员，执行任务或被俘会占用人手。请求释放需8国库，约4个月后可能被拒或没有回信。'},
  {kind:'game',en:'Personal meetings and travel',zh:'人物旅行与个人会面',control:'#factions',enBody:'Open your faction and select an independent character to plan a journey. Army commanders and seriously ill characters cannot travel independently; wounds and frailty slow each leg. A personal audience with a reported leader, claimant or commander costs 3 treasury and takes 2 months; both people must actually be in the same theater and may not meet. Reports can be stale or wrong. Trust and relations affect acceptance; a successful meeting improves relations by 3. A known contact can improve a later claimant support offer, but letters may still be lost or refused.',zhBody:'打开己方势力并选择独立人物以规划旅行。随军指挥官和重病人物不能单独出行，受伤或衰弱会拖慢每段行程。可向已报告的领袖、竞争者或指挥官请求个人会面，消耗3国库、需要2个月；双方须实际位于同一战区，也可能无法会面。报告可能过时或错误。已有信任及势力关系影响接受意愿；成功会面使双方关系提高3。可让有信任的人帮助联系竞争者，但书信仍可能丢失或被拒。'},
- {kind:'game',en:'Character health and succession',zh:'人物健康与继任',control:'#factions',enBody:'Game health, wounds and illness are simulated, not historical diagnoses. Wounds, service and shortages affect risk. In your faction panel designate a possible successor for 5 treasury; when a leader is incapacitated, changing the acting deputy costs 5. A living co-leader remains in office. A commander missing after defeat may regain contact after three months if the faction controls a theater; health events pause while missing.',zhBody:'健康、战伤和疾病是游戏模拟，并非历史诊断。战伤、军旅与粮食短缺会影响风险。在己方势力面板可用5国库指定可能的继任者；领导人无法履职时，更换代行官员需5国库。仍在任的共同领导者不会被替换。战败后失联的指挥官如仍有己方战区，三个月后可重新取得联系；失联期间暂停健康事件。'},
+ {kind:'game',en:'Character health and succession',zh:'人物健康与继任',control:'#factions',enBody:'Game health, wounds and illness are simulated, not historical diagnoses. Wounds, service and shortages affect risk. A seriously ill or dying commander is relieved before movement or battle; an unnamed officer takes over while the person remains in the last theater. Political authority is handled separately. In your faction panel designate a possible successor for 5 treasury; when a leader is incapacitated, changing the acting deputy costs 5. A living co-leader remains in office. A commander missing after defeat may regain contact after three months if the faction controls a theater; health events pause while missing.',zhBody:'健康、战伤和疾病是游戏模拟，并非历史诊断。战伤、军旅与粮食短缺会影响风险。重病或垂危的将领会在行军或战斗前卸下军职，由未具名军官接替；人物留在原战区，政治领导另行处理。在己方势力面板可用5国库指定可能的继任者；领导人无法履职时，更换代行官员需5国库。仍在任的共同领导者不会被替换。战败后失联的指挥官如仍有己方战区，三个月后可重新取得联系；失联期间暂停健康事件。'},
  {kind:'game',en:'Internal plots and reassurance',zh:'内部阴谋与安抚',control:'#factions',enBody:'Political plots are simulated possibilities, not historical claims. When loyalty and stability are low, a disaffected officer may challenge leadership. Your faction panel offers a three-month internal investigation for 8 treasury and an agent; reports may be wrong. Reassure any eligible friendly person for 8 treasury to raise loyalty by 15. A report or reassurance does not prove guilt.',zhBody:'内部阴谋是游戏可能发生的事件，并非历史事实。当忠诚和稳定度低时，心怀不满的官员可能挑战领导。己方势力面板可花费8国库和一名情报人员，调查3个月；报告可能有误。也可花费8国库安抚任意合适的己方人物，忠诚提高15。报告或安抚均不证明其有罪。'},
  {kind:'game',en:'Covert contacts',zh:'秘密政治接触',control:'#factions',enBody:'A Roman faction may send an offer to an Egyptian claimant it has heard about. A spy investigating Egypt can report a recent accepted offer by the other Roman faction. Reports are unverified and may be wrong; no reliable information does not prove that no contact exists. These are simulated contacts, not historical claims or formal alliances.',zhBody:'罗马派系可以向自己听闻的埃及竞争者寄出支持提议。派间谍调查埃及，可能查到另一罗马派系最近获得接受的提议。报告未经核实，可能有误；没有可靠消息不代表不存在接触。这些是游戏模拟的接触，并非历史断言或正式同盟。'},
  {kind:'game',en:'Checking intelligence reports',zh:'核查情报报告',control:'#factions',enBody:'In a foreign faction’s Intelligence tab, use Check this report to select its subject and, for health, the reported person. Then choose and confirm a mission. Selecting a report costs nothing. Repeating or forwarding the same source is not independent corroboration; another source can also be wrong.',zhBody:'在外国势力的情报页面点击“核查此报告”，可选中对应调查内容；健康报告也会选中已报告的人物。然后选择并确认行动。选择报告不收费。重复或转交同一来源不构成独立核实，其他来源也可能有误。'},
