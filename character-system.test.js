@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy} from './engine.js';
 import {assignSuccession,knownLeaders,ageRange} from './characters.js';
-import {addReport,commandFactor,advanceCharacters,advanceOperations,contestLeadership,observeArmies,reportedArmies,missionDuration} from './character-system.js';
+import {addReport,commandFactor,advanceCharacters,advanceOperations,contestLeadership,observeArmies,reportedArmies,missionDuration,previewMission} from './character-system.js';
 
 test('foreign intelligence is independent from actual leadership and other observers',()=>{
  const s=newGame(),opening=knownLeaders(s,'caesar','egypt');
@@ -49,6 +49,14 @@ test('spies cost resources and resolve by month with isolated records',()=>{
  assert.equal(queueMission(s,'caesar','egypt','spy','health').reason,'pending');for(let i=0;i<3;i++)tick(s);
  assert.equal(s.operations[0].status,'pending');const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));tick(loaded);
  assert.notEqual(loaded.operations[0].status,'pending');assert.equal(loaded.knowledge.senate.egypt.reports.length,0);
+});
+test('mission preview gives actionable requirements without spending or revealing foreign secrets',()=>{
+ const s=newGame(),before=JSON.stringify(s),plan=previewMission(s,'caesar','egypt','spy','health');
+ assert.deepEqual(plan,{ok:true,cost:12,duration:4,partner:undefined});assert.equal(JSON.stringify(s),before);
+ s.world.characters.cleopatra.health='dying';assert.deepEqual(previewMission(s,'caesar','egypt','spy','health'),plan);
+ assert.equal(previewMission(s,'caesar','egypt','exchange','health').reason,'alliance');
+ s.factions.caesar.treasury=0;assert.equal(previewMission(s,'caesar','egypt','spy','health').reason,'treasury');
+ assert.equal(queueMission(s,'caesar','egypt','spy','health').reason,'treasury');assert.equal(s.operations.length,0);
 });
 test('health has gameplay impact and deceased commanders are succeeded without revealing foreign changes',()=>{
  const s=newGame(),a=s.armies.find(x=>x.id==='xiii');s.world.characters.caesar.health='seriously_ill';assert.ok(commandFactor(s,a)<1);
