@@ -143,5 +143,8 @@ try{
  for(let i=0;i<3;i++)await page.locator('#advance').click();assert.match(await page.locator('#command-detail').innerText(),/报告已收到|调查失败/);
  await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();await page.locator('[data-page="intelligence"]').click();
  await page.locator('#mission-subject').selectOption('conspiracy');await page.locator('[data-mission="spy"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/内部阴谋/);
+ // Both newly modeled courts expose reported leaders and delayed letters.
+ for(const [id,leader] of [['galatia','代奥塔鲁斯'],['bosporus','法尔纳刻斯二世']]){await page.locator('#factions').click();await page.locator('[data-faction="'+id+'"]').click();assert.match(await page.locator('#command-detail').innerText(),new RegExp(leader));await page.locator('[data-page="intelligence"]').click();await page.locator('#send-inquiry').click();assert.match(await page.locator('#command-detail').innerText(),/等待回信/)}
+ assert.equal(await page.locator('[data-theater="galatia"]').count(),1);assert.equal(await page.locator('[data-theater="bosporus"]').count(),1);
  assert.deepEqual(errors,[],'uncaught browser errors');console.log('Browser smoke passed: atlas, travel, correspondence, spy, turns, and campaign view handoff.');
 } finally {await browser.close()}
