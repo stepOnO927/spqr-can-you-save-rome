@@ -7,6 +7,20 @@ const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
 
+// Credit reflects the sender's own recent contacts, not the foreign person's
+// hidden current allegiance, health, location, or negotiating authority.
+export function personalDiplomaticCredit(s,actor,target){
+ initializeWorld(s);const now=s.year*12+s.month;let best=0;
+ for(const meeting of s.meetings){
+  if(meeting.actor!==actor||meeting.targetFaction!==target||meeting.status!=='met')continue;
+  const year=meeting.resolvedYear??meeting.year,month=meeting.resolvedMonth??meeting.month,age=now-(year*12+month),own=s.world.characters[meeting.person];
+  if(!Number.isFinite(age)||age<0||age>36||!own?.alive||own.missing||own.faction!==actor)continue;
+  const trust=s.world.personalRelations[[meeting.person,meeting.target].sort().join(':')]?.trust||0;
+  best=Math.max(best,Math.min(10,Math.max(0,Math.floor(trust/5))));
+ }
+ return best;
+}
+
 // Civilian journeys use the campaign theater graph, not precise historical roads.
 export function previewPersonTravel(s,id,destination){
  initializeWorld(s);const c=s.world.characters[id],owner=s.player;
