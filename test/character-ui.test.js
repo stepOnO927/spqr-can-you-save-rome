@@ -161,3 +161,9 @@ test('only a friendly dossier shows simulated ambition, without claiming a plot 
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('cato');const own=panel.children.find(x=>x.className==='help-list');assert.match(own.innerHTML,/模拟政治野心/);assert.match(own.innerHTML,/不代表此人正在密谋/);panel.children=[];ui.show('cleopatra');const foreign=panel.children.find(x=>x.className==='help-list');assert.doesNotMatch(foreign.innerHTML,/模拟政治野心|91/)}finally{globalThis.document=prior}
 });
 
+
+
+test('friendly commander experience is shown as game history without exposing foreign experience',()=>{
+ const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cato.battlesCommanded=2;s.world.characters.cleopatra.battlesCommanded=37;globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
+ try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('cato');const own=panel.children.find(x=>x.className==='help-list');assert.match(own.innerHTML,/游戏指挥战斗次数: 2/);assert.match(own.innerHTML,/最多10%/);panel.children=[];ui.show('cleopatra');const foreign=panel.children.find(x=>x.className==='help-list');assert.doesNotMatch(foreign.innerHTML,/游戏指挥战斗次数|37/)}finally{globalThis.document=prior}
+});
