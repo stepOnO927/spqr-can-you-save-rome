@@ -52,3 +52,5 @@
 .map-controls #relief-toggle{font:700 10px Manrope,'Microsoft YaHei',sans-serif}.map-controls #relief-toggle[aria-pressed="false"]{color:#a6a69b;background:#18211f}
 
 .office-row{border-top:1px solid #bda77755;margin-top:12px;padding-top:12px}.office-row label{display:block;margin:6px 0}.office-row button{margin:4px 4px 0 0}
+
+.outlying-theater{border:1px solid #e1ca92;background:#26352eea;color:#f4e5bf;padding:3px 6px;cursor:pointer;white-space:nowrap;font:600 11px Georgia,serif;box-shadow:0 2px 5px #0009}.outlying-theater:focus-visible{outline:2px solid #f1d492;outline-offset:3px}

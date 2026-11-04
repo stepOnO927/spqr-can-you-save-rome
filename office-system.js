@@ -1,4 +1,4 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=13';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=14';
 
 // These are simulated administrative assignments, not historical magistracies.
 export const OFFICE_TYPES=['finance','supply','administration'];

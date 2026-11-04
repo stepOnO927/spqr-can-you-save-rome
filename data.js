@@ -18,7 +18,9 @@ export const REGIONS = [
   {id:'numidia',name:['Numidia','努米底亚'],x:344,y:570,terrain:'plain',food:5,tax:4,supply:11,loyalty:72,owner:'numidia',fort:0,city:'Cirta'},
   {id:'mauretania',name:['Mauretania','毛里塔尼亚'],x:218,y:565,terrain:'hills',food:4,tax:3,supply:10,loyalty:70,owner:'mauretania',fort:0,city:'Iol'},
   {id:'armenia',name:['Armenia','亚美尼亚'],x:1085,y:250,terrain:'hills',food:4,tax:4,supply:10,loyalty:70,owner:'armenia',fort:1,city:'Artaxata'},
-  {id:'parthia',name:['Parthia','帕提亚'],x:1152,y:380,terrain:'desert',food:5,tax:6,supply:11,loyalty:70,owner:'parthia',fort:0,city:'Seleucia'}
+  {id:'parthia',name:['Parthia','帕提亚'],x:1152,y:380,terrain:'desert',food:5,tax:6,supply:11,loyalty:70,owner:'parthia',fort:0,city:'Seleucia'},
+  {id:'galatia',name:['Western Galatia','加拉太西部'],x:970,y:290,terrain:'hills',food:4,tax:3,supply:10,loyalty:70,owner:'galatia',fort:0,city:'Gordion area'},
+  {id:'bosporus',name:['Cimmerian Bosporus','辛梅里安博斯普鲁斯'],x:1060,y:155,terrain:'plain',food:4,tax:4,supply:10,loyalty:70,owner:'bosporus',fort:0,city:'Panticapaeum'}
 ];
 
 // Sea routes require transport and take longer. All others represent adjoining land theaters.
@@ -27,7 +29,7 @@ export const ROUTES = [
   ['cisalpine','italiaN'],['italiaN','roma'],['roma','italiaS'],['italiaS','illyricum','sea'],
   ['illyricum','epirus'],['epirus','achaia'],['anatolia','syria'],['syria','egypt'],
   ['italiaS','sicilia','sea'],['sicilia','africa','sea'],['africa','hispaniaS','sea'],
-  ['achaia','anatolia','sea'],['italiaS','epirus','sea'],['africa','numidia'],['numidia','mauretania'],['mauretania','hispaniaS','sea'],['anatolia','armenia'],['armenia','parthia'],['parthia','syria']
+  ['achaia','anatolia','sea'],['italiaS','epirus','sea'],['africa','numidia'],['numidia','mauretania'],['mauretania','hispaniaS','sea'],['anatolia','armenia'],['armenia','parthia'],['parthia','syria'],['anatolia','galatia'],['galatia','armenia'],['anatolia','bosporus','sea']
 ];
 
 export const FACTIONS = {
@@ -38,6 +40,8 @@ export const FACTIONS = {
   mauretania:{name:['Mauretanian kingdoms','毛里塔尼亚诸王国'],short:['Mauretania','毛里塔尼亚'],color:'#849063',ruler:['Bocchus II and Bogud','博库斯二世与博古德']},
   armenia:{name:['Kingdom of Armenia','亚美尼亚王国'],short:['Armenia','亚美尼亚'],color:'#967d91',ruler:['Artavasdes II','阿尔塔瓦兹德二世']},
   parthia:{name:['Parthian Empire','帕提亚帝国'],short:['Parthia','帕提亚'],color:'#b28560',ruler:['Orodes II','奥罗德二世']},
+  galatia:{name:['Deiotarus’ Galatian realm','代奥塔鲁斯的加拉太领地'],short:['Galatia','加拉太'],color:'#7c8760',ruler:['Deiotarus','代奥塔鲁斯']},
+  bosporus:{name:['Bosporan Kingdom','博斯普鲁斯王国'],short:['Bosporus','博斯普鲁斯'],color:'#8b7270',ruler:['Pharnaces II','法尔纳刻斯二世']},
   rebels:{name:['Provincial rebels','行省叛军'],short:['Rebels','叛军'],color:'#8a7365',ruler:['Local leaders','地方首领']}
 };
 
@@ -48,7 +52,7 @@ export const INITIAL_ARMIES = [
   {id:'pompey',name:['Pompeian field army','庞培野战军'],owner:'senate',region:'roma',men:8800,morale:75,skill:4,experience:2,commander:['Pompey','庞培']},
   {id:'spain',name:['Hispanian legions','西班牙军团'],owner:'senate',region:'hispaniaN',men:6700,morale:68,skill:2,experience:2,commander:['Unnamed officer','未具名军官']},
   {id:'egyptguard',name:['Royal guard','王室卫队'],owner:'egypt',region:'egypt',men:4700,morale:66,skill:2,experience:1,commander:['Unnamed officer','未具名军官']},
-  ...['numidia','mauretania','armenia','parthia'].map(id=>({id:id+'army',name:['Royal forces','王国军队'],owner:id,region:id,men:4200,morale:65,skill:2,experience:1,commander:['Unnamed officer','未具名军官']}))
+  ...['numidia','mauretania','armenia','parthia','galatia','bosporus'].map(id=>({id:id+'army',name:['Royal forces','王国军队'],owner:id,region:id,men:4200,morale:65,skill:2,experience:1,commander:['Unnamed officer','未具名军官']}))
 ];
 
 export const SOURCES = [

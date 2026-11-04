@@ -1,7 +1,7 @@
-import {initializeWorld, CHARACTER_CATALOG, ageRange} from './characters.js?v=13';
-import {ROUTES} from './data.js?v=8';
-import {addReport,reportedHealthSubjects} from './character-system.js?v=45';
-import {officeOf} from './office-system.js?v=3';
+import {initializeWorld, CHARACTER_CATALOG, ageRange} from './characters.js?v=14';
+import {ROUTES} from './data.js?v=9';
+import {addReport,reportedHealthSubjects} from './character-system.js?v=46';
+import {officeOf} from './office-system.js?v=4';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
