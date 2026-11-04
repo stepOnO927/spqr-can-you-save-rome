@@ -29,3 +29,7 @@ The Egyptian cornucopia is inspired by Ptolemaic coin types: https://resources.m
 ### Egypt: joint rule and official reports
 The 49 BCE opening recognizes Cleopatra VII and Ptolemy XIII as joint rulers, based on the Metropolitan Museum of Art chronological table: https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf. In-game correspondence and subsequent succession are simulated, not historical evidence; official claims may be unverified or outdated.
 
+
+### Galatian and Bosporan courts
+
+Deiotarus’ western Galatian rule and relationship to Rome are summarized by the [Oxford Classical Dictionary](https://academic.oup.com/edited-volume/61673/chapter-abstract/548724362); Pharnaces II’s Bosporan kingship is documented by the [Royal Library of Belgium’s numismatic catalog](https://silver.kbr.be/Pharnaces_II_of_Pontus_%28king_of_the_Bosporan_Kingdom%2C_63-47_BC%29). Pleiades describes [Gordion](https://pleiades.stoa.org/indexes-old/settlement/hellenistic-republican?b_start%3Aint=1900) and [Panticapaeum](https://pleiades.stoa.org/indexes-old/index-by-select-time-periods/roman?b_start%3Aint=15860); Pleiades content is CC BY 3.0, credited to its contributors. Approximate theater markers are game aids and do not claim that Gordion was Deiotarus’ capital or define political borders. The broad source polygons are not evidence of their exact internal limits. Routes, resources, forces, and later events are simulation abstractions.
