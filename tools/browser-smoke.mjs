@@ -16,8 +16,10 @@ try{
  await page.locator('#help-search').fill('将领忠诚');assert.match(await page.locator('#help-results').innerText(),/可能倒戈/);
  await page.locator('#language').click();await page.locator('#help-search').fill('captured agents');assert.match(await page.locator('#help-results').innerText(),/8 treasury/);await page.locator('#language').click();
  await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();
+ await page.locator('#succession-choice').selectOption('cicero');await page.locator('#succession-support').click();
+ assert.match(await page.locator('#succession-feedback').innerText(),/其他候选人忠诚降低3/);await page.locator('#succession-feedback button').click();
  await page.locator('[data-character="cicero"]').click();
- assert.match(await page.locator('#command-detail').innerText(),/游戏战伤次数/);
+ assert.match(await page.locator('#command-detail').innerText(),/游戏战伤次数/);assert.match(await page.locator('#command-detail').innerText(),/65 \/ 100/);
  await page.locator('#person-destination').selectOption('epirus');await page.locator('#person-travel').click();
  await page.locator('#person-travel-feedback button').click();
  assert.match(await page.locator('#command-detail').innerText(),/正在旅行/);
