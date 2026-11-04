@@ -58,6 +58,21 @@ test('mission preview gives actionable requirements without spending or revealin
  s.factions.caesar.treasury=0;assert.equal(previewMission(s,'caesar','egypt','spy','health').reason,'treasury');
  assert.equal(queueMission(s,'caesar','egypt','spy','health').reason,'treasury');assert.equal(s.operations.length,0);
 });
+test('health missions investigate the chosen reported person, not a hidden successor',()=>{
+ const s=newGame('caesar');s.world.leadership.egypt=['ptolemy'];s.world.characters.cleopatra.health='ill';s.world.characters.ptolemy.health='seriously_ill';
+ assert.equal(queueMission(s,'caesar','egypt','spy','health',null,'pacorus').reason,'identity');
+ assert.equal(queueMission(s,'caesar','egypt','spy','health',null,'cleopatra').ok,true);
+ s.knowledge.caesar.egypt.reportedLeaders=['ptolemy'];
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));loaded.world.intelSeed=1000;
+ for(let i=0;i<4;i++)advanceOperations(loaded);
+ assert.equal(loaded.operations[0].status,'complete');assert.equal(loaded.operations[0].subjectCharacter,'cleopatra');
+ const report=loaded.knowledge.caesar.egypt.reports[0];assert.equal(report.character,'cleopatra');assert.equal(report.value,'ill');
+ assert.equal(loaded.knowledge.senate.egypt.reports.length,0);
+ const unknown=newGame();unknown.knowledge.caesar.egypt.reportedLeaders=[];unknown.world.leadership.egypt=['ptolemy'];
+ assert.equal(queueMission(unknown,'caesar','egypt','travelers','health').ok,true);unknown.world.intelSeed=1000;
+ advanceOperations(unknown);advanceOperations(unknown);
+ assert.equal(unknown.knowledge.caesar.egypt.reports[0].character,null);assert.equal(unknown.knowledge.caesar.egypt.reports[0].value,'unknown');
+});
 test('political stability investigations produce uncertain reports instead of revealing the true score',()=>{
  const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
  const s=newGame('caesar');s.factions.egypt.stability=20;s.wars.push(['caesar','egypt']);
