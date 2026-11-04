@@ -62,6 +62,11 @@ test('own character dossier shows actual game command and political role',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('caesar');globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('caesar');const dossier=panel.children.find(x=>x.className==='help-list');assert.match(dossier.innerHTML,/正式政治领导人/);assert.match(dossier.innerHTML,/第十三军团/);assert.match(dossier.innerHTML,/影响默认继任与代行顺序/)}finally{globalThis.document=prior}
 });
+test('a missing friendly character does not expose their current health or loyalty',()=>{
+ const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cicero.missing={origin:'roma',remaining:2,year:s.year,month:s.month};s.world.characters.cicero.location=null;s.world.characters.cicero.health='seriously_ill';s.world.characters.cicero.loyalty=23;
+ globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).show('cicero');assert.match(panel.innerHTML,/游戏健康<\/span><b>未知/);assert.match(panel.innerHTML,/模拟忠诚<\/span><b>未知/);assert.doesNotMatch(panel.innerHTML,/重病|23%/);assert.match(panel.children.find(x=>x.className==='help-list').innerHTML,/战后失联/);assert.ok(!panel.children.some(x=>x.className==='mission-box'))}finally{globalThis.document=prior}
+});
 test('a reported claimant can be contacted through the diplomacy panel',()=>{
  const prior=globalThis.document,s=newGame('senate'),content=new Element();addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified'});let refreshed=0;globalThis.document={createElement:tag=>new Element(tag)};
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{},onStateChanged:()=>refreshed++});ui.addMissions(content,'egypt');const box=content.children[2],cash=s.factions.senate.treasury;assert.match(box.innerHTML,/报告可能过时或错误/);box.querySelector('#claimant-support').onclick();box.querySelector('#claimant-feedback').children[0].onclick();assert.equal(s.factions.senate.treasury,cash-10);assert.equal(s.operations[0].type,'support');assert.equal(s.operations[0].remaining,4);assert.equal(refreshed,1)}finally{globalThis.document=prior}
