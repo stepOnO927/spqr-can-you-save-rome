@@ -1,6 +1,10 @@
 # Map Lab validation notes
 
-- Local browser: initial 3-second requestAnimationFrame sample reported approximately 52 fps, including startup. The viewport size and hardware were not captured for that sample; this is not a benchmark or a guarantee for other devices. No sustained pan/zoom frame-time benchmark was completed.
+## Repeatable interaction measurement
+
+The browser workflow records a 1920 × 1080 screenshot and six-second requestAnimationFrame samples for idle, repeated dragging, and wheel zoom, with terrain hillshade enabled and disabled. It verifies that panning and zooming move a map marker, that the relief preference survives a reload, and reports callback cadence, frame-time percentiles, long intervals, tile-request outcomes, browser version, CPU and WebGL renderer in `map-benchmark.json`. Download the workflow's `browser-smoke-evidence` artifact for the actual run and image. CI uses headless Chromium with SwiftShader software rendering; callback timing is not a measurement of displayed frames or a guarantee of performance on player hardware. Tile availability and runner load can change the result. The earlier notes below are historical snapshots.
+
+- Earlier local browser: an initial 3-second requestAnimationFrame sample reported approximately 52 fps, including startup. The viewport size and hardware were not captured; this historical sample is not a benchmark or guarantee for other devices.
 - 1366 × 768: browser screenshot captured. 1920 × 1080: screenshot exported by html2canvas 1.4.1 from the rendered DOM and WebGL canvas at scale 1. The export is a browser-generated composite; it does not use the external full-page screenshot path that drops the WebGL map.
 - Browser flow: select XIII, order a march to northern Italy, advance a month, see casualties and the actual battle report, save to a test slot, advance again, reload and observe the February state. Switch to Chinese. Local automated engine tests: 15 passing.
 - Remaining work: full bilingual coverage, complete Stage A province selection and command coverage, detailed location sourcing, objective and diplomatic systems, tested supply and military map modes, character art, a sustained interaction performance test, and full integration into the campaign screen. The existing campaign screen remains available and uses compatible save slots.
@@ -47,3 +51,4 @@ Browser-tested starting the Senate/Pompeian command at standard difficulty, its 
 ## Atlas taxation
 
 Browser-tested selecting a tax rate in the resources panel, advancing a month, and observing the actual treasury, food and selected-tax state. Tax and loyalty changes use the existing shared campaign engine.
+
