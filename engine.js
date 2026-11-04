@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=14';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=15';
 import {initializeGovernments,advanceGovernments} from './governance.js?v=5';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=8';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies} from './character-system.js?v=17';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies} from './character-system.js?v=18';
 export {queueMission};
 
 const clone = value => JSON.parse(JSON.stringify(value));
