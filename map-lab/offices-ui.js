@@ -1,4 +1,4 @@
-import {OFFICE_TYPES,initializeOffices,officeCandidates,appointOffice,dismissOffice} from '../office-system.js?v=4';
+import {OFFICE_TYPES,initializeOffices,officeCandidates,appointOffice,dismissOffice} from '../office-system.js?v=5';
 import {CHARACTER_CATALOG} from '../characters.js?v=14';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

@@ -1,9 +1,9 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=50';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=51';
 import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=15';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=9';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=14';
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=51';
-import {advanceOffices,officeEffects} from './office-system.js?v=4';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=5';
 import {advanceConspiracies} from './conspiracies.js?v=6';
 export {queueMission};
 
@@ -245,7 +245,7 @@ function economy(s){
     if(f.treasury<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.morale=Math.max(20,a.morale-4))}
     if(f.food<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.men=Math.max(1,Math.round(a.men*.96)))}
     f.treasury=Math.max(-100,Math.round(f.treasury));f.food=Math.max(-100,Math.round(f.food));
-    owned.forEach(r=>{r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+(f.food<0?-2:0)))});
+    owned.forEach(r=>{r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+(f.food<0?-2:0)+governorLoyaltyEffect(s,r.id)))});
   }
 }
 
