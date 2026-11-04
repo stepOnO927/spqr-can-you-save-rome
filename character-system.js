@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=11';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=12';
 import {FACTIONS,ROUTES} from './data.js?v=8';
 import {deriveGovernment} from './governance.js?v=10';
 import {potentialConspirators} from './conspiracies.js?v=2';
