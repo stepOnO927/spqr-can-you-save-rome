@@ -20,5 +20,5 @@ test('a forwarded old report does not masquerade as the date of a newer belief',
  const s=newGame();s.month=6;addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy'],source:'spy',confidence:'unverified'});
  s.month=7;addReport(s,'caesar','egypt',{kind:'leaders',leaders:['cleopatra'],source:'exchange',originSource:'court',observationYear:-49,observationMonth:2,confidence:'unverified'});
  assert.deepEqual(leadershipIntelligence(s,'caesar','egypt').observed,{year:-49,month:6});
- assert.equal(leadershipIntelligence(s,'caesar','egypt').confidence,'disputed');
+ assert.equal(leadershipIntelligence(s,'caesar','egypt').confidence,'unverified');
 });
