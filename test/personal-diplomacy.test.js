@@ -2,6 +2,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick} from '../engine.js';
 import {previewPersonTravel,startPersonTravel,requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js';
+import {addReport,contestLeadership} from '../character-system.js';
+
+test('a claimant can be contacted only after a report, and the request does not reveal hidden court status',()=>{
+ const s=newGame('senate');s.knowledge.senate.egypt.reportedLeaders=['ptolemy'];contestLeadership(s,'egypt','cleopatra');s.world.characters.cicero.location='egypt';
+ assert.equal(requestPersonalMeeting(s,'cicero','cleopatra','egypt').reason,'unavailable');
+ addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'rumor'});
+ assert.equal(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok,true);assert.equal(s.meetings[0].remaining,2);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+ s.world.intelSeed=1000;advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');assert.equal(s.world.personalRelations['cicero:cleopatra'].meetings,1);
+});
+test('a stale claimant report permits the same request but may lead to no contact',()=>{
+ const s=newGame('senate');s.knowledge.senate.egypt.reportedLeaders=['ptolemy'];addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'travelers',confidence:'rumor'});
+ s.world.characters.cleopatra.faction='caesar';assert.equal(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok,true);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'no_contact');
+});
 
 test('meeting requests follow the reported court, not hidden allegiance or historical affiliation',()=>{
  const s=newGame('senate');s.world.characters.cicero.location='italia';

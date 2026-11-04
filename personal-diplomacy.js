@@ -1,6 +1,6 @@
-import {initializeWorld, CHARACTER_CATALOG, knownLeaders} from './characters.js?v=10';
+import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=10';
 import {ROUTES} from './data.js?v=8';
-import {addReport} from './character-system.js?v=26';
+import {addReport,reportedHealthSubjects} from './character-system.js?v=26';
 import {officeOf} from './office-system.js?v=1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
@@ -21,9 +21,9 @@ export function previewPersonTravel(s,id,destination){
 export function startPersonTravel(s,id,destination){const p=previewPersonTravel(s,id,destination);if(!p.ok)return p;s.factions[s.player].treasury-=p.cost;s.world.characters[id].travel={destination,legs:p.legs,remaining:p.legs[0].months};return p}
 export function requestPersonalMeeting(s,id,target,targetFaction){
  initializeWorld(s);const c=s.world.characters[id];
- // Address the court from the sender's reports, even if they are stale or wrong.
+ // Address reported leaders or claimants, even when those reports are stale or wrong.
  // The recipient's actual allegiance is checked only when the request resolves.
- const reported=Object.keys(s.factions).filter(f=>f!==s.player&&knownLeaders(s,s.player,f).includes(target));
+ const reported=Object.keys(s.factions).filter(f=>f!==s.player&&reportedHealthSubjects(s,s.player,f).includes(target));
  const court=targetFaction??(reported.length===1?reported[0]:null);
  if(!c||c.faction!==s.player||!c.alive||!c.location||c.travel||['seriously_ill','dying','deceased'].includes(c.health)||!CHARACTER_CATALOG[target]||!court||!reported.includes(court))return {ok:false,reason:'unavailable'};
  if(s.meetings.some(m=>m.person===id&&m.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[s.player].treasury<3)return {ok:false,reason:'treasury'};
