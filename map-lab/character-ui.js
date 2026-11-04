@@ -1,10 +1,10 @@
 import {officeOf} from '../office-system.js?v=2';
-import {reportedClaimants,reportedHealthSubjects,supportClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=31';
+import {reportedClaimants,reportedHealthSubjects,supportClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=32';
 import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor} from '../governance.js?v=9';
 import {FACTIONS} from '../data.js?v=8';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=11';
-import {queueMission} from '../engine.js?v=48';
-import {previewPersonTravel,startPersonTravel,requestPersonalMeeting} from '../personal-diplomacy.js?v=30';
+import {queueMission} from '../engine.js?v=49';
+import {previewPersonTravel,startPersonTravel,requestPersonalMeeting} from '../personal-diplomacy.js?v=31';
 const portraits=new Set(['caesar','pompey','cleopatra','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function evidenceText(state,actor,target,report,zh){
