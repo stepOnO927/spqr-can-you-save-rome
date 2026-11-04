@@ -1,6 +1,6 @@
 import {initializeWorld, CHARACTER_CATALOG, ageRange} from './characters.js?v=12';
 import {ROUTES} from './data.js?v=8';
-import {addReport,reportedHealthSubjects} from './character-system.js?v=38';
+import {addReport,reportedHealthSubjects} from './character-system.js?v=39';
 import {officeOf} from './office-system.js?v=2';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
