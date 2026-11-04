@@ -21,7 +21,7 @@ jobs:
           node server.mjs > server.log 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
           node tools/browser-smoke.mjs
-          node tools/capture-test.mjs
+          node tools/capture-check.mjs
           node tools/map-benchmark.mjs
       - uses: actions/upload-artifact@v4
         if: always()
@@ -33,4 +33,5 @@ jobs:
             map-benchmark-1920x1080.png
             map-benchmark.json
             server.log
+
 
