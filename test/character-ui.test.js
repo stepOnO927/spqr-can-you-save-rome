@@ -28,7 +28,7 @@ test('intelligence and personal audience confirmations spend treasury and refres
 });
 test('health inquiry selection names only reported leaders and is captured at confirmation',()=>{
  const prior=globalThis.document,s=newGame('senate'),content=new Element();s.world.leadership.egypt=['ptolemy'];globalThis.document={createElement:tag=>new Element(tag)};
- try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0];assert.match(box.innerHTML,/健康调查对象（已报告人物）/);assert.match(box.innerHTML,/克娄巴特拉七世/);box.querySelector('#mission-person').value='ptolemy';box.missions.find(x=>x.dataset.mission==='spy').onclick();assert.match(box.querySelector('#mission-feedback').textContent,/托勒密十三世/);box.querySelector('#mission-feedback').children[0].onclick();assert.equal(s.operations[0].subjectCharacter,'ptolemy')}finally{globalThis.document=prior}
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0];assert.match(box.innerHTML,/人物情报对象（已报告人物）/);assert.match(box.innerHTML,/克娄巴特拉七世/);box.querySelector('#mission-person').value='ptolemy';box.missions.find(x=>x.dataset.mission==='spy').onclick();assert.match(box.querySelector('#mission-feedback').textContent,/托勒密十三世/);box.querySelector('#mission-feedback').children[0].onclick();assert.equal(s.operations[0].subjectCharacter,'ptolemy')}finally{globalThis.document=prior}
 });
 test('health selection includes reported claimants without reading the real court',()=>{
  const prior=globalThis.document,s=newGame('senate');s.knowledge.senate.egypt.reportedLeaders=['cleopatra'];s.world.claimants.egypt=['ptolemy'];globalThis.document={createElement:tag=>new Element(tag)};
@@ -123,4 +123,9 @@ test('foreign leadership cards use reported arrangements rather than hidden lead
 test('foreign age estimates identify direct and forwarded sources and their age',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
  try{addReport(s,'senate','egypt',{kind:'age',character:'cleopatra',value:[19,21],source:'meeting',confidence:'unverified'});addReport(s,'senate','egypt',{kind:'age',character:'cleopatra',value:[18,20],source:'exchange',originSource:'audience',fromFaction:'parthia',observationYear:-52,observationMonth:1,confidence:'unverified'});createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{},onShowCharacter:()=>{}}).show('cleopatra');const dossier=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(dossier,/个人会面/);assert.match(dossier,/盟友转交/);assert.match(dossier,/使者会面/);assert.match(dossier,/情报过期/);assert.match(dossier,/未经核实/)}finally{globalThis.document=prior}
+});
+
+test('allied exchanges confirm and remember the selected reported person',()=>{
+ const prior=globalThis.document,s=newGame('senate'),content=new Element();s.alliances.push(['senate','parthia']);globalThis.document={createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0];box.querySelector('#mission-subject').value='age';box.querySelector('#mission-person').value='ptolemy';box.querySelector('#mission-ally').value='parthia';box.missions.find(x=>x.dataset.mission==='exchange').onclick();assert.match(box.querySelector('#mission-feedback').textContent,/托勒密十三世/);box.querySelector('#mission-feedback').children[0].onclick();assert.equal(s.operations[0].subjectCharacter,'ptolemy');assert.equal(s.operations[0].partner,'parthia')}finally{globalThis.document=prior}
 });
