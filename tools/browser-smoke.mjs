@@ -86,6 +86,10 @@ try{
  assert.equal(await page.locator('[data-army="egyptguard"]').count(),0,'distant armies are not automatically revealed');
  await page.locator('#open-atlas').click();await page.waitForFunction(()=>document.querySelector('[data-army="italy"]'));
  assert.equal(await page.locator('[data-army="egyptguard"]').count(),0,'both map views use the same limited intelligence');
+ // A claimant appears as a health target only after this faction receives a report.
+ async function loadClaimantCase(reported){await page.evaluate(reported=>{const state=JSON.parse(localStorage.getItem('spqr-save-2'));state.knowledge.senate.egypt.reportedLeaders=['cleopatra'];state.world.claimants.egypt=['ptolemy'];state.knowledge.senate.egypt.reports=state.knowledge.senate.egypt.reports.filter(r=>r.kind!=='claimants');if(reported)state.knowledge.senate.egypt.reports.unshift({kind:'claimants',leaders:['ptolemy'],year:state.year,month:state.month,source:'travelers',confidence:'rumor'});sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));},reported);await page.reload();await page.waitForFunction(()=>document.querySelector('#turn-date')?.textContent.includes('前'));await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click()}
+ await loadClaimantCase(false);assert.equal(await page.locator('#mission-person option[value="ptolemy"]').count(),0);
+ await loadClaimantCase(true);await page.locator('#mission-person').selectOption('ptolemy');await page.locator('[data-mission="spy"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/托勒密十三世/);
  assert.deepEqual(errors,[],'uncaught browser errors');console.log('Browser smoke passed: atlas, travel, correspondence, spy, turns, and campaign view handoff.');
 } finally {await browser.close()}
 

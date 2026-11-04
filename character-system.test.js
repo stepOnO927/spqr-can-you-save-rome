@@ -73,6 +73,15 @@ test('health missions investigate the chosen reported person, not a hidden succe
  advanceOperations(unknown);advanceOperations(unknown);
  assert.equal(unknown.knowledge.caesar.egypt.reports[0].character,null);assert.equal(unknown.knowledge.caesar.egypt.reports[0].value,'unknown');
 });
+test('a reported claimant may be investigated without revealing an unreported one',()=>{
+ const s=newGame('caesar');s.knowledge.caesar.egypt.reportedLeaders=['cleopatra'];s.world.claimants.egypt=['ptolemy'];
+ assert.equal(previewMission(s,'caesar','egypt','spy','health',null,'ptolemy').reason,'identity');
+ addReport(s,'caesar','egypt',{kind:'claimants',leaders:['ptolemy'],source:'spy',confidence:'rumor'});
+ assert.equal(queueMission(s,'caesar','egypt','spy','health',null,'ptolemy').ok,true);
+ assert.equal(s.operations[0].subjectCharacter,'ptolemy');assert.equal(s.knowledge.senate.egypt.reports.length,0);
+ s.world.intelSeed=1000;for(let i=0;i<4;i++)advanceOperations(s);
+ assert.equal(s.knowledge.caesar.egypt.reports[0].character,'ptolemy');
+});
 test('political stability investigations produce uncertain reports instead of revealing the true score',()=>{
  const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
  const s=newGame('caesar');s.factions.egypt.stability=20;s.wars.push(['caesar','egypt']);
