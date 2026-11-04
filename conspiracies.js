@@ -6,7 +6,9 @@ const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.l
 
 // A game-only disposition derived from the stable id, not a historical character judgment.
 export function politicalAmbition(s,id){initializeWorld(s);const person=s.world.characters[id];if(!person)return null;if(!Number.isFinite(person.ambition))person.ambition=35+([...id].reduce((v,c)=>(v*31+c.charCodeAt(0))%31,0));return person.ambition}
-export function plotFormationChance(s,id){const ambition=politicalAmbition(s,id);return ambition===null?0:.20+ambition*.002}
+function currentLeader(s,id){const person=s.world.characters[id];return (s.world.leadership[person?.faction]||[]).find(leader=>leader!==id&&s.world.characters[leader]?.alive)||null}
+export function improveLeaderTrust(s,id,amount=5){initializeWorld(s);const leader=currentLeader(s,id);if(!leader)return null;const key=[id,leader].sort().join(':'),relationship=s.world.personalRelations[key]||{trust:0,meetings:0};relationship.trust=Math.max(-100,Math.min(100,(relationship.trust||0)+amount));s.world.personalRelations[key]=relationship;return relationship.trust}
+export function plotFormationChance(s,id){const ambition=politicalAmbition(s,id);if(ambition===null)return 0;const leader=currentLeader(s,id),key=leader?[id,leader].sort().join(':'):null,trust=key?(s.world.personalRelations[key]?.trust||0):0;return Math.max(.05,Math.min(.5,.20+ambition*.002-trust*.001))}
 // A simulated conspiracy is not a claim about a historical person's intentions.
 export function potentialConspirators(s,faction){
  initializeWorld(s);if(!roman(faction))return [];
@@ -28,5 +30,5 @@ export function reassurePerson(s,id){
  initializeWorld(s);const c=s.world.characters[id],actor=s.player;
  if(!roman(actor)||!c||!CHARACTER_CATALOG[id]||c.faction!==actor||!c.alive||c.missing||c.travel||['seriously_ill','dying','deceased'].includes(c.health)||(s.world.leadership[actor]||[]).includes(id)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(c.loyalty>=100)return {ok:false,reason:'maximum'};if(s.factions[actor].treasury<8)return {ok:false,reason:'treasury'};
- s.factions[actor].treasury-=8;c.loyalty=Math.min(100,c.loyalty+15);log(s,`${CHARACTER_CATALOG[id].name[0]} received political reassurance in the simulation.`,`${CHARACTER_CATALOG[id].name[1]}在游戏中获得政治安抚。`);return {ok:true,cost:8};
+ s.factions[actor].treasury-=8;c.loyalty=Math.min(100,c.loyalty+15);improveLeaderTrust(s,id);log(s,`${CHARACTER_CATALOG[id].name[0]} received political reassurance in the simulation.`,`${CHARACTER_CATALOG[id].name[1]}在游戏中获得政治安抚。`);return {ok:true,cost:8};
 }
