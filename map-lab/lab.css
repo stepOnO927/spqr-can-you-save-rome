@@ -41,6 +41,7 @@
 .diplomacy-tabs,.diplomacy-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.diplomacy-tabs button,.diplomacy-actions button,#send-inquiry,#city-region,#recruit-region,.help-list button{background:#344b40;border:1px solid #b6a26e;color:#f5e8c8;padding:7px 9px;font:12px Manrope,'Microsoft YaHei',sans-serif;cursor:pointer}.diplomacy-content button:disabled,#recruit-region:disabled{opacity:.48;cursor:not-allowed}#recruit-feedback,#diplomacy-feedback,#letter-feedback{color:#eec590;font-size:12px;margin-top:6px}.help-list button{font-size:11px}
 
 .character-card{display:flex;align-items:center;gap:10px;width:100%;margin:8px 0;padding:5px;text-align:left;border:1px solid #9b8860;background:#14241f;color:#f0e4c7;cursor:pointer}.character-card img,.portrait-unknown{width:54px;height:54px;object-fit:cover;border:1px solid #bba26e}.portrait-unknown{display:grid;place-items:center;font:24px Georgia;background:#2a3631}.character-card strong,.character-card small{display:block}.character-card small{margin-top:5px;color:#bdbaa5;font-size:10px}.mission-box{border-top:1px solid #88764c;margin-top:12px;padding-top:8px;font:12px/1.5 Manrope,'Microsoft YaHei',sans-serif}.mission-box select{background:#283a35;color:#fff;border:1px solid #9e8c65;padding:5px}.mission-box p{margin:7px 0}
+.historical-entry{border-top:1px solid #8b806355;margin-top:12px;padding-top:9px}.historical-entry summary{cursor:pointer;color:#e2c78a;font-weight:700}.historical-entry a{color:#f0d397;text-decoration:underline}.historical-entry summary:focus-visible{outline:2px solid #ffe18b;outline-offset:3px}
 
 .leader-map-label{display:none;align-items:center;gap:5px;padding:4px 7px;background:#172722dc;border:1px solid #d0bc86;color:#f2e7c8;white-space:nowrap;cursor:pointer}.leader-overview .leader-map-label{display:flex}.leader-map-label svg{width:22px;height:22px}.leader-map-label strong,.leader-map-label small{display:block;text-align:left}.leader-map-label strong{font:700 11px Manrope,'Microsoft YaHei',sans-serif}.leader-map-label small{font:10px Manrope,'Microsoft YaHei',sans-serif;color:#d0c3a2}
 
@@ -51,4 +52,3 @@
 .map-controls #relief-toggle{font:700 10px Manrope,'Microsoft YaHei',sans-serif}.map-controls #relief-toggle[aria-pressed="false"]{color:#a6a69b;background:#18211f}
 
 .office-row{border-top:1px solid #bda77755;margin-top:12px;padding-top:12px}.office-row label{display:block;margin:6px 0}.office-row button{margin:4px 4px 0 0}
-
