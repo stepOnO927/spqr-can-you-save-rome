@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=9';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=10';
 import {FACTIONS,ROUTES} from './data.js?v=8';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
@@ -107,7 +107,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   op.meeting='envoy';const k=[op.actor,op.target].sort().join(':');s.relations[k]=Math.min(100,(s.relations[k]||0)+3);
   // An audience may be with a representative. Only record a personal observation
   // when someone actually in office and named in the report could attend.
-  const met=(report.leaders||[]).find(candidate=>(s.world.leadership[op.target]||[]).includes(candidate)&&s.world.characters[candidate]?.alive&&!s.world.characters[candidate].travel&&!['seriously_ill','dying','deceased'].includes(s.world.characters[candidate].health));
+  const met=(report.leaders||[]).find(candidate=>(s.world.leadership[op.target]||[]).includes(candidate)&&s.world.characters[candidate]?.alive&&!s.world.characters[candidate].travel&&!s.world.characters[candidate].missing&&!['seriously_ill','dying','deceased'].includes(s.world.characters[candidate].health));
   if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=ageRange(met,s.year);
    addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,source:'audience',confidence:'unverified',reliability:'low'});
    if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,source:'audience',confidence:'unverified',reliability:'low'});
@@ -115,14 +115,14 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  }
  addReport(s,op.actor,op.target,report);if(op.actor===s.player)notify(s,`An intelligence report from ${FACTIONS[op.target].short[0]} has arrived.`,`一份来自${FACTIONS[op.target].short[1]}的情报报告已送达。`);
 }}
-export function contestLeadership(s,faction,claimant){initializeWorld(s);const leaders=s.world.leadership[faction]||[];if(faction!=='egypt'||leaders.length<2||!leaders.includes(claimant)||!s.world.characters[claimant]?.alive)return false;s.world.leadership[faction]=leaders.filter(id=>id!==claimant);const claimants=s.world.claimants[faction]||=[];if(!claimants.includes(claimant))claimants.push(claimant);s.world.disputes[faction]={months:0};if(s.factions[faction])s.factions[faction].stability=Math.max(0,s.factions[faction].stability-5);if(faction===s.player)notify(s,'A leadership dispute has created a rival claimant.','执政权争议产生了一位竞争者。');return true}
+export function contestLeadership(s,faction,claimant){initializeWorld(s);const leaders=s.world.leadership[faction]||[];if(faction!=='egypt'||leaders.length<2||!leaders.includes(claimant)||(!s.world.characters[claimant]?.alive||s.world.characters[claimant]?.missing))return false;s.world.leadership[faction]=leaders.filter(id=>id!==claimant);const claimants=s.world.claimants[faction]||=[];if(!claimants.includes(claimant))claimants.push(claimant);s.world.disputes[faction]={months:0};if(s.factions[faction])s.factions[faction].stability=Math.max(0,s.factions[faction].stability-5);if(faction===s.player)notify(s,'A leadership dispute has created a rival claimant.','执政权争议产生了一位竞争者。');return true}
 
 // Alternate-history court outcomes use existing characters and never update a foreign observer's reports directly.
 export function advanceDisputes(s){
  initializeWorld(s);const faction='egypt',leaders=s.world.leadership[faction]||[],claimants=(s.world.claimants[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!leaders.includes(id));s.world.claimants[faction]=claimants;
  if(!claimants.length||!leaders.length||!s.regions.some(r=>r.owner===faction)){delete s.world.disputes[faction];return}
  const dispute=s.world.disputes[faction]||={months:0};if(++dispute.months<6)return;dispute.months=0;
- const claimant=claimants[0],person=s.world.characters[claimant],stability=s.factions[faction].stability,support=dispute.support?.[claimant]||0,q=rand(s);let outcome;
+ const claimant=claimants[0],person=s.world.characters[claimant];if(person.missing)return;const stability=s.factions[faction].stability,support=dispute.support?.[claimant]||0,q=rand(s);let outcome;
  if(stability>=45&&person.loyalty>=55&&support===0&&q<.12){s.world.leadership[faction]=[...leaders,claimant];s.world.claimants[faction]=claimants.filter(id=>id!==claimant);s.factions[faction].stability=Math.min(100,stability+2);outcome='reconciliation';delete s.world.disputes[faction]}
  else if(q<(stability<45?.22:.08)+support/100){s.world.leadership[faction]=[claimant];s.world.claimants[faction]=[...new Set([...claimants.filter(id=>id!==claimant),...leaders.filter(id=>s.world.characters[id]?.alive)])];s.factions[faction].stability=Math.max(0,stability-4);outcome='takeover';dispute.support={}}
  if(outcome){s.world.disputeHistory.unshift({faction,claimant,outcome,year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);if(faction===s.player)notify(s,outcome==='reconciliation'?'A simulated court settlement restored joint rule.':'A simulated court struggle changed the ruling authority.',outcome==='reconciliation'?'游戏中的宫廷和解恢复了共同统治。':'游戏中的宫廷斗争改变了执政者。')}
@@ -132,11 +132,11 @@ export function illnessRisk(s,id){initializeWorld(s);const c=s.world.characters[
 // Alternate-history defection is restricted to unattached Roman officers, never fabricated identities.
 export function considerDefection(s,id){
  initializeWorld(s);const c=s.world.characters[id],from=c?.faction,to=from==='caesar'?'senate':from==='senate'?'caesar':null;
- if(!to||!c.alive||c.loyalty>20||['seriously_ill','dying','deceased'].includes(c.health)||(s.world.leadership[from]||[]).includes(id)||s.armies.some(a=>a.characterId===id)||!s.regions.some(r=>r.owner===to)||!s.wars.some(w=>w.includes(from)&&w.includes(to)))return false;
+ if(!to||!c.alive||c.missing||c.loyalty>20||['seriously_ill','dying','deceased'].includes(c.health)||(s.world.leadership[from]||[]).includes(id)||s.armies.some(a=>a.characterId===id)||!s.regions.some(r=>r.owner===to)||!s.wars.some(w=>w.includes(from)&&w.includes(to)))return false;
  if(rand(s)>=.18)return false;c.faction=to;c.loyalty=45;delete c.travel;s.factions[from].stability=Math.max(0,s.factions[from].stability-2);s.factions[to].stability=Math.min(100,s.factions[to].stability+1);
  s.world.defections.unshift({id,from,to,year:s.year,month:s.month});s.world.defections=s.world.defections.slice(0,30);if(s.player===from||s.player===to)notify(s,`${CHARACTER_CATALOG[id].name[0]} changed allegiance in the simulation.`,`${CHARACTER_CATALOG[id].name[1]}在游戏中改变了政治立场。`);return true;
 }
-export function advanceCharacters(s){initializeWorld(s);if(s.month!==1)return;for(const [id,c] of Object.entries(s.world.characters)){if(!c.alive||!c.faction)continue;const r=rand(s),previous=c.health,age=ageRange(id,s.year)?.[0],illChance=illnessRisk(s,id),frailChance=age>=65?.025:0;c.loyalty=Math.max(0,Math.min(100,c.loyalty+(s.factions[c.faction]?.stability<35?-4:1)));if(c.health==='dying'&&r<.45)c.health='deceased';else if(c.health==='seriously_ill'&&r<.22)c.health='dying';else if(c.health==='healthy'&&r<frailChance)c.health='frail';else if(c.health==='healthy'&&r<frailChance+illChance)c.health='ill';else if(c.health==='frail'&&r<.08)c.health='seriously_ill';else if(c.health==='ill'&&r<.22)c.health='seriously_ill';else if((c.health==='ill'||c.health==='wounded')&&r>.45)c.health='recovering';else if(c.health==='recovering'&&r>.25)c.health='healthy';
+export function advanceCharacters(s){initializeWorld(s);if(s.month!==1)return;for(const [id,c] of Object.entries(s.world.characters)){if(!c.alive||!c.faction||c.missing)continue;const r=rand(s),previous=c.health,age=ageRange(id,s.year)?.[0],illChance=illnessRisk(s,id),frailChance=age>=65?.025:0;c.loyalty=Math.max(0,Math.min(100,c.loyalty+(s.factions[c.faction]?.stability<35?-4:1)));if(c.health==='dying'&&r<.45)c.health='deceased';else if(c.health==='seriously_ill'&&r<.22)c.health='dying';else if(c.health==='healthy'&&r<frailChance)c.health='frail';else if(c.health==='healthy'&&r<frailChance+illChance)c.health='ill';else if(c.health==='frail'&&r<.08)c.health='seriously_ill';else if(c.health==='ill'&&r<.22)c.health='seriously_ill';else if((c.health==='ill'||c.health==='wounded')&&r>.45)c.health='recovering';else if(c.health==='recovering'&&r>.25)c.health='healthy';
  if((previous==='healthy'&&c.health==='ill')||(previous==='frail'&&c.health==='seriously_ill'))c.illnessEpisodes++;
  if(c.health==='deceased'){c.alive=false;if(s.factions[c.faction])s.factions[c.faction].stability=Math.max(0,s.factions[c.faction].stability-3);const lead=s.world.leadership[c.faction]||[];if(lead.includes(id))assignSuccession(s,c.faction);for(const a of s.armies.filter(a=>a.characterId===id)){a.characterId=null;a.commander=['Unnamed officer','未具名军官'];a.skill=Math.min(a.skill,1)}if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[id].name[0]} died in the simulation; leadership was reassigned.`,`${CHARACTER_CATALOG[id].name[1]}在模拟中去世，指挥权已调整。`)}
  else {if(previous!==c.health&&c.faction===s.player)notify(s,`${CHARACTER_CATALOG[id].name[0]}: simulated health changed to ${c.health}.`,`${CHARACTER_CATALOG[id].name[1]}的游戏健康状态发生变化。`);considerDefection(s,id)}
@@ -144,6 +144,20 @@ export function advanceCharacters(s){initializeWorld(s);if(s.month!==1)return;fo
 export function battlefieldWound(s,a){initializeWorld(s);const c=s.world.characters[a.characterId];if(!c?.alive||!['healthy','recovering','frail','wounded'].includes(c.health))return;const risk=Math.min(.14,.07+((s.factions[a.owner]?.food??0)<0?.03:0)+Math.min(.04,c.wounds*.01));if(rand(s)<risk){c.health='wounded';c.wounds++;if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[c.id].name[0]} was wounded in battle (simulated).`,`${CHARACTER_CATALOG[c.id].name[1]}在游戏战斗中受伤。`)}}
 export function commandFactor(s,a){const c=s.world?.characters?.[a.characterId];return !c?1:({healthy:1,recovering:.96,wounded:.9,ill:.9,frail:.88,seriously_ill:.8,dying:.7,deceased:.7}[c.health]||1)}
 export function linkCommanders(s){initializeWorld(s);for(const a of s.armies){if(a.characterId===undefined){a.characterId=a.id==='xiii'?'caesar':a.id==='pompey'?'pompey':null}if(a.characterId&&s.world.characters[a.characterId])s.world.characters[a.characterId].location=a.region}}
+
+// A missing commander may re-establish contact after three months in the nearest
+// controlled theater. This is a coarse game abstraction, not a precise escape route.
+export function advanceMissingCommanders(s){
+ initializeWorld(s);for(const person of Object.values(s.world.characters)){
+  const missing=person.missing;if(!missing)continue;if(!person.alive){delete person.missing;continue}
+  if(s.year===missing.year&&s.month===missing.month)continue;
+  missing.remaining=Math.max(0,missing.remaining-1);if(missing.remaining)continue;
+  const queue=[missing.origin],seen=new Set(queue);let destination=null;
+  for(let i=0;i<queue.length;i++){const id=queue[i],r=s.regions.find(x=>x.id===id);if(r?.owner===person.faction){destination=r;break}for(const edge of ROUTES){const next=edge[0]===id?edge[1]:edge[1]===id?edge[0]:null;if(next&&!seen.has(next)){seen.add(next);queue.push(next)}}}
+  if(!destination)continue;person.location=destination.id;delete person.missing;
+  if(person.faction===s.player)notify(s,`${CHARACTER_CATALOG[person.id].name[0]} re-established contact in ${destination.name[0]}.`,`${CHARACTER_CATALOG[person.id].name[1]}在${destination.name[1]}重新取得联系。`);
+ }
+}
 
 // Local reports update only at a controlled frontier; unseen reports remain stale.
 export function observeArmies(s){initializeWorld(s);for(const viewer of Object.keys(s.knowledge)){for(const unit of s.armies){if(unit.owner===viewer||unit.move||!s.knowledge[viewer]?.[unit.owner])continue;const local=s.regions.some(r=>r.owner===viewer&&(r.id===unit.region||ROUTES.some(x=>(x[0]===r.id&&x[1]===unit.region)||(x[1]===r.id&&x[0]===unit.region))));if(local)s.knowledge[viewer][unit.owner].sightings[unit.id]={id:unit.id,name:[...unit.name],owner:unit.owner,region:unit.region,year:s.year,month:s.month}}}}
