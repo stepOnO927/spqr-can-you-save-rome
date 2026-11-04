@@ -1,10 +1,10 @@
-import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=9';
+import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=10';
 
 // Theater-level appointments are simulated, not claims about historical commands.
 export function availableCommanders(s,armyId){
  initializeWorld(s);const unit=s.armies.find(a=>a.id===armyId);
  if(!unit||unit.owner!==s.player||unit.men<=0||unit.move||unit.siege)return [];
- return Object.values(s.world.characters).filter(c=>c.faction===s.player&&c.alive&&c.location===unit.region&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health)&&!s.armies.some(a=>a.characterId===c.id)).map(c=>c.id);
+ return Object.values(s.world.characters).filter(c=>c.faction===s.player&&c.alive&&c.location===unit.region&&!c.travel&&!c.missing&&!['seriously_ill','dying','deceased'].includes(c.health)&&!s.armies.some(a=>a.characterId===c.id)).map(c=>c.id);
 }
 export function appointCommander(s,armyId,id){
  if(!availableCommanders(s,armyId).includes(id))return {ok:false,reason:'unavailable'};
