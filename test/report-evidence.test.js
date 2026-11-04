@@ -65,3 +65,11 @@ test('loading older saves removes false corroboration of unknown names and recov
  s.knowledge.caesar.egypt.reportedLeaders=[];for(const r of s.knowledge.caesar.egypt.reports.filter(r=>!r.leaders.length)){r.confidence='confirmed';r.verified=true}const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(loaded.knowledge.caesar.egypt.reportedLeaders,['ptolemy']);assert.ok(loaded.knowledge.caesar.egypt.reports.filter(r=>!r.leaders.length).every(r=>!r.verified&&r.confidence==='unverified'));assert.equal(leadershipIntelligence(loaded,'caesar',target).confidence,'unverified');
  const empty=newGame('caesar');empty.knowledge.caesar.egypt.reportedLeaders=[];addReport(empty,'caesar',target,{kind:'leaders',leaders:[],source:'spy',confidence:'unverified'});empty.world.leadership.egypt=['ptolemy'];const clean=upgradeSave(JSON.parse(JSON.stringify(empty)));assert.deepEqual(clean.knowledge.caesar.egypt.reportedLeaders,[]);assert.equal(leadershipIntelligence(clean,'caesar',target).confidence,'unknown');
 });
+
+test('overlapping age estimates are compatible but do not independently corroborate the exact range',()=>{
+ const s=newGame('caesar'),t='egypt';const first=addReport(s,'caesar',t,{kind:'age',character:'ptolemy',value:[19,21],source:'meeting'});
+ addReport(s,'caesar',t,{kind:'age',character:'ptolemy',value:[20,22],source:'envoy'});
+ assert.equal(first.confidence,'unverified');assert.equal(first.verified,false);let e=reportEvidence(s,'caesar',t,first);assert.deepEqual(e.conflict,[]);assert.deepEqual(e.compatible.map(x=>x.family),['court']);assert.deepEqual(e.support.map(x=>x.family),['meeting']);
+ addReport(s,'caesar',t,{kind:'age',character:'ptolemy',value:[19,21],source:'spy'});assert.equal(first.confidence,'credible');
+ addReport(s,'caesar',t,{kind:'age',character:'ptolemy',value:[23,25],source:'travelers'});assert.equal(first.confidence,'disputed');e=reportEvidence(s,'caesar',t,first);assert.deepEqual(e.conflict.map(x=>x.family),['travelers']);
+});
