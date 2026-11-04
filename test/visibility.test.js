@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,region,tick} from '../engine.js';
+import {newGame,resolveBattle,region,tick,upgradeSave} from '../engine.js';
+import {observeArmies,reportedArmies} from '../character-system.js';
 import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer} from '../visibility.js';
 
 test('battle projection hides opponent details while preserving actual simulation evidence',()=>{
@@ -23,4 +24,14 @@ test('an old army sighting does not expose its actual destruction, movement, or 
  assert.deepEqual(visibleArmyForPlayer(s,'senate','xiii'),reported);
  assert.equal(visibleArmyForPlayer(s,'senate','italy').owner,'senate');
 });
-
+test('only a visible recheck retires a marker; history survives saves without revealing its fate',()=>{
+ let s=newGame('senate');region(s,'italiaN').owner='caesar';const unit=s.armies.find(a=>a.id==='xiii');unit.region='gaul';unit.characterId='antony';s.month=2;observeArmies(s);
+ assert.equal(reportedArmies(s,'senate').find(a=>a.id==='xiii').region,'cisalpine');assert.equal(s.knowledge.senate.caesar.sightingHistory,undefined);
+ region(s,'italiaN').owner='senate';s.month=3;observeArmies(s);assert.equal(reportedArmies(s,'senate').find(a=>a.id==='xiii'),undefined);
+ let entry=s.knowledge.senate.caesar.sightingHistory[0];assert.equal(entry.region,'cisalpine');assert.equal(entry.month,1);assert.equal(entry.checkedMonth,3);assert.equal(entry.commanderId,'caesar');assert.equal(entry.fate,undefined);assert.equal(entry.destination,undefined);assert.equal(s.knowledge.egypt.caesar.sightingHistory,undefined);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));entry=s.knowledge.senate.caesar.sightingHistory[0];assert.equal(entry.checkedMonth,3);
+});
+test('an army still in its last observed theater is not erased just because it is moving',()=>{
+ const s=newGame('senate'),unit=s.armies.find(a=>a.id==='xiii');unit.move={to:'gaul',remaining:1};s.month=2;observeArmies(s);
+ assert.equal(reportedArmies(s,'senate').find(a=>a.id==='xiii').region,'cisalpine');assert.equal(s.knowledge.senate.caesar.sightingHistory,undefined);
+});

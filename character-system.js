@@ -245,5 +245,23 @@ export function advanceMissingCommanders(s){
 }
 
 // Local reports update only at a controlled frontier; unseen reports remain stale.
-export function observeArmies(s){initializeWorld(s);for(const viewer of Object.keys(s.knowledge)){for(const unit of s.armies){if(unit.owner===viewer||unit.move||!s.knowledge[viewer]?.[unit.owner])continue;const local=s.regions.some(r=>r.owner===viewer&&(r.id===unit.region||ROUTES.some(x=>(x[0]===r.id&&x[1]===unit.region)||(x[1]===r.id&&x[0]===unit.region))));if(local){const k=s.knowledge[viewer][unit.owner],commanderId=CHARACTER_CATALOG[unit.characterId]?unit.characterId:null;k.sightings[unit.id]={id:unit.id,name:[...unit.name],owner:unit.owner,region:unit.region,year:s.year,month:s.month,commanderId};if(commanderId){k.commanderReports=(k.commanderReports||[]).filter(r=>r.commanderId!==commanderId||r.armyId!==unit.id);k.commanderReports.unshift({commanderId,armyId:unit.id,armyName:[...unit.name],year:s.year,month:s.month});k.commanderReports=k.commanderReports.slice(0,30)}}}}}
+export function observeArmies(s){
+ initializeWorld(s);
+ for(const viewer of Object.keys(s.knowledge)){
+  const controlled=new Set(s.regions.filter(r=>r.owner===viewer).map(r=>r.id)),observed=new Set(controlled);
+  for(const [a,b] of ROUTES){if(controlled.has(a))observed.add(b);if(controlled.has(b))observed.add(a)}
+  const visible=place=>observed.has(place);
+  // A visible former position can be checked without learning where the army
+  // went or whether it survived. Preserve the dated report as historical evidence.
+  for(const [owner,k] of Object.entries(s.knowledge[viewer]))for(const [id,old] of Object.entries(k.sightings||{})){
+   if(!visible(old.region))continue;const unit=s.armies.find(a=>a.id===id);
+   if(unit&&unit.region===old.region&&(unit.owner===owner||unit.move))continue;
+   (k.sightingHistory||=[]).unshift({...old,checkedYear:s.year,checkedMonth:s.month});k.sightingHistory=k.sightingHistory.slice(0,30);delete k.sightings[id];
+  }
+  for(const unit of s.armies){if(unit.owner===viewer||unit.move||!s.knowledge[viewer]?.[unit.owner]||!visible(unit.region))continue;
+   const k=s.knowledge[viewer][unit.owner],commanderId=CHARACTER_CATALOG[unit.characterId]?unit.characterId:null;k.sightings[unit.id]={id:unit.id,name:[...unit.name],owner:unit.owner,region:unit.region,year:s.year,month:s.month,commanderId};
+   if(commanderId){k.commanderReports=(k.commanderReports||[]).filter(r=>r.commanderId!==commanderId||r.armyId!==unit.id);k.commanderReports.unshift({commanderId,armyId:unit.id,armyName:[...unit.name],year:s.year,month:s.month});k.commanderReports=k.commanderReports.slice(0,30)}
+  }
+ }
+}
 export function reportedArmies(s,viewer){initializeWorld(s);const result=[];for(const [owner,k] of Object.entries(s.knowledge[viewer]||{})){if(owner===viewer)continue;for(const x of Object.values(k.sightings||{}))result.push({...x,reported:true})}return result}

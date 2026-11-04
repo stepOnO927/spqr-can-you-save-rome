@@ -177,12 +177,12 @@ test('low domestic stability reduces simulated loyalty without exposing it to ot
 });
 
 
-test('foreign army markers use old sightings until a controlled frontier observes them',()=>{
+test('rechecking a visible former position clears the marker without proving the army was destroyed',()=>{
  const s=newGame(),pompey=s.armies.find(a=>a.id==='pompey');pompey.region='italiaN';observeArmies(s);
- pompey.region='africa';observeArmies(s);assert.equal(reportedArmies(s,'caesar').find(a=>a.id==='pompey').region,'italiaN');
+ pompey.region='africa';observeArmies(s);assert.equal(reportedArmies(s,'caesar').find(a=>a.id==='pompey'),undefined);assert.equal(s.knowledge.caesar.senate.sightingHistory[0].region,'italiaN');
  pompey.region='italiaN';s.month=2;observeArmies(s);assert.equal(reportedArmies(s,'caesar').find(a=>a.id==='pompey').region,'italiaN');
- pompey.region='africa';s.month=3;observeArmies(s);const stale=reportedArmies(s,'caesar').find(a=>a.id==='pompey');assert.equal(stale.region,'italiaN');assert.equal(stale.month,2);
- s.armies=s.armies.filter(a=>a.id!=='pompey');assert.ok(reportedArmies(s,'caesar').some(a=>a.id==='pompey'));
+ s.armies=s.armies.filter(a=>a.id!=='pompey');assert.ok(reportedArmies(s,'caesar').some(a=>a.id==='pompey'));s.month=3;observeArmies(s);
+ assert.equal(reportedArmies(s,'caesar').find(a=>a.id==='pompey'),undefined);assert.equal(s.knowledge.caesar.senate.sightingHistory[0].month,2);assert.equal(s.knowledge.caesar.senate.sightingHistory[0].checkedMonth,3);
 });
 
 test('new campaigns seed each faction only with its own frontier observations',()=>{
