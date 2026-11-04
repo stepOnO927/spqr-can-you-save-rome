@@ -6,7 +6,9 @@ Playable local 49 BCE civil war slice. Requires Node.js 20 or later and a curren
 npm start
 ```
 
-Open `http://localhost:5173`. No package installation, account, API, or network access is needed. Run `npm test` for the simulation tests.
+Open `http://localhost:5173` for the original campaign or `/map-lab/` for the terrain-map prototype. The original campaign works without network access; the prototype loads MapLibre and geographic tiles over the network. No account is needed. Run `npm test` for the simulation tests.
+
+The **Terrain Map Lab** and **Return to Campaign** controls transfer the current game between the two views in the same browser tab. The transfer uses temporary session storage and does not overwrite the three save slots. Both views remain available; the prototype is not yet a complete replacement for the original campaign screen. Save separately for longer-term persistence.
 
 ## How to play
 
@@ -22,7 +24,7 @@ This is a game slice, not the complete game described in the master directive. C
 
 Some simulation theaters share a source polygon. Stripes indicate mixed military control, not a historical frontier; the theater picker identifies individual game areas. Gray Roman territory has no assigned gameplay theater. Starting troop numbers, faction control, income, and ratings are gameplay estimates. The opening puts Pompey in Rome; events are conditional on play.
 
-Not yet implemented: precise researched province geography, the full set of neighboring powers, sophisticated diplomacy and AI, other era bookmarks, characters and succession, research, religion, institutions, construction, national focuses, encyclopedia images, and multi-century simulation. Version 2 saves are migrated; version 1 saves cannot be loaded into the expanded map. The game does not represent those features as complete.
+The map prototype includes historical characters, interpretive portraits, health, succession, espionage, and dated faction-specific intelligence. Letters and audiences can take time, be lost, or receive no useful reply. These are evolving gameplay models, not complete historical reconstructions. Precise province geography, broader AI and diplomacy, and a fully integrated campaign interface remain incomplete. Other era bookmarks and long-term systems such as research and religion are outside the current slice. Older supported saves are upgraded when loaded.
 
 ## Code layout
 
@@ -30,8 +32,9 @@ Not yet implemented: precise researched province geography, the full set of neig
 - `historical-territories.js` — dated polity outlines and adapted Roman polygons; see `MAP_SOURCES.md`
 - `engine.js` — pure simulation operations and AI
 - `app.js` — UI and localization
+- `map-lab/` — terrain-map prototype, character panels and tutorial
+- `view-handoff.js` — temporary campaign transfer between the two views
 - `style.css` — historical atlas style
 - `engine.test.js` — gameplay checks
 
 No commercial game art or maps are copied. The schematic coastline and interface are original.
-
