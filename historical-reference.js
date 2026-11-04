@@ -20,3 +20,13 @@ export const HISTORICAL_DEATHS={
  pharnaces:{years:[47],sources:[{label:['Oxford Classical Dictionary: Pharnaces II','牛津古典辞典：法尔纳刻斯二世'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549705304'}]},
  pacorus:{years:[38],sources:[{label:['Encyclopaedia Iranica: Orodes II','伊朗百科：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}]}
 };
+
+// Approximate birth references; uncertain single years are not converted into
+// invented narrow age ranges or used as simulation thresholds.
+export const HISTORICAL_BIRTH_ESTIMATES={
+ ptolemy:{text:['62–61 BCE (estimated)','公元前62–61年（估计）'],sources:[{label:['Trismegistos: Ptolemy XIII','Trismegistos：托勒密十三世'],url:'https://www.trismegistos.org/calendar/bennett/ptolemies/ptolemy_xiii.htm'}]},
+ labienus:{text:['around 100 BCE; precision unknown','约公元前100年，误差范围不明'],sources:[{label:['Oxford Classical Dictionary','牛津古典辞典'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549655484'}]},
+ lepidus:{text:['around 90 BCE; precision unknown','约公元前90年，误差范围不明'],sources:[{label:['Encyclopedia of Ancient History','古代史百科全书'],url:'https://onlinelibrary.wiley.com/doi/10.1002/9781444338386.wbeah20004'}]},
+ juba:{text:['around 85 BCE; precision unknown','约公元前85年，误差范围不明'],sources:[{label:['Algerian Embassy: Numidian kings','阿尔及利亚大使馆：努米底亚诸王'],url:'https://ambassade-algerie.ch/exposition_culturelle/medias/encyclotimbreen.pdf'}]},
+ deiotarus:{text:['around 120 BCE; precision unknown','约公元前120年，误差范围不明'],sources:[{label:['Encyclopedia of Ancient History','古代史百科全书'],url:'https://onlinelibrary.wiley.com/doi/abs/10.1002/9781444338386.wbeah09083.pub2'}]}
+};
