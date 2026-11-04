@@ -77,7 +77,7 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
  if(subject==='contacts'&&(!['spy','exchange'].includes(type)||target!=='egypt'))return {ok:false,reason:'subject'};
  if(type==='counter'&&subject!=='conspiracy'||subject==='conspiracy'&&(!['spy','counter','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
- if(subject==='health'&&type!=='exchange'&&characterId&&!reportedHealthSubjects(s,actor,target).includes(characterId))return {ok:false,reason:'identity'};
+ if(['health','age'].includes(subject)&&characterId&&!reportedHealthSubjects(s,actor,target).includes(characterId))return {ok:false,reason:'identity'};
  const partners=s.alliances.filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)).filter(id=>id!==target&&s.factions[id]);
  if(type==='exchange'&&(!partners.length||(partnerId&&!partners.includes(partnerId))))return {ok:false,reason:'alliance'};
  if(['spy','counter'].includes(type)&&!availableAgents(s,actor))return {ok:false,reason:'agents'};
@@ -87,7 +87,7 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
 }
 export function queueMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;
- const {duration,partner,cost}=plan,subjectCharacter=subject==='health'&&type!=='exchange'?(characterId||reportedHealthSubjects(s,actor,target)[0]||null):null;
+ const {duration,partner,cost}=plan,subjectCharacter=['health','age'].includes(subject)?(characterId||(subject==='health'&&type!=='exchange'?reportedHealthSubjects(s,actor,target)[0]:null)||null):null;
  s.factions[actor].treasury-=cost;s.operations.unshift({actor,target,type,subject,partner,subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month});
  if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months.`,`已派出${({spy:'间谍',counter:'内部调查',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月。`);return {ok:true,duration};
 }
@@ -105,7 +105,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  const refusal=Math.max(.23,Math.min(.70,.38-relation*.0015+(atWar?.18:0)+(s.factions[op.target].stability<35?.08:0)));
  if((op.type==='audience'||op.type==='envoy')&&q<refusal){op.status='declined';continue}
  if(op.type==='exchange'){
-  const partner=op.partner,stillAllied=s.alliances.some(x=>x.includes(op.actor)&&x.includes(partner)),prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>r.kind===op.subject);
+  const partner=op.partner,stillAllied=s.alliances.some(x=>x.includes(op.actor)&&x.includes(partner)),prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter));
   if(!stillAllied||!prior){op.status='failed';continue}
   const copy={kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'};
   addReport(s,op.actor,op.target,copy);op.status='complete';if(op.actor===s.player)notify(s,'An ally forwarded an existing report; its original date and source still matter.','盟友转交了一份既有报告；仍需留意原始日期与来源。');continue
