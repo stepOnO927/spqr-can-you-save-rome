@@ -29,10 +29,10 @@ test('death during a dispute leaves a vacancy until a claimant establishes autho
  for(let i=0;i<5;i++)advanceDisputes(s);s.world.intelSeed=seedFor(.3,.35);advanceDisputes(s);
  assert.deepEqual(s.world.leadership.egypt,['cleopatra']);assert.deepEqual(s.world.claimants.egypt,[]);assert.equal(s.world.disputeHistory[0].outcome,'succession');assert.deepEqual(knownLeaders(s,'caesar','egypt'),['cleopatra','ptolemy']);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
 });
-test('a spy can report the vacancy without automatically informing other observers',()=>{
+test('a spy finding no identifiable leaders does not erase previous reports or inform other observers',()=>{
  const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.world.characters.ptolemy.alive=false;assignSuccession(s,'egypt');
  assert.equal(queueMission(s,'caesar','egypt','spy','leaders').ok,true);s.world.intelSeed=seedFor(.7,.8);for(let i=0;i<4;i++)advanceOperations(s);
- assert.deepEqual(s.knowledge.caesar.egypt.reports[0].leaders,[]);assert.deepEqual(knownLeaders(s,'caesar','egypt'),[]);assert.deepEqual(knownLeaders(s,'senate','egypt'),['cleopatra','ptolemy']);
+ assert.deepEqual(s.knowledge.caesar.egypt.reports[0].leaders,[]);assert.deepEqual(knownLeaders(s,'caesar','egypt'),['cleopatra','ptolemy']);assert.deepEqual(knownLeaders(s,'senate','egypt'),['cleopatra','ptolemy']);
 });
 test('a claimant who dies during an interregnum is not installed as ruler',()=>{
  const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.world.characters.ptolemy.alive=false;assignSuccession(s,'egypt');s.world.characters.cleopatra.alive=false;s.month++;advanceDisputes(s);

@@ -48,3 +48,20 @@ test('loading an old save recalculates fresh confidence without deleting old rep
  const newer=addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy'],source:'spy',confidence:'unverified'});newer.confidence='confirmed';newer.verified=true;const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
  assert.equal(restored.knowledge.caesar.egypt.reports.length,4);assert.equal(restored.knowledge.caesar.egypt.reports[0].confidence,'unverified');assert.equal(restored.knowledge.caesar.egypt.reports[0].verified,false);
 });
+
+test('empty leader and claimant reports cannot corroborate absence or contradict named evidence',()=>{
+ const s=newGame('caesar'),target='egypt';const known=addReport(s,'caesar',target,{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified'});
+ for(const source of ['spy','envoy','travelers'])addReport(s,'caesar',target,{kind:'claimants',leaders:[],source,confidence:'confirmed'});
+ assert.equal(known.confidence,'unverified');assert.equal(known.verified,false);assert.deepEqual(reportEvidence(s,'caesar',target,known).conflict,[]);
+ for(const r of s.knowledge.caesar.egypt.reports.filter(r=>r.kind==='claimants'&&!r.leaders.length)){assert.equal(r.confidence,'unverified');assert.equal(r.verified,false);assert.equal(reportEvidence(s,'caesar',target,r).unavailable,true)}
+});
+test('a no-name leader report preserves the last named report and an older forwarded name is not masked by no-name results',()=>{
+ const s=newGame('caesar'),target='egypt';s.month=3;addReport(s,'caesar',target,{kind:'leaders',leaders:['ptolemy'],source:'spy',confidence:'unverified'});s.month=7;addReport(s,'caesar',target,{kind:'leaders',leaders:[],source:'envoy',confidence:'unverified'});
+ assert.deepEqual(s.knowledge.caesar.egypt.reportedLeaders,['ptolemy']);assert.equal(leadershipIntelligence(s,'caesar',target).confidence,'unverified');assert.deepEqual(leadershipIntelligence(s,'caesar',target).observed,{year:-49,month:3});
+ const t=newGame('caesar');t.knowledge.caesar.egypt.reportedLeaders=[];t.month=7;addReport(t,'caesar',target,{kind:'leaders',leaders:[],source:'spy',confidence:'unverified'});addReport(t,'caesar',target,{kind:'leaders',leaders:['ptolemy'],source:'exchange',originSource:'court',observationYear:-49,observationMonth:3,confidence:'unverified'});assert.deepEqual(t.knowledge.caesar.egypt.reportedLeaders,['ptolemy']);
+});
+test('loading older saves removes false corroboration of unknown names and recovers only recorded names',()=>{
+ const s=newGame('caesar'),target='egypt';addReport(s,'caesar',target,{kind:'leaders',leaders:['ptolemy'],source:'spy',confidence:'unverified'});for(const source of ['envoy','travelers','spy'])addReport(s,'caesar',target,{kind:'leaders',leaders:[],source,confidence:'unverified'});
+ s.knowledge.caesar.egypt.reportedLeaders=[];for(const r of s.knowledge.caesar.egypt.reports.filter(r=>!r.leaders.length)){r.confidence='confirmed';r.verified=true}const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(loaded.knowledge.caesar.egypt.reportedLeaders,['ptolemy']);assert.ok(loaded.knowledge.caesar.egypt.reports.filter(r=>!r.leaders.length).every(r=>!r.verified&&r.confidence==='unverified'));assert.equal(leadershipIntelligence(loaded,'caesar',target).confidence,'unverified');
+ const empty=newGame('caesar');empty.knowledge.caesar.egypt.reportedLeaders=[];addReport(empty,'caesar',target,{kind:'leaders',leaders:[],source:'spy',confidence:'unverified'});empty.world.leadership.egypt=['ptolemy'];const clean=upgradeSave(JSON.parse(JSON.stringify(empty)));assert.deepEqual(clean.knowledge.caesar.egypt.reportedLeaders,[]);assert.equal(leadershipIntelligence(clean,'caesar',target).confidence,'unknown');
+});

@@ -149,3 +149,8 @@ test('foreign age remains unknown until an observation despite a sourced histori
  const prior=globalThis.document,s=newGame('caesar'),panel=new Element();globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).show('ptolemy');assert.match(panel.innerHTML,/年龄<\/span><b>未知/);const html=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(html,/历史出生估计: 公元前62–61年（估计）/);assert.match(html,/trismegistos\.org/);assert.match(html,/历史百科（非游戏情报）/);assert.doesNotMatch(html,/会面时的年龄估计/)}finally{globalThis.document=prior}
 });
+
+test('reports without identifiable names explicitly do not establish absence',()=>{
+ const prior=globalThis.document,s=newGame('caesar');globalThis.document={createElement:tag=>new Element(tag)};
+ try{addReport(s,'caesar','egypt',{kind:'claimants',leaders:[],source:'spy',confidence:'unverified'});for(const language of ['zh','en']){const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,language==='zh'?/未获得可核实姓名；不代表不存在/:/No identifiable names; this does not prove absence/);assert.doesNotMatch(html,language==='zh'?/已独立核实/:/>Independently corroborated</)}}finally{globalThis.document=prior}
+});
