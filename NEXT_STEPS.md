@@ -1,40 +1,26 @@
-# SPQR outstanding work audit
+# SPQR — outstanding work and evidence
 
-This is an implementation tracker, not a claim that the game has reached a final release. Later user restrictions take precedence over earlier requests: the player remains Roman, the terrain map is retained, and historical uncertainty is explicit.
+This is a development tracker, not a completion claim. The player chooses a Roman command; the independent countries remain AI-controlled. The 49 BCE atlas and the original campaign share a saved simulation, with a reversible transfer between views. New eras, religion and technology expansion remain outside the current visual and Phase IX work.
 
-## Current priorities
-- Complete the Phase IX character model: dynamic offices, regencies, more succession arrangements, personal diplomacy and relationships, character travel, illness and injury consequences, and historical uncertainty in every profile.
-- Expand intelligence beyond the present report model: document source reliability, keep independently corroborated and conflicting reports visible, improve knowledge-aware AI and map visibility, and distinguish personal meetings from an envoy's audience. Client-side saves are not a secrecy boundary.
-- Complete the earlier atlas requirements: deeper operational effects for the existing terrain, military, supply, economy and loyalty views; polished army routes and battle feedback; geographic roads, ports and passes; and sustained performance measurements.
-- Reconcile the atlas with the working campaign only when the necessary mechanics and visual acceptance criteria are met; preserve saves and a playable fallback during the transition.
-- Complete accessibility, small-screen and Chinese/English coverage; test all systems in both languages and arrange a genuine independent beginner test before calling onboarding validated.
-- Research additional 49 BCE interior boundaries and geographic details only where defensible sources exist; preserve the uncertainty documentation and data licenses.
+## Phase IX — current state and remaining work
 
-## Verification already present
-See map-lab/TESTING.md for tested behavior and limits. Automated tests cover combat, diplomatic conditions, saved missions, conflicting knowledge, illness, joint rule, succession and historical geography. Browser checks are not a substitute for independent usability testing.
-# Personal travel and meetings — local work in progress
+| Requirement | Evidence in the current game | Still needed |
+| --- | --- | --- |
+| Historical figures and portraits | The catalog includes the 18 priority figures and individual generated portrait assets. Reconstructions and references are identified in `assets/portraits/SOURCES.md`. | Complete historical profile fields and source-by-source review; artistic reconstructions are not verified likenesses. |
+| Health and succession | Aging, wounds, illness, death, co-rule, a limited Egyptian dispute, temporary deputies, succession plans and Roman political plots affect the simulation. | Broader contested inheritance, regency and civil-war outcomes; do not present simulated events as history. |
+| Foreign knowledge | Dated, faction-specific reports, limited frontier sightings, contradictory evidence, stale intelligence, and independent source families are implemented. Actual state remains separate in client-side saves. | Continue auditing every UI and AI decision for information leaks. Local saves contain the true state and are not a security boundary. |
+| Diplomacy and espionage | Delayed letters may be lost, refused or answered; spies, travelers, envoys, audiences, ally exchanges, claimant contacts and counter-investigations have costs and outcomes. Reports may be wrong. | Expand interactions and consequences without exposing hidden status. Political relationships and diplomacy remain simplified. |
+| Characters on the map | Reported leadership and dated observed commanders can be inspected; sightings do not track unseen changes. | Broaden reporting of offices and political relationships without turning reports into omniscient state. |
+| History versus simulation | Profiles label historical biographies separately from simulated health, travel, political office and reports. | Review date uncertainty, biographies and sourcing for every field before presenting additional historical claims. |
 
-An independent character can follow a time- and treasury-consuming route through peaceful campaign theaters. The theater positions are scenario assumptions, not verified historical itineraries. A personal audience requires actual co-location at resolution and may be declined or receive no reply. It creates a dated, observer-specific report and a personal trust record only if the meeting happens. Existing letters and envoy audiences remain separate. Old saves are migrated without resetting their state.
+## Earlier phases still requiring work
 
-Automated engine tests cover travel, save/load, changing access, private knowledge and outcomes. Browser interaction and the public deployment of these changes remain unverified: local loopback network access was unavailable in the current environment. Complete browser testing before publishing. Personal relationships are still rudimentary; offices, regencies, broader succession and the remaining Phase IX requirements need further work.
+- Continue verifying the atlas-to-campaign transition and the full command flow in both languages. The atlas currently remains a separate view, with the original campaign available.
+- The Caesarian tutorial is interactive; the Senate choice starts in free play. An independent beginner playtest, broader accessibility and small-screen checks remain outstanding.
+- Some systems are deliberately simplified: theater supply capacity is descriptive, battles resolve immediately rather than over several turns, and terrain/control boundaries are approximations where sources do not support a precise border. Maintain clear explanations and improve supported mechanics where appropriate.
+- Continue historical boundary and geographic research only where defensible sources and licenses are available. `MAP_SOURCES.md` and `map-lab/SOURCES.md` document current source limitations.
+- The master directive contains substantially wider campaigns and systems. These are not complete; prioritize the current 49 BCE Roman campaign and Phase IX before expanding the scope.
 
-## Intelligence provenance — local work in progress
+## Verification and release
 
-An ally now forwards only a report it already holds about a third party. The player may choose the ally; forwarding preserves the original source and observation date, so an old or repeated report is not treated as fresh independent confirmation. Reports from the same court share a source family. Peace decisions use the responder's estimate of the offerer's strength, not its hidden troop total. Personal meetings no longer reveal an unseen illness. Automated tests cover these cases; browser and public deployment verification remain outstanding.
-
-Unknown observations no longer corroborate or contradict definite health claims. An older forwarded report remains visible without replacing a newer leadership report; AI strength estimates likewise use observation date rather than forwarding date. A small offline DOM stub exercises confirmation handlers and immediate treasury refresh, but is not a substitute for testing the real browser, map or layout.
-
-Character dossiers now separate historical biographies, friendly game positions and foreign reports; enemy theater loyalty, unseen movement summaries and exact enemy battle details are hidden in the UI. This is a presentation rule only: local saves contain true simulation state. Legacy casualty messages are redacted when shown. Further visibility and save audits remain necessary.
-
-## Governance and frailty — local work in progress
-
-Temporary incapacity preserves the nominal leader while a qualified Roman officer or royal deputy acts; where a co-ruler is capable they can assume duties. The player can appoint an eligible acting deputy, with a cost for changing the current choice, and an unavailable deputy is replaced automatically. This is not a formal succession or an election to historical office. The separate Mauretanian kingdoms remain distinct. An empty leadership uses an unnamed temporary authority, and disruption costs stability each quarter. Foreign intelligence is not automatically updated. Simulated frailty may arise at an advanced known age, slows journeys and reduces command effectiveness. These are game events, not historical diagnoses. Save migration and engine tests cover the transitions; complex succession, browser verification and deployment remain outstanding.
-
-The player can also designate a possible political successor independently of the acting deputy. A living co-leader stays in place; an unavailable or departed candidate is skipped. This remains a simplified succession rule, not an election, dynastic-law system, or contested usurpation model.
-
-## Court disputes — local work in progress
-
-An Egyptian joint-rule dispute now advances on campaign time and may end in a negotiated return to joint rule or an alternate-history takeover using existing characters. Stability and claimant loyalty affect possible outcomes; foreign observers do not receive automatic updates. Dead claimants are removed, and Mauretania's separate kingdoms are not modeled as a single jointly ruled throne. Report cards explicitly distinguish reported claimants from reported leaders and show source reliability and corroboration. This is a limited court model, not a full civil-war or diplomatic-support system; browser testing and deployment remain outstanding.
-
-Players may now offer support to a claimant identified by their own intelligence. The offer takes four months and can be refused or receive no reply; accepted support alters the simulated Egyptian dispute and worsens court relations. Outdated or false reports remain usable without revealing the true state before a response. This remains a limited court model, not a full civil-war simulation. The previous build passed GitHub browser smoke checks and was deployed; the current change still needs its own browser check and release.
-
+Run `npm test` and the GitHub browser workflow for changes to gameplay. The workflow exercises both Roman starts, map interactions, save and view transfer, diplomacy, correspondence, characters, a 1920 × 1080 capture and map performance. Automated checks do not replace an independent usability test or guarantee that every feature in the original directives is complete. Verify the live GitHub Pages version after deployment. Historical claims and third-party map data need the sources and licensing documented alongside them.
