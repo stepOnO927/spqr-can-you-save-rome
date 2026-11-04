@@ -71,3 +71,12 @@ test('unseen foreign illness does not create a public report of a command change
  const s=newGame('caesar'),unit=s.armies.find(a=>a.id==='pompey');s.world.characters.pompey.health='seriously_ill';const before=JSON.stringify(s.knowledge.caesar.senate.sightings.pompey);tick(s);
  assert.equal(unit.characterId,null);assert.equal(JSON.stringify(s.knowledge.caesar.senate.sightings.pompey),before);assert.ok(!s.log.some(e=>e.en.includes('simulated illness')&&e.en.includes('Pompey')));
 });
+
+
+test('battle experience follows a commander between armies, persists, and is distinct from army experience',()=>{
+ let s=newGame('senate');assert.equal(recruit(s,'roma'),true);let first=s.armies.find(a=>a.id==='levy1');assert.equal(appointCommander(s,first.id,'cato').ok,true);const enemy=s.armies.find(a=>a.id==='xiii'),base=first.skill;first.men=100000;resolveBattle(s,enemy,first,region(s,'roma'));assert.equal(s.world.characters.cato.battlesCommanded,1);assert.equal(first.skill,base);s.world.characters.cato.health='healthy';assert.equal(commandFactor(s,first),1.02);assert.equal(releaseCommander(s,first.id).ok,true);assert.equal(commandFactor(s,first),1);
+ assert.equal(recruit(s,'roma'),true);const second=s.armies.find(a=>a.id==='levy2');assert.equal(appointCommander(s,second.id,'cato').ok,true);s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(s.world.characters.cato.battlesCommanded,1);assert.equal(commandFactor(s,s.armies.find(a=>a.id==='levy2')),1.02);s.world.characters.cato.battlesCommanded=20;assert.equal(commandFactor(s,s.armies.find(a=>a.id==='levy2')),1.10);
+});
+test('a foreign commander’s campaign experience is not disclosed by an unseen battle',()=>{
+ const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii'),d=s.armies.find(x=>x.id==='pompey');resolveBattle(s,a,d,region(s,'roma'));assert.equal(s.world.characters.pompey.battlesCommanded,1);assert.equal(s.knowledge.caesar.senate.reports.length,0);assert.equal(s.knowledge.caesar.senate.sightings.pompey?.battlesCommanded,undefined);
+});
