@@ -58,6 +58,16 @@ test('mission preview gives actionable requirements without spending or revealin
  s.factions.caesar.treasury=0;assert.equal(previewMission(s,'caesar','egypt','spy','health').reason,'treasury');
  assert.equal(queueMission(s,'caesar','egypt','spy','health').reason,'treasury');assert.equal(s.operations.length,0);
 });
+test('political stability investigations produce uncertain reports instead of revealing the true score',()=>{
+ const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
+ const s=newGame('caesar');s.factions.egypt.stability=20;s.wars.push(['caesar','egypt']);
+ assert.equal(queueMission(s,'caesar','egypt','spy','stability').ok,true);s.world.intelSeed=seedFor(.4,.44);
+ for(let i=0;i<4;i++)advanceOperations(s);const first=s.knowledge.caesar.egypt.reports[0];
+ assert.equal(first.kind,'stability');assert.equal(first.value,'stable');assert.equal(first.verified,false);assert.equal(s.factions.egypt.stability,20);assert.equal(s.knowledge.senate.egypt.reports.length,0);
+ const mission=queueMission(s,'caesar','egypt','envoy','stability');assert.equal(mission.ok,true);s.world.intelSeed=seedFor(.7,.8);
+ for(let i=0;i<mission.duration;i++)advanceOperations(s);
+ assert.equal(s.knowledge.caesar.egypt.reports[0].value,'fragile');assert.ok(s.knowledge.caesar.egypt.reports.every(r=>r.confidence==='disputed'));
+});
 test('health has gameplay impact and deceased commanders are succeeded without revealing foreign changes',()=>{
  const s=newGame(),a=s.armies.find(x=>x.id==='xiii');s.world.characters.caesar.health='seriously_ill';assert.ok(commandFactor(s,a)<1);
  let died=false;for(let seed=1;seed<500&&!died;seed++){const trial=newGame();trial.world.characters.orodes.health='dying';trial.world.intelSeed=(seed*900001)>>>0;trial.month=1;advanceCharacters(trial);if(!trial.world.characters.orodes.alive){died=true;assert.deepEqual(trial.world.leadership.parthia,['pacorus']);assert.deepEqual(knownLeaders(trial,'caesar','parthia'),['orodes'])}}assert.equal(died,true);

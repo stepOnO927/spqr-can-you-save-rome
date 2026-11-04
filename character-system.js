@@ -52,7 +52,7 @@ export function supportClaimant(s,actor,target,claimant){
 }
 export function previewMission(s,actor,target,type,subject='health',partnerId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||actor===target||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
- if(!['health','leaders','strength','claimants'].includes(subject))return {ok:false,reason:'subject'};
+ if(!['health','leaders','strength','claimants','stability'].includes(subject))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
  const partners=s.alliances.filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)).filter(id=>id!==target&&s.factions[id]);
  if(type==='exchange'&&(!partners.length||(partnerId&&!partners.includes(partnerId))))return {ok:false,reason:'alliance'};
@@ -87,6 +87,13 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.subject==='health'){const value=person?(falsehood?'healthy':person.health):'unknown';report={kind:'health',character:id||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='claimants'){const candidates=falsehood?[]:[...(s.world.claimants[op.target]||[])];report={kind:'claimants',leaders:candidates,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='strength'){let count=s.armies.filter(a=>a.owner===op.target).reduce((x,a)=>x+a.men,0);if(falsehood)count=Math.round(count*.65/1000)*1000;else count=Math.round(count/1000)*1000;report={kind:'strength',value:count,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
+ else if(op.subject==='stability'){
+  const stability=s.factions[op.target].stability,actual=stability<35?'fragile':stability<60?'strained':'stable';
+  // In a threatened court, reassuring propaganda can mask instability. Casual
+  // travelers may also misread conditions, without learning the underlying score.
+  const value=(hostile||contested)&&q<.45?'stable':low&&q<.6?(actual==='strained'?'stable':'strained'):actual;
+  report={kind:'stability',value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
+ }
  else {
   const current=s.world.leadership[op.target]||[],opening=OPENING_LEADERS[op.target]||[];
   // A threatened or contested court may circulate an outdated public arrangement.
