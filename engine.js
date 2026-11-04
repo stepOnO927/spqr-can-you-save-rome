@@ -1,10 +1,10 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=26';
-import {initializeGovernments,advanceGovernments} from './governance.js?v=8';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=27';
+import {initializeGovernments,advanceGovernments} from './governance.js?v=9';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=8';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=10';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant} from './character-system.js?v=27';
-import {advanceOffices,officeEffects} from './office-system.js?v=1';
-import {advanceConspiracies} from './conspiracies.js?v=1';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=11';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant} from './character-system.js?v=28';
+import {advanceOffices,officeEffects} from './office-system.js?v=2';
+import {advanceConspiracies} from './conspiracies.js?v=2';
 export {queueMission};
 
 const clone = value => JSON.parse(JSON.stringify(value));
