@@ -131,16 +131,28 @@ export function sendInquiry(s,actor,target,subject='leaders'){
  if((s.inquiries||[]).some(x=>x.actor===actor&&x.target===target&&x.status==='pending'))return {ok:false,reason:'pending'};
  const duration=letterMonths[target]||4;s.factions[actor].treasury-=3;
  (s.inquiries||=[]).unshift({actor,target,sentYear:s.year,sentMonth:s.month,remaining:duration,duration,subject,status:'pending',source:'official court',confidence:'unverified'});
- log(s,`A letter was sent to ${FACTIONS[target].short[0]}; a reply may take ${duration} months.`,`已向${FACTIONS[target].short[1]}寄信；等待回信约需${duration}个月。`);
+ if(actor===s.player)log(s,`A letter was sent to ${FACTIONS[target].short[0]}; a reply may take ${duration} months.`,`已向${FACTIONS[target].short[1]}寄信；等待回信约需${duration}个月。`);
  return {ok:true,duration};
 }
 function resolveInquiries(s){
  for(const letter of s.inquiries||[]){
   if(letter.status!=='pending'||--letter.remaining>0)continue;
   const roll=rnd(s),hostile=isWar(s,letter.actor,letter.target),rel=relation(s,letter.actor,letter.target);
-  if(roll<.18||!s.regions.some(r=>r.owner===letter.target)){letter.status='no_reply';log(s,`No reply has arrived from ${FACTIONS[letter.target].short[0]}; the letter or answer may have been lost.`,`来自${FACTIONS[letter.target].short[1]}的回信尚未到达；书信或回信可能遗失。`)}
-  else if(roll<(hostile?.65:rel<0?.46:.34)){letter.status='refused';log(s,`A reply from ${FACTIONS[letter.target].short[0]} declined to answer.`,`${FACTIONS[letter.target].short[1]}回信表示不愿回答。`)}
-  else{letter.status='answered';const current=s.world.leadership[letter.target]||[],opening=OPENING_LEADERS[letter.target]||[];const conceal=isWar(s,letter.actor,letter.target)&&opening.some(id=>!current.includes(id));const stated=conceal?opening:current;const claimants=s.world.claimants[letter.target]||[],subject=letter.subject||'leaders';letter.claim=subject==='successor'?(claimants.length?[`Reported claimant(s): ${claimants.map(id=>CHARACTER_CATALOG[id].name[0]).join(', ')}`,`对方报告的竞争者：${claimants.map(id=>CHARACTER_CATALOG[id].name[1]).join('、')}`]:['No successor was named in the reply.','回信没有指明继承人。']):subject==='availability'?['The court has made no binding commitment to a meeting.','宫廷尚未就会面作出承诺。']:subject==='representative'?['An unnamed official may represent the court.','一名未具名官员可代表宫廷。']:stated.length?[stated.map(id=>CHARACTER_CATALOG[id].name[0]).join(', '),stated.map(id=>CHARACTER_CATALOG[id].name[1]).join('、')]:['Authority uncertain','执政者不明'];letter.reportYear=s.year;letter.reportMonth=s.month;if(subject==='leaders')addReport(s,letter.actor,letter.target,{kind:'leaders',leaders:[...stated],source:'official',confidence:'unverified',reliability:'unknown'});log(s,`An unverified official response arrived from ${FACTIONS[letter.target].short[0]}.`,`收到${FACTIONS[letter.target].short[1]}的官方答复，内容尚未经独立核实。`)}
+  if(roll<.18||!s.regions.some(r=>r.owner===letter.target)){letter.status='no_reply';if(letter.actor===s.player)log(s,`No reply has arrived from ${FACTIONS[letter.target].short[0]}; the letter or answer may have been lost.`,`来自${FACTIONS[letter.target].short[1]}的回信尚未到达；书信或回信可能遗失。`)}
+  else if(roll<(hostile?.65:rel<0?.46:.34)){letter.status='refused';if(letter.actor===s.player)log(s,`A reply from ${FACTIONS[letter.target].short[0]} declined to answer.`,`${FACTIONS[letter.target].short[1]}回信表示不愿回答。`)}
+  else{
+   letter.status='answered';const current=s.world.leadership[letter.target]||[],opening=OPENING_LEADERS[letter.target]||[],claimants=s.world.claimants[letter.target]||[],subject=letter.subject||'leaders';
+   const stated=hostile&&opening.some(id=>!current.includes(id))?opening:current;
+   const plan=s.world.successionPlans?.[letter.target],candidate=s.world.characters[plan];
+   const disclose=subject==='successor'&&!hostile&&rel>=30&&roll>=.75&&!claimants.length&&candidate?.alive&&!candidate.missing&&candidate.faction===letter.target&&!current.includes(plan)&&CHARACTER_CATALOG[plan];
+   if(subject==='successor'){
+    letter.claim=disclose?[`The court names ${CHARACTER_CATALOG[plan].name[0]} as a possible successor.`,`宫廷称${CHARACTER_CATALOG[plan].name[1]}为可能的继任人选。`]:['The reply did not name a successor.','回信没有指明继任人选。'];
+    addReport(s,letter.actor,letter.target,{kind:'succession',value:disclose?plan:'unknown',source:'official',confidence:'unverified',reliability:'unknown'});
+   }else if(subject==='availability')letter.claim=['The court has made no binding commitment to a meeting.','宫廷尚未就会面作出承诺。'];
+   else if(subject==='representative')letter.claim=['An unnamed official may represent the court.','一名未具名官员可代表宫廷。'];
+   else{letter.claim=stated.length?[stated.map(id=>CHARACTER_CATALOG[id].name[0]).join(', '),stated.map(id=>CHARACTER_CATALOG[id].name[1]).join('、')]:['Authority uncertain','执政者不明'];addReport(s,letter.actor,letter.target,{kind:'leaders',leaders:[...stated],source:'official',confidence:'unverified',reliability:'unknown'})}
+   letter.reportYear=s.year;letter.reportMonth=s.month;if(letter.actor===s.player)log(s,`An unverified official response arrived from ${FACTIONS[letter.target].short[0]}.`,`收到${FACTIONS[letter.target].short[1]}的官方答复，内容尚未经独立核实。`);
+  }
  }
 }
 
