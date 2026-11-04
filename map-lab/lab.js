@@ -7,11 +7,11 @@ import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=7';
 import historical from '../historical-territories.js';
 import republicanRoads from '../republican-roads.js?v=1';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=43';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=44';
 import {FACTIONS} from '../data.js?v=8';
 import {identity,factionMark} from '../identity.js?v=1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=10';
-import {createCharacterUI} from './character-ui.js?v=36';
+import {createCharacterUI} from './character-ui.js?v=37';
 import {reportedArmies} from '../character-system.js?v=27';
 import {createTutorial} from './tutorial.js?v=5';
 import {friendlyPersonnelInTheater} from './personnel.js?v=1';
@@ -181,6 +181,7 @@ const helpEntries=[
  {kind:'game',en:'Covert contacts',zh:'秘密政治接触',control:'#factions',enBody:'A Roman faction may send an offer to an Egyptian claimant it has heard about. A spy investigating Egypt can report a recent accepted offer by the other Roman faction. Reports are unverified and may be wrong; no reliable information does not prove that no contact exists. These are simulated contacts, not historical claims or formal alliances.',zhBody:'罗马派系可以向自己听闻的埃及竞争者寄出支持提议。派间谍调查埃及，可能查到另一罗马派系最近获得接受的提议。报告未经核实，可能有误；没有可靠消息不代表不存在接触。这些是游戏模拟的接触，并非历史断言或正式同盟。'},
  {kind:'game',en:'Checking intelligence reports',zh:'核查情报报告',control:'#factions',enBody:'In a foreign faction’s Intelligence tab, use Check this report to select its subject and, for health, the reported person. Then choose and confirm a mission. Selecting a report costs nothing. Repeating or forwarding the same source is not independent corroboration; another source can also be wrong.',zhBody:'在外国势力的情报页面点击“核查此报告”，可选中对应调查内容；健康报告也会选中已报告的人物。然后选择并确认行动。选择报告不收费。重复或转交同一来源不构成独立核实，其他来源也可能有误。'},
  {kind:'game',en:'Reported commanders',zh:'指挥官目击报告',control:'#factions',enBody:'Frontier observations may identify a foreign army’s commander. The dated report can be opened from that army and used to select a person for health inquiries or an audience. It can become outdated when the army moves or command changes; an unseen change is not automatically revealed.',zhBody:'前线目击可能识别外国军队的指挥官。可从军队查看带日期的报告，并以此人物作为健康调查或会面对象。军队移动或更换指挥官后，旧报告可能过时；未被目击的变化不会自动公开。'},
+ {kind:'game',en:'What rival commanders know',zh:'对手掌握的情报',control:'#factions',enBody:'Computer factions estimate foreign strength from their own reports and recent sightings, using a rough assumption when evidence is missing. They may make mistaken decisions. A numerical report gradually loses influence after two years; old observations are not fresh confirmation.',zhBody:'电脑势力依据自己的报告和近期目击估计外国兵力；缺少证据时只能粗略推测，因此也可能判断错误。兵力报告在两年后逐渐失去影响，旧目击不等于新证实。'},
  {kind:'game',en:'Supporting a reported claimant',zh:'支持已报告的竞争者',control:'#factions',enBody:'In Egypt’s Letters & Intelligence panel, investigate claimants before making an offer. It costs 10 treasury and takes 4 months; it may be accepted, refused or unanswered. Acceptance can increase the claimant’s chance of taking power and reduces court relations by 10. Reports can be outdated or false.',zhBody:'在埃及的“书信与情报”中先调查竞争者，再寄出支持提议。费用10国库、需要4个月，可能被接受、拒绝或没有回信。接受可能增加竞争者夺权机会，并使宫廷关系降低10；报告也可能过时或错误。'},
  {kind:'game',en:'Research and construction',zh:'研究与建设',enBody:'Research and construction are not implemented in this campaign slice.',zhBody:'当前战役片段尚未实现研究与建设。'},
  {kind:'history',en:'Who was Julius Caesar?',zh:'尤利乌斯·凯撒是谁？',enBody:'Julius Caesar was a Roman general and politician. In 49 BCE his crossing of the Rubicon preceded the civil war against Pompey and the Senate.',zhBody:'尤利乌斯·凯撒是罗马将领和政治人物。公元前49年，他越过卢比孔河，随后与庞培和元老院爆发内战。'},
