@@ -29,7 +29,10 @@ export function newGame(player='caesar'){
       ...Object.fromEntries(['numidia','mauretania','armenia','parthia'].map(id=>[id,{treasury:60,food:60,manpower:9000,stability:65,legitimacy:60,tax:'normal',research:0}])),
       rebels:{treasury:10,food:15,manpower:0,stability:50,legitimacy:0,tax:'normal',research:0}
     },wars:[['caesar','senate']],log:[],victory:false,nextArmy:1});
-  linkCommanders(s);return initializeGovernments(s);
+  // A new campaign starts with frontier observations, not every foreign army's
+  // exact opening location. Existing saves keep their accumulated sightings.
+  for(const targets of Object.values(s.knowledge))for(const knowledge of Object.values(targets))knowledge.sightings={};
+  observeArmies(s);linkCommanders(s);return initializeGovernments(s);
 }
 
 export function upgradeSave(s){
@@ -278,3 +281,4 @@ export function tick(s){
   if(!s.victory&&s.player==='caesar'&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
   return s;
 }
+
