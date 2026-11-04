@@ -3,7 +3,7 @@ import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=7';
 import {identity,factionMark} from './identity.js?v=1';
 import {CHARACTER_CATALOG} from './characters.js?v=10';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=8';
-import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=43';
+import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=44';
 import {drawMap,mapPoint} from './map.js?v=32';
 
 const ui={
