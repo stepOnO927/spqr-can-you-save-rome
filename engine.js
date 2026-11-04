@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=47';
+import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=48';
 import {initializeGovernments,advanceGovernments} from './governance.js?v=14';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=9';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=14';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=48';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=49';
 import {advanceOffices,officeEffects} from './office-system.js?v=4';
 import {advanceConspiracies} from './conspiracies.js?v=6';
 export {queueMission};

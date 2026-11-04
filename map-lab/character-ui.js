@@ -1,12 +1,12 @@
 import {politicalAmbition} from '../conspiracies.js?v=6';
 import {HISTORICAL_DEATHS,HISTORICAL_BIRTH_ESTIMATES} from '../historical-reference.js?v=3';
 import {officeOf} from '../office-system.js?v=4';
-import {reportedClaimants,reportedHealthSubjects,supportClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=48';
+import {reportedClaimants,reportedHealthSubjects,supportClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=49';
 import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor} from '../governance.js?v=14';
 import {FACTIONS} from '../data.js?v=9';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=14';
-import {queueMission} from '../engine.js?v=65';
-import {previewPersonTravel,startPersonTravel,requestPersonalMeeting} from '../personal-diplomacy.js?v=47';
+import {queueMission} from '../engine.js?v=66';
+import {previewPersonTravel,startPersonTravel,requestPersonalMeeting} from '../personal-diplomacy.js?v=48';
 const portraits=new Set(['caesar','pompey','cleopatra','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function evidenceText(state,actor,target,report,zh){
