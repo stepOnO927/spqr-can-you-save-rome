@@ -62,7 +62,7 @@ try{
  await page.locator('[data-page="intelligence"]').click();
  await page.locator('#mission-person').selectOption('ptolemy');await page.locator('[data-mission="spy"]').click();
  assert.match(await page.locator('#mission-feedback').innerText(),/托勒密十三世/);await page.locator('#mission-feedback button').last().click();
- assert.match(await page.locator('#command-detail').innerText(),/成功会面使双方关系提高3/);
+ assert.match(await page.locator('#command-detail').innerText(),/成功会面使双方关系提高3/);assert.match(await page.locator('#command-detail').innerText(),/不保证其拥有谈判权限/);
  assert.match(await page.locator('[data-mission="envoy"]').innerText(),/使者 · 8国库 · 3月/);
  assert.match(await page.locator('#command-detail').innerText(),/战区距离估计/);
  await page.locator('[data-mission="audience"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/有限的公开观察/);await page.locator('#mission-feedback button').last().click();

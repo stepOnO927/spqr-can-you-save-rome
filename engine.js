@@ -1,5 +1,5 @@
 import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=49';
-import {initializeGovernments,advanceGovernments} from './governance.js?v=15';
+import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=15';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=9';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=14';
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=50';
@@ -146,7 +146,7 @@ function resolveInquiries(s){
   letter.remaining=Math.max(0,letter.remaining-1);
   // The response is composed roughly halfway through the round trip. Its sealed
   // contents are simulation state and do not enter the sender's knowledge until
-  // delivery; old pending saves without a sealed response are prepared on the next tick.
+  // delivery; old pending saves already past this point are prepared on the next tick.
   if(!letter.sealed&&letter.remaining<=Math.floor((letter.duration||2)/2)){
    const roll=rnd(s),hostile=isWar(s,letter.actor,letter.target),rel=relation(s,letter.actor,letter.target);
    const sealed={status:'answered',year:s.year,month:s.month};
@@ -161,7 +161,16 @@ function resolveInquiries(s){
     sealed.claim=disclose?[`The court names ${CHARACTER_CATALOG[plan].name[0]} as a possible successor.`,`宫廷称${CHARACTER_CATALOG[plan].name[1]}为可能的继任人选。`]:['The reply did not name a successor.','回信没有指明继任人选。'];
     sealed.report={kind:'succession',value:disclose?plan:'unknown'};
    }else if(subject==='availability')sealed.claim=['The court has made no binding commitment to a meeting.','宫廷尚未就会面作出承诺。'];
-   else if(subject==='representative')sealed.claim=['An unnamed official may represent the court.','一名未具名官员可代表宫廷。'];
+   else if(subject==='representative'){
+    // A cooperative court may name people who currently exercise authority.
+    // A guarded or contested court gives no names; silence proves nothing.
+    const government=deriveGovernment(s,letter.target),actors=government.acting.filter(id=>CHARACTER_CATALOG[id]);
+    const reveal=!hostile&&!claimants.length&&rel>=0&&roll>=.65&&actors.length>0;
+    if(reveal){const en=actors.map(id=>CHARACTER_CATALOG[id].name[0]).join(', '),zh=actors.map(id=>CHARACTER_CATALOG[id].name[1]).join('、');
+     sealed.claim=[`The court names ${en} as exercising authority; negotiating powers remain unconfirmed.`,`宫廷称${zh}行使政务；谈判权限尚未确认。`];
+     sealed.report={kind:'authority',value:{kind:government.kind,actors:[...actors]}};
+    }else{sealed.claim=['An unnamed official may represent the court; no individual was named.','一名未具名官员可代表宫廷；回信没有指明具体人物。'];sealed.report={kind:'authority',value:'unknown'}}
+   }
    else{sealed.claim=stated.length?[stated.map(id=>CHARACTER_CATALOG[id].name[0]).join(', '),stated.map(id=>CHARACTER_CATALOG[id].name[1]).join('、')]:['Authority uncertain','执政者不明'];sealed.report={kind:'leaders',leaders:[...stated],exhaustive:true}}
    }
    letter.sealed=sealed;
