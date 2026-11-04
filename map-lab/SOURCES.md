@@ -1,6 +1,6 @@
 # Map Lab · data, licensing and limitations
 
-This is an experimental scene, separate from the playable campaign. It uses a separate initial simulation state and can issue orders and advance months with optional saves compatible with the existing campaign, without replacing its screen. Its use of contemporary land cover is a geographic visualization, not evidence for 49 BCE vegetation or settlement. The marked Via Flaminia is a schematic connection between known places, not a surveyed archaeological route. City coordinates are approximate modern locations of ancient sites.
+This experimental scene and the original campaign can transfer their current state in the same browser tab and share compatible save slots. The terrain-map scene does not replace the original campaign. Its contemporary land cover is a geographic visualization, not evidence for 49 BCE vegetation or settlement. City coordinates are approximate modern locations of ancient sites.
 
 - MapLibre GL JS 5.9.0, BSD 3-Clause: https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt
 - Esri World Imagery, modern satellite imagery: attribution Esri, Vantor, Earthstar Geographics and GIS User Community. Service terms and credits: https://goto.arcgisonline.com/maps/World_Imagery . This prototype uses a third-party hosted service, subject to its availability and terms; it is not bundled or relicensed.
@@ -10,7 +10,13 @@ This is an experimental scene, separate from the playable campaign. It uses a se
 - Place identifications: Pleiades ancient place gazetteer https://pleiades.stoa.org/ ; Salona and civil-war context: https://www.armus.hr/en/collections/roman-provincial-collection ; Caesar and Illyricum: https://www.cambridge.org/core/books/abs/illyricum-in-roman-politics-229-bcad-68/construction-of-illyricum-caesar-in-illyricum-and-the-civil-wars-5944-bc/8C06B68D9FE789689625316A7B7A4E5B .
 - Fonts: Cormorant Garamond and Manrope, SIL Open Font License 1.1, served by Google Fonts. All UI, markers and banners in this prototype are original CSS/SVG-like geometric designs.
 
-Map tiles and fonts require a network connection. No ancient vegetation layer, detailed dated province subdivision, archaeological road alignment, or exact 49 BCE control survey is claimed.
+Map tiles and fonts require a network connection. No ancient vegetation layer, complete dated province subdivision, exact 49 BCE road alignment, or exact 49 BCE control survey is claimed.
+
+## Named road reconstructions
+
+The displayed linework is a subset of [Ancient World Mapping Center road data](https://github.com/AWMC/geodata/tree/master/Cultural-Data/roads), derived from the Barrington Atlas and AWMC modifications to OpenStreetMap, © AWMC and OpenStreetMap contributors, available under the [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/). The derived database is `../republican-roads.js`, generated from AWMC `roads.geojson` blob `e5b53dfb7aab621eb25d31d66457562240524ff2` by `../tools/build-republican-roads.mjs`. It selects named features 637 (Via Appia, Rome–Capua), 1467 (Via Aemilia), and 1480 and 1550 (Via Flaminia), preserves the source feature IDs and source-map attributes, and rounds coordinates to five decimal places. Decimal precision is not a claim of survey accuracy.
+
+The [Umbrian heritage authority](https://sabapumbria.cultura.gov.it/archeologia-e-territorio/archeologia-via-flaminia/) dates Via Flaminia's construction to 220–219 BCE. [LacusCurtius' reproduction of the Britannica entry](https://penelope.uchicago.edu/Thayer/E/Gazetteer/Periods/Roman/Topics/Engineering/roads/Aemilia/Britannica_1911%2A.html) dates Via Aemilia to 187 BCE. [UNESCO](https://whc.unesco.org/en/list/1708) dates the original Rome–Capua Via Appia to 312 BCE. These dates establish the historical roads, not the exact date of every mapped segment: the AWMC lines are later reconstructions, may incorporate changes or uncertain alignments, and are not presented as a surveyed 49 BCE network. Other unnamed or potentially later roads have not been imported. The lines are informational and do not change the campaign's abstract movement graph.
 
 - html2canvas 1.4.1 (MIT), loaded on demand for screenshot export: https://github.com/niklasvh/html2canvas/blob/master/LICENSE
 
@@ -21,4 +27,5 @@ All faction marks, banners and counters are original vector drawings used as mod
 The Egyptian cornucopia is inspired by Ptolemaic coin types: https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf . The Parthian bow evokes Arsacid archer coin types: https://www.metmuseum.org/essays/the-parthian-empire-247-b-c-224-a-d . The Armenian tiara is inspired by the contemporary Artavasdes II coinage documented by the Central Bank of Armenia: https://www.cba.am/en/history-ancient-to-1918 . The remaining spear, palm, and unmarked bands are deliberately general gameplay identifiers, not attributed to any specific historical standard. Mixed-control Roman areas use a neutral shared treatment rather than implying a third sovereign faction.
 
 ### Egypt: joint rule and official reports
-The 49 BCE opening recognizes Cleopatra VII and Ptolemy XIII as joint rulers, based on the Metropolitan Museum of Art chronological table: https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf. In-game correspondence is simulated and labeled as an unverified official statement, not historical evidence. Leadership succession is not yet dynamically simulated.
+The 49 BCE opening recognizes Cleopatra VII and Ptolemy XIII as joint rulers, based on the Metropolitan Museum of Art chronological table: https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf. In-game correspondence and subsequent succession are simulated, not historical evidence; official claims may be unverified or outdated.
+
