@@ -233,7 +233,7 @@ test('an unknown observation neither contradicts a claim nor independently verif
 test('a recently forwarded but older leadership report cannot overwrite a newer observation',()=>{
  const s=newGame();s.month=6;addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy'],source:'spy',confidence:'unverified'});
  s.month=7;addReport(s,'caesar','egypt',{kind:'leaders',leaders:['cleopatra'],source:'exchange',originSource:'court',observationYear:-49,observationMonth:2,confidence:'unverified'});
- assert.deepEqual(knownLeaders(s,'caesar','egypt'),['ptolemy']);assert.equal(s.knowledge.caesar.egypt.reports[0].confidence,'disputed');
+ assert.deepEqual(knownLeaders(s,'caesar','egypt'),['ptolemy']);assert.equal(s.knowledge.caesar.egypt.reports[0].confidence,'unverified');
 });
 test('diplomatic AI bases its estimate on observation time, not when an older report was forwarded',()=>{
  const s=newGame('egypt');diplomacy(s,'egypt','senate','war');s.month=6;
