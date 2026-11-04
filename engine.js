@@ -1,4 +1,4 @@
-import {advancePersonalDiplomacy} from './personal-diplomacy.js?v=51';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=52';
 import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=15';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=9';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=14';
@@ -6,6 +6,7 @@ import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,ad
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=5';
 import {advanceConspiracies} from './conspiracies.js?v=6';
 export {queueMission};
+export {personalDiplomaticCredit};
 
 const clone = value => JSON.parse(JSON.stringify(value));
 export const region = (s,id) => s.regions.find(r=>r.id===id);
@@ -93,7 +94,7 @@ export function diplomacy(s, actor, target, action){
   if(actor===target || !s.factions[actor] || !s.factions[target] || target==='rebels'||actor==='rebels' || !s.regions.some(r=>r.owner===actor) || !s.regions.some(r=>r.owner===target))return false;
   const key=pair(actor,target);
   if(action==='improve' && !isWar(s,actor,target) && s.factions[actor].treasury>=10){s.factions[actor].treasury-=10;s.relations[key]=Math.min(100,relation(s,actor,target)+15);log(s,`${FACTIONS[actor].short[0]} improved relations with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}改善了与${FACTIONS[target].short[1]}的关系。`);return true}
-  if(action==='alliance' && !isWar(s,actor,target) && relation(s,actor,target)>=30 && !isAllied(s,actor,target) && !s.wars.some(w=>(w.includes(actor)&&isAllied(s,target,w.find(x=>x!==actor)))||(w.includes(target)&&isAllied(s,actor,w.find(x=>x!==target))))){s.alliances.push([actor,target]);log(s,`${FACTIONS[actor].short[0]} allied with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}结盟。`);return true}
+  if(action==='alliance' && !isWar(s,actor,target) && relation(s,actor,target)+personalDiplomaticCredit(s,actor,target)>=30 && !isAllied(s,actor,target) && !s.wars.some(w=>(w.includes(actor)&&isAllied(s,target,w.find(x=>x!==actor)))||(w.includes(target)&&isAllied(s,actor,w.find(x=>x!==target))))){s.alliances.push([actor,target]);log(s,`${FACTIONS[actor].short[0]} allied with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}结盟。`);return true}
   if(action==='break' && isAllied(s,actor,target)){s.alliances=s.alliances.filter(p=>!(p.includes(actor)&&p.includes(target)));s.relations[key]=relation(s,actor,target)-20;log(s,`${FACTIONS[actor].short[0]} broke its alliance with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}解除了与${FACTIONS[target].short[1]}的同盟。`);return true}
   if(action==='war' && !isWar(s,actor,target)){
     if(isAllied(s,actor,target))return false;

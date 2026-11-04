@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js';
-import {previewPersonTravel,startPersonTravel,requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js';
+import {newGame,upgradeSave,tick,diplomacy} from '../engine.js';
+import {previewPersonTravel,startPersonTravel,requestPersonalMeeting,advancePersonalDiplomacy,personalDiplomaticCredit} from '../personal-diplomacy.js';
 import {addReport,contestLeadership} from '../character-system.js';
 
 test('a claimant can be contacted only after a report, and the request does not reveal hidden court status',()=>{
@@ -57,4 +57,19 @@ test('an incapacitated or departed envoy cannot complete a pending personal meet
 
 test('a meeting with Ptolemy can yield only a dated age range to the observer',()=>{
  const s=newGame('senate');s.world.characters.cicero.location='egypt';assert.equal(s.knowledge.senate.egypt.reports.some(r=>r.kind==='age'&&r.character==='ptolemy'),false);s.world.intelSeed=1000;assert.equal(requestPersonalMeeting(s,'cicero','ptolemy').ok,true);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');const report=s.knowledge.senate.egypt.reports.find(r=>r.kind==='age'&&r.character==='ptolemy');assert.deepEqual(report.value,[11,13]);assert.equal(report.confidence,'unverified');assert.equal(report.source,'meeting');assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+});
+
+test('a recent personal meeting can help meet the alliance threshold without guaranteeing an alliance',()=>{
+ const baseline=newGame('senate');baseline.relations['egypt:senate']=29;assert.equal(diplomacy(baseline,'senate','egypt','alliance'),false);
+ let s=newGame('senate');s.relations['egypt:senate']=26;s.world.characters.cicero.location='egypt';s.world.intelSeed=1000;
+ assert.equal(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok,true);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);
+ assert.equal(s.meetings[0].status,'met');assert.equal(s.relations['egypt:senate'],29);assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1);assert.equal(personalDiplomaticCredit(s,'caesar','egypt'),0);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));const conflict=upgradeSave(JSON.parse(JSON.stringify(s)));conflict.alliances.push(['caesar','egypt']);assert.equal(diplomacy(conflict,'senate','egypt','alliance'),false);
+ assert.equal(diplomacy(s,'senate','egypt','alliance'),true);
+});
+test('contact credit uses only recorded meetings and expires without revealing hidden foreign state',()=>{
+ const s=newGame('senate');s.world.personalRelations['cicero:cleopatra']={trust:100,meetings:1};assert.equal(personalDiplomaticCredit(s,'senate','egypt'),0);
+ s.meetings.push({actor:'senate',targetFaction:'egypt',person:'cicero',target:'cleopatra',status:'met',year:s.year,month:s.month});assert.equal(personalDiplomaticCredit(s,'senate','egypt'),10);
+ s.world.characters.cleopatra.faction='parthia';s.world.characters.cleopatra.health='dying';s.world.characters.cleopatra.location='parthia';assert.equal(personalDiplomaticCredit(s,'senate','egypt'),10);
+ s.year+=3;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),10);s.month++;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),0);
 });
