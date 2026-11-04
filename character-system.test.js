@@ -98,6 +98,23 @@ test('envoy journeys reflect distance and court cooperation depends on relations
  const warm=JSON.parse(JSON.stringify(loaded)),cold=JSON.parse(JSON.stringify(loaded));warm.relations['caesar:egypt']=80;cold.relations['caesar:egypt']=-80;warm.world.intelSeed=seed;cold.world.intelSeed=seed;
  advanceOperations(warm);advanceOperations(cold);assert.equal(warm.operations[0].status,'complete');assert.equal(cold.operations[0].status,'declined');assert.equal(cold.knowledge.caesar.egypt.reports.length,0);
 });
+test('an envoy audience yields limited dated observations only to its sender',()=>{
+ const s=newGame('senate');s.world.characters.cleopatra.health='ill';
+ const plan=queueMission(s,'senate','egypt','audience','leaders');assert.equal(plan.ok,true);s.world.intelSeed=1000;
+ for(let i=0;i<plan.duration;i++)advanceOperations(s);
+ assert.equal(s.operations[0].status,'complete');const reports=s.knowledge.senate.egypt.reports;
+ assert.equal(reports.find(r=>r.kind==='health').value,'unknown');
+ assert.deepEqual(reports.find(r=>r.kind==='age').value,ageRange('cleopatra',s.year));
+ assert.ok(reports.every(r=>!r.verified&&r.source==='audience'));assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+ const hidden=newGame('senate');hidden.world.characters.cleopatra.health='dying';hidden.world.characters.ptolemy.health='seriously_ill';
+ const second=queueMission(hidden,'senate','egypt','audience','leaders');hidden.world.intelSeed=1000;for(let i=0;i<second.duration;i++)advanceOperations(hidden);
+ assert.ok(hidden.knowledge.senate.egypt.reports.every(r=>r.kind==='leaders'));
+});
+test('age estimates from different dates are not treated as contradictory current claims',()=>{
+ const s=newGame();addReport(s,'caesar','egypt',{kind:'age',character:'cleopatra',value:[19,21],source:'audience',confidence:'unverified'});
+ s.year++;addReport(s,'caesar','egypt',{kind:'age',character:'cleopatra',value:[20,22],source:'audience',confidence:'unverified'});
+ assert.ok(s.knowledge.caesar.egypt.reports.every(r=>r.confidence==='unverified'&&!r.verified));
+});
 
 
 test('different inquiry questions persist and do not overwrite leadership knowledge',()=>{
