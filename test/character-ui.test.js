@@ -152,6 +152,16 @@ test('authority reports show only attributed claims, including an unknown result
  try{let content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'parthia');assert.doesNotMatch(content.children[0].innerHTML,/帕科鲁斯一世/);addReport(s,'caesar','parthia',{kind:'authority',value:'unknown',source:'travelers',confidence:'rumor'});addReport(s,'caesar','parthia',{kind:'authority',value:{kind:'regency',actors:['pacorus']},source:'spy',confidence:'unverified'});content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'parthia');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,/摄政／临时代行政务 · 帕科鲁斯一世/);assert.match(html,/代行政务报告：没有可靠消息/);assert.match(content.children[1].innerHTML,/帕科鲁斯一世 · 其他已报告人物/)}finally{globalThis.document=prior}
 });
 
+test('a reported Mauretanian vacancy identifies separate administration without exposing hidden changes',()=>{
+ const prior=globalThis.document,s=newGame('caesar');globalThis.document={createElement:tag=>new Element(tag)};
+ try{addReport(s,'caesar','mauretania',{kind:'authority',value:{kind:'constituent_vacant',actors:['bogud']},source:'spy'});
+  for(const language of ['zh','en']){const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'mauretania');const html=content.children[0].querySelector('#mission-records').innerHTML;
+   assert.match(html,language==='zh'?/一个独立王国没有具名统治者，由未具名官员管理/:/One separate kingdom has no named ruler; an unnamed authority administers it/);
+   assert.match(html,language==='zh'?/博古德/:/Bogud/);assert.match(html,language==='zh'?/未经核实/:/UNVERIFIED/);
+  }
+ }finally{globalThis.document=prior}
+});
+
 test('reported acting authorities open their own dossier without revealing current health or location',()=>{
  const prior=globalThis.document,s=newGame('caesar'),panel=new Element();s.world.characters.pacorus.health='seriously_ill';s.world.characters.pacorus.location='parthia';globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
  try{let content=new Element();const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.addMissions(content,'parthia');assert.equal(content.children[0].querySelector('#mission-records').querySelectorAll('[data-character]').length,0);addReport(s,'caesar','parthia',{kind:'authority',value:{kind:'regency',actors:['pacorus']},source:'spy',confidence:'unverified'});content=new Element();ui.addMissions(content,'parthia');const cards=content.children[0].querySelector('#mission-records').querySelectorAll('[data-character]');assert.equal(cards.length,1);assert.equal(cards[0].dataset.character,'pacorus');cards[0].onclick();assert.match(panel.innerHTML,/帕科鲁斯一世/);assert.match(panel.innerHTML,/游戏健康<\/span><b>未知/);assert.match(panel.innerHTML,/所在战区<\/span><b>未知/);assert.doesNotMatch(panel.innerHTML,/重病/)}finally{globalThis.document=prior}

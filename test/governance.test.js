@@ -17,6 +17,18 @@ test('a co-ruler can govern without creating a false historical ruler or informi
 test('separate Mauretanian rulers do not automatically govern each other’s kingdom',()=>{
  const s=newGame();s.world.characters.bocchus.health='seriously_ill';assert.equal(deriveGovernment(s,'mauretania').kind,'constituent_unavailable');assert.deepEqual(s.world.leadership.mauretania,['bocchus','bogud']);
 });
+test('the loss of one Mauretanian ruler leaves the other kingdom separately administered',()=>{
+ for(const [lost,survivor] of [['bocchus','bogud'],['bogud','bocchus']]){
+  let s=newGame('caesar');s.world.characters[lost].alive=false;assignSuccession(s,'mauretania');
+  assert.deepEqual(s.world.leadership.mauretania,[survivor]);assert.equal(deriveGovernment(s,'mauretania').kind,'constituent_vacant');assert.deepEqual(deriveGovernment(s,'mauretania').acting,[survivor]);
+  const stability=s.factions.mauretania.stability;s.month=3;advanceGovernments(s);assert.equal(s.factions.mauretania.stability,stability-1);
+  assert.deepEqual(knownLeaders(s,'caesar','mauretania'),['bocchus','bogud']);assert.equal(s.knowledge.caesar.mauretania.reports.length,0);
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(deriveGovernment(s,'mauretania').kind,'constituent_vacant');
+  const mission=queueMission(s,'caesar','mauretania','spy','authority');s.world.intelSeed=1000;for(let i=0;i<mission.duration;i++)advanceOperations(s);
+  assert.equal(s.knowledge.caesar.mauretania.reports[0].value.kind,'constituent_vacant');assert.deepEqual(s.knowledge.caesar.mauretania.reports[0].value.actors,[survivor]);assert.equal(s.knowledge.senate.mauretania.reports.length,0);
+  s.world.characters[survivor].health='seriously_ill';assert.deepEqual(deriveGovernment(s,'mauretania').acting,[]);
+ }
+});
 test('a vacancy remains unnamed and governance disruption has a real periodic cost',()=>{
  const s=newGame('caesar');s.world.characters.juba.alive=false;assignSuccession(s,'numidia');assert.equal(deriveGovernment(s,'numidia').kind,'vacant');const stability=s.factions.numidia.stability;s.month=3;advanceGovernments(s);assert.equal(s.factions.numidia.stability,stability-1);assert.deepEqual(s.world.leadership.numidia,[]);
 });
