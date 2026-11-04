@@ -1,4 +1,4 @@
-import {initializeWorld,successorFor,CHARACTER_CATALOG} from './characters.js?v=8';
+import {initializeWorld,successorFor,CHARACTER_CATALOG} from './characters.js?v=9';
 
 const unable=c=>!c?.alive||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
@@ -23,6 +23,17 @@ export function planSuccession(s,id){
  initializeGovernments(s);const faction=s.player;if(!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive)||!successorFor(s,faction).includes(id))return {ok:false,reason:'unavailable'};
  if(s.world.successionPlans[faction]===id)return {ok:false,reason:'already'};if(s.factions[faction].treasury<5)return {ok:false,reason:'treasury'};
  s.factions[faction].treasury-=5;s.world.successionPlans[faction]=id;s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[id].name[0]} was designated as a possible successor in the simulation.`,zh:`${CHARACTER_CATALOG[id].name[1]}在游戏中被指定为可能的继任者。`});s.log=s.log.slice(0,80);return {ok:true,cost:5};
+}
+
+// Influence is a game abstraction, not a claim about a historical person's power.
+export function supportSuccessor(s,id){
+ initializeGovernments(s);const faction=s.player,candidates=successorFor(s,faction),person=s.world.characters[id];
+ if(!candidates.includes(id)||!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive))return {ok:false,reason:'unavailable'};
+ if(person.influence>=100)return {ok:false,reason:'maximum'};if(s.factions[faction].treasury<8)return {ok:false,reason:'treasury'};
+ s.factions[faction].treasury-=8;person.influence=Math.min(100,person.influence+15);
+ for(const other of candidates.filter(candidate=>candidate!==id)){const rival=s.world.characters[other];rival.loyalty=Math.max(0,rival.loyalty-3)}
+ s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[id].name[0]} gained political influence in the simulation.`,zh:`${CHARACTER_CATALOG[id].name[1]}在游戏中的政治影响力提高。`});s.log=s.log.slice(0,80);
+ return {ok:true,cost:8};
 }
 
 // This is a temporary game appointment, not an election to a historical magistracy.
