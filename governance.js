@@ -1,4 +1,4 @@
-import {politicalAmbition} from './conspiracies.js?v=4';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=5';
 import {initializeWorld,successorFor,CHARACTER_CATALOG} from './characters.js?v=13';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
@@ -31,7 +31,7 @@ export function supportSuccessor(s,id){
  initializeGovernments(s);const faction=s.player,candidates=successorFor(s,faction),person=s.world.characters[id];
  if(!candidates.includes(id)||!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive))return {ok:false,reason:'unavailable'};
  if(person.influence>=100)return {ok:false,reason:'maximum'};if(s.factions[faction].treasury<8)return {ok:false,reason:'treasury'};
- s.factions[faction].treasury-=8;person.influence=Math.min(100,person.influence+15);person.ambition=Math.min(100,politicalAmbition(s,id)+5);
+ s.factions[faction].treasury-=8;person.influence=Math.min(100,person.influence+15);person.ambition=Math.min(100,politicalAmbition(s,id)+5);improveLeaderTrust(s,id);
  for(const other of candidates.filter(candidate=>candidate!==id)){const rival=s.world.characters[other];rival.loyalty=Math.max(0,rival.loyalty-3)}
  s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[id].name[0]} gained political influence in the simulation.`,zh:`${CHARACTER_CATALOG[id].name[1]}在游戏中的政治影响力提高。`});s.log=s.log.slice(0,80);
  return {ok:true,cost:8};
