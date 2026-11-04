@@ -1,5 +1,5 @@
-import {queueMission,availableAgents} from '../character-system.js?v=32';
-import {reassurePerson} from '../conspiracies.js?v=2';
+import {queueMission,availableAgents} from '../character-system.js?v=42';
+import {reassurePerson} from '../conspiracies.js?v=3';
 import {CHARACTER_CATALOG} from '../characters.js?v=11';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
