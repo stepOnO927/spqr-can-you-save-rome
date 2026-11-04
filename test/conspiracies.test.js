@@ -46,3 +46,13 @@ test('simulated ambition affects political risk and persists without disclosing 
 test('among similarly disloyal officers, greater ambition increases their priority',()=>{
  const s=newGame('senate');s.world.characters.cato.loyalty=25;s.world.characters.scipio.loyalty=25;s.world.characters.cato.ambition=20;s.world.characters.scipio.ambition=80;assert.equal(potentialConspirators(s,'senate')[0],'scipio');
 });
+
+
+test('domestic trust responds to support and reassurance, survives saves, and lowers plot risk',()=>{
+ let s=newGame('senate');const key='cato:pompey';assert.equal(supportSuccessor(s,'cato').ok,true);assert.equal(s.world.personalRelations[key].trust,5);assert.equal(s.world.personalRelations[key].meetings,0);s.world.characters.cato.loyalty=25;assert.equal(reassurePerson(s,'cato').ok,true);assert.equal(s.world.personalRelations[key].trust,10);s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(s.world.personalRelations[key].trust,10);
+ function trial(trust){const x=newGame('senate');unrest(x);x.world.characters.cato.ambition=50;x.world.personalRelations[key]={trust,meetings:0};x.month=3;x.world.intelSeed=seedFor(.25,.26);advanceConspiracies(x);return x}
+ assert.equal(trial(0).world.conspiracies.senate.person,'cato');const trusted=trial(100);assert.equal(trusted.world.conspiracies.senate,undefined);assert.equal(trusted.knowledge.caesar.senate.reports.length,0);
+});
+test('reassurance without a living leader does not invent a relationship',()=>{
+ const s=newGame('senate');s.world.characters.cato.loyalty=25;s.world.characters.pompey.alive=false;assert.equal(reassurePerson(s,'cato').ok,true);assert.deepEqual(s.world.personalRelations,{});
+});
