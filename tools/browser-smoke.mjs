@@ -34,6 +34,8 @@ try{
  assert.match(await page.locator('#leader-intelligence-summary').innerText(),/当前领袖报告：未经核实/);
  assert.match(await page.locator('#leader-intelligence-summary').innerText(),/上次领袖报告获独立佐证（可能不是当前说法）：未知/);
  await page.locator('[data-page="intelligence"]').click();
+ await page.locator('#mission-person').selectOption('ptolemy');await page.locator('[data-mission="spy"]').click();
+ assert.match(await page.locator('#mission-feedback').innerText(),/托勒密十三世/);await page.locator('#mission-feedback button').last().click();
  assert.match(await page.locator('#command-detail').innerText(),/成功会面使双方关系提高3/);
  assert.match(await page.locator('[data-mission="envoy"]').innerText(),/使者 · 8国库 · 3月/);
  assert.match(await page.locator('#command-detail').innerText(),/战区距离估计/);
