@@ -1,5 +1,6 @@
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=11';
 import {FACTIONS,ROUTES} from './data.js?v=8';
+import {deriveGovernment} from './governance.js?v=9';
 import {potentialConspirators} from './conspiracies.js?v=2';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
@@ -26,7 +27,7 @@ export function advanceAgentRequests(s){initializeWorld(s);for(const request of 
 const sourceFamily=r=>{const source=r.originSource||r.source;return ({official:'court',envoy:'court',audience:'court',exchange:'unknown'}[source]||source||'unknown')};
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
 const knownReport=x=>x.value!=='unknown'&&x.value!=null||x.kind==='leaders'||x.kind==='claimants';
-const reportValue=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?[...new Set(x.leaders||[])].sort():x.value);
+const reportValue=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?[...new Set(x.leaders||[])].sort():x.kind==='authority'&&x.value&&typeof x.value==='object'?{kind:x.value.kind,actors:[...new Set(x.value.actors||[])].sort()}:x.value);
 const sameSubject=(a,b)=>a.kind===b.kind&&a.character===b.character&&(a.kind!=='age'||((a.observationYear??a.year)===(b.observationYear??b.year)&&(a.observationMonth??a.month)===(b.observationMonth??b.month)));
 function refreshKnowledge(s,k){
  const reports=k.reports||[];for(const item of reports){if(!knownReport(item)||reportAge(s,item)>24)continue;const group=reports.filter(x=>knownReport(x)&&sameSubject(item,x)&&reportAge(s,x)<=24),disputed=group.some(x=>reportValue(x)!==reportValue(item))||group.some(x=>x.baseConfidence==='disputed'),families=new Set(group.map(sourceFamily).filter(f=>f!=='unknown')).size,base=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';item.confidence=disputed?'disputed':families>=3?'confirmed':families>=2?'credible':base;item.verified=!disputed&&families>=3}
@@ -59,7 +60,7 @@ export function addReport(s,actor,target,report){
 export function publicLeaderClaim(s,target){initializeWorld(s);const ids=s.world.leadership[target]||[];return [ids.length?names(ids,0):'Authority uncertain',ids.length?names(ids,1):'执政者不明']}
 export function reportedClaimants(s,actor,target){initializeWorld(s);return [...new Set((s.knowledge[actor]?.[target]?.reports||[]).filter(r=>r.kind==='claimants').flatMap(r=>r.leaders||[]).filter(id=>CHARACTER_CATALOG[id]?.faction===target))]}
 export function reportedHealthSubjects(s,actor,target){
- initializeWorld(s);const knowledge=s.knowledge[actor]?.[target];return [...new Set([...(knowledge?.reportedLeaders||[]),...reportedClaimants(s,actor,target),...Object.values(knowledge?.sightings||{}).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).map(x=>x.commanderId)].filter(id=>CHARACTER_CATALOG[id]))];
+ initializeWorld(s);const knowledge=s.knowledge[actor]?.[target];return [...new Set([...(knowledge?.reportedLeaders||[]),...reportedClaimants(s,actor,target),...Object.values(knowledge?.sightings||{}).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).map(x=>x.commanderId),...(knowledge?.reports||[]).filter(x=>x.kind==='authority'&&x.value&&typeof x.value==='object').flatMap(x=>x.value.actors||[])].filter(id=>CHARACTER_CATALOG[id]))];
 }
 export function claimantRepresentatives(s,actor,claimant){
  initializeWorld(s);return Object.values(s.world.characters).filter(c=>c.faction===actor&&c.alive&&!c.missing&&!['seriously_ill','dying','deceased'].includes(c.health)&&CHARACTER_CATALOG[c.id]&&(s.world.personalRelations[[c.id,claimant].sort().join(':')]?.trust||0)>0).map(c=>c.id);
@@ -72,7 +73,7 @@ export function supportClaimant(s,actor,target,claimant,representative=null){
 }
 export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
- if(!['health','age','leaders','strength','claimants','stability','succession','conspiracy','contacts'].includes(subject))return {ok:false,reason:'subject'};
+ if(!['health','age','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts'].includes(subject))return {ok:false,reason:'subject'};
  if(subject==='age'&&type!=='exchange')return {ok:false,reason:'subject'};
  if(subject==='contacts'&&(!['spy','exchange'].includes(type)||target!=='egypt'))return {ok:false,reason:'subject'};
  if(type==='counter'&&subject!=='conspiracy'||subject==='conspiracy'&&(!['spy','counter','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
@@ -107,7 +108,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.type==='exchange'){
   const partner=op.partner,stillAllied=s.alliances.some(x=>x.includes(op.actor)&&x.includes(partner)),prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter));
   if(!stillAllied||!prior){op.status='failed';continue}
-  const copy={kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'};
+  const copy={kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'};
   addReport(s,op.actor,op.target,copy);op.status='complete';if(op.actor===s.player)notify(s,'An ally forwarded an existing report; its original date and source still matter.','盟友转交了一份既有报告；仍需留意原始日期与来源。');continue
  }
  const healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(reportedHealthSubjects(s,op.actor,op.target)[0]||null),healthPerson=s.world.characters[healthId];
@@ -135,6 +136,13 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   // travelers may also misread conditions, without learning the underlying score.
   const value=(hostile||contested)&&q<.45?'stable':low&&q<.6?(actual==='strained'?'stable':'strained'):actual;
   report={kind:'stability',value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
+ }
+ else if(op.subject==='authority'){
+  // The observer receives a claim about the arrangement at the time, never a live view.
+  // A threatened court can conceal incapacity behind its opening public rulers.
+  const government=deriveGovernment(s,op.target),concealed=(hostile||contested)&&q<.45,unknown=low&&q<.6;
+  const value=unknown?'unknown':concealed?{kind:'normal',actors:[...(OPENING_LEADERS[op.target]||[])]}:{kind:government.kind,actors:[...government.acting]};
+  report={kind:'authority',value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
  }
  else if(op.subject==='succession'){
   // Silence means no information, not proof that a succession plan does not exist.
