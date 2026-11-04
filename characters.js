@@ -1,4 +1,4 @@
-import {INITIAL_ARMIES} from './data.js?v=8';
+import {INITIAL_ARMIES} from './data.js?v=9';
 export const CHARACTER_CATALOG = {
  caesar:{name:['Gaius Julius Caesar','盖乌斯·尤利乌斯·凯撒'],birth:[-100,-100],faction:'caesar',role:['Roman political and military leader','罗马政治与军事领袖'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Julius-Caesar-Roman-ruler'},
  pompey:{name:['Gnaeus Pompeius Magnus','格奈乌斯·庞培'],birth:[-106,-106],faction:'senate',role:['Roman commander allied with the Senate','元老院方面的罗马统帅'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Pompey-the-Great'},
@@ -16,17 +16,17 @@ export const CHARACTER_CATALOG = {
  juba:{name:['Juba I','朱巴一世'],birth:null,faction:'numidia',role:['King of Numidia','努米底亚国王'],culture:['Numidian','努米底亚'],source:'https://www.britannica.com/biography/Juba-I'},
  bocchus:{name:['Bocchus II','博库斯二世'],birth:null,faction:'mauretania',role:['Mauretanian king','毛里塔尼亚国王'],culture:['Mauretanian','毛里塔尼亚'],source:'https://www.britannica.com/place/Mauretania-ancient-region-Africa'},
  bogud:{name:['Bogud','博古德'],birth:null,faction:'mauretania',role:['Mauretanian king','毛里塔尼亚国王'],culture:['Mauretanian','毛里塔尼亚'],source:'https://www.britannica.com/place/Mauretania-ancient-region-Africa'},
- deiotarus:{name:['Deiotarus','代奥塔鲁斯'],birth:null,faction:null,role:['Galatian ruler','加拉太统治者'],culture:['Galatian','加拉太'],source:'https://www.britannica.com/biography/Deiotarus'},
- pharnaces:{name:['Pharnaces II','法尔纳刻斯二世'],birth:null,faction:null,role:['Bosporan ruler','博斯普鲁斯王国统治者'],culture:['Pontic','本都'],source:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549705304?login=false'}
+ deiotarus:{name:['Deiotarus','代奥塔鲁斯'],birth:null,faction:'galatia',role:['Galatian ruler','加拉太统治者'],culture:['Galatian','加拉太'],source:'https://www.britannica.com/biography/Deiotarus'},
+ pharnaces:{name:['Pharnaces II','法尔纳刻斯二世'],birth:null,faction:'bosporus',role:['Bosporan ruler','博斯普鲁斯王国统治者'],culture:['Pontic','本都'],source:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549705304?login=false'}
 };
-export const OPENING_LEADERS={caesar:['caesar'],senate:['pompey'],egypt:['cleopatra','ptolemy'],parthia:['orodes'],armenia:['artavasdes'],numidia:['juba'],mauretania:['bocchus','bogud'],rebels:[]};
-const SUCCESSORS={caesar:['antony','lepidus'],senate:['cato','scipio','labienus','cicero'],egypt:['cleopatra','ptolemy'],parthia:['pacorus'],armenia:[],numidia:[],mauretania:['bocchus','bogud'],rebels:[]};
+export const OPENING_LEADERS={caesar:['caesar'],senate:['pompey'],egypt:['cleopatra','ptolemy'],parthia:['orodes'],armenia:['artavasdes'],numidia:['juba'],mauretania:['bocchus','bogud'],galatia:['deiotarus'],bosporus:['pharnaces'],rebels:[]};
+const SUCCESSORS={caesar:['antony','lepidus'],senate:['cato','scipio','labienus','cicero'],egypt:['cleopatra','ptolemy'],parthia:['pacorus'],armenia:[],numidia:[],mauretania:['bocchus','bogud'],galatia:[],bosporus:[],rebels:[]};
 const clone=x=>JSON.parse(JSON.stringify(x));
 export function initializeWorld(s){
  if(!s.world){s.world={characters:Object.fromEntries(Object.entries(CHARACTER_CATALOG).map(([id,c])=>[id,{id,faction:c.faction,health:'healthy',location:null,alive:true,loyalty:75,influence:50}])),leadership:clone(OPENING_LEADERS),intelSeed:874913};}
  for(const c of Object.values(s.world.characters)){if(c.loyalty===undefined)c.loyalty=75;if(c.influence===undefined)c.influence=50;if(c.wounds===undefined)c.wounds=c.health==='wounded'?1:0;if(c.illnessEpisodes===undefined)c.illnessEpisodes=0}
  // Theater-level scenario positions, not claims about historical whereabouts.
- if(!s.world.personLocationsInitialized){const homes={antony:'cisalpine',lepidus:'cisalpine',cicero:'roma',cato:'roma',labienus:'roma',scipio:'roma',cleopatra:'egypt',ptolemy:'egypt',orodes:'parthia',pacorus:'parthia',artavasdes:'armenia',juba:'numidia',bocchus:'mauretania',bogud:'mauretania'};for(const [id,place] of Object.entries(homes)){const c=s.world.characters[id];if(c&&c.location==null)c.location=place}s.world.personLocationsInitialized=true}
+ if(!s.world.personLocationsInitialized){const homes={antony:'cisalpine',lepidus:'cisalpine',cicero:'roma',cato:'roma',labienus:'roma',scipio:'roma',cleopatra:'egypt',ptolemy:'egypt',orodes:'parthia',pacorus:'parthia',artavasdes:'armenia',juba:'numidia',bocchus:'mauretania',bogud:'mauretania',deiotarus:'galatia',pharnaces:'bosporus'};for(const [id,place] of Object.entries(homes)){const c=s.world.characters[id];if(c&&c.location==null)c.location=place}s.world.personLocationsInitialized=true}
  if(!s.world.personalRelations)s.world.personalRelations={};
  if(!s.meetings)s.meetings=[];
  if(!s.world.claimants)s.world.claimants={};
