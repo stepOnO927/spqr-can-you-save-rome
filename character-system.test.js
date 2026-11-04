@@ -95,7 +95,7 @@ test('political stability investigations produce uncertain reports instead of re
 test('health has gameplay impact and deceased commanders are succeeded without revealing foreign changes',()=>{
  const s=newGame(),a=s.armies.find(x=>x.id==='xiii');s.world.characters.caesar.health='seriously_ill';assert.ok(commandFactor(s,a)<1);
  let died=false;for(let seed=1;seed<500&&!died;seed++){const trial=newGame();trial.world.characters.orodes.health='dying';trial.world.intelSeed=(seed*900001)>>>0;trial.month=1;advanceCharacters(trial);if(!trial.world.characters.orodes.alive){died=true;assert.deepEqual(trial.world.leadership.parthia,['pacorus']);assert.deepEqual(knownLeaders(trial,'caesar','parthia'),['orodes'])}}assert.equal(died,true);
- assert.deepEqual(ageRange('caesar',-49),[50,51]);assert.equal(ageRange('ptolemy',-49),null);
+ assert.deepEqual(ageRange('caesar',-49),[50,51]);assert.deepEqual(ageRange('ptolemy',-49),[11,13]);assert.equal(ageRange('lepidus',-49),null);
 });
 test('old version 3 saves are migrated without resetting their campaign data',()=>{
  const s=newGame();s.month=7;s.factions.caesar.treasury=42;delete s.world;delete s.knowledge;delete s.operations;
@@ -241,4 +241,3 @@ test('diplomatic AI bases its estimate on observation time, not when an older re
  addReport(s,'senate','egypt',{kind:'strength',value:1000,source:'exchange',originSource:'court',observationYear:-49,observationMonth:2,confidence:'unverified'});
  assert.equal(diplomacy(s,'egypt','senate','peace'),true);
 });
-
