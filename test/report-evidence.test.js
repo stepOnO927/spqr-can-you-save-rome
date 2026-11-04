@@ -109,3 +109,19 @@ test('lead eligibility comes from the observer’s records, not the simulated co
  addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'unknown',source:'spy'});
  assert.deepEqual(reportedHealthSubjects(s,'caesar','egypt'),['cleopatra']);
 });
+
+test('a health mission does not expose a reported person who left the investigated court or is missing',()=>{
+ for(const change of [c=>{c.faction='parthia';c.health='dying'},c=>{c.missing={origin:'egypt',remaining:2};c.health='dying'}]){
+  let s=newGame('caesar');s.knowledge.caesar.egypt.reportedLeaders=['cleopatra'];
+  change(s.world.characters.cleopatra);const mission=queueMission(s,'caesar','egypt','spy','health',null,'cleopatra');
+  assert.equal(mission.ok,true);s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.intelSeed=1000;
+  for(let i=0;i<mission.duration;i++)advanceOperations(s);
+  const result=s.knowledge.caesar.egypt.reports.find(r=>r.kind==='health');
+  assert.equal(s.operations[0].status,'complete');assert.equal(result.character,'cleopatra');assert.equal(result.value,'unknown');
+  assert.equal(s.knowledge.senate.egypt.reports.length,0);
+ }
+ const s=newGame('caesar');s.world.characters.cleopatra.health='dying';
+ const mission=queueMission(s,'caesar','egypt','spy','health',null,'cleopatra');s.world.intelSeed=1000;
+ for(let i=0;i<mission.duration;i++)advanceOperations(s);
+ assert.equal(s.knowledge.caesar.egypt.reports[0].value,'dying');
+});
