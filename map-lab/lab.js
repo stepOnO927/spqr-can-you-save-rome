@@ -1,12 +1,12 @@
 import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=1';
 import historical from '../historical-territories.js';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=30';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax} from '../engine.js?v=31';
 import {FACTIONS} from '../data.js?v=8';
 import {identity,factionMark} from '../identity.js?v=1';
-import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=8';
-import {createCharacterUI} from './character-ui.js?v=22';
-import {reportedArmies} from '../character-system.js?v=18';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=9';
+import {createCharacterUI} from './character-ui.js?v=23';
+import {reportedArmies} from '../character-system.js?v=19';
 import {createTutorial} from './tutorial.js?v=4';
 import {friendlyPersonnelInTheater} from './personnel.js?v=1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=1';
