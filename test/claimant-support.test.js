@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js';
-import {addReport,reportedClaimants,supportClaimant,contestLeadership,advanceOperations,advanceDisputes} from '../character-system.js';
+import {addReport,reportedClaimants,supportClaimant,claimantRepresentatives,contestLeadership,advanceOperations,advanceDisputes} from '../character-system.js';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js';
 
 const report=s=>addReport(s,s.player,'egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified'});
 test('offers require a reported claimant but do not expose whether that report is true',()=>{
@@ -13,4 +14,16 @@ test('accepted support changes the actual dispute after delay and survives a sav
 });
 test('offers can be refused or lost without changing support',()=>{
  for(const [seed,outcome] of [[0,'declined'],[1972,'no_reply']]){const s=newGame();contestLeadership(s,'egypt','cleopatra');report(s);supportClaimant(s,'caesar','egypt','cleopatra');s.world.intelSeed=seed;for(let i=0;i<4;i++)advanceOperations(s);assert.equal(s.operations[0].status,outcome);assert.equal(s.world.disputes.egypt.support,undefined)}
+});
+test('trust earned in an actual meeting can improve a later offer without guaranteeing a reply',()=>{
+ const s=newGame('senate');contestLeadership(s,'egypt','cleopatra');s.world.characters.cicero.location='egypt';s.world.intelSeed=1000;assert.equal(requestPersonalMeeting(s,'cicero','cleopatra').ok,true);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');
+ addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified'});assert.deepEqual(claimantRepresentatives(s,'senate','cleopatra'),['cicero']);
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.44&&q<.45});
+ function trial(representative,seedValue){const t=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(supportClaimant(t,'senate','egypt','cleopatra',representative).ok,true);for(let i=0;i<3;i++)advanceOperations(t);assert.equal(t.operations[0].status,'pending');t.world.intelSeed=seedValue;advanceOperations(t);return t}
+ assert.equal(trial(null,seed).operations[0].status,'declined');const trusted=trial('cicero',seed);assert.equal(trusted.operations[0].status,'complete');assert.equal(trusted.world.disputes.egypt.support.cleopatra,15);assert.equal(trusted.knowledge.caesar.egypt.reports.length,0);assert.equal(trial('cicero',1972).operations[0].status,'no_reply');
+});
+test('representatives must be known friendly contacts and can lose their influence while a letter travels',()=>{
+ const s=newGame('senate');contestLeadership(s,'egypt','cleopatra');addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified'});s.world.personalRelations['cicero:cleopatra']={trust:50,meetings:1};
+ assert.equal(supportClaimant(s,'senate','egypt','cleopatra','caesar').reason,'representative');assert.equal(supportClaimant(s,'senate','egypt','cleopatra','cicero').ok,true);s.world.characters.cicero.faction='caesar';
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.34&&q<.36});s.world.intelSeed=seed;for(let i=0;i<4;i++)advanceOperations(s);assert.equal(s.operations[0].status,'declined');assert.equal(s.world.disputes.egypt.support,undefined);
 });
