@@ -38,6 +38,12 @@ test('foreign character profiles show recorded claims without revealing actual h
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cleopatra.health='seriously_ill';addReport(s,'senate','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'envoy',confidence:'unverified'});globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'en',inspect:()=>{}});ui.show('cleopatra');const dossier=panel.children.find(x=>x.className==='help-list');assert.match(dossier.innerHTML,/Healthy · Envoy/);assert.match(dossier.innerHTML,/Unverified/);assert.doesNotMatch(dossier.innerHTML,/Seriously ill|battle wounds|Illness episodes/);assert.match(panel.innerHTML,/Simulated health<\/span><b>Unknown/);assert.match(dossier.innerHTML,/HISTORICAL ENCYCLOPEDIA \(NOT GAME INTELLIGENCE\)/)}finally{globalThis.document=prior}
 });
+test('foreign dossier and intelligence panel show a dated age estimate rather than current certainty',()=>{
+ const prior=globalThis.document,panel=new Element(),s=newGame('senate'),content=new Element();
+ addReport(s,'senate','egypt',{kind:'age',character:'cleopatra',value:[19,21],source:'audience',confidence:'unverified',reliability:'low'});
+ globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
+ try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('cleopatra');const html=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(html,/会面时的年龄估计/);assert.match(html,/19–21/);assert.match(html,/并非当前年龄或已核实身份/);ui.addMissions(content,'egypt');assert.match(content.children[0].querySelector('#mission-records').innerHTML,/会面时年龄估计/)}finally{globalThis.document=prior}
+});
 test('a personal meeting is visible only to its sender and never proves current foreign authority',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cicero.location='egypt';s.world.intelSeed=1000;
  assert.equal(requestPersonalMeeting(s,'cicero','cleopatra').ok,true);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');

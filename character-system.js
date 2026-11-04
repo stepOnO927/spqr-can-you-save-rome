@@ -27,7 +27,7 @@ const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observ
 export function addReport(s,actor,target,report){
  initializeWorld(s);const k=s.knowledge[actor]?.[target];if(!k)return;
  const r={...report,year:s.year,month:s.month,baseConfidence:report.baseConfidence||report.confidence||'unverified',verified:false},known=x=>x.value!=='unknown'&&x.value!=null||x.kind==='leaders'||x.kind==='claimants';
- const comparable=known(r)&&reportAge(s,r)<=24?k.reports.filter(x=>known(x)&&x.kind===r.kind&&x.character===r.character&&reportAge(s,x)<=24):[];
+ const comparable=known(r)&&reportAge(s,r)<=24?k.reports.filter(x=>known(x)&&x.kind===r.kind&&x.character===r.character&&reportAge(s,x)<=24&&(r.kind!=='age'||((x.observationYear??x.year)===(r.observationYear??r.year)&&(x.observationMonth??x.month)===(r.observationMonth??r.month)))):[];
  // Leadership and claimant reports describe sets; co-ruler order carries no meaning.
  const value=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?[...new Set(x.leaders||[])].sort():x.value);
  if(known(r)&&reportAge(s,r)<=24){
@@ -96,7 +96,17 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   const leaders=[...(oldArrangement?opening:current)];
   report={kind:'leaders',leaders,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
  }
- if(op.type==='audience'){op.meeting='envoy';const k=[op.actor,op.target].sort().join(':');s.relations[k]=Math.min(100,(s.relations[k]||0)+3)}addReport(s,op.actor,op.target,report);if(op.actor===s.player)notify(s,`An intelligence report from ${FACTIONS[op.target].short[0]} has arrived.`,`一份来自${FACTIONS[op.target].short[1]}的情报报告已送达。`);
+ if(op.type==='audience'){
+  op.meeting='envoy';const k=[op.actor,op.target].sort().join(':');s.relations[k]=Math.min(100,(s.relations[k]||0)+3);
+  // An audience may be with a representative. Only record a personal observation
+  // when someone actually in office and named in the report could attend.
+  const met=(report.leaders||[]).find(candidate=>(s.world.leadership[op.target]||[]).includes(candidate)&&s.world.characters[candidate]?.alive&&!s.world.characters[candidate].travel&&!['seriously_ill','dying','deceased'].includes(s.world.characters[candidate].health));
+  if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=ageRange(met,s.year);
+   addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,source:'audience',confidence:'unverified',reliability:'low'});
+   if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,source:'audience',confidence:'unverified',reliability:'low'});
+  }
+ }
+ addReport(s,op.actor,op.target,report);if(op.actor===s.player)notify(s,`An intelligence report from ${FACTIONS[op.target].short[0]} has arrived.`,`一份来自${FACTIONS[op.target].short[1]}的情报报告已送达。`);
 }}
 export function contestLeadership(s,faction,claimant){initializeWorld(s);const leaders=s.world.leadership[faction]||[];if(faction!=='egypt'||leaders.length<2||!leaders.includes(claimant)||!s.world.characters[claimant]?.alive)return false;s.world.leadership[faction]=leaders.filter(id=>id!==claimant);const claimants=s.world.claimants[faction]||=[];if(!claimants.includes(claimant))claimants.push(claimant);s.world.disputes[faction]={months:0};if(s.factions[faction])s.factions[faction].stability=Math.max(0,s.factions[faction].stability-5);if(faction===s.player)notify(s,'A leadership dispute has created a rival claimant.','执政权争议产生了一位竞争者。');return true}
 
