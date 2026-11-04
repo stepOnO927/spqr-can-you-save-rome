@@ -10,8 +10,15 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});
- await page.locator('#roman-faction').selectOption('senate');await page.locator('#start-free').click();
+ await page.locator('#roman-faction').selectOption('senate');assert.equal(await page.locator('#start-game').isDisabled(),false);await page.locator('#start-game').click();
  await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
+ assert.match(await page.locator('#guide-body').innerText(),/元老院与庞培派/);await page.locator('#guide-next').click();
+ await page.locator('[data-army="italy"]').click({force:true});assert.match(await page.locator('#guide-body').innerText(),/5200人/);
+ await page.locator('#language').click();assert.match(await page.locator('#guide-body').innerText(),/5,200 soldiers/);await page.locator('#language').click();
+ await page.locator('#guide-next').click();await page.locator('#lab-orders select').selectOption('cisalpine');await page.locator('#lab-orders button').click();
+ await page.locator('#advance').click();if((await page.locator('#guide-title').innerText())==='理解战斗')await page.locator('#recent-battle').click();
+ assert.equal(await page.locator('#guide-title').innerText(),'战区与城市');await page.locator('[data-city="RAVENNA"]').click({force:true});await page.locator('#resources-help').click();await page.locator('#guide-next').click();assert.equal(await page.locator('#guide').isHidden(),true);
+ await page.locator('#guide-restart').click();await page.locator('#roman-faction').selectOption('senate');await page.locator('#start-free').click();
  await page.locator('[data-army="xiii"]').click({force:true});assert.match(await page.locator('#command-detail').innerText(),/上次报告的指挥官：盖乌斯·尤利乌斯·凯撒（可能过时）/);
  await page.locator('#command-detail button').click();assert.match(await page.locator('#command-detail').innerText(),/指挥官目击记录/);assert.match(await page.locator('#command-detail').innerText(),/不证明目前的职务或位置/);
  const road=roads.features.find(f=>f.properties.id===1550).geometry.coordinates[0][85],mercY=lat=>.5-Math.log((1+Math.sin(lat*Math.PI/180))/(1-Math.sin(lat*Math.PI/180)))/(4*Math.PI);
