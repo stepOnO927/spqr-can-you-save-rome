@@ -28,7 +28,7 @@ try{
  assert.equal(await page.locator('#claimant-support').isDisabled(),true,'an unreported claimant must not be exposed');
  await page.locator('#inquiry-subject').selectOption('leaders');await page.locator('#send-inquiry').click();
  assert.match(await page.locator('#command-detail').innerText(),/等待回信/);
- await page.locator('[data-mission="spy"]').click();await page.locator('#mission-feedback button').first().click();
+ await page.locator('[data-mission="spy"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/关系降低10/);assert.match(await page.locator('#mission-feedback').innerText(),/可能被捕/);await page.locator('#mission-feedback button').first().click();
  assert.equal(await page.locator('#agent-available').innerText(),'2');
  for(let i=0;i<4;i++)await page.locator('#advance').click();
  await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click();
