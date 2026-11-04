@@ -12,6 +12,8 @@ try{
  await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});
  await page.locator('#roman-faction').selectOption('senate');await page.locator('#start-free').click();
  await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
+ await page.locator('[data-army="xiii"]').click({force:true});assert.match(await page.locator('#command-detail').innerText(),/上次报告的指挥官：盖乌斯·尤利乌斯·凯撒（可能过时）/);
+ await page.locator('#command-detail button').click();assert.match(await page.locator('#command-detail').innerText(),/指挥官目击记录/);assert.match(await page.locator('#command-detail').innerText(),/不证明目前的职务或位置/);
  const road=roads.features.find(f=>f.properties.id===1550).geometry.coordinates[0][85],mercY=lat=>.5-Math.log((1+Math.sin(lat*Math.PI/180))/(1-Math.sin(lat*Math.PI/180)))/(4*Math.PI);
  const romeBox=await page.locator('[data-city="ROMA"]').boundingBox(),narboBox=await page.locator('[data-city="NARBO"]').boundingBox(),world=(romeBox.x-narboBox.x)*360/(12.4964-3.003);
  const roadPoint={x:romeBox.x+world*(road[0]-12.4964)/360,y:romeBox.y+romeBox.height/2+world*(mercY(road[1])-mercY(41.9028))};
