@@ -27,3 +27,7 @@ test('representatives must be known friendly contacts and can lose their influen
  assert.equal(supportClaimant(s,'senate','egypt','cleopatra','caesar').reason,'representative');assert.equal(supportClaimant(s,'senate','egypt','cleopatra','cicero').ok,true);s.world.characters.cicero.faction='caesar';
  const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.34&&q<.36});s.world.intelSeed=seed;for(let i=0;i<4;i++)advanceOperations(s);assert.equal(s.operations[0].status,'declined');assert.equal(s.world.disputes.egypt.support,undefined);
 });
+
+test('a reported claimant who is missing, incapacitated or traveling cannot reply and no cause is disclosed',()=>{
+ for(const change of [c=>c.health='seriously_ill',c=>c.health='dying',c=>c.missing={year:-49,month:1},c=>c.travel={destination:'egypt',legs:[],remaining:1}]){const s=newGame();contestLeadership(s,'egypt','cleopatra');report(s);change(s.world.characters.cleopatra);assert.equal(supportClaimant(s,'caesar','egypt','cleopatra').ok,true);s.world.intelSeed=1000;for(let i=0;i<4;i++)advanceOperations(s);assert.equal(s.operations[0].status,'no_reply');assert.equal(s.world.disputes.egypt.support,undefined);assert.equal(s.knowledge.caesar.egypt.reports.length,1);assert.match(s.log[0].zh,/未收到回信/)}
+});

@@ -1,8 +1,9 @@
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=11';
 import {FACTIONS,ROUTES} from './data.js?v=8';
-import {deriveGovernment} from './governance.js?v=9';
+import {deriveGovernment} from './governance.js?v=10';
 import {potentialConspirators} from './conspiracies.js?v=2';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
+const claimantAvailable=c=>!!c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health);
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const notify=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
 const configs={spy:{cost:12,months:4},counter:{cost:8,months:3},envoy:{cost:8,months:3},travelers:{cost:4,months:2},audience:{cost:10,months:4},exchange:{cost:6,months:3}};
@@ -94,7 +95,7 @@ export function queueMission(s,actor,target,type,subject='health',partnerId=null
 }
 export function advanceOperations(s){initializeWorld(s);for(const op of s.operations){if(op.status!=='pending'||--op.remaining>0)continue;const q=rand(s),id=(s.world.leadership[op.target]||[])[0],person=s.world.characters[id];
  if(op.type==='support'){
-  const claimant=s.world.characters[op.claimant],valid=s.regions.some(r=>r.owner===op.target)&&claimant?.alive&&(s.world.claimants[op.target]||[]).includes(op.claimant);
+  const claimant=s.world.characters[op.claimant],valid=s.regions.some(r=>r.owner===op.target)&&claimantAvailable(claimant)&&(s.world.claimants[op.target]||[]).includes(op.claimant);
   const representative=op.representative&&claimantRepresentatives(s,op.actor,op.claimant).includes(op.representative)?op.representative:null,trust=representative?(s.world.personalRelations[[representative,op.claimant].sort().join(':')]?.trust||0):0,declineLimit=Math.max(.25,.45-Math.min(100,trust)*.002);
   if(!valid||q<.2)op.status='no_reply';else if(q<declineLimit)op.status='declined';else{op.status='complete';const dispute=s.world.disputes[op.target]||={months:0};dispute.support||={};dispute.support[op.claimant]=Math.min(30,(dispute.support[op.claimant]||0)+15);const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-10)}
   op.resolvedYear=s.year;op.resolvedMonth=s.month;
@@ -171,7 +172,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  }
  addReport(s,op.actor,op.target,report);if(op.actor===s.player)notify(s,`An intelligence report from ${FACTIONS[op.target].short[0]} has arrived.`,`一份来自${FACTIONS[op.target].short[1]}的情报报告已送达。`);
 }}
-export function contestLeadership(s,faction,claimant){initializeWorld(s);const leaders=s.world.leadership[faction]||[];if(faction!=='egypt'||leaders.length<2||!leaders.includes(claimant)||(!s.world.characters[claimant]?.alive||s.world.characters[claimant]?.missing))return false;s.world.leadership[faction]=leaders.filter(id=>id!==claimant);const claimants=s.world.claimants[faction]||=[];if(!claimants.includes(claimant))claimants.push(claimant);s.world.disputes[faction]={months:0};if(s.factions[faction])s.factions[faction].stability=Math.max(0,s.factions[faction].stability-5);if(faction===s.player)notify(s,'A leadership dispute has created a rival claimant.','执政权争议产生了一位竞争者。');return true}
+export function contestLeadership(s,faction,claimant){initializeWorld(s);const leaders=s.world.leadership[faction]||[];if(faction!=='egypt'||leaders.length<2||!leaders.includes(claimant)||!claimantAvailable(s.world.characters[claimant]))return false;s.world.leadership[faction]=leaders.filter(id=>id!==claimant);const claimants=s.world.claimants[faction]||=[];if(!claimants.includes(claimant))claimants.push(claimant);s.world.disputes[faction]={months:0};if(s.factions[faction])s.factions[faction].stability=Math.max(0,s.factions[faction].stability-5);if(faction===s.player)notify(s,'A leadership dispute has created a rival claimant.','执政权争议产生了一位竞争者。');return true}
 
 // Alternate-history court outcomes use existing characters and never update a foreign observer's reports directly.
 export function advanceDisputes(s){
@@ -182,11 +183,11 @@ export function advanceDisputes(s){
   // A rival's claim is not automatically recognized when the incumbent dies.
   // An unnamed authority governs during the vacancy; existing claimants may
   // eventually establish control, influenced by already accepted support.
-  const eligible=claimants.filter(id=>!s.world.characters[id]?.missing&&s.world.characters[id]?.alive).sort((a,b)=>(s.world.characters[b].influence+(dispute.support?.[b]||0))-(s.world.characters[a].influence+(dispute.support?.[a]||0))),candidate=eligible[0];
+  const eligible=claimants.filter(id=>claimantAvailable(s.world.characters[id])).sort((a,b)=>(s.world.characters[b].influence+(dispute.support?.[b]||0))-(s.world.characters[a].influence+(dispute.support?.[a]||0))),candidate=eligible[0];
   if(candidate&&rand(s)<Math.min(.8,.5+(dispute.support?.[candidate]||0)/100)){s.world.leadership[faction]=[candidate];s.world.claimants[faction]=claimants.filter(id=>id!==candidate);s.factions[faction].stability=Math.max(0,s.factions[faction].stability-2);s.world.disputeHistory.unshift({faction,claimant:candidate,outcome:'succession',year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);if(!s.world.claimants[faction].length)delete s.world.disputes[faction];else{dispute.support={};delete dispute.vacancySince}if(faction===s.player)notify(s,'A claimant established authority after the simulated succession dispute.','一位竞争者在游戏继承争议后确立了执政权。')}
   return
  }
- const claimant=claimants[0],person=s.world.characters[claimant];if(person.missing)return;const stability=s.factions[faction].stability,support=dispute.support?.[claimant]||0,q=rand(s);let outcome;
+ const claimant=claimants.find(id=>claimantAvailable(s.world.characters[id]));if(!claimant)return;const person=s.world.characters[claimant];const stability=s.factions[faction].stability,support=dispute.support?.[claimant]||0,q=rand(s);let outcome;
  if(stability>=45&&person.loyalty>=55&&support===0&&q<.12){s.world.leadership[faction]=[...leaders,claimant];s.world.claimants[faction]=claimants.filter(id=>id!==claimant);s.factions[faction].stability=Math.min(100,stability+2);outcome='reconciliation';delete s.world.disputes[faction]}
  else if(q<(stability<45?.22:.08)+support/100){s.world.leadership[faction]=[claimant];s.world.claimants[faction]=[...new Set([...claimants.filter(id=>id!==claimant),...leaders.filter(id=>s.world.characters[id]?.alive)])];s.factions[faction].stability=Math.max(0,stability-4);outcome='takeover';dispute.support={}}
  if(outcome){s.world.disputeHistory.unshift({faction,claimant,outcome,year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);if(faction===s.player)notify(s,outcome==='reconciliation'?'A simulated court settlement restored joint rule.':'A simulated court struggle changed the ruling authority.',outcome==='reconciliation'?'游戏中的宫廷和解恢复了共同统治。':'游戏中的宫廷斗争改变了执政者。')}
