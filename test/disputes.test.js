@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick} from '../engine.js';
-import {contestLeadership,advanceDisputes,queueMission,advanceOperations} from '../character-system.js';
+import {contestLeadership,advanceDisputes,queueMission,advanceOperations,addReport,supportClaimant} from '../character-system.js';
 import {knownLeaders,assignSuccession} from '../characters.js';
 import {deriveGovernment} from '../governance.js';
 
@@ -59,4 +59,18 @@ test('an incapacitated or traveling claimant cannot establish authority until av
 test('an unavailable claimant cannot instigate or resolve a court struggle',()=>{
  const opening=newGame('caesar');opening.world.characters.cleopatra.health='seriously_ill';assert.equal(contestLeadership(opening,'egypt','cleopatra'),false);
  for(const change of [c=>c.health='seriously_ill',c=>c.travel={destination:'egypt',legs:[],remaining:1}]){const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');change(s.world.characters.cleopatra);s.factions.egypt.stability=20;s.world.disputes.egypt.months=5;s.world.intelSeed=seedFor(.1,.12);advanceDisputes(s);assert.deepEqual(s.world.leadership.egypt,['ptolemy']);assert.deepEqual(s.world.claimants.egypt,['cleopatra']);assert.equal(s.world.disputeHistory.length,0)}
+});
+
+
+test('Parthian dynastic rivalry remains hidden until investigated and is not automatic joint rule',()=>{
+ const s=newGame('caesar');s.world.characters.pacorus.loyalty=20;assert.equal(contestLeadership(s,'parthia','pacorus'),true);assert.deepEqual(s.world.leadership.parthia,['orodes']);assert.deepEqual(s.world.claimants.parthia,['pacorus']);assert.deepEqual(knownLeaders(s,'caesar','parthia'),['orodes']);assert.equal(s.knowledge.caesar.parthia.reports.length,0);
+ const m=queueMission(s,'caesar','parthia','spy','claimants');s.world.intelSeed=seedFor(.7,.8);for(let i=0;i<m.duration;i++)advanceOperations(s);assert.deepEqual(s.knowledge.caesar.parthia.reports[0].leaders,['pacorus']);assert.equal(s.knowledge.senate.parthia.reports.length,0);
+ s.world.characters.pacorus.loyalty=60;s.world.disputes.parthia.months=5;s.world.intelSeed=seedFor(.02,.05);advanceDisputes(s);assert.deepEqual(s.world.leadership.parthia,['orodes']);assert.deepEqual(s.world.claimants.parthia,[]);assert.equal(s.world.disputeHistory[0].outcome,'reconciliation');
+});
+test('Parthian claimant backing is delayed and a disputed vacancy is not automatically filled',()=>{
+ let s=newGame('caesar');s.world.characters.pacorus.loyalty=20;contestLeadership(s,'parthia','pacorus');assert.equal(supportClaimant(s,'caesar','parthia','pacorus').reason,'unavailable');addReport(s,'caesar','parthia',{kind:'claimants',leaders:['pacorus'],source:'spy',confidence:'unverified'});assert.equal(supportClaimant(s,'caesar','parthia','pacorus').ok,true);for(let i=0;i<3;i++)advanceOperations(s);assert.equal(s.operations[0].status,'pending');s.world.intelSeed=seedFor(.8,.9);advanceOperations(s);assert.equal(s.operations[0].status,'complete');assert.equal(s.world.disputes.parthia.support.pacorus,15);
+ s.world.characters.orodes.alive=false;assert.deepEqual(assignSuccession(s,'parthia'),[]);assert.equal(deriveGovernment(s,'parthia').kind,'vacant');s=upgradeSave(JSON.parse(JSON.stringify(s)));s.month=2;s.world.disputes.parthia.months=5;s.world.intelSeed=seedFor(.4,.45);advanceDisputes(s);assert.deepEqual(s.world.leadership.parthia,['pacorus']);assert.deepEqual(knownLeaders(s,'caesar','parthia'),['orodes']);
+});
+test('Parthian takeovers use known characters and leave a rival claim, not an invented co-ruler',()=>{
+ const s=newGame('caesar');s.world.characters.pacorus.loyalty=20;contestLeadership(s,'parthia','pacorus');s.factions.parthia.stability=20;s.world.disputes.parthia.months=5;s.world.intelSeed=seedFor(.15,.2);advanceDisputes(s);assert.deepEqual(s.world.leadership.parthia,['pacorus']);assert.deepEqual(s.world.claimants.parthia,['orodes']);assert.equal(s.world.disputeHistory[0].outcome,'takeover');assert.deepEqual(knownLeaders(s,'caesar','parthia'),['orodes']);
 });

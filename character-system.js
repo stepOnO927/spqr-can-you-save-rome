@@ -1,7 +1,7 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=12';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=13';
 import {FACTIONS,ROUTES} from './data.js?v=8';
-import {deriveGovernment} from './governance.js?v=11';
-import {potentialConspirators} from './conspiracies.js?v=3';
+import {deriveGovernment} from './governance.js?v=12';
+import {potentialConspirators} from './conspiracies.js?v=4';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 const claimantAvailable=c=>!!c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health);
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
@@ -69,7 +69,7 @@ export function claimantRepresentatives(s,actor,claimant){
  initializeWorld(s);return Object.values(s.world.characters).filter(c=>c.faction===actor&&c.alive&&!c.missing&&!['seriously_ill','dying','deceased'].includes(c.health)&&CHARACTER_CATALOG[c.id]&&(s.world.personalRelations[[c.id,claimant].sort().join(':')]?.trust||0)>0).map(c=>c.id);
 }
 export function supportClaimant(s,actor,target,claimant,representative=null){
- initializeWorld(s);if(!['caesar','senate'].includes(actor)||actor===target||target!=='egypt'||!reportedClaimants(s,actor,target).includes(claimant)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
+ initializeWorld(s);if(!['caesar','senate'].includes(actor)||actor===target||!['egypt','parthia'].includes(target)||!reportedClaimants(s,actor,target).includes(claimant)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(representative&&!claimantRepresentatives(s,actor,claimant).includes(representative))return {ok:false,reason:'representative'};
  if(s.operations.some(o=>o.actor===actor&&o.target===target&&o.type==='support'&&o.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<10)return {ok:false,reason:'treasury'};
  s.factions[actor].treasury-=10;s.operations.unshift({actor,target,type:'support',claimant,representative:representative||null,remaining:4,status:'pending',sentYear:s.year,sentMonth:s.month});if(actor===s.player)notify(s,'An offer of support was sent; a response may take four months.','已寄出支持提议；回信可能需要四个月。');return {ok:true};
@@ -174,11 +174,12 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  }
  addReport(s,op.actor,op.target,report);if(op.actor===s.player)notify(s,`An intelligence report from ${FACTIONS[op.target].short[0]} has arrived.`,`一份来自${FACTIONS[op.target].short[1]}的情报报告已送达。`);
 }}
-export function contestLeadership(s,faction,claimant){initializeWorld(s);const leaders=s.world.leadership[faction]||[];if(faction!=='egypt'||leaders.length<2||!leaders.includes(claimant)||!claimantAvailable(s.world.characters[claimant]))return false;s.world.leadership[faction]=leaders.filter(id=>id!==claimant);const claimants=s.world.claimants[faction]||=[];if(!claimants.includes(claimant))claimants.push(claimant);s.world.disputes[faction]={months:0};if(s.factions[faction])s.factions[faction].stability=Math.max(0,s.factions[faction].stability-5);if(faction===s.player)notify(s,'A leadership dispute has created a rival claimant.','执政权争议产生了一位竞争者。');return true}
+export function contestLeadership(s,faction,claimant){initializeWorld(s);const leaders=s.world.leadership[faction]||[],person=s.world.characters[claimant],egypt=faction==='egypt'&&leaders.length>1&&leaders.includes(claimant),parthia=faction==='parthia'&&claimant==='pacorus'&&leaders.includes('orodes')&&!leaders.includes(claimant)&&person?.loyalty<40;if((!egypt&&!parthia)||!s.regions.some(r=>r.owner===faction)||!claimantAvailable(person)||(s.world.claimants[faction]||[]).includes(claimant))return false;if(egypt)s.world.leadership[faction]=leaders.filter(id=>id!==claimant);const claimants=s.world.claimants[faction]||=[];claimants.push(claimant);s.world.disputes[faction]={months:0};if(s.factions[faction])s.factions[faction].stability=Math.max(0,s.factions[faction].stability-5);if(faction===s.player)notify(s,'A leadership dispute has created a rival claimant.','执政权争议产生了一位竞争者。');return true}
 
 // Alternate-history court outcomes use existing characters and never update a foreign observer's reports directly.
-export function advanceDisputes(s){
- initializeWorld(s);const faction='egypt',leaders=s.world.leadership[faction]||[],claimants=(s.world.claimants[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!leaders.includes(id));s.world.claimants[faction]=claimants;
+export function advanceDisputes(s){initializeWorld(s);for(const faction of ['egypt','parthia'])advanceFactionDispute(s,faction)}
+function advanceFactionDispute(s,faction){
+ const leaders=s.world.leadership[faction]||[],claimants=(s.world.claimants[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!leaders.includes(id));s.world.claimants[faction]=claimants;
  if(!claimants.length||!s.regions.some(r=>r.owner===faction)){delete s.world.disputes[faction];return}
  const dispute=s.world.disputes[faction]||={months:0};if(!leaders.length&&dispute.vacancySince?.year===s.year&&dispute.vacancySince?.month===s.month)return;if(++dispute.months<6)return;dispute.months=0;
  if(!leaders.length){
@@ -190,9 +191,9 @@ export function advanceDisputes(s){
   return
  }
  const claimant=claimants.find(id=>claimantAvailable(s.world.characters[id]));if(!claimant)return;const person=s.world.characters[claimant];const stability=s.factions[faction].stability,support=dispute.support?.[claimant]||0,q=rand(s);let outcome;
- if(stability>=45&&person.loyalty>=55&&support===0&&q<.12){s.world.leadership[faction]=[...leaders,claimant];s.world.claimants[faction]=claimants.filter(id=>id!==claimant);s.factions[faction].stability=Math.min(100,stability+2);outcome='reconciliation';delete s.world.disputes[faction]}
+ if(stability>=45&&person.loyalty>=55&&support===0&&q<.12){s.world.leadership[faction]=faction==='egypt'?[...leaders,claimant]:leaders;s.world.claimants[faction]=claimants.filter(id=>id!==claimant);s.factions[faction].stability=Math.min(100,stability+2);outcome='reconciliation';delete s.world.disputes[faction]}
  else if(q<(stability<45?.22:.08)+support/100){s.world.leadership[faction]=[claimant];s.world.claimants[faction]=[...new Set([...claimants.filter(id=>id!==claimant),...leaders.filter(id=>s.world.characters[id]?.alive)])];s.factions[faction].stability=Math.max(0,stability-4);outcome='takeover';dispute.support={}}
- if(outcome){s.world.disputeHistory.unshift({faction,claimant,outcome,year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);if(faction===s.player)notify(s,outcome==='reconciliation'?'A simulated court settlement restored joint rule.':'A simulated court struggle changed the ruling authority.',outcome==='reconciliation'?'游戏中的宫廷和解恢复了共同统治。':'游戏中的宫廷斗争改变了执政者。')}
+ if(outcome){s.world.disputeHistory.unshift({faction,claimant,outcome,year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);if(faction===s.player)notify(s,outcome==='reconciliation'?(faction==='egypt'?'A simulated court settlement restored joint rule.':'A simulated settlement ended the dynastic challenge.'):'A simulated court struggle changed the ruling authority.',outcome==='reconciliation'?(faction==='egypt'?'游戏中的宫廷和解恢复了共同统治。':'游戏中的宫廷和解结束了王朝挑战。'):'游戏中的宫廷斗争改变了执政者。')}
 }
 // Simulation probabilities only; these do not assert historical diagnoses.
 export function illnessRisk(s,id){initializeWorld(s);const c=s.world.characters[id];if(!c)return 0;const age=ageRange(id,s.year)?.[0],military=s.armies.some(a=>a.characterId===id),shortage=(s.factions[c.faction]?.food??0)<0;return Math.min(.18,(age>=65?.04:.018)+(military?.01:0)+(shortage?.025:0)+(c.travel?.01:0)+Math.min(.02,c.wounds*.01))}
@@ -210,7 +211,7 @@ export function advanceCharacters(s){initializeWorld(s);for(const [id,c] of Obje
  if((previous==='healthy'&&c.health==='ill')||(previous==='frail'&&c.health==='seriously_ill'))c.illnessEpisodes++;
  if(c.health==='deceased'){c.alive=false;if(s.factions[c.faction])s.factions[c.faction].stability=Math.max(0,s.factions[c.faction].stability-3);const lead=s.world.leadership[c.faction]||[];if(lead.includes(id))assignSuccession(s,c.faction);for(const a of s.armies.filter(a=>a.characterId===id)){a.characterId=null;a.commander=['Unnamed officer','未具名军官']}if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[id].name[0]} died in the simulation; the succession situation was updated.`,`${CHARACTER_CATALOG[id].name[1]}在模拟中去世，继任局势已更新。`)}
  else {if(previous!==c.health&&c.faction===s.player)notify(s,`${CHARACTER_CATALOG[id].name[0]}: simulated health changed to ${c.health}.`,`${CHARACTER_CATALOG[id].name[1]}的游戏健康状态发生变化。`);if(s.month===1)considerDefection(s,id)}
- }if(s.month===1&&(s.world.leadership.egypt||[]).length>1&&rand(s)<(s.world.characters.cleopatra.loyalty<40?.18:.08))contestLeadership(s,'egypt','cleopatra');}
+ }if(s.month===1&&(s.world.leadership.egypt||[]).length>1&&rand(s)<(s.world.characters.cleopatra.loyalty<40?.18:.08))contestLeadership(s,'egypt','cleopatra');if(s.month===1&&s.world.characters.pacorus?.loyalty<40&&(s.factions.parthia?.stability<45||['seriously_ill','dying'].includes(s.world.characters.orodes?.health))&&!(s.world.claimants.parthia||[]).length&&rand(s)<.15)contestLeadership(s,'parthia','pacorus');}
 export function battlefieldWound(s,a){initializeWorld(s);const c=s.world.characters[a.characterId];if(!c?.alive||!['healthy','recovering','frail','wounded'].includes(c.health))return;const risk=Math.min(.14,.07+((s.factions[a.owner]?.food??0)<0?.03:0)+Math.min(.04,c.wounds*.01));if(rand(s)<risk){c.health='wounded';c.wounds++;if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[c.id].name[0]} was wounded in battle (simulated).`,`${CHARACTER_CATALOG[c.id].name[1]}在游戏战斗中受伤。`)}}
 export function commandFactor(s,a){const c=s.world?.characters?.[a.characterId];return !c?1:({healthy:1,recovering:.96,wounded:.9,ill:.9,frail:.88,seriously_ill:.8,dying:.7,deceased:.7}[c.health]||1)}
 export function linkCommanders(s){initializeWorld(s);for(const a of s.armies){if(a.characterId===undefined){a.characterId=a.id==='xiii'?'caesar':a.id==='pompey'?'pompey':null}const person=s.world.characters[a.characterId];if(person?.alive&&!person.missing)person.location=a.region}}
