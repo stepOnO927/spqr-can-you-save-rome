@@ -1,4 +1,4 @@
-import {initializeWorld,successorFor,CHARACTER_CATALOG} from './characters.js?v=10';
+import {initializeWorld,successorFor,CHARACTER_CATALOG} from './characters.js?v=11';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';

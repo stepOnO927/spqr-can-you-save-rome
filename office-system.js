@@ -1,4 +1,4 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=10';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=11';
 
 // These are simulated administrative assignments, not historical magistracies.
 export const OFFICE_TYPES=['finance','supply','administration'];
@@ -41,4 +41,3 @@ export function officeEffects(s,faction){
  const posts=initializeOffices(s)[faction]||{},active=office=>posts[office]&&canHoldOffice(s,faction,posts[office]);
  return {treasury:active('finance')?2:0,food:active('supply')?2:0,stability:active('administration')&&s.month%3===0?1:0};
 }
-

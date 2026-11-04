@@ -1,5 +1,5 @@
-import {OFFICE_TYPES,initializeOffices,officeCandidates,appointOffice,dismissOffice} from '../office-system.js?v=1';
-import {CHARACTER_CATALOG} from '../characters.js?v=10';
+import {OFFICE_TYPES,initializeOffices,officeCandidates,appointOffice,dismissOffice} from '../office-system.js?v=2';
+import {CHARACTER_CATALOG} from '../characters.js?v=11';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={finance:['Finance officer','财务专员'],supply:['Supply officer','粮秣专员'],administration:['Administration officer','政务专员']};
@@ -21,4 +21,3 @@ export function renderOffices({panel,state,language,refresh}){
   const office=button.dataset.officeDismiss,out=box.querySelector('#office-feedback');out.textContent=zh?'确认解除该任命？':'Confirm dismissal? ';const confirm=document.createElement('button');confirm.textContent=zh?'确认':'CONFIRM';out.append(confirm);confirm.onclick=()=>{if(dismissOffice(state,office).ok)refresh();else out.textContent=zh?'该职务已空缺。':'The assignment is already vacant.'};
  });
 }
-
