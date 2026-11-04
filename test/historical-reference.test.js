@@ -16,3 +16,10 @@ test('a historical death year does not determine a simulated character’s lifes
 test('approximate single-year birth references remain unbounded and do not create precise simulation ages',async()=>{
  const {HISTORICAL_BIRTH_ESTIMATES}=await import('../historical-reference.js');const {ageRange}=await import('../characters.js');assert.equal(ageRange('labienus',-49),null);assert.equal(ageRange('lepidus',-49),null);assert.deepEqual(ageRange('ptolemy',-49),[11,13]);assert.match(HISTORICAL_BIRTH_ESTIMATES.labienus.text[1],/误差范围不明/);assert.ok(HISTORICAL_BIRTH_ESTIMATES.ptolemy.sources.length);
 });
+test('disputed Roman birth dates remain sourced and represented as inclusive age bounds',async()=>{
+ const {HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS}=await import('../historical-reference.js');const {ageRange}=await import('../characters.js');
+ assert.deepEqual(ageRange('caesar',-49),[50,53]);assert.deepEqual(ageRange('antony',-49),[32,37]);
+ assert.match(HISTORICAL_BIRTH_ESTIMATES.caesar.text[1],/较常用/);assert.match(HISTORICAL_BIRTH_ESTIMATES.antony.text[1],/可能性较低/);
+ assert.ok(HISTORICAL_BIRTH_ESTIMATES.caesar.sources.some(x=>x.url.includes('cambridge.org')));assert.ok(HISTORICAL_BIRTH_ESTIMATES.antony.sources.some(x=>x.url.includes('jstor.org')));
+ assert.equal(HISTORICAL_NAME_FORMS.cleopatra.form,'ΚΛΕΟΠΑΤΡΑ');assert.match(HISTORICAL_NAME_FORMS.cleopatra.note[1],/后期/);assert.equal(HISTORICAL_NAME_FORMS.antony.form,'ΑΝΤΩΝΙΟΣ');
+});

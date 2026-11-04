@@ -1,8 +1,8 @@
 import {INITIAL_ARMIES} from './data.js?v=9';
 export const CHARACTER_CATALOG = {
- caesar:{name:['Gaius Julius Caesar','盖乌斯·尤利乌斯·凯撒'],birth:[-100,-100],faction:'caesar',role:['Roman political and military leader','罗马政治与军事领袖'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Julius-Caesar-Roman-ruler'},
+ caesar:{name:['Gaius Julius Caesar','盖乌斯·尤利乌斯·凯撒'],birth:[-102,-100],faction:'caesar',role:['Roman political and military leader','罗马政治与军事领袖'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Julius-Caesar-Roman-ruler'},
  pompey:{name:['Gnaeus Pompeius Magnus','格奈乌斯·庞培'],birth:[-106,-106],faction:'senate',role:['Roman commander allied with the Senate','元老院方面的罗马统帅'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Pompey-the-Great'},
- antony:{name:['Marcus Antonius','马尔库斯·安东尼'],birth:[-83,-83],faction:'caesar',role:['Roman officer and politician','罗马军官与政治人物'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Mark-Antony'},
+ antony:{name:['Marcus Antonius','马尔库斯·安东尼'],birth:[-86,-82],faction:'caesar',role:['Roman officer and politician','罗马军官与政治人物'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Mark-Antony'},
  cicero:{name:['Marcus Tullius Cicero','马尔库斯·图利乌斯·西塞罗'],birth:[-106,-106],faction:'senate',role:['Roman statesman and orator','罗马政治家与演说家'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Cicero'},
  cato:{name:['Marcus Porcius Cato','小加图'],birth:[-95,-95],faction:'senate',role:['Roman senator','罗马元老'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Cato-the-Younger'},
  labienus:{name:['Titus Labienus','提图斯·拉比埃努斯'],birth:null,faction:'senate',role:['Roman commander','罗马指挥官'],culture:['Roman','罗马'],source:'https://www.enciklopedija.hr/clanak/labijen-tit-vojskovodja'},
