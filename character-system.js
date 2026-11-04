@@ -1,7 +1,7 @@
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=12';
 import {FACTIONS,ROUTES} from './data.js?v=8';
-import {deriveGovernment} from './governance.js?v=10';
-import {potentialConspirators} from './conspiracies.js?v=2';
+import {deriveGovernment} from './governance.js?v=11';
+import {potentialConspirators} from './conspiracies.js?v=3';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 const claimantAvailable=c=>!!c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health);
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};

@@ -154,3 +154,10 @@ test('reports without identifiable names explicitly do not establish absence',()
  const prior=globalThis.document,s=newGame('caesar');globalThis.document={createElement:tag=>new Element(tag)};
  try{addReport(s,'caesar','egypt',{kind:'claimants',leaders:[],source:'spy',confidence:'unverified'});for(const language of ['zh','en']){const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,language==='zh'?/未获得可核实姓名；不代表不存在/:/No identifiable names; this does not prove absence/);assert.doesNotMatch(html,language==='zh'?/已独立核实/:/>Independently corroborated</)}}finally{globalThis.document=prior}
 });
+
+
+test('only a friendly dossier shows simulated ambition, without claiming a plot exists',()=>{
+ const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cleopatra.ambition=91;globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
+ try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('cato');const own=panel.children.find(x=>x.className==='help-list');assert.match(own.innerHTML,/模拟政治野心/);assert.match(own.innerHTML,/不代表此人正在密谋/);panel.children=[];ui.show('cleopatra');const foreign=panel.children.find(x=>x.className==='help-list');assert.doesNotMatch(foreign.innerHTML,/模拟政治野心|91/)}finally{globalThis.document=prior}
+});
+

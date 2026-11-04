@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {newGame,upgradeSave,queueMission} from '../engine.js';
 import {knownLeaders} from '../characters.js';
 import {advanceOperations,availableAgents} from '../character-system.js';
-import {advanceConspiracies,reassurePerson} from '../conspiracies.js';
+import {advanceConspiracies,reassurePerson,politicalAmbition,potentialConspirators} from '../conspiracies.js';
+import {supportSuccessor} from '../governance.js';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 function unrest(s){s.factions.senate.stability=30;s.world.characters.cato.loyalty=25;}
@@ -34,4 +35,14 @@ test('reassurance costs resources, can calm a plot and does not reveal whether o
  const s=newGame('senate');unrest(s);s.world.conspiracies={senate:{person:'cato',remaining:6}};const cash=s.factions.senate.treasury;
  assert.equal(reassurePerson(s,'cato').ok,true);assert.equal(s.factions.senate.treasury,cash-8);assert.equal(s.world.characters.cato.loyalty,40);advanceConspiracies(s);assert.equal(s.world.conspiracies.senate,undefined);
  assert.equal(reassurePerson(s,'cleopatra').reason,'unavailable');assert.equal(queueMission(s,'senate','senate','spy','conspiracy').reason,'unavailable');assert.equal(queueMission(s,'senate','egypt','counter','conspiracy').reason,'unavailable');
+});
+
+
+test('simulated ambition affects political risk and persists without disclosing a secret plot',()=>{
+ function setup(ambition){const s=newGame('senate');unrest(s);s.world.characters.cato.ambition=ambition;s.month=3;s.world.intelSeed=seedFor(.26,.27);return s}
+ const low=setup(10),high=setup(90);advanceConspiracies(low);advanceConspiracies(high);assert.equal(low.world.conspiracies.senate,undefined);assert.equal(high.world.conspiracies.senate.person,'cato');assert.equal(high.knowledge.senate.senate.reports.length,0);
+ let s=newGame('senate');delete s.world.characters.cato.ambition;const initial=politicalAmbition(s,'cato');assert.ok(initial>=35&&initial<=65);assert.equal(supportSuccessor(s,'cato').ok,true);assert.equal(s.world.characters.cato.ambition,initial+5);s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(politicalAmbition(s,'cato'),initial+5);
+});
+test('among similarly disloyal officers, greater ambition increases their priority',()=>{
+ const s=newGame('senate');s.world.characters.cato.loyalty=25;s.world.characters.scipio.loyalty=25;s.world.characters.cato.ambition=20;s.world.characters.scipio.ambition=80;assert.equal(potentialConspirators(s,'senate')[0],'scipio');
 });
