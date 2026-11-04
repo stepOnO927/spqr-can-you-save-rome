@@ -27,7 +27,7 @@ test('joint ruler order is immaterial and all current claims reflect an unresolv
  addReport(s,'caesar','egypt',{kind:'leaders',leaders:['cleopatra','ptolemy'],source:'spy',confidence:'unverified'});
  addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy','cleopatra'],source:'envoy',confidence:'unverified'});
  assert.ok(s.knowledge.caesar.egypt.reports.every(r=>r.confidence==='credible'));
- addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy'],source:'travelers',confidence:'rumor'});
+ addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy'],exhaustive:true,source:'travelers',confidence:'rumor'});
  assert.ok(s.knowledge.caesar.egypt.reports.every(r=>r.confidence==='disputed'&&!r.verified));
  addReport(s,'caesar','egypt',{kind:'leaders',leaders:['cleopatra','ptolemy'],source:'meeting',confidence:'unverified'});
  assert.ok(s.knowledge.caesar.egypt.reports.every(r=>r.confidence==='disputed'&&!r.verified));
