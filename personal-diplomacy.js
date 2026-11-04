@@ -1,6 +1,6 @@
 import {initializeWorld, CHARACTER_CATALOG, knownLeaders} from './characters.js?v=10';
 import {ROUTES} from './data.js?v=8';
-import {addReport} from './character-system.js?v=24';
+import {addReport} from './character-system.js?v=25';
 import {officeOf} from './office-system.js?v=1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
@@ -41,4 +41,3 @@ export function advancePersonalDiplomacy(s){
   m.resolvedYear=s.year;m.resolvedMonth=s.month;if(m.actor===s.player)log(s,`Personal audience: ${m.status.replace('_',' ')}.`,({no_contact:'未能见到对方；对方可能不在、无法会面或局势有变。',no_reply:'个人会面请求没有收到答复。',declined:'个人会面请求被拒绝。',met:'双方在同一战区举行了个人会面，关系有所改善。'})[m.status]);
  }
 }
-

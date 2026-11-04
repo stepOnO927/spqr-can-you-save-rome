@@ -104,6 +104,15 @@ try{
  async function loadClaimantCase(reported){await page.evaluate(reported=>{const state=JSON.parse(localStorage.getItem('spqr-save-2'));state.knowledge.senate.egypt.reportedLeaders=['cleopatra'];state.world.claimants.egypt=['ptolemy'];state.knowledge.senate.egypt.reports=state.knowledge.senate.egypt.reports.filter(r=>r.kind!=='claimants');if(reported)state.knowledge.senate.egypt.reports.unshift({kind:'claimants',leaders:['ptolemy'],year:state.year,month:state.month,source:'travelers',confidence:'rumor'});sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));},reported);await page.reload();await page.waitForFunction(()=>document.querySelector('#turn-date')?.textContent.includes('前'));await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click()}
  await loadClaimantCase(false);assert.equal(await page.locator('#mission-person option[value="ptolemy"]').count(),0);
  await loadClaimantCase(true);await page.locator('#mission-person').selectOption('ptolemy');await page.locator('[data-mission="spy"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/托勒密十三世/);
+ // Begin a clean Caesar campaign to exercise domestic and foreign investigations.
+ await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>document.querySelector('#turn-date')?.textContent.includes('前'));
+ await page.locator('#factions').click();await page.locator('[data-faction="caesar"]').click();await page.locator('#internal-investigate').click();
+ assert.match(await page.locator('#internal-feedback').innerText(),/8国库，3个月/);await page.locator('#internal-feedback button').click();
+ assert.equal(await page.locator('#internal-agents').innerText(),'2');assert.match(await page.locator('#command-detail').innerText(),/进行中 · 3个月/);
+ await page.locator('#reassure-person').selectOption('lepidus');await page.locator('#reassure').click();await page.locator('#reassure-feedback button').click();
+ assert.match(await page.locator('#reassure-person option[value="lepidus"]').innerText(),/90\/100/);
+ for(let i=0;i<3;i++)await page.locator('#advance').click();assert.match(await page.locator('#command-detail').innerText(),/报告已收到|调查失败/);
+ await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();await page.locator('[data-page="intelligence"]').click();
+ await page.locator('#mission-subject').selectOption('conspiracy');await page.locator('[data-mission="spy"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/内部阴谋/);
  assert.deepEqual(errors,[],'uncaught browser errors');console.log('Browser smoke passed: atlas, travel, correspondence, spy, turns, and campaign view handoff.');
 } finally {await browser.close()}
-
