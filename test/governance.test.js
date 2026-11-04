@@ -24,7 +24,7 @@ test('monthly turns and old save migration preserve temporary authority and reco
  let s=newGame('caesar');s.world.characters.caesar.health='seriously_ill';s.month=2;tick(s);assert.equal(s.world.governments.caesar.kind,'acting_command');assert.ok(s.log.some(x=>x.zh.includes('暂时代行')));s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.characters.caesar.health='recovering';tick(s);assert.equal(s.world.governments.caesar.kind,'normal');
 });
 test('frailty is simulated in later age and slows travel and military command',()=>{
- let found=false;for(let seed=0;seed<1000&&!found;seed++){const s=newGame();s.year=-34;s.month=1;s.world.intelSeed=seed*100000;s.world.characters.caesar.health='healthy';advanceCharacters(s);if(s.world.characters.caesar.health==='frail'){found=true;assert.equal(commandFactor(s,s.armies.find(a=>a.id==='xiii')),.88)}}assert.equal(found,true);
+ let found=false;for(let seed=0;seed<2500&&!found;seed++){const s=newGame();s.year=-34;s.month=1;s.world.intelSeed=seed;s.world.characters.caesar.health='healthy';advanceCharacters(s);if(s.world.characters.caesar.health==='frail'){found=true;assert.equal(commandFactor(s,s.armies.find(a=>a.id==='xiii')),.88)}}assert.equal(found,true);
  const s=newGame('senate'),ordinary=previewPersonTravel(s,'cicero','epirus');s.world.characters.cicero.health='frail';const frail=previewPersonTravel(s,'cicero','epirus');assert.ok(frail.months>ordinary.months);
 });
 test('a player can appoint another eligible deputy without changing formal succession',()=>{
