@@ -1,17 +1,17 @@
 import {HISTORICAL_DEATHS,HISTORICAL_BIRTH_ESTIMATES} from '../historical-reference.js?v=3';
 import {officeOf} from '../office-system.js?v=2';
-import {reportedClaimants,reportedHealthSubjects,supportClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=38';
+import {reportedClaimants,reportedHealthSubjects,supportClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=39';
 import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor} from '../governance.js?v=10';
 import {FACTIONS} from '../data.js?v=8';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=12';
-import {queueMission} from '../engine.js?v=55';
-import {previewPersonTravel,startPersonTravel,requestPersonalMeeting} from '../personal-diplomacy.js?v=37';
+import {queueMission} from '../engine.js?v=56';
+import {previewPersonTravel,startPersonTravel,requestPersonalMeeting} from '../personal-diplomacy.js?v=38';
 const portraits=new Set(['caesar','pompey','cleopatra','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function evidenceText(state,actor,target,report,zh){
  const e=reportEvidence(state,actor,target,report);if(e.unavailable)return zh?'未知或已过期的报告不能作为当前核实依据。':'Unknown or outdated reports do not provide current corroboration.';
  const labels={spy:['Spy','间谍'],court:['Court / envoy','宫廷／使者'],travelers:['Travelers','商旅'],meeting:['Personal meeting','个人会面'],counter:['Internal investigation','内部调查']},name=family=>(labels[family]||[family,family])[zh?1:0],list=items=>items.length?items.map(x=>`${name(x.family)} (${x.month}/${Math.abs(x.year)} BCE)`).join(zh?'、':', '):(zh?'无':'none');
- return (zh?'支持来源：':'Supporting sources: ')+list(e.support)+(zh?'；冲突来源：':'; conflicting sources: ')+list(e.conflict)+(e.unattributed?(zh?`；${e.unattributed}份报告缺少可追溯来源，不计为独立证据`:`; ${e.unattributed} report(s) lack traceable origins and do not count independently`):'')+(e.inheritedDispute?(zh?'；转交的原报告已标记为存在争议':' ; a forwarded report already carried a dispute'):'')+(zh?'。同一来源的重复报告只计算一次。':'. Repeated reports from the same source count once.');
+ return (zh?'支持来源：':'Supporting sources: ')+list(e.support)+(zh?'；冲突来源：':'; conflicting sources: ')+list(e.conflict)+(e.compatible?.length?(zh?'；部分重叠的年龄估计：':'; partially overlapping age estimates: ')+list(e.compatible)+(zh?'（不算完全核实）':' (not exact corroboration)'):'')+(e.unattributed?(zh?`；${e.unattributed}份报告缺少可追溯来源，不计为独立证据`:`; ${e.unattributed} report(s) lack traceable origins and do not count independently`):'')+(e.inheritedDispute?(zh?'；转交的原报告已标记为存在争议':' ; a forwarded report already carried a dispute'):'')+(zh?'。同一来源的重复报告只计算一次。':'. Repeated reports from the same source count once.');
 }
 export function createCharacterUI({getState,getLanguage,inspect,onShowCharacter=()=>{},onGovernmentChanged=()=>{},onStateChanged=()=>{}}){
  const isZh=()=>getLanguage()==='zh',n=x=>x?.[isZh()?1:0]||'';
