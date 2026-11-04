@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,resolveBattle,region,tick} from '../engine.js';
-import {battleSideForPlayer,visibleLogText} from '../visibility.js';
+import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer} from '../visibility.js';
 
 test('battle projection hides opponent details while preserving actual simulation evidence',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii'),d=s.armies.find(x=>x.id==='italy');resolveBattle(s,a,d,region(s,'italiaN'));const b=s.battles[0],own=battleSideForPlayer(b,'caesar','attacker'),enemy=battleSideForPlayer(b,'caesar','defender');
@@ -13,3 +13,14 @@ test('legacy casualty logs do not reveal exact enemy numbers in either language'
 test('foreign sieges in unseen theaters are not published to the player chronicle',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='egyptguard'),target=region(s,'syria');target.owner='parthia';target.fort=1;s.wars.push(['egypt','parthia']);a.move={to:'syria',remaining:1};tick(s);assert.ok(a.siege);assert.ok(!s.log.some(e=>e.en.includes('began a siege at Syria')));
 });
+test('an old army sighting does not expose its actual destruction, movement, or defection',()=>{
+ const s=newGame('senate'),reported=visibleArmyForPlayer(s,'senate','xiii');
+ assert.equal(reported.reported,true);assert.equal(reported.region,'cisalpine');
+ const actual=s.armies.find(a=>a.id==='xiii');actual.region='syria';actual.men=1;actual.name=['Secret change','秘密变更'];
+ assert.deepEqual(visibleArmyForPlayer(s,'senate','xiii'),reported);
+ actual.owner='egypt';assert.deepEqual(visibleArmyForPlayer(s,'senate','xiii'),reported);
+ s.armies=s.armies.filter(a=>a.id!=='xiii');
+ assert.deepEqual(visibleArmyForPlayer(s,'senate','xiii'),reported);
+ assert.equal(visibleArmyForPlayer(s,'senate','italy').owner,'senate');
+});
+
