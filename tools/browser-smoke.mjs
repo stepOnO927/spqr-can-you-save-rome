@@ -39,7 +39,7 @@ try{
  assert.match(await page.locator('#command-detail').innerText(),/战区距离估计/);
  await page.locator('[data-mission="audience"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/有限的公开观察/);await page.locator('#mission-feedback button').last().click();
  assert.equal(await page.locator('#claimant-support').isDisabled(),true,'an unreported claimant must not be exposed');
- await page.locator('#inquiry-subject').selectOption('leaders');await page.locator('#send-inquiry').click();
+ await page.locator('#inquiry-subject').selectOption('successor');await page.locator('#send-inquiry').click();
  assert.match(await page.locator('#command-detail').innerText(),/等待回信/);
  await page.locator('#mission-subject').selectOption('succession');await page.locator('[data-mission="spy"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/继任安排/);await page.locator('#mission-feedback button').last().click();
  await page.locator('#mission-subject').selectOption('stability');await page.locator('[data-mission="spy"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/政治稳定度/);assert.match(await page.locator('#mission-feedback').innerText(),/关系降低10/);assert.match(await page.locator('#mission-feedback').innerText(),/可能被捕/);await page.locator('#mission-feedback button').first().click();
