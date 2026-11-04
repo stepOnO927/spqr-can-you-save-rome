@@ -52,7 +52,7 @@ export function supportClaimant(s,actor,target,claimant){
 }
 export function previewMission(s,actor,target,type,subject='health',partnerId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||actor===target||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
- if(!['health','leaders','strength','claimants','stability'].includes(subject))return {ok:false,reason:'subject'};
+ if(!['health','leaders','strength','claimants','stability','succession'].includes(subject))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
  const partners=s.alliances.filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)).filter(id=>id!==target&&s.factions[id]);
  if(type==='exchange'&&(!partners.length||(partnerId&&!partners.includes(partnerId))))return {ok:false,reason:'alliance'};
@@ -93,6 +93,12 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   // travelers may also misread conditions, without learning the underlying score.
   const value=(hostile||contested)&&q<.45?'stable':low&&q<.6?(actual==='strained'?'stable':'strained'):actual;
   report={kind:'stability',value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
+ }
+ else if(op.subject==='succession'){
+  // Silence means no information, not proof that a succession plan does not exist.
+  const concealed=(hostile||contested)&&q<.45||(op.type==='envoy'&&q<.7)||(low&&q<.8);
+  const planned=s.world.successionPlans?.[op.target];
+  report={kind:'succession',value:!concealed&&CHARACTER_CATALOG[planned]?planned:'unknown',source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
  }
  else {
   const current=s.world.leadership[op.target]||[],opening=OPENING_LEADERS[op.target]||[];
