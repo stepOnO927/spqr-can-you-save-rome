@@ -207,3 +207,9 @@ test('name reports distinguish incomplete lists from a source claiming completen
  const prior=globalThis.document,s=newGame('caesar');addReport(s,'caesar','egypt',{kind:'leaders',leaders:['cleopatra'],exhaustive:true,source:'official'});addReport(s,'caesar','egypt',{kind:'claimants',leaders:['ptolemy'],source:'spy'});globalThis.document={createElement:tag=>new Element(tag)};
  try{for(const language of ['zh','en']){const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,language==='zh'?/来源声称名单完整；仍可能有误/:/Source claims the list is complete; it may be wrong/);assert.match(html,language==='zh'?/名单可能不完整/:/List may be incomplete/)}}finally{globalThis.document=prior}
 });
+
+test('a missing friendly character does not disclose a stale saved location',()=>{
+ const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cicero.missing={origin:'roma',remaining:2};
+ globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).show('cicero');assert.match(panel.innerHTML,/所在战区<\/span><b>未知<\/b>/);assert.doesNotMatch(panel.innerHTML,/所在战区<\/span><b>罗马<\/b>/)}finally{globalThis.document=prior}
+});

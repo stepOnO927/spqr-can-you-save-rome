@@ -73,3 +73,17 @@ test('contact credit uses only recorded meetings and expires without revealing h
  s.world.characters.cleopatra.faction='parthia';s.world.characters.cleopatra.health='dying';s.world.characters.cleopatra.location='parthia';assert.equal(personalDiplomaticCredit(s,'senate','egypt'),10);
  s.year+=3;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),10);s.month++;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),0);
 });
+
+test('missing participants cannot travel or complete a personal audience, even with a stale location',()=>{
+ const missing=newGame('senate');missing.world.characters.cicero.missing={origin:'roma',remaining:2};
+ assert.equal(previewPersonTravel(missing,'cicero','epirus').reason,'unavailable');
+ assert.equal(requestPersonalMeeting(missing,'cicero','cleopatra','egypt').reason,'unavailable');
+ for(const id of ['cicero','cleopatra']){
+  let s=newGame('senate');s.world.characters.cicero.location='egypt';s.world.intelSeed=1000;
+  assert.equal(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok,true);
+  s.world.characters[id].missing={origin:'egypt',remaining:2};
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);
+  assert.equal(s.meetings[0].status,'no_contact');assert.deepEqual(s.world.personalRelations,{});
+  assert.equal(s.knowledge.senate.egypt.reports.length,0);
+ }
+});
