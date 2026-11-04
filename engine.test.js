@@ -220,6 +220,20 @@ test('succession letters can disclose an unverified plan or answer evasively aft
  const hostile=newGame('caesar');hostile.world.successionPlans.senate='cato';assert.equal(sendInquiry(hostile,'caesar','senate','successor').ok,true);hostile.inquiries[0].remaining=1;hostile.seed=seed;tick(hostile);
  assert.equal(hostile.inquiries[0].status,'answered');assert.match(hostile.inquiries[0].claim[0],/did not name/);assert.equal(hostile.knowledge.caesar.senate.reports[0].value,'unknown');assert.equal(hostile.world.successionPlans.senate,'cato');
 });
+test('a cooperative court may name an acting authority in a delayed, unverified representative reply',()=>{
+ const start=newGame('caesar');start.world.characters.orodes.health='seriously_ill';start.relations['caesar:parthia']=30;assert.equal(sendInquiry(start,'caesar','parthia','representative').ok,true);
+ tick(start);tick(start);start.world.characters.orodes.health='seriously_ill';let s;
+ for(let i=1;i<300&&!s;i++){const trial=upgradeSave(JSON.parse(JSON.stringify(start)));trial.seed=(i*7000013)>>>0;tick(trial);if(trial.inquiries[0].sealed?.report?.value?.actors?.includes('pacorus'))s=trial}
+ assert.ok(s,'a cooperative reply should be possible');assert.equal(s.inquiries[0].status,'pending');assert.equal(s.knowledge.caesar.parthia.reports.length,0);assert.equal(s.knowledge.senate.parthia.reports.length,0);
+ const observed={year:s.year,month:s.month};s.world.characters.orodes.health='healthy';s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);tick(s);
+ assert.equal(s.inquiries[0].status,'answered');assert.match(s.inquiries[0].claim[0],/Pacorus/);assert.match(s.inquiries[0].claim[0],/unconfirmed/);
+ const report=s.knowledge.caesar.parthia.reports.find(r=>r.kind==='authority');assert.deepEqual(report.value,{kind:'regency',actors:['pacorus']});assert.equal(report.observationYear,observed.year);assert.equal(report.observationMonth,observed.month);assert.equal(report.confidence,'unverified');assert.equal(report.verified,false);assert.equal(s.knowledge.senate.parthia.reports.length,0);
+});
+test('a hostile court may answer a representative inquiry without exposing its hidden regent',()=>{
+ const base=newGame('caesar');base.world.characters.orodes.health='seriously_ill';base.wars.push(['caesar','parthia']);sendInquiry(base,'caesar','parthia','representative');base.inquiries[0].remaining=1;let s;
+ for(let i=1;i<300&&!s;i++){const trial=upgradeSave(JSON.parse(JSON.stringify(base)));trial.seed=(i*7000013)>>>0;tick(trial);if(trial.inquiries[0].status==='answered')s=trial}
+ assert.ok(s);assert.match(s.inquiries[0].claim[0],/unnamed official/i);assert.doesNotMatch(s.inquiries[0].claim[0],/Pacorus/);assert.equal(s.knowledge.caesar.parthia.reports[0].value,'unknown');
+});
 test('another faction’s outgoing and resolved letters are not published in the player log',()=>{
  const s=newGame('caesar');assert.equal(sendInquiry(s,'senate','egypt','leaders').ok,true);assert.equal(s.log.length,0);s.inquiries[0].remaining=1;s.seed=2500;tick(s);
  assert.notEqual(s.inquiries[0].status,'pending');assert.ok(!s.log.some(e=>/letter|reply|response/i.test(e.en)));assert.equal(s.knowledge.caesar.egypt.reports.length,0);
