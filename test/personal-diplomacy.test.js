@@ -54,3 +54,7 @@ test('successful meetings improve bilateral relations and trust affects later ac
 test('an incapacitated or departed envoy cannot complete a pending personal meeting',()=>{
  for(const change of [c=>c.health='dying',c=>c.faction='caesar']){const s=newGame('senate');s.world.characters.cicero.location='egypt';requestPersonalMeeting(s,'cicero','cleopatra');change(s.world.characters.cicero);s.world.intelSeed=1000;advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'no_contact');assert.deepEqual(s.world.personalRelations,{});assert.equal(s.relations['egypt:senate'],undefined)}
 });
+
+test('a meeting with Ptolemy can yield only a dated age range to the observer',()=>{
+ const s=newGame('senate');s.world.characters.cicero.location='egypt';assert.equal(s.knowledge.senate.egypt.reports.some(r=>r.kind==='age'&&r.character==='ptolemy'),false);s.world.intelSeed=1000;assert.equal(requestPersonalMeeting(s,'cicero','ptolemy').ok,true);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');const report=s.knowledge.senate.egypt.reports.find(r=>r.kind==='age'&&r.character==='ptolemy');assert.deepEqual(report.value,[11,13]);assert.equal(report.confidence,'unverified');assert.equal(report.source,'meeting');assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+});
