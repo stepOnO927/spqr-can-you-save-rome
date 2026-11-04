@@ -42,6 +42,10 @@ test('claimants are identified as reports and source reliability is visible in b
  const prior=globalThis.document,s=newGame('senate');addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified',reliability:'moderate'});globalThis.document={createElement:tag=>new Element(tag)};
  try{for(const language of ['en','zh']){const content=new Element(),ui=createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}});ui.addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,language==='zh'?/报告的竞争者：/:/Reported claimants:/);assert.match(html,language==='zh'?/来源可靠性: 中等/:/Source reliability: Moderate/);assert.match(html,language==='zh'?/未独立核实/:/Not independently corroborated/)}}finally{globalThis.document=prior}
 });
+test('covert contact reports show a reported sponsor without disclosing the true operation list',()=>{
+ const prior=globalThis.document,s=newGame('senate');addReport(s,'senate','egypt',{kind:'contacts',value:'caesar',source:'spy',confidence:'unverified',reliability:'moderate'});globalThis.document={createElement:tag=>new Element(tag)};
+ try{for(const language of ['en','zh']){const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,language==='zh'?/秘密接触报告：凯撒/:/Covert contact report: Caesar/);assert.match(html,language==='zh'?/未经核实/:/UNVERIFIED/);assert.match(content.children[0].innerHTML,/value="contacts"/)}}finally{globalThis.document=prior}
+});
 test('political stability reports display only the recorded estimate in both languages',()=>{
  const prior=globalThis.document,s=newGame('senate');s.factions.egypt.stability=20;
  addReport(s,'senate','egypt',{kind:'stability',value:'stable',source:'spy',confidence:'unverified',reliability:'moderate'});globalThis.document={createElement:tag=>new Element(tag)};
@@ -91,4 +95,3 @@ test('foreign leadership cards use reported arrangements rather than hidden lead
  const prior=globalThis.document,s=newGame('caesar'),panel=new Element();globalThis.document={createElement:tag=>new Element(tag)};
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});s.world.leadership.egypt=['ptolemy'];ui.addLeaders(panel,'egypt');assert.match(panel.children[0].innerHTML,/共同统治者/);addReport(s,'caesar','egypt',{kind:'leaders',leaders:['ptolemy'],source:'envoy',confidence:'unverified'});const newer=new Element();ui.addLeaders(newer,'egypt');assert.match(newer.children[0].innerHTML,/统治者/);assert.doesNotMatch(newer.children[0].innerHTML,/共同统治者/);const mauretania=new Element();ui.addLeaders(mauretania,'mauretania');assert.match(mauretania.children[0].innerHTML,/各王国统治者/)}finally{globalThis.document=prior}
 });
-
