@@ -28,6 +28,7 @@ try{
  assert.match(await page.locator('#command-detail').innerText(),/成功会面使双方关系提高3/);
  assert.match(await page.locator('[data-mission="envoy"]').innerText(),/使者 · 8国库 · 3月/);
  assert.match(await page.locator('#command-detail').innerText(),/战区距离估计/);
+ await page.locator('[data-mission="audience"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/有限的公开观察/);await page.locator('#mission-feedback button').last().click();
  assert.equal(await page.locator('#claimant-support').isDisabled(),true,'an unreported claimant must not be exposed');
  await page.locator('#inquiry-subject').selectOption('leaders');await page.locator('#send-inquiry').click();
  assert.match(await page.locator('#command-detail').innerText(),/等待回信/);
