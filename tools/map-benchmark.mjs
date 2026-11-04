@@ -25,14 +25,7 @@ function summarize(sample){
  return {elapsedMs:Math.round(sample.elapsedMs),frames:values.length,callbackFps:Math.round(values.length*100000/sample.elapsedMs)/100,p50Ms:at(.5),p95Ms:at(.95),p99Ms:at(.99),over50ms:values.filter(x=>x>50).length};
 }
 async function position(){return page.locator('[data-city="ROMA"]').evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y}})}
-try{
- await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
- await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
- await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});await page.locator('#start-free').click();
- await page.locator('[data-city="ROMA"]').waitFor();await page.waitForTimeout(8000);
- const renderer=await page.evaluate(()=>{const canvas=document.querySelector('.maplibregl-canvas'),gl=canvas?.getContext('webgl2')||canvas?.getContext('webgl');const ext=gl?.getExtension('WEBGL_debug_renderer_info');return ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):'unavailable'});
- await page.screenshot({path:'map-benchmark-1920x1080.png'});
- const idle=summarize(await sample(6000));
+async function exercise(){
  const beforePan=await position(),panSample=sample(6000);
  for(const end=Date.now()+5400;Date.now()<end;){await page.mouse.move(1200,350);await page.mouse.down();await page.mouse.move(1245,365,{steps:10});await page.mouse.up();await page.waitForTimeout(200)}
  const pan=summarize(await panSample),afterPan=await position();
@@ -43,9 +36,26 @@ try{
  const zoom=summarize(await zoomSample),afterZoom=await position();
  assert.ok(Math.hypot(afterPan.x-beforePan.x,afterPan.y-beforePan.y)>10,'dragging must move the map');
  assert.ok(Math.hypot(zoomed.x-beforeZoom.x,zoomed.y-beforeZoom.y)>3,'scrolling must zoom the map');
- assert.ok(idle.frames>0&&pan.frames>0&&zoom.frames>0,'frame samples must contain observations');
+ assert.ok(pan.frames>0&&zoom.frames>0,'frame samples must contain observations');
+ return {pan,zoom,interaction:{beforePan,afterPan,beforeZoom,zoomed,afterZoom}};
+}
+try{
+ await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
+ await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});await page.locator('#start-free').click();
+ await page.locator('[data-city="ROMA"]').waitFor();await page.waitForTimeout(8000);
+ const renderer=await page.evaluate(()=>{const canvas=document.querySelector('.maplibregl-canvas'),gl=canvas?.getContext('webgl2')||canvas?.getContext('webgl');const ext=gl?.getExtension('WEBGL_debug_renderer_info');return ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):'unavailable'});
+ await page.screenshot({path:'map-benchmark-1920x1080.png'});
+ const idle=summarize(await sample(6000));
+ const fullRelief=await exercise();
+ await page.locator('#reset').click();await page.waitForTimeout(2500);await page.locator('#relief-toggle').click();
+ assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'false');
+ await page.reload();await page.waitForFunction(()=>document.querySelector('#relief-toggle')?.getAttribute('aria-pressed')==='false');await page.waitForTimeout(4000);
+ const reducedRelief=await exercise();
+ await page.locator('#relief-toggle').click();assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'true');
+ assert.ok(idle.frames>0,'idle sample must contain observations');
  assert.deepEqual(errors,[],'uncaught browser errors');
- const report={note:'Browser requestAnimationFrame callback cadence, not presented-frame timing; results depend on runner load, software renderer, cache and network.',viewport:{width:1920,height:1080,deviceScaleFactor:1},environment:{platform:os.platform(),architecture:os.arch(),cpu:os.cpus()[0]?.model,browser:browser.version(),renderer},tileRequests:tiles,scenarios:{idle,pan,zoom},interaction:{beforePan,afterPan,beforeZoom,zoomed,afterZoom},pageErrors:errors};
+ const report={note:'Browser requestAnimationFrame callback cadence, not presented-frame timing; results depend on runner load, software renderer, cache and network.',viewport:{width:1920,height:1080,deviceScaleFactor:1},environment:{platform:os.platform(),architecture:os.arch(),cpu:os.cpus()[0]?.model,browser:browser.version(),renderer},tileRequests:tiles,scenarios:{idle,fullRelief,reducedRelief},pageErrors:errors};
  await writeFile('map-benchmark.json',JSON.stringify(report,null,2)+'\n');
  console.log(JSON.stringify(report,null,2));
 }finally{await browser.close()}
