@@ -28,6 +28,11 @@ const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observ
 const knownReport=x=>x.value!=='unknown'&&x.value!=null||x.kind==='leaders'||x.kind==='claimants';
 const reportValue=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?[...new Set(x.leaders||[])].sort():x.value);
 const sameSubject=(a,b)=>a.kind===b.kind&&a.character===b.character&&(a.kind!=='age'||((a.observationYear??a.year)===(b.observationYear??b.year)&&(a.observationMonth??a.month)===(b.observationMonth??b.month)));
+function refreshKnowledge(s,k){
+ const reports=k.reports||[];for(const item of reports){if(!knownReport(item)||reportAge(s,item)>24)continue;const group=reports.filter(x=>knownReport(x)&&sameSubject(item,x)&&reportAge(s,x)<=24),disputed=group.some(x=>reportValue(x)!==reportValue(item))||group.some(x=>x.baseConfidence==='disputed'),families=new Set(group.map(sourceFamily).filter(f=>f!=='unknown')).size,base=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';item.confidence=disputed?'disputed':families>=3?'confirmed':families>=2?'credible':base;item.verified=!disputed&&families>=3}
+}
+// Expired reports remain historical records; only fresh reports are recalculated.
+export function refreshReportConfidence(s){initializeWorld(s);for(const targets of Object.values(s.knowledge||{}))for(const k of Object.values(targets))refreshKnowledge(s,k);return s}
 
 // Explain confidence only from the observer's own recent evidence. A forwarded
 // report keeps the original family; an unknown is neither support nor rebuttal.
@@ -48,7 +53,7 @@ export function addReport(s,actor,target,report){
  k.reports.unshift(r);k.reports=k.reports.slice(0,30);
  // Recalculate after trimming so a source that is no longer retained cannot
  // silently keep a current report marked as independently corroborated.
- for(const item of k.reports){if(!knownReport(item)||reportAge(s,item)>24)continue;const group=k.reports.filter(x=>knownReport(x)&&sameSubject(item,x)&&reportAge(s,x)<=24),disputed=group.some(x=>reportValue(x)!==reportValue(item))||group.some(x=>x.baseConfidence==='disputed'),families=new Set(group.map(sourceFamily).filter(f=>f!=='unknown')).size,base=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';item.confidence=disputed?'disputed':families>=3?'confirmed':families>=2?'credible':base;item.verified=!disputed&&families>=3}
+ refreshKnowledge(s,k);
  if(r.kind==='leaders'&&r.leaders&&reportAge(s,r)<=24&&!newerLeader)k.reportedLeaders=[...r.leaders];return r
 }
 export function publicLeaderClaim(s,target){initializeWorld(s);const ids=s.world.leadership[target]||[];return [ids.length?names(ids,0):'Authority uncertain',ids.length?names(ids,1):'执政者不明']}
