@@ -66,6 +66,7 @@ try{
  assert.match(await page.locator('#command-detail').innerText(),/战区距离估计/);
  await page.locator('[data-mission="audience"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/有限的公开观察/);await page.locator('#mission-feedback button').last().click();
  assert.equal(await page.locator('#claimant-support').isDisabled(),true,'an unreported claimant must not be exposed');
+ assert.match(await page.locator('#command-detail').innerText(),/在领导空缺时确立权力/);
  await page.locator('#inquiry-subject').selectOption('successor');await page.locator('#send-inquiry').click();
  assert.match(await page.locator('#command-detail').innerText(),/等待回信/);
  await page.locator('#mission-subject').selectOption('succession');await page.locator('[data-mission="spy"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/继任安排/);await page.locator('#mission-feedback button').last().click();
