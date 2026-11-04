@@ -50,7 +50,7 @@ export function supportClaimant(s,actor,target,claimant){
  if(s.operations.some(o=>o.actor===actor&&o.target===target&&o.type==='support'&&o.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<10)return {ok:false,reason:'treasury'};
  s.factions[actor].treasury-=10;s.operations.unshift({actor,target,type:'support',claimant,remaining:4,status:'pending',sentYear:s.year,sentMonth:s.month});notify(s,'An offer of support was sent; a response may take four months.','已寄出支持提议；回信可能需要四个月。');return {ok:true};
 }
-export function queueMission(s,actor,target,type,subject='health',partnerId=null){
+export function previewMission(s,actor,target,type,subject='health',partnerId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||actor===target||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
  if(!['health','leaders','strength','claimants'].includes(subject))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
@@ -59,7 +59,11 @@ export function queueMission(s,actor,target,type,subject='health',partnerId=null
  if(type==='spy'&&!availableAgents(s,actor))return {ok:false,reason:'agents'};
  if(s.factions[actor].treasury<cfg.cost)return {ok:false,reason:'treasury'};
  if(s.operations.some(x=>x.actor===actor&&x.target===target&&x.status==='pending'&&x.type===type))return {ok:false,reason:'pending'};
- const duration=missionDuration(s,actor,target,type);s.factions[actor].treasury-=cfg.cost;s.operations.unshift({actor,target,type,subject,partner:type==='exchange'?(partnerId||partners[0]):undefined,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month});
+ return {ok:true,cost:cfg.cost,duration:missionDuration(s,actor,target,type),partner:type==='exchange'?(partnerId||partners[0]):undefined};
+}
+export function queueMission(s,actor,target,type,subject='health',partnerId=null){
+ const plan=previewMission(s,actor,target,type,subject,partnerId);if(!plan.ok)return plan;
+ const {duration,partner,cost}=plan;s.factions[actor].treasury-=cost;s.operations.unshift({actor,target,type,subject,partner,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month});
  if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months.`,`已派出${({spy:'间谍',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月。`);return {ok:true,duration};
 }
 export function advanceOperations(s){initializeWorld(s);for(const op of s.operations){if(op.status!=='pending'||--op.remaining>0)continue;const q=rand(s),id=(s.world.leadership[op.target]||[])[0],person=s.world.characters[id];
