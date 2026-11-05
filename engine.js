@@ -1,11 +1,11 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=69';
-import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=19';
-import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=9';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=16';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=67';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=7';
-import {advanceConspiracies} from './conspiracies.js?v=8';
-import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=2';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=70';
+import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=20';
+import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=10';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=17';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=68';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=8';
+import {advanceConspiracies} from './conspiracies.js?v=9';
+import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=3';
 export {queueMission};
 export {personalDiplomaticCredit};
 
@@ -44,9 +44,23 @@ function migrateRegionalPowers(s){
  initializeWorld(s);const added=[];for(const id of ['galatia','bosporus']){if(s.factions[id])continue;added.push(id);s.factions[id]={treasury:60,food:60,manpower:9000,stability:65,legitimacy:60,tax:'normal',research:0};if(!s.regions.some(r=>r.id===id))s.regions.push(clone(REGIONS.find(r=>r.id===id)));if(!s.armies.some(a=>a.id===id+'army'))s.armies.push({...clone(INITIAL_ARMIES.find(a=>a.id===id+'army')),move:null,siege:null});const leader=OPENING_LEADERS[id][0],person=s.world.characters[leader];s.world.leadership[id]=person?.alive?[leader]:[];if(person&&person.faction==null){person.faction=id;if(person.location==null&&!person.missing)person.location=id}}
  if(added.length){for(const actor of Object.keys(s.factions)){s.knowledge[actor]||={};for(const target of Object.keys(s.factions)){if(!s.knowledge[actor][target])s.knowledge[actor][target]={reportedLeaders:clone(OPENING_LEADERS[target]||[]),reports:[],sightings:{}}}}if(added.includes('galatia')&&s.relations['galatia:senate']===undefined)s.relations['galatia:senate']=25}
 }
+// Earlier saves represented each realm as one theater. Split the existing
+// economic potential and preserve its controller and reported control; do not
+// invent a boundary or change the owner of a campaign already in progress.
+function migrateEasternTheaters(s){
+ for(const [parentId,newId] of [['egypt','egyptUpper'],['parthia','media']]){
+  if(s.regions.some(r=>r.id===newId))continue;
+  const parent=region(s,parentId),template=REGIONS.find(r=>r.id===newId);if(!parent||!template)continue;
+  const next=clone(template);next.owner=parent.owner;next.loyalty=parent.loyalty;
+  for(const key of ['food','tax']){const total=Number.isFinite(parent[key])?parent[key]:0;next[key]=Math.max(0,Math.floor(total/3));parent[key]=total-next[key]}
+  const parentTemplate=REGIONS.find(r=>r.id===parentId);if(parentTemplate)parent.name=clone(parentTemplate.name);
+  s.regions.push(next);
+  for(const reports of Object.values(s.controlKnowledge||{}))if(!reports[newId]&&reports[parentId])reports[newId]={...reports[parentId]};
+ }
+}
 export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
- if(s.version!==3)throw new Error('Unsupported save');migrateRegionalPowers(s);initializeControlKnowledge(s);return refreshReportConfidence(initializeGovernments(s));
+ if(s.version!==3)throw new Error('Unsupported save');migrateRegionalPowers(s);migrateEasternTheaters(s);initializeControlKnowledge(s);return refreshReportConfidence(initializeGovernments(s));
 }
 
 export function previewMarch(s,armyId,destination){
