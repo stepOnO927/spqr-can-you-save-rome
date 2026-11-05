@@ -2,7 +2,7 @@ import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRa
 import {FACTIONS,ROUTES} from './data.js?v=11';
 import {deriveGovernment} from './governance.js?v=21';
 import {potentialConspirators} from './conspiracies.js?v=10';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=2';
 import {reportedControl} from './control-intelligence.js?v=4';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
