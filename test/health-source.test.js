@@ -19,3 +19,8 @@ test('travelers may observe a wound locally, hear misleading propaganda, or have
  assert.equal(investigate('dying',.4,'travelers',s=>{s.world.claimants.egypt=['ptolemy']}).knowledge.caesar.egypt.reports[0].value,'healthy');
  assert.equal(investigate('healthy',.5,'travelers',s=>{s.world.claimants.egypt=['ptolemy']}).knowledge.caesar.egypt.reports[0].value,'ill');
 });
+
+test('foreign health cannot be read remotely when the subject has left, is traveling, marching or missing',()=>{
+ const cases=[s=>{s.world.characters.cleopatra.location='parthia'},s=>{s.world.characters.cleopatra.travel={destination:'parthia',legs:[],remaining:2}},s=>{s.armies.push({id:'royal-moving',owner:'egypt',region:'egypt',men:1000,characterId:'cleopatra',move:{to:'egyptUpper',remaining:2}})},s=>{s.world.characters.cleopatra.missing={origin:'egypt',remaining:2}}];
+ for(const change of cases)for(const type of ['spy','travelers'])for(const health of ['healthy','dying'])for(const q of [.4,.9]){const s=investigate(health,q,type,change),report=s.knowledge.caesar.egypt.reports[0];assert.equal(report.value,'unknown',type+' '+health);assert.equal(report.verified,false);assert.equal(s.knowledge.senate.egypt.reports.length,0)}
+});

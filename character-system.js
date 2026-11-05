@@ -155,6 +155,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  // health of someone who has left it, or whose whereabouts are unknown.
  // Return the same uninformative report instead of disclosing the hidden reason.
  const healthPerson=healthCandidate?.faction===op.target&&!healthCandidate.missing?healthCandidate:null;
+ const locallyObservable=!!(healthPerson?.alive&&!healthPerson.travel&&s.regions.some(r=>r.id===healthPerson.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===healthId&&a.move));
  op.status='complete';const source=op.type,low=op.type==='travelers',hostile=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target)),contested=(s.world.claimants[op.target]||[]).length>0,investigated=op.subject==='health'?healthPerson:person,concealment=hostile||contested||investigated?.health==='seriously_ill'||investigated?.health==='dying',falsehood=q<.45&&concealment;let report;
  if(op.subject==='clashes'){
   // No report is not evidence of peace. Rumors may be false in a contested court.
@@ -194,13 +195,14 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   if(healthPerson&&low){
    // Travelers hear rumors or glimpse a person in a court-controlled theater;
    // they do not get a precise diagnosis or private health state for free.
-   const visible=!healthPerson.travel&&s.regions.some(r=>r.id===healthPerson.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===healthId&&a.move);
-   if(falsehood)value='healthy';
-   else if(contested&&q<.55)value='ill'; // politically motivated rumor
+   const visible=locallyObservable;
+   if((hostile||contested)&&q<.45)value='healthy'; // propaganda does not depend on hidden health
+   else if(contested&&q<.55)value='ill';
+   else if(visible&&falsehood)value='healthy'; // politically motivated rumor
    else if(visible&&q>=.65&&['wounded','frail'].includes(healthPerson.health))value=healthPerson.health;
-   else if(q>=.85&&['ill','seriously_ill','dying'].includes(healthPerson.health))value='ill';
-   else if(q>=.9&&healthPerson.health==='deceased')value='deceased';
-  }else if(healthPerson)value=falsehood?'healthy':healthPerson.health;
+   else if(visible&&q>=.85&&['ill','seriously_ill','dying'].includes(healthPerson.health))value='ill';
+   
+  }else if(locallyObservable)value=falsehood?'healthy':healthPerson.health;
   report={kind:'health',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
  }
  else if(op.subject==='claimants'){const candidates=falsehood?[]:[...(s.world.claimants[op.target]||[])];report={kind:'claimants',leaders:candidates,exhaustive:op.type==='spy'&&q>=.7,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
