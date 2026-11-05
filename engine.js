@@ -1,10 +1,10 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=60';
-import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=16';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=61';
+import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=17';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=9';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=15';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=58';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
-import {advanceConspiracies} from './conspiracies.js?v=7';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=16';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=59';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=7';
+import {advanceConspiracies} from './conspiracies.js?v=8';
 export {queueMission};
 export {personalDiplomaticCredit};
 

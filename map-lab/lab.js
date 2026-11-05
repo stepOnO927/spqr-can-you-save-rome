@@ -1,23 +1,23 @@
-import {renderLocalGovernor} from './local-governor-ui.js?v=2';
-import {renderSecurity} from './security-ui.js?v=25';
-import {renderOffices} from './offices-ui.js?v=6';
-import {officeEffects} from '../office-system.js?v=6';
+import {renderLocalGovernor} from './local-governor-ui.js?v=3';
+import {renderSecurity} from './security-ui.js?v=26';
+import {renderOffices} from './offices-ui.js?v=7';
+import {officeEffects} from '../office-system.js?v=7';
 import {waitForMapIdle} from './capture-wait.js?v=1';
 import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=1';
-import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=29';
+import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=30';
 import historical from '../historical-territories.js';
 import republicanRoads from '../republican-roads.js?v=1';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=81';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=82';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
-import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=15';
-import {createCharacterUI} from './character-ui.js?v=81';
-import {reportedArmies} from '../character-system.js?v=58';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=16';
+import {createCharacterUI} from './character-ui.js?v=82';
+import {reportedArmies} from '../character-system.js?v=59';
 import {createTutorial} from './tutorial.js?v=6';
 import {friendlyPersonnelInTheater} from './personnel.js?v=2';
 import {leadershipIntelligence} from './intelligence-summary.js?v=2';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=9';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=10';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGame();
@@ -190,7 +190,7 @@ const helpEntries=[
  {kind:'game',en:'Checking intelligence reports',zh:'核查情报报告',control:'#factions',enBody:'In a foreign faction’s Intelligence tab, open Why this confidence to compare supporting and conflicting source families. Use Check this report to select its subject and, for health, the reported person. Then choose and confirm a mission. Selecting a report costs nothing. Repeating or forwarding the same source is not independent corroboration; another source can also be wrong. A list can be incomplete; a source may claim completeness without proving it. Different named rulers or claimants are compatible unless a claimed complete list excludes someone. Reports from different observation months may describe a change and do not confirm or contradict a claim at the same time. Coordinate missions to compare observations from the same month. Partially overlapping age estimates are compatible but do not verify an exact range. Confidence is recalculated as evidence expires each month.',zhBody:'在外国势力的情报页面展开“查看判断依据”，可比较支持与冲突的来源。点击“核查此报告”，可选中对应调查内容；健康报告也会选中已报告的人物。然后选择并确认行动。选择报告不收费。重复或转交同一来源不构成独立核实，其他来源也可能有误。人名名单可能不完整；来源声称完整也不等于事实。不同人名可能并存，除非声称完整的名单排除了对方。不同观察月份的报告可能反映局势变化，不算同时核实或冲突；可协调行动，使不同来源在同一月观察。部分重叠的年龄估计彼此相容，但不能证明完整区间完全一致。每月会依据尚未过期的证据重新计算可信度。'},
  {kind:'game',en:'Reported commanders',zh:'指挥官目击报告',control:'#factions',enBody:'Frontier observations may identify a foreign army’s commander. The dated report can be opened from that army and used to select a person for health inquiries or an audience. It can become outdated when the army moves or command changes; an unseen change is not automatically revealed.',zhBody:'前线目击可能识别外国军队的指挥官。可从军队查看带日期的报告，并以此人物作为健康调查或会面对象。军队移动或更换指挥官后，旧报告可能过时；未被目击的变化不会自动公开。'},
  {kind:'game',en:'What rival commanders know',zh:'对手掌握的情报',control:'#factions',enBody:'Computer factions estimate foreign strength from their own reports and recent sightings, using a rough assumption when evidence is missing. They may make mistaken decisions. A numerical report gradually loses influence after two years; old observations are not fresh confirmation.',zhBody:'电脑势力依据自己的报告和近期目击估计外国兵力；缺少证据时只能粗略推测，因此也可能判断错误。兵力报告在两年后逐渐失去影响，旧目击不等于新证实。'},
- {kind:'game',en:'Supporting a reported claimant',zh:'支持已报告的竞争者',control:'#factions',enBody:'In Egypt’s or Parthia’s Letters & Intelligence panel, investigate claimants before making an offer. It costs 10 treasury and takes 4 months; it may be accepted, refused or unanswered. Acceptance can increase the claimant’s chance of taking power and reduces court relations by 10. Reports can be outdated or false.',zhBody:'在埃及或帕提亚的“书信与情报”中先调查竞争者，再寄出支持提议。费用10国库、需要4个月，可能被接受、拒绝或没有回信。接受可能增加竞争者夺权机会，并使宫廷关系降低10；报告也可能过时或错误。'},
+ {kind:'game',en:'Supporting a reported claimant',zh:'支持已报告的竞争者',control:'#factions',enBody:'In Egypt’s or Parthia’s Letters & Intelligence panel, investigate claimants before making an offer. It costs 10 treasury and takes 4 months; it may be accepted, refused or unanswered. Acceptance can increase the claimant’s chance of taking power and reduces court relations by 10. Public recognition costs 5 treasury and reduces relations by up to 5; it may improve a later support offer, but does not establish actual rule. Reports can be outdated or false.',zhBody:'在埃及或帕提亚的“书信与情报”中先调查竞争者，再寄出支持提议。费用10国库、需要4个月，可能被接受、拒绝或没有回信。接受可能增加竞争者夺权机会，并使宫廷关系降低10；公开承认需5国库，宫廷关系最多降低5，可能帮助之后的支持提议，但不能证明其实际执政。报告也可能过时或错误。'},
  {kind:'game',en:'Research and construction',zh:'研究与建设',enBody:'Research and construction are not implemented in this campaign slice.',zhBody:'当前战役片段尚未实现研究与建设。'},
  {kind:'history',en:'Who was Julius Caesar?',zh:'尤利乌斯·凯撒是谁？',enBody:'Julius Caesar was a Roman general and politician. In 49 BCE his crossing of the Rubicon preceded the civil war against Pompey and the Senate.',zhBody:'尤利乌斯·凯撒是罗马将领和政治人物。公元前49年，他越过卢比孔河，随后与庞培和元老院爆发内战。'},
  {kind:'history',en:'Who was Pompey?',zh:'庞培是谁？',enBody:'Gnaeus Pompeius Magnus was a Roman commander and politician who opposed Caesar during the civil war.',zhBody:'格奈乌斯·庞培是罗马将领和政治人物，在内战中与凯撒对立。'}

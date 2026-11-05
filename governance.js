@@ -1,5 +1,5 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=7';
-import {initializeWorld,successorFor,CHARACTER_CATALOG} from './characters.js?v=15';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=8';
+import {initializeWorld,successorFor,CHARACTER_CATALOG} from './characters.js?v=16';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
