@@ -176,7 +176,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   op.meeting='envoy';const k=[op.actor,op.target].sort().join(':');s.relations[k]=Math.min(100,(s.relations[k]||0)+3);
   // An audience may be with a representative. Only record a personal observation
   // when someone actually in office and named in the report could attend.
-  const met=(report.leaders||[]).find(candidate=>(s.world.leadership[op.target]||[]).includes(candidate)&&s.world.characters[candidate]?.alive&&!s.world.characters[candidate].travel&&!s.world.characters[candidate].missing&&!['seriously_ill','dying','deceased'].includes(s.world.characters[candidate].health));
+  const met=(report.leaders||[]).find(candidate=>(s.world.leadership[op.target]||[]).includes(candidate)&&s.world.characters[candidate]?.alive&&!s.world.characters[candidate].travel&&!s.world.characters[candidate].missing&&!s.armies.some(a=>a.characterId===candidate&&a.move)&&!['seriously_ill','dying','deceased'].includes(s.world.characters[candidate].health));
   if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=ageRange(met,s.year);
    addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,source:'audience',confidence:'unverified',reliability:'low'});
    if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,source:'audience',confidence:'unverified',reliability:'low'});

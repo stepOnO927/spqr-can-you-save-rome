@@ -87,3 +87,11 @@ test('missing participants cannot travel or complete a personal audience, even w
   assert.equal(s.knowledge.senate.egypt.reports.length,0);
  }
 });
+
+test('a commander on the march cannot send or complete a personal audience from the origin theater',()=>{
+ const initial=newGame('senate'),army=initial.armies.find(a=>a.owner==='senate');army.characterId='cicero';army.move={to:'italiaS',remaining:2};initial.world.characters.cicero.location=army.region;
+ assert.equal(requestPersonalMeeting(initial,'cicero','cleopatra','egypt').reason,'unavailable');assert.equal(initial.meetings.length,0);
+ for(const person of ['cicero','cleopatra']){let s=newGame('senate');s.world.characters.cicero.location='egypt';s.world.characters.cleopatra.location='egypt';s.world.intelSeed=1000;assert.equal(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok,true);
+ const unit=s.armies.find(a=>a.owner===(person==='cicero'?'senate':'egypt'));unit.characterId=person;unit.region='egypt';unit.move={to:'syria',remaining:2};s=upgradeSave(JSON.parse(JSON.stringify(s)));advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'no_contact');assert.deepEqual(s.world.personalRelations,{});assert.equal(s.knowledge.senate.egypt.reports.length,0);
+ }
+});
