@@ -5,6 +5,7 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=67';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=7';
 import {advanceConspiracies} from './conspiracies.js?v=8';
+import {initializeControlKnowledge,observeControl,advanceControlScouts} from './control-intelligence.js?v=1';
 export {queueMission};
 export {personalDiplomaticCredit};
 
@@ -35,7 +36,7 @@ export function newGame(player='caesar'){
   // A new campaign starts with frontier observations, not every foreign army's
   // exact opening location. Existing saves keep their accumulated sightings.
   for(const targets of Object.values(s.knowledge))for(const knowledge of Object.values(targets))knowledge.sightings={};
-  linkCommanders(s);observeArmies(s);return initializeGovernments(s);
+  linkCommanders(s);observeArmies(s);observeControl(s);return initializeGovernments(s);
 }
 
 // Add newly modeled courts to older campaigns without resetting existing people or territory.
@@ -45,7 +46,7 @@ function migrateRegionalPowers(s){
 }
 export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
- if(s.version!==3)throw new Error('Unsupported save');migrateRegionalPowers(s);return refreshReportConfidence(initializeGovernments(s));
+ if(s.version!==3)throw new Error('Unsupported save');migrateRegionalPowers(s);initializeControlKnowledge(s);return refreshReportConfidence(initializeGovernments(s));
 }
 
 export function previewMarch(s,armyId,destination){
@@ -270,7 +271,7 @@ function rebellion(s){
   candidate.owner='rebels';candidate.loyalty=45;
   s.armies.push({id:`rebel${s.nextArmy++}`,name:['Provincial uprising','行省起义军'],owner:'rebels',region:candidate.id,men:2400,morale:59,skill:1,experience:0,commander:['Local leaders','地方首领'],move:null,siege:null});
   if(!isWar(s,'rebels',previousOwner))s.wars.push(['rebels',previousOwner]);
-  log(s,`${candidate.name[0]} has risen in rebellion and formed an armed faction.`,`${candidate.name[1]}爆发叛乱，形成了武装派系。`);
+  if(previousOwner===s.player)log(s,`${candidate.name[0]} has risen in rebellion and formed an armed faction.`,`${candidate.name[1]}爆发叛乱，形成了武装派系。`);
 }
 
 function shortestStep(s,start,goal,owner){
@@ -342,7 +343,7 @@ export function tick(s){
   }
   rebellion(s);
   resolveInquiries(s);advanceOperations(s);advanceAgentRequests(s);advanceCharacters(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);advanceDisputes(s);advanceConspiracies(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);
-  observeArmies(s);
+  advanceControlScouts(s);observeArmies(s);observeControl(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
   if(!s.victory&&s.player==='caesar'&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
   return s;
