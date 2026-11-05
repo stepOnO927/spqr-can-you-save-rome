@@ -356,6 +356,17 @@ function aiTurn(s,owner){
   }
 }
 
+// A defeated rival must lose both its territories and its field forces. The
+// simulated outcome is not announced until a courier has had time to arrive.
+export function advanceRomanVictory(s){
+ if(!['caesar','senate'].includes(s.player)||s.victory)return;
+ const opponent=s.player==='caesar'?'senate':'caesar',survives=s.regions.some(r=>r.owner===opponent)||s.armies.some(a=>a.owner===opponent&&a.men>0),ownSurvives=s.regions.some(r=>r.owner===s.player)||s.armies.some(a=>a.owner===s.player&&a.men>0);
+ if(survives||!ownSurvives||!isWar(s,s.player,opponent)){delete s.world.romanVictoryNotice;return}
+ let notice=s.world.romanVictoryNotice;if(!notice||notice.opponent!==opponent){s.world.romanVictoryNotice={opponent,remaining:3};return}
+ if(--notice.remaining>0)return;delete s.world.romanVictoryNotice;s.victory=true;s.victor=s.player;
+ log(s,'A dispatch reports the opposing Roman command has collapsed. The campaign continues.','信使报告敌对罗马指挥方已瓦解；战役仍可继续。');
+}
+
 export function tick(s){
   initializeWorld(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
   s.month++;if(s.month>12){s.month=1;s.year++}
@@ -371,6 +382,6 @@ export function tick(s){
   resolveInquiries(s);advanceOperations(s);advanceAgentRequests(s);advanceCharacters(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advanceConspiracies(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);
   advanceControlScouts(s);observeArmies(s);observeControl(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
-  if(!s.victory&&s.player==='caesar'&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
+  advanceRomanVictory(s);
   return s;
 }
