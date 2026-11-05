@@ -13,7 +13,7 @@ import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=16';
-import {createCharacterUI} from './character-ui.js?v=90';
+import {createCharacterUI} from './character-ui.js?v=91';
 import {reportedArmies} from '../character-system.js?v=64';
 import {createTutorial} from './tutorial.js?v=6';
 import {friendlyPersonnelInTheater} from './personnel.js?v=2';
@@ -41,7 +41,7 @@ const terrainName=id=>lang==='zh'?({plain:'平原',hills:'丘陵',forest:'森林
 const marchReason=reason=>({adjacent:lang==='zh'?'目的地不相邻':'Destination is not adjacent',peace:lang==='zh'?'尚未与该势力交战':'Not at war with this faction',transport:lang==='zh'?'海运需要8国库':'Sea transport requires 8 treasury',unavailable:lang==='zh'?'军队正行军或围攻':'Army is marching or besieging'})[reason]||'';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function inspect(title,description){document.querySelector('#selection-title').textContent=title;document.querySelector('#selection-detail').textContent=description;document.querySelector('#lab-orders').replaceChildren();document.querySelector('#command-detail').replaceChildren()}
-const characterUI=createCharacterUI({getState:()=>state,getLanguage:()=>lang,inspect,onShowCharacter:id=>{activeInfo={type:"character",id};activeArmy=null;activeBattle=null;activeFaction=null;clearReach()},onGovernmentChanged:()=>{renderHud();showFaction(state.player)},onStateChanged:()=>renderHud()});
+const characterUI=createCharacterUI({getState:()=>state,getLanguage:()=>lang,inspect,onShowCharacter:id=>{activeInfo={type:"character",id};activeArmy=null;activeBattle=null;activeFaction=null;clearReach()},onFocusTheater:id=>{if(!namedPoints[id])return;map.flyTo({center:namedPoints[id],zoom:5.3});status.textContent=lang==='zh'?'地图显示的是报告中的战区，不代表人物当前所在地。':'Showing the reported theater, not the person’s current location.';status.style.display='block'},onGovernmentChanged:()=>{renderHud();showFaction(state.player)},onStateChanged:()=>renderHud()});
 function marker(element,coordinates,anchor='center',offset=[0,0]){return new maplibregl.Marker({element,anchor,offset}).setLngLat(coordinates).addTo(map)}
 for(const city of cities){const el=document.createElement('button');el.className=`city-marker ${city.kind}`;el.dataset.city=city.name;el.setAttribute('aria-label',`${t('inspect')} ${city.name}`);const icon=city.kind.includes('fort')?'<path d="M3 11V5h2v2h2V5h2v2h2V5h2v6H3zm3 0V9h4v2"/>':city.kind.includes('port')?'<circle cx="8" cy="4" r="1.4"/><path d="M8 5.5v7M4 9c0 4 8 4 8 0M3 9h2m6 0h2"/>':'<path d="M2 12h12M4 11V7l4-3 4 3v4M7 11V8h2v3"/>';el.innerHTML=`<span class="city-icon"><svg viewBox="0 0 16 16" aria-hidden="true">${icon}</svg></span><span class="name">${esc(city.name)}</span>`;el.addEventListener('click',e=>{e.stopPropagation();activeFaction=null;activeArmy=null;activeBattle=null;previewDestination='';clearReach();renderArmies();showCity(city);emit('city',city.name)});marker(el,city.p,'left')}
 let leaderMarkers=[];let factionSection='diplomacy';
