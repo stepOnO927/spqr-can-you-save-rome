@@ -174,7 +174,20 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   const value=hostile?'guarded':relation>=30?'receptive':relation<0?'guarded':'noncommittal';
   report={kind:'stance',value,source,confidence:'unverified',reliability:'moderate'};
  }
- else if(op.subject==='health'){const value=healthPerson?(falsehood?'healthy':healthPerson.health):'unknown';report={kind:'health',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
+ else if(op.subject==='health'){
+  let value='unknown';
+  if(healthPerson&&low){
+   // Travelers hear rumors or glimpse a person in a court-controlled theater;
+   // they do not get a precise diagnosis or private health state for free.
+   const visible=!healthPerson.travel&&s.regions.some(r=>r.id===healthPerson.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===healthId&&a.move);
+   if(falsehood)value='healthy';
+   else if(contested&&q<.55)value='ill'; // politically motivated rumor
+   else if(visible&&q>=.65&&['wounded','frail'].includes(healthPerson.health))value=healthPerson.health;
+   else if(q>=.85&&['ill','seriously_ill','dying'].includes(healthPerson.health))value='ill';
+   else if(q>=.9&&healthPerson.health==='deceased')value='deceased';
+  }else if(healthPerson)value=falsehood?'healthy':healthPerson.health;
+  report={kind:'health',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
+ }
  else if(op.subject==='claimants'){const candidates=falsehood?[]:[...(s.world.claimants[op.target]||[])];report={kind:'claimants',leaders:candidates,exhaustive:op.type==='spy'&&q>=.7,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='strength'){
   // A rounded estimate is not exact reconnaissance: each source has a different
