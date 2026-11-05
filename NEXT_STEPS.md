@@ -16,7 +16,7 @@ This is a development tracker, not a completion claim. The player chooses a Roma
 ## Earlier phases still requiring work
 
 - Continue verifying the atlas-to-campaign transition and the full command flow in both languages. The atlas currently remains a separate view, with the original campaign available.
-- Both Roman commands have interactive tutorials. An independent beginner playtest, broader accessibility and small-screen checks remain outstanding.
+- Both Roman commands have interactive tutorials and can receive a delayed campaign victory report when the opposing command loses its theaters and surviving field forces. An independent beginner playtest, broader accessibility and small-screen checks remain outstanding.
 - Some systems are deliberately simplified: theater supply capacity is descriptive, battles resolve immediately rather than over several turns, and terrain/control boundaries are approximations where sources do not support a precise border. Maintain clear explanations and improve supported mechanics where appropriate.
 - Continue historical boundary and geographic research only where defensible sources and licenses are available. `MAP_SOURCES.md` and `map-lab/SOURCES.md` document current source limitations.
 - The master directive contains substantially wider campaigns and systems. These are not complete; prioritize the current 49 BCE Roman campaign and Phase IX before expanding the scope.
