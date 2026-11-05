@@ -27,6 +27,25 @@ test('a minority regency is known to a foreign faction only through a dated inve
  const mission=queueMission(s,'caesar','egypt','spy','authority');s.world.intelSeed=1000;for(let i=0;i<mission.duration;i++)advanceOperations(s);const report=s.knowledge.caesar.egypt.reports[0];assert.equal(report.value.kind,'regency');assert.deepEqual(report.value.actors,[]);assert.equal(report.verified,false);assert.equal(s.knowledge.senate.egypt.reports.length,0);
  s.year=-46;assert.equal(deriveGovernment(s,'egypt').kind,'normal');assert.equal(report.value.kind,'regency');
 });
+test('acting deputies must be in controlled territory and not marching, without revealing changes abroad',()=>{
+ let s=newGame('caesar');s.world.characters.caesar.health='seriously_ill';
+ assert.deepEqual(deriveGovernment(s,'caesar').acting,['antony']);
+ s.world.characters.antony.location='roma';
+ assert.deepEqual(deriveGovernment(s,'caesar').acting,['lepidus']);
+ s.world.characters.lepidus.location='roma';
+ assert.deepEqual(deriveGovernment(s,'caesar').acting,[]);
+ assert.equal(appointDeputy(s,'antony').reason,'unavailable');
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ s.world.characters.antony.location='cisalpine';
+ s.armies.push({id:'antony-test',owner:'caesar',characterId:'antony',region:'cisalpine',men:1000,move:{to:'italiaN',remaining:1}});
+ assert.deepEqual(deriveGovernment(s,'caesar').acting,[]);
+ s.armies.at(-1).move=null;
+ s.armies.at(-1).region='roma';
+ assert.deepEqual(deriveGovernment(s,'caesar').acting,[]);
+ s.armies.at(-1).region='cisalpine';s.world.characters.antony.location='roma';
+ assert.deepEqual(deriveGovernment(s,'caesar').acting,['antony']);
+ assert.equal(s.knowledge.senate.caesar.reports.length,0);
+});
 test('separate Mauretanian rulers do not automatically govern each other’s kingdom',()=>{
  const s=newGame();s.world.characters.bocchus.health='seriously_ill';assert.equal(deriveGovernment(s,'mauretania').kind,'constituent_unavailable');assert.deepEqual(s.world.leadership.mauretania,['bocchus','bogud']);
 });
