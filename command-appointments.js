@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=16';
-import {officeOf} from './office-system.js?v=7';
+import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=17';
+import {officeOf} from './office-system.js?v=8';
 
 // Theater-level appointments are simulated, not claims about historical commands.
 export function availableCommanders(s,armyId){
