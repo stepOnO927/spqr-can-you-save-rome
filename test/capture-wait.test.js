@@ -12,4 +12,3 @@ test('capture proceeds when the map becomes idle',async()=>{
 test('capture does not hang when map data never settles',async()=>{
  const map=fakeMap();assert.equal(await waitForMapIdle(map,10),false);assert.equal(map.hasListener(),false);
 });
-

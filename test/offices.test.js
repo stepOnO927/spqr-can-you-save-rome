@@ -30,4 +30,3 @@ test('AI fills an available assignment with its own personnel without publishing
  const s=newGame('caesar');s.month=7;const before=s.factions.senate.treasury;advanceOffices(s);
  assert.ok(s.world.offices.senate.finance);assert.equal(s.factions.senate.treasury,before-5);assert.equal(s.world.characters[s.world.offices.senate.finance].faction,'senate');assert.ok(!s.log.some(x=>x.en.includes('administrative assignment')));
 });
-

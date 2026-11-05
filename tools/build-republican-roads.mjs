@@ -15,4 +15,3 @@ const features=data.features.filter(f=>selected.has(f.properties.OBJECTID)).map(
 }).sort((a,b)=>a.properties.id-b.properties.id);
 if(features.length!==selected.size)throw Error('Missing expected road features');
 await writeFile(output,`// Derived from AWMC road data, ODbL 1.0; see map-lab/SOURCES.md.\nexport default ${JSON.stringify({type:'FeatureCollection',features})};\n`);
-

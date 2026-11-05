@@ -8,4 +8,3 @@ export function waitForMapIdle(map,timeoutMs=8000){
   map.once('idle',onIdle);map.triggerRepaint();
  });
 }
-

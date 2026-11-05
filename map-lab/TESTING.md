@@ -53,4 +53,3 @@ Browser-tested starting the Senate/Pompeian command at standard difficulty, its 
 ## Atlas taxation
 
 Browser-tested selecting a tax rate in the resources panel, advancing a month, and observing the actual treasury, food and selected-tax state. Tax and loyalty changes use the existing shared campaign engine.
-

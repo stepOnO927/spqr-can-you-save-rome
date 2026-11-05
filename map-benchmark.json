@@ -1,0 +1,117 @@
+{
+  "note": "Browser requestAnimationFrame callback cadence, not presented-frame timing; results depend on runner load, software renderer, cache and network.",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "deviceScaleFactor": 1
+  },
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "cpu": "AMD Ryzen AI 7 H 350 w/ Radeon 860M ",
+    "browser": "156.0.8078.4",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "tileRequests": {
+    "ok": 389,
+    "httpError": 0,
+    "failed": 0,
+    "cancelled": 34
+  },
+  "scenarios": {
+    "idle": {
+      "elapsedMs": 6010,
+      "frames": 361,
+      "callbackFps": 60.06,
+      "p50Ms": 16.69999999999891,
+      "p95Ms": 16.700000000000728,
+      "p99Ms": 16.80000000000109,
+      "over50ms": 0
+    },
+    "fullRelief": {
+      "pan": {
+        "elapsedMs": 6070,
+        "frames": 61,
+        "callbackFps": 10.05,
+        "p50Ms": 33.400000000001455,
+        "p95Ms": 250,
+        "p99Ms": 366.6000000000022,
+        "over50ms": 28
+      },
+      "zoom": {
+        "elapsedMs": 6144,
+        "frames": 42,
+        "callbackFps": 6.84,
+        "p50Ms": 166.59999999999854,
+        "p95Ms": 350,
+        "p99Ms": 583.4000000000015,
+        "over50ms": 27
+      },
+      "interaction": {
+        "beforePan": {
+          "x": 965.9931640625,
+          "y": 639.9811401367188
+        },
+        "afterPan": {
+          "x": 1101,
+          "y": 684.5
+        },
+        "beforeZoom": {
+          "x": 1101,
+          "y": 684.5
+        },
+        "zoomed": {
+          "x": 1056,
+          "y": 840.5
+        },
+        "afterZoom": {
+          "x": 1073.0072021484375,
+          "y": 782.3544921875
+        }
+      }
+    },
+    "reducedRelief": {
+      "pan": {
+        "elapsedMs": 6092,
+        "frames": 84,
+        "callbackFps": 13.79,
+        "p50Ms": 66.70000000000073,
+        "p95Ms": 183.29999999999927,
+        "p99Ms": 200.10000000000036,
+        "over50ms": 48
+      },
+      "zoom": {
+        "elapsedMs": 6177,
+        "frames": 67,
+        "callbackFps": 10.85,
+        "p50Ms": 100,
+        "p95Ms": 183.29999999999927,
+        "p99Ms": 249.90000000000146,
+        "over50ms": 45
+      },
+      "interaction": {
+        "beforePan": {
+          "x": 965.9931640625,
+          "y": 639.9811401367188
+        },
+        "afterPan": {
+          "x": 1151,
+          "y": 701.5
+        },
+        "beforeZoom": {
+          "x": 1151,
+          "y": 701.5
+        },
+        "zoomed": {
+          "x": 1128,
+          "y": 865.5
+        },
+        "afterZoom": {
+          "x": 1128,
+          "y": 865.5
+        }
+      }
+    }
+  },
+  "pageErrors": []
+}

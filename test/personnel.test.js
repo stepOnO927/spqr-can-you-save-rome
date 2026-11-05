@@ -16,7 +16,3 @@ test('city personnel projection contains only living friendly people stationary 
  assert.ok(!result.includes('cicero'));assert.ok(!result.includes('pompey'));assert.ok(!result.includes('cato'));
  assert.ok(!friendlyPersonnelInTheater(s,'egypt').includes('cleopatra'));
 });
-
-test('a missing person with a stale saved theater is not shown as present',()=>{
- const s=newGame('senate');s.world.characters.cicero.location='roma';s.world.characters.cicero.missing={origin:'roma',remaining:2};assert.equal(friendlyPersonnelInTheater(s,'roma').includes('cicero'),false);
-});

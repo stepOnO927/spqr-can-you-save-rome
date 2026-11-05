@@ -1,4 +1,4 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=18';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=15';
 
 // These are simulated administrative assignments, not historical magistracies.
 export const OFFICE_TYPES=['finance','supply','administration'];
@@ -28,8 +28,8 @@ export function dismissOffice(s,office){
 }
 // A theater assignment is a game abstraction and does not assert a historical governorship.
 export function localGovernor(s,theater){
- initializeOffices(s);const post=s.world.localGovernors[theater],r=s.regions.find(x=>x.id===theater),c=s.world.characters[post?.person];
- return post&&r?.owner===post.faction&&c?.location===theater&&canHoldOffice(s,post.faction,post.person)?post.person:null;
+ initializeOffices(s);const r=s.regions.find(x=>x.id===theater),assignment=s.world.localGovernors[theater]?theater:s.grandMap?r?.macro:theater,post=s.world.localGovernors[assignment],c=s.world.characters[post?.person];
+ return post&&r?.owner===post.faction&&c?.location===assignment&&canHoldOffice(s,post.faction,post.person)?post.person:null;
 }
 export function governorCandidates(s,theater,actor=s.player){
  initializeOffices(s);if(!roman(actor)||!s.regions.some(r=>r.id===theater&&r.owner===actor))return [];

@@ -1,13 +1,10 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=18';
-import {FACTIONS,ROUTES} from './data.js?v=11';
-import {deriveGovernment} from './governance.js?v=21';
-import {potentialConspirators} from './conspiracies.js?v=10';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=3';
-import {reportedControl} from './control-intelligence.js?v=4';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=15';
+import {FACTIONS,ROUTES} from './data.js?v=9';
+import {GRAND_ROUTES} from './grand-map-data.js';
+import {deriveGovernment} from './governance.js?v=16';
+import {potentialConspirators} from './conspiracies.js?v=7';
+import {localBuildingEffects} from './development.js?v=1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
-// A visual impression is less precise than the historical birth estimate.
-// Unknown birth dates remain unknown, rather than becoming invented ages.
-export function apparentAgeRange(id,year){const age=ageRange(id,year);return age?[Math.max(0,Math.floor((age[0]-5)/5)*5),Math.ceil((age[1]+5)/5)*5]:null}
 const claimantAvailable=c=>!!c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health);
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const notify=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
@@ -17,8 +14,8 @@ export const MISSION_RULES=configs;
 export function missionDuration(s,actor,target,type){
  const cfg=configs[type];if(!cfg)return null;
  if(type!=='envoy'&&type!=='audience')return cfg.months;
- const starts=s.regions.filter(r=>r.owner===actor).map(r=>r.id),goals=new Set(s.regions.filter(r=>reportedControl(s,actor,r.id)?.owner===target).map(r=>r.id));
- if(!starts.length)return null;if(!goals.size)return cfg.months+2;
+ const starts=s.regions.filter(r=>r.owner===actor).map(r=>r.id),goals=new Set(s.regions.filter(r=>r.owner===target).map(r=>r.id));
+ if(!starts.length||!goals.size)return null;
  const queue=starts.map(id=>[id,0]),seen=new Set(starts);let distance=null;
  for(let i=0;i<queue.length;i++){const [id,steps]=queue[i];if(goals.has(id)){distance=steps;break}for(const edge of ROUTES){const next=edge[0]===id?edge[1]:edge[1]===id?edge[0]:null;if(next&&!seen.has(next)){seen.add(next);queue.push([next,steps+1])}}}
  return cfg.months+(distance===null?2:distance>=5?2:distance>=3?1:0);
@@ -33,11 +30,9 @@ export function advanceAgentRequests(s){initializeWorld(s);for(const request of 
 const sourceFamily=r=>{const source=r.originSource||r.source;return ({official:'court',envoy:'court',audience:'court',exchange:'unknown'}[source]||source||'unknown')};
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
 const knownReport=x=>['leaders','claimants'].includes(x.kind)?Array.isArray(x.leaders)&&x.leaders.length>0:x.value!=='unknown'&&x.value!=null;
-const validStrengthRange=r=>r.kind==='strength'&&Array.isArray(r.range)&&r.range.length===2&&r.range.every(Number.isFinite)&&r.range[0]>=0&&r.range[0]<=r.range[1];
-const strengthRange=r=>validStrengthRange(r)?r.range:Number.isFinite(r.value)?[r.value,r.value]:null;
-const reportValue=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?[...new Set(x.leaders||[])].sort():x.kind==='strength'&&validStrengthRange(x)?x.range:x.kind==='authority'&&x.value&&typeof x.value==='object'?{kind:x.value.kind,actors:[...new Set(x.value.actors||[])].sort()}:x.value);
+const reportValue=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?[...new Set(x.leaders||[])].sort():x.kind==='authority'&&x.value&&typeof x.value==='object'?{kind:x.value.kind,actors:[...new Set(x.value.actors||[])].sort()}:x.value);
 // Partially overlapping age estimates are compatible, but do not independently verify the same range.
-const evidenceRelation=(a,b)=>{if((a.observationYear??a.year)!==(b.observationYear??b.year)||(a.observationMonth??a.month)!==(b.observationMonth??b.month))return 'different_time';if(['leaders','claimants'].includes(a.kind)){const aa=new Set(a.leaders||[]),bb=new Set(b.leaders||[]),same=reportValue(a)===reportValue(b);if((a.exhaustive&&[...bb].some(id=>!aa.has(id)))||(b.exhaustive&&[...aa].some(id=>!bb.has(id))))return 'conflict';if(same&&(!a.exhaustive||b.exhaustive))return 'support';return 'compatible'}if(reportValue(a)===reportValue(b))return 'support';if(a.kind==='strength'){const aa=strengthRange(a),bb=strengthRange(b);if(aa&&bb&&Math.max(aa[0],bb[0])<=Math.min(aa[1],bb[1]))return 'compatible'}if(a.kind==='age'&&Array.isArray(a.value)&&Array.isArray(b.value)&&a.value.length===2&&b.value.length===2&&a.value.every(Number.isFinite)&&b.value.every(Number.isFinite)&&Math.max(a.value[0],b.value[0])<=Math.min(a.value[1],b.value[1]))return 'compatible';return 'conflict'};
+const evidenceRelation=(a,b)=>{if((a.observationYear??a.year)!==(b.observationYear??b.year)||(a.observationMonth??a.month)!==(b.observationMonth??b.month))return 'different_time';if(['leaders','claimants'].includes(a.kind)){const aa=new Set(a.leaders||[]),bb=new Set(b.leaders||[]),same=reportValue(a)===reportValue(b);if((a.exhaustive&&[...bb].some(id=>!aa.has(id)))||(b.exhaustive&&[...aa].some(id=>!bb.has(id))))return 'conflict';if(same&&(!a.exhaustive||b.exhaustive))return 'support';return 'compatible'}if(reportValue(a)===reportValue(b))return 'support';if(a.kind==='age'&&Array.isArray(a.value)&&Array.isArray(b.value)&&a.value.length===2&&b.value.length===2&&a.value.every(Number.isFinite)&&b.value.every(Number.isFinite)&&Math.max(a.value[0],b.value[0])<=Math.min(a.value[1],b.value[1]))return 'compatible';return 'conflict'};
 const sameSubject=(a,b)=>a.kind===b.kind&&a.character===b.character;
 function refreshKnowledge(s,k){
  const reports=k.reports||[];for(const item of reports){if(!knownReport(item)){item.verified=false;item.confidence=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';continue}if(reportAge(s,item)>24)continue;const group=reports.filter(x=>knownReport(x)&&sameSubject(item,x)&&reportAge(s,x)<=24),disputed=group.some(x=>evidenceRelation(item,x)==='conflict')||group.some(x=>evidenceRelation(item,x)!=='different_time'&&x.baseConfidence==='disputed'),families=new Set(group.filter(x=>evidenceRelation(item,x)==='support').map(sourceFamily).filter(f=>f!=='unknown')).size,base=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';item.confidence=disputed?'disputed':families>=3?'confirmed':families>=2?'credible':base;item.verified=!disputed&&families>=3}
@@ -73,44 +68,26 @@ export function reportedHealthSubjects(s,actor,target){
  initializeWorld(s);const knowledge=s.knowledge[actor]?.[target],reports=knowledge?.reports||[];
  // A later partial roster is not evidence that names in earlier reports vanished.
  // Preserve these as investigable leads only, not as current rulers or verified identities.
- const leads=reports.flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['health','age','location','conspiracy'].includes(r.kind)?[r.character]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:[]);
+ const leads=reports.flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['health','age','conspiracy'].includes(r.kind)?[r.character]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:[]);
  return [...new Set([...(knowledge?.reportedLeaders||[]),...reportedClaimants(s,actor,target),...Object.values(knowledge?.sightings||{}).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).map(x=>x.commanderId),...leads].filter(id=>CHARACTER_CATALOG[id]))];
 }
 export function claimantRepresentatives(s,actor,claimant){
  initializeWorld(s);return Object.values(s.world.characters).filter(c=>c.faction===actor&&c.alive&&!c.missing&&!['seriously_ill','dying','deceased'].includes(c.health)&&CHARACTER_CATALOG[c.id]&&(s.world.personalRelations[[c.id,claimant].sort().join(':')]?.trust||0)>0).map(c=>c.id);
 }
-// A public policy records the player's choice, not the target court's true ruler.
-export function recognizeClaimant(s,target,claimant){
- initializeWorld(s);const actor=s.player;if(!['caesar','senate'].includes(actor)||!['egypt','parthia'].includes(target)||!s.factions[actor]||!s.factions[target]||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
- const existing=s.world.recognitions[actor]?.[target];
- if(claimant==null){if(!existing)return {ok:false,reason:'unavailable'};delete s.world.recognitions[actor][target];notify(s,'Recognition of a reported claimant was withdrawn.','已撤回对报告中竞争者的承认。');return {ok:true,cost:0}}
- if(!reportedClaimants(s,actor,target).includes(claimant))return {ok:false,reason:'unavailable'};
- if(existing?.claimant===claimant)return {ok:false,reason:'already'};if(s.factions[actor].treasury<5)return {ok:false,reason:'treasury'};
- s.factions[actor].treasury-=5;(s.world.recognitions[actor]||={})[target]={claimant,year:s.year,month:s.month};const key=[actor,target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-5);
- notify(s,'A reported claimant was recognized; relations with the court fell by up to 5.','已承认一位报告中的竞争者；与宫廷的关系最多降低5。');return {ok:true,cost:5};
-}
-export function supportClaimant(s,actor,target,claimant,representative=null,aid='political'){
+export function supportClaimant(s,actor,target,claimant,representative=null){
  initializeWorld(s);if(!['caesar','senate'].includes(actor)||actor===target||!['egypt','parthia'].includes(target)||!reportedClaimants(s,actor,target).includes(claimant)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
- if(!['political','military'].includes(aid))return {ok:false,reason:'aid'};
  if(representative&&!claimantRepresentatives(s,actor,claimant).includes(representative))return {ok:false,reason:'representative'};
- const cost=aid==='military'?{treasury:14,manpower:1000,food:5}:{treasury:10,manpower:0,food:0},f=s.factions[actor];
- if(s.operations.some(o=>o.actor===actor&&o.target===target&&o.type==='support'&&o.status==='pending'))return {ok:false,reason:'pending'};
- if(f.treasury<cost.treasury)return {ok:false,reason:'treasury'};if(f.manpower<cost.manpower)return {ok:false,reason:'manpower'};if(f.food<cost.food)return {ok:false,reason:'food'};
- f.treasury-=cost.treasury;f.manpower-=cost.manpower;f.food-=cost.food;s.operations.unshift({actor,target,type:'support',claimant,representative:representative||null,aid,remaining:4,status:'pending',sentYear:s.year,sentMonth:s.month});if(actor===s.player)notify(s,'An offer of support was sent; a response may take four months.','已寄出支持提议；回信可能需要四个月。');return {ok:true};
+ if(s.operations.some(o=>o.actor===actor&&o.target===target&&o.type==='support'&&o.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<10)return {ok:false,reason:'treasury'};
+ s.factions[actor].treasury-=10;s.operations.unshift({actor,target,type:'support',claimant,representative:representative||null,remaining:4,status:'pending',sentYear:s.year,sentMonth:s.month});if(actor===s.player)notify(s,'An offer of support was sent; a response may take four months.','已寄出支持提议；回信可能需要四个月。');return {ok:true};
 }
 export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
- initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!FACTIONS[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
- if(target.endsWith('_claimant')&&!knownDynasticFactions(s,actor).includes(target))return {ok:false,reason:'unavailable'};
- if(!['health','age','location','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance','clashes'].includes(subject))return {ok:false,reason:'subject'};
- if(subject==='location'&&!['spy','travelers','exchange'].includes(type))return {ok:false,reason:'subject'};
- if(subject==='clashes'&&(!['spy','travelers','exchange'].includes(type)||!['egypt','parthia'].includes(target)))return {ok:false,reason:'subject'};
+ initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
+ if(!['health','age','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts'].includes(subject))return {ok:false,reason:'subject'};
  if(subject==='age'&&type!=='exchange')return {ok:false,reason:'subject'};
- if(subject==='relations'&&type!=='envoy')return {ok:false,reason:'subject'};
- if(subject==='stance'&&!['envoy','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(subject==='contacts'&&(!['spy','exchange'].includes(type)||!['egypt','parthia'].includes(target)))return {ok:false,reason:'subject'};
  if(type==='counter'&&subject!=='conspiracy'||subject==='conspiracy'&&(!['spy','counter','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
- if(['health','age','location'].includes(subject)&&characterId&&!reportedHealthSubjects(s,actor,target).includes(characterId))return {ok:false,reason:'identity'};
+ if(['health','age'].includes(subject)&&characterId&&!reportedHealthSubjects(s,actor,target).includes(characterId))return {ok:false,reason:'identity'};
  const partners=s.alliances.filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)).filter(id=>id!==target&&s.factions[id]);
  if(type==='exchange'&&(!partners.length||(partnerId&&!partners.includes(partnerId))))return {ok:false,reason:'alliance'};
  if(['spy','counter'].includes(type)&&!availableAgents(s,actor))return {ok:false,reason:'agents'};
@@ -120,34 +97,27 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
 }
 export function queueMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;
- const {duration,partner,cost}=plan,subjectCharacter=['health','age','location'].includes(subject)?(characterId||(['health','location'].includes(subject)&&type!=='exchange'?reportedHealthSubjects(s,actor,target)[0]:null)||null):null;
+ const {duration,partner,cost}=plan,subjectCharacter=['health','age'].includes(subject)?(characterId||(subject==='health'&&type!=='exchange'?reportedHealthSubjects(s,actor,target)[0]:null)||null):null;
  s.factions[actor].treasury-=cost;s.operations.unshift({actor,target,type,subject,partner,subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month});
  if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months.`,`已派出${({spy:'间谍',counter:'内部调查',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月。`);return {ok:true,duration};
 }
 export function advanceOperations(s){initializeWorld(s);for(const op of s.operations){if(op.status!=='pending'||--op.remaining>0)continue;const q=rand(s),id=(s.world.leadership[op.target]||[])[0],person=s.world.characters[id];
- // The resolution date is visible to the sender, but not the hidden cause of a failed mission.
- op.resolvedYear=s.year;op.resolvedMonth=s.month;
  if(op.type==='support'){
-  const claimant=s.world.characters[op.claimant],rival=s.world.disputes[op.target]?.war?.rival,valid=(s.regions.some(r=>r.owner===op.target||r.owner===rival)||s.armies.some(a=>a.owner===rival&&a.men>0))&&claimantAvailable(claimant)&&(s.world.claimants[op.target]||[]).includes(op.claimant);
-  const representative=op.representative&&claimantRepresentatives(s,op.actor,op.claimant).includes(op.representative)?op.representative:null,trust=representative?(s.world.personalRelations[[representative,op.claimant].sort().join(':')]?.trust||0):0,recognized=s.world.recognitions?.[op.actor]?.[op.target]?.claimant===op.claimant,declineLimit=Math.max(.25,.45-Math.min(100,trust)*.002-(recognized ? 0.05 : 0));
-  if(!valid||q<.2)op.status='no_reply';else if(q<declineLimit)op.status='declined';else{op.status='complete';const dispute=s.world.disputes[op.target]||={months:0};dispute.support||={};dispute.support[op.claimant]=Math.min(30,(dispute.support[op.claimant]||0)+(op.aid==='military'?25:15));if(op.aid==='military'){const unit=s.armies.find(a=>a.owner===dispute.war?.rival&&a.characterId===op.claimant&&a.men>0)||s.armies.find(a=>a.owner===dispute.war?.rival&&a.men>0);if(unit)unit.men+=1000;else if(dispute.war&&s.factions[dispute.war.rival])s.factions[dispute.war.rival].manpower+=1000;else if(!dispute.war){dispute.militaryAid||={};dispute.militaryAid[op.claimant]=(dispute.militaryAid[op.claimant]||0)+1000}}const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-(op.aid==='military'?15:10))}
+  const claimant=s.world.characters[op.claimant],valid=s.regions.some(r=>r.owner===op.target)&&claimantAvailable(claimant)&&(s.world.claimants[op.target]||[]).includes(op.claimant);
+  const representative=op.representative&&claimantRepresentatives(s,op.actor,op.claimant).includes(op.representative)?op.representative:null,trust=representative?(s.world.personalRelations[[representative,op.claimant].sort().join(':')]?.trust||0):0,declineLimit=Math.max(.25,.45-Math.min(100,trust)*.002);
+  if(!valid||q<.2)op.status='no_reply';else if(q<declineLimit)op.status='declined';else{op.status='complete';const dispute=s.world.disputes[op.target]||={months:0};dispute.support||={};dispute.support[op.claimant]=Math.min(30,(dispute.support[op.claimant]||0)+15);const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-10)}
   op.resolvedYear=s.year;op.resolvedMonth=s.month;
   if(op.actor===s.player)notify(s,op.status==='complete'?'The claimant accepted support; relations with the court worsened.':op.status==='declined'?'The claimant declined the offer.':'No reply arrived; the offer or response may have been lost.',op.status==='complete'?'竞争者接受支持；与宫廷的关系恶化。':op.status==='declined'?'竞争者拒绝了提议。':'未收到回信；提议或回信可能遗失。');continue
  }
- if(!s.regions.some(r=>r.owner===op.target)||q<.18){op.status='failed';if(op.actor===s.player)notify(s,'The intelligence mission ended without a report; the reason is unknown.','情报行动结束，未收到报告；原因不明。');continue}
+ if(!s.regions.some(r=>r.owner===op.target)||q<.18){op.status='failed';continue}
  if(op.type==='spy'&&q<.33){op.status=q<.24?'captured':'detected';if(op.status==='captured'){op.captiveId='captive'+s.world.nextCaptive++;s.world.captives.push({id:op.captiveId,owner:op.actor,holder:op.target,state:'held',year:s.year,month:s.month})}const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,`A spy from ${FACTIONS[op.actor].short[0]} was discovered by ${FACTIONS[op.target].short[0]}.`,`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现，双方关系恶化。`);continue}
  const relation=s.relations[[op.actor,op.target].sort().join(':')]||0,atWar=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target));
  const refusal=Math.max(.23,Math.min(.70,.38-relation*.0015+(atWar?.18:0)+(s.factions[op.target].stability<35?.08:0)));
- if((op.type==='audience'||op.type==='envoy')&&q<refusal){op.status='declined';if(op.actor===s.player)notify(s,'The court declined the envoy or audience request.','宫廷拒绝了使者或会面请求。');continue}
- if(op.type==='envoy'&&op.subject==='relations'){
-  // A diplomatic reception changes relations at arrival; it produces no secret intelligence.
-  const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.min(100,relation+8);op.status='complete';
-  if(op.actor===s.player)notify(s,'The envoy was received and relations improved by up to 8.','使者获接待，双方关系最多提高8。');continue
- }
+ if((op.type==='audience'||op.type==='envoy')&&q<refusal){op.status='declined';continue}
  if(op.type==='exchange'){
   const partner=op.partner,stillAllied=s.alliances.some(x=>x.includes(op.actor)&&x.includes(partner)),prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter));
-  if(!stillAllied||!prior){op.status='failed';if(op.actor===s.player)notify(s,'The intelligence exchange ended without a report; the reason is unknown.','情报交换结束，未收到报告；原因不明。');continue}
-  const copy={kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,range:validStrengthRange(prior)?[...prior.range]:undefined,exhaustive:prior.exhaustive===true,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'};
+  if(!stillAllied||!prior){op.status='failed';continue}
+  const copy={kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,exhaustive:prior.exhaustive===true,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'};
   addReport(s,op.actor,op.target,copy);op.status='complete';if(op.actor===s.player)notify(s,'An ally forwarded an existing report; its original date and source still matter.','盟友转交了一份既有报告；仍需留意原始日期与来源。');continue
  }
  const healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(reportedHealthSubjects(s,op.actor,op.target)[0]||null),healthCandidate=s.world.characters[healthId];
@@ -155,15 +125,8 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  // health of someone who has left it, or whose whereabouts are unknown.
  // Return the same uninformative report instead of disclosing the hidden reason.
  const healthPerson=healthCandidate?.faction===op.target&&!healthCandidate.missing?healthCandidate:null;
- const locallyObservable=!!(healthPerson?.alive&&!healthPerson.travel&&s.regions.some(r=>r.id===healthPerson.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===healthId&&a.move));
  op.status='complete';const source=op.type,low=op.type==='travelers',hostile=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target)),contested=(s.world.claimants[op.target]||[]).length>0,investigated=op.subject==='health'?healthPerson:person,concealment=hostile||contested||investigated?.health==='seriously_ill'||investigated?.health==='dying',falsehood=q<.45&&concealment;let report;
- if(op.subject==='clashes'){
-  // No report is not evidence of peace. Rumors may be false in a contested court.
-  const recent=!!s.world.disputes[op.target]?.war||s.world.disputeHistory.some(event=>event.faction===op.target&&['clashes','civil_war'].includes(event.outcome)&&(s.year-event.year)*12+s.month-event.month>=0&&(s.year-event.year)*12+s.month-event.month<=12);
-  const reported=recent&&q>=.55||contested&&!recent&&q<.45;
-  report={kind:'clashes',value:reported?'reported':'unknown',source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
- }
- else if(op.subject==='contacts'){
+ if(op.subject==='contacts'){
   // Only accepted support offers are simulated contacts. A lack of evidence is
   // never a claim that no contact exists; the observer cannot see its own offer.
   const contact=s.operations.find(x=>{const year=x.resolvedYear??x.sentYear,month=x.resolvedMonth??x.sentMonth,age=(s.year-year)*12+s.month-month;return x.type==='support'&&x.status==='complete'&&x.target===op.target&&x.actor!==op.actor&&Number.isFinite(age)&&age>=0&&age<=(x.resolvedYear==null?28:24)});
@@ -177,41 +140,9 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   const suspect=q>=.6?actual:(q>=.34&&s.factions[op.target].stability<45?alternative:null);
   report={kind:'conspiracy',character:suspect,value:suspect?'suspected':'unknown',source,confidence:'unverified',reliability:'moderate'};
  }
- else if(op.subject==='stance'){
-  // This is a reported public statement, not access to another faction's plans.
-  const value=hostile?'guarded':relation>=30?'receptive':relation<0?'guarded':'noncommittal';
-  report={kind:'stance',value,source,confidence:'unverified',reliability:'moderate'};
- }
- else if(op.subject==='location'){
-  // Never follow an unseen person after the observation. An agent may find an
-  // available person in this court's territory; travelers may only hear a rumor.
-  const p=healthPerson,local=p?.alive&&!p.travel&&!s.armies.some(a=>a.characterId===healthId&&a.move)&&s.regions.some(r=>r.id===p.location&&r.owner===op.target);
-  const old=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>r.kind==='location'&&r.character===healthId&&s.regions.some(region=>region.id===r.value));
-  const value=falsehood&&old?old.value:local&&q>=(low?.8:.55)?p.location:'unknown';
-  report={kind:'location',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
- }
- else if(op.subject==='health'){
-  let value='unknown';
-  if(healthPerson&&low){
-   // Travelers hear rumors or glimpse a person in a court-controlled theater;
-   // they do not get a precise diagnosis or private health state for free.
-   const visible=locallyObservable;
-   if((hostile||contested)&&q<.45)value='healthy'; // propaganda does not depend on hidden health
-   else if(contested&&q<.55)value='ill';
-   else if(visible&&falsehood)value='healthy'; // politically motivated rumor
-   else if(visible&&q>=.65&&['wounded','frail'].includes(healthPerson.health))value=healthPerson.health;
-   else if(visible&&q>=.85&&['ill','seriously_ill','dying'].includes(healthPerson.health))value='ill';
-   
-  }else if(locallyObservable)value=falsehood?'healthy':healthPerson.health;
-  report={kind:'health',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
- }
+ else if(op.subject==='health'){const value=healthPerson?(falsehood?'healthy':healthPerson.health):'unknown';report={kind:'health',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='claimants'){const candidates=falsehood?[]:[...(s.world.claimants[op.target]||[])];report={kind:'claimants',leaders:candidates,exhaustive:op.type==='spy'&&q>=.7,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
- else if(op.subject==='strength'){
-  // A rounded estimate is not exact reconnaissance: each source has a different
-  // error, and even its stated interval is not a guarantee of the actual total.
-  const actual=s.armies.filter(a=>a.owner===op.target).reduce((x,a)=>x+a.men,0),error=low ? 0.5 : op.type==='spy' ? 0.18 : 0.3,baseline=(falsehood?actual*.65:actual),sample=Math.max(1000,baseline)*(1+(rand(s)*2-1)*error),estimate=Math.max(0,Math.round(sample/1000)*1000),margin=Math.max(1000,Math.ceil(estimate*error/1000)*1000);
-  report={kind:'strength',value:estimate,range:[Math.max(0,estimate-margin),estimate+margin],source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
- }
+ else if(op.subject==='strength'){let count=s.armies.filter(a=>a.owner===op.target).reduce((x,a)=>x+a.men,0);if(falsehood)count=Math.round(count*.65/1000)*1000;else count=Math.round(count/1000)*1000;report={kind:'strength',value:count,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='stability'){
   const stability=s.factions[op.target].stability,actual=stability<35?'fragile':stability<60?'strained':'stable';
   // In a threatened court, reassuring propaganda can mask instability. Casual
@@ -245,9 +176,8 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   op.meeting='envoy';const k=[op.actor,op.target].sort().join(':');s.relations[k]=Math.min(100,(s.relations[k]||0)+3);
   // An audience may be with a representative. Only record a personal observation
   // when someone actually in office and named in the report could attend.
-  const met=(report.leaders||[]).find(candidate=>{const p=s.world.characters[candidate];return (s.world.leadership[op.target]||[]).includes(candidate)&&p?.alive&&p.faction===op.target&&!p.travel&&!p.missing&&s.regions.some(r=>r.id===p.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===candidate&&a.move)&&!['seriously_ill','dying','deceased'].includes(p.health)});
-  if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=apparentAgeRange(met,s.year);
-   addReport(s,op.actor,op.target,{kind:'location',character:met,value:p.location,source:'audience',confidence:'unverified',reliability:'moderate'});
+  const met=(report.leaders||[]).find(candidate=>(s.world.leadership[op.target]||[]).includes(candidate)&&s.world.characters[candidate]?.alive&&!s.world.characters[candidate].travel&&!s.world.characters[candidate].missing&&!['seriously_ill','dying','deceased'].includes(s.world.characters[candidate].health));
+  if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=ageRange(met,s.year);
    addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,source:'audience',confidence:'unverified',reliability:'low'});
    if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,source:'audience',confidence:'unverified',reliability:'low'});
   }
@@ -259,7 +189,6 @@ export function contestLeadership(s,faction,claimant){initializeWorld(s);const l
 // Alternate-history court outcomes use existing characters and never update a foreign observer's reports directly.
 export function advanceDisputes(s){initializeWorld(s);for(const faction of ['egypt','parthia'])advanceFactionDispute(s,faction)}
 function advanceFactionDispute(s,faction){
- if(s.world.disputes[faction]?.war)return;
  const leaders=s.world.leadership[faction]||[],claimants=(s.world.claimants[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!leaders.includes(id));s.world.claimants[faction]=claimants;
  if(!claimants.length||!s.regions.some(r=>r.owner===faction)){delete s.world.disputes[faction];return}
  const dispute=s.world.disputes[faction]||={months:0};if(!leaders.length&&dispute.vacancySince?.year===s.year&&dispute.vacancySince?.month===s.month)return;
@@ -280,24 +209,10 @@ function advanceFactionDispute(s,faction){
  const claimant=claimants.find(id=>claimantAvailable(s.world.characters[id]));if(!claimant)return;const person=s.world.characters[claimant];const stability=s.factions[faction].stability,support=dispute.support?.[claimant]||0,q=rand(s);let outcome;
  if(stability>=45&&person.loyalty>=55&&support===0&&q<.12){s.world.leadership[faction]=faction==='egypt'?[...leaders,claimant]:leaders;s.world.claimants[faction]=claimants.filter(id=>id!==claimant);s.factions[faction].stability=Math.min(100,stability+2);outcome='reconciliation';delete s.world.disputes[faction]}
  else if(q<(stability<45?.22:.08)+support/100){s.world.leadership[faction]=[claimant];s.world.claimants[faction]=[...new Set([...claimants.filter(id=>id!==claimant),...leaders.filter(id=>s.world.characters[id]?.alive)])];s.factions[faction].stability=Math.max(0,stability-4);outcome='takeover';dispute.support={}}
- else if(dispute.duration>=6&&stability<45&&q>=.6){
-  // Local clashes are an abstract consequence, not a fabricated separate army
-  // or a claim about historical events. Losses apply only to forces at home.
-  const army=s.armies.find(a=>a.owner===faction&&a.men>0&&!a.move&&s.regions.some(r=>r.id===a.region&&r.owner===faction));
-  if(army)army.men=Math.max(0,army.men-Math.min(300,Math.ceil(army.men*.05)));
-  s.factions[faction].manpower=Math.max(0,s.factions[faction].manpower-300);s.factions[faction].food=Math.max(-100,s.factions[faction].food-3);s.factions[faction].stability=Math.max(0,stability-2);outcome='clashes';
-  if(dispute.duration>=12)startDynasticWar(s,faction,claimant);
- }
  if(outcome){s.world.disputeHistory.unshift({faction,claimant,outcome,year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);if(faction===s.player)notify(s,outcome==='reconciliation'?(faction==='egypt'?'A simulated court settlement restored joint rule.':'A simulated settlement ended the dynastic challenge.'):'A simulated court struggle changed the ruling authority.',outcome==='reconciliation'?(faction==='egypt'?'游戏中的宫廷和解恢复了共同统治。':'游戏中的宫廷和解结束了王朝挑战。'):'游戏中的宫廷斗争改变了执政者。')}
 }
-// Select from both existing co-rulers; lower loyalty adds weight without
-// guaranteeing an outcome. A minor represents a faction at court.
-export function egyptianClaimantCandidate(s,roll){
- const leaders=s.world.leadership?.egypt||[],candidates=['cleopatra','ptolemy'].filter(id=>leaders.includes(id)&&claimantAvailable(s.world.characters[id]));
- if(leaders.length<2||!candidates.length)return null;const weights=candidates.map(id=>Math.max(1,101-(s.world.characters[id].loyalty??75))),total=weights.reduce((a,b)=>a+b,0);let value=Math.max(0,Math.min(.999999,roll))*total;for(let i=0;i<candidates.length;i++){value-=weights[i];if(value<0)return candidates[i]}return candidates.at(-1);
-}
 // Simulation probabilities only; these do not assert historical diagnoses.
-export function illnessRisk(s,id){initializeWorld(s);const c=s.world.characters[id];if(!c)return 0;const age=ageRange(id,s.year)?.[0],military=s.armies.some(a=>a.characterId===id),shortage=(s.factions[c.faction]?.food??0)<0;return Math.min(.18,(age>=65?.04:.018)+(military?.01:0)+(shortage?.025:0)+(c.travel?.01:0)+Math.min(.02,c.wounds*.01))}
+export function illnessRisk(s,id){initializeWorld(s);const c=s.world.characters[id];if(!c)return 0;const age=ageRange(id,s.year)?.[0],military=s.armies.some(a=>a.characterId===id),shortage=(s.factions[c.faction]?.food??0)<0,site=s.regions.find(r=>r.id===c.location),risk=site?localBuildingEffects(site).healthRisk||0:0;return Math.max(0,Math.min(.18,(age>=65?.04:.018)+(military?.01:0)+(shortage?.025:0)+(c.travel?.01:0)+Math.min(.02,c.wounds*.01)+risk))}
 // Alternate-history defection is restricted to unattached Roman officers, never fabricated identities.
 export function considerDefection(s,id){
  initializeWorld(s);const c=s.world.characters[id],from=c?.faction,to=from==='caesar'?'senate':from==='senate'?'caesar':null;
@@ -312,7 +227,7 @@ export function advanceCharacters(s){initializeWorld(s);for(const [id,c] of Obje
  if((previous==='healthy'&&c.health==='ill')||(previous==='frail'&&c.health==='seriously_ill'))c.illnessEpisodes++;
  if(c.health==='deceased'){c.alive=false;if(s.factions[c.faction])s.factions[c.faction].stability=Math.max(0,s.factions[c.faction].stability-3);const lead=s.world.leadership[c.faction]||[];if(lead.includes(id))assignSuccession(s,c.faction);for(const a of s.armies.filter(a=>a.characterId===id)){a.characterId=null;a.commander=['Unnamed officer','未具名军官']}if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[id].name[0]} died in the simulation; the succession situation was updated.`,`${CHARACTER_CATALOG[id].name[1]}在模拟中去世，继任局势已更新。`)}
  else {if(previous!==c.health&&c.faction===s.player)notify(s,`${CHARACTER_CATALOG[id].name[0]}: simulated health changed to ${c.health}.`,`${CHARACTER_CATALOG[id].name[1]}的游戏健康状态发生变化。`);if(s.month===1)considerDefection(s,id)}
- }if(s.month===1&&(s.world.leadership.egypt||[]).length>1){const candidate=egyptianClaimantCandidate(s,rand(s));if(candidate&&rand(s)<(s.world.characters[candidate].loyalty<40?.18:.08))contestLeadership(s,'egypt',candidate)}if(s.month===1&&s.world.characters.pacorus?.loyalty<40&&(s.factions.parthia?.stability<45||['seriously_ill','dying'].includes(s.world.characters.orodes?.health))&&!(s.world.claimants.parthia||[]).length&&rand(s)<.15)contestLeadership(s,'parthia','pacorus');}
+ }if(s.month===1&&(s.world.leadership.egypt||[]).length>1&&rand(s)<(s.world.characters.cleopatra.loyalty<40?.18:.08))contestLeadership(s,'egypt','cleopatra');if(s.month===1&&s.world.characters.pacorus?.loyalty<40&&(s.factions.parthia?.stability<45||['seriously_ill','dying'].includes(s.world.characters.orodes?.health))&&!(s.world.claimants.parthia||[]).length&&rand(s)<.15)contestLeadership(s,'parthia','pacorus');}
 export function battlefieldWound(s,a){initializeWorld(s);const c=s.world.characters[a.characterId];if(!c?.alive||!['healthy','recovering','frail','wounded'].includes(c.health))return;const risk=Math.min(.14,.07+((s.factions[a.owner]?.food??0)<0?.03:0)+Math.min(.04,c.wounds*.01));if(rand(s)<risk){c.health='wounded';c.wounds++;if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[c.id].name[0]} was wounded in battle (simulated).`,`${CHARACTER_CATALOG[c.id].name[1]}在游戏战斗中受伤。`)}}
 export function commandFactor(s,a){const c=s.world?.characters?.[a.characterId];if(!c)return 1;const health=({healthy:1,recovering:.96,wounded:.9,ill:.9,frail:.88,seriously_ill:.8,dying:.7,deceased:.7}[c.health]||1),battles=Number.isFinite(c.battlesCommanded)?Math.max(0,c.battlesCommanded):0;return health*(1+Math.min(5,battles)*.02)}
 export function linkCommanders(s){initializeWorld(s);for(const a of s.armies){if(a.characterId===undefined){a.characterId=a.id==='xiii'?'caesar':a.id==='pompey'?'pompey':null}const person=s.world.characters[a.characterId];if(person?.alive&&!person.missing)person.location=a.region}}
@@ -342,7 +257,7 @@ export function observeArmies(s){
  initializeWorld(s);
  for(const viewer of Object.keys(s.knowledge)){
   const controlled=new Set(s.regions.filter(r=>r.owner===viewer).map(r=>r.id)),observed=new Set(controlled);
-  for(const [a,b] of ROUTES){if(controlled.has(a))observed.add(b);if(controlled.has(b))observed.add(a)}
+  for(const [a,b] of s.grandMap?GRAND_ROUTES:ROUTES){if(controlled.has(a))observed.add(b);if(controlled.has(b))observed.add(a)}
   const visible=place=>observed.has(place);
   // A visible former position can be checked without learning where the army
   // went or whether it survived. Preserve the dated report as historical evidence.
@@ -353,7 +268,7 @@ export function observeArmies(s){
   }
   for(const unit of s.armies){if(unit.owner===viewer||unit.move||!s.knowledge[viewer]?.[unit.owner]||!visible(unit.region))continue;
    const k=s.knowledge[viewer][unit.owner],commanderId=CHARACTER_CATALOG[unit.characterId]?unit.characterId:null;k.sightings[unit.id]={id:unit.id,name:[...unit.name],owner:unit.owner,region:unit.region,year:s.year,month:s.month,commanderId};
-   if(commanderId){k.commanderReports=(k.commanderReports||[]).filter(r=>r.commanderId!==commanderId||r.armyId!==unit.id);k.commanderReports.unshift({commanderId,armyId:unit.id,armyName:[...unit.name],region:unit.region,year:s.year,month:s.month});k.commanderReports=k.commanderReports.slice(0,30)}
+   if(commanderId){k.commanderReports=(k.commanderReports||[]).filter(r=>r.commanderId!==commanderId||r.armyId!==unit.id);k.commanderReports.unshift({commanderId,armyId:unit.id,armyName:[...unit.name],year:s.year,month:s.month});k.commanderReports=k.commanderReports.slice(0,30)}
   }
  }
 }

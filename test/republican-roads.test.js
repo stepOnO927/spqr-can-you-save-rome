@@ -15,4 +15,3 @@ test('named routes reach their documented approximate terminal areas',()=>{
  assert.ok(near(points('Via Aemilia'),12.5683,44.0678));assert.ok(near(points('Via Aemilia'),9.69,45.05));
  assert.ok(near(points('Via Appia'),12.4964,41.9028));assert.ok(near(points('Via Appia'),14.2,41.12));
 });
-

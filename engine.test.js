@@ -203,16 +203,14 @@ test('official inquiries can produce unanswered, declined and unverified respons
 });
 
 
-test('letters are private, cost resources, and do not reveal a vanished court at dispatch',()=>{
+test('letters are private to each sender and validate costs and active governments',()=>{
  const s=newGame();s.factions.caesar.treasury=2;assert.equal(sendInquiry(s,'caesar','egypt').reason,'treasury');
  s.factions.caesar.treasury=30;assert.equal(sendInquiry(s,'caesar','egypt').ok,true);
  assert.equal(sendInquiry(s,'senate','egypt').ok,true);
  assert.deepEqual(s.inquiries.map(x=>x.actor).sort(),['caesar','senate']);
  for(const r of s.regions.filter(r=>r.owner==='egypt'))r.owner='senate';
- assert.equal(sendInquiry(s,'caesar','egypt').reason,'pending');
+ assert.equal(sendInquiry(s,'caesar','egypt').reason,'unavailable');
  s.inquiries[0].remaining=1;tick(s);assert.equal(s.inquiries[0].status,'no_reply');
- s.inquiries.find(x=>x.actor==='caesar').status='no_reply';assert.equal(sendInquiry(s,'caesar','egypt').ok,true);
- const sent=s.inquiries[0];for(let i=0;i<sent.duration;i++)tick(s);assert.equal(sent.status,'no_reply');
 });
 test('succession letters can disclose an unverified plan or answer evasively after a delay',()=>{
  const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.8&&q<.9});

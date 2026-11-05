@@ -87,19 +87,3 @@ test('a prolonged court dispute strains stability and treasury without revealing
 test('older unresolved disputes start the pressure clock safely on load',()=>{
  let s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.world.disputes.egypt.months=3;delete s.world.disputes.egypt.duration;s=upgradeSave(JSON.parse(JSON.stringify(s)));const cash=s.factions.egypt.treasury;advanceDisputes(s);assert.equal(s.world.disputes.egypt.duration,1);assert.equal(s.factions.egypt.treasury,cash);
 });
-
-test('a prolonged unstable dispute can cause local clashes without revealing them automatically',()=>{
- let s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.factions.egypt.stability=30;
- s.world.disputes.egypt.months=5;s.world.disputes.egypt.duration=5;s.world.intelSeed=seedFor(.7,.8);
- const army=s.armies.find(a=>a.owner==='egypt'),men=army.men,food=s.factions.egypt.food,manpower=s.factions.egypt.manpower;
- advanceDisputes(s);assert.equal(s.world.disputeHistory[0].outcome,'clashes');assert.equal(army.men,men-Math.min(300,Math.ceil(men*.05)));assert.equal(s.factions.egypt.food,food-3);assert.equal(s.factions.egypt.manpower,Math.max(0,manpower-300));
- assert.equal(s.knowledge.caesar.egypt.reports.length,0);assert.equal(s.knowledge.senate.egypt.reports.length,0);
- s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(s.world.disputeHistory[0].outcome,'clashes');
- const op=queueMission(s,'caesar','egypt','spy','clashes');assert.equal(op.ok,true);s.world.intelSeed=seedFor(.7,.8);for(let i=0;i<op.duration;i++)advanceOperations(s);
- assert.equal(s.knowledge.caesar.egypt.reports[0].value,'reported');assert.equal(s.knowledge.caesar.egypt.reports[0].verified,false);assert.equal(s.knowledge.senate.egypt.reports.length,0);
-});
-test('reports of clashes can be misleading and silence does not establish peace',()=>{
- const rumor=newGame('caesar');contestLeadership(rumor,'egypt','cleopatra');const op=queueMission(rumor,'caesar','egypt','spy','clashes');rumor.world.intelSeed=seedFor(.4,.44);for(let i=0;i<op.duration;i++)advanceOperations(rumor);assert.equal(rumor.knowledge.caesar.egypt.reports[0].value,'reported');assert.equal(rumor.world.disputeHistory.length,0);
- const quiet=newGame('caesar'),task=queueMission(quiet,'caesar','egypt','travelers','clashes');quiet.world.intelSeed=seedFor(.7,.8);for(let i=0;i<task.duration;i++)advanceOperations(quiet);assert.equal(quiet.knowledge.caesar.egypt.reports[0].value,'unknown');assert.equal(quiet.knowledge.caesar.egypt.reports[0].verified,false);
- assert.equal(queueMission(quiet,'caesar','egypt','envoy','clashes').ok,false);
-});

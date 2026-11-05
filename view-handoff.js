@@ -20,4 +20,3 @@ export function receiveHandoff(storage, target, upgrade) {
     return null;
   }
 }
-

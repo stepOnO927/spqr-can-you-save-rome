@@ -1,4 +1,4 @@
-import {INITIAL_ARMIES} from './data.js?v=11';
+import {INITIAL_ARMIES} from './data.js?v=9';
 export const CHARACTER_CATALOG = {
  caesar:{name:['Gaius Julius Caesar','盖乌斯·尤利乌斯·凯撒'],birth:[-102,-100],faction:'caesar',role:['Roman political and military leader','罗马政治与军事领袖'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Julius-Caesar-Roman-ruler'},
  pompey:{name:['Gnaeus Pompeius Magnus','格奈乌斯·庞培'],birth:[-106,-106],faction:'senate',role:['Roman commander allied with the Senate','元老院方面的罗马统帅'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Pompey-the-Great'},
@@ -32,7 +32,6 @@ export function initializeWorld(s){
  if(!s.world.claimants)s.world.claimants={};
  if(!s.world.disputes)s.world.disputes={};
  if(!s.world.disputeHistory)s.world.disputeHistory=[];
- if(!s.world.recognitions)s.world.recognitions={};
  if(!s.world.defections)s.world.defections=[];
  if(!s.knowledge){s.knowledge=Object.fromEntries(Object.keys(s.factions).map(actor=>[actor,Object.fromEntries(Object.keys(s.factions).map(target=>[target,{reportedLeaders:clone(OPENING_LEADERS[target]||[]),reports:[]}]))]));}
  for(const [observer,targets] of Object.entries(s.knowledge))for(const [target,k] of Object.entries(targets)){if(!k.sightings)k.sightings=Object.fromEntries(INITIAL_ARMIES.filter(a=>a.owner===target&&target!==observer).map(a=>[a.id,{id:a.id,name:[...a.name],owner:a.owner,region:a.region,year:-49,month:1}]))}
@@ -49,7 +48,7 @@ export function successorFor(s,faction){return (SUCCESSORS[faction]||[]).filter(
 export function assignSuccession(s,faction){const current=s.world.leadership[faction].filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction),contested=['egypt','parthia'].includes(faction)&&s.world.disputes?.[faction]&&(s.world.claimants?.[faction]||[]).some(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);if(!current.length&&contested&&!s.world.disputes[faction].vacancySince){s.world.disputes[faction].months=0;s.world.disputes[faction].vacancySince={year:s.year,month:s.month}}if(!current.length&&!contested){const candidates=successorFor(s,faction),preferred=s.world.successionPlans?.[faction],next=candidates.includes(preferred)?preferred:candidates[0];if(next)current.push(next)}s.world.leadership[faction]=current;if(s.world.claimants[faction])s.world.claimants[faction]=s.world.claimants[faction].filter(id=>!current.includes(id)&&s.world.characters[id]?.alive);return current}
 export function knownLeaders(s,viewer,target){initializeWorld(s);return s.knowledge[viewer]?.[target]?.reportedLeaders||[]}
 // Derive a public-facing description only from the reported names, never the hidden government state.
-export function leadershipTitle(faction,reported){if(!reported?.length)return ['Authority unconfirmed','领导身份未确认'];if(faction==='caesar'||faction==='senate')return ['Roman faction leadership','罗马派系领袖'];if(faction==='egypt_claimant'||faction==='parthia_claimant')return ['Reported claimant leadership','报告的竞争者领袖'];if(faction==='egypt'&&reported.length>1)return ['Joint rulers','共同统治者'];if(faction==='mauretania')return ['Rulers of separate kingdoms','各王国统治者'];return ['Ruler','统治者']}
+export function leadershipTitle(faction,reported){if(!reported?.length)return ['Authority unconfirmed','领导身份未确认'];if(faction==='caesar'||faction==='senate')return ['Roman faction leadership','罗马派系领袖'];if(faction==='egypt'&&reported.length>1)return ['Joint rulers','共同统治者'];if(faction==='mauretania')return ['Rulers of separate kingdoms','各王国统治者'];return ['Ruler','统治者']}
 
 // Historical encyclopedia text; later campaign events and health are simulated.
 export const HISTORICAL_BIO={

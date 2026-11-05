@@ -24,4 +24,3 @@ try{
  assert.ok(colors>100,`map area needs geographic detail, got ${colors} colors`);
  assert.deepEqual(errors,[],'uncaught browser errors');console.log(`Screenshot download passed: 1920 × 1080; ${colors} sampled map colors.`);
 }finally{await browser.close()}
-

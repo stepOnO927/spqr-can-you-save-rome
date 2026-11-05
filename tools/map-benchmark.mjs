@@ -59,4 +59,3 @@ try{
  await writeFile('map-benchmark.json',JSON.stringify(report,null,2)+'\n');
  console.log(JSON.stringify(report,null,2));
 }finally{await browser.close()}
-

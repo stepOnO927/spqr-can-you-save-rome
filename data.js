@@ -14,13 +14,11 @@ export const REGIONS = [
   {id:'achaia',name:['Achaia','亚该亚'],x:849,y:493,terrain:'hills',food:4,tax:5,supply:11,loyalty:72,owner:'senate',fort:0,city:'Athenae'},
   {id:'anatolia',name:['Asia Minor','小亚细亚'],x:963,y:337,terrain:'hills',food:6,tax:7,supply:13,loyalty:69,owner:'senate',fort:0,city:'Ephesus'},
   {id:'syria',name:['Syria','叙利亚'],x:1089,y:456,terrain:'desert',food:4,tax:6,supply:9,loyalty:65,owner:'senate',fort:0,city:'Antioch'},
-  {id:'egypt',name:['Alexandrian theater','亚历山大战区'],x:998,y:590,terrain:'desert',food:6,tax:5,supply:14,loyalty:77,owner:'egypt',fort:1,city:'Alexandria'},
-  {id:'egyptUpper',name:['Upper Egyptian theater','上埃及战区'],x:1044,y:631,terrain:'desert',food:3,tax:3,supply:9,loyalty:77,owner:'egypt',fort:0,city:'Thebes'},
+  {id:'egypt',name:['Ptolemaic Egypt','托勒密埃及'],x:998,y:590,terrain:'desert',food:9,tax:8,supply:14,loyalty:77,owner:'egypt',fort:1,city:'Alexandria'},
   {id:'numidia',name:['Numidia','努米底亚'],x:344,y:570,terrain:'plain',food:5,tax:4,supply:11,loyalty:72,owner:'numidia',fort:0,city:'Cirta'},
   {id:'mauretania',name:['Mauretania','毛里塔尼亚'],x:218,y:565,terrain:'hills',food:4,tax:3,supply:10,loyalty:70,owner:'mauretania',fort:0,city:'Iol'},
   {id:'armenia',name:['Armenia','亚美尼亚'],x:1085,y:250,terrain:'hills',food:4,tax:4,supply:10,loyalty:70,owner:'armenia',fort:1,city:'Artaxata'},
-  {id:'parthia',name:['Mesopotamian theater','美索不达米亚战区'],x:1152,y:380,terrain:'desert',food:3,tax:4,supply:11,loyalty:70,owner:'parthia',fort:0,city:'Seleucia'},
-  {id:'media',name:['Median theater','米底亚战区'],x:1180,y:329,terrain:'hills',food:2,tax:2,supply:9,loyalty:70,owner:'parthia',fort:0,city:'Ecbatana'},
+  {id:'parthia',name:['Parthia','帕提亚'],x:1152,y:380,terrain:'desert',food:5,tax:6,supply:11,loyalty:70,owner:'parthia',fort:0,city:'Seleucia'},
   {id:'galatia',name:['Western Galatia','加拉太西部'],x:970,y:290,terrain:'hills',food:4,tax:3,supply:10,loyalty:70,owner:'galatia',fort:0,city:'Gordion area'},
   {id:'bosporus',name:['Cimmerian Bosporus','辛梅里安博斯普鲁斯'],x:1060,y:155,terrain:'plain',food:4,tax:4,supply:10,loyalty:70,owner:'bosporus',fort:0,city:'Panticapaeum'}
 ];
@@ -29,7 +27,7 @@ export const REGIONS = [
 export const ROUTES = [
   ['gaul','narbo'],['narbo','cisalpine'],['narbo','hispaniaN'],['hispaniaN','hispaniaS'],
   ['cisalpine','italiaN'],['italiaN','roma'],['roma','italiaS'],['italiaS','illyricum','sea'],
-  ['illyricum','epirus'],['epirus','achaia'],['anatolia','syria'],['syria','egypt'],['egypt','egyptUpper'],['parthia','media'],
+  ['illyricum','epirus'],['epirus','achaia'],['anatolia','syria'],['syria','egypt'],
   ['italiaS','sicilia','sea'],['sicilia','africa','sea'],['africa','hispaniaS','sea'],
   ['achaia','anatolia','sea'],['italiaS','epirus','sea'],['africa','numidia'],['numidia','mauretania'],['mauretania','hispaniaS','sea'],['anatolia','armenia'],['armenia','parthia'],['parthia','syria'],['anatolia','galatia'],['galatia','armenia'],['anatolia','bosporus','sea']
 ];
@@ -42,8 +40,6 @@ export const FACTIONS = {
   mauretania:{name:['Mauretanian kingdoms','毛里塔尼亚诸王国'],short:['Mauretania','毛里塔尼亚'],color:'#849063',ruler:['Bocchus II and Bogud','博库斯二世与博古德']},
   armenia:{name:['Kingdom of Armenia','亚美尼亚王国'],short:['Armenia','亚美尼亚'],color:'#967d91',ruler:['Artavasdes II','阿尔塔瓦兹德二世']},
   parthia:{name:['Parthian Empire','帕提亚帝国'],short:['Parthia','帕提亚'],color:'#b28560',ruler:['Orodes II','奥罗德二世']},
-  egypt_claimant:{name:['Egyptian claimant command','埃及竞争者军队'],short:['Egyptian claimant','埃及竞争者'],color:'#b49052',ruler:['Contested leadership','争议中的领袖']},
-  parthia_claimant:{name:['Parthian claimant command','帕提亚竞争者军队'],short:['Parthian claimant','帕提亚竞争者'],color:'#a26d57',ruler:['Contested leadership','争议中的领袖']},
   galatia:{name:['Deiotarus’ Galatian realm','代奥塔鲁斯的加拉太领地'],short:['Galatia','加拉太'],color:'#7c8760',ruler:['Deiotarus','代奥塔鲁斯']},
   bosporus:{name:['Bosporan Kingdom','博斯普鲁斯王国'],short:['Bosporus','博斯普鲁斯'],color:'#8b7270',ruler:['Pharnaces II','法尔纳刻斯二世']},
   rebels:{name:['Provincial rebels','行省叛军'],short:['Rebels','叛军'],color:'#8a7365',ruler:['Local leaders','地方首领']}

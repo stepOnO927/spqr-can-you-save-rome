@@ -1,18 +1,34 @@
 # SPQR — Can You Save Rome?
 
-Playable local 49 BCE civil war slice. Requires Node.js 20 or later and a current browser.
+Playable independent 49 BCE civil war grand campaign and persistent Legacy of Rome hub. Requires Node.js 20 or later and a current browser.
 
 ```powershell
 npm start
 ```
 
-Open `http://localhost:5173` for the original campaign or `/map-lab/` for the terrain-map prototype. The original campaign works without network access; the prototype loads MapLibre and geographic tiles over the network. No account is needed. Run `npm test` for the simulation tests.
+Open `http://localhost:5173` for the campaign, `/map-lab/` for the zoomable atlas, or `/legacy/` for the out-of-run city. The campaign and hub work without network access; the atlas loads MapLibre and geographic tiles over the network. No account is needed. Run `npm test` for simulation tests.
 
-The **Terrain Map Lab** and **Return to Campaign** controls transfer the current game between the two views in the same browser tab. The transfer uses temporary session storage and does not overwrite the three save slots. Both views remain available; the prototype is not yet a complete replacement for the original campaign screen. Save separately for longer-term persistence.
+## Phase XV and XVI
+
+The default campaign contains **120 controllable strategic territories**, including 30 in Italy and Sicily. Settlement anchors, operational polygons, graph routes, real leg-by-leg pathfinding, roads, port-only sea crossings, supply connectivity, encirclement attrition, defensive preparation, coordinated flanking, retreats, and territory-level construction are implemented. The old 22-theater campaign can still be loaded; the main menu offers an explicit choice to convert it or continue in legacy mode. Existing characters, diplomacy, intelligence and battle records survive conversion. Run `node tools/grand-browser-smoke.mjs` for the bilingual browser flow and `node tools/phase-xi-atlas-smoke.mjs` for the Senate tutorial, scouting and combat flow. Both Caesar and the Senate pass 36-month simulation checks.
+
+**Legacy of Rome** is a persistent, clickable city outside campaign turns. Laurels are separate from campaign treasury. The Curia has state-changing petitions; the Museum collects illustrated objects; the Archive and Arch preserve victories; the Circus opens a 2D, five-driver, three-lap chariot race. Other city buildings provide drills, records, trade, legal review, intelligence training, learning and an alternate-history scenario. Purchases, cosmetics, achievements, race records, and rewards survive refresh and save loading. Rewards are keyed to campaign/run or minigame completion to prevent duplicate claims. Test an automated three-lap race with `node tools/race-playtest.mjs`.
+
+The entry screen and in-game menu support JSON save upload and download. Older files are preserved; import does not overwrite any local save slot. The atlas also has direct JSON transfer buttons.
+
+## Phase XIV development system
+
+The independent Phase XIV build adds a playable **Development** panel, five-category **National Ideas** panel, province construction, and knowledge trade to both campaign views. Each nation begins with one empty idea slot in each category. Research spends treasury and advances by month; ideas need a separate timed adoption, while material knowledge only unlocks construction. A province project consumes treasury and stone or timber, takes months, checks terrain and modeled metal deposits, and then affects the monthly economy or combat. Category-specific expansion can raise capacity to three slots at an ongoing administrative cost. International purchases take two months to deliver and do not equip or build anything. AI countries research, build, adopt, and seek foreign knowledge when resources allow.
+
+This build includes 29 material innovations, 29 building types, and 15 national ideas. The building families in the directive are represented, including dams, sewers, monuments, barracks, mines, roads, ports and shipyards. Geography checks, resource purchases, maintenance, food storage, seasonal water stress, recruitment, illness risk, siege and movement effects connect them to the simulation. The existing campaign does not yet contain a dedicated religion system or five recruitable Great Figure categories; deeper religious composition, figure assignments, cultural adaptation, and historically sourced pictures for every node remain future work. Bilingual historical notes and source links are included for the implemented nodes. Gameplay values are balance settings, not historical measurements.
+
+Run `node tools/phase-xiv-smoke.mjs` after installing Playwright locally to check the main browser flow. The smoke script serves project files through Playwright route interception, so it does not need a networked dev server; it uses a locally installed Chrome browser.
+
+The **Terrain Map Lab** and **Return to Campaign** controls transfer the current game between the two views in the same browser tab. The transfer uses temporary session storage and does not overwrite the three save slots. Save separately for longer-term persistence.
 
 ## How to play
 
-Select an army marker or open **Military**. Choose **Order march**, then click a connected theater. Use **+1 month** or **Play** to advance the simulation. Legions cost treasury, manpower, and food. Sea routes cost 8 treasury and take longer. Battles use force size, morale, commander rating, experience, supply, terrain, and fortifications. An undefended fort requires a siege. The opposing command moves and recruits under the same rules. High taxation can trigger an armed provincial rebellion. Three local save slots are available.
+Select an army marker or open **Military**. Choose **Order march**, then select a reachable territory. The route advances one connected leg at a time. Use **+1 month** or **Play** to advance the simulation. Legions cost treasury, manpower, and food. Sea routes require ports, cost 8 treasury per leg, and take longer. Battles use force size, morale, commander rating, experience, operational supply, terrain, and fortifications. An undefended fort requires a siege. The opposing command moves and recruits under the same rules. High taxation can trigger an armed provincial rebellion. Three local save slots are available, plus JSON import/export.
 
 Choose **New campaign** to play Caesar or the Senate. Neighboring kingdoms are AI-controlled. Under **Government**, improve relations, form or break alliances, declare war, and offer peace. Allies may join offensive and defensive wars; separate peace retains current territorial control and does not end allies' wars. A stronger opponent may reject peace. AI states consider border access, relative strength, food, finances and stability. Diplomatic choices and combat ratings are gameplay abstractions.
 
@@ -24,7 +40,7 @@ This is a game slice, not the complete game described in the master directive. C
 
 Some simulation theaters share a source polygon. Stripes indicate mixed military control, not a historical frontier; the theater picker identifies individual game areas. Gray Roman territory has no assigned gameplay theater. Starting troop numbers, faction control, income, and ratings are gameplay estimates. The opening puts Pompey in Rome; events are conditional on play.
 
-The map prototype includes historical characters, interpretive portraits, health, succession, espionage, and dated faction-specific intelligence. Letters and audiences can take time, be lost, or receive no useful reply. These are evolving gameplay models, not complete historical reconstructions. Precise province geography, broader AI and diplomacy, and a fully integrated campaign interface remain incomplete. Other era bookmarks and long-term systems such as research and religion are outside the current slice. Older supported saves are upgraded when loaded.
+The atlas includes historical characters, interpretive portraits, health, succession, espionage, and dated faction-specific intelligence. Letters and audiences can take time, be lost, or receive no useful reply. These are evolving gameplay models, not complete historical reconstructions. The 120 territories are operational gameplay cells clipped to historical source outlines, **not** attested ancient administrative provinces. Routes, resources, religion labels and political values remain approximations. The unlockable Rubicon challenge is clearly labeled alternate history; other eras are not simulated as historical campaign starts. Older supported saves can be preserved or converted explicitly.
 
 New campaigns begin with foreign army sightings only in a faction's own theaters or adjacent theaters, including linked sea routes. Later observations update these dated reports; a disappeared or moved army can leave an outdated sighting. This is a coarse gameplay model, not literal visibility or a historical claim. Existing saves retain their accumulated reports.
 
@@ -33,11 +49,12 @@ New campaigns begin with foreign army sightings only in a faction's own theaters
 - `data.js` — theaters, routes, factions, initial armies, sources
 - `historical-territories.js` — dated polity outlines and adapted Roman polygons; see `MAP_SOURCES.md`
 - `engine.js` — pure simulation operations and AI
+- `grand-map-data.js`, `grand-territory-polygons.js`, `grand-operations.js` — expanded geography and operational warfare
 - `app.js` — UI and localization
-- `map-lab/` — terrain-map prototype, character panels and tutorial
+- `map-lab/` — zoomable atlas, character panels and tutorial
+- `legacy/` — persistent city, shop, Curia, Museum and chariot race
 - `view-handoff.js` — temporary campaign transfer between the two views
 - `style.css` — historical atlas style
 - `engine.test.js` — gameplay checks
 
 No commercial game art or maps are copied. The schematic coastline and interface are original.
-

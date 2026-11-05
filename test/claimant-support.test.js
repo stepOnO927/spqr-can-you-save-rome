@@ -31,18 +31,3 @@ test('representatives must be known friendly contacts and can lose their influen
 test('a reported claimant who is missing, incapacitated or traveling cannot reply and no cause is disclosed',()=>{
  for(const change of [c=>c.health='seriously_ill',c=>c.health='dying',c=>c.missing={year:-49,month:1},c=>c.travel={destination:'egypt',legs:[],remaining:1}]){const s=newGame();contestLeadership(s,'egypt','cleopatra');report(s);change(s.world.characters.cleopatra);assert.equal(supportClaimant(s,'caesar','egypt','cleopatra').ok,true);s.world.intelSeed=1000;for(let i=0;i<4;i++)advanceOperations(s);assert.equal(s.operations[0].status,'no_reply');assert.equal(s.world.disputes.egypt.support,undefined);assert.equal(s.knowledge.caesar.egypt.reports.length,1);assert.match(s.log[0].zh,/未收到回信/)}
 });
-
-test('military aid spends resources on dispatch and strengthens an accepted claimant after a delay',()=>{
- let s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');report(s);const f=s.factions.caesar,before={treasury:f.treasury,food:f.food,manpower:f.manpower},relations=s.relations['caesar:egypt']||0;
- assert.equal(supportClaimant(s,'caesar','egypt','cleopatra',null,'military').ok,true);assert.equal(f.treasury,before.treasury-14);assert.equal(f.food,before.food-5);assert.equal(f.manpower,before.manpower-1000);assert.equal(s.operations[0].aid,'military');
- for(let i=0;i<3;i++)advanceOperations(s);assert.equal(s.operations[0].status,'pending');s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.intelSeed=1000;advanceOperations(s);assert.equal(s.operations[0].status,'complete');assert.equal(s.world.disputes.egypt.support.cleopatra,25);assert.equal(s.relations['caesar:egypt'],relations-15);assert.equal(s.knowledge.senate.egypt.reports.length,0);
-});
-test('military aid can fail without exposing a false claimant and checks resources before spending',()=>{
- let s=newGame('caesar');report(s);const before=s.factions.caesar.manpower;assert.equal(supportClaimant(s,'caesar','egypt','cleopatra',null,'military').ok,true);s.world.intelSeed=1000;for(let i=0;i<4;i++)advanceOperations(s);assert.equal(s.operations[0].status,'no_reply');assert.equal(s.world.disputes.egypt,undefined);assert.equal(s.factions.caesar.manpower,before-1000);
- for(const [field,value,reason] of [['treasury',13,'treasury'],['food',4,'food'],['manpower',999,'manpower']]){s=newGame('caesar');report(s);s.factions.caesar[field]=value;const snapshot=JSON.stringify(s.factions.caesar);assert.equal(supportClaimant(s,'caesar','egypt','cleopatra',null,'military').reason,reason);assert.equal(JSON.stringify(s.factions.caesar),snapshot);assert.equal(s.operations.length,0)}
-});
-test('accepted military backing can change a court struggle without guaranteeing victory',()=>{
- const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.4&&q<.41});
- function trial(aid){const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');report(s);supportClaimant(s,'caesar','egypt','cleopatra',null,aid);s.world.intelSeed=1000;for(let i=0;i<4;i++)advanceOperations(s);s.factions.egypt.stability=30;s.world.disputes.egypt.months=5;s.world.intelSeed=seed;advanceDisputes(s);return s}
- assert.deepEqual(trial('political').world.leadership.egypt,['ptolemy']);assert.deepEqual(trial('military').world.leadership.egypt,['cleopatra']);
-});

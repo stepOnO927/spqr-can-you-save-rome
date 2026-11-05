@@ -23,4 +23,3 @@ for(const f of selected.filter(f=>names[f.properties.Name]))territory.push({id:n
 const output={type:'FeatureCollection',features:territory.map(t=>({type:'Feature',properties:{id:t.id,regions:t.regions,source:t.source,period:t.period||null,name:t.name||null},geometry:t.geometry}))};
 fs.writeFileSync(process.argv[4] || 'historical-territories.js','export default '+JSON.stringify(output,(k,v)=>typeof v==='number'?Number(v.toFixed(4)):v)+';');
 console.log('Territories:',territory.map(t=>`${t.id}:${t.regions.join(',')}`).join(' | '));
-

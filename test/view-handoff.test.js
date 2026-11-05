@@ -33,4 +33,3 @@ test('invalid transfers are not consumed and storage failures do not appear succ
   assert.equal(receiveHandoff(storage,'atlas',upgradeSave),null);
   assert.throws(()=>stageHandoff({setItem(){throw Error('storage blocked')}},newGame(),'atlas'),/storage blocked/);
 });
-

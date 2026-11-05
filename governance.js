@@ -1,26 +1,15 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=10';
-import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange} from './characters.js?v=18';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=7';
+import {initializeWorld,successorFor,CHARACTER_CATALOG} from './characters.js?v=15';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
-// Sixteen is a simulation threshold, not a historical claim about when a
-// particular court recognized majority. Uncertain ages are not forced into it.
-const definitelyMinor=(s,faction,id)=>{const age=ageRange(id,s.year);return !roman(faction)&&age!==null&&age[1]<16};
-// A deputy must be reachable in a controlled theater. A location stored on a
-// marching army is its last theater, not the person's present location.
-export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>{
- const person=s.world.characters[id],army=s.armies.find(a=>a.characterId===id),location=army?.region??person?.location;
- return !unable(person)&&!definitelyMinor(s,faction,id)&&!person.travel&&
-  s.regions.some(r=>r.id===location&&r.owner===faction)&&
-  !s.armies.some(a=>a.characterId===id&&a.move)&&
-  !(s.world.claimants?.[faction]||[]).includes(id);
-});
+export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>!unable(s.world.characters[id])&&!s.world.characters[id].travel&&!(s.world.claimants?.[faction]||[]).includes(id));
 
 // This describes the simulated arrangement, not a historical medical or constitutional claim.
 export function deriveGovernment(s,faction){
  initializeWorld(s);const nominal=(s.world.leadership[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
  if(!nominal.length)return {kind:'vacant',nominal:[],acting:[]};
- const capable=nominal.filter(id=>!unable(s.world.characters[id])&&!definitelyMinor(s,faction,id));
+ const capable=nominal.filter(id=>!unable(s.world.characters[id]));
  // The campaign groups two independent Mauretanian kingdoms under one map
  // faction. A surviving king does not automatically inherit the other realm.
  if(faction==='mauretania'&&['bocchus','bogud'].some(id=>!nominal.includes(id)))return {kind:'constituent_vacant',nominal,acting:capable};
@@ -75,7 +64,7 @@ export function advanceGovernments(s){
   }
   if(faction===s.player&&(before.kind!==after.kind||before.acting.join(':')!==after.acting.join(':'))){
    const name=after.acting.map(id=>CHARACTER_CATALOG[id]?.name).filter(Boolean),en=name.map(x=>x[0]).join(', ')||'an unnamed authority',zh=name.map(x=>x[1]).join('、')||'未具名临时官员';
-   const text=after.kind==='normal'?['The normal leadership arrangement resumed.','正常领导安排已恢复。']:after.kind==='vacant'?['Leadership is vacant; an unnamed authority administers the government.','领导职位空缺，由未具名临时官员维持政府运作。']:after.kind==='constituent_vacant'?['One Mauretanian kingdom has no named ruler; an unnamed authority administers it. The other kingdom remains separate.','一个毛里塔尼亚王国没有具名统治者，由未具名官员维持政务；另一个王国仍然独立。']:after.kind==='constituent_unavailable'?['One Mauretanian ruler is unable to govern; the separate kingdoms remain distinct.','一位毛里塔尼亚统治者无法履职；两个王国仍各自独立。']:after.kind==='co_ruler_acting'?[`${en} exercises authority while the other co-ruler requires assistance.`,`${zh}在另一位共同统治者需要辅政时行使政务。`]:after.kind==='acting_command'?[`${en} temporarily assumes the political command.`,`${zh}暂时代行政治指挥职责。`]:[`${en} exercises temporary authority while the ruler requires assistance.`,`${zh}在统治者需要辅政时暂时代行政务。`];
+   const text=after.kind==='normal'?['The normal leadership arrangement resumed.','正常领导安排已恢复。']:after.kind==='vacant'?['Leadership is vacant; an unnamed authority administers the government.','领导职位空缺，由未具名临时官员维持政府运作。']:after.kind==='constituent_vacant'?['One Mauretanian kingdom has no named ruler; an unnamed authority administers it. The other kingdom remains separate.','一个毛里塔尼亚王国没有具名统治者，由未具名官员维持政务；另一个王国仍然独立。']:after.kind==='constituent_unavailable'?['One Mauretanian ruler is unable to govern; the separate kingdoms remain distinct.','一位毛里塔尼亚统治者无法履职；两个王国仍各自独立。']:after.kind==='co_ruler_acting'?[`${en} assumes the duties of an incapacitated co-ruler.`,`${zh}代行无法履职的共同统治者职责。`]:after.kind==='acting_command'?[`${en} temporarily assumes the political command.`,`${zh}暂时代行政治指挥职责。`]:[`${en} exercises temporary authority during the ruler’s incapacity.`,`${zh}在统治者无法履职期间暂时代行政务。`];
    s.log.unshift({year:s.year,month:s.month,en:text[0],zh:text[1]});s.log=s.log.slice(0,80);
   }
   if(after.kind!=='normal'&&s.month%3===0)s.factions[faction].stability=Math.max(0,s.factions[faction].stability-1);

@@ -138,20 +138,11 @@ test('an envoy audience yields limited dated observations only to its sender',()
  for(let i=0;i<plan.duration;i++)advanceOperations(s);
  assert.equal(s.operations[0].status,'complete');const reports=s.knowledge.senate.egypt.reports;
  assert.equal(reports.find(r=>r.kind==='health').value,'unknown');
- assert.deepEqual(reports.find(r=>r.kind==='age').value,[10,30]);
+ assert.deepEqual(reports.find(r=>r.kind==='age').value,ageRange('cleopatra',s.year));
  assert.ok(reports.every(r=>!r.verified&&r.source==='audience'));assert.equal(s.knowledge.caesar.egypt.reports.length,0);
  const hidden=newGame('senate');hidden.world.characters.cleopatra.health='dying';hidden.world.characters.ptolemy.health='seriously_ill';
  const second=queueMission(hidden,'senate','egypt','audience','leaders');hidden.world.intelSeed=1000;for(let i=0;i<second.duration;i++)advanceOperations(hidden);
  assert.ok(hidden.knowledge.senate.egypt.reports.every(r=>r.kind==='leaders'));
-});
-test('an envoy cannot personally observe a ruler outside the receiving court',()=>{
- const s=newGame('senate');s.world.characters.cleopatra.location='parthia';s.world.characters.ptolemy.location='parthia';
- const plan=queueMission(s,'senate','egypt','audience','leaders');s.world.intelSeed=1000;
- for(let i=0;i<plan.duration;i++)advanceOperations(s);
- assert.equal(s.operations[0].status,'complete');assert.equal(s.operations[0].meeting,'envoy');
- assert.ok(s.knowledge.senate.egypt.reports.some(r=>r.kind==='leaders'));
- assert.ok(s.knowledge.senate.egypt.reports.every(r=>r.kind!=='age'&&r.kind!=='health'));
- assert.equal(s.knowledge.caesar.egypt.reports.length,0);
 });
 test('age estimates from different dates are not treated as contradictory current claims',()=>{
  const s=newGame();addReport(s,'caesar','egypt',{kind:'age',character:'cleopatra',value:[19,21],source:'audience',confidence:'unverified'});

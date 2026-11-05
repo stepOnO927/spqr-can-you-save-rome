@@ -1,0 +1,52 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {newGame,army,region,resolveBattle,moveArmy,diplomacy,tick,recruit,previewMarch} from '../engine.js';
+import {recordMovement,eventText,recordEvent} from '../campaign-reports.js';
+import {chronicleHtml,battleReportHtml,eventDate} from '../reports-ui.js';
+import {requestReinforcements,probePositions} from '../reconnaissance.js';
+
+test('a defeated besieger cannot take a theater remotely',()=>{
+ const s=newGame('caesar'),besieger=army(s,'xiii'),defender=army(s,'pompey'),rome=region(s,'roma');
+ besieger.region='roma';besieger.siege={region:'roma',remaining:1};besieger.men=1000;defender.region='roma';defender.men=20000;
+ resolveBattle(s,defender,besieger,rome);
+ assert.equal(besieger.siege,null);tick(s);assert.equal(rome.owner,'senate');
+});
+test('a token force cannot occupy an undefended enemy theater',()=>{
+ const s=newGame('caesar'),unit=army(s,'xiii');unit.men=1;s.armies=s.armies.filter(a=>a.id!=='italy');
+ assert.equal(moveArmy(s,'xiii','italiaN').ok,true);tick(s);
+ assert.equal(region(s,'italiaN').owner,'senate');assert.equal(unit.region,'cisalpine');
+});
+test('peace withdraws besieging units from the former enemy theater',()=>{
+ const s=newGame('caesar'),unit=army(s,'xiii');unit.region='roma';unit.siege={region:'roma',remaining:1};s.factions.senate.stability=20;
+ assert.equal(diplomacy(s,'caesar','senate','peace'),true);
+ assert.equal(region(s,unit.region).owner,'caesar');assert.equal(unit.siege,null);
+ assert.ok(previewMarch(s,'xiii',s.armies.find(a=>a.id==='xiii').region==='cisalpine'?'gaul':'cisalpine').ok||unit.region==='cisalpine');
+});
+test('alliance war reaching player is recorded and notified',()=>{
+ const s=newGame('caesar');s.alliances.push(['caesar','numidia']);const before=s.notifications.length;
+ assert.equal(diplomacy(s,'parthia','numidia','war'),true);
+ assert.ok(s.notifications.length>before);assert.ok(s.campaignEvents.some(e=>e.type==='diplomacy'&&e.affectedFactionIds?.includes('caesar')&&e.affectedFactionIds?.includes('parthia')));
+});
+test('Senate victory and calendar crossing have valid outcomes',()=>{
+ const s=newGame('senate');for(const r of s.regions)if(r.owner==='caesar')r.owner='senate';s.armies=s.armies.filter(a=>a.owner!=='caesar');tick(s);assert.equal(s.victory,true);
+ s.year=-1;s.month=12;tick(s);assert.equal(s.year,1);assert.match(eventDate({year:s.year,month:s.month},'en'),/CE/);
+});
+test('objectives and monthly briefing include recruitment before the tick',()=>{
+ const s=newGame('caesar');s.armies=s.armies.filter(a=>a.owner!=='caesar');s.objectiveProgress.field.status='lost';
+ const before=s.factions.caesar.treasury;assert.equal(recruit(s,'cisalpine'),true);assert.equal(s.objectiveProgress.field.status,'completed');
+ tick(s);assert.equal(s.briefings[0].delta.treasury,s.factions.caesar.treasury-before);assert.ok(s.briefings[0].eventIds.some(id=>s.campaignEvents.find(e=>e.id===id)?.type==='recruitment'));
+});
+test('chronicle includes intelligence target and snapshots historical army and battle labels',()=>{
+ const s=newGame('caesar'),unit=army(s,'xiii');recordEvent(s,{type:'intelligence',category:'intelligence',factionId:'caesar',targetFactionId:'egypt'});
+ assert.match(chronicleHtml(s,'en',{faction:'egypt'}),/Egypt/);
+ unit.region='italiaN';const movement=recordMovement(s,unit,'cisalpine');const name=unit.name[0];s.armies=s.armies.filter(a=>a.id!=='xiii');assert.match(eventText(s,movement,'en').title,new RegExp(name));
+ const t=newGame('caesar'),a=army(t,'xiii'),d=army(t,'italy');resolveBattle(t,a,d,region(t,'italiaN'));const battle=t.battles[0];delete battle.ownerAfter;region(t,'italiaN').owner='egypt';
+ assert.match(battleReportHtml(t,battle,'en'),/Controller after battle: —/);
+});
+test('reinforcements join the selected army after a month and a detected probe changes AI posture',()=>{
+ const s=newGame('senate'),unit=army(s,'italy'),men=unit.men;
+ assert.equal(requestReinforcements(s,unit.id).ok,true);assert.equal(unit.men,men);assert.equal(moveArmy(s,unit.id,'cisalpine').ok,false);tick(s);assert.equal(unit.men,men+3000);
+ const p=newGame('senate');let result;for(let seed=1;seed<100;seed++){p.seed=seed;result=probePositions(p,'italy','cisalpine');if(result.enemyDetected)break;p.armies.find(a=>a.id==='italy').reconPending=null}
+ assert.equal(result.enemyDetected,true);assert.ok(result.report);const before=p.armies.filter(a=>a.owner==='caesar'&&a.region==='cisalpine').length;tick(p);
+ assert.ok(p.armies.filter(a=>a.owner==='caesar'&&a.region==='cisalpine').length>before);
+});
