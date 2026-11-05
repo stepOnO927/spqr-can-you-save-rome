@@ -1,21 +1,21 @@
 import {renderLocalGovernor} from './local-governor-ui.js?v=2';
-import {renderSecurity} from './security-ui.js?v=22';
+import {renderSecurity} from './security-ui.js?v=23';
 import {renderOffices} from './offices-ui.js?v=6';
 import {officeEffects} from '../office-system.js?v=6';
 import {waitForMapIdle} from './capture-wait.js?v=1';
 import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=1';
-import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=26';
+import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=27';
 import historical from '../historical-territories.js';
 import republicanRoads from '../republican-roads.js?v=1';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=78';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=79';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=15';
-import {createCharacterUI} from './character-ui.js?v=77';
-import {reportedArmies} from '../character-system.js?v=55';
+import {createCharacterUI} from './character-ui.js?v=78';
+import {reportedArmies} from '../character-system.js?v=56';
 import {createTutorial} from './tutorial.js?v=6';
-import {friendlyPersonnelInTheater} from './personnel.js?v=1';
+import {friendlyPersonnelInTheater} from './personnel.js?v=2';
 import {leadershipIntelligence} from './intelligence-summary.js?v=2';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=9';
 

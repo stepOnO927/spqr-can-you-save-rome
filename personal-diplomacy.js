@@ -1,9 +1,11 @@
 import {initializeWorld, CHARACTER_CATALOG, ageRange} from './characters.js?v=15';
 import {ROUTES} from './data.js?v=9';
-import {addReport,reportedHealthSubjects} from './character-system.js?v=55';
+import {addReport,reportedHealthSubjects} from './character-system.js?v=56';
 import {officeOf} from './office-system.js?v=6';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
+// A commander in transit has not arrived in a theater where an audience can occur.
+const commandingMarch=(s,id)=>s.armies.some(a=>a.characterId===id&&a.move);
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
 
@@ -39,7 +41,7 @@ export function requestPersonalMeeting(s,id,target,targetFaction){
  // The recipient's actual allegiance is checked only when the request resolves.
  const reported=Object.keys(s.factions).filter(f=>f!==s.player&&reportedHealthSubjects(s,s.player,f).includes(target));
  const court=targetFaction??(reported.length===1?reported[0]:null);
- if(!c||c.faction!==s.player||!c.alive||c.missing||!c.location||c.travel||['seriously_ill','dying','deceased'].includes(c.health)||!CHARACTER_CATALOG[target]||!court||!reported.includes(court))return {ok:false,reason:'unavailable'};
+ if(!c||c.faction!==s.player||!c.alive||c.missing||!c.location||c.travel||commandingMarch(s,id)||['seriously_ill','dying','deceased'].includes(c.health)||!CHARACTER_CATALOG[target]||!court||!reported.includes(court))return {ok:false,reason:'unavailable'};
  if(s.meetings.some(m=>m.person===id&&m.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[s.player].treasury<3)return {ok:false,reason:'treasury'};
  s.factions[s.player].treasury-=3;s.meetings.unshift({actor:s.player,person:id,target,targetFaction:court,location:c.location,status:'pending',remaining:2,year:s.year,month:s.month});return {ok:true};
 }
@@ -48,7 +50,7 @@ export function advancePersonalDiplomacy(s){
  for(const m of s.meetings){
   if(m.status!=='pending'||--m.remaining>0)continue;
   const a=s.world.characters[m.person],b=s.world.characters[m.target],q=random(s),personKey=[m.person,m.target].sort().join(':'),factionKey=[m.actor,m.targetFaction].sort().join(':'),trust=s.world.personalRelations[personKey]?.trust||0,relations=s.relations[factionKey]||0,declineLimit=Math.max(.25,Math.min(.7,.45-trust*.002-relations*.001));
-  if(!a?.alive||a.missing||a.faction!==m.actor||a.travel||a.location!==m.location||['seriously_ill','dying','deceased'].includes(a.health)||!b?.alive||b.missing||b.faction!==m.targetFaction||b.travel||b.location!==m.location||atWar(s,m.actor,m.targetFaction))m.status='no_contact';
+  if(!a?.alive||a.missing||a.faction!==m.actor||a.travel||commandingMarch(s,m.person)||a.location!==m.location||['seriously_ill','dying','deceased'].includes(a.health)||!b?.alive||b.missing||b.faction!==m.targetFaction||b.travel||commandingMarch(s,m.target)||b.location!==m.location||atWar(s,m.actor,m.targetFaction))m.status='no_contact';
   else if(q<.2)m.status='no_reply';
   else if(q<declineLimit||['seriously_ill','dying','deceased'].includes(b.health))m.status='declined';
   else{m.status='met';const rel=s.world.personalRelations[personKey]||{trust:0,meetings:0};rel.trust=Math.min(100,rel.trust+5);rel.meetings++;rel.lastYear=s.year;rel.lastMonth=s.month;s.world.personalRelations[personKey]=rel;s.relations[factionKey]=Math.min(100,relations+3);const age=ageRange(m.target,s.year);if(age)addReport(s,m.actor,m.targetFaction,{kind:'age',character:m.target,value:age,source:'meeting',confidence:'unverified',reliability:'low'});addReport(s,m.actor,m.targetFaction,{kind:'health',character:m.target,value:b.health==='wounded'?'wounded':'unknown',source:'meeting',confidence:'unverified',reliability:'low'})}

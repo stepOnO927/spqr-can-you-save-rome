@@ -230,3 +230,8 @@ test('completed mission records show the resolution date without hidden reasons'
  const prior=globalThis.document,s=newGame('senate'),content=new Element();s.operations.push({actor:'senate',target:'egypt',type:'spy',status:'failed',resolvedYear:-49,resolvedMonth:4});globalThis.document={createElement:tag=>new Element(tag)};
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,/间谍 · 失败 · 结束 4\/49 BCE/);assert.doesNotMatch(html,/宫廷已不存在/)}finally{globalThis.document=prior}
 });
+
+test('a friendly commander in transit is shown marching rather than present in the origin theater',()=>{
+ const prior=globalThis.document,panel=new Element(),s=newGame('senate'),unit=s.armies.find(a=>a.characterId==='pompey');unit.move={to:'italiaS',remaining:2};globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).show('pompey');assert.match(panel.innerHTML,/所在战区<\/span><b>随军行军中<\/b>/)}finally{globalThis.document=prior}
+});

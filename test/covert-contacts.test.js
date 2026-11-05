@@ -69,3 +69,8 @@ test('Parthian contact reports can be mistaken or unknown without revealing an a
 test('Roman AI investigates Parthian claimants rather than reading the court directly',()=>{
  const s=newGame('caesar');s.month=8;s.factions.senate.treasury=100;tick(s);const op=s.operations.find(o=>o.actor==='senate'&&o.target==='parthia'&&o.type==='spy'&&o.subject==='claimants');assert.equal(op?.status,'pending');assert.equal(s.knowledge.senate.parthia.reports.length,0);
 });
+
+test('an envoy cannot personally observe a leader who is marching with an army',()=>{
+ const s=newGame('senate'),unit=s.armies.find(a=>a.characterId==='caesar');unit.move={to:'italiaN',remaining:2};const plan=queueMission(s,'senate','caesar','audience','leaders');assert.equal(plan.ok,true);s.world.intelSeed=seedFor(.7,.8);for(let i=0;i<plan.duration;i++)advanceOperations(s);
+ assert.equal(s.operations[0].status,'complete');assert.ok(s.knowledge.senate.caesar.reports.some(r=>r.kind==='leaders'));assert.equal(s.knowledge.senate.caesar.reports.some(r=>r.kind==='health'||r.kind==='age'),false);
+});
