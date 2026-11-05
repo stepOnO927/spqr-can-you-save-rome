@@ -1,4 +1,4 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=74';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=75';
 import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=21';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=11';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=18';
