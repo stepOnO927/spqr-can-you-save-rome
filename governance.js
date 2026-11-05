@@ -9,9 +9,9 @@ const definitelyMinor=(s,faction,id)=>{const age=ageRange(id,s.year);return !rom
 // A deputy must be reachable in a controlled theater. A location stored on a
 // marching army is its last theater, not the person's present location.
 export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>{
- const person=s.world.characters[id];
+ const person=s.world.characters[id],army=s.armies.find(a=>a.characterId===id),location=army?.region??person?.location;
  return !unable(person)&&!definitelyMinor(s,faction,id)&&!person.travel&&
-  s.regions.some(r=>r.id===person.location&&r.owner===faction)&&
+  s.regions.some(r=>r.id===location&&r.owner===faction)&&
   !s.armies.some(a=>a.characterId===id&&a.move)&&
   !(s.world.claimants?.[faction]||[]).includes(id);
 });
