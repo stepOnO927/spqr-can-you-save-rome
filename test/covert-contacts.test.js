@@ -50,3 +50,22 @@ test('allied exchanges request a reported person without disclosing the ally’s
  assert.equal(queueMission(t,'senate','egypt','exchange','age','parthia','ptolemy').ok,true);for(let i=0;i<3;i++)advanceOperations(t);assert.equal(t.operations[0].status,'failed');assert.equal(t.knowledge.senate.egypt.reports.length,0);
  const u=newGame('senate');u.alliances.push(['senate','parthia']);u.knowledge.senate.egypt.reportedLeaders=['cleopatra'];assert.equal(queueMission(u,'senate','egypt','exchange','health','parthia','ptolemy').reason,'identity');assert.equal(u.operations.length,0);
 });
+
+test('Parthian claimant contacts require delayed investigation and stay private to the observer',()=>{
+ let s=newGame('senate');s.world.characters.pacorus.loyalty=20;contestLeadership(s,'parthia','pacorus');addReport(s,'caesar','parthia',{kind:'claimants',leaders:['pacorus'],source:'spy',confidence:'unverified'});
+ assert.equal(supportClaimant(s,'caesar','parthia','pacorus').ok,true);s.world.intelSeed=seedFor(.7,.8);for(let i=0;i<4;i++)advanceOperations(s);assert.equal(s.operations[0].status,'complete');assert.equal(s.knowledge.senate.parthia.reports.length,0);
+ assert.equal(queueMission(s,'senate','parthia','spy','contacts').ok,true);for(let i=0;i<3;i++)advanceOperations(s);assert.equal(s.knowledge.senate.parthia.reports.length,0);s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.intelSeed=seedFor(.7,.8);advanceOperations(s);
+ const r=s.knowledge.senate.parthia.reports[0];assert.equal(r.value,'caesar');assert.equal(r.verified,false);assert.equal(r.confidence,'unverified');assert.equal(s.knowledge.egypt.parthia.reports.length,0);assert.equal(queueMission(s,'senate','parthia','envoy','contacts').reason,'subject');
+});
+test('Roman AI may support a reported Parthian claimant but not a hidden one',()=>{
+ function trial(informed){const s=newGame('caesar');s.month=11;s.factions.senate.treasury=100;s.world.characters.pacorus.loyalty=20;contestLeadership(s,'parthia','pacorus');if(informed)addReport(s,'senate','parthia',{kind:'claimants',leaders:['pacorus'],source:'spy',confidence:'unverified'});tick(s);return s}
+ assert.equal(trial(false).operations.some(o=>o.actor==='senate'&&o.target==='parthia'&&o.type==='support'),false);const s=trial(true),offer=s.operations.find(o=>o.actor==='senate'&&o.target==='parthia'&&o.type==='support');assert.equal(offer?.claimant,'pacorus');assert.equal(offer.status,'pending');assert.equal(s.knowledge.caesar.parthia.reports.length,0);
+});
+
+test('Parthian contact reports can be mistaken or unknown without revealing an actual offer',()=>{
+ const s=newGame('senate');s.world.characters.pacorus.loyalty=20;contestLeadership(s,'parthia','pacorus');assert.equal(queueMission(s,'senate','parthia','spy','contacts').ok,true);s.world.intelSeed=seedFor(.4,.44);for(let i=0;i<4;i++)advanceOperations(s);assert.equal(s.knowledge.senate.parthia.reports[0].value,'caesar');assert.equal(s.operations.some(o=>o.type==='support'),false);
+ const t=newGame('senate');assert.equal(queueMission(t,'senate','parthia','spy','contacts').ok,true);t.world.intelSeed=seedFor(.7,.8);for(let i=0;i<4;i++)advanceOperations(t);assert.equal(t.knowledge.senate.parthia.reports[0].value,'unknown');
+});
+test('Roman AI investigates Parthian claimants rather than reading the court directly',()=>{
+ const s=newGame('caesar');s.month=8;s.factions.senate.treasury=100;tick(s);const op=s.operations.find(o=>o.actor==='senate'&&o.target==='parthia'&&o.type==='spy'&&o.subject==='claimants');assert.equal(op?.status,'pending');assert.equal(s.knowledge.senate.parthia.reports.length,0);
+});
