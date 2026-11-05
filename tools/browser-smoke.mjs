@@ -52,7 +52,8 @@ try{
  assert.match(await page.locator('#command-detail').innerText(),/个人信任 · 格奈乌斯·庞培: 5/);assert.match(await page.locator('#command-detail').innerText(),/游戏战伤次数/);assert.match(await page.locator('#command-detail').innerText(),/65 \/ 100/);
  await page.locator('#person-destination').selectOption('epirus');assert.match(await page.locator('#command-detail').innerText(),/路线根据已有控制报告规划/);await page.locator('#person-travel').click();
  await page.locator('#person-travel-feedback button').click();
- assert.match(await page.locator('#command-detail').innerText(),/正在旅行/);
+ assert.match(await page.locator('#command-detail').innerText(),/正在旅行/);assert.match(await page.locator('#command-detail').innerText(),/旅途中；最后记录战区：拉丁姆/);
+ await page.locator('#person-halt').click();assert.match(await page.locator('#command-detail').innerText(),/已下令抵达下一战区后停下/);assert.match(await page.locator('#command-detail').innerText(),/已付旅费不退还/);await page.locator('#person-halt').click();assert.match(await page.locator('#command-detail').innerText(),/行程按原计划继续/);
  await page.locator('[data-city="ROMA"]').click({force:true});await page.locator('#city-region').click();await page.locator('#recruit-region').click();
  await page.locator('[data-army="levy1"]').click({force:true});await page.locator('#commander-choice').selectOption('cato');await page.locator('#commander-appoint').click();
  await page.locator('#commander-feedback button').click();assert.match(await page.locator('#selection-detail').innerText(),/小加图/);
