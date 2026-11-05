@@ -225,3 +225,8 @@ test('Parthian intelligence offers covert contact investigations in both languag
  const prior=globalThis.document,s=newGame('senate');globalThis.document={createElement:tag=>new Element(tag)};
  try{for(const language of ['en','zh']){const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'parthia');assert.match(content.children[0].innerHTML,/value="contacts"/);assert.match(content.children[0].innerHTML,language==='zh'?/埃及或帕提亚竞争者/:/Egyptian or Parthian claimant/)}}finally{globalThis.document=prior}
 });
+
+test('completed mission records show the resolution date without hidden reasons',()=>{
+ const prior=globalThis.document,s=newGame('senate'),content=new Element();s.operations.push({actor:'senate',target:'egypt',type:'spy',status:'failed',resolvedYear:-49,resolvedMonth:4});globalThis.document={createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,/间谍 · 失败 · 结束 4\/49 BCE/);assert.doesNotMatch(html,/宫廷已不存在/)}finally{globalThis.document=prior}
+});
