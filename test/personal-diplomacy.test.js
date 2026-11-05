@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick,diplomacy} from '../engine.js';
-import {previewPersonTravel,startPersonTravel,requestPersonalMeeting,advancePersonalDiplomacy,personalDiplomaticCredit} from '../personal-diplomacy.js';
+import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,advancePersonalDiplomacy,personalDiplomaticCredit} from '../personal-diplomacy.js';
 import {addReport,contestLeadership} from '../character-system.js';
 
 test('a claimant can be contacted only after a report, and the request does not reveal hidden court status',()=>{
@@ -30,6 +30,22 @@ test('meeting requests follow the reported court, not hidden allegiance or histo
 
 test('civilian journeys cost resources, take time, and survive a save',()=>{
  let s=newGame('senate');const p=previewPersonTravel(s,'cicero','epirus');assert.equal(p.ok,true);assert.ok(p.months>1);const treasury=s.factions.senate.treasury;assert.equal(startPersonTravel(s,'cicero','epirus').ok,true);assert.equal(s.factions.senate.treasury,treasury-p.cost);assert.equal(s.world.characters.cicero.location,'roma');s=upgradeSave(JSON.parse(JSON.stringify(s)));for(let i=0;i<p.months-1;i++)advancePersonalDiplomacy(s);assert.notEqual(s.world.characters.cicero.location,'epirus');advancePersonalDiplomacy(s);assert.equal(s.world.characters.cicero.location,'epirus');assert.equal(s.world.characters.cicero.travel,undefined);
+});
+test('a traveler can be ordered to stop at the next theater without teleporting or a refund',()=>{
+ let s=newGame('senate');const plan=startPersonTravel(s,'cicero','epirus');assert.equal(plan.ok,true);assert.ok(plan.legs.length>1);
+ const origin=s.world.characters.cicero.location,treasury=s.factions.senate.treasury;
+ assert.equal(setJourneyHalt(s,'cicero',true).ok,true);assert.equal(s.world.characters.cicero.location,origin);assert.equal(s.factions.senate.treasury,treasury);
+ assert.equal(setJourneyHalt(s,'cicero',true).reason,'unchanged');assert.equal(setJourneyHalt(s,'cicero',false).ok,true);assert.equal(setJourneyHalt(s,'cicero',true).ok,true);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));for(let i=0;i<plan.legs[0].months-1;i++)advancePersonalDiplomacy(s);
+ assert.equal(s.world.characters.cicero.location,origin);assert.equal(s.world.characters.cicero.travel.haltAfterLeg,true);
+ advancePersonalDiplomacy(s);assert.equal(s.world.characters.cicero.location,plan.legs[0].to);assert.equal(s.world.characters.cicero.travel,undefined);assert.equal(s.factions.senate.treasury,treasury);assert.match(s.log[0].zh,/按命令.*停下/);
+ assert.equal(setJourneyHalt(s,'cicero',true).reason,'unavailable');
+});
+test('a stop order cannot reveal or bypass hostile control at the next theater',()=>{
+ const s=newGame('senate'),plan=startPersonTravel(s,'cicero','epirus');assert.equal(setJourneyHalt(s,'cicero',true).ok,true);s.regions.find(r=>r.id===plan.legs[0].to).owner='caesar';
+ for(let i=0;i<plan.legs[0].months;i++)advancePersonalDiplomacy(s);
+ assert.equal(s.world.characters.cicero.location,'roma');assert.equal(s.world.characters.cicero.travel,undefined);assert.match(s.log[0].zh,/无法安全进入/);
+ const other=newGame('senate');other.world.characters.cleopatra.travel={legs:[{to:'syria',months:2},{to:'media',months:1}],remaining:2};assert.equal(setJourneyHalt(other,'cleopatra',true).reason,'unavailable');
 });
 test('journeys stop when a route becomes hostile; commanders cannot abandon an army',()=>{
  const s=newGame('senate');assert.equal(previewPersonTravel(s,'pompey','italiaS').ok,false);assert.equal(startPersonTravel(s,'cicero','epirus').ok,true);s.regions.find(r=>r.id==='italiaS').owner='caesar';advancePersonalDiplomacy(s);assert.equal(s.world.characters.cicero.location,'roma');assert.ok(s.world.characters.cicero.travel);advancePersonalDiplomacy(s);assert.equal(s.world.characters.cicero.location,'roma');assert.equal(s.world.characters.cicero.travel,undefined);

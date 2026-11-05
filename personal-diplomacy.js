@@ -36,6 +36,17 @@ export function previewPersonTravel(s,id,destination){
  if(!paths[destination])return {ok:false,reason:'route'};const legs=paths[destination],cost=3+legs.filter(x=>x.sea).length*8;if(s.factions[owner].treasury<cost)return {ok:false,reason:'treasury'};return {ok:true,legs,months:distances[destination],cost};
 }
 export function startPersonTravel(s,id,destination){const p=previewPersonTravel(s,id,destination);if(!p.ok)return p;s.factions[s.player].treasury-=p.cost;s.world.characters[id].travel={destination,legs:p.legs,remaining:p.legs[0].months};return p}
+// An order cannot teleport a traveler back to the last recorded theater. They
+// finish the current leg, then halt, unless its controller prevents entry.
+export function setJourneyHalt(s,id,halt){
+ initializeWorld(s);const c=s.world.characters[id],t=c?.travel;
+ if(!c||c.faction!==s.player||!c.alive||c.missing||['seriously_ill','dying','deceased'].includes(c.health)||!t||!Array.isArray(t.legs)||t.legs.length<2||typeof halt!=='boolean')return {ok:false,reason:'unavailable'};
+ if(!!t.haltAfterLeg===halt)return {ok:false,reason:'unchanged'};
+ t.haltAfterLeg=halt;
+ const name=CHARACTER_CATALOG[id]?.name||['A person','一位人物'];
+ log(s,halt?`${name[0]} was ordered to stop after the current leg; travel costs are not refunded.`:`${name[0]}'s stop order was withdrawn; the original journey continues.`,halt?`已命${name[1]}完成当前路段后停下；旅费不予退还。`:`已撤回${name[1]}的停下命令，原行程继续。`);
+ return {ok:true};
+}
 export function requestPersonalMeeting(s,id,target,targetFaction){
  initializeWorld(s);const c=s.world.characters[id];
  // Address reported leaders or claimants, even when those reports are stale or wrong.
@@ -55,7 +66,7 @@ function interruptJourney(s,c){
  else log(s,`${name[0]}'s journey was interrupted by serious illness; the last recorded theater does not establish their exact location.`,`${name[1]}因重病中止行程；最后记录的战区不代表其确切位置。`);
 }
 export function advancePersonalDiplomacy(s){
- initializeWorld(s);for(const c of Object.values(s.world.characters)){const t=c.travel;if(!t)continue;if(!c.alive||c.missing||['seriously_ill','dying','deceased'].includes(c.health)){interruptJourney(s,c);continue}const next=t.legs[0],r=s.regions.find(x=>x.id===next?.to);if(!r){delete c.travel;continue}if(--t.remaining>0)continue;observeArrival(s,c.faction,next.to);if(atWar(s,c.faction,r.owner)){delete c.travel;if(c.faction===s.player)log(s,'A personal journey stopped on arrival: entry is no longer safe.','人物抵达途中核实了战区控制；因无法安全进入而中止行程。');continue}c.location=next.to;t.legs.shift();if(t.legs.length)t.remaining=t.legs[0].months;else{delete c.travel;if(c.faction===s.player)log(s,`${CHARACTER_CATALOG[c.id].name[0]} arrived in ${r.name[0]}.`,`${CHARACTER_CATALOG[c.id].name[1]}抵达${r.name[1]}。`)}}
+ initializeWorld(s);for(const c of Object.values(s.world.characters)){const t=c.travel;if(!t)continue;if(!c.alive||c.missing||['seriously_ill','dying','deceased'].includes(c.health)){interruptJourney(s,c);continue}const next=t.legs[0],r=s.regions.find(x=>x.id===next?.to);if(!r){delete c.travel;continue}if(--t.remaining>0)continue;observeArrival(s,c.faction,next.to);if(atWar(s,c.faction,r.owner)){delete c.travel;if(c.faction===s.player)log(s,'A personal journey stopped on arrival: entry is no longer safe.','人物抵达途中核实了战区控制；因无法安全进入而中止行程。');continue}c.location=next.to;t.legs.shift();if(t.haltAfterLeg){delete c.travel;if(c.faction===s.player)log(s,`${CHARACTER_CATALOG[c.id].name[0]} stopped in ${r.name[0]} as ordered.`,`${CHARACTER_CATALOG[c.id].name[1]}按命令在${r.name[1]}停下。`)}else if(t.legs.length)t.remaining=t.legs[0].months;else{delete c.travel;if(c.faction===s.player)log(s,`${CHARACTER_CATALOG[c.id].name[0]} arrived in ${r.name[0]}.`,`${CHARACTER_CATALOG[c.id].name[1]}抵达${r.name[1]}。`)}}
  for(const m of s.meetings){
   if(m.status!=='pending'||--m.remaining>0)continue;
   const a=s.world.characters[m.person],b=s.world.characters[m.target],q=random(s),personKey=[m.person,m.target].sort().join(':'),factionKey=[m.actor,m.targetFaction].sort().join(':'),trust=s.world.personalRelations[personKey]?.trust||0,relations=s.relations[factionKey]||0,declineLimit=Math.max(.25,Math.min(.7,.45-trust*.002-relations*.001));
