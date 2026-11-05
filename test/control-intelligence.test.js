@@ -1,0 +1,56 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {newGame,region,tick,upgradeSave} from '../engine.js';
+import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js';
+import {drawMap} from '../map.js';
+
+test('remote control changes do not automatically change a faction’s map or turn knowledge',()=>{
+ let s=newGame('caesar');const before=reportedControl(s,'caesar','parthia');
+ const options={selectedRegion:null,selectedArmy:null,mode:'political',lang:'en',view:[0,0,1200,650]};
+ const oldMap=drawMap(s,options);region(s,'parthia').owner='egypt';s.month=2;observeControl(s);
+ assert.deepEqual(reportedControl(s,'caesar','parthia'),before);
+ assert.equal(drawMap(s,options),oldMap);
+ assert.equal(reportedControl(s,'parthia','parthia').owner,'egypt');
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(reportedControl(s,'caesar','parthia'),before);
+});
+test('frontier observation updates independently and records when the information was obtained',()=>{
+ const s=newGame('caesar');region(s,'italiaN').owner='rebels';s.month=2;observeControl(s);
+ assert.deepEqual(reportedControl(s,'caesar','italiaN'),{owner:'rebels',year:-49,month:2});
+ assert.equal(reportedControl(s,'egypt','italiaN').owner,'senate');
+});
+test('loss of the last own theater is reported without revealing distant changes',()=>{
+ const s=newGame('caesar');for(const r of s.regions.filter(r=>r.owner==='caesar'))r.owner='senate';
+ region(s,'parthia').owner='egypt';s.month=2;observeControl(s);
+ assert.equal(reportedControl(s,'caesar','gaul').owner,'senate');
+ assert.equal(reportedControl(s,'caesar','parthia').owner,'parthia');
+});
+test('old saves get opening assumptions rather than current hidden foreign control',()=>{
+ const s=newGame('caesar');delete s.controlKnowledge;region(s,'parthia').owner='egypt';
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(reportedControl(loaded,'caesar','parthia'),{owner:'parthia',year:-49,month:1});
+});
+test('a remote uprising is not instantly published in the player chronicle',()=>{
+ const s=newGame('caesar'),r=region(s,'parthia');s.armies=s.armies.filter(a=>a.owner!=='parthia');r.loyalty=1;s.factions.parthia.stability=20;tick(s);
+ assert.equal(r.owner,'rebels');assert.equal(reportedControl(s,'caesar','parthia').owner,'parthia');
+ assert.ok(!s.log.some(e=>e.en.includes('Parthia has risen in rebellion')));
+});
+test('a traveler report observes halfway through a round trip and arrives only for its sender',()=>{
+ let s=newGame('caesar');region(s,'parthia').owner='egypt';const treasury=s.factions.caesar.treasury;
+ assert.equal(requestControlReport(s,'parthia').ok,true);assert.equal(s.factions.caesar.treasury,treasury-5);assert.equal(requestControlReport(s,'parthia').reason,'pending');
+ s.world.intelSeed=1000;s.month=2;advanceControlScouts(s);s.month=3;advanceControlScouts(s);
+ assert.equal(reportedControl(s,'caesar','parthia').owner,'parthia');
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));region(s,'parthia').owner='rebels';s.month=4;advanceControlScouts(s);s.month=5;advanceControlScouts(s);
+ assert.deepEqual(reportedControl(s,'caesar','parthia'),{owner:'egypt',year:-49,month:3,source:'travelers'});
+ assert.equal(reportedControl(s,'senate','parthia').owner,'parthia');
+});
+test('travelers may bring old or no information and a later frontier observation takes precedence',()=>{
+ for(const [seed,status,owner] of [[0,'complete','parthia'],[1972,'no_reply','parthia']]){
+  const s=newGame('caesar');region(s,'parthia').owner='egypt';requestControlReport(s,'parthia');s.world.intelSeed=seed;
+  for(let m=2;m<=5;m++){s.month=m;advanceControlScouts(s)}
+  assert.equal(s.controlScouts[0].status,status);assert.equal(reportedControl(s,'caesar','parthia').owner,owner);
+ }
+ const s=newGame('caesar');region(s,'parthia').owner='egypt';requestControlReport(s,'parthia');s.world.intelSeed=1000;
+ s.month=2;advanceControlScouts(s);s.month=3;advanceControlScouts(s);s.month=4;
+ s.controlKnowledge.caesar.parthia={owner:'rebels',year:-49,month:4};advanceControlScouts(s);s.month=5;advanceControlScouts(s);
+ assert.equal(reportedControl(s,'caesar','parthia').owner,'rebels');
+});
