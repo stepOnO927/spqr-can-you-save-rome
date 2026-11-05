@@ -236,7 +236,7 @@ export function resolveBattle(s,attacker,defender,target){
 
 function arrive(s,a){
   const target=region(s,a.move.to);
-  if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner)){a.move=null;return}
+  if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner)){a.move=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`);return}
   const enemy=s.armies.find(other=>other.id!==a.id&&other.region===target.id&&other.owner!==a.owner&&isWar(s,a.owner,other.owner)&&!other.move);
   if(enemy){resolveBattle(s,a,enemy,target);return}
   a.region=target.id;a.move=null;

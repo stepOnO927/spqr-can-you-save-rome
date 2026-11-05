@@ -18,6 +18,7 @@ try{
  await page.locator('#guide-next').click();await page.locator('#lab-orders select').selectOption('cisalpine');await page.locator('#lab-orders button').click();
  await page.locator('#advance').click();if((await page.locator('#guide-title').innerText())==='理解战斗')await page.locator('#recent-battle').click();
  assert.equal(await page.locator('#guide-title').innerText(),'战区与城市');await page.locator('[data-city="RAVENNA"]').click({force:true});await page.locator('#resources-help').click();await page.locator('#guide-next').click();assert.equal(await page.locator('#guide').isHidden(),true);
+ await page.locator('#chronicle').click();assert.match(await page.locator('#command-detail').innerText(),/意大利征召军/);
  await page.locator('#guide-restart').click();await page.locator('#roman-faction').selectOption('senate');await page.locator('#start-free').click();
  await page.locator('[data-army="xiii"]').click({force:true});assert.match(await page.locator('#command-detail').innerText(),/上次报告的指挥官：盖乌斯·尤利乌斯·凯撒（可能过时）/);
  await page.locator('#command-detail button').click();assert.match(await page.locator('#command-detail').innerText(),/指挥官目击记录/);assert.match(await page.locator('#command-detail').innerText(),/不证明目前的职务或位置/);await page.locator('.historical-entry summary').click();assert.match(await page.locator('.historical-entry').innerText(),/公元前100年较常用/);assert.match(await page.locator('.historical-entry').innerText(),/公元前102年/);
