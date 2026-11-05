@@ -1,6 +1,6 @@
-import {queueMission,availableAgents} from '../character-system.js?v=68';
-import {reassurePerson} from '../conspiracies.js?v=9';
-import {CHARACTER_CATALOG} from '../characters.js?v=17';
+import {queueMission,availableAgents} from '../character-system.js?v=69';
+import {reassurePerson} from '../conspiracies.js?v=10';
+import {CHARACTER_CATALOG} from '../characters.js?v=18';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function renderSecurity({panel,state,language,refresh}){
