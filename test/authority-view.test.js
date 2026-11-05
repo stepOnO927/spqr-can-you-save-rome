@@ -21,3 +21,8 @@ test('new unknown or old authority reports do not disclose unseen circumstances'
 test('own government reflects acting command without inventing a local governor',()=>{
  const s=newGame('caesar');s.world.characters.caesar.health='dying';const report=authorityForTheater(s,'cisalpine');assert.equal(report.own,true);assert.equal(report.kind,'acting_command');assert.ok(report.actors.includes('antony'));assert.equal(report.city,undefined);
 });
+
+test('same-month conflicting government reports remain visible with their original provenance',()=>{
+ let s=newGame('senate');s.year=-48;s.month=7;s.knowledge.senate.egypt.reports.unshift({kind:'authority',value:{kind:'co_ruler_acting',actors:['ptolemy']},source:'spy',year:-48,month:6,confidence:'disputed'},{kind:'authority',value:{kind:'regency',actors:['cleopatra']},source:'exchange',originSource:'travelers',fromFaction:'parthia',year:-48,month:7,observationYear:-48,observationMonth:6,confidence:'disputed'},{kind:'authority',value:'unknown',source:'envoy',year:-48,month:6,confidence:'unverified'},{kind:'authority',value:{kind:'normal',actors:['cleopatra']},source:'spy',year:-49,month:1});
+ const expected=authorityForTheater(s,'egypt');assert.equal(expected.kind,'co_ruler_acting');assert.equal(expected.confidence,'disputed');assert.equal(expected.alternatives.length,2);assert.equal(expected.alternatives[0].kind,'regency');assert.equal(expected.alternatives[0].originSource,'travelers');assert.equal(expected.alternatives[0].fromFaction,'parthia');assert.equal(expected.alternatives[1].kind,'unknown');s.world.leadership.egypt=[];assert.deepEqual(authorityForTheater(s,'egypt'),expected);
+});
