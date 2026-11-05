@@ -270,3 +270,7 @@ test('clash reports present uncertainty and do not display another faction’s r
  const prior=globalThis.document,s=newGame('senate'),content=new Element();addReport(s,'senate','egypt',{kind:'clashes',value:'unknown',source:'travelers',confidence:'rumor'});addReport(s,'caesar','egypt',{kind:'clashes',value:'reported',source:'spy'});globalThis.document={createElement:tag=>new Element(tag)};
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0],html=box.querySelector('#mission-records').innerHTML;assert.match(box.innerHTML,/武装冲突报告/);assert.match(html,/未取得武装冲突的可靠消息；不代表局势和平/);assert.doesNotMatch(html,/有地方武装冲突的报告/)}finally{globalThis.document=prior}
 });
+test('an official denial is shown as a claim, not proof of peace',()=>{
+ const prior=globalThis.document,s=newGame('senate'),content=new Element();addReport(s,'senate','egypt',{kind:'clashes',value:'denied',source:'official'});globalThis.document={createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,/宫廷否认武装冲突；否认不证明局势和平/);assert.match(html,/官方书信/);assert.match(html,/未经核实/)}finally{globalThis.document=prior}
+});
