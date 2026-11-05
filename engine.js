@@ -1,11 +1,12 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=70';
-import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=20';
-import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=10';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=17';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=68';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=8';
-import {advanceConspiracies} from './conspiracies.js?v=9';
-import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=3';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=71';
+import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=21';
+import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=11';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=18';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=69';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=9';
+import {advanceConspiracies} from './conspiracies.js?v=10';
+import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=4';
+import {resolveDynasticWars} from './civil-war.js?v=1';
 export {queueMission};
 export {personalDiplomaticCredit};
 
@@ -144,12 +145,13 @@ const courtReports={
  senate:['Pompey, commander aligned with the Senate','庞培，元老院方面军事统帅'],
  egypt:['Cleopatra VII and Ptolemy XIII, joint rulers','克娄巴特拉七世与托勒密十三世，共同统治者'],
  numidia:['Juba I, king','朱巴一世，国王'],mauretania:['Bocchus II and Bogud, rulers of separate kingdoms','博库斯二世与博古德，各自统治不同王国'],
- armenia:['Artavasdes II, king','阿尔塔瓦兹德二世，国王'],parthia:['Orodes II, king','奥罗德二世，国王'],galatia:['Deiotarus, Galatian king','代奥塔鲁斯，加拉太国王'],bosporus:['Pharnaces II, king','法尔纳刻斯二世，国王']
+ armenia:['Artavasdes II, king','阿尔塔瓦兹德二世，国王'],parthia:['Orodes II, king','奥罗德二世，国王'],galatia:['Deiotarus, Galatian king','代奥塔鲁斯，加拉太国王'],bosporus:['Pharnaces II, king','法尔纳刻斯二世，国王'],egypt_claimant:['Disputed Egyptian authority','争议中的埃及执政方'],parthia_claimant:['Disputed Parthian authority','争议中的帕提亚执政方']
 };
-const letterMonths={senate:2,caesar:2,egypt:4,numidia:3,mauretania:4,armenia:5,parthia:5,galatia:4,bosporus:5};
+const letterMonths={senate:2,caesar:2,egypt:4,egypt_claimant:4,numidia:3,mauretania:4,armenia:5,parthia:5,parthia_claimant:5,galatia:4,bosporus:5};
 export function sendInquiry(s,actor,target,subject='leaders'){
  if(!['leaders','successor','availability','representative','clashes'].includes(subject)||subject==='clashes'&&!['egypt','parthia'].includes(target))return {ok:false,reason:'subject'};
- if(actor===target||!s.factions[actor]||!courtReports[target]||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
+ if(actor===target||!s.factions[actor]||!courtReports[target]||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
+ if(target.endsWith('_claimant')&&!s.regions.some(r=>reportedControl(s,actor,r.id)?.owner===target)&&!Object.keys(s.knowledge[actor]?.[target]?.sightings||{}).length&&!s.knowledge[actor]?.[target]?.reportedLeaders?.length)return {ok:false,reason:'unavailable'};
  if(s.factions[actor].treasury<3)return {ok:false,reason:'treasury'};
  if((s.inquiries||[]).some(x=>x.actor===actor&&x.target===target&&x.status==='pending'))return {ok:false,reason:'pending'};
  const duration=letterMonths[target]||4;s.factions[actor].treasury-=3;
@@ -178,7 +180,7 @@ function resolveInquiries(s){
     sealed.claim=disclose?[`The court names ${CHARACTER_CATALOG[plan].name[0]} as a possible successor.`,`宫廷称${CHARACTER_CATALOG[plan].name[1]}为可能的继任人选。`]:['The reply did not name a successor.','回信没有指明继任人选。'];
     sealed.report={kind:'succession',value:disclose?plan:'unknown'};
    }else if(subject==='clashes'){
-    const recent=s.world.disputeHistory.some(e=>e.faction===letter.target&&e.outcome==='clashes'&&(s.year-e.year)*12+s.month-e.month>=0&&(s.year-e.year)*12+s.month-e.month<=12);
+    const recent=!!s.world.disputes[letter.target]?.war||s.world.disputeHistory.some(e=>e.faction===letter.target&&['clashes','civil_war'].includes(e.outcome)&&(s.year-e.year)*12+s.month-e.month>=0&&(s.year-e.year)*12+s.month-e.month<=12);
     // Guarded courts may deny violence to conceal their weakness. Silence or a
     // denial is an official claim, never proof that the country is peaceful.
     const admit=recent&&!hostile&&rel>=30&&roll>=.75,deny=!admit&&(hostile||rel<0||!recent)&&roll>=.6;
@@ -317,13 +319,16 @@ export function estimatedStrength(s,observer,target){
 }
 function aiTurn(s,owner){
   const f=s.factions[owner],owned=s.regions.filter(r=>r.owner===owner);
-  if(!owned.length)return;
+  const internalOpponent=other=>Object.entries(s.world.disputes||{}).some(([parent,d])=>d.war&&[parent,d.war.rival].includes(owner)&&[parent,d.war.rival].includes(other));
+  // A defeated government may still have a field army outside its last
+  // theater; it must be able to continue the dynastic campaign.
+  if(!owned.length&&!s.wars.some(w=>w.includes(owner)))return;
   const reportedNeighbors=()=>owned.flatMap(r=>adjacent(r.id).map(e=>({id:e.to,owner:reportedControl(s,owner,e.to)?.owner}))).filter(r=>r.owner);
   const enemies=s.regions.filter(r=>isWar(s,owner,reportedControl(s,owner,r.id)?.owner));
   const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&a.men>1200);
   for(const a of available){
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y)})).sort((x,y)=>x.d-y.d);
-    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const defenderOwner=reportedControl(s,owner,step)?.owner;const defenders=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/Math.max(1,s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length):0;if(defenders>a.men*1.35||f.food<0)continue;moveArmy(s,a.id,step);break}}
+    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const defenderOwner=reportedControl(s,owner,step)?.owner;const defenders=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/Math.max(1,s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length):0;if(defenders>a.men*(internalOpponent(defenderOwner)?2:1.35)||f.food<0)continue;moveArmy(s,a.id,step);break}}
   }
   if(f.treasury>65&&f.manpower>5500&&s.month%4===0){
     const border=owned.find(r=>adjacent(r.id).some(e=>isWar(s,owner,reportedControl(s,owner,e.to)?.owner)));
@@ -338,7 +343,8 @@ function aiTurn(s,owner){
   if(['caesar','senate'].includes(owner)&&s.month===12){for(const court of ['egypt','parthia']){if(f.treasury<=35)break;const claimant=reportedClaimants(s,owner,court)[0];if(claimant)supportClaimant(s,owner,court,claimant)}}
   if(owner!=='rebels' && s.month===12){
     const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);
-    if(enemy && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=estimatedStrength(s,owner,enemy)*.6)diplomacy(s,owner,enemy,'peace');
+    const internal=internalOpponent(enemy);
+    if(enemy && !internal && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=estimatedStrength(s,owner,enemy)*.6)diplomacy(s,owner,enemy,'peace');
     if(!enemy && f.treasury>35){const neighbor=reportedNeighbors().find(r=>r.owner!==owner&&r.owner!=='rebels'&&relation(s,owner,r.owner)>=0&&!isAllied(s,owner,r.owner));if(neighbor && rnd(s)<.2)diplomacy(s,owner,neighbor.owner,'improve')}
   }
   if(owner!=='rebels' && s.month%6===0 && f.treasury>40 && f.food>10 && strength(s,owner)>2000){
@@ -359,7 +365,7 @@ export function tick(s){
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   rebellion(s);
-  resolveInquiries(s);advanceOperations(s);advanceAgentRequests(s);advanceCharacters(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);advanceDisputes(s);advanceConspiracies(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);
+  resolveInquiries(s);advanceOperations(s);advanceAgentRequests(s);advanceCharacters(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceDisputes(s);advanceConspiracies(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);
   advanceControlScouts(s);observeArmies(s);observeControl(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
   if(!s.victory&&s.player==='caesar'&&s.regions.every(r=>r.owner!=='senate')){s.victory=true;log(s,'The Pompeian command has collapsed. The campaign continues.','庞培派势力瓦解。战役仍可继续。')}
