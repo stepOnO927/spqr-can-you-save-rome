@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,region,tick,upgradeSave} from '../engine.js';
+import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js';
 import {observeArmies,reportedArmies} from '../character-system.js';
 import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer} from '../visibility.js';
 
@@ -34,4 +34,12 @@ test('only a visible recheck retires a marker; history survives saves without re
 test('an army still in its last observed theater is not erased just because it is moving',()=>{
  const s=newGame('senate'),unit=s.armies.find(a=>a.id==='xiii');unit.move={to:'gaul',remaining:1};s.month=2;observeArmies(s);
  assert.equal(reportedArmies(s,'senate').find(a=>a.id==='xiii').region,'cisalpine');assert.equal(s.knowledge.senate.caesar.sightingHistory,undefined);
+});
+
+test('unrelated foreign diplomacy and taxation do not appear in the player chronicle',()=>{
+ const s=newGame('caesar');s.log=[];assert.equal(setTax(s,'egypt','high'),true);assert.equal(diplomacy(s,'egypt','parthia','improve'),true);s.relations['egypt:parthia']=50;assert.equal(diplomacy(s,'egypt','parthia','alliance'),true);assert.equal(diplomacy(s,'egypt','parthia','break'),true);assert.equal(diplomacy(s,'egypt','parthia','war'),true);s.factions.egypt.stability=0;s.factions.parthia.stability=0;assert.equal(diplomacy(s,'egypt','parthia','peace'),true);assert.equal(s.log.length,0);
+});
+test('diplomacy involving the player and wars entered through alliances remain visible',()=>{
+ const direct=newGame('caesar');direct.log=[];assert.equal(diplomacy(direct,'caesar','egypt','improve'),true);assert.match(direct.log[0].en,/improved relations/);
+ for(const side of ['egypt','parthia']){const s=newGame('caesar');s.log=[];s.alliances.push(['caesar',side]);assert.equal(diplomacy(s,'egypt','parthia','war'),true);const enemy=side==='egypt'?'parthia':'egypt';assert.equal(isWar(s,'caesar',enemy),true);assert.equal(s.log.length,1);assert.match(s.log[0].en,/alliance has brought your faction into war/);assert.match(s.log[0].en,new RegExp(enemy==='egypt'?'Egypt':'Parthia'));}
 });

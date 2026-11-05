@@ -4,7 +4,7 @@ import {identity,factionMark} from './identity.js?v=3';
 import {reportedControl} from './control-intelligence.js?v=4';
 import {CHARACTER_CATALOG} from './characters.js?v=18';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=11';
-import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=99';
+import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=100';
 import {drawMap,mapPoint} from './map.js?v=69';
 
 const ui={
