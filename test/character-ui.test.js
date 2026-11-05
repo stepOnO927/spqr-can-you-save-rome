@@ -240,3 +240,8 @@ test('strength ranges and compatible evidence are explained in the intelligence 
  const prior=globalThis.document,s=newGame('senate'),content=new Element();addReport(s,'senate','egypt',{kind:'strength',value:10000,range:[8000,12000],source:'spy'});addReport(s,'senate','egypt',{kind:'strength',value:12000,range:[10000,14000],source:'envoy'});globalThis.document={createElement:tag=>new Element(tag)};
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,/军力估计：8000–12000（不保证准确）/);assert.match(html,/部分重叠的军力估计/);assert.doesNotMatch(html,/可能并存的人名报告/)}finally{globalThis.document=prior}
 });
+
+test('envoy relation missions explain the delayed diplomatic benefit before confirmation',()=>{
+ const prior=globalThis.document,s=newGame('senate'),content=new Element();globalThis.document={createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0],subject=box.querySelector('#mission-subject');assert.match(box.innerHTML,/改善关系（仅使者）/);subject.value='relations';box.missions.find(x=>x.dataset.mission==='envoy').onclick();const feedback=box.querySelector('#mission-feedback');assert.match(feedback.textContent,/双方关系最多提高8/);assert.match(feedback.textContent,/可能拒绝/);feedback.children[0].onclick();assert.equal(s.operations[0].subject,'relations');assert.equal(s.operations[0].type,'envoy');assert.ok(s.operations[0].remaining>=3)}finally{globalThis.document=prior}
+});
