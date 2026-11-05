@@ -95,7 +95,8 @@ export function supportClaimant(s,actor,target,claimant,representative=null){
 }
 export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
- if(!['health','age','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance'].includes(subject))return {ok:false,reason:'subject'};
+ if(!['health','age','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance','clashes'].includes(subject))return {ok:false,reason:'subject'};
+ if(subject==='clashes'&&(!['spy','travelers','exchange'].includes(type)||!['egypt','parthia'].includes(target)))return {ok:false,reason:'subject'};
  if(subject==='age'&&type!=='exchange')return {ok:false,reason:'subject'};
  if(subject==='relations'&&type!=='envoy')return {ok:false,reason:'subject'};
  if(subject==='stance'&&!['envoy','exchange'].includes(type))return {ok:false,reason:'subject'};
@@ -148,7 +149,13 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  // Return the same uninformative report instead of disclosing the hidden reason.
  const healthPerson=healthCandidate?.faction===op.target&&!healthCandidate.missing?healthCandidate:null;
  op.status='complete';const source=op.type,low=op.type==='travelers',hostile=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target)),contested=(s.world.claimants[op.target]||[]).length>0,investigated=op.subject==='health'?healthPerson:person,concealment=hostile||contested||investigated?.health==='seriously_ill'||investigated?.health==='dying',falsehood=q<.45&&concealment;let report;
- if(op.subject==='contacts'){
+ if(op.subject==='clashes'){
+  // No report is not evidence of peace. Rumors may be false in a contested court.
+  const recent=s.world.disputeHistory.some(event=>event.faction===op.target&&event.outcome==='clashes'&&(s.year-event.year)*12+s.month-event.month>=0&&(s.year-event.year)*12+s.month-event.month<=12);
+  const reported=recent&&q>=.55||contested&&!recent&&q<.45;
+  report={kind:'clashes',value:reported?'reported':'unknown',source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
+ }
+ else if(op.subject==='contacts'){
   // Only accepted support offers are simulated contacts. A lack of evidence is
   // never a claim that no contact exists; the observer cannot see its own offer.
   const contact=s.operations.find(x=>{const year=x.resolvedYear??x.sentYear,month=x.resolvedMonth??x.sentMonth,age=(s.year-year)*12+s.month-month;return x.type==='support'&&x.status==='complete'&&x.target===op.target&&x.actor!==op.actor&&Number.isFinite(age)&&age>=0&&age<=(x.resolvedYear==null?28:24)});
@@ -241,6 +248,13 @@ function advanceFactionDispute(s,faction){
  const claimant=claimants.find(id=>claimantAvailable(s.world.characters[id]));if(!claimant)return;const person=s.world.characters[claimant];const stability=s.factions[faction].stability,support=dispute.support?.[claimant]||0,q=rand(s);let outcome;
  if(stability>=45&&person.loyalty>=55&&support===0&&q<.12){s.world.leadership[faction]=faction==='egypt'?[...leaders,claimant]:leaders;s.world.claimants[faction]=claimants.filter(id=>id!==claimant);s.factions[faction].stability=Math.min(100,stability+2);outcome='reconciliation';delete s.world.disputes[faction]}
  else if(q<(stability<45?.22:.08)+support/100){s.world.leadership[faction]=[claimant];s.world.claimants[faction]=[...new Set([...claimants.filter(id=>id!==claimant),...leaders.filter(id=>s.world.characters[id]?.alive)])];s.factions[faction].stability=Math.max(0,stability-4);outcome='takeover';dispute.support={}}
+ else if(dispute.duration>=6&&stability<45&&q>=.6){
+  // Local clashes are an abstract consequence, not a fabricated separate army
+  // or a claim about historical events. Losses apply only to forces at home.
+  const army=s.armies.find(a=>a.owner===faction&&a.men>0&&!a.move&&s.regions.some(r=>r.id===a.region&&r.owner===faction));
+  if(army)army.men=Math.max(0,army.men-Math.min(300,Math.ceil(army.men*.05)));
+  s.factions[faction].manpower=Math.max(0,s.factions[faction].manpower-300);s.factions[faction].food=Math.max(-100,s.factions[faction].food-3);s.factions[faction].stability=Math.max(0,stability-2);outcome='clashes';
+ }
  if(outcome){s.world.disputeHistory.unshift({faction,claimant,outcome,year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);if(faction===s.player)notify(s,outcome==='reconciliation'?(faction==='egypt'?'A simulated court settlement restored joint rule.':'A simulated settlement ended the dynastic challenge.'):'A simulated court struggle changed the ruling authority.',outcome==='reconciliation'?(faction==='egypt'?'游戏中的宫廷和解恢复了共同统治。':'游戏中的宫廷和解结束了王朝挑战。'):'游戏中的宫廷斗争改变了执政者。')}
 }
 // Simulation probabilities only; these do not assert historical diagnoses.
