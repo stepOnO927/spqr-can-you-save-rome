@@ -235,3 +235,8 @@ test('a friendly commander in transit is shown marching rather than present in t
  const prior=globalThis.document,panel=new Element(),s=newGame('senate'),unit=s.armies.find(a=>a.characterId==='pompey');unit.move={to:'italiaS',remaining:2};globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).show('pompey');assert.match(panel.innerHTML,/所在战区<\/span><b>随军行军中<\/b>/)}finally{globalThis.document=prior}
 });
+
+test('strength ranges and compatible evidence are explained in the intelligence interface',()=>{
+ const prior=globalThis.document,s=newGame('senate'),content=new Element();addReport(s,'senate','egypt',{kind:'strength',value:10000,range:[8000,12000],source:'spy'});addReport(s,'senate','egypt',{kind:'strength',value:12000,range:[10000,14000],source:'envoy'});globalThis.document={createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,/军力估计：8000–12000（不保证准确）/);assert.match(html,/部分重叠的军力估计/);assert.doesNotMatch(html,/可能并存的人名报告/)}finally{globalThis.document=prior}
+});
