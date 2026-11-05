@@ -1,7 +1,9 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=17';
-import {FACTIONS,ROUTES} from './data.js?v=10';
-import {deriveGovernment} from './governance.js?v=20';
-import {potentialConspirators} from './conspiracies.js?v=9';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=18';
+import {FACTIONS,ROUTES} from './data.js?v=11';
+import {deriveGovernment} from './governance.js?v=21';
+import {potentialConspirators} from './conspiracies.js?v=10';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=1';
+import {reportedControl} from './control-intelligence.js?v=4';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -15,8 +17,8 @@ export const MISSION_RULES=configs;
 export function missionDuration(s,actor,target,type){
  const cfg=configs[type];if(!cfg)return null;
  if(type!=='envoy'&&type!=='audience')return cfg.months;
- const starts=s.regions.filter(r=>r.owner===actor).map(r=>r.id),goals=new Set(s.regions.filter(r=>r.owner===target).map(r=>r.id));
- if(!starts.length||!goals.size)return null;
+ const starts=s.regions.filter(r=>r.owner===actor).map(r=>r.id),goals=new Set(s.regions.filter(r=>reportedControl(s,actor,r.id)?.owner===target).map(r=>r.id));
+ if(!starts.length)return null;if(!goals.size)return cfg.months+2;
  const queue=starts.map(id=>[id,0]),seen=new Set(starts);let distance=null;
  for(let i=0;i<queue.length;i++){const [id,steps]=queue[i];if(goals.has(id)){distance=steps;break}for(const edge of ROUTES){const next=edge[0]===id?edge[1]:edge[1]===id?edge[0]:null;if(next&&!seen.has(next)){seen.add(next);queue.push([next,steps+1])}}}
  return cfg.months+(distance===null?2:distance>=5?2:distance>=3?1:0);
@@ -97,7 +99,8 @@ export function supportClaimant(s,actor,target,claimant,representative=null,aid=
  f.treasury-=cost.treasury;f.manpower-=cost.manpower;f.food-=cost.food;s.operations.unshift({actor,target,type:'support',claimant,representative:representative||null,aid,remaining:4,status:'pending',sentYear:s.year,sentMonth:s.month});if(actor===s.player)notify(s,'An offer of support was sent; a response may take four months.','已寄出支持提议；回信可能需要四个月。');return {ok:true};
 }
 export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
- initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
+ initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!FACTIONS[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
+ if(target.endsWith('_claimant')&&!knownDynasticFactions(s,actor).includes(target))return {ok:false,reason:'unavailable'};
  if(!['health','age','location','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance','clashes'].includes(subject))return {ok:false,reason:'subject'};
  if(subject==='location'&&!['spy','travelers','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(subject==='clashes'&&(!['spy','travelers','exchange'].includes(type)||!['egypt','parthia'].includes(target)))return {ok:false,reason:'subject'};
@@ -125,9 +128,9 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  // The resolution date is visible to the sender, but not the hidden cause of a failed mission.
  op.resolvedYear=s.year;op.resolvedMonth=s.month;
  if(op.type==='support'){
-  const claimant=s.world.characters[op.claimant],valid=s.regions.some(r=>r.owner===op.target)&&claimantAvailable(claimant)&&(s.world.claimants[op.target]||[]).includes(op.claimant);
+  const claimant=s.world.characters[op.claimant],rival=s.world.disputes[op.target]?.war?.rival,valid=(s.regions.some(r=>r.owner===op.target||r.owner===rival)||s.armies.some(a=>a.owner===rival&&a.men>0))&&claimantAvailable(claimant)&&(s.world.claimants[op.target]||[]).includes(op.claimant);
   const representative=op.representative&&claimantRepresentatives(s,op.actor,op.claimant).includes(op.representative)?op.representative:null,trust=representative?(s.world.personalRelations[[representative,op.claimant].sort().join(':')]?.trust||0):0,recognized=s.world.recognitions?.[op.actor]?.[op.target]?.claimant===op.claimant,declineLimit=Math.max(.25,.45-Math.min(100,trust)*.002-(recognized ? 0.05 : 0));
-  if(!valid||q<.2)op.status='no_reply';else if(q<declineLimit)op.status='declined';else{op.status='complete';const dispute=s.world.disputes[op.target]||={months:0};dispute.support||={};dispute.support[op.claimant]=Math.min(30,(dispute.support[op.claimant]||0)+(op.aid==='military'?25:15));const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-(op.aid==='military'?15:10))}
+  if(!valid||q<.2)op.status='no_reply';else if(q<declineLimit)op.status='declined';else{op.status='complete';const dispute=s.world.disputes[op.target]||={months:0};dispute.support||={};dispute.support[op.claimant]=Math.min(30,(dispute.support[op.claimant]||0)+(op.aid==='military'?25:15));if(op.aid==='military'){const unit=s.armies.find(a=>a.owner===dispute.war?.rival&&a.characterId===op.claimant&&a.men>0);if(unit)unit.men+=1000;else if(dispute.war&&s.factions[dispute.war.rival])s.factions[dispute.war.rival].manpower+=1000;else if(!dispute.war){dispute.militaryAid||={};dispute.militaryAid[op.claimant]=(dispute.militaryAid[op.claimant]||0)+1000}}const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-(op.aid==='military'?15:10))}
   op.resolvedYear=s.year;op.resolvedMonth=s.month;
   if(op.actor===s.player)notify(s,op.status==='complete'?'The claimant accepted support; relations with the court worsened.':op.status==='declined'?'The claimant declined the offer.':'No reply arrived; the offer or response may have been lost.',op.status==='complete'?'竞争者接受支持；与宫廷的关系恶化。':op.status==='declined'?'竞争者拒绝了提议。':'未收到回信；提议或回信可能遗失。');continue
  }
@@ -155,7 +158,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  op.status='complete';const source=op.type,low=op.type==='travelers',hostile=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target)),contested=(s.world.claimants[op.target]||[]).length>0,investigated=op.subject==='health'?healthPerson:person,concealment=hostile||contested||investigated?.health==='seriously_ill'||investigated?.health==='dying',falsehood=q<.45&&concealment;let report;
  if(op.subject==='clashes'){
   // No report is not evidence of peace. Rumors may be false in a contested court.
-  const recent=s.world.disputeHistory.some(event=>event.faction===op.target&&event.outcome==='clashes'&&(s.year-event.year)*12+s.month-event.month>=0&&(s.year-event.year)*12+s.month-event.month<=12);
+  const recent=!!s.world.disputes[op.target]?.war||s.world.disputeHistory.some(event=>event.faction===op.target&&['clashes','civil_war'].includes(event.outcome)&&(s.year-event.year)*12+s.month-event.month>=0&&(s.year-event.year)*12+s.month-event.month<=12);
   const reported=recent&&q>=.55||contested&&!recent&&q<.45;
   report={kind:'clashes',value:reported?'reported':'unknown',source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
  }
@@ -254,6 +257,7 @@ export function contestLeadership(s,faction,claimant){initializeWorld(s);const l
 // Alternate-history court outcomes use existing characters and never update a foreign observer's reports directly.
 export function advanceDisputes(s){initializeWorld(s);for(const faction of ['egypt','parthia'])advanceFactionDispute(s,faction)}
 function advanceFactionDispute(s,faction){
+ if(s.world.disputes[faction]?.war)return;
  const leaders=s.world.leadership[faction]||[],claimants=(s.world.claimants[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!leaders.includes(id));s.world.claimants[faction]=claimants;
  if(!claimants.length||!s.regions.some(r=>r.owner===faction)){delete s.world.disputes[faction];return}
  const dispute=s.world.disputes[faction]||={months:0};if(!leaders.length&&dispute.vacancySince?.year===s.year&&dispute.vacancySince?.month===s.month)return;
@@ -280,6 +284,7 @@ function advanceFactionDispute(s,faction){
   const army=s.armies.find(a=>a.owner===faction&&a.men>0&&!a.move&&s.regions.some(r=>r.id===a.region&&r.owner===faction));
   if(army)army.men=Math.max(0,army.men-Math.min(300,Math.ceil(army.men*.05)));
   s.factions[faction].manpower=Math.max(0,s.factions[faction].manpower-300);s.factions[faction].food=Math.max(-100,s.factions[faction].food-3);s.factions[faction].stability=Math.max(0,stability-2);outcome='clashes';
+  if(dispute.duration>=12)startDynasticWar(s,faction,claimant);
  }
  if(outcome){s.world.disputeHistory.unshift({faction,claimant,outcome,year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);if(faction===s.player)notify(s,outcome==='reconciliation'?(faction==='egypt'?'A simulated court settlement restored joint rule.':'A simulated settlement ended the dynastic challenge.'):'A simulated court struggle changed the ruling authority.',outcome==='reconciliation'?(faction==='egypt'?'游戏中的宫廷和解恢复了共同统治。':'游戏中的宫廷和解结束了王朝挑战。'):'游戏中的宫廷斗争改变了执政者。')}
 }

@@ -4,6 +4,8 @@ export const IDENTITIES = Object.freeze({
  senate:{primary:'#4e626a',accent:'#e8ddbb',map:'#73868c',abbr:'SEN',motif:'fasces'},
  egypt:{primary:'#326e70',accent:'#dfca83',map:'#5e9b91',abbr:'AEG',motif:'horn'},
  parthia:{primary:'#68475f',accent:'#dfbe86',map:'#956b84',abbr:'ARS',motif:'bow'},
+ egypt_claimant:{primary:'#8b6941',accent:'#f0dab0',map:'#bd985c',abbr:'AEG·R',motif:'horn'},
+ parthia_claimant:{primary:'#854f49',accent:'#efd4ae',map:'#b77664',abbr:'ARS·R',motif:'bow'},
  armenia:{primary:'#805c40',accent:'#e8c691',map:'#b18b64',abbr:'ARM',motif:'tiara'},
  numidia:{primary:'#80703d',accent:'#e6d29a',map:'#a99654',abbr:'NVM',motif:'spear'},
  mauretania:{primary:'#58684a',accent:'#d8d2a0',map:'#829466',abbr:'MAV',motif:'palm'},

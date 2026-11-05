@@ -42,6 +42,8 @@ export const FACTIONS = {
   mauretania:{name:['Mauretanian kingdoms','毛里塔尼亚诸王国'],short:['Mauretania','毛里塔尼亚'],color:'#849063',ruler:['Bocchus II and Bogud','博库斯二世与博古德']},
   armenia:{name:['Kingdom of Armenia','亚美尼亚王国'],short:['Armenia','亚美尼亚'],color:'#967d91',ruler:['Artavasdes II','阿尔塔瓦兹德二世']},
   parthia:{name:['Parthian Empire','帕提亚帝国'],short:['Parthia','帕提亚'],color:'#b28560',ruler:['Orodes II','奥罗德二世']},
+  egypt_claimant:{name:['Egyptian claimant command','埃及竞争者军队'],short:['Egyptian claimant','埃及竞争者'],color:'#b49052',ruler:['Contested leadership','争议中的领袖']},
+  parthia_claimant:{name:['Parthian claimant command','帕提亚竞争者军队'],short:['Parthian claimant','帕提亚竞争者'],color:'#a26d57',ruler:['Contested leadership','争议中的领袖']},
   galatia:{name:['Deiotarus’ Galatian realm','代奥塔鲁斯的加拉太领地'],short:['Galatia','加拉太'],color:'#7c8760',ruler:['Deiotarus','代奥塔鲁斯']},
   bosporus:{name:['Bosporan Kingdom','博斯普鲁斯王国'],short:['Bosporus','博斯普鲁斯'],color:'#8b7270',ruler:['Pharnaces II','法尔纳刻斯二世']},
   rebels:{name:['Provincial rebels','行省叛军'],short:['Rebels','叛军'],color:'#8a7365',ruler:['Local leaders','地方首领']}
