@@ -50,7 +50,7 @@ try{
  assert.match(await page.locator('#succession-feedback').innerText(),/其他候选人忠诚降低3/);assert.match(await page.locator('#succession-feedback').innerText(),/野心增加5/);await page.locator('#succession-feedback button').click();
  await page.locator('[data-character="cicero"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/个人信任 · 格奈乌斯·庞培: 5/);assert.match(await page.locator('#command-detail').innerText(),/游戏战伤次数/);assert.match(await page.locator('#command-detail').innerText(),/65 \/ 100/);
- await page.locator('#person-destination').selectOption('epirus');await page.locator('#person-travel').click();
+ await page.locator('#person-destination').selectOption('epirus');assert.match(await page.locator('#command-detail').innerText(),/路线根据已有控制报告规划/);await page.locator('#person-travel').click();
  await page.locator('#person-travel-feedback button').click();
  assert.match(await page.locator('#command-detail').innerText(),/正在旅行/);
  await page.locator('[data-city="ROMA"]').click({force:true});await page.locator('#city-region').click();await page.locator('#recruit-region').click();
