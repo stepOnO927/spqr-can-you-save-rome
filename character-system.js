@@ -87,11 +87,14 @@ export function recognizeClaimant(s,target,claimant){
  s.factions[actor].treasury-=5;(s.world.recognitions[actor]||={})[target]={claimant,year:s.year,month:s.month};const key=[actor,target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-5);
  notify(s,'A reported claimant was recognized; relations with the court fell by up to 5.','已承认一位报告中的竞争者；与宫廷的关系最多降低5。');return {ok:true,cost:5};
 }
-export function supportClaimant(s,actor,target,claimant,representative=null){
+export function supportClaimant(s,actor,target,claimant,representative=null,aid='political'){
  initializeWorld(s);if(!['caesar','senate'].includes(actor)||actor===target||!['egypt','parthia'].includes(target)||!reportedClaimants(s,actor,target).includes(claimant)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
+ if(!['political','military'].includes(aid))return {ok:false,reason:'aid'};
  if(representative&&!claimantRepresentatives(s,actor,claimant).includes(representative))return {ok:false,reason:'representative'};
- if(s.operations.some(o=>o.actor===actor&&o.target===target&&o.type==='support'&&o.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<10)return {ok:false,reason:'treasury'};
- s.factions[actor].treasury-=10;s.operations.unshift({actor,target,type:'support',claimant,representative:representative||null,remaining:4,status:'pending',sentYear:s.year,sentMonth:s.month});if(actor===s.player)notify(s,'An offer of support was sent; a response may take four months.','已寄出支持提议；回信可能需要四个月。');return {ok:true};
+ const cost=aid==='military'?{treasury:14,manpower:1000,food:5}:{treasury:10,manpower:0,food:0},f=s.factions[actor];
+ if(s.operations.some(o=>o.actor===actor&&o.target===target&&o.type==='support'&&o.status==='pending'))return {ok:false,reason:'pending'};
+ if(f.treasury<cost.treasury)return {ok:false,reason:'treasury'};if(f.manpower<cost.manpower)return {ok:false,reason:'manpower'};if(f.food<cost.food)return {ok:false,reason:'food'};
+ f.treasury-=cost.treasury;f.manpower-=cost.manpower;f.food-=cost.food;s.operations.unshift({actor,target,type:'support',claimant,representative:representative||null,aid,remaining:4,status:'pending',sentYear:s.year,sentMonth:s.month});if(actor===s.player)notify(s,'An offer of support was sent; a response may take four months.','已寄出支持提议；回信可能需要四个月。');return {ok:true};
 }
 export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
@@ -124,7 +127,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.type==='support'){
   const claimant=s.world.characters[op.claimant],valid=s.regions.some(r=>r.owner===op.target)&&claimantAvailable(claimant)&&(s.world.claimants[op.target]||[]).includes(op.claimant);
   const representative=op.representative&&claimantRepresentatives(s,op.actor,op.claimant).includes(op.representative)?op.representative:null,trust=representative?(s.world.personalRelations[[representative,op.claimant].sort().join(':')]?.trust||0):0,recognized=s.world.recognitions?.[op.actor]?.[op.target]?.claimant===op.claimant,declineLimit=Math.max(.25,.45-Math.min(100,trust)*.002-(recognized ? 0.05 : 0));
-  if(!valid||q<.2)op.status='no_reply';else if(q<declineLimit)op.status='declined';else{op.status='complete';const dispute=s.world.disputes[op.target]||={months:0};dispute.support||={};dispute.support[op.claimant]=Math.min(30,(dispute.support[op.claimant]||0)+15);const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-10)}
+  if(!valid||q<.2)op.status='no_reply';else if(q<declineLimit)op.status='declined';else{op.status='complete';const dispute=s.world.disputes[op.target]||={months:0};dispute.support||={};dispute.support[op.claimant]=Math.min(30,(dispute.support[op.claimant]||0)+(op.aid==='military'?25:15));const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-(op.aid==='military'?15:10))}
   op.resolvedYear=s.year;op.resolvedMonth=s.month;
   if(op.actor===s.player)notify(s,op.status==='complete'?'The claimant accepted support; relations with the court worsened.':op.status==='declined'?'The claimant declined the offer.':'No reply arrived; the offer or response may have been lost.',op.status==='complete'?'竞争者接受支持；与宫廷的关系恶化。':op.status==='declined'?'竞争者拒绝了提议。':'未收到回信；提议或回信可能遗失。');continue
  }
