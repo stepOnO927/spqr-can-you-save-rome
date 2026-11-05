@@ -19,3 +19,14 @@ test('an older forwarded report does not supersede a more recent observation',()
  s.month=7;addReport(s,'senate','caesar',{kind:'strength',value:1000,source:'exchange',originSource:'court',observationYear:-49,observationMonth:1,confidence:'unverified'});
  assert.equal(estimatedStrength(s,'senate','caesar'),18000);
 });
+test('AI weighs contradictory contemporary sources without counting forwarded copies twice',()=>{
+ const s=newGame('caesar');s.knowledge.senate.caesar.sightings={};
+ addReport(s,'senate','caesar',{kind:'strength',value:10000,source:'spy'});
+ addReport(s,'senate','caesar',{kind:'strength',value:30000,source:'envoy'});
+ assert.equal(estimatedStrength(s,'senate','caesar'),20000);
+ addReport(s,'senate','caesar',{kind:'strength',value:30000,source:'exchange',originSource:'envoy'});
+ assert.equal(estimatedStrength(s,'senate','caesar'),20000);
+ for(const army of s.armies.filter(a=>a.owner==='caesar'))army.men=999999;
+ assert.equal(estimatedStrength(s,'senate','caesar'),20000);
+ s.year+=3;assert.equal(estimatedStrength(s,'senate','caesar'),12000);
+});
