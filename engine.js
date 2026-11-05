@@ -103,24 +103,26 @@ export function recruit(s,regionId,owner=s.player){
 export function setTax(s,owner,level){
   if(!['low','normal','high'].includes(level)||!s.factions[owner])return false;
   s.factions[owner].tax=level;
-  log(s,`${FACTIONS[owner].short[0]} set ${level} taxation.`,`${FACTIONS[owner].short[1]}实行${{low:'低',normal:'标准',high:'高'}[level]}税率。`);
+  if(owner===s.player)log(s,`${FACTIONS[owner].short[0]} set ${level} taxation.`,`${FACTIONS[owner].short[1]}实行${{low:'低',normal:'标准',high:'高'}[level]}税率。`);
   return true;
 }
 
 export function diplomacy(s, actor, target, action){
   if(actor===target || !s.factions[actor] || !s.factions[target] || target==='rebels'||actor==='rebels' || !s.regions.some(r=>r.owner===actor) || !s.regions.some(r=>r.owner===target))return false;
   const key=pair(actor,target);
-  if(action==='improve' && !isWar(s,actor,target) && s.factions[actor].treasury>=10){s.factions[actor].treasury-=10;s.relations[key]=Math.min(100,relation(s,actor,target)+15);log(s,`${FACTIONS[actor].short[0]} improved relations with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}改善了与${FACTIONS[target].short[1]}的关系。`);return true}
-  if(action==='alliance' && !isWar(s,actor,target) && relation(s,actor,target)+personalDiplomaticCredit(s,actor,target)>=30 && !isAllied(s,actor,target) && !s.wars.some(w=>(w.includes(actor)&&isAllied(s,target,w.find(x=>x!==actor)))||(w.includes(target)&&isAllied(s,actor,w.find(x=>x!==target))))){s.alliances.push([actor,target]);log(s,`${FACTIONS[actor].short[0]} allied with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}结盟。`);return true}
-  if(action==='break' && isAllied(s,actor,target)){s.alliances=s.alliances.filter(p=>!(p.includes(actor)&&p.includes(target)));s.relations[key]=relation(s,actor,target)-20;log(s,`${FACTIONS[actor].short[0]} broke its alliance with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}解除了与${FACTIONS[target].short[1]}的同盟。`);return true}
+  if(action==='improve' && !isWar(s,actor,target) && s.factions[actor].treasury>=10){s.factions[actor].treasury-=10;s.relations[key]=Math.min(100,relation(s,actor,target)+15);if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} improved relations with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}改善了与${FACTIONS[target].short[1]}的关系。`);return true}
+  if(action==='alliance' && !isWar(s,actor,target) && relation(s,actor,target)+personalDiplomaticCredit(s,actor,target)>=30 && !isAllied(s,actor,target) && !s.wars.some(w=>(w.includes(actor)&&isAllied(s,target,w.find(x=>x!==actor)))||(w.includes(target)&&isAllied(s,actor,w.find(x=>x!==target))))){s.alliances.push([actor,target]);if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} allied with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}结盟。`);return true}
+  if(action==='break' && isAllied(s,actor,target)){s.alliances=s.alliances.filter(p=>!(p.includes(actor)&&p.includes(target)));s.relations[key]=relation(s,actor,target)-20;if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} broke its alliance with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}解除了与${FACTIONS[target].short[1]}的同盟。`);return true}
   if(action==='war' && !isWar(s,actor,target)){
     if(isAllied(s,actor,target))return false;
+    const playerWarsBefore=new Set(s.wars.filter(w=>w.includes(s.player)).map(w=>w.find(id=>id!==s.player)));
     s.wars.push([actor,target]);
     for(const p of s.alliances.filter(p=>p.includes(target))){const ally=p.find(x=>x!==target);if(ally!==actor&&!isWar(s,ally,actor)&&!isAllied(s,ally,actor))s.wars.push([ally,actor])}
     for(const p of s.alliances.filter(p=>p.includes(actor))){const ally=p.find(x=>x!==actor);if(ally!==target&&!isWar(s,ally,target)&&!isAllied(s,ally,target))s.wars.push([ally,target])}
     s.relations[key]=-60;
     s.factions[actor].legitimacy=Math.max(0,s.factions[actor].legitimacy-5);
-    log(s,`${FACTIONS[actor].short[0]} declared war on ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}向${FACTIONS[target].short[1]}宣战。`);
+    if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} declared war on ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}向${FACTIONS[target].short[1]}宣战。`);
+    else for(const enemy of s.wars.filter(w=>w.includes(s.player)).map(w=>w.find(id=>id!==s.player)).filter(id=>!playerWarsBefore.has(id))){log(s,`An alliance has brought your faction into war with ${FACTIONS[enemy].short[0]}.`,`同盟义务使本方与${FACTIONS[enemy].short[1]}进入战争。`)}
     return true;
   }
   if(action==='peace' && isWar(s,actor,target)){
@@ -133,7 +135,7 @@ export function diplomacy(s, actor, target, action){
       if(a.move && reportedControl(s,a.owner,a.move.to)?.owner===other)a.move=null;
       if(a.siege && region(s,a.siege.region).owner===other)a.siege=null;
     }
-    log(s,`${FACTIONS[actor].short[0]} and ${FACTIONS[target].short[0]} made peace; current control remains.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}议和，维持现有控制。`);
+    if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} and ${FACTIONS[target].short[0]} made peace; current control remains.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}议和，维持现有控制。`);
     return true;
   }
   return false;
