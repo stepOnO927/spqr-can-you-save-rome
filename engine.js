@@ -278,8 +278,18 @@ function shortestStep(s,start,goal,owner){
 export function estimatedStrength(s,observer,target){
  const k=s.knowledge?.[observer]?.[target],now=s.year*12+s.month,age=x=>now-((x.observationYear??x.year)*12+(x.observationMonth??x.month));
  const sightings=Object.values(k?.sightings||{}).filter(x=>age(x)>=0&&age(x)<=24).length,prior=4000+Math.min(5,sightings)*1000;
- const latest=(k?.reports||[]).filter(x=>x.kind==='strength'&&Number.isFinite(x.value)&&age(x)>=0).sort((a,b)=>age(a)-age(b))[0];
- if(!latest)return prior;const weight=Math.max(0,Math.min(1,1-(age(latest)-24)/24));return Math.round(prior+(latest.value-prior)*weight);
+ const reports=(k?.reports||[]).filter(x=>x.kind==='strength'&&Number.isFinite(x.value)&&x.value>=0&&age(x)>=0).sort((a,b)=>age(a)-age(b));
+ if(!reports.length)return prior;
+ // Compare only observations from the newest month. Forwarded copies from the
+ // same source family must not outvote independent contradictory evidence.
+ const newestAge=age(reports[0]),families=new Map();
+ for(const report of reports.filter(x=>age(x)===newestAge)){
+  const origin=report.originSource||report.source, family=({official:'court',envoy:'court',audience:'court',exchange:'unknown'}[origin]||origin||'unknown');
+  const values=families.get(family)||new Set();values.add(report.value);families.set(family,values);
+ }
+ const estimates=[...families.values()].map(values=>{const entries=[...values];return (Math.min(...entries)+Math.max(...entries))/2});
+ const estimate=estimates.reduce((sum,value)=>sum+value,0)/estimates.length;
+ const weight=Math.max(0,Math.min(1,1-(newestAge-24)/24));return Math.round(prior+(estimate-prior)*weight);
 }
 function aiTurn(s,owner){
   const f=s.factions[owner],owned=s.regions.filter(r=>r.owner===owner);
