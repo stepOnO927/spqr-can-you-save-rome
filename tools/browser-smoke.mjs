@@ -31,6 +31,7 @@ try{
  await page.locator('#zoom-out').click();await page.waitForFunction(()=>document.body.classList.contains('leader-overview'));
  const labels=(await page.locator('.leader-map-label').allTextContents()).join(' ');assert.match(labels,/共同统治者/);assert.match(labels,/各王国统治者/);assert.match(labels,/罗马派系领袖/);
  await page.locator('#help').click();await page.locator('#help-search').fill('代行政务情报');assert.match(await page.locator('#help-results').innerText(),/当前健康和位置仍然未知/);await page.locator('#help-search').fill('被俘');assert.match(await page.locator('#help-results').innerText(),/8国库/);
+ await page.locator('#help-search').fill('王朝竞争');assert.match(await page.locator('#help-results').innerText(),/埃及两位共同统治者都可能成为竞争者/);assert.match(await page.locator('#help-results').innerText(),/未具名军官指挥/);
  await page.locator('#help-search').fill('将领忠诚');assert.match(await page.locator('#help-results').innerText(),/可能倒戈/);
  await page.locator('#help-search').fill('对手掌握的情报');assert.match(await page.locator('#help-results').innerText(),/两年后逐渐失去影响/);
  await page.locator('#help-search').fill('人物健康与继任');assert.match(await page.locator('#help-results').innerText(),/三个月后可重新取得联系/);
