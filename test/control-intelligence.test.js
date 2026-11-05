@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,tick,upgradeSave} from '../engine.js';
+import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js';
 import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js';
 import {drawMap} from '../map.js';
 
@@ -53,4 +53,18 @@ test('travelers may bring old or no information and a later frontier observation
  s.month=2;advanceControlScouts(s);s.month=3;advanceControlScouts(s);s.month=4;
  s.controlKnowledge.caesar.parthia={owner:'rebels',year:-49,month:4};advanceControlScouts(s);s.month=5;advanceControlScouts(s);
  assert.equal(reportedControl(s,'caesar','parthia').owner,'rebels');
+});
+test('march previews and acceptance depend on the reported controller, not secret control',()=>{
+ const a=newGame('caesar'),b=newGame('caesar');region(b,'italiaN').owner='egypt';
+ assert.deepEqual(previewMarch(a,'xiii','italiaN'),previewMarch(b,'xiii','italiaN'));
+ assert.equal(moveArmy(a,'xiii','italiaN').ok,true);assert.equal(moveArmy(b,'xiii','italiaN').ok,true);
+ tick(b);assert.equal(b.armies.find(x=>x.id==='xiii').region,'cisalpine');
+ assert.equal(b.armies.find(x=>x.id==='xiii').move,null);
+ assert.equal(reportedControl(b,'caesar','italiaN').owner,'egypt');
+ assert.match(b.log.find(e=>e.en.includes('stopped:')).en,/no longer permitted/);
+});
+test('an unknown controller does not disclose a secret border before arrival',()=>{
+ const a=newGame('caesar'),b=newGame('caesar');delete a.controlKnowledge.caesar.italiaN;delete b.controlKnowledge.caesar.italiaN;region(b,'italiaN').owner='egypt';
+ const pa=previewMarch(a,'xiii','italiaN'),pb=previewMarch(b,'xiii','italiaN');assert.deepEqual(pa,pb);assert.equal(pa.ok,true);assert.equal(pa.reportedOwner,null);
+ assert.equal(moveArmy(b,'xiii','italiaN').ok,true);tick(b);assert.equal(reportedControl(b,'caesar','italiaN').owner,'egypt');
 });
