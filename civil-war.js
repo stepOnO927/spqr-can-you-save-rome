@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG} from './characters.js?v=18';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=18';
 import {reportedControl} from './control-intelligence.js?v=4';
 
 // Alternate-history claimant commands use real game theaters and armies.
@@ -22,7 +22,9 @@ export function startDynasticWar(s,parent,claimant){
  person.faction=cfg.rival;person.location=home.id;home.owner=cfg.rival;home.loyalty=45;
  s.world.leadership[cfg.rival]=[claimant];
  const aid=dispute.militaryAid?.[claimant]||0;
- s.armies.push({id:`${cfg.rival}_${s.nextArmy++}`,name:parent==='egypt'?['Egyptian claimant forces','埃及竞争者军队']:['Parthian claimant forces','帕提亚竞争者军队'],owner:cfg.rival,region:home.id,men:defectors+recruits+aid,morale:60,skill:2,experience:0,commander:[...CHARACTER_CATALOG[claimant].name],characterId:claimant,move:null,siege:null});
+ const age=ageRange(claimant,s.year),minor=age!==null&&age[1]<16;
+ // A minor claimant is a political figurehead; unnamed officers lead the army.
+ s.armies.push({id:`${cfg.rival}_${s.nextArmy++}`,name:parent==='egypt'?['Egyptian claimant forces','埃及竞争者军队']:['Parthian claimant forces','帕提亚竞争者军队'],owner:cfg.rival,region:home.id,men:defectors+recruits+aid,morale:60,skill:2,experience:0,commander:minor?['Unnamed officer','未具名军官']:[...CHARACTER_CATALOG[claimant].name],characterId:minor?null:claimant,move:null,siege:null});
  if(dispute.militaryAid)delete dispute.militaryAid[claimant];
  s.wars.push([parent,cfg.rival]);dispute.war={rival:cfg.rival,claimant,startedYear:s.year,startedMonth:s.month};
  // New diplomatic records contain no foreign reports; no uninvolved observer
