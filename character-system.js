@@ -92,9 +92,10 @@ export function supportClaimant(s,actor,target,claimant,representative=null){
 }
 export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!s.factions[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
- if(!['health','age','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations'].includes(subject))return {ok:false,reason:'subject'};
+ if(!['health','age','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance'].includes(subject))return {ok:false,reason:'subject'};
  if(subject==='age'&&type!=='exchange')return {ok:false,reason:'subject'};
  if(subject==='relations'&&type!=='envoy')return {ok:false,reason:'subject'};
+ if(subject==='stance'&&!['envoy','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(subject==='contacts'&&(!['spy','exchange'].includes(type)||!['egypt','parthia'].includes(target)))return {ok:false,reason:'subject'};
  if(type==='counter'&&subject!=='conspiracy'||subject==='conspiracy'&&(!['spy','counter','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
@@ -157,6 +158,11 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   // Discontent can produce a false accusation; silence is not proof of safety.
   const suspect=q>=.6?actual:(q>=.34&&s.factions[op.target].stability<45?alternative:null);
   report={kind:'conspiracy',character:suspect,value:suspect?'suspected':'unknown',source,confidence:'unverified',reliability:'moderate'};
+ }
+ else if(op.subject==='stance'){
+  // This is a reported public statement, not access to another faction's plans.
+  const value=hostile?'guarded':relation>=30?'receptive':relation<0?'guarded':'noncommittal';
+  report={kind:'stance',value,source,confidence:'unverified',reliability:'moderate'};
  }
  else if(op.subject==='health'){const value=healthPerson?(falsehood?'healthy':healthPerson.health):'unknown';report={kind:'health',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='claimants'){const candidates=falsehood?[]:[...(s.world.claimants[op.target]||[])];report={kind:'claimants',leaders:candidates,exhaustive:op.type==='spy'&&q>=.7,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
