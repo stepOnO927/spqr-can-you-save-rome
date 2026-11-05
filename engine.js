@@ -5,7 +5,7 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=67';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=7';
 import {advanceConspiracies} from './conspiracies.js?v=8';
-import {initializeControlKnowledge,observeControl,advanceControlScouts} from './control-intelligence.js?v=1';
+import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=2';
 export {queueMission};
 export {personalDiplomaticCredit};
 
@@ -54,11 +54,12 @@ export function previewMarch(s,armyId,destination){
   if(!a||!target||a.men<=0||a.move||a.siege)return {ok:false,reason:'unavailable'};
   const link=adjacent(a.region).find(e=>e.to===destination);
   if(!link)return {ok:false,reason:'adjacent'};
-  if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner))return {ok:false,reason:'peace'};
+  const report=reportedControl(s,a.owner,destination),reportedOwner=report?.owner;
+  if(reportedOwner&&reportedOwner!==a.owner&&!isWar(s,a.owner,reportedOwner))return {ok:false,reason:'peace'};
   const faction=s.factions[a.owner];
   if(link.sea&&faction.treasury<8)return {ok:false,reason:'transport'};
   const months=(link.sea?3:1)+(target.terrain==='hills'?1:0)+(target.terrain==='desert'?1:0);
-  return {ok:true,months,sea:!!link.sea,terrain:target.terrain,hostile:target.owner!==a.owner,food:faction.food,supply:target.supply};
+  return {ok:true,months,sea:!!link.sea,terrain:target.terrain,hostile:!!reportedOwner&&reportedOwner!==a.owner,reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:target.supply};
 }
 
 export function moveArmy(s,armyId,destination){
@@ -114,7 +115,7 @@ export function diplomacy(s, actor, target, action){
     s.relations[key]=-20;
     for(const a of s.armies.filter(a=>a.owner===actor||a.owner===target)){
       const other=a.owner===actor?target:actor;
-      if(a.move && region(s,a.move.to).owner===other)a.move=null;
+      if(a.move && reportedControl(s,a.owner,a.move.to)?.owner===other)a.move=null;
       if(a.siege && region(s,a.siege.region).owner===other)a.siege=null;
     }
     log(s,`${FACTIONS[actor].short[0]} and ${FACTIONS[target].short[0]} made peace; current control remains.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}议和，维持现有控制。`);
@@ -237,6 +238,7 @@ export function resolveBattle(s,attacker,defender,target){
 
 function arrive(s,a){
   const target=region(s,a.move.to);
+  observeArrival(s,a.owner,target.id);
   if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner)){a.move=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`);return}
   const enemy=s.armies.find(other=>other.id!==a.id&&other.region===target.id&&other.owner!==a.owner&&isWar(s,a.owner,other.owner)&&!other.move);
   if(enemy){resolveBattle(s,a,enemy,target);return}
@@ -277,7 +279,7 @@ function rebellion(s){
 function shortestStep(s,start,goal,owner){
   const queue=[[start,null]],seen=new Set([start]);
   while(queue.length){const [id,first]=queue.shift();if(id===goal)return first;
-    for(const e of adjacent(id)){if(seen.has(e.to))continue;const r=region(s,e.to);if(r.owner!==owner&&!isWar(s,owner,r.owner))continue;seen.add(e.to);queue.push([e.to,first||e.to])}}
+    for(const e of adjacent(id)){if(seen.has(e.to))continue;const controller=reportedControl(s,owner,e.to)?.owner;if(controller&&controller!==owner&&!isWar(s,owner,controller))continue;seen.add(e.to);queue.push([e.to,first||e.to])}}
   return null;
 }
 
@@ -302,14 +304,15 @@ export function estimatedStrength(s,observer,target){
 function aiTurn(s,owner){
   const f=s.factions[owner],owned=s.regions.filter(r=>r.owner===owner);
   if(!owned.length)return;
-  const enemies=s.regions.filter(r=>isWar(s,owner,r.owner));
+  const reportedNeighbors=()=>owned.flatMap(r=>adjacent(r.id).map(e=>({id:e.to,owner:reportedControl(s,owner,e.to)?.owner}))).filter(r=>r.owner);
+  const enemies=s.regions.filter(r=>isWar(s,owner,reportedControl(s,owner,r.id)?.owner));
   const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&a.men>1200);
   for(const a of available){
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y)})).sort((x,y)=>x.d-y.d);
-    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const defenderOwner=region(s,step).owner;const defenders=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/Math.max(1,s.regions.filter(x=>x.owner===defenderOwner).length):0;if(defenders>a.men*1.35||f.food<0)continue;moveArmy(s,a.id,step);break}}
+    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const defenderOwner=reportedControl(s,owner,step)?.owner;const defenders=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/Math.max(1,s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length):0;if(defenders>a.men*1.35||f.food<0)continue;moveArmy(s,a.id,step);break}}
   }
   if(f.treasury>65&&f.manpower>5500&&s.month%4===0){
-    const border=owned.find(r=>adjacent(r.id).some(e=>isWar(s,owner,region(s,e.to).owner)));
+    const border=owned.find(r=>adjacent(r.id).some(e=>isWar(s,owner,reportedControl(s,owner,e.to)?.owner)));
     if(border)recruit(s,border.id,owner);
   }
   if(f.stability<45&&f.treasury>25){f.treasury-=10;f.stability+=3}
@@ -322,10 +325,10 @@ function aiTurn(s,owner){
   if(owner!=='rebels' && s.month===12){
     const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);
     if(enemy && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=estimatedStrength(s,owner,enemy)*.6)diplomacy(s,owner,enemy,'peace');
-    if(!enemy && f.treasury>35){const neighbor=owned.flatMap(r=>adjacent(r.id).map(e=>region(s,e.to))).find(r=>r.owner!==owner&&r.owner!=='rebels'&&relation(s,owner,r.owner)>=0&&!isAllied(s,owner,r.owner));if(neighbor && rnd(s)<.2)diplomacy(s,owner,neighbor.owner,'improve')}
+    if(!enemy && f.treasury>35){const neighbor=reportedNeighbors().find(r=>r.owner!==owner&&r.owner!=='rebels'&&relation(s,owner,r.owner)>=0&&!isAllied(s,owner,r.owner));if(neighbor && rnd(s)<.2)diplomacy(s,owner,neighbor.owner,'improve')}
   }
   if(owner!=='rebels' && s.month%6===0 && f.treasury>40 && f.food>10 && strength(s,owner)>2000){
-    const border=owned.flatMap(r=>adjacent(r.id).map(e=>region(s,e.to))).find(r=>r.owner!==owner&&r.owner!=='rebels'&&!isWar(s,owner,r.owner)&&!isAllied(s,owner,r.owner)&&strength(s,owner)>estimatedStrength(s,owner,r.owner)*1.5&&relation(s,owner,r.owner)<0);
+    const border=reportedNeighbors().find(r=>r.owner!==owner&&r.owner!=='rebels'&&!isWar(s,owner,r.owner)&&!isAllied(s,owner,r.owner)&&strength(s,owner)>estimatedStrength(s,owner,r.owner)*1.5&&relation(s,owner,r.owner)<0);
     if(border&&rnd(s)<.18)diplomacy(s,owner,border.owner,'war');
   }
 }
