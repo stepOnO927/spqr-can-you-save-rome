@@ -37,3 +37,7 @@ Deiotarus’ western Galatian rule and relationship to Rome are summarized by th
 ### Eastern operational theaters
 
 Thebes (Diospolis Magna) and Ecbatana are mapped as approximate ancient places. [Pleiades, Diospolis Magna/Thebai](https://pleiades.stoa.org/places/786017), creators T. Wilfong, S. E. Sidebotham and J. Keenan and contributors (CC BY 3.0), places Thebes at approximately 25.665° N, 32.632° E. [Encyclopaedia Iranica, Ecbatana](https://www.iranicaonline.org/articles/ecbatana/) identifies the Median city and Parthian royal residence around 34.8° N, 48.52° E. These are evidence of places, not precise political borders or the location of either claimant in 49 BCE. The northern/upper Egyptian and Mesopotamian/Median theaters and their links are game abstractions within the existing broad historical outlines. Historical source polygons are shared rather than partitioned with invented lines.
+
+### Simulated claimant commands
+
+The alternative Egyptian and Parthian claimant banners reuse each realm’s original game motif with distinct colors. These are original game identifiers, not historical flags or evidence that these particular alternate-history uprisings occurred. Territorial control, army strength, aid and later outcomes are simulated.
