@@ -1,7 +1,7 @@
-import {initializeWorld, CHARACTER_CATALOG, ageRange} from './characters.js?v=15';
+import {initializeWorld, CHARACTER_CATALOG, ageRange} from './characters.js?v=16';
 import {ROUTES} from './data.js?v=9';
-import {addReport,reportedHealthSubjects} from './character-system.js?v=58';
-import {officeOf} from './office-system.js?v=6';
+import {addReport,reportedHealthSubjects} from './character-system.js?v=59';
+import {officeOf} from './office-system.js?v=7';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 // A commander in transit has not arrived in a theater where an audience can occur.

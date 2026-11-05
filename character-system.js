@@ -1,7 +1,7 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=15';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=16';
 import {FACTIONS,ROUTES} from './data.js?v=9';
-import {deriveGovernment} from './governance.js?v=16';
-import {potentialConspirators} from './conspiracies.js?v=7';
+import {deriveGovernment} from './governance.js?v=17';
+import {potentialConspirators} from './conspiracies.js?v=8';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 const claimantAvailable=c=>!!c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health);
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
@@ -74,6 +74,16 @@ export function reportedHealthSubjects(s,actor,target){
 export function claimantRepresentatives(s,actor,claimant){
  initializeWorld(s);return Object.values(s.world.characters).filter(c=>c.faction===actor&&c.alive&&!c.missing&&!['seriously_ill','dying','deceased'].includes(c.health)&&CHARACTER_CATALOG[c.id]&&(s.world.personalRelations[[c.id,claimant].sort().join(':')]?.trust||0)>0).map(c=>c.id);
 }
+// A public policy records the player's choice, not the target court's true ruler.
+export function recognizeClaimant(s,target,claimant){
+ initializeWorld(s);const actor=s.player;if(!['caesar','senate'].includes(actor)||!['egypt','parthia'].includes(target)||!s.factions[actor]||!s.factions[target]||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
+ const existing=s.world.recognitions[actor]?.[target];
+ if(claimant==null){if(!existing)return {ok:false,reason:'unavailable'};delete s.world.recognitions[actor][target];notify(s,'Recognition of a reported claimant was withdrawn.','已撤回对报告中竞争者的承认。');return {ok:true,cost:0}}
+ if(!reportedClaimants(s,actor,target).includes(claimant))return {ok:false,reason:'unavailable'};
+ if(existing?.claimant===claimant)return {ok:false,reason:'already'};if(s.factions[actor].treasury<5)return {ok:false,reason:'treasury'};
+ s.factions[actor].treasury-=5;(s.world.recognitions[actor]||={})[target]={claimant,year:s.year,month:s.month};const key=[actor,target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-5);
+ notify(s,'A reported claimant was recognized; relations with the court fell by up to 5.','已承认一位报告中的竞争者；与宫廷的关系最多降低5。');return {ok:true,cost:5};
+}
 export function supportClaimant(s,actor,target,claimant,representative=null){
  initializeWorld(s);if(!['caesar','senate'].includes(actor)||actor===target||!['egypt','parthia'].includes(target)||!reportedClaimants(s,actor,target).includes(claimant)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(representative&&!claimantRepresentatives(s,actor,claimant).includes(representative))return {ok:false,reason:'representative'};
@@ -107,7 +117,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  op.resolvedYear=s.year;op.resolvedMonth=s.month;
  if(op.type==='support'){
   const claimant=s.world.characters[op.claimant],valid=s.regions.some(r=>r.owner===op.target)&&claimantAvailable(claimant)&&(s.world.claimants[op.target]||[]).includes(op.claimant);
-  const representative=op.representative&&claimantRepresentatives(s,op.actor,op.claimant).includes(op.representative)?op.representative:null,trust=representative?(s.world.personalRelations[[representative,op.claimant].sort().join(':')]?.trust||0):0,declineLimit=Math.max(.25,.45-Math.min(100,trust)*.002);
+  const representative=op.representative&&claimantRepresentatives(s,op.actor,op.claimant).includes(op.representative)?op.representative:null,trust=representative?(s.world.personalRelations[[representative,op.claimant].sort().join(':')]?.trust||0):0,recognized=s.world.recognitions?.[op.actor]?.[op.target]?.claimant===op.claimant,declineLimit=Math.max(.25,.45-Math.min(100,trust)*.002-(recognized ? 0.05 : 0));
   if(!valid||q<.2)op.status='no_reply';else if(q<declineLimit)op.status='declined';else{op.status='complete';const dispute=s.world.disputes[op.target]||={months:0};dispute.support||={};dispute.support[op.claimant]=Math.min(30,(dispute.support[op.claimant]||0)+15);const key=[op.actor,op.target].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]||0)-10)}
   op.resolvedYear=s.year;op.resolvedMonth=s.month;
   if(op.actor===s.player)notify(s,op.status==='complete'?'The claimant accepted support; relations with the court worsened.':op.status==='declined'?'The claimant declined the offer.':'No reply arrived; the offer or response may have been lost.',op.status==='complete'?'竞争者接受支持；与宫廷的关系恶化。':op.status==='declined'?'竞争者拒绝了提议。':'未收到回信；提议或回信可能遗失。');continue

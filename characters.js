@@ -32,6 +32,7 @@ export function initializeWorld(s){
  if(!s.world.claimants)s.world.claimants={};
  if(!s.world.disputes)s.world.disputes={};
  if(!s.world.disputeHistory)s.world.disputeHistory=[];
+ if(!s.world.recognitions)s.world.recognitions={};
  if(!s.world.defections)s.world.defections=[];
  if(!s.knowledge){s.knowledge=Object.fromEntries(Object.keys(s.factions).map(actor=>[actor,Object.fromEntries(Object.keys(s.factions).map(target=>[target,{reportedLeaders:clone(OPENING_LEADERS[target]||[]),reports:[]}]))]));}
  for(const [observer,targets] of Object.entries(s.knowledge))for(const [target,k] of Object.entries(targets)){if(!k.sightings)k.sightings=Object.fromEntries(INITIAL_ARMIES.filter(a=>a.owner===target&&target!==observer).map(a=>[a.id,{id:a.id,name:[...a.name],owner:a.owner,region:a.region,year:-49,month:1}]))}

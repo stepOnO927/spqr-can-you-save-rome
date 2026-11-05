@@ -1,5 +1,5 @@
-import {OFFICE_TYPES,initializeOffices,officeCandidates,appointOffice,dismissOffice} from '../office-system.js?v=6';
-import {CHARACTER_CATALOG} from '../characters.js?v=15';
+import {OFFICE_TYPES,initializeOffices,officeCandidates,appointOffice,dismissOffice} from '../office-system.js?v=7';
+import {CHARACTER_CATALOG} from '../characters.js?v=16';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={finance:['Finance officer','财务专员'],supply:['Supply officer','粮秣专员'],administration:['Administration officer','政务专员']};
