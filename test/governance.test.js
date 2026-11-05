@@ -40,6 +40,9 @@ test('acting deputies must be in controlled territory and not marching, without 
  s.armies.push({id:'antony-test',owner:'caesar',characterId:'antony',region:'cisalpine',men:1000,move:{to:'italiaN',remaining:1}});
  assert.deepEqual(deriveGovernment(s,'caesar').acting,[]);
  s.armies.at(-1).move=null;
+ s.armies.at(-1).region='roma';
+ assert.deepEqual(deriveGovernment(s,'caesar').acting,[]);
+ s.armies.at(-1).region='cisalpine';s.world.characters.antony.location='roma';
  assert.deepEqual(deriveGovernment(s,'caesar').acting,['antony']);
  assert.equal(s.knowledge.senate.caesar.reports.length,0);
 });
