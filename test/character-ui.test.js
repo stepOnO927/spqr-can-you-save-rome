@@ -220,3 +220,8 @@ test('sourced historical kinship remains separate from simulated trust and forei
  panel.children=[];ui.show('pacorus');html=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(html,/奥罗德二世 · 父亲/);assert.match(html,/iranicaonline\.org/);assert.deepEqual(s.knowledge.senate.parthia.reports,[]);
  }finally{globalThis.document=prior}
 });
+
+test('Parthian intelligence offers covert contact investigations in both languages',()=>{
+ const prior=globalThis.document,s=newGame('senate');globalThis.document={createElement:tag=>new Element(tag)};
+ try{for(const language of ['en','zh']){const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'parthia');assert.match(content.children[0].innerHTML,/value="contacts"/);assert.match(content.children[0].innerHTML,language==='zh'?/埃及或帕提亚竞争者/:/Egyptian or Parthian claimant/)}}finally{globalThis.document=prior}
+});
