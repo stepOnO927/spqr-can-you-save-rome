@@ -1,13 +1,13 @@
 import {identityKnowledge} from './identity-knowledge.js?v=3';
-import {politicalAmbition} from '../conspiracies.js?v=8';
+import {politicalAmbition} from '../conspiracies.js?v=9';
 import {HISTORICAL_DEATHS,HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS,HISTORICAL_RELATIONSHIPS} from '../historical-reference.js?v=5';
-import {officeOf} from '../office-system.js?v=7';
-import {reportedClaimants,reportedHealthSubjects,supportClaimant,recognizeClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=67';
-import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor} from '../governance.js?v=19';
-import {FACTIONS} from '../data.js?v=9';
-import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=16';
-import {queueMission} from '../engine.js?v=95';
-import {previewPersonTravel,startPersonTravel,requestPersonalMeeting} from '../personal-diplomacy.js?v=69';
+import {officeOf} from '../office-system.js?v=8';
+import {reportedClaimants,reportedHealthSubjects,supportClaimant,recognizeClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=68';
+import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor} from '../governance.js?v=20';
+import {FACTIONS} from '../data.js?v=10';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=17';
+import {queueMission} from '../engine.js?v=96';
+import {previewPersonTravel,startPersonTravel,requestPersonalMeeting} from '../personal-diplomacy.js?v=70';
 const portraits=new Set(['caesar','pompey','cleopatra','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function evidenceText(state,actor,target,report,zh){

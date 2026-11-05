@@ -1,4 +1,4 @@
-import {INITIAL_ARMIES} from './data.js?v=9';
+import {INITIAL_ARMIES} from './data.js?v=10';
 export const CHARACTER_CATALOG = {
  caesar:{name:['Gaius Julius Caesar','盖乌斯·尤利乌斯·凯撒'],birth:[-102,-100],faction:'caesar',role:['Roman political and military leader','罗马政治与军事领袖'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Julius-Caesar-Roman-ruler'},
  pompey:{name:['Gnaeus Pompeius Magnus','格奈乌斯·庞培'],birth:[-106,-106],faction:'senate',role:['Roman commander allied with the Senate','元老院方面的罗马统帅'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Pompey-the-Great'},

@@ -1,7 +1,7 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=16';
-import {FACTIONS,ROUTES} from './data.js?v=9';
-import {deriveGovernment} from './governance.js?v=19';
-import {potentialConspirators} from './conspiracies.js?v=8';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=17';
+import {FACTIONS,ROUTES} from './data.js?v=10';
+import {deriveGovernment} from './governance.js?v=20';
+import {potentialConspirators} from './conspiracies.js?v=9';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.

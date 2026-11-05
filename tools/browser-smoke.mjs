@@ -115,6 +115,8 @@ try{
  assert.equal(await page.locator('[data-army="egyptguard"]').count(),0,'distant armies are not automatically revealed');
  await page.locator('#open-atlas').click();await page.waitForFunction(()=>document.querySelector('[data-army="italy"]'));
  assert.equal(await page.locator('[data-army="egyptguard"]').count(),0,'both map views use the same limited intelligence');
+ await page.locator('[data-city="THEBAI"]').dispatchEvent('click');assert.match(await page.locator('#command-detail').innerText(),/上埃及战区/);await page.locator('#city-region').click();assert.match(await page.locator('#selection-title').innerText(),/上埃及战区/);
+ await page.locator('[data-city="ECBATANA"]').dispatchEvent('click');assert.match(await page.locator('#command-detail').innerText(),/米底亚战区/);
  await page.locator('[data-city="ROMA"]').click({force:true});
  assert.match(await page.locator('#command-detail').innerText(),/战区控制报告/);
  await page.locator('#control-scout').click();assert.match(await page.locator('#control-scout-feedback').innerText(),/5国库/);

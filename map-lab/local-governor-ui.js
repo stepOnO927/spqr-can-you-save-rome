@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from '../characters.js?v=16';
-import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=7';
+import {CHARACTER_CATALOG} from '../characters.js?v=17';
+import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=8';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
