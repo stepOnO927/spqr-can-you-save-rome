@@ -13,11 +13,11 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=8';
 import republicanRoads from '../republican-roads.js?v=1';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=104';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=105';
 import {FACTIONS} from '../data.js?v=11';
 import {identity,factionMark} from '../identity.js?v=3';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=18';
-import {createCharacterUI} from './character-ui.js?v=106';
+import {createCharacterUI} from './character-ui.js?v=107';
 import {reportedArmies} from '../character-system.js?v=72';
 import {createTutorial} from './tutorial.js?v=6';
 import {friendlyPersonnelInTheater} from './personnel.js?v=2';

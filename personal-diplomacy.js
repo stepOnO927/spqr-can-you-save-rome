@@ -46,8 +46,16 @@ export function requestPersonalMeeting(s,id,target,targetFaction){
  if(s.meetings.some(m=>m.person===id&&m.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[s.player].treasury<3)return {ok:false,reason:'treasury'};
  s.factions[s.player].treasury-=3;s.meetings.unshift({actor:s.player,person:id,target,targetFaction:court,location:c.location,status:'pending',remaining:2,year:s.year,month:s.month});return {ok:true};
 }
+function interruptJourney(s,c){
+ delete c.travel;
+ if(c.faction!==s.player)return;
+ const name=CHARACTER_CATALOG[c.id]?.name||['A person','一位人物'];
+ if(c.missing)log(s,`${name[0]}'s journey ended after contact was lost; their present location is unknown.`,`${name[1]}失联，行程已中止；目前位置不明。`);
+ else if(!c.alive||c.health==='deceased')log(s,`${name[0]}'s journey ended following their death in the simulation.`,`${name[1]}在模拟中去世，行程已结束。`);
+ else log(s,`${name[0]}'s journey was interrupted by serious illness; the last recorded theater does not establish their exact location.`,`${name[1]}因重病中止行程；最后记录的战区不代表其确切位置。`);
+}
 export function advancePersonalDiplomacy(s){
- initializeWorld(s);for(const c of Object.values(s.world.characters)){const t=c.travel;if(!t)continue;if(!c.alive||c.missing||['seriously_ill','dying','deceased'].includes(c.health)){delete c.travel;continue}const next=t.legs[0],r=s.regions.find(x=>x.id===next?.to);if(!r){delete c.travel;continue}if(--t.remaining>0)continue;observeArrival(s,c.faction,next.to);if(atWar(s,c.faction,r.owner)){delete c.travel;if(c.faction===s.player)log(s,'A personal journey stopped on arrival: entry is no longer safe.','人物抵达途中核实了战区控制；因无法安全进入而中止行程。');continue}c.location=next.to;t.legs.shift();if(t.legs.length)t.remaining=t.legs[0].months;else{delete c.travel;if(c.faction===s.player)log(s,`${CHARACTER_CATALOG[c.id].name[0]} arrived in ${r.name[0]}.`,`${CHARACTER_CATALOG[c.id].name[1]}抵达${r.name[1]}。`)}}
+ initializeWorld(s);for(const c of Object.values(s.world.characters)){const t=c.travel;if(!t)continue;if(!c.alive||c.missing||['seriously_ill','dying','deceased'].includes(c.health)){interruptJourney(s,c);continue}const next=t.legs[0],r=s.regions.find(x=>x.id===next?.to);if(!r){delete c.travel;continue}if(--t.remaining>0)continue;observeArrival(s,c.faction,next.to);if(atWar(s,c.faction,r.owner)){delete c.travel;if(c.faction===s.player)log(s,'A personal journey stopped on arrival: entry is no longer safe.','人物抵达途中核实了战区控制；因无法安全进入而中止行程。');continue}c.location=next.to;t.legs.shift();if(t.legs.length)t.remaining=t.legs[0].months;else{delete c.travel;if(c.faction===s.player)log(s,`${CHARACTER_CATALOG[c.id].name[0]} arrived in ${r.name[0]}.`,`${CHARACTER_CATALOG[c.id].name[1]}抵达${r.name[1]}。`)}}
  for(const m of s.meetings){
   if(m.status!=='pending'||--m.remaining>0)continue;
   const a=s.world.characters[m.person],b=s.world.characters[m.target],q=random(s),personKey=[m.person,m.target].sort().join(':'),factionKey=[m.actor,m.targetFaction].sort().join(':'),trust=s.world.personalRelations[personKey]?.trust||0,relations=s.relations[factionKey]||0,declineLimit=Math.max(.25,Math.min(.7,.45-trust*.002-relations*.001));

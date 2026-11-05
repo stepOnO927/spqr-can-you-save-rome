@@ -34,6 +34,16 @@ test('civilian journeys cost resources, take time, and survive a save',()=>{
 test('journeys stop when a route becomes hostile; commanders cannot abandon an army',()=>{
  const s=newGame('senate');assert.equal(previewPersonTravel(s,'pompey','italiaS').ok,false);assert.equal(startPersonTravel(s,'cicero','epirus').ok,true);s.regions.find(r=>r.id==='italiaS').owner='caesar';advancePersonalDiplomacy(s);assert.equal(s.world.characters.cicero.location,'roma');assert.ok(s.world.characters.cicero.travel);advancePersonalDiplomacy(s);assert.equal(s.world.characters.cicero.location,'roma');assert.equal(s.world.characters.cicero.travel,undefined);
 });
+test('illness, disappearance and death interrupt an own journey with a private explanation',()=>{
+ for(const [change,expected] of [[c=>c.health='seriously_ill',/因重病中止行程.*不代表其确切位置/],[c=>c.missing={origin:'roma',remaining:2},/失联.*目前位置不明/],[c=>{c.alive=false;c.health='deceased'},/模拟中去世.*行程已结束/]]){
+  let s=newGame('senate');assert.equal(startPersonTravel(s,'cicero','epirus').ok,true);change(s.world.characters.cicero);s.log=[];
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));advancePersonalDiplomacy(s);
+  assert.equal(s.world.characters.cicero.travel,undefined);assert.match(s.log[0].zh,expected);assert.equal(s.log.length,1);
+  advancePersonalDiplomacy(s);assert.equal(s.log.length,1);
+ }
+ const s=newGame('senate');s.world.characters.cleopatra.travel={destination:'syria',legs:[{to:'syria',months:2}],remaining:2};s.world.characters.cleopatra.health='dying';s.log=[];
+ advancePersonalDiplomacy(s);assert.equal(s.world.characters.cleopatra.travel,undefined);assert.equal(s.log.length,0);
+});
 test('requests do not reveal whether a reported foreign leader is actually present',()=>{
  const s=newGame('senate');s.world.characters.cleopatra.location='parthia';assert.equal(requestPersonalMeeting(s,'cicero','cleopatra').ok,true);assert.equal(s.meetings[0].status,'pending');advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'pending');advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'no_contact');assert.deepEqual(s.world.personalRelations,{});assert.equal(s.knowledge.senate.egypt.reports.length,0);
 });
