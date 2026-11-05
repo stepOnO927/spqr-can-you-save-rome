@@ -189,7 +189,13 @@ export function advanceDisputes(s){initializeWorld(s);for(const faction of ['egy
 function advanceFactionDispute(s,faction){
  const leaders=s.world.leadership[faction]||[],claimants=(s.world.claimants[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!leaders.includes(id));s.world.claimants[faction]=claimants;
  if(!claimants.length||!s.regions.some(r=>r.owner===faction)){delete s.world.disputes[faction];return}
- const dispute=s.world.disputes[faction]||={months:0};if(!leaders.length&&dispute.vacancySince?.year===s.year&&dispute.vacancySince?.month===s.month)return;if(++dispute.months<6)return;dispute.months=0;
+ const dispute=s.world.disputes[faction]||={months:0};if(!leaders.length&&dispute.vacancySince?.year===s.year&&dispute.vacancySince?.month===s.month)return;
+ // An unresolved court struggle strains administration over time. This is
+ // internal simulation state; observers learn about it only through reports.
+ // Old saves start the new pressure clock when they are resumed.
+ dispute.duration=(Number.isFinite(dispute.duration)?Math.max(0,dispute.duration):0)+1;
+ if(dispute.duration%3===0){s.factions[faction].stability=Math.max(0,s.factions[faction].stability-1);s.factions[faction].treasury=Math.max(-100,s.factions[faction].treasury-3)}
+ if(++dispute.months<6)return;dispute.months=0;
  if(!leaders.length){
   // A rival's claim is not automatically recognized when the incumbent dies.
   // An unnamed authority governs during the vacancy; existing claimants may

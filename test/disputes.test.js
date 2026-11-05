@@ -74,3 +74,16 @@ test('Parthian claimant backing is delayed and a disputed vacancy is not automat
 test('Parthian takeovers use known characters and leave a rival claim, not an invented co-ruler',()=>{
  const s=newGame('caesar');s.world.characters.pacorus.loyalty=20;contestLeadership(s,'parthia','pacorus');s.factions.parthia.stability=20;s.world.disputes.parthia.months=5;s.world.intelSeed=seedFor(.15,.2);advanceDisputes(s);assert.deepEqual(s.world.leadership.parthia,['pacorus']);assert.deepEqual(s.world.claimants.parthia,['orodes']);assert.equal(s.world.disputeHistory[0].outcome,'takeover');assert.deepEqual(knownLeaders(s,'caesar','parthia'),['orodes']);
 });
+
+test('a prolonged court dispute strains stability and treasury without revealing secret state',()=>{
+ for(const faction of ['egypt','parthia']){
+  let s=newGame('caesar');if(faction==='parthia')s.world.characters.pacorus.loyalty=20;assert.equal(contestLeadership(s,faction,faction==='egypt'?'cleopatra':'pacorus'),true);
+  const stability=s.factions[faction].stability,treasury=s.factions[faction].treasury,known=structuredClone(s.knowledge.caesar[faction]);
+  advanceDisputes(s);advanceDisputes(s);assert.equal(s.factions[faction].stability,stability);assert.equal(s.factions[faction].treasury,treasury);
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));advanceDisputes(s);assert.equal(s.factions[faction].stability,stability-1);assert.equal(s.factions[faction].treasury,treasury-3);assert.deepEqual(s.knowledge.caesar[faction],known);assert.equal(s.world.disputes[faction].duration,3);
+  s.world.claimants[faction]=[];advanceDisputes(s);const after=s.factions[faction].treasury;for(let i=0;i<3;i++)advanceDisputes(s);assert.equal(s.factions[faction].treasury,after);assert.equal(s.world.disputes[faction],undefined);
+ }
+});
+test('older unresolved disputes start the pressure clock safely on load',()=>{
+ let s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.world.disputes.egypt.months=3;delete s.world.disputes.egypt.duration;s=upgradeSave(JSON.parse(JSON.stringify(s)));const cash=s.factions.egypt.treasury;advanceDisputes(s);assert.equal(s.world.disputes.egypt.duration,1);assert.equal(s.factions.egypt.treasury,cash);
+});
