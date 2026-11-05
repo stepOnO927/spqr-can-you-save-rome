@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm test
-      - run: npm install --no-save playwright
+      - run: npm install --no-save playwright@1.64.1
       - run: npx playwright install --with-deps chromium
       - run: |
           node server.mjs > server.log 2>&1 &

@@ -29,6 +29,13 @@ export function reportedControl(s,viewer,id){
  return s.controlKnowledge[viewer]?.[id]||null;
 }
 
+// The force arriving at a theater can observe its controller, even when the
+// location is outside the observer's normal monthly frontier observation.
+export function observeArrival(s,viewer,id){
+ initializeControlKnowledge(s);const r=s.regions.find(x=>x.id===id);
+ if(r&&s.controlKnowledge[viewer])s.controlKnowledge[viewer][id]={owner:r.owner,year:s.year,month:s.month,source:'arrival'};
+}
+
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
 
