@@ -213,3 +213,10 @@ test('a missing friendly character does not disclose a stale saved location',()=
  globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).show('cicero');assert.match(panel.innerHTML,/所在战区<\/span><b>未知<\/b>/);assert.doesNotMatch(panel.innerHTML,/所在战区<\/span><b>罗马<\/b>/)}finally{globalThis.document=prior}
 });
+
+test('sourced historical kinship remains separate from simulated trust and foreign intelligence',()=>{
+ const prior=globalThis.document,s=newGame('senate'),panel=new Element();globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
+ try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('cleopatra');let html=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(html,/历史家族关系: 托勒密十三世 · 弟弟及早期共同统治者/);assert.match(html,/不代表游戏中的信任、当前职权或已获情报/);assert.match(html,/metmuseum\.org/);assert.deepEqual(s.knowledge.senate.egypt.reports,[]);assert.deepEqual(s.world.personalRelations,{});
+ panel.children=[];ui.show('pacorus');html=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(html,/奥罗德二世 · 父亲/);assert.match(html,/iranicaonline\.org/);assert.deepEqual(s.knowledge.senate.parthia.reports,[]);
+ }finally{globalThis.document=prior}
+});

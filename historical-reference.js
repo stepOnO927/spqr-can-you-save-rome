@@ -39,3 +39,12 @@ export const HISTORICAL_NAME_FORMS={
  cleopatra:{form:'ΚΛΕΟΠΑΤΡΑ',note:['Greek inscription on a coin from later in her reign','其统治后期钱币上的希腊文铭文'],source:{label:['Metropolitan Museum: Pergamon and the Hellenistic Kingdoms','大都会艺术博物馆：《帕加马与希腊化王国》'],url:'https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf'}},
  antony:{form:'ΑΝΤΩΝΙΟΣ',note:['Greek inscription on a coin from later in his life','其生平后期钱币上的希腊文铭文'],source:{label:['Metropolitan Museum: Pergamon and the Hellenistic Kingdoms','大都会艺术博物馆：《帕加马与希腊化王国》'],url:'https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf'}}
 };
+
+// Family relationships are historical references, not simulation trust, present
+// authority, or evidence that a foreign court's current reports are accurate.
+export const HISTORICAL_RELATIONSHIPS={
+ cleopatra:[{person:'ptolemy',relation:['Younger brother and early co-ruler','弟弟及早期共同统治者'],source:{label:['Metropolitan Museum of Art: Hellenistic kingdoms','大都会艺术博物馆：希腊化王国'],url:'https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf'}}],
+ ptolemy:[{person:'cleopatra',relation:['Older sister and early co-ruler','姐姐及早期共同统治者'],source:{label:['Metropolitan Museum of Art: Hellenistic kingdoms','大都会艺术博物馆：希腊化王国'],url:'https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf'}}],
+ orodes:[{person:'pacorus',relation:['Son','儿子'],source:{label:['Encyclopaedia Iranica: Orodes II','《伊朗百科全书》：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}}],
+ pacorus:[{person:'orodes',relation:['Father','父亲'],source:{label:['Encyclopaedia Iranica: Orodes II','《伊朗百科全书》：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}}]
+};
