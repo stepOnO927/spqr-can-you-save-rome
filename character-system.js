@@ -1,6 +1,6 @@
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=16';
 import {FACTIONS,ROUTES} from './data.js?v=9';
-import {deriveGovernment} from './governance.js?v=17';
+import {deriveGovernment} from './governance.js?v=18';
 import {potentialConspirators} from './conspiracies.js?v=8';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.

@@ -11,8 +11,21 @@ test('a sick Roman commander retains nominal office while an available officer a
  s.world.characters.antony.health='dying';assert.deepEqual(deriveGovernment(s,'caesar').acting,['lepidus']);s.world.characters.caesar.health='recovering';assert.equal(deriveGovernment(s,'caesar').kind,'normal');
 });
 test('a co-ruler can govern without creating a false historical ruler or informing foreign observers',()=>{
- const s=newGame('caesar');s.world.characters.cleopatra.health='seriously_ill';const g=deriveGovernment(s,'egypt');assert.equal(g.kind,'co_ruler_acting');assert.deepEqual(g.acting,['ptolemy']);advanceGovernments(s);
+ const s=newGame('caesar');s.year=-45;s.world.characters.cleopatra.health='seriously_ill';const g=deriveGovernment(s,'egypt');assert.equal(g.kind,'co_ruler_acting');assert.deepEqual(g.acting,['ptolemy']);advanceGovernments(s);
  assert.deepEqual(s.world.leadership.egypt,['cleopatra','ptolemy']);assert.deepEqual(knownLeaders(s,'caesar','egypt'),['cleopatra','ptolemy']);assert.equal(s.knowledge.caesar.egypt.reports.length,0);assert.ok(!s.log.some(x=>x.en.includes('co-ruler')));
+});
+test('a definitely underage monarch keeps nominal rule while an adult co-ruler or unnamed regent acts',()=>{
+ let s=newGame('caesar');let g=deriveGovernment(s,'egypt');assert.deepEqual(g.nominal,['cleopatra','ptolemy']);assert.equal(g.kind,'co_ruler_acting');assert.deepEqual(g.acting,['cleopatra']);assert.deepEqual(knownLeaders(s,'caesar','egypt'),['cleopatra','ptolemy']);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+ s.world.characters.cleopatra.alive=false;assignSuccession(s,'egypt');g=deriveGovernment(s,'egypt');assert.deepEqual(g.nominal,['ptolemy']);assert.equal(g.kind,'regency');assert.deepEqual(g.acting,[]);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));s.year=-47;assert.equal(deriveGovernment(s,'egypt').kind,'regency');s.year=-46;assert.equal(deriveGovernment(s,'egypt').kind,'normal');assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+});
+test('a definitely underage successor cannot act as regent for an incapacitated co-ruler',()=>{
+ const s=newGame('caesar');s.world.characters.cleopatra.health='seriously_ill';const g=deriveGovernment(s,'egypt');assert.equal(g.kind,'regency');assert.deepEqual(g.acting,[]);assert.deepEqual(g.nominal,['cleopatra','ptolemy']);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+});
+test('a minority regency is known to a foreign faction only through a dated investigation',()=>{
+ const s=newGame('caesar');s.world.characters.cleopatra.alive=false;assignSuccession(s,'egypt');advanceGovernments(s);assert.equal(s.world.governments.egypt.kind,'regency');assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+ const mission=queueMission(s,'caesar','egypt','spy','authority');s.world.intelSeed=1000;for(let i=0;i<mission.duration;i++)advanceOperations(s);const report=s.knowledge.caesar.egypt.reports[0];assert.equal(report.value.kind,'regency');assert.deepEqual(report.value.actors,[]);assert.equal(report.verified,false);assert.equal(s.knowledge.senate.egypt.reports.length,0);
+ s.year=-46;assert.equal(deriveGovernment(s,'egypt').kind,'normal');assert.equal(report.value.kind,'regency');
 });
 test('separate Mauretanian rulers do not automatically govern each other’s kingdom',()=>{
  const s=newGame();s.world.characters.bocchus.health='seriously_ill';assert.equal(deriveGovernment(s,'mauretania').kind,'constituent_unavailable');assert.deepEqual(s.world.leadership.mauretania,['bocchus','bogud']);
