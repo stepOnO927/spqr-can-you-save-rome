@@ -132,7 +132,7 @@ const courtReports={
 };
 const letterMonths={senate:2,caesar:2,egypt:4,numidia:3,mauretania:4,armenia:5,parthia:5,galatia:4,bosporus:5};
 export function sendInquiry(s,actor,target,subject='leaders'){
- if(!['leaders','successor','availability','representative'].includes(subject))return {ok:false,reason:'subject'};
+ if(!['leaders','successor','availability','representative','clashes'].includes(subject)||subject==='clashes'&&!['egypt','parthia'].includes(target))return {ok:false,reason:'subject'};
  if(actor===target||!s.factions[actor]||!courtReports[target]||!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target))return {ok:false,reason:'unavailable'};
  if(s.factions[actor].treasury<3)return {ok:false,reason:'treasury'};
  if((s.inquiries||[]).some(x=>x.actor===actor&&x.target===target&&x.status==='pending'))return {ok:false,reason:'pending'};
@@ -161,6 +161,13 @@ function resolveInquiries(s){
    if(subject==='successor'){
     sealed.claim=disclose?[`The court names ${CHARACTER_CATALOG[plan].name[0]} as a possible successor.`,`宫廷称${CHARACTER_CATALOG[plan].name[1]}为可能的继任人选。`]:['The reply did not name a successor.','回信没有指明继任人选。'];
     sealed.report={kind:'succession',value:disclose?plan:'unknown'};
+   }else if(subject==='clashes'){
+    const recent=s.world.disputeHistory.some(e=>e.faction===letter.target&&e.outcome==='clashes'&&(s.year-e.year)*12+s.month-e.month>=0&&(s.year-e.year)*12+s.month-e.month<=12);
+    // Guarded courts may deny violence to conceal their weakness. Silence or a
+    // denial is an official claim, never proof that the country is peaceful.
+    const admit=recent&&!hostile&&rel>=30&&roll>=.75,deny=!admit&&(hostile||rel<0||!recent)&&roll>=.6;
+    sealed.claim=admit?['The court acknowledges reports of local fighting.','宫廷承认有地方武装冲突的报告。']:deny?['The court denies reports of local fighting.','宫廷否认地方武装冲突的报告。']:['The court gives no clear answer about local fighting.','宫廷没有就地方武装冲突给出明确答复。'];
+    sealed.report={kind:'clashes',value:admit?'reported':deny?'denied':'unknown'};
    }else if(subject==='availability')sealed.claim=['The court has made no binding commitment to a meeting.','宫廷尚未就会面作出承诺。'];
    else if(subject==='representative'){
     // A cooperative court may name people who currently exercise authority.
