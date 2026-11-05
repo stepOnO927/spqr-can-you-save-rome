@@ -65,3 +65,58 @@ export function resolveDynasticWars(s){
   if(s.world.claimants[parent].length)s.world.disputes[parent]={months:0};else delete s.world.disputes[parent];
  }
 }
+
+// A negotiated settlement preserves both sides' surviving forces. It cannot
+// silently create a war between a realm and one of its existing allies.
+export function settleDynasticWar(s,parent){
+ const cfg=CONFIG[parent],war=s.world.disputes?.[parent]?.war;if(!cfg||!war||!s.factions[parent]||!s.factions[cfg.rival])return false;
+ const enemies=s.wars.filter(w=>w.includes(cfg.rival)).map(w=>w.find(id=>id!==cfg.rival)).filter(id=>id!==parent);
+ if(enemies.some(id=>s.alliances.some(a=>a.includes(parent)&&a.includes(id))))return false;
+ const person=s.world.characters[war.claimant],leaders=(s.world.leadership[parent]||[]).filter(id=>s.world.characters[id]?.alive);
+ for(const a of s.armies.filter(a=>[parent,cfg.rival].includes(a.owner))){
+  if(a.move&&[parent,cfg.rival].includes(s.regions.find(r=>r.id===a.move.to)?.owner))a.move=null;
+  if(a.siege&&[parent,cfg.rival].includes(s.regions.find(r=>r.id===a.siege.region)?.owner))a.siege=null;
+  if(a.owner===cfg.rival)a.owner=parent;
+ }
+ for(const r of s.regions)if(r.owner===cfg.rival)r.owner=parent;
+ if(person){person.faction=parent;if(person.alive&&(parent==='egypt'||!leaders.length))leaders.push(war.claimant)}
+ s.world.leadership[parent]=[...new Set(leaders)];s.world.claimants[parent]=(s.world.claimants[parent]||[]).filter(id=>id!==war.claimant);
+ const base=s.factions[parent],rival=s.factions[cfg.rival];base.treasury+=rival.treasury;base.food+=rival.food;base.manpower+=rival.manpower;
+ s.wars=s.wars.filter(w=>!w.includes(cfg.rival));for(const enemy of enemies)if(!s.wars.some(w=>w.includes(parent)&&w.includes(enemy)))s.wars.push([parent,enemy]);
+ s.alliances=s.alliances.filter(a=>!a.includes(cfg.rival));delete s.factions[cfg.rival];delete s.world.leadership[cfg.rival];delete s.world.governments?.[cfg.rival];
+ s.world.disputeHistory.unshift({faction:parent,claimant:war.claimant,outcome:'negotiated_settlement',year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);
+ if(s.world.claimants[parent].length)s.world.disputes[parent]={months:0};else delete s.world.disputes[parent];
+ return true;
+}
+
+const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
+const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
+
+// A report can be false or old. The ability to send a proposal depends only
+// on the sender's own leads, never on whether the hidden war is still active.
+export function canMediate(s,actor,parent){
+ const cfg=CONFIG[parent];if(!cfg||!['caesar','senate'].includes(actor)||!s.factions[actor]||!s.regions.some(r=>r.owner===actor))return false;
+ return knownDynasticFactions(s,actor).includes(cfg.rival)||(s.knowledge?.[actor]?.[parent]?.reports||[]).some(r=>r.kind==='clashes'&&r.value==='reported');
+}
+export function requestMediation(s,actor,parent){
+ if(!canMediate(s,actor,parent))return {ok:false,reason:'unavailable'};
+ s.mediations||=[];if(s.mediations.some(x=>x.actor===actor&&x.parent===parent&&x.status==='pending'))return {ok:false,reason:'pending'};
+ if(s.factions[actor].treasury<12)return {ok:false,reason:'treasury'};
+ s.factions[actor].treasury-=12;s.mediations.unshift({actor,parent,status:'pending',remaining:6,duration:6,sentYear:s.year,sentMonth:s.month});
+ if(actor===s.player)log(s,'Mediation letters were sent; a response may take six months.','调停书信已寄出；回信可能需要六个月。');return {ok:true,duration:6};
+}
+
+export function advanceMediations(s){
+ for(const m of s.mediations||[]){if(m.status!=='pending')continue;m.remaining=Math.max(0,m.remaining-1);
+  if(!m.sealed&&m.remaining<=3){
+   const war=s.world.disputes?.[m.parent]?.war,base=s.factions[m.parent],rival=war&&s.factions[war.rival];let result='no_reply';
+   if(war&&base&&rival){const a=random(s),b=random(s),threshold=f=>f.stability<40?.38:.5;
+    if(a<.18||b<.18)result='no_reply';else if(a<threshold(base)||b<threshold(rival))result='refused';else result=settleDynasticWar(s,m.parent)?'accepted':'refused';
+   }
+   m.sealed={result,year:s.year,month:s.month};
+  }
+  if(m.remaining>0)continue;const reply=m.sealed||{result:'no_reply'},lost=reply.result!=='no_reply'&&random(s)<.15;
+  m.status=lost?'no_reply':reply.result;m.responseYear=reply.year;m.responseMonth=reply.month;delete m.sealed;
+  if(m.actor===s.player)log(s,m.status==='accepted'?'A reply reports a negotiated settlement; the situation may have changed since it was written.':m.status==='refused'?'A reply declined the mediation proposal.':'No mediation reply arrived; the letters may have been lost.',m.status==='accepted'?'回信称双方达成和解；局势可能在写信后改变。':m.status==='refused'?'回信拒绝了调停提议。':'未收到调停回信；书信可能遗失。');
+ }
+}
