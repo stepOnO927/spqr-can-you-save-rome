@@ -1,3 +1,22 @@
+import {reportedControl} from '../control-intelligence.js?v=4';
+
+// Preserve the observation date and provenance, not just the controller: a
+// traveler arriving now may describe an earlier and possibly mistaken sighting.
+export function controlReportChanges(state,before,labels){
+ return state.regions.flatMap(r=>{
+  const report=reportedControl(state,state.player,r.id);
+  if(!report?.owner||before[r.id]===report.owner)return [];
+  return [{name:r.name,owner:labels[report.owner]?.short||['Unknown','未知'],year:report.year,month:report.month,source:report.own?'own':report.source||'observation'}];
+ });
+}
+export function formatControlReport(change,language){
+ const zh=language==='zh',i=zh?1:0,name=change.name?.[i]||'',owner=change.owner?.[i]||'';
+ const sources={own:zh?'己方':'own control',travelers:zh?'商旅':'travelers',arrival:zh?'抵达观察':'arrival observation',observation:zh?'观察':'observation'};
+ const source=sources[change.source]||(zh?'来源未知':'source unknown');
+ if(!Number.isFinite(change.year)||!Number.isFinite(change.month))return zh?`${name}：控制报告 ${owner}（观察时间和来源未保存）`:`${name}: control reported as ${owner} (observation date and source were not saved)`;
+ return zh?`${name}：报告由${owner}控制（${source}，观察于 ${change.month}/${Math.abs(change.year)} BCE；可能过时或有误）`:`${name}: reported controlled by ${owner} (${source}, observed ${change.month}/${Math.abs(change.year)} BCE; may be outdated or mistaken)`;
+}
+
 // Chronicle projections contain only the player's own orders, never live enemy data.
 export function captureOwnOrders(state){
  return state.armies.filter(a=>a.owner===state.player).map(a=>({id:a.id,name:[...a.name],region:a.region,move:a.move?{...a.move}:null,siege:a.siege?{...a.siege}:null}));
