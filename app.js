@@ -1,10 +1,10 @@
 import {stageHandoff,receiveHandoff} from './view-handoff.js?v=1';
-import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=43';
+import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=44';
 import {identity,factionMark} from './identity.js?v=3';
 import {reportedControl} from './control-intelligence.js?v=4';
 import {CHARACTER_CATALOG} from './characters.js?v=18';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=11';
-import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=103';
+import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=104';
 import {drawMap,mapPoint} from './map.js?v=70';
 
 const ui={

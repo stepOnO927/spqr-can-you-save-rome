@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js';
 import {observeArmies,reportedArmies} from '../character-system.js';
-import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer} from '../visibility.js';
+import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer,visibleSummaryEvidence} from '../visibility.js';
 
 test('battle projection hides opponent details while preserving actual simulation evidence',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii'),d=s.armies.find(x=>x.id==='italy');resolveBattle(s,a,d,region(s,'italiaN'));const b=s.battles[0],own=battleSideForPlayer(b,'caesar','attacker'),enemy=battleSideForPlayer(b,'caesar','defender');
@@ -10,6 +10,21 @@ test('battle projection hides opponent details while preserving actual simulatio
 });
 test('legacy casualty logs do not reveal exact enemy numbers in either language',()=>{
  const event={en:'Caesar won. Casualties: 1,234 / 5,678.',zh:'凯撒获胜。伤亡：1,234 / 5,678。'};assert.equal(visibleLogText(event,'en'),'Caesar won. Casualties: details unverified.');assert.equal(visibleLogText(event,'zh'),'凯撒获胜。伤亡：详情未核实。');
+});
+test('old chronicle evidence without provenance remains hidden after loading, while new dispatches remain visible',()=>{
+ let s=newGame('caesar');delete s.chronicleVisibilityVersion;
+ s.log=[{en:'Secret Egyptian tax policy changed.',zh:'秘密税率变更。'}];
+ const old={changes:[{name:['Egypt','埃及'],owner:['Parthia','帕提亚']}],events:[s.log[0]]};
+ s.turnSummaries=[old];s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.match(visibleLogText(s.log[0],'en'),/unknown intelligence source/);
+ assert.match(visibleLogText(s.log[0],'zh'),/来源无法确认/);
+ assert.deepEqual(visibleSummaryEvidence(s.turnSummaries[0],'caesar'),{changes:[],events:[],legacy:true});
+ s.log.unshift({en:'A new messenger arrives.',zh:'新信使抵达。'});
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(visibleLogText(s.log[0],'en'),'A new messenger arrives.');
+ const fresh={knowledgeViewer:'caesar',changes:[{name:['Rome','罗马']}],events:[s.log[0]]};
+ assert.deepEqual(visibleSummaryEvidence(fresh,'caesar'),{changes:fresh.changes,events:fresh.events,legacy:false});
+ assert.deepEqual(visibleSummaryEvidence(fresh,'senate'),{changes:[],events:[],legacy:true});
 });
 test('foreign sieges in unseen theaters are not published to the player chronicle',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='egyptguard'),target=region(s,'syria');target.owner='parthia';target.fort=1;s.wars.push(['egypt','parthia']);a.move={to:'syria',remaining:1};tick(s);assert.ok(a.siege);assert.ok(!s.log.some(e=>e.en.includes('began a siege at Syria')));
