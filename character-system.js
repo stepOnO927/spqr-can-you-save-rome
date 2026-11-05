@@ -3,6 +3,9 @@ import {FACTIONS,ROUTES} from './data.js?v=9';
 import {deriveGovernment} from './governance.js?v=17';
 import {potentialConspirators} from './conspiracies.js?v=8';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
+// A visual impression is less precise than the historical birth estimate.
+// Unknown birth dates remain unknown, rather than becoming invented ages.
+export function apparentAgeRange(id,year){const age=ageRange(id,year);return age?[Math.max(0,Math.floor((age[0]-5)/5)*5),Math.ceil((age[1]+5)/5)*5]:null}
 const claimantAvailable=c=>!!c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health);
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const notify=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
@@ -205,8 +208,8 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   op.meeting='envoy';const k=[op.actor,op.target].sort().join(':');s.relations[k]=Math.min(100,(s.relations[k]||0)+3);
   // An audience may be with a representative. Only record a personal observation
   // when someone actually in office and named in the report could attend.
-  const met=(report.leaders||[]).find(candidate=>(s.world.leadership[op.target]||[]).includes(candidate)&&s.world.characters[candidate]?.alive&&!s.world.characters[candidate].travel&&!s.world.characters[candidate].missing&&!s.armies.some(a=>a.characterId===candidate&&a.move)&&!['seriously_ill','dying','deceased'].includes(s.world.characters[candidate].health));
-  if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=ageRange(met,s.year);
+  const met=(report.leaders||[]).find(candidate=>{const p=s.world.characters[candidate];return (s.world.leadership[op.target]||[]).includes(candidate)&&p?.alive&&p.faction===op.target&&!p.travel&&!p.missing&&s.regions.some(r=>r.id===p.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===candidate&&a.move)&&!['seriously_ill','dying','deceased'].includes(p.health)});
+  if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=apparentAgeRange(met,s.year);
    addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,source:'audience',confidence:'unverified',reliability:'low'});
    if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,source:'audience',confidence:'unverified',reliability:'low'});
   }
