@@ -2,12 +2,12 @@ import {identityKnowledge} from './identity-knowledge.js?v=3';
 import {politicalAmbition} from '../conspiracies.js?v=10';
 import {HISTORICAL_DEATHS,HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS,HISTORICAL_RELATIONSHIPS} from '../historical-reference.js?v=5';
 import {officeOf} from '../office-system.js?v=9';
-import {reportedClaimants,reportedHealthSubjects,supportClaimant,recognizeClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=69';
+import {reportedClaimants,reportedHealthSubjects,supportClaimant,recognizeClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=70';
 import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor} from '../governance.js?v=21';
 import {FACTIONS} from '../data.js?v=11';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=18';
-import {queueMission} from '../engine.js?v=97';
-import {previewPersonTravel,startPersonTravel,requestPersonalMeeting} from '../personal-diplomacy.js?v=71';
+import {queueMission} from '../engine.js?v=98';
+import {previewPersonTravel,startPersonTravel,requestPersonalMeeting} from '../personal-diplomacy.js?v=72';
 const portraits=new Set(['caesar','pompey','cleopatra','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function evidenceText(state,actor,target,report,zh){
