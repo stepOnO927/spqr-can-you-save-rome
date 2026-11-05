@@ -16,7 +16,7 @@ import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied
 import {FACTIONS} from '../data.js?v=11';
 import {identity,factionMark} from '../identity.js?v=3';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=18';
-import {createCharacterUI} from './character-ui.js?v=101';
+import {createCharacterUI} from './character-ui.js?v=102';
 import {reportedArmies} from '../character-system.js?v=71';
 import {createTutorial} from './tutorial.js?v=6';
 import {friendlyPersonnelInTheater} from './personnel.js?v=2';
