@@ -218,6 +218,14 @@ test('allied exchange cannot invent knowledge or refresh an old observation',()=
  assert.equal(s.knowledge.caesar.egypt.reports[0].observationYear,-49);assert.deepEqual(knownLeaders(s,'caesar','egypt'),['cleopatra','ptolemy']);
  assert.equal(queueMission(s,'caesar','egypt','exchange','strength').ok,true);s.world.intelSeed=1000;for(let i=0;i<3;i++)advanceOperations(s);assert.equal(s.operations[0].status,'failed');assert.equal(s.knowledge.caesar.egypt.reports.some(r=>r.kind==='strength'),false);
 });
+test('an ally can forward existing intelligence even when the target secretly loses all territory',()=>{
+ const baseline=newGame('senate');baseline.alliances.push(['senate','parthia']);addReport(baseline,'parthia','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'spy',confidence:'unverified',observationYear:-50,observationMonth:4});
+ const hidden=upgradeSave(JSON.parse(JSON.stringify(baseline)));for(const r of hidden.regions)if(r.owner==='egypt')r.owner='numidia';
+ for(const s of [baseline,hidden]){s.world.intelSeed=1000;assert.equal(queueMission(s,'senate','egypt','exchange','health','parthia','cleopatra').ok,true);for(let i=0;i<3;i++)advanceOperations(s);assert.equal(s.operations[0].status,'complete')}
+ assert.deepEqual(hidden.knowledge.senate.egypt.reports[0],baseline.knowledge.senate.egypt.reports[0]);
+ assert.equal(hidden.knowledge.senate.egypt.reports[0].observationYear,-50);assert.equal(hidden.knowledge.senate.egypt.reports[0].originSource,'spy');
+ const stale=newGame('senate');stale.alliances.push(['senate','parthia']);stale.knowledge.senate.egypt_claimant={reportedLeaders:['ptolemy'],reports:[],sightings:{}};stale.knowledge.parthia.egypt_claimant={reportedLeaders:[],reports:[],sightings:{}};addReport(stale,'parthia','egypt_claimant',{kind:'leaders',leaders:['ptolemy'],source:'spy'});assert.equal(stale.factions.egypt_claimant,undefined);assert.equal(queueMission(stale,'senate','egypt_claimant','exchange','leaders','parthia').ok,true);stale.world.intelSeed=1000;for(let i=0;i<3;i++)advanceOperations(stale);assert.equal(stale.operations[0].status,'complete');assert.deepEqual(stale.knowledge.senate.egypt_claimant.reports[0].leaders,['ptolemy']);
+});
 test('official court responses and an envoy do not independently corroborate one another',()=>{
  const s=newGame();for(const source of ['official','envoy','audience'])addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'healthy',source,confidence:'unverified'});assert.equal(s.knowledge.caesar.egypt.reports[0].confidence,'unverified');assert.equal(s.knowledge.caesar.egypt.reports[0].verified,false);
 });

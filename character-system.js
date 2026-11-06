@@ -134,10 +134,12 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   op.resolvedYear=s.year;op.resolvedMonth=s.month;
   if(op.actor===s.player)notify(s,op.status==='complete'?'The claimant accepted support; relations with the court worsened.':op.status==='declined'?'The claimant declined the offer.':'No reply arrived; the offer or response may have been lost.',op.status==='complete'?'竞争者接受支持；与宫廷的关系恶化。':op.status==='declined'?'竞争者拒绝了提议。':'未收到回信；提议或回信可能遗失。');continue
  }
- if(!s.regions.some(r=>r.owner===op.target)||q<.18){op.status='failed';if(op.actor===s.player)notify(s,'The intelligence mission ended without a report; the reason is unknown.','情报行动结束，未收到报告；原因不明。');continue}
+ // An exchange asks an ally for its own existing records; it does not visit
+ // the target court, whose hidden territorial status cannot decide success.
+ if((op.type!=='exchange'&&!s.regions.some(r=>r.owner===op.target))||q<.18){op.status='failed';if(op.actor===s.player)notify(s,'The intelligence mission ended without a report; the reason is unknown.','情报行动结束，未收到报告；原因不明。');continue}
  if(op.type==='spy'&&q<.33){op.status=q<.24?'captured':'detected';if(op.status==='captured'){op.captiveId='captive'+s.world.nextCaptive++;s.world.captives.push({id:op.captiveId,owner:op.actor,holder:op.target,state:'held',year:s.year,month:s.month})}const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,`A spy from ${FACTIONS[op.actor].short[0]} was discovered by ${FACTIONS[op.target].short[0]}.`,`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现，双方关系恶化。`);continue}
  const relation=s.relations[[op.actor,op.target].sort().join(':')]||0,atWar=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target));
- const refusal=Math.max(.23,Math.min(.70,.38-relation*.0015+(atWar?.18:0)+(s.factions[op.target].stability<35?.08:0)));
+ const refusal=Math.max(.23,Math.min(.70,.38-relation*.0015+(atWar?.18:0)+(s.factions[op.target]?.stability<35?.08:0)));
  if((op.type==='audience'||op.type==='envoy')&&q<refusal){op.status='declined';if(op.actor===s.player)notify(s,'The court declined the envoy or audience request.','宫廷拒绝了使者或会面请求。');continue}
  if(op.type==='envoy'&&op.subject==='relations'){
   // A diplomatic reception changes relations at arrival; it produces no secret intelligence.
