@@ -1,8 +1,8 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=11-xxiib';
-import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange} from './characters.js?v=20-xxiib';
-import {recordLifeEvent,dynastyRoll,personAge} from './dynasties.js?v=5-xxiie';
-import {FACTIONS} from './data.js?v=11-xxiib';
-import {startDynasticWar} from './civil-war.js?v=7-xxiib';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=11-xxiif';
+import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange} from './characters.js?v=21-xxiif';
+import {recordLifeEvent,dynastyRoll,personAge} from './dynasties.js?v=5-xxiif';
+import {FACTIONS} from './data.js?v=11-xxiif';
+import {startDynasticWar} from './civil-war.js?v=7-xxiif';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';

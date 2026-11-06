@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=20-xxiib';
-import {initializeDynasties} from './dynasties.js?v=5-xxiie';
+import {CHARACTER_CATALOG} from './characters.js?v=21-xxiif';
+import {initializeDynasties} from './dynasties.js?v=5-xxiif';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.world?.dynasties?.scenario?.stage==='resolved')}
 

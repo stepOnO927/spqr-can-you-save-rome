@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
-import {CHARACTER_CATALOG} from '../characters.js?v=20-xxiib';
-import {assignSuccession} from '../characters.js?v=20-xxiib';
-import {deriveGovernment,advanceGovernments,secureRegency} from '../governance.js?v=26-xxiib';
+import {CHARACTER_CATALOG} from '../characters.js?v=21-xxiif';
+import {assignSuccession,successionModel} from '../characters.js?v=21-xxiif';
+import {deriveGovernment,advanceGovernments,secureRegency} from '../governance.js?v=26-xxiif';
 import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
-import {canHoldOffice} from '../office-system.js?v=12-xxiib';
+import {canHoldOffice} from '../office-system.js?v=12-xxiif';
 import {renderGenealogy} from '../genealogy-ui.js';
 import {finalizeCampaign} from '../legacy.js';
 
@@ -164,6 +164,18 @@ test('a royal child can need a regent while a Roman command is not inherited',()
  assert.deepEqual(egypt.world.leadership.egypt,[child]);assert.equal(deriveGovernment(egypt,'egypt').kind,'regency');
  const rome=newGame('caesar'),father=createFictionalPerson(rome,{name:['Roman father','罗马父亲'],faction:'caesar',birthYear:-80}),son=createFictionalPerson(rome,{name:['Roman son','罗马儿子'],faction:'caesar',birthYear:-60,parents:[father]});
  rome.world.leadership.caesar=[father];rome.world.characters[father].alive=false;assignSuccession(rome,'caesar');assert.equal(rome.world.leadership.caesar.includes(son),false);
+});
+
+test('Parthian noble selection can bypass a minor heir and preserve the claim',()=>{
+ const s=newGame('parthia'),parent=createFictionalPerson(s,{name:['King','国王'],faction:'parthia',birthYear:-85}),child=createFictionalPerson(s,{name:['Prince','王子'],faction:'parthia',birthYear:-57,parents:[parent]});
+ s.world.leadership.parthia=[parent];s.world.claimants.parthia=[];delete s.world.disputes.parthia;
+ s.world.characters[parent].alive=false;assignSuccession(s,'parthia');
+ assert.equal(successionModel('parthia'),'arsacid_nobility');
+ assert.deepEqual(s.world.leadership.parthia,['pacorus']);
+ assert.ok(s.world.claimants.parthia.includes(child));
+ assert.equal(s.world.disputes.parthia.support[child],10);
+ assert.equal(successionModel('egypt'),'ptolemaic_court');
+ assert.equal(successionModel('caesar'),'republican_command');
 });
 
 test('a guardian nomination can guide a regency without granting inherited office',()=>{

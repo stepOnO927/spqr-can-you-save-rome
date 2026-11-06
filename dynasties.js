@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=20-xxiib';
-import {startDynasticWar} from './civil-war.js?v=7-xxiib';
+import {CHARACTER_CATALOG} from './characters.js?v=21-xxiif';
+import {startDynasticWar} from './civil-war.js?v=7-xxiif';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.

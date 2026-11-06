@@ -1,7 +1,7 @@
-import {CHARACTER_CATALOG} from './characters.js?v=20-xxiib';
-import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage} from './dynasties.js?v=5-xxiie';
-import {deriveGovernment,secureRegency} from './governance.js?v=28-xxiie';
-import {FACTIONS} from './data.js?v=11-xxiib';
+import {CHARACTER_CATALOG,successionModel} from './characters.js?v=21-xxiif';
+import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage} from './dynasties.js?v=5-xxiif';
+import {deriveGovernment,secureRegency} from './governance.js?v=28-xxiif';
+import {FACTIONS} from './data.js?v=11-xxiif';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||id;
@@ -30,6 +30,8 @@ export function renderGenealogy(s,zh=false){
 
 export function bindGenealogy(root,s,zh=false,onChange=()=>{}){
  const viewport=root.querySelector('.gene-viewport'),canvas=root.querySelector('.gene-canvas'),label=root.querySelector('.gene-zoom-label'),out=root.querySelector('.gene-detail');if(!viewport)return;
+ const successionHelp={republican_command:['Roman political command is filled through institutions and appointments; children do not inherit it.','罗马政治指挥权由制度与任命决定，子女不会自动继承。'],ptolemaic_court:['Egyptian co-rulers remain distinct; a child may succeed but court rivals can contest the choice.','埃及共同统治者各自独立；子女可能继位，但宫廷对手可以争夺。'],arsacid_nobility:['Parthian nobles may favor an adult candidate over a ruler’s child; bypassed heirs retain claims.','帕提亚贵族可能推举成年候选人而越过君主子女；被越过的继承人保留主张。'],separate_kingdoms:['The Mauretanian kingdoms remain separate; one ruler does not inherit the other’s throne automatically.','毛里塔尼亚各王国仍然分立；一位君主不会自动继承另一位的王位。'],regional_dynasty:['Dynastic candidates are considered alongside appointments and political support.','王朝候选人与任命及政治支持共同影响继位。']};
+ root.querySelector('.gene-tools').insertAdjacentHTML('beforebegin',`<p class="hint">${escape(successionHelp[successionModel(s.player)][zh?1:0])}</p>`);
  const contactRank=x=>s.wars.some(w=>w.includes(s.player)&&w.includes(x.faction))?2:(s.relations[[s.player,x.faction].sort().join(':')]??0)<0?1:0;
  const contacts=reportedDynasticContacts(s).sort((a,b)=>contactRank(a)-contactRank(b)),ownCandidates=Object.values(s.world.characters).filter(c=>c.faction===s.player&&c.alive&&!c.missing&&!c.spouse&&personAge(s,c.id)>=18);
  if(contacts.length&&ownCandidates.length){

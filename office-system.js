@@ -1,5 +1,5 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=20-xxiib';
-import {recordLifeEvent} from './dynasties.js?v=1-xxiib';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=21-xxiif';
+import {recordLifeEvent} from './dynasties.js?v=1-xxiif';
 
 // These are simulated administrative assignments, not historical magistracies.
 export const OFFICE_TYPES=['finance','supply','administration'];

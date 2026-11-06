@@ -1,5 +1,5 @@
-import {reportedControl} from '../control-intelligence.js?v=4-xxiib';
-import {deriveGovernment} from '../governance.js?v=25-xxiib';
+import {reportedControl} from '../control-intelligence.js?v=4-xxiif';
+import {deriveGovernment} from '../governance.js?v=25-xxiif';
 
 // Project government authority from the viewer's own state or dated reports.
 // The theater-level political authority is not a claim of presence in a city.
