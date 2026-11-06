@@ -50,6 +50,11 @@ try{
  await page.locator('#brief-toggle').click();await page.locator('#recent-battle').click();
  assert.match(await page.locator('.after-action').innerText(),/AFTER-ACTION REVIEW/);
  assert.match(await page.locator('.after-action').innerText(),/Friendly casualties/);
+ await page.locator('#save').click();
+ await page.evaluate(()=>{const key='spqr-save-1',s=JSON.parse(localStorage.getItem(key));const base={owner:'senate',armyId:'italy',regionId:'cisalpine',year:s.year,month:s.month,observationYear:s.year,observationMonth:s.month,arrivalYear:s.year,arrivalMonth:s.month,min:1000,max:3000};s.militaryRecon=[{...base,source:'<img src=x onerror=window.__injected=true>'},{...base,source:'scouts'}];localStorage.setItem(key,JSON.stringify(s))});
+ await page.locator('#load').click();await page.locator('#brief-toggle').click();await page.locator('[data-army="italy"]').click();
+ assert.equal(await page.locator('.war-council img').count(),0);
+ assert.equal(await page.evaluate(()=>window.__injected),undefined);
  await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
  await page.locator('#entry-continue').click();
  await page.locator('[data-tab="military"]').click();await page.locator('[data-select-army="xiii"]').click();
