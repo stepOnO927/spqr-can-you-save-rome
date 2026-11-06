@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,region,isWar} from '../engine.js';
+import {newGame,upgradeSave,region,isWar,sendInquiry,tick} from '../engine.js';
 import {startDynasticWar,resolveDynasticWars,settleDynasticWar} from '../civil-war.js';
 import {assignSuccession} from '../characters.js';
 import {egyptianClaimantCandidate,advanceCharacters,contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,queueMission} from '../character-system.js';
@@ -43,4 +43,29 @@ test('an incumbent vacancy preserves other claimants’ support when one claiman
 
 test('a negotiated settlement retains support for other unresolved claimants',()=>{
  const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.factions.egypt.stability=30;contestLeadership(s,'egypt','arsinoe');s.world.disputes.egypt.support={cleopatra:15};s.world.disputes.egypt.militaryAid={cleopatra:1000};assert.equal(startDynasticWar(s,'egypt','arsinoe'),true);assert.equal(settleDynasticWar(s,'egypt'),true);assert.deepEqual(s.world.claimants.egypt,['cleopatra']);assert.equal(s.world.disputes.egypt.support.cleopatra,15);assert.equal(s.world.disputes.egypt.militaryAid.cleopatra,1000);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+});
+
+test('military aid for another claimant never reinforces the active rival army',()=>{
+ let s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.factions.egypt.stability=30;contestLeadership(s,'egypt','arsinoe');assert.equal(startDynasticWar(s,'egypt','arsinoe'),true);
+ addReport(s,'caesar','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy'});const before=s.armies.find(a=>a.owner==='egypt_claimant').men;
+ assert.equal(supportClaimant(s,'caesar','egypt','cleopatra',null,'military').ok,true);s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.intelSeed=1000;
+ for(let i=0;i<3;i++)advanceOperations(s);assert.equal(s.operations[0].status,'pending');assert.equal(s.world.disputes.egypt.militaryAid,undefined);
+ advanceOperations(s);assert.equal(s.operations[0].status,'complete');assert.equal(s.armies.find(a=>a.owner==='egypt_claimant').men,before);assert.equal(s.world.disputes.egypt.militaryAid.cleopatra,1000);
+ assert.equal(settleDynasticWar(s,'egypt'),true);s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(s.world.disputes.egypt.militaryAid.cleopatra,1000);assert.equal(s.knowledge.senate.egypt.reports.length,0);
+});
+
+test('letters and missions addressed to an old claimant court do not reach a later rebellion',()=>{
+ let s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.factions.egypt.stability=30;contestLeadership(s,'egypt','arsinoe');assert.equal(startDynasticWar(s,'egypt','arsinoe'),true);
+ s.controlKnowledge.caesar.egyptUpper={owner:'egypt_claimant',year:-49,month:1,source:'travelers'};
+ assert.equal(sendInquiry(s,'caesar','egypt_claimant').ok,true);assert.equal(queueMission(s,'caesar','egypt_claimant','spy','leaders').ok,true);
+ assert.equal(settleDynasticWar(s,'egypt'),true);for(const a of s.armies)if(a.region==='egyptUpper')a.region='egypt';assert.equal(startDynasticWar(s,'egypt','cleopatra'),true);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.intelSeed=1000;for(let i=0;i<4;i++)advanceOperations(s);assert.equal(s.operations[0].status,'failed');assert.equal(s.knowledge.caesar.egypt_claimant.reports.length,0);
+ for(let i=0;i<4;i++)tick(s);assert.equal(s.inquiries[0].status,'no_reply');assert.equal(s.knowledge.caesar.egypt_claimant.reports.length,0);
+});
+
+test('a prepared response can still arrive after the original claimant court falls',()=>{
+ const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');assert.equal(startDynasticWar(s,'egypt','cleopatra'),true);s.controlKnowledge.caesar.egyptUpper={owner:'egypt_claimant',year:-49,month:1,source:'travelers'};assert.equal(sendInquiry(s,'caesar','egypt_claimant').ok,true);
+ // A previously composed reply is already in transit; ending the court does not erase it.
+ s.inquiries[0].sealed={status:'answered',year:-49,month:1,report:{kind:'leaders',leaders:['cleopatra'],source:'official',confidence:'unverified'}};assert.equal(settleDynasticWar(s,'egypt'),true);s.world.intelSeed=1000;
+ for(let i=0;i<4;i++)tick(s);assert.equal(s.inquiries[0].status,'answered');
 });
