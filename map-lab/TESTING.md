@@ -54,3 +54,22 @@ Browser-tested starting the Senate/Pompeian command at standard difficulty, its 
 
 Browser-tested selecting a tax rate in the resources panel, advancing a month, and observing the actual treasury, food and selected-tax state. Tax and loyalty changes use the existing shared campaign engine.
 
+# Phase VIII — Gameplay UX and tutorial recovery (2026-11-06)
+
+Tested in a local browser through the visible controls:
+
+| Scenario | Result |
+| --- | --- |
+| New Caesarian and Senatorial campaigns | Both opened with their own armies, objectives and tutorial text. |
+| Beginner and Standard | Beginner received a limited resource bonus and Feather route advice; Standard kept the original opening resources. |
+| Hard and Expert | Both were selectable; the same Caesarian opening month produced treasury/food changes of −3/−5 on Hard and −4/−6 on Expert. |
+| First movement and cancellation | Previewed a friendly route, issued the march, cancelled it, and saw the tutorial return to the planning step. |
+| First battle and tutorial defeat | The Senatorial levies lost at Cisalpine Gaul; the guide required opening the battle report and continued after the defeat. |
+| Invalid movement | Unconnected destinations appeared disabled with an explicit reason; the order button explained its prerequisites. |
+| Siege and occupation | A Caesarian force entered a two-month siege of Latium, could not march during the siege, and occupied it when the timer completed. |
+| Completed objectives | All three Senatorial objectives were checked in one campaign; the interface still explained that final victory requires total enemy collapse and a courier delay. |
+| Language switching | Switched between Simplified Chinese and English during the Senatorial tutorial; the step and game controls translated without losing progress. |
+| Save and load during tutorial | Saved on the route decision step and loaded the slot; the same tutorial step was restored. |
+
+Automated tests cover difficulty resource effects, tutorial branching and persistence, Roman victory conditions, hidden enemy intelligence, movement, combat and save migration. This remains a strategic simulation; enemy reports can be wrong, and neither a tutorial milestone nor three objectives alone is a final victory.
+

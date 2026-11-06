@@ -54,3 +54,7 @@
 .office-row{border-top:1px solid #bda77755;margin-top:12px;padding-top:12px}.office-row label{display:block;margin:6px 0}.office-row button{margin:4px 4px 0 0}
 
 .outlying-theater{border:1px solid #e1ca92;background:#26352eea;color:#f4e5bf;padding:3px 6px;cursor:pointer;white-space:nowrap;font:600 11px Georgia,serif;box-shadow:0 2px 5px #0009}.outlying-theater:focus-visible{outline:2px solid #f1d492;outline-offset:3px}
+
+.milestone-note{margin:13px 0 4px!important;padding:9px 10px;border-top:1px solid #bda77777;border-left:2px solid #c5a86c;background:#1a2b29a8;color:#e8d9b7!important;font:11px/1.55 Manrope,'Microsoft YaHei',sans-serif!important}.selection .detail-grid{border-top:1px solid #bda77755;padding-top:10px}.selection #lab-orders{border-top:1px solid #bda77766;padding-top:10px}.selection .preview-detail{padding:8px;border-left:2px solid #d7b879;background:#12231fc9}.guide-highlight{scroll-margin:20px}
+
+.feather-advice{margin:7px 0!important;padding:8px 10px;border-left:2px solid #d3b574;background:#253c31e8;color:#f0dfb8!important;font:11px/1.5 Manrope,'Microsoft YaHei',sans-serif!important}

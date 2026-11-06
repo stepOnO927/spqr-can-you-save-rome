@@ -282,8 +282,9 @@ function economy(s){
     const offices=officeEffects(s,id);
     const troops=s.armies.filter(a=>a.owner===id).reduce((n,a)=>n+a.men,0);
     const rate={low:.65,normal:1,high:1.4}[f.tax];
-    f.treasury+=Math.round(owned.reduce((n,r)=>n+r.tax*rate*(r.loyalty/100),0)-troops/1100)+offices.treasury;
-    f.food+=Math.round(owned.reduce((n,r)=>n+r.food,0)-troops/1200-owned.length*2)+offices.food;
+    const difficulty=id===s.player?({hard:.9,expert:.8}[s.difficulty]||1):1;
+    f.treasury+=Math.round(owned.reduce((n,r)=>n+r.tax*rate*(r.loyalty/100),0)*difficulty-troops/1100)+offices.treasury;
+    f.food+=Math.round(owned.reduce((n,r)=>n+r.food,0)*difficulty-troops/1200-owned.length*2)+offices.food;
     f.stability=Math.min(100,f.stability+offices.stability);
     f.manpower+=owned.length*170;
     if(f.treasury<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.morale=Math.max(20,a.morale-4))}
@@ -354,7 +355,7 @@ function aiTurn(s,owner){
   const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&a.men>1200);
   for(const a of available){
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y)})).sort((x,y)=>x.d-y.d);
-    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const defenderOwner=reportedControl(s,owner,step)?.owner;const defenders=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/Math.max(1,s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length):0;if(defenders>a.men*(internalOpponent(defenderOwner)?2:1.35)||f.food<0)continue;moveArmy(s,a.id,step);break}}
+    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const defenderOwner=reportedControl(s,owner,step)?.owner;const defenders=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/Math.max(1,s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length):0;if(defenders>a.men*(internalOpponent(defenderOwner)?2:({hard:1.15,expert:1.05}[s.difficulty]||1.35))||f.food<0)continue;moveArmy(s,a.id,step);break}}
   }
   if(f.treasury>65&&f.manpower>5500&&s.month%4===0){
     const border=owned.find(r=>adjacent(r.id).some(e=>isWar(s,owner,reportedControl(s,owner,e.to)?.owner)));
