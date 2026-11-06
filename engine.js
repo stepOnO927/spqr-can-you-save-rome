@@ -7,6 +7,7 @@ import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-syste
 import {advanceConspiracies} from './conspiracies.js?v=11';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=4';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=6';
+import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=1';
 export {queueMission};
 export {personalDiplomaticCredit};
 
@@ -37,8 +38,10 @@ export function newGame(player='caesar'){
   // A new campaign starts with frontier observations, not every foreign army's
   // exact opening location. Existing saves keep their accumulated sightings.
   for(const targets of Object.values(s.knowledge))for(const knowledge of Object.values(targets))knowledge.sightings={};
-  linkCommanders(s);observeArmies(s);observeControl(s);return initializeGovernments(s);
+  linkCommanders(s);observeArmies(s);observeControl(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);return initializeGovernments(s);
 }
+
+export function newDynastyScenario(){const s=newGame('egypt');createDisputedHeirScenario(s);return s}
 
 // Add newly modeled courts to older campaigns without resetting existing people or territory.
 function migrateRegionalPowers(s){
@@ -63,7 +66,7 @@ export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeControlKnowledge(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeControlKnowledge(s);return refreshReportConfidence(initializeGovernments(s));
 }
 
 export function previewMarch(s,armyId,destination){
@@ -237,6 +240,8 @@ export function resolveBattle(s,attacker,defender,target){
   const powerD=defender.men*(.65+defender.morale/200+defender.skill*.055+defender.experience*.025)*terrain*(1+target.fort*.12)*supplyD*commandFactor(s,defender);
   const roll=.85+rnd(s)*.3;
   const attackerWins=powerA*roll>powerD;
+  if(attacker.characterId)recordLifeEvent(s,attacker.characterId,`${attackerWins?'Won':'Lost'} a battle at ${target.name[0]}.`,`在${target.name[1]}的战斗中${attackerWins?'获胜':'战败'}。`);
+  if(defender.characterId)recordLifeEvent(s,defender.characterId,`${attackerWins?'Lost':'Won'} a battle at ${target.name[0]}.`,`在${target.name[1]}的战斗中${attackerWins?'战败':'获胜'}。`);
   const lossA=Math.min(attacker.men,Math.round(defender.men*(attackerWins?.19:.31)*(powerD/powerA)**.25));
   const lossD=Math.min(defender.men,Math.round(attacker.men*(attackerWins?.34:.19)*(powerA/powerD)**.25));
   const report={year:s.year,month:s.month,region:target.id,attacker:{id:attacker.id,name:[...attacker.name],commander:[...attacker.commander],owner:attacker.owner,men:attacker.men,morale:attacker.morale,food:s.factions[attacker.owner].food,power:Math.round(powerA)},defender:{id:defender.id,name:[...defender.name],commander:[...defender.commander],owner:defender.owner,men:defender.men,morale:defender.morale,food:s.factions[defender.owner].food,power:Math.round(powerD)},terrain:target.terrain,fort:target.fort,roll,attackerWins,lossA,lossD};
@@ -411,7 +416,7 @@ export function tick(s){
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   rebellion(s);
-  resolveInquiries(s);advanceOperations(s);advanceAgentRequests(s);advanceCharacters(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advanceConspiracies(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);
+  resolveInquiries(s);advanceOperations(s);advanceAgentRequests(s);advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advanceConspiracies(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);
   advanceControlScouts(s);observeArmies(s);observeControl(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
   advanceRomanVictory(s);

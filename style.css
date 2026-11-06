@@ -14,3 +14,21 @@ body{min-width:0;background:#292d29}.top{height:54px;padding:0 12px;gap:15px;bac
 .evidence-point path{fill:#f4dc9c;stroke:#4a3023;stroke-width:1.2}.evidence-command{cursor:pointer}.evidence-command circle:first-child{fill:#ebd7a2;fill-opacity:.28;stroke:#f5e3aa;stroke-width:1.7;stroke-dasharray:2 2}.evidence-command circle:nth-child(2){fill:#775e43;stroke:#f8e7b5;stroke-width:1.2}.evidence-command.selected circle:first-child{stroke:#fff5c4;stroke-width:3}.evidence-command:focus{outline:none}.evidence-command:focus circle:first-child{stroke:#fff;stroke-width:3}
 
 .identity-inline{display:inline-flex;align-items:center;gap:7px}.identity-inline .faction-mark{width:23px;height:23px;flex:none}.campaign-identity .faction-mark{width:45px;height:48px}.region-title .campaign-identity{flex:none}.diplomatic-country .identity-inline{vertical-align:middle}.selected-army .identity-inline{margin-bottom:5px}
+.dynasty-council,.genealogy{border-top:1px solid #8f7655;margin-top:1.5rem;padding-top:1rem}
+.dynasty-council h3,.genealogy h3{font-family:Georgia,serif;letter-spacing:.06em}
+.dynasty-people,.dynasty-choices{display:grid;gap:.4rem;margin:.7rem 0}
+.dynasty-people button{text-align:left;padding:.6rem;background:#efe6d5;border:1px solid #ad9674;color:#2d271e}
+.dynasty-people button small{display:block;margin-top:.3rem;color:#665846}
+.genealogy>p{font-size:.8rem;line-height:1.45;color:#6c5d49}
+.gene-tools{display:flex;align-items:center;gap:.5rem;margin:.7rem 0}
+.gene-tools button{width:2rem;height:2rem;border:1px solid #9f8867;background:#eadfca;color:#332819}
+.gene-viewport{overflow:auto;height:350px;border:1px solid #ac9878;background:repeating-linear-gradient(0deg,#eee4d2,#eee4d2 27px,#e8dcc6 28px);cursor:grab}
+.gene-canvas{position:relative}
+.gene-canvas svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.gene-bio,.gene-adopt,.gene-marriage{fill:none;stroke:#725c3f;stroke-width:2}
+.gene-adopt{stroke-dasharray:2 5}.gene-marriage{stroke-dasharray:9 5}
+.gene-person{position:absolute;width:104px;height:122px;padding:3px;border:1px solid #9a8261;background:#f7f0e4;color:#29231d;text-align:center;overflow:hidden;box-shadow:0 2px 5px #66553b44}
+.gene-person img{display:block;width:42px;height:42px;object-fit:cover;margin:0 auto 2px;border-radius:50%}
+.gene-person b,.gene-person small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.7rem}
+.gene-person small{font-size:.58rem;color:#6b5b45}
+.gene-detail{font-size:.8rem;line-height:1.4;margin:.6rem 0}

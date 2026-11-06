@@ -1,13 +1,15 @@
 import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=19';
+import {recordLifeEvent} from './dynasties.js?v=1';
 
 // These are simulated administrative assignments, not historical magistracies.
 export const OFFICE_TYPES=['finance','supply','administration'];
+const officeZh={finance:'财务',supply:'粮秣',administration:'行政'};
 const roman=faction=>faction==='caesar'||faction==='senate';
 export function initializeOffices(s){initializeWorld(s);s.world.offices||={};s.world.localGovernors||={};for(const faction of ['caesar','senate'])s.world.offices[faction]||={};return s.world.offices}
 export function officeOf(s,faction,id){const national=Object.entries(initializeOffices(s)[faction]||{}).find(([,person])=>person===id)?.[0];if(national)return national;const local=Object.entries(s.world.localGovernors).find(([,post])=>post.faction===faction&&post.person===id);return local?'theater:'+local[0]:null}
 export function canHoldOffice(s,faction,id){
  initializeOffices(s);const c=s.world.characters[id];
- return !!(roman(faction)&&CHARACTER_CATALOG[id]&&s.regions.some(r=>r.owner===faction)&&c?.faction===faction&&c.alive&&!c.missing&&!c.travel&&c.loyalty>=40&&!['seriously_ill','dying','deceased'].includes(c.health)&&!(s.world.leadership[faction]||[]).includes(id)&&!s.armies.some(a=>a.characterId===id));
+ return !!(roman(faction)&&CHARACTER_CATALOG[id]&&s.regions.some(r=>r.owner===faction)&&c?.faction===faction&&(c.birthYear==null||s.year-c.birthYear>=25)&&c.alive&&!c.missing&&!c.travel&&c.loyalty>=40&&!['seriously_ill','dying','deceased'].includes(c.health)&&!(s.world.leadership[faction]||[]).includes(id)&&!s.armies.some(a=>a.characterId===id));
 }
 export function officeCandidates(s,faction,office){
  initializeOffices(s);if(!OFFICE_TYPES.includes(office))return [];
@@ -19,12 +21,13 @@ export function appointOffice(s,office,id,actor=s.player){
  if(offices[actor][office]===id)return {ok:false,reason:'already'};
  if(s.factions[actor].treasury<5)return {ok:false,reason:'treasury'};
  s.factions[actor].treasury-=5;offices[actor][office]=id;
+ recordLifeEvent(s,id,`Appointed to the simulated ${office} assignment.`,`获任模拟的${officeZh[office]}职务。`);
  if(actor===s.player)record(s,`${CHARACTER_CATALOG[id].name[0]} received a simulated administrative assignment.`,`${CHARACTER_CATALOG[id].name[1]}获得游戏中的行政任命。`);
  return {ok:true,cost:5};
 }
 export function dismissOffice(s,office){
  const offices=initializeOffices(s),faction=s.player,id=offices[faction]?.[office];if(!OFFICE_TYPES.includes(office)||!id)return {ok:false,reason:'unavailable'};
- delete offices[faction][office];record(s,`${CHARACTER_CATALOG[id]?.name[0]||'An official'} left an administrative assignment.`,`${CHARACTER_CATALOG[id]?.name[1]||'一名官员'}卸下行政职务。`);return {ok:true};
+ delete offices[faction][office];recordLifeEvent(s,id,`Left the simulated ${office} assignment.`,`卸下模拟的${officeZh[office]}职务。`);record(s,`${CHARACTER_CATALOG[id]?.name[0]||'An official'} left an administrative assignment.`,`${CHARACTER_CATALOG[id]?.name[1]||'一名官员'}卸下行政职务。`);return {ok:true};
 }
 // A theater assignment is a game abstraction and does not assert a historical governorship.
 export function localGovernor(s,theater){

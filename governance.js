@@ -1,5 +1,7 @@
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=11';
 import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange} from './characters.js?v=19';
+import {recordLifeEvent} from './dynasties.js?v=1';
+import {FACTIONS} from './data.js?v=11';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
@@ -83,6 +85,7 @@ export function advanceGovernments(s){
  initializeGovernments(s);for(const faction of Object.keys(s.world.governments)){
   if(!s.factions[faction]||!s.regions.some(r=>r.owner===faction))continue;
   const before=s.world.governments[faction],after=deriveGovernment(s,faction);s.world.governments[faction]=after;
+  for(const id of after.nominal.filter(id=>!before.nominal.includes(id)))recordLifeEvent(s,id,`Assumed political leadership of ${FACTIONS[faction]?.short[0]||faction} in the simulation.`,`在模拟中成为${FACTIONS[faction]?.short[1]||faction}的政治领袖。`);
   // NPC preparations are internal game state, not an announcement to the player.
   if(faction!==s.player&&s.month%6===0){
    const candidates=successorFor(s,faction),current=s.world.successionPlans[faction],leaders=after.nominal.map(id=>s.world.characters[id]);

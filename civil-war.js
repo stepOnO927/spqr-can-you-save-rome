@@ -72,6 +72,7 @@ export function resolveDynasticWars(s){
   s.wars=s.wars.filter(w=>!w.includes(cfg.rival));for(const enemy of inherited)if(!s.wars.some(w=>w.includes(parent)&&w.includes(enemy)))s.wars.push([parent,enemy]);
   s.alliances=s.alliances.filter(a=>!a.includes(cfg.rival));
   delete s.factions[cfg.rival];delete s.world.leadership[cfg.rival];delete s.world.governments?.[cfg.rival];
+  for(const character of Object.values(s.world.characters))if(character.faction===cfg.rival)character.faction=parent;
   s.world.disputeHistory.unshift({faction:parent,claimant:war.claimant,outcome:rivalWins?'civil_war_victory':'civil_war_defeat',year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);
   continueRemainingDispute(s,parent,dispute);
   // A deceased claimant's supporters can win, but cannot themselves rule.

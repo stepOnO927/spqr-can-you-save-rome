@@ -1,0 +1,106 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
+import {CHARACTER_CATALOG} from '../characters.js?v=19';
+import {assignSuccession} from '../characters.js?v=19';
+import {deriveGovernment} from '../governance.js?v=24';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,adoptHeir,makeWill,settleInheritance,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
+import {canHoldOffice} from '../office-system.js?v=11';
+import {renderGenealogy} from '../genealogy-ui.js';
+import {finalizeCampaign} from '../legacy.js';
+
+test('historical relationships do not invent missing parents or spouses',()=>{
+ const s=newGame();assert.equal(s.world.characters.cleopatra.familyId,s.world.characters.arsinoe.familyId);
+ assert.deepEqual(s.world.characters.caesar.parents,[]);assert.equal(s.world.characters.pompey.spouse,null);
+ assert.notEqual(s.world.characters.caesar.familyId,s.world.characters.pompey.familyId);
+});
+
+test('marriage, adoption and wills change legal relationships and private assets',()=>{
+ const s=newGame('egypt'),a=createFictionalPerson(s,{name:['A','甲'],faction:'egypt',birthYear:-90,wealth:40,sex:'male'}),b=createFictionalPerson(s,{name:['B','乙'],faction:'egypt',birthYear:-78,sex:'female'}),child=createFictionalPerson(s,{name:['C','丙'],faction:'egypt',birthYear:-68});
+ s.world.characters[a].loyalty=100;s.world.characters[b].loyalty=100;
+ let marriage;for(let i=0;i<10;i++){marriage=proposeMarriage(s,a,b);if(marriage.ok)break}assert.equal(marriage.ok,true);
+ assert.equal(s.world.characters[a].spouse,b);assert.equal(s.world.characters[b].spouse,a);
+ assert.equal(adoptHeir(s,a,child).ok,true);assert.equal(s.world.characters[child].familyId,s.world.characters[a].familyId);
+ assert.equal(s.world.leadership.egypt.includes(child),false);
+ assert.equal(makeWill(s,a,child).ok,true);const treasury=s.factions.egypt.treasury;
+ s.world.characters[a].alive=false;settleInheritance(s,a);
+ assert.equal(s.world.characters[child].wealth,40);assert.equal(s.factions.egypt.treasury,treasury);
+ assert.equal(s.world.dynasties.lives[child].some(e=>e.en.includes('Inherited')),true);
+});
+
+test('children mature over years and their identities survive loading',()=>{
+ const s=newGame(),parent=createFictionalPerson(s,{name:['Parent','家长'],faction:'caesar',birthYear:-80}),child=createFictionalPerson(s,{name:['Child','子女'],faction:'caesar',birthYear:-49,parents:[parent],familyId:s.world.characters[parent].familyId});
+ assert.equal(personAge(s,child),0);assert.equal(s.world.characters[child].influence,20);
+ for(let year=-48;year<=-31;year++){s.year=year;s.month=1;advanceDynasties(s)}
+ assert.equal(personAge(s,child),18);assert.ok(s.world.dynasties.lives[child].some(e=>e.en.includes('adulthood')));
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(loaded.world.characters[child].parents,[parent]);assert.equal(CHARACTER_CATALOG[child].name[0],'Child');
+});
+
+test('fictional succession choice can escalate into actual territorial civil war',()=>{
+ const s=newDynastyScenario(),c=s.world.dynasties.scenario;
+ assert.equal(s.world.characters[c.adopted].wealth,48);assert.equal(s.world.characters[c.parent].alive,false);
+ assert.equal(decideDisputedHeir(s,'appointed').ok,true);
+ s.month=4;s.world.dynasties.seed=0;advanceDynasties(s);
+ assert.equal(s.world.dynasties.scenario.stage,'war');assert.equal(s.regions.find(r=>r.id==='egyptUpper').owner,'egypt_claimant');
+ assert.ok(s.armies.some(a=>a.owner==='egypt_claimant'&&a.men>=500));assert.ok(s.wars.some(w=>w.includes('egypt')&&w.includes('egypt_claimant')));
+ assert.ok(s.armies.some(a=>a.owner==='egypt_claimant'&&a.characterId===c.general));
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(restored.world.dynasties.scenario.stage,'war');
+});
+
+test('a peaceful compromise has real economic and political costs',()=>{
+ const s=newDynastyScenario(),before=s.factions.egypt.treasury,stability=s.factions.egypt.stability;
+ assert.equal(decideDisputedHeir(s,'compromise').ok,true);
+ assert.equal(s.factions.egypt.treasury,before-18);assert.equal(s.factions.egypt.stability,stability+12);
+ for(let i=0;i<2;i++)tick(s);assert.equal(s.world.dynasties.scenario.stage,'chosen');
+});
+
+test('deterministic generations grow gradually and young characters cannot hold office',()=>{
+ const s=newGame('caesar'),a=createFictionalPerson(s,{name:['A','甲'],faction:'caesar',birthYear:-80,location:'cisalpine',sex:'male'}),b=createFictionalPerson(s,{name:['B','乙'],faction:'caesar',birthYear:-78,location:'cisalpine',sex:'female'});
+ let outcome;for(let i=0;i<10;i++){outcome=proposeMarriage(s,a,b);if(outcome.ok)break}assert.equal(outcome.ok,true);
+ for(let year=-48;year<=-30;year++){s.year=year;s.month=1;advanceDynasties(s)}
+ const children=s.world.characters[a].children;assert.ok(children.length>0);
+ const first=children[0];assert.equal(s.world.characters[first].parents.includes(a),true);
+ assert.equal(canHoldOffice(s,'caesar',first),false);
+ const save=JSON.stringify(s),restored=upgradeSave(JSON.parse(save));assert.deepEqual(restored.world.characters[a].children,children);
+});
+
+test('genealogy stays bilingual and procedural identity remains stable with age',()=>{
+ const s=newGame(),id=createFictionalPerson(s,{name:['Aulus of Rome','罗马的奥卢斯'],faction:'caesar',birthYear:-85});
+ const young=renderGenealogy(s,false),chinese=renderGenealogy(s,true);
+ assert.match(young,/FAMILY GENEALOGY/);assert.match(chinese,/家族谱系/);
+ assert.match(young,/Aulus of Rome/);assert.match(chinese,/罗马的奥卢斯/);
+ const seed=s.world.characters[id].personalitySeed;s.year=-25;
+ const older=renderGenealogy(s,false);assert.equal(s.world.characters[id].personalitySeed,seed);
+ assert.match(older,/Aulus of Rome/);assert.match(older,/data:image\/svg\+xml/);
+});
+
+test('legacy achievements remain sealed until campaign finalization',()=>{
+ const s=newDynastyScenario();assert.equal(s.world.dynasties.finalized,undefined);
+ assert.deepEqual(finalizeCampaign(s),{ok:false,reason:'unfinished'});
+ s.world.dynasties.scenario.stage='resolved';const result=finalizeCampaign(s);
+ assert.equal(result.ok,true);assert.ok(result.archive.families.length>0);
+ assert.ok(result.archive.rulers.some(r=>r.faction==='egypt'));
+ assert.equal(s.world.dynasties.finalized.id,result.archive.id);
+ assert.deepEqual(finalizeCampaign(s),{ok:false,reason:'already'});
+});
+
+test('a royal child can need a regent while a Roman command is not inherited',()=>{
+ const egypt=newGame('egypt'),royal=createFictionalPerson(egypt,{name:['Royal parent','王室家长'],faction:'egypt',birthYear:-85}),child=createFictionalPerson(egypt,{name:['Young heir','幼年继承人'],faction:'egypt',birthYear:-55,parents:[royal],familyId:egypt.world.characters[royal].familyId});
+ egypt.world.leadership.egypt=[royal];egypt.world.characters[royal].alive=false;assignSuccession(egypt,'egypt');
+ assert.deepEqual(egypt.world.leadership.egypt,[child]);assert.equal(deriveGovernment(egypt,'egypt').kind,'regency');
+ const rome=newGame('caesar'),father=createFictionalPerson(rome,{name:['Roman father','罗马父亲'],faction:'caesar',birthYear:-80}),son=createFictionalPerson(rome,{name:['Roman son','罗马儿子'],faction:'caesar',birthYear:-60,parents:[father]});
+ rome.world.leadership.caesar=[father];rome.world.characters[father].alive=false;assignSuccession(rome,'caesar');assert.equal(rome.world.leadership.caesar.includes(son),false);
+});
+
+test('foreign recognition has uncertain acceptance and a real concession cost',()=>{
+ const s=newDynastyScenario(),beforeEgypt=s.factions.egypt.treasury,beforeNumidia=s.factions.numidia.treasury;
+ s.world.dynasties.seed=0;assert.equal(decideDisputedHeir(s,'foreign').ok,true);
+ assert.equal(s.world.dynasties.scenario.concessionMonths,24);assert.equal(s.factions.egypt.treasury,beforeEgypt+2);assert.equal(s.factions.numidia.treasury,beforeNumidia-12);
+ advanceDynasties(s);assert.equal(s.world.dynasties.scenario.concessionMonths,23);
+});
+
+test('AI families can marry and have children in an extended seeded campaign',()=>{
+ let s=newGame('caesar');for(let month=0;month<360;month++){tick(s);if(month%60===0)s=upgradeSave(JSON.parse(JSON.stringify(s)))}
+ assert.equal(s.year,-19);assert.ok(s.world.dynasties.marriages.some(m=>s.world.characters[m.a].faction==='senate'));
+ assert.ok(Object.values(s.world.characters).some(c=>c.parents.length>0));
+});

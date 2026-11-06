@@ -48,8 +48,19 @@ export function initializeWorld(s){
 }
 // Birthdays are not specified in the catalog: either side of the birthday may apply.
 export function ageRange(id,year){const b=CHARACTER_CATALOG[id]?.birth;if(!b)return null;return [year-b[1]-1,year-b[0]]}
-export function successorFor(s,faction){return (SUCCESSORS[faction]||[]).filter(id=>s.world.characters[id]?.alive&&!s.world.characters[id].missing&&s.world.characters[id].faction===faction&&!(s.world.leadership[faction]||[]).includes(id)).sort((a,b)=>(s.world.characters[b].influence??50)-(s.world.characters[a].influence??50));}
-export function assignSuccession(s,faction){const current=s.world.leadership[faction].filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction),contested=['egypt','parthia'].includes(faction)&&s.world.disputes?.[faction]&&(s.world.claimants?.[faction]||[]).some(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);if(!current.length&&contested&&!s.world.disputes[faction].vacancySince){s.world.disputes[faction].months=0;s.world.disputes[faction].vacancySince={year:s.year,month:s.month}}if(!current.length&&!contested){const candidates=successorFor(s,faction),preferred=s.world.successionPlans?.[faction],next=candidates.includes(preferred)?preferred:candidates[0];if(next)current.push(next)}s.world.leadership[faction]=current;if(s.world.claimants[faction])s.world.claimants[faction]=s.world.claimants[faction].filter(id=>!current.includes(id)&&s.world.characters[id]?.alive);return current}
+export function successorFor(s,faction){const fictional=['egypt','parthia','armenia','numidia','mauretania','galatia','bosporus'].includes(faction)?Object.values(s.world.characters).filter(c=>CHARACTER_CATALOG[c.id]?.fictional&&c.faction===faction&&c.birthYear!=null&&s.year-c.birthYear>=18).map(c=>c.id):[];return [...new Set([...(SUCCESSORS[faction]||[]),...fictional])].filter(id=>s.world.characters[id]?.alive&&!s.world.characters[id].missing&&s.world.characters[id].faction===faction&&!(s.world.leadership[faction]||[]).includes(id)).sort((a,b)=>(s.world.characters[b].influence??50)-(s.world.characters[a].influence??50));}
+export function assignSuccession(s,faction){
+ const previous=s.world.leadership[faction]||[],current=previous.filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
+ const contested=['egypt','parthia'].includes(faction)&&s.world.disputes?.[faction]&&(s.world.claimants?.[faction]||[]).some(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
+ if(!current.length&&contested&&!s.world.disputes[faction].vacancySince){s.world.disputes[faction].months=0;s.world.disputes[faction].vacancySince={year:s.year,month:s.month}}
+ if(!current.length&&!contested){
+  const candidates=successorFor(s,faction),royal=!['caesar','senate','mauretania'].includes(faction);
+  const children=royal?previous.flatMap(id=>s.world.characters[id]?.children||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!s.world.characters[id].missing):[];
+  const preferred=s.world.successionPlans?.[faction],eligible=[...new Set([...children,...candidates])];
+  const next=eligible.includes(preferred)?preferred:children[0]||candidates[0];if(next)current.push(next);
+ }
+ s.world.leadership[faction]=current;if(s.world.claimants[faction])s.world.claimants[faction]=s.world.claimants[faction].filter(id=>!current.includes(id)&&s.world.characters[id]?.alive);return current;
+}
 export function knownLeaders(s,viewer,target){initializeWorld(s);return s.knowledge[viewer]?.[target]?.reportedLeaders||[]}
 // Derive a public-facing description only from the reported names, never the hidden government state.
 export function leadershipTitle(faction,reported){if(!reported?.length)return ['Authority unconfirmed','领导身份未确认'];if(faction==='caesar'||faction==='senate')return ['Roman faction leadership','罗马派系领袖'];if(faction==='egypt_claimant'||faction==='parthia_claimant')return ['Reported claimant leadership','报告的竞争者领袖'];if(faction==='egypt'&&reported.length>1)return ['Joint rulers','共同统治者'];if(faction==='mauretania')return ['Rulers of separate kingdoms','各王国统治者'];return ['Ruler','统治者']}

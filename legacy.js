@@ -1,0 +1,26 @@
+import {CHARACTER_CATALOG} from './characters.js?v=19';
+import {initializeDynasties} from './dynasties.js?v=1';
+
+export function canFinalizeCampaign(s){return !!(s.victory||s.world?.dynasties?.scenario?.stage==='resolved')}
+
+// The archive is produced only at finalization. It is never computed or shown
+// to the player while the campaign is active.
+export function finalizeCampaign(s){
+ if(!canFinalizeCampaign(s))return {ok:false,reason:'unfinished'};
+ const d=initializeDynasties(s);if(d.finalized)return {ok:false,reason:'already'};
+ const own=new Set(Object.values(s.world.characters).filter(c=>c.faction===s.player).map(c=>c.id));
+ for(const ruler of d.rulers.filter(r=>r.faction===s.player))for(const id of ruler.current.split(':'))if(id)own.add(id);
+ for(const defection of s.world.defections||[])if(defection.from===s.player||defection.to===s.player)own.add(defection.id);
+ const familyIds=[...new Set([...own].map(id=>s.world.characters[id]?.familyId).filter(Boolean))];
+ const archive={id:`${s.player}-${Math.abs(s.year)}-${s.month}-${s.seed}`,faction:s.player,year:s.year,month:s.month,simulated:true,
+  rulers:d.rulers.filter(r=>r.faction===s.player).map(r=>({...r,names:r.current.split(':').filter(Boolean).map(id=>CHARACTER_CATALOG[id]?.name||[id,id])})),
+  families:familyIds.map(id=>({id,name:d.families[id]?.name||[id,id],members:[...own].filter(person=>s.world.characters[person]?.familyId===id).map(person=>({id,name:CHARACTER_CATALOG[person]?.name||[person,person],alive:s.world.characters[person].alive}))})),
+  marriages:d.marriages.filter(m=>own.has(m.a)||own.has(m.b)).map(m=>({...m,names:[CHARACTER_CATALOG[m.a]?.name,CHARACTER_CATALOG[m.b]?.name]})),
+  crises:(s.world.disputeHistory||[]).filter(e=>e.faction===s.player||e.faction==='egypt'&&d.scenario).map(e=>({...e})),
+  lifeEvents:Object.fromEntries([...own].map(id=>[id,(d.lives[id]||[]).map(e=>({...e}))])),
+  generals:[...own].filter(id=>(s.world.characters[id]?.battlesCommanded||0)>0).map(id=>({name:CHARACTER_CATALOG[id]?.name||[id,id],battles:s.world.characters[id].battlesCommanded})),
+  betrayals:(s.world.defections||[]).filter(e=>e.from===s.player||e.to===s.player).map(e=>({...e,name:CHARACTER_CATALOG[e.id]?.name||[e.id,e.id]})),
+  heirs:[...own].filter(id=>(s.world.characters[id]?.adoptiveParents||[]).length>0).map(id=>({name:CHARACTER_CATALOG[id]?.name||[id,id],adoptiveParents:[...s.world.characters[id].adoptiveParents]})),
+  victory:!!s.victory,scenario:d.scenario?{...d.scenario}:null};
+ d.finalized=archive;return {ok:true,archive};
+}
