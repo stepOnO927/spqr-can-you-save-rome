@@ -1,6 +1,6 @@
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=11-xxiib';
 import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange} from './characters.js?v=20-xxiib';
-import {recordLifeEvent,dynastyRoll,personAge} from './dynasties.js?v=4-xxiid';
+import {recordLifeEvent,dynastyRoll,personAge} from './dynasties.js?v=5-xxiie';
 import {FACTIONS} from './data.js?v=11-xxiib';
 import {startDynasticWar} from './civil-war.js?v=7-xxiib';
 

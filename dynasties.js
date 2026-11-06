@@ -17,7 +17,7 @@ const ensureCatalog=s=>{for(const [id,entry] of Object.entries(s.world.dynasties
 
 export function initializeDynasties(s){
  const d=s.world.dynasties||= {families:{},lives:{},catalog:{},marriages:[],memories:[],rulers:[],seed:220049,nextPerson:1,nextFamily:1};
- d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
+ d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
  for(const [id,c] of Object.entries(s.world.characters)){
   c.parents||=[];c.adoptiveParents||=[];c.children||=[];c.spouse||=null;c.wealth??=0;
   c.sex||=(['cleopatra','arsinoe'].includes(id)?'female':CHARACTER_CATALOG[id]?.fictional?'unknown':'male');
@@ -78,6 +78,42 @@ export function proposeMarriage(s,aId,bId){
  if(a.faction!==b.faction){const key=pair(a.faction,b.faction);s.relations[key]=Math.min(100,(s.relations[key]||0)+4)}
  if(a.faction===s.player||b.faction===s.player)note(s,`${CHARACTER_CATALOG[aId].name[0]} and ${CHARACTER_CATALOG[bId].name[0]} married in the simulation.`,`模拟战役中，${CHARACTER_CATALOG[aId].name[1]}与${CHARACTER_CATALOG[bId].name[1]}结婚。`);
  return {ok:true};
+}
+
+// These are dated diplomatic leads. No live foreign character state is read
+// while listing contacts or accepting the player's decision to send an offer.
+export function reportedDynasticContacts(s,viewer=s.player){
+ initializeDynasties(s);const contacts=[];
+ for(const [faction,k] of Object.entries(s.knowledge?.[viewer]||{})){
+  if(faction===viewer||faction==='rebels')continue;
+  const ids=[...(k.reportedLeaders||[]),...(k.reports||[]).flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['age','health','location'].includes(r.kind)&&r.character?[r.character]:[])];
+  for(const id of new Set(ids))if(CHARACTER_CATALOG[id])contacts.push({id,faction});
+ }
+ return contacts;
+}
+
+export function offerForeignMarriage(s,ownId,foreignId,reportedFaction){
+ const d=initializeDynasties(s),own=s.world.characters[ownId];
+ if(!own||own.faction!==s.player||!eligibleAdult(s,ownId)||own.spouse)return {ok:false,reason:'eligibility'};
+ if(!reportedDynasticContacts(s).some(x=>x.id===foreignId&&x.faction===reportedFaction))return {ok:false,reason:'unknown'};
+ if(s.wars.some(w=>w.includes(s.player)&&w.includes(reportedFaction))||(s.relations[pair(s.player,reportedFaction)]??0)<0)return {ok:false,reason:'diplomacy'};
+ if(d.marriageOffers.some(x=>x.status==='pending'&&(x.own===ownId||x.foreign===foreignId)))return {ok:false,reason:'pending'};
+ if(s.factions[s.player].treasury<4)return {ok:false,reason:'treasury'};
+ s.factions[s.player].treasury-=4;
+ const offer={id:`marriage:${d.marriageOffers.length+1}`,own:ownId,foreign:foreignId,reportedFaction,status:'pending',months:3,year:s.year,month:s.month};d.marriageOffers.push(offer);
+ record(s,ownId,`A marriage envoy was sent concerning ${CHARACTER_CATALOG[foreignId].name[0]}; the report may be outdated.`,`已派使者商议与${CHARACTER_CATALOG[foreignId].name[1]}的婚事；情报可能过时。`);
+ return {ok:true,cost:4,offer};
+}
+
+function advanceMarriageOffers(s){
+ const d=s.world.dynasties;for(const offer of d.marriageOffers.filter(x=>x.status==='pending')){
+  if(--offer.months>0)continue;
+  const own=s.world.characters[offer.own],foreign=s.world.characters[offer.foreign];
+  const valid=own?.alive&&foreign?.alive&&!own.spouse&&!foreign.spouse&&foreign.faction===offer.reportedFaction&&!s.wars.some(w=>w.includes(s.player)&&w.includes(foreign.faction));
+  const result=valid?proposeMarriage(s,offer.own,offer.foreign):{ok:false,reason:'no_reply'};
+  offer.status=result.ok?'accepted':result.reason==='declined'?'declined':'no_reply';offer.resolvedYear=s.year;offer.resolvedMonth=s.month;
+  if(offer.status!=='accepted')note(s,offer.status==='declined'?'The foreign court declined the marriage proposal.':'No marriage agreement was reached; the original report may have been outdated.',offer.status==='declined'?'外国宫廷拒绝了婚事。':'未达成婚姻协议；原情报可能已经过时。');
+ }
 }
 
 export function adoptHeir(s,parentId,childId){
@@ -178,6 +214,7 @@ export function requestFamilyResources(s,familyId,choice){
 
 export function advanceDynasties(s){
  const d=initializeDynasties(s);
+ advanceMarriageOffers(s);
  for(const loan of d.familyLoans.filter(x=>x.remaining>0)){
   const treasury=s.factions[loan.faction]?.treasury||0;if(treasury<1)continue;
   s.factions[loan.faction].treasury--;d.families[loan.familyId].wealth++;loan.remaining--;

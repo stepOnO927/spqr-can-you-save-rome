@@ -4,7 +4,7 @@ import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
 import {CHARACTER_CATALOG} from '../characters.js?v=20-xxiib';
 import {assignSuccession} from '../characters.js?v=20-xxiib';
 import {deriveGovernment,advanceGovernments,secureRegency} from '../governance.js?v=26-xxiib';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
 import {canHoldOffice} from '../office-system.js?v=12-xxiib';
 import {renderGenealogy} from '../genealogy-ui.js';
 import {finalizeCampaign} from '../legacy.js';
@@ -26,6 +26,29 @@ test('marriage, adoption and wills change legal relationships and private assets
  s.world.characters[a].alive=false;settleInheritance(s,a);
  assert.equal(s.world.characters[child].wealth,40);assert.equal(s.factions.egypt.treasury,treasury);
  assert.equal(s.world.dynasties.lives[child].some(e=>e.en.includes('Inherited')),true);
+});
+
+test('foreign marriage requires a reported contact, a paid envoy and a delayed answer',()=>{
+ const s=newGame('caesar'),own=createFictionalPerson(s,{name:['Roman','罗马人'],faction:'caesar',birthYear:-80,sex:'male'}),foreign=createFictionalPerson(s,{name:['Egyptian','埃及人'],faction:'egypt',birthYear:-75,sex:'female'});
+ s.world.characters[own].loyalty=100;s.world.characters[foreign].loyalty=100;
+ assert.equal(offerForeignMarriage(s,own,foreign,'egypt').reason,'unknown');
+ assert.equal(reportedDynasticContacts(s).some(x=>x.id===foreign),false);
+ s.knowledge.caesar.egypt.reportedLeaders.push(foreign);
+ assert.equal(reportedDynasticContacts(s).some(x=>x.id===foreign),true);
+ const treasury=s.factions.caesar.treasury,alliances=s.alliances.length;
+ assert.equal(offerForeignMarriage(s,own,foreign,'egypt').ok,true);
+ assert.equal(s.factions.caesar.treasury,treasury-4);assert.equal(s.world.characters[own].spouse,null);
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));for(const month of [2,3,4]){loaded.month=month;if(month===4)loaded.world.dynasties.seed=0;advanceDynasties(loaded)}
+ assert.equal(loaded.world.dynasties.marriageOffers[0].status,'accepted');
+ assert.equal(loaded.world.characters[own].spouse,foreign);assert.equal(loaded.alliances.length,alliances);
+});
+
+test('a stale reported marriage target produces no hidden-state disclosure',()=>{
+ const s=newGame('caesar'),own=createFictionalPerson(s,{name:['Roman','罗马人'],faction:'caesar',birthYear:-80,sex:'male'}),foreign=createFictionalPerson(s,{name:['Contact','联系人'],faction:'egypt',birthYear:-75,sex:'female'});
+ s.knowledge.caesar.egypt.reportedLeaders.push(foreign);offerForeignMarriage(s,own,foreign,'egypt');s.world.characters[foreign].alive=false;
+ for(const month of [2,3,4]){s.month=month;advanceDynasties(s)}
+ assert.equal(s.world.dynasties.marriageOffers[0].status,'no_reply');
+ assert.match(s.log[0].en,/may have been outdated/);assert.equal(s.world.characters[own].spouse,null);
 });
 
 test('a contested private will becomes a saved court case with real costs',()=>{

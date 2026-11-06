@@ -1,13 +1,13 @@
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=91-xxiib';
-import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=27-xxiid';
+import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=28-xxiie';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=11-xxiib';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=20-xxiib';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=death-report-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=death-report-2-xxiie';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=12-xxiib';
 import {advanceConspiracies} from './conspiracies.js?v=11-xxiib';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=4-xxiib';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=7-xxiib';
-import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=4-xxiid';
+import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=5-xxiie';
 export {queueMission};
 export {personalDiplomaticCredit};
 
