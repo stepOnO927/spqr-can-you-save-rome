@@ -12,7 +12,7 @@ import {holdPosition,strategicRetreat,armySupply,encircled} from '../grand-opera
 import {importCampaign,downloadCampaign} from '../save-files.js';
 import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js';
+import {physicalStyle} from './physical-style.js?v=2';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,purchaseMaterials} from '../engine.js?v=80';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js?v=1';
 import {FACTIONS} from '../data.js?v=9';
@@ -31,7 +31,7 @@ import {intelligenceHtml,afterActionHtml} from '../recon-ui.js';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
-let objectivesOpen=true;let currentMapMode='political';let reliefEnabled=localStorage.getItem('spqr-relief')!=='off';
+let objectivesOpen=true;let currentMapMode='political';let focusPreviousMode=null;let reliefEnabled=localStorage.getItem('spqr-relief')!=='off';
 let lang=localStorage.getItem('spqr-lang')==='en'?'en':'zh';
 let devBranch='material';
 let treeZoom=1;
@@ -78,6 +78,8 @@ L.en.credits='NATURAL EARTH COASTS · MODERN ELEVATION · HISTORICAL BORDERS APP
 L.zh.credits='Natural Earth 海岸线 · 现代高程 · 历史边界为近似';
 const status = document.querySelector('#status');
 const map = new maplibregl.Map({container:'map',canvasContextAttributes:{preserveDrawingBuffer:true},center:[12.4,43.2],zoom:5.45,minZoom:3.6,maxZoom:9.2,maxBounds:[[-20,18],[60,58]],attributionControl:{compact:true},style:physicalStyle});
+if(maplibregl.ScaleControl&&map.addControl)map.addControl(new maplibregl.ScaleControl({maxWidth:110,unit:'metric'}),'bottom-left');
+const atlasFocus=document.createElement('button');atlasFocus.id='atlas-focus';atlasFocus.type='button';atlasFocus.setAttribute('aria-pressed','false');document.querySelector('.map-controls').append(atlasFocus);atlasFocus.onclick=()=>{const focused=document.body.classList.toggle('atlas-focus');if(focused){focusPreviousMode=currentMapMode;currentMapMode='terrain'}else if(focusPreviousMode){currentMapMode=focusPreviousMode;focusPreviousMode=null}atlasFocus.setAttribute('aria-pressed',String(focused));renderArmies();renderHud();map.resize?.()};
 
 const cities=[{name:'ROMA',p:[12.4964,41.9028],kind:'major',desc:'The political center of the Roman Republic and Pompeian command.'},{name:'RAVENNA',p:[12.2035,44.4184],kind:'major fort',desc:'Caesar’s gathering point before the civil war.'},{name:'ARIMINUM',p:[12.5683,44.0678],kind:'major',desc:'A Roman colony south of the Rubicon.'},{name:'NARBO',p:[3.003,43.184],kind:'major',desc:'Roman colony in southern Gaul.'},{name:'MASSILIA',p:[5.3698,43.2965],kind:'minor port',desc:'Greek city and Mediterranean port; its position in the war changed through 49 BCE.'},{name:'MEDIOLANUM',p:[9.19,45.464],kind:'minor',desc:'A major settlement in Cisalpine Gaul.'},{name:'AQUILEIA',p:[13.368,45.768],kind:'minor fort',desc:'Roman colony at the head of the Adriatic.'},{name:'BRUNDISIUM',p:[17.946,40.632],kind:'major port',desc:'Strategic port for crossings to the eastern Adriatic.'},{name:'SALONA',p:[16.49,43.54],kind:'major port',desc:'Eastern Adriatic settlement in the area of Caesar’s Illyrian command. Its precise territorial extent is uncertain.'},{name:'DYRRHACHIUM',p:[19.45,41.31],kind:'minor port',desc:'Eastern Adriatic port and later focal point of the civil war.'},{name:'CAPUA',p:[14.25,41.08],kind:'minor',desc:'An important city in Campania.'}];
 const cityZh={ROMA:'罗马',RAVENNA:'拉文纳',ARIMINUM:'阿里米努姆',NARBO:'纳博',MASSILIA:'马西利亚',MEDIOLANUM:'梅迪奥拉努姆',AQUILEIA:'阿奎莱亚',BRUNDISIUM:'布伦迪西姆',SALONA:'萨洛纳',DYRRHACHIUM:'狄拉希乌姆',CAPUA:'卡普亚'};
@@ -104,8 +106,9 @@ function updateControl(){
    else if(currentMapMode==='stability')color=own?(r.loyalty>=65?'#8ca87d':r.loyalty>=35?'#c49b69':'#b87865'):'#ad9c7e';
    pairs.push(r.id,color);borders.push(r.id,identity(r.owner).map);
   }
-  map.setPaintProperty('grand-control','fill-color',['match',['get','id'],...pairs,'#b9a982']);map.setPaintProperty('grand-control','fill-opacity',currentMapMode==='terrain'?.035:currentMapMode==='political'?.20:.26);
+  map.setPaintProperty('grand-control','fill-color',['match',['get','id'],...pairs,'#b9a982']);map.setPaintProperty('grand-control','fill-opacity',currentMapMode==='terrain'?.025:currentMapMode==='political'?.13:.22);
   map.setPaintProperty('grand-border','line-color',['match',['get','id'],...borders,'#72604f']);
+  map.setPaintProperty('grand-border','line-opacity',currentMapMode==='terrain'?.035:currentMapMode==='political'?.1:.25);
   map.setPaintProperty('control','fill-opacity',0);map.setPaintProperty('province-outline','line-opacity',0);return;
  }
  if(!map.getLayer('control'))return;
@@ -204,6 +207,7 @@ function renderHudBase(){document.querySelector('#development').textContent=lang
 
 function renderHud(){
  renderHudBase();
+ atlasFocus.textContent=lang==='zh'?(document.body.classList.contains('atlas-focus')?'返回':'观图'):(document.body.classList.contains('atlas-focus')?'BACK':'MAP');atlasFocus.title=lang==='zh'?'切换地图专注视图':'Toggle map focus view';
  if(currentMapMode==='terrain')document.querySelector('#map-mode-note').textContent=lang==='zh'?'清晰的海岸线与陆地地形。海洋使用独立配色；光影可单独切换。':'Detailed coastline and land relief. The sea has its own color; relief can be toggled separately.';
  document.querySelectorAll('.grand-site').forEach(el=>{const site=GRAND_SITES.find(x=>x.id===el.dataset.site);if(site)el.textContent=n(site.site)});
  if(state.grandMap&&currentMapMode==='supply')document.querySelector('#map-mode-note').textContent=lang==='zh'?'绿色表示与己方补给源连通；黄褐色表示较弱补给。补给影响战斗、士气与损耗。':'Green marks stronger links to friendly supply sources; ochre marks weaker supply. Supply affects combat, morale and attrition.';
@@ -231,8 +235,10 @@ map.on('load',()=>{
  map.addSource('grand-territories',{type:'geojson',data:grandTerritories});
  map.addLayer({id:'grand-control',type:'fill',source:'grand-territories',paint:{'fill-color':'#baaa8d','fill-opacity':.55}},'control');
  map.addLayer({id:'grand-border',type:'line',source:'grand-territories',paint:{'line-color':'#654c3f','line-width':['interpolate',['linear'],['zoom'],4,.65,8,1.8],'line-opacity':.78}},'control');
+ map.addLayer({id:'grand-hover',type:'line',source:'grand-territories',filter:['==',['get','id'],''],paint:{'line-color':'#f3e6c3','line-width':2.2,'line-opacity':.9}},'control');
  map.on('click','grand-control',e=>{if(!state.grandMap)return;e.originalEvent?.stopPropagation?.();const r=region(state,e.features[0]?.properties?.id);if(!r)return;const unit=state.armies.find(a=>a.id===activeArmy&&a.owner===state.player);if(unit&&!unit.move&&r.id!==unit.region&&previewMarch(state,unit.id,r.id).ok){previewDestination=r.id;showArmy(unit);renderReach(unit)}else showRegion(r)});
- map.on('mouseenter','grand-control',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','grand-control',()=>map.getCanvas().style.cursor='');
+ map.on('mousemove','grand-control',e=>map.setFilter('grand-hover',['==',['get','id'],e.features?.[0]?.properties?.id||'']));
+ map.on('mouseenter','grand-control',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','grand-control',()=>{map.getCanvas().style.cursor='';map.setFilter('grand-hover',['==',['get','id'],''])});
  for(const site of GRAND_SITES){const el=document.createElement('button');el.className=`grand-site ${site.id===site.macro?'major':''}`;el.dataset.site=site.id;el.textContent=site.site[lang==='zh'?1:0];el.title=site.site.join(' · ');el.onclick=e=>{e.stopPropagation();const r=region(state,site.id),unit=state.armies.find(a=>a.id===activeArmy&&a.owner===state.player);if(unit&&!unit.move&&r.id!==unit.region&&previewMarch(state,unit.id,r.id).ok){previewDestination=r.id;showArmy(unit);renderReach(unit)}else showRegion(r)};marker(el,[site.lon,site.lat],'left')}
 });
 map.on('load',()=>{if(!reliefEnabled)map.setLayoutProperty('relief','visibility','none');status.style.display='none';map.addSource('preview',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'preview-line',type:'line',source:'preview',paint:{'line-color':'#ffdd8b','line-width':3,'line-dasharray':[2,2]}});map.addSource('marches',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'march-lines',type:'line',source:'marches',paint:{'line-color':'#f6df9d','line-width':3,'line-opacity':.9,'line-dasharray':[2,2]}});renderArmies();map.addSource('route',{type:'geojson',data:republicanRoads});map.addLayer({id:'ancient-route',type:'line',source:'route',paint:{'line-color':'#f2d8a0','line-width':['interpolate',['linear'],['zoom'],3.6,.8,5.5,1.5,9,2.6],'line-opacity':.85,'line-dasharray':[3,2]}},'control');map.addLayer({id:'road-hit',type:'line',source:'route',paint:{'line-color':'#f2d8a0','line-width':12,'line-opacity':.01}});map.on('click','road-hit',e=>{e.originalEvent.stopPropagation();showRoad(e.features[0].properties.name)});map.on('mouseenter','road-hit',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','road-hit',()=>map.getCanvas().style.cursor='');map.on('click','control',e=>{if(state.grandMap)return;if(map.queryRenderedFeatures(e.point,{layers:['road-hit']}).length)return;const p=e.features[0].properties;(()=>{const ids=Array.isArray(p.regions)?p.regions:JSON.parse(p.regions||'[]');if(ids.length===1){showRegion(region(state,ids[0]));return}activeArmy=null;clearReach();inspect(p.id.toUpperCase(),t('shared'));const controls=document.querySelector('#lab-orders');for(const id of ids){const r=region(state,id);if(!r)continue;const b=document.createElement('button');b.textContent=n(r.name);b.onclick=()=>showRegion(r);controls.append(b)}})()});map.on('mouseenter','control',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','control',()=>map.getCanvas().style.cursor='')});

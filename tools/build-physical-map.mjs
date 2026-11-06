@@ -5,7 +5,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 
 const root=path.resolve(import.meta.dirname,'..');
-const bounds=[-20,18,60,58],tolerance=.0015;
+const bounds=[-20,18,60,58];let tolerance=.0015;
 const nearly=(a,b)=>Math.abs(a-b)<1e-9;
 function clip(ring){
  let points=ring.slice(0,-1);
@@ -24,3 +24,10 @@ function simplify(ring){
 }
 function extract(data){const polygons=[];for(const feature of data.features){const geometry=feature.geometry;for(const polygon of geometry.type==='Polygon'?[geometry.coordinates]:geometry.coordinates){const outer=clip(polygon[0]);if(!outer.length)continue;const rings=[simplify(outer)];for(const hole of polygon.slice(1)){const clipped=clip(hole);if(clipped.length)rings.push(simplify(clipped))}polygons.push(rings)}}return {type:'FeatureCollection',features:polygons.map((coordinates,i)=>({type:'Feature',properties:{id:i},geometry:{type:'Polygon',coordinates}}))}}
 for(const name of ['land','ocean']){const original=JSON.parse(await readFile(path.join(root,'cartography-work',`${name}.geojson`),'utf8')),map=extract(original);const target=path.join(root,`mediterranean-${name}.js`);await writeFile(target,`// Natural Earth 1:10m physical vectors, public domain; cropped to the campaign region.\nexport default ${JSON.stringify(map)};\n`);console.log(name,map.features.length,Math.round((await readFile(target)).length/1024)+' KiB')}
+tolerance=.006;
+const bathymetry={type:'FeatureCollection',features:[]};
+for(const [code,depth] of [['J_1000',1000],['I_2000',2000],['H_3000',3000]]){
+ const data=JSON.parse(await readFile(path.join(root,'cartography-work',`ne_10m_bathymetry_${code}.geojson`),'utf8'));
+ const clipped=extract(data);for(const feature of clipped.features){feature.properties.depth=depth;bathymetry.features.push(feature)}
+}
+const bathTarget=path.join(root,'mediterranean-bathymetry.js');await writeFile(bathTarget,`// Natural Earth 1:10m bathymetry, public domain; cropped and generalized.\nexport default ${JSON.stringify(bathymetry)};\n`);console.log('bathymetry',bathymetry.features.length,Math.round((await readFile(bathTarget)).length/1024)+' KiB');
