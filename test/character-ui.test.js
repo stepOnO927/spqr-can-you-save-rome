@@ -295,3 +295,9 @@ test('new Roman birth references appear in the historical encyclopedia with indi
  const previous=globalThis.document,panel=new Element(),s=newGame('caesar');globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
  try{for(const [id,year,source] of [['pompey','106','museum.classics.cam.ac.uk'],['cicero','106','548206709'],['cato','95','549703663']])for(const language of ['en','zh']){panel.children=[];createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).show(id);const dossier=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(dossier,new RegExp(year));assert.ok(dossier.includes(source));assert.match(dossier,language==='zh'?/历史百科（非游戏情报）/:/HISTORICAL ENCYCLOPEDIA \(NOT GAME INTELLIGENCE\)/)}}finally{globalThis.document=previous}
 });
+test('Bosporan birth estimate and the Armenian–Parthian betrothal remain sourced history, not game intelligence',()=>{
+ const previous=globalThis.document,panel=new Element(),s=newGame('caesar');globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
+ try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('pharnaces');let html=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(html,/约公元前97年，误差范围不明/);assert.match(html,/特雷卡尼百科/);assert.match(panel.innerHTML,/年龄<\/span><b>未知/);assert.deepEqual(s.knowledge.caesar.bosporus.reports,[]);
+ for(const [id,pattern] of [['pacorus',/前53年曾安排与其姊妹订婚/],['artavasdes',/其姊妹与帕科鲁斯于前53年订婚/]]){panel.children=[];ui.show(id);html=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(html,pattern);assert.match(html,/不代表游戏中的信任、当前职权或已获情报/);assert.match(html,/iranicaonline\.org/)}assert.deepEqual(s.world.personalRelations,{});
+ }finally{globalThis.document=previous}
+});
