@@ -24,6 +24,11 @@ export function missionDuration(s,actor,target,type){
  for(let i=0;i<queue.length;i++){const [id,steps]=queue[i];if(goals.has(id)){distance=steps;break}for(const edge of ROUTES){const next=edge[0]===id?edge[1]:edge[1]===id?edge[0]:null;if(next&&!seen.has(next)){seen.add(next);queue.push([next,steps+1])}}}
  return cfg.months+(distance===null?2:distance>=5?2:distance>=3?1:0);
 }
+// A watch begins next month, so concurrent missions resolve independently of array order.
+export function counterWatchRemaining(s,actor){
+ const watch=s.world?.securityWatches?.[actor],now=s.year*12+s.month;if(!watch||!Number.isFinite(watch.start)||!Number.isFinite(watch.end)||now>watch.end)return 0;return Math.max(0,watch.end-Math.max(now,watch.start)+1);
+}
+function counterWatchActive(s,actor){const watch=s.world?.securityWatches?.[actor],now=s.year*12+s.month;return !!watch&&now>=watch.start&&now<=watch.end}
 export function availableAgents(s,actor){initializeWorld(s);const held=s.world.captives.filter(c=>c.owner===actor&&c.state==='held').length,pending=s.operations.filter(o=>o.actor===actor&&['spy','counter'].includes(o.type)&&o.status==='pending').length;return Math.max(0,3-held-pending)}
 export function requestAgentRelease(s,actor,captiveId){
  initializeWorld(s);const c=s.world.captives.find(x=>x.id===captiveId&&x.owner===actor&&x.state==='held');if(actor!==s.player||!c)return {ok:false,reason:'unavailable'};
@@ -107,7 +112,7 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!FACTIONS[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(target.endsWith('_claimant')&&!knownDynasticFactions(s,actor).includes(target))return {ok:false,reason:'unavailable'};
  const theater=subject.startsWith('office_theater:')?subject.slice('office_theater:'.length):null;
- if(!theater&&!['health','age','location','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance','clashes','office_finance','office_supply','office_administration','availability'].includes(subject))return {ok:false,reason:'subject'};
+ if(!theater&&!['health','age','location','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance','clashes','office_finance','office_supply','office_administration','availability','counter_spies'].includes(subject))return {ok:false,reason:'subject'};
  if(theater&&!reportedOfficeTheaters(s,actor,target).includes(theater))return {ok:false,reason:'subject'};
  if(subject.startsWith('office_')&&(!['spy','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
  if(subject==='location'&&!['spy','travelers','exchange'].includes(type))return {ok:false,reason:'subject'};
@@ -117,7 +122,7 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
  if(subject==='relations'&&type!=='envoy')return {ok:false,reason:'subject'};
  if(subject==='stance'&&!['envoy','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(subject==='contacts'&&(!['spy','exchange'].includes(type)||!['egypt','parthia'].includes(target)))return {ok:false,reason:'subject'};
- if(type==='counter'&&subject!=='conspiracy'||subject==='conspiracy'&&(!['spy','counter','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
+ if(type==='counter'&&!['conspiracy','counter_spies'].includes(subject)||subject==='counter_spies'&&(type!=='counter'||!['caesar','senate'].includes(target))||subject==='conspiracy'&&(!['spy','counter','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
  if(['health','age','location'].includes(subject)&&characterId&&!reportedHealthSubjects(s,actor,target).includes(characterId))return {ok:false,reason:'identity'};
  const partners=s.alliances.filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)).filter(id=>id!==target&&s.factions[id]);
@@ -130,7 +135,7 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
 export function queueMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;
  const {duration,partner,cost}=plan,subjectCharacter=['health','age','location'].includes(subject)?(characterId||(['health','location'].includes(subject)&&type!=='exchange'?reportedHealthSubjects(s,actor,target)[0]:null)||null):null;
- s.factions[actor].treasury-=cost;s.operations.unshift({actor,target,type,subject,partner,subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month});
+ s.factions[actor].treasury-=cost;s.operations.unshift({actor,target,type,subject,...(partner?{partner}:{}),subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month});
  if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months.`,`已派出${({spy:'间谍',counter:'内部调查',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月。`);return {ok:true,duration};
 }
 // The ally selects its own record when the request reaches it. The sealed
@@ -156,7 +161,9 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  // An exchange asks an ally for its own existing records; it does not visit
  // the target court, whose hidden territorial status cannot decide success.
  if((op.type!=='exchange'&&!s.regions.some(r=>r.owner===op.target))||q<.18){op.status='failed';delete op.exchangeSealed;if(op.actor===s.player)notify(s,'The intelligence mission ended without a report; the reason is unknown.','情报行动结束，未收到报告；原因不明。');continue}
- if(op.type==='spy'&&q<.33){op.status=q<.24?'captured':'detected';if(op.status==='captured'){op.captiveId='captive'+s.world.nextCaptive++;s.world.captives.push({id:op.captiveId,owner:op.actor,holder:op.target,state:'held',year:s.year,month:s.month})}const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,`A spy from ${FACTIONS[op.actor].short[0]} was discovered by ${FACTIONS[op.target].short[0]}.`,`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现，双方关系恶化。`);continue}
+ if(op.type==='counter'&&op.subject==='counter_spies'){const now=s.year*12+s.month;(s.world.securityWatches||={})[op.actor]={start:now+1,end:now+6};op.status='complete';if(op.actor===s.player)notify(s,'A counterintelligence watch will operate for the next six months.','反间谍警戒将在接下来的六个月运行。');continue}
+ const watch=op.type==='spy'&&counterWatchActive(s,op.target),captureLimit=watch?.36:.24,discoveryLimit=watch?.52:.33;
+ if(op.type==='spy'&&q<discoveryLimit){op.status=q<captureLimit?'captured':'detected';if(op.status==='captured'){op.captiveId='captive'+s.world.nextCaptive++;s.world.captives.push({id:op.captiveId,owner:op.actor,holder:op.target,state:'held',year:s.year,month:s.month})}const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,op.status==='captured'?`A spy from ${FACTIONS[op.actor].short[0]} was captured by ${FACTIONS[op.target].short[0]}.`:`A spy from ${FACTIONS[op.actor].short[0]} was detected by ${FACTIONS[op.target].short[0]}.`,op.status==='captured'?`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}抓获，双方关系恶化。`:`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现，双方关系恶化。`);continue}
  const relation=s.relations[[op.actor,op.target].sort().join(':')]||0,atWar=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target));
  const refusal=Math.max(.23,Math.min(.70,.38-relation*.0015+(atWar?.18:0)+(s.factions[op.target]?.stability<35?.08:0)));
  if((op.type==='audience'||op.type==='envoy')&&q<refusal){op.status='declined';if(op.actor===s.player)notify(s,'The court declined the envoy or audience request.','宫廷拒绝了使者或会面请求。');continue}
