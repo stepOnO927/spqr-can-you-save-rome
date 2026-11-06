@@ -6,7 +6,7 @@ Playable independent 49 BCE civil war grand campaign and persistent Legacy of Ro
 npm start
 ```
 
-Open `http://localhost:5173` for the campaign, `/map-lab/` for the zoomable atlas, or `/legacy/` for the out-of-run city. The campaign and hub work without network access; the atlas loads MapLibre and geographic tiles over the network. No account is needed. Run `npm test` for simulation tests.
+Open `http://localhost:5173` for the campaign, `/map-lab/` for the zoomable atlas, or `/legacy/` for the out-of-run city. The campaign and hub work without network access. The atlas bundles its land and sea geometry; MapLibre, optional elevation tiles and web fonts need network access. No account is needed. Run `npm test` for simulation tests.
 
 ## Phase XV and XVI
 
@@ -14,7 +14,7 @@ The default campaign contains **120 controllable strategic territories**, includ
 
 **Legacy of Rome** is a persistent, clickable city outside campaign turns. Laurels are separate from campaign treasury. The Curia has state-changing petitions; the Museum collects illustrated objects; the Archive and Arch preserve victories; the Circus opens a 2D, five-driver, three-lap chariot race with a second narrow circuit. Six districts have twelve permanent, one-time civic choices. The shop also unlocks a historically inspired alternate Thessaly start in 48 BCE. Purchases, cosmetics, achievements, race records, and rewards survive refresh and save loading. The city profile can be exported and imported as JSON for another browser or device. Rewards are keyed to campaign/run or minigame completion to prevent duplicate claims. Test an automated three-lap race with `node tools/race-playtest.mjs`.
 
-The entry screen and in-game menu support JSON save upload and download. Older files are preserved; import does not overwrite any local save slot. The atlas also has direct JSON transfer buttons. The map uses a neutral land wash to separate land from sea, subdued ownership fills, visible faction borders and banners, and optional elevation relief. Run `node tools/live-grand-atlas.mjs <output-directory>` against a local server on port 5174 to test live tiles, pan and map modes.
+The entry screen and in-game menu support JSON save upload and download. Older files are preserved; import does not overwrite any local save slot. The atlas also has direct JSON transfer buttons. Both maps now use cropped Natural Earth 1:10m land geometry. The atlas uses the matching ocean polygon as an opaque sea mask, a crisp coastline, subdued ownership fills, visible faction borders and banners, and optional land relief. Run `node tools/live-grand-atlas.mjs <output-directory>` against a local server on port 5174 to test live tiles, pan and map modes.
 
 ## Phase XIV development system
 
@@ -57,4 +57,4 @@ New campaigns begin with foreign army sightings only in a faction's own theaters
 - `style.css` — historical atlas style
 - `engine.test.js` — gameplay checks
 
-No commercial game art or maps are copied. The schematic coastline and interface are original.
+No commercial game art or maps are copied. The coast is from the public-domain Natural Earth dataset; the interface artwork is original.

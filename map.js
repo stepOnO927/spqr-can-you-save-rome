@@ -1,5 +1,5 @@
 import {IDENTITIES,factionMark} from './identity.js?v=2';
-import land from './land.js?v=7';
+import land from './mediterranean-land.js';
 import rivers from './rivers.js?v=7';
 import historical from './historical-territories.js?v=7';
 import {FACTIONS,REGIONS} from './data.js?v=9';

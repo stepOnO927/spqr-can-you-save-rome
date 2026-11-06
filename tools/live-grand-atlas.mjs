@@ -18,7 +18,7 @@ try{
  await page.screenshot({path:path.join(output,'live-grand-atlas.png')});
  await page.locator('#map-mode').selectOption('terrain');await page.locator('#relief-toggle').click();await page.waitForTimeout(500);await page.screenshot({path:path.join(output,'terrain-no-relief.png')});await page.locator('#relief-toggle').click();await page.locator('#map-mode').selectOption('political');
  const before=await page.locator('.grand-site').first().boundingBox();await page.mouse.move(790,430);await page.mouse.down();await page.mouse.move(930,480,{steps:12});await page.mouse.up();const after=await page.locator('.grand-site').first().boundingBox();
- await page.mouse.wheel(0,-400);await page.waitForTimeout(800);await page.locator('#map-mode').selectOption('military');await page.locator('#map-mode').selectOption('supply');
+ await page.mouse.wheel(0,-400);await page.waitForTimeout(800);await page.screenshot({path:path.join(output,'zoomed-coast.png')});await page.locator('#map-mode').selectOption('military');await page.locator('#map-mode').selectOption('supply');
  const report={sites:120,tiles,animationCallbacksPerSecond:Math.round(sample.frames/sample.seconds),panPixels:Math.round(Math.hypot(after.x-before.x,after.y-before.y)),pageErrors:errors,requests:requests.slice(0,12)};
  await writeFile(path.join(output,'live-grand-atlas.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));assert.equal(errors.length,0);assert.ok(tiles.ok>0,'live tiles must load');assert.ok(report.panPixels>20,'map must pan');
 }finally{await browser.close()}
