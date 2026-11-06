@@ -332,8 +332,12 @@ function settleClaimantBacking(s,faction,dispute,claimant){
 }
 function advanceFactionDispute(s,faction){
  if(s.world.disputes[faction]?.war)return;
- const leaders=s.world.leadership[faction]||[],claimants=(s.world.claimants[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!leaders.includes(id));s.world.claimants[faction]=claimants;
- if(!claimants.length||!s.regions.some(r=>r.owner===faction)){delete s.world.disputes[faction];return}
+ const leaders=s.world.leadership[faction]||[],previousClaimants=s.world.claimants[faction]||[],claimants=previousClaimants.filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!leaders.includes(id));s.world.claimants[faction]=claimants;
+ const controlsLand=s.regions.some(r=>r.owner===faction),previousDispute=s.world.disputes[faction];
+ // A deceased claimant's accepted reserve returns to the surviving court;
+ // do not discard another living claimant's backing while pruning the list.
+ if(controlsLand&&s.factions[faction]&&previousDispute)for(const id of previousClaimants)if(s.world.characters[id]&&!s.world.characters[id].alive)settleClaimantBacking(s,faction,previousDispute,id);
+ if(!claimants.length||!controlsLand){delete s.world.disputes[faction];if(previousDispute&&!claimants.length&&controlsLand&&!leaders.length)assignSuccession(s,faction);return}
  const dispute=s.world.disputes[faction]||={months:0};if(!leaders.length&&dispute.vacancySince?.year===s.year&&dispute.vacancySince?.month===s.month)return;
  // An unresolved court struggle strains administration over time. This is
  // internal simulation state; observers learn about it only through reports.
