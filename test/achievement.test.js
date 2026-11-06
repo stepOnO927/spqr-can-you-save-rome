@@ -17,6 +17,9 @@ test('a military victory remains silent while play continues, then reveals once 
 test('a terminal defeat finalizes without a victory award',()=>{
  const s=newGrandGame('senate'),p=profile();s.terminalResult='defeat';tick(s);assert.equal(s.achievementState.finalized,true);assert.equal(s.achievementState.result,'defeat');assert.equal(s.achievementState.completed.victory,undefined);recordCampaign(p,s);assert.equal(p.achievements.some(a=>a.id==='victory'),false);
 });
+test('formally ending a wiped-out command records defeat',()=>{
+ const s=newGrandGame('senate');for(const r of s.regions)if(r.owner==='senate')r.owner='caesar';s.armies=s.armies.filter(a=>a.owner!=='senate');const done=endCampaign(s,'retired');assert.equal(done.ok,true);assert.equal(done.state.result,'defeat');assert.equal(revealedAchievements(s).some(a=>a.id==='victory'),false)
+});
 test('voluntary endings preserve dated evidence through saves without duplicate claims',()=>{
  const s=newGrandGame('senate'),p=profile();s.year=-48;s.month=1;evaluateAchievements(s);const evidence=structuredClone(s.achievementState.completed['survive:12']);endCampaign(s,'retired');recordCampaign(p,s);const coins=p.coins;const restored=upgradeSave(structuredClone(s));assert.deepEqual(restored.achievementState.completed['survive:12'],evidence);assert.equal(restored.achievementState.result,'retired');assert.equal(recordCampaign(p,restored).length,0);assert.equal(p.coins,coins);assert.equal(tick(restored).month,1);
 });

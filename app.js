@@ -3,7 +3,7 @@ import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=25';
 import {identity,factionMark} from './identity.js?v=2';
 import {CHARACTER_CATALOG} from './characters.js?v=15';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=9';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,purchaseMaterials,recruitFigure} from './engine.js?v=82';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,purchaseMaterials,recruitFigure} from './engine.js?v=83';
 import {importCampaign,downloadCampaign} from './save-files.js';
 import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js';
 import {endCampaign} from './achievement-system.js';

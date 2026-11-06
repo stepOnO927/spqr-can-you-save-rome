@@ -18,7 +18,7 @@ The entry screen and in-game menu support JSON save upload and download. Older f
 
 ## Mare Nostrum and campaign achievements
 
-The independent campaign now has eleven connected Mediterranean sea zones, persistent fleets, dated naval sightings, shipyard queues, fleet orders, combat, piracy, military transports and stock-limited merchant routes. Maritime trade consumes actual goods and payment; hostile raids, blockades, war, diplomacy and merchant capacity can interrupt deliveries. Sea-zone boundaries, ship values and commercial routes are gameplay approximations of the ancient Mediterranean.
+The independent campaign now has eleven connected Mediterranean sea zones, persistent fleets, dated naval sightings, shipyard queues, fleet orders, combat, piracy, military transports and stock-limited merchant routes. Maritime trade consumes actual goods and payment; hostile raids, blockades, war, diplomacy and merchant capacity can interrupt deliveries. Fleet speed, crew shortages, storms, repairs and sailor replacement affect operations. Naval officers have travel times, salary, experience and real effects on ports, shipbuilding, trade, repairs and reconnaissance. Sea-zone boundaries, ship values and commercial routes are gameplay approximations of the ancient Mediterranean.
 
 Campaign achievements are recorded silently in the save as dated evidence. The player can formally end a run in either campaign view. Only then are Ordinary, Hidden and Legendary achievements revealed and eligible Laurel Coins claimed once in the permanent Legacy profile. A military victory can be played beyond without revealing achievements. Finished saves retain their results and can be downloaded or imported.
 

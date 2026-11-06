@@ -24,5 +24,5 @@ export function evaluateAchievements(s){
  if(s.victory){mark('victory',{territories,battles:s.battles?.length||0});if(s.legacyScenario)mark('challenge',{scenario:s.legacyScenario})}
  return a;
 }
-export function endCampaign(s,result){const a=evaluateAchievements(s);if(a.finalized)return {ok:false,reason:'finalized',state:a};const chosen=result==='defeat'?'defeat':s.victory?'victory':'retired';a.finalized=true;a.result=chosen;a.endedAt=stamp(s);return {ok:true,state:a,achievements:Object.entries(a.completed).map(([id,record])=>({id,...record}))}}
+export function endCampaign(s,result){const a=evaluateAchievements(s);if(a.finalized)return {ok:false,reason:'finalized',state:a};const noCommand=!s.regions.some(r=>r.owner===s.player)&&!s.armies.some(unit=>unit.owner===s.player&&unit.men>0);const chosen=result==='defeat'||!s.victory&&noCommand?'defeat':s.victory?'victory':'retired';a.finalized=true;a.result=chosen;a.endedAt=stamp(s);return {ok:true,state:a,achievements:Object.entries(a.completed).map(([id,record])=>({id,...record}))}}
 export function revealedAchievements(s){const a=initializeAchievements(s);return a.finalized?Object.entries(a.completed).map(([id,record])=>({id,...record,definition:achievementDefinition(id)})).filter(x=>x.definition):[]}

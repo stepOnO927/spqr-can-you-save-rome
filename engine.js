@@ -15,7 +15,7 @@ import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js';
 export {endCampaign,revealedAchievements} from './achievement-system.js';
-export {SEA_ZONES,SHIPS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,orderFleet,reportedHostileFleets,supportPirates} from './naval.js';
+export {SEA_ZONES,SHIPS,NAVAL_JOBS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reportedHostileFleets,supportPirates} from './naval.js';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
 export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js';
 export {knowledgeTrade,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
