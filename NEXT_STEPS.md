@@ -26,3 +26,5 @@ This is a development tracker, not a completion claim. The player chooses a Roma
 Run `npm test` and the GitHub browser workflow for changes to gameplay. The workflow exercises both Roman starts, map interactions, save and view transfer, diplomacy, correspondence, characters, a 1920 × 1080 capture and map performance. Automated checks do not replace an independent usability test or guarantee that every feature in the original directives is complete. Verify the live GitHub Pages version after deployment. Historical claims and third-party map data need the sources and licensing documented alongside them.
 
 - 本次修复：继任安排可以撤回且不退款；失去资格的人选不会在新间谍报告中被当作有效安排，旧报告仍保留。
+
+- Succession: if the final claimant dies after an incumbent vacancy, an eligible successor can take office. Accepted reserves are retained; other living claimants and foreign reports remain separate. Multiple simultaneous breakaway military factions remain unimplemented.
