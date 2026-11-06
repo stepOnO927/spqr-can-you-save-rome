@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,army,moveArmy,tick,upgradeSave} from '../engine.js';
-import {assessment,sendScouts,probePositions,latestRecon} from '../reconnaissance.js';
+import {newGame,army,moveArmy,tick,upgradeSave,aiTurn} from '../engine.js';
+import {assessment,sendScouts,probePositions,latestRecon,reconReports,delayAttack,markReconRegion} from '../reconnaissance.js';
 import {intelligenceHtml,afterActionHtml} from '../recon-ui.js';
 
 test('Senate can assess, scout, then attack without a scripted outcome or exact intelligence',()=>{
@@ -19,13 +19,40 @@ test('Senate can assess, scout, then attack without a scripted outcome or exact 
  const report=latestRecon(s,'senate','cisalpine');assert.equal(report.source,'scouts');assert.equal(report.month,s.month);
  assert.ok(report.min===null||report.max>report.min);
  assert.equal(report.misinformationRisk,'high');
- assert.deepEqual(upgradeSave(JSON.parse(JSON.stringify(s))).militaryRecon[0],report);
+ assert.deepEqual(reconReports(upgradeSave(JSON.parse(JSON.stringify(s))),'senate','cisalpine')[0],report);
  const order=moveArmy(s,'italy','cisalpine');assert.equal(order.ok,true);
  assert.ok(unit.attackIntel);assert.equal(unit.attackIntel.report?.source,'scouts');
  for(let i=0;i<3&&!s.battles?.length;i++)tick(s);
  assert.ok(s.battles?.length);
  const battle=s.battles[0];assert.equal(typeof battle.attackerWins,'boolean');
+ const battleContact=latestRecon(s,'senate','cisalpine');assert.equal(battleContact.source,'battle');assert.equal(battleContact.confidence,'confirmed');assert.ok(battleContact.max>battleContact.min);
  for(const language of ['en','zh'])assert.match(afterActionHtml(battle,'senate',language),language==='zh'?/战后复盘/:/AFTER-ACTION REVIEW/);
+});
+test('AI scouts in later campaigns but sometimes attacks on incomplete intelligence',()=>{
+ const scout=newGame('senate');scout.year=-48;scout.month=3;scout.seed=1;scout.factions.caesar.treasury=200;scout.factions.caesar.food=100;
+ aiTurn(scout,'caesar');assert.equal(scout.armies.find(a=>a.id==='xiii').reconPending?.kind,'scouts');
+ tick(scout);assert.ok(reconReports(scout,'caesar','italiaN').some(r=>r.source==='scouts'));
+ const rash=newGame('senate');rash.year=-48;rash.month=3;rash.seed=2;rash.factions.caesar.treasury=200;rash.factions.caesar.food=100;
+ aiTurn(rash,'caesar');assert.equal(rash.armies.find(a=>a.id==='xiii').move?.to,'italiaN');
+});
+test('reports preserve observation and arrival, age without leaking fortifications, and compare sources',()=>{
+ const s=newGame('senate'),target=s.regions.find(r=>r.id==='cisalpine');target.fort=3;
+ assert.equal(assessment(s,'italy','cisalpine').fort,null);
+ assert.equal(markReconRegion(s,'italy','cisalpine').marked,true);
+ assert.equal(markReconRegion(s,'italy','cisalpine').marked,false);
+ assert.equal(delayAttack(s,'italy','cisalpine').ok,true);
+ assert.equal(s.armies.find(a=>a.id==='italy').delayedTarget.regionId,'cisalpine');
+ assert.equal(sendScouts(s,'italy','cisalpine').ok,true);tick(s);
+ const scout=latestRecon(s,'senate','cisalpine');
+ assert.equal(scout.observationMonth,1);assert.equal(scout.arrivalMonth,2);assert.equal(scout.age,1);
+ assert.equal(scout.reliability,'low');assert.equal(assessment(s,'italy','cisalpine').fort,null);
+ s.armies.find(a=>a.id==='italy').reconPending=null;
+ assert.equal(probePositions(s,'italy','cisalpine').ok,true);
+ const reports=reconReports(s,'senate','cisalpine');assert.equal(reports.length,2);
+ assert.ok(['highly credible','disputed','unverified','rumor'].includes(reports[0].confidence));
+ const html=intelligenceHtml(assessment(s,'italy','cisalpine'),target,'en');
+ assert.match(html,/Observed \/ arrived/);assert.match(html,/Compare intelligence reports/);
+ assert.match(intelligenceHtml(assessment(s,'italy','cisalpine'),target,'zh'),/比较情报报告/);
 });
 test('probe has a real resource and readiness cost; delay lets AI advance',()=>{
  const s=newGame('senate'),food=s.factions.senate.food;

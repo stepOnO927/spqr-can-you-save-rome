@@ -7,17 +7,17 @@ export function navalCapacity(s,owner){const faction=s.factions[owner];if(!facti
 export function availableNavalLift(s,owner,unitId){return navalCapacity(s,owner)-s.armies.filter(a=>a.owner===owner&&a.id!==unitId&&a.move?.sea).length}
 export function canEmbark(s,unit,from,to){return !!(from?.port&&to?.port&&s.factions[unit.owner]?.treasury>=8&&(s.naval?accessibleFleet(s,unit.owner,from.id,unit.men):availableNavalLift(s,unit.owner,unit.id)>0))}
 export function grandAdjacent(id){return GRAND_ROUTES.filter(r=>r[0]===id||r[1]===id).map(r=>({to:r[0]===id?r[1]:r[0],sea:r[2]==='sea',...r[3]}))}
-export function edgeMonths(edge,destination){const base=edge.sea?2:1,travel=Math.max(0,Math.floor((edge.distance||0)/(edge.sea?270:180))),terrain=destination.terrain==='hills'||destination.terrain==='forest'?1:0,road=edge.road?1:0,river=edge.river?1:0;return Math.max(1,base+travel+terrain+river-road)}
+export function edgeMonths(edge,destination,origin=null){const base=edge.sea?2:1,travel=Math.max(0,Math.floor((edge.distance||0)/(edge.sea?270:180))),terrain=destination.terrain==='hills'||destination.terrain==='forest'?1:0,road=edge.road||!edge.sea&&(origin?.buildings?.includes('road')||destination.buildings?.includes('road'))?1:0,bridge=edge.river&&(origin?.buildings?.includes('bridge')||destination.buildings?.includes('bridge')),river=edge.river&&!bridge?1:0;return Math.max(1,base+travel+terrain+river-road)}
 export function grandRoute(s,unit,destination,isWar){
  const regions=byId(s),start=unit.region;if(!regions[start]||!regions[destination])return null;
  const distances=new Map([[start,0]]),previous=new Map(),queue=new Set([start]);
  while(queue.size){const current=[...queue].sort((a,b)=>distances.get(a)-distances.get(b))[0];queue.delete(current);if(current===destination)break;
   for(const edge of grandAdjacent(current)){const next=regions[edge.to];if(!next||next.owner!==unit.owner&&!isWar(s,unit.owner,next.owner))continue;if(edge.sea&&!canEmbark(s,unit,regions[current],next))continue;
-   const cost=distances.get(current)+edgeMonths(edge,next)+(next.owner!==unit.owner?1:0)+(edge.sea?1:0),old=distances.get(next.id);if(old==null||cost<old){distances.set(next.id,cost);previous.set(next.id,{from:current,edge});queue.add(next.id)}
+   const cost=distances.get(current)+edgeMonths(edge,next,regions[current])+(next.owner!==unit.owner?1:0)+(edge.sea?1:0),old=distances.get(next.id);if(old==null||cost<old){distances.set(next.id,cost);previous.set(next.id,{from:current,edge});queue.add(next.id)}
   }
  }
  if(!previous.has(destination))return null;
- const path=[];let node=destination;while(node!==start){const entry=previous.get(node);path.unshift({id:node,sea:entry.edge.sea,months:edgeMonths(entry.edge,regions[node]),distance:entry.edge.distance,road:entry.edge.road,river:entry.edge.river,mountain:entry.edge.mountain});node=entry.from}
+ const path=[];let node=destination;while(node!==start){const entry=previous.get(node);path.unshift({id:node,sea:entry.edge.sea,months:edgeMonths(entry.edge,regions[node],regions[entry.from]),distance:entry.edge.distance,road:entry.edge.road,river:entry.edge.river,mountain:entry.edge.mountain});node=entry.from}
  return {path,months:path.reduce((n,x)=>n+x.months,0),sea:path.some(x=>x.sea),supplyConcern:path.some(x=>regions[x.id].supply<7),hostile:path.some(x=>regions[x.id].owner!==unit.owner)};
 }
 export function supplyNetwork(s,owner){

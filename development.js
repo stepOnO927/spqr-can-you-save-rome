@@ -144,7 +144,7 @@ export function initializeDevelopment(s){
     const d=s.development[id] ||= fresh(id);
     d.knownMaterial ||= fresh(id).knownMaterial;d.knownIdeas ||= [];
     d.slots ||= fresh(id).slots;for(const c of IDEA_CATEGORIES)d.slots[c.id] ||= [null];
-    d.materials ||= {stone:6,timber:7,metal:3};d.trade ||= [];d.foreignOrigins ||= {};
+    d.materials ||= {stone:6,timber:7,metal:3};d.trade ||= [];d.foreignOrigins ||= {};d.visitingScholars ||= [];
   }
   for(const r of s.regions){r.buildings ||= [];r.construction ||= null}
   return s;
@@ -160,9 +160,10 @@ export function researchInnovation(s,owner,branch,id){
   const d=development(s,owner),item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id),f=s.factions[owner];
   if(!item||d.research||d[branch==='material'?'knownMaterial':'knownIdeas'].includes(id))return {ok:false,reason:'unavailable'};
   if(item.prerequisites.some(pre=>!d[branch==='material'?'knownMaterial':'knownIdeas'].includes(pre)))return {ok:false,reason:'prerequisite'};
-  const cost=Math.max(8,item.cost-(activeEffects(s,owner).researchDiscount||0)-(figureActive(s,owner,'scholar')?3:0));
+  const visitor=d.visitingScholars?.some(x=>x.remaining>0);
+  const cost=Math.max(8,item.cost-(activeEffects(s,owner).researchDiscount||0)-(figureActive(s,owner,'scholar')?3:0)-(visitor?3:0));
   if(f.treasury<cost)return {ok:false,reason:'treasury'};
-  f.treasury-=cost;d.research={branch,id,remaining:Math.max(1,item.months-(figureActive(s,owner,'scholar')?1:0))};return {ok:true};
+  f.treasury-=cost;d.research={branch,id,remaining:Math.max(1,item.months-(figureActive(s,owner,'scholar')?1:0)-(visitor?1:0))};return {ok:true};
 }
 export function ideaCompatibility(s,owner,ideaId){
   const d=development(s,owner),idea=IDEAS.find(i=>i.id===ideaId);
@@ -187,11 +188,21 @@ export function removeIdea(s,owner,category,slot=0){
   if(!current||d.adoption||f.treasury<5)return {ok:false,reason:'unavailable'};
   f.treasury-=5;d.adoption={ideaId:null,category,slot,remaining:2,old:current};return {ok:true};
 }
-export function expandIdeaSlot(s,owner,category){
+export function ideaSlotExpansionCheck(s,owner,category){
   const d=development(s,owner),slots=d.slots[category],f=s.factions[owner];
-  if(!slots||slots.length>=3||d.expansion||d.knownIdeas.filter(id=>IDEAS.find(i=>i.id===id)?.category===category).length<2)return {ok:false,reason:'capacity'};
-  const cost=slots.length===1?35:60;if(f.treasury<cost)return {ok:false,reason:'treasury'};
-  f.treasury-=cost;d.expansion={category,remaining:slots.length===1?6:9};return {ok:true};
+  if(!slots||slots.length>=3||d.expansion)return {ok:false,reason:'capacity'};
+  const known=d.knownIdeas.filter(id=>IDEAS.find(i=>i.id===id)?.category===category).length;
+  if(known<slots.length+1)return {ok:false,reason:'knowledge'};
+  const active=Object.values(d.slots).flat().filter(Boolean),owned=s.regions.filter(r=>r.owner===owner);
+  const administration=active.some(id=>['senatorial-consultation','central-administration','maritime-administration'].includes(id))||owned.some(r=>r.buildings?.includes('administration'));
+  const education=active.some(id=>['rhetorical-education','civic-education','naval-engineering-education'].includes(id))||owned.some(r=>r.buildings?.includes('library'));
+  if(slots.length===1&&!administration&&!education||slots.length===2&&(!administration||!education||f.stability<55))return {ok:false,reason:'institution'};
+  const cost=slots.length===1?35:60,months=slots.length===1?6:9;
+  return f.treasury<cost?{ok:false,reason:'treasury',cost,months}:{ok:true,cost,months};
+}
+export function expandIdeaSlot(s,owner,category){
+  const check=ideaSlotExpansionCheck(s,owner,category);if(!check.ok)return check;
+  const d=development(s,owner);s.factions[owner].treasury-=check.cost;d.expansion={category,remaining:check.months};return {ok:true,cost:check.cost,months:check.months};
 }
 export function constructionCheck(s,owner,regionId,buildingId){
   const d=development(s,owner),r=s.regions.find(x=>x.id===regionId),b=BUILDINGS.find(x=>x.id===buildingId),f=s.factions[owner];
@@ -237,6 +248,37 @@ export function knowledgeTrade(s,buyer,seller,branch,id){
   buyerFaction.treasury-=price;sellerFaction.treasury+=Math.round(price*.7);
   bd.trade.push({seller,branch,id,remaining:2});return {ok:true,price};
 }
+export function sellKnowledge(s,seller,buyer,branch,id){
+ initializeDevelopment(s);const source=s.development[seller],recipient=s.development[buyer],key=branch==='material'?'knownMaterial':branch==='idea'?'knownIdeas':null,item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id);
+ if(!source||!recipient||!key||!item||!source[key].includes(id)||recipient[key].includes(id)||recipient.trade.some(t=>t.id===id&&t.branch===branch))return {ok:false,reason:'knowledge'};
+ if(s.wars.some(w=>w.includes(seller)&&w.includes(buyer)))return {ok:false,reason:'war'};
+ const relation=s.relations[[seller,buyer].sort().join(':')]??0,price=Math.max(12,Math.round(item.cost*.9));
+ if(relation<15)return {ok:false,reason:'relations'};
+ if(s.factions[buyer].treasury<price)return {ok:false,reason:'buyer treasury'};
+ s.factions[buyer].treasury-=price;s.factions[seller].treasury+=price;
+ recipient.trade.push({seller,branch,id,remaining:2,method:'sale'});return {ok:true,price};
+}
+export function exchangeKnowledge(s,a,b,offerBranch,offerId,wantBranch,wantId){
+ initializeDevelopment(s);const ad=s.development[a],bd=s.development[b],ak=offerBranch==='material'?'knownMaterial':offerBranch==='idea'?'knownIdeas':null,bk=wantBranch==='material'?'knownMaterial':wantBranch==='idea'?'knownIdeas':null;
+ if(!ad||!bd||!ak||!bk||!ad[ak].includes(offerId)||!bd[bk].includes(wantId)||ad[bk].includes(wantId)||bd[ak].includes(offerId))return {ok:false,reason:'knowledge'};
+ if(ad.trade.some(t=>t.id===wantId&&t.branch===wantBranch)||bd.trade.some(t=>t.id===offerId&&t.branch===offerBranch))return {ok:false,reason:'pending'};
+ if(s.wars.some(w=>w.includes(a)&&w.includes(b)))return {ok:false,reason:'war'};
+ if((s.relations[[a,b].sort().join(':')]??0)<20)return {ok:false,reason:'relations'};
+ if(s.factions[a].treasury<8||s.factions[b].treasury<8)return {ok:false,reason:'treasury'};
+ s.factions[a].treasury-=8;s.factions[b].treasury-=8;
+ ad.trade.push({seller:b,branch:wantBranch,id:wantId,remaining:3,method:'exchange'});
+ bd.trade.push({seller:a,branch:offerBranch,id:offerId,remaining:3,method:'exchange'});
+ return {ok:true,months:3,cost:8};
+}
+export function inviteForeignScholars(s,host,partner){
+ initializeDevelopment(s);const hd=s.development[host],pd=s.development[partner],relation=s.relations[[host,partner].sort().join(':')]??0;
+ if(!hd||!pd||host===partner||s.wars.some(w=>w.includes(host)&&w.includes(partner)))return {ok:false,reason:'partner'};
+ if(relation<20)return {ok:false,reason:'relations'};
+ if(hd.visitingScholars.some(x=>x.partner===partner))return {ok:false,reason:'already invited'};
+ if(s.factions[host].treasury<24)return {ok:false,reason:'treasury'};
+ s.factions[host].treasury-=24;s.factions[partner].treasury+=10;hd.visitingScholars.push({partner,remaining:6});
+ return {ok:true,months:6,cost:24};
+}
 export function advanceDevelopment(s,log=()=>{}){
   initializeDevelopment(s);
   for(const [owner,d] of Object.entries(s.development)){
@@ -245,6 +287,7 @@ export function advanceDevelopment(s,log=()=>{}){
     if(d.adoption&&--d.adoption.remaining<=0){const {category,slot,ideaId}=d.adoption;d.slots[category][slot]=ideaId;d.adoption=null;if(owner===s.player)log(`National idea ${ideaId||'removed'} is now in effect.`,`国家理念${ideaId||'已移除'}现已生效。`)}
     if(d.expansion&&--d.expansion.remaining<=0){d.slots[d.expansion.category].push(null);d.expansion=null}
     for(const trade of [...d.trade])if(--trade.remaining<=0){const key=trade.branch==='material'?'knownMaterial':'knownIdeas';if(!d[key].includes(trade.id))d[key].push(trade.id);if(trade.branch==='idea')d.foreignOrigins[trade.id]=trade.seller;d.trade.splice(d.trade.indexOf(trade),1);if(owner===s.player)log(`Knowledge arrived from ${trade.seller}: ${trade.id}.`,`来自${trade.seller}的知识已传入：${trade.id}。`)}
+    for(const visit of [...d.visitingScholars])if(--visit.remaining<=0)d.visitingScholars.splice(d.visitingScholars.indexOf(visit),1);
     const added={stone:0,timber:0,metal:0};
     for(const r of s.regions.filter(x=>x.owner===owner)){
       if(r.terrain==='forest')added.timber+=2;

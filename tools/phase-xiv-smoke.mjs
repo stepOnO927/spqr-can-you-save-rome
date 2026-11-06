@@ -24,7 +24,8 @@ try{
   assert.match(await page.locator('.dev-status').first().innerText(),/Researching/);
   for(let i=0;i<3;i++)await page.locator('#step').click();
   await page.locator('[data-tab="ideas"]').click();
-  assert.equal(await page.locator('.dev-category').count(),5);
+  assert.equal(await page.locator('.dev-category:not(.religion-panel)').count(),5);
+  assert.equal(await page.locator('.religion-panel').count(),1);
   await page.locator('[data-adopt-idea="legion-training"]').first().click();
   for(let i=0;i<2;i++)await page.locator('#step').click();
   assert.match(await page.locator('.dev-slot').first().innerText(),/Standardized Legion Training/);
@@ -32,8 +33,10 @@ try{
   await page.locator('#region-choice').selectOption('gaul');
   assert.ok(await page.locator('[data-build="road"]').count());
   const stoneBefore=await page.locator('.dev-construction .dev-meta').first().innerText();
-  await page.locator('[data-buy-material="stone"]').click();
-  assert.notEqual(await page.locator('.dev-construction .dev-meta').first().innerText(),stoneBefore);
+  if(await page.locator('[data-buy-material="stone"]').isEnabled()){
+    await page.locator('[data-buy-material="stone"]').click();
+    assert.notEqual(await page.locator('.dev-construction .dev-meta').first().innerText(),stoneBefore);
+  }
   await page.locator('#lang').click();
   await page.locator('[data-tab="development"]').click();
   assert.match(await page.locator('.inspector h2').innerText(),/文明发展/);

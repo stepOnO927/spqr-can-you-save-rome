@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {GRAND_SITES,GRAND_ROUTES,GRAND_GROUPS} from './grand-map-data.js';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,previewMarch,moveArmy,tick,aiTurn,recruitFigure} from './engine.js';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,previewMarch,moveArmy,tick,aiTurn,recruitFigure,setReligiousPolicy} from './engine.js';
 import {grandAdjacent,armySupply,encircled,holdPosition,strategicRetreat,flankFactor,navalCapacity,availableNavalLift,canEmbark,supplyBottlenecks} from './grand-operations.js';
 import {advanceFigures,figureActive} from './great-figures.js';
-import {faithSatisfaction,advanceDemography} from './local-society.js';
+import {faithSatisfaction,advanceDemography,advanceReligion,religionPanel} from './local-society.js';
 import grandPolygons from './grand-territory-polygons.js';
 
 test('120 actual territories, 30 in Italy and Sicily, each with a bounded map polygon and graph entry',()=>{
@@ -31,6 +31,18 @@ test('AI coordinates a real neighboring attack and protects actual supply cut po
 });
 test('historical engineer travels before construction bonus and faith affects local society',()=>{
  const s=newGrandGame('caesar'),offer=recruitFigure(s,'caesar','mamurra');assert.equal(offer.ok,true);assert.equal(figureActive(s,'caesar','engineer'),false);for(let i=0;i<offer.months;i++)advanceFigures(s);assert.equal(figureActive(s,'caesar','engineer'),true);const region=s.regions.find(r=>r.id==='egypt');region.owner='caesar';region.integration=30;s.month=3;assert.equal(faithSatisfaction(s,region),-1);s.development.caesar.slots.culture[0]='cultural-accommodation';assert.equal(faithSatisfaction(s,region),1);const origin=s.regions.find(r=>r.id==='cisalpine'),neighbor=s.regions.find(r=>r.id==='t005');neighbor.owner='caesar';origin.civicSatisfaction=20;neighbor.civicSatisfaction=80;const before=origin.population;advanceDemography(s);assert.ok(origin.population<before)
+});
+test('regional rites change satisfaction after a political transition and migration carries traditions',()=>{
+ const s=newGrandGame('caesar'),egypt=s.regions.find(r=>r.id==='egypt');egypt.owner='caesar';egypt.integration=30;s.month=3;
+ assert.equal(faithSatisfaction(s,egypt),-1);
+ const treasury=s.factions.caesar.treasury;assert.equal(setReligiousPolicy(s,'caesar','local-rites').ok,true);
+ assert.equal(s.factions.caesar.treasury,treasury-18);assert.equal(faithSatisfaction(s,egypt),-1);
+ for(let i=0;i<3;i++)advanceReligion(s);assert.equal(s.religion.caesar.policy,'local-rites');assert.equal(faithSatisfaction(s,egypt),1);
+ assert.equal(setReligiousPolicy(s,'caesar','civic-patronage').ok,true);for(let i=0;i<3;i++)advanceReligion(s);
+ assert.equal(faithSatisfaction(s,egypt),-2);assert.match(religionPanel(s,'zh'),/地方宗教与祭司团/);assert.match(religionPanel(s,'en'),/PRIESTHOODS/);
+ const origin=s.regions.find(r=>r.id==='cisalpine'),neighbor=s.regions.find(r=>r.id==='t005');for(const edge of grandAdjacent(origin.id)){const candidate=s.regions.find(r=>r.id===edge.to);candidate.civicSatisfaction=10}neighbor.owner=origin.owner;origin.faiths=[{id:'egyptian-cults',share:100}];neighbor.faiths=[{id:'roman-cults',share:100}];origin.civicSatisfaction=20;neighbor.civicSatisfaction=80;origin.population=100000;neighbor.population=1000;
+ advanceDemography(s);assert.ok(neighbor.faiths.some(x=>x.id==='egyptian-cults'&&x.share>0));
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(s))).religion.caesar.policy,'civic-patronage');
 });
 test('legacy save migration preserves political state, characters, intelligence and armies',()=>{
  const old=newGame('senate');old.regions.find(r=>r.id==='roma').loyalty=31;old.factions.senate.treasury=77;old.log.push({year:-49,month:1,en:'test',zh:'测试'});const name=old.world.characters.cicero.name;old.armies.find(a=>a.id==='xiii').move={to:'roma',remaining:1,sea:false};const converted=convertToGrandMap(structuredClone(old));assert.equal(converted.regions.length,120);assert.equal(converted.regions.find(r=>r.id==='roma').loyalty,31);assert.equal(converted.factions.senate.treasury,77);assert.equal(converted.world.characters.cicero.name,name);assert.equal(converted.log.at(-1).en,'test');assert.notEqual(converted.armies.find(a=>a.id==='xiii').move.to,'roma');assert.equal(upgradeSave(structuredClone(converted)).regions.length,120);assert.equal(old.regions.length,22);

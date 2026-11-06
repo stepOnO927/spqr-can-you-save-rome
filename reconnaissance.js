@@ -1,35 +1,45 @@
 import {adjacent, army, region, isWar} from './engine.js';
 
-const draw=s=>{s.seed=(Math.imul(s.seed,1664525)+1013904223)>>>0;return s.seed/4294967296};
+const draw=s=>{s.reconSeed??=((s.seed??1)^0x9e3779b9)>>>0;s.reconSeed=(Math.imul(s.reconSeed,1664525)+1013904223)>>>0;return s.reconSeed/4294967296};
 const turn=s=>s.year*12+s.month;
-export function latestRecon(s,owner,regionId){
- return (s.militaryRecon||[]).find(r=>r.owner===owner&&r.regionId===regionId)||null;
+const observedAt=r=>(r.observationYear??r.year)*12+(r.observationMonth??r.month);
+export function reconReports(s,owner,regionId){
+ const reports=(s.militaryRecon||[]).filter(r=>r.owner===owner&&r.regionId===regionId).sort((a,b)=>((b.arrivalYear??b.year)*12+(b.arrivalMonth??b.month))-((a.arrivalYear??a.year)*12+(a.arrivalMonth??a.month)));
+ return reports.map(report=>{
+  const age=Math.max(0,turn(s)-observedAt(report));
+  const other=reports.find(r=>r!==report&&r.source!==report.source&&Math.abs(observedAt(r)-observedAt(report))<=2&&r.min!=null&&report.min!=null);
+  const corroborated=!!other&&Math.max(report.min,other.min)<=Math.min(report.max,other.max),disputed=!!other&&!corroborated;
+  const confidence=age>6?'outdated':report.source==='battle'?(age<=1?'confirmed':'highly credible'):disputed?'disputed':report.min==null?'rumor':corroborated?'highly credible':'unverified';
+  return {...report,observationYear:report.observationYear??report.year,observationMonth:report.observationMonth??report.month,arrivalYear:report.arrivalYear??report.year,arrivalMonth:report.arrivalMonth??report.month,age,confidence,corroborated,disputed,reliability:report.reliability??(report.source==='probe'?'medium':'low')};
+ });
 }
-export function assessment(s,armyId,regionId){
+export function latestRecon(s,owner,regionId){
+ return reconReports(s,owner,regionId)[0]||null;
+}
+export function assessment(s,armyId,regionId,plan=null){
  const unit=army(s,armyId),target=region(s,regionId);
  if(!unit||!target||unit.owner!==s.player)return null;
- const report=latestRecon(s,unit.owner,regionId);
- const age=report?Math.max(0,turn(s)-(report.year*12+report.month)):null;
- const known=report&&age<=6?report:null;
+ const reports=reconReports(s,unit.owner,regionId),report=reports[0]||null;
  const sighting=Object.values(s.knowledge?.[unit.owner]?.[target.owner]?.sightings||{}).find(x=>x.region===regionId);
- const confidence=known?(age>2?'low':known.confidence):sighting?'low':'none';
- return {friendly:unit.men,morale:unit.morale,commander:[...unit.commander],terrain:target.terrain,fort:target.fort,
-  regionId,owner:target.owner,report:known?{...known,age,confidence}:null,sighting:sighting?{year:sighting.year,month:sighting.month,region:sighting.region}:null,
-  risk:!known||age>2||confidence==='low'||confidence==='none'?'high uncertainty':known.max>unit.men?'high':'uncertain',
-  food:s.factions[unit.owner].food};
+ const confidence=report?.confidence||(sighting?'rumor':'unknown'),food=s.factions[unit.owner].food;
+ return {friendly:unit.men,morale:unit.morale,commander:[...unit.commander],terrain:target.terrain,fort:report?.defensive?.fort??null,
+  regionId,owner:target.owner,report,sighting:sighting?{year:sighting.year,month:sighting.month,region:sighting.region}:null,
+  risk:!report||['unknown','rumor','disputed','outdated'].includes(confidence)?'high uncertainty':report.max>unit.men?'high':'uncertain',
+  food,supply:Math.round(100*Math.min(1,Math.max(.65,food/20))*(unit.operationalSupply??1)),travelMonths:plan?.months??1,reinforcementRisk:'possible',reports:reports.slice(0,4)};
 }
-function available(s,unit,target){return !!(unit&&target&&unit.owner===s.player&&!unit.move&&!unit.siege&&!unit.reconPending&&unit.men>0&&adjacent(unit.region,s).some(x=>x.to===target.id)&&isWar(s,unit.owner,target.owner));}
-export function sendScouts(s,armyId,regionId){
+function available(s,unit,target){return !!(unit&&target&&!unit.move&&!unit.siege&&!unit.reconPending&&unit.men>0&&adjacent(unit.region,s).some(x=>x.to===target.id)&&isWar(s,unit.owner,target.owner));}
+export function sendScouts(s,armyId,regionId,actor=s.player){
  const unit=army(s,armyId),target=region(s,regionId);
- if(!available(s,unit,target))return {ok:false,reason:'unavailable'};
+ if(!unit||unit.owner!==actor||!available(s,unit,target))return {ok:false,reason:'unavailable'};
  if(s.factions[unit.owner].treasury<4||s.factions[unit.owner].food<2)return {ok:false,reason:'resources'};
  s.factions[unit.owner].treasury-=4;s.factions[unit.owner].food-=2;
- unit.reconPending={regionId,remaining:1,kind:'scouts'};
+ const observedEnemy=s.armies.filter(a=>a.region===regionId&&a.owner!==unit.owner&&!a.move&&a.men>0);
+ unit.reconPending={regionId,remaining:1,kind:'scouts',observationYear:s.year,observationMonth:s.month,observedCount:observedEnemy.reduce((n,a)=>n+a.men,0),observedPresence:observedEnemy.length>0,observedFort:target.fort};
  return {ok:true,months:1};
 }
-export function probePositions(s,armyId,regionId){
+export function probePositions(s,armyId,regionId,actor=s.player){
  const unit=army(s,armyId),target=region(s,regionId);
- if(!available(s,unit,target))return {ok:false,reason:'unavailable'};
+ if(!unit||unit.owner!==actor||!available(s,unit,target))return {ok:false,reason:'unavailable'};
  if(s.factions[unit.owner].food<3)return {ok:false,reason:'resources'};
  s.factions[unit.owner].food-=3;
  const enemy=s.armies.filter(a=>a.region===regionId&&a.owner!==unit.owner&&!a.move&&a.men>0),count=enemy.reduce((n,a)=>n+a.men,0);
@@ -41,6 +51,18 @@ export function probePositions(s,armyId,regionId){
  const report=makeReport(s,unit,target,'probe',count,observed,enemy);
  return {ok:true,loss,enemyDetected,report};
 }
+export function delayAttack(s,armyId,regionId,actor=s.player){
+ const unit=army(s,armyId),target=region(s,regionId);
+ if(!unit||unit.owner!==actor||!available(s,unit,target))return {ok:false,reason:'unavailable'};
+ unit.delayedTarget={regionId,year:s.year,month:s.month};return {ok:true,months:1};
+}
+export function markReconRegion(s,armyId,regionId,actor=s.player){
+ const unit=army(s,armyId),target=region(s,regionId);
+ if(!unit||unit.owner!==actor||!target||!adjacent(unit.region,s).some(x=>x.to===regionId))return {ok:false,reason:'unavailable'};
+ s.warCouncilMarks||=[];const key=`${actor}:${regionId}`,at=s.warCouncilMarks.findIndex(x=>x.key===key);
+ if(at>=0)s.warCouncilMarks.splice(at,1);else s.warCouncilMarks.push({key,owner:actor,regionId,year:s.year,month:s.month});
+ return {ok:true,marked:at<0};
+}
 export function requestReinforcements(s,armyId){
  const unit=army(s,armyId),site=unit&&region(s,unit.region),f=unit&&s.factions[unit.owner];
  if(!unit||unit.owner!==s.player||!site||site.owner!==unit.owner||unit.move||unit.siege||unit.reconPending)return {ok:false,reason:'unavailable'};
@@ -49,14 +71,16 @@ export function requestReinforcements(s,armyId){
  unit.reconPending={kind:'reinforce',remaining:1,regionId:site.id};
  return {ok:true,months:1};
 }
-function makeReport(s,unit,target,source,count,detected,enemy){
+function makeReport(s,unit,target,source,count,detected,enemy,observed=null){
  const error=(draw(s)-.5)*(source==='probe'?.55:1.1),misinformation=draw(s)<(source==='probe'?.13:.25);
- const observed=misinformation?Math.round(count*(.35+draw(s)*1.6)):count;
- const estimate=detected?Math.max(0,Math.round(observed*(1+error)/500)*500):null;
+ const observedCount=misinformation?Math.round(count*(.35+draw(s)*1.6)):count;
+ const estimate=detected?Math.max(0,Math.round(observedCount*(1+error)/500)*500):null;
  const spread=source==='probe'?.32:.55;
  const report={owner:unit.owner,armyId:unit.id,regionId:target.id,year:s.year,month:s.month,source,
+  observationYear:observed?.observationYear??s.year,observationMonth:observed?.observationMonth??s.month,arrivalYear:s.year,arrivalMonth:s.month,
   min:estimate==null?null:Math.max(0,Math.floor(estimate*(1-spread)/500)*500),max:estimate==null?null:Math.max(500,Math.ceil(estimate*(1+spread)/500)*500),
-  confidence:detected?(source==='probe'?'medium':'low'):'low',positions:detected?(enemy.length?'enemy formations suspected in theater':'no formation found on observed route'):'positions unconfirmed',
+  confidence:detected?'unverified':'rumor',reliability:source==='probe'?'medium':'low',positions:detected?(enemy.length?'enemy formations suspected in theater':'no formation found on observed route'):'positions unconfirmed',
+  defensive:source==='probe'&&detected?{fort:Math.max(0,(observed?.observedFort??target.fort)+(draw(s)<.7?0:draw(s)<.5?-1:1))}:null,
   misinformationRisk:source==='probe'?'moderate':'high'};
  (s.militaryRecon||=[]).unshift(report);s.militaryRecon=s.militaryRecon.slice(0,80);
  return report;
@@ -64,13 +88,13 @@ function makeReport(s,unit,target,source,count,detected,enemy){
 export function advanceRecon(s){
  for(const unit of s.armies){if(!unit.reconPending)continue;unit.reconPending.remaining--;
   if(unit.reconPending.remaining>0)continue;
-  const {kind,regionId}=unit.reconPending;unit.reconPending=null;
+  const {kind,regionId,observationYear,observationMonth,observedCount,observedPresence,observedFort}=unit.reconPending;unit.reconPending=null;
   if(kind==='reinforce'){if(region(s,regionId)?.owner===unit.owner){unit.men+=3000;unit.morale=Math.round((unit.morale*(unit.men-3000)+58*3000)/unit.men);if(unit.owner===s.player)s.log.unshift({year:s.year,month:s.month,en:`Reinforcements joined ${unit.name[0]}.`,zh:`增援已加入${unit.name[1]}。`})}continue}
   if(kind!=='scouts')continue;
   const target=region(s,regionId);if(!target)continue;
-  const enemy=s.armies.filter(a=>a.region===regionId&&a.owner!==unit.owner&&!a.move&&a.men>0);
-  const count=enemy.reduce((n,a)=>n+a.men,0),detected=draw(s)<(count?.65:.42);
-  makeReport(s,unit,target,'scouts',count,detected,enemy);
+  const enemy=observedCount==null?s.armies.filter(a=>a.region===regionId&&a.owner!==unit.owner&&!a.move&&a.men>0):observedPresence?[{}]:[];
+  const count=observedCount??enemy.reduce((n,a)=>n+a.men,0),detected=draw(s)<(count?.65:.42);
+  makeReport(s,unit,target,'scouts',count,detected,enemy,{observationYear,observationMonth,observedFort});
   if(unit.owner===s.player)s.log.unshift({year:s.year,month:s.month,en:`Scouts returned from ${target.name[0]}; their estimate is uncertain.`,zh:`斥候从${target.name[1]}返回；估计仍有不确定性。`});
  }
 }

@@ -5,12 +5,12 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=54';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
-import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=1';
+import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=1';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js';
-import {advanceRecon,assessment} from './reconnaissance.js';
+import {advanceRecon,assessment,sendScouts,latestRecon} from './reconnaissance.js';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks} from './grand-operations.js';
-import {initializeLocalSociety,faithSatisfaction,advanceDemography} from './local-society.js';
+import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy} from './local-society.js';
 import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js';
@@ -18,7 +18,8 @@ export {endCampaign,revealedAchievements} from './achievement-system.js';
 export {SEA_ZONES,SHIPS,NAVAL_JOBS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reportedHostileFleets,supportPirates} from './naval.js';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
 export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js';
-export {knowledgeTrade,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
+export {knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
+export {setReligiousPolicy};
 export {queueMission};
 export {personalDiplomaticCredit};
 
@@ -88,12 +89,12 @@ export function previewMarch(s,armyId,destination){
 export function moveArmy(s,armyId,destination){
   const estimate=previewMarch(s,armyId,destination);
   if(!estimate.ok)return estimate;
-  if(s.grandMap){const a=army(s,armyId),first=estimate.path[0];let transport=null;if(first.sea){transport=commitArmyTransport(s,a,region(s,a.region),region(s,first.id));if(!transport.ok)return transport;s.factions[a.owner].treasury-=8}a.stance=null;a.prepared=0;a.move={to:first.id,remaining:first.months,sea:first.sea,path:estimate.path.slice(1),final:destination,...(transport?{transportFleetId:transport.fleetId,transportReady:false}:{})};a.attackIntel=region(s,first.id).owner!==a.owner?assessment(s,armyId,first.id):null;if(a.owner===s.player)log(s,`${a.name[0]} began a ${estimate.path.length}-territory march toward ${region(s,destination).name[0]}.`,`${a.name[1]}开始向${region(s,destination).name[1]}行军，途经${estimate.path.length}个战区。`);return {ok:true,path:estimate.path.map(x=>x.id),months:estimate.months}}
+  if(s.grandMap){const a=army(s,armyId),first=estimate.path[0];let transport=null;if(first.sea){transport=commitArmyTransport(s,a,region(s,a.region),region(s,first.id));if(!transport.ok)return transport;s.factions[a.owner].treasury-=8}a.stance=null;a.prepared=0;a.move={to:first.id,remaining:first.months,sea:first.sea,path:estimate.path.slice(1),final:destination,...(transport?{transportFleetId:transport.fleetId,transportReady:false}:{})};a.attackIntel=region(s,first.id).owner!==a.owner?assessment(s,armyId,first.id,{months:first.months}):null;if(a.owner===s.player)log(s,`${a.name[0]} began a ${estimate.path.length}-territory march toward ${region(s,destination).name[0]}.`,`${a.name[1]}开始向${region(s,destination).name[1]}行军，途经${estimate.path.length}个战区。`);return {ok:true,path:estimate.path.map(x=>x.id),months:estimate.months}}
   const a=army(s,armyId),target=region(s,destination),link=adjacent(a.region).find(e=>e.to===destination);
   if(link.sea)s.factions[a.owner].treasury-=8;
   const months=estimate.months;
   a.move={to:destination,remaining:months,sea:link.sea};
-  a.attackIntel=estimate.hostile?assessment(s,armyId,destination):null;
+  a.attackIntel=estimate.hostile?assessment(s,armyId,destination,estimate):null;
   if(a.owner===s.player)log(s,`${a.name[0]} marched toward ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}向${target.name[1]}行军（${months}个月）。`);
   return {ok:true};
 }
@@ -242,6 +243,7 @@ export function resolveBattle(s,attacker,defender,target){
   report.attacker.remaining=Math.max(0,attacker.men-lossA);report.defender.remaining=Math.max(0,defender.men-lossD);
   report.id=`battle-${initializeReports(s).nextBattle++}`;
   (s.battles ||= []).unshift(report);
+  for(const observer of [attacker,defender]){const [min,max]=report.combatEstimate[observer===attacker?'defender':'attacker'];(s.militaryRecon||=[]).unshift({owner:observer.owner,armyId:observer.id,regionId:target.id,year:s.year,month:s.month,observationYear:s.year,observationMonth:s.month,arrivalYear:s.year,arrivalMonth:s.month,source:'battle',min,max,confidence:'confirmed',reliability:'high',positions:'battlefield contact',defensive:{fort:target.fort},misinformationRisk:'low'});s.militaryRecon.length=Math.min(80,s.militaryRecon.length)}
   recordBattle(s,report,attacker,defender);
   const previousOwner=target.owner;
   attacker.men-=lossA;defender.men-=lossD;for(const unit of [attacker,defender]){const person=s.world.characters[unit.characterId];if(person?.alive)person.battlesCommanded=(Number.isFinite(person.battlesCommanded)?person.battlesCommanded:0)+1}battlefieldWound(s,attacker);battlefieldWound(s,defender);
@@ -290,7 +292,7 @@ function arrive(s,a){
     if(destination&&(destination.owner===a.owner||isWar(s,a.owner,destination.owner))&&(!next.sea||canEmbark(s,a,region(s,a.region),destination))){
       let transport=null;
       if(next.sea){transport=commitArmyTransport(s,a,region(s,a.region),destination);if(!transport.ok)return;s.factions[a.owner].treasury-=8}
-      a.attackIntel=destination.owner!==a.owner?assessment(s,a.id,next.id):null;
+      a.attackIntel=destination.owner!==a.owner?assessment(s,a.id,next.id,{months:next.months}):null;
       a.move={to:next.id,remaining:next.months,sea:next.sea,path:rest,final:rest.length?rest.at(-1).id:next.id,...(transport?{transportFleetId:transport.fleetId,transportReady:false}:{})};
     }
   }
@@ -372,6 +374,7 @@ export function aiTurn(s,owner){
     if(!d.adoption&&f.treasury>30){const idea=IDEAS.find(i=>d.knownIdeas.includes(i.id)&&!d.slots[i.category].includes(i.id)&&d.slots[i.category].some(v=>!v));if(idea)adoptIdea(s,owner,idea.id,d.slots[idea.category].indexOf(null))}
     if(f.treasury>120){for(const kind of ['stone','timber','metal'])if(d.materials[kind]<5)purchaseMaterials(s,owner,kind,5);const project=owned.flatMap(site=>BUILDINGS.map(b=>({site,b}))).find(({site,b})=>constructionCheck(s,owner,site.id,b.id).ok);if(project)startConstruction(s,owner,project.site.id,project.b.id)}
     if(s.month%12===0&&f.treasury>75){const seller=Object.keys(s.development).find(id=>id!==owner&&!isWar(s,owner,id)&&relation(s,owner,id)>=0&&s.development[id].knownMaterial.some(k=>!d.knownMaterial.includes(k)));const item=seller&&s.development[seller].knownMaterial.find(k=>!d.knownMaterial.includes(k));if(item)knowledgeTrade(s,owner,seller,'material',item)}
+    if(s.year>=-48&&s.month===6&&f.treasury>30){const partner=Object.keys(s.development).find(id=>id!==owner&&!isWar(s,owner,id)&&relation(s,owner,id)>=20&&s.development[id].knownIdeas.some(k=>!d.knownIdeas.includes(k))&&d.knownIdeas.some(k=>!s.development[id].knownIdeas.includes(k)));if(partner){const offer=d.knownIdeas.find(k=>!s.development[partner].knownIdeas.includes(k)),want=s.development[partner].knownIdeas.find(k=>!d.knownIdeas.includes(k));exchangeKnowledge(s,owner,partner,'idea',offer,'idea',want)}}
   }
   const enemies=s.regions.filter(r=>isWar(s,owner,r.owner));
   const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&a.men>1200&&(!alert||a.region!==alert.regionId)).sort((a,b)=>b.men-a.men);
@@ -380,7 +383,12 @@ export function aiTurn(s,owner){
     if(reservedSupport.has(a.id))continue;
     if(s.grandMap){const local=region(s,a.region);if(armySupply(s,a)<.55){const escape=adjacent(a.region,s).filter(e=>!e.sea&&region(s,e.to).owner===owner).map(e=>({to:e.to,supply:armySupply(s,{...a,region:e.to})})).sort((x,y)=>y.supply-x.supply)[0];if(escape?.supply>armySupply(s,a)+.15){a.region=escape.to;a.morale=Math.max(15,a.morale-4);continue}}if((local.port||local.terrain==='urban'||protectedJunctions.has(local.id))&&adjacent(a.region,s).some(e=>isWar(s,owner,region(s,e.to).owner))){a.stance='hold';a.prepared=Math.min(3,(a.prepared||0)+1);if(a.men<estimatedStrength(s,owner,s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner))*.75)continue}}
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y)-(s.grandMap?(r.port?12:0)+(r.terrain==='urban'?15:0)+(r.road?4:0):0)})).sort((x,y)=>x.d-y.d);
-    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const destination=region(s,step),defenderOwner=destination.owner,defenders=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/(s.grandMap?1:Math.max(1,s.regions.filter(x=>x.owner===defenderOwner).length)):0;if(defenders>a.men*1.35||f.food<0||s.grandMap&&destination.owner===owner&&armySupply(s,{...a,region:step})<.45)continue;
+    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const destination=region(s,step),defenderOwner=destination.owner,report=s.year>=-48&&destination.owner!==owner?latestRecon(s,owner,step):null;
+      const reconWindow=s.year>=-48&&s.month%3===0,investigate=((s.seed+owner.length+a.id.length+s.month)%5)!==0;
+      if(destination.owner!==owner&&(!report||report.age>5)&&f.treasury>=8&&f.food>=4&&reconWindow&&investigate){if(sendScouts(s,a.id,step,owner).ok)break}
+      const prior=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/(s.grandMap?1:Math.max(1,s.regions.filter(x=>x.owner===defenderOwner).length)):0;
+      const defenders=report?.min!=null?Math.round((report.min+report.max)/2):prior;
+      if(defenders>a.men*1.35||f.food<0||s.grandMap&&destination.owner===owner&&armySupply(s,{...a,region:step})<.45)continue;
       const support=s.grandMap&&destination.owner!==owner?available.find(other=>other.id!==a.id&&!reservedSupport.has(other.id)&&!other.move&&other.region!==a.region&&other.men>=1000&&armySupply(s,other)>=.5&&grandAdjacent(other.region).some(edge=>edge.to===step)):null;
       a.coordinated=!!support;const ordered=moveArmy(s,a.id,step);if(ordered.ok){if(support)reservedSupport.add(support.id);break}a.coordinated=false}}
   }
@@ -413,7 +421,7 @@ export function tick(s){
   s.month++;if(s.month>12){s.month=1;s.year++;if(s.year===0)s.year=1}
   refreshReportConfidence(s);
   advanceRecon(s);advanceFigures(s);
-  advanceOffices(s);advanceDevelopment(s,(en,zh)=>log(s,en,zh));economy(s);advanceNaval(s,log);seasonalWaterStress(s);advanceOperationalState(s);
+  advanceOffices(s);advanceDevelopment(s,(en,zh)=>log(s,en,zh));advanceReligion(s);economy(s);advanceNaval(s,log);seasonalWaterStress(s);advanceOperationalState(s);
   // Travel and sieges resolve before new AI orders.
   for(const a of [...s.armies]){
     if(!s.armies.includes(a))continue;

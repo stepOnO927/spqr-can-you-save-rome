@@ -20,7 +20,7 @@ export function evaluateAchievements(s){
  for(const months of [12,24,36])if(turn(s)>=months)mark(`survive:${months}`,{months:turn(s)});
  for(const [goal,progress] of Object.entries(s.objectiveProgress||{}))if(progress?.status==='completed'&&progress.changedTurn>0)mark(`objective:${goal}`,{goal,completedTurn:progress.changedTurn});
  const territories=s.regions.filter(r=>r.owner===s.player).length;if(territories>=40)mark('control:40',{territories});
- if((s.militaryRecon||[]).some(r=>r.owner===s.player))mark('first-recon',{source:'military reconnaissance'});
+ if((s.militaryRecon||[]).some(r=>r.owner===s.player&&['scouts','probe'].includes(r.source)))mark('first-recon',{source:'military reconnaissance'});
  if(s.victory){mark('victory',{territories,battles:s.battles?.length||0});if(s.legacyScenario)mark('challenge',{scenario:s.legacyScenario})}
  return a;
 }

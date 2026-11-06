@@ -3,17 +3,17 @@ import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=25';
 import {identity,factionMark} from './identity.js?v=2';
 import {CHARACTER_CATALOG} from './characters.js?v=15';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=9';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,purchaseMaterials,recruitFigure} from './engine.js?v=84';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=85';
 import {importCampaign,downloadCampaign} from './save-files.js';
 import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js';
 import {endCampaign} from './achievement-system.js';
 import {campaignEndingHtml} from './achievement-ui.js';
 import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js';
-import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=1';
+import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=2';
 import {drawMap,mapPoint} from './map.js?v=52';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js';
-import {assessment,sendScouts,probePositions,requestReinforcements} from './reconnaissance.js';
+import {assessment,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js';
 import {intelligenceHtml} from './recon-ui.js';
 
 const ui={
@@ -74,12 +74,12 @@ function requestMarch(destination){
  const plan=previewMarch(state,selectedArmy,destination);if(!plan.ok){flash(t('invalid'));return}
  const commit=()=>{const result=moveArmy(state,selectedArmy,destination);if(!result.ok){flash(t('invalid'));return}ordering=false;selectedRegion=destination;tab='map';panelOpen=true;render()};
  if(!plan.hostile){commit();return}
- const unit=army(state,selectedArmy),target=region(state,destination),overlay=document.createElement('div');overlay.className='march-review-overlay';overlay.innerHTML=`<div class="march-review" role="dialog" aria-modal="true" aria-label="${lang==='zh'?'战前情报':'Pre-battle intelligence'}">${intelligenceHtml(assessment(state,unit.id,destination),target,lang)}<div class="march-review-actions"><button data-review="attack">${lang==='zh'?'仍要进攻':'ATTACK ANYWAY'}</button><button data-review="scouts">${lang==='zh'?'派斥候 · 4国库/2粮/1月':'SEND SCOUTS · 4¤ / 2 food / 1 month'}</button><button data-review="probe">${lang==='zh'?'试探敌阵 · 3粮/可能伤亡':'PROBE POSITIONS · 3 food / possible losses'}</button><button data-review="reinforce">${lang==='zh'?'请求增援 · 24国库/6粮/3000兵源/1月':'REQUEST REINFORCEMENTS · 24¤ / 6 food / 3,000 manpower / 1 month'}</button><button data-review="delay">${lang==='zh'?'延迟进攻 · 推进1月':'DELAY ATTACK · 1 month'}</button><button data-review="cancel">${lang==='zh'?'取消命令':'CANCEL ORDER'}</button></div><p class="review-feedback" role="status"></p></div>`;document.body.append(overlay);
+ const unit=army(state,selectedArmy),target=region(state,destination),overlay=document.createElement('div');overlay.className='march-review-overlay';overlay.innerHTML=`<div class="march-review" role="dialog" aria-modal="true" aria-label="${lang==='zh'?'战前情报':'Pre-battle intelligence'}">${intelligenceHtml(assessment(state,unit.id,destination,plan),target,lang)}<div class="march-review-actions"><button data-review="attack">${lang==='zh'?'仍要进攻':'ATTACK ANYWAY'}</button><button data-review="scouts">${lang==='zh'?'派斥候 · 4国库/2粮/1月':'SEND SCOUTS · 4¤ / 2 food / 1 month'}</button><button data-review="probe">${lang==='zh'?'试探敌阵 · 3粮/可能伤亡':'PROBE POSITIONS · 3 food / possible losses'}</button><button data-review="reinforce">${lang==='zh'?'请求增援 · 24国库/6粮/3000兵源/1月':'REQUEST REINFORCEMENTS · 24¤ / 6 food / 3,000 manpower / 1 month'}</button><button data-review="delay">${lang==='zh'?'延迟进攻 · 推进1月':'DELAY ATTACK · 1 month'}</button><button data-review="cancel">${lang==='zh'?'取消命令':'CANCEL ORDER'}</button></div><p class="review-feedback" role="status"></p></div>`;document.body.append(overlay);
  const close=()=>overlay.remove();overlay.querySelector('[data-review="attack"]').onclick=()=>{close();commit()};overlay.querySelector('[data-review="cancel"]').onclick=close;
  overlay.querySelector('[data-review="scouts"]').onclick=()=>{const out=sendScouts(state,unit.id,destination);if(!out.ok){overlay.querySelector('.review-feedback').textContent=out.reason;return}close();ordering=false;render()};
  overlay.querySelector('[data-review="probe"]').onclick=()=>{const out=probePositions(state,unit.id,destination);if(!out.ok){overlay.querySelector('.review-feedback').textContent=out.reason;return}close();ordering=false;render()};
  overlay.querySelector('[data-review="reinforce"]').onclick=()=>{if(!requestReinforcements(state,unit.id).ok){overlay.querySelector('.review-feedback').textContent=t('recruitFail');return}close();ordering=false;render()};
- overlay.querySelector('[data-review="delay"]').onclick=()=>{close();ordering=false;advanceMonth()};
+ overlay.querySelector('[data-review="delay"]').onclick=()=>{const out=delayAttack(state,unit.id,destination);if(!out.ok)return;close();ordering=false;advanceMonth()};
 }
 function render(){
   const f=state.factions[state.player],strength=ownArmies().reduce((n,a)=>n+a.men,0);
@@ -155,6 +155,10 @@ function bind(){
   document.querySelectorAll('[data-build]').forEach(el=>el.onclick=()=>{const inscription=el.dataset.build==='monument'?prompt(lang==='zh'?'输入符合本国时代的石刻铭文':'Enter a period-appropriate inscription',['caesar','senate'].includes(state.player)?'SENATVS POPVLVSQVE ROMANVS':''):'';if(inscription===null)return;const r=startConstruction(state,state.player,selectedRegion,el.dataset.build,inscription);if(!r.ok)flash(`${lang==='zh'?'无法建造':'Cannot build'}: ${r.reason}`);else render()});
   document.querySelectorAll('[data-buy-material]').forEach(el=>el.onclick=()=>{const r=purchaseMaterials(state,state.player,el.dataset.buyMaterial);if(!r.ok)flash(`${lang==='zh'?'无法购买':'Cannot purchase'}: ${r.reason}`);else render()});
   document.querySelectorAll('[data-trade-id]').forEach(el=>el.onclick=()=>{const r=knowledgeTrade(state,state.player,el.dataset.tradeSeller,el.dataset.tradeBranch,el.dataset.tradeId);if(!r.ok)flash(`${lang==='zh'?'无法交易':'Trade unavailable'}: ${r.reason}`);else render()});
+  document.querySelectorAll('[data-sell-id]').forEach(el=>el.onclick=()=>{const r=sellKnowledge(state,state.player,el.dataset.sellBuyer,el.dataset.sellBranch,el.dataset.sellId);if(!r.ok)flash(r.reason);else render()});
+  document.querySelectorAll('[data-exchange-id]').forEach(el=>el.onclick=()=>{const offer=document.querySelector(`[data-exchange-offer="${el.dataset.exchangePartner}"]`)?.value;if(!offer)return;const [branch,id]=offer.split(':'),r=exchangeKnowledge(state,state.player,el.dataset.exchangePartner,branch,id,el.dataset.exchangeBranch,el.dataset.exchangeId);if(!r.ok)flash(r.reason);else render()});
+  document.querySelectorAll('[data-invite-scholar]').forEach(el=>el.onclick=()=>{const r=inviteForeignScholars(state,state.player,el.dataset.inviteScholar);if(!r.ok)flash(r.reason);else render()});
+  document.querySelectorAll('[data-religion-policy]').forEach(el=>el.onclick=()=>{const r=setReligiousPolicy(state,state.player,el.dataset.religionPolicy);if(!r.ok)flash(r.reason);else render()});
   document.querySelector('#lang').onclick=()=>{lang=lang==='en'?'zh':'en';localStorage.setItem('spqr-lang',lang);render()};
   document.querySelector('#ending-download')?.addEventListener('click',()=>downloadCampaign(state));
   document.querySelector('#ending-language')?.addEventListener('click',()=>document.querySelector('#lang').click());

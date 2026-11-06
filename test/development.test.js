@@ -1,8 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,purchaseMaterials} from '../engine.js';
+import {newGame,upgradeSave,tick,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,purchaseMaterials} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects} from '../development.js';
+import {developmentPanel} from '../development-ui.js';
+import {edgeMonths} from '../grand-operations.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
+
+test('both research branches render every node, including naval capabilities without buildings',()=>{
+  const s=newGame('senate');for(const lang of ['en','zh'])for(const branch of ['material','idea']){
+    const html=developmentPanel(s,lang,branch);assert.equal((html.match(/class="dev-card dev-card-/g)||[]).length,branch==='material'?MATERIALS.length:IDEAS.length)
+  }
+});
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();const d=development(s,'caesar');
@@ -111,4 +119,36 @@ test('waterworks and libraries change real food losses and research spending',()
   assert.equal(researchInnovation(plain,'egypt','idea','rhetorical-education').ok,true);
   assert.equal(researchInnovation(learned,'egypt','idea','rhetorical-education').ok,true);
   assert.equal(beforeLearned-learned.factions.egypt.treasury,(beforePlain-plain.factions.egypt.treasury)-3);
+});
+test('road and bridge construction shortens relevant grand-campaign travel',()=>{
+ const edge={sea:false,distance:350,river:true},destination={terrain:'plain',buildings:[]},origin={buildings:[]};
+ const baseline=edgeMonths(edge,destination,origin);origin.buildings.push('road');assert.equal(edgeMonths(edge,destination,origin),baseline-1);
+ origin.buildings.push('bridge');assert.equal(edgeMonths(edge,destination,origin),baseline-2);
+});
+test('idea capacity requires institutions as well as researched ideas and treasury',()=>{
+ const s=newGame('senate'),d=development(s,'senate');s.factions.senate.treasury=500;
+ d.knownIdeas.push('legion-training','frontier-defense','reserve-mobilization');
+ assert.equal(expandIdeaSlot(s,'senate','military').reason,'institution');
+ s.regions.find(r=>r.owner==='senate').buildings.push('administration');
+ assert.equal(expandIdeaSlot(s,'senate','military').ok,true);months(s,6);
+ assert.equal(expandIdeaSlot(s,'senate','military').reason,'institution');
+ s.regions.find(r=>r.owner==='senate').buildings.push('library');s.factions.senate.stability=75;
+ assert.equal(expandIdeaSlot(s,'senate','military').ok,true);
+});
+test('states can exchange, sell and host scholars through priced delayed knowledge diplomacy',()=>{
+ const s=newGame('caesar');s.relations['caesar:egypt']=25;s.factions.caesar.treasury=300;s.factions.egypt.treasury=300;
+ const caesar=development(s,'caesar'),egypt=development(s,'egypt');
+ assert.equal(exchangeKnowledge(s,'caesar','egypt','material','roadmaking','material','water-control').ok,true);
+ assert.ok(!caesar.knownMaterial.includes('water-control'));assert.ok(!egypt.knownMaterial.includes('roadmaking'));
+ months(s,3);assert.ok(caesar.knownMaterial.includes('water-control'));assert.ok(egypt.knownMaterial.includes('roadmaking'));
+ caesar.knownIdeas.push('legion-training');const treasury=s.factions.caesar.treasury;
+ assert.equal(sellKnowledge(s,'caesar','egypt','idea','legion-training').ok,true);assert.ok(s.factions.caesar.treasury>treasury);
+ months(s,2);assert.ok(egypt.knownIdeas.includes('legion-training'));
+ assert.equal(inviteForeignScholars(s,'caesar','egypt').ok,true);
+ const plain=newGame('caesar');plain.factions.caesar.treasury=300;
+ const baseline=plain.factions.caesar.treasury;assert.equal(researchInnovation(plain,'caesar','material','quarrying').ok,true);
+ const before=s.factions.caesar.treasury;assert.equal(researchInnovation(s,'caesar','material','quarrying').ok,true);
+ assert.equal(before-s.factions.caesar.treasury,baseline-plain.factions.caesar.treasury-3);
+ assert.equal(caesar.research.remaining,Math.max(1,plain.development.caesar.research.remaining-1));
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(s))).development.caesar.visitingScholars.length,1);
 });
