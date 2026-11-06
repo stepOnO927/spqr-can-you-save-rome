@@ -4,21 +4,21 @@ import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,for
 import {knownDynasticFactions} from '../civil-war.js?v=3';
 import {reportedControl,requestControlReport} from '../control-intelligence.js?v=4';
 import {renderLocalGovernor} from './local-governor-ui.js?v=5';
-import {renderSecurity} from './security-ui.js?v=41';
+import {renderSecurity} from './security-ui.js?v=42';
 import {renderOffices} from './offices-ui.js?v=9';
 import {officeEffects} from '../office-system.js?v=9';
 import {waitForMapIdle} from './capture-wait.js?v=1';
 import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=1';
-import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=46';
+import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=47';
 import historical from '../historical-territories.js?v=8';
 import republicanRoads from '../republican-roads.js?v=1';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=108';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=109';
 import {FACTIONS} from '../data.js?v=11';
 import {identity,factionMark} from '../identity.js?v=3';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=18';
-import {createCharacterUI} from './character-ui.js?v=110';
-import {reportedArmies} from '../character-system.js?v=74';
+import {createCharacterUI} from './character-ui.js?v=111';
+import {reportedArmies} from '../character-system.js?v=75';
 import {createTutorial} from './tutorial.js?v=6';
 import {friendlyPersonnelInTheater} from './personnel.js?v=2';
 import {leadershipIntelligence} from './intelligence-summary.js?v=2';
@@ -208,6 +208,7 @@ const helpEntries=[
  {kind:'game',en:'Dynastic mediation',zh:'王朝调停',enBody:'Once a report suggests a dynastic conflict, Roman factions may spend 12 treasury to send mediation letters. The return takes about six months; either side may refuse, and letters may be lost in either direction. A settlement may take effect before the reply arrives; a reply may be stale, and an old or false report can lead to no reply.',zhBody:'获得王朝冲突线索后，罗马阵营可花费12国库寄信调停。回信约需六个月，双方可能拒绝，去信或回信可能丢失。和解可能在回信抵达前生效；回信可能过时，过期或错误的线索也可能得不到答复。'},
  {kind:'game',en:'Dynastic civil wars',zh:'王朝内战',enBody:'A prolonged and unstable Egyptian or Parthian dispute may split into two commands if the potential breakaway theater is ungarrisoned. Each side controls land, troops and resources and fights using the normal rules. Both land and armies must be lost for a side to collapse. Rumors, travelers and letters can reveal the fighting; reports may be old or wrong. These are alternate-history events, not claims of a specific historical border or rebellion.',zhBody:'埃及或帕提亚的争议长期不稳时，如果潜在分裂战区没有驻军，可能形成两个指挥方。双方各有控制区、军队与资源，并按正常规则作战。一方同时失去全部控制区和野战军后才会瓦解。传闻、商旅和书信可能报告战事，但情报可能错误或过时。这些是游戏中的架空事件，不代表特定历史边界或叛乱。'},
  {kind:'game',en:'Acting authority intelligence',zh:'代行政务情报',control:'#factions',enBody:'Investigate acting authority with spies, envoys or travelers, or request an ally’s existing report. Reports may name a regent, acting commander or co-ruler, but can be wrong, withheld or outdated. Open a reported portrait to inspect that person; their current health and location remain unknown. Comparing independent sources can reveal disagreement.',zhBody:'可派间谍、使者或商旅调查代行政务，也可请求盟友转交已有报告。报告可能提到摄政者、临时指挥者或共同统治者，也可能有误、被隐瞒或已经过期。点击报告中的肖像可查看人物档案；其当前健康和位置仍然未知。比较独立来源可发现分歧。'},
+ {kind:'game',en:'Roman administrative intelligence',zh:'罗马行政任命情报',enBody:'In a rival Roman faction’s Letters & Intelligence tab, a spy can investigate its finance, supply or administration officer. Allies can forward a report they already hold. Reports may be incomplete, wrong or outdated; no name does not prove a vacancy. A named report does not prove the person is still in office or physically in a city. Click a reported portrait to inspect the person; other information remains restricted.',zhBody:'在敌对罗马派系的“书信与情报”中，可派间谍调查财务、粮秣或政务专员；盟友也可转交已有报告。报告可能不完整、有误或过时，没有名字不代表职务空缺。报告中的人名不证明此人仍在任，也不表示其身处某座城市。点击报告肖像可查看人物，其余情报仍受限制。'},
  {kind:'game',en:'Covert contacts',zh:'秘密政治接触',control:'#factions',enBody:'A Roman faction may send an offer to an Egyptian claimant it has heard about. A spy investigating Egypt can report a recent accepted offer by the other Roman faction. Reports are unverified and may be wrong; no reliable information does not prove that no contact exists. These are simulated contacts, not historical claims or formal alliances.',zhBody:'罗马派系可以向自己听闻的埃及竞争者寄出支持提议。派间谍调查埃及，可能查到另一罗马派系最近获得接受的提议。报告未经核实，可能有误；没有可靠消息不代表不存在接触。这些是游戏模拟的接触，并非历史断言或正式同盟。'},
  {kind:'game',en:'Checking intelligence reports',zh:'核查情报报告',control:'#factions',enBody:'In a foreign faction’s Intelligence tab, open Why this confidence to compare supporting and conflicting source families. Use Check this report to select its subject and, for health, the reported person. Then choose and confirm a mission. Selecting a report costs nothing. Repeating or forwarding the same source is not independent corroboration; another source can also be wrong. A list can be incomplete; a source may claim completeness without proving it. Different named rulers or claimants are compatible unless a claimed complete list excludes someone. Reports from different observation months may describe a change and do not confirm or contradict a claim at the same time. Coordinate missions to compare observations from the same month. Partially overlapping age estimates are compatible but do not verify an exact range. Confidence is recalculated as evidence expires each month.',zhBody:'在外国势力的情报页面展开“查看判断依据”，可比较支持与冲突的来源。点击“核查此报告”，可选中对应调查内容；健康报告也会选中已报告的人物。然后选择并确认行动。选择报告不收费。重复或转交同一来源不构成独立核实，其他来源也可能有误。人名名单可能不完整；来源声称完整也不等于事实。不同人名可能并存，除非声称完整的名单排除了对方。不同观察月份的报告可能反映局势变化，不算同时核实或冲突；可协调行动，使不同来源在同一月观察。部分重叠的年龄估计彼此相容，但不能证明完整区间完全一致。每月会依据尚未过期的证据重新计算可信度。'},
  {kind:'game',en:'Reported commanders',zh:'指挥官目击报告',control:'#factions',enBody:'Frontier observations may identify a foreign army’s commander. The dated report can be opened from that army and used to select a person for health inquiries or an audience. It can become outdated when the army moves or command changes; an unseen change is not automatically revealed.',zhBody:'前线目击可能识别外国军队的指挥官。可从军队查看带日期的报告，并以此人物作为健康调查或会面对象。军队移动或更换指挥官后，旧报告可能过时；未被目击的变化不会自动公开。'},

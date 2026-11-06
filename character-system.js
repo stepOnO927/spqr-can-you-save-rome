@@ -4,6 +4,7 @@ import {deriveGovernment} from './governance.js?v=21';
 import {potentialConspirators} from './conspiracies.js?v=10';
 import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=3';
 import {reportedControl} from './control-intelligence.js?v=4';
+import {canHoldOffice} from './office-system.js?v=9';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -73,7 +74,7 @@ export function reportedHealthSubjects(s,actor,target){
  initializeWorld(s);const knowledge=s.knowledge[actor]?.[target],reports=knowledge?.reports||[];
  // A later partial roster is not evidence that names in earlier reports vanished.
  // Preserve these as investigable leads only, not as current rulers or verified identities.
- const leads=reports.flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['health','age','location','conspiracy'].includes(r.kind)?[r.character]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:[]);
+ const leads=reports.flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['health','age','location','conspiracy'].includes(r.kind)?[r.character]:r.kind.startsWith('office_')?[r.value]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:[]);
  return [...new Set([...(knowledge?.reportedLeaders||[]),...reportedClaimants(s,actor,target),...Object.values(knowledge?.sightings||{}).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).map(x=>x.commanderId),...leads].filter(id=>CHARACTER_CATALOG[id]))];
 }
 export function claimantRepresentatives(s,actor,claimant){
@@ -101,7 +102,8 @@ export function supportClaimant(s,actor,target,claimant,representative=null,aid=
 export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!FACTIONS[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(target.endsWith('_claimant')&&!knownDynasticFactions(s,actor).includes(target))return {ok:false,reason:'unavailable'};
- if(!['health','age','location','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance','clashes'].includes(subject))return {ok:false,reason:'subject'};
+ if(!['health','age','location','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance','clashes','office_finance','office_supply','office_administration'].includes(subject))return {ok:false,reason:'subject'};
+ if(subject.startsWith('office_')&&(!['spy','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
  if(subject==='location'&&!['spy','travelers','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(subject==='clashes'&&(!['spy','travelers','exchange'].includes(type)||!['egypt','parthia'].includes(target)))return {ok:false,reason:'subject'};
  if(subject==='age'&&type!=='exchange')return {ok:false,reason:'subject'};
@@ -168,7 +170,14 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  const healthPerson=healthCandidate?.faction===op.target&&!healthCandidate.missing?healthCandidate:null;
  const locallyObservable=!!(healthPerson?.alive&&!healthPerson.travel&&s.regions.some(r=>r.id===healthPerson.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===healthId&&a.move));
  op.status='complete';const source=op.type,low=op.type==='travelers',hostile=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target)),contested=(s.world.claimants[op.target]||[]).length>0,investigated=op.subject==='health'?healthPerson:person,concealment=hostile||contested||investigated?.health==='seriously_ill'||investigated?.health==='dying',falsehood=q<.45&&concealment;let report;
- if(op.subject==='clashes'){
+ if(op.subject.startsWith('office_')){
+  // Only successful spies can inspect an assignment. No name is a lack of
+  // evidence, not proof of a vacancy. Wartime deception may reuse an old lead.
+  const office=op.subject.slice('office_'.length),personId=s.world.offices?.[op.target]?.[office],prior=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>r.kind===op.subject&&CHARACTER_CATALOG[r.value]);
+  const value=falsehood?(prior?.value||'unknown'):q>=.55&&CHARACTER_CATALOG[personId]&&canHoldOffice(s,op.target,personId)?personId:'unknown';
+  report={kind:op.subject,value,source,confidence:'unverified',reliability:'moderate'};
+ }
+ else if(op.subject==='clashes'){
   // No report is not evidence of peace. Rumors may be false in a contested court.
   const recent=!!s.world.disputes[op.target]?.war||s.world.disputeHistory.some(event=>event.faction===op.target&&['clashes','civil_war'].includes(event.outcome)&&(s.year-event.year)*12+s.month-event.month>=0&&(s.year-event.year)*12+s.month-event.month<=12);
   const reported=recent&&q>=.55||contested&&!recent&&q<.45;
