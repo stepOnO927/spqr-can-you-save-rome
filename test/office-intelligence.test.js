@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js';
 import {appointOffice} from '../office-system.js';
-import {addReport,advanceOperations,previewMission,queueMission,reportedHealthSubjects} from '../character-system.js';
+import {addReport,advanceOperations,previewMission,queueMission,reportedHealthSubjects,reportedOfficeTheaters} from '../character-system.js';
 import {identityKnowledge} from '../map-lab/identity-knowledge.js';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
@@ -25,4 +25,15 @@ test('no named officer is no evidence of a vacancy; wartime misdirection may reu
 test('an ally can forward an office report without inventing its own knowledge',()=>{
  const s=newGame('caesar');s.alliances.push(['caesar','egypt']);addReport(s,'egypt','senate',{kind:'office_finance',value:'cicero',source:'spy',observationYear:-50,observationMonth:6});assert.equal(queueMission(s,'caesar','senate','exchange','office_finance','egypt').ok,true);s.world.intelSeed=seedFor(.65,.7);for(let i=0;i<3;i++)advanceOperations(s);
  const r=s.knowledge.caesar.senate.reports[0];assert.equal(r.value,'cicero');assert.equal(r.observationYear,-50);assert.equal(r.observationMonth,6);assert.equal(r.originSource,'spy');assert.equal(r.fromFaction,'egypt');assert.equal(r.verified,false);
+});
+
+test('a theater assignment can be investigated without disclosing hidden control or current location',()=>{
+ let s=newGame('caesar');s.world.localGovernors={roma:{faction:'senate',person:'cicero'}};
+ const options=reportedOfficeTheaters(s,'caesar','senate');assert.ok(options.includes('roma'));assert.equal(previewMission(s,'caesar','senate','envoy','office_theater:roma').reason,'subject');assert.equal(previewMission(s,'caesar','egypt','spy','office_theater:roma').reason,'subject');assert.equal(previewMission(s,'caesar','senate','spy','office_theater:cisalpine').reason,'subject');
+ assert.equal(queueMission(s,'caesar','senate','spy','office_theater:roma').ok,true);s.world.intelSeed=seedFor(.65,.7);for(let i=0;i<3;i++)advanceOperations(s);assert.equal(s.knowledge.caesar.senate.reports.length,0);s=upgradeSave(JSON.parse(JSON.stringify(s)));advanceOperations(s);const r=s.knowledge.caesar.senate.reports[0];assert.equal(r.value,'cicero');assert.equal(r.kind,'office_theater:roma');assert.equal(r.location,undefined);assert.equal(s.knowledge.egypt.senate.reports.length,0);
+ s.world.characters.cicero.location='syria';s.regions.find(x=>x.id==='roma').owner='caesar';assert.equal(r.value,'cicero');assert.deepEqual(reportedOfficeTheaters(s,'caesar','senate'),options);
+});
+test('allied theater reports preserve their original source and unknown does not imply a vacancy',()=>{
+ let s=newGame('caesar');s.alliances.push(['caesar','egypt']);addReport(s,'egypt','senate',{kind:'office_theater:roma',value:'cicero',source:'spy',observationYear:-50,observationMonth:6});assert.equal(queueMission(s,'caesar','senate','exchange','office_theater:roma','egypt').ok,true);s.world.intelSeed=seedFor(.65,.7);for(let i=0;i<3;i++)advanceOperations(s);let r=s.knowledge.caesar.senate.reports[0];assert.equal(r.value,'cicero');assert.equal(r.originSource,'spy');assert.equal(r.observationYear,-50);
+ s=newGame('caesar');assert.equal(queueMission(s,'caesar','senate','spy','office_theater:roma').ok,true);s.world.intelSeed=seedFor(.65,.7);resolve(s);r=s.knowledge.caesar.senate.reports[0];assert.equal(r.value,'unknown');assert.equal(r.verified,false);
 });

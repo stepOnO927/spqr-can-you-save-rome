@@ -301,3 +301,8 @@ test('Bosporan birth estimate and the Armenian–Parthian betrothal remain sourc
  for(const [id,pattern] of [['pacorus',/前53年曾安排与其姊妹订婚/],['artavasdes',/其姊妹与帕科鲁斯于前53年订婚/]]){panel.children=[];ui.show(id);html=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(html,pattern);assert.match(html,/不代表游戏中的信任、当前职权或已获情报/);assert.match(html,/iranicaonline\.org/)}assert.deepEqual(s.world.personalRelations,{});
  }finally{globalThis.document=previous}
 });
+
+test('theater office leads use reported control and retain historical uncertainty in both languages',()=>{
+ const prior=globalThis.document,s=newGame('caesar');s.world.localGovernors={roma:{faction:'senate',person:'cato'}};addReport(s,'caesar','senate',{kind:'office_theater:roma',value:'cicero',source:'spy',confidence:'unverified'});s.regions.find(r=>r.id==='roma').owner='caesar';globalThis.document={createElement:tag=>new Element(tag)};
+ try{for(const language of ['en','zh']){const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'senate');const box=content.children[0],html=box.querySelector('#mission-records').innerHTML;assert.match(box.innerHTML,/value="office_theater:roma"/);assert.match(html,language==='zh'?/战区行政官报告：拉丁姆 · 马尔库斯·图利乌斯·西塞罗/:/Reported theater administrator: Latium · Marcus Tullius Cicero/);assert.match(html,language==='zh'?/不证明当前位置或现职/:/not proof of current office or location/);assert.doesNotMatch(html,/小加图|Cato/);assert.match(html,/data-verify-report=/)}}finally{globalThis.document=prior}
+});

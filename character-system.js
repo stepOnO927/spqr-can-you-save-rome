@@ -4,7 +4,7 @@ import {deriveGovernment,validSuccessionPlan} from './governance.js?v=22';
 import {potentialConspirators} from './conspiracies.js?v=10';
 import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=3';
 import {reportedControl} from './control-intelligence.js?v=4';
-import {canHoldOffice} from './office-system.js?v=9';
+import {canHoldOffice,localGovernor} from './office-system.js?v=9';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -99,10 +99,16 @@ export function supportClaimant(s,actor,target,claimant,representative=null,aid=
  if(f.treasury<cost.treasury)return {ok:false,reason:'treasury'};if(f.manpower<cost.manpower)return {ok:false,reason:'manpower'};if(f.food<cost.food)return {ok:false,reason:'food'};
  f.treasury-=cost.treasury;f.manpower-=cost.manpower;f.food-=cost.food;s.operations.unshift({actor,target,type:'support',claimant,representative:representative||null,aid,remaining:4,status:'pending',sentYear:s.year,sentMonth:s.month});if(actor===s.player)notify(s,'An offer of support was sent; a response may take four months.','已寄出支持提议；回信可能需要四个月。');return {ok:true};
 }
+// The target list is based on the observer's reports, not current control.
+export function reportedOfficeTheaters(s,actor,target){
+ initializeWorld(s);const reports=s.knowledge[actor]?.[target]?.reports||[];return s.regions.filter(r=>reportedControl(s,actor,r.id)?.owner===target||reports.some(x=>x.kind==='office_theater:'+r.id)).map(r=>r.id);
+}
 export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!FACTIONS[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(target.endsWith('_claimant')&&!knownDynasticFactions(s,actor).includes(target))return {ok:false,reason:'unavailable'};
- if(!['health','age','location','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance','clashes','office_finance','office_supply','office_administration'].includes(subject))return {ok:false,reason:'subject'};
+ const theater=subject.startsWith('office_theater:')?subject.slice('office_theater:'.length):null;
+ if(!theater&&!['health','age','location','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance','clashes','office_finance','office_supply','office_administration'].includes(subject))return {ok:false,reason:'subject'};
+ if(theater&&!reportedOfficeTheaters(s,actor,target).includes(theater))return {ok:false,reason:'subject'};
  if(subject.startsWith('office_')&&(!['spy','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
  if(subject==='location'&&!['spy','travelers','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(subject==='clashes'&&(!['spy','travelers','exchange'].includes(type)||!['egypt','parthia'].includes(target)))return {ok:false,reason:'subject'};
@@ -173,7 +179,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.subject.startsWith('office_')){
   // Only successful spies can inspect an assignment. No name is a lack of
   // evidence, not proof of a vacancy. Wartime deception may reuse an old lead.
-  const office=op.subject.slice('office_'.length),personId=s.world.offices?.[op.target]?.[office],prior=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>r.kind===op.subject&&CHARACTER_CATALOG[r.value]);
+  const office=op.subject.slice('office_'.length),theater=office.startsWith('theater:')?office.slice('theater:'.length):null,post=theater?s.world.localGovernors?.[theater]:null,personId=theater?(post?.faction===op.target?localGovernor(s,theater):null):s.world.offices?.[op.target]?.[office],prior=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>r.kind===op.subject&&CHARACTER_CATALOG[r.value]);
   const value=falsehood?(prior?.value||'unknown'):q>=.55&&CHARACTER_CATALOG[personId]&&canHoldOffice(s,op.target,personId)?personId:'unknown';
   report={kind:op.subject,value,source,confidence:'unverified',reliability:'moderate'};
  }
