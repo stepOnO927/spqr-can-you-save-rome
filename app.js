@@ -4,9 +4,9 @@ import {identity,factionMark} from './identity.js?v=3-xxiib';
 import {reportedControl} from './control-intelligence.js?v=4-xxiib';
 import {CHARACTER_CATALOG} from './characters.js?v=20-xxiib';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=11-xxiib';
-import {newGame,newDynastyScenario,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=123-xxiib';
-import {decideDisputedHeir,personAge} from './dynasties.js?v=1-xxiib';
-import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=1-xxiib';
+import {newGame,newDynastyScenario,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=124-xxiic';
+import {decideDisputedHeir,personAge} from './dynasties.js?v=3-xxiic';
+import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=2-xxiic';
 import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=1-xxiib';
 import {drawMap,mapPoint} from './map.js?v=84-xxiib';
 

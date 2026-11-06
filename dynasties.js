@@ -96,8 +96,26 @@ export function makeWill(s,id,beneficiary,share=1){
  c.will={beneficiary,share};record(s,id,`Named ${CHARACTER_CATALOG[beneficiary].name[0]} in a personal will.`,`在个人遗嘱中指定${CHARACTER_CATALOG[beneficiary].name[1]}。`);return {ok:true};
 }
 
+export function nominateGuardian(s,parentId,childId,guardianId){
+ initializeDynasties(s);const parent=s.world.characters[parentId],child=s.world.characters[childId],guardian=s.world.characters[guardianId];
+ if(!eligibleAdult(s,parentId)||!child?.alive||!eligibleAdult(s,guardianId)||parentId===guardianId||childId===guardianId||parent.faction!==child.faction||child.faction!==guardian.faction||!child.parents.includes(parentId)&&!child.adoptiveParents.includes(parentId))return {ok:false,reason:'eligibility'};
+ const age=personAge(s,childId);if(age===null||age>=16)return {ok:false,reason:'age'};
+ child.guardianNominee=guardianId;record(s,parentId,`Nominated ${CHARACTER_CATALOG[guardianId].name[0]} as guardian of ${CHARACTER_CATALOG[childId].name[0]}; this conferred no office.`,`提名${CHARACTER_CATALOG[guardianId].name[1]}为${CHARACTER_CATALOG[childId].name[1]}的监护人；这不授予官职。`);
+ return {ok:true};
+}
+
+function activateGuardianships(s,id){
+ const parent=s.world.characters[id];for(const childId of parent.children){
+  const child=s.world.characters[childId],guardian=s.world.characters[child?.guardianNominee];
+  if(!child?.alive||personAge(s,childId)>=16||!guardian?.alive||guardian.missing||guardian.faction!==child.faction)continue;
+  if([...child.parents,...child.adoptiveParents].some(pid=>pid!==id&&eligibleAdult(s,pid)))continue;
+  child.guardian=guardian.id;record(s,childId,`${CHARACTER_CATALOG[guardian.id].name[0]} became guardian; no political office was inherited.`,`${CHARACTER_CATALOG[guardian.id].name[1]}成为监护人；没有继承政治职务。`);
+ }
+}
+
 export function settleInheritance(s,id){
  const d=initializeDynasties(s),c=s.world.characters[id];if(!c||c.inheritanceSettled)return;
+ activateGuardianships(s,id);
  c.inheritanceSettled=true;const heirs=c.children.filter(x=>s.world.characters[x]?.alive),will=c.will?.beneficiary;
  const eligibleWill=will&&s.world.characters[will]?.alive?will:null,wealth=Math.max(0,Math.floor(c.wealth||0));
  if(eligibleWill&&heirs.length&&!heirs.includes(eligibleWill)&&wealth>0){

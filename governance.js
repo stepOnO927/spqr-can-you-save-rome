@@ -1,7 +1,8 @@
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=11-xxiib';
 import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange} from './characters.js?v=20-xxiib';
-import {recordLifeEvent} from './dynasties.js?v=1-xxiib';
+import {recordLifeEvent,dynastyRoll,personAge} from './dynasties.js?v=3-xxiic';
 import {FACTIONS} from './data.js?v=11-xxiib';
+import {startDynasticWar} from './civil-war.js?v=7-xxiib';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
@@ -35,7 +36,7 @@ export function deriveGovernment(s,faction){
  const capable=nominal.filter(id=>!unable(s.world.characters[id])&&!definitelyMinor(s,faction,id));
  if(capable.length===nominal.length)return {kind:'normal',nominal,acting:[...nominal]};
  if(capable.length)return {kind:'co_ruler_acting',nominal,acting:capable};
- const candidates=eligibleDeputies(s,faction),preferred=s.world.appointments?.[faction],deputy=candidates.includes(preferred)?preferred:candidates[0];
+ const candidates=eligibleDeputies(s,faction),preferred=s.world.appointments?.[faction],guardian=nominal.map(id=>s.world.characters[id]?.guardian).find(id=>candidates.includes(id)),deputy=candidates.includes(preferred)?preferred:guardian||candidates[0];
  return {kind:roman(faction)?'acting_command':'regency',nominal,acting:deputy?[deputy]:[]};
 }
 
@@ -81,10 +82,31 @@ export function appointDeputy(s,id){
  return {ok:true,cost};
 }
 
+export function secureRegency(s){
+ initializeGovernments(s);const faction=s.player,g=deriveGovernment(s,faction),regent=s.world.characters[g.acting[0]];
+ if(g.kind!=='regency'||!regent)return {ok:false,reason:'unavailable'};
+ if(s.factions[faction].treasury<8)return {ok:false,reason:'treasury'};
+ s.factions[faction].treasury-=8;s.factions[faction].stability=Math.min(100,s.factions[faction].stability+2);
+ regent.loyalty=Math.min(100,(regent.loyalty??50)+5);regent.ambition=Math.max(0,(regent.ambition??30)-8);regent.influence=Math.max(0,(regent.influence??20)-3);
+ recordLifeEvent(s,regent.id,'A funded court council supervised the regency; its authority remained temporary.','宫廷会议获得经费并监督摄政；其权力仍属临时。');
+ return {ok:true,cost:8};
+}
+
 export function advanceGovernments(s){
- initializeGovernments(s);for(const faction of Object.keys(s.world.governments)){
+ initializeGovernments(s);s.world.regencies||={};for(const faction of Object.keys(s.world.governments)){
   if(!s.factions[faction]||!s.regions.some(r=>r.owner===faction))continue;
   const before=s.world.governments[faction],after=deriveGovernment(s,faction);s.world.governments[faction]=after;
+  if(after.kind==='regency'&&after.acting.length){
+   const regent=s.world.characters[after.acting[0]],ward=after.nominal[0],previous=s.world.regencies[faction];
+   const tenure=previous?.regent===regent.id&&previous.ward===ward?previous:{regent:regent.id,ward,months:0,startedYear:s.year,startedMonth:s.month};
+   tenure.months++;s.world.regencies[faction]=tenure;
+   if(tenure.months%3===0){regent.influence=Math.min(100,(regent.influence??20)+1);regent.ambition=Math.min(100,(regent.ambition??30)+1)}
+   if(['egypt','parthia'].includes(faction)&&personAge(s,ward)!==null&&personAge(s,ward)<16&&tenure.months>=6&&(regent.ambition??0)>=75&&s.factions[faction].stability<35&&dynastyRoll(s)<.12){
+    s.world.claimants[faction]||=[];if(!s.world.claimants[faction].includes(regent.id))s.world.claimants[faction].push(regent.id);
+    s.world.disputes[faction]||={months:0,support:{}};s.world.disputes[faction].support||={};s.world.disputes[faction].support[regent.id]=Math.max(30,s.world.disputes[faction].support[regent.id]||0);
+    if(startDynasticWar(s,faction,regent.id)){tenure.usurpation=true;if(faction===s.player)s.log.unshift({year:s.year,month:s.month,en:'The regent raised a rival court and seized a province with an army.',zh:'摄政者另立宫廷，率军夺取一处行省。'})}
+   }
+  }else if(s.world.regencies[faction]&&!s.world.regencies[faction].endedYear){s.world.regencies[faction].endedYear=s.year;s.world.regencies[faction].endedMonth=s.month}
   for(const id of after.nominal.filter(id=>!before.nominal.includes(id)))recordLifeEvent(s,id,`Assumed political leadership of ${FACTIONS[faction]?.short[0]||faction} in the simulation.`,`在模拟中成为${FACTIONS[faction]?.short[1]||faction}的政治领袖。`);
   // NPC preparations are internal game state, not an announcement to the player.
   if(faction!==s.player&&s.month%6===0){

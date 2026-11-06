@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
 import {CHARACTER_CATALOG} from '../characters.js?v=20-xxiib';
 import {assignSuccession} from '../characters.js?v=20-xxiib';
-import {deriveGovernment} from '../governance.js?v=25-xxiib';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
+import {deriveGovernment,advanceGovernments,secureRegency} from '../governance.js?v=26-xxiib';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
 import {canHoldOffice} from '../office-system.js?v=12-xxiib';
 import {renderGenealogy} from '../genealogy-ui.js';
 import {finalizeCampaign} from '../legacy.js';
@@ -115,6 +115,28 @@ test('a royal child can need a regent while a Roman command is not inherited',()
  assert.deepEqual(egypt.world.leadership.egypt,[child]);assert.equal(deriveGovernment(egypt,'egypt').kind,'regency');
  const rome=newGame('caesar'),father=createFictionalPerson(rome,{name:['Roman father','罗马父亲'],faction:'caesar',birthYear:-80}),son=createFictionalPerson(rome,{name:['Roman son','罗马儿子'],faction:'caesar',birthYear:-60,parents:[father]});
  rome.world.leadership.caesar=[father];rome.world.characters[father].alive=false;assignSuccession(rome,'caesar');assert.equal(rome.world.leadership.caesar.includes(son),false);
+});
+
+test('a guardian nomination can guide a regency without granting inherited office',()=>{
+ const s=newGame('egypt'),parent=createFictionalPerson(s,{name:['Parent','父母'],faction:'egypt',birthYear:-85,wealth:12}),child=createFictionalPerson(s,{name:['Minor','幼主'],faction:'egypt',birthYear:-57,parents:[parent],familyId:s.world.characters[parent].familyId}),guardian=createFictionalPerson(s,{name:['Guardian','监护人'],faction:'egypt',birthYear:-80,location:'egyptUpper'});
+ assert.equal(nominateGuardian(s,parent,child,guardian).ok,true);
+ s.world.leadership.egypt=[parent];s.world.characters[parent].alive=false;settleInheritance(s,parent);assignSuccession(s,'egypt');
+ assert.equal(s.world.characters[child].guardian,guardian);
+ const g=deriveGovernment(s,'egypt');assert.equal(g.kind,'regency');assert.deepEqual(g.acting,[guardian]);
+ assert.match(renderGenealogy(s,true),/临时摄政/);assert.match(renderGenealogy(s,false),/Convene council/);
+ const treasury=s.factions.egypt.treasury;assert.equal(secureRegency(s).ok,true);assert.equal(s.factions.egypt.treasury,treasury-8);
+ advanceGovernments(s);const saved=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(saved.world.regencies.egypt.regent,guardian);
+ s.year=-40;assert.equal(deriveGovernment(s,'egypt').kind,'normal');advanceGovernments(s);assert.equal(s.world.regencies.egypt.endedYear,-40);
+});
+
+test('an ambitious regent can create a real rival court under weak rule',()=>{
+ const s=newGame('egypt'),parent=createFictionalPerson(s,{name:['Ruler','君主'],faction:'egypt',birthYear:-85}),child=createFictionalPerson(s,{name:['Ward','幼主'],faction:'egypt',birthYear:-58,parents:[parent]}),regent=createFictionalPerson(s,{name:['Regent','摄政'],faction:'egypt',birthYear:-80,location:'egyptUpper'});
+ nominateGuardian(s,parent,child,regent);s.world.leadership.egypt=[parent];s.world.characters[parent].alive=false;settleInheritance(s,parent);assignSuccession(s,'egypt');
+ s.world.characters[regent].ambition=100;s.factions.egypt.stability=20;s.armies=s.armies.filter(a=>a.region!=='egyptUpper');
+ for(let month=1;month<=6;month++){s.month=month;if(month===6)s.world.dynasties.seed=2000;advanceGovernments(s)}
+ assert.equal(s.world.regencies.egypt.usurpation,true);
+ assert.equal(s.regions.find(r=>r.id==='egyptUpper').owner,'egypt_claimant');
+ assert.ok(s.armies.some(a=>a.owner==='egypt_claimant'&&a.men>=500));
 });
 
 test('foreign recognition has uncertain acceptance and a real concession cost',()=>{
