@@ -21,13 +21,18 @@ export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>{
 // This describes the simulated arrangement, not a historical medical or constitutional claim.
 export function deriveGovernment(s,faction){
  initializeWorld(s);const nominal=(s.world.leadership[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
+ // These are separate kingdoms represented by one campaign faction. Never
+ // invent a single shared regency, even if both kings are absent or dead.
+ if(faction==='mauretania'){
+  const capable=nominal.filter(id=>!unable(s.world.characters[id])&&!definitelyMinor(s,faction,id));
+  if(['bocchus','bogud'].some(id=>!nominal.includes(id)))return {kind:'constituent_vacant',nominal,acting:capable};
+  if(capable.length<nominal.length)return {kind:'constituent_unavailable',nominal,acting:capable};
+  return {kind:'normal',nominal,acting:capable};
+ }
  if(!nominal.length)return {kind:'vacant',nominal:[],acting:[]};
  const capable=nominal.filter(id=>!unable(s.world.characters[id])&&!definitelyMinor(s,faction,id));
- // The campaign groups two independent Mauretanian kingdoms under one map
- // faction. A surviving king does not automatically inherit the other realm.
- if(faction==='mauretania'&&['bocchus','bogud'].some(id=>!nominal.includes(id)))return {kind:'constituent_vacant',nominal,acting:capable};
  if(capable.length===nominal.length)return {kind:'normal',nominal,acting:[...nominal]};
- if(capable.length)return {kind:faction==='mauretania'?'constituent_unavailable':'co_ruler_acting',nominal,acting:capable};
+ if(capable.length)return {kind:'co_ruler_acting',nominal,acting:capable};
  const candidates=eligibleDeputies(s,faction),preferred=s.world.appointments?.[faction],deputy=candidates.includes(preferred)?preferred:candidates[0];
  return {kind:roman(faction)?'acting_command':'regency',nominal,acting:deputy?[deputy]:[]};
 }
@@ -87,7 +92,7 @@ export function advanceGovernments(s){
   }
   if(faction===s.player&&(before.kind!==after.kind||before.acting.join(':')!==after.acting.join(':'))){
    const name=after.acting.map(id=>CHARACTER_CATALOG[id]?.name).filter(Boolean),en=name.map(x=>x[0]).join(', ')||'an unnamed authority',zh=name.map(x=>x[1]).join('、')||'未具名临时官员';
-   const text=after.kind==='normal'?['The normal leadership arrangement resumed.','正常领导安排已恢复。']:after.kind==='vacant'?['Leadership is vacant; an unnamed authority administers the government.','领导职位空缺，由未具名临时官员维持政府运作。']:after.kind==='constituent_vacant'?['One Mauretanian kingdom has no named ruler; an unnamed authority administers it. The other kingdom remains separate.','一个毛里塔尼亚王国没有具名统治者，由未具名官员维持政务；另一个王国仍然独立。']:after.kind==='constituent_unavailable'?['One Mauretanian ruler is unable to govern; the separate kingdoms remain distinct.','一位毛里塔尼亚统治者无法履职；两个王国仍各自独立。']:after.kind==='co_ruler_acting'?[`${en} exercises authority while the other co-ruler requires assistance.`,`${zh}在另一位共同统治者需要辅政时行使政务。`]:after.kind==='acting_command'?[`${en} temporarily assumes the political command.`,`${zh}暂时代行政治指挥职责。`]:[`${en} exercises temporary authority while the ruler requires assistance.`,`${zh}在统治者需要辅政时暂时代行政务。`];
+   const text=after.kind==='normal'?['The normal leadership arrangement resumed.','正常领导安排已恢复。']:after.kind==='vacant'?['Leadership is vacant; an unnamed authority administers the government.','领导职位空缺，由未具名临时官员维持政府运作。']:after.kind==='constituent_vacant'?['At least one Mauretanian kingdom has no named ruler; unnamed authorities administer vacant kingdoms separately.','至少一个毛里塔尼亚王国没有具名统治者；空缺王国分别由未具名官员维持政务。']:after.kind==='constituent_unavailable'?['At least one Mauretanian ruler is unable to govern; the separate kingdoms remain distinct.','至少一位毛里塔尼亚统治者无法履职；两个王国仍各自独立。']:after.kind==='co_ruler_acting'?[`${en} exercises authority while the other co-ruler requires assistance.`,`${zh}在另一位共同统治者需要辅政时行使政务。`]:after.kind==='acting_command'?[`${en} temporarily assumes the political command.`,`${zh}暂时代行政治指挥职责。`]:[`${en} exercises temporary authority while the ruler requires assistance.`,`${zh}在统治者需要辅政时暂时代行政务。`];
    s.log.unshift({year:s.year,month:s.month,en:text[0],zh:text[1]});s.log=s.log.slice(0,80);
   }
   if(after.kind!=='normal'&&s.month%3===0)s.factions[faction].stability=Math.max(0,s.factions[faction].stability-1);

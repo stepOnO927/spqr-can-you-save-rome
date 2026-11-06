@@ -1,24 +1,24 @@
-import {authorityForTheater} from './authority-view.js?v=4';
+import {authorityForTheater} from './authority-view.js?v=5';
 import {renderMediation} from './mediation-ui.js?v=5';
 import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from './turn-report.js?v=2';
 import {knownDynasticFactions} from '../civil-war.js?v=6';
 import {reportedControl,requestControlReport} from '../control-intelligence.js?v=4';
 import {renderLocalGovernor} from './local-governor-ui.js?v=8';
-import {renderSecurity} from './security-ui.js?v=51';
+import {renderSecurity} from './security-ui.js?v=52';
 import {renderOffices} from './offices-ui.js?v=11';
 import {officeEffects} from '../office-system.js?v=11';
 import {waitForMapIdle} from './capture-wait.js?v=1';
 import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=1';
-import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=56';
+import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=57';
 import historical from '../historical-territories.js?v=8';
 import republicanRoads from '../republican-roads.js?v=1';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=120';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=121';
 import {FACTIONS} from '../data.js?v=11';
 import {identity,factionMark} from '../identity.js?v=3';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=19';
-import {createCharacterUI} from './character-ui.js?v=124';
-import {reportedArmies} from '../character-system.js?v=84';
+import {createCharacterUI} from './character-ui.js?v=125';
+import {reportedArmies} from '../character-system.js?v=85';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=7';
 import {friendlyPersonnelInTheater} from './personnel.js?v=2';
 import {leadershipIntelligence} from './intelligence-summary.js?v=2';
@@ -129,7 +129,7 @@ function addControlScout(r,refresh){
  document.querySelector('#command-detail').append(box);box.querySelector('#control-scout').onclick=()=>{const out=box.querySelector('#control-scout-feedback');out.textContent=zh?'确认派出：5国库，约4个月。':'Confirm dispatch: 5 treasury, about 4 months. ';const b=document.createElement('button');b.textContent=zh?'确认':'CONFIRM';out.append(b);b.onclick=()=>{const result=requestControlReport(state,r.id);if(result.ok)refresh();else out.textContent=zh?'无法派出：检查国库和已有调查。':'Unavailable: check treasury and pending missions.'}};
 }
 function renderTheaterAuthority(panel,r){
- const zh=lang==='zh',report=authorityForTheater(state,r.id),labels={normal:['Government in office','在任政府'],acting_command:['Acting command','临时代行指挥'],regency:['Regency / acting government','摄政／代行政务'],co_ruler_acting:['Co-ruler acting','共同统治者代行'],constituent_unavailable:['One constituent ruler unavailable','一位统治者无法履职'],constituent_vacant:['One separate kingdom has no named ruler','一个独立王国没有具名统治者'],vacant:['Authority vacant','职权空缺'],unknown:['Unknown','未知']},sources={court:['Court / envoy','宫廷／使者'],spy:['Spy','间谍'],envoy:['Envoy','使者'],travelers:['Travelers','商旅'],official:['Official letter','官方书信'],exchange:['Allied exchange','盟友交换'],audience:['Envoy audience','使者会面'],meeting:['Personal meeting','个人会面']};
+ const zh=lang==='zh',report=authorityForTheater(state,r.id),labels={normal:['Government in office','在任政府'],acting_command:['Acting command','临时代行指挥'],regency:['Regency / acting government','摄政／代行政务'],co_ruler_acting:['Co-ruler acting','共同统治者代行'],constituent_unavailable:['At least one constituent ruler unavailable','至少一位统治者无法履职'],constituent_vacant:['At least one separate kingdom has no named ruler','至少一个独立王国没有具名统治者'],vacant:['Authority vacant','职权空缺'],unknown:['Unknown','未知']},sources={court:['Court / envoy','宫廷／使者'],spy:['Spy','间谍'],envoy:['Envoy','使者'],travelers:['Travelers','商旅'],official:['Official letter','官方书信'],exchange:['Allied exchange','盟友交换'],audience:['Envoy audience','使者会面'],meeting:['Personal meeting','个人会面']};
  const confidence={confirmed:['Corroborated','多方证实'],credible:['Highly credible','高可信度'],unverified:['Unverified','未经核实'],rumor:['Rumor','传闻'],disputed:['Disputed','存在争议']},el=document.createElement('section');el.id='theater-authority';el.className='help-list';
  const claims=[report,...(report.alternatives||[])],describe=claim=>{const names=claim.actors.map(id=>n(CHARACTER_CATALOG[id]?.name)).filter(Boolean).join(zh?'、':', '),known=labels[claim.kind]||labels.unknown,source=n(sources[claim.source])||(zh?'来源未知':'Unknown source'),origin=claim.originSource?(n(sources[claim.originSource])||claim.originSource):'',forwarder=claim.fromFaction?n(FACTIONS[claim.fromFaction]?.short):'',status=claim.outdated?(zh?'情报过期':'OUTDATED'):n(confidence[claim.confidence]||confidence.unverified);return `<p>${esc(n(known))}${names?' · '+esc(names):''}</p><p>${claim.own?(zh?'本方模拟政务状态。':'Own simulated government.'):claim.year!=null?(zh?'观察于 ':'Observed ')+claim.month+'/'+Math.abs(claim.year)+' BCE · '+esc(source)+(forwarder?' · '+esc(forwarder):'')+(origin?' · '+(zh?'原始来源：':'origin: ')+esc(origin):'')+' · '+esc(status)+' · '+(zh?'报告可能有误':'Report may be wrong'):(zh?'暂无代行政务报告。':'No acting-authority report.')}</p>`};
  el.innerHTML=`<strong>${zh?'战区政治权力':'THEATER POLITICAL AUTHORITY'}</strong>`+claims.map(describe).join('')+(claims.length>1?`<p>${zh?'同一观察月份的报告可能冲突；请在书信与情报中比较完整依据。':'Reports observed in the same month may conflict; compare the full evidence in Letters & Intelligence.'}</p>`:'')+`<p>${zh?'这是势力层面的政务信息，不代表相关人物身在这座城市，也不确认地方官职。':'This concerns the faction’s government, not a person’s presence in this city or a local office.'}</p>`;for(const id of [...new Set(claims.flatMap(claim=>claim.actors))].filter(id=>CHARACTER_CATALOG[id])){const button=document.createElement('button');button.className='identity-focus-map';button.textContent=n(CHARACTER_CATALOG[id].name);button.onclick=()=>characterUI.show(id);el.append(button)}panel.append(el);

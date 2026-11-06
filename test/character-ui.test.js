@@ -160,7 +160,7 @@ test('a reported Mauretanian vacancy identifies separate administration without 
  const prior=globalThis.document,s=newGame('caesar');globalThis.document={createElement:tag=>new Element(tag)};
  try{addReport(s,'caesar','mauretania',{kind:'authority',value:{kind:'constituent_vacant',actors:['bogud']},source:'spy'});
   for(const language of ['zh','en']){const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'mauretania');const html=content.children[0].querySelector('#mission-records').innerHTML;
-   assert.match(html,language==='zh'?/一个独立王国没有具名统治者，由未具名官员管理/:/One separate kingdom has no named ruler; an unnamed authority administers it/);
+   assert.match(html,language==='zh'?/至少一个独立王国没有具名统治者，由未具名官员分别管理/:/At least one separate kingdom has no named ruler; unnamed authorities administer vacant kingdoms/);
    assert.match(html,language==='zh'?/博古德/:/Bogud/);assert.match(html,language==='zh'?/未经核实/:/UNVERIFIED/);
   }
  }finally{globalThis.document=prior}
