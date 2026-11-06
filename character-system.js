@@ -1,6 +1,6 @@
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=18';
 import {FACTIONS,ROUTES} from './data.js?v=11';
-import {deriveGovernment} from './governance.js?v=21';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=22';
 import {potentialConspirators} from './conspiracies.js?v=10';
 import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=3';
 import {reportedControl} from './control-intelligence.js?v=4';
@@ -249,7 +249,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  else if(op.subject==='succession'){
   // Silence means no information, not proof that a succession plan does not exist.
   const concealed=(hostile||contested)&&q<.45||(op.type==='envoy'&&q<.7)||(low&&q<.8);
-  const planned=s.world.successionPlans?.[op.target];
+  const planned=validSuccessionPlan(s,op.target);
   report={kind:'succession',value:!concealed&&CHARACTER_CATALOG[planned]?planned:'unknown',source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
  }
  else {

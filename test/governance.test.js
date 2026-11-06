@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
-import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor} from '../governance.js';
+import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js';
 import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js';
 import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js';
 import {previewPersonTravel} from '../personal-diplomacy.js';
@@ -112,4 +112,15 @@ test('an unknown succession report does not prove a plan is absent',()=>{
 });
 test('reported titles distinguish Roman factions, Egyptian joint rule and separate Mauretanian kingdoms',()=>{
  assert.equal(leadershipTitle('caesar',['caesar'])[1],'罗马派系领袖');assert.equal(leadershipTitle('egypt',['cleopatra','ptolemy'])[1],'共同统治者');assert.equal(leadershipTitle('egypt',['ptolemy'])[1],'统治者');assert.equal(leadershipTitle('mauretania',['bocchus','bogud'])[1],'各王国统治者');assert.equal(leadershipTitle('egypt',[])[1],'领导身份未确认');
+});
+
+test('a nomination can be withdrawn without a refund and default succession survives save migration',()=>{
+ let s=newGame('caesar');const money=s.factions.caesar.treasury;
+ assert.equal(planSuccession(s,'lepidus').ok,true);assert.equal(validSuccessionPlan(s,'caesar'),'lepidus');assert.equal(withdrawSuccessionPlan(s).ok,true);assert.equal(withdrawSuccessionPlan(s).reason,'unavailable');assert.equal(s.factions.caesar.treasury,money-5);assert.equal(s.knowledge.senate.caesar.reports.length,0);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.characters.caesar.alive=false;assert.deepEqual(assignSuccession(s,'caesar'),['antony']);
+});
+test('invalid nominations remain stored but are not revealed as valid by a new spy report',()=>{
+ const s=newGame('caesar');s.world.successionPlans.senate='cato';assert.equal(validSuccessionPlan(s,'senate'),'cato');s.world.characters.cato.missing=true;assert.equal(validSuccessionPlan(s,'senate'),null);
+ const probe=queueMission(s,'caesar','senate','spy','succession');assert.equal(probe.ok,true);s.world.intelSeed=1000;for(let i=0;i<probe.duration;i++)advanceOperations(s);assert.equal(s.knowledge.caesar.senate.reports[0].value,'unknown');assert.equal(s.world.successionPlans.senate,'cato');assert.equal(s.knowledge.egypt.senate.reports.length,0);
+ s.world.characters.cato.missing=false;assert.equal(validSuccessionPlan(s,'senate'),'cato');assert.equal(s.knowledge.caesar.senate.reports[0].value,'unknown');s.world.characters.cato.faction='caesar';assert.equal(validSuccessionPlan(s,'senate'),null);
 });

@@ -1,24 +1,24 @@
-import {authorityForTheater} from './authority-view.js?v=2';
+import {authorityForTheater} from './authority-view.js?v=3';
 import {renderMediation} from './mediation-ui.js?v=2';
 import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from './turn-report.js?v=2';
 import {knownDynasticFactions} from '../civil-war.js?v=3';
 import {reportedControl,requestControlReport} from '../control-intelligence.js?v=4';
 import {renderLocalGovernor} from './local-governor-ui.js?v=5';
-import {renderSecurity} from './security-ui.js?v=42';
+import {renderSecurity} from './security-ui.js?v=43';
 import {renderOffices} from './offices-ui.js?v=9';
 import {officeEffects} from '../office-system.js?v=9';
 import {waitForMapIdle} from './capture-wait.js?v=1';
 import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=1';
-import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=47';
+import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=48';
 import historical from '../historical-territories.js?v=8';
 import republicanRoads from '../republican-roads.js?v=1';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=109';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=110';
 import {FACTIONS} from '../data.js?v=11';
 import {identity,factionMark} from '../identity.js?v=3';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=18';
-import {createCharacterUI} from './character-ui.js?v=112';
-import {reportedArmies} from '../character-system.js?v=75';
+import {createCharacterUI} from './character-ui.js?v=113';
+import {reportedArmies} from '../character-system.js?v=76';
 import {createTutorial} from './tutorial.js?v=6';
 import {friendlyPersonnelInTheater} from './personnel.js?v=2';
 import {leadershipIntelligence} from './intelligence-summary.js?v=2';
@@ -195,7 +195,7 @@ const helpEntries=[
  {kind:'game',en:'Theater administrators',zh:'战区行政官',enBody:'Select a city in your controlled theater to appoint an eligible person located there for 5 treasury. The appointment adds one theater loyalty each quarter; dismissal is free. Health, loyalty, availability and control determine whether the assignment continues. The role is a game abstraction, not a historical city office or proof of presence in that city. Foreign local authorities remain unknown.',zhBody:'选择己方控制战区中的城市，可以花费5国库任命位于该战区的合格人物；任职期间每季度增加该战区1点忠诚，解除免费。健康、忠诚、人员状态或控制权变化可能使其卸任。这是游戏中的战区职务，不是历史城市官职，也不代表此人就在城内；外国地方负责人未知。'},
  {kind:'game',en:'Administrative assignments',zh:'行政任命',control:'#factions',enBody:'Open your faction to appoint finance, supply and administration officers. Appointment costs 5 treasury; dismissal is free. Capable friendly people need at least 40 loyalty and cannot command an army, hold another assignment or travel independently while appointed. An unavailable official loses the assignment before the next monthly economy.',zhBody:'打开己方势力，可任命财务、粮秣和政务专员。任命消耗5国库，解除免费。人选必须有至少40忠诚、能够履职，不能指挥军队或兼任其他职位；任职期间不能独立旅行。无法履职的官员会在下次月度经济结算前卸任。'},
  {kind:'game',en:'Commander loyalty',zh:'将领忠诚',control:'#factions',enBody:'Friendly character profiles have simulated loyalty, separate from theater loyalty. Low faction stability reduces personal loyalty each year. During the Roman civil war, a non-leading officer without an army may defect when loyalty reaches 20 or below.',zhBody:'己方人物档案中的模拟忠诚度与战区忠诚度不同。势力稳定度低时，个人忠诚每年下降。罗马内战期间，忠诚不高于20、未领导派系且未指挥军队的官员可能倒戈。'},
- {kind:'game',en:'Reports and uncertainty',zh:'情报报告与不确定性',control:'#factions',enBody:'Open Factions, choose another power, then Letters & Intelligence. Reports show source, observation date, reliability and confidence. Political stability, reported people’s theater locations and possible succession plans can be investigated; location reports are dated leads, not live positions; no identifiable names do not prove absence or erase the last named leader report, and no information does not prove no plan exists. Conflicting reports remain visible; old reports may be wrong. Your save contains the true simulated world and is not a secrecy boundary.',zhBody:'打开“势力”，选择其他势力，再打开“书信与情报”。报告显示来源、观察日期、可靠性和可信度；可以调查政治稳定度、已报告人物的战区位置和可能的继任安排；位置是带日期的线索，并非实时追踪；没有可核实的姓名不代表无人执政或没有竞争者，也不会覆盖旧领袖报告；没有消息不等于没有计划。冲突报告会保留，旧报告可能错误。本地存档包含真实模拟状态，并非保密边界。'},
+ {kind:'game',en:'Reports and uncertainty',zh:'情报报告与不确定性',control:'#factions',enBody:'Open Factions, choose another power, then Letters & Intelligence. Reports show source, observation date, reliability and confidence. Political stability, reported people’s theater locations and possible succession plans can be investigated; location reports are dated leads, not live positions; no identifiable names do not prove absence or erase the last named leader report, and no information does not prove no plan exists. Conflicting reports remain visible; old reports may be wrong. Your save contains the true simulated world and is not a secrecy boundary.',zhBody:'打开“势力”，选择其他势力，再打开“书信与情报”。报告显示来源、观察日期、可靠性和可信度；可以调查政治稳定度、已报告人物的战区位置和可能的继任安排；位置是带日期的线索，并非实时追踪；没有可核实的姓名不代表无人执政或没有竞争者，也不会覆盖旧领袖报告；没有消息不等于没有计划。本方继任安排可以撤回，已付费用不退；没有有效指定时按影响力选择。冲突报告会保留，旧报告可能错误。本地存档包含真实模拟状态，并非保密边界。'},
  {kind:'game',en:'Letters and direct questions',zh:'书信与直接询问',control:'#factions',enBody:'A direct inquiry costs 3 treasury and normally takes 2–5 months. A letter or reply may be lost; war increases the risk on the return journey. The court may refuse, and its answer is unverified. An envoy can also travel to improve relations; reception may be refused. Other diplomatic buttons currently resolve immediately.',zhBody:'直接询问消耗3国库，通常需要2至5个月。信件或回信可能遗失，交战会增加返程风险；对方可能拒答，官方答复未经独立核实。也可派遣使者历时数月改善关系，但可能被拒；其他外交按钮目前即时结算。'},
  {kind:'game',en:'Spies, captured agents and release',zh:'间谍、被俘与释放',control:'#factions',enBody:'A spy costs 12 treasury and takes 4 months; discovery or capture harms relations. Each faction has three agents: missions and captivity occupy capacity. A release letter costs 8 treasury and takes about 4 months; it may be refused or unanswered.',zhBody:'派遣间谍消耗12国库、需要4个月；被发现或被捕会损害关系。每个势力有3名情报人员，执行任务或被俘会占用人手。请求释放需8国库，约4个月后可能被拒或没有回信。'},
  {kind:'game',en:'Personal meetings and travel',zh:'人物旅行与个人会面',control:'#factions',enBody:'Open your faction and select an independent character to plan a journey. Army commanders and seriously ill characters cannot travel independently; wounds and frailty slow each leg. Routes use control reports that may be outdated; control is checked on arrival and an unsafe journey stops. During a multi-leg journey, order a stop at the next theater or withdraw that order; costs are not refunded. A personal audience with a reported leader, claimant or commander costs 3 treasury and takes 2 months; both people must actually be in the same theater and may not meet. Reports can be stale or wrong. Trust and relations affect acceptance; a successful meeting improves relations by 3 and records a dated public statement, not proof of private intentions. For 36 months, personal trust can add up to 10 toward alliance eligibility, subject to other constraints. A known contact can improve a later claimant support offer, but letters may still be lost or refused.',zhBody:'打开己方势力并选择独立人物以规划旅行。随军指挥官和重病人物不能单独出行，受伤或衰弱会拖慢每段行程。路线依据已有控制报告，可能过时，抵达时核实实际控制；不能进入时会中止。多段行程中可命令人物在下一战区停下，也可撤回命令；已付费用不退还。可向已报告的领袖、竞争者或指挥官请求个人会面，消耗3国库、需要2个月；双方须实际位于同一战区，也可能无法会面。报告可能过时或错误。已有信任及势力关系影响接受意愿；成功会面使双方关系提高3，并记录当时的公开表态，不证明私下意图；36个月内，个人信任还能为结盟条件提供最多10点加成，但不能排除其他阻碍。可让有信任的人帮助联系竞争者，但书信仍可能丢失或被拒。'},

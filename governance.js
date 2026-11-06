@@ -34,6 +34,16 @@ export function initializeGovernments(s){
  initializeWorld(s);s.world.appointments||={};s.world.successionPlans||={};s.world.governments||={};for(const faction of Object.keys(s.factions).filter(x=>x!=='rebels'))if(!s.world.governments[faction])s.world.governments[faction]=deriveGovernment(s,faction);return s;
 }
 
+// A stored nomination can become temporarily invalid without being erased.
+export function validSuccessionPlan(s,faction){
+ initializeWorld(s);const id=s.world.successionPlans?.[faction];return id&&successorFor(s,faction).includes(id)?id:null;
+}
+
+export function withdrawSuccessionPlan(s){
+ initializeGovernments(s);const faction=s.player;if(!s.world.successionPlans[faction])return {ok:false,reason:'unavailable'};
+ delete s.world.successionPlans[faction];s.log.unshift({year:s.year,month:s.month,en:'The succession designation was withdrawn. Its cost was not refunded.',zh:'继任安排已撤回，已付费用不予退还。'});s.log=s.log.slice(0,80);return {ok:true};
+}
+
 export function planSuccession(s,id){
  initializeGovernments(s);const faction=s.player;if(!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive)||!successorFor(s,faction).includes(id))return {ok:false,reason:'unavailable'};
  if(s.world.successionPlans[faction]===id)return {ok:false,reason:'already'};if(s.factions[faction].treasury<5)return {ok:false,reason:'treasury'};
