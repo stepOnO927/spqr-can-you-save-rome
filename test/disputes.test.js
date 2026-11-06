@@ -36,7 +36,7 @@ test('a spy finding no identifiable leaders does not erase previous reports or i
 });
 test('a claimant who dies during an interregnum is not installed as ruler',()=>{
  const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.world.characters.ptolemy.alive=false;assignSuccession(s,'egypt');s.world.characters.cleopatra.alive=false;s.month++;advanceDisputes(s);
- assert.deepEqual(s.world.claimants.egypt,[]);assert.deepEqual(s.world.leadership.egypt,[]);assert.equal(deriveGovernment(s,'egypt').kind,'vacant');assert.equal(s.world.disputes.egypt,undefined);
+ assert.deepEqual(s.world.claimants.egypt,[]);assert.deepEqual(s.world.leadership.egypt,['arsinoe']);assert.ok(!s.world.leadership.egypt.includes('cleopatra'));assert.equal(s.world.disputes.egypt,undefined);
 });
 test('an ordinary monthly tick leaves time for an unresolved succession after the incumbent dies',()=>{
  const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.world.disputes.egypt.months=5;s.world.characters.ptolemy.health='dying';s.month=12;s.world.intelSeed=1000;tick(s);

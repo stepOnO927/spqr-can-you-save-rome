@@ -69,3 +69,14 @@ test('a prepared response can still arrive after the original claimant court fal
  s.inquiries[0].sealed={status:'answered',year:-49,month:1,report:{kind:'leaders',leaders:['cleopatra'],source:'official',confidence:'unverified'}};assert.equal(settleDynasticWar(s,'egypt'),true);s.world.intelSeed=1000;
  for(let i=0;i<4;i++)tick(s);assert.equal(s.inquiries[0].status,'answered');
 });
+
+test('the death of the last claimant resolves an incumbent vacancy and preserves accepted reserves',()=>{
+ let s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.world.characters.ptolemy.alive=false;s.world.characters.ptolemy.health='deceased';assignSuccession(s,'egypt');assert.deepEqual(s.world.leadership.egypt,[]);
+ s.world.disputes.egypt.militaryAid={cleopatra:1000};s.world.characters.cleopatra.alive=false;s.world.characters.cleopatra.health='deceased';const before=s.factions.egypt.manpower;
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));advanceDisputes(s);assert.deepEqual(s.world.leadership.egypt,['arsinoe']);assert.equal(s.world.disputes.egypt,undefined);assert.equal(s.factions.egypt.manpower,before+1000);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+ advanceDisputes(s);assert.equal(s.factions.egypt.manpower,before+1000);
+});
+test('a deceased claimant does not erase a living rival or that rival’s backing',()=>{
+ const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');s.factions.egypt.stability=30;contestLeadership(s,'egypt','arsinoe');s.world.disputes.egypt.militaryAid={cleopatra:1000,arsinoe:1000};s.world.disputes.egypt.support={cleopatra:15,arsinoe:20};s.world.characters.cleopatra.alive=false;s.world.characters.cleopatra.health='deceased';const before=s.factions.egypt.manpower;
+ advanceDisputes(s);assert.deepEqual(s.world.claimants.egypt,['arsinoe']);assert.equal(s.factions.egypt.manpower,before+1000);assert.equal(s.world.disputes.egypt.militaryAid.arsinoe,1000);assert.equal(s.world.disputes.egypt.support.arsinoe,20);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+});
