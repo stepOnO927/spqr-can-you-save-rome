@@ -22,3 +22,15 @@ test('an invalidated or captured assignment stops working before the next econom
   const s=newGame('senate');appointGovernor(s,'roma','cicero');change(s);s.month=3;assert.equal(localGovernor(s,'roma'),null);assert.equal(governorLoyaltyEffect(s,'roma'),0);advanceOffices(s);assert.equal(s.world.localGovernors.roma,undefined);assert.equal(s.knowledge.caesar.senate.reports.length,0);
  }
 });
+
+test('both Roman AI factions appoint a local administrator with their own available people and without broadcasting the appointment',()=>{
+ for(const [player,opponent,theater] of [['caesar','senate','roma'],['senate','caesar','cisalpine']]){
+  let s=newGame(player),cash=s.factions[opponent].treasury,chronicle=s.log.length;s.month=1;advanceOffices(s);assert.equal(Object.keys(s.world.offices[opponent]).length,1);assert.equal(s.factions[opponent].treasury,cash-5);assert.equal(s.world.localGovernors[theater],undefined);
+  s.month=7;advanceOffices(s);const id=localGovernor(s,theater);assert.ok(id);assert.equal(s.factions[opponent].treasury,cash-10);assert.equal(s.world.characters[id].faction,opponent);assert.equal(s.world.characters[id].location,theater);assert.equal(s.knowledge[player][opponent].reports.length,0);assert.equal(s.log.length,chronicle);
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(localGovernor(s,theater),id);s.world.characters[id].health='seriously_ill';assert.equal(localGovernor(s,theater),null);advanceOffices(s);assert.equal(s.knowledge[player][opponent].reports.length,0);
+ }
+});
+test('AI prioritizes a weak eligible theater, spends funds and never appoints into a foreign theater',()=>{
+ const s=newGame('caesar');s.month=1;s.regions.find(r=>r.id==='roma').loyalty=50;const initial=s.factions.senate.treasury;advanceOffices(s);assert.ok(localGovernor(s,'roma'));assert.equal(Object.keys(s.world.offices.senate).length,0);assert.equal(s.factions.senate.treasury,initial-5);assert.equal(s.world.localGovernors.cisalpine,undefined);
+ const poor=newGame('caesar');poor.month=1;poor.regions.find(r=>r.id==='roma').loyalty=50;poor.factions.senate.treasury=4;advanceOffices(poor);assert.deepEqual(poor.world.localGovernors,{});assert.equal(poor.factions.senate.treasury,4);
+});

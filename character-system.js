@@ -4,7 +4,7 @@ import {deriveGovernment,validSuccessionPlan} from './governance.js?v=22';
 import {potentialConspirators} from './conspiracies.js?v=10';
 import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=3';
 import {reportedControl} from './control-intelligence.js?v=4';
-import {canHoldOffice,localGovernor} from './office-system.js?v=9';
+import {canHoldOffice,localGovernor} from './office-system.js?v=10';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
