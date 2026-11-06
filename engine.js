@@ -2,7 +2,7 @@ import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-dipl
 import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=27-xxiid';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=11-xxiib';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=20-xxiib';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=89-xxiid';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=death-report-1';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=12-xxiib';
 import {advanceConspiracies} from './conspiracies.js?v=11-xxiib';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=4-xxiib';

@@ -13,12 +13,12 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=8-xxiib';
 import republicanRoads from '../republican-roads.js?v=1-xxiib';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=125-xxiid';
+import {newGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=death-report-1';
 import {FACTIONS} from '../data.js?v=11-xxiib';
 import {identity,factionMark} from '../identity.js?v=3-xxiib';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=20-xxiib';
-import {createCharacterUI} from './character-ui.js?v=127-xxiic';
-import {reportedArmies} from '../character-system.js?v=89-xxiid';
+import {createCharacterUI} from './character-ui.js?v=death-report-1';
+import {reportedArmies} from '../character-system.js?v=death-report-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=9-xxiib';
 import {friendlyPersonnelInTheater} from './personnel.js?v=2-xxiib';
 import {leadershipIntelligence} from './intelligence-summary.js?v=2-xxiib';
