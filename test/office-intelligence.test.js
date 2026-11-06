@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js';
-import {appointOffice} from '../office-system.js';
+import {appointOffice,advanceOffices,localGovernor} from '../office-system.js';
 import {addReport,advanceOperations,previewMission,queueMission,reportedHealthSubjects,reportedOfficeTheaters} from '../character-system.js';
 import {identityKnowledge} from '../map-lab/identity-knowledge.js';
 
@@ -36,4 +36,8 @@ test('a theater assignment can be investigated without disclosing hidden control
 test('allied theater reports preserve their original source and unknown does not imply a vacancy',()=>{
  let s=newGame('caesar');s.alliances.push(['caesar','egypt']);addReport(s,'egypt','senate',{kind:'office_theater:roma',value:'cicero',source:'spy',observationYear:-50,observationMonth:6});assert.equal(queueMission(s,'caesar','senate','exchange','office_theater:roma','egypt').ok,true);s.world.intelSeed=seedFor(.65,.7);for(let i=0;i<3;i++)advanceOperations(s);let r=s.knowledge.caesar.senate.reports[0];assert.equal(r.value,'cicero');assert.equal(r.originSource,'spy');assert.equal(r.observationYear,-50);
  s=newGame('caesar');assert.equal(queueMission(s,'caesar','senate','spy','office_theater:roma').ok,true);s.world.intelSeed=seedFor(.65,.7);resolve(s);r=s.knowledge.caesar.senate.reports[0];assert.equal(r.value,'unknown');assert.equal(r.verified,false);
+});
+
+test('a real AI appointment can be uncovered by a delayed spy without automatic disclosure',()=>{
+ let s=newGame('caesar');s.month=1;advanceOffices(s);s.month=7;advanceOffices(s);const nominee=localGovernor(s,'roma');assert.ok(nominee);assert.equal(s.knowledge.caesar.senate.reports.length,0);assert.equal(queueMission(s,'caesar','senate','spy','office_theater:roma').ok,true);s.world.intelSeed=seedFor(.65,.7);for(let i=0;i<3;i++)advanceOperations(s);assert.equal(s.knowledge.caesar.senate.reports.length,0);s=upgradeSave(JSON.parse(JSON.stringify(s)));advanceOperations(s);assert.equal(s.knowledge.caesar.senate.reports[0].value,nominee);assert.equal(s.knowledge.egypt.senate.reports.length,0);
 });

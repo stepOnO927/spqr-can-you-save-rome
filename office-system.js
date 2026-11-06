@@ -35,11 +35,12 @@ export function governorCandidates(s,theater,actor=s.player){
  initializeOffices(s);if(!roman(actor)||!s.regions.some(r=>r.id===theater&&r.owner===actor))return [];
  return Object.keys(s.world.characters).filter(id=>s.world.characters[id].location===theater&&canHoldOffice(s,actor,id)&&(!officeOf(s,actor,id)||officeOf(s,actor,id)==='theater:'+theater));
 }
-export function appointGovernor(s,theater,id){
- const faction=s.player;initializeOffices(s);if(!governorCandidates(s,theater,faction).includes(id))return {ok:false,reason:'unavailable'};
+function appointGovernorFor(s,theater,id,faction){
+ initializeOffices(s);if(!governorCandidates(s,theater,faction).includes(id))return {ok:false,reason:'unavailable'};
  if(localGovernor(s,theater)===id)return {ok:false,reason:'already'};if(s.factions[faction].treasury<5)return {ok:false,reason:'treasury'};
- s.factions[faction].treasury-=5;s.world.localGovernors[theater]={faction,person:id};record(s,`${CHARACTER_CATALOG[id].name[0]} received a simulated theater assignment.`,`${CHARACTER_CATALOG[id].name[1]}获得游戏中的战区行政任命。`);return {ok:true,cost:5};
+ s.factions[faction].treasury-=5;s.world.localGovernors[theater]={faction,person:id};if(faction===s.player)record(s,`${CHARACTER_CATALOG[id].name[0]} received a simulated theater assignment.`,`${CHARACTER_CATALOG[id].name[1]}获得游戏中的战区行政任命。`);return {ok:true,cost:5};
 }
+export function appointGovernor(s,theater,id){return appointGovernorFor(s,theater,id,s.player)}
 export function dismissGovernor(s,theater){
  initializeOffices(s);const post=s.world.localGovernors[theater];if(!post||post.faction!==s.player)return {ok:false,reason:'unavailable'};
  delete s.world.localGovernors[theater];record(s,`${CHARACTER_CATALOG[post.person]?.name[0]||'An official'} left a simulated theater assignment.`,`${CHARACTER_CATALOG[post.person]?.name[1]||'一名官员'}卸下游戏中的战区行政职务。`);return {ok:true};
@@ -53,7 +54,14 @@ export function advanceOffices(s){
   // AI uses only its own personnel, and fills at most one vacancy per half-year.
   if(faction!==s.player&&(s.month===1||s.month===7)&&s.factions[faction]?.treasury>=5&&s.regions.some(r=>r.owner===faction)){
    const vacancy=OFFICE_TYPES.find(office=>!offices[faction][office]&&officeCandidates(s,faction,office).length);
-   if(vacancy){const id=officeCandidates(s,faction,vacancy).sort((a,b)=>s.world.characters[b].loyalty-s.world.characters[a].loyalty)[0];appointOffice(s,vacancy,id,faction)}
+   // Choose from the faction's own present people and theaters only. A weak
+   // theater takes priority; otherwise establish a local post after one central
+   // office. Both branches spend the same five treasury and fill at most one.
+   const theater=s.regions.filter(r=>r.owner===faction&&!localGovernor(s,r.id)&&governorCandidates(s,r.id,faction).length).sort((a,b)=>a.loyalty-b.loyalty||a.id.localeCompare(b.id))[0];
+   const centralCount=OFFICE_TYPES.filter(office=>offices[faction][office]).length,existingLocal=Object.values(s.world.localGovernors).some(post=>post.faction===faction);
+   if(theater&&(!vacancy||theater.loyalty<=60||centralCount>0&&!existingLocal)){
+    const id=governorCandidates(s,theater.id,faction).sort((a,b)=>s.world.characters[b].loyalty-s.world.characters[a].loyalty||a.localeCompare(b))[0];appointGovernorFor(s,theater.id,id,faction);
+   }else if(vacancy){const id=officeCandidates(s,faction,vacancy).sort((a,b)=>s.world.characters[b].loyalty-s.world.characters[a].loyalty)[0];appointOffice(s,vacancy,id,faction)}
   }
  }
 }
