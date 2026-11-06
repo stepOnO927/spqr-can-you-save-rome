@@ -1,12 +1,12 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=88';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=89';
 import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=23';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=11';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=19';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=83';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=84';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=11';
 import {advanceConspiracies} from './conspiracies.js?v=11';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=4';
-import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=5';
+import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=6';
 export {queueMission};
 export {personalDiplomaticCredit};
 

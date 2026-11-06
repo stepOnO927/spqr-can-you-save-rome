@@ -2,7 +2,7 @@ import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRa
 import {FACTIONS,ROUTES} from './data.js?v=11';
 import {deriveGovernment,validSuccessionPlan} from './governance.js?v=23';
 import {potentialConspirators} from './conspiracies.js?v=11';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=5';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=6';
 import {reportedControl} from './control-intelligence.js?v=4';
 import {canHoldOffice,localGovernor} from './office-system.js?v=11';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');

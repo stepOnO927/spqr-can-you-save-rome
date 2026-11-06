@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=19';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=19';
 import {reportedControl} from './control-intelligence.js?v=4';
 
 // Alternate-history claimant commands use real game theaters and armies.
@@ -74,6 +74,9 @@ export function resolveDynasticWars(s){
   delete s.factions[cfg.rival];delete s.world.leadership[cfg.rival];delete s.world.governments?.[cfg.rival];
   s.world.disputeHistory.unshift({faction:parent,claimant:war.claimant,outcome:rivalWins?'civil_war_victory':'civil_war_defeat',year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);
   continueRemainingDispute(s,parent,dispute);
+  // A deceased claimant's supporters can win, but cannot themselves rule.
+  // Resolve an uncontested vacancy normally; living rivals still contest it.
+  if(rivalWins&&!s.world.leadership[parent].length)assignSuccession(s,parent);
  }
 }
 
