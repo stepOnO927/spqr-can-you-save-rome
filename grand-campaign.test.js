@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {GRAND_SITES,GRAND_ROUTES,GRAND_GROUPS} from './grand-map-data.js';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,previewMarch,moveArmy,tick} from './engine.js';
-import {grandAdjacent,armySupply,encircled,holdPosition,strategicRetreat,flankFactor} from './grand-operations.js';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,previewMarch,moveArmy,tick,aiTurn,recruitFigure} from './engine.js';
+import {grandAdjacent,armySupply,encircled,holdPosition,strategicRetreat,flankFactor,navalCapacity,availableNavalLift,canEmbark,supplyBottlenecks} from './grand-operations.js';
+import {advanceFigures,figureActive} from './great-figures.js';
+import {faithSatisfaction,advanceDemography} from './local-society.js';
 import grandPolygons from './grand-territory-polygons.js';
 
 test('120 actual territories, 30 in Italy and Sicily, each with a bounded map polygon and graph entry',()=>{
@@ -19,7 +21,16 @@ test('cut supply creates encirclement and real attrition; hold and retreat obey 
  const isolated=s.armies.find(x=>x.id==='xiii');isolated.region='t005';for(const r of s.regions)if(r.id!==isolated.region&&r.owner==='caesar')r.owner='senate';assert.equal(encircled(s,isolated),true);assert.ok(armySupply(s,isolated)<.5);const men=isolated.men;tick(s);assert.ok(isolated.men<men);assert.equal(strategicRetreat(s,isolated.id,exit.to).ok,false);
 });
 test('flanking requires distinct friendly attack directions and explicit coordination',()=>{
- const s=newGrandGame('caesar'),target=s.regions.find(r=>r.id==='italiaN'),attack=s.armies.find(a=>a.id==='xiii'),approach=grandAdjacent(target.id).filter(e=>!e.sea&&e.to!==attack.region);assert.ok(approach.length);s.armies.push({id:'support-test',owner:'caesar',region:approach[0].to,men:2500,move:null});assert.equal(flankFactor(s,attack,target),1);attack.coordinated=true;assert.equal(flankFactor(s,attack,target),1.06);
+ const s=newGrandGame('caesar'),target=s.regions.find(r=>r.id==='italiaN'),attack=s.armies.find(a=>a.id==='xiii'),approach=grandAdjacent(target.id).find(e=>e.to==='t005');assert.ok(approach);s.armies.push({id:'support-test',owner:'caesar',region:approach.to,men:2500,move:null});assert.equal(flankFactor(s,attack,target),1);attack.coordinated=true;assert.equal(flankFactor(s,attack,target),1.06);
+});
+test('fleet lift limits simultaneous sea crossings and a completed shipyard expands capacity',()=>{
+ const s=newGrandGame('senate'),[from,to]=GRAND_ROUTES.find(([a,b,kind])=>kind==='sea'&&s.regions.find(r=>r.id===a).owner==='senate'&&s.regions.find(r=>r.id===b).owner==='senate'),unit=s.armies.find(a=>a.id==='italy');unit.region=from;const departure=s.regions.find(r=>r.id===from),arrival=s.regions.find(r=>r.id===to);s.factions.senate.navalLift=0;assert.equal(canEmbark(s,unit,departure,arrival),false);departure.buildings.push('shipyard');assert.equal(navalCapacity(s,'senate'),1);assert.equal(canEmbark(s,unit,departure,arrival),true);s.armies.find(a=>a.id==='pompey').move={to,remaining:2,sea:true};assert.equal(availableNavalLift(s,'senate',unit.id),0);assert.equal(canEmbark(s,unit,departure,arrival),false)
+});
+test('AI coordinates a real neighboring attack and protects actual supply cut points',()=>{
+ const s=newGrandGame('caesar');for(const r of s.regions)if(r.owner==='senate'&&r.id!=='italiaN')r.owner='caesar';const attack=s.armies.find(a=>a.id==='xiii');attack.men=10000;const support=s.armies.find(a=>a.id==='viii');support.region='t005';support.men=3500;s.regions.find(r=>r.id==='t005').owner='caesar';s.factions.caesar.food=100;aiTurn(s,'caesar');assert.equal(attack.coordinated,true);assert.equal(attack.move?.to,'italiaN');assert.equal(support.move,null);assert.ok(supplyBottlenecks(s,'caesar') instanceof Set)
+});
+test('historical engineer travels before construction bonus and faith affects local society',()=>{
+ const s=newGrandGame('caesar'),offer=recruitFigure(s,'caesar','mamurra');assert.equal(offer.ok,true);assert.equal(figureActive(s,'caesar','engineer'),false);for(let i=0;i<offer.months;i++)advanceFigures(s);assert.equal(figureActive(s,'caesar','engineer'),true);const region=s.regions.find(r=>r.id==='egypt');region.owner='caesar';region.integration=30;s.month=3;assert.equal(faithSatisfaction(s,region),-1);s.development.caesar.slots.culture[0]='cultural-accommodation';assert.equal(faithSatisfaction(s,region),1);const origin=s.regions.find(r=>r.id==='cisalpine'),neighbor=s.regions.find(r=>r.id==='t005');neighbor.owner='caesar';origin.civicSatisfaction=20;neighbor.civicSatisfaction=80;const before=origin.population;advanceDemography(s);assert.ok(origin.population<before)
 });
 test('legacy save migration preserves political state, characters, intelligence and armies',()=>{
  const old=newGame('senate');old.regions.find(r=>r.id==='roma').loyalty=31;old.factions.senate.treasury=77;old.log.push({year:-49,month:1,en:'test',zh:'测试'});const name=old.world.characters.cicero.name;old.armies.find(a=>a.id==='xiii').move={to:'roma',remaining:1,sea:false};const converted=convertToGrandMap(structuredClone(old));assert.equal(converted.regions.length,120);assert.equal(converted.regions.find(r=>r.id==='roma').loyalty,31);assert.equal(converted.factions.senate.treasury,77);assert.equal(converted.world.characters.cicero.name,name);assert.equal(converted.log.at(-1).en,'test');assert.notEqual(converted.armies.find(a=>a.id==='xiii').move.to,'roma');assert.equal(upgradeSave(structuredClone(converted)).regions.length,120);assert.equal(old.regions.length,22);

@@ -106,6 +106,7 @@ const materialPrerequisites={'stone-fortification':['barracks-design'],'metal-ex
 const ideaPrerequisites={'reserve-mobilization':['legion-training'],'provincial-autonomy':['senatorial-consultation'],'commercial-agreements':['diplomatic-accommodation'],'estate-organization':['public-works'],'civic-education':['rhetorical-education']};
 for(const item of MATERIALS)item.prerequisites=materialPrerequisites[item.id]||item.prerequisites||[];
 for(const item of IDEAS)item.prerequisites=ideaPrerequisites[item.id]||[];
+import {figureActive} from './great-figures.js';
 const ids = x => x.map(item=>item.id);
 const metalDeposits=new Set(['hispaniaN','hispaniaS','illyricum','anatolia','armenia','gaul']);
 const coastalSites=new Set(['narbo','hispaniaN','hispaniaS','italiaS','sicilia','africa','epirus','achaia','anatolia','syria','egypt','numidia','mauretania','bosporus']);
@@ -134,9 +135,9 @@ export function researchInnovation(s,owner,branch,id){
   const d=development(s,owner),item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id),f=s.factions[owner];
   if(!item||d.research||d[branch==='material'?'knownMaterial':'knownIdeas'].includes(id))return {ok:false,reason:'unavailable'};
   if(item.prerequisites.some(pre=>!d[branch==='material'?'knownMaterial':'knownIdeas'].includes(pre)))return {ok:false,reason:'prerequisite'};
-  const cost=Math.max(8,item.cost-(activeEffects(s,owner).researchDiscount||0));
+  const cost=Math.max(8,item.cost-(activeEffects(s,owner).researchDiscount||0)-(figureActive(s,owner,'scholar')?3:0));
   if(f.treasury<cost)return {ok:false,reason:'treasury'};
-  f.treasury-=cost;d.research={branch,id,remaining:item.months};return {ok:true};
+  f.treasury-=cost;d.research={branch,id,remaining:Math.max(1,item.months-(figureActive(s,owner,'scholar')?1:0))};return {ok:true};
 }
 export function ideaCompatibility(s,owner,ideaId){
   const d=development(s,owner),idea=IDEAS.find(i=>i.id===ideaId);
@@ -151,7 +152,8 @@ export function adoptIdea(s,owner,ideaId,slot=0){
   const compatible=ideaCompatibility(s,owner,ideaId);if(!compatible.ok)return compatible;
   if(f.treasury<idea.adopt)return {ok:false,reason:'treasury'};
   const old=d.slots[idea.category][slot];if(old===ideaId)return {ok:false,reason:'active'};
-  f.treasury-=idea.adopt;d.adoption={ideaId,category:idea.category,slot,remaining:(old?3:2)+(activeEffects(s,owner).decisionDelay||0)+(d.foreignOrigins[ideaId]?2:0),old};
+  const specialist=idea.category==='military'?'military':idea.category==='government'?'statesman':idea.category==='culture'?'religious':null;
+  f.treasury-=idea.adopt;d.adoption={ideaId,category:idea.category,slot,remaining:Math.max(1,(old?3:2)+(activeEffects(s,owner).decisionDelay||0)+(d.foreignOrigins[ideaId]?2:0)-(specialist&&figureActive(s,owner,specialist)?1:0)),old};
   if(old)f.stability=Math.max(0,f.stability-2);
   return {ok:true};
 }
@@ -177,7 +179,7 @@ export function constructionCheck(s,owner,regionId,buildingId){
   if(b.site==='urban'&&!(s.grandMap?r.terrain==='urban':urbanSites.has(r.id)))return {ok:false,reason:'settlement'};
   if(b.id==='shipyard'&&!r.buildings.includes('port'))return {ok:false,reason:'port'};
   if(r.buildings.includes(buildingId)||r.construction)return {ok:false,reason:'queue'};
-  const cost=Math.max(5,b.cost-(activeEffects(s,owner).constructionDiscount||0));
+  const cost=Math.max(5,b.cost-(activeEffects(s,owner).constructionDiscount||0)-(figureActive(s,owner,'engineer')?3:0));
   if(f.treasury<cost)return {ok:false,reason:'treasury'};
   if(Object.entries(b.materials).some(([k,v])=>(d.materials[k]||0)<v))return {ok:false,reason:'materials'};
   return {ok:true,cost};
@@ -186,7 +188,7 @@ export function startConstruction(s,owner,regionId,buildingId,inscription=''){
   const check=constructionCheck(s,owner,regionId,buildingId);if(!check.ok)return check;
   const d=development(s,owner),r=s.regions.find(x=>x.id===regionId),b=BUILDINGS.find(x=>x.id===buildingId);
   s.factions[owner].treasury-=check.cost;for(const [k,v] of Object.entries(b.materials))d.materials[k]-=v;
-  r.construction={buildingId,owner,remaining:b.months,inscription:buildingId==='monument'?String(inscription).slice(0,120):''};return {ok:true};
+  r.construction={buildingId,owner,remaining:Math.max(1,b.months-(figureActive(s,owner,'engineer')?1:0)),inscription:buildingId==='monument'?String(inscription).slice(0,120):''};return {ok:true};
 }
 export function purchaseMaterials(s,owner,kind,amount=5){
   const d=development(s,owner),f=s.factions[owner],unit={stone:2,timber:2,metal:4}[kind];

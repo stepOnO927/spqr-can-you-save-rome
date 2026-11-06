@@ -19,6 +19,8 @@ export const HISTORICAL_DEATHS={
  deiotarus:{years:[41,40],disputed:true,sources:[{label:['Encyclopedia of Ancient History: Deiotaros','古代史百科全书：代奥塔鲁斯'],url:'https://onlinelibrary.wiley.com/doi/abs/10.1002/9781444338386.wbeah09083.pub2'}]},
  pharnaces:{years:[47],sources:[{label:['Oxford Classical Dictionary: Pharnaces II','牛津古典辞典：法尔纳刻斯二世'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549705304'}]},
  pacorus:{years:[38],sources:[{label:['Encyclopaedia Iranica: Orodes II','伊朗百科：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}]}
+ ,mamurra:{years:[],unknown:true,sources:[{label:['Oxford Classical Dictionary: Mamurra','牛津古典辞典：马穆拉'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549655591'}]}
+ ,varro:{years:[27],sources:[{label:['Oxford Classical Dictionary: Varro','牛津古典辞典：瓦罗'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/548203937'}]}
 };
 
 // Approximate birth references; uncertain single years are not converted into

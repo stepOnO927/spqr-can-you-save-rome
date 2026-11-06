@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {loadProfile,saveProfile,purchase,recordCampaign,createScenario} from './legacy-core.js';
+import {loadProfile,saveProfile,exportProfile,importProfile,purchase,recordCampaign,createScenario} from './legacy-core.js';
 import {decidePetition} from './civic.js';
 import {settleRace} from './race.js';
+import {ACTIVITIES,resolveActivity} from './activities.js';
 import {newGrandGame} from '../engine.js';
 
 const memory=()=>{let value=null;return {getItem:()=>value,setItem:(key,v)=>{value=v}}};
@@ -20,4 +21,13 @@ test('race places, trophy, last place punishment and reward guard persist',()=>{
 });
 test('unlocked scenario creates a distinct playable alternate history state',()=>{
  const s=createScenario('scenario-rubicon',newGrandGame);assert.equal(s.grandMap,true);assert.equal(s.regions.length,120);assert.equal(s.player,'senate');assert.ok(s.legacyScenario);assert.equal(s.difficulty,'standard');
+});
+test('six hub districts contain permanent choices with one-time rewards and civic consequences',()=>{
+ const storage=memory(),p=loadProfile(storage);p.coins=5000;for(const building of ['camp','temple','library','harbor','court','intelligence'])assert.equal(purchase(p,building).ok,true);assert.equal(ACTIVITIES.length,12);const before=p.politics.corruption,coins=p.coins;assert.equal(resolveActivity(p,'court-bribe',0).ok,true);assert.equal(p.politics.corruption,before-3);assert.equal(p.coins,coins+40);assert.equal(resolveActivity(p,'court-bribe',0).ok,false);assert.equal(resolveActivity(p,'intelligence-sources',1).correct,false);saveProfile(p,storage);assert.equal(loadProfile(storage).activities.length,2)
+});
+test('tight track championship and Thessaly scenario persist as distinct content',()=>{
+ const p=loadProfile(memory());assert.equal(settleRace(p,{id:'tight-win',driver:'Aurelia',place:1,lastDriver:'Lucius',track:'tight'}).ok,true);assert.ok(p.collectibles.includes('tight-cup'));assert.ok(p.race.champions.includes('tight'));const s=createScenario('scenario-pharsalus',newGrandGame);assert.equal(s.year,-48);assert.equal(s.month,6);assert.equal(s.player,'caesar');assert.equal(s.armies.find(a=>a.id==='xiii').region,s.regions.find(r=>r.site?.[0]==='Apollonia').id);assert.equal(s.armies.find(a=>a.id==='pompey').region,s.regions.find(r=>r.site?.[0]==='Larissa').id)
+});
+test('city profile export and import preserve one-time rewards across devices',()=>{
+ const p=loadProfile(memory());p.buildings.push('court');assert.equal(resolveActivity(p,'court-bribe',0).ok,true);const restored=importProfile(exportProfile(p));assert.deepEqual(restored.activities,p.activities);assert.deepEqual(restored.rewards,p.rewards);assert.equal(resolveActivity(restored,'court-bribe',0).ok,false);assert.throws(()=>importProfile('{"player":"caesar"}'));assert.throws(()=>importProfile('x'.repeat(2_000_001)));
 });
