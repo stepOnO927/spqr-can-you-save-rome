@@ -17,7 +17,7 @@ const ensureCatalog=s=>{for(const [id,entry] of Object.entries(s.world.dynasties
 
 export function initializeDynasties(s){
  const d=s.world.dynasties||= {families:{},lives:{},catalog:{},marriages:[],memories:[],rulers:[],seed:220049,nextPerson:1,nextFamily:1};
- d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
+ d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
  for(const [id,c] of Object.entries(s.world.characters)){
   c.parents||=[];c.adoptiveParents||=[];c.children||=[];c.spouse||=null;c.wealth??=0;
   c.sex||=(['cleopatra','arsinoe'].includes(id)?'female':CHARACTER_CATALOG[id]?.fictional?'unknown':'male');
@@ -153,8 +153,36 @@ export function resolveInheritanceDispute(s,disputeId,choice){
  return {ok:true};
 }
 
+export function requestFamilyResources(s,familyId,choice){
+ const d=initializeDynasties(s),family=d.families[familyId],faction=s.player,government=s.factions[faction];
+ if(!family||!government||!['donation','loan','levy'].includes(choice))return {ok:false,reason:'unavailable'};
+ const members=Object.values(s.world.characters).filter(c=>c.alive&&c.faction===faction&&c.familyId===familyId).sort((a,b)=>(b.wealth||0)-(a.wealth||0));
+ if(!members.length)return {ok:false,reason:'unavailable'};
+ const monthIndex=s.year*12+s.month;if((family.lastResourceRequest??-Infinity)+6>monthIndex)return {ok:false,reason:'cooldown'};
+ const available=(family.wealth||0)+members.reduce((sum,c)=>sum+Math.max(0,Math.floor(c.wealth||0)),0);
+ const amount=Math.min(choice==='loan'?12:8,available);if(amount<4)return {ok:false,reason:'wealth'};
+ const leader=s.world.characters[family.leader]||members[0];
+ if(choice==='donation'&&roll(s)>=Math.max(.2,Math.min(.85,.35+(leader.loyalty||50)/250+(family.reputation||50)/500))){family.lastResourceRequest=monthIndex;record(s,leader.id,'The family declined a request for a voluntary contribution.','家族拒绝了自愿捐助请求。');return {ok:false,reason:'declined'}}
+ if(choice==='loan'&&((leader.loyalty||50)<25||d.familyLoans.some(x=>x.familyId===familyId&&x.remaining>0)))return {ok:false,reason:'terms'};
+ let rest=amount,pooled=Math.min(rest,family.wealth||0);family.wealth-=pooled;rest-=pooled;
+ for(const person of members){const taken=Math.min(rest,Math.max(0,Math.floor(person.wealth||0)));person.wealth-=taken;rest-=taken;if(!rest)break}
+ government.treasury+=amount;family.lastResourceRequest=monthIndex;
+ if(choice==='donation'){family.influence=Math.min(100,(family.influence||20)+3);family.reputation=Math.min(100,(family.reputation||50)+2);leader.loyalty=Math.min(100,(leader.loyalty||50)+2)}
+ if(choice==='loan'){d.familyLoans.push({familyId,faction,principal:amount,remaining:amount+2,year:s.year,month:s.month});family.influence=Math.min(100,(family.influence||20)+2)}
+ if(choice==='levy'){government.stability=Math.max(0,government.stability-4);family.reputation=Math.max(0,(family.reputation||50)-5);for(const member of members)member.loyalty=Math.max(0,(member.loyalty||50)-8);d.memories.push({familyId,kind:'forced_levy',year:s.year,month:s.month,weight:-10})}
+ const labels={donation:['voluntary contribution','自愿捐助'],loan:['family loan','家族借款'],levy:['compulsory levy','强制征收']};
+ record(s,leader.id,`The family provided ${amount} to the treasury as a ${labels[choice][0]}.`,`家族以${labels[choice][1]}形式向国库提供${amount}。`);
+ note(s,`A ${labels[choice][0]} transferred ${amount} private wealth to the treasury.`,`一笔${labels[choice][1]}将${amount}私人财富转入国库。`);
+ return {ok:true,amount};
+}
+
 export function advanceDynasties(s){
  const d=initializeDynasties(s);
+ for(const loan of d.familyLoans.filter(x=>x.remaining>0)){
+  const treasury=s.factions[loan.faction]?.treasury||0;if(treasury<1)continue;
+  s.factions[loan.faction].treasury--;d.families[loan.familyId].wealth++;loan.remaining--;
+  if(!loan.remaining&&loan.faction===s.player)note(s,'A family loan was repaid in full.','一笔家族借款已全额偿还。');
+ }
  for(const dispute of d.inheritanceDisputes.filter(x=>x.status==='pending')){
   const age=(s.year-dispute.year)*12+s.month-dispute.month;
   if((dispute.faction!==s.player&&age>=3)||age>=12){const choice=s.factions[dispute.faction]?.treasury>=6?'compromise':'heirs';resolveInheritanceDispute(s,dispute.id,choice)}

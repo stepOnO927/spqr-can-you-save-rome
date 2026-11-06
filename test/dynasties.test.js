@@ -4,7 +4,7 @@ import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
 import {CHARACTER_CATALOG} from '../characters.js?v=20-xxiib';
 import {assignSuccession} from '../characters.js?v=20-xxiib';
 import {deriveGovernment,advanceGovernments,secureRegency} from '../governance.js?v=26-xxiib';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
 import {canHoldOffice} from '../office-system.js?v=12-xxiib';
 import {renderGenealogy} from '../genealogy-ui.js';
 import {finalizeCampaign} from '../legacy.js';
@@ -51,6 +51,20 @@ test('unresolved estates receive an automatic ruling after twelve months',()=>{
  s.year+=1;advanceDynasties(s);
  assert.equal(s.world.dynasties.inheritanceDisputes[0].status,'resolved');
  assert.equal(s.world.characters[child].wealth+s.world.characters[outsider].wealth,20);
+});
+
+test('family wealth funds real loans and levies without becoming free treasury',()=>{
+ const s=newGame('egypt'),person=createFictionalPerson(s,{name:['Patron','家主'],faction:'egypt',birthYear:-80,wealth:30});
+ const family=s.world.characters[person].familyId,treasury=s.factions.egypt.treasury;
+ assert.equal(requestFamilyResources(s,family,'loan').ok,true);
+ assert.equal(s.factions.egypt.treasury,treasury+12);assert.equal(s.world.characters[person].wealth,18);
+ assert.equal(requestFamilyResources(s,family,'loan').reason,'cooldown');
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));advanceDynasties(restored);
+ assert.equal(restored.factions.egypt.treasury,treasury+11);assert.equal(restored.world.dynasties.familyLoans[0].remaining,13);
+ assert.equal(restored.world.dynasties.families[family].wealth,1);
+ restored.month+=6;assert.equal(requestFamilyResources(restored,family,'levy').ok,true);
+ assert.equal(restored.factions.egypt.stability,s.factions.egypt.stability-4);
+ assert.ok(restored.world.characters[person].loyalty<s.world.characters[person].loyalty);
 });
 
 test('children mature over years and their identities survive loading',()=>{

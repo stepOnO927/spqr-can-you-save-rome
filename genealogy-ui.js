@@ -1,5 +1,5 @@
 import {CHARACTER_CATALOG} from './characters.js?v=20-xxiib';
-import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian} from './dynasties.js?v=3-xxiic';
+import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources} from './dynasties.js?v=4-xxiid';
 import {deriveGovernment,secureRegency} from './governance.js?v=26-xxiic';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -29,6 +29,11 @@ export function renderGenealogy(s,zh=false){
 
 export function bindGenealogy(root,s,zh=false,onChange=()=>{}){
  const viewport=root.querySelector('.gene-viewport'),canvas=root.querySelector('.gene-canvas'),label=root.querySelector('.gene-zoom-label'),out=root.querySelector('.gene-detail');if(!viewport)return;
+ const ownFamilies=Object.values(s.world.dynasties.families).filter(f=>Object.values(s.world.characters).some(c=>c.alive&&c.faction===s.player&&c.familyId===f.id));
+ if(ownFamilies.length){
+  root.querySelector('.gene-tools').insertAdjacentHTML('beforebegin',`<div class="rule-block"><h4>${zh?'家族财产与国库':'FAMILY PROPERTY & TREASURY'}</h4><p class="hint">${zh?'私人财产不自动进入国库。捐助可能遭拒；借款须偿还本金加2；强制征收降低稳定度和家族忠诚。每家族每六个月最多请求一次。':'Private property never enters the treasury automatically. Donations may be refused. Loans repay principal plus 2. A compulsory levy lowers stability and family loyalty. Each family can be approached once every six months.'}</p><select data-resource-family>${ownFamilies.map(f=>`<option value="${escape(f.id)}">${escape(f.name?.[zh?1:0]||f.id)} · ${zh?'家族公产':'pooled'} ${f.wealth||0}</option>`).join('')}</select><div class="dynasty-choices"><button data-resource-action="donation">${zh?'请求捐助 · 最多8':'Request donation · up to 8'}</button><button data-resource-action="loan">${zh?'家族借款 · 最多12':'Family loan · up to 12'}</button><button data-resource-action="levy">${zh?'强制征收 · 最多8':'Compulsory levy · up to 8'}</button></div><p data-resource-feedback role="status"></p></div>`);
+  root.querySelectorAll('[data-resource-action]').forEach(button=>button.onclick=()=>{const result=requestFamilyResources(s,root.querySelector('[data-resource-family]').value,button.dataset.resourceAction);if(result.ok)onChange();else{const reasons={cooldown:["This family was approached recently.","近期已向该家族提出过请求。"],wealth:["This family has less than 4 private wealth available.","该家族可用私人财产不足4。"],declined:["The family declined. Try again after six months.","家族拒绝了请求；六个月后可再试。"],terms:["This family has an unpaid loan or will not accept the terms.","该家族仍有未还借款或不接受条款。"]};root.querySelector('[data-resource-feedback]').textContent=(reasons[result.reason]||["Action unavailable.","行动不可用。"])[zh?1:0]}});
+ }
  const guardians=Object.values(s.world.characters).filter(c=>c.alive&&c.faction===s.player&&personAge(s,c.id)>=18);
  const families=guardians.flatMap(parent=>parent.children.filter(id=>s.world.characters[id]?.alive&&personAge(s,id)<16).map(id=>({parent:parent.id,child:id})));
  if(families.length&&guardians.length>1){

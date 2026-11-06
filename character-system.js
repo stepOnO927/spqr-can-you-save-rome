@@ -1,5 +1,5 @@
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=20-xxiib';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=3-xxiic';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=4-xxiid';
 import {FACTIONS,ROUTES} from './data.js?v=11-xxiib';
 import {deriveGovernment,validSuccessionPlan} from './governance.js?v=25-xxiib';
 import {potentialConspirators} from './conspiracies.js?v=11-xxiib';
