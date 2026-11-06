@@ -16,8 +16,10 @@ try{
  await page.locator('[data-army="italy"]').click({force:true});assert.match(await page.locator('#guide-body').innerText(),/5200人/);
  await page.locator('#language').click();assert.match(await page.locator('#guide-body').innerText(),/5,200 soldiers/);await page.locator('#language').click();
  await page.locator('#guide-next').click();await page.locator('#lab-orders select').selectOption('cisalpine');assert.match(await page.locator('.preview-detail').innerText(),/报告控制方（可能过时）/);await page.locator('#lab-orders button').click();
- await page.locator('#advance').click();if((await page.locator('#guide-title').innerText())==='理解战斗')await page.locator('#recent-battle').click();
- assert.equal(await page.locator('#guide-title').innerText(),'战区与城市');await page.locator('[data-city="RAVENNA"]').click({force:true});await page.locator('#resources-help').click();await page.locator('#guide-next').click();assert.equal(await page.locator('#guide').isHidden(),true);
+ await page.locator('#advance').click();assert.equal(await page.locator('#guide-title').innerText(),'查看结果');if(await page.locator('#guide-next').isHidden())await page.locator('#recent-battle').click();else await page.locator('#guide-next').click();
+ assert.equal(await page.locator('#guide-title').innerText(),'战区与城市');await page.locator('[data-city="RAVENNA"]').click({force:true});await page.locator('#resources-help').click();
+ assert.equal(await page.locator('#guide-title').innerText(),'情报与不确定性');await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click();
+ assert.equal(await page.locator('#guide-title').innerText(),'目标与胜利');await page.locator('#objectives button').first().click();assert.equal(await page.locator('#guide-title').innerText(),'独立指挥');await page.locator('#guide-next').click();assert.equal(await page.locator('#guide').isHidden(),true);
  await page.locator('#chronicle').click();assert.match(await page.locator('#command-detail').innerText(),/意大利征召军/);
  await page.locator('#guide-restart').click();await page.locator('#roman-faction').selectOption('senate');await page.locator('#start-free').click();
  await page.locator('[data-army="xiii"]').click({force:true});assert.match(await page.locator('#command-detail').innerText(),/上次报告的指挥官：盖乌斯·尤利乌斯·凯撒（可能过时）/);
