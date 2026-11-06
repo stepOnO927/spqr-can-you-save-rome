@@ -4,7 +4,14 @@ import {newGame,upgradeSave,tick,researchInnovation,adoptIdea,removeIdea,expandI
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects} from '../development.js';
 import {developmentPanel} from '../development-ui.js';
 import {edgeMonths} from '../grand-operations.js';
+import {techIllustration} from '../tech-art.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
+
+test('every development node has its own interpretive illustration',()=>{
+ const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
+ assert.equal(art.length,59);assert.equal(new Set(art).size,59);
+ assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
+});
 
 test('both research branches render every node, including naval capabilities without buildings',()=>{
   const s=newGame('senate');for(const lang of ['en','zh'])for(const branch of ['material','idea']){

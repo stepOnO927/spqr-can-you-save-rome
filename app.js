@@ -9,7 +9,7 @@ import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js';
 import {endCampaign} from './achievement-system.js';
 import {campaignEndingHtml} from './achievement-ui.js';
 import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js';
-import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=2';
+import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=3';
 import {drawMap,mapPoint} from './map.js?v=52';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js';
