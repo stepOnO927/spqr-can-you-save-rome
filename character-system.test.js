@@ -226,6 +226,18 @@ test('an ally can forward existing intelligence even when the target secretly lo
  assert.equal(hidden.knowledge.senate.egypt.reports[0].observationYear,-50);assert.equal(hidden.knowledge.senate.egypt.reports[0].originSource,'spy');
  const stale=newGame('senate');stale.alliances.push(['senate','parthia']);stale.knowledge.senate.egypt_claimant={reportedLeaders:['ptolemy'],reports:[],sightings:{}};stale.knowledge.parthia.egypt_claimant={reportedLeaders:[],reports:[],sightings:{}};addReport(stale,'parthia','egypt_claimant',{kind:'leaders',leaders:['ptolemy'],source:'spy'});assert.equal(stale.factions.egypt_claimant,undefined);assert.equal(queueMission(stale,'senate','egypt_claimant','exchange','leaders','parthia').ok,true);stale.world.intelSeed=1000;for(let i=0;i<3;i++)advanceOperations(stale);assert.equal(stale.operations[0].status,'complete');assert.deepEqual(stale.knowledge.senate.egypt_claimant.reports[0].leaders,['ptolemy']);
 });
+test('allied exchanges seal the ally’s record in transit and reveal it only on delivery',()=>{
+ let s=newGame('senate');s.alliances.push(['senate','parthia']);addReport(s,'parthia','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'spy'});
+ assert.equal(queueMission(s,'senate','egypt','exchange','health','parthia','cleopatra').ok,true);s.world.intelSeed=1000;
+ s.month=2;advanceOperations(s);assert.equal(s.operations[0].remaining,2);assert.equal(s.operations[0].exchangeSealed,undefined);assert.equal(s.knowledge.senate.egypt.reports.length,0);
+ s.month=3;advanceOperations(s);assert.equal(s.operations[0].remaining,1);assert.equal(s.knowledge.senate.egypt.reports.length,0);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));addReport(s,'parthia','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'travelers'});s.alliances=[];
+ s.month=4;advanceOperations(s);assert.equal(s.operations[0].status,'complete');assert.equal(s.operations[0].exchangeSealed,undefined);const received=s.knowledge.senate.egypt.reports[0];assert.equal(received.value,'ill');assert.equal(received.originSource,'spy');assert.equal(received.observationMonth,1);assert.equal(received.month,4);
+});
+test('a later allied report cannot travel back in time to answer an earlier request',()=>{
+ const s=newGame('senate');s.alliances.push(['senate','parthia']);assert.equal(queueMission(s,'senate','egypt','exchange','health','parthia','cleopatra').ok,true);s.world.intelSeed=1000;advanceOperations(s);advanceOperations(s);
+ addReport(s,'parthia','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'spy'});advanceOperations(s);assert.equal(s.operations[0].status,'failed');assert.equal(s.knowledge.senate.egypt.reports.length,0);assert.match(s.log[0].zh,/未收到报告；原因不明/);
+});
 test('official court responses and an envoy do not independently corroborate one another',()=>{
  const s=newGame();for(const source of ['official','envoy','audience'])addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'healthy',source,confidence:'unverified'});assert.equal(s.knowledge.caesar.egypt.reports[0].confidence,'unverified');assert.equal(s.knowledge.caesar.egypt.reports[0].verified,false);
 });
