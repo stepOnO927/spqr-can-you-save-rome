@@ -1,12 +1,12 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=87';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=88';
 import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=23';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=11';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=19';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=82';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=83';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=11';
 import {advanceConspiracies} from './conspiracies.js?v=11';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=4';
-import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=4';
+import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=5';
 export {queueMission};
 export {personalDiplomaticCredit};
 
@@ -159,7 +159,7 @@ export function sendInquiry(s,actor,target,subject='leaders'){
  if(s.factions[actor].treasury<3)return {ok:false,reason:'treasury'};
  if((s.inquiries||[]).some(x=>x.actor===actor&&x.target===target&&x.status==='pending'))return {ok:false,reason:'pending'};
  const duration=letterMonths[target]||4;s.factions[actor].treasury-=3;
- (s.inquiries||=[]).unshift({actor,target,sentYear:s.year,sentMonth:s.month,remaining:duration,duration,subject,status:'pending',source:'official court',confidence:'unverified'});
+ (s.inquiries||=[]).unshift({actor,target,sentYear:s.year,sentMonth:s.month,remaining:duration,duration,subject,status:'pending',source:'official court',confidence:'unverified',...(target.endsWith('_claimant')?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{})});
  if(actor===s.player)log(s,`A letter was sent to ${FACTIONS[target].short[0]}; a reply may take ${duration} months.`,`已向${FACTIONS[target].short[1]}寄信；等待回信约需${duration}个月。`);
  return {ok:true,duration};
 }
@@ -173,7 +173,7 @@ function resolveInquiries(s){
   if(!letter.sealed&&letter.remaining<=Math.floor((letter.duration||2)/2)){
    const roll=rnd(s),hostile=isWar(s,letter.actor,letter.target),rel=relation(s,letter.actor,letter.target);
    const sealed={status:'answered',year:s.year,month:s.month};
-   if(roll<.18||!s.regions.some(r=>r.owner===letter.target))sealed.status='no_reply';
+   if(roll<.18||!s.regions.some(r=>r.owner===letter.target)||(letter.target.endsWith('_claimant')&&(letter.targetGeneration??0)!==(s.world.dynasticGenerations?.[letter.target]||0)))sealed.status='no_reply';
    else if(roll<(hostile?.65:rel<0?.46:.34))sealed.status='refused';
    else{
    const current=s.world.leadership[letter.target]||[],opening=OPENING_LEADERS[letter.target]||[],claimants=s.world.claimants[letter.target]||[],subject=letter.subject||'leaders';

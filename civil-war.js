@@ -18,6 +18,9 @@ export function startDynasticWar(s,parent,claimant){
  if(defectors+recruits<500)return false;
  if(guard)guard.men-=defectors;base.manpower-=recruits;
  const treasury=Math.min(15,Math.max(0,base.treasury)),food=Math.min(12,Math.max(0,base.food));base.treasury-=treasury;base.food-=food;
+ // A later rebellion reuses the public faction slot but is a different court.
+ // Pending messages sent to an earlier incarnation must not reach the new one.
+ s.world.dynasticGenerations||={};s.world.dynasticGenerations[cfg.rival]=(s.world.dynasticGenerations[cfg.rival]||0)+1;
  s.factions[cfg.rival]={treasury,food,manpower:0,stability:45,legitimacy:35,tax:'normal',research:0};
  person.faction=cfg.rival;person.location=home.id;home.owner=cfg.rival;home.loyalty=45;
  s.world.leadership[cfg.rival]=[claimant];
