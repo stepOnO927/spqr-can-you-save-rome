@@ -1,6 +1,6 @@
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=19';
 import {FACTIONS,ROUTES} from './data.js?v=11';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=23';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=24';
 import {potentialConspirators} from './conspiracies.js?v=11';
 import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=6';
 import {reportedControl} from './control-intelligence.js?v=4';

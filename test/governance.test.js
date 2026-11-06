@@ -49,6 +49,17 @@ test('acting deputies must be in controlled territory and not marching, without 
 test('separate Mauretanian rulers do not automatically govern each other’s kingdom',()=>{
  const s=newGame();s.world.characters.bocchus.health='seriously_ill';assert.equal(deriveGovernment(s,'mauretania').kind,'constituent_unavailable');assert.deepEqual(s.world.leadership.mauretania,['bocchus','bogud']);
 });
+test('both Mauretanian rulers can be incapacitated without creating a shared regency',()=>{
+ let s=newGame('caesar');s.world.characters.bocchus.health='seriously_ill';s.world.characters.bogud.health='dying';s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(deriveGovernment(s,'mauretania'),{kind:'constituent_unavailable',nominal:['bocchus','bogud'],acting:[]});assert.equal(s.knowledge.caesar.mauretania.reports.length,0);
+ const mission=queueMission(s,'caesar','mauretania','spy','authority');s.world.intelSeed=1000;for(let i=0;i<mission.duration;i++)advanceOperations(s);assert.equal(s.knowledge.caesar.mauretania.reports[0].value.kind,'constituent_unavailable');assert.deepEqual(s.knowledge.caesar.mauretania.reports[0].value.actors,[]);assert.equal(s.knowledge.senate.mauretania.reports.length,0);
+ s.world.characters.bogud.health='recovering';assert.deepEqual(deriveGovernment(s,'mauretania').acting,['bogud']);
+});
+test('both separate Mauretanian kingdoms can be vacant without inventing a single ruler',()=>{
+ let s=newGame('caesar');for(const id of ['bocchus','bogud']){s.world.characters[id].alive=false;s.world.characters[id].health='deceased'}assignSuccession(s,'mauretania');s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(deriveGovernment(s,'mauretania'),{kind:'constituent_vacant',nominal:[],acting:[]});assert.deepEqual(knownLeaders(s,'caesar','mauretania'),['bocchus','bogud']);
+ const mission=queueMission(s,'caesar','mauretania','spy','authority');s.world.intelSeed=1000;for(let i=0;i<mission.duration;i++)advanceOperations(s);assert.equal(s.knowledge.caesar.mauretania.reports[0].value.kind,'constituent_vacant');assert.deepEqual(s.knowledge.caesar.mauretania.reports[0].value.actors,[]);assert.equal(s.knowledge.senate.mauretania.reports.length,0);
+});
 test('the loss of one Mauretanian ruler leaves the other kingdom separately administered',()=>{
  for(const [lost,survivor] of [['bocchus','bogud'],['bogud','bocchus']]){
   let s=newGame('caesar');s.world.characters[lost].alive=false;assignSuccession(s,'mauretania');
