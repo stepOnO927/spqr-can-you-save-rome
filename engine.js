@@ -2,7 +2,7 @@ import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-dipl
 import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=22';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=11';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=18';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=79';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=79';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=10';
 import {advanceConspiracies} from './conspiracies.js?v=10';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=4';
@@ -328,6 +328,21 @@ export function estimatedStrength(s,observer,target){
  const estimate=estimates.reduce((sum,value)=>sum+value,0)/estimates.length;
  const weight=Math.max(0,Math.min(1,1-(newestAge-24)/24));return Math.round(prior+(estimate-prior)*weight);
 }
+// Choose from this faction's own recent reports; a forwarded copy does not
+// create another independent source. Missing names do not prove absence.
+export function aiClaimantChoice(s,actor,target){
+ const now=s.year*12+s.month,families=new Map();
+ for(const report of s.knowledge?.[actor]?.[target]?.reports||[]){
+  if(report.kind!=='claimants'||!Array.isArray(report.leaders))continue;
+  const age=now-((report.observationYear??report.year)*12+(report.observationMonth??report.month));if(!Number.isFinite(age)||age<0||age>24)continue;
+  const ids=report.leaders.filter(id=>CHARACTER_CATALOG[id]?.faction===target);if(!ids.length)continue;
+  const origin=report.originSource||report.source,family=({official:'court',envoy:'court',audience:'court',exchange:'unknown'}[origin]||origin||'unknown'),old=families.get(family);
+  if(!old||age<old.age)families.set(family,{age,ids:new Set(ids)});else if(age===old.age)for(const id of ids)old.ids.add(id);
+ }
+ const scores=new Map();for(const {age,ids} of families.values())for(const id of ids)scores.set(id,(scores.get(id)||0)+(25-age)/25);
+ return [...scores].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]?.[0]||null;
+}
+
 function aiTurn(s,owner){
   const f=s.factions[owner],owned=s.regions.filter(r=>r.owner===owner);
   const internalOpponent=other=>Object.entries(s.world.disputes||{}).some(([parent,d])=>d.war&&[parent,d.war.rival].includes(owner)&&[parent,d.war.rival].includes(other));
@@ -352,7 +367,7 @@ function aiTurn(s,owner){
   if(['caesar','senate'].includes(owner)&&s.month===6&&f.treasury>45)queueMission(s,owner,'egypt','spy','claimants');
   if(['caesar','senate'].includes(owner)&&s.month===9&&f.treasury>45)queueMission(s,owner,'parthia','spy','claimants');
   if(['caesar','senate'].includes(owner)&&s.month===10&&f.treasury>45)for(const court of ['egypt','parthia'])if(canMediate(s,owner,court)){requestMediation(s,owner,court);break}
-  if(['caesar','senate'].includes(owner)&&s.month===12){for(const court of ['egypt','parthia']){if(f.treasury<=35)break;const claimant=reportedClaimants(s,owner,court)[0];if(claimant)supportClaimant(s,owner,court,claimant)}}
+  if(['caesar','senate'].includes(owner)&&s.month===12){for(const court of ['egypt','parthia']){if(f.treasury<=35)break;const claimant=aiClaimantChoice(s,owner,court);if(claimant)supportClaimant(s,owner,court,claimant)}}
   if(owner!=='rebels' && s.month===12){
     const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);
     const internal=internalOpponent(enemy);
