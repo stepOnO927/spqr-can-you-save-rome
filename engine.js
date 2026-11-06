@@ -1,13 +1,13 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=91';
-import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=24';
-import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=11';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=19';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=86';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=11';
-import {advanceConspiracies} from './conspiracies.js?v=11';
-import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=4';
-import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=6';
-import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=91-xxii';
+import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=25-xxii';
+import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=11-xxii';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=20-xxii';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=87-xxii';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=12-xxii';
+import {advanceConspiracies} from './conspiracies.js?v=11-xxii';
+import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=4-xxii';
+import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=7-xxii';
+import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=1-xxii';
 export {queueMission};
 export {personalDiplomaticCredit};
 

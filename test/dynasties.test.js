@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
-import {CHARACTER_CATALOG} from '../characters.js?v=19';
-import {assignSuccession} from '../characters.js?v=19';
-import {deriveGovernment} from '../governance.js?v=24';
+import {CHARACTER_CATALOG} from '../characters.js?v=20-xxii';
+import {assignSuccession} from '../characters.js?v=20-xxii';
+import {deriveGovernment} from '../governance.js?v=25-xxii';
 import {initializeDynasties,createFictionalPerson,proposeMarriage,adoptHeir,makeWill,settleInheritance,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
-import {canHoldOffice} from '../office-system.js?v=11';
+import {canHoldOffice} from '../office-system.js?v=12-xxii';
 import {renderGenealogy} from '../genealogy-ui.js';
 import {finalizeCampaign} from '../legacy.js';
 

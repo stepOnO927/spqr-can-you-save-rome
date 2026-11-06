@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=19';
-import {personAge,proposeMarriage,adoptHeir,makeWill} from './dynasties.js?v=1';
+import {CHARACTER_CATALOG} from './characters.js?v=20-xxii';
+import {personAge,proposeMarriage,adoptHeir,makeWill} from './dynasties.js?v=1-xxii';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||id;
