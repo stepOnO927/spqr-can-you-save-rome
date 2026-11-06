@@ -1,6 +1,6 @@
 import {identityKnowledge} from './identity-knowledge.js?v=4';
 import {politicalAmbition} from '../conspiracies.js?v=10';
-import {HISTORICAL_DEATHS,HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS,HISTORICAL_RELATIONSHIPS} from '../historical-reference.js?v=7';
+import {HISTORICAL_DEATHS,HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS,HISTORICAL_RELATIONSHIPS} from '../historical-reference.js?v=8';
 import {officeOf} from '../office-system.js?v=10';
 import {reportedClaimants,reportedHealthSubjects,reportedOfficeTheaters,supportClaimant,recognizeClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=79';
 import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js?v=22';

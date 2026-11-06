@@ -38,9 +38,11 @@ export const HISTORICAL_BIRTH_ESTIMATES={
  pharnaces:{text:['around 97 BCE; precision unknown','约公元前97年，误差范围不明'],sources:[{label:['Treccani: Pharnaces II','特雷卡尼百科：法尔纳刻斯二世'],url:'https://www.treccani.it/enciclopedia/farnace-ii_%28Enciclopedia-dell%27Arte-Antica%29/'}]}
 };
 
-// A later coin inscription is evidence of a name form, not an authentic portrait
-// or proof that the specific coin existed at the 49 BCE bookmark.
+// Name forms are documented transliterations or inscriptions, not portraits.
+// Later coin inscriptions do not imply that a specific coin existed in 49 BCE.
 export const HISTORICAL_NAME_FORMS={
+ orodes:{form:'wrwd',note:['Scholarly transliteration of the Parthian consonants; readings include Worōd and Wirōd/Wirōy','帕提亚语辅音的学术转写（非原文字母）；读法包括 Worōd 和 Wirōd／Wirōy'],source:{label:['Encyclopaedia Iranica: Orodes II','《伊朗百科全书》：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}},
+ pacorus:{form:'pkwr',note:['Scholarly transliteration of the Parthian consonants, read Pakur','帕提亚语辅音的学术转写（非原文字母），读作 Pakur'],source:{label:['Encyclopaedia Iranica: Orodes II','《伊朗百科全书》：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}},
  cleopatra:{form:'ΚΛΕΟΠΑΤΡΑ',note:['Greek inscription on a coin from later in her reign','其统治后期钱币上的希腊文铭文'],source:{label:['Metropolitan Museum: Pergamon and the Hellenistic Kingdoms','大都会艺术博物馆：《帕加马与希腊化王国》'],url:'https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf'}},
  antony:{form:'ΑΝΤΩΝΙΟΣ',note:['Greek inscription on a coin from later in his life','其生平后期钱币上的希腊文铭文'],source:{label:['Metropolitan Museum: Pergamon and the Hellenistic Kingdoms','大都会艺术博物馆：《帕加马与希腊化王国》'],url:'https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf'}}
 };
@@ -48,6 +50,8 @@ export const HISTORICAL_NAME_FORMS={
 // Family relationships are historical references, not simulation trust, present
 // authority, or evidence that a foreign court's current reports are accurate.
 export const HISTORICAL_RELATIONSHIPS={
+ caesar:[{person:'pompey',relation:['Pompey married Caesar’s daughter Julia in 59 BCE; Julia died in 54 BCE','庞培于前59年迎娶凯撒之女朱莉娅；朱莉娅于前54年去世'],source:{label:['Oxford Classical Dictionary: Julia','牛津古典辞典：朱莉娅'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549657389'}}],
+ pompey:[{person:'caesar',relation:['Pompey married Caesar’s daughter Julia in 59 BCE; Julia died in 54 BCE','庞培于前59年迎娶凯撒之女朱莉娅；朱莉娅于前54年去世'],source:{label:['Oxford Classical Dictionary: Julia','牛津古典辞典：朱莉娅'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549657389'}}],
  cleopatra:[{person:'ptolemy',relation:['Younger brother and early co-ruler','弟弟及早期共同统治者'],source:{label:['Metropolitan Museum of Art: Hellenistic kingdoms','大都会艺术博物馆：希腊化王国'],url:'https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf'}}],
  ptolemy:[{person:'cleopatra',relation:['Older sister and early co-ruler','姐姐及早期共同统治者'],source:{label:['Metropolitan Museum of Art: Hellenistic kingdoms','大都会艺术博物馆：希腊化王国'],url:'https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf'}}],
  orodes:[{person:'pacorus',relation:['Son','儿子'],source:{label:['Encyclopaedia Iranica: Orodes II','《伊朗百科全书》：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}}],
