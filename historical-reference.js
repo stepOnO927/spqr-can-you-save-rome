@@ -1,6 +1,7 @@
 // Historical reference only: this catalog is never used for simulated mortality.
 // Years are BCE; sources are linked per field so uncertainty can be reviewed.
 export const HISTORICAL_DEATHS={
+ arsinoe:{years:[41],disputed:true,sources:[{label:['University of Vienna: Arsinoë IV','维也纳大学：阿尔西诺伊四世'],url:'https://www.univie.ac.at/en/news/detail/cleopatras-sister-remains-missing'}]},
  caesar:{years:[44],sources:[{label:['Oxford Dictionary of National Biography','牛津国家传记辞典'],url:'https://academic.oup.com/oxford-dictionary-of-national-biography/reference/63486/reference-article-abstract/579736904'}]},
  pompey:{years:[48],sources:[{label:['Cambridge Museum of Classical Archaeology','剑桥古典考古博物馆'],url:'https://museum.classics.cam.ac.uk/collections/casts/pompey-gnaeus-pompeius-magnus'}]},
  cicero:{years:[43],sources:[{label:['Oxford Bibliographies','牛津古典学书目'],url:'https://academic.oup.com/reference/62365/reference-article-abstract/574486739'}]},
@@ -24,6 +25,7 @@ export const HISTORICAL_DEATHS={
 // Approximate birth references; uncertain single years are not converted into
 // invented narrow age ranges or used as simulation thresholds.
 export const HISTORICAL_BIRTH_ESTIMATES={
+ arsinoe:{text:['Between 69 and 60 BCE; narrower estimates differ','公元前69–60年之间；更具体的估计存在分歧'],sources:[{label:['Trismegistos: Arsinoë IV','Trismegistos：阿尔西诺伊四世'],url:'https://www.trismegistos.org/calendar/bennett/ptolemies/arsinoe_iv.htm'}]},
  pompey:{text:['106 BCE; birthday not used in the simulation','公元前106年；模拟不采用具体生日'],sources:[{label:['Cambridge Museum of Classical Archaeology: Pompey','剑桥古典考古博物馆：庞培'],url:'https://museum.classics.cam.ac.uk/collections/casts/pompey-gnaeus-pompeius-magnus'}]},
  cicero:{text:['106 BCE; birthday not used in the simulation','公元前106年；模拟不采用具体生日'],sources:[{label:['Oxford Classical Dictionary: Cicero','牛津古典辞典：西塞罗'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/548206709'}]},
  cato:{text:['95 BCE; birthday not used in the simulation','公元前95年；模拟不采用具体生日'],sources:[{label:['Oxford Classical Dictionary: Cato the Younger','牛津古典辞典：小加图'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549703663'}]},
@@ -50,6 +52,7 @@ export const HISTORICAL_NAME_FORMS={
 // Family relationships are historical references, not simulation trust, present
 // authority, or evidence that a foreign court's current reports are accurate.
 export const HISTORICAL_RELATIONSHIPS={
+ arsinoe:[{person:'cleopatra',relation:['Sister; their later conflict is historical context, not a predetermined campaign event','姐妹；她们后来的争斗是历史背景，并非战役中的预定事件'],source:{label:['University of Vienna: Arsinoë IV','维也纳大学：阿尔西诺伊四世'],url:'https://www.univie.ac.at/en/news/detail/cleopatras-sister-remains-missing'}}],
  caesar:[{person:'pompey',relation:['Pompey married Caesar’s daughter Julia in 59 BCE; Julia died in 54 BCE','庞培于前59年迎娶凯撒之女朱莉娅；朱莉娅于前54年去世'],source:{label:['Oxford Classical Dictionary: Julia','牛津古典辞典：朱莉娅'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549657389'}}],
  pompey:[{person:'caesar',relation:['Pompey married Caesar’s daughter Julia in 59 BCE; Julia died in 54 BCE','庞培于前59年迎娶凯撒之女朱莉娅；朱莉娅于前54年去世'],source:{label:['Oxford Classical Dictionary: Julia','牛津古典辞典：朱莉娅'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549657389'}}],
  cleopatra:[{person:'ptolemy',relation:['Younger brother and early co-ruler','弟弟及早期共同统治者'],source:{label:['Metropolitan Museum of Art: Hellenistic kingdoms','大都会艺术博物馆：希腊化王国'],url:'https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf'}}],

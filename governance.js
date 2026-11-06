@@ -1,16 +1,18 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=10';
-import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange} from './characters.js?v=18';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=11';
+import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange} from './characters.js?v=19';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
 // Sixteen is a simulation threshold, not a historical claim about when a
 // particular court recognized majority. Uncertain ages are not forced into it.
 const definitelyMinor=(s,faction,id)=>{const age=ageRange(id,s.year);return !roman(faction)&&age!==null&&age[1]<16};
+// A possible minor is not appointed as a temporary deputy when age is uncertain.
+const possiblyMinor=(s,faction,id)=>{const age=ageRange(id,s.year);return !roman(faction)&&age!==null&&age[0]<16};
 // A deputy must be reachable in a controlled theater. A location stored on a
 // marching army is its last theater, not the person's present location.
 export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>{
  const person=s.world.characters[id],army=s.armies.find(a=>a.characterId===id),location=army?.region??person?.location;
- return !unable(person)&&!definitelyMinor(s,faction,id)&&!person.travel&&
+ return !unable(person)&&!possiblyMinor(s,faction,id)&&!person.travel&&
   s.regions.some(r=>r.id===location&&r.owner===faction)&&
   !s.armies.some(a=>a.characterId===id&&a.move)&&
   !(s.world.claimants?.[faction]||[]).includes(id);

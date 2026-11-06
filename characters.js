@@ -10,6 +10,7 @@ export const CHARACTER_CATALOG = {
  scipio:{name:['Quintus Caecilius Metellus Scipio','梅特卢斯·西庇阿'],birth:null,faction:'senate',role:['Roman senator and commander','罗马元老与指挥官'],culture:['Roman','罗马'],source:'https://academic.oup.com/edited-volume/61673/chapter-abstract/548509305'},
  cleopatra:{name:['Cleopatra VII','克娄巴特拉七世'],birth:[-70,-69],faction:'egypt',role:['Ptolemaic co-ruler','托勒密王朝共同统治者'],culture:['Ptolemaic Egyptian','托勒密埃及'],source:'https://www.metmuseum.org/toah/hd/ptol/hd_ptol.htm'},
  ptolemy:{name:['Ptolemy XIII','托勒密十三世'],birth:[-62,-61],faction:'egypt',role:['Ptolemaic co-ruler','托勒密王朝共同统治者'],culture:['Ptolemaic Egyptian','托勒密埃及'],source:'https://www.metmuseum.org/toah/hd/gkru/hd_gkru.htm'},
+ arsinoe:{name:['Arsinoë IV','阿尔西诺伊四世'],birth:[-69,-60],faction:'egypt',role:['Ptolemaic princess','托勒密王朝公主'],culture:['Ptolemaic Egyptian','托勒密埃及'],source:'https://www.trismegistos.org/calendar/bennett/ptolemies/arsinoe_iv.htm'},
  orodes:{name:['Orodes II','奥罗德二世'],birth:null,faction:'parthia',role:['Arsacid king','安息阿尔沙克王朝国王'],culture:['Parthian','帕提亚'],source:'https://www.iranicaonline.org/articles/orodes-ii/'},
  pacorus:{name:['Pacorus I','帕科鲁斯一世'],birth:null,faction:'parthia',role:['Arsacid prince','安息王子'],culture:['Parthian','帕提亚'],source:'https://www.iranicaonline.org/articles/armenia-ii/'},
  artavasdes:{name:['Artavasdes II','阿尔塔瓦兹德二世'],birth:null,faction:'armenia',role:['King of Armenia','亚美尼亚国王'],culture:['Armenian','亚美尼亚'],source:'https://www.iranicaonline.org/articles/armenia-ii/'},
@@ -20,13 +21,15 @@ export const CHARACTER_CATALOG = {
  pharnaces:{name:['Pharnaces II','法尔纳刻斯二世'],birth:null,faction:'bosporus',role:['Bosporan ruler','博斯普鲁斯王国统治者'],culture:['Pontic','本都'],source:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549705304?login=false'}
 };
 export const OPENING_LEADERS={caesar:['caesar'],senate:['pompey'],egypt:['cleopatra','ptolemy'],parthia:['orodes'],armenia:['artavasdes'],numidia:['juba'],mauretania:['bocchus','bogud'],galatia:['deiotarus'],bosporus:['pharnaces'],rebels:[]};
-const SUCCESSORS={caesar:['antony','lepidus'],senate:['cato','scipio','labienus','cicero'],egypt:['cleopatra','ptolemy'],parthia:['pacorus'],armenia:[],numidia:[],mauretania:['bocchus','bogud'],galatia:[],bosporus:[],rebels:[]};
+const SUCCESSORS={caesar:['antony','lepidus'],senate:['cato','scipio','labienus','cicero'],egypt:['cleopatra','ptolemy','arsinoe'],parthia:['pacorus'],armenia:[],numidia:[],mauretania:['bocchus','bogud'],galatia:[],bosporus:[],rebels:[]};
 const clone=x=>JSON.parse(JSON.stringify(x));
 export function initializeWorld(s){
  if(!s.world){s.world={characters:Object.fromEntries(Object.entries(CHARACTER_CATALOG).map(([id,c])=>[id,{id,faction:c.faction,health:'healthy',location:null,alive:true,loyalty:75,influence:50}])),leadership:clone(OPENING_LEADERS),intelSeed:874913};}
+ // Add the new historical figure once to old saves, without resetting existing people.
+ if(!s.world.arsinoeInitialized){if(!s.world.characters.arsinoe&&s.factions?.egypt)s.world.characters.arsinoe={id:'arsinoe',faction:'egypt',health:'healthy',location:s.regions.some(r=>r.id==='egypt'&&r.owner==='egypt')?'egypt':null,alive:true,loyalty:75,influence:50};s.world.arsinoeInitialized=true}
  for(const c of Object.values(s.world.characters)){if(c.loyalty===undefined)c.loyalty=75;if(c.influence===undefined)c.influence=50;if(c.wounds===undefined)c.wounds=c.health==='wounded'?1:0;if(c.illnessEpisodes===undefined)c.illnessEpisodes=0}
  // Theater-level scenario positions, not claims about historical whereabouts.
- if(!s.world.personLocationsInitialized){const homes={antony:'cisalpine',lepidus:'cisalpine',cicero:'roma',cato:'roma',labienus:'roma',scipio:'roma',cleopatra:'egypt',ptolemy:'egypt',orodes:'parthia',pacorus:'parthia',artavasdes:'armenia',juba:'numidia',bocchus:'mauretania',bogud:'mauretania',deiotarus:'galatia',pharnaces:'bosporus'};for(const [id,place] of Object.entries(homes)){const c=s.world.characters[id];if(c&&c.location==null)c.location=place}s.world.personLocationsInitialized=true}
+ if(!s.world.personLocationsInitialized){const homes={antony:'cisalpine',lepidus:'cisalpine',cicero:'roma',cato:'roma',labienus:'roma',scipio:'roma',cleopatra:'egypt',ptolemy:'egypt',arsinoe:'egypt',orodes:'parthia',pacorus:'parthia',artavasdes:'armenia',juba:'numidia',bocchus:'mauretania',bogud:'mauretania',deiotarus:'galatia',pharnaces:'bosporus'};for(const [id,place] of Object.entries(homes)){const c=s.world.characters[id];if(c&&c.location==null)c.location=place}s.world.personLocationsInitialized=true}
  if(!s.world.personalRelations)s.world.personalRelations={};
  if(!s.meetings)s.meetings=[];
  if(!s.world.claimants)s.world.claimants={};
@@ -63,6 +66,7 @@ export const HISTORICAL_BIO={
  scipio:['Roman senator, consul in 52 BCE, and a leading supporter of Pompey.','罗马元老，公元前52年任执政官，是庞培的重要支持者。'],
  cleopatra:['Ptolemaic queen who initially shared the throne with her brother Ptolemy XIII.','托勒密王朝女王，最初与弟弟托勒密十三世共同统治。'],
  ptolemy:['Ptolemaic king and co-ruler with Cleopatra VII in the opening period of the civil war.','托勒密王朝国王，在内战初期与克娄巴特拉七世共同统治。'],
+ arsinoe:['Ptolemaic princess and sister of Cleopatra VII and Ptolemy XIII; later involved in the Alexandrian conflict.','托勒密王朝公主，克娄巴特拉七世和托勒密十三世的姐妹；后来卷入亚历山大城的冲突。'],
  orodes:['Arsacid king of Parthia during the period following the Roman defeat at Carrhae.','安息阿尔沙克王朝国王，在罗马于卡莱战败后的时期统治。'],
  pacorus:['Arsacid prince and son of Orodes II, associated with Parthian military affairs.','阿尔沙克王朝王子、奥罗德二世之子，参与安息军事事务。'],
  artavasdes:['King of Armenia whose position between Rome and Parthia required careful diplomacy.','亚美尼亚国王，身处罗马与安息之间，需要谨慎处理外交。'],

@@ -8,6 +8,7 @@ The following are original AI-generated, painterly **artistic reconstructions**,
 | pompey | Pompey | https://www.britannica.com/biography/Pompey-the-Great |
 | cleopatra | Cleopatra VII | https://www.metmuseum.org/toah/hd/ptol/hd_ptol.htm |
 | ptolemy | Ptolemy XIII | https://www.metmuseum.org/toah/hd/gkru/hd_gkru.htm |
+| arsinoe | Arsinoë IV | https://www.trismegistos.org/calendar/bennett/ptolemies/arsinoe_iv.htm |
 | orodes | Orodes II | https://www.iranicaonline.org/articles/orodes-ii/ |
 | pacorus | Pacorus I | https://www.iranicaonline.org/articles/armenia-ii/ |
 | artavasdes | Artavasdes II | https://www.iranicaonline.org/articles/armenia-ii/ |
@@ -19,3 +20,6 @@ The following are original AI-generated, painterly **artistic reconstructions**,
 | deiotarus, pharnaces | Deiotarus and Pharnaces II | See individual entries in characters.js. |
 
 Generated in-game health, missions and successions are alternate-history simulation, not evidence about a historical person’s actual condition. Foreign character cards represent reported identities and artistic reconstructions; they do not confirm current authority, location, age or health.
+
+
+Arsinoë’s original AI-generated portrait was created on 2026-11-05 with the built-in image generation tool. It is an interpretive reconstruction, not a verified likeness or evidence of age. The prompt requested a distinctive head-and-shoulders portrait with short curls, linen headband, ochre and ivory clothing, warm light, dark olive background, and no text or decorative frame. The 512, 128 and 64 pixel images are resized derivatives.

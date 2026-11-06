@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=18';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=19';
 import {reportedControl} from './control-intelligence.js?v=4';
 
 // Alternate-history claimant commands use real game theaters and armies.
@@ -22,8 +22,8 @@ export function startDynasticWar(s,parent,claimant){
  person.faction=cfg.rival;person.location=home.id;home.owner=cfg.rival;home.loyalty=45;
  s.world.leadership[cfg.rival]=[claimant];
  const aid=dispute.militaryAid?.[claimant]||0;
- const age=ageRange(claimant,s.year),minor=age!==null&&age[1]<16;
- // A minor claimant is a political figurehead; unnamed officers lead the army.
+ const age=ageRange(claimant,s.year),minor=age!==null&&age[0]<16;
+ // A claimant who may be a minor is a political figurehead; an unnamed officer leads.
  s.armies.push({id:`${cfg.rival}_${s.nextArmy++}`,name:parent==='egypt'?['Egyptian claimant forces','埃及竞争者军队']:['Parthian claimant forces','帕提亚竞争者军队'],owner:cfg.rival,region:home.id,men:defectors+recruits+aid,morale:60,skill:2,experience:0,commander:minor?['Unnamed officer','未具名军官']:[...CHARACTER_CATALOG[claimant].name],characterId:minor?null:claimant,move:null,siege:null});
  if(dispute.militaryAid)delete dispute.militaryAid[claimant];
  s.wars.push([parent,cfg.rival]);dispute.war={rival:cfg.rival,claimant,startedYear:s.year,startedMonth:s.month};
@@ -34,6 +34,12 @@ export function startDynasticWar(s,parent,claimant){
  if(s.controlKnowledge)s.controlKnowledge[cfg.rival]=structuredClone(s.controlKnowledge[parent]||{});
  s.world.disputeHistory.unshift({faction:parent,claimant,outcome:'civil_war',year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);
  return true;
+}
+
+// Keep backing for other surviving claimants when one war concludes.
+function continueRemainingDispute(s,parent,previous){
+ const claimants=s.world.claimants[parent]||[];if(!claimants.length){delete s.world.disputes[parent];return}
+ const next={months:0};for(const key of ['support','militaryAid']){const entries=Object.entries(previous?.[key]||{}).filter(([id])=>claimants.includes(id));if(entries.length)next[key]=Object.fromEntries(entries)}s.world.disputes[parent]=next;
 }
 
 // Defeat requires both territory and field forces to be lost. The winner is
@@ -52,7 +58,7 @@ export function resolveDynasticWars(s){
    for(const r of s.regions)if(r.owner===cfg.rival)r.owner=parent;
    for(const a of s.armies)if(a.owner===cfg.rival)a.owner=parent;
    s.world.leadership[parent]=person?.alive?[war.claimant]:[];
-   s.world.claimants[parent]=oldLeaders.filter(id=>s.world.characters[id]?.alive&&id!==war.claimant);
+   s.world.claimants[parent]=[...new Set([...(s.world.claimants[parent]||[]).filter(id=>id!==war.claimant),...oldLeaders.filter(id=>s.world.characters[id]?.alive&&id!==war.claimant)])];
    if(s.factions[cfg.rival]){s.factions[parent].treasury+=s.factions[cfg.rival].treasury;s.factions[parent].food+=s.factions[cfg.rival].food;s.factions[parent].manpower+=s.factions[cfg.rival].manpower}
   }else{
    for(const r of s.regions)if(r.owner===cfg.rival)r.owner=parent;
@@ -64,14 +70,14 @@ export function resolveDynasticWars(s){
   s.alliances=s.alliances.filter(a=>!a.includes(cfg.rival));
   delete s.factions[cfg.rival];delete s.world.leadership[cfg.rival];delete s.world.governments?.[cfg.rival];
   s.world.disputeHistory.unshift({faction:parent,claimant:war.claimant,outcome:rivalWins?'civil_war_victory':'civil_war_defeat',year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);
-  if(s.world.claimants[parent].length)s.world.disputes[parent]={months:0};else delete s.world.disputes[parent];
+  continueRemainingDispute(s,parent,dispute);
  }
 }
 
 // A negotiated settlement preserves both sides' surviving forces. It cannot
 // silently create a war between a realm and one of its existing allies.
 export function settleDynasticWar(s,parent){
- const cfg=CONFIG[parent],war=s.world.disputes?.[parent]?.war;if(!cfg||!war||!s.factions[parent]||!s.factions[cfg.rival])return false;
+ const cfg=CONFIG[parent],dispute=s.world.disputes?.[parent],war=dispute?.war;if(!cfg||!war||!s.factions[parent]||!s.factions[cfg.rival])return false;
  const enemies=s.wars.filter(w=>w.includes(cfg.rival)).map(w=>w.find(id=>id!==cfg.rival)).filter(id=>id!==parent);
  if(enemies.some(id=>s.alliances.some(a=>a.includes(parent)&&a.includes(id))))return false;
  const person=s.world.characters[war.claimant],leaders=(s.world.leadership[parent]||[]).filter(id=>s.world.characters[id]?.alive);
@@ -87,7 +93,7 @@ export function settleDynasticWar(s,parent){
  s.wars=s.wars.filter(w=>!w.includes(cfg.rival));for(const enemy of enemies)if(!s.wars.some(w=>w.includes(parent)&&w.includes(enemy)))s.wars.push([parent,enemy]);
  s.alliances=s.alliances.filter(a=>!a.includes(cfg.rival));delete s.factions[cfg.rival];delete s.world.leadership[cfg.rival];delete s.world.governments?.[cfg.rival];
  s.world.disputeHistory.unshift({faction:parent,claimant:war.claimant,outcome:'negotiated_settlement',year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);
- if(s.world.claimants[parent].length)s.world.disputes[parent]={months:0};else delete s.world.disputes[parent];
+ continueRemainingDispute(s,parent,dispute);
  return true;
 }
 

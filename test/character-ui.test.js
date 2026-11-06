@@ -316,3 +316,13 @@ test('Parthian name transliterations and the earlier Roman marriage remain sourc
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.personalRelations={};globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});for(const [id,patterns] of [['orodes',[/wrwd/,/非原文字母/,/Wirōd/]],['pacorus',[/pkwr/,/非原文字母/,/Pakur/]],['caesar',[/庞培于前59年迎娶凯撒之女朱莉娅/,/前54年去世/,/不代表游戏中的信任/]],['pompey',[/朱莉娅于前54年去世/,/不代表游戏中的信任/]]]){panel.children=[];ui.show(id);const html=panel.children.find(x=>x.className==='help-list').innerHTML;for(const pattern of patterns)assert.match(html,pattern);assert.match(html,id==='orodes'||id==='pacorus'?/iranicaonline.org/:/academic.oup.com/)}assert.deepEqual(s.world.personalRelations,{});assert.equal(s.knowledge.senate.parthia.reports.length,0);assert.equal(s.knowledge.senate.caesar.reports.length,0)}finally{globalThis.document=prior}
 });
+
+test('the new claimant has a distinct portrait and sourced uncertain birth without leaking her hidden status',()=>{
+ const prior=globalThis.document,panel=new Element(),s=newGame('caesar');s.world.characters.arsinoe.health='dying';addReport(s,'caesar','egypt',{kind:'claimants',leaders:['arsinoe'],source:'spy',confidence:'unverified'});globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).show('arsinoe');assert.match(panel.innerHTML,/arsinoe-128.jpg/);assert.match(panel.innerHTML,/游戏健康<\/span><b>未知/);const details=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(details,/公元前69–60年之间/);assert.match(details,/并非战役中的预定事件/);assert.match(details,/trismegistos.org/);assert.doesNotMatch(details,/垂危/)}finally{globalThis.document=prior}
+});
+
+test('reported claimants can be opened directly from the intelligence report',()=>{
+ const prior=globalThis.document,s=newGame('caesar');addReport(s,'caesar','egypt',{kind:'claimants',leaders:['arsinoe'],source:'spy'});globalThis.document={createElement:tag=>new Element(tag)};
+ try{const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,/data-character="arsinoe"/);assert.match(html,/arsinoe-128\.jpg/);assert.match(html,/报告的竞争者/);assert.doesNotMatch(html,/垂危/)}finally{globalThis.document=prior}
+});
