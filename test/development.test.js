@@ -6,7 +6,7 @@ const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,15);assert.equal(MATERIALS.length,29);assert.equal(BUILDINGS.length,29);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,25);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);

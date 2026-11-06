@@ -13,6 +13,8 @@ The atlas and campaign can transfer their current state in the same browser tab 
 
 The optional elevation tiles and web fonts require a network connection. The land/sea shapes and colors are bundled and remain visible offline. No ancient vegetation layer, complete dated province subdivision, exact 49 BCE road alignment, or exact 49 BCE control survey is claimed.
 
+The restrained land palette uses only a small amount of modern elevation color. Directional hill shading is off by default and can be switched on in Settings. The eleven sea zones, initial fleet strength, ship costs, commercial lanes, cargo quantities and piracy pressures in `../naval.js` are gameplay abstractions, not measured 49 BCE records. They do not imply exact ancient maritime borders or shipping volumes.
+
 ## Named road reconstructions
 
 The displayed linework is a subset of [Ancient World Mapping Center road data](https://github.com/AWMC/geodata/tree/master/Cultural-Data/roads), derived from the Barrington Atlas and AWMC modifications to OpenStreetMap, © AWMC and OpenStreetMap contributors, available under the [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/). The derived database is `../republican-roads.js`, generated from AWMC `roads.geojson` blob `e5b53dfb7aab621eb25d31d66457562240524ff2` by `../tools/build-republican-roads.mjs`. It selects named features 637 (Via Appia, Rome–Capua), 1467 (Via Aemilia), and 1480 and 1550 (Via Flaminia), preserves the source feature IDs and source-map attributes, and rounds coordinates to five decimal places. Decimal precision is not a claim of survey accuracy.

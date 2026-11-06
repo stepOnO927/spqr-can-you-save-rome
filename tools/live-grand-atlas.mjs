@@ -12,7 +12,7 @@ page.on('requestfailed',r=>{if(/arcgisonline|elevation-tiles-prod/.test(r.url())
 try{
  await page.goto('http://127.0.0.1:5174/',{waitUntil:'domcontentloaded'});
  await page.locator('#entry-senate').click();await page.waitForURL('**/map-lab/');
- await page.locator('.grand-site').first().waitFor({timeout:30000});assert.equal(await page.locator('.grand-site').count(),120);
+ try{await page.locator('.grand-site').first().waitFor({timeout:30000})}catch(error){await page.screenshot({path:path.join(output,'load-failure.png')});console.error('Atlas load errors',errors);throw error}assert.equal(await page.locator('.grand-site').count(),120);
  await page.locator('.maplibregl-canvas').waitFor({timeout:30000});await page.waitForTimeout(8000);
  const sample=await page.evaluate(()=>new Promise(resolve=>{let frames=0;const begin=performance.now();function frame(now){frames++;if(now-begin<3000)requestAnimationFrame(frame);else resolve({seconds:(now-begin)/1000,frames})}requestAnimationFrame(frame)}));
  await page.screenshot({path:path.join(output,'live-grand-atlas.png')});await page.locator('#atlas-focus').click();await page.waitForTimeout(250);await page.screenshot({path:path.join(output,'focused-atlas.png')});await page.locator('#atlas-focus').click();

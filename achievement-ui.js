@@ -1,0 +1,8 @@
+import {revealedAchievements} from './achievement-system.js';
+
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function campaignEndingHtml(state,lang){
+ if(!state.achievementState?.finalized)return '';
+ const zh=lang==='zh',result=state.achievementState.result,labels={victory:['Victory','胜利'],defeat:['Defeat','战败'],retired:['Campaign ended','战役结束']},categories={ordinary:['Ordinary','普通'],hidden:['Hidden','隐藏'],legendary:['Legendary','传奇']},earned=revealedAchievements(state);
+ return `<section class="campaign-ending" aria-label="${zh?'战役结算':'Campaign results'}"><span>${zh?'历史已写就':'HISTORY IS WRITTEN'}</span><h2>${esc(labels[result]?.[zh?1:0]||result)}</h2><p>${zh?'以下成就只在战役结束后揭晓。已获得的成就存入罗马遗产博物馆。':'These achievements are revealed only after the campaign ends. Earned records enter the Legacy of Rome museum.'}</p><div class="ending-achievements">${earned.length?earned.map(({id,definition,year,month})=>`<article><small>${esc(categories[definition.category][zh?1:0])} · ${month}/${Math.abs(year)} ${zh?'公元前':'BCE'}</small><strong>${esc(definition.name[zh?1:0])}</strong><p>${esc(definition.description[zh?1:0])}</p></article>`).join(''):`<p>${zh?'本次没有达成成就。':'No achievements earned in this campaign.'}</p>`}</div><div class="ending-actions"><button id="ending-language">${zh?'ENGLISH':'中文'}</button><button id="ending-download">${zh?'下载结算存档':'DOWNLOAD FINAL SAVE'}</button><a href="${globalThis.location?.pathname?.includes('/map-lab/')?'../legacy/':'./legacy/'}">${zh?'前往罗马遗产博物馆':'VIEW LEGACY MUSEUM'} ↗</a></div></section>`;
+}

@@ -102,6 +102,31 @@ const additionalBuildings=[
  ['shipyard',['Shipyard','造船厂'],'shipyard-craft',30,5,{stone:3,timber:4,metal:2},3,{treasury:2,seaSpeed:1},['plain','hills','desert'],'coast']
 ];
 for(const [id,name,tech,cost,months,materials,upkeep,effects,terrain,site] of additionalBuildings)BUILDINGS.push({id,name,tech,cost,months,materials,upkeep,effects,terrain,site});
+MATERIALS.push(
+ {id:'improved-shipbuilding',name:['Improved Shipbuilding','改良造船'],cost:27,months:4,prerequisites:['shipyard-craft'],context:['Better yard organization shortens vessel construction.','改进船厂组织，缩短造船时间。'],source:source(engineeringSource)},
+ {id:'naval-equipment',name:['Heavy Naval Equipment','重型海军装备'],cost:32,months:5,prerequisites:['shipyard-craft','metalworking'],context:['Stronger hull fittings make heavier warships feasible.','更坚固的船体配件使大型战船可建造。'],source:source(engineeringSource)},
+ {id:'repair-facilities',name:['Naval Repair Facilities','海军修理设施'],cost:25,months:4,prerequisites:['shipyard-craft'],context:['Dockside repair crews restore damaged hulls over time.','港边修理人员逐月修复受损船体。'],source:source(engineeringSource)},
+ {id:'maritime-warehousing',name:['Maritime Warehousing','海运仓储'],cost:23,months:3,prerequisites:['port-facilities'],context:['Warehouses protect cargo and increase reliable throughput.','仓库保护货物，提高稳定吞吐量。'],source:source(grainSource)},
+ {id:'military-transport-organization',name:['Military Transport Organization','军事海运组织'],cost:26,months:4,prerequisites:['shipyard-craft'],context:['Organized loading lets each transport carry more soldiers.','组织装载，使每艘运输船多运士兵。'],source:source(armySource)}
+);
+BUILDINGS.push(
+ {id:'naval-depot',name:['Naval Supply Depot','海军补给站'],tech:'port-facilities',cost:23,months:3,materials:{timber:2,stone:1},upkeep:1,effects:{navalSupply:12},terrain:['plain','hills','urban'],site:'coast'},
+ {id:'dockyard',name:['Naval Dockyard','海军船坞'],tech:'repair-facilities',cost:29,months:5,materials:{timber:3,stone:2,metal:1},upkeep:2,effects:{navalRepair:8},terrain:['plain','hills','urban'],site:'coast'},
+ {id:'coastal-fort',name:['Coastal Fortification','海岸堡垒'],tech:'stone-fortification',cost:30,months:5,materials:{stone:4,timber:1,metal:1},upkeep:2,effects:{navalDefense:4},terrain:['plain','hills','urban'],site:'coast'},
+ {id:'naval-training',name:['Naval Training Facility','海军训练场'],tech:'shipyard-craft',cost:22,months:4,materials:{timber:2,stone:1},upkeep:2,effects:{navalExperience:2},terrain:['plain','hills','urban'],site:'coast'}
+);
+IDEAS.push(
+ {id:'naval-crew-training',category:'military',name:['Naval Crew Training','海军船员训练'],cost:23,months:3,adopt:12,effects:{navalPower:.08,upkeep:2},context:['Drilling oarsmen improves maneuver but requires pay.','训练桨手改善机动，但增加军费。'],source:source(armySource)},
+ {id:'fleet-coordination',category:'military',name:['Fleet Coordination','舰队协同'],cost:25,months:4,adopt:13,effects:{navalPower:.06,navalSupply:3,upkeep:1},context:['Signals and practiced formations aid a fleet at a cost.','旗号与队形训练增强舰队，也要花费。'],source:source(armySource)},
+ {id:'maritime-administration',category:'government',name:['Maritime Administration','海务行政'],cost:23,months:3,adopt:12,effects:{navalTrade:1,upkeep:2},context:['Officials organize convoy records and port dues.','官员管理船队记录与港口税费。'],source:source(republicSource)},
+ {id:'harbor-regulation',category:'government',name:['Harbor Regulation','港口条例'],cost:22,months:3,adopt:10,effects:{navalSecurity:8,treasury:-1},context:['Inspections reduce losses and slow merchants.','检查减少损失，也拖慢商船。'],source:source(republicSource)},
+ {id:'maritime-intelligence',category:'diplomacy',name:['Maritime Intelligence Networks','海事情报网'],cost:24,months:3,adopt:12,effects:{navalIntel:1,upkeep:1},context:['Port informants improve sightings without revealing certainty.','港口线人改善目击，仍不能提供确切情报。'],source:source(republicSource)},
+ {id:'commercial-treaties',category:'diplomacy',name:['Commercial Treaties','商业条约'],cost:25,months:3,adopt:12,effects:{navalTrade:1,upkeep:1},context:['Treaties ease access but require envoys and concessions.','条约改善准入，也需要使节与让步。'],source:source(republicSource)},
+ {id:'merchant-patronage',category:'economy',name:['Merchant Patronage','商人赞助'],cost:23,months:3,adopt:12,effects:{navalTrade:1,loyalty:-1},context:['Patronage expands exchange and favors a few merchants.','赞助扩大贸易，也偏袒少数商人。'],source:source(grainSource)},
+ {id:'state-supported-trade',category:'economy',name:['State-Supported Trade','国家扶助贸易'],cost:27,months:4,adopt:14,effects:{navalSecurity:10,treasury:-2},context:['State escorts stabilize commerce at fiscal cost.','国家护航稳定贸易，却增加财政负担。'],source:source(grainSource)},
+ {id:'naval-engineering-education',category:'culture',name:['Naval Engineering Education','海军工程教育'],cost:25,months:4,adopt:13,effects:{navalRepair:4,upkeep:1},context:['Training shipwrights improves repairs.','训练造船工匠改善修理。'],source:source(engineeringSource)},
+ {id:'maritime-cultural-exchange',category:'culture',name:['Maritime Cultural Exchange','海上文化交流'],cost:22,months:3,adopt:11,effects:{navalTrade:1,stability:-1},context:['Port exchange carries knowledge and political unease.','港口交流传播知识，也带来政治不安。'],source:source(romanSource)}
+);
 const materialPrerequisites={'stone-fortification':['barracks-design'],'metal-extraction':['quarrying'],'urban-drainage':['water-control']};
 const ideaPrerequisites={'reserve-mobilization':['legion-training'],'provincial-autonomy':['senatorial-consultation'],'commercial-agreements':['diplomatic-accommodation'],'estate-organization':['public-works'],'civic-education':['rhetorical-education']};
 for(const item of MATERIALS)item.prerequisites=materialPrerequisites[item.id]||item.prerequisites||[];
