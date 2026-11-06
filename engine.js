@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=83';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=84';
 import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=22';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=11';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=18';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=78';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=79';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=10';
 import {advanceConspiracies} from './conspiracies.js?v=10';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=4';
@@ -190,7 +190,14 @@ function resolveInquiries(s){
     const admit=recent&&!hostile&&rel>=30&&roll>=.75,deny=!admit&&(hostile||rel<0||!recent)&&roll>=.6;
     sealed.claim=admit?['The court acknowledges reports of local fighting.','宫廷承认有地方武装冲突的报告。']:deny?['The court denies reports of local fighting.','宫廷否认地方武装冲突的报告。']:['The court gives no clear answer about local fighting.','宫廷没有就地方武装冲突给出明确答复。'];
     sealed.report={kind:'clashes',value:admit?'reported':deny?'denied':'unknown'};
-   }else if(subject==='availability')sealed.claim=['The court has made no binding commitment to a meeting.','宫廷尚未就会面作出承诺。'];
+   }else if(subject==='availability'){
+    // This is a court statement composed now, not a promise, a diagnosis or
+    // proof that a particular person can be met when the letter arrives.
+    const government=deriveGovernment(s,letter.target),reachable=government.acting.some(id=>{const c=s.world.characters[id];return c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health)&&s.regions.some(r=>r.id===c.location&&r.owner===letter.target)&&!s.armies.some(a=>a.characterId===id&&a.move)});
+    const open=!hostile&&rel>=0&&roll>=.65&&(reachable||claimants.length>0&&roll>=.85),value=open?'open':hostile||!reachable||claimants.length?'deferred':'unknown';
+    sealed.claim=open?['The court invites a later request for an audience, without guaranteeing a meeting.','宫廷表示可另行请求会面，但不保证会见。']:value==='deferred'?['The court defers an audience request and makes no commitment.','宫廷暂缓会面请求，未作任何承诺。']:['The court has made no binding commitment to a meeting.','宫廷尚未就会面作出承诺。'];
+    sealed.report={kind:'availability',value};
+   }
    else if(subject==='representative'){
     // A cooperative court may name people who currently exercise authority.
     // A guarded or contested court gives no names; silence proves nothing.

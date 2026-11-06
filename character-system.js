@@ -107,12 +107,13 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!FACTIONS[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(target.endsWith('_claimant')&&!knownDynasticFactions(s,actor).includes(target))return {ok:false,reason:'unavailable'};
  const theater=subject.startsWith('office_theater:')?subject.slice('office_theater:'.length):null;
- if(!theater&&!['health','age','location','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance','clashes','office_finance','office_supply','office_administration'].includes(subject))return {ok:false,reason:'subject'};
+ if(!theater&&!['health','age','location','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance','clashes','office_finance','office_supply','office_administration','availability'].includes(subject))return {ok:false,reason:'subject'};
  if(theater&&!reportedOfficeTheaters(s,actor,target).includes(theater))return {ok:false,reason:'subject'};
  if(subject.startsWith('office_')&&(!['spy','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
  if(subject==='location'&&!['spy','travelers','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(subject==='clashes'&&(!['spy','travelers','exchange'].includes(type)||!['egypt','parthia'].includes(target)))return {ok:false,reason:'subject'};
  if(subject==='age'&&type!=='exchange')return {ok:false,reason:'subject'};
+ if(subject==='availability'&&type!=='exchange')return {ok:false,reason:'subject'};
  if(subject==='relations'&&type!=='envoy')return {ok:false,reason:'subject'};
  if(subject==='stance'&&!['envoy','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(subject==='contacts'&&(!['spy','exchange'].includes(type)||!['egypt','parthia'].includes(target)))return {ok:false,reason:'subject'};
