@@ -1,11 +1,11 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=20-xxii';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=1-xxii';
-import {FACTIONS,ROUTES} from './data.js?v=11-xxii';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=25-xxii';
-import {potentialConspirators} from './conspiracies.js?v=11-xxii';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=7-xxii';
-import {reportedControl} from './control-intelligence.js?v=4-xxii';
-import {canHoldOffice,localGovernor} from './office-system.js?v=12-xxii';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=20-xxiib';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=1-xxiib';
+import {FACTIONS,ROUTES} from './data.js?v=11-xxiib';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=25-xxiib';
+import {potentialConspirators} from './conspiracies.js?v=11-xxiib';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=7-xxiib';
+import {reportedControl} from './control-intelligence.js?v=4-xxiib';
+import {canHoldOffice,localGovernor} from './office-system.js?v=12-xxiib';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.

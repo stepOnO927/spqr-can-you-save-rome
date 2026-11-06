@@ -1,4 +1,4 @@
-import {REGIONS,ROUTES} from './data.js?v=11-xxii';
+import {REGIONS,ROUTES} from './data.js?v=11-xxiib';
 
 // Opening control is common campaign knowledge, not a reconstruction of the
 // current world in an old save. Later observations belong to each faction.

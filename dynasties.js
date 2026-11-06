@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=20-xxii';
-import {startDynasticWar} from './civil-war.js?v=7-xxii';
+import {CHARACTER_CATALOG} from './characters.js?v=20-xxiib';
+import {startDynasticWar} from './civil-war.js?v=7-xxiib';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -17,7 +17,7 @@ const ensureCatalog=s=>{for(const [id,entry] of Object.entries(s.world.dynasties
 
 export function initializeDynasties(s){
  const d=s.world.dynasties||= {families:{},lives:{},catalog:{},marriages:[],memories:[],rulers:[],seed:220049,nextPerson:1,nextFamily:1};
- d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
+ d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
  for(const [id,c] of Object.entries(s.world.characters)){
   c.parents||=[];c.adoptiveParents||=[];c.children||=[];c.spouse||=null;c.wealth??=0;
   c.sex||=(['cleopatra','arsinoe'].includes(id)?'female':CHARACTER_CATALOG[id]?.fictional?'unknown':'male');
@@ -100,14 +100,47 @@ export function settleInheritance(s,id){
  const d=initializeDynasties(s),c=s.world.characters[id];if(!c||c.inheritanceSettled)return;
  c.inheritanceSettled=true;const heirs=c.children.filter(x=>s.world.characters[x]?.alive),will=c.will?.beneficiary;
  const eligibleWill=will&&s.world.characters[will]?.alive?will:null,wealth=Math.max(0,Math.floor(c.wealth||0));
+ if(eligibleWill&&heirs.length&&!heirs.includes(eligibleWill)&&wealth>0){
+  d.inheritanceDisputes.push({id:`estate:${id}`,deceased:id,faction:c.faction,beneficiary:eligibleWill,heirs:[...heirs],estate:wealth,share:c.will.share,status:'pending',year:s.year,month:s.month});
+  c.wealth=0;record(s,id,'Died; the contested private estate is held pending a ruling.','去世；有争议的私人遗产待裁决。');
+  note(s,`The private estate of ${CHARACTER_CATALOG[id].name[0]} is disputed; the court may uphold the will, divide it, or favor the children.`,` ${CHARACTER_CATALOG[id].name[1]}的私人遗产发生争议；宫廷可维持遗嘱、分割遗产或支持子女。`);
+  return;
+ }
  if(eligibleWill){const amount=Math.floor(wealth*c.will.share);s.world.characters[eligibleWill].wealth+=amount;c.wealth-=amount;record(s,eligibleWill,`Inherited ${amount} private wealth from ${CHARACTER_CATALOG[id].name[0]}.`,`从${CHARACTER_CATALOG[id].name[1]}继承${amount}私人财富。`)}
  const remaining=Math.max(0,Math.floor(c.wealth||0));if(heirs.length){for(const heir of heirs)s.world.characters[heir].wealth+=Math.floor(remaining/heirs.length);c.wealth=remaining%heirs.length}else{familyOf(s,id).wealth+=remaining;c.wealth=0}
  record(s,id,'Died; private property was settled separately from the state treasury.','去世；私人财产与国库分别结算。');
- if(eligibleWill&&heirs.length&&!heirs.includes(eligibleWill)){d.memories.push({familyId:c.familyId,targetFamilyId:s.world.characters[eligibleWill].familyId,kind:'contested_will',year:s.year,month:s.month,weight:-12});familyOf(s,id).reputation=Math.max(0,familyOf(s,id).reputation-3);for(const heir of heirs)s.world.characters[heir].loyalty=Math.max(0,s.world.characters[heir].loyalty-5)}
+}
+
+export function resolveInheritanceDispute(s,disputeId,choice){
+ const d=initializeDynasties(s),caseFile=d.inheritanceDisputes.find(x=>x.id===disputeId&&x.status==='pending');
+ if(!caseFile)return {ok:false,reason:'unavailable'};
+ if(!['will','compromise','heirs'].includes(choice))return {ok:false,reason:'choice'};
+ const faction=s.factions[caseFile.faction],beneficiary=s.world.characters[caseFile.beneficiary],heirs=caseFile.heirs.map(id=>s.world.characters[id]).filter(c=>c?.alive);
+ if(!beneficiary?.alive&&!heirs.length)return {ok:false,reason:'no_heirs'};
+ if(choice==='compromise'&&faction?.treasury<6)return {ok:false,reason:'treasury'};
+ const willAmount=beneficiary?.alive?(choice==='will'?Math.floor(caseFile.estate*caseFile.share):choice==='compromise'?Math.floor(caseFile.estate*.5):0):0;
+ if(beneficiary)beneficiary.wealth+=willAmount;
+ const rest=caseFile.estate-willAmount;
+ if(heirs.length){const portion=Math.floor(rest/heirs.length);for(const heir of heirs)heir.wealth+=portion;d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest-portion*heirs.length}
+ else if(beneficiary)beneficiary.wealth+=rest;
+ else d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest;
+ if(choice==='compromise'){faction.treasury-=6;faction.stability=Math.min(100,faction.stability+2)}
+ if(choice==='will'){for(const heir of heirs)heir.loyalty=Math.max(0,heir.loyalty-8);if(faction)faction.stability=Math.max(0,faction.stability-2)}
+ if(choice==='heirs'&&beneficiary){beneficiary.loyalty=Math.max(0,beneficiary.loyalty-10);if(faction)faction.stability=Math.max(0,faction.stability-1)}
+ d.memories.push({familyId:s.world.characters[caseFile.deceased].familyId,targetFamilyId:beneficiary?.familyId,kind:`inheritance_${choice}`,year:s.year,month:s.month,weight:choice==='compromise'?2:-6});
+ caseFile.status='resolved';caseFile.choice=choice;caseFile.resolvedYear=s.year;caseFile.resolvedMonth=s.month;
+ const labels={will:['will upheld','维持遗嘱'],compromise:['estate divided','分割遗产'],heirs:['children favored','支持子女']};
+ record(s,caseFile.deceased,`Inheritance ruling: ${labels[choice][0]}.`,`继承裁决：${labels[choice][1]}。`);
+ if(caseFile.faction===s.player)note(s,`Inheritance ruling: ${labels[choice][0]}.`,`继承裁决：${labels[choice][1]}。`);
+ return {ok:true};
 }
 
 export function advanceDynasties(s){
  const d=initializeDynasties(s);
+ for(const dispute of d.inheritanceDisputes.filter(x=>x.status==='pending')){
+  const age=(s.year-dispute.year)*12+s.month-dispute.month;
+  if((dispute.faction!==s.player&&age>=3)||age>=12){const choice=s.factions[dispute.faction]?.treasury>=6?'compromise':'heirs';resolveInheritanceDispute(s,dispute.id,choice)}
+ }
  const crisis=d.scenario,months=crisis?(s.year-crisis.startedYear)*12+s.month-crisis.startedMonth:0;
  if(crisis?.concessionMonths>0&&s.factions.egypt&&s.factions.numidia){s.factions.egypt.treasury-=1;s.factions.numidia.treasury+=1;crisis.concessionMonths--}
  if(crisis?.stage==='war'&&!s.world.disputes?.egypt?.war&&!s.factions.egypt_claimant){crisis.stage='resolved';note(s,'The succession civil war ended; its political consequences remain.','继承内战已经结束，但政治后果仍然存在。')}

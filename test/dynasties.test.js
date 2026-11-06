@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
-import {CHARACTER_CATALOG} from '../characters.js?v=20-xxii';
-import {assignSuccession} from '../characters.js?v=20-xxii';
-import {deriveGovernment} from '../governance.js?v=25-xxii';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,adoptHeir,makeWill,settleInheritance,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
-import {canHoldOffice} from '../office-system.js?v=12-xxii';
+import {CHARACTER_CATALOG} from '../characters.js?v=20-xxiib';
+import {assignSuccession} from '../characters.js?v=20-xxiib';
+import {deriveGovernment} from '../governance.js?v=25-xxiib';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
+import {canHoldOffice} from '../office-system.js?v=12-xxiib';
 import {renderGenealogy} from '../genealogy-ui.js';
 import {finalizeCampaign} from '../legacy.js';
 
@@ -26,6 +26,31 @@ test('marriage, adoption and wills change legal relationships and private assets
  s.world.characters[a].alive=false;settleInheritance(s,a);
  assert.equal(s.world.characters[child].wealth,40);assert.equal(s.factions.egypt.treasury,treasury);
  assert.equal(s.world.dynasties.lives[child].some(e=>e.en.includes('Inherited')),true);
+});
+
+test('a contested private will becomes a saved court case with real costs',()=>{
+ const s=newGame('egypt');
+ const parent=createFictionalPerson(s,{name:['Testator','立遗嘱者'],faction:'egypt',birthYear:-90,wealth:35});
+ const child=createFictionalPerson(s,{name:['Child','子女'],faction:'egypt',birthYear:-66,parents:[parent],familyId:s.world.characters[parent].familyId});
+ const outsider=createFictionalPerson(s,{name:['Outsider','外人'],faction:'egypt',birthYear:-70});
+ assert.equal(makeWill(s,parent,outsider).ok,true);const treasury=s.factions.egypt.treasury;
+ s.world.characters[parent].alive=false;settleInheritance(s,parent);
+ assert.equal(s.world.characters[outsider].wealth,0);assert.equal(s.world.characters[child].wealth,0);
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s))),caseFile=saved.world.dynasties.inheritanceDisputes[0];
+ assert.equal(caseFile.estate,35);assert.match(renderGenealogy(saved,false),/CONTESTED PRIVATE ESTATE/);
+ assert.match(renderGenealogy(saved,true),/待决私人遗产/);
+ assert.equal(resolveInheritanceDispute(saved,caseFile.id,'compromise').ok,true);
+ assert.equal(saved.factions.egypt.treasury,treasury-6);
+ assert.equal(saved.world.characters[outsider].wealth+saved.world.characters[child].wealth+saved.world.dynasties.families[saved.world.characters[parent].familyId].wealth,35);
+ assert.equal(resolveInheritanceDispute(saved,caseFile.id,'will').ok,false);
+});
+
+test('unresolved estates receive an automatic ruling after twelve months',()=>{
+ const s=newGame('egypt'),parent=createFictionalPerson(s,{name:['P','甲'],faction:'egypt',birthYear:-90,wealth:20}),child=createFictionalPerson(s,{name:['C','乙'],faction:'egypt',birthYear:-69,parents:[parent]}),outsider=createFictionalPerson(s,{name:['O','丙'],faction:'egypt',birthYear:-70});
+ makeWill(s,parent,outsider);s.world.characters[parent].alive=false;settleInheritance(s,parent);
+ s.year+=1;advanceDynasties(s);
+ assert.equal(s.world.dynasties.inheritanceDisputes[0].status,'resolved');
+ assert.equal(s.world.characters[child].wealth+s.world.characters[outsider].wealth,20);
 });
 
 test('children mature over years and their identities survive loading',()=>{
