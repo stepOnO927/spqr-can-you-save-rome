@@ -1,5 +1,5 @@
 import {SEA_ZONES,SHIPS,NAVAL_JOBS,reportedHostileFleets,portZone,fleetSpeed,fleetCargoCapacity,fleetUpkeep} from '../naval.js';
-import {adjacent,previewMarch} from '../engine.js?v=83';
+import {adjacent,previewMarch} from '../engine.js?v=84';
 import {CHARACTER_CATALOG} from '../characters.js';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
