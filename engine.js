@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=85';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=86';
 import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=22';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=11';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=18';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=80';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=81';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=10';
 import {advanceConspiracies} from './conspiracies.js?v=10';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=4';
@@ -361,6 +361,12 @@ function aiTurn(s,owner){
     if(border)recruit(s,border.id,owner);
   }
   if(f.stability<45&&f.treasury>25){f.treasury-=10;f.stability+=3}
+  // A faction may write about its own captured personnel, without exposing a
+  // letter to the player until its outward journey reaches the holder.
+  if(owner!=='rebels'&&s.month%6===3&&f.treasury>35){
+    const captive=s.world.captives.find(c=>c.owner===owner&&c.holder===s.player&&c.state==='held'&&!s.releaseRequests.some(r=>r.captiveId===c.id&&((s.year-r.year)*12+s.month-r.month<12)));
+    if(captive)requestAgentRelease(s,owner,captive.id);
+  }
   if(['caesar','senate'].includes(owner)&&s.month===2&&f.treasury>40&&s.wars.some(w=>w.includes(owner)))queueMission(s,owner,owner,'counter','counter_spies');
   if(owner!=='rebels' && s.month===8 && f.treasury>=25){const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);if(enemy&&enemy!=='rebels')queueMission(s,owner,enemy,'spy','strength')}
   // Rival Roman commands investigate and act on their own reports, not on the

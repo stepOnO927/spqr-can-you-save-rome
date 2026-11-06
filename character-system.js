@@ -31,11 +31,37 @@ export function counterWatchRemaining(s,actor){
 function counterWatchActive(s,actor){const watch=s.world?.securityWatches?.[actor],now=s.year*12+s.month;return !!watch&&now>=watch.start&&now<=watch.end}
 export function availableAgents(s,actor){initializeWorld(s);const held=s.world.captives.filter(c=>c.owner===actor&&c.state==='held').length,pending=s.operations.filter(o=>o.actor===actor&&['spy','counter'].includes(o.type)&&o.status==='pending').length;return Math.max(0,3-held-pending)}
 export function requestAgentRelease(s,actor,captiveId){
- initializeWorld(s);const c=s.world.captives.find(x=>x.id===captiveId&&x.owner===actor&&x.state==='held');if(actor!==s.player||!c)return {ok:false,reason:'unavailable'};
- if(s.releaseRequests.some(x=>x.captiveId===captiveId&&x.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<8)return {ok:false,reason:'treasury'};
- s.factions[actor].treasury-=8;s.releaseRequests.unshift({actor,holder:c.holder,captiveId,remaining:4,status:'pending',year:s.year,month:s.month});notify(s,'A release request was sent; a reply may take four months.','已寄出释放请求；回信可能需要四个月。');return {ok:true};
+ initializeWorld(s);const c=s.world.captives.find(x=>x.id===captiveId&&x.owner===actor&&x.state==='held');if(!c||!s.factions[actor]||(actor!==s.player&&c.holder!==s.player))return {ok:false,reason:'unavailable'};
+ if(s.releaseRequests.some(x=>x.captiveId===captiveId&&['pending','awaiting_decision','returning'].includes(x.status)))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<8)return {ok:false,reason:'treasury'};
+ s.factions[actor].treasury-=8;
+ if(actor===s.player){s.releaseRequests.unshift({actor,holder:c.holder,captiveId,remaining:4,status:'pending',year:s.year,month:s.month});notify(s,'A release request was sent; a reply may take four months.','已寄出释放请求；回信可能需要四个月。')}
+ else s.releaseRequests.unshift({actor,holder:c.holder,captiveId,remaining:2,status:'pending',phase:'outbound',year:s.year,month:s.month});
+ return {ok:true};
 }
-export function advanceAgentRequests(s){initializeWorld(s);for(const request of s.releaseRequests){if(request.status!=='pending'||--request.remaining>0)continue;const c=s.world.captives.find(x=>x.id===request.captiveId),q=rand(s),war=s.wars.some(w=>w.includes(request.actor)&&w.includes(request.holder));if(!c||c.state!=='held'||!s.regions.some(r=>r.owner===request.holder)||q<.2)request.status='no_reply';else if(q<(war?.65:.45))request.status='refused';else{request.status='released';c.state='released';c.releasedYear=s.year;c.releasedMonth=s.month}if(request.actor===s.player)notify(s,request.status==='released'?'The unnamed agent was released and is available again.':request.status==='refused'?'The court refused to release the agent.':'No response arrived; the correspondence may have been lost.',request.status==='released'?'未具名人员获释，情报人手恢复。':request.status==='refused'?'对方拒绝释放人员。':'未收到回信；书信可能遗失。')}}
+// Only a letter that reached the player may be answered. The decision is not
+// delivered, and an approved handover is not completed, until the return trip.
+export function answerAgentRelease(s,captiveId,decision){
+ initializeWorld(s);if(!['release','refuse'].includes(decision))return {ok:false,reason:'decision'};
+ const r=s.releaseRequests.find(x=>x.captiveId===captiveId&&x.holder===s.player&&x.status==='awaiting_decision'),c=s.world.captives.find(x=>x.id===captiveId&&x.holder===s.player&&x.state==='held');if(!r||!c)return {ok:false,reason:'unavailable'};
+ r.decision=decision;r.status='returning';r.phase='return';r.remaining=2;r.answeredYear=s.year;r.answeredMonth=s.month;
+ notify(s,'Your answer has been sent; delivery and any handover may take two months.','答复已寄出；送达及可能的交接约需两个月。');return {ok:true};
+}
+export function advanceAgentRequests(s){initializeWorld(s);for(const request of s.releaseRequests){
+ if(request.status==='awaiting_decision'){if(--request.remaining<=0){request.status='no_reply';request.phase='expired'}continue}
+ if(!['pending','returning'].includes(request.status)||--request.remaining>0)continue;
+ const c=s.world.captives.find(x=>x.id===request.captiveId),q=rand(s);
+ if(request.phase==='outbound'){
+  if(!c||c.state!=='held'||c.holder!==request.holder||q<.2){request.status='no_reply';request.phase='lost';continue}
+  request.status='awaiting_decision';request.phase='at_court';request.remaining=6;
+  if(request.holder===s.player)notify(s,'A letter from '+(FACTIONS[request.actor]?.short[0]||'another faction')+' requests release of a detained agent.',(FACTIONS[request.actor]?.short[1]||'另一势力')+'来信请求释放被扣押的情报人员。');continue;
+ }
+ if(request.phase==='return'){
+  if(!c||c.state!=='held'||c.holder!==request.holder||q<.2){request.status='no_reply';request.phase='lost';continue}
+  request.status=request.decision==='release'?'released':'refused';request.phase='delivered';
+  if(request.status==='released'){c.state='released';c.releasedYear=s.year;c.releasedMonth=s.month}continue;
+ }
+ const war=s.wars.some(w=>w.includes(request.actor)&&w.includes(request.holder));if(!c||c.state!=='held'||!s.regions.some(r=>r.owner===request.holder)||q<.2)request.status='no_reply';else if(q<(war?.65:.45))request.status='refused';else{request.status='released';c.state='released';c.releasedYear=s.year;c.releasedMonth=s.month}if(request.actor===s.player)notify(s,request.status==='released'?'The unnamed agent was released and is available again.':request.status==='refused'?'The court refused to release the agent.':'No response arrived; the correspondence may have been lost.',request.status==='released'?'未具名人员获释，情报人手恢复。':request.status==='refused'?'对方拒绝释放人员。':'未收到回信；书信可能遗失。');
+}}
 const sourceFamily=r=>{const source=r.originSource||r.source;return ({official:'court',envoy:'court',audience:'court',exchange:'unknown'}[source]||source||'unknown')};
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
 const knownReport=x=>['leaders','claimants'].includes(x.kind)?Array.isArray(x.leaders)&&x.leaders.length>0:x.value!=='unknown'&&x.value!=null;
