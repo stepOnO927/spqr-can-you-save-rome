@@ -321,3 +321,8 @@ test('the new claimant has a distinct portrait and sourced uncertain birth witho
  const prior=globalThis.document,panel=new Element(),s=newGame('caesar');s.world.characters.arsinoe.health='dying';addReport(s,'caesar','egypt',{kind:'claimants',leaders:['arsinoe'],source:'spy',confidence:'unverified'});globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).show('arsinoe');assert.match(panel.innerHTML,/arsinoe-128.jpg/);assert.match(panel.innerHTML,/游戏健康<\/span><b>未知/);const details=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(details,/公元前69–60年之间/);assert.match(details,/并非战役中的预定事件/);assert.match(details,/trismegistos.org/);assert.doesNotMatch(details,/垂危/)}finally{globalThis.document=prior}
 });
+
+test('reported claimants can be opened directly from the intelligence report',()=>{
+ const prior=globalThis.document,s=newGame('caesar');addReport(s,'caesar','egypt',{kind:'claimants',leaders:['arsinoe'],source:'spy'});globalThis.document={createElement:tag=>new Element(tag)};
+ try{const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,/data-character="arsinoe"/);assert.match(html,/arsinoe-128\.jpg/);assert.match(html,/报告的竞争者/);assert.doesNotMatch(html,/垂危/)}finally{globalThis.document=prior}
+});
