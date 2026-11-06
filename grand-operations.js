@@ -1,5 +1,5 @@
 import {GRAND_ROUTES} from './grand-map-data.js';
-import {accessibleFleet} from './naval.js';
+import {accessibleFleet,portZone} from './naval.js?v=3';
 
 const byId=s=>Object.fromEntries(s.regions.map(r=>[r.id,r]));
 const OPENING_LIFT={caesar:1,senate:2,egypt:2,numidia:1,mauretania:1,armenia:0,parthia:0,galatia:0,bosporus:1,rebels:0};
@@ -33,7 +33,10 @@ export function supplyBottlenecks(s,owner){
  return vital;
 }
 export function armySupply(s,unit){if(!s.grandMap)return 1;const site=s.regions.find(r=>r.id===unit.region);if(!site)return 0;const network=supplyNetwork(s,unit.owner);let distance=network.get(site.id);if(distance==null&&unit.siege)distance=Math.min(...grandAdjacent(site.id).map(e=>network.get(e.to)).filter(Number.isFinite).map(x=>x+1),Infinity);
- if(!Number.isFinite(distance))return site.food>=1?.36:.18;return Math.max(.38,Math.min(1,1-distance*.075+(site.food>=1?.08:0)+((site.buildings||[]).includes('supply-depot')?.2:0)))}
+ const base=!Number.isFinite(distance)?site.food>=1?.36:.18:Math.max(.38,Math.min(1,1-distance*.075+(site.food>=1?.08:0)+((site.buildings||[]).includes('supply-depot')?.2:0)));
+ const blockaded=site.port&&s.naval?.fleets?.some(f=>f.order?.kind==='blockade'&&f.order.targetPort===site.id&&f.zone===portZone(site.id)&&s.wars.some(w=>w.includes(f.owner)&&w.includes(unit.owner)));
+ return blockaded?Math.max(.18,Math.round(base*.7*100)/100):base;
+}
 export function encircled(s,unit){if(!s.grandMap)return false;const network=supplyNetwork(s,unit.owner);if(network.has(unit.region))return false;return !grandAdjacent(unit.region).some(e=>{const r=s.regions.find(x=>x.id===e.to);return r?.owner===unit.owner&&network.has(r.id)})}
 export function advanceOperationalState(s){if(!s.grandMap)return;for(const unit of s.armies){if(unit.men<=0)continue;if(unit.stance==='hold'&&!unit.move)unit.prepared=Math.min(3,(unit.prepared||0)+1);else if(unit.move)unit.prepared=0;
   unit.encircled=encircled(s,unit);const supply=armySupply(s,unit);unit.operationalSupply=supply;

@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave} from '../engine.js';
+import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn} from '../engine.js';
 import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,accessibleFleet,supportPirates,fleetSpeed,fleetCargoCapacity,fleetUpkeep} from '../naval.js';
+import {tradeCard} from '../map-lab/naval-ui.js';
+import {armySupply} from '../grand-operations.js';
 
 test('fleets are separate from armies and move only through connected sea zones',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate');assert.ok(f);assert.equal(s.armies.some(a=>a.id===f.id),false);assert.equal(SEA_ZONES.length,11);assert.deepEqual(seaRoute('adriatic','aegean'),['ionian','aegean']);assert.equal(seaRoute('adriatic','nonesuch'),null);assert.equal(portZone('italiaS'),'adriatic');assert.equal(orderFleet(s,'senate',f.id,'intercept','aegean').ok,true);advanceNaval(s);assert.equal(f.zone,'ionian');advanceNaval(s);assert.equal(f.zone,'aegean')
@@ -38,6 +40,36 @@ test('naval contact produces uncertain dated enemy intelligence and a battle rep
 });
 test('Egyptian grain requires merchant shipping and transfers bounded food and payment',()=>{
  const s=newGrandGame('senate'),route=s.naval.routes.find(r=>r.id==='egypt-italy');s.factions.senate.food=0;s.factions.egypt.food=60;const before=s.factions.senate.treasury;advanceNaval(s);assert.equal(route.last.amount,4);assert.equal(s.factions.senate.food,4);assert.equal(s.factions.egypt.food,56);assert.equal(route.last.reason,'delivered');s.naval.fleets.find(f=>f.owner==='egypt').ships.merchant=0;s.factions.senate.food=0;advanceNaval(s);assert.equal(route.last.amount,0);assert.equal(route.last.reason,'merchant');assert.ok(s.factions.senate.treasury<=before)
+});
+test('trade prices respond to scarcity and charge for the quantity delivered',()=>{
+ const run=food=>{const s=newGrandGame('senate');s.factions.senate.food=food;s.factions.egypt.food=80;advanceNaval(s);return s.naval.routes.find(r=>r.id==='egypt-italy').last};
+ const scarce=run(10),ample=run(80);assert.equal(scarce.reason,'delivered');assert.equal(scarce.amount,4);assert.ok(scarce.unitPrice>ample.unitPrice);assert.equal(scarce.paid,scarce.amount*scarce.unitPrice);
+ const short=newGrandGame('senate');short.regions.find(r=>r.id==='africa').owner='egypt';const egyptian=short.naval.fleets.find(f=>f.owner==='egypt');egyptian.zone='african';egyptian.port=null;advanceNaval(short);assert.ok(ample.unitPrice>short.naval.routes.find(r=>r.id==='africa-sicily').last.unitPrice);
+ const cashPoor=newGrandGame('senate');cashPoor.factions.senate.food=10;cashPoor.factions.senate.treasury=12;advanceNaval(cashPoor);const partial=cashPoor.naval.routes.find(r=>r.id==='egypt-italy').last;assert.ok(partial.amount>0&&partial.amount<4);assert.equal(partial.paid,partial.amount*partial.unitPrice);
+});
+test('foreign trade routes keep shipment and security figures private',()=>{
+ const s=newGrandGame('senate'),foreign={from:'egypt',to:'mauretania',good:'grain',volume:9,last:{amount:7,security:99,reason:'delivered',unitPrice:4,paid:28}};
+ for(const zh of [false,true]){const html=tradeCard(s,foreign,zh);assert.match(html,zh?/外国商路/:/Foreign route/);assert.doesNotMatch(html,/99|28|计划货量|Planned volume/)}
+ const own={from:'egypt',to:'t016',good:'grain',volume:'<img src=x>',last:{amount:'<svg onload=alert(1)>',security:99,reason:'delivered'}};
+ assert.doesNotMatch(tradeCard(s,own,false),/<img|<svg/);
+});
+test('a hostile trade raid physically transfers captured cargo to its fleet owner',()=>{
+ const s=newGrandGame('senate'),raider=s.naval.fleets.find(f=>f.owner==='caesar');raider.zone='alexandrian';raider.port=null;
+ assert.equal(orderFleet(s,'caesar',raider.id,'raid','egypt-italy').ok,true);
+ const before={egypt:s.factions.egypt.food,caesar:s.factions.caesar.food,senate:s.factions.senate.food};advanceNaval(s);
+ const result=s.naval.routes.find(r=>r.id==='egypt-italy').last;
+ assert.equal(result.reason,'raid');assert.ok(result.captured>0);assert.equal(result.amount,0);assert.equal(result.paid,0);
+ assert.equal(s.factions.egypt.food,before.egypt-result.captured);assert.equal(s.factions.caesar.food,before.caesar+result.captured);assert.equal(s.factions.senate.food,before.senate);
+ assert.ok(s.naval.reports.some(r=>r.kind==='trade-raid'&&r.captured===result.captured));
+});
+test('AI can order a real army transport when a hostile coast is reachable by sea',()=>{
+ const s=newGrandGame('caesar');for(const r of s.regions)r.owner='egypt';s.regions.find(r=>r.id==='italiaS').owner='senate';s.regions.find(r=>r.id==='t075').owner='caesar';s.armies=s.armies.filter(a=>a.id==='italy');s.armies[0].region='italiaS';
+ aiTurn(s,'senate');assert.equal(s.armies[0].move?.sea,true);assert.equal(s.armies[0].move?.to,'t075');assert.equal(s.naval.fleets.find(f=>f.owner==='senate').order?.armyId,'italy');
+});
+test('a hostile naval blockade cuts port army supply until the blockade ends',()=>{
+ const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');unit.region='italiaS';enemy.zone=portZone('italiaS');enemy.port=null;
+ const normal=armySupply(s,unit);assert.equal(orderFleet(s,'caesar',enemy.id,'blockade','italiaS').ok,true);assert.ok(armySupply(s,unit)<normal);
+ assert.equal(orderFleet(s,'caesar',enemy.id,'intercept','aegean').ok,true);assert.equal(armySupply(s,unit),normal);
 });
 test('merchant hulls limit simultaneous routes and hostile raids interrupt real cargo',()=>{
  const s=newGrandGame('senate'),egypt=s.naval.fleets.find(f=>f.owner==='egypt'),caesar=s.naval.fleets.find(f=>f.owner==='caesar');egypt.ships.merchant=1;s.factions.senate.food=0;s.factions.egypt.food=60;advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.amount,4);assert.equal(s.naval.routes.find(r=>r.id==='egypt-papyrus').last.reason,'merchant');
