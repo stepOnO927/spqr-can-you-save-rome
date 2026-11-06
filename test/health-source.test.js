@@ -24,3 +24,21 @@ test('foreign health cannot be read remotely when the subject has left, is trave
  const cases=[s=>{s.world.characters.cleopatra.location='parthia'},s=>{s.world.characters.cleopatra.travel={destination:'parthia',legs:[],remaining:2}},s=>{s.armies.push({id:'royal-moving',owner:'egypt',region:'egypt',men:1000,characterId:'cleopatra',move:{to:'egyptUpper',remaining:2}})},s=>{s.world.characters.cleopatra.missing={origin:'egypt',remaining:2}}];
  for(const change of cases)for(const type of ['spy','travelers'])for(const health of ['healthy','dying'])for(const q of [.4,.9]){const s=investigate(health,q,type,change),report=s.knowledge.caesar.egypt.reports[0];assert.equal(report.value,'unknown',type+' '+health);assert.equal(report.verified,false);assert.equal(s.knowledge.senate.egypt.reports.length,0)}
 });
+test('a death at the court can be learned only through a delayed and fallible report',()=>{
+ for(const type of ['spy','travelers','envoy']){
+  let s=newGame('caesar');s.world.characters.cleopatra.alive=false;s.world.characters.cleopatra.health='deceased';const mission=queueMission(s,'caesar','egypt',type,'health',null,'cleopatra');assert.equal(mission.ok,true);s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.intelSeed=seedFor(.9,.91);
+  for(let i=0;i<mission.duration-1;i++)advanceOperations(s);assert.equal(s.knowledge.caesar.egypt.reports.length,0);advanceOperations(s);const r=s.knowledge.caesar.egypt.reports[0];assert.equal(r.value,'deceased');assert.equal(r.character,'cleopatra');assert.equal(r.source,type);assert.equal(r.verified,false);assert.equal(s.knowledge.senate.egypt.reports.length,0);assert.deepEqual(s.knowledge.caesar.egypt.reportedLeaders,['cleopatra','ptolemy']);
+ }
+ assert.equal(investigate('deceased',.5,'spy',s=>{s.world.characters.cleopatra.alive=false}).knowledge.caesar.egypt.reports[0].value,'unknown');
+});
+test('an investigator cannot disclose a death at an unknown or inaccessible location',()=>{
+ for(const change of [c=>{c.location='parthia'},c=>{c.location=null},c=>{c.missing={origin:'egypt',remaining:2}},c=>{c.travel={destination:'parthia',legs:[],remaining:2}}])for(const type of ['spy','travelers']){
+  const s=investigate('deceased',.9,type,s=>{const c=s.world.characters.cleopatra;c.alive=false;change(c)});assert.equal(s.knowledge.caesar.egypt.reports[0].value,'unknown');assert.equal(s.knowledge.senate.egypt.reports.length,0);
+ }
+});
+test('conflicting death and court propaganda reports remain inspectable',()=>{
+ const s=newGame('caesar'),c=s.world.characters.cleopatra;c.alive=false;c.health='deceased';s.world.claimants.egypt=['ptolemy'];
+ const spy=queueMission(s,'caesar','egypt','spy','health',null,'cleopatra');s.world.intelSeed=seedFor(.9,.91);for(let i=0;i<spy.duration;i++)advanceOperations(s);
+ const travelers=queueMission(s,'caesar','egypt','travelers','health',null,'cleopatra');s.world.intelSeed=seedFor(.4,.41);for(let i=0;i<travelers.duration;i++)advanceOperations(s);
+ const reports=s.knowledge.caesar.egypt.reports.filter(r=>r.kind==='health'&&r.character==='cleopatra');assert.deepEqual(reports.map(r=>r.value),['healthy','deceased']);assert.ok(reports.every(r=>r.confidence==='disputed'));assert.equal(s.knowledge.senate.egypt.reports.length,0);
+});

@@ -210,6 +210,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  // health of someone who has left it, or whose whereabouts are unknown.
  // Return the same uninformative report instead of disclosing the hidden reason.
  const healthPerson=healthCandidate?.faction===op.target&&!healthCandidate.missing?healthCandidate:null;
+ const localDeath=healthPerson&&!healthPerson.alive&&healthPerson.health==='deceased'&&!healthPerson.travel&&s.regions.some(r=>r.id===healthPerson.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===healthId&&a.move);
  const locallyObservable=!!(healthPerson?.alive&&!healthPerson.travel&&s.regions.some(r=>r.id===healthPerson.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===healthId&&a.move));
  op.status='complete';const source=op.type,low=op.type==='travelers',hostile=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target)),contested=(s.world.claimants[op.target]||[]).length>0,investigated=op.subject==='health'?healthPerson:person,concealment=hostile||contested||investigated?.health==='seriously_ill'||investigated?.health==='dying',falsehood=q<.45&&concealment;let report;
  if(op.subject.startsWith('office_')){
@@ -263,8 +264,9 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
    else if(visible&&falsehood)value='healthy'; // politically motivated rumor
    else if(visible&&q>=.65&&['wounded','frail'].includes(healthPerson.health))value=healthPerson.health;
    else if(visible&&q>=.85&&['ill','seriously_ill','dying'].includes(healthPerson.health))value='ill';
-   
+   else if(localDeath&&q>=.85)value='deceased';
   }else if(locallyObservable)value=falsehood?'healthy':healthPerson.health;
+  else if(localDeath&&q>=.6)value='deceased';
   report={kind:'health',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
  }
  else if(op.subject==='claimants'){const candidates=falsehood?[]:[...(s.world.claimants[op.target]||[])];report={kind:'claimants',leaders:candidates,exhaustive:op.type==='spy'&&q>=.7,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
