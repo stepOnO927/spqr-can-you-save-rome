@@ -1,5 +1,5 @@
 import {CHARACTER_CATALOG} from './characters.js?v=20-xxiib';
-import {initializeDynasties} from './dynasties.js?v=1-xxiib';
+import {initializeDynasties} from './dynasties.js?v=5-xxiie';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.world?.dynasties?.scenario?.stage==='resolved')}
 
@@ -21,6 +21,11 @@ export function finalizeCampaign(s){
   generals:[...own].filter(id=>(s.world.characters[id]?.battlesCommanded||0)>0).map(id=>({name:CHARACTER_CATALOG[id]?.name||[id,id],battles:s.world.characters[id].battlesCommanded})),
   betrayals:(s.world.defections||[]).filter(e=>e.from===s.player||e.to===s.player).map(e=>({...e,name:CHARACTER_CATALOG[e.id]?.name||[e.id,e.id]})),
   heirs:[...own].filter(id=>(s.world.characters[id]?.adoptiveParents||[]).length>0).map(id=>({name:CHARACTER_CATALOG[id]?.name||[id,id],adoptiveParents:[...s.world.characters[id].adoptiveParents]})),
+  inheritanceCases:(d.inheritanceDisputes||[]).filter(x=>x.faction===s.player).map(x=>({...x,deceasedName:CHARACTER_CATALOG[x.deceased]?.name||[x.deceased,x.deceased],beneficiaryName:CHARACTER_CATALOG[x.beneficiary]?.name||[x.beneficiary,x.beneficiary]})),
+  marriageOffers:(d.marriageOffers||[]).filter(x=>own.has(x.own)).map(x=>({...x,ownName:CHARACTER_CATALOG[x.own]?.name||[x.own,x.own],foreignName:CHARACTER_CATALOG[x.foreign]?.name||[x.foreign,x.foreign]})),
+  familyLoans:(d.familyLoans||[]).filter(x=>x.faction===s.player).map(x=>({...x,familyName:d.families[x.familyId]?.name||[x.familyId,x.familyId]})),
+  regency:s.world.regencies?.[s.player]?{...s.world.regencies[s.player],regentName:CHARACTER_CATALOG[s.world.regencies[s.player].regent]?.name||null,wardName:CHARACTER_CATALOG[s.world.regencies[s.player].ward]?.name||null}:null,
+  memories:(d.memories||[]).filter(x=>familyIds.includes(x.familyId)).map(x=>({...x})),
   victory:!!s.victory,scenario:d.scenario?{...d.scenario}:null};
  d.finalized=archive;return {ok:true,archive};
 }

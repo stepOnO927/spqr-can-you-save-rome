@@ -7,7 +7,7 @@ import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=11-xxiib';
 import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=death-report-2-xxiie';
 import {decideDisputedHeir,personAge} from './dynasties.js?v=5-xxiie';
 import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=4-xxiie';
-import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=1-xxiib';
+import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=2-xxiie';
 import {drawMap,mapPoint} from './map.js?v=84-xxiib';
 
 const ui={
@@ -80,6 +80,14 @@ function render(){
   if(state.world.dynasties?.scenario)document.querySelector('.campaign-name b').textContent=lang==='zh'?'王朝与命运 · 架空埃及继承危机':'DYNASTY & DESTINY · FICTIONAL EGYPT';
   const outcomeZh={civil_war:'内战',civil_war_victory:'内战胜利',civil_war_defeat:'内战失败',succession:'继承',reconciliation:'和解',takeover:'夺权',clashes:'冲突'};
   if(tab==='legacy')document.querySelectorAll('.legacy-entry details').forEach((detail,index)=>{const archive=archives()[index];if(!archive)return;detail.insertAdjacentHTML('beforeend',`<p>${lang==='zh'?'婚姻':'Marriages'}: ${(archive.marriages||[]).map(m=>esc(m.names.map(n=>n?.[lang==='zh'?1:0]).join(' — '))).join(' · ')||'—'}</p><p>${lang==='zh'?'将领':'Generals'}: ${(archive.generals||[]).map(g=>`${esc(g.name?.[lang==='zh'?1:0])} (${g.battles})`).join(' · ')||'—'}</p><p>${lang==='zh'?'倒戈':'Defections'}: ${(archive.betrayals||[]).map(b=>esc(b.name?.[lang==='zh'?1:0])).join(' · ')||'—'}</p><p>${lang==='zh'?'收养继承人':'Adopted heirs'}: ${(archive.heirs||[]).map(h=>esc(h.name?.[lang==='zh'?1:0])).join(' · ')||'—'}</p><p>${lang==='zh'?'继承争议':'Succession disputes'}: ${(archive.crises||[]).map(c=>`${c.month}/${Math.abs(c.year)} BCE · ${esc(lang==="zh"?outcomeZh[c.outcome]||c.outcome:c.outcome)}`).join(' · ')||'—'}</p>`)});
+  if(tab==='legacy')document.querySelectorAll('.legacy-entry details').forEach((detail,index)=>{
+   const a=archives()[index];if(!a)return;const language=lang==='zh'?1:0;
+   const rulings=(a.inheritanceCases||[]).map(x=>`${esc(x.deceasedName?.[language])}: ${esc(x.choice||x.status)}`).join(' · ')||'—';
+   const envoys=(a.marriageOffers||[]).map(x=>`${esc(x.ownName?.[language])} → ${esc(x.foreignName?.[language])}: ${esc(x.status)}`).join(' · ')||'—';
+   const loans=(a.familyLoans||[]).map(x=>`${esc(x.familyName?.[language])}: ${x.principal} (${lang==='zh'?'未还':'due'} ${x.remaining})`).join(' · ')||'—';
+   const regency=a.regency?`${esc(a.regency.regentName?.[language])} → ${esc(a.regency.wardName?.[language])} · ${a.regency.months} ${lang==='zh'?'个月':'months'}`:'—';
+   detail.insertAdjacentHTML('beforeend',`<p>${lang==='zh'?'私人遗产裁决':'Private inheritance rulings'}: ${rulings}</p><p>${lang==='zh'?'婚姻使团':'Marriage envoys'}: ${envoys}</p><p>${lang==='zh'?'家族借款':'Family loans'}: ${loans}</p><p>${lang==='zh'?'摄政':'Regency'}: ${regency}</p><p>${lang==='zh'?'家族记忆':'Family memories'}: ${(a.memories||[]).length}</p>`);
+  });
   document.querySelector('.map-toolbar .eyebrow').textContent=`${t('historical')} · ${labelFaction(state.player)}`;
   bind();
 }

@@ -146,6 +146,18 @@ test('legacy achievements remain sealed until campaign finalization',()=>{
  assert.deepEqual(finalizeCampaign(s),{ok:false,reason:'already'});
 });
 
+test('final archive retains named marriage envoys and private family debts',()=>{
+ const s=newGame('caesar'),person=createFictionalPerson(s,{name:['Aulus Patron','奥卢斯·家主'],faction:'caesar',birthYear:-80,wealth:20,sex:'male'});
+ assert.equal(offerForeignMarriage(s,person,'cleopatra','egypt').ok,true);
+ assert.equal(requestFamilyResources(s,s.world.characters[person].familyId,'loan').ok,true);
+ assert.equal(s.world.dynasties.finalized,undefined);s.victory=true;
+ const archive=finalizeCampaign(s).archive;
+ assert.equal(archive.marriageOffers[0].ownName[0],'Aulus Patron');
+ assert.equal(archive.familyLoans[0].principal,12);
+ assert.equal(archive.familyLoans[0].remaining,14);
+ assert.ok(Array.isArray(archive.inheritanceCases));assert.ok(Array.isArray(archive.memories));
+});
+
 test('a royal child can need a regent while a Roman command is not inherited',()=>{
  const egypt=newGame('egypt'),royal=createFictionalPerson(egypt,{name:['Royal parent','王室家长'],faction:'egypt',birthYear:-85}),child=createFictionalPerson(egypt,{name:['Young heir','幼年继承人'],faction:'egypt',birthYear:-55,parents:[royal],familyId:egypt.world.characters[royal].familyId});
  egypt.world.leadership.egypt=[royal];egypt.world.characters[royal].alive=false;assignSuccession(egypt,'egypt');
