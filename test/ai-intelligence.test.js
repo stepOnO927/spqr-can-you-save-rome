@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength} from '../engine.js';
+import {newGame,estimatedStrength,aiClaimantChoice,tick,upgradeSave} from '../engine.js';
 import {addReport} from '../character-system.js';
 
 test('AI without numerical reports estimates from its own sightings rather than real enemy forces',()=>{
@@ -29,4 +29,15 @@ test('AI weighs contradictory contemporary sources without counting forwarded co
  for(const army of s.armies.filter(a=>a.owner==='caesar'))army.men=999999;
  assert.equal(estimatedStrength(s,'senate','caesar'),20000);
  s.year+=3;assert.equal(estimatedStrength(s,'senate','caesar'),12000);
+});
+
+test('AI compares recent claimant reports from independent sources rather than hidden court state or repeated copies',()=>{
+ const s=newGame('caesar');s.month=11;s.factions.senate.treasury=100;
+ addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy'});addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'travelers'});addReport(s,'senate','egypt',{kind:'claimants',leaders:['ptolemy'],source:'envoy'});
+ for(let i=0;i<8;i++)addReport(s,'senate','egypt',{kind:'claimants',leaders:['ptolemy'],source:'exchange',originSource:'court'});
+ assert.equal(aiClaimantChoice(s,'senate','egypt'),'cleopatra');s.world.claimants.egypt=['ptolemy'];s.world.characters.cleopatra.alive=false;s.world.characters.ptolemy.health='healthy';assert.equal(aiClaimantChoice(s,'senate','egypt'),'cleopatra');assert.equal(aiClaimantChoice(s,'caesar','egypt'),null);
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));tick(loaded);const offer=loaded.operations.find(o=>o.type==='support'&&o.actor==='senate'&&o.target==='egypt');assert.ok(offer);assert.equal(offer.claimant,'cleopatra');assert.equal(offer.status,'pending');assert.equal(loaded.knowledge.caesar.egypt.reports.length,0);
+});
+test('old or unnamed claimant reports do not direct new AI support, and newer same-source claims supersede earlier ones',()=>{
+ const s=newGame('caesar');s.month=1;addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy'});s.month=2;addReport(s,'senate','egypt',{kind:'claimants',leaders:['ptolemy'],source:'spy'});addReport(s,'senate','egypt',{kind:'claimants',leaders:[],source:'travelers'});assert.equal(aiClaimantChoice(s,'senate','egypt'),'ptolemy');s.year+=3;assert.equal(aiClaimantChoice(s,'senate','egypt'),null);
 });
