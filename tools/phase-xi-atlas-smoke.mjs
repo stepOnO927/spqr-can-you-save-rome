@@ -17,6 +17,11 @@ try{
  await page.locator('#roman-faction').selectOption('senate');await page.locator('#difficulty').selectOption('standard');await page.locator('#start-game').click();
  assert.match(await page.locator('#guide-body').innerText(),/assess|评估/i);
  await page.locator('#guide-next').click();await page.locator('[data-army="italy"]').click();await page.locator('#guide-next').click();
+ assert.match(await page.locator('.war-council').innerText(),/军议/);
+ await page.locator('[data-council-mark]').click();
+ assert.ok(await page.locator('.recon-map-mark').count());
+ assert.match(await page.locator('[data-council-mark]').innerText(),/取消侦察标记/);
+ await page.locator('[data-council-revise]').click();
  await page.locator('#lab-orders select').selectOption('cisalpine');
  await page.locator('#lab-orders button').click();
  assert.ok(await page.locator('.prebattle-intel').count());

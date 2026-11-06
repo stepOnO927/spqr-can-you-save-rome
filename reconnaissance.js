@@ -25,7 +25,7 @@ export function assessment(s,armyId,regionId,plan=null){
  return {friendly:unit.men,morale:unit.morale,commander:[...unit.commander],terrain:target.terrain,fort:report?.defensive?.fort??null,
   regionId,owner:target.owner,report,sighting:sighting?{year:sighting.year,month:sighting.month,region:sighting.region}:null,
   risk:!report||['unknown','rumor','disputed','outdated'].includes(confidence)?'high uncertainty':report.max>unit.men?'high':'uncertain',
-  food,supply:Math.round(100*Math.min(1,Math.max(.65,food/20))*(unit.operationalSupply??1)),travelMonths:plan?.months??1,reinforcementRisk:'possible',reports:reports.slice(0,4)};
+  food,supply:Math.round(100*Math.min(1,Math.max(.65,food/20))*(unit.operationalSupply??1)),travelMonths:plan?.months??1,landing:!!(plan?.path?.at(-1)?.sea??plan?.sea),reinforcementRisk:'possible',reports:reports.slice(0,4)};
 }
 function available(s,unit,target){return !!(unit&&target&&!unit.move&&!unit.siege&&!unit.reconPending&&unit.men>0&&adjacent(unit.region,s).some(x=>x.to===target.id)&&isWar(s,unit.owner,target.owner));}
 export function sendScouts(s,armyId,regionId,actor=s.player){

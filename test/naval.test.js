@@ -46,6 +46,18 @@ test('merchant hulls limit simultaneous routes and hostile raids interrupt real 
 test('pirate suppression and covert sponsorship alter pressure and resources',()=>{
  const s=newGrandGame('senate'),p=s.naval.pirates.find(x=>x.id==='illyrian-raiders'),before=p.pressure,treasury=s.factions.senate.treasury;assert.equal(supportPirates(s,'senate',p.id).ok,true);assert.equal(s.factions.senate.treasury,treasury-12);assert.equal(p.pressure,before+8);assert.equal(orderFleet(s,'senate','senate-adriatic','patrol','adriatic').ok,true);advanceNaval(s);assert.ok(p.pressure<before+8)
 });
+test('patrols can fight pirate vessels with real sailor losses and finite pirate strength',()=>{
+ const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.owner==='senate'),pirates=s.naval.pirates.find(p=>p.zone==='adriatic');s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';
+ pirates.pressure=30;const crew=fleet.sailors,ships=pirates.ships;
+ assert.equal(orderFleet(s,'senate',fleet.id,'patrol','adriatic').ok,true);advanceNaval(s);
+ assert.ok(s.naval.reports.some(r=>r.kind==='pirate-clash'&&r.owner==='senate'));
+ assert.ok(fleet.sailors<crew);assert.equal(pirates.ships,ships-1);
+ assert.ok(pirates.pressure<30);
+});
+test('naval AI assigns orders to each available fleet instead of only its first',()=>{
+ const s=newGrandGame('caesar'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first);second.id='senate-east';second.zone='eastern';second.port=null;s.naval.fleets.push(second);
+ advanceNaval(s);assert.equal(first.order?.kind,'patrol');assert.equal(second.order?.kind,'patrol');
+});
 test('naval state survives save migration and 36 campaign months',()=>{
  const s=newGrandGame('senate');for(let i=0;i<36;i++)tick(s);const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(restored.naval.fleets.length,s.naval.fleets.length);assert.equal(restored.naval.routes.length,12);assert.ok(restored.naval.routes.every(r=>Number.isFinite(r.last?.security)));assert.ok(restored.naval.fleets.every(f=>Number.isFinite(f.hull)&&Number.isFinite(f.supply)))
 });

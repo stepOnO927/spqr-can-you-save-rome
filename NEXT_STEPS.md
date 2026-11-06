@@ -1,26 +1,25 @@
-# SPQR — outstanding work and evidence
+# SPQR — remaining work
 
-This is a development tracker, not a completion claim. The player chooses a Roman command; the independent countries remain AI-controlled. The 49 BCE atlas and the original campaign share a saved simulation, with a reversible transfer between views. New eras, religion and technology expansion remain outside the current visual and Phase IX work.
+This tracker records the state of the **independent development branch**. A working mechanic is not a claim that every phase directive has been fulfilled. The 49 BCE Roman campaign remains the main playable scenario.
 
-## Phase IX — current state and remaining work
+## Implemented and checked
 
-| Requirement | Evidence in the current game | Still needed |
-| --- | --- | --- |
-| Historical figures and portraits | The catalog includes the 18 priority figures and individual generated portrait assets; Deiotarus and Pharnaces now lead modeled courts with approximate theater markers. Reconstructions and references are identified in `assets/portraits/SOURCES.md`. | Complete historical profile fields and source-by-source review; artistic reconstructions are not verified likenesses. |
-| Health and succession | Aging, wounds, illness, death, co-rule, Egyptian and Parthian dynastic disputes, temporary deputies, succession plans and Roman political plots affect the simulation. | Broader contested inheritance, regency and civil-war outcomes; do not present simulated events as history. |
-| Foreign knowledge | Dated, faction-specific reports, limited frontier sightings, contradictory evidence, stale intelligence, and independent source families are implemented. Actual state remains separate in client-side saves. | Continue auditing every UI and AI decision for information leaks. Local saves contain the true state and are not a security boundary. |
-| Diplomacy and espionage | Delayed letters may be lost, refused or answered; spies, travelers, envoys, audiences, ally exchanges, claimant contacts and counter-investigations have costs and outcomes. Reports may be wrong. | Expand interactions and consequences without exposing hidden status. Political relationships and diplomacy remain simplified. |
-| Characters on the map | Reported leadership and dated observed commanders can be inspected; sightings do not track unseen changes. | Broaden reporting of offices and political relationships without turning reports into omniscient state. |
-| History versus simulation | Profiles label historical biographies separately from simulated health, travel, political office and reports. | Review date uncertainty, biographies and sourcing for every field before presenting additional historical claims. |
+- **Phase XI reconnaissance:** scouts, probes, waiting, dated and uncertain reports, prebattle estimates, battle reviews, a War Council, neutral military density markers, and later campaign AI scouting. The Senate Standard 5,200-man opening is covered in English and Chinese browser smoke tests.
+- **Phase XIV development:** two research branches with 34 material innovations and 25 national ideas, five idea categories, construction, institutional slot expansion, knowledge purchase/sale/exchange, visiting scholars, and local religion policy. Roads, bridges, harbor storage, and coastal forts have simulation effects.
+- **Phase XVIII naval core:** fleets, shipbuilding, officer assignments, sea combat, piracy, transport, maritime trade, and AI fleet orders. Patrols can now fight actual pirate vessels, and amphibious attacks use a battle penalty shown in the review.
+- **Legacy achievements:** silent in active campaigns, revealed on formal conclusion or terminal defeat, with one-time reward keys. New campaigns have unique IDs; older imported saves receive a stable ID based on the imported file.
+- **Regression:** `npm test` and browser smoke scripts for the atlas, Senate reconnaissance, development, and grand campaign.
 
-## Earlier phases still requiring work
+## Still incomplete
 
-- Continue verifying the atlas-to-campaign transition and the full command flow in both languages. The atlas currently remains a separate view, with the original campaign available.
-- Both Roman commands have interactive tutorials. An independent beginner playtest, broader accessibility and small-screen checks remain outstanding.
-- Some systems are deliberately simplified: theater supply capacity is descriptive, battles resolve immediately rather than over several turns, and terrain/control boundaries are approximations where sources do not support a precise border. Maintain clear explanations and improve supported mechanics where appropriate.
-- Continue historical boundary and geographic research only where defensible sources and licenses are available. `MAP_SOURCES.md` and `map-lab/SOURCES.md` document current source limitations.
-- The master directive contains substantially wider campaigns and systems. These are not complete; prioritize the current 49 BCE Roman campaign and Phase IX before expanding the scope.
+1. **Phase XIV source and art review.** Most technology cards use common imagery and broad historical links. Each node still needs an individually chosen, licensed illustration and a checked source that directly supports its historical note. The 34/25 catalog is a playable slice; the broader directive's deeper policy, religious, cultural, and civilization-specific content remains unfinished.
+2. **Phase XIV balance and long campaigns.** The default Caesar opening can end in terminal defeat by July 49 BCE on the older map when the player makes no moves. The simulation should be played and balanced across factions and difficulties without scripting a guaranteed result. Research, economy, faith, migration, and diplomacy need longer campaign review.
+3. **Phase XVIII naval depth.** Piracy and sea battles use aggregate fleet calculations. Tactical choices, detailed cargo capture, commander capture, AI troop transport, maritime supply, distance-sensitive market prices, and more nuanced detection remain to be built and balanced.
+4. **Phase XV map geography and visual review.** The 120 territories are gameplay cells based on imperfect historical sources. Coastlines, borders, names, terrain, contrast, zoom behavior, small screens, and accessibility still need a cartographic review and user acceptance. This remains the user's principal visual complaint.
+5. **Phase XVI Legacy hub depth.** The city, shop, museum, archive, race, and campaign rewards are playable, but building-specific activities and museum curation are narrower than the full directive.
+6. **Phase XI continued playtesting.** One Senate Standard path and both languages are covered by browser smoke, plus targeted simulation tests. More independent human campaigns, alternate decisions, long intelligence chains, AI mistakes, and save/import flows need playtesting. Local saves contain actual simulation state, so fog of war is a gameplay interface boundary, not file encryption.
+7. **Historical audit.** Figures, politics, religion, regional boundaries, and economic values are approximations. Check source and license records before presenting any additional historical statement as fact.
 
-## Verification and release
+## Release checks
 
-Run `npm test` and the GitHub browser workflow for changes to gameplay. The workflow exercises both Roman starts, map interactions, save and view transfer, diplomacy, correspondence, characters, a 1920 × 1080 capture and map performance. Automated checks do not replace an independent usability test or guarantee that every feature in the original directives is complete. Verify the live GitHub Pages version after deployment. Historical claims and third-party map data need the sources and licensing documented alongside them.
+Run `npm test`, `node tools/phase-xi-atlas-smoke.mjs`, `node tools/phase-xiv-smoke.mjs`, and `node tools/grand-browser-smoke.mjs`. Inspect both languages and actual browser rendering. Keep the independent branch separate from `main` until the user chooses otherwise.

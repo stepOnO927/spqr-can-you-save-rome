@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,army,moveArmy,tick,upgradeSave,aiTurn} from '../engine.js';
+import {newGame,army,moveArmy,tick,upgradeSave,aiTurn,resolveBattle} from '../engine.js';
 import {assessment,sendScouts,probePositions,latestRecon,reconReports,delayAttack,markReconRegion} from '../reconnaissance.js';
 import {intelligenceHtml,afterActionHtml} from '../recon-ui.js';
 
@@ -63,4 +63,12 @@ test('probe has a real resource and readiness cost; delay lets AI advance',()=>{
  const before=s.month;tick(s);assert.notEqual(s.month,before);
  assert.equal(s.armies.find(a=>a.id==='italy')?.reconPending,null);
  assert.equal(latestRecon(s,'senate','cisalpine').source,'probe');
+});
+test('amphibious attacks pay a combat readiness cost disclosed in the review',()=>{
+ const land=newGame('caesar'),sea=structuredClone(land);
+ const fight=(s,isSea)=>{const attacker=army(s,'xiii'),defender=army(s,'italy'),target=s.regions.find(r=>r.id==='italiaN');attacker.move={sea:isSea};resolveBattle(s,attacker,defender,target);return s.battles[0]};
+ const ground=fight(land,false),landing=fight(sea,true);
+ assert.ok(landing.attacker.power<ground.attacker.power);assert.ok(landing.landingFactor<1);
+ assert.match(afterActionHtml(landing,'caesar','en'),/landing factor/);
+ assert.match(afterActionHtml(landing,'caesar','zh'),/登陆战力系数/);
 });

@@ -15,7 +15,7 @@ import {endCampaign} from '../achievement-system.js';
 import {campaignEndingHtml} from '../achievement-ui.js';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=3';
-import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=85';
+import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=86';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js?v=2';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
@@ -28,10 +28,10 @@ import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabe
 import {objectiveDefinitions,eventText,unreadCount,markRead,latestCritical,campaignTurn} from '../campaign-reports.js';
 import {leadershipIntelligence} from './intelligence-summary.js?v=2';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=9';
-import {assessment,sendScouts,probePositions,delayAttack,markReconRegion,requestReinforcements,latestRecon} from '../reconnaissance.js';
-import {intelligenceHtml,afterActionHtml} from '../recon-ui.js';
+import {assessment,sendScouts,probePositions,delayAttack,markReconRegion,requestReinforcements,latestRecon} from '../reconnaissance.js?v=2';
+import {intelligenceHtml,afterActionHtml} from '../recon-ui.js?v=2';
 import {renderNavalPanel} from './naval-ui.js';
-import {SEA_ZONES,reportedHostileFleets} from '../naval.js';
+import {SEA_ZONES,reportedHostileFleets} from '../naval.js?v=2';
 import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,supportPirates} from '../engine.js';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);

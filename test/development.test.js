@@ -13,7 +13,7 @@ test('both research branches render every node, including naval capabilities wit
 });
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
-  const s=newGame();const d=development(s,'caesar');
+  const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
   assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,25);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
@@ -29,7 +29,7 @@ test('five categories begin with one independent inactive slot and research alon
 });
 
 test('ideas remain in their category, conflicting policies are rejected, expansion is category specific',()=>{
-  const s=newGame();const d=development(s,'caesar');s.factions.caesar.treasury=500;
+  const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');s.factions.caesar.treasury=500;
   d.knownIdeas.push('senatorial-consultation','central-administration','provincial-autonomy','legion-training');
   assert.equal(adoptIdea(s,'caesar','legion-training',1).ok,false);
   assert.equal(adoptIdea(s,'caesar','senatorial-consultation',0).ok,true);months(s,2);
@@ -55,7 +55,7 @@ test('material knowledge permits delayed construction with terrain, deposits, ma
 });
 
 test('knowledge trade transfers knowledge after travel, never constructs or adopts it',()=>{
-  const s=newGame();s.factions.caesar.treasury=200;s.relations['caesar:egypt']=20;
+  const s=newGame('numidia');s.factions.caesar.treasury=200;s.relations['caesar:egypt']=20;
   const d=development(s,'caesar');assert.ok(!d.knownMaterial.includes('water-control'));
   const result=knowledgeTrade(s,'caesar','egypt','material','water-control');assert.equal(result.ok,true);
   assert.ok(!d.knownMaterial.includes('water-control'));
@@ -73,7 +73,7 @@ test('knowledge trade transfers knowledge after travel, never constructs or adop
 });
 
 test('old saves gain development without losing territory, and AI participates through 36 months',()=>{
-  const s=newGame();const owner=s.regions.find(r=>r.id==='roma').owner;delete s.development;
+  const s=newGame('numidia');const owner=s.regions.find(r=>r.id==='roma').owner;delete s.development;
   const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
   assert.equal(loaded.regions.find(r=>r.id==='roma').owner,owner);
   assert.equal(development(loaded,'egypt').slots.culture.length,1);
@@ -84,10 +84,11 @@ test('old saves gain development without losing territory, and AI participates t
   assert.doesNotThrow(()=>JSON.stringify(loaded));
 });
 
-test('36-month campaigns remain playable for distinct starting civilizations',()=>{
+test('distinct starting civilizations advance until 36 months or a terminal defeat',()=>{
   for(const player of ['caesar','senate','egypt','numidia']){
     const s=newGame(player);months(s,36);
     assert.ok(Number.isFinite(s.factions[player].treasury),player);
+    assert.ok(s.year===-46&&s.month===1||s.terminalResult==='defeat',player);
     assert.ok(s.development[player].knownMaterial.length>=2,player);
     assert.equal(Object.keys(s.development[player].slots).length,5,player);
     assert.doesNotThrow(()=>upgradeSave(JSON.parse(JSON.stringify(s))),player);
