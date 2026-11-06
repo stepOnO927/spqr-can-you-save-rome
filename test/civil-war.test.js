@@ -37,6 +37,15 @@ test('a claimant death does not erase an army or its territory mid-war',()=>{
  const s=outbreak();s.world.characters.cleopatra.alive=false;s.world.characters.cleopatra.health='deceased';resolveDynasticWars(s);
  assert.ok(s.factions.egypt_claimant);assert.equal(region(s,'egyptUpper').owner,'egypt_claimant');assert.ok(s.armies.some(a=>a.owner==='egypt_claimant'));assert.ok(s.world.disputes.egypt.war);
 });
+test('an uncontested vacancy is filled if a deceased claimant’s army wins the civil war',()=>{
+ let s=outbreak();for(const id of ['cleopatra','ptolemy']){s.world.characters[id].alive=false;s.world.characters[id].health='deceased'}
+ for(const r of s.regions)if(r.owner==='egypt')r.owner='caesar';s.armies=s.armies.filter(a=>a.owner!=='egypt');s=upgradeSave(JSON.parse(JSON.stringify(s)));resolveDynasticWars(s);
+ assert.deepEqual(s.world.leadership.egypt,['arsinoe']);assert.equal(s.world.disputes.egypt,undefined);assert.equal(s.world.characters.arsinoe.faction,'egypt');assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+});
+test('a surviving rival still contests the vacancy when a deceased claimant’s army wins',()=>{
+ const s=outbreak();s.world.characters.cleopatra.alive=false;s.world.characters.cleopatra.health='deceased';for(const r of s.regions)if(r.owner==='egypt')r.owner='caesar';s.armies=s.armies.filter(a=>a.owner!=='egypt');resolveDynasticWars(s);
+ assert.deepEqual(s.world.leadership.egypt,[]);assert.ok(s.world.claimants.egypt.includes('ptolemy'));assert.ok(s.world.disputes.egypt.vacancySince);assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+});
 test('accepted military aid can reinforce an actual claimant army after the delayed response',()=>{
  const s=outbreak();addReport(s,'caesar','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified'});
  const unit=s.armies.find(a=>a.owner==='egypt_claimant'),before=unit.men;assert.equal(supportClaimant(s,'caesar','egypt','cleopatra',null,'military').ok,true);
