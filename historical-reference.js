@@ -17,7 +17,7 @@ export const HISTORICAL_DEATHS={
  bocchus:{years:[33],sources:[{label:['Oxford Classical Dictionary: Bocchus II','牛津古典辞典：博库斯二世'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/548527004'}]},
  bogud:{years:[31],sources:[{label:['University of Barcelona: Mauretania','巴塞罗那大学：毛里塔尼亚研究'],url:'https://diposit.ub.edu/server/api/core/bitstreams/daccdffc-557e-4df4-8567-0d922c01a16b/content'}]},
  deiotarus:{years:[41,40],disputed:true,sources:[{label:['Encyclopedia of Ancient History: Deiotaros','古代史百科全书：代奥塔鲁斯'],url:'https://onlinelibrary.wiley.com/doi/abs/10.1002/9781444338386.wbeah09083.pub2'}]},
- pharnaces:{years:[47],sources:[{label:['Oxford Classical Dictionary: Pharnaces II','牛津古典辞典：法尔纳刻斯二世'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549705304'}]},
+ pharnaces:{years:[47],sources:[{label:['Oxford Classical Dictionary: Pharnaces II','牛津古典辞典：法尔纳刻斯二世'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549705304'},{label:['Treccani: Pharnaces II','特雷卡尼百科：法尔纳刻斯二世'],url:'https://www.treccani.it/enciclopedia/farnace-ii_%28Enciclopedia-dell%27Arte-Antica%29/'}]},
  pacorus:{years:[38],sources:[{label:['Encyclopaedia Iranica: Orodes II','伊朗百科：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}]}
 };
 
@@ -34,7 +34,8 @@ export const HISTORICAL_BIRTH_ESTIMATES={
  labienus:{text:['around 100 BCE; precision unknown','约公元前100年，误差范围不明'],sources:[{label:['Oxford Classical Dictionary','牛津古典辞典'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549655484'}]},
  lepidus:{text:['around 90 BCE; precision unknown','约公元前90年，误差范围不明'],sources:[{label:['Encyclopedia of Ancient History','古代史百科全书'],url:'https://onlinelibrary.wiley.com/doi/10.1002/9781444338386.wbeah20004'}]},
  juba:{text:['around 85 BCE; precision unknown','约公元前85年，误差范围不明'],sources:[{label:['Algerian Embassy: Numidian kings','阿尔及利亚大使馆：努米底亚诸王'],url:'https://ambassade-algerie.ch/exposition_culturelle/medias/encyclotimbreen.pdf'}]},
- deiotarus:{text:['around 120 BCE; precision unknown','约公元前120年，误差范围不明'],sources:[{label:['Encyclopedia of Ancient History','古代史百科全书'],url:'https://onlinelibrary.wiley.com/doi/abs/10.1002/9781444338386.wbeah09083.pub2'}]}
+ deiotarus:{text:['around 120 BCE; precision unknown','约公元前120年，误差范围不明'],sources:[{label:['Encyclopedia of Ancient History','古代史百科全书'],url:'https://onlinelibrary.wiley.com/doi/abs/10.1002/9781444338386.wbeah09083.pub2'}]},
+ pharnaces:{text:['around 97 BCE; precision unknown','约公元前97年，误差范围不明'],sources:[{label:['Treccani: Pharnaces II','特雷卡尼百科：法尔纳刻斯二世'],url:'https://www.treccani.it/enciclopedia/farnace-ii_%28Enciclopedia-dell%27Arte-Antica%29/'}]}
 };
 
 // A later coin inscription is evidence of a name form, not an authentic portrait
@@ -50,5 +51,6 @@ export const HISTORICAL_RELATIONSHIPS={
  cleopatra:[{person:'ptolemy',relation:['Younger brother and early co-ruler','弟弟及早期共同统治者'],source:{label:['Metropolitan Museum of Art: Hellenistic kingdoms','大都会艺术博物馆：希腊化王国'],url:'https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf'}}],
  ptolemy:[{person:'cleopatra',relation:['Older sister and early co-ruler','姐姐及早期共同统治者'],source:{label:['Metropolitan Museum of Art: Hellenistic kingdoms','大都会艺术博物馆：希腊化王国'],url:'https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf'}}],
  orodes:[{person:'pacorus',relation:['Son','儿子'],source:{label:['Encyclopaedia Iranica: Orodes II','《伊朗百科全书》：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}}],
- pacorus:[{person:'orodes',relation:['Father','父亲'],source:{label:['Encyclopaedia Iranica: Orodes II','《伊朗百科全书》：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}}]
+ pacorus:[{person:'orodes',relation:['Father','父亲'],source:{label:['Encyclopaedia Iranica: Orodes II','《伊朗百科全书》：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}},{person:'artavasdes',relation:['A betrothal to his sister was arranged in 53 BCE','前53年曾安排与其姊妹订婚'],source:{label:['Encyclopaedia Iranica: Orodes II','《伊朗百科全书》：奥罗德二世'],url:'https://www.iranicaonline.org/articles/orodes-ii/'}}],
+ artavasdes:[{person:'pacorus',relation:['His sister was betrothed to Pacorus in 53 BCE','其姊妹与帕科鲁斯于前53年订婚'],source:{label:['Encyclopaedia Iranica: Armenia and Iran','《伊朗百科全书》：亚美尼亚与伊朗'],url:'https://www.iranicaonline.org/articles/armenia-ii/'}}]
 };
