@@ -1,5 +1,6 @@
-import {CHARACTER_CATALOG} from './characters.js?v=xxii-final-3';
-import {startDynasticWar} from './civil-war.js?v=xxii-final-3';
+import {CHARACTER_CATALOG} from './characters.js?v=xxii-final-4';
+import {startDynasticWar} from './civil-war.js?v=xxii-final-4';
+import {ROUTES} from './data.js?v=xxii-final-4';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -17,7 +18,7 @@ const ensureCatalog=s=>{for(const [id,entry] of Object.entries(s.world.dynasties
 
 export function initializeDynasties(s){
  const d=s.world.dynasties||= {families:{},lives:{},catalog:{},marriages:[],memories:[],rulers:[],seed:220049,nextPerson:1,nextFamily:1};
- d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
+ d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.familyAccords||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
  for(const [id,c] of Object.entries(s.world.characters)){
   c.parents||=[];c.adoptiveParents||=[];c.children||=[];c.spouse||=null;c.wealth??=0;
   c.sex||=(['cleopatra','arsinoe'].includes(id)?'female':CHARACTER_CATALOG[id]?.fictional?'unknown':'male');
@@ -150,6 +151,59 @@ function advanceAsylumRequests(s){
  }
 }
 
+const courtTheater={caesar:'cisalpine',senate:'roma',egypt:'egypt',parthia:'parthia',numidia:'numidia',mauretania:'mauretania',armenia:'armenia',galatia:'galatia',bosporus:'bosporus'};
+// These broad court categories are diplomatic game abstractions, not claims
+// about any named person's private religion or cultural identity.
+const courtProfile={caesar:['roman','civic'],senate:['roman','civic'],egypt:['hellenistic','mixed'],parthia:['iranian','mixed'],numidia:['north_african','mixed'],mauretania:['north_african','mixed'],armenia:['armenian','mixed'],galatia:['anatolian','mixed'],bosporus:['hellenistic','mixed']};
+function courtDistance(a,b){
+ const start=courtTheater[a],goal=courtTheater[b];if(!start||!goal)return 6;
+ const queue=[[start,0]],seen=new Set([start]);while(queue.length){const [at,d]=queue.shift();if(at===goal)return d;for(const [x,y] of ROUTES){const next=x===at?y:y===at?x:null;if(next&&!seen.has(next)){seen.add(next);queue.push([next,d+1])}}}return 6;
+}
+
+// A pledge exchanges guarantees, not literal captive units. Wardship records
+// an educational relationship and never transfers sovereignty or legal custody.
+export function offerFamilyAccord(s,kind,contactId,reportedFaction,childId=null){
+ const d=initializeDynasties(s),host=s.player,cost=kind==='wardship'?8:6;
+ if(!['pledge','wardship'].includes(kind)||!reportedDynasticContacts(s).some(x=>x.id===contactId&&x.faction===reportedFaction)||host===reportedFaction)return {ok:false,reason:'unknown'};
+ if(kind==='wardship'&&(!s.world.characters[childId]?.alive||s.world.characters[childId].faction!==host||personAge(s,childId)>=16||personAge(s,childId)<0))return {ok:false,reason:'child'};
+ if(s.wars.some(w=>w.includes(host)&&w.includes(reportedFaction))||(s.relations[pair(host,reportedFaction)]??0)<0)return {ok:false,reason:'diplomacy'};
+ if(d.familyAccords.some(x=>x.host===host&&x.target===reportedFaction&&x.kind===kind&&['pending','active'].includes(x.status)))return {ok:false,reason:'commitment'};
+ if(kind==='wardship'&&d.familyAccords.some(x=>x.child===childId&&['pending','active'].includes(x.status)))return {ok:false,reason:'commitment'};
+ if(s.factions[host].treasury<cost)return {ok:false,reason:'treasury'};
+ s.factions[host].treasury-=cost;const accord={id:`accord:${d.familyAccords.length+1}`,kind,host,target:reportedFaction,contact:contactId,child:childId,status:'pending',months:4,year:s.year,month:s.month};d.familyAccords.push(accord);
+ note(s,kind==='pledge'?'An envoy proposed mutual family guarantees; a reply may take four months.':'An envoy proposed diplomatic wardship; a reply may take four months.',kind==='pledge'?'使者提议互保家族保证；回信可能需要四个月。':'使者提议外交监护；回信可能需要四个月。');return {ok:true,cost,accord};
+}
+
+function advanceFamilyAccords(s){
+ const d=s.world.dynasties,now=s.year*12+s.month;
+ for(const a of d.familyAccords){
+  const war=s.wars.some(w=>w.includes(a.host)&&w.includes(a.target));
+  if(a.status==='pending'){
+   if(--a.months>0)continue;
+   const contact=s.world.characters[a.contact],child=s.world.characters[a.child],valid=contact?.alive&&!contact.missing&&contact.faction===a.target&&s.factions[a.target]&&!war&&(!a.child||child?.alive&&child.faction===a.host&&personAge(s,a.child)<16)&&(!a.child||personAge(s,a.contact)>=18);
+   if(!valid){a.status='no_reply';if(a.host===s.player)note(s,'No family accord was reached; the original contact report may have been outdated.','未达成家族协定；原联系人情报可能已经过时。')}
+   else{
+    const relation=s.relations[pair(a.host,a.target)]??0,distance=courtDistance(a.host,a.target),[culture,faith]=courtProfile[a.host]||[],[otherCulture,otherFaith]=courtProfile[a.target]||[];
+    const chance=Math.max(.12,Math.min(.82,.55+relation/250-distance*.025+(s.factions[a.target].stability<35?-.12:0)+(s.factions[a.host].legitimacy<40?-.08:0)+(culture!==otherCulture?-.05:0)+(faith!==otherFaith?-.03:0)));
+    a.status=roll(s)<chance?'active':'declined';
+    if(a.status==='active'){
+     a.expiresAt=now+(a.kind==='pledge'?24:60);s.relations[pair(a.host,a.target)]=Math.min(100,relation+(a.kind==='pledge'?8:6));
+     s.factions[a.host].stability=Math.min(100,s.factions[a.host].stability+1);
+     if(a.kind==='wardship'){child.diplomaticGuardian=a.contact;child.education=Math.min(100,(child.education||0)+8);record(s,child.id,`A diplomatic wardship with ${CHARACTER_CATALOG[a.contact].name[0]} began; legal custody stayed local.`,`与${CHARACTER_CATALOG[a.contact].name[1]}的外交监护开始；法定监护仍留在本地。`)}
+     else{const head=Object.values(s.world.characters).find(c=>c.faction===a.host&&c.alive),family=head&&familyOf(s,head.id);if(family)family.reputation=Math.min(100,(family.reputation||50)+2)}
+     if(a.host===s.player)note(s,a.kind==='pledge'?'Mutual family guarantees were accepted for two years; no alliance was created.':'Diplomatic wardship was accepted; the child gained education, not a foreign office.',a.kind==='pledge'?'互保家族保证获接受，期限两年；没有自动建立同盟。':'外交监护获接受；子女增加教育，不获得外国职务。');
+    }else if(a.host===s.player)note(s,'The foreign court declined the family agreement.','外国宫廷拒绝了家族协定。');
+   }
+   a.resolvedYear=s.year;a.resolvedMonth=s.month;
+  }else if(a.status==='active'&&(war||now>=a.expiresAt||a.child&&personAge(s,a.child)>=16)){
+   a.status=war?'broken':'expired';if(a.child&&s.world.characters[a.child]?.diplomaticGuardian===a.contact)delete s.world.characters[a.child].diplomaticGuardian;
+   if(war){s.relations[pair(a.host,a.target)]=Math.max(-100,(s.relations[pair(a.host,a.target)]||0)-12);s.factions[a.host].stability=Math.max(0,s.factions[a.host].stability-2)}
+   if(a.host===s.player)note(s,war?'War broke the family agreement; relations and stability fell.':'The family agreement ended on its stated terms.',war?'战争使家族协定破裂；关系与稳定度下降。':'家族协定按约终止。');
+  }
+  if(a.status==='active'&&a.kind==='wardship'&&s.month===1&&a.child&&s.world.characters[a.child]?.alive)s.world.characters[a.child].education=Math.min(100,(s.world.characters[a.child].education||0)+2);
+ }
+}
+
 export function adoptHeir(s,parentId,childId){
  initializeDynasties(s);const parent=s.world.characters[parentId],child=s.world.characters[childId];
  if(!eligibleAdult(s,parentId)||!child?.alive||childId===parentId||parent.faction!==child.faction||parent.children.includes(childId)||child.parents.includes(parentId)||child.adoptiveParents.length)return {ok:false,reason:'eligibility'};
@@ -162,7 +216,8 @@ export function adoptHeir(s,parentId,childId){
 
 export function makeWill(s,id,beneficiary,share=1){
  initializeDynasties(s);const c=s.world.characters[id],heir=s.world.characters[beneficiary];
- if(!eligibleAdult(s,id)||!heir?.alive||id===beneficiary||c.faction!==heir.faction||share<=0||share>1)return {ok:false,reason:'eligibility'};
+ if(!eligibleAdult(s,id)||!heir?.alive||id===beneficiary||share<=0||share>1)return {ok:false,reason:'eligibility'};
+ if(c.faction!==heir.faction){if(c.spouse!==beneficiary&&!c.children.includes(beneficiary))return {ok:false,reason:'foreign_heir'};if(s.wars.some(w=>w.includes(c.faction)&&w.includes(heir.faction))||(s.relations[pair(c.faction,heir.faction)]??0)<0)return {ok:false,reason:'diplomacy'}}
  c.will={beneficiary,share};record(s,id,`Named ${CHARACTER_CATALOG[beneficiary].name[0]} in a personal will.`,`在个人遗嘱中指定${CHARACTER_CATALOG[beneficiary].name[1]}。`);return {ok:true};
 }
 
@@ -188,8 +243,8 @@ export function settleInheritance(s,id){
  activateGuardianships(s,id);
  c.inheritanceSettled=true;const heirs=c.children.filter(x=>s.world.characters[x]?.alive),will=c.will?.beneficiary;
  const eligibleWill=will&&s.world.characters[will]?.alive?will:null,wealth=Math.max(0,Math.floor(c.wealth||0));
- if(eligibleWill&&heirs.length&&!heirs.includes(eligibleWill)&&wealth>0){
-  d.inheritanceDisputes.push({id:`estate:${id}`,deceased:id,faction:c.faction,beneficiary:eligibleWill,heirs:[...heirs],estate:wealth,share:c.will.share,status:'pending',year:s.year,month:s.month});
+ if(eligibleWill&&heirs.some(x=>x!==eligibleWill)&&(!heirs.includes(eligibleWill)||s.world.characters[eligibleWill].faction!==c.faction)&&wealth>0){
+  d.inheritanceDisputes.push({id:`estate:${id}`,deceased:id,faction:c.faction,beneficiary:eligibleWill,heirs:heirs.filter(x=>x!==eligibleWill),estate:wealth,share:c.will.share,status:'pending',year:s.year,month:s.month});
   c.wealth=0;record(s,id,'Died; the contested private estate is held pending a ruling.','去世；有争议的私人遗产待裁决。');
   note(s,`The private estate of ${CHARACTER_CATALOG[id].name[0]} is disputed; the court may uphold the will, divide it, or favor the children.`,` ${CHARACTER_CATALOG[id].name[1]}的私人遗产发生争议；宫廷可维持遗嘱、分割遗产或支持子女。`);
   return;
@@ -215,6 +270,7 @@ export function resolveInheritanceDispute(s,disputeId,choice){
  if(choice==='compromise'){faction.treasury-=6;faction.stability=Math.min(100,faction.stability+2)}
  if(choice==='will'){for(const heir of heirs)heir.loyalty=Math.max(0,heir.loyalty-8);if(faction)faction.stability=Math.max(0,faction.stability-2)}
  if(choice==='heirs'&&beneficiary){beneficiary.loyalty=Math.max(0,beneficiary.loyalty-10);if(faction)faction.stability=Math.max(0,faction.stability-1)}
+ if(beneficiary&&beneficiary.faction!==caseFile.faction){const key=pair(beneficiary.faction,caseFile.faction);s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+(choice==='heirs'?-4:2)))}
  d.memories.push({familyId:s.world.characters[caseFile.deceased].familyId,targetFamilyId:beneficiary?.familyId,kind:`inheritance_${choice}`,year:s.year,month:s.month,weight:choice==='compromise'?2:-6});
  caseFile.status='resolved';caseFile.choice=choice;caseFile.resolvedYear=s.year;caseFile.resolvedMonth=s.month;
  const labels={will:['will upheld','维持遗嘱'],compromise:['estate divided','分割遗产'],heirs:['children favored','支持子女']};
@@ -250,6 +306,7 @@ export function advanceDynasties(s){
  const d=initializeDynasties(s);
  advanceMarriageOffers(s);
  advanceAsylumRequests(s);
+ advanceFamilyAccords(s);
  for(const loan of d.familyLoans.filter(x=>x.remaining>0)){
   const treasury=s.factions[loan.faction]?.treasury||0;if(treasury<1)continue;
   s.factions[loan.faction].treasury--;d.families[loan.familyId].wealth++;loan.remaining--;

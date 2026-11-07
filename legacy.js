@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=xxii-final-3';
-import {initializeDynasties} from './dynasties.js?v=xxii-final-3';
+import {CHARACTER_CATALOG} from './characters.js?v=xxii-final-4';
+import {initializeDynasties} from './dynasties.js?v=xxii-final-4';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.world?.dynasties?.scenario?.stage==='resolved')}
 
@@ -24,6 +24,7 @@ export function finalizeCampaign(s){
   inheritanceCases:(d.inheritanceDisputes||[]).filter(x=>x.faction===s.player).map(x=>({...x,deceasedName:CHARACTER_CATALOG[x.deceased]?.name||[x.deceased,x.deceased],beneficiaryName:CHARACTER_CATALOG[x.beneficiary]?.name||[x.beneficiary,x.beneficiary]})),
   marriageOffers:(d.marriageOffers||[]).filter(x=>own.has(x.own)).map(x=>({...x,ownName:CHARACTER_CATALOG[x.own]?.name||[x.own,x.own],foreignName:CHARACTER_CATALOG[x.foreign]?.name||[x.foreign,x.foreign]})),
   asylumRequests:(d.asylumRequests||[]).filter(x=>x.host===s.player).map(x=>({...x,claimantName:CHARACTER_CATALOG[x.claimant]?.name||[x.claimant,x.claimant]})),
+  familyAccords:(d.familyAccords||[]).filter(x=>x.host===s.player).map(x=>({...x,contactName:CHARACTER_CATALOG[x.contact]?.name||[x.contact,x.contact],childName:x.child?CHARACTER_CATALOG[x.child]?.name||[x.child,x.child]:null})),
   constitutionalReforms:(s.world.romanReforms||[]).filter(x=>x.faction===s.player).map(x=>({...x})),
   familyLoans:(d.familyLoans||[]).filter(x=>x.faction===s.player).map(x=>({...x,familyName:d.families[x.familyId]?.name||[x.familyId,x.familyId]})),
   regency:s.world.regencies?.[s.player]?{...s.world.regencies[s.player],regentName:CHARACTER_CATALOG[s.world.regencies[s.player].regent]?.name||null,wardName:CHARACTER_CATALOG[s.world.regencies[s.player].ward]?.name||null}:null,

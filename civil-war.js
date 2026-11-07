@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=xxii-final-3';
-import {reportedControl} from './control-intelligence.js?v=xxii-final-3';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=xxii-final-4';
+import {reportedControl} from './control-intelligence.js?v=xxii-final-4';
 
 // Alternate-history claimant commands use real game theaters and armies.
 // The setup is a simulation, not a reconstruction of a historical campaign.

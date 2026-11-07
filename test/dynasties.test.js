@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
-import {CHARACTER_CATALOG} from '../characters.js?v=xxii-final-3';
-import {assignSuccession,successionModel} from '../characters.js?v=xxii-final-3';
-import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession} from '../governance.js?v=xxii-final-3';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
-import {canHoldOffice} from '../office-system.js?v=xxii-final-3';
+import {CHARACTER_CATALOG} from '../characters.js?v=xxii-final-4';
+import {assignSuccession,successionModel} from '../characters.js?v=xxii-final-4';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession} from '../governance.js?v=xxii-final-4';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
+import {canHoldOffice} from '../office-system.js?v=xxii-final-4';
 import {renderGenealogy} from '../genealogy-ui.js';
 import {finalizeCampaign} from '../legacy.js';
-import {startDynasticWar} from '../civil-war.js?v=xxii-final-3';
+import {startDynasticWar} from '../civil-war.js?v=xxii-final-4';
 
 test('historical relationships do not invent missing parents or spouses',()=>{
  const s=newGame();assert.equal(s.world.characters.cleopatra.familyId,s.world.characters.arsinoe.familyId);
@@ -77,6 +77,46 @@ test('stale asylum lead gives a generic reply',()=>{
  for(const month of [2,3,4]){s.month=month;advanceDynasties(s)}
  assert.equal(s.world.dynasties.asylumRequests[0].status,'no_reply');
  assert.match(s.log[0].en,/may have been outdated/);
+});
+
+test('a family guarantee costs treasury, waits for reply, and breaks on war',()=>{
+ const s=newGame('caesar'),treasury=s.factions.caesar.treasury;
+ assert.equal(offerFamilyAccord(s,'pledge','cleopatra','egypt').ok,true);
+ assert.equal(s.factions.caesar.treasury,treasury-6);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ for(const month of [2,3,4,5]){restored.month=month;if(month===5)restored.world.dynasties.seed=0;advanceDynasties(restored)}
+ assert.equal(restored.world.dynasties.familyAccords[0].status,'active');
+ assert.equal(restored.alliances.length,0);
+ const relation=restored.relations['caesar:egypt'],stability=restored.factions.caesar.stability;
+ restored.wars.push(['caesar','egypt']);restored.month=6;advanceDynasties(restored);
+ assert.equal(restored.world.dynasties.familyAccords[0].status,'broken');
+ assert.equal(restored.relations['caesar:egypt'],relation-12);
+ assert.equal(restored.factions.caesar.stability,stability-2);
+ restored.victory=true;assert.equal(finalizeCampaign(restored).archive.familyAccords[0].status,'broken');
+});
+
+test('diplomatic wardship educates a minor without transferring custody or office',()=>{
+ const s=newGame('caesar'),child=createFictionalPerson(s,{name:['Ward','受监护者'],faction:'caesar',birthYear:-57,location:'cisalpine'});
+ assert.equal(offerFamilyAccord(s,'wardship','cleopatra','egypt',child).ok,true);
+ for(const month of [2,3,4,5]){s.month=month;if(month===5)s.world.dynasties.seed=0;advanceDynasties(s)}
+ assert.equal(s.world.dynasties.familyAccords[0].status,'active');
+ assert.equal(s.world.characters[child].diplomaticGuardian,'cleopatra');
+ assert.equal(s.world.characters[child].guardian,undefined);
+ assert.equal(s.world.characters[child].faction,'caesar');
+ assert.ok(s.world.characters[child].education>=8);
+});
+
+test('a foreign child may inherit private property through a negotiated court settlement',()=>{
+ const s=newGame('caesar'),parent=createFictionalPerson(s,{name:['Parent','父母'],faction:'caesar',birthYear:-90,wealth:30}),domestic=createFictionalPerson(s,{name:['Domestic','本地子女'],faction:'caesar',birthYear:-65,parents:[parent]}),foreign=createFictionalPerson(s,{name:['Foreign','外国子女'],faction:'egypt',birthYear:-66,parents:[parent]});
+ assert.equal(makeWill(s,parent,foreign).ok,true);
+ s.world.characters[parent].alive=false;settleInheritance(s,parent);
+ const caseFile=s.world.dynasties.inheritanceDisputes.at(-1),before=s.relations['caesar:egypt']||0;
+ assert.ok(caseFile.heirs.includes(domestic));
+ assert.equal(resolveInheritanceDispute(s,caseFile.id,'compromise').ok,true);
+ assert.equal(s.world.characters[foreign].wealth,15);
+ assert.equal(s.world.characters[domestic].wealth,15);
+ assert.equal(s.relations['caesar:egypt'],before+2);
+ assert.equal(s.world.leadership.egypt.includes(foreign),false);
 });
 
 test('a contested private will becomes a saved court case with real costs',()=>{

@@ -1,14 +1,14 @@
-import {stageHandoff,receiveHandoff} from './view-handoff.js?v=xxii-final-3';
-import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=xxii-final-3';
-import {identity,factionMark} from './identity.js?v=xxii-final-3';
-import {reportedControl} from './control-intelligence.js?v=xxii-final-3';
-import {CHARACTER_CATALOG} from './characters.js?v=xxii-final-3';
-import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=xxii-final-3';
-import {newGame,newDynastyScenario,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=xxii-final-3';
-import {decideDisputedHeir,personAge} from './dynasties.js?v=xxii-final-3';
-import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=xxii-final-3';
-import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=xxii-final-3';
-import {drawMap,mapPoint} from './map.js?v=xxii-final-3';
+import {stageHandoff,receiveHandoff} from './view-handoff.js?v=xxii-final-4';
+import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=xxii-final-4';
+import {identity,factionMark} from './identity.js?v=xxii-final-4';
+import {reportedControl} from './control-intelligence.js?v=xxii-final-4';
+import {CHARACTER_CATALOG} from './characters.js?v=xxii-final-4';
+import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=xxii-final-4';
+import {newGame,newDynastyScenario,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=xxii-final-4';
+import {decideDisputedHeir,personAge} from './dynasties.js?v=xxii-final-4';
+import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=xxii-final-4';
+import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=xxii-final-4';
+import {drawMap,mapPoint} from './map.js?v=xxii-final-4';
 
 const ui={
   en:{subtitle:'A republic at war with itself',campaign:'49 BCE · Caesar’s Civil War',historical:'Historical campaign',schematic:'Schematic operational map · theaters and routes are gameplay abstractions',new:'New campaign',save:'Save',load:'Load',pause:'Pause',play:'Play',speed:'Speed',month:'MONTH',treasury:'TREASURY',food:'FOOD',manpower:'MANPOWER',stability:'STABILITY',legitimacy:'LEGITIMACY',strength:'FIELD STRENGTH',map:'Campaign',military:'Military',government:'Government',chronicle:'Chronicle',sources:'Sources',select:'Select a theater or army',selected:'SELECTED THEATER',owner:'Command',terrain:'Terrain',city:'Principal city',supply:'Supply limit',loyalty:'Local loyalty',fort:'Fortification',recruit:'Raise legion · 24¤ / 3,000 men / 6 grain',recruitFail:'Insufficient resources or this theater is not yours.',army:'SELECTED ARMY',men:'Soldiers',morale:'Morale',commander:'Commander',order:'Order march',cancel:'Cancel order',target:'Select an adjacent theater on the map.',invalid:'No legal march route. War is required to enter another command’s theater.',marching:'Marching',siege:'Besieging',available:'Ready',armies:'Field armies',tax:'Tax policy',low:'Low',normal:'Normal',high:'High',taxText:'Higher taxes raise revenue but erode local loyalty. Low taxes recover loyalty.',revolt:'Rebellion',revoltText:'A disloyal, undefended theater can secede when stability is low. The rebels gain land and an army.',war:'Civil war',warText:'Caesar and Pompey command opposing Roman factions. Their colors show military control during the conflict, not separate sovereign states.',log:'Campaign dispatches',sourceNote:'Historical framework: Caesar crossed the Rubicon in January 49 BCE. Theater ownership, troop totals, income, travel times, and battle ratings are simplified gameplay estimates. The coast is hand-drawn and schematic; it does not encode ancient administrative borders.',instructions:'Choose an army, select Order march, then click a connected theater. Advance time to resolve travel and combat.',savePrompt:'Choose save slot 1–3',saved:'Campaign saved in slot',loaded:'Campaign loaded from slot',empty:'That slot is empty.',victory:'Opposing Roman command defeated · the campaign continues',noArmy:'No field army selected',atWar:'At war',neutral:'Independent',terrainNames:{plain:'Plain',hills:'Hills',forest:'Forest',urban:'Urban',desert:'Desert'},sourceTitle:'Research and accuracy notes',open:'Open source ↗',legend:'CAMPAIGN CONTROL',sea:'Sea crossing · 8¤',land:'Land route',clear:'Clear selection'},
@@ -86,7 +86,7 @@ function render(){
    const envoys=(a.marriageOffers||[]).map(x=>`${esc(x.ownName?.[language])} → ${esc(x.foreignName?.[language])}: ${esc(x.status)}`).join(' · ')||'—';
    const loans=(a.familyLoans||[]).map(x=>`${esc(x.familyName?.[language])}: ${x.principal} (${lang==='zh'?'未还':'due'} ${x.remaining})`).join(' · ')||'—';
    const regency=a.regency?`${esc(a.regency.regentName?.[language])} → ${esc(a.regency.wardName?.[language])} · ${a.regency.months} ${lang==='zh'?'个月':'months'}`:'—';
-   detail.insertAdjacentHTML('beforeend',`<p>${lang==='zh'?'私人遗产裁决':'Private inheritance rulings'}: ${rulings}</p><p>${lang==='zh'?'婚姻使团':'Marriage envoys'}: ${envoys}</p><p>${lang==='zh'?'家族借款':'Family loans'}: ${loans}</p><p>${lang==='zh'?'摄政':'Regency'}: ${regency}</p><p>${lang==='zh'?'家族记忆':'Family memories'}: ${(a.memories||[]).length}</p><p>${lang==='zh'?'庇护使团':'Asylum requests'}: ${(a.asylumRequests||[]).map(x=>`${esc(x.claimantName?.[language])} · ${esc(x.status)}`).join(' · ')||'—'}</p><p>${lang==='zh'?'宪制改革':'Constitutional reforms'}: ${(a.constitutionalReforms||[]).map(x=>`${esc(x.target)} · ${x.year}`).join(' · ')||'—'}</p>`);
+   detail.insertAdjacentHTML('beforeend',`<p>${lang==='zh'?'私人遗产裁决':'Private inheritance rulings'}: ${rulings}</p><p>${lang==='zh'?'婚姻使团':'Marriage envoys'}: ${envoys}</p><p>${lang==='zh'?'家族借款':'Family loans'}: ${loans}</p><p>${lang==='zh'?'摄政':'Regency'}: ${regency}</p><p>${lang==='zh'?'家族记忆':'Family memories'}: ${(a.memories||[]).length}</p><p>${lang==='zh'?'家族保证':'Family accords'}: ${(a.familyAccords||[]).map(x=>`${esc(x.contactName?.[language])} · ${esc(lang==='zh'?({pledge:'互保',wardship:'监护'}[x.kind]||x.kind):x.kind)} · ${esc(lang==='zh'?({pending:'等待中',active:'生效中',declined:'拒绝',no_reply:'无协议',broken:'破裂',expired:'届满'}[x.status]||x.status):x.status)}`).join(' · ')||'—'}</p><p>${lang==='zh'?'庇护使团':'Asylum requests'}: ${(a.asylumRequests||[]).map(x=>`${esc(x.claimantName?.[language])} · ${esc(x.status)}`).join(' · ')||'—'}</p><p>${lang==='zh'?'宪制改革':'Constitutional reforms'}: ${(a.constitutionalReforms||[]).map(x=>`${esc(x.target)} · ${x.year}`).join(' · ')||'—'}</p>`);
   });
   document.querySelector('.map-toolbar .eyebrow').textContent=`${t('historical')} · ${labelFaction(state.player)}`;
   bind();

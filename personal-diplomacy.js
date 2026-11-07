@@ -1,8 +1,8 @@
-import {reportedControl,observeArrival} from './control-intelligence.js?v=xxii-final-3';
-import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=xxii-final-3';
-import {ROUTES} from './data.js?v=xxii-final-3';
-import {addReport,reportedHealthSubjects,apparentAgeRange} from './character-system.js?v=xxii-final-3';
-import {officeOf} from './office-system.js?v=xxii-final-3';
+import {reportedControl,observeArrival} from './control-intelligence.js?v=xxii-final-4';
+import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=xxii-final-4';
+import {ROUTES} from './data.js?v=xxii-final-4';
+import {addReport,reportedHealthSubjects,apparentAgeRange} from './character-system.js?v=xxii-final-4';
+import {officeOf} from './office-system.js?v=xxii-final-4';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 // A commander in transit has not arrived in a theater where an audience can occur.

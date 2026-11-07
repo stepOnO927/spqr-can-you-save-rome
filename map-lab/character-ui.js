@@ -1,13 +1,13 @@
-import {identityKnowledge} from './identity-knowledge.js?v=xxii-final-3';
-import {politicalAmbition} from '../conspiracies.js?v=xxii-final-3';
-import {HISTORICAL_DEATHS,HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS,HISTORICAL_RELATIONSHIPS} from '../historical-reference.js?v=xxii-final-3';
-import {officeOf} from '../office-system.js?v=xxii-final-3';
-import {reportedClaimants,reportedHealthSubjects,reportedOfficeTheaters,supportClaimant,recognizeClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=xxii-final-3';
-import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan,successionCandidates} from '../governance.js?v=xxii-final-3';
-import {FACTIONS} from '../data.js?v=xxii-final-3';
-import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=xxii-final-3';
-import {queueMission} from '../engine.js?v=xxii-final-3';
-import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from '../personal-diplomacy.js?v=xxii-final-3';
+import {identityKnowledge} from './identity-knowledge.js?v=xxii-final-4';
+import {politicalAmbition} from '../conspiracies.js?v=xxii-final-4';
+import {HISTORICAL_DEATHS,HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS,HISTORICAL_RELATIONSHIPS} from '../historical-reference.js?v=xxii-final-4';
+import {officeOf} from '../office-system.js?v=xxii-final-4';
+import {reportedClaimants,reportedHealthSubjects,reportedOfficeTheaters,supportClaimant,recognizeClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=xxii-final-4';
+import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan,successionCandidates} from '../governance.js?v=xxii-final-4';
+import {FACTIONS} from '../data.js?v=xxii-final-4';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=xxii-final-4';
+import {queueMission} from '../engine.js?v=xxii-final-4';
+import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from '../personal-diplomacy.js?v=xxii-final-4';
 const portraits=new Set(['caesar','pompey','cleopatra','arsinoe','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function evidenceText(state,actor,target,report,zh){
