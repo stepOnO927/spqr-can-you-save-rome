@@ -42,3 +42,17 @@ test('conflicting death and court propaganda reports remain inspectable',()=>{
  const travelers=queueMission(s,'caesar','egypt','travelers','health',null,'cleopatra');s.world.intelSeed=seedFor(.4,.41);for(let i=0;i<travelers.duration;i++)advanceOperations(s);
  const reports=s.knowledge.caesar.egypt.reports.filter(r=>r.kind==='health'&&r.character==='cleopatra');assert.deepEqual(reports.map(r=>r.value),['healthy','deceased']);assert.ok(reports.every(r=>r.confidence==='disputed'));assert.equal(s.knowledge.senate.egypt.reports.length,0);
 });
+test('a contested court can spread a false death rumor without revealing the subject’s real condition',()=>{
+ const states=[()=>{},s=>{s.world.characters.cleopatra.health='dying'},s=>{const c=s.world.characters.cleopatra;c.health='deceased';c.alive=false},s=>{s.world.characters.cleopatra.location='parthia'},s=>{s.world.characters.cleopatra.missing={origin:'egypt',remaining:2}},s=>{s.world.characters.cleopatra.faction='parthia'}];
+ for(const type of ['spy','travelers'])for(const change of states){
+  const s=investigate('healthy',.35,type,s=>{s.world.claimants.egypt=['ptolemy'];change(s)}),r=s.knowledge.caesar.egypt.reports[0];
+  assert.equal(r.value,'deceased');assert.equal(r.confidence,'rumor');assert.equal(r.reliability,'low');assert.equal(r.verified,false);assert.equal(r.originSource,'travelers');assert.equal(s.knowledge.senate.egypt.reports.length,0);
+ }
+ const noDispute=investigate('healthy',.35,'travelers',s=>{s.world.characters.cleopatra.location='parthia'});assert.equal(noDispute.knowledge.caesar.egypt.reports[0].value,'unknown');
+});
+test('a spy repeating the same death rumor does not independently corroborate travelers',()=>{
+ const s=newGame('caesar');s.world.claimants.egypt=['ptolemy'];
+ for(const type of ['spy','travelers']){const mission=queueMission(s,'caesar','egypt',type,'health',null,'cleopatra');assert.equal(mission.ok,true);s.world.intelSeed=seedFor(.35,.36);for(let i=0;i<mission.duration;i++)advanceOperations(s)}
+ const reports=s.knowledge.caesar.egypt.reports.filter(r=>r.kind==='health'&&r.character==='cleopatra');
+ assert.equal(reports.length,2);assert.ok(reports.every(r=>r.value==='deceased'&&r.confidence==='rumor'&&!r.verified));assert.equal(s.world.characters.cleopatra.alive,true);
+});
