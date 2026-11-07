@@ -53,7 +53,7 @@ try{
  await page.locator('#succession-choice').selectOption('cicero');await page.locator('#succession-plan').click();await page.locator('#succession-feedback button').click();assert.match(await page.locator('#command-detail').innerText(),/当前安排：马尔库斯·图利乌斯·西塞罗/);
  await page.locator('#succession-withdraw').click();assert.match(await page.locator('#succession-feedback').innerText(),/已付费用不退还/);await page.locator('#succession-feedback button').click();assert.match(await page.locator('#command-detail').innerText(),/当前没有指定继任人选/);
  await page.locator('#succession-choice').selectOption('cicero');await page.locator('#succession-support').click();
- assert.match(await page.locator('#succession-feedback').innerText(),/其他候选人忠诚降低3/);assert.match(await page.locator('#succession-feedback').innerText(),/野心增加5/);await page.locator('#succession-feedback button').click();
+ assert.match(await page.locator('#succession-feedback').innerText(),/影响力最多提高15/);assert.match(await page.locator('#succession-feedback').innerText(),/其他候选人忠诚最多降低3/);assert.match(await page.locator('#succession-feedback').innerText(),/野心最多提高5/);await page.locator('#succession-feedback button').click();
  await page.locator('[data-character="cicero"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/个人信任 · 格奈乌斯·庞培: 5/);assert.match(await page.locator('#command-detail').innerText(),/游戏战伤次数/);assert.match(await page.locator('#command-detail').innerText(),/65 \/ 100/);
  await page.locator('#person-destination').selectOption('epirus');assert.match(await page.locator('#command-detail').innerText(),/路线根据已有控制报告规划/);await page.locator('#person-travel').click();

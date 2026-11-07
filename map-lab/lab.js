@@ -17,7 +17,7 @@ import {newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, reg
 import {FACTIONS} from '../data.js?v=11-xxiif';
 import {identity,factionMark} from '../identity.js?v=3-xxiif';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=21-xxiif';
-import {createCharacterUI} from './character-ui.js?v=death-report-2-xxiif';
+import {createCharacterUI} from './character-ui.js?v=successor-info-3';
 import {reportedArmies} from '../character-system.js?v=death-report-2-xxiif';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=9-xxiif';
 import {friendlyPersonnelInTheater} from './personnel.js?v=2-xxiif';
