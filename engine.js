@@ -5,7 +5,7 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=54';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
-import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=2';
+import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=3';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js';
 import {advanceRecon,assessment,sendScouts,latestRecon} from './reconnaissance.js?v=2';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
@@ -18,7 +18,7 @@ export {endCampaign,revealedAchievements} from './achievement-system.js';
 export {SEA_ZONES,SHIPS,NAVAL_JOBS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reportedHostileFleets,supportPirates} from './naval.js?v=3';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
 export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=2';
-export {knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
+export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
 export {setReligiousPolicy};
 export {queueMission};
 export {personalDiplomaticCredit};
@@ -387,6 +387,13 @@ export function aiTurn(s,owner){
         const offers=[...d.knownMaterial.filter(id=>!recipient.knownMaterial.includes(id)&&!recipient.trade.some(t=>t.branch==='material'&&t.id===id)).map(id=>['material',id]),...d.knownIdeas.filter(id=>!recipient.knownIdeas.includes(id)&&!recipient.trade.some(t=>t.branch==='idea'&&t.id===id)).map(id=>['idea',id])];
         for(const [branch,id] of offers)if(sellKnowledge(s,owner,buyer,branch,id).ok){sold=true;break}
         if(sold)break;
+      }
+    }
+    if(s.month%12===9&&s.player!=='rebels'){
+      const candidates=[...d.knownMaterial.map(id=>['material',id]),...d.knownIdeas.map(id=>['idea',id])];
+      for(const [branch,id] of candidates){
+        const result=proposeKnowledgeSale(s,owner,s.player,branch,id);
+        if(result.ok){const name=(branch==='material'?MATERIALS:IDEAS).find(x=>x.id===id)?.name||[id,id];log(s,`${owner} offers ${name[0]} knowledge for ${result.price} treasury. Open Development to accept or decline.`,`${owner}提出以${result.price}国库传授${name[1]}。请在“发展”界面接受或拒绝。`);break}
       }
     }
     if(s.year>=-48&&s.month===6&&f.treasury>30){const partner=Object.keys(s.development).find(id=>id!==owner&&!isWar(s,owner,id)&&relation(s,owner,id)>=20&&s.development[id].knownIdeas.some(k=>!d.knownIdeas.includes(k))&&d.knownIdeas.some(k=>!s.development[id].knownIdeas.includes(k)));if(partner){const offer=d.knownIdeas.find(k=>!s.development[partner].knownIdeas.includes(k)),want=s.development[partner].knownIdeas.find(k=>!d.knownIdeas.includes(k));exchangeKnowledge(s,owner,partner,'idea',offer,'idea',want)}}

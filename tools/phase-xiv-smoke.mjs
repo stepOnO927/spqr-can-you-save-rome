@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {newGrandGame,proposeKnowledgeSale} from '../engine.js';
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1440,height:900}});
@@ -10,9 +11,9 @@ const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
   await page.route('http://spqr.test/**',async route=>{
     const pathname=new URL(route.request().url()).pathname;
-    const file=resolve(root,'.'+(pathname==='/'?'/index.html':pathname));
+    const file=resolve(root,'.'+(pathname.endsWith('/')?pathname+'index.html':pathname));
     if(!file.startsWith(root))return route.abort();
-    const mime={'.js':'text/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.json':'application/json'}[extname(file)]||'application/octet-stream';
+    const mime={'.js':'text/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.json':'application/json','.png':'image/png','.jpg':'image/jpeg'}[extname(file)]||'application/octet-stream';
     try{await route.fulfill({status:200,contentType:mime,body:await readFile(file)})}catch{await route.fulfill({status:404,body:'Not found'})}
   });
   await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
@@ -41,6 +42,32 @@ try{
   await page.locator('[data-tab="development"]').click();
   assert.match(await page.locator('.inspector h2').innerText(),/文明发展/);
   await page.screenshot({path:'tools/phase-xiv-ui.png'});
+  const offered=newGrandGame('senate');offered.relations['egypt:senate']=20;
+  assert.equal(proposeKnowledgeSale(offered,'egypt','senate','material','water-control').ok,true);
+  await page.evaluate(()=>localStorage.setItem('spqr-lang','en'));
+  await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+  await page.locator('#entry-file').setInputFiles({name:'offer.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(offered))});
+  await page.locator('[data-tab="development"]').click();
+  assert.equal(await page.locator('[data-accept-offer-seller="egypt"]').count(),1);
+  assert.match(await page.locator('[data-accept-offer-seller="egypt"]').innerText(),/Accept/);
+  await page.locator('[data-accept-offer-seller="egypt"]').click();
+  assert.equal(await page.locator('[data-accept-offer-seller="egypt"]').count(),0);
+  assert.match(await page.locator('.dev-status').allInnerTexts().then(x=>x.join(' ')),/water-control/);
+  const declined=newGrandGame('senate');declined.relations['egypt:senate']=20;
+  assert.equal(proposeKnowledgeSale(declined,'egypt','senate','material','water-control').ok,true);
+  await page.evaluate(()=>localStorage.setItem('spqr-lang','zh'));
+  await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+  await page.locator('#entry-file').setInputFiles({name:'offer-zh.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(declined))});
+  await page.locator('[data-tab="development"]').click();
+  assert.match(await page.locator('[data-decline-offer-seller="egypt"]').innerText(),/拒绝/);
+  await page.locator('[data-decline-offer-seller="egypt"]').click();
+  assert.equal(await page.locator('[data-decline-offer-seller="egypt"]').count(),0);
+  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),offered);
+  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+  await page.locator('#development').click();
+  assert.equal(await page.locator('[data-accept-offer-seller="egypt"]').count(),1);
+  await page.locator('[data-accept-offer-seller="egypt"]').click();
+  assert.equal(await page.locator('[data-accept-offer-seller="egypt"]').count(),0);
   assert.deepEqual(errors,[]);
-  console.log('Phase XIV browser smoke passed: research, adoption, construction controls, bilingual UI.');
+  console.log('Phase XIV browser smoke passed: research, adoption, construction and consent-based knowledge offers in both languages.');
 }finally{await browser.close()}
