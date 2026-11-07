@@ -44,6 +44,8 @@ export const FACTIONS = {
   parthia:{name:['Parthian Empire','帕提亚帝国'],short:['Parthia','帕提亚'],color:'#b28560',ruler:['Orodes II','奥罗德二世']},
   egypt_claimant:{name:['Egyptian claimant command','埃及竞争者军队'],short:['Egyptian claimant','埃及竞争者'],color:'#b49052',ruler:['Contested leadership','争议中的领袖']},
   parthia_claimant:{name:['Parthian claimant command','帕提亚竞争者军队'],short:['Parthian claimant','帕提亚竞争者'],color:'#a26d57',ruler:['Contested leadership','争议中的领袖']},
+  caesar_claimant:{name:['Rival Roman imperial court','罗马帝国竞争宫廷'],short:['Rival court','竞争宫廷'],color:'#9a5e52',ruler:['Contested imperial authority','争议中的帝国权威']},
+  senate_claimant:{name:['Rival Roman imperial court','罗马帝国竞争宫廷'],short:['Rival court','竞争宫廷'],color:'#a78765',ruler:['Contested imperial authority','争议中的帝国权威']},
   galatia:{name:['Deiotarus’ Galatian realm','代奥塔鲁斯的加拉太领地'],short:['Galatia','加拉太'],color:'#7c8760',ruler:['Deiotarus','代奥塔鲁斯']},
   bosporus:{name:['Bosporan Kingdom','博斯普鲁斯王国'],short:['Bosporus','博斯普鲁斯'],color:'#8b7270',ruler:['Pharnaces II','法尔纳刻斯二世']},
   rebels:{name:['Provincial rebels','行省叛军'],short:['Rebels','叛军'],color:'#8a7365',ruler:['Local leaders','地方首领']}

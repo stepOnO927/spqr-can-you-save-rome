@@ -1,9 +1,9 @@
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=21-xxiif';
-import {reportedControl} from './control-intelligence.js?v=4-xxiif';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=xxii-final-1';
+import {reportedControl} from './control-intelligence.js?v=xxii-final-1';
 
 // Alternate-history claimant commands use real game theaters and armies.
 // The setup is a simulation, not a reconstruction of a historical campaign.
-const CONFIG={egypt:{rival:'egypt_claimant',theater:'egyptUpper'},parthia:{rival:'parthia_claimant',theater:'media'}};
+const CONFIG={egypt:{rival:'egypt_claimant',theater:'egyptUpper'},parthia:{rival:'parthia_claimant',theater:'media'},caesar:{rival:'caesar_claimant'},senate:{rival:'senate_claimant'}};
 
 // A remembered control report or unit sighting is a lead, not proof the
 // government still exists. Do not inspect the live faction list here.
@@ -12,8 +12,8 @@ export function knownDynasticFactions(s,viewer){
 }
 
 export function startDynasticWar(s,parent,claimant){
- const cfg=CONFIG[parent],dispute=s.world.disputes?.[parent],person=s.world.characters?.[claimant],base=s.factions[parent],home=s.regions.find(r=>r.id===cfg?.theater);
- if(!cfg||!dispute||dispute.war||s.factions[cfg.rival]||!person?.alive||person.missing||person.travel||!base||!home||home.owner!==parent||!(s.world.claimants[parent]||[]).includes(claimant)||s.armies.some(a=>a.characterId===claimant)||s.armies.some(a=>a.region===home.id&&a.men>0))return false;
+ const cfg=CONFIG[parent],dispute=s.world.disputes?.[parent],person=s.world.characters?.[claimant],base=s.factions[parent],home=cfg?.theater?s.regions.find(r=>r.id===cfg.theater):s.regions.find(r=>r.owner===parent&&r.id!=='roma'&&!s.armies.some(a=>a.region===r.id&&a.men>0));
+ if(!cfg||!dispute||dispute.war||s.factions[cfg.rival]||!person?.alive||person.missing||person.travel||person.asylumHost||!base||!home||home.owner!==parent||!(s.world.claimants[parent]||[]).includes(claimant)||s.armies.some(a=>a.characterId===claimant)||s.armies.some(a=>a.region===home.id&&a.men>0))return false;
  const guard=s.armies.find(a=>a.owner===parent&&a.men>0&&!a.move&&!a.siege),defectors=guard?Math.min(1000,Math.floor(guard.men*.2)):0,recruits=Math.min(1000,Math.max(0,base.manpower));
  if(defectors+recruits<500)return false;
  if(guard)guard.men-=defectors;base.manpower-=recruits;
@@ -27,7 +27,7 @@ export function startDynasticWar(s,parent,claimant){
  const aid=dispute.militaryAid?.[claimant]||0;
  const age=ageRange(claimant,s.year),minor=age!==null&&age[0]<16;
  // A claimant who may be a minor is a political figurehead; an unnamed officer leads.
- s.armies.push({id:`${cfg.rival}_${s.nextArmy++}`,name:parent==='egypt'?['Egyptian claimant forces','埃及竞争者军队']:['Parthian claimant forces','帕提亚竞争者军队'],owner:cfg.rival,region:home.id,men:defectors+recruits+aid,morale:60,skill:2,experience:0,commander:minor?['Unnamed officer','未具名军官']:[...CHARACTER_CATALOG[claimant].name],characterId:minor?null:claimant,move:null,siege:null});
+ s.armies.push({id:`${cfg.rival}_${s.nextArmy++}`,name:parent==='egypt'?['Egyptian claimant forces','埃及竞争者军队']:parent==='parthia'?['Parthian claimant forces','帕提亚竞争者军队']:['Rival imperial court forces','帝国竞争宫廷军队'],owner:cfg.rival,region:home.id,men:defectors+recruits+aid,morale:60,skill:2,experience:0,commander:minor?['Unnamed officer','未具名军官']:[...CHARACTER_CATALOG[claimant].name],characterId:minor?null:claimant,move:null,siege:null});
  if(dispute.militaryAid)delete dispute.militaryAid[claimant];
  s.wars.push([parent,cfg.rival]);dispute.war={rival:cfg.rival,claimant,startedYear:s.year,startedMonth:s.month};
  // New diplomatic records contain no foreign reports; no uninvolved observer

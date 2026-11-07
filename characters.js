@@ -1,4 +1,4 @@
-import {INITIAL_ARMIES} from './data.js?v=11-xxiif';
+import {INITIAL_ARMIES} from './data.js?v=xxii-final-1';
 export const CHARACTER_CATALOG = {
  caesar:{name:['Gaius Julius Caesar','盖乌斯·尤利乌斯·凯撒'],birth:[-102,-100],faction:'caesar',role:['Roman political and military leader','罗马政治与军事领袖'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Julius-Caesar-Roman-ruler'},
  pompey:{name:['Gnaeus Pompeius Magnus','格奈乌斯·庞培'],birth:[-106,-106],faction:'senate',role:['Roman commander allied with the Senate','元老院方面的罗马统帅'],culture:['Roman','罗马'],source:'https://www.britannica.com/biography/Pompey-the-Great'},
@@ -48,17 +48,21 @@ export function initializeWorld(s){
 }
 // Birthdays are not specified in the catalog: either side of the birthday may apply.
 export function ageRange(id,year){const b=CHARACTER_CATALOG[id]?.birth;if(!b)return null;return [year-b[1]-1,year-b[0]]}
-export const successionModel=faction=>['caesar','senate'].includes(faction)?'republican_command':faction==='egypt'?'ptolemaic_court':faction==='parthia'?'arsacid_nobility':faction==='mauretania'?'separate_kingdoms':'regional_dynasty';
-export function successorFor(s,faction){const fictional=['egypt','parthia','armenia','numidia','mauretania','galatia','bosporus'].includes(faction)?Object.values(s.world.characters).filter(c=>CHARACTER_CATALOG[c.id]?.fictional&&c.faction===faction&&c.birthYear!=null&&s.year-c.birthYear>=18).map(c=>c.id):[];return [...new Set([...(SUCCESSORS[faction]||[]),...fictional])].filter(id=>s.world.characters[id]?.alive&&!s.world.characters[id].missing&&s.world.characters[id].faction===faction&&!(s.world.leadership[faction]||[]).includes(id)).sort((a,b)=>(s.world.characters[b].influence??50)-(s.world.characters[a].influence??50));}
+export const successionModel=(faction,s)=>['caesar','senate'].includes(faction)?(s?.world?.romanRegimes?.[faction]||'republican_command'):faction==='egypt'?'ptolemaic_court':faction==='parthia'?'arsacid_nobility':faction==='mauretania'?'separate_kingdoms':'regional_dynasty';
+export function successorFor(s,faction){const fictional=['egypt','parthia','armenia','numidia','mauretania','galatia','bosporus'].includes(faction)||['roman_principate','later_empire'].includes(successionModel(faction,s))?Object.values(s.world.characters).filter(c=>CHARACTER_CATALOG[c.id]?.fictional&&c.faction===faction&&c.birthYear!=null&&s.year-c.birthYear>=18).map(c=>c.id):[];return [...new Set([...(SUCCESSORS[faction]||[]),...fictional])].filter(id=>s.world.characters[id]?.alive&&!s.world.characters[id].missing&&s.world.characters[id].faction===faction&&!(s.world.leadership[faction]||[]).includes(id)).sort((a,b)=>(s.world.characters[b].influence??50)-(s.world.characters[a].influence??50));}
 export function assignSuccession(s,faction){
  const previous=s.world.leadership[faction]||[],current=previous.filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
- const contested=['egypt','parthia'].includes(faction)&&s.world.disputes?.[faction]&&(s.world.claimants?.[faction]||[]).some(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
+ const model=successionModel(faction,s),imperial=['roman_principate','later_empire'].includes(model);
+ const contested=(['egypt','parthia'].includes(faction)||imperial)&&s.world.disputes?.[faction]&&(s.world.claimants?.[faction]||[]).some(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
  if(!current.length&&contested&&!s.world.disputes[faction].vacancySince){s.world.disputes[faction].months=0;s.world.disputes[faction].vacancySince={year:s.year,month:s.month}}
  if(!current.length&&!contested){
-  const candidates=successorFor(s,faction),model=successionModel(faction),royal=!['republican_command','separate_kingdoms'].includes(model);
+  const candidates=successorFor(s,faction),royal=!['republican_command','separate_kingdoms'].includes(model);
   const children=royal?previous.flatMap(id=>s.world.characters[id]?.children||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!s.world.characters[id].missing):[];
-  const preferred=s.world.successionPlans?.[faction],eligible=[...new Set([...children,...candidates])];
-  const next=eligible.includes(preferred)?preferred:model==='arsacid_nobility'?candidates[0]||children[0]:children[0]||candidates[0];if(next)current.push(next);
+  const preferred=model==='later_empire'&&s.world.coEmperors?.[faction]||s.world.successionPlans?.[faction],eligible=[...new Set([...children,...candidates])];
+  const military=id=>s.armies.filter(a=>a.owner===faction&&a.characterId===id).reduce((n,a)=>n+Math.min(35,Math.floor((a.men||0)/500)),0);
+  const ranked=imperial?[...eligible].sort((a,b)=>((s.world.characters[b].influence||0)+military(b)+(children.includes(b)?12:0))-((s.world.characters[a].influence||0)+military(a)+(children.includes(a)?12:0))):eligible;
+  const next=eligible.includes(preferred)?preferred:model==='arsacid_nobility'?candidates[0]||children[0]:imperial?ranked[0]:children[0]||candidates[0];if(next)current.push(next);
+  if(imperial&&next){const rival=ranked.find(id=>id!==next&&s.world.characters[id].influence>=35&&((s.world.characters[id].influence||0)+military(id)>=(s.world.characters[next].influence||0)+military(next)-25||s.factions[faction]?.stability<45));if(rival){s.world.claimants[faction]||=[];if(!s.world.claimants[faction].includes(rival))s.world.claimants[faction].push(rival);s.world.disputes[faction]||={months:0,support:{}};s.world.disputes[faction].support||={};s.world.disputes[faction].support[rival]??=Math.min(30,military(rival))}}
   if(model==='arsacid_nobility'&&next){const bypassed=children.filter(id=>id!==next);if(bypassed.length){s.world.claimants[faction]||=[];for(const id of bypassed)if(!s.world.claimants[faction].includes(id))s.world.claimants[faction].push(id);s.world.disputes[faction]||={months:0,support:{}};s.world.disputes[faction].support||={};for(const id of bypassed)s.world.disputes[faction].support[id]??=10}}
  }
  s.world.leadership[faction]=current;if(s.world.claimants[faction])s.world.claimants[faction]=s.world.claimants[faction].filter(id=>!current.includes(id)&&s.world.characters[id]?.alive);return current;

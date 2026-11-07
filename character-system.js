@@ -1,11 +1,11 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=21-xxiif';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=5-xxiif';
-import {FACTIONS,ROUTES} from './data.js?v=11-xxiif';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=25-xxiif';
-import {potentialConspirators} from './conspiracies.js?v=11-xxiif';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=7-xxiif';
-import {reportedControl} from './control-intelligence.js?v=4-xxiif';
-import {canHoldOffice,localGovernor} from './office-system.js?v=12-xxiif';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=xxii-final-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=xxii-final-1';
+import {FACTIONS,ROUTES} from './data.js?v=xxii-final-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=xxii-final-1';
+import {potentialConspirators} from './conspiracies.js?v=xxii-final-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=xxii-final-1';
+import {reportedControl} from './control-intelligence.js?v=xxii-final-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=xxii-final-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -326,7 +326,7 @@ export function contestLeadership(s,faction,claimant){
 }
 
 // Alternate-history court outcomes use existing characters and never update a foreign observer's reports directly.
-export function advanceDisputes(s){initializeWorld(s);for(const faction of ['egypt','parthia'])advanceFactionDispute(s,faction)}
+export function advanceDisputes(s){initializeWorld(s);for(const faction of ['egypt','parthia',...['caesar','senate'].filter(id=>['roman_principate','later_empire'].includes(s.world.romanRegimes?.[id]))])advanceFactionDispute(s,faction)}
 // Accepted military backing remains part of the simulated force pool if a
 // claimant reaches a settlement or office without forming a field army.
 function settleClaimantBacking(s,faction,dispute,claimant){

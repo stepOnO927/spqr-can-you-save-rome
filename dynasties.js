@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=21-xxiif';
-import {startDynasticWar} from './civil-war.js?v=7-xxiif';
+import {CHARACTER_CATALOG} from './characters.js?v=xxii-final-1';
+import {startDynasticWar} from './civil-war.js?v=xxii-final-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -17,7 +17,7 @@ const ensureCatalog=s=>{for(const [id,entry] of Object.entries(s.world.dynasties
 
 export function initializeDynasties(s){
  const d=s.world.dynasties||= {families:{},lives:{},catalog:{},marriages:[],memories:[],rulers:[],seed:220049,nextPerson:1,nextFamily:1};
- d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
+ d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
  for(const [id,c] of Object.entries(s.world.characters)){
   c.parents||=[];c.adoptiveParents||=[];c.children||=[];c.spouse||=null;c.wealth??=0;
   c.sex||=(['cleopatra','arsinoe'].includes(id)?'female':CHARACTER_CATALOG[id]?.fictional?'unknown':'male');
@@ -113,6 +113,40 @@ function advanceMarriageOffers(s){
   const result=valid?proposeMarriage(s,offer.own,offer.foreign):{ok:false,reason:'no_reply'};
   offer.status=result.ok?'accepted':result.reason==='declined'?'declined':'no_reply';offer.resolvedYear=s.year;offer.resolvedMonth=s.month;
   if(offer.status!=='accepted')note(s,offer.status==='declined'?'The foreign court declined the marriage proposal.':'No marriage agreement was reached; the original report may have been outdated.',offer.status==='declined'?'外国宫廷拒绝了婚事。':'未达成婚姻协议；原情报可能已经过时。');
+ }
+}
+
+// A request is based on dated reports. Acceptance is checked only when the
+// messenger arrives, so the interface does not reveal hidden court changes.
+export function requestClaimantAsylum(s,claimantId,reportedFaction){
+ const d=initializeDynasties(s),actor=s.player;
+ const reports=s.knowledge?.[actor]?.[reportedFaction]?.reports||[];
+ const known=reports.some(r=>r.kind==='claimants'&&(r.leaders||[]).includes(claimantId));
+ if(!known||!['egypt','parthia'].includes(reportedFaction)||!['caesar','senate'].includes(actor)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unknown'};
+ if(s.wars.some(w=>w.includes(actor)&&w.includes(reportedFaction)))return {ok:false,reason:'war'};
+ if(d.asylumRequests.some(x=>x.claimant===claimantId&&x.status==='pending'))return {ok:false,reason:'pending'};
+ if(d.asylumRequests.some(x=>x.claimant===claimantId&&x.status==='accepted'))return {ok:false,reason:'already'};
+ if(s.factions[actor].treasury<6)return {ok:false,reason:'treasury'};
+ s.factions[actor].treasury-=6;
+ const request={id:`asylum:${d.asylumRequests.length+1}`,claimant:claimantId,reportedFaction,host:actor,months:3,status:'pending',year:s.year,month:s.month};d.asylumRequests.push(request);
+ note(s,'A claimant was offered refuge. A reply may take three months; the report may be outdated.','已向一位竞争者提出庇护。回信可能需要三个月；原情报可能过时。');
+ return {ok:true,cost:6,request};
+}
+
+function advanceAsylumRequests(s){
+ for(const request of s.world.dynasties.asylumRequests.filter(x=>x.status==='pending')){
+  if(--request.months>0)continue;
+  const person=s.world.characters[request.claimant],home=request.reportedFaction,host=request.host;
+  const eligible=person?.alive&&!person.missing&&!person.travel&&person.faction===home&&(s.world.claimants?.[home]||[]).includes(request.claimant)&&!s.armies.some(a=>a.characterId===request.claimant)&&!s.wars.some(w=>w.includes(host)&&w.includes(home));
+  const refuge=s.regions.find(r=>r.owner===host);
+  if(eligible&&refuge&&roll(s)<.75){
+   person.asylumHost=host;person.location=refuge.id;person.travel=null;request.status='accepted';
+   const key=pair(host,home);s.relations[key]=Math.max(-100,(s.relations[key]||0)-6);
+   if(s.factions[home])s.factions[home].stability=Math.max(0,s.factions[home].stability-2);
+   record(s,person.id,`Received asylum in ${host}; this granted no throne or army.`,`获得${host}庇护；未获王位或军队。`);
+   if(host===s.player)note(s,'The claimant arrived under protection. The foreign court protested; no throne or alliance was granted.','竞争者抵达并获得保护。外国宫廷提出抗议；此举不授予王位或同盟。');
+  }else{request.status='no_reply';if(host===s.player)note(s,'No asylum agreement was reached; the original report may have been outdated.','未达成庇护协议；原情报可能已经过时。')}
+  request.resolvedYear=s.year;request.resolvedMonth=s.month;
  }
 }
 
@@ -215,6 +249,7 @@ export function requestFamilyResources(s,familyId,choice){
 export function advanceDynasties(s){
  const d=initializeDynasties(s);
  advanceMarriageOffers(s);
+ advanceAsylumRequests(s);
  for(const loan of d.familyLoans.filter(x=>x.remaining>0)){
   const treasury=s.factions[loan.faction]?.treasury||0;if(treasury<1)continue;
   s.factions[loan.faction].treasury--;d.families[loan.familyId].wealth++;loan.remaining--;
@@ -247,6 +282,21 @@ export function advanceDynasties(s){
  if(s.month===1)for(const faction of Object.keys(s.factions).filter(id=>id!==s.player&&id!=='rebels')){
   if(roll(s)>=.12)continue;const candidates=Object.values(s.world.characters).filter(c=>c.faction===faction&&CHARACTER_CATALOG[c.id]?.fictional&&eligibleAdult(s,c.id)&&!c.spouse).sort((a,b)=>b.influence-a.influence);
   const first=candidates[0],second=candidates.find(c=>c.id!==first?.id&&c.familyId!==first?.familyId);if(first&&second)proposeMarriage(s,first.id,second.id);
+ }
+ // NPC households pursue modest, state-dependent interests without spending
+ // the player's treasury or granting an office through kinship alone.
+ if(s.month===7)for(const faction of Object.keys(s.factions).filter(id=>id!==s.player&&id!=='rebels'&&!id.endsWith('_claimant'))){
+  const adults=Object.values(s.world.characters).filter(c=>c.alive&&c.faction===faction&&eligibleAdult(s,c.id));
+  const houses=[...new Set(adults.map(c=>c.familyId))].map(id=>d.families[id]).filter(Boolean);
+  for(const family of houses){
+   const members=adults.filter(c=>c.familyId===family.id).sort((a,b)=>(b.influence||0)-(a.influence||0));
+   const head=members[0];if(!head||roll(s)>.16)continue;
+   const action=roll(s);
+   if(action<.38&&head.wealth>=5){const gift=Math.min(4,Math.floor(head.wealth/3));head.wealth-=gift;family.wealth+=gift;family.influence=Math.min(100,(family.influence||20)+1);record(s,head.id,`Contributed ${gift} private wealth to the family network.`,`向家族关系网贡献${gift}私人财富。`)}
+   else if(action<.68&&family.wealth>=3&&members.length>1){const protege=members.at(-1),gift=Math.min(3,family.wealth);family.wealth-=gift;protege.wealth+=gift;protege.influence=Math.min(100,(protege.influence||20)+2);record(s,protege.id,`Received ${gift} private wealth and family patronage.`,`获得${gift}私人财富及家族扶持。`)}
+   else if(action<.82){const ward=adults.find(c=>c.familyId!==family.id&&!c.adoptiveParents.length&&personAge(s,head.id)-personAge(s,c.id)>=16&&c.influence>=25);if(ward)adoptHeir(s,head.id,ward.id)}
+   else {const hurt=members.find(c=>c.loyalty<55);if(hurt&&family.wealth>=2){family.wealth-=2;hurt.wealth+=2;hurt.loyalty=Math.min(100,hurt.loyalty+4);record(s,hurt.id,'The family offered a private reconciliation gift.','家族以私人赠礼尝试和解。')}}
+  }
  }
 }
 

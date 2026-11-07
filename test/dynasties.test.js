@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
-import {CHARACTER_CATALOG} from '../characters.js?v=21-xxiif';
-import {assignSuccession,successionModel} from '../characters.js?v=21-xxiif';
-import {deriveGovernment,advanceGovernments,secureRegency} from '../governance.js?v=26-xxiif';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
-import {canHoldOffice} from '../office-system.js?v=12-xxiif';
+import {CHARACTER_CATALOG} from '../characters.js?v=xxii-final-1';
+import {assignSuccession,successionModel} from '../characters.js?v=xxii-final-1';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession} from '../governance.js?v=xxii-final-1';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
+import {canHoldOffice} from '../office-system.js?v=xxii-final-1';
 import {renderGenealogy} from '../genealogy-ui.js';
 import {finalizeCampaign} from '../legacy.js';
+import {startDynasticWar} from '../civil-war.js?v=xxii-final-1';
 
 test('historical relationships do not invent missing parents or spouses',()=>{
  const s=newGame();assert.equal(s.world.characters.cleopatra.familyId,s.world.characters.arsinoe.familyId);
@@ -49,6 +50,31 @@ test('a stale reported marriage target produces no hidden-state disclosure',()=>
  for(const month of [2,3,4]){s.month=month;advanceDynasties(s)}
  assert.equal(s.world.dynasties.marriageOffers[0].status,'no_reply');
  assert.match(s.log[0].en,/may have been outdated/);assert.equal(s.world.characters[own].spouse,null);
+});
+
+test('asylum uses reported claimant leads, a paid delay and survives save/load',()=>{
+ const s=newGame('caesar'),claimant=createFictionalPerson(s,{name:['Claimant','竞争者'],faction:'egypt',birthYear:-75,location:'egyptUpper'});
+ s.world.claimants.egypt=[claimant];s.world.disputes.egypt={months:0,support:{}};
+ assert.equal(requestClaimantAsylum(s,claimant,'egypt').reason,'unknown');
+ s.knowledge.caesar.egypt.reports.push({kind:'claimants',leaders:[claimant],year:s.year,month:s.month});
+ const treasury=s.factions.caesar.treasury,alliances=s.alliances.length;
+ assert.equal(requestClaimantAsylum(s,claimant,'egypt').ok,true);
+ assert.equal(s.factions.caesar.treasury,treasury-6);
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ for(const month of [2,3,4]){loaded.month=month;if(month===4)loaded.world.dynasties.seed=0;advanceDynasties(loaded)}
+ assert.equal(loaded.world.dynasties.asylumRequests[0].status,'accepted');
+ assert.equal(loaded.world.characters[claimant].asylumHost,'caesar');
+ assert.equal(loaded.world.characters[claimant].faction,'egypt');
+ assert.equal(loaded.alliances.length,alliances);
+ assert.match(renderGenealogy(loaded,false),/FAMILY GENEALOGY/);
+});
+
+test('stale asylum lead gives a generic reply',()=>{
+ const s=newGame('caesar'),claimant=createFictionalPerson(s,{name:['Claimant','竞争者'],faction:'egypt',birthYear:-75});
+ s.knowledge.caesar.egypt.reports.push({kind:'claimants',leaders:[claimant]});requestClaimantAsylum(s,claimant,'egypt');
+ for(const month of [2,3,4]){s.month=month;advanceDynasties(s)}
+ assert.equal(s.world.dynasties.asylumRequests[0].status,'no_reply');
+ assert.match(s.log[0].en,/may have been outdated/);
 });
 
 test('a contested private will becomes a saved court case with real costs',()=>{
@@ -164,6 +190,34 @@ test('a royal child can need a regent while a Roman command is not inherited',()
  assert.deepEqual(egypt.world.leadership.egypt,[child]);assert.equal(deriveGovernment(egypt,'egypt').kind,'regency');
  const rome=newGame('caesar'),father=createFictionalPerson(rome,{name:['Roman father','罗马父亲'],faction:'caesar',birthYear:-80}),son=createFictionalPerson(rome,{name:['Roman son','罗马儿子'],faction:'caesar',birthYear:-60,parents:[father]});
  rome.world.leadership.caesar=[father];rome.world.characters[father].alive=false;assignSuccession(rome,'caesar');assert.equal(rome.world.leadership.caesar.includes(son),false);
+});
+
+test('postwar Roman reform changes legal succession, supports a minor and a regent',()=>{
+ const s=newGame('caesar');s.victory=true;s.factions.caesar.stability=70;s.factions.caesar.legitimacy=70;s.regions.find(r=>r.id==='roma').owner='caesar';
+ assert.equal(reformRomanGovernment(s,'roman_principate').ok,true);
+ assert.equal(successionModel('caesar',s),'roman_principate');
+ const parent=s.world.leadership.caesar[0],child=createFictionalPerson(s,{name:['Young heir','年幼继承人'],faction:'caesar',birthYear:-56,parents:[parent],familyId:s.world.characters[parent].familyId});
+ assert.equal(planSuccession(s,child).ok,true);
+ s.world.characters[parent].alive=false;assignSuccession(s,'caesar');
+ assert.deepEqual(s.world.leadership.caesar,[child]);
+ assert.equal(deriveGovernment(s,'caesar').kind,'regency');
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(successionModel('caesar',restored),'roman_principate');
+ assert.equal(deriveGovernment(restored,'caesar').kind,'regency');
+});
+
+test('later imperial reform permits co-emperors and a rival court with real forces',()=>{
+ const s=newGame('caesar');s.victory=true;s.year=235;s.factions.caesar.stability=75;s.factions.caesar.legitimacy=75;s.factions.caesar.treasury=160;s.regions.find(r=>r.id==='roma').owner='caesar';
+ assert.equal(reformRomanGovernment(s,'roman_principate').ok,true);
+ assert.equal(reformRomanGovernment(s,'later_empire').ok,true);
+ const co=createFictionalPerson(s,{name:['Co-ruler','共治者'],faction:'caesar',birthYear:200,location:'roma'});
+ assert.equal(appointCoEmperor(s,co).ok,true);
+ assert.equal(s.world.leadership.caesar.includes(co),true);
+ const rival=createFictionalPerson(s,{name:['Rival','竞争者'],faction:'caesar',birthYear:205,location:'roma'});
+ s.world.claimants.caesar=[rival];s.world.disputes.caesar={months:12,support:{[rival]:30}};
+ const home=s.regions.find(r=>r.owner==='caesar'&&r.id!=='roma'&&!s.armies.some(a=>a.region===r.id&&a.men>0));
+ assert.ok(home);assert.equal(startDynasticWar(s,'caesar',rival),true);
+ assert.equal(home.owner,'caesar_claimant');assert.ok(s.armies.some(a=>a.owner==='caesar_claimant'&&a.men>=500));
 });
 
 test('Parthian noble selection can bypass a minor heir and preserve the claim',()=>{
