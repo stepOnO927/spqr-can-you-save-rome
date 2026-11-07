@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
-import {CHARACTER_CATALOG} from '../characters.js?v=xxii-final-1';
-import {assignSuccession,successionModel} from '../characters.js?v=xxii-final-1';
-import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession} from '../governance.js?v=xxii-final-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=xxii-final-3';
+import {assignSuccession,successionModel} from '../characters.js?v=xxii-final-3';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession} from '../governance.js?v=xxii-final-3';
 import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
-import {canHoldOffice} from '../office-system.js?v=xxii-final-1';
+import {canHoldOffice} from '../office-system.js?v=xxii-final-3';
 import {renderGenealogy} from '../genealogy-ui.js';
 import {finalizeCampaign} from '../legacy.js';
-import {startDynasticWar} from '../civil-war.js?v=xxii-final-1';
+import {startDynasticWar} from '../civil-war.js?v=xxii-final-3';
 
 test('historical relationships do not invent missing parents or spouses',()=>{
  const s=newGame();assert.equal(s.world.characters.cleopatra.familyId,s.world.characters.arsinoe.familyId);
@@ -65,6 +65,8 @@ test('asylum uses reported claimant leads, a paid delay and survives save/load',
  assert.equal(loaded.world.dynasties.asylumRequests[0].status,'accepted');
  assert.equal(loaded.world.characters[claimant].asylumHost,'caesar');
  assert.equal(loaded.world.characters[claimant].faction,'egypt');
+ loaded.world.leadership.egypt=[];assignSuccession(loaded,'egypt');
+ assert.deepEqual(loaded.world.leadership.egypt,[]);
  assert.equal(loaded.alliances.length,alliances);
  assert.match(renderGenealogy(loaded,false),/FAMILY GENEALOGY/);
 });

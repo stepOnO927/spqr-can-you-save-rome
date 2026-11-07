@@ -1,7 +1,7 @@
-import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO} from './characters.js?v=xxii-final-1';
-import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum} from './dynasties.js?v=xxii-final-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=xxii-final-1';
-import {FACTIONS} from './data.js?v=xxii-final-1';
+import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO} from './characters.js?v=xxii-final-3';
+import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum} from './dynasties.js?v=xxii-final-3';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=xxii-final-3';
+import {FACTIONS} from './data.js?v=xxii-final-3';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||id;

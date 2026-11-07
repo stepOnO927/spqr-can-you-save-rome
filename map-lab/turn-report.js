@@ -1,4 +1,4 @@
-import {reportedControl} from '../control-intelligence.js?v=xxii-final-1';
+import {reportedControl} from '../control-intelligence.js?v=xxii-final-3';
 
 // Preserve the observation date and provenance, not just the controller: a
 // traveler arriving now may describe an earlier and possibly mistaken sighting.

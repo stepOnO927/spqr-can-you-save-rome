@@ -1,16 +1,16 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=xxii-final-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=xxii-final-1';
-import {FACTIONS,ROUTES} from './data.js?v=xxii-final-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=xxii-final-1';
-import {potentialConspirators} from './conspiracies.js?v=xxii-final-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=xxii-final-1';
-import {reportedControl} from './control-intelligence.js?v=xxii-final-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=xxii-final-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=xxii-final-3';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=xxii-final-3';
+import {FACTIONS,ROUTES} from './data.js?v=xxii-final-3';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=xxii-final-3';
+import {potentialConspirators} from './conspiracies.js?v=xxii-final-3';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=xxii-final-3';
+import {reportedControl} from './control-intelligence.js?v=xxii-final-3';
+import {canHoldOffice,localGovernor} from './office-system.js?v=xxii-final-3';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
 export function apparentAgeRange(id,year){const age=ageRange(id,year);return age?[Math.max(0,Math.floor((age[0]-5)/5)*5),Math.ceil((age[1]+5)/5)*5]:null}
-const claimantAvailable=c=>!!c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health);
+const claimantAvailable=c=>!!c?.alive&&!c.missing&&!c.travel&&!c.asylumHost&&!['seriously_ill','dying','deceased'].includes(c.health);
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const notify=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
 const configs={spy:{cost:12,months:4},counter:{cost:8,months:3},envoy:{cost:8,months:3},travelers:{cost:4,months:2},audience:{cost:10,months:4},exchange:{cost:6,months:3}};
