@@ -89,8 +89,63 @@ export function moveArmy(s,armyId,destination){
   if(link.sea)s.factions[a.owner].treasury-=8;
   const months=estimate.months;
   a.move={to:destination,remaining:months,sea:link.sea};
+  a.order={kind:'move',target:destination};
   if(a.owner===s.player)log(s,`${a.name[0]} marched toward ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}向${target.name[1]}行军（${months}个月）。`);
   return {ok:true};
+}
+
+// All player and AI field orders use the same state transition. Persistent
+// stances are resolved during combat and monthly upkeep, including old saves
+// whose armies have no order field.
+export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player){
+  const a=army(s,armyId),f=s.factions[owner],place=a&&region(s,a.region);
+  if(!a||a.owner!==owner||a.men<=0||!f||!place)return {ok:false,reason:'unavailable'};
+  if(kind==='cancel'){
+    if(!a.move&&!a.siege&&!a.order)return {ok:false,reason:'unavailable'};
+    a.move=null;a.siege=null;a.order=null;
+    if(owner===s.player)log(s,`${a.name[0]} cancelled its field order.`,`${a.name[1]}取消了野战命令。`);
+    return {ok:true};
+  }
+  if(kind==='move'||kind==='attack'){
+    if(a.move||a.siege)return {ok:false,reason:'unavailable'};
+    const plan=previewMarch(s,armyId,targetId);
+    if(!plan.ok)return plan;
+    if(kind==='attack'&&!plan.hostile)return {ok:false,reason:'target'};
+    const result=moveArmy(s,armyId,targetId);
+    if(result.ok){a.move.intent=kind;a.order={kind,target:targetId}}
+    return result;
+  }
+  if(kind==='retreat'){
+    const link=adjacent(a.region).find(x=>x.to===targetId),dest=region(s,targetId);
+    if(!link||!dest||dest.owner!==owner||a.move)return {ok:false,reason:'target'};
+    if(link.sea&&f.treasury<8)return {ok:false,reason:'transport'};
+    if(link.sea)f.treasury-=8;
+    a.siege=null;a.order={kind,target:targetId};a.move={to:targetId,remaining:link.sea?3:1,sea:link.sea,intent:'retreat'};
+    a.morale=Math.max(20,a.morale-3);
+    if(owner===s.player)log(s,`${a.name[0]} withdrew toward ${dest.name[0]}.`,`${a.name[1]}向${dest.name[1]}撤退。`);
+    return {ok:true};
+  }
+  if(a.move||a.siege)return {ok:false,reason:'unavailable'};
+  if(['defend','hold','guard'].includes(kind)){
+    if(kind==='guard'&&place.owner!==owner)return {ok:false,reason:'target'};
+    a.order={kind,target:a.region};
+    if(owner===s.player)log(s,`${a.name[0]} received a ${kind} order at ${place.name[0]}.`,`${a.name[1]}在${place.name[1]}接受了${{defend:'防御',hold:'坚守',guard:'守卫要地'}[kind]}命令。`);
+    return {ok:true};
+  }
+  if(kind==='reinforce'){
+    if(place.owner!==owner||f.treasury<6||f.food<2||f.manpower<1000||a.men>=15000)return {ok:false,reason:'resources'};
+    f.treasury-=6;f.food-=2;f.manpower-=1000;a.men+=1000;
+    if(owner===s.player)log(s,`${a.name[0]} received 1,000 reinforcements at ${place.name[0]}.`,`${a.name[1]}在${place.name[1]}获得1000名援兵。`);
+    return {ok:true};
+  }
+  if(kind==='rally'){
+    if(f.treasury<5||f.food<2||a.morale>=90)return {ok:false,reason:'resources'};
+    f.treasury-=5;f.food-=2;a.morale=Math.min(90,a.morale+10);
+    if(owner===s.player)log(s,`${a.name[0]} rallied at ${place.name[0]}.`,`${a.name[1]}在${place.name[1]}重整士气。`);
+    return {ok:true};
+  }
+  if(kind==='recruit')return recruit(s,a.region,owner)?{ok:true}:{ok:false,reason:'resources'};
+  return {ok:false,reason:'unavailable'};
 }
 
 export function recruit(s,regionId,owner=s.player){
@@ -234,17 +289,19 @@ function resolveInquiries(s){
 
 export function resolveBattle(s,attacker,defender,target){
   const terrain={plain:1,hills:1.2,forest:1.12,urban:1.25,desert:1.06}[target.terrain];
-  const supplyA=Math.min(1,Math.max(.65,s.factions[attacker.owner].food/20));
-  const supplyD=Math.min(1,Math.max(.65,s.factions[defender.owner].food/20));
-  linkCommanders(s);relieveIncapacitatedCommanders(s);const powerA=attacker.men*(.65+attacker.morale/200+attacker.skill*.055+attacker.experience*.025)*supplyA*commandFactor(s,attacker);
-  const powerD=defender.men*(.65+defender.morale/200+defender.skill*.055+defender.experience*.025)*terrain*(1+target.fort*.12)*supplyD*commandFactor(s,defender);
+  const supplyA=Math.min(1,Math.max(.65,s.factions[attacker.owner].food/20))*Math.min(1,Math.max(.7,region(s,attacker.region).supply*1000/Math.max(1,attacker.men)));
+  const supplyD=Math.min(1,Math.max(.65,s.factions[defender.owner].food/20))*Math.min(1,Math.max(.7,target.supply*1000/Math.max(1,defender.men)));
+  const stanceD=({defend:1.16,hold:1.09,guard:1.22})[defender.order?.kind]||1;
+  linkCommanders(s);relieveIncapacitatedCommanders(s);const commandA=commandFactor(s,attacker),commandD=commandFactor(s,defender);
+  const powerA=attacker.men*(.65+attacker.morale/200+attacker.skill*.055+attacker.experience*.025)*supplyA*commandA;
+  const powerD=defender.men*(.65+defender.morale/200+defender.skill*.055+defender.experience*.025)*terrain*(1+target.fort*.12)*supplyD*commandD*stanceD;
   const roll=.85+rnd(s)*.3;
   const attackerWins=powerA*roll>powerD;
   if(attacker.characterId)recordLifeEvent(s,attacker.characterId,`${attackerWins?'Won':'Lost'} a battle at ${target.name[0]}.`,`在${target.name[1]}的战斗中${attackerWins?'获胜':'战败'}。`);
   if(defender.characterId)recordLifeEvent(s,defender.characterId,`${attackerWins?'Lost':'Won'} a battle at ${target.name[0]}.`,`在${target.name[1]}的战斗中${attackerWins?'战败':'获胜'}。`);
   const lossA=Math.min(attacker.men,Math.round(defender.men*(attackerWins?.19:.31)*(powerD/powerA)**.25));
   const lossD=Math.min(defender.men,Math.round(attacker.men*(attackerWins?.34:.19)*(powerA/powerD)**.25));
-  const report={year:s.year,month:s.month,region:target.id,attacker:{id:attacker.id,name:[...attacker.name],commander:[...attacker.commander],owner:attacker.owner,men:attacker.men,morale:attacker.morale,food:s.factions[attacker.owner].food,power:Math.round(powerA)},defender:{id:defender.id,name:[...defender.name],commander:[...defender.commander],owner:defender.owner,men:defender.men,morale:defender.morale,food:s.factions[defender.owner].food,power:Math.round(powerD)},terrain:target.terrain,fort:target.fort,roll,attackerWins,lossA,lossD};
+  const report={year:s.year,month:s.month,region:target.id,attacker:{id:attacker.id,name:[...attacker.name],commander:[...attacker.commander],owner:attacker.owner,men:attacker.men,morale:attacker.morale,food:s.factions[attacker.owner].food,power:Math.round(powerA),supply:supplyA,command:commandA},defender:{id:defender.id,name:[...defender.name],commander:[...defender.commander],owner:defender.owner,men:defender.men,morale:defender.morale,food:s.factions[defender.owner].food,power:Math.round(powerD),supply:supplyD,command:commandD,stance:stanceD},terrain:target.terrain,fort:target.fort,roll,attackerWins,lossA,lossD};
   (s.battles ||= []).unshift(report);s.battles=s.battles.slice(0,20);
   attacker.men-=lossA;defender.men-=lossD;for(const unit of [attacker,defender]){const person=s.world.characters[unit.characterId];if(person?.alive)person.battlesCommanded=(Number.isFinite(person.battlesCommanded)?person.battlesCommanded:0)+1}battlefieldWound(s,attacker);battlefieldWound(s,defender);
   attacker.morale=Math.max(20,attacker.morale+(attackerWins?7:-16));
@@ -257,9 +314,10 @@ export function resolveBattle(s,attacker,defender,target){
   } else {
     attacker.region=adjacent(target.id).map(e=>region(s,e.to)).find(r=>r.owner===attacker.owner)?.id||attacker.region;
   }
-  attacker.move=null;attacker.experience=Math.min(5,attacker.experience+1);
+  report.ownerAfter=target.owner;report.attackerRemaining=attacker.men;report.defenderRemaining=defender.men;
+  attacker.move=null;attacker.order=null;defender.order=defender.region===target.id?defender.order:null;attacker.experience=Math.min(5,attacker.experience+1);
   defender.experience=Math.min(5,defender.experience+1);
-  if(attacker.owner===s.player||defender.owner===s.player){const ownLoss=attacker.owner===s.player?lossA:lossD;log(s,`${FACTIONS[attacker.owner].short[0]} ${attackerWins?'won':'lost'} at ${target.name[0]}. Casualties: own ${ownLoss.toLocaleString()}; enemy unknown.`,`${FACTIONS[attacker.owner].short[1]}在${target.name[1]}${attackerWins?'获胜':'战败'}。己方伤亡：${ownLoss.toLocaleString()}；敌方伤亡未知。`)}
+  if(attacker.owner===s.player||defender.owner===s.player){const ownLoss=attacker.owner===s.player?lossA:lossD,ownStart=attacker.owner===s.player?report.attacker.men:report.defender.men,capture=attackerWins&&target.owner===attacker.owner?` ${target.name[0]} is now under ${FACTIONS[target.owner].short[0]} control.`:'';log(s,`${FACTIONS[attacker.owner].short[0]} ${attackerWins?'won':'lost'} at ${target.name[0]}. Casualties: own ${ownLoss.toLocaleString()}; enemy unknown.${capture}${ownLoss>ownStart*.3?' Severe friendly losses.':''}`,`${FACTIONS[attacker.owner].short[1]}在${target.name[1]}${attackerWins?'获胜':'战败'}。己方伤亡：${ownLoss.toLocaleString()}；敌方伤亡未知。${capture?` ${target.name[1]}现由${FACTIONS[target.owner].short[1]}控制。`:''}${ownLoss>ownStart*.3?' 己方伤亡惨重。':''}`)}
   for(const lost of s.armies.filter(a=>a.men<=0&&a.characterId)){
     const person=s.world.characters[lost.characterId];if(!person||!person.alive)continue;person.location=null;person.missing={origin:target.id,remaining:3,year:s.year,month:s.month};
     if(lost.owner===s.player)log(s,`${CHARACTER_CATALOG[person.id].name[0]}'s location is unknown after the army was destroyed.`,`${CHARACTER_CATALOG[person.id].name[1]}的军队覆灭后，其位置不明。`);
@@ -271,10 +329,10 @@ export function resolveBattle(s,attacker,defender,target){
 function arrive(s,a){
   const target=region(s,a.move.to);
   observeArrival(s,a.owner,target.id);
-  if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner)){a.move=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`);return}
+  if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner)){a.move=null;a.order=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`);return}
   const enemy=s.armies.find(other=>other.id!==a.id&&other.region===target.id&&other.owner!==a.owner&&isWar(s,a.owner,other.owner)&&!other.move);
   if(enemy){resolveBattle(s,a,enemy,target);return}
-  a.region=target.id;a.move=null;
+  a.region=target.id;a.move=null;a.order=null;
   if(target.owner!==a.owner){
     if(target.fort>0){a.siege={region:target.id,remaining:target.fort*2};if(a.owner===s.player||target.owner===s.player)log(s,`${a.name[0]} began a siege at ${target.name[0]}.`,`${a.name[1]}开始围攻${target.name[1]}。`)}
     else {const witnessed=a.owner===s.player||target.owner===s.player;target.owner=a.owner;target.loyalty=38;if(witnessed)log(s,`${FACTIONS[a.owner].short[0]} occupied ${target.name[0]}.`,`${FACTIONS[a.owner].short[1]}占领了${target.name[1]}。`)}
@@ -359,8 +417,19 @@ function aiTurn(s,owner){
   const enemies=s.regions.filter(r=>isWar(s,owner,reportedControl(s,owner,r.id)?.owner));
   const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&a.men>1200);
   for(const a of available){
+    const here=region(s,a.region),neighbors=adjacent(a.region).map(e=>region(s,e.to)).filter(Boolean);
+    const threatened=neighbors.filter(r=>isWar(s,owner,reportedControl(s,owner,r.id)?.owner));
+    const estimate=r=>{const rival=reportedControl(s,owner,r.id)?.owner;return rival&&isWar(s,owner,rival)?estimatedStrength(s,owner,rival)/Math.max(1,s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===rival).length):0};
+    const ownSupport=neighbors.filter(r=>r.owner===owner).reduce((sum,r)=>sum+s.armies.filter(b=>b.owner===owner&&b.region===r.id&&!b.move&&b.id!==a.id).reduce((n,b)=>n+b.men,0),0);
+    if(['caesar','senate'].includes(owner)&&threatened.some(r=>estimate(r)>a.men*1.7)&&a.morale<48){const safe=neighbors.filter(r=>r.owner===owner).sort((x,y)=>y.supply-x.supply)[0];if(safe&&issueMilitaryOrder(s,a.id,'retreat',safe.id,owner).ok)continue}
+    if(['caesar','senate'].includes(owner)&&here.owner===owner&&threatened.length&&here.supply*1000<a.men*.75){const safe=neighbors.filter(r=>r.owner===owner&&r.supply>here.supply).sort((x,y)=>y.supply-x.supply)[0];if(safe&&issueMilitaryOrder(s,a.id,'move',safe.id,owner).ok)continue}
+    if(['caesar','senate'].includes(owner)&&here.owner===owner&&threatened.length&&threatened.every(r=>estimate(r)>a.men*1.25)){
+      const support=neighbors.find(r=>r.owner===owner&&s.armies.some(b=>b.owner===owner&&b.region===r.id&&b.id!==a.id&&!b.move));
+      if(support&&issueMilitaryOrder(s,a.id,'move',support.id,owner).ok)continue;
+      issueMilitaryOrder(s,a.id,here.fort||here.tax>=7?'guard':'defend',null,owner);continue;
+    }
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y)})).sort((x,y)=>x.d-y.d);
-    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const defenderOwner=reportedControl(s,owner,step)?.owner;const defenders=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/Math.max(1,s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length):0;if(defenders>a.men*(internalOpponent(defenderOwner)?2:({hard:1.15,expert:1.05}[s.difficulty]||1.35))||f.food<0)continue;moveArmy(s,a.id,step);break}}
+    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const defenderOwner=reportedControl(s,owner,step)?.owner;const defenders=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/Math.max(1,s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length):0;if(defenders>a.men*(internalOpponent(defenderOwner)?2:({hard:1.15,expert:1.05}[s.difficulty]||1.35))||f.food<0)continue;issueMilitaryOrder(s,a.id,defenders?'attack':'move',step,owner);break}}
   }
   if(f.treasury>65&&f.manpower>5500&&s.month%4===0){
     const border=owned.find(r=>adjacent(r.id).some(e=>isWar(s,owner,reportedControl(s,owner,e.to)?.owner)));
