@@ -9,6 +9,7 @@ This tracker records the state of the **independent development branch**. A work
 - **Phase XVIII naval core:** fleets, shipbuilding, officer assignments, sea combat, piracy, transport, maritime trade, and AI fleet orders. Patrols can fight pirate vessels; amphibious attacks use a disclosed battle penalty. AI can embark troops with actual transport ships. Trade payments now depend on cargo quantity, route length and scarcity, while raids move captured goods into the raider's inventory. A hostile blockade reduces an army's supply in the blockaded port.
 - **Legacy achievements:** silent in active campaigns, revealed on formal conclusion or terminal defeat, with one-time reward keys. New campaigns have unique IDs; older imported saves receive a stable ID based on the imported file.
 - **Regression:** `npm test` and browser smoke scripts for the atlas, Senate reconnaissance, development, and grand campaign.
+- **Offline atlas:** MapLibre GL JS, its license, physical land and sea data, and 64 overview terrain tiles are bundled. A disconnected browser smoke test loads 120 settlement markers with a real map engine; higher-zoom terrain detail remains network-dependent.
 
 ## Still incomplete
 

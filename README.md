@@ -6,7 +6,7 @@ Playable independent 49 BCE civil war grand campaign and persistent Legacy of Ro
 npm start
 ```
 
-Open `http://localhost:5173` for the campaign, `/map-lab/` for the zoomable atlas, or `/legacy/` for the out-of-run city. New campaigns and city scenarios open in the zoomable atlas; its Return button reaches the older campaign view. The campaign, hub, and atlas map engine and geography work without network access. Optional elevation tiles and web fonts need network access. No account is needed. Run `npm test` for simulation tests.
+Open `http://localhost:5173` for the campaign, `/map-lab/` for the zoomable atlas, or `/legacy/` for the out-of-run city. New campaigns and city scenarios open in the zoomable atlas; its Return button reaches the older campaign view. The campaign, hub, atlas map engine, geography, and overview terrain work without network access. Higher-zoom terrain detail and web fonts need network access. No account is needed. Run `npm test` for simulation tests.
 
 ## Phase XV and XVI
 
