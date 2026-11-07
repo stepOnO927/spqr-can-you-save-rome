@@ -6,7 +6,7 @@ import {CHARACTER_CATALOG} from './characters.js?v=xxii-final-1';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=xxii-final-1';
 import {newGame,newDynastyScenario,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=xxii-final-1';
 import {decideDisputedHeir,personAge} from './dynasties.js?v=xxii-final-1';
-import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=xxii-final-1';
+import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=xxii-final-2';
 import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=xxii-final-1';
 import {drawMap,mapPoint} from './map.js?v=xxii-final-1';
 
@@ -94,7 +94,7 @@ function render(){
 
 function stop(){playing=false;if(timer){clearInterval(timer);timer=null}}
 function setPlaying(on){stop();playing=on;if(on)timer=setInterval(()=>{tick(state);render()},speed===1?1500:speed===2?800:350);render()}
-function slot(action){const choice=chosenSlot;if(!['1','2','3'].includes(choice))return;const key=`spqr-save-${choice}`;if(action==='save'){try{localStorage.setItem(key,JSON.stringify(state));flash(`${t('saved')} ${choice}`)}catch{flash(lang==='zh'?'浏览器无法保存存档。':'The browser could not save this campaign.')}}else{const raw=localStorage.getItem(key);if(!raw){flash(t('empty'));return}try{const loaded=upgradeSave(JSON.parse(raw));if(!['caesar','senate'].includes(loaded.player)&&!(loaded.player==='egypt'&&loaded.world.dynasties?.scenario)){flash(t('oldFaction'));return}state=loaded;stop();chosenFaction=['caesar','senate'].includes(state.player)?state.player:'caesar';selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0].id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;ordering=false;flash(`${t('loaded')} ${choice}`)}catch{flash(lang==='zh'?'存档无法读取。':'This save could not be read.')}}}
+function slot(action){const choice=chosenSlot;if(!['1','2','3'].includes(choice))return;const key=`spqr-save-${choice}`;if(action==='save'){try{localStorage.setItem(key,JSON.stringify(state));flash(`${t('saved')} ${choice}`)}catch{flash(lang==='zh'?'浏览器无法保存存档。':'The browser could not save this campaign.')}}else{const raw=localStorage.getItem(key);if(!raw){flash(t('empty'));return}try{const loaded=upgradeSave(JSON.parse(raw));if(!['caesar','senate'].includes(loaded.player)&&!(loaded.player==='egypt'&&loaded.world.dynasties?.scenario)){flash(t('oldFaction'));return}state=loaded;stop();if(state.world.dynasties?.scenario){tab='government';panelOpen=true}chosenFaction=['caesar','senate'].includes(state.player)?state.player:'caesar';selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0].id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;ordering=false;flash(`${t('loaded')} ${choice}`)}catch{flash(lang==='zh'?'存档无法读取。':'This save could not be read.')}}}
 function bind(){
   const finalize=document.querySelector('#finalize-campaign');if(finalize)finalize.onclick=()=>{const result=finalizeCampaign(state);if(!result.ok)return;try{const saved=archives();saved.unshift(result.archive);localStorage.setItem('spqr-legacy-archive',JSON.stringify(saved.slice(0,20)))}catch{delete state.world.dynasties.finalized;flash(lang==='zh'?'无法写入本地档案。':'Could not write the local archive.');return}render()};
   if(tab==='government')bindGenealogy(document.querySelector('.inspector'),state,lang==='zh',render);
