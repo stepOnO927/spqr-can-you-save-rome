@@ -15,7 +15,7 @@ import {endCampaign} from '../achievement-system.js';
 import {campaignEndingHtml} from '../achievement-ui.js';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=4';
-import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=87';
+import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=88';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js?v=3';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';

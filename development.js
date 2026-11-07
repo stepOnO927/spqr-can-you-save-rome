@@ -133,6 +133,7 @@ for(const item of MATERIALS)item.prerequisites=materialPrerequisites[item.id]||i
 for(const item of IDEAS)item.prerequisites=ideaPrerequisites[item.id]||[];
 import {figureActive} from './great-figures.js';
 const ids = x => x.map(item=>item.id);
+const strategicKnowledge=new Set(['stone-fortification','siege-machinery','legion-training']);
 const metalDeposits=new Set(['hispaniaN','hispaniaS','illyricum','anatolia','armenia','gaul']);
 const coastalSites=new Set(['narbo','hispaniaN','hispaniaS','italiaS','sicilia','africa','epirus','achaia','anatolia','syria','egypt','numidia','mauretania','bosporus']);
 const waterSites=new Set(['gaul','cisalpine','narbo','hispaniaN','hispaniaS','italiaN','roma','italiaS','anatolia','syria','egypt','armenia']);
@@ -242,7 +243,7 @@ export function knowledgeTrade(s,buyer,seller,branch,id){
   if(s.wars.some(w=>w.includes(buyer)&&w.includes(seller)))return {ok:false,reason:'war'};
   const relation=s.relations[[buyer,seller].sort().join(':')]||0;
   if(relation<0)return {ok:false,reason:'relations'};
-  if(['stone-fortification','siege-machinery','legion-training'].includes(id)&&relation<30)return {ok:false,reason:'strategic'};
+  if(strategicKnowledge.has(id)&&relation<30)return {ok:false,reason:'strategic'};
   const price=Math.max(16,Math.round(item.cost*1.3));
   if(buyerFaction.treasury<price)return {ok:false,reason:'treasury'};
   buyerFaction.treasury-=price;sellerFaction.treasury+=Math.round(price*.7);
@@ -254,6 +255,7 @@ export function sellKnowledge(s,seller,buyer,branch,id){
  if(s.wars.some(w=>w.includes(seller)&&w.includes(buyer)))return {ok:false,reason:'war'};
  const relation=s.relations[[seller,buyer].sort().join(':')]??0,price=Math.max(12,Math.round(item.cost*.9));
  if(relation<15)return {ok:false,reason:'relations'};
+ if(strategicKnowledge.has(id)&&relation<30)return {ok:false,reason:'strategic'};
  if(s.factions[buyer].treasury<price)return {ok:false,reason:'buyer treasury'};
  s.factions[buyer].treasury-=price;s.factions[seller].treasury+=price;
  recipient.trade.push({seller,branch,id,remaining:2,method:'sale'});return {ok:true,price};
@@ -264,6 +266,7 @@ export function exchangeKnowledge(s,a,b,offerBranch,offerId,wantBranch,wantId){
  if(ad.trade.some(t=>t.id===wantId&&t.branch===wantBranch)||bd.trade.some(t=>t.id===offerId&&t.branch===offerBranch))return {ok:false,reason:'pending'};
  if(s.wars.some(w=>w.includes(a)&&w.includes(b)))return {ok:false,reason:'war'};
  if((s.relations[[a,b].sort().join(':')]??0)<20)return {ok:false,reason:'relations'};
+ if((strategicKnowledge.has(offerId)||strategicKnowledge.has(wantId))&&(s.relations[[a,b].sort().join(':')]??0)<30)return {ok:false,reason:'strategic'};
  if(s.factions[a].treasury<8||s.factions[b].treasury<8)return {ok:false,reason:'treasury'};
  s.factions[a].treasury-=8;s.factions[b].treasury-=8;
  ad.trade.push({seller:b,branch:wantBranch,id:wantId,remaining:3,method:'exchange'});

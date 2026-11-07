@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,purchaseMaterials} from '../engine.js';
+import {newGame,newGrandGame,upgradeSave,tick,aiTurn,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,purchaseMaterials} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects} from '../development.js';
 import {developmentPanel} from '../development-ui.js';
 import {edgeMonths} from '../grand-operations.js';
@@ -133,6 +133,38 @@ test('road and bridge construction shortens relevant grand-campaign travel',()=>
  const baseline=edgeMonths(edge,destination,origin);origin.buildings.push('road');assert.equal(edgeMonths(edge,destination,origin),baseline-1);
  origin.buildings.push('bridge');assert.equal(edgeMonths(edge,destination,origin),baseline-2);
 });
+test('opposed five-idea development paths survive 36 months in the grand campaign',()=>{
+ const plans={
+  senate:['legion-training','senatorial-consultation','diplomatic-accommodation','public-works','rhetorical-education'],
+  egypt:['frontier-defense','central-administration','hardline-diplomacy','tax-farming','cultural-accommodation']
+ };
+ for(const [player,plan] of Object.entries(plans)){
+  const s=newGrandGame(player),d=development(s,player);
+  if(player==='senate')assert.equal(startConstruction(s,player,'roma','road').ok,true);
+  for(let month=0;month<36;month++){
+   const next=plan.find(id=>!d.knownIdeas.includes(id));
+   if(next&&!d.research)assert.equal(researchInnovation(s,player,'idea',next).ok,true,`${player}: research ${next}`);
+   const adopt=plan.find(id=>d.knownIdeas.includes(id)&&!Object.values(d.slots).flat().includes(id));
+   if(adopt&&!d.adoption)assert.equal(adoptIdea(s,player,adopt,0).ok,true,`${player}: adopt ${adopt}`);
+   tick(s);
+   assert.equal(s.achievementState?.finalized,false,`${player}: month ${month+1}`);
+  }
+  assert.equal(s.year,-46);assert.equal(s.month,1);
+  assert.deepEqual(Object.values(d.slots).flat(),plan);
+  assert.ok(Number.isFinite(s.factions[player].treasury));
+  assert.doesNotThrow(()=>upgradeSave(JSON.parse(JSON.stringify(s))));
+  if(player==='senate'){
+   assert.ok(s.regions.find(r=>r.id==='roma').buildings.includes('road'));
+   assert.equal(activeEffects(s,player).researchDiscount,4);
+   assert.equal(activeEffects(s,player).combatAttack,.06);
+   assert.ok(activeEffects(s,player).upkeep>0);
+  }else{
+   assert.equal(activeEffects(s,player).diplomacyPressure,12);
+   assert.equal(activeEffects(s,player).combatAttack,-.02);
+   assert.equal(activeEffects(s,player).relations,-2);
+  }
+ }
+});
 test('idea capacity requires institutions as well as researched ideas and treasury',()=>{
  const s=newGame('senate'),d=development(s,'senate');s.factions.senate.treasury=500;
  d.knownIdeas.push('legion-training','frontier-defense','reserve-mobilization');
@@ -149,7 +181,7 @@ test('states can exchange, sell and host scholars through priced delayed knowled
  assert.equal(exchangeKnowledge(s,'caesar','egypt','material','roadmaking','material','water-control').ok,true);
  assert.ok(!caesar.knownMaterial.includes('water-control'));assert.ok(!egypt.knownMaterial.includes('roadmaking'));
  months(s,3);assert.ok(caesar.knownMaterial.includes('water-control'));assert.ok(egypt.knownMaterial.includes('roadmaking'));
- caesar.knownIdeas.push('legion-training');const treasury=s.factions.caesar.treasury;
+ caesar.knownIdeas.push('legion-training');s.relations['caesar:egypt']=30;const treasury=s.factions.caesar.treasury;
  assert.equal(sellKnowledge(s,'caesar','egypt','idea','legion-training').ok,true);assert.ok(s.factions.caesar.treasury>treasury);
  months(s,2);assert.ok(egypt.knownIdeas.includes('legion-training'));
  assert.equal(inviteForeignScholars(s,'caesar','egypt').ok,true);
@@ -159,4 +191,17 @@ test('states can exchange, sell and host scholars through priced delayed knowled
  assert.equal(before-s.factions.caesar.treasury,baseline-plain.factions.caesar.treasury-3);
  assert.equal(caesar.research.remaining,Math.max(1,plain.development.caesar.research.remaining-1));
  assert.equal(upgradeSave(JSON.parse(JSON.stringify(s))).development.caesar.visitingScholars.length,1);
+});
+test('AI can sell knowledge to another AI without charging the player or disclosing guarded military methods',()=>{
+ const s=newGame('senate');s.month=9;s.relations['caesar:egypt']=25;
+ const seller=development(s,'caesar'),buyer=development(s,'egypt');
+ seller.knownMaterial.push('stone-fortification');
+ assert.equal(sellKnowledge(s,'caesar','egypt','material','stone-fortification').reason,'strategic');
+ assert.equal(exchangeKnowledge(s,'caesar','egypt','material','stone-fortification','material','water-control').reason,'strategic');
+ const egyptTreasury=s.factions.egypt.treasury,playerTreasury=s.factions.senate.treasury;
+ aiTurn(s,'caesar');
+ assert.ok(buyer.trade.some(t=>t.method==='sale'&&t.seller==='caesar'&&t.id==='roadmaking'));
+ assert.ok(s.factions.egypt.treasury<egyptTreasury);
+ assert.equal(s.factions.senate.treasury,playerTreasury);
+ assert.ok(!development(s,'senate').trade.some(t=>t.method==='sale'));
 });

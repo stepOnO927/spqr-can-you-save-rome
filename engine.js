@@ -5,7 +5,7 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=54';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
-import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=1';
+import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=2';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js';
 import {advanceRecon,assessment,sendScouts,latestRecon} from './reconnaissance.js?v=2';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
@@ -379,6 +379,16 @@ export function aiTurn(s,owner){
     if(!d.adoption&&f.treasury>30){const idea=IDEAS.find(i=>d.knownIdeas.includes(i.id)&&!d.slots[i.category].includes(i.id)&&d.slots[i.category].some(v=>!v));if(idea)adoptIdea(s,owner,idea.id,d.slots[idea.category].indexOf(null))}
     if(f.treasury>120){for(const kind of ['stone','timber','metal'])if(d.materials[kind]<5)purchaseMaterials(s,owner,kind,5);const project=owned.flatMap(site=>BUILDINGS.map(b=>({site,b}))).find(({site,b})=>constructionCheck(s,owner,site.id,b.id).ok);if(project)startConstruction(s,owner,project.site.id,project.b.id)}
     if(s.month%12===0&&f.treasury>75){const seller=Object.keys(s.development).find(id=>id!==owner&&!isWar(s,owner,id)&&relation(s,owner,id)>=0&&s.development[id].knownMaterial.some(k=>!d.knownMaterial.includes(k)));const item=seller&&s.development[seller].knownMaterial.find(k=>!d.knownMaterial.includes(k));if(item)knowledgeTrade(s,owner,seller,'material',item)}
+    if(s.month%12===9){
+      let sold=false;
+      for(const buyer of Object.keys(s.development)){
+        if(buyer===owner||buyer===s.player||buyer==='rebels'||isWar(s,owner,buyer)||relation(s,owner,buyer)<15||s.factions[buyer].treasury<12)continue;
+        const recipient=s.development[buyer];
+        const offers=[...d.knownMaterial.filter(id=>!recipient.knownMaterial.includes(id)&&!recipient.trade.some(t=>t.branch==='material'&&t.id===id)).map(id=>['material',id]),...d.knownIdeas.filter(id=>!recipient.knownIdeas.includes(id)&&!recipient.trade.some(t=>t.branch==='idea'&&t.id===id)).map(id=>['idea',id])];
+        for(const [branch,id] of offers)if(sellKnowledge(s,owner,buyer,branch,id).ok){sold=true;break}
+        if(sold)break;
+      }
+    }
     if(s.year>=-48&&s.month===6&&f.treasury>30){const partner=Object.keys(s.development).find(id=>id!==owner&&!isWar(s,owner,id)&&relation(s,owner,id)>=20&&s.development[id].knownIdeas.some(k=>!d.knownIdeas.includes(k))&&d.knownIdeas.some(k=>!s.development[id].knownIdeas.includes(k)));if(partner){const offer=d.knownIdeas.find(k=>!s.development[partner].knownIdeas.includes(k)),want=s.development[partner].knownIdeas.find(k=>!d.knownIdeas.includes(k));exchangeKnowledge(s,owner,partner,'idea',offer,'idea',want)}}
   }
   const enemies=s.regions.filter(r=>isWar(s,owner,r.owner));
