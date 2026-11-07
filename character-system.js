@@ -255,7 +255,11 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  }
  else if(op.subject==='health'){
   let value='unknown';
-  if(healthPerson&&low){
+  // A rival in a succession dispute can spread a death rumor about a known
+  // person. It does not depend on their actual health, faction, or location.
+  const rumoredDeath=!!(contested&&healthId&&(low||op.type==='spy')&&q>=.34&&q<.40);
+  if(rumoredDeath)value='deceased';
+  else if(healthPerson&&low){
    // Travelers hear rumors or glimpse a person in a court-controlled theater;
    // they do not get a precise diagnosis or private health state for free.
    const visible=locallyObservable;
@@ -267,7 +271,8 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
    else if(localDeath&&q>=.85)value='deceased';
   }else if(locallyObservable)value=falsehood?'healthy':healthPerson.health;
   else if(localDeath&&q>=.6)value='deceased';
-  report={kind:'health',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
+  // Retellings of the same circulating rumor are not independent evidence.
+  report={kind:'health',character:healthId||null,value,source,originSource:rumoredDeath?'travelers':undefined,confidence:low||rumoredDeath?'rumor':'unverified',reliability:low||rumoredDeath?'low':'moderate'};
  }
  else if(op.subject==='claimants'){const candidates=falsehood?[]:[...(s.world.claimants[op.target]||[])];report={kind:'claimants',leaders:candidates,exhaustive:op.type==='spy'&&q>=.7,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};}
  else if(op.subject==='strength'){

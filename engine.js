@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=xxii-final-4';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=rumored-death-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=xxii-final-4';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=xxii-final-4';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=xxii-final-4';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=xxii-final-4';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=rumored-death-1';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=xxii-final-4';
 import {advanceConspiracies} from './conspiracies.js?v=xxii-final-4';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=xxii-final-4';
