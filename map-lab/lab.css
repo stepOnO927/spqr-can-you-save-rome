@@ -44,6 +44,7 @@
 .historical-entry{border-top:1px solid #8b806355;margin-top:12px;padding-top:9px}.historical-entry summary,.report-evidence summary{cursor:pointer;color:#e2c78a;font-weight:700}.historical-entry a{color:#f0d397;text-decoration:underline}.historical-entry summary:focus-visible,.report-evidence summary:focus-visible{outline:2px solid #ffe18b;outline-offset:3px}
 
 .leader-map-label{display:none;align-items:center;gap:5px;padding:4px 7px;background:#172722dc;border:1px solid #d0bc86;color:#f2e7c8;white-space:nowrap;cursor:pointer}.leader-overview .leader-map-label{display:flex}.leader-map-label svg{width:22px;height:22px}.leader-map-label strong,.leader-map-label small{display:block;text-align:left}.leader-map-label strong{font:700 11px Manrope,'Microsoft YaHei',sans-serif}.leader-map-label small{font:10px Manrope,'Microsoft YaHei',sans-serif;color:#d0c3a2}
+.leader-overview .leader-map-label{padding:3px 7px 3px 4px;gap:4px;background:#172722d9;border-color:#d0bc8699;box-shadow:0 2px 5px #08191777}.leader-overview .leader-map-label svg{width:18px;height:18px}.leader-overview .leader-map-label strong{font:700 10px Manrope,'Microsoft YaHei',sans-serif;letter-spacing:.2px}.leader-overview .leader-map-label small{display:none}.leader-overview .leader-map-label:hover,.leader-overview .leader-map-label:focus-visible{background:#172722f5;outline:2px solid #e5c982;outline-offset:2px}
 
 .intro-leader img{width:72px;height:81px;object-fit:cover;flex:none;border:1px solid #b99c67}
 
