@@ -11,7 +11,7 @@ const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
 test('every development node has its own interpretive illustration',()=>{
  const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
- assert.equal(art.length,60);assert.equal(new Set(art).size,60);
+ assert.equal(art.length,62);assert.equal(new Set(art).size,62);
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
@@ -45,9 +45,34 @@ test('both research branches render every node, including naval capabilities wit
   }
 });
 
+test('idea tradeoffs show their negative sign in both languages',()=>{
+ const s=newGame('senate');
+ assert.match(developmentPanel(s,'en','idea'),/Treasury \/ month −2/);
+ assert.match(developmentPanel(s,'zh','idea'),/国库 \/ 月 −2/);
+ assert.match(developmentPanel(s,'en','idea'),/Attack −2%/);
+ assert.match(developmentPanel(s,'zh','idea'),/进攻 −2%/);
+});
+
+test('public law and allied registration are sourced, bilingual policies with paid active effects',()=>{
+ const law=IDEAS.find(x=>x.id==='public-legal-reference'),registry=IDEAS.find(x=>x.id==='citizen-registration');
+ assert.match(law.source.url,/Diodorus_Siculus/);assert.match(registry.source.url,/phi016/);
+ assert.match(developmentPanel(newGame('senate'),'en','idea'),/Public Legal Reference/);
+ assert.match(developmentPanel(newGame('senate'),'zh','idea'),/盟邦公民登记/);
+ const s=newGame('senate');s.wars=[];s.factions.senate.treasury=500;
+ const d=development(s,'senate');d.knownIdeas.push(law.id,registry.id);
+ assert.equal(adoptIdea(s,'senate',law.id,0).ok,true);months(s,2);
+ assert.equal(activeEffects(s,'senate').loyalty,2);
+ assert.equal(activeEffects(s,'senate').upkeep,2);
+ assert.equal(adoptIdea(s,'senate',registry.id,0).ok,true);months(s,3);
+ assert.equal(d.slots.government[0],registry.id);
+ assert.equal(activeEffects(s,'senate').manpower,80);
+ assert.equal(activeEffects(s,'senate').loyalty,1);
+ assert.equal(activeEffects(s,'senate').upkeep,2);
+});
+
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,26);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,28);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);

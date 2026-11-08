@@ -22,6 +22,9 @@ try{
   assert.match(await page.locator('.inspector h2').innerText(),/Development/);
   await page.locator('[data-dev-branch="idea"]').click();
   assert.match(await page.locator('#tech-sanctuary-protection').innerText(),/Provincial Sanctuary Protection/);
+  assert.match(await page.locator('#tech-public-legal-reference').innerText(),/Public Legal Reference/);
+  assert.match(await page.locator('#tech-citizen-registration').innerText(),/Allied Citizen Registration/);
+  assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/Treasury \/ month −2/);
   await page.locator('[data-research="legion-training"]').click();
   assert.match(await page.locator('.dev-status').first().innerText(),/Researching/);
   for(let i=0;i<3;i++)await page.locator('#step').click();
@@ -44,6 +47,9 @@ try{
   assert.match(await page.locator('.inspector h2').innerText(),/文明发展/);
   await page.locator('[data-dev-branch="idea"]').click();
   assert.match(await page.locator('#tech-sanctuary-protection').innerText(),/行省圣所保护/);
+  assert.match(await page.locator('#tech-public-legal-reference').innerText(),/公开法律参照/);
+  assert.match(await page.locator('#tech-citizen-registration').innerText(),/盟邦公民登记/);
+  assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/国库 \/ 月 −2/);
   await page.screenshot({path:'tools/phase-xiv-ui.png'});
   for(const lang of ['en','zh']){
     const replacing=newGrandGame('caesar');
