@@ -14,7 +14,14 @@ const waterSource='https://www.worldhistory.org/aqueduct/';
 const grainSource='https://www.worldhistory.org/article/684/food-in-the-roman-world/';
 const engineeringSource='https://www.worldhistory.org/Roman_Engineering/';
 const inscriptionSource='https://www.metmuseum.org/essays/roman-inscriptions';
-const source=(url)=>({title:url.includes('metmuseum')?'Metropolitan Museum of Art':'World History Encyclopedia',url});
+const appianSource='https://whc.unesco.org/en/list/1708';
+const miningSource='https://oxrep.web.ox.ac.uk/mines-database';
+const quarrySource='https://oxrep.web.ox.ac.uk/stone-quarries-database';
+const alesiaSource='https://musee-archeologienationale.fr/en/node/1592';
+const numantiaSource='https://numanciasoria.es/en/divulgacion/the-archaeological-hall-of-garray';
+const siegeSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/2A%2A.html';
+const librarySource='https://www.persee.fr/doc/mefr_0223-5102_2006_num_118_2_10261';
+const source=(url)=>({title:url.includes('metmuseum')?'Metropolitan Museum of Art':url.includes('whc.unesco')?'UNESCO World Heritage Centre':url.includes('oxrep.web.ox')?'Oxford Roman Economy Project':url.includes('musee-archeologie')?'Musée d’Archéologie nationale':url.includes('numanciasoria')?'Numancia Archaeological Site':url.includes('penelope.uchicago')?'Caesar, Civil Wars':url.includes('persee.fr')?'Mélanges de l’École française de Rome':'World History Encyclopedia',url});
 export const IDEAS = [
   {id:'legion-training',category:'military',name:['Standardized Legion Training','军团标准化训练'],cost:24,months:3,adopt:12,effects:{recruitMorale:6,combatAttack:.06,upkeep:2},context:['Roman drill and organization are adapted as a costly training program.','罗马式操练与编制需要持续训练经费。'],source:source(armySource)},
   {id:'frontier-defense',category:'military',name:['Frontier Defense Doctrine','边境防御学说'],cost:22,months:3,adopt:10,effects:{combatDefense:.09,upkeep:1,combatAttack:-.02},context:['Garrisons favor prepared defense over rapid offensive action.','驻军重视防御，但进攻灵活性稍降。'],source:source(armySource)},
@@ -33,12 +40,12 @@ export const IDEAS = [
   {id:'civic-education',category:'culture',name:['Civic Education','公民教育'],cost:24,months:3,adopt:12,effects:{stability:1,researchDiscount:2,upkeep:2},context:['Teaching public duties supports institutions but requires teachers and funds.','公民职责教育支持制度，但需要教师与经费。'],source:source(romanSource)}
 ];
 export const MATERIALS = [
-  {id:'roadmaking',name:['Road Building','道路修筑'],cost:22,months:3,building:'road',context:['Roman roads predate 49 BCE; this node spreads and improves local technique.','罗马道路早于前49年；此项代表技术传播与改进。'],source:source(roadSource)},
+  {id:'roadmaking',name:['Road Building','道路修筑'],cost:22,months:3,building:'road',context:['Roman roads predate 49 BCE; this node spreads and improves local technique.','罗马道路早于前49年；此项代表技术传播与改进。'],source:source(appianSource)},
   {id:'water-control',name:['Water Management','水利管理'],cost:24,months:4,building:'irrigation',context:['Channels adapt older Mediterranean water practices to local terrain.','水渠将已有的地中海水利做法用于当地地形。'],source:source(waterSource)},
-  {id:'barracks-design',name:['Barracks Planning','兵营规划'],cost:21,months:3,building:'barracks',context:['Organized quarters support military training and supply.','有组织的营舍支撑军队训练与补给。'],source:source(armySource)},
-  {id:'stone-fortification',name:['Stone Fortification','石砌防御工事'],cost:25,months:4,building:'fort',context:['Fortified sites require skilled construction and a defensible location.','防御据点需要熟练工匠与合适地形。'],source:source(armySource)},
-  {id:'quarrying',name:['Quarrying','采石'],cost:20,months:3,building:'quarry',context:['Stone extraction supplies local building work.','采石为当地建筑提供石材。'],source:source(romanSource)},
-  {id:'metal-extraction',name:['Metal Extraction','金属采掘'],cost:23,months:4,building:'mine',context:['Metal extraction depends on regional deposits and labor.','金属采掘取决于当地矿藏与劳动力。'],source:source(romanSource)},
+  {id:'barracks-design',name:['Barracks Planning','兵营规划'],cost:21,months:3,building:'barracks',context:['Republican Roman siege camps show planned military quarters.','共和国时期的罗马围城军营显示出经过规划的营舍。'],source:source(numantiaSource)},
+  {id:'stone-fortification',name:['Fortification Planning','防御工事规划'],cost:25,months:4,building:'fort',context:['Caesar’s works at Alesia show extensive field fortifications; materials and layouts varied by site.','凯撒在阿莱西亚修筑了大规模野战工事；材料和布局因地而异。'],source:source(alesiaSource)},
+  {id:'quarrying',name:['Quarrying','采石'],cost:20,months:3,building:'quarry',context:['Roman-period quarry sites are documented, though dating individual sites to 49 BCE is often uncertain.','罗马时期采石场有考古记录，但单个遗址是否活跃于前49年往往难以确定。'],source:source(quarrySource)},
+  {id:'metal-extraction',name:['Metal Extraction','金属采掘'],cost:23,months:4,building:'mine',context:['Roman mining sites are documented, but this card does not date a particular deposit to 49 BCE.','罗马时期矿场有考古记录，但此卡不把某处矿藏断定为前49年已开采。'],source:source(miningSource)},
   {id:'grain-storage',name:['Grain Storage','谷物储藏'],cost:20,months:3,building:'granary',context:['Stored grain buffers shortages; storage must be constructed.','储粮缓解短缺；研究之后仍需建造粮仓。'],source:source(grainSource)},
   {id:'urban-drainage',name:['Urban Drainage Improvement','城市排水改进'],cost:27,months:4,building:'drain',context:['Ancient drains existed before 49 BCE; this is local improvement, not modern sanitation.','古代排水早于前49年；此为地方改进，并非现代卫生。'],source:source(waterSource)}
 ];
@@ -62,17 +69,17 @@ const additionalMaterials=[
  ['training-ground',['Training Ground','训练场'],'training-camp',armySource,['Permanent training grounds support repeated drills.','固定训练场支持反复操练。'],20,3,['barracks-design']],
  ['supply-organization',['Supply Organization','军需组织'],'supply-depot',armySource,['Depots hold food and equipment near active armies.','军需仓在军队附近储备粮食与装备。'],22,3,['barracks-design']],
  ['armory-craft',['Armory Craft','军械制造'],'armory',armySource,['Organized armories support recruitment and equipment repair.','有组织的军械库支援征兵与装备修理。'],24,4,['metal-extraction']],
- ['siege-machinery',['Siege Machinery','攻城器械'],'siege-workshop',armySource,['Workshops assemble machines for prolonged sieges.','作坊制造长期围攻所需的器械。'],25,4,['armory-craft']],
+ ['siege-machinery',['Siege Machinery','攻城器械'],'siege-workshop',siegeSource,['Caesar describes earthworks, covered galleries and towers at the siege of Massilia in 49 BCE.','凯撒记载了前49年马赛围城中的土垒、带顶通道与攻城塔。'],25,4,['armory-craft']],
  ['metalworking',['Metalworking','金属加工'],'metalworks',engineeringSource,['Local metalworking turns mined supply into practical equipment.','地方金属加工把矿产变成实用器材。'],22,3,['metal-extraction']],
  ['craft-workshops',['Craft Workshops','手工业作坊'],'workshop',engineeringSource,['Workshops sustain urban crafts and taxable exchange.','作坊支撑城市手工业与可征税的交换。'],18,3,[]],
  ['grain-processing',['Grain Processing','谷物加工'],'grain-mill',grainSource,['Milling and processing increase usable local grain.','碾磨加工提高当地谷物的可用量。'],19,3,['grain-storage']],
  ['stone-inscription',['Stone Inscription','石刻铭文'],'monument',inscriptionSource,['Roman inscriptions served civic, religious, commemorative and political purposes.','罗马铭文用于公民、宗教、纪念和政治用途。'],18,2,['quarrying']],
- ['road-milestones',['Road Milestones','道路里程碑'],'milestone',roadSource,['Milestones marked routes and often named responsible officials.','里程碑标示路线，也常记载负责官员。'],16,2,['roadmaking']],
+ ['road-milestones',['Road Milestones','道路里程碑'],'milestone',appianSource,['Milestones marked Roman roads; surviving examples span several periods.','里程碑标示罗马道路；留存实例横跨多个时期。'],16,2,['roadmaking']],
  ['public-square-planning',['Public Square Planning','公共广场规划'],'square',romanSource,['A civic square concentrates assemblies and exchange.','公共广场汇集集会与交易。'],21,3,['roadmaking']],
- ['library-organization',['Library Organization','书库组织'],'library',romanSource,['Collections and copyists preserve and circulate learned works.','藏书与抄写者保存、传播学术著作。'],24,4,['public-square-planning']],
+ ['library-organization',['Private Collection Organization','私人藏书整理'],'library',librarySource,['Private book collections existed in Republican Rome; the first Roman public libraries came later.','共和国时期罗马已有私人藏书；罗马公共图书馆出现得更晚。'],24,4,['craft-workshops']],
  ['bath-construction',['Bath Construction','浴场建造'],'bath',engineeringSource,['Baths require water and maintenance and serve social life.','浴场需要供水和维护，也是社会生活场所。'],24,4,['aqueduct-refinement']],
  ['administrative-building',['Administrative Building','行政建筑'],'administration',republicSource,['Offices provide a place for records and provincial administration.','官署容纳记录与地方行政。'],23,4,['public-square-planning']],
- ['bridge-engineering',['Bridge Engineering','桥梁工程'],'bridge',roadSource,['Bridges extend practical roads across rivers.','桥梁使实用道路跨越河流。'],24,4,['roadmaking']],
+ ['bridge-engineering',['Bridge Engineering','桥梁工程'],'bridge',appianSource,['Bridges extend practical roads across rivers.','桥梁使实用道路跨越河流。'],24,4,['roadmaking']],
  ['port-facilities',['Port Facilities','港口设施'],'port',engineeringSource,['Harbors handle shipments but require a suitable coast.','港口处理船运，必须有合适海岸。'],26,4,['roadmaking']],
  ['warehouse-management',['Warehouse Management','仓储管理'],'warehouse',grainSource,['Warehouses protect traded supplies and grain reserves.','仓库保护交易货物与谷物储备。'],20,3,['grain-storage']],
  ['shipyard-craft',['Shipyard Craft','造船工艺'],'shipyard',engineeringSource,['Shipyards maintain vessels at suitable maritime ports.','造船厂在适合的海港维修船舶。'],28,5,['port-facilities']]
@@ -93,7 +100,7 @@ const additionalBuildings=[
  ['monument',['Inscribed Stone Monument','铭文石碑'],'stone-inscription',23,4,{stone:3},1,{legitimacy:1,loyalty:-1},['plain','hills','urban']],
  ['milestone',['Milestone','里程碑'],'road-milestones',15,2,{stone:1},0,{treasury:1},['plain','hills','forest','urban','desert']],
  ['square',['Public Square','公共广场'],'public-square-planning',24,4,{stone:3,timber:1},2,{loyalty:1},['plain','hills','urban'],'urban'],
- ['library',['Library','书库'],'library-organization',25,4,{stone:2,timber:2},2,{researchDiscount:3},['plain','hills','urban'],'urban'],
+ ['library',['Private Book Collection','私人藏书室'],'library-organization',25,4,{stone:2,timber:2},2,{researchDiscount:3},['plain','hills','urban'],'urban'],
  ['bath',['Bath','浴场'],'bath-construction',25,5,{stone:3,metal:1},2,{loyalty:1,healthRisk:-.002},['plain','hills','urban'],'water'],
  ['administration',['Administrative Building','行政官署'],'administrative-building',24,4,{stone:3,timber:2},2,{treasury:2,stability:1},['plain','hills','urban'],'urban'],
  ['bridge',['Bridge','桥梁'],'bridge-engineering',25,4,{stone:3,timber:2},1,{treasury:1,march:1},['plain','hills','forest','urban'],'water'],

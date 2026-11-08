@@ -1,0 +1,15 @@
+# Development card source audit
+
+The campaign starts in 49 BCE. A card represents learning, local adaptation, or organization, not the first invention of its subject. Game costs and effects are balance values, not measurements from the sources. The drawings are original interpretive diagrams, not excavated objects.
+
+| Card IDs | Evidence now linked from the game | Limit |
+| --- | --- | --- |
+| `roadmaking`, `road-milestones`, `bridge-engineering` | [UNESCO, Via Appia](https://whc.unesco.org/en/list/1708): road begun in 312 BCE; the property includes bridges and milestones. | The heritage property includes additions through late antiquity. A surviving bridge or marker is not necessarily dated to 49 BCE. |
+| `barracks-design` | [Numantia archaeological site](https://numanciasoria.es/en/divulgacion/the-archaeological-hall-of-garray): reconstruction of Scipio's siege camps and a legionary barrack hut. | A museum reconstruction supports camp planning, not a universal Republican barrack design. |
+| `stone-fortification` | [Musée d'Archéologie nationale, Alesia](https://musee-archeologienationale.fr/en/node/1592): Caesar's double field fortification and camps, 52 BCE. | The historical note and displayed name now say *fortification planning*; the stable internal ID is retained for old saves. The source does not establish that all such works were stone. |
+| `quarrying` | [Oxford Roman Economy Project, quarries](https://oxrep.web.ox.ac.uk/stone-quarries-database): Roman-period quarry gazetteer. | Its authors warn that precise dates and coordinates are often uncertain. |
+| `metal-extraction` | [Oxford Roman Economy Project, mines](https://oxrep.web.ox.ac.uk/mines-database): recorded Roman mines and extraction methods. | Its authors warn that dating most individual mines is difficult. |
+| `siege-machinery` | [Caesar, *Civil Wars* II.1–22](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/2A%2A.html): earthworks, covered galleries, and towers at Massilia in 49 BCE. | Caesar's account is a participant's text; the card does not imply that every siege had these works. |
+| `library-organization` | [Dix and Houston, *Mélanges de l'École française de Rome*](https://www.persee.fr/doc/mefr_0223-5102_2006_num_118_2_10261): private Republican collections precede Roman public libraries. | The 49 BCE card and building now refer to a private collection. Stable IDs are retained for save compatibility. |
+
+The remaining cards still need a direct source review. A broad source link should be treated as background, especially where the evidence is Imperial rather than Republican. Before changing another card, check the date, location, and the exact claim in both languages.

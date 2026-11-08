@@ -14,6 +14,7 @@ try{
  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-overlay').waitFor({state:'visible'});
  await page.locator('#roman-faction').selectOption('senate');await page.locator('#difficulty').selectOption('standard');await page.locator('#start-game').click();
+ assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('grand-campaign')),true,'tutorial must retain the grand campaign');
  assert.match(await page.locator('#guide-body').innerText(),/assess|评估/i);
  await page.locator('#guide-next').click();await page.locator('[data-army="italy"]').click();await page.locator('#guide-next').click();
  assert.match(await page.locator('.war-council').innerText(),/军议/);
@@ -43,6 +44,9 @@ try{
  await page.locator('#map-mode').selectOption('military');
  assert.match(await page.locator('.legend').innerText(),/Friendly troops/);
  await page.locator('#guide-restart').click();await page.locator('#roman-faction').selectOption('senate');await page.locator('#difficulty').selectOption('standard');await page.locator('#start-free').click();
+ assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('grand-campaign')),true,'free play must retain the grand campaign');
+ assert.equal(await page.locator('.grand-site').count(),120);
+ assert.equal(await page.locator('.city-marker').first().isVisible(),false,'duplicate base-map city labels must be hidden');
  await page.locator('#brief-toggle').click();await page.locator('[data-army="italy"]').click();await page.locator('#lab-orders select').selectOption('cisalpine');await page.locator('#lab-orders button').click();
  assert.match(await page.locator('.prebattle-intel').innerText(),/Unknown/);
  await page.locator('#attack-anyway').click();await page.locator('#advance').click();

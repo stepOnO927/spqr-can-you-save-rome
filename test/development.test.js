@@ -13,6 +13,19 @@ test('every development node has its own interpretive illustration',()=>{
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
+test('Republican-era source corrections retain save IDs and avoid later public-library claims',()=>{
+ const fort=MATERIALS.find(x=>x.id==='stone-fortification'),library=MATERIALS.find(x=>x.id==='library-organization');
+ assert.match(fort.name[0],/Fortification Planning/);
+ assert.match(fort.source.url,/musee-archeologienationale/);
+ assert.match(library.name[0],/Private Collection/);
+ assert.deepEqual(library.prerequisites,['craft-workshops']);
+ assert.match(BUILDINGS.find(x=>x.id==='library').name[0],/Private Book Collection/);
+ assert.match(library.source.url,/persee\.fr/);
+ for(const id of ['roadmaking','road-milestones','bridge-engineering','barracks-design','stone-fortification','quarrying','metal-extraction','siege-machinery','library-organization']){
+  const item=MATERIALS.find(x=>x.id===id);assert.ok(item?.source.url.startsWith('https://'),id);assert.notEqual(item.source.title,'World History Encyclopedia',id);
+ }
+});
+
 test('both research branches render every node, including naval capabilities without buildings',()=>{
   const s=newGame('senate');for(const lang of ['en','zh'])for(const branch of ['material','idea']){
     const html=developmentPanel(s,lang,branch);assert.equal((html.match(/class="dev-card dev-card-/g)||[]).length,branch==='material'?MATERIALS.length:IDEAS.length)
