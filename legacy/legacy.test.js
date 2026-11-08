@@ -18,6 +18,22 @@ test('foreign campaign archive counts only battles fought by its own command',()
  assert.equal(profile.archive[0].battles,1);assert.equal(profile.archive[0].summary.battles,1);
  assert.deepEqual(profile.archive[0].notable,[{region:'t116',winner:'senate'}]);
 });
+test('reimport repairs an old foreign archive without awarding Laurel Coins twice',()=>{
+ const storage=memory(),profile=loadProfile(storage),campaign=newGrandGame('egypt');
+ campaign.battles=[{region:'roma',attacker:{owner:'caesar'},defender:{owner:'senate'},attackerWins:true},{region:'t116',attacker:{owner:'egypt'},defender:{owner:'senate'},attackerWins:false}];
+ campaign.civilWarOutcome={kind:'military',winner:'senate',loser:'caesar',year:-48,month:2};
+ endCampaign(campaign,'retired');recordCampaign(profile,campaign);
+ const archive=profile.archive[0];
+ archive.summary={...archive.summary,winner:'senate',method:'military'};
+ delete archive.summary.civilWarOutcome;
+ archive.battles=2;archive.notable=[{region:'roma',winner:'caesar'},{region:'t116',winner:'senate'}];
+ const coins=profile.coins,rewards=profile.rewards.length;
+ assert.deepEqual(recordCampaign(profile,campaign),[]);
+ assert.equal(profile.coins,coins);assert.equal(profile.rewards.length,rewards);assert.equal(profile.archive.length,1);
+ assert.equal(archive.summary.winner,null);assert.equal(archive.summary.civilWarOutcome.winner,'senate');
+ assert.equal(archive.battles,1);assert.deepEqual(archive.notable,[{region:'t116',winner:'senate'}]);
+ saveProfile(profile,storage);assert.deepEqual(loadProfile(storage).archive[0],archive);
+});
 test('buildings visually owned through durable purchases and unlock museum content',()=>{
  const storage=memory(),p=loadProfile(storage);p.coins=1200;assert.equal(purchase(p,'museum').ok,true);assert.ok(p.buildings.includes('museum'));assert.ok(p.collectibles.includes('senate-tablet'));assert.equal(purchase(p,'museum').ok,false);assert.equal(purchase(p,'temple').ok,true);assert.equal(purchase(p,'circus').ok,false);p.coins=600;assert.equal(purchase(p,'circus').ok,true);saveProfile(p,storage);assert.ok(loadProfile(storage).buildings.includes('circus'));
 });

@@ -13,11 +13,11 @@ import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,e
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy} from './local-society.js?v=2';
 import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=14';
-import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=3';
+import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=4';
 import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js';
 import {nationalBudget} from './national-budget.js';
 export {nationalBudget} from './national-budget.js';
-export {endCampaign,revealedAchievements} from './achievement-system.js?v=3';
+export {endCampaign,revealedAchievements} from './achievement-system.js?v=4';
 export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=14';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
 export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=9';

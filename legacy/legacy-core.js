@@ -1,6 +1,6 @@
 import {observeArmies} from '../character-system.js';
 import {beginBriefing} from '../campaign-reports.js?v=2';
-import {achievementDefinition} from '../achievement-system.js?v=3';
+import {achievementDefinition} from '../achievement-system.js?v=4';
 export const PROFILE_KEY='spqr-legacy-profile-v1';
 export const BUILDINGS={curia:{name:['Curia','元老院'],price:0,position:[48,35],icon:'♜'},archive:{name:['Archive','档案馆'],price:0,position:[33,53],icon:'▤'},arch:{name:['Triumphal Arch','凯旋门'],price:0,position:[64,52],icon:'⌒'},camp:{name:['Military Camp','军营'],price:300,position:[16,31],icon:'⚑'},museum:{name:['Museum','博物馆'],price:350,position:[75,28],icon:'◈'},temple:{name:['Temple District','神庙区'],price:450,position:[31,16],icon:'♙'},circus:{name:['Circus of Mars','战车赛马场'],price:550,position:[78,71],icon:'◎',requires:'temple'},library:{name:['Library & Academy','图书馆与学院'],price:500,position:[48,68],icon:'▦'},harbor:{name:['Harbor Office','港务局'],price:450,position:[88,43],icon:'⚓'},court:{name:['Court','法庭'],price:400,position:[56,16],icon:'⚖'},intelligence:{name:['Intelligence Office','情报局'],price:500,position:[17,67],icon:'◉'},palace:{name:['State Residence','国政官邸'],price:1200,position:[50,7],icon:'♛'}};
 export const GOODS={
@@ -34,7 +34,14 @@ export function recordCampaign(profile,state){
   if(achievementId==='victory'){profile.collectibles.push(state.player==='caesar'?'caesar-bust':'pompey-coin');profile.titles.push(state.player==='caesar'?'Caesarian Victor':'Senatorial Defender')}
   if(achievementId==='challenge')profile.titles.push(state.legacyScenario==='scenario-pharsalus'?'Thessaly Victor':'Rubicon Survivor');
  }
- if(!profile.archive.some(a=>a.id===id)){const ownBattles=(state.battles||[]).filter(b=>b.attacker?.owner===state.player||b.defender?.owner===state.player);profile.archive.unshift({id,year:state.achievementState.endedAt.year,month:state.achievementState.endedAt.month,result:state.achievementState.result,faction:state.player,territories:state.regions.filter(r=>r.owner===state.player).length,battles:ownBattles.length,summary:state.achievementState.summary||null,notable:ownBattles.slice(-4).map(b=>({region:b.region,winner:b.attackerWins?b.attacker?.owner:b.defender?.owner}))});profile.archive=profile.archive.slice(0,profile.purchases.includes('archive-capacity')?100:50)}
+ const ownBattles=(state.battles||[]).filter(b=>b.attacker?.owner===state.player||b.defender?.owner===state.player);
+ const existing=profile.archive.find(a=>a.id===id);
+ if(!existing){profile.archive.unshift({id,year:state.achievementState.endedAt.year,month:state.achievementState.endedAt.month,result:state.achievementState.result,faction:state.player,territories:state.regions.filter(r=>r.owner===state.player).length,battles:ownBattles.length,summary:state.achievementState.summary||null,notable:ownBattles.slice(-4).map(b=>({region:b.region,winner:b.attackerWins?b.attacker?.owner:b.defender?.owner}))});profile.archive=profile.archive.slice(0,profile.purchases.includes('archive-capacity')?100:50)}
+ else if(!['caesar','senate'].includes(state.player)&&state.achievementState.summary?.civilWarOutcome&&!existing.summary?.civilWarOutcome){
+  existing.summary=state.achievementState.summary;
+  existing.battles=ownBattles.length;
+  existing.notable=ownBattles.slice(-4).map(b=>({region:b.region,winner:b.attackerWins?b.attacker?.owner:b.defender?.owner}));
+ }
  profile.collectibles=[...new Set(profile.collectibles)];profile.titles=[...new Set(profile.titles)];return done;
 }
 export function createScenario(id,createGrand){if(!['scenario-rubicon','scenario-pharsalus'].includes(id))return null;const s=createGrand(id==='scenario-pharsalus'?'caesar':'senate');s.legacyScenario=id;s.difficulty='standard';if(id==='scenario-rubicon'){s.scenarioLabel=['Rubicon under siege (alternate history)','卢比孔河危局（架空历史）'];s.factions.senate.treasury=Math.max(10,s.factions.senate.treasury-30);s.factions.senate.food=Math.max(10,s.factions.senate.food-12);return s}

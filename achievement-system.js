@@ -26,7 +26,7 @@ export function evaluateAchievements(s){
 }
 export function campaignSummary(s){
  const own=s.player,battles=(s.battles||[]).filter(b=>[b.attacker?.owner,b.defender?.owner].includes(own)),wins=battles.filter(b=>(b.attackerWins?b.attacker?.owner:b.defender?.owner)===own).length;
- const casualties=battles.reduce((n,b)=>n+(b.attacker?.owner===own?b.lossA:b.lossD||0),0);
+ const casualties=battles.reduce((n,b)=>n+(Number(b.attacker?.owner===own?b.lossA:b.lossD)||0),0);
  const warKeys=new Set(['caesar','senate'].includes(own)?['caesar:senate']:[]);
  for(const war of s.wars||[])if(war.includes(own))warKeys.add([...war].sort().join(':'));
  for(const event of s.campaignEvents||[])if(event.type==='diplomacy'&&event.action==='war'&&[event.factionId,event.targetFactionId].includes(own))warKeys.add([event.factionId,event.targetFactionId].sort().join(':'));

@@ -1,4 +1,4 @@
-import {revealedAchievements,campaignSummary} from './achievement-system.js?v=3';
+import {revealedAchievements,campaignSummary} from './achievement-system.js?v=4';
 import {FACTIONS} from './data.js';
 import {CHARACTER_CATALOG} from './characters.js';
 import {eventText} from './campaign-reports.js?v=2';

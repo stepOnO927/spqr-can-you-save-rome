@@ -1,4 +1,4 @@
-import {claimReward} from './legacy-core.js?v=3';
+import {claimReward} from './legacy-core.js?v=4';
 
 // Outcomes are fictional civic exercises, not claims about attested Roman cases.
 export const ACTIVITIES=[
