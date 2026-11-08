@@ -10,7 +10,7 @@ import {endCampaign} from './achievement-system.js';
 import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js';
 import {budgetHtml} from './budget-ui.js';
 import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js?v=2';
-import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=5';
+import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=6';
 import {drawMap,mapPoint} from './map.js?v=54';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js';
