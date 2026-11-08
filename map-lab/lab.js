@@ -163,7 +163,24 @@ function updateControl(){
  map.setPaintProperty('control','fill-color',['match',['get','id'],...pairs,'#aa9c75']);map.setPaintProperty('control','fill-opacity',currentMapMode==='terrain'?.08:currentMapMode==='political'?.30:.38);
  if(map.getLayer('province-outline'))map.setPaintProperty('province-outline','line-color',['match',['get','id'],...borderPairs,'#aa9c75']);
 }
-function renderLeaders(){leaderMarkers.forEach(m=>m.remove());leaderMarkers=[];for(const id of ['caesar','senate','egypt','parthia','armenia','numidia','mauretania','galatia','bosporus']){const place=({caesar:'cisalpine',senate:'roma',egypt:'egypt',parthia:'parthia',armenia:'armenia',numidia:'numidia',mauretania:'mauretania',galatia:'galatia',bosporus:'bosporus'})[id],ids=id===state.player?state.world.leadership[id]:knownLeaders(state,state.player,id),el=document.createElement('button');el.className='leader-map-label';el.innerHTML=`${factionMark(id,'insignia')}<span><strong>${esc(n(FACTIONS[id].short))}</strong><small>${esc(n(leadershipTitle(id,ids))+' · '+(ids.map(cid=>n(CHARACTER_CATALOG[cid]?.name)).filter(Boolean).join(' · ')||(lang==='zh'?'领袖未知':'Leader unknown')))}</small></span>`;el.title=lang==='zh'?'公开传闻，可能过时；点击查看':'Publicly reported, may be outdated; click to inspect';el.onclick=e=>{e.stopPropagation();showFaction(id)};leaderMarkers.push(marker(el,namedPoints[place],'bottom'))}}
+function renderLeaders(){
+ leaderMarkers.forEach(m=>m.remove());leaderMarkers=[];
+ const homes={caesar:'cisalpine',senate:'roma',egypt:'egypt',parthia:'parthia',armenia:'armenia',numidia:'numidia',mauretania:'mauretania',galatia:'galatia',bosporus:'bosporus'};
+ for(const id of Object.keys(homes)){
+  const home=homes[id],origin=namedPoints[home],controlled=state.regions.filter(r=>r.owner===id&&namedPoints[r.id]);
+  if(!controlled.length)continue;
+  const anchor=controlled.find(r=>r.id===home)||controlled.sort((a,b)=>{
+   const distance=r=>Math.hypot(namedPoints[r.id][0]-origin[0],namedPoints[r.id][1]-origin[1]);
+   return distance(a)-distance(b)||a.id.localeCompare(b.id);
+  })[0];
+  const ids=id===state.player?state.world.leadership[id]:knownLeaders(state,state.player,id),el=document.createElement('button');
+  el.className='leader-map-label';el.dataset.faction=id;el.dataset.anchor=anchor.id;
+  el.innerHTML=`${factionMark(id,'insignia')}<span><strong>${esc(n(FACTIONS[id].short))}</strong><small>${esc(n(leadershipTitle(id,ids))+' · '+(ids.map(cid=>n(CHARACTER_CATALOG[cid]?.name)).filter(Boolean).join(' · ')||(lang==='zh'?'领袖未知':'Leader unknown')))}</small></span>`;
+  el.title=lang==='zh'?'标在当前控制区；领袖传闻可能过时。点击查看。':'Placed in currently controlled territory; ruler reports may be outdated. Click to inspect.';
+  el.onclick=e=>{e.stopPropagation();showFaction(id)};
+  leaderMarkers.push(marker(el,namedPoints[anchor.id],'bottom'));
+ }
+}
 function renderMaritime(){maritimeMarkers.forEach(m=>m.remove());maritimeMarkers=[];if(map.isStyleLoaded&&!map.isStyleLoaded())return;if(!map.getSource('naval-lanes')){map.addSource('naval-lanes',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'naval-lanes',type:'line',source:'naval-lanes',paint:{'line-color':['match',['get','status'],'blockade','#bd6553','piracy','#bd9c63','#afd5d5'],'line-width':2,'line-opacity':0,'line-dasharray':[3,2]}},'control')}
  const features=state.naval?.routes.map(r=>{const a=namedPoints[r.from],b=namedPoints[r.to];return a&&b?{type:'Feature',properties:{status:r.last?.reason||'open'},geometry:{type:'LineString',coordinates:[a,b]}}:null}).filter(Boolean)||[];map.getSource('naval-lanes').setData({type:'FeatureCollection',features});map.setPaintProperty('naval-lanes','line-opacity',currentMapMode==='maritime'?.7:0);if(currentMapMode!=='maritime'||!state.naval)return;
  for(const z of SEA_ZONES){const el=document.createElement('button');el.className='sea-zone';el.textContent=n(z.name);el.title=lang==='zh'?'海上作战区；航行按相邻海域逐月推进。':'Sea zone; fleets cross connected waters each month.';el.onclick=e=>{e.stopPropagation();map.flyTo({center:z.point,zoom:6});showNaval('intelligence')};maritimeMarkers.push(marker(el,z.point))}
