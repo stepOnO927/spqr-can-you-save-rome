@@ -24,5 +24,14 @@ export function evaluateAchievements(s){
  if(s.victory){mark('victory',{territories,battles:s.battles?.length||0});if(s.legacyScenario)mark('challenge',{scenario:s.legacyScenario})}
  return a;
 }
-export function endCampaign(s,result){const a=evaluateAchievements(s);if(a.finalized)return {ok:false,reason:'finalized',state:a};const noCommand=!s.regions.some(r=>r.owner===s.player)&&!s.armies.some(unit=>unit.owner===s.player&&unit.men>0);const chosen=result==='defeat'||!s.victory&&noCommand?'defeat':s.victory?'victory':'retired';a.finalized=true;a.result=chosen;a.endedAt=stamp(s);return {ok:true,state:a,achievements:Object.entries(a.completed).map(([id,record])=>({id,...record}))}}
+export function campaignSummary(s){
+ const own=s.player,battles=(s.battles||[]).filter(b=>[b.attacker?.owner,b.defender?.owner].includes(own)),wins=battles.filter(b=>(b.attackerWins?b.attacker?.owner:b.defender?.owner)===own).length;
+ const casualties=battles.reduce((n,b)=>n+(b.attacker?.owner===own?b.lossA:b.lossD||0),0);
+ const warKeys=new Set(['caesar','senate'].includes(own)?['caesar:senate']:[]);
+ for(const war of s.wars||[])if(war.includes(own))warKeys.add([...war].sort().join(':'));
+ for(const event of s.campaignEvents||[])if(event.type==='diplomacy'&&event.action==='war'&&[event.factionId,event.targetFactionId].includes(own))warKeys.add([event.factionId,event.targetFactionId].sort().join(':'));
+ const commanders=[...new Map(battles.flatMap(b=>[b.attacker,b.defender].filter(side=>side?.owner===own).map(side=>side.commander).filter(Boolean)).map(name=>[JSON.stringify(name),name])).values()].slice(0,8);
+ return {winner:s.campaignOutcome?.winner||null,method:s.campaignOutcome?.kind||null,duration:turn(s),year:s.year,month:s.month,rulers:[...(s.world?.leadership?.[own]||[])],territories:s.regions.filter(r=>r.owner===own).length,wars:warKeys.size,battles:battles.length,wins,losses:battles.length-wins,casualties,commanders,politics:(s.campaignEvents||[]).filter(e=>['diplomacy','objective','rebellion'].includes(e.type)).slice(0,12).map(e=>({id:e.id,type:e.type,action:e.action||e.objectiveStatus||null,year:e.year,month:e.month})),economy:{treasury:s.factions[own]?.treasury??0,food:s.factions[own]?.food??0,manpower:s.factions[own]?.manpower??0,stability:s.factions[own]?.stability??0,legitimacy:s.factions[own]?.legitimacy??0},settlement:s.civilSettlement||null};
+}
+export function endCampaign(s,result){const a=evaluateAchievements(s);if(a.finalized)return {ok:false,reason:'finalized',state:a};const noCommand=!s.regions.some(r=>r.owner===s.player)&&!s.armies.some(unit=>unit.owner===s.player&&unit.men>0);const chosen=result==='defeat'||!s.victory&&noCommand?'defeat':s.victory?'victory':'retired';a.finalized=true;a.result=chosen;a.endedAt=stamp(s);a.summary=campaignSummary(s);return {ok:true,state:a,achievements:Object.entries(a.completed).map(([id,record])=>({id,...record}))}}
 export function revealedAchievements(s){const a=initializeAchievements(s);return a.finalized?Object.entries(a.completed).map(([id,record])=>({id,...record,definition:achievementDefinition(id)})).filter(x=>x.definition):[]}

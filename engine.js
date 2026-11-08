@@ -14,6 +14,9 @@ import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligi
 import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=4';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js';
+import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js';
+import {nationalBudget} from './national-budget.js';
+export {nationalBudget} from './national-budget.js';
 export {endCampaign,revealedAchievements} from './achievement-system.js';
 export {SEA_ZONES,SHIPS,NAVAL_JOBS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reportedHostileFleets,supportPirates} from './naval.js?v=4';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
@@ -74,12 +77,12 @@ export function upgradeSave(s){
  if(!s.legacyRunId)s.legacyRunId=importedRunId(s);
  if(s.year===0)s.year=1;
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
- if(s.version!==3)throw new Error('Unsupported save');migrateRegionalPowers(s);initializeReports(s);updateObjectives(s,true);initializeFigures(initializeDevelopment(refreshReportConfidence(initializeGovernments(s))));initializeLocalSociety(s);initializeNaval(s);initializeAchievements(s);s.briefingBaseline ||= beginBriefing(s);return s;
+ if(s.version!==3)throw new Error('Unsupported save');migrateRegionalPowers(s);initializeReports(s);updateObjectives(s,true);initializeFigures(initializeDevelopment(refreshReportConfidence(initializeGovernments(s))));initializeLocalSociety(s);initializeNaval(s);initializeAchievements(s);if(s.victory&&!s.campaignOutcome)s.campaignOutcome={kind:'military',winner:s.player,loser:s.player==='caesar'?'senate':'caesar',year:s.year,month:s.month,legacy:true};s.briefingBaseline ||= beginBriefing(s);return s;
 }
 
 export function previewMarch(s,armyId,destination){
   const a=army(s,armyId); const target=region(s,destination);
-  if(!a||!target||a.men<=0||a.move||a.siege||a.reconPending)return {ok:false,reason:'unavailable'};
+  if(!a||!target||a.men<=0||a.move||a.siege||a.reconPending||a.trainingRemaining)return {ok:false,reason:'unavailable'};
   if(s.grandMap){const plan=grandRoute(s,a,destination,isWar);if(!plan)return {ok:false,reason:'route'};return {ok:true,...plan,terrain:target.terrain,hostile:plan.hostile,food:s.factions[a.owner].food,supply:target.supply}}
   const link=adjacent(a.region).find(e=>e.to===destination);
   if(!link)return {ok:false,reason:'adjacent'};
@@ -119,6 +122,15 @@ export function recruit(s,regionId,owner=s.player){
   return true;
 }
 
+export function trainArmy(s,armyId){
+ const unit=army(s,armyId),home=unit&&region(s,unit.region),f=unit&&s.factions[unit.owner];
+ if(!unit||unit.owner!==s.player||!home||home.owner!==unit.owner||unit.move||unit.siege||unit.reconPending||unit.trainingRemaining||unit.men<500||unit.experience>=5)return {ok:false,reason:'unavailable'};
+ if(f.treasury<8||f.food<2)return {ok:false,reason:'resources'};
+ f.treasury-=8;f.food-=2;unit.trainingRemaining=1;unit.morale=Math.min(100,unit.morale+2);
+ log(s,`${unit.name[0]} began a month of training at a cost of 8 treasury and 2 food.`,`${unit.name[1]}开始一个月训练，消耗8国库与2粮食。`);
+ return {ok:true,cost:8,food:2,months:1};
+}
+
 export function setTax(s,owner,level){
   if(!['low','normal','high'].includes(level)||!s.factions[owner])return false;
   s.factions[owner].tax=level;
@@ -126,9 +138,40 @@ export function setTax(s,owner,level){
   return true;
 }
 
+function concludePeace(s,actor,target){
+ s.wars=s.wars.filter(w=>!(w.includes(actor)&&w.includes(target)));
+ s.relations[pair(actor,target)]=-20;
+ for(const a of s.armies.filter(a=>a.owner===actor||a.owner===target)){
+   const other=a.owner===actor?target:actor;
+   if(a.move&&region(s,a.move.to)?.owner===other)a.move=null;
+   if(a.siege&&region(s,a.siege.region)?.owner===other)a.siege=null;
+   if(region(s,a.region)?.owner===other){const here=region(s,a.region),destination=s.regions.filter(r=>r.owner===a.owner).sort((x,y)=>Math.hypot(x.x-here.x,x.y-here.y)-Math.hypot(y.x-here.x,y.y-here.y))[0];if(destination){a.region=destination.id;a.move=null;a.siege=null;a.attackIntel=null}}
+ }
+}
+
 export function diplomacy(s, actor, target, action){
   if(actor===target || !s.factions[actor] || !s.factions[target] || target==='rebels'||actor==='rebels' || !s.regions.some(r=>r.owner===actor) || !s.regions.some(r=>r.owner===target))return false;
   const key=pair(actor,target);
+  if(action==='settlement'&&['caesar','senate'].includes(actor)&&target===(actor==='caesar'?'senate':'caesar')&&isWar(s,actor,target)){
+    const offerKey=pair(actor,target),now=s.year*12+s.month,last=s.lastSettlementOffer?.[offerKey]??-Infinity;
+    if(s.factions[actor].treasury<4||now-last<3)return false;
+    s.factions[actor].treasury-=4;(s.lastSettlementOffer||={})[offerKey]=now;
+    if(!settlementEligible(s,actor,target)){
+      if(actor===s.player)log(s,`${FACTIONS[target].short[0]} rejected the civil settlement proposal. The diplomatic mission cost 4 treasury.`,`${FACTIONS[target].short[1]}拒绝内战和议。外交使团消耗4国库。`);
+      return false;
+    }
+    const concession=s.regions.find(r=>r.owner===target&&adjacent(r.id,s).some(link=>region(s,link.to)?.owner===actor));
+    if(concession){const previousOwner=concession.owner;concession.owner=actor;concession.loyalty=Math.max(35,concession.loyalty);recordControl(s,concession,previousOwner,'settlement',{attacker:actor,defender:target})}
+    concludePeace(s,actor,target);
+    s.factions[actor].legitimacy=Math.min(100,s.factions[actor].legitimacy+8);
+    s.factions[actor].stability=Math.min(100,s.factions[actor].stability+3);
+    s.relations[key]=0;
+    s.civilSettlement={winner:actor,loser:target,year:s.year,month:s.month,territory:concession?.id||null};
+    setCampaignOutcome(s,{kind:'settlement',winner:actor,loser:target,year:s.year,month:s.month,territory:concession?.id||null});
+    log(s,`${FACTIONS[target].short[0]} accepted a civil settlement. The war ended and ${FACTIONS[actor].short[0]} gained political legitimacy.`,`${FACTIONS[target].short[1]}接受内战和议。战争结束，${FACTIONS[actor].short[1]}获得政治合法性。`);
+    recordDiplomacy(s,actor,target,'settlement');evaluateAchievements(s);
+    return true;
+  }
   if(action==='improve' && !isWar(s,actor,target) && s.factions[actor].treasury>=10){s.factions[actor].treasury-=10;s.relations[key]=Math.min(100,relation(s,actor,target)+15+(activeEffects(s,actor).diplomacy||0));log(s,`${FACTIONS[actor].short[0]} improved relations with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}改善了与${FACTIONS[target].short[1]}的关系。`);recordDiplomacy(s,actor,target,action);return true}
   if(action==='alliance' && !isWar(s,actor,target) && relation(s,actor,target)+personalDiplomaticCredit(s,actor,target)>=30 && !isAllied(s,actor,target) && !s.wars.some(w=>(w.includes(actor)&&isAllied(s,target,w.find(x=>x!==actor)))||(w.includes(target)&&isAllied(s,actor,w.find(x=>x!==target))))){s.alliances.push([actor,target]);log(s,`${FACTIONS[actor].short[0]} allied with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}结盟。`);recordDiplomacy(s,actor,target,action);return true}
   if(action==='break' && isAllied(s,actor,target)){s.alliances=s.alliances.filter(p=>!(p.includes(actor)&&p.includes(target)));s.relations[key]=relation(s,actor,target)-20;log(s,`${FACTIONS[actor].short[0]} broke its alliance with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}解除了与${FACTIONS[target].short[1]}的同盟。`);recordDiplomacy(s,actor,target,action);return true}
@@ -147,14 +190,7 @@ export function diplomacy(s, actor, target, action){
   if(action==='peace' && isWar(s,actor,target)){
     // The responding government knows its own forces, but judges the sender by its reports.
     if(estimatedStrength(s,target,actor)*(1+(activeEffects(s,actor).diplomacyPressure||0)/100)<strength(s,target)*.6 && s.factions[target].stability>35)return false;
-    s.wars=s.wars.filter(w=>!(w.includes(actor)&&w.includes(target)));
-    s.relations[key]=-20;
-    for(const a of s.armies.filter(a=>a.owner===actor||a.owner===target)){
-      const other=a.owner===actor?target:actor;
-      if(a.move && region(s,a.move.to).owner===other)a.move=null;
-      if(a.siege && region(s,a.siege.region).owner===other)a.siege=null;
-      if(region(s,a.region).owner===other){const destination=s.regions.filter(r=>r.owner===a.owner).sort((x,y)=>Math.hypot(x.x-region(s,a.region).x,x.y-region(s,a.region).y)-Math.hypot(y.x-region(s,a.region).x,y.y-region(s,a.region).y))[0];if(destination){a.region=destination.id;a.move=null;a.siege=null;a.attackIntel=null}}
-    }
+    concludePeace(s,actor,target);
     log(s,`${FACTIONS[actor].short[0]} and ${FACTIONS[target].short[0]} made peace; current control remains.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}议和，维持现有控制。`);
     recordDiplomacy(s,actor,target,action);
     return true;
@@ -305,20 +341,18 @@ function arrive(s,a){
 
 function economy(s){
   for(const [id,f] of Object.entries(s.factions)){
-    const owned=s.regions.filter(r=>r.owner===id),administrativeUnits=s.grandMap?new Set(owned.map(r=>r.macro)).size:owned.length;
-    const offices=officeEffects(s,id),effects=id==='rebels'?{}:activeEffects(s,id);
+    const owned=s.regions.filter(r=>r.owner===id),effects=id==='rebels'?{}:activeEffects(s,id);
     const buildings=owned.map(r=>({r,e:localBuildingEffects(r)}));
-    const troops=s.armies.filter(a=>a.owner===id).reduce((n,a)=>n+a.men,0);
-    const rate={low:.65,normal:1,high:1.4}[f.tax];
-    f.treasury+=Math.round(owned.reduce((n,r)=>n+r.tax*rate*(r.loyalty/100)*(s.grandMap?Math.max(.65,Math.min(1.35,r.population/(r.initialPopulation||r.population))):1),0)-troops/1100)+offices.treasury+(effects.treasury||0)+buildings.reduce((n,x)=>n+(x.e.treasury||0)-(x.e.upkeep||0),0)-(effects.upkeep||0);
-    f.food+=Math.round(owned.reduce((n,r)=>n+r.food,0)-troops/1200-administrativeUnits*2)+offices.food+(effects.food||0)+buildings.reduce((n,x)=>n+(x.e.food||0),0);
-    f.stability=Math.max(0,Math.min(100,f.stability+offices.stability+(effects.stability||0)+buildings.reduce((n,x)=>n+(x.e.stability||0),0)));
-    f.legitimacy=Math.max(0,Math.min(100,f.legitimacy+buildings.reduce((n,x)=>n+(x.e.legitimacy||0),0)));
-    f.manpower+=Math.round(administrativeUnits*170*(s.grandMap?Math.max(.6,Math.min(1.2,owned.reduce((n,r)=>n+(r.civicSatisfaction??60),0)/Math.max(1,owned.length)/60)):1))+(effects.manpower||0);
+    const budget=nationalBudget(s,id);
+    f.treasury+=budget.landNet;
+    f.food+=budget.foodNet;
+    f.stability=Math.max(0,Math.min(100,f.stability+budget.stability));
+    f.legitimacy=Math.max(0,Math.min(100,f.legitimacy+budget.legitimacy));
+    f.manpower+=budget.manpowerNet;
     if(f.treasury<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.morale=Math.max(20,a.morale-4))}
     if(f.food<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.men=Math.max(1,Math.round(a.men*.96)))}
     f.treasury=Math.max(-100,Math.round(f.treasury));
-    f.foodCapacity=100+administrativeUnits*25+buildings.reduce((n,x)=>n+(x.e.foodCapacity||0),0);
+    f.foodCapacity=budget.foodCapacity;
     f.food=Math.max(-100,Math.min(f.foodCapacity,Math.round(f.food)));
     owned.forEach(r=>{const governor=governorLoyaltyEffect(s,r.id),works=localBuildingEffects(r);if(s.grandMap){r.civicSatisfaction=Math.max(0,Math.min(100,(r.civicSatisfaction??r.loyalty)+({low:2,normal:0,high:-2}[f.tax])+(f.food<0?-3:0)+(works.loyalty||0)+faithSatisfaction(s,r)));r.integration=Math.max(0,Math.min(100,(r.integration??60)+(governor>0?1:0)+(works.stability>0?1:0)));}r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+(f.food<0?-2:0)+governor+(effects.loyalty||0)+(works.loyalty||0)+(s.grandMap?(r.civicSatisfaction<30?-1:r.civicSatisfaction>75?1:0)+(r.integration<35?-1:0):0)))});
   }
@@ -444,6 +478,7 @@ export function tick(s){
   refreshReportConfidence(s);
   advanceRecon(s);advanceFigures(s);
   advanceOffices(s);advanceDevelopment(s,(en,zh)=>log(s,en,zh));advanceReligion(s);economy(s);advanceNaval(s,log);seasonalWaterStress(s);advanceOperationalState(s);
+  for(const unit of s.armies.filter(a=>a.trainingRemaining>0)){unit.trainingRemaining--;if(unit.trainingRemaining===0&&unit.men>0){unit.experience=Math.min(5,unit.experience+1);unit.morale=Math.min(100,unit.morale+4);if(unit.owner===s.player)log(s,`${unit.name[0]} completed field training.`,`${unit.name[1]}完成野战训练。`)}}
   // Travel and sieges resolve before new AI orders.
   for(const a of [...s.armies]){
     if(!s.armies.includes(a))continue;
@@ -455,7 +490,11 @@ export function tick(s){
   observeArmies(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
   s.militaryAlerts=(s.militaryAlerts||[]).filter(a=>a.year*12+a.month>=s.year*12+s.month);
-  if(!s.victory&&['caesar','senate'].includes(s.player)&&s.regions.every(r=>r.owner!==(s.player==='caesar'?'senate':'caesar'))){s.victory=true;log(s,s.player==='caesar'?'The Pompeian command has collapsed. The campaign continues.':'The Caesarian command has collapsed. The campaign continues.',s.player==='caesar'?'庞培派势力瓦解。战役仍可继续。':'凯撒派势力瓦解。战役仍可继续。')}
+  if(!s.campaignOutcome&&isWar(s,'caesar','senate'))for(const faction of ['caesar','senate'].includes(s.player)?[s.player,s.player==='caesar'?'senate':'caesar']:['caesar','senate']){
+    const outcome=militaryResult(s,faction);if(outcome&&setCampaignOutcome(s,outcome)){
+      log(s,`${FACTIONS[outcome.winner].short[0]} prevailed in the civil war.`,`${FACTIONS[outcome.winner].short[1]}在内战中获胜。`);break;
+    }
+  }
   updateObjectives(s);finishBriefing(s,before);s.briefingBaseline=beginBriefing(s);evaluateAchievements(s);
   const noCommand=!s.regions.some(r=>r.owner===s.player)&&!s.armies.some(a=>a.owner===s.player&&a.men>0);
   if(s.terminalResult==='defeat'||noCommand){s.terminalResult='defeat';endCampaign(s,'defeat')}
