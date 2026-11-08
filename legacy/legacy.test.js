@@ -34,6 +34,33 @@ test('a dismissed petitioner returns later, survives export and cannot pay twice
  const heard=loadProfile(memory());assert.equal(decidePetition(heard,'doorway',0).ok,true);
  assert.equal(availablePetitions(heard).some(x=>x.id==='doorway-appeal'),false);
 });
+test('the villa case branches into delayed reprisal or relief with durable consequences',()=>{
+ const reckless=loadProfile(memory());
+ assert.equal(decidePetition(reckless,'villa-reprisal',0).ok,false);
+ assert.equal(decidePetition(reckless,'villa',1).ok,true);
+ assert.equal(availablePetitions(reckless).some(p=>p.id==='villa-reprisal'),false);
+ for(const id of ['doorway','grain'])assert.equal(decidePetition(reckless,id,0).ok,true);
+ assert.equal(availablePetitions(reckless).some(p=>p.id==='villa-reprisal'),false);
+ assert.equal(decidePetition(reckless,'inheritance',0).ok,true);
+ const restored=importProfile(exportProfile(reckless)),before=restored.politics.aristocrats,coins=restored.coins;
+ assert.equal(availablePetitions(restored).some(p=>p.id==='villa-reprisal'),true);
+ assert.equal(availablePetitions(restored).some(p=>p.id==='villa-relief'),false);
+ assert.equal(decidePetition(restored,'villa-reprisal',0).ok,true);
+ assert.equal(restored.politics.aristocrats,before+6);
+ assert.equal(restored.coins,coins+70);
+ assert.ok(restored.collectibles.includes('villa-seal'));
+ assert.ok(restored.collectibles.includes('villa-reprisal-letter'));
+ assert.equal(decidePetition(restored,'villa-reprisal',0).ok,false);
+ assert.equal(importProfile(exportProfile(restored)).coins,coins+70);
+ const fair=loadProfile(memory());assert.equal(decidePetition(fair,'villa',0).ok,true);
+ for(const id of ['doorway','grain','inheritance'])assert.equal(decidePetition(fair,id,0).ok,true);
+ assert.equal(availablePetitions(fair).some(p=>p.id==='villa-relief'),true);
+ assert.equal(availablePetitions(fair).some(p=>p.id==='villa-reprisal'),false);
+ const people=fair.politics.people;
+ assert.equal(decidePetition(fair,'villa-relief',0).ok,true);
+ assert.equal(fair.politics.people,people+7);
+ assert.ok(fair.collectibles.includes('villa-relief-ledger'));
+});
 test('race places, trophy, last place punishment and reward guard persist',()=>{
  const p=loadProfile(memory());const race={id:'race-test',driver:'Aurelia',place:1,lastDriver:'Lucius'};assert.equal(settleRace(p,race).payout,100);assert.ok(p.collectibles.includes('race-cup'));assert.ok(p.race.eliminated.includes('Lucius'));assert.equal(settleRace(p,race).ok,false);const last=settleRace(p,{id:'race-last',driver:'Aurelia',place:5,lastDriver:'Aurelia'});assert.equal(last.payout,0);assert.ok(p.race.eliminated.includes('Aurelia'));
 });
