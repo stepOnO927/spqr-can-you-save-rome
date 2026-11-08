@@ -38,6 +38,15 @@ assert.match(await page.locator('.petition').innerText(),/Catinius returns|卡�
 await page.locator('[data-petition]').first().click();await page.locator('#nav-museum').click();
 assert.match(await page.locator('.museum-grid').innerText(),/Catinius appeal tablet|卡提尼乌斯申诉板/);
 await page.evaluate(value=>localStorage.setItem('spqr-legacy-profile-v1',value),beforeAppeal);await page.reload();
+const previousLanguage=await page.evaluate(()=>localStorage.getItem('spqr-lang'));
+await page.evaluate(()=>localStorage.setItem('spqr-lang','zh'));await page.reload();
+await page.locator('#nav-shop').click();assert.match(await page.locator('.shop-card small').first().innerText(),/建筑/);
+await page.locator('#nav-museum').click();assert.match(await page.locator('.filter-bar').innerText(),/全部藏品/);
+await page.locator('#nav-city').click();await page.locator('[data-building="curia"]').click();assert.match(await page.locator('.politics').innerText(),/民众支持/);
+await page.locator('#nav-lang').click();assert.match(await page.locator('.politics').innerText(),/Popular Support/i);
+await page.locator('#nav-shop').click();assert.match(await page.locator('.shop-card small').first().innerText(),/Building/);
+await page.locator('#nav-museum').click();assert.match(await page.locator('.filter-bar').innerText(),/All collections/);
+await page.evaluate(value=>value==null?localStorage.removeItem('spqr-lang'):localStorage.setItem('spqr-lang',value),previousLanguage);await page.reload();
 await page.locator('#nav-shop').click();await page.screenshot({path:path.join(root,'outputs','legacy-shop.png')});
 await page.goto('http://spqr.test/legacy/',{waitUntil:'domcontentloaded'});assert.match(await page.locator('.hub-metrics').innerText(),/220/);
 const cityBytes=Buffer.from(await page.evaluate(()=>JSON.stringify({kind:'spqr-legacy-profile',version:2,profile:JSON.parse(localStorage.getItem('spqr-legacy-profile-v1'))})));await page.locator('#profile-file').setInputFiles({name:'spqr-legacy-city.json',mimeType:'application/json',buffer:cityBytes});assert.match(await page.locator('.notice').innerText(),/城邦资料已导入|City profile imported/);
