@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,army,region,resolveBattle,moveArmy,diplomacy,tick,recruit,previewMarch,upgradeSave,aiTurn} from '../engine.js';
+import {newGame,newGrandGame,army,region,resolveBattle,moveArmy,diplomacy,tick,recruit,previewMarch,upgradeSave,aiTurn,nationalBudget} from '../engine.js';
 import {recordMovement,eventText,recordEvent} from '../campaign-reports.js';
 import {chronicleHtml,battleReportHtml,eventDate} from '../reports-ui.js';
 import {requestReinforcements,probePositions,latestRecon,advanceRecon} from '../reconnaissance.js';
@@ -63,6 +63,22 @@ test('AI consolidates a captured city after a siege even when the player is else
  assert.deepEqual(unit.lastSiegeCapture,{regionId:'roma',year:s.year,month:s.month});
  assert.equal(s.campaignEvents.some(e=>e.type==='siege'&&e.regionId==='roma'),false,'foreign AI sieges must stay out of the player chronicle');
  assert.deepEqual(upgradeSave(JSON.parse(JSON.stringify(s))).armies.find(a=>a.id==='xiii').lastSiegeCapture,unit.lastSiegeCapture);
+});
+
+test('outnumbered AI pays for a city garrison and keeps it in the captured theater',()=>{
+ const s=newGrandGame('egypt'),unit=army(s,'xiii'),f=s.factions.caesar;
+ s.armies=s.armies.filter(a=>a.id!=='pompey');
+ unit.region='roma';unit.move=null;unit.siege={region:'roma',remaining:1};f.treasury=50;
+ const cash=f.treasury,food=f.food,manpower=f.manpower,budget=nationalBudget(s,'caesar');
+ tick(s);
+ const garrison=s.armies.find(a=>a.owner==='caesar'&&a.aiGarrisonRegion==='roma');
+ assert.ok(garrison);assert.equal(garrison.men,3000);assert.equal(garrison.move,null);
+ assert.equal(f.treasury,cash+budget.projectedNet-24);
+ assert.equal(f.food,food+budget.foodNet-6);
+ assert.equal(f.manpower,manpower+budget.manpowerNet-3000);
+ for(let i=0;i<3;i++)tick(s);
+ assert.equal(garrison.region,'roma');assert.equal(garrison.move,null);
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(s))).armies.find(a=>a.id===garrison.id).aiGarrisonRegion,'roma');
 });
 
 test('a depleted AI army withdraws toward a safer friendly theater',()=>{

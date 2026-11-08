@@ -12,13 +12,13 @@ import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks} from './grand-operations.js?v=5';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy} from './local-society.js?v=1';
 import {initializeFigures,advanceFigures} from './great-figures.js';
-import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=9';
+import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=10';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js';
 import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js';
 import {nationalBudget} from './national-budget.js';
 export {nationalBudget} from './national-budget.js';
 export {endCampaign,revealedAchievements} from './achievement-system.js';
-export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,supportPirates} from './naval.js?v=9';
+export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,supportPirates} from './naval.js?v=10';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
 export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=5';
 export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
@@ -408,18 +408,27 @@ export function aiTurn(s,owner){
   if(!owned.length)return;
   const alert=(s.militaryAlerts||[]).find(a=>a.owner===owner&&a.year*12+a.month>=s.year*12+s.month-1&&region(s,a.regionId)?.owner===owner);
   const willingToRisk=(report,men)=>['scouts','probe'].includes(report?.source)&&report.age<=3&&report.min==null&&f.treasury<30&&men>=5000;
+  const newlyRecruited=new Set(),recruitHere=(regionId,garrison=false)=>{const before=s.armies.length;if(!recruit(s,regionId,owner))return false;const unit=s.armies[before];newlyRecruited.add(unit.id);if(garrison)unit.aiGarrisonRegion=regionId;return true};
   const raiseAt=regionId=>{
     if(s.armies.some(a=>a.owner===owner&&a.region===regionId&&a.reconPending?.kind==='reinforce'))return false;
     const stationed=s.grandMap?s.armies.filter(a=>a.owner===owner&&a.region===regionId&&a.men>0&&!a.move&&!a.siege&&!a.reconPending):[];
     if(stationed.some(a=>a.men>=6000))return false;
     const front=stationed.sort((a,b)=>b.men-a.men)[0];
-    return front&&requestReinforcements(s,front.id,owner).ok||recruit(s,regionId,owner);
+    return front&&requestReinforcements(s,front.id,owner).ok||recruitHere(regionId);
   };
   if(alert&&f.treasury>=40&&f.food>=6&&f.manpower>=3000)raiseAt(alert.regionId);
   const outnumbered=s.wars.some(w=>w.includes(owner)&&s.regions.filter(r=>r.owner===w.find(id=>id!==owner)).length>owned.length*1.5);
   if(s.grandMap&&outnumbered&&f.treasury>=24&&f.food>=6&&f.manpower>=3000){
     const exposedWin=(s.battles||[]).find(b=>b.year===s.year&&b.month===s.month&&b.attacker?.owner===owner&&b.attackerWins&&region(s,b.region)?.owner===owner&&adjacent(b.region,s).some(e=>isWar(s,owner,region(s,e.to)?.owner)));
     if(exposedWin)raiseAt(exposedWin.region);
+    else{
+      const siegeWin=s.armies.find(a=>a.owner===owner&&a.lastSiegeCapture?.year===s.year&&a.lastSiegeCapture.month===s.month&&a.lastSiegeCapture.regionId===a.region&&region(s,a.region)?.owner===owner&&region(s,a.region)?.terrain==='urban');
+      if(siegeWin){
+        const garrison=s.armies.some(a=>a!==siegeWin&&a.owner===owner&&a.region===siegeWin.region&&a.men>0);
+        if(siegeWin.men>=6000&&!garrison)recruitHere(siegeWin.region,true);
+        else raiseAt(siegeWin.region);
+      }
+    }
   }
   if(owner!=='rebels'){
     const d=s.development[owner];
@@ -458,12 +467,15 @@ export function aiTurn(s,owner){
     const rally=emergency?owned.find(r=>r.port||r.terrain==='urban')||border||owned[0]:border;
     if(rally)raiseAt(rally.id);
   }
-  const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&!a.reconPending&&a.men>0&&(!alert||a.region!==alert.regionId)).sort((a,b)=>b.men-a.men);
+  const available=s.armies.filter(a=>a.owner===owner&&!newlyRecruited.has(a.id)&&!a.move&&!a.siege&&!a.reconPending&&a.men>0&&(!alert||a.region!==alert.regionId)).sort((a,b)=>b.men-a.men);
   const protectedJunctions=s.grandMap?supplyBottlenecks(s,owner):new Set(),reservedSupport=new Set();
   for(const a of available){
     if(reservedSupport.has(a.id))continue;
     const justCaptured=s.grandMap&&((s.battles||[]).some(b=>b.year===s.year&&b.month===s.month&&b.attacker.owner===owner&&b.attackerWins&&b.region===a.region)||(a.lastSiegeCapture?.regionId===a.region&&a.lastSiegeCapture.year===s.year&&a.lastSiegeCapture.month===s.month));
     if(justCaptured){
+      a.stance='hold';a.prepared=Math.min(3,(a.prepared||0)+1);continue;
+    }
+    if(s.grandMap&&a.aiGarrisonRegion===a.region&&region(s,a.region)?.owner===owner&&s.wars.some(w=>w.includes(owner))&&armySupply(s,a)>=.45){
       a.stance='hold';a.prepared=Math.min(3,(a.prepared||0)+1);continue;
     }
     if(a.men<1200){

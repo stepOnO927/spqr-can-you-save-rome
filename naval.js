@@ -237,7 +237,12 @@ function aiSupplyDestination(s,owner,f){
 function aiNavalOrders(s,owner,f){
  const cashflow=aiNavalCashflow(s,owner),treasury=s.factions[owner].treasury;
  const nearbyThreat=reportedHostileFleets(s,owner).some(r=>atWar(s,owner,r.owner)&&seaRoute(f.zone,r.zone)?.length<=1);
- if(f.reserve){if(treasury>=35&&(nearbyThreat||cashflow>3&&treasury>=75))mobilizeFleet(s,owner,f.id);return}
+ if(f.reserve){
+  const activeCashflow=cashflow-fleetUpkeepDue({...f,reserve:false})+fleetUpkeepDue(f);
+  const canSustain=treasury>=Math.max(35,26+3*Math.max(0,-activeCashflow));
+  if(canSustain&&(nearbyThreat||cashflow>3&&treasury>=75))mobilizeFleet(s,owner,f.id);
+  return;
+ }
  if(f.order&&cashflow< -6&&treasury<35&&!nearbyThreat&&!f.order.armyId&&f.order.kind!=='return'){
   const home=s.regions.filter(r=>r.owner===owner&&r.port).sort((a,b)=>(seaRoute(f.zone,portZone(a.id))?.length??99)-(seaRoute(f.zone,portZone(b.id))?.length??99))[0];
   if(home)orderFleet(s,owner,f.id,'return',home.id);
