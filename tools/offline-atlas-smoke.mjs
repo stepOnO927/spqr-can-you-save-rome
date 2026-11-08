@@ -15,6 +15,8 @@ assert.ok(physicalStyle.sources.rivers.data.features.some(feature=>feature.prope
 assert.ok(physicalStyle.sources.rivers.data.features.every(feature=>feature.properties.kind!=='Canal'));
 assert.ok(physicalStyle.sources.lakes.data.features.every(feature=>feature.properties.kind!=='Reservoir'));
 assert.deepEqual(physicalStyle.sources['elevation-fine'].bounds,[-20,18,60,58]);
+assert.equal(physicalStyle.sources['nile-delta'].data.geometry.type,'Polygon');
+assert.ok(physicalStyle.layers.some(layer=>layer.id==='nile-delta-alluvium'));
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -29,7 +31,7 @@ async function waitForTerrain(pattern,message){
   if(terrainRequests.some(path=>pattern.test(path)))return;
   await page.waitForTimeout(200);
  }
- assert.fail(message);
+ assert.fail(`${message}: ${terrainRequests.slice(-30).join(', ')}`);
 }
 page.on('pageerror',error=>errors.push(error.message));
 try{
@@ -143,6 +145,7 @@ try{
  assert.deepEqual(missingTerrain,[],'Egyptian close zoom requested missing terrain tiles');
  if(process.env.SPQR_ATLAS_EGYPT_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_SCREENSHOT});
  await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(900);
+ await waitForTerrain(/\/terrain\/9\/(29\d|30[0-7])\//,'Egyptian maximum zoom did not use bundled high-detail terrain');
  assert.deepEqual(missingTerrain,[],'Egyptian maximum zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Egyptian terrain unexpectedly needed the network');
  if(process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT});
@@ -156,5 +159,5 @@ try{
  await waitForTerrain(/\/terrain\/7\/(7[8-9]|8[0-2])\//,'Armenian zoom 7 did not use bundled mountain terrain');
  assert.deepEqual(missingTerrain,[],'Armenian mountain zoom requested missing terrain tiles');
  if(process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT});
- console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and Italy through zoom 9.');
+ console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and Italy and Egypt through zoom 9.');
 }finally{await browser.close()}
