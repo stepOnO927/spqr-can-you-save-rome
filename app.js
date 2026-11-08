@@ -8,7 +8,7 @@ import {importCampaign,downloadCampaign} from './save-files.js';
 import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js';
 import {endCampaign} from './achievement-system.js';
 import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js';
-import {budgetHtml} from './budget-ui.js';
+import {budgetHtml} from './budget-ui.js?v=2';
 import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js?v=3';
 import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=11';
 import {drawMap,mapPoint} from './map.js?v=54';

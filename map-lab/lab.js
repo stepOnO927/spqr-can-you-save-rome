@@ -14,7 +14,7 @@ import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js';
 import {endCampaign} from '../achievement-system.js';
 import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js';
 import {nationalBudget} from '../national-budget.js';
-import {budgetHtml} from '../budget-ui.js';
+import {budgetHtml} from '../budget-ui.js?v=2';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=7';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=104';
