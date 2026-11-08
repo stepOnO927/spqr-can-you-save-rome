@@ -1,9 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn} from '../engine.js';
-import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,accessibleFleet,supportPirates,fleetSpeed,fleetCargoCapacity,fleetUpkeep} from '../naval.js';
+import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,accessibleFleet,supportPirates,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue} from '../naval.js';
 import {tradeCard} from '../map-lab/naval-ui.js';
 import {armySupply} from '../grand-operations.js';
+import {nationalBudget} from '../national-budget.js';
+
+test('reserve cuts real upkeep but suspends orders and troop transports until mobilization completes',()=>{
+ const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),full=fleetUpkeepDue(f),before=nationalBudget(s,'senate');
+ assert.equal(reserveFleet(s,'senate',f.id).ok,true);assert.equal(reserveFleet(s,'senate',f.id).ok,false);
+ assert.equal(fleetUpkeepDue(f),Math.ceil(fleetUpkeep(f)*.35));assert.equal(nationalBudget(s,'senate').navyUpkeep,before.navyUpkeep-full+fleetUpkeepDue(f));
+ assert.equal(orderFleet(s,'senate',f.id,'patrol','adriatic').ok,false);assert.equal(accessibleFleet(s,'senate',f.port,2000),undefined);
+ const money=s.factions.senate.treasury,food=s.factions.senate.food;assert.equal(mobilizeFleet(s,'senate',f.id).ok,true);assert.equal(s.factions.senate.treasury,money-6);assert.equal(s.factions.senate.food,food-2);assert.equal(orderFleet(s,'senate',f.id,'patrol','adriatic').ok,false);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s))),saved=restored.naval.fleets.find(x=>x.id===f.id);assert.equal(saved.reserve,true);assert.equal(saved.mobilizing,1);
+ restored.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';advanceNaval(restored);assert.equal(saved.reserve,false);assert.equal(saved.mobilizing,0);assert.equal(fleetUpkeepDue(saved),full);assert.equal(orderFleet(restored,'senate',saved.id,'patrol','adriatic').ok,true);
+});
+test('reserve ships cannot carry merchant cargo, and loss of their harbor ends reserve',()=>{
+ const s=newGrandGame('senate'),egypt=s.naval.fleets.find(x=>x.owner==='egypt'),senate=s.naval.fleets.find(x=>x.owner==='senate');
+ assert.equal(reserveFleet(s,'egypt',egypt.id).ok,true);advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
+ assert.equal(mobilizeFleet(s,'egypt',egypt.id).ok,true);advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');assert.equal(egypt.reserve,false);advanceNaval(s);assert.notEqual(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
+ assert.equal(reserveFleet(s,'senate',senate.id).ok,true);s.regions.find(r=>r.id===senate.port).owner='caesar';s.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';advanceNaval(s);assert.equal(senate.reserve,false);assert.equal(senate.port,null);assert.ok(senate.hull<100);
+});
+test('a fleet attacked during mobilization fights at reserve readiness and the battle records it',()=>{
+ const s=newGrandGame('senate'),own=s.naval.fleets.find(x=>x.owner==='senate'),enemy=s.naval.fleets.find(x=>x.owner==='caesar');
+ assert.equal(reserveFleet(s,'senate',own.id).ok,true);assert.equal(mobilizeFleet(s,'senate',own.id).ok,true);enemy.zone=own.zone;enemy.port=null;advanceNaval(s);
+ const battle=s.naval.reports.find(r=>r.kind==='battle'&&r.participants.includes(own.id));assert.ok(battle);assert.equal(battle.snapshots[own.id].reserve,true);assert.equal(own.reserve,false);
+});
 
 test('fleets are separate from armies and move only through connected sea zones',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate');assert.ok(f);assert.equal(s.armies.some(a=>a.id===f.id),false);assert.equal(SEA_ZONES.length,11);assert.deepEqual(seaRoute('adriatic','aegean'),['ionian','aegean']);assert.equal(seaRoute('adriatic','nonesuch'),null);assert.equal(portZone('italiaS'),'adriatic');assert.equal(orderFleet(s,'senate',f.id,'intercept','aegean').ok,true);advanceNaval(s);assert.equal(f.zone,'ionian');advanceNaval(s);assert.equal(f.zone,'aegean')

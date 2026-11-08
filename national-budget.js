@@ -1,6 +1,6 @@
 import {officeEffects} from './office-system.js';
 import {activeEffects,localBuildingEffects} from './development.js';
-import {fleetUpkeep} from './naval.js';
+import {fleetUpkeepDue} from './naval.js';
 
 export function nationalBudget(s,id){
  const f=s.factions[id],owned=s.regions.filter(r=>r.owner===id),units=s.grandMap?new Set(owned.map(r=>r.macro)).size:owned.length;
@@ -10,7 +10,7 @@ export function nationalBudget(s,id){
  const armyUpkeep=troops/1100,officeIncome=offices.treasury,ideaIncome=effects.treasury||0;
  const buildingIncome=buildings.reduce((n,e)=>n+(e.treasury||0),0),buildingUpkeep=buildings.reduce((n,e)=>n+(e.upkeep||0),0),ideaUpkeep=effects.upkeep||0;
  const landNet=Math.round(tax-armyUpkeep)+officeIncome+ideaIncome+buildingIncome-buildingUpkeep-ideaUpkeep;
- const navyUpkeep=(s.naval?.fleets||[]).filter(v=>v.owner===id&&Object.values(v.ships||{}).some(Boolean)).reduce((n,v)=>n+fleetUpkeep(v)+(v.commanderId?1:0),0);
+ const navyUpkeep=(s.naval?.fleets||[]).filter(v=>v.owner===id&&Object.values(v.ships||{}).some(Boolean)).reduce((n,v)=>n+fleetUpkeepDue(v),0);
  const navalJobs=(s.naval?.jobs||[]).filter(v=>v.owner===id&&v.remaining<=0).length;
  const administrationExpense=Object.values(s.development?.[id]?.slots||{}).reduce((n,slots)=>n+Math.max(0,slots.length-1),0);
  const policy=s.religion?.[id],religiousExpense=(policy?.policy==='civic-patronage'||policy?.transition?.policy==='civic-patronage'&&policy.transition.remaining<=1)&&f.treasury>0?1:0;
