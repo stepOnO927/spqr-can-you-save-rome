@@ -21,6 +21,7 @@ try{
   await page.locator('[data-tab="development"]').click();
   assert.match(await page.locator('.inspector h2').innerText(),/Development/);
   await page.locator('[data-dev-branch="idea"]').click();
+  assert.match(await page.locator('#tech-sanctuary-protection').innerText(),/Provincial Sanctuary Protection/);
   await page.locator('[data-research="legion-training"]').click();
   assert.match(await page.locator('.dev-status').first().innerText(),/Researching/);
   for(let i=0;i<3;i++)await page.locator('#step').click();
@@ -41,6 +42,8 @@ try{
   await page.locator('#lang').click();
   await page.locator('[data-tab="development"]').click();
   assert.match(await page.locator('.inspector h2').innerText(),/文明发展/);
+  await page.locator('[data-dev-branch="idea"]').click();
+  assert.match(await page.locator('#tech-sanctuary-protection').innerText(),/行省圣所保护/);
   await page.screenshot({path:'tools/phase-xiv-ui.png'});
   for(const lang of ['en','zh']){
     const replacing=newGrandGame('caesar');

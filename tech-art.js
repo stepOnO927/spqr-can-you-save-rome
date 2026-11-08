@@ -59,7 +59,8 @@ const drawings={
  'merchant-patronage':'M10 52h44M16 47V26l16-13 16 13v21M21 34h22M24 42h16M16 47q16-11 32 0',
  'state-supported-trade':'M8 51h48M12 40h40l-6 10H18zM17 40V22h30v18M23 22v-9h18v9M22 31h20',
  'naval-engineering-education':'M8 52h48M13 45V22h38v23M19 28h26M20 36h24M32 22V11M25 48q7-7 14 0',
- 'maritime-cultural-exchange':'M8 51h48M11 37q11-11 21 0t21 0M16 42l9 8 7-8 7 8 9-8M25 24l7-11 7 11M32 13v28'
+ 'maritime-cultural-exchange':'M8 51h48M11 37q11-11 21 0t21 0M16 42l9 8 7-8 7 8 9-8M25 24l7-11 7 11M32 13v28',
+ 'sanctuary-protection':'M8 52h48M14 47V25l18-13 18 13v22M20 47V30h24v17M26 40h12M32 21v20M11 55h42'
 };
 
 export function techIllustration(item){

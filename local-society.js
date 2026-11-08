@@ -26,11 +26,10 @@ export function advanceReligion(state){
 }
 export function faithSatisfaction(state,region){
  if(!state.grandMap||state.month%3!==0)return 0;
- const accommodation=state.development?.[region.owner]?.slots?.culture?.includes('cultural-accommodation'),policy=state.religion?.[region.owner]?.policy||'customary',aligned=region.faiths?.[0]?.id===traditionFor(region.owner);
- if(policy==='local-rites')return !aligned||accommodation?1:0;
- if(policy==='civic-patronage')return aligned?1:accommodation?0:-2;
- if(accommodation)return region.integration<85?1:0;
- return region.integration<65&&!aligned?-1:0;
+ const ideas=state.development?.[region.owner]?.slots?.culture||[],accommodation=ideas.includes('cultural-accommodation'),policy=state.religion?.[region.owner]?.policy||'customary',dominant=region.faiths?.[0]?.id,aligned=dominant===traditionFor(region.owner);
+ const protectedSanctuary=ideas.includes('sanctuary-protection')&&!aligned&&region.priesthood?.tradition===dominant&&region.priesthood.influence>=35;
+ const baseline=policy==='local-rites'?(!aligned||accommodation?1:0):policy==='civic-patronage'?(aligned?1:accommodation?0:-2):accommodation?(region.integration<85?1:0):region.integration<65&&!aligned?-1:0;
+ return baseline+(protectedSanctuary?1:0);
 }
 export function religionPanel(state,lang){
  if(!state.grandMap)return '';initializeLocalSociety(state);const zh=lang==='zh',record=state.religion[state.player],f=state.factions[state.player],label={'customary':zh?'沿用地方旧制':'Customary balance','local-rites':zh?'承认地方祭仪':'Recognize local rites','civic-patronage':zh?'资助城邦祭仪':'Civic patronage'};

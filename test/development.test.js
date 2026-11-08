@@ -5,11 +5,13 @@ import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,idea
 import {developmentPanel,ideasPanel} from '../development-ui.js';
 import {edgeMonths} from '../grand-operations.js';
 import {techIllustration} from '../tech-art.js';
+import {faithSatisfaction} from '../local-society.js';
+import {nationalBudget} from '../national-budget.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
 test('every development node has its own interpretive illustration',()=>{
  const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
- assert.equal(art.length,59);assert.equal(new Set(art).size,59);
+ assert.equal(art.length,60);assert.equal(new Set(art).size,60);
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
@@ -45,7 +47,7 @@ test('both research branches render every node, including naval capabilities wit
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,25);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,26);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
@@ -91,6 +93,21 @@ test('a conflicting idea may replace its own slot but cannot coexist or be equip
   assert.equal(d.slots.diplomacy[0],'diplomatic-accommodation');
   assert.equal(activeEffects(s,'caesar').diplomacy,5);
   assert.equal(activeEffects(s,'caesar').diplomacyPressure,undefined);
+});
+
+test('sanctuary protection helps only attended local rites and carries a monthly cost',()=>{
+  const s=newGrandGame('caesar'),d=development(s,'caesar'),province=s.regions.find(r=>r.id==='egypt');
+  province.owner='caesar';province.integration=30;s.month=3;
+  assert.equal(faithSatisfaction(s,province),-1);
+  const before=nationalBudget(s,'caesar').ideaUpkeep;
+  d.slots.culture[0]='sanctuary-protection';
+  assert.equal(faithSatisfaction(s,province),0);
+  assert.equal(nationalBudget(s,'caesar').ideaUpkeep,before+2);
+  province.priesthood.influence=20;assert.equal(faithSatisfaction(s,province),-1);
+  province.priesthood.influence=40;s.religion.caesar.policy='local-rites';assert.equal(faithSatisfaction(s,province),2);
+  const aligned=s.regions.find(r=>r.id==='roma');aligned.owner='caesar';assert.equal(faithSatisfaction(s,aligned),0);
+  const idea=IDEAS.find(x=>x.id==='sanctuary-protection');assert.match(idea.source.url,/verres24_3/);
+  for(const [lang,label] of [['en','Provincial rites support'],['zh','地方祭仪支持']])assert.match(developmentPanel(s,lang,'idea'),new RegExp(label));
 });
 
 test('material knowledge permits delayed construction with terrain, deposits, materials and upkeep',()=>{
