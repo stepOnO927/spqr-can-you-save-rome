@@ -9,7 +9,7 @@ test('between-turn dispatches appear once with their original dates without impo
  const messages=s.chronicle.entries.filter(e=>e.en==='An offer arrived.');assert.equal(messages.length,1);assert.equal(messages[0].month,2);assert.ok(!s.chronicle.entries.some(e=>e.en==='SECRET'));
  const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));syncChronicleDispatches(loaded);assert.equal(loaded.chronicle.entries.filter(e=>e.en==='An offer arrived.').length,1);
 });
-import {finalizeCampaign} from '../legacy.js?v=dynasty-id-3';
+import {finalizeCampaign} from '../legacy.js?v=phase9-relations-1';
 import {appointCommander} from '../command-appointments.js';
 import {planSuccession} from '../governance.js';
 

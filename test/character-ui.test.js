@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=dynasty-id-3';
-import {createCharacterUI} from '../map-lab/character-ui.js?v=dynasty-id-3';
+import {createCharacterUI} from '../map-lab/character-ui.js?v=phase9-relations-1';
 import {addReport} from '../character-system.js?v=dynasty-id-3';
 import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=dynasty-id-3';
 import {createFictionalPerson} from '../dynasties.js';
@@ -292,6 +292,15 @@ test('strength ranges and compatible evidence are explained in the intelligence 
 test('envoy relation missions explain the delayed diplomatic benefit before confirmation',()=>{
  const prior=globalThis.document,s=newGame('senate'),content=new Element();globalThis.document={createElement:tag=>new Element(tag)};
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0],subject=box.querySelector('#mission-subject');assert.match(box.innerHTML,/改善关系（仅使者）/);subject.value='relations';box.missions.find(x=>x.dataset.mission==='envoy').onclick();const feedback=box.querySelector('#mission-feedback');assert.match(feedback.textContent,/双方关系最多提高8/);assert.match(feedback.textContent,/可能拒绝/);feedback.children[0].onclick();assert.equal(s.operations[0].subject,'relations');assert.equal(s.operations[0].type,'envoy');assert.ok(s.operations[0].remaining>=3)}finally{globalThis.document=prior}
+});
+
+test('personal trust displays complete fictional IDs and hides foreign-only relationships after loading',()=>{
+ const prior=globalThis.document,panel=new Element();let s=newGame('caesar');
+ s.world.personalRelations={'fictional:1:fictional:2':{trust:41,meetings:2},'fictional:1:fictional:3':{trust:23,meetings:1},'fictional:3:fictional:4':{trust:88,meetings:3}};
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
+ try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('fictional:1');let html=panel.children.map(x=>x.innerHTML).join('');assert.match(html,/莉维娅·玛尔基娅: 41/);assert.match(html,/奥卢斯·卡西亚努斯: 23/);
+  panel.children=[];ui.show('fictional:3');html=panel.children.map(x=>x.innerHTML).join('');assert.match(html,/普布利乌斯·瓦雷努斯: 23/);assert.doesNotMatch(html,/: 88/);
+ }finally{globalThis.document=prior}
 });
 
 test('foreign portrait presentation changes only with the viewer’s identity evidence',()=>{
