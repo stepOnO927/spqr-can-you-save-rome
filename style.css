@@ -48,3 +48,6 @@ body{min-width:0;background:#292d29}.top{height:54px;padding:0 12px;gap:15px;bac
 @media(max-width:850px){.board-grid,.board-lower{grid-template-columns:1fr}.chessboard{padding:18px 14px 125px}.board-mast h1{font-size:28px}.board-sheet{padding:14px}.board-evidence{order:-1}.board-network{min-width:640px}}
 .board-network{min-width:850px}.board-marker .board-marker-label{font-size:15px}
 @media(max-width:850px){.board-network{min-width:760px}}
+
+/* Keep the complete setup usable on smaller screens. */
+.setup-panel{max-height:92vh;overflow:auto}.setup-feedback:not(:empty){padding:8px;color:#842f28;background:#f5e5d0}.setup-panel #setup-language{float:right;padding:6px 9px}.setup-panel label{display:block}.setup-panel label:has(input[type=checkbox]){margin:12px 0;line-height:1.4}
