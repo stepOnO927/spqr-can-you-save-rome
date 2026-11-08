@@ -136,6 +136,8 @@ assert.equal(orderFleet(battleCampaign,'senate','senate-adriatic','intercept','a
 advanceNaval(battleCampaign);
 assert.ok(battleCampaign.naval.reports.some(r=>r.kind==='battle'));
 await page.locator('#upload-save-file').setInputFiles({name:'naval-battle.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(battleCampaign))});
+assert.match(await page.locator('.identity strong').innerText(),/ITALIA/);
+assert.doesNotMatch(await page.locator('.identity strong').innerText(),/埃及|Egypt/);
 await page.locator('#naval').click();await page.locator('[data-naval-tab="reports"]').click();
 assert.match(await page.locator('.naval-content').innerText(),/敌舰损失目击估计/);
 await page.locator('#language').click();await page.locator('[data-naval-tab="reports"]').click();

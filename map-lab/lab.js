@@ -285,6 +285,7 @@ function renderHudBase(){document.querySelector('#development').textContent=lang
 
 function renderHud(){
  renderHudBase();
+ if(['caesar','senate'].includes(state.player))document.querySelector('.identity strong').innerHTML='ITALIA <i>·</i> XLIX BC';
  endButton.textContent=lang==='zh'?'结束战役':'END CAMPAIGN';endButton.disabled=!!state.achievementState?.finalized;document.querySelector('#advance').disabled=!!state.achievementState?.finalized;document.querySelector('#play-time').disabled=!!state.achievementState?.finalized;refreshEnding();
  atlasFocus.textContent=lang==='zh'?(document.body.classList.contains('atlas-focus')?'返回':'观图'):(document.body.classList.contains('atlas-focus')?'BACK':'MAP');atlasFocus.title=lang==='zh'?'切换地图专注视图':'Toggle map focus view';
  settingsButton.textContent=lang==='zh'?'设置':'SETTINGS';
