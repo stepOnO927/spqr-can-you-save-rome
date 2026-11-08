@@ -52,6 +52,19 @@ test('an AI army consolidates a captured theater before advancing again',()=>{
  assert.equal(unit.region,'italiaN');assert.equal(unit.move,null);assert.equal(unit.stance,'hold');
 });
 
+test('AI consolidates a captured city after a siege even when the player is elsewhere',()=>{
+ const s=newGrandGame('egypt'),unit=army(s,'xiii');
+ s.armies=s.armies.filter(a=>a.id!=='pompey');
+ unit.region='roma';unit.move=null;unit.siege={region:'roma',remaining:1};
+ tick(s);
+ assert.equal(region(s,'roma').owner,'caesar');
+ assert.equal(unit.move,null);
+ assert.equal(unit.stance,'hold');
+ assert.deepEqual(unit.lastSiegeCapture,{regionId:'roma',year:s.year,month:s.month});
+ assert.equal(s.campaignEvents.some(e=>e.type==='siege'&&e.regionId==='roma'),false,'foreign AI sieges must stay out of the player chronicle');
+ assert.deepEqual(upgradeSave(JSON.parse(JSON.stringify(s))).armies.find(a=>a.id==='xiii').lastSiegeCapture,unit.lastSiegeCapture);
+});
+
 test('a depleted AI army withdraws toward a safer friendly theater',()=>{
  const s=newGrandGame('egypt'),unit=army(s,'viii');
  unit.region='t048';unit.men=800;region(s,'narbo').owner='senate';

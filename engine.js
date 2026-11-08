@@ -462,7 +462,8 @@ export function aiTurn(s,owner){
   const protectedJunctions=s.grandMap?supplyBottlenecks(s,owner):new Set(),reservedSupport=new Set();
   for(const a of available){
     if(reservedSupport.has(a.id))continue;
-    if(s.grandMap&&(s.battles||[]).some(b=>b.year===s.year&&b.month===s.month&&b.attacker.owner===owner&&b.attackerWins&&b.region===a.region)){
+    const justCaptured=s.grandMap&&((s.battles||[]).some(b=>b.year===s.year&&b.month===s.month&&b.attacker.owner===owner&&b.attackerWins&&b.region===a.region)||(a.lastSiegeCapture?.regionId===a.region&&a.lastSiegeCapture.year===s.year&&a.lastSiegeCapture.month===s.month));
+    if(justCaptured){
       a.stance='hold';a.prepared=Math.min(3,(a.prepared||0)+1);continue;
     }
     if(a.men<1200){
@@ -542,7 +543,7 @@ export function tick(s){
   for(const a of [...s.armies]){
     if(!s.armies.includes(a))continue;
     if(a.move){a.move.remaining--;if(a.move.remaining<=0)arrive(s,a)}
-    else if(a.siege){const siegeRegion=region(s,a.siege.region);if(!siegeRegion||a.region!==siegeRegion.id||a.men<500||!isWar(s,a.owner,siegeRegion.owner)){a.siege=null;continue}a.siege.remaining--;if(a.siege.remaining<=0){const r=siegeRegion,previousOwner=r.owner,witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;recordSiege(s,r,a,'completed');recordControl(s,r,previousOwner,'siege',{armyId:a.id,attacker:a.owner});if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
+    else if(a.siege){const siegeRegion=region(s,a.siege.region);if(!siegeRegion||a.region!==siegeRegion.id||a.men<500||!isWar(s,a.owner,siegeRegion.owner)){a.siege=null;continue}a.siege.remaining--;if(a.siege.remaining<=0){const r=siegeRegion,previousOwner=r.owner,witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;a.lastSiegeCapture={regionId:r.id,year:s.year,month:s.month};recordSiege(s,r,a,'completed');recordControl(s,r,previousOwner,'siege',{armyId:a.id,attacker:a.owner});if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   rebellion(s);
   resolveInquiries(s);advanceOperations(s);advanceAgentRequests(s);advanceCharacters(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);advanceDisputes(s);advanceConspiracies(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);
