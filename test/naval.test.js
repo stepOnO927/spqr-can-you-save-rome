@@ -25,6 +25,21 @@ test('AI reserves an unaffordable docked fleet and recommissions it after a date
 test('AI withdraws an unaffordable patrol to port before laying it up',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='caesar');s.naval.fleets.find(x=>x.owner==='senate').zone='tyrrhenian';f.port=null;f.order={kind:'patrol',target:f.zone,path:[]};s.factions.caesar.treasury=20;advanceNaval(s);assert.equal(f.order?.kind,'return');advanceNaval(s);assert.equal(f.port,'cisalpine');assert.equal(f.reserve,true);
 });
+test('critically damaged and unsupplied fleets can retreat but cannot start a new mission',()=>{
+ const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate');
+ s.naval.fleets.find(x=>x.owner==='caesar').zone='western';
+ f.port=null;f.zone='ionian';f.hull=20;f.supply=5;
+ assert.equal(orderFleet(s,'senate',f.id,'intercept','aegean').reason,'condition');
+ assert.equal(orderFleet(s,'senate',f.id,'return','italiaS').ok,true);
+ advanceNaval(s);advanceNaval(s);
+ assert.equal(f.port,'italiaS');assert.equal(f.order,null);
+ advanceNaval(s);assert.ok(f.supply>5);
+ const ai=newGrandGame('senate'),enemy=ai.naval.fleets.find(x=>x.owner==='caesar');
+ ai.naval.fleets.find(x=>x.owner==='senate').zone='western';
+ enemy.port=null;enemy.zone='ionian';enemy.hull=20;enemy.supply=5;
+ advanceNaval(ai);assert.equal(enemy.order?.kind,'return');
+ advanceNaval(ai);advanceNaval(ai);assert.equal(enemy.port,'cisalpine');
+});
 
 test('reserve cuts real upkeep but suspends orders and troop transports until mobilization completes',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),full=fleetUpkeepDue(f),before=nationalBudget(s,'senate');

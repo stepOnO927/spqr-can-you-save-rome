@@ -119,7 +119,7 @@ export function orderFleet(s,owner,id,kind,target){
  }
  const path=seaRoute(f.zone,targetZone);
  if(!path)return {ok:false,reason:'sea'};
- if(f.supply<15||f.hull<25)return {ok:false,reason:'condition'};
+ if(!ships(f)||f.hull<=0||kind!=='return'&&(f.supply<15||f.hull<25))return {ok:false,reason:'condition'};
  const returning=kind==='return'&&f.order?.kind==='supply'?f.order.cargo:0;
  if(f.order?.kind==='supply'&&kind!=='return')report(s,{kind:'supply-loss',owner,port:f.order.targetPort,cargo:f.order.cargo,reason:'cancelled'});
  if(kind==='supply')s.factions[owner].food-=cargo;
