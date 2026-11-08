@@ -96,7 +96,8 @@ function render(){
 }
 
 function stop(){playing=false;if(timer){clearInterval(timer);timer=null}}
-function setPlaying(on){stop();playing=on;if(on)timer=setInterval(()=>{tick(state);render()},speed===1?1500:speed===2?800:350);render()}
+function advanceMonth(){const previous=state.chronicle?.nextId||1;tick(state);const critical=state.chronicle?.entries.find(e=>e.id>=previous&&e.priority==='critical');if(critical){if(playing&&localStorage.getItem('spqr-auto-pause-critical')==='on')stop();flash((lang==='zh'?'紧急事件：':'CRITICAL: ')+formatChronicleEntry(critical,lang))}else render()}
+function setPlaying(on){stop();playing=on;if(on)timer=setInterval(advanceMonth,speed===1?1500:speed===2?800:350);render()}
 function slot(action){const choice=chosenSlot;if(!['1','2','3'].includes(choice))return;const key=`spqr-save-${choice}`;if(action==='save'){try{localStorage.setItem(key,JSON.stringify(state));flash(`${t('saved')} ${choice}`)}catch{flash(lang==='zh'?'浏览器无法保存存档。':'The browser could not save this campaign.')}}else{const raw=localStorage.getItem(key);if(!raw){flash(t('empty'));return}try{const loaded=upgradeSave(JSON.parse(raw));if(!['caesar','senate'].includes(loaded.player)){flash(t('oldFaction'));return}state=loaded;stop();if(state.world.dynasties?.scenario){tab='government';panelOpen=true}chosenFaction=['caesar','senate'].includes(state.player)?state.player:'caesar';selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0].id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;ordering=false;flash(`${t('loaded')} ${choice}`)}catch{flash(lang==='zh'?'存档无法读取。':'This save could not be read.')}}}
 function bind(){
   const finalize=document.querySelector('#finalize-campaign');if(finalize)finalize.onclick=()=>{const result=finalizeCampaign(state);if(!result.ok)return;try{const saved=archives();saved.unshift(result.archive);localStorage.setItem('spqr-legacy-archive',JSON.stringify(saved.slice(0,20)))}catch{delete state.world.dynasties.finalized;flash(lang==='zh'?'无法写入本地档案。':'Could not write the local archive.');return}render()};
@@ -114,7 +115,7 @@ function bind(){
   document.querySelectorAll('[data-dynasty-person]').forEach(el=>el.onclick=()=>{const c=state.world.characters[el.dataset.dynastyPerson],family=state.world.dynasties.families[c.familyId],parents=[...c.parents,...c.adoptiveParents].map(id=>n(CHARACTER_CATALOG[id]?.name)).join(lang==='zh'?'、':', ')|| (lang==='zh'?'未知':'Unknown');flash(`${n(CHARACTER_CATALOG[c.id]?.name)} · ${lang==='zh'?'家族':'Family'} ${n(family?.name)} · ${lang==='zh'?'父母':'Parents'} ${parents}`)});
   document.querySelector('#save').onclick=()=>slot('save');document.querySelector('#load').onclick=()=>slot('load');
   document.querySelector('#play').onclick=()=>setPlaying(!playing);
-  document.querySelector('#step').onclick=()=>{tick(state);render()};
+  document.querySelector('#step').onclick=advanceMonth;
   document.querySelector('#speed').onclick=()=>{speed=speed===1?2:speed===2?4:1;if(playing)setPlaying(true);else render()};
   document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>{tab=el.dataset.tab;panelOpen=true;render()});
   const chooseRegion=id=>{if(ordering&&selectedArmy){const result=moveArmy(state,selectedArmy,id);if(!result.ok){flash(t('invalid'));return}ordering=false}selectedRegion=id;tab='map';panelOpen=true;render()};
