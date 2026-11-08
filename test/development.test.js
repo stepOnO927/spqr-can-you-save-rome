@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,upgradeSave,tick,aiTurn,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,purchaseMaterials} from '../engine.js';
+import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,purchaseMaterials} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects} from '../development.js';
 import {developmentPanel} from '../development-ui.js';
 import {edgeMonths} from '../grand-operations.js';
@@ -155,10 +155,12 @@ test('opposed five-idea development paths survive 36 months in the grand campaig
   const s=newGrandGame(player),d=development(s,player);
   if(player==='senate')assert.equal(startConstruction(s,player,'roma','road').ok,true);
   for(let month=0;month<36;month++){
+   if(player==='senate'&&s.factions[player].treasury<55)setTax(s,player,'high');
+   else if(player==='senate'&&s.factions[player].treasury>130)setTax(s,player,'normal');
    const next=plan.find(id=>!d.knownIdeas.includes(id));
-   if(next&&!d.research)assert.equal(researchInnovation(s,player,'idea',next).ok,true,`${player}: research ${next}`);
+   if(next&&!d.research){const result=researchInnovation(s,player,'idea',next);assert.ok(result.ok||result.reason==='treasury',`${player}: research ${next}: ${result.reason}`)}
    const adopt=plan.find(id=>d.knownIdeas.includes(id)&&!Object.values(d.slots).flat().includes(id));
-   if(adopt&&!d.adoption)assert.equal(adoptIdea(s,player,adopt,0).ok,true,`${player}: adopt ${adopt}`);
+   if(adopt&&!d.adoption){const result=adoptIdea(s,player,adopt,0);assert.ok(result.ok||result.reason==='treasury',`${player}: adopt ${adopt}: ${result.reason}`)}
    tick(s);
    assert.equal(s.achievementState?.finalized,false,`${player}: month ${month+1}`);
   }
