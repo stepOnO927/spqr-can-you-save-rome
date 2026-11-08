@@ -38,11 +38,15 @@ try{
  await page.locator('#map-mode').selectOption('military');
  assert.ok(await page.locator('.density-counter').count());
  assert.match(await page.locator('.legend').innerText(),/己方兵力/);
+ assert.match(await page.locator('#map-mode-note').innerText(),/米白色◎数字/);
+ assert.equal(await page.locator('.legend .swatch').count(),0,'military strength must not use faction-color swatches');
  assert.doesNotMatch(await page.locator('.legend').innerText(),/Own: over 7,000/);
  await page.locator('#map-mode').selectOption('political');
  await page.locator('#language').click();
  await page.locator('#map-mode').selectOption('military');
  assert.match(await page.locator('.legend').innerText(),/Friendly troops/);
+ assert.match(await page.locator('#map-mode-note').innerText(),/ivory ◎ counters/);
+ assert.equal(await page.locator('.legend .swatch').count(),0);
  await page.locator('#guide-restart').click();await page.locator('#roman-faction').selectOption('senate');await page.locator('#difficulty').selectOption('standard');await page.locator('#start-free').click();
  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('grand-campaign')),true,'free play must retain the grand campaign');
  assert.equal(await page.locator('.grand-site').count(),120);
