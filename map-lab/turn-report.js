@@ -1,5 +1,18 @@
 import {reportedControl} from '../control-intelligence.js?v=phase-x-1';
 
+// Use only losses directly recorded for the player. A later foreign transfer
+// does not update the alert until the player obtains a new control report.
+export function unrecoveredOwnLosses(state){
+ const seen=new Set(),losses=[];
+ for(const entry of state.chronicle?.entries||[]){
+  if(entry.kind!=='territory'||entry.previous!==state.player||seen.has(entry.region))continue;
+  seen.add(entry.region);
+  if(state.regions.some(r=>r.id===entry.region&&r.owner===state.player))continue;
+  losses.push({region:entry.region,name:entry.place,year:entry.year,month:entry.month});
+ }
+ return losses;
+}
+
 // Preserve the observation date and provenance, not just the controller: a
 // traveler arriving now may describe an earlier and possibly mistaken sighting.
 export function controlReportChanges(state,before,labels){

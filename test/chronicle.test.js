@@ -14,7 +14,7 @@ import {appointCommander} from '../command-appointments.js';
 import {planSuccession} from '../governance.js';
 
 test('36 monthly turns preserve a full chronology and three evidence-based annual reviews',()=>{
- const s=newGame('caesar');for(let i=0;i<36;i++)tick(s);
+ const s=newGame('caesar');s.wars=[];for(let i=0;i<36;i++)tick(s);
  const records=s.chronicle.entries.filter(e=>e.kind==='economy'&&e.change==='monthly');
  assert.equal(records.length,36);assert.equal(s.chronicle.monthly.length,36);assert.equal(s.chronicle.annual.length,3);
  for(const review of s.chronicle.annual)assert.equal(review.economy.treasury,s.chronicle.entries.filter(e=>e.year===review.year&&e.kind==='economy').reduce((n,e)=>n+e.delta.treasury,0));
@@ -67,7 +67,7 @@ test('diplomatic decisions enter the Chronicle before month advance, save and fi
 });
 
 test('December decisions appear by name in the annual review without double counting',()=>{
- const s=newGame('caesar');for(let i=0;i<11;i++)tick(s);assert.equal(s.month,12);s.factions.caesar.treasury=Math.max(100,s.factions.caesar.treasury);region(s,'mauretania').owner='mauretania';region(s,'cisalpine').owner='caesar';s.wars=s.wars.filter(w=>!w.includes('mauretania'));assert.equal(diplomacy(s,'caesar','mauretania','improve'),true);syncChronicleDispatches(s);const report=s.chronicle.annual[0];assert.ok(report.diplomaticEvents.some(e=>/improved relations/.test(e.en)&&/关系/.test(e.zh)));assert.equal(report.diplomacy,report.diplomaticEvents.length);syncChronicleDispatches(s);assert.equal(report.diplomaticEvents.length,1);
+ const s=newGame('caesar');s.wars=[];for(let i=0;i<11;i++)tick(s);assert.equal(s.month,12);s.factions.caesar.treasury=Math.max(100,s.factions.caesar.treasury);region(s,'mauretania').owner='mauretania';region(s,'cisalpine').owner='caesar';s.wars=s.wars.filter(w=>!w.includes('mauretania'));assert.equal(diplomacy(s,'caesar','mauretania','improve'),true);syncChronicleDispatches(s);const report=s.chronicle.annual[0];assert.ok(report.diplomaticEvents.some(e=>/improved relations/.test(e.en)&&/关系/.test(e.zh)));assert.equal(report.diplomacy,report.diplomaticEvents.length);syncChronicleDispatches(s);assert.equal(report.diplomaticEvents.length,1);
 });
 
 test('new commander appointment can be found by character before advancing time',()=>{

@@ -1,8 +1,8 @@
-import {syncChronicleDispatches} from './chronicle.js?v=dynasty-id-3';
+import {syncChronicleDispatches} from './chronicle.js?v=defeat-1';
 import {CHARACTER_CATALOG} from './characters.js?v=dynasty-id-3';
 import {initializeDynasties} from './dynasties.js?v=dynasty-id-3';
 
-export function canFinalizeCampaign(s){return !!(s.victory||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
+export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 
 // Older ruler histories use ':' between IDs, while simulated IDs themselves
 // contain a colon. Keep their existing save format and recover complete IDs.
@@ -38,7 +38,7 @@ export function finalizeCampaign(s){
   chronicle:(s.chronicle?.entries||[]).map(e=>({...e})),
   monthlyReports:(s.chronicle?.monthly||[]).map(x=>({...x})),
   annualReviews:(s.chronicle?.annual||[]).map(x=>({...x})),
-  victory:!!s.victory,peacefulVictory:!!s.peacefulVictory,scenario:d.scenario?{...d.scenario}:null};
+  victory:!!s.victory,defeat:!!s.defeat,defeatedBy:s.defeatedBy||null,peacefulVictory:!!s.peacefulVictory,scenario:d.scenario?{...d.scenario}:null};
  // Compute and reveal earned distinctions only after an official finalization.
  // They are archival recognition, with no permanent gameplay reward to duplicate.
  archive.achievements=[];

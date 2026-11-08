@@ -15,7 +15,7 @@ test('material research unlocks a local building, with separate construction and
  assert.ok(MATERIALS.every(i=>i.source.startsWith('https://')&&i.description[0]&&i.description[1]));
 });
 test('five category slots and delayed active policy effects, negative effects, conflicts and expansion',()=>{
- const s=newGame(),x=s.inventions.caesar;assert.deepEqual(CATEGORIES.map(([id])=>x.slots[id]),[1,1,1,1,1]);
+ const s=newGame();s.wars=[];const x=s.inventions.caesar;assert.deepEqual(CATEGORIES.map(([id])=>x.slots[id]),[1,1,1,1,1]);
  assert.equal(IDEAS.length,25);assert.equal(startResearch(s,'caesar','tax_farming').ok,true);advance(s,4);
  assert.equal(activeModifiers(s,'caesar').tax||0,0);assert.equal(equipIdea(s,'caesar','tax_farming').ok,true);assert.equal(activeModifiers(s,'caesar').tax||0,0);advance(s,2);
  assert.equal(activeModifiers(s,'caesar').tax,.12);assert.equal(activeModifiers(s,'caesar').stability,-1);
