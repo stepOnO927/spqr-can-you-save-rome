@@ -151,7 +151,7 @@ function resolveArmedMovement(s,m){
  if(!rebelAlive){if(foldForce(s,m,false)){m.stage='defeated';m.outcome='military_defeat'}return}
  if(!governmentAlive&&foldForce(s,m,true,{inheritWars:true})){applyDemand(s,m);m.stage='victorious';m.outcome='government_change';if(parent===s.player)log(s,'A movement won the civil war and established a new government.','政治运动赢得内战并建立了新政府。')}
 }
-export function advanceMovements(s){
+export function advanceMovements(s,{autoplayPlayer=false}={}){
  initializeMovements(s);
  advanceMovementContacts(s);
  for(const m of s.world.movements.filter(x=>x.stage==='armed'))resolveArmedMovement(s,m);
@@ -183,7 +183,7 @@ export function advanceMovements(s){
   if(pressure>=75&&r.population.satisfaction<20)m.radicalism=clamp(m.radicalism+1,0,100);else if(pressure<45)m.radicalism=Math.max(0,m.radicalism-1);
   if(m.months>=12&&m.supporters<Math.max(300,Math.floor(r.population.total*.005))){returnFunds(m,r);m.stage='collapsed';m.outcome='lost_support';continue}
   if(m.stage==='crisis'&&pressure>=75&&m.radicalism>=5&&m.leader)raiseUprising(s,m,r);
-  if(m.parent!==s.player&&active(m)&&m.stage!=='armed'&&s.month%6===0&&s.factions[m.parent].treasury>35&&share>=.05)respondToMovement(s,m.parent,m.id,'reform');
+  if((autoplayPlayer||m.parent!==s.player)&&active(m)&&m.stage!=='armed'&&s.month%6===0&&s.factions[m.parent].treasury>35&&share>=.05)respondToMovement(s,m.parent,m.id,'reform');
  }
  observeMovements(s);
 }

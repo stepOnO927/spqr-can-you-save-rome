@@ -2,7 +2,7 @@ import {ROUTES} from './data.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=grand-chessboard-2';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const rel=(s,a,b)=>s.relations[pair(a,b)]??0;
@@ -40,10 +40,10 @@ export function coalitionInterest(s,actor,target,estimateStrength){
  const perceivedThreat=enemy||balance.border&&(rel(s,actor,target)<-15||balance.estimate>balance.own*1.35||balance.ratio>1&&balance.pressure>=6.5);
  return {interested:perceivedThreat&&!activeAgreement(s,actor,target,'non_aggression'),border:balance.border,enemy,estimate:balance.estimate,balance};
 }
-export function formCoalition(s,leader,members,target,estimateStrength){
+export function formCoalition(s,leader,members,target,estimateStrength,{allowPlayer=false}={}){
  const parties=[...new Set([leader,...members])];
  if(parties.length<3||parties.length>5||parties.includes(target)||typeof estimateStrength!=='function')return {ok:false,reason:'members'};
- if(leader!==s.player&&parties.includes(s.player))return {ok:false,reason:'player_decision'};
+ if(!allowPlayer&&leader!==s.player&&parties.includes(s.player))return {ok:false,reason:'player_decision'};
  if(parties.some(id=>!s.factions[id]||!s.regions.some(r=>r.owner===id)||s.factions[id].treasury<5))return {ok:false,reason:'resources'};
  if(!s.factions[target]||parties.some((id,i)=>parties.slice(i+1).some(other=>war(s,id,other))||s.alliances.some(a=>a.includes(id)&&a.includes(target))))return {ok:false,reason:'conflict'};
  if(parties.some(id=>id!==leader&&(rel(s,id,leader)<15||rel(s,id,leader)-(100-(s.diplomaticCredibility?.[leader]??100))*.4<15)))return {ok:false,reason:'relations'};

@@ -29,8 +29,8 @@ export function strategicPersonality(person){
 // orders or positions are consulted, and old patterns stop influencing orders.
 export function observeAttackPattern(s,actor){
  s.world.aiAdaptation||={};const state=s.world.aiAdaptation[actor]||={seen:[],attacks:[]},now=s.year*12+s.month,seen=new Set(state.seen);
- for(const battle of (s.battles||[]).slice(0,50))if(!seen.has(battle.id)&&battle.attacker?.owner===s.player&&battle.defender?.owner===actor){
-  seen.add(battle.id);state.attacks.push({id:battle.id,region:battle.region,year:battle.year,month:battle.month});
+ for(const battle of (s.battles||[]).slice(0,50))if(!seen.has(battle.id)&&battle.attacker?.owner!==actor&&battle.defender?.owner===actor){
+  seen.add(battle.id);state.attacks.push({id:battle.id,opponent:battle.attacker.owner,region:battle.region,year:battle.year,month:battle.month});
  }
  state.seen=[...seen].slice(-100);state.attacks=state.attacks.filter(x=>{const age=now-(x.year*12+x.month);return age>=0&&age<=24}).slice(-24);
  const counts=new Map();for(const x of state.attacks)counts.set(x.region,(counts.get(x.region)||0)+1);

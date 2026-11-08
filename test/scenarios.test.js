@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newScenario} from '../scenarios.js?v=dynasty-id-3';
-import {tick,upgradeSave} from '../engine.js?v=dynasty-id-3';
+import {newScenario} from '../scenarios.js?v=multipolar-2';
+import {tick,upgradeSave} from '../engine.js?v=multipolar-2';
 import {potentialConspirators} from '../conspiracies.js?v=dynasty-id-3';
-import {leaveCoalition} from '../coalitions.js?v=grand-chessboard-2';
-import {advancePersonalPlans} from '../personal-plans.js?v=grand-chessboard-2';
+import {leaveCoalition} from '../coalitions.js?v=multipolar-2';
+import {advancePersonalPlans} from '../personal-plans.js?v=multipolar-2';
 
 test('both Roman sides can start and reload each required scenario',()=>{
  for(const player of ['caesar','senate'])for(const kind of ['historical','ambitious_general','three_state_coalition','civic_movement','revolution']){

@@ -1,0 +1,26 @@
+import {newGame,tick} from '../engine.js?v=multipolar-2';
+import assert from 'node:assert/strict';
+
+// Identical unforced openings, different seeded random streams; both the
+// fully automated world and an ordinary passive Roman player are exercised.
+const seeds=Number(process.env.SPQR_SEEDS||6),months=Number(process.env.SPQR_MONTHS||24),actors=['caesar','egypt','parthia','armenia'];
+if(!Number.isInteger(seeds)||seeds<2||!Number.isInteger(months)||months<1)throw Error('Invalid simulation dimensions');
+function simulate(seed,autoplayPlayer,regionalTension=false){
+ const s=newGame('caesar');s.difficulty='expert';s.seed=seed;s.world.intelSeed=(seed^0x53a2)>>>0;s.world.dynasties.seed=(seed^0xd3c1)>>>0;const histories=new Set(),wars=new Set(),agreements=new Set(),operations=new Set(),goals=new Set();
+ // A second fictional opening changes incentives, not diplomatic outcomes:
+ // the existing Roman war is unchanged and no new war or alliance is forced.
+ if(regionalTension){s.relations['parthia:senate']=-45;s.factions.parthia.food=100;s.factions.parthia.treasury=100;s.factions.parthia.stability=80;for(const a of s.armies.filter(x=>x.owner==='parthia'))a.men=15000;Object.assign(s.world.characters.orodes,{ambition:95,influence:85})}
+ for(let i=0;i<months;i++){
+  tick(s,{autoplayPlayer});
+  for(const [actor,p] of Object.entries(s.world.multipolarPlans||{})){histories.add(actor);if(p.lastAction)goals.add(`${actor}:${p.lastAction.kind}:${p.lastAction.target}`)}
+  for(const w of s.wars)wars.add([...w].sort().join(':'));
+  for(const t of s.agreements||[])agreements.add(`${t.type}:${t.parties.slice().sort().join(':')}`);
+  for(const o of s.operations||[])operations.add(`${o.actor}:${o.type}:${o.target}:${o.status}`);
+ }
+ for(const actor of actors.filter(x=>autoplayPlayer||x!==s.player))assert.ok(histories.has(actor),`${actor} did not review the situation`);
+ return {seed,reviewed:[...histories].sort(),wars:[...wars].sort(),agreements:[...agreements].sort(),operations:[...operations].sort(),decisions:[...goals].sort(),peaceLetters:(s.inquiries||[]).filter(x=>x.subject==='peace').map(x=>`${x.actor}:${x.target}:${x.status}`).sort()};
+}
+const report={months,seeds,automated:[],passiveRome:[],regionalTension:[]};for(let i=1;i<=seeds;i++){const seed=(Math.imul(i,2654435761)^49049)>>>0;report.automated.push(simulate(seed,true));report.passiveRome.push(simulate(seed,false));report.regionalTension.push(simulate(seed,true,true))}
+assert.ok(new Set(report.automated.map(x=>JSON.stringify([x.wars,x.agreements,x.operations,x.decisions,x.peaceLetters]))).size>1,'different seeds must not yield identical outcomes');
+if(seeds>=6&&months>=24){assert.ok(report.regionalTension.some(x=>x.decisions.some(d=>d.startsWith('parthia:opportunistic_war:'))),'a prepared court should sometimes exploit a reported war');assert.ok(report.regionalTension.some(x=>!x.decisions.some(d=>d.startsWith('parthia:opportunistic_war:'))),'exploitation must not be inevitable')}
+console.log(JSON.stringify(report,null,2));

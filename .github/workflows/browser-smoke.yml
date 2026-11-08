@@ -20,6 +20,8 @@ jobs:
       - run: |
           node server.mjs > server.log 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
+          node scripts/multipolar-sim.mjs > multipolar-simulation.json
+          node tools/multipolar-smoke.mjs
           node tools/onboarding-smoke.mjs
           node tools/systems-smoke.mjs
           node tools/scenario-systems-smoke.mjs
@@ -37,5 +39,6 @@ jobs:
             capture-control-1920x1080.png
             map-benchmark-1920x1080.png
             map-benchmark.json
+            multipolar-simulation.json
             server.log
 
