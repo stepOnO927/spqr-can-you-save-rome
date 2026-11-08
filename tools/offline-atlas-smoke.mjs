@@ -5,6 +5,7 @@ import {resolve, extname, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import bathymetry from '../mediterranean-bathymetry.js';
 import {physicalStyle} from '../map-lab/physical-style.js';
+import {identity} from '../identity.js';
 
 assert.deepEqual([...new Set(bathymetry.features.map(feature=>feature.properties.depth))].sort((a,b)=>a-b),[200,1000,2000,3000]);
 assert.ok(physicalStyle.layers.some(layer=>layer.id==='depth-200'&&layer.source==='bathymetry'));
@@ -46,6 +47,12 @@ try{
  assert.equal(external.includes('s3.amazonaws.com'),false,'Overview terrain unexpectedly needed the network');
  assert.ok(external.every(host=>host==='s3.amazonaws.com'||host.endsWith('googleapis.com')||host.endsWith('gstatic.com')),`Unexpected external dependency: ${external.join(', ')}`);
  await page.locator('#start-free').click();
+ const firstLanguage=await page.locator('html').getAttribute('lang');
+ assert.match(await page.locator('.map-key').innerText(),firstLanguage==='zh-CN'?/城市 · 颜色表示控制阵营/:/City · color shows controller/);
+ for(const [site,owner] of [['cisalpine','caesar'],['italiaN','senate']]){
+  const accent=await page.locator(`[data-site="${site}"]`).evaluate(el=>el.style.getPropertyValue('--site-accent'));
+  assert.equal(accent,identity(owner).map,`${owner} settlement must match its faction map color`);
+ }
  if(page.viewportSize().width>=901&&page.viewportSize().width<=1450){
   const back=await page.locator('#return-campaign').boundingBox();
   assert.ok(back&&back.x>=0&&back.x+back.width<=page.viewportSize().width-4,'Return to campaign must fit in the desktop header');
@@ -69,10 +76,10 @@ try{
  assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'false');
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await page.locator('#map-mode').selectOption('terrain');
- const firstLanguage=await page.locator('html').getAttribute('lang');
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/近岸浅海（约0–200米）/:/Coastal shelf \(about 0–200 m\)/);
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/河流与天然湖泊/:/Rivers & natural lakes/);
  await page.locator('#language').click();
+ assert.match(await page.locator('.map-key').innerText(),firstLanguage==='zh-CN'?/City · color shows controller/:/城市 · 颜色表示控制阵营/);
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Coastal shelf \(about 0–200 m\)/:/近岸浅海（约0–200米）/);
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Rivers & natural lakes/:/河流与天然湖泊/);
  assert.match(await page.locator('.file-transfer a').innerText(),firstLanguage==='zh-CN'?/LEGACY HUB/:/罗马遗产/);
