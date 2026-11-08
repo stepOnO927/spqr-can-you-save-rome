@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {loadProfile,saveProfile,exportProfile,importProfile,purchase,recordCampaign,createScenario} from './legacy-core.js';
-import {decidePetition} from './civic.js';
+import {decidePetition,availablePetitions} from './civic.js';
 import {settleRace} from './race.js';
 import {ACTIVITIES,resolveActivity} from './activities.js';
 import {newGrandGame} from '../engine.js';
@@ -16,6 +16,23 @@ test('buildings visually owned through durable purchases and unlock museum conte
 });
 test('Curia decisions change politics, pay once and yield museum relics',()=>{
  const p=loadProfile(memory()),before=p.politics.people;const result=decidePetition(p,'doorway',0);assert.equal(result.ok,true);assert.equal(p.politics.people,before+6);assert.ok(p.collectibles.includes('catinius-scroll'));assert.equal(decidePetition(p,'doorway',0).ok,false);
+});
+test('a dismissed petitioner returns later, survives export and cannot pay twice',()=>{
+ const p=loadProfile(memory());
+ assert.equal(availablePetitions(p).some(x=>x.id==='doorway-appeal'),false);
+ assert.equal(decidePetition(p,'doorway-appeal',0).ok,false);
+ assert.equal(decidePetition(p,'doorway',Number.NaN).ok,false);
+ assert.equal(decidePetition(p,'doorway',1).ok,true);
+ assert.equal(availablePetitions(p).some(x=>x.id==='doorway-appeal'),true);
+ const restored=importProfile(exportProfile(p)),coins=restored.coins,people=restored.politics.people;
+ assert.equal(decidePetition(restored,'doorway-appeal',0).ok,true);
+ assert.equal(restored.coins,coins+70);
+ assert.equal(restored.politics.people,people+8);
+ assert.ok(restored.collectibles.includes('catinius-appeal-tablet'));
+ assert.equal(decidePetition(restored,'doorway-appeal',0).ok,false);
+ assert.equal(importProfile(exportProfile(restored)).coins,coins+70);
+ const heard=loadProfile(memory());assert.equal(decidePetition(heard,'doorway',0).ok,true);
+ assert.equal(availablePetitions(heard).some(x=>x.id==='doorway-appeal'),false);
 });
 test('race places, trophy, last place punishment and reward guard persist',()=>{
  const p=loadProfile(memory());const race={id:'race-test',driver:'Aurelia',place:1,lastDriver:'Lucius'};assert.equal(settleRace(p,race).payout,100);assert.ok(p.collectibles.includes('race-cup'));assert.ok(p.race.eliminated.includes('Lucius'));assert.equal(settleRace(p,race).ok,false);const last=settleRace(p,{id:'race-last',driver:'Aurelia',place:5,lastDriver:'Aurelia'});assert.equal(last.payout,0);assert.ok(p.race.eliminated.includes('Aurelia'));
