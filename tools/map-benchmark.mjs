@@ -50,7 +50,7 @@ try{
  const fullRelief=await exercise();
  await page.locator('#reset').click();await page.waitForTimeout(2500);await page.locator('#relief-toggle').click();
  assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'false');
- await page.reload();await page.waitForFunction(()=>document.querySelector('#relief-toggle')?.getAttribute('aria-pressed')==='false');await page.waitForTimeout(4000);
+ await page.reload();await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});await page.locator('#start-free').click();await page.waitForFunction(()=>document.querySelector('#relief-toggle')?.getAttribute('aria-pressed')==='false');await page.waitForTimeout(4000);
  const reducedRelief=await exercise();
  await page.locator('#relief-toggle').click();assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'true');
  assert.ok(idle.frames>0,'idle sample must contain observations');
