@@ -1,7 +1,7 @@
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=dynasty-id-3';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=grand-chessboard-2';
-import {reportedMovements} from './movements.js?v=dynasty-id-3';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
+import {reportedMovements} from './movements.js?v=multipolar-2';
 
 const opening=['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair=(a,b)=>[a,b].sort().join(':');
@@ -31,6 +31,8 @@ export function buildChessboard(s,viewer=s.player){
  for(const id of [...factionIds].filter(id=>id!==viewer&&FACTIONS[id]).slice(0,14)){
   const relation=s.relations[pair(viewer,id)]??0,enemy=atWar(s,viewer,id),id2='f:'+id;
   add(id2,'faction',name(id),'reported',[[`Official relationship with your command: ${relation}. Other information may be old or absent.`,`与本方的官方关系：${relation}。其他情报可能过时或缺失。`]]);
+  const sightings=Object.values(s.knowledge?.[viewer]?.[id]?.sightings||{}).filter(x=>age(s,x)>=0&&age(s,x)<=24&&x.region).sort((a,b)=>age(s,a)-age(s,b)).slice(0,3);
+  for(const sighting of sightings){const location=s.regions.find(r=>r.id===sighting.region)?.name||[sighting.region,sighting.region],year=sighting.year<0?Math.abs(sighting.year):sighting.year+1;byId.get(id2).detail.push([`A force was reported near ${location[0]} in ${sighting.month}/${year} ${sighting.year<0?'BCE':'CE'}; current location and strength are unknown.`,`曾于${sighting.year<0?'公元前':'公元'}${year}年${sighting.month}月在${location[1]}附近发现一支军队；当前位置及兵力未知。`])}
   if(enemy)link(ownId,id2,'war','confirmed',['Your command is at war with this faction.','本方与该势力交战。']);
   else if(relation!==0)link(ownId,id2,'relation','confirmed',[`Official relationship: ${relation}.`,`官方关系：${relation}。`]);
  }
@@ -40,7 +42,7 @@ export function buildChessboard(s,viewer=s.player){
  for(const t of s.agreements||[])if(t.status==='active'&&t.parties.includes(viewer)&&now<t.expiresAt&&!atWar(s,t.parties[0],t.parties[1])){const other=t.parties.find(x=>x!==viewer),label=kinds[t.type]||[t.type,t.type];link(ownId,'f:'+other,'agreement','confirmed',t.secret?[`Known secret agreement: ${label[0]}.`,`本方知悉的秘密协议：${label[1]}。`]:[`Agreement: ${label[0]}.`,`条约：${label[1]}。`])}
  const coalitions=[...(s.coalitions||[]).filter(c=>c.status==='active'&&c.parties.includes(viewer)).map(c=>({id:c.id,kind:'coalition',parties:c.parties,leader:c.leader,target:c.target,own:true,cohesion:c.cohesion})),...docs.filter(d=>d.kind==='coalition')].slice(0,4);
  for(const c of coalitions){const cid='c:'+c.id;add(cid,'coalition',['Defensive coalition','防御联盟'],c.own?'confirmed':'reported',c.own?[[`Your coalition reports cohesion ${c.cohesion}. Members retain independent interests.`,`本方联盟的凝聚力为 ${c.cohesion}；各成员仍有独立利益。`]]:[['A public coalition report; membership and purpose may be outdated.','公开联盟报告；成员与目标可能过时。']]);for(const id of c.parties)link(cid,'f:'+id,'coalition',c.own?'confirmed':'reported',['Membership','成员'],c.own?null:{year:c.year,month:c.month});link(cid,'f:'+c.target,'opposes',c.own?'confirmed':'reported',['Declared defensive concern; not proof of imminent war.','公开防范对象；不代表即将开战。'],c.own?null:{year:c.year,month:c.month})}
- for(const d of docs.filter(x=>x.kind!=='coalition').slice(0,12)){const a='f:'+d.parties[0],b='f:'+d.parties[1],label=kinds[d.type]||[d.type,d.type];link(a,b,d.kind==='alliance'?'alliance':'agreement','reported',[`Public report: ${label[0]}; it may be outdated.`,`公开报告：${label[1]}；可能过时。`],{year:d.year,month:d.month})}
+ for(const d of docs.filter(x=>x.kind!=='coalition').slice(0,12)){const a='f:'+d.parties[0],b='f:'+d.parties[1],label=d.kind==='war'?['war','战争']:(kinds[d.type]||[d.type,d.type]);link(a,b,d.kind==='war'?'war':d.kind==='alliance'?'alliance':'agreement','reported',[`Public report: ${label[0]}; it may be outdated.`,`公开报告：${label[1]}；可能过时。`],{year:d.year,month:d.month})}
  const ownLeaders=s.world.leadership[viewer]||[],priority=new Set([...ownLeaders,...ownArmies.map(a=>a.characterId).filter(Boolean)]),ownPeople=Object.values(s.world.characters).filter(c=>c.faction===viewer&&c.alive&&!c.missing).sort((a,b)=>(priority.has(b.id)?1:0)-(priority.has(a.id)?1:0)||(b.influence||0)-(a.influence||0)||a.id.localeCompare(b.id)).slice(0,8);
  for(const c of ownPeople){add('p:'+c.id,'person',personName(c.id),'confirmed',[[ownLeaders.includes(c.id)?'A current member of your leadership.':'A member of your command.',ownLeaders.includes(c.id)?'本方现任领导成员。':'本方人员。']]);link(ownId,'p:'+c.id,ownLeaders.includes(c.id)?'ownLeadership':'office','confirmed',['Known role in your command.','本方已知职务。'])}
  for(const accord of (s.world.dynasties?.familyAccords||[]).filter(a=>a.host===viewer&&a.status==='active')){

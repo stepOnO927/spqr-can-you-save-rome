@@ -1,26 +1,26 @@
 import {stageHandoff,receiveHandoff} from './view-handoff.js?v=phase-x-1';
-import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=dynasty-id-3';
+import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=multipolar-2';
 import {identity,factionMark} from './identity.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=dynasty-id-3';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=phase-x-1';
-import {forecastEconomy,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, answerPeaceOffer,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=dynasty-id-3';
+import {forecastEconomy,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, answerPeaceOffer,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=multipolar-2';
 import {decideDisputedHeir,personAge} from './dynasties.js?v=dynasty-id-3';
-import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=dynasty-id-3';
+import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=multipolar-2';
 import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=phase9-relations-1';
 import {syncChronicleDispatches} from './chronicle.js?v=dynasty-id-3';
 import {renderChronicle} from './map-lab/chronicle-ui.js?v=dynasty-id-3';
 import {formatChronicleEntry,chronicleDate} from './chronicle.js?v=dynasty-id-3';
-import {drawMap,mapPoint} from './map.js?v=dynasty-id-3';
+import {drawMap,mapPoint} from './map.js?v=multipolar-2';
 import {AGREEMENT_TYPES,activeAgreement,proposeAgreement,terminateAgreement} from './agreements.js?v=grand-chessboard-2';
-import {formCoalition,leaveCoalition} from './coalitions.js?v=grand-chessboard-2';
+import {formCoalition,leaveCoalition} from './coalitions.js?v=multipolar-2';
 import {offerPoliticalContact} from './political-contacts.js?v=dynasty-id-3';
-import {reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=dynasty-id-3';
+import {reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=multipolar-2';
 import {religiousPolicy} from './religion.js?v=dynasty-id-3';
-import {respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=dynasty-id-3';
-import {newScenario} from './scenarios.js?v=dynasty-id-3';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=grand-chessboard-2';
-import {renderChessboard} from './chessboard-ui.js?v=dynasty-id-3';
+import {respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=multipolar-2';
+import {newScenario} from './scenarios.js?v=multipolar-2';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
+import {renderChessboard} from './chessboard-ui.js?v=multipolar-2';
 import {configureStartingDifficulty} from './difficulty.js?v=grand-chessboard-2';
 import {IDEAS,startResearch,equipIdea} from './inventions.js?v=grand-chessboard-2';
 
@@ -47,7 +47,7 @@ Object.assign(ui.zh,{selectTheater:'选择战区',chooseDestination:'目的地',
 
 let lang=localStorage.getItem('spqr-lang')==='zh'?'zh':'en';
 const initialView=()=>window.innerWidth<=800?[310,0,580,650]:[0,0,1200,650];
-let state=newGame(),selectedRegion='cisalpine',selectedArmy='xiii',tab='map',ordering=false,speed=1,playing=false,timer=null,toast='',chosenFaction='caesar',chosenScenario='historical',chosenDifficulty='standard',chosenHandicap=false,chosenGuide=true,chosenSlot='1',setupOpen=false,setupRequired=false,panelOpen=false,mapMode='political',view=initialView(),boardSelected=null;
+let state=newGame(),selectedRegion='cisalpine',selectedArmy='xiii',tab='map',ordering=false,speed=1,playing=false,timer=null,toast='',chosenFaction='caesar',chosenScenario='historical',chosenDifficulty='standard',chosenHandicap=false,chosenGuide=true,chosenSlot='1',setupOpen=false,setupRequired=false,panelOpen=false,mapMode='political',view=initialView(),boardSelected=null,boardView='all';
 const received=receiveHandoff(sessionStorage,'campaign',upgradeSave);
 setupRequired=!received;setupOpen=setupRequired;
 if(received){state=received;selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0]?.id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;chosenFaction=state.player;chosenDifficulty=state.difficulty||'standard';chosenHandicap=!!state.economicHandicap}
@@ -134,7 +134,7 @@ function render(){syncChronicleDispatches(state);
   document.getElementById('app').innerHTML=`<header class="top"><div class="brand"><span class="laurel">✦</span><div><h1>SPQR</h1><small>CAN YOU SAVE ROME?</small></div></div><div class="campaign-name"><b>${t('campaign')}</b><small>${t('subtitle')}</small></div><div class="top-stats">${stat('treasury',fmt(f.treasury)+' ¤')}${stat('food',fmt(f.food))}${stat('manpower',fmt(f.manpower))}${stat('stability',f.stability+'%')}${stat('legitimacy',f.legitimacy+'%')}${stat('strength',fmt(strength))}</div><button id="lang" class="language">${lang==='en'?'中文':'EN'}</button></header><div class="shell"><aside class="rail"><div class="rail-label">SENATVS POPVLVSQVE ROMANVS</div>${[['map','▣'],['military','⚔'],['government','§'],['chessboard','◇'],['chronicle','≡'],['legacy','◈'],['sources','¶']].map(([id,icon])=>`<button data-tab="${id}" class="rail-item ${tab===id?'active':''}"><span>${icon}</span>${t(id)}</button>`).join('')}<div class="rail-foot">M·I<br>XLIX A.C.N.</div></aside><main><div class="map-toolbar"><div><span class="eyebrow">${t('historical')}</span><h2>${date()}</h2></div><div class="controls"><button id="open-atlas">${lang==='zh'?'地形地图（推荐）':'TERRAIN ATLAS (RECOMMENDED)'}</button><button id="new">${t('new')}</button><button id="save">${t('save')}</button><button id="load">${t('load')}</button><span class="control-sep"></span><button id="speed" title="${t('speed')}">×${speed}</button><button id="play" class="play">${playing?t('pause'):t('play')}</button><button id="step" class="step">+1 ${t('month')}</button></div></div>${victoryProgress()}${resourceForecast()}<div class="map-wrap">${mapSvg()}<div class="map-hint">${t('instructions')}</div></div><div class="map-footer"><div class="legend"><span>${t('legend')}</span>${Object.entries(FACTIONS).slice(0,3).map(([id,v])=>`<i style="background:${v.color}"></i>${esc(labelFaction(id))}`).join('')}</div><div>${t('schematic')}</div></div></main><aside class="inspector">${panel()}</aside></div>${state.victory?`<div class="victory">${t('victory')}</div>`:state.peacefulVictory?`<div class="victory">${lang==='zh'?'和平和解达成 · 战役仍可继续':'Peaceful settlement achieved · the campaign continues'}</div>`:''}${toast?`<div class="toast">${esc(toast)}</div>`:''}`;
   const a=army(state,selectedArmy),destinations=ordering&&a?adjacent(a.region).map(x=>region(state,x.to)):[];
   document.querySelector('.map-wrap').insertAdjacentHTML('beforeend',`<div class="map-tools"><button id="political" class="${mapMode==='political'?'active':''}">${t('political')}</button><button id="terrain-map" class="${mapMode==='terrain'?'active':''}">${t('terrainMap')}</button><button id="zoom-in">+</button><button id="zoom-out">−</button></div>${ordering?`<div class="march-prompt">${t('target')} <label>${t('chooseDestination')} <select id="march-destination"><option value="">—</option>${destinations.map(r=>`<option value="${r.id}">${esc(n(r.name))}</option>`).join('')}</select></label> <button id="cancel-march">${t('cancel')}</button></div>`:''}<div class="map-attribution">${t('mapNote')}</div>`);
-  if(tab==='chessboard'){document.querySelector('.shell').classList.add('chessboard-active');const area=document.querySelector('.map-wrap');area.classList.add('chessboard-mode');area.insertAdjacentHTML('beforeend',renderChessboard(state,lang,boardSelected))}
+  if(tab==='chessboard'){document.querySelector('.shell').classList.add('chessboard-active');const area=document.querySelector('.map-wrap');area.classList.add('chessboard-mode');area.insertAdjacentHTML('beforeend',renderChessboard(state,lang,boardSelected,boardView))}
   document.querySelector('.inspector').classList.toggle('closed',!panelOpen);
   document.querySelector('.inspector').insertAdjacentHTML('afterbegin',`<button id="close-panel" class="panel-close" aria-label="${t('close')}">×</button>`);
   if(tab==='map' && selectedRegion==='illyricum')document.querySelector('.inspector .region-title')?.insertAdjacentHTML('afterend',`<p class="map-group-note">${lang==='zh'?'史料说明：凯撒时代的伊利里库姆是东亚得里亚海的指挥范围，确切边界不明；游戏控制方仅为战役简化。':'Historical note: Caesar’s Illyricum was an eastern Adriatic command with no securely defined boundary; the game owner is a campaign abstraction.'}</p>`);
@@ -170,6 +170,7 @@ function advanceMonth(){const previous=state.chronicle?.nextId||1;tick(state);co
 function setPlaying(on){stop();playing=on;if(on)timer=setInterval(advanceMonth,speed===1?1500:speed===2?800:350);render()}
 function slot(action){const choice=chosenSlot;if(!['1','2','3'].includes(choice))return;const key=`spqr-save-${choice}`;if(action==='save'){try{syncChronicleDispatches(state);localStorage.setItem(key,JSON.stringify(state));flash(`${t('saved')} ${choice}`)}catch{flash(lang==='zh'?'浏览器无法保存存档。':'The browser could not save this campaign.')}}else{const raw=localStorage.getItem(key);if(!raw){flash(t('empty'));return false}try{const loaded=upgradeSave(JSON.parse(raw));if(!['caesar','senate'].includes(loaded.player)){flash(t('oldFaction'));return false}state=loaded;chosenDifficulty=state.difficulty||'standard';chosenHandicap=!!state.economicHandicap;stop();if(state.world.dynasties?.scenario){tab='government';panelOpen=true}chosenFaction=['caesar','senate'].includes(state.player)?state.player:'caesar';selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0].id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;ordering=false;flash(`${t('loaded')} ${choice}`);return true}catch{flash(lang==='zh'?'存档无法读取。':'This save could not be read.');return false}}}
 function bind(){
+  document.querySelectorAll('[data-board-view]').forEach(el=>el.onclick=()=>{boardView=el.dataset.boardView;boardSelected=null;render()});
   document.querySelectorAll('[data-board-node]').forEach(el=>{const select=()=>{boardSelected=el.dataset.boardNode;render();[...document.querySelectorAll('g[data-board-node]')].find(node=>node.dataset.boardNode===boardSelected)?.focus()};el.onclick=select;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select()}}});
   document.querySelectorAll('[data-recognize-movement]').forEach(el=>el.onclick=()=>{const yes=el.dataset.recognition==='yes',result=recognizeMovement(state,state.player,el.dataset.recognizeMovement,yes);if(result.ok){render();flash(yes?(lang==='zh'?'已公开承认该报告中的运动。':'Recognition of the reported movement declared.'):(lang==='zh'?'已撤回承认。':'Recognition withdrawn.'))}else flash(lang==='zh'?'行动不可用：请检查国库及已有立场。':'Unavailable: check treasury and your existing position.')});
   document.querySelector('#movement-contact-send')?.addEventListener('click',()=>{const [id,representative]=document.querySelector('#movement-contact').value.split('|'),result=offerMovementSupport(state,state.player,id,representative);if(result.ok){render();flash(lang==='zh'?'资助提议已寄出；回信约需4个月。':'Support offer sent; allow about four months for a reply.')}else flash(lang==='zh'?'无法派出：请检查联系、国库及已有提议。':'Unavailable: check the contact, treasury and pending offers.')});

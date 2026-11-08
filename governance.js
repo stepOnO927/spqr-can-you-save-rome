@@ -125,7 +125,7 @@ export function secureRegency(s){
  return {ok:true,cost:8};
 }
 
-export function advanceGovernments(s){
+export function advanceGovernments(s,{autoplayPlayer=false}={}){
  initializeGovernments(s);s.world.regencies||={};for(const faction of Object.keys(s.world.governments)){
   if(!s.factions[faction]||!s.regions.some(r=>r.owner===faction))continue;
   const before=s.world.governments[faction],after=deriveGovernment(s,faction);s.world.governments[faction]=after;
@@ -142,7 +142,7 @@ export function advanceGovernments(s){
   }else if(s.world.regencies[faction]&&!s.world.regencies[faction].endedYear){s.world.regencies[faction].endedYear=s.year;s.world.regencies[faction].endedMonth=s.month}
   for(const id of after.nominal.filter(id=>!before.nominal.includes(id)))recordLifeEvent(s,id,`Assumed political leadership of ${FACTIONS[faction]?.short[0]||faction} in the simulation.`,`在模拟中成为${FACTIONS[faction]?.short[1]||faction}的政治领袖。`);
   // NPC preparations are internal game state, not an announcement to the player.
-  if(faction!==s.player&&s.month%6===0){
+  if((autoplayPlayer||faction!==s.player)&&s.month%6===0){
    const candidates=successionCandidates(s,faction),current=s.world.successionPlans[faction],leaders=after.nominal.map(id=>s.world.characters[id]);
    if(current&&!candidates.includes(current))delete s.world.successionPlans[faction];
    const concern=s.factions[faction].stability<45||leaders.some(c=>c.missing||['frail','seriously_ill','dying'].includes(c.health));

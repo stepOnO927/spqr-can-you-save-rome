@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,resolveBattle,upgradeSave,isWar,tick,sendInquiry} from '../engine.js?v=dynasty-id-3';
-import {contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,previewMission,queueMission} from '../character-system.js?v=dynasty-id-3';
+import {newGame,region,resolveBattle,upgradeSave,isWar,tick,sendInquiry} from '../engine.js?v=multipolar-2';
+import {contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,previewMission,queueMission} from '../character-system.js?v=multipolar-2';
 import {knownDynasticFactions,resolveDynasticWars} from '../civil-war.js?v=dynasty-id-3';
 import {reportedControl} from '../control-intelligence.js';
 

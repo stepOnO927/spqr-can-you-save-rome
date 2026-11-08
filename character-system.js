@@ -1,7 +1,7 @@
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=dynasty-id-3';
 import {settleInheritance,dynastyRoll} from './dynasties.js?v=dynasty-id-3';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=dynasty-id-3';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=multipolar-2';
 import {potentialConspirators} from './conspiracies.js?v=dynasty-id-3';
 import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=dynasty-id-3';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
@@ -33,10 +33,10 @@ export function counterWatchRemaining(s,actor){
 function counterWatchActive(s,actor){const watch=s.world?.securityWatches?.[actor],now=s.year*12+s.month;return !!watch&&now>=watch.start&&now<=watch.end}
 export function availableAgents(s,actor){initializeWorld(s);const held=s.world.captives.filter(c=>c.owner===actor&&c.state==='held').length,pending=s.operations.filter(o=>o.actor===actor&&['spy','counter'].includes(o.type)&&o.status==='pending').length;return Math.max(0,3-held-pending)}
 export function requestAgentRelease(s,actor,captiveId){
- initializeWorld(s);const c=s.world.captives.find(x=>x.id===captiveId&&x.owner===actor&&x.state==='held');if(!c||!s.factions[actor]||(actor!==s.player&&c.holder!==s.player))return {ok:false,reason:'unavailable'};
+ initializeWorld(s);const c=s.world.captives.find(x=>x.id===captiveId&&x.owner===actor&&x.state==='held');if(!c||!s.factions[actor]||!s.factions[c.holder])return {ok:false,reason:'unavailable'};
  if(s.releaseRequests.some(x=>x.captiveId===captiveId&&['pending','awaiting_decision','returning'].includes(x.status)))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<8)return {ok:false,reason:'treasury'};
  s.factions[actor].treasury-=8;
- if(actor===s.player){s.releaseRequests.unshift({actor,holder:c.holder,captiveId,remaining:4,status:'pending',year:s.year,month:s.month});notify(s,'A release request was sent; a reply may take four months.','已寄出释放请求；回信可能需要四个月。')}
+ if(actor===s.player||c.holder!==s.player){s.releaseRequests.unshift({actor,holder:c.holder,captiveId,remaining:4,status:'pending',year:s.year,month:s.month});if(actor===s.player)notify(s,'A release request was sent; a reply may take four months.','已寄出释放请求；回信可能需要四个月。')}
  else s.releaseRequests.unshift({actor,holder:c.holder,captiveId,remaining:2,status:'pending',phase:'outbound',year:s.year,month:s.month});
  return {ok:true};
 }
@@ -48,12 +48,16 @@ export function answerAgentRelease(s,captiveId,decision){
  r.decision=decision;r.status='returning';r.phase='return';r.remaining=2;r.answeredYear=s.year;r.answeredMonth=s.month;
  notify(s,'Your answer has been sent; delivery and any handover may take two months.','答复已寄出；送达及可能的交接约需两个月。');return {ok:true};
 }
-export function advanceAgentRequests(s){initializeWorld(s);for(const request of s.releaseRequests){
- if(request.status==='awaiting_decision'){if(--request.remaining<=0){request.status='no_reply';request.phase='expired'}continue}
+export function advanceAgentRequests(s,{autoplayPlayer=false}={}){initializeWorld(s);for(const request of s.releaseRequests){
+ if(request.status==='awaiting_decision'){
+  if(autoplayPlayer&&request.holder===s.player){const war=s.wars.some(w=>w.includes(request.actor)&&w.includes(request.holder));answerAgentRelease(s,request.captiveId,war?'refuse':'release');continue}
+  if(--request.remaining<=0){request.status='no_reply';request.phase='expired'}continue
+ }
  if(!['pending','returning'].includes(request.status)||--request.remaining>0)continue;
  const c=s.world.captives.find(x=>x.id===request.captiveId),q=rand(s);
  if(request.phase==='outbound'){
   if(!c||c.state!=='held'||c.holder!==request.holder||q<.2){request.status='no_reply';request.phase='lost';continue}
+  if(autoplayPlayer&&request.holder===s.player){const war=s.wars.some(w=>w.includes(request.actor)&&w.includes(request.holder));request.decision=q<(war?.65:.45)?'refuse':'release';request.status='returning';request.phase='return';request.remaining=2;request.answeredYear=s.year;request.answeredMonth=s.month;continue}
   request.status='awaiting_decision';request.phase='at_court';request.remaining=6;
   if(request.holder===s.player)notify(s,'A letter from '+(FACTIONS[request.actor]?.short[0]||'another faction')+' requests release of a detained agent.',(FACTIONS[request.actor]?.short[1]||'另一势力')+'来信请求释放被扣押的情报人员。');continue;
  }
@@ -124,7 +128,7 @@ export function recognizeClaimant(s,target,claimant){
  notify(s,'A reported claimant was recognized; relations with the court fell by up to 5.','已承认一位报告中的竞争者；与宫廷的关系最多降低5。');return {ok:true,cost:5};
 }
 export function supportClaimant(s,actor,target,claimant,representative=null,aid='political'){
- initializeWorld(s);if(!['caesar','senate'].includes(actor)||actor===target||!['egypt','parthia'].includes(target)||!reportedClaimants(s,actor,target).includes(claimant)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
+ initializeWorld(s);if(!s.factions[actor]||actor==='rebels'||actor===target||!['egypt','parthia'].includes(target)||!reportedClaimants(s,actor,target).includes(claimant)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(!['political','military'].includes(aid))return {ok:false,reason:'aid'};
  if(representative&&!claimantRepresentatives(s,actor,claimant).includes(representative))return {ok:false,reason:'representative'};
  const cost=aid==='military'?{treasury:14,manpower:1000,food:5}:{treasury:10,manpower:0,food:0},f=s.factions[actor];

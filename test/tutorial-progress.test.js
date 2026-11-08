@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=dynasty-id-3';
+import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=multipolar-2';
 import {tutorialTurnProgress,createTutorial} from '../map-lab/tutorial.js?v=playability-1';
 
 test('tutorial tracks the commanded army rather than another friendly battle',()=>{
