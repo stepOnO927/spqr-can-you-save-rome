@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=asylum-heir-1';
-import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=asylum-heir-1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=valid-letter-1';
+import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=valid-letter-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=xxii-final-4';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=asylum-heir-1';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=asylum-heir-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=valid-letter-1';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=asylum-heir-1';
 import {advanceConspiracies} from './conspiracies.js?v=asylum-heir-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=xxii-final-4';
@@ -236,8 +236,8 @@ function resolveInquiries(s){
    else{
    const current=s.world.leadership[letter.target]||[],opening=OPENING_LEADERS[letter.target]||[],claimants=s.world.claimants[letter.target]||[],subject=letter.subject||'leaders';
    const stated=hostile&&opening.some(id=>!current.includes(id))?opening:current;
-   const plan=s.world.successionPlans?.[letter.target],candidate=s.world.characters[plan];
-   const disclose=subject==='successor'&&!hostile&&rel>=30&&roll>=.75&&!claimants.length&&candidate?.alive&&!candidate.missing&&candidate.faction===letter.target&&!current.includes(plan)&&CHARACTER_CATALOG[plan];
+   const plan=subject==='successor'?validSuccessionPlan(s,letter.target):null;
+   const disclose=subject==='successor'&&!hostile&&rel>=30&&roll>=.75&&!claimants.length&&plan&&CHARACTER_CATALOG[plan];
    if(subject==='successor'){
     sealed.claim=disclose?[`The court names ${CHARACTER_CATALOG[plan].name[0]} as a possible successor.`,`宫廷称${CHARACTER_CATALOG[plan].name[1]}为可能的继任人选。`]:['The reply did not name a successor.','回信没有指明继任人选。'];
     sealed.report={kind:'succession',value:disclose?plan:'unknown'};
