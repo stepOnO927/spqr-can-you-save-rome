@@ -167,6 +167,7 @@ export function diplomacy(s, actor, target, action){
     s.factions[actor].stability=Math.min(100,s.factions[actor].stability+3);
     s.relations[key]=0;
     s.civilSettlement={winner:actor,loser:target,year:s.year,month:s.month,territory:concession?.id||null};
+    s.world.governments[actor]=deriveGovernment(s,actor);s.world.governments[target]=deriveGovernment(s,target);
     setCampaignOutcome(s,{kind:'settlement',winner:actor,loser:target,year:s.year,month:s.month,territory:concession?.id||null});
     log(s,`${FACTIONS[target].short[0]} accepted a civil settlement. The war ended and ${FACTIONS[actor].short[0]} gained political legitimacy.`,`${FACTIONS[target].short[1]}接受内战和议。战争结束，${FACTIONS[actor].short[1]}获得政治合法性。`);
     recordDiplomacy(s,actor,target,'settlement');evaluateAchievements(s);

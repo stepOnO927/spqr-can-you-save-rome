@@ -35,6 +35,9 @@ test('civil settlement changes territory, peace and legitimacy without revealing
  assert.equal(s.wars.some(w=>w.includes('caesar')&&w.includes('senate')),false);
  assert.ok(s.factions.caesar.legitimacy>before);assert.ok(s.regions.filter(r=>r.owner==='caesar').length>=territories);
  assert.equal(s.factions.caesar.treasury,treasury-4);
+ assert.equal(s.world.governments.caesar.civilWarRecognition,'recognized');
+ assert.equal(s.world.governments.senate.civilWarRecognition,'conceded');
+ tick(s);assert.equal(s.world.governments.caesar.civilWarRecognition,'recognized');
  assert.equal(s.achievementState.finalized,false);
 });
 

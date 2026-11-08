@@ -8,15 +8,17 @@ export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>!u
 // This describes the simulated arrangement, not a historical medical or constitutional claim.
 export function deriveGovernment(s,faction){
  initializeWorld(s);const nominal=(s.world.leadership[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
- if(!nominal.length)return {kind:'vacant',nominal:[],acting:[]};
+ const recognition=s.civilSettlement?.winner===faction?'recognized':s.civilSettlement?.loser===faction?'conceded':null;
+ const finish=government=>({...government,civilWarRecognition:recognition});
+ if(!nominal.length)return finish({kind:'vacant',nominal:[],acting:[]});
  const capable=nominal.filter(id=>!unable(s.world.characters[id]));
  // The campaign groups two independent Mauretanian kingdoms under one map
  // faction. A surviving king does not automatically inherit the other realm.
- if(faction==='mauretania'&&['bocchus','bogud'].some(id=>!nominal.includes(id)))return {kind:'constituent_vacant',nominal,acting:capable};
- if(capable.length===nominal.length)return {kind:'normal',nominal,acting:[...nominal]};
- if(capable.length)return {kind:faction==='mauretania'?'constituent_unavailable':'co_ruler_acting',nominal,acting:capable};
+ if(faction==='mauretania'&&['bocchus','bogud'].some(id=>!nominal.includes(id)))return finish({kind:'constituent_vacant',nominal,acting:capable});
+ if(capable.length===nominal.length)return finish({kind:'normal',nominal,acting:[...nominal]});
+ if(capable.length)return finish({kind:faction==='mauretania'?'constituent_unavailable':'co_ruler_acting',nominal,acting:capable});
  const candidates=eligibleDeputies(s,faction),preferred=s.world.appointments?.[faction],deputy=candidates.includes(preferred)?preferred:candidates[0];
- return {kind:roman(faction)?'acting_command':'regency',nominal,acting:deputy?[deputy]:[]};
+ return finish({kind:roman(faction)?'acting_command':'regency',nominal,acting:deputy?[deputy]:[]});
 }
 
 export function initializeGovernments(s){
