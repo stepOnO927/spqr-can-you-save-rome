@@ -78,3 +78,16 @@
 @media(max-width:700px){.mast{overflow:visible;gap:8px;padding:0 10px}.identity{margin-right:auto}.identity strong{font-size:15px}.mast .hud-button{padding:7px 8px}.mast>#resources-help,.mast>#help,.mast>#guide-restart,.mast>#factions,.mast>#chronicle,.mast>#inventions,.mast>#save-slot,.mast>#save,.mast>#load,.mast>#capture,.mast>#return-campaign{display:none}#compact-menu-toggle{display:block;min-width:38px;font-size:17px}.compact-menu:not([hidden]){display:grid;position:absolute;right:8px;top:55px;z-index:15;width:min(250px,calc(100vw - 16px));max-height:calc(100vh - 70px);overflow:auto;padding:12px;gap:7px;background:#1b2926;border:1px solid #bda777;box-shadow:0 8px 25px #0009;pointer-events:auto}.compact-menu .hud-button,.compact-menu a{display:block!important;width:100%;box-sizing:border-box;margin:0;text-align:left}.compact-menu select{color:#e4d6b4;background:#273631}.compact-menu #compact-menu-close{justify-self:end;background:none;color:#e4d6b4;border:0;font-size:20px}.brief{max-height:calc(100vh - 145px);overflow:auto;z-index:4}.brief-toggle{left:12px;top:74px}.brief-toggle:has(+ .brief.collapsed){left:12px}.selection{right:8px;bottom:54px;width:min(300px,calc(100vw - 54px));max-height:calc(100vh - 130px);z-index:4}.selection.collapsed{display:none}.selection-toggle{display:block;position:absolute;z-index:5;right:8px;bottom:55px;background:#202e2a;color:#e4d1a3;border:1px solid #bda777;width:30px;height:30px;cursor:pointer}.selection-toggle:has(+ .selection.collapsed){bottom:55px}.map-controls{top:96px}}
 
 .resource-forecast-line{margin-top:10px!important;color:#ead5a8!important}.forecast-caveat{font-size:9px!important;color:#aba897!important}
+
+/* Known losses remain visible after the monthly toast expires. */
+#front-alert{position:fixed;z-index:16;top:82px;left:50%;transform:translateX(-50%);width:min(430px,calc(100vw - 32px));max-height:min(52vh,400px);overflow:auto;padding:12px;background:#542922;border:2px solid #e4ae79;color:#fff0d7;box-shadow:0 3px 12px #0008;font:12px/1.5 Manrope,'Microsoft YaHei',sans-serif}
+#front-alert strong{display:block;color:#ffe0a1;letter-spacing:.8px;margin:4px 0}
+#front-alert p{margin:5px 0 9px!important;color:#f5e7d5}
+#front-alert button{display:block;width:100%;padding:7px;margin:4px 0;background:#352b27;border:1px solid #d6a36e;color:#fff0d7;text-align:left;cursor:pointer}
+#front-alert small{display:block;margin-top:7px}
+#campaign-outcome{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:#091311da;padding:16px;color:#f7ebd2}
+#campaign-outcome section{width:min(520px,95vw);padding:26px;background:#281f1d;border:3px solid #e0b577;box-shadow:0 12px 40px #000c;font:14px/1.65 Manrope,'Microsoft YaHei',sans-serif}
+#campaign-outcome small{color:#e4bc7c;letter-spacing:1px}
+#campaign-outcome h2{font:700 32px Georgia,'Noto Serif SC',serif;color:#ffe2a4;margin:10px 0}
+#campaign-outcome button{padding:10px 13px;margin:8px 8px 0 0;background:#703a2f;border:1px solid #d9b47d;color:#fff0d5;cursor:pointer}
+.time-controls button:disabled{opacity:.5;cursor:not-allowed}

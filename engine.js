@@ -8,7 +8,7 @@ import {advanceConspiracies} from './conspiracies.js?v=dynasty-id-3';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=dynasty-id-3';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=dynasty-id-3';
-import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=dynasty-id-3';
+import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=defeat-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=grand-chessboard-2';
 import {advancePersonalPlans} from './personal-plans.js?v=grand-chessboard-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers,buildingModifiers} from './inventions.js?v=grand-chessboard-2';
@@ -610,7 +610,7 @@ function aiTurn(s,owner){
 // A defeated rival must lose both its territories and its field forces. The
 // simulated outcome is not announced until a courier has had time to arrive.
 export function advanceRomanVictory(s){
- if(!['caesar','senate'].includes(s.player)||s.victory)return;
+ if(!['caesar','senate'].includes(s.player)||s.victory||s.defeat)return;
  const opponent=s.player==='caesar'?'senate':'caesar',survives=s.regions.some(r=>r.owner===opponent)||s.armies.some(a=>a.owner===opponent&&a.men>0),ownSurvives=s.regions.some(r=>r.owner===s.player)||s.armies.some(a=>a.owner===s.player&&a.men>0);
  if(survives||!ownSurvives||!isWar(s,s.player,opponent)){delete s.world.romanVictoryNotice;return}
  let notice=s.world.romanVictoryNotice;if(!notice||notice.opponent!==opponent){s.world.romanVictoryNotice={opponent,remaining:3};return}
@@ -618,10 +618,28 @@ export function advanceRomanVictory(s){
  log(s,'A dispatch reports the opposing Roman command has collapsed. The campaign continues.','信使报告敌对罗马指挥方已瓦解；战役仍可继续。');
 }
 
+// Allow a defeated command three monthly opportunities to raise another army.
+// A peaceful state or a newly raised force cancels the collapse warning.
+export function advanceRomanDefeat(s){
+ if(!['caesar','senate'].includes(s.player)||s.victory||s.defeat)return;
+ const opponent=s.player==='caesar'?'senate':'caesar';
+ const exposed=isWar(s,s.player,opponent)&&(s.regions.some(r=>r.owner===opponent)||s.armies.some(a=>a.owner===opponent&&a.men>0));
+ if(!exposed||s.armies.some(a=>a.owner===s.player&&a.men>0)){
+  delete s.world.romanDefeatNotice;return;
+ }
+ const month=s.year*12+s.month,notice=s.world.romanDefeatNotice;
+ if(!notice){s.world.romanDefeatNotice={opponent,remaining:2,lastMonth:month};log(s,'No field army remains. Raise a new force within three months or the command will collapse.','己方已无野战军。三个月内征召新军队，否则指挥方将瓦解。');return}
+ if(notice.lastMonth===month)return;
+ notice.lastMonth=month;
+ if(--notice.remaining>0)return;
+ delete s.world.romanDefeatNotice;s.defeat=true;s.defeatedBy=opponent;
+ log(s,'The Roman command has collapsed after three months without a field army. The campaign has ended.','连续三个月没有野战军，罗马指挥方瓦解；本次战役结束。');
+}
+
 // A durable settlement offers a peaceful completion path. The campaign can
 // continue, but renewed war before finalization ends the qualification.
 export function advancePeacefulSettlement(s){
- if(!['caesar','senate'].includes(s.player)||s.victory)return;
+ if(!['caesar','senate'].includes(s.player)||s.victory||s.defeat)return;
  const f=s.factions[s.player],secure=f&&s.regions.some(r=>r.owner===s.player)&&!s.wars.some(w=>w.includes(s.player))&&f.stability>=55&&f.legitimacy>=40&&f.treasury>=0&&f.food>=0;
  if(!secure){s.world.peacefulSettlementMonths=0;if(!s.world.dynasties?.finalized)delete s.peacefulVictory;return}
  const month=s.year*12+s.month;if(s.world.lastPeacefulSettlementMonth===month)return;s.world.lastPeacefulSettlementMonth=month;
@@ -630,6 +648,7 @@ export function advancePeacefulSettlement(s){
 }
 
 export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
+  if(s.defeat)return s;
   initializeWorld(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
   const chronicleBefore=captureCampaignState(s);
   s.month++;if(s.month>12){s.month=1;s.year++}
@@ -650,7 +669,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
     try{aiTurn(s,owner);if(owner!=='rebels')aiInnovation(s,owner)}finally{if(hadDifficulty)s.difficulty=originalDifficulty;else delete s.difficulty}
   }
   observeDiplomacy(s);
-  advanceRomanVictory(s);advancePeacefulSettlement(s);
+  advanceRomanDefeat(s);advanceRomanVictory(s);advancePeacefulSettlement(s);
   recordCampaignTurn(s,chronicleBefore);
   return s;
 }

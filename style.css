@@ -57,3 +57,8 @@ body{min-width:0;background:#292d29}.top{height:54px;padding:0 12px;gap:15px;bac
 .victory-progress{display:flex;align-items:center;gap:12px;padding:7px 17px;background:#29332e;color:#e7d5ae;border-bottom:1px solid #756d54;font:11px Arial,sans-serif;flex-wrap:wrap}.victory-progress b{color:#d6b475;letter-spacing:1px}.victory-progress small{color:#c9c5b7;font-size:10px}@media(max-width:700px){.victory-progress{position:absolute;z-index:4;top:115px;left:48px;right:8px;max-height:70px;overflow:auto;gap:4px;padding:7px}.victory-progress small{width:100%}}
 
 .resource-forecast{padding:6px 17px;background:#303832;color:#dccda7;border-bottom:1px solid #615d4c;font:11px Arial,sans-serif}.resource-forecast summary{cursor:pointer}.resource-forecast p{margin:5px 0 2px;color:#bdb9aa}@media(max-width:700px){.resource-forecast{position:absolute;z-index:4;top:190px;left:48px;right:8px;padding:6px}}
+
+.victory.defeat{background:#542b24;border:2px solid #e5b87b;font-weight:700}
+.defeat-summary{padding:14px;margin:8px 0 14px;background:#f2dfc8;border:2px solid #9b4b38;color:#45261e}
+.defeat-summary h3{margin:0 0 8px;font-size:22px}
+.defeat-summary p{margin:7px 0;line-height:1.5}

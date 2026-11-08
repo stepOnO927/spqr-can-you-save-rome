@@ -26,6 +26,7 @@ jobs:
           node tools/construction-smoke.mjs
           node tools/browser-smoke.mjs
           node tools/phase-v-smoke.mjs
+          node tools/campaign-defeat-smoke.mjs
           node tools/capture-check.mjs
           node tools/map-benchmark.mjs
       - uses: actions/upload-artifact@v4
