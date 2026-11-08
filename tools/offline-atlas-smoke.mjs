@@ -90,7 +90,7 @@ try{
  await page.locator('#map-mode').selectOption('political');
  if(page.viewportSize().width<=600){await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),false)}
  if(process.env.SPQR_ATLAS_OVERVIEW_SCREENSHOT){await page.waitForTimeout(600);await page.screenshot({path:process.env.SPQR_ATLAS_OVERVIEW_SCREENSHOT})}
- if(process.env.SPQR_ATLAS_WIDE_SCREENSHOT){await page.locator('#zoom-out').click();await page.locator('#zoom-out').click();await page.waitForTimeout(1300);await page.screenshot({path:process.env.SPQR_ATLAS_WIDE_SCREENSHOT});await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(800)}
+ if(process.env.SPQR_ATLAS_WIDE_SCREENSHOT){await page.locator('#zoom-out').click();await page.locator('#zoom-out').click();await page.waitForTimeout(1300);assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('leader-overview')),true);assert.equal(await page.locator('[data-site="roma"]').evaluate(el=>getComputedStyle(el).fontSize),'0px','Wide overview should show a settlement dot, not a label competing with army flags');await page.screenshot({path:process.env.SPQR_ATLAS_WIDE_SCREENSHOT});await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(800);assert.notEqual(await page.locator('[data-site="roma"]').evaluate(el=>getComputedStyle(el).fontSize),'0px','City names should return at regional zoom')}
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
  assert.ok(terrainRequests.some(path=>path.includes('/terrain/6/')),'Zoom 6 did not use bundled terrain');
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
