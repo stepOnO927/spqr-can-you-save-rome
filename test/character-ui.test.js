@@ -4,6 +4,7 @@ import {newGame} from '../engine.js';
 import {createCharacterUI} from '../map-lab/character-ui.js';
 import {addReport} from '../character-system.js';
 import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js';
+import {createFictionalPerson} from '../dynasties.js';
 
 // A small DOM stub exercises the real handler without requiring a network listener.
 // It does not replace a browser or layout test.
@@ -17,6 +18,16 @@ class Element {
  prepend(...elements){this.children.unshift(...elements)}
  replaceChildren(...elements){this.children=elements}
 }
+test('fictional people without dedicated artwork use an explicit silhouette without revealing hidden foreign details',()=>{
+ const prior=globalThis.document,s=newGame('caesar'),panel=new Element();globalThis.document={createElement:tag=>new Element(tag),querySelector:()=>panel};
+ try{
+  const id=createFictionalPerson(s,{name:['Test Person','测试人物'],faction:'caesar',birthYear:-70,location:'cisalpine'}),ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});
+  ui.show(id);assert.match(panel.innerHTML,/暂无专属肖像/);assert.match(panel.innerHTML,/<svg class="portrait-unknown"/);assert.doesNotMatch(panel.innerHTML,/肖像为艺术复原|<img /);
+  const other='fictional:1';s.world.characters[other].faction='senate';addReport(s,'caesar','senate',{kind:'leaders',leaders:[other],source:'spy'});panel.children=[];ui.show(other);const first=panel.innerHTML;
+  assert.match(first,/报告身份未经证实；肖像未取得/);assert.match(first,/<svg class="portrait-unknown"/);assert.doesNotMatch(first,/fictional-varenus-128/);
+  s.world.characters[other].birthYear+=9;panel.children=[];ui.show(other);assert.equal(panel.innerHTML,first);
+ }finally{globalThis.document=prior}
+});
 test('a deceased friendly character shows age at simulated death and no travel order',()=>{
  const prior=globalThis.document,s=newGame('senate'),panel=new Element(),c=s.world.characters.cicero;
  s.year=-40;Object.assign(c,{alive:false,health:'deceased',deathYear:-48,deathMonth:5,location:'roma',travel:{destination:'epirus',legs:[{to:'epirus',months:2}],remaining:2}});
