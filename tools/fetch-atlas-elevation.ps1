@@ -1,11 +1,13 @@
-# Cache overview-scale Mapzen/AWS Terrarium terrain for the playable map bounds.
+# Cache Mapzen/AWS Terrarium terrain: full Mediterranean overview and Italy detail.
 # Source and attribution: https://registry.opendata.aws/terrain-tiles/
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $terrainRoot = Join-Path $root 'map-lab/terrain'
 $levels = @(
     @{ Zoom = 4; XMin = 7; XMax = 10; YMin = 4; YMax = 7 },
-    @{ Zoom = 5; XMin = 14; XMax = 21; YMin = 9; YMax = 14 }
+    @{ Zoom = 5; XMin = 14; XMax = 21; YMin = 9; YMax = 14 },
+    @{ Zoom = 6; XMin = 28; XMax = 42; YMin = 19; YMax = 28 },
+    @{ Zoom = 7; XMin = 65; XMax = 71; YMin = 44; YMax = 50 }
 )
 $downloaded = 0
 foreach ($level in $levels) {
@@ -20,11 +22,11 @@ foreach ($level in $levels) {
                 $downloaded++
             }
             $bytes = [IO.File]::ReadAllBytes($target)
-            if ($bytes.Length -lt 100 -or [Convert]::ToHexString($bytes,0,8) -ne '89504E470D0A1A0A') {
+            if ($bytes.Length -lt 100 -or [Convert]::ToBase64String($bytes[0..7]) -ne 'iVBORw0KGgo=') {
                 throw "Invalid terrain tile: $target"
             }
         }
     }
     Write-Output "Verified terrain zoom $($level.Zoom)."
 }
-Write-Output "Downloaded $downloaded tiles; verified 64."
+Write-Output "Downloaded $downloaded tiles; verified 263."

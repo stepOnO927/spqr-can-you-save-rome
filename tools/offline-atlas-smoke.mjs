@@ -36,6 +36,13 @@ try{
  assert.deepEqual(missingTerrain,[]);
  assert.equal(external.includes('s3.amazonaws.com'),false,'Overview terrain unexpectedly needed the network');
  assert.ok(external.every(host=>host==='s3.amazonaws.com'||host.endsWith('googleapis.com')||host.endsWith('gstatic.com')),`Unexpected external dependency: ${external.join(', ')}`);
- if(process.env.SPQR_ATLAS_SCREENSHOT){await page.locator('#start-free').click();await page.screenshot({path:process.env.SPQR_ATLAS_SCREENSHOT})}
- console.log('Offline atlas loaded MapLibre, 120 settlement markers and campaign controls without CDN access.');
+ await page.locator('#start-free').click();
+ await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
+ assert.ok(terrainRequests.some(path=>path.includes('/terrain/6/')),'Zoom 6 did not use bundled terrain');
+ await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
+ assert.ok(terrainRequests.some(path=>path.includes('/terrain/7/')),'Zoom 7 did not use bundled terrain');
+ assert.deepEqual(missingTerrain,[],'Zoomed Italy requested missing terrain tiles');
+ assert.equal(external.includes('s3.amazonaws.com'),false,'Italy zoom needed network terrain');
+ if(process.env.SPQR_ATLAS_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_SCREENSHOT});
+ console.log('Offline atlas loaded MapLibre, 120 settlement markers and local terrain through Italy zoom 7.');
 }finally{await browser.close()}
