@@ -21,7 +21,7 @@ import {newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, reg
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=phase-x-1';
-import {createCharacterUI} from './character-ui.js?v=governance-sync-1';
+import {createCharacterUI} from './character-ui.js?v=death-age-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=1';
 import {reportedArmies} from '../character-system.js?v=governance-sync-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=phase-x-1';

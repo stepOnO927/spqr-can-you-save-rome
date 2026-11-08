@@ -17,6 +17,17 @@ class Element {
  prepend(...elements){this.children.unshift(...elements)}
  replaceChildren(...elements){this.children=elements}
 }
+test('a deceased friendly character shows age at simulated death and no travel order',()=>{
+ const prior=globalThis.document,s=newGame('senate'),panel=new Element(),c=s.world.characters.cicero;
+ s.year=-40;Object.assign(c,{alive:false,health:'deceased',deathYear:-48,deathMonth:5,location:'roma',travel:{destination:'epirus',legs:[{to:'epirus',months:2}],remaining:2}});
+ globalThis.document={createElement:tag=>new Element(tag),querySelector:()=>panel};
+ try{
+  const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('cicero');
+  assert.match(panel.innerHTML,/模拟去世时年龄<\/span><b>约57–58/);assert.match(panel.innerHTML,/最后记录战区/);assert.doesNotMatch(panel.innerHTML,/旅途中/);assert.ok(!panel.children.some(x=>x.className==='mission-box'));
+  delete c.deathYear;panel.children=[];ui.show('cicero');assert.match(panel.innerHTML,/模拟去世时年龄<\/span><b>未知/);
+  s.player='caesar';panel.children=[];ui.show('cicero');assert.match(panel.innerHTML,/年龄<\/span><b>未知/);assert.doesNotMatch(panel.innerHTML,/模拟去世时年龄|最后记录战区|已故/);
+ }finally{globalThis.document=prior}
+});
 test('travel confirmation uses the selected route and refreshes resources immediately',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');let refreshed=0;
  globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
