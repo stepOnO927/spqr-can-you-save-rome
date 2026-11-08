@@ -21,6 +21,7 @@ const errors=[];
 const external=[];
 const terrainRequests=[];
 const missingTerrain=[];
+const landcoverRequests=[],missingLandcover=[];
 page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.route('**/*',async route=>{
@@ -29,11 +30,12 @@ try{
   if(url.hostname!=='spqr.test'){external.push(url.hostname);await route.abort();return}
   const pathname=url.pathname.endsWith('/')?url.pathname+'index.html':url.pathname;
   if(pathname.includes('/terrain/'))terrainRequests.push(pathname);
+  if(pathname.includes('/landcover/'))landcoverRequests.push(pathname);
   const file=resolve(root,'.'+pathname);
   if(!file.startsWith(root+sep)){await route.abort();return}
   const mime={'.js':'text/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.json':'application/json','.png':'image/png','.jpg':'image/jpeg'}[extname(file)]||'application/octet-stream';
   try{await route.fulfill({status:200,contentType:mime,body:await readFile(file)})}
-  catch{if(pathname.includes('/terrain/'))missingTerrain.push(pathname);await route.fulfill({status:404,body:'Not found'})}
+  catch{if(pathname.includes('/terrain/'))missingTerrain.push(pathname);if(pathname.includes('/landcover/'))missingLandcover.push(pathname);await route.fulfill({status:404,body:'Not found'})}
  });
  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('.maplibregl-canvas').waitFor();
@@ -44,6 +46,8 @@ try{
  assert.deepEqual(errors,[]);
  assert.ok(terrainRequests.length>0,'Overview terrain tiles were not requested');
  assert.deepEqual(missingTerrain,[]);
+ assert.ok(landcoverRequests.length>0,'Overview idealized land-cover tiles were not requested');
+ assert.deepEqual(missingLandcover,[]);
  assert.equal(external.includes('s3.amazonaws.com'),false,'Overview terrain unexpectedly needed the network');
  assert.ok(external.every(host=>host==='s3.amazonaws.com'||host.endsWith('googleapis.com')||host.endsWith('gstatic.com')),`Unexpected external dependency: ${external.join(', ')}`);
  await page.locator('#start-free').click();
@@ -86,6 +90,7 @@ try{
  await page.locator('#map-mode').selectOption('political');
  if(page.viewportSize().width<=600){await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),false)}
  if(process.env.SPQR_ATLAS_OVERVIEW_SCREENSHOT){await page.waitForTimeout(600);await page.screenshot({path:process.env.SPQR_ATLAS_OVERVIEW_SCREENSHOT})}
+ if(process.env.SPQR_ATLAS_WIDE_SCREENSHOT){await page.locator('#zoom-out').click();await page.locator('#zoom-out').click();await page.waitForTimeout(1300);await page.screenshot({path:process.env.SPQR_ATLAS_WIDE_SCREENSHOT});await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(800)}
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
  assert.ok(terrainRequests.some(path=>path.includes('/terrain/6/')),'Zoom 6 did not use bundled terrain');
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
