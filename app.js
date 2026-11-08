@@ -6,7 +6,7 @@ import {CHARACTER_CATALOG} from './characters.js?v=xxii-final-4';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=xxii-final-4';
 import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=rumored-death-1';
 import {decideDisputedHeir,personAge} from './dynasties.js?v=xxii-final-4';
-import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=xxii-final-4';
+import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=fictional-portraits-1';
 import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=xxii-final-4';
 import {drawMap,mapPoint} from './map.js?v=rumored-death-1';
 

@@ -204,6 +204,16 @@ test('genealogy stays bilingual and procedural identity remains stable with age'
  assert.match(older,/Aulus of Rome/);assert.match(older,/data:image\/svg\+xml/);
 });
 
+test('opening fictional portraits stay distinct and are not assigned to a reused identity',()=>{
+ const portrait=(html,id)=>html.match(new RegExp('data-gene-person="'+id+'"[^>]*><img src="([^"]+)"'))?.[1];
+ for(const [side,expected] of [['caesar',['fictional-varenus','fictional-livia']],['senate',['fictional-cassianus','fictional-valeria']]]){
+  const s=newGame(side),html=renderGenealogy(s,false),ids=side==='caesar'?['fictional:1','fictional:2']:['fictional:3','fictional:4'];
+  assert.ok(portrait(html,ids[0]).includes(expected[0]));assert.ok(portrait(html,ids[1]).includes(expected[1]));assert.notEqual(portrait(html,ids[0]),portrait(html,ids[1]));assert.match(html,/game artwork and do not age/);
+  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(portrait(renderGenealogy(restored,false),ids[0]),portrait(html,ids[0]));
+  restored.world.dynasties.catalog[ids[0]].name=['A different person','另一人'];assert.match(portrait(renderGenealogy(restored,false),ids[0]),/^data:image\/svg\+xml/);
+ }
+});
+
 test('legacy achievements remain sealed until campaign finalization',()=>{
  const s=newDynastyScenario();assert.equal(s.world.dynasties.finalized,undefined);
  assert.deepEqual(finalizeCampaign(s),{ok:false,reason:'unfinished'});
