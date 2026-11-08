@@ -120,5 +120,16 @@ test('grand-campaign AI reinforces an existing border army before marching or ra
  assert.equal(region(s,'italiaN').loyalty,loyalty-3);
  advanceRecon(s);
  assert.equal(levies.men,men+3000);
- assert.equal(levies.reconPending,null);
+ assert.equal(levies.reconPending?.kind,undefined);
+});
+
+test('AI does not stack another levy on an already assembled border force',()=>{
+ const s=newGrandGame('caesar'),levies=army(s,'italy'),f=s.factions.senate;
+ s.month=4;levies.men=8200;f.treasury=200;f.food=100;f.manpower=10000;
+ s.militaryAlerts=[{owner:'senate',regionId:'italiaN',year:s.year,month:s.month}];
+ const count=s.armies.length;
+ aiTurn(s,'senate');
+ assert.equal(s.armies.length,count);
+ assert.equal(levies.reconPending?.kind,undefined);
+ assert.equal(f.manpower,10000);
 });

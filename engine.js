@@ -409,7 +409,9 @@ export function aiTurn(s,owner){
   const alert=(s.militaryAlerts||[]).find(a=>a.owner===owner&&a.year*12+a.month>=s.year*12+s.month-1&&region(s,a.regionId)?.owner===owner);
   const raiseAt=regionId=>{
     if(s.armies.some(a=>a.owner===owner&&a.region===regionId&&a.reconPending?.kind==='reinforce'))return false;
-    const front=s.grandMap&&s.armies.filter(a=>a.owner===owner&&a.region===regionId&&a.men>0&&a.men<9000&&!a.move&&!a.siege&&!a.reconPending).sort((a,b)=>b.men-a.men)[0];
+    const stationed=s.grandMap?s.armies.filter(a=>a.owner===owner&&a.region===regionId&&a.men>0&&!a.move&&!a.siege&&!a.reconPending):[];
+    if(stationed.some(a=>a.men>=6000))return false;
+    const front=stationed.sort((a,b)=>b.men-a.men)[0];
     return front&&requestReinforcements(s,front.id,owner).ok||recruit(s,regionId,owner);
   };
   if(alert&&f.treasury>=40&&f.food>=6&&f.manpower>=3000)raiseAt(alert.regionId);
