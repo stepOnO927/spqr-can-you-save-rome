@@ -130,7 +130,7 @@ function bindEntry(){
  document.querySelector('#entry-load').onclick=()=>{entryOpen=false;slot('load');render()};
  document.querySelector('#entry-export').onclick=()=>downloadCampaign(state);
  document.querySelector('#entry-import').onclick=()=>document.querySelector('#entry-file').click();
- document.querySelector('#entry-file').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>5_000_000)throw Error('File is too large');offerMigration(importCampaign(await file.text()))}catch{document.querySelector('#entry-message').textContent=lang==='zh'?'存档格式有误，无法上传。':'The save file could not be imported.'}};
+ document.querySelector('#entry-file').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>5_000_000)throw Error('File is too large');offerMigration(importCampaign(await file.text()))}catch{document.querySelector('#entry-message').textContent=lang==='zh'?'存档格式有误，无法上传。':'The save file could not be imported.'}finally{e.target.value=''}};
  document.querySelector('#entry-lang').onclick=()=>{lang=lang==='zh'?'en':'zh';localStorage.setItem('spqr-lang',lang);render()};
 }
 
