@@ -1,0 +1,40 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {newGame,tick,upgradeSave,resolveBattle,region} from '../engine.js';
+import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports} from '../chronicle.js?v=phase-x-1';
+import {finalizeCampaign} from '../legacy.js';
+
+test('36 monthly turns preserve a full chronology and three evidence-based annual reviews',()=>{
+ const s=newGame('caesar');for(let i=0;i<36;i++)tick(s);
+ const records=s.chronicle.entries.filter(e=>e.kind==='economy'&&e.change==='monthly');
+ assert.equal(records.length,36);assert.equal(s.chronicle.monthly.length,36);assert.equal(s.chronicle.annual.length,3);
+ for(const review of s.chronicle.annual)assert.equal(review.economy.treasury,s.chronicle.entries.filter(e=>e.year===review.year&&e.kind==='economy').reduce((n,e)=>n+e.delta.treasury,0));
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(saved.chronicle.entries.length,s.chronicle.entries.length);assert.deepEqual(saved.chronicle.monthly,s.chronicle.monthly);assert.deepEqual(saved.chronicle.annual,s.chronicle.annual);
+});
+
+test('recapture and capital loss record actual controllers, location, consequences and critical priority',()=>{
+ const s=newGame('senate'),r=region(s,'roma'),before=captureCampaignState(s);r.owner='caesar';s.month=2;recordCampaignTurn(s,before);
+ const loss=s.chronicle.entries.find(e=>e.kind==='territory');assert.equal(loss.previous,'senate');assert.equal(loss.current,'caesar');assert.equal(loss.region,'roma');assert.equal(loss.priority,'critical');assert.deepEqual(loss.strategic.objectives,['roma']);assert.match(formatChronicleEntry(loss,'en'),/Rome|Latium/);assert.match(formatChronicleEntry(loss,'zh'),/罗马|拉丁姆/);
+ const next=captureCampaignState(s);r.owner='senate';s.month=3;recordCampaignTurn(s,next);assert.equal(s.chronicle.entries.find(e=>e.kind==='territory').current,'senate');
+});
+
+test('simultaneous real battles retain separate identifiers and known friendly losses',()=>{
+ const s=newGame('caesar'),before=captureCampaignState(s);
+ resolveBattle(s,s.armies.find(a=>a.id==='xiii'),s.armies.find(a=>a.id==='italy'),region(s,'italiaN'));
+ resolveBattle(s,s.armies.find(a=>a.id==='viii'),s.armies.find(a=>a.id==='spain'),region(s,'hispaniaN'));
+ recordCampaignTurn(s,before);const battles=s.chronicle.entries.filter(e=>e.kind==='battle');assert.equal(battles.length,2);assert.equal(new Set(battles.map(e=>e.battleId)).size,2);assert.ok(battles.every(e=>e.ownCasualties>=0&&e.enemyCasualties===null));
+});
+
+test('deaths, diplomacy, rebellion and army destruction generate classified alerts without foreign secrets',()=>{
+ const s=newGame('caesar'),before=captureCampaignState(s);s.month=2;s.world.characters.caesar.alive=false;s.world.governments.caesar.kind='vacant';s.wars.push(['caesar','egypt']);region(s,'gaul').owner='rebels';s.armies=s.armies.filter(a=>a.id!=='xiii');recordCampaignTurn(s,before);
+ const entries=s.chronicle.entries;assert.ok(entries.some(e=>e.kind==='character'&&e.characterId==='caesar'&&e.priority==='critical'));assert.ok(entries.some(e=>e.kind==='government'&&e.to==='vacant'));assert.ok(entries.some(e=>e.kind==='diplomacy'&&e.other==='egypt'));assert.ok(entries.some(e=>e.kind==='army'&&e.armyId==='xiii'&&e.priority==='critical'));assert.ok(entries.some(e=>e.kind==='territory'&&e.current==='rebels'));
+ const foreign=captureCampaignState(s);s.world.characters.cleopatra.alive=false;s.factions.egypt.treasury=-90;recordCampaignTurn(s,foreign);assert.ok(!s.chronicle.entries.some(e=>e.characterId==='cleopatra'||e.faction==='egypt'));
+});
+
+test('Chronicle filtering, dated intelligence, and finalized archive replay stay bilingual',()=>{
+ const s=newGame('caesar');const before=captureCampaignState(s);s.month=2;region(s,'gaul').owner='senate';recordCampaignTurn(s,before);
+ recordIntelligenceReports(s,[{region:'egypt',name:['Egypt','埃及'],owner:['Egypt','埃及'],year:-49,month:1,source:'travelers'}]);
+ const events=s.chronicle.entries,territory=filterChronicle(events,{kind:'territory',faction:'senate',from:String(-49*12+2)});assert.equal(territory.length,1);assert.equal(filterChronicle(events,{kind:'territory',to:String(-49*12+1)}).length,0);assert.ok(filterChronicle(events,{query:'Egypt',kind:'intelligence'}).length);
+ assert.match(formatChronicleEntry(events[0],'en'),/may be outdated/);assert.match(formatChronicleEntry(events[0],'zh'),/可能过时/);
+ s.victory=true;const archive=finalizeCampaign(s).archive;assert.ok(archive.chronicle.some(e=>e.kind==='territory'));assert.ok(archive.chronicle.some(e=>e.kind==='intelligence'&&e.source==='travelers'));
+});

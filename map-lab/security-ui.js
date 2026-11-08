@@ -1,7 +1,7 @@
-import {queueMission,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=valid-letter-1';
-import {reassurePerson} from '../conspiracies.js?v=asylum-heir-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=asylum-heir-1';
-import {FACTIONS} from '../data.js?v=xxii-final-4';
+import {queueMission,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=phase-x-1';
+import {reassurePerson} from '../conspiracies.js?v=phase-x-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=phase-x-1';
+import {FACTIONS} from '../data.js?v=phase-x-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function renderSecurity({panel,state,language,refresh}){

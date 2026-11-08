@@ -1,4 +1,4 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=asylum-heir-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=phase-x-1';
 
 const roman=id=>id==='caesar'||id==='senate';
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};

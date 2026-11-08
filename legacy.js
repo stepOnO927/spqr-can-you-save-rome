@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=asylum-heir-1';
-import {initializeDynasties} from './dynasties.js?v=asylum-heir-1';
+import {CHARACTER_CATALOG} from './characters.js?v=phase-x-1';
+import {initializeDynasties} from './dynasties.js?v=phase-x-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.world?.dynasties?.scenario?.stage==='resolved')}
 
@@ -29,6 +29,9 @@ export function finalizeCampaign(s){
   familyLoans:(d.familyLoans||[]).filter(x=>x.faction===s.player).map(x=>({...x,familyName:d.families[x.familyId]?.name||[x.familyId,x.familyId]})),
   regency:s.world.regencies?.[s.player]?{...s.world.regencies[s.player],regentName:CHARACTER_CATALOG[s.world.regencies[s.player].regent]?.name||null,wardName:CHARACTER_CATALOG[s.world.regencies[s.player].ward]?.name||null}:null,
   memories:(d.memories||[]).filter(x=>familyIds.includes(x.familyId)).map(x=>({...x})),
+  chronicle:(s.chronicle?.entries||[]).map(e=>({...e})),
+  monthlyReports:(s.chronicle?.monthly||[]).map(x=>({...x})),
+  annualReviews:(s.chronicle?.annual||[]).map(x=>({...x})),
   victory:!!s.victory,scenario:d.scenario?{...d.scenario}:null};
  d.finalized=archive;return {ok:true,archive};
 }

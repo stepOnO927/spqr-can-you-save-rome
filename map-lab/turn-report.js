@@ -1,4 +1,4 @@
-import {reportedControl} from '../control-intelligence.js?v=xxii-final-4';
+import {reportedControl} from '../control-intelligence.js?v=phase-x-1';
 
 // Preserve the observation date and provenance, not just the controller: a
 // traveler arriving now may describe an earlier and possibly mistaken sighting.
@@ -6,7 +6,7 @@ export function controlReportChanges(state,before,labels){
  return state.regions.flatMap(r=>{
   const report=reportedControl(state,state.player,r.id);
   if(!report?.owner||before[r.id]===report.owner)return [];
-  return [{name:r.name,owner:labels[report.owner]?.short||['Unknown','未知'],year:report.year,month:report.month,source:report.own?'own':report.source||'observation'}];
+  return [{region:r.id,name:r.name,owner:labels[report.owner]?.short||['Unknown','未知'],year:report.year,month:report.month,source:report.own?'own':report.source||'observation'}];
  });
 }
 export function formatControlReport(change,language){

@@ -1,11 +1,11 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=asylum-heir-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=asylum-heir-1';
-import {FACTIONS,ROUTES} from './data.js?v=xxii-final-4';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=valid-letter-1';
-import {potentialConspirators} from './conspiracies.js?v=asylum-heir-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=asylum-heir-1';
-import {reportedControl} from './control-intelligence.js?v=xxii-final-4';
-import {canHoldOffice,localGovernor} from './office-system.js?v=asylum-heir-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=phase-x-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=phase-x-1';
+import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=phase-x-1';
+import {potentialConspirators} from './conspiracies.js?v=phase-x-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=phase-x-1';
+import {reportedControl} from './control-intelligence.js?v=phase-x-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=phase-x-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
