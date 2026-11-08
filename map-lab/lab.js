@@ -10,14 +10,14 @@ import grandTerritories from '../grand-territory-polygons.js';
 import {GRAND_SITES} from '../grand-map-data.js';
 import {holdPosition,strategicRetreat,armySupply,encircled} from '../grand-operations.js?v=9';
 import {importCampaign,downloadCampaign} from '../save-files.js?v=4';
-import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js?v=4';
-import {endCampaign} from '../achievement-system.js?v=4';
-import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=4';
+import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js?v=5';
+import {endCampaign} from '../achievement-system.js?v=5';
+import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=5';
 import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js?v=2';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=10';
-import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=122';
+import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=123';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js?v=17';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
@@ -34,7 +34,7 @@ import {assessment,sendScouts,probePositions,delayAttack,markReconRegion,request
 import {intelligenceHtml,afterActionHtml} from '../recon-ui.js?v=3';
 import {renderNavalPanel} from './naval-ui.js?v=27';
 import {SEA_ZONES,reportedHostileFleets} from '../naval.js?v=14';
-import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=122';
+import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=123';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();

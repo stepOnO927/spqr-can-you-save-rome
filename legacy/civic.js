@@ -1,4 +1,4 @@
-import {claimReward} from './legacy-core.js?v=4';
+import {claimReward} from './legacy-core.js?v=5';
 export const PETITIONS=[
  {id:'doorway',title:['The offended doorway','受辱的门口'],text:['Atlas Catinius claims his neighbor relieved himself at his doorway. His sandals are ruined.','阿特拉斯·卡提尼乌斯控诉邻居在他门前小便，毁了他的凉鞋。'],choices:[['Order restitution','命令赔偿'],['Dismiss the complaint','驳回诉状'],['Fine both men for wasting the Senate’s time','两人皆罚：浪费元老院时间']],effects:[{people:6,reputation:4},{people:-5,aristocrats:2},{senate:4,people:-7,corruption:2}],relic:'catinius-scroll'},
  {id:'grain',title:['A hungry district','饥饿的街区'],text:['The Aventine asks for emergency grain while a wealthy contractor offers a costly private delivery.','阿文提诺山居民请求紧急粮食，富商提出高价私人运输。'],choices:[['Open public stores','开放公粮仓'],['Accept the contractor','接受富商提议'],['Delay for an audit','先审计再决定']],effects:[{people:9,senate:-3},{people:3,corruption:8,aristocrats:5},{people:-5,senate:4,corruption:-3}],relic:'grain-tablet'},

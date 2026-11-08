@@ -1,6 +1,6 @@
 import {observeArmies} from '../character-system.js';
 import {beginBriefing} from '../campaign-reports.js?v=2';
-import {achievementDefinition} from '../achievement-system.js?v=4';
+import {achievementDefinition,campaignSummary} from '../achievement-system.js?v=5';
 export const PROFILE_KEY='spqr-legacy-profile-v1';
 export const BUILDINGS={curia:{name:['Curia','元老院'],price:0,position:[48,35],icon:'♜'},archive:{name:['Archive','档案馆'],price:0,position:[33,53],icon:'▤'},arch:{name:['Triumphal Arch','凯旋门'],price:0,position:[64,52],icon:'⌒'},camp:{name:['Military Camp','军营'],price:300,position:[16,31],icon:'⚑'},museum:{name:['Museum','博物馆'],price:350,position:[75,28],icon:'◈'},temple:{name:['Temple District','神庙区'],price:450,position:[31,16],icon:'♙'},circus:{name:['Circus of Mars','战车赛马场'],price:550,position:[78,71],icon:'◎',requires:'temple'},library:{name:['Library & Academy','图书馆与学院'],price:500,position:[48,68],icon:'▦'},harbor:{name:['Harbor Office','港务局'],price:450,position:[88,43],icon:'⚓'},court:{name:['Court','法庭'],price:400,position:[56,16],icon:'⚖'},intelligence:{name:['Intelligence Office','情报局'],price:500,position:[17,67],icon:'◉'},palace:{name:['State Residence','国政官邸'],price:1200,position:[50,7],icon:'♛'}};
 export const GOODS={
@@ -35,10 +35,12 @@ export function recordCampaign(profile,state){
   if(achievementId==='challenge')profile.titles.push(state.legacyScenario==='scenario-pharsalus'?'Thessaly Victor':'Rubicon Survivor');
  }
  const ownBattles=(state.battles||[]).filter(b=>b.attacker?.owner===state.player||b.defender?.owner===state.player);
- const summary=state.achievementState.summary?JSON.parse(JSON.stringify(state.achievementState.summary)):null;
+ const savedSummary=state.achievementState.summary;
+ const highlights=savedSummary&&(savedSummary.conquests===undefined||savedSummary.worstBattle===undefined)?campaignSummary(state):null;
+ const summary=savedSummary?JSON.parse(JSON.stringify({...savedSummary,conquests:savedSummary.conquests??highlights?.conquests,worstBattle:savedSummary.worstBattle===undefined?highlights?.worstBattle:savedSummary.worstBattle})):null;
  const existing=profile.archive.find(a=>a.id===id);
  if(!existing){profile.archive.unshift({id,year:state.achievementState.endedAt.year,month:state.achievementState.endedAt.month,result:state.achievementState.result,faction:state.player,territories:state.regions.filter(r=>r.owner===state.player).length,battles:ownBattles.length,summary,notable:ownBattles.slice(-4).map(b=>({region:b.region,winner:b.attackerWins?b.attacker?.owner:b.defender?.owner}))});profile.archive=profile.archive.slice(0,profile.purchases.includes('archive-capacity')?100:50)}
- else if(!['caesar','senate'].includes(state.player)&&summary){
+ else if(summary&&(!['caesar','senate'].includes(state.player)||existing.summary?.conquests===undefined)){
   existing.summary=summary;
   existing.battles=ownBattles.length;
   existing.notable=ownBattles.slice(-4).map(b=>({region:b.region,winner:b.attackerWins?b.attacker?.owner:b.defender?.owner}));

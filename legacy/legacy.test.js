@@ -49,15 +49,31 @@ test('archive tells a foreign campaign story without exposing raw territory IDs'
  const profile=loadProfile(memory()),campaign=newGrandGame('egypt');
  campaign.civilWarOutcome={kind:'military',winner:'senate',loser:'caesar',year:-48,month:2};
  campaign.battles=[{region:'roma',attacker:{owner:'caesar'},defender:{owner:'senate'},attackerWins:true,lossA:90,lossD:60},{region:'t116',attacker:{owner:'egypt',commander:['Egyptian commander','埃及将领']},defender:{owner:'senate'},attackerWins:false,lossA:45,lossD:20}];
+ campaign.campaignEvents.push({type:'control',newOwner:'egypt',previousOwner:'senate',regionId:'t116'},{type:'control',newOwner:'egypt',previousOwner:'senate',regionId:'t116'},{type:'control',newOwner:'caesar',previousOwner:'senate',regionId:'roma'});
  campaign.achievementState.completed['first-recon']={year:-49,month:1,turn:0,evidence:{source:'scouts'}};
  endCampaign(campaign,'retired');recordCampaign(profile,campaign);
  const en=archivePanelHtml(profile,'en'),zh=archivePanelHtml(profile,'zh');
  for(const html of [en,zh])assert.doesNotMatch(html,/t116|undefined|NaN/);
  assert.match(en,/Voluntary ending/);assert.match(en,/Roman civil war: .*Senate/);assert.match(en,/Damascus/);
  assert.match(en,/Egyptian commander/);assert.match(en,/Your casualties: 45/);assert.match(en,/Eyes Across the Frontier/);
+ assert.match(en,/Distinct captures 1/);assert.match(en,/Heaviest friendly losses: Damascus · 45 · lost/);
  assert.match(zh,/自愿结束/);assert.match(zh,/罗马内战/);assert.match(zh,/大马士革/);assert.match(zh,/埃及将领/);
+ assert.match(zh,/不同领土的夺取 1/);assert.match(zh,/己方伤亡最重一战: 大马士革 · 45 · 败/);
  const old={archive:[{id:'old',faction:'egypt',year:-49,result:'retired',territories:2,battles:0,summary:{},notable:[{region:'<script>',winner:'senate'}]}],achievements:[]};
  assert.doesNotMatch(archivePanelHtml(old,'en'),/<script>/);
+ old.archive[0].year=1;assert.match(archivePanelHtml(old,'en'),/1 CE/);
+});
+test('reimport fills capture and heaviest-loss records from an older finalized save',()=>{
+ const profile=loadProfile(memory()),campaign=newGrandGame('caesar');
+ campaign.campaignEvents.push({type:'control',newOwner:'caesar',previousOwner:'senate',regionId:'roma'});
+ campaign.battles=[{region:'roma',attacker:{owner:'caesar'},defender:{owner:'senate'},attackerWins:false,lossA:180,lossD:75}];
+ endCampaign(campaign,'retired');
+ delete campaign.achievementState.summary.conquests;delete campaign.achievementState.summary.worstBattle;
+ recordCampaign(profile,campaign);
+ assert.equal(profile.archive[0].summary.conquests,1);
+ assert.deepEqual(profile.archive[0].summary.worstBattle,{region:'roma',casualties:180,won:false});
+ const coins=profile.coins;
+ assert.deepEqual(recordCampaign(profile,campaign),[]);assert.equal(profile.coins,coins);
 });
 test('buildings visually owned through durable purchases and unlock museum content',()=>{
  const storage=memory(),p=loadProfile(storage);p.coins=1200;assert.equal(purchase(p,'museum').ok,true);assert.ok(p.buildings.includes('museum'));assert.ok(p.collectibles.includes('senate-tablet'));assert.equal(purchase(p,'museum').ok,false);assert.equal(purchase(p,'temple').ok,true);assert.equal(purchase(p,'circus').ok,false);p.coins=600;assert.equal(purchase(p,'circus').ok,true);saveProfile(p,storage);assert.ok(loadProfile(storage).buildings.includes('circus'));
