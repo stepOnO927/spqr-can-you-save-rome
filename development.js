@@ -21,7 +21,10 @@ const alesiaSource='https://musee-archeologienationale.fr/en/node/1592';
 const numantiaSource='https://numanciasoria.es/en/divulgacion/the-archaeological-hall-of-garray';
 const siegeSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/2A%2A.html';
 const librarySource='https://www.persee.fr/doc/mefr_0223-5102_2006_num_118_2_10261';
-const source=(url)=>({title:url.includes('metmuseum')?'Metropolitan Museum of Art':url.includes('whc.unesco')?'UNESCO World Heritage Centre':url.includes('oxrep.web.ox')?'Oxford Roman Economy Project':url.includes('musee-archeologie')?'Musée d’Archéologie nationale':url.includes('numanciasoria')?'Numancia Archaeological Site':url.includes('penelope.uchicago')?'Caesar, Civil Wars':url.includes('persee.fr')?'Mélanges de l’École française de Rome':'World History Encyclopedia',url});
+const cloacaSource='https://www.sovraintendenzaroma.it/i_luoghi/roma_antica/monumenti/cloaca_massima';
+const marciaSource='https://www.sovraintendenzaroma.it/i_luoghi/roma_antica/monumenti/acquedotto_marcio';
+const pompeiiBathSource='https://pompeiisites.org/en/excavations-plan-en/stabian-baths-and-republican-baths/';
+const source=(url)=>({title:url.includes('metmuseum')?'Metropolitan Museum of Art':url.includes('whc.unesco')?'UNESCO World Heritage Centre':url.includes('oxrep.web.ox')?'Oxford Roman Economy Project':url.includes('musee-archeologie')?'Musée d’Archéologie nationale':url.includes('numanciasoria')?'Numancia Archaeological Site':url.includes('penelope.uchicago')?'Caesar, Civil Wars':url.includes('persee.fr')?'Mélanges de l’École française de Rome':url.includes('sovraintendenzaroma.it')?'Sovrintendenza Capitolina':url.includes('pompeiisites.org')?'Pompeii Archaeological Park':'World History Encyclopedia',url});
 export const IDEAS = [
   {id:'legion-training',category:'military',name:['Standardized Legion Training','军团标准化训练'],cost:24,months:3,adopt:12,effects:{recruitMorale:6,combatAttack:.06,upkeep:2},context:['Roman drill and organization are adapted as a costly training program.','罗马式操练与编制需要持续训练经费。'],source:source(armySource)},
   {id:'frontier-defense',category:'military',name:['Frontier Defense Doctrine','边境防御学说'],cost:22,months:3,adopt:10,effects:{combatDefense:.09,upkeep:1,combatAttack:-.02},context:['Garrisons favor prepared defense over rapid offensive action.','驻军重视防御，但进攻灵活性稍降。'],source:source(armySource)},
@@ -47,7 +50,7 @@ export const MATERIALS = [
   {id:'quarrying',name:['Quarrying','采石'],cost:20,months:3,building:'quarry',context:['Roman-period quarry sites are documented, though dating individual sites to 49 BCE is often uncertain.','罗马时期采石场有考古记录，但单个遗址是否活跃于前49年往往难以确定。'],source:source(quarrySource)},
   {id:'metal-extraction',name:['Metal Extraction','金属采掘'],cost:23,months:4,building:'mine',context:['Roman mining sites are documented, but this card does not date a particular deposit to 49 BCE.','罗马时期矿场有考古记录，但此卡不把某处矿藏断定为前49年已开采。'],source:source(miningSource)},
   {id:'grain-storage',name:['Grain Storage','谷物储藏'],cost:20,months:3,building:'granary',context:['Stored grain buffers shortages; storage must be constructed.','储粮缓解短缺；研究之后仍需建造粮仓。'],source:source(grainSource)},
-  {id:'urban-drainage',name:['Urban Drainage Improvement','城市排水改进'],cost:27,months:4,building:'drain',context:['Ancient drains existed before 49 BCE; this is local improvement, not modern sanitation.','古代排水早于前49年；此为地方改进，并非现代卫生。'],source:source(waterSource)}
+  {id:'urban-drainage',name:['Urban Drainage Improvement','城市排水改进'],cost:27,months:4,building:'drain',context:['Rome’s Cloaca Maxima began as drainage for a flood-prone valley long before 49 BCE; this node represents local maintenance and adaptation, not modern sanitation.','罗马大下水道在前49年很久以前已用于排除低洼地积水；此项代表地方维护与改造，并非现代卫生。'],source:source(cloacaSource)}
 ];
 export const BUILDINGS = [
   {id:'road',name:['Road','道路'],tech:'roadmaking',cost:18,months:3,materials:{stone:2,timber:1},upkeep:1,effects:{treasury:1},terrain:['plain','hills','forest','urban','desert']},
@@ -64,8 +67,8 @@ export const BUILDINGS = [
 const additionalMaterials=[
  ['dam-engineering',['Dam Engineering','堤坝工程'],'dam',engineeringSource,['Later Roman dams became especially prominent under the Empire; this is a costly local adaptation.','大型罗马堤坝在帝国时代尤为突出；此项是昂贵的地方改造。'],31,5,['water-control']],
  ['reservoir-design',['Reservoir Design','蓄水池设计'],'reservoir',waterSource,['Reservoirs store water for settlement and cultivation.','蓄水池为聚落与耕作储水。'],22,3,['water-control']],
- ['aqueduct-refinement',['Aqueduct Refinement','渡槽改进'],'aqueduct',waterSource,['Aqueducts long predate Caesar; this refines local distribution.','渡槽早于凯撒时代；此项改进地方配水。'],27,4,['water-control']],
- ['sewer-improvement',['Sewer Improvement','下水道改进'],'sewer',engineeringSource,['Older drains are improved for larger settlements; no modern medical claim is implied.','改进旧有排水以服务较大聚落，不暗示现代医疗卫生。'],29,5,['urban-drainage']],
+ ['aqueduct-refinement',['Aqueduct Refinement','渡槽改进'],'aqueduct',marciaSource,['Rome’s Aqua Marcia was built in 144 BCE; this node refines water distribution rather than inventing aqueducts.','罗马的马尔基亚水道建于前144年；此项改进配水，而非发明渡槽。'],27,4,['water-control']],
+ ['sewer-improvement',['Sewer Improvement','下水道改进'],'sewer',cloacaSource,['The Cloaca Maxima combined drainage with later sewer functions; this is an improvement of existing works, not a claim of modern hygiene.','罗马大下水道兼有排涝和后来的排污功能；此项改进旧有工程，不宣称现代卫生效果。'],29,5,['urban-drainage']],
  ['training-ground',['Training Ground','训练场'],'training-camp',armySource,['Permanent training grounds support repeated drills.','固定训练场支持反复操练。'],20,3,['barracks-design']],
  ['supply-organization',['Supply Organization','军需组织'],'supply-depot',armySource,['Depots hold food and equipment near active armies.','军需仓在军队附近储备粮食与装备。'],22,3,['barracks-design']],
  ['armory-craft',['Armory Craft','军械制造'],'armory',armySource,['Organized armories support recruitment and equipment repair.','有组织的军械库支援征兵与装备修理。'],24,4,['metal-extraction']],
@@ -77,7 +80,7 @@ const additionalMaterials=[
  ['road-milestones',['Road Milestones','道路里程碑'],'milestone',appianSource,['Milestones marked Roman roads; surviving examples span several periods.','里程碑标示罗马道路；留存实例横跨多个时期。'],16,2,['roadmaking']],
  ['public-square-planning',['Public Square Planning','公共广场规划'],'square',romanSource,['A civic square concentrates assemblies and exchange.','公共广场汇集集会与交易。'],21,3,['roadmaking']],
  ['library-organization',['Private Collection Organization','私人藏书整理'],'library',librarySource,['Private book collections existed in Republican Rome; the first Roman public libraries came later.','共和国时期罗马已有私人藏书；罗马公共图书馆出现得更晚。'],24,4,['craft-workshops']],
- ['bath-construction',['Bath Construction','浴场建造'],'bath',engineeringSource,['Baths require water and maintenance and serve social life.','浴场需要供水和维护，也是社会生活场所。'],24,4,['aqueduct-refinement']],
+ ['bath-construction',['Bath Construction','浴场建造'],'bath',pompeiiBathSource,['Pompeii’s Stabian and Republican baths were built in the second century BCE; their water and heating systems changed over time.','庞贝的斯塔比亚浴场与共和国浴场建于前2世纪；供水和加热设施后来多次改造。'],24,4,['aqueduct-refinement']],
  ['administrative-building',['Administrative Building','行政建筑'],'administration',republicSource,['Offices provide a place for records and provincial administration.','官署容纳记录与地方行政。'],23,4,['public-square-planning']],
  ['bridge-engineering',['Bridge Engineering','桥梁工程'],'bridge',appianSource,['Bridges extend practical roads across rivers.','桥梁使实用道路跨越河流。'],24,4,['roadmaking']],
  ['port-facilities',['Port Facilities','港口设施'],'port',engineeringSource,['Harbors handle shipments but require a suitable coast.','港口处理船运，必须有合适海岸。'],26,4,['roadmaking']],
