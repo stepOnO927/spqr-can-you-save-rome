@@ -1,6 +1,6 @@
 import {observeArmies} from '../character-system.js';
-import {beginBriefing} from '../campaign-reports.js';
-import {achievementDefinition} from '../achievement-system.js';
+import {beginBriefing} from '../campaign-reports.js?v=2';
+import {achievementDefinition} from '../achievement-system.js?v=2';
 export const PROFILE_KEY='spqr-legacy-profile-v1';
 export const BUILDINGS={curia:{name:['Curia','元老院'],price:0,position:[48,35],icon:'♜'},archive:{name:['Archive','档案馆'],price:0,position:[33,53],icon:'▤'},arch:{name:['Triumphal Arch','凯旋门'],price:0,position:[64,52],icon:'⌒'},camp:{name:['Military Camp','军营'],price:300,position:[16,31],icon:'⚑'},museum:{name:['Museum','博物馆'],price:350,position:[75,28],icon:'◈'},temple:{name:['Temple District','神庙区'],price:450,position:[31,16],icon:'♙'},circus:{name:['Circus of Mars','战车赛马场'],price:550,position:[78,71],icon:'◎',requires:'temple'},library:{name:['Library & Academy','图书馆与学院'],price:500,position:[48,68],icon:'▦'},harbor:{name:['Harbor Office','港务局'],price:450,position:[88,43],icon:'⚓'},court:{name:['Court','法庭'],price:400,position:[56,16],icon:'⚖'},intelligence:{name:['Intelligence Office','情报局'],price:500,position:[17,67],icon:'◉'},palace:{name:['State Residence','国政官邸'],price:1200,position:[50,7],icon:'♛'}};
 export const GOODS={
@@ -20,7 +20,7 @@ export function importProfile(text){if(typeof text!=='string'||text.length>2_000
 export function claimReward(profile,key,amount){if(profile.rewards.includes(key))return false;profile.rewards.push(key);profile.coins+=amount;return true}
 export function purchase(profile,id){const item=BUILDINGS[id]||GOODS[id];if(!item)return {ok:false,reason:'unknown'};const collection=BUILDINGS[id]?'buildings':'purchases';if(profile[collection].includes(id))return {ok:false,reason:'owned'};if(item.requires&&!profile.buildings.includes(item.requires))return {ok:false,reason:'requires'};if(profile.coins<item.price)return {ok:false,reason:'coins'};profile.coins-=item.price;profile[collection].push(id);if(id==='museum')profile.collectibles.push('senate-tablet');if(id==='camp')profile.collectibles.push('legion-sword');if(id==='museum-figures')profile.collectibles.push('cato-bust');if(id==='museum-ritual')profile.collectibles.push('votive-lamp');if(id==='theme-senate')profile.theme='senate';if(id==='banner-eagle')profile.banner='eagle';if(id==='race-blue')profile.raceColor='blue';return {ok:true}}
 export function recordCampaign(profile,state){
- if(!state?.achievementState?.finalized||!['caesar','senate'].includes(state.player))return [];
+ if(!state?.achievementState?.finalized||!state.factions?.[state.player])return [];
  const id=state.legacyRunId||`legacy-${state.player}-${state.startYear??-49}-${state.startMonth??1}`;profile.achievements||=[];const done=[];
  for(const [achievementId,record] of Object.entries(state.achievementState.completed)){
   const definition=achievementDefinition(achievementId);if(!definition)continue;

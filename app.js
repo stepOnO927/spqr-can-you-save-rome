@@ -3,17 +3,17 @@ import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=26';
 import {identity,factionMark} from './identity.js?v=2';
 import {CHARACTER_CATALOG} from './characters.js?v=15';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=9';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=117';
-import {importCampaign,downloadCampaign} from './save-files.js';
-import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js';
-import {endCampaign} from './achievement-system.js';
-import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=118';
+import {importCampaign,downloadCampaign} from './save-files.js?v=2';
+import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js?v=2';
+import {endCampaign} from './achievement-system.js?v=2';
+import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js?v=2';
 import {budgetHtml} from './budget-ui.js?v=2';
 import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js?v=8';
 import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=16';
 import {drawMap,mapPoint} from './map.js?v=55';
-import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=2';
-import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js';
+import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=3';
+import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=2';
 import {assessment,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=5';
 import {intelligenceHtml} from './recon-ui.js?v=3';
 
@@ -132,7 +132,7 @@ function syncFinalizedProfile(){if(!state.achievementState?.finalized)return;con
 function finalizeCampaign(result){stop();const ended=endCampaign(state,result);if(ended.ok)syncFinalizedProfile();render()}
 function advanceMonth(){if(state.achievementState?.finalized){stop();render();return}const before=state.nextCampaignEvent;tick(state);if(state.achievementState?.finalized){syncFinalizedProfile();stop()}if(playing&&state.reportPreferences?.pauseCritical&&latestCritical(state,before))stop();render()}
 function setPlaying(on){stop();if(state.achievementState?.finalized){render();return}playing=on;if(on)timer=setInterval(advanceMonth,speed===1?1500:speed===2?800:350);render()}
-function slot(action){const choice=prompt(t('savePrompt'),'1');if(!choice||!['1','2','3'].includes(choice))return;const key=`spqr-save-${choice}`;if(action==='save'){localStorage.setItem(key,JSON.stringify(state));flash(`${t('saved')} ${choice}`)}else{const raw=localStorage.getItem(key);if(!raw){flash(t('empty'));return}try{const loaded=importCampaign(raw);if(!['caesar','senate'].includes(loaded.player)){flash(t('oldFaction'));return}offerMigration(loaded)}catch{flash(lang==='zh'?'存档无法读取。':'This save could not be read.')}}}
+function slot(action){const choice=prompt(t('savePrompt'),'1');if(!choice||!['1','2','3'].includes(choice))return;const key=`spqr-save-${choice}`;if(action==='save'){localStorage.setItem(key,JSON.stringify(state));flash(`${t('saved')} ${choice}`)}else{const raw=localStorage.getItem(key);if(!raw){flash(t('empty'));return}try{const loaded=importCampaign(raw);offerMigration(loaded)}catch{flash(lang==='zh'?'存档无法读取。':'This save could not be read.')}}}
 function bind(){
   document.querySelector('#open-notifications').onclick=()=>{tab='notifications';panelOpen=true;render()};
   document.querySelectorAll('[data-report-filter]').forEach(el=>el.onchange=()=>{reportFilters[el.dataset.reportFilter]=el.value;render()});

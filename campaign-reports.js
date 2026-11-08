@@ -55,6 +55,13 @@ export function recordRebellion(s,r,previousOwner,armyId){
   return recordEvent(s,{type:'rebellion',category:'political',severity:'critical',factionId:'rebels',affectedFactionIds:[previousOwner,'rebels'],regionId:r.id,armyId,previousOwner,newOwner:'rebels'});
 }
 export function objectiveDefinitions(s){
+  if(!['caesar','senate'].includes(s.player)){
+    const home=s.regions.find(r=>r.id===s.player)||s.regions.find(r=>r.owner===s.player);
+    if(!home)return [];
+    const label=FACTIONS[s.player]?.short||[s.player,s.player];
+    return [{id:'home',kind:'territory',regionId:home.id,en:`Hold ${label[0]}'s home theater`,zh:`守住${label[1]}本土战区`},
+      {id:'field',kind:'army',regionId:home.id,en:'Keep an army in the field',zh:'保有一支野战军'}];
+  }
   const first=s.player==='senate'?'cisalpine':'italiaN';
   return [{id:'frontier',kind:'territory',regionId:first,en:s.player==='senate'?'Challenge Caesar in Cisalpine Gaul':'Control northern Italy',zh:s.player==='senate'?'争夺山南高卢':'控制意大利北部'},
     {id:'rome',kind:'territory',regionId:'roma',en:s.player==='senate'?'Defend Latium and Rome':'Control Latium and Rome',zh:s.player==='senate'?'保卫拉丁姆与罗马':'控制拉丁姆与罗马'},

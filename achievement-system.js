@@ -15,13 +15,13 @@ const turn=s=>Math.max(0,(s.year-(s.startYear??-49))*12+s.month-(s.startMonth??1
 const stamp=s=>({year:s.year,month:s.month,turn:turn(s)});
 export function initializeAchievements(s){s.achievementState||={version:1,completed:{},finalized:false,result:null,endedAt:null};s.achievementState.completed||={};return s.achievementState}
 export function evaluateAchievements(s){
- const a=initializeAchievements(s);if(a.finalized||!['caesar','senate'].includes(s.player))return a;
+ const a=initializeAchievements(s);if(a.finalized||!s.factions?.[s.player])return a;
  const mark=(id,evidence)=>{if(!a.completed[id])a.completed[id]={...stamp(s),evidence}};
  for(const months of [12,24,36])if(turn(s)>=months)mark(`survive:${months}`,{months:turn(s)});
  for(const [goal,progress] of Object.entries(s.objectiveProgress||{}))if(progress?.status==='completed'&&progress.changedTurn>0)mark(`objective:${goal}`,{goal,completedTurn:progress.changedTurn});
  const territories=s.regions.filter(r=>r.owner===s.player).length;if(territories>=40)mark('control:40',{territories});
  if((s.militaryRecon||[]).some(r=>r.owner===s.player&&['scouts','probe'].includes(r.source)))mark('first-recon',{source:'military reconnaissance'});
- if(s.victory){mark('victory',{territories,battles:s.battles?.length||0});if(s.legacyScenario)mark('challenge',{scenario:s.legacyScenario})}
+ if(s.victory&&['caesar','senate'].includes(s.player)){mark('victory',{territories,battles:s.battles?.length||0});if(s.legacyScenario)mark('challenge',{scenario:s.legacyScenario})}
  return a;
 }
 export function campaignSummary(s){
