@@ -12,6 +12,18 @@ test('36 monthly turns preserve a full chronology and three evidence-based annua
  const saved=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(saved.chronicle.entries.length,s.chronicle.entries.length);assert.deepEqual(saved.chronicle.monthly,s.chronicle.monthly);assert.deepEqual(saved.chronicle.annual,s.chronicle.annual);
 });
 
+test('save migration reconciles trusted late dispatches and dated reports without importing unsourced events',()=>{
+ const s=newGame('senate');s.month=4;
+ s.log.unshift({year:-49,month:4,en:'A known journey stopped.',zh:'已知旅程中止。'});
+ s.turnSummaries||=[];s.turnSummaries.unshift({knowledgeViewer:'senate',year:-49,month:4,changes:[{region:'egypt',name:['Egypt','埃及'],owner:['Parthia','帕提亚'],year:-49,month:3,source:'travelers'}]});
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(loaded.chronicle.entries.filter(e=>e.en==='A known journey stopped.').length,1);
+ assert.match(formatChronicleEntry(loaded.chronicle.entries.find(e=>e.kind==='intelligence'),'zh'),/商旅.*3\/49 BCE/);
+ assert.equal(upgradeSave(loaded).chronicle.entries.filter(e=>e.en==='A known journey stopped.').length,1);
+ const legacy=JSON.parse(JSON.stringify(s));delete legacy.chronicleVisibilityVersion;legacy.log=[{year:-49,month:4,en:'SECRET',zh:'秘密'}];legacy.turnSummaries=[{year:-49,month:4,changes:[{name:['Secret','秘密'],owner:['Parthia','帕提亚']}]}];
+ assert.equal(upgradeSave(legacy).chronicle.entries.some(e=>e.en==='SECRET'||e.place?.[0]==='Secret'),false);
+});
+
 test('recapture and capital loss record actual controllers, location, consequences and critical priority',()=>{
  const s=newGame('senate'),r=region(s,'roma'),before=captureCampaignState(s);r.owner='caesar';s.month=2;recordCampaignTurn(s,before);
  const loss=s.chronicle.entries.find(e=>e.kind==='territory');assert.equal(loss.previous,'senate');assert.equal(loss.current,'caesar');assert.equal(loss.region,'roma');assert.equal(loss.priority,'critical');assert.deepEqual(loss.strategic.objectives,['roma']);assert.match(formatChronicleEntry(loss,'en'),/Rome|Latium/);assert.match(formatChronicleEntry(loss,'zh'),/罗马|拉丁姆/);
