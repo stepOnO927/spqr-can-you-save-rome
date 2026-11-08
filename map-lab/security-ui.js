@@ -1,6 +1,6 @@
-import {queueMission,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=rumored-death-1';
-import {reassurePerson} from '../conspiracies.js?v=xxii-final-4';
-import {CHARACTER_CATALOG} from '../characters.js?v=xxii-final-4';
+import {queueMission,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=asylum-heir-1';
+import {reassurePerson} from '../conspiracies.js?v=asylum-heir-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=asylum-heir-1';
 import {FACTIONS} from '../data.js?v=xxii-final-4';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
