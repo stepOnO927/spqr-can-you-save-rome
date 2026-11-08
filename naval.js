@@ -196,6 +196,10 @@ function battleDamage(opponentPower,ownPower,won,opponentTactic,ownTactic){
  const protection={formation:.9,ramming:1.1,boarding:1.1,missile:1}[ownTactic]||1;
  return Math.min(65,Math.max(0,Math.round((opponentPower/(ownPower+opponentPower+1)*34+(won?4:15))*outgoing*protection)));
 }
+function observedBattleLosses(loss){
+ const sailors=Math.max(0,loss.sailors||0),sunk=Math.max(0,loss.sunk||0);
+ return {ships:[Math.max(0,sunk-1),sunk+1],sailors:[Math.max(0,Math.floor(Math.max(0,sailors*.6-15)/25)*25),Math.max(25,Math.ceil((sailors*1.4+15)/25)*25)]};
+}
 function adjustBattleSailors(f,loss,ownTactic,opponentTactic){
  if(ownTactic==='missile'){const spared=Math.round(loss.sailors*.25);f.sailors+=spared;loss.sailors-=spared}
  const extra=(ownTactic==='boarding'?8:0)+(opponentTactic==='boarding'?12:0);
@@ -223,7 +227,7 @@ function resolveBattle(s,a,b,zone,log){
  if(capturedCommander&&(capturedCommander.owner===s.player||capturedCommander.holder===s.player))log(s,'A fleet commander was taken prisoner in a boarding action.','接舷战中一名舰长被俘。');
  a.experience=Math.min(100,a.experience+3);b.experience=Math.min(100,b.experience+3);
  for(const f of [a,b]){if(f.hull<12&&f.commanderId){const person=s.world?.characters?.[f.commanderId];if(person?.health==='healthy')person.health='wounded'}if(f.commanderId){const person=s.world?.characters?.[f.commanderId];if(person?.alive){const skill=navalSkill(person,'commander');person.navalSkills.commander=Math.min(100,skill+2)}}disruptTransport(s,f,transported[f.id])}
- report(s,{kind:'battle',zone,participants:[a.id,b.id],snapshots:{[a.id]:beforeA,[b.id]:beforeB},winner:victor.owner,losses:{[a.id]:aLoss,[b.id]:bLoss},captured,capturedCommander,tactics,weather:Math.round(weather*100),damage:{[a.id]:beforeA.hull-a.hull,[b.id]:beforeB.hull-b.hull}});
+ report(s,{kind:'battle',zone,participants:[a.id,b.id],snapshots:{[a.id]:beforeA,[b.id]:beforeB},winner:victor.owner,losses:{[a.id]:aLoss,[b.id]:bLoss},observedLosses:{[a.owner]:observedBattleLosses(bLoss),[b.owner]:observedBattleLosses(aLoss)},captured,capturedCommander,tactics,weather:Math.round(weather*100),damage:{[a.id]:beforeA.hull-a.hull,[b.id]:beforeB.hull-b.hull}});
  for(const owner of [a.owner,b.owner])observe(s,owner,owner===a.owner?b:a,'battle');
 }
 function advanceNavalCaptives(s,log){

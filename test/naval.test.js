@@ -85,6 +85,13 @@ test('sea transport needs an idle fleet and arrives with its vessels',()=>{
 test('naval contact produces uncertain dated enemy intelligence and a battle report',()=>{
  const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.owner==='senate');assert.deepEqual(reportedHostileFleets(s,'senate'),[]);assert.equal(orderFleet(s,'senate',fleet.id,'intercept','adriatic').ok,true);advanceNaval(s);assert.ok(s.naval.reports.some(r=>r.kind==='battle'));const sighting=reportedHostileFleets(s,'senate').find(r=>r.owner==='caesar');assert.ok(sighting);assert.equal(sighting.month,s.month);assert.ok(sighting.range[0]<sighting.range[1])
 });
+test('naval battle preserves bounded enemy-loss observations across saves',()=>{
+ const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.owner==='senate');assert.equal(orderFleet(s,'senate',fleet.id,'intercept','adriatic').ok,true);advanceNaval(s);
+ const battle=s.naval.reports.find(r=>r.kind==='battle'&&r.participants.includes(fleet.id)),enemyId=battle.participants.find(id=>id!==fleet.id),loss=battle.losses[enemyId],observed=battle.observedLosses.senate;
+ assert.ok(observed.ships[0]<=loss.sunk&&loss.sunk<=observed.ships[1]);assert.ok(observed.ships[1]>observed.ships[0]);
+ assert.ok(observed.sailors[0]<=loss.sailors&&loss.sailors<=observed.sailors[1]);assert.ok(observed.sailors[1]>observed.sailors[0]);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(restored.naval.reports.find(r=>r.id===battle.id).observedLosses.senate,observed);
+});
 test('naval reconnaissance can miss, observe approximately or evade a real encounter',()=>{
  const run=seed=>{const s=newGrandGame('senate'),scout=s.naval.fleets.find(f=>f.id==='senate-adriatic'),messages=[];scout.ships={light:3};scout.sailors=240;s.seed=seed;
   assert.deepEqual(reportedHostileFleets(s,'senate'),[]);assert.equal(orderFleet(s,'senate',scout.id,'recon','adriatic').ok,true);advanceNaval(s,(_state,en,zh)=>messages.push({en,zh}));
