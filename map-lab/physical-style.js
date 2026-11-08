@@ -16,7 +16,7 @@ export const physicalStyle={
   'elevation-detail':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:6,maxzoom:6,bounds:[-20,18,60,58],attribution:'Elevation © Mapzen / AWS Terrain Tiles and data contributors'},
   'elevation-fine':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:7,maxzoom:7,bounds:[5,35,22,48],attribution:'Elevation © Mapzen / AWS Terrain Tiles and data contributors'},
   'elevation-ultra':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:8,maxzoom:8,bounds:[5,35,22,48],attribution:'Elevation © Mapzen / AWS Terrain Tiles and data contributors'},
-  'elevation-higher':{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:9,maxzoom:15,attribution:'Elevation © Mapzen / AWS Terrain Tiles and data contributors'},
+  'elevation-higher':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:9,maxzoom:9,bounds:[5,35,22,48],attribution:'Elevation © Mapzen / AWS Terrain Tiles and data contributors'},
   historical:{type:'geojson',data:historical},
   rivers:{type:'geojson',data:rivers}
  },
@@ -31,7 +31,7 @@ export const physicalStyle={
   {id:'relief-fine',type:'hillshade',source:'elevation-fine',minzoom:7,paint:{'hillshade-exaggeration':.1,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'land-elevation-ultra',type:'color-relief',source:'elevation-ultra',minzoom:8,paint:{'color-relief-opacity':.86,'color-relief-color':['interpolate',['linear'],['elevation'],-100,'#dcd5b9',0,'#d8d2b2',100,'#cfceaa',300,'#bac4a0',700,'#9faf91',1200,'#879b89',1800,'#849089',2600,'#a5aaa0',3500,'#dddacb']}},
   {id:'relief-ultra',type:'hillshade',source:'elevation-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':.08,'color-relief-color':['interpolate',['linear'],['elevation'],-100,'#d5d1b2',0,'#d5d1b2',200,'#c8c9aa',650,'#abb899',1200,'#9eab93',2200,'#9da393',3500,'#d0cbb8']}},
+  {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':.86,'color-relief-color':['interpolate',['linear'],['elevation'],-100,'#dcd5b9',0,'#d8d2b2',100,'#cfceaa',300,'#bac4a0',700,'#9faf91',1200,'#879b89',1800,'#849089',2600,'#a5aaa0',3500,'#dddacb']}},
   {id:'relief-higher',type:'hillshade',source:'elevation-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'sea-mask',type:'fill',source:'ocean',paint:{'fill-color':'#356f79','fill-opacity':1}},
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},

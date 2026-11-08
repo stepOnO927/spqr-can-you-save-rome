@@ -42,6 +42,7 @@ try{
  assert.equal(external.includes('s3.amazonaws.com'),false,'Overview terrain unexpectedly needed the network');
  assert.ok(external.every(host=>host==='s3.amazonaws.com'||host.endsWith('googleapis.com')||host.endsWith('gstatic.com')),`Unexpected external dependency: ${external.join(', ')}`);
  await page.locator('#start-free').click();
+ assert.equal(await page.locator('[data-site="italiaN"]').evaluate(el=>getComputedStyle(el).position),'absolute','Grand-campaign sites must use map coordinates');
  if(page.viewportSize().width<=600){
   assert.equal(await page.locator('#brief-toggle').getAttribute('aria-expanded'),'false','mobile map should open with its overview folded');
   assert.equal(await page.locator('.brief').isVisible(),false);
@@ -73,9 +74,19 @@ try{
  assert.ok(terrainRequests.some(path=>path.includes('/terrain/7/')),'Zoom 7 did not use bundled terrain');
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
  assert.ok(terrainRequests.some(path=>path.includes('/terrain/8/')),'Zoom 8 did not use bundled terrain');
+ await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
+ assert.ok(terrainRequests.some(path=>path.includes('/terrain/9/')),'Zoom 9 did not use bundled terrain');
  assert.deepEqual(missingTerrain,[],'Zoomed Italy requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Italy zoom needed network terrain');
  if(process.env.SPQR_ATLAS_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_SCREENSHOT});
+ if(process.env.SPQR_ATLAS_TERRAIN_SCREENSHOT){await page.locator('#map-mode').selectOption('terrain');await page.waitForTimeout(500);await page.screenshot({path:process.env.SPQR_ATLAS_TERRAIN_SCREENSHOT});await page.locator('#map-mode').selectOption('political')}
  if(process.env.SPQR_ATLAS_RELIEF_SCREENSHOT){await page.locator('#relief-toggle').click();await page.waitForTimeout(500);await page.screenshot({path:process.env.SPQR_ATLAS_RELIEF_SCREENSHOT})}
- console.log('Offline atlas loaded MapLibre, 120 settlement markers and local terrain through Italy zoom 8.');
+ if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
+ await page.locator('[data-objective="italiaN"]').click();await page.waitForTimeout(1200);
+ if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
+ for(let i=0;i<3;i++){await page.locator('#zoom-in').click();await page.waitForTimeout(500)}
+ const site=await page.locator('[data-site="italiaN"]').boundingBox();
+ assert.ok(Math.abs(site.x-page.viewportSize().width/2)<15,'Ariminum must stay at the map focus');
+ if(process.env.SPQR_ATLAS_OBJECTIVE_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_OBJECTIVE_SCREENSHOT});
+ console.log('Offline atlas loaded MapLibre, 120 settlement markers and local terrain through Italy zoom 9.');
 }finally{await browser.close()}
