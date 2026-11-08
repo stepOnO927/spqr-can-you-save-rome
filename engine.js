@@ -7,7 +7,7 @@ import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-syste
 import {advanceConspiracies} from './conspiracies.js?v=7';
 import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=9';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js';
-import {advanceRecon,assessment,sendScouts,latestRecon} from './reconnaissance.js?v=2';
+import {advanceRecon,assessment,sendScouts,latestRecon,requestReinforcements} from './reconnaissance.js?v=3';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks} from './grand-operations.js?v=3';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy} from './local-society.js';
@@ -407,7 +407,12 @@ export function aiTurn(s,owner){
   const f=s.factions[owner],owned=s.regions.filter(r=>r.owner===owner);
   if(!owned.length)return;
   const alert=(s.militaryAlerts||[]).find(a=>a.owner===owner&&a.year*12+a.month>=s.year*12+s.month-1&&region(s,a.regionId)?.owner===owner);
-  if(alert&&f.treasury>=40&&f.food>=6&&f.manpower>=3000)recruit(s,alert.regionId,owner);
+  const raiseAt=regionId=>{
+    if(s.armies.some(a=>a.owner===owner&&a.region===regionId&&a.reconPending?.kind==='reinforce'))return false;
+    const front=s.grandMap&&s.armies.filter(a=>a.owner===owner&&a.region===regionId&&a.men>0&&a.men<9000&&!a.move&&!a.siege&&!a.reconPending).sort((a,b)=>b.men-a.men)[0];
+    return front&&requestReinforcements(s,front.id,owner).ok||recruit(s,regionId,owner);
+  };
+  if(alert&&f.treasury>=40&&f.food>=6&&f.manpower>=3000)raiseAt(alert.regionId);
   if(owner!=='rebels'){
     const d=s.development[owner];
     if(!d.research&&f.treasury>55&&s.month%4===0){
@@ -439,6 +444,12 @@ export function aiTurn(s,owner){
     if(s.year>=-48&&s.month===6&&f.treasury>30){const partner=Object.keys(s.development).find(id=>id!==owner&&!isWar(s,owner,id)&&relation(s,owner,id)>=20&&s.development[id].knownIdeas.some(k=>!d.knownIdeas.includes(k))&&d.knownIdeas.some(k=>!s.development[id].knownIdeas.includes(k)));if(partner){const offer=d.knownIdeas.find(k=>!s.development[partner].knownIdeas.includes(k)),want=s.development[partner].knownIdeas.find(k=>!d.knownIdeas.includes(k));exchangeKnowledge(s,owner,partner,'idea',offer,'idea',want)}}
   }
   const enemies=s.regions.filter(r=>isWar(s,owner,r.owner));
+  const fieldStrength=strength(s,owner),emergency=fieldStrength<1500&&enemies.length>0;
+  if((emergency||f.treasury>65&&f.manpower>5500&&s.month%4===0)&&f.treasury>=24&&f.manpower>=3000&&f.food>=6){
+    const border=owned.find(r=>adjacent(r.id,s).some(e=>isWar(s,owner,region(s,e.to).owner)));
+    const rally=emergency?owned.find(r=>r.port||r.terrain==='urban')||border||owned[0]:border;
+    if(rally)raiseAt(rally.id);
+  }
   const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&!a.reconPending&&a.men>0&&(!alert||a.region!==alert.regionId)).sort((a,b)=>b.men-a.men);
   const protectedJunctions=s.grandMap?supplyBottlenecks(s,owner):new Set(),reservedSupport=new Set();
   for(const a of available){
@@ -460,12 +471,6 @@ export function aiTurn(s,owner){
       if(defenders>a.men*1.35||f.food<0||s.grandMap&&destination.owner===owner&&armySupply(s,{...a,region:step})<.45)continue;
       const support=s.grandMap&&destination.owner!==owner?available.find(other=>other.id!==a.id&&!reservedSupport.has(other.id)&&!other.move&&other.region!==a.region&&other.men>1200&&armySupply(s,other)>=.5&&grandAdjacent(other.region).some(edge=>edge.to===step)):null;
       a.coordinated=!!support;const ordered=moveArmy(s,a.id,step);if(ordered.ok){if(support)reservedSupport.add(support.id);break}a.coordinated=false}}
-  }
-  const fieldStrength=strength(s,owner),emergency=fieldStrength<1500&&enemies.length>0;
-  if((emergency||f.treasury>65&&f.manpower>5500&&s.month%4===0)&&f.treasury>=24&&f.manpower>=3000&&f.food>=6){
-    const border=owned.find(r=>adjacent(r.id,s).some(e=>isWar(s,owner,region(s,e.to).owner)));
-    const rally=emergency?owned.find(r=>r.port||r.terrain==='urban')||border||owned[0]:border;
-    if(rally)recruit(s,rally.id,owner);
   }
   if(f.stability<45&&f.treasury>25){f.treasury-=10;f.stability+=3}
   if(owner!=='rebels' && s.month===8 && f.treasury>=25){const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);if(enemy&&enemy!=='rebels')queueMission(s,owner,enemy,'spy','strength')}

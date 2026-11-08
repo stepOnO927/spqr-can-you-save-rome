@@ -3,7 +3,7 @@ import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=25';
 import {identity,factionMark} from './identity.js?v=2';
 import {CHARACTER_CATALOG} from './characters.js?v=15';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=9';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=102';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=103';
 import {importCampaign,downloadCampaign} from './save-files.js';
 import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js';
 import {endCampaign} from './achievement-system.js';
@@ -14,7 +14,7 @@ import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js
 import {drawMap,mapPoint} from './map.js?v=54';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=2';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js';
-import {assessment,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=2';
+import {assessment,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=3';
 import {intelligenceHtml} from './recon-ui.js?v=3';
 
 const ui={

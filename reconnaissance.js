@@ -63,9 +63,9 @@ export function markReconRegion(s,armyId,regionId,actor=s.player){
  if(at>=0)s.warCouncilMarks.splice(at,1);else s.warCouncilMarks.push({key,owner:actor,regionId,year:s.year,month:s.month});
  return {ok:true,marked:at<0};
 }
-export function requestReinforcements(s,armyId){
+export function requestReinforcements(s,armyId,actor=s.player){
  const unit=army(s,armyId),site=unit&&region(s,unit.region),f=unit&&s.factions[unit.owner];
- if(!unit||unit.owner!==s.player||!site||site.owner!==unit.owner||unit.move||unit.siege||unit.reconPending)return {ok:false,reason:'unavailable'};
+ if(!unit||unit.owner!==actor||!site||site.owner!==unit.owner||unit.move||unit.siege||unit.reconPending||unit.men<=0)return {ok:false,reason:'unavailable'};
  if(f.treasury<24||f.food<6||f.manpower<3000)return {ok:false,reason:'resources'};
  f.treasury-=24;f.food-=6;f.manpower-=3000;site.loyalty=Math.max(0,site.loyalty-3);
  unit.reconPending={kind:'reinforce',remaining:1,regionId:site.id};

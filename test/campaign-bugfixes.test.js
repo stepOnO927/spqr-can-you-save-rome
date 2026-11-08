@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,newGrandGame,army,region,resolveBattle,moveArmy,diplomacy,tick,recruit,previewMarch,upgradeSave,aiTurn} from '../engine.js';
 import {recordMovement,eventText,recordEvent} from '../campaign-reports.js';
 import {chronicleHtml,battleReportHtml,eventDate} from '../reports-ui.js';
-import {requestReinforcements,probePositions,latestRecon} from '../reconnaissance.js';
+import {requestReinforcements,probePositions,latestRecon,advanceRecon} from '../reconnaissance.js';
 
 test('opposing marches meet without swapping theaters or taking a fort bonus',()=>{
  const s=newGame('senate'),caesar=army(s,'xiii'),levies=army(s,'italy');
@@ -104,4 +104,21 @@ test('reinforcements join the selected army after a month and a detected probe c
  const p=newGame('senate');let result;for(let seed=1;seed<100;seed++){p.seed=seed;result=probePositions(p,'italy','cisalpine');if(result.enemyDetected)break;p.armies.find(a=>a.id==='italy').reconPending=null}
  assert.equal(result.enemyDetected,true);assert.ok(result.report);const before=p.armies.filter(a=>a.owner==='caesar'&&a.region==='cisalpine').length;tick(p);
  assert.ok(p.armies.filter(a=>a.owner==='caesar'&&a.region==='cisalpine').length>before);
+});
+
+test('grand-campaign AI reinforces an existing border army before marching or raising another levy',()=>{
+ const s=newGrandGame('caesar'),levies=army(s,'italy'),f=s.factions.senate;
+ s.month=4;f.treasury=200;f.food=100;f.manpower=10000;
+ s.militaryAlerts=[{owner:'senate',regionId:'italiaN',year:s.year,month:s.month}];
+ const count=s.armies.length,men=levies.men,loyalty=region(s,'italiaN').loyalty;
+ aiTurn(s,'senate');
+ assert.equal(s.armies.length,count);
+ assert.deepEqual(levies.reconPending,{kind:'reinforce',remaining:1,regionId:'italiaN'});
+ assert.equal(levies.move,null);
+ assert.equal(f.manpower,7000);
+ assert.equal(f.food,94);
+ assert.equal(region(s,'italiaN').loyalty,loyalty-3);
+ advanceRecon(s);
+ assert.equal(levies.men,men+3000);
+ assert.equal(levies.reconPending,null);
 });
