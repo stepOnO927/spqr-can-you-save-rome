@@ -8,7 +8,7 @@ import {advanceConspiracies} from './conspiracies.js?v=phase-x-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=phase-x-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=phase-x-1';
-import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=phase-x-6';
+import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=peace-choice-8';
 export {queueMission};
 export {personalDiplomaticCredit};
 
@@ -175,7 +175,7 @@ export function setTax(s,owner,level){
   return true;
 }
 
-export function diplomacy(s, actor, target, action){
+export function diplomacy(s, actor, target, action, options={}){
   if(actor===target || !s.factions[actor] || !s.factions[target] || target==='rebels'||actor==='rebels' || !s.regions.some(r=>r.owner===actor) || !s.regions.some(r=>r.owner===target))return false;
   const key=pair(actor,target);
   if(action==='improve' && !isWar(s,actor,target) && s.factions[actor].treasury>=10){s.factions[actor].treasury-=10;s.relations[key]=Math.min(100,relation(s,actor,target)+15);if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} improved relations with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}改善了与${FACTIONS[target].short[1]}的关系。`,{other:actor===s.player?target:actor});return true}
@@ -195,7 +195,7 @@ export function diplomacy(s, actor, target, action){
   }
   if(action==='peace' && isWar(s,actor,target)){
     // The responding government knows its own forces, but judges the sender by its reports.
-    if(estimatedStrength(s,target,actor)<strength(s,target)*.6 && s.factions[target].stability>35)return false;
+    if(!options.acceptedByPlayer && estimatedStrength(s,target,actor)<strength(s,target)*.6 && s.factions[target].stability>35)return false;
     s.wars=s.wars.filter(w=>!(w.includes(actor)&&w.includes(target)));
     s.relations[key]=-20;
     for(const a of s.armies.filter(a=>a.owner===actor||a.owner===target)){
@@ -224,14 +224,26 @@ export function sendInquiry(s,actor,target,subject='leaders'){
  if(subject==='peace'&&!isWar(s,actor,target))return {ok:false,reason:'unavailable'};
  if(target.endsWith('_claimant')&&!s.regions.some(r=>reportedControl(s,actor,r.id)?.owner===target)&&!Object.keys(s.knowledge[actor]?.[target]?.sightings||{}).length&&!s.knowledge[actor]?.[target]?.reportedLeaders?.length)return {ok:false,reason:'unavailable'};
  if(s.factions[actor].treasury<3)return {ok:false,reason:'treasury'};
- if((s.inquiries||[]).some(x=>x.actor===actor&&x.target===target&&x.status==='pending'))return {ok:false,reason:'pending'};
+ if((s.inquiries||[]).some(x=>x.actor===actor&&x.target===target&&['pending','awaiting_decision'].includes(x.status)))return {ok:false,reason:'pending'};
  const duration=letterMonths[target]||4;s.factions[actor].treasury-=3;
  (s.inquiries||=[]).unshift({actor,target,sentYear:s.year,sentMonth:s.month,remaining:duration,duration,subject,status:'pending',source:'official court',confidence:'unverified',...(target.endsWith('_claimant')?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{})});
  if(actor===s.player)log(s,`A letter was sent to ${FACTIONS[target].short[0]}; a reply may take ${duration} months.`,`已向${FACTIONS[target].short[1]}寄信；等待回信约需${duration}个月。`);
  return {ok:true,duration};
 }
+// Only an offer that reached the player's court can be answered. A positive
+// decision becomes effective only when the reply reaches the sender.
+export function answerPeaceOffer(s,actor,decision){
+ if(!['accept','refuse'].includes(decision))return {ok:false,reason:'decision'};
+ const letter=(s.inquiries||[]).find(x=>x.actor===actor&&x.target===s.player&&x.subject==='peace'&&x.status==='awaiting_decision');
+ if(!letter||!isWar(s,actor,s.player))return {ok:false,reason:'unavailable'};
+ letter.status='pending';letter.phase='return';letter.remaining=Math.max(1,Math.floor((letter.duration||2)/2));
+ letter.sealed={status:decision==='accept'?'answered':'refused',year:s.year,month:s.month,acceptedByPlayer:decision==='accept',...(decision==='accept'?{claim:['Peace accepted; the war has ended.','议和获接受；战争结束。']}:{})};
+ log(s,'Your reply to the peace offer has been sent; the war continues until a valid acceptance is delivered.','议和答复已寄出；在有效接受送达前战争继续。');
+ return {ok:true};
+}
 function resolveInquiries(s){
  for(const letter of s.inquiries||[]){
+  if(letter.status==='awaiting_decision'){if(!isWar(s,letter.actor,letter.target)||--letter.remaining<=0)letter.status='no_reply';continue}
   if(letter.status!=='pending')continue;
   letter.remaining=Math.max(0,letter.remaining-1);
   // The response is composed roughly halfway through the round trip. Its sealed
@@ -239,6 +251,11 @@ function resolveInquiries(s){
   // delivery; old pending saves already past this point are prepared on the next tick.
   if(!letter.sealed&&letter.remaining<=Math.floor((letter.duration||2)/2)){
    const roll=rnd(s),hostile=isWar(s,letter.actor,letter.target),rel=relation(s,letter.actor,letter.target);
+   if(letter.subject==='peace'&&letter.target===s.player&&letter.actor!==s.player){
+    if(roll<.18||!hostile||!s.regions.some(r=>r.owner===letter.target)){letter.status='no_reply';continue}
+    letter.status='awaiting_decision';letter.phase='at_court';letter.remaining=6;
+    log(s,`A peace offer has arrived from ${FACTIONS[letter.actor].short[0]}; your decision is needed.`,`${FACTIONS[letter.actor].short[1]}的议和书信已送达，等待你的决定。`);continue;
+   }
    const sealed={status:'answered',year:s.year,month:s.month};
    if(roll<.18||!s.regions.some(r=>r.owner===letter.target)||(letter.target.endsWith('_claimant')&&(letter.targetGeneration??0)!==(s.world.dynasticGenerations?.[letter.target]||0)))sealed.status='no_reply';
    else if(letter.subject==='peace'&&!hostile)sealed.status='no_reply';
@@ -291,7 +308,7 @@ function resolveInquiries(s){
   if(reply.status!=='no_reply'&&rnd(s)<(isWar(s,letter.actor,letter.target) ? 0.18 : 0.08))reply={status:'no_reply'};
   // A provisional acceptance only takes effect when it reaches the sender.
   // Circumstances may change during the return journey.
-  if(letter.subject==='peace'&&reply.status==='answered'&&!diplomacy(s,letter.actor,letter.target,'peace'))reply={status:'no_reply'};
+  if(letter.subject==='peace'&&reply.status==='answered'&&!diplomacy(s,letter.actor,letter.target,'peace',{acceptedByPlayer:!!reply.acceptedByPlayer&&letter.target===s.player}))reply={status:'no_reply'};
   letter.status=reply.status;delete letter.sealed;
   if(reply.status==='no_reply'){if(letter.actor===s.player)log(s,`No reply has arrived from ${FACTIONS[letter.target].short[0]}; the letter or answer may have been lost.`,`来自${FACTIONS[letter.target].short[1]}的回信尚未到达；书信或回信可能遗失。`)}
   else if(reply.status==='refused'){if(letter.actor===s.player)log(s,letter.subject==='peace'?`A reply from ${FACTIONS[letter.target].short[0]} rejected the peace offer.`:`A reply from ${FACTIONS[letter.target].short[0]} declined to answer.`,letter.subject==='peace'?`${FACTIONS[letter.target].short[1]}回信拒绝议和。`:`${FACTIONS[letter.target].short[1]}回信表示不愿回答。`)}
