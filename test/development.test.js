@@ -24,6 +24,17 @@ test('Republican-era source corrections retain save IDs and avoid later public-l
  for(const id of ['roadmaking','road-milestones','bridge-engineering','barracks-design','stone-fortification','quarrying','metal-extraction','siege-machinery','library-organization']){
   const item=MATERIALS.find(x=>x.id===id);assert.ok(item?.source.url.startsWith('https://'),id);assert.notEqual(item.source.title,'World History Encyclopedia',id);
  }
+ const ideaEvidence={
+  'tax-farming':['In Verrem','verres23.html'],
+  'estate-organization':['Cato, On Agriculture','De_Agricultura/A%2A.html'],
+  'rhetorical-education':['De Oratore','deoratore1B.html']
+ };
+ for(const [id,[title,url]] of Object.entries(ideaEvidence)){
+  const item=IDEAS.find(x=>x.id===id);
+  assert.ok(item?.context.every(Boolean),id);
+  assert.match(item.source.title,new RegExp(title));
+  assert.ok(item.source.url.endsWith(url),id);
+ }
 });
 
 test('both research branches render every node, including naval capabilities without buildings',()=>{

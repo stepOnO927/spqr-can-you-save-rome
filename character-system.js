@@ -3,7 +3,7 @@ import {FACTIONS,ROUTES} from './data.js?v=9';
 import {GRAND_ROUTES} from './grand-map-data.js';
 import {deriveGovernment} from './governance.js?v=16';
 import {potentialConspirators} from './conspiracies.js?v=7';
-import {localBuildingEffects} from './development.js?v=1';
+import {localBuildingEffects} from './development.js?v=5';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 const claimantAvailable=c=>!!c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health);
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
