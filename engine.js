@@ -401,6 +401,7 @@ function arrive(s,a){
   }
 }
 
+export function forecastEconomy(s,id=s.player){const f=s.factions[id],owned=s.regions.filter(r=>r.owner===id),offices=officeEffects(s,id),ideas=activeModifiers(s,id),troops=s.armies.filter(a=>a.owner===id).reduce((n,a)=>n+a.men,0),rate={low:.65,normal:1,high:1.4}[f.tax],difficulty=id===s.player&&s.economicHandicap===true?({hard:.9,expert:.8}[s.difficulty]||1):1;return {treasury:Math.round(owned.reduce((n,r)=>n+(r.tax+(buildingModifiers(r).tax||0))*rate*(r.loyalty/100)*populationFactor(r)*(1-Math.min(80,Math.max(0,r.autonomy||0))/200),0)*difficulty*(1+(ideas.tax||0))-troops/1100)+offices.treasury+(ideas.treasury||0)-religiousTaxCost(s,id)-owned.reduce((n,r)=>n+(buildingModifiers(r).upkeep||0),0)-Math.max(0,Object.values(s.inventions?.[id]?.slots||{}).reduce((n,v)=>n+v-1,0)),food:Math.round(owned.reduce((n,r)=>n+r.food+(buildingModifiers(r).food||0),0)*difficulty-troops/1200-owned.length*2)+offices.food+(ideas.food||0),manpower:owned.length*170+(ideas.manpower||0)}}
 function economy(s){
   for(const [id,f] of Object.entries(s.factions)){
     const owned=s.regions.filter(r=>r.owner===id);
