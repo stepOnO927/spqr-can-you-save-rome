@@ -1,3 +1,4 @@
+import {syncChronicleDispatches} from './chronicle.js?v=phase-x-4';
 import {CHARACTER_CATALOG} from './characters.js?v=phase-x-1';
 import {initializeDynasties} from './dynasties.js?v=phase-x-1';
 
@@ -7,6 +8,7 @@ export function canFinalizeCampaign(s){return !!(s.victory||s.world?.dynasties?.
 // to the player while the campaign is active.
 export function finalizeCampaign(s){
  if(!canFinalizeCampaign(s))return {ok:false,reason:'unfinished'};
+ syncChronicleDispatches(s);
  const d=initializeDynasties(s);if(d.finalized)return {ok:false,reason:'already'};
  const own=new Set(Object.values(s.world.characters).filter(c=>c.faction===s.player).map(c=>c.id));
  for(const ruler of d.rulers.filter(r=>r.faction===s.player))for(const id of ruler.current.split(':'))if(id)own.add(id);

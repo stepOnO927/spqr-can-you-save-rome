@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,resolveBattle,region} from '../engine.js';
-import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports} from '../chronicle.js?v=phase-x-2';
+import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine.js';
+import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports,syncChronicleDispatches} from '../chronicle.js?v=phase-x-4';
 import {finalizeCampaign} from '../legacy.js';
 
 test('36 monthly turns preserve a full chronology and three evidence-based annual reviews',()=>{
@@ -46,4 +46,17 @@ test('Chronicle filtering, dated intelligence, and finalized archive replay stay
  const events=s.chronicle.entries,territory=filterChronicle(events,{kind:'territory',faction:'senate',from:String(-49*12+2)});assert.equal(territory.length,1);assert.equal(filterChronicle(events,{kind:'territory',to:String(-49*12+1)}).length,0);assert.ok(filterChronicle(events,{query:'Egypt',kind:'intelligence'}).length);
  assert.match(formatChronicleEntry(events[0],'en'),/may be outdated/);assert.match(formatChronicleEntry(events[0],'zh'),/可能过时/);
  s.victory=true;const archive=finalizeCampaign(s).archive;assert.ok(archive.chronicle.some(e=>e.kind==='territory'));assert.ok(archive.chronicle.some(e=>e.kind==='intelligence'&&e.source==='travelers'));
+});
+
+test('Senatorial campaign retains 36 monthly reports and three annual reviews',()=>{
+ const s=newGame('senate');for(let i=0;i<36;i++)tick(s);assert.equal(s.chronicle.monthly.length,36);assert.equal(s.chronicle.annual.length,3);assert.ok(s.chronicle.entries.every(e=>e.faction==='senate'));
+});
+
+test('diplomatic decisions enter the Chronicle before month advance, save and finalization',()=>{
+ const s=newGame('caesar');assert.equal(diplomacy(s,'caesar','mauretania','improve'),true);syncChronicleDispatches(s);const entry=s.chronicle.entries.find(e=>e.topic==='diplomacy');assert.equal(entry.other,'mauretania');assert.equal(filterChronicle(s.chronicle.entries,{kind:'diplomacy',faction:'mauretania'}).length,1);assert.match(entry.zh,/关系/);
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s)));syncChronicleDispatches(saved);assert.equal(saved.chronicle.entries.filter(e=>e.en===entry.en).length,1);saved.victory=true;const archive=finalizeCampaign(saved).archive;assert.ok(archive.chronicle.some(e=>e.id===entry.id));
+});
+
+test('December decisions appear by name in the annual review without double counting',()=>{
+ const s=newGame('caesar');for(let i=0;i<11;i++)tick(s);assert.equal(s.month,12);s.factions.caesar.treasury=Math.max(100,s.factions.caesar.treasury);region(s,'mauretania').owner='mauretania';region(s,'cisalpine').owner='caesar';s.wars=s.wars.filter(w=>!w.includes('mauretania'));assert.equal(diplomacy(s,'caesar','mauretania','improve'),true);syncChronicleDispatches(s);const report=s.chronicle.annual[0];assert.ok(report.diplomaticEvents.some(e=>/improved relations/.test(e.en)&&/关系/.test(e.zh)));assert.equal(report.diplomacy,report.diplomaticEvents.length);syncChronicleDispatches(s);assert.equal(report.diplomaticEvents.length,1);
 });
