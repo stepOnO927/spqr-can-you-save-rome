@@ -6,6 +6,7 @@ import {sendScouts,probePositions,latestRecon,requestReinforcements} from '../re
 // assess the next operation, reinforce, fight, and reload during the campaign.
 let state=newGrandGame('egypt');
 const actions=[];
+const knowledgeAgreementsSeen=new Set(),knowledgeOffersSeen=new Set();
 assert.equal(moveArmy(state,'egyptguard','t112').ok,true);
 actions.push('march-to-pelusium');
 for(let turn=0;turn<36&&!state.achievementState.finalized;turn++){
@@ -32,6 +33,8 @@ for(let turn=0;turn<36&&!state.achievementState.finalized;turn++){
   if(target?.owner==='senate'&&previewMarch(state,unit.id,target.id).ok&&moveArmy(state,unit.id,target.id).ok)actions.push('attack-syria');
  }
  tick(state);
+ for(const agreement of state.knowledgeAgreements||[])knowledgeAgreementsSeen.add([agreement.a,agreement.b].sort().join(':'));
+ for(const request of state.development?.egypt?.agreementRequests||[])knowledgeOffersSeen.add(request.partner);
  assert.equal(state.regions.length,120);
  assert.ok(state.armies.every(a=>Number.isFinite(a.men)&&a.men>=0));
  assert.ok(Object.values(state.factions).every(f=>[f.treasury,f.food,f.manpower].every(Number.isFinite)));
@@ -47,4 +50,4 @@ assert.ok(actions.includes('scout-syria'));
 assert.ok(actions.includes('dated-report'));
 assert.ok(actions.includes('reload-12')&&actions.includes('reload-24'));
 assert.equal(state.campaignOutcome,undefined);
-console.log(JSON.stringify({date:`${state.year}/${state.month}`,actions,territories:state.regions.filter(r=>r.owner==='egypt').length,army:army(state,'egyptguard')?.men??0,frontSupply:army(state,'egyptguard')?armySupply(state,army(state,'egyptguard')):null,treasury:state.factions.egypt.treasury,food:state.factions.egypt.food,battles:state.battles?.length||0,egyptResult:state.achievementState.result||'ongoing',civilWarOutcome:state.civilWarOutcome?.winner||'unresolved'}));
+console.log(JSON.stringify({date:`${state.year}/${state.month}`,actions,territories:state.regions.filter(r=>r.owner==='egypt').length,army:army(state,'egyptguard')?.men??0,frontSupply:army(state,'egyptguard')?armySupply(state,army(state,'egyptguard')):null,treasury:state.factions.egypt.treasury,food:state.factions.egypt.food,battles:state.battles?.length||0,egyptResult:state.achievementState.result||'ongoing',civilWarOutcome:state.civilWarOutcome?.winner||'unresolved',knowledgeAgreementsSeen:[...knowledgeAgreementsSeen],knowledgeOffersSeen:[...knowledgeOffersSeen]}));

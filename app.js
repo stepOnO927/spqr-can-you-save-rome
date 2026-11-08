@@ -3,18 +3,18 @@ import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=26';
 import {identity,factionMark} from './identity.js?v=2';
 import {CHARACTER_CATALOG} from './characters.js?v=15';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=9';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=129';
-import {importCampaign,downloadCampaign} from './save-files.js?v=7';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=130';
+import {importCampaign,downloadCampaign} from './save-files.js?v=8';
 import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js?v=5';
 import {endCampaign} from './achievement-system.js?v=5';
 import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js?v=5';
-import {budgetHtml} from './budget-ui.js?v=3';
+import {budgetHtml} from './budget-ui.js?v=4';
 import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js?v=9';
-import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=22';
+import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=23';
 import {drawMap,mapPoint} from './map.js?v=55';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=3';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=2';
-import {assessment,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=6';
+import {assessment,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=7';
 import {intelligenceHtml} from './recon-ui.js?v=3';
 
 const ui={
@@ -171,6 +171,8 @@ function bind(){
   document.querySelectorAll('[data-accept-exchange-request]').forEach(el=>el.onclick=()=>{const d=el.dataset,r=acceptKnowledgeExchange(state,state.player,d.exchangeRequestPartner,d.exchangeRequestOfferBranch,d.exchangeRequestOfferId,d.exchangeRequestWantBranch,d.exchangeRequestWantId);if(!r.ok)flash(`${lang==='zh'?'无法交换':'Cannot exchange'}: ${r.reason}`);else render()});
   document.querySelectorAll('[data-decline-exchange-request]').forEach(el=>el.onclick=()=>{const d=el.dataset;declineKnowledgeExchange(state,state.player,d.exchangeRequestPartner,d.exchangeRequestOfferBranch,d.exchangeRequestOfferId,d.exchangeRequestWantBranch,d.exchangeRequestWantId);render()});
   document.querySelectorAll('[data-negotiate-knowledge-agreement]').forEach(el=>el.onclick=()=>{const r=negotiateKnowledgeAgreement(state,state.player,el.dataset.negotiateKnowledgeAgreement);if(!r.ok)flash(`${lang==='zh'?'无法签订协定':'Cannot sign agreement'}: ${r.reason}`);else render()});
+  document.querySelectorAll('[data-accept-knowledge-agreement-request]').forEach(el=>el.onclick=()=>{const r=acceptKnowledgeAgreement(state,state.player,el.dataset.acceptKnowledgeAgreementRequest);if(!r.ok)flash(`${lang==='zh'?'无法接受协定':'Cannot accept agreement'}: ${r.reason}`);else render()});
+  document.querySelectorAll('[data-decline-knowledge-agreement-request]').forEach(el=>el.onclick=()=>{declineKnowledgeAgreement(state,state.player,el.dataset.declineKnowledgeAgreementRequest);render()});
   document.querySelectorAll('[data-cancel-knowledge-agreement]').forEach(el=>el.onclick=()=>{cancelKnowledgeAgreement(state,state.player,el.dataset.cancelKnowledgeAgreement);render()});
   document.querySelectorAll('[data-sell-id]').forEach(el=>el.onclick=()=>{const r=sellKnowledge(state,state.player,el.dataset.sellBuyer,el.dataset.sellBranch,el.dataset.sellId);if(!r.ok)flash(r.reason);else render()});
   document.querySelectorAll('[data-exchange-id]').forEach(el=>el.onclick=()=>{const offer=document.querySelector(`[data-exchange-offer="${el.dataset.exchangePartner}"]`)?.value;if(!offer)return;const [branch,id]=offer.split(':'),r=exchangeKnowledge(state,state.player,el.dataset.exchangePartner,branch,id,el.dataset.exchangeBranch,el.dataset.exchangeId);if(!r.ok)flash(r.reason);else render()});

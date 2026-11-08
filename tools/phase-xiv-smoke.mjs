@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {newGrandGame,proposeKnowledgeSale,proposeKnowledgePurchase,proposeKnowledgeExchange} from '../engine.js';
+import {newGrandGame,proposeKnowledgeSale,proposeKnowledgePurchase,proposeKnowledgeExchange,proposeKnowledgeAgreement} from '../engine.js';
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox']});
-const page=await browser.newPage({viewport:{width:1440,height:900}});
+const page=await browser.newPage({viewport:{width:Number(process.env.SPQR_XIV_WIDTH||1440),height:Number(process.env.SPQR_XIV_HEIGHT||900)}});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
   await page.route('http://spqr.test/**',async route=>{
@@ -185,6 +185,27 @@ try{
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
   await page.locator('#development').click();
   await page.locator('[data-negotiate-knowledge-agreement="caesar"]').click();
+  assert.equal(await page.locator('[data-cancel-knowledge-agreement="caesar"]').count(),1);
+  const proposed=newGrandGame('egypt');proposed.relations['caesar:egypt']=50;
+  proposed.factions.egypt.treasury=300;proposed.factions.caesar.treasury=300;
+  assert.equal(proposeKnowledgeAgreement(proposed,'caesar','egypt').ok,true);
+  for(const language of ['en','zh']){
+    await page.evaluate(value=>localStorage.setItem('spqr-lang',value),language);
+    await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+    await page.locator('#entry-file').setInputFiles({name:`agreement-request-${language}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(proposed))});
+    await page.locator('[data-tab="development"]').click();
+    const row=page.locator('.dev-build-row').filter({has:page.locator('[data-accept-knowledge-agreement-request="caesar"]')});
+    assert.match(await row.innerText(),language==='zh'?/凯撒[\s\S]*知识共享提议[\s\S]*前49年1月/:/Caesar[\s\S]*Knowledge-sharing proposal[\s\S]*1\/49 BCE/);
+    if(language==='zh')await page.locator('[data-decline-knowledge-agreement-request="caesar"]').click();
+    else await page.locator('[data-accept-knowledge-agreement-request="caesar"]').click();
+    assert.equal(await page.locator('[data-accept-knowledge-agreement-request="caesar"]').count(),0);
+    assert.equal(await page.locator('[data-cancel-knowledge-agreement="caesar"]').count(),language==='en'?1:0);
+  }
+  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),proposed);
+  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+  await page.locator('#development').click();
+  assert.match(await page.locator('.dev-build-row').filter({has:page.locator('[data-accept-knowledge-agreement-request="caesar"]')}).innerText(),/知识共享提议/);
+  await page.locator('[data-accept-knowledge-agreement-request="caesar"]').click();
   assert.equal(await page.locator('[data-cancel-knowledge-agreement="caesar"]').count(),1);
   assert.deepEqual(errors,[]);
   console.log('Phase XIV browser smoke passed: research, adoption, construction, knowledge agreements and consent-based trades in both languages.');

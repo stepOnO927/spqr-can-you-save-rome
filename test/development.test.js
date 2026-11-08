@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,negotiateKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,purchaseMaterials} from '../engine.js';
+import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,purchaseMaterials} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility} from '../development.js';
 import {developmentPanel,ideasPanel} from '../development-ui.js';
 import {edgeMonths} from '../grand-operations.js';
@@ -525,4 +525,74 @@ test('knowledge-sharing agreement pays once, transfers both ways over time and e
  const canceled=structuredClone(s);assert.equal(cancelKnowledgeAgreement(canceled,'egypt','caesar').ok,true);
  assert.equal(cancelKnowledgeAgreement(canceled,'egypt','caesar').reason,'agreement');
  assert.equal(canceled.factions.egypt.treasury,280);
+});
+
+test('AI knowledge-sharing proposals need consent, survive saves and charge only once',()=>{
+ const s=newGrandGame('egypt');s.wars=[];s.relations['caesar:egypt']=50;
+ s.factions.caesar.treasury=200;s.factions.egypt.treasury=200;
+ const result=proposeKnowledgeAgreement(s,'caesar','egypt');
+ assert.equal(result.ok,true);assert.equal(result.offerMonths,4);
+ assert.equal(s.factions.caesar.treasury,200);assert.equal(s.factions.egypt.treasury,200);
+ assert.equal(s.knowledgeAgreements.length,0);
+ assert.deepEqual(development(s,'egypt').agreementRequests,[{partner:'caesar',sentYear:-49,sentMonth:1,remaining:4}]);
+ assert.equal(proposeKnowledgeAgreement(s,'caesar','egypt').reason,'request');
+ assert.equal(negotiateKnowledgeAgreement(s,'caesar','egypt').reason,'consent');
+ for(const lang of ['en','zh']){
+  const html=developmentPanel(s,lang,'material');
+  assert.match(html,lang==='zh'?/知识共享协定提议/:/Proposed knowledge-sharing agreements/);
+  assert.match(html,lang==='zh'?/前49年1月/:/1\/49 BCE/);
+  assert.match(html,lang==='zh'?/双方各付20国库/:/each side pays 20 treasury/);
+ }
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(loaded.development.egypt.agreementRequests.length,1);
+ assert.equal(acceptKnowledgeAgreement(loaded,'egypt','caesar').ok,true);
+ assert.equal(loaded.factions.egypt.treasury,180);assert.equal(loaded.factions.caesar.treasury,180);
+ assert.equal(loaded.development.egypt.agreementRequests.length,0);
+ assert.equal(loaded.knowledgeAgreements.length,1);
+ assert.equal(acceptKnowledgeAgreement(loaded,'egypt','caesar').reason,'request');
+ assert.equal(loaded.factions.egypt.treasury,180);assert.equal(loaded.factions.caesar.treasury,180);
+ months(loaded,5);
+ assert.ok(loaded.development.egypt.knownMaterial.includes('roadmaking'));
+ assert.ok(loaded.development.caesar.knownMaterial.includes('water-control'));
+ const declined=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(declineKnowledgeAgreement(declined,'egypt','caesar').ok,true);
+ assert.equal(declineKnowledgeAgreement(declined,'egypt','caesar').reason,'request');
+ assert.equal(declined.factions.egypt.treasury,200);assert.equal(declined.knowledgeAgreements.length,0);
+ const hostile=upgradeSave(JSON.parse(JSON.stringify(s)));hostile.wars.push(['caesar','egypt']);months(hostile,1);
+ assert.equal(hostile.development.egypt.agreementRequests.length,0);
+ const expired=upgradeSave(JSON.parse(JSON.stringify(s))),withoutRequest=upgradeSave(JSON.parse(JSON.stringify(s)));
+ withoutRequest.development.egypt.agreementRequests=[];
+ months(expired,4);months(withoutRequest,4);
+ assert.equal(expired.development.egypt.agreementRequests.length,0);
+ assert.equal(expired.factions.egypt.treasury,withoutRequest.factions.egypt.treasury);
+ const deteriorated=upgradeSave(JSON.parse(JSON.stringify(s)));deteriorated.relations['caesar:egypt']=19;
+ months(deteriorated,1);assert.equal(deteriorated.development.egypt.agreementRequests.length,0);
+ const old=structuredClone(s);delete old.development.egypt.agreementRequests;
+ assert.deepEqual(upgradeSave(old).development.egypt.agreementRequests,[]);
+});
+
+test('AI can initiate mutual agreements with a player or another AI',()=>{
+ const seasonal=newGrandGame('egypt');seasonal.wars=[];seasonal.year=-48;seasonal.month=2;
+ seasonal.relations['caesar:egypt']=55;seasonal.factions.caesar.treasury=300;seasonal.factions.egypt.treasury=300;
+ tick(seasonal);
+ assert.deepEqual(seasonal.development.egypt.agreementRequests.map(x=>[x.partner,x.sentYear,x.sentMonth]),[['caesar',-48,3]]);
+ assert.equal(acceptKnowledgeAgreement(seasonal,'egypt','caesar').ok,true);
+ months(seasonal,5);
+ assert.ok(seasonal.development.egypt.knownMaterial.includes('roadmaking'));
+ assert.ok(seasonal.development.caesar.knownMaterial.includes('water-control'));
+ const player=newGrandGame('egypt');player.wars=[];player.year=-48;player.month=3;
+ player.relations['caesar:egypt']=55;player.factions.caesar.treasury=100;player.factions.egypt.treasury=100;
+ aiTurn(player,'caesar');
+ assert.ok(player.development.egypt.agreementRequests.some(x=>x.partner==='caesar'));
+ assert.equal(player.knowledgeAgreements.length,0);
+ assert.equal(player.factions.egypt.treasury,100);
+ const others=newGrandGame('egypt');others.wars=[];others.year=-48;others.month=3;
+ others.relations['caesar:senate']=60;others.factions.caesar.treasury=100;others.factions.senate.treasury=100;
+ others.development.caesar.knownMaterial.push('bridge-engineering');
+ others.development.senate.knownMaterial.push('water-control');
+ aiTurn(others,'caesar');
+ assert.ok(others.knowledgeAgreements.some(a=>a.a==='caesar'&&a.b==='senate'));
+ assert.equal(others.factions.senate.treasury,80);
+ aiTurn(others,'caesar');
+ assert.equal(others.knowledgeAgreements.length,1);
 });
