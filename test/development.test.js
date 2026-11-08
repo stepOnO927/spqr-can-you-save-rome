@@ -86,7 +86,7 @@ test('material knowledge permits delayed construction with terrain, deposits, ma
 });
 
 test('knowledge trade transfers knowledge after travel, never constructs or adopts it',()=>{
-  const s=newGame('numidia');s.factions.caesar.treasury=200;s.relations['caesar:egypt']=20;
+  const s=newGame('caesar');s.wars=[];s.relations['caesar:senate']=50;s.factions.caesar.treasury=200;s.relations['caesar:egypt']=20;
   const d=development(s,'caesar');assert.ok(!d.knownMaterial.includes('water-control'));
   const result=knowledgeTrade(s,'caesar','egypt','material','water-control');assert.equal(result.ok,true);
   assert.ok(!d.knownMaterial.includes('water-control'));

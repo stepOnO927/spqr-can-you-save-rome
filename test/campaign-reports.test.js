@@ -1,24 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,moveArmy,tick,upgradeSave,diplomacy,resolveBattle,region} from '../engine.js';
-import {eventText,markRead,unreadCount,recordEvent,latestCritical} from '../campaign-reports.js';
+import {eventText,markRead,unreadCount,recordEvent,latestCritical,updateObjectives} from '../campaign-reports.js';
 import {chronicleHtml,notificationsHtml,battleReportHtml} from '../reports-ui.js';
 
-test('five-month Caesarian campaign records conquest, recapture, objective loss, and siege completion',()=>{
+test('conquest, counterattack, objective loss, and siege completion retain a dated chronicle',()=>{
  const s=newGame();assert.equal(moveArmy(s,'xiii','italiaN').ok,true);
  tick(s);assert.equal(region(s,'italiaN').owner,'caesar');
  const conquest=s.campaignEvents.find(e=>e.type==='control'&&e.regionId==='italiaN');assert.equal(conquest.previousOwner,'senate');
- assert.equal(moveArmy(s,'xiii','roma').ok,true);
- tick(s);assert.equal(region(s,'italiaN').owner,'senate');
+ const caesar=s.armies.find(a=>a.id==='xiii'),pompey=s.armies.find(a=>a.id==='pompey');
+ caesar.men=500;pompey.men=10000;pompey.move=null;pompey.region='italiaN';
+ resolveBattle(s,pompey,caesar,region(s,'italiaN'));updateObjectives(s);tick(s);
+ assert.equal(region(s,'italiaN').owner,'senate');
  const loss=s.campaignEvents.find(e=>e.type==='control'&&e.regionId==='italiaN'&&e.previousOwner==='caesar');
  assert.equal(loss.severity,'critical');assert.equal(s.objectiveProgress.frontier.status,'lost');
  const objective=s.campaignEvents.find(e=>e.type==='objective'&&e.objectiveStatus==='lost'&&e.regionId==='italiaN');
  assert.equal(objective.causeEventId,loss.id);assert.match(eventText(s,objective,'en').description,/Northern Italy/);
  assert.match(eventText(s,loss,'zh').title,/意大利北部/);
  tick(s);assert.equal(s.objectiveProgress.frontier.status,'lost');
- tick(s);assert.equal(region(s,'roma').owner,'caesar');assert.ok(s.campaignEvents.some(e=>e.type==='siege'&&e.phase==='completed'&&e.regionId==='roma'));
  assert.ok(s.campaignEvents.findIndex(e=>e.id===loss.id)<s.campaignEvents.findIndex(e=>e.id===conquest.id));
  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(restored.campaignEvents.find(e=>e.id===loss.id).regionId,'italiaN');assert.equal(restored.objectiveProgress.frontier.status,'lost');
+ const siege=newGame(),besieger=siege.armies.find(a=>a.id==='xiii');besieger.region='roma';besieger.siege={region:'roma',remaining:1};tick(siege);
+ assert.equal(region(siege,'roma').owner,'caesar');assert.ok(siege.campaignEvents.some(e=>e.type==='siege'&&e.phase==='completed'&&e.regionId==='roma'));
 });
 
 test('simultaneous battles and territory changes retain distinct stable references',()=>{

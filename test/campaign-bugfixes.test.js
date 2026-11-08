@@ -1,9 +1,38 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,army,region,resolveBattle,moveArmy,diplomacy,tick,recruit,previewMarch} from '../engine.js';
+import {newGame,army,region,resolveBattle,moveArmy,diplomacy,tick,recruit,previewMarch,upgradeSave} from '../engine.js';
 import {recordMovement,eventText,recordEvent} from '../campaign-reports.js';
 import {chronicleHtml,battleReportHtml,eventDate} from '../reports-ui.js';
-import {requestReinforcements,probePositions} from '../reconnaissance.js';
+import {requestReinforcements,probePositions,latestRecon} from '../reconnaissance.js';
+
+test('opposing marches meet without swapping theaters or taking a fort bonus',()=>{
+ const s=newGame('senate'),caesar=army(s,'xiii'),levies=army(s,'italy');
+ assert.equal(moveArmy(s,caesar.id,'italiaN').ok,true);
+ assert.equal(moveArmy(s,levies.id,'cisalpine').ok,true);
+ tick(s);
+ const battle=s.battles?.[0];assert.ok(battle?.meeting);assert.equal(battle.fort,0);
+ assert.ok(battle.lossA>0&&battle.lossD>0);
+ assert.equal(caesar.region,'cisalpine');assert.equal(levies.region,'italiaN');
+ assert.equal(region(s,'cisalpine').owner,'caesar');assert.equal(region(s,'italiaN').owner,'senate');
+ assert.equal(latestRecon(s,'caesar','italiaN').source,'battle');
+ assert.equal(latestRecon(s,'senate','cisalpine').source,'battle');
+ assert.match(battleReportHtml(s,battle,'en'),/opposing marches/);
+ assert.match(battleReportHtml(s,battle,'zh'),/反向行军/);
+ assert.match(battleReportHtml(s,battle,'en'),/Meeting engagement/);
+ assert.match(battleReportHtml(s,battle,'zh'),/行军遭遇战/);
+ assert.ok(s.log.some(entry=>/Senate .*opposing marches/.test(entry.en)));
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(s))).battles[0].meeting,true);
+});
+
+test('AI uses fresh opening-battle intelligence before repeating an attack',()=>{
+ const s=newGame('egypt');
+ assert.equal(moveArmy(s,'xiii','italiaN').ok,true);
+ assert.equal(moveArmy(s,'italy','cisalpine').ok,true);
+ tick(s);
+ assert.ok(s.battles[0]?.meeting);
+ assert.equal(army(s,'italy').move,null);
+ assert.equal(latestRecon(s,'senate','cisalpine').source,'battle');
+});
 
 test('a defeated besieger cannot take a theater remotely',()=>{
  const s=newGame('caesar'),besieger=army(s,'xiii'),defender=army(s,'pompey'),rome=region(s,'roma');
