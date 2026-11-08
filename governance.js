@@ -90,7 +90,7 @@ export function withdrawSuccessionPlan(s){
 export function planSuccession(s,id){
  initializeGovernments(s);const faction=s.player;if(!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive)||!successionCandidates(s,faction).includes(id))return {ok:false,reason:'unavailable'};
  if(s.world.successionPlans[faction]===id)return {ok:false,reason:'already'};if(s.factions[faction].treasury<5)return {ok:false,reason:'treasury'};
- s.factions[faction].treasury-=5;s.world.successionPlans[faction]=id;s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[id].name[0]} was designated as a possible successor in the simulation.`,zh:`${CHARACTER_CATALOG[id].name[1]}在游戏中被指定为可能的继任者。`});s.log=s.log.slice(0,80);return {ok:true,cost:5};
+ s.factions[faction].treasury-=5;s.world.successionPlans[faction]=id;recordLifeEvent(s,id,'Designated as a possible successor; succession remains uncertain.','被指定为可能继任者；最终继任仍未确定。');s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[id].name[0]} was designated as a possible successor in the simulation.`,zh:`${CHARACTER_CATALOG[id].name[1]}在游戏中被指定为可能的继任者。`});s.log=s.log.slice(0,80);return {ok:true,cost:5};
 }
 
 // Influence is a game abstraction, not a claim about a historical person's power.
@@ -98,7 +98,7 @@ export function supportSuccessor(s,id){
  initializeGovernments(s);const faction=s.player,candidates=successorFor(s,faction),person=s.world.characters[id];
  if(!candidates.includes(id)||!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive))return {ok:false,reason:'unavailable'};
  if(person.influence>=100)return {ok:false,reason:'maximum'};if(s.factions[faction].treasury<8)return {ok:false,reason:'treasury'};
- s.factions[faction].treasury-=8;person.influence=Math.min(100,person.influence+15);person.ambition=Math.min(100,politicalAmbition(s,id)+5);improveLeaderTrust(s,id);
+ s.factions[faction].treasury-=8;person.influence=Math.min(100,person.influence+15);person.ambition=Math.min(100,politicalAmbition(s,id)+5);improveLeaderTrust(s,id);recordLifeEvent(s,id,'Received political backing in the simulated campaign.','在模拟战役中获得政治支持。');
  for(const other of candidates.filter(candidate=>candidate!==id)){const rival=s.world.characters[other];rival.loyalty=Math.max(0,rival.loyalty-3)}
  s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[id].name[0]} gained political influence in the simulation.`,zh:`${CHARACTER_CATALOG[id].name[1]}在游戏中的政治影响力提高。`});s.log=s.log.slice(0,80);
  return {ok:true,cost:8};
@@ -110,7 +110,7 @@ export function appointDeputy(s,id){
  if(!['acting_command','regency'].includes(g.kind)||!eligibleDeputies(s,faction).includes(id))return {ok:false,reason:'unavailable'};
  if(s.world.appointments[faction]===id)return {ok:false,reason:'already'};
  const cost=g.acting[0]===id?0:5;if(s.factions[faction].treasury<cost)return {ok:false,reason:'treasury'};
- s.factions[faction].treasury-=cost;s.world.appointments[faction]=id;s.world.governments[faction]=deriveGovernment(s,faction);
+ s.factions[faction].treasury-=cost;s.world.appointments[faction]=id;s.world.governments[faction]=deriveGovernment(s,faction);recordLifeEvent(s,id,'Appointed as temporary acting authority.','获任临时代行政务。');
  s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[id].name[0]} was appointed as acting authority in the simulation.`,zh:`${CHARACTER_CATALOG[id].name[1]}在游戏中被任命暂时代行政务。`});s.log=s.log.slice(0,80);
  return {ok:true,cost};
 }

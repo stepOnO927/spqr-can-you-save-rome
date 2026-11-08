@@ -4,6 +4,7 @@ import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine
 import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports,syncChronicleDispatches} from '../chronicle.js?v=phase-x-6';
 import {finalizeCampaign} from '../legacy.js';
 import {appointCommander} from '../command-appointments.js';
+import {planSuccession} from '../governance.js';
 
 test('36 monthly turns preserve a full chronology and three evidence-based annual reviews',()=>{
  const s=newGame('caesar');for(let i=0;i<36;i++)tick(s);
@@ -64,4 +65,8 @@ test('December decisions appear by name in the annual review without double coun
 
 test('new commander appointment can be found by character before advancing time',()=>{
  const s=newGame('caesar');assert.equal(appointCommander(s,'xiii','antony').ok,true);syncChronicleDispatches(s);const found=filterChronicle(s.chronicle.entries,{kind:'character',character:'antony'});assert.ok(found.some(e=>/Appointed commander/.test(e.en)));assert.ok(found.every(e=>e.characterId==='antony'));assert.ok(s.chronicle.monthly[0].entryIds.includes(found[0].id));const save=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(filterChronicle(save.chronicle.entries,{kind:'character',character:'antony'}).length,found.length);
+});
+
+test('successor designation is an immediate character event with a stable person filter',()=>{
+ const s=newGame('caesar');assert.equal(planSuccession(s,'antony').ok,true);syncChronicleDispatches(s);const entries=filterChronicle(s.chronicle.entries,{kind:'character',character:'antony'});assert.ok(entries.some(e=>/possible successor/.test(e.en)));assert.ok(entries.some(e=>/可能继任者/.test(e.zh)));
 });
