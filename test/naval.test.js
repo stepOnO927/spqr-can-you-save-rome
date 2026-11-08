@@ -1,10 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn} from '../engine.js';
-import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,accessibleFleet,supportPirates,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue} from '../naval.js';
+import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,accessibleFleet,supportPirates,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue} from '../naval.js';
 import {tradeCard} from '../map-lab/naval-ui.js';
 import {armySupply} from '../grand-operations.js';
 import {nationalBudget} from '../national-budget.js';
+import {advanceMissingCommanders} from '../character-system.js';
+
+test('chosen tactics survive saves and change actual naval losses',()=>{
+ const run=tactic=>{const s=newGrandGame('senate'),own=s.naval.fleets.find(f=>f.owner==='senate'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');own.port=null;enemy.port=null;enemy.zone=own.zone;s.seed=83;if(tactic!=='formation')assert.equal(setFleetTactic(s,'senate',own.id,tactic).ok,true);assert.equal(setFleetTactic(s,'senate',own.id,'formation').ok,false);const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(loaded.naval.fleets.find(f=>f.id===own.id).tactic,tactic);advanceNaval(loaded);return loaded.naval.reports.find(r=>r.kind==='battle')};
+ const boarding=run('boarding'),missile=run('missile'),ramming=run('ramming');const id='senate-adriatic',enemy='caesar-adriatic';
+ assert.equal(boarding.snapshots[id].tactic,'boarding');assert.ok(boarding.losses[id].sailors>missile.losses[id].sailors);assert.ok(ramming.damage[enemy]>missile.damage[enemy]);
+});
+test('boarding can capture a named commander who stays captive through save reload until ransom returns him',()=>{
+ let s=newGrandGame('senate');const own=s.naval.fleets.find(f=>f.owner==='senate'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');own.port=null;enemy.port=null;enemy.zone=own.zone;enemy.hull=25;enemy.commanderId='antony';s.factions.caesar.treasury=0;s.seed=8;
+ assert.equal(setFleetTactic(s,'senate',own.id,'boarding').ok,true);advanceNaval(s);const capture=s.naval.captives.find(c=>c.characterId==='antony');assert.ok(capture);assert.equal(capture.status,'held');assert.equal(s.world.characters.antony.missing.capturedBy,'senate');assert.equal(enemy.commanderId,null);assert.equal(s.naval.reports.find(r=>r.kind==='battle').capturedCommander.characterId,'antony');
+ advanceMissingCommanders(s);assert.equal(s.world.characters.antony.missing.capturedBy,'senate');s=upgradeSave(JSON.parse(JSON.stringify(s)));s.wars=[];s.factions.caesar.treasury=50;assert.equal(ransomFleetCommander(s,'caesar','antony').ok,true);assert.equal(ransomFleetCommander(s,'caesar','antony').ok,false);assert.equal(s.naval.captives.find(c=>c.characterId==='antony').status,'returning');advanceNaval(s);assert.ok(s.world.characters.antony.missing);advanceNaval(s);assert.equal(s.naval.captives.find(c=>c.characterId==='antony').status,'released');assert.equal(s.world.characters.antony.missing,undefined);
+});
 
 test('reserve cuts real upkeep but suspends orders and troop transports until mobilization completes',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),full=fleetUpkeepDue(f),before=nationalBudget(s,'senate');

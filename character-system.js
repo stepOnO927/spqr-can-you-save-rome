@@ -242,7 +242,7 @@ export function relieveIncapacitatedCommanders(s){
 // controlled theater. This is a coarse game abstraction, not a precise escape route.
 export function advanceMissingCommanders(s){
  initializeWorld(s);for(const person of Object.values(s.world.characters)){
-  const missing=person.missing;if(!missing)continue;if(!person.alive){delete person.missing;continue}
+  const missing=person.missing;if(!missing)continue;if(!person.alive){delete person.missing;continue}if(missing.capturedBy)continue;
   if(s.year===missing.year&&s.month===missing.month)continue;
   missing.remaining=Math.max(0,missing.remaining-1);if(missing.remaining)continue;
   const queue=[missing.origin],seen=new Set(queue);let destination=null;

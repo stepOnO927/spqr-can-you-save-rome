@@ -17,7 +17,7 @@ import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=4';
-import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=92';
+import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=93';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js?v=6';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
@@ -32,9 +32,9 @@ import {leadershipIntelligence} from './intelligence-summary.js?v=2';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=9';
 import {assessment,sendScouts,probePositions,delayAttack,markReconRegion,requestReinforcements,latestRecon} from '../reconnaissance.js?v=2';
 import {intelligenceHtml,afterActionHtml} from '../recon-ui.js?v=2';
-import {renderNavalPanel} from './naval-ui.js?v=4';
-import {SEA_ZONES,reportedHostileFleets} from '../naval.js?v=5';
-import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,supportPirates} from '../engine.js';
+import {renderNavalPanel} from './naval-ui.js?v=5';
+import {SEA_ZONES,reportedHostileFleets} from '../naval.js?v=6';
+import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=93';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
@@ -115,7 +115,7 @@ settingsButton.onclick=showSettings;
 function showNaval(section='fleets'){
  activeInfo={type:'naval',section};activeArmy=null;activeBattle=null;activeFaction=null;previewDestination='';clearReach();currentMapMode='maritime';renderArmies();renderHud();
  inspect(lang==='zh'?'海军与海上贸易':'NAVY & MARITIME TRADE',lang==='zh'?'舰队、港口、商路与海上情报按回合结算。':'Fleets, ports, trade and intelligence resolve each turn.');
- const handle=(action,id,value,target)=>{if(['fleets','yards','trade','reports','intelligence','jobs'].includes(action)){showNaval(action);return {ok:true}}let result;if(action==='order')result=orderFleet(state,state.player,id,value,target);else if(action==='reserve')result=reserveFleet(state,state.player,id);else if(action==='mobilize')result=mobilizeFleet(state,state.player,id);else if(action==='appoint')result=appointFleet(state,state.player,id,value);else if(action==='dismiss')result=dismissFleetCommander(state,state.player,id);else if(action==='appoint-job')result=appointNavalJob(state,state.player,id,value||null,target);else if(action==='dismiss-job')result=dismissNavalJob(state,state.player,id,value||null);else if(action==='build')result=queueShip(state,state.player,id,value);else if(action==='transport')result=moveArmy(state,id,value);else if(action==='support')result=supportPirates(state,state.player,id);if(result?.ok){renderArmies();renderHud()}return result};
+ const handle=(action,id,value,target)=>{if(['fleets','yards','trade','reports','intelligence','jobs'].includes(action)){showNaval(action);return {ok:true}}let result;if(action==='order')result=orderFleet(state,state.player,id,value,target);else if(action==='reserve')result=reserveFleet(state,state.player,id);else if(action==='mobilize')result=mobilizeFleet(state,state.player,id);else if(action==='tactic')result=setFleetTactic(state,state.player,id,value);else if(action==='ransom')result=ransomFleetCommander(state,state.player,id);else if(action==='appoint')result=appointFleet(state,state.player,id,value);else if(action==='dismiss')result=dismissFleetCommander(state,state.player,id);else if(action==='appoint-job')result=appointNavalJob(state,state.player,id,value||null,target);else if(action==='dismiss-job')result=dismissNavalJob(state,state.player,id,value||null);else if(action==='build')result=queueShip(state,state.player,id,value);else if(action==='transport')result=moveArmy(state,id,value);else if(action==='support')result=supportPirates(state,state.player,id);if(result?.ok){renderArmies();renderHud()}return result};
  renderNavalPanel({state,lang,root:document.querySelector('#command-detail'),section,onAction:handle,onPort:id=>{const r=region(state,id);if(r){map.flyTo({center:namedPoints[id],zoom:6});showRegion(r)}}});
 }
 navalButton.onclick=()=>showNaval();
