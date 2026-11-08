@@ -34,6 +34,16 @@ test('reimport repairs an old foreign archive without awarding Laurel Coins twic
  assert.equal(archive.battles,1);assert.deepEqual(archive.notable,[{region:'t116',winner:'senate'}]);
  saveProfile(profile,storage);assert.deepEqual(loadProfile(storage).archive[0],archive);
 });
+test('reimport also corrects an older foreign battle total before Roman civil-war settlement',()=>{
+ const profile=loadProfile(memory()),campaign=newGrandGame('armenia');
+ campaign.battles=[{region:'roma',attacker:{owner:'caesar'},defender:{owner:'senate'},attackerWins:true}];
+ endCampaign(campaign,'retired');recordCampaign(profile,campaign);
+ const archived=profile.archive[0],coins=profile.coins;
+ archived.battles=1;archived.summary.battles=1;archived.notable=[{region:'roma',winner:'caesar'}];
+ assert.deepEqual(recordCampaign(profile,campaign),[]);
+ assert.equal(profile.coins,coins);assert.equal(archived.battles,0);assert.equal(archived.summary.battles,0);
+ assert.deepEqual(archived.notable,[]);
+});
 test('buildings visually owned through durable purchases and unlock museum content',()=>{
  const storage=memory(),p=loadProfile(storage);p.coins=1200;assert.equal(purchase(p,'museum').ok,true);assert.ok(p.buildings.includes('museum'));assert.ok(p.collectibles.includes('senate-tablet'));assert.equal(purchase(p,'museum').ok,false);assert.equal(purchase(p,'temple').ok,true);assert.equal(purchase(p,'circus').ok,false);p.coins=600;assert.equal(purchase(p,'circus').ok,true);saveProfile(p,storage);assert.ok(loadProfile(storage).buildings.includes('circus'));
 });
