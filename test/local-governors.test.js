@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js';
-import {appointGovernor,dismissGovernor,governorCandidates,localGovernor,officeOf,officeCandidates,advanceOffices,governorLoyaltyEffect} from '../office-system.js';
+import {newGame,tick,upgradeSave} from '../engine.js?v=grand-chessboard-1';
+import {appointGovernor,dismissGovernor,governorCandidates,localGovernor,officeOf,officeCandidates,advanceOffices,governorLoyaltyEffect} from '../office-system.js?v=grand-chessboard-1';
 import {previewPersonTravel} from '../personal-diplomacy.js';
 import {availableCommanders} from '../command-appointments.js';
 

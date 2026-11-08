@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry,answerPeaceOffer} from './engine.js';
+import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry,answerPeaceOffer} from './engine.js?v=grand-chessboard-1';
 import historical from './historical-territories.js';
 import {REGIONS} from './data.js';
 import {identity,factionMark} from './identity.js';
@@ -130,14 +130,12 @@ test('battles inflict casualties and the victor controls the theater',()=>{
   assert.ok(s.armies.every(x=>x.id!=='italy'||x.men<1000));
 });
 
-test('tax pressure causes an actual territorial rebellion',()=>{
-  const s=newGame();s.factions.caesar.stability=40;
-  region(s,'gaul').loyalty=25;
-  setTax(s,'caesar','high');
-  tick(s);
-  assert.equal(region(s,'gaul').owner,'rebels');
-  assert.ok(s.armies.some(a=>a.owner==='rebels'&&a.region==='gaul'));
-  assert.ok(isWar(s,'caesar','rebels'));
+test('sustained tax and political grievances create a movement before any armed revolt',()=>{
+  const s=newGame();s.factions.caesar.stability=20;s.factions.caesar.legitimacy=25;
+  region(s,'gaul').loyalty=5;region(s,'gaul').population.satisfaction=10;
+  setTax(s,'caesar','high');tick(s);assert.equal(region(s,'gaul').owner,'caesar');tick(s);tick(s);
+  const movement=s.world.movements.find(m=>m.parent==='caesar'&&m.region==='gaul');
+  assert.ok(movement);assert.equal(movement.stage,'dissatisfaction');assert.equal(region(s,'gaul').owner,'caesar');assert.ok(!movement.force);
 });
 
 test('AI issues real movement orders after a monthly update',()=>{

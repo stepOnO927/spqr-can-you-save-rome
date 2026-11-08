@@ -1,11 +1,12 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=phase-x-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=phase-x-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=grand-chessboard-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=grand-chessboard-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
 import {deriveGovernment,validSuccessionPlan} from './governance.js?v=governance-sync-1';
-import {potentialConspirators} from './conspiracies.js?v=phase-x-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=phase-x-1';
+import {potentialConspirators} from './conspiracies.js?v=grand-chessboard-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=grand-chessboard-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=phase-x-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=grand-chessboard-1';
+import {activeAgreement} from './agreements.js?v=grand-chessboard-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -149,10 +150,10 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
  if(subject==='relations'&&type!=='envoy')return {ok:false,reason:'subject'};
  if(subject==='stance'&&!['envoy','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(subject==='contacts'&&(!['spy','exchange'].includes(type)||!['egypt','parthia'].includes(target)))return {ok:false,reason:'subject'};
- if(type==='counter'&&!['conspiracy','counter_spies'].includes(subject)||subject==='counter_spies'&&(type!=='counter'||!['caesar','senate'].includes(target))||subject==='conspiracy'&&(!['spy','counter','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
+ if(type==='counter'&&!['conspiracy','counter_spies'].includes(subject)||subject==='counter_spies'&&type!=='counter'||subject==='conspiracy'&&!['spy','counter','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
  if(['health','age','location'].includes(subject)&&characterId&&!reportedHealthSubjects(s,actor,target).includes(characterId))return {ok:false,reason:'identity'};
- const partners=s.alliances.filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)).filter(id=>id!==target&&s.factions[id]);
+ const partners=[...new Set([...s.alliances.filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)),...(s.agreements||[]).filter(t=>t.type==='intelligence'&&t.parties.includes(actor)&&activeAgreement(s,t.parties[0],t.parties[1],'intelligence')).map(t=>t.parties.find(id=>id!==actor))])].filter(id=>id!==target&&s.factions[id]);
  if(type==='exchange'&&(!partners.length||(partnerId&&!partners.includes(partnerId))))return {ok:false,reason:'alliance'};
  if(['spy','counter'].includes(type)&&!availableAgents(s,actor))return {ok:false,reason:'agents'};
  if(s.factions[actor].treasury<cfg.cost)return {ok:false,reason:'treasury'};
@@ -168,7 +169,7 @@ export function queueMission(s,actor,target,type,subject='health',partnerId=null
 // The ally selects its own record when the request reaches it. The sealed
 // response stays out of the recipient's knowledge until the return journey.
 function prepareExchange(s,op){
- const partner=op.partner,allied=s.alliances.some(x=>x.includes(op.actor)&&x.includes(partner));
+ const partner=op.partner,allied=s.alliances.some(x=>x.includes(op.actor)&&x.includes(partner))||!!activeAgreement(s,op.actor,partner,'intelligence');
  const prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter));
  if(!allied||!prior)return {available:false};
  return {available:true,report:{kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,range:validStrengthRange(prior)?[...prior.range]:undefined,exhaustive:prior.exhaustive===true,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'}};

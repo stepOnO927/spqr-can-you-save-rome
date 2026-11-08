@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js';
-import {createCharacterUI} from '../map-lab/character-ui.js';
-import {addReport} from '../character-system.js';
+import {newGame} from '../engine.js?v=grand-chessboard-1';
+import {createCharacterUI} from '../map-lab/character-ui.js?v=grand-chessboard-1';
+import {addReport} from '../character-system.js?v=grand-chessboard-1';
 import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js';
 
 // A small DOM stub exercises the real handler without requiring a network listener.
@@ -214,9 +214,9 @@ test('reports without identifiable names explicitly do not establish absence',()
 });
 
 
-test('only a friendly dossier shows simulated ambition, without claiming a plot exists',()=>{
+test('ordinary character dossiers do not expose hidden ambition',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cleopatra.ambition=91;globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
- try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('cato');const own=panel.children.find(x=>x.className==='help-list');assert.match(own.innerHTML,/模拟政治野心/);assert.match(own.innerHTML,/不代表此人正在密谋/);panel.children=[];ui.show('cleopatra');const foreign=panel.children.find(x=>x.className==='help-list');assert.doesNotMatch(foreign.innerHTML,/模拟政治野心|91/)}finally{globalThis.document=prior}
+ try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('cato');const own=panel.children.find(x=>x.className==='help-list');assert.doesNotMatch(own.innerHTML,/模拟政治野心/);panel.children=[];ui.show('cleopatra');const foreign=panel.children.find(x=>x.className==='help-list');assert.doesNotMatch(foreign.innerHTML,/模拟政治野心|91/)}finally{globalThis.document=prior}
 });
 
 

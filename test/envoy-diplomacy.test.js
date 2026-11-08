@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js';
-import {queueMission,advanceOperations,missionDuration} from '../character-system.js';
+import {newGame,upgradeSave} from '../engine.js?v=grand-chessboard-1';
+import {queueMission,advanceOperations,missionDuration} from '../character-system.js?v=grand-chessboard-1';
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 
 test('an envoy improves relations only after travel and reception, without giving secret reports',()=>{

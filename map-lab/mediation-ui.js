@@ -1,4 +1,4 @@
-import {canMediate,requestMediation} from '../civil-war.js?v=phase-x-1';
+import {canMediate,requestMediation} from '../civil-war.js?v=grand-chessboard-1';
 
 export function renderMediation({panel,state,target,language,refresh}){
  if(!['egypt','parthia'].includes(target))return;

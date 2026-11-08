@@ -1,8 +1,8 @@
-import {syncChronicleDispatches} from './chronicle.js?v=peace-choice-8';
-import {CHARACTER_CATALOG} from './characters.js?v=phase-x-1';
-import {initializeDynasties} from './dynasties.js?v=phase-x-1';
+import {syncChronicleDispatches} from './chronicle.js?v=grand-chessboard-1';
+import {CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-1';
+import {initializeDynasties} from './dynasties.js?v=grand-chessboard-1';
 
-export function canFinalizeCampaign(s){return !!(s.victory||s.world?.dynasties?.scenario?.stage==='resolved')}
+export function canFinalizeCampaign(s){return !!(s.victory||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 
 // The archive is produced only at finalization. It is never computed or shown
 // to the player while the campaign is active.
@@ -34,6 +34,13 @@ export function finalizeCampaign(s){
   chronicle:(s.chronicle?.entries||[]).map(e=>({...e})),
   monthlyReports:(s.chronicle?.monthly||[]).map(x=>({...x})),
   annualReviews:(s.chronicle?.annual||[]).map(x=>({...x})),
-  victory:!!s.victory,scenario:d.scenario?{...d.scenario}:null};
+  victory:!!s.victory,peacefulVictory:!!s.peacefulVictory,scenario:d.scenario?{...d.scenario}:null};
+ // Compute and reveal earned distinctions only after an official finalization.
+ // They are archival recognition, with no permanent gameplay reward to duplicate.
+ archive.achievements=[];
+ if((s.agreements||[]).some(t=>t.parties?.includes(s.player))||(s.alliances||[]).some(a=>a.includes(s.player))||(s.world.allianceHistory||[]).some(a=>a.parties.includes(s.player)))archive.achievements.push({id:'diplomatic_table',name:['At the Diplomatic Table','外交谈判桌']});
+ if((s.coalitions||[]).some(c=>c.parties?.includes(s.player)||(c.departures||[]).some(x=>x.actor===s.player)))archive.achievements.push({id:'common_cause',name:['A Common Cause','共同事业']});
+ if((s.world.movements||[]).some(m=>m.parent===s.player&&m.stage==='settled'&&['negotiated','reform','transfer'].includes(m.outcome)))archive.achievements.push({id:'peaceful_settlement',name:['A Peaceful Settlement','和平和解']});
+ if((s.world.religiousInstitutions||[]).some(o=>(o.history||[]).some(h=>h.actor===s.player&&['negotiate','tolerance'].includes(h.action))))archive.achievements.push({id:'civic_dialogue',name:['Civic Dialogue','公民对话']});
  d.finalized=archive;return {ok:true,archive};
 }

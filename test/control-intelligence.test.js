@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js';
+import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=grand-chessboard-1';
 import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js';
 import {drawMap} from '../map.js';
+import {advanceMovements} from '../movements.js?v=grand-chessboard-1';
 
 test('remote control changes do not automatically change a faction’s map or turn knowledge',()=>{
  let s=newGame('caesar');const before=reportedControl(s,'caesar','parthia');
@@ -30,9 +31,10 @@ test('old saves get opening assumptions rather than current hidden foreign contr
  assert.deepEqual(reportedControl(loaded,'caesar','parthia'),{owner:'parthia',year:-49,month:1});
 });
 test('a remote uprising is not instantly published in the player chronicle',()=>{
- const s=newGame('caesar'),r=region(s,'parthia');s.armies=s.armies.filter(a=>a.owner!=='parthia');r.loyalty=1;s.factions.parthia.stability=20;tick(s);
- assert.equal(r.owner,'rebels');assert.equal(reportedControl(s,'caesar','parthia').owner,'parthia');
- assert.ok(!s.log.some(e=>e.en.includes('Parthia has risen in rebellion')));
+ const s=newGame('caesar'),r=region(s,'parthia'),f=s.factions.parthia;s.armies=s.armies.filter(a=>a.owner!=='parthia');r.loyalty=1;r.population.satisfaction=10;f.stability=20;f.legitimacy=20;f.tax='high';f.treasury=-50;
+ for(let i=0;i<80&&!s.world.movements.some(m=>m.region==='parthia'&&m.stage==='armed');i++){s.month++;if(s.month>12){s.month=1;s.year++}advanceMovements(s)}
+ const m=s.world.movements.find(x=>x.region==='parthia'&&x.stage==='armed');assert.ok(m);tick(s);assert.equal(r.owner,m.force);assert.equal(reportedControl(s,'caesar','parthia').owner,'parthia');
+ assert.ok(!s.log.some(e=>e.en.includes('armed movement in Mesopotamian theater')));
 });
 test('a traveler report observes halfway through a round trip and arrives only for its sender',()=>{
  let s=newGame('caesar');region(s,'parthia').owner='egypt';const treasury=s.factions.caesar.treasury;

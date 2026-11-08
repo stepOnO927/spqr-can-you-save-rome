@@ -1,5 +1,6 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=phase-x-1';
-import {recordLifeEvent} from './dynasties.js?v=phase-x-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-1';
+import {recordLifeEvent} from './dynasties.js?v=grand-chessboard-1';
+import {rememberPersonalEvent} from './political-memory.js?v=grand-chessboard-1';
 
 // These are simulated administrative assignments, not historical magistracies.
 export const OFFICE_TYPES=['finance','supply','administration'];
@@ -20,14 +21,15 @@ export function appointOffice(s,office,id,actor=s.player){
  const offices=initializeOffices(s);if(!roman(actor)||!OFFICE_TYPES.includes(office)||!s.regions.some(r=>r.owner===actor)||!officeCandidates(s,actor,office).includes(id))return {ok:false,reason:'unavailable'};
  if(offices[actor][office]===id)return {ok:false,reason:'already'};
  if(s.factions[actor].treasury<5)return {ok:false,reason:'treasury'};
- s.factions[actor].treasury-=5;offices[actor][office]=id;
+ const previous=offices[actor][office];if(previous&&previous!==id)rememberPersonalEvent(s,previous,actor,'dismissal',-8);
+ s.factions[actor].treasury-=5;offices[actor][office]=id;rememberPersonalEvent(s,id,actor,'appointment',4);
  recordLifeEvent(s,id,`Appointed to the simulated ${office} assignment.`,`获任模拟的${officeZh[office]}职务。`);
  if(actor===s.player)record(s,`${CHARACTER_CATALOG[id].name[0]} received a simulated administrative assignment.`,`${CHARACTER_CATALOG[id].name[1]}获得游戏中的行政任命。`);
  return {ok:true,cost:5};
 }
 export function dismissOffice(s,office){
  const offices=initializeOffices(s),faction=s.player,id=offices[faction]?.[office];if(!OFFICE_TYPES.includes(office)||!id)return {ok:false,reason:'unavailable'};
- delete offices[faction][office];recordLifeEvent(s,id,`Left the simulated ${office} assignment.`,`卸下模拟的${officeZh[office]}职务。`);record(s,`${CHARACTER_CATALOG[id]?.name[0]||'An official'} left an administrative assignment.`,`${CHARACTER_CATALOG[id]?.name[1]||'一名官员'}卸下行政职务。`);return {ok:true};
+ delete offices[faction][office];rememberPersonalEvent(s,id,faction,'dismissal',-8);recordLifeEvent(s,id,`Left the simulated ${office} assignment.`,`卸下模拟的${officeZh[office]}职务。`);record(s,`${CHARACTER_CATALOG[id]?.name[0]||'An official'} left an administrative assignment.`,`${CHARACTER_CATALOG[id]?.name[1]||'一名官员'}卸下行政职务。`);return {ok:true};
 }
 // A theater assignment is a game abstraction and does not assert a historical governorship.
 export function localGovernor(s,theater){
@@ -41,12 +43,13 @@ export function governorCandidates(s,theater,actor=s.player){
 function appointGovernorFor(s,theater,id,faction){
  initializeOffices(s);if(!governorCandidates(s,theater,faction).includes(id))return {ok:false,reason:'unavailable'};
  if(localGovernor(s,theater)===id)return {ok:false,reason:'already'};if(s.factions[faction].treasury<5)return {ok:false,reason:'treasury'};
- s.factions[faction].treasury-=5;s.world.localGovernors[theater]={faction,person:id};if(faction===s.player)record(s,`${CHARACTER_CATALOG[id].name[0]} received a simulated theater assignment.`,`${CHARACTER_CATALOG[id].name[1]}获得游戏中的战区行政任命。`);return {ok:true,cost:5};
+ const previous=s.world.localGovernors[theater]?.person;if(previous&&previous!==id)rememberPersonalEvent(s,previous,faction,'dismissal',-8);
+ s.factions[faction].treasury-=5;s.world.localGovernors[theater]={faction,person:id};rememberPersonalEvent(s,id,faction,'appointment',4);if(faction===s.player)record(s,`${CHARACTER_CATALOG[id].name[0]} received a simulated theater assignment.`,`${CHARACTER_CATALOG[id].name[1]}获得游戏中的战区行政任命。`);return {ok:true,cost:5};
 }
 export function appointGovernor(s,theater,id){return appointGovernorFor(s,theater,id,s.player)}
 export function dismissGovernor(s,theater){
  initializeOffices(s);const post=s.world.localGovernors[theater];if(!post||post.faction!==s.player)return {ok:false,reason:'unavailable'};
- delete s.world.localGovernors[theater];record(s,`${CHARACTER_CATALOG[post.person]?.name[0]||'An official'} left a simulated theater assignment.`,`${CHARACTER_CATALOG[post.person]?.name[1]||'一名官员'}卸下游戏中的战区行政职务。`);return {ok:true};
+ delete s.world.localGovernors[theater];rememberPersonalEvent(s,post.person,s.player,'dismissal',-8);record(s,`${CHARACTER_CATALOG[post.person]?.name[0]||'An official'} left a simulated theater assignment.`,`${CHARACTER_CATALOG[post.person]?.name[1]||'一名官员'}卸下游戏中的战区行政职务。`);return {ok:true};
 }
 export function governorLoyaltyEffect(s,theater){return s.month%3===0&&localGovernor(s,theater)?1:0}
 export function advanceOffices(s){

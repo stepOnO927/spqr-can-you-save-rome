@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO} from './characters.js?v=phase-x-1';
-import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=phase-x-1';
+import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO} from './characters.js?v=grand-chessboard-1';
+import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=grand-chessboard-1';
 import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=governance-sync-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=1';

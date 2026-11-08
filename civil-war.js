@@ -1,9 +1,32 @@
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=phase-x-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=grand-chessboard-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 
 // Alternate-history claimant commands use real game theaters and armies.
 // The setup is a simulation, not a reconstruction of a historical campaign.
 const CONFIG={egypt:{rival:'egypt_claimant',theater:'egyptUpper'},parthia:{rival:'parthia_claimant',theater:'media'},caesar:{rival:'caesar_claimant'},senate:{rival:'senate_claimant'}};
+
+// A political commander's uprising transfers an existing army and theater;
+// unlike a generated event it cannot fabricate troops or replace a live war.
+export function startPoliticalWar(s,parent,plot){
+ const cfg=CONFIG[parent],person=s.world.characters?.[plot.person],base=s.factions[parent],unit=s.armies.find(a=>a.owner===parent&&a.characterId===plot.person&&a.men>=1000&&!a.move&&!a.siege),home=unit&&s.regions.find(r=>r.id===unit.region&&r.owner===parent);
+ if(!['caesar','senate'].includes(parent)||!cfg||!base||!person?.alive||!home||s.factions[cfg.rival]||s.world.disputes?.[parent]||plot.participants.length<3||plot.funds<3)return false;
+ const commands=s.armies.filter(a=>a.owner===parent&&a.region===home.id&&a.men>0&&!a.move&&!a.siege),defectors=commands.filter(a=>plot.participants.includes(a.characterId));
+ if(!defectors.includes(unit)||commands.some(a=>!defectors.includes(a)))return false;
+ const food=Math.min(12,Math.max(0,base.food));base.food-=food;
+ s.world.dynasticGenerations||={};s.world.dynasticGenerations[cfg.rival]=(s.world.dynasticGenerations[cfg.rival]||0)+1;
+ s.factions[cfg.rival]={treasury:plot.funds,food,manpower:0,stability:45,legitimacy:35,tax:'normal',research:0};plot.funds=0;
+ for(const a of defectors){a.owner=cfg.rival;a.order=null}
+ for(const id of plot.participants){const c=s.world.characters[id],command=s.armies.find(a=>a.characterId===id);if(c&&(!command||defectors.includes(command)))c.faction=cfg.rival}
+ home.owner=cfg.rival;home.loyalty=45;s.world.leadership[cfg.rival]=[plot.person];
+ s.world.claimants[parent]||=[];if(!s.world.claimants[parent].includes(plot.person))s.world.claimants[parent].push(plot.person);
+ s.world.disputes[parent]={months:0,war:{rival:cfg.rival,claimant:plot.person,startedYear:s.year,startedMonth:s.month,origin:'political_network'}};
+ s.wars.push([parent,cfg.rival]);
+ for(const targets of Object.values(s.knowledge))if(!targets[cfg.rival])targets[cfg.rival]={reportedLeaders:[],reports:[],sightings:{}};
+ s.knowledge[cfg.rival]||=Object.fromEntries(Object.keys(s.factions).map(id=>[id,{reportedLeaders:[],reports:[],sightings:{}}]));
+ if(s.controlKnowledge)s.controlKnowledge[cfg.rival]=structuredClone(s.controlKnowledge[parent]||{});
+ s.world.disputeHistory||=[];s.world.disputeHistory.unshift({faction:parent,claimant:plot.person,outcome:'civil_war',year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);
+ return true;
+}
 
 // A remembered control report or unit sighting is a lead, not proof the
 // government still exists. Do not inspect the live faction list here.

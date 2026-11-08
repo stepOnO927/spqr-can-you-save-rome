@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,adjacent,upgradeSave} from '../engine.js';
+import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=grand-chessboard-1';
 import {reportedControl} from '../control-intelligence.js';
 import historical from '../historical-territories.js';
 

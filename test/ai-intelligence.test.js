@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,aiClaimantChoice,tick,upgradeSave} from '../engine.js';
-import {addReport} from '../character-system.js';
+import {newGame,estimatedStrength,aiClaimantChoice,tick,upgradeSave} from '../engine.js?v=grand-chessboard-1';
+import {addReport} from '../character-system.js?v=grand-chessboard-1';
 
 test('AI without numerical reports estimates from its own sightings rather than real enemy forces',()=>{
  const s=newGame('caesar');s.knowledge.senate.caesar.sightings={};const before=estimatedStrength(s,'senate','caesar');assert.equal(before,4000);

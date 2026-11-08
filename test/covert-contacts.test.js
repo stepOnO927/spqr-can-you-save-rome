@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,queueMission} from '../engine.js';
-import {addReport,advanceOperations,contestLeadership,supportClaimant} from '../character-system.js';
+import {newGame,upgradeSave,tick,queueMission} from '../engine.js?v=grand-chessboard-1';
+import {addReport,advanceOperations,contestLeadership,supportClaimant} from '../character-system.js?v=grand-chessboard-1';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 const knownClaimant=(s,actor)=>addReport(s,actor,'egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified'});

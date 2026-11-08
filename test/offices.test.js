@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js';
-import {appointOffice,dismissOffice,officeCandidates,officeEffects,advanceOffices} from '../office-system.js';
+import {newGame,tick,upgradeSave} from '../engine.js?v=grand-chessboard-1';
+import {appointOffice,dismissOffice,officeCandidates,officeEffects,advanceOffices} from '../office-system.js?v=grand-chessboard-1';
 import {availableCommanders} from '../command-appointments.js';
 import {previewPersonTravel} from '../personal-diplomacy.js';
 

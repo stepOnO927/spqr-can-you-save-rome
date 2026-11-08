@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js';
-import {addReport,reportedClaimants,supportClaimant,claimantRepresentatives,contestLeadership,advanceOperations,advanceDisputes} from '../character-system.js';
+import {newGame,upgradeSave} from '../engine.js?v=grand-chessboard-1';
+import {addReport,reportedClaimants,supportClaimant,claimantRepresentatives,contestLeadership,advanceOperations,advanceDisputes} from '../character-system.js?v=grand-chessboard-1';
 import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js';
 
 const report=s=>addReport(s,s.player,'egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified'});

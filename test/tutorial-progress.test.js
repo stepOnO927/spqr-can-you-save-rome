@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,upgradeSave} from '../engine.js';
-import {tutorialTurnProgress,createTutorial} from '../map-lab/tutorial.js';
+import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=grand-chessboard-1';
+import {tutorialTurnProgress,createTutorial} from '../map-lab/tutorial.js?v=grand-chessboard-1';
 
 test('tutorial tracks the commanded army rather than another friendly battle',()=>{
  let s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii');unit.move={to:'italiaN',remaining:2};s.battles=[{year:s.year,month:s.month,attacker:{id:'other',owner:'caesar'},defender:{id:'italy',owner:'senate'}}];assert.deepEqual(tutorialTurnProgress(s,'caesar'),{kind:'marching',armyId:'xiii',remaining:2});
@@ -9,6 +9,13 @@ test('tutorial tracks the commanded army rather than another friendly battle',()
 });
 test('battle records retain army identity across saves for the tutorial',()=>{
  let s=newGame('caesar');resolveBattle(s,s.armies.find(a=>a.id==='xiii'),s.armies.find(a=>a.id==='italy'),s.regions.find(r=>r.id==='italiaN'));assert.equal(tutorialTurnProgress(s,'caesar').kind,'battle');s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(tutorialTurnProgress(s,'caesar').kind,'battle');
+});
+test('both campaign start paths pass the separately selected handicap',()=>{
+ const saved={document:globalThis.document,localStorage:globalThis.localStorage};const elements=new Map(),calls=[];
+ const get=key=>{if(!elements.has(key))elements.set(key,{hidden:false,textContent:'',value:'',checked:false,style:{},parentElement:{},options:[{},{},{},{}],classList:{add(){},remove(){}}});return elements.get(key)};
+ get('#roman-faction').value='senate';get('#difficulty').value='expert';get('#economic-handicap').checked=true;
+ globalThis.document={querySelector:get,addEventListener(){}};globalThis.localStorage={setItem(){},getItem(){return null}};
+ try{createTutorial({language:()=> 'en',getState:()=>({}),onReset:(...args)=>calls.push(args),onMode(){},skipInitial:true});get('#start-game').onclick();get('#start-free').onclick();assert.deepEqual(calls,[['expert','senate',true],['expert','senate',true]])}finally{Object.assign(globalThis,saved)}
 });
 test('interactive guide accepts defensive choices and persists real action progress',()=>{
  const saved={document:globalThis.document,localStorage:globalThis.localStorage,innerWidth:globalThis.innerWidth,innerHeight:globalThis.innerHeight};const elements=new Map();let listener;

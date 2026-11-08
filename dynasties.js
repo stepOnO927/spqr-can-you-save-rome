@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=phase-x-1';
-import {startDynasticWar} from './civil-war.js?v=phase-x-1';
+import {CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-1';
+import {startDynasticWar} from './civil-war.js?v=grand-chessboard-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
@@ -337,13 +337,13 @@ export function advanceDynasties(s){
  // Family memory has a small, fading effect. Personal choices can override it.
  if(s.month===6)for(const memory of d.memories){const age=s.year-memory.year;if(age>60)continue;const members=Object.values(s.world.characters).filter(c=>c.alive&&c.familyId===memory.familyId&&personAge(s,c.id)>=18);for(const c of members)if(roll(s)<.08)c.loyalty=Math.max(0,Math.min(100,c.loyalty+Math.sign(memory.weight)))}
  if(s.month===1)for(const faction of Object.keys(s.factions).filter(id=>id!==s.player&&id!=='rebels')){
-  if(roll(s)>=.12)continue;const candidates=Object.values(s.world.characters).filter(c=>c.faction===faction&&CHARACTER_CATALOG[c.id]?.fictional&&eligibleAdult(s,c.id)&&!c.spouse).sort((a,b)=>b.influence-a.influence);
+  if(roll(s)>=.12)continue;const candidates=Object.values(s.world.characters).filter(c=>c.faction===faction&&CHARACTER_CATALOG[c.id]?.fictional&&!c.institutionalOnly&&eligibleAdult(s,c.id)&&!c.spouse).sort((a,b)=>b.influence-a.influence);
   const first=candidates[0],second=candidates.find(c=>c.id!==first?.id&&c.familyId!==first?.familyId);if(first&&second)proposeMarriage(s,first.id,second.id);
  }
  // NPC households pursue modest, state-dependent interests without spending
  // the player's treasury or granting an office through kinship alone.
  if(s.month===7)for(const faction of Object.keys(s.factions).filter(id=>id!==s.player&&id!=='rebels'&&!id.endsWith('_claimant'))){
-  const adults=Object.values(s.world.characters).filter(c=>c.alive&&c.faction===faction&&eligibleAdult(s,c.id));
+  const adults=Object.values(s.world.characters).filter(c=>c.alive&&!c.institutionalOnly&&c.faction===faction&&eligibleAdult(s,c.id));
   const houses=[...new Set(adults.map(c=>c.familyId))].map(id=>d.families[id]).filter(Boolean);
   for(const family of houses){
    const members=adults.filter(c=>c.familyId===family.id).sort((a,b)=>(b.influence||0)-(a.influence||0));

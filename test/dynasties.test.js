@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
-import {CHARACTER_CATALOG} from '../characters.js?v=phase-x-1';
-import {assignSuccession,successionModel} from '../characters.js?v=phase-x-1';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=grand-chessboard-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=grand-chessboard-1';
+import {assignSuccession,successionModel} from '../characters.js?v=grand-chessboard-1';
 import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=phase-x-1';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
-import {canHoldOffice} from '../office-system.js?v=phase-x-1';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=grand-chessboard-1';
+import {canHoldOffice} from '../office-system.js?v=grand-chessboard-1';
 import {renderGenealogy} from '../genealogy-ui.js';
-import {finalizeCampaign} from '../legacy.js';
-import {startDynasticWar} from '../civil-war.js?v=phase-x-1';
+import {finalizeCampaign} from '../legacy.js?v=grand-chessboard-1';
+import {startDynasticWar} from '../civil-war.js?v=grand-chessboard-1';
 
 test('historical relationships do not invent missing parents or spouses',()=>{
  const s=newGame();assert.equal(s.world.characters.cleopatra.familyId,s.world.characters.arsinoe.familyId);
