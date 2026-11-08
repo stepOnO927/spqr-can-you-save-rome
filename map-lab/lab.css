@@ -88,3 +88,11 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
  .credits{left:12px;right:12px;bottom:3px;max-width:none;text-align:center;font-size:7px}
  #guide{top:64px;bottom:auto;max-height:25vh;overflow:auto}
 }
+
+#locator{position:absolute;z-index:4;top:296px;right:27px;width:210px;padding:8px 9px 9px;background:#172b2ce9;border:1px solid #cbb482a8;box-shadow:0 4px 18px #091b24a6;pointer-events:none}
+#locator .locator-title{display:block;margin:0 0 6px;color:#efd9a2;font:700 9px Manrope,'Microsoft YaHei',sans-serif;letter-spacing:1.4px}
+#locator .locator-map{position:relative;width:190px;height:130px;overflow:hidden;border:1px solid #a9bdad99}
+#locator .locator-map img{display:block;width:190px;height:130px}
+#locator-position{position:absolute;width:10px;height:10px;transform:translate(-50%,-50%);border:2px solid #fff0c2;border-radius:50%;background:#9d4939;box-shadow:0 0 0 3px #9d4939b8,0 1px 6px #001b22}
+@media(max-width:900px){#locator{display:none}}
+@media(min-width:901px) and (max-width:1450px){.mast .identity small,.mast .identity strong{display:none}.mast .identity{margin-right:0}.mast{gap:6px}.mast .hud-button{padding:5px 6px}}

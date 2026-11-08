@@ -46,6 +46,10 @@ try{
  assert.equal(external.includes('s3.amazonaws.com'),false,'Overview terrain unexpectedly needed the network');
  assert.ok(external.every(host=>host==='s3.amazonaws.com'||host.endsWith('googleapis.com')||host.endsWith('gstatic.com')),`Unexpected external dependency: ${external.join(', ')}`);
  await page.locator('#start-free').click();
+ if(page.viewportSize().width>=901&&page.viewportSize().width<=1450){
+  const back=await page.locator('#return-campaign').boundingBox();
+  assert.ok(back&&back.x>=0&&back.x+back.width<=page.viewportSize().width-4,'Return to campaign must fit in the desktop header');
+ }
  assert.equal(await page.locator('[data-site="italiaN"]').evaluate(el=>getComputedStyle(el).position),'absolute','Grand-campaign sites must use map coordinates');
  if(page.viewportSize().width<=600){
   assert.equal(await page.locator('#brief-toggle').getAttribute('aria-expanded'),'false','mobile map should open with its overview folded');
@@ -58,6 +62,7 @@ try{
   await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),false);
  }
  assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'false','Hill shading should start disabled');
+ assert.equal(await page.locator('#locator').isVisible(),false,'Locator should not cover the overview');
  await page.locator('#relief-toggle').click();
  assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'true');
  await page.locator('#relief-toggle').click();
@@ -78,6 +83,12 @@ try{
  assert.ok(terrainRequests.some(path=>path.includes('/terrain/6/')),'Zoom 6 did not use bundled terrain');
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
  assert.ok(terrainRequests.some(path=>path.includes('/terrain/7/')),'Zoom 7 did not use bundled terrain');
+ if(page.viewportSize().width>900){
+  assert.equal(await page.locator('#locator').isVisible(),true,'Zoomed Italy needs a geographic locator');
+  assert.match(await page.locator('.locator-title').innerText(),firstLanguage==='zh-CN'?/YOUR POSITION/:/当前位置/);
+  const dot=await page.locator('#locator-position').evaluate(el=>({x:parseFloat(el.style.left),y:parseFloat(el.style.top)}));
+  assert.ok(dot.x>0&&dot.x<100&&dot.y>0&&dot.y<100,'Locator dot must stay inside the Italy coast inset');
+ }else assert.equal(await page.locator('#locator').isVisible(),false,'Narrow screens should keep the map unobstructed');
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
  assert.ok(terrainRequests.some(path=>path.includes('/terrain/8/')),'Zoom 8 did not use bundled terrain');
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
