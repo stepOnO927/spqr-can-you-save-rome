@@ -1,5 +1,6 @@
 import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
+import {breakawayIdentity,identity} from './identity.js?v=phase-vi-2';
 
 // Alternate-history claimant commands use real game theaters and armies.
 // The setup is a simulation, not a reconstruction of a historical campaign.
@@ -21,6 +22,7 @@ export function startDynasticWar(s,parent,claimant){
  // A later rebellion reuses the public faction slot but is a different court.
  // Pending messages sent to an earlier incarnation must not reach the new one.
  s.world.dynasticGenerations||={};s.world.dynasticGenerations[cfg.rival]=(s.world.dynasticGenerations[cfg.rival]||0)+1;
+ s.identityKits||={};s.identityKits[cfg.rival]=breakawayIdentity(parent,claimant,s.world.dynasticGenerations[cfg.rival]);
  s.factions[cfg.rival]={treasury,food,manpower:0,stability:45,legitimacy:35,tax:'normal',research:0};
  person.faction=cfg.rival;person.location=home.id;home.owner=cfg.rival;home.loyalty=45;
  s.world.leadership[cfg.rival]=[claimant];
@@ -58,6 +60,9 @@ export function resolveDynasticWars(s){
   const rivalWins=rivalAlive&&!baseAlive,oldLeaders=[...(s.world.leadership[parent]||[])];
   if(person){person.faction=parent;if(!person.alive)person.location=null}
   if(rivalWins){
+   // A victorious court changes the realm's political standard. A routine
+   // succession leaves the existing standard untouched.
+   if(s.identityKits?.[cfg.rival])s.identityKits[parent]={...s.identityKits[cfg.rival],abbr:identity(parent).abbr,origin:parent};
    for(const r of s.regions)if(r.owner===cfg.rival)r.owner=parent;
    for(const a of s.armies)if(a.owner===cfg.rival)a.owner=parent;
    s.world.leadership[parent]=person?.alive?[war.claimant]:[];

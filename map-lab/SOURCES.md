@@ -26,6 +26,8 @@ All faction marks, banners and counters are original vector drawings used as mod
 
 The Egyptian cornucopia is inspired by Ptolemaic coin types: https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf . The Parthian bow evokes Arsacid archer coin types: https://www.metmuseum.org/essays/the-parthian-empire-247-b-c-224-a-d . The Armenian tiara is inspired by the contemporary Artavasdes II coinage documented by the Central Bank of Armenia: https://www.cba.am/en/history-ancient-to-1918 . The remaining spear, palm, and unmarked bands are deliberately general gameplay identifiers, not attributed to any specific historical standard. Mixed-control Roman areas use a neutral shared treatment rather than implying a third sovereign faction.
 
+Galatia's geometric shield and the Bosporan grain stalk are original regional motifs. Breakaway courts reuse a parent culture's motif with a distinct seal and palette; their emblems are generated game artwork, preserved in campaign saves. A successful claimant can establish a new political standard, while an ordinary change of ruler does not alter it. The in-game bilingual insignia encyclopedia labels every design as a reconstruction and reports foreign leadership only from available intelligence.
+
 ### Egypt: joint rule and official reports
 The 49 BCE opening recognizes Cleopatra VII and Ptolemy XIII as joint rulers, based on the Metropolitan Museum of Art chronological table: https://resources.metmuseum.org/resources/metpublications/pdf/Pergamon_and_the_Hellenistic_Kingdoms_of_the_Ancient_World.pdf. In-game correspondence and subsequent succession are simulated, not historical evidence; official claims may be unverified or outdated.
 

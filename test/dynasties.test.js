@@ -8,7 +8,40 @@ import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynast
 import {canHoldOffice} from '../office-system.js?v=phase-x-1';
 import {renderGenealogy} from '../genealogy-ui.js';
 import {finalizeCampaign} from '../legacy.js';
-import {startDynasticWar} from '../civil-war.js?v=phase-x-1';
+import {startDynasticWar,resolveDynasticWars} from '../civil-war.js?v=phase-vi-1';
+import {identity,factionMark,IDENTITY_STORIES} from '../identity.js?v=phase-vi-1';
+
+test('all major powers have bilingual, historically labeled banner kits',()=>{
+ const ids=['caesar','senate','egypt','parthia','armenia','numidia','mauretania','galatia','bosporus'];
+ for(const id of ids){const kit=identity(id);assert.match(kit.primary,/^#[0-9a-f]{6}$/i);assert.match(kit.secondary,/^#[0-9a-f]{6}$/i);assert.match(kit.map,/^#[0-9a-f]{6}$/i);assert.ok(kit.abbr);assert.equal(IDENTITY_STORIES[id].length,2);for(const variant of ['banner','standard','insignia'])assert.match(factionMark(id,variant),/<svg[^>]+>/)}
+ assert.notEqual(factionMark('caesar','standard'),factionMark('senate','standard'));
+ assert.notEqual(factionMark('egypt','standard'),factionMark('parthia','standard'));
+});
+
+test('claimant marks persist through saves, change on a new revolt and follow a victorious court',()=>{
+ const s=newGame('caesar');
+ const claimant=createFictionalPerson(s,{name:['First claimant','第一位争位者'],faction:'caesar',birthYear:-75,location:'gaul'});
+ s.world.claimants.caesar=[claimant];s.world.disputes.caesar={months:0};
+ assert.equal(startDynasticWar(s,'caesar',claimant),true);
+ const first=structuredClone(identity('caesar_claimant',s)),parent=structuredClone(identity('caesar',s));
+ assert.equal(first.origin,'caesar');assert.notEqual(factionMark('caesar_claimant','standard',s),factionMark('caesar','standard',s));
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(identity('caesar_claimant',loaded),first);
+ const legacy=JSON.parse(JSON.stringify(s));delete legacy.identityKits;
+ assert.equal(identity('caesar_claimant',upgradeSave(legacy)).claimant,claimant);
+ // A failed uprising does not alter the parent state's political standard.
+ for(const r of s.regions)if(r.owner==='caesar_claimant')r.owner='caesar';
+ s.armies=s.armies.filter(a=>a.owner!=='caesar_claimant');resolveDynasticWars(s);
+ assert.deepEqual(identity('caesar',s),parent);
+ const next=createFictionalPerson(s,{name:['Second claimant','第二位争位者'],faction:'caesar',birthYear:-70,location:'gaul'});
+ s.world.claimants.caesar=[next];s.world.disputes.caesar={months:0};
+ assert.equal(startDynasticWar(s,'caesar',next),true);
+ assert.notDeepEqual(identity('caesar_claimant',s),first);
+ for(const r of s.regions)if(r.owner==='caesar')r.owner='caesar_claimant';
+ s.armies=s.armies.filter(a=>a.owner!=='caesar');resolveDynasticWars(s);
+ assert.equal(identity('caesar',s).claimant,next);
+ assert.equal(identity('caesar',upgradeSave(JSON.parse(JSON.stringify(s)))).claimant,next);
+});
 
 test('historical relationships do not invent missing parents or spouses',()=>{
  const s=newGame();assert.equal(s.world.characters.cleopatra.familyId,s.world.characters.arsinoe.familyId);
