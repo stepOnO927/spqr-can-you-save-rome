@@ -15,7 +15,7 @@ The atlas and campaign can transfer their current state in the same browser tab 
 
 All terrain levels used by the playable atlas are bundled; web fonts may require a network connection. The land/sea shapes and colors remain visible offline. No ancient vegetation layer, complete dated province subdivision, exact 49 BCE road alignment, or exact 49 BCE control survey is claimed.
 
-The restrained land palette uses only a small amount of modern elevation color. Directional hill shading is off by default and can be switched on in Settings. The eleven sea zones, initial fleet strength, ship costs, commercial lanes, cargo quantities and piracy pressures in `../naval.js` are gameplay abstractions, not measured 49 BCE records. They do not imply exact ancient maritime borders or shipping volumes.
+The restrained land palette uses modern elevation color. Directional hill shading is off by default, with stronger local relief at close Italy zoom when switched on with REL. The setting is remembered. The eleven sea zones, initial fleet strength, ship costs, commercial lanes, cargo quantities and piracy pressures in `../naval.js` are gameplay abstractions, not measured 49 BCE records. They do not imply exact ancient maritime borders or shipping volumes.
 
 ## Named road reconstructions
 

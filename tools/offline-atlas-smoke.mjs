@@ -112,6 +112,11 @@ try{
  const site=await page.locator('[data-site="italiaN"]').boundingBox();
  assert.ok(Math.abs(site.x-page.viewportSize().width/2)<15,'Ariminum must stay at the map focus');
  if(process.env.SPQR_ATLAS_OBJECTIVE_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_OBJECTIVE_SCREENSHOT});
+ if(process.env.SPQR_ATLAS_Z9_RELIEF_SCREENSHOT){if(await page.locator('#relief-toggle').getAttribute('aria-pressed')==='false')await page.locator('#relief-toggle').click();await page.waitForTimeout(650);await page.screenshot({path:process.env.SPQR_ATLAS_Z9_RELIEF_SCREENSHOT})}
  if(process.env.SPQR_ATLAS_RIVER_SCREENSHOT){if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();await page.locator('[data-objective="roma"]').click();await page.waitForTimeout(1200);for(let i=0;i<3;i++){await page.locator('#zoom-in').click();await page.waitForTimeout(500)}await page.screenshot({path:process.env.SPQR_ATLAS_RIVER_SCREENSHOT})}
+ await page.evaluate(()=>localStorage.setItem('spqr-relief-v2','on'));
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
+ assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'true','The enabled relief preference should survive reload');
  console.log('Offline atlas loaded MapLibre, 120 settlement markers and local terrain through Italy zoom 9.');
 }finally{await browser.close()}
