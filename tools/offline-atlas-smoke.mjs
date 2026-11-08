@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import bathymetry from '../mediterranean-bathymetry.js';
 import {physicalStyle} from '../map-lab/physical-style.js';
 import {identity} from '../identity.js';
+import {newGrandGame} from '../engine.js';
 
 assert.deepEqual([...new Set(bathymetry.features.map(feature=>feature.properties.depth))].sort((a,b)=>a-b),[200,1000,2000,3000]);
 assert.ok(physicalStyle.layers.some(layer=>layer.id==='depth-200'&&layer.source==='bathymetry'));
@@ -13,6 +14,7 @@ assert.ok(physicalStyle.sources.rivers.data.features.some(feature=>feature.prope
 assert.ok(physicalStyle.sources.rivers.data.features.some(feature=>feature.properties.name==='Po'));
 assert.ok(physicalStyle.sources.rivers.data.features.every(feature=>feature.properties.kind!=='Canal'));
 assert.ok(physicalStyle.sources.lakes.data.features.every(feature=>feature.properties.kind!=='Reservoir'));
+assert.deepEqual(physicalStyle.sources['elevation-fine'].bounds,[-20,18,60,58]);
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -124,5 +126,27 @@ try{
  await page.reload({waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
  assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'true','The enabled relief preference should survive reload');
- console.log('Offline atlas loaded MapLibre, 120 settlement markers and local terrain through Italy zoom 9.');
+ const egypt=newGrandGame('egypt');
+ await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),egypt);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
+ await page.waitForTimeout(1400);
+ await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(900);
+ assert.ok(terrainRequests.some(path=>/\/terrain\/7\/(7[0-9]|8[0-9])\//.test(path)),'Eastern Mediterranean zoom 7 did not use bundled local terrain');
+ assert.deepEqual(missingTerrain,[],'Egyptian close zoom requested missing terrain tiles');
+ if(process.env.SPQR_ATLAS_EGYPT_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_SCREENSHOT});
+ await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(900);
+ assert.deepEqual(missingTerrain,[],'Egyptian maximum zoom requested missing terrain tiles');
+ assert.equal(external.includes('s3.amazonaws.com'),false,'Egyptian terrain unexpectedly needed the network');
+ if(process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT});
+ const armenia=newGrandGame('armenia');
+ await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),armenia);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
+ await page.waitForTimeout(1400);
+ await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(900);
+ assert.ok(terrainRequests.some(path=>/\/terrain\/7\/(7[8-9]|8[0-2])\//.test(path)),'Armenian zoom 7 did not use bundled mountain terrain');
+ assert.deepEqual(missingTerrain,[],'Armenian mountain zoom requested missing terrain tiles');
+ if(process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT});
+ console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and Italy through zoom 9.');
 }finally{await browser.close()}

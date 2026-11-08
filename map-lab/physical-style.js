@@ -8,6 +8,7 @@ import historical from '../historical-territories.js';
 // At local scale, separate lowland, upland and exposed rock more clearly.
 // These are modern elevation bands, not reconstructed ancient land cover.
 const localElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e0d5b6',0,'#ded2ae',100,'#d1cba7',300,'#b9c39b',700,'#91a78b',1200,'#758e7d',1800,'#848d80',2600,'#b2b2a4',3500,'#e1ddcb'];
+const terrainAttribution='Elevation: Mapzen Terrain Tiles; Copernicus EU-DEM, NOAA ETOPO1 and USGS SRTM/GMTED2010 contributors';
 
 // Natural Earth land and ocean share a coastline. The ocean mask is deliberately
 // above the elevation layer so relief never turns the sea into apparent land.
@@ -17,11 +18,11 @@ export const physicalStyle={
   land:{type:'geojson',data:land,attribution:'Physical geography: Natural Earth, public domain'},
   ocean:{type:'geojson',data:ocean},
   bathymetry:{type:'geojson',data:bathymetry},
-  elevation:{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:4,maxzoom:5,bounds:[-20,18,60,58],attribution:'Elevation © Mapzen / AWS Terrain Tiles and data contributors'},
-  'elevation-detail':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:6,maxzoom:6,bounds:[-20,18,60,58],attribution:'Elevation © Mapzen / AWS Terrain Tiles and data contributors'},
-  'elevation-fine':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:7,maxzoom:7,bounds:[5,35,22,48],attribution:'Elevation © Mapzen / AWS Terrain Tiles and data contributors'},
-  'elevation-ultra':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:8,maxzoom:8,bounds:[5,35,22,48],attribution:'Elevation © Mapzen / AWS Terrain Tiles and data contributors'},
-  'elevation-higher':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:9,maxzoom:9,bounds:[5,35,22,48],attribution:'Elevation © Mapzen / AWS Terrain Tiles and data contributors'},
+  elevation:{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:4,maxzoom:5,bounds:[-20,18,60,58],attribution:terrainAttribution},
+  'elevation-detail':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:6,maxzoom:6,bounds:[-20,18,60,58],attribution:terrainAttribution},
+  'elevation-fine':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:7,maxzoom:7,bounds:[-20,18,60,58],attribution:terrainAttribution},
+  'elevation-ultra':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:8,maxzoom:8,bounds:[5,35,22,48],attribution:terrainAttribution},
+  'elevation-higher':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:9,maxzoom:9,bounds:[5,35,22,48],attribution:terrainAttribution},
   historical:{type:'geojson',data:historical},
   rivers:{type:'geojson',data:rivers,attribution:'Hydrography: Natural Earth 1:10m, public domain'},
   lakes:{type:'geojson',data:lakes},
@@ -34,7 +35,7 @@ export const physicalStyle={
   {id:'relief',type:'hillshade',source:'elevation',paint:{'hillshade-exaggeration':.22,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'land-elevation-detail',type:'color-relief',source:'elevation-detail',minzoom:6,paint:{'color-relief-opacity':['interpolate',['linear'],['zoom'],6,.78,7.5,0],'color-relief-color':['interpolate',['linear'],['elevation'],-100,'#dcd5b9',0,'#d8d2b2',100,'#cfceaa',300,'#bac4a0',700,'#9faf91',1200,'#879b89',1800,'#849089',2600,'#a5aaa0',3500,'#dddacb']}},
   {id:'relief-detail',type:'hillshade',source:'elevation-detail',minzoom:6,paint:{'hillshade-exaggeration':.14,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-fine',type:'color-relief',source:'elevation-fine',minzoom:7,paint:{'color-relief-opacity':['interpolate',['linear'],['zoom'],7,.82,8.5,0],'color-relief-color':['interpolate',['linear'],['elevation'],-100,'#dcd5b9',0,'#d8d2b2',100,'#cfceaa',300,'#bac4a0',700,'#9faf91',1200,'#879b89',1800,'#849089',2600,'#a5aaa0',3500,'#dddacb']}},
+  {id:'land-elevation-fine',type:'color-relief',source:'elevation-fine',minzoom:7,paint:{'color-relief-opacity':.82,'color-relief-color':['interpolate',['linear'],['elevation'],-100,'#dcd5b9',0,'#d8d2b2',100,'#cfceaa',300,'#bac4a0',700,'#9faf91',1200,'#879b89',1800,'#849089',2600,'#a5aaa0',3500,'#dddacb']}},
   {id:'relief-fine',type:'hillshade',source:'elevation-fine',minzoom:7,paint:{'hillshade-exaggeration':.1,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'land-elevation-ultra',type:'color-relief',source:'elevation-ultra',minzoom:8,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
   {id:'relief-ultra',type:'hillshade',source:'elevation-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
