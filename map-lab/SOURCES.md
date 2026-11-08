@@ -21,7 +21,7 @@ The displayed linework is a subset of [Ancient World Mapping Center road data](h
 
 The [Umbrian heritage authority](https://sabapumbria.cultura.gov.it/archeologia-e-territorio/archeologia-via-flaminia/) dates Via Flaminia's construction to 220–219 BCE. [LacusCurtius' reproduction of the Britannica entry](https://penelope.uchicago.edu/Thayer/E/Gazetteer/Periods/Roman/Topics/Engineering/roads/Aemilia/Britannica_1911%2A.html) dates Via Aemilia to 187 BCE. [UNESCO](https://whc.unesco.org/en/list/1708) dates the original Rome–Capua Via Appia to 312 BCE. These dates establish the historical roads, not the exact date of every mapped segment: the AWMC lines are later reconstructions, may incorporate changes or uncertain alignments, and are not presented as a surveyed 49 BCE network. Other unnamed or potentially later roads have not been imported. The lines are informational and do not change the campaign's abstract movement graph.
 
-- html2canvas 1.4.1 (MIT), loaded on demand for screenshot export: https://github.com/niklasvh/html2canvas/blob/master/LICENSE
+- html2canvas 1.4.1 (MIT), bundled in `vendor/` and loaded on demand so screenshot export works without a third-party connection. Its license is in `vendor/html2canvas.LICENSE`: https://github.com/niklasvh/html2canvas/blob/v1.4.1/LICENSE
 
 ## Faction identity art direction
 
