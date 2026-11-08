@@ -1,9 +1,9 @@
 import {authorityForTheater} from './authority-view.js?v=phase-x-1';
 import {renderMediation} from './mediation-ui.js?v=phase-x-1';
 import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from './turn-report.js?v=phase-x-1';
-import {syncChronicleDispatches} from '../chronicle.js?v=phase-x-4';
+import {syncChronicleDispatches} from '../chronicle.js?v=phase-x-6';
 import {renderChronicle} from './chronicle-ui.js?v=phase-x-4';
-import {formatChronicleEntry} from '../chronicle.js?v=phase-x-4';
+import {formatChronicleEntry} from '../chronicle.js?v=phase-x-6';
 import {knownDynasticFactions} from '../civil-war.js?v=phase-x-1';
 import {reportedControl,requestControlReport} from '../control-intelligence.js?v=phase-x-1';
 import {renderLocalGovernor} from './local-governor-ui.js?v=phase-x-1';
@@ -16,7 +16,7 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js';
-import {newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=phase-x-5';
+import {newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=phase-x-6';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=phase-x-1';

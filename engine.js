@@ -8,7 +8,7 @@ import {advanceConspiracies} from './conspiracies.js?v=phase-x-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=phase-x-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=phase-x-1';
-import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=phase-x-4';
+import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=phase-x-6';
 export {queueMission};
 export {personalDiplomaticCredit};
 

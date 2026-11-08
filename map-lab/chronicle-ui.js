@@ -1,4 +1,4 @@
-import {filterChronicle,formatChronicleEntry,chronicleDate} from '../chronicle.js?v=phase-x-4';
+import {filterChronicle,formatChronicleEntry,chronicleDate} from '../chronicle.js?v=phase-x-6';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=phase-x-1';
 

@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine.js';
-import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports,syncChronicleDispatches} from '../chronicle.js?v=phase-x-4';
+import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports,syncChronicleDispatches} from '../chronicle.js?v=phase-x-6';
 import {finalizeCampaign} from '../legacy.js';
+import {appointCommander} from '../command-appointments.js';
 
 test('36 monthly turns preserve a full chronology and three evidence-based annual reviews',()=>{
  const s=newGame('caesar');for(let i=0;i<36;i++)tick(s);
@@ -59,4 +60,8 @@ test('diplomatic decisions enter the Chronicle before month advance, save and fi
 
 test('December decisions appear by name in the annual review without double counting',()=>{
  const s=newGame('caesar');for(let i=0;i<11;i++)tick(s);assert.equal(s.month,12);s.factions.caesar.treasury=Math.max(100,s.factions.caesar.treasury);region(s,'mauretania').owner='mauretania';region(s,'cisalpine').owner='caesar';s.wars=s.wars.filter(w=>!w.includes('mauretania'));assert.equal(diplomacy(s,'caesar','mauretania','improve'),true);syncChronicleDispatches(s);const report=s.chronicle.annual[0];assert.ok(report.diplomaticEvents.some(e=>/improved relations/.test(e.en)&&/关系/.test(e.zh)));assert.equal(report.diplomacy,report.diplomaticEvents.length);syncChronicleDispatches(s);assert.equal(report.diplomaticEvents.length,1);
+});
+
+test('new commander appointment can be found by character before advancing time',()=>{
+ const s=newGame('caesar');assert.equal(appointCommander(s,'xiii','antony').ok,true);syncChronicleDispatches(s);const found=filterChronicle(s.chronicle.entries,{kind:'character',character:'antony'});assert.ok(found.some(e=>/Appointed commander/.test(e.en)));assert.ok(found.every(e=>e.characterId==='antony'));assert.ok(s.chronicle.monthly[0].entryIds.includes(found[0].id));const save=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(filterChronicle(save.chronicle.entries,{kind:'character',character:'antony'}).length,found.length);
 });
