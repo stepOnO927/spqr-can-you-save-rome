@@ -1,7 +1,7 @@
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=scenario-portraits-3';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=governance-sync-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=phase-x-1';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=phase-xiii-1';
 import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence} from './character-system.js?v=governance-sync-1';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=phase-x-1';
 import {advanceConspiracies} from './conspiracies.js?v=phase-x-1';
@@ -10,6 +10,8 @@ import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from 
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=phase-x-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=peace-choice-8';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers,buildingModifiers} from './inventions.js?v=phase-xiv-1';
+import {initializeCivilization,advanceCivilization,civilizationYield,buildingEffect,aiCivilization} from './civilization.js?v=phase-xiii-1';
+export {build,canBuild,setReligionPolicy,recruitFigure,patronizeCulture,culturalProject} from './civilization.js?v=phase-xiii-1';
 export {queueMission};
 export {personalDiplomaticCredit};
 
@@ -40,7 +42,7 @@ export function newGame(player='caesar'){
   // A new campaign starts with frontier observations, not every foreign army's
   // exact opening location. Existing saves keep their accumulated sightings.
   for(const targets of Object.values(s.knowledge))for(const knowledge of Object.values(targets))knowledge.sightings={};
-  linkCommanders(s);observeArmies(s);observeControl(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);initializeChronicle(s);initializeInventions(s);return initializeGovernments(s);
+  linkCommanders(s);observeArmies(s);observeControl(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);initializeChronicle(s);initializeInventions(s);initializeCivilization(s);return initializeGovernments(s);
 }
 
 export function newDynastyScenario(){const s=newGame('egypt');createDisputedHeirScenario(s);return s}
@@ -75,7 +77,7 @@ export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeControlKnowledge(s);initializeChronicle(s);initializeInventions(s);migrateBattleIds(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeControlKnowledge(s);initializeChronicle(s);initializeInventions(s);initializeCivilization(s);migrateBattleIds(s);return refreshReportConfidence(initializeGovernments(s));
 }
 
 export function previewMarch(s,armyId,destination){
@@ -165,7 +167,7 @@ export function recruit(s,regionId,owner=s.player){
   f.treasury-=24;f.manpower-=3000;f.food-=6;
   const id=`levy${s.nextArmy++}`;
   const roman=owner==='caesar'||owner==='senate';
-  s.armies.push({id,name:roman?['Newly raised legion','新编军团']:['Newly raised forces','新征召军队'],owner,region:regionId,men:3000,morale:58+(buildingModifiers(r).recruit||0)*4,skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null});
+  s.armies.push({id,name:roman?['Newly raised legion','新编军团']:['Newly raised forces','新征召军队'],owner,region:regionId,men:3000+buildingEffect(r,'recruit')*100,morale:58+buildingEffect(r,'morale')*2+(buildingModifiers(r).recruit||0)*4,skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null});
   r.loyalty=Math.max(0,r.loyalty-3);
   if(owner===s.player)log(s,`New forces were raised in ${r.name[0]}.`,`在${r.name[1]}征召了新军队。`);
   return true;
@@ -181,7 +183,7 @@ export function setTax(s,owner,level){
 export function diplomacy(s, actor, target, action, options={}){
   if(actor===target || !s.factions[actor] || !s.factions[target] || target==='rebels'||actor==='rebels' || !s.regions.some(r=>r.owner===actor) || !s.regions.some(r=>r.owner===target))return false;
   const key=pair(actor,target);
-  if(action==='improve' && !isWar(s,actor,target) && s.factions[actor].treasury>=10){s.factions[actor].treasury-=10;s.relations[key]=Math.min(100,relation(s,actor,target)+15);if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} improved relations with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}改善了与${FACTIONS[target].short[1]}的关系。`,{other:actor===s.player?target:actor});return true}
+  if(action==='improve' && !isWar(s,actor,target) && s.factions[actor].treasury>=10){s.factions[actor].treasury-=10;s.relations[key]=Math.min(100,relation(s,actor,target)+15+(Object.values(s.world.characters).some(c=>c.alive&&c.faction===actor&&c.civilizationRole==='statesman')?3:0));if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} improved relations with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}改善了与${FACTIONS[target].short[1]}的关系。`,{other:actor===s.player?target:actor});return true}
   if(action==='alliance' && !isWar(s,actor,target) && relation(s,actor,target)+personalDiplomaticCredit(s,actor,target)>=30 && !isAllied(s,actor,target) && !s.wars.some(w=>(w.includes(actor)&&isAllied(s,target,w.find(x=>x!==actor)))||(w.includes(target)&&isAllied(s,actor,w.find(x=>x!==target))))){s.alliances.push([actor,target]);if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} allied with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}结盟。`,{other:actor===s.player?target:actor});return true}
   if(action==='break' && isAllied(s,actor,target)){s.alliances=s.alliances.filter(p=>!(p.includes(actor)&&p.includes(target)));s.relations[key]=relation(s,actor,target)-20;if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} broke its alliance with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}解除了与${FACTIONS[target].short[1]}的同盟。`,{other:actor===s.player?target:actor});return true}
   if(action==='war' && !isWar(s,actor,target)){
@@ -328,7 +330,7 @@ export function resolveBattle(s,attacker,defender,target){
   const supplyA=Math.min(1,Math.max(.65,s.factions[attacker.owner].food/20))*Math.min(1,Math.max(.7,(region(s,attacker.region).supply+(buildingModifiers(region(s,attacker.region)).supply||0))*1000/Math.max(1,attacker.men)));
   const supplyD=Math.min(1,Math.max(.65,s.factions[defender.owner].food/20))*Math.min(1,Math.max(.7,(target.supply+(buildingModifiers(target).supply||0))*1000/Math.max(1,defender.men)));
   const stanceD=({defend:1.16,hold:1.09,guard:1.22})[defender.order?.kind]||1;
-  linkCommanders(s);relieveIncapacitatedCommanders(s);const commandA=commandFactor(s,attacker),commandD=commandFactor(s,defender);
+  linkCommanders(s);relieveIncapacitatedCommanders(s);const specialist=(owner,place)=>Object.values(s.world.characters).some(c=>c.alive&&c.faction===owner&&c.civilizationRole==='military'&&c.location===place)?1.05:1;const commandA=commandFactor(s,attacker)*specialist(attacker.owner,attacker.region),commandD=commandFactor(s,defender)*specialist(defender.owner,target.id);
   const powerA=attacker.men*(.65+attacker.morale/200+attacker.skill*.055+attacker.experience*.025)*supplyA*commandA*(1+(activeModifiers(s,attacker.owner).battle||0)+(buildingModifiers(region(s,attacker.region)).battle||0)*.03);
   const powerD=defender.men*(.65+defender.morale/200+defender.skill*.055+defender.experience*.025)*terrain*(1+target.fort*.12)*supplyD*commandD*stanceD*(1+(activeModifiers(s,defender.owner).battle||0)+(activeModifiers(s,defender.owner).defense||0)+(buildingModifiers(target).battle||0)*.03);
   const roll=.85+rnd(s)*.3;
@@ -340,6 +342,7 @@ export function resolveBattle(s,attacker,defender,target){
   s.nextBattle??=(s.battles?.length||0)+1;
   const report={id:`battle:${s.nextBattle++}`,year:s.year,month:s.month,region:target.id,attacker:{id:attacker.id,name:[...attacker.name],commander:[...attacker.commander],owner:attacker.owner,men:attacker.men,morale:attacker.morale,food:s.factions[attacker.owner].food,power:Math.round(powerA),supply:supplyA,command:commandA},defender:{id:defender.id,name:[...defender.name],commander:[...defender.commander],owner:defender.owner,men:defender.men,morale:defender.morale,food:s.factions[defender.owner].food,power:Math.round(powerD),supply:supplyD,command:commandD,stance:stanceD},terrain:target.terrain,fort:target.fort,roll,attackerWins,lossA,lossD};
   (s.battles ||= []).unshift(report);
+  target.warDamage=Math.min(30,(target.warDamage||0)+Math.min(12,3+Math.round((lossA+lossD)/1500)));
   attacker.men-=lossA;defender.men-=lossD;for(const unit of [attacker,defender]){const person=s.world.characters[unit.characterId];if(person?.alive)person.battlesCommanded=(Number.isFinite(person.battlesCommanded)?person.battlesCommanded:0)+1}battlefieldWound(s,attacker);battlefieldWound(s,defender);
   attacker.morale=Math.max(20,attacker.morale+(attackerWins?7:-16));
   defender.morale=Math.max(20,defender.morale+(attackerWins?-16:7));
@@ -384,15 +387,21 @@ function economy(s){
     const troops=s.armies.filter(a=>a.owner===id).reduce((n,a)=>n+a.men,0);
     const rate={low:.65,normal:1,high:1.4}[f.tax];
     const difficulty=id===s.player?({hard:.9,expert:.8}[s.difficulty]||1):1;
-    f.treasury+=Math.round(owned.reduce((n,r)=>n+(r.tax+(buildingModifiers(r).tax||0))*rate*(r.loyalty/100),0)*difficulty*(1+(ideas.tax||0))-troops/1100)+offices.treasury+(ideas.treasury||0)-owned.reduce((n,r)=>n+(buildingModifiers(r).upkeep||0),0)-Math.max(0,Object.values(s.inventions?.[id]?.slots||{}).reduce((n,v)=>n+v-1,0));
-    f.food+=Math.round(owned.reduce((n,r)=>n+r.food+(buildingModifiers(r).food||0),0)*difficulty-troops/1200-owned.length*2)+offices.food+(ideas.food||0);
-    f.stability=Math.max(0,Math.min(100,f.stability+offices.stability+(ideas.stability||0)));
-    f.manpower+=owned.length*170+(ideas.manpower||0);
+    f.treasury+=Math.round(owned.reduce((n,r)=>n+(civilizationYield(s,r).tax+(buildingModifiers(r).tax||0))*rate*(r.loyalty/100),0)*difficulty*(1+(ideas.tax||0))-troops/1100-owned.reduce((n,r)=>n+civilizationYield(s,r).maintenance+(buildingModifiers(r).upkeep||0),0))+offices.treasury+(ideas.treasury||0)-Math.max(0,Object.values(s.inventions?.[id]?.slots||{}).reduce((n,v)=>n+v-1,0));
+    f.food+=Math.round(owned.reduce((n,r)=>n+civilizationYield(s,r).food+(buildingModifiers(r).food||0),0)*difficulty-troops/1200-owned.length*2)+offices.food+(ideas.food||0);
+    if(f.food<0)for(const r of owned){const used=Math.min(-f.food,r.foodReserve);r.foodReserve-=used;f.food+=used;if(f.food>=0)break}
+    if(f.food>0)for(const r of owned)r.foodReserve=Math.min(20,r.foodReserve+buildingEffect(r,'foodReserve'));
+    f.stability=Math.min(100,f.stability+offices.stability+(ideas.stability||0));
+    f.manpower+=owned.reduce((n,r)=>n+Math.round((100+Math.min(160,r.population/1000)+civilizationYield(s,r).recruit*8)*(.5+r.satisfaction/150)),0)+(ideas.manpower||0);
+    f.research=Math.min(20,f.research+Math.floor(owned.reduce((n,r)=>n+civilizationYield(s,r).research,0)/2));
+    f.culturalPrestige=Math.min(200,f.culturalPrestige+Math.floor(owned.reduce((n,r)=>n+civilizationYield(s,r).prestige,0)/2));
+    for(const c of Object.values(s.world.characters||{}))if(c.faction===id&&c.alive&&c.civilizationRole){if(c.civilizationRole==='scholar'){f.research=Math.min(20,f.research+1);f.culturalPrestige=Math.min(200,f.culturalPrestige+1)}if(c.civilizationRole==='statesman')f.stability=Math.min(100,f.stability+1);if(c.civilizationRole==='religious')f.legitimacy=Math.min(100,f.legitimacy+1);if(c.id.startsWith('fictional:')){c.fame=(c.fame||0)+1;if(c.fame>=12&&!c.famous){c.famous=true;f.culturalPrestige=Math.min(200,f.culturalPrestige+5);if(id===s.player)log(s,`${CHARACTER_CATALOG[c.id]?.name?.[0]||c.id} became renowned through public service.`,`${CHARACTER_CATALOG[c.id]?.name?.[1]||c.id}因公共服务而成名。`)}}}
     if(f.treasury<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.morale=Math.max(20,a.morale-4))}
     if(f.food<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.men=Math.max(1,Math.round(a.men*.96)))}
     f.treasury=Math.max(-100,Math.round(f.treasury));f.food=Math.max(-100,Math.round(f.food));
     owned.forEach(r=>{r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+(f.food<0?-2:0)+governorLoyaltyEffect(s,r.id)+(ideas.loyalty||0)+(buildingModifiers(r).loyalty||0)))});
     if(ideas.relations)for(const other of Object.keys(s.factions))if(other!==id&&other!=='rebels'){const key=[id,other].sort().join(':');s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+ideas.relations))}
+    for(const a of s.armies.filter(a=>a.owner===id)){const here=region(s,a.region);if(here?.owner===id&&buildingEffect(here,'training')){a.morale=Math.min(90,a.morale+1);a.experience=Math.min(5,a.experience+.05)}if(Object.values(s.world.characters||{}).some(c=>c.faction===id&&c.alive&&c.civilizationRole==='military'&&c.location===a.region))a.morale=Math.min(90,a.morale+1)}
   }
 }
 
@@ -448,6 +457,7 @@ export function aiClaimantChoice(s,actor,target){
 
 function aiTurn(s,owner){
   const f=s.factions[owner],owned=s.regions.filter(r=>r.owner===owner);
+  aiCivilization(s,owner);
   const internalOpponent=other=>Object.entries(s.world.disputes||{}).some(([parent,d])=>d.war&&[parent,d.war.rival].includes(owner)&&[parent,d.war.rival].includes(other));
   // A defeated government may still have a field army outside its last
   // theater; it must be able to continue the dynastic campaign.
@@ -513,16 +523,16 @@ export function advanceRomanVictory(s){
 }
 
 export function tick(s){
-  initializeWorld(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
+  initializeWorld(s);initializeCivilization(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
   const chronicleBefore=captureCampaignState(s);
   s.month++;if(s.month>12){s.month=1;s.year++}
   refreshReportConfidence(s);
-  advanceInventions(s);advanceOffices(s);economy(s);
+  advanceInventions(s);advanceOffices(s);advanceCivilization(s);economy(s);
   // Travel and sieges resolve before new AI orders.
   for(const a of [...s.armies]){
     if(!s.armies.includes(a))continue;
     if(a.move){a.move.remaining--;if(a.move.remaining<=0)arrive(s,a)}
-    else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
+    else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;r.warDamage=Math.min(30,(r.warDamage||0)+8);a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   rebellion(s);
   resolveInquiries(s);advanceOperations(s);advanceAgentRequests(s);advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advanceConspiracies(s);advanceGovernments(s);linkCommanders(s);advancePersonalDiplomacy(s);

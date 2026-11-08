@@ -9,7 +9,8 @@ test('territory record uses the actual friendly garrison and local food potentia
  const men = s.armies.filter(a => a.owner === s.player && a.region === r.id).reduce((sum,a) => sum + a.men,0);
  assert.match(html,new RegExp(men.toLocaleString()));
  assert.match(html,new RegExp(`Food potential</span><b>${r.food}`));
- assert.match(html,/Buildings and construction queue<\/span><b>None/);
+ assert.match(html,new RegExp(`Population</span><b>${r.population.toLocaleString()}`));
+ assert.match(html,/Buildings and construction queue<\/span><b>(?:—|None)/);
 });
 
 test('foreign territory details hide actual resources and army strength', () => {
@@ -20,4 +21,5 @@ test('foreign territory details hide actual resources and army strength', () => 
  assert.match(html,/兵力未知/);
  assert.doesNotMatch(html,/9876/);
  assert.doesNotMatch(html,new RegExp(`粮食潜力</span><b>${r.food}`));
+ assert.doesNotMatch(html,new RegExp(r.population.toLocaleString()));
 });

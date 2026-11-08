@@ -1,5 +1,5 @@
 import {syncChronicleDispatches} from './chronicle.js?v=peace-choice-8';
-import {CHARACTER_CATALOG} from './characters.js?v=phase-x-1';
+import {CHARACTER_CATALOG} from './characters.js?v=phase-xiii-1';
 import {initializeDynasties} from './dynasties.js?v=phase-x-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.world?.dynasties?.scenario?.stage==='resolved')}

@@ -1,4 +1,4 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=phase-x-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=phase-xiii-1';
 import {recordLifeEvent} from './dynasties.js?v=phase-x-1';
 
 // These are simulated administrative assignments, not historical magistracies.

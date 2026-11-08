@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=phase-x-1';
+import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=phase-xiii-1';
 import {officeOf} from './office-system.js?v=phase-x-1';
 import {recordLifeEvent} from './dynasties.js?v=phase-x-1';
 

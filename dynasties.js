@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG} from './characters.js?v=phase-x-1';
+import {CHARACTER_CATALOG} from './characters.js?v=phase-xiii-1';
 import {startDynasticWar} from './civil-war.js?v=phase-x-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 

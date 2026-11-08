@@ -1,6 +1,8 @@
 // Historical reference only: this catalog is never used for simulated mortality.
 // Years are BCE; sources are linked per field so uncertainty can be reviewed.
 export const HISTORICAL_DEATHS={
+ varro:{years:[27],sources:[{label:['Wellcome Collection: Varro','惠康收藏：瓦罗'],url:'https://wellcomecollection.org/concepts/zt7h4m64'}]},
+ vitruvius:{years:[],disputed:true,sources:[{label:['Oxford Classical Dictionary: Vitruvius','牛津古典辞典：维特鲁威'],url:'https://academic.oup.com/edited-volume/61673/chapter-abstract/548202520?login=false'}]},
  arsinoe:{years:[41],disputed:true,sources:[{label:['University of Vienna: Arsinoë IV','维也纳大学：阿尔西诺伊四世'],url:'https://www.univie.ac.at/en/news/detail/cleopatras-sister-remains-missing'}]},
  caesar:{years:[44],sources:[{label:['Oxford Dictionary of National Biography','牛津国家传记辞典'],url:'https://academic.oup.com/oxford-dictionary-of-national-biography/reference/63486/reference-article-abstract/579736904'}]},
  pompey:{years:[48],sources:[{label:['Cambridge Museum of Classical Archaeology','剑桥古典考古博物馆'],url:'https://museum.classics.cam.ac.uk/collections/casts/pompey-gnaeus-pompeius-magnus'}]},

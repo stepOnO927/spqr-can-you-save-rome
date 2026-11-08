@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=phase-x-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=phase-xiii-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 
 // Alternate-history claimant commands use real game theaters and armies.

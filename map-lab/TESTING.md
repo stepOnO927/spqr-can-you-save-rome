@@ -22,7 +22,7 @@ At 1366 × 768, inspected the default campaign, selected Caesarian and Senatoria
 
 ## Phase VII onboarding and help
 
-At 1366 × 768, exercised the Chinese beginner flow from a new game through selecting Rome and Legio XIII, previewing and confirming a legal march, advancing into a real battle, opening the battle report and resource explanation, and entering free play. Checked automatic time progression and battle pause, speed controls, wrong-action feedback, standard starting resources, tutorial restart/skip, help search and mid-tutorial language switching. These checks were performed by the developer; no independent novice playtest has yet been conducted. The tutorial belongs to the separate map-lab prototype; the original campaign remains available. Commander loyalty, research and construction are not implemented in the prototype, and supply limits are informational.
+At 1366 × 768, exercised the Chinese beginner flow from a new game through selecting Rome and Legio XIII, previewing and confirming a legal march, advancing into a real battle, opening the battle report and resource explanation, and entering free play. Checked automatic time progression and battle pause, speed controls, wrong-action feedback, standard starting resources, tutorial restart/skip, help search and mid-tutorial language switching. These checks were performed by the developer; no independent novice playtest has yet been conducted. The tutorial belongs to the separate map-lab prototype; the original campaign remains available. Commander loyalty remains separate; Phase XIII adds research and construction. Exceeding local supply limits reduces battle power.
 
 ## Phase VIII interaction checks
 
@@ -40,7 +40,7 @@ At 1366 × 768, exercised character cards, hidden foreign troop counts, recruiti
 
 ## Additional map modes
 
-Browser-tested switching between political, terrain, military, supply, economy and loyalty overlays, their bilingual labels and their mode-specific legends, followed by selecting an army. Supply remains informational and does not add an operational penalty. Economic and loyalty views show only player-controlled theaters; mixed historic polygons aggregate known player theaters and are not new boundaries.
+Browser-tested switching between political, terrain, military, supply, economy and loyalty overlays, their bilingual labels and their mode-specific legends, followed by selecting an army. Exceeding a local supply limit reduces battle power; it does not cause monthly attrition by itself. Economic and loyalty views show only player-controlled theaters; mixed historic polygons aggregate known player theaters and are not new boundaries.
 
 ## Dated army sightings
 
@@ -73,3 +73,7 @@ Tested in a local browser through the visible controls:
 
 Automated tests cover difficulty resource effects, tutorial branching and persistence, Roman victory conditions, hidden enemy intelligence, movement, combat and save migration. This remains a strategic simulation; enemy reports can be wrong, and neither a tutorial milestone nor three objectives alone is a final victory.
 
+
+## Phase XIII civilization development
+
+The atlas theater panel now shows owned population, satisfaction, religious communities, buildings, construction queue, cultural prestige and specialist offers. Building prerequisites, treasury/time/upkeep, religious policy effects, migration, specialist travel, AI construction and 36 simulated months are covered by `test/civilization.test.js`. Local civic buildings and the researched material projects from the invention screen share one construction capacity per theater. The browser smoke starts as Caesar, selects Narbo, checks the invention screen, builds a granary, adopts an accommodation policy, hires Vitruvius as an engineer, advances four months, checks the completed building and changed population, uses the satisfaction and infrastructure map modes, switches to Chinese, and saves and reloads the campaign. Building sketches are original game reconstructions, linked to historical references; they are not depictions of excavated structures.
