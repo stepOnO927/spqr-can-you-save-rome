@@ -70,6 +70,7 @@ await page.evaluate(()=>localStorage.setItem('spqr-lang','en'));
 const foreignCampaign=newGrandGame('egypt');foreignCampaign.year=-48;foreignCampaign.month=1;foreignCampaign.civilWarOutcome={kind:'military',winner:'senate',loser:'caesar',year:-48,month:1};evaluateAchievements(foreignCampaign);
 await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('.grand-site').first().waitFor();
 await page.locator('#upload-save-file').setInputFiles({name:'egypt-unfinished.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(foreignCampaign))});
+await page.waitForFunction(()=>document.querySelector('#objectives')?.innerText.includes("Hold Egypt's home theater"),null,{timeout:10000});
 assert.match(await page.locator('#objectives').innerText(),/Hold Egypt's home theater/);
 assert.doesNotMatch(await page.locator('#objectives').innerText(),/Latium|Northern Italy/);
 await page.locator('#save').click();

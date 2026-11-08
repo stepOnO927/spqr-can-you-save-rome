@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=5';
 import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js?v=2';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=12';
+import {physicalStyle} from './physical-style.js?v=13';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=128';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js?v=21';
 import {FACTIONS} from '../data.js?v=9';
@@ -93,8 +93,8 @@ const L={en:{army:'Army',morale:'Morale',experience:'Experience',location:'Locat
 Object.assign(L.en,{hostile:'hostile',atlas:'CAMPAIGN ATLAS',title:'The Rubicon',subtitle:'and the Republic.',intro:'Italy stands between Caesar’s legions and the Senate. Explore the terrain, cities and commands of the opening campaign.',allegiance:'MILITARY ALLEGIANCE',caesar:'CAESARIAN',senate:'SENATORIAL',mixed:'SHARED / UNCERTAIN',caveat:'Close-up control shading shows approximate game cells, not documented ancient borders.',intel:'FIELD INTELLIGENCE',back:'RETURN TO CAMPAIGN',credits:'IDEALIZED LAND COVER · MODERN ELEVATION · HISTORICAL OVERLAYS APPROXIMATE',sources:'DATA & LICENSES',city:'CITY',fortKey:'FORTIFICATION',road:'RECONSTRUCTED ROAD · SELECT' ,crisis:'THE REPUBLIC IN CRISIS',civil:'THE CIVIL WAR',inspectPlace:'Historical place; local campaign control is represented at theater level.'});
 Object.assign(L.zh,{hostile:'敌方',atlas:'战役地图',title:'卢比孔河',subtitle:'与罗马共和国',intro:'凯撒的军团与元老院之间是意大利。探索地形、城市和开战时的军事指挥。',allegiance:'军事阵营',caesar:'凯撒派',senate:'元老院派',mixed:'共用轮廓 / 不确定',caveat:'近景控制区着色是近似的游戏划分，不代表史料证实的古代边界。',intel:'战场情报',back:'返回战役',credits:'理想化地表与现代高程 · 历史范围为近似',sources:'数据及许可',city:'城市',fortKey:'要塞',road:'复原古道 · 可选' ,crisis:'共和国的危机',civil:'罗马内战',inspectPlace:'历史地点；游戏控制权按战区表示。'});
 const t=k=>L[lang][k];const n=a=>a?.[lang==='zh'?1:0]||'';
-L.en.credits='NATURAL EARTH COASTS · MODERN ELEVATION · HISTORICAL BORDERS APPROXIMATE';
-L.zh.credits='Natural Earth 海岸线 · 现代高程 · 历史边界为近似';
+L.en.credits='GSHHG MODERN COAST · MODERN ELEVATION · HISTORICAL BORDERS APPROXIMATE';
+L.zh.credits='GSHHG 现代海岸线 · 现代高程 · 历史边界为近似';
 const status = document.querySelector('#status');
 const map = new maplibregl.Map({container:'map',canvasContextAttributes:{preserveDrawingBuffer:true},center:[12.4,43.2],zoom:5.45,minZoom:3.6,maxZoom:9.2,maxBounds:[[-20,18],[60,58]],attributionControl:{compact:true},style:physicalStyle});
 const locator=document.createElement('aside');locator.id='locator';locator.hidden=true;locator.innerHTML='<strong class="locator-title"></strong><div class="locator-map"><img src="./italy-locator.svg?v=1" alt=""><span id="locator-position"></span></div>';document.body.append(locator);
@@ -148,14 +148,14 @@ function updateControl(){
    pairs.push(r.id,color);borders.push(r.id,identity(r.owner).map);
   }
   map.setPaintProperty('grand-control','fill-color',['match',['get','id'],...pairs,'#b9a982']);
-  map.setPaintProperty('grand-control','fill-opacity',currentMapMode==='terrain'?.025:['political','military','maritime'].includes(currentMapMode)?['interpolate',['linear'],['zoom'],5.5,.01,6.5,.15,8,.24]:.22);
+  map.setPaintProperty('grand-control','fill-opacity',currentMapMode==='terrain'?.025:['political','military','maritime'].includes(currentMapMode)?['interpolate',['linear'],['zoom'],5.5,.01,6.5,.15,7.2,.16,8,.11,9,.05]:.22);
   map.setPaintProperty('grand-border','line-color',['match',['get','id'],...borders,'#72604f']);
   // Settlement catchment lines are synthetic gameplay partitions. Selection
   // highlights a cell when needed; the base atlas uses the broader outlines.
   map.setPaintProperty('grand-border','line-opacity',0);
   const macroBorders=[];for(const feature of historical.features){const macros=feature.properties.regions||[],owners=[...new Set(state.regions.filter(r=>macros.includes(r.macro)).map(r=>r.owner))];if(macros.length)macroBorders.push(feature.properties.id,identity(owners.length===1?owners[0]:'shared').map)}
   map.setPaintProperty('province-outline','line-color',['match',['get','id'],...macroBorders,'#aa9c75']);
-  map.setPaintProperty('province-outline','line-opacity',currentMapMode==='terrain'?.12:.5);
+  map.setPaintProperty('province-outline','line-opacity',currentMapMode==='terrain'?.12:['interpolate',['linear'],['zoom'],5.5,.5,8,.3,9,.2]);
   map.setPaintProperty('control','fill-color',['match',['get','id'],...macroBorders,'#aa9c75']);
   map.setPaintProperty('control','fill-opacity',['political','military','maritime'].includes(currentMapMode)?['interpolate',['linear'],['zoom'],5.5,.18,6.5,.08,8,.025]:0);return;
  }

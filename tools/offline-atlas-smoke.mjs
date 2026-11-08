@@ -24,6 +24,13 @@ const external=[];
 const terrainRequests=[];
 const missingTerrain=[];
 const landcoverRequests=[],missingLandcover=[];
+async function waitForTerrain(pattern,message){
+ for(let i=0;i<40;i++){
+  if(terrainRequests.some(path=>pattern.test(path)))return;
+  await page.waitForTimeout(200);
+ }
+ assert.fail(message);
+}
 page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.route('**/*',async route=>{
@@ -131,8 +138,8 @@ try{
  await page.reload({waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
  await page.waitForTimeout(1400);
- await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(900);
- assert.ok(terrainRequests.some(path=>/\/terrain\/7\/(7[0-9]|8[0-9])\//.test(path)),'Eastern Mediterranean zoom 7 did not use bundled local terrain');
+ await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();
+ await waitForTerrain(/\/terrain\/7\/(7[0-9]|8[0-9])\//,'Eastern Mediterranean zoom 7 did not use bundled local terrain');
  assert.deepEqual(missingTerrain,[],'Egyptian close zoom requested missing terrain tiles');
  if(process.env.SPQR_ATLAS_EGYPT_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_SCREENSHOT});
  await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(900);
@@ -145,8 +152,8 @@ try{
  await page.reload({waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
  await page.waitForTimeout(1400);
- await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(900);
- assert.ok(terrainRequests.some(path=>/\/terrain\/7\/(7[8-9]|8[0-2])\//.test(path)),'Armenian zoom 7 did not use bundled mountain terrain');
+ await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();
+ await waitForTerrain(/\/terrain\/7\/(7[8-9]|8[0-2])\//,'Armenian zoom 7 did not use bundled mountain terrain');
  assert.deepEqual(missingTerrain,[],'Armenian mountain zoom requested missing terrain tiles');
  if(process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT});
  console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and Italy through zoom 9.');

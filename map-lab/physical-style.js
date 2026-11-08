@@ -10,12 +10,12 @@ import historical from '../historical-territories.js';
 const localElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e0d5b6',0,'#ded2ae',100,'#d1cba7',300,'#b9c39b',700,'#91a78b',1200,'#758e7d',1800,'#848d80',2600,'#b2b2a4',3500,'#e1ddcb'];
 const terrainAttribution='Elevation: Mapzen Terrain Tiles; Copernicus EU-DEM, NOAA ETOPO1 and USGS SRTM/GMTED2010 contributors';
 
-// Natural Earth land and ocean share a coastline. The ocean mask is deliberately
+// GSHHG land and ocean derive from the same L1 shoreline. The ocean mask is deliberately
 // above the elevation layer so relief never turns the sea into apparent land.
 export const physicalStyle={
  version:8,
  sources:{
-  land:{type:'geojson',data:land,attribution:'Physical geography: Natural Earth, public domain'},
+  land:{type:'geojson',data:land,attribution:'Shorelines: GSHHG 2.3.7, Wessel and Smith, LGPL'},
   ocean:{type:'geojson',data:ocean},
   bathymetry:{type:'geojson',data:bathymetry},
   elevation:{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:4,maxzoom:5,bounds:[-20,18,60,58],attribution:terrainAttribution},

@@ -1,0 +1,7 @@
+# GSHHG coastline source
+
+The compressed GeoJSON in this directory is a source snapshot of GSHHG 2.3.7 high-resolution level-1 land polygons, distributed by [the ArcGIS GSHHG feature service](https://services7.arcgis.com/WSiUmUhlFx4CtMBB/ArcGIS/rest/services/GSHHS_GlobalCoastlines_HighResolution/FeatureServer/0). GSHHG is developed by Paul Wessel (University of Hawaiʻi) and Walter H. F. Smith (NOAA). The data is licensed under [LGPL 3.0 or later](https://www.soest.hawaii.edu/pwessel/gshhg/); the GPL and LGPL license texts are included here. The GSHHG project name is used only to identify and credit the source.
+
+The query used the rectangle `[-20, 18, 60, 58]` in EPSG:4326, `level_ = 1 AND area > 1`, `geometryPrecision=5`, and GeoJSON output. Its 1,365 returned features were gzip-compressed without coordinate changes. The uncompressed response had SHA-256 `ff171736068583cb43909305976b76780e74021e8ec3dd02ee0c826d3b4e22a7`.
+
+Run `node tools/build-gshhg-coast.mjs` from the repository root to regenerate the playable land and ocean assets without network access. The build clips the land polygons to the campaign bounds and derives the ocean as their geometric complement. This deliberately omits islands of at most 1 square kilometer and all inland lake levels. Natural Earth lake data remains a separate illustrative layer. These are modern shorelines; they do not reconstruct the coast in 49 BCE.
