@@ -4,12 +4,12 @@ import {identity,factionMark} from './identity.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=phase-x-1';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=phase-x-1';
-import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=phase-x-1';
+import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry,region,army,adjacent,isWar,isAllied,relation,PLAYABLE} from './engine.js?v=phase-x-2';
 import {decideDisputedHeir,personAge} from './dynasties.js?v=phase-x-1';
 import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=phase-x-1';
 import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=phase-x-1';
-import {renderChronicle} from './map-lab/chronicle-ui.js?v=phase-x-1';
-import {formatChronicleEntry,chronicleDate} from './chronicle.js?v=phase-x-1';
+import {renderChronicle} from './map-lab/chronicle-ui.js?v=phase-x-2';
+import {formatChronicleEntry,chronicleDate} from './chronicle.js?v=phase-x-2';
 import {drawMap,mapPoint} from './map.js?v=phase-x-1';
 
 const ui={

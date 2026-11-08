@@ -8,7 +8,7 @@ import {advanceConspiracies} from './conspiracies.js?v=phase-x-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=phase-x-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=phase-x-1';
-import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=phase-x-1';
+import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=phase-x-2';
 export {queueMission};
 export {personalDiplomaticCredit};
 
@@ -63,11 +63,18 @@ function migrateEasternTheaters(s){
   for(const reports of Object.values(s.controlKnowledge||{}))if(!reports[newId]&&reports[parentId])reports[newId]={...reports[parentId]};
  }
 }
+function migrateBattleIds(s){
+ const reports=s.battles||[];let next=Math.max(s.nextBattle||1,...reports.map(b=>Number(String(b.id||'').split(':')[1])||0))+1;
+ for(const report of [...reports].reverse())if(!report.id)report.id=`battle:${next++}`;
+ for(const entry of s.chronicle?.entries||[]){if(!entry.battleId||String(entry.battleId).startsWith('battle:'))continue;const candidates=reports.filter(b=>b.year===entry.year&&b.month===entry.month&&b.region===entry.region&&b.attacker.id===String(entry.battleId).split(':').at(-1));const match=candidates.find(b=>{const loss=b.attacker.owner===s.player?b.lossA:b.lossD;return loss===entry.ownCasualties})||candidates[0];if(match)entry.battleId=match.id}
+ for(const month of s.chronicle?.monthly||[])month.battles=month.entryIds.map(id=>s.chronicle.entries.find(e=>e.id===id&&e.kind==='battle')?.battleId).filter(Boolean);
+ s.nextBattle=next;
+}
 export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeControlKnowledge(s);initializeChronicle(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeControlKnowledge(s);initializeChronicle(s);migrateBattleIds(s);return refreshReportConfidence(initializeGovernments(s));
 }
 
 export function previewMarch(s,armyId,destination){
@@ -309,7 +316,8 @@ export function resolveBattle(s,attacker,defender,target){
   if(defender.characterId)recordLifeEvent(s,defender.characterId,`${attackerWins?'Lost':'Won'} a battle at ${target.name[0]}.`,`在${target.name[1]}的战斗中${attackerWins?'战败':'获胜'}。`);
   const lossA=Math.min(attacker.men,Math.round(defender.men*(attackerWins?.19:.31)*(powerD/powerA)**.25));
   const lossD=Math.min(defender.men,Math.round(attacker.men*(attackerWins?.34:.19)*(powerA/powerD)**.25));
-  const report={year:s.year,month:s.month,region:target.id,attacker:{id:attacker.id,name:[...attacker.name],commander:[...attacker.commander],owner:attacker.owner,men:attacker.men,morale:attacker.morale,food:s.factions[attacker.owner].food,power:Math.round(powerA),supply:supplyA,command:commandA},defender:{id:defender.id,name:[...defender.name],commander:[...defender.commander],owner:defender.owner,men:defender.men,morale:defender.morale,food:s.factions[defender.owner].food,power:Math.round(powerD),supply:supplyD,command:commandD,stance:stanceD},terrain:target.terrain,fort:target.fort,roll,attackerWins,lossA,lossD};
+  s.nextBattle??=(s.battles?.length||0)+1;
+  const report={id:`battle:${s.nextBattle++}`,year:s.year,month:s.month,region:target.id,attacker:{id:attacker.id,name:[...attacker.name],commander:[...attacker.commander],owner:attacker.owner,men:attacker.men,morale:attacker.morale,food:s.factions[attacker.owner].food,power:Math.round(powerA),supply:supplyA,command:commandA},defender:{id:defender.id,name:[...defender.name],commander:[...defender.commander],owner:defender.owner,men:defender.men,morale:defender.morale,food:s.factions[defender.owner].food,power:Math.round(powerD),supply:supplyD,command:commandD,stance:stanceD},terrain:target.terrain,fort:target.fort,roll,attackerWins,lossA,lossD};
   (s.battles ||= []).unshift(report);
   attacker.men-=lossA;defender.men-=lossD;for(const unit of [attacker,defender]){const person=s.world.characters[unit.characterId];if(person?.alive)person.battlesCommanded=(Number.isFinite(person.battlesCommanded)?person.battlesCommanded:0)+1}battlefieldWound(s,attacker);battlefieldWound(s,defender);
   attacker.morale=Math.max(20,attacker.morale+(attackerWins?7:-16));

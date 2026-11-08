@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,resolveBattle,region} from '../engine.js';
-import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports} from '../chronicle.js?v=phase-x-1';
+import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports} from '../chronicle.js?v=phase-x-2';
 import {finalizeCampaign} from '../legacy.js';
 
 test('36 monthly turns preserve a full chronology and three evidence-based annual reviews',()=>{
@@ -23,6 +23,15 @@ test('simultaneous real battles retain separate identifiers and known friendly l
  resolveBattle(s,s.armies.find(a=>a.id==='xiii'),s.armies.find(a=>a.id==='italy'),region(s,'italiaN'));
  resolveBattle(s,s.armies.find(a=>a.id==='viii'),s.armies.find(a=>a.id==='spain'),region(s,'hispaniaN'));
  recordCampaignTurn(s,before);const battles=s.chronicle.entries.filter(e=>e.kind==='battle');assert.equal(battles.length,2);assert.equal(new Set(battles.map(e=>e.battleId)).size,2);assert.ok(battles.every(e=>e.ownCasualties>=0&&e.enemyCasualties===null));
+});
+
+test('two battles by one army in one theater have distinct report links after save and load',()=>{
+ const s=newGame('caesar'),before=captureCampaignState(s),attacker=s.armies.find(a=>a.id==='xiii'),defender=s.armies.find(a=>a.id==='italy');
+ resolveBattle(s,attacker,defender,region(s,'italiaN'));
+ const fresh={...defender,id:'reinforcements',name:['Senatorial reinforcements','元老院援军'],men:5000,region:'italiaN',move:null,siege:null};s.armies.push(fresh);
+ resolveBattle(s,attacker,fresh,region(s,'italiaN'));recordCampaignTurn(s,before);
+ const ids=s.chronicle.entries.filter(e=>e.kind==='battle').map(e=>e.battleId);assert.equal(new Set(ids).size,2);assert.ok(ids.every(id=>s.battles.some(b=>b.id===id)));
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(saved.chronicle.entries.filter(e=>e.kind==='battle').map(e=>e.battleId),ids);
 });
 
 test('deaths, diplomacy, rebellion and army destruction generate classified alerts without foreign secrets',()=>{
