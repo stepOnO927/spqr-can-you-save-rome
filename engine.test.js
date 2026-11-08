@@ -112,6 +112,19 @@ test('battle reports preserve pre-battle evidence and calculated losses',()=>{
   assert.deepEqual(JSON.parse(JSON.stringify(s)).battles,s.battles);
 });
 
+test('exceeding local supply limit reduces actual battle power',()=>{
+  const battle=(supply)=>{
+    const s=newGame(),a=army(s,'xiii'),d=army(s,'italy');
+    a.men=20000;
+    region(s,a.region).supply=supply;
+    resolveBattle(s,a,d,region(s,'italiaN'));
+    return s.battles[0].attacker;
+  };
+  const strained=battle(5),supplied=battle(30);
+  assert.ok(strained.supply<supplied.supply);
+  assert.ok(strained.power<supplied.power);
+});
+
 test('recruitment spends actual resources and creates an army',()=>{
   const s=newGame(),initial=s.armies.length;
   assert.equal(recruit(s,'cisalpine'),true);
