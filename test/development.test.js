@@ -21,7 +21,7 @@ test('Republican-era source corrections retain save IDs and avoid later public-l
  assert.deepEqual(library.prerequisites,['craft-workshops']);
  assert.match(BUILDINGS.find(x=>x.id==='library').name[0],/Private Book Collection/);
  assert.match(library.source.url,/persee\.fr/);
- for(const id of ['roadmaking','road-milestones','bridge-engineering','barracks-design','stone-fortification','quarrying','metal-extraction','siege-machinery','library-organization']){
+ for(const id of ['roadmaking','road-milestones','bridge-engineering','barracks-design','stone-fortification','quarrying','metal-extraction','siege-machinery','library-organization','grain-storage','supply-organization','grain-processing']){
   const item=MATERIALS.find(x=>x.id===id);assert.ok(item?.source.url.startsWith('https://'),id);assert.notEqual(item.source.title,'World History Encyclopedia',id);
  }
  const ideaEvidence={
