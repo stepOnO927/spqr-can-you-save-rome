@@ -454,9 +454,11 @@ export function aiTurn(s,owner){
       const support=s.grandMap&&destination.owner!==owner?available.find(other=>other.id!==a.id&&!reservedSupport.has(other.id)&&!other.move&&other.region!==a.region&&other.men>=1000&&armySupply(s,other)>=.5&&grandAdjacent(other.region).some(edge=>edge.to===step)):null;
       a.coordinated=!!support;const ordered=moveArmy(s,a.id,step);if(ordered.ok){if(support)reservedSupport.add(support.id);break}a.coordinated=false}}
   }
-  if(f.treasury>65&&f.manpower>5500&&s.month%4===0){
+  const fieldStrength=strength(s,owner),emergency=fieldStrength<1500&&enemies.length>0;
+  if((emergency||f.treasury>65&&f.manpower>5500&&s.month%4===0)&&f.treasury>=24&&f.manpower>=3000&&f.food>=6){
     const border=owned.find(r=>adjacent(r.id,s).some(e=>isWar(s,owner,region(s,e.to).owner)));
-    if(border)recruit(s,border.id,owner);
+    const rally=emergency?owned.find(r=>r.port||r.terrain==='urban')||border||owned[0]:border;
+    if(rally)recruit(s,rally.id,owner);
   }
   if(f.stability<45&&f.treasury>25){f.treasury-=10;f.stability+=3}
   if(owner!=='rebels' && s.month===8 && f.treasury>=25){const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);if(enemy&&enemy!=='rebels')queueMission(s,owner,enemy,'spy','strength')}

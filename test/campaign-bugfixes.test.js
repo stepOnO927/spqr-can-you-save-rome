@@ -34,6 +34,15 @@ test('AI uses fresh opening-battle intelligence before repeating an attack',()=>
  assert.equal(latestRecon(s,'senate','cisalpine').source,'battle');
 });
 
+test('an AI command with no field army raises an emergency force when resources allow',()=>{
+ const s=newGame('egypt');s.armies=s.armies.filter(unit=>unit.owner!=='caesar');
+ s.factions.caesar.treasury=50;s.factions.caesar.food=20;s.factions.caesar.manpower=4000;
+ tick(s);
+ const replacement=s.armies.filter(unit=>unit.owner==='caesar');
+ assert.equal(replacement.length,1);assert.equal(replacement[0].men,3000);
+ assert.equal(s.factions.caesar.manpower<4000,true);
+});
+
 test('a defeated besieger cannot take a theater remotely',()=>{
  const s=newGame('caesar'),besieger=army(s,'xiii'),defender=army(s,'pompey'),rome=region(s,'roma');
  besieger.region='roma';besieger.siege={region:'roma',remaining:1};besieger.men=1000;defender.region='roma';defender.men=20000;
