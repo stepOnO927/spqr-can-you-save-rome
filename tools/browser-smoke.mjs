@@ -119,9 +119,9 @@ try{
  assert.match(await page.locator('.selected-army').innerText(),/第十三军团/);
  assert.match(await page.locator('.selected-army').innerText(),/上次报告.*当前位置、兵力和状态未知/);
  // Only Roman commands are playable; old foreign saves remain intact but cannot be loaded.
- await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('spqr-save-2'));s.player='egypt';localStorage.setItem('spqr-save-3',JSON.stringify(s))});
+ await page.evaluate(async()=>{const {newDynastyScenario}=await import('/engine.js');localStorage.setItem('spqr-save-3',JSON.stringify(newDynastyScenario()))});
  const foreignSave=await page.evaluate(()=>localStorage.getItem('spqr-save-3'));
- await page.locator('#new').click();assert.deepEqual(await page.locator('#faction-choice option').evaluateAll(options=>options.map(o=>o.value)),['caesar','senate']);assert.equal(await page.locator('#dynasty-scenario').count(),0);
+ await page.locator('#new').click();assert.deepEqual(await page.locator('#faction-choice option').evaluateAll(options=>options.map(o=>o.value)),['caesar','senate']);assert.equal(await page.locator('#dynasty-scenario, #start-dynasty').count(),0);
  await page.locator('#slot-choice').selectOption('3');await page.locator('[data-slot="load"]').click();assert.match(await page.locator('.toast').innerText(),/非罗马势力/);assert.equal(await page.evaluate(()=>localStorage.getItem('spqr-save-3')),foreignSave);
  await page.locator('#new').click();await page.locator('#faction-choice').selectOption('caesar');await page.locator('#start-campaign').click();
  assert.equal(await page.locator('[data-army="italy"]').count(),1,'frontier armies can be reported');
