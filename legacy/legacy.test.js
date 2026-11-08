@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {loadProfile,saveProfile,exportProfile,importProfile,purchase,recordCampaign,createScenario} from './legacy-core.js';
+import {archivePanelHtml} from './archive-ui.js';
 import {decidePetition,availablePetitions} from './civic.js';
 import {settleRace} from './race.js';
 import {ACTIVITIES,resolveActivity} from './activities.js';
@@ -43,6 +44,20 @@ test('reimport also corrects an older foreign battle total before Roman civil-wa
  assert.deepEqual(recordCampaign(profile,campaign),[]);
  assert.equal(profile.coins,coins);assert.equal(archived.battles,0);assert.equal(archived.summary.battles,0);
  assert.deepEqual(archived.notable,[]);
+});
+test('archive tells a foreign campaign story without exposing raw territory IDs',()=>{
+ const profile=loadProfile(memory()),campaign=newGrandGame('egypt');
+ campaign.civilWarOutcome={kind:'military',winner:'senate',loser:'caesar',year:-48,month:2};
+ campaign.battles=[{region:'roma',attacker:{owner:'caesar'},defender:{owner:'senate'},attackerWins:true,lossA:90,lossD:60},{region:'t116',attacker:{owner:'egypt',commander:['Egyptian commander','埃及将领']},defender:{owner:'senate'},attackerWins:false,lossA:45,lossD:20}];
+ campaign.achievementState.completed['first-recon']={year:-49,month:1,turn:0,evidence:{source:'scouts'}};
+ endCampaign(campaign,'retired');recordCampaign(profile,campaign);
+ const en=archivePanelHtml(profile,'en'),zh=archivePanelHtml(profile,'zh');
+ for(const html of [en,zh])assert.doesNotMatch(html,/t116|undefined|NaN/);
+ assert.match(en,/Voluntary ending/);assert.match(en,/Roman civil war: .*Senate/);assert.match(en,/Damascus/);
+ assert.match(en,/Egyptian commander/);assert.match(en,/Your casualties: 45/);assert.match(en,/Eyes Across the Frontier/);
+ assert.match(zh,/自愿结束/);assert.match(zh,/罗马内战/);assert.match(zh,/大马士革/);assert.match(zh,/埃及将领/);
+ const old={archive:[{id:'old',faction:'egypt',year:-49,result:'retired',territories:2,battles:0,summary:{},notable:[{region:'<script>',winner:'senate'}]}],achievements:[]};
+ assert.doesNotMatch(archivePanelHtml(old,'en'),/<script>/);
 });
 test('buildings visually owned through durable purchases and unlock museum content',()=>{
  const storage=memory(),p=loadProfile(storage);p.coins=1200;assert.equal(purchase(p,'museum').ok,true);assert.ok(p.buildings.includes('museum'));assert.ok(p.collectibles.includes('senate-tablet'));assert.equal(purchase(p,'museum').ok,false);assert.equal(purchase(p,'temple').ok,true);assert.equal(purchase(p,'circus').ok,false);p.coins=600;assert.equal(purchase(p,'circus').ok,true);saveProfile(p,storage);assert.ok(loadProfile(storage).buildings.includes('circus'));

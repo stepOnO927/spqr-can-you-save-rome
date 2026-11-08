@@ -88,7 +88,13 @@ await page.locator('#end-campaign').click();await page.locator('.campaign-ending
 assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins),afterForeign);
 await page.goto('http://spqr.test/legacy/',{waitUntil:'domcontentloaded'});await page.locator('#nav-archive').click();
 assert.match(await page.locator('.archive-list').innerText(),/Egypt/);
+const egyptArchive=page.locator('.archive-list article').filter({hasText:'Egypt'}).first();
+assert.match(await egyptArchive.innerText(),/Voluntary ending/);
+assert.match(await egyptArchive.innerText(),/Roman civil war: Senate/);
+await egyptArchive.locator('summary').click();assert.match(await egyptArchive.innerText(),/One Year of War/);
+await page.screenshot({path:path.join(root,'outputs','legacy-archive.png')});
 await page.locator('#nav-lang').click();assert.match(await page.locator('.archive-list').innerText(),/埃及/);
+assert.match(await page.locator('.archive-list article').filter({hasText:'埃及'}).first().innerText(),/自愿结束/);
 await page.evaluate(()=>localStorage.setItem('spqr-lang','en'));
 await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
 assert.equal(await page.locator('#entry-foreign-choice option').count(),7);
