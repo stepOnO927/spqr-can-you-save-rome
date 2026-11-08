@@ -1,0 +1,21 @@
+# Player-facing feature audit
+
+This is an incremental audit of the current 49 BCE Roman campaign. A feature is listed as browser-verified only when the test uses the visible controls and checks campaign state; engine tests alone do not establish player access.
+
+| Feature | Player entry | Browser coverage |
+| --- | --- | --- |
+| New campaign, difficulty, tutorial and save/load | Opening setup | `tools/onboarding-smoke.mjs` |
+| Army inspection, marches, battles and AI turns | Terrain map → army | `tools/phase-v-smoke.mjs`, `tools/browser-smoke.mjs` |
+| Recruitment | Terrain map → owned city → manage theater | `tools/systems-smoke.mjs` |
+| Family tree and private wills | Terrain map → Government, Families & Policies → family tree | `tools/systems-smoke.mjs` |
+| Material research and completed construction | Terrain map → Inventions → research; owned city → manage theater → construction | `tools/construction-smoke.mjs` |
+| National idea research and non-aggression treaties | Government, Families & Policies → national ideas / diplomatic agreements | `tools/systems-smoke.mjs` |
+| Letters and foreign intelligence | Government → Characters & Intelligence → faction → Letters & Intelligence | `tools/systems-smoke.mjs`, `tools/browser-smoke.mjs` |
+| Spying and administrative appointments | Factions → foreign intelligence or own faction | `tools/systems-smoke.mjs` |
+| Character travel, health and succession information | Factions → character | `tools/browser-smoke.mjs` |
+| City authority and local administration | Terrain map → city → manage theater | `tools/browser-smoke.mjs` |
+| Chronicle and map handoff | Chronicle / return to campaign | `tools/browser-smoke.mjs` |
+| Terrain-map pan, zoom and relief | Map drag, wheel and relief control | `tools/map-benchmark.mjs` |
+| Screenshot | Terrain map → Screenshot | `tools/capture-check.mjs` |
+
+The remaining family actions, other treaty types, coalitions and political movements have engine or component tests, but are not yet all verified through a complete player journey. Continue the audit before treating every system as fully playable. Foreign political information remains limited to the player's reports; letter outcomes remain delayed and can be lost or refused.
