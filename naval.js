@@ -232,7 +232,21 @@ function aiNavalCashflow(s,owner){
 function aiSupplyDestination(s,owner,f){
  if(!f.port||(f.ships.transport||0)*3+(f.ships.merchant||0)*4<4||s.factions[owner].food<10)return null;
  const destinations=s.regions.filter(r=>r.owner===owner&&r.port&&r.id!==f.port&&r.food<.6&&(s.naval.provisions?.[r.id]?.owner!==owner||(s.naval.provisions[r.id].food||0)<4));
- return destinations.filter(r=>s.armies.some(a=>a.owner===owner&&a.men>=1200&&a.operationalSupply<.65&&(a.region===r.id||GRAND_ROUTES.some(([from,to,kind])=>kind!=='sea'&&(from===r.id&&to===a.region||to===r.id&&from===a.region))))).sort((a,b)=>(seaRoute(f.zone,portZone(a.id))?.length??99)-(seaRoute(f.zone,portZone(b.id))?.length??99))[0]||null;
+ const knownThreats=reportedHostileFleets(s,owner).filter(report=>atWar(s,owner,report.owner));
+ return destinations.map(r=>{
+  const path=seaRoute(f.zone,portZone(r.id));if(!path)return null;
+  const nearby=s.armies.filter(a=>a.owner===owner&&a.men>=1200&&a.operationalSupply<.65&&(a.region===r.id||GRAND_ROUTES.some(([from,to,kind])=>kind!=='sea'&&(from===r.id&&to===a.region||to===r.id&&from===a.region))));
+  if(!nearby.length)return null;
+  const shortage=Math.max(...nearby.map(a=>.65-a.operationalSupply));
+  const zones=new Set([f.zone,...path]);
+  const reportedRisk=knownThreats.reduce((risk,report)=>{
+   if(!zones.has(report.zone))return risk;
+   const age=Math.max(0,s.year*12+s.month-(report.year*12+report.month));
+   const confidence={high:24,medium:18,low:12}[report.confidence]||12;
+   return risk+(confidence+Math.min(12,(report.range?.[1]||0)*2))*(1-age/5);
+  },0);
+  return {region:r,score:shortage*80+(0.6-r.food)*20-path.length*6-reportedRisk};
+ }).filter(Boolean).sort((a,b)=>b.score-a.score)[0]?.region||null;
 }
 function aiNavalOrders(s,owner,f){
  const cashflow=aiNavalCashflow(s,owner),treasury=s.factions[owner].treasury;

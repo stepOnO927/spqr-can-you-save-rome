@@ -176,6 +176,18 @@ test('AI dispatches a paid supply convoy only for its own under-supplied port fr
  advanceNaval(healthy);
  assert.notEqual(healthy.naval.fleets.find(f=>f.id==='senate-adriatic').order?.kind,'supply');
 });
+test('AI convoy favors a similarly needy safe port using dated reports, not hidden enemy positions',()=>{
+ const setup=()=>{const s=newGrandGame('egypt'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');s.naval.routes=[];fleet.port='t026';fleet.zone='sicilian';s.factions.senate.treasury=200;s.factions.senate.food=60;
+  for(const [id,armyId] of [['t016','italy'],['t078','pompey']]){s.regions.find(r=>r.id===id).food=.3;const unit=s.armies.find(a=>a.id===armyId);unit.region=id;unit.operationalSupply=.35}
+  return s};
+ const unseen=setup();unseen.naval.fleets.find(f=>f.id==='caesar-adriatic').zone='tyrrhenian';advanceNaval(unseen);
+ assert.equal(unseen.naval.fleets.find(f=>f.id==='senate-adriatic').order?.targetPort,'t016');
+ const informed=setup();informed.naval.intel.senate={'caesar-adriatic':{owner:'caesar',zone:'tyrrhenian',year:informed.year,month:informed.month,source:'sighting',range:[2,5],confidence:'medium'}};
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(informed)));advanceNaval(loaded);
+ assert.equal(loaded.naval.fleets.find(f=>f.id==='senate-adriatic').order?.targetPort,'t078');
+ const stale=setup();stale.naval.intel.senate={'caesar-adriatic':{owner:'caesar',zone:'tyrrhenian',year:stale.year-1,month:stale.month+7,source:'sighting',range:[2,5],confidence:'medium'}};advanceNaval(stale);
+ assert.equal(stale.naval.fleets.find(f=>f.id==='senate-adriatic').order?.targetPort,'t016');
+});
 test('merchant hulls limit simultaneous routes and hostile raids interrupt real cargo',()=>{
  const s=newGrandGame('senate'),egypt=s.naval.fleets.find(f=>f.owner==='egypt'),caesar=s.naval.fleets.find(f=>f.owner==='caesar');egypt.ships.merchant=1;s.factions.caesar.treasury=200;s.factions.senate.food=0;s.factions.egypt.food=60;advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.amount,4);assert.equal(s.naval.routes.find(r=>r.id==='egypt-papyrus').last.reason,'merchant');
  caesar.zone='alexandrian';caesar.port=null;assert.equal(orderFleet(s,'caesar',caesar.id,'raid','egypt-italy').ok,true);const before={food:s.factions.senate.food,raider:s.factions.caesar.treasury};advanceNaval(s);const route=s.naval.routes.find(r=>r.id==='egypt-italy');assert.equal(route.last.reason,'raid');assert.equal(route.last.amount,0);assert.equal(s.factions.senate.food,before.food);assert.ok(s.naval.reports.some(r=>r.kind==='trade-raid'));assert.ok(s.factions.caesar.treasury<=before.raider);
