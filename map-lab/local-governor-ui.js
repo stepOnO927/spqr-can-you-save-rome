@@ -1,7 +1,7 @@
 import {reportedControl} from '../control-intelligence.js?v=phase-x-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=grand-chessboard-2';
-import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=grand-chessboard-2';
+import {CHARACTER_CATALOG} from '../characters.js?v=dynasty-id-3';
+import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=dynasty-id-3';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 

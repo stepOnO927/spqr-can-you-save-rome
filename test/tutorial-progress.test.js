@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=grand-chessboard-2';
+import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=dynasty-id-3';
 import {tutorialTurnProgress,createTutorial} from '../map-lab/tutorial.js?v=grand-chessboard-2';
 
 test('tutorial tracks the commanded army rather than another friendly battle',()=>{

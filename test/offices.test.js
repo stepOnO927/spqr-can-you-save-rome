@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=grand-chessboard-2';
-import {appointOffice,dismissOffice,officeCandidates,officeEffects,advanceOffices} from '../office-system.js?v=grand-chessboard-2';
+import {newGame,tick,upgradeSave} from '../engine.js?v=dynasty-id-3';
+import {appointOffice,dismissOffice,officeCandidates,officeEffects,advanceOffices} from '../office-system.js?v=dynasty-id-3';
 import {availableCommanders} from '../command-appointments.js';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=grand-chessboard-2';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=dynasty-id-3';
 
 test('appointments cost treasury and affect the actual monthly economy',()=>{
  const s=newGame('senate');assert.equal(appointOffice(s,'finance','cicero').ok,true);assert.equal(appointOffice(s,'supply','cato').ok,true);

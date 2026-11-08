@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newScenario} from '../scenarios.js?v=grand-chessboard-2';
-import {tick,upgradeSave} from '../engine.js?v=grand-chessboard-2';
-import {potentialConspirators} from '../conspiracies.js?v=grand-chessboard-2';
+import {newScenario} from '../scenarios.js?v=dynasty-id-3';
+import {tick,upgradeSave} from '../engine.js?v=dynasty-id-3';
+import {potentialConspirators} from '../conspiracies.js?v=dynasty-id-3';
 import {leaveCoalition} from '../coalitions.js?v=grand-chessboard-2';
 import {advancePersonalPlans} from '../personal-plans.js?v=grand-chessboard-2';
 
