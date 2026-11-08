@@ -160,6 +160,16 @@ test('AI can order a real army transport when a hostile coast is reachable by se
  const s=newGrandGame('caesar');for(const r of s.regions)r.owner='egypt';s.regions.find(r=>r.id==='italiaS').owner='senate';s.regions.find(r=>r.id==='t075').owner='caesar';s.armies=s.armies.filter(a=>a.id==='italy');s.armies[0].region='italiaS';
  aiTurn(s,'senate');assert.equal(s.armies[0].move?.sea,true);assert.equal(s.armies[0].move?.to,'t075');assert.equal(s.naval.fleets.find(f=>f.owner==='senate').order?.armyId,'italy');
 });
+test('AI takes an available land route instead of stalling at a sea link without transports',()=>{
+ const s=newGrandGame('caesar');
+ for(const r of s.regions)if(r.id!=='t036'&&r.owner==='caesar')r.owner='senate';
+ s.armies=s.armies.filter(a=>a.owner==='senate').slice(0,1);
+ const unit=s.armies[0];unit.region='t026';unit.men=3500;unit.move=null;unit.siege=null;
+ s.factions.senate.treasury=60;s.factions.senate.food=100;
+ assert.equal(s.naval.fleets.find(f=>f.owner==='senate').port,'italiaS');
+ aiTurn(s,'senate');
+ assert.equal(unit.move?.to,'t022');assert.equal(unit.move?.sea,false);
+});
 test('a hostile naval blockade cuts port army supply until the blockade ends',()=>{
  const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');unit.region='italiaS';enemy.zone=portZone('italiaS');enemy.port=null;
  const normal=armySupply(s,unit);assert.equal(orderFleet(s,'caesar',enemy.id,'blockade','italiaS').ok,true);assert.ok(armySupply(s,unit)<normal);

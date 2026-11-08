@@ -395,10 +395,10 @@ function rebellion(s){
   log(s,`${candidate.name[0]} has risen in rebellion and formed an armed faction.`,`${candidate.name[1]}爆发叛乱，形成了武装派系。`);
 }
 
-function shortestStep(s,start,goal,owner){
+function shortestStep(s,start,goal,owner,unit){
   const queue=[[start,null]],seen=new Set([start]);
   while(queue.length){const [id,first]=queue.shift();if(id===goal)return first;
-    for(const e of adjacent(id,s)){if(seen.has(e.to))continue;const r=region(s,e.to);if(r.owner!==owner&&!isWar(s,owner,r.owner))continue;seen.add(e.to);queue.push([e.to,first||e.to])}}
+    for(const e of adjacent(id,s)){if(seen.has(e.to))continue;const r=region(s,e.to);if(r.owner!==owner&&!isWar(s,owner,r.owner)||e.sea&&s.grandMap&&!canEmbark(s,unit,region(s,id),r))continue;seen.add(e.to);queue.push([e.to,first||e.to])}}
   return null;
 }
 
@@ -511,7 +511,7 @@ export function aiTurn(s,owner){
       }
     }
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y)-(s.grandMap?(r.port?12:0)+(r.terrain==='urban'?15:0)+(r.road?4:0):0)})).sort((x,y)=>x.d-y.d);
-    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const destination=region(s,step),defenderOwner=destination.owner,report=destination.owner!==owner?latestRecon(s,owner,step):null;
+    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner,a);if(step&&step!==a.region){const destination=region(s,step),defenderOwner=destination.owner,report=destination.owner!==owner?latestRecon(s,owner,step):null;
       const reconWindow=s.year>=-48&&s.month%3===0,investigate=((s.seed+owner.length+a.id.length+s.month)%5)!==0;
       const prior=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/(s.grandMap?1:Math.max(1,s.regions.filter(x=>x.owner===defenderOwner).length)):0;
       if(destination.owner!==owner&&(!report||report.age>5)&&reconWindow&&investigate){
