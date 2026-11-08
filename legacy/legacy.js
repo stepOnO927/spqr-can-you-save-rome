@@ -3,7 +3,7 @@ import {PETITIONS,decidePetition,availablePetitions} from './civic.js?v=7';
 import {ARTIFACTS} from './museum.js?v=3';
 import {DRIVERS,startRace,settleRace} from './race.js?v=5';
 import {ACTIVITIES,resolveActivity} from './activities.js?v=5';
-import {newGrandGame} from '../engine.js?v=126';
+import {newGrandGame} from '../engine.js?v=127';
 import {stageHandoff} from '../view-handoff.js';
 import {achievementDefinition} from '../achievement-system.js?v=5';
 import {archivePanelHtml} from './archive-ui.js?v=2';

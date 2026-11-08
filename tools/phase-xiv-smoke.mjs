@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {newGrandGame,proposeKnowledgeSale,proposeKnowledgePurchase} from '../engine.js';
+import {newGrandGame,proposeKnowledgeSale,proposeKnowledgePurchase,proposeKnowledgeExchange} from '../engine.js';
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1440,height:900}});
@@ -131,6 +131,26 @@ try{
   assert.equal(await page.locator('[data-accept-purchase-buyer="caesar"]').count(),1);
   await page.locator('[data-accept-purchase-buyer="caesar"]').click();
   assert.equal(await page.locator('[data-accept-purchase-buyer="caesar"]').count(),0);
+  const exchange=newGrandGame('egypt');exchange.relations['caesar:egypt']=40;exchange.factions.caesar.treasury=100;
+  exchange.development.caesar.knownIdeas.push('legion-training');exchange.development.egypt.knownIdeas.push('civic-education');
+  assert.equal(proposeKnowledgeExchange(exchange,'caesar','egypt','idea','legion-training','idea','civic-education').ok,true);
+  for(const language of ['en','zh']){
+    await page.evaluate(value=>localStorage.setItem('spqr-lang',value),language);
+    await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+    await page.locator('#entry-file').setInputFiles({name:`exchange-${language}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exchange))});
+    await page.locator('[data-tab="development"]').click();
+    const row=page.locator('.dev-build-row').filter({has:page.locator('[data-accept-exchange-request]')});
+    assert.match(await row.innerText(),language==='zh'?/凯撒[\s\S]*军团战场训练[\s\S]*公民教育/:/Caesar[\s\S]*Legion Field Training[\s\S]*Civic Education/);
+    if(language==='zh')await page.locator('[data-decline-exchange-request]').click();
+    else await page.locator('[data-accept-exchange-request]').click();
+    assert.equal(await page.locator('[data-accept-exchange-request]').count(),0);
+  }
+  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),exchange);
+  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+  await page.locator('#development').click();
+  assert.equal(await page.locator('[data-accept-exchange-request]').count(),1);
+  await page.locator('[data-accept-exchange-request]').click();
+  assert.equal(await page.locator('[data-accept-exchange-request]').count(),0);
   assert.deepEqual(errors,[]);
-  console.log('Phase XIV browser smoke passed: research, adoption, construction and consent-based knowledge sales and purchases in both languages.');
+  console.log('Phase XIV browser smoke passed: research, adoption, construction and consent-based knowledge sales, purchases and exchanges in both languages.');
 }finally{await browser.close()}
