@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {newGrandGame,proposeKnowledgeSale} from '../engine.js';
+import {newGrandGame,proposeKnowledgeSale,proposeKnowledgePurchase} from '../engine.js';
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1440,height:900}});
@@ -112,6 +112,25 @@ try{
   assert.equal(await page.locator('[data-accept-offer-seller="egypt"]').count(),1);
   await page.locator('[data-accept-offer-seller="egypt"]').click();
   assert.equal(await page.locator('[data-accept-offer-seller="egypt"]').count(),0);
+  const requested=newGrandGame('egypt');requested.relations['caesar:egypt']=40;requested.factions.caesar.treasury=200;
+  assert.equal(proposeKnowledgePurchase(requested,'caesar','egypt','material','water-control').ok,true);
+  for(const language of ['en','zh']){
+    await page.evaluate(value=>localStorage.setItem('spqr-lang',value),language);
+    await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+    await page.locator('#entry-file').setInputFiles({name:`request-${language}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(requested))});
+    await page.locator('[data-tab="development"]').click();
+    const request=page.locator('.dev-build-row').filter({has:page.locator('[data-accept-purchase-buyer="caesar"]')});
+    assert.match(await request.innerText(),language==='zh'?/凯撒.*请求购买己方知识/:/Caesar.*requests your knowledge/);
+    if(language==='zh')await page.locator('[data-decline-purchase-buyer="caesar"]').click();
+    else await page.locator('[data-accept-purchase-buyer="caesar"]').click();
+    assert.equal(await page.locator('[data-accept-purchase-buyer="caesar"]').count(),0);
+  }
+  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),requested);
+  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+  await page.locator('#development').click();
+  assert.equal(await page.locator('[data-accept-purchase-buyer="caesar"]').count(),1);
+  await page.locator('[data-accept-purchase-buyer="caesar"]').click();
+  assert.equal(await page.locator('[data-accept-purchase-buyer="caesar"]').count(),0);
   assert.deepEqual(errors,[]);
-  console.log('Phase XIV browser smoke passed: research, adoption, ancestral rites, conflicting-idea replacement, construction and consent-based knowledge offers in both languages.');
+  console.log('Phase XIV browser smoke passed: research, adoption, construction and consent-based knowledge sales and purchases in both languages.');
 }finally{await browser.close()}
