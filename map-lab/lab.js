@@ -57,7 +57,7 @@ let leaderMarkers=[];let factionSection='diplomacy';
 // These accessible theater markers do not assert geographic borders or exact capitals.
 for(const id of ['galatia','bosporus']){const el=document.createElement('button');el.className='outlying-theater';el.dataset.theater=id;el.textContent=n(region(state,id).name);el.title=lang==='zh'?'模拟战区，历史边界未绘制':'Simulated theater; historical borders not drawn';el.addEventListener('click',e=>{e.stopPropagation();renderArmies();showRegion(region(state,id))});marker(el,namedPoints[id],'top',[-24,18])}
 let activeArmy=null, activeBattle=null, activeFaction=null, activeInfo=null, previewDestination='', armyMarkers=[],battleMarkers=[],reachMarkers=[];
-function updateControl(){
+function updateControl(){const unavailable=['religion','satisfaction','infrastructure'].includes(currentMapMode);
  if(!map.getLayer('control'))return;
  const pairs=[];for(const f of historical.features){const ids=f.properties.regions||[];if(!ids.length)continue;const regions=ids.map(id=>state.regions.find(r=>r.id===id)).filter(Boolean),owners=[...new Set(regions.map(r=>reportedControl(state,state.player,r.id)?.owner||'shared'))],own=regions.filter(r=>r.owner===state.player);let color=identity(owners.length>1?'shared':owners[0]).map;
  if(currentMapMode==='terrain'||unavailable)color='#9f987a';
