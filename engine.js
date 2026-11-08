@@ -211,8 +211,9 @@ const courtReports={
 };
 const letterMonths={senate:2,caesar:2,egypt:4,egypt_claimant:4,numidia:3,mauretania:4,armenia:5,parthia:5,parthia_claimant:5,galatia:4,bosporus:5};
 export function sendInquiry(s,actor,target,subject='leaders'){
- if(!['leaders','successor','availability','representative','clashes'].includes(subject)||subject==='clashes'&&!['egypt','parthia'].includes(target))return {ok:false,reason:'subject'};
+ if(!['leaders','successor','availability','representative','clashes','peace'].includes(subject)||subject==='clashes'&&!['egypt','parthia'].includes(target))return {ok:false,reason:'subject'};
  if(actor===target||!s.factions[actor]||!courtReports[target]||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
+ if(subject==='peace'&&!isWar(s,actor,target))return {ok:false,reason:'unavailable'};
  if(target.endsWith('_claimant')&&!s.regions.some(r=>reportedControl(s,actor,r.id)?.owner===target)&&!Object.keys(s.knowledge[actor]?.[target]?.sightings||{}).length&&!s.knowledge[actor]?.[target]?.reportedLeaders?.length)return {ok:false,reason:'unavailable'};
  if(s.factions[actor].treasury<3)return {ok:false,reason:'treasury'};
  if((s.inquiries||[]).some(x=>x.actor===actor&&x.target===target&&x.status==='pending'))return {ok:false,reason:'pending'};
@@ -232,13 +233,16 @@ function resolveInquiries(s){
    const roll=rnd(s),hostile=isWar(s,letter.actor,letter.target),rel=relation(s,letter.actor,letter.target);
    const sealed={status:'answered',year:s.year,month:s.month};
    if(roll<.18||!s.regions.some(r=>r.owner===letter.target)||(letter.target.endsWith('_claimant')&&(letter.targetGeneration??0)!==(s.world.dynasticGenerations?.[letter.target]||0)))sealed.status='no_reply';
-   else if(roll<(hostile?.65:rel<0?.46:.34))sealed.status='refused';
+   else if(letter.subject==='peace'&&!hostile)sealed.status='no_reply';
+   else if(roll<(hostile?.65:rel<0?.46:.34)||letter.subject==='peace'&&estimatedStrength(s,letter.target,letter.actor)<strength(s,letter.target)*.6&&s.factions[letter.target].stability>35)sealed.status='refused';
    else{
    const current=s.world.leadership[letter.target]||[],opening=OPENING_LEADERS[letter.target]||[],claimants=s.world.claimants[letter.target]||[],subject=letter.subject||'leaders';
    const stated=hostile&&opening.some(id=>!current.includes(id))?opening:current;
    const plan=subject==='successor'?validSuccessionPlan(s,letter.target):null;
    const disclose=subject==='successor'&&!hostile&&rel>=30&&roll>=.75&&!claimants.length&&plan&&CHARACTER_CATALOG[plan];
-   if(subject==='successor'){
+   if(subject==='peace'){
+    sealed.claim=['Peace accepted; the war has ended.','议和获接受；战争结束。'];
+   }else if(subject==='successor'){
     sealed.claim=disclose?[`The court names ${CHARACTER_CATALOG[plan].name[0]} as a possible successor.`,`宫廷称${CHARACTER_CATALOG[plan].name[1]}为可能的继任人选。`]:['The reply did not name a successor.','回信没有指明继任人选。'];
     sealed.report={kind:'succession',value:disclose?plan:'unknown'};
    }else if(subject==='clashes'){
@@ -277,9 +281,12 @@ function resolveInquiries(s){
   // use the same rule without changing their already-composed response.
   let reply=letter.sealed;
   if(reply.status!=='no_reply'&&rnd(s)<(isWar(s,letter.actor,letter.target) ? 0.18 : 0.08))reply={status:'no_reply'};
+  // A provisional acceptance only takes effect when it reaches the sender.
+  // Circumstances may change during the return journey.
+  if(letter.subject==='peace'&&reply.status==='answered'&&!diplomacy(s,letter.actor,letter.target,'peace'))reply={status:'no_reply'};
   letter.status=reply.status;delete letter.sealed;
   if(reply.status==='no_reply'){if(letter.actor===s.player)log(s,`No reply has arrived from ${FACTIONS[letter.target].short[0]}; the letter or answer may have been lost.`,`来自${FACTIONS[letter.target].short[1]}的回信尚未到达；书信或回信可能遗失。`)}
-  else if(reply.status==='refused'){if(letter.actor===s.player)log(s,`A reply from ${FACTIONS[letter.target].short[0]} declined to answer.`,`${FACTIONS[letter.target].short[1]}回信表示不愿回答。`)}
+  else if(reply.status==='refused'){if(letter.actor===s.player)log(s,letter.subject==='peace'?`A reply from ${FACTIONS[letter.target].short[0]} rejected the peace offer.`:`A reply from ${FACTIONS[letter.target].short[0]} declined to answer.`,letter.subject==='peace'?`${FACTIONS[letter.target].short[1]}回信拒绝议和。`:`${FACTIONS[letter.target].short[1]}回信表示不愿回答。`)}
   else{letter.claim=reply.claim;letter.responseYear=reply.year;letter.responseMonth=reply.month;letter.reportYear=s.year;letter.reportMonth=s.month;
    if(reply.report)addReport(s,letter.actor,letter.target,{...reply.report,source:'official',confidence:'unverified',reliability:'unknown',observationYear:reply.year,observationMonth:reply.month});
    if(letter.actor===s.player)log(s,`An unverified official response arrived from ${FACTIONS[letter.target].short[0]}.`,`收到${FACTIONS[letter.target].short[1]}的官方答复，内容尚未经独立核实。`);
@@ -453,7 +460,7 @@ function aiTurn(s,owner){
   if(owner!=='rebels' && s.month===12){
     const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);
     const internal=internalOpponent(enemy);
-    if(enemy && !internal && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=estimatedStrength(s,owner,enemy)*.6)diplomacy(s,owner,enemy,'peace');
+    if(enemy && !internal && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=estimatedStrength(s,owner,enemy)*.6)sendInquiry(s,owner,enemy,'peace');
     if(!enemy && f.treasury>35){const neighbor=reportedNeighbors().find(r=>r.owner!==owner&&r.owner!=='rebels'&&relation(s,owner,r.owner)>=0&&!isAllied(s,owner,r.owner));if(neighbor && rnd(s)<.2)diplomacy(s,owner,neighbor.owner,'improve')}
   }
   if(owner!=='rebels' && s.month%6===0 && f.treasury>40 && f.food>10 && strength(s,owner)>2000){

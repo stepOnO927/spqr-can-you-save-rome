@@ -5,6 +5,31 @@ import historical from './historical-territories.js';
 import {REGIONS} from './data.js';
 import {identity,factionMark} from './identity.js';
 
+test('peace offers remain in transit across saves and only end war on delivery',()=>{
+ let s=newGame('caesar');for(const a of s.armies){a.move=null;a.siege=null;if(a.owner==='senate')a.men=1}
+ const treasury=s.factions.caesar.treasury;
+ assert.equal(sendInquiry(s,'caesar','senate','peace').ok,true);assert.equal(s.factions.caesar.treasury,treasury-3);
+ assert.equal(sendInquiry(s,'caesar','senate','leaders').reason,'pending');
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.8&&q<.9});
+ s.seed=seed;tick(s);assert.equal(s.inquiries[0].status,'pending');assert.equal(s.inquiries[0].sealed.status,'answered');assert.equal(s.inquiries[0].claim,undefined);assert.ok(isWar(s,'caesar','senate'));
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));for(const a of s.armies){a.move=null;a.siege=null}s.seed=seed;tick(s);
+ assert.equal(s.inquiries[0].status,'answered');assert.equal(isWar(s,'caesar','senate'),false);assert.match(s.inquiries[0].claim[0],/war has ended/);
+ assert.equal(sendInquiry(s,'caesar','senate','peace').ok,false);
+});
+
+test('lost or rejected peace letters do not end the war or reveal a sealed response',()=>{
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.8&&q<.9});
+ for(const outcome of ['refused','lost']){
+  let s=newGame('caesar');for(const a of s.armies){a.move=null;a.siege=null;if(outcome==='lost'&&a.owner==='senate')a.men=1}
+  if(outcome==='refused')for(const a of s.armies)if(a.owner==='senate')a.men=100000;
+  assert.equal(sendInquiry(s,'caesar','senate','peace').ok,true);s.seed=seed;tick(s);
+  assert.equal(s.inquiries[0].status,'pending');assert.equal(s.inquiries[0].claim,undefined);assert.ok(isWar(s,'caesar','senate'));
+  assert.equal(s.inquiries[0].sealed.status,outcome==='refused'?'refused':'answered');
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));for(const a of s.armies){a.move=null;a.siege=null}
+  s.seed=outcome==='lost'?Array.from({length:10000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296<.1):seed;tick(s);assert.equal(s.inquiries[0].status,outcome==='lost'?'no_reply':'refused');assert.ok(isWar(s,'caesar','senate'));
+ }
+});
+
 test('49 BCE opens with opposing Roman commands and independent Egypt',()=>{
   const s=newGame();
   assert.equal(s.year,-49);assert.equal(s.month,1);
