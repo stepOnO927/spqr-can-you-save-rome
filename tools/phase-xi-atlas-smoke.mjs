@@ -5,7 +5,7 @@ import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox']});
-const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
+const page=await browser.newPage({viewport:{width:Number(process.env.SPQR_ATLAS_WIDTH||1440),height:Number(process.env.SPQR_ATLAS_HEIGHT||900)}}),errors=[];
 page.on('pageerror',e=>errors.push(e.message));
 try{
  const mapMock=`window.maplibregl={Map:class{constructor(){this.sources={};this.layers=new Set(['control','relief']);this.canvas=document.createElement('canvas')}on(name,layer,callback){if(name==='load')setTimeout(typeof layer==='function'?layer:callback,0);return this}addSource(id,data){this.sources[id]={...data,setData(x){this.data=x}}}getSource(id){return this.sources[id]}addLayer(layer){this.layers.add(layer.id)}getLayer(id){return this.layers.has(id)}setPaintProperty(){}setLayoutProperty(){}getCanvas(){return this.canvas}getZoom(){return 5.45}flyTo(){}zoomIn(){}zoomOut(){}queryRenderedFeatures(){return []}},Marker:class{constructor({element}){this.element=element}setLngLat(){return this}addTo(){document.querySelector('#map').append(this.element);return this}remove(){this.element.remove()}}}`;
@@ -27,6 +27,7 @@ try{
  assert.ok(await page.locator('.prebattle-intel').count());
  assert.match(await page.locator('.prebattle-intel').innerText(),/5,200/);
  assert.match(await page.locator('.prebattle-intel').innerText(),/未知/);
+ if(process.env.SPQR_ATLAS_PREBATTLE_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_PREBATTLE_SCREENSHOT});
  await page.locator('#screen-scouts').click();
  await page.locator('#advance').click();
  assert.match(await page.locator('#command-detail').innerText(),/最新报告|斥候/);
@@ -35,6 +36,7 @@ try{
  await page.locator('#resources-help').click();
  await page.locator('#guide-next').click();
  assert.equal(await page.locator('#guide').isVisible(),false);
+ if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await page.locator('#map-mode').selectOption('military');
  assert.ok(await page.locator('.density-counter').count());
  assert.match(await page.locator('.legend').innerText(),/己方兵力/);
@@ -47,19 +49,21 @@ try{
  assert.match(await page.locator('.legend').innerText(),/Friendly troops/);
  assert.match(await page.locator('#map-mode-note').innerText(),/ivory ◎ counters/);
  assert.equal(await page.locator('.legend .swatch').count(),0);
+ if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await page.locator('#guide-restart').click();await page.locator('#roman-faction').selectOption('senate');await page.locator('#difficulty').selectOption('standard');await page.locator('#start-free').click();
  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('grand-campaign')),true,'free play must retain the grand campaign');
  assert.equal(await page.locator('.grand-site').count(),120);
  assert.equal(await page.locator('.city-marker').first().isVisible(),false,'duplicate base-map city labels must be hidden');
- await page.locator('#brief-toggle').click();await page.locator('[data-army="italy"]').click();await page.locator('#lab-orders select').selectOption('cisalpine');await page.locator('#lab-orders button').click();
+ if(page.viewportSize().width>600)await page.locator('#brief-toggle').click();await page.locator('[data-army="italy"]').click();await page.locator('#lab-orders select').selectOption('cisalpine');await page.locator('#lab-orders button').click();
  assert.match(await page.locator('.prebattle-intel').innerText(),/Unknown/);
  await page.locator('#attack-anyway').click();await page.locator('#advance').click();
  await page.locator('#brief-toggle').click();await page.locator('#recent-battle').click();
  assert.match(await page.locator('.after-action').innerText(),/AFTER-ACTION REVIEW/);
  assert.match(await page.locator('.after-action').innerText(),/Friendly casualties/);
+ if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await page.locator('#save').click();
  await page.evaluate(()=>{const key='spqr-save-1',s=JSON.parse(localStorage.getItem(key));const base={owner:'senate',armyId:'italy',regionId:'cisalpine',year:s.year,month:s.month,observationYear:s.year,observationMonth:s.month,arrivalYear:s.year,arrivalMonth:s.month,min:1000,max:3000};s.militaryRecon=[{...base,source:'<img src=x onerror=window.__injected=true>'},{...base,source:'scouts'}];localStorage.setItem(key,JSON.stringify(s))});
- await page.locator('#load').click();await page.locator('#brief-toggle').click();await page.locator('[data-army="italy"]').click();
+ await page.locator('#load').click();if(page.viewportSize().width>600)await page.locator('#brief-toggle').click();await page.locator('[data-army="italy"]').click();
  assert.equal(await page.locator('.war-council img').count(),0);
  assert.equal(await page.evaluate(()=>window.__injected),undefined);
  await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});

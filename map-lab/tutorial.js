@@ -52,7 +52,16 @@ export function createTutorial({language,onReset,onMode,skipInitial=false}){
  const scenario=()=>faction==='senate'?{army:'italy',destination:'cisalpine',city:'RAVENNA'}:{army:'xiii',destination:'italiaN',city:'ARIMINUM'};
  const targets=()=>faction==='senate'?['',`#map [data-army="${scenario().army}"]`,'#command-detail','#lab-orders select','#lab-orders button','.prebattle-screen','#advance',`#map [data-city="${scenario().city}"]`,'#resources-help','']:['',`#map [data-army="${scenario().army}"]`,'#command-detail','#lab-orders select','#lab-orders button','#advance','#recent-battle',`#map [data-city="${scenario().city}"]`,'#resources-help',''];
  function unmark(){if(previous){previous.classList.remove('guide-highlight');previous=null}arrow.hidden=true}
- function place(){if(!running)return;const selector=targets()[step],target=selector?$(selector):null;if(target!==previous){unmark();previous=target;if(target){target.classList.add('guide-highlight');target.scrollIntoView({block:'nearest',inline:'nearest'})}}if(target){const r=target.getBoundingClientRect();if(r.width&&r.height&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth){arrow.hidden=false;arrow.style.left=Math.max(12,Math.min(innerWidth-32,r.left+r.width/2-10))+'px';arrow.style.top=Math.max(72,r.top-31)+'px'}else arrow.hidden=true}}
+ function place(){
+  if(!running)return;
+  const selector=targets()[step],target=selector?$(selector):null;
+  if(target!==previous){unmark();previous=target;if(target){target.classList.add('guide-highlight');target.scrollIntoView({block:'nearest',inline:'nearest'})}}
+  const r=target?.getBoundingClientRect();
+  if(innerWidth<=600){const guideAbove=!!r&&r.top>innerHeight*.48;box.style.top=guideAbove?'64px':'auto';box.style.bottom=guideAbove?'auto':'12px'}
+  else{box.style.top='';box.style.bottom=''}
+  if(r?.width&&r.height&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth){arrow.hidden=false;arrow.style.left=Math.max(12,Math.min(innerWidth-32,r.left+r.width/2-10))+'px';arrow.style.top=Math.max(72,r.top-31)+'px'}
+  else arrow.hidden=true;
+ }
  function render(){if(!running)return;const c=data();box.hidden=false;document.body.classList.toggle('guide-army-step',step===1);$('#guide-label').textContent=`${c.step} · ${step+1}/10`;$('#guide-title').textContent=c.steps[step][0];$('#guide-body').textContent=c.steps[step][1];$('#guide-skip').textContent=c.skip;const next=$('#guide-next');next.hidden=step!==0&&step!==2&&step!==9&&!(faction==='senate'&&step===6);next.textContent=step===9?c.finish:c.continue;$('#guide-feedback').textContent='';place()}
  function setStep(next){step=next;unmark();render()}
  function stop(){running=false;box.hidden=true;document.body.classList.remove('guide-army-step');unmark();if(pulseTimer){clearInterval(pulseTimer);pulseTimer=null}}

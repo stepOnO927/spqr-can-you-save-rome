@@ -75,3 +75,16 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
 .ending-chronicle{width:min(920px,90vw);text-align:left}.ending-chronicle summary{padding:9px 12px;border:1px solid #c5a86c;cursor:pointer}.ending-chronicle>div{max-height:25vh;overflow:auto;padding:8px 14px;background:#e9dbc0;color:#322c23}.ending-chronicle p{margin:5px 0;font:13px/1.4 Arial}
 .war-council{margin:12px 0;padding:12px;border:1px solid #a68b65;background:rgba(237,223,192,.94);color:#322b22}.war-council h3{margin:0 0 6px;font:700 14px Georgia,serif;letter-spacing:.08em}.war-council p{font-size:12px;line-height:1.45}.war-council button{margin:3px;padding:5px 7px}.war-council details{margin-top:7px;font-size:12px}.intel-comparison{margin:9px 0;padding:8px;background:#e7ddc5;font-size:12px}.after-action h4{margin:10px 0 3px;font:700 12px Georgia,serif}
 .recon-map-mark{width:28px;height:28px;border:2px solid #efe0b8;border-radius:50%;background:#394b48;color:#fff2cb;font:700 20px Georgia,serif;box-shadow:0 2px 7px #171d1b99;cursor:pointer}
+
+@media(max-width:600px){
+ .brief{top:72px;left:12px;width:min(320px,calc(100vw - 24px));max-height:45vh;z-index:7}
+ .brief-toggle{top:72px;left:min(332px,calc(100vw - 37px));z-index:8}
+ .brief-toggle:has(+ .brief.collapsed){left:12px}
+ .selection{left:12px;right:12px;bottom:12px;width:auto;min-height:0;max-height:42vh;padding:12px 14px;z-index:6}
+ .selection h2{font-size:23px}
+ .map-controls{top:112px;right:12px}
+ .file-transfer{top:60px;right:52px;gap:2px;max-width:calc(100vw - 110px);overflow-x:auto}
+ .file-transfer .hud-button{font-size:8px;padding:4px}
+ .credits{left:12px;right:12px;bottom:3px;max-width:none;text-align:center;font-size:7px}
+ #guide{top:64px;bottom:auto;max-height:25vh;overflow:auto}
+}

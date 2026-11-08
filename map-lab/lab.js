@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js';
 import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=6';
+import {physicalStyle} from './physical-style.js?v=7';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=102';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js?v=11';
 import {FACTIONS} from '../data.js?v=9';
@@ -24,7 +24,7 @@ import {identity,factionMark} from '../identity.js?v=2';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=15';
 import {createCharacterUI} from './character-ui.js?v=85';
 import {reportedArmies} from '../character-system.js?v=54';
-import {createTutorial} from './tutorial.js?v=6';
+import {createTutorial} from './tutorial.js?v=7';
 import {friendlyPersonnelInTheater} from './personnel.js?v=1';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from '../reports-ui.js?v=2';
 import {objectiveDefinitions,eventText,unreadCount,markRead,latestCritical,campaignTurn} from '../campaign-reports.js';
@@ -266,6 +266,7 @@ function renderHud(){
  atlasFocus.textContent=lang==='zh'?(document.body.classList.contains('atlas-focus')?'返回':'观图'):(document.body.classList.contains('atlas-focus')?'BACK':'MAP');atlasFocus.title=lang==='zh'?'切换地图专注视图':'Toggle map focus view';
  settingsButton.textContent=lang==='zh'?'设置':'SETTINGS';
  navalButton.textContent=lang==='zh'?'海军':'NAVY';
+ const legacyLink=document.querySelector('.file-transfer a');if(legacyLink)legacyLink.textContent=lang==='zh'?'罗马遗产':'LEGACY HUB';
  if(currentMapMode==='terrain')document.querySelector('#map-mode-note').textContent=lang==='zh'?'浅色陆地、青色浅海与较深海域分别着色；可单独开启山体光影。':'Land, coastal shelf and deeper sea have distinct colors; hill shading can be toggled separately.';
  document.querySelectorAll('.grand-site').forEach(el=>{const site=GRAND_SITES.find(x=>x.id===el.dataset.site);if(site){el.textContent=n(site.site);const owner=region(state,site.id)?.owner;el.style.setProperty('--site-accent',identity(owner).accent);el.title=n(site.site)+' · '+n(FACTIONS[owner]?.short||['Unknown','未知'])}});
  if(state.grandMap&&currentMapMode==='supply')document.querySelector('#map-mode-note').textContent=lang==='zh'?'绿色表示与己方补给源连通；黄褐色表示较弱补给。补给影响战斗、士气与损耗。':'Green marks stronger links to friendly supply sources; ochre marks weaker supply. Supply affects combat, morale and attrition.';
@@ -378,13 +379,16 @@ if(new URLSearchParams(location.search).has('perf')){let count=0,start=performan
 
 function saveSlot(action){const choice=document.querySelector('#save-slot').value;if(!['1','2','3'].includes(choice))return;const key=`spqr-save-${choice}`;if(action==='save'){localStorage.setItem(key,JSON.stringify(state));status.textContent=lang==='zh'?`已保存至栏位 ${choice}`:`Saved to slot ${choice}`;status.style.display='block';return}const raw=localStorage.getItem(key);if(!raw){status.textContent=lang==='zh'?'此存档栏为空。':'This slot is empty.';status.style.display='block';return}try{const saved=importCampaign(raw);if(!['caesar','senate'].includes(saved.player))throw Error('Not a Roman campaign');setPlaying(false);tutorial.stop();document.querySelector('#start-overlay').hidden=true;state=saved;syncFinalizedProfile();activeInfo=null;activeFaction=null;activeBattle=null;activeArmy=null;previewDestination='';clearReach();battleMarkers.forEach(m=>m.remove());battleMarkers=[];renderArmies();renderHud();inspect(lang==='zh'?'存档已读取':'Campaign loaded',lang==='zh'?'已恢复战役状态。':'Campaign state restored.');status.style.display='none'}catch(e){status.textContent=lang==='zh'?'存档无法读取。':'Could not load this save.';status.style.display='block'}}
 document.querySelector('#save').onclick=()=>saveSlot('save');document.querySelector('#load').onclick=()=>saveSlot('load');
-const transfer=document.createElement('div');transfer.className='file-transfer';transfer.innerHTML=`<button id="download-save" class="hud-button">↓ JSON</button><button id="upload-save" class="hud-button">↑ JSON</button><a class="hud-button" href="../legacy/">${lang==='zh'?'罗马遗产':'LEGACY HUB'}</a><input id="upload-save-file" type="file" accept=".json,application/json" hidden>`;document.querySelector('.mast').insertBefore(transfer,document.querySelector('#capture'));
+const transfer=document.createElement('div');transfer.className='file-transfer';transfer.innerHTML=`<button id="download-save" class="hud-button">↓ JSON</button><button id="upload-save" class="hud-button">↑ JSON</button><a class="hud-button" href="../legacy/">${lang==='zh'?'罗马遗产':'LEGACY HUB'}</a><input id="upload-save-file" type="file" accept=".json,application/json" hidden>`;document.body.append(transfer);
 document.querySelector('#download-save').onclick=()=>downloadCampaign(state);document.querySelector('#upload-save').onclick=()=>document.querySelector('#upload-save-file').click();document.querySelector('#upload-save-file').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>5_000_000)throw Error('size');const loaded=importCampaign(await file.text());setPlaying(false);tutorial.stop();document.querySelector('#start-overlay').hidden=true;state=loaded;syncFinalizedProfile();activeArmy=null;activeBattle=null;activeInfo=null;previewDestination='';renderArmies();renderHud();inspect(lang==='zh'?'上传成功':'Save imported',lang==='zh'?'战役已恢复。':'Campaign restored.')}catch{status.style.display='block';status.textContent=lang==='zh'?'存档文件无法读取。':'Could not import the save file.'}};
 
 document.querySelector('#map-mode').onchange=e=>{currentMapMode=e.target.value;renderArmies();renderHud()};
 document.querySelector('#objective-toggle').onclick=()=>{objectivesOpen=!objectivesOpen;renderHud()};
 
 document.querySelector('#brief-toggle').onclick=()=>{const b=document.querySelector('.brief');b.classList.toggle('collapsed');document.querySelector('#brief-toggle').textContent=b.classList.contains('collapsed')?'›':'‹';document.querySelector('#brief-toggle').setAttribute('aria-expanded',String(!b.classList.contains('collapsed')))};
+const compactAtlas=matchMedia('(max-width:600px)');
+function foldBriefForCompact(){if(!compactAtlas.matches)return;const brief=document.querySelector('.brief'),toggle=document.querySelector('#brief-toggle');brief.classList.add('collapsed');toggle.textContent='›';toggle.setAttribute('aria-expanded','false')}
+foldBriefForCompact();compactAtlas.addEventListener('change',foldBriefForCompact);
 
 document.querySelector('#factions').onclick=factionDirectory;
 function resourceHelp(id){

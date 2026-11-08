@@ -11,7 +11,7 @@ assert.ok(physicalStyle.layers.some(layer=>layer.id==='depth-200'&&layer.source=
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const page=await browser.newPage({viewport:{width:1440,height:900}});
+const page=await browser.newPage({viewport:{width:Number(process.env.SPQR_ATLAS_WIDTH||1440),height:Number(process.env.SPQR_ATLAS_HEIGHT||900)}});
 const errors=[];
 const external=[];
 const terrainRequests=[];
@@ -42,17 +42,30 @@ try{
  assert.equal(external.includes('s3.amazonaws.com'),false,'Overview terrain unexpectedly needed the network');
  assert.ok(external.every(host=>host==='s3.amazonaws.com'||host.endsWith('googleapis.com')||host.endsWith('gstatic.com')),`Unexpected external dependency: ${external.join(', ')}`);
  await page.locator('#start-free').click();
+ if(page.viewportSize().width<=600){
+  assert.equal(await page.locator('#brief-toggle').getAttribute('aria-expanded'),'false','mobile map should open with its overview folded');
+  assert.equal(await page.locator('.brief').isVisible(),false);
+  assert.equal(await page.locator('#download-save').isVisible(),true,'mobile save export should not be clipped by the top menu');
+  assert.equal(await page.locator('#upload-save').isVisible(),true,'mobile save import should not be clipped by the top menu');
+  const sheet=await page.locator('.selection').boundingBox();
+  assert.ok(sheet.width>=page.viewportSize().width-30&&sheet.x>=0&&sheet.x+sheet.width<=page.viewportSize().width,'mobile command sheet should span the usable width');
+  await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),true);
+  await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),false);
+ }
  assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'false','Hill shading should start disabled');
  await page.locator('#relief-toggle').click();
  assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'true');
  await page.locator('#relief-toggle').click();
  assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'false');
+ if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await page.locator('#map-mode').selectOption('terrain');
  const firstLanguage=await page.locator('html').getAttribute('lang');
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/近岸浅海（约0–200米）/:/Coastal shelf \(about 0–200 m\)/);
  await page.locator('#language').click();
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Coastal shelf \(about 0–200 m\)/:/近岸浅海（约0–200米）/);
+ assert.match(await page.locator('.file-transfer a').innerText(),firstLanguage==='zh-CN'?/LEGACY HUB/:/罗马遗产/);
  await page.locator('#map-mode').selectOption('political');
+ if(page.viewportSize().width<=600){await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),false)}
  if(process.env.SPQR_ATLAS_OVERVIEW_SCREENSHOT){await page.waitForTimeout(600);await page.screenshot({path:process.env.SPQR_ATLAS_OVERVIEW_SCREENSHOT})}
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
  assert.ok(terrainRequests.some(path=>path.includes('/terrain/6/')),'Zoom 6 did not use bundled terrain');
