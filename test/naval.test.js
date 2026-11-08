@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn} from '../engine.js';
-import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,accessibleFleet,supportPirates,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue} from '../naval.js';
+import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue} from '../naval.js';
 import {tradeCard} from '../map-lab/naval-ui.js';
 import {armySupply,supplyNetwork} from '../grand-operations.js';
 import {nationalBudget} from '../national-budget.js';
@@ -84,6 +84,31 @@ test('sea transport needs an idle fleet and arrives with its vessels',()=>{
 });
 test('naval contact produces uncertain dated enemy intelligence and a battle report',()=>{
  const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.owner==='senate');assert.deepEqual(reportedHostileFleets(s,'senate'),[]);assert.equal(orderFleet(s,'senate',fleet.id,'intercept','adriatic').ok,true);advanceNaval(s);assert.ok(s.naval.reports.some(r=>r.kind==='battle'));const sighting=reportedHostileFleets(s,'senate').find(r=>r.owner==='caesar');assert.ok(sighting);assert.equal(sighting.month,s.month);assert.ok(sighting.range[0]<sighting.range[1])
+});
+test('naval reconnaissance can miss, observe approximately or evade a real encounter',()=>{
+ const run=seed=>{const s=newGrandGame('senate'),scout=s.naval.fleets.find(f=>f.id==='senate-adriatic'),messages=[];scout.ships={light:3};scout.sailors=240;s.seed=seed;
+  assert.deepEqual(reportedHostileFleets(s,'senate'),[]);assert.equal(orderFleet(s,'senate',scout.id,'recon','adriatic').ok,true);advanceNaval(s,(_state,en,zh)=>messages.push({en,zh}));
+  return {s,scout,messages,sighting:reportedHostileFleets(s,'senate').find(r=>r.owner==='caesar'),battle:s.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(scout.id))}};
+ const missed=run(1400);assert.equal(missed.sighting,undefined);assert.equal(missed.battle,false);assert.equal(missed.scout.order,null);assert.ok(missed.scout.supply<100);
+ assert.ok(missed.messages.some(m=>/enemies may still be present/.test(m.en)&&/敌人仍可能在附近/.test(m.zh)));
+ const observed=run(1);assert.ok(observed.sighting);assert.equal(observed.battle,false);assert.equal(observed.sighting.source,'recon');assert.equal(observed.sighting.month,observed.s.month);assert.ok(observed.sighting.range[0]<observed.sighting.range[1]);
+ assert.ok(observed.messages.some(m=>/fleet remains at sea/i.test(m.en)&&/舰队仍在海上/.test(m.zh)));
+ assert.deepEqual(upgradeSave(JSON.parse(JSON.stringify(observed.s))).naval.intel.senate['caesar-adriatic'],observed.s.naval.intel.senate['caesar-adriatic']);
+ const engaged=run(3);assert.equal(engaged.battle,true);
+});
+test('neutral fleet sightings stay private to intelligence until a current war makes them hostile',()=>{
+ const s=newGrandGame('senate');s.naval.intel.senate={'egypt-grain':{owner:'egypt',zone:'alexandrian',year:s.year,month:s.month,source:'recon',range:[2,5],confidence:'medium'}};
+ assert.deepEqual(reportedHostileFleets(s,'senate'),[]);assert.equal(reportedNonHostileFleets(s,'senate')[0].id,'egypt-grain');
+ s.wars.push(['senate','egypt']);assert.equal(reportedHostileFleets(s,'senate')[0].id,'egypt-grain');assert.deepEqual(reportedNonHostileFleets(s,'senate'),[]);
+ s.month+=5;assert.deepEqual(reportedHostileFleets(s,'senate'),[]);assert.deepEqual(reportedNonHostileFleets(s,'senate'),[]);
+ s.naval.intel.senate['egypt-grain'].month=s.month+1;assert.deepEqual(reportedHostileFleets(s,'senate'),[]);
+});
+test('reconnaissance of a neutral fleet produces a dated non-hostile report in both languages',()=>{
+ const s=newGrandGame('senate'),scout=s.naval.fleets.find(f=>f.id==='senate-adriatic'),egypt=s.naval.fleets.find(f=>f.id==='egypt-grain'),messages=[];
+ scout.ships={light:3};scout.sailors=240;s.naval.fleets.find(f=>f.id==='caesar-adriatic').zone='ligurian';egypt.zone='adriatic';egypt.port=null;s.seed=1;
+ assert.equal(orderFleet(s,'senate',scout.id,'recon','adriatic').ok,true);advanceNaval(s,(_state,en,zh)=>messages.push({en,zh}));
+ assert.deepEqual(reportedHostileFleets(s,'senate'),[]);assert.equal(reportedNonHostileFleets(s,'senate')[0].id,'egypt-grain');
+ assert.ok(messages.some(m=>/non-hostile fleet/.test(m.en)&&/非交战舰队/.test(m.zh)));
 });
 test('Egyptian grain requires merchant shipping and transfers bounded food and payment',()=>{
  const s=newGrandGame('senate'),route=s.naval.routes.find(r=>r.id==='egypt-italy');s.factions.senate.food=0;s.factions.egypt.food=60;const before=s.factions.senate.treasury;advanceNaval(s);assert.equal(route.last.amount,4);assert.equal(s.factions.senate.food,4);assert.equal(s.factions.egypt.food,56);assert.equal(route.last.reason,'delivered');s.naval.fleets.find(f=>f.owner==='egypt').ships.merchant=0;s.factions.senate.food=0;advanceNaval(s);assert.equal(route.last.amount,0);assert.equal(route.last.reason,'merchant');assert.ok(s.factions.senate.treasury<=before)
