@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=5';
 import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js?v=2';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=10';
+import {physicalStyle} from './physical-style.js?v=11';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=124';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js?v=17';
 import {FACTIONS} from '../data.js?v=9';
@@ -84,8 +84,8 @@ let playing=false,speed=1,timer=null;
 const emit=(type,id,extra={})=>document.dispatchEvent(new CustomEvent('spqr:action',{detail:{type,id,...extra}}));
 const campaignDate=(year,month,language)=>language==='zh'?`公元${year<0?'前':'后'}${Math.abs(year)}年${month}月`:`${month}/${Math.abs(year)} ${year<0?'BCE':'CE'}`;
 const L={en:{army:'Army',morale:'Morale',experience:'Experience',location:'Location',supply:'Supply limit',food:'Faction food',status:'Status',ready:'Ready',marching:'Marching',siege:'Besieging',destination:'Choose destination',order:'ORDER MARCH',cancel:'CANCEL MARCH',months:'months',recruit:'Recruit',chronicle:'CHRONICLE',close:'Close',empty:'No dispatches yet.',marchFail:'This march is unavailable under current route or diplomacy rules.',month:'ADVANCE MONTH',treasury:'TREASURY',stability:'STABILITY',legitimacy:'LEGITIMACY',faction:'Command',loyalty:'Loyalty',terrain:'Terrain',tax:'Tax',fort:'Fortification',shared:'Shared historical outline; choose a theater:',soldiers:'soldiers',commander:'Commander',noBorder:'Historical boundary uncertain',inspect:'Inspect',foodLabel:'FOOD'},zh:{army:'军队',morale:'士气',experience:'经验',location:'位置',supply:'补给上限',food:'派系粮食',status:'状态',ready:'待命',marching:'行军中',siege:'围攻中',destination:'选择目的地',order:'下达行军令',cancel:'取消行军',months:'个月',recruit:'征召',chronicle:'战报',close:'关闭',empty:'暂无战报。',marchFail:'受路线或外交条件限制，无法行军。',month:'推进月份',treasury:'国库',stability:'稳定度',legitimacy:'合法性',faction:'指挥方',loyalty:'忠诚度',terrain:'地形',tax:'税收',fort:'防御工事',shared:'多个战区共用轮廓，请选择：',soldiers:'人',commander:'指挥官',noBorder:'历史边界不确定',inspect:'查看',foodLabel:'粮食'}};
-Object.assign(L.en,{hostile:'hostile',atlas:'CAMPAIGN ATLAS',title:'The Rubicon',subtitle:'and the Republic.',intro:'Italy stands between Caesar’s legions and the Senate. Explore the terrain, cities and commands of the opening campaign.',allegiance:'MILITARY ALLEGIANCE',caesar:'CAESARIAN',senate:'SENATORIAL',mixed:'SHARED / UNCERTAIN',caveat:'Control is a campaign abstraction. Where source polygons do not distinguish theaters, no internal border is invented.',intel:'FIELD INTELLIGENCE',back:'RETURN TO CAMPAIGN',credits:'IDEALIZED LAND COVER · MODERN ELEVATION · HISTORICAL OVERLAYS APPROXIMATE',sources:'DATA & LICENSES',city:'CITY',fortKey:'FORTIFICATION',road:'RECONSTRUCTED ROAD · SELECT' ,crisis:'THE REPUBLIC IN CRISIS',civil:'THE CIVIL WAR',inspectPlace:'Historical place; local campaign control is represented at theater level.'});
-Object.assign(L.zh,{hostile:'敌方',atlas:'战役地图',title:'卢比孔河',subtitle:'与罗马共和国',intro:'凯撒的军团与元老院之间是意大利。探索地形、城市和开战时的军事指挥。',allegiance:'军事阵营',caesar:'凯撒派',senate:'元老院派',mixed:'共用轮廓 / 不确定',caveat:'控制权为战役抽象。史料轮廓不能区分战区时，不绘制虚构的内部边界。',intel:'战场情报',back:'返回战役',credits:'理想化地表与现代高程 · 历史范围为近似',sources:'数据及许可',city:'城市',fortKey:'要塞',road:'复原古道 · 可选' ,crisis:'共和国的危机',civil:'罗马内战',inspectPlace:'历史地点；游戏控制权按战区表示。'});
+Object.assign(L.en,{hostile:'hostile',atlas:'CAMPAIGN ATLAS',title:'The Rubicon',subtitle:'and the Republic.',intro:'Italy stands between Caesar’s legions and the Senate. Explore the terrain, cities and commands of the opening campaign.',allegiance:'MILITARY ALLEGIANCE',caesar:'CAESARIAN',senate:'SENATORIAL',mixed:'SHARED / UNCERTAIN',caveat:'Close-up control shading shows approximate game cells, not documented ancient borders.',intel:'FIELD INTELLIGENCE',back:'RETURN TO CAMPAIGN',credits:'IDEALIZED LAND COVER · MODERN ELEVATION · HISTORICAL OVERLAYS APPROXIMATE',sources:'DATA & LICENSES',city:'CITY',fortKey:'FORTIFICATION',road:'RECONSTRUCTED ROAD · SELECT' ,crisis:'THE REPUBLIC IN CRISIS',civil:'THE CIVIL WAR',inspectPlace:'Historical place; local campaign control is represented at theater level.'});
+Object.assign(L.zh,{hostile:'敌方',atlas:'战役地图',title:'卢比孔河',subtitle:'与罗马共和国',intro:'凯撒的军团与元老院之间是意大利。探索地形、城市和开战时的军事指挥。',allegiance:'军事阵营',caesar:'凯撒派',senate:'元老院派',mixed:'共用轮廓 / 不确定',caveat:'近景控制区着色是近似的游戏划分，不代表史料证实的古代边界。',intel:'战场情报',back:'返回战役',credits:'理想化地表与现代高程 · 历史范围为近似',sources:'数据及许可',city:'城市',fortKey:'要塞',road:'复原古道 · 可选' ,crisis:'共和国的危机',civil:'罗马内战',inspectPlace:'历史地点；游戏控制权按战区表示。'});
 const t=k=>L[lang][k];const n=a=>a?.[lang==='zh'?1:0]||'';
 L.en.credits='NATURAL EARTH COASTS · MODERN ELEVATION · HISTORICAL BORDERS APPROXIMATE';
 L.zh.credits='Natural Earth 海岸线 · 现代高程 · 历史边界为近似';
@@ -141,7 +141,8 @@ function updateControl(){
    else if(currentMapMode==='stability')color=own?(r.loyalty>=65?'#8ca87d':r.loyalty>=35?'#c49b69':'#b87865'):'#ad9c7e';
    pairs.push(r.id,color);borders.push(r.id,identity(r.owner).map);
   }
-  map.setPaintProperty('grand-control','fill-color',['match',['get','id'],...pairs,'#b9a982']);map.setPaintProperty('grand-control','fill-opacity',currentMapMode==='terrain'?.025:['political','military','maritime'].includes(currentMapMode)?.01:.22);
+  map.setPaintProperty('grand-control','fill-color',['match',['get','id'],...pairs,'#b9a982']);
+  map.setPaintProperty('grand-control','fill-opacity',currentMapMode==='terrain'?.025:['political','military','maritime'].includes(currentMapMode)?['interpolate',['linear'],['zoom'],5.5,.01,6.5,.15,8,.24]:.22);
   map.setPaintProperty('grand-border','line-color',['match',['get','id'],...borders,'#72604f']);
   // Settlement catchment lines are synthetic gameplay partitions. Selection
   // highlights a cell when needed; the base atlas uses the broader outlines.
@@ -150,7 +151,7 @@ function updateControl(){
   map.setPaintProperty('province-outline','line-color',['match',['get','id'],...macroBorders,'#aa9c75']);
   map.setPaintProperty('province-outline','line-opacity',currentMapMode==='terrain'?.12:.5);
   map.setPaintProperty('control','fill-color',['match',['get','id'],...macroBorders,'#aa9c75']);
-  map.setPaintProperty('control','fill-opacity',['political','military','maritime'].includes(currentMapMode)?.18:0);return;
+  map.setPaintProperty('control','fill-opacity',['political','military','maritime'].includes(currentMapMode)?['interpolate',['linear'],['zoom'],5.5,.18,6.5,.08,8,.025]:0);return;
  }
  if(!map.getLayer('control'))return;
  const pairs=[],borderPairs=[];for(const f of historical.features){const ids=f.properties.regions||[];if(!ids.length)continue;const regions=ids.map(id=>state.regions.find(r=>r.id===id)).filter(Boolean),owners=[...new Set(regions.map(r=>r.owner))],own=regions.filter(r=>r.owner===state.player);let color=identity(owners.length>1?'shared':owners[0]).map;borderPairs.push(f.properties.id,identity(owners.length>1?'shared':owners[0]).map);
@@ -334,7 +335,7 @@ renderArmies();
 for(const label of [{text:'A L P E S',p:[9.3,46.2]},{text:'APENNINVS',p:[13.6,42.75]},{text:'MARE ADRIATICVM',p:[15.5,42.15],sea:true},{text:'MARE TYRRHENVM',p:[10.0,40.2],sea:true}]){const el=document.createElement('div');el.className=`geo-label ${label.sea?'sea-label':''}`;el.textContent=label.text;marker(el,label.p)}
 map.on('load',()=>{
  map.addSource('grand-territories',{type:'geojson',data:grandTerritories});
- map.addLayer({id:'grand-control',type:'fill',source:'grand-territories',paint:{'fill-color':'#baaa8d','fill-opacity':.55}},'control');
+ map.addLayer({id:'grand-control',type:'fill',source:'grand-territories',paint:{'fill-color':'#baaa8d','fill-opacity':.55,'fill-antialias':false}},'control');
  map.addLayer({id:'grand-border',type:'line',source:'grand-territories',paint:{'line-color':'#654c3f','line-width':['interpolate',['linear'],['zoom'],4,.35,8,1.3],'line-opacity':.78}},'control');
  map.addLayer({id:'grand-hover',type:'line',source:'grand-territories',filter:['==',['get','id'],''],paint:{'line-color':'#f3e6c3','line-width':2.2,'line-opacity':.9}},'control');
  map.on('click','grand-control',e=>{if(!state.grandMap)return;e.originalEvent?.stopPropagation?.();const r=region(state,e.features[0]?.properties?.id);if(!r)return;const unit=state.armies.find(a=>a.id===activeArmy&&a.owner===state.player);if(unit&&!unit.move&&r.id!==unit.region&&previewMarch(state,unit.id,r.id).ok){previewDestination=r.id;showArmy(unit);renderReach(unit)}else showRegion(r)});

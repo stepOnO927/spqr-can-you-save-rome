@@ -5,6 +5,10 @@ import rivers from '../mediterranean-rivers.js';
 import lakes from '../mediterranean-lakes.js';
 import historical from '../historical-territories.js';
 
+// At local scale, separate lowland, upland and exposed rock more clearly.
+// These are modern elevation bands, not reconstructed ancient land cover.
+const localElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e0d5b6',0,'#ded2ae',100,'#d1cba7',300,'#b9c39b',700,'#91a78b',1200,'#758e7d',1800,'#848d80',2600,'#b2b2a4',3500,'#e1ddcb'];
+
 // Natural Earth land and ocean share a coastline. The ocean mask is deliberately
 // above the elevation layer so relief never turns the sea into apparent land.
 export const physicalStyle={
@@ -32,9 +36,9 @@ export const physicalStyle={
   {id:'relief-detail',type:'hillshade',source:'elevation-detail',minzoom:6,paint:{'hillshade-exaggeration':.14,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'land-elevation-fine',type:'color-relief',source:'elevation-fine',minzoom:7,paint:{'color-relief-opacity':['interpolate',['linear'],['zoom'],7,.82,8.5,0],'color-relief-color':['interpolate',['linear'],['elevation'],-100,'#dcd5b9',0,'#d8d2b2',100,'#cfceaa',300,'#bac4a0',700,'#9faf91',1200,'#879b89',1800,'#849089',2600,'#a5aaa0',3500,'#dddacb']}},
   {id:'relief-fine',type:'hillshade',source:'elevation-fine',minzoom:7,paint:{'hillshade-exaggeration':.1,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-ultra',type:'color-relief',source:'elevation-ultra',minzoom:8,paint:{'color-relief-opacity':.86,'color-relief-color':['interpolate',['linear'],['elevation'],-100,'#dcd5b9',0,'#d8d2b2',100,'#cfceaa',300,'#bac4a0',700,'#9faf91',1200,'#879b89',1800,'#849089',2600,'#a5aaa0',3500,'#dddacb']}},
+  {id:'land-elevation-ultra',type:'color-relief',source:'elevation-ultra',minzoom:8,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
   {id:'relief-ultra',type:'hillshade',source:'elevation-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':.86,'color-relief-color':['interpolate',['linear'],['elevation'],-100,'#dcd5b9',0,'#d8d2b2',100,'#cfceaa',300,'#bac4a0',700,'#9faf91',1200,'#879b89',1800,'#849089',2600,'#a5aaa0',3500,'#dddacb']}},
+  {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
   {id:'relief-higher',type:'hillshade',source:'elevation-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'idealized-landcover',type:'raster',source:'landcover',paint:{'raster-opacity':['interpolate',['linear'],['zoom'],4,.86,6,.74,7.2,0],'raster-fade-duration':0}},
   {id:'sea-mask',type:'fill',source:'ocean',paint:{'fill-color':'#356f79','fill-opacity':1}},
