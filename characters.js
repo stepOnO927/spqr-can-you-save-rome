@@ -19,17 +19,19 @@ export const CHARACTER_CATALOG = {
  bogud:{name:['Bogud','博古德'],birth:null,faction:'mauretania',role:['Mauretanian king','毛里塔尼亚国王'],culture:['Mauretanian','毛里塔尼亚'],source:'https://www.britannica.com/place/Mauretania-ancient-region-Africa'},
  deiotarus:{name:['Deiotarus','代奥塔鲁斯'],birth:null,faction:'galatia',role:['Galatian ruler','加拉太统治者'],culture:['Galatian','加拉太'],source:'https://www.britannica.com/biography/Deiotarus'},
  pharnaces:{name:['Pharnaces II','法尔纳刻斯二世'],birth:null,faction:'bosporus',role:['Bosporan ruler','博斯普鲁斯王国统治者'],culture:['Pontic','本都'],source:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549705304?login=false'}
+ ,varro:{name:['Marcus Terentius Varro','马尔库斯·特伦提乌斯·瓦罗'],birth:[-116,-116],faction:'senate',role:['Roman scholar and writer','罗马学者与作家'],culture:['Roman','罗马'],source:'https://wellcomecollection.org/concepts/zt7h4m64'}
+ ,vitruvius:{name:['Vitruvius','维特鲁威'],birth:null,faction:null,role:['Roman architect and military engineer; early biography uncertain','罗马建筑师与军事工程师；早年生平不详'],culture:['Roman','罗马'],source:'https://academic.oup.com/edited-volume/61673/chapter-abstract/548202520?login=false'}
 };
 export const OPENING_LEADERS={caesar:['caesar'],senate:['pompey'],egypt:['cleopatra','ptolemy'],parthia:['orodes'],armenia:['artavasdes'],numidia:['juba'],mauretania:['bocchus','bogud'],galatia:['deiotarus'],bosporus:['pharnaces'],rebels:[]};
 const SUCCESSORS={caesar:['antony','lepidus'],senate:['cato','scipio','labienus','cicero'],egypt:['cleopatra','ptolemy','arsinoe'],parthia:['pacorus'],armenia:[],numidia:[],mauretania:['bocchus','bogud'],galatia:[],bosporus:[],rebels:[]};
 const clone=x=>JSON.parse(JSON.stringify(x));
 export function initializeWorld(s){
- if(!s.world){s.world={characters:Object.fromEntries(Object.entries(CHARACTER_CATALOG).map(([id,c])=>[id,{id,faction:c.faction,health:'healthy',location:null,alive:true,loyalty:75,influence:50}])),leadership:clone(OPENING_LEADERS),intelSeed:874913};}
+ if(!s.world){s.world={characters:Object.fromEntries(Object.entries(CHARACTER_CATALOG).filter(([id])=>!['varro','vitruvius'].includes(id)).map(([id,c])=>[id,{id,faction:c.faction,health:'healthy',location:null,alive:true,loyalty:75,influence:50}])),leadership:clone(OPENING_LEADERS),intelSeed:874913};}
  // Add the new historical figure once to old saves, without resetting existing people.
  if(!s.world.arsinoeInitialized){if(!s.world.characters.arsinoe&&s.factions?.egypt)s.world.characters.arsinoe={id:'arsinoe',faction:'egypt',health:'healthy',location:s.regions.some(r=>r.id==='egypt'&&r.owner==='egypt')?'egypt':null,alive:true,loyalty:75,influence:50};s.world.arsinoeInitialized=true}
  for(const c of Object.values(s.world.characters)){if(c.loyalty===undefined)c.loyalty=75;if(c.influence===undefined)c.influence=50;if(c.wounds===undefined)c.wounds=c.health==='wounded'?1:0;if(c.illnessEpisodes===undefined)c.illnessEpisodes=0}
  // Theater-level scenario positions, not claims about historical whereabouts.
- if(!s.world.personLocationsInitialized){const homes={antony:'cisalpine',lepidus:'cisalpine',cicero:'roma',cato:'roma',labienus:'roma',scipio:'roma',cleopatra:'egypt',ptolemy:'egypt',arsinoe:'egypt',orodes:'parthia',pacorus:'parthia',artavasdes:'armenia',juba:'numidia',bocchus:'mauretania',bogud:'mauretania',deiotarus:'galatia',pharnaces:'bosporus'};for(const [id,place] of Object.entries(homes)){const c=s.world.characters[id];if(c&&c.location==null)c.location=place}s.world.personLocationsInitialized=true}
+ if(!s.world.personLocationsInitialized){const homes={antony:'cisalpine',lepidus:'cisalpine',cicero:'roma',cato:'roma',labienus:'roma',scipio:'roma',cleopatra:'egypt',ptolemy:'egypt',arsinoe:'egypt',orodes:'parthia',pacorus:'parthia',artavasdes:'armenia',juba:'numidia',bocchus:'mauretania',bogud:'mauretania',deiotarus:'galatia',pharnaces:'bosporus',varro:'roma',vitruvius:'cisalpine'};for(const [id,place] of Object.entries(homes)){const c=s.world.characters[id];if(c&&c.location==null)c.location=place}s.world.personLocationsInitialized=true}
  if(!s.world.personalRelations)s.world.personalRelations={};
  if(!s.meetings)s.meetings=[];
  if(!s.world.claimants)s.world.claimants={};

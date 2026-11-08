@@ -1,6 +1,6 @@
 import {reportedControl} from '../control-intelligence.js?v=phase-x-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=phase-x-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=phase-xiii-1';
 import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=phase-x-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

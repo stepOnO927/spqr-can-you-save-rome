@@ -1,5 +1,5 @@
 import {reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
-import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=phase-x-1';
+import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=phase-xiii-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {addReport,reportedHealthSubjects,apparentAgeRange} from './character-system.js?v=governance-sync-1';
 import {officeOf} from './office-system.js?v=phase-x-1';

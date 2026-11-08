@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=phase-x-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=phase-xiii-1';
 import {settleInheritance,dynastyRoll} from './dynasties.js?v=phase-x-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
 import {deriveGovernment,validSuccessionPlan} from './governance.js?v=governance-sync-1';
