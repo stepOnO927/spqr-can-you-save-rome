@@ -51,3 +51,7 @@ body{min-width:0;background:#292d29}.top{height:54px;padding:0 12px;gap:15px;bac
 
 /* Keep the complete setup usable on smaller screens. */
 .setup-panel{max-height:92vh;overflow:auto}.setup-feedback:not(:empty){padding:8px;color:#842f28;background:#f5e5d0}.setup-panel #setup-language{float:right;padding:6px 9px}.setup-panel label{display:block}.setup-panel label:has(input[type=checkbox]){margin:12px 0;line-height:1.4}
+
+.action:disabled{opacity:.48;cursor:not-allowed;filter:grayscale(.5)}.recruit-reason{color:#c5b38e;margin:7px 0 0}
+
+.victory-progress{display:flex;align-items:center;gap:12px;padding:7px 17px;background:#29332e;color:#e7d5ae;border-bottom:1px solid #756d54;font:11px Arial,sans-serif;flex-wrap:wrap}.victory-progress b{color:#d6b475;letter-spacing:1px}.victory-progress small{color:#c9c5b7;font-size:10px}@media(max-width:700px){.victory-progress{position:absolute;z-index:4;top:115px;left:48px;right:8px;max-height:70px;overflow:auto;gap:4px;padding:7px}.victory-progress small{width:100%}}
