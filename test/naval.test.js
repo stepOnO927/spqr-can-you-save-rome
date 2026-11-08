@@ -17,6 +17,11 @@ test('shipbuilding spends treasury, materials, crew and time at a real shipyard'
 test('fleet commander appointments cost pay, take travel time, and can be dismissed',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),person=Object.entries(s.world.characters).find(([id,p])=>p.faction==='senate'&&p.alive&&!p.missing&&p.loyalty>=35&&!s.armies.some(a=>a.characterId===id));assert.ok(person);s.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';const treasury=s.factions.senate.treasury,out=appointFleet(s,'senate',f.id,person[0]);assert.equal(out.ok,true);assert.equal(s.factions.senate.treasury,treasury-5);assert.equal(f.commanderId,null);for(let i=0;i<out.months;i++)advanceNaval(s);assert.equal(f.commanderId,person[0]);const loyalty=person[1].loyalty;assert.equal(dismissFleetCommander(s,'senate',f.id).ok,true);assert.equal(f.commanderId,null);assert.equal(person[1].loyalty,loyalty-2)
 });
+test('appointing a fleet commander twice does not charge twice or overwrite the traveler',()=>{
+ const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),person=Object.entries(s.world.characters).find(([id,p])=>p.faction==='senate'&&p.alive&&!p.missing&&!s.armies.some(a=>a.characterId===id));
+ assert.ok(person);assert.equal(appointFleet(s,'senate',f.id,person[0]).ok,true);const treasury=s.factions.senate.treasury;
+ assert.equal(appointFleet(s,'senate',f.id,person[0]).ok,false);assert.equal(s.factions.senate.treasury,treasury);
+});
 test('naval officers travel, draw salary, improve real operations and survive saves',()=>{
  const s=newGrandGame('senate'),person=Object.entries(s.world.characters).find(([id,p])=>p.faction==='senate'&&p.alive&&p.loyalty>=35&&!s.armies.some(a=>a.characterId===id));assert.ok(person);const before=s.factions.senate.treasury,appointment=appointNavalJob(s,'senate','supervisor','italiaS',person[0]);assert.equal(appointment.ok,true);assert.equal(s.factions.senate.treasury,before-5);assert.equal(navalJobEffect(s,'senate','supervisor','italiaS'),0);assert.equal(appointFleet(s,'senate','senate-adriatic',person[0]).ok,false);for(let i=0;i<appointment.months;i++)advanceNaval(s);assert.ok(navalJobEffect(s,'senate','supervisor','italiaS')>0);const build=queueShip(s,'senate','italiaS','merchant');assert.equal(build.ok,true);assert.ok(build.months<3);const saved=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(saved.naval.jobs[0].characterId,person[0]);const loyalty=person[1].loyalty;assert.equal(dismissNavalJob(s,'senate','supervisor','italiaS').ok,true);assert.equal(person[1].loyalty,loyalty-2);assert.equal(navalJobEffect(s,'senate','supervisor','italiaS'),0)
 });
@@ -77,6 +82,19 @@ test('merchant hulls limit simultaneous routes and hostile raids interrupt real 
 });
 test('pirate suppression and covert sponsorship alter pressure and resources',()=>{
  const s=newGrandGame('senate'),p=s.naval.pirates.find(x=>x.id==='illyrian-raiders'),before=p.pressure,treasury=s.factions.senate.treasury;assert.equal(supportPirates(s,'senate',p.id).ok,true);assert.equal(s.factions.senate.treasury,treasury-12);assert.equal(p.pressure,before+8);assert.equal(orderFleet(s,'senate','senate-adriatic','patrol','adriatic').ok,true);advanceNaval(s);assert.ok(p.pressure<before+8)
+});
+test('pirate raids move cargo into persistent inventory and patrols can recover it',()=>{
+ const s=newGrandGame('senate');s.seed=100004;s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';
+ const pirate=s.naval.pirates.find(p=>p.id==='cilician-raiders');pirate.zone='alexandrian';pirate.pressure=70;
+ const egyptianFood=s.factions.egypt.food;advanceNaval(s);const route=s.naval.routes.find(r=>r.id==='egypt-italy');
+ assert.equal(route.last.reason,'piracy');assert.equal(route.last.captured,4);assert.equal(pirate.cargo.grain,4);assert.equal(s.factions.egypt.food,egyptianFood-4);
+ assert.match(tradeCard(s,route,false),/Cargo seized 4/);assert.match(tradeCard(s,route,true),/被夺货物 4/);
+ const restored=upgradeSave(structuredClone(s));assert.equal(restored.naval.pirates.find(p=>p.id===pirate.id).cargo.grain,4);
+ const old=structuredClone(s);delete old.naval.pirates[1].cargo;assert.deepEqual(upgradeSave(old).naval.pirates[1].cargo,{});
+ s.naval.routes=s.naval.routes.filter(r=>r.id!=='egypt-italy');s.factions.senate.food=10;const fleet=s.naval.fleets.find(f=>f.owner==='senate');fleet.zone='alexandrian';fleet.port=null;
+ assert.equal(orderFleet(s,'senate',fleet.id,'patrol','alexandrian').ok,true);advanceNaval(s);
+ assert.equal(s.factions.senate.food,11);assert.equal(pirate.cargo.grain,3);
+ assert.deepEqual(s.naval.reports.find(r=>r.kind==='pirate-clash').recovered,{good:'grain',amount:1});
 });
 test('patrols can fight pirate vessels with real sailor losses and finite pirate strength',()=>{
  const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.owner==='senate'),pirates=s.naval.pirates.find(p=>p.zone==='adriatic');s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';
