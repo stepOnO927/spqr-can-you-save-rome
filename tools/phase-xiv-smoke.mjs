@@ -42,6 +42,20 @@ try{
   await page.locator('[data-tab="development"]').click();
   assert.match(await page.locator('.inspector h2').innerText(),/文明发展/);
   await page.screenshot({path:'tools/phase-xiv-ui.png'});
+  for(const lang of ['en','zh']){
+    const replacing=newGrandGame('caesar');
+    replacing.development.caesar.knownIdeas.push('hardline-diplomacy','diplomatic-accommodation');
+    replacing.development.caesar.slots.diplomacy[0]='hardline-diplomacy';
+    await page.evaluate(language=>localStorage.setItem('spqr-lang',language),lang);
+    await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+    await page.locator('#entry-file').setInputFiles({name:`replace-${lang}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(replacing))});
+    await page.locator('[data-tab="ideas"]').click();
+    const replacement=page.locator('[data-adopt-idea="diplomatic-accommodation"][data-slot="0"]');
+    assert.equal(await replacement.isEnabled(),true,lang);
+    await replacement.click();
+    for(let i=0;i<3;i++)await page.locator('#step').click();
+    assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(2).locator('.dev-slot').first().innerText(),lang==='zh'?/外交妥协/:/Diplomatic Accommodation/);
+  }
   const offered=newGrandGame('senate');offered.relations['egypt:senate']=20;
   assert.equal(proposeKnowledgeSale(offered,'egypt','senate','material','water-control').ok,true);
   await page.evaluate(()=>localStorage.setItem('spqr-lang','en'));
@@ -69,5 +83,5 @@ try{
   await page.locator('[data-accept-offer-seller="egypt"]').click();
   assert.equal(await page.locator('[data-accept-offer-seller="egypt"]').count(),0);
   assert.deepEqual(errors,[]);
-  console.log('Phase XIV browser smoke passed: research, adoption, construction and consent-based knowledge offers in both languages.');
+  console.log('Phase XIV browser smoke passed: research, adoption, conflicting-idea replacement, construction and consent-based knowledge offers in both languages.');
 }finally{await browser.close()}

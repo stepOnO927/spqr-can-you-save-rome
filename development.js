@@ -190,17 +190,19 @@ export function researchInnovation(s,owner,branch,id){
   if(f.treasury<cost)return {ok:false,reason:'treasury'};
   f.treasury-=cost;d.research={branch,id,remaining:Math.max(1,item.months-(figureActive(s,owner,'scholar')?1:0)-(visitor?1:0))};return {ok:true};
 }
-export function ideaCompatibility(s,owner,ideaId){
+export function ideaCompatibility(s,owner,ideaId,slot){
   const d=development(s,owner),idea=IDEAS.find(i=>i.id===ideaId);
   if(!idea)return {ok:false,reason:'unknown'};
-  const active=Object.values(d.slots).flat().filter(Boolean);
+  if(slot!==undefined&&(!Number.isInteger(slot)||slot<0||slot>=d.slots[idea.category].length))return {ok:false,reason:'unavailable'};
+  const active=Object.entries(d.slots).flatMap(([category,slots])=>slots.filter((id,index)=>id&&!(category===idea.category&&index===slot)));
+  if(active.includes(ideaId))return {ok:false,reason:'duplicate',with:ideaId};
   const conflict=active.find(id=>idea.conflicts?.includes(id)||IDEAS.find(x=>x.id===id)?.conflicts?.includes(ideaId));
   return conflict?{ok:false,reason:'conflict',with:conflict}:{ok:true};
 }
 export function adoptIdea(s,owner,ideaId,slot=0){
   const d=development(s,owner),idea=IDEAS.find(x=>x.id===ideaId),f=s.factions[owner];
   if(!idea||!d.knownIdeas.includes(ideaId)||d.adoption||!d.slots[idea.category]||slot<0||slot>=d.slots[idea.category].length)return {ok:false,reason:'unavailable'};
-  const compatible=ideaCompatibility(s,owner,ideaId);if(!compatible.ok)return compatible;
+  const compatible=ideaCompatibility(s,owner,ideaId,slot);if(!compatible.ok)return compatible;
   if(f.treasury<idea.adopt)return {ok:false,reason:'treasury'};
   const old=d.slots[idea.category][slot];if(old===ideaId)return {ok:false,reason:'active'};
   const specialist=idea.category==='military'?'military':idea.category==='government'?'statesman':idea.category==='culture'?'religious':null;

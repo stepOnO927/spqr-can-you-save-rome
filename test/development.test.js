@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,purchaseMaterials} from '../engine.js';
-import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects} from '../development.js';
-import {developmentPanel} from '../development-ui.js';
+import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility} from '../development.js';
+import {developmentPanel,ideasPanel} from '../development-ui.js';
 import {edgeMonths} from '../grand-operations.js';
 import {techIllustration} from '../tech-art.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
@@ -64,11 +64,33 @@ test('ideas remain in their category, conflicting policies are rejected, expansi
   d.knownIdeas.push('senatorial-consultation','central-administration','provincial-autonomy','legion-training');
   assert.equal(adoptIdea(s,'caesar','legion-training',1).ok,false);
   assert.equal(adoptIdea(s,'caesar','senatorial-consultation',0).ok,true);months(s,2);
-  assert.equal(adoptIdea(s,'caesar','central-administration',0).reason,'conflict');
+  assert.equal(ideaCompatibility(s,'caesar','central-administration',0).ok,true);
   assert.equal(expandIdeaSlot(s,'caesar','government').ok,true);months(s,6);
   assert.equal(d.slots.government.length,2);assert.equal(d.slots.military.length,1);
   assert.equal(adoptIdea(s,'caesar','provincial-autonomy',1).ok,true);months(s,3);
   assert.equal(d.slots.government[1],'provincial-autonomy');
+});
+
+test('a conflicting idea may replace its own slot but cannot coexist or be equipped twice',()=>{
+  const s=newGame('caesar');s.factions.caesar.treasury=500;
+  const d=development(s,'caesar');d.knownIdeas.push('hardline-diplomacy','diplomatic-accommodation');
+  assert.equal(adoptIdea(s,'caesar','hardline-diplomacy',0).ok,true);months(s,2);
+  assert.equal(d.slots.diplomacy[0],'hardline-diplomacy');
+  assert.equal(ideaCompatibility(s,'caesar','diplomatic-accommodation',0).ok,true);
+  for(const lang of ['en','zh']){
+    const button=ideasPanel(s,lang).match(/<button[^>]*data-adopt-idea="diplomatic-accommodation" data-slot="0"[^>]*>/)?.[0];
+    assert.ok(button,lang);assert.doesNotMatch(button,/\bdisabled\b/,lang);
+  }
+  d.slots.diplomacy.push(null);
+  assert.equal(ideaCompatibility(s,'caesar','diplomatic-accommodation',1).reason,'conflict');
+  assert.equal(adoptIdea(s,'caesar','diplomatic-accommodation',1).reason,'conflict');
+  assert.equal(ideaCompatibility(s,'caesar','hardline-diplomacy',1).reason,'duplicate');
+  assert.equal(adoptIdea(s,'caesar','hardline-diplomacy',1).reason,'duplicate');
+  assert.equal(adoptIdea(s,'caesar','diplomatic-accommodation',0).ok,true);
+  months(s,3);
+  assert.equal(d.slots.diplomacy[0],'diplomatic-accommodation');
+  assert.equal(activeEffects(s,'caesar').diplomacy,5);
+  assert.equal(activeEffects(s,'caesar').diplomacyPressure,undefined);
 });
 
 test('material knowledge permits delayed construction with terrain, deposits, materials and upkeep',()=>{
