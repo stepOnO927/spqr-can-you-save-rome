@@ -439,19 +439,26 @@ export function aiTurn(s,owner){
     if(s.year>=-48&&s.month===6&&f.treasury>30){const partner=Object.keys(s.development).find(id=>id!==owner&&!isWar(s,owner,id)&&relation(s,owner,id)>=20&&s.development[id].knownIdeas.some(k=>!d.knownIdeas.includes(k))&&d.knownIdeas.some(k=>!s.development[id].knownIdeas.includes(k)));if(partner){const offer=d.knownIdeas.find(k=>!s.development[partner].knownIdeas.includes(k)),want=s.development[partner].knownIdeas.find(k=>!d.knownIdeas.includes(k));exchangeKnowledge(s,owner,partner,'idea',offer,'idea',want)}}
   }
   const enemies=s.regions.filter(r=>isWar(s,owner,r.owner));
-  const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&a.men>1200&&(!alert||a.region!==alert.regionId)).sort((a,b)=>b.men-a.men);
+  const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&!a.reconPending&&a.men>0&&(!alert||a.region!==alert.regionId)).sort((a,b)=>b.men-a.men);
   const protectedJunctions=s.grandMap?supplyBottlenecks(s,owner):new Set(),reservedSupport=new Set();
   for(const a of available){
     if(reservedSupport.has(a.id))continue;
+    if(s.grandMap&&(s.battles||[]).some(b=>b.year===s.year&&b.month===s.month&&b.attacker.owner===owner&&b.attackerWins&&b.region===a.region)){
+      a.stance='hold';a.prepared=Math.min(3,(a.prepared||0)+1);continue;
+    }
+    if(a.men<1200){
+      if(s.grandMap){const threat=id=>adjacent(id,s).filter(e=>!e.sea&&isWar(s,owner,region(s,e.to)?.owner)).length,here=threat(a.region),retreat=adjacent(a.region,s).filter(e=>!e.sea&&region(s,e.to)?.owner===owner).map(e=>({id:e.to,risk:threat(e.to),supply:armySupply(s,{...a,region:e.to})})).filter(e=>e.risk<here&&e.supply>=armySupply(s,a)-.1).sort((x,y)=>x.risk-y.risk||y.supply-x.supply)[0];if(retreat)moveArmy(s,a.id,retreat.id)}
+      continue;
+    }
     if(s.grandMap){const local=region(s,a.region);if(armySupply(s,a)<.55){const escape=adjacent(a.region,s).filter(e=>!e.sea&&region(s,e.to).owner===owner).map(e=>({to:e.to,supply:armySupply(s,{...a,region:e.to})})).sort((x,y)=>y.supply-x.supply)[0];if(escape?.supply>armySupply(s,a)+.15){a.region=escape.to;a.morale=Math.max(15,a.morale-4);continue}}if((local.port||local.terrain==='urban'||protectedJunctions.has(local.id))&&adjacent(a.region,s).some(e=>isWar(s,owner,region(s,e.to).owner))){a.stance='hold';a.prepared=Math.min(3,(a.prepared||0)+1);if(a.men<estimatedStrength(s,owner,s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner))*.75)continue}}
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y)-(s.grandMap?(r.port?12:0)+(r.terrain==='urban'?15:0)+(r.road?4:0):0)})).sort((x,y)=>x.d-y.d);
     for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const destination=region(s,step),defenderOwner=destination.owner,report=destination.owner!==owner?latestRecon(s,owner,step):null;
       const reconWindow=s.year>=-48&&s.month%3===0,investigate=((s.seed+owner.length+a.id.length+s.month)%5)!==0;
-      if(destination.owner!==owner&&(!report||report.age>5)&&f.treasury>=8&&f.food>=4&&reconWindow&&investigate){if(sendScouts(s,a.id,step,owner).ok)break}
       const prior=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/(s.grandMap?1:Math.max(1,s.regions.filter(x=>x.owner===defenderOwner).length)):0;
+      if(destination.owner!==owner&&(!report||report.age>5)&&f.treasury>=8&&f.food>=4&&reconWindow&&investigate){if(sendScouts(s,a.id,step,owner).ok)break}
       const defenders=report?.min!=null&&report.age<=5?Math.round((report.min+report.max)/2):prior;
       if(defenders>a.men*1.35||f.food<0||s.grandMap&&destination.owner===owner&&armySupply(s,{...a,region:step})<.45)continue;
-      const support=s.grandMap&&destination.owner!==owner?available.find(other=>other.id!==a.id&&!reservedSupport.has(other.id)&&!other.move&&other.region!==a.region&&other.men>=1000&&armySupply(s,other)>=.5&&grandAdjacent(other.region).some(edge=>edge.to===step)):null;
+      const support=s.grandMap&&destination.owner!==owner?available.find(other=>other.id!==a.id&&!reservedSupport.has(other.id)&&!other.move&&other.region!==a.region&&other.men>1200&&armySupply(s,other)>=.5&&grandAdjacent(other.region).some(edge=>edge.to===step)):null;
       a.coordinated=!!support;const ordered=moveArmy(s,a.id,step);if(ordered.ok){if(support)reservedSupport.add(support.id);break}a.coordinated=false}}
   }
   const fieldStrength=strength(s,owner),emergency=fieldStrength<1500&&enemies.length>0;

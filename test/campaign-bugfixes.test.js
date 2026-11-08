@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,army,region,resolveBattle,moveArmy,diplomacy,tick,recruit,previewMarch,upgradeSave} from '../engine.js';
+import {newGame,newGrandGame,army,region,resolveBattle,moveArmy,diplomacy,tick,recruit,previewMarch,upgradeSave,aiTurn} from '../engine.js';
 import {recordMovement,eventText,recordEvent} from '../campaign-reports.js';
 import {chronicleHtml,battleReportHtml,eventDate} from '../reports-ui.js';
 import {requestReinforcements,probePositions,latestRecon} from '../reconnaissance.js';
@@ -41,6 +41,23 @@ test('an AI command with no field army raises an emergency force when resources 
  const replacement=s.armies.filter(unit=>unit.owner==='caesar');
  assert.equal(replacement.length,1);assert.equal(replacement[0].men,3000);
  assert.equal(s.factions.caesar.manpower<4000,true);
+});
+
+test('an AI army consolidates a captured theater before advancing again',()=>{
+ const s=newGrandGame('egypt'),unit=army(s,'xiii'),defender=army(s,'italy');
+ unit.men=10000;defender.men=1000;
+ resolveBattle(s,unit,defender,region(s,'italiaN'));
+ assert.equal(region(s,'italiaN').owner,'caesar');
+ aiTurn(s,'caesar');
+ assert.equal(unit.region,'italiaN');assert.equal(unit.move,null);assert.equal(unit.stance,'hold');
+});
+
+test('a depleted AI army withdraws toward a safer friendly theater',()=>{
+ const s=newGrandGame('egypt'),unit=army(s,'viii');
+ unit.region='t048';unit.men=800;region(s,'narbo').owner='senate';
+ aiTurn(s,'caesar');
+ assert.equal(unit.move?.to,'t041');
+ assert.equal(region(s,unit.move.to).owner,'caesar');
 });
 
 test('a defeated besieger cannot take a theater remotely',()=>{
