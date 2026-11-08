@@ -57,7 +57,7 @@ export function assignSuccession(s,faction){
  if(!current.length&&contested&&!s.world.disputes[faction].vacancySince){s.world.disputes[faction].months=0;s.world.disputes[faction].vacancySince={year:s.year,month:s.month}}
  if(!current.length&&!contested){
   const candidates=successorFor(s,faction),royal=!['republican_command','separate_kingdoms'].includes(model);
-  const children=royal?previous.flatMap(id=>s.world.characters[id]?.children||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!s.world.characters[id].missing):[];
+  const children=royal?previous.flatMap(id=>s.world.characters[id]?.children||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!s.world.characters[id].missing&&!s.world.characters[id].asylumHost):[];
   const preferred=model==='later_empire'&&s.world.coEmperors?.[faction]||s.world.successionPlans?.[faction],eligible=[...new Set([...children,...candidates])];
   const military=id=>s.armies.filter(a=>a.owner===faction&&a.characterId===id).reduce((n,a)=>n+Math.min(35,Math.floor((a.men||0)/500)),0);
   const ranked=imperial?[...eligible].sort((a,b)=>((s.world.characters[b].influence||0)+military(b)+(children.includes(b)?12:0))-((s.world.characters[a].influence||0)+military(a)+(children.includes(a)?12:0))):eligible;

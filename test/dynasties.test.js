@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
-import {CHARACTER_CATALOG} from '../characters.js?v=xxii-final-4';
-import {assignSuccession,successionModel} from '../characters.js?v=xxii-final-4';
-import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession} from '../governance.js?v=xxii-final-4';
+import {CHARACTER_CATALOG} from '../characters.js?v=asylum-heir-1';
+import {assignSuccession,successionModel} from '../characters.js?v=asylum-heir-1';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession} from '../governance.js?v=asylum-heir-1';
 import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
-import {canHoldOffice} from '../office-system.js?v=xxii-final-4';
+import {canHoldOffice} from '../office-system.js?v=asylum-heir-1';
 import {renderGenealogy} from '../genealogy-ui.js';
 import {finalizeCampaign} from '../legacy.js';
 import {startDynasticWar} from '../civil-war.js?v=xxii-final-4';
@@ -69,6 +69,20 @@ test('asylum uses reported claimant leads, a paid delay and survives save/load',
  assert.deepEqual(loaded.world.leadership.egypt,[]);
  assert.equal(loaded.alliances.length,alliances);
  assert.match(renderGenealogy(loaded,false),/FAMILY GENEALOGY/);
+});
+
+test('a sheltered child cannot inherit court authority through the family succession path',()=>{
+ for(const includeLocal of [false,true]){
+  let s=newGame('caesar');
+  const abroad=createFictionalPerson(s,{name:['Exiled child','受庇护子女'],faction:'egypt',birthYear:-70,parents:['cleopatra'],location:'cisalpine'});
+  s.world.characters[abroad].asylumHost='caesar';
+  const local=includeLocal?createFictionalPerson(s,{name:['Local child','在廷子女'],faction:'egypt',birthYear:-68,parents:['cleopatra'],location:'egypt'}):null;
+  s.world.leadership.egypt=['cleopatra'];s.world.characters.cleopatra.alive=false;s.world.characters.cleopatra.health='deceased';
+  const prior=structuredClone(s.knowledge.caesar.egypt);s=upgradeSave(JSON.parse(JSON.stringify(s)));
+  const leaders=assignSuccession(s,'egypt');
+  assert.ok(!leaders.includes(abroad));assert.deepEqual(leaders,[local||'ptolemy']);
+  assert.equal(s.world.characters[abroad].asylumHost,'caesar');assert.deepEqual(s.knowledge.caesar.egypt,prior);
+ }
 });
 
 test('stale asylum lead gives a generic reply',()=>{
