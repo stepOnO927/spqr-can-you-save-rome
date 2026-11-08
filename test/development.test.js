@@ -11,7 +11,7 @@ const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
 test('every development node has its own interpretive illustration',()=>{
  const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
- assert.equal(art.length,63);assert.equal(new Set(art).size,63);
+ assert.equal(art.length,64);assert.equal(new Set(art).size,64);
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
@@ -72,7 +72,7 @@ test('public law and allied registration are sourced, bilingual policies with pa
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,29);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,30);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
@@ -133,6 +133,43 @@ test('sanctuary protection helps only attended local rites and carries a monthly
   const aligned=s.regions.find(r=>r.id==='roma');aligned.owner='caesar';assert.equal(faithSatisfaction(s,aligned),0);
   const idea=IDEAS.find(x=>x.id==='sanctuary-protection');assert.match(idea.source.url,/verres24_3/);
   for(const [lang,label] of [['en','Provincial rites support'],['zh','地方祭仪支持']])assert.match(developmentPanel(s,lang,'idea'),new RegExp(label));
+});
+
+test('ancestral rites patronage has a real provincial tradeoff, upkeep, and a preserved save',()=>{
+ const idea=IDEAS.find(x=>x.id==='ancestral-rites');
+ assert.match(idea.source.url,/univ-grenoble-alpes/);
+ assert.match(idea.context[0],/proposes/);
+ const s=newGrandGame('caesar'),d=development(s,'caesar');s.wars=[];
+ const home=s.regions.find(r=>r.id==='roma'),foreign=s.regions.find(r=>r.id==='egypt');
+ home.owner='caesar';foreign.owner='caesar';foreign.integration=30;s.month=3;
+ assert.equal(faithSatisfaction(s,home),0);
+ assert.equal(faithSatisfaction(s,foreign),-1);
+ const before=nationalBudget(s,'caesar').ideaUpkeep;
+ d.slots.culture[0]=idea.id;
+ assert.equal(faithSatisfaction(s,home),1);
+ assert.equal(faithSatisfaction(s,foreign),-2);
+ assert.equal(nationalBudget(s,'caesar').ideaUpkeep,before+3);
+ foreign.priesthood.influence=20;
+ assert.equal(faithSatisfaction(s,foreign),-1);
+ foreign.priesthood.influence=40;
+ assert.equal(ideaCompatibility(s,'caesar','cultural-accommodation',0).ok,true);
+ d.slots.culture.push(null);
+ assert.equal(ideaCompatibility(s,'caesar','cultural-accommodation',1).reason,'conflict');
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(faithSatisfaction(loaded,loaded.regions.find(r=>r.id==='roma')),1);
+ assert.equal(faithSatisfaction(loaded,loaded.regions.find(r=>r.id==='egypt')),-2);
+ const egypt=newGrandGame('egypt');egypt.month=3;
+ const egyptHome=egypt.regions.find(r=>r.id==='egypt');
+ assert.equal(faithSatisfaction(egypt,egyptHome),0);
+ development(egypt,'egypt').slots.culture[0]=idea.id;
+ assert.equal(faithSatisfaction(egypt,egyptHome),1);
+ const control=newGrandGame('caesar');control.wars=[];control.month=2;
+ for(const id of ['roma','egypt']){const r=control.regions.find(x=>x.id===id);r.owner='caesar';r.civicSatisfaction=50;r.loyalty=50}
+ const adopted=upgradeSave(JSON.parse(JSON.stringify(control)));
+ development(adopted,'caesar').slots.culture[0]=idea.id;
+ tick(control);tick(adopted);
+ for(const [id,delta] of [['roma',1],['egypt',-1]])assert.equal(adopted.regions.find(r=>r.id===id).civicSatisfaction-control.regions.find(r=>r.id===id).civicSatisfaction,delta,id);
+ for(const [lang,label] of [['en','Other rites satisfaction / quarter −1'],['zh','异地祭仪满意度 / 季 −1']])assert.match(developmentPanel(s,lang,'idea'),new RegExp(label));
 });
 
 test('material knowledge permits delayed construction with terrain, deposits, materials and upkeep',()=>{

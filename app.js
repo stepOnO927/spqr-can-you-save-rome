@@ -1,20 +1,20 @@
 import {stageHandoff,receiveHandoff} from './view-handoff.js?v=1';
-import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=25';
+import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=26';
 import {identity,factionMark} from './identity.js?v=2';
 import {CHARACTER_CATALOG} from './characters.js?v=15';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=9';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=116';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=117';
 import {importCampaign,downloadCampaign} from './save-files.js';
 import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js';
 import {endCampaign} from './achievement-system.js';
 import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js';
 import {budgetHtml} from './budget-ui.js?v=2';
 import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js?v=8';
-import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=15';
-import {drawMap,mapPoint} from './map.js?v=54';
+import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=16';
+import {drawMap,mapPoint} from './map.js?v=55';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=2';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js';
-import {assessment,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=4';
+import {assessment,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=5';
 import {intelligenceHtml} from './recon-ui.js?v=3';
 
 const ui={

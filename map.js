@@ -3,7 +3,7 @@ import land from './mediterranean-land.js';
 import rivers from './rivers.js?v=7';
 import historical from './historical-territories.js?v=7';
 import {FACTIONS,REGIONS} from './data.js?v=9';
-import {reportedArmies} from './character-system.js?v=54';
+import {reportedArmies} from './character-system.js?v=58';
 import grandTerritories from './grand-territory-polygons.js';
 import bathymetry from './mediterranean-bathymetry.js';
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js';

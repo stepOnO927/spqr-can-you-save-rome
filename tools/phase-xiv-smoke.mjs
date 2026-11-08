@@ -22,6 +22,8 @@ try{
   assert.match(await page.locator('.inspector h2').innerText(),/Development/);
   await page.locator('[data-dev-branch="idea"]').click();
   assert.match(await page.locator('#tech-sanctuary-protection').innerText(),/Provincial Sanctuary Protection/);
+  assert.match(await page.locator('#tech-ancestral-rites').innerText(),/Own rites satisfaction \/ quarter \+1/);
+  assert.match(await page.locator('#tech-ancestral-rites').innerText(),/Other rites satisfaction \/ quarter −1/);
   assert.match(await page.locator('#tech-public-legal-reference').innerText(),/Public Legal Reference/);
   assert.match(await page.locator('#tech-citizen-registration').innerText(),/Allied Citizen Registration/);
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/Treasury \/ month −2/);
@@ -47,6 +49,8 @@ try{
   assert.match(await page.locator('.inspector h2').innerText(),/文明发展/);
   await page.locator('[data-dev-branch="idea"]').click();
   assert.match(await page.locator('#tech-sanctuary-protection').innerText(),/行省圣所保护/);
+  assert.match(await page.locator('#tech-ancestral-rites').innerText(),/传统祭仪扶持/);
+  assert.match(await page.locator('#tech-ancestral-rites').innerText(),/异地祭仪满意度 \/ 季 −1/);
   assert.match(await page.locator('#tech-public-legal-reference').innerText(),/公开法律参照/);
   assert.match(await page.locator('#tech-citizen-registration').innerText(),/盟邦公民登记/);
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/国库 \/ 月 −2/);
@@ -64,6 +68,19 @@ try{
     await replacement.click();
     for(let i=0;i<3;i++)await page.locator('#step').click();
     assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(2).locator('.dev-slot').first().innerText(),lang==='zh'?/外交妥协/:/Diplomatic Accommodation/);
+  }
+  for(const lang of ['en','zh']){
+    const rites=newGrandGame('caesar');rites.wars=[];rites.factions.caesar.treasury=500;
+    rites.development.caesar.knownIdeas.push('ancestral-rites');
+    await page.evaluate(language=>localStorage.setItem('spqr-lang',language),lang);
+    await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+    await page.locator('#entry-file').setInputFiles({name:`rites-${lang}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(rites))});
+    await page.locator('[data-tab="ideas"]').click();
+    const button=page.locator('[data-adopt-idea="ancestral-rites"][data-slot="0"]');
+    assert.equal(await button.isEnabled(),true,lang);
+    await button.click();
+    for(let i=0;i<3;i++)await page.locator('#step').click();
+    assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(4).locator('.dev-slot').first().innerText(),lang==='zh'?/传统祭仪扶持/:/Ancestral Rites Patronage/);
   }
   const offered=newGrandGame('senate');offered.relations['egypt:senate']=20;
   assert.equal(proposeKnowledgeSale(offered,'egypt','senate','material','water-control').ok,true);
@@ -92,5 +109,5 @@ try{
   await page.locator('[data-accept-offer-seller="egypt"]').click();
   assert.equal(await page.locator('[data-accept-offer-seller="egypt"]').count(),0);
   assert.deepEqual(errors,[]);
-  console.log('Phase XIV browser smoke passed: research, adoption, conflicting-idea replacement, construction and consent-based knowledge offers in both languages.');
+  console.log('Phase XIV browser smoke passed: research, adoption, ancestral rites, conflicting-idea replacement, construction and consent-based knowledge offers in both languages.');
 }finally{await browser.close()}
