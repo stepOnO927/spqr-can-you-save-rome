@@ -137,7 +137,9 @@ function updateControl(){
   }
   map.setPaintProperty('grand-control','fill-color',['match',['get','id'],...pairs,'#b9a982']);map.setPaintProperty('grand-control','fill-opacity',currentMapMode==='terrain'?.025:currentMapMode==='political'?.13:.22);
   map.setPaintProperty('grand-border','line-color',['match',['get','id'],...borders,'#72604f']);
-  map.setPaintProperty('grand-border','line-opacity',currentMapMode==='terrain'?.035:currentMapMode==='political'?.1:.25);
+  // Settlement catchment lines are gameplay partitions. Keep them legible at
+  // inspection zoom without turning the overview into a polygon mesh.
+  map.setPaintProperty('grand-border','line-opacity',['interpolate',['linear'],['zoom'],4,currentMapMode==='terrain'?0:currentMapMode==='political'?.015:.04,6,currentMapMode==='terrain'?.015:currentMapMode==='political'?.045:.10,8,currentMapMode==='terrain'?.08:currentMapMode==='political'?.25:.28]);
   map.setPaintProperty('control','fill-opacity',0);map.setPaintProperty('province-outline','line-opacity',0);return;
  }
  if(!map.getLayer('control'))return;
@@ -288,7 +290,7 @@ for(const label of [{text:'A L P E S',p:[9.3,46.2]},{text:'APENNINVS',p:[13.6,42
 map.on('load',()=>{
  map.addSource('grand-territories',{type:'geojson',data:grandTerritories});
  map.addLayer({id:'grand-control',type:'fill',source:'grand-territories',paint:{'fill-color':'#baaa8d','fill-opacity':.55}},'control');
- map.addLayer({id:'grand-border',type:'line',source:'grand-territories',paint:{'line-color':'#654c3f','line-width':['interpolate',['linear'],['zoom'],4,.65,8,1.8],'line-opacity':.78}},'control');
+ map.addLayer({id:'grand-border',type:'line',source:'grand-territories',paint:{'line-color':'#654c3f','line-width':['interpolate',['linear'],['zoom'],4,.35,8,1.3],'line-opacity':.78}},'control');
  map.addLayer({id:'grand-hover',type:'line',source:'grand-territories',filter:['==',['get','id'],''],paint:{'line-color':'#f3e6c3','line-width':2.2,'line-opacity':.9}},'control');
  map.on('click','grand-control',e=>{if(!state.grandMap)return;e.originalEvent?.stopPropagation?.();const r=region(state,e.features[0]?.properties?.id);if(!r)return;const unit=state.armies.find(a=>a.id===activeArmy&&a.owner===state.player);if(unit&&!unit.move&&r.id!==unit.region&&previewMarch(state,unit.id,r.id).ok){previewDestination=r.id;showArmy(unit);renderReach(unit)}else showRegion(r)});
  map.on('mousemove','grand-control',e=>map.setFilter('grand-hover',['==',['get','id'],e.features?.[0]?.properties?.id||'']));
