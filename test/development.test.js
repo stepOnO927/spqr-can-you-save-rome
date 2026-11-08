@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,purchaseMaterials} from '../engine.js';
+import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,purchaseMaterials} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility} from '../development.js';
 import {developmentPanel,ideasPanel} from '../development-ui.js';
 import {edgeMonths} from '../grand-operations.js';
@@ -11,7 +11,7 @@ const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
 test('every development node has its own interpretive illustration',()=>{
  const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
- assert.equal(art.length,64);assert.equal(new Set(art).size,64);
+ assert.equal(art.length,65);assert.equal(new Set(art).size,65);
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
@@ -72,7 +72,7 @@ test('public law and allied registration are sourced, bilingual policies with pa
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,30);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,31);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
@@ -170,6 +170,28 @@ test('ancestral rites patronage has a real provincial tradeoff, upkeep, and a pr
  tick(control);tick(adopted);
  for(const [id,delta] of [['roma',1],['egypt',-1]])assert.equal(adopted.regions.find(r=>r.id===id).civicSatisfaction-control.regions.find(r=>r.id===id).civicSatisfaction,delta,id);
  for(const [lang,label] of [['en','Other rites satisfaction / quarter −1'],['zh','异地祭仪满意度 / 季 −1']])assert.match(developmentPanel(s,lang,'idea'),new RegExp(label));
+});
+test('civic exercise trains recruits only in integrated towns and charges upkeep',()=>{
+ const idea=IDEAS.find(x=>x.id==='civic-exercise');
+ assert.match(idea.source.url,/gutenberg.org/);assert.match(idea.context[0],/criticizes excessive Spartan severity/);
+ const base=newGrandGame('egypt'),inactive=upgradeSave(JSON.parse(JSON.stringify(base))),active=upgradeSave(JSON.parse(JSON.stringify(base)));
+ const local=active.regions.find(r=>r.id==='egypt');
+ development(active,'egypt').slots.culture[0]=idea.id;
+ assert.equal(nationalBudget(active,'egypt').ideaUpkeep,nationalBudget(inactive,'egypt').ideaUpkeep+3);
+ assert.equal(recruit(inactive,'egypt'),true);assert.equal(recruit(active,'egypt'),true);
+ assert.equal(active.armies.at(-1).morale,inactive.armies.at(-1).morale,'low integration should not grant the morale bonus');
+ const integrated=upgradeSave(JSON.parse(JSON.stringify(base)));
+ development(integrated,'egypt').slots.culture[0]=idea.id;
+ integrated.regions.find(r=>r.id==='egypt').integration=65;
+ assert.equal(recruit(integrated,'egypt'),true);
+ assert.equal(integrated.armies.at(-1).morale,inactive.armies.at(-1).morale+4);
+  const rural=upgradeSave(JSON.parse(JSON.stringify(base)));
+  development(rural,'egypt').slots.culture[0]=idea.id;
+  rural.regions.find(r=>r.id==='t112').integration=80;
+  assert.equal(recruit(rural,'t112'),true);
+  assert.equal(rural.armies.at(-1).morale,58,'a highly integrated rural territory is not a civic training town');
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(integrated))).armies.at(-1).morale,integrated.armies.at(-1).morale);
+ for(const [lang,label] of [['en','Recruit morale in urban territory with integration ≥65'],['zh','融合度≥65的城市新兵士气']])assert.ok(developmentPanel(active,lang,'idea').includes(label));
 });
 
 test('material knowledge permits delayed construction with terrain, deposits, materials and upkeep',()=>{

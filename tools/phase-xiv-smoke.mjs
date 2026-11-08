@@ -26,6 +26,7 @@ try{
   assert.match(await page.locator('#tech-ancestral-rites').innerText(),/Other rites satisfaction \/ quarter −1/);
   assert.match(await page.locator('#tech-public-legal-reference').innerText(),/Public Legal Reference/);
   assert.match(await page.locator('#tech-citizen-registration').innerText(),/Allied Citizen Registration/);
+  assert.match(await page.locator('#tech-civic-exercise').innerText(),/Recruit morale in urban territory with integration ≥65/);
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/Treasury \/ month −2/);
   await page.locator('[data-research="legion-training"]').click();
   assert.match(await page.locator('.dev-status').first().innerText(),/Researching/);
@@ -53,6 +54,7 @@ try{
   assert.match(await page.locator('#tech-ancestral-rites').innerText(),/异地祭仪满意度 \/ 季 −1/);
   assert.match(await page.locator('#tech-public-legal-reference').innerText(),/公开法律参照/);
   assert.match(await page.locator('#tech-citizen-registration').innerText(),/盟邦公民登记/);
+  assert.match(await page.locator('#tech-civic-exercise').innerText(),/融合度≥65的城市新兵士气/);
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/国库 \/ 月 −2/);
   await page.screenshot({path:'tools/phase-xiv-ui.png'});
   for(const lang of ['en','zh']){

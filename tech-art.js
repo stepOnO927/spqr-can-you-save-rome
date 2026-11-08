@@ -64,7 +64,8 @@ const drawings={
  'naval-engineering-education':'M8 52h48M13 45V22h38v23M19 28h26M20 36h24M32 22V11M25 48q7-7 14 0',
  'maritime-cultural-exchange':'M8 51h48M11 37q11-11 21 0t21 0M16 42l9 8 7-8 7 8 9-8M25 24l7-11 7 11M32 13v28',
  'sanctuary-protection':'M8 52h48M14 47V25l18-13 18 13v22M20 47V30h24v17M26 40h12M32 21v20M11 55h42',
- 'ancestral-rites':'M8 52h48M16 49h32M21 49V31h22v18M18 31h28M23 31l9-18 9 18M32 16v23M25 42h14M11 21q5-5 10 0m22 0q5-5 10 0'
+ 'ancestral-rites':'M8 52h48M16 49h32M21 49V31h22v18M18 31h28M23 31l9-18 9 18M32 16v23M25 42h14M11 21q5-5 10 0m22 0q5-5 10 0',
+ 'civic-exercise':'M9 52h46M15 43h34M18 42l7-15 7 6 8-18M25 27l-5-9m5 9 10-10M37 16a5 5 0 1 0 10 0 5 5 0 1 0-10 0M40 33l8 9M17 51v-8m30 8v-8'
 };
 
 export function techIllustration(item){

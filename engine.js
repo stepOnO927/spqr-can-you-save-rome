@@ -5,7 +5,7 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=58';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
-import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=14';
+import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=15';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=2';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=5';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
@@ -121,7 +121,8 @@ export function recruit(s,regionId,owner=s.player){
   f.treasury-=cost;f.manpower-=3000;f.food-=6;
   const id=`levy${s.nextArmy++}`;
   const roman=owner==='caesar'||owner==='senate';
-  s.armies.push({id,name:roman?['Newly raised legion','新编军团']:['Newly raised forces','新征召军队'],owner,region:regionId,men:3000,morale:Math.min(100,58+(effects.recruitMorale||0)+(local.recruitMorale||0)),skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null});
+  const civicExercise=r.terrain==='urban'&&(r.integration??(s.grandMap?55:65))>=65?effects.civicExercise||0:0;
+  s.armies.push({id,name:roman?['Newly raised legion','新编军团']:['Newly raised forces','新征召军队'],owner,region:regionId,men:3000,morale:Math.min(100,58+(effects.recruitMorale||0)+(local.recruitMorale||0)+civicExercise),skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null});
   r.loyalty=Math.max(0,r.loyalty-3);
   if(owner===s.player){log(s,`New forces were raised in ${r.name[0]}.`,`在${r.name[1]}征召了新军队。`);recordEvent(s,{type:'recruitment',category:'military',severity:'routine',factionId:owner,regionId:r.id,armyId:id})}
   if(owner===s.player)updateObjectives(s);
