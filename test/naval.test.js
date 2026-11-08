@@ -158,6 +158,23 @@ test('merchant hulls assigned to army supplies cannot also carry trade cargo',()
  advanceNaval(s);
  assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
 });
+test('AI dispatches a paid supply convoy only for its own under-supplied port front',()=>{
+ const s=newGrandGame('egypt'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic'),army=s.armies.find(a=>a.id==='italy');
+ s.factions.senate.treasury=200;s.factions.senate.food=50;
+ s.naval.routes=[];
+ s.regions.find(r=>r.id==='t016').food=.4;army.region='t016';army.operationalSupply=.4;
+ const before=s.factions.senate.food;
+ advanceNaval(s);
+ assert.equal(fleet.order?.kind,'supply');assert.equal(fleet.order.targetPort,'t016');
+ assert.equal(s.factions.senate.food,before-fleet.order.cargo);
+ for(let i=0;i<3;i++)advanceNaval(s);
+ assert.ok(s.naval.provisions.t016?.food>0);
+ const healthy=newGrandGame('egypt'),healthyArmy=healthy.armies.find(a=>a.id==='italy');
+ healthy.factions.senate.treasury=200;healthyArmy.region='t016';healthyArmy.operationalSupply=.95;
+ healthy.regions.find(r=>r.id==='t016').food=.4;
+ advanceNaval(healthy);
+ assert.notEqual(healthy.naval.fleets.find(f=>f.id==='senate-adriatic').order?.kind,'supply');
+});
 test('merchant hulls limit simultaneous routes and hostile raids interrupt real cargo',()=>{
  const s=newGrandGame('senate'),egypt=s.naval.fleets.find(f=>f.owner==='egypt'),caesar=s.naval.fleets.find(f=>f.owner==='caesar');egypt.ships.merchant=1;s.factions.caesar.treasury=200;s.factions.senate.food=0;s.factions.egypt.food=60;advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.amount,4);assert.equal(s.naval.routes.find(r=>r.id==='egypt-papyrus').last.reason,'merchant');
  caesar.zone='alexandrian';caesar.port=null;assert.equal(orderFleet(s,'caesar',caesar.id,'raid','egypt-italy').ok,true);const before={food:s.factions.senate.food,raider:s.factions.caesar.treasury};advanceNaval(s);const route=s.naval.routes.find(r=>r.id==='egypt-italy');assert.equal(route.last.reason,'raid');assert.equal(route.last.amount,0);assert.equal(s.factions.senate.food,before.food);assert.ok(s.naval.reports.some(r=>r.kind==='trade-raid'));assert.ok(s.factions.caesar.treasury<=before.raider);

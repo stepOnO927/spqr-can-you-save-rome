@@ -27,8 +27,8 @@ try{
  assert.match(await page.locator('.naval-content').innerText(),/份粮在途/);
  assert.match(await page.locator('.naval-content').innerText(),/军需载量 6粮/);
  const reports=await page.evaluate(async()=>{
-  const {newGrandGame}=await import('../engine.js?v=108');
-  const {renderNavalPanel}=await import('./naval-ui.js?v=16');
+  const {newGrandGame}=await import('../engine.js?v=109');
+  const {renderNavalPanel}=await import('./naval-ui.js?v=17');
   const state=newGrandGame('senate');state.naval.reports.unshift({id:'supply-test',kind:'supply-delivery',owner:'senate',port:'t016',cargo:6,year:-49,month:4});
   const root=document.createElement('div');
   const render=lang=>{renderNavalPanel({state,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};

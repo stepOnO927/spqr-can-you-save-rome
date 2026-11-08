@@ -229,6 +229,11 @@ function aiNavalCashflow(s,owner){
  const fleetCost=s.naval.fleets.filter(f=>f.owner===owner).reduce((sum,f)=>sum+fleetUpkeepDue(f),0);
  return income-armyCost-fleetCost;
 }
+function aiSupplyDestination(s,owner,f){
+ if(!f.port||(f.ships.transport||0)*3+(f.ships.merchant||0)*4<4||s.factions[owner].food<10)return null;
+ const destinations=s.regions.filter(r=>r.owner===owner&&r.port&&r.id!==f.port&&r.food<.6&&(s.naval.provisions?.[r.id]?.owner!==owner||(s.naval.provisions[r.id].food||0)<4));
+ return destinations.filter(r=>s.armies.some(a=>a.owner===owner&&a.men>=1200&&a.operationalSupply<.65&&(a.region===r.id||GRAND_ROUTES.some(([from,to,kind])=>kind!=='sea'&&(from===r.id&&to===a.region||to===r.id&&from===a.region))))).sort((a,b)=>(seaRoute(f.zone,portZone(a.id))?.length??99)-(seaRoute(f.zone,portZone(b.id))?.length??99))[0]||null;
+}
 function aiNavalOrders(s,owner,f){
  const cashflow=aiNavalCashflow(s,owner),treasury=s.factions[owner].treasury;
  const nearbyThreat=reportedHostileFleets(s,owner).some(r=>atWar(s,owner,r.owner)&&seaRoute(f.zone,r.zone)?.length<=1);
@@ -241,6 +246,7 @@ function aiNavalOrders(s,owner,f){
  if(f.order||f.mobilizing)return;
  if(f.port&&treasury<110&&cashflow< -6&&!nearbyThreat){reserveFleet(s,owner,f.id);return}
  if(f.supply<25||f.hull<35){const home=s.regions.filter(r=>r.owner===owner&&r.port).sort((a,b)=>(seaRoute(f.zone,portZone(a.id))?.length??99)-(seaRoute(f.zone,portZone(b.id))?.length??99))[0];if(home)orderFleet(s,owner,f.id,'return',home.id);return}
+ if(treasury>=40){const destination=aiSupplyDestination(s,owner,f);if(destination)return orderFleet(s,owner,f.id,'supply',destination.id)}
  const pirate=s.naval.pirates.find(p=>p.zone===f.zone&&p.pressure>18);if(pirate&&(f.ships.trireme||f.ships.light||f.ships.quadrireme||f.ships.quinquereme))return orderFleet(s,owner,f.id,'patrol',f.zone);
  const threatened=s.naval.routes.find(r=>[r.from,r.to].some(id=>s.regions.find(x=>x.id===id)?.owner===owner)&&['piracy','raid'].includes(r.last?.reason));if(threatened&&(f.ships.trireme||f.ships.light||f.ships.quadrireme||f.ships.quinquereme))return orderFleet(s,owner,f.id,'escort',threatened.id);
  const known=reportedHostileFleets(s,owner),enemyPort=s.regions.find(r=>r.port&&atWar(s,owner,r.owner)&&seaRoute(f.zone,portZone(r.id))?.length<=1&&!known.some(x=>x.zone===portZone(r.id)&&x.range[1]>(ships(f)*1.5)));if(enemyPort&&combatPower(s,f)>4)return orderFleet(s,owner,f.id,'blockade',enemyPort.id);
