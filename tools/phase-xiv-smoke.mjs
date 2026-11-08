@@ -151,6 +151,26 @@ try{
   assert.equal(await page.locator('[data-accept-exchange-request]').count(),1);
   await page.locator('[data-accept-exchange-request]').click();
   assert.equal(await page.locator('[data-accept-exchange-request]').count(),0);
+  const agreement=newGrandGame('egypt');agreement.relations['caesar:egypt']=50;
+  agreement.factions.egypt.treasury=300;agreement.factions.caesar.treasury=300;
+  agreement.development.caesar.knownMaterial.push('bridge-engineering');
+  for(const language of ['en','zh']){
+    await page.evaluate(value=>localStorage.setItem('spqr-lang',value),language);
+    await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+    await page.locator('#entry-file').setInputFiles({name:`agreement-${language}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(agreement))});
+    await page.locator('[data-tab="development"]').click();
+    const sign=page.locator('[data-negotiate-knowledge-agreement="caesar"]');
+    assert.equal(await sign.isEnabled(),true);
+    await sign.click();
+    assert.match(await page.locator('.dev-build-row').filter({has:page.locator('[data-cancel-knowledge-agreement="caesar"]')}).innerText(),language==='zh'?/凯撒[\s\S]*协定生效中/:/Caesar[\s\S]*Agreement active/);
+    await page.locator('[data-cancel-knowledge-agreement="caesar"]').click();
+    assert.equal(await page.locator('[data-cancel-knowledge-agreement="caesar"]').count(),0);
+  }
+  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),agreement);
+  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+  await page.locator('#development').click();
+  await page.locator('[data-negotiate-knowledge-agreement="caesar"]').click();
+  assert.equal(await page.locator('[data-cancel-knowledge-agreement="caesar"]').count(),1);
   assert.deepEqual(errors,[]);
-  console.log('Phase XIV browser smoke passed: research, adoption, construction and consent-based knowledge sales, purchases and exchanges in both languages.');
+  console.log('Phase XIV browser smoke passed: research, adoption, construction, knowledge agreements and consent-based trades in both languages.');
 }finally{await browser.close()}

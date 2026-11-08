@@ -17,8 +17,8 @@ import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js?v=2';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=12';
-import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=127';
-import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js?v=20';
+import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=128';
+import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js?v=21';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=15';
@@ -34,7 +34,7 @@ import {assessment,sendScouts,probePositions,delayAttack,markReconRegion,request
 import {intelligenceHtml,afterActionHtml} from '../recon-ui.js?v=3';
 import {renderNavalPanel} from './naval-ui.js?v=30';
 import {SEA_ZONES,reportedHostileFleets} from '../naval.js?v=15';
-import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=127';
+import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=128';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
@@ -79,6 +79,8 @@ function showDevelopment(page='research'){
   act('[data-decline-purchase-buyer]',b=>declineKnowledgePurchase(state,state.player,b.dataset.declinePurchaseBuyer,b.dataset.purchaseBranch,b.dataset.purchaseId));
   act('[data-accept-exchange-request]',b=>{const d=b.dataset;return acceptKnowledgeExchange(state,state.player,d.exchangeRequestPartner,d.exchangeRequestOfferBranch,d.exchangeRequestOfferId,d.exchangeRequestWantBranch,d.exchangeRequestWantId)});
   act('[data-decline-exchange-request]',b=>{const d=b.dataset;return declineKnowledgeExchange(state,state.player,d.exchangeRequestPartner,d.exchangeRequestOfferBranch,d.exchangeRequestOfferId,d.exchangeRequestWantBranch,d.exchangeRequestWantId)});
+  act('[data-negotiate-knowledge-agreement]',b=>negotiateKnowledgeAgreement(state,state.player,b.dataset.negotiateKnowledgeAgreement));
+  act('[data-cancel-knowledge-agreement]',b=>cancelKnowledgeAgreement(state,state.player,b.dataset.cancelKnowledgeAgreement));
   act('[data-sell-id]',b=>sellKnowledge(state,state.player,b.dataset.sellBuyer,b.dataset.sellBranch,b.dataset.sellId));
   act('[data-exchange-id]',b=>{const offer=panel.querySelector(`[data-exchange-offer="${b.dataset.exchangePartner}"]`)?.value;if(!offer)return {ok:false,reason:'offer'};const [branch,id]=offer.split(':');return exchangeKnowledge(state,state.player,b.dataset.exchangePartner,branch,id,b.dataset.exchangeBranch,b.dataset.exchangeId)});
   act('[data-invite-scholar]',b=>inviteForeignScholars(state,state.player,b.dataset.inviteScholar));

@@ -177,6 +177,7 @@ const urbanSites=new Set(['roma','egypt','anatolia','syria','achaia','sicilia'])
 const fresh = faction => ({knownMaterial:faction==='egypt'?['water-control','grain-storage']:['roadmaking','grain-storage'],knownIdeas:[],foreignOrigins:{},slots:Object.fromEntries(IDEA_CATEGORIES.map(c=>[c.id,[null]])),research:null,adoption:null,expansion:null,trade:[],offers:[],purchaseRequests:[],exchangeRequests:[],materials:{stone:6,timber:7,metal:3}});
 export function initializeDevelopment(s){
   s.development ||= {};
+  s.knowledgeAgreements=Array.isArray(s.knowledgeAgreements)?s.knowledgeAgreements.filter(a=>a&&typeof a.a==='string'&&typeof a.b==='string'&&a.a!==a.b&&s.factions[a.a]&&s.factions[a.b]&&Number.isInteger(a.remaining)&&a.remaining>0&&a.remaining<=12&&Number.isInteger(a.next)&&a.next>0&&a.next<=3):[];
   for(const id of Object.keys(s.factions).filter(id=>id!=='rebels')){
     const d=s.development[id] ||= fresh(id);
     d.knownMaterial ||= fresh(id).knownMaterial;d.knownIdeas ||= [];
@@ -398,6 +399,38 @@ export function inviteForeignScholars(s,host,partner){
  s.factions[host].treasury-=24;s.factions[partner].treasury+=10;hd.visitingScholars.push({partner,remaining:6});
  return {ok:true,months:6,cost:24};
 }
+function agreementCandidate(s,seller,buyer,cycle=0){
+ const source=s.development[seller],recipient=s.development[buyer];if(!source||!recipient)return null;
+ for(const branch of cycle%2?['idea','material']:['material','idea']){
+  const key=branch==='material'?'knownMaterial':'knownIdeas';
+  const id=source[key].find(id=>!strategicKnowledge.has(id)&&!recipient[key].includes(id)&&!recipient.trade.some(t=>t.branch===branch&&t.id===id));
+  if(id)return {branch,id};
+ }
+ return null;
+}
+export function knowledgeAgreementCheck(s,a,b){
+ initializeDevelopment(s);
+ if(a===b||!s.development[a]||!s.development[b]||!s.regions.some(r=>r.owner===a)||!s.regions.some(r=>r.owner===b))return {ok:false,reason:'partner'};
+ if(s.knowledgeAgreements.some(x=>x.a===a&&x.b===b||x.a===b&&x.b===a))return {ok:false,reason:'existing'};
+ if(s.wars.some(w=>w.includes(a)&&w.includes(b)))return {ok:false,reason:'war'};
+ if((s.relations[[a,b].sort().join(':')]??0)<45)return {ok:false,reason:'relations'};
+ if(s.factions[a].treasury<20||s.factions[b].treasury<20)return {ok:false,reason:'treasury'};
+ if(!agreementCandidate(s,a,b)||!agreementCandidate(s,b,a))return {ok:false,reason:'knowledge'};
+ return {ok:true,cost:20,months:12};
+}
+export function negotiateKnowledgeAgreement(s,a,b){
+ if(a!==s.player&&b===s.player)return {ok:false,reason:'consent'};
+ const check=knowledgeAgreementCheck(s,a,b);if(!check.ok)return check;
+ s.factions[a].treasury-=20;s.factions[b].treasury-=20;
+ s.knowledgeAgreements.push({a,b,remaining:12,next:3,cycle:0});return check;
+}
+export function cancelKnowledgeAgreement(s,a,b){
+ initializeDevelopment(s);
+ if(a!==s.player)return {ok:false,reason:'consent'};
+ const agreement=s.knowledgeAgreements.find(x=>x.a===a&&x.b===b||x.a===b&&x.b===a);
+ if(!agreement)return {ok:false,reason:'agreement'};
+ s.knowledgeAgreements.splice(s.knowledgeAgreements.indexOf(agreement),1);return {ok:true};
+}
 export function advanceDevelopment(s,log=()=>{}){
   initializeDevelopment(s);
   for(const [owner,d] of Object.entries(s.development)){
@@ -424,6 +457,20 @@ export function advanceDevelopment(s,log=()=>{}){
     }
   }
   for(const r of s.regions){const c=r.construction;if(!c)continue;if(r.owner!==c.owner){r.construction=null;continue}if(--c.remaining<=0){r.buildings.push(c.buildingId);if(c.buildingId==='fort')r.fort++;if(c.buildingId==='monument'&&c.inscription)(r.inscriptions||=[]).push({text:c.inscription,owner:c.owner,year:s.year,month:s.month});if(c.owner===s.player)log(`${c.buildingId} completed in ${r.name[0]}.`,`${r.name[1]}的${c.buildingId}建成。`);r.construction=null}}
+  for(const agreement of [...s.knowledgeAgreements]){
+    const {a,b}=agreement;
+    if(s.wars.some(w=>w.includes(a)&&w.includes(b))||(s.relations[[a,b].sort().join(':')]??0)<20||!s.regions.some(r=>r.owner===a)||!s.regions.some(r=>r.owner===b)){
+      s.knowledgeAgreements.splice(s.knowledgeAgreements.indexOf(agreement),1);continue;
+    }
+    if(--agreement.next<=0){
+      for(const [seller,buyer] of [[a,b],[b,a]]){
+        const candidate=agreementCandidate(s,seller,buyer,agreement.cycle);
+        if(candidate)s.development[buyer].trade.push({seller,...candidate,remaining:2,method:'agreement'});
+      }
+      agreement.next=3;agreement.cycle++;
+    }
+    if(--agreement.remaining<=0)s.knowledgeAgreements.splice(s.knowledgeAgreements.indexOf(agreement),1);
+  }
 }
 export function localBuildingEffects(r){const out={};for(const id of r.buildings||[]){const b=BUILDINGS.find(x=>x.id===id);if(!b)continue;for(const [k,v] of Object.entries(b.effects))out[k]=(out[k]||0)+v;out.upkeep=(out.upkeep||0)+b.upkeep}return out}
 export const developmentCatalogIds={ideas:ids(IDEAS),materials:ids(MATERIALS),buildings:ids(BUILDINGS)};
