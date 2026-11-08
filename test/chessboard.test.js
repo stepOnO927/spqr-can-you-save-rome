@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=grand-chessboard-2';
-import {buildChessboard} from '../chessboard.js?v=grand-chessboard-2';
-import {addReport} from '../character-system.js?v=grand-chessboard-2';
+import {newGame} from '../engine.js?v=dynasty-id-3';
+import {buildChessboard} from '../chessboard.js?v=dynasty-id-3';
+import {addReport} from '../character-system.js?v=dynasty-id-3';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {observeDiplomacy} from '../diplomatic-knowledge.js?v=grand-chessboard-2';
-import {renderChessboard} from '../chessboard-ui.js?v=grand-chessboard-2';
+import {renderChessboard} from '../chessboard-ui.js?v=dynasty-id-3';
 
 test('the board does not read hidden foreign plans, plots, armies, personal loyalties or secret treaties',()=>{
  const s=newGame('caesar'),before=buildChessboard(s);s.world.conspiracies={senate:{person:'cato',participants:['cato']}};s.world.strategicPlans={senate:{goal:'secret'}};s.world.doubleAgents=[{person:'antony',allegiance:'senate'}];

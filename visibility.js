@@ -1,4 +1,4 @@
-import {reportedArmies} from './character-system.js?v=grand-chessboard-2';
+import {reportedArmies} from './character-system.js?v=dynasty-id-3';
 
 // UI projections only: the simulation and local saves still contain the true state.
 export function visibleArmyForPlayer(state,player,id){

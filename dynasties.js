@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-2';
-import {startDynasticWar} from './civil-war.js?v=grand-chessboard-2';
+import {CHARACTER_CATALOG} from './characters.js?v=dynasty-id-3';
+import {startDynasticWar} from './civil-war.js?v=dynasty-id-3';
 import {ROUTES} from './data.js?v=phase-x-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
@@ -44,8 +44,13 @@ export function initializeDynasties(s){
 }
 
 export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员']}){
- const d=initializeDynasties(s),id=`fictional:${d.nextPerson++}`;
- const family=familyId||`family:fictional:${d.nextFamily++}`;
+ const d=initializeDynasties(s);
+ // Reserve identities mentioned anywhere in older saves, including reports
+ // and relationships whose original person or family is no longer present.
+ const snapshot=JSON.stringify({state:s,parents,adoptiveParents,familyId}),people=new Set([...snapshot.matchAll(/(?:^|[^A-Za-z0-9_:])fictional:(\d+)(?!\d)/g)].map(m=>m[1])),families=new Set([...snapshot.matchAll(/family:fictional:(\d+)(?!\d)/g)].map(m=>m[1]));
+ const nextFree=(start,used)=>{let n=Number.isSafeInteger(start)&&start>0&&start<Number.MAX_SAFE_INTEGER?start:1;while(used.has(String(n))){n++;if(n>=Number.MAX_SAFE_INTEGER)n=1}return n};
+ const personNo=nextFree(d.nextPerson,people);d.nextPerson=personNo+1;const id=`fictional:${personNo}`;
+ let family=familyId;if(!family){const familyNo=nextFree(d.nextFamily,families);d.nextFamily=familyNo+1;family=`family:fictional:${familyNo}`}
  if(!d.families[family])d.families[family]={id:family,name:Array.isArray(name)?name:[name,name],wealth:0,reputation:50,influence:20,leader:id,patrons:[]};
  d.catalog[id]={name:Array.isArray(name)?name:[name,name],birth:[birthYear,birthYear],faction,role,culture:['Simulated','模拟'],source:null,fictional:true};
  CHARACTER_CATALOG[id]=d.catalog[id];

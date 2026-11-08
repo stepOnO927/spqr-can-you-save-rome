@@ -1,4 +1,4 @@
-import {buildChessboard} from './chessboard.js?v=grand-chessboard-2';
+import {buildChessboard} from './chessboard.js?v=dynasty-id-3';
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=(x,zh)=>Array.isArray(x)?x[zh?1:0]||x[0]:x||'';

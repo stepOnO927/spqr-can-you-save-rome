@@ -1,5 +1,5 @@
-import {initializeWorld} from './characters.js?v=grand-chessboard-2';
-import {politicalAmbition} from './conspiracies.js?v=grand-chessboard-2';
+import {initializeWorld} from './characters.js?v=dynasty-id-3';
+import {politicalAmbition} from './conspiracies.js?v=dynasty-id-3';
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const pair=(a,b)=>[a,b].sort().join(':');
 const current=s=>s.year*12+s.month;
