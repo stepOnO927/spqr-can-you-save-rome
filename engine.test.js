@@ -1,9 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry} from './engine.js';
+import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry,answerPeaceOffer} from './engine.js';
 import historical from './historical-territories.js';
 import {REGIONS} from './data.js';
 import {identity,factionMark} from './identity.js';
+
+test('an incoming peace offer needs the player decision and a delivered acceptance',()=>{
+ let s=newGame('caesar');for(const a of s.armies){a.move=null;a.siege=null;if(a.owner==='caesar')a.men=100000}
+ s.log=[];assert.equal(sendInquiry(s,'senate','caesar','peace').ok,true);assert.equal(answerPeaceOffer(s,'senate','accept').ok,false);assert.equal(s.log.length,0);
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.8&&q<.9});
+ s.seed=seed;tick(s);assert.equal(s.inquiries[0].status,'awaiting_decision');assert.ok(isWar(s,'caesar','senate'));assert.match(s.log[0].zh,/等待你的决定/);
+ assert.equal(sendInquiry(s,'senate','caesar','peace').reason,'pending');assert.equal(answerPeaceOffer(s,'senate','accept').ok,true);assert.equal(answerPeaceOffer(s,'senate','accept').ok,false);assert.ok(isWar(s,'caesar','senate'));
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));for(const a of s.armies){a.move=null;a.siege=null}s.seed=seed;tick(s);assert.equal(s.inquiries[0].status,'answered');assert.equal(isWar(s,'caesar','senate'),false);
+});
+
+test('an incoming offer can be lost, refused, expire, or lose its reply without ending war',()=>{
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.8&&q<.9});
+ const low=Array.from({length:10000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296<.1);
+ for(const outcome of ['outbound','refused','expired','return']){
+  let s=newGame('caesar');for(const a of s.armies){a.move=null;a.siege=null}s.log=[];assert.equal(sendInquiry(s,'senate','caesar','peace').ok,true);
+  s.seed=outcome==='outbound'?low:seed;tick(s);if(outcome==='outbound'){assert.equal(s.inquiries[0].status,'no_reply');assert.equal(s.log.length,0);assert.ok(isWar(s,'caesar','senate'));continue}
+  assert.equal(s.inquiries[0].status,'awaiting_decision');
+  if(outcome==='expired'){s.inquiries[0].remaining=1;tick(s);assert.equal(s.inquiries[0].status,'no_reply');assert.equal(answerPeaceOffer(s,'senate','accept').ok,false)}
+  else{assert.equal(answerPeaceOffer(s,'senate',outcome==='refused'?'refuse':'accept').ok,true);s=upgradeSave(JSON.parse(JSON.stringify(s)));for(const a of s.armies){a.move=null;a.siege=null}s.seed=outcome==='return'?low:seed;tick(s);assert.equal(s.inquiries[0].status,outcome==='refused'?'refused':'no_reply')}
+  assert.ok(isWar(s,'caesar','senate'));
+ }
+});
 
 test('peace offers remain in transit across saves and only end war on delivery',()=>{
  let s=newGame('caesar');for(const a of s.armies){a.move=null;a.siege=null;if(a.owner==='senate')a.men=1}

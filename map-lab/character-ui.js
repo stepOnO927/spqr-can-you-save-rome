@@ -7,7 +7,7 @@ import {reportedClaimants,reportedHealthSubjects,reportedOfficeTheaters,supportC
 import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan,successionCandidates} from '../governance.js?v=phase-x-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=phase-x-1';
-import {queueMission} from '../engine.js?v=phase-x-2';
+import {queueMission} from '../engine.js?v=peace-choice-8';
 import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from '../personal-diplomacy.js?v=phase-x-1';
 const portraits=new Set(['caesar','pompey','cleopatra','arsinoe','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

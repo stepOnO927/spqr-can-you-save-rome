@@ -51,6 +51,6 @@ export function formatChronicleEntry(e,lang='en'){const zh=lang==='zh',i=zh?1:0,
  case 'character':if(e.change==='death')return zh?`${e.personName?.[1]||e.characterId}去世。`:`${e.personName?.[0]||e.characterId} died.`;if(e.characterId)return `${e.personName?.[i]||e.characterId}: ${zh?e.zh||e.en:e.en||e.zh}`;break;
  case 'government':return zh?`政体由${e.from}变为${e.to}。`:`Government changed from ${e.from} to ${e.to}.`;
  case 'diplomacy':if(e.change==='war')return zh?`与${name(e.other,lang)}进入战争。`:`War began with ${name(e.other,lang)}.`;break;
- case 'intelligence':return zh?`${p}：${e.reportedOwner?.[1]||'未知'}控制的${e.source||'情报'}报告，观察于公元前${Math.abs(e.observationYear)}年${e.observationMonth}月；可能过时或有误。`:`${p}: ${e.source||'intelligence'} reports control by ${e.reportedOwner?.[0]||'unknown'}, observed ${e.observationMonth}/${Math.abs(e.observationYear)} BCE; may be outdated or mistaken.`;
+ case 'intelligence':return zh?`${p}：报告由${e.reportedOwner?.[1]||'未知'}控制（${({travelers:'商旅',observation:'观察',spy:'间谍',official:'官方'})[e.source]||'情报'}，观察于 ${e.observationMonth}/${Math.abs(e.observationYear)} BCE；可能过时或有误）。`:`${p}: ${e.source||'intelligence'} reports control by ${e.reportedOwner?.[0]||'unknown'}, observed ${e.observationMonth}/${Math.abs(e.observationYear)} BCE; may be outdated or mistaken.`;
  }return zh?e.zh||e.en||'':e.en||e.zh||''}
 export const chronicleDate=date;
