@@ -26,7 +26,7 @@ import {newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, reg
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=dynasty-id-3';
-import {createCharacterUI} from './character-ui.js?v=dynasty-id-3';
+import {createCharacterUI} from './character-ui.js?v=phase9-relations-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=grand-chessboard-2';
 import {reportedArmies} from '../character-system.js?v=dynasty-id-3';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=grand-chessboard-2';

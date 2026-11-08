@@ -7,7 +7,7 @@ import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,
 import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=dynasty-id-3';
 import {canHoldOffice} from '../office-system.js?v=dynasty-id-3';
 import {renderGenealogy} from '../genealogy-ui.js?v=dynasty-id-3';
-import {finalizeCampaign} from '../legacy.js?v=dynasty-id-3';
+import {finalizeCampaign} from '../legacy.js?v=phase9-relations-1';
 import {startDynasticWar} from '../civil-war.js?v=dynasty-id-3';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=grand-chessboard-2';
 import fs from 'node:fs';
@@ -293,6 +293,17 @@ test('final archive retains named marriage envoys and private family debts',()=>
  assert.equal(archive.familyLoans[0].principal,12);
  assert.equal(archive.familyLoans[0].remaining,14);
  assert.ok(Array.isArray(archive.inheritanceCases));assert.ok(Array.isArray(archive.memories));
+});
+
+test('legacy ruler history preserves complete fictional identities and their families after loading',()=>{
+ let s=newGame('caesar');s.world.dynasties.rulers.push({faction:'caesar',current:'caesar:fictional:1:fictional:2',year:s.year,month:s.month});
+ s.world.characters['fictional:1'].faction='senate';s.world.characters['fictional:2'].faction='senate';
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));s.victory=true;
+ const archive=finalizeCampaign(s).archive,entry=archive.rulers.find(r=>r.current==='caesar:fictional:1:fictional:2');
+ assert.deepEqual(entry.names.map(name=>name[0]),['Gaius Julius Caesar','Publius Varenus','Livia Marcia']);
+ assert.ok(archive.families.some(f=>f.members.some(m=>m.id==='fictional:1')));
+ assert.ok(archive.families.some(f=>f.members.some(m=>m.id==='fictional:2')));
+ assert.ok(Object.hasOwn(archive.lifeEvents,'fictional:1'));
 });
 
 test('a royal child can need a regent while a Roman command is not inherited',()=>{
