@@ -7,9 +7,11 @@ $levels = @(
     @{ Zoom = 4; XMin = 7; XMax = 10; YMin = 4; YMax = 7 },
     @{ Zoom = 5; XMin = 14; XMax = 21; YMin = 9; YMax = 14 },
     @{ Zoom = 6; XMin = 28; XMax = 42; YMin = 19; YMax = 28 },
-    @{ Zoom = 7; XMin = 65; XMax = 71; YMin = 44; YMax = 50 }
+    @{ Zoom = 7; XMin = 65; XMax = 71; YMin = 44; YMax = 50 },
+    @{ Zoom = 8; XMin = 131; XMax = 143; YMin = 88; YMax = 101 }
 )
 $downloaded = 0
+$verified = 0
 foreach ($level in $levels) {
     for ($x = $level.XMin; $x -le $level.XMax; $x++) {
         for ($y = $level.YMin; $y -le $level.YMax; $y++) {
@@ -25,8 +27,9 @@ foreach ($level in $levels) {
             if ($bytes.Length -lt 100 -or [Convert]::ToBase64String($bytes[0..7]) -ne 'iVBORw0KGgo=') {
                 throw "Invalid terrain tile: $target"
             }
+            $verified++
         }
     }
     Write-Output "Verified terrain zoom $($level.Zoom)."
 }
-Write-Output "Downloaded $downloaded tiles; verified 263."
+Write-Output "Downloaded $downloaded tiles; verified $verified."

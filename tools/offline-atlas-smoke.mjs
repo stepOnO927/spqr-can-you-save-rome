@@ -3,6 +3,11 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {resolve, extname, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import bathymetry from '../mediterranean-bathymetry.js';
+import {physicalStyle} from '../map-lab/physical-style.js';
+
+assert.deepEqual([...new Set(bathymetry.features.map(feature=>feature.properties.depth))].sort((a,b)=>a-b),[200,1000,2000,3000]);
+assert.ok(physicalStyle.layers.some(layer=>layer.id==='depth-200'&&layer.source==='bathymetry'));
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -37,12 +42,27 @@ try{
  assert.equal(external.includes('s3.amazonaws.com'),false,'Overview terrain unexpectedly needed the network');
  assert.ok(external.every(host=>host==='s3.amazonaws.com'||host.endsWith('googleapis.com')||host.endsWith('gstatic.com')),`Unexpected external dependency: ${external.join(', ')}`);
  await page.locator('#start-free').click();
+ assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'false','Hill shading should start disabled');
+ await page.locator('#relief-toggle').click();
+ assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'true');
+ await page.locator('#relief-toggle').click();
+ assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'false');
+ await page.locator('#map-mode').selectOption('terrain');
+ const firstLanguage=await page.locator('html').getAttribute('lang');
+ assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/近岸浅海（约0–200米）/:/Coastal shelf \(about 0–200 m\)/);
+ await page.locator('#language').click();
+ assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Coastal shelf \(about 0–200 m\)/:/近岸浅海（约0–200米）/);
+ await page.locator('#map-mode').selectOption('political');
+ if(process.env.SPQR_ATLAS_OVERVIEW_SCREENSHOT){await page.waitForTimeout(600);await page.screenshot({path:process.env.SPQR_ATLAS_OVERVIEW_SCREENSHOT})}
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
  assert.ok(terrainRequests.some(path=>path.includes('/terrain/6/')),'Zoom 6 did not use bundled terrain');
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
  assert.ok(terrainRequests.some(path=>path.includes('/terrain/7/')),'Zoom 7 did not use bundled terrain');
+ await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
+ assert.ok(terrainRequests.some(path=>path.includes('/terrain/8/')),'Zoom 8 did not use bundled terrain');
  assert.deepEqual(missingTerrain,[],'Zoomed Italy requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Italy zoom needed network terrain');
  if(process.env.SPQR_ATLAS_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_SCREENSHOT});
- console.log('Offline atlas loaded MapLibre, 120 settlement markers and local terrain through Italy zoom 7.');
+ if(process.env.SPQR_ATLAS_RELIEF_SCREENSHOT){await page.locator('#relief-toggle').click();await page.waitForTimeout(500);await page.screenshot({path:process.env.SPQR_ATLAS_RELIEF_SCREENSHOT})}
+ console.log('Offline atlas loaded MapLibre, 120 settlement markers and local terrain through Italy zoom 8.');
 }finally{await browser.close()}

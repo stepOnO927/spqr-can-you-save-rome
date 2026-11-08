@@ -26,7 +26,7 @@ function extract(data){const polygons=[];for(const feature of data.features){con
 for(const name of ['land','ocean']){const original=JSON.parse(await readFile(path.join(root,'cartography-work',`${name}.geojson`),'utf8')),map=extract(original);const target=path.join(root,`mediterranean-${name}.js`);await writeFile(target,`// Natural Earth 1:10m physical vectors, public domain; cropped to the campaign region.\nexport default ${JSON.stringify(map)};\n`);console.log(name,map.features.length,Math.round((await readFile(target)).length/1024)+' KiB')}
 tolerance=.006;
 const bathymetry={type:'FeatureCollection',features:[]};
-for(const [code,depth] of [['J_1000',1000],['I_2000',2000],['H_3000',3000]]){
+for(const [code,depth] of [['K_200',200],['J_1000',1000],['I_2000',2000],['H_3000',3000]]){
  const data=JSON.parse(await readFile(path.join(root,'cartography-work',`ne_10m_bathymetry_${code}.geojson`),'utf8'));
  const clipped=extract(data);for(const feature of clipped.features){feature.properties.depth=depth;bathymetry.features.push(feature)}
 }
