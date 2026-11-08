@@ -139,8 +139,11 @@ function updateControl(){
   map.setPaintProperty('grand-border','line-color',['match',['get','id'],...borders,'#72604f']);
   // Settlement catchment lines are gameplay partitions. Keep them legible at
   // inspection zoom without turning the overview into a polygon mesh.
-  map.setPaintProperty('grand-border','line-opacity',['interpolate',['linear'],['zoom'],4,currentMapMode==='terrain'?0:currentMapMode==='political'?.015:.04,6,currentMapMode==='terrain'?.015:currentMapMode==='political'?.045:.10,8,currentMapMode==='terrain'?.08:currentMapMode==='political'?.25:.28]);
-  map.setPaintProperty('control','fill-opacity',0);map.setPaintProperty('province-outline','line-opacity',0);return;
+  map.setPaintProperty('grand-border','line-opacity',['interpolate',['linear'],['zoom'],4,0,6,currentMapMode==='terrain'?0:.01,8,currentMapMode==='terrain'?.08:currentMapMode==='political'?.25:.28]);
+  const macroBorders=[];for(const feature of historical.features){const macros=feature.properties.regions||[],owners=[...new Set(state.regions.filter(r=>macros.includes(r.macro)).map(r=>r.owner))];if(macros.length)macroBorders.push(feature.properties.id,identity(owners.length===1?owners[0]:'shared').map)}
+  map.setPaintProperty('province-outline','line-color',['match',['get','id'],...macroBorders,'#aa9c75']);
+  map.setPaintProperty('province-outline','line-opacity',currentMapMode==='terrain'?.12:.5);
+  map.setPaintProperty('control','fill-opacity',0);return;
  }
  if(!map.getLayer('control'))return;
  const pairs=[],borderPairs=[];for(const f of historical.features){const ids=f.properties.regions||[];if(!ids.length)continue;const regions=ids.map(id=>state.regions.find(r=>r.id===id)).filter(Boolean),owners=[...new Set(regions.map(r=>r.owner))],own=regions.filter(r=>r.owner===state.player);let color=identity(owners.length>1?'shared':owners[0]).map;borderPairs.push(f.properties.id,identity(owners.length>1?'shared':owners[0]).map);
