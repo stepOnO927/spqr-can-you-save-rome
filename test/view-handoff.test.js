@@ -24,12 +24,25 @@ test('switching views preserves the entire campaign without touching save slots'
   assert.equal(receiveHandoff(storage,'atlas',upgradeSave),null);
 });
 
+test('independent commands survive both view transfers',()=>{
+  const storage=memoryStorage(),state=newGame('egypt');
+  stageHandoff(storage,state,'atlas');
+  const atlas=receiveHandoff(storage,'atlas',upgradeSave);
+  assert.equal(atlas.player,'egypt');
+  stageHandoff(storage,atlas,'campaign');
+  const campaign=receiveHandoff(storage,'campaign',upgradeSave);
+  assert.equal(campaign.player,'egypt');
+  assert.equal(storage.getItem(HANDOFF_KEY),null);
+});
+
 test('invalid transfers are not consumed and storage failures do not appear successful',()=>{
   const storage=memoryStorage();
   storage.setItem(HANDOFF_KEY,'{invalid');
   assert.equal(receiveHandoff(storage,'atlas',upgradeSave),null);
   assert.equal(storage.getItem(HANDOFF_KEY),'{invalid');
   storage.setItem(HANDOFF_KEY,JSON.stringify({target:'atlas',state:{player:'egypt',regions:[],armies:[],factions:{}}}));
+  assert.equal(receiveHandoff(storage,'atlas',upgradeSave),null);
+  storage.setItem(HANDOFF_KEY,JSON.stringify({target:'atlas',state:{...newGame(),player:'rebels'}}));
   assert.equal(receiveHandoff(storage,'atlas',upgradeSave),null);
   assert.throws(()=>stageHandoff({setItem(){throw Error('storage blocked')}},newGame(),'atlas'),/storage blocked/);
 });

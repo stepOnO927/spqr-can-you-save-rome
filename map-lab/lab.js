@@ -3,7 +3,7 @@ import {renderSecurity} from './security-ui.js?v=22';
 import {renderOffices} from './offices-ui.js?v=6';
 import {officeEffects} from '../office-system.js?v=6';
 import {waitForMapIdle} from './capture-wait.js?v=1';
-import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=1';
+import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=2';
 import {battleSideForPlayer,visibleLogText} from '../visibility.js?v=26';
 import historical from '../historical-territories.js';
 import grandTerritories from '../grand-territory-polygons.js';
@@ -24,7 +24,7 @@ import {identity,factionMark} from '../identity.js?v=2';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=15';
 import {createCharacterUI} from './character-ui.js?v=94';
 import {reportedArmies} from '../character-system.js?v=58';
-import {createTutorial} from './tutorial.js?v=7';
+import {createTutorial} from './tutorial.js?v=8';
 import {friendlyPersonnelInTheater} from './personnel.js?v=1';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from '../reports-ui.js?v=3';
 import {objectiveDefinitions,eventText,unreadCount,markRead,latestCritical,campaignTurn} from '../campaign-reports.js?v=2';
@@ -109,6 +109,8 @@ const cityZh={ROMA:'罗马',RAVENNA:'拉文纳',ARIMINUM:'阿里米努姆',NARBO
 const cityTheater={ROMA:'roma',RAVENNA:'cisalpine',ARIMINUM:'italiaN',NARBO:'narbo',MASSILIA:'narbo',MEDIOLANUM:'cisalpine',AQUILEIA:'cisalpine',BRUNDISIUM:'italiaS',SALONA:'illyricum',DYRRHACHIUM:'epirus',CAPUA:'italiaS'};
 const originalCityTheater={...cityTheater};
 const namedPoints={cisalpine:[11.6,44.75],narbo:[3.3,43.4],italiaN:[13.05,44.0],roma:[12.45,42.1],italiaS:[17.5,40.8],illyricum:[16.49,43.54],gaul:[4.5,47.54],hispaniaN:[1.25,41.12],sicilia:[15.29,37.08],epirus:[19.45,41.31],hispaniaS:[-4.78,37.88],africa:[10.05,37.05],achaia:[23.73,37.98],anatolia:[27.34,37.94],syria:[36.16,36.20],egypt:[29.92,31.20],numidia:[6.61,36.37],mauretania:[2.19,36.60],armenia:[44.55,39.95],parthia:[44.5,33.1],galatia:[32,39.7],bosporus:[36.5,45.3],...Object.fromEntries(GRAND_SITES.map(site=>[site.id,[site.lon,site.lat]]))};
+const campaignCenter=faction=>['caesar','senate'].includes(faction)?[12.4,43.2]:namedPoints[faction]||[12.4,43.2];
+if(received&&!['caesar','senate'].includes(state.player))map.flyTo({center:campaignCenter(state.player),zoom:5.45});
 const terrainName=id=>lang==='zh'?({plain:'平原',hills:'丘陵',forest:'森林',urban:'城市',desert:'沙漠'}[id]||id):id;
 const marchReason=reason=>({adjacent:lang==='zh'?'目的地不相邻':'Destination is not adjacent',peace:lang==='zh'?'尚未与该势力交战':'Not at war with this faction',transport:lang==='zh'?'海运需要8国库':'Sea transport requires 8 treasury',unavailable:lang==='zh'?'军队正行军或围攻':'Army is marching or besieging'})[reason]||'';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -289,6 +291,22 @@ function renderHud(){
   }
  });
  const b=document.querySelector('#notifications');if(b)b.textContent=`${reportLabel('notifications',lang)} (${unreadCount(state)})`;
+ if(!['caesar','senate'].includes(state.player)){
+  const home=region(state,state.player)||state.regions.find(r=>r.owner===state.player);
+  const own=state.armies.filter(a=>a.owner===state.player&&a.men>0).reduce((total,a)=>total+a.men,0);
+  const holdings=state.regions.filter(r=>r.owner===state.player).length;
+  const wars=state.wars.filter(pair=>pair.includes(state.player)).map(pair=>pair.find(id=>id!==state.player));
+  document.querySelector('.identity small').textContent=lang==='zh'?'独立势力战役':'INDEPENDENT CAMPAIGN';
+  document.querySelector('.identity strong').textContent=n(FACTIONS[state.player].short)+' · 49 BCE';
+  document.querySelector('.brief h1').textContent=n(FACTIONS[state.player].name);
+  document.querySelector('.brief > p').textContent=lang==='zh'?'守住本土，管理军队与国库。你可以选择是否介入罗马内战；胜负仍由战役模拟决定。':'Defend your homeland and manage your armies and treasury. You may choose whether to intervene in Rome’s civil war; battles resolve through the campaign simulation.';
+  document.querySelector('#situation').innerHTML=`<div class="situation-title">${esc(n(FACTIONS[state.player].short))} · ${lang==='zh'?'战役态势':'CAMPAIGN'}</div><div class="strength-line"><span>${factionMark(state.player)} ${lang==='zh'?'己方野战军':'OWN FIELD FORCE'} <b>${own.toLocaleString()}</b></span></div><p>${lang==='zh'?'控制战区':'Controlled theaters'}: ${holdings}</p><p>${lang==='zh'?'本土忠诚度':'Home loyalty'}: ${home?.owner===state.player?home.loyalty+'%':lang==='zh'?'已失去':'Lost'}</p><p>${lang==='zh'?'交战势力':'At war with'}: ${wars.length?wars.map(id=>esc(n(FACTIONS[id]?.short||[id,id]))).join('、'):(lang==='zh'?'无':'None')}</p>${state.battles?.some(b=>b.attacker.owner===state.player||b.defender.owner===state.player)?`<button id="recent-battle">${lang==='zh'?'查看最近战斗':'LATEST BATTLE'}</button>`:''}`;
+  document.querySelector('#recent-battle')?.addEventListener('click',()=>showBattle(state.battles.find(b=>b.attacker.owner===state.player||b.defender.owner===state.player)));
+  if(['political','military'].includes(currentMapMode)){
+   const flags=[state.player,'caesar','senate'].map(id=>`<span class="identity-legend">${factionMark(id)} ${esc(n(FACTIONS[id].short))}</span>`).join('')+`<span>${lang==='zh'?'其他独立势力：各自旗色':'Other powers: their own banner colors'}</span>`;
+   document.querySelector('.legend').innerHTML=flags+(currentMapMode==='military'?`<span><b class="density-key">◎</b> ${lang==='zh'?'己方兵力（千人）':'Friendly troops (thousands)'}</span><span>? ${lang==='zh'?'可能过时的敌军目击':'Possibly stale enemy sighting'}</span><span>⌕ ${lang==='zh'?'军议待侦察地点':'War Council recon target'}</span>`:'');
+  }
+ }
 }
 function showBattle(b){showBattleBase(b);if(b)document.querySelector('#command-detail').innerHTML=battleReportHtml(state,b,lang)}
 
@@ -309,7 +327,7 @@ map.on('load',()=>{if(!reliefEnabled)for(const id of ['relief','relief-detail','
 let tileErrors=0;map.on('error',e=>{if(++tileErrors===3){status.textContent='Some map data could not be loaded; check network access.';status.style.display='block'}console.warn('Map data error',e.error?.message||e.error)});
 function zoomClass(){document.body.classList.toggle('low-zoom',map.getZoom()<5.2);document.body.classList.toggle('mid-zoom',map.getZoom()<6.5);document.body.classList.toggle('leader-overview',map.getZoom()<4.8)}map.on('zoom',zoomClass);zoomClass();
 document.querySelector('#relief-toggle').onclick=()=>{reliefEnabled=!reliefEnabled;localStorage.setItem('spqr-relief-v2',reliefEnabled?'on':'off');for(const id of ['relief','relief-detail','relief-fine','relief-ultra','relief-higher'])if(map.getLayer(id))map.setLayoutProperty(id,'visibility',reliefEnabled?'visible':'none');renderHud()};
-document.querySelector('#zoom-in').onclick=()=>map.zoomIn();document.querySelector('#zoom-out').onclick=()=>map.zoomOut();document.querySelector('#reset').onclick=()=>map.flyTo({center:[12.4,43.2],zoom:5.45});
+document.querySelector('#zoom-in').onclick=()=>map.zoomIn();document.querySelector('#zoom-out').onclick=()=>map.zoomOut();document.querySelector('#reset').onclick=()=>map.flyTo({center:campaignCenter(state.player),zoom:5.45});
 
 function advanceTurn(){
  if(state.achievementState?.finalized){setPlaying(false);return}
@@ -440,4 +458,4 @@ const helpEntries=[
 for(const c of Object.values(CHARACTER_CATALOG))helpEntries.push({kind:'history',en:c.name[0],zh:c.name[1],enBody:(HISTORICAL_BIO[Object.keys(CHARACTER_CATALOG).find(id=>CHARACTER_CATALOG[id]===c)]?.[0]||c.role[0])+' Simulated health and later events are fictional.',zhBody:(HISTORICAL_BIO[Object.keys(CHARACTER_CATALOG).find(id=>CHARACTER_CATALOG[id]===c)]?.[1]||c.role[1])+' 游戏中的健康和之后的事件属于模拟。',source:c.source});
 function openHelp(){activeInfo={type:'help'};activeFaction=null;activeBattle=null;activeArmy=null;previewDestination='';clearReach();const zh=lang==='zh';inspect(zh?'游戏帮助与历史':'GAME HELP & HISTORY',zh?'选择分类或搜索；游戏规则与历史知识分开。':'Choose a category or search; gameplay and history are separate.');const target=document.querySelector('#command-detail');target.innerHTML=`<div class="diplomacy-tabs"><button id="help-game">${zh?'游戏指南':'GAMEPLAY GUIDE'}</button><button id="help-history">${zh?'历史百科':'HISTORICAL ENCYCLOPEDIA'}</button></div><input id="help-search" type="search" aria-label="${zh?'搜索帮助':'Search help'}" placeholder="${zh?'搜索帮助':'Search help'}"><div id="help-results" class="help-list"></div>`;const input=target.querySelector('#help-search'),out=target.querySelector('#help-results');let category='game';const update=()=>{const q=input.value.trim().toLowerCase();out.innerHTML=helpEntries.filter(x=>x.kind===category&&[x.en,x.zh,x.enBody,x.zhBody].some(v=>v.toLowerCase().includes(q))).map(x=>{const index=helpEntries.indexOf(x);return `<article><strong>${esc(zh?x.zh:x.en)}</strong><p>${esc(zh?x.zhBody:x.enBody)}</p>${x.kind==='game'?`<button data-help-locate="${index}">${zh?'指出相关控件':'HIGHLIGHT CONTROL'}</button>`:''}${x.source?`<a href="${esc(x.source)}" target="_blank" rel="noreferrer">${zh?'查看历史资料':'Historical source'}</a>`:''}</article>`}).join('')||`<p>${zh?'没有匹配的条目。':'No matching entries.'}</p>`;out.querySelectorAll('[data-help-locate]').forEach(b=>b.onclick=()=>{const entry=helpEntries[Number(b.dataset.helpLocate)],selector=entry.control|| (entry.en.includes('Recruitment')?'#map [data-city="MEDIOLANUM"]':entry.en.includes('Diplomacy')?'#factions':entry.en.includes('Turns')?'#advance':entry.en.includes('Food')?'#resources-help':entry.en.includes('Battles')?'#recent-battle':entry.en.includes('Move')?'#map [data-army="xiii"]':'#help');const el=document.querySelector(selector);if(!el){b.textContent=zh?'当前控件尚未出现':'Control is not available yet';return}el.classList.add('guide-highlight');el.scrollIntoView({block:'nearest',inline:'nearest'});setTimeout(()=>el.classList.remove('guide-highlight'),5000)})};input.oninput=update;target.querySelector('#help-game').onclick=()=>{category='game';update()};target.querySelector('#help-history').onclick=()=>{category='history';update()};update()}
 document.querySelector('#help').onclick=openHelp;
-const tutorial=createTutorial({skipInitial:!!received,language:()=>lang,onMode:()=>{},onReset:(mode,faction='caesar')=>{setPlaying(false);state=newGrandGame(faction);state.difficulty=mode;if(mode==='beginner'){state.factions[faction].treasury+=40;state.factions[faction].food+=30;state.factions[faction].manpower+=3000;state.factions[faction].stability=Math.min(100,state.factions[faction].stability+5)}activeInfo=null;activeFaction=null;activeArmy=null;activeBattle=null;previewDestination='';clearReach();battleMarkers.forEach(m=>m.remove());battleMarkers=[];renderArmies();renderHud();inspect(lang==='zh'?'选择军队':'Select a command',lang==='zh'?'点击军团或城市查看详情。':'Select an army or city to inspect it.');map.flyTo({center:[12.4,43.2],zoom:5.45})}});
+const tutorial=createTutorial({skipInitial:!!received,language:()=>lang,currentFaction:()=>state.player,onMode:()=>{},onReset:(mode,faction='caesar')=>{setPlaying(false);state=newGrandGame(faction);state.difficulty=mode;if(mode==='beginner'){state.factions[faction].treasury+=40;state.factions[faction].food+=30;state.factions[faction].manpower+=3000;state.factions[faction].stability=Math.min(100,state.factions[faction].stability+5)}activeInfo=null;activeFaction=null;activeArmy=null;activeBattle=null;previewDestination='';clearReach();battleMarkers.forEach(m=>m.remove());battleMarkers=[];renderArmies();renderHud();inspect(lang==='zh'?'选择军队':'Select a command',lang==='zh'?'点击军团或城市查看详情。':'Select an army or city to inspect it.');map.flyTo({center:campaignCenter(state.player),zoom:5.45})}});
