@@ -21,5 +21,18 @@ The following are original AI-generated, painterly **artistic reconstructions**,
 
 Generated in-game health, missions and successions are alternate-history simulation, not evidence about a historical person’s actual condition. Foreign character cards represent reported identities and artistic reconstructions; they do not confirm current authority, location, age or health.
 
+## Fictional Roman households
+
+These four individual portraits were generated with the built-in image generation tool on 2026-11-07 for fictional opening characters. They do not depict historical people. Each `-master.jpg` is a 512×512 project master; `-128.jpg` and `-64.jpg` are resized UI derivatives. The original generated PNGs are retained in the local workspace under `outputs/fictional-portrait-originals/`. Portraits are static artistic depictions, not a simulation of changing age. Characters without an individual image use a faceless silhouette.
+
+| Stable opening identity | Name | Asset prefix | Generation prompt |
+| --- | --- | --- | --- |
+| fictional:1, born 77 BCE | Publius Varenus / 普布利乌斯·瓦雷努斯 | fictional-varenus | Lean, clean-shaven Roman man in an ivory wool tunic and muted red cloak. |
+| fictional:2, born 74 BCE | Livia Marcia / 莉维娅·玛尔基娅 | fictional-livia | Roman woman with dark tied hair, cream stola and muted burgundy wrap. |
+| fictional:3, born 79 BCE | Aulus Cassianus / 奥卢斯·卡西亚努斯 | fictional-cassianus | Broad-faced Roman man with wavy dark hair and a short beard, in a plain tunic and cloak. |
+| fictional:4, born 76 BCE | Marcia Valeria / 玛尔基娅·瓦莱里娅 | fictional-valeria | Narrow-faced Roman woman with braided black hair, green stola and undyed wrap. |
+
+All prompts specified 49 BCE, head-and-shoulders composition, painterly historical realism, warm side light, a subdued dark olive background, and no text, frame or watermark. Identity matching also checks the saved name and birth year to avoid assigning an opening portrait to a different person in an older save.
+
 
 Arsinoë’s original AI-generated portrait was created on 2026-11-05 with the built-in image generation tool. It is an interpretive reconstruction, not a verified likeness or evidence of age. The prompt requested a distinctive head-and-shoulders portrait with short curls, linen headband, ochre and ivory clothing, warm light, dark olive background, and no text or decorative frame. The 512, 128 and 64 pixel images are resized derivatives.

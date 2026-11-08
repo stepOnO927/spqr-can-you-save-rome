@@ -104,6 +104,12 @@ try{
  await page.evaluate(()=>localStorage.setItem('spqr-save-3','preserve-existing-slot'));
  await page.locator('#return-campaign').click();await page.locator('#open-atlas').waitFor();
  assert.equal((await page.locator('.top-stats .stat strong').first().innerText()).replace(/\D/g,''),atlasTreasury.replace(/\D/g,''),'treasury survives the switch to campaign');
+ await page.locator('[data-tab="government"]').click();
+ for(const [id,asset] of [['fictional:3','fictional-cassianus-128.jpg'],['fictional:4','fictional-valeria-128.jpg']]){
+  const image=page.locator(`[data-gene-person="${id}"] img`);assert.match(await image.getAttribute('src'),new RegExp(asset.replace('.', '\\.')));
+  await page.waitForFunction(el=>el.complete&&el.naturalWidth>0,await image.elementHandle(),{timeout:30000});
+ }
+ assert.match(await page.locator('.genealogy').innerText(),/虚构人物的肖像为游戏创作/);
  await page.locator('#open-atlas').click();
  await page.waitForFunction(date=>document.querySelector('#turn-date')?.innerText===date,atlasDate);
  assert.equal(await page.locator('#turn-date').innerText(),atlasDate,'date survives the round trip');

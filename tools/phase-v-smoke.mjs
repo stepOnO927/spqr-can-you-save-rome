@@ -17,6 +17,11 @@ try{
   assert.match(await dossier.innerText(),/士气|Morale/);
   assert.match(await dossier.innerText(),/附近已知威胁|Known nearby threats/);
   assert.equal(await dossier.locator('.army-portrait').count(),1);
+  if(side==='caesar'){
+   await dossier.locator('#commander-choice').selectOption('fictional:1');await dossier.locator('#commander-appoint').click();await dossier.locator('#commander-feedback button').click();
+   const portrait=dossier.locator('img.army-portrait');assert.match(await portrait.getAttribute('src'),/fictional-varenus-128\.jpg/);await page.waitForFunction(el=>el.complete&&el.naturalWidth>0,await portrait.elementHandle(),{timeout:30000});
+   await dossier.locator('#commander-choice').selectOption('caesar');await dossier.locator('#commander-appoint').click();await dossier.locator('#commander-feedback button').click();
+  }
   await dossier.locator('[data-order="defend"]').click();
   assert.match(await dossier.innerText(),/防御|Defend/);
   await dossier.locator('[data-order="cancel"]').click();
