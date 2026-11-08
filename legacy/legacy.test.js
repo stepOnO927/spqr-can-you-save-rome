@@ -11,6 +11,13 @@ const memory=()=>{let value=null;return {getItem:()=>value,setItem:(key,v)=>{val
 test('Laurel rewards are distinct from campaign treasury and cannot be claimed twice through save reload',()=>{
  const storage=memory(),p=loadProfile(storage),s=newGrandGame('caesar');const initialTreasury=s.factions.caesar.treasury;s.month=1;s.year=-48;evaluateAchievements(s);assert.deepEqual(recordCampaign(p,s),[]);assert.equal(p.coins,150);endCampaign(s,'retired');assert.deepEqual(recordCampaign(p,s),['survive:12']);assert.equal(p.coins,210);assert.deepEqual(recordCampaign(p,s),[]);saveProfile(p,storage);const reloaded=loadProfile(storage);assert.deepEqual(recordCampaign(reloaded,structuredClone(s)),[]);assert.equal(reloaded.coins,210);assert.equal(s.factions.caesar.treasury,initialTreasury);
 });
+test('foreign campaign archive counts only battles fought by its own command',()=>{
+ const profile=loadProfile(memory()),campaign=newGrandGame('egypt');
+ campaign.battles=[{region:'roma',attacker:{owner:'caesar'},defender:{owner:'senate'},attackerWins:true},{region:'t116',attacker:{owner:'egypt'},defender:{owner:'senate'},attackerWins:false}];
+ endCampaign(campaign,'retired');recordCampaign(profile,campaign);
+ assert.equal(profile.archive[0].battles,1);assert.equal(profile.archive[0].summary.battles,1);
+ assert.deepEqual(profile.archive[0].notable,[{region:'t116',winner:'senate'}]);
+});
 test('buildings visually owned through durable purchases and unlock museum content',()=>{
  const storage=memory(),p=loadProfile(storage);p.coins=1200;assert.equal(purchase(p,'museum').ok,true);assert.ok(p.buildings.includes('museum'));assert.ok(p.collectibles.includes('senate-tablet'));assert.equal(purchase(p,'museum').ok,false);assert.equal(purchase(p,'temple').ok,true);assert.equal(purchase(p,'circus').ok,false);p.coins=600;assert.equal(purchase(p,'circus').ok,true);saveProfile(p,storage);assert.ok(loadProfile(storage).buildings.includes('circus'));
 });

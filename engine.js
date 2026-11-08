@@ -13,11 +13,11 @@ import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,e
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy} from './local-society.js?v=2';
 import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=14';
-import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=2';
+import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=3';
 import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js';
 import {nationalBudget} from './national-budget.js';
 export {nationalBudget} from './national-budget.js';
-export {endCampaign,revealedAchievements} from './achievement-system.js?v=2';
+export {endCampaign,revealedAchievements} from './achievement-system.js?v=3';
 export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=14';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
 export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=9';
@@ -77,7 +77,13 @@ export function upgradeSave(s){
  if(!s.legacyRunId)s.legacyRunId=importedRunId(s);
  if(s.year===0)s.year=1;
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
- if(s.version!==3)throw new Error('Unsupported save');migrateRegionalPowers(s);initializeReports(s);updateObjectives(s,true);initializeFigures(initializeDevelopment(refreshReportConfidence(initializeGovernments(s))));initializeLocalSociety(s);initializeNaval(s);initializeAchievements(s);if(s.victory&&!s.campaignOutcome)s.campaignOutcome={kind:'military',winner:s.player,loser:s.player==='caesar'?'senate':'caesar',year:s.year,month:s.month,legacy:true};s.briefingBaseline ||= beginBriefing(s);return s;
+ if(s.version!==3)throw new Error('Unsupported save');
+ if(!['caesar','senate'].includes(s.player)&&['caesar','senate'].includes(s.campaignOutcome?.winner)&&['caesar','senate'].includes(s.campaignOutcome?.loser)){
+  s.civilWarOutcome ||= s.campaignOutcome;delete s.campaignOutcome;s.victory=false;
+  const completed=s.achievementState;
+  if(completed?.finalized&&completed.result==='retired'&&completed.summary?.winner===s.civilWarOutcome.winner){completed.summary.civilWarOutcome=s.civilWarOutcome;completed.summary.winner=null;completed.summary.method=null}
+ }
+ migrateRegionalPowers(s);initializeReports(s);updateObjectives(s,true);initializeFigures(initializeDevelopment(refreshReportConfidence(initializeGovernments(s))));initializeLocalSociety(s);initializeNaval(s);initializeAchievements(s);if(s.victory&&!s.campaignOutcome)s.campaignOutcome={kind:'military',winner:s.player,loser:s.player==='caesar'?'senate':'caesar',year:s.year,month:s.month,legacy:true};s.briefingBaseline ||= beginBriefing(s);return s;
 }
 
 export function previewMarch(s,armyId,destination){
@@ -562,7 +568,7 @@ export function tick(s){
   observeArmies(s);
   for(const owner of Object.keys(s.factions).filter(id=>id!==s.player))aiTurn(s,owner);
   s.militaryAlerts=(s.militaryAlerts||[]).filter(a=>a.year*12+a.month>=s.year*12+s.month);
-  if(!s.campaignOutcome&&isWar(s,'caesar','senate'))for(const faction of ['caesar','senate'].includes(s.player)?[s.player,s.player==='caesar'?'senate':'caesar']:['caesar','senate']){
+  if(!s.campaignOutcome&&!s.civilWarOutcome&&isWar(s,'caesar','senate'))for(const faction of ['caesar','senate'].includes(s.player)?[s.player,s.player==='caesar'?'senate':'caesar']:['caesar','senate']){
     const outcome=militaryResult(s,faction);if(outcome&&setCampaignOutcome(s,outcome)){
       log(s,`${FACTIONS[outcome.winner].short[0]} prevailed in the civil war.`,`${FACTIONS[outcome.winner].short[1]}在内战中获胜。`);break;
     }

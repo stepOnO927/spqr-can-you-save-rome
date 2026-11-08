@@ -27,6 +27,11 @@ export function settlementEligible(s,actor,target){
 }
 
 export function setCampaignOutcome(s,outcome){
+ if(roman(outcome.winner)&&roman(outcome.loser)&&!roman(s.player)){
+  if(s.civilWarOutcome)return false;
+  s.civilWarOutcome=outcome;
+  return true;
+ }
  if(s.campaignOutcome)return false;
  s.campaignOutcome=outcome;s.victory=outcome.winner===s.player;
  if(outcome.loser===s.player)s.terminalResult='defeat';

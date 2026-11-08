@@ -1,11 +1,11 @@
-import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,createScenario,claimReward} from './legacy-core.js?v=2';
-import {PETITIONS,decidePetition,availablePetitions} from './civic.js?v=4';
+import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,createScenario,claimReward} from './legacy-core.js?v=3';
+import {PETITIONS,decidePetition,availablePetitions} from './civic.js?v=5';
 import {ARTIFACTS} from './museum.js?v=3';
-import {DRIVERS,startRace,settleRace} from './race.js?v=2';
-import {ACTIVITIES,resolveActivity} from './activities.js?v=2';
-import {newGrandGame} from '../engine.js?v=119';
+import {DRIVERS,startRace,settleRace} from './race.js?v=3';
+import {ACTIVITIES,resolveActivity} from './activities.js?v=3';
+import {newGrandGame} from '../engine.js?v=120';
 import {stageHandoff} from '../view-handoff.js';
-import {achievementDefinition} from '../achievement-system.js?v=2';
+import {achievementDefinition} from '../achievement-system.js?v=3';
 import {FACTIONS} from '../data.js?v=9';
 
 let profile=loadProfile(),lang=localStorage.getItem('spqr-lang')==='en'?'en':'zh',panel='city',selected='curia',filter='all',race=null,notice='';

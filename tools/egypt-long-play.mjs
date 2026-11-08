@@ -46,4 +46,5 @@ assert.ok(actions.includes('war-with-senate'));
 assert.ok(actions.includes('scout-syria'));
 assert.ok(actions.includes('dated-report'));
 assert.ok(actions.includes('reload-12')&&actions.includes('reload-24'));
-console.log(JSON.stringify({date:`${state.year}/${state.month}`,actions,territories:state.regions.filter(r=>r.owner==='egypt').length,army:army(state,'egyptguard')?.men??0,frontSupply:army(state,'egyptguard')?armySupply(state,army(state,'egyptguard')):null,treasury:state.factions.egypt.treasury,food:state.factions.egypt.food,battles:state.battles?.length||0,egyptResult:state.achievementState.result||'ongoing',civilWarOutcome:state.campaignOutcome?.winner||'unresolved'}));
+assert.equal(state.campaignOutcome,undefined);
+console.log(JSON.stringify({date:`${state.year}/${state.month}`,actions,territories:state.regions.filter(r=>r.owner==='egypt').length,army:army(state,'egyptguard')?.men??0,frontSupply:army(state,'egyptguard')?armySupply(state,army(state,'egyptguard')):null,treasury:state.factions.egypt.treasury,food:state.factions.egypt.food,battles:state.battles?.length||0,egyptResult:state.achievementState.result||'ongoing',civilWarOutcome:state.civilWarOutcome?.winner||'unresolved'}));

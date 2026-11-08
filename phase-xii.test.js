@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGrandGame,tick,diplomacy,nationalBudget,endCampaign,trainArmy,previewMarch} from './engine.js';
+import {newGrandGame,tick,diplomacy,nationalBudget,endCampaign,trainArmy,previewMarch,upgradeSave} from './engine.js';
 import {militaryResult} from './campaign-outcome.js';
 import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js';
 import {normalizeProfile,recordCampaign} from './legacy/legacy-core.js';
@@ -49,8 +49,23 @@ test('rejected settlement missions cost resources and cannot be spammed for hidd
 
 test('a Roman civil-war outcome does not terminate a third-party campaign',()=>{
  const s=newGrandGame('egypt');pressure(s,'caesar');tick(s);
- assert.equal(s.campaignOutcome?.winner,'caesar');assert.equal(s.achievementState.finalized,false);
+ assert.equal(s.civilWarOutcome?.winner,'caesar');assert.equal(s.campaignOutcome,undefined);assert.equal(s.achievementState.finalized,false);
  assert.notEqual(s.terminalResult,'defeat');
+ assert.equal(endCampaign(s,'retired').state.summary.winner,null);
+ assert.equal(s.achievementState.summary.civilWarOutcome.winner,'caesar');
+ assert.match(campaignEndingHtml(s,'en'),/Roman civil war: Caesar prevailed/);
+ assert.match(campaignEndingHtml(s,'zh'),/罗马内战：凯撒获胜/);
+ assert.doesNotMatch(campaignEndingHtml(s,'en'),/Winner: Caesar/);
+});
+
+test('older foreign saves move the Roman civil-war result out of their campaign outcome',()=>{
+ const old=newGrandGame('egypt');old.campaignOutcome={kind:'military',winner:'senate',loser:'caesar',year:-48,month:2};
+ const restored=upgradeSave(JSON.parse(JSON.stringify(old)));
+ assert.equal(restored.campaignOutcome,undefined);assert.equal(restored.civilWarOutcome.winner,'senate');assert.equal(restored.victory,false);
+ const finished=newGrandGame('egypt');finished.campaignOutcome={kind:'military',winner:'senate',loser:'caesar',year:-48,month:2};
+ endCampaign(finished,'retired');finished.achievementState.summary.winner='senate';finished.achievementState.summary.method='military';
+ const migrated=upgradeSave(JSON.parse(JSON.stringify(finished)));
+ assert.equal(migrated.achievementState.summary.winner,null);assert.equal(migrated.achievementState.summary.civilWarOutcome.winner,'senate');
 });
 
 test('final results preserve a summary and reward each achievement only once',()=>{
