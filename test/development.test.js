@@ -11,7 +11,7 @@ const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
 test('every development node has its own interpretive illustration',()=>{
  const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
- assert.equal(art.length,62);assert.equal(new Set(art).size,62);
+ assert.equal(art.length,63);assert.equal(new Set(art).size,63);
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
@@ -72,7 +72,7 @@ test('public law and allied registration are sourced, bilingual policies with pa
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,28);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,29);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);

@@ -2,12 +2,12 @@ import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-dipl
 import {initializeGovernments,advanceGovernments,deriveGovernment} from './governance.js?v=16';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=9';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=15';
-import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=56';
+import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=57';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
-import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=12';
+import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=13';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js';
-import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=3';
+import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=4';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks} from './grand-operations.js?v=5';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy} from './local-society.js?v=1';

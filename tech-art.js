@@ -41,6 +41,7 @@ const drawings={
  'senatorial-consultation':'M9 51h46M14 48V23h36v25M13 23l19-12 19 12M20 31h24M20 39h24M25 48v-8m14 8v-8',
  'public-legal-reference':'M8 51h48M12 13h18v34H12zM34 13h18v34H34zM16 20h10m-10 8h10m-10 8h10m12-16h10m-10 8h10m-10 8h10M30 51v-6m4 6v-6',
  'citizen-registration':'M8 51h48M14 15q4-5 9 0h27v32H23q-5 5-9 0zM23 15v32M29 23h16m-16 8h16m-16 8h11M11 54h42',
+ 'field-reconnaissance':'M8 51h48M14 43l14-12 8 5 14-17M13 20a7 7 0 1 0 14 0 7 7 0 1 0-14 0m30 25a7 7 0 1 0 14 0 7 7 0 1 0-14 0M20 27v11m30-14v14M29 14h12',
  'central-administration':'M10 53h44M16 53V19h32v34M22 25h20m-20 8h20m-20 8h20M32 19V9M27 12h10',
  'provincial-autonomy':'M8 51h48M15 49V27l12-9 12 9v22M39 49V31l10-8 6 8v18M21 35h12M24 49V40h6v9',
  'hardline-diplomacy':'M12 51h40M20 44l9-31 7 20 8-11M16 29l12 9m18-18-10 19M31 44v8',

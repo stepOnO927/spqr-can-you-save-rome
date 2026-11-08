@@ -1,9 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,army,moveArmy,tick,upgradeSave,aiTurn,resolveBattle} from '../engine.js';
-import {assessment,sendScouts,probePositions,latestRecon,reconReports,delayAttack,markReconRegion} from '../reconnaissance.js';
+import {assessment,sendScouts,probePositions,latestRecon,reconReports,delayAttack,markReconRegion,advanceRecon} from '../reconnaissance.js';
+import {development,activeEffects,IDEAS} from '../development.js';
+import {developmentPanel} from '../development-ui.js';
 import {intelligenceHtml,afterActionHtml} from '../recon-ui.js';
 
+test('field scout coordination improves reports without revealing exact troops',()=>{
+ const base=newGame('senate');
+ const idea=IDEAS.find(x=>x.id==='field-reconnaissance');
+ assert.match(idea.source.url,/Gallic_War\/2%2A/);
+ for(const [lang,label] of [['en','Field Scout Coordination'],['zh','战场斥候编组']])assert.match(developmentPanel(base,lang,'idea'),new RegExp(label));
+ const outcomes={plain:0,trained:0,narrower:0,trainedMisses:0};
+ for(let i=1;i<=128;i++){
+  const reports={};
+  for(const kind of ['plain','trained']){
+   const s=structuredClone(base);s.reconSeed=Math.imul(i,0x9e3779b9)>>>0;
+   if(kind==='trained')development(s,'senate').slots.military[0]=idea.id;
+   assert.equal(activeEffects(s,'senate').scoutReliability||0,kind==='trained' ? .12 : 0);
+   assert.equal(sendScouts(s,'italy','cisalpine').ok,true);
+   assert.equal(s.armies.find(a=>a.id==='italy').reconPending.scoutBonus,kind==='trained' ? .12 : 0);
+   advanceRecon(s);reports[kind]=latestRecon(s,'senate','cisalpine');
+   if(reports[kind].min!=null)outcomes[kind]++;
+   else if(kind==='trained')outcomes.trainedMisses++;
+   if(reports[kind].min!=null)assert.ok(reports[kind].max>reports[kind].min);
+  }
+  if(reports.plain.min!=null&&reports.trained.min!=null&&reports.trained.max-reports.trained.min<reports.plain.max-reports.plain.min)outcomes.narrower++;
+ }
+ assert.ok(outcomes.trained>outcomes.plain,'coordination should increase detection over seeded encounters');
+ assert.ok(outcomes.narrower>0,'some estimates should become narrower');
+ assert.ok(outcomes.trainedMisses>0,'training must not make detection certain');
+});
 test('Senate can assess, scout, then attack without a scripted outcome or exact intelligence',()=>{
  const s=newGame('senate'),unit=army(s,'italy'),actual=army(s,'xiii').men;
  const initial=assessment(s,'italy','cisalpine');

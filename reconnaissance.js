@@ -1,8 +1,10 @@
 import {adjacent, army, region, isWar} from './engine.js';
+import {activeEffects} from './development.js?v=13';
 
 const draw=s=>{s.reconSeed??=((s.seed??1)^0x9e3779b9)>>>0;s.reconSeed=(Math.imul(s.reconSeed,1664525)+1013904223)>>>0;return s.reconSeed/4294967296};
 const turn=s=>s.year*12+s.month;
 const observedAt=r=>(r.observationYear??r.year)*12+(r.observationMonth??r.month);
+const scoutBonus=(s,owner)=>Math.min(.2,Math.max(0,activeEffects(s,owner).scoutReliability||0));
 export function reconReports(s,owner,regionId){
  const reports=(s.militaryRecon||[]).filter(r=>r.owner===owner&&r.regionId===regionId).sort((a,b)=>((b.arrivalYear??b.year)*12+(b.arrivalMonth??b.month))-((a.arrivalYear??a.year)*12+(a.arrivalMonth??a.month)));
  return reports.map(report=>{
@@ -34,7 +36,7 @@ export function sendScouts(s,armyId,regionId,actor=s.player){
  if(s.factions[unit.owner].treasury<4||s.factions[unit.owner].food<2)return {ok:false,reason:'resources'};
  s.factions[unit.owner].treasury-=4;s.factions[unit.owner].food-=2;
  const observedEnemy=s.armies.filter(a=>a.region===regionId&&a.owner!==unit.owner&&!a.move&&a.men>0);
- unit.reconPending={regionId,remaining:1,kind:'scouts',observationYear:s.year,observationMonth:s.month,observedCount:observedEnemy.reduce((n,a)=>n+a.men,0),observedPresence:observedEnemy.length>0,observedFort:target.fort};
+ unit.reconPending={regionId,remaining:1,kind:'scouts',observationYear:s.year,observationMonth:s.month,observedCount:observedEnemy.reduce((n,a)=>n+a.men,0),observedPresence:observedEnemy.length>0,observedFort:target.fort,scoutBonus:scoutBonus(s,unit.owner)};
  return {ok:true,months:1};
 }
 export function probePositions(s,armyId,regionId,actor=s.player){
@@ -43,12 +45,12 @@ export function probePositions(s,armyId,regionId,actor=s.player){
  if(s.factions[unit.owner].food<3)return {ok:false,reason:'resources'};
  s.factions[unit.owner].food-=3;
  const enemy=s.armies.filter(a=>a.region===regionId&&a.owner!==unit.owner&&!a.move&&a.men>0),count=enemy.reduce((n,a)=>n+a.men,0);
- const observed=draw(s)<(count?.72:.32),enemyDetected=count>0&&draw(s)<.55,loss=Math.min(unit.men-1,Math.round((count?unit.men*.012:unit.men*.003)*draw(s)));
+ const bonus=scoutBonus(s,unit.owner),observed=draw(s)<(count?.72+bonus:.32+bonus),enemyDetected=count>0&&draw(s)<.55,loss=Math.min(unit.men-1,Math.round((count?unit.men*.012:unit.men*.003)*draw(s)));
  unit.men-=Math.max(0,loss);unit.morale=Math.max(20,unit.morale-(loss>0?2:0));
  if(enemyDetected)(s.militaryAlerts||=[]).push({owner:target.owner,regionId,observedFrom:unit.region,year:s.year,month:s.month});
  // A probe is limited contact, not a full battle or free movement.
  unit.reconPending={regionId,remaining:1,kind:'probe'};
- const report=makeReport(s,unit,target,'probe',count,observed,enemy);
+ const report=makeReport(s,unit,target,'probe',count,observed,enemy,{scoutBonus:bonus});
  return {ok:true,loss,enemyDetected,report};
 }
 export function delayAttack(s,armyId,regionId,actor=s.player){
@@ -72,10 +74,11 @@ export function requestReinforcements(s,armyId,actor=s.player){
  return {ok:true,months:1};
 }
 function makeReport(s,unit,target,source,count,detected,enemy,observed=null){
- const error=(draw(s)-.5)*(source==='probe'?.55:1.1),misinformation=draw(s)<(source==='probe'?.13:.25);
+ const bonus=Math.min(.2,Math.max(0,observed?.scoutBonus||0));
+ const error=(draw(s)-.5)*(source==='probe'?.55:1.1)*(1-bonus),misinformation=draw(s)<Math.max(.04,(source==='probe'?.13:.25)-bonus*.6);
  const observedCount=misinformation?Math.round(count*(.35+draw(s)*1.6)):count;
  const estimate=detected?Math.max(0,Math.round(observedCount*(1+error)/500)*500):null;
- const spread=source==='probe'?.32:.55;
+ const spread=(source==='probe'?.32:.55)-bonus*.5;
  const report={owner:unit.owner,armyId:unit.id,regionId:target.id,year:s.year,month:s.month,source,
   observationYear:observed?.observationYear??s.year,observationMonth:observed?.observationMonth??s.month,arrivalYear:s.year,arrivalMonth:s.month,
   min:estimate==null?null:Math.max(0,Math.floor(estimate*(1-spread)/500)*500),max:estimate==null?null:Math.max(500,Math.ceil(estimate*(1+spread)/500)*500),
@@ -88,13 +91,13 @@ function makeReport(s,unit,target,source,count,detected,enemy,observed=null){
 export function advanceRecon(s){
  for(const unit of s.armies){if(!unit.reconPending)continue;unit.reconPending.remaining--;
   if(unit.reconPending.remaining>0)continue;
-  const {kind,regionId,observationYear,observationMonth,observedCount,observedPresence,observedFort}=unit.reconPending;unit.reconPending=null;
+  const {kind,regionId,observationYear,observationMonth,observedCount,observedPresence,observedFort,scoutBonus=0}=unit.reconPending;unit.reconPending=null;
   if(kind==='reinforce'){if(region(s,regionId)?.owner===unit.owner){unit.men+=3000;unit.morale=Math.round((unit.morale*(unit.men-3000)+58*3000)/unit.men);if(unit.owner===s.player)s.log.unshift({year:s.year,month:s.month,en:`Reinforcements joined ${unit.name[0]}.`,zh:`增援已加入${unit.name[1]}。`})}continue}
   if(kind!=='scouts')continue;
   const target=region(s,regionId);if(!target)continue;
   const enemy=observedCount==null?s.armies.filter(a=>a.region===regionId&&a.owner!==unit.owner&&!a.move&&a.men>0):observedPresence?[{}]:[];
-  const count=observedCount??enemy.reduce((n,a)=>n+a.men,0),detected=draw(s)<(count?.65:.42);
-  makeReport(s,unit,target,'scouts',count,detected,enemy,{observationYear,observationMonth,observedFort});
+  const count=observedCount??enemy.reduce((n,a)=>n+a.men,0),detected=draw(s)<(count?.65+scoutBonus:.42+scoutBonus);
+  makeReport(s,unit,target,'scouts',count,detected,enemy,{observationYear,observationMonth,observedFort,scoutBonus});
   if(unit.owner===s.player)s.log.unshift({year:s.year,month:s.month,en:`Scouts returned from ${target.name[0]}; their estimate is uncertain.`,zh:`斥候从${target.name[1]}返回；估计仍有不确定性。`});
  }
 }
