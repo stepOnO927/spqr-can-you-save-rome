@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn} from '../engine.js';
 import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,accessibleFleet,supportPirates,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue} from '../naval.js';
 import {tradeCard} from '../map-lab/naval-ui.js';
-import {armySupply} from '../grand-operations.js';
+import {armySupply,supplyNetwork} from '../grand-operations.js';
 import {nationalBudget} from '../national-budget.js';
 import {advanceMissingCommanders} from '../character-system.js';
 
@@ -117,6 +117,47 @@ test('a hostile naval blockade cuts port army supply until the blockade ends',()
  const normal=armySupply(s,unit);assert.equal(orderFleet(s,'caesar',enemy.id,'blockade','italiaS').ok,true);assert.ok(armySupply(s,unit)<normal);
  assert.equal(orderFleet(s,'caesar',enemy.id,'intercept','aegean').ok,true);assert.equal(armySupply(s,unit),normal);
 });
+test('a fleet moves finite food from a home port to an isolated land front through save reload',()=>{
+ const s=newGrandGame('senate');
+ for(const r of s.regions)if(r.owner==='senate'&&!['italiaS','t016','t017'].includes(r.id))r.owner='caesar';
+ s.regions.find(r=>r.id==='t016').food=.4;
+ s.regions.find(r=>r.id==='italiaS').food=.4;
+ s.naval.fleets=s.naval.fleets.filter(f=>f.owner==='senate');
+ const unit=s.armies.find(a=>a.id==='italy');unit.region='t017';
+ const baseline=armySupply(s,unit),food=s.factions.senate.food;
+ assert.equal(supplyNetwork(s,'senate',true).has('t017'),false);
+ const order=orderFleet(s,'senate','senate-adriatic','supply','t016');
+ assert.equal(order.ok,true);assert.equal(order.cargo,6);assert.equal(s.factions.senate.food,food-6);
+ advanceNaval(s);assert.equal(s.naval.provisions.t016,undefined);
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s))),army=loaded.armies.find(a=>a.id==='italy');
+ advanceNaval(loaded);assert.equal(loaded.naval.provisions.t016,undefined);
+ advanceNaval(loaded);assert.equal(loaded.naval.provisions.t016.food,6);
+ assert.ok(armySupply(loaded,army)>baseline);
+ assert.equal(supplyNetwork(loaded,'senate',true).has('t017'),true);
+ assert.ok(loaded.naval.reports.some(r=>r.kind==='supply-delivery'&&r.cargo===6));
+ for(let i=0;i<3;i++)advanceNaval(loaded);
+ assert.equal(loaded.naval.provisions.t016,undefined);assert.equal(armySupply(loaded,army),baseline);
+});
+test('a blockade holds loaded supply ships outside port, and returning cargo refunds food once',()=>{
+ const s=newGrandGame('senate'),own=s.naval.fleets.find(f=>f.owner==='senate'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');
+ s.naval.fleets=s.naval.fleets.filter(f=>f.owner!=='egypt');enemy.zone=portZone('t016');enemy.port=null;
+ assert.equal(orderFleet(s,'caesar',enemy.id,'blockade','t016').ok,true);
+ const supply=orderFleet(s,'senate',own.id,'supply','t016');assert.equal(supply.ok,true);
+ for(let i=0;i<3;i++)advanceNaval(s);
+ assert.equal(own.order?.kind,'supply');assert.equal(own.order.blocked,true);assert.equal(s.naval.provisions.t016,undefined);
+ assert.ok(s.naval.reports.some(r=>r.kind==='supply-blocked'));
+ const before=s.factions.senate.food;
+ assert.equal(orderFleet(s,'senate',own.id,'return','italiaS').ok,true);
+ for(let i=0;i<5&&own.order;i++)advanceNaval(s);
+ assert.equal(own.port,'italiaS');assert.equal(s.factions.senate.food,before+supply.cargo);
+ assert.equal(s.naval.reports.filter(r=>r.kind==='supply-return').length,1);
+});
+test('merchant hulls assigned to army supplies cannot also carry trade cargo',()=>{
+ const s=newGrandGame('egypt');s.regions.find(r=>r.id==='t016').owner='egypt';
+ assert.equal(orderFleet(s,'egypt','egypt-grain','supply','t016').ok,true);
+ advanceNaval(s);
+ assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
+});
 test('merchant hulls limit simultaneous routes and hostile raids interrupt real cargo',()=>{
  const s=newGrandGame('senate'),egypt=s.naval.fleets.find(f=>f.owner==='egypt'),caesar=s.naval.fleets.find(f=>f.owner==='caesar');egypt.ships.merchant=1;s.factions.caesar.treasury=200;s.factions.senate.food=0;s.factions.egypt.food=60;advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.amount,4);assert.equal(s.naval.routes.find(r=>r.id==='egypt-papyrus').last.reason,'merchant');
  caesar.zone='alexandrian';caesar.port=null;assert.equal(orderFleet(s,'caesar',caesar.id,'raid','egypt-italy').ok,true);const before={food:s.factions.senate.food,raider:s.factions.caesar.treasury};advanceNaval(s);const route=s.naval.routes.find(r=>r.id==='egypt-italy');assert.equal(route.last.reason,'raid');assert.equal(route.last.amount,0);assert.equal(s.factions.senate.food,before.food);assert.ok(s.naval.reports.some(r=>r.kind==='trade-raid'));assert.ok(s.factions.caesar.treasury<=before.raider);
@@ -151,4 +192,9 @@ test('naval AI assigns orders to each available fleet instead of only its first'
 });
 test('naval state survives save migration and 36 campaign months',()=>{
  const s=newGrandGame('senate');for(let i=0;i<36;i++)tick(s);const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(restored.naval.fleets.length,s.naval.fleets.length);assert.equal(restored.naval.routes.length,12);assert.ok(restored.naval.routes.every(r=>Number.isFinite(r.last?.security)));assert.ok(restored.naval.fleets.every(f=>Number.isFinite(f.hull)&&Number.isFinite(f.supply)))
+});
+
+test('older naval saves acquire an empty maritime supply inventory',()=>{
+ const old=JSON.parse(JSON.stringify(newGrandGame('senate')));delete old.naval.provisions;
+ assert.deepEqual(upgradeSave(old).naval.provisions,{});
 });

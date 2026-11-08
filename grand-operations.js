@@ -1,5 +1,5 @@
 import {GRAND_ROUTES} from './grand-map-data.js';
-import {accessibleFleet,portZone} from './naval.js?v=7';
+import {accessibleFleet,portZone} from './naval.js?v=8';
 
 const byId=s=>Object.fromEntries(s.regions.map(r=>[r.id,r]));
 const OPENING_LIFT={caesar:1,senate:2,egypt:2,numidia:1,mauretania:1,armenia:0,parthia:0,galatia:0,bosporus:1,rebels:0};
@@ -20,20 +20,23 @@ export function grandRoute(s,unit,destination,isWar){
  const path=[];let node=destination;while(node!==start){const entry=previous.get(node);path.unshift({id:node,sea:entry.edge.sea,months:edgeMonths(entry.edge,regions[node],regions[entry.from]),distance:entry.edge.distance,road:entry.edge.road,river:entry.edge.river,mountain:entry.edge.mountain});node=entry.from}
  return {path,months:path.reduce((n,x)=>n+x.months,0),sea:path.some(x=>x.sea),supplyConcern:path.some(x=>regions[x.id].supply<7),hostile:path.some(x=>regions[x.id].owner!==unit.owner)};
 }
-export function supplyNetwork(s,owner){
- const regions=byId(s),owned=s.regions.filter(r=>r.owner===owner),sources=owned.filter(r=>r.port||r.terrain==='urban'||(r.buildings||[]).some(x=>['granary','supply-depot'].includes(x)));
+function supplySources(s,owner,established=false){return s.regions.filter(r=>r.owner===owner&&(r.terrain==='urban'||(r.buildings||[]).some(x=>['granary','supply-depot'].includes(x))||r.port&&(!established||r.food>=.6||s.naval?.provisions?.[r.id]?.owner===owner&&s.naval.provisions[r.id].food>0)))}
+export function supplyNetwork(s,owner,established=false){
+ const regions=byId(s),sources=supplySources(s,owner,established);
  const distance=new Map(sources.map(r=>[r.id,0])),queue=new Set(sources.map(r=>r.id));
- while(queue.size){const id=[...queue].sort((a,b)=>distance.get(a)-distance.get(b))[0];queue.delete(id);for(const edge of grandAdjacent(id)){const next=regions[edge.to];if(!next||next.owner!==owner||edge.sea&&(!regions[id].port||!next.port))continue;const cost=distance.get(id)+(edge.road?.8:1)+(edge.mountain?.8:0)+(edge.sea?1.3:0);if(cost<(distance.get(next.id)??Infinity)){distance.set(next.id,cost);queue.add(next.id)}}}
+ while(queue.size){const id=[...queue].sort((a,b)=>distance.get(a)-distance.get(b))[0];queue.delete(id);for(const edge of grandAdjacent(id)){const next=regions[edge.to];if(!next||next.owner!==owner||edge.sea)continue;const cost=distance.get(id)+(edge.road?.8:1)+(edge.mountain?.8:0);if(cost<(distance.get(next.id)??Infinity)){distance.set(next.id,cost);queue.add(next.id)}}}
  return distance;
 }
 export function supplyBottlenecks(s,owner){
- const owned=s.regions.filter(r=>r.owner===owner),sources=owned.filter(r=>r.port||r.terrain==='urban'||(r.buildings||[]).some(x=>['granary','supply-depot'].includes(x))),positions=new Set(s.armies.filter(a=>a.owner===owner&&a.men>0).map(a=>a.region));
+ const owned=s.regions.filter(r=>r.owner===owner),sources=supplySources(s,owner),positions=new Set(s.armies.filter(a=>a.owner===owner&&a.men>0).map(a=>a.region));
  const vital=new Set();if(!sources.length||!positions.size)return vital;
- for(const candidate of owned){if(sources.some(r=>r.id===candidate.id))continue;const seen=new Set(sources.map(r=>r.id).filter(id=>id!==candidate.id)),queue=[...seen];while(queue.length){const id=queue.shift();for(const edge of grandAdjacent(id)){const next=s.regions.find(r=>r.id===edge.to);if(next?.owner!==owner||next.id===candidate.id||seen.has(next.id)||edge.sea&&(!s.regions.find(r=>r.id===id)?.port||!next.port))continue;seen.add(next.id);queue.push(next.id)}}if([...positions].some(id=>id!==candidate.id&&!seen.has(id)))vital.add(candidate.id)}
+ for(const candidate of owned){if(sources.some(r=>r.id===candidate.id))continue;const seen=new Set(sources.map(r=>r.id).filter(id=>id!==candidate.id)),queue=[...seen];while(queue.length){const id=queue.shift();for(const edge of grandAdjacent(id)){const next=s.regions.find(r=>r.id===edge.to);if(next?.owner!==owner||next.id===candidate.id||seen.has(next.id)||edge.sea)continue;seen.add(next.id);queue.push(next.id)}}if([...positions].some(id=>id!==candidate.id&&!seen.has(id)))vital.add(candidate.id)}
  return vital;
 }
 export function armySupply(s,unit){if(!s.grandMap)return 1;const site=s.regions.find(r=>r.id===unit.region);if(!site)return 0;const network=supplyNetwork(s,unit.owner);let distance=network.get(site.id);if(distance==null&&unit.siege)distance=Math.min(...grandAdjacent(site.id).map(e=>network.get(e.to)).filter(Number.isFinite).map(x=>x+1),Infinity);
- const base=!Number.isFinite(distance)?site.food>=1?.36:.18:Math.max(.38,Math.min(1,1-distance*.075+(site.food>=1?.08:0)+((site.buildings||[]).includes('supply-depot')?.2:0)));
+ let base=!Number.isFinite(distance)?site.food>=1?.36:.18:Math.max(.38,Math.min(1,1-distance*.075+(site.food>=1?.08:0)+((site.buildings||[]).includes('supply-depot')?.2:0)));
+ const established=supplyNetwork(s,unit.owner,true);
+ if(!established.has(site.id)&&!(unit.siege&&grandAdjacent(site.id).some(e=>established.has(e.to))))base=Math.min(base,.68);
  const blockaded=site.port&&s.naval?.fleets?.some(f=>f.order?.kind==='blockade'&&f.order.targetPort===site.id&&f.zone===portZone(site.id)&&s.wars.some(w=>w.includes(f.owner)&&w.includes(unit.owner)));
  return blockaded?Math.max(.18,Math.round(base*.7*100)/100):base;
 }
