@@ -29,7 +29,7 @@ try{
   assert.equal(await page.locator('.religion-panel').count(),1);
   await page.locator('[data-adopt-idea="legion-training"]').first().click();
   for(let i=0;i<2;i++)await page.locator('#step').click();
-  assert.match(await page.locator('.dev-slot').first().innerText(),/Standardized Legion Training/);
+  assert.match(await page.locator('.dev-slot').first().innerText(),/Legion Field Training/);
   await page.locator('[data-tab="map"]').click();
   await page.locator('#region-choice').selectOption('gaul');
   assert.ok(await page.locator('[data-build="road"]').count());

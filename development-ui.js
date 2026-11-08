@@ -1,4 +1,4 @@
-import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaCompatibility,ideaSlotExpansionCheck,localBuildingEffects} from './development.js?v=8';
+import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaCompatibility,ideaSlotExpansionCheck,localBuildingEffects} from './development.js?v=9';
 import {FIGURE_ROLES,initializeFigures,figureStatus,figureActive} from './great-figures.js';
 import {CHARACTER_CATALOG} from './characters.js';
 import {religionPanel} from './local-society.js';
