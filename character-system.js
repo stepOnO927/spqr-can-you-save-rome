@@ -1,12 +1,12 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=grand-chessboard-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=grand-chessboard-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=grand-chessboard-2';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=grand-chessboard-2';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
 import {deriveGovernment,validSuccessionPlan} from './governance.js?v=governance-sync-1';
-import {potentialConspirators} from './conspiracies.js?v=grand-chessboard-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=grand-chessboard-1';
+import {potentialConspirators} from './conspiracies.js?v=grand-chessboard-2';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=grand-chessboard-2';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=grand-chessboard-1';
-import {activeAgreement} from './agreements.js?v=grand-chessboard-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=grand-chessboard-2';
+import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.

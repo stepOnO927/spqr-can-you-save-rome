@@ -1,7 +1,7 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-1';
-import {startPoliticalWar} from './civil-war.js?v=grand-chessboard-1';
-import {personalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-1';
-import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-2';
+import {startPoliticalWar} from './civil-war.js?v=grand-chessboard-2';
+import {personalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
+import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};

@@ -1,8 +1,8 @@
-import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO} from './characters.js?v=grand-chessboard-1';
-import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=grand-chessboard-1';
+import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO} from './characters.js?v=grand-chessboard-2';
+import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=grand-chessboard-2';
 import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=governance-sync-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=1';
+import {fictionalPortraitKey} from './portrait-registry.js?v=grand-chessboard-2';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||id;

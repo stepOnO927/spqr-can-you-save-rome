@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region} from '../engine.js?v=grand-chessboard-1';
-import {renderTerritoryFacts} from '../map-lab/territory-facts.js?v=grand-chessboard-1';
+import {newGame,region} from '../engine.js?v=grand-chessboard-2';
+import {renderTerritoryFacts} from '../map-lab/territory-facts.js?v=grand-chessboard-2';
 
 test('territory record uses the actual friendly garrison and local food potential', () => {
  const s = newGame('caesar'), r = region(s, 'cisalpine');
@@ -10,7 +10,7 @@ test('territory record uses the actual friendly garrison and local food potentia
  assert.match(html,new RegExp(men.toLocaleString()));
  assert.match(html,new RegExp(`Food potential</span><b>${r.food}`));
  assert.match(html,new RegExp(`Simulated population</span><b>${r.population.total.toLocaleString()}`));
- assert.match(html,/Buildings and construction queue<\/span><b>Not implemented/);
+ assert.match(html,/Buildings and construction queue<\/span><b>None/);
 });
 
 test('foreign territory details hide actual resources and army strength', () => {

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,advanceRomanVictory,tick} from '../engine.js?v=grand-chessboard-1';
+import {newGame,upgradeSave,advanceRomanVictory,tick} from '../engine.js?v=grand-chessboard-2';
 const opponent=player=>player==='caesar'?'senate':'caesar';
 function defeat(s){const enemy=opponent(s.player);for(const r of s.regions.filter(r=>r.owner===enemy))r.owner=s.player;s.armies=s.armies.filter(a=>a.owner!==enemy);return enemy}
 

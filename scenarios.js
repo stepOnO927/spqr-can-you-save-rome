@@ -1,7 +1,7 @@
-import {newGame,estimatedStrength} from './engine.js?v=grand-chessboard-1';
-import {createFictionalPerson} from './dynasties.js?v=grand-chessboard-1';
-import {formCoalition} from './coalitions.js?v=grand-chessboard-1';
-import {observeDiplomacy} from './diplomatic-knowledge.js?v=grand-chessboard-1';
+import {newGame,estimatedStrength} from './engine.js?v=grand-chessboard-2';
+import {createFictionalPerson} from './dynasties.js?v=grand-chessboard-2';
+import {formCoalition} from './coalitions.js?v=grand-chessboard-2';
+import {observeDiplomacy} from './diplomatic-knowledge.js?v=grand-chessboard-2';
 
 // A fictional political crisis in the 49 BCE campaign. Conditions make
 // collective opposition plausible, but do not preselect a war or outcome.

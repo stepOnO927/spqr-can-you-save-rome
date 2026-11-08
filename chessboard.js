@@ -1,7 +1,7 @@
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=grand-chessboard-1';
-import {reportedMovements} from './movements.js?v=grand-chessboard-1';
+import {CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-2';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=grand-chessboard-2';
+import {reportedMovements} from './movements.js?v=grand-chessboard-2';
 
 const opening=['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair=(a,b)=>[a,b].sort().join(':');

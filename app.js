@@ -2,27 +2,27 @@ import {stageHandoff,receiveHandoff} from './view-handoff.js?v=phase-x-1';
 import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=governance-sync-1';
 import {identity,factionMark} from './identity.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-1';
+import {CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-2';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=phase-x-1';
-import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, answerPeaceOffer,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=grand-chessboard-1';
-import {decideDisputedHeir,personAge} from './dynasties.js?v=grand-chessboard-1';
+import {newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, answerPeaceOffer,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=grand-chessboard-2';
+import {decideDisputedHeir,personAge} from './dynasties.js?v=grand-chessboard-2';
 import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=governance-sync-1';
-import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=grand-chessboard-1';
-import {syncChronicleDispatches} from './chronicle.js?v=grand-chessboard-1';
+import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=grand-chessboard-2';
+import {syncChronicleDispatches} from './chronicle.js?v=grand-chessboard-2';
 import {renderChronicle} from './map-lab/chronicle-ui.js?v=peace-choice-8';
-import {formatChronicleEntry,chronicleDate} from './chronicle.js?v=grand-chessboard-1';
+import {formatChronicleEntry,chronicleDate} from './chronicle.js?v=grand-chessboard-2';
 import {drawMap,mapPoint} from './map.js?v=governance-sync-1';
-import {AGREEMENT_TYPES,activeAgreement,proposeAgreement,terminateAgreement} from './agreements.js?v=grand-chessboard-1';
-import {formCoalition,leaveCoalition} from './coalitions.js?v=grand-chessboard-1';
-import {offerPoliticalContact} from './political-contacts.js?v=grand-chessboard-1';
-import {reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=grand-chessboard-1';
-import {religiousPolicy} from './religion.js?v=grand-chessboard-1';
-import {respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=grand-chessboard-1';
-import {newScenario} from './scenarios.js?v=grand-chessboard-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=grand-chessboard-1';
-import {renderChessboard} from './chessboard-ui.js?v=grand-chessboard-1';
-import {configureStartingDifficulty} from './difficulty.js?v=grand-chessboard-1';
-import {NATIONAL_IDEAS,adoptNationalIdea} from './national-ideas.js?v=grand-chessboard-1';
+import {AGREEMENT_TYPES,activeAgreement,proposeAgreement,terminateAgreement} from './agreements.js?v=grand-chessboard-2';
+import {formCoalition,leaveCoalition} from './coalitions.js?v=grand-chessboard-2';
+import {offerPoliticalContact} from './political-contacts.js?v=grand-chessboard-2';
+import {reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=grand-chessboard-2';
+import {religiousPolicy} from './religion.js?v=grand-chessboard-2';
+import {respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=grand-chessboard-2';
+import {newScenario} from './scenarios.js?v=grand-chessboard-2';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=grand-chessboard-2';
+import {renderChessboard} from './chessboard-ui.js?v=grand-chessboard-2';
+import {configureStartingDifficulty} from './difficulty.js?v=grand-chessboard-2';
+import {IDEAS,startResearch,equipIdea} from './inventions.js?v=grand-chessboard-2';
 
 const ui={
   en:{subtitle:'A republic at war with itself',campaign:'49 BCE · Caesar’s Civil War',historical:'Historical campaign',schematic:'Schematic operational map · theaters and routes are gameplay abstractions',new:'New campaign',save:'Save',load:'Load',pause:'Pause',play:'Play',speed:'Speed',month:'MONTH',treasury:'TREASURY',food:'FOOD',manpower:'MANPOWER',stability:'STABILITY',legitimacy:'LEGITIMACY',strength:'FIELD STRENGTH',map:'Campaign',military:'Military',government:'Government',chronicle:'Chronicle',sources:'Sources',select:'Select a theater or army',selected:'SELECTED THEATER',owner:'Command',terrain:'Terrain',city:'Principal city',supply:'Supply limit',loyalty:'Local loyalty',fort:'Fortification',recruit:'Raise legion · 24¤ / 3,000 men / 6 grain',recruitFail:'Insufficient resources or this theater is not yours.',army:'SELECTED ARMY',men:'Soldiers',morale:'Morale',commander:'Commander',order:'Order march',cancel:'Cancel order',target:'Select an adjacent theater on the map.',invalid:'No legal march route. War is required to enter another command’s theater.',marching:'Marching',siege:'Besieging',available:'Ready',armies:'Field armies',tax:'Tax policy',low:'Low',normal:'Normal',high:'High',taxText:'Higher taxes raise revenue but erode local loyalty. Low taxes recover loyalty.',revolt:'Rebellion',revoltText:'A disloyal, undefended theater can secede when stability is low. The rebels gain land and an army.',war:'Civil war',warText:'Caesar and Pompey command opposing Roman factions. Their colors show military control during the conflict, not separate sovereign states.',log:'Campaign dispatches',sourceNote:'Historical framework: Caesar crossed the Rubicon in January 49 BCE. Theater ownership, troop totals, income, travel times, and battle ratings are simplified gameplay estimates. The coast is hand-drawn and schematic; it does not encode ancient administrative borders.',instructions:'Choose an army, select Order march, then click a connected theater. Advance time to resolve travel and combat.',savePrompt:'Choose save slot 1–3',saved:'Campaign saved in slot',loaded:'Campaign loaded from slot',empty:'That slot is empty.',victory:'Opposing Roman command defeated · the campaign continues',noArmy:'No field army selected',atWar:'At war',neutral:'Independent',terrainNames:{plain:'Plain',hills:'Hills',forest:'Forest',urban:'Urban',desert:'Desert'},sourceTitle:'Research and accuracy notes',open:'Open source ↗',legend:'CAMPAIGN CONTROL',sea:'Sea crossing · 8¤',land:'Land route',clear:'Clear selection'},
@@ -72,8 +72,8 @@ function incomingPeacePanel(){
 }
 const agreementNames={non_aggression:['Non-aggression pact','互不侵犯条约'],military_access:['Mutual military access','相互军事通行权'],trade:['Trade agreement','贸易协定'],intelligence:['Intelligence sharing','情报共享'],defensive:['Defensive alliance','防御同盟'],offensive:['Offensive alliance','进攻同盟'],military_support:['Wartime aid to partner','向对方提供战时援助'],political:['Political cooperation','政治合作'],guarantee:['Guarantee partner independence','保障对方独立']};
 function nationalIdeasPanel(){
- const zh=lang==='zh',owned=state.world.nationalIdeas?.[state.player]||[],f=state.factions[state.player];
- return `<div class="rule-block"><h3>${zh?'国家理念':'National ideas'}</h3><p>${zh?'这些是模拟的政策传统，而非历史定论。每季度获得1研究点；每项花费8研究点和12国库，最多选择两项。':'These are simulated policy traditions, not historical claims. Gain one research point each quarter; each idea costs 8 research and 12 treasury. Choose at most two.'}</p><p>${zh?'研究点':'Research'}: ${f.research||0} · ${zh?'已选择':'Selected'} ${owned.length}/2</p>${Object.entries(NATIONAL_IDEAS).map(([id,idea])=>`<p><b>${esc(n(idea.name))}</b> · ${esc(n(idea.description))} <button class="action" data-national-idea="${id}" ${owned.includes(id)||owned.length>=2||(f.research||0)<8||f.treasury<12?'disabled':''}>${owned.includes(id)?(zh?'已采纳':'Adopted'):(zh?'采纳':'Adopt')}</button></p>`).join('')}</div>`;
+ const zh=lang==='zh',x=state.inventions?.[state.player],ideas=IDEAS.filter(i=>i.id.startsWith('gc_'));
+ return `<div class="rule-block"><h3>${zh?'国家理念':'National ideas'}</h3><p>${zh?'先研究，再制定理念；建设与其他理念可在地形地图的“发明”中管理。':'Research, then enact an idea; manage construction and other ideas in the atlas Inventions panel.'}</p>${ideas.map(i=>{const known=x?.knownIdeas.includes(i.id),active=x?.active[i.category]?.includes(i.id),researching=x?.research?.id===i.id,reforming=x?.reform?.id===i.id;return `<p><b>${esc(n(i.name))}</b> · ${esc(n(i.benefit))} · ${esc(n(i.drawback))} <button class="action" data-national-idea="${i.id}" ${active||researching||reforming?'disabled':''}>${active?(zh?'已制定':'Active'):researching?(zh?'研究中':'Researching'):reforming?(zh?'制定中':'Enacting'):known?(zh?'制定 · 8国库':'Enact · 8 treasury'):(zh?`研究 · ${i.cost}国库`:`Research · ${i.cost} treasury`)}</button></p>`}).join('')}</div>`;
 }
 function agreementsPanel(){
  const zh=lang==='zh',own=(state.agreements||[]).filter(x=>x.parties.includes(state.player)&&activeAgreement(state,x.parties[0],x.parties[1],x.type));
@@ -168,7 +168,7 @@ function bind(){
   document.querySelectorAll('[data-recognize-movement]').forEach(el=>el.onclick=()=>{const yes=el.dataset.recognition==='yes',result=recognizeMovement(state,state.player,el.dataset.recognizeMovement,yes);if(result.ok){render();flash(yes?(lang==='zh'?'已公开承认该报告中的运动。':'Recognition of the reported movement declared.'):(lang==='zh'?'已撤回承认。':'Recognition withdrawn.'))}else flash(lang==='zh'?'行动不可用：请检查国库及已有立场。':'Unavailable: check treasury and your existing position.')});
   document.querySelector('#movement-contact-send')?.addEventListener('click',()=>{const [id,representative]=document.querySelector('#movement-contact').value.split('|'),result=offerMovementSupport(state,state.player,id,representative);if(result.ok){render();flash(lang==='zh'?'资助提议已寄出；回信约需4个月。':'Support offer sent; allow about four months for a reply.')}else flash(lang==='zh'?'无法派出：请检查联系、国库及已有提议。':'Unavailable: check the contact, treasury and pending offers.')});
   document.querySelectorAll('[data-movement-response]').forEach(el=>el.onclick=()=>{const result=respondToMovement(state,state.player,el.dataset.movementId,el.dataset.movementResponse);if(result.ok){render();flash(result.settled?(lang==='zh'?'政治争议已解决。':'Political dispute settled.'):(lang==='zh'?'已作出回应；争议仍在继续。':'Response made; the dispute continues.'))}else flash(lang==='zh'?'行动不可用：请检查局势与国库。':'Action unavailable; check conditions and treasury.')});
-  document.querySelectorAll('[data-national-idea]').forEach(el=>el.onclick=()=>{if(adoptNationalIdea(state,state.player,el.dataset.nationalIdea).ok){render();flash(lang==='zh'?'国家理念已采纳。':'National idea adopted.')}else flash(lang==='zh'?'无法采纳该理念。':'This idea is unavailable.')});
+  document.querySelectorAll('[data-national-idea]').forEach(el=>el.onclick=()=>{const id=el.dataset.nationalIdea,known=state.inventions[state.player].knownIdeas.includes(id),result=known?equipIdea(state,state.player,id):startResearch(state,state.player,id);if(result.ok){render();flash(lang==='zh'?'理念工作已开始，需要数月完成。':'Idea work started; completion takes several months.')}else flash(lang==='zh'?'无法开始：请检查资源、研究或理念槽位。':'Unavailable: check resources, research and idea slots.')});
   document.querySelectorAll('[data-religion-action]').forEach(el=>el.onclick=()=>{const result=religiousPolicy(state,state.player,el.dataset.institution,el.dataset.religionAction);if(result.ok){render();flash(lang==='zh'?'政策已实施。':'Policy enacted.')}else flash(lang==='zh'?'政策不可用：请检查国库、控制权和已有调查。':'Policy unavailable; check treasury, control and pending inquiries.')});
   document.querySelector('#political-contact-send')?.addEventListener('click',()=>{const [target,person,representative]=document.querySelector('#political-contact').value.split('|');const result=offerPoliticalContact(state,state.player,target,person,representative);if(result.ok){render();flash(lang==='zh'?'秘密提议已派出；回信约需4个月。':'Secret offer sent; allow about four months for a reply.')}else flash(lang==='zh'?'无法派出：请检查联系人、国库及已有提议。':'Unavailable: check contacts, treasury and existing offers.')});
   document.querySelector('#coalition-propose')?.addEventListener('click',()=>{const first=document.querySelector('#coalition-first').value,second=document.querySelector('#coalition-second').value,target=document.querySelector('#coalition-threat').value;const result=formCoalition(state,state.player,[first,second],target,estimatedStrength);if(result.ok){render();flash(lang==='zh'?'防御联盟已成立。':'Defensive coalition formed.')}else flash(lang==='zh'?'联盟未能成立：成员须不同，且各方须有共同威胁、足够信任与资金。':'Coalition declined: choose distinct parties with a shared perceived threat, sufficient trust and funds.')});

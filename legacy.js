@@ -1,6 +1,6 @@
-import {syncChronicleDispatches} from './chronicle.js?v=grand-chessboard-1';
-import {CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-1';
-import {initializeDynasties} from './dynasties.js?v=grand-chessboard-1';
+import {syncChronicleDispatches} from './chronicle.js?v=grand-chessboard-2';
+import {CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-2';
+import {initializeDynasties} from './dynasties.js?v=grand-chessboard-2';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 

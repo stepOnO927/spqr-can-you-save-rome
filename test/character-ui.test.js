@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=grand-chessboard-1';
-import {createCharacterUI} from '../map-lab/character-ui.js?v=grand-chessboard-1';
-import {addReport} from '../character-system.js?v=grand-chessboard-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js';
+import {newGame,upgradeSave} from '../engine.js?v=grand-chessboard-2';
+import {createCharacterUI} from '../map-lab/character-ui.js?v=grand-chessboard-2';
+import {addReport} from '../character-system.js?v=grand-chessboard-2';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=grand-chessboard-2';
+import {createFictionalPerson} from '../dynasties.js';
 
 // A small DOM stub exercises the real handler without requiring a network listener.
 // It does not replace a browser or layout test.
@@ -17,6 +18,29 @@ class Element {
  prepend(...elements){this.children.unshift(...elements)}
  replaceChildren(...elements){this.children=elements}
 }
+test('fictional people without dedicated artwork use an explicit silhouette without revealing hidden foreign details',()=>{
+ const prior=globalThis.document,s=newGame('caesar'),panel=new Element();globalThis.document={createElement:tag=>new Element(tag),querySelector:()=>panel};
+ try{
+  const id=createFictionalPerson(s,{name:['Test Person','测试人物'],faction:'caesar',birthYear:-70,location:'cisalpine'}),ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});
+  ui.show(id);assert.match(panel.innerHTML,/暂无专属肖像/);assert.match(panel.innerHTML,/<svg class="portrait-unknown"/);assert.doesNotMatch(panel.innerHTML,/肖像为艺术复原|<img /);
+  const other='fictional:1';s.world.characters[other].faction='senate';addReport(s,'caesar','senate',{kind:'leaders',leaders:[other],source:'spy'});panel.children=[];ui.show(other);const first=panel.innerHTML;
+  assert.match(first,/报告身份未经证实；肖像未取得/);assert.match(first,/<svg class="portrait-unknown"/);assert.doesNotMatch(first,/fictional-varenus-128/);
+  s.world.characters[other].birthYear+=9;panel.children=[];ui.show(other);assert.equal(panel.innerHTML,first);
+ }finally{globalThis.document=prior}
+});
+test('a personal meeting records an observed foreign fictional portrait without tracking hidden changes',()=>{
+ const prior=globalThis.document,s=newGame('caesar'),panel=new Element(),id='fictional:3';globalThis.document={createElement:tag=>new Element(tag),querySelector:()=>panel};
+ try{
+  s.wars=[];s.world.characters.caesar.location='roma';s.world.characters[id].location='roma';addReport(s,'caesar','senate',{kind:'leaders',leaders:[id],source:'spy'});
+  const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show(id);assert.doesNotMatch(panel.innerHTML,/fictional-cassianus-128/);
+  assert.equal(requestPersonalMeeting(s,'caesar',id,'senate').ok,true);s.world.intelSeed=1000;advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');assert.equal(s.meetings[0].portraitKey,'fictional-cassianus');
+  panel.children=[];ui.show(id);assert.match(panel.innerHTML,/fictional-cassianus-128/);assert.match(panel.innerHTML,/肖像为游戏创作/);assert.match(panel.innerHTML,/游戏健康<\/span><b>未知/);
+  s.world.characters[id].birthYear+=9;panel.children=[];ui.show(id);assert.match(panel.innerHTML,/fictional-cassianus-128/);
+  const restored=upgradeSave(JSON.parse(JSON.stringify(s))),savedUI=createCharacterUI({getState:()=>restored,getLanguage:()=> 'zh',inspect:()=>{}});panel.children=[];savedUI.show(id);assert.match(panel.innerHTML,/fictional-cassianus-128/);
+  restored.player='egypt';panel.children=[];savedUI.show(id);assert.doesNotMatch(panel.innerHTML,/fictional-cassianus-128/);restored.player='caesar';restored.meetings[0].portraitKey='../../invalid';panel.children=[];savedUI.show(id);assert.doesNotMatch(panel.innerHTML,/invalid/);
+  delete s.meetings[0].portraitKey;panel.children=[];ui.show(id);assert.doesNotMatch(panel.innerHTML,/fictional-cassianus-128/);assert.match(panel.innerHTML,/肖像未取得/);
+ }finally{globalThis.document=prior}
+});
 test('a deceased friendly character shows age at simulated death and no travel order',()=>{
  const prior=globalThis.document,s=newGame('senate'),panel=new Element(),c=s.world.characters.cicero;
  s.year=-40;Object.assign(c,{alive:false,health:'deceased',deathYear:-48,deathMonth:5,location:'roma',travel:{destination:'epirus',legs:[{to:'epirus',months:2}],remaining:2}});

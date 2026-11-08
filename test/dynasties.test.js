@@ -1,14 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=grand-chessboard-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=grand-chessboard-1';
-import {assignSuccession,successionModel} from '../characters.js?v=grand-chessboard-1';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=grand-chessboard-2';
+import {CHARACTER_CATALOG} from '../characters.js?v=grand-chessboard-2';
+import {assignSuccession,successionModel} from '../characters.js?v=grand-chessboard-2';
 import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=phase-x-1';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=grand-chessboard-1';
-import {canHoldOffice} from '../office-system.js?v=grand-chessboard-1';
-import {renderGenealogy} from '../genealogy-ui.js';
-import {finalizeCampaign} from '../legacy.js?v=grand-chessboard-1';
-import {startDynasticWar} from '../civil-war.js?v=grand-chessboard-1';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=grand-chessboard-2';
+import {canHoldOffice} from '../office-system.js?v=grand-chessboard-2';
+import {renderGenealogy} from '../genealogy-ui.js?v=grand-chessboard-2';
+import {finalizeCampaign} from '../legacy.js?v=grand-chessboard-2';
+import {startDynasticWar} from '../civil-war.js?v=grand-chessboard-2';
+import {fictionalPortraitKey} from '../portrait-registry.js?v=grand-chessboard-2';
+import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 
 test('historical relationships do not invent missing parents or spouses',()=>{
  const s=newGame();assert.equal(s.world.characters.cleopatra.familyId,s.world.characters.arsinoe.familyId);
@@ -235,6 +238,19 @@ test('opening fictional portraits stay distinct and are not assigned to a reused
   const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(portrait(renderGenealogy(restored,false),ids[0]),portrait(html,ids[0]));
   restored.world.dynasties.catalog[ids[0]].name=['A different person','另一人'];assert.match(portrait(renderGenealogy(restored,false),ids[0]),/^data:image\/svg\+xml/);
  }
+});
+
+test('fixed succession scenario portraits remain unique and tied to the saved role and identity',()=>{
+ const s=newDynastyScenario(),scenario=s.world.dynasties.scenario,keys={parent:'fictional-nikon',adopted:'fictional-demetrios',son:'fictional-leontios',general:'fictional-straton'},hashes=new Set();
+ for(const [role,key] of Object.entries(keys)){
+  const id=scenario[role];assert.equal(fictionalPortraitKey(s,id),key);assert.match(renderGenealogy(s,false),new RegExp(key+'-128\\.jpg'));
+  for(const size of ['master','128','64'])assert.ok(fs.existsSync(`assets/portraits/${key}-${size}.jpg`));
+  hashes.add(createHash('sha256').update(fs.readFileSync(`assets/portraits/${key}-128.jpg`)).digest('hex'));
+ }
+ assert.equal(hashes.size,4);const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ for(const [role,key] of Object.entries(keys))assert.equal(fictionalPortraitKey(restored,restored.world.dynasties.scenario[role]),key);
+ const id=restored.world.dynasties.scenario.son;restored.world.characters[id].birthYear++;assert.equal(fictionalPortraitKey(restored,id),null);restored.world.characters[id].birthYear--;
+ restored.world.dynasties.catalog[id].name=['Different person','另一人'];assert.equal(fictionalPortraitKey(restored,id),null);restored.world.dynasties.catalog[id].name=['Leontios of Alexandria','亚历山大里亚的莱昂提奥斯'];delete restored.world.dynasties.scenario.son;assert.equal(fictionalPortraitKey(restored,id),null);
 });
 
 test('legacy achievements remain sealed until campaign finalization',()=>{

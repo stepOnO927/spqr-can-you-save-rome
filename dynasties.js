@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-1';
-import {startDynasticWar} from './civil-war.js?v=grand-chessboard-1';
+import {CHARACTER_CATALOG} from './characters.js?v=grand-chessboard-2';
+import {startDynasticWar} from './civil-war.js?v=grand-chessboard-2';
 import {ROUTES} from './data.js?v=phase-x-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent

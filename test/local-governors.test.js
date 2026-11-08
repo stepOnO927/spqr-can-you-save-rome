@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=grand-chessboard-1';
-import {appointGovernor,dismissGovernor,governorCandidates,localGovernor,officeOf,officeCandidates,advanceOffices,governorLoyaltyEffect} from '../office-system.js?v=grand-chessboard-1';
-import {previewPersonTravel} from '../personal-diplomacy.js';
+import {newGame,tick,upgradeSave} from '../engine.js?v=grand-chessboard-2';
+import {appointGovernor,dismissGovernor,governorCandidates,localGovernor,officeOf,officeCandidates,advanceOffices,governorLoyaltyEffect} from '../office-system.js?v=grand-chessboard-2';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=grand-chessboard-2';
 import {availableCommanders} from '../command-appointments.js';
 
 test('a local administrator costs resources and improves only that theater quarterly',()=>{

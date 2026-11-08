@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,region,isWar,sendInquiry,tick} from '../engine.js?v=grand-chessboard-1';
-import {startDynasticWar,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=grand-chessboard-1';
-import {assignSuccession} from '../characters.js?v=grand-chessboard-1';
-import {egyptianClaimantCandidate,advanceCharacters,contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,queueMission} from '../character-system.js?v=grand-chessboard-1';
+import {newGame,upgradeSave,region,isWar,sendInquiry,tick} from '../engine.js?v=grand-chessboard-2';
+import {startDynasticWar,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=grand-chessboard-2';
+import {assignSuccession} from '../characters.js?v=grand-chessboard-2';
+import {egyptianClaimantCandidate,advanceCharacters,contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,queueMission} from '../character-system.js?v=grand-chessboard-2';
 const seedFor=(min,max)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=min&&q<max});
 
 test('either Egyptian co-ruler can be selected, with discontent influencing but not deciding the choice',()=>{

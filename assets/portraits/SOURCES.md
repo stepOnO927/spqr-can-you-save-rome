@@ -36,3 +36,16 @@ All prompts specified 49 BCE, head-and-shoulders composition, painterly historic
 
 
 Arsinoë’s original AI-generated portrait was created on 2026-11-05 with the built-in image generation tool. It is an interpretive reconstruction, not a verified likeness or evidence of age. The prompt requested a distinctive head-and-shoulders portrait with short curls, linen headband, ochre and ivory clothing, warm light, dark olive background, and no text or decorative frame. The 512, 128 and 64 pixel images are resized derivatives.
+
+## Fictional succession scenario
+
+These four original portraits were generated on 2026-11-08 for fixed fictional characters in the existing succession scenario; they do not depict historical people. Each has a 512×512 JPEG master and 128×128 and 64×64 derivatives; the original generated PNGs are retained locally in `outputs/scenario-portrait-originals/`. The images are static game artwork and do not track changes in age or health. Assignment requires the scenario role, saved name and birth year to match, so a reused numeric character ID cannot acquire another person's image. Foreign fictional portraits are shown only after a completed personal meeting records the image key; older meetings without that snapshot remain silhouettes. The stored observation does not prove current health, position or authority.
+
+| Scenario role | English / Chinese name | Asset prefix | Individual visual direction |
+| --- | --- | --- | --- |
+| parent | Nikon of Alexandria / 亚历山大里亚的尼孔 | fictional-nikon | Senior household patriarch, greying curls and beard, ivory linen and ochre wrap. |
+| adopted | Demetrios of Alexandria / 亚历山大里亚的德米特里奥斯 | fictional-demetrios | Young adopted heir, dark curls, clean shaven, linen and muted blue wrap. |
+| son | Leontios of Alexandria / 亚历山大里亚的莱昂提奥斯 | fictional-leontios | Young claimant, long wavy hair, fine moustache and russet wrap. |
+| general | Straton of Thebes / 底比斯的斯特拉顿 | fictional-straton | General with short hair, dark beard, simple cuirass and brown cloak. |
+
+All prompts specified an original fictional 49 BCE head-and-shoulders image, painterly realism, warm side light, subdued dark olive background, and no text, emblem, watermark or decorative frame.

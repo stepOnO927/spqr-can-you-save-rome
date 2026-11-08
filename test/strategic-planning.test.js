@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from '../strategic-planning.js?v=grand-chessboard-1';
-import {newGame,tick,upgradeSave} from '../engine.js?v=grand-chessboard-1';
+import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from '../strategic-planning.js?v=grand-chessboard-2';
+import {newGame,tick,upgradeSave} from '../engine.js?v=grand-chessboard-2';
 
 test('planner balances crisis, supplies and observed threats',()=>{
  const base={treasury:50,food:50,stability:70,ownStrength:10000,enemies:[]};

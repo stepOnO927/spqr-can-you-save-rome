@@ -1,6 +1,6 @@
-import {queueMission,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=grand-chessboard-1';
-import {reassurePerson} from '../conspiracies.js?v=grand-chessboard-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=grand-chessboard-1';
+import {queueMission,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=grand-chessboard-2';
+import {reassurePerson} from '../conspiracies.js?v=grand-chessboard-2';
+import {CHARACTER_CATALOG} from '../characters.js?v=grand-chessboard-2';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
