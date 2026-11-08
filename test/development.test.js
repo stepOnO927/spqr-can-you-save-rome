@@ -5,13 +5,13 @@ import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,idea
 import {developmentPanel,ideasPanel} from '../development-ui.js';
 import {edgeMonths} from '../grand-operations.js';
 import {techIllustration} from '../tech-art.js';
-import {faithSatisfaction} from '../local-society.js';
+import {faithSatisfaction,advanceDemography} from '../local-society.js';
 import {nationalBudget} from '../national-budget.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
 test('every development node has its own interpretive illustration',()=>{
  const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
- assert.equal(art.length,65);assert.equal(new Set(art).size,65);
+ assert.equal(art.length,66);assert.equal(new Set(art).size,66);
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
@@ -72,7 +72,7 @@ test('public law and allied registration are sourced, bilingual policies with pa
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,31);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,32);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
@@ -192,6 +192,53 @@ test('civic exercise trains recruits only in integrated towns and charges upkeep
   assert.equal(rural.armies.at(-1).morale,58,'a highly integrated rural territory is not a civic training town');
  assert.equal(upgradeSave(JSON.parse(JSON.stringify(integrated))).armies.at(-1).morale,integrated.armies.at(-1).morale);
  for(const [lang,label] of [['en','Recruit morale in urban territory with integration ≥65'],['zh','融合度≥65的城市新兵士气']])assert.ok(developmentPanel(active,lang,'idea').includes(label));
+});
+
+test('restrictive estate labor trades rural food for unrest and slower distressed migration',()=>{
+ const idea=IDEAS.find(x=>x.id==='estate-labor-control');
+ assert.deepEqual(idea.prerequisites,['estate-organization']);
+ assert.match(idea.source.url,/De_Agricultura\/A%2A.html/);
+ assert.match(idea.context[0],/not the late Roman bound colonate/);
+ for(const [lang,label] of [['en','Restrictive Estate Labor'],['zh','庄园劳役约束']]){
+  const html=developmentPanel(newGrandGame('egypt'),lang,'idea');
+  assert.ok(html.includes(label));
+  assert.ok(html.includes(lang==='en'?'distressed outmigration halved':'不满人口迁出减半'));
+ }
+ const researching=newGrandGame('egypt');researching.wars=[];researching.factions.egypt.treasury=500;
+ assert.equal(researchInnovation(researching,'egypt','idea',idea.id).reason,'prerequisite');
+ development(researching,'egypt').knownIdeas.push('estate-organization');
+ assert.equal(researchInnovation(researching,'egypt','idea',idea.id).ok,true);
+ assert.equal(activeEffects(researching,'egypt').estateLabor,undefined);
+ months(researching,4);
+ assert.ok(development(researching,'egypt').knownIdeas.includes(idea.id));
+ assert.equal(adoptIdea(researching,'egypt',idea.id,0).ok,true);
+ assert.equal(activeEffects(researching,'egypt').estateLabor,undefined);
+ months(researching,2);
+ assert.equal(activeEffects(researching,'egypt').estateLabor,1);
+ const base=newGrandGame('egypt');base.wars=[];base.month=2;
+ const control=upgradeSave(JSON.parse(JSON.stringify(base))),active=upgradeSave(JSON.parse(JSON.stringify(base)));
+ development(active,'egypt').slots.economy[0]=idea.id;
+ const budget0=nationalBudget(control,'egypt'),budget1=nationalBudget(active,'egypt');
+ assert.equal(budget1.estateFood,2);
+ assert.equal(budget1.foodNet,budget0.foodNet+2);
+ assert.equal(budget1.ideaUpkeep,budget0.ideaUpkeep+1);
+ tick(control);tick(active);
+ for(const id of ['t111','t112']){
+  const a=active.regions.find(r=>r.id===id),b=control.regions.find(r=>r.id===id);
+  assert.equal(a.civicSatisfaction,b.civicSatisfaction-1,id);
+  assert.equal(a.loyalty,b.loyalty-1,id);
+ }
+ assert.equal(active.regions.find(r=>r.id==='egypt').civicSatisfaction,control.regions.find(r=>r.id==='egypt').civicSatisfaction);
+ const fleeing=upgradeSave(JSON.parse(JSON.stringify(base))),free=upgradeSave(JSON.parse(JSON.stringify(base)));
+ development(fleeing,'egypt').slots.economy[0]=idea.id;
+ for(const state of [fleeing,free]){
+  const from=state.regions.find(r=>r.id==='t111'),to=state.regions.find(r=>r.id==='t112');
+  from.population=100000;from.civicSatisfaction=20;to.civicSatisfaction=80;
+ }
+ advanceDemography(fleeing);advanceDemography(free);
+ assert.equal(fleeing.regions.find(r=>r.id==='t111').population,99925);
+ assert.equal(free.regions.find(r=>r.id==='t111').population,99850);
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(fleeing))).development.egypt.slots.economy[0],idea.id);
 });
 
 test('material knowledge permits delayed construction with terrain, deposits, materials and upkeep',()=>{

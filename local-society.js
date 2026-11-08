@@ -1,6 +1,8 @@
 import {grandAdjacent} from './grand-operations.js';
 
 const traditionFor=owner=>({caesar:'roman-cults',senate:'roman-cults',egypt:'egyptian-cults',galatia:'local-cults',bosporus:'hellenic-cults',parthia:'local-cults',armenia:'local-cults',numidia:'local-cults',mauretania:'local-cults'})[owner]||'local-cults';
+export const productiveEstateRegion=region=>['plain','hills'].includes(region.terrain)&&region.food>=2;
+export const estateLaborActive=(state,owner)=>state.development?.[owner]?.slots?.economy?.includes('estate-labor-control')||false;
 export function provinceFaith(region){
  const dominant=({egypt:'egyptian-cults',achaia:'hellenic-cults',epirus:'hellenic-cults',anatolia:'hellenic-cults',bosporus:'hellenic-cults'})[region.macro]||(['parthia','armenia','galatia','africa','numidia','mauretania'].includes(region.macro)?'local-cults':'roman-cults');
  const minority=dominant==='roman-cults'?'local-cults':dominant==='egyptian-cults'?'hellenic-cults':'roman-cults';
@@ -45,7 +47,7 @@ export function advanceDemography(state){
  for(const r of state.regions){const faction=state.factions[r.owner];if(!faction||r.owner==='rebels')continue;const population=r.population||0;if(faction.food<0){r.population=Math.max(1000,Math.round(population*.998));r.civicSatisfaction=Math.max(0,r.civicSatisfaction-1)}else if(r.civicSatisfaction>65)r.population=Math.round(population*1.0003);
   if(r.civicSatisfaction>=35)continue;
   const destination=grandAdjacent(r.id).map(e=>state.regions.find(x=>x.id===e.to)).filter(x=>x?.owner===r.owner&&x.civicSatisfaction>r.civicSatisfaction+20).sort((a,b)=>b.civicSatisfaction-a.civicSatisfaction)[0];
-  if(destination)changes.push({from:r,to:destination,people:Math.min(150,Math.floor(population*.002))});
+  if(destination)changes.push({from:r,to:destination,people:Math.min(estateLaborActive(state,r.owner)&&productiveEstateRegion(r)?75:150,Math.floor(population*.002))});
  }
  for(const {from,to,people} of changes){if(from.population-people<1000)continue;const previous=to.population,total=previous+people,faiths=new Map();for(const item of to.faiths||[])faiths.set(item.id,(faiths.get(item.id)||0)+previous*item.share/100);for(const item of from.faiths||[])faiths.set(item.id,(faiths.get(item.id)||0)+people*item.share/100);to.faiths=[...faiths].map(([id,count])=>({id,share:Math.round(count/total*100)})).filter(x=>x.share>0).sort((a,b)=>b.share-a.share);from.population-=people;to.population=total}
 }

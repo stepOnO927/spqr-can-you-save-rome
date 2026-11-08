@@ -1,4 +1,4 @@
-import {nationalBudget} from './national-budget.js';
+import {nationalBudget} from './national-budget.js?v=2';
 const number=x=>(Object.is(x,-0)?0:Number(x)).toLocaleString(undefined,{maximumFractionDigits:1});
 export function budgetHtml(s,lang){
  const b=nationalBudget(s,s.player),zh=lang==='zh',row=(a,c,v)=>`<tr><td>${zh?c:a}</td><td>${typeof v==='string'?v:number(v)}</td></tr>`;
