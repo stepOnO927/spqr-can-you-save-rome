@@ -8,6 +8,10 @@ import {physicalStyle} from '../map-lab/physical-style.js';
 
 assert.deepEqual([...new Set(bathymetry.features.map(feature=>feature.properties.depth))].sort((a,b)=>a-b),[200,1000,2000,3000]);
 assert.ok(physicalStyle.layers.some(layer=>layer.id==='depth-200'&&layer.source==='bathymetry'));
+assert.ok(physicalStyle.sources.rivers.data.features.some(feature=>feature.properties.name==='Tevere'));
+assert.ok(physicalStyle.sources.rivers.data.features.some(feature=>feature.properties.name==='Po'));
+assert.ok(physicalStyle.sources.rivers.data.features.every(feature=>feature.properties.kind!=='Canal'));
+assert.ok(physicalStyle.sources.lakes.data.features.every(feature=>feature.properties.kind!=='Reservoir'));
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -62,8 +66,10 @@ try{
  await page.locator('#map-mode').selectOption('terrain');
  const firstLanguage=await page.locator('html').getAttribute('lang');
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/近岸浅海（约0–200米）/:/Coastal shelf \(about 0–200 m\)/);
+ assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/河流与天然湖泊/:/Rivers & natural lakes/);
  await page.locator('#language').click();
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Coastal shelf \(about 0–200 m\)/:/近岸浅海（约0–200米）/);
+ assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Rivers & natural lakes/:/河流与天然湖泊/);
  assert.match(await page.locator('.file-transfer a').innerText(),firstLanguage==='zh-CN'?/LEGACY HUB/:/罗马遗产/);
  await page.locator('#map-mode').selectOption('political');
  if(page.viewportSize().width<=600){await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),false)}
@@ -88,5 +94,6 @@ try{
  const site=await page.locator('[data-site="italiaN"]').boundingBox();
  assert.ok(Math.abs(site.x-page.viewportSize().width/2)<15,'Ariminum must stay at the map focus');
  if(process.env.SPQR_ATLAS_OBJECTIVE_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_OBJECTIVE_SCREENSHOT});
+ if(process.env.SPQR_ATLAS_RIVER_SCREENSHOT){if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();await page.locator('[data-objective="roma"]').click();await page.waitForTimeout(1200);for(let i=0;i<3;i++){await page.locator('#zoom-in').click();await page.waitForTimeout(500)}await page.screenshot({path:process.env.SPQR_ATLAS_RIVER_SCREENSHOT})}
  console.log('Offline atlas loaded MapLibre, 120 settlement markers and local terrain through Italy zoom 9.');
 }finally{await browser.close()}

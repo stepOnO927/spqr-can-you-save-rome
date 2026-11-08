@@ -1,7 +1,8 @@
 import land from '../mediterranean-land.js';
 import ocean from '../mediterranean-ocean.js';
 import bathymetry from '../mediterranean-bathymetry.js?v=2';
-import rivers from '../rivers.js';
+import rivers from '../mediterranean-rivers.js';
+import lakes from '../mediterranean-lakes.js';
 import historical from '../historical-territories.js';
 
 // Natural Earth land and ocean share a coastline. The ocean mask is deliberately
@@ -18,7 +19,8 @@ export const physicalStyle={
   'elevation-ultra':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:8,maxzoom:8,bounds:[5,35,22,48],attribution:'Elevation © Mapzen / AWS Terrain Tiles and data contributors'},
   'elevation-higher':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:9,maxzoom:9,bounds:[5,35,22,48],attribution:'Elevation © Mapzen / AWS Terrain Tiles and data contributors'},
   historical:{type:'geojson',data:historical},
-  rivers:{type:'geojson',data:rivers}
+  rivers:{type:'geojson',data:rivers,attribution:'Hydrography: Natural Earth 1:10m, public domain'},
+  lakes:{type:'geojson',data:lakes}
  },
  layers:[
   {id:'sea',type:'background',paint:{'background-color':'#356f79'}},
@@ -37,7 +39,10 @@ export const physicalStyle={
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},
   {id:'coastal-halo',type:'line',source:'land',paint:{'line-color':'#e1d2aa','line-width':['interpolate',['linear'],['zoom'],4,3,8,5],'line-blur':2,'line-opacity':.27}},
   {id:'coastline',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,.9,8,1.7],'line-opacity':.87}},
-  {id:'waterways',type:'line',source:'rivers',paint:{'line-color':'#5f8d92','line-opacity':.9,'line-width':['interpolate',['linear'],['zoom'],4,.7,8,1.6]}},
+  {id:'natural-lakes',type:'fill',source:'lakes',paint:{'fill-color':'#5b9093','fill-opacity':.88}},
+  {id:'lake-shores',type:'line',source:'lakes',paint:{'line-color':'#c6d2ba','line-opacity':.65,'line-width':.65}},
+  {id:'waterways-major',type:'line',source:'rivers',filter:['<=',['get','rank'],6],paint:{'line-color':'#5c9293','line-opacity':.88,'line-width':['interpolate',['linear'],['zoom'],4,.65,7,1.15,9,2]}},
+  {id:'waterways-minor',type:'line',source:'rivers',minzoom:7,filter:['>',['get','rank'],6],paint:{'line-color':'#67999a','line-opacity':.72,'line-width':['interpolate',['linear'],['zoom'],7,.55,9,1.05]}},
   {id:'control',type:'fill',source:'historical',filter:['!=',['get','id'],'roman-extent'],paint:{'fill-color':['match',['get','id'],'gaul','#ad4d3d','narbo','#ad4d3d','italy','#b0a480','greece','#778994','sicilia','#778994','hispania','#778994','asia','#778994','syria','#778994','africa','#778994','#aa9c75'],'fill-opacity':.30}},
   {id:'province-outline',type:'line',source:'historical',filter:['!=',['get','id'],'roman-extent'],paint:{'line-color':'#f1deb0','line-opacity':.72,'line-width':1.25}},
   {id:'sea-final',type:'fill',source:'ocean',paint:{'fill-color':'#356f79','fill-opacity':1}},
