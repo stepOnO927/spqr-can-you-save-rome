@@ -73,7 +73,7 @@ export function initializeGovernments(s){
 export function successionCandidates(s,faction){
  const candidates=successorFor(s,faction);
  if(!['roman_principate','later_empire'].includes(successionModel(faction,s)))return candidates;
- const children=(s.world.leadership[faction]||[]).flatMap(id=>s.world.characters[id]?.children||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!s.world.characters[id].missing);
+ const children=(s.world.leadership[faction]||[]).flatMap(id=>s.world.characters[id]?.children||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!s.world.characters[id].missing&&!s.world.characters[id].asylumHost);
  return [...new Set([...children,...candidates])];
 }
 

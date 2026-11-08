@@ -1,7 +1,7 @@
 import {reportedControl,observeArrival} from './control-intelligence.js?v=xxii-final-4';
 import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=asylum-heir-1';
 import {ROUTES} from './data.js?v=xxii-final-4';
-import {addReport,reportedHealthSubjects,apparentAgeRange} from './character-system.js?v=asylum-heir-1';
+import {addReport,reportedHealthSubjects,apparentAgeRange} from './character-system.js?v=valid-letter-1';
 import {officeOf} from './office-system.js?v=asylum-heir-1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));

@@ -222,6 +222,20 @@ test('succession letters can disclose an unverified plan or answer evasively aft
  const hostile=newGame('caesar');hostile.world.successionPlans.senate='cato';assert.equal(sendInquiry(hostile,'caesar','senate','successor').ok,true);hostile.inquiries[0].remaining=1;hostile.seed=seed;tick(hostile);
  assert.equal(hostile.inquiries[0].status,'answered');assert.match(hostile.inquiries[0].claim[0],/did not name/);assert.equal(hostile.knowledge.caesar.senate.reports[0].value,'unknown');assert.equal(hostile.world.successionPlans.senate,'cato');
 });
+test('a cooperative succession reply does not present a sheltered nominee as a valid plan',()=>{
+ const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.8&&q<.9});
+ for(const sheltered of [false,true]){
+  let s=newGame('caesar');s.world.successionPlans.parthia='pacorus';s.relations['caesar:parthia']=50;
+  if(sheltered)s.world.characters.pacorus.asylumHost='caesar';
+  assert.equal(sendInquiry(s,'caesar','parthia','successor').ok,true);tick(s);tick(s);
+  assert.equal(s.knowledge.caesar.parthia.reports.length,0);for(const army of s.armies){army.move=null;army.siege=null}s.seed=seed;tick(s);
+  assert.equal(s.inquiries[0].status,'pending');assert.equal(s.knowledge.caesar.parthia.reports.length,0);assert.equal(s.world.successionPlans.parthia,'pacorus');
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);for(const army of s.armies){army.move=null;army.siege=null}s.seed=seed;tick(s);
+  assert.equal(s.inquiries[0].status,'answered');const report=s.knowledge.caesar.parthia.reports[0];
+  assert.equal(report.value,sheltered?'unknown':'pacorus');assert.equal(report.verified,false);
+  assert.equal(s.knowledge.senate.parthia.reports.length,0);
+ }
+});
 test('a cooperative court may name an acting authority in a delayed, unverified representative reply',()=>{
  const start=newGame('caesar');start.world.characters.orodes.health='seriously_ill';start.relations['caesar:parthia']=30;assert.equal(sendInquiry(start,'caesar','parthia','representative').ok,true);
  tick(start);tick(start);start.world.characters.orodes.health='seriously_ill';let s;

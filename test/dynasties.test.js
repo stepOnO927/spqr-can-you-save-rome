@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js';
 import {CHARACTER_CATALOG} from '../characters.js?v=asylum-heir-1';
 import {assignSuccession,successionModel} from '../characters.js?v=asylum-heir-1';
-import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession} from '../governance.js?v=asylum-heir-1';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=valid-letter-1';
 import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js';
 import {canHoldOffice} from '../office-system.js?v=asylum-heir-1';
 import {renderGenealogy} from '../genealogy-ui.js';
@@ -83,6 +83,15 @@ test('a sheltered child cannot inherit court authority through the family succes
   assert.ok(!leaders.includes(abroad));assert.deepEqual(leaders,[local||'ptolemy']);
   assert.equal(s.world.characters[abroad].asylumHost,'caesar');assert.deepEqual(s.knowledge.caesar.egypt,prior);
  }
+});
+
+test('a sheltered imperial child cannot be nominated while a local child remains eligible',()=>{
+ const s=newGame('caesar');s.world.romanRegimes={caesar:'roman_principate'};
+ const abroad=createFictionalPerson(s,{name:['Sheltered child','受庇护子女'],faction:'caesar',birthYear:-60,parents:['caesar'],location:'egypt'});
+ const local=createFictionalPerson(s,{name:['Local child','在廷子女'],faction:'caesar',birthYear:-58,parents:['caesar'],location:'cisalpine'});
+ s.world.characters[abroad].asylumHost='egypt';s.world.successionPlans.caesar=abroad;
+ assert.equal(validSuccessionPlan(s,'caesar'),null);assert.equal(planSuccession(s,abroad).reason,'unavailable');
+ assert.equal(planSuccession(s,local).ok,true);assert.equal(validSuccessionPlan(s,'caesar'),local);
 });
 
 test('stale asylum lead gives a generic reply',()=>{

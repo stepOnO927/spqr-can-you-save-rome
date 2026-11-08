@@ -3,7 +3,7 @@ import land from './land.js?v=xxii-final-4';
 import rivers from './rivers.js?v=xxii-final-4';
 import historical from './historical-territories.js?v=xxii-final-4';
 import {FACTIONS} from './data.js?v=xxii-final-4';
-import {reportedArmies} from './character-system.js?v=asylum-heir-1';
+import {reportedArmies} from './character-system.js?v=valid-letter-1';
 import {reportedControl} from './control-intelligence.js?v=xxii-final-4';
 
 // Anchors identify playable theaters within a historical polygon; they do not create borders.
