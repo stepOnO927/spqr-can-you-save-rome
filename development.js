@@ -20,6 +20,8 @@ const quarrySource='https://oxrep.web.ox.ac.uk/stone-quarries-database';
 const alesiaSource='https://musee-archeologienationale.fr/en/node/1592';
 const numantiaSource='https://numanciasoria.es/en/divulgacion/the-archaeological-hall-of-garray';
 const siegeSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/2A%2A.html';
+const massiliaSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1B%2A.html';
+const militaryTransportSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/3A%2A.html';
 const librarySource='https://www.persee.fr/doc/mefr_0223-5102_2006_num_118_2_10261';
 const cloacaSource='https://www.sovraintendenzaroma.it/i_luoghi/roma_antica/monumenti/cloaca_massima';
 const marciaSource='https://www.sovraintendenzaroma.it/i_luoghi/roma_antica/monumenti/acquedotto_marcio';
@@ -33,8 +35,8 @@ const source=(url,title)=>({title:title??(url.includes('metmuseum')?'Metropolita
 export const IDEAS = [
   {id:'legion-training',category:'military',name:['Standardized Legion Training','军团标准化训练'],cost:24,months:3,adopt:12,effects:{recruitMorale:6,combatAttack:.06,upkeep:2},context:['Roman drill and organization are adapted as a costly training program.','罗马式操练与编制需要持续训练经费。'],source:source(armySource)},
   {id:'frontier-defense',category:'military',name:['Frontier Defense Doctrine','边境防御学说'],cost:22,months:3,adopt:10,effects:{combatDefense:.09,upkeep:1,combatAttack:-.02},context:['Garrisons favor prepared defense over rapid offensive action.','驻军重视防御，但进攻灵活性稍降。'],source:source(armySource)},
-  {id:'reserve-mobilization',category:'military',name:['Reserve Mobilization','预备役动员'],cost:24,months:3,adopt:12,effects:{manpower:120,upkeep:2,stability:-1},context:['A wider levy pool raises manpower while burdening households and administration.','扩大征兵来源增加兵源，也使家庭与行政承压。'],source:source(armySource)},
-  {id:'senatorial-consultation',category:'government',name:['Senatorial Consultation','元老院协商'],cost:20,months:2,adopt:12,effects:{stability:1,loyalty:1,decisionDelay:1},conflicts:['central-administration'],context:['Elite consultation can support legitimacy while slowing decisions.','精英协商有助于合法性，但延长决策时间。'],source:source(republicSource)},
+  {id:'reserve-mobilization',category:'military',name:['Reserve Mobilization','预备役动员'],cost:24,months:3,adopt:12,effects:{manpower:120,upkeep:2,stability:-1},context:['Caesar reports calling on soldiers and auxiliaries from several regions for the Spanish campaign; the wider levy pool is a game abstraction.','凯撒记载为西班牙战役从多个地区召集士兵与辅助军；更广的征兵池属于游戏抽象。'],source:source(massiliaSource,'Caesar, Civil Wars 1.39')},
+  {id:'senatorial-consultation',category:'government',name:['Senatorial Consultation','元老院协商'],cost:20,months:2,adopt:12,effects:{stability:1,loyalty:1,decisionDelay:1},conflicts:['central-administration'],context:['Caesar describes a Senate debate over envoys that lasted several days; the stability effect is a game interpretation.','凯撒记载元老院讨论派遣使节持续数日；稳定度效果是游戏诠释。'],source:source(massiliaSource,'Caesar, Civil Wars 1.32–33')},
   {id:'central-administration',category:'government',name:['Centralized Administration','中央集权行政'],cost:26,months:4,adopt:16,effects:{treasury:2,stability:-1,loyalty:-1},conflicts:['senatorial-consultation'],context:['Central direction improves collection but can strain local loyalties.','中央指挥改善征收，却可能损害地方忠诚。'],source:source(republicSource)},
   {id:'provincial-autonomy',category:'government',name:['Provincial Autonomy','行省自治'],cost:25,months:3,adopt:14,effects:{loyalty:2,treasury:-2},conflicts:['central-administration'],context:['Local discretion can win support while limiting central receipts.','地方自主可争取支持，但减少中央收入。'],source:source(republicSource)},
   {id:'hardline-diplomacy',category:'diplomacy',name:['Hardline Diplomacy','强硬外交'],cost:20,months:2,adopt:10,effects:{diplomacyPressure:12,relations:-2},conflicts:['diplomatic-accommodation'],context:['Coercive bargaining increases pressure and foreign distrust.','胁迫式谈判增加压力，也加深外国疑虑。'],source:source(republicSource)},
@@ -76,7 +78,7 @@ const additionalMaterials=[
  ['sewer-improvement',['Sewer Improvement','下水道改进'],'sewer',cloacaSource,['The Cloaca Maxima combined drainage with later sewer functions; this is an improvement of existing works, not a claim of modern hygiene.','罗马大下水道兼有排涝和后来的排污功能；此项改进旧有工程，不宣称现代卫生效果。'],29,5,['urban-drainage']],
  ['training-ground',['Training Ground','训练场'],'training-camp',armySource,['Permanent training grounds support repeated drills.','固定训练场支持反复操练。'],20,3,['barracks-design']],
  ['supply-organization',['Supply Organization','军需组织'],'supply-depot',militaryGranarySource,['Republican military granaries in Hispania show that armies stored grain near campaigns.','西班牙的共和国时期军用粮仓表明军队曾在战役地点附近储粮。'],22,3,['barracks-design']],
- ['armory-craft',['Armory Craft','军械制造'],'armory',armySource,['Organized armories support recruitment and equipment repair.','有组织的军械库支援征兵与装备修理。'],24,4,['metal-extraction']],
+ ['armory-craft',['Armory Craft','军械制造'],'armory',massiliaSource,['Caesar reports that Massilia set up arms workshops in 49 BCE; a local armory adapts that wartime practice.','凯撒记载马赛在前49年设立兵器作坊；地方军械库代表这种战时做法的改造。'],24,4,['metal-extraction']],
  ['siege-machinery',['Siege Machinery','攻城器械'],'siege-workshop',siegeSource,['Caesar describes earthworks, covered galleries and towers at the siege of Massilia in 49 BCE.','凯撒记载了前49年马赛围城中的土垒、带顶通道与攻城塔。'],25,4,['armory-craft']],
  ['metalworking',['Metalworking','金属加工'],'metalworks',engineeringSource,['Local metalworking turns mined supply into practical equipment.','地方金属加工把矿产变成实用器材。'],22,3,['metal-extraction']],
  ['craft-workshops',['Craft Workshops','手工业作坊'],'workshop',engineeringSource,['Workshops sustain urban crafts and taxable exchange.','作坊支撑城市手工业与可征税的交换。'],18,3,[]],
@@ -88,9 +90,9 @@ const additionalMaterials=[
  ['bath-construction',['Bath Construction','浴场建造'],'bath',pompeiiBathSource,['Pompeii’s Stabian and Republican baths were built in the second century BCE; their water and heating systems changed over time.','庞贝的斯塔比亚浴场与共和国浴场建于前2世纪；供水和加热设施后来多次改造。'],24,4,['aqueduct-refinement']],
  ['administrative-building',['Administrative Building','行政建筑'],'administration',republicSource,['Offices provide a place for records and provincial administration.','官署容纳记录与地方行政。'],23,4,['public-square-planning']],
  ['bridge-engineering',['Bridge Engineering','桥梁工程'],'bridge',appianSource,['Bridges extend practical roads across rivers.','桥梁使实用道路跨越河流。'],24,4,['roadmaking']],
- ['port-facilities',['Port Facilities','港口设施'],'port',engineeringSource,['Harbors handle shipments but require a suitable coast.','港口处理船运，必须有合适海岸。'],26,4,['roadmaking']],
- ['warehouse-management',['Warehouse Management','仓储管理'],'warehouse',grainSource,['Warehouses protect traded supplies and grain reserves.','仓库保护交易货物与谷物储备。'],20,3,['grain-storage']],
- ['shipyard-craft',['Shipyard Craft','造船工艺'],'shipyard',engineeringSource,['Shipyards maintain vessels at suitable maritime ports.','造船厂在适合的海港维修船舶。'],28,5,['port-facilities']]
+ ['port-facilities',['Port Facilities','港口设施'],'port',massiliaSource,['Massilia received merchant ships and warships during the 49 BCE siege; port works still require a suitable coast.','前49年马赛围城时商船与战船进出港口；港口工程仍须依托适宜海岸。'],26,4,['roadmaking']],
+ ['warehouse-management',['Warehouse Management','仓储管理'],'warehouse',massiliaSource,['At Massilia, provisions were gathered and reserved for a possible siege; storage capacity is a game abstraction.','马赛曾为可能的围城收集并储备粮食与物资；仓储容量是游戏抽象值。'],20,3,['grain-storage']],
+ ['shipyard-craft',['Shipyard Craft','造船工艺'],'shipyard',massiliaSource,['Caesar reports twelve warships made at Arelate in 49 BCE and equipped before deployment; the card represents local yard organization.','凯撒记载前49年阿雷拉特建造并装备十二艘战船；此卡代表地方船厂组织。'],28,5,['port-facilities']]
 ];
 for(const [id,name,building,url,context,cost,months,prerequisites] of additionalMaterials)MATERIALS.push({id,name,building,cost,months,prerequisites,context,source:source(url)});
 const additionalBuildings=[
@@ -118,11 +120,11 @@ const additionalBuildings=[
 ];
 for(const [id,name,tech,cost,months,materials,upkeep,effects,terrain,site] of additionalBuildings)BUILDINGS.push({id,name,tech,cost,months,materials,upkeep,effects,terrain,site});
 MATERIALS.push(
- {id:'improved-shipbuilding',name:['Improved Shipbuilding','改良造船'],cost:27,months:4,prerequisites:['shipyard-craft'],context:['Better yard organization shortens vessel construction.','改进船厂组织，缩短造船时间。'],source:source(engineeringSource)},
- {id:'naval-equipment',name:['Heavy Naval Equipment','重型海军装备'],cost:32,months:5,prerequisites:['shipyard-craft','metalworking'],context:['Stronger hull fittings make heavier warships feasible.','更坚固的船体配件使大型战船可建造。'],source:source(engineeringSource)},
- {id:'repair-facilities',name:['Naval Repair Facilities','海军修理设施'],cost:25,months:4,prerequisites:['shipyard-craft'],context:['Dockside repair crews restore damaged hulls over time.','港边修理人员逐月修复受损船体。'],source:source(engineeringSource)},
- {id:'maritime-warehousing',name:['Maritime Warehousing','海运仓储'],cost:23,months:3,prerequisites:['port-facilities'],context:['Warehouses protect cargo and increase reliable throughput.','仓库保护货物，提高稳定吞吐量。'],source:source(grainSource)},
- {id:'military-transport-organization',name:['Military Transport Organization','军事海运组织'],cost:26,months:4,prerequisites:['shipyard-craft'],context:['Organized loading lets each transport carry more soldiers.','组织装载，使每艘运输船多运士兵。'],source:source(armySource)}
+ {id:'improved-shipbuilding',name:['Improved Shipbuilding','改良造船'],cost:27,months:4,prerequisites:['shipyard-craft'],context:['Caesar reports warships built and equipped at Arelate within thirty days; the game models yard coordination, not a universal build time.','凯撒记载阿雷拉特在三十天内建造并装备战船；游戏模拟船厂协作，并非通用建造工期。'],source:source(massiliaSource,'Caesar, Civil Wars 1.36')},
+ {id:'naval-equipment',name:['Heavy Naval Equipment','重型海军装备'],cost:32,months:5,prerequisites:['shipyard-craft','metalworking'],context:['Caesar describes grappling equipment prepared for the Massilia fleet; larger hulls are a separate game abstraction.','凯撒记载马赛战役舰队准备了钩爪等装备；大型船体是另行抽象的游戏设定。'],source:source(massiliaSource,'Caesar, Civil Wars 1.57')},
+ {id:'repair-facilities',name:['Naval Repair Facilities','海军修理设施'],cost:25,months:4,prerequisites:['shipyard-craft'],context:['Massilia repaired and fitted out old ships after a naval defeat; the game models dockside repair crews.','马赛海战失利后修理并重新装备旧船；游戏据此模拟港边修船人员。'],source:source(siegeSource,'Caesar, Civil Wars 2.4')},
+ {id:'maritime-warehousing',name:['Maritime Warehousing','海运仓储'],cost:23,months:3,prerequisites:['port-facilities'],context:['Massilia stored grain for an emergency during the siege; cargo throughput bonuses are game values.','马赛围城期间储备谷物以应急；货物吞吐加成属于游戏数值。'],source:source(siegeSource,'Caesar, Civil Wars 2.22')},
+ {id:'military-transport-organization',name:['Military Transport Organization','军事海运组织'],cost:26,months:4,prerequisites:['shipyard-craft'],context:['Caesar describes scarce transport capacity and ships sent back for another crossing; the game abstracts improved loading capacity.','凯撒记载运兵船不足，以及舰船返航接运后续部队；游戏将改进装载能力作抽象处理。'],source:source(militaryTransportSource,'Caesar, Civil Wars 3.2, 3.29')}
 );
 BUILDINGS.push(
  {id:'naval-depot',name:['Naval Supply Depot','海军补给站'],tech:'port-facilities',cost:23,months:3,materials:{timber:2,stone:1},upkeep:1,effects:{navalSupply:12},terrain:['plain','hills','urban'],site:'coast'},
@@ -132,7 +134,7 @@ BUILDINGS.push(
 );
 IDEAS.push(
  {id:'naval-crew-training',category:'military',name:['Naval Crew Training','海军船员训练'],cost:23,months:3,adopt:12,effects:{navalPower:.08,upkeep:2},context:['Drilling oarsmen improves maneuver but requires pay.','训练桨手改善机动，但增加军费。'],source:source(armySource)},
- {id:'fleet-coordination',category:'military',name:['Fleet Coordination','舰队协同'],cost:25,months:4,adopt:13,effects:{navalPower:.06,navalSupply:3,upkeep:1},context:['Signals and practiced formations aid a fleet at a cost.','旗号与队形训练增强舰队，也要花费。'],source:source(armySource)},
+ {id:'fleet-coordination',category:'military',name:['Fleet Coordination','舰队协同'],cost:25,months:4,adopt:13,effects:{navalPower:.06,navalSupply:3,upkeep:1},context:['Caesar placed Brutus over his new fleet at Massilia and prepared crews for battle; the combat bonus is a game abstraction.','凯撒在马赛任命布鲁图斯统领新舰队并备战；战斗加成属于游戏抽象。'],source:source(massiliaSource,'Caesar, Civil Wars 1.36, 1.57')},
  {id:'maritime-administration',category:'government',name:['Maritime Administration','海务行政'],cost:23,months:3,adopt:12,effects:{navalTrade:1,upkeep:2},context:['Officials organize convoy records and port dues.','官员管理船队记录与港口税费。'],source:source(republicSource)},
  {id:'harbor-regulation',category:'government',name:['Harbor Regulation','港口条例'],cost:22,months:3,adopt:10,effects:{navalSecurity:8,treasury:-1},context:['Inspections reduce losses and slow merchants.','检查减少损失，也拖慢商船。'],source:source(republicSource)},
  {id:'maritime-intelligence',category:'diplomacy',name:['Maritime Intelligence Networks','海事情报网'],cost:24,months:3,adopt:12,effects:{navalIntel:1,upkeep:1},context:['Port informants improve sightings without revealing certainty.','港口线人改善目击，仍不能提供确切情报。'],source:source(republicSource)},
