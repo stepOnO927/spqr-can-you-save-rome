@@ -29,6 +29,33 @@ test('actual idle transports, not a numeric lift allowance or shipyard, enable s
 test('AI coordinates a real neighboring attack and protects actual supply cut points',()=>{
  const s=newGrandGame('caesar');for(const r of s.regions)if(r.owner==='senate'&&r.id!=='italiaN')r.owner='caesar';const attack=s.armies.find(a=>a.id==='xiii');attack.men=10000;const support=s.armies.find(a=>a.id==='viii');support.region='t005';support.men=3500;s.regions.find(r=>r.id==='t005').owner='caesar';s.factions.caesar.food=100;aiTurn(s,'caesar');assert.equal(attack.coordinated,true);assert.equal(attack.move?.to,'italiaN');assert.equal(support.move,null);assert.ok(supplyBottlenecks(s,'caesar') instanceof Set)
 });
+test('AI reinforces an exposed, depleted winning army using the player resource and time costs',()=>{
+ const s=newGrandGame('egypt'),front=s.regions.find(r=>r.id==='italiaN'),legion=s.armies.find(a=>a.id==='xiii');
+ front.owner='caesar';legion.region=front.id;legion.men=5900;s.month=3;s.factions.caesar.treasury=50;
+ s.battles=[{year:s.year,month:s.month,region:front.id,attacker:{owner:'caesar'},attackerWins:true}];
+ const cash=s.factions.caesar.treasury,food=s.factions.caesar.food,manpower=s.factions.caesar.manpower;
+ aiTurn(s,'caesar');
+ assert.equal(legion.reconPending?.kind,'reinforce');
+ assert.equal(legion.reconPending.remaining,1);
+ assert.equal(s.factions.caesar.treasury,cash-24);
+ assert.equal(s.factions.caesar.food,food-6);
+ assert.equal(s.factions.caesar.manpower,manpower-3000);
+ const dominant=newGrandGame('egypt'),levies=dominant.armies.find(a=>a.id==='italy');
+ dominant.month=3;dominant.factions.senate.treasury=50;levies.men=5900;
+ dominant.battles=[{year:dominant.year,month:dominant.month,region:'italiaN',attacker:{owner:'senate'},attackerWins:true}];
+ aiTurn(dominant,'senate');assert.notEqual(levies.reconPending?.kind,'reinforce');
+});
+test('AI probes a contested border using only local reports before a cash-starved risky advance',()=>{
+ const setup=cash=>{const s=newGrandGame('egypt');s.armies=s.armies.filter(a=>a.id!=='viii');const legion=s.armies.find(a=>a.id==='xiii');legion.region='t016';legion.men=6154;for(const id of ['t016','roma'])s.regions.find(r=>r.id===id).owner='caesar';s.month=3;s.factions.caesar.treasury=cash;s.knowledge.caesar.senate.reports.push({kind:'strength',value:10000,year:s.year,month:s.month});return {s,legion}};
+ const {s,legion}=setup(50),food=s.factions.caesar.food;
+ aiTurn(s,'caesar');assert.equal(legion.reconPending?.kind,'scouts');assert.equal(legion.reconPending.regionId,'t017');assert.equal(s.factions.caesar.treasury,46);assert.equal(s.factions.caesar.food,food-2);
+ legion.reconPending=null;s.factions.caesar.treasury=20;
+ s.militaryRecon=[{owner:'caesar',regionId:'t017',year:s.year,month:s.month,observationYear:s.year,observationMonth:s.month,source:'scouts',min:null,max:null}];
+ aiTurn(s,'caesar');assert.equal(legion.move?.to,'t017');assert.equal(s.factions.caesar.treasury,20);
+ const poor=setup(3),beforeFood=poor.s.factions.caesar.food;
+ aiTurn(poor.s,'caesar');assert.equal(poor.legion.reconPending?.kind,'probe');assert.equal(poor.legion.reconPending.regionId,'t017');assert.equal(poor.s.factions.caesar.treasury,3);assert.equal(poor.s.factions.caesar.food,beforeFood-3);
+ assert.equal(poor.s.militaryRecon[0].source,'probe');
+});
 test('historical engineer travels before construction bonus and faith affects local society',()=>{
  const s=newGrandGame('caesar'),offer=recruitFigure(s,'caesar','mamurra');assert.equal(offer.ok,true);assert.equal(figureActive(s,'caesar','engineer'),false);for(let i=0;i<offer.months;i++)advanceFigures(s);assert.equal(figureActive(s,'caesar','engineer'),true);const region=s.regions.find(r=>r.id==='egypt');region.owner='caesar';region.integration=30;s.month=3;assert.equal(faithSatisfaction(s,region),-1);s.development.caesar.slots.culture[0]='cultural-accommodation';assert.equal(faithSatisfaction(s,region),1);const origin=s.regions.find(r=>r.id==='cisalpine'),neighbor=s.regions.find(r=>r.id==='t005');neighbor.owner='caesar';origin.civicSatisfaction=20;neighbor.civicSatisfaction=80;const before=origin.population;advanceDemography(s);assert.ok(origin.population<before)
 });

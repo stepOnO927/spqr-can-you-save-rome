@@ -7,7 +7,7 @@ import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-syste
 import {advanceConspiracies} from './conspiracies.js?v=7';
 import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=11';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js';
-import {advanceRecon,assessment,sendScouts,latestRecon,requestReinforcements} from './reconnaissance.js?v=3';
+import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=3';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks} from './grand-operations.js?v=3';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy} from './local-society.js?v=1';
@@ -407,6 +407,7 @@ export function aiTurn(s,owner){
   const f=s.factions[owner],owned=s.regions.filter(r=>r.owner===owner);
   if(!owned.length)return;
   const alert=(s.militaryAlerts||[]).find(a=>a.owner===owner&&a.year*12+a.month>=s.year*12+s.month-1&&region(s,a.regionId)?.owner===owner);
+  const willingToRisk=(report,men)=>['scouts','probe'].includes(report?.source)&&report.age<=3&&report.min==null&&f.treasury<30&&men>=5000;
   const raiseAt=regionId=>{
     if(s.armies.some(a=>a.owner===owner&&a.region===regionId&&a.reconPending?.kind==='reinforce'))return false;
     const stationed=s.grandMap?s.armies.filter(a=>a.owner===owner&&a.region===regionId&&a.men>0&&!a.move&&!a.siege&&!a.reconPending):[];
@@ -415,6 +416,11 @@ export function aiTurn(s,owner){
     return front&&requestReinforcements(s,front.id,owner).ok||recruit(s,regionId,owner);
   };
   if(alert&&f.treasury>=40&&f.food>=6&&f.manpower>=3000)raiseAt(alert.regionId);
+  const outnumbered=s.wars.some(w=>w.includes(owner)&&s.regions.filter(r=>r.owner===w.find(id=>id!==owner)).length>owned.length*1.5);
+  if(s.grandMap&&outnumbered&&f.treasury>=24&&f.food>=6&&f.manpower>=3000){
+    const exposedWin=(s.battles||[]).find(b=>b.year===s.year&&b.month===s.month&&b.attacker?.owner===owner&&b.attackerWins&&region(s,b.region)?.owner===owner&&adjacent(b.region,s).some(e=>isWar(s,owner,region(s,e.to)?.owner)));
+    if(exposedWin)raiseAt(exposedWin.region);
+  }
   if(owner!=='rebels'){
     const d=s.development[owner];
     if(!d.research&&f.treasury>55&&s.month%4===0){
@@ -463,13 +469,36 @@ export function aiTurn(s,owner){
       if(s.grandMap){const threat=id=>adjacent(id,s).filter(e=>!e.sea&&isWar(s,owner,region(s,e.to)?.owner)).length,here=threat(a.region),retreat=adjacent(a.region,s).filter(e=>!e.sea&&region(s,e.to)?.owner===owner).map(e=>({id:e.to,risk:threat(e.to),supply:armySupply(s,{...a,region:e.to})})).filter(e=>e.risk<here&&e.supply>=armySupply(s,a)-.1).sort((x,y)=>x.risk-y.risk||y.supply-x.supply)[0];if(retreat)moveArmy(s,a.id,retreat.id)}
       continue;
     }
-    if(s.grandMap){const local=region(s,a.region);if(armySupply(s,a)<.55){const escape=adjacent(a.region,s).filter(e=>!e.sea&&region(s,e.to).owner===owner).map(e=>({to:e.to,supply:armySupply(s,{...a,region:e.to})})).sort((x,y)=>y.supply-x.supply)[0];if(escape?.supply>armySupply(s,a)+.15){a.region=escape.to;a.morale=Math.max(15,a.morale-4);continue}}if((local.port||local.terrain==='urban'||protectedJunctions.has(local.id))&&adjacent(a.region,s).some(e=>isWar(s,owner,region(s,e.to).owner))){a.stance='hold';a.prepared=Math.min(3,(a.prepared||0)+1);if(a.men<estimatedStrength(s,owner,s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner))*.75)continue}}
+    if(s.grandMap){
+      const local=region(s,a.region);
+      if(armySupply(s,a)<.55){
+        const escape=adjacent(a.region,s).filter(e=>!e.sea&&region(s,e.to).owner===owner).map(e=>({to:e.to,supply:armySupply(s,{...a,region:e.to})})).sort((x,y)=>y.supply-x.supply)[0];
+        if(escape?.supply>armySupply(s,a)+.15){a.region=escape.to;a.morale=Math.max(15,a.morale-4);continue}
+      }
+      const borders=adjacent(a.region,s).filter(e=>isWar(s,owner,region(s,e.to)?.owner));
+      if((local.port||local.terrain==='urban'||protectedJunctions.has(local.id))&&borders.length){
+        a.stance='hold';a.prepared=Math.min(3,(a.prepared||0)+1);
+        const opponent=s.wars.find(w=>w.includes(owner))?.find(id=>id!==owner);
+        if(a.men<estimatedStrength(s,owner,opponent)*.75){
+          const safe=borders.some(e=>{const report=latestRecon(s,owner,e.to);return (report?.min!=null&&report.age<=5&&report.max<=a.men*1.15)||willingToRisk(report,a.men)});
+          if(!safe){
+            const scout=borders.find(e=>{const report=latestRecon(s,owner,e.to);return !report||report.age>5||report.min==null&&report.age>=2});
+            if(scout&&f.treasury>=4&&f.food>=2)sendScouts(s,a.id,scout.to,owner);
+            else if(scout&&f.treasury<4&&f.food>=3)probePositions(s,a.id,scout.to,owner);
+            continue;
+          }
+        }
+      }
+    }
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y)-(s.grandMap?(r.port?12:0)+(r.terrain==='urban'?15:0)+(r.road?4:0):0)})).sort((x,y)=>x.d-y.d);
     for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const destination=region(s,step),defenderOwner=destination.owner,report=destination.owner!==owner?latestRecon(s,owner,step):null;
       const reconWindow=s.year>=-48&&s.month%3===0,investigate=((s.seed+owner.length+a.id.length+s.month)%5)!==0;
       const prior=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/(s.grandMap?1:Math.max(1,s.regions.filter(x=>x.owner===defenderOwner).length)):0;
-      if(destination.owner!==owner&&(!report||report.age>5)&&f.treasury>=8&&f.food>=4&&reconWindow&&investigate){if(sendScouts(s,a.id,step,owner).ok)break}
-      const defenders=report?.min!=null&&report.age<=5?Math.round((report.min+report.max)/2):prior;
+      if(destination.owner!==owner&&(!report||report.age>5)&&reconWindow&&investigate){
+        if(f.treasury>=8&&f.food>=4&&sendScouts(s,a.id,step,owner).ok)break;
+        if(f.treasury<8&&f.food>=3&&probePositions(s,a.id,step,owner).ok)break;
+      }
+      const defenders=report?.min!=null&&report.age<=5?Math.round((report.min+report.max)/2):willingToRisk(report,a.men)?a.men:prior;
       if(defenders>a.men*1.35||f.food<0||s.grandMap&&destination.owner===owner&&armySupply(s,{...a,region:step})<.45)continue;
       const support=s.grandMap&&destination.owner!==owner?available.find(other=>other.id!==a.id&&!reservedSupport.has(other.id)&&!other.move&&other.region!==a.region&&other.men>1200&&armySupply(s,other)>=.5&&grandAdjacent(other.region).some(edge=>edge.to===step)):null;
       a.coordinated=!!support;const ordered=moveArmy(s,a.id,step);if(ordered.ok){if(support)reservedSupport.add(support.id);break}a.coordinated=false}}

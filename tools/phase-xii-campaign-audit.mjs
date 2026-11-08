@@ -25,3 +25,7 @@ for(const faction of ['caesar','senate'])for(const strategy of [...['aggressive'
  const own=s.regions.filter(r=>r.owner===faction).length;
  console.log(`${faction} ${strategy}: ${s.year}/${s.month}, territories ${own}, Rome ${region(s,'roma').owner}, southern Italy ${region(s,'italiaS').owner}, attacks ${attacks}, recruits ${recruits}, reinforcements ${reinforcements}, treasury ${s.factions[faction].treasury}, food ${s.factions[faction].food}, outcome ${s.achievementState.result||s.campaignOutcome?.kind||'ongoing'}`);
 }
+const spectator=newGrandGame('egypt');
+for(let month=0;month<36&&!spectator.achievementState.finalized;month++)tick(spectator);
+assert.equal(spectator.regions.length,120);
+console.log(`egypt spectator: Caesar ${spectator.regions.filter(r=>r.owner==='caesar').length} territories, Senate ${spectator.regions.filter(r=>r.owner==='senate').length}, Rome ${region(spectator,'roma').owner}, outcome ${spectator.achievementState.result||spectator.campaignOutcome?.kind||'ongoing'}`);
