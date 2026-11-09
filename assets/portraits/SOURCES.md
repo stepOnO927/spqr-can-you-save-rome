@@ -49,3 +49,30 @@ These four original portraits were generated on 2026-11-08 for fixed fictional c
 | general | Straton of Thebes / 底比斯的斯特拉顿 | fictional-straton | General with short hair, dark beard, simple cuirass and brown cloak. |
 
 All prompts specified an original fictional 49 BCE head-and-shoulders image, painterly realism, warm side light, subdued dark olive background, and no text, emblem, watermark or decorative frame.
+
+## Mandate of Heaven — 天命：大汉帝国
+
+All eighteen Han and steppe portraits were generated on 2026-11-09 with Canva's AI image generator. Each is an AI-generated artistic reconstruction, not a verified likeness: no reliable portrait of any Western Han emperor or Xiongnu chanyu survives. The prompts asked for an East Asian face, Western Han court dress (black lacquered gauze cap, layered crossed-collar silk robe fastened to the right), a 1:1 head-and-shoulders composition, painterly oil realism, warm side light from the left, a subdued dark olive background, and no dragons, text, watermark or frame. Steppe rulers wear fur-trimmed Xiongnu-period dress with braided hair and a belt plaque, and are deliberately not shown in Mongol-era costume. Canva supplied 200 px previews. Each 512 px master is a Lanczos upscale with light sharpening, and the 128 and 64 px versions are downscales. Full-resolution originals are in Canva under the listed media IDs.
+
+| Asset prefix | Person | Status | Canva media |
+| --- | --- | --- | --- |
+| han-liu-bang | 刘邦 Emperor Gaozu | historical | MAHadYSmj6o |
+| han-liu-ying | 刘盈 Emperor Hui | historical | MAHadSaUidg |
+| han-liu-heng | 刘恒 Emperor Wen | historical | MAHadekcyDA |
+| han-liu-qi | 刘启 Emperor Jing | historical | MAHadcqvtl4 |
+| han-liu-che | 刘彻 Emperor Wu | historical | MAHadYPPZP8 |
+| han-liu-fuling | 刘弗陵 Emperor Zhao | historical | MAHadc915yk |
+| han-liu-xun | 刘询 Emperor Xuan | historical | MAHadQ6dEIk |
+| han-liu-shi | 刘奭 Emperor Yuan (reigns from 49 BCE) | historical | MAHadYqAYWY |
+| han-liu-ao | 刘骜 Emperor Cheng | historical | MAHadXAcF6o |
+| han-liu-xin | 刘欣 Emperor Ai | historical | MAHadern3mM |
+| han-liu-kan | 刘衎 Emperor Ping | historical | MAHadSwgNMc |
+| han-huhanye | 呼韩邪单于 Huhanye Chanyu | historical | MAHadYOp4dE |
+| han-zhizhi | 郅支单于 Zhizhi Chanyu | historical | MAHadRENQuo |
+| han-fictional-liu-ji | 刘寂, a fictional Liu prince of a cadet line, about 30 | fictional, alternate history | MAHadZ2kXI8 |
+| han-fictional-liu-shang | 刘殇, a fictional young Liu prince, about 17 | fictional, alternate history | MAHadc8Sg80 |
+| han-fictional-pang-chong | 庞崇, a fictional non-Liu grand minister (usurper path) | fictional, alternate history | MAHadTDB2-w |
+| han-fictional-zhao-lie | 赵烈, a fictional Hexi frontier commander | fictional, alternate history | MAHadd06C6k |
+| han-fictional-su-heng | 苏蘅, a fictional consort from a maternal-relative clan | fictional, alternate history | MAHadYE47bQ |
+
+Fictional characters are original to this DLC and do not depict any documented person. In game, none of them can hold `orthodox_han_emperor` unless the engine's Liu-lineage validator accepts them. 庞崇 is not a Liu and can therefore only reach de facto power or found a new dynasty.
