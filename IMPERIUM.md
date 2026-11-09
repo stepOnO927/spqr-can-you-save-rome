@@ -99,4 +99,4 @@ National Focus Trees, the Legion Designer and the Operational Battle Planner, bu
 - Commander specialties are simulated defaults for named characters and hashed values for others.
 - Every module changed by IMPERIUM (`engine.js`, `character-system.js`, `legacy.js`, `app.js`) is now loaded everywhere as `?v=imperium-1`, so browsers fetch the new versions.
 - GitHub Actions (PR #164, run 42662656117) passed: `npm test`, the existing browser smokes, `tools/imperium-smoke.mjs` and both simulation scripts.
-- The ally-warning branch (`feature/scouted-ally-warnings`) is separate. A local merge with this branch has one conflict in the `tick()` order plus version-string conflicts; once resolved, all 627 tests and both simulations pass.
+- This branch also includes the scout-based ally-warning patch (`feature/scouted-ally-warnings`, see `MULTIPOLAR_STATUS.md`). Warnings run after formation scouting in `tick()`. All 627 tests and both simulations pass with both changes together.
