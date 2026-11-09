@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave} from '../engine.js?v=imperium-1';
+import fs from 'node:fs';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=imperium-1';
+import {advanceStrategicWarnings,warningCandidates,warningLedger} from '../strategic-warnings.js?v=multipolar-2';
 import {assessOpportunities} from '../multipolar.js?v=multipolar-2';
 import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
@@ -120,4 +122,100 @@ test('AI courts can negotiate real aid based on a reported third-party war',()=>
  const aid=s.agreements.find(x=>x.type==='military_support'&&x.parties.includes('parthia')&&x.parties.includes('armenia'));
  assert.ok(aid);assert.equal(aid.terms.provider,'parthia');assert.equal(aid.terms.recipient,'armenia');
  const before=s.factions.armenia.food;s.month=6;advanceAgreements(s);assert.equal(s.factions.armenia.food,before+2);
+});
+
+// Scout-based allied warnings. Setup: the Senate is at war with Caesar and is
+// friendly with Numidia; the Senate's own scouts report a Caesarian force in
+// Africa, next to Numidia. Letter delivery reuses the existing courier times.
+function warningSetup(seed=4242){
+ const s=newGame('caesar');s.seed=seed;s.relations['numidia:senate']=40;assert.ok(proposeAgreement(s,'senate','numidia','defensive').ok);
+ s.knowledge.senate.caesar.sightings={xiii:{id:'xiii',name:['Legio XIII','第十三军团'],owner:'caesar',region:'africa',year:s.year,month:s.month,commanderId:null,strengthBand:[5000,10000]}};
+ return s;
+}
+const warnOptions=(extra={})=>({letterMonths:{numidia:3,senate:2,caesar:2,egypt:4},issueOrder:issueMilitaryOrder,log:()=>{},...extra});
+function sendFirst(seedFrom=1){for(let seed=seedFrom;seed<seedFrom+400;seed++){const s=warningSetup(seed);advanceStrategicWarnings(s,warnOptions());if(s.warningLetters.length)return s}throw Error('no warning sent')}
+
+test('a warning is composed only from the sender’s own fresh sighting, never from hidden foreign state',()=>{
+ const s=warningSetup(),copy=JSON.parse(JSON.stringify(s));
+ for(const a of copy.armies.filter(x=>x.owner==='caesar')){a.men=999999;a.region='numidia'}
+ copy.factions.caesar.treasury=-500;copy.world.multipolarPlans={caesar:{secret:'HIDDEN_AI_GOAL'}};copy.world.strategicPlans={caesar:{goal:'HIDDEN'}};
+ assert.deepEqual(warningCandidates(copy,'senate'),warningCandidates(s,'senate'));
+ const c=warningCandidates(s,'senate')[0];assert.equal(c.partner,'numidia');assert.equal(c.threat,'caesar');assert.equal(c.near,'numidia');assert.equal(c.sighting.region,'africa');assert.deepEqual(c.sighting.strengthBand,[5000,10000]);
+ assert.doesNotMatch(JSON.stringify(warningCandidates(copy,'senate')),/HIDDEN|999999/);
+});
+
+test('no scout report means no warning and no inferred empty garrison',()=>{
+ const s=warningSetup();s.knowledge.senate.caesar.sightings={};const before=JSON.parse(JSON.stringify(s.knowledge.numidia));
+ for(let i=0;i<6;i++){advanceStrategicWarnings(s,warnOptions());s.month++}
+ assert.equal(s.warningLetters.length,0);assert.deepEqual(s.knowledge.numidia,before);
+ const stale=warningSetup();stale.knowledge.senate.caesar.sightings.xiii.month-=3;assert.equal(warningCandidates(stale,'senate').length,0);
+});
+
+test('warning letters travel with the existing one-way courier delay and may be delayed, lost or expire',()=>{
+ const s=sendFirst(),l=s.warningLetters[0];assert.equal(l.duration,2);assert.equal(l.status,'sent');assert.equal(l.from,'senate');assert.equal(l.to,'numidia');
+ const statuses=new Set();
+ for(let seed=1;seed<=300;seed++){const t=warningSetup(seed);advanceStrategicWarnings(t,warnOptions());if(!t.warningLetters.length)continue;for(let m=0;m<4;m++){t.month++;t.seed=(t.seed+seed*977)>>>0;advanceStrategicWarnings(t,warnOptions())}for(const h of t.warningLetters[0].history)statuses.add(h.status)}
+ for(const x of ['sent','delayed','lost','responded','unresponded'])assert.ok(statuses.has(x),`missing ${x}`);
+ const war=sendFirst(7);war.wars.push(['numidia','senate']);war.month++;advanceStrategicWarnings(war,warnOptions());assert.equal(war.warningLetters[0].status,'expired');
+ const old=sendFirst(9);old.warningLetters[0].sighting.year-=1;old.warningLetters[0].remaining=1;old.warningLetters[0].wasDelayed=true;old.month++;
+ for(let i=0;i<3&&['sent','delayed'].includes(old.warningLetters[0].status);i++)advanceStrategicWarnings(old,warnOptions());
+ if(old.warningLetters[0].status!=='lost')assert.equal(old.warningLetters[0].history.at(-1).reason,'stale');
+});
+
+test('the recipient decides independently; a warning never declares war or forces an agreement',()=>{
+ const decisions=new Set();
+ for(let seed=1;seed<=300;seed++){
+  const s=warningSetup(seed);advanceStrategicWarnings(s,warnOptions());if(!s.warningLetters.length)continue;
+  const wars=JSON.stringify(s.wars),agreements=s.agreements.length,alliances=JSON.stringify(s.alliances);
+  for(let m=0;m<4;m++){s.month++;advanceStrategicWarnings(s,warnOptions())}
+  assert.equal(JSON.stringify(s.wars),wars);assert.equal(s.agreements.length,agreements);assert.equal(JSON.stringify(s.alliances),alliances);
+  if(s.warningLetters[0].decision)decisions.add(s.warningLetters[0].decision.kind);
+ }
+ assert.ok(decisions.has('heeded'));assert.ok(decisions.has('noted'));
+ const s=sendFirst();s.relations['numidia:senate']=-60;s.warningLetters[0].remaining=1;s.warningLetters[0].wasDelayed=true;s.month++;
+ for(let seed=0;seed<50&&!s.warningLetters[0].decision;seed++){const t=JSON.parse(JSON.stringify(s));t.seed=seed;advanceStrategicWarnings(t,warnOptions());if(t.warningLetters[0].decision){assert.equal(t.warningLetters[0].decision.kind,'dismissed');break}}
+});
+
+test('a delivered warning is second-hand dated evidence and never replaces a newer first-hand sighting',()=>{
+ for(let seed=1;seed<=200;seed++){const s=warningSetup(seed);advanceStrategicWarnings(s,warnOptions());if(!s.warningLetters.length)continue;
+  for(let m=0;m<4&&['sent','delayed'].includes(s.warningLetters[0].status);m++){s.month++;advanceStrategicWarnings(s,warnOptions())}
+  if(!['responded','unresponded'].includes(s.warningLetters[0].status))continue;
+  const x=s.knowledge.numidia.caesar.sightings.xiii;assert.equal(x.source,'ally_warning');assert.equal(x.via,'senate');assert.deepEqual(x.strengthBand,[5000,10000]);
+  const fresh=warningSetup(seed);advanceStrategicWarnings(fresh,warnOptions());fresh.knowledge.numidia.caesar.sightings={xiii:{id:'xiii',owner:'caesar',region:'numidia',year:fresh.year,month:fresh.month+3,strengthBand:[3000,6000]}};
+  for(let m=0;m<4;m++){fresh.month++;advanceStrategicWarnings(fresh,warnOptions())}
+  assert.equal(fresh.knowledge.numidia.caesar.sightings.xiii.region,'numidia');return;
+ }
+ assert.fail('no delivered warning in sample');
+});
+
+test('a human recipient is informed bilingually and keeps the decision; automated Rome decides for itself',()=>{
+ function run(autoplayPlayer){
+  for(let seed=1;seed<=300;seed++){const s=newGame('caesar');s.seed=seed;s.relations['caesar:mauretania']=40;s.wars.push(['mauretania','senate']);
+   s.knowledge.mauretania.senate.sightings={x:{id:'x',owner:'senate',region:'italiaN',year:s.year,month:s.month,strengthBand:[6000,12000]}};
+   s.regions.find(r=>r.id==='narbo').owner='caesar';const logs=[];
+   advanceStrategicWarnings(s,{letterMonths:{caesar:2},issueOrder:issueMilitaryOrder,log:(_,en,zh)=>logs.push([en,zh]),autoplayPlayer});
+   const l=s.warningLetters.find(x=>x.to==='caesar');if(!l)continue;
+   for(let m=0;m<3&&['sent','delayed'].includes(l.status);m++){s.month++;advanceStrategicWarnings(s,{letterMonths:{caesar:2},issueOrder:issueMilitaryOrder,log:(_,en,zh)=>logs.push([en,zh]),autoplayPlayer})}
+   if(['responded','unresponded'].includes(l.status))return {l,logs};
+  }
+  assert.fail('no delivered warning to Rome');
+ }
+ const human=run(false);assert.equal(human.l.decision.kind,'player_discretion');assert.equal(human.l.status,'unresponded');
+ const [en,zh]=human.logs.at(-1);assert.match(en,/forwarded report; it says nothing about other frontiers/);assert.match(zh,/预警/);assert.match(zh,/不说明其他边境/);
+ const auto=run(true);assert.notEqual(auto.l.decision.kind,'player_discretion');
+});
+
+test('the sighted faction cannot see warnings about it, and the sender does not learn the recipient’s decision',()=>{
+ const s=sendFirst();assert.equal(warningLedger(s,'caesar').length,0);
+ assert.equal(warningLedger(s,'senate').length,1);assert.ok(!('decision' in warningLedger(s,'senate')[0]));assert.ok('decision' in warningLedger(s,'numidia')[0]);
+ assert.doesNotMatch(renderChessboard(s,'zh','f:senate','power'),/warning:/);
+});
+
+test('old saves without a warning queue keep working and do not duplicate existing multipolar decisions',()=>{
+ const s=newGame('caesar');s.difficulty='expert';delete s.warningLetters;const save=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(save.warningLetters,undefined);
+ for(let i=0;i<3;i++)tick(save,{autoplayPlayer:true});assert.ok(Array.isArray(save.warningLetters));
+ // The warning layer reuses courier, report and memory helpers; it does not call
+ // the existing war, breach, aid or claimant-support decision paths.
+ const source=fs.readFileSync(new URL('../strategic-warnings.js',import.meta.url),'utf8');
+ assert.doesNotMatch(source,/diplomacy\(|proposeAgreement|terminateAgreement|supportClaimant|wars\.push|alliances\.push|opportunistic_war|treaty_breach/);
 });
