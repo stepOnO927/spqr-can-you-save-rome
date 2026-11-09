@@ -1,10 +1,17 @@
 # MANDATE OF HEAVEN — 天命：大汉帝国
 
-The first civilization expansion for **SPQR — Can You Save Rome?** A playable Western Han campaign with its own court, succession law, army organizer, frontier diplomacy, Silk Road and focus trees. It runs beside the Roman campaign and does not change it.
+The first civilization expansion for **SPQR — Can You Save Rome?** It adds the Chinese and Central Asian world as **NPCs inside the Roman campaign**. **You still play Rome**; no Chinese power is playable.
 
-- **Start:** main menu → *CIVILIZATION EXPANSIONS — 文明扩展* → *MANDATE OF HEAVEN*, or open `/han/` directly (`npm start`, then <http://localhost:5173/han/>).
-- **Saves:** `spqr-han-save-1…3`. Roman saves (`spqr-save-*`) are never read or written by the DLC.
-- **Code:** `han/` (data, people, dynasty, court, military, frontier, silk-road, focus, engine, map, ui). Tests: `test/han-*.test.js`.
+- **Enable it:** in the Roman campaign menu, *CIVILIZATION EXPANSIONS — 文明扩展* → tick *MANDATE OF HEAVEN* (ticked by default). Campaigns started without it, and all older saves, behave exactly as before.
+- **What runs:** a complete Han world (`han/`) advances every Roman month on the same calendar. It covers the Liu court and succession, Huhanye and Zhizhi, the oasis kingdoms under the Protectorate, the two Wusun kunmi, Kangju, Dayuan, the Qiang and the Silk Road. Every power is an NPC making its own decisions.
+- **What Rome sees:** nothing live. The **東 / The East** tab shows a map coloured from the latest merchant account that has reached the Mediterranean, plus the dispatches carried west by Kangju and Parthian merchants.
+  - Rome begins with an old account (51 BCE).
+  - Fresh news needs about 26 months to arrive once Han goods reach Parthia, and about 40 months as steppe hearsay before that.
+  - Silk delivered through Parthia brings customs to whoever holds the Roman eastern ports.
+  - Once news flows and Parthia lets envoys pass, Rome may send an embassy to the Seres (alternate history). It takes years to arrive and years more for the report to come back.
+  - The *Envoys to the Seres* distinction is revealed only at campaign finalization.
+- **Code:** `han/world.js` (the bridge to the Roman tick and saves), `han/east-ui.js` (the Roman-side view). The NPC simulation is in `han/`: data, people, dynasty, court, military, frontier, silk-road, focus, engine, map. Tests: `test/han-*.test.js`.
+- **Calendar:** the Han world opens in January 49 BCE with Emperor Xuan (Liu Xun) reigning and Liu Shi as crown prince. Xuan's recorded death on 10 January 48 BCE and his deathbed appointment of Shi Gao, Xiao Wangzhi and Zhou Kan happen on schedule. Liu Shi's accession and everything after are simulated.
 
 ## The absolute rule
 
@@ -23,7 +30,7 @@ The game tracks six statuses: orthodox emperor, disputed Liu claimant, regent, d
 
 | System | What it does in play |
 | --- | --- |
-| **49 BCE bookmark** | Liu Xun (Emperor Xuan) died on 10 January 48 BCE, late in the Huanglong era (黄龙元年, conventionally "49 BCE"). Liu Shi took the throne on 29 January 48 BCE. The campaign opens in February 48 BCE. Two alternate bookmarks are included: *The Grand Marshal's Shadow*, with the fictional Pang Chong, and *The Huaiyang Question*, a disputed accession between Liu Shi and Liu Qin. |
+| **Calendar** | Shares the Roman campaign's January 49 BCE start (see above). The engine also contains two alternate opening states, used by the tests: the fictional Pang Chong dominating the court, and a disputed accession between Liu Shi and Liu Qin. |
 | **Map** | 44 territories drawn as areas: a Voronoi partition of several anchors per territory, clipped to the Natural Earth coastline. Every territory belongs to a Han inspection circuit (十三州刺史部, plus 西域都护府 and 外藩) and to one of 13 military theatres (战区). Borders are drawn by level: territory, circuit, theatre, state. Four map modes: 政区 / 州部 / 战区 / 地形. The terrain layer covers the plateau, 26 ranges, deserts, steppe and marsh, plus 10 lakes, 24 rivers and the Han frontier line. 64 routes typed as road, river, pass, desert, steppe or oasis road connect the territories. Five camera presets; text and lines keep their size at any zoom. Borders are schematic, not surveyed. |
 | **Imperial Court 大汉朝廷** | 10 offices with period titles and short glosses: 丞相, 御史大夫, 大司马车骑将军, 前将军光禄勋, 中书令, 大司农, 宗正 (Liu clan only), 西域都护, a Hexi command and 京兆尹. Five factions: 外戚, 儒臣, 中书宦官, 边将, 地方豪强. The emperor's authority is tracked separately from who controls the court. Edicts take months and need faction support; they can stall. |
 | **Hidden minds and audits** | Officials have hidden corruption and ambition. Competence becomes visible after a year in office; corruption only through an audit's evidence. A powerful official under audit can obstruct it, and an unfounded accusation makes an enemy. |
@@ -41,9 +48,7 @@ The game tracks six statuses: orthodox emperor, disputed Liu claimant, regent, d
 | **Fog of war** | Each faction has its own intelligence picture, built from its territory, armies, scouts and the Protectorate. AI decisions read only that picture. |
 | **Silk Road 丝绸之路** | Caravans travel hop by hop along the cheapest open path. Each leg needs access, water and security; owners levy tolls and bandits threaten unguarded roads. Beyond Kangju, Parthian (安息) intermediaries carry goods off-map. Rumours of 犁靬 Lijian, the far west, need years to come back. A Han embassy to the far west requires a rumour already heard, 36 months of open road, Kangju's goodwill and money. Han and Rome have no contact at the start. |
 | **National focus** | Han tree with branches A–F (36 focuses), plus trees for Huhanye, Zhizhi, both Wusun kunmi, the oases, Dayuan and Kangju. Effects act through real systems: an edict that still needs support, a negotiation the other side can refuse, standing, regional works. The AI uses the same engine. |
-| **Endings** | 盛汉, 朝廷分裂, 汉室再兴, 篡位新朝 (labelled not orthodox), 西域雄图 and 汉祚绵延, all decided by game-state conditions. |
-| **Achievements** | Eight Han achievements, computed only at official finalization. Each Laurel Coin is paid once per achievement, ever. |
-| **Bilingual interface** | Simplified Chinese and English throughout, with Chinese names and titles preserved. |
+| **The East tab** | Map modes 政区 / 州部 / 战区 / 地形, five cameras, reported holders per territory, the merchant dispatches, and the embassy. Simplified Chinese and English. |
 
 ## Historical sources
 
@@ -71,12 +76,14 @@ The full repository suite (667 tests) passes.
 
 ## Save compatibility
 
-- Roman saves and scenarios are unchanged; the Roman engine does not import any DLC module.
-- The only changes outside `han/` are:
-  - `app.js`: the menu entry;
-  - `index.html`: the cache version;
-  - `server.mjs`: the `/han/` route and image MIME types.
-- Han saves carry `dlc:'mandate-of-heaven'` and `version:'han-1'`. Loading re-derives historical birth records from the static record, then re-validates the throne.
+- Roman campaigns and saves without the expansion are unchanged; with no Han world attached, the hook in the Roman tick does nothing.
+- With the expansion, the Han world is saved inside the Roman save (`world.hanWorld`). On load the Roman `upgradeSave` re-validates it: historical birth records are re-derived from the static record and the throne invariants are re-checked.
+- Changes outside `han/`:
+  - `engine.js`: monthly hook and save upgrade;
+  - `app.js`: menu checkbox, the 東 tab, a guard for the map's wheel handler;
+  - `legacy.js`: the finalization-only distinction;
+  - `index.html`: map stylesheet and cache version;
+  - `server.mjs`: image MIME types.
 
 ## Performance
 
@@ -86,8 +93,8 @@ The full repository suite (667 tests) passes.
 
 ## Not yet done
 
-- **One world map:** the Mediterranean and Han maps are separate. The far west appears only as off-map Silk Road nodes; there is no single zoomable world map or shared camera between theatres.
+- **One world map:** the East is a separate tab rather than one continuous map with the Mediterranean. The Iranian plateau between them is not modelled, so Roman and Han armies cannot meet; only goods, news and envoys travel.
 - **Map detail:** the map is a vertical slice of 44 territories. It has no county-level detail, no Liaodong, Korea or far south, and no Iranian plateau.
 - **Simulation:** births are simulated only for the reigning emperor. Officials are generated for vacant offices rather than through full family dynasties. Weather is seasonal only (winter).
 - **Wider play:** Western Regions rulers are shown by title only. The non-Han trees are smaller than the Han tree, and steppe AI is goal-driven but simpler than the court AI.
-- **Later bookmarks:** 36 BCE, 9 CE (Xin) and 25 CE are prepared for (the Wang Mang and Liu Xiu facts are recorded) but not built, as the brief required.
+- **Interaction:** apart from silk customs and the embassy, eastern events do not yet change Roman politics.

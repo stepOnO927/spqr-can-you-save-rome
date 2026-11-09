@@ -1,93 +1,90 @@
-// MANDATE OF HEAVEN — technical acceptance tests 31–38.
+// MANDATE OF HEAVEN — technical and integration tests (31–38). The Han world
+// runs as NPCs inside the Roman campaign; the player is always Roman.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick as romanTick,upgradeSave} from '../engine.js?v=imperium-1';
+import {newGame,tick as romanTick,upgradeSave,PLAYABLE as ROMAN_PLAYABLE} from '../engine.js?v=imperium-1';
 import {REGIONS as ROMAN_REGIONS} from '../data.js?v=phase-x-1';
-import {newHanGame,tick,serialize,loadHanSave,SAVE_KEY,finalizeHan,canFinalize,visibleProgress,DLC_ID} from '../han/engine.js?v=han-1';
+import {finalizeCampaign} from '../legacy.js?v=imperium-1';
 import {REGIONS} from '../han/data.js?v=han-1';
 import {drawMap} from '../han/map.js?v=han-1';
 import {validateTrees} from '../han/focus.js?v=han-1';
 import {EDICTS} from '../han/court.js?v=han-1';
-import {__test} from '../han/ui.js?v=han-1';
+import {isLiuClan} from '../han/dynasty.js?v=han-1';
+import {attachHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=han-1';
+import {eastPanel,eastMap} from '../han/east-ui.js?v=han-1';
 
-test('31. existing Roman campaigns still work and contain no Han data',()=>{
- const s=newGame('caesar');for(let i=0;i<6;i++)romanTick(s);
- assert.ok(s.year<=-48);
- const han=new Set(REGIONS.map(r=>r.id));
- assert.ok(!ROMAN_REGIONS.some(r=>han.has(r.id)),'no shared territory ids');
- assert.ok(!s.regions.some(r=>han.has(r.id)));
- const app=fs.readFileSync('app.js','utf8');assert.ok(app.includes("spqr-save-"),'Roman save keys unchanged');
+const roman=(o={})=>{const s=newGame(o.player||'caesar');if(o.dlc!==false)attachHanWorld(s,{seed:7});return s};
+
+test('31. Roman campaigns work with and without the expansion; only Romans are playable',()=>{
+ const plain=newGame('caesar');for(let i=0;i<4;i++)romanTick(plain);assert.equal(hanWorld(plain),null);
+ const s=roman();for(let i=0;i<4;i++)romanTick(s);
+ assert.ok(!ROMAN_PLAYABLE.some(f=>['han','huhanye','zhizhi','wusun','kangju','qiuci'].includes(f)),'no Chinese power is playable');
+ assert.equal(hanWorld(s).state.player,null,'every Han-world power is an NPC');
+ const han=new Set(REGIONS.map(r=>r.id));assert.ok(!ROMAN_REGIONS.some(r=>han.has(r.id)));
+ assert.equal(fs.existsSync('han/index.html'),false,'no separate playable Han campaign');
 });
 
-test('32. existing saves are preserved: Roman saves load as before and are never read as Han saves',()=>{
- const roman=newGame('senate');const raw=JSON.stringify(roman);
- const back=upgradeSave(JSON.parse(raw));assert.equal(back.player,'senate');
- assert.throws(()=>loadHanSave(raw),/Not a Mandate of Heaven save/);
- assert.notEqual(SAVE_KEY(1),'spqr-save-1');assert.match(SAVE_KEY(1),/^spqr-han-save-/);
+test('32. existing saves are preserved; saves with the expansion re-validate the Han throne',()=>{
+ const plain=newGame('senate');const back=upgradeSave(JSON.parse(JSON.stringify(plain)));assert.equal(back.player,'senate');assert.equal(hanWorld(back),null);
+ const s=roman();for(let i=0;i<14;i++)romanTick(s);
+ const raw=JSON.parse(JSON.stringify(s));raw.world.hanWorld.state.throne.orthodox='fictional-pang-chong';
+ const l=upgradeSave(raw);assert.notEqual(hanWorld(l).state.throne.orthodox,'fictional-pang-chong');
+ assert.ok(!hanWorld(l).state.throne.orthodox||isLiuClan(hanWorld(l).state,hanWorld(l).state.throne.orthodox));
 });
 
-test('33. a Chinese campaign saves and loads correctly',()=>{
- const s=newHanGame('han',{seed:9});for(let i=0;i<30;i++)tick(s);
- const l=loadHanSave(serialize(s));
- assert.equal(l.dlc,DLC_ID);assert.equal(l.year,s.year);assert.equal(l.month,s.month);
- assert.deepEqual(l.regions,s.regions);assert.deepEqual(l.armies,s.armies);assert.deepEqual(l.throne,s.throne);assert.deepEqual(l.silk,s.silk);
- for(let i=0;i<6;i++){tick(l);tick(s)}
- assert.equal(l.throne.orthodox,s.throne.orthodox);assert.deepEqual(l.factions.han,s.factions.han,'deterministic after load');
- for(const p of ['huhanye','qiuci','wusun']){const x=newHanGame(p,{seed:2});for(let i=0;i<12;i++)tick(x);assert.equal(loadHanSave(serialize(x)).player,p)}
+test('33. the Han world shares the Roman calendar and its 49 BCE history',()=>{
+ const s=roman();const h=hanWorld(s).state;
+ assert.equal(h.year,-49);assert.equal(h.throne.orthodox,'liu-xun','Emperor Xuan still reigns in January 49 BCE');assert.equal(h.throne.heir,'liu-shi');
+ for(let i=0;i<12;i++)romanTick(s);
+ assert.equal(h.year,s.year);assert.equal(h.month,s.month);
+ assert.equal(h.persons['liu-xun'].alive,false,'Xuan dies in January 48 BCE');assert.equal(h.throne.orthodox,'liu-shi');
+ assert.equal(h.court.offices.dasima,'shi-gao','deathbed regents appointed');
 });
 
-test('34. Chinese and English both work in every panel',()=>{
- const s=newHanGame('han',{seed:3});for(let i=0;i<14;i++)tick(s);__test.state=s;
- for(const [k,v] of Object.entries(__test.T))assert.ok(Array.isArray(v)&&v.length===2&&v.every(x=>x.trim()),k);
- for(const lang of [0,1]){__test.setLang(lang);
-  for(const [name,fn] of Object.entries(__test.panels)){const html=fn();assert.ok(html.length>80,name);assert.doesNotMatch(html,/undefined|NaN|\[object/,`${name} lang ${lang}`);
-   if(lang)assert.match(html,/[一-鿿]/,name)}}
- __test.setLang(0);
- // non-Han players see a working, smaller set of panels
- const q=newHanGame('qiuci',{seed:3});__test.state=q;for(const n of ['panelFocus','panelFrontier','panelSilk','panelArmy','panelProvinces','panelRecords','panelEmperor'])assert.doesNotMatch(__test.panels[n](),/undefined|NaN/,n);
+test('34. Rome sees the East only through delayed merchant reports, in both languages',()=>{
+ const s=roman();const v=romanView(s);
+ assert.equal(v.snapshot.year,-51,'Rome starts with an old account');assert.equal(v.dispatches.length,0);
+ for(let i=0;i<20;i++)romanTick(s);
+ assert.equal(romanView(s).dispatches.length,0,'nothing fresh arrives within 20 months');
+ assert.equal(romanView(s).snapshot.year,-51,'the map still shows the old account');
+ let n=20;while(!romanView(s).dispatches.length&&n<80){romanTick(s);n++}
+ assert.ok(n>=RELAY_MONTHS.trade,'first report after '+n+' months');
+ const d=romanView(s).dispatches.at(-1);assert.ok((s.year*12+s.month)-(d.origin.year*12+d.origin.month)>=RELAY_MONTHS.trade);
+ assert.ok(s.log.some(e=>e.eastern),'reports enter the Roman dispatches');
+ for(const lang of [0,1]){const html=eastPanel(s,{lang,selected:'changan'});assert.doesNotMatch(html,/undefined|NaN|\[object/);if(lang)assert.match(html,/[一-鿿]/)}
+ assert.match(eastPanel(newGame('caesar'),{lang:0}),/not enabled/);
 });
 
-test('35. the strategic map stays responsive',()=>{
- const s=newHanGame('han',{seed:3});drawMap(s,{});
- const t0=performance.now();for(let i=0;i<20;i++)drawMap(s,{lang:i%2,camera:['all','core','hexi','west','steppe'][i%5]});const per=(performance.now()-t0)/20;
- assert.ok(per<40,`map render ${per.toFixed(1)} ms`);
- const svg=drawMap(s,{});assert.equal((svg.match(/class="territory[^"]*" data-region=/g)||[]).length,REGIONS.length,'every drawn territory is a simulation region');
- for(const m of ['political','circuits','theaters','terrain'])assert.ok(drawMap(s,{mode:m}).includes('b-'),m+' draws borders');
- assert.ok(svg.includes('b-state')&&svg.includes('b-theater-soft'),'state and theatre borders are drawn');
+test('35. the eastern map stays responsive and draws only reported control',()=>{
+ const s=roman();const t0=performance.now();for(let i=0;i<10;i++)eastMap(s,{lang:i%2,camera:['all','core','hexi','west','steppe'][i%5],mode:['political','circuits','theaters','terrain'][i%4]});
+ assert.ok((performance.now()-t0)/10<60);
+ const svg=eastMap(s,{});assert.equal((svg.match(/class="territory[^"]*" data-east-region=/g)||[]).length,REGIONS.length);
+ assert.ok(!/class="army/.test(svg),'no live army positions reach Rome');
+ for(const m of ['political','circuits','theaters','terrain'])assert.ok(drawMap({regions:REGIONS,armies:[],silk:{}},{mode:m}).includes('b-'),m);
 });
 
-test('36. AI planning does not freeze the browser',()=>{
- for(const sc of ['historical','usurper','disputed']){
-  const s=newHanGame('kangju',{scenario:sc,seed:13});let worst=0;const t0=performance.now();
-  for(let i=0;i<120;i++){const a=performance.now();tick(s);worst=Math.max(worst,performance.now()-a)}
-  const avg=(performance.now()-t0)/120;assert.ok(avg<15,`${sc} avg ${avg.toFixed(2)} ms`);assert.ok(worst<120,`${sc} worst ${worst.toFixed(1)} ms`);
- }
+test('36. the NPC East does not freeze the browser',()=>{
+ const a=newGame('caesar'),b=roman();
+ let t0=performance.now();for(let i=0;i<24;i++)romanTick(a);const base=(performance.now()-t0)/24;
+ t0=performance.now();for(let i=0;i<24;i++)romanTick(b);const withDlc=(performance.now()-t0)/24;
+ assert.ok(withDlc-base<15,`expansion adds ${(withDlc-base).toFixed(2)} ms per month`);
 });
 
-test('37. no empty placeholder mechanics are presented as complete',()=>{
+test('37. no placeholder mechanics: every eastern button and edict works',()=>{
  assert.deepEqual(validateTrees(),[]);
- const ui=fs.readFileSync('han/ui.js','utf8');
- const acts=[...new Set([...ui.matchAll(/data-act="([a-z-]+)"/g)].map(m=>m[1]))];
- for(const a of acts)assert.ok(ui.includes(`case '${a}'`),`button ${a} has a handler`);
- const court=fs.readFileSync('han/court.js','utf8');
- for(const [k,e] of Object.entries(EDICTS))assert.ok(court.includes(`case '${e.effect}'`),`edict ${k} has an effect`);
- // the eleven required panels exist and render
- for(const p of ['panelEmperor','panelGenealogy','panelCourt','panelOfficials','panelSuccession','panelFocus','panelFinance','panelFrontier','panelSilk','panelArmy','panelProvinces'])assert.equal(typeof __test.panels[p],'function',p);
+ const court=fs.readFileSync('han/court.js','utf8');for(const [k,e] of Object.entries(EDICTS))assert.ok(court.includes(`case '${e.effect}'`),k);
+ const app=fs.readFileSync('app.js','utf8');for(const sel of ['#east-embassy','data-east-region','data-east-mode','data-east-camera'])assert.ok(app.includes(sel),sel);
+ const s=roman();assert.equal(sendEmbassyToSeres(s).ok,false,'no embassy before any news has arrived');
 });
 
-test('38. hidden achievements stay concealed during play and are paid once',()=>{
- const s=newHanGame('han',{seed:17});__test.state=s;__test.setLang(0);
- for(let i=0;i<121;i++)tick(s);
- assert.equal(visibleProgress(s).achievements,null);
- assert.doesNotMatch(__test.panels.panelRecords(),/The Liu Line Unbroken|Laurel Coins: \+/);
- assert.ok(canFinalize(s));
- const store=new Map();const ls={getItem:k=>store.has(k)?store.get(k):null,setItem:(k,v)=>store.set(k,String(v))};
- const r=finalizeHan(s,ls);assert.ok(r.ok);assert.ok(Array.isArray(r.archive.achievements));
- assert.equal(finalizeHan(s,ls).ok,false,'cannot finalize twice');
- const coins=Number(ls.getItem('spqr-laurel-coins'));
- const t=newHanGame('han',{seed:17});for(let i=0;i<121;i++)tick(t);finalizeHan(t,ls);
- assert.equal(Number(ls.getItem('spqr-laurel-coins')),coins,'the same achievements never pay again');
- // continuing play after finalization does not change the archive
- const before=JSON.stringify(s.finalized);tick(s);assert.equal(JSON.stringify(s.finalized),before);
+test('38. the expansion achievement stays hidden until finalization',()=>{
+ const s=roman();
+ let n=0;while(!embassyConditions(s).reports&&n<80){romanTick(s);n++}
+ s.factions[s.player].treasury=500;s.regions.find(r=>r.id==='parthia')||assert.fail('parthia');
+ const r=sendEmbassyToSeres(s);assert.ok(r.ok,JSON.stringify(embassyConditions(s)));
+ let m=0;while(hanWorld(s).embassy.status!=='returned'&&m<200){romanTick(s);m++}
+ assert.equal(hanWorld(s).embassy.status,'returned');assert.ok(m>=30+RELAY_MONTHS.trade,'there and back takes years: '+m);
+ assert.ok(!JSON.stringify(s.log).includes('Envoys to the Seres'),'not announced as an achievement during play');
+ s.victory=true;const f=finalizeCampaign(s);assert.ok(f.ok);assert.ok(f.archive.achievements.some(a=>a.id==='seric_embassy'));
 });

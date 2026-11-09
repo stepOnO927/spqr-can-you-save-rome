@@ -51,6 +51,8 @@ export function finalizeCampaign(s){
  if((focus?.completed?.length||0)>=6)archive.achievements.push({id:'national_will',name:['National Will','国家意志']});
  if(s.armies.some(a=>a.owner===s.player&&a.formation&&templates[a.formation.templateId]&&!templates[a.formation.templateId].preset))archive.achievements.push({id:'legion_reformer',name:['Reformer of the Legions','军团改革者']});
  if((s.world.battlePlans||[]).some(p=>p.owner===s.player&&p.status==='completed'&&p.roles.length>=3))archive.achievements.push({id:'grand_operation',name:['A Grand Operation','宏大战役']});
+ // Mandate of Heaven: revealed only here, never during play.
+ if(s.world?.hanWorld?.embassy?.status==='returned'&&s.world.hanWorld.embassy.by===s.player)archive.achievements.push({id:'seric_embassy',name:['Envoys to the Seres','远使赛里斯']});
  archive.achievements=archive.achievements.filter((a,i,list)=>list.findIndex(x=>x.id===a.id)===i);
  d.finalized=archive;return {ok:true,archive};
 }

@@ -86,7 +86,7 @@ function advanceRelays(s){
  for(const r of s.silk.relays.filter(x=>!x.done&&x.arrive<=now)){
   r.done=true;
   if(r.kind==='goods'&&r.node==='anxi'){s.silk.contact.anxi.level='trade';s.silk.relays.push({kind:'goods',node:'lijian',arrive:now+FAR_WEST[1].months})}
-  else if(r.kind==='goods'&&r.node==='lijian'){if(!s.silk.farWestKnows.seres){s.silk.farWestKnows={seres:true,at:now}}
+  else if(r.kind==='goods'&&r.node==='lijian'){s.silk.farWestDeliveries=(s.silk.farWestDeliveries||0)+1;if(!s.silk.farWestKnows.seres){s.silk.farWestKnows={seres:true,at:now}}
    // a rumour of the far west starts back along the same chain
    s.silk.relays.push({kind:'rumour',node:'han',arrive:now+FAR_WEST[1].months+FAR_WEST[0].months})}
   else if(r.kind==='rumour'&&r.node==='han'){if(s.silk.contact.lijian.level==='unknown'){s.silk.contact.lijian={level:'rumour',heardAt:now};log(s,['Merchants from Kangju repeat tales of Lijian, a land far beyond Anxi.','康居商人转述安息以西有犁靬之国的传闻。'],{kind:'silk'})}}
