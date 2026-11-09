@@ -52,7 +52,9 @@ test('35. the strategic map stays responsive',()=>{
  const s=newHanGame('han',{seed:3});drawMap(s,{});
  const t0=performance.now();for(let i=0;i<20;i++)drawMap(s,{lang:i%2,camera:['all','core','hexi','west','steppe'][i%5]});const per=(performance.now()-t0)/20;
  assert.ok(per<40,`map render ${per.toFixed(1)} ms`);
- const svg=drawMap(s,{});assert.equal((svg.match(/data-region=/g)||[]).length,REGIONS.length,'every drawn territory is a simulation region');
+ const svg=drawMap(s,{});assert.equal((svg.match(/class="territory[^"]*" data-region=/g)||[]).length,REGIONS.length,'every drawn territory is a simulation region');
+ for(const m of ['political','circuits','theaters','terrain'])assert.ok(drawMap(s,{mode:m}).includes('b-'),m+' draws borders');
+ assert.ok(svg.includes('b-state')&&svg.includes('b-theater-soft'),'state and theatre borders are drawn');
 });
 
 test('36. AI planning does not freeze the browser',()=>{

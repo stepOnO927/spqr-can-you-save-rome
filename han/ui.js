@@ -8,10 +8,12 @@ import {relation,atWar,propose,answerProposal,answerRequest,protectorateAction,P
 import {tradePath,intermediaries,embassyConditions,sendTradeEmbassy,protectRoute} from './silk-road.js?v=han-1';
 import {treeFor,focusStatus,focusState,startFocus,BRANCHES,focusById} from './focus.js?v=han-1';
 import {COMPONENTS,PRESETS,templatesFor,templateStats,recruitQuote,recruit,saveTemplate,cultureOf,routeBetween,neighbours,validateMix} from './military.js?v=han-1';
-import {drawMap,CAMERAS} from './map.js?v=han-1';
+import {drawMap,CAMERAS,MODES} from './map.js?v=han-1';
+import {ZHOU,THEATERS} from './data.js?v=han-1';
 import {dateLabel} from './util.js?v=han-1';
 
 let lang=(()=>{try{return localStorage.getItem('spqr-lang')==='zh'?1:0}catch{return 0}})();
+let mapMode='political';
 let s=null,tab='emperor',selRegion='changan',selArmy=null,ordering=false,playing=null,toast='',camera='all',designer=null,setup={scenario:'historical',faction:'han',difficulty:'standard'},slot='1';
 const L=v=>Array.isArray(v)?v[lang]:v;
 const esc=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -147,7 +149,12 @@ function panelArmy(){
 }
 function panelProvinces(){
  const mine=s.regions.filter(r=>r.owner===s.player);
- return `<h2>${t('provinces')}</h2><table class="provinces"><tr><th></th><th>${lang?'忠诚':'Loyalty'}</th><th>${t('grain')}</th><th>${lang?'赋':'Tax'}</th><th>${lang?'常平仓':'Granary'}</th><th>${lang?'水利':'Irrigation'}</th><th>${lang?'工事':'Fort'}</th><th></th></tr>${mine.map(r=>`<tr><td><button class="link" data-region-select="${r.id}">${esc(L(r.name))}</button> <small>${esc(L({commandery:['commandery','郡'],kingdom:['kingdom','王国'],capital:['capital','京师'],protectorate:['protectorate','都护'],oasis:['oasis state','城郭'],steppe:['pastures','牧地']}[r.kind]))}</small></td><td>${Math.round(r.loyalty)}</td><td>${r.grain}</td><td>${r.tax}</td><td>${r.granary||0}</td><td>${r.irrigation||0}</td><td>${r.fort}</td><td>${r.disaster?`<b class="warn">${esc(L(DISASTERS[r.disaster.type].name))}</b>`:''}${r.unrest?` <b class="warn">${lang?'民变':'unrest'}</b>`:''}</td></tr>`).join('')}</table>`;
+ const byTheater={};for(const r of mine)(byTheater[r.theater]||=[]).push(r);
+ const threat=list=>{let men=0;const ids=new Set(list.map(r=>r.id));for(const r of list)for(const n of neighbours(r.id)){if(ids.has(n))continue;const i=s.intel[s.player]?.[n];if(i)men+=i.armies.filter(a=>a.owner!==s.player&&atWar(s,s.player,a.owner)).reduce((x,a)=>x+a.men,0)}return men};
+ return `<h2>${t('provinces')}</h2><p class="hint">${lang?'郡国按战区编组；州部为监察区。战区兵力与敌情只来自己方情报。':'Territories grouped by military theatre; circuits are inspection districts. Enemy figures come only from your own intelligence.'}</p>
+ ${Object.entries(byTheater).map(([th,list])=>{const troops=s.armies.filter(a=>a.owner===s.player&&list.some(r=>r.id===a.region)).reduce((x,a)=>x+a.men,0),sup=list.reduce((x,r)=>x+r.supply,0),loy=Math.round(list.reduce((x,r)=>x+r.loyalty,0)/list.length),enemy=threat(list);
+  return `<section class="theater-block"><h3>${esc(L(THEATERS[th].name))} <small>${esc(L(THEATERS[th].role))}</small></h3><p class="theater-sum">${lang?'驻军':'Troops'} <b>${fmt(troops)}</b> · ${lang?'补给容量':'Supply'} <b>${sup}</b> · ${lang?'平均忠诚':'Avg. loyalty'} <b>${loy}</b> · ${lang?'已知相邻敌军':'Known hostile forces nearby'} <b class="${enemy>troops?'warn':''}">${fmt(enemy)}</b></p>
+  <table class="provinces"><tr><th></th><th>${lang?'州部':'Circuit'}</th><th>${lang?'忠诚':'Loyalty'}</th><th>${t('grain')}</th><th>${lang?'赋':'Tax'}</th><th>${lang?'仓':'Granary'}</th><th>${lang?'水利':'Irrig.'}</th><th>${lang?'工事':'Fort'}</th><th></th></tr>${list.map(r=>`<tr><td><button class="link" data-region-select="${r.id}">${esc(L(r.name))}</button> <small>${esc(L({commandery:['commandery','郡'],kingdom:['kingdom','王国'],capital:['capital','京师'],protectorate:['protectorate','都护'],oasis:['oasis state','城郭'],steppe:['pastures','牧地']}[r.kind]))}</small></td><td>${esc(L(ZHOU[r.zhou].name))}</td><td>${Math.round(r.loyalty)}</td><td>${r.grain}</td><td>${r.tax}</td><td>${r.granary||0}</td><td>${r.irrigation||0}</td><td>${r.fort}</td><td>${r.disaster?`<b class="warn">${esc(L(DISASTERS[r.disaster.type].name))}</b>`:''}${r.unrest?` <b class="warn">${lang?'民变':'unrest'}</b>`:''}</td></tr>`).join('')}</table></section>`}).join('')}`;
 }
 function panelRecords(){
  const v=visibleProgress(s);
@@ -161,10 +168,16 @@ function visibleLog(e){if(isHanPlayer())return true;if(e.faction===s.player||e.f
 function inspector(){
  const r=s.regions.find(x=>x.id===selRegion),a=s.armies.find(x=>x.id===selArmy);
  const known=r?(r.owner===s.player?r.owner:s.intel[s.player]?.[r.id]?.owner||null):null;
- return `${r?`<section class="insp"><h3>${esc(L(r.name))}</h3><dl><dt>${lang?'控制':'Held by'}</dt><dd>${known?esc(fac(known)):t('unknown')}</dd><dt>${lang?'地形':'Terrain'}</dt><dd>${esc(L({plain:['plain','平原'],hills:['hills','丘陵'],mountain:['mountains','山地'],river:['river country','水乡'],desert:['desert','沙碛'],steppe:['steppe','草原'],oasis:['oasis','绿洲'],urban:['capital city','都城']}[r.terrain]))}</dd><dt>${lang?'治所':'Seat'}</dt><dd>${esc(L(r.seat||['—','—']))}</dd>${r.owner===s.player?`<dt>${lang?'忠诚':'Loyalty'}</dt><dd>${Math.round(r.loyalty)}</dd><dt>${lang?'补给':'Supply'}</dt><dd>${r.supply}</dd>`:''}<dt>${lang?'工事':'Fort'}</dt><dd>${r.fort}</dd></dl>${r.siege?`<p class="warn">${lang?'围城':'Siege'} ${r.siege.months}/${r.siege.need}</p>`:''}<p class="hint">${neighbours(r.id).map(n=>{const l=routeBetween(r.id,n);return `${esc(L(s.regions.find(x=>x.id===n).name).split(/[（(]/)[0])} (${esc(L({road:['road','道路'],river:['river','水道'],pass:['pass','关隘'],desert:['desert','沙碛'],steppe:['steppe','草原'],oasis:['oasis road','绿洲道']}[l.kind]))}, ${l.months}${lang?'月':' mo'})`}).join(' · ')}</p></section>`:''}
+ return `${r?`<section class="insp"><h3>${esc(L(r.name))}</h3><dl><dt>${lang?'控制':'Held by'}</dt><dd>${known?esc(fac(known)):t('unknown')}</dd><dt>${lang?'州部':'Circuit'}</dt><dd>${esc(L(ZHOU[r.zhou].name))}</dd><dt>${lang?'战区':'Theatre'}</dt><dd>${esc(L(THEATERS[r.theater].name))}</dd><dt>${lang?'地形':'Terrain'}</dt><dd>${esc(L({plain:['plain','平原'],hills:['hills','丘陵'],mountain:['mountains','山地'],river:['river country','水乡'],desert:['desert','沙碛'],steppe:['steppe','草原'],oasis:['oasis','绿洲'],urban:['capital city','都城']}[r.terrain]))}</dd><dt>${lang?'治所':'Seat'}</dt><dd>${esc(L(r.seat||['—','—']))}</dd>${r.owner===s.player?`<dt>${lang?'忠诚':'Loyalty'}</dt><dd>${Math.round(r.loyalty)}</dd><dt>${lang?'补给':'Supply'}</dt><dd>${r.supply}</dd>`:''}<dt>${lang?'工事':'Fort'}</dt><dd>${r.fort}</dd></dl>${r.siege?`<p class="warn">${lang?'围城':'Siege'} ${r.siege.months}/${r.siege.need}</p>`:''}<p class="hint">${neighbours(r.id).map(n=>{const l=routeBetween(r.id,n);return `${esc(L(s.regions.find(x=>x.id===n).name).split(/[（(]/)[0])} (${esc(L({road:['road','道路'],river:['river','水道'],pass:['pass','关隘'],desert:['desert','沙碛'],steppe:['steppe','草原'],oasis:['oasis road','绿洲道']}[l.kind]))}, ${l.months}${lang?'月':' mo'})`}).join(' · ')}</p></section>`:''}
  ${a?`<section class="insp"><h3>${esc(L(a.template.name))}</h3>${a.owner===s.player?`<p>${fmt(a.men)} · ${lang?'士气':'morale'} ${a.morale} · ${lang?'补给':'supply'} ${a.supply}${a.commander?` · ${esc(pname(a.commander))}`:''}</p><button class="act primary" data-act="march" ${a.move||a.forming?'disabled':''}>${ordering?t('cancel'):t('march')}</button>${ordering?`<p class="hint">${t('noTarget')}</p>`:''}`:`<p>${esc(fac(a.owner))} · ${lang?'约':'about'} ${fmt(Math.round(a.men/1000)*1000)}</p>`}</section>`:''}`;
 }
 
+function legend(){
+ if(mapMode==='circuits')return Object.entries(ZHOU).filter(([z])=>s.regions.some(r=>r.zhou===z)).map(([z,v])=>`<span><i style="background:${v.color}"></i>${esc(L(v.name))}</span>`).join('')+`<span class="hint">${lang?'刺史部为监察区，非一级政府':'Inspection circuits, not a level of government'}</span>`;
+ if(mapMode==='theaters')return Object.entries(THEATERS).map(([k,v],i)=>`<span><i style="background:hsl(${(i*47)%360} 32% 55%)"></i>${esc(L(v.name))}</span>`).join('');
+ if(mapMode==='terrain')return [['plateau','#c9b9a0',['Plateau','高原']],['mountain','#b8a68a',['Mountains','山地']],['desert','#e8d39c',['Desert','沙漠']],['steppe','#cdd2a0',['Steppe','草原']],['marsh','#b9c6a8',['Marsh','泽薮']]].map(([k,c,n])=>`<span><i style="background:${c}"></i>${esc(L(n))}</span>`).join('')+`<span><i class="line river"></i>${lang?'河流':'Rivers'}</span><span><i class="line wall"></i>${lang?'汉塞':'Han frontier'}</span>`;
+ return [...new Set(s.regions.map(r=>r.owner))].filter(Boolean).map(o=>`<span><i style="background:${colors[o]||'#777'}"></i>${esc(fac(o))}</span>`).join('')+`<span><i class="stripes"></i>${lang?'向汉的城郭之国（都护监护）':'Oasis states standing with Han'}</span>`;
+}
 function railTabs(){
  const han=isHanPlayer();
  return [['emperor','帝'],['genealogy','谱'],...(han?[['court','廷'],['officials','官'],['succession','嗣']]:[]),['focus','策'],['finance','计'],['frontier','边'],['silk','丝'],['army','军'],['provinces','郡'],['records','史']];
@@ -184,8 +197,8 @@ export function render(){
  <div class="stats">${[['treasury',fmt(f.treasury||0)],['grain',fmt(f.grain||0)],['manpower',fmt(f.manpower||0)],['horses',fmt(f.horses||0)],...(isHanPlayer()?[['mandate',s.mandate.value],['authority',emperorAuthority(s)]]:[])].map(([k,v])=>`<span><small>${t(k)}</small><b>${v}</b></span>`).join('')}</div>
  <div class="controls"><button data-act="play" class="act primary">${playing?t('pause'):t('play')}</button><button data-act="step" class="act">${t('step')}</button><select data-slot>${[1,2,3].map(n=>`<option ${slot==n?'selected':''}>${n}</option>`).join('')}</select><button data-act="save" class="act">${t('save')}</button><button data-act="load" class="act">${t('load')}</button><button data-act="lang" class="act">${lang?'EN':'中文'}</button><button data-act="menu" class="act">${t('menu')}</button></div></header>
  <div class="shell"><nav class="rail">${railTabs().map(([id,g])=>`<button data-tab="${id}" class="${tab===id?'on':''}"><span>${g}</span>${t(id)}</button>`).join('')}</nav>
- <main><div class="map-tools">${Object.entries(CAMERAS).map(([id,c])=>`<button class="mini ${camera===id?'on':''}" data-camera="${id}">${esc(L(c.name))}</button>`).join('')}</div><div class="map-wrap">${drawMap(s,{lang,selected:selRegion,selectedArmy:selArmy,visibleArmy,colors,ordering,targets,silkPath:s.silk.lastPath,camera})}</div>
- <div class="legend">${[...new Set(s.regions.map(r=>r.owner))].filter(Boolean).map(o=>`<span><i style="background:${colors[o]||'#777'}"></i>${esc(fac(o))}</span>`).join('')}</div>${inspector()}</main>
+ <main><div class="map-tools"><span class="tool-group">${Object.entries(MODES).map(([id,n])=>`<button class="mini mode ${mapMode===id?'on':''}" data-mode="${id}">${esc(L(n))}</button>`).join('')}</span><span class="tool-group">${Object.entries(CAMERAS).map(([id,c])=>`<button class="mini ${camera===id?'on':''}" data-camera="${id}">${esc(L(c.name))}</button>`).join('')}</span></div><div class="map-wrap">${drawMap(s,{lang,selected:selRegion,selectedArmy:selArmy,visibleArmy,colors,targets,silkPath:s.silk.lastPath,camera,mode:mapMode,oasisStanding:Object.fromEntries(OASIS.map(o=>[o,s.protectorate.oasis[o]?.han||0]))})}</div>
+ <div class="legend">${legend()}</div>${inspector()}</main>
  <aside class="panel">${panel()}</aside></div>${toast?`<div class="toast" role="status">${esc(toast)}</div>`:''}`;
  const p=root.querySelector('.panel');if(p)p.scrollTop=scrollTop;
 }
@@ -202,9 +215,10 @@ function onChange(e){
  if(el.hasAttribute('data-design-name')){designer.name=el.value;return}
 }
 function onClick(e){
- const b=e.target.closest('[data-act],[data-tab],[data-region],[data-army],[data-camera],[data-army-select],[data-region-select]');if(!b)return;
+ const b=e.target.closest('[data-act],[data-tab],[data-region],[data-army],[data-camera],[data-mode],[data-army-select],[data-region-select]');if(!b)return;
  if(b.dataset.tab){tab=b.dataset.tab;render();return}
  if(b.dataset.camera){camera=b.dataset.camera;render();return}
+ if(b.dataset.mode){mapMode=b.dataset.mode;render();return}
  if(b.dataset.armySelect){selArmy=b.dataset.armySelect;render();return}
  if(b.dataset.regionSelect){selRegion=b.dataset.regionSelect;render();return}
  if(b.dataset.army&&!b.dataset.act){selArmy=b.dataset.army;ordering=false;render();return}

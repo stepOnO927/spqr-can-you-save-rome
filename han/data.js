@@ -8,6 +8,8 @@
 // "49 BCE"); Liu Shi took the throne on 29 January 48 BCE. The campaign opens
 // in February 48 BCE, after the accession.
 
+import {REGION_GEO,ZHOU,THEATERS} from './geography.js?v=han-1';
+
 export const START={year:-48,month:2,label:['Huanglong 1, final month · February 48 BCE (Emperor Xuan d. 10 Jan 48 BCE; Liu Shi enthroned 29 Jan 48 BCE)','黄龙元年岁末 · 公元前48年2月（宣帝崩于公元前48年1月10日；刘奭于1月29日即位）']};
 
 // terrain: plain | hills | mountain | river | desert | steppe | oasis | urban
@@ -64,6 +66,9 @@ export const REGIONS=[
  R('qiang','Qiang Highlands','羌地',100.8,36.2,'mountain','steppe','qiang',8,1,1,2,0,{})
 ];
 for(const r of REGIONS)if(r.owner==='han')r.loyalty=r.kind==='kingdom'?62:r.frontier?66:74;
+// administrative circuit (州部) and military theatre (战区) for every territory
+for(const r of REGIONS){const g=REGION_GEO[r.id];r.zhou=g.zhou;r.theater=g.theater}
+export {ZHOU,THEATERS};
 
 // kind: road 驰道/道路 | river 水运 | pass 关隘 | desert 沙碛 | steppe 草原 | oasis 绿洲道
 // months: base travel time for a mixed infantry army; supply: logistic quality 0–3.

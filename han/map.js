@@ -1,57 +1,137 @@
-// Strategic map of the Han vertical slice: Natural Earth land (shared with
-// the Roman atlas), hand-simplified rivers, the Han frontier line, labelled
-// ranges and deserts, and the clickable territory network. Everything
-// clickable is a simulation region.
+// Strategic map of the Han theatre.
+//
+// Territories are real areas: a Voronoi partition of several anchor points per
+// territory, clipped to the Natural Earth coastline. Borders between cells of
+// different territories are drawn by level — territory, circuit (州部),
+// theatre (战区) and state — so the map shows the administrative and military
+// structure. A schematic terrain layer (plateau, ranges, deserts, steppe,
+// marsh), lakes and rivers sits under the political colours.
+// Map modes: political 政区 · circuits 州部 · theatres 战区 · terrain 地形.
 import LAND from '../land.js?v=phase-x-1';
-import {REGIONS,ROUTES} from './data.js?v=han-1';
+import {REGIONS,ROUTES,ZHOU,THEATERS} from './data.js?v=han-1';
+import {REGION_GEO,OUTSIDE,TERRAIN,LAKES,RIVERS,FRONTIER} from './geography.js?v=han-1';
 
-export const VIEW={lon0:58,lon1:126,lat0:54,lat1:24,W:1200,H:640};
-export const project=([lon,lat],v=VIEW)=>[Math.round((lon-v.lon0)/(v.lon1-v.lon0)*v.W*10)/10,Math.round((v.lat0-lat)/(v.lat0-v.lat1)*v.H*10)/10];
-const RIVERS={
- yellow:{name:['Yellow River','黄河'],pts:[[96,35],[100,36],[103.6,36.1],[105,37.5],[106.5,39.2],[107,40.6],[109,40.7],[111,40.3],[111.5,39],[110.5,37],[110.4,35],[111.5,34.8],[113.6,34.9],[115,35.8],[116,37],[117.5,38.4]]},
- yangtze:{name:['Yangtze','长江'],pts:[[91,33.5],[97,33],[99.5,28],[102,26.5],[104.6,28.8],[106.5,29.6],[108.4,30.8],[110.5,31],[112.2,30.3],[113.5,30.4],[114.3,30.6],[116,29.8],[117.6,30.9],[118.8,32],[121,31.7]]},
- wei:{name:['Wei River','渭水'],pts:[[104.6,34.8],[106.2,34.4],[107.5,34.3],[108.9,34.4],[110.2,34.6]]},
- han:{name:['Han River','汉水'],pts:[[106.5,33.1],[108.9,32.7],[110.8,32.6],[112.1,32.0],[112.6,31.0],[114.3,30.6]]},
- tarim:{name:['Tarim','塔里木河'],pts:[[76,39.5],[79,40.6],[81,40.9],[84,41.2],[86.5,40.8],[88,40.2],[90.3,40.4]]},
- ili:{name:['Ili','伊犁河'],pts:[[82.5,43.6],[81.3,43.9],[78,44],[76.5,44.5],[74.8,45.4]]},
- syr:{name:['Syr Darya','锡尔河'],pts:[[72.5,40.8],[71.6,40.9],[69.3,41],[68.5,42],[66,44.5],[61.5,46]]}
-};
-const FRONTIER=[[93.8,40.4],[95.5,40.3],[98.5,40],[100.5,39.4],[102.8,38.4],[104.5,38.2],[106.2,39.0],[107.5,41.0],[110,41.5],[112.5,41.3],[115,41.0],[118,40.5]];
-const LABELS=[
- [['Qinling','秦岭'],108,33.7,'range'],[['Tianshan','天山'],84,43.3,'range'],[['Kunlun','昆仑'],85,36,'range'],[['Congling (Pamirs)','葱岭'],74.3,38.4,'range'],[['Qilian','祁连山'],98.6,38.3,'range'],[['Taihang','太行山'],113.3,37.6,'range'],
- [['Gobi','戈壁'],104,43.3,'desert'],[['Taklamakan','塔克拉玛干'],83,39,'desert'],[['Lop Nur','盐泽'],90.6,40.6,'desert'],
- [['Guanzhong','关中'],108.4,34.75,'basin'],[['North China Plain','华北平原'],115.6,36.8,'basin'],[['Hexi Corridor','河西走廊'],99.5,39.6,'basin'],[['Tarim Basin','塔里木盆地'],82,40.3,'basin']
-];
-const path=(pts)=>pts.map((p,i)=>(i?'L':'M')+project(p).join(',')).join('');
-let landCache=null;
-function landPaths(){
- if(landCache)return landCache;const v=VIEW,out=[];
- for(const f of LAND.features){const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;
-  for(const poly of polys){const ring=poly[0];let minX=180,maxX=-180,minY=90,maxY=-90;for(const [x,y] of ring){if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y}
-   if(maxX<v.lon0-5||minX>v.lon1+5||maxY<v.lat1-5||minY>v.lat0+5)continue;
-   const step=1;out.push(path(ring.filter((_,i)=>i%step===0))+'Z')}}
- return landCache=out;
-}
-// Camera presets: the theatre is navigable without rebuilding the data.
-export const CAMERAS={all:{name:['Whole theatre','全图'],box:[58,126,54,24]},core:{name:['Guanzhong & the Plain','关中与中原'],box:[100,123,42,27]},hexi:{name:['Hexi Corridor','河西走廊'],box:[90,110,44,32]},west:{name:['Western Regions','西域'],box:[66,96,47,35]},steppe:{name:['The Steppe','草原'],box:[82,118,54,38]}};
+export const VIEW={lon0:57,lon1:127,lat0:55,lat1:23,W:1400,H:760};
+export const project=([lon,lat])=>[Math.round((lon-VIEW.lon0)/(VIEW.lon1-VIEW.lon0)*VIEW.W*10)/10,Math.round((VIEW.lat0-lat)/(VIEW.lat0-VIEW.lat1)*VIEW.H*10)/10];
+export const CAMERAS={all:{name:['Whole theatre','全图'],box:[60,125,53.5,24.5]},core:{name:['Guanzhong & the Plain','关中与中原'],box:[101,123,41.5,26.5]},hexi:{name:['Hexi Corridor','河西走廊'],box:[90,110,44,33]},west:{name:['Western Regions','西域'],box:[65,96,47,34.5]},steppe:{name:['The Steppe','草原'],box:[82,120,55,38]}};
+export function cameraScale(id){const c=CAMERAS[id]||CAMERAS.all;return (c.box[1]-c.box[0])/(VIEW.lon1-VIEW.lon0)}
 export function cameraBox(id){const c=CAMERAS[id]||CAMERAS.all;const [a,b]=project([c.box[0],c.box[2]]),[x,y]=project([c.box[1],c.box[3]]);return `${a} ${b} ${x-a} ${y-b}`}
+export const MODES={political:['Political','政区'],circuits:['Circuits','州部'],theaters:['Theatres','战区'],terrain:['Terrain','地形']};
+
+// ---------- geometry (computed once) ----------
+const pathOf=(pts,close=true)=>pts.map((p,i)=>(i?'L':'M')+p[0]+','+p[1]).join('')+(close?'Z':'');
+const lonlatPath=(pts,close=true)=>pathOf(pts.map(project),close);
+function smooth(pts){ // Chaikin smoothing for rivers and terrain outlines
+ let p=pts;for(let k=0;k<2;k++){const o=[p[0]];for(let i=0;i<p.length-1;i++){const [a,b]=[p[i],p[i+1]];o.push([a[0]*0.75+b[0]*0.25,a[1]*0.75+b[1]*0.25],[a[0]*0.25+b[0]*0.75,a[1]*0.25+b[1]*0.75])}o.push(p[p.length-1]);p=o}return p}
+function smoothClosed(pts){let p=pts;for(let k=0;k<2;k++){const o=[];for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length];o.push([a[0]*0.75+b[0]*0.25,a[1]*0.75+b[1]*0.25],[a[0]*0.25+b[0]*0.75,a[1]*0.25+b[1]*0.75])}p=o}return p}
+// clip a convex polygon (vertices tagged with the site that created the edge
+// leaving them) to the half-plane closer to site a than to site b.
+function clip(poly,a,b,tag){
+ const dx=b[0]-a[0],dy=b[1]-a[1],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,side=p=>(p.x-mx)*dx+(p.y-my)*dy;
+ const out=[];
+ for(let i=0;i<poly.length;i++){const P=poly[i],Q=poly[(i+1)%poly.length],sp=side(P),sq=side(Q);
+  if(sp<=0)out.push(P);
+  if((sp<=0)!==(sq<=0)){const t=sp/(sp-sq),I={x:P.x+(Q.x-P.x)*t,y:P.y+(Q.y-P.y)*t};I.tag=sp<=0?tag:P.tag;out.push(I)}}
+ return out;
+}
+let GEO=null;
+function geometry(){
+ if(GEO)return GEO;
+ const sites=[];
+ for(const r of REGIONS)for(const a of REGION_GEO[r.id].anchors)sites.push({region:r.id,p:project(a)});
+ OUTSIDE.forEach((o,k)=>{for(const a of o.pts)sites.push({region:null,outside:k,p:project(a)})});
+ const box=[{x:-40,y:-40,tag:-1},{x:VIEW.W+40,y:-40,tag:-1},{x:VIEW.W+40,y:VIEW.H+40,tag:-1},{x:-40,y:VIEW.H+40,tag:-1}];
+ const cells=sites.map((s,i)=>{let poly=box.map(v=>({...v}));
+  // nearest sites first keeps polygons small quickly
+  const order=sites.map((o,j)=>[j,(o.p[0]-s.p[0])**2+(o.p[1]-s.p[1])**2]).filter(([j])=>j!==i).sort((x,y)=>x[1]-y[1]);
+  for(const [j] of order){const o=sites[j];
+   // a site further than twice the cell radius cannot cut the cell
+   const rad=Math.max(...poly.map(v=>(v.x-s.p[0])**2+(v.y-s.p[1])**2));if((o.p[0]-s.p[0])**2+(o.p[1]-s.p[1])**2>4*rad)break;
+   poly=clip(poly,s.p,o.p,j);if(poly.length<3)break}
+  return poly});
+ // territory shapes and border segments
+ const regionCells={},segments=[];
+ cells.forEach((poly,i)=>{const s=sites[i];const key=s.region||('outside:'+s.outside);(regionCells[key]||=[]).push(poly);
+  for(let k=0;k<poly.length;k++){const P=poly[k],Q=poly[(k+1)%poly.length];if(P.tag<=i)continue; // each shared edge once (j>i)
+   const o=sites[P.tag];if(!o)continue;const ka=s.region||('outside:'+s.outside),kb=o.region||('outside:'+o.outside);if(ka===kb)continue;
+   segments.push({a:ka,b:kb,d:`M${P.x.toFixed(1)},${P.y.toFixed(1)}L${Q.x.toFixed(1)},${Q.y.toFixed(1)}`})}});
+ const area=poly=>poly.reduce((a,p,i)=>{const q=poly[(i+1)%poly.length];return a+p.x*q.y-q.x*p.y},0)/2;
+ const centroid=polys=>{let A=0,X=0,Y=0;for(const poly of polys){for(let i=0;i<poly.length;i++){const p=poly[i],q=poly[(i+1)%poly.length],c=p.x*q.y-q.x*p.y;X+=(p.x+q.x)*c;Y+=(p.y+q.y)*c;A+=c/2}}return A?[X/(6*A),Y/(6*A)]:[0,0]};
+ const shapes={},centres={};
+ for(const [k,polys] of Object.entries(regionCells)){shapes[k]=polys.map(poly=>'M'+poly.map(v=>v.x.toFixed(1)+','+v.y.toFixed(1)).join('L')+'Z').join('');centres[k]=centroid(polys)}
+ // label anchors: prefer the seat for small territories
+ for(const r of REGIONS){const seat=project([r.lon,r.lat]),c=centres[r.id];const d=Math.hypot(seat[0]-c[0],seat[1]-c[1]);centres[r.id]=d>60?[(seat[0]*2+c[0])/3,(seat[1]*2+c[1])/3]:c}
+ const groupCentre=(field,id)=>{const list=REGIONS.filter(r=>r[field]===id);const xs=list.map(r=>centres[r.id]);return [xs.reduce((a,p)=>a+p[0],0)/xs.length,xs.reduce((a,p)=>a+p[1],0)/xs.length]};
+ const land=[];for(const f of LAND.features){const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;
+  for(const poly of polys){const ring=poly[0];if(!ring.some(([x,y])=>x>VIEW.lon0-10&&x<VIEW.lon1+10&&y>VIEW.lat1-10&&y<VIEW.lat0+10))continue;land.push(lonlatPath(ring))}}
+ GEO={shapes,centres,segments,land:land.join(''),theaterCentre:Object.fromEntries(Object.keys(THEATERS).map(t=>[t,groupCentre('theater',t)])),zhouCentre:Object.fromEntries(Object.keys(ZHOU).filter(z=>z!=='waifan'&&REGIONS.some(r=>r.zhou===z)).map(z=>[z,groupCentre('zhou',z)])),
+  terrain:TERRAIN.map(t=>({...t,d:pathOf(smoothClosed(t.pts.map(project)))})),lakes:LAKES.map(l=>({...l,d:pathOf(smoothClosed(l.pts.map(project)))})),
+  rivers:Object.values(RIVERS).map(r=>({...r,d:pathOf(smooth(r.pts.map(project)),false)})),frontier:pathOf(FRONTIER.map(project),false)};
+ return GEO;
+}
 export function regionPoint(id){const r=REGIONS.find(x=>x.id===id);return project([r.lon,r.lat])}
-// Voronoi-like territory discs are avoided: each territory is a seat marker with
-// a control ring; routes show kind by stroke style.
-export function drawMap(s,{lang=0,selected=null,selectedArmy=null,visibleArmy=()=>true,colors={},ordering=false,targets=new Set(),silkPath=null,camera='all'}={}){
- const L=i=>Array.isArray(i)?i[lang]:i;
- const routeStyle={road:'route-road',river:'route-river',pass:'route-pass',desert:'route-desert',steppe:'route-steppe',oasis:'route-oasis'};
+export const territoryGeometry=()=>geometry();
+
+const TERRAIN_FILL={plateau:'url(#t-plateau)',mountain:'url(#t-mountain)',desert:'url(#t-desert)',steppe:'url(#t-steppe)',hills:'url(#t-hills)',marsh:'url(#t-marsh)'};
+const TERRAIN_TINT={plateau:'#c9b9a0',mountain:'#b8a68a',desert:'#e8d39c',steppe:'#cdd2a0',hills:'#cbbd98',marsh:'#b9c6a8'};
+const defsFor=k=>`<defs>
+<clipPath id="land-clip"><path d="${''}"/></clipPath>
+<pattern id="t-mountain" width="18" height="14" patternUnits="userSpaceOnUse" patternTransform="scale(${k})"><path d="M1 12 L6 4 L11 12 M8 12 L12 6 L16 12" fill="none" stroke="#6e5a3e" stroke-width="1.1" stroke-linejoin="round" opacity=".55"/></pattern>
+<pattern id="t-plateau" width="22" height="16" patternUnits="userSpaceOnUse" patternTransform="scale(${k})"><path d="M2 13 L7 6 L12 13" fill="none" stroke="#7d6b55" stroke-width="1" opacity=".35"/><path d="M13 8h6" stroke="#7d6b55" opacity=".25"/></pattern>
+<pattern id="t-desert" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="scale(${k})"><circle cx="2" cy="3" r=".9" fill="#a8823e" opacity=".55"/><circle cx="7" cy="8" r=".8" fill="#a8823e" opacity=".45"/><circle cx="8" cy="2" r=".5" fill="#a8823e" opacity=".4"/></pattern>
+<pattern id="t-steppe" width="14" height="10" patternUnits="userSpaceOnUse" patternTransform="scale(${k})"><path d="M2 8 l1.5 -4 M4 8 l0 -4.5 M6 8 l-1.5 -4" stroke="#6f7a3e" stroke-width=".8" opacity=".45"/></pattern>
+<pattern id="t-hills" width="16" height="10" patternUnits="userSpaceOnUse" patternTransform="scale(${k})"><path d="M1 8 q4 -6 8 0" fill="none" stroke="#7d6a48" stroke-width=".9" opacity=".45"/></pattern>
+<pattern id="t-marsh" width="12" height="8" patternUnits="userSpaceOnUse" patternTransform="scale(${k})"><path d="M1 5h4M7 3h4" stroke="#4f7b8f" stroke-width=".9" opacity=".6"/></pattern>
+<pattern id="protect-stripes" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="scale(${k}) rotate(45)"><rect width="3" height="8" fill="#a2311f" opacity=".42"/></pattern>
+<pattern id="outside-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="scale(${k}) rotate(-35)"><path d="M0 0v7" stroke="#6d6250" stroke-width=".7" opacity=".35"/></pattern>
+<filter id="paper"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" result="n"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 .07"/></feComponentTransfer><feBlend in="SourceGraphic" mode="multiply"/></filter>
+</defs>`;
+
+// ---------- draw ----------
+export function drawMap(s,{lang=0,selected=null,selectedArmy=null,visibleArmy=()=>true,colors={},targets=new Set(),silkPath=null,camera='all',mode='political',oasisStanding={}}={}){
+ const g=geometry(),L=v=>Array.isArray(v)?v[lang]:v,k=cameraScale(camera),f=n=>(n*k).toFixed(2);
+ const owner=Object.fromEntries(s.regions.map(r=>[r.id,r.owner]));
+ const reg=Object.fromEntries(s.regions.map(r=>[r.id,r]));
+ const fillFor=id=>{if(id.startsWith('outside'))return '#cfc3a6';const r=reg[id];
+  if(mode==='political')return colors[r.owner]||'#9a9080';
+  if(mode==='circuits')return ZHOU[r.zhou].color;
+  if(mode==='theaters'){const keys=Object.keys(THEATERS),i=keys.indexOf(r.theater);return `hsl(${(i*47)%360} 32% 55%)`}
+  return 'transparent'};
+ const op=mode==="terrain"?0:mode==="political"?0.5:0.6;
+ const territories=Object.entries(g.shapes).map(([id,d])=>{
+  if(id.startsWith('outside'))return `<path class="outside" d="${d}"><title>${L(OUTSIDE[+id.split(':')[1]].name)}</title></path>`;
+  const r=reg[id],sel=selected===id,tgt=targets.has(id);
+  return `<path class="territory ${sel?'selected':''} ${tgt?'target':''} ${r.siege?'besieged':''} ${r.disaster?'calamity':''}" data-region="${id}" d="${d}" fill="${fillFor(id)}" fill-opacity="${op}"><title>${L(r.name)} · ${L(ZHOU[r.zhou].name)} · ${L(THEATERS[r.theater].name)}</title></path>${mode==='political'&&(oasisStanding[r.owner]||0)>=60?`<path class="protected" d="${d}" fill="url(#protect-stripes)" pointer-events="none"/>`:''}`}).join('');
+ // borders by level
+ const level=sg=>{if(sg.a.startsWith('outside')||sg.b.startsWith('outside'))return 'b-outside';const A=reg[sg.a],B=reg[sg.b];
+  if(A.owner!==B.owner)return 'b-state';if(mode==='theaters'&&A.theater!==B.theater)return 'b-theater';if(mode==='circuits'&&A.zhou!==B.zhou)return 'b-circuit';
+  if(A.theater!==B.theater)return 'b-theater-soft';if(A.zhou!==B.zhou)return 'b-circuit-soft';return 'b-territory'};
+ const groups={};for(const sg of g.segments)(groups[level(sg)]||=[]).push(sg.d);
+ const borders=['b-territory','b-circuit-soft','b-theater-soft','b-circuit','b-theater','b-outside','b-state'].filter(k=>groups[k]).map(k=>`<path class="border ${k}" d="${groups[k].join('')}"/>`).join('');
+ const terrain=g.terrain.map(t=>`<path class="terrain t-${t.kind}" d="${t.d}" fill="${TERRAIN_TINT[t.kind]}" fill-opacity="${mode==='terrain'?0.75:0.45}"/><path d="${t.d}" fill="${TERRAIN_FILL[t.kind]}" pointer-events="none"/>`).join('');
+ const terrainLabels=g.terrain.filter(t=>mode==='terrain'?['desert','mountain','plateau','marsh','steppe'].includes(t.kind):['desert','plateau'].includes(t.kind)).map(t=>{const c=t.pts.map(project).reduce((a,p)=>[a[0]+p[0]/t.pts.length,a[1]+p[1]/t.pts.length],[0,0]);return `<text class="geo-label ${t.kind}" x="${c[0].toFixed(0)}" y="${c[1].toFixed(0)}">${L(t.name)}</text>`}).join('');
+ const lakes=g.lakes.map(l=>`<path class="lake" d="${l.d}"><title>${L(l.name)}</title></path>`).join('');
+ const rivers=g.rivers.map(r=>`<path class="river ${r.major?'major':''}" d="${r.d}"><title>${L(r.name)}</title></path>`).join('');
  const silkSet=new Set();if(silkPath)for(let i=0;i<silkPath.length-1;i++)silkSet.add([silkPath[i],silkPath[i+1]].sort().join(':'));
- const routes=ROUTES.map(l=>{const [x1,y1]=regionPoint(l.a),[x2,y2]=regionPoint(l.b),k=[l.a,l.b].sort().join(':');return `<line class="route ${routeStyle[l.kind]} ${silkSet.has(k)?'silk-leg':''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><title>${L(l.name||[l.kind,{road:'道路',river:'水道',pass:'关隘',desert:'沙碛',steppe:'草原',oasis:'绿洲道'}[l.kind]])} · ${l.months}${lang?'月':' mo'}</title></line>`}).join('');
- const rivers=Object.values(RIVERS).map(r=>`<path class="river" d="${path(r.pts)}"><title>${L(r.name)}</title></path>`).join('');
- const labels=LABELS.map(([n,lon,lat,kind])=>{const [x,y]=project([lon,lat]);return `<text class="geo-label ${kind}" x="${x}" y="${y}">${L(n)}</text>`}).join('');
- const regions=s.regions.map(r=>{const [x,y]=regionPoint(r.id),c=colors[r.owner]||'#777',sel=selected===r.id,tgt=targets.has(r.id);
-  const size=r.kind==='capital'?11:r.kind==='steppe'?9:7;
-  const shape=r.kind==='steppe'?`<circle class="seat steppe" cx="${x}" cy="${y}" r="${size}" fill="${c}"/>`:r.kind==='oasis'||r.kind==='protectorate'?`<rect class="seat oasis" x="${x-size}" y="${y-size}" width="${size*2}" height="${size*2}" transform="rotate(45 ${x} ${y})" fill="${c}"/>`:`<rect class="seat" x="${x-size}" y="${y-size}" width="${size*2}" height="${size*2}" rx="2" fill="${c}"/>`;
-  return `<g class="region ${sel?'selected':''} ${tgt?'target':''} ${r.siege?'besieged':''} ${r.disaster?'calamity':''}" data-region="${r.id}" tabindex="0" role="button" aria-label="${L(r.name)}">${tgt?`<circle class="target-ring" cx="${x}" cy="${y}" r="${size+7}"/>`:''}${shape}<text class="region-label" x="${x}" y="${y+size+13}">${L(r.name).split(/[（(]/)[0]}</text></g>`}).join('');
+ const routeName={road:['road','道路'],river:['river route','水道'],pass:['pass','关隘'],desert:['desert crossing','沙碛'],steppe:['steppe route','草原道'],oasis:['oasis road','绿洲道']};
+ const routes=ROUTES.map(l=>{const [x1,y1]=regionPoint(l.a),[x2,y2]=regionPoint(l.b),k=[l.a,l.b].sort().join(':');return `<line class="route r-${l.kind} ${silkSet.has(k)?'silk-leg':''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><title>${L(l.name||routeName[l.kind])} · ${l.months}${lang?'月':' mo'}</title></line>`}).join('');
+ const groupLabels=mode==='theaters'?Object.entries(g.theaterCentre).map(([t,[x,y]])=>`<text class="group-label theater" x="${x.toFixed(0)}" y="${(y-14*k).toFixed(1)}">${L(THEATERS[t].name)}</text>`).join('')
+  :mode==='circuits'?Object.entries(g.zhouCentre).map(([z,[x,y]])=>`<text class="group-label circuit" x="${x.toFixed(0)}" y="${(y-14*k).toFixed(1)}">${L(ZHOU[z].name)}</text>`).join(''):'';
+ const seats=s.regions.map(r=>{const [x,y]=regionPoint(r.id),[cx,cy]=g.centres[r.id];const cap=r.kind==='capital';
+  const mark=cap?`<rect x="${x-5*k}" y="${y-5*k}" width="${f(10)}" height="${f(10)}" class="seat capital"/>`:`<circle cx="${x}" cy="${y}" r="${f(r.kind==='kingdom'?3.8:3.2)}" class="seat ${r.kind}"/>`;
+  const label=L(r.name).split(/[（(]/)[0];
+  return `<g class="seat-g" data-region="${r.id}">${mark}${targets.has(r.id)?`<circle class="target-ring" cx="${x}" cy="${y}" r="${f(11)}"/>`:''}<text class="region-label ${r.kind}" x="${cx.toFixed(1)}" y="${(cy+(Math.abs(cy-y)<8*k?14*k:0)).toFixed(1)}">${label}</text></g>`}).join('');
  const stacks={};for(const a of s.armies.filter(a=>a.men>0&&visibleArmy(a)))(stacks[a.region]||=[]).push(a);
- const armies=Object.entries(stacks).map(([rid,list])=>{const [x,y]=regionPoint(rid);return list.map((a,i)=>{const ax=x+14+i*13,ay=y-16;const sel=selectedArmy===a.id;
-  return `<g class="army ${sel?'selected':''} ${a.move?'moving':''}" data-army="${a.id}" role="button" tabindex="0"><rect x="${ax-6}" y="${ay-8}" width="12" height="16" rx="1" fill="${colors[a.owner]||'#555'}"/><text x="${ax}" y="${ay+4}">${a.owner==='han'||a.owner==='han_loyalist'||a.owner==='rival_court'?'汉':a.owner==='zhizhi'||a.owner==='huhanye'?'匈':a.owner.startsWith('wusun')?'孙':'旗'}</text>${a.move?(()=>{const [tx,ty]=regionPoint(a.move.to);return `<line class="march" x1="${ax}" y1="${ay}" x2="${tx}" y2="${ty}"/>`})():''}</g>`}).join('')}).join('');
- const v=VIEW,box=cameraBox(camera);
- return `<svg class="han-map camera-${camera}" viewBox="${box}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${lang?'汉代战略地图':'Han strategic map'}"><defs><pattern id="silk" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8L8 0" stroke="#0000000d"/></pattern></defs><rect class="sea" width="${v.W}" height="${v.H}"/>${landPaths().map(d=>`<path class="land" d="${d}"/>`).join('')}<rect width="${v.W}" height="${v.H}" fill="url(#silk)" pointer-events="none"/>${labels}${rivers}<path class="frontier-wall" d="${path(FRONTIER)}"><title>${lang?'汉代边塞与烽燧（示意）':'Han frontier walls and beacons (schematic)'}</title></path>${routes}${regions}${armies}</svg>`;
+ const glyph=o=>['han','han_loyalist','rival_court'].includes(o)?'汉':['zhizhi','huhanye'].includes(o)?'匈':o.startsWith('wusun')?'孙':o==='rebels'?'民':o==='qiang'?'羌':o==='kangju'?'康':o==='dayuan'?'宛':'国';
+ const armies=Object.entries(stacks).map(([rid,list])=>{const [x,y]=regionPoint(rid);return list.map((a,i)=>{const ax=x+(10+i*26)*k,ay=y-22*k,sel=selectedArmy===a.id,n=a.men>=10000?(a.men/10000).toFixed(1).replace('.0','')+(lang?'万':'0k'):Math.round(a.men/1000)+'k';
+  const label=lang&&a.men>=10000?(a.men/10000).toFixed(1).replace('.0','')+'万':Math.round(a.men/1000)+'k';
+  return `<g class="army ${sel?'selected':''} ${a.move?'moving':''}" data-army="${a.id}" role="button" tabindex="0"><title>${a.men}</title>${a.move?(()=>{const [tx,ty]=regionPoint(a.move.to);return `<path class="march" d="M${ax},${ay+8*k}L${tx},${ty}" marker-end="url(#arrow)"/>`})():''}<g transform="translate(${ax} ${ay}) scale(${k})"><rect x="-11" y="-9" width="24" height="18" rx="2" fill="${colors[a.owner]||'#555'}"/><rect x="-11" y="-9" width="9" height="18" rx="2" fill="#0003"/><text class="glyph" x="-6.5" y="4">${glyph(a.owner)}</text><text class="count" x="6" y="4">${label}</text></g></g>`}).join('')}).join('');
+ const box=cameraBox(camera);
+ return `<svg class="han-map mode-${mode} camera-${camera}" viewBox="${box}" preserveAspectRatio="xMidYMid meet" style="font-size:${f(21)}px" role="img" aria-label="${lang?'汉代战略地图':'Han strategic map'}">${defsFor(k).replace(`<path d="${''}"/>`,`<path d="${g.land}"/>`)}<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fff8e6"/></marker>
+<rect class="sea" x="-100" y="-100" width="${VIEW.W+200}" height="${VIEW.H+200}"/>
+<path class="land" d="${g.land}" filter="url(#paper)"/>
+<g clip-path="url(#land-clip)">${terrain}${territories}${borders}${lakes}${rivers}</g>
+<path class="coast" d="${g.land}"/>
+<path class="frontier-wall" d="${g.frontier}"><title>${lang?'汉塞：长城、亭障与烽燧（示意）':'Han frontier: walls, forts and beacons (schematic)'}</title></path>
+${terrainLabels}<g class="routes">${routes}</g>${groupLabels}${seats}${armies}</svg>`;
 }
