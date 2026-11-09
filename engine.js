@@ -14,6 +14,7 @@ import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers,buildingModifiers} from './inventions.js?v=grand-chessboard-2';
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
 import {assessOpportunities} from './multipolar.js?v=multipolar-2';
+import {advanceStrategicWarnings} from './strategic-warnings.js?v=multipolar-2';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {formCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=multipolar-2';
 import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=dynasty-id-3';
@@ -670,6 +671,8 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   advanceMovements(s,{autoplayPlayer});
   resolveInquiries(s,{autoplayPlayer});advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});linkCommanders(s);advancePersonalDiplomacy(s);
   advanceControlScouts(s);observeArmies(s);observeControl(s);if(s.month%6===0)observeBalanceOfPower(s);
+  // Friendly courts may forward fresh scout sightings; recipients judge them on their own.
+  advanceStrategicWarnings(s,{autoplayPlayer,letterMonths,issueOrder:issueMilitaryOrder,log});
   for(const owner of Object.keys(s.factions).filter(id=>autoplayPlayer||id!==s.player)){
     const override=autoplayPlayer&&owner===s.player&&playerDifficulty;if(!override){aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner);continue}
     const originalDifficulty=s.difficulty,hadDifficulty=Object.prototype.hasOwnProperty.call(s,'difficulty');s.difficulty=playerDifficulty;
