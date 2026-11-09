@@ -1,0 +1,293 @@
+// MANDATE OF HEAVEN — campaign engine. Independent of the Roman engine: the
+// Roman campaign, its saves and its modules are untouched. Han saves use
+// their own storage keys and carry dlc:'mandate-of-heaven'.
+import {START,REGIONS,FACTIONS,PLAYABLE,OASIS} from './data.js?v=han-1';
+import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=han-1';
+import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,statusOf,yearsBetween,claimStrength} from './dynasty.js?v=han-1';
+import {initCourt,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,issueEdict,EDICTS,adminCapacity,emperorAuthority} from './court.js?v=han-1';
+import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=han-1';
+import {initSilk,advanceSilk} from './silk-road.js?v=han-1';
+import {advanceFocus,focusState} from './focus.js?v=han-1';
+import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf} from './military.js?v=han-1';
+import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
+
+export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
+export const SCENARIOS={
+ historical:{name:['48 BCE — The New Son of Heaven','公元前49年 — 新天子'],note:['Opens just after Liu Shi’s accession (29 January 48 BCE), at the end of the Huanglong era usually dated 49 BCE.','开局于刘奭即位（公元前48年1月29日）之后，即通常记为公元前49年的黄龙元年岁末。'],alternate:false},
+ usurper:{name:['Alternate: The Grand Marshal’s Shadow','架空：大司马之影'],note:['Alternate history. The fictional Pang Chong dominates the inner court.','架空历史。虚构人物庞崇把持中朝。'],alternate:true},
+ disputed:{name:['Alternate: The Huaiyang Question','架空：淮阳之争'],note:['Alternate history. Emperor Xuan dies without a settled heir; Liu Shi and Liu Qin dispute the throne.','架空历史。宣帝崩而储位未定，刘奭与刘钦争位。'],alternate:true}
+};
+
+const STARTING_OFFICES={chengxiang:'yu-dingguo',yushi:'chen-wannian',dasima:'shi-gao',qianjiangjun:'xiao-wangzhi',zhongshu:'hong-gong',dasinong:null,zongzheng:'liu-xiang',duhu:null,hexi:'fictional-zhao-lie',jingzhao:null};
+const RES={han:{treasury:600,grain:500,manpower:60000,horses:20000,stability:62},huhanye:{treasury:40,grain:40,manpower:30000,horses:60000,stability:55},zhizhi:{treasury:60,grain:60,manpower:40000,horses:80000,stability:60},wusun:{treasury:40,grain:50,manpower:25000,horses:60000,stability:50},wusun_lesser:{treasury:30,grain:40,manpower:18000,horses:40000,stability:55},kangju:{treasury:60,grain:60,manpower:30000,horses:50000,stability:55},dayuan:{treasury:70,grain:90,manpower:20000,horses:30000,stability:60}};
+const ARMY=(owner,region,template,men,commander=null)=>({owner,region,template,men,commander});
+const OPENING_ARMIES=[
+ ARMY('han','changan','field',20000,'feng-fengshi'),ARMY('han','henan','field',12000),ARMY('han','shuofang','garrison',8000),ARMY('han','yunzhong','garrison',6000),
+ ARMY('han','wuwei','garrison',6000,'fictional-zhao-lie'),ARMY('han','dunhuang','garrison',4000),ARMY('han','wulei','garrison',3000,'gan-yanshou'),ARMY('han','beidi','cavalry',6000),ARMY('han','yanmen','garrison',5000),
+ ARMY('huhanye','monan','chanyu',20000),ARMY('zhizhi','mobei','chanyu',30000),ARMY('zhizhi','mobei','raiders',10000),
+ ARMY('wusun','wusun','wusun_host',18000),ARMY('wusun_lesser','wusun_lesser','wusun_host',12000),ARMY('kangju','kangju','kangju_host',20000),ARMY('dayuan','dayuan','town',12000),
+ ...OASIS.map(o=>ARMY(o,REGIONS.find(r=>r.owner===o).id,'town',o==='qiuci'?5000:2500)),
+ ARMY('wujie','wujie','raiders',5000),ARMY('jiankun','jiankun','raiders',8000),ARMY('qiang','qiang','qiang_band',8000)
+];
+
+export function newHanGame(player='han',{scenario='historical',difficulty='standard',seed=null}={}){
+ if(!PLAYABLE.includes(player))throw new Error('Unplayable faction '+player);
+ const s={dlc:DLC_ID,version:SAVE_VERSION,scenario,difficulty,player,seed:seed??(Date.now()%2147483647),year:START.year,month:START.month,
+  regions:REGIONS.map(r=>({...r,name:[...r.name]})),factions:{},armies:[],persons:{},genealogy:{},
+  throne:{orthodox:null,lastOrthodox:'liu-xun',occupant:null,regent:null,deFacto:null,heir:null,puppet:null,claimants:[],deposed:[],support:{},history:[],dynasty:{id:'han',name:['Han','汉'],orthodox:true,founder:'liu-bang'},restorations:0,usurpations:0,displaced:false},
+  relations:{},treaties:[],wars:[],proposals:[],pendingRequests:[],coalitions:[],focus:{},templates:{},log:[],taxLevel:'normal',militaryRecord:0,crises:[],stats:{provenAudits:0,battlesWon:0,startMonth:0},finalized:null};
+ s.stats.startMonth=monthIndex(s);
+ for(const id of Object.keys(FACTIONS))if(!FACTIONS[id].dynamic)s.factions[id]={id,...(RES[id]||{treasury:20,grain:30,manpower:6000,horses:3000,stability:55})};
+ // people and their birth records (historical records come from people.js)
+ for(const p of PEOPLE){
+  // anyone with a recorded death in or before January 48 BCE is dead at the start
+  s.persons[p.id]={...p,name:[...p.name],alive:p.death==null||p.death>START.year,spouse:[...(p.spouse||[])]};
+  recordBirth(s,{id:p.id,father:p.father,mother:p.mother,birthSurname:p.birthSurname,birth:p.birth,sex:p.sex});
+ }
+ initCourt(s,STARTING_OFFICES);
+ s.court.offices.dasinong=null;
+ // the reigning emperor: Liu Shi, enthroned 29 January 48 BCE
+ for(const f of Object.keys(s.court.factions)){s.throne.support['liu-shi']={...(s.throne.support['liu-shi']||{}),[f]:80}}
+ const opening=crown(s,'liu-shi','accession',{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
+ s.throne.history[0]={...s.throne.history[0],year:-48,month:1,note:'29 January 48 BCE'};
+ s.persons['wang-zhengjun'].empress=false;s.pendingEmpress='wang-zhengjun';
+ for(const a of OPENING_ARMIES){const t=PRESETS[a.template];s.armies.push({id:`a${s.armies.length+1}`,owner:a.owner,region:a.region,men:a.men,morale:70,training:50,supply:100,template:{id:t.id,name:t.name,mix:{...t.mix}},commander:a.commander,move:null})}
+ s.nextArmy=s.armies.length+1;
+ // relations at the start of 48 BCE
+ const R=(a,b,v)=>setRelation(s,a,b,v);
+ R('han','huhanye',65);R('han','zhizhi',-30);R('huhanye','zhizhi',-70);R('han','wusun',60);R('han','wusun_lesser',30);R('wusun','wusun_lesser',10);
+ R('han','kangju',0);R('zhizhi','kangju',10);R('kangju','wusun',-20);R('han','dayuan',25);R('han','qiang',-10);R('zhizhi','wujie',-20);R('zhizhi','jiankun',-20);
+ for(const o of OASIS){R('han',o,45);R('zhizhi',o,0)}
+ s.treaties.push({type:'tributary',parties:['huhanye','han'],since:monthIndex(s)-36,note:'51 BCE'},{type:'marriage',parties:['wusun','han'],since:monthIndex(s)-600,note:'Princess Jieyou'});
+ initProtectorate(s);initSilk(s);initIntel(s);
+ if(scenario==='usurper')applyUsurperScenario(s);
+ if(scenario==='disputed')applyDisputedScenario(s);
+ if(difficulty==='beginner'&&player)s.factions[player].treasury+=100;
+ computeMandate(s);recomputeInfluence(s);observe(s);
+ log(s,['Liu Shi has taken the throne. The court looks to the regents named by Emperor Xuan.','刘奭已即位，朝廷仰赖宣帝遗诏所命辅政大臣。'],{kind:'throne'});
+ return s;
+}
+function applyUsurperScenario(s){
+ s.persons['fictional-pang-chong'].office=null;appoint(s,'dasima','fictional-pang-chong');s.court.favor['fictional-pang-chong']=60;
+ s.persons['shi-gao'].alive=false;s.persons['shi-gao'].death=-49;
+ s.persons['liu-shi'].health=35;s.persons['fictional-su-heng'].empress=false;
+ s.court.factions.haoqiang.influence=45;s.court.factions.waiqi.influence=35;recomputeInfluence(s);
+ log(s,['Alternate history: Pang Chong holds the seal of the Grand Marshal.','架空历史：庞崇执大司马印。'],{kind:'throne'});
+}
+function applyDisputedScenario(s){
+ s.throne.orthodox=null;s.throne.occupant=null;s.throne.history=[];s.throne.claimants=[{id:'liu-shi',since:{year:s.year,month:s.month}},{id:'liu-qin',since:{year:s.year,month:s.month}}];
+ s.throne.support={'liu-shi':{ru:80,waiqi:70,huanguan:40,frontier:40,haoqiang:30},'liu-qin':{ru:30,waiqi:30,huanguan:60,frontier:60,haoqiang:70}};s.throne.paralysis=4;
+ log(s,['Alternate history: no heir is confirmed; Liu Shi and Liu Qin each claim the throne.','架空历史：储位未定，刘奭与刘钦各自争位。'],{kind:'throne'});
+}
+
+// ---------- orders ----------
+export function moveArmy(s,armyId,to,{owner=s.player}={}){
+ const a=s.armies.find(x=>x.id===armyId);if(!a||a.owner!==owner||a.men<=0)return {ok:false,reason:'invalid'};
+ if(a.forming)return {ok:false,reason:'forming'};
+ const link=routeBetween(a.region,to);if(!link)return {ok:false,reason:'not_adjacent'};
+ const dest=s.regions.find(r=>r.id===to);
+ if(dest.owner&&dest.owner!==owner&&!atWar(s,owner,dest.owner)&&!access(s,owner,dest.owner))return {ok:false,reason:'no_access'};
+ a.move={to,months:marchMonths(s,a,to),from:a.region};return {ok:true,months:a.move.months};
+}
+export function setTaxLevel(s,level){if(!['low','normal','high'].includes(level))return {ok:false};s.taxLevel=level;return {ok:true}}
+export function designateHeir(s,id){
+ if(s.player!=='han'&&s.player!=='han_loyalist')return {ok:false,reason:'not_han'};
+ const e=eligibility(s,id);if(!e.ok)return {ok:false,reason:e.reasons[0]};
+ s.throne.heir=id;s.throne.support[id]||={};for(const f of Object.keys(s.court.factions))s.throne.support[id][f]=Math.max(s.throne.support[id][f]||0,55);
+ log(s,['%NAME% is named heir apparent.','立%NAME%为皇太子。'],{who:id,kind:'throne'});return {ok:true};
+}
+export function elevateEmpress(s,id){const p=s.persons[id];if(!p||p.sex!=='f'||!p.alive)return {ok:false};for(const q of Object.values(s.persons))q.empress=false;p.empress=true;s.pendingEmpress=null;s.court.factions.waiqi.influence+=5;log(s,['%NAME% is made empress.','立%NAME%为皇后。'],{who:id,kind:'court'});return {ok:true}}
+
+// ---------- monthly simulation ----------
+function economy(s){
+ const capacity=s.court?adminCapacity(s)/100:0.6;
+ for(const [id,f] of Object.entries(s.factions)){
+  if(f.defeated)continue;const own=s.regions.filter(r=>r.owner===id);if(!own.length)continue;
+  const taxRate=id==='han'||id==='han_loyalist'||id==='rival_court'?{low:0.7,normal:1,high:1.3}[s.taxLevel]*(s.taxRelief>0?0.6:1)+(focusState(s,id).mod.tax||0):1;
+  const loyaltyF=r=>0.4+r.loyalty/150;
+  const income=own.reduce((a,r)=>a+r.tax*loyaltyF(r),0)*0.12*(id==='han'?0.5+capacity:1)*taxRate*(s.throne.paralysis>0&&id==='han'?0.6:1);
+  const grain=own.reduce((a,r)=>a+(r.grain+(r.irrigation||0))*loyaltyF(r),0)*0.27;
+  const armies=s.armies.filter(a=>a.owner===id&&a.men>0);
+  const upkeep=armies.reduce((a,x)=>a+x.men/1000*templateStats(x.template).cost*0.22,0);
+  const eat=armies.reduce((a,x)=>a+x.men/1000*templateStats(x.template).grain*0.3,0);
+  f.treasury=Math.round(f.treasury+income-upkeep);f.grain=Math.round(f.grain+grain-eat-own.reduce((a,r)=>a+r.pop*0.02,0));
+  f.manpower=Math.round(Math.min(own.reduce((a,r)=>a+r.pop*1500,0),f.manpower+own.reduce((a,r)=>a+r.pop*4,0)));f.horses=Math.round((f.horses||0)+own.filter(r=>r.horses).length*150);
+  if(id==='han'&&s.taxLevel==='high')for(const r of own)r.loyalty=clamp(r.loyalty-0.6);
+  if(id==='han'&&s.taxLevel==='low')for(const r of own)r.loyalty=clamp(r.loyalty+0.4);
+  if(f.treasury<0)f.stability=clamp(f.stability-1);if(f.grain<0)f.stability=clamp(f.stability-2);
+ }
+}
+function movement(s){
+ for(const a of s.armies.filter(x=>x.move&&x.men>0)){
+  a.move.months--;
+  if(a.move.months<=0){const dest=s.regions.find(r=>r.id===a.move.to);
+   if(dest.owner&&dest.owner!==a.owner&&!atWar(s,a.owner,dest.owner)&&!access(s,a.owner,dest.owner)){a.move=null;continue}
+   a.region=a.move.to;a.move=null;}
+ }
+ for(const a of s.armies)if(a.forming>0)a.forming--;
+}
+function supply(s){
+ for(const a of s.armies.filter(x=>x.men>0)){
+  const sp=supplyFor(s,a,{access:(x,y)=>access(s,x,y)});
+  let att=sp.attrition;if(sp.fodderShort&&!(focusState(s,a.owner).mod.cavalrySupply))att+=0.01;
+  if(att>0){a.men=Math.max(0,Math.round(a.men*(1-att)));a.supply=clamp(a.supply-10)}else a.supply=clamp(a.supply+10);
+  a.training=clamp((a.training||0)+(a.move?0:1));a.morale=clamp(a.morale+(a.supply>60?1:-2));
+ }
+}
+const skill=s=>a=>a.commander&&s.persons[a.commander]?.alive?(s.persons[a.commander].military||s.persons[a.commander].competence||50):45;
+function battles(s){
+ const regions=[...new Set(s.armies.filter(a=>a.men>0).map(a=>a.region))];
+ for(const rid of regions){
+  const here=s.armies.filter(a=>a.region===rid&&a.men>0&&!a.move);
+  const owners=[...new Set(here.map(a=>a.owner))];
+  for(let i=0;i<owners.length;i++)for(let j=i+1;j<owners.length;j++){
+   const A=owners[i],B=owners[j];if(!atWar(s,A,B))continue;
+   const region=s.regions.find(r=>r.id===rid);
+   const defender=region.owner===B?B:region.owner===A?A:B,attacker=defender===A?B:A;
+   const att=here.filter(a=>a.owner===attacker&&a.men>0),def=here.filter(a=>a.owner===defender&&a.men>0);if(!att.length||!def.length)continue;
+   const result=resolveBattle(s,att,def,rid,{skill:skill(s),rand:()=>roll(s,'battle'+rid+A+B)});
+   const winner=result.outcome==='attacker_won'||result.outcome==='defender_withdrew'?attacker:defender;
+   if(winner===s.player)s.stats.battlesWon++;
+   if(winner==='han')s.militaryRecord=clamp((s.militaryRecord||0)+1,-10,10);else if(attacker==='han'||defender==='han')s.militaryRecord=clamp((s.militaryRecord||0)-1,-10,10);
+   if(result.outcome.endsWith('withdrew'))for(const x of (result.outcome==='defender_withdrew'?def:att)){const back=neighbourFor(s,x);if(back)x.region=back}
+   else if(result.outcome==='attacker_won')for(const x of def){const back=neighbourFor(s,x);if(back)x.region=back;else x.men=Math.round(x.men*0.5)}
+   else for(const x of att){const back=neighbourFor(s,x);if(back)x.region=back}
+   s.lastBattle={region:rid,attacker,defender,outcome:result.outcome,losses:result.losses,month:monthIndex(s)};
+   log(s,['Battle at %REGION%: '+result.outcome.replace(/_/g,' ')+'.','%REGION%之战：'+({attacker_won:'攻方胜',defender_won:'守方胜',defender_withdrew:'守方撤走',attacker_withdrew:'攻方撤走'}[result.outcome])+'。'],{region:rid,kind:'war',parties:[attacker,defender]});
+  }
+ }
+ s.armies=s.armies.filter(a=>a.men>200);
+}
+function neighbourFor(s,a){const opts=s.regions.filter(r=>routeBetween(a.region,r.id)&&(r.owner===a.owner||access(s,a.owner,r.owner)));return opts[0]?.id||null}
+function sieges(s){
+ for(const r of s.regions){
+  const occupiers=s.armies.filter(a=>a.region===r.id&&a.men>0&&!a.move&&r.owner&&a.owner!==r.owner&&atWar(s,a.owner,r.owner));
+  const defenders=s.armies.filter(a=>a.region===r.id&&a.owner===r.owner&&a.men>0);
+  if(!occupiers.length||defenders.length){r.siege=null;continue}
+  const siegeSkill=occupiers.reduce((x,a)=>x+templateStats(a.template).siege*a.men/1000,0);
+  const need=Math.max(1,Math.round(1+r.fort*1.5-siegeSkill*0.15));
+  r.siege=r.siege&&r.siege.by===occupiers[0].owner?{...r.siege,months:r.siege.months+1,need}:{by:occupiers[0].owner,months:1,need};
+  if(r.siege.months>=need){
+   const prev=r.owner,taker=r.siege.by;r.owner=taker;r.loyalty=30;r.siege=null;
+   if(OASIS.includes(prev)&&taker==='han'){for(const o of OASIS){const st=s.protectorate.oasis[o];st.concern=clamp(st.concern+20);st.han=clamp(st.han-8)}log(s,['Direct annexation of an oasis alarms every Western Regions ruler.','直接吞并城郭之国，令西域诸王震恐。'],{kind:'frontier'})}
+   log(s,['%REGION% falls to %FACTION%.','%REGION%为%FACTION%所得。'],{region:r.id,faction:taker,kind:'war'});
+   if(!s.regions.some(x=>x.owner===prev)&&s.factions[prev]){s.factions[prev].defeated=true;s.wars=s.wars.filter(w=>!w.includes(prev))}
+  }
+ }
+}
+// lives: deaths, vacated offices, the emperor's death and births
+function mortality(age,health=60){const base=age<30?0.0006:age<45?0.0015:age<55?0.003:age<65?0.006:age<75?0.012:0.025;return base*(1.6-health/100)}
+function lives(s){
+ for(const p of Object.values(s.persons).filter(p=>p.alive&&p.birth!=null)){
+  const age=yearsBetween(p.birth,s.year);
+  if(roll(s,'death'+p.id)<mortality(age,p.health??60)){
+   p.alive=false;p.death=s.year;p.deathMonth=s.month;
+   if(p.office&&s.court){s.court.offices[p.office]=null;p.office=null}
+   log(s,['%NAME% dies.','%NAME%去世。'],{who:p.id,kind:'life'});
+   if(s.throne.orthodox===p.id){s.throne.lastOrthodox=p.id;s.throne.orthodox=null;s.throne.regent=null;s.throne.puppet=null;s.crises.push({kind:'succession',year:s.year,month:s.month});resolveSuccession(s)}
+   if(s.throne.occupant===p.id&&!isLiuClan(s,p.id)){s.throne.occupant=null}
+  }
+ }
+ // births to the reigning emperor and his consorts (simulated, not historical)
+ const e=s.throne.orthodox;if(e){const ep=s.persons[e],age=yearsBetween(ep.birth,s.year);
+  const consort=Object.values(s.persons).find(p=>p.alive&&p.sex==='f'&&(p.spouse||[]).includes(e)&&yearsBetween(p.birth,s.year)<42);
+  if(consort&&age>=16&&age<=55&&roll(s,'birth'+e)<0.012){
+   const sex=roll(s,'sex'+e)<0.5?'m':'f',given=GIVEN[Math.floor(roll(s,'gn'+e)*GIVEN.length)];
+   const id=`sim-liu-${monthIndex(s)}-${Math.floor(roll(s,'id'+e)*1e6)}`;
+   const rb=recordBirth(s,{id,father:e,mother:consort.id,birthSurname:'Liu',birth:s.year,sex});
+   if(rb.ok){s.persons[id]={id,name:[`Liu ${given[0]}`,`刘${given[1]}`],surname:'Liu',birthSurname:'Liu',sex,birth:s.year,death:null,father:e,mother:consort.id,record:'simulated',faction:ep.faction,role:sex==='m'?'prince':'princess',alive:true,ambition:Math.floor(roll(s,'amb'+id)*70),competence:Math.floor(30+roll(s,'cmp'+id)*50),loyalty:80,spouse:[]};
+    log(s,['A child is born to the emperor: %NAME%.','皇帝得子女：%NAME%。'],{who:id,kind:'life'})}
+  }}
+ // vacant offices draw new officials from the empire’s gentry (never Liu unless clan office)
+ if(s.court&&s.month%3===0){for(const [office,holder] of Object.entries(s.court.offices)){if(holder)continue;if(s.player==='han'&&office!=='zongzheng')continue;
+  const cand=office==='zongzheng'?Object.values(s.persons).find(p=>p.alive&&p.faction==='han'&&isLiuClan(s,p.id)&&!p.office&&s.throne.orthodox!==p.id&&p.role!=='prince'):generateOfficial(s,office);
+  if(cand)appoint(s,office,cand.id)}}
+}
+export function generateOfficial(s,office){
+ const sn=SURNAMES[Math.floor(roll(s,'sn'+office)*SURNAMES.length)],gv=GIVEN[Math.floor(roll(s,'gv'+office)*GIVEN.length)];
+ const id=`gen-${monthIndex(s)}-${office}`;if(s.persons[id])return s.persons[id];
+ const birth=s.year-30-Math.floor(roll(s,'age'+office)*20);
+ recordBirth(s,{id,father:null,mother:null,birthSurname:sn[0],birth,sex:'m'});
+ const factions=['ru','waiqi','frontier','haoqiang'];
+ s.persons[id]={id,name:[`${sn[0]} ${gv[0]}`,`${sn[1]}${gv[1]}`],surname:sn[0],birthSurname:sn[0],sex:'m',birth,death:null,father:null,mother:null,record:'fictional',faction:'han',role:office==='duhu'||office==='hexi'?'general':'official',courtFaction:factions[Math.floor(roll(s,'cf'+id)*factions.length)],alive:true,ambition:Math.floor(20+roll(s,'a'+id)*70),competence:Math.floor(35+roll(s,'c'+id)*50),loyalty:Math.floor(40+roll(s,'l'+id)*50),corruption:Math.floor(roll(s,'k'+id)*60),military:Math.floor(30+roll(s,'m'+id)*50),spouse:[]};
+ return s.persons[id];
+}
+function hanAI(s){
+ if(s.player==='han')return;
+ if(s.pendingEmpress&&s.month>=5)elevateEmpress(s,s.pendingEmpress);
+ if(!s.throne.heir&&s.throne.orthodox){const sons=Object.values(s.persons).filter(p=>p.alive&&p.father===s.throne.orthodox&&eligibility(s,p.id).ok);if(sons[0])s.throne.heir=sons[0].id}
+ if(s.month===3&&s.court&&roll(s,'hanEdict')<0.4){const types=Object.keys(EDICTS).filter(t=>!s.court.edicts.some(e=>e.type===t&&e.status!=='stalled'));const t=types[Math.floor(roll(s,'et')*types.length)];if(t)issueEdict(s,t)}
+}
+
+export function tick(s){
+ if(s.finalized)return s;
+ advanceDate(s);
+ movement(s);battles(s);sieges(s);supply(s);economy(s);lives(s);
+ hanAI(s);advanceCourt(s);
+ advanceFrontier(s,{issueMove:(a,to)=>moveArmy(s,a.id,to,{owner:a.owner})});
+ advanceSilk(s);advanceFocus(s);
+ if(s.throne.dynasty&&!s.throne.dynasty.orthodox)s.usurperMonths=(s.usurperMonths||0)+1;
+ if(s.throne.orthodox&&s.throne.dynasty?.orthodox)s.orthodoxMonths=(s.orthodoxMonths||0)+1;
+ if(!s.wars.length)s.peaceMonths=(s.peaceMonths||0)+1;else s.peaceMonths=0;
+ return s;
+}
+
+// ---------- endings & finalization ----------
+export const ENDINGS={
+ prosperous:{name:['The Prosperous Han','盛汉'],orthodox:true},
+ fractured:{name:['The Fractured Court','朝廷分裂'],orthodox:false},
+ restoration:{name:['The Han Restoration','汉室再兴'],orthodox:true},
+ usurper:{name:['The Usurper’s Dynasty','篡位新朝'],orthodox:false,note:['Not an orthodox Han imperial victory.','这不是汉室正统的胜利。']},
+ western:{name:['The Western Frontier','西域雄图'],orthodox:null},
+ endures:{name:['The Dynasty Endures','汉祚绵延'],orthodox:true}
+};
+export function evaluateEndings(s){
+ const out=[],orthodoxLiu=!!s.throne.orthodox&&isLiuClan(s,s.throne.orthodox)&&s.throne.dynasty?.orthodox;
+ const f=s.factions.han||{};
+ if(s.throne.dynasty&&!s.throne.dynasty.orthodox&&(s.usurperMonths||0)>=24)out.push('usurper');
+ if(orthodoxLiu&&(s.throne.restorations||0)>0)out.push('restoration');
+ if(s.throne.claimants.length>=2||(s.factions.rival_court&&!s.factions.rival_court.defeated))out.push('fractured');
+ if(orthodoxLiu&&!s.throne.usurpations&&(s.mandate?.value||0)>=65&&f.treasury>=500&&f.grain>=200&&(s.orthodoxMonths||0)>=60)out.push('prosperous');
+ if(OASIS.filter(o=>(s.protectorate.oasis[o]?.han||0)>=65).length>=6&&s.silk.functionalMonths>=24&&relation(s,'han','wusun')>=50)out.push('western');
+ const crises=(s.crises||[]).length+(s.throne.usurpations||0)+((s.throne.history||[]).some(h=>h.process==='civil_war_settlement')?1:0);
+ if(orthodoxLiu&&crises>=2)out.push('endures');
+ return out;
+}
+export function canFinalize(s){const months=monthIndex(s)-s.stats.startMonth;return !s.finalized&&(months>=120||evaluateEndings(s).some(e=>['usurper','restoration'].includes(e)))}
+// Achievements are computed and revealed only here. `store` persists which
+// achievements have ever paid their one-time Laurel Coin.
+export function finalizeHan(s,store=null){
+ if(!canFinalize(s))return {ok:false,reason:'unfinished'};
+ const endings=evaluateEndings(s);
+ const ach=[];const A=(id,en,zh)=>ach.push({id,name:[en,zh]});
+ if(s.throne.dynasty?.orthodox&&!s.throne.usurpations&&s.throne.orthodox&&isLiuClan(s,s.throne.orthodox))A('han_liu_preserved','The Liu Line Unbroken','刘氏不绝');
+ if((s.throne.restorations||0)>0)A('han_restorer','Restorer of Han','中兴汉室');
+ if(OASIS.every(o=>(s.protectorate.oasis[o]?.han||0)>=60))A('han_protector','Protector of the Western Regions','都护西域');
+ if(s.silk.contact.lijian.level!=='unknown')A('han_far_rumour','Tales from Beyond Anxi','安息以西的传闻');
+ if(s.silk.contact.lijian.level==='embassy')A('han_far_embassy','Envoy to the Far West','远使极西');
+ if((s.court?.reformLevel||0)>=3)A('han_reformer','A Reformed Court','更化朝政');
+ if((s.court?.audits||[]).filter(a=>a.status==='proven').length>=3)A('han_auditor','The Incorruptible Censor','秉公纠察');
+ if(s.treaties.some(t=>t.type==='tributary'&&t.parties.includes('huhanye'))&&(s.peaceMonths||0)>=60)A('han_steppe_peace','Peace on the Steppe Frontier','边塞无警');
+ let coins=0;
+ if(store){const paid=new Set(JSON.parse(store.getItem('spqr-han-laurel-paid')||'[]'));for(const a of ach)if(!paid.has(a.id)){paid.add(a.id);coins++}
+  store.setItem('spqr-han-laurel-paid',JSON.stringify([...paid]));store.setItem('spqr-laurel-coins',String(Number(store.getItem('spqr-laurel-coins')||0)+coins))}
+ s.finalized={year:s.year,month:s.month,endings,achievements:ach,laurelCoins:coins,player:s.player,scenario:s.scenario,emperor:s.throne.orthodox,dynasty:s.throne.dynasty};
+ return {ok:true,archive:s.finalized};
+}
+// During a campaign only the open objectives are visible — never achievements.
+export function visibleProgress(s){return {endingsInReach:evaluateEndings(s).map(id=>({id,name:ENDINGS[id].name,orthodox:ENDINGS[id].orthodox})),achievements:s.finalized?s.finalized.achievements:null}}
+
+// ---------- saves ----------
+export const SAVE_KEY=n=>`spqr-han-save-${n}`;
+export function serialize(s){return JSON.stringify(s)}
+export function loadHanSave(raw){
+ const s=typeof raw==='string'?JSON.parse(raw):raw;
+ if(!s||s.dlc!==DLC_ID)throw new Error('Not a Mandate of Heaven save');
+ // canonical historical birth records always come from the static record
+ for(const p of PEOPLE){const rec=s.genealogy[p.id];if(rec&&(rec.father!==p.father||rec.birthSurname!==p.birthSurname||rec.sex!==p.sex||rec.birth!==p.birth)){delete s.genealogy[p.id];recordBirth(s,{id:p.id,father:p.father,mother:p.mother,birthSurname:p.birthSurname,birth:p.birth,sex:p.sex})}
+  if(s.persons[p.id])s.persons[p.id].birthSurname=p.birthSurname}
+ s.version=SAVE_VERSION;s.throne.claimants||=[];s.throne.support||={};s.throne.history||=[];
+ const fixes=enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
+ s.loadFixes=fixes;computeMandate(s);return s;
+}
+export {statusOf,eligibility,claimStrength,emperorAuthority,adminCapacity};
