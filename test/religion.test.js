@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=multipolar-2';
+import {newGame,upgradeSave,tick} from '../engine.js?v=imperium-1';
 import {initializeReligion,religiousPolicy,advanceReligion,religiousTaxCost,populationFactor} from '../religion.js?v=dynasty-id-3';
 import {CHARACTER_CATALOG} from '../characters.js?v=dynasty-id-3';
 import {createFictionalPerson} from '../dynasties.js?v=dynasty-id-3';

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=multipolar-2';
-import {battlefieldWound,advanceCharacters,illnessRisk} from '../character-system.js?v=multipolar-2';
+import {newGame,upgradeSave} from '../engine.js?v=imperium-1';
+import {battlefieldWound,advanceCharacters,illnessRisk} from '../character-system.js?v=imperium-1';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=multipolar-2';
 
 test('battle wounds are persisted, affect risk, and notify only the owner',()=>{

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=multipolar-2';
+import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=imperium-1';
 import {reportedControl} from '../control-intelligence.js';
 import historical from '../historical-territories.js';
 

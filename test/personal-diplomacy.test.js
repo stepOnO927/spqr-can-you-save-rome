@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=multipolar-2';
+import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=imperium-1';
 import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,advancePersonalDiplomacy,personalDiplomaticCredit} from '../personal-diplomacy.js?v=multipolar-2';
-import {addReport,contestLeadership} from '../character-system.js?v=multipolar-2';
+import {addReport,contestLeadership} from '../character-system.js?v=imperium-1';
 
 test('a claimant can be contacted only after a report, and the request does not reveal hidden court status',()=>{
  const s=newGame('senate');s.knowledge.senate.egypt.reportedLeaders=['ptolemy'];contestLeadership(s,'egypt','cleopatra');s.world.characters.cicero.location='egypt';

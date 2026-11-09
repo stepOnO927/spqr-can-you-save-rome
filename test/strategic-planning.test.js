@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {newGame,tick,upgradeSave} from '../engine.js?v=multipolar-2';
+import {newGame,tick,upgradeSave} from '../engine.js?v=imperium-1';
+// These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
+// they run with the expansion's AI layer switched off (world.imperium.enabled=false).
+const legacyIsolated=g=>{g.world.imperium={enabled:false};return g};
 
 test('planner balances crisis, supplies and observed threats',()=>{
  const base={treasury:50,food:50,stability:70,ownStrength:10000,enemies:[]};
@@ -25,12 +28,12 @@ test('private personality biases bounded planning without overriding an acute cr
 });
 
 test('a cautious army concentrates real troops at the frontier instead of marching back and forth',()=>{
- const s=newGame('senate');s.difficulty='expert';tick(s);const unit=s.armies.find(a=>a.id==='xiii');
+ const s=legacyIsolated(newGame('senate'));s.difficulty='expert';tick(s);const unit=s.armies.find(a=>a.id==='xiii');
  tick(s);assert.equal(unit.region,'italiaN');assert.equal(unit.move,null);const men=unit.men+s.armies.find(a=>a.id==='viii').men;
  tick(s);assert.equal(unit.region,'italiaN');assert.equal(unit.move.to,'roma');assert.equal(unit.men,men);assert.deepEqual(unit.mergedFrom,['viii']);assert.ok(!s.armies.some(a=>a.id==='viii'));
 });
 test('a limited feint moves a real army between visible frontiers and returns it',()=>{
- const s=newGame('senate');s.difficulty='expert';s.month=9;const unit=s.armies.find(a=>a.id==='viii'),reserve=s.armies.find(a=>a.id==='xiii');unit.region='cisalpine';s.armies=[unit,reserve,...s.armies.filter(a=>a!==unit&&a!==reserve)];const men=unit.men;
+ const s=legacyIsolated(newGame('senate'));s.difficulty='expert';s.month=9;const unit=s.armies.find(a=>a.id==='viii'),reserve=s.armies.find(a=>a.id==='xiii');unit.region='cisalpine';s.armies=[unit,reserve,...s.armies.filter(a=>a!==unit&&a!==reserve)];const men=unit.men;
  tick(s);assert.equal(unit.move.to,'narbo');assert.equal(s.world.aiFeints.caesar.army,unit.id);tick(s);tick(s);
  assert.equal(unit.region,'narbo');assert.equal(unit.move.to,'cisalpine');assert.equal(unit.men,men);assert.equal(s.knowledge.senate.caesar.sightings[unit.id].region,'narbo');assert.equal(s.world.aiFeints.caesar,undefined);
 });

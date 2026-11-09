@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=multipolar-2';
+import {newGame,tick,upgradeSave} from '../engine.js?v=imperium-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=grand-chessboard-2';
 import {newScenario} from '../scenarios.js?v=multipolar-2';
 

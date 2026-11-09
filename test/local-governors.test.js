@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=multipolar-2';
+import {newGame,tick,upgradeSave} from '../engine.js?v=imperium-1';
 import {appointGovernor,dismissGovernor,governorCandidates,localGovernor,officeOf,officeCandidates,advanceOffices,governorLoyaltyEffect} from '../office-system.js?v=dynasty-id-3';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=multipolar-2';
 import {availableCommanders} from '../command-appointments.js';

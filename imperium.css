@@ -1,0 +1,77 @@
+/* IMPERIUM — national strategy, legion designer, operations. Parchment, bronze and seal-wax
+   on the campaign's dark map; shares the campaign's Georgia/Noto Serif typography. */
+:root{--imp-parch:#ebe1c6;--imp-parch2:#f4ecd6;--imp-ink:#2f2a22;--imp-muted:#6f6556;--imp-bronze:#9a7440;--imp-seal:#8e2b23;--imp-slate:#1d2321;--imp-line:#b9a983;
+ --imp-political:#6b3b5c;--imp-military:#8e2b23;--imp-diplomatic:#2f5d6b;--imp-economic:#8a6d1f;--imp-cultural:#4f6b3a;--imp-special:#3b3f6b;--imp-ok:#3f6b35;--imp-warn:#9a6a12}
+.imp-sub{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#cdbf9b;margin:14px 0 6px}
+.imp-current{background:#262d2a;border:1px solid #4d4636;padding:9px 10px;display:grid;gap:5px}
+.imp-bar{height:6px;background:#3a3a30}.imp-bar i{display:block;height:100%;background:var(--imp-bronze)}
+.imp-open{width:100%;margin-top:8px}
+.imp-list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.imp-list button{width:100%;text-align:left;background:#232a27;border:1px solid #3f3b30;color:#e8dfc8;padding:6px 8px;display:grid}
+.imp-list button:hover,.imp-list button:focus-visible{border-color:var(--imp-bronze);outline:none}
+.imp-list small{color:#b3a785}
+/* focus screen */
+.imp-focus-screen{position:fixed;inset:0;z-index:60;background:var(--imp-parch);color:var(--imp-ink);display:grid;grid-template-rows:auto 1fr auto}
+.imp-focus-screen>header{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:3px double var(--imp-bronze);background:var(--imp-parch2)}
+.imp-focus-screen h2{margin:0;font-size:20px;letter-spacing:.02em;flex:1}
+.imp-mark{background:var(--imp-seal);color:#f6ead0;padding:3px 9px;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.imp-tools{display:flex;gap:6px}.imp-tools button,.imp-designer button,.imp-plan button{border:1px solid var(--imp-bronze);background:var(--imp-parch2);color:var(--imp-ink);padding:5px 10px;min-height:30px}
+.imp-tools button:focus-visible,.imp-designer button:focus-visible,.imp-plan button:focus-visible,.imp-node:focus-visible{outline:2px solid var(--imp-seal);outline-offset:2px}
+.imp-canvas{position:relative;overflow:hidden;background:repeating-linear-gradient(0deg,transparent 0 31px,#d9cda9 31px 32px),repeating-linear-gradient(90deg,transparent 0 31px,#ddd2b1 31px 32px)}
+#imp-tree{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+.imp-col{font-size:13px;fill:var(--imp-muted);letter-spacing:.08em;text-transform:uppercase}
+.imp-link{fill:none;stroke:#a89770;stroke-width:2}.imp-link.done{stroke:var(--imp-bronze);stroke-width:3}.imp-link.any{stroke-dasharray:2 4}
+.imp-excl{stroke:var(--imp-seal);stroke-width:1.5;stroke-dasharray:6 5;fill:none}.imp-excl-mark circle{fill:var(--imp-parch2);stroke:var(--imp-seal)}.imp-excl-mark path{stroke:var(--imp-seal);stroke-width:1.6}
+.imp-node{cursor:pointer}.imp-card{fill:var(--imp-parch2);stroke:#a99a74;stroke-width:1.2}
+.imp-node:hover .imp-card,.imp-node.sel .imp-card{stroke:var(--imp-seal);stroke-width:2.5}
+.imp-band{fill:var(--imp-muted)}.b-political .imp-band,.b-political i{fill:var(--imp-political);background:var(--imp-political)}.b-military .imp-band,.b-military i{fill:var(--imp-military);background:var(--imp-military)}.b-diplomatic .imp-band,.b-diplomatic i{fill:var(--imp-diplomatic);background:var(--imp-diplomatic)}.b-economic .imp-band,.b-economic i{fill:var(--imp-economic);background:var(--imp-economic)}.b-cultural .imp-band,.b-cultural i{fill:var(--imp-cultural);background:var(--imp-cultural)}.b-special .imp-band,.b-special i{fill:var(--imp-special);background:var(--imp-special)}
+.imp-seal{fill:#e3d5b0;stroke:var(--imp-bronze);stroke-width:1.5}.glyph{fill:none;stroke:var(--imp-ink);stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round}
+.imp-t{font-size:12.5px;font-weight:700;fill:var(--imp-ink)}.imp-m{font-size:11px;fill:var(--imp-muted);font-variant-numeric:tabular-nums}.imp-s{font-size:11px;fill:var(--imp-muted);font-style:italic}.imp-alt{fill:var(--imp-bronze);font-size:13px}
+.imp-pbg{fill:#d8ccab}.imp-pfg{fill:var(--imp-bronze)}
+.s-completed .imp-card{fill:#e2d6b2;stroke:var(--imp-bronze)}.s-completed .imp-seal{fill:var(--imp-bronze)}.s-completed .glyph{stroke:#fbf2dc}
+.s-in_progress .imp-card{stroke:var(--imp-seal);stroke-width:2.2}.s-available .imp-s{fill:var(--imp-ok);font-style:normal;font-weight:700}
+.s-locked,.s-exclusive,.s-invalid{opacity:.55}.s-exclusive .imp-card{stroke:var(--imp-seal);stroke-dasharray:4 3}.s-suspended .imp-s{fill:var(--imp-warn)}
+.imp-drawer{position:absolute;top:0;right:0;bottom:0;width:min(380px,92vw);overflow:auto;background:var(--imp-parch2);border-left:3px double var(--imp-bronze);padding:16px 18px;box-shadow:-8px 0 18px #0002}
+.imp-drawer h3{margin:6px 0;font-size:19px}.imp-drawer p{line-height:1.5;max-width:60ch}.imp-drawer dl{display:grid;gap:3px 0}.imp-drawer dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--imp-muted);margin-top:8px}.imp-drawer dd{margin:0}.imp-drawer ul{margin:2px 0;padding-left:18px}
+.imp-drawer-icon{width:56px;height:56px}.imp-tags{display:flex;gap:6px;flex-wrap:wrap}.imp-tags span{font-size:11px;border:1px solid var(--imp-line);padding:1px 7px}.imp-tags .alt{border-color:var(--imp-bronze);color:var(--imp-bronze)}
+.imp-drawer .primary,.imp-designer .primary,.imp-plan .primary{background:var(--imp-seal);color:#f8ecd2;border-color:var(--imp-seal)}
+.imp-drawer button:disabled,.imp-designer button:disabled,.imp-plan button:disabled{opacity:.45;cursor:not-allowed}
+.imp-focus-screen>footer{display:flex;gap:16px;flex-wrap:wrap;padding:7px 16px;border-top:1px solid var(--imp-line);font-size:12px;color:var(--imp-muted)}
+.imp-focus-screen>footer i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}.imp-focus-screen>footer i.excl{border-top:2px dashed var(--imp-seal);height:0;width:16px}
+/* designer */
+.imp-designer{position:absolute;inset:0;overflow:auto;background:var(--imp-parch);color:var(--imp-ink);display:grid;grid-template-columns:230px minmax(320px,1fr) 300px;grid-template-rows:auto 1fr auto;gap:0 14px;padding:0 14px 14px}
+.imp-designer>header{grid-column:1/-1;display:flex;align-items:baseline;gap:12px;border-bottom:3px double var(--imp-bronze);padding:10px 0;margin-bottom:10px}.imp-designer>header h2{margin:0;font-size:20px}.imp-designer>header small{color:var(--imp-muted)}
+.imp-designer h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--imp-muted);margin:12px 0 6px}.imp-designer h4{margin:14px 0 6px;font-size:14px}
+.imp-col-list ul{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:4px}.imp-col-list li{display:flex;gap:4px;align-items:stretch}.imp-col-list li button{flex:1;text-align:left;display:grid;background:var(--imp-parch2)}.imp-col-list li.on button{border-color:var(--imp-seal);box-shadow:inset 3px 0 0 var(--imp-seal)}.imp-col-list small{color:var(--imp-muted)}
+.imp-cmp{display:flex;align-items:center}
+.imp-col-edit label,.imp-plan label{display:block;font-size:12px;color:var(--imp-muted);margin:8px 0 3px}
+.imp-col-edit input,.imp-col-edit select,.imp-col-stats select,.imp-plan select,.imp-plan input,.imp-row input{font:inherit;padding:5px 7px;border:1px solid var(--imp-line);background:var(--imp-parch2);color:var(--imp-ink);min-height:30px;width:100%}
+.imp-slots{list-style:none;margin:0;padding:0;display:grid;gap:3px}.imp-slots li{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:5px 8px;background:var(--imp-parch2);border:1px solid #d6c9a5}
+.imp-slots li small{display:block;color:var(--imp-muted);font-size:11.5px;line-height:1.35}.imp-slots li.locked{opacity:.55}.imp-slots li em{grid-column:1/-1;font-size:11px;color:var(--imp-seal)}
+.imp-count{display:flex;align-items:center;gap:4px}.imp-count button{width:28px;padding:0}.imp-count output{min-width:22px;text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
+.imp-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}.imp-row select{flex:1;min-width:140px}
+.imp-err{color:var(--imp-seal);font-size:13px}.hint{line-height:1.45}
+.imp-stats{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0;font-size:13px}.imp-stats dt{color:var(--imp-muted)}.imp-stats dd{margin:0;font-variant-numeric:tabular-nums}
+.imp-meter{display:inline-block;width:70px;height:6px;background:#d8ccab;vertical-align:middle;margin-right:6px}.imp-meter i{display:block;height:100%;background:var(--imp-bronze)}
+.imp-terrain{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:13px}.imp-terrain li{display:grid;grid-template-columns:60px 80px auto;align-items:center}.imp-terrain .neg{color:var(--imp-seal)}.imp-terrain .pos{color:var(--imp-ok)}
+.imp-conc{font-size:13px;padding:4px 7px;border-left:3px solid var(--imp-ok)}.imp-conc.l-elevated{border-color:var(--imp-warn)}.imp-conc.l-high{border-color:var(--imp-seal);color:var(--imp-seal)}
+.imp-compare{grid-column:1/-1}.imp-scroll{overflow-x:auto}.imp-compare table{border-collapse:collapse;font-size:13px}.imp-compare th,.imp-compare td{border-bottom:1px solid var(--imp-line);padding:5px 10px;text-align:left;font-variant-numeric:tabular-nums}
+@media(max-width:1100px){.imp-designer{grid-template-columns:1fr;}}
+/* planner panel (dark inspector) */
+.imp-plans{list-style:none;margin:0;padding:0;display:grid;gap:4px}.imp-plans button{width:100%;text-align:left;background:#232a27;border:1px solid #3f3b30;color:#e8dfc8;padding:6px 8px;display:grid}.imp-plans li.on button{border-color:var(--imp-bronze)}
+.imp-plan{background:var(--imp-parch);color:var(--imp-ink);padding:10px 12px;margin-top:10px;border-top:3px double var(--imp-bronze)}.imp-plan h3{margin:0 0 6px;font-size:16px}.imp-plan h4{margin:12px 0 5px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--imp-muted)}
+.imp-plan small[class^="ps-"],.imp-plans small{font-size:11px}.ps-needs_attention{color:#c4492f!important}.ps-active{color:#7fae6b}.ps-preparing{color:#d0a24a}
+.imp-roles{list-style:none;margin:0;padding:0;display:grid;gap:3px}.imp-roles li{display:flex;justify-content:space-between;gap:6px;align-items:center;background:var(--imp-parch2);padding:4px 7px;border:1px solid #d6c9a5}.imp-roles small{display:block;color:var(--imp-muted)}
+.imp-plan .link{border:0;background:none;color:var(--imp-seal);text-decoration:underline;padding:2px}
+.imp-add{border:1px solid var(--imp-line);padding:6px 8px;margin:8px 0;display:grid;gap:5px}.imp-add legend{font-size:12px;color:var(--imp-muted)}
+.imp-check{display:flex!important;gap:6px;align-items:center}.imp-check input{width:auto!important;min-height:0!important}
+.imp-path{font-size:13px;font-weight:700}
+.imp-counsel{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:13px}.imp-counsel li{border-left:3px solid var(--imp-line);padding-left:7px}.imp-counsel .st-support{border-color:var(--imp-ok)}.imp-counsel .st-caution{border-color:var(--imp-warn)}.imp-counsel .st-oppose{border-color:var(--imp-seal)}
+.imp-events{list-style:none;margin:0;padding:0;font-size:12px;display:grid;gap:2px}.imp-plan .neg{color:var(--imp-seal)}
+/* map overlay */
+.imp-ov{pointer-events:none}.imp-arrow{stroke:#f2d58c;stroke-width:3.2;fill:none;stroke-linecap:round;filter:drop-shadow(0 1px 1px #000a)}.imp-ov.on.imp-arrow{stroke:#ffeab0;stroke-width:4}
+.imp-head{fill:#f2d58c}.imp-dash{stroke:#e6d8b0;stroke-width:1.6;stroke-dasharray:4 4;fill:none}.imp-draft{stroke:#ffb36b;stroke-width:3;stroke-dasharray:7 4;fill:none}
+.imp-sym circle{fill:#2a2622;stroke:#f2d58c;stroke-width:1.4}.imp-sym path{fill:none;stroke:#f2d58c;stroke-width:1.4}.imp-ov.ps-needs_attention circle{stroke:#ff8b6b}
+.imp-reach{fill:none;stroke:#ffb36b;stroke-width:2;stroke-dasharray:3 3;pointer-events:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media(prefers-reduced-motion:reduce){.imp-focus-screen *{transition:none!important}}

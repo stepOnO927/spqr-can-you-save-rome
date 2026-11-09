@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=multipolar-2';
+import {newGame,tick,upgradeSave} from '../engine.js?v=imperium-1';
 import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js';
 import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js?v=dynasty-id-3';
-import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=multipolar-2';
+import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=imperium-1';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=multipolar-2';
 
 test('a sick Roman commander retains nominal office while an available officer acts temporarily',()=>{
