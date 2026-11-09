@@ -98,4 +98,5 @@ National Focus Trees, the Legion Designer and the Operational Battle Planner, bu
 - The terrain atlas (`map-lab`) links to the three IMPERIUM screens. The screens themselves open in the campaign view, and the campaign carries over.
 - Commander specialties are simulated defaults for named characters and hashed values for others.
 - Every module changed by IMPERIUM (`engine.js`, `character-system.js`, `legacy.js`, `app.js`) is now loaded everywhere as `?v=imperium-1`, so browsers fetch the new versions.
-- The browser smoke test has run locally in Chrome. It has not yet run in GitHub Actions.
+- GitHub Actions (PR #164, run 42662656117) passed: `npm test`, the existing browser smokes, `tools/imperium-smoke.mjs` and both simulation scripts.
+- The ally-warning branch (`feature/scouted-ally-warnings`) is separate. A local merge with this branch has one conflict in the `tick()` order plus version-string conflicts; once resolved, all 627 tests and both simulations pass.
