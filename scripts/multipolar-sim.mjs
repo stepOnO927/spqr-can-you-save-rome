@@ -1,4 +1,4 @@
-import {newGame,tick} from '../engine.js?v=multipolar-2';
+import {newGame,tick} from '../engine.js?v=imperium-1';
 import assert from 'node:assert/strict';
 
 // Identical unforced openings, different seeded random streams; both the

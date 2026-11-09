@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js?v=multipolar-2';
-import {observeArmies,reportedArmies} from '../character-system.js?v=multipolar-2';
+import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js?v=imperium-1';
+import {observeArmies,reportedArmies} from '../character-system.js?v=imperium-1';
 import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer,visibleSummaryEvidence} from '../visibility.js';
 
 test('battle projection hides opponent details while preserving actual simulation evidence',()=>{

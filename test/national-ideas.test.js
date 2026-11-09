@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=multipolar-2';
+import {newGame,upgradeSave} from '../engine.js?v=imperium-1';
 import {startResearch,equipIdea,advanceInventions} from '../inventions.js?v=grand-chessboard-2';
 import {hasNationalIdea} from '../national-ideas.js?v=grand-chessboard-2';
 import {plotFormationChance} from '../conspiracies.js?v=dynasty-id-3';

@@ -4,10 +4,10 @@ import {identity,factionMark} from './identity.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=dynasty-id-3';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=phase-x-1';
-import {forecastEconomy,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, answerPeaceOffer,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=multipolar-2';
+import {forecastEconomy,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, answerPeaceOffer,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=imperium-1';
 import {decideDisputedHeir,personAge} from './dynasties.js?v=dynasty-id-3';
 import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=multipolar-2';
-import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=phase9-relations-1';
+import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=imperium-1';
 import {syncChronicleDispatches} from './chronicle.js?v=dynasty-id-3';
 import {renderChronicle} from './map-lab/chronicle-ui.js?v=dynasty-id-3';
 import {formatChronicleEntry,chronicleDate} from './chronicle.js?v=dynasty-id-3';
@@ -15,7 +15,7 @@ import {drawMap,mapPoint} from './map.js?v=multipolar-2';
 import {AGREEMENT_TYPES,activeAgreement,proposeAgreement,terminateAgreement} from './agreements.js?v=grand-chessboard-2';
 import {formCoalition,leaveCoalition} from './coalitions.js?v=multipolar-2';
 import {offerPoliticalContact} from './political-contacts.js?v=dynasty-id-3';
-import {reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=multipolar-2';
+import {reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=imperium-1';
 import {religiousPolicy} from './religion.js?v=dynasty-id-3';
 import {respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=multipolar-2';
 import {newScenario} from './scenarios.js?v=multipolar-2';
@@ -53,7 +53,7 @@ let state=newGame(),selectedRegion='cisalpine',selectedArmy='xiii',tab='map',ord
 const received=receiveHandoff(sessionStorage,'campaign',upgradeSave);
 setupRequired=!received;setupOpen=setupRequired;
 if(received){state=received;selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0]?.id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;chosenFaction=state.player;chosenDifficulty=state.difficulty||'standard';chosenHandicap=!!state.economicHandicap}
-if(received&&location.hash==='#government'){tab='government';panelOpen=true;history.replaceState(null,'',location.pathname+location.search)}
+if(received&&['#government','#focus','#legions','#plans'].includes(location.hash)){tab=location.hash.slice(1);panelOpen=true;history.replaceState(null,'',location.pathname+location.search)}
 const t=k=>ui[lang][k]; const n=a=>a?.[lang==='zh'?1:0]||'';
 const labelFaction=id=>n(FACTIONS[id]?.short)||id;
 const fmt=x=>Math.round(x).toLocaleString(lang==='zh'?'zh-CN':'en-US');

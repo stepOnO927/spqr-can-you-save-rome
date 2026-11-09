@@ -22,14 +22,14 @@ National Focus Trees, the Legion Designer and the Operational Battle Planner, bu
 ## Systems
 
 **National focus** (`imperium-focus-data.js`, `national-focus.js`)
-- There are 123 focuses across 9 trees: Caesar 28, Senate 23, Egypt 14, Parthia 11, Armenia 11, and Numidia, Mauretania, Galatia and Bosporus 9 each.
-- The four client kingdoms share a 6-focus institutional core, and each has its own unique branch.
+- There are 143 focuses across 11 trees: Caesar 28, Senate 23, Egypt 14, Parthia 11, Armenia 11, Numidia, Mauretania, Galatia and Bosporus 11 each, plus 6 each for the Egyptian and Parthian claimant authorities that appear in dynastic wars.
+- The four client kingdoms share a 6-focus institutional core; each adds 5 focuses of its own.
 - Every focus has a stable ID, a branch, an original icon, bilingual name, description and historical context, cost, duration, prerequisites, exclusions, preconditions, invalidation conditions, concrete effects and AI evaluation data. Alternate-history focuses are marked.
 - A focus can be available, in progress, completed, locked, mutually exclusive, suspended or invalidated.
 - Costs are paid at the start. Setting a focus aside keeps its progress. If a focus is invalidated (leader dead, government collapse, civil war), half the treasury cost is refunded and stability drops by 2; both are logged.
 - The AI scores focuses from its treasury trend, stability, food, wars, its leader’s personality, its own sightings and the focus reports it has received. Hard and expert AIs also weigh anticipated threats.
 - The AI keeps a treasury reserve, favours revenue focuses when its treasury is falling, and abandons a suspended or clearly outclassed strategy.
-- Courts that have contact with a faction learn of its completed focuses as dated reports.
+- Courts that have contact with a faction learn of its completed focuses as dated reports. These reports also appear in the Chessboard’s evidence dossier for that faction.
 
 **Legion Designer** (`legion-designer.js`)
 - There are 27 components across 7 military cultures: Roman cohorts and attachments, Hellenistic, Parthian, Armenian, North African, Galatian and Bosporan. Some components are unlocked by focuses.
@@ -73,14 +73,15 @@ National Focus Trees, the Legion Designer and the Operational Battle Planner, bu
 
 ## Tests and measurements
 
-- `npm test`: 618 tests pass. 589 existed before; 29 are new, in `test/imperium-focus.test.js`, `test/legion-designer.test.js`, `test/battle-plans.test.js` and `test/imperium-integration.test.js`.
+- `npm test`: 619 tests pass. 589 existed before; 30 are new, in `test/imperium-focus.test.js`, `test/legion-designer.test.js`, `test/battle-plans.test.js` and `test/imperium-integration.test.js`.
 - Five existing seed-engineered tests (seven test cases) pin the exact random roll of an older subsystem. They now run with `world.imperium.enabled=false`; their assertions are unchanged.
-- `node scripts/imperium-sim.mjs`: 4 fully automated expert campaigns over 36 months.
+- `node scripts/imperium-sim.mjs`: 4 fully automated expert campaigns over 36 months in the default opening, plus 4 in a fictional allied-front opening (Caesar holds Africa and Sicily; Juba is allied to the Senate).
   - Mean month 3–8 ms, slowest 43 ms.
   - Save size about 170 KB.
   - 37–40 focuses completed per run, by all 9 courts.
   - 4–5 AI armies organized under templates.
   - 3 operations per run, 2 of them multi-army.
+  - In the allied-front opening: 5–11 operations per run, reconnaissance roles used, impossible plans abandoned, and the Senate reorganizing after defeats.
 - `node scripts/multipolar-sim.mjs` still passes.
 - Chrome walkthrough, run locally through Python Playwright: focus started, tree zoomed, template saved and compared, reorganization quoted and applied, route drawn on the map, plan approved and executed, language switched. No page errors. `tools/imperium-smoke.mjs` repeats this in CI.
 
@@ -90,9 +91,11 @@ National Focus Trees, the Legion Designer and the Operational Battle Planner, bu
 
 ## Remaining limitations
 
-- In the default 49 BCE opening, the AI fields only 2–3 armies. Its operations therefore use offensive, reserve and frontline roles. Reconnaissance and supply-guard roles appear when spare forces and a missing objective sighting exist (covered by a test). Ally coordination needs an allied pair at war with the same enemy; it is implemented but was not observed in the default opening.
+- In the default 49 BCE opening, the AI fields only 2–3 armies, so its operations use offensive, reserve and frontline roles. Reconnaissance appears in the allied-front opening.
+- Supply guards appear only when a spare army stands next to the departure theater; this is covered by a test but was not observed in simulation.
+- Ally coordination is covered by a test. It was not observed in the simulated runs, because the allies happened to choose different objectives.
 - Formation profiles reach other courts only through sightings. There is no espionage report of an enemy’s template list.
-- The terrain atlas (`map-lab`) does not yet show the IMPERIUM screens; they are in the campaign view.
+- The terrain atlas (`map-lab`) links to the three IMPERIUM screens. The screens themselves open in the campaign view, and the campaign carries over.
 - Commander specialties are simulated defaults for named characters and hashed values for others.
-- `engine.js`, `app.js` and other shared modules keep their existing `?v=` cache version. New modules use `?v=imperium-1`.
+- Every module changed by IMPERIUM (`engine.js`, `character-system.js`, `legacy.js`, `app.js`) is now loaded everywhere as `?v=imperium-1`, so browsers fetch the new versions.
 - The browser smoke test has run locally in Chrome. It has not yet run in GitHub Actions.

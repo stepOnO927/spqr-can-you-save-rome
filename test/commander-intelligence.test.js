@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=multipolar-2';
-import {observeArmies,reportedArmies,reportedHealthSubjects} from '../character-system.js?v=multipolar-2';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=imperium-1';
+import {observeArmies,reportedArmies,reportedHealthSubjects} from '../character-system.js?v=imperium-1';
 import {requestPersonalMeeting} from '../personal-diplomacy.js?v=multipolar-2';
 
 test('frontier observations record a dated commander without tracking unseen changes',()=>{

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=multipolar-2';
+import {newGame,upgradeSave,tick} from '../engine.js?v=imperium-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {advanceMovements,respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from '../movements.js?v=multipolar-2';
 import {newRevolutionScenario} from '../scenarios.js?v=multipolar-2';
