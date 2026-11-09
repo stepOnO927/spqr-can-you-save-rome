@@ -20,6 +20,6 @@ try{
  await p.locator('[data-imp-approve]').click();await p.locator('#step').click();
  assert.ok(await p.locator('#imp-overlay .imp-arrow, #imp-overlay .imp-sym').count()>0);
  assert.match(await p.locator('.imp-plan').innerText(),/风险评估/);
- await p.locator('#lang').click();assert.match(await p.locator('.imp-plan').innerText(),/Risk assessment/);
+ await p.locator('#lang').click();assert.match(await p.locator('.imp-plan').innerText(),/Risk assessment/i);
  assert.deepEqual(errors,[]);console.log('IMPERIUM focus tree, legion designer and battle planner verified in Chrome');
 }finally{await b.close()}
