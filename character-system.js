@@ -441,7 +441,7 @@ export function observeArmies(s){
    (k.sightingHistory||=[]).unshift({...old,checkedYear:s.year,checkedMonth:s.month});k.sightingHistory=k.sightingHistory.slice(0,30);delete k.sightings[id];
   }
   for(const unit of s.armies){if(unit.owner===viewer||unit.move||!s.knowledge[viewer]?.[unit.owner]||!visible(unit.region))continue;
-   const k=s.knowledge[viewer][unit.owner],commanderId=CHARACTER_CATALOG[unit.characterId]?unit.characterId:null;k.sightings[unit.id]={id:unit.id,name:[...unit.name],owner:unit.owner,region:unit.region,year:s.year,month:s.month,commanderId,strengthBand:[Math.max(0,Math.floor(unit.men*.7/1000)*1000),Math.max(1000,Math.ceil(unit.men*1.3/1000)*1000)]};
+   const k=s.knowledge[viewer][unit.owner],commanderId=CHARACTER_CATALOG[unit.characterId]?unit.characterId:null;k.sightings[unit.id]={id:unit.id,name:[...unit.name],owner:unit.owner,region:unit.region,year:s.year,month:s.month,commanderId,strengthBand:[Math.max(0,Math.floor(unit.men*.7/1000)*1000),Math.max(1000,Math.ceil(unit.men*1.3/1000)*1000)],...(unit.formation?.profile?{profile:unit.formation.profile}:{})};
    if(commanderId){k.commanderReports=(k.commanderReports||[]).filter(r=>r.commanderId!==commanderId||r.armyId!==unit.id);k.commanderReports.unshift({commanderId,armyId:unit.id,armyName:[...unit.name],region:unit.region,year:s.year,month:s.month});k.commanderReports=k.commanderReports.slice(0,30)}
   }
  }

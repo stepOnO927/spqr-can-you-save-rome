@@ -46,5 +46,11 @@ export function finalizeCampaign(s){
  if((s.coalitions||[]).some(c=>c.parties?.includes(s.player)||(c.departures||[]).some(x=>x.actor===s.player)))archive.achievements.push({id:'common_cause',name:['A Common Cause','共同事业']});
  if((s.world.movements||[]).some(m=>m.parent===s.player&&m.stage==='settled'&&['negotiated','reform','transfer'].includes(m.outcome)))archive.achievements.push({id:'peaceful_settlement',name:['A Peaceful Settlement','和平和解']});
  if((s.world.religiousInstitutions||[]).some(o=>(o.history||[]).some(h=>h.actor===s.player&&['negotiate','tolerance'].includes(h.action))))archive.achievements.push({id:'civic_dialogue',name:['Civic Dialogue','公民对话']});
+ // IMPERIUM distinctions: computed only here, at official finalization; never shown before.
+ const focus=s.world.nationalFocus?.[s.player],templates=s.world.formations?.templates||{};
+ if((focus?.completed?.length||0)>=6)archive.achievements.push({id:'national_will',name:['National Will','国家意志']});
+ if(s.armies.some(a=>a.owner===s.player&&a.formation&&templates[a.formation.templateId]&&!templates[a.formation.templateId].preset))archive.achievements.push({id:'legion_reformer',name:['Reformer of the Legions','军团改革者']});
+ if((s.world.battlePlans||[]).some(p=>p.owner===s.player&&p.status==='completed'&&p.roles.length>=3))archive.achievements.push({id:'grand_operation',name:['A Grand Operation','宏大战役']});
+ archive.achievements=archive.achievements.filter((a,i,list)=>list.findIndex(x=>x.id===a.id)===i);
  d.finalized=archive;return {ok:true,archive};
 }

@@ -4,6 +4,9 @@ import {newGame,upgradeSave,region,isWar,sendInquiry,tick} from '../engine.js?v=
 import {startDynasticWar,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=dynasty-id-3';
 import {assignSuccession} from '../characters.js?v=dynasty-id-3';
 import {egyptianClaimantCandidate,advanceCharacters,contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,queueMission} from '../character-system.js?v=multipolar-2';
+// These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
+// they run with the expansion's AI layer switched off (world.imperium.enabled=false).
+const legacyIsolated=g=>{g.world.imperium={enabled:false};return g};
 const seedFor=(min,max)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=min&&q<max});
 
 test('either Egyptian co-ruler can be selected, with discontent influencing but not deciding the choice',()=>{
@@ -64,7 +67,7 @@ test('letters and missions addressed to an old claimant court do not reach a lat
 });
 
 test('a prepared response can still arrive after the original claimant court falls',()=>{
- const s=newGame('caesar');contestLeadership(s,'egypt','cleopatra');assert.equal(startDynasticWar(s,'egypt','cleopatra'),true);s.controlKnowledge.caesar.egyptUpper={owner:'egypt_claimant',year:-49,month:1,source:'travelers'};assert.equal(sendInquiry(s,'caesar','egypt_claimant').ok,true);
+ const s=legacyIsolated(newGame('caesar'));contestLeadership(s,'egypt','cleopatra');assert.equal(startDynasticWar(s,'egypt','cleopatra'),true);s.controlKnowledge.caesar.egyptUpper={owner:'egypt_claimant',year:-49,month:1,source:'travelers'};assert.equal(sendInquiry(s,'caesar','egypt_claimant').ok,true);
  // A previously composed reply is already in transit; ending the court does not erase it.
  s.inquiries[0].sealed={status:'answered',year:-49,month:1,report:{kind:'leaders',leaders:['cleopatra'],source:'official',confidence:'unverified'}};assert.equal(settleDynasticWar(s,'egypt'),true);s.world.intelSeed=1000;
  for(let i=0;i<4;i++)tick(s);assert.equal(s.inquiries[0].status,'answered');

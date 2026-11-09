@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,estimatedStrength,aiClaimantChoice,tick,upgradeSave} from '../engine.js?v=multipolar-2';
 import {addReport} from '../character-system.js?v=multipolar-2';
+// These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
+// they run with the expansion's AI layer switched off (world.imperium.enabled=false).
+const legacyIsolated=g=>{g.world.imperium={enabled:false};return g};
 
 test('AI without numerical reports estimates from its own sightings rather than real enemy forces',()=>{
  const s=newGame('caesar');s.knowledge.senate.caesar.sightings={};const before=estimatedStrength(s,'senate','caesar');assert.equal(before,4000);
@@ -32,7 +35,7 @@ test('AI weighs contradictory contemporary sources without counting forwarded co
 });
 
 test('AI compares recent claimant reports from independent sources rather than hidden court state or repeated copies',()=>{
- const s=newGame('caesar');s.month=11;s.factions.senate.treasury=100;
+ const s=legacyIsolated(newGame('caesar'));s.month=11;s.factions.senate.treasury=100;
  addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy'});addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'travelers'});addReport(s,'senate','egypt',{kind:'claimants',leaders:['ptolemy'],source:'envoy'});
  for(let i=0;i<8;i++)addReport(s,'senate','egypt',{kind:'claimants',leaders:['ptolemy'],source:'exchange',originSource:'court'});
  assert.equal(aiClaimantChoice(s,'senate','egypt'),'cleopatra');s.world.claimants.egypt=['ptolemy'];s.world.characters.cleopatra.alive=false;s.world.characters.ptolemy.health='healthy';assert.equal(aiClaimantChoice(s,'senate','egypt'),'cleopatra');assert.equal(aiClaimantChoice(s,'caesar','egypt'),null);

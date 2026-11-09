@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick,queueMission} from '../engine.js?v=multipolar-2';
 import {addReport,advanceOperations,contestLeadership,supportClaimant} from '../character-system.js?v=multipolar-2';
+// These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
+// they run with the expansion's AI layer switched off (world.imperium.enabled=false).
+const legacyIsolated=g=>{g.world.imperium={enabled:false};return g};
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 const knownClaimant=(s,actor)=>addReport(s,actor,'egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified'});
@@ -22,9 +25,9 @@ test('a rumor may falsely suggest a sponsor and no reliable information is not p
  assert.equal(t.knowledge.senate.egypt.reports[0].value,'unknown');assert.equal(queueMission(t,'senate','egypt','envoy','contacts').reason,'subject');
 });
 test('the Roman AI offers support only to claimants it has learned about',()=>{
- const unaware=newGame('caesar');unaware.month=11;unaware.factions.senate.treasury=100;contestLeadership(unaware,'egypt','cleopatra');tick(unaware);
+ const unaware=legacyIsolated(newGame('caesar'));unaware.month=11;unaware.factions.senate.treasury=100;contestLeadership(unaware,'egypt','cleopatra');tick(unaware);
  assert.equal(unaware.operations.some(o=>o.actor==='senate'&&o.type==='support'),false);
- const informed=newGame('caesar');informed.month=11;informed.factions.senate.treasury=100;knownClaimant(informed,'senate');tick(informed);
+ const informed=legacyIsolated(newGame('caesar'));informed.month=11;informed.factions.senate.treasury=100;knownClaimant(informed,'senate');tick(informed);
  const offer=informed.operations.find(o=>o.actor==='senate'&&o.type==='support');assert.equal(offer?.claimant,'cleopatra');assert.equal(offer.status,'pending');assert.ok(!informed.log.some(e=>e.en.includes('offer of support')));
 });
 test('old reports can be forwarded without becoming fresh evidence and expired contacts are not observed',()=>{
@@ -58,7 +61,7 @@ test('Parthian claimant contacts require delayed investigation and stay private 
  const r=s.knowledge.senate.parthia.reports[0];assert.equal(r.value,'caesar');assert.equal(r.verified,false);assert.equal(r.confidence,'unverified');assert.equal(s.knowledge.egypt.parthia.reports.length,0);assert.equal(queueMission(s,'senate','parthia','envoy','contacts').reason,'subject');
 });
 test('Roman AI may support a reported Parthian claimant but not a hidden one',()=>{
- function trial(informed){const s=newGame('caesar');s.month=11;s.factions.senate.treasury=100;s.world.characters.pacorus.loyalty=20;contestLeadership(s,'parthia','pacorus');if(informed)addReport(s,'senate','parthia',{kind:'claimants',leaders:['pacorus'],source:'spy',confidence:'unverified'});tick(s);return s}
+ function trial(informed){const s=legacyIsolated(newGame('caesar'));s.month=11;s.factions.senate.treasury=100;s.world.characters.pacorus.loyalty=20;contestLeadership(s,'parthia','pacorus');if(informed)addReport(s,'senate','parthia',{kind:'claimants',leaders:['pacorus'],source:'spy',confidence:'unverified'});tick(s);return s}
  assert.equal(trial(false).operations.some(o=>o.actor==='senate'&&o.target==='parthia'&&o.type==='support'),false);const s=trial(true),offer=s.operations.find(o=>o.actor==='senate'&&o.target==='parthia'&&o.type==='support');assert.equal(offer?.claimant,'pacorus');assert.equal(offer.status,'pending');assert.equal(s.knowledge.caesar.parthia.reports.length,0);
 });
 
