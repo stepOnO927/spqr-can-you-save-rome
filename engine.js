@@ -9,7 +9,7 @@ import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activ
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=2';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=7';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
-import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks} from './grand-operations.js?v=10';
+import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=11';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion} from './local-society.js?v=4';
 import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=16';
@@ -20,7 +20,7 @@ export {nationalBudget} from './national-budget.js?v=4';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
 export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=16';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
-export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=10';
+export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=11';
 export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
 export {setReligiousPolicy};
 export {queueMission};
@@ -490,7 +490,11 @@ export function aiTurn(s,owner){
   }
   const enemies=s.regions.filter(r=>isWar(s,owner,r.owner));
   const fieldStrength=strength(s,owner),emergency=fieldStrength<1500&&enemies.length>0;
-  if((emergency||f.treasury>65&&f.manpower>5500&&s.month%4===0)&&f.treasury>=24&&f.manpower>=3000&&f.food>=6){
+  // A smaller command can lose its field army while remaining below the
+  // peacetime cash threshold. Replace losses at the ordinary player cost;
+  // political control and its own current force are enough to judge pressure.
+  const stretched=s.grandMap&&outnumbered&&enemies.length>0&&fieldStrength<Math.max(6000,owned.length*350);
+  if((emergency||s.month%4===0&&f.manpower>5500&&(f.treasury>65||stretched))&&f.treasury>=24&&f.manpower>=3000&&f.food>=6){
     const border=owned.find(r=>adjacent(r.id,s).some(e=>isWar(s,owner,region(s,e.to).owner)));
     const rally=emergency?owned.find(r=>r.port||r.terrain==='urban')||border||owned[0]:border;
     if(rally)raiseAt(rally.id);
@@ -514,7 +518,7 @@ export function aiTurn(s,owner){
       const local=region(s,a.region);
       if(armySupply(s,a)<.55){
         const escape=adjacent(a.region,s).filter(e=>!e.sea&&region(s,e.to).owner===owner).map(e=>({to:e.to,supply:armySupply(s,{...a,region:e.to})})).sort((x,y)=>y.supply-x.supply)[0];
-        if(escape?.supply>armySupply(s,a)+.15){a.region=escape.to;a.morale=Math.max(15,a.morale-4);continue}
+        if(escape?.supply>armySupply(s,a)+.15&&strategicRetreat(s,a.id,escape.to,owner).ok)continue;
       }
       const borders=adjacent(a.region,s).filter(e=>isWar(s,owner,region(s,e.to)?.owner));
       if((local.port||local.terrain==='urban'||protectedJunctions.has(local.id))&&borders.length){

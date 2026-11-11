@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {GRAND_SITES,GRAND_ROUTES,GRAND_GROUPS} from './grand-map-data.js';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,previewMarch,moveArmy,tick,aiTurn,recruitFigure,setReligiousPolicy} from './engine.js';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,previewMarch,moveArmy,tick,aiTurn,recruitFigure,setReligiousPolicy,portZone} from './engine.js';
 import {grandAdjacent,armySupply,encircled,holdPosition,strategicRetreat,flankFactor,navalCapacity,availableNavalLift,canEmbark,supplyBottlenecks} from './grand-operations.js';
 import {advanceFigures,figureActive} from './great-figures.js';
 import {faithSatisfaction,advanceDemography,advanceReligion,religionPanel} from './local-society.js';
+import {advanceRecon} from './reconnaissance.js';
 import grandPolygons from './grand-territory-polygons.js';
 
 test('120 actual territories, 30 in Italy and Sicily, each with a bounded map polygon and graph entry',()=>{
@@ -44,6 +45,37 @@ test('AI reinforces an exposed, depleted winning army using the player resource 
  dominant.month=3;dominant.factions.senate.treasury=50;levies.men=5900;
  dominant.battles=[{year:dominant.year,month:dominant.month,region:'italiaN',attacker:{owner:'senate'},attackerWins:true}];
  aiTurn(dominant,'senate');assert.notEqual(levies.reconPending?.kind,'reinforce');
+});
+test('an outnumbered AI replaces field losses at the ordinary cost despite a low cash reserve',()=>{
+ const s=newGrandGame('egypt'),front=s.armies.find(a=>a.id==='xiii'),rear=s.armies.find(a=>a.id==='viii'),f=s.factions.caesar;
+ s.month=4;f.treasury=30;rear.men=0;front.men=3000;
+ const food=f.food,manpower=f.manpower,armies=s.armies.length;
+ aiTurn(s,'caesar');
+ assert.equal(s.armies.length,armies);
+ assert.equal(front.region,'cisalpine');
+ assert.equal(front.men,3000);
+ assert.equal(front.reconPending?.kind,'reinforce');
+ assert.equal(f.treasury,6);
+ assert.equal(f.food,food-6);
+ assert.equal(f.manpower,manpower-3000);
+ advanceRecon(s);
+ assert.equal(front.men,6000);
+ const stronger=newGrandGame('egypt'),senate=stronger.factions.senate;
+ stronger.month=4;senate.treasury=30;stronger.armies.find(a=>a.id==='italy').men=3000;
+ aiTurn(stronger,'senate');
+ assert.notEqual(stronger.armies.find(a=>a.id==='italy').reconPending?.kind,'reinforce');
+});
+test('AI low-supply withdrawal obeys the same retreat limits and preparation loss as the player',()=>{
+ const s=newGrandGame('egypt'),a=s.armies.find(x=>x.id==='xiii');
+ for(const r of s.regions)if(r.owner==='caesar'&&!['cisalpine','t005'].includes(r.id))r.owner='senate';
+ s.regions.find(r=>r.id==='t005').owner='caesar';
+ for(const id of ['cisalpine','t005'])s.regions.find(r=>r.id===id).food=0;
+ const blocker=s.naval.fleets.find(f=>f.owner==='senate');blocker.zone=portZone('cisalpine');blocker.order={kind:'blockade',targetPort:'cisalpine',path:[]};
+ a.stance='hold';a.prepared=3;s.factions.caesar.treasury=0;
+ assert.ok(armySupply(s,a)<.55);
+ assert.ok(armySupply(s,{...a,region:'t005'})>armySupply(s,a)+.15);
+ const morale=a.morale;aiTurn(s,'caesar');
+ assert.equal(a.region,'t005');assert.equal(a.move,null);assert.equal(a.stance,null);assert.equal(a.prepared,0);assert.equal(a.morale,morale-4);
 });
 test('AI probes a contested border using only local reports before a cash-starved risky advance',()=>{
  const setup=cash=>{const s=newGrandGame('egypt');s.armies=s.armies.filter(a=>a.id!=='viii');const legion=s.armies.find(a=>a.id==='xiii');legion.region='t016';legion.men=6154;for(const id of ['t016','roma'])s.regions.find(r=>r.id===id).owner='caesar';s.month=3;s.factions.caesar.treasury=cash;s.knowledge.caesar.senate.reports.push({kind:'strength',value:10000,year:s.year,month:s.month});return {s,legion}};
