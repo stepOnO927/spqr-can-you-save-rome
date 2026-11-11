@@ -158,12 +158,17 @@ try{
  await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
  await page.waitForTimeout(1400);
  terrainRequests.length=0;
- const aegeanCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=195');map.jumpTo({center:[27.1,38.6],zoom:9.1});return map.getCenter().toArray()});
+ const aegeanCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=196');map.jumpTo({center:[27.1,38.6],zoom:9.1});return map.getCenter().toArray()});
  assert.ok(Math.abs(aegeanCenter[0]-27.1)<.1&&Math.abs(aegeanCenter[1]-38.6)<.1,'Aegean screenshot must actually focus on the coast');
  await waitForTerrain(/\/terrain\/9\/294\//,'Aegean maximum zoom did not use bundled high-detail terrain');
  assert.deepEqual(missingTerrain,[],'Aegean maximum zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Aegean terrain unexpectedly needed the network');
  if(process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT){await page.waitForTimeout(650);await page.screenshot({path:process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT})}
+ await page.locator('#resources-help').click();assert.match(await page.locator('.national-budget').innerText(),/Home domain dues · game estimate/);
+ await page.locator('#language').click();assert.match(await page.locator('.national-budget').innerText(),/本土领地储粮 · 游戏估算/);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'the translated budget must not overflow the screen');
+ if(process.env.SPQR_ATLAS_BUDGET_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_BUDGET_SCREENSHOT});
+ await page.locator('#language').click();
  const armenia=newGrandGame('armenia');
  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),armenia);
  await page.reload({waitUntil:'domcontentloaded'});

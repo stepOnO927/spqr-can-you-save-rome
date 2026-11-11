@@ -311,7 +311,9 @@ export function sellKnowledge(s,seller,buyer,branch,id){
  const relation=s.relations[[seller,buyer].sort().join(':')]??0,price=Math.max(12,Math.round(item.cost*.9));
  if(relation<15)return {ok:false,reason:'relations'};
  if(strategicKnowledge.has(id)&&relation<30)return {ok:false,reason:'strategic'};
- if(s.factions[buyer].treasury<price)return {ok:false,reason:'buyer treasury'};
+ // An AI buyer must keep the ordinary 24-treasury levy reserve. Human buyers
+ // may deliberately spend their last treasury on a quoted knowledge offer.
+ if(s.factions[buyer].treasury<price+(buyer===s.player?0:24))return {ok:false,reason:'buyer treasury'};
  s.factions[buyer].treasury-=price;s.factions[seller].treasury+=price;
  recipient.trade.push({seller,branch,id,remaining:2,method:'sale'});return {ok:true,price};
 }
@@ -339,7 +341,7 @@ export function proposeKnowledgePurchase(s,buyer,seller,branch,id){
  if(relation<15)return {ok:false,reason:'relations'};
  if(strategicKnowledge.has(id)&&relation<30)return {ok:false,reason:'strategic'};
  const price=Math.max(12,Math.round(item.cost*.9));
- if(s.factions[buyer].treasury<price)return {ok:false,reason:'buyer treasury'};
+ if(s.factions[buyer].treasury<price+24)return {ok:false,reason:'buyer treasury'};
  source.purchaseRequests.push({buyer,branch,id,price,remaining:4});return {ok:true,price,months:4};
 }
 export function acceptKnowledgePurchase(s,seller,buyer,branch,id){

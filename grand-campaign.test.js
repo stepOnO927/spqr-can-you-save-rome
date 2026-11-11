@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {GRAND_SITES,GRAND_ROUTES,GRAND_GROUPS} from './grand-map-data.js';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,previewMarch,moveArmy,tick,aiTurn,recruitFigure,setReligiousPolicy,portZone} from './engine.js';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,previewMarch,moveArmy,tick,aiTurn,recruitFigure,setReligiousPolicy,portZone,nationalBudget} from './engine.js';
+import {budgetHtml} from './budget-ui.js';
 import {grandAdjacent,armySupply,encircled,holdPosition,strategicRetreat,flankFactor,navalCapacity,availableNavalLift,canEmbark,supplyBottlenecks} from './grand-operations.js';
 import {advanceFigures,figureActive} from './great-figures.js';
 import {faithSatisfaction,advanceDemography,advanceReligion,religionPanel} from './local-society.js';
@@ -13,6 +14,25 @@ test('120 actual territories, 30 in Italy and Sicily, each with a bounded map po
  for(const r of s.regions){assert.ok(Number.isFinite(r.lon)&&Number.isFinite(r.lat));assert.ok(ids.has(r.macro));assert.ok(r.population>0);assert.ok(grandAdjacent(r.id).length>0);assert.ok(grandPolygons.features.some(f=>f.properties.id===r.id&&f.geometry.coordinates.length))}
  for(const [a,b,kind] of GRAND_ROUTES){assert.ok(ids.has(a)&&ids.has(b));if(kind==='sea'){assert.equal(s.regions.find(r=>r.id===a).port,true);assert.equal(s.regions.find(r=>r.id===b).port,true)}}
  const seen=new Set([s.regions[0].id]),queue=[s.regions[0].id];while(queue.length)for(const e of grandAdjacent(queue.shift()))if(!seen.has(e.to)){seen.add(e.to);queue.push(e.to)}assert.equal(seen.size,120);
+});
+test('small inland kingdoms can feed their home army and lose home-domain income if conquered',()=>{
+ const s=newGrandGame('egypt');
+ for(const id of ['numidia','mauretania','armenia','parthia','galatia','bosporus']){
+  const unit=s.armies.find(a=>a.owner===id),budget=nationalBudget(s,id);
+  assert.ok(armySupply(s,unit)>=.95,`${id} home army should have an established supply line`);
+  assert.equal(budget.homeIncome,2);assert.equal(budget.homeFood,2);
+  assert.ok(budget.projectedNet>=0&&budget.foodNet>=0,`${id} opening force should be sustainable`);
+ }
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(armySupply(restored,restored.armies.find(a=>a.owner==='galatia')),1);
+ const galatia=s.regions.find(r=>r.id==='galatia'),before=nationalBudget(s,'galatia');
+ galatia.owner='senate';const after=nationalBudget(s,'galatia');
+ assert.equal(after.homeIncome,0);assert.equal(after.homeFood,0);
+ assert.ok(after.projectedNet<=before.projectedNet-2);assert.ok(after.foodNet<=before.foodNet-2);
+ assert.ok(armySupply(s,s.armies.find(a=>a.owner==='galatia'))<.5);
+ const player=newGrandGame('galatia');
+ assert.match(budgetHtml(player,'en'),/Home domain dues · game estimate/);
+ assert.match(budgetHtml(player,'zh'),/本土领地储粮 · 游戏估算/);
 });
 test('multi territory march travels leg by leg and plans realistic time',()=>{
  const s=newGrandGame('caesar'),plan=previewMarch(s,'xiii','roma');assert.equal(plan.ok,true);assert.ok(plan.path.length>=3);const start=s.armies.find(a=>a.id==='xiii');assert.equal(start.region,'cisalpine');const out=moveArmy(s,'xiii','roma');assert.equal(out.ok,true);assert.equal(start.move.to,plan.path[0].id);tick(s);assert.notEqual(start.region,'roma');assert.ok(start.move||start.region===plan.path[0].id);

@@ -491,6 +491,25 @@ test('states can exchange, sell and host scholars through priced delayed knowled
  const oldBefore=old.factions.caesar.treasury;assert.equal(researchInnovation(old,'caesar','material','quarrying').ok,true);
  assert.equal(oldBefore-old.factions.caesar.treasury,17,'legacy visiting scholars retain their old broad bonus until expiry');
 });
+test('AI knowledge buyers keep a levy reserve while human buyers may choose to spend it',()=>{
+ const ai=newGame('caesar');ai.relations['caesar:egypt']=30;
+ ai.development.caesar.knownIdeas.push('legion-training');
+ ai.factions.egypt.treasury=45;
+ assert.equal(sellKnowledge(ai,'caesar','egypt','idea','legion-training').reason,'buyer treasury');
+ assert.equal(ai.factions.egypt.treasury,45);
+ ai.factions.egypt.treasury=46;
+ assert.equal(sellKnowledge(ai,'caesar','egypt','idea','legion-training').ok,true);
+ assert.equal(ai.factions.egypt.treasury,24);
+ const human=newGame('egypt');human.relations['caesar:egypt']=30;
+ human.development.caesar.knownIdeas.push('legion-training');human.factions.egypt.treasury=22;
+ assert.equal(sellKnowledge(human,'caesar','egypt','idea','legion-training').ok,true);
+ assert.equal(human.factions.egypt.treasury,0);
+ const request=newGame('egypt');request.relations['caesar:egypt']=30;
+ request.factions.caesar.treasury=45;
+ assert.equal(proposeKnowledgePurchase(request,'caesar','egypt','material','water-control').reason,'buyer treasury');
+ request.factions.caesar.treasury=46;
+ assert.equal(proposeKnowledgePurchase(request,'caesar','egypt','material','water-control').ok,true);
+});
 test('a foreign idea studied with visiting expertise still needs cultural adaptation',()=>{
  const s=newGame('caesar');s.wars=[];s.relations['caesar:egypt']=30;s.factions.caesar.treasury=500;
  s.development.caesar.knownMaterial.push('water-control');s.development.egypt.knownIdeas.push('cultural-accommodation');

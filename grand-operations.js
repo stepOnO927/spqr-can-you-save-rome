@@ -20,7 +20,13 @@ export function grandRoute(s,unit,destination,isWar){
  const path=[];let node=destination;while(node!==start){const entry=previous.get(node);path.unshift({id:node,sea:entry.edge.sea,months:edgeMonths(entry.edge,regions[node],regions[entry.from]),distance:entry.edge.distance,road:entry.edge.road,river:entry.edge.river,mountain:entry.edge.mountain});node=entry.from}
  return {path,months:path.reduce((n,x)=>n+x.months,0),sea:path.some(x=>x.sea),supplyConcern:path.some(x=>regions[x.id].supply<7),hostile:path.some(x=>regions[x.id].owner!==unit.owner)};
 }
-function supplySources(s,owner,established=false){return s.regions.filter(r=>r.owner===owner&&(r.terrain==='urban'||(r.buildings||[]).some(x=>['granary','supply-depot'].includes(x))||r.port&&(!established||r.food>=.6||s.naval?.provisions?.[r.id]?.owner===owner&&s.naval.provisions[r.id].food>0)))}
+function supplySources(s,owner,established=false){return s.regions.filter(r=>r.owner===owner&&(
+ r.terrain==='urban'||(r.buildings||[]).some(x=>['granary','supply-depot'].includes(x))||
+ r.port&&(!established||r.food>=.6||s.naval?.provisions?.[r.id]?.owner===owner&&s.naval.provisions[r.id].food>0)||
+ // Smaller inland commands recruit and provision at their home theater.
+ // They still need local production and national reserves for an established line.
+ r.id===owner&&(!established||r.food>=.6&&s.factions[owner]?.food>=0)
+))}
 export function supplyNetwork(s,owner,established=false){
  const regions=byId(s),sources=supplySources(s,owner,established);
  const distance=new Map(sources.map(r=>[r.id,0])),queue=new Set(sources.map(r=>r.id));
