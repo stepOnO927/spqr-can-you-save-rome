@@ -11,7 +11,7 @@ import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js?v=5';
 import {budgetHtml} from './budget-ui.js?v=7';
 import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js?v=13';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from './development-ui.js?v=28';
-import {drawMap,mapPoint} from './map.js?v=55';
+import {drawMap,mapPoint} from './map.js?v=59';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=3';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=2';
 import {assessment,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=7';
@@ -29,18 +29,22 @@ Object.assign(ui.zh,{neighbors:'周边王国',improve:'改善关系 · 10¤',all
 Object.assign(ui.en,{chooseFaction:'Play as',rejected:'The proposal was declined or the conditions are not met.',diplomacyText:'Allies join wars when possible. A stronger opponent may refuse peace. A separate peace preserves current control; allies remain at war.'});
 Object.assign(ui.zh,{chooseFaction:'选择国家',rejected:'提议被拒绝或条件不足。',diplomacyText:'盟友会在条件允许时参战。较强的对手可能拒绝议和；单独议和保留现有控制，盟友的战争继续。'});
 ui.en.recruit='Raise forces · 24¤ / 3,000 men / 6 grain';ui.zh.recruit='征召军队 · 24¤ / 3,000人 / 6粮';
-Object.assign(ui.en,{political:'Political',terrainMap:'Terrain',close:'Close',startCampaign:'Begin campaign',setup:'Campaign menu',menu:'Menu',mapNote:'Natural Earth geography · operational areas are approximations',oldFaction:'This save controls a non-Roman faction.'});
-Object.assign(ui.zh,{political:'政治',terrainMap:'地形',close:'关闭',startCampaign:'开始战役',setup:'战役菜单',menu:'菜单',mapNote:'Natural Earth 地理数据 · 作战区界线为近似',oldFaction:'此存档控制的是非罗马势力。'});
+Object.assign(ui.en,{political:'Political',terrainMap:'Terrain',close:'Close',startCampaign:'Begin campaign',setup:'Campaign menu',menu:'Menu',mapNote:'Cliopatria/AWMC overlays · GSHHG coast · Mapzen/AWS relief · Natural Earth water · operational borders approximate',legacyMapNote:'Cliopatria/AWMC historical overlays · GSHHG coast · Natural Earth rivers · stripes show mixed control',oldFaction:'This save controls a non-Roman faction.'});
+Object.assign(ui.zh,{political:'政治',terrainMap:'地形',close:'关闭',startCampaign:'开始战役',setup:'战役菜单',menu:'菜单',mapNote:'Cliopatria/AWMC 历史覆盖层 · GSHHG 海岸 · Mapzen/AWS 地形 · Natural Earth 河湖 · 作战区界线为近似',legacyMapNote:'Cliopatria/AWMC 历史覆盖层 · GSHHG 海岸 · Natural Earth 河流 · 条纹表示混合控制',oldFaction:'此存档控制的是非罗马势力。'});
 ui.en.sourceNote='Polity shapes: Seshat Cliopatria v0.2.1, CC BY 4.0, for 49 BCE. Roman regional outlines: Ancient World Mapping Center, c. 60 BCE, ODbL 1.0, intersected with Cliopatria. Dates and ancient boundaries are uncertain. Several playable theaters share one historical polygon; stripes show mixed control rather than an invented boundary. Coast and rivers: Natural Earth, public domain.';ui.zh.sourceNote='政体范围：Seshat Cliopatria v0.2.1（CC BY 4.0），取覆盖公元前49年的数据。罗马区域轮廓：古代世界地图中心约前60年数据（ODbL 1.0），与 Cliopatria 范围相交。古代边界和日期存在不确定性；多个游戏战区共用一个史料多边形时，条纹表示混合控制，并不代表内部边界。海岸和河流来自公共领域 Natural Earth。';
-ui.en.mapNote='Cliopatria 49 BCE · AWMC c. 60 BCE · stripes: mixed control';ui.zh.mapNote='Cliopatria 前49年 · AWMC 约前60年 · 条纹：混合控制';
 Object.assign(ui.en,{selectTheater:'Choose theater',chooseDestination:'Destination',groupNote:'Several theaters share historical outlines; stripes indicate mixed control. The dotted Salona marker selects Illyricum: its historical command had no securely defined boundary. Diamonds mark approximate Rubicon and Castulo areas, not border lines.'});
 Object.assign(ui.zh,{selectTheater:'选择战区',chooseDestination:'目的地',groupNote:'部分战区共用历史轮廓；条纹表示混合控制。伊利里库姆的萨洛纳虚线标记可点击选择；其历史管辖边界无法确定。菱形标示卢比孔河和卡斯图洛附近的参考地点，并非边界线。'});
 Object.assign(ui.en,{development:'Development',ideas:'National Ideas'});
 Object.assign(ui.zh,{development:'文明发展',ideas:'国家理念'});
 
 let lang=localStorage.getItem('spqr-lang')==='zh'?'zh':'en';
-const initialView=()=>window.innerWidth<=800?[310,0,580,650]:[0,0,1200,650];
-let state=newGrandGame(),selectedRegion='cisalpine',selectedArmy='xiii',selectedBattle=null,reportFilters={},dismissedAlert=null,tab='map',devBranch='material',treeZoom=1,ordering=false,speed=1,playing=false,timer=null,toast='',chosenFaction='caesar',setupOpen=false,panelOpen=false,mapMode='political',view=initialView();
+const initialView=(centerId='cisalpine')=>{
+ if(window.innerWidth>800)return [0,0,1200,650];
+ const stageWidth=Math.max(200,window.innerWidth-(window.innerWidth<=700?42:58)),stageHeight=Math.max(360,window.innerHeight-54);
+ const width=Math.max(200,Math.min(580,Math.round(650*stageWidth/stageHeight))),[center]=mapPoint(centerId);
+ return [Math.max(0,Math.min(1200-width,center-width/2)),0,width,650];
+};
+let state=newGrandGame(),selectedRegion='cisalpine',selectedArmy='xiii',selectedBattle=null,reportFilters={},dismissedAlert=null,tab='map',devBranch='material',treeZoom=1,ordering=false,speed=1,playing=false,timer=null,toast='',chosenFaction='caesar',setupOpen=false,panelOpen=false,mapMode='political',view=initialView('cisalpine');
 const received=receiveHandoff(sessionStorage,'campaign',upgradeSave);
 let entryOpen=!received;
 if(received){state=received;selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0]?.id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;chosenFaction=state.player}
@@ -103,7 +107,7 @@ function render(){
   if(tab==='map'&&state.legacyScoutNote)document.querySelector('.inspector').insertAdjacentHTML('beforeend',`<p class="map-group-note">${lang==='zh'?'顾问提示：旧目击可能已经过时；进攻前派遣斥候，再比较兵力范围、报告日期与地形。':'Advisor: old sightings may be stale. Send scouts before an attack, then compare strength ranges, report dates and terrain.'}</p>`);
   const operationalArmy=army(state,selectedArmy);if(tab==='map'&&state.grandMap&&operationalArmy?.owner===state.player&&!operationalArmy.move&&!operationalArmy.siege){const exits=adjacent(operationalArmy.region,state).filter(link=>!link.sea&&region(state,link.to)?.owner===state.player);document.querySelector('.inspector').insertAdjacentHTML('beforeend',`<div class="operational-actions"><h3>${lang==='zh'?'作战态势':'OPERATIONS'}</h3><p>${lang==='zh'?'实际补给':'Actual supply'}: ${Math.round(armySupply(state,operationalArmy)*100)}% · ${operationalArmy.encircled?(lang==='zh'?'被围困':'ENCIRCLED'):(lang==='zh'?'补给线可用':'Supply route open')}</p><button id="hold-position">${lang==='zh'?'坚守阵地':'HOLD POSITION'}</button><button id="coordinate-attack">${operationalArmy.coordinated?(lang==='zh'?'取消协同':'CANCEL COORDINATION'):(lang==='zh'?'筹划侧击':'PLAN FLANKING')}</button><select id="retreat-destination"><option value="">${lang==='zh'?'撤退目的地':'Retreat destination'}</option>${exits.map(link=>`<option value="${link.to}">${esc(n(region(state,link.to).name))}</option>`).join('')}</select><button id="retreat-army">${lang==='zh'?'战略撤退':'RETREAT'}</button></div>`)}
   const a=army(state,selectedArmy),destinations=ordering&&a?adjacent(a.region,state).map(x=>region(state,x.to)):[];
-  document.querySelector('.map-wrap').insertAdjacentHTML('beforeend',`<div class="map-tools"><button id="political" class="${mapMode==='political'?'active':''}">${t('political')}</button><button id="terrain-map" class="${mapMode==='terrain'?'active':''}">${t('terrainMap')}</button><button id="zoom-in">+</button><button id="zoom-out">−</button></div>${ordering?`<div class="march-prompt">${t('target')} <label>${t('chooseDestination')} <select id="march-destination"><option value="">—</option>${destinations.map(r=>`<option value="${r.id}">${esc(n(r.name))}</option>`).join('')}</select></label> <button id="cancel-march">${t('cancel')}</button></div>`:''}<div class="map-attribution">${t('mapNote')}</div>`);
+  document.querySelector('.map-wrap').insertAdjacentHTML('beforeend',`<div class="map-tools"><button id="political" class="${mapMode==='political'?'active':''}">${t('political')}</button><button id="terrain-map" class="${mapMode==='terrain'?'active':''}">${t('terrainMap')}</button><button id="zoom-in">+</button><button id="zoom-out">−</button></div>${ordering?`<div class="march-prompt">${t('target')} <label>${t('chooseDestination')} <select id="march-destination"><option value="">—</option>${destinations.map(r=>`<option value="${r.id}">${esc(n(r.name))}</option>`).join('')}</select></label> <button id="cancel-march">${t('cancel')}</button></div>`:''}<div class="map-attribution">${t(state.grandMap?'mapNote':'legacyMapNote')}</div>`);
   document.querySelector('.inspector').classList.toggle('closed',!panelOpen);
   document.querySelector('.inspector').classList.toggle('wide',tab==='development'||tab==='ideas');
   if(document.querySelector('.dev-cards'))document.querySelector('.dev-cards').style.zoom=treeZoom;
@@ -121,7 +125,7 @@ function render(){
   if(entryOpen)bindEntry();
 }
 
-function acceptCampaign(loaded){state=loaded;stop();syncFinalizedProfile();chosenFaction=state.player;selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0].id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;ordering=false;entryOpen=false;setupOpen=false;view=initialView();render()}
+function acceptCampaign(loaded){state=loaded;stop();syncFinalizedProfile();chosenFaction=state.player;selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0].id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;ordering=false;entryOpen=false;setupOpen=false;view=initialView(army(state,selectedArmy)?.region||selectedRegion);render()}
 function offerMigration(loaded){if(loaded.grandMap){acceptCampaign(loaded);return}const modal=document.createElement('div');modal.className='migration-backdrop';modal.innerHTML=`<section class="migration-dialog"><span>SPQR · SAVE COMPATIBILITY</span><h2>${lang==='zh'?'旧版战役存档':'Older campaign save'}</h2><p>${lang==='zh'?'这份存档使用22个大战区。转换会把每个旧战区的控制权、建筑、军队及地方状态映射到新的120个领土；人物、外交、情报与战史继续保留。旧文件不会被覆盖。你也可以在旧版地图继续游玩。':'This save uses 22 broad theaters. Conversion maps control, buildings, armies and local conditions into 120 territories while retaining characters, diplomacy, intelligence and battle history. The original file stays intact. You can also continue on the older map.'}</p><div><button id="migrate-now">${lang==='zh'?'转换为大战役地图':'CONVERT TO GRAND MAP'}</button><button id="keep-legacy">${lang==='zh'?'保留旧版地图':'KEEP LEGACY MAP'}</button></div></section>`;document.body.append(modal);modal.querySelector('#migrate-now').onclick=()=>{const converted=convertToGrandMap(structuredClone(loaded));converted.legacyRunId=loaded.legacyRunId||globalThis.crypto?.randomUUID?.();converted.startYear=loaded.startYear??loaded.year;converted.startMonth=loaded.startMonth??loaded.month;modal.remove();acceptCampaign(converted)};modal.querySelector('#keep-legacy').onclick=()=>{modal.remove();acceptCampaign(loaded)}}
 function bindEntry(){
  const start=faction=>{const campaign=newGrandGame(faction);campaign.legacyScoutNote=loadProfile().purchases.includes('advisor-note');try{stageHandoff(sessionStorage,campaign,'atlas');location.assign('./map-lab/')}catch{acceptCampaign(campaign)}};
@@ -188,7 +192,7 @@ function bind(){
   const closeSetup=document.querySelector('#close-setup');if(closeSetup)closeSetup.onclick=()=>{setupOpen=false;render()};
   document.querySelectorAll('.setup-saves [data-slot]').forEach(el=>el.onclick=()=>{setupOpen=false;slot(el.dataset.slot);render()});
   const exportFile=document.querySelector('#export-file');if(exportFile)exportFile.onclick=()=>downloadCampaign(state);const importFile=document.querySelector('#import-file');if(importFile)importFile.onclick=()=>document.querySelector('#import-input').click();const importInput=document.querySelector('#import-input');if(importInput)importInput.onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{if(file.size>5_000_000)throw Error('size');setupOpen=false;offerMigration(importCampaign(await file.text()))}catch{flash(lang==='zh'?'存档文件无法读取。':'Could not import this save file.')}};
-  const start=document.querySelector('#start-campaign');if(start)start.onclick=()=>{state=newGrandGame(chosenFaction);state.legacyScoutNote=loadProfile().purchases.includes('advisor-note');selectedRegion=state.regions.find(r=>r.owner===state.player).id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;ordering=false;tab='map';panelOpen=false;setupOpen=false;view=initialView();render()};
+  const start=document.querySelector('#start-campaign');if(start)start.onclick=()=>{state=newGrandGame(chosenFaction);state.legacyScoutNote=loadProfile().purchases.includes('advisor-note');selectedRegion=state.regions.find(r=>r.owner===state.player).id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;ordering=false;tab='map';panelOpen=false;setupOpen=false;view=initialView(army(state,selectedArmy)?.region||selectedRegion);render()};
   document.querySelector('#save').onclick=()=>slot('save');document.querySelector('#load').onclick=()=>slot('load');
   document.querySelector('#play').onclick=()=>setPlaying(!playing);
   document.querySelector('#end-campaign').onclick=()=>finalizeCampaign('retired');
@@ -214,9 +218,11 @@ function bind(){
   const cancelMarch=document.querySelector('#cancel-march');if(cancelMarch)cancelMarch.onclick=()=>{ordering=false;panelOpen=true;render()};
   document.querySelector('#close-panel').onclick=()=>{panelOpen=false;render()};
   document.querySelector('#political').onclick=()=>{mapMode='political';render()};document.querySelector('#terrain-map').onclick=()=>{mapMode='terrain';render()};
-  const zoom=factor=>{const w=Math.min(1200,Math.max(300,view[2]*factor)),h=Math.min(650,Math.max(162.5,view[3]*factor));view=[Math.max(0,Math.min(1200-w,view[0]+(view[2]-w)/2)),Math.max(0,Math.min(650-h,view[1]+(view[3]-h)/2)),w,h];render()};
+  const zoom=factor=>{const compact=window.innerWidth<=800,maxWidth=compact?initialView(selectedRegion)[2]:1200,w=Math.min(maxWidth,Math.max(compact?120:300,view[2]*factor)),h=Math.min(650,Math.max(162.5,view[3]*factor));view=[Math.max(0,Math.min(1200-w,view[0]+(view[2]-w)/2)),Math.max(0,Math.min(650-h,view[1]+(view[3]-h)/2)),w,h];render()};
   document.querySelector('#zoom-in').onclick=()=>zoom(.8);document.querySelector('#zoom-out').onclick=()=>zoom(1.25);
   const svg=document.querySelector('#map-svg');svg.onwheel=e=>{e.preventDefault();zoom(e.deltaY<0?.8:1.25)};
   let drag=null;svg.onpointerdown=e=>{if(e.target.closest('[data-map-group],[data-army]'))return;drag={x:e.clientX,y:e.clientY,v:[...view]};svg.setPointerCapture(e.pointerId)};svg.onpointermove=e=>{if(!drag)return;const box=svg.getBoundingClientRect();view[0]=Math.max(0,Math.min(1200-view[2],drag.v[0]-(e.clientX-drag.x)*view[2]/box.width));view[1]=Math.max(0,Math.min(650-view[3],drag.v[1]-(e.clientY-drag.y)*view[3]/box.height));svg.setAttribute('viewBox',view.join(' '))};svg.onpointerup=()=>{drag=null};
 }
 render();
+let compactViewport=window.innerWidth<=800;
+window.addEventListener('resize',()=>{const next=window.innerWidth<=800;if(next===compactViewport)return;compactViewport=next;view=initialView(army(state,selectedArmy)?.region||selectedRegion);render()});
