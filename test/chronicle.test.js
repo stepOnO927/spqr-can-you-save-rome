@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine.js?v=strategic-offers-1';
+import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine.js?v=strategic-offers-2';
 import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports,syncChronicleDispatches} from '../chronicle.js?v=dynasty-id-3';
 
 test('between-turn dispatches appear once with their original dates without importing unverified legacy entries',()=>{
@@ -14,7 +14,7 @@ import {appointCommander} from '../command-appointments.js';
 import {planSuccession} from '../governance.js';
 
 test('36 monthly turns preserve a full chronology and three evidence-based annual reviews',()=>{
- const s=newGame('caesar');for(let i=0;i<36;i++)tick(s);
+ const s=newGame('caesar');s.wars=[];for(let i=0;i<36;i++)tick(s);
  const records=s.chronicle.entries.filter(e=>e.kind==='economy'&&e.change==='monthly');
  assert.equal(records.length,36);assert.equal(s.chronicle.monthly.length,36);assert.equal(s.chronicle.annual.length,3);
  for(const review of s.chronicle.annual)assert.equal(review.economy.treasury,s.chronicle.entries.filter(e=>e.year===review.year&&e.kind==='economy').reduce((n,e)=>n+e.delta.treasury,0));

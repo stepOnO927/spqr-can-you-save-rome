@@ -80,3 +80,5 @@
 .resource-forecast-line{margin-top:10px!important;color:#ead5a8!important}.forecast-caveat{font-size:9px!important;color:#aba897!important}
 
 .imperium-links{display:flex;flex-wrap:wrap;gap:6px 14px;margin:2px 0 10px}
+
+.tax-projection{margin-top:.7rem;border-top:1px solid rgba(153,125,75,.35);padding-top:.55rem;font-size:.82rem}.tax-row{display:flex;gap:.65rem;flex-wrap:wrap;padding:.18rem 0;border-bottom:1px solid rgba(153,125,75,.16)}.tax-row strong{min-width:5rem}.tax-projection small{display:block;margin-top:.4rem;opacity:.8}

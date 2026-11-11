@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=strategic-offers-1';
+import {newGame,upgradeSave} from '../engine.js?v=strategic-offers-2';
 import {authorityForTheater} from '../map-lab/authority-view.js';
 
 test('foreign authority uses only the viewer’s most recent observed report',()=>{

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=strategic-offers-1';
+import {newGame,upgradeSave} from '../engine.js?v=strategic-offers-2';
 import {appointOffice,advanceOffices,localGovernor} from '../office-system.js?v=dynasty-id-3';
 import {addReport,advanceOperations,previewMission,queueMission,reportedHealthSubjects,reportedOfficeTheaters} from '../character-system.js?v=imperium-1';
 import {identityKnowledge} from '../map-lab/identity-knowledge.js';

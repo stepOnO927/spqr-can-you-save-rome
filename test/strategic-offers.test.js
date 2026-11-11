@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,isWar,upgradeSave} from '../engine.js?v=strategic-offers-1';
+import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,isWar,upgradeSave} from '../engine.js?v=strategic-offers-2';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {observeDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=strategic-offers-1';
+import {buildChessboard} from '../chessboard.js?v=strategic-offers-2';
 
 function setup(seed){
  const s=newGame('caesar');s.seed=seed;s.wars.push(['egypt','senate']);s.relations['egypt:parthia']=40;

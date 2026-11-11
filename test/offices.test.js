@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=strategic-offers-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=strategic-offers-2';
 import {appointOffice,dismissOffice,officeCandidates,officeEffects,advanceOffices} from '../office-system.js?v=dynasty-id-3';
 import {availableCommanders} from '../command-appointments.js';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=multipolar-2';

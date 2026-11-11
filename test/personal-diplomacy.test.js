@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=strategic-offers-1';
+import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=strategic-offers-2';
 import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,advancePersonalDiplomacy,personalDiplomaticCredit} from '../personal-diplomacy.js?v=multipolar-2';
 import {addReport,contestLeadership} from '../character-system.js?v=imperium-1';
 

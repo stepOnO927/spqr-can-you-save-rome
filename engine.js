@@ -462,7 +462,12 @@ function arrive(s,a){
   }
 }
 
-export function forecastEconomy(s,id=s.player){const base=baseForecastEconomy(s,id),fu=formationUpkeepDelta(s,id);return {...base,treasury:base.treasury-Math.round(fu.treasury),food:base.food-Math.round(fu.food)}}
+export function forecastEconomy(s,id=s.player){const base=baseForecastEconomy(s,id),fu=formationUpkeepDelta(s,id),f=s.factions[id],food=f.food+base.food-Math.round(fu.food),treasury=f.treasury+base.treasury-Math.round(fu.treasury);return {...base,treasury:base.treasury-Math.round(fu.treasury),food:base.food-Math.round(fu.food),manpower:food<0?-Math.min(f.manpower,Math.max(170,Math.ceil(Math.abs(food)*3))):treasury<=-50?Math.floor(base.manpower*.25):base.manpower}}
+export function projectTaxPath(s,owner=s.player,level=s.factions[owner].tax,months=3){
+ const copy=structuredClone(s);copy.factions[owner].tax=level;const rows=[];
+ for(let i=0;i<months;i++){const before={treasury:copy.factions[owner].treasury,food:copy.factions[owner].food,manpower:copy.factions[owner].manpower};economy(copy);const f=copy.factions[owner],owned=copy.regions.filter(r=>r.owner===owner);rows.push({month:i+1,treasury:f.treasury-before.treasury,food:f.food-before.food,manpower:f.manpower-before.manpower,loyalty:owned.length?Math.round(owned.reduce((n,r)=>n+r.loyalty,0)/owned.length):0})}
+ return rows;
+}
 function baseForecastEconomy(s,id=s.player){const f=s.factions[id],owned=s.regions.filter(r=>r.owner===id),offices=officeEffects(s,id),ideas=activeModifiers(s,id),troops=s.armies.filter(a=>a.owner===id).reduce((n,a)=>n+a.men,0),rate={low:.65,normal:1,high:1.4}[f.tax],difficulty=id===s.player&&s.economicHandicap===true?({hard:.9,expert:.8}[s.difficulty]||1):1;return {treasury:Math.round(owned.reduce((n,r)=>n+(r.tax+(buildingModifiers(r).tax||0))*rate*(r.loyalty/100)*populationFactor(r)*(1-Math.min(80,Math.max(0,r.autonomy||0))/200),0)*difficulty*(1+(ideas.tax||0))-troops/1100)+offices.treasury+(ideas.treasury||0)-religiousTaxCost(s,id)-owned.reduce((n,r)=>n+(buildingModifiers(r).upkeep||0),0)-Math.max(0,Object.values(s.inventions?.[id]?.slots||{}).reduce((n,v)=>n+v-1,0)),food:Math.round(owned.reduce((n,r)=>n+r.food+(buildingModifiers(r).food||0),0)*difficulty-troops/1200-owned.length*2)+offices.food+(ideas.food||0),manpower:owned.length*170+(ideas.manpower||0)}}
 function economy(s){
   for(const [id,f] of Object.entries(s.factions)){
@@ -477,9 +482,15 @@ function economy(s){
     f.food+=Math.round(owned.reduce((n,r)=>n+r.food+(buildingModifiers(r).food||0),0)*difficulty-troops/1200-owned.length*2)+offices.food+(ideas.food||0);
     {const fu=formationUpkeepDelta(s,id);f.treasury-=Math.round(fu.treasury);f.food-=Math.round(fu.food)}
     f.stability=Math.max(0,Math.min(100,f.stability+offices.stability+(ideas.stability||0)+(s.month===1&&s.world.constitutionalOversight?.[id]?1:0)));
-    f.manpower+=owned.length*170+(ideas.manpower||0);
+    const manpowerGain=owned.length*170+(ideas.manpower||0);
+    if(f.food<0)f.manpower=Math.max(0,f.manpower-Math.max(170,Math.ceil(Math.abs(f.food)*3)));
+    else f.manpower+=f.treasury<=-50?Math.floor(manpowerGain*.25):manpowerGain;
     if(f.treasury<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.morale=Math.max(20,a.morale-4))}
-    if(f.food<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.men=Math.max(1,Math.round(a.men*.96)))}
+    if(f.food<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.men=Math.max(1,Math.round(a.men*(f.food<=-50?.92:.96))))}
+    if(id===s.player&&f.treasury<=-50&&!s.world.debtCrisisNotified){log(s,'Deep debt has stalled recruitment and weakened the army.','严重债务已拖慢兵源补充，并削弱军队。');s.world.debtCrisisNotified=true}
+    if(id===s.player&&f.food<=-50&&!s.world.famineNotified){log(s,'Food shortages are draining manpower and increasing army losses.','粮食短缺正在消耗兵源并增加军队减员。');s.world.famineNotified=true}
+    if(f.treasury>-50&&id===s.player)delete s.world.debtCrisisNotified;
+    if(f.food>-50&&id===s.player)delete s.world.famineNotified;
     f.treasury=Math.max(-100,Math.round(f.treasury));f.food=Math.max(-100,Math.round(f.food));
     owned.forEach(r=>{r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+(f.food<0?-2:0)+governorLoyaltyEffect(s,r.id)+(ideas.loyalty||0)+(buildingModifiers(r).loyalty||0)))});
     if(ideas.relations)for(const other of Object.keys(s.factions))if(other!==id&&other!=='rebels'){const key=[id,other].sort().join(':');s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+ideas.relations))}
@@ -633,7 +644,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
       if(prepared.ok)s.world.lastPreparation[owner]=period;
     }
   }
-  if(f.treasury>65&&f.manpower>5500&&s.month%4===0&&(!strategy||!['recover','stabilize'].includes(strategy.goal))){
+  if(f.treasury>65&&f.food>30&&forecastEconomy(s,owner).food+f.food>=0&&f.manpower>5500&&s.armies.filter(a=>a.owner===owner&&a.men>0).length<Math.max(2,Math.ceil(owned.length*.75))&&s.month%4===0&&(!strategy||!['recover','stabilize'].includes(strategy.goal))){
     const border=owned.find(r=>adjacent(r.id).some(e=>isWar(s,owner,reportedControl(s,owner,e.to)?.owner)));
     if(border&&!(owner!=='rebels'&&imperiumOn(s)&&aiRecruitFormation(s,owner,border.id,{log}).ok))recruit(s,border.id,owner);
   }
@@ -716,6 +727,19 @@ export function advanceRomanVictory(s){
  log(s,'A dispatch reports the opposing Roman command has collapsed. The campaign continues.','信使报告敌对罗马指挥方已瓦解；战役仍可继续。');
 }
 
+export function advanceRomanDefeat(s){
+ if(!['caesar','senate'].includes(s.player)||s.victory||s.defeat)return;
+ const opponent=s.player==='caesar'?'senate':'caesar';
+ if(!isWar(s,s.player,opponent)||s.armies.some(a=>a.owner===s.player&&a.men>0)){delete s.world.romanDefeatNotice;return}
+ const territory=s.regions.some(r=>r.owner===s.player);
+ if(!territory){delete s.world.romanDefeatNotice;s.defeat=true;s.victor=opponent;s.defeatDate={year:s.year,month:s.month};log(s,'The last Roman field army and remaining territory are lost. The campaign has ended in defeat.','最后一支罗马野战军和余下战区均已失去。战役以失败告终。');return}
+ let notice=s.world.romanDefeatNotice;
+ if(!notice){s.world.romanDefeatNotice={remaining:3};log(s,'No field army remains. Raise another force within three months or face defeat.','已无野战军。请在三个月内重建军队，否则战役将失败。');return}
+ if(--notice.remaining>0)return;
+ delete s.world.romanDefeatNotice;s.defeat=true;s.victor=opponent;s.defeatDate={year:s.year,month:s.month};
+ log(s,'The Roman command has collapsed without a field army. The campaign has ended in defeat.','罗马指挥体系因失去野战军而瓦解。战役以失败告终。');
+}
+
 // A durable settlement offers a peaceful completion path. The campaign can
 // continue, but renewed war before finalization ends the qualification.
 export function advancePeacefulSettlement(s){
@@ -728,6 +752,7 @@ export function advancePeacefulSettlement(s){
 }
 
 export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
+  if(s.defeat)return s;
   initializeWorld(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
   const chronicleBefore=captureCampaignState(s);
   s.month++;if(s.month>12){s.month=1;s.year++}
@@ -753,7 +778,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
     try{aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner)}finally{if(hadDifficulty)s.difficulty=originalDifficulty;else delete s.difficulty}
   }
   observeDiplomacy(s);
-  advanceRomanVictory(s);advancePeacefulSettlement(s);
+  advanceRomanDefeat(s);if(!s.defeat){advanceRomanVictory(s);advancePeacefulSettlement(s)}
   recordCampaignTurn(s,chronicleBefore);
   return s;
 }
