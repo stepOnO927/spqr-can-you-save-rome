@@ -517,6 +517,43 @@ test('AI adopts a compatible known policy when an earlier one conflicts',()=>{
  assert.equal(d.adoption?.ideaId,'public-works');
  assert.equal(d.adoption?.category,'economy');
 });
+test('AI researches a second idea, pays for institutional capacity, then adopts it after a save',()=>{
+ const s=newGrandGame('egypt'),d=development(s,'senate');
+ s.factions.senate.treasury=1000;s.month=4;
+ for(const [category,id] of Object.entries({military:'legion-training',government:'senatorial-consultation',diplomacy:'diplomatic-accommodation',economy:'public-works',culture:'rhetorical-education'})){
+  d.knownIdeas.push(id);d.slots[category][0]=id;
+ }
+ aiTurn(s,'senate');
+ assert.deepEqual([d.research?.branch,d.research?.id],['idea','public-legal-reference']);
+ months(s,3);
+ assert.ok(d.knownIdeas.includes('public-legal-reference'));
+ assert.equal(d.expansion?.category,'government');
+ assert.equal(d.slots.government.length,1);
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s))),reloaded=development(saved,'senate');
+ assert.equal(reloaded.expansion?.category,'government');
+ months(saved,11);
+ assert.deepEqual(reloaded.slots.government,['senatorial-consultation','public-legal-reference']);
+ assert.ok(saved.factions.senate.treasury<1000-23-35);
+});
+test('AI will not study a second policy before its administration or education exists',()=>{
+ const s=newGame('senate'),d=development(s,'egypt');
+ s.month=4;s.factions.egypt.treasury=500;
+ for(const [category,id] of Object.entries({military:'frontier-defense',government:'public-legal-reference',diplomacy:'diplomatic-accommodation',economy:'tax-farming',culture:'cultural-accommodation'})){
+  d.knownIdeas.push(id);d.slots[category][0]=id;
+ }
+ aiTurn(s,'egypt');
+ assert.notEqual(d.research?.branch,'idea');
+ assert.equal(d.expansion,null);
+});
+test('AI reserves expansion money before researching another policy for a full category',()=>{
+ const s=newGame('egypt'),d=development(s,'senate');
+ s.month=4;s.factions.senate.treasury=130;
+ for(const [category,id] of Object.entries({military:'legion-training',government:'senatorial-consultation',diplomacy:'diplomatic-accommodation',economy:'public-works',culture:'rhetorical-education'})){
+  d.knownIdeas.push(id);d.slots[category][0]=id;
+ }
+ aiTurn(s,'senate');
+ assert.notEqual(d.research?.branch,'idea');
+});
 test('idea capacity requires institutions as well as researched ideas and treasury',()=>{
  const s=newGame('senate'),d=development(s,'senate');s.factions.senate.treasury=500;
  d.knownIdeas.push('legion-training','frontier-defense','reserve-mobilization');

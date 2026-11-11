@@ -5,7 +5,7 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=60';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
-import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,ideaAdoptionPlan,ideaCompatibility,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=26';
+import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=26';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=3';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=7';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
@@ -491,6 +491,14 @@ export function aiTurn(s,owner){
     const unsettled=f.stability<60||owned.some(r=>(r.loyalty??70)<55);
     const categoryNeed={military:atWar?9:3,government:unsettled?9:5,diplomacy:atWar?5:7,economy:budget.projectedNet<0?11:6,culture:unsettled?6:5};
     const categoryScore=category=>categoryNeed[category]+(d.slots[category].some(v=>!v)?8:0)-5*d.knownIdeas.filter(id=>IDEAS.find(i=>i.id===id)?.category===category).length;
+    const institutions=Object.values(d.slots).flat().filter(Boolean);
+    const administration=institutions.some(id=>['senatorial-consultation','central-administration','maritime-administration'].includes(id))||owned.some(r=>r.buildings?.includes('administration'));
+    const education=institutions.some(id=>['rhetorical-education','civic-education','naval-engineering-education'].includes(id))||owned.some(r=>r.buildings?.includes('library'));
+    const categoryHasRoom=category=>{
+      const slots=d.slots[category],known=d.knownIdeas.filter(id=>IDEAS.find(i=>i.id===id)?.category===category).length;
+      if(slots.some(v=>!v))return !d.knownIdeas.some(id=>IDEAS.find(i=>i.id===id)?.category===category&&!slots.includes(id));
+      return slots.length<3&&known===slots.length&&(slots.length===1?administration||education:administration&&education&&f.stability>=55);
+    };
     const ideaScore=i=>{
       let score=categoryScore(i.category);
       if(i.id==='legion-training'&&atWar||i.id==='frontier-defense'&&!atWar)score+=3;
@@ -505,11 +513,22 @@ export function aiTurn(s,owner){
     };
     if(!d.research&&f.treasury>55+civilianReserve&&s.month%4===0){
       const ideaTurn=s.month%8===4;
-      const ideas=IDEAS.filter(i=>!d.knownIdeas.includes(i.id)&&!(i.id==='senatorial-consultation'&&!['senate','caesar'].includes(owner))&&i.prerequisites.every(id=>d.knownIdeas.includes(id))&&d.slots[i.category].some(v=>!v)&&!d.knownIdeas.some(id=>IDEAS.find(other=>other.id===id)?.category===i.category&&!d.slots[i.category].includes(id))&&ideaCompatibility(s,owner,i.id,d.slots[i.category].indexOf(null)).ok&&f.treasury>=i.cost).sort((a,b)=>ideaScore(b)-ideaScore(a));
+      const ideas=IDEAS.filter(i=>{
+        const slots=d.slots[i.category],empty=slots.indexOf(null);
+        if(d.knownIdeas.includes(i.id)||i.id==='senatorial-consultation'&&!['senate','caesar'].includes(owner))return false;
+        if(!i.prerequisites.every(id=>d.knownIdeas.includes(id))||!categoryHasRoom(i.category))return false;
+        if(empty<0&&f.treasury<=100+civilianReserve+i.cost+(slots.length===1?35:60))return false;
+        return f.treasury>=i.cost&&ideaCompatibility(s,owner,i.id,empty>=0?empty:undefined).ok;
+      }).sort((a,b)=>ideaScore(b)-ideaScore(a));
       const materials=MATERIALS.filter(i=>!d.knownMaterial.includes(i.id)&&i.prerequisites.every(id=>d.knownMaterial.includes(id))&&f.treasury>=i.cost);
       if(ideaTurn&&ideas.length)researchInnovation(s,owner,'idea',ideas[0].id);
       else if(materials.length)researchInnovation(s,owner,'material',materials[0].id);
       else if(ideas.length)researchInnovation(s,owner,'idea',ideas[0].id);
+    }
+    if(!d.expansion&&f.treasury>100+civilianReserve){
+      const expandable=Object.keys(d.slots).filter(category=>d.knownIdeas.filter(id=>IDEAS.find(i=>i.id===id)?.category===category).length>d.slots[category].length&&ideaSlotExpansionCheck(s,owner,category).ok)
+        .sort((a,b)=>categoryScore(b)-categoryScore(a));
+      if(expandable.length)expandIdeaSlot(s,owner,expandable[0]);
     }
     if(!d.adoption&&f.treasury>30+civilianReserve){
       const available=IDEAS.filter(i=>d.knownIdeas.includes(i.id)&&!d.slots[i.category].includes(i.id))
