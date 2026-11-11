@@ -44,6 +44,7 @@ const drawings={
  'field-reconnaissance':'M8 51h48M14 43l14-12 8 5 14-17M13 20a7 7 0 1 0 14 0 7 7 0 1 0-14 0m30 25a7 7 0 1 0 14 0 7 7 0 1 0-14 0M20 27v11m30-14v14M29 14h12',
  'central-administration':'M10 53h44M16 53V19h32v34M22 25h20m-20 8h20m-20 8h20M32 19V9M27 12h10',
  'provincial-autonomy':'M8 51h48M15 49V27l12-9 12 9v22M39 49V31l10-8 6 8v18M21 35h12M24 49V40h6v9',
+ 'provincial-tax-review':'M8 53h48M14 14h36v32H14zM20 21h24M20 28h18M20 35h24M20 42h12M39 38l4 4 8-10M16 49h32',
  'hardline-diplomacy':'M12 51h40M20 44l9-31 7 20 8-11M16 29l12 9m18-18-10 19M31 44v8',
  'diplomatic-accommodation':'M9 49h46M13 27q10 11 19 0t19 0M13 27l7-12m-7 12 12-3m26 3-7-12m7 12-12-3M24 42l8 8 8-8',
  'commercial-agreements':'M9 51h46M12 24h40v27H12zM19 24v-9h26v9M20 34h24M20 42h24M32 24v27',

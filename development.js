@@ -51,6 +51,7 @@ export const IDEAS = [
   {id:'senatorial-consultation',category:'government',name:['Senatorial Consultation','元老院协商'],cost:20,months:2,adopt:12,effects:{stability:1,loyalty:1,decisionDelay:1},conflicts:['central-administration'],context:['Caesar describes a Senate debate over envoys that lasted several days; the stability effect is a game interpretation.','凯撒记载元老院讨论派遣使节持续数日；稳定度效果是游戏诠释。'],source:source(massiliaSource,'Caesar, Civil Wars 1.32–33')},
   {id:'central-administration',category:'government',name:['Centralized Administration','中央集权行政'],cost:26,months:4,adopt:16,effects:{treasury:2,stability:-1,loyalty:-1},conflicts:['senatorial-consultation'],context:['Varro ordered provincial levies, shipbuilding and collection in Spain; the treasury and loyalty effects are game interpretations.','瓦罗在西班牙下令征兵、造船并征集物资；国库与忠诚效果属于游戏诠释。'],source:source(siegeSource,'Caesar, Civil Wars 2.17–18')},
   {id:'provincial-autonomy',category:'government',name:['Provincial Autonomy','行省自治'],cost:25,months:3,adopt:14,effects:{loyalty:2,treasury:-2},conflicts:['central-administration'],context:['Corduba and Carmona took local action against Varro; this does not prove formal provincial autonomy or a fixed loyalty gain.','科尔杜巴与卡尔莫纳自行采取反瓦罗行动；这不证明行省享有正式自治或固定忠诚加成。'],source:source(siegeSource,'Caesar, Civil Wars 2.19')},
+  {id:'provincial-tax-review',category:'government',name:['Provincial Tax Review','行省税务复核'],cost:25,months:3,adopt:14,effects:{taxReview:1,upkeep:2},context:['Cicero says Sicilian tithe rules were reviewed by Roman magistrates and alleges that Verres overrode established protections. Regular local review is a game policy: in administratively integrated territories it softens, but does not remove, the discontent caused by high taxes.','西塞罗记述罗马官员审议西西里什一税规则，并指控维勒斯破坏既有保障。定期地方复核是游戏政策：在行政融合度较高的领土，它减轻但不消除高税引起的不满。'],source:source(verrineSource,'Cicero, In Verrem 2.3.17–21')},
   {id:'hardline-diplomacy',category:'diplomacy',name:['Hardline Diplomacy','强硬外交'],cost:20,months:2,adopt:10,effects:{diplomacyPressure:12,relations:-2},conflicts:['diplomatic-accommodation'],context:['The older Apamea settlement imposed ships, tribute and hostages on Antiochus; diplomatic pressure here is an abstract policy, not a 49 BCE event.','较早的阿帕梅亚和约向安条克索取舰船、贡赋与人质；此处外交施压是抽象政策，并非前49年的事件。'],source:source(polybiusApameaSource,'Polybius, Histories 21.42')},
   {id:'diplomatic-accommodation',category:'diplomacy',name:['Diplomatic Accommodation','外交妥协'],cost:20,months:2,adopt:10,effects:{diplomacy:5,upkeep:1},conflicts:['hardline-diplomacy'],context:['Caesar sought Massilian neutrality, but the city refused; negotiation need not succeed, and the bonus is a game value.','凯撒争取马赛保持中立，但该城拒绝；谈判未必成功，加成属于游戏数值。'],source:source(massiliaSource,'Caesar, Civil Wars 1.35')},
   {id:'commercial-agreements',category:'diplomacy',name:['Commercial Agreements','商业协定'],cost:24,months:3,adopt:12,effects:{diplomacy:3,treasury:1,upkeep:1},context:['Polybius records much earlier Roman–Carthaginian trade terms; this is treaty practice, not evidence of a new 49 BCE agreement.','波利比乌斯记载更早的罗马与迦太基贸易条款；此卡取其条约惯例，并非前49年的新协定。'],source:source(polybiusTreatySource,'Polybius, Histories 3.22–26')},
@@ -201,6 +202,10 @@ export function activeEffects(s,id){
   for(const ideaId of Object.values(d.slots).flat().filter(Boolean))for(const [key,value] of Object.entries(IDEAS.find(i=>i.id===ideaId)?.effects||{}))result[key]=(result[key]||0)+value;
   for(const r of s.regions.filter(x=>x.owner===id))for(const buildingId of r.buildings){const e=BUILDINGS.find(x=>x.id===buildingId)?.effects||{};for(const key of ['researchDiscount','constructionDiscount'])result[key]=(result[key]||0)+(e[key]||0)}
   return result;
+}
+export function taxReviewExpense(s,owner){
+ if(!s.grandMap||s.factions[owner]?.tax!=='high'||!development(s,owner)?.slots?.government?.includes('provincial-tax-review'))return 0;
+ return Math.ceil(s.regions.filter(r=>r.owner===owner&&(r.integration??60)>=65).length/12);
 }
 export function researchInnovation(s,owner,branch,id){
   const d=development(s,owner),item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id),f=s.factions[owner];
@@ -501,7 +506,7 @@ export function advanceDevelopment(s,log=()=>{}){
       for(const id of r.buildings){const b=BUILDINGS.find(x=>x.id===id);for(const k of ['stone','timber','metal'])added[k]+=b?.effects[k]||0}
     }
     for(const k of Object.keys(added))d.materials[k]=Math.min(100,d.materials[k]+added[k]);
-    f.treasury-=Object.values(d.slots).reduce((n,slots)=>n+Math.max(0,slots.length-1),0);
+    f.treasury-=Object.values(d.slots).reduce((n,slots)=>n+Math.max(0,slots.length-1),0)+taxReviewExpense(s,owner);
     const relationEffect=activeEffects(s,owner).relations||0;
     if(relationEffect)for(const other of Object.keys(s.development).filter(id=>id!==owner&&!s.wars.some(w=>w.includes(owner)&&w.includes(id)))){
       const key=[owner,other].sort().join(':');s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+relationEffect));

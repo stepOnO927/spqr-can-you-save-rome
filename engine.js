@@ -5,22 +5,22 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=60';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
-import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=25';
-import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=2';
+import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=26';
+import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=3';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=7';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
-import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=14';
+import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=15';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion} from './local-society.js?v=4';
 import {initializeFigures,advanceFigures} from './great-figures.js';
-import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=19';
+import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=20';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
 import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=2';
-import {nationalBudget} from './national-budget.js?v=5';
-export {nationalBudget} from './national-budget.js?v=5';
+import {nationalBudget} from './national-budget.js?v=6';
+export {nationalBudget} from './national-budget.js?v=6';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
-export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=19';
+export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=20';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
-export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=14';
+export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=15';
 export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
 export {setReligiousPolicy};
 export {queueMission};
@@ -376,7 +376,7 @@ function economy(s){
     f.treasury=Math.max(-100,Math.round(f.treasury));
     f.foodCapacity=budget.foodCapacity;
     f.food=Math.max(-100,Math.min(f.foodCapacity,Math.round(f.food)));
-    owned.forEach(r=>{const governor=governorLoyaltyEffect(s,r.id),works=localBuildingEffects(r),rural=productiveEstateRegion(r)&&s.month%3===0,estateStrain=effects.estateLabor&&rural?1:0,tenantSupport=effects.tenantShares&&rural?1:0;if(s.grandMap){r.civicSatisfaction=Math.max(0,Math.min(100,(r.civicSatisfaction??r.loyalty)+({low:2,normal:0,high:-2}[f.tax])+(f.food<0?-3:0)+(works.loyalty||0)+faithSatisfaction(s,r)-estateStrain+tenantSupport));r.integration=Math.max(0,Math.min(100,(r.integration??60)+(governor>0?1:0)+(works.stability>0?1:0)));}r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+(f.food<0?-2:0)+governor+(effects.loyalty||0)+(works.loyalty||0)+(s.grandMap?(r.civicSatisfaction<30?-1:r.civicSatisfaction>75?1:0)+(r.integration<35?-1:0):0)-estateStrain+tenantSupport))});
+    owned.forEach(r=>{const governor=governorLoyaltyEffect(s,r.id),works=localBuildingEffects(r),rural=productiveEstateRegion(r)&&s.month%3===0,estateStrain=effects.estateLabor&&rural?1:0,tenantSupport=effects.tenantShares&&rural?1:0,taxReview=s.grandMap&&f.tax==='high'&&effects.taxReview&&(r.integration??60)>=65?1:0,taxPressure=({low:2,normal:0,high:-2}[f.tax])+taxReview;if(s.grandMap){r.civicSatisfaction=Math.max(0,Math.min(100,(r.civicSatisfaction??r.loyalty)+taxPressure+(f.food<0?-3:0)+(works.loyalty||0)+faithSatisfaction(s,r)-estateStrain+tenantSupport));r.integration=Math.max(0,Math.min(100,(r.integration??60)+(governor>0?1:0)+(works.stability>0?1:0)));}r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+taxReview+(f.food<0?-2:0)+governor+(effects.loyalty||0)+(works.loyalty||0)+(s.grandMap?(r.civicSatisfaction<30?-1:r.civicSatisfaction>75?1:0)+(r.integration<35?-1:0):0)-estateStrain+tenantSupport))});
   }
   advanceDemography(s);
 }

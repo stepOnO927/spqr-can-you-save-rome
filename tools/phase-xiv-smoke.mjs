@@ -38,6 +38,7 @@ try{
   assert.match(await page.locator('#tech-estate-labor-control').innerText(),/distressed outmigration halved/);
   assert.match(await page.locator('#tech-negotiated-crop-shares').innerText(),/State-available food \/ month −1/);
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/Treasury \/ month −2/);
+  assert.match(await page.locator('#tech-provincial-tax-review').innerText(),/integration ≥65, monthly satisfaction and loyalty losses each fall by 1/);
   await page.locator('[data-research="legion-training"]').click();
   assert.match(await page.locator('.dev-status').first().innerText(),/Researching/);
   for(let i=0;i<3;i++)await page.locator('#step').click();
@@ -68,6 +69,7 @@ try{
   assert.match(await page.locator('#tech-estate-labor-control').innerText(),/不满人口迁出减半/);
   assert.match(await page.locator('#tech-negotiated-crop-shares').innerText(),/国库可用粮食 \/ 月 −1/);
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/国库 \/ 月 −2/);
+  assert.match(await page.locator('#tech-provincial-tax-review').innerText(),/行政融合度≥65且实行高税时/);
   await page.screenshot({path:'tools/phase-xiv-ui.png'});
   for(const lang of ['en','zh']){
     const replacing=newGrandGame('caesar');
@@ -240,6 +242,7 @@ try{
     await page.locator('[data-tab="development"]').click();
     const invite=page.locator('[data-invite-scholar="egypt"]');assert.equal(await invite.isEnabled(),true);
     assert.match(await invite.innerText(),language==='zh'?/水利管理.*个月行程/:/Water Management.*m travel/);
+    await invite.evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
     await invite.click();
     assert.match(await page.locator('.inspector').innerText(),language==='zh'?/水利管理.*个月后抵达/:/Water Management.*m until arrival/);
     for(let month=0;month<plan.travel;month++)await page.locator('#step').click();

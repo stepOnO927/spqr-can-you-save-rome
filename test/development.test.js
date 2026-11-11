@@ -41,7 +41,7 @@ test('monthly budget records paid construction and research orders without doubl
 
 test('every development node has its own interpretive illustration',()=>{
  const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
- assert.equal(art.length,67);assert.equal(new Set(art).size,67);
+ assert.equal(art.length,68);assert.equal(new Set(art).size,68);
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
@@ -100,9 +100,43 @@ test('public law and allied registration are sourced, bilingual policies with pa
  assert.equal(activeEffects(s,'senate').upkeep,2);
 });
 
+test('provincial tax review costs upkeep and only softens high-tax pressure where administration reaches',()=>{
+ const idea=IDEAS.find(x=>x.id==='provincial-tax-review');
+ assert.match(idea.source.url,/verres23\.html/);
+ assert.match(developmentPanel(newGrandGame('senate'),'en','idea'),/Provincial Tax Review/);
+ assert.match(developmentPanel(newGrandGame('senate'),'zh','idea'),/行省税务复核/);
+ const s=newGrandGame('senate');s.wars=[];s.factions.senate.treasury=500;
+ development(s,'senate').knownIdeas.push(idea.id);
+ assert.equal(adoptIdea(s,'senate',idea.id,0).ok,true);
+ months(s,2);
+ assert.equal(development(s,'senate').slots.government[0],idea.id);
+ const active=upgradeSave(JSON.parse(JSON.stringify(s))),control=upgradeSave(JSON.parse(JSON.stringify(s)));
+ development(control,'senate').slots.government[0]=null;
+ for(const state of [active,control]){
+  assert.equal(setTax(state,'senate','high'),true);
+  for(const [id,integration] of [['roma',70],['t016',50]]){
+   const province=state.regions.find(r=>r.id===id);
+   assert.equal(province.owner,'senate');province.integration=integration;province.loyalty=50;province.civicSatisfaction=50;
+  }
+ }
+ assert.equal(nationalBudget(active,'senate').ideaUpkeep,nationalBudget(control,'senate').ideaUpkeep+2);
+ assert.equal(nationalBudget(active,'senate').reviewExpense,6);
+ assert.equal(nationalBudget(control,'senate').reviewExpense,0);
+ assert.match(budgetHtml(active,'en'),/Provincial tax review<\/td><td>-6/);
+ assert.match(budgetHtml(active,'zh'),/行省税务复核<\/td><td>-6/);
+ const cashDifference=active.factions.senate.treasury-control.factions.senate.treasury;
+ tick(active);tick(control);
+ assert.equal(active.factions.senate.treasury-control.factions.senate.treasury,cashDifference-8);
+ for(const field of ['loyalty','civicSatisfaction']){
+  assert.equal(active.regions.find(r=>r.id==='roma')[field],control.regions.find(r=>r.id==='roma')[field]+1);
+  assert.equal(active.regions.find(r=>r.id==='t016')[field],control.regions.find(r=>r.id==='t016')[field]);
+ }
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(active))).development.senate.slots.government[0],idea.id);
+});
+
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,33);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,34);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
