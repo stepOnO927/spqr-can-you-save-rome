@@ -64,7 +64,13 @@ export function convertToGrandMap(s){
  for(const {army:unit,destination} of pending){const plan=grandRoute(s,unit,destination,isWar);if(!plan?.path.length){unit.move=null;unit.attackIntel=null;continue}const [first,...rest]=plan.path;unit.move={to:first.id,remaining:first.months,sea:first.sea,path:rest,final:destination};unit.attackIntel=null}
  initializeNaval(s);s.briefingBaseline=beginBriefing(s);return s;
 }
-export function newGrandGame(player='caesar'){const state=convertToGrandMap(newGame(player));initializeNaval(state);state.startYear=state.year;state.startMonth=state.month;return state}
+export function newGrandGame(player='caesar'){
+ const state=convertToGrandMap(newGame(player));initializeNaval(state);
+ // The 120-theater opening gives Caesar a six-month operating deficit and an
+ // immediate two-front war. This is a game reserve for that scenario only.
+ state.factions.caesar.treasury=180;
+ state.startYear=state.year;state.startMonth=state.month;return state;
+}
 
 function importedRunId(s){const source=JSON.stringify(s);let a=2166136261,b=0x9e3779b9;for(let i=0;i<source.length;i++){const code=source.charCodeAt(i);a=Math.imul(a^code,16777619);b=Math.imul(b^code,2246822519)}return `legacy-import-${(a>>>0).toString(16)}-${(b>>>0).toString(16)}`}
 
@@ -463,6 +469,7 @@ export function aiTurn(s,owner){
   };
   if(alert&&f.treasury>=40&&f.food>=6&&f.manpower>=3000)raiseAt(alert.regionId);
   const outnumbered=s.wars.some(w=>w.includes(owner)&&s.regions.filter(r=>r.owner===w.find(id=>id!==owner)).length>owned.length*1.5);
+  const civilianReserve=outnumbered?24+3*Math.max(0,-nationalBudget(s,owner).projectedNet):0;
   if(s.grandMap&&outnumbered&&f.treasury>=24&&f.food>=6&&f.manpower>=3000){
     const exposedWin=(s.battles||[]).find(b=>b.year===s.year&&b.month===s.month&&b.attacker?.owner===owner&&b.attackerWins&&region(s,b.region)?.owner===owner&&adjacent(b.region,s).some(e=>isWar(s,owner,region(s,e.to)?.owner)));
     if(exposedWin)raiseAt(exposedWin.region);
@@ -477,15 +484,15 @@ export function aiTurn(s,owner){
   }
   if(owner!=='rebels'){
     const d=s.development[owner];
-    if(!d.research&&f.treasury>55&&s.month%4===0){
+    if(!d.research&&f.treasury>55+civilianReserve&&s.month%4===0){
       const idea=IDEAS.find(i=>!d.knownIdeas.includes(i.id)&&['military','economy','culture'].includes(i.category));
       const material=MATERIALS.find(i=>!d.knownMaterial.includes(i.id));
       if(idea&&s.month%8===0)researchInnovation(s,owner,'idea',idea.id);
       else if(material)researchInnovation(s,owner,'material',material.id);
     }
-    if(!d.adoption&&f.treasury>30){const idea=IDEAS.find(i=>d.knownIdeas.includes(i.id)&&!d.slots[i.category].includes(i.id)&&d.slots[i.category].some(v=>!v));if(idea)adoptIdea(s,owner,idea.id,d.slots[idea.category].indexOf(null))}
-    if(f.treasury>120){for(const kind of ['stone','timber','metal'])if(d.materials[kind]<5)purchaseMaterials(s,owner,kind,5);const project=owned.flatMap(site=>BUILDINGS.map(b=>({site,b}))).find(({site,b})=>constructionCheck(s,owner,site.id,b.id).ok);if(project)startConstruction(s,owner,project.site.id,project.b.id)}
-    if(s.month%12===0&&f.treasury>75){for(const seller of Object.keys(s.development)){
+    if(!d.adoption&&f.treasury>30+civilianReserve){const idea=IDEAS.find(i=>d.knownIdeas.includes(i.id)&&!d.slots[i.category].includes(i.id)&&d.slots[i.category].some(v=>!v));if(idea)adoptIdea(s,owner,idea.id,d.slots[idea.category].indexOf(null))}
+    if(f.treasury>120+civilianReserve){for(const kind of ['stone','timber','metal'])if(d.materials[kind]<5)purchaseMaterials(s,owner,kind,5);const project=owned.flatMap(site=>BUILDINGS.map(b=>({site,b}))).find(({site,b})=>constructionCheck(s,owner,site.id,b.id).ok);if(project)startConstruction(s,owner,project.site.id,project.b.id)}
+    if(s.month%12===0&&f.treasury>75+civilianReserve){for(const seller of Object.keys(s.development)){
       if(seller===owner||isWar(s,owner,seller)||relation(s,owner,seller)<0)continue;
       const item=s.development[seller].knownMaterial.find(k=>!d.knownMaterial.includes(k));if(!item)continue;
       const result=seller===s.player?proposeKnowledgePurchase(s,owner,seller,'material',item):knowledgeTrade(s,owner,seller,'material',item);
@@ -516,7 +523,7 @@ export function aiTurn(s,owner){
       const result=partner===s.player?proposeKnowledgeExchange(s,owner,partner,'idea',offer,'idea',want):exchangeKnowledge(s,owner,partner,'idea',offer,'idea',want);
       if(result.ok){if(partner===s.player){const give=IDEAS.find(x=>x.id===want)?.name||[want,want],receive=IDEAS.find(x=>x.id===offer)?.name||[offer,offer];log(s,`${FACTIONS[owner].short[0]} proposes an exchange: ${receive[0]} for ${give[0]}. Open Development to accept or decline.`,`${FACTIONS[owner].short[1]}提议用${receive[1]}交换${give[1]}。请在“发展”界面接受或拒绝。`)}break}
     }}
-    if(owner!==s.player&&s.year>=-48&&s.month===3&&f.treasury>=70&&!s.knowledgeAgreements.some(a=>a.a===owner||a.b===owner)){
+    if(owner!==s.player&&s.year>=-48&&s.month===3&&f.treasury>=70+civilianReserve&&!s.knowledgeAgreements.some(a=>a.a===owner||a.b===owner)){
       const partners=Object.keys(s.development).filter(id=>id!==owner&&id!=='rebels').sort((a,b)=>relation(s,owner,b)-relation(s,owner,a));
       for(const partner of partners){
         const result=partner===s.player?proposeKnowledgeAgreement(s,owner,partner):negotiateKnowledgeAgreement(s,owner,partner);

@@ -35,6 +35,19 @@ test('small inland kingdoms can feed their home army and lose home-domain income
  assert.match(budgetHtml(player,'en'),/Home domain dues · game estimate/);
  assert.match(budgetHtml(player,'zh'),/本土领地储粮 · 游戏估算/);
 });
+test('grand campaign war chest funds a costly opening without rewriting older saves',()=>{
+ const grand=newGrandGame('senate'),opening=nationalBudget(grand,'caesar');
+ assert.ok(opening.projectedNet<0);
+ assert.ok(grand.factions.caesar.treasury>=6*-opening.projectedNet+48,'opening reserve should cover six deficit months and two ordinary levies');
+ const saved=upgradeSave(JSON.parse(JSON.stringify(grand)));assert.equal(saved.factions.caesar.treasury,grand.factions.caesar.treasury);
+ const legacy=newGame('caesar');assert.ok(legacy.factions.caesar.treasury<grand.factions.caesar.treasury);
+});
+test('outnumbered wartime AI preserves a field levy reserve before optional research',()=>{
+ const fighting=newGrandGame('egypt');fighting.month=12;fighting.factions.caesar.treasury=100;
+ aiTurn(fighting,'caesar');assert.equal(fighting.development.caesar.research,null);assert.equal(fighting.factions.caesar.treasury,100);
+ const peaceful=newGrandGame('egypt');peaceful.month=12;peaceful.wars=[];peaceful.factions.caesar.treasury=100;
+ aiTurn(peaceful,'caesar');assert.ok(peaceful.development.caesar.research);assert.ok(peaceful.factions.caesar.treasury<100);
+});
 test('independent diplomacy builds a reachable border alliance without committing the player',()=>{
  const s=newGrandGame('egypt');s.month=12;s.factions.numidia.treasury=70;
  aiTurn(s,'numidia');assert.equal(s.relations['numidia:senate'],40);
