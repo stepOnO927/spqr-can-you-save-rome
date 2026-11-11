@@ -20,6 +20,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Intelligence request to a trading partner | Same intelligence panel → trade partner | `tools/trade-intelligence-smoke.mjs` uses a trade fixture, checks pending save/load and the eventual result; the partner may refuse |
 | Spying and administrative appointments | Factions → foreign intelligence or own faction | `tools/systems-smoke.mjs` |
 | Character travel, health and succession information | Factions → character | `tools/browser-smoke.mjs` |
+| Illness, acting authority and actual succession | Factions → own faction → succession and acting authority | `tools/health-succession-smoke.mjs` uses a dying-leader fixture, designates and appoints a deputy, saves/loads, then checks simulated death, successor and chronicle |
 | City authority and local administration | Terrain map → city → manage theater | `tools/browser-smoke.mjs` |
 | Chronicle and map handoff | Chronicle / return to campaign | `tools/browser-smoke.mjs` |
 | Terrain-map pan, zoom and relief | Map drag, wheel and relief control | `tools/map-benchmark.mjs` |

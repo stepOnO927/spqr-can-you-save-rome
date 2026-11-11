@@ -1,18 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=safe-save-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=succession-feedback-1';
 import {advanceStrategicWarnings,warningCandidates,warningLedger} from '../strategic-warnings.js?v=multipolar-2';
 import {assessOpportunities} from '../multipolar.js?v=multipolar-2';
 import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
 import {buildChessboard} from '../chessboard.js?v=safe-save-1';
 import {renderChessboard} from '../chessboard-ui.js?v=safe-save-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=safe-save-1';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=succession-feedback-1';
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {advanceGovernments} from '../governance.js?v=safe-save-1';
 import {advanceMovements} from '../movements.js?v=safe-save-1';
-import {newRevolutionScenario} from '../scenarios.js?v=safe-save-1';
+import {newRevolutionScenario} from '../scenarios.js?v=succession-feedback-1';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
