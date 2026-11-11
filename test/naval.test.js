@@ -160,6 +160,41 @@ test('AI can order a real army transport when a hostile coast is reachable by se
  const s=newGrandGame('caesar');for(const r of s.regions)r.owner='egypt';s.regions.find(r=>r.id==='italiaS').owner='senate';s.regions.find(r=>r.id==='t075').owner='caesar';s.armies=s.armies.filter(a=>a.id==='italy');s.armies[0].region='italiaS';
  aiTurn(s,'senate');assert.equal(s.armies[0].move?.sea,true);assert.equal(s.armies[0].move?.to,'t075');assert.equal(s.naval.fleets.find(f=>f.owner==='senate').order?.armyId,'italy');
 });
+test('AI stages a transport fleet at an isolated army port and waits for embarkation',()=>{
+ const setup=()=>{
+  const s=newGrandGame('caesar');for(const r of s.regions)r.owner='egypt';
+  for(const id of ['italiaS','epirus'])s.regions.find(r=>r.id===id).owner='senate';
+  s.regions.find(r=>r.id==='t075').owner='caesar';
+  s.armies=s.armies.filter(a=>a.id==='italy');s.armies[0].region='italiaS';
+  s.naval.fleets=s.naval.fleets.filter(f=>f.owner==='senate');
+  const fleet=s.naval.fleets[0];fleet.port='epirus';fleet.zone=portZone('epirus');fleet.reserve=false;fleet.order=null;
+  s.factions.senate.treasury=200;return s;
+ };
+ const warned=setup();warned.naval.intel.senate={'caesar-adriatic':{owner:'caesar',zone:portZone('epirus'),year:warned.year,month:warned.month,range:[8,12],confidence:'high'}};
+ advanceNaval(warned);
+ assert.notEqual(warned.naval.fleets[0].order?.targetPort,'italiaS','a strong reported hostile fleet blocks staging');
+ const cashPoor=setup();cashPoor.factions.senate.treasury=25;advanceNaval(cashPoor);
+ assert.notEqual(cashPoor.naval.fleets[0].order?.targetPort,'italiaS','a fleet without a funded voyage stays available for reserve');
+ const afloat=setup();afloat.naval.fleets[0].port=null;advanceNaval(afloat);
+ assert.equal(afloat.naval.fleets[0].order?.targetPort,'italiaS','an idle fleet at sea can also meet the army');
+ const s=setup();advanceNaval(s);
+ assert.equal(s.naval.fleets[0].order?.kind,'return');
+ assert.equal(s.naval.fleets[0].order?.targetPort,'italiaS');
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s))),fleet=loaded.naval.fleets[0];
+ for(let i=0;i<8&&fleet.port!=='italiaS';i++)advanceNaval(loaded);
+ assert.equal(fleet.port,'italiaS');
+ assert.equal(fleet.order,null,'the fleet waits for the army instead of taking a new patrol order');
+ aiTurn(loaded,'senate');
+ assert.equal(loaded.armies[0].move?.sea,true);
+ assert.equal(fleet.order?.kind,'transport');
+ assert.equal(fleet.order?.armyId,'italy');
+ const live=setup();tick(live);
+ assert.equal(live.armies.find(a=>a.id==='italy').region,'italiaS','staging does not teleport the army');
+ assert.equal(live.naval.fleets[0].port,null);
+ tick(live);assert.equal(live.armies.find(a=>a.id==='italy').move?.sea,true);
+ tick(live);assert.equal(live.armies.find(a=>a.id==='italy').region,'italiaS');
+ tick(live);assert.equal(live.armies.find(a=>a.id==='italy').region,'t075','the ordered fleet carries the army across the sea');
+});
 test('AI takes an available land route instead of stalling at a sea link without transports',()=>{
  const s=newGrandGame('caesar');
  for(const r of s.regions)if(r.id!=='t036'&&r.owner==='caesar')r.owner='senate';

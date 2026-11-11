@@ -269,6 +269,22 @@ function aiSupplyDestination(s,owner,f){
   return {region:r,score:shortage*80+(0.6-r.food)*20-path.length*6-reportedRisk};
  }).filter(Boolean).sort((a,b)=>b.score-a.score)[0]?.region||null;
 }
+function hostileSeaLanding(s,owner,origin){
+ return GRAND_ROUTES.some(([from,to,kind])=>{if(kind!=='sea')return false;const other=from===origin?to:to===origin?from:null,target=s.regions.find(r=>r.id===other);return !!target?.port&&atWar(s,owner,target.owner)});
+}
+function aiTransportStagingPort(s,owner,f){
+ if(fleetCapacity(f,s)<1200||s.factions[owner].treasury<35)return null;
+ const capacity=fleetCapacity(f,s),knownThreats=reportedHostileFleets(s,owner),fleetCount=ships(f);
+ return s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&a.men>=1200&&a.men<=capacity&&a.region!==f.port).map(a=>{
+  const origin=s.regions.find(r=>r.id===a.region&&r.owner===owner&&r.port);
+  if(!origin||s.naval.fleets.some(other=>other.id!==f.id&&other.owner===owner&&other.port===origin.id&&!other.reserve&&!other.mobilizing&&!other.order?.armyId&&fleetCapacity(other,s)>=a.men&&other.hull>=40&&other.supply>=20))return null;
+  if(!hostileSeaLanding(s,owner,origin.id))return null;
+  const path=seaRoute(f.zone,portZone(origin.id));if(!path)return null;
+  const zones=new Set([f.zone,...path]);
+  if(knownThreats.some(report=>zones.has(report.zone)&&(report.range?.[1]||0)>fleetCount*1.5))return null;
+  return {origin,score:a.men/1000-path.length*2};
+ }).filter(Boolean).sort((a,b)=>b.score-a.score)[0]?.origin||null;
+}
 function aiNavalOrders(s,owner,f){
  const cashflow=aiNavalCashflow(s,owner),treasury=s.factions[owner].treasury;
  const nearbyThreat=reportedHostileFleets(s,owner).some(r=>atWar(s,owner,r.owner)&&seaRoute(f.zone,r.zone)?.length<=1);
@@ -284,8 +300,13 @@ function aiNavalOrders(s,owner,f){
   return;
  }
  if(f.order||f.mobilizing)return;
+ if(f.supply<25||f.hull<35){if(f.port){if(treasury<110&&cashflow< -6&&!nearbyThreat)reserveFleet(s,owner,f.id);return}const home=s.regions.filter(r=>r.owner===owner&&r.port).sort((a,b)=>(seaRoute(f.zone,portZone(a.id))?.length??99)-(seaRoute(f.zone,portZone(b.id))?.length??99))[0];if(home)orderFleet(s,owner,f.id,'return',home.id);return}
+ const transportBudget=treasury>=Math.max(35,26+3*Math.max(0,-cashflow));
+ if(transportBudget){
+  if(f.port&&s.armies.some(a=>a.owner===owner&&a.region===f.port&&!a.move&&!a.siege&&a.men>=1200&&a.men<=fleetCapacity(f,s)&&hostileSeaLanding(s,owner,f.port)))return;
+  const embarkation=aiTransportStagingPort(s,owner,f);if(embarkation)return orderFleet(s,owner,f.id,'return',embarkation.id);
+ }
  if(f.port&&treasury<110&&cashflow< -6&&!nearbyThreat){reserveFleet(s,owner,f.id);return}
- if(f.supply<25||f.hull<35){const home=s.regions.filter(r=>r.owner===owner&&r.port).sort((a,b)=>(seaRoute(f.zone,portZone(a.id))?.length??99)-(seaRoute(f.zone,portZone(b.id))?.length??99))[0];if(home)orderFleet(s,owner,f.id,'return',home.id);return}
  if(treasury>=40){const destination=aiSupplyDestination(s,owner,f);if(destination)return orderFleet(s,owner,f.id,'supply',destination.id)}
  const pirate=s.naval.pirates.find(p=>p.zone===f.zone&&p.pressure>18);if(pirate&&(f.ships.trireme||f.ships.light||f.ships.quadrireme||f.ships.quinquereme))return orderFleet(s,owner,f.id,'patrol',f.zone);
  const threatened=s.naval.routes.find(r=>[r.from,r.to].some(id=>s.regions.find(x=>x.id===id)?.owner===owner)&&['piracy','raid'].includes(r.last?.reason));if(threatened&&(f.ships.trireme||f.ships.light||f.ships.quadrireme||f.ships.quinquereme))return orderFleet(s,owner,f.id,'escort',threatened.id);
