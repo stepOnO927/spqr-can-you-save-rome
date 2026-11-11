@@ -16,7 +16,10 @@ jobs:
           node-version: '22'
       - run: npm test
       - run: npm install --no-save playwright@1.64.1
-      - run: npx playwright install --with-deps chromium
+      # GitHub's Ubuntu image already contains Chromium's runtime libraries.
+      # Avoid apt mirror failures while still letting Chromium itself fail the
+      # smoke test if a future image is missing a required library.
+      - run: npx playwright install chromium
       - run: |
           node server.mjs > server.log 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
