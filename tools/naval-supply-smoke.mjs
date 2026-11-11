@@ -17,6 +17,7 @@ try{
  await page.locator('#entry-senate').click();await page.waitForURL('**/map-lab/');await page.locator('.grand-site').first().waitFor();
  await page.locator('#naval').click();
  assert.match(await page.locator('.naval-content').innerText(),/MARITIME ARMY SUPPLY/);
+ assert.match(await page.locator('.naval-content').innerText(),/three friendly land links/);
  assert.match(await page.locator('.naval-content').innerText(),/Army supply capacity 6 food/);
  await page.locator('[data-order-kind="senate-adriatic"]').selectOption('supply');
  await page.locator('[data-order-target="senate-adriatic"]').selectOption('t016');
@@ -24,11 +25,12 @@ try{
  assert.match(await page.locator('.naval-content').innerText(),/food in transit/);
  await page.locator('#language').click();
  assert.match(await page.locator('.naval-content').innerText(),/海运陆军补给/);
+ assert.match(await page.locator('.naval-content').innerText(),/三段己方陆路/);
  assert.match(await page.locator('.naval-content').innerText(),/份粮在途/);
  assert.match(await page.locator('.naval-content').innerText(),/军需载量 6粮/);
  const reports=await page.evaluate(async()=>{
-  const {newGrandGame}=await import('../engine.js?v=109');
-  const {renderNavalPanel}=await import('./naval-ui.js?v=17');
+  const {newGrandGame}=await import('../engine.js?v=141');
+  const {renderNavalPanel}=await import('./naval-ui.js?v=36');
   const state=newGrandGame('senate');state.naval.reports.unshift({id:'supply-test',kind:'supply-delivery',owner:'senate',port:'t016',cargo:6,year:-49,month:4});
   const root=document.createElement('div');
   const render=lang=>{renderNavalPanel({state,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};

@@ -133,12 +133,27 @@ export function orderFleet(s,owner,id,kind,target){
  f.port=null;f.order={kind,target,targetPort,path,...(cargo?{cargo}:{}),...(returning?{cargo:returning}: {})};
  return {ok:true,months:Math.max(1,Math.ceil(path.length/fleetSpeed(f))),...(cargo?{cargo}: {})};
 }
+// Food landed at a port can be carted a few friendly land links inland. A
+// hostile occupation breaks the chain, and each field army draws from only
+// its nearest stocked port so overlapping routes do not double-charge it.
+function inlandSupplyReach(s,owner,port,maxLinks=3){
+ const owned=new Set(s.regions.filter(r=>r.owner===owner).map(r=>r.id)),distance=new Map([[port,0]]),queue=[port];
+ while(queue.length){const id=queue.shift(),steps=distance.get(id);if(steps>=maxLinks)continue;
+  for(const [from,to,kind] of GRAND_ROUTES){if(kind==='sea')continue;const next=from===id?to:to===id?from:null;if(!next||!owned.has(next)||distance.has(next))continue;distance.set(next,steps+1);queue.push(next)}
+ }
+ return distance;
+}
 function consumeMaritimeProvisions(s){
+ const reaches=new Map(),demand=new Map();
+ for(const [port,store] of Object.entries(s.naval.provisions||{}))if(store.food>0&&s.regions.some(r=>r.id===port&&r.owner===store.owner))reaches.set(port,{owner:store.owner,distance:inlandSupplyReach(s,store.owner,port)});
+ for(const army of s.armies.filter(a=>a.men>0)){
+  const port=[...reaches].filter(([,store])=>store.owner===army.owner&&store.distance.has(army.region)).sort(([a,first],[b,second])=>first.distance.get(army.region)-second.distance.get(army.region)||a.localeCompare(b))[0]?.[0];
+  if(port)demand.set(port,(demand.get(port)||0)+army.men);
+ }
  for(const [port,store] of Object.entries(s.naval.provisions||{})){
   const site=s.regions.find(r=>r.id===port);
   if(site?.owner!==store.owner){delete s.naval.provisions[port];continue}
-  const nearby=s.armies.filter(a=>a.owner===store.owner&&a.men>0&&(a.region===port||GRAND_ROUTES.some(([from,to,kind])=>kind!=='sea'&&(from===port&&to===a.region||to===port&&from===a.region))));
-  store.food=Math.max(0,store.food-1-Math.min(3,Math.floor(nearby.reduce((n,a)=>n+a.men,0)/4000)));
+  store.food=Math.max(0,store.food-1-Math.min(3,Math.floor((demand.get(port)||0)/4000)));
   if(!store.food)delete s.naval.provisions[port];
  }
 }
@@ -264,9 +279,10 @@ function aiSupplyDestination(s,owner,f){
  const knownThreats=reportedHostileFleets(s,owner).filter(report=>atWar(s,owner,report.owner));
  return destinations.map(r=>{
   const path=seaRoute(f.zone,portZone(r.id));if(!path)return null;
-  const nearby=s.armies.filter(a=>a.owner===owner&&a.men>=1200&&a.operationalSupply<.65&&(a.region===r.id||GRAND_ROUTES.some(([from,to,kind])=>kind!=='sea'&&(from===r.id&&to===a.region||to===r.id&&from===a.region))));
+  const reach=inlandSupplyReach(s,owner,r.id);
+  const nearby=s.armies.filter(a=>a.owner===owner&&a.men>=1200&&a.operationalSupply<.65&&reach.has(a.region));
   if(!nearby.length)return null;
-  const shortage=Math.max(...nearby.map(a=>.65-a.operationalSupply));
+  const shortage=Math.max(...nearby.map(a=>(.65-a.operationalSupply)*Math.max(.4,1-reach.get(a.region)*.15)));
   const zones=new Set([f.zone,...path]);
   const reportedRisk=knownThreats.reduce((risk,report)=>{
    if(!zones.has(report.zone))return risk;

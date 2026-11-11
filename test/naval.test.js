@@ -284,6 +284,51 @@ test('AI dispatches a paid supply convoy only for its own under-supplied port fr
  advanceNaval(healthy);
  assert.notEqual(healthy.naval.fleets.find(f=>f.id==='senate-adriatic').order?.kind,'supply');
 });
+test('AI can supply an inland front through friendly land routes beyond the harbor neighbor',()=>{
+ const s=newGrandGame('egypt'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic'),army=s.armies.find(a=>a.id==='italy');
+ s.naval.routes=[];s.factions.senate.treasury=200;s.factions.senate.food=50;
+ for(const r of s.regions)if(r.owner==='senate'&&r.port&&r.id!=='t016')r.food=1.25;
+ s.regions.find(r=>r.id==='t016').food=.4;army.region='t018';army.operationalSupply=.4;
+ advanceNaval(s);
+ assert.equal(fleet.order?.kind,'supply');assert.equal(fleet.order.targetPort,'t016');
+ const cut=newGrandGame('egypt'),cutFleet=cut.naval.fleets.find(f=>f.id==='senate-adriatic'),cutArmy=cut.armies.find(a=>a.id==='italy');
+ cut.naval.routes=[];cut.factions.senate.treasury=200;cut.factions.senate.food=50;
+ for(const r of cut.regions)if(r.owner==='senate'&&r.port&&r.id!=='t016')r.food=1.25;
+ cut.regions.find(r=>r.id==='t016').food=.4;cutArmy.region='t018';cutArmy.operationalSupply=.4;
+ for(const id of ['roma','t017'])cut.regions.find(r=>r.id===id).owner='caesar';
+ advanceNaval(cut);
+ assert.notEqual(cutFleet.order?.kind,'supply','a hostile land corridor cannot carry port provisions to the army');
+});
+test('inland armies consume finite port provisions, and an occupied corridor breaks delivery',()=>{
+ const s=newGrandGame('senate'),army=s.armies.find(a=>a.id==='italy');army.region='t018';army.men=8000;
+ for(const other of s.armies)if(other.owner==='senate'&&other.id!==army.id)other.men=0;
+ s.naval.provisions.t016={owner:'senate',food:10};
+ advanceNaval(s);assert.equal(s.naval.provisions.t016.food,7);
+ for(const id of ['roma','t017'])s.regions.find(r=>r.id===id).owner='caesar';
+ advanceNaval(s);assert.equal(s.naval.provisions.t016.food,6);
+});
+test('a provisioned port establishes a finite three-link inland supply reach',()=>{
+ const s=newGrandGame('senate'),corridor=new Set(['t016','t017','t019','t021','t023']);
+ for(const r of s.regions)if(r.owner==='senate')r.owner=corridor.has(r.id)?'senate':'caesar';
+ for(const id of corridor)s.regions.find(r=>r.id===id).food=.4;
+ s.naval.provisions.t016={owner:'senate',food:8};
+ const line=supplyNetwork(s,'senate',true);
+ assert.equal(line.has('t021'),true);
+ assert.equal(line.has('t023'),false,'one port stock must not provision an unlimited inland chain');
+ const army=s.armies.find(a=>a.id==='italy');army.region='t021';
+ const supplied=armySupply(s,army);assert.ok(supplied>.68);
+ s.regions.find(r=>r.id==='t017').owner='caesar';
+ assert.equal(supplyNetwork(s,'senate',true).has('t021'),false);
+ assert.ok(armySupply(s,army)<supplied);
+});
+test('overlapping port stores charge an army to only one port when that store runs dry',()=>{
+ const s=newGrandGame('senate'),army=s.armies.find(a=>a.id==='italy');army.region='t017';army.men=8000;
+ for(const other of s.armies)if(other.owner==='senate'&&other.id!==army.id)other.men=0;
+ s.naval.provisions.t016={owner:'senate',food:1};s.naval.provisions.t019={owner:'senate',food:10};
+ advanceNaval(s);
+ assert.equal(s.naval.provisions.t016,undefined);
+ assert.equal(s.naval.provisions.t019.food,9);
+});
 test('AI convoy favors a similarly needy safe port using dated reports, not hidden enemy positions',()=>{
  const setup=()=>{const s=newGrandGame('egypt'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');s.naval.routes=[];fleet.port='t026';fleet.zone='sicilian';s.factions.senate.treasury=200;s.factions.senate.food=60;
   for(const [id,armyId] of [['t016','italy'],['t078','pompey']]){s.regions.find(r=>r.id===id).food=.3;const unit=s.armies.find(a=>a.id===armyId);unit.region=id;unit.operationalSupply=.35}

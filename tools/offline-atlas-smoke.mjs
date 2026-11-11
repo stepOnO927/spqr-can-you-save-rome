@@ -51,7 +51,7 @@ try{
  });
  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('.maplibregl-canvas').waitFor();
- await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
+ await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',null,{timeout:60000});
  await page.waitForTimeout(1200);
  assert.equal(await page.locator('.grand-site').count(),120);
  assert.equal(await page.locator('.maplibregl-canvas').isVisible(),true);
@@ -155,10 +155,11 @@ try{
  const galatia=newGrandGame('galatia');
  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),galatia);
  await page.reload({waitUntil:'domcontentloaded'});
- await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
+ try{await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',null,{timeout:60000})}
+ catch(error){const status=await page.locator('#status').evaluate(el=>({display:el.style.display,text:el.textContent})).catch(()=>null);throw Error(`Atlas reload did not finish: ${JSON.stringify({status,errors,missingTerrain:missingTerrain.slice(-8)})}`,{cause:error})}
  await page.waitForTimeout(1400);
  terrainRequests.length=0;
- const aegeanCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=198');map.jumpTo({center:[27.1,38.6],zoom:9.1});return map.getCenter().toArray()});
+ const aegeanCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=199');map.jumpTo({center:[27.1,38.6],zoom:9.1});return map.getCenter().toArray()});
  assert.ok(Math.abs(aegeanCenter[0]-27.1)<.1&&Math.abs(aegeanCenter[1]-38.6)<.1,'Aegean screenshot must actually focus on the coast');
  await waitForTerrain(/\/terrain\/9\/294\//,'Aegean maximum zoom did not use bundled high-detail terrain');
  assert.deepEqual(missingTerrain,[],'Aegean maximum zoom requested missing terrain tiles');

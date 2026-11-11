@@ -1,5 +1,5 @@
 import {GRAND_ROUTES} from './grand-map-data.js';
-import {accessibleFleet,portZone} from './naval.js?v=17';
+import {accessibleFleet,portZone} from './naval.js?v=18';
 
 const byId=s=>Object.fromEntries(s.regions.map(r=>[r.id,r]));
 const OPENING_LIFT={caesar:1,senate:2,egypt:2,numidia:1,mauretania:1,armenia:0,parthia:0,galatia:0,bosporus:1,rebels:0};
@@ -22,7 +22,7 @@ export function grandRoute(s,unit,destination,isWar){
 }
 function supplySources(s,owner,established=false){return s.regions.filter(r=>r.owner===owner&&(
  r.terrain==='urban'||(r.buildings||[]).some(x=>['granary','supply-depot'].includes(x))||
- r.port&&(!established||r.food>=.6||s.naval?.provisions?.[r.id]?.owner===owner&&s.naval.provisions[r.id].food>0)||
+ r.port&&(!established||r.food>=.6)||
  // Smaller inland commands recruit and provision at their home theater.
  // They still need local production and national reserves for an established line.
  r.id===owner&&(!established||r.food>=.6&&s.factions[owner]?.food>=0)
@@ -31,6 +31,13 @@ export function supplyNetwork(s,owner,established=false){
  const regions=byId(s),sources=supplySources(s,owner,established);
  const distance=new Map(sources.map(r=>[r.id,0])),queue=new Set(sources.map(r=>r.id));
  while(queue.size){const id=[...queue].sort((a,b)=>distance.get(a)-distance.get(b))[0];queue.delete(id);for(const edge of grandAdjacent(id)){const next=regions[edge.to];if(!next||next.owner!==owner||edge.sea)continue;const cost=distance.get(id)+(edge.road?.8:1)+(edge.mountain?.8:0);if(cost<(distance.get(next.id)??Infinity)){distance.set(next.id,cost);queue.add(next.id)}}}
+ if(established)for(const [port,store] of Object.entries(s.naval?.provisions||{})){
+  if(store.owner!==owner||store.food<=0||regions[port]?.owner!==owner)continue;
+  const steps=new Map([[port,0]]),frontier=[port];
+  while(frontier.length){const id=frontier.shift(),depth=steps.get(id);distance.set(id,Math.min(distance.get(id)??Infinity,depth));if(depth>=3)continue;
+   for(const edge of grandAdjacent(id)){const next=regions[edge.to];if(edge.sea||next?.owner!==owner||steps.has(next.id))continue;steps.set(next.id,depth+1);frontier.push(next.id)}
+  }
+ }
  return distance;
 }
 export function supplyBottlenecks(s,owner){
