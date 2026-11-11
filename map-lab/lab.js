@@ -150,7 +150,10 @@ function updateControl(){
    pairs.push(r.id,color);borders.push(r.id,identity(r.owner).map);
   }
   map.setPaintProperty('grand-control','fill-color',['match',['get','id'],...pairs,'#b9a982']);
-  map.setPaintProperty('grand-control','fill-opacity',currentMapMode==='terrain'?.025:['political','military','maritime'].includes(currentMapMode)?['interpolate',['linear'],['zoom'],5.5,.01,6.5,.15,7.2,.16,8,.11,9,.05]:.22);
+  // Catchment polygons are useful at theater scale, but their straight edges
+  // look like misplaced coastlines when the player zooms in to read terrain.
+  const theaterOpacity=['interpolate',['linear'],['zoom'],5.5,.12,6.4,.11,6.9,.055,7.4,0];
+  map.setPaintProperty('grand-control','fill-opacity',currentMapMode==='terrain'?0:['political','military','maritime'].includes(currentMapMode)?theaterOpacity:['interpolate',['linear'],['zoom'],5.5,.22,6.6,.16,7.4,0]);
   map.setPaintProperty('grand-border','line-color',['match',['get','id'],...borders,'#72604f']);
   // Settlement catchment lines are synthetic gameplay partitions. Selection
   // highlights a cell when needed; the base atlas uses the broader outlines.
@@ -159,7 +162,7 @@ function updateControl(){
   map.setPaintProperty('province-outline','line-color',['match',['get','id'],...macroBorders,'#aa9c75']);
   map.setPaintProperty('province-outline','line-opacity',currentMapMode==='terrain'?.12:['interpolate',['linear'],['zoom'],5.5,.5,8,.3,9,.2]);
   map.setPaintProperty('control','fill-color',['match',['get','id'],...macroBorders,'#aa9c75']);
-  map.setPaintProperty('control','fill-opacity',['political','military','maritime'].includes(currentMapMode)?['interpolate',['linear'],['zoom'],5.5,.18,6.5,.08,8,.025]:0);return;
+  map.setPaintProperty('control','fill-opacity',['political','military','maritime'].includes(currentMapMode)?['interpolate',['linear'],['zoom'],5.5,.18,6.5,.07,7.4,0]:0);return;
  }
  if(!map.getLayer('control'))return;
  const pairs=[],borderPairs=[];for(const f of historical.features){const ids=f.properties.regions||[];if(!ids.length)continue;const regions=ids.map(id=>state.regions.find(r=>r.id===id)).filter(Boolean),owners=[...new Set(regions.map(r=>r.owner))],own=regions.filter(r=>r.owner===state.player);let color=identity(owners.length>1?'shared':owners[0]).map;borderPairs.push(f.properties.id,identity(owners.length>1?'shared':owners[0]).map);

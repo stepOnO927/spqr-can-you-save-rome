@@ -106,7 +106,7 @@ try{
  assert.ok(terrainRequests.some(path=>path.includes('/terrain/6/')),'Zoom 6 did not use bundled terrain');
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
  assert.ok(terrainRequests.some(path=>path.includes('/terrain/7/')),'Zoom 7 did not use bundled terrain');
- if(process.env.SPQR_ATLAS_Z7_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_Z7_SCREENSHOT});
+ if(process.env.SPQR_ATLAS_Z7_SCREENSHOT){await page.waitForTimeout(2400);await page.screenshot({path:process.env.SPQR_ATLAS_Z7_SCREENSHOT})}
  if(page.viewportSize().width>900){
   assert.equal(await page.locator('#locator').isVisible(),true,'Zoomed Italy needs a geographic locator');
   assert.match(await page.locator('.locator-title').innerText(),firstLanguage==='zh-CN'?/YOUR POSITION/:/当前位置/);
