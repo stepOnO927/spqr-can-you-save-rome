@@ -1,5 +1,5 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=dynasty-id-3';
-import {recordLifeEvent} from './dynasties.js?v=save-identity-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
+import {recordLifeEvent} from './dynasties.js?v=safe-save-1';
 import {rememberPersonalEvent} from './political-memory.js?v=grand-chessboard-2';
 
 // These are simulated administrative assignments, not historical magistracies.

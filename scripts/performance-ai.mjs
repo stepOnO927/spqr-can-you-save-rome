@@ -1,6 +1,6 @@
 import {performance} from 'node:perf_hooks';
-import {newScenario} from '../scenarios.js?v=save-identity-1';
-import {tick} from '../engine.js?v=save-identity-1';
+import {newScenario} from '../scenarios.js?v=safe-save-1';
+import {tick} from '../engine.js?v=safe-save-1';
 
 const months=Number(process.env.SPQR_MONTHS||120);
 if(!Number.isInteger(months)||months<1||months>1200)throw Error('Invalid month count');

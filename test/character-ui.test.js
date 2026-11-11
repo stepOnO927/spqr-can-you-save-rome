@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=save-identity-1';
-import {createCharacterUI} from '../map-lab/character-ui.js?v=save-identity-1';
-import {addReport} from '../character-system.js?v=save-identity-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=save-identity-1';
+import {newGame,upgradeSave} from '../engine.js?v=safe-save-1';
+import {createCharacterUI} from '../map-lab/character-ui.js?v=safe-save-1';
+import {addReport} from '../character-system.js?v=safe-save-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=safe-save-1';
 import {createFictionalPerson} from '../dynasties.js';
 
 // A small DOM stub exercises the real handler without requiring a network listener.

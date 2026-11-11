@@ -1,20 +1,20 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=save-identity-1';
-import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=save-identity-1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=safe-save-1';
+import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=safe-save-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js?v=dynasty-id-3';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=save-identity-1';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=save-identity-1';
-import {advanceConspiracies} from './conspiracies.js?v=dynasty-id-3';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=safe-save-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=safe-save-1';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=safe-save-1';
+import {advanceConspiracies} from './conspiracies.js?v=safe-save-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
-import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=dynasty-id-3';
-import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=save-identity-1';
-import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=dynasty-id-3';
+import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=safe-save-1';
+import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=safe-save-1';
+import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=safe-save-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=grand-chessboard-2';
-import {advanceFocuses,focusModifiers} from './national-focus.js?v=save-identity-1';
-import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=save-identity-1';
-import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=save-identity-1';
+import {advanceFocuses,focusModifiers} from './national-focus.js?v=safe-save-1';
+import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=safe-save-1';
+import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=safe-save-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
@@ -25,9 +25,9 @@ import {assessOpportunities} from './multipolar.js?v=multipolar-2';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=multipolar-2';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {formCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=multipolar-2';
-import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=dynasty-id-3';
-import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=save-identity-1';
-import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=save-identity-1';
+import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=safe-save-1';
+import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=safe-save-1';
+import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=safe-save-1';
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
 export {queueMission};
 export {personalDiplomaticCredit};
@@ -100,10 +100,13 @@ function migrateBattleIds(s){
 // IMPERIUM save migration: adds empty focus/plan records and preset templates only.
 function migrateImperium(s){s.world.nationalFocus||={};s.world.battlePlans||=[];s.world.nextBattlePlan||=1;for(const id of Object.keys(s.factions))if(id!=='rebels')seedTemplates(s,id);s.world.imperiumVersion=1}
 export function upgradeSave(s){
+ const priorCatalog=snapshotFictionalCatalog();
+ try{
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
  migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);return refreshReportConfidence(initializeGovernments(s));
+ }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
 export function previewMarch(s,armyId,destination){

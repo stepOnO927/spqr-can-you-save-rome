@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=dynasty-id-3';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=safe-save-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 
 // Alternate-history claimant commands use real game theaters and armies.

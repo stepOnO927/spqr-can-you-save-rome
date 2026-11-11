@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=save-identity-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=safe-save-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {advanceMovements,respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from '../movements.js?v=save-identity-1';
-import {newRevolutionScenario} from '../scenarios.js?v=save-identity-1';
-import {plotFormationChance} from '../conspiracies.js?v=dynasty-id-3';
+import {advanceMovements,respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from '../movements.js?v=safe-save-1';
+import {newRevolutionScenario} from '../scenarios.js?v=safe-save-1';
+import {plotFormationChance} from '../conspiracies.js?v=safe-save-1';
 
 function crisis(){const s=newGame('caesar'),r=s.regions.find(x=>x.id==='gaul'),f=s.factions.caesar;r.loyalty=5;r.population.satisfaction=10;f.stability=20;f.legitimacy=25;f.tax='high';return {s,r,f}}
 function month(s){s.month++;if(s.month>12){s.month=1;s.year++}advanceMovements(s)}

@@ -20,6 +20,10 @@ export const CHARACTER_CATALOG = {
  deiotarus:{name:['Deiotarus','代奥塔鲁斯'],birth:null,faction:'galatia',role:['Galatian ruler','加拉太统治者'],culture:['Galatian','加拉太'],source:'https://www.britannica.com/biography/Deiotarus'},
  pharnaces:{name:['Pharnaces II','法尔纳刻斯二世'],birth:null,faction:'bosporus',role:['Bosporan ruler','博斯普鲁斯王国统治者'],culture:['Pontic','本都'],source:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549705304?login=false'}
 };
+// Save loading temporarily rebuilds this shared namespace. Preserve it if a
+// migration or transfer fails, so the active campaign keeps its own people.
+export function snapshotFictionalCatalog(){return Object.fromEntries(Object.entries(CHARACTER_CATALOG).filter(([id])=>/^fictional:\d+$/.test(id)))}
+export function restoreFictionalCatalog(snapshot){for(const id of Object.keys(CHARACTER_CATALOG))if(/^fictional:\d+$/.test(id))delete CHARACTER_CATALOG[id];Object.assign(CHARACTER_CATALOG,snapshot)}
 export const OPENING_LEADERS={caesar:['caesar'],senate:['pompey'],egypt:['cleopatra','ptolemy'],parthia:['orodes'],armenia:['artavasdes'],numidia:['juba'],mauretania:['bocchus','bogud'],galatia:['deiotarus'],bosporus:['pharnaces'],rebels:[]};
 const SUCCESSORS={caesar:['antony','lepidus'],senate:['cato','scipio','labienus','cicero'],egypt:['cleopatra','ptolemy','arsinoe'],parthia:['pacorus'],armenia:[],numidia:[],mauretania:['bocchus','bogud'],galatia:[],bosporus:[],rebels:[]};
 const clone=x=>JSON.parse(JSON.stringify(x));

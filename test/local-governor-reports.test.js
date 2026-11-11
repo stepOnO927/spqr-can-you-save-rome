@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=save-identity-1';
-import {addReport} from '../character-system.js?v=save-identity-1';
+import {newGame,upgradeSave} from '../engine.js?v=safe-save-1';
+import {addReport} from '../character-system.js?v=safe-save-1';
 import {reportedTheaterAdministrators,renderLocalGovernor} from '../map-lab/local-governor-ui.js';
 
 test('foreign city administration uses dated reports and retains conflicting or unknown claims',()=>{

@@ -1,6 +1,6 @@
-import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO} from './characters.js?v=dynasty-id-3';
-import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=save-identity-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=save-identity-1';
+import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO} from './characters.js?v=safe-save-1';
+import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=safe-save-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=safe-save-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=institution-portraits-1';
 

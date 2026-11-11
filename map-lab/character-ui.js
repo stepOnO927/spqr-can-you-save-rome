@@ -1,13 +1,13 @@
 import {identityKnowledge} from './identity-knowledge.js?v=phase-x-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=institution-portraits-1';
 import {HISTORICAL_DEATHS,HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS,HISTORICAL_RELATIONSHIPS} from '../historical-reference.js?v=phase-x-1';
-import {officeOf} from '../office-system.js?v=save-identity-1';
-import {reportedClaimants,reportedHealthSubjects,reportedOfficeTheaters,intelligencePartners,intelligencePartnerAccess,supportClaimant,recognizeClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=save-identity-1';
-import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan,successionCandidates} from '../governance.js?v=save-identity-1';
+import {officeOf} from '../office-system.js?v=safe-save-1';
+import {reportedClaimants,reportedHealthSubjects,reportedOfficeTheaters,intelligencePartners,intelligencePartnerAccess,supportClaimant,recognizeClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,previewMission,reportEvidence} from '../character-system.js?v=safe-save-1';
+import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan,successionCandidates} from '../governance.js?v=safe-save-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=dynasty-id-3';
-import {queueMission} from '../engine.js?v=save-identity-1';
-import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from '../personal-diplomacy.js?v=save-identity-1';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=safe-save-1';
+import {queueMission} from '../engine.js?v=safe-save-1';
+import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from '../personal-diplomacy.js?v=safe-save-1';
 const portraits=new Set(['caesar','pompey','cleopatra','arsinoe','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function evidenceText(state,actor,target,report,zh){
