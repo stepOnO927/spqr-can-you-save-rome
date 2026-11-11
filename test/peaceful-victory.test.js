@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,diplomacy,sendInquiry,isWar,advancePeacefulSettlement,upgradeSave} from '../engine.js?v=strategic-offers-2';
+import {newGame,tick,diplomacy,sendInquiry,isWar,advancePeacefulSettlement,upgradeSave} from '../engine.js?v=intelligence-partners-1';
 import {canFinalizeCampaign,finalizeCampaign} from '../legacy.js?v=imperium-1';
 
 test('a year of stable peace creates a real archival outcome without military conquest',()=>{

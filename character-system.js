@@ -140,6 +140,11 @@ export function supportClaimant(s,actor,target,claimant,representative=null,aid=
 export function reportedOfficeTheaters(s,actor,target){
  initializeWorld(s);const reports=s.knowledge[actor]?.[target]?.reports||[];return s.regions.filter(r=>reportedControl(s,actor,r.id)?.owner===target||reports.some(x=>x.kind==='office_theater:'+r.id)).map(r=>r.id);
 }
+// The exchange screen and mission validation must offer the same partners.
+// These are the actor's own alliances and agreements, not foreign secrets.
+export function intelligencePartners(s,actor,target){
+ return [...new Set([...(s.alliances||[]).filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)),...(s.agreements||[]).filter(t=>t.type==='intelligence'&&t.parties.includes(actor)&&activeAgreement(s,t.parties[0],t.parties[1],'intelligence')).map(t=>t.parties.find(id=>id!==actor))])].filter(id=>id&&id!==target&&s.factions[id]&&FACTIONS[id]);
+}
 export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!FACTIONS[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(target.endsWith('_claimant')&&!knownDynasticFactions(s,actor).includes(target))return {ok:false,reason:'unavailable'};
@@ -157,7 +162,7 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
  if(type==='counter'&&!['conspiracy','counter_spies'].includes(subject)||subject==='counter_spies'&&type!=='counter'||subject==='conspiracy'&&!['spy','counter','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
  if(['health','age','location'].includes(subject)&&characterId&&!reportedHealthSubjects(s,actor,target).includes(characterId))return {ok:false,reason:'identity'};
- const partners=[...new Set([...s.alliances.filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)),...(s.agreements||[]).filter(t=>t.type==='intelligence'&&t.parties.includes(actor)&&activeAgreement(s,t.parties[0],t.parties[1],'intelligence')).map(t=>t.parties.find(id=>id!==actor))])].filter(id=>id!==target&&s.factions[id]);
+ const partners=intelligencePartners(s,actor,target);
  if(type==='exchange'&&(!partners.length||(partnerId&&!partners.includes(partnerId))))return {ok:false,reason:'alliance'};
  if(['spy','counter'].includes(type)&&!availableAgents(s,actor))return {ok:false,reason:'agents'};
  if(s.factions[actor].treasury<cfg.cost)return {ok:false,reason:'treasury'};
@@ -208,7 +213,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if(op.type==='exchange'){
   const sealed=op.exchangeSealed;delete op.exchangeSealed;
   if(!sealed?.available){op.status='failed';if(op.actor===s.player)notify(s,'The intelligence exchange ended without a report; the reason is unknown.','情报交换结束，未收到报告；原因不明。');continue}
-  addReport(s,op.actor,op.target,sealed.report);op.status='complete';if(op.actor===s.player)notify(s,'An ally forwarded an existing report; its original date and source still matter.','盟友转交了一份既有报告；仍需留意原始日期与来源。');continue
+  addReport(s,op.actor,op.target,sealed.report);op.status='complete';if(op.actor===s.player)notify(s,'A partner forwarded an existing report; its original date and source still matter.','伙伴转交了一份既有报告；仍需留意原始日期与来源。');continue
  }
  const healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(reportedHealthSubjects(s,op.actor,op.target)[0]||null),healthCandidate=s.world.characters[healthId];
  // A lead can be stale or wrong. Investigating a court must not read the live

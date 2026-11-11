@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=strategic-offers-2';
-import {createCharacterUI} from '../map-lab/character-ui.js?v=strategic-offers-2';
-import {addReport} from '../character-system.js?v=imperium-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=multipolar-2';
+import {newGame,upgradeSave} from '../engine.js?v=intelligence-partners-1';
+import {createCharacterUI} from '../map-lab/character-ui.js?v=intelligence-partners-1';
+import {addReport} from '../character-system.js?v=intelligence-partners-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=intelligence-partners-1';
 import {createFictionalPerson} from '../dynasties.js';
 
 // A small DOM stub exercises the real handler without requiring a network listener.
@@ -88,7 +88,7 @@ test('claimants are identified as reports and source reliability is visible in b
 });
 test('foreign office reports are inspectable leads, not assertions of present office or location',()=>{
  const prior=globalThis.document,s=newGame('caesar');s.world.offices={senate:{finance:'cato'}};s.world.characters.cicero.location='syria';addReport(s,'caesar','senate',{kind:'office_finance',value:'cicero',source:'spy',confidence:'unverified'});addReport(s,'caesar','senate',{kind:'office_supply',value:'unknown',source:'spy',confidence:'unverified'});globalThis.document={createElement:tag=>new Element(tag)};
- try{for(const language of ['en','zh']){const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'senate');const box=content.children[0],html=box.querySelector('#mission-records').innerHTML;assert.match(box.innerHTML,language==='zh'?/财务专员（间谍或盟友）/:/Finance officer \(spy or ally\)/);assert.match(html,language==='zh'?/财务专员报告：马尔库斯·图利乌斯·西塞罗/:/Reported finance officer: Marcus Tullius Cicero/);assert.match(html,language==='zh'?/不证明当前位置或现职/:/not proof of current office or location/);assert.match(html,language==='zh'?/粮秣专员报告：没有可靠消息/:/Reported supply officer: No reliable information/);assert.doesNotMatch(html,/小加图|Cato|叙利亚|Syria/);assert.match(html,/data-character="cicero"/)}}finally{globalThis.document=prior}
+ try{for(const language of ['en','zh']){const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'senate');const box=content.children[0],html=box.querySelector('#mission-records').innerHTML;assert.match(box.innerHTML,language==='zh'?/财务专员（间谍或伙伴）/:/Finance officer \(spy or partner\)/);assert.match(html,language==='zh'?/财务专员报告：马尔库斯·图利乌斯·西塞罗/:/Reported finance officer: Marcus Tullius Cicero/);assert.match(html,language==='zh'?/不证明当前位置或现职/:/not proof of current office or location/);assert.match(html,language==='zh'?/粮秣专员报告：没有可靠消息/:/Reported supply officer: No reliable information/);assert.doesNotMatch(html,/小加图|Cato|叙利亚|Syria/);assert.match(html,/data-character="cicero"/)}}finally{globalThis.document=prior}
 });
 test('intelligence cards explain supporting and conflicting source families in both languages',()=>{
  const prior=globalThis.document,s=newGame('senate');for(const [source,value] of [['spy','ill'],['envoy','ill'],['travelers','healthy']])addReport(s,'senate','egypt',{kind:'health',character:'cleopatra',value,source,confidence:'unverified'});globalThis.document={createElement:tag=>new Element(tag)};
@@ -170,7 +170,7 @@ test('foreign leadership cards use reported arrangements rather than hidden lead
 
 test('foreign age estimates identify direct and forwarded sources and their age',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');globalThis.document={querySelector:selector=>selector==='#command-detail'?panel:null,createElement:tag=>new Element(tag)};
- try{addReport(s,'senate','egypt',{kind:'age',character:'cleopatra',value:[19,21],source:'meeting',confidence:'unverified'});addReport(s,'senate','egypt',{kind:'age',character:'cleopatra',value:[18,20],source:'exchange',originSource:'audience',fromFaction:'parthia',observationYear:-52,observationMonth:1,confidence:'unverified'});createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{},onShowCharacter:()=>{}}).show('cleopatra');const dossier=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(dossier,/个人会面/);assert.match(dossier,/盟友转交/);assert.match(dossier,/使者会面/);assert.match(dossier,/情报过期/);assert.match(dossier,/未经核实/)}finally{globalThis.document=prior}
+ try{addReport(s,'senate','egypt',{kind:'age',character:'cleopatra',value:[19,21],source:'meeting',confidence:'unverified'});addReport(s,'senate','egypt',{kind:'age',character:'cleopatra',value:[18,20],source:'exchange',originSource:'audience',fromFaction:'parthia',observationYear:-52,observationMonth:1,confidence:'unverified'});createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{},onShowCharacter:()=>{}}).show('cleopatra');const dossier=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(dossier,/个人会面/);assert.match(dossier,/伙伴转交/);assert.match(dossier,/使者会面/);assert.match(dossier,/情报过期/);assert.match(dossier,/未经核实/)}finally{globalThis.document=prior}
 });
 
 test('foreign health dossiers show the investigated court, forwarded origin, and both dates',()=>{
@@ -193,6 +193,18 @@ test('foreign health dossiers show the investigated court, forwarded origin, and
 test('allied exchanges confirm and remember the selected reported person',()=>{
  const prior=globalThis.document,s=newGame('senate'),content=new Element();s.alliances.push(['senate','parthia']);globalThis.document={createElement:tag=>new Element(tag)};
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0];box.querySelector('#mission-subject').value='age';box.querySelector('#mission-person').value='ptolemy';box.querySelector('#mission-ally').value='parthia';box.missions.find(x=>x.dataset.mission==='exchange').onclick();assert.match(box.querySelector('#mission-feedback').textContent,/托勒密十三世/);box.querySelector('#mission-feedback').children[0].onclick();assert.equal(s.operations[0].subjectCharacter,'ptolemy');assert.equal(s.operations[0].partner,'parthia')}finally{globalThis.document=prior}
+});
+
+test('intelligence agreement partners are selectable, deduplicated and named before dispatch',()=>{
+ const prior=globalThis.document,s=newGame('senate'),content=new Element();s.alliances.push(['senate','numidia']);
+ const expiresAt=s.year*12+s.month+12;
+ s.agreements.push({type:'intelligence',status:'active',parties:['senate','parthia'],expiresAt},{type:'intelligence',status:'active',parties:['senate','numidia'],expiresAt},{type:'intelligence',status:'active',parties:['senate','egypt'],expiresAt},{type:'intelligence',status:'active',parties:['senate','galatia'],expiresAt:s.year*12+s.month});
+ globalThis.document={createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0];
+  const menu=box.innerHTML.match(/<select id="mission-ally">([\s\S]*?)<\/select>/)[1];assert.match(menu,/value="parthia"/);assert.equal((menu.match(/value="numidia"/g)||[]).length,1);assert.doesNotMatch(menu,/value="egypt"|value="galatia"/);
+  box.querySelector('#mission-subject').value='age';box.querySelector('#mission-person').value='ptolemy';box.querySelector('#mission-ally').value='parthia';box.missions.find(x=>x.dataset.mission==='exchange').onclick();
+  assert.match(box.querySelector('#mission-feedback').textContent,/转交方：帕提亚/);box.querySelector('#mission-feedback').children[0].onclick();assert.equal(s.operations[0].partner,'parthia');assert.equal(s.operations[0].status,'pending');assert.equal(s.operations[0].remaining,3);
+ }finally{globalThis.document=prior}
 });
 
 test('authority reports show only attributed claims, including an unknown result',()=>{
@@ -315,7 +327,7 @@ test('claimant recognition requires confirmation and shows only the player’s s
 
 test('diplomatic statements display the source and warn they do not prove private intentions',()=>{
  const prior=globalThis.document,s=newGame('senate'),content=new Element();addReport(s,'senate','egypt',{kind:'stance',character:'cleopatra',value:'receptive',source:'meeting',confidence:'unverified'});globalThis.document={createElement:tag=>new Element(tag)};
- try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0],html=box.querySelector('#mission-records').innerHTML;assert.match(box.innerHTML,/公开外交表态（使者或盟友转交）/);assert.match(html,/公开外交表态：克娄巴特拉七世 · 愿意接触（不保证真实意图或未来行动）/);assert.match(html,/个人会面/);assert.match(html,/未经核实/)}finally{globalThis.document=prior}
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0],html=box.querySelector('#mission-records').innerHTML;assert.match(box.innerHTML,/公开外交表态（使者或伙伴转交）/);assert.match(html,/公开外交表态：克娄巴特拉七世 · 愿意接触（不保证真实意图或未来行动）/);assert.match(html,/个人会面/);assert.match(html,/未经核实/)}finally{globalThis.document=prior}
 });
 
 test('foreign dossiers show only recorded statements, with date and uncertainty',()=>{
