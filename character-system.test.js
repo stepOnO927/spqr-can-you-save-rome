@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy} from './engine.js?v=succession-feedback-1';
+import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy} from './engine.js?v=varus-portrait-1';
 import {assignSuccession,knownLeaders,ageRange} from './characters.js?v=safe-save-1';
 import {addReport,commandFactor,advanceCharacters,advanceOperations,contestLeadership,observeArmies,reportedArmies,missionDuration,previewMission} from './character-system.js?v=succession-feedback-1';
 
