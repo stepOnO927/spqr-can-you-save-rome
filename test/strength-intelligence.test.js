@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,estimatedStrength} from '../engine.js?v=succession-feedback-1';
+import {newGame,upgradeSave,estimatedStrength} from '../engine.js?v=varus-portrait-1';
 import {queueMission,advanceOperations,addReport,reportEvidence} from '../character-system.js?v=succession-feedback-1';
 function makeReport(type,seed){const s=newGame('senate');for(const a of s.armies.filter(a=>a.owner==='egypt'))a.men=0;s.armies.find(a=>a.owner==='egypt').men=50000;assert.equal(queueMission(s,'senate','egypt',type,'strength').ok,true);s.operations[0].remaining=1;s.world.intelSeed=seed;advanceOperations(s);return s}
 test('strength intelligence is a source-dependent uncertain estimate, not exact hidden strength',()=>{

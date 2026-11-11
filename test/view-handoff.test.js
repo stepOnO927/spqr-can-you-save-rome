@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=succession-feedback-1';
+import {newGame,upgradeSave} from '../engine.js?v=varus-portrait-1';
 import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js';
 import {CHARACTER_CATALOG} from '../characters.js?v=safe-save-1';
 

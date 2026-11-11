@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=succession-feedback-1';
+import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=varus-portrait-1';
 import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js';
 import {drawMap} from '../map.js';
 import {advanceMovements} from '../movements.js?v=safe-save-1';

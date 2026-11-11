@@ -4,9 +4,9 @@ import {identity,factionMark} from './identity.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, answerPeaceOffer,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=succession-feedback-1';
+import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, answerPeaceOffer,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=varus-portrait-1';
 import {decideDisputedHeir,personAge} from './dynasties.js?v=safe-save-1';
-import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=safe-save-1';
+import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=varus-portrait-1';
 import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=succession-feedback-1';
 import {marchReason} from './movement-help.js?v=defeat-1';
 import {syncChronicleDispatches} from './chronicle.js?v=succession-feedback-1';
@@ -19,12 +19,12 @@ import {offerPoliticalContact} from './political-contacts.js?v=safe-save-1';
 import {reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=succession-feedback-1';
 import {religiousPolicy} from './religion.js?v=safe-save-1';
 import {respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=safe-save-1';
-import {newScenario} from './scenarios.js?v=succession-feedback-1';
+import {newScenario} from './scenarios.js?v=varus-portrait-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
 import {renderChessboard} from './chessboard-ui.js?v=safe-save-1';
 import {configureStartingDifficulty} from './difficulty.js?v=grand-chessboard-2';
 import {IDEAS,startResearch,equipIdea} from './inventions.js?v=grand-chessboard-2';
-import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium} from './imperium-ui.js?v=succession-feedback-1';
+import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium} from './imperium-ui.js?v=varus-portrait-1';
 
 const ui={
   en:{subtitle:'A republic at war with itself',campaign:'49 BCE · Caesar’s Civil War',historical:'Historical campaign',schematic:'Schematic operational map · theaters and routes are gameplay abstractions',new:'New campaign',save:'Save',load:'Load',pause:'Pause',play:'Play',speed:'Speed',month:'MONTH',treasury:'TREASURY',food:'FOOD',manpower:'MANPOWER',stability:'STABILITY',legitimacy:'LEGITIMACY',strength:'FIELD STRENGTH',map:'Campaign',military:'Military',government:'Government',chronicle:'Chronicle',sources:'Sources',select:'Select a theater or army',selected:'SELECTED THEATER',owner:'Command',terrain:'Terrain',city:'Principal city',supply:'Supply limit',loyalty:'Local loyalty',fort:'Fortification',recruit:'Raise legion · 24¤ / 3,000 men / 6 grain',recruitFail:'Insufficient resources or this theater is not yours.',army:'SELECTED ARMY',men:'Soldiers',morale:'Morale',commander:'Commander',order:'Order march',cancel:'Cancel order',target:'Select an adjacent theater on the map.',invalid:'No legal march route. War is required to enter another command’s theater.',marching:'Marching',siege:'Besieging',available:'Ready',armies:'Field armies',tax:'Tax policy',low:'Low',normal:'Normal',high:'High',taxText:'Higher taxes raise revenue but erode local loyalty. Low taxes recover loyalty.',revolt:'Rebellion',revoltText:'A disloyal, undefended theater can secede when stability is low. The rebels gain land and an army.',war:'Civil war',warText:'Caesar and Pompey command opposing Roman factions. Their colors show military control during the conflict, not separate sovereign states.',log:'Campaign dispatches',sourceNote:'Historical framework: Caesar crossed the Rubicon in January 49 BCE. Theater ownership, troop totals, income, travel times, and battle ratings are simplified gameplay estimates. The coast is hand-drawn and schematic; it does not encode ancient administrative borders.',instructions:'Choose an army, select Order march, then click a connected theater. Advance time to resolve travel and combat.',savePrompt:'Choose save slot 1–3',saved:'Campaign saved in slot',loaded:'Campaign loaded from slot',empty:'That slot is empty.',victory:'Opposing Roman command defeated · the campaign continues',noArmy:'No field army selected',atWar:'At war',neutral:'Independent',terrainNames:{plain:'Plain',hills:'Hills',forest:'Forest',urban:'Urban',desert:'Desert'},sourceTitle:'Research and accuracy notes',open:'Open source ↗',legend:'CAMPAIGN CONTROL',sea:'Sea crossing · 8¤',land:'Land route',clear:'Clear selection'},
