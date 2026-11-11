@@ -30,6 +30,7 @@ jobs:
           node tools/onboarding-smoke.mjs
           node tools/systems-smoke.mjs
           node tools/intelligence-partners-smoke.mjs
+          node tools/trade-intelligence-smoke.mjs
           node tools/scenario-systems-smoke.mjs
           node tools/construction-smoke.mjs
           node tools/browser-smoke.mjs

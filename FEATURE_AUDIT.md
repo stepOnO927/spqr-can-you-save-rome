@@ -14,6 +14,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | National idea research and non-aggression treaties | Government, Families & Policies → national ideas / diplomatic agreements | `tools/systems-smoke.mjs` |
 | Letters and foreign intelligence | Government → Characters & Intelligence → faction → Letters & Intelligence | `tools/systems-smoke.mjs`, `tools/browser-smoke.mjs` |
 | Intelligence exchange with a pact partner | Factions → foreign faction → Letters & Intelligence → select a partner | `tools/intelligence-partners-smoke.mjs` uses a pact fixture and verifies the delayed request and save/load; delivery may fail |
+| Intelligence request to a trading partner | Same intelligence panel → trade partner | `tools/trade-intelligence-smoke.mjs` uses a trade fixture, checks pending save/load and the eventual result; the partner may refuse |
 | Spying and administrative appointments | Factions → foreign intelligence or own faction | `tools/systems-smoke.mjs` |
 | Character travel, health and succession information | Factions → character | `tools/browser-smoke.mjs` |
 | City authority and local administration | Terrain map → city → manage theater | `tools/browser-smoke.mjs` |
