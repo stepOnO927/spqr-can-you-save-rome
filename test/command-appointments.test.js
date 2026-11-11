@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=strategic-offers-2';
+import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=intelligence-partners-1';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js';
-import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=imperium-1';
+import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=intelligence-partners-1';
 import {deriveGovernment} from '../governance.js';
 import {successorFor} from '../characters.js?v=dynasty-id-3';
 

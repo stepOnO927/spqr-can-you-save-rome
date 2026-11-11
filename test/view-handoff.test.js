@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=strategic-offers-2';
+import {newGame,upgradeSave} from '../engine.js?v=intelligence-partners-1';
 import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js';
 
 function memoryStorage() {

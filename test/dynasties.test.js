@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=strategic-offers-2';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=intelligence-partners-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=dynasty-id-3';
 import {assignSuccession,successionModel} from '../characters.js?v=dynasty-id-3';
 import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=multipolar-2';
