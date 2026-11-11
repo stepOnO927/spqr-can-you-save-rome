@@ -15,6 +15,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Material research and completed construction | Terrain map → Inventions → research; owned city → manage theater → construction | `tools/construction-smoke.mjs` |
 | Defensive coalition, civic negotiations and political movement reform | Campaign map → government (coalition test uses a friendly-relations fixture) | `tools/scenario-systems-smoke.mjs` |
 | National idea research and non-aggression treaties | Government, Families & Policies → national ideas / diplomatic agreements | `tools/systems-smoke.mjs` |
+| Discounted inquiries and peace letters | Terrain-map diplomacy / campaign-map government | `tools/inquiry-price-smoke.mjs` verifies default and discounted prices, low-treasury availability, actual payment and delayed save/load |
 | Letters and foreign intelligence | Government → Characters & Intelligence → faction → Letters & Intelligence | `tools/systems-smoke.mjs`, `tools/browser-smoke.mjs` |
 | Intelligence exchange with a pact partner | Factions → foreign faction → Letters & Intelligence → select a partner | `tools/intelligence-partners-smoke.mjs` uses a pact fixture and verifies the delayed request and save/load; delivery may fail |
 | Intelligence request to a trading partner | Same intelligence panel → trade partner | `tools/trade-intelligence-smoke.mjs` uses a trade fixture, checks pending save/load and the eventual result; the partner may refuse |
