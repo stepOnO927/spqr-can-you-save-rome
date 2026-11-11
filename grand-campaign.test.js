@@ -8,6 +8,7 @@ import {advanceFigures,figureActive} from './great-figures.js';
 import {faithSatisfaction,advanceDemography,advanceReligion,religionPanel} from './local-society.js';
 import {advanceRecon} from './reconnaissance.js';
 import grandPolygons from './grand-territory-polygons.js';
+import {addReport,advanceOperations} from './character-system.js';
 
 test('120 actual territories, 30 in Italy and Sicily, each with a bounded map polygon and graph entry',()=>{
  const s=newGrandGame('senate'),italian=['cisalpine','italiaN','roma','italiaS','sicilia'];assert.equal(s.regions.length,120);assert.equal(italian.reduce((n,id)=>n+GRAND_GROUPS[id].length,0),30);assert.equal(grandPolygons.features.length,120);const ids=new Set(s.regions.map(r=>r.id));
@@ -33,6 +34,34 @@ test('small inland kingdoms can feed their home army and lose home-domain income
  const player=newGrandGame('galatia');
  assert.match(budgetHtml(player,'en'),/Home domain dues · game estimate/);
  assert.match(budgetHtml(player,'zh'),/本土领地储粮 · 游戏估算/);
+});
+test('independent diplomacy builds a reachable border alliance without committing the player',()=>{
+ const s=newGrandGame('egypt');s.month=12;s.factions.numidia.treasury=70;
+ aiTurn(s,'numidia');assert.equal(s.relations['numidia:senate'],40);
+ s.year=-48;s.factions.numidia.treasury=70;aiTurn(s,'numidia');
+ assert.ok(s.alliances.some(pair=>pair.includes('numidia')&&pair.includes('senate')));
+ assert.ok(!s.alliances.some(pair=>pair.includes('egypt')));
+ assert.ok(s.log.some(entry=>/allied with/.test(entry.en)&&/结盟/.test(entry.zh)));
+});
+test('independent command commissions dated border intelligence before considering war',()=>{
+ const s=newGrandGame('egypt');s.month=6;s.relations['armenia:parthia']=-35;s.factions.armenia.treasury=100;
+ aiTurn(s,'armenia');const mission=s.operations.find(op=>op.actor==='armenia'&&op.target==='parthia'&&op.type==='envoy'&&op.subject==='strength');
+ assert.ok(mission);assert.equal(mission.sentYear,-49);assert.equal(mission.sentMonth,6);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.ok(restored.operations.some(op=>op.actor==='armenia'&&op.status==='pending'));
+ restored.world.intelSeed=1000;for(let month=0;month<mission.duration;month++)advanceOperations(restored);
+ const report=restored.knowledge.armenia.parthia.reports.find(item=>item.kind==='strength');
+ assert.ok(report);assert.equal(report.year,-49);assert.equal(report.month,6);assert.equal(report.source,'envoy');assert.ok(Number.isFinite(report.value));
+});
+test('independent war needs fresh uncertain evidence, a viable force, and a cooldown',()=>{
+ const baseline=newGrandGame('egypt');baseline.month=12;baseline.seed=10000;baseline.relations['armenia:parthia']=-35;baseline.factions.armenia.treasury=115;
+ const noReport=upgradeSave(JSON.parse(JSON.stringify(baseline)));aiTurn(noReport,'armenia');assert.ok(!noReport.wars.some(pair=>pair.includes('armenia')&&pair.includes('parthia')));
+ const rumor=upgradeSave(JSON.parse(JSON.stringify(baseline)));addReport(rumor,'armenia','parthia',{kind:'strength',value:2000,source:'envoy',confidence:'rumor'});aiTurn(rumor,'armenia');assert.ok(!rumor.wars.some(pair=>pair.includes('armenia')&&pair.includes('parthia')));
+ const informed=upgradeSave(JSON.parse(JSON.stringify(baseline)));addReport(informed,'armenia','parthia',{kind:'strength',value:2000,source:'envoy',confidence:'unverified'});aiTurn(informed,'armenia');
+ assert.ok(informed.wars.some(pair=>pair.includes('armenia')&&pair.includes('parthia')));assert.equal(informed.aiWarCooldowns.armenia,-576);
+ assert.ok(informed.log.some(entry=>/declared war/.test(entry.en)&&/宣战/.test(entry.zh)));
+ const resumed=upgradeSave(JSON.parse(JSON.stringify(informed)));assert.equal(resumed.aiWarCooldowns.armenia,-576);
+ resumed.wars=resumed.wars.filter(pair=>!pair.includes('armenia')||!pair.includes('parthia'));resumed.year=-48;resumed.month=12;resumed.factions.armenia.treasury=115;resumed.seed=10000;
+ aiTurn(resumed,'armenia');assert.ok(!resumed.wars.some(pair=>pair.includes('armenia')&&pair.includes('parthia')));
 });
 test('multi territory march travels leg by leg and plans realistic time',()=>{
  const s=newGrandGame('caesar'),plan=previewMarch(s,'xiii','roma');assert.equal(plan.ok,true);assert.ok(plan.path.length>=3);const start=s.armies.find(a=>a.id==='xiii');assert.equal(start.region,'cisalpine');const out=moveArmy(s,'xiii','roma');assert.equal(out.ok,true);assert.equal(start.move.to,plan.path[0].id);tick(s);assert.notEqual(start.region,'roma');assert.ok(start.move||start.region===plan.path[0].id);
