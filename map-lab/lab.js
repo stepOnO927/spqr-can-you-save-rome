@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=5';
 import {nationalBudget} from '../national-budget.js?v=4';
 import {budgetHtml} from '../budget-ui.js?v=6';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=13';
+import {physicalStyle} from './physical-style.js?v=14';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=137';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=28';
 import {FACTIONS} from '../data.js?v=9';
@@ -99,7 +99,7 @@ const t=k=>L[lang][k];const n=a=>a?.[lang==='zh'?1:0]||'';
 L.en.credits='GSHHG MODERN COAST · MODERN ELEVATION · HISTORICAL BORDERS APPROXIMATE';
 L.zh.credits='GSHHG 现代海岸线 · 现代高程 · 历史边界为近似';
 const status = document.querySelector('#status');
-const map = new maplibregl.Map({container:'map',canvasContextAttributes:{preserveDrawingBuffer:true},center:[12.4,43.2],zoom:5.45,minZoom:3.6,maxZoom:9.2,maxBounds:[[-20,18],[60,58]],attributionControl:{compact:true},style:physicalStyle});
+export const map = new maplibregl.Map({container:'map',canvasContextAttributes:{preserveDrawingBuffer:true},center:[12.4,43.2],zoom:5.45,minZoom:3.6,maxZoom:9.2,maxBounds:[[-20,18],[60,58]],attributionControl:{compact:true},style:physicalStyle});
 const locator=document.createElement('aside');locator.id='locator';locator.hidden=true;locator.innerHTML='<strong class="locator-title"></strong><div class="locator-map"><img src="./italy-locator.svg?v=1" alt=""><span id="locator-position"></span></div>';document.body.append(locator);
 function updateLocator(){const center=map.getCenter?.(),zoom=map.getZoom?.()||0;if(!center||zoom<7||center.lng<4||center.lng>23||center.lat<35||center.lat>48){locator.hidden=true;return}locator.hidden=false;locator.querySelector('.locator-title').textContent=lang==='zh'?'当前位置 · 意大利':'YOUR POSITION · ITALY';locator.setAttribute('aria-label',lang==='zh'?'意大利海岸及当前地图中心':'Italy coast and current map center');const dot=locator.querySelector('#locator-position');dot.style.left=`${(center.lng-4)/19*100}%`;dot.style.top=`${(48-center.lat)/13*100}%`}
 map.on('move',updateLocator);map.on('load',updateLocator);document.querySelector('#language').addEventListener('click',()=>setTimeout(updateLocator,0));

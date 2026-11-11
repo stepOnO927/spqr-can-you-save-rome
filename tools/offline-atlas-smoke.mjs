@@ -15,6 +15,7 @@ assert.ok(physicalStyle.sources.rivers.data.features.some(feature=>feature.prope
 assert.ok(physicalStyle.sources.rivers.data.features.every(feature=>feature.properties.kind!=='Canal'));
 assert.ok(physicalStyle.sources.lakes.data.features.every(feature=>feature.properties.kind!=='Reservoir'));
 assert.deepEqual(physicalStyle.sources['elevation-fine'].bounds,[-20,18,60,58]);
+assert.deepEqual(physicalStyle.sources['elevation-aegean-higher'].bounds,[21.9,34,31,43]);
 assert.equal(physicalStyle.sources['nile-delta'].data.geometry.type,'Polygon');
 assert.ok(physicalStyle.layers.some(layer=>layer.id==='nile-delta-alluvium'));
 
@@ -151,6 +152,18 @@ try{
  assert.equal(external.includes('s3.amazonaws.com'),false,'Egyptian terrain unexpectedly needed the network');
  if(process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT});
  if(process.env.SPQR_ATLAS_EGYPT_Z9_TERRAIN_SCREENSHOT){await page.locator('#map-mode').selectOption('terrain');await page.waitForTimeout(400);await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_TERRAIN_SCREENSHOT});await page.locator('#map-mode').selectOption('political')}
+ const galatia=newGrandGame('galatia');
+ await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),galatia);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',{timeout:30000});
+ await page.waitForTimeout(1400);
+ terrainRequests.length=0;
+ const aegeanCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=195');map.jumpTo({center:[27.1,38.6],zoom:9.1});return map.getCenter().toArray()});
+ assert.ok(Math.abs(aegeanCenter[0]-27.1)<.1&&Math.abs(aegeanCenter[1]-38.6)<.1,'Aegean screenshot must actually focus on the coast');
+ await waitForTerrain(/\/terrain\/9\/294\//,'Aegean maximum zoom did not use bundled high-detail terrain');
+ assert.deepEqual(missingTerrain,[],'Aegean maximum zoom requested missing terrain tiles');
+ assert.equal(external.includes('s3.amazonaws.com'),false,'Aegean terrain unexpectedly needed the network');
+ if(process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT){await page.waitForTimeout(650);await page.screenshot({path:process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT})}
  const armenia=newGrandGame('armenia');
  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),armenia);
  await page.reload({waitUntil:'domcontentloaded'});
@@ -160,5 +173,5 @@ try{
  await waitForTerrain(/\/terrain\/7\/(7[8-9]|8[0-2])\//,'Armenian zoom 7 did not use bundled mountain terrain');
  assert.deepEqual(missingTerrain,[],'Armenian mountain zoom requested missing terrain tiles');
  if(process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT});
- console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and Italy and Egypt through zoom 9.');
+ console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and Italy, the Aegean and Egypt through zoom 9.');
 }finally{await browser.close()}
