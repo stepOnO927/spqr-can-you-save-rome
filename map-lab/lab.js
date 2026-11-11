@@ -3,38 +3,38 @@ import {marchReason as sharedMarchReason} from '../movement-help.js?v=defeat-1';
 import {renderTerritoryFacts} from './territory-facts.js?v=grand-chessboard-2';
 import {createInventionUI} from './invention-ui.js?v=grand-chessboard-2';
 import {buildingModifiers} from '../inventions.js?v=grand-chessboard-2';
-import {authorityForTheater} from './authority-view.js?v=save-identity-1';
-import {renderMediation} from './mediation-ui.js?v=dynasty-id-3';
+import {authorityForTheater} from './authority-view.js?v=safe-save-1';
+import {renderMediation} from './mediation-ui.js?v=safe-save-1';
 import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from './turn-report.js?v=phase-x-1';
-import {syncChronicleDispatches} from '../chronicle.js?v=dynasty-id-3';
-import {renderChronicle} from './chronicle-ui.js?v=dynasty-id-3';
-import {formatChronicleEntry} from '../chronicle.js?v=dynasty-id-3';
-import {knownDynasticFactions} from '../civil-war.js?v=dynasty-id-3';
+import {syncChronicleDispatches} from '../chronicle.js?v=safe-save-1';
+import {renderChronicle} from './chronicle-ui.js?v=safe-save-1';
+import {formatChronicleEntry} from '../chronicle.js?v=safe-save-1';
+import {knownDynasticFactions} from '../civil-war.js?v=safe-save-1';
 import {reportedControl,requestControlReport} from '../control-intelligence.js?v=phase-x-1';
-import {renderLocalGovernor} from './local-governor-ui.js?v=save-identity-1';
-import {renderSecurity} from './security-ui.js?v=save-identity-1';
-import {renderOffices} from './offices-ui.js?v=save-identity-1';
-import {officeEffects} from '../office-system.js?v=save-identity-1';
-import {populationFactor,religiousTaxCost} from '../religion.js?v=save-identity-1';
+import {renderLocalGovernor} from './local-governor-ui.js?v=safe-save-1';
+import {renderSecurity} from './security-ui.js?v=safe-save-1';
+import {renderOffices} from './offices-ui.js?v=safe-save-1';
+import {officeEffects} from '../office-system.js?v=safe-save-1';
+import {populationFactor,religiousTaxCost} from '../religion.js?v=safe-save-1';
 import {activeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {configureStartingDifficulty} from '../difficulty.js?v=grand-chessboard-2';
 import {waitForMapIdle} from './capture-wait.js?v=phase-x-1';
-import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=phase-x-1';
-import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=save-identity-1';
+import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=safe-save-1';
+import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=safe-save-1';
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=save-identity-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=safe-save-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
-import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=dynasty-id-3';
-import {createCharacterUI} from './character-ui.js?v=save-identity-1';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=safe-save-1';
+import {createCharacterUI} from './character-ui.js?v=safe-save-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=institution-portraits-1';
-import {reportedArmies} from '../character-system.js?v=save-identity-1';
+import {reportedArmies} from '../character-system.js?v=safe-save-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=playability-1';
 import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=phase-x-1';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=save-identity-1';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=safe-save-1';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGame();
@@ -199,7 +199,7 @@ document.querySelector('#capture').onclick=async()=>{const button=document.query
 
 if(new URLSearchParams(location.search).has('perf')){let count=0,start=performance.now();function sample(now){count++;if(now-start<3000)requestAnimationFrame(sample);else{document.body.dataset.perfFps=String(Math.round(count*1000/(now-start)));document.body.dataset.perfSeconds=String(((now-start)/1000).toFixed(1))}}requestAnimationFrame(sample)}
 
-function saveSlot(action){const choice=document.querySelector('#save-slot').value;if(!['1','2','3'].includes(choice))return;const key=`spqr-save-${choice}`;if(action==='save'){try{syncChronicleDispatches(state);localStorage.setItem(key,JSON.stringify(state));status.textContent=lang==='zh'?`已保存至栏位 ${choice}`:`Saved to slot ${choice}`}catch{status.textContent=lang==='zh'?'浏览器无法保存存档，请检查存储空间与权限。':'Could not save; check browser storage space and permissions.'}status.style.display='block';return}let raw;try{raw=localStorage.getItem(key)}catch{status.textContent=lang==='zh'?'浏览器无法读取存档，请检查存储权限。':'Could not access saves; check browser storage permissions.';status.style.display='block';return}if(!raw){status.textContent=lang==='zh'?'此存档栏为空。':'This slot is empty.';status.style.display='block';return}try{const saved=upgradeSave(JSON.parse(raw));if(!['caesar','senate'].includes(saved.player))throw Error('Not a Roman campaign');setPlaying(false);tutorial.stop();state=saved;activeInfo=null;activeFaction=null;activeBattle=null;activeArmy=null;previewDestination='';clearReach();battleMarkers.forEach(m=>m.remove());battleMarkers=[];renderArmies();renderHud();tutorial.restore(saved.tutorial);inspect(lang==='zh'?'存档已读取':'Campaign loaded',lang==='zh'?'已恢复战役状态。':'Campaign state restored.');status.style.display='none'}catch(e){status.textContent=lang==='zh'?'存档无法读取。':'Could not load this save.';status.style.display='block'}}
+function saveSlot(action){const choice=document.querySelector('#save-slot').value;if(!['1','2','3'].includes(choice))return;const key=`spqr-save-${choice}`;if(action==='save'){try{syncChronicleDispatches(state);localStorage.setItem(key,JSON.stringify(state));status.textContent=lang==='zh'?`已保存至栏位 ${choice}`:`Saved to slot ${choice}`}catch{status.textContent=lang==='zh'?'浏览器无法保存存档，请检查存储空间与权限。':'Could not save; check browser storage space and permissions.'}status.style.display='block';return}let raw;try{raw=localStorage.getItem(key)}catch{status.textContent=lang==='zh'?'浏览器无法读取存档，请检查存储权限。':'Could not access saves; check browser storage permissions.';status.style.display='block';return}if(!raw){status.textContent=lang==='zh'?'此存档栏为空。':'This slot is empty.';status.style.display='block';return}try{const candidate=JSON.parse(raw);if(!['caesar','senate'].includes(candidate?.player)||!Array.isArray(candidate.regions)||!candidate.regions.length||!Array.isArray(candidate.armies)||!candidate.factions?.[candidate.player])throw Error('Invalid Roman campaign');const saved=upgradeSave(candidate);setPlaying(false);tutorial.stop();state=saved;activeInfo=null;activeFaction=null;activeBattle=null;activeArmy=null;previewDestination='';clearReach();battleMarkers.forEach(m=>m.remove());battleMarkers=[];renderArmies();renderHud();tutorial.restore(saved.tutorial);inspect(lang==='zh'?'存档已读取':'Campaign loaded',lang==='zh'?'已恢复战役状态。':'Campaign state restored.');status.style.display='none'}catch(e){status.textContent=lang==='zh'?'存档无法读取。':'Could not load this save.';status.style.display='block'}}
 document.querySelector('#save').onclick=()=>saveSlot('save');document.querySelector('#load').onclick=()=>saveSlot('load');
 
 document.querySelector('#map-mode').onchange=e=>{currentMapMode=e.target.value;updateControl();renderHud()};

@@ -1,30 +1,30 @@
-import {stageHandoff,receiveHandoff} from './view-handoff.js?v=phase-x-1';
-import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=save-identity-1';
+import {stageHandoff,receiveHandoff} from './view-handoff.js?v=safe-save-1';
+import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=safe-save-1';
 import {identity,factionMark} from './identity.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=dynasty-id-3';
+import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, answerPeaceOffer,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=save-identity-1';
-import {decideDisputedHeir,personAge} from './dynasties.js?v=save-identity-1';
-import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=save-identity-1';
-import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=save-identity-1';
+import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, answerPeaceOffer,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=safe-save-1';
+import {decideDisputedHeir,personAge} from './dynasties.js?v=safe-save-1';
+import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=safe-save-1';
+import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=safe-save-1';
 import {marchReason} from './movement-help.js?v=defeat-1';
-import {syncChronicleDispatches} from './chronicle.js?v=dynasty-id-3';
-import {renderChronicle} from './map-lab/chronicle-ui.js?v=dynasty-id-3';
-import {formatChronicleEntry,chronicleDate} from './chronicle.js?v=dynasty-id-3';
-import {drawMap,mapPoint} from './map.js?v=save-identity-1';
+import {syncChronicleDispatches} from './chronicle.js?v=safe-save-1';
+import {renderChronicle} from './map-lab/chronicle-ui.js?v=safe-save-1';
+import {formatChronicleEntry,chronicleDate} from './chronicle.js?v=safe-save-1';
+import {drawMap,mapPoint} from './map.js?v=safe-save-1';
 import {AGREEMENT_TYPES,activeAgreement,proposeAgreement,terminateAgreement} from './agreements.js?v=grand-chessboard-2';
 import {formCoalition,leaveCoalition} from './coalitions.js?v=multipolar-2';
-import {offerPoliticalContact} from './political-contacts.js?v=dynasty-id-3';
-import {reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=save-identity-1';
-import {religiousPolicy} from './religion.js?v=save-identity-1';
-import {respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=save-identity-1';
-import {newScenario} from './scenarios.js?v=save-identity-1';
+import {offerPoliticalContact} from './political-contacts.js?v=safe-save-1';
+import {reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=safe-save-1';
+import {religiousPolicy} from './religion.js?v=safe-save-1';
+import {respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=safe-save-1';
+import {newScenario} from './scenarios.js?v=safe-save-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
-import {renderChessboard} from './chessboard-ui.js?v=save-identity-1';
+import {renderChessboard} from './chessboard-ui.js?v=safe-save-1';
 import {configureStartingDifficulty} from './difficulty.js?v=grand-chessboard-2';
 import {IDEAS,startResearch,equipIdea} from './inventions.js?v=grand-chessboard-2';
-import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium} from './imperium-ui.js?v=save-identity-1';
+import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium} from './imperium-ui.js?v=safe-save-1';
 
 const ui={
   en:{subtitle:'A republic at war with itself',campaign:'49 BCE · Caesar’s Civil War',historical:'Historical campaign',schematic:'Schematic operational map · theaters and routes are gameplay abstractions',new:'New campaign',save:'Save',load:'Load',pause:'Pause',play:'Play',speed:'Speed',month:'MONTH',treasury:'TREASURY',food:'FOOD',manpower:'MANPOWER',stability:'STABILITY',legitimacy:'LEGITIMACY',strength:'FIELD STRENGTH',map:'Campaign',military:'Military',government:'Government',chronicle:'Chronicle',sources:'Sources',select:'Select a theater or army',selected:'SELECTED THEATER',owner:'Command',terrain:'Terrain',city:'Principal city',supply:'Supply limit',loyalty:'Local loyalty',fort:'Fortification',recruit:'Raise legion · 24¤ / 3,000 men / 6 grain',recruitFail:'Insufficient resources or this theater is not yours.',army:'SELECTED ARMY',men:'Soldiers',morale:'Morale',commander:'Commander',order:'Order march',cancel:'Cancel order',target:'Select an adjacent theater on the map.',invalid:'No legal march route. War is required to enter another command’s theater.',marching:'Marching',siege:'Besieging',available:'Ready',armies:'Field armies',tax:'Tax policy',low:'Low',normal:'Normal',high:'High',taxText:'Higher taxes raise revenue but erode local loyalty. Low taxes recover loyalty.',revolt:'Rebellion',revoltText:'A disloyal, undefended theater can secede when stability is low. The rebels gain land and an army.',war:'Civil war',warText:'Caesar and Pompey command opposing Roman factions. Their colors show military control during the conflict, not separate sovereign states.',log:'Campaign dispatches',sourceNote:'Historical framework: Caesar crossed the Rubicon in January 49 BCE. Theater ownership, troop totals, income, travel times, and battle ratings are simplified gameplay estimates. The coast is hand-drawn and schematic; it does not encode ancient administrative borders.',instructions:'Choose an army, select Order march, then click a connected theater. Advance time to resolve travel and combat.',savePrompt:'Choose save slot 1–3',saved:'Campaign saved in slot',loaded:'Campaign loaded from slot',empty:'That slot is empty.',victory:'Opposing Roman command defeated · the campaign continues',noArmy:'No field army selected',atWar:'At war',neutral:'Independent',terrainNames:{plain:'Plain',hills:'Hills',forest:'Forest',urban:'Urban',desert:'Desert'},sourceTitle:'Research and accuracy notes',open:'Open source ↗',legend:'CAMPAIGN CONTROL',sea:'Sea crossing · 8¤',land:'Land route',clear:'Clear selection'},
@@ -177,7 +177,7 @@ function render(){syncChronicleDispatches(state);
 function stop(){playing=false;if(timer){clearInterval(timer);timer=null}}
 function advanceMonth(){if(state.defeat){stop();render();return}const previous=state.chronicle?.nextId||1;tick(state);const critical=state.chronicle?.entries.find(e=>e.id>=previous&&e.priority==='critical');if(critical){if(playing&&localStorage.getItem('spqr-auto-pause-critical')==='on')stop();flash((lang==='zh'?'紧急事件：':'CRITICAL: ')+formatChronicleEntry(critical,lang))}else render()}
 function setPlaying(on){stop();playing=on&&!state.defeat;if(playing)timer=setInterval(advanceMonth,speed===1?1500:speed===2?800:350);render()}
-function slot(action){const choice=chosenSlot;if(!['1','2','3'].includes(choice))return;const key=`spqr-save-${choice}`;if(action==='save'){try{syncChronicleDispatches(state);localStorage.setItem(key,JSON.stringify(state));flash(`${t('saved')} ${choice}`)}catch{flash(lang==='zh'?'浏览器无法保存存档。':'The browser could not save this campaign.')}}else{const raw=localStorage.getItem(key);if(!raw){flash(t('empty'));return false}try{const loaded=upgradeSave(JSON.parse(raw));if(!['caesar','senate'].includes(loaded.player)){flash(t('oldFaction'));return false}state=loaded;chosenDifficulty=state.difficulty||'standard';chosenHandicap=!!state.economicHandicap;stop();if(state.world.dynasties?.scenario){tab='government';panelOpen=true}chosenFaction=['caesar','senate'].includes(state.player)?state.player:'caesar';selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0].id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;ordering=false;flash(`${t('loaded')} ${choice}`);return true}catch{flash(lang==='zh'?'存档无法读取。':'This save could not be read.');return false}}}
+function slot(action){const choice=chosenSlot;if(!['1','2','3'].includes(choice))return;const key=`spqr-save-${choice}`;if(action==='save'){try{syncChronicleDispatches(state);localStorage.setItem(key,JSON.stringify(state));flash(`${t('saved')} ${choice}`)}catch{flash(lang==='zh'?'浏览器无法保存存档。':'The browser could not save this campaign.')}}else{let raw;try{raw=localStorage.getItem(key)}catch{flash(lang==='zh'?'浏览器无法读取存档，请检查存储权限。':'Could not access saves; check browser storage permissions.');return false}if(!raw){flash(t('empty'));return false}try{const candidate=JSON.parse(raw);if(!['caesar','senate'].includes(candidate?.player)){flash(t('oldFaction'));return false}if(!Array.isArray(candidate.regions)||!candidate.regions.length||!Array.isArray(candidate.armies)||!candidate.factions?.[candidate.player])throw Error('Invalid campaign');const loaded=upgradeSave(candidate);state=loaded;chosenDifficulty=state.difficulty||'standard';chosenHandicap=!!state.economicHandicap;stop();if(state.world.dynasties?.scenario){tab='government';panelOpen=true}chosenFaction=['caesar','senate'].includes(state.player)?state.player:'caesar';selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0].id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;ordering=false;flash(`${t('loaded')} ${choice}`);return true}catch{flash(lang==='zh'?'存档无法读取。':'This save could not be read.');return false}}}
 const imperiumLog=(s,en,zh,meta={})=>{s.log.unshift({month:s.month,year:s.year,en,zh,...meta});s.log=s.log.slice(0,80)};
 function bind(){
   document.querySelectorAll('[data-board-view]').forEach(el=>el.onclick=()=>{boardView=el.dataset.boardView;boardSelected=null;render()});

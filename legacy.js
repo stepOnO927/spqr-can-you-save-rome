@@ -1,6 +1,6 @@
-import {syncChronicleDispatches} from './chronicle.js?v=dynasty-id-3';
-import {CHARACTER_CATALOG} from './characters.js?v=dynasty-id-3';
-import {initializeDynasties} from './dynasties.js?v=save-identity-1';
+import {syncChronicleDispatches} from './chronicle.js?v=safe-save-1';
+import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
+import {initializeDynasties} from './dynasties.js?v=safe-save-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 

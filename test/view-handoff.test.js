@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=save-identity-1';
+import {newGame,upgradeSave} from '../engine.js?v=safe-save-1';
 import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js';
+import {CHARACTER_CATALOG} from '../characters.js?v=safe-save-1';
 
 function memoryStorage() {
   const values=new Map();
@@ -32,5 +33,17 @@ test('invalid transfers are not consumed and storage failures do not appear succ
   storage.setItem(HANDOFF_KEY,JSON.stringify({target:'atlas',state:{player:'egypt',regions:[],armies:[],factions:{}}}));
   assert.equal(receiveHandoff(storage,'atlas',upgradeSave),null);
   assert.throws(()=>stageHandoff({setItem(){throw Error('storage blocked')}},newGame(),'atlas'),/storage blocked/);
+});
+
+test('failed migration and failed transfer consumption restore the active fictional catalog',()=>{
+ const active=newGame('caesar'),original=CHARACTER_CATALOG['fictional:1'].name[0],broken=JSON.parse(JSON.stringify(active));broken.world.dynasties.catalog['fictional:1'].name=['Wrong save','错误存档人物'];broken.agreements={};
+ assert.throws(()=>upgradeSave(broken));assert.equal(CHARACTER_CATALOG['fictional:1'].name[0],original);
+ const candidate=JSON.parse(JSON.stringify(active));candidate.world.dynasties.catalog['fictional:1'].name=['Wrong transfer','错误转移人物'];const storage=memoryStorage();stageHandoff(storage,candidate,'atlas');storage.removeItem=()=>{throw Error('blocked')};
+ assert.equal(receiveHandoff(storage,'atlas',upgradeSave),null);assert.equal(CHARACTER_CATALOG['fictional:1'].name[0],original);assert.ok(storage.getItem(HANDOFF_KEY));
+});
+
+test('a transfer missing the selected faction is rejected before migration',()=>{
+ const active=newGame('caesar'),storage=memoryStorage(),invalid=JSON.parse(JSON.stringify(active));delete invalid.factions.caesar;stageHandoff(storage,invalid,'atlas');let called=false;
+ assert.equal(receiveHandoff(storage,'atlas',()=>{called=true;throw Error('must not migrate')}),null);assert.equal(called,false);
 });
 
