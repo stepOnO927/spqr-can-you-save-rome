@@ -24,7 +24,7 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=imperium-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=defeat-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=dynasty-id-3';
