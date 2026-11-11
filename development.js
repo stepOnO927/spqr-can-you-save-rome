@@ -218,15 +218,22 @@ export function ideaCompatibility(s,owner,ideaId,slot){
   const conflict=active.find(id=>idea.conflicts?.includes(id)||IDEAS.find(x=>x.id===id)?.conflicts?.includes(ideaId));
   return conflict?{ok:false,reason:'conflict',with:conflict}:{ok:true};
 }
-export function adoptIdea(s,owner,ideaId,slot=0){
+export function ideaAdoptionPlan(s,owner,ideaId,slot=0){
   const d=development(s,owner),idea=IDEAS.find(x=>x.id===ideaId),f=s.factions[owner];
-  if(!idea||!d.knownIdeas.includes(ideaId)||d.adoption||!d.slots[idea.category]||slot<0||slot>=d.slots[idea.category].length)return {ok:false,reason:'unavailable'};
-  const compatible=ideaCompatibility(s,owner,ideaId,slot);if(!compatible.ok)return compatible;
-  if(f.treasury<idea.adopt)return {ok:false,reason:'treasury'};
-  const old=d.slots[idea.category][slot];if(old===ideaId)return {ok:false,reason:'active'};
-  const specialist=idea.category==='military'?'military':idea.category==='government'?'statesman':idea.category==='culture'?'religious':null;
-  f.treasury-=idea.adopt;d.adoption={ideaId,category:idea.category,slot,remaining:Math.max(1,(old?3:2)+(activeEffects(s,owner).decisionDelay||0)+(d.foreignOrigins[ideaId]?2:0)-(specialist&&figureActive(s,owner,specialist)?1:0)),old};
-  if(old)f.stability=Math.max(0,f.stability-2);
+  if(!idea||!Number.isInteger(slot)||slot<0||slot>=d.slots[idea.category]?.length)return {ok:false,reason:'unavailable'};
+  const old=d.slots[idea.category][slot],specialist=idea.category==='military'?'military':idea.category==='government'?'statesman':idea.category==='culture'?'religious':null;
+  const plan={cost:idea.adopt,months:Math.max(1,(old?3:2)+(activeEffects(s,owner).decisionDelay||0)+(d.foreignOrigins[ideaId]?2:0)-(specialist&&figureActive(s,owner,specialist)?1:0)),stabilityLoss:old&&old!==ideaId?2:0,old};
+  if(!d.knownIdeas.includes(ideaId)||d.adoption)return {...plan,ok:false,reason:'unavailable'};
+  const compatible=ideaCompatibility(s,owner,ideaId,slot);if(!compatible.ok)return {...plan,...compatible};
+  if(old===ideaId)return {...plan,ok:false,reason:'active'};
+  if(f.treasury<plan.cost)return {...plan,ok:false,reason:'treasury'};
+  return {...plan,ok:true};
+}
+export function adoptIdea(s,owner,ideaId,slot=0){
+  const plan=ideaAdoptionPlan(s,owner,ideaId,slot);if(!plan.ok)return {ok:false,reason:plan.reason,...(plan.with?{with:plan.with}:{})};
+  const d=development(s,owner),idea=IDEAS.find(x=>x.id===ideaId),f=s.factions[owner];
+  f.treasury-=plan.cost;d.adoption={ideaId,category:idea.category,slot,remaining:plan.months,old:plan.old};
+  if(plan.stabilityLoss)f.stability=Math.max(0,f.stability-plan.stabilityLoss);
   return {ok:true};
 }
 export function removeIdea(s,owner,category,slot=0){

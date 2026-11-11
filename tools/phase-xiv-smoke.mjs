@@ -73,12 +73,18 @@ try{
     const replacing=newGrandGame('caesar');
     replacing.development.caesar.knownIdeas.push('hardline-diplomacy','diplomatic-accommodation');
     replacing.development.caesar.slots.diplomacy[0]='hardline-diplomacy';
+    replacing.development.caesar.slots.diplomacy.push(null);
     await page.evaluate(language=>localStorage.setItem('spqr-lang',language),lang);
     await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
     await page.locator('#entry-file').setInputFiles({name:`replace-${lang}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(replacing))});
     await page.locator('[data-tab="ideas"]').click();
     const replacement=page.locator('[data-adopt-idea="diplomatic-accommodation"][data-slot="0"]');
     assert.equal(await replacement.isEnabled(),true,lang);
+    assert.equal(await page.locator('[data-adopt-idea="diplomatic-accommodation"][data-slot="1"]').isDisabled(),true,lang);
+    assert.match(await replacement.innerText(),lang==='zh'?/10¤ \/ 3月 · 稳定度 −2/:/10¤ \/ 3m · stability −2/);
+    const comparison=page.locator('#tech-diplomatic-accommodation .dev-compare');await comparison.locator('summary').click();
+    assert.match(await comparison.innerText(),lang==='zh'?/当前[\s\S]*拟装配[\s\S]*稳定度 −2/:/Current[\s\S]*Proposed[\s\S]*stability −2/);
+    if(lang==='en')await page.screenshot({path:'outputs/idea-replacement-compare.png'});
     await replacement.click();
     for(let i=0;i<3;i++)await page.locator('#step').click();
     assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(2).locator('.dev-slot').first().innerText(),lang==='zh'?/外交妥协/:/Diplomatic Accommodation/);

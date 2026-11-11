@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,purchaseMaterials} from '../engine.js';
-import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility} from '../development.js';
+import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan} from '../development.js';
 import {developmentPanel,ideasPanel} from '../development-ui.js';
 import {edgeMonths} from '../grand-operations.js';
 import {techIllustration} from '../tech-art.js';
@@ -111,10 +111,20 @@ test('a conflicting idea may replace its own slot but cannot coexist or be equip
   }
   d.slots.diplomacy.push(null);
   assert.equal(ideaCompatibility(s,'caesar','diplomatic-accommodation',1).reason,'conflict');
+  const replacement=ideaAdoptionPlan(s,'caesar','diplomatic-accommodation',0),blocked=ideaAdoptionPlan(s,'caesar','diplomatic-accommodation',1);
+  assert.equal(replacement.ok,true);assert.equal(replacement.cost,10);assert.equal(replacement.months,3);assert.equal(replacement.stabilityLoss,2);
+  assert.equal(blocked.reason,'conflict');assert.equal(blocked.stabilityLoss,0);
+  for(const [language,expected] of [['en',/Compare with slot 1: Hardline Diplomacy/],['zh',/与栏位 1: 强硬外交/]]){
+    const html=ideasPanel(s,language),card=html.match(/<article id="tech-diplomatic-accommodation"[\s\S]*?<\/article>/)?.[0];
+    assert.ok(card);assert.match(card,expected);assert.match(card,language==='zh'?/更换 1 · 10¤ \/ 3月 · 稳定度 −2/:/Replace 1 · 10¤ \/ 3m · stability −2/);
+    assert.doesNotMatch(card.match(/<button[^>]*data-adopt-idea="diplomatic-accommodation" data-slot="0"[^>]*>/)?.[0]||'',/\bdisabled\b/);
+    assert.match(card.match(/<button[^>]*data-adopt-idea="diplomatic-accommodation" data-slot="1"[^>]*>/)?.[0]||'',/\bdisabled\b/);
+  }
   assert.equal(adoptIdea(s,'caesar','diplomatic-accommodation',1).reason,'conflict');
   assert.equal(ideaCompatibility(s,'caesar','hardline-diplomacy',1).reason,'duplicate');
   assert.equal(adoptIdea(s,'caesar','hardline-diplomacy',1).reason,'duplicate');
-  assert.equal(adoptIdea(s,'caesar','diplomatic-accommodation',0).ok,true);
+  const stability=s.factions.caesar.stability;assert.equal(adoptIdea(s,'caesar','diplomatic-accommodation',0).ok,true);
+  assert.equal(d.adoption.remaining,replacement.months);assert.equal(s.factions.caesar.stability,stability-replacement.stabilityLoss);
   months(s,3);
   assert.equal(d.slots.diplomacy[0],'diplomatic-accommodation');
   assert.equal(activeEffects(s,'caesar').diplomacy,5);
