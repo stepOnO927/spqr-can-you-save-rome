@@ -23,7 +23,9 @@ const INSTITUTION_PORTRAITS=[
  ['theban_temples',0,'Psenamun',-97,'fictional-psenamun'],
  ['theban_temples',1,'Taimhotep',-83,'fictional-taimhotep'],
  ['syrian_association',0,'Maron',-97,'fictional-maron'],
- ['syrian_association',1,'Helena of Antioch',-83,'fictional-helena']
+ ['syrian_association',1,'Helena of Antioch',-83,'fictional-helena'],
+ ['scenario_civic',0,'Gaius Sennius',-85,'fictional-sennius'],
+ ['scenario_civic',1,'Mara',-85,'fictional-mara']
 ];
 export function fictionalPortraitKey(state,id){
  const entry=OPENING_PORTRAITS[id],person=state.world?.characters?.[id],saved=state.world?.dynasties?.catalog?.[id];

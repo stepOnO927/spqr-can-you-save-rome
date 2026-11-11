@@ -1,0 +1,7 @@
+import {chromium} from 'playwright';import assert from 'node:assert/strict';
+const b=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),p=await b.newPage({viewport:{width:1600,height:1000}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+try{
+ await p.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await p.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});await p.locator('#campaign-guide').uncheck();await p.locator('#scenario-choice').selectOption('civic_movement');await p.locator('#start-campaign').click();await p.locator('[data-tab="government"]').click();
+ for(const [name,key] of [['盖乌斯·森尼乌斯','fictional-sennius'],['玛拉','fictional-mara']]){const card=p.locator('[data-gene-person]').filter({hasText:name}),img=card.locator('img');assert.equal(await card.count(),1);assert.match(await img.getAttribute('src'),new RegExp(key+'-128\\.jpg'));await img.evaluate(async e=>{await e.decode();if(e.naturalWidth!==128)throw Error('portrait load')})}
+ await p.locator('#new').click();await p.locator('[data-slot="save"]').click();await p.locator('#new').click();await p.locator('[data-slot="load"]').click();await p.locator('[data-tab="government"]').click();assert.match(await p.locator('[data-gene-person]').filter({hasText:'玛拉'}).locator('img').getAttribute('src'),/fictional-mara-128\.jpg/);assert.deepEqual(errors,[]);console.log('Civic scenario representatives have distinct portraits and retain them after save/load.');
+}finally{await b.close()}

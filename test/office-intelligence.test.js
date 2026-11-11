@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=varus-portrait-1';
+import {newGame,upgradeSave} from '../engine.js?v=civic-portraits-1';
 import {appointOffice,advanceOffices,localGovernor} from '../office-system.js?v=safe-save-1';
 import {addReport,advanceOperations,previewMission,queueMission,reportedHealthSubjects,reportedOfficeTheaters} from '../character-system.js?v=succession-feedback-1';
 import {identityKnowledge} from '../map-lab/identity-knowledge.js';
