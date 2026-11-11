@@ -140,10 +140,18 @@ export function supportClaimant(s,actor,target,claimant,representative=null,aid=
 export function reportedOfficeTheaters(s,actor,target){
  initializeWorld(s);const reports=s.knowledge[actor]?.[target]?.reports||[];return s.regions.filter(r=>reportedControl(s,actor,r.id)?.owner===target||reports.some(x=>x.kind==='office_theater:'+r.id)).map(r=>r.id);
 }
-// The exchange screen and mission validation must offer the same partners.
 // These are the actor's own alliances and agreements, not foreign secrets.
+export function intelligencePartnerAccess(s,actor,partner){
+ if((s.alliances||[]).some(p=>p.includes(actor)&&p.includes(partner)))return 'alliance';
+ if(activeAgreement(s,actor,partner,'intelligence'))return 'intelligence';
+ if(activeAgreement(s,actor,partner,'trade'))return 'trade';
+ return null;
+}
+// The exchange screen and mission validation must offer the same partners.
 export function intelligencePartners(s,actor,target){
- return [...new Set([...(s.alliances||[]).filter(x=>x.includes(actor)).map(x=>x.find(id=>id!==actor)),...(s.agreements||[]).filter(t=>t.type==='intelligence'&&t.parties.includes(actor)&&activeAgreement(s,t.parties[0],t.parties[1],'intelligence')).map(t=>t.parties.find(id=>id!==actor))])].filter(id=>id&&id!==target&&s.factions[id]&&FACTIONS[id]);
+ const alliances=(s.alliances||[]).filter(p=>p.includes(actor)).map(p=>p.find(id=>id!==actor));
+ const partners=type=>(s.agreements||[]).filter(t=>t.type===type&&t.parties.includes(actor)).map(t=>t.parties.find(id=>id!==actor));
+ return [...new Set([...alliances,...partners('intelligence'),...partners('trade')])].filter(id=>id&&id!==actor&&id!==target&&s.factions[id]&&FACTIONS[id]&&intelligencePartnerAccess(s,actor,id));
 }
 export function previewMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!FACTIONS[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
@@ -178,9 +186,18 @@ export function queueMission(s,actor,target,type,subject='health',partnerId=null
 // The ally selects its own record when the request reaches it. The sealed
 // response stays out of the recipient's knowledge until the return journey.
 function prepareExchange(s,op){
- const partner=op.partner,allied=s.alliances.some(x=>x.includes(op.actor)&&x.includes(partner))||!!activeAgreement(s,op.actor,partner,'intelligence');
+ const partner=op.partner,access=intelligencePartnerAccess(s,op.actor,partner);
  const prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter));
- if(!allied||!prior)return {available:false};
+ if(!access)return {available:false};
+ // Trade is contact, not an obligation to share secrets. The recipient's own
+ // relations influence its independent response; the sender learns only the
+ // reply if it survives the return journey, never the reason or hidden report.
+ if(access==='trade'){
+  const relation=s.relations[[partner,op.actor].sort().join(':')]||0;
+  const refusal=Math.max(.2,Math.min(.65,.5-relation*.003));
+  if(rand(s)<refusal)return {available:false,declined:true};
+ }
+ if(!prior)return {available:false};
  return {available:true,report:{kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,range:validStrengthRange(prior)?[...prior.range]:undefined,exhaustive:prior.exhaustive===true,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'}};
 }
 export function advanceOperations(s){initializeWorld(s);for(const op of s.operations){if(op.status!=='pending')continue;op.remaining--;
@@ -212,6 +229,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  }
  if(op.type==='exchange'){
   const sealed=op.exchangeSealed;delete op.exchangeSealed;
+  if(sealed?.declined){op.status='declined';if(op.actor===s.player)notify(s,'The trading partner declined the request for information.','贸易伙伴拒绝了情报请求。');continue}
   if(!sealed?.available){op.status='failed';if(op.actor===s.player)notify(s,'The intelligence exchange ended without a report; the reason is unknown.','情报交换结束，未收到报告；原因不明。');continue}
   addReport(s,op.actor,op.target,sealed.report);op.status='complete';if(op.actor===s.player)notify(s,'A partner forwarded an existing report; its original date and source still matter.','伙伴转交了一份既有报告；仍需留意原始日期与来源。');continue
  }

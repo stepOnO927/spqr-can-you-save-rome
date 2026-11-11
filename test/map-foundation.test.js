@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region} from '../engine.js?v=intelligence-partners-1';
+import {newGame,region} from '../engine.js?v=trade-intelligence-1';
 import {renderTerritoryFacts} from '../map-lab/territory-facts.js?v=grand-chessboard-2';
 
 test('territory record uses the actual friendly garrison and local food potential', () => {
