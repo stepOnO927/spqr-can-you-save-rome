@@ -14,7 +14,15 @@ const familyOf=(s,id)=>s.world.dynasties.families[s.world.characters[id]?.family
 const pair=(a,b)=>[a,b].sort().join(':');
 const record=(s,id,en,zh)=>{(s.world.dynasties.lives[id]||=[]).push({year:s.year,month:s.month,en,zh,simulated:true})};
 export function recordLifeEvent(s,id,en,zh){initializeDynasties(s);if(s.world.characters[id])record(s,id,en,zh)}
-const ensureCatalog=s=>{for(const [id,entry] of Object.entries(s.world.dynasties.catalog))CHARACTER_CATALOG[id]=entry};
+// The shared catalog also contains historical reference data. Fictional IDs,
+// unlike historical IDs, are local to a save and can be reused by another one.
+// Rebuild only that namespace when activating a campaign; never invent a name
+// for a legacy person whose saved catalog entry is missing or malformed.
+function ensureCatalog(s){
+ for(const id of Object.keys(CHARACTER_CATALOG))if(/^fictional:\d+$/.test(id))delete CHARACTER_CATALOG[id];
+ for(const [id,entry] of Object.entries(s.world.dynasties.catalog))if(/^fictional:\d+$/.test(id)&&entry?.fictional&&Array.isArray(entry.name)&&entry.name.length>=2&&entry.name.every(x=>typeof x==='string'&&x.trim()))CHARACTER_CATALOG[id]=entry;
+ for(const [id,person] of Object.entries(s.world.characters))if(/^fictional:\d+$/.test(id)&&!CHARACTER_CATALOG[id])CHARACTER_CATALOG[id]={name:['Unknown simulated person','身份不明的模拟人物'],birth:null,faction:person.faction,role:['Identity not recorded','身份未记录'],culture:['Simulated','模拟'],source:null,fictional:true};
+}
 
 export function initializeDynasties(s){
  const d=s.world.dynasties||= {families:{},lives:{},catalog:{},marriages:[],memories:[],rulers:[],seed:220049,nextPerson:1,nextFamily:1};

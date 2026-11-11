@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=institution-portraits-1';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=save-identity-1';
 import {knownLeaders} from '../characters.js?v=dynasty-id-3';
-import {advanceOperations,availableAgents} from '../character-system.js?v=trade-intelligence-1';
+import {advanceOperations,availableAgents} from '../character-system.js?v=save-identity-1';
 import {advanceConspiracies,reassurePerson,politicalAmbition,potentialConspirators} from '../conspiracies.js?v=dynasty-id-3';
 import {supportSuccessor} from '../governance.js';
 import {resolveDynasticWars} from '../civil-war.js?v=dynasty-id-3';
-import {createFictionalPerson} from '../dynasties.js?v=dynasty-id-3';
+import {createFictionalPerson} from '../dynasties.js?v=save-identity-1';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 function unrest(s){s.factions.senate.stability=30;s.world.characters.cato.loyalty=25;}

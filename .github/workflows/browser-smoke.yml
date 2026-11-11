@@ -32,6 +32,7 @@ jobs:
           node tools/intelligence-partners-smoke.mjs
           node tools/trade-intelligence-smoke.mjs
           node tools/portrait-institutions-smoke.mjs
+          node tools/legacy-identity-smoke.mjs
           node tools/scenario-systems-smoke.mjs
           node tools/construction-smoke.mjs
           node tools/browser-smoke.mjs

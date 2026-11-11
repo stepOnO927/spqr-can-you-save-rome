@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=institution-portraits-1';
-import {contestLeadership,advanceDisputes,queueMission,advanceOperations,addReport,supportClaimant} from '../character-system.js?v=trade-intelligence-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=save-identity-1';
+import {contestLeadership,advanceDisputes,queueMission,advanceOperations,addReport,supportClaimant} from '../character-system.js?v=save-identity-1';
 import {knownLeaders,assignSuccession} from '../characters.js?v=dynasty-id-3';
 import {deriveGovernment} from '../governance.js';
 
