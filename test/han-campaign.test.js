@@ -7,8 +7,18 @@ import {createFictionalPerson} from '../dynasties.js?v=safe-save-1';
 test('Han begins with a productive core, reserves and frontier defense that consume real upkeep',()=>{
  const s=newGame('han'),han=s.factions.han,egypt=s.factions.egypt;
  assert.equal(s.world.leadership.han[0],'han_xuan');
+ assert.equal(s.world.characters.han_xuan.location,'hanGuanzhong');
+ assert.equal(s.world.characters.han_yuan.location,'hanGuanzhong');
  assert.ok(s.regions.filter(r=>r.owner==='han').length>=4);
  assert.ok(s.armies.filter(a=>a.owner==='han').reduce((n,a)=>n+a.men,0)>20000);
+ const commanders=s.armies.filter(a=>a.owner==='han').map(a=>a.characterId);
+ assert.equal(new Set(commanders).size,3);
+ for(const id of commanders){
+  assert.equal(s.world.characters[id].faction,'han');
+  assert.ok(s.world.characters[id].homeland);
+  assert.deepEqual(s.world.dynasties.catalog[id].culture,['Han Chinese','汉']);
+  assert.equal(s.world.dynasties.catalog[id].fictional,true);
+ }
  assert.ok(han.treasury>egypt.treasury*2&&han.food>egypt.food&&han.manpower>egypt.manpower*3);
  const base=forecastEconomy(s,'han');assert.ok(base.food>0&&base.treasury>0);
  const before={treasury:han.treasury,food:han.food,manpower:han.manpower};tick(s);
@@ -54,4 +64,13 @@ test('an older Mediterranean save without Han records still loads without resett
  assert.doesNotThrow(()=>upgradeSave(old));
  assert.equal(old.world.characters.caesar,original);
  assert.equal(old.factions.han,undefined);
+});
+
+test('Han commanders keep their personal identities across save migration',()=>{
+ const s=newGame('han'),before=s.armies.filter(a=>a.owner==='han').map(a=>[a.id,a.characterId,a.commander]);
+ const restored=upgradeSave(structuredClone(s));
+ assert.deepEqual(restored.armies.filter(a=>a.owner==='han').map(a=>[a.id,a.characterId,a.commander]),before);
+ for(const [,id] of before)assert.equal(restored.world.dynasties.catalog[id].fictional,true);
+ const again=upgradeSave(structuredClone(restored));
+ assert.deepEqual(again.armies.filter(a=>a.owner==='han').map(a=>[a.id,a.characterId,a.commander]),before);
 });
