@@ -13,8 +13,12 @@ try{
  await page.locator('#start-campaign').click();
  await page.waitForURL('**/map-lab/');
  await page.locator('[data-theater="hanGuanzhong"]').waitFor();
+ await page.locator('[data-theater="shanshanOasis"]').waitFor();
  assert.match(await page.locator('.brief h1').innerText(),/关中/);
  assert.match(await page.locator('#objectives').innerText(),/河西走廊/);
+ await page.locator('#factions').click();
+ await page.locator('[data-faction="shanshan"]').click();
+ assert.match(await page.locator('#selection-title').innerText(),/鄯善/);
  assert.equal(await page.locator('[data-army="hanCapitalGuard"]').count(),1);
  await page.locator('[data-army="hanCapitalGuard"]').click({force:true});
  assert.match(await page.locator('#selection-detail').innerText(),/张守/);

@@ -81,4 +81,23 @@ export function advanceInventions(s){initializeInventions(s);for(const [owner,x]
  for(const x of Object.values(s.inventions)){if(x.adapting&&--x.adapting.remaining<=0){if(!x.knownIdeas.includes(x.adapting.id))x.knownIdeas.push(x.adapting.id);x.adapting=x.adaptationQueue?.shift()||null}}
  s.log=s.log.slice(0,80);
 }
-export function aiInnovation(s,owner){const x=inventionState(s,owner),f=s.factions[owner];if(!x||!f||f.treasury<38)return;const candidates=ALL.filter(i=>!canResearch(s,owner,i.id));if(!x.research&&candidates.length){const pick=candidates[(Math.abs(s.year*12+s.month+owner.length*7))%candidates.length];startResearch(s,owner,pick.id)}if(s.month%4===0){const project=s.regions.filter(r=>r.owner===owner).flatMap(r=>x.knownMaterial.map(id=>[r,id])).find(([r,id])=>!canConstruct(s,owner,r.id,id));if(project&&f.treasury>50)startConstruction(s,owner,project[0].id,project[1]);const idea=x.knownIdeas.find(id=>!Object.values(x.active).flat().includes(id)&&!canEquip(s,owner,id));if(idea&&f.treasury>50)equipIdea(s,owner,idea)}if(s.month%6===0&&!s.knowledgeTrades.some(t=>t.actor===owner)){const targets=Object.keys(s.inventions).filter(id=>id!==owner&&!s.wars?.some(w=>w.includes(id)&&w.includes(owner))&&connected(s,owner,id));const target=targets[(s.month+owner.length)%targets.length],wanted=ALL.find(i=>!x.knownMaterial.includes(i.id)&&!x.knownIdeas.includes(i.id)&&!s.knowledgeTrades.some(t=>t.actor===owner&&t.id===i.id));if(target&&wanted&&f.treasury>65)requestKnowledge(s,owner,target,wanted.id)}}
+export function aiInnovation(s,owner){
+ const x=inventionState(s,owner),f=s.factions[owner];
+ // The Han court keeps a real treasury reserve for its long frontier supply
+ // line. It receives no free money or research; it postpones discretionary work.
+ const reserve=owner==='han'?170:38;
+ if(!x||!f||f.treasury<reserve)return;
+ const candidates=ALL.filter(i=>!canResearch(s,owner,i.id));
+ if(!x.research&&candidates.length){const pick=candidates[(Math.abs(s.year*12+s.month+owner.length*7))%candidates.length];startResearch(s,owner,pick.id)}
+ if(s.month%4===0){
+  const project=s.regions.filter(r=>r.owner===owner).flatMap(r=>x.knownMaterial.map(id=>[r,id])).find(([r,id])=>!canConstruct(s,owner,r.id,id));
+  if(project&&f.treasury>(owner==='han'?205:50))startConstruction(s,owner,project[0].id,project[1]);
+  const idea=x.knownIdeas.find(id=>!Object.values(x.active).flat().includes(id)&&!canEquip(s,owner,id));
+  if(idea&&f.treasury>(owner==='han'?195:50))equipIdea(s,owner,idea);
+ }
+ if(s.month%6===0&&!s.knowledgeTrades.some(t=>t.actor===owner)){
+  const targets=Object.keys(s.inventions).filter(id=>id!==owner&&!s.wars?.some(w=>w.includes(id)&&w.includes(owner))&&connected(s,owner,id));
+  const target=targets[(s.month+owner.length)%targets.length],wanted=ALL.find(i=>!x.knownMaterial.includes(i.id)&&!x.knownIdeas.includes(i.id)&&!s.knowledgeTrades.some(t=>t.actor===owner&&t.id===i.id));
+  if(target&&wanted&&f.treasury>(owner==='han'?205:65))requestKnowledge(s,owner,target,wanted.id);
+ }
+}

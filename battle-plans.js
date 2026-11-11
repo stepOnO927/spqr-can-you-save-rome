@@ -265,7 +265,7 @@ export function aiBattlePlans(s,owner,{estimatedStrength,log=()=>{}}={}){
  const enemies=s.wars.filter(w=>w.includes(owner)).map(w=>w.find(x=>x!==owner));if(!enemies.length)return null;
  const own=s.regions.filter(r=>r.owner===owner),ownIds=new Set(own.map(r=>r.id)),sightings=freshSightings(s,owner);
  const busy=new Set(plansFor(s,owner).filter(p=>LIVE.includes(p.status)).flatMap(p=>p.roles.map(r=>r.armyId)));
- const free=s.armies.filter(a=>a.owner===owner&&a.men>1200&&!a.move&&!a.siege&&!a.reorg&&!busy.has(a.id)&&ownIds.has(a.region)).sort((a,b)=>b.men-a.men||a.id.localeCompare(b.id));
+ const free=s.armies.filter(a=>a.owner===owner&&a.men>1200&&!a.move&&!a.siege&&!a.reorg&&!busy.has(a.id)&&ownIds.has(a.region)&&!(owner==='han'&&a.id==='hanCapitalGuard'&&s.regions.find(r=>r.id==='hanHexi')?.owner==='han')).sort((a,b)=>b.men-a.men||a.id.localeCompare(b.id));
  if(!free.length)return null;
  const threatened=own.filter(r=>adjacentIds(r.id).some(id=>sightings.some(x=>x.region===id&&enemies.includes(x.owner)))).map(r=>r.id);
  if(level==='standard'){

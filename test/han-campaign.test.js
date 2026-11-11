@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,forecastEconomy,upgradeSave} from '../engine.js';
+import {newGame,tick,forecastEconomy,upgradeSave,previewMarch,moveArmy} from '../engine.js';
 import {assignSuccession,eligibleLiuImperial,CHARACTER_CATALOG} from '../characters.js?v=safe-save-1';
 import {createFictionalPerson} from '../dynasties.js?v=safe-save-1';
 
@@ -73,4 +73,64 @@ test('Han commanders keep their personal identities across save migration',()=>{
  for(const [,id] of before)assert.equal(restored.world.dynasties.catalog[id].fictional,true);
  const again=upgradeSave(structuredClone(restored));
  assert.deepEqual(again.armies.filter(a=>a.owner==='han').map(a=>[a.id,a.characterId,a.commander]),before);
+});
+
+test('Shanshan remains independent and the frontier crossing pays real transport costs',()=>{
+ const s=newGame('han'),oasis=s.regions.find(r=>r.id==='shanshanOasis'),court=s.world.leadership.shanshan;
+ assert.equal(oasis.owner,'shanshan');
+ assert.equal(s.regions.find(r=>r.id==='hanHexi').owner,'han');
+ assert.equal(court.length,1);
+ assert.equal(s.world.dynasties.catalog[court[0]].fictional,true);
+ assert.equal(s.world.characters[court[0]].faction,'shanshan');
+ assert.equal(s.world.characters[s.armies.find(a=>a.id==='shanshanGuard').characterId].faction,'shanshan');
+ assert.equal(previewMarch(s,'hanHexiGarrison','shanshanOasis').reason,'peace');
+ s.wars.push(['han','shanshan']);
+ const plan=previewMarch(s,'hanHexiGarrison','shanshanOasis');
+ assert.equal(plan.ok,true);assert.ok(plan.months>=4);
+ assert.deepEqual(plan.frontierCost,{food:8,treasury:6});
+ const before={food:s.factions.han.food,treasury:s.factions.han.treasury};
+ assert.equal(moveArmy(s,'hanHexiGarrison','shanshanOasis').ok,true);
+ assert.equal(s.factions.han.food,before.food-8);
+ assert.equal(s.factions.han.treasury,before.treasury-6);
+ assert.equal(s.armies.find(a=>a.id==='hanHexiGarrison').move.frontier,true);
+ const starved=newGame('han');starved.wars.push(['han','shanshan']);starved.factions.han.food=7;
+ assert.equal(previewMarch(starved,'hanHexiGarrison','shanshanOasis').reason,'supply');
+ assert.equal(newGame('caesar').factions.shanshan,undefined);
+});
+
+test('autonomous Han keeps a capital reserve and the outmatched oasis court defends',()=>{
+ const s=newGame('han');s.wars.push(['han','shanshan']);
+ tick(s,{autoplayPlayer:true});
+ const capital=s.armies.find(a=>a.id==='hanCapitalGuard'),oasis=s.armies.find(a=>a.id==='shanshanGuard');
+ assert.equal(capital.region,'hanGuanzhong');assert.equal(capital.move,null);assert.equal(capital.order.kind,'guard');
+ assert.equal(oasis.region,'shanshanOasis');assert.equal(oasis.move,null);assert.equal(oasis.order.kind,'guard');
+ for(let month=0;month<3;month++)tick(s,{autoplayPlayer:true});
+ assert.equal(capital.region,'hanGuanzhong');assert.equal(capital.move,null);
+ assert.ok(s.armies.find(a=>a.id==='hanHexiGarrison').move?.frontier);
+});
+
+test('Han can win a favorable oasis campaign without bankrupting its long-term court',()=>{
+ const s=newGame('han');s.wars.push(['han','shanshan']);
+ for(let month=0;month<120;month++)tick(s,{autoplayPlayer:true});
+ const victory=s.battles.find(b=>b.attacker.owner==='han'&&b.defender.owner==='shanshan'&&b.attackerWins);
+ assert.ok(victory,'a recorded battlefield victory must precede occupation');
+ assert.equal(s.regions.find(r=>r.id==='shanshanOasis').owner,'han');
+ assert.equal(s.armies.find(a=>a.id==='hanCapitalGuard').region,'hanGuanzhong');
+ assert.ok(s.factions.han.treasury>=100,'the AI keeps a real fiscal reserve');
+ assert.equal(s.year,-39);assert.equal(s.month,1);
+});
+
+test('old Han saves gain the oasis court without rewriting their own campaign',()=>{
+ const old=structuredClone(newGame('han'));
+ const ruler=old.world.leadership.shanshan[0],guard=old.armies.find(a=>a.id==='shanshanGuard').characterId;
+ delete old.factions.shanshan;old.regions=old.regions.filter(r=>r.id!=='shanshanOasis');old.armies=old.armies.filter(a=>a.id!=='shanshanGuard');
+ delete old.world.leadership.shanshan;delete old.world.hanFrontierPeopleSeeded;
+ for(const id of [ruler,guard]){delete old.world.characters[id];delete old.world.dynasties.catalog[id]}
+ old.factions.han.treasury=137;const ownCommander=old.armies.find(a=>a.id==='hanHexiGarrison').characterId;
+ const restored=upgradeSave(old);
+ assert.equal(restored.factions.han.treasury,137);
+ assert.equal(restored.armies.find(a=>a.id==='hanHexiGarrison').characterId,ownCommander);
+ assert.equal(restored.regions.find(r=>r.id==='shanshanOasis').owner,'shanshan');
+ assert.equal(restored.world.leadership.shanshan.length,1);
+ assert.equal(upgradeSave(structuredClone(restored)).regions.filter(r=>r.id==='shanshanOasis').length,1);
 });

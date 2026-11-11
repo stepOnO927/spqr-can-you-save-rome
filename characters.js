@@ -26,11 +26,11 @@ export const CHARACTER_CATALOG = {
 // migration or transfer fails, so the active campaign keeps its own people.
 export function snapshotFictionalCatalog(){return Object.fromEntries(Object.entries(CHARACTER_CATALOG).filter(([id])=>/^fictional:\d+$/.test(id)))}
 export function restoreFictionalCatalog(snapshot){for(const id of Object.keys(CHARACTER_CATALOG))if(/^fictional:\d+$/.test(id))delete CHARACTER_CATALOG[id];Object.assign(CHARACTER_CATALOG,snapshot)}
-export const OPENING_LEADERS={caesar:['caesar'],senate:['pompey'],egypt:['cleopatra','ptolemy'],parthia:['orodes'],armenia:['artavasdes'],numidia:['juba'],mauretania:['bocchus','bogud'],galatia:['deiotarus'],bosporus:['pharnaces'],han:['han_xuan'],rebels:[]};
+export const OPENING_LEADERS={caesar:['caesar'],senate:['pompey'],egypt:['cleopatra','ptolemy'],parthia:['orodes'],armenia:['artavasdes'],numidia:['juba'],mauretania:['bocchus','bogud'],galatia:['deiotarus'],bosporus:['pharnaces'],han:['han_xuan'],shanshan:[],rebels:[]};
 const SUCCESSORS={caesar:['antony','lepidus'],senate:['cato','scipio','labienus','cicero'],egypt:['cleopatra','ptolemy','arsinoe'],parthia:['pacorus'],armenia:[],numidia:[],mauretania:['bocchus','bogud'],galatia:[],bosporus:[],han:['han_yuan'],rebels:[]};
 const clone=x=>JSON.parse(JSON.stringify(x));
 export function initializeWorld(s){
- if(!s.world){s.world={characters:Object.fromEntries(Object.entries(CHARACTER_CATALOG).filter(([,c])=>!c.fictional&&(c.faction!=='han'||s.factions?.han)).map(([id,c])=>[id,{id,faction:c.faction,health:'healthy',location:null,alive:true,loyalty:75,influence:50}])),leadership:Object.fromEntries(Object.entries(OPENING_LEADERS).filter(([id])=>id!=='han'||s.factions?.han)),intelSeed:874913};}
+ if(!s.world){s.world={characters:Object.fromEntries(Object.entries(CHARACTER_CATALOG).filter(([,c])=>!c.fictional&&(c.faction!=='han'||s.factions?.han)).map(([id,c])=>[id,{id,faction:c.faction,health:'healthy',location:null,alive:true,loyalty:75,influence:50}])),leadership:Object.fromEntries(Object.entries(OPENING_LEADERS).filter(([id])=>!!s.factions?.[id])),intelSeed:874913};}
  if(s.world.characters.han_yuan&&s.world.characters.han_xuan){s.world.characters.han_yuan.parents||=['han_xuan'];s.world.characters.han_xuan.children||=['han_yuan']}
  // Add the new historical figure once to old saves, without resetting existing people.
  if(!s.world.arsinoeInitialized){if(!s.world.characters.arsinoe&&s.factions?.egypt)s.world.characters.arsinoe={id:'arsinoe',faction:'egypt',health:'healthy',location:s.regions.some(r=>r.id==='egypt'&&r.owner==='egypt')?'egypt':null,alive:true,loyalty:75,influence:50};s.world.arsinoeInitialized=true}

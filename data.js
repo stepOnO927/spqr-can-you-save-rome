@@ -27,7 +27,9 @@ export const REGIONS = [
   {id:'hanGuanzhong',name:['Guanzhong core','关中核心区'],x:1400,y:315,terrain:'plain',food:13,tax:10,supply:24,loyalty:82,owner:'han',fort:2,city:'Chang’an'},
   {id:'hanHenan',name:['Henan heartland','河南腹地'],x:1460,y:330,terrain:'plain',food:12,tax:9,supply:22,loyalty:78,owner:'han',fort:1,city:'Luoyang'},
   {id:'hanShu',name:['Shu basin','蜀地盆地'],x:1390,y:405,terrain:'hills',food:11,tax:7,supply:18,loyalty:76,owner:'han',fort:1,city:'Chengdu'},
-  {id:'hanHexi',name:['Hexi corridor','河西走廊'],x:1330,y:300,terrain:'desert',food:4,tax:3,supply:12,loyalty:70,owner:'han',fort:2,city:'Dunhuang'}
+  {id:'hanHexi',name:['Hexi corridor','河西走廊'],x:1330,y:300,terrain:'desert',food:4,tax:3,supply:12,loyalty:70,owner:'han',fort:2,city:'Dunhuang'},
+  // An independent oasis realm under Han influence, not a Han province.
+  {id:'shanshanOasis',name:['Shanshan oasis realm','鄯善绿洲王国'],x:1260,y:310,terrain:'desert',food:2,tax:2,supply:5,loyalty:68,owner:'shanshan',fort:1,city:'Shanshan oasis'}
 ];
 
 // Sea routes require transport and take longer. All others represent adjoining land theaters.
@@ -37,7 +39,7 @@ export const ROUTES = [
   ['illyricum','epirus'],['epirus','achaia'],['anatolia','syria'],['syria','egypt'],['egypt','egyptUpper'],['parthia','media'],
   ['italiaS','sicilia','sea'],['sicilia','africa','sea'],['africa','hispaniaS','sea'],
   ['achaia','anatolia','sea'],['italiaS','epirus','sea'],['africa','numidia'],['numidia','mauretania'],['mauretania','hispaniaS','sea'],['anatolia','armenia'],['armenia','parthia'],['parthia','syria'],['anatolia','galatia'],['galatia','armenia'],['anatolia','bosporus','sea'],
-  ['hanGuanzhong','hanHenan'],['hanGuanzhong','hanShu'],['hanGuanzhong','hanHexi']
+  ['hanGuanzhong','hanHenan'],['hanGuanzhong','hanShu'],['hanGuanzhong','hanHexi'],['hanHexi','shanshanOasis','frontier']
 ];
 
 export const FACTIONS = {
@@ -55,6 +57,7 @@ export const FACTIONS = {
   galatia:{name:['Deiotarus’ Galatian realm','代奥塔鲁斯的加拉太领地'],short:['Galatia','加拉太'],color:'#7c8760',ruler:['Deiotarus','代奥塔鲁斯']},
   bosporus:{name:['Bosporan Kingdom','博斯普鲁斯王国'],short:['Bosporus','博斯普鲁斯'],color:'#8b7270',ruler:['Pharnaces II','法尔纳刻斯二世']},
   han:{name:['Western Han Empire','西汉帝国'],short:['Han','汉'],color:'#8c6444',ruler:['Emperor Xuan (Liu Xun)','汉宣帝（刘询）']},
+  shanshan:{name:['Shanshan oasis kingdom','鄯善绿洲王国'],short:['Shanshan','鄯善'],color:'#8a8060',ruler:['Unnamed local ruler','未具名当地君主']},
   rebels:{name:['Provincial rebels','行省叛军'],short:['Rebels','叛军'],color:'#8a7365',ruler:['Local leaders','地方首领']}
 };
 
@@ -68,10 +71,12 @@ export const INITIAL_ARMIES = [
   ...['numidia','mauretania','armenia','parthia','galatia','bosporus'].map(id=>({id:id+'army',name:['Royal forces','王国军队'],owner:id,region:id,men:4200,morale:65,skill:2,experience:1,commander:['Unnamed officer','未具名军官']})),
   {id:'hanCapitalGuard',name:['Capital Guard','京师卫军'],owner:'han',region:'hanGuanzhong',men:8500,morale:78,skill:3,experience:2,commander:['Capital Commandant','京师都尉']},
   {id:'hanHexiGarrison',name:['Hexi Garrison','河西戍军'],owner:'han',region:'hanHexi',men:6800,morale:73,skill:3,experience:2,commander:['Frontier Commandant','边郡都尉']},
-  {id:'hanEasternReserve',name:['Eastern Reserve','东部预备军'],owner:'han',region:'hanHenan',men:6200,morale:71,skill:2,experience:1,commander:['Regional Commandant','郡都尉']}
+  {id:'hanEasternReserve',name:['Eastern Reserve','东部预备军'],owner:'han',region:'hanHenan',men:6200,morale:71,skill:2,experience:1,commander:['Regional Commandant','郡都尉']},
+  {id:'shanshanGuard',name:['Oasis guard','绿洲卫队'],owner:'shanshan',region:'shanshanOasis',men:2500,morale:66,skill:2,experience:1,commander:['Oasis commandant','绿洲都尉']}
 ];
 
 export const SOURCES = [
+  {title:'Han Shu · Biographies of the Western Regions (Shanshan)',url:'https://ctext.org/han-shu/xi-yu-zhuan-shang/ens'},
   {title:'Džino · Caesar and the construction of Illyricum',url:'https://www.cambridge.org/core/books/abs/illyricum-in-roman-politics-229-bcad-68/construction-of-illyricum-caesar-in-illyricum-and-the-civil-wars-5944-bc/8C06B68D9FE789689625316A7B7A4E5B'},
   {title:'Šačić Beća · Origins and division of Illyricum',url:'https://hrcak.srce.hr/file/443309'},
   {title:'Archaeological Museum Split · Salona and the Civil War',url:'https://www.armus.hr/en/collections/roman-provincial-collection'},

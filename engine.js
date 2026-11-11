@@ -7,7 +7,7 @@ import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-syste
 import {advanceConspiracies} from './conspiracies.js?v=safe-save-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=safe-save-1';
-import {initializeDynasties,seedOpeningFictionalHouseholds,seedHanCommanders,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=safe-save-1';
+import {initializeDynasties,seedOpeningFictionalHouseholds,seedHanCommanders,seedHanFrontierPeople,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=safe-save-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-feedback-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
@@ -35,7 +35,7 @@ export {personalDiplomaticCredit};
 const clone = value => JSON.parse(JSON.stringify(value));
 export const region = (s,id) => s.regions.find(r=>r.id===id);
 export const army = (s,id) => s.armies.find(a=>a.id===id);
-export const adjacent = (id) => ROUTES.filter(r=>r[0]===id||r[1]===id).map(r=>({to:r[0]===id?r[1]:r[0],sea:r[2]==='sea'}));
+export const adjacent = (id) => ROUTES.filter(r=>r[0]===id||r[1]===id).map(r=>({to:r[0]===id?r[1]:r[0],sea:r[2]==='sea',frontier:r[2]==='frontier'}));
 const rnd = s => {s.seed=(Math.imul(s.seed,1664525)+1013904223)>>>0;return s.seed/4294967296};
 // Strategic deliberation gets a deterministic per-actor stream so considering
 // an opportunity does not consume a courier, battle or disease random roll.
@@ -50,20 +50,20 @@ const strength = (s,id) => s.armies.filter(a=>a.owner===id).reduce((v,a)=>v+a.me
 
 export function newGame(player='caesar'){
   if(!PLAYABLE.includes(player))throw new Error('Invalid playable faction');
-  const s=initializeWorld({version:3,chronicleVisibilityVersion:1,seed:49049,year:-49,month:1,mode:'historical',player,relations:{'caesar:numidia':-30,'caesar:mauretania':20,'caesar:parthia':-10,'numidia:senate':25,'galatia:senate':25},alliances:[],
-    regions:clone(REGIONS.filter(r=>player==='han'||r.owner!=='han')),armies:clone(INITIAL_ARMIES.filter(a=>player==='han'||a.owner!=='han')).map(a=>({...a,move:null,siege:null})),
+  const s=initializeWorld({version:3,chronicleVisibilityVersion:1,seed:49049,year:-49,month:1,mode:'historical',player,relations:{'caesar:numidia':-30,'caesar:mauretania':20,'caesar:parthia':-10,'numidia:senate':25,'galatia:senate':25,...(player==='han'?{'han:shanshan':35}:{})},alliances:[],
+    regions:clone(REGIONS.filter(r=>player==='han'||!['han','shanshan'].includes(r.owner))),armies:clone(INITIAL_ARMIES.filter(a=>player==='han'||!['han','shanshan'].includes(a.owner))).map(a=>({...a,move:null,siege:null})),
     factions:{
       caesar:{treasury:90,food:65,manpower:22000,stability:58,legitimacy:49,tax:'normal',research:0},
       senate:{treasury:135,food:100,manpower:34000,stability:57,legitimacy:68,tax:'normal',research:0},
       egypt:{treasury:85,food:90,manpower:9000,stability:64,legitimacy:60,tax:'normal',research:0},
-      ...(player==='han'?{han:{treasury:260,food:180,manpower:48000,stability:67,legitimacy:76,tax:'normal',research:0}}:{}),
+      ...(player==='han'?{han:{treasury:260,food:180,manpower:48000,stability:67,legitimacy:76,tax:'normal',research:0},shanshan:{treasury:35,food:45,manpower:3000,stability:58,legitimacy:55,tax:'normal',research:0}}:{}),
       ...Object.fromEntries(['numidia','mauretania','armenia','parthia','galatia','bosporus'].map(id=>[id,{treasury:60,food:60,manpower:9000,stability:65,legitimacy:60,tax:'normal',research:0}])),
       rebels:{treasury:10,food:15,manpower:0,stability:50,legitimacy:0,tax:'normal',research:0}
     },wars:[['caesar','senate']],log:[],victory:false,nextArmy:1});
   // A new campaign starts with frontier observations, not every foreign army's
   // exact opening location. Existing saves keep their accumulated sightings.
   for(const targets of Object.values(s.knowledge))for(const knowledge of Object.values(targets))knowledge.sightings={};
-  linkCommanders(s);observeArmies(s);observeControl(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);seedHanCommanders(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);return initializeGovernments(s);
+  linkCommanders(s);observeArmies(s);observeControl(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);seedHanCommanders(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);return initializeGovernments(s);
 }
 
 export function newDynastyScenario(){const s=newGame('egypt');createDisputedHeirScenario(s);return s}
@@ -72,6 +72,17 @@ export function newDynastyScenario(){const s=newGame('egypt');createDisputedHeir
 function migrateRegionalPowers(s){
  initializeWorld(s);const added=[];for(const id of ['galatia','bosporus']){if(s.factions[id])continue;added.push(id);s.factions[id]={treasury:60,food:60,manpower:9000,stability:65,legitimacy:60,tax:'normal',research:0};if(!s.regions.some(r=>r.id===id))s.regions.push(clone(REGIONS.find(r=>r.id===id)));if(!s.armies.some(a=>a.id===id+'army'))s.armies.push({...clone(INITIAL_ARMIES.find(a=>a.id===id+'army')),move:null,siege:null});const leader=OPENING_LEADERS[id][0],person=s.world.characters[leader];s.world.leadership[id]=person?.alive?[leader]:[];if(person&&person.faction==null){person.faction=id;if(person.location==null&&!person.missing)person.location=id}}
  if(added.length){for(const actor of Object.keys(s.factions)){s.knowledge[actor]||={};for(const target of Object.keys(s.factions)){if(!s.knowledge[actor][target])s.knowledge[actor][target]={reportedLeaders:clone(OPENING_LEADERS[target]||[]),reports:[],sightings:{}}}}if(added.includes('galatia')&&s.relations['galatia:senate']===undefined)s.relations['galatia:senate']=25}
+}
+// Add an independent neighboring court to existing Han saves without changing
+// their four Han theaters, armies, treasury, wars or accumulated intelligence.
+function migrateHanFrontier(s){
+ if(s.player!=='han'||s.factions.shanshan)return;
+ s.factions.shanshan={treasury:35,food:45,manpower:3000,stability:58,legitimacy:55,tax:'normal',research:0};
+ if(!s.regions.some(r=>r.id==='shanshanOasis'))s.regions.push(clone(REGIONS.find(r=>r.id==='shanshanOasis')));
+ if(!s.armies.some(a=>a.id==='shanshanGuard'))s.armies.push({...clone(INITIAL_ARMIES.find(a=>a.id==='shanshanGuard')),move:null,siege:null});
+ if(s.relations['han:shanshan']===undefined)s.relations['han:shanshan']=35;
+ initializeWorld(s);s.world.leadership.shanshan||=[];
+ for(const actor of Object.keys(s.factions)){s.knowledge[actor]||={};for(const target of Object.keys(s.factions))s.knowledge[actor][target]||={reportedLeaders:[],reports:[],sightings:{}}}
 }
 // Earlier saves represented each realm as one theater. Split the existing
 // economic potential and preserve its controller and reported control; do not
@@ -106,7 +117,7 @@ export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);seedHanCommanders(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);migrateHanFrontier(s);initializeDynasties(s);seedHanCommanders(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
@@ -121,9 +132,12 @@ export function previewMarch(s,armyId,destination){
   const faction=s.factions[a.owner];
   const seaCost=Math.max(2,8+(activeModifiers(s,a.owner).seaCost||0));
   if(link.sea&&faction.treasury<seaCost)return {ok:false,reason:'transport'};
+  const frontierCost=link.frontier?{food:8,treasury:6}:{food:0,treasury:0};
+  if(faction.food<frontierCost.food)return {ok:false,reason:'supply'};
+  if(faction.treasury<frontierCost.treasury)return {ok:false,reason:'transport'};
   const routeWorks=buildingModifiers(region(s,a.region)).march||0,doctrine=activeModifiers(s,a.owner).march||0;
-  const months=Math.max(1,(link.sea?3:1)+(target.terrain==='hills'?1:0)+(target.terrain==='desert'?1:0)-routeWorks-doctrine+formationMarchDelta(s,a,link,target.terrain));
-  return {ok:true,months,seaCost,sea:!!link.sea,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:target.supply};
+  const months=Math.max(1,(link.sea?3:1)+(link.frontier?2:0)+(target.terrain==='hills'?1:0)+(target.terrain==='desert'?1:0)-routeWorks-doctrine+formationMarchDelta(s,a,link,target.terrain));
+  return {ok:true,months,seaCost,frontierCost,sea:!!link.sea,frontier:!!link.frontier,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:target.supply};
 }
 
 export function moveArmy(s,armyId,destination){
@@ -131,8 +145,9 @@ export function moveArmy(s,armyId,destination){
   if(!estimate.ok)return estimate;
   const a=army(s,armyId),target=region(s,destination),link=adjacent(a.region).find(e=>e.to===destination);
   if(link.sea)s.factions[a.owner].treasury-=estimate.seaCost;
+  if(link.frontier){s.factions[a.owner].treasury-=estimate.frontierCost.treasury;s.factions[a.owner].food-=estimate.frontierCost.food}
   const months=estimate.months;
-  a.move={to:destination,remaining:months,sea:link.sea};
+  a.move={to:destination,remaining:months,sea:link.sea,frontier:!!link.frontier};
   a.order={kind:'move',target:destination};
   if(a.owner===s.player)log(s,`${a.name[0]} marched toward ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}向${target.name[1]}行军（${months}个月）。`);
   return {ok:true};
@@ -569,7 +584,8 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     if(strongPlanning||s.month%3===0)aiBattlePlans(s,owner,{estimatedStrength,log});
     // Reorganize quarterly, or soon after a lost battle when a battered army is safe at home.
     const beaten=(s.battles||[]).some(b=>(b.attackerWins?b.defender.owner:b.attacker.owner)===owner&&(s.year*12+s.month)-(b.year*12+b.month)<=2);
-    if((s.month%4===2&&f.treasury>70||beaten&&f.treasury>35)&&(!strategy||!['recover','stabilize'].includes(strategy.goal)||beaten))aiReorganize(s,owner,{log});
+    const canFundReorganization=owner==='han'?f.treasury>180&&forecastEconomy(s,owner).treasury>=5:(s.month%4===2&&f.treasury>70||beaten&&f.treasury>35);
+    if((s.month%4===2||beaten)&&canFundReorganization&&(!strategy||!['recover','stabilize'].includes(strategy.goal)||beaten))aiReorganize(s,owner,{log});
   }
   const reportedNeighbors=()=>owned.flatMap(r=>adjacent(r.id).map(e=>({id:e.to,owner:reportedControl(s,owner,e.to)?.owner}))).filter(r=>r.owner);
   // Review bounded, private opportunity estimates when observed wars change or
@@ -605,6 +621,16 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     const threatened=neighbors.filter(r=>isWar(s,owner,reportedControl(s,owner,r.id)?.owner));
     const estimate=r=>{const rival=reportedControl(s,owner,r.id)?.owner;return rival&&isWar(s,owner,rival)?estimatedStrength(s,owner,rival)/Math.max(1,s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===rival).length):0};
     const ownSupport=neighbors.filter(r=>r.owner===owner).reduce((sum,r)=>sum+s.armies.filter(b=>b.owner===owner&&b.region===r.id&&!b.move&&b.id!==a.id).reduce((n,b)=>n+b.men,0),0);
+    // Keep a real capital reserve while the Hexi garrison conducts frontier
+    // operations. A recorded loss of Hexi releases it for a counterattack.
+    if(owner==='han'&&a.id==='hanCapitalGuard'&&here.id==='hanGuanzhong'&&region(s,'hanHexi')?.owner==='han'){
+      if(a.order?.kind!=='guard')issueMilitaryOrder(s,a.id,'guard',null,owner);continue;
+    }
+    // An oasis court defends its own approach when its *reported* opponent is
+    // stronger; it does not gain hidden access to Han army strength.
+    if(owner==='shanshan'&&here.owner===owner&&threatened.length&&estimatedStrength(s,owner,'han')>strength(s,owner)*1.25){
+      if(a.order?.kind!=='guard')issueMilitaryOrder(s,a.id,'guard',null,owner);continue;
+    }
     if(['caesar','senate'].includes(owner)&&threatened.some(r=>estimate(r)>a.men*1.7)&&a.morale<48){const safe=neighbors.filter(r=>r.owner===owner).sort((x,y)=>y.supply-x.supply)[0];if(safe&&issueMilitaryOrder(s,a.id,'retreat',safe.id,owner).ok)continue}
     if(['caesar','senate'].includes(owner)&&here.owner===owner&&threatened.length&&here.supply*1000<a.men*.75){const safe=neighbors.filter(r=>r.owner===owner&&r.supply>here.supply).sort((x,y)=>y.supply-x.supply)[0];if(safe&&issueMilitaryOrder(s,a.id,'move',safe.id,owner).ok)continue}
     if(observedPressure===here.id&&here.owner===owner&&threatened.length&&(a.morale<65||f.food<30)){issueMilitaryOrder(s,a.id,here.fort?'guard':'defend',null,owner);continue}
@@ -664,7 +690,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     if(captive)requestAgentRelease(s,owner,captive.id);
   }
   if(['caesar','senate'].includes(owner)&&s.month===2&&f.treasury>40&&s.wars.some(w=>w.includes(owner)))queueMission(s,owner,owner,'counter','counter_spies');
-  if(owner!=='rebels' && s.month===8 && f.treasury>=25){const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);if(enemy&&enemy!=='rebels')queueMission(s,owner,enemy,'spy','strength')}
+  if(owner!=='rebels' && s.month===8 && f.treasury>=(owner==='han'?170:25)){const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);if(enemy&&enemy!=='rebels')queueMission(s,owner,enemy,'spy','strength')}
   // Rival Roman commands investigate and act on their own reports, not on the
   // concealed state of the Egyptian court. An old report may lead nowhere.
   if(['caesar','senate'].includes(owner)&&s.month===6&&f.treasury>45)queueMission(s,owner,'egypt','spy','claimants');
