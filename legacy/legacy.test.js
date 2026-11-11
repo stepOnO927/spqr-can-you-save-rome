@@ -4,7 +4,7 @@ import {loadProfile,saveProfile,exportProfile,importProfile,purchase,recordCampa
 import {archivePanelHtml} from './archive-ui.js';
 import {decidePetition,availablePetitions} from './civic.js';
 import {settleRace} from './race.js';
-import {ACTIVITIES,resolveActivity} from './activities.js';
+import {ACTIVITIES,availableActivities,resolveActivity} from './activities.js';
 import {newGrandGame} from '../engine.js';
 import {evaluateAchievements,endCampaign} from '../achievement-system.js';
 
@@ -132,7 +132,30 @@ test('unlocked scenario creates a distinct playable alternate history state',()=
  const s=createScenario('scenario-rubicon',newGrandGame);assert.equal(s.grandMap,true);assert.equal(s.regions.length,120);assert.equal(s.player,'senate');assert.ok(s.legacyScenario);assert.equal(s.difficulty,'standard');
 });
 test('six hub districts contain permanent choices with one-time rewards and civic consequences',()=>{
- const storage=memory(),p=loadProfile(storage);p.coins=5000;for(const building of ['camp','temple','library','harbor','court','intelligence'])assert.equal(purchase(p,building).ok,true);assert.equal(ACTIVITIES.length,12);const before=p.politics.corruption,coins=p.coins;assert.equal(resolveActivity(p,'court-bribe',0).ok,true);assert.equal(p.politics.corruption,before-3);assert.equal(p.coins,coins+40);assert.equal(resolveActivity(p,'court-bribe',0).ok,false);assert.equal(resolveActivity(p,'intelligence-sources',1).correct,false);saveProfile(p,storage);assert.equal(loadProfile(storage).activities.length,2)
+ const storage=memory(),p=loadProfile(storage);p.coins=5000;for(const building of ['camp','temple','library','harbor','court','intelligence'])assert.equal(purchase(p,building).ok,true);assert.equal(ACTIVITIES.length,13);const before=p.politics.corruption,coins=p.coins;assert.equal(resolveActivity(p,'court-bribe',0).ok,true);assert.equal(p.politics.corruption,before-3);assert.equal(p.coins,coins+40);assert.equal(resolveActivity(p,'court-bribe',0).ok,false);assert.equal(resolveActivity(p,'intelligence-sources',1).correct,false);saveProfile(p,storage);assert.equal(loadProfile(storage).activities.length,2)
+});
+test('a twice dismissed Curia petitioner can obtain a distinct durable court judgment',()=>{
+ const p=loadProfile(memory());p.buildings.push('court');
+ assert.equal(availableActivities(p,'court').some(x=>x.id==='court-catinius'),false);
+ assert.equal(resolveActivity(p,'court-catinius',0).ok,false);
+ assert.equal(decidePetition(p,'doorway',1).ok,true);
+ assert.equal(availableActivities(p,'court').some(x=>x.id==='court-catinius'),false);
+ assert.equal(decidePetition(p,'doorway-appeal',1).ok,true);
+ assert.equal(availableActivities(p,'court')[0].id,'court-catinius');
+ const restored=importProfile(exportProfile(p)),coins=restored.coins,people=restored.politics.people;
+ const verdict=resolveActivity(restored,'court-catinius',0);
+ assert.equal(verdict.correct,null);
+ assert.equal(verdict.coins,45);
+ assert.equal(restored.coins,coins+45);
+ assert.equal(restored.politics.people,people+5);
+ assert.ok(restored.collectibles.includes('catinius-court-record'));
+ assert.ok(restored.activities.find(x=>x.id==='court-catinius').at);
+ const after=importProfile(exportProfile(restored));
+ assert.equal(resolveActivity(after,'court-catinius',1).ok,false);
+ assert.equal(after.coins,coins+45);
+ const settlement=loadProfile(memory());settlement.buildings.push('court');decidePetition(settlement,'doorway',1);decidePetition(settlement,'doorway-appeal',1);
+ assert.equal(resolveActivity(settlement,'court-catinius',1).ok,true);
+ assert.equal(settlement.politics.corruption,23);
 });
 test('tight track championship and Thessaly scenario persist as distinct content',()=>{
  const p=loadProfile(memory());assert.equal(settleRace(p,{id:'tight-win',driver:'Aurelia',place:1,lastDriver:'Lucius',track:'tight'}).ok,true);assert.ok(p.collectibles.includes('tight-cup'));assert.ok(p.race.champions.includes('tight'));const s=createScenario('scenario-pharsalus',newGrandGame);assert.equal(s.year,-48);assert.equal(s.month,6);assert.equal(s.player,'caesar');assert.equal(s.armies.find(a=>a.id==='xiii').region,s.regions.find(r=>r.site?.[0]==='Apollonia').id);assert.equal(s.armies.find(a=>a.id==='pompey').region,s.regions.find(r=>r.site?.[0]==='Larissa').id)

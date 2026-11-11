@@ -38,8 +38,16 @@ await page.locator('[data-petition][data-choice="1"]').click();assert.match(awai
 const beforeAppeal=await page.evaluate(()=>localStorage.getItem('spqr-legacy-profile-v1'));
 for(let i=0;i<8&&!/Catinius returns|卡提尼乌斯再来/.test(await page.locator('.petition').innerText());i++)await page.locator('[data-petition]').first().click();
 assert.match(await page.locator('.petition').innerText(),/Catinius returns|卡提尼乌斯再来/);
-await page.locator('[data-petition]').first().click();await page.locator('#nav-museum').click();
+await page.locator('[data-petition][data-choice="1"]').click();await page.locator('#nav-museum').click();
 assert.match(await page.locator('.museum-grid').innerText(),/Catinius appeal tablet|卡提尼乌斯申诉板/);
+await page.evaluate(()=>{const key='spqr-legacy-profile-v1',p=JSON.parse(localStorage.getItem(key));p.coins=2000;localStorage.setItem(key,JSON.stringify(p));localStorage.setItem('spqr-lang','zh')});await page.reload();
+await page.locator('#nav-shop').click();await page.locator('[data-buy="court"]').click();await page.locator('#nav-city').click();await page.locator('[data-building="court"]').click();
+assert.match(await page.locator('.civic-activity').innerText(),/Catinius petitions the court|卡提尼乌斯向法庭申诉/);
+await page.locator('#nav-lang').click();assert.match(await page.locator('.civic-activity').innerText(),/Catinius petitions the court/);assert.equal(await page.locator('.notice').innerText(),'');
+await page.screenshot({path:path.join(root,'outputs','legacy-catinius-court.png')});
+await page.locator('#nav-lang').click();await page.locator('[data-activity="court-catinius"][data-activity-choice="0"]').click();
+assert.match(await page.locator('.notice').innerText(),/45/);await page.locator('#nav-museum').click();assert.match(await page.locator('.museum-grid').innerText(),/卡提尼乌斯法庭案卷/);
+const courtCoins=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins);await page.reload();await page.locator('[data-building="court"]').click();assert.equal(await page.locator('[data-activity="court-catinius"]').count(),0);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins),courtCoins);
 await page.evaluate(value=>localStorage.setItem('spqr-legacy-profile-v1',value),beforeAppeal);await page.reload();
 await page.locator('[data-building="curia"]').click();await page.locator('[data-petition]').first().click();
 assert.match(await page.locator('.petition').innerText(),/The seized villa|被查封的庄园/);
