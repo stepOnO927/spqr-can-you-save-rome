@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {HISTORICAL_DEATHS} from '../historical-reference.js';
 import {CHARACTER_CATALOG} from '../characters.js?v=safe-save-1';
-import {newGame} from '../engine.js?v=civic-portraits-1';
+import {newGame} from '../engine.js?v=letter-cost-1';
 import {advanceCharacters} from '../character-system.js?v=succession-feedback-1';
 
 test('sourced historical death years preserve disputed and unknown entries',()=>{
