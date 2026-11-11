@@ -1,6 +1,6 @@
 import {REGIONS,ROUTES,FACTIONS} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
-import {mapPoint} from './map.js?v=safe-save-1';
+import {mapPoint} from './map.js?v=succession-feedback-1';
 import {BRANCH_NAMES,PATH_NAMES} from './imperium-focus-data.js?v=imperium-1';
 import {treeFor,focusStatus,focusState,canStartFocus,startFocus,cancelFocus,focusCost,focusReportsFor,focusById} from './national-focus.js?v=safe-save-1';
 import {COMPONENTS,CULTURE_NAMES,templatesFor,templateStats,saveTemplate,duplicateTemplate,deleteTemplate,validateTemplate,availableComponents,cultureOf,reorganizationQuote,reorganizeArmy,recruitmentQuote,recruitFormation,commanderSpecialty,commandConcentration,seedTemplates,formationState,outdatedArmies} from './legion-designer.js?v=safe-save-1';
@@ -238,7 +238,7 @@ export function bindImperium({state,lang,render,flash,log}){
   all('[data-imp-approve]').forEach(el=>el.onclick=()=>{const r=approvePlan(state,owner,plan.id,{log});if(!r.ok)flash(r.reason);render()});
   all('[data-imp-pause]').forEach(el=>el.onclick=()=>{pausePlan(state,owner,plan.id);render()});
   all('[data-imp-cancel-plan]').forEach(el=>el.onclick=()=>{cancelPlan(state,owner,plan.id);ui.drawing=null;render()});
-  all('[data-imp-rec]').forEach(el=>el.onclick=async()=>{const {issueMilitaryOrder}=await import('./engine.js?v=safe-save-1');const r=approveRecommendation(state,owner,plan.id,Number(el.dataset.impRec),{issueOrder:issueMilitaryOrder});if(!r.ok)flash(r.reason||'');render()});
+  all('[data-imp-rec]').forEach(el=>el.onclick=async()=>{const {issueMilitaryOrder}=await import('./engine.js?v=succession-feedback-1');const r=approveRecommendation(state,owner,plan.id,Number(el.dataset.impRec),{issueOrder:issueMilitaryOrder});if(!r.ok)flash(r.reason||'');render()});
  }
  // Route drawing captures map clicks before the normal region selection.
  if(ui.drawing){all('[data-map-group]').forEach(el=>el.addEventListener('click',e=>{e.stopImmediatePropagation();e.preventDefault();const a=state.armies.find(x=>x.id===ui.drawing.armyId);if(!a)return;const last=ui.drawing.path.at(-1)||a.region,ids=el.dataset.mapGroup.split(','),next=ids.find(id=>legalStep(state,owner,last,id).ok);

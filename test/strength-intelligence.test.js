@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,estimatedStrength} from '../engine.js?v=safe-save-1';
-import {queueMission,advanceOperations,addReport,reportEvidence} from '../character-system.js?v=safe-save-1';
+import {newGame,upgradeSave,estimatedStrength} from '../engine.js?v=succession-feedback-1';
+import {queueMission,advanceOperations,addReport,reportEvidence} from '../character-system.js?v=succession-feedback-1';
 function makeReport(type,seed){const s=newGame('senate');for(const a of s.armies.filter(a=>a.owner==='egypt'))a.men=0;s.armies.find(a=>a.owner==='egypt').men=50000;assert.equal(queueMission(s,'senate','egypt',type,'strength').ok,true);s.operations[0].remaining=1;s.world.intelSeed=seed;advanceOperations(s);return s}
 test('strength intelligence is a source-dependent uncertain estimate, not exact hidden strength',()=>{
  const values=new Set();let spy,travelers;for(let i=1;i<300;i++){const seed=(i*7000013)>>>0,s=makeReport('spy',seed),r=s.knowledge.senate.egypt.reports[0];if(r){values.add(r.value);if(!spy)spy=r}const t=makeReport('travelers',seed),tr=t.knowledge.senate.egypt.reports[0];if(tr&&!travelers)travelers=tr}

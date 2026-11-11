@@ -1,4 +1,4 @@
-import {queueMission,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=safe-save-1';
+import {queueMission,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=succession-feedback-1';
 import {reassurePerson} from '../conspiracies.js?v=safe-save-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=safe-save-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';

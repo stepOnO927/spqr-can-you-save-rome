@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine.js?v=safe-save-1';
-import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports,syncChronicleDispatches} from '../chronicle.js?v=safe-save-1';
+import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine.js?v=succession-feedback-1';
+import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports,syncChronicleDispatches} from '../chronicle.js?v=succession-feedback-1';
 
 test('between-turn dispatches appear once with their original dates without importing unverified legacy entries',()=>{
  const s=newGame('caesar');s.log.unshift({year:-49,month:2,en:'An offer arrived.',zh:'议和信已送达。'},{year:-49,month:1,en:'SECRET',zh:'秘密',legacyUnverified:true});
@@ -9,7 +9,7 @@ test('between-turn dispatches appear once with their original dates without impo
  const messages=s.chronicle.entries.filter(e=>e.en==='An offer arrived.');assert.equal(messages.length,1);assert.equal(messages[0].month,2);assert.ok(!s.chronicle.entries.some(e=>e.en==='SECRET'));
  const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));syncChronicleDispatches(loaded);assert.equal(loaded.chronicle.entries.filter(e=>e.en==='An offer arrived.').length,1);
 });
-import {finalizeCampaign} from '../legacy.js?v=safe-save-1';
+import {finalizeCampaign} from '../legacy.js?v=succession-feedback-1';
 import {appointCommander} from '../command-appointments.js';
 import {planSuccession} from '../governance.js';
 
@@ -47,6 +47,15 @@ test('deaths, diplomacy, rebellion and army destruction generate classified aler
  const s=newGame('caesar'),before=captureCampaignState(s);s.month=2;s.world.characters.caesar.alive=false;s.world.governments.caesar.kind='vacant';s.wars.push(['caesar','egypt']);region(s,'gaul').owner='rebels';s.armies=s.armies.filter(a=>a.id!=='xiii');recordCampaignTurn(s,before);
  const entries=s.chronicle.entries;assert.ok(entries.some(e=>e.kind==='character'&&e.characterId==='caesar'&&e.priority==='critical'));assert.ok(entries.some(e=>e.kind==='government'&&e.to==='vacant'));assert.ok(entries.some(e=>e.kind==='diplomacy'&&e.other==='egypt'));assert.ok(entries.some(e=>e.kind==='army'&&e.armyId==='xiii'&&e.priority==='critical'));assert.ok(entries.some(e=>e.kind==='territory'&&e.current==='rebels'));
  const foreign=captureCampaignState(s);s.world.characters.cleopatra.alive=false;s.factions.egypt.treasury=-90;recordCampaignTurn(s,foreign);assert.ok(!s.chronicle.entries.some(e=>e.characterId==='cleopatra'||e.faction==='egypt'));
+});
+
+test('own leadership changes are named and localized, without exposing foreign succession',()=>{
+ let s=newGame('caesar');const before=captureCampaignState(s);s.month=2;s.world.leadership.caesar=['lepidus'];s.world.leadership.egypt=['arsinoe'];s.world.governments.caesar.kind='acting_command';recordCampaignTurn(s,before);
+ const entry=s.chronicle.entries.find(e=>e.kind==='government'&&e.change==='leadership');assert.ok(entry);assert.equal(entry.priority,'critical');assert.match(formatChronicleEntry(entry,'zh'),/凯撒.*雷必达/);assert.match(formatChronicleEntry(entry,'en'),/Caesar.*Lepidus/);assert.doesNotMatch(JSON.stringify(entry),/arsinoe|阿尔西诺伊/);
+ const authority=s.chronicle.entries.find(e=>e.kind==='government'&&!e.change);assert.match(formatChronicleEntry(authority,'zh'),/正常履职.*临时指挥/);assert.doesNotMatch(formatChronicleEntry(authority,'zh'),/acting_command|normal/);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.match(formatChronicleEntry(s.chronicle.entries.find(e=>e.change==='leadership'),'zh'),/凯撒.*雷必达/);
+ const co=newGame('egypt'),prior=captureCampaignState(co);co.month=2;co.world.leadership.egypt.reverse();recordCampaignTurn(co,prior);assert.ok(!co.chronicle.entries.some(e=>e.change==='leadership'),'reordering the same co-rulers is not a succession');
+ const annual=newGame('caesar'),snapshot=captureCampaignState(annual);annual.month=12;annual.world.leadership.caesar=['antony'];recordCampaignTurn(annual,snapshot);const year=annual.chronicle.annual[0];assert.deepEqual(year.governments,[]);assert.match(year.governmentEvents[0].zh,/凯撒.*安东尼/);assert.match(year.governmentEvents[0].en,/Caesar.*Antonius/);
 });
 
 test('Chronicle filtering, dated intelligence, and finalized archive replay stay bilingual',()=>{
