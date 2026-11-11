@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=imperium-1';
+import {newGame} from '../engine.js?v=strategic-offers-2';
 import {friendlyPersonnelInTheater} from '../map-lab/personnel.js';
 
 test('city personnel projection contains only living friendly people stationary in that theater',()=>{

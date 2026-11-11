@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=imperium-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=strategic-offers-2';
 import {contestLeadership,advanceDisputes,queueMission,advanceOperations,addReport,supportClaimant} from '../character-system.js?v=imperium-1';
 import {knownLeaders,assignSuccession} from '../characters.js?v=dynasty-id-3';
 import {deriveGovernment} from '../governance.js';

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {newGame,tick,upgradeSave} from '../engine.js?v=imperium-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=strategic-offers-2';
 // These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
 // they run with the expansion's AI layer switched off (world.imperium.enabled=false).
 const legacyIsolated=g=>{g.world.imperium={enabled:false};return g};

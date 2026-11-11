@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=imperium-1';
+import {newGame,upgradeSave} from '../engine.js?v=strategic-offers-2';
 import {battlefieldWound,advanceCharacters,illnessRisk} from '../character-system.js?v=imperium-1';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=multipolar-2';
 
