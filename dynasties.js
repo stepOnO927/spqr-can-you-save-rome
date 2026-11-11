@@ -1,6 +1,7 @@
 import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
 import {startDynasticWar} from './civil-war.js?v=safe-save-1';
 import {ROUTES} from './data.js?v=phase-x-1';
+import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS} from './fictional-names.js?v=faces-of-empire-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -55,7 +56,7 @@ export function initializeDynasties(s){
  return d;
 }
 
-export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员'],culture=['Simulated','模拟'],homeland=null}){
+export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员'],culture=['Simulated','模拟'],homeland=null,ambition,personalitySeed,militaryOnly=false}){
  const d=initializeDynasties(s);
  // Reserve identities mentioned anywhere in older saves, including reports
  // and relationships whose original person or family is no longer present.
@@ -66,7 +67,7 @@ export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,
  if(!d.families[family])d.families[family]={id:family,name:Array.isArray(name)?name:[name,name],wealth:0,reputation:50,influence:20,leader:id,patrons:[]};
  d.catalog[id]={name:Array.isArray(name)?name:[name,name],birth:[birthYear,birthYear],faction,role,culture,source:null,fictional:true};
  CHARACTER_CATALOG[id]=d.catalog[id];
- s.world.characters[id]={id,faction,health:'healthy',location,homeland:homeland||location,alive:true,loyalty:65,influence:20,wealth,parents:[...parents],adoptiveParents:[...adoptiveParents],children:[],spouse:null,familyId:family,birthYear,sex,education:0,ambition:Math.floor(20+roll(s)*60),personalitySeed:Math.floor(roll(s)*0xffffffff),wounds:0,illnessEpisodes:0};
+ s.world.characters[id]={id,faction,health:'healthy',location,homeland:homeland||location,alive:true,loyalty:65,influence:20,wealth,parents:[...parents],adoptiveParents:[...adoptiveParents],children:[],spouse:null,familyId:family,birthYear,sex,education:0,ambition:ambition??Math.floor(20+roll(s)*60),personalitySeed:personalitySeed??Math.floor(roll(s)*0xffffffff),militaryOnly,wounds:0,illnessEpisodes:0};
  for(const parent of [...parents,...adoptiveParents])if(s.world.characters[parent])s.world.characters[parent].children.push(id);
  record(s,id,'Born in the simulated campaign.','出生于模拟战役。');return id;
 }
@@ -80,6 +81,20 @@ export function seedOpeningFictionalHouseholds(s){
   [['Marcia Valeria','玛尔基娅·瓦莱里娅'],'senate','female',-76,'roma']
  ])createFictionalPerson(s,{name,faction,sex,birthYear,location,wealth:8});
  d.openingFictionalSeeded=true;
+}
+
+// Historical commanders are linked by character-system. These remaining
+// officers are original scenario people and are saved with their armies.
+export function seedOpeningCommanders(s){
+ initializeDynasties(s);if(s.world.openingCommandersSeeded)return;
+ for(const profile of STARTING_COMMANDERS){
+  const army=s.armies.find(a=>a.id===profile.army&&a.owner===profile.faction&&a.men>0);
+  if(!army||army.characterId||army.commander?.[0]&&!['Unnamed officer','Unnamed legate'].includes(army.commander[0]))continue;
+  const hash=[...profile.army].reduce((h,c)=>Math.imul(h,31)+c.charCodeAt(0)|0,0)>>>0;
+  const id=createFictionalPerson(s,{name:profile.name,faction:profile.faction,birthYear:profile.birthYear,location:army.region,homeland:army.region,sex:'male',role:['Fictional field commander','虚构野战指挥官'],culture:NAME_POOLS[FACTION_NAME_CULTURE[profile.faction]].culture,ambition:30+hash%45,personalitySeed:hash,militaryOnly:true});
+  army.characterId=id;army.commander=[...profile.name];
+ }
+ s.world.openingCommandersSeeded=true;
 }
 
 // These are original scenario commanders, not claims about documented officers.

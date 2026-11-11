@@ -242,20 +242,21 @@ test('opening fictional portraits stay distinct and are not assigned to a reused
 
 test('stale legacy counters cannot reuse identities referenced by the campaign',()=>{
  let s=newGame('caesar');const before=JSON.parse(JSON.stringify(s.world.characters['fictional:1'])),catalog=JSON.parse(JSON.stringify(s.world.dynasties.catalog['fictional:1']));
- s.meetings.push({actor:'caesar',target:'fictional:11',status:'met',portraitKey:'fictional-cassianus',year:s.year,month:s.month});
- s.world.dynasties.memories.push({person:'fictional:12',familyId:'family:fictional:11',kind:'legacy'});
+ const firstFree=s.world.dynasties.nextPerson,firstFamily=s.world.dynasties.nextFamily,reserved=`fictional:${firstFree}`;
+ s.meetings.push({actor:'caesar',target:reserved,status:'met',portraitKey:'fictional-cassianus',year:s.year,month:s.month});
+ s.world.dynasties.memories.push({person:`fictional:${firstFree+1}`,familyId:`family:fictional:${firstFamily}`,kind:'legacy'});
  delete s.world.dynasties.nextPerson;delete s.world.dynasties.nextFamily;s=upgradeSave(JSON.parse(JSON.stringify(s)));
  const id=createFictionalPerson(s,{name:['New person','新人物'],faction:'caesar',birthYear:-40,location:'roma'});
- assert.equal(id,'fictional:13');assert.equal(s.world.characters[id].familyId,'family:fictional:12');assert.deepEqual(s.world.characters['fictional:1'],before);assert.deepEqual(s.world.dynasties.catalog['fictional:1'],catalog);assert.equal(fictionalPortraitKey(s,'fictional:1'),'fictional-varenus');
- assert.equal(s.meetings[0].target,'fictional:11');assert.notEqual(id,s.meetings[0].target);
+ assert.equal(id,`fictional:${firstFree+2}`);assert.equal(s.world.characters[id].familyId,`family:fictional:${firstFamily+1}`);assert.deepEqual(s.world.characters['fictional:1'],before);assert.deepEqual(s.world.dynasties.catalog['fictional:1'],catalog);assert.equal(fictionalPortraitKey(s,'fictional:1'),'fictional-varenus');
+ assert.equal(s.meetings[0].target,reserved);assert.notEqual(id,s.meetings[0].target);
  s.world.dynasties.nextPerson=1;s.world.dynasties.nextFamily=1;
- const another=createFictionalPerson(s,{name:['Another person','另一人物'],faction:'caesar',birthYear:-40,parents:['fictional:14']});
- assert.equal(another,'fictional:15');assert.equal(s.world.characters[another].familyId,'family:fictional:13');assert.notEqual(another,s.world.characters[another].parents[0]);
+ const another=createFictionalPerson(s,{name:['Another person','另一人物'],faction:'caesar',birthYear:-40,parents:[`fictional:${firstFree+3}`]});
+ assert.equal(another,`fictional:${firstFree+4}`);assert.equal(s.world.characters[another].familyId,`family:fictional:${firstFamily+2}`);assert.notEqual(another,s.world.characters[another].parents[0]);
 });
 
 test('a new campaign does not import fictional people from a previously loaded campaign',()=>{
  const first=newGame('caesar'),id=createFictionalPerson(first,{name:['Previous campaign','前次战役人物'],faction:'caesar',birthYear:-70});
- const second=newGame('senate');assert.equal(second.world.characters[id],undefined);assert.deepEqual(Object.keys(second.world.dynasties.catalog),Array.from({length:10},(_,i)=>`fictional:${i+1}`));
+ const second=newGame('senate');assert.equal(second.world.characters[id],undefined);assert.deepEqual(Object.keys(second.world.dynasties.catalog),Array.from({length:second.world.dynasties.nextPerson-1},(_,i)=>`fictional:${i+1}`));
  assert.equal(second.world.dynasties.catalog['fictional:3'].name[0],'Aulus Cassianus');
  const restored=upgradeSave(JSON.parse(JSON.stringify(first)));assert.equal(restored.world.dynasties.catalog[id].name[0],'Previous campaign');assert.ok(restored.world.characters[id]);
 });

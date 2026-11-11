@@ -38,6 +38,7 @@ jobs:
           node tools/scenario-general-portrait-smoke.mjs
           node tools/civic-portrait-smoke.mjs
           node tools/dossier-rumor-smoke.mjs
+          node tools/captive-release-smoke.mjs
           node tools/scenario-systems-smoke.mjs
           node tools/construction-smoke.mjs
           node tools/browser-smoke.mjs

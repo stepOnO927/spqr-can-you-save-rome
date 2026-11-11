@@ -7,7 +7,8 @@ import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-syste
 import {advanceConspiracies} from './conspiracies.js?v=safe-save-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=safe-save-1';
-import {initializeDynasties,seedOpeningFictionalHouseholds,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=safe-save-1';
+import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,createFictionalPerson,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=safe-save-1';
+import {generateFictionalName} from './fictional-names.js?v=faces-of-empire-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-feedback-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
@@ -63,7 +64,7 @@ export function newGame(player='caesar'){
   // A new campaign starts with frontier observations, not every foreign army's
   // exact opening location. Existing saves keep their accumulated sightings.
   for(const targets of Object.values(s.knowledge))for(const knowledge of Object.values(targets))knowledge.sightings={};
-  linkCommanders(s);observeArmies(s);observeControl(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);return initializeGovernments(s);
+  linkCommanders(s);observeArmies(s);observeControl(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);return initializeGovernments(s);
 }
 
 export function newDynastyScenario(){const s=newGame('egypt');createDisputedHeirScenario(s);return s}
@@ -117,7 +118,7 @@ export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);migrateHanFrontier(s);initializeDynasties(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);migrateHanFrontier(s);initializeDynasties(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
@@ -213,7 +214,9 @@ export function recruit(s,regionId,owner=s.player){
   f.treasury-=24;f.manpower-=3000;f.food-=6;
   const id=`levy${s.nextArmy++}`;
   const roman=owner==='caesar'||owner==='senate';
-  s.armies.push({id,name:roman?['Newly raised legion','新编军团']:['Newly raised forces','新征召军队'],owner,region:regionId,men:3000,morale:58+(buildingModifiers(r).recruit||0)*4,skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null});
+  const army={id,name:roman?['Newly raised legion','新编军团']:['Newly raised forces','新征召军队'],owner,region:regionId,men:3000,morale:58+(buildingModifiers(r).recruit||0)*4,skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null};
+  const identity=generateFictionalName(s,{originFaction:owner,location:regionId}),hash=[...id].reduce((h,c)=>Math.imul(h,31)+c.charCodeAt(0)|0,0)>>>0;
+  army.characterId=createFictionalPerson(s,{...identity,faction:owner,birthYear:s.year-35,location:regionId,sex:'male',role:['Fictional field commander','虚构野战指挥官'],militaryOnly:true,ambition:30+hash%45,personalitySeed:hash});army.commander=[...identity.name];s.armies.push(army);
   r.loyalty=Math.max(0,r.loyalty-3);
   if(owner===s.player)log(s,`New forces were raised in ${r.name[0]}.`,`在${r.name[1]}征召了新军队。`);
   return true;

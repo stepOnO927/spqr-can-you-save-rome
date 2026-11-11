@@ -4,6 +4,22 @@ This is an implementation audit, not a claim that the expansion is present.
 Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 `data.js` and `characters.js`, not from the UI.
 
+## Progress on the draft branch
+
+The baseline table is a historical snapshot. Later commits added an eastern
+Han theater, a separate Shanshan polity, Han court personnel and succession
+rules, and a browser exercised Han start and save restoration. The current
+identity work gives every opening army a saved commander record and names
+newly recruited officers and movement organizers from faction-aware pools.
+New opening officers are excluded from automatic dynastic succession; their
+presence must not silently fill a vacant throne. The opening dynasty random
+seed remains `786509145` for the Caesarian scenario.
+
+The expansion remains incomplete: wider Central Asian name datasets and
+characters, individual or procedural portraits, physical commodity trade,
+market AI, and the full acceptance scenarios are still outstanding. New names
+and emblems are game reconstructions, not documented personal identities.
+
 ## Existing foundations
 
 | System | Reusable implementation | Limitation for Faces of Empire |
