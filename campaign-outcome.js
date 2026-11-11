@@ -22,6 +22,7 @@ export function militaryResult(s,id){
 // discloses these figures as intelligence.
 export function settlementEligible(s,actor,target){
  if(!roman(actor)||target!==rival(actor)||!s.wars?.some(w=>w.includes(actor)&&w.includes(target))||!strategic(s,actor))return false;
+ if(actor==='senate'&&s.regions.find(r=>r.id==='roma')?.owner!=='senate')return false;
  const base=opening(s,target),lost=base.territories-holdings(s,target);
  return lost>=Math.max(2,Math.ceil(base.territories*.12))&&troops(s,target)<=base.troops*.7&&troops(s,actor)>=troops(s,target)*1.4&&s.factions[actor].legitimacy>=35&&s.factions[actor].stability>=30;
 }

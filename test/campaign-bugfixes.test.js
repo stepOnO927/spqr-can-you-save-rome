@@ -78,7 +78,20 @@ test('outnumbered AI pays for a city garrison and keeps it in the captured theat
  assert.equal(f.manpower,manpower+budget.manpowerNet-3000);
  for(let i=0;i<3;i++)tick(s);
  assert.equal(garrison.region,'roma');assert.equal(garrison.move,null);
+ assert.equal(s.armies.filter(a=>a.owner==='caesar'&&a.aiGarrisonRegion==='roma').length,1);
  assert.equal(upgradeSave(JSON.parse(JSON.stringify(s))).armies.find(a=>a.id===garrison.id).aiGarrisonRegion,'roma');
+});
+
+test('cash-poor AI sends a nearby relief column to Rome without conjuring a levy',()=>{
+ const s=newGrandGame('egypt'),main=army(s,'xiii'),relief=army(s,'viii');
+ region(s,'roma').owner='caesar';region(s,'t014').owner='caesar';
+ main.region='roma';main.move=null;relief.region='t014';relief.move=null;
+ s.factions.caesar.treasury=0;
+ aiTurn(s,'caesar');
+ assert.equal(relief.move?.to,'roma');
+ assert.equal(relief.aiGarrisonRegion,'roma');
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(army(restored,'viii').aiGarrisonRegion,'roma');
 });
 
 test('a depleted AI army withdraws toward a safer friendly theater',()=>{

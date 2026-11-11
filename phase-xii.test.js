@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newGrandGame,tick,aiTurn,diplomacy,isWar,nationalBudget,endCampaign,trainArmy,previewMarch,upgradeSave} from './engine.js';
-import {militaryResult} from './campaign-outcome.js';
+import {militaryResult,settlementEligible} from './campaign-outcome.js';
 import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js';
 import {normalizeProfile,recordCampaign} from './legacy/legacy-core.js';
 
@@ -69,6 +69,15 @@ test('an AI Roman command can conclude a qualified civil settlement for a third-
  assert.equal(s.civilWarOutcome.winner,'senate');
  assert.equal(isWar(s,'caesar','senate'),false);
  assert.equal(s.campaignOutcome,undefined);
+});
+
+test('Senate cannot claim a favorable civil settlement while Caesar still controls Rome',()=>{
+ const s=newGrandGame('egypt');pressure(s,'senate');
+ s.regions.find(r=>r.id==='narbo').owner='caesar';
+ s.regions.find(r=>r.id==='roma').owner='caesar';
+ assert.equal(settlementEligible(s,'senate','caesar'),false);
+ s.regions.find(r=>r.id==='roma').owner='senate';
+ assert.equal(settlementEligible(s,'senate','caesar'),true);
 });
 
 test('rejected settlement missions cost resources and cannot be spammed for hidden intelligence',()=>{

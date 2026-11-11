@@ -12,13 +12,13 @@ import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=14';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion} from './local-society.js?v=4';
 import {initializeFigures,advanceFigures} from './great-figures.js';
-import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=18';
+import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=19';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
 import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js';
 import {nationalBudget} from './national-budget.js?v=5';
 export {nationalBudget} from './national-budget.js?v=5';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
-export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=18';
+export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=19';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
 export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=14';
 export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
@@ -546,6 +546,17 @@ export function aiTurn(s,owner){
     const border=owned.find(r=>adjacent(r.id,s).some(e=>isWar(s,owner,region(s,e.to).owner)));
     const rally=emergency?owned.find(r=>r.port||r.terrain==='urban')||border||owned[0]:border;
     if(rally)raiseAt(rally.id);
+  }
+  const strategicCity=s.grandMap&&outnumbered&&['caesar','senate'].includes(owner)?region(s,owner==='caesar'?'roma':'cisalpine'):null;
+  if(strategicCity?.owner===owner&&isWar(s,owner,owner==='caesar'?'senate':'caesar')){
+    const defenders=s.armies.filter(a=>a.owner===owner&&a.region===strategicCity.id&&a.men>0&&!a.move);
+    if(defenders.length===1&&defenders[0].men>=3000&&defenders[0].aiGarrisonRegion!==strategicCity.id){
+      if(f.treasury>=24&&f.food>=6&&f.manpower>=3000)recruitHere(strategicCity.id,true);
+      else{
+        const relief=s.armies.filter(a=>a.owner===owner&&a.id!==defenders[0].id&&a.men>=1500&&!a.move&&!a.siege&&!a.reconPending&&!newlyRecruited.has(a.id)&&!a.aiGarrisonRegion).map(a=>({unit:a,route:grandRoute(s,a,strategicCity.id,isWar)})).filter(x=>x.route?.months<=3&&x.route.path.every(step=>!step.sea&&region(s,step.id)?.owner===owner)).sort((a,b)=>a.route.months-b.route.months||b.unit.men-a.unit.men)[0];
+        if(relief&&moveArmy(s,relief.unit.id,strategicCity.id).ok)relief.unit.aiGarrisonRegion=strategicCity.id;
+      }
+    }
   }
   const available=s.armies.filter(a=>a.owner===owner&&!newlyRecruited.has(a.id)&&!a.move&&!a.siege&&!a.reconPending&&a.men>0&&(!alert||a.region!==alert.regionId)).sort((a,b)=>b.men-a.men);
   const protectedJunctions=s.grandMap?supplyBottlenecks(s,owner):new Set(),reservedSupport=new Set();
