@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=varus-portrait-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=civic-portraits-1';
 import {appointGovernor,dismissGovernor,governorCandidates,localGovernor,officeOf,officeCandidates,advanceOffices,governorLoyaltyEffect} from '../office-system.js?v=safe-save-1';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=varus-portrait-1';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=civic-portraits-1';
 import {availableCommanders} from '../command-appointments.js';
 
 test('a local administrator costs resources and improves only that theater quarterly',()=>{

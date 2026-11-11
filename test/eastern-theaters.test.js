@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=varus-portrait-1';
+import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=civic-portraits-1';
 import {reportedControl} from '../control-intelligence.js';
 import historical from '../historical-territories.js';
 

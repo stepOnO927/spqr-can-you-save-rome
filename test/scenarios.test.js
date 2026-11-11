@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newScenario} from '../scenarios.js?v=varus-portrait-1';
-import {tick,upgradeSave} from '../engine.js?v=varus-portrait-1';
+import {newScenario} from '../scenarios.js?v=civic-portraits-1';
+import {tick,upgradeSave} from '../engine.js?v=civic-portraits-1';
 import {potentialConspirators} from '../conspiracies.js?v=safe-save-1';
 import {leaveCoalition} from '../coalitions.js?v=multipolar-2';
-import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=varus-portrait-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=civic-portraits-1';
 import {advancePersonalPlans} from '../personal-plans.js?v=multipolar-2';
 
 test('both Roman sides can start and reload each required scenario',()=>{
@@ -33,4 +33,8 @@ test('the coalition is an actual independent agreement with consequences for lea
 });
 test('the civic scenario begins with a real local organization, grievance and no forced violence',()=>{
  for(const player of ['caesar','senate']){const s=newScenario('civic_movement',player),o=s.world.religiousInstitutions.find(x=>x.id===s.scenarioInstitution),region=s.regions.find(r=>r.id===o.region);assert.equal(region.owner,player);assert.ok(o.council.length>=2);assert.ok(region.population.satisfaction<35);assert.equal(s.world.movements.some(m=>m.stage==='armed'),false);}
+});
+
+test('civic scenario portraits use identity and seat, surviving saves without leaking into other campaigns',()=>{
+ let s=newScenario('civic_movement','caesar');const [a,b]=s.world.religiousInstitutions.find(i=>i.id==='scenario_civic').council;assert.equal(fictionalPortraitKey(s,a),'fictional-sennius');assert.equal(fictionalPortraitKey(s,b),'fictional-mara');s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(fictionalPortraitKey(s,a),'fictional-sennius');assert.equal(fictionalPortraitKey(s,b),'fictional-mara');s.world.dynasties.catalog[a].name=['Different person','另一个人物'];assert.equal(fictionalPortraitKey(s,a),null);s.player='senate';assert.equal(observedFictionalPortrait(s,b),null);s.meetings.push({actor:'senate',target:b,status:'met',portraitKey:'fictional-mara',resolvedYear:s.year,resolvedMonth:s.month});assert.equal(observedFictionalPortrait(s,b),'fictional-mara');s.player='egypt';assert.equal(observedFictionalPortrait(s,b),null);
 });
