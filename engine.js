@@ -5,7 +5,7 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=60';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
-import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=26';
+import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,ideaAdoptionPlan,ideaCompatibility,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=26';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=3';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=7';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
@@ -487,13 +487,36 @@ export function aiTurn(s,owner){
   }
   if(owner!=='rebels'){
     const d=s.development[owner];
+    const budget=nationalBudget(s,owner),atWar=s.wars.some(w=>w.includes(owner));
+    const unsettled=f.stability<60||owned.some(r=>(r.loyalty??70)<55);
+    const categoryNeed={military:atWar?9:3,government:unsettled?9:5,diplomacy:atWar?5:7,economy:budget.projectedNet<0?11:6,culture:unsettled?6:5};
+    const categoryScore=category=>categoryNeed[category]+(d.slots[category].some(v=>!v)?8:0)-5*d.knownIdeas.filter(id=>IDEAS.find(i=>i.id===id)?.category===category).length;
+    const ideaScore=i=>{
+      let score=categoryScore(i.category);
+      if(i.id==='legion-training'&&atWar||i.id==='frontier-defense'&&!atWar)score+=3;
+      if(i.id==='senatorial-consultation'&&owner==='senate'||i.id==='public-legal-reference'&&unsettled)score+=3;
+      if(i.id==='central-administration'&&budget.projectedNet<0&&f.stability>=65)score+=2;
+      if(i.id==='provincial-tax-review'&&f.tax==='high')score+=3;
+      if(i.id==='diplomatic-accommodation'&&!atWar||i.id==='hardline-diplomacy'&&atWar)score+=3;
+      if(i.id==='tax-farming'&&budget.projectedNet<0&&!unsettled||i.id==='public-works'&&unsettled)score+=3;
+      if(i.id==='cultural-accommodation'&&unsettled||i.id==='rhetorical-education'&&!unsettled)score+=3;
+      if((i.effects.navalPower||i.effects.navalTrade||i.effects.navalIntel||i.effects.navalRepair)&&!s.naval?.fleets.some(fleet=>fleet.owner===owner))score-=8;
+      return score;
+    };
     if(!d.research&&f.treasury>55+civilianReserve&&s.month%4===0){
-      const idea=IDEAS.find(i=>!d.knownIdeas.includes(i.id)&&['military','economy','culture'].includes(i.category));
-      const material=MATERIALS.find(i=>!d.knownMaterial.includes(i.id));
-      if(idea&&s.month%8===0)researchInnovation(s,owner,'idea',idea.id);
-      else if(material)researchInnovation(s,owner,'material',material.id);
+      const ideaTurn=s.month%8===4;
+      const ideas=IDEAS.filter(i=>!d.knownIdeas.includes(i.id)&&!(i.id==='senatorial-consultation'&&!['senate','caesar'].includes(owner))&&i.prerequisites.every(id=>d.knownIdeas.includes(id))&&d.slots[i.category].some(v=>!v)&&!d.knownIdeas.some(id=>IDEAS.find(other=>other.id===id)?.category===i.category&&!d.slots[i.category].includes(id))&&ideaCompatibility(s,owner,i.id,d.slots[i.category].indexOf(null)).ok&&f.treasury>=i.cost).sort((a,b)=>ideaScore(b)-ideaScore(a));
+      const materials=MATERIALS.filter(i=>!d.knownMaterial.includes(i.id)&&i.prerequisites.every(id=>d.knownMaterial.includes(id))&&f.treasury>=i.cost);
+      if(ideaTurn&&ideas.length)researchInnovation(s,owner,'idea',ideas[0].id);
+      else if(materials.length)researchInnovation(s,owner,'material',materials[0].id);
+      else if(ideas.length)researchInnovation(s,owner,'idea',ideas[0].id);
     }
-    if(!d.adoption&&f.treasury>30+civilianReserve){const idea=IDEAS.find(i=>d.knownIdeas.includes(i.id)&&!d.slots[i.category].includes(i.id)&&d.slots[i.category].some(v=>!v));if(idea)adoptIdea(s,owner,idea.id,d.slots[idea.category].indexOf(null))}
+    if(!d.adoption&&f.treasury>30+civilianReserve){
+      const available=IDEAS.filter(i=>d.knownIdeas.includes(i.id)&&!d.slots[i.category].includes(i.id))
+        .map(i=>({idea:i,slot:d.slots[i.category].indexOf(null)})).filter(x=>x.slot>=0&&ideaAdoptionPlan(s,owner,x.idea.id,x.slot).ok)
+        .sort((a,b)=>ideaScore(b.idea)-ideaScore(a.idea));
+      if(available.length)adoptIdea(s,owner,available[0].idea.id,available[0].slot);
+    }
     if(f.treasury>120+civilianReserve){for(const kind of ['stone','timber','metal'])if(d.materials[kind]<5)purchaseMaterials(s,owner,kind,5);const project=owned.flatMap(site=>BUILDINGS.map(b=>({site,b}))).find(({site,b})=>constructionCheck(s,owner,site.id,b.id).ok);if(project)startConstruction(s,owner,project.site.id,project.b.id)}
     if(s.month%12===0&&f.treasury>75+civilianReserve){for(const seller of Object.keys(s.development)){
       if(seller===owner||isWar(s,owner,seller)||relation(s,owner,seller)<0)continue;

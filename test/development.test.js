@@ -486,6 +486,37 @@ test('opposed five-idea development paths survive 36 months in the grand campaig
   }
  }
 });
+test('wealthy AI states research and adopt all five idea categories over a long campaign',()=>{
+ for(const owner of ['senate','egypt']){
+  const s=newGrandGame(owner==='senate'?'egypt':'senate');
+  s.factions[owner].treasury=10000;
+  for(let month=0;month<36;month++)tick(s);
+  const d=development(s,owner);
+  assert.deepEqual(Object.keys(d.slots).filter(category=>d.slots[category].some(Boolean)),IDEA_CATEGORIES.map(category=>category.id),owner);
+  assert.ok(d.knownIdeas.every(id=>IDEAS.find(idea=>idea.id===id)?.prerequisites.every(pre=>d.knownIdeas.includes(pre))),owner);
+  assert.ok(!d.knownIdeas.includes('senatorial-consultation')||owner==='senate',owner);
+  assert.doesNotThrow(()=>upgradeSave(JSON.parse(JSON.stringify(s))));
+ }
+});
+test('AI skips a blocked material prerequisite and researches a feasible alternative',()=>{
+ const s=newGame('senate'),d=development(s,'egypt');
+ s.month=8;s.factions.egypt.treasury=500;
+ d.knownMaterial=MATERIALS.map(item=>item.id).filter(id=>!['quarrying','metal-extraction','craft-workshops'].includes(id));
+ aiTurn(s,'egypt');
+ assert.deepEqual([d.research?.branch,d.research?.id],['material','quarrying']);
+ d.research=null;d.knownMaterial.push('quarrying');s.month=9;
+ aiTurn(s,'egypt');
+ assert.equal(d.research,null);
+});
+test('AI adopts a compatible known policy when an earlier one conflicts',()=>{
+ const s=newGame('senate'),d=development(s,'egypt');
+ s.factions.egypt.treasury=500;
+ d.knownIdeas.push('hardline-diplomacy','diplomatic-accommodation','public-works');
+ d.slots.diplomacy=['diplomatic-accommodation',null];
+ aiTurn(s,'egypt');
+ assert.equal(d.adoption?.ideaId,'public-works');
+ assert.equal(d.adoption?.category,'economy');
+});
 test('idea capacity requires institutions as well as researched ideas and treasury',()=>{
  const s=newGame('senate'),d=development(s,'senate');s.factions.senate.treasury=500;
  d.knownIdeas.push('legion-training','frontier-defense','reserve-mobilization');
