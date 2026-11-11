@@ -1,3 +1,5 @@
+import {recordExpense} from './expense-ledger.js?v=1';
+
 // Phase XIV. All numbers below are game balance values, not historical measurements.
 export const IDEA_CATEGORIES = [
   {id:'military',name:['Military & Training','军事与训练']},
@@ -207,7 +209,7 @@ export function researchInnovation(s,owner,branch,id){
   const visitingScholar=visitingScholarFor(s,owner,branch,id),visitor=!!visitingScholar;
   const cost=Math.max(8,item.cost-(activeEffects(s,owner).researchDiscount||0)-(figureActive(s,owner,'scholar')?3:0)-(visitor?3:0));
   if(f.treasury<cost)return {ok:false,reason:'treasury'};
-  f.treasury-=cost;d.research={branch,id,remaining:Math.max(1,item.months-(figureActive(s,owner,'scholar')?1:0)-(visitor?1:0)),scholarPartner:visitingScholar?.id?visitingScholar.partner:null};return {ok:true};
+  f.treasury-=cost;recordExpense(s,owner,'research',cost);d.research={branch,id,remaining:Math.max(1,item.months-(figureActive(s,owner,'scholar')?1:0)-(visitor?1:0)),scholarPartner:visitingScholar?.id?visitingScholar.partner:null};return {ok:true};
 }
 export function ideaCompatibility(s,owner,ideaId,slot){
   const d=development(s,owner),idea=IDEAS.find(i=>i.id===ideaId);
@@ -276,7 +278,7 @@ export function constructionCheck(s,owner,regionId,buildingId){
 export function startConstruction(s,owner,regionId,buildingId,inscription=''){
   const check=constructionCheck(s,owner,regionId,buildingId);if(!check.ok)return check;
   const d=development(s,owner),r=s.regions.find(x=>x.id===regionId),b=BUILDINGS.find(x=>x.id===buildingId);
-  s.factions[owner].treasury-=check.cost;for(const [k,v] of Object.entries(b.materials))d.materials[k]-=v;
+  s.factions[owner].treasury-=check.cost;recordExpense(s,owner,'construction',check.cost);for(const [k,v] of Object.entries(b.materials))d.materials[k]-=v;
   r.construction={buildingId,owner,remaining:Math.max(1,b.months-(figureActive(s,owner,'engineer')?1:0)),inscription:buildingId==='monument'?String(inscription).slice(0,120):''};return {ok:true};
 }
 export function purchaseMaterials(s,owner,kind,amount=5){

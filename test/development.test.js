@@ -8,7 +8,36 @@ import {techIllustration} from '../tech-art.js';
 import {faithSatisfaction,advanceDemography} from '../local-society.js';
 import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js';
+import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
+
+test('monthly budget records paid construction and research orders without double counting',()=>{
+ const s=newGrandGame('senate');s.factions.senate.treasury=500;
+ const projected=nationalBudget(s,'senate').projectedNet;
+ assert.deepEqual(expensesThisMonth(s,'senate'),{construction:0,research:0});
+ const researchBefore=s.factions.senate.treasury;
+ assert.equal(researchInnovation(s,'senate','material','water-control').ok,true);
+ const researchCost=researchBefore-s.factions.senate.treasury;
+ const constructionCost=constructionCheck(s,'senate','roma','road').cost;
+ assert.equal(startConstruction(s,'senate','roma','road').ok,true);
+ const secondCost=constructionCheck(s,'senate','italiaS','road').cost;
+ assert.equal(startConstruction(s,'senate','italiaS','road').ok,true);
+ const constructionTotal=constructionCost+secondCost;
+ assert.deepEqual(expensesThisMonth(s,'senate'),{construction:constructionTotal,research:researchCost});
+ assert.equal(researchInnovation(s,'senate','material','water-control').ok,false);
+ assert.equal(startConstruction(s,'senate','roma','road').ok,false);
+ assert.deepEqual(expensesThisMonth(s,'senate'),{construction:constructionTotal,research:researchCost});
+ assert.equal(nationalBudget(s,'senate').projectedNet,projected,'one-time orders must remain separate from the monthly projection');
+ for(const [lang,construction,research] of [['en','Construction paid this month','Research paid this month'],['zh','本月已付建造费','本月已付研究费']]){
+  const html=budgetHtml(s,lang);
+  assert.match(html,new RegExp(`${construction}</td><td>-${constructionTotal}`));
+  assert.match(html,new RegExp(`${research}</td><td>-${researchCost}`));
+ }
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(expensesThisMonth(restored,'senate'),{construction:constructionTotal,research:researchCost});
+ tick(restored);
+ assert.deepEqual(expensesThisMonth(restored,'senate'),{construction:0,research:0});
+});
 
 test('every development node has its own interpretive illustration',()=>{
  const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
