@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,queueMission} from '../engine.js?v=succession-feedback-1';
+import {newGame,upgradeSave,tick,queueMission} from '../engine.js?v=varus-portrait-1';
 import {addReport,advanceOperations,contestLeadership,supportClaimant} from '../character-system.js?v=succession-feedback-1';
 // These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
 // they run with the expansion's AI layer switched off (world.imperium.enabled=false).

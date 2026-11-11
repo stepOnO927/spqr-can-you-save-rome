@@ -64,3 +64,8 @@ These six distinct original images were generated with the built-in image genera
 | Syrian civic association, second | Helena of Antioch / 安条克的海伦娜 | fictional-helena | Mature Antiochene woman with loosely tied dark hair, linen and green mantle. |
 
 Assignment requires the matching saved institution and council seat, name, fictional status and opening birth year; it does not rely on reusable numeric IDs. Foreign portraits are revealed only from a recorded personal meeting, and the image does not confirm current position, location or health. People seeded later, or whose old-save identity cannot be matched, continue to use silhouettes.
+
+## Fictional scenario general
+
+Lucius Valerius Varus / 卢基乌斯·瓦勒里乌斯·瓦鲁斯 is a fictional character, not a documented historical person. His original portrait was generated with the built-in image generation tool on 2026-11-11; the project contains a 512×512 master and 128×128 and 64×64 derivatives. It is game artwork, not a historical likeness. Assignment requires the matching scenario, saved character ID, fictional name and birth year. Foreign viewers can see it only through a saved personal-meeting observation; it does not establish current identity, health or position.
+

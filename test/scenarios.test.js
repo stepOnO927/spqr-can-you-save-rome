@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newScenario} from '../scenarios.js?v=succession-feedback-1';
-import {tick,upgradeSave} from '../engine.js?v=succession-feedback-1';
+import {newScenario} from '../scenarios.js?v=varus-portrait-1';
+import {tick,upgradeSave} from '../engine.js?v=varus-portrait-1';
 import {potentialConspirators} from '../conspiracies.js?v=safe-save-1';
 import {leaveCoalition} from '../coalitions.js?v=multipolar-2';
+import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=varus-portrait-1';
 import {advancePersonalPlans} from '../personal-plans.js?v=multipolar-2';
 
 test('both Roman sides can start and reload each required scenario',()=>{
@@ -14,6 +15,10 @@ test('both Roman sides can start and reload each required scenario',()=>{
 test('the fictional general has real command and does not revolt merely due to ambition',()=>{
  const s=newScenario('ambitious_general','senate'),person=s.world.characters[s.scenarioGeneral],army=s.armies.find(a=>a.characterId===person.id);
  assert.ok(army&&army.men>0);assert.equal(army.skill,5);assert.equal(person.ambition,95);assert.ok(!potentialConspirators(s,'senate').includes(person.id));assert.ok(Object.keys(s.world.personalRelations).filter(k=>k.includes(person.id)).length>=3);
+});
+test('the scenario general keeps a unique portrait without crossing save identities',()=>{
+ for(const player of ['caesar','senate']){let s=newScenario('ambitious_general',player),id=s.scenarioGeneral;assert.equal(fictionalPortraitKey(s,id),'fictional-varus');s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(fictionalPortraitKey(s,id),'fictional-varus');const other=newScenario('historical',player);other.scenarioGeneral=id;assert.equal(fictionalPortraitKey(other,id),null);s.world.dynasties.catalog[id].name=['Another person','另一个人物'];assert.equal(fictionalPortraitKey(s,id),null);}
+ const s=newScenario('ambitious_general','senate'),id=s.scenarioGeneral;s.player='caesar';assert.equal(observedFictionalPortrait(s,id),null);s.meetings.push({actor:'caesar',target:id,status:'met',portraitKey:'fictional-varus',resolvedYear:s.year,resolvedMonth:s.month});assert.equal(observedFictionalPortrait(s,id),'fictional-varus');s.player='egypt';assert.equal(observedFictionalPortrait(s,id),null);
 });
 test('the ambitious general builds influence, cultivates allies in a crisis, and can return to a loyal plan',()=>{
  let s=newScenario('ambitious_general','senate'),id=s.scenarioGeneral,general=s.world.characters[id],before=general.influence,wealth=general.wealth;s.month=3;advancePersonalPlans(s);

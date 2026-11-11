@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,region,isWar,sendInquiry,tick} from '../engine.js?v=succession-feedback-1';
+import {newGame,upgradeSave,region,isWar,sendInquiry,tick} from '../engine.js?v=varus-portrait-1';
 import {startDynasticWar,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=safe-save-1';
 import {assignSuccession} from '../characters.js?v=safe-save-1';
 import {egyptianClaimantCandidate,advanceCharacters,contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,queueMission} from '../character-system.js?v=succession-feedback-1';
