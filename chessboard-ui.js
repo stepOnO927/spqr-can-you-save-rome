@@ -1,4 +1,4 @@
-import {buildChessboard} from './chessboard.js?v=multipolar-2';
+import {buildChessboard} from './chessboard.js?v=strategic-offers-1';
 import {focusReportsFor,focusById} from './national-focus.js?v=imperium-1';
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

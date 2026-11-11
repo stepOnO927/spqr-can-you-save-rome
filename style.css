@@ -61,3 +61,4 @@ body{min-width:0;background:#292d29}.top{height:54px;padding:0 12px;gap:15px;bac
 .war-decision-note{display:block;margin:3px 0 9px;color:#bba978;font:10px/1.45 Arial,sans-serif;max-width:100%}
 
 .board-view-switch{display:flex;gap:8px;margin:8px 0}.board-view-switch button{padding:7px 11px;border:1px solid #99856b;background:#e2d5ba;color:#382e25}.board-view-switch button[aria-pressed="true"]{background:#843b30;color:#fff0d3}.board-link.kind-war{stroke:#a1372b;stroke-width:3}.board-link.kind-alliance,.board-link.kind-coalition{stroke:#4b7955;stroke-width:2.5}.board-link.kind-agreement{stroke:#a88441;stroke-dasharray:7 4}
+.board-link.kind-shared_threat{stroke:#8a6a96;stroke-width:2;stroke-dasharray:3 6}
