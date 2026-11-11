@@ -24,7 +24,8 @@ export function assessment(s,armyId,regionId,plan=null){
  const reports=reconReports(s,unit.owner,regionId),report=reports[0]||null;
  const sighting=Object.values(s.knowledge?.[unit.owner]?.[target.owner]?.sightings||{}).find(x=>x.region===regionId);
  const confidence=report?.confidence||(sighting?'rumor':'unknown'),food=s.factions[unit.owner].food;
- return {friendly:unit.men,morale:unit.morale,commander:[...unit.commander],terrain:target.terrain,fort:report?.defensive?.fort??null,
+ const fortReport=reports.find(item=>item.defensive?.fort!=null)||null;
+ return {friendly:unit.men,morale:unit.morale,commander:[...unit.commander],terrain:target.terrain,fort:fortReport?.defensive.fort??null,fortReport,
   regionId,owner:target.owner,report,sighting:sighting?{year:sighting.year,month:sighting.month,region:sighting.region}:null,
   risk:!report||['unknown','rumor','disputed','outdated'].includes(confidence)?'high uncertainty':report.max>unit.men?'high':'uncertain',
   food,supply:Math.round(100*Math.min(1,Math.max(.65,food/20))*(unit.operationalSupply??1)),travelMonths:plan?.months??1,landing:!!(plan?.path?.at(-1)?.sea??plan?.sea),reinforcementRisk:'possible',reports:reports.slice(0,4)};

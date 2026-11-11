@@ -4,7 +4,26 @@ import {newGame,army,moveArmy,tick,upgradeSave,aiTurn,resolveBattle} from '../en
 import {assessment,sendScouts,probePositions,latestRecon,reconReports,delayAttack,markReconRegion,advanceRecon} from '../reconnaissance.js';
 import {development,activeEffects,IDEAS} from '../development.js';
 import {developmentPanel} from '../development-ui.js';
-import {intelligenceHtml,afterActionHtml} from '../recon-ui.js';
+import {intelligenceHtml,afterActionHtml,fortificationText} from '../recon-ui.js';
+
+test('enemy fortification remains hidden until a dated military report is available',()=>{
+ const s=newGame('senate'),target=s.regions.find(r=>r.id==='cisalpine');target.fort=3;
+ assert.equal(fortificationText(s,'senate',target.id,'en'),'Unknown');
+ assert.equal(fortificationText(s,'senate',target.id,'zh'),'未知');
+ assert.equal(fortificationText(s,'caesar',target.id,'en'),'3');
+ s.militaryRecon=[];
+ s.militaryRecon.unshift({owner:'senate',armyId:'italy',regionId:target.id,year:-49,month:1,observationYear:-49,observationMonth:1,arrivalYear:-49,arrivalMonth:1,source:'probe',min:3000,max:7000,defensive:{fort:2}});
+ s.militaryRecon.unshift({owner:'senate',armyId:'italy',regionId:target.id,year:-49,month:2,observationYear:-49,observationMonth:1,arrivalYear:-49,arrivalMonth:2,source:'scouts',min:null,max:null,defensive:null});
+ s.month=2;
+ assert.equal(assessment(s,'italy',target.id).fort,2,'a newer strength report must not erase an older fort observation');
+ assert.match(intelligenceHtml(assessment(s,'italy',target.id),target,'en'),/≈2 \(1\/49 BCE\)/);
+ assert.equal(fortificationText(s,'senate',target.id,'en'),'≈2 · 1/49 BCE');
+ assert.equal(fortificationText(s,'senate',target.id,'zh'),'≈2 · 1/49 公元前');
+ target.fort=7;
+ assert.equal(fortificationText(upgradeSave(JSON.parse(JSON.stringify(s))),'senate',target.id,'en'),'≈2 · 1/49 BCE','the interface must show the observed estimate, never the new hidden value');
+ s.month=5;
+ assert.match(fortificationText(s,'senate',target.id,'en'),/may be outdated/);
+});
 
 test('field scout coordination improves reports without revealing exact troops',()=>{
  const base=newGame('senate');

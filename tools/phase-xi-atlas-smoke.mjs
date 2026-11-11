@@ -15,6 +15,8 @@ try{
  await page.locator('#start-overlay').waitFor({state:'visible'});
  await page.locator('#roman-faction').selectOption('senate');await page.locator('#difficulty').selectOption('standard');await page.locator('#start-game').click();
  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('grand-campaign')),true,'tutorial must retain the grand campaign');
+ await page.locator('.grand-site[data-site="cisalpine"]').evaluate(el=>el.click());
+ assert.match(await page.locator('#command-detail .detail-grid').innerText(),/防御工事\s+未知/,'enemy works must stay hidden in theater details');
  assert.match(await page.locator('#guide-body').innerText(),/assess|评估/i);
  await page.locator('#guide-next').click();await page.locator('[data-army="italy"]').click();await page.locator('#guide-next').click();
  assert.match(await page.locator('.war-council').innerText(),/军议/);
@@ -53,6 +55,8 @@ try{
  await page.locator('#guide-restart').click();await page.locator('#roman-faction').selectOption('senate');await page.locator('#difficulty').selectOption('standard');await page.locator('#start-free').click();
  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('grand-campaign')),true,'free play must retain the grand campaign');
  assert.equal(await page.locator('.grand-site').count(),120);
+ await page.locator('.grand-site[data-site="cisalpine"]').evaluate(el=>el.click());
+ assert.match(await page.locator('#command-detail .detail-grid').innerText(),/Fortification\s+Unknown/);
  assert.equal(await page.locator('.city-marker').first().isVisible(),false,'duplicate base-map city labels must be hidden');
  if(page.viewportSize().width>600)await page.locator('#brief-toggle').click();await page.locator('[data-army="italy"]').click();await page.locator('#lab-orders select').selectOption('cisalpine');await page.locator('#lab-orders button').click();
  assert.match(await page.locator('.prebattle-intel').innerText(),/Unknown/);
@@ -62,10 +66,13 @@ try{
  assert.match(await page.locator('.after-action').innerText(),/Friendly casualties/);
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await page.locator('#save').click();
- await page.evaluate(()=>{const key='spqr-save-1',s=JSON.parse(localStorage.getItem(key));const base={owner:'senate',armyId:'italy',regionId:'cisalpine',year:s.year,month:s.month,observationYear:s.year,observationMonth:s.month,arrivalYear:s.year,arrivalMonth:s.month,min:1000,max:3000};s.militaryRecon=[{...base,source:'<img src=x onerror=window.__injected=true>'},{...base,source:'scouts'}];localStorage.setItem(key,JSON.stringify(s))});
+ await page.evaluate(()=>{const key='spqr-save-1',s=JSON.parse(localStorage.getItem(key));const base={owner:'senate',armyId:'italy',regionId:'cisalpine',year:s.year,month:s.month,observationYear:s.year,observationMonth:s.month,arrivalYear:s.year,arrivalMonth:s.month,min:1000,max:3000};s.regions.find(r=>r.id==='cisalpine').fort=7;s.militaryRecon=[{...base,source:'<img src=x onerror=window.__injected=true>',defensive:{fort:2}},{...base,source:'scouts'}];localStorage.setItem(key,JSON.stringify(s))});
  await page.locator('#load').click();if(page.viewportSize().width>600)await page.locator('#brief-toggle').click();await page.locator('[data-army="italy"]').click();
  assert.equal(await page.locator('.war-council img').count(),0);
  assert.equal(await page.evaluate(()=>window.__injected),undefined);
+ await page.locator('[data-city="RAVENNA"]').evaluate(el=>el.click());
+ assert.match(await page.locator('#command-detail .detail-grid').innerText(),/Fortification\s+≈2 ·/);
+ assert.doesNotMatch(await page.locator('#command-detail .detail-grid').innerText(),/Fortification\s+7/);
  await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
  await page.locator('#entry-continue').click();
  await page.locator('[data-tab="military"]').click();await page.locator('[data-select-army="xiii"]').click();
@@ -73,6 +80,9 @@ try{
  assert.match(await page.locator('.march-review').innerText(),/PRE-BATTLE INTELLIGENCE/);
  assert.match(await page.locator('.march-review').innerText(),/Enemy estimate[\s\S]*Unknown/);
  await page.locator('[data-review="cancel"]').click();
+ await page.locator('#new').click();await page.locator('#faction-choice').selectOption('senate');await page.locator('#start-campaign').click();
+ await page.locator('[data-map-group="cisalpine"]').first().evaluate(el=>el.dispatchEvent(new MouseEvent('click',{bubbles:true})));
+ assert.match(await page.locator('.inspector .detail-list').innerText(),/Fortification\s+Unknown/,'main campaign must not expose an enemy fort');
  assert.deepEqual(errors,[]);
  console.log('Phase XI Atlas and campaign pre-battle, Senate Standard EN/ZH tutorial and combat smoke passed.');
 }finally{await browser.close()}

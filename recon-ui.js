@@ -1,3 +1,5 @@
+import {reconReports} from './reconnaissance.js?v=7';
+
 const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const date=(y,m,z)=>y==null?'—':m+'/'+Math.abs(y)+' '+(z?'公元前':'BCE');
 const labels={
@@ -12,13 +14,24 @@ const labels={
 };
 const local=(x,z)=>labels[x]?.[z?1:0]??x;
 const range=(r,z)=>r?.min!=null?r.min.toLocaleString()+'–'+r.max.toLocaleString():(z?'未知':'Unknown');
+export function fortificationText(s,observer,regionId,lang){
+ const site=s.regions.find(r=>r.id===regionId),z=lang==='zh';
+ if(!site)return z?'未知':'Unknown';
+ if(site.owner===observer)return Number.isFinite(Number(site.fort))?String(Math.max(0,Math.round(Number(site.fort)))):(z?'未知':'Unknown');
+ const report=reconReports(s,observer,regionId).find(r=>r.defensive?.fort!=null);
+ if(!report)return z?'未知':'Unknown';
+ const fort=Number(report.defensive.fort);
+ if(!Number.isFinite(fort)||fort<0)return z?'未知':'Unknown';
+ const observed=safe(date(report.observationYear,report.observationMonth,z));
+ return `≈${Math.round(fort)} · ${observed}${report.age>2?(z?' · 可能过时':' · may be outdated'):''}`;
+}
 export function intelligenceHtml(a,r,lang){
  if(!a)return '';
  const z=lang==='zh',report=a.report;
  const rows=[
   [z?'己方兵力／士气':'Friendly strength / morale',a.friendly.toLocaleString()+' / '+a.morale],
   [z?'指挥官／补给':'Commander / supply',safe(a.commander[z?1:0])+' / '+a.supply+'%'],
-  [z?'已知地形／敌方工事':'Known terrain / enemy works',safe(local(a.terrain,z))+' / '+(a.fort==null?(z?'未知':'Unknown'):a.fort)],
+  [z?'已知地形／敌方工事':'Known terrain / enemy works',safe(local(a.terrain,z))+' / '+(a.fort==null?(z?'未知':'Unknown'):`≈${safe(a.fort)} (${safe(date(a.fortReport?.observationYear,a.fortReport?.observationMonth,z))})`)],
   [z?'敌军估计':'Enemy estimate',range(report,z)],
   [z?'最后目击地点':'Last reported presence',report||a.sighting?safe(r.name?.[z?1:0]??a.regionId):(z?'未知':'Unknown')],
   [z?'情报来源':'Source',report?safe(local(report.source,z)):a.sighting?(z?'边境目击':'Frontier sighting'):(z?'无':'None')],
