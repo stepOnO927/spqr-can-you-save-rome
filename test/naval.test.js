@@ -150,11 +150,27 @@ test('foreign trade routes keep shipment and security figures private',()=>{
 test('a hostile trade raid physically transfers captured cargo to its fleet owner',()=>{
  const s=newGrandGame('senate'),raider=s.naval.fleets.find(f=>f.owner==='caesar');raider.zone='alexandrian';raider.port=null;
  assert.equal(orderFleet(s,'caesar',raider.id,'raid','egypt-italy').ok,true);
- const before={egypt:s.factions.egypt.food,caesar:s.factions.caesar.food,senate:s.factions.senate.food};advanceNaval(s);
+ const relationKey='caesar:egypt',before={egypt:s.factions.egypt.food,caesar:s.factions.caesar.food,senate:s.factions.senate.food,relation:s.relations[relationKey]??0};advanceNaval(s);
  const result=s.naval.routes.find(r=>r.id==='egypt-italy').last;
  assert.equal(result.reason,'raid');assert.ok(result.captured>0);assert.equal(result.amount,0);assert.equal(result.paid,0);
  assert.equal(s.factions.egypt.food,before.egypt-result.captured);assert.equal(s.factions.caesar.food,before.caesar+result.captured);assert.equal(s.factions.senate.food,before.senate);
  assert.ok(s.naval.reports.some(r=>r.kind==='trade-raid'&&r.captured===result.captured));
+ assert.equal(s.relations[relationKey],before.relation-6);
+ assert.ok(s.naval.reports.some(r=>r.kind==='trade-incident'&&r.owner==='egypt'&&r.raider==='caesar'&&r.captured===result.captured));
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(s))).relations[relationKey],before.relation-6);
+});
+test('a neutral fleet cannot raid commerce, and a saved raid stops when war ends',()=>{
+ const s=newGrandGame('senate'),neutral={...s.naval.fleets.find(f=>f.owner==='senate'),id:'neutral-raider',owner:'numidia',zone:'alexandrian',port:null,order:null};
+ s.naval.fleets.push(neutral);
+ assert.deepEqual(orderFleet(s,'numidia',neutral.id,'raid','egypt-italy'),{ok:false,reason:'war'});
+ assert.deepEqual(orderFleet(s,'senate','senate-adriatic','raid','egypt-italy'),{ok:false,reason:'war'});
+ const hostile=s.naval.fleets.find(f=>f.owner==='caesar');hostile.zone='alexandrian';hostile.port=null;
+ assert.equal(orderFleet(s,'caesar',hostile.id,'raid','egypt-italy').ok,true);
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));loaded.wars=[];
+ advanceNaval(loaded);
+ assert.equal(loaded.naval.fleets.find(f=>f.id===hostile.id).order,null);
+ assert.notEqual(loaded.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'raid');
+ assert.equal(loaded.naval.reports.some(r=>r.kind==='trade-raid'),false);
 });
 test('AI can order a real army transport when a hostile coast is reachable by sea',()=>{
  const s=newGrandGame('caesar');for(const r of s.regions)r.owner='egypt';s.regions.find(r=>r.id==='italiaS').owner='senate';s.regions.find(r=>r.id==='t075').owner='caesar';s.armies=s.armies.filter(a=>a.id==='italy');s.armies[0].region='italiaS';
