@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=trade-intelligence-1';
-import {createCharacterUI} from '../map-lab/character-ui.js?v=trade-intelligence-1';
+import {newGame,upgradeSave} from '../engine.js?v=institution-portraits-1';
+import {createCharacterUI} from '../map-lab/character-ui.js?v=institution-portraits-1';
 import {addReport} from '../character-system.js?v=trade-intelligence-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=trade-intelligence-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=institution-portraits-1';
 import {createFictionalPerson} from '../dynasties.js';
 
 // A small DOM stub exercises the real handler without requiring a network listener.
@@ -39,6 +39,15 @@ test('a personal meeting records an observed foreign fictional portrait without 
   const restored=upgradeSave(JSON.parse(JSON.stringify(s))),savedUI=createCharacterUI({getState:()=>restored,getLanguage:()=> 'zh',inspect:()=>{}});panel.children=[];savedUI.show(id);assert.match(panel.innerHTML,/fictional-cassianus-128/);
   restored.player='egypt';panel.children=[];savedUI.show(id);assert.doesNotMatch(panel.innerHTML,/fictional-cassianus-128/);restored.player='caesar';restored.meetings[0].portraitKey='../../invalid';panel.children=[];savedUI.show(id);assert.doesNotMatch(panel.innerHTML,/invalid/);
   delete s.meetings[0].portraitKey;panel.children=[];ui.show(id);assert.doesNotMatch(panel.innerHTML,/fictional-cassianus-128/);assert.match(panel.innerHTML,/肖像未取得/);
+ }finally{globalThis.document=prior}
+});
+test('an institution member’s foreign portrait appears only after a recorded meeting',()=>{
+ const prior=globalThis.document,s=newGame('caesar'),panel=new Element(),id=s.world.religiousInstitutions.find(o=>o.id==='theban_temples').council[0];globalThis.document={createElement:tag=>new Element(tag),querySelector:()=>panel};
+ try{s.wars=[];s.world.characters.caesar.location='roma';s.world.characters[id].location='roma';addReport(s,'caesar','egypt',{kind:'leaders',leaders:[id],source:'spy'});
+  const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show(id);assert.doesNotMatch(panel.innerHTML,/fictional-psenamun-128/);
+  assert.ok(requestPersonalMeeting(s,'caesar',id,'egypt').ok);s.world.intelSeed=1000;advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');assert.equal(s.meetings[0].portraitKey,'fictional-psenamun');
+  panel.children=[];ui.show(id);assert.match(panel.innerHTML,/fictional-psenamun-128/);assert.match(panel.innerHTML,/肖像为游戏创作/);s.world.characters[id].health='dying';panel.children=[];ui.show(id);assert.match(panel.innerHTML,/游戏健康<\/span><b>未知/);
+  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));restored.player='senate';panel.children=[];createCharacterUI({getState:()=>restored,getLanguage:()=> 'zh',inspect:()=>{}}).show(id);assert.doesNotMatch(panel.innerHTML,/fictional-psenamun-128/);
  }finally{globalThis.document=prior}
 });
 test('a deceased friendly character shows age at simulated death and no travel order',()=>{

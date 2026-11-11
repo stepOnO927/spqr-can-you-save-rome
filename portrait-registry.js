@@ -14,9 +14,21 @@ const SCENARIO_PORTRAITS={
  son:['Leontios of Alexandria',-70,'fictional-leontios'],
  general:['Straton of Thebes',-78,'fictional-straton']
 };
+// Fixed opening institution members can receive different numeric IDs in old
+// saves. Require the saved institution seat, name and opening birth year, not
+// the reusable number alone. Later-seeded people remain silhouettes.
+const INSTITUTION_PORTRAITS=[
+ ['roman_college',0,'Aulus Fabius',-97,'fictional-fabius'],
+ ['roman_college',1,'Claudia Flavia',-83,'fictional-flavia'],
+ ['theban_temples',0,'Psenamun',-97,'fictional-psenamun'],
+ ['theban_temples',1,'Taimhotep',-83,'fictional-taimhotep'],
+ ['syrian_association',0,'Maron',-97,'fictional-maron'],
+ ['syrian_association',1,'Helena of Antioch',-83,'fictional-helena']
+];
 export function fictionalPortraitKey(state,id){
  const entry=OPENING_PORTRAITS[id],person=state.world?.characters?.[id],saved=state.world?.dynasties?.catalog?.[id];
  if(entry&&saved?.fictional&&saved.name?.[0]===entry[0]&&person?.birthYear===entry[1])return entry[2];
+ if(saved?.fictional&&person?.institutionalOnly){for(const [institution,seat,name,birth,key] of INSTITUTION_PORTRAITS){const office=state.world?.religiousInstitutions?.find(o=>o.id===institution);if(office?.council?.[seat]===id&&saved.name?.[0]===name&&person.birthYear===birth)return key}}
  const scenario=state.world?.dynasties?.scenario;if(!scenario||!saved?.fictional)return null;
  for(const [role,portrait] of Object.entries(SCENARIO_PORTRAITS))if(scenario[role]===id&&saved.name?.[0]===portrait[0]&&person?.birthYear===portrait[1])return portrait[2];
  return null;
@@ -24,6 +36,6 @@ export function fictionalPortraitKey(state,id){
 // Foreign artwork becomes available only from this viewer's completed meeting
 // snapshot. It must not be recomputed from the person's current hidden state.
 export function observedFictionalPortrait(state,id){
- const allowed=new Set([...Object.values(OPENING_PORTRAITS),...Object.values(SCENARIO_PORTRAITS)].map(x=>x[2])),now=state.year*12+state.month;
+ const allowed=new Set([...Object.values(OPENING_PORTRAITS).map(x=>x[2]),...Object.values(SCENARIO_PORTRAITS).map(x=>x[2]),...INSTITUTION_PORTRAITS.map(x=>x[4])]),now=state.year*12+state.month;
  return (state.meetings||[]).filter(m=>m.actor===state.player&&m.target===id&&m.status==='met'&&allowed.has(m.portraitKey)&&Number.isFinite(m.resolvedYear??m.year)&&Number.isFinite(m.resolvedMonth??m.month)&&(m.resolvedYear??m.year)*12+(m.resolvedMonth??m.month)<=now).sort((a,b)=>((b.resolvedYear??b.year)*12+(b.resolvedMonth??b.month))-((a.resolvedYear??a.year)*12+(a.resolvedMonth??a.month)))[0]?.portraitKey||null;
 }

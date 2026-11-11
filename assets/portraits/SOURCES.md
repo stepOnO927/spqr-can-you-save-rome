@@ -49,3 +49,18 @@ These four original portraits were generated on 2026-11-08 for fixed fictional c
 | general | Straton of Thebes / 底比斯的斯特拉顿 | fictional-straton | General with short hair, dark beard, simple cuirass and brown cloak. |
 
 All prompts specified an original fictional 49 BCE head-and-shoulders image, painterly realism, warm side light, subdued dark olive background, and no text, emblem, watermark or decorative frame.
+
+## Fictional opening institution members
+
+These six distinct original images were generated with the built-in image generation tool on 2026-11-11 for existing fictional game characters. They do not represent documented historical people or verified likenesses. Each has a 512×512 project master and 128×128 and 64×64 derivatives; the original generated PNGs are retained locally under `outputs/institution-portrait-originals/`. The common prompt requested a single fictional 49 BCE head-and-shoulders character, painterly realism, warm side light, a subdued dark olive background, modest period-inspired clothing, and no lettering, frame, badge or watermark. Portraits do not change with simulated age or health.
+
+| Opening institution and seat | English / Chinese name | Asset prefix | Individual direction |
+| --- | --- | --- | --- |
+| Roman civic college, first | Aulus Fabius / 奥卢斯·法比乌斯 | fictional-fabius | Older, lean Roman man with silver hair and plain undyed wool. |
+| Roman civic college, second | Claudia Flavia / 克劳狄娅·弗拉维娅 | fictional-flavia | Mature Roman woman with braided hair, cream stola and muted red wrap. |
+| Theban temple network, first | Psenamun / 普塞纳蒙 | fictional-psenamun | Older Egyptian man, close-shaven head, white linen and ochre wrap. |
+| Theban temple network, second | Taimhotep / 塔伊姆霍特普 | fictional-taimhotep | Mature Egyptian woman with dark hair, ivory linen and muted blue wrap. |
+| Syrian civic association, first | Maron / 马隆 | fictional-maron | Older Syrian man with graying curls and short beard, linen and brown mantle. |
+| Syrian civic association, second | Helena of Antioch / 安条克的海伦娜 | fictional-helena | Mature Antiochene woman with loosely tied dark hair, linen and green mantle. |
+
+Assignment requires the matching saved institution and council seat, name, fictional status and opening birth year; it does not rely on reusable numeric IDs. Foreign portraits are revealed only from a recorded personal meeting, and the image does not confirm current position, location or health. People seeded later, or whose old-save identity cannot be matched, continue to use silhouettes.
