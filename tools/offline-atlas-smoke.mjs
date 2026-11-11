@@ -83,12 +83,13 @@ try{
   await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),true);
   await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),false);
  }
- assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'false','Hill shading should start disabled');
+ const initialRelief=page.viewportSize().width>900;
+ assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),String(initialRelief),'Hill shading should default on at desktop size and off on small screens');
  assert.equal(await page.locator('#locator').isVisible(),false,'Locator should not cover the overview');
  await page.locator('#relief-toggle').click();
- assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),String(!initialRelief));
  await page.locator('#relief-toggle').click();
- assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'false');
+ assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),String(initialRelief));
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await page.locator('#map-mode').selectOption('terrain');
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/近岸浅海（约0–200米）/:/Coastal shelf \(about 0–200 m\)/);
@@ -121,7 +122,7 @@ try{
  assert.equal(external.includes('s3.amazonaws.com'),false,'Italy zoom needed network terrain');
  if(process.env.SPQR_ATLAS_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_SCREENSHOT});
  if(process.env.SPQR_ATLAS_TERRAIN_SCREENSHOT){await page.locator('#map-mode').selectOption('terrain');await page.waitForTimeout(500);await page.screenshot({path:process.env.SPQR_ATLAS_TERRAIN_SCREENSHOT});await page.locator('#map-mode').selectOption('political')}
- if(process.env.SPQR_ATLAS_RELIEF_SCREENSHOT){await page.locator('#relief-toggle').click();await page.waitForTimeout(500);await page.screenshot({path:process.env.SPQR_ATLAS_RELIEF_SCREENSHOT})}
+ if(process.env.SPQR_ATLAS_RELIEF_SCREENSHOT){if(await page.locator('#relief-toggle').getAttribute('aria-pressed')==='false')await page.locator('#relief-toggle').click();await page.waitForTimeout(500);await page.screenshot({path:process.env.SPQR_ATLAS_RELIEF_SCREENSHOT})}
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await page.locator('[data-objective="italiaN"]').click();await page.waitForTimeout(1200);
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();

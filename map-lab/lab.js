@@ -38,7 +38,7 @@ import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNava
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
-let objectivesOpen=true;let currentMapMode='political';let focusPreviousMode=null;let reliefEnabled=localStorage.getItem('spqr-relief-v2')==='on';
+let objectivesOpen=true;let currentMapMode='political';let focusPreviousMode=null;const savedRelief=localStorage.getItem('spqr-relief-v2');let reliefEnabled=savedRelief==='on'||savedRelief===null&&window.matchMedia('(min-width: 901px)').matches;
 let lang=localStorage.getItem('spqr-lang')==='en'?'en':'zh';
 let devBranch='material';
 let treeZoom=1;
