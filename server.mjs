@@ -5,11 +5,12 @@ import {fileURLToPath} from 'node:url';
 
 const root=path.dirname(fileURLToPath(import.meta.url));
 const port=Number(process.env.PORT||5173);
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.md':'text/plain; charset=utf-8'};
+const mime={'.jpg':'image/jpeg','.png':'image/png','.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.md':'text/plain; charset=utf-8'};
 http.createServer((req,res)=>{
   const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+  if(pathname==='/han'){res.writeHead(308,{Location:'/han/'});res.end();return}
   if(pathname==='/map-lab'){res.writeHead(308,{Location:'/map-lab/'});res.end();return}
-  const target=pathname==='/'?path.join(root,'index.html'):pathname==='/map-lab'||pathname==='/map-lab/'?path.join(root,'map-lab','index.html'):path.resolve(root,'.'+pathname);
+  const target=pathname==='/'?path.join(root,'index.html'):pathname==='/map-lab'||pathname==='/map-lab/'?path.join(root,'map-lab','index.html'):pathname==='/han/'?path.join(root,'han','index.html'):path.resolve(root,'.'+pathname);
   if(!target.startsWith(root+path.sep)){res.writeHead(403);res.end();return}
   fs.readFile(target,(err,data)=>{
     if(err){res.writeHead(404);res.end('Not found');return}
