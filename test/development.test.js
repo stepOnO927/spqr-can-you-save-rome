@@ -7,11 +7,12 @@ import {edgeMonths} from '../grand-operations.js';
 import {techIllustration} from '../tech-art.js';
 import {faithSatisfaction,advanceDemography} from '../local-society.js';
 import {nationalBudget} from '../national-budget.js';
+import {budgetHtml} from '../budget-ui.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
 test('every development node has its own interpretive illustration',()=>{
  const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
- assert.equal(art.length,66);assert.equal(new Set(art).size,66);
+ assert.equal(art.length,67);assert.equal(new Set(art).size,67);
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
@@ -72,7 +73,7 @@ test('public law and allied registration are sourced, bilingual policies with pa
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,32);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,33);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
@@ -239,6 +240,57 @@ test('restrictive estate labor trades rural food for unrest and slower distresse
  assert.equal(fleeing.regions.find(r=>r.id==='t111').population,99925);
  assert.equal(free.regions.find(r=>r.id==='t111').population,99850);
  assert.equal(upgradeSave(JSON.parse(JSON.stringify(fleeing))).development.egypt.slots.economy[0],idea.id);
+});
+
+test('negotiated crop shares trade state grain for rural consent and greater mobility',()=>{
+ const idea=IDEAS.find(x=>x.id==='negotiated-crop-shares');
+ assert.deepEqual(idea.prerequisites,['estate-organization']);
+ assert.match(idea.source.url,/De_Agricultura\/I%2A.html/);
+ assert.match(idea.context[0],/not proof of universal tenant freedom/);
+ assert.ok(idea.conflicts.includes('estate-labor-control'));
+ for(const [lang,name,food] of [['en','Share Tenancy Arrangements','State-available food'],['zh','分成佃作安排','国库可用粮食']]){
+  const html=developmentPanel(newGrandGame('egypt'),lang,'idea');
+  assert.ok(html.includes(name)&&html.includes(food));
+ }
+ const researching=newGrandGame('egypt');researching.wars=[];researching.factions.egypt.treasury=500;
+ assert.equal(researchInnovation(researching,'egypt','idea',idea.id).reason,'prerequisite');
+ const d=development(researching,'egypt');d.knownIdeas.push('estate-organization');
+ assert.equal(researchInnovation(researching,'egypt','idea',idea.id).ok,true);
+ assert.equal(activeEffects(researching,'egypt').tenantShares,undefined);
+ months(researching,3);
+ assert.ok(d.knownIdeas.includes(idea.id));
+ d.knownIdeas.push('estate-labor-control');d.slots.economy[0]='estate-labor-control';
+ assert.equal(ideaCompatibility(researching,'egypt',idea.id,0).ok,true,'replacing the conflict in its own slot is legal');
+ d.slots.economy.push('estate-labor-control');
+ assert.equal(ideaCompatibility(researching,'egypt',idea.id,0).reason,'conflict','another active slot still blocks the conflict');
+ d.slots.economy.pop();
+ assert.equal(adoptIdea(researching,'egypt',idea.id,0).ok,true);
+ assert.equal(activeEffects(researching,'egypt').tenantShares,undefined);
+ months(researching,3);
+ assert.equal(activeEffects(researching,'egypt').tenantShares,1);
+ const base=newGrandGame('egypt');base.wars=[];base.month=2;
+ const control=upgradeSave(JSON.parse(JSON.stringify(base))),active=upgradeSave(JSON.parse(JSON.stringify(base)));
+ development(active,'egypt').slots.economy[0]=idea.id;
+ const b0=nationalBudget(control,'egypt'),b1=nationalBudget(active,'egypt');
+ assert.equal(b1.tenantFood,2);
+ assert.equal(b1.foodProduction,b0.foodProduction,'tenant shares reduce public stores, not gross harvest');
+ assert.equal(b1.foodNet,b0.foodNet-2);
+ assert.equal(b1.ideaUpkeep,b0.ideaUpkeep+1);
+ assert.match(budgetHtml(active,'en'),/Tenant crop shares/);
+ assert.match(budgetHtml(active,'zh'),/佃作分成粮食/);
+ tick(control);tick(active);
+ for(const id of ['t111','t112']){
+  const a=active.regions.find(r=>r.id===id),b=control.regions.find(r=>r.id===id);
+  assert.equal(a.civicSatisfaction,b.civicSatisfaction+1,id);
+  assert.equal(a.loyalty,b.loyalty+1,id);
+ }
+ const moving=upgradeSave(JSON.parse(JSON.stringify(base))),ordinary=upgradeSave(JSON.parse(JSON.stringify(base)));
+ development(moving,'egypt').slots.economy[0]=idea.id;
+ for(const state of [moving,ordinary]){const from=state.regions.find(r=>r.id==='t111'),to=state.regions.find(r=>r.id==='t112');from.population=100000;from.civicSatisfaction=20;to.civicSatisfaction=80}
+ advanceDemography(moving);advanceDemography(ordinary);
+ assert.equal(moving.regions.find(r=>r.id==='t111').population,99800);
+ assert.equal(ordinary.regions.find(r=>r.id==='t111').population,99850);
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(moving))).development.egypt.slots.economy[0],idea.id);
 });
 
 test('material knowledge permits delayed construction with terrain, deposits, materials and upkeep',()=>{

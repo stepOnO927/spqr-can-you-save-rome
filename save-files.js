@@ -1,4 +1,4 @@
-import {upgradeSave,PLAYABLE} from './engine.js?v=130';
+import {upgradeSave,PLAYABLE} from './engine.js?v=131';
 
 export const SAVE_FORMAT='spqr-campaign-v2';
 function legacySaveId(source){const raw=JSON.stringify(source);let hash=2166136261;for(let i=0;i<raw.length;i++)hash=Math.imul(hash^raw.charCodeAt(i),16777619);return `legacy-import-${(hash>>>0).toString(16)}`}

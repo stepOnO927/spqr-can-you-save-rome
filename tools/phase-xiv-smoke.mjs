@@ -28,6 +28,7 @@ try{
   assert.match(await page.locator('#tech-citizen-registration').innerText(),/Allied Citizen Registration/);
   assert.match(await page.locator('#tech-civic-exercise').innerText(),/Recruit morale in urban territory with integration ≥65/);
   assert.match(await page.locator('#tech-estate-labor-control').innerText(),/distressed outmigration halved/);
+  assert.match(await page.locator('#tech-negotiated-crop-shares').innerText(),/State-available food \/ month −1/);
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/Treasury \/ month −2/);
   await page.locator('[data-research="legion-training"]').click();
   assert.match(await page.locator('.dev-status').first().innerText(),/Researching/);
@@ -57,6 +58,7 @@ try{
   assert.match(await page.locator('#tech-citizen-registration').innerText(),/盟邦公民登记/);
   assert.match(await page.locator('#tech-civic-exercise').innerText(),/融合度≥65的城市新兵士气/);
   assert.match(await page.locator('#tech-estate-labor-control').innerText(),/不满人口迁出减半/);
+  assert.match(await page.locator('#tech-negotiated-crop-shares').innerText(),/国库可用粮食 \/ 月 −1/);
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/国库 \/ 月 −2/);
   await page.screenshot({path:'tools/phase-xiv-ui.png'});
   for(const lang of ['en','zh']){
@@ -88,7 +90,7 @@ try{
   }
   for(const lang of ['en','zh']){
     const estate=newGrandGame('egypt');estate.wars=[];estate.factions.egypt.treasury=500;
-    estate.development.egypt.knownIdeas.push('estate-organization','estate-labor-control');
+    estate.development.egypt.knownIdeas.push('estate-organization','estate-labor-control','negotiated-crop-shares');
     await page.evaluate(language=>localStorage.setItem('spqr-lang',language),lang);
     await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
     await page.locator('#entry-file').setInputFiles({name:`estate-${lang}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(estate))});
@@ -98,6 +100,11 @@ try{
     await button.click();
     for(let i=0;i<2;i++)await page.locator('#step').click();
     assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(3).locator('.dev-slot').first().innerText(),lang==='zh'?/庄园劳役约束/:/Restrictive Estate Labor/);
+    const alternative=page.locator('[data-adopt-idea="negotiated-crop-shares"][data-slot="0"]');
+    assert.equal(await alternative.isEnabled(),true,lang);
+    await alternative.click();
+    for(let i=0;i<3;i++)await page.locator('#step').click();
+    assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(3).locator('.dev-slot').first().innerText(),lang==='zh'?/分成佃作安排/:/Share Tenancy Arrangements/);
   }
   const offered=newGrandGame('senate');offered.relations['egypt:senate']=20;
   assert.equal(proposeKnowledgeSale(offered,'egypt','senate','material','water-control').ok,true);
