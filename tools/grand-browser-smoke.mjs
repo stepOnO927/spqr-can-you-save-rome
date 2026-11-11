@@ -48,6 +48,18 @@ await page.screenshot({path:path.join(root,'outputs','legacy-catinius-court.png'
 await page.locator('#nav-lang').click();await page.locator('[data-activity="court-catinius"][data-activity-choice="0"]').click();
 assert.match(await page.locator('.notice').innerText(),/45/);await page.locator('#nav-museum').click();assert.match(await page.locator('.museum-grid').innerText(),/卡提尼乌斯法庭案卷/);
 const courtCoins=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins);await page.reload();await page.locator('[data-building="court"]').click();assert.equal(await page.locator('[data-activity="court-catinius"]').count(),0);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins),courtCoins);
+await page.locator('#nav-shop').click();await page.locator('[data-buy="intelligence"]').click();await page.locator('#nav-city').click();await page.locator('[data-building="intelligence"]').click();
+assert.match(await page.locator('.intelligence-dossier').innerText(),/港口封印/);
+await page.locator('[data-dossier="begin"][data-route="registry"]').click();assert.match(await page.locator('.dossier-evidence').innerText(),/货单副本/);
+await page.locator('#nav-lang').click();assert.match(await page.locator('.intelligence-dossier').innerText(),/Side mission · harbor seal/);
+await page.locator('[data-dossier="corroborate"]').click();assert.equal(await page.locator('.intelligence-dossier .dossier-evidence li').count(),2);
+assert.match(await page.locator('.intelligence-dossier').innerText(),/cannot name who ordered it/);
+await page.screenshot({path:path.join(root,'outputs','legacy-intelligence-dossier.png')});
+await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'the dossier must fit a narrow screen');
+await page.screenshot({path:path.join(root,'outputs','legacy-intelligence-mobile.png'),fullPage:true});await page.setViewportSize({width:1440,height:900});
+await page.locator('[data-dossier="close"][data-verdict="audit"]').click();assert.match(await page.locator('.dossier-archive').innerText(),/Confidential audit/);
+await page.locator('#nav-museum').click();assert.match(await page.locator('.museum-grid').innerText(),/Harbor seal dossier/);
+const dossierCoins=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins);await page.reload();await page.locator('[data-building="intelligence"]').click();assert.equal(await page.locator('[data-dossier="close"]').count(),0);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins),dossierCoins);
 await page.evaluate(value=>localStorage.setItem('spqr-legacy-profile-v1',value),beforeAppeal);await page.reload();
 await page.locator('[data-building="curia"]').click();await page.locator('[data-petition]').first().click();
 assert.match(await page.locator('.petition').innerText(),/The seized villa|被查封的庄园/);

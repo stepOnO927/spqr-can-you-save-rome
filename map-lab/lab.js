@@ -10,7 +10,7 @@ import grandTerritories from '../grand-territory-polygons.js';
 import {GRAND_SITES} from '../grand-map-data.js';
 import {holdPosition,strategicRetreat,armySupply,encircled} from '../grand-operations.js?v=12';
 import {importCampaign,downloadCampaign} from '../save-files.js?v=10';
-import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js?v=5';
+import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js?v=6';
 import {endCampaign} from '../achievement-system.js?v=5';
 import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=5';
 import {nationalBudget} from '../national-budget.js?v=4';
