@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGrandGame,tick,diplomacy,nationalBudget,endCampaign,trainArmy,previewMarch,upgradeSave} from './engine.js';
+import {newGame,newGrandGame,tick,aiTurn,diplomacy,isWar,nationalBudget,endCampaign,trainArmy,previewMarch,upgradeSave} from './engine.js';
 import {militaryResult} from './campaign-outcome.js';
 import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js';
 import {normalizeProfile,recordCampaign} from './legacy/legacy-core.js';
@@ -39,6 +39,36 @@ test('civil settlement changes territory, peace and legitimacy without revealing
  assert.equal(s.world.governments.senate.civilWarRecognition,'conceded');
  tick(s);assert.equal(s.world.governments.caesar.civilWarRecognition,'recognized');
  assert.equal(s.achievementState.finalized,false);
+});
+
+test('ordinary peace cannot silently end the Roman civil war without an outcome',()=>{
+ for(const create of [newGame,newGrandGame])for(const actor of ['caesar','senate']){
+  const target=other(actor),s=create('egypt');s.factions[target].stability=10;
+  assert.equal(diplomacy(s,actor,target,'peace'),false);
+  assert.equal(isWar(s,'caesar','senate'),true);
+  assert.equal(s.civilWarOutcome,undefined);
+ }
+ const spectator=newGrandGame('egypt');spectator.seed=1;
+ for(let month=0;month<12;month++)tick(spectator);
+ assert.ok(isWar(spectator,'caesar','senate')||spectator.civilWarOutcome?.winner,'AI may end the civil war only through a formal result');
+});
+
+test('a saved pre-fix Roman ordinary peace remains loadable and can be resumed',()=>{
+ const old=newGrandGame('egypt');old.wars=[];
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(old)));
+ assert.equal(isWar(loaded,'caesar','senate'),false);
+ assert.equal(loaded.civilWarOutcome,undefined);
+ assert.equal(diplomacy(loaded,'caesar','senate','war'),true);
+ assert.equal(isWar(loaded,'caesar','senate'),true);
+});
+
+test('an AI Roman command can conclude a qualified civil settlement for a third-party observer',()=>{
+ const s=newGrandGame('egypt');pressure(s,'senate');s.regions.find(r=>r.id==='narbo').owner='caesar';s.month=12;
+ aiTurn(s,'senate');
+ assert.equal(s.civilWarOutcome?.kind,'settlement');
+ assert.equal(s.civilWarOutcome.winner,'senate');
+ assert.equal(isWar(s,'caesar','senate'),false);
+ assert.equal(s.campaignOutcome,undefined);
 });
 
 test('rejected settlement missions cost resources and cannot be spammed for hidden intelligence',()=>{

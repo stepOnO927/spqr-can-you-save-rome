@@ -202,6 +202,9 @@ export function diplomacy(s, actor, target, action){
     return true;
   }
   if(action==='peace' && isWar(s,actor,target)){
+    // The Roman civil war has its own negotiated conclusion. Ordinary peace
+    // used to stop the war without recording any campaign result.
+    if(['caesar','senate'].includes(actor)&&target===(actor==='caesar'?'senate':'caesar'))return false;
     // The responding government knows its own forces, but judges the sender by its reports.
     if(estimatedStrength(s,target,actor)*(1+(activeEffects(s,actor).diplomacyPressure||0)/100)<strength(s,target)*.6 && s.factions[target].stability>35)return false;
     concludePeace(s,actor,target);
@@ -602,7 +605,10 @@ export function aiTurn(s,owner){
   if(['caesar','senate'].includes(owner)&&s.month===12){for(const court of ['egypt','parthia']){if(f.treasury<=35)break;const claimant=reportedClaimants(s,owner,court)[0];if(claimant)supportClaimant(s,owner,court,claimant)}}
   if(owner!=='rebels' && s.month===12){
     const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);
-    if(enemy && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=estimatedStrength(s,owner,enemy)*.6)diplomacy(s,owner,enemy,'peace');
+    if(enemy && ['caesar','senate'].includes(owner)&&enemy===(owner==='caesar'?'senate':'caesar')){
+      const strategic=owned.some(r=>r.id===(owner==='caesar'?'roma':'cisalpine')||r.macro===(owner==='caesar'?'roma':'cisalpine'));
+      if(strategic&&f.treasury>=4&&f.stability>=30&&f.legitimacy>=35&&strength(s,owner)>=estimatedStrength(s,owner,enemy)*1.4)diplomacy(s,owner,enemy,'settlement');
+    }else if(enemy && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=estimatedStrength(s,owner,enemy)*.6)diplomacy(s,owner,enemy,'peace');
     if(!INDEPENDENT_COMMANDS.has(owner)&&!enemy && f.treasury>35){const neighbor=owned.flatMap(r=>adjacent(r.id,s).map(e=>region(s,e.to))).find(r=>r.owner!==owner&&r.owner!=='rebels'&&relation(s,owner,r.owner)>=0&&!isAllied(s,owner,r.owner));if(neighbor && rnd(s)<.2)diplomacy(s,owner,neighbor.owner,'improve')}
   }
   if(INDEPENDENT_COMMANDS.has(owner))independentPosture(s,owner,owned);

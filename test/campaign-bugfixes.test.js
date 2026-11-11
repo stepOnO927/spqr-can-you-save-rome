@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,army,region,resolveBattle,moveArmy,diplomacy,tick,recruit,previewMarch,upgradeSave,aiTurn,nationalBudget} from '../engine.js';
+import {newGame,newGrandGame,army,region,resolveBattle,moveArmy,diplomacy,isWar,tick,recruit,previewMarch,upgradeSave,aiTurn,nationalBudget} from '../engine.js';
 import {recordMovement,eventText,recordEvent} from '../campaign-reports.js';
 import {chronicleHtml,battleReportHtml,eventDate} from '../reports-ui.js';
 import {requestReinforcements,probePositions,latestRecon,advanceRecon} from '../reconnaissance.js';
@@ -101,10 +101,12 @@ test('a token force cannot occupy an undefended enemy theater',()=>{
  assert.equal(region(s,'italiaN').owner,'senate');assert.equal(unit.region,'cisalpine');
 });
 test('peace withdraws besieging units from the former enemy theater',()=>{
- const s=newGame('caesar'),unit=army(s,'xiii');unit.region='roma';unit.siege={region:'roma',remaining:1};s.factions.senate.stability=20;
- assert.equal(diplomacy(s,'caesar','senate','peace'),true);
- assert.equal(region(s,unit.region).owner,'caesar');assert.equal(unit.siege,null);
- assert.ok(previewMarch(s,'xiii',s.armies.find(a=>a.id==='xiii').region==='cisalpine'?'gaul':'cisalpine').ok||unit.region==='cisalpine');
+ const s=newGame('egypt'),unit=army(s,'egyptguard');
+ assert.equal(diplomacy(s,'egypt','senate','war'),true);
+ unit.region='roma';unit.siege={region:'roma',remaining:1};s.factions.senate.stability=20;
+ assert.equal(diplomacy(s,'egypt','senate','peace'),true);
+ assert.equal(region(s,unit.region).owner,'egypt');assert.equal(unit.siege,null);
+ assert.equal(isWar(s,'egypt','senate'),false);
 });
 test('alliance war reaching player is recorded and notified',()=>{
  const s=newGame('caesar');s.alliances.push(['caesar','numidia']);const before=s.notifications.length;

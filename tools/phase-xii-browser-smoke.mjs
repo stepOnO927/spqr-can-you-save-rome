@@ -13,6 +13,12 @@ await context.route('http://spqr.test/**',async route=>{const url=new URL(route.
 try{
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://spqr.test/map-lab/');await page.locator('.grand-site').first().waitFor();
+ await page.locator('#start-free').click();await page.locator('#factions').click();await page.locator('.faction-directory [data-faction="senate"]').click();
+ assert.equal(await page.locator('[data-diplomacy="peace"]').count(),0);
+ assert.equal(await page.locator('[data-diplomacy="settlement"]').count(),1);
+ const settlementLabel=await page.locator('[data-diplomacy="settlement"]').innerText();
+ await page.locator('#language').click();const translatedSettlement=await page.locator('[data-diplomacy="settlement"]').innerText();
+ assert.notEqual(settlementLabel,translatedSettlement);assert.match(settlementLabel+translatedSettlement,/内战和议/);assert.match(settlementLabel+translatedSettlement,/civil settlement/);
  const s=newGrandGame('senate');s.victory=true;s.campaignOutcome={kind:'settlement',winner:'senate',loser:'caesar',year:s.year,month:s.month};s.expenseLedger={year:s.year,month:s.month,owners:{senate:{construction:23,research:17}}};
  await page.locator('#upload-save-file').setInputFiles({name:'victory.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(s))});
  await page.locator('#victory-continue').waitFor();assert.equal(await page.locator('.ending-achievements').count(),0);
@@ -24,6 +30,16 @@ try{
  assert.notEqual(firstBudget,translatedBudget);assert.match(translatedBudget,/本月已付建造费\s+-23|Construction paid this month\s+-23/);assert.match(translatedBudget,/本月已付研究费\s+-17|Research paid this month\s+-17/);
  await page.locator('#end-campaign').click();const beforeLanguage=await page.locator('.ending-summary').innerText();assert.match(beforeLanguage,/Negotiated settlement|政治和议/);
  await page.locator('#ending-language').click();const afterLanguage=await page.locator('.ending-summary').innerText();assert.match(afterLanguage,/Negotiated settlement|政治和议/);assert.notEqual(afterLanguage,beforeLanguage);
+ const civil=await context.newPage();civil.on('pageerror',e=>errors.push(e.message));
+ await civil.goto('http://spqr.test/');
+ await civil.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state})),newGrandGame('senate'));
+ await civil.reload();await civil.locator('[data-tab="government"]').click();
+ assert.equal(await civil.locator('[data-dip="caesar"][data-act="peace"]').count(),0);
+ assert.equal(await civil.locator('[data-dip="caesar"][data-act="settlement"]').count(),1);
+ assert.match(await civil.locator('[data-dip="caesar"][data-act="settlement"]').innerText(),/civil settlement|内战和议/);
+ await civil.locator('#lang').click();
+ assert.match(await civil.locator('[data-dip="caesar"][data-act="settlement"]').innerText(),/内战和议|civil settlement/);
+ await civil.close();
  assert.deepEqual(errors,[]);
  console.log('Phase XII browser smoke passed');
 }finally{await browser.close()}
