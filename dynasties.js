@@ -98,6 +98,23 @@ export function seedHanCommanders(s){
  s.world.hanCommandersSeeded=true;
 }
 
+// Original court personnel give the Han campaign visible, replaceable
+// administrators. They are not presented as documented officials of 49 BCE.
+export function seedHanCourt(s){
+ if(!s.factions.han||s.world.hanCourtSeeded)return;
+ s.world.offices||={};s.world.offices.han||={};
+ for(const [name,birthYear,location,office] of [
+  [['Zhao He','赵和'],-83,'hanGuanzhong','finance'],
+  [['Xu Jian','徐俭'],-81,'hanHexi','supply'],
+  [['Cai Ming','蔡明'],-87,'hanHenan','administration'],
+  [['Wang Huan','王桓'],-79,'hanGuanzhong',null]
+ ]){
+  const id=createFictionalPerson(s,{name,faction:'han',birthYear,location,homeland:location,sex:'male',role:['Han court official (fictional)','汉廷官员（虚构）'],culture:['Han Chinese','汉']});
+  if(office&&!s.world.offices.han[office]){s.world.offices.han[office]=id;recordLifeEvent(s,id,`Appointed to the simulated ${office} assignment.`,`获任模拟的${{finance:'财务',supply:'粮秣',administration:'政务'}[office]}职务。`)}
+ }
+ s.world.hanCourtSeeded=true;
+}
+
 // These original game characters represent an independent oasis court. The
 // historical source identifies Shanshan as a kingdom but not these people.
 export function seedHanFrontierPeople(s){

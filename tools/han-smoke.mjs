@@ -19,6 +19,14 @@ try{
  await page.locator('#factions').click();
  await page.locator('[data-faction="shanshan"]').click();
  assert.match(await page.locator('#selection-title').innerText(),/鄯善/);
+ await page.locator('#factions').click();
+ await page.locator('[data-faction="han"]').click();
+ assert.match(await page.locator('#command-detail').innerText(),/西汉朝廷任命/);
+ assert.match(await page.locator('#command-detail').innerText(),/赵和/);
+ await page.locator('[data-office-choice="finance"]').selectOption({label:'王桓'});
+ await page.locator('[data-office-appoint="finance"]').click();
+ await page.locator('#office-feedback button').click();
+ assert.match(await page.locator('.office-row').first().innerText(),/王桓/);
  assert.equal(await page.locator('[data-army="hanCapitalGuard"]').count(),1);
  await page.locator('[data-army="hanCapitalGuard"]').click({force:true});
  assert.match(await page.locator('#selection-detail').innerText(),/张守/);
@@ -41,6 +49,9 @@ try{
  await page.waitForFunction(()=>document.querySelector('[data-theater="hanGuanzhong"]')&&document.querySelector('.brief h1')?.textContent.includes('关中'));
  await page.locator('[data-army="hanCapitalGuard"]').click({force:true});
  assert.match(await page.locator('#selection-detail').innerText(),/张守/);
+ await page.locator('#factions').click();
+ await page.locator('[data-faction="han"]').click();
+ assert.match(await page.locator('.office-row').first().innerText(),/王桓/);
  await page.locator('#language').click();
  assert.match(await page.locator('.brief h1').innerText(),/Guanzhong/);
  assert.deepEqual(errors,[]);

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,tick,forecastEconomy,upgradeSave,previewMarch,moveArmy} from '../engine.js';
 import {assignSuccession,eligibleLiuImperial,CHARACTER_CATALOG} from '../characters.js?v=safe-save-1';
 import {createFictionalPerson} from '../dynasties.js?v=safe-save-1';
+import {officeCandidates,appointOffice,dismissOffice,advanceOffices} from '../office-system.js?v=safe-save-1';
 
 test('Han begins with a productive core, reserves and frontier defense that consume real upkeep',()=>{
  const s=newGame('han'),han=s.factions.han,egypt=s.factions.egypt;
@@ -75,6 +76,33 @@ test('Han commanders keep their personal identities across save migration',()=>{
  assert.deepEqual(again.armies.filter(a=>a.owner==='han').map(a=>[a.id,a.characterId,a.commander]),before);
 });
 
+test('named Han court appointments provide replaceable fiscal and supply capacity',()=>{
+ const s=newGame('han'),posts=s.world.offices.han,ids=Object.values(posts);
+ assert.deepEqual(Object.keys(posts).sort(),['administration','finance','supply']);
+ assert.equal(new Set(ids).size,3);
+ for(const id of ids){assert.equal(s.world.characters[id].faction,'han');assert.equal(s.world.dynasties.catalog[id].fictional,true);assert.deepEqual(s.world.dynasties.catalog[id].culture,['Han Chinese','汉'])}
+ const base=forecastEconomy(s,'han'),former=posts.finance;
+ assert.equal(dismissOffice(s,'finance').ok,true);
+ assert.equal(forecastEconomy(s,'han').treasury,base.treasury-2);
+ const replacement=Object.keys(s.world.characters).find(id=>CHARACTER_CATALOG[id]?.name[0]==='Wang Huan');
+ assert.ok(officeCandidates(s,'han','finance').includes(replacement));
+ const treasury=s.factions.han.treasury;
+ assert.equal(appointOffice(s,'finance',replacement).ok,true);
+ assert.equal(s.factions.han.treasury,treasury-5);
+ assert.equal(forecastEconomy(s,'han').treasury,base.treasury);
+ assert.notEqual(posts.finance,former);
+ assert.equal(upgradeSave(structuredClone(s)).world.offices.han.finance,replacement);
+});
+
+test('Han AI replaces an unavailable minister without hidden resources',()=>{
+ const s=newGame('han'),former=s.world.offices.han.finance,before=s.factions.han.treasury;
+ s.world.characters[former].health='seriously_ill';s.month=7;
+ advanceOffices(s,{autoplayPlayer:true});
+ assert.notEqual(s.world.offices.han.finance,former);
+ assert.equal(s.factions.han.treasury,before-5);
+ assert.ok(s.world.characters[s.world.offices.han.finance].alive);
+});
+
 test('Shanshan remains independent and the frontier crossing pays real transport costs',()=>{
  const s=newGame('han'),oasis=s.regions.find(r=>r.id==='shanshanOasis'),court=s.world.leadership.shanshan;
  assert.equal(oasis.owner,'shanshan');
@@ -133,4 +161,15 @@ test('old Han saves gain the oasis court without rewriting their own campaign',(
  assert.equal(restored.regions.find(r=>r.id==='shanshanOasis').owner,'shanshan');
  assert.equal(restored.world.leadership.shanshan.length,1);
  assert.equal(upgradeSave(structuredClone(restored)).regions.filter(r=>r.id==='shanshanOasis').length,1);
+});
+
+test('older Han saves acquire court personnel once while preserving resources',()=>{
+ const old=structuredClone(newGame('han')),ids=Object.values(old.world.offices.han);
+ for(const id of ids){delete old.world.characters[id];delete old.world.dynasties.catalog[id]}
+ delete old.world.offices.han;delete old.world.hanCourtSeeded;old.factions.han.food=123;
+ const restored=upgradeSave(old),posts={...restored.world.offices.han};
+ assert.equal(restored.factions.han.food,123);
+ assert.equal(new Set(Object.values(posts)).size,3);
+ for(const id of Object.values(posts))assert.equal(restored.world.characters[id].faction,'han');
+ assert.deepEqual(upgradeSave(structuredClone(restored)).world.offices.han,posts);
 });
