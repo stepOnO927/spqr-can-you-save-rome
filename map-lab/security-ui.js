@@ -1,4 +1,4 @@
-import {queueMission,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=trade-intelligence-1';
+import {queueMission,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=save-identity-1';
 import {reassurePerson} from '../conspiracies.js?v=dynasty-id-3';
 import {CHARACTER_CATALOG} from '../characters.js?v=dynasty-id-3';
 import {FACTIONS} from '../data.js?v=phase-x-1';

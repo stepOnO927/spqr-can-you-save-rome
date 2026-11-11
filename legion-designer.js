@@ -1,5 +1,5 @@
 import {ROUTES} from './data.js?v=phase-x-1';
-import {unlockedComponents,focusModifiers} from './national-focus.js?v=imperium-1';
+import {unlockedComponents,focusModifiers} from './national-focus.js?v=save-identity-1';
 import {politicalAmbition} from './conspiracies.js?v=dynasty-id-3';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 

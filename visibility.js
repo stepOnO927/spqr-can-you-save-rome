@@ -1,4 +1,4 @@
-import {reportedArmies} from './character-system.js?v=trade-intelligence-1';
+import {reportedArmies} from './character-system.js?v=save-identity-1';
 
 // UI projections only: the simulation and local saves still contain the true state.
 export function visibleArmyForPlayer(state,player,id){

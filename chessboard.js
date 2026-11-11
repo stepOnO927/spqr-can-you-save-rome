@@ -1,7 +1,7 @@
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=dynasty-id-3';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
-import {reportedMovements} from './movements.js?v=multipolar-2';
+import {reportedMovements} from './movements.js?v=save-identity-1';
 
 const opening=['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair=(a,b)=>[a,b].sort().join(':');
