@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=varus-portrait-1';
+import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=civic-portraits-1';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js';
 import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=succession-feedback-1';
 import {deriveGovernment} from '../governance.js';

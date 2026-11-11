@@ -24,12 +24,12 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=varus-portrait-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=civic-portraits-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=safe-save-1';
-import {createCharacterUI} from './character-ui.js?v=varus-portrait-1';
-import {fictionalPortraitKey} from '../portrait-registry.js?v=varus-portrait-1';
+import {createCharacterUI} from './character-ui.js?v=dossier-rumor-1';
+import {fictionalPortraitKey} from '../portrait-registry.js?v=civic-portraits-1';
 import {reportedArmies} from '../character-system.js?v=succession-feedback-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=playability-1';
 import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';

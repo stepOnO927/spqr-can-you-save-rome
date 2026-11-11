@@ -69,3 +69,8 @@ Assignment requires the matching saved institution and council seat, name, ficti
 
 Lucius Valerius Varus / 卢基乌斯·瓦勒里乌斯·瓦鲁斯 is a fictional character, not a documented historical person. His original portrait was generated with the built-in image generation tool on 2026-11-11; the project contains a 512×512 master and 128×128 and 64×64 derivatives. It is game artwork, not a historical likeness. Assignment requires the matching scenario, saved character ID, fictional name and birth year. Foreign viewers can see it only through a saved personal-meeting observation; it does not establish current identity, health or position.
 
+
+## Fictional civic scenario representatives
+
+Gaius Sennius / 盖乌斯·森尼乌斯 and Mara / 玛拉 are invented civic representatives, not documented historical people. Their distinct original portraits were generated with the built-in image generation tool on 2026-11-11. Each has a 512×512 master and 128×128 and 64×64 derivatives. Assignment requires matching fictional identity, opening birth year, civic institution and council seat; foreign viewers require a recorded personal meeting. These images are game artwork, not historical likenesses.
+
