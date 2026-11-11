@@ -27,3 +27,5 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Screenshot | Terrain map → Screenshot | `tools/capture-check.mjs` |
 
 The remaining family actions, other treaty types, and other political movement stages have engine or component tests, but are not yet all verified through a complete player journey. Continue the audit before treating every system as fully playable. Foreign political information remains limited to the player's reports; letter outcomes remain delayed and can be lost or refused.
+
+The health and succession browser scenario starts from an explicitly simulated dying-leader fixture; it does not imply that an ordinary new campaign starts with an imminent death.
