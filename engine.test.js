@@ -75,9 +75,9 @@ test('major powers retain distinct, usable visual identities',()=>{
   assert.notEqual(identity('shared').primary,identity('caesar').primary);
 });
 
-test('historical polygons map known theaters and leave unmapped Illyricum explicit',()=>{
+test('historical polygons map Mediterranean theaters and leave unmapped theaters explicit',()=>{
   const groups=historical.features.flatMap(f=>f.properties.regions);
-  for(const r of REGIONS)assert.equal(groups.filter(x=>x===r.id).length,['illyricum','galatia','bosporus'].includes(r.id)?0:1,`${r.id} mapping must reflect available source coverage`);
+  for(const r of REGIONS)assert.equal(groups.filter(x=>x===r.id).length,['illyricum','galatia','bosporus','hanGuanzhong','hanHenan','hanShu','hanHexi'].includes(r.id)?0:1,`${r.id} mapping must reflect available source coverage`);
   for(const id of ['egypt','numidia','mauretania','armenia','parthia']){const f=historical.features.find(x=>x.properties.id===id);assert.ok(f.properties.period[0]<=-49&&f.properties.period[1]>=-49);assert.ok(f.geometry.coordinates.length)}
   assert.ok(adjacent('italiaS').find(e=>e.to==='illyricum').sea);
 });

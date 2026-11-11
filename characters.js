@@ -18,17 +18,20 @@ export const CHARACTER_CATALOG = {
  bocchus:{name:['Bocchus II','博库斯二世'],birth:null,faction:'mauretania',role:['Mauretanian king','毛里塔尼亚国王'],culture:['Mauretanian','毛里塔尼亚'],source:'https://www.britannica.com/place/Mauretania-ancient-region-Africa'},
  bogud:{name:['Bogud','博古德'],birth:null,faction:'mauretania',role:['Mauretanian king','毛里塔尼亚国王'],culture:['Mauretanian','毛里塔尼亚'],source:'https://www.britannica.com/place/Mauretania-ancient-region-Africa'},
  deiotarus:{name:['Deiotarus','代奥塔鲁斯'],birth:null,faction:'galatia',role:['Galatian ruler','加拉太统治者'],culture:['Galatian','加拉太'],source:'https://www.britannica.com/biography/Deiotarus'},
- pharnaces:{name:['Pharnaces II','法尔纳刻斯二世'],birth:null,faction:'bosporus',role:['Bosporan ruler','博斯普鲁斯王国统治者'],culture:['Pontic','本都'],source:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549705304?login=false'}
+ pharnaces:{name:['Pharnaces II','法尔纳刻斯二世'],birth:null,faction:'bosporus',role:['Bosporan ruler','博斯普鲁斯王国统治者'],culture:['Pontic','本都'],source:'https://academic.oup.com/edited-volume/61673/chapter-abstract/549705304?login=false'},
+ han_xuan:{name:['Liu Xun (Emperor Xuan)','刘询（汉宣帝）'],birth:[-91,-91],faction:'han',role:['Western Han emperor','西汉皇帝'],culture:['Han Chinese','汉'],source:'https://www.amo.gov.hk/filemanager/amo/en/content_2147/E-Han_Pamphlet.pdf'},
+ han_yuan:{name:['Liu Shi (future Emperor Yuan)','刘奭（后来的汉元帝）'],birth:[-75,-75],faction:'han',role:['Han crown prince','汉太子'],culture:['Han Chinese','汉'],source:'https://www.amo.gov.hk/filemanager/amo/en/content_2147/E-Han_Pamphlet.pdf'}
 };
 // Save loading temporarily rebuilds this shared namespace. Preserve it if a
 // migration or transfer fails, so the active campaign keeps its own people.
 export function snapshotFictionalCatalog(){return Object.fromEntries(Object.entries(CHARACTER_CATALOG).filter(([id])=>/^fictional:\d+$/.test(id)))}
 export function restoreFictionalCatalog(snapshot){for(const id of Object.keys(CHARACTER_CATALOG))if(/^fictional:\d+$/.test(id))delete CHARACTER_CATALOG[id];Object.assign(CHARACTER_CATALOG,snapshot)}
-export const OPENING_LEADERS={caesar:['caesar'],senate:['pompey'],egypt:['cleopatra','ptolemy'],parthia:['orodes'],armenia:['artavasdes'],numidia:['juba'],mauretania:['bocchus','bogud'],galatia:['deiotarus'],bosporus:['pharnaces'],rebels:[]};
-const SUCCESSORS={caesar:['antony','lepidus'],senate:['cato','scipio','labienus','cicero'],egypt:['cleopatra','ptolemy','arsinoe'],parthia:['pacorus'],armenia:[],numidia:[],mauretania:['bocchus','bogud'],galatia:[],bosporus:[],rebels:[]};
+export const OPENING_LEADERS={caesar:['caesar'],senate:['pompey'],egypt:['cleopatra','ptolemy'],parthia:['orodes'],armenia:['artavasdes'],numidia:['juba'],mauretania:['bocchus','bogud'],galatia:['deiotarus'],bosporus:['pharnaces'],han:['han_xuan'],rebels:[]};
+const SUCCESSORS={caesar:['antony','lepidus'],senate:['cato','scipio','labienus','cicero'],egypt:['cleopatra','ptolemy','arsinoe'],parthia:['pacorus'],armenia:[],numidia:[],mauretania:['bocchus','bogud'],galatia:[],bosporus:[],han:['han_yuan'],rebels:[]};
 const clone=x=>JSON.parse(JSON.stringify(x));
 export function initializeWorld(s){
- if(!s.world){s.world={characters:Object.fromEntries(Object.entries(CHARACTER_CATALOG).filter(([,c])=>!c.fictional).map(([id,c])=>[id,{id,faction:c.faction,health:'healthy',location:null,alive:true,loyalty:75,influence:50}])),leadership:clone(OPENING_LEADERS),intelSeed:874913};}
+ if(!s.world){s.world={characters:Object.fromEntries(Object.entries(CHARACTER_CATALOG).filter(([,c])=>!c.fictional&&(c.faction!=='han'||s.factions?.han)).map(([id,c])=>[id,{id,faction:c.faction,health:'healthy',location:null,alive:true,loyalty:75,influence:50}])),leadership:Object.fromEntries(Object.entries(OPENING_LEADERS).filter(([id])=>id!=='han'||s.factions?.han)),intelSeed:874913};}
+ if(s.world.characters.han_yuan&&s.world.characters.han_xuan){s.world.characters.han_yuan.parents||=['han_xuan'];s.world.characters.han_xuan.children||=['han_yuan']}
  // Add the new historical figure once to old saves, without resetting existing people.
  if(!s.world.arsinoeInitialized){if(!s.world.characters.arsinoe&&s.factions?.egypt)s.world.characters.arsinoe={id:'arsinoe',faction:'egypt',health:'healthy',location:s.regions.some(r=>r.id==='egypt'&&r.owner==='egypt')?'egypt':null,alive:true,loyalty:75,influence:50};s.world.arsinoeInitialized=true}
  for(const c of Object.values(s.world.characters)){if(c.loyalty===undefined)c.loyalty=75;if(c.influence===undefined)c.influence=50;if(c.wounds===undefined)c.wounds=c.health==='wounded'?1:0;if(c.illnessEpisodes===undefined)c.illnessEpisodes=0}
@@ -52,20 +55,30 @@ export function initializeWorld(s){
 }
 // Birthdays are not specified in the catalog: either side of the birthday may apply.
 export function ageRange(id,year){const b=CHARACTER_CATALOG[id]?.birth;if(!b)return null;return [year-b[1]-1,year-b[0]]}
-export const successionModel=(faction,s)=>['caesar','senate'].includes(faction)?(s?.world?.romanRegimes?.[faction]||'republican_command'):faction==='egypt'?'ptolemaic_court':faction==='parthia'?'arsacid_nobility':faction==='mauretania'?'separate_kingdoms':'regional_dynasty';
-export function successorFor(s,faction){const fictional=['egypt','parthia','armenia','numidia','mauretania','galatia','bosporus'].includes(faction)||['roman_principate','later_empire'].includes(successionModel(faction,s))?Object.values(s.world.characters).filter(c=>CHARACTER_CATALOG[c.id]?.fictional&&c.faction===faction&&!c.institutionalOnly&&c.birthYear!=null&&s.year-c.birthYear>=18).map(c=>c.id):[];return [...new Set([...(SUCCESSORS[faction]||[]),...fictional])].filter(id=>s.world.characters[id]?.alive&&!s.world.characters[id].missing&&!s.world.characters[id].asylumHost&&s.world.characters[id].faction===faction&&!(s.world.leadership[faction]||[]).includes(id)).sort((a,b)=>(s.world.characters[b].influence??50)-(s.world.characters[a].influence??50));}
+export const successionModel=(faction,s)=>['caesar','senate'].includes(faction)?(s?.world?.romanRegimes?.[faction]||'republican_command'):faction==='han'?'liu_imperial':faction==='egypt'?'ptolemaic_court':faction==='parthia'?'arsacid_nobility':faction==='mauretania'?'separate_kingdoms':'regional_dynasty';
+// Biological descent from a documented imperial Liu is required. A surname,
+// adoption, office or marriage alone never establishes orthodox eligibility.
+const DOCUMENTED_IMPERIAL_LIU=new Set(['han_xuan','han_yuan']);
+export function eligibleLiuImperial(s,id,seen=new Set()){
+ if(!id||seen.has(id))return false;
+ seen.add(id);
+ if(DOCUMENTED_IMPERIAL_LIU.has(id))return true;
+ const c=s.world?.characters?.[id];
+ return !!(c?.faction==='han'&&c.parents?.some(parent=>eligibleLiuImperial(s,parent,seen)));
+}
+export function successorFor(s,faction){const fictional=['egypt','parthia','armenia','numidia','mauretania','galatia','bosporus','han'].includes(faction)||['roman_principate','later_empire'].includes(successionModel(faction,s))?Object.values(s.world.characters).filter(c=>CHARACTER_CATALOG[c.id]?.fictional&&c.faction===faction&&!c.institutionalOnly&&c.birthYear!=null&&s.year-c.birthYear>=18).map(c=>c.id):[];return [...new Set([...(SUCCESSORS[faction]||[]),...fictional])].filter(id=>s.world.characters[id]?.alive&&!s.world.characters[id].missing&&!s.world.characters[id].asylumHost&&s.world.characters[id].faction===faction&&!(s.world.leadership[faction]||[]).includes(id)&&(faction!=='han'||eligibleLiuImperial(s,id))).sort((a,b)=>(s.world.characters[b].influence??50)-(s.world.characters[a].influence??50));}
 export function assignSuccession(s,faction){
- const previous=s.world.leadership[faction]||[],current=previous.filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
+ const previous=s.world.leadership[faction]||[],current=previous.filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&(faction!=='han'||eligibleLiuImperial(s,id)));
  const model=successionModel(faction,s),imperial=['roman_principate','later_empire'].includes(model);
  const contested=(['egypt','parthia'].includes(faction)||imperial)&&s.world.disputes?.[faction]&&(s.world.claimants?.[faction]||[]).some(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
  if(!current.length&&contested&&!s.world.disputes[faction].vacancySince){s.world.disputes[faction].months=0;s.world.disputes[faction].vacancySince={year:s.year,month:s.month}}
  if(!current.length&&!contested){
   const candidates=successorFor(s,faction),royal=!['republican_command','separate_kingdoms'].includes(model);
-  const children=royal?previous.flatMap(id=>s.world.characters[id]?.children||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!s.world.characters[id].missing&&!s.world.characters[id].asylumHost):[];
+  const children=royal?previous.flatMap(id=>s.world.characters[id]?.children||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!s.world.characters[id].missing&&!s.world.characters[id].asylumHost&&(faction!=='han'||eligibleLiuImperial(s,id))):[];
   const preferred=model==='later_empire'&&s.world.coEmperors?.[faction]||s.world.successionPlans?.[faction],eligible=[...new Set([...children,...candidates])];
   const military=id=>s.armies.filter(a=>a.owner===faction&&a.characterId===id).reduce((n,a)=>n+Math.min(35,Math.floor((a.men||0)/500)),0);
   const ranked=imperial?[...eligible].sort((a,b)=>((s.world.characters[b].influence||0)+military(b)+(children.includes(b)?12:0))-((s.world.characters[a].influence||0)+military(a)+(children.includes(a)?12:0))):eligible;
-  const next=eligible.includes(preferred)?preferred:model==='arsacid_nobility'?candidates[0]||children[0]:imperial?ranked[0]:children[0]||candidates[0];if(next)current.push(next);
+  const next=eligible.includes(preferred)?preferred:model==='liu_imperial'?candidates[0]||children[0]:model==='arsacid_nobility'?candidates[0]||children[0]:imperial?ranked[0]:children[0]||candidates[0];if(next)current.push(next);
   if(imperial&&next){const rival=ranked.find(id=>id!==next&&s.world.characters[id].influence>=35&&((s.world.characters[id].influence||0)+military(id)>=(s.world.characters[next].influence||0)+military(next)-25||s.factions[faction]?.stability<45));if(rival){s.world.claimants[faction]||=[];if(!s.world.claimants[faction].includes(rival))s.world.claimants[faction].push(rival);s.world.disputes[faction]||={months:0,support:{}};s.world.disputes[faction].support||={};s.world.disputes[faction].support[rival]??=Math.min(30,military(rival))}}
   if(model==='arsacid_nobility'&&next){const bypassed=children.filter(id=>id!==next);if(bypassed.length){s.world.claimants[faction]||=[];for(const id of bypassed)if(!s.world.claimants[faction].includes(id))s.world.claimants[faction].push(id);s.world.disputes[faction]||={months:0,support:{}};s.world.disputes[faction].support||={};for(const id of bypassed)s.world.disputes[faction].support[id]??=10}}
  }

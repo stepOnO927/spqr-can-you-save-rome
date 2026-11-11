@@ -22,7 +22,12 @@ export const REGIONS = [
   {id:'parthia',name:['Mesopotamian theater','美索不达米亚战区'],x:1152,y:380,terrain:'desert',food:3,tax:4,supply:11,loyalty:70,owner:'parthia',fort:0,city:'Seleucia'},
   {id:'media',name:['Median theater','米底亚战区'],x:1180,y:329,terrain:'hills',food:2,tax:2,supply:9,loyalty:70,owner:'parthia',fort:0,city:'Ecbatana'},
   {id:'galatia',name:['Western Galatia','加拉太西部'],x:970,y:290,terrain:'hills',food:4,tax:3,supply:10,loyalty:70,owner:'galatia',fort:0,city:'Gordion area'},
-  {id:'bosporus',name:['Cimmerian Bosporus','辛梅里安博斯普鲁斯'],x:1060,y:155,terrain:'plain',food:4,tax:4,supply:10,loyalty:70,owner:'bosporus',fort:0,city:'Panticapaeum'}
+  {id:'bosporus',name:['Cimmerian Bosporus','辛梅里安博斯普鲁斯'],x:1060,y:155,terrain:'plain',food:4,tax:4,supply:10,loyalty:70,owner:'bosporus',fort:0,city:'Panticapaeum'},
+  // Simulated economic theaters, not reconstructed Han administrative borders.
+  {id:'hanGuanzhong',name:['Guanzhong core','关中核心区'],x:1400,y:315,terrain:'plain',food:13,tax:10,supply:24,loyalty:82,owner:'han',fort:2,city:'Chang’an'},
+  {id:'hanHenan',name:['Henan heartland','河南腹地'],x:1460,y:330,terrain:'plain',food:12,tax:9,supply:22,loyalty:78,owner:'han',fort:1,city:'Luoyang'},
+  {id:'hanShu',name:['Shu basin','蜀地盆地'],x:1390,y:405,terrain:'hills',food:11,tax:7,supply:18,loyalty:76,owner:'han',fort:1,city:'Chengdu'},
+  {id:'hanHexi',name:['Hexi corridor','河西走廊'],x:1330,y:300,terrain:'desert',food:4,tax:3,supply:12,loyalty:70,owner:'han',fort:2,city:'Dunhuang'}
 ];
 
 // Sea routes require transport and take longer. All others represent adjoining land theaters.
@@ -31,7 +36,8 @@ export const ROUTES = [
   ['cisalpine','italiaN'],['italiaN','roma'],['roma','italiaS'],['italiaS','illyricum','sea'],
   ['illyricum','epirus'],['epirus','achaia'],['anatolia','syria'],['syria','egypt'],['egypt','egyptUpper'],['parthia','media'],
   ['italiaS','sicilia','sea'],['sicilia','africa','sea'],['africa','hispaniaS','sea'],
-  ['achaia','anatolia','sea'],['italiaS','epirus','sea'],['africa','numidia'],['numidia','mauretania'],['mauretania','hispaniaS','sea'],['anatolia','armenia'],['armenia','parthia'],['parthia','syria'],['anatolia','galatia'],['galatia','armenia'],['anatolia','bosporus','sea']
+  ['achaia','anatolia','sea'],['italiaS','epirus','sea'],['africa','numidia'],['numidia','mauretania'],['mauretania','hispaniaS','sea'],['anatolia','armenia'],['armenia','parthia'],['parthia','syria'],['anatolia','galatia'],['galatia','armenia'],['anatolia','bosporus','sea'],
+  ['hanGuanzhong','hanHenan'],['hanGuanzhong','hanShu'],['hanGuanzhong','hanHexi']
 ];
 
 export const FACTIONS = {
@@ -48,6 +54,7 @@ export const FACTIONS = {
   senate_claimant:{name:['Rival Roman imperial court','罗马帝国竞争宫廷'],short:['Rival court','竞争宫廷'],color:'#a78765',ruler:['Contested imperial authority','争议中的帝国权威']},
   galatia:{name:['Deiotarus’ Galatian realm','代奥塔鲁斯的加拉太领地'],short:['Galatia','加拉太'],color:'#7c8760',ruler:['Deiotarus','代奥塔鲁斯']},
   bosporus:{name:['Bosporan Kingdom','博斯普鲁斯王国'],short:['Bosporus','博斯普鲁斯'],color:'#8b7270',ruler:['Pharnaces II','法尔纳刻斯二世']},
+  han:{name:['Western Han Empire','西汉帝国'],short:['Han','汉'],color:'#8c6444',ruler:['Emperor Xuan (Liu Xun)','汉宣帝（刘询）']},
   rebels:{name:['Provincial rebels','行省叛军'],short:['Rebels','叛军'],color:'#8a7365',ruler:['Local leaders','地方首领']}
 };
 
@@ -58,7 +65,10 @@ export const INITIAL_ARMIES = [
   {id:'pompey',name:['Pompeian field army','庞培野战军'],owner:'senate',region:'roma',men:8800,morale:75,skill:4,experience:2,commander:['Pompey','庞培']},
   {id:'spain',name:['Hispanian legions','西班牙军团'],owner:'senate',region:'hispaniaN',men:6700,morale:68,skill:2,experience:2,commander:['Unnamed officer','未具名军官']},
   {id:'egyptguard',name:['Royal guard','王室卫队'],owner:'egypt',region:'egypt',men:4700,morale:66,skill:2,experience:1,commander:['Unnamed officer','未具名军官']},
-  ...['numidia','mauretania','armenia','parthia','galatia','bosporus'].map(id=>({id:id+'army',name:['Royal forces','王国军队'],owner:id,region:id,men:4200,morale:65,skill:2,experience:1,commander:['Unnamed officer','未具名军官']}))
+  ...['numidia','mauretania','armenia','parthia','galatia','bosporus'].map(id=>({id:id+'army',name:['Royal forces','王国军队'],owner:id,region:id,men:4200,morale:65,skill:2,experience:1,commander:['Unnamed officer','未具名军官']})),
+  {id:'hanCapitalGuard',name:['Capital Guard','京师卫军'],owner:'han',region:'hanGuanzhong',men:8500,morale:78,skill:3,experience:2,commander:['Capital Commandant','京师都尉']},
+  {id:'hanHexiGarrison',name:['Hexi Garrison','河西戍军'],owner:'han',region:'hanHexi',men:6800,morale:73,skill:3,experience:2,commander:['Frontier Commandant','边郡都尉']},
+  {id:'hanEasternReserve',name:['Eastern Reserve','东部预备军'],owner:'han',region:'hanHenan',men:6200,morale:71,skill:2,experience:1,commander:['Regional Commandant','郡都尉']}
 ];
 
 export const SOURCES = [

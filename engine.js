@@ -42,7 +42,7 @@ const rnd = s => {s.seed=(Math.imul(s.seed,1664525)+1013904223)>>>0;return s.see
 const strategicRoll=(s,actor,salt)=>{let h=(s.seed^(s.year*37+s.month*101)^salt)>>>0;for(const c of actor)h=Math.imul(h^c.charCodeAt(0),16777619)>>>0;h^=h>>>16;h=Math.imul(h,0x7feb352d)>>>0;h^=h>>>15;return (h>>>0)/4294967296};
 const log = (s,en,zh,meta={}) => {s.log.unshift({month:s.month,year:s.year,en,zh,...meta});s.log=s.log.slice(0,80)};
 export const isWar = (s,a,b) => a!==b && s.wars.some(w=>w.includes(a)&&w.includes(b));
-export const PLAYABLE = ['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
+export const PLAYABLE = ['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus','han'];
 const pair = (a,b) => [a,b].sort().join(':');
 export const relation = (s,a,b) => s.relations[pair(a,b)] ?? 0;
 export const isAllied = (s,a,b) => s.alliances.some(p=>p.includes(a)&&p.includes(b));
@@ -51,11 +51,12 @@ const strength = (s,id) => s.armies.filter(a=>a.owner===id).reduce((v,a)=>v+a.me
 export function newGame(player='caesar'){
   if(!PLAYABLE.includes(player))throw new Error('Invalid playable faction');
   const s=initializeWorld({version:3,chronicleVisibilityVersion:1,seed:49049,year:-49,month:1,mode:'historical',player,relations:{'caesar:numidia':-30,'caesar:mauretania':20,'caesar:parthia':-10,'numidia:senate':25,'galatia:senate':25},alliances:[],
-    regions:clone(REGIONS),armies:clone(INITIAL_ARMIES).map(a=>({...a,move:null,siege:null})),
+    regions:clone(REGIONS.filter(r=>player==='han'||r.owner!=='han')),armies:clone(INITIAL_ARMIES.filter(a=>player==='han'||a.owner!=='han')).map(a=>({...a,move:null,siege:null})),
     factions:{
       caesar:{treasury:90,food:65,manpower:22000,stability:58,legitimacy:49,tax:'normal',research:0},
       senate:{treasury:135,food:100,manpower:34000,stability:57,legitimacy:68,tax:'normal',research:0},
       egypt:{treasury:85,food:90,manpower:9000,stability:64,legitimacy:60,tax:'normal',research:0},
+      ...(player==='han'?{han:{treasury:260,food:180,manpower:48000,stability:67,legitimacy:76,tax:'normal',research:0}}:{}),
       ...Object.fromEntries(['numidia','mauretania','armenia','parthia','galatia','bosporus'].map(id=>[id,{treasury:60,food:60,manpower:9000,stability:65,legitimacy:60,tax:'normal',research:0}])),
       rebels:{treasury:10,food:15,manpower:0,stability:50,legitimacy:0,tax:'normal',research:0}
     },wars:[['caesar','senate']],log:[],victory:false,nextArmy:1});

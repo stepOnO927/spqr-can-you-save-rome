@@ -11,10 +11,13 @@ export const IDENTITIES = Object.freeze({
  mauretania:{primary:'#58684a',accent:'#d8d2a0',map:'#829466',abbr:'MAV',motif:'palm'},
  galatia:{primary:'#5d6845',accent:'#e3d39b',map:'#8c9a65',abbr:'GAL',motif:'shield'},
  bosporus:{primary:'#654b5b',accent:'#e8cd9e',map:'#ad8290',abbr:'BOS',motif:'grain'},
+ // Original game emblem inspired by Han administrative seals; not a historical flag.
+ han:{primary:'#725139',accent:'#e5c790',map:'#a77c50',abbr:'HAN',motif:'seal'},
  rebels:{primary:'#615044',accent:'#d2b99a',map:'#887360',abbr:'REB',motif:'bands'},
  shared:{primary:'#807a67',accent:'#d7cdb3',map:'#aea184',abbr:'ROM',motif:'discs'}
 });
 const motifs={
+ seal:'<rect x="10" y="10" width="20" height="20" rx="1"/><path d="M15 15h10v10H15zM20 15v10M15 20h10"/>',
  discs:'<path d="M20 6v28M15 9h10M14 31h12"/><circle cx="20" cy="13" r="3"/><circle cx="20" cy="21" r="3"/><circle cx="20" cy="29" r="3"/>',
  fasces:'<path d="M14 8v25M17 7v26M20 6v27M23 7v26M26 8v25M12 13h16M12 26h16M13 34h14"/>',
  horn:'<path d="M10 11c1 12 5 18 16 21-3-5-2-9 4-15M10 11c6 0 12 3 20 6M12 15c4 1 8 3 12 5M15 21l6 4"/><circle cx="26" cy="13" r="2"/><circle cx="21" cy="11" r="2"/>',

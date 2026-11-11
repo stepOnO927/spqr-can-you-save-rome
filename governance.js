@@ -1,5 +1,5 @@
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=safe-save-1';
-import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange,successionModel} from './characters.js?v=safe-save-1';
+import {initializeWorld,successorFor,assignSuccession,eligibleLiuImperial,CHARACTER_CATALOG,ageRange,successionModel} from './characters.js?v=safe-save-1';
 import {recordLifeEvent,dynastyRoll,personAge} from './dynasties.js?v=safe-save-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {startDynasticWar} from './civil-war.js?v=safe-save-1';
@@ -24,7 +24,7 @@ export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>{
 
 // This describes the simulated arrangement, not a historical medical or constitutional claim.
 export function deriveGovernment(s,faction){
- initializeWorld(s);const nominal=(s.world.leadership[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
+ initializeWorld(s);const nominal=(s.world.leadership[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&(faction!=='han'||eligibleLiuImperial(s,id)));
  // These are separate kingdoms represented by one campaign faction. Never
  // invent a single shared regency, even if both kings are absent or dead.
  if(faction==='mauretania'){
@@ -67,7 +67,7 @@ export function appointCoEmperor(s,id){
 }
 
 export function initializeGovernments(s){
- initializeWorld(s);s.world.appointments||={};s.world.successionPlans||={};s.world.governments||={};for(const faction of Object.keys(s.factions).filter(x=>x!=='rebels'))if(!s.world.governments[faction])s.world.governments[faction]=deriveGovernment(s,faction);return s;
+ initializeWorld(s);s.world.appointments||={};s.world.successionPlans||={};s.world.governments||={};if(s.factions.han){assignSuccession(s,'han');if(!validSuccessionPlan(s,'han'))delete s.world.successionPlans.han;s.world.governments.han=deriveGovernment(s,'han')}for(const faction of Object.keys(s.factions).filter(x=>x!=='rebels'))if(!s.world.governments[faction])s.world.governments[faction]=deriveGovernment(s,faction);return s;
 }
 
 export function successionCandidates(s,faction){

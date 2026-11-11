@@ -44,6 +44,10 @@ export function initializeDynasties(s){
   const family=d.families['family:cleopatra'];s.world.characters.arsinoe.familyId=family.id;delete d.families['family:arsinoe'];
   d.historicalSeeded=true;
  }
+ if(!d.hanFamilySeeded&&s.world.characters.han_xuan&&s.world.characters.han_yuan){
+  const family=d.families['family:han_xuan'];s.world.characters.han_yuan.familyId=family.id;delete d.families['family:han_yuan'];
+  d.hanFamilySeeded=true;
+ }
  for(const [faction,ids] of Object.entries(s.world.leadership||{}))if(s.factions[faction]){
   const current=ids.filter(id=>s.world.characters[id]?.alive).join(':');
   if(d.rulers.filter(r=>r.faction===faction).at(-1)?.current!==current)d.rulers.push({faction,current,year:s.year,month:s.month});
