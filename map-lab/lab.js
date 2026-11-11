@@ -28,7 +28,7 @@ import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, pr
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=safe-save-1';
-import {createCharacterUI} from './character-ui.js?v=succession-feedback-1';
+import {createCharacterUI} from './character-ui.js?v=mission-records-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=institution-portraits-1';
 import {reportedArmies} from '../character-system.js?v=succession-feedback-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=playability-1';
