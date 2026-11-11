@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,upgradeSave,isWar} from '../engine.js?v=trade-intelligence-1';
+import {newGame,region,upgradeSave,isWar} from '../engine.js?v=institution-portraits-1';
 import {contestLeadership,advanceDisputes,addReport} from '../character-system.js?v=trade-intelligence-1';
 import {requestMediation,advanceMediations,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=dynasty-id-3';
 

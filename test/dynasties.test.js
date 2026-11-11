@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=trade-intelligence-1';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=institution-portraits-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=dynasty-id-3';
 import {assignSuccession,successionModel} from '../characters.js?v=dynasty-id-3';
 import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=multipolar-2';
 import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=dynasty-id-3';
 import {canHoldOffice} from '../office-system.js?v=dynasty-id-3';
-import {renderGenealogy} from '../genealogy-ui.js?v=multipolar-2';
+import {renderGenealogy} from '../genealogy-ui.js?v=institution-portraits-1';
 import {finalizeCampaign} from '../legacy.js?v=imperium-1';
 import {startDynasticWar} from '../civil-war.js?v=dynasty-id-3';
-import {fictionalPortraitKey} from '../portrait-registry.js?v=grand-chessboard-2';
+import {fictionalPortraitKey} from '../portrait-registry.js?v=institution-portraits-1';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 
@@ -271,6 +271,15 @@ test('fixed succession scenario portraits remain unique and tied to the saved ro
  for(const [role,key] of Object.entries(keys))assert.equal(fictionalPortraitKey(restored,restored.world.dynasties.scenario[role]),key);
  const id=restored.world.dynasties.scenario.son;restored.world.characters[id].birthYear++;assert.equal(fictionalPortraitKey(restored,id),null);restored.world.characters[id].birthYear--;
  restored.world.dynasties.catalog[id].name=['Different person','另一人'];assert.equal(fictionalPortraitKey(restored,id),null);restored.world.dynasties.catalog[id].name=['Leontios of Alexandria','亚历山大里亚的莱昂提奥斯'];delete restored.world.dynasties.scenario.son;assert.equal(fictionalPortraitKey(restored,id),null);
+});
+
+test('opening institution portraits match saved identity and seat, not the reusable numeric ID',()=>{
+ const s=newGame('caesar'),cases=[['roman_college',0,'fictional-fabius'],['roman_college',1,'fictional-flavia'],['theban_temples',0,'fictional-psenamun'],['theban_temples',1,'fictional-taimhotep'],['syrian_association',0,'fictional-maron'],['syrian_association',1,'fictional-helena']],hashes=new Set();
+ for(const [institution,seat,key] of cases){const id=s.world.religiousInstitutions.find(o=>o.id===institution).council[seat];assert.equal(fictionalPortraitKey(s,id),key);for(const size of ['master','128','64'])assert.ok(fs.existsSync(`assets/portraits/${key}-${size}.jpg`));hashes.add(createHash('sha256').update(fs.readFileSync(`assets/portraits/${key}-128.jpg`)).digest('hex'))}
+ assert.equal(hashes.size,6);
+ let restored=upgradeSave(JSON.parse(JSON.stringify(s)));const college=restored.world.religiousInstitutions.find(o=>o.id==='roman_college'),id=college.council[0],person=restored.world.characters[id],saved=restored.world.dynasties.catalog[id];assert.equal(fictionalPortraitKey(restored,id),'fictional-fabius');
+ saved.name=['Other person','另一人'];assert.equal(fictionalPortraitKey(restored,id),null);saved.name=['Aulus Fabius','奥卢斯·法比乌斯'];person.birthYear++;assert.equal(fictionalPortraitKey(restored,id),null);person.birthYear--;college.council.reverse();assert.equal(fictionalPortraitKey(restored,id),null);college.council.reverse();
+ const changed='fictional:900';restored.world.characters[changed]={...person,id:changed};restored.world.dynasties.catalog[changed]={...saved};college.council[0]=changed;delete restored.world.characters[id];delete restored.world.dynasties.catalog[id];assert.equal(fictionalPortraitKey(restored,changed),'fictional-fabius');
 });
 
 test('legacy achievements remain sealed until campaign finalization',()=>{

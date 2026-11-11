@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=trade-intelligence-1';
-import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,advancePersonalDiplomacy,personalDiplomaticCredit} from '../personal-diplomacy.js?v=trade-intelligence-1';
+import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=institution-portraits-1';
+import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,advancePersonalDiplomacy,personalDiplomaticCredit} from '../personal-diplomacy.js?v=institution-portraits-1';
 import {addReport,contestLeadership} from '../character-system.js?v=trade-intelligence-1';
 
 test('a claimant can be contacted only after a report, and the request does not reveal hidden court status',()=>{

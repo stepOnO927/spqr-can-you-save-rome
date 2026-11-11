@@ -3,7 +3,7 @@ import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=dynasty-id-3
 import {ROUTES} from './data.js?v=phase-x-1';
 import {addReport,reportedHealthSubjects,apparentAgeRange} from './character-system.js?v=trade-intelligence-1';
 import {officeOf} from './office-system.js?v=dynasty-id-3';
-import {fictionalPortraitKey} from './portrait-registry.js?v=grand-chessboard-2';
+import {fictionalPortraitKey} from './portrait-registry.js?v=institution-portraits-1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 // A commander in transit has not arrived in a theater where an audience can occur.

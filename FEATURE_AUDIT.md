@@ -9,6 +9,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Recruitment | Terrain map → owned city → manage theater | `tools/systems-smoke.mjs` |
 | Family adoption and marriage | Campaign map → government → family tree | `tools/scenario-systems-smoke.mjs` |
 | Family tree and private wills | Terrain map → Government, Families & Policies → family tree | `tools/systems-smoke.mjs` |
+| Fixed opening institution portraits | Campaign map → government → family tree | `tools/portrait-institutions-smoke.mjs` checks individual images and save/load; unit tests cover old IDs and foreign meeting snapshots |
 | Material research and completed construction | Terrain map → Inventions → research; owned city → manage theater → construction | `tools/construction-smoke.mjs` |
 | Defensive coalition, civic negotiations and political movement reform | Campaign map → government (coalition test uses a friendly-relations fixture) | `tools/scenario-systems-smoke.mjs` |
 | National idea research and non-aggression treaties | Government, Families & Policies → national ideas / diplomatic agreements | `tools/systems-smoke.mjs` |

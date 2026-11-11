@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=trade-intelligence-1';
+import {newGame} from '../engine.js?v=institution-portraits-1';
 import {addReport} from '../character-system.js?v=trade-intelligence-1';
 import {leadershipIntelligence} from '../map-lab/intelligence-summary.js';
 
