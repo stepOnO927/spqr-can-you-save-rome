@@ -80,6 +80,14 @@ test('Senate cannot claim a favorable civil settlement while Caesar still contro
  assert.equal(settlementEligible(s,'senate','caesar'),true);
 });
 
+test('Senate cannot claim restored military authority while Caesar still controls Rome',()=>{
+ const s=newGrandGame('egypt');pressure(s,'senate');
+ s.regions.find(r=>r.id==='roma').owner='caesar';
+ assert.equal(militaryResult(s,'senate'),null);
+ s.regions.find(r=>r.id==='roma').owner='senate';
+ assert.equal(militaryResult(s,'senate')?.winner,'senate');
+});
+
 test('rejected settlement missions cost resources and cannot be spammed for hidden intelligence',()=>{
  const s=newGrandGame('senate'),before=s.factions.senate.treasury;
  assert.equal(diplomacy(s,'senate','caesar','settlement'),false);assert.equal(s.factions.senate.treasury,before-4);

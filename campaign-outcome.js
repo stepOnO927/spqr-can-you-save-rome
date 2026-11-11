@@ -13,7 +13,7 @@ export function militaryResult(s,id){
  if(!roman(id)||!s.factions[id])return null;
  const enemy=rival(id),base=opening(s,enemy),remaining=holdings(s,enemy),field=troops(s,enemy);
  const collapsed=remaining===0&&field<500;
- const decisive=strategic(s,id)&&battleWon(s,id)&&remaining<=Math.floor(base.territories*.35)&&field<=Math.floor(base.troops*.25)&&troops(s,id)>=1000;
+ const decisive=strategic(s,id)&&(id!=='senate'||s.regions.find(r=>r.id==='roma')?.owner==='senate')&&battleWon(s,id)&&remaining<=Math.floor(base.territories*.35)&&field<=Math.floor(base.troops*.25)&&troops(s,id)>=1000;
  return collapsed||decisive?{kind:'military',winner:id,loser:enemy,year:s.year,month:s.month,enemyTerritories:remaining,enemyFieldStrength:field}:null;
 }
 
