@@ -21,6 +21,13 @@ try{
   await page.locator('[data-tab="development"]').click();
   assert.match(await page.locator('.inspector h2').innerText(),/Development/);
   await page.locator('[data-dev-branch="idea"]').click();
+  assert.equal(await page.locator('[data-tree-pan="left"]').isDisabled(),true);
+  assert.equal(await page.locator('[data-tree-pan="right"]').isEnabled(),true);
+  await page.locator('[data-tree-pan="right"]').click();
+  await page.waitForFunction(()=>document.querySelector('.dev-tree')?.scrollLeft>100);
+  await page.screenshot({path:'outputs/phase-xiv-later-stage.png'});
+  await page.locator('[data-tree-pan="left"]').click();
+  await page.waitForFunction(()=>document.querySelector('.dev-tree')?.scrollLeft<2);
   assert.match(await page.locator('#tech-sanctuary-protection').innerText(),/Provincial Sanctuary Protection/);
   assert.match(await page.locator('#tech-ancestral-rites').innerText(),/Own rites satisfaction \/ quarter \+1/);
   assert.match(await page.locator('#tech-ancestral-rites').innerText(),/Other rites satisfaction \/ quarter −1/);
@@ -131,6 +138,9 @@ try{
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),offered);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
   await page.locator('#development').click();
+  assert.equal(await page.locator('[data-tree-pan="right"]').isEnabled(),true);
+  await page.locator('[data-tree-pan="right"]').click();
+  await page.waitForFunction(()=>document.querySelector('.dev-tree')?.scrollLeft>100);
   assert.equal(await page.locator('[data-accept-offer-seller="egypt"]').count(),1);
   await page.locator('[data-accept-offer-seller="egypt"]').click();
   assert.equal(await page.locator('[data-accept-offer-seller="egypt"]').count(),0);

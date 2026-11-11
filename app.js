@@ -10,7 +10,7 @@ import {endCampaign} from './achievement-system.js?v=5';
 import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js?v=5';
 import {budgetHtml} from './budget-ui.js?v=5';
 import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js?v=12';
-import {developmentPanel,ideasPanel,constructionPanel} from './development-ui.js?v=24';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from './development-ui.js?v=25';
 import {drawMap,mapPoint} from './map.js?v=55';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=3';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=2';
@@ -154,7 +154,8 @@ function bind(){
   document.querySelectorAll('[data-report-character]').forEach(el=>el.onclick=()=>{tab='government';panelOpen=true;render()});
   document.querySelectorAll('[data-dismiss-alert]').forEach(el=>el.onclick=()=>{dismissedAlert=el.dataset.dismissAlert;render()});
   document.querySelectorAll('.report-card[data-event-id]').forEach(el=>el.onclick=e=>{if(e.target.closest('button'))return;const item=state.campaignEvents.find(x=>x.id===el.dataset.eventId);if(item?.regionId)focusRegion(item.regionId)});
-  document.querySelectorAll('[data-tree-zoom]').forEach(el=>el.onclick=()=>{treeZoom=Math.max(.75,Math.min(1.3,treeZoom+(el.dataset.treeZoom==='in'?.1:-.1)));document.querySelector('.dev-cards').style.zoom=treeZoom});
+  document.querySelectorAll('[data-tree-zoom]').forEach(el=>el.onclick=()=>{treeZoom=Math.max(.75,Math.min(1.3,treeZoom+(el.dataset.treeZoom==='in'?.1:-.1)));const tree=document.querySelector('.dev-cards');tree.style.zoom=treeZoom;tree.dispatchEvent(new Event('scroll'))});
+  bindDevelopmentTreeNavigation(document);
   document.querySelectorAll('[data-dev-branch]').forEach(el=>el.onclick=()=>{devBranch=el.dataset.devBranch;render()});
   document.querySelectorAll('[data-research]').forEach(el=>el.onclick=()=>{const r=researchInnovation(state,state.player,el.dataset.researchBranch,el.dataset.research);if(!r.ok)flash(`${lang==='zh'?'无法研究':'Research unavailable'}: ${r.reason}`);else render()});
   document.querySelectorAll('[data-recruit-figure]').forEach(el=>el.onclick=()=>{const r=recruitFigure(state,state.player,el.dataset.recruitFigure);if(!r.ok)flash(`${lang==='zh'?'无法邀请':'Invitation unavailable'}: ${r.reason}`);else render()});

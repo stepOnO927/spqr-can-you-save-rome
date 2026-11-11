@@ -98,7 +98,15 @@ export function tradePanel(s,lang){
 export function developmentPanel(s,lang,branch){
   const zh=lang==='zh';
   const reference=branch==='material'?`<details class="dev-reference"><summary>${enzh(zh,'Building reference · costs and effects','建筑图鉴 · 费用与效果')}</summary>${BUILDINGS.map(b=>{const invention=MATERIALS.find(x=>x.id===b.tech);return `<article><b>${esc(b.name[zh?1:0])}</b><small>${esc(b.name[zh?0:1])} · ${b.cost}¤ · ${b.months}${enzh(zh,' months','个月')} · ${enzh(zh,'upkeep','维护')} ${b.upkeep}¤</small><p>${esc(invention.context[zh?1:0])}</p><div class="dev-effects">${effectsText(b.effects,zh)}</div>${sourceLink(invention,zh)}</article>`}).join('')}</details>`:'';
-  return `<div class="dev-zoom"><span>${zh?'发展树缩放':'TREE ZOOM'}</span><button data-tree-zoom="out" aria-label="${zh?'缩小':'Zoom out'}">−</button><button data-tree-zoom="in" aria-label="${zh?'放大':'Zoom in'}">+</button></div>`+developmentPanelContent(s,lang,branch)+figurePanel(s,zh)+reference;
+  return `<div class="dev-zoom"><span>${zh?'后续阶段':'LATER STAGES'}</span><button data-tree-pan="left" aria-label="${zh?'查看前一阶段':'Show earlier stages'}">←</button><button data-tree-pan="right" aria-label="${zh?'查看后一阶段':'Show later stages'}">→</button><span>${zh?'缩放':'ZOOM'}</span><button data-tree-zoom="out" aria-label="${zh?'缩小':'Zoom out'}">−</button><button data-tree-zoom="in" aria-label="${zh?'放大':'Zoom in'}">+</button></div>`+developmentPanelContent(s,lang,branch)+figurePanel(s,zh)+reference;
+}
+export function bindDevelopmentTreeNavigation(root){
+ const tree=root.querySelector('.dev-tree');if(!tree)return;
+ const previous=root.querySelector('[data-tree-pan="left"]'),next=root.querySelector('[data-tree-pan="right"]');
+ const update=()=>{previous.disabled=tree.scrollLeft<=1;next.disabled=tree.scrollLeft+tree.clientWidth>=tree.scrollWidth-1};
+ previous.onclick=()=>tree.scrollBy({left:-Math.max(240,tree.clientWidth*.8),behavior:'smooth'});
+ next.onclick=()=>tree.scrollBy({left:Math.max(240,tree.clientWidth*.8),behavior:'smooth'});
+ tree.addEventListener('scroll',update,{passive:true});update();
 }
 export function constructionPanel(s,lang,r){
   const inscriptions=(r?.inscriptions||[]).map(record=>`<blockquote class="dev-inscription">${esc(record.text)}<small>${record.month}/${Math.abs(record.year)} BCE</small></blockquote>`).join('');

@@ -18,7 +18,7 @@ import {budgetHtml} from '../budget-ui.js?v=5';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=13';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=134';
-import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js?v=24';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=25';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=15';
@@ -64,7 +64,8 @@ function showDevelopment(page='research'){
   const panel=document.querySelector('#command-detail');
   panel.innerHTML=`<div class="dev-page-tabs"><button data-dev-page="research">${lang==='zh'?'发明树':'INVENTION TREE'}</button><button data-dev-page="ideas">${lang==='zh'?'国家理念':'NATIONAL IDEAS'}</button></div>`+(page==='ideas'?ideasPanel(state,lang):developmentPanel(state,lang,devBranch));
   if(panel.querySelector('.dev-cards'))panel.querySelector('.dev-cards').style.zoom=treeZoom;
-  panel.querySelectorAll('[data-tree-zoom]').forEach(button=>button.onclick=()=>{treeZoom=Math.max(.75,Math.min(1.3,treeZoom+(button.dataset.treeZoom==='in'?.1:-.1)));panel.querySelector('.dev-cards').style.zoom=treeZoom});
+  panel.querySelectorAll('[data-tree-zoom]').forEach(button=>button.onclick=()=>{treeZoom=Math.max(.75,Math.min(1.3,treeZoom+(button.dataset.treeZoom==='in'?.1:-.1)));const tree=panel.querySelector('.dev-cards');tree.style.zoom=treeZoom;tree.dispatchEvent(new Event('scroll'))});
+  bindDevelopmentTreeNavigation(panel);
   panel.querySelectorAll('[data-dev-page]').forEach(button=>button.onclick=()=>showDevelopment(button.dataset.devPage));
   panel.querySelectorAll('[data-dev-branch]').forEach(button=>button.onclick=()=>{devBranch=button.dataset.devBranch;showDevelopment(page)});
   const act=(selector,fn)=>panel.querySelectorAll(selector).forEach(button=>button.onclick=()=>{const result=fn(button);if(result.ok){renderHud();showDevelopment(page)}else{const feedback=document.createElement('p');feedback.className='dev-status';feedback.textContent=`${lang==='zh'?'操作不可用':'Unavailable'}: ${result.reason}`;button.after(feedback)}});
