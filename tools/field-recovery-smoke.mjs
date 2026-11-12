@@ -11,13 +11,15 @@ try{
  await page.locator('#roman-faction').selectOption('caesar');
  await page.locator('#start-game').click();
  await page.locator('#guide:not([hidden])').waitFor({timeout:60000});
+ await page.waitForFunction(()=>document.querySelector('#brief-toggle')?.hasAttribute('aria-expanded')&&document.querySelector('#selection-toggle')?.hasAttribute('aria-expanded'));
+ await page.waitForTimeout(200);
  if(await page.locator('.brief').evaluate(el=>el.classList.contains('collapsed')))await page.locator('#brief-toggle').click({force:true});
  if(await page.locator('.selection').evaluate(el=>el.classList.contains('collapsed')))await page.locator('#selection-toggle').click({force:true});
  const panels=await page.evaluate(()=>{
   const box=id=>{const r=document.querySelector(id).getBoundingClientRect();return {top:r.top,bottom:r.bottom}};
   return {brief:box('.brief'),selection:box('.selection'),guide:box('#guide'),briefOpen:!document.querySelector('.brief').classList.contains('collapsed'),selectionOpen:!document.querySelector('.selection').classList.contains('collapsed')};
  });
- assert.ok(panels.briefOpen&&panels.selectionOpen);
+ assert.ok(panels.briefOpen&&panels.selectionOpen,JSON.stringify(panels));
  assert.ok(panels.brief.bottom<=panels.selection.top+2,JSON.stringify(panels));
  assert.ok(panels.selection.bottom<=panels.guide.top+2,JSON.stringify(panels));
  await page.locator('#guide-skip').click();
