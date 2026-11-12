@@ -7,6 +7,7 @@ import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=safe-save
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 import {canHoldOffice,localGovernor} from './office-system.js?v=safe-save-1';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
+import {activeModifiers} from './inventions.js?v=mission-discount-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -17,6 +18,8 @@ const notify=(s,en,zh,metadata={})=>{s.log.unshift({year:s.year,month:s.month,en
 const healthNames={healthy:['healthy','健康'],recovering:['recovering','康复中'],wounded:['wounded','受伤'],frail:['frail','衰弱'],ill:['ill','患病'],seriously_ill:['seriously ill','重病'],dying:['dying','垂危'],deceased:['deceased','已故']};
 const configs={spy:{cost:12,months:4},counter:{cost:8,months:3},envoy:{cost:8,months:3},travelers:{cost:4,months:2},audience:{cost:10,months:4},exchange:{cost:6,months:3}};
 export const MISSION_RULES=configs;
+// The active intelligence network reduces each investigation expense by one; never below one.
+export function missionCost(s,actor,type){const cfg=configs[type];return cfg?Math.max(1,cfg.cost-(activeModifiers(s,actor).intelligence||0)):null}
 // This is a theater-graph estimate, not a reconstruction of an actual ancient route.
 export function missionDuration(s,actor,target,type){
  const cfg=configs[type];if(!cfg)return null;
@@ -174,9 +177,9 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
  const partners=intelligencePartners(s,actor,target);
  if(type==='exchange'&&(!partners.length||(partnerId&&!partners.includes(partnerId))))return {ok:false,reason:'alliance'};
  if(['spy','counter'].includes(type)&&!availableAgents(s,actor))return {ok:false,reason:'agents'};
- if(s.factions[actor].treasury<cfg.cost)return {ok:false,reason:'treasury'};
+ const cost=missionCost(s,actor,type);if(s.factions[actor].treasury<cost)return {ok:false,reason:'treasury'};
  if(s.operations.some(x=>x.actor===actor&&x.target===target&&x.status==='pending'&&x.type===type))return {ok:false,reason:'pending'};
- return {ok:true,cost:cfg.cost,duration:missionDuration(s,actor,target,type),partner:type==='exchange'?(partnerId||partners[0]):undefined};
+ return {ok:true,cost,duration:missionDuration(s,actor,target,type),partner:type==='exchange'?(partnerId||partners[0]):undefined};
 }
 export function queueMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;

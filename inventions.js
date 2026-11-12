@@ -42,7 +42,7 @@ export const IDEAS=[
  idea('legal_reform','government','Legal reform','法律整顿',['Stability +1 per month','每月稳定度+1'],['Monthly administration expense 2','每月行政支出2'],{stability:1,treasury:-2},23,5,[],url.law),
  idea('hardline_diplomacy','diplomacy','Hardline diplomacy','强硬外交',['Diplomatic pressure +10','外交施压+10'],['Foreign relations decay','与外国的关系逐渐恶化'],{pressure:10,relations:-1},19,4,[],url.law),
  idea('diplomatic_accommodation','diplomacy','Diplomatic accommodation','外交妥协',['Foreign relations recover','与外国关系逐渐恢复'],['Diplomatic pressure −10','外交施压−10'],{relations:1,pressure:-10},19,4,[],url.law),
- idea('intelligence_networks','diplomacy','Intelligence networks','情报网络',['Intelligence expense reduced','情报行动费用降低'],['Monthly agent expense 2','每月情报人员支出2'],{intelligence:1,treasury:-2},22,5,[],url.law),
+ idea('intelligence_networks','diplomacy','Intelligence networks','情报网络',['Inquiries and intelligence missions cost 1 less (minimum 1)','询问信与情报行动费用减少1（最低1）'],['Monthly agent expense 2','每月情报人员支出2'],{intelligence:1,treasury:-2},22,5,[],url.law),
  idea('client_influence','diplomacy','Client kingdom influence','附属王国影响',['Diplomatic pressure +5','外交施压+5'],['Monthly patronage expense 2','每月资助支出2'],{pressure:5,treasury:-2},22,5,[],url.law),
  idea('provincial_tenancy','economy','Provincial tenancy','行省租佃',['Tax receipts +5%','税收+5%'],['Local loyalty −1 per month','地方忠诚每月−1'],{tax:.05,loyalty:-1},19,4,[],url.tax),
  idea('tax_farming','economy','Tax farming oversight','包税监督',['Tax receipts +12%','税收+12%'],['Stability −1 per month','每月稳定度−1'],{tax:.12,stability:-1},21,4,[],url.tax),

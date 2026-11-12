@@ -1,4 +1,4 @@
-import {MATERIALS} from '../inventions.js?v=grand-chessboard-2';
+import {MATERIALS} from '../inventions.js?v=mission-discount-1';
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 export function renderTerritoryFacts({state, territory, language = 'en', sightings = []}) {
