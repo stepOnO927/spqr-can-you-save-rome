@@ -25,6 +25,15 @@ test('reinforcement has a real per-army monthly cap and consumes all three resou
  assert.equal(loaded.armies.find(x=>x.id===a.id).men,2346);
 });
 
+test('reinforcement explains a missing resource before charging anything',()=>{
+ const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii'),f=s.factions.caesar;
+ f.manpower=999;
+ const before={treasury:f.treasury,food:f.food,manpower:f.manpower,men:a.men};
+ assert.equal(reinforcementQuote(s,a.id).reason,'manpower');
+ assert.equal(issueMilitaryOrder(s,a.id,'reinforce').reason,'manpower');
+ assert.deepEqual({treasury:f.treasury,food:f.food,manpower:f.manpower,men:a.men},before);
+});
+
 test('vacating the last friendly garrison warns without revealing hidden enemy armies',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii');
  const risk=vacatedTheaterRisk(s,a.id);
