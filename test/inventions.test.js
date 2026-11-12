@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
-import {MATERIALS,IDEAS,CATEGORIES,activeModifiers,buildingModifiers,startResearch,startConstruction,equipIdea,removeIdea,expandSlot,requestKnowledge,offerKnowledge,inviteScholars,canEquip} from '../inventions.js?v=grand-chessboard-2';
+import {MATERIALS,IDEAS,CATEGORIES,activeModifiers,buildingModifiers,startResearch,startConstruction,equipIdea,removeIdea,expandSlot,requestKnowledge,offerKnowledge,inviteScholars,canEquip} from '../inventions.js?v=mission-discount-1';
 
 const advance=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 test('material research unlocks a local building, with separate construction and real income',()=>{
