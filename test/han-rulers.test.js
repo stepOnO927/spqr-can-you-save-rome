@@ -17,6 +17,50 @@ test('foreign rulers keep historical identities and unknown opening names distin
  assert.match(ownRulerHtml(s,1),/艺术复原/);
 });
 
+test('undocumented opening rulers remain unnamed until an actual succession',()=>{
+ const s=newHanGame('gumo',{seed:112});
+ for(const f of ['gumo','sogd_samarkand','atropatene']){
+  const ruler=s.rulers[f],person=s.persons[ruler.personId];
+  assert.equal(person.titleOnly,true,f);assert.equal(person.record,'reconstruction',f);
+  assert.match(person.name[0],/^Unnamed ruler of /,f);
+ }
+ assert.equal(s.rulers.parthia.id,'orodes-ii');
+ assert.match(ownRulerHtml(s,0),/personal name is unrecorded/);
+ assert.match(ownRulerHtml(s,1),/史料未载此时王名/);
+ const missingPerson=structuredClone(s);delete missingPerson.persons[missingPerson.rulers.gumo.personId];
+ const migrated=loadHanSave(serialize(missingPerson));
+ assert.equal(migrated.persons[migrated.rulers.gumo.personId].titleOnly,true);
+ assert.match(ownRulerHtml(migrated,0),/personal name is unrecorded/);
+ const old=s.rulers.gumo;s.persons[old.personId].alive=false;s.persons[old.personId].death=s.year;
+ advanceForeignRulers(s);
+ const next=s.rulers.gumo,person=s.persons[next.personId];
+ assert.equal(person.record,'fictional');assert.equal(person.titleOnly,undefined);
+ assert.equal(next.predecessor,old.id);
+ const restored=loadHanSave(serialize(s));
+ assert.deepEqual(restored.rulers.gumo,next);
+ assert.deepEqual(restored.persons[next.personId].name,person.name);
+});
+
+test('new sovereign names stay distinct across neighboring courts and dynamic states',()=>{
+ const s=newHanGame('han',{seed:123});const courts=['gumo','jingjue','qiemo','xiaowan','ruoqiang','qiule','wensu'];
+ for(const f of courts)s.persons[s.rulers[f].personId].alive=false;
+ s.factions['new-oasis-court']={id:'new-oasis-court',stability:55,treasury:20};
+ advanceForeignRulers(s);
+ const people=courts.map(f=>s.persons[s.rulers[f].personId]);
+ assert.equal(new Set(people.map(p=>p.name[0])).size,people.length);
+ assert.equal(people.every(p=>p.record==='fictional'),true);
+ assert.equal(s.persons[s.rulers['new-oasis-court'].personId].record,'fictional');
+});
+
+test('a missing legacy ruler counter cannot overwrite an existing person',()=>{
+ const s=newHanGame('gumo',{seed:32}),old=s.rulers.gumo;
+ s.persons['sim-ruler-gumo-1']={id:'sim-ruler-gumo-1',name:['Earlier person','先前人物'],alive:false,record:'fictional'};
+ s.nextRuler=0;s.persons[old.personId].alive=false;
+ advanceForeignRulers(s);
+ assert.notEqual(s.rulers.gumo.personId,'sim-ruler-gumo-1');
+ assert.deepEqual(s.persons['sim-ruler-gumo-1'].name,['Earlier person','先前人物']);
+});
+
 test('Parthia, Armenia, Wusun, Kangju and an oasis kingdom gain persistent successors',()=>{
  for(const f of ['parthia','armenia','wusun','kangju','shanshan']){
   const s=newHanGame(f,{seed:700});const old=s.rulers[f],oldPortrait=rulerPortrait(s,f);

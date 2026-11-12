@@ -164,6 +164,20 @@ languages, and older saves gain missing links without overwriting a recorded
 ruler. Targeted tests cover Parthia, Armenia, Wusun, Kangju and Shanshan,
 plus save restoration and a Kangju browser succession. The Roman campaign's
 separate succession model still needs the full cross-campaign acceptance run.
+The expanded Eurasian roster now opens with title-only, explicitly unnamed
+rulers where no contemporary personal name is documented. A named original
+successor appears only after a simulated succession. New ruler names avoid
+duplicates among living people where the cultural pool permits; an existing
+save's ruler identity is retained, and a stale ID counter cannot overwrite
+an earlier person. Tests cover several neighboring courts and a dynamic
+new court. If an older save retains an unnamed ruler receipt but lacks that
+person record, migration restores the title-only marker instead of claiming
+the placeholder is a documented historical individual.
+The [Hanshu Western Regions account](https://ctext.org/wiki.pl?chapter=325663&if=en)
+describes Gumo's king by office without identifying a 49 BCE personal name;
+[the Atropatene chronology](https://www.iranicaonline.org/articles/azerbaijan-iii/)
+is likewise too uncertain to assign a specific opening king. The title-only
+records avoid presenting a game-generated personal name as documented history.
 The standalone Han campaign now settles a player defeat when no land and no
 field army remain, after six wartime months without a field army, or after a
 year of territorial exile without recovery. The final state stores the
