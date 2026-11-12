@@ -39,6 +39,8 @@ try{
   assert.match(await page.locator('#tech-negotiated-crop-shares').innerText(),/State-available food \/ month −1/);
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/Treasury \/ month −2/);
   assert.match(await page.locator('#tech-provincial-tax-review').innerText(),/integration ≥65, monthly satisfaction and loyalty losses each fall by 1/);
+  assert.match(await page.locator('#tech-field-march-coordination').innerText(),/Coordinated Field Marches[\s\S]*Land march reduction \+1/);
+  assert.match(await page.locator('#tech-field-march-coordination a[target="_blank"]').getAttribute('href'),/Civil_Wars\/1B/);
   await page.locator('[data-research="legion-training"]').click();
   assert.match(await page.locator('.dev-status').first().innerText(),/Researching/);
   for(let i=0;i<3;i++)await page.locator('#step').click();
@@ -70,6 +72,7 @@ try{
   assert.match(await page.locator('#tech-negotiated-crop-shares').innerText(),/国库可用粮食 \/ 月 −1/);
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/国库 \/ 月 −2/);
   assert.match(await page.locator('#tech-provincial-tax-review').innerText(),/行政融合度≥65且实行高税时/);
+  assert.match(await page.locator('#tech-field-march-coordination').innerText(),/野战行军调度[\s\S]*陆路行军缩减 \+1/);
   await page.screenshot({path:'tools/phase-xiv-ui.png'});
   for(const lang of ['en','zh']){
     const replacing=newGrandGame('caesar');

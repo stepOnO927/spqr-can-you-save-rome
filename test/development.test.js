@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,diplomacy,royalCourtCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,purchaseMaterials} from '../engine.js';
+import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,royalCourtCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,purchaseMaterials} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan} from '../development.js';
 import {developmentPanel,ideasPanel} from '../development-ui.js';
-import {edgeMonths} from '../grand-operations.js';
+import {edgeMonths,grandRoute} from '../grand-operations.js';
 import {techIllustration} from '../tech-art.js';
 import {faithSatisfaction,advanceDemography} from '../local-society.js';
 import {nationalBudget} from '../national-budget.js';
@@ -41,7 +41,7 @@ test('monthly budget records paid construction and research orders without doubl
 
 test('every development node has its own interpretive illustration',()=>{
  const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
- assert.equal(art.length,69);assert.equal(new Set(art).size,69);
+ assert.equal(art.length,70);assert.equal(new Set(art).size,70);
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
@@ -163,7 +163,7 @@ test('royal court liaison helps paid alliances with kingdoms only after adoption
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,35);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,36);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
@@ -487,6 +487,27 @@ test('road and bridge construction shortens relevant grand-campaign travel',()=>
  const edge={sea:false,distance:350,river:true},destination={terrain:'plain',buildings:[]},origin={buildings:[]};
  const baseline=edgeMonths(edge,destination,origin);origin.buildings.push('road');assert.equal(edgeMonths(edge,destination,origin),baseline-1);
  origin.buildings.push('bridge');assert.equal(edgeMonths(edge,destination,origin),baseline-2);
+});
+test('field-march coordination changes paid, active land orders but not known-only or sea orders',()=>{
+ const s=newGame('caesar'),d=development(s,'caesar'),idea=IDEAS.find(x=>x.id==='field-march-coordination');
+ assert.deepEqual(idea.prerequisites,['legion-training']);
+ assert.equal(researchInnovation(s,'caesar','idea',idea.id).ok,false,'the prerequisite matters');
+ const baseline=previewMarch(s,'xiii','narbo').months;
+ assert.equal(baseline,2);
+ d.knownIdeas.push('legion-training',idea.id);
+ assert.equal(previewMarch(s,'xiii','narbo').months,baseline,'knowing the idea is not adopting it');
+ const upkeep=nationalBudget(s,'caesar').ideaUpkeep;
+ d.slots.military[0]=idea.id;
+ assert.equal(previewMarch(s,'xiii','narbo').months,baseline-1);
+ assert.equal(nationalBudget(s,'caesar').ideaUpkeep,upkeep+3);
+ assert.equal(edgeMonths({sea:true,distance:300},{terrain:'plain',buildings:[]},null,1),edgeMonths({sea:true,distance:300},{terrain:'plain',buildings:[]}));
+ assert.equal(moveArmy(s,'xiii','narbo').ok,true);
+ assert.equal(s.armies.find(a=>a.id==='xiii').move.remaining,1);
+ const grand=newGrandGame('caesar'),legion=grand.armies.find(a=>a.id==='xiii'),war=(state,a,b)=>state.wars.some(w=>w.includes(a)&&w.includes(b));
+ const before=grandRoute(grand,legion,'t024',war).months;
+ const gd=development(grand,'caesar');gd.knownIdeas.push('legion-training',idea.id);gd.slots.military[0]=idea.id;
+ assert.equal(grandRoute(grand,legion,'t024',war).months,before-1);
+ assert.equal(grandRoute(upgradeSave(JSON.parse(JSON.stringify(grand))),legion,'t024',war).months,before-1);
 });
 test('opposed five-idea development paths survive 36 months in the grand campaign',()=>{
  const plans={
