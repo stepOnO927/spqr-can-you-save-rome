@@ -105,6 +105,17 @@ test('outnumbered AI pays for a city garrison and keeps it in the captured theat
  assert.equal(upgradeSave(JSON.parse(JSON.stringify(s))).armies.find(a=>a.id===garrison.id).aiGarrisonRegion,'roma');
 });
 
+test('outnumbered AI reinforces the exposed front instead of the first map cell',()=>{
+ const s=newGrandGame('egypt'),caesar=s.factions.caesar;
+ s.month=4;caesar.treasury=80;caesar.food=100;
+ army(s,'xiii').men=5000;army(s,'viii').men=1000;
+ aiTurn(s,'caesar');
+ assert.deepEqual(army(s,'viii').reconPending,{kind:'reinforce',remaining:1,regionId:'narbo'});
+ assert.equal(army(s,'xiii').reconPending,undefined);
+ assert.equal(caesar.treasury,56,'the usual reinforcement cost must be paid');
+ assert.equal(upgradeSave(structuredClone(s)).armies.find(a=>a.id==='viii').reconPending?.kind,'reinforce');
+});
+
 test('cash-poor AI sends a nearby relief column to Rome without conjuring a levy',()=>{
  const s=newGrandGame('egypt'),main=army(s,'xiii'),relief=army(s,'viii');
  region(s,'roma').owner='caesar';region(s,'t014').owner='caesar';

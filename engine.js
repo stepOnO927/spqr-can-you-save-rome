@@ -602,7 +602,12 @@ export function aiTurn(s,owner){
   // political control and its own current force are enough to judge pressure.
   const stretched=s.grandMap&&outnumbered&&enemies.length>0&&fieldStrength<Math.max(6000,owned.length*350);
   if((emergency||s.month%4===0&&f.manpower>5500&&(f.treasury>65||stretched))&&f.treasury>=24&&f.manpower>=3000&&f.food>=6){
-    const border=owned.find(r=>adjacent(r.id,s).some(e=>isWar(s,owner,region(s,e.to).owner)));
+    const landFrontier=owned.filter(r=>adjacent(r.id,s).some(e=>!e.sea&&isWar(s,owner,region(s,e.to).owner)));
+    const frontier=landFrontier.length?landFrontier:owned.filter(r=>adjacent(r.id,s).some(e=>isWar(s,owner,region(s,e.to).owner)));
+    // When a smaller command has troops on one front but none on another,
+    // raise the next paid levy at the exposed front instead of always using
+    // the first map cell in data order.
+    const border=stretched?frontier.map(r=>({r,coverage:s.armies.filter(a=>a.owner===owner&&a.men>0&&region(s,a.region)?.macro===r.macro).reduce((n,a)=>n+a.men,0),pressure:adjacent(r.id,s).filter(e=>!e.sea&&isWar(s,owner,region(s,e.to).owner)).length})).sort((a,b)=>a.coverage-b.coverage||b.pressure-a.pressure||b.r.supply-a.r.supply)[0]?.r:frontier[0];
     const rally=emergency?owned.find(r=>r.port||r.terrain==='urban')||border||owned[0]:border;
     if(rally)raiseAt(rally.id);
   }

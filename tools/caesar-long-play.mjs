@@ -37,7 +37,7 @@ for(let month=1;month<48&&!s.achievementState.finalized;month++){
   if(legion.region==='roma'&&region(s,'roma').owner==='caesar'&&!s.armies.some(a=>a.owner==='caesar'&&a.id!==legion.id&&a.region==='roma')&&f.treasury>=24&&f.food>=9&&f.manpower>=3000)record('raise Roman garrison',recruit(s,'roma','caesar')?{ok:true}:{ok:false});
  }
  tick(s);
- if(month%6===5)snapshots.push({date:`${s.year}/${s.month}`,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,projectedNet:nationalBudget(s,'caesar').projectedNet,foodNet:nationalBudget(s,'caesar').foodNet,territories:s.regions.filter(r=>r.owner==='caesar').length,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0)});
+ if(month%6===5)snapshots.push({date:`${s.year}/${s.month}`,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,budget:nationalBudget(s,'caesar'),territories:s.regions.filter(r=>r.owner==='caesar').length,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0)});
  for(const b of s.battles||[])if(!seen.has(b.id)){
   seen.add(b.id);
   if(b.attacker.owner==='caesar'||b.defender.owner==='caesar'){
@@ -57,4 +57,4 @@ for(let month=1;month<48&&!s.achievementState.finalized;month++){
  if(!s.achievementState.finalized)assert.deepEqual(revealedAchievements(s),[]);
 }
 assert.ok(journal.some(x=>x.includes('scout')));
-console.log(JSON.stringify({date:`${s.year}/${s.month}`,result:s.achievementState.result||s.campaignOutcome?.winner||'ongoing',rome:region(s,'roma').owner,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),armies:s.armies.filter(a=>a.owner==='caesar').map(a=>({id:a.id,men:a.men,region:a.region,morale:a.morale})),battles:seen.size,snapshots,journal},null,2));
+console.log(JSON.stringify({date:`${s.year}/${s.month}`,result:s.achievementState.result||s.campaignOutcome?.winner||'ongoing',rome:region(s,'roma').owner,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),armies:s.armies.filter(a=>a.owner==='caesar').map(a=>({id:a.id,men:a.men,region:a.region,morale:a.morale})),fleets:s.naval.fleets.filter(f=>f.owner==='caesar').map(f=>({id:f.id,port:f.port,reserve:f.reserve,ships:f.ships,order:f.order?.kind})),battles:seen.size,snapshots,journal},null,2));
