@@ -14,6 +14,7 @@ import {advanceFocus,focusState} from './focus.js?v=han-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf,recruit,recruitQuote,neighbours} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
 import {ensureFieldCommanders} from './field-identities.js';
+import {ensureForeignRulers,advanceForeignRulers} from './rulers.js';
 
 export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
 export const SCENARIOS={
@@ -77,6 +78,7 @@ export function newHanGame(player='han',{scenario='historical',difficulty='stand
  for(const f of Object.values(EURASIAN_FACTIONS)){const r=s.regions.find(x=>x.owner===f.id);if(!r||s.armies.some(a=>a.owner===f.id))continue;const t=PRESETS[['parthian','yuezhi','saka','sogdian'].includes(f.culture)?'kangju_host':'town'];s.armies.push({id:`a${s.armies.length+1}`,owner:f.id,region:r.id,men:f.id==='parthia'?7000:Math.min(3200,Math.max(600,Math.floor(s.factions[f.id].manpower/4))),morale:65,training:45,supply:90,template:{id:t.id,name:t.name,mix:{...t.mix}},commander:null,move:null})}
  s.nextArmy=s.armies.length+1;
  s.rulers=Object.fromEntries(EURASIAN_RULERS.map(p=>[p.faction,{...p,attested:true}]));
+ ensureForeignRulers(s);
  initDependencies(s);
  // relations at the start of 49 BCE
  const R=(a,b,v)=>setRelation(s,a,b,v);
@@ -203,8 +205,8 @@ function sieges(s){
 // lives: deaths, vacated offices, the emperor's death and births
 function mortality(age,health=60){const base=age<30?0.0006:age<45?0.0015:age<55?0.003:age<65?0.006:age<75?0.012:0.025;return base*(1.6-health/100)}
 function lives(s){
- for(const p of Object.values(s.persons).filter(p=>p.alive&&p.birth!=null&&!p.scheduledDeath)){
-  const age=yearsBetween(p.birth,s.year);
+ for(const p of Object.values(s.persons).filter(p=>p.alive&&(p.birth!=null||p.simulatedAge!=null)&&!p.scheduledDeath)){
+  const age=p.birth!=null?yearsBetween(p.birth,s.year):p.simulatedAge+s.year-p.ageBaseYear;
   if(roll(s,'death'+p.id)<mortality(age,p.health??60)){
    p.alive=false;p.death=s.year;p.deathMonth=s.month;
    if(p.office&&s.court){s.court.offices[p.office]=null;p.office=null}
@@ -280,7 +282,7 @@ function regionalAI(s){
 export function tick(s){
  if(s.finalized)return s;
  advanceDate(s);
- scheduledEvents(s);movement(s);battles(s);sieges(s);supply(s);economy(s);lives(s);
+ scheduledEvents(s);movement(s);battles(s);sieges(s);supply(s);economy(s);lives(s);advanceForeignRulers(s);
  hanAI(s);advanceCourt(s);
  advanceFrontier(s,{issueMove:(a,to)=>moveArmy(s,a.id,to,{owner:a.owner})});
  advanceEasternMarkets(s);advanceSilk(s);advanceDependencies(s);advanceFocus(s);ensureFieldCommanders(s);
@@ -302,6 +304,7 @@ export function loadHanSave(raw){
  for(const r of REGIONS)if(!s.regions.some(x=>x.id===r.id))s.regions.push({...r,siege:null,unrest:0});
  for(const [id,f] of Object.entries(FACTIONS))if(!f.dynamic&&!s.factions[id])s.factions[id]={id,treasury:20,grain:30,manpower:6000,horses:3000,stability:55};
  s.rulers||=Object.fromEntries(EURASIAN_RULERS.map(p=>[p.faction,{...p,attested:true}]));
+ ensureForeignRulers(s);
  initDependencies(s);
  // Older saves did not date opening appointments. Begin the observation clock
  // at load instead of exposing a guessed historical tenure or private skill.

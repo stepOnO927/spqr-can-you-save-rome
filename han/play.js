@@ -6,6 +6,7 @@ import {changeDependency,dependencyOf} from './dependencies.js';
 import {declareWar,propose,atWar} from './frontier.js';
 import {marketReasonName,renderEasternMarketPanel} from './market-ui.js?v=faces-of-empire-1';
 import {renderHanCourtPanel} from './court-ui.js?v=faces-of-empire-4';
+import {ownRulerHtml} from './ruler-ui.js';
 import {appoint,startAudit,respondToDisaster} from './court.js?v=han-1';
 const $=id=>document.getElementById(id),D=(en,zh)=>lang?zh:en,L=a=>Array.isArray(a)?a[lang]||a[0]:a;
 let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,camera='all',mode='political',marketOpen=false,courtOpen=false,selectedCourt='shi-gao';
@@ -25,7 +26,7 @@ function render(){
  $('setup').innerHTML=s?`<p class="muted">${D('All polities share one simulated campaign. Regional centers are approximate, not precise borders.','所有政体共用同一战役模拟。政体中心为概略位置，不代表精确国界。')}</p>`:`<p>${D('49 BCE. Emperor Xuan rules Han. Choose a kingdom, confederation, client or oasis state.','公元前49年，汉宣帝在位。选择王国、联盟、属邦或绿洲政体。')}</p><select id="factionSelect">${PLAYABLE.map(id=>`<option value="${esc(id)}">${esc(L(FACTIONS[id].name))}</option>`).join('')}</select><button id="begin">${D('Begin campaign','开始战役')}</button>`;
  if(!s){$('begin').onclick=()=>begin($('factionSelect').value);$('map').innerHTML='';$('overview').innerHTML='';$('inspector').innerHTML='';$('chronicle').innerHTML='';return}
  const f=s.factions[s.player],owned=s.regions.filter(r=>r.owner===s.player),mine=s.armies.filter(a=>a.owner===s.player&&a.men>0);
- $('overview').innerHTML=`<h3>${D('Realm','国势')}</h3><dl><dt>${D('Treasury','国库')}</dt><dd>${f.treasury}</dd><dt>${D('Grain','粮食')}</dt><dd>${f.grain}</dd><dt>${D('Manpower','兵源')}</dt><dd>${f.manpower}</dd><dt>${D('Stability','稳定')}</dt><dd>${f.stability}</dd><dt>${D('Regions','领地')}</dt><dd>${owned.length}</dd><dt>${D('Armies','军队')}</dt><dd>${mine.length}</dd><dt>${D('Known ruler','可考君主')}</dt><dd>${esc(L(s.rulers?.[s.player]?.name)||D('Uncertain','未详'))}</dd></dl><h3>${D('Your armies','麾下军队')}</h3>${mine.map(a=>`<div class="list"><button data-select-army="${esc(a.id)}">${esc(a.id)} · ${esc(L(s.regions.find(r=>r.id===a.region)?.name))} · ${a.men}</button></div>`).join('')||D('No armies remain.','已无军队。')}`;
+ $('overview').innerHTML=`<h3>${D('Realm','国势')}</h3><dl><dt>${D('Treasury','国库')}</dt><dd>${f.treasury}</dd><dt>${D('Grain','粮食')}</dt><dd>${f.grain}</dd><dt>${D('Manpower','兵源')}</dt><dd>${f.manpower}</dd><dt>${D('Stability','稳定')}</dt><dd>${f.stability}</dd><dt>${D('Regions','领地')}</dt><dd>${owned.length}</dd><dt>${D('Armies','军队')}</dt><dd>${mine.length}</dd></dl>${ownRulerHtml(s,lang)}<h3>${D('Your armies','麾下军队')}</h3>${mine.map(a=>`<div class="list"><button data-select-army="${esc(a.id)}">${esc(a.id)} · ${esc(L(s.regions.find(r=>r.id===a.region)?.name))} · ${a.men}</button></div>`).join('')||D('No armies remain.','已无军队。')}`;
  $('overview').querySelectorAll('[data-select-army]').forEach(b=>b.onclick=()=>{army=b.dataset.selectArmy;selected=s.armies.find(a=>a.id===army)?.region;marketOpen=false;courtOpen=false;render()});
  const colors=Object.fromEntries(Object.values(FACTIONS).map(f=>[f.id,f.color]));
  const targets=new Set(army?neighbours(s.armies.find(a=>a.id===army)?.region||'').map(x=>typeof x==='string'?x:x.id):[]);

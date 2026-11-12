@@ -131,6 +131,18 @@ test verifies that the chosen faction loses influence across save/load.
 The minister dossier also shows approximate age from the saved birth record,
 only named relatives already present in the genealogy, and the current
 office's actual responsibility. It avoids inventing unknown family ties.
+The direct Han campaign now links foreign sovereign records to persistent
+people. The attested opening Parthian, Armenian and Commagene names stay
+historical; unnamed Kangju and oasis kings retain title-only opening records.
+When a ruler dies, a faction-aware original successor takes office, with a
+saved identity, portrait seed, appropriate title, predecessor or valid parent
+link, stability cost and Chronicle entry. Military AI uses the reigning
+ruler's judgment when evaluating *dated observed* enemy strength. The own
+realm overview shows the current ruler, portrait and provenance in both
+languages, and older saves gain missing links without overwriting a recorded
+ruler. Targeted tests cover Parthia, Armenia, Wusun, Kangju and Shanshan,
+plus save restoration and a Kangju browser succession. The Roman campaign's
+separate succession model still needs the full cross-campaign acceptance run.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,

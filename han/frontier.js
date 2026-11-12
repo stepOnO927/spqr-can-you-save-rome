@@ -11,6 +11,7 @@
 import {OASIS,STEPPE,FACTIONS,PLAYABLE} from './data.js?v=han-1';
 import {neighbours,templateStats,routeBetween,marchMonths} from './military.js?v=han-1';
 import {roll,clamp,log,monthIndex} from './util.js?v=han-1';
+import {rulerMilitaryJudgment} from './rulers.js';
 
 const key=(a,b)=>[a,b].sort().join(':');
 export const relation=(s,a,b)=>a===b?100:(s.relations[key(a,b)]??0);
@@ -150,7 +151,7 @@ function steppeDecides(s,f){
  const r=roll(s,'steppe'+f);
  if(f==='huhanye'){
   // a dependent ally: needs grain; may ask Han for aid, may drift if neglected
-  if(s.factions.huhanye.grain<30&&r<0.2&&!s.pendingRequests.some(x=>x.from==='huhanye')){s.pendingRequests.push({id:s.nextProposal=(s.nextProposal||1)+1,from:'huhanye',to:'han',kind:'grain_aid',amount:40,deadline:3});log(s,['Huhanye asks the Han court for grain for his people.','呼韩邪请汉廷赐粮赈其部众。'],{faction:'huhanye',kind:'diplomacy'})}
+  if(s.factions.huhanye.grain<30&&r<0.2&&!s.pendingRequests.some(x=>x.from==='huhanye')){s.pendingRequests.push({id:s.nextProposal=(s.nextProposal||1)+1,from:'huhanye',to:'han',kind:'grain_aid',amount:40,deadline:3});const ruler=s.rulers?.huhanye?.name||['The allied chanyu','归附单于'];log(s,[`${ruler[0]} asks the Han court for grain.`,`${ruler[1]}请汉廷赐粮。`],{faction:'huhanye',kind:'diplomacy'})}
   if(relation(s,'huhanye','han')<20&&r<0.05)shiftRelation(s,'huhanye','zhizhi',5);
  }
  if(f==='zhizhi'){
@@ -193,7 +194,9 @@ export function aiMilitary(s,f,{issueMove}){
   const mine=a.men;
   const options=neighbours(a.region).map(n=>{const r=s.regions.find(x=>x.id===n),k=knownStrength(s,f,n);return {n,r,k}})
    .filter(o=>o.r.owner&&atWar(s,f,o.r.owner)&&o.k&&o.k.age<=6);
-  const target=options.filter(o=>o.k.men<mine*0.8).sort((x,y)=>x.k.men-y.k.men)[0];
+  // The reigning ruler's military judgment changes risk tolerance. Only
+  // dated observations in knownStrength may inform the target choice.
+  const target=options.filter(o=>o.k.men<mine*rulerMilitaryJudgment(s,f)).sort((x,y)=>x.k.men-y.k.men)[0];
   if(target)issueMove(a,target.n);
  }
 }
