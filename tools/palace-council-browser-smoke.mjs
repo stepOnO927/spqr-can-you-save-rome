@@ -1,0 +1,55 @@
+import {chromium} from 'playwright';
+import {readFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+const context=await browser.newContext({viewport:{width:390,height:844}});
+await context.route('https://**/*',route=>route.abort());
+await context.route('http://spqr.test/**',async route=>{
+ const url=new URL(route.request().url()),relative=url.pathname==='/legacy/'?'legacy/index.html':url.pathname.slice(1),target=path.resolve(root,relative);
+ if(!target.startsWith(root+path.sep)){await route.abort();return}
+ try{const body=await readFile(target),ext=path.extname(target),type={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml'}[ext]||'application/octet-stream';await route.fulfill({status:200,contentType:type,body})}catch{await route.fulfill({status:404,body:'Not found'})}
+});
+const page=await context.newPage(),errors=[];
+page.on('pageerror',error=>errors.push(error.message));
+await page.goto('http://spqr.test/legacy/',{waitUntil:'domcontentloaded'});
+await page.locator('.city-building').first().waitFor();
+await page.evaluate(()=>{const key='spqr-legacy-profile-v1',p=JSON.parse(localStorage.getItem(key)||'null')||{coins:2000};p.coins=2000;localStorage.setItem(key,JSON.stringify(p));localStorage.setItem('spqr-lang','zh')});
+await page.reload();
+await page.locator('#nav-shop').click();await page.locator('[data-buy="palace"]').click();
+await page.locator('#nav-city').click();await page.locator('[data-building="palace"]').click();
+assert.match(await page.locator('.palace-council').innerText(),/继承议事会/);
+await page.locator('[data-council="convene"][data-audience="provinces"]').click();
+assert.match(await page.locator('.palace-council').innerText(),/行省代表/);
+await page.locator('#nav-lang').click();
+assert.match(await page.locator('.palace-council').innerText(),/Provincial delegation/);
+await page.locator('[data-council="draft"][data-charter="election"]').click();
+assert.match(await page.locator('.palace-council').innerText(),/Elect a magistrate/);
+await page.reload();await page.locator('[data-building="palace"]').click();
+assert.equal(await page.locator('[data-council="draft"]').count(),0);
+await page.locator('[data-council="settle"][data-response="oversight"]').click();
+assert.match(await page.locator('.palace-council').innerText(),/Council record sealed/);
+const settled=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')));
+assert.equal(settled.palaceCouncils[0].status,'settled');
+assert.equal(settled.palaceCouncils[0].coinsClaimed,60);
+assert.equal(settled.politics.senate,57);
+assert.ok(await page.evaluate(()=>document.querySelector('.palace-council').getBoundingClientRect().top>=document.querySelector('.hub-header').getBoundingClientRect().bottom),'the council card should stay below the sticky mobile header');
+await page.screenshot({path:path.join(root,'outputs','legacy-palace-council-mobile.png')});
+assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+await page.locator('#nav-shop').click();await page.locator('[data-buy="museum"]').click();await page.locator('#nav-museum').click();
+assert.match(await page.locator('.museum-grid').innerText(),/Succession council charter/);
+const coins=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins);
+await page.reload();await page.locator('[data-building="palace"]').click();
+assert.equal(await page.locator('[data-council]').count(),0);
+assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins),coins);
+await page.locator('#nav-lang').click();
+assert.match(await page.locator('.palace-council').innerText(),/议事记录已封存/);
+await page.setViewportSize({width:1440,height:900});
+await page.screenshot({path:path.join(root,'outputs','legacy-palace-council-desktop.png')});
+assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+assert.deepEqual(errors,[]);
+await browser.close();
+console.log('Palace council persists across language changes, reloads and the museum on mobile.');
