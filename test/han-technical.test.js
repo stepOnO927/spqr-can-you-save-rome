@@ -33,6 +33,9 @@ test('32. existing saves are preserved; saves with the expansion re-validate the
  const raw=JSON.parse(JSON.stringify(s));raw.world.hanWorld.state.throne.orthodox='fictional-pang-chong';
  const l=upgradeSave(raw);assert.notEqual(hanWorld(l).state.throne.orthodox,'fictional-pang-chong');
  assert.ok(!hanWorld(l).state.throne.orthodox||isLiuClan(hanWorld(l).state,hanWorld(l).state.throne.orthodox));
+ delete raw.world.hanWorld.state.tradeMarkets;
+ const old=upgradeSave(raw);romanTick(old);
+ assert.equal(hanWorld(old).state.tradeMarkets.embeddedRoman,true,'old attached worlds migrate without starting a second autonomous market');
 });
 
 test('33. the Han world shares the Roman calendar and its 49 BCE history',()=>{

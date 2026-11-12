@@ -23,8 +23,8 @@ export const hanWorld=s=>s.world?.[DLC_KEY]||null;
 export function attachHanWorld(s,{seed=null}={}){
  if(hanWorld(s))return hanWorld(s);
  const state=newHanGame(null,{start:'roman',seed:seed??((s.seed||Date.now())%2147483647)});
- // Roman campaigns run their physical trade ledger at the campaign level.
- // Avoid advancing a second independent market inside the attached Han NPC.
+ // Roman campaigns run autonomous trade at campaign level. The attached Han
+ // market only settles its narrative westward caravans and local production.
  state.tradeMarkets.embeddedRoman=true;
  state.year=s.year;state.month=s.month;
  // An old merchant account already circulating in the eastern ports (51 BCE).
@@ -41,7 +41,7 @@ function snapshotOf(h){const e=h.throne.orthodox||h.throne.occupant;return {year
 export function advanceHanWorld(s){
  const w=hanWorld(s);if(!w)return;
  const h=w.state,before=h.log.length?h.log[h.log.length-1]:null;
- if(h.tradeMarkets)h.tradeMarkets.embeddedRoman=true;
+ (h.tradeMarkets||={}).embeddedRoman=true;
  const startIndex=h.log.length;
  h.year=s.year;h.month=s.month;h.month--;if(h.month<1){h.month=12;h.year--}
  hanTick(h); // advances to the Roman date

@@ -283,7 +283,7 @@ export function tick(s){
  scheduledEvents(s);movement(s);battles(s);sieges(s);supply(s);economy(s);lives(s);
  hanAI(s);advanceCourt(s);
  advanceFrontier(s,{issueMove:(a,to)=>moveArmy(s,a.id,to,{owner:a.owner})});
- advanceSilk(s);if(!s.tradeMarkets?.embeddedRoman)advanceEasternMarkets(s);advanceDependencies(s);advanceFocus(s);ensureFieldCommanders(s);
+ advanceEasternMarkets(s);advanceSilk(s);advanceDependencies(s);advanceFocus(s);ensureFieldCommanders(s);
  if(s.throne.dynasty&&!s.throne.dynasty.orthodox)s.usurperMonths=(s.usurperMonths||0)+1;
  if(s.throne.orthodox&&s.throne.dynasty?.orthodox)s.orthodoxMonths=(s.orthodoxMonths||0)+1;
  if(!s.wars.length)s.peaceMonths=(s.peaceMonths||0)+1;else s.peaceMonths=0;

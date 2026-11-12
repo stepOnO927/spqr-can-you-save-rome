@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=han-1';
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=han-1';
 import {advanceEasternMarkets,placeEasternTrade,quoteEasternTrade} from '../han/markets.js?v=faces-of-empire-1';
+import {advanceSilk} from '../han/silk-road.js?v=han-1';
+import {roll} from '../han/util.js?v=han-1';
 
 const next=s=>{if(++s.month>12){s.month=1;s.year++}advanceEasternMarkets(s)};
 
@@ -69,9 +71,66 @@ test('120 autonomous market months conserve goods and money through save reload'
   const production=items.reduce((n,x)=>n+x.production*120,0);
   const consumed=items.reduce((n,x)=>n+x.consumed,0);
   const discarded=items.reduce((n,x)=>n+x.surplusDiscarded,0);
-  assert.equal(quantity(good)+consumed+discarded,initial[good]+production,`${good} was created or lost`);
+  assert.equal(quantity(good)+consumed+discarded+(s.tradeMarkets.lostGoods[good]||0),initial[good]+production,`${good} was created or lost`);
  }
  assert.equal(cash(),initialCash,'market payments must balance');
  assert.ok(s.tradeMarkets.transactions.length>0);
  assert.ok(s.tradeMarkets.shipments.every(x=>!['traveling','blocked'].includes(x.status)||x.escrow>0));
+});
+
+test('the far-west caravan reserves real silk and a finite buyer budget',()=>{
+ let s=newHanGame('han',{seed:38});s.month=2;s.tradeMarkets.embeddedRoman=true;
+ const request={seller:'han',buyer:'external',origin:'changan',destination:'mediterranean_gate',commodity:'silk',quantity:1};
+ const quote=quoteEasternTrade(s,request);assert.equal(quote.ok,true);
+ s.tradeMarkets.externalTreasury=quote.total;
+ const source=s.tradeMarkets.regions.changan.goods.silk,destination=s.tradeMarkets.regions.mediterranean_gate.goods.silk;
+ const initialStock=source.stock,initialDestination=destination.stock,initialHan=s.factions.han.treasury;
+ const cash=()=>Object.values(s.factions).reduce((sum,f)=>sum+f.treasury,0)+s.tradeMarkets.externalTreasury+s.tradeMarkets.shipments.reduce((sum,x)=>sum+x.escrow,0)+Object.values(s.tradeMarkets.merchants).flat().reduce((sum,id)=>sum+(s.persons[id]?.wealth||0),0)+s.tradeMarkets.transportSpent;
+ const initialCash=cash();advanceSilk(s);
+ const caravan=s.silk.caravans.find(c=>c.shipmentId),shipment=s.tradeMarkets.shipments.find(x=>x.id===caravan?.shipmentId);
+ assert.ok(caravan);assert.ok(s.persons[caravan.merchantId]);assert.equal(source.stock,initialStock-1);
+ assert.equal(s.tradeMarkets.externalTreasury,0);assert.equal(s.factions.han.treasury,initialHan);assert.equal(cash(),initialCash);
+ source.production=0;source.consumption=0;
+ s=loadHanSave(serialize(s));
+ for(let i=0;i<quote.months+2;i++){next(s);advanceSilk(s)}
+ const delivered=s.tradeMarkets.shipments.find(x=>x.id===shipment.id),arrival=s.silk.caravans.find(x=>x.shipmentId===shipment.id);
+ assert.equal(delivered.status,'delivered');assert.equal(arrival.status,'arrived');
+ assert.equal(s.tradeMarkets.regions.mediterranean_gate.goods.silk.stock,initialDestination+1);
+ assert.equal(s.factions.han.treasury,initialHan+quote.price);
+ assert.equal(s.silk.farWestDeliveries,1);assert.equal(s.silk.income.han,quote.price);
+ assert.equal(cash(),initialCash);
+ assert.equal(s.tradeMarkets.transactions.filter(x=>x.shipment===shipment.id).length,1);
+});
+
+test('bandit risk consumes real cargo while route security can protect it',()=>{
+ const s=newHanGame('han',{seed:1});s.tradeMarkets.embeddedRoman=true;
+ const request={seller:'han',buyer:'external',origin:'changan',destination:'mediterranean_gate',commodity:'silk',quantity:1};
+ const placed=placeEasternTrade(s,request);assert.equal(placed.ok,true);
+ const shipment=placed.shipment,nextRegion=s.regions.find(r=>r.id===shipment.legs[0].to);
+ nextRegion.unrest=1;nextRegion.fort=0;for(const army of s.armies.filter(a=>a.region===nextRegion.id))army.men=0;
+ s.month++;shipment.remaining=1;
+ let selected=null;for(let seed=1;seed<10000;seed++){s.seed=seed;if(roll(s,`market-bandit:${shipment.id}:${nextRegion.id}`)<.08){selected=seed;break}}
+ assert.ok(selected);
+ const protectedState=loadHanSave(serialize(s));protectedState.silk.security=10;
+ advanceEasternMarkets(protectedState);assert.equal(protectedState.tradeMarkets.shipments[0].status,'traveling');
+ const externalBefore=s.tradeMarkets.externalTreasury,hanBefore=s.factions.han.treasury;
+ advanceEasternMarkets(s);
+ assert.equal(shipment.status,'lost');assert.equal(shipment.escrow,0);
+ assert.equal(s.tradeMarkets.lostGoods.silk,1);assert.equal(s.tradeMarkets.externalTreasury,externalBefore+shipment.price+shipment.tariffs.reduce((n,t)=>n+t.amount,0));
+ assert.equal(s.factions.han.treasury,hanBefore);
+ assert.equal(s.tradeMarkets.transportSpent+s.tradeMarkets.merchantFees,shipment.transport);
+});
+
+test('a legacy caravan without prepaid goods carries reports without minting money or horses',()=>{
+ const s=newHanGame('han',{seed:6});s.month=1;
+ s.silk.caravans.push({id:777,path:['changan','kangju'],pos:1,wait:0,goods:['silk','lacquer','iron'],value:27,start:s.year*12+s.month,tolls:0,status:'travelling'});
+ const treasury=s.factions.han.treasury,horses=s.factions.han.horses,deliveries=s.silk.farWestDeliveries||0;
+ advanceSilk(s);
+ assert.equal(s.silk.caravans.find(c=>c.id===777).status,'arrived');
+ assert.equal(s.factions.han.treasury,treasury);assert.equal(s.factions.han.horses,horses);
+ assert.equal(s.silk.farWestDeliveries||0,deliveries);
+ s.silk.caravans.push({id:778,path:['changan','mediterranean_gate'],pos:1,wait:0,goods:['silk'],value:18,start:s.year*12+s.month,tolls:0,status:'travelling'});
+ advanceSilk(s);assert.equal(s.silk.caravans.find(c=>c.id===778).status,'arrived');
+ assert.equal(s.silk.farWestDeliveries||0,deliveries);
+ assert.equal(s.factions.han.treasury,treasury);
 });
