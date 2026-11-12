@@ -28,9 +28,10 @@ function render(){
  if(s.finalized){
   const why=s.finalized.reason==='army_collapse'?D('Six wartime months passed without a field army.','交战期间连续六个月没有野战军。'):s.finalized.reason==='exile'?D('The realm could not regain a home after a year in exile.','失去领地一年后仍未能复国。'):D('No territory or field army remains.','已无领地及野战军。');
   const elapsed=Math.max(0,s.finalized.year*12+s.finalized.month-(s.stats?.startMonth||s.finalized.year*12+s.finalized.month));
-  $('overview').innerHTML=`<section class="campaign-defeat" role="status"><h3>${D('Campaign lost','战役失败')}</h3><p>${why}</p><p>${D(`${elapsed} months played · ${s.finalized.regions} regions · ${s.finalized.armies} armies remained.`,`历经${elapsed}个月 · 剩余领地${s.finalized.regions}处 · 军队${s.finalized.armies}支。`)}</p><p class="muted">${D('The campaign is finished. Save it to keep this record, or return to the campaign menu to begin again.','战役已结算。可保存此记录，或返回战役菜单重新开始。')}</p></section>`;
+  $('overview').innerHTML=`<section class="campaign-defeat" role="status"><h3>${D('Campaign lost','战役失败')}</h3><p>${why}</p><p>${D(`${elapsed} months played · ${s.finalized.regions} regions · ${s.finalized.armies} armies remained.`,`历经${elapsed}个月 · 剩余领地${s.finalized.regions}处 · 军队${s.finalized.armies}支。`)}</p><p class="muted">${D('The campaign is finished. Save it to keep this record, or start a new campaign.','战役已结算。可保存此记录，或开始新战役。')}</p><button id="restart" class="action">${D('New campaign','新战役')}</button></section>`;
   $('inspector').innerHTML=`<h2>${D('Campaign summary','战役总结')}</h2><p>${why}</p>`;
   $('map').innerHTML=drawMap(s,{lang,selected:null,selectedArmy:null,visibleArmy:a=>a.owner===s.player,colors:Object.fromEntries(Object.values(FACTIONS).map(f=>[f.id,f.color])),targets:new Set(),camera,mode,silkPath:s.silk?.lastPath});
+  $('restart').onclick=()=>{s=null;selected=null;army=null;marketOpen=false;courtOpen=false;render();message('Choose a polity to begin.','请选择政体开始。')};
   renderChronicle();return;
  }
  const f=s.factions[s.player],owned=s.regions.filter(r=>r.owner===s.player),mine=s.armies.filter(a=>a.owner===s.player&&a.men>0);

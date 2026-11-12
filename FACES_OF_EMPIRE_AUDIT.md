@@ -157,6 +157,7 @@ field army remain, after six wartime months without a field army, or after a
 year of territorial exile without recovery. The final state stores the
 reason, date and remaining forces; the playable screen shows a bilingual
 summary and stops month advancement. Peace without armies remains recoverable.
+The finished screen offers a new campaign without deleting the saved record.
 An actual siege loss records a recent territory alert in the realm overview.
 Unit and Chromium tests cover defeat, save/load, a frozen date and the
 bilingual alert. The embedded NPC eastern simulation does not self-finalize.
