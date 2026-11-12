@@ -1,5 +1,5 @@
 import {officeEffects} from './office-system.js';
-import {activeEffects,localBuildingEffects,taxReviewExpense} from './development.js?v=26';
+import {activeEffects,localBuildingEffects,taxReviewExpense} from './development.js?v=27';
 import {fleetUpkeepDue} from './naval.js';
 import {productiveEstateRegion} from './local-society.js?v=4';
 

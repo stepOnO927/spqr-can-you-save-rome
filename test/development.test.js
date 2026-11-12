@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,purchaseMaterials} from '../engine.js';
+import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,diplomacy,royalCourtCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,purchaseMaterials} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan} from '../development.js';
 import {developmentPanel,ideasPanel} from '../development-ui.js';
 import {edgeMonths} from '../grand-operations.js';
@@ -41,7 +41,7 @@ test('monthly budget records paid construction and research orders without doubl
 
 test('every development node has its own interpretive illustration',()=>{
  const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
- assert.equal(art.length,68);assert.equal(new Set(art).size,68);
+ assert.equal(art.length,69);assert.equal(new Set(art).size,69);
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
@@ -134,9 +134,36 @@ test('provincial tax review costs upkeep and only softens high-tax pressure wher
  assert.equal(upgradeSave(JSON.parse(JSON.stringify(active))).development.senate.slots.government[0],idea.id);
 });
 
+test('royal court liaison helps paid alliances with kingdoms only after adoption and survives reload',()=>{
+ const idea=IDEAS.find(x=>x.id==='royal-court-liaison');
+ assert.match(idea.source.url,/adfam15\.html/);
+ assert.match(developmentPanel(newGame('senate'),'en','idea'),/Royal Court Liaison/);
+ assert.match(developmentPanel(newGame('senate'),'zh','idea'),/王廷联络/);
+ assert.match(developmentPanel(newGame('senate'),'en','idea'),/Alliance credit with independent kingdoms \+8/);
+ const s=newGame('senate');s.wars=[];s.alliances=[];s.factions.senate.treasury=500;
+ s.relations['galatia:senate']=22;s.relations['caesar:senate']=22;
+ const d=development(s,'senate');d.knownIdeas.push(idea.id);
+ assert.equal(royalCourtCredit(s,'senate','galatia'),0,'research alone gives no diplomatic credit');
+ assert.equal(diplomacy(s,'senate','galatia','alliance'),false);
+ assert.equal(adoptIdea(s,'senate',idea.id,0).ok,true);
+ assert.equal(royalCourtCredit(s,'senate','galatia'),0,'the transition must finish first');
+ months(s,2);
+ assert.equal(d.slots.diplomacy[0],idea.id);
+ assert.equal(royalCourtCredit(s,'senate','galatia'),8);
+ assert.equal(royalCourtCredit(s,'senate','caesar'),0);
+ assert.equal(nationalBudget(s,'senate').ideaUpkeep>=3,true);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(royalCourtCredit(restored,'senate','galatia'),8);
+ restored.wars=[];restored.alliances=[];restored.relations['galatia:senate']=22;restored.relations['caesar:senate']=22;
+ assert.equal(diplomacy(restored,'senate','caesar','alliance'),false,'Roman factions do not receive royal-court credit');
+ assert.equal(diplomacy(restored,'senate','galatia','alliance'),true);
+ const atWar=upgradeSave(JSON.parse(JSON.stringify(s)));atWar.wars.push(['senate','galatia']);
+ assert.equal(diplomacy(atWar,'senate','galatia','alliance'),false,'the idea cannot override war');
+});
+
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,34);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,35);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
