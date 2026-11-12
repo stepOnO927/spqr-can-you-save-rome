@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=calendar-1';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=born-portraits-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=newborn-age-1';
 import {assignSuccession,successionModel} from '../characters.js?v=newborn-age-1';
-import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=newborn-age-1';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=newborn-age-1';
-import {canHoldOffice} from '../office-system.js?v=newborn-age-1';
-import {renderGenealogy} from '../genealogy-ui.js?v=newborn-age-1';
-import {finalizeCampaign} from '../legacy.js?v=calendar-1';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=born-portraits-1';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=born-portraits-1';
+import {canHoldOffice} from '../office-system.js?v=born-portraits-1';
+import {renderGenealogy} from '../genealogy-ui.js?v=born-portraits-1';
+import {finalizeCampaign} from '../legacy.js?v=born-portraits-1';
 import {startDynasticWar} from '../civil-war.js?v=newborn-age-1';
-import {fictionalPortraitKey} from '../portrait-registry.js?v=civic-portraits-1';
+import {fictionalPortraitKey} from '../portrait-registry.js?v=born-portraits-1';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 
@@ -234,7 +234,7 @@ test('opening fictional portraits stay distinct and are not assigned to a reused
  const portrait=(html,id)=>html.match(new RegExp('data-gene-person="'+id+'"[^>]*><img src="([^"]+)"'))?.[1];
  for(const [side,expected] of [['caesar',['fictional-varenus','fictional-livia']],['senate',['fictional-cassianus','fictional-valeria']]]){
   const s=newGame(side),html=renderGenealogy(s,false),ids=side==='caesar'?['fictional:1','fictional:2']:['fictional:3','fictional:4'];
-  assert.ok(portrait(html,ids[0]).includes(expected[0]));assert.ok(portrait(html,ids[1]).includes(expected[1]));assert.notEqual(portrait(html,ids[0]),portrait(html,ids[1]));assert.match(html,/game artwork and do not age/);
+  assert.ok(portrait(html,ids[0]).includes(expected[0]));assert.ok(portrait(html,ids[1]).includes(expected[1]));assert.notEqual(portrait(html,ids[0]),portrait(html,ids[1]));assert.match(html,/childhood and adult images/);
   const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(portrait(renderGenealogy(restored,false),ids[0]),portrait(html,ids[0]));
   restored.world.dynasties.catalog[ids[0]].name=['A different person','另一人'];assert.match(portrait(renderGenealogy(restored,false),ids[0]),/^data:image\/svg\+xml/);
  }

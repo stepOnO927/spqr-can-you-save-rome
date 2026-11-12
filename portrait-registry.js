@@ -27,8 +27,26 @@ const INSTITUTION_PORTRAITS=[
  ['scenario_civic',0,'Gaius Sennius',-85,'fictional-sennius'],
  ['scenario_civic',1,'Mara',-85,'fictional-mara']
 ];
+// Each pair is one fictional person at two life stages. Claims belong to a
+// save, are never recycled after death, and do not consume simulation RNG.
+const BORN_PORTRAITS={male:['born-m1','born-m2'],female:['born-f1','born-f2']};
+export function assignBornPortrait(state,id){
+ const d=state.world?.dynasties,c=state.world?.characters?.[id],saved=d?.catalog?.[id];
+ if(!d||!c||!saved?.fictional||!Array.isArray(saved.name)||!saved.name[0]||!['caesar','senate'].includes(state.player)||c.faction!==state.player||c.institutionalOnly||!BORN_PORTRAITS[c.sex]||!Number.isInteger(c.birthYear)||c.birthYear< -49||c.birthYear>state.year||!Array.isArray(c.parents)||!c.parents.length||!c.parents.every(parent=>state.world.characters[parent]))return null;
+ d.bornPortraitClaims||={};if(d.bornPortraitClaims[id])return null;
+ const used=new Set(Object.values(d.bornPortraitClaims).map(claim=>claim?.key));
+ const key=BORN_PORTRAITS[c.sex].find(candidate=>!used.has(candidate));if(!key)return null;
+ d.bornPortraitClaims[id]={key,name:[...saved.name],birthYear:c.birthYear,sex:c.sex,parents:[...c.parents]};return key;
+}
+function bornPortraitKey(state,id){
+ const claim=state.world?.dynasties?.bornPortraitClaims?.[id],c=state.world?.characters?.[id],saved=state.world?.dynasties?.catalog?.[id];
+ if(!claim||!c||!saved?.fictional||!BORN_PORTRAITS[claim.sex]?.includes(claim.key)||c.sex!==claim.sex||c.birthYear!==claim.birthYear||!Array.isArray(claim.name)||claim.name[0]!==saved.name?.[0]||claim.name[1]!==saved.name?.[1]||!Array.isArray(claim.parents)||!Array.isArray(c.parents)||JSON.stringify(claim.parents)!==JSON.stringify(c.parents))return null;
+ const age=(c.alive?state.year:c.deathYear)-c.birthYear;if(!Number.isFinite(age)||age<5)return null;
+ return claim.key+(age<18?'-child':'-adult');
+}
 export function fictionalPortraitKey(state,id){
  const entry=OPENING_PORTRAITS[id],person=state.world?.characters?.[id],saved=state.world?.dynasties?.catalog?.[id];
+ const born=bornPortraitKey(state,id);if(born)return born;
  if(entry&&saved?.fictional&&saved.name?.[0]===entry[0]&&person?.birthYear===entry[1])return entry[2];
  if(state.scenario==='ambitious_general'&&state.scenarioGeneral===id&&saved?.fictional&&saved.name?.[0]==='Lucius Valerius Varus'&&person?.birthYear===-86)return 'fictional-varus';
  if(saved?.fictional&&person?.institutionalOnly){for(const [institution,seat,name,birth,key] of INSTITUTION_PORTRAITS){const office=state.world?.religiousInstitutions?.find(o=>o.id===institution);if(office?.council?.[seat]===id&&saved.name?.[0]===name&&person.birthYear===birth)return key}}
@@ -39,6 +57,6 @@ export function fictionalPortraitKey(state,id){
 // Foreign artwork becomes available only from this viewer's completed meeting
 // snapshot. It must not be recomputed from the person's current hidden state.
 export function observedFictionalPortrait(state,id){
- const allowed=new Set([...Object.values(OPENING_PORTRAITS).map(x=>x[2]),...Object.values(SCENARIO_PORTRAITS).map(x=>x[2]),...INSTITUTION_PORTRAITS.map(x=>x[4]),'fictional-varus']),now=state.year*12+state.month;
+ const allowed=new Set([...Object.values(OPENING_PORTRAITS).map(x=>x[2]),...Object.values(SCENARIO_PORTRAITS).map(x=>x[2]),...INSTITUTION_PORTRAITS.map(x=>x[4]),...Object.values(BORN_PORTRAITS).flatMap(keys=>keys.flatMap(key=>[key+'-child',key+'-adult'])),'fictional-varus']),now=state.year*12+state.month;
  return (state.meetings||[]).filter(m=>m.actor===state.player&&m.target===id&&m.status==='met'&&allowed.has(m.portraitKey)&&Number.isFinite(m.resolvedYear??m.year)&&Number.isFinite(m.resolvedMonth??m.month)&&(m.resolvedYear??m.year)*12+(m.resolvedMonth??m.month)<=now).sort((a,b)=>((b.resolvedYear??b.year)*12+(b.resolvedMonth??b.month))-((a.resolvedYear??a.year)*12+(a.resolvedMonth??a.month)))[0]?.portraitKey||null;
 }

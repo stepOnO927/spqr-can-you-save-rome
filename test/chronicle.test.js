@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine.js?v=calendar-1';
+import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine.js?v=born-portraits-1';
 import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports,syncChronicleDispatches} from '../chronicle.js?v=calendar-1';
 
 test('between-turn dispatches appear once with their original dates without importing unverified legacy entries',()=>{
@@ -9,9 +9,9 @@ test('between-turn dispatches appear once with their original dates without impo
  const messages=s.chronicle.entries.filter(e=>e.en==='An offer arrived.');assert.equal(messages.length,1);assert.equal(messages[0].month,2);assert.ok(!s.chronicle.entries.some(e=>e.en==='SECRET'));
  const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));syncChronicleDispatches(loaded);assert.equal(loaded.chronicle.entries.filter(e=>e.en==='An offer arrived.').length,1);
 });
-import {finalizeCampaign} from '../legacy.js?v=calendar-1';
-import {appointCommander} from '../command-appointments.js?v=newborn-age-1';
-import {planSuccession} from '../governance.js?v=newborn-age-1';
+import {finalizeCampaign} from '../legacy.js?v=born-portraits-1';
+import {appointCommander} from '../command-appointments.js?v=born-portraits-1';
+import {planSuccession} from '../governance.js?v=born-portraits-1';
 
 test('36 monthly turns preserve a full chronology and three evidence-based annual reviews',()=>{
  const s=newGame('caesar');s.wars=[];for(let i=0;i<36;i++)tick(s);
