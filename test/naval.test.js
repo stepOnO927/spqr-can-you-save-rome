@@ -102,6 +102,37 @@ test('a captured shipyard cancels unfinished ships before launch',()=>{
  assert.equal(s.naval.fleets.filter(f=>f.owner==='senate').reduce((n,f)=>n+(f.ships.merchant||0),0),0);
  assert.ok(messages.some(m=>m.en.includes('Shipbuilding stopped')&&m.zh.includes('造船工程中止')));
 });
+test('a returning convoy diverts from a captured port and unloads cargo only at a friendly harbor',()=>{
+ const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),messages=[];s.month=2;
+ for(const other of s.naval.fleets.filter(x=>x!==f))other.zone='western';
+ for(const pirate of s.naval.pirates)pirate.ships=0;
+ assert.equal(orderFleet(s,'senate',f.id,'supply','epirus').ok,true);
+ const cargo=f.order.cargo;
+ assert.equal(orderFleet(s,'senate',f.id,'return','italiaS').ok,true);
+ assert.equal(f.order.cargo,cargo);
+ s.regions.find(r=>r.id==='italiaS').owner='caesar';
+ advanceNaval(s,(_state,en,zh)=>messages.push({en,zh}));
+ assert.notEqual(f.port,'italiaS');assert.equal(s.regions.find(r=>r.id===f.port)?.owner,'senate');
+ const returned=s.naval.reports.filter(r=>r.kind==='supply-return'&&r.owner==='senate');
+ assert.equal(returned.length,1);assert.equal(returned[0].port,f.port);assert.equal(returned[0].cargo,cargo);
+ assert.ok(messages.some(m=>m.en.includes('diverted')&&m.zh.includes('改驶')));
+ advanceNaval(s);assert.equal(s.naval.reports.filter(r=>r.kind==='supply-return'&&r.owner==='senate').length,1);
+});
+test('a convoy keeps its cargo offshore until a friendly port becomes available',()=>{
+ const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate');s.month=2;
+ for(const other of s.naval.fleets.filter(x=>x!==f))other.zone='western';
+ for(const pirate of s.naval.pirates)pirate.ships=0;
+ assert.equal(orderFleet(s,'senate',f.id,'supply','epirus').ok,true);
+ assert.equal(orderFleet(s,'senate',f.id,'return','italiaS').ok,true);
+ const cargo=f.order.cargo;
+ for(const r of s.regions.filter(r=>r.owner==='senate'&&r.port))r.owner='caesar';
+ advanceNaval(s);
+ assert.equal(f.port,null);assert.equal(f.order?.kind,'return');assert.equal(f.order?.targetPort,null);assert.equal(f.order?.cargo,cargo);
+ assert.equal(s.naval.reports.some(r=>r.kind==='supply-return'&&r.owner==='senate'),false);
+ s.regions.find(r=>r.id==='epirus').owner='senate';
+ advanceNaval(s);
+ assert.equal(f.port,'epirus');assert.equal(s.naval.reports.filter(r=>r.kind==='supply-return'&&r.owner==='senate').length,1);
+});
 test('fleet commander appointments cost pay, take travel time, and can be dismissed',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),person=Object.entries(s.world.characters).find(([id,p])=>p.faction==='senate'&&p.alive&&!p.missing&&p.loyalty>=35&&!s.armies.some(a=>a.characterId===id));assert.ok(person);s.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';const treasury=s.factions.senate.treasury,out=appointFleet(s,'senate',f.id,person[0]);assert.equal(out.ok,true);assert.equal(s.factions.senate.treasury,treasury-5);assert.equal(f.commanderId,null);for(let i=0;i<out.months;i++)advanceNaval(s);assert.equal(f.commanderId,person[0]);const loyalty=person[1].loyalty;assert.equal(dismissFleetCommander(s,'senate',f.id).ok,true);assert.equal(f.commanderId,null);assert.equal(person[1].loyalty,loyalty-2)
 });

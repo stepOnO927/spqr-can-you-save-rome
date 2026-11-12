@@ -4,6 +4,7 @@ This tracker records the state of the **independent development branch**. A work
 
 ## Implemented and checked
 
+- **Returning convoy reroutes after a port capture:** A fleet returning with undelivered cargo now chooses a reachable friendly harbor if its ordered port changes owner. With no friendly harbor it keeps the cargo offshore and resumes when one becomes available. The return refund occurs once at the actual friendly port, including after a return order is retargeted. Naval regressions cover diversion, no-port waiting, cargo, bilingual notice, and duplicate refund prevention.
 - **Captured shipyard stops shipbuilding:** A queued ship is now cancelled before launch when its port changes owner, rather than appearing in an enemy-controlled dock after its former owner paid the cost. A regression moves ownership on the final construction month and checks the queue, fleet roster, and bilingual notice.
 - **Captured harbor closes fleet services:** An active fleet that loses ownership of its dock now sails offshore before monthly port supply, repairs, sailor recruitment, or naval training can run. The reserve evacuation rule remains and costs readiness. A naval regression checks supplies, hull, experience, manpower, and bilingual notice after the harbor changes hands.
 

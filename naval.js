@@ -128,7 +128,7 @@ export function orderFleet(s,owner,id,kind,target){
  const path=seaRoute(f.zone,targetZone);
  if(!path)return {ok:false,reason:'sea'};
  if(!ships(f)||f.hull<=0||kind!=='return'&&(f.supply<15||f.hull<25))return {ok:false,reason:'condition'};
- const returning=kind==='return'&&f.order?.kind==='supply'?f.order.cargo:0;
+ const returning=kind==='return'?f.order?.cargo||0:0;
  if(f.order?.kind==='supply'&&kind!=='return')report(s,{kind:'supply-loss',owner,port:f.order.targetPort,cargo:f.order.cargo,reason:'cancelled'});
  if(kind==='supply')s.factions[owner].food-=cargo;
  f.port=null;f.order={kind,target,targetPort,path,...(cargo?{cargo}:{}),...(returning?{cargo:returning}: {})};
@@ -347,6 +347,15 @@ export function advanceNaval(s,log=()=>{}){initializeNaval(s);if(!s.naval)return
   if(f.owner===s.player)log(s,wasReserve?'The fleet lost its safe harbor and left reserve at reduced readiness.':'The fleet lost its harbor and sailed offshore.',wasReserve?'舰队失去安全港，仓促出港，船况受损。':'舰队失去港口，驶往近海。');
  }
  for(const f of n.fleets)if(f.order?.kind==='raid'&&!hostileTradeRoute(s,f.owner,n.routes.find(r=>r.id===f.order.target))){f.order=null;if(f.owner===s.player)log(s,'The trade raid ended because its route no longer serves an enemy.','商路不再涉及敌方，袭扰命令已结束。')}
+ for(const f of n.fleets){
+  const order=f.order;
+  if(order?.kind!=='return'||order.targetPort&&s.regions.find(r=>r.id===order.targetPort)?.owner===f.owner)continue;
+  const oldPort=order.targetPort;
+  const home=s.regions.filter(r=>r.owner===f.owner&&r.port).map(r=>({id:r.id,path:seaRoute(f.zone,portZone(r.id))})).filter(x=>x.path).sort((a,b)=>a.path.length-b.path.length)[0];
+  if(!home){order.targetPort=null;order.path=[];if(oldPort&&f.owner===s.player)log(s,'The return harbor was lost; the fleet is waiting offshore with its cargo.','返航港口失守，舰队携货在近海等待。');continue}
+  order.target=home.id;order.targetPort=home.id;order.path=home.path;
+  if(oldPort&&f.owner===s.player)log(s,'The return harbor was lost; the fleet diverted to another friendly port.','返航港口失守，舰队改驶另一友方港口。');
+ }
  for(const f of n.fleets){if(!ships(f))continue;const budget=s.factions[f.owner];if(f.pendingCommanderId){f.pendingMonths--;if(f.pendingMonths<=0){const person=s.world?.characters?.[f.pendingCommanderId];if(person?.alive&&person.faction===f.owner&&!person.missing){f.commanderId=f.pendingCommanderId;f.morale=Math.min(100,f.morale+2)}f.pendingCommanderId=null;f.pendingMonths=0}}const upkeep=fleetUpkeepDue(f);budget.treasury=Math.max(-100,budget.treasury-upkeep);if(budget.treasury<0){f.morale=Math.max(10,f.morale-3);const commander=s.world?.characters?.[f.commanderId];if(commander)commander.loyalty=Math.max(0,commander.loyalty-1)}if(f.port){const dock=s.regions.find(r=>r.id===f.port);f.supply=Math.min(100,f.supply+25+(dock?.buildings?.includes('naval-depot')?12:0)+navalJobEffect(s,f.owner,'harbor',f.port)*4);if(!f.reserve&&dock?.buildings?.includes('shipyard')&&f.hull<100&&budget.treasury>=3&&(s.development?.[f.owner]?.materials?.timber||0)>=1){budget.treasury-=3;s.development[f.owner].materials.timber--;f.hull=Math.min(100,f.hull+8+(dock.buildings.includes('dockyard')?8:0)+(activeEffects(s,f.owner).navalRepair||0)+navalJobEffect(s,f.owner,'engineer',f.port)*3)}const crewNeeded=Object.entries(f.ships).reduce((n,[type,count])=>n+(SHIPS[type]?.crew||0)*count,0)-f.sailors;if(!f.reserve&&crewNeeded>0&&budget.treasury>=2&&budget.manpower>0){const recruited=Math.min(30,crewNeeded,budget.manpower);budget.treasury-=2;budget.manpower-=recruited;f.sailors+=recruited}if(!f.reserve&&dock?.buildings?.includes('naval-training'))f.experience=Math.min(100,f.experience+2)}else{f.supply=Math.max(0,f.supply-8+(activeEffects(s,f.owner).navalSupply||0));if(f.supply===0)f.morale=Math.max(10,f.morale-3)}maritimeHazards(s,f,log);const order=f.order;if(!order)continue;if(order.path.length){for(let step=0;step<fleetSpeed(f)&&order.path.length;step++)f.zone=order.path.shift();f.port=null}else if(order.targetPort){f.zone=portZone(order.targetPort);if(order.kind==='return'||order.kind==='transport'){f.port=order.targetPort;if(order.kind==='return'&&order.cargo){budget.food=Math.min(budget.foodCapacity||100,budget.food+order.cargo);report(s,{kind:'supply-return',owner:f.owner,port:order.targetPort,cargo:order.cargo})}if(order.kind==='transport'){const a=s.armies.find(x=>x.id===order.armyId);if(a?.move)a.move.transportReady=true}f.order=null}}if(order.kind==='recon'&&!order.path.length){resolveReconOrder(s,f,avoidedNavalBattles,log);f.order=null}}
  for(const a of n.fleets)for(const b of n.fleets){if(a.id>=b.id||!ships(a)||!ships(b)||a.zone!==b.zone||!atWar(s,a.owner,b.owner)||avoidedNavalBattles.has(encounterKey(a.id,b.id)))continue;if(a.port&&b.port&&a.port!==b.port)continue;resolveBattle(s,a,b,a.zone,log)}
  finishMaritimeSupply(s,log);
