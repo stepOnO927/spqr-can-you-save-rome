@@ -2,8 +2,8 @@ import {ROUTES,REGIONS} from './data.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
 import {politicalAmbition} from './conspiracies.js?v=newborn-age-1';
-import {focusModifiers} from './national-focus.js?v=born-portraits-1';
-import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=born-portraits-1';
+import {focusModifiers} from './national-focus.js?v=inheritance-fix-1';
+import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=inheritance-fix-1';
 
 // OPERATIONAL BATTLE PLANNER. Plans are an order layer over the existing War
 // Council orders: every movement goes through issueMilitaryOrder/moveArmy, so

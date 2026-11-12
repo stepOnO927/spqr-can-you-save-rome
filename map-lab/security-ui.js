@@ -1,5 +1,5 @@
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
-import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=born-portraits-1';
+import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=inheritance-fix-1';
 import {reassurePerson} from '../conspiracies.js?v=newborn-age-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=newborn-age-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';

@@ -3,9 +3,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick as romanTick,upgradeSave,PLAYABLE as ROMAN_PLAYABLE} from '../engine.js?v=born-portraits-1';
+import {newGame,tick as romanTick,upgradeSave,PLAYABLE as ROMAN_PLAYABLE} from '../engine.js?v=inheritance-fix-1';
 import {REGIONS as ROMAN_REGIONS} from '../data.js?v=phase-x-1';
-import {finalizeCampaign} from '../legacy.js?v=born-portraits-1';
+import {finalizeCampaign} from '../legacy.js?v=inheritance-fix-1';
 import {REGIONS} from '../han/data.js?v=han-1';
 import {drawMap} from '../han/map.js?v=han-1';
 import {validateTrees} from '../han/focus.js?v=han-1';

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
-import {newGame,sendInquiry,tick,upgradeSave} from '../engine.js?v=born-portraits-1';
+import {newGame,sendInquiry,tick,upgradeSave} from '../engine.js?v=inheritance-fix-1';
 import {formatChronicleEntry} from '../chronicle.js?v=calendar-1';
 
 test('continuous save years display without a historical year zero',()=>{
