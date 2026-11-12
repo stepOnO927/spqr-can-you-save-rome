@@ -1,5 +1,5 @@
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
+import {CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 
 const copy=x=>JSON.parse(JSON.stringify(x));

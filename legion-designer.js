@@ -1,6 +1,6 @@
 import {ROUTES} from './data.js?v=phase-x-1';
-import {unlockedComponents,focusModifiers} from './national-focus.js?v=safe-save-1';
-import {politicalAmbition} from './conspiracies.js?v=safe-save-1';
+import {unlockedComponents,focusModifiers} from './national-focus.js?v=newborn-age-1';
+import {politicalAmbition} from './conspiracies.js?v=newborn-age-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 
 // LEGION DESIGNER. Templates are data; an army carries a snapshot of the

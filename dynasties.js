@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
-import {startDynasticWar} from './civil-war.js?v=safe-save-1';
+import {CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
+import {startDynasticWar} from './civil-war.js?v=newborn-age-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
