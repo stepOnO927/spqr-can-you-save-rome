@@ -36,6 +36,26 @@ try{
  const delivered=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(delivered.markets.shipments[0].status,'delivered');
  assert.equal(delivered.markets.transactions.length,1);
+ // A direct Han player can buy from Parthia through the existing oasis and
+ // Central Asian network without receiving a fictitious direct border.
+ await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=faces-empire-2'),{proposeAgreement}=await import('/agreements.js?v=grand-chessboard-2');
+  const state=newGame('han');state.relations['han:parthia']=45;
+  if(!proposeAgreement(state,'han','parthia','trade').ok)throw Error('Han-Parthia treaty unavailable');
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
+ });
+ await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.locator('#markets').click();
+ assert.ok((await page.locator('#market-origin option').evaluateAll(options=>options.map(x=>x.value))).includes('parthia'));
+ await page.locator('#market-origin').selectOption('parthia');
+ await page.locator('#market-destination').selectOption('hanHexi');
+ await page.locator('#market-commodity').selectOption('horses');
+ assert.match(await page.locator('#market-quote').innerText(),/个月|months/);
+ await page.locator('#market-order').click();
+ await page.locator('#save-slot').selectOption('2');await page.locator('#save').click();
+ const silkRoadOrder=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-2')).markets.shipments[0]);
+ assert.ok(silkRoadOrder.route.includes('silk:parthia'));
+ assert.ok(silkRoadOrder.legs.some(x=>x.network==='silk'));
  assert.deepEqual(errors,[]);
- console.log('Market order, route delivery, bilingual panel and save/load passed in Chromium.');
+ console.log('Local and Han–Parthian market orders, route delivery, bilingual panel and save/load passed in Chromium.');
 }finally{await browser.close()}

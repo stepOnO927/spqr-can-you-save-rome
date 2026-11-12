@@ -53,14 +53,35 @@ test('border war blocks an actual shipment until passage is restored',()=>{
  assert.equal(shipment.status,'delivered');assert.equal(s.markets.transactions.length,1);
 });
 
-test('orders reject unaffordable, missing-stock and geographically disconnected trades',()=>{
+test('orders reject unaffordable and missing-stock trades while using mapped Eurasian routes',()=>{
  const s=deal(),before=structuredClone(s.markets.regions.parthia.goods.horses);
  assert.equal(placeTradeOrder(s,{...request,quantity:1000}).reason,'invalid');
  assert.equal(placeTradeOrder(s,{...request,quantity:20}).reason,'unavailable');
  s.factions.armenia.treasury=0;assert.equal(placeTradeOrder(s,request).reason,'treasury');
  assert.deepEqual(s.markets.regions.parthia.goods.horses,before);
  const han=newGame('han');han.relations['han:parthia']=45;assert.equal(proposeAgreement(han,'han','parthia','trade').ok,true);
- assert.equal(quoteTrade(han,{seller:'han',buyer:'parthia',origin:'hanGuanzhong',destination:'parthia',commodity:'silk',quantity:1}).reason,'route');
+ assert.equal(quoteTrade(han,{seller:'han',buyer:'parthia',origin:'hanGuanzhong',destination:'parthia',commodity:'silk',quantity:1}).ok,true);
+});
+
+test('Han silk travels through independent oasis and Central Asian markets, with war blocking its actual leg',()=>{
+ const s=newGame('han');s.relations['han:parthia']=45;assert.equal(proposeAgreement(s,'han','parthia','trade').ok,true);
+ const request={seller:'han',buyer:'parthia',origin:'hanGuanzhong',destination:'parthia',commodity:'silk',quantity:1};
+ const quote=quoteTrade(s,request),sellerStock=s.markets.regions.hanGuanzhong.goods.silk.stock,buyerStock=s.markets.regions.parthia.goods.silk.stock,buyerCash=s.factions.parthia.treasury,sellerCash=s.factions.han.treasury,shanshanCash=s.factions.shanshan.treasury;
+ assert.equal(quote.ok,true);assert.ok(quote.months>=20);assert.deepEqual(quote.route.slice(0,3),['hanGuanzhong','hanHexi','shanshanOasis']);
+ assert.ok(quote.route.includes('silk:bactra')&&quote.route.includes('silk:parthia'));assert.ok(quote.tariffs.some(x=>x.owner==='yuezhi'));
+ const shipment=placeTradeOrder(s,request).shipment;assert.equal(s.markets.regions.hanGuanzhong.goods.silk.stock,sellerStock-1);assert.equal(s.factions.parthia.treasury,buyerCash-quote.total);
+ const saved=upgradeSave(structuredClone(s));saved.wars.push(['han','yuezhi']);
+ const next=()=>{if(++saved.month>12){saved.month=1;saved.year++}advanceMarkets(saved)};
+ for(let i=0;i<quote.months;i++){next();if(saved.markets.shipments[0].status==='blocked')break}
+ assert.equal(saved.markets.shipments[0].status,'blocked');assert.equal(saved.markets.regions.parthia.goods.silk.stock,buyerStock);assert.equal(saved.markets.shipments[0].escrow,quote.total);
+ saved.wars=saved.wars.filter(w=>!w.includes('yuezhi'));
+ for(let i=0;i<quote.months+2&&saved.markets.shipments[0].status!=='delivered';i++)next();
+ assert.equal(saved.markets.shipments[0].status,'delivered');assert.equal(saved.markets.regions.parthia.goods.silk.stock,buyerStock+1);
+ assert.equal(saved.factions.han.treasury,sellerCash+quote.price);
+ assert.equal(saved.factions.shanshan.treasury,shanshanCash+quote.tariffs.find(x=>x.owner==='shanshan').amount);
+ assert.equal(saved.markets.transitTreasury.yuezhi,quote.tariffs.find(x=>x.owner==='yuezhi').amount);
+ assert.equal(saved.markets.transactions.length,1);assert.equal(saved.markets.transportSpent,quote.transport);
+ assert.equal(shipment.status,'traveling','serialized state advances independently');
 });
 
 test('old saves gain markets once without changing existing treasury or region ownership',()=>{
@@ -68,6 +89,7 @@ test('old saves gain markets once without changing existing treasury or region o
  const restored=upgradeSave(structuredClone(s)),again=upgradeSave(structuredClone(restored));
  assert.equal(restored.factions.caesar.treasury,cash);
  assert.deepEqual(restored.regions.map(r=>r.owner),owners);
+ assert.deepEqual(restored.markets.transitTreasury,{});
  assert.deepEqual(again.markets,restored.markets);
  assert.equal(Object.keys(initializeMarkets(again).regions).length,again.regions.length);
 });

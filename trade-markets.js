@@ -1,5 +1,6 @@
 import {ROUTES} from './data.js?v=phase-x-1';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
+import {ROUTES as EURASIAN_ROUTES,REGIONS as EURASIAN_REGIONS} from './han/data.js?v=han-1';
 
 // One unit is an economic batch, not a single animal or artifact. Prices use
 // the campaign's treasury scale. Production and consumption remain separate
@@ -16,6 +17,21 @@ const month=s=>s.year*12+s.month;
 const clamp=(n,low,high)=>Math.min(high,Math.max(low,n));
 const region=(s,id)=>s.regions.find(r=>r.id===id);
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
+// Reuse the existing Han map's roads. Only the endpoints that denote the
+// campaign's broader economic theaters are aliased; all other kingdoms keep
+// their own transit identities and never become Han or Parthian provinces.
+const HAN_MARKETS={changan:'hanGuanzhong',henan:'hanHenan',shu:'hanShu',dunhuang:'hanHexi',shanshan:'shanshanOasis',ecbatana:'media',ctesiphon:'parthia'};
+const silkId=id=>HAN_MARKETS[id]||`silk:${id}`;
+const silkNodes=new Map(EURASIAN_REGIONS.filter(r=>!HAN_MARKETS[r.id]).map(r=>[silkId(r.id),r]));
+const tradeLinks=[...ROUTES.map(([a,b,kind])=>({a,b,kind:kind||'land',months:kind==='sea'||kind==='frontier'?3:null,network:'campaign'})),...EURASIAN_ROUTES.map(r=>({a:silkId(r.a),b:silkId(r.b),kind:r.kind,months:r.months,network:'silk'})).filter(r=>r.a!==r.b)];
+const node=(s,id)=>region(s,id)||silkNodes.get(id);
+export const tradeRouteName=(s,id)=>node(s,id)?.name||[id,id];
+const relationValue=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;
+function permitted(s,owner,buyer,seller,network){
+ if(!owner||owner===buyer||owner===seller)return true;
+ if(network==='silk')return relationValue(s,owner,buyer)>=-35&&relationValue(s,owner,seller)>=-35;
+ return !!(activeAgreement(s,owner,buyer,'trade')&&activeAgreement(s,owner,seller,'trade'));
+}
 
 function profile(r,good){
  const east=r.id.startsWith('han'),egypt=r.id.startsWith('egypt');
@@ -31,8 +47,8 @@ function profile(r,good){
  return {production,consumption,stock:Math.max(0,production*4+2-consumption),price:COMMODITIES[good].basePrice};
 }
 export function initializeMarkets(s){
- const markets=s.markets||={regions:{},shipments:[],transactions:[],nextShipment:1,tariffs:{},lastTick:null,transportSpent:0};
- markets.regions||={};markets.shipments||=[];markets.transactions||=[];markets.tariffs||={};markets.nextShipment||=1;markets.transportSpent??=0;
+ const markets=s.markets||={regions:{},shipments:[],transactions:[],nextShipment:1,tariffs:{},lastTick:null,transportSpent:0,transitTreasury:{}};
+ markets.regions||={};markets.shipments||=[];markets.transactions||=[];markets.tariffs||={};markets.nextShipment||=1;markets.transportSpent??=0;markets.transitTreasury||={};
  for(const r of s.regions){
   const market=markets.regions[r.id]||={id:r.id,goods:{},disruption:0};market.goods||={};
   for(const good of Object.keys(COMMODITIES))market.goods[good]||=profile(r,good);
@@ -48,18 +64,17 @@ export function marketPrice(market,good){
  return clamp(Math.round(base*(1+pressure*.7)),Math.max(1,Math.round(base*.5)),base*3);
 }
 
-const permitted=(s,owner,buyer,seller)=>owner===buyer||owner===seller||!!(activeAgreement(s,owner,buyer,'trade')&&activeAgreement(s,owner,seller,'trade'));
 function routeFor(s,origin,destination,buyer,seller){
  const queue=[{id:origin,cost:0,path:[origin],legs:[]}],seen=new Map();
  while(queue.length){
   queue.sort((a,b)=>a.cost-b.cost);const current=queue.shift();
   if(current.id===destination)return current;
   if(seen.has(current.id)&&seen.get(current.id)<=current.cost)continue;seen.set(current.id,current.cost);
-  for(const [a,b,kind] of ROUTES){
-   const next=a===current.id?b:b===current.id?a:null,r=next&&region(s,next);
-   if(!r||!permitted(s,r.owner,buyer,seller)||atWar(s,r.owner,buyer)||atWar(s,r.owner,seller)||current.path.includes(next))continue;
-   const duration=kind==='sea'?3:kind==='frontier'?3:r.terrain==='desert'?2:1;
-   queue.push({id:next,cost:current.cost+duration,path:[...current.path,next],legs:[...current.legs,{from:current.id,to:next,kind:kind||'land',months:duration}]});
+  for(const link of tradeLinks){
+   const next=link.a===current.id?link.b:link.b===current.id?link.a:null,r=next&&node(s,next);
+   if(!r||!permitted(s,r.owner,buyer,seller,link.network)||atWar(s,r.owner,buyer)||atWar(s,r.owner,seller)||current.path.includes(next))continue;
+   const duration=link.months??(r.terrain==='desert'?2:1);
+   queue.push({id:next,cost:current.cost+duration,path:[...current.path,next],legs:[...current.legs,{from:current.id,to:next,kind:link.kind,network:link.network,months:duration}]});
   }
  }
  return null;
@@ -73,7 +88,7 @@ export function quoteTrade(s,{seller,buyer,origin,destination,commodity,quantity
  const route=routeFor(s,origin,destination,buyer,seller);if(!route)return {ok:false,reason:'route'};
  const unitPrice=marketPrice(markets.regions[origin],commodity),price=unitPrice*quantity;
  const transport=Math.max(1,Math.ceil(route.cost*quantity/5));
- const customs=[...new Set(route.path.slice(1,-1).map(id=>region(s,id).owner).filter(owner=>owner!==seller&&owner!==buyer))];
+ const customs=[...new Set(route.path.slice(1,-1).map(id=>node(s,id)?.owner).filter(owner=>owner&&owner!==seller&&owner!==buyer))];
  const tariffs=customs.map(owner=>({owner,amount:Math.ceil(price*clamp(markets.tariffs[owner]??.05,0,.3))}));
  const total=price+transport+tariffs.reduce((sum,t)=>sum+t.amount,0);
  if(s.factions[buyer].treasury<total)return {ok:false,reason:'treasury'};
@@ -101,8 +116,8 @@ export function advanceMarkets(s){
   item.price=marketPrice(markets.regions[r.id],good);
  }
  for(const shipment of markets.shipments.filter(x=>x.status==='traveling'||x.status==='blocked')){
-  const leg=shipment.legs[shipment.leg],next=region(s,leg?.to);
-  if(!leg||!next||!permitted(s,next.owner,shipment.buyer,shipment.seller)||atWar(s,next.owner,shipment.buyer)||atWar(s,next.owner,shipment.seller)){shipment.status='blocked';continue}
+  const leg=shipment.legs[shipment.leg],next=node(s,leg?.to);
+  if(!leg||!next||!permitted(s,next.owner,shipment.buyer,shipment.seller,leg.network)||atWar(s,next.owner,shipment.buyer)||atWar(s,next.owner,shipment.seller)){shipment.status='blocked';continue}
   shipment.status='traveling';shipment.remaining--;if(shipment.remaining>0)continue;
   shipment.leg++;
   if(shipment.leg<shipment.legs.length){shipment.remaining=shipment.legs[shipment.leg].months;continue}
@@ -110,7 +125,7 @@ export function advanceMarkets(s){
   if(destination?.owner!==shipment.buyer){shipment.status='blocked';shipment.leg--;shipment.remaining=1;continue}
   markets.regions[shipment.destination].goods[shipment.commodity].stock+=shipment.quantity;
   s.factions[shipment.seller].treasury+=shipment.price;
-  for(const tariff of shipment.tariffs)if(s.factions[tariff.owner])s.factions[tariff.owner].treasury+=tariff.amount;
+  for(const tariff of shipment.tariffs)if(s.factions[tariff.owner])s.factions[tariff.owner].treasury+=tariff.amount;else markets.transitTreasury[tariff.owner]=(markets.transitTreasury[tariff.owner]||0)+tariff.amount;
   markets.transportSpent+=shipment.transport;
   shipment.escrow=0;shipment.status='delivered';shipment.deliveredYear=s.year;shipment.deliveredMonth=s.month;
   markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,commodity:shipment.commodity,quantity:shipment.quantity,price:shipment.price,transport:shipment.transport,tariffs:shipment.tariffs,year:s.year,month:s.month});
@@ -131,8 +146,8 @@ export function advanceMarketAI(s,{autoplayPlayer=false}={}){
   if(markets.shipments.some(x=>x.buyer===buyer&&['traveling','blocked'].includes(x.status)))continue;
   const candidates=[];
   for(const destination of s.regions.filter(r=>r.owner===buyer)){
-   const near=ROUTES.filter(([a,b])=>a===destination.id||b===destination.id).map(([a,b])=>region(s,a===destination.id?b:a)).filter(Boolean);
-   for(const origin of near){
+   const treatyMarkets=s.regions.filter(r=>r.owner!==buyer&&r.owner!=='rebels'&&(autoplayPlayer||r.owner!==s.player)&&!!activeAgreement(s,buyer,r.owner,'trade'));
+   for(const origin of treatyMarkets){
     const seller=origin.owner;if(seller===buyer||seller===s.player&&!autoplayPlayer||!s.factions[seller]||!activeAgreement(s,seller,buyer,'trade'))continue;
     for(const commodity of Object.keys(COMMODITIES)){
      const need=markets.regions[destination.id].goods[commodity],supply=markets.regions[origin.id].goods[commodity];

@@ -60,11 +60,12 @@ timber, silk and papyrus batches for existing theaters. Production,
 consumption, bounded prices, stock, shortages, shipment escrow, actual route
 legs, tariff receipts, delivery transactions and transport spending persist in
 saves. A treaty-backed Parthia–Armenia horse shipment is tested across a save
-and a wartime interruption. The Han and Parthian graphs remain disconnected;
-their trade is correctly rejected pending geographically defensible
-intermediate markets. The existing abstract trade-treaty revenue still needs
-replacement when merchant AI and player trade controls are integrated.
-Adjacent treaty partners now make bounded quarterly AI purchases through the
+and a wartime interruption. Direct-Han-campaign silk and horses can now move
+to and from Parthia along the pre-existing Han oasis and Central Asian route
+graph. Distinct intermediate authorities collect buyer-funded tariffs; a war
+at an intermediate leg blocks the shipment until passage reopens. No direct
+Han–Parthian shortcut or Han provincial ownership is invented.
+Treaty partners now make bounded quarterly AI purchases through the
 same order validation and escrow path. AI-to-AI deliveries do not generate
 player dispatches, and AI buyers cannot silently take goods from a player
 market. The atlas now exposes own market stocks, quotes, routes, prepaid
@@ -73,15 +74,16 @@ test places an order and checks delivery and save/load. Old and new trade
 treaties grant market access instead of generating one treasury unit per
 party each month without a payer. This is a first commercial behavior, not
 the requested merchant-character network or continental competition. The
-existing Han subsystem already supplies a separate geographically sourced
-Silk Road graph; the market ledger has not yet been joined to that graph.
+Roman campaign's optional Han NPC simulation still uses abstract silk income
+and has not yet been joined to the physical market ledger.
 The 120-month market simulation verifies that at least four AI courts place
 orders against real surplus, deliveries complete, stocks and prices remain
 bounded, escrow resolves, and save migration works halfway through.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, major fixed portraits, additional routes to fictional sovereignty,
-integrated physical commodity trade across the Roman campaign, broader market AI, and the full acceptance
+integrated physical commodity trade with the Roman campaign's Han NPC world,
+broader market AI and the full acceptance
 scenarios are still outstanding. New names
 and emblems are game reconstructions, not documented personal identities.
 
