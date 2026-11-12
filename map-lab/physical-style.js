@@ -13,7 +13,8 @@ const nileDelta={type:'Feature',properties:{name:'Nile Delta (approximate)'},geo
 
 // At local scale, separate lowland, upland and exposed rock more clearly.
 // These are modern elevation bands, not reconstructed ancient land cover.
-const localElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e0d5b6',0,'#ded2ae',100,'#d1cba7',300,'#b9c39b',700,'#91a78b',1200,'#758e7d',1800,'#848d80',2600,'#b2b2a4',3500,'#e1ddcb'];
+const localElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e5d9b8',0,'#dfd5b1',100,'#c6cba1',300,'#a7b88d',700,'#829c7d',1200,'#6c8676',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
+const regionalElevationPalette=['interpolate',['linear'],['elevation'],-100,'#ded6b8',0,'#d8d2b0',100,'#c3c9a1',300,'#a3b68d',700,'#849f80',1200,'#6d8979',1800,'#838e83',2600,'#b0b2a4',3500,'#ded9c7'];
 const terrainAttribution='Elevation: Mapzen Terrain Tiles; Copernicus EU-DEM, NOAA ETOPO1 and USGS SRTM/GMTED2010 contributors';
 
 // GSHHG land and ocean derive from the same L1 shoreline. The ocean mask is deliberately
@@ -46,11 +47,11 @@ export const physicalStyle={
  layers:[
   {id:'sea',type:'background',paint:{'background-color':'#356f79'}},
   {id:'land-base',type:'fill',source:'land',paint:{'fill-color':'#d4d0ae','fill-opacity':1}},
-  {id:'land-elevation',type:'color-relief',source:'elevation',paint:{'color-relief-opacity':['interpolate',['linear'],['zoom'],5.5,.64,6.5,0],'color-relief-color':['interpolate',['linear'],['elevation'],-100,'#dcd5b9',0,'#d8d2b2',100,'#cfceaa',300,'#bac4a0',700,'#9faf91',1200,'#879b89',1800,'#849089',2600,'#a5aaa0',3500,'#dddacb']}},
+  {id:'land-elevation',type:'color-relief',source:'elevation',paint:{'color-relief-opacity':['interpolate',['linear'],['zoom'],5.5,.64,6.5,0],'color-relief-color':regionalElevationPalette}},
   {id:'relief',type:'hillshade',source:'elevation',paint:{'hillshade-exaggeration':.22,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-detail',type:'color-relief',source:'elevation-detail',minzoom:6,paint:{'color-relief-opacity':['interpolate',['linear'],['zoom'],6,.78,7.5,0],'color-relief-color':['interpolate',['linear'],['elevation'],-100,'#dcd5b9',0,'#d8d2b2',100,'#cfceaa',300,'#bac4a0',700,'#9faf91',1200,'#879b89',1800,'#849089',2600,'#a5aaa0',3500,'#dddacb']}},
+  {id:'land-elevation-detail',type:'color-relief',source:'elevation-detail',minzoom:6,paint:{'color-relief-opacity':['interpolate',['linear'],['zoom'],6,.78,7.5,0],'color-relief-color':regionalElevationPalette}},
   {id:'relief-detail',type:'hillshade',source:'elevation-detail',minzoom:6,paint:{'hillshade-exaggeration':.14,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-fine',type:'color-relief',source:'elevation-fine',minzoom:7,paint:{'color-relief-opacity':.82,'color-relief-color':['interpolate',['linear'],['elevation'],-100,'#dcd5b9',0,'#d8d2b2',100,'#cfceaa',300,'#bac4a0',700,'#9faf91',1200,'#879b89',1800,'#849089',2600,'#a5aaa0',3500,'#dddacb']}},
+  {id:'land-elevation-fine',type:'color-relief',source:'elevation-fine',minzoom:7,paint:{'color-relief-opacity':.82,'color-relief-color':regionalElevationPalette}},
   {id:'relief-fine',type:'hillshade',source:'elevation-fine',minzoom:7,paint:{'hillshade-exaggeration':.1,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'land-elevation-aegean-ultra',type:'color-relief',source:'elevation-aegean-ultra',minzoom:8,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
   {id:'relief-aegean-ultra',type:'hillshade',source:'elevation-aegean-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},

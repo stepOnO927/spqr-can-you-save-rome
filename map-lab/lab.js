@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=6';
 import {nationalBudget} from '../national-budget.js?v=8';
 import {budgetHtml} from '../budget-ui.js?v=10';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=19';
+import {physicalStyle} from './physical-style.js?v=20';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,royalCourtCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=153';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=31';
 import {FACTIONS} from '../data.js?v=9';
@@ -121,7 +121,7 @@ const namedPoints={cisalpine:[11.6,44.75],narbo:[3.3,43.4],italiaN:[13.05,44.0],
 const campaignCenter=faction=>['caesar','senate'].includes(faction)?[12.4,43.2]:namedPoints[faction]||[12.4,43.2];
 if(received&&!['caesar','senate'].includes(state.player))map.flyTo({center:campaignCenter(state.player),zoom:5.45});
 const reliefLayers=physicalStyle.layers.filter(layer=>layer.type==='hillshade').map(layer=>layer.id);
-function setDetailedRelief(){for(const id of reliefLayers.filter(layer=>layer!=='relief'&&layer!=='relief-detail')){if(!map.getLayer(id))continue;map.setPaintProperty(id,'hillshade-exaggeration',.32);map.setPaintProperty(id,'hillshade-shadow-color','#675f50');map.setPaintProperty(id,'hillshade-highlight-color','#fff7e1');map.setPaintProperty(id,'hillshade-accent-color','#a79a7a')}}
+function setDetailedRelief(){for(const id of reliefLayers.filter(layer=>layer!=='relief'&&layer!=='relief-detail')){if(!map.getLayer(id))continue;map.setPaintProperty(id,'hillshade-exaggeration',.15);map.setPaintProperty(id,'hillshade-shadow-color','#857f6e');map.setPaintProperty(id,'hillshade-highlight-color','#fbf5e1');map.setPaintProperty(id,'hillshade-accent-color','#b0a68e')}}
 const terrainName=id=>lang==='zh'?({plain:'平原',hills:'丘陵',forest:'森林',urban:'城市',desert:'沙漠'}[id]||id):id;
 const marchReason=reason=>({adjacent:lang==='zh'?'目的地不相邻':'Destination is not adjacent',peace:lang==='zh'?'尚未与该势力交战':'Not at war with this faction',transport:lang==='zh'?'海运需要8国库':'Sea transport requires 8 treasury',unavailable:lang==='zh'?'军队正行军或围攻':'Army is marching or besieging'})[reason]||'';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

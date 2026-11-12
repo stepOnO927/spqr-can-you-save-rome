@@ -108,7 +108,7 @@ try{
  await waitForTerrain(/\/terrain\/6\//,'Zoom 6 did not use bundled terrain');
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
  await waitForTerrain(/\/terrain\/7\//,'Zoom 7 did not use bundled terrain');
- if(process.env.SPQR_ATLAS_Z7_SCREENSHOT){await page.waitForTimeout(2400);await page.screenshot({path:process.env.SPQR_ATLAS_Z7_SCREENSHOT})}
+ if(process.env.SPQR_ATLAS_Z7_SCREENSHOT){await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded('elevation-fine')},null,{timeout:45000});await page.waitForTimeout(500);await page.screenshot({path:process.env.SPQR_ATLAS_Z7_SCREENSHOT})}
  if(page.viewportSize().width>900){
   assert.equal(await page.locator('#locator').isVisible(),true,'Zoomed Italy needs a geographic locator');
   assert.match(await page.locator('.locator-title').innerText(),firstLanguage==='zh-CN'?/YOUR POSITION/:/当前位置/);
@@ -165,7 +165,7 @@ try{
  assert.deepEqual(missingTerrain,[],'Aegean maximum zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Aegean terrain unexpectedly needed the network');
  const aegeanRelief=()=>page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return ['relief-aegean-ultra','relief-aegean-higher'].map(id=>({visibility:map.getLayoutProperty(id,'visibility')||'visible',strength:map.getPaintProperty(id,'hillshade-exaggeration')}))});
- assert.deepEqual(await aegeanRelief(),[{visibility:'visible',strength:.32},{visibility:'visible',strength:.32}]);
+ assert.deepEqual(await aegeanRelief(),[{visibility:'visible',strength:.15},{visibility:'visible',strength:.15}]);
  await page.locator('#relief-toggle').click();
  assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['none','none']);
  await page.locator('#relief-toggle').click();
@@ -178,7 +178,7 @@ try{
  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded('elevation-iberia-ultra')&&map.isSourceLoaded('elevation-iberia-higher')},null,{timeout:45000});
  assert.deepEqual(missingTerrain,[],'Iberian close zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Iberian terrain unexpectedly needed the network');
- assert.equal(await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getPaintProperty('relief-iberia-higher','hillshade-exaggeration')}),.32);
+ assert.equal(await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getPaintProperty('relief-iberia-higher','hillshade-exaggeration')}),.15);
  terrainRequests.length=0;
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[-2.448,41.808],zoom:9.1})});
  await waitForTerrain(/\/terrain\/9\/252\//,'Numantia maximum zoom did not use native Iberian terrain');
@@ -200,7 +200,7 @@ try{
  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded('elevation-gaul-ultra')&&map.isSourceLoaded('elevation-gaul-higher')},null,{timeout:45000});
  assert.deepEqual(missingTerrain,[],'Gallic close zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Gallic terrain unexpectedly needed the network');
- assert.equal(await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getPaintProperty('relief-gaul-higher','hillshade-exaggeration')}),.32);
+ assert.equal(await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getPaintProperty('relief-gaul-higher','hillshade-exaggeration')}),.15);
  if(process.env.SPQR_ATLAS_GAUL_Z9_SCREENSHOT){await page.waitForTimeout(4000);await page.screenshot({path:process.env.SPQR_ATLAS_GAUL_Z9_SCREENSHOT})}
  for(const [region,lon,lat,tileX] of [
   ['pontic',35.154,42.026,305],['armenia',44.58,39.885,319],['syria',36.16,36.2,307],
@@ -212,7 +212,7 @@ try{
   await waitForTerrain(new RegExp(`/terrain/9/${tileX}/`),`${region} maximum zoom did not request native terrain`);
   await page.waitForFunction(async region=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded(`elevation-${region}-higher`)},region,{timeout:45000});
   assert.deepEqual(missingTerrain,[],`${region} close zoom requested missing terrain tiles`);
-  assert.equal(await page.evaluate(async region=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getPaintProperty(`relief-${region}-higher`,'hillshade-exaggeration')},region),.32);
+  assert.equal(await page.evaluate(async region=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getPaintProperty(`relief-${region}-higher`,'hillshade-exaggeration')},region),.15);
   if(region==='armenia'){
    const visibility=()=>page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getLayoutProperty('relief-armenia-higher','visibility')||'visible'});
    await page.locator('#relief-toggle').click();assert.equal(await visibility(),'none','Armenian detail must honor relief off');
