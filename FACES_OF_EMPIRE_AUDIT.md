@@ -75,6 +75,9 @@ party each month without a payer. This is a first commercial behavior, not
 the requested merchant-character network or continental competition. The
 existing Han subsystem already supplies a separate geographically sourced
 Silk Road graph; the market ledger has not yet been joined to that graph.
+The 120-month market simulation verifies that at least four AI courts place
+orders against real surplus, deliveries complete, stocks and prices remain
+bounded, escrow resolves, and save migration works halfway through.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, major fixed portraits, additional routes to fictional sovereignty,

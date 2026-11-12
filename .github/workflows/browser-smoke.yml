@@ -24,6 +24,7 @@ jobs:
           node server.mjs > server.log 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
           node scripts/multipolar-sim.mjs > multipolar-simulation.json
+          node scripts/market-120-sim.mjs > market-120-simulation.json
           node tools/multipolar-smoke.mjs
           node tools/imperium-smoke.mjs
           node scripts/imperium-sim.mjs > imperium-simulation.json
@@ -66,5 +67,6 @@ jobs:
             map-benchmark-1920x1080.png
             map-benchmark.json
             multipolar-simulation.json
+            market-120-simulation.json
             server.log
 
