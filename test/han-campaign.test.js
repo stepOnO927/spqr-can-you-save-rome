@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,forecastEconomy,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=newborn-age-1';
+import {newGame,tick,forecastEconomy,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=calendar-1';
 import {assignSuccession,eligibleLiuImperial,CHARACTER_CATALOG} from '../characters.js?v=newborn-age-1';
 import {createFictionalPerson} from '../dynasties.js?v=newborn-age-1';
 import {officeCandidates,appointOffice,dismissOffice,advanceOffices} from '../office-system.js?v=newborn-age-1';

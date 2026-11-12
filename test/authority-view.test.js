@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=newborn-age-1';
+import {newGame,upgradeSave} from '../engine.js?v=calendar-1';
 import {authorityForTheater} from '../map-lab/authority-view.js?v=newborn-age-1';
 
 test('foreign authority uses only the viewer’s most recent observed report',()=>{

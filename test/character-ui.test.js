@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=newborn-age-1';
+import {newGame,upgradeSave} from '../engine.js?v=calendar-1';
 import {createCharacterUI} from '../map-lab/character-ui.js?v=newborn-age-1';
 import {addReport,queueMission} from '../character-system.js?v=newborn-age-1';
 import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=newborn-age-1';

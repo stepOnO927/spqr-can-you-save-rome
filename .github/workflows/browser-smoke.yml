@@ -37,6 +37,7 @@ jobs:
           node tools/safe-save-smoke.mjs
           node tools/health-succession-smoke.mjs
           node tools/newborn-age-smoke.mjs
+          node tools/campaign-date-smoke.mjs
           node tools/scenario-general-portrait-smoke.mjs
           node tools/civic-portrait-smoke.mjs
           node tools/dossier-rumor-smoke.mjs

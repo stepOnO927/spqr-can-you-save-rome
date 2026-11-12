@@ -1,6 +1,7 @@
+import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
 import {REGIONS,ROUTES,FACTIONS} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
-import {mapPoint} from './map.js?v=newborn-age-1';
+import {mapPoint} from './map.js?v=calendar-1';
 import {BRANCH_NAMES,PATH_NAMES} from './imperium-focus-data.js?v=imperium-1';
 import {treeFor,focusStatus,focusState,canStartFocus,startFocus,cancelFocus,focusCost,focusReportsFor,focusById} from './national-focus.js?v=newborn-age-1';
 import {COMPONENTS,CULTURE_NAMES,templatesFor,templateStats,saveTemplate,duplicateTemplate,deleteTemplate,validateTemplate,availableComponents,cultureOf,reorganizationQuote,reorganizeArmy,recruitmentQuote,recruitFormation,commanderSpecialty,commandConcentration,seedTemplates,formationState,outdatedArmies} from './legion-designer.js?v=newborn-age-1';
@@ -94,7 +95,7 @@ export function focusPanel(state,lang){
  <div class="imp-current">${f?`<b>${esc(L(lang,f.name))}</b><div class="imp-bar" role="progressbar" aria-valuenow="${a.progress}" aria-valuemax="${a.months}"><i style="width:${Math.round(a.progress/a.months*100)}%"></i></div><small>${a.progress}/${a.months} ${L2.months}${a.suspended?' · '+L2.st.suspended:''}</small>`:`<small>${L2.none}</small>`}</div>
  <button class="action imp-open" data-imp-open-focus>${L2.open}</button>
  <h3 class="imp-sub">${L2.st.available}</h3><ul class="imp-list">${avail.map(x=>`<li><button data-imp-focus="${x.id}">${esc(L(lang,x.name))}<small>${x.months} ${L2.months} · ${x.cost.treasury||0}¤</small></button></li>`).join('')||'<li><small>—</small></li>'}</ul>
- <h3 class="imp-sub">${L2.reports}</h3>${reports.length?`<ul class="imp-list">${reports.map(r=>`<li><small>${esc(fname(r.actor,lang))} · ${esc(L(lang,focusById(r.actor,r.focus)?.name)||r.focus)} · ${r.month}/${Math.abs(r.year)} BCE</small></li>`).join('')}</ul>`:`<p class="hint">${L2.noReports}</p>`}`;
+ <h3 class="imp-sub">${L2.reports}</h3>${reports.length?`<ul class="imp-list">${reports.map(r=>`<li><small>${esc(fname(r.actor,lang))} · ${esc(L(lang,focusById(r.actor,r.focus)?.name)||r.focus)} · ${r.month}/${campaignYear(r.year)}</small></li>`).join('')}</ul>`:`<p class="hint">${L2.noReports}</p>`}`;
 }
 export function focusScreen(state,lang){
  if(!ui.focusOpen)return '';const L2=tx(lang),tree=treeFor(state.player);if(!tree)return '';
@@ -171,7 +172,7 @@ export function plannerPanel(state,lang,selectedArmy){
  ${plan.recommendations?.length?`<h4>${L2.recs}</h4><ul class="imp-roles">${plan.recommendations.map((r,i)=>`<li><span><b>${esc(L(lang,state.armies.find(a=>a.id===r.armyId)?.name))}</b><small>${esc(r.kind)} → ${esc(rname(r.target,lang))}</small></span><button class="link" data-imp-rec="${i}">${L2.approveRec}</button></li>`).join('')}</ul>`:''}
  ${report?`<h4>${L2.risk}</h4><dl class="imp-stats"><dt>${L2.friendly}</dt><dd>${report.friendly.toLocaleString()}</dd><dt>${L2.known}</dt><dd>${report.known.length?report.known.map(k=>`${esc(fname(k.owner,lang))} ${esc(rname(k.region,lang))} ${k.band[0].toLocaleString()}–${k.band[1].toLocaleString()} (${k.age}${lang==='zh'?'个月前':' mo ago'})`).join('<br>'):L2.noIntel}</dd><dt>${L2.intel}</dt><dd>${report.intelAge==null?(lang==='zh'?'目标处无部队目击（不代表无守军）':'no troop sighting at the objective (not proof of no defenders)'):report.intelAge+' '+L2.months}</dd><dt>${L2.terrain}</dt><dd>${[...new Set(report.terrain)].join(', ')||'—'}</dd><dt>${L2.supplyC}</dt><dd class="${report.risks.includes('supply')?'neg':''}">${report.supply.ratio} · ${lang==='zh'?'粮':'food'} ${report.supply.food}</dd><dt>${L2.travel}</dt><dd>${report.travel} ${L2.months}</dd><dt>${L2.reinforceD}</dt><dd>${report.reinforceDistance}</dd><dt>${L2.siegeD}</dt><dd>${report.siege.map(x=>esc(rname(x.region,lang))+' · '+x.fort).join(', ')||'—'}</dd><dt>${L2.counter}</dt><dd>${report.counterattack}</dd><dt>${L2.political}</dt><dd>${report.political.map(p=>p.kind==='concentration'?`${L2.concentration}: ${L2.levels[p.level]}`:`${esc(rname(p.region,lang))}: ${esc(fname(p.owner,lang))}`).join('<br>')||'—'}</dd></dl>
  <h4>${L2.advisers}</h4><ul class="imp-counsel">${counsel.map(c=>`<li class="st-${c.stance}"><b>${esc(cname(c.id,lang))}</b> ${esc(L2.stance[c.stance])}: ${esc(L2.reasons[c.reason]||c.reason)}</li>`).join('')||'<li>—</li>'}</ul>`:''}
- ${plan.events.length?`<h4>${L2.events}</h4><ul class="imp-events">${plan.events.slice(0,8).map(e=>`<li><small>${e.month}/${Math.abs(e.year)}</small> ${esc(e.kind.replace(/_/g,' '))}${e.region?' · '+esc(rname(e.region,lang)):''}</li>`).join('')}</ul>`:''}</article>`;
+ ${plan.events.length?`<h4>${L2.events}</h4><ul class="imp-events">${plan.events.slice(0,8).map(e=>`<li><small>${campaignDate(e.month,e.year)}</small> ${esc(e.kind.replace(/_/g,' '))}${e.region?' · '+esc(rname(e.region,lang)):''}</li>`).join('')}</ul>`:''}</article>`;
 }
 // Military markers drawn over the strategic map; the map stays visible.
 export function planOverlay(state,lang){
@@ -238,7 +239,7 @@ export function bindImperium({state,lang,render,flash,log}){
   all('[data-imp-approve]').forEach(el=>el.onclick=()=>{const r=approvePlan(state,owner,plan.id,{log});if(!r.ok)flash(r.reason);render()});
   all('[data-imp-pause]').forEach(el=>el.onclick=()=>{pausePlan(state,owner,plan.id);render()});
   all('[data-imp-cancel-plan]').forEach(el=>el.onclick=()=>{cancelPlan(state,owner,plan.id);ui.drawing=null;render()});
-  all('[data-imp-rec]').forEach(el=>el.onclick=async()=>{const {issueMilitaryOrder}=await import('./engine.js?v=newborn-age-1');const r=approveRecommendation(state,owner,plan.id,Number(el.dataset.impRec),{issueOrder:issueMilitaryOrder});if(!r.ok)flash(r.reason||'');render()});
+  all('[data-imp-rec]').forEach(el=>el.onclick=async()=>{const {issueMilitaryOrder}=await import('./engine.js?v=calendar-1');const r=approveRecommendation(state,owner,plan.id,Number(el.dataset.impRec),{issueOrder:issueMilitaryOrder});if(!r.ok)flash(r.reason||'');render()});
  }
  // Route drawing captures map clicks before the normal region selection.
  if(ui.drawing){all('[data-map-group]').forEach(el=>el.addEventListener('click',e=>{e.stopImmediatePropagation();e.preventDefault();const a=state.armies.find(x=>x.id===ui.drawing.armyId);if(!a)return;const last=ui.drawing.path.at(-1)||a.region,ids=el.dataset.mapGroup.split(','),next=ids.find(id=>legalStep(state,owner,last,id).ok);

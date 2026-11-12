@@ -1,3 +1,4 @@
+import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
 import {reportedControl} from '../control-intelligence.js?v=phase-x-1';
 
 // Preserve the observation date and provenance, not just the controller: a
@@ -14,7 +15,7 @@ export function formatControlReport(change,language){
  const sources={own:zh?'己方':'own control',travelers:zh?'商旅':'travelers',arrival:zh?'抵达观察':'arrival observation',observation:zh?'观察':'observation'};
  const source=sources[change.source]||(zh?'来源未知':'source unknown');
  if(!Number.isFinite(change.year)||!Number.isFinite(change.month))return zh?`${name}：控制报告 ${owner}（观察时间和来源未保存）`:`${name}: control reported as ${owner} (observation date and source were not saved)`;
- return zh?`${name}：报告由${owner}控制（${source}，观察于 ${change.month}/${Math.abs(change.year)} BCE；可能过时或有误）`:`${name}: reported controlled by ${owner} (${source}, observed ${change.month}/${Math.abs(change.year)} BCE; may be outdated or mistaken)`;
+ return zh?`${name}：报告由${owner}控制（${source}，观察于 ${change.month}/${campaignYear(change.year)}；可能过时或有误）`:`${name}: reported controlled by ${owner} (${source}, observed ${change.month}/${campaignYear(change.year)}; may be outdated or mistaken)`;
 }
 
 // Chronicle projections contain only the player's own orders, never live enemy data.

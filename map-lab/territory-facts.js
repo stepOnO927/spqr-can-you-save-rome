@@ -1,3 +1,4 @@
+import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
 import {MATERIALS} from '../inventions.js?v=mission-discount-1';
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -7,7 +8,7 @@ export function renderTerritoryFacts({state, territory, language = 'en', sightin
  const strength = friendly.reduce((sum, a) => sum + a.men, 0);
  const unitNames = friendly.map(a => escapeHtml(a.name?.[zh ? 1 : 0] || a.id)).join(zh ? '、' : ', ');
  const presence = friendly.length ? `${unitNames} · ${strength.toLocaleString()} ${zh ? '人' : 'men'}` : zh ? '未发现己方驻军' : 'No friendly garrison';
- const reports = sightings.filter(a => a.region === territory.id).map(a => `${escapeHtml(a.name?.[zh ? 1 : 0] || a.id)} · ${a.month}/${Math.abs(a.year)} BCE · ${zh ? '兵力未知' : 'strength unknown'}`);
+ const reports = sightings.filter(a => a.region === territory.id).map(a => `${escapeHtml(a.name?.[zh ? 1 : 0] || a.id)} · ${a.month}/${campaignYear(a.year)} · ${zh ? '兵力未知' : 'strength unknown'}`);
  const buildingName=id=>escapeHtml(MATERIALS.find(i=>i.id===id)?.name[zh?1:0]||id);
  const buildings=own?((territory.buildings||[]).map(buildingName).join(zh?'、':', ')||(zh?'无':'None'))+(territory.construction?' · '+buildingName(territory.construction.id)+' ('+territory.construction.remaining+(zh?'月':' mo')+')':''):(zh?'未知':'Unknown');
  const population=own&&territory.population,local=own?(state.world?.religiousInstitutions||[]).filter(o=>o.region===territory.id):[];
