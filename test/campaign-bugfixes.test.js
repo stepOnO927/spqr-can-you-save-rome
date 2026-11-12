@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,army,region,resolveBattle,moveArmy,diplomacy,isWar,tick,recruit,previewMarch,upgradeSave,aiTurn,nationalBudget} from '../engine.js';
+import {newGame,newGrandGame,army,region,resolveBattle,moveArmy,diplomacy,isWar,tick,recruit,previewMarch,upgradeSave,aiTurn,nationalBudget,armySupply} from '../engine.js';
 import {recordMovement,eventText,recordEvent} from '../campaign-reports.js';
 import {chronicleHtml,battleReportHtml,eventDate} from '../reports-ui.js';
 import {requestReinforcements,probePositions,latestRecon,advanceRecon} from '../reconnaissance.js';
@@ -116,6 +116,21 @@ test('outnumbered AI reinforces the exposed front instead of the first map cell'
  assert.equal(upgradeSave(structuredClone(s)).armies.find(a=>a.id==='viii').reconPending?.kind,'reinforce');
 });
 
+test('AI does not count an army besieging enemy land as a friendly frontier defender',()=>{
+ const s=newGrandGame('egypt'),caesar=s.factions.caesar;
+ s.month=4;caesar.treasury=80;caesar.food=100;
+ army(s,'xiii').men=1500;army(s,'viii').men=3000;
+ region(s,'narbo').owner='senate';army(s,'viii').siege={region:'narbo',remaining:2};
+ const manpower=caesar.manpower,cash=caesar.treasury;
+ aiTurn(s,'caesar');
+ const relief=s.armies.find(a=>a.owner==='caesar'&&a.id.startsWith('levy'));
+ assert.equal(relief?.region,'t048');
+ assert.equal(relief.men,3000);
+ assert.equal(caesar.manpower,manpower-3000);
+ assert.ok(caesar.treasury<=cash-24);
+ assert.equal(upgradeSave(structuredClone(s)).armies.find(a=>a.id===relief.id).region,'t048');
+});
+
 test('cash-poor AI sends a nearby relief column to Rome without conjuring a levy',()=>{
  const s=newGrandGame('egypt'),main=army(s,'xiii'),relief=army(s,'viii');
  region(s,'roma').owner='caesar';region(s,'t014').owner='caesar';
@@ -224,6 +239,32 @@ test('a landless starving command loses its last soldier and reaches a terminal 
  assert.equal(s.armies.some(a=>a.owner==='egypt'),false);
  assert.equal(s.terminalResult,'defeat');
  assert.equal(s.achievementState.finalized,true);
+ assert.equal(s.campaignEvents.some(e=>e.type==='armyDestroyed'&&e.armyId==='egyptguard'&&e.cause==='food'),true);
+ assert.equal(upgradeSave(structuredClone(s)).achievementState.result,'defeat');
+});
+test('food attrition records a lost command and the commander goes missing',()=>{
+ const s=newGrandGame('caesar');army(s,'xiii').men=1;s.factions.caesar.food=-100;
+ tick(s);
+ assert.equal(army(s,'xiii'),undefined);
+ assert.equal(s.world.characters.caesar.location,null);
+ assert.equal(s.world.characters.caesar.missing?.origin,'cisalpine');
+ assert.equal(s.campaignEvents.some(e=>e.type==='armyDestroyed'&&e.armyId==='xiii'&&e.cause==='food'),true);
+ assert.ok(s.log.some(entry=>/dissolved after prolonged food shortages/.test(entry.en)&&/长期缺粮/.test(entry.zh)));
+ const loaded=upgradeSave(structuredClone(s));
+ assert.equal(loaded.world.characters.caesar.missing?.origin,'cisalpine');
+});
+test('a supplied country still loses its last isolated soldier to local supply failure',()=>{
+ const s=newGrandGame('egypt');
+ for(const site of s.regions)if(site.owner==='egypt')site.owner='senate';
+ s.armies=s.armies.filter(a=>a.owner!=='egypt'||a.id==='egyptguard');
+ const guard=army(s,'egyptguard');guard.men=1;guard.region='roma';s.factions.egypt.food=100;
+ assert.ok(armySupply(s,guard)<.5);
+ tick(s);
+ assert.ok(s.factions.egypt.food>=0);
+ assert.equal(s.armies.some(a=>a.owner==='egypt'),false);
+ assert.equal(s.terminalResult,'defeat');
+ assert.equal(s.campaignEvents.some(e=>e.type==='armyDestroyed'&&e.armyId==='egyptguard'&&e.cause==='supply'),true);
+ assert.ok(s.log.some(entry=>/dissolved after prolonged supply failure/.test(entry.en)&&/长期补给中断/.test(entry.zh)));
  assert.equal(upgradeSave(structuredClone(s)).achievementState.result,'defeat');
 });
 test('alliance war reaching player is recorded and notified',()=>{

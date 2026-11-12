@@ -9,7 +9,7 @@ import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activ
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=3';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=7';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
-import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=17';
+import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=18';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion} from './local-society.js?v=4';
 import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=25';
@@ -20,7 +20,7 @@ export {nationalBudget} from './national-budget.js?v=8';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
 export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=25';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
-export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=17';
+export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=18';
 export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
 export {setReligiousPolicy};
 export {queueMission};
@@ -384,8 +384,24 @@ function economy(s){
     f.food=Math.max(-100,Math.min(f.foodCapacity,Math.round(f.food)));
     owned.forEach(r=>{const governor=governorLoyaltyEffect(s,r.id),works=localBuildingEffects(r),rural=productiveEstateRegion(r)&&s.month%3===0,estateStrain=effects.estateLabor&&rural?1:0,tenantSupport=effects.tenantShares&&rural?1:0,taxReview=s.grandMap&&f.tax==='high'&&effects.taxReview&&(r.integration??60)>=65?1:0,taxPressure=({low:2,normal:0,high:-2}[f.tax])+taxReview;if(s.grandMap){r.civicSatisfaction=Math.max(0,Math.min(100,(r.civicSatisfaction??r.loyalty)+taxPressure+(f.food<0?-3:0)+(works.loyalty||0)+faithSatisfaction(s,r)-estateStrain+tenantSupport));r.integration=Math.max(0,Math.min(100,(r.integration??60)+(governor>0?1:0)+(works.stability>0?1:0)));}r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+taxReview+(f.food<0?-2:0)+governor+(effects.loyalty||0)+(works.loyalty||0)+(s.grandMap?(r.civicSatisfaction<30?-1:r.civicSatisfaction>75?1:0)+(r.integration<35?-1:0):0)-estateStrain+tenantSupport))});
   }
-  s.armies=s.armies.filter(a=>a.men>0);
   advanceDemography(s);
+}
+
+function removeDepletedArmies(s,cause){
+ const lost=s.armies.filter(a=>a.men<=0);
+ if(!lost.length)return;
+ for(const unit of lost){
+  const person=s.world?.characters?.[unit.characterId];
+  if(person?.alive&&!person.missing){
+   person.location=null;person.missing={origin:unit.region,remaining:3,year:s.year,month:s.month};
+   if(unit.owner===s.player){const name=CHARACTER_CATALOG[person.id]?.name||person.name||[person.id,person.id];log(s,`${name[0]}'s location is unknown after the army dissolved.`,`${name[1]}的军队溃散后，其位置不明。`)}
+  }
+  if(unit.owner===s.player){
+   recordEvent(s,{type:'armyDestroyed',category:'military',severity:'critical',factionId:unit.owner,regionId:unit.region,armyId:unit.id,armyName:[...unit.name],cause});
+   log(s,cause==='food'?`${unit.name[0]} dissolved after prolonged food shortages.`:`${unit.name[0]} dissolved after prolonged supply failure.`,cause==='food'?`${unit.name[1]}因长期缺粮而溃散。`:`${unit.name[1]}因长期补给中断而溃散。`);
+  }
+ }
+ s.armies=s.armies.filter(a=>a.men>0);
 }
 
 function seasonalWaterStress(s){
@@ -607,7 +623,12 @@ export function aiTurn(s,owner){
     // When a smaller command has troops on one front but none on another,
     // raise the next paid levy at the exposed front instead of always using
     // the first map cell in data order.
-    const border=stretched?frontier.map(r=>({r,coverage:s.armies.filter(a=>a.owner===owner&&a.men>0&&region(s,a.region)?.macro===r.macro).reduce((n,a)=>n+a.men,0),pressure:adjacent(r.id,s).filter(e=>!e.sea&&isWar(s,owner,region(s,e.to).owner)).length})).sort((a,b)=>a.coverage-b.coverage||b.pressure-a.pressure||b.r.supply-a.r.supply)[0]?.r:frontier[0];
+    const coverage=new Map();
+    if(stretched)for(const unit of s.armies){
+      const here=region(s,unit.region);
+      if(unit.owner===owner&&unit.men>0&&!unit.move&&!unit.siege&&here?.owner===owner)coverage.set(here.macro,(coverage.get(here.macro)||0)+unit.men);
+    }
+    const border=stretched?frontier.map(r=>({r,coverage:coverage.get(r.macro)||0,pressure:adjacent(r.id,s).filter(e=>!e.sea&&isWar(s,owner,region(s,e.to).owner)).length})).sort((a,b)=>a.coverage-b.coverage||b.pressure-a.pressure||b.r.supply-a.r.supply)[0]?.r:frontier[0];
     const rally=emergency?owned.find(r=>r.port||r.terrain==='urban')||border||owned[0]:border;
     if(rally)raiseAt(rally.id);
   }
@@ -700,7 +721,7 @@ export function tick(s){
   s.month++;if(s.month>12){s.month=1;s.year++;if(s.year===0)s.year=1}
   refreshReportConfidence(s);
   advanceRecon(s);advanceFigures(s);
-  advanceOffices(s);advanceDevelopment(s,(en,zh)=>log(s,en,zh));advanceReligion(s);economy(s);advanceNaval(s,log);seasonalWaterStress(s);advanceOperationalState(s);
+  advanceOffices(s);advanceDevelopment(s,(en,zh)=>log(s,en,zh));advanceReligion(s);economy(s);removeDepletedArmies(s,'food');advanceNaval(s,log);seasonalWaterStress(s);advanceOperationalState(s);removeDepletedArmies(s,'supply');
   for(const unit of s.armies.filter(a=>a.trainingRemaining>0)){unit.trainingRemaining--;if(unit.trainingRemaining===0&&unit.men>0){unit.experience=Math.min(5,unit.experience+1);unit.morale=Math.min(100,unit.morale+4);if(unit.owner===s.player)log(s,`${unit.name[0]} completed field training.`,`${unit.name[1]}完成野战训练。`)}}
   const intercepted=new Set();
   for(const a of [...s.armies]){

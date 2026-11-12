@@ -58,7 +58,7 @@ export function armySupply(s,unit){if(!s.grandMap)return 1;const site=s.regions.
 export function encircled(s,unit){if(!s.grandMap)return false;const network=supplyNetwork(s,unit.owner);if(network.has(unit.region))return false;return !grandAdjacent(unit.region).some(e=>{const r=s.regions.find(x=>x.id===e.to);return r?.owner===unit.owner&&network.has(r.id)})}
 export function advanceOperationalState(s){if(!s.grandMap)return;for(const unit of s.armies){if(unit.men<=0)continue;if(unit.stance==='hold'&&!unit.move)unit.prepared=Math.min(3,(unit.prepared||0)+1);else if(unit.move)unit.prepared=0;
   unit.encircled=encircled(s,unit);const supply=armySupply(s,unit);unit.operationalSupply=supply;
-  if(supply<.5){unit.men=Math.max(1,Math.round(unit.men*(unit.encircled?.94:.98)));unit.morale=Math.max(15,unit.morale-(unit.encircled?5:2))}
+  if(supply<.5){unit.men=Math.max(0,unit.men-Math.max(1,Math.round(unit.men*(unit.encircled?.06:.02))));unit.morale=Math.max(15,unit.morale-(unit.encircled?5:2))}
  }}
 export function holdPosition(s,armyId){const unit=s.armies.find(a=>a.id===armyId);if(!s.grandMap||!unit||unit.owner!==s.player||unit.move||unit.siege)return {ok:false,reason:'unavailable'};unit.stance='hold';unit.prepared=0;return {ok:true}}
 export function strategicRetreat(s,armyId,to,actor=s.player){const unit=s.armies.find(a=>a.id===armyId),target=s.regions.find(r=>r.id===to);if(!s.grandMap||!unit||unit.owner!==actor||!target||target.owner!==unit.owner||!grandAdjacent(unit.region).some(e=>e.to===to&&!e.sea)||encircled(s,unit))return {ok:false,reason:'route'};unit.region=to;unit.move=null;unit.siege=null;unit.stance=null;unit.prepared=0;unit.morale=Math.max(15,unit.morale-4);return {ok:true}}
