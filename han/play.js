@@ -5,8 +5,8 @@ import {templatesFor,recruitQuote,recruit,neighbours} from './military.js';
 import {changeDependency,dependencyOf} from './dependencies.js';
 import {declareWar,propose,atWar} from './frontier.js';
 import {marketReasonName,renderEasternMarketPanel} from './market-ui.js?v=faces-of-empire-1';
-import {renderHanCourtPanel} from './court-ui.js?v=faces-of-empire-1';
-import {appoint,startAudit} from './court.js?v=han-1';
+import {renderHanCourtPanel} from './court-ui.js?v=faces-of-empire-2';
+import {appoint,startAudit,respondToDisaster} from './court.js?v=han-1';
 const $=id=>document.getElementById(id),D=(en,zh)=>lang?zh:en,L=a=>Array.isArray(a)?a[lang]||a[0]:a;
 let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,camera='all',mode='political',marketOpen=false,courtOpen=false,selectedCourt='shi-gao';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -34,7 +34,14 @@ function render(){
  $('map').querySelectorAll('[data-army]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();army=el.dataset.army;selected=s.armies.find(a=>a.id===army)?.region;marketOpen=false;courtOpen=false;render()}));
  const r=s.regions.find(x=>x.id===selected),a=s.armies.find(x=>x.id===army);
  if(marketOpen){renderEasternMarketPanel({root:$('inspector'),state:s,lang,selected,onOrder:result=>{message(result.ok?'Merchant dispatched.':`Order failed: ${marketReasonName(result.reason,0)}.`,result.ok?'商队已派出。':`下单失败：${marketReasonName(result.reason,1)}。`);render()},onProposal:result=>{const status=result.proposal?.status,labels={accepted:['accepted','已接受'],rejected:['rejected','已拒绝'],pending:['awaiting reply','待答复']},label=labels[status]||['unavailable','无法执行'];message(result.ok?`Market proposal ${label[0]}.`:'Proposal unavailable.',result.ok?`互市提议：${label[1]}。`:'无法提出互市提议。');render()}});renderChronicle();return}
- if(courtOpen&&s.player==='han'){renderHanCourtPanel({root:$('inspector'),state:s,lang,selected:selectedCourt,onSelect:id=>{selectedCourt=id;render()},onAppoint:(id,office)=>{const result=appoint(s,office,id);message(result.ok?'Appointment made.':`Appointment failed: ${result.reason}.`,result.ok?'任命已生效。':'任命未获准。');render()},onAudit:id=>{const result=startAudit(s,id);message(result.ok?'Audit opened.':`Audit unavailable: ${result.reason}.`,result.ok?'稽查已启动。':'无法启动稽查。');render()}});renderChronicle();return}
+ if(courtOpen&&s.player==='han'){
+  renderHanCourtPanel({root:$('inspector'),state:s,lang,selected:selectedCourt,
+   onSelect:id=>{selectedCourt=id;render()},
+   onAppoint:(id,office)=>{const result=appoint(s,office,id);message(result.ok?'Appointment made.':`Appointment failed: ${result.reason}.`,result.ok?'任命已生效。':'任命未获准。');render()},
+   onAudit:id=>{const result=startAudit(s,id);message(result.ok?'Audit opened.':`Audit unavailable: ${result.reason}.`,result.ok?'稽查已启动。':'无法启动稽查。');render()},
+   onDisaster:(response,faction)=>{const result=respondToDisaster(s,response,{faction});message(result.ok?'Court response enacted.':`Response failed: ${result.reason}.`,result.ok?'朝廷已作出应对。':'应对未获执行。');render()}
+  });renderChronicle();return
+ }
  let detail=`<h2>${D('Inspect','检视')}</h2>`;
  if(r){detail+=`<h3>${esc(L(r.name))}</h3><dl><dt>${D('Controller','控制方')}</dt><dd>${esc(L(FACTIONS[r.owner]?.name)||D('Independent','无主'))}</dd><dt>${D('Terrain','地形')}</dt><dd>${esc(r.terrain)}</dd><dt>${D('Population','人口')}</dt><dd>${r.pop}</dd><dt>${D('Supply','补给')}</dt><dd>${r.supply}</dd><dt>${D('Taxes','税收')}</dt><dd>${r.tax}</dd><dt>${D('Fort','城防')}</dt><dd>${r.fort}</dd></dl>`;
  if(r.owner===s.player){const t=templatesFor(s,s.player)[0],q=t?recruitQuote(s,s.player,r.id,t.id,500):null;detail+=`<button class="action" id="recruit" ${q?.ok?'':'disabled'}>${D('Recruit 500','征募500人')}</button><small>${q?.ok?D(`Cost: ${q.quote.treasury} treasury, ${q.quote.grain} grain, ${q.quote.manpower} manpower.`,`花费：国库${q.quote.treasury}、粮食${q.quote.grain}、兵源${q.quote.manpower}。`):D('Unavailable: '+(q?.problems||['unknown']).join(', '),'不可用：'+(q?.problems||['未知']).join('、'))}</small>`;

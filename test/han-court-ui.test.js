@@ -45,3 +45,13 @@ test('opening and legacy appointments reveal assessed skill only after a year of
  assert.match(hanCourtHtml(migrated,0,'yu-dingguo'),/Not yet assessed/);
  migrated.year=-45;assert.match(hanCourtHtml(migrated,0,'yu-dingguo'),/<dt>Skill assessment<\/dt><dd>70<\/dd>/);
 });
+
+test('a pending disaster offers executable bilingual responses with real resource checks',()=>{
+ const s=newHanGame('han',{seed:12});s.court.pendingDisaster={id:8,type:'flood',region:'changan',deadline:2,readings:[]};
+ s.factions.han.grain=20;
+ const en=hanCourtHtml(s,0),zh=hanCourtHtml(s,1);
+ assert.match(en,/Court must respond/);assert.match(zh,/朝廷须应对灾异/);
+ assert.match(zh,/黄河决溢/);assert.match(zh,/40 粮食/);
+ assert.match(zh,/data-court-disaster="relief" disabled/);
+ assert.match(en,/data-court-disaster="blame_faction"/);
+});

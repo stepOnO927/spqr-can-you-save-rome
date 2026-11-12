@@ -118,6 +118,15 @@ Opening officeholders now record when service began in the campaign, so
 their ability assessment can become visible after a year. Old saves that
 lacked this date start the observation clock on load rather than exposing a
 historical tenure or hidden skill without evidence.
+The disaster response now applies blame to the court faction actually chosen
+by the player. Invalid faction IDs are rejected before altering influence;
+previously the conditional expression silently redirected every choice to
+the classicist officials.
+The direct Han court panel now displays pending disasters with the affected
+region, a response deadline, costs and available actions. The player can
+choose whom to blame, or use the existing relief, self-reproach, dismissal
+and magnate options; each goes through the actual court simulation. A browser
+test verifies that the chosen faction loses influence across save/load.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,

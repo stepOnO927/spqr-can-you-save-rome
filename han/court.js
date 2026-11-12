@@ -214,6 +214,8 @@ export const DISASTER_RESPONSES={
 };
 export function respondToDisaster(s,response,{faction=null}={}){
  const d=s.court.pendingDisaster;if(!d)return {ok:false,reason:'none'};const opt=DISASTER_RESPONSES[response];if(!opt)return {ok:false,reason:'unknown'};
+ const blamed=response==='blame_faction'?(faction??((d.readings||[]).some(x=>x.stance==='blame')?'ru':'huanguan')):null;
+ if(blamed!==null&&!Object.hasOwn(s.court.factions,blamed))return {ok:false,reason:'invalid_faction'};
  const f=s.factions.han;if((opt.cost.grain||0)>f.grain||(opt.cost.treasury||0)>f.treasury)return {ok:false,reason:'cost'};
  f.grain-=opt.cost.grain||0;f.treasury-=opt.cost.treasury||0;const r=s.regions.find(x=>x.id===d.region);
  const F=s.court.factions;
@@ -221,7 +223,7 @@ export function respondToDisaster(s,response,{faction=null}={}){
   case 'relief':r.loyalty=clamp(r.loyalty+10);r.pop+=1;break;
   case 'self_reproach':s.omenBalance=(s.omenBalance||0)+2;s.taxRelief=Math.max(s.taxRelief||0,6);F.ru.influence+=4;r.loyalty=clamp(r.loyalty+5);break;
   case 'dismiss_chancellor':{const c=s.court.offices.chengxiang;if(c){dismiss(s,'chengxiang');s.omenBalance=(s.omenBalance||0)+1;F.waiqi.influence+=4}break}
-  case 'blame_faction':{const target=faction||d.readings.find(x=>x.stance==='blame')?'ru':'huanguan';F[target].influence=Math.max(5,F[target].influence-10);const blamer=target==='ru'?'huanguan':'ru';F[blamer].influence+=6;break}
+  case 'blame_faction':{F[blamed].influence=Math.max(5,F[blamed].influence-10);const blamer=blamed==='ru'?'huanguan':'ru';F[blamer].influence+=6;break}
   case 'magnates':r.loyalty=clamp(r.loyalty+6);F.haoqiang.influence+=8;s.court.reformLevel=Math.max(0,(s.court.reformLevel||0)-0.5);break;
  }
  log(s,['Response to the calamity: '+opt.name[0]+'.','应对灾异：'+opt.name[1]+'。'],{kind:'disaster'});

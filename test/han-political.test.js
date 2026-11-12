@@ -87,6 +87,19 @@ test('28. public unrest can lead to reform or rebellion',()=>{
  assert.equal(q.owner,'rebels','unanswered unrest under a failing mandate becomes rebellion');
 });
 
+test('a disaster response blames the selected court faction and rejects an unknown one',()=>{
+ const s=game(),site=s.regions.find(r=>r.owner==='han');
+ s.court.pendingDisaster={id:101,type:'flood',region:site.id,readings:[{faction:'huanguan',stance:'blame'}],deadline:2};
+ const before=s.court.factions.waiqi.influence,ru=s.court.factions.ru.influence,treasury=s.factions.han.treasury;
+ assert.deepEqual(respondToDisaster(s,'blame_faction',{faction:'unknown'}),{ok:false,reason:'invalid_faction'});
+ assert.deepEqual(respondToDisaster(s,'blame_faction',{faction:''}),{ok:false,reason:'invalid_faction'});
+ assert.equal(s.factions.han.treasury,treasury);assert.ok(s.court.pendingDisaster);
+ assert.equal(respondToDisaster(s,'blame_faction',{faction:'waiqi'}).ok,true);
+ assert.ok(s.court.factions.waiqi.influence<before,'selected faction loses influence');
+ assert.ok(s.court.factions.ru.influence>ru,'rival faction gains influence');
+ assert.equal(s.court.pendingDisaster,null);
+});
+
 test('29. character relationships persist across time and saves',()=>{
  const s=game();for(let i=0;i<12;i++)tick(s);
  const l=loadHanSave(serialize(s));
