@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=newborn-age-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=calendar-1';
 import {appointOffice,dismissOffice,officeCandidates,officeEffects,advanceOffices} from '../office-system.js?v=newborn-age-1';
 import {availableCommanders} from '../command-appointments.js?v=newborn-age-1';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=newborn-age-1';

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=newborn-age-1';
+import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=calendar-1';
 import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js';
-import {drawMap} from '../map.js?v=newborn-age-1';
+import {drawMap} from '../map.js?v=calendar-1';
 import {advanceMovements} from '../movements.js?v=newborn-age-1';
 
 test('remote control changes do not automatically change a faction’s map or turn knowledge',()=>{

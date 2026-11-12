@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=newborn-age-1';
+import {newGame,upgradeSave} from '../engine.js?v=calendar-1';
 import {battlefieldWound,advanceCharacters,illnessRisk} from '../character-system.js?v=newborn-age-1';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=newborn-age-1';
-import {syncChronicleDispatches,filterChronicle} from '../chronicle.js?v=newborn-age-1';
+import {syncChronicleDispatches,filterChronicle} from '../chronicle.js?v=calendar-1';
 
 test('battle wounds are persisted, affect risk, and notify only the owner',()=>{
  let s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii'),before=illnessRisk(s,'caesar');s.world.intelSeed=1972;battlefieldWound(s,unit);assert.equal(s.world.characters.caesar.health,'wounded');assert.equal(s.world.characters.caesar.wounds,1);assert.ok(illnessRisk(s,'caesar')>before);assert.ok(s.log.some(e=>e.zh.includes('游戏战斗中受伤')));syncChronicleDispatches(s);assert.ok(filterChronicle(s.chronicle.entries,{kind:'character',character:'caesar'}).some(e=>e.zh.includes('游戏战斗中受伤')));s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(s.world.characters.caesar.wounds,1);
