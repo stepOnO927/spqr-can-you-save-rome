@@ -10,12 +10,12 @@ try{
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
  await page.locator('#court-panel').click();
- assert.equal(await page.locator('[data-court-person]').count(),5);
- assert.deepEqual(await page.locator('[data-court-person] img').evaluateAll(images=>images.map(image=>image.complete&&image.naturalWidth>0)),[true,true,true,true,true]);
+ assert.equal(await page.locator('[data-court-person]').count(),12);
+ assert.equal(await page.locator('[data-court-person] img').evaluateAll(images=>images.every(image=>image.complete&&image.naturalWidth>0)),true);
  await page.locator('[data-court-person="shi-gao"]').click();
  const profile=page.locator('.court-profile');
  assert.match(await profile.innerText(),/Shi Gao/);
- assert.match(await profile.innerText(),/No current office/);
+ assert.match(await profile.innerText(),/No office is currently assigned/);
  assert.match(await profile.innerText(),/No finding/);
  assert.equal(await profile.locator('img').getAttribute('src'),'../assets/portraits/han-shi-gao-128.jpg');
  assert.equal((await profile.locator('img').evaluate(img=>img.naturalWidth))>0,true);
@@ -28,6 +28,11 @@ try{
  assert.equal(await page.locator('#court-audit').isDisabled(),true);
  await page.locator('[data-court-person="hong-gong"]').click();
  assert.equal(await page.locator('#court-office option[value="chengxiang"]').count(),0);
+ await page.locator('[data-court-person="liu-xiang"]').click();
+ assert.equal(await page.locator('#court-office option[value="zongzheng"]').count(),1);
+ await page.locator('[data-court-person="feng-liao"]').click();
+ assert.match(await profile.innerText(),/Envoy/);
+ assert.equal(await profile.evaluate(el=>el.getBoundingClientRect().top<innerHeight),true,'the selected dossier stays visible below the compact roster');
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#court-panel').click();
  await page.locator('[data-court-person="shi-gao"]').click();
  assert.match(await profile.innerText(),/Grand Minister of Agriculture/);
@@ -44,5 +49,5 @@ try{
  const result=await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-han-save-browser'));return {pending:state.court.pendingDisaster,influence:state.court.factions.waiqi.influence}});
  assert.equal(result.pending,null);assert.ok(result.influence<prior,'chosen faction should lose influence');
  assert.deepEqual(errors,[]);
- console.log('Han court browser smoke passed: five portraits, appointment, audit, disaster decision, save/load and both languages.');
+ console.log('Han court browser smoke passed: twelve portraits, appointment, audit, disaster decision, save/load and both languages.');
 }finally{await browser.close()}

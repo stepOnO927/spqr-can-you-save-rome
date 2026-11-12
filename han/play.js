@@ -5,7 +5,7 @@ import {templatesFor,recruitQuote,recruit,neighbours} from './military.js';
 import {changeDependency,dependencyOf} from './dependencies.js';
 import {declareWar,propose,atWar} from './frontier.js';
 import {marketReasonName,renderEasternMarketPanel} from './market-ui.js?v=faces-of-empire-1';
-import {renderHanCourtPanel} from './court-ui.js?v=faces-of-empire-3';
+import {renderHanCourtPanel} from './court-ui.js?v=faces-of-empire-4';
 import {appoint,startAudit,respondToDisaster} from './court.js?v=han-1';
 const $=id=>document.getElementById(id),D=(en,zh)=>lang?zh:en,L=a=>Array.isArray(a)?a[lang]||a[0]:a;
 let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,camera='all',mode='political',marketOpen=false,courtOpen=false,selectedCourt='shi-gao';

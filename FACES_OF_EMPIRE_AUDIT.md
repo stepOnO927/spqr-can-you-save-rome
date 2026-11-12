@@ -105,14 +105,15 @@ The 120-month market simulation verifies that at least four AI courts place
 orders against real surplus, deliveries complete, stocks and prices remain
 bounded, escrow resolves, merchant IDs persist, transport fees balance, and
 save migration works halfway through.
-The five major historical opening Han ministers now have separate artistic
-reconstruction portraits and an inspectable bilingual court roster in the
+Twelve historical opening Han ministers, frontier commanders and an envoy
+now have separate artistic reconstruction portraits and an inspectable
+bilingual court roster in the
 direct Han campaign. The current office, faction and public loyalty are
 visible; competence requires service, and corruption or ambition remains
 hidden until the simulation reveals evidence. A player appointment or audit
 changes the court state and survives save/load. Older saves gain an absent
 portrait only when the saved identity still matches the historical record.
-A browser regression visits all five portraits and exercises appointment,
+A browser regression checks all twelve portraits and exercises appointment,
 audit and both languages.
 Opening officeholders now record when service began in the campaign, so
 their ability assessment can become visible after a year. Old saves that

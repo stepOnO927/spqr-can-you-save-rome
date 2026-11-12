@@ -4,9 +4,9 @@ import {readFileSync} from 'node:fs';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js';
 import {hanCourtHtml} from '../han/court-ui.js';
 
-const MINISTERS=['shi-gao','xiao-wangzhi','hong-gong','yu-dingguo','chen-wannian'];
+const MINISTERS=['shi-gao','xiao-wangzhi','hong-gong','yu-dingguo','chen-wannian','liu-xiang','zhou-kan','shi-xian','feng-fengshi','gan-yanshou','chen-tang','feng-liao'];
 
-test('five opening ministers have individual portraits and a bilingual profile without hidden attributes',()=>{
+test('twelve opening officials have individual portraits and bilingual profiles without hidden attributes',()=>{
  const state=newHanGame('han',{seed:7});
  assert.equal(new Set(MINISTERS.map(id=>state.persons[id].portrait)).size,MINISTERS.length);
  for(const id of MINISTERS){
@@ -18,10 +18,14 @@ test('five opening ministers have individual portraits and a bilingual profile w
   assert.ok(en.includes(`${person.portrait}-128.jpg`));
   assert.match(en,/Approximate age/);assert.match(zh,/约略年龄/);
   assert.match(en,/Current responsibilities/);assert.match(zh,/当前职责/);
-  assert.match(en,/No finding/);assert.match(en,/Unknown/);
-  assert.ok(!en.includes(`>${person.corruption}<`),'unproven corruption must not be displayed');
+  assert.match(en,/<dt>Audit finding<\/dt><dd>No finding<\/dd>/);
+  assert.match(en,/<dt>Ambition<\/dt><dd>Unknown<\/dd>/);
  }
  assert.ok(!hanCourtHtml(state,0,'hong-gong').includes('<option value="chengxiang"'));
+ assert.ok(!hanCourtHtml(state,0,'shi-xian').includes('<option value="chengxiang"'));
+ assert.ok(hanCourtHtml(state,0,'liu-xiang').includes('<option value="zongzheng"'));
+ assert.match(hanCourtHtml(state,0,'feng-liao'),/Envoy/);
+ assert.match(hanCourtHtml(state,1,'feng-liao'),/使者/);
  assert.match(hanCourtHtml(state,0,'yu-dingguo'),/about 56/);
  assert.match(hanCourtHtml(state,0,'yu-dingguo'),/Head of the outer administration/);
 });
