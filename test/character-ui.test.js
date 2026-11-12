@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=succession-feedback-1';
-import {createCharacterUI} from '../map-lab/character-ui.js?v=succession-feedback-1';
+import {newGame,upgradeSave} from '../engine.js?v=letter-cost-1';
+import {createCharacterUI} from '../map-lab/character-ui.js?v=letter-cost-1';
 import {addReport} from '../character-system.js?v=succession-feedback-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=succession-feedback-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=civic-portraits-1';
 import {createFictionalPerson} from '../dynasties.js';
 
 // A small DOM stub exercises the real handler without requiring a network listener.
@@ -399,4 +399,9 @@ test('the new claimant has a distinct portrait and sourced uncertain birth witho
 test('reported claimants can be opened directly from the intelligence report',()=>{
  const prior=globalThis.document,s=newGame('caesar');addReport(s,'caesar','egypt',{kind:'claimants',leaders:['arsinoe'],source:'spy'});globalThis.document={createElement:tag=>new Element(tag)};
  try{const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,/data-character="arsinoe"/);assert.match(html,/arsinoe-128\.jpg/);assert.match(html,/报告的竞争者/);assert.doesNotMatch(html,/垂危/)}finally{globalThis.document=prior}
+});
+
+test('foreign character dossiers distinguish rumors from unverified reports and retain staleness',()=>{
+ const prior=globalThis.document,s=newGame('senate');addReport(s,'senate','egypt',{kind:'location',character:'cleopatra',value:'egypt',source:'travelers',confidence:'rumor'});addReport(s,'senate','egypt',{kind:'stance',character:'cleopatra',value:'guarded',source:'meeting',confidence:'rumor'});
+ try{for(const language of ['zh','en']){const panel=new Element();globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};const ui=createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}});ui.show('cleopatra');let html=panel.children.find(x=>x.className==='help-list').innerHTML;const label=language==='zh'?'传闻':'Rumor';assert.equal((html.match(new RegExp(label,'g'))||[]).length,2);assert.doesNotMatch(html,language==='zh'?/商旅 · [^<]*未经核实/:/Travelers · [^<]*Unverified/);s.year+=3;panel.children=[];ui.show('cleopatra');html=panel.children.find(x=>x.className==='help-list').innerHTML;assert.equal((html.match(new RegExp(language==='zh'?'情报过期':'Outdated','g'))||[]).length,2);s.year-=3}}finally{globalThis.document=prior}
 });

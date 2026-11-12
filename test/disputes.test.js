@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=succession-feedback-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=letter-cost-1';
 import {contestLeadership,advanceDisputes,queueMission,advanceOperations,addReport,supportClaimant} from '../character-system.js?v=succession-feedback-1';
 import {knownLeaders,assignSuccession} from '../characters.js?v=safe-save-1';
 import {deriveGovernment} from '../governance.js';
