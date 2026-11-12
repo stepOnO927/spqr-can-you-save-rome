@@ -169,6 +169,7 @@ await page.locator('#upload-save-file').setInputFiles({name:'egypt-landless.json
 await page.waitForFunction(()=>!document.querySelector('.leader-map-label[data-faction="egypt"]'));
 assert.equal(await page.locator('.leader-map-label[data-faction="egypt"]').count(),0);
 const battleCampaign=newGrandGame('senate');
+ battleCampaign.naval.fleets.find(f=>f.id==='caesar-adriatic').port=null;
 assert.equal(orderFleet(battleCampaign,'senate','senate-adriatic','intercept','adriatic').ok,true);
 advanceNaval(battleCampaign);
 assert.ok(battleCampaign.naval.reports.some(r=>r.kind==='battle'));
@@ -186,7 +187,7 @@ await page.locator('#upload-save-file').setInputFiles({name:'old-naval-battle.js
 await page.waitForFunction(()=>document.querySelector('#selection-title')?.textContent==='Save imported');
 await page.locator('#naval').click();await page.locator('[data-naval-tab="reports"]').click();
 assert.match(await page.locator('.naval-content').innerText(),/older report has no usable observation/);
-const raidCampaign=newGrandGame('caesar'),raider=raidCampaign.naval.fleets.find(f=>f.owner==='caesar');raider.zone='alexandrian';raider.port=null;
+ const raidCampaign=newGrandGame('caesar'),raider=raidCampaign.naval.fleets.find(f=>f.owner==='caesar');raidCampaign.factions.senate.food=0;raider.zone='alexandrian';raider.port=null;
 assert.equal(orderFleet(raidCampaign,'caesar',raider.id,'raid','egypt-italy').ok,true);advanceNaval(raidCampaign);
 assert.ok(raidCampaign.naval.reports.some(r=>r.kind==='trade-incident'));
 await page.locator('#upload-save-file').setInputFiles({name:'neutral-cargo-incident.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(raidCampaign))});

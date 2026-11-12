@@ -22,6 +22,19 @@ test('AI reserves an unaffordable docked fleet and recommissions it after a date
  s=upgradeSave(JSON.parse(JSON.stringify(s)));f=s.naval.fleets.find(x=>x.id===id);s.factions.caesar.treasury=45;s.naval.intel.caesar={'senate-adriatic':{owner:'senate',zone:f.zone,year:s.year,month:s.month,source:'sighting',range:[1,5],confidence:'low'}};advanceNaval(s);assert.equal(f.reserve,true);assert.ok(!f.mobilizing);
  s.factions.caesar.treasury=120;advanceNaval(s);assert.equal(f.reserve,true);assert.equal(f.mobilizing,1);advanceNaval(s);assert.equal(f.reserve,false);assert.equal(f.mobilizing,0);
 });
+test('an offshore patrol cannot fight a fleet sheltered in port until it sorties',()=>{
+ const s=newGrandGame('senate'),patrol=s.naval.fleets.find(f=>f.id==='senate-adriatic'),sheltered=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ assert.equal(reserveFleet(s,'caesar',sheltered.id).ok,true);
+ assert.equal(orderFleet(s,'senate',patrol.id,'patrol','adriatic').ok,true);
+ const hull=sheltered.hull;
+ advanceNaval(s);
+ assert.equal(s.naval.reports.filter(r=>r.kind==='battle').length,0);
+ assert.equal(sheltered.hull,hull);
+ assert.equal(sheltered.reserve,true);
+ sheltered.port=null;sheltered.reserve=false;
+ advanceNaval(s);
+ assert.ok(s.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(sheltered.id)));
+});
 test('outnumbered AI preserves its land-war budget before optional patrols, but responds to a reported sea threat',()=>{
  const s=newGrandGame('egypt'),fleet=s.naval.fleets.find(f=>f.id==='caesar-adriatic'),full=fleetUpkeepDue(fleet);
  assert.equal(s.factions.caesar.treasury,180);
@@ -90,10 +103,12 @@ test('reserve ships cannot carry merchant cargo, and loss of their harbor ends r
  assert.equal(mobilizeFleet(s,'egypt',egypt.id).ok,true);advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');assert.equal(egypt.reserve,false);advanceNaval(s);assert.notEqual(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
  assert.equal(reserveFleet(s,'senate',senate.id).ok,true);s.regions.find(r=>r.id===senate.port).owner='caesar';s.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';advanceNaval(s);assert.equal(senate.reserve,false);assert.equal(senate.port,null);assert.ok(senate.hull<100);
 });
-test('a fleet attacked during mobilization fights at reserve readiness and the battle records it',()=>{
+test('a fleet mobilizing in harbor stays sheltered until it sorties',()=>{
  const s=newGrandGame('senate'),own=s.naval.fleets.find(x=>x.owner==='senate'),enemy=s.naval.fleets.find(x=>x.owner==='caesar');
  assert.equal(reserveFleet(s,'senate',own.id).ok,true);assert.equal(mobilizeFleet(s,'senate',own.id).ok,true);enemy.zone=own.zone;enemy.port=null;advanceNaval(s);
- const battle=s.naval.reports.find(r=>r.kind==='battle'&&r.participants.includes(own.id));assert.ok(battle);assert.equal(battle.snapshots[own.id].reserve,true);assert.equal(own.reserve,false);
+ assert.equal(s.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(own.id)),false);assert.equal(own.reserve,false);
+ assert.equal(orderFleet(s,'senate',own.id,'patrol','adriatic').ok,true);advanceNaval(s);
+ assert.ok(s.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(own.id)));
 });
 
 test('fleets are separate from armies and move only through connected sea zones',()=>{
@@ -163,7 +178,7 @@ test('historical naval aptitude and service experience influence officers',()=>{
  const s=newGrandGame('caesar'),mamurra=s.world.characters.mamurra;assert.equal(appointNavalJob(s,'caesar','engineer','cisalpine','mamurra').ok,true);assert.equal(mamurra.navalSkills.engineer,55);const job=s.naval.jobs[0],months=job.remaining;for(let i=0;i<months;i++)advanceNaval(s);job.experience=11;advanceNaval(s);assert.equal(mamurra.navalSkills.engineer,57);assert.ok(navalJobEffect(s,'caesar','engineer','cisalpine')>=3)
 });
 test('a fleet commander gains naval skill from real combat',()=>{
- const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),enemy=s.naval.fleets.find(x=>x.owner==='caesar'),person=Object.entries(s.world.characters).find(([id,p])=>p.faction==='senate'&&p.alive&&p.loyalty>=35&&!s.armies.some(a=>a.characterId===id));enemy.zone='ligurian';const out=appointFleet(s,'senate',f.id,person[0]);assert.equal(out.ok,true);for(let i=0;i<out.months;i++)advanceNaval(s);const skill=person[1].navalSkills.commander;enemy.zone=f.zone;enemy.port=null;enemy.order=null;advanceNaval(s);assert.ok(s.naval.reports.some(r=>r.kind==='battle'));assert.equal(person[1].navalSkills.commander,skill+2)
+  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),enemy=s.naval.fleets.find(x=>x.owner==='caesar'),person=Object.entries(s.world.characters).find(([id,p])=>p.faction==='senate'&&p.alive&&p.loyalty>=35&&!s.armies.some(a=>a.characterId===id));enemy.zone='ligurian';const out=appointFleet(s,'senate',f.id,person[0]);assert.equal(out.ok,true);for(let i=0;i<out.months;i++)advanceNaval(s);const skill=person[1].navalSkills.commander;enemy.zone=f.zone;enemy.port=null;enemy.order=null;f.port=null;advanceNaval(s);assert.ok(s.naval.reports.some(r=>r.kind==='battle'));assert.equal(person[1].navalSkills.commander,skill+2)
 });
 test('shipyard repairs and sailor replacement consume treasury, timber and manpower',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate');s.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';s.naval.fleets.find(x=>x.owner==='egypt').ships.merchant=0;f.hull=60;f.sailors-=30;const before={treasury:s.factions.senate.treasury,timber:s.development.senate.materials.timber,manpower:s.factions.senate.manpower};advanceNaval(s);assert.ok(f.hull>60);assert.equal(f.sailors,500);assert.equal(s.development.senate.materials.timber,before.timber-1);assert.equal(s.factions.senate.manpower,before.manpower-30);assert.equal(s.factions.senate.treasury,before.treasury-fleetUpkeep(f)-5)
@@ -175,17 +190,17 @@ test('sea transport needs an idle fleet and arrives with its vessels',()=>{
  const s=newGrandGame('senate'),army=s.armies.find(a=>a.id==='italy');army.region='italiaS';const target='t075',fleet=s.naval.fleets.find(f=>f.owner==='senate');s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';assert.equal(previewMarch(s,army.id,target).ok,true);assert.equal(moveArmy(s,army.id,target).ok,true);assert.equal(fleet.order.kind,'transport');assert.equal(accessibleFleet(s,'senate','italiaS',army.men),undefined);for(let i=0;i<4&&army.region!==target;i++)tick(s);assert.equal(army.region,target);assert.equal(fleet.port,target)
 });
 test('naval contact produces uncertain dated enemy intelligence and a battle report',()=>{
- const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.owner==='senate');assert.deepEqual(reportedHostileFleets(s,'senate'),[]);assert.equal(orderFleet(s,'senate',fleet.id,'intercept','adriatic').ok,true);advanceNaval(s);assert.ok(s.naval.reports.some(r=>r.kind==='battle'));const sighting=reportedHostileFleets(s,'senate').find(r=>r.owner==='caesar');assert.ok(sighting);assert.equal(sighting.month,s.month);assert.ok(sighting.range[0]<sighting.range[1])
+  const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.owner==='senate');s.naval.fleets.find(f=>f.owner==='caesar').port=null;assert.deepEqual(reportedHostileFleets(s,'senate'),[]);assert.equal(orderFleet(s,'senate',fleet.id,'intercept','adriatic').ok,true);advanceNaval(s);assert.ok(s.naval.reports.some(r=>r.kind==='battle'));const sighting=reportedHostileFleets(s,'senate').find(r=>r.owner==='caesar');assert.ok(sighting);assert.equal(sighting.month,s.month);assert.ok(sighting.range[0]<sighting.range[1])
 });
 test('naval battle preserves bounded enemy-loss observations across saves',()=>{
- const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.owner==='senate');assert.equal(orderFleet(s,'senate',fleet.id,'intercept','adriatic').ok,true);advanceNaval(s);
+  const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.owner==='senate');s.naval.fleets.find(f=>f.owner==='caesar').port=null;assert.equal(orderFleet(s,'senate',fleet.id,'intercept','adriatic').ok,true);advanceNaval(s);
  const battle=s.naval.reports.find(r=>r.kind==='battle'&&r.participants.includes(fleet.id)),enemyId=battle.participants.find(id=>id!==fleet.id),loss=battle.losses[enemyId],observed=battle.observedLosses.senate;
  assert.ok(observed.ships[0]<=loss.sunk&&loss.sunk<=observed.ships[1]);assert.ok(observed.ships[1]>observed.ships[0]);
  assert.ok(observed.sailors[0]<=loss.sailors&&loss.sailors<=observed.sailors[1]);assert.ok(observed.sailors[1]>observed.sailors[0]);
  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(restored.naval.reports.find(r=>r.id===battle.id).observedLosses.senate,observed);
 });
 test('naval reconnaissance can miss, observe approximately or evade a real encounter',()=>{
- const run=seed=>{const s=newGrandGame('senate'),scout=s.naval.fleets.find(f=>f.id==='senate-adriatic'),messages=[];scout.ships={light:3};scout.sailors=240;s.seed=seed;
+  const run=seed=>{const s=newGrandGame('senate'),scout=s.naval.fleets.find(f=>f.id==='senate-adriatic'),messages=[];scout.ships={light:3};scout.sailors=240;s.naval.fleets.find(f=>f.id==='caesar-adriatic').port=null;s.seed=seed;
   assert.deepEqual(reportedHostileFleets(s,'senate'),[]);assert.equal(orderFleet(s,'senate',scout.id,'recon','adriatic').ok,true);advanceNaval(s,(_state,en,zh)=>messages.push({en,zh}));
   return {s,scout,messages,sighting:reportedHostileFleets(s,'senate').find(r=>r.owner==='caesar'),battle:s.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(scout.id))}};
  const missed=run(1400);assert.equal(missed.sighting,undefined);assert.equal(missed.battle,false);assert.equal(missed.scout.order,null);assert.ok(missed.scout.supply<100);
