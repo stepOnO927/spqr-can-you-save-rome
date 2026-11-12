@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,royalCourtCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,purchaseMaterials} from '../engine.js';
+import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,purchaseMaterials} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan} from '../development.js';
 import {developmentPanel,ideasPanel} from '../development-ui.js';
 import {edgeMonths,grandRoute} from '../grand-operations.js';
 import {techIllustration} from '../tech-art.js';
-import {faithSatisfaction,advanceDemography} from '../local-society.js';
+import {faithSatisfaction,advanceDemography,advanceReligion} from '../local-society.js';
 import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
@@ -159,6 +159,36 @@ test('royal court liaison helps paid alliances with kingdoms only after adoption
  assert.equal(diplomacy(restored,'senate','galatia','alliance'),true);
  const atWar=upgradeSave(JSON.parse(JSON.stringify(s)));atWar.wars.push(['senate','galatia']);
  assert.equal(diplomacy(atWar,'senate','galatia','alliance'),false,'the idea cannot override war');
+});
+
+test('local rites affect a neighboring court only through an influential shared border cult',()=>{
+ const s=newGrandGame('senate'),cash=s.factions.senate.treasury;
+ assert.equal(relation(s,'senate','numidia'),25);
+ assert.equal(provincialRitesCredit(s,'senate','numidia'),0);
+ assert.equal(diplomacy(s,'senate','numidia','alliance'),false);
+ assert.equal(setReligiousPolicy(s,'senate','local-rites').ok,true);
+ assert.equal(s.factions.senate.treasury,cash-18);
+ assert.equal(provincialRitesCredit(s,'senate','numidia'),0,'the policy transition has not finished');
+ for(let i=0;i<3;i++)advanceReligion(s);
+ assert.equal(provincialRitesCredit(s,'senate','numidia'),5);
+ assert.equal(provincialRitesCredit(s,'senate','caesar'),0,'shared Roman rites are not a foreign border cult');
+ assert.equal(provincialRitesCredit(s,'senate','bosporus'),0,'a distant court gets no border-rites credit');
+ assert.equal(relation(s,'senate','numidia'),25,'the modifier does not silently rewrite relations');
+ const saved=upgradeSave(structuredClone(s));
+ assert.equal(provincialRitesCredit(saved,'senate','numidia'),5);
+ assert.equal(diplomacy(saved,'senate','numidia','alliance'),true);
+ const imposed=newGrandGame('senate');
+ assert.equal(setReligiousPolicy(imposed,'senate','civic-patronage').ok,true);
+ for(let i=0;i<3;i++)advanceReligion(imposed);
+ assert.equal(provincialRitesCredit(imposed,'senate','numidia'),-5);
+ for(const id of ['africa','t102'])imposed.regions.find(r=>r.id===id).priesthood.influence=20;
+ assert.equal(provincialRitesCredit(imposed,'senate','numidia'),0,'a weak priesthood has no court credit');
+ const calendar=newGrandGame('senate');calendar.wars=[];
+ assert.equal(setReligiousPolicy(calendar,'senate','local-rites').ok,true);
+ months(calendar,3);
+ assert.equal(provincialRitesCredit(calendar,'senate','numidia'),5,'normal monthly turns complete the policy transition');
+ const legacy=structuredClone(calendar);delete legacy.religion;
+ assert.equal(provincialRitesCredit(upgradeSave(legacy),'senate','numidia'),0,'older saves begin with customary policy');
 });
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{

@@ -36,11 +36,25 @@ export function faithSatisfaction(state,region){
  const baseline=policy==='local-rites'?(!aligned||accommodation?1:0):policy==='civic-patronage'?(aligned?1:accommodation?0:-2):accommodation?(region.integration<85?1:0):region.integration<65&&!aligned?-1:0;
  return baseline+(protectedSanctuary?1:0)+ancestralPatronage;
 }
+// A neighboring court can weigh the treatment of an influential border cult
+// that it shares. Cicero describes allies protesting damage to Sicilian rites
+// (In Verrem 2.4.113–115); this five-point alliance credit is a game value,
+// not an attested decision by any court in 49 BCE.
+export function provincialRitesCredit(state,actor,target){
+ if(!state.grandMap||!state.factions?.[actor]||!state.factions?.[target]||actor===target||target==='rebels')return 0;
+ const policy=state.religion?.[actor]?.policy;
+ if(!['local-rites','civic-patronage'].includes(policy))return 0;
+ const tradition=traditionFor(target);
+ if(tradition===traditionFor(actor))return 0;
+ const ownerBySite=new Map(state.regions.map(site=>[site.id,site.owner]));
+ const sharedBorderCult=state.regions.some(site=>site.owner===actor&&site.faiths?.[0]?.id===tradition&&site.priesthood?.tradition===tradition&&site.priesthood.influence>=35&&grandAdjacent(site.id).some(edge=>!edge.sea&&ownerBySite.get(edge.to)===target));
+ return sharedBorderCult?(policy==='local-rites'?5:-5):0;
+}
 export function religionPanel(state,lang){
  if(!state.grandMap)return '';initializeLocalSociety(state);const zh=lang==='zh',record=state.religion[state.player],f=state.factions[state.player],label={'customary':zh?'沿用地方旧制':'Customary balance','local-rites':zh?'承认地方祭仪':'Recognize local rites','civic-patronage':zh?'资助城邦祭仪':'Civic patronage'};
  const policy=['customary','local-rites','civic-patronage'].map(id=>'<button data-religion-policy="'+id+'" '+(record.policy===id||record.transition||f.treasury<18?'disabled':'')+'>'+label[id]+' · 18¤ / 3'+(zh?'月':'m')+'</button>').join('');
  const mismatched=state.regions.filter(r=>r.owner===state.player&&r.faiths?.[0]?.id!==traditionFor(state.player)).length;
- return '<section class="dev-category religion-panel"><h3>'+(zh?'地方宗教与祭司团':'PROVINCIAL RITES & PRIESTHOODS')+'</h3><p>'+(zh?'这是公元前49年的地方祭仪政策，不是后世的国教制度。政策与各省主要信仰、祭司团影响及人口迁移互动。':'These are local rites in 49 BCE, not a later state religion. Policy interacts with provincial traditions, priesthood influence and migration.')+'</p><p>'+(zh?'当前政策':'Current policy')+': '+label[record.policy]+' · '+(zh?'主要信仰与本国习俗不同的领土':'territories with a different dominant tradition')+' '+mismatched+'</p>'+(record.transition?'<p class="dev-status">'+(zh?'政策过渡中':'Transition underway')+' · '+record.transition.remaining+(zh?'月':'m')+'</p>':'')+policy+'</section>';
+ return '<section class="dev-category religion-panel"><h3>'+(zh?'地方宗教与祭司团':'PROVINCIAL RITES & PRIESTHOODS')+'</h3><p>'+(zh?'这是公元前49年的地方祭仪政策，不是后世的国教制度。政策与各省主要信仰、祭司团影响、人口迁移及有共同边境祭仪的王廷结盟互动。':'These are local rites in 49 BCE, not a later state religion. Policy interacts with provincial traditions, priesthood influence, migration and alliances with neighboring courts that share an influential border cult.')+'</p><p>'+(zh?'当前政策':'Current policy')+': '+label[record.policy]+' · '+(zh?'主要信仰与本国习俗不同的领土':'territories with a different dominant tradition')+' '+mismatched+'</p>'+(record.transition?'<p class="dev-status">'+(zh?'政策过渡中':'Transition underway')+' · '+record.transition.remaining+(zh?'月':'m')+'</p>':'')+policy+'</section>';
 }
 export function advanceDemography(state){
  if(!state.grandMap)return;

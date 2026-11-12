@@ -2,7 +2,7 @@ import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,cons
 import {FIGURE_ROLES,initializeFigures,figureStatus,figureActive} from './great-figures.js';
 import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';
-import {religionPanel} from './local-society.js?v=4';
+import {religionPanel} from './local-society.js?v=5';
 import {techIllustration} from './tech-art.js?v=10';
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const factionLabel=(id,zh)=>esc(FACTIONS[id]?.short?.[zh?1:0]||id);
