@@ -10,14 +10,23 @@ The baseline table is a historical snapshot. Later commits added an eastern
 Han theater, a separate Shanshan polity, Han court personnel and succession
 rules, and a browser exercised Han start and save restoration. The current
 identity work gives every opening army a saved commander record and names
-newly recruited officers and movement organizers from faction-aware pools.
+newly recruited officers, replacement officers, minor claimant field leaders,
+and movement organizers from faction-aware pools. Civil-war settlements now
+update those officers' political affiliation with their armies.
 New opening officers are excluded from automatic dynastic succession; their
 presence must not silently fill a vacant throne. The opening dynasty random
 seed remains `786509145` for the Caesarian scenario.
 
+The latest main also added a separate Mandate of Heaven Han simulation within
+Roman campaigns, with its own eastern map, court, portraits, trade and delayed
+reports. This optional Roman expansion coexists with the directly playable Han
+campaign. The setup keeps the Roman option out of direct Han starts; neither
+simulation silently replaces the other or changes an existing save.
+
 The expansion remains incomplete: wider Central Asian name datasets and
-characters, individual or procedural portraits, physical commodity trade,
-market AI, and the full acceptance scenarios are still outstanding. New names
+characters, a general procedural portrait system, integrated physical
+commodity trade across the Roman campaign, market AI, and the full acceptance
+scenarios are still outstanding. New names
 and emblems are game reconstructions, not documented personal identities.
 
 ## Existing foundations

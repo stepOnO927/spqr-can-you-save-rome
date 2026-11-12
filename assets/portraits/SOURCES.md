@@ -65,6 +65,33 @@ These six distinct original images were generated with the built-in image genera
 
 Assignment requires the matching saved institution and council seat, name, fictional status and opening birth year; it does not rely on reusable numeric IDs. Foreign portraits are revealed only from a recorded personal meeting, and the image does not confirm current position, location or health. People seeded later, or whose old-save identity cannot be matched, continue to use silhouettes.
 
+## Mandate of Heaven — 天命：大汉帝国
+
+All eighteen Han and steppe portraits were generated on 2026-11-09 with Canva's AI image generator. Each is an AI-generated artistic reconstruction, not a verified likeness: no reliable portrait of any Western Han emperor or Xiongnu chanyu survives. The prompts asked for an East Asian face, Western Han court dress (black lacquered gauze cap, layered crossed-collar silk robe fastened to the right), a 1:1 head-and-shoulders composition, painterly oil realism, warm side light from the left, a subdued dark olive background, and no dragons, text, watermark or frame. Steppe rulers wear fur-trimmed Xiongnu-period dress with braided hair and a belt plaque, and are deliberately not shown in Mongol-era costume. Canva supplied 200 px previews. Each 512 px master is a Lanczos upscale with light sharpening, and the 128 and 64 px versions are downscales. Full-resolution originals are in Canva under the listed media IDs.
+
+| Asset prefix | Person | Status | Canva media |
+| --- | --- | --- | --- |
+| han-liu-bang | 刘邦 Emperor Gaozu | historical | MAHadYSmj6o |
+| han-liu-ying | 刘盈 Emperor Hui | historical | MAHadSaUidg |
+| han-liu-heng | 刘恒 Emperor Wen | historical | MAHadekcyDA |
+| han-liu-qi | 刘启 Emperor Jing | historical | MAHadcqvtl4 |
+| han-liu-che | 刘彻 Emperor Wu | historical | MAHadYPPZP8 |
+| han-liu-fuling | 刘弗陵 Emperor Zhao | historical | MAHadc915yk |
+| han-liu-xun | 刘询 Emperor Xuan | historical | MAHadQ6dEIk |
+| han-liu-shi | 刘奭 Emperor Yuan (reigns from 49 BCE) | historical | MAHadYqAYWY |
+| han-liu-ao | 刘骜 Emperor Cheng | historical | MAHadXAcF6o |
+| han-liu-xin | 刘欣 Emperor Ai | historical | MAHadern3mM |
+| han-liu-kan | 刘衎 Emperor Ping | historical | MAHadSwgNMc |
+| han-huhanye | 呼韩邪单于 Huhanye Chanyu | historical | MAHadYOp4dE |
+| han-zhizhi | 郅支单于 Zhizhi Chanyu | historical | MAHadRENQuo |
+| han-fictional-liu-ji | 刘寂, a fictional Liu prince of a cadet line, about 30 | fictional, alternate history | MAHadZ2kXI8 |
+| han-fictional-liu-shang | 刘殇, a fictional young Liu prince, about 17 | fictional, alternate history | MAHadc8Sg80 |
+| han-fictional-pang-chong | 庞崇, a fictional non-Liu grand minister (usurper path) | fictional, alternate history | MAHadTDB2-w |
+| han-fictional-zhao-lie | 赵烈, a fictional Hexi frontier commander | fictional, alternate history | MAHadd06C6k |
+| han-fictional-su-heng | 苏蘅, a fictional consort from a maternal-relative clan | fictional, alternate history | MAHadYE47bQ |
+
+Fictional characters are original to this DLC and do not depict any documented person. In game, none of them can hold `orthodox_han_emperor` unless the engine's Liu-lineage validator accepts them. 庞崇 is not a Liu and can therefore only reach de facto power or found a new dynasty.
+
 ## Fictional scenario general
 
 Lucius Valerius Varus / 卢基乌斯·瓦勒里乌斯·瓦鲁斯 is a fictional character, not a documented historical person. His original portrait was generated with the built-in image generation tool on 2026-11-11; the project contains a 512×512 master and 128×128 and 64×64 derivatives. It is game artwork, not a historical likeness. Assignment requires the matching scenario, saved character ID, fictional name and birth year. Foreign viewers can see it only through a saved personal-meeting observation; it does not establish current identity, health or position.
@@ -73,4 +100,5 @@ Lucius Valerius Varus / 卢基乌斯·瓦勒里乌斯·瓦鲁斯 is a fictional 
 ## Fictional civic scenario representatives
 
 Gaius Sennius / 盖乌斯·森尼乌斯 and Mara / 玛拉 are invented civic representatives, not documented historical people. Their distinct original portraits were generated with the built-in image generation tool on 2026-11-11. Each has a 512×512 master and 128×128 and 64×64 derivatives. Assignment requires matching fictional identity, opening birth year, civic institution and council seat; foreign viewers require a recorded personal meeting. These images are game artwork, not historical likenesses.
+
 

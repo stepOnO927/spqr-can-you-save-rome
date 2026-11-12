@@ -2,7 +2,7 @@ import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
 
 // Original game people and naming pools, not transcriptions of documented
 // individuals. The pools reflect each implemented court's naming tradition.
-export const FACTION_NAME_CULTURE=Object.freeze({caesar:'roman',senate:'roman',egypt:'greek_egyptian',numidia:'numidian',mauretania:'mauretanian',armenia:'armenian',parthia:'parthian',galatia:'galatian',bosporus:'bosporan',han:'han',shanshan:'shanshan'});
+export const FACTION_NAME_CULTURE=Object.freeze({caesar:'roman',senate:'roman',caesar_claimant:'roman',senate_claimant:'roman',egypt:'greek_egyptian',egypt_claimant:'greek_egyptian',numidia:'numidian',mauretania:'mauretanian',armenia:'armenian',parthia:'parthian',parthia_claimant:'parthian',galatia:'galatian',bosporus:'bosporan',han:'han',shanshan:'shanshan'});
 export const NAME_POOLS=Object.freeze({
  roman:{culture:['Roman','罗马'],given:[['Gaius','盖乌斯'],['Lucius','卢基乌斯'],['Marcus','马库斯'],['Publius','普布利乌斯'],['Aulus','奥卢斯']],family:[['Furius','弗里乌斯'],['Valerius','瓦勒里乌斯'],['Aemilius','埃米利乌斯'],['Cassius','卡西乌斯'],['Fabius','法比乌斯']],epithet:[['Naso','纳索'],['Crispus','克里斯普斯'],['Luscus','卢斯库斯'],['Varro','瓦罗']]},
  han:{culture:['Han Chinese','汉'],family:[['Zhao','赵'],['Xu','徐'],['Cai','蔡'],['Wang','王'],['Li','李'],['Zhang','张']],given:[['He','和'],['Jian','俭'],['Ming','明'],['Huan','桓'],['Cheng','成'],['Yan','延']]},

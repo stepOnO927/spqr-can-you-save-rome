@@ -1,5 +1,6 @@
 import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=safe-save-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
+import {assignFictionalFieldCommander} from './dynasties.js?v=safe-save-1';
 
 // Alternate-history claimant commands use real game theaters and armies.
 // The setup is a simulation, not a reconstruction of a historical campaign.
@@ -49,8 +50,10 @@ export function startDynasticWar(s,parent,claimant){
  s.world.leadership[cfg.rival]=[claimant];
  const aid=dispute.militaryAid?.[claimant]||0;
  const age=ageRange(claimant,s.year),minor=age!==null&&age[0]<16;
- // A claimant who may be a minor is a political figurehead; an unnamed officer leads.
- s.armies.push({id:`${cfg.rival}_${s.nextArmy++}`,name:parent==='egypt'?['Egyptian claimant forces','埃及竞争者军队']:parent==='parthia'?['Parthian claimant forces','帕提亚竞争者军队']:['Rival imperial court forces','帝国竞争宫廷军队'],owner:cfg.rival,region:home.id,men:defectors+recruits+aid,morale:60,skill:2,experience:0,commander:minor?['Unnamed officer','未具名军官']:[...CHARACTER_CATALOG[claimant].name],characterId:minor?null:claimant,move:null,siege:null});
+ // A claimant who may be a minor remains the political figurehead; a saved
+ // fictional officer leads the army instead of implying the child commands it.
+ const army={id:`${cfg.rival}_${s.nextArmy++}`,name:parent==='egypt'?['Egyptian claimant forces','埃及竞争者军队']:parent==='parthia'?['Parthian claimant forces','帕提亚竞争者军队']:['Rival imperial court forces','帝国竞争宫廷军队'],owner:cfg.rival,region:home.id,men:defectors+recruits+aid,morale:60,skill:2,experience:0,commander:minor?['Unnamed officer','未具名军官']:[...CHARACTER_CATALOG[claimant].name],characterId:minor?null:claimant,move:null,siege:null};
+ if(minor)assignFictionalFieldCommander(s,army);s.armies.push(army);
  if(dispute.militaryAid)delete dispute.militaryAid[claimant];
  s.wars.push([parent,cfg.rival]);dispute.war={rival:cfg.rival,claimant,startedYear:s.year,startedMonth:s.month};
  // New diplomatic records contain no foreign reports; no uninvolved observer
@@ -122,6 +125,7 @@ export function settleDynasticWar(s,parent){
  const base=s.factions[parent],rival=s.factions[cfg.rival];base.treasury+=rival.treasury;base.food+=rival.food;base.manpower+=rival.manpower;
  s.wars=s.wars.filter(w=>!w.includes(cfg.rival));for(const enemy of enemies)if(!s.wars.some(w=>w.includes(parent)&&w.includes(enemy)))s.wars.push([parent,enemy]);
  s.alliances=s.alliances.filter(a=>!a.includes(cfg.rival));delete s.factions[cfg.rival];delete s.world.leadership[cfg.rival];delete s.world.governments?.[cfg.rival];
+ for(const character of Object.values(s.world.characters))if(character.faction===cfg.rival)character.faction=parent;
  s.world.disputeHistory.unshift({faction:parent,claimant:war.claimant,outcome:'negotiated_settlement',year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);
  continueRemainingDispute(s,parent,dispute);
  return true;

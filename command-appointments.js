@@ -1,6 +1,6 @@
 import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=safe-save-1';
 import {officeOf} from './office-system.js?v=safe-save-1';
-import {recordLifeEvent} from './dynasties.js?v=safe-save-1';
+import {recordLifeEvent,assignFictionalFieldCommander} from './dynasties.js?v=safe-save-1';
 
 // Theater-level appointments are simulated, not claims about historical commands.
 export function availableCommanders(s,armyId){
@@ -22,8 +22,8 @@ export function appointCommander(s,armyId,id){
 export function releaseCommander(s,armyId){
  initializeWorld(s);const unit=s.armies.find(a=>a.id===armyId),person=unit&&s.world.characters[unit.characterId];
  if(!unit||unit.owner!==s.player||unit.men<=0||unit.move||unit.siege||!person)return {ok:false,reason:'unavailable'};
- person.location=unit.region;unit.characterId=null;unit.commander=['Unnamed officer','未具名军官'];
+ person.location=unit.region;unit.characterId=null;const replacement=assignFictionalFieldCommander(s,unit);
  recordLifeEvent(s,person.id,`Relieved of command of ${unit.name[0]}.`,`卸任${unit.name[1]}指挥官。`);
- s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[person.id].name[0]} was relieved of army command in the simulation.`,zh:`${CHARACTER_CATALOG[person.id].name[1]}在游戏中卸任军队指挥。`});s.log=s.log.slice(0,80);
+ s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[person.id].name[0]} was relieved of army command; ${CHARACTER_CATALOG[replacement].name[0]} took over.`,zh:`${CHARACTER_CATALOG[person.id].name[1]}卸任军队指挥，${CHARACTER_CATALOG[replacement].name[1]}接替。`,characterId:replacement});s.log=s.log.slice(0,80);
  return {ok:true};
 }
