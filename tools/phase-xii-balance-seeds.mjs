@@ -4,7 +4,11 @@ import {newGrandGame,region,tick,isWar} from '../engine.js';
 // Compare deterministic campaigns without declaring any one outcome correct.
 // The player observes as Egypt so both Roman commands use the AI.
 // --long checks twelve seeds across six years; the default is a fast 36-month check.
-const long=process.argv.includes('--long'),months=long?72:36,seeds=long?12:5;
+// --months=N extends the twelve-seed check to expose late campaign stalemates.
+const requested=process.argv.find(arg=>arg.startsWith('--months='));
+const duration=requested?Number(requested.slice('--months='.length)):null;
+if(requested&&(!Number.isInteger(duration)||duration<1||duration>240))throw new Error('Use --months=1..240');
+const long=process.argv.includes('--long')||requested!=null,months=duration??(long?72:36),seeds=long?12:5;
 const outcomes={};
 for(let seed=1;seed<=seeds;seed++){
  const state=newGrandGame('egypt');state.seed=seed;

@@ -105,6 +105,18 @@ test('outnumbered AI pays for a city garrison and keeps it in the captured theat
  assert.equal(upgradeSave(JSON.parse(JSON.stringify(s))).armies.find(a=>a.id===garrison.id).aiGarrisonRegion,'roma');
 });
 
+test('a Roman AI still protects its strategic city after gaining territorial parity',()=>{
+ const s=newGrandGame('egypt'),main=army(s,'xiii'),f=s.factions.caesar;
+ for(const site of s.regions.filter(r=>r.owner==='senate'&&r.id!=='roma').slice(0,26))site.owner='caesar';
+ region(s,'roma').owner='caesar';main.region='roma';main.move=null;
+ f.treasury=100;f.food=100;
+ assert.ok(s.regions.filter(r=>r.owner==='caesar').length>s.regions.filter(r=>r.owner==='senate').length);
+ aiTurn(s,'caesar');
+ const guard=s.armies.find(a=>a.owner==='caesar'&&a.aiGarrisonRegion==='roma');
+ assert.ok(guard,'capturing enough territory must not turn off the Rome garrison');
+ assert.equal(guard.region,'roma');assert.equal(guard.move,null);
+});
+
 test('outnumbered AI reinforces the exposed front instead of the first map cell',()=>{
  const s=newGrandGame('egypt'),caesar=s.factions.caesar;
  s.month=4;caesar.treasury=80;caesar.food=100;

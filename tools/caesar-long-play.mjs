@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {newGrandGame,upgradeSave,tick,army,region,moveArmy,previewMarch,recruit,reserveFleet,nationalBudget} from '../engine.js';
+import {newGrandGame,upgradeSave,tick,army,region,moveArmy,previewMarch,recruit,reserveFleet,nationalBudget,collectWarContributions} from '../engine.js';
 import {assessment,sendScouts,delayAttack,latestRecon,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {revealedAchievements} from '../achievement-system.js';
@@ -22,6 +22,7 @@ assert.deepEqual(revealedAchievements(s),[]);
 
 for(let month=1;month<48&&!s.achievementState.finalized;month++){
  const legion=army(s,'xiii'),f=s.factions.caesar;
+ if(f.treasury<30&&nationalBudget(s,'caesar').projectedNet<0)record('collect wartime contributions',collectWarContributions(s,'caesar'));
  const ready=legion&&legion.men>=600&&!legion.move&&!legion.siege&&!legion.reconPending&&!legion.trainingRemaining;
  if(ready&&region(s,legion.region)?.owner==='caesar'){
   const index=corridor.indexOf(legion.region),next=index>=0&&index<corridor.length-1?corridor[index+1]:null;
@@ -57,4 +58,5 @@ for(let month=1;month<48&&!s.achievementState.finalized;month++){
  if(!s.achievementState.finalized)assert.deepEqual(revealedAchievements(s),[]);
 }
 assert.ok(journal.some(x=>x.includes('scout')));
+assert.ok(journal.some(x=>x.includes('collect wartime contributions')));
 console.log(JSON.stringify({date:`${s.year}/${s.month}`,result:s.achievementState.result||s.campaignOutcome?.winner||'ongoing',rome:region(s,'roma').owner,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),armies:s.armies.filter(a=>a.owner==='caesar').map(a=>({id:a.id,men:a.men,region:a.region,morale:a.morale})),fleets:s.naval.fleets.filter(f=>f.owner==='caesar').map(f=>({id:f.id,port:f.port,reserve:f.reserve,ships:f.ships,order:f.order?.kind})),battles:seen.size,snapshots,journal},null,2));

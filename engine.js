@@ -659,7 +659,9 @@ export function aiTurn(s,owner){
     const rally=emergency?owned.find(r=>r.port||r.terrain==='urban')||border||owned[0]:border;
     if(rally)raiseAt(rally.id);
   }
-  const strategicCity=s.grandMap&&outnumbered&&['caesar','senate'].includes(owner)?region(s,owner==='caesar'?'roma':'cisalpine'):null;
+  // Holding a political center matters after territorial parity, too. A
+  // successful advance must not disable its own garrison decision.
+  const strategicCity=s.grandMap&&['caesar','senate'].includes(owner)?region(s,owner==='caesar'?'roma':'cisalpine'):null;
   if(strategicCity?.owner===owner&&isWar(s,owner,owner==='caesar'?'senate':'caesar')){
     const defenders=s.armies.filter(a=>a.owner===owner&&a.region===strategicCity.id&&a.men>0&&!a.move);
     if(defenders.length===1&&defenders[0].men>=3000&&defenders[0].aiGarrisonRegion!==strategicCity.id){
