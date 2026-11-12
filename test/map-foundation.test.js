@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region} from '../engine.js?v=mission-discount-1';
+import {newGame,region} from '../engine.js?v=newborn-age-1';
 import {renderTerritoryFacts} from '../map-lab/territory-facts.js?v=mission-discount-1';
 
 test('territory record uses the actual friendly garrison and local food potential', () => {
