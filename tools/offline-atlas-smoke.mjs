@@ -105,9 +105,9 @@ try{
  if(process.env.SPQR_ATLAS_OVERVIEW_SCREENSHOT){await page.waitForTimeout(600);await page.screenshot({path:process.env.SPQR_ATLAS_OVERVIEW_SCREENSHOT})}
  if(process.env.SPQR_ATLAS_WIDE_SCREENSHOT){await page.locator('#zoom-out').click();await page.locator('#zoom-out').click();await page.waitForTimeout(1300);assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('leader-overview')),true);assert.equal(await page.locator('[data-site="roma"]').evaluate(el=>getComputedStyle(el).fontSize),'0px','Wide overview should show a settlement dot, not a label competing with army flags');await page.screenshot({path:process.env.SPQR_ATLAS_WIDE_SCREENSHOT});await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(800);assert.notEqual(await page.locator('[data-site="roma"]').evaluate(el=>getComputedStyle(el).fontSize),'0px','City names should return at regional zoom')}
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
- assert.ok(terrainRequests.some(path=>path.includes('/terrain/6/')),'Zoom 6 did not use bundled terrain');
+ await waitForTerrain(/\/terrain\/6\//,'Zoom 6 did not use bundled terrain');
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
- assert.ok(terrainRequests.some(path=>path.includes('/terrain/7/')),'Zoom 7 did not use bundled terrain');
+ await waitForTerrain(/\/terrain\/7\//,'Zoom 7 did not use bundled terrain');
  if(process.env.SPQR_ATLAS_Z7_SCREENSHOT){await page.waitForTimeout(2400);await page.screenshot({path:process.env.SPQR_ATLAS_Z7_SCREENSHOT})}
  if(page.viewportSize().width>900){
   assert.equal(await page.locator('#locator').isVisible(),true,'Zoomed Italy needs a geographic locator');
@@ -116,9 +116,9 @@ try{
   assert.ok(dot.x>0&&dot.x<100&&dot.y>0&&dot.y<100,'Locator dot must stay inside the Italy coast inset');
  }else assert.equal(await page.locator('#locator').isVisible(),false,'Narrow screens should keep the map unobstructed');
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
- assert.ok(terrainRequests.some(path=>path.includes('/terrain/8/')),'Zoom 8 did not use bundled terrain');
+ await waitForTerrain(/\/terrain\/8\//,'Zoom 8 did not use bundled terrain');
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
- assert.ok(terrainRequests.some(path=>path.includes('/terrain/9/')),'Zoom 9 did not use bundled terrain');
+ await waitForTerrain(/\/terrain\/9\//,'Zoom 9 did not use bundled terrain');
  assert.deepEqual(missingTerrain,[],'Zoomed Italy requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Italy zoom needed network terrain');
  if(process.env.SPQR_ATLAS_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_SCREENSHOT});
@@ -159,12 +159,12 @@ try{
  catch(error){const status=await page.locator('#status').evaluate(el=>({display:el.style.display,text:el.textContent})).catch(()=>null);throw Error(`Atlas reload did not finish: ${JSON.stringify({status,errors,missingTerrain:missingTerrain.slice(-8)})}`,{cause:error})}
  await page.waitForTimeout(1400);
  terrainRequests.length=0;
- const aegeanCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=207');map.jumpTo({center:[27.1,38.6],zoom:9.1});return map.getCenter().toArray()});
+ const aegeanCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');map.jumpTo({center:[27.1,38.6],zoom:9.1});return map.getCenter().toArray()});
  assert.ok(Math.abs(aegeanCenter[0]-27.1)<.1&&Math.abs(aegeanCenter[1]-38.6)<.1,'Aegean screenshot must actually focus on the coast');
  await waitForTerrain(/\/terrain\/9\/294\//,'Aegean maximum zoom did not use bundled high-detail terrain');
  assert.deepEqual(missingTerrain,[],'Aegean maximum zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Aegean terrain unexpectedly needed the network');
- const aegeanRelief=()=>page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=207');return ['relief-aegean-ultra','relief-aegean-higher'].map(id=>({visibility:map.getLayoutProperty(id,'visibility')||'visible',strength:map.getPaintProperty(id,'hillshade-exaggeration')}))});
+ const aegeanRelief=()=>page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');return ['relief-aegean-ultra','relief-aegean-higher'].map(id=>({visibility:map.getLayoutProperty(id,'visibility')||'visible',strength:map.getPaintProperty(id,'hillshade-exaggeration')}))});
  assert.deepEqual(await aegeanRelief(),[{visibility:'visible',strength:.32},{visibility:'visible',strength:.32}]);
  await page.locator('#relief-toggle').click();
  assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['none','none']);
@@ -172,17 +172,17 @@ try{
  assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['visible','visible']);
  if(process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT){await page.waitForTimeout(650);await page.screenshot({path:process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT})}
  terrainRequests.length=0;
- const iberianCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=207');map.jumpTo({center:[-4.78,37.888],zoom:9.1});return map.getCenter().toArray()});
+ const iberianCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');map.jumpTo({center:[-4.78,37.888],zoom:9.1});return map.getCenter().toArray()});
  assert.ok(Math.abs(iberianCenter[0]+4.78)<.1&&Math.abs(iberianCenter[1]-37.888)<.1,'Iberian check must focus on Corduba');
  await waitForTerrain(/\/terrain\/9\/249\//,'Iberian maximum zoom did not use native zoom-9 terrain');
- await page.waitForFunction(async()=>{const {map}=await import('/map-lab/lab.js?v=207');return map.isSourceLoaded('elevation-iberia-ultra')&&map.isSourceLoaded('elevation-iberia-higher')},null,{timeout:45000});
+ await page.waitForFunction(async()=>{const {map}=await import('/map-lab/lab.js?v=208');return map.isSourceLoaded('elevation-iberia-ultra')&&map.isSourceLoaded('elevation-iberia-higher')},null,{timeout:45000});
  assert.deepEqual(missingTerrain,[],'Iberian close zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Iberian terrain unexpectedly needed the network');
- assert.equal(await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=207');return map.getPaintProperty('relief-iberia-higher','hillshade-exaggeration')}),.32);
+ assert.equal(await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');return map.getPaintProperty('relief-iberia-higher','hillshade-exaggeration')}),.32);
  terrainRequests.length=0;
- await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=207');map.jumpTo({center:[-2.448,41.808],zoom:9.1})});
+ await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');map.jumpTo({center:[-2.448,41.808],zoom:9.1})});
  await waitForTerrain(/\/terrain\/9\/252\//,'Numantia maximum zoom did not use native Iberian terrain');
- await page.waitForFunction(async()=>{const {map}=await import('/map-lab/lab.js?v=207');return map.isSourceLoaded('elevation-iberia-higher')},null,{timeout:45000});
+ await page.waitForFunction(async()=>{const {map}=await import('/map-lab/lab.js?v=208');return map.isSourceLoaded('elevation-iberia-higher')},null,{timeout:45000});
  assert.deepEqual(missingTerrain,[],'Numantia close zoom requested missing terrain tiles');
  if(page.viewportSize().width>=1000)await page.waitForFunction(()=>{
   const source=document.querySelector('#map canvas.maplibregl-canvas');if(!source)return false;
@@ -193,6 +193,15 @@ try{
   return high-low>22;
  },null,{timeout:45000,polling:400});
  if(process.env.SPQR_ATLAS_IBERIA_Z9_SCREENSHOT){await page.waitForTimeout(400);await page.screenshot({path:process.env.SPQR_ATLAS_IBERIA_Z9_SCREENSHOT})}
+ terrainRequests.length=0;
+ const gallicCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');map.jumpTo({center:[3.136,45.72],zoom:9.1});return map.getCenter().toArray()});
+ assert.ok(Math.abs(gallicCenter[0]-3.136)<.1&&Math.abs(gallicCenter[1]-45.72)<.1,'Gallic close zoom must focus on Gergovia');
+ await waitForTerrain(/\/terrain\/9\/260\//,'Gallic maximum zoom did not use native zoom-9 terrain');
+ await page.waitForFunction(async()=>{const {map}=await import('/map-lab/lab.js?v=208');return map.isSourceLoaded('elevation-gaul-ultra')&&map.isSourceLoaded('elevation-gaul-higher')},null,{timeout:45000});
+ assert.deepEqual(missingTerrain,[],'Gallic close zoom requested missing terrain tiles');
+ assert.equal(external.includes('s3.amazonaws.com'),false,'Gallic terrain unexpectedly needed the network');
+ assert.equal(await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');return map.getPaintProperty('relief-gaul-higher','hillshade-exaggeration')}),.32);
+ if(process.env.SPQR_ATLAS_GAUL_Z9_SCREENSHOT){await page.waitForTimeout(4000);await page.screenshot({path:process.env.SPQR_ATLAS_GAUL_Z9_SCREENSHOT})}
  await page.locator('#resources-help').click();assert.match(await page.locator('.national-budget').innerText(),/Home domain dues · game estimate/);
  await page.locator('#language').click();assert.match(await page.locator('.national-budget').innerText(),/本土领地储粮 · 游戏估算/);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'the translated budget must not overflow the screen');
@@ -207,5 +216,5 @@ try{
  await waitForTerrain(/\/terrain\/7\/(7[8-9]|8[0-2])\//,'Armenian zoom 7 did not use bundled mountain terrain');
  assert.deepEqual(missingTerrain,[],'Armenian mountain zoom requested missing terrain tiles');
  if(process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT});
- console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and Italy, the Aegean, Iberia and Egypt through zoom 9.');
+ console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and Italy, the Aegean, Iberia, Gaul and Egypt through zoom 9.');
 }finally{await browser.close()}
