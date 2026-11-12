@@ -16,10 +16,14 @@ test('five opening ministers have individual portraits and a bilingual profile w
   assert.match(en,new RegExp(`data-person="${id}"`));
   assert.ok(en.includes(person.name[0]));assert.ok(zh.includes(person.name[1]));
   assert.ok(en.includes(`${person.portrait}-128.jpg`));
+  assert.match(en,/Approximate age/);assert.match(zh,/约略年龄/);
+  assert.match(en,/Current responsibilities/);assert.match(zh,/当前职责/);
   assert.match(en,/No finding/);assert.match(en,/Unknown/);
   assert.ok(!en.includes(`>${person.corruption}<`),'unproven corruption must not be displayed');
  }
  assert.ok(!hanCourtHtml(state,0,'hong-gong').includes('<option value="chengxiang"'));
+ assert.match(hanCourtHtml(state,0,'yu-dingguo'),/about 56/);
+ assert.match(hanCourtHtml(state,0,'yu-dingguo'),/Head of the outer administration/);
 });
 
 test('older save gains a portrait only when the saved historical identity matches',()=>{

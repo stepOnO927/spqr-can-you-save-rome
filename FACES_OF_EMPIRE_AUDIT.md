@@ -127,6 +127,9 @@ region, a response deadline, costs and available actions. The player can
 choose whom to blame, or use the existing relief, self-reproach, dismissal
 and magnate options; each goes through the actual court simulation. A browser
 test verifies that the chosen faction loses influence across save/load.
+The minister dossier also shows approximate age from the saved birth record,
+only named relatives already present in the genealogy, and the current
+office's actual responsibility. It avoids inventing unknown family ties.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,
