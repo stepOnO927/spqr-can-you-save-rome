@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,moveArmy,tick,upgradeSave} from '../engine.js?v=newborn-age-1';
-import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from '../map-lab/turn-report.js';
+import {newGame,moveArmy,tick,upgradeSave} from '../engine.js?v=calendar-1';
+import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from '../map-lab/turn-report.js?v=calendar-1';
 import {reportedControl} from '../control-intelligence.js';
 import {FACTIONS} from '../data.js';
 

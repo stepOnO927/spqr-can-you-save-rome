@@ -1,4 +1,4 @@
-import {syncChronicleDispatches} from './chronicle.js?v=newborn-age-1';
+import {syncChronicleDispatches} from './chronicle.js?v=calendar-1';
 import {CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
 import {initializeDynasties} from './dynasties.js?v=newborn-age-1';
 

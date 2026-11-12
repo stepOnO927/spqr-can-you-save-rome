@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,estimatedStrength} from '../engine.js?v=newborn-age-1';
+import {newGame,tick,upgradeSave,estimatedStrength} from '../engine.js?v=calendar-1';
 import {startFocus,focusState,treeFor,scoreFocus,focusReportsFor} from '../national-focus.js?v=newborn-age-1';
 import {templatesFor,reorganizeArmy,commandConcentration} from '../legion-designer.js?v=newborn-age-1';
 import {createPlan,assignRole,approvePlan,planById} from '../battle-plans.js?v=newborn-age-1';
 import {assessOpportunities} from '../multipolar.js?v=multipolar-2';
-import {finalizeCampaign} from '../legacy.js?v=newborn-age-1';
+import {finalizeCampaign} from '../legacy.js?v=calendar-1';
 
 const run=(s,id,actor=s.player)=>{const f=treeFor(actor).find(x=>x.id===id);const r=startFocus(s,actor,id);assert.ok(r.ok,`${id}: ${r.reason}`);for(let i=0;i<f.months;i++)tick(s)};
 

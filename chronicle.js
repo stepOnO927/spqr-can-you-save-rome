@@ -1,3 +1,4 @@
+import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
@@ -5,7 +6,7 @@ import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 const copy=x=>JSON.parse(JSON.stringify(x));
 const name=(id,lang)=>FACTIONS[id]?.short?.[lang==='zh'?1:0]||id;
 const place=(entry,lang)=>entry.place?.[lang==='zh'?1:0]||entry.region||'';
-const date=(e,lang)=>lang==='zh'?`公元前${Math.abs(e.year)}年${e.month}月`:`${e.month}/${Math.abs(e.year)} BCE`;
+const date=(e,lang)=>lang==='zh'?`${campaignYear(e.year,'zh')}${e.month}月`:`${e.month}/${campaignYear(e.year)}`;
 export function initializeChronicle(s){if(!s.chronicle){s.chronicle={entries:[],monthly:[],annual:[],nextId:1,lifeSeen:Object.fromEntries(Object.entries(s.world?.dynasties?.lives||{}).map(([id,events])=>[id,events.length]))};for(const e of [...(s.log||[])].reverse()){if(e.legacyUnverified)continue;const en=String(e.en||''),zh=String(e.zh||'');s.chronicle.entries.unshift({id:s.chronicle.nextId++,year:e.year??s.year,month:e.month??s.month,kind:'dispatch',topic:category(en+' '+zh),priority:dispatchPriority(en+' '+zh),faction:s.player,other:e.other||null,characterId:e.characterId||null,en,zh});e.chronicleRecorded=true}}s.chronicle.entries||=[];s.chronicle.monthly||=[];s.chronicle.annual||=[];s.chronicle.nextId||=1;s.chronicle.lifeSeen||={};return s.chronicle}
 export function captureCampaignState(s){
  initializeChronicle(s);
@@ -60,6 +61,6 @@ export function formatChronicleEntry(e,lang='en'){const zh=lang==='zh',i=zh?1:0,
   const label=value=>labels[value]?.[i]||(zh?'未知安排':'unknown arrangement');return zh?`政务安排由${label(e.from)}变为${label(e.to)}。`:`Government authority changed from ${label(e.from)} to ${label(e.to)}.`;
  }
  case 'diplomacy':if(e.change==='war')return zh?`与${name(e.other,lang)}进入战争。`:`War began with ${name(e.other,lang)}.`;break;
- case 'intelligence':return zh?`${p}：报告由${e.reportedOwner?.[1]||'未知'}控制（${({travelers:'商旅',observation:'观察',spy:'间谍',official:'官方'})[e.source]||'情报'}，观察于 ${e.observationMonth}/${Math.abs(e.observationYear)} BCE；可能过时或有误）。`:`${p}: ${e.source||'intelligence'} reports control by ${e.reportedOwner?.[0]||'unknown'}, observed ${e.observationMonth}/${Math.abs(e.observationYear)} BCE; may be outdated or mistaken.`;
+ case 'intelligence':return zh?`${p}：报告由${e.reportedOwner?.[1]||'未知'}控制（${({travelers:'商旅',observation:'观察',spy:'间谍',official:'官方'})[e.source]||'情报'}，观察于 ${e.observationMonth}/${campaignYear(e.observationYear)}；可能过时或有误）。`:`${p}: ${e.source||'intelligence'} reports control by ${e.reportedOwner?.[0]||'unknown'}, observed ${e.observationMonth}/${campaignYear(e.observationYear)}; may be outdated or mistaken.`;
  }return zh?e.zh||e.en||'':e.en||e.zh||''}
 export const chronicleDate=date;
