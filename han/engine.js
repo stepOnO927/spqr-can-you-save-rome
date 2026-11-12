@@ -298,7 +298,7 @@ export function loadHanSave(raw){
  if(!s||s.dlc!==DLC_ID)throw new Error('Not a Mandate of Heaven save');
  // canonical historical birth records always come from the static record
  for(const p of PEOPLE){const rec=s.genealogy[p.id];if(rec&&(rec.father!==p.father||rec.birthSurname!==p.birthSurname||rec.sex!==p.sex||rec.birth!==p.birth)){delete s.genealogy[p.id];recordBirth(s,{id:p.id,father:p.father,mother:p.mother,birthSurname:p.birthSurname,birth:p.birth,sex:p.sex})}
-  if(s.persons[p.id])s.persons[p.id].birthSurname=p.birthSurname}
+  if(s.persons[p.id]){s.persons[p.id].birthSurname=p.birthSurname;if(p.portrait&&!s.persons[p.id].portrait&&s.persons[p.id].birth===p.birth&&s.persons[p.id].name?.[0]===p.name[0])s.persons[p.id].portrait=p.portrait}}
  for(const r of REGIONS)if(!s.regions.some(x=>x.id===r.id))s.regions.push({...r,siege:null,unrest:0});
  for(const [id,f] of Object.entries(FACTIONS))if(!f.dynamic&&!s.factions[id])s.factions[id]={id,treasury:20,grain:30,manpower:6000,horses:3000,stability:55};
  s.rulers||=Object.fromEntries(EURASIAN_RULERS.map(p=>[p.faction,{...p,attested:true}]));

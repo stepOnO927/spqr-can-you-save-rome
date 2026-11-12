@@ -86,17 +86,39 @@ orders gain one stable carrier without changing their stock reservation or
 escrow. A carrier committed to an active shipment cannot be sent on an
 unrelated personal journey. This is a first merchant-character integration;
 the merchant still does not plan independently of its faction's trade AI. The
-Roman campaign's optional Han NPC simulation still uses abstract silk income
-and has not yet been joined to the physical market ledger.
+Roman campaign's optional Han NPC simulation now settles westward Silk Road
+caravans through its measured stock and finite external buyer budget, with
+actual tariff, merchant-fee and transport entries. Road closures and bandits
+settle cargo and escrow without inventing revenue. Older saved caravans
+continue carrying reports but cannot mint new treasury or horses. Roman and
+Han campaign ledgers still run separately and need a common interstate
+settlement model.
+The independent Han campaign also has its own market panel. Known courts can
+receive a frontier-market proposal; once a treaty exists, players can see
+public offers, quote a route and full price, dispatch a named merchant, and
+follow the shipment after saving and loading. A browser test runs the full
+Kangju-to-Han horse purchase and delivery in English and Chinese. Han,
+Kangju, Yuezhi and Parthia AI courts can seek treaties and place orders
+without player input; their route plans use dated control reports, while
+dispatch checks the actual road.
 The 120-month market simulation verifies that at least four AI courts place
 orders against real surplus, deliveries complete, stocks and prices remain
 bounded, escrow resolves, merchant IDs persist, transport fees balance, and
 save migration works halfway through.
+The five major historical opening Han ministers now have separate artistic
+reconstruction portraits and an inspectable bilingual court roster in the
+direct Han campaign. The current office, faction and public loyalty are
+visible; competence requires service, and corruption or ambition remains
+hidden until the simulation reveals evidence. A player appointment or audit
+changes the court state and survives save/load. Older saves gain an absent
+portrait only when the saved identity still matches the historical record.
+A browser regression visits all five portraits and exercises appointment,
+audit and both languages.
 
 The expansion remains incomplete: wider Central Asian name datasets and
-characters, major fixed portraits, additional routes to fictional sovereignty,
-integrated physical commodity trade with the Roman campaign's Han NPC world,
-broader market AI and the full acceptance
+characters, other major fixed portraits, additional routes to fictional sovereignty,
+shared Roman–Han settlement, intermediary resale rather than only tariffs,
+broader player and merchant competition, and the full acceptance
 scenarios are still outstanding. New names
 and emblems are game reconstructions, not documented personal identities.
 

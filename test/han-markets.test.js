@@ -134,3 +134,26 @@ test('a legacy caravan without prepaid goods carries reports without minting mon
  assert.equal(s.silk.farWestDeliveries||0,deliveries);
  assert.equal(s.factions.han.treasury,treasury);
 });
+
+test('autonomous Han buyers seek another horse supplier after a wartime blockade',()=>{
+ const s=newHanGame(null,{seed:48});s.month=3;
+ for(const market of Object.values(s.tradeMarkets.regions))for(const item of Object.values(market.goods)){item.stock=0;item.production=0;item.consumption=0}
+ for(const id of ['kangju','wusun']){const item=s.tradeMarkets.regions[id].goods.horses;item.stock=60;item.production=3;setRelation(s,'han',id,65)}
+ for(const f of Object.values(s.factions))f.treasury=0;s.factions.han.treasury=600;
+ advanceEasternMarkets(s);
+ const first=s.tradeMarkets.shipments.find(x=>x.buyer==='han'&&x.commodity==='horses');
+ assert.ok(first,'Han should initiate a horse import');
+ assert.ok(['kangju','wusun'].includes(first.seller));
+ const alternative=first.seller==='kangju'?'wusun':'kangju';
+ assert.equal(declareWar(s,'han',first.seller).ok,true);
+ for(let i=0;i<18;i++)next(s);
+ assert.ok(s.tradeMarkets.shipments.some(x=>x.buyer==='han'&&x.seller===alternative&&x.commodity==='horses'),'Han did not seek the other supplier');
+ assert.ok(['blocked','stranded'].includes(first.status));
+});
+
+test('local eastern prices react to actual scarcity and surplus',()=>{
+ const s=newHanGame('han',{seed:12}),horses=s.tradeMarkets.regions.dunhuang.goods.horses;
+ horses.stock=0;horses.production=0;horses.consumption=0;advanceEasternMarkets(s);
+ const scarce=horses.price;horses.stock=80;next(s);
+ assert.ok(scarce>horses.price,`scarce ${scarce}, surplus ${horses.price}`);
+});
