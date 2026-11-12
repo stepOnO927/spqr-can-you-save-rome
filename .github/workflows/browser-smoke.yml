@@ -54,6 +54,7 @@ jobs:
           node tools/market-smoke.mjs
           node tools/browser-smoke.mjs
           node tools/han-smoke.mjs
+          node tools/han-market-smoke.mjs
           node tools/han-field-smoke.mjs
           node tools/phase-v-smoke.mjs
           node tools/capture-check.mjs

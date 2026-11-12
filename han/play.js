@@ -4,17 +4,19 @@ import {drawMap} from './map.js';
 import {templatesFor,recruitQuote,recruit,neighbours} from './military.js';
 import {changeDependency,dependencyOf} from './dependencies.js';
 import {declareWar,propose,atWar} from './frontier.js';
+import {marketReasonName,renderEasternMarketPanel} from './market-ui.js?v=faces-of-empire-1';
 const $=id=>document.getElementById(id),D=(en,zh)=>lang?zh:en,L=a=>Array.isArray(a)?a[lang]||a[0]:a;
-let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,camera='all',mode='political';
+let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,camera='all',mode='political',marketOpen=false;
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function message(en,zh){$('message').textContent=D(en,zh)}
 function save(){if(!s)return;localStorage.setItem(SAVE_KEY('browser'),serialize(s));message('Campaign saved.','战役已保存。')}
-function load(){const raw=localStorage.getItem(SAVE_KEY('browser'));if(!raw){message('No saved campaign.','尚无存档。');return}try{s=loadHanSave(raw);selected=null;army=null;render();message('Campaign loaded.','战役已读取。')}catch(e){message('Save could not be loaded: '+e.message,'无法读取存档：'+e.message)}}
-function begin(f){s=newHanGame(f);selected=s.regions.find(r=>r.owner===f)?.id||null;army=null;render();message('Select an army, inspect a route, then advance a month.','选择军队、查看路线，再推进一个月。')}
+function load(){const raw=localStorage.getItem(SAVE_KEY('browser'));if(!raw){message('No saved campaign.','尚无存档。');return}try{s=loadHanSave(raw);selected=null;army=null;marketOpen=false;render();message('Campaign loaded.','战役已读取。')}catch(e){message('Save could not be loaded: '+e.message,'无法读取存档：'+e.message)}}
+function begin(f){s=newHanGame(f);selected=s.regions.find(r=>r.owner===f)?.id||null;army=null;marketOpen=false;render();message('Select an army, inspect a route, then advance a month.','选择军队、查看路线，再推进一个月。')}
 function date(){return lang?`公元前${Math.abs(s.year)}年${s.month}月`:`${Math.abs(s.year)} BCE · month ${s.month}`}
+function renderChronicle(){$('chronicle').innerHTML=`<h3>${D('Recent events','近期事件')}</h3>${s.log.slice(-6).reverse().map(e=>`<p>${esc(e.year||s.year)} · ${esc(L(e.text||e.message||e))}</p>`).join('')||`<p class="muted">${D('The campaign has just begun.','战役刚刚开始。')}</p>`}`}
 function render(){
  document.documentElement.lang=lang?'zh-CN':'en';$('title').textContent=D('MANDATE OF HEAVEN · SILK ROAD','天命 · 丝路诸国');$('lang').textContent=lang?'English':'中文';$('save').textContent=D('Save','保存');$('load').textContent=D('Load','读取');$('campaignTitle').textContent=s?`${esc(L(FACTIONS[s.player]?.name))} · ${date()}`:D('Choose a polity','选择政体');
- $('advance').textContent=D('Next month','推进一月');$('advance').disabled=!s;
+ $('advance').textContent=D('Next month','推进一月');$('advance').disabled=!s;$('trade-panel').textContent=D(marketOpen?'Close markets':'Markets',marketOpen?'关闭市场':'市场');$('trade-panel').disabled=!s;$('trade-panel').setAttribute('aria-pressed',String(marketOpen));
  const choices=[['all',D('All Eurasia','欧亚全图')],['han',D('Han frontier','汉地边疆')],['tarim',D('Tarim Basin','塔里木盆地')],['central',D('Central Asia','中亚')],['iran',D('Iran and Mesopotamia','伊朗与两河')],['caucasus',D('Caucasus','高加索')]];
  $('camera').innerHTML=choices.map(([v,n])=>`<option value="${v}">${n}</option>`).join('');$('camera').value=camera;
  $('mode').innerHTML=[['political',D('Political','政治')],['terrain',D('Terrain','地形')],['military',D('Own armies','我军')],['supply',D('Supply','补给')],['economy',D('Local taxes','地方税收')]].map(([v,n])=>`<option value="${v}">${n}</option>`).join('');$('mode').value=mode;
@@ -22,13 +24,14 @@ function render(){
  if(!s){$('begin').onclick=()=>begin($('factionSelect').value);$('map').innerHTML='';$('overview').innerHTML='';$('inspector').innerHTML='';$('chronicle').innerHTML='';return}
  const f=s.factions[s.player],owned=s.regions.filter(r=>r.owner===s.player),mine=s.armies.filter(a=>a.owner===s.player&&a.men>0);
  $('overview').innerHTML=`<h3>${D('Realm','国势')}</h3><dl><dt>${D('Treasury','国库')}</dt><dd>${f.treasury}</dd><dt>${D('Grain','粮食')}</dt><dd>${f.grain}</dd><dt>${D('Manpower','兵源')}</dt><dd>${f.manpower}</dd><dt>${D('Stability','稳定')}</dt><dd>${f.stability}</dd><dt>${D('Regions','领地')}</dt><dd>${owned.length}</dd><dt>${D('Armies','军队')}</dt><dd>${mine.length}</dd><dt>${D('Known ruler','可考君主')}</dt><dd>${esc(L(s.rulers?.[s.player]?.name)||D('Uncertain','未详'))}</dd></dl><h3>${D('Your armies','麾下军队')}</h3>${mine.map(a=>`<div class="list"><button data-select-army="${esc(a.id)}">${esc(a.id)} · ${esc(L(s.regions.find(r=>r.id===a.region)?.name))} · ${a.men}</button></div>`).join('')||D('No armies remain.','已无军队。')}`;
- $('overview').querySelectorAll('[data-select-army]').forEach(b=>b.onclick=()=>{army=b.dataset.selectArmy;selected=s.armies.find(a=>a.id===army)?.region;render()});
+ $('overview').querySelectorAll('[data-select-army]').forEach(b=>b.onclick=()=>{army=b.dataset.selectArmy;selected=s.armies.find(a=>a.id===army)?.region;marketOpen=false;render()});
  const colors=Object.fromEntries(Object.values(FACTIONS).map(f=>[f.id,f.color]));
  const targets=new Set(army?neighbours(s.armies.find(a=>a.id===army)?.region||'').map(x=>typeof x==='string'?x:x.id):[]);
  $('map').innerHTML=drawMap(s,{lang,selected,selectedArmy:army,visibleArmy:a=>a.owner===s.player,colors,targets,camera,mode,silkPath:s.silk?.lastPath});
- $('map').querySelectorAll('[data-region]').forEach(el=>el.addEventListener('click',()=>{const id=el.dataset.region;if(army&&id!==selected){const a=s.armies.find(x=>x.id===army);if(a){const r=moveArmy(s,a.id,id,{owner:s.player});if(r.ok){message(`March ordered: ${r.months} month(s).`,`已下达行军令，预计${r.months}个月。`);render();return}else message(`Cannot move: ${r.reason}.`,`无法行军：${reason(r.reason)}。`)}}selected=id;render()}));
- $('map').querySelectorAll('[data-army]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();army=el.dataset.army;selected=s.armies.find(a=>a.id===army)?.region;render()}));
+ $('map').querySelectorAll('[data-region]').forEach(el=>el.addEventListener('click',()=>{const id=el.dataset.region;marketOpen=false;if(army&&id!==selected){const a=s.armies.find(x=>x.id===army);if(a){const r=moveArmy(s,a.id,id,{owner:s.player});if(r.ok){message(`March ordered: ${r.months} month(s).`,`已下达行军令，预计${r.months}个月。`);render();return}else message(`Cannot move: ${r.reason}.`,`无法行军：${reason(r.reason)}。`)}}selected=id;render()}));
+ $('map').querySelectorAll('[data-army]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();army=el.dataset.army;selected=s.armies.find(a=>a.id===army)?.region;marketOpen=false;render()}));
  const r=s.regions.find(x=>x.id===selected),a=s.armies.find(x=>x.id===army);
+ if(marketOpen){renderEasternMarketPanel({root:$('inspector'),state:s,lang,selected,onOrder:result=>{message(result.ok?'Merchant dispatched.':`Order failed: ${marketReasonName(result.reason,0)}.`,result.ok?'商队已派出。':`下单失败：${marketReasonName(result.reason,1)}。`);render()},onProposal:result=>{const status=result.proposal?.status,labels={accepted:['accepted','已接受'],rejected:['rejected','已拒绝'],pending:['awaiting reply','待答复']},label=labels[status]||['unavailable','无法执行'];message(result.ok?`Market proposal ${label[0]}.`:'Proposal unavailable.',result.ok?`互市提议：${label[1]}。`:'无法提出互市提议。');render()}});renderChronicle();return}
  let detail=`<h2>${D('Inspect','检视')}</h2>`;
  if(r){detail+=`<h3>${esc(L(r.name))}</h3><dl><dt>${D('Controller','控制方')}</dt><dd>${esc(L(FACTIONS[r.owner]?.name)||D('Independent','无主'))}</dd><dt>${D('Terrain','地形')}</dt><dd>${esc(r.terrain)}</dd><dt>${D('Population','人口')}</dt><dd>${r.pop}</dd><dt>${D('Supply','补给')}</dt><dd>${r.supply}</dd><dt>${D('Taxes','税收')}</dt><dd>${r.tax}</dd><dt>${D('Fort','城防')}</dt><dd>${r.fort}</dd></dl>`;
  if(r.owner===s.player){const t=templatesFor(s,s.player)[0],q=t?recruitQuote(s,s.player,r.id,t.id,500):null;detail+=`<button class="action" id="recruit" ${q?.ok?'':'disabled'}>${D('Recruit 500','征募500人')}</button><small>${q?.ok?D(`Cost: ${q.quote.treasury} treasury, ${q.quote.grain} grain, ${q.quote.manpower} manpower.`,`花费：国库${q.quote.treasury}、粮食${q.quote.grain}、兵源${q.quote.manpower}。`):D('Unavailable: '+(q?.problems||['unknown']).join(', '),'不可用：'+(q?.problems||['未知']).join('、'))}</small>`;
@@ -44,11 +47,12 @@ function render(){
  if($('cancel'))$('cancel').onclick=()=>{a.move=null;message('Movement canceled.','行军已取消。');render()};
  if($('autonomy'))$('autonomy').onclick=()=>{changeDependency(s,r.owner,'grant_autonomy');render()};
  if($('aid'))$('aid').onclick=()=>{const v=changeDependency(s,r.owner,'request_aid');message(v.ok?`Received ${v.aid} manpower.`:'Request refused.',v.ok?`获得${v.aid}名兵员。`:'请求被拒绝。');render()};
- $('chronicle').innerHTML=`<h3>${D('Recent events','近期事件')}</h3>${s.log.slice(-6).reverse().map(e=>`<p>${esc(e.year||s.year)} · ${esc(L(e.text||e.message||e))}</p>`).join('')||`<p class="muted">${D('The campaign has just begun.','战役刚刚开始。')}</p>`}`;
+ renderChronicle();
 }
 function reason(x){return ({not_adjacent:'目的地不相邻',no_access:'尚无通行权或战争状态',forming:'军队仍在集结',invalid:'不是可指挥的军队'})[x]||x}
 $('lang').onclick=()=>{lang=1-lang;localStorage.setItem('spqr-han-lang',lang?'zh':'en');render()};
 $('save').onclick=save;$('load').onclick=load;
 $('advance').onclick=()=>{if(!s)return;tick(s);render();message('One month passed.','时间推进一个月。')};
+$('trade-panel').onclick=()=>{if(!s)return;marketOpen=!marketOpen;army=null;render()};
 $('camera').onchange=e=>{camera=e.target.value;render()};$('mode').onchange=e=>{mode=e.target.value;render()};
 render();message('Choose a polity to begin.','请选择政体开始。');

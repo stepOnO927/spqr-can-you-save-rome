@@ -1,0 +1,33 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+
+const base=process.env.SPQR_URL||'http://127.0.0.1:5173';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
+page.on('pageerror',error=>errors.push(error.message));
+try{
+ await page.addInitScript(()=>{localStorage.setItem('spqr-han-lang','en');Date.now=()=>123456});
+ await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
+ await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
+ await page.locator('#trade-panel').click();
+ assert.match(await page.locator('#inspector').innerText(),/Own stock/);
+ await page.locator('#east-market-partner').selectOption('kangju');await page.locator('#east-market-propose').click();
+ assert.match(await page.locator('#message').innerText(),/accepted/);
+ const value=await page.locator('#east-market-offer option').evaluateAll(options=>options.find(o=>o.textContent.includes('Kangju')&&o.textContent.includes('Horses'))?.value);
+ assert.ok(value,'Kangju horses should become available after a market agreement');
+ await page.locator('#east-market-offer').selectOption(value);
+ await page.locator('#east-market-destination').selectOption('dunhuang');
+ const quoteText=await page.locator('#east-market-quote').innerText(),months=Number(quoteText.match(/Travel (\d+) months/)?.[1]);
+ assert.ok(months>0,quoteText);
+ assert.equal(await page.locator('#east-market-order').isDisabled(),false);
+ await page.locator('#east-market-order').click();
+ assert.match(await page.locator('#message').innerText(),/Merchant dispatched/);
+ assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Horses/);
+ await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#trade-panel').click();
+ assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Horses/);
+ for(let i=0;i<months+2;i++)await page.locator('#advance').click();
+ assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Delivered/);
+ await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
+ assert.deepEqual(errors,[]);
+ console.log('Han market browser smoke passed: treaty, horse quote, dispatch, saved merchant, delivery and bilingual panel.');
+}finally{await browser.close()}

@@ -96,6 +96,8 @@ function publishOffers(s){
  markets.offers=offers;return offers;
 }
 
+export function easternMarketOffers(s){initializeEasternMarkets(s);return publishOffers(s)}
+
 function advanceShipments(s){
  const markets=s.tradeMarkets;
  for(const shipment of markets.shipments.filter(x=>['traveling','blocked'].includes(x.status))){
