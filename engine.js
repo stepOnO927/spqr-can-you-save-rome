@@ -22,7 +22,7 @@ const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
-import {initializeMarkets,advanceMarkets,advanceMarketAI} from './trade-markets.js?v=faces-empire-2';
+import {initializeMarkets,advanceMarkets,advanceMarketAI,advanceMarketDiplomacy} from './trade-markets.js?v=faces-empire-2';
 import {assessOpportunities} from './multipolar.js?v=multipolar-2';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=multipolar-2';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
@@ -818,7 +818,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
     const originalDifficulty=s.difficulty,hadDifficulty=Object.prototype.hasOwnProperty.call(s,'difficulty');s.difficulty=playerDifficulty;
     try{aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner)}finally{if(hadDifficulty)s.difficulty=originalDifficulty;else delete s.difficulty}
   }
-  advanceMarketAI(s,{autoplayPlayer});observeDiplomacy(s);
+  advanceMarketDiplomacy(s,{autoplayPlayer});advanceMarketAI(s,{autoplayPlayer});observeDiplomacy(s);
   advanceRomanDefeat(s);if(!s.defeat){advanceRomanVictory(s);advancePeacefulSettlement(s)}
   advanceHanWorld(s);
   recordCampaignTurn(s,chronicleBefore);

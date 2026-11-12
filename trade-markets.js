@@ -1,23 +1,19 @@
-import {ROUTES} from './data.js?v=phase-x-1';
-import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
+import {REGIONS,ROUTES} from './data.js?v=phase-x-1';
+import {activeAgreement,proposeAgreement} from './agreements.js?v=grand-chessboard-2';
 import {ROUTES as EURASIAN_ROUTES,REGIONS as EURASIAN_REGIONS} from './han/data.js?v=han-1';
 import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=faces-empire-2';
 import {generateFictionalName} from './fictional-names.js?v=faces-of-empire-1';
+import {reportedControl} from './control-intelligence.js?v=phase-x-1';
+import {COMMODITIES,marketPrice} from './market-goods.js?v=faces-of-empire-1';
+export {COMMODITIES,marketPrice};
 
 // One unit is an economic batch, not a single animal or artifact. Prices use
 // the campaign's treasury scale. Production and consumption remain separate
 // from the older aggregate food/tax economy until that economy is migrated.
-export const COMMODITIES={
- grain:{name:['Grain','谷物'],unit:['100 tons','百吨'],basePrice:2},
- horses:{name:['Horses','马匹'],unit:['100 head','百匹'],basePrice:5},
- iron:{name:['Iron','铁'],unit:['20 tons','二十吨'],basePrice:4},
- timber:{name:['Timber','木材'],unit:['100 logs','百根'],basePrice:3},
- silk:{name:['Silk','丝绸'],unit:['50 bolts','五十匹'],basePrice:8},
- papyrus:{name:['Papyrus','纸草'],unit:['100 rolls','百卷'],basePrice:5}
-};
 const month=s=>s.year*12+s.month;
 const clamp=(n,low,high)=>Math.min(high,Math.max(low,n));
 const region=(s,id)=>s.regions.find(r=>r.id===id);
+const openingOwner=new Map(REGIONS.map(r=>[r.id,r.owner]));
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 // Reuse the existing Han map's roads. Only the endpoints that denote the
 // campaign's broader economic theaters are aliased; all other kingdoms keep
@@ -52,6 +48,8 @@ export function initializeMarkets(s){
  const markets=s.markets||={regions:{},shipments:[],transactions:[],nextShipment:1,tariffs:{},lastTick:null,transportSpent:0,transitTreasury:{},merchants:{},merchantFees:0};
  markets.regions||={};markets.shipments||=[];markets.transactions||=[];markets.tariffs||={};markets.nextShipment||=1;markets.transportSpent??=0;markets.transitTreasury||={};
  markets.merchants||={};markets.merchantFees??=0;
+ markets.diplomacy||={attempts:[],nextAt:{},lastTick:null};
+ markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};
  for(const [buyer,ids] of Object.entries(markets.merchants))if(!Array.isArray(ids))markets.merchants[buyer]=ids?[ids]:[];
  for(const r of s.regions){
   const market=markets.regions[r.id]||={id:r.id,goods:{},disruption:0};market.goods||={};
@@ -75,14 +73,7 @@ function merchantFor(s,buyer,location){
  return id;
 }
 
-export function marketPrice(market,good){
- const item=market?.goods?.[good],base=COMMODITIES[good]?.basePrice;
- if(!item||!base)return null;
- const desired=Math.max(4,item.consumption*4+item.production*2),pressure=(desired-item.stock)/desired;
- return clamp(Math.round(base*(1+pressure*.7)),Math.max(1,Math.round(base*.5)),base*3);
-}
-
-function routeFor(s,origin,destination,buyer,seller){
+function routeFor(s,origin,destination,buyer,seller,{planFor=null}={}){
  const queue=[{id:origin,cost:0,path:[origin],legs:[]}],seen=new Map();
  while(queue.length){
   queue.sort((a,b)=>a.cost-b.cost);const current=queue.shift();
@@ -90,7 +81,8 @@ function routeFor(s,origin,destination,buyer,seller){
   if(seen.has(current.id)&&seen.get(current.id)<=current.cost)continue;seen.set(current.id,current.cost);
   for(const link of tradeLinks){
    const next=link.a===current.id?link.b:link.b===current.id?link.a:null,r=next&&node(s,next);
-   if(!r||!permitted(s,r.owner,buyer,seller,link.network)||atWar(s,r.owner,buyer)||atWar(s,r.owner,seller)||current.path.includes(next))continue;
+   const owner=planFor&&link.network!=='eurasia'?reportedControl(s,planFor,next)?.owner??openingOwner.get(next):r?.owner;
+   if(!r||!permitted(s,owner,buyer,seller,link.network)||atWar(s,owner,buyer)||atWar(s,owner,seller)||current.path.includes(next))continue;
    const duration=link.months??(r.terrain==='desert'?2:1);
    queue.push({id:next,cost:current.cost+duration,path:[...current.path,next],legs:[...current.legs,{from:current.id,to:next,kind:link.kind,network:link.network,months:duration}]});
   }
@@ -155,6 +147,49 @@ export function advanceMarkets(s){
  }
  if(markets.shipments.length>300){const completed=markets.shipments.filter(x=>x.status==='delivered');const excess=markets.shipments.length-300;const remove=new Set(completed.slice(0,excess).map(x=>x.id));markets.shipments=markets.shipments.filter(x=>!remove.has(x.id))}
  return markets;
+}
+
+// Courts can seek market access without inspecting another country's live
+// stock. They use their own shortages, public geographic export reputation,
+// the road network and the recipient's ordinary treaty decision.
+export function advanceMarketDiplomacy(s,{autoplayPlayer=false}={}){
+ if(s.month%6!==0)return [];
+ const markets=initializeMarkets(s),now=month(s),diplomacy=markets.diplomacy;
+ if(diplomacy.lastTick===now)return [];
+ diplomacy.lastTick=now;
+ const attempts=[];
+ for(const buyer of Object.keys(s.factions).filter(id=>id!=='rebels'&&(autoplayPlayer||id!==s.player))){
+  const owned=s.regions.filter(r=>r.owner===buyer),candidates=[];
+  if(!owned.length||s.factions[buyer].treasury<12)continue;
+  for(const destination of owned)for(const [commodity,item] of Object.entries(markets.regions[destination.id].goods)){
+   const target=Math.max(4,item.consumption*3+item.production),deficit=target-item.stock;
+   if(deficit<=0)continue;
+   for(const origin of s.regions){
+    const seller=origin.owner,key=[buyer,seller].sort().join(':');
+    if(!seller||seller==='rebels'||seller===buyer||seller===s.player&&!autoplayPlayer||!s.factions[seller]||activeAgreement(s,buyer,seller,'trade')||atWar(s,buyer,seller)||now<(diplomacy.nextAt[key]||-Infinity))continue;
+    // Production potential is a public export reputation, not a reading of
+    // the seller's current warehouse or concealed military resources.
+    const reputation=profile(origin,commodity).production;
+    if(reputation<2)continue;
+    const standing=relationValue(s,buyer,seller),distance=Math.hypot((origin.x||0)-(destination.x||0),(origin.y||0)-(destination.y||0))/100;
+    candidates.push({seller,commodity,origin:origin.id,destination:destination.id,rough:deficit*3+reputation*2+standing/8-distance,key});
+   }
+  }
+  candidates.sort((a,b)=>b.rough-a.rough||a.seller.localeCompare(b.seller)||a.commodity.localeCompare(b.commodity));
+  let candidate=null;
+  for(const option of candidates.slice(0,6)){
+   const route=routeFor(s,option.origin,option.destination,buyer,option.seller,{planFor:buyer});
+   if(!route)continue;
+   const score=option.rough-route.cost;if(score>0&&(!candidate||score>candidate.score))candidate={...option,score};
+  }
+  if(!candidate)continue;
+  const result=proposeAgreement(s,buyer,candidate.seller,'trade');
+  diplomacy.nextAt[candidate.key]=now+(result.ok?36:12);
+  const attempt={year:s.year,month:s.month,buyer,seller:candidate.seller,commodity:candidate.commodity,origin:candidate.origin,destination:candidate.destination,status:result.ok?'accepted':result.reason};
+  diplomacy.attempts.push(attempt);attempts.push(attempt);
+  if(diplomacy.attempts.length>100)diplomacy.attempts.shift();
+ }
+ return attempts;
 }
 
 // Quarterly market participation is bounded to one order per AI country.

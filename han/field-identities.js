@@ -44,3 +44,17 @@ export function assignFieldCommander(s,army){
 }
 
 export function ensureFieldCommanders(s){for(const army of s.armies)if(army.men>0&&(!army.commander||!s.persons[army.commander]?.alive))assignFieldCommander(s,army);return s}
+
+// Commercial agents use the same cultural pools but a separate persistent ID
+// namespace. A market record never claims these original game people are
+// documented historical merchants.
+export function createMarketMerchant(s,faction,location){
+ const culture=fieldCulture(faction),pool=POOLS[culture],used=new Set(Object.values(s.persons).map(p=>p.name?.[0]).filter(Boolean));
+ s.nextMerchantPerson=Number.isSafeInteger(s.nextMerchantPerson)&&s.nextMerchantPerson>0?s.nextMerchantPerson:1;
+ let id;do{id=`merchant:${s.nextMerchantPerson++}`}while(s.persons[id]);
+ const serial=s.nextMerchantPerson-1,start=serial%pool.names.length;
+ let name=null;for(let i=0;i<pool.names.length;i++){const candidate=pool.names[(start+i)%pool.names.length];if(!used.has(candidate[0])){name=candidate;break}}
+ if(!name){const candidate=pool.names[start];name=[`${candidate[0]} (${serial})`,`${candidate[1]}（${serial}）`]}
+ const birth=s.year-35,person={id,name:[...name],record:'fictional',culture:[...pool.culture],faction,role:'merchant',profession:'merchant',title:['Caravan merchant','商队商人'],homeland:location,location,sex:'unknown',birth,death:null,alive:true,ambition:40,competence:55,loyalty:60,wealth:0,spouse:[],history:[{year:s.year,month:s.month,kind:'entered_market'}],appearanceSeed:serial*2654435761>>>0};
+ s.persons[id]=person;recordBirth(s,{id,birthSurname:null,birth,sex:'unknown'});return id;
+}

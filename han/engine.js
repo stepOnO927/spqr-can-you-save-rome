@@ -9,6 +9,7 @@ import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,status
 import {initCourt,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,issueEdict,EDICTS,adminCapacity,emperorAuthority} from './court.js?v=han-1';
 import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=han-1';
 import {initSilk,advanceSilk} from './silk-road.js?v=han-1';
+import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=faces-of-empire-1';
 import {advanceFocus,focusState} from './focus.js?v=han-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf,recruit,recruitQuote,neighbours} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
@@ -83,7 +84,7 @@ export function newHanGame(player='han',{scenario='historical',difficulty='stand
  R('han','kangju',0);R('zhizhi','kangju',10);R('kangju','wusun',-20);R('han','dayuan',25);R('han','qiang',-10);R('zhizhi','wujie',-20);R('zhizhi','jiankun',-20);
  for(const o of OASIS){R('han',o,45);R('zhizhi',o,0)}
  s.treaties.push({type:'tributary',parties:['huhanye','han'],since:monthIndex(s)-36,note:'51 BCE'},{type:'marriage',parties:['wusun','han'],since:monthIndex(s)-600,note:'Princess Jieyou'});
- initProtectorate(s);initSilk(s);initIntel(s);
+ initProtectorate(s);initSilk(s);initIntel(s);initializeEasternMarkets(s);
  if(scenario==='usurper')applyUsurperScenario(s);
  if(scenario==='disputed')applyDisputedScenario(s);
  if(difficulty==='beginner'&&player)s.factions[player].treasury+=100;
@@ -282,7 +283,7 @@ export function tick(s){
  scheduledEvents(s);movement(s);battles(s);sieges(s);supply(s);economy(s);lives(s);
  hanAI(s);advanceCourt(s);
  advanceFrontier(s,{issueMove:(a,to)=>moveArmy(s,a.id,to,{owner:a.owner})});
- advanceSilk(s);advanceDependencies(s);advanceFocus(s);ensureFieldCommanders(s);
+ advanceSilk(s);if(!s.tradeMarkets?.embeddedRoman)advanceEasternMarkets(s);advanceDependencies(s);advanceFocus(s);ensureFieldCommanders(s);
  if(s.throne.dynasty&&!s.throne.dynasty.orthodox)s.usurperMonths=(s.usurperMonths||0)+1;
  if(s.throne.orthodox&&s.throne.dynasty?.orthodox)s.orthodoxMonths=(s.orthodoxMonths||0)+1;
  if(!s.wars.length)s.peaceMonths=(s.peaceMonths||0)+1;else s.peaceMonths=0;
@@ -304,6 +305,6 @@ export function loadHanSave(raw){
  initDependencies(s);
  s.version=SAVE_VERSION;s.throne.claimants||=[];s.throne.support||={};s.throne.history||=[];
  const fixes=enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
- s.loadFixes=fixes;ensureFieldCommanders(s);computeMandate(s);return s;
+ s.loadFixes=fixes;initializeEasternMarkets(s);ensureFieldCommanders(s);computeMandate(s);return s;
 }
 export {statusOf,eligibility,claimStrength,emperorAuthority,adminCapacity};

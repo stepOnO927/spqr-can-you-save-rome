@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
-import {advanceMarketAI,advanceMarkets} from '../trade-markets.js?v=faces-empire-2';
+import {advanceMarketAI,advanceMarketDiplomacy,advanceMarkets} from '../trade-markets.js?v=faces-empire-2';
 
 const tradeState=player=>{
  const s=newGame(player);s.relations['egypt:senate']=55;
@@ -51,4 +51,28 @@ test('autoplay merchants can price a real Han to Parthia silk route',()=>{
  const order=advanceMarketAI(s,{autoplayPlayer:true}).find(x=>x.buyer==='parthia'&&x.seller==='han');
  assert.ok(order);assert.equal(order.commodity,'silk');assert.ok(order.route.includes('silk:bactra'));
  assert.ok(order.legs.length>8);assert.ok(s.factions.parthia.treasury>=20);
+});
+
+test('an AI buyer proposes market access for its own shortage and then orders real goods',()=>{
+ const s=newGame('caesar');s.month=6;s.relations['egypt:senate']=45;
+ for(const market of Object.values(s.markets.regions))for(const item of Object.values(market.goods))item.stock=100;
+ s.markets.regions.syria.goods.papyrus.stock=0;
+ const attempts=advanceMarketDiplomacy(s),proposal=attempts.find(x=>x.buyer==='senate');
+ assert.equal(proposal?.seller,'egypt');assert.equal(proposal.status,'accepted');
+ assert.ok(s.agreements.some(x=>x.type==='trade'&&x.parties.includes('senate')&&x.parties.includes('egypt')));
+ assert.ok(advanceMarketAI(s).some(x=>x.buyer==='senate'&&x.commodity==='papyrus'));
+ assert.deepEqual(advanceMarketDiplomacy(s),[],'the same monthly tick cannot propose twice');
+ assert.ok(!attempts.some(x=>x.buyer==='caesar'||x.seller==='caesar'),'normal AI cannot bind the player to a treaty');
+});
+
+test('a rejected AI proposal has a saved cooldown and cannot spend the player treasury',()=>{
+ const s=newGame('caesar');s.month=6;s.relations['egypt:senate']=-30;
+ for(const market of Object.values(s.markets.regions))for(const item of Object.values(market.goods))item.stock=100;
+ s.markets.regions.syria.goods.papyrus.stock=0;
+ const cash=s.factions.caesar.treasury,attempt=advanceMarketDiplomacy(s).find(x=>x.buyer==='senate');
+ assert.equal(attempt?.seller,'egypt');assert.equal(attempt.status,'declined');
+ assert.equal(s.factions.caesar.treasury,cash);
+ assert.ok(!s.agreements.some(x=>x.type==='trade'&&x.parties.includes('senate')&&x.parties.includes('egypt')));
+ const restored=upgradeSave(structuredClone(s));restored.month=12;
+ assert.ok(!advanceMarketDiplomacy(restored).some(x=>x.buyer==='senate'&&x.seller==='egypt'));
 });
