@@ -22,6 +22,17 @@ test('AI reserves an unaffordable docked fleet and recommissions it after a date
  s=upgradeSave(JSON.parse(JSON.stringify(s)));f=s.naval.fleets.find(x=>x.id===id);s.factions.caesar.treasury=45;s.naval.intel.caesar={'senate-adriatic':{owner:'senate',zone:f.zone,year:s.year,month:s.month,source:'sighting',range:[1,5],confidence:'low'}};advanceNaval(s);assert.equal(f.reserve,true);assert.ok(!f.mobilizing);
  s.factions.caesar.treasury=120;advanceNaval(s);assert.equal(f.reserve,true);assert.equal(f.mobilizing,1);advanceNaval(s);assert.equal(f.reserve,false);assert.equal(f.mobilizing,0);
 });
+test('a captured harbor cannot resupply, repair or train its former active fleet',()=>{
+ const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),port=s.regions.find(r=>r.id===f.port),messages=[];
+ port.buildings.push('naval-training');f.supply=30;f.hull=60;f.experience=20;f.sailors-=20;
+ for(const other of s.naval.fleets.filter(x=>x!==f))other.zone='western';
+ for(const pirate of s.naval.pirates)pirate.ships=0;
+ const manpower=s.factions.senate.manpower;port.owner='caesar';
+ advanceNaval(s,(_state,en,zh)=>messages.push({en,zh}));
+ assert.equal(f.port,null);assert.equal(f.supply,22);assert.equal(f.hull,60);assert.equal(f.experience,20);
+ assert.equal(s.factions.senate.manpower,manpower,'lost harbor must not recruit sailors');
+ assert.ok(messages.some(m=>m.en.includes('lost its harbor')&&m.zh.includes('失去港口')));
+});
 test('AI withdraws an unaffordable patrol to port before laying it up',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='caesar');s.naval.fleets.find(x=>x.owner==='senate').zone='tyrrhenian';f.port=null;f.order={kind:'patrol',target:f.zone,path:[]};s.factions.caesar.treasury=20;advanceNaval(s);assert.equal(f.order?.kind,'return');advanceNaval(s);assert.equal(f.port,'cisalpine');assert.equal(f.reserve,true);
 });
