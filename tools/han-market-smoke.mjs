@@ -27,7 +27,10 @@ try{
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Horses/);
  for(let i=0;i<months+2;i++)await page.locator('#advance').click();
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Delivered/);
+ assert.match(await page.locator('.market-receipts').innerText(),/Kangju.*Dunhuang/);
+ assert.match(await page.locator('.market-receipts').innerText(),/Goods.*Transport.*Tariffs.*Total/);
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
+ assert.match(await page.locator('.market-receipts').innerText(),/货价.*运费.*过境税.*总计/);
  assert.deepEqual(errors,[]);
  console.log('Han market browser smoke passed: treaty, horse quote, dispatch, saved merchant, delivery and bilingual panel.');
 }finally{await browser.close()}

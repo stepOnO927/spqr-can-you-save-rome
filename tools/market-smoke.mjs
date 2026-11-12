@@ -39,11 +39,15 @@ try{
  await page.locator('#advance').click();
  await page.locator('#markets').click();
  assert.match(await page.locator('.market-panel').innerText(),/RECENT DELIVERIES/);
+ assert.match(await page.locator('.market-panel').innerText(),/Cisalpine.*Narbo|Northern Italy.*Narbo/);
+ assert.match(await page.locator('.market-panel').innerText(),/Goods.*Transport.*Customs.*Total/);
  await page.locator('#save').click();
  const delivered=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(delivered.markets.shipments[0].status,'delivered');
  assert.equal(delivered.markets.transactions.length,1);
  assert.equal(delivered.markets.transactions[0].merchantId,merchant);
+ assert.equal(delivered.markets.transactions[0].origin,'cisalpine');
+ assert.equal(delivered.markets.transactions[0].destination,'narbo');
  // A direct Han player can buy from Parthia through the existing oasis and
  // Central Asian network without receiving a fictitious direct border.
  await page.evaluate(async()=>{

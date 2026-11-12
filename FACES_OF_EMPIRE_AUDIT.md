@@ -99,6 +99,12 @@ cargo waits at the gate, and older delivered cargo is marked as historical
 instead of imported twice. The Roman player sees only their own purchases.
 This is a first cross-campaign settlement bridge; the two simulations do
 not yet share a general interstate market.
+Completed Roman and standalone Han market deliveries now retain their origin
+and destination in the transaction record. Both market panels show recent
+player-involved receipts with actual buyer, seller, cargo, route endpoints,
+goods payment, transport, customs and total in English and Chinese. Older
+receipts use their shipment record when available; an unknown old endpoint
+is shown as unknown rather than invented.
 The independent Han campaign also has its own market panel. Known courts can
 receive a frontier-market proposal; once a treaty exists, players can see
 public offers, quote a route and full price, dispatch a named merchant, and
