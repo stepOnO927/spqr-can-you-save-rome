@@ -51,7 +51,7 @@ try{
   const file=resolve(root,'.'+pathname);
   if(!file.startsWith(root+sep)){await route.abort();return}
   const mime={'.js':'text/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.json':'application/json','.png':'image/png','.jpg':'image/jpeg'}[extname(file)]||'application/octet-stream';
-  try{await route.fulfill({status:200,contentType:mime,body:await readFile(file)})}
+  try{await route.fulfill({status:200,contentType:mime,body:await readFile(pathname==='/map-lab/physical-style.js'&&process.env.SPQR_MAP_STYLE_OVERRIDE?process.env.SPQR_MAP_STYLE_OVERRIDE:file)})}
   catch{await route.fulfill({status:404,body:'Not found'})}
  });
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
