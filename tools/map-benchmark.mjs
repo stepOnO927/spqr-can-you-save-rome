@@ -59,7 +59,7 @@ try{
  await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});await page.locator('#start-free').click();
  await page.locator('[data-site="roma"]').waitFor();await page.waitForTimeout(8000);
  const renderer=await page.evaluate(()=>{const canvas=document.querySelector('.maplibregl-canvas'),gl=canvas?.getContext('webgl2')||canvas?.getContext('webgl');const ext=gl?.getExtension('WEBGL_debug_renderer_info');return ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):'unavailable'});
- await page.screenshot({path:'map-benchmark-1920x1080.png'});
+ await page.screenshot({path:'outputs/map-benchmark-1920x1080.png'});
  const idle=summarize(await sample(6000));
  const fullRelief=await exercise();
  await page.locator('#reset').click();await page.waitForTimeout(2500);await page.locator('#relief-toggle').click();
