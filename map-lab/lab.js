@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=6';
 import {nationalBudget} from '../national-budget.js?v=7';
 import {budgetHtml} from '../budget-ui.js?v=9';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=18';
+import {physicalStyle} from './physical-style.js?v=19';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,royalCourtCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=150';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=30';
 import {FACTIONS} from '../data.js?v=9';
@@ -162,7 +162,7 @@ function updateControl(){
   map.setPaintProperty('grand-border','line-opacity',0);
   const macroBorders=[];for(const feature of historical.features){const macros=feature.properties.regions||[],owners=[...new Set(state.regions.filter(r=>macros.includes(r.macro)).map(r=>r.owner))];if(macros.length)macroBorders.push(feature.properties.id,identity(owners.length===1?owners[0]:'shared').map)}
   map.setPaintProperty('province-outline','line-color',['match',['get','id'],...macroBorders,'#aa9c75']);
-  map.setPaintProperty('province-outline','line-opacity',currentMapMode==='terrain'?.12:['interpolate',['linear'],['zoom'],5.5,.5,8,.3,9,.2]);
+  map.setPaintProperty('province-outline','line-opacity',currentMapMode==='terrain'?['interpolate',['linear'],['zoom'],6,.12,8.5,0]:['interpolate',['linear'],['zoom'],5.5,.5,7,.3,8.5,0]);
   map.setPaintProperty('control','fill-color',['match',['get','id'],...macroBorders,'#aa9c75']);
   map.setPaintProperty('control','fill-opacity',['political','military','maritime'].includes(currentMapMode)?['interpolate',['linear'],['zoom'],5.5,.18,6.5,.07,7.4,0]:0);return;
  }
@@ -306,7 +306,7 @@ function renderHud(){
  settingsButton.textContent=lang==='zh'?'设置':'SETTINGS';
  navalButton.textContent=lang==='zh'?'海军':'NAVY';
  const legacyLink=document.querySelector('.file-transfer a');if(legacyLink)legacyLink.textContent=lang==='zh'?'罗马遗产':'LEGACY HUB';
- if(currentMapMode==='terrain')document.querySelector('#map-mode-note').textContent=lang==='zh'?'浅色陆地、青色浅海与较深海域分别着色；可单独开启山体光影。':'Land, coastal shelf and deeper sea have distinct colors; hill shading can be toggled separately.';
+ if(currentMapMode==='terrain')document.querySelector('#map-mode-note').textContent=lang==='zh'?'总览显示海底深度分带；近景隐藏粗略深度边界。可单独开启山体光影。':'Overview shows sea-depth bands; close zoom hides their coarse boundaries. Hill shading can be toggled separately.';
  document.querySelectorAll('.grand-site').forEach(el=>{const site=GRAND_SITES.find(x=>x.id===el.dataset.site);if(site){el.textContent=n(site.site);const owner=region(state,site.id)?.owner;el.style.setProperty('--site-accent',identity(owner).map);el.title=n(site.site)+' · '+n(FACTIONS[owner]?.short||['Unknown','未知'])}});
  if(state.grandMap&&currentMapMode==='supply')document.querySelector('#map-mode-note').textContent=lang==='zh'?'绿色表示与己方补给源连通；黄褐色表示较弱补给。补给影响战斗、士气与损耗。':'Green marks stronger links to friendly supply sources; ochre marks weaker supply. Supply affects combat, morale and attrition.';
  if(state.grandMap&&currentMapMode==='supply')document.querySelector('.legend').innerHTML=`<span><b class="swatch" style="background:#8ca87d"></b>${lang==='zh'?'补给较强':'Stronger supply'}</span><span><b class="swatch" style="background:#c49b69"></b>${lang==='zh'?'补给较弱':'Weaker supply'}</span><span>✚ ${lang==='zh'?'补给源':'Supply source'}</span><span>! ${lang==='zh'?'被围困军队':'Isolated army'}</span>`;
