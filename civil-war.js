@@ -1,6 +1,6 @@
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=newborn-age-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=born-portraits-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
-import {assignFictionalFieldCommander} from './dynasties.js?v=newborn-age-1';
+import {assignFictionalFieldCommander} from './dynasties.js?v=born-portraits-1';
 
 // Alternate-history claimant commands use real game theaters and armies.
 // The setup is a simulation, not a reconstruction of a historical campaign.

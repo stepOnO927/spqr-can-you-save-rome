@@ -1,4 +1,4 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=born-portraits-1';
 import {startPoliticalWar} from './civil-war.js?v=newborn-age-1';
 import {personalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';

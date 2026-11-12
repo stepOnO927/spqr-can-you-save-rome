@@ -44,6 +44,10 @@ the previously observed artwork. Existing bespoke portraits remain in use.
 The family tree now uses the same artwork and the portraits vary face shape,
 details and age without changing the person's saved identity. A foreign
 portrait remains gated by the viewer's own meeting record.
+Main's new limited childhood/adult portrait pairs for campaign-born Roman
+people are also integrated. Saved identity claims keep those authored assets
+attached to one person, while the procedural renderer covers other named
+people. A legacy record without a saved identity still shows a silhouette.
 Reported sovereign labels now distinguish Han, Parthian, Egyptian and other
 institutions. When an unrelated fictional court member succeeds a hereditary
 ruler, the new house, founder and political cost are saved and shown in the
@@ -51,6 +55,15 @@ player's genealogy. A documented Liu descendant may succeed in the direct Han
 campaign; an unrelated minister with a Liu-looking name cannot. These are
 partial Stage D/E integrations, not a claim that every requested political
 route or important portrait is finished.
+An initial Stage F/G market ledger now records measured grain, horse, iron,
+timber, silk and papyrus batches for existing theaters. Production,
+consumption, bounded prices, stock, shortages, shipment escrow, actual route
+legs, tariff receipts, delivery transactions and transport spending persist in
+saves. A treaty-backed Parthia–Armenia horse shipment is tested across a save
+and a wartime interruption. The Han and Parthian graphs remain disconnected;
+their trade is correctly rejected pending geographically defensible
+intermediate markets. The existing abstract trade-treaty revenue still needs
+replacement when merchant AI and player trade controls are integrated.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, major fixed portraits, additional routes to fictional sovereignty,

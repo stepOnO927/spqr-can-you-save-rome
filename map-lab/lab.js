@@ -15,7 +15,7 @@ import {reportedControl,requestControlReport} from '../control-intelligence.js?v
 import {renderLocalGovernor} from './local-governor-ui.js?v=newborn-age-1';
 import {renderSecurity} from './security-ui.js?v=newborn-age-1';
 import {renderOffices} from './offices-ui.js?v=newborn-age-1';
-import {officeEffects} from '../office-system.js?v=newborn-age-1';
+import {officeEffects} from '../office-system.js?v=born-portraits-1';
 import {populationFactor,religiousTaxCost} from '../religion.js?v=newborn-age-1';
 import {activeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {configureStartingDifficulty} from '../difficulty.js?v=grand-chessboard-2';
@@ -25,13 +25,13 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=calendar-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=born-portraits-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
-import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=newborn-age-1';
-import {createCharacterUI} from './character-ui.js?v=newborn-age-1';
-import {fictionalPortraitKey} from '../portrait-registry.js?v=faces-of-empire-1';
-import {reportedArmies} from '../character-system.js?v=newborn-age-1';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=born-portraits-1';
+import {createCharacterUI} from './character-ui.js?v=born-portraits-1';
+import {fictionalPortraitKey} from '../portrait-registry.js?v=born-portraits-1';
+import {reportedArmies} from '../character-system.js?v=born-portraits-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=playability-1';
 import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=phase-x-1';

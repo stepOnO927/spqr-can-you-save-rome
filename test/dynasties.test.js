@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=calendar-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=newborn-age-1';
-import {assignSuccession,successionModel} from '../characters.js?v=newborn-age-1';
-import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=newborn-age-1';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=newborn-age-1';
-import {canHoldOffice} from '../office-system.js?v=newborn-age-1';
-import {renderGenealogy} from '../genealogy-ui.js?v=newborn-age-1';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=born-portraits-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=born-portraits-1';
+import {assignSuccession,successionModel} from '../characters.js?v=born-portraits-1';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=born-portraits-1';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=born-portraits-1';
+import {canHoldOffice} from '../office-system.js?v=born-portraits-1';
+import {renderGenealogy} from '../genealogy-ui.js?v=born-portraits-1';
 import {finalizeCampaign} from '../legacy.js?v=calendar-1';
 import {startDynasticWar} from '../civil-war.js?v=newborn-age-1';
-import {fictionalPortraitKey} from '../portrait-registry.js?v=faces-of-empire-1';
+import {fictionalPortraitKey} from '../portrait-registry.js?v=born-portraits-1';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 
@@ -265,7 +265,7 @@ test('a legacy person with missing identity never inherits another save’s name
  const first=newGame('caesar'),id=createFictionalPerson(first,{name:['Other campaign person','另一战役人物'],faction:'caesar',birthYear:-70});
  const firstSave=JSON.parse(JSON.stringify(first));let legacy=newGame('caesar');legacy.world.characters[id]={id,faction:'caesar',alive:true,health:'healthy',birthYear:-80,location:'roma'};delete legacy.world.dynasties.catalog[id];
  legacy=upgradeSave(JSON.parse(JSON.stringify(legacy)));assert.equal(legacy.world.dynasties.catalog[id],undefined,'do not write invented details into the save');assert.deepEqual(CHARACTER_CATALOG[id].name,['Unknown simulated person','身份不明的模拟人物']);
- const view=renderGenealogy(legacy,true);assert.match(view,/身份不明的模拟人物/);assert.doesNotMatch(view,/另一战役人物/);assert.equal(fictionalPortraitKey(legacy,id),null);
+ const view=renderGenealogy(legacy,true),missingPortrait=view.match(new RegExp('data-gene-person="'+id+'"[^>]*><img src="([^"]+)"'))?.[1];assert.match(view,/身份不明的模拟人物/);assert.doesNotMatch(view,/另一战役人物/);assert.match(missingPortrait,/^data:image\/svg\+xml/);assert.doesNotMatch(missingPortrait,/portrait-procedural/);assert.equal(fictionalPortraitKey(legacy,id),null);
  const again=upgradeSave(firstSave);assert.equal(CHARACTER_CATALOG[id].name[0],'Other campaign person');assert.match(renderGenealogy(again,true),/另一战役人物/);
  const malformed=JSON.parse(JSON.stringify(legacy));malformed.world.dynasties.catalog[id]={fictional:true,name:[null,'错误']};CHARACTER_CATALOG[id]={name:['Leaked','错误姓名'],fictional:false};upgradeSave(malformed);assert.deepEqual(CHARACTER_CATALOG[id].name,['Unknown simulated person','身份不明的模拟人物']);
 });

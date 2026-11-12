@@ -1,8 +1,8 @@
-import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,leadershipTitle} from './characters.js?v=newborn-age-1';
-import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=newborn-age-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=newborn-age-1';
+import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,leadershipTitle} from './characters.js?v=born-portraits-1';
+import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=born-portraits-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=born-portraits-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {fictionalPortraitKey,proceduralPortraitSvg} from './portrait-registry.js?v=faces-of-empire-1';
+import {fictionalPortraitKey,proceduralPortraitSvg} from './portrait-registry.js?v=born-portraits-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||id;
@@ -20,7 +20,10 @@ const portrait=(id,state)=>{
  const key=fictionalPortraitKey(state,id);
  if(key)return `./assets/portraits/${key}-128.jpg`;
  const svg=proceduralPortraitSvg(state,id);
- return svg?`data:image/svg+xml,${encodeURIComponent(svg)}`:'';
+ // A legacy record without a saved identity must never borrow another save's
+ // face; retain the explicit silhouette until an identity is known.
+ const silhouette='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#b1a487"/><circle cx="40" cy="29" r="15" fill="#534e40"/><path d="M9 80c1-21 12-32 31-32s30 11 31 32" fill="#534e40"/></svg>';
+ return `data:image/svg+xml,${encodeURIComponent(svg||silhouette)}`;
 };
 const dates=(c,zh)=>{
  const birth=c.birthYear!=null?era(c.birthYear,zh):CHARACTER_CATALOG[c.id]?.birth;

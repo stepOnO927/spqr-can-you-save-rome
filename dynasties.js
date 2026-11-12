@@ -1,8 +1,8 @@
-import {CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
+import {CHARACTER_CATALOG} from './characters.js?v=born-portraits-1';
 import {startDynasticWar} from './civil-war.js?v=newborn-age-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=faces-of-empire-1';
-import {portraitSeedFor} from './portrait-registry.js?v=faces-of-empire-1';
+import {portraitSeedFor,assignBornPortrait} from './portrait-registry.js?v=born-portraits-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -74,7 +74,7 @@ export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,
  s.world.characters[id]={id,faction,health:'healthy',location,homeland:homeland||location,alive:true,loyalty:65,influence:20,wealth,parents:[...parents],adoptiveParents:[...adoptiveParents],children:[],spouse:null,familyId:family,birthYear,sex,education:0,ambition:ambition??Math.floor(20+roll(s)*60),personalitySeed:personalitySeed??Math.floor(roll(s)*0xffffffff),militaryOnly,wounds:0,illnessEpisodes:0};
  s.world.characters[id].portraitSeed=portraitSeedFor(id,s.world.characters[id],d.catalog[id]);
  for(const parent of [...parents,...adoptiveParents])if(s.world.characters[parent])s.world.characters[parent].children.push(id);
- record(s,id,'Born in the simulated campaign.','出生于模拟战役。');return id;
+ record(s,id,'Born in the simulated campaign.','出生于模拟战役。');if(birthYear===s.year)assignBornPortrait(s,id);return id;
 }
 
 export function seedOpeningFictionalHouseholds(s){
@@ -397,6 +397,9 @@ export function requestFamilyResources(s,familyId,choice){
 
 export function advanceDynasties(s){
  const d=initializeDynasties(s);
+ // Claim saved artwork only for identifiable campaign-born children with a
+ // recorded birth and parents; old identities are never replaced.
+ if(!d.bornPortraitClaims){d.bornPortraitClaims={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id)}
  advanceMarriageOffers(s);
  advanceAsylumRequests(s);
  advanceFamilyAccords(s);

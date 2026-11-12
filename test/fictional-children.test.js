@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=calendar-1';
-import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=newborn-age-1';
+import {newGame,upgradeSave} from '../engine.js?v=born-portraits-1';
+import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=born-portraits-1';
 import {generateFictionalChildName} from '../fictional-names.js?v=faces-of-empire-1';
-import {proceduralPortraitSvg} from '../portrait-registry.js?v=faces-of-empire-1';
+import {proceduralPortraitSvg} from '../portrait-registry.js?v=born-portraits-1';
 
 test('Han children keep a recorded family and use Han names across saves',()=>{
  const s=newGame('han');
@@ -39,4 +39,13 @@ test('a fictional face retains its identity while age changes its visible detail
  assert.match(older,/opacity=".6"/);
  assert.equal(s.world.characters[id].portraitSeed,seed);
  assert.equal(proceduralPortraitSvg(upgradeSave(structuredClone(s)),id),older);
+});
+
+test('a foreign meeting portrait does not reveal later hidden aging or death',()=>{
+ const s=newGame('caesar');
+ const id=createFictionalPerson(s,{name:['Theon of Alexandria','亚历山大里亚的提翁'],faction:'egypt',birthYear:-80,sex:'male',location:'egypt'});
+ const observed={portraitSeed:s.world.characters[id].portraitSeed,portraitFaction:'egypt',resolvedYear:-49,year:-49};
+ const first=proceduralPortraitSvg(s,id,observed);
+ s.year=1;s.world.characters[id].deathYear=-20;s.world.characters[id].alive=false;
+ assert.equal(proceduralPortraitSvg(s,id,observed),first);
 });

@@ -1,4 +1,4 @@
-import {newGame,tick} from '../engine.js?v=calendar-1';
+import {newGame,tick} from '../engine.js?v=born-portraits-1';
 import assert from 'node:assert/strict';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {warningLedger} from '../strategic-warnings.js?v=multipolar-2';

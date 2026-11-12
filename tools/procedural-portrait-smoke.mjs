@@ -8,7 +8,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  const ids=await page.evaluate(async()=>{
-  const engine=await import('/engine.js?v=mission-discount-1'),dynasties=await import('/dynasties.js?v=safe-save-1'),characters=await import('/character-system.js?v=mission-discount-1');
+  const engine=await import('/engine.js?v=born-portraits-1'),dynasties=await import('/dynasties.js?v=born-portraits-1'),characters=await import('/character-system.js?v=born-portraits-1');
   const s=engine.newGame('caesar'),own=dynasties.createFictionalPerson(s,{name:['Gaius Furius Crispus','盖乌斯·弗里乌斯·克里斯普斯'],faction:'caesar',birthYear:-82,location:'cisalpine',sex:'male',role:['Fictional field commander','虚构野战指挥官'],militaryOnly:true});
   const legion=s.armies.find(a=>a.id==='xiii');legion.characterId=own;legion.commander=[...s.world.dynasties.catalog[own].name];
   const foreign=dynasties.createFictionalPerson(s,{name:['Theon of Alexandria','亚历山大里亚的提翁'],faction:'egypt',birthYear:-75,location:'roma'});

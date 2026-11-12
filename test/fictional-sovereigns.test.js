@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=calendar-1';
-import {assignSuccession,eligibleLiuImperial,leadershipTitle} from '../characters.js?v=newborn-age-1';
-import {createFictionalPerson} from '../dynasties.js?v=newborn-age-1';
-import {renderGenealogy} from '../genealogy-ui.js?v=newborn-age-1';
+import {newGame,upgradeSave} from '../engine.js?v=born-portraits-1';
+import {assignSuccession,eligibleLiuImperial,leadershipTitle} from '../characters.js?v=born-portraits-1';
+import {createFictionalPerson} from '../dynasties.js?v=born-portraits-1';
+import {renderGenealogy} from '../genealogy-ui.js?v=born-portraits-1';
 
 test('a fictional Parthian court outsider founds a saved house with political cost',()=>{
  const s=newGame('parthia'),oldHouse=s.world.dynasties.rulingHouses.parthia;
