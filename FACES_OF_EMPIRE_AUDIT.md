@@ -114,6 +114,10 @@ changes the court state and survives save/load. Older saves gain an absent
 portrait only when the saved identity still matches the historical record.
 A browser regression visits all five portraits and exercises appointment,
 audit and both languages.
+Opening officeholders now record when service began in the campaign, so
+their ability assessment can become visible after a year. Old saves that
+lacked this date start the observation clock on load rather than exposing a
+historical tenure or hidden skill without evidence.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,

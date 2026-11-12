@@ -31,3 +31,17 @@ test('older save gains a portrait only when the saved historical identity matche
  assert.equal(loaded.persons['chen-wannian'].portrait,undefined);
  assert.doesNotMatch(hanCourtHtml(loaded,0,'chen-wannian'),/han-chen-wannian-128.jpg/);
 });
+
+test('opening and legacy appointments reveal assessed skill only after a year of observed service',()=>{
+ const fresh=newHanGame('han',{seed:10});
+ assert.deepEqual(fresh.persons['yu-dingguo'].officeSince,{year:-49,month:1});
+ assert.match(hanCourtHtml(fresh,0,'yu-dingguo'),/Not yet assessed/);
+ fresh.year=-48;fresh.month=1;
+ assert.match(hanCourtHtml(fresh,0,'yu-dingguo'),/<dt>Skill assessment<\/dt><dd>70<\/dd>/);
+ const old=newHanGame('han',{seed:11});delete old.persons['yu-dingguo'].officeSince;
+ old.year=-46;old.month=5;
+ const migrated=loadHanSave(serialize(old));
+ assert.deepEqual(migrated.persons['yu-dingguo'].officeSince,{year:-46,month:5});
+ assert.match(hanCourtHtml(migrated,0,'yu-dingguo'),/Not yet assessed/);
+ migrated.year=-45;assert.match(hanCourtHtml(migrated,0,'yu-dingguo'),/<dt>Skill assessment<\/dt><dd>70<\/dd>/);
+});

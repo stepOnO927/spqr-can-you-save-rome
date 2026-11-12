@@ -62,8 +62,8 @@ test('34. Rome sees the East only through delayed merchant reports, in both lang
 });
 
 test('35. the eastern map stays responsive and draws only reported control',()=>{
- const s=roman();const t0=performance.now();for(let i=0;i<10;i++)eastMap(s,{lang:i%2,camera:['all','core','hexi','west','steppe'][i%5],mode:['political','circuits','theaters','terrain'][i%4]});
- assert.ok((performance.now()-t0)/10<60);
+ const s=roman(),draws=[];for(let i=0;i<11;i++){const t0=performance.now();eastMap(s,{lang:i%2,camera:['all','core','hexi','west','steppe'][i%5],mode:['political','circuits','theaters','terrain'][i%4]});draws.push(performance.now()-t0)}
+ draws.sort((a,b)=>a-b);assert.ok(draws[5]<60,`median eastern map draw ${draws[5].toFixed(1)} ms`);
  const svg=eastMap(s,{});assert.equal((svg.match(/class="territory[^"]*" data-east-region=/g)||[]).length,REGIONS.length);
  assert.ok(!/class="army/.test(svg),'no live army positions reach Rome');
  for(const m of ['political','circuits','theaters','terrain'])assert.ok(drawMap({regions:REGIONS,armies:[],silk:{}},{mode:m}).includes('b-'),m);

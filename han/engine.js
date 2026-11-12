@@ -303,6 +303,9 @@ export function loadHanSave(raw){
  for(const [id,f] of Object.entries(FACTIONS))if(!f.dynamic&&!s.factions[id])s.factions[id]={id,treasury:20,grain:30,manpower:6000,horses:3000,stability:55};
  s.rulers||=Object.fromEntries(EURASIAN_RULERS.map(p=>[p.faction,{...p,attested:true}]));
  initDependencies(s);
+ // Older saves did not date opening appointments. Begin the observation clock
+ // at load instead of exposing a guessed historical tenure or private skill.
+ for(const [office,id] of Object.entries(s.court?.offices||{}))if(id&&s.persons[id]?.alive&&s.persons[id].office===office)s.persons[id].officeSince??={year:s.year,month:s.month};
  s.version=SAVE_VERSION;s.throne.claimants||=[];s.throne.support||={};s.throne.history||=[];
  const fixes=enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
  s.loadFixes=fixes;initializeEasternMarkets(s);ensureFieldCommanders(s);computeMandate(s);return s;

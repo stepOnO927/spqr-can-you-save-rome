@@ -16,7 +16,7 @@ export const govFaction=s=>'han';
 
 export function initCourt(s,offices){
  s.court={offices:{...offices},factions:Object.fromEntries(Object.keys(COURT_FACTIONS).map(k=>[k,{influence:20}])),control:{},favor:{},knowledge:{},edicts:[],audits:[],enmity:{},pendingDisaster:null,debates:[],nextId:1,schemes:[],implemented:[]};
- for(const [office,id] of Object.entries(offices))if(id&&s.persons[id])s.persons[id].office=office;
+ for(const [office,id] of Object.entries(offices))if(id&&s.persons[id]){s.persons[id].office=office;s.persons[id].officeSince??={year:s.year,month:s.month}}
  recomputeInfluence(s);return s.court;
 }
 
