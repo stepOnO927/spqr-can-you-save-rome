@@ -160,7 +160,7 @@ function steppeDecides(s,f){
   if(target&&r<0.06)declareWar(s,'zhizhi',target);
   if(r>0.95&&!treaty(s,'alliance','zhizhi','kangju'))propose(s,'zhizhi','kangju','alliance');
   // court oasis kings who resent Han garrisons
-  for(const o of OASIS){const st=s.protectorate.oasis[o];if(st.concern>45&&roll(s,'zz'+o)<0.1){st.xiongnu=clamp(st.xiongnu+6);log(s,['Zhizhi offers support to %FACTION%.','郅支向%FACTION%示好，许以援助。'],{faction:o,kind:'frontier'});s.westernCrisis={oasis:o,month:monthIndex(s)}}}
+  for(const o of OASIS){const st=s.protectorate.oasis[o];if(st.concern>45&&roll(s,'zz'+o)<0.1){st.xiongnu=clamp(st.xiongnu+6);const ruler=s.rulers?.zhizhi?.name||['The northern chanyu','北部单于'];log(s,[`${ruler[0]} offers support to %FACTION%.`,`${ruler[1]}向%FACTION%示好，许以援助。`],{faction:o,kind:'frontier'});s.westernCrisis={oasis:o,month:monthIndex(s)}}}
  }
  if(f==='wusun'||f==='wusun_lesser'){
   // the kunmi weigh the balance between Han and the Xiongnu

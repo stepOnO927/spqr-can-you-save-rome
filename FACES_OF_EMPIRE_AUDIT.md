@@ -137,7 +137,9 @@ historical; unnamed Kangju and oasis kings retain title-only opening records.
 When a ruler dies, a faction-aware original successor takes office, with a
 saved identity, portrait seed, appropriate title, predecessor or valid parent
 link, stability cost and Chronicle entry. Military AI uses the reigning
-ruler's judgment when evaluating *dated observed* enemy strength. The own
+ruler's judgment when evaluating *dated observed* enemy strength. The
+reigning ruler's competence also alters actual foreign tax collection, with
+the simulated effect visible only in that faction's own ruler card. The own
 realm overview shows the current ruler, portrait and provenance in both
 languages, and older saves gain missing links without overwriting a recorded
 ruler. Targeted tests cover Parthia, Armenia, Wusun, Kangju and Shanshan,

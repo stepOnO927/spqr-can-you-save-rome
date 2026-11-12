@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js';
-import {advanceForeignRulers,rulerPortrait,rulerMilitaryJudgment} from '../han/rulers.js';
+import {advanceForeignRulers,rulerPortrait,rulerMilitaryJudgment,rulerGovernanceFactor} from '../han/rulers.js';
 import {ownRulerHtml} from '../han/ruler-ui.js';
 import {birthRecordValid} from '../han/dynasty.js';
 
@@ -44,6 +44,17 @@ test('succession has a simulation cost and ruler judgment affects AI threshold',
  const p=s.persons[s.rulers[f].personId];p.military=35;const cautious=rulerMilitaryJudgment(s,f);p.military=90;
  assert.ok(rulerMilitaryJudgment(s,f)>cautious);
  assert.equal(s.log.at(-1).kind,'succession');
+});
+
+test('the reigning ruler changes actual taxation rather than only the displayed dossier',()=>{
+ const base=newHanGame('parthia',{seed:16});for(const r of base.regions)if(r.owner==='parthia')r.tax=100;
+ const low=structuredClone(base),high=structuredClone(base),id=base.rulers.parthia.personId;
+ low.persons[id].competence=0;high.persons[id].competence=100;
+ assert.equal(rulerGovernanceFactor(low,'parthia'),0.9);
+ assert.equal(rulerGovernanceFactor(high,'parthia'),1.1);
+ tick(low);tick(high);
+ assert.ok(high.factions.parthia.treasury>low.factions.parthia.treasury);
+ assert.match(ownRulerHtml(high,0),/Tax administration \(simulated\): ×1.10/);
 });
 
 test('loading an older save creates missing ruler links without replacing its dated rulers',()=>{

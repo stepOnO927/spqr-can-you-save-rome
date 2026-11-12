@@ -14,7 +14,7 @@ import {advanceFocus,focusState} from './focus.js?v=han-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf,recruit,recruitQuote,neighbours} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
 import {ensureFieldCommanders} from './field-identities.js';
-import {ensureForeignRulers,advanceForeignRulers} from './rulers.js';
+import {ensureForeignRulers,advanceForeignRulers,rulerGovernanceFactor} from './rulers.js';
 
 export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
 export const SCENARIOS={
@@ -132,7 +132,7 @@ function economy(s){
   if(f.defeated)continue;const own=s.regions.filter(r=>r.owner===id);if(!own.length)continue;
   const taxRate=id==='han'||id==='han_loyalist'||id==='rival_court'?{low:0.7,normal:1,high:1.3}[s.taxLevel]*(s.taxRelief>0?0.6:1)+(focusState(s,id).mod.tax||0):1;
   const loyaltyF=r=>0.4+r.loyalty/150;
-  const income=own.reduce((a,r)=>a+r.tax*loyaltyF(r),0)*0.12*(id==='han'?0.5+capacity:1)*taxRate*(s.throne.paralysis>0&&id==='han'?0.6:1);
+  const income=own.reduce((a,r)=>a+r.tax*loyaltyF(r),0)*0.12*(id==='han'?0.5+capacity:rulerGovernanceFactor(s,id))*taxRate*(s.throne.paralysis>0&&id==='han'?0.6:1);
   const grain=own.reduce((a,r)=>a+(r.grain+(r.irrigation||0))*loyaltyF(r),0)*0.27;
   const armies=s.armies.filter(a=>a.owner===id&&a.men>0);
   const upkeep=armies.reduce((a,x)=>a+x.men/1000*templateStats(x.template).cost*0.22,0);

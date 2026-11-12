@@ -57,6 +57,7 @@ export function advanceForeignRulers(s){
  }
 }
 export function rulerMilitaryJudgment(s,f){const p=s.persons[s.rulers?.[f]?.personId];return p?.alive?Math.max(0.65,Math.min(1.05,0.65+(p.military??50)/300)):0.8}
+export function rulerGovernanceFactor(s,f){const p=s.persons[s.rulers?.[f]?.personId];return p?.alive?0.9+clamp(p.competence??50)/500:1}
 export function rulerPortrait(s,f){
  const r=s.rulers?.[f],p=s.persons[r?.personId];if(!r||!p)return null;
  if(p.portrait)return `../assets/portraits/${p.portrait}-128.jpg`;
