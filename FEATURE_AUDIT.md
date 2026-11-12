@@ -26,6 +26,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Character travel, health and succession information | Factions → character | `tools/browser-smoke.mjs` |
 | Illness, acting authority and actual succession | Factions → own faction → succession and acting authority | `tools/health-succession-smoke.mjs` uses a dying-leader fixture, designates and appoints a deputy, saves/loads, then checks simulated death, successor and chronicle |
 | City authority and local administration | Terrain map → city → manage theater | `tools/browser-smoke.mjs` |
+| Population satisfaction map | Terrain map → map mode → population satisfaction | `tools/satisfaction-map-smoke.mjs` checks owned values, a real policy change, privacy, visible map redraw and save/load; shared outlines summarize owned theaters only |
 | Chronicle and map handoff | Chronicle / return to campaign | `tools/browser-smoke.mjs` |
 | Terrain-map pan, zoom and relief | Map drag, wheel and relief control | `tools/map-benchmark.mjs` |
 | Screenshot | Terrain map → Screenshot | `tools/capture-check.mjs` |
