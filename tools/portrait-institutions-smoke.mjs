@@ -4,7 +4,7 @@ const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
- const council=await page.evaluate(async()=>{const e=await import('/engine.js?v=born-portraits-1'),s=e.newGame('senate');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));return Object.fromEntries(s.world.religiousInstitutions.map(institution=>[institution.id,institution.council]))});await page.reload();
+ const council=await page.evaluate(async()=>{const e=await import('/engine.js?v=faces-empire-2'),s=e.newGame('senate');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));return Object.fromEntries(s.world.religiousInstitutions.map(institution=>[institution.id,institution.council]))});await page.reload();
  await page.locator('[data-tab="government"]').click();
  for(const [id,key] of [[council.roman_college[0],'fictional-fabius'],[council.roman_college[1],'fictional-flavia'],[council.syrian_association[0],'fictional-maron'],[council.syrian_association[1],'fictional-helena']]){
   const img=page.locator(`[data-gene-person="${id}"] img`);assert.match(await img.getAttribute('src'),new RegExp(`${key}-128\\.jpg`));await img.evaluate(async element=>{await element.decode();if(element.naturalWidth!==128)throw Error('portrait did not load')});

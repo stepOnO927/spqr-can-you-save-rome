@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=born-portraits-1';
-import {addReport,advanceOperations,reportedHealthSubjects,reportEvidence} from '../character-system.js?v=born-portraits-1';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=faces-empire-2';
+import {addReport,advanceOperations,reportedHealthSubjects,reportEvidence} from '../character-system.js?v=faces-empire-2';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 function complete(s,mission,seed){s.world.intelSeed=seedFor(...seed);for(let i=0;i<mission.duration;i++)advanceOperations(s)}

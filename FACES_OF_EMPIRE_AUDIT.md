@@ -64,10 +64,21 @@ and a wartime interruption. The Han and Parthian graphs remain disconnected;
 their trade is correctly rejected pending geographically defensible
 intermediate markets. The existing abstract trade-treaty revenue still needs
 replacement when merchant AI and player trade controls are integrated.
+Adjacent treaty partners now make bounded quarterly AI purchases through the
+same order validation and escrow path. AI-to-AI deliveries do not generate
+player dispatches, and AI buyers cannot silently take goods from a player
+market. The atlas now exposes own market stocks, quotes, routes, prepaid
+orders, shipments and deliveries in English and Chinese. A Chromium smoke
+test places an order and checks delivery and save/load. Old and new trade
+treaties grant market access instead of generating one treasury unit per
+party each month without a payer. This is a first commercial behavior, not
+the requested merchant-character network or continental competition. The
+existing Han subsystem already supplies a separate geographically sourced
+Silk Road graph; the market ledger has not yet been joined to that graph.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, major fixed portraits, additional routes to fictional sovereignty,
-integrated physical commodity trade across the Roman campaign, market AI, and the full acceptance
+integrated physical commodity trade across the Roman campaign, broader market AI, and the full acceptance
 scenarios are still outstanding. New names
 and emblems are game reconstructions, not documented personal identities.
 

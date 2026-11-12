@@ -1,35 +1,35 @@
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=newborn-age-1';
-import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=born-portraits-1';
+import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=faces-empire-2';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=born-portraits-1';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives,upgradeMissionIdentities} from './character-system.js?v=born-portraits-1';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=born-portraits-1';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=faces-empire-2';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives,upgradeMissionIdentities} from './character-system.js?v=faces-empire-2';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=faces-empire-2';
 import {advanceConspiracies} from './conspiracies.js?v=newborn-age-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=newborn-age-1';
-import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,assignFictionalFieldCommander,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=born-portraits-1';
+import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,assignFictionalFieldCommander,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=faces-empire-2';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=calendar-1';
 import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=han-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
-import {advanceFocuses,focusModifiers} from './national-focus.js?v=born-portraits-1';
-import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=born-portraits-1';
-import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=born-portraits-1';
+import {advanceFocuses,focusModifiers} from './national-focus.js?v=faces-empire-2';
+import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=faces-empire-2';
+import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=faces-empire-2';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
-import {initializeMarkets,advanceMarkets} from './trade-markets.js?v=born-portraits-1';
+import {initializeMarkets,advanceMarkets,advanceMarketAI} from './trade-markets.js?v=faces-empire-2';
 import {assessOpportunities} from './multipolar.js?v=multipolar-2';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=multipolar-2';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {formCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=multipolar-2';
 import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=newborn-age-1';
 import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=newborn-age-1';
-import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=born-portraits-1';
+import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=faces-empire-2';
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
 export {queueMission};
 export {personalDiplomaticCredit};
@@ -811,7 +811,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
     const originalDifficulty=s.difficulty,hadDifficulty=Object.prototype.hasOwnProperty.call(s,'difficulty');s.difficulty=playerDifficulty;
     try{aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner)}finally{if(hadDifficulty)s.difficulty=originalDifficulty;else delete s.difficulty}
   }
-  observeDiplomacy(s);
+  advanceMarketAI(s,{autoplayPlayer});observeDiplomacy(s);
   advanceRomanDefeat(s);if(!s.defeat){advanceRomanVictory(s);advancePeacefulSettlement(s)}
   advanceHanWorld(s);
   recordCampaignTurn(s,chronicleBefore);

@@ -1,5 +1,5 @@
-import {buildChessboard} from './chessboard.js?v=born-portraits-1';
-import {focusReportsFor,focusById} from './national-focus.js?v=born-portraits-1';
+import {buildChessboard} from './chessboard.js?v=faces-empire-2';
+import {focusReportsFor,focusById} from './national-focus.js?v=faces-empire-2';
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=(x,zh)=>Array.isArray(x)?x[zh?1:0]||x[0]:x||'';

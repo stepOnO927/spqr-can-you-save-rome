@@ -120,3 +120,34 @@ export function advanceMarkets(s){
  if(markets.shipments.length>300){const completed=markets.shipments.filter(x=>x.status==='delivered');const excess=markets.shipments.length-300;const remove=new Set(completed.slice(0,excess).map(x=>x.id));markets.shipments=markets.shipments.filter(x=>!remove.has(x.id))}
  return markets;
 }
+
+// Quarterly market participation is bounded to one order per AI country.
+// Treaty partners expose a trading price, not an army/intelligence report.
+// Validation still uses the same stock, route and escrow rules as a player.
+export function advanceMarketAI(s,{autoplayPlayer=false}={}){
+ if(s.month%3!==0)return [];
+ const markets=initializeMarkets(s),orders=[];
+ for(const buyer of Object.keys(s.factions).filter(id=>id!=='rebels'&&(autoplayPlayer||id!==s.player))){
+  if(markets.shipments.some(x=>x.buyer===buyer&&['traveling','blocked'].includes(x.status)))continue;
+  const candidates=[];
+  for(const destination of s.regions.filter(r=>r.owner===buyer)){
+   const near=ROUTES.filter(([a,b])=>a===destination.id||b===destination.id).map(([a,b])=>region(s,a===destination.id?b:a)).filter(Boolean);
+   for(const origin of near){
+    const seller=origin.owner;if(seller===buyer||seller===s.player&&!autoplayPlayer||!s.factions[seller]||!activeAgreement(s,seller,buyer,'trade'))continue;
+    for(const commodity of Object.keys(COMMODITIES)){
+     const need=markets.regions[destination.id].goods[commodity],supply=markets.regions[origin.id].goods[commodity];
+     const target=Math.max(4,need.consumption*3+need.production),available=supply.stock-Math.max(4,supply.production*2);
+     if(need.stock>=target||available<1)continue;
+     const quantity=Math.min(3,target-need.stock,available),request={seller,buyer,origin:origin.id,destination:destination.id,commodity,quantity},quote=quoteTrade(s,request);
+     if(!quote.ok||s.factions[buyer].treasury-quote.total<(buyer==='han'?100:20))continue;
+     const gain=marketPrice(markets.regions[destination.id],commodity)*quantity-quote.total;
+     if(gain<0)continue;
+     candidates.push({request,gain});
+    }
+   }
+  }
+  candidates.sort((a,b)=>b.gain-a.gain||a.request.destination.localeCompare(b.request.destination)||a.request.commodity.localeCompare(b.request.commodity));
+  if(candidates.length){const result=placeTradeOrder(s,candidates[0].request);if(result.ok)orders.push(result.shipment)}
+ }
+ return orders;
+}

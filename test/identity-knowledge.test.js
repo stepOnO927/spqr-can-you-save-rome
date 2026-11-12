@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-1';
-import {addReport} from '../character-system.js?v=born-portraits-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
+import {addReport} from '../character-system.js?v=faces-empire-2';
 import {identityKnowledge} from '../map-lab/identity-knowledge.js?v=phase-x-1';
 
 test('identity presentation follows the observer’s records, not hidden foreign state',()=>{

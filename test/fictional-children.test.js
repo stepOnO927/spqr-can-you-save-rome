@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-1';
-import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=born-portraits-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
+import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=faces-empire-2';
 import {generateFictionalChildName} from '../fictional-names.js?v=faces-of-empire-1';
-import {proceduralPortraitSvg} from '../portrait-registry.js?v=born-portraits-1';
+import {proceduralPortraitSvg} from '../portrait-registry.js?v=faces-empire-2';
 
 test('Han children keep a recorded family and use Han names across saves',()=>{
  const s=newGame('han');

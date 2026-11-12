@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
-import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=born-portraits-1';
+import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=faces-empire-2';
 
 const deal=()=>{
  const s=newGame('armenia');s.relations['armenia:parthia']=45;

@@ -1,18 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=born-portraits-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=faces-empire-2';
 import {advanceStrategicWarnings,warningCandidates,warningLedger} from '../strategic-warnings.js?v=multipolar-2';
 import {assessOpportunities} from '../multipolar.js?v=multipolar-2';
 import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=born-portraits-1';
-import {renderChessboard} from '../chessboard-ui.js?v=born-portraits-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=born-portraits-1';
+import {buildChessboard} from '../chessboard.js?v=faces-empire-2';
+import {renderChessboard} from '../chessboard-ui.js?v=faces-empire-2';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=faces-empire-2';
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
-import {advanceGovernments} from '../governance.js?v=born-portraits-1';
-import {advanceMovements} from '../movements.js?v=born-portraits-1';
-import {newRevolutionScenario} from '../scenarios.js?v=born-portraits-1';
+import {advanceGovernments} from '../governance.js?v=faces-empire-2';
+import {advanceMovements} from '../movements.js?v=faces-empire-2';
+import {newRevolutionScenario} from '../scenarios.js?v=faces-empire-2';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));

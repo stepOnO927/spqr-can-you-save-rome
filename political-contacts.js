@@ -1,4 +1,4 @@
-import {initializeWorld} from './characters.js?v=born-portraits-1';
+import {initializeWorld} from './characters.js?v=faces-empire-2';
 import {politicalAmbition} from './conspiracies.js?v=newborn-age-1';
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const pair=(a,b)=>[a,b].sort().join(':');
