@@ -8,8 +8,9 @@ import {advanceConspiracies} from './conspiracies.js?v=newborn-age-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=newborn-age-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=newborn-age-1';
-import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=newborn-age-1';
+import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=field-recovery-1';
 import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=han-4';
+import {enemyBattleLossEstimate} from './battle-estimate.js';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -110,6 +111,15 @@ export function upgradeSave(s){
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
+// This warning uses friendly positions and reported neighboring control only.
+export function vacatedTheaterRisk(s,armyId){
+  const a=army(s,armyId),source=a&&region(s,a.region);
+  if(!a||!source||source.owner!==a.owner)return null;
+  if(s.armies.some(other=>other.id!==a.id&&other.owner===a.owner&&other.region===source.id&&other.men>0&&!other.move))return null;
+  const hostileNearby=adjacent(source.id).some(link=>{const report=reportedControl(s,a.owner,link.to);return report?.owner&&isWar(s,a.owner,report.owner)});
+  return {region:source.id,name:[...source.name],hostileNearby};
+}
+
 export function previewMarch(s,armyId,destination){
   const a=army(s,armyId); const target=region(s,destination);
   if(!a||!target||a.men<=0||a.move||a.siege)return {ok:false,reason:'unavailable'};
@@ -123,7 +133,7 @@ export function previewMarch(s,armyId,destination){
   if(link.sea&&faction.treasury<seaCost)return {ok:false,reason:'transport'};
   const routeWorks=buildingModifiers(region(s,a.region)).march||0,doctrine=activeModifiers(s,a.owner).march||0;
   const months=Math.max(1,(link.sea?3:1)+(target.terrain==='hills'?1:0)+(target.terrain==='desert'?1:0)-routeWorks-doctrine+formationMarchDelta(s,a,link,target.terrain));
-  return {ok:true,months,seaCost,sea:!!link.sea,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:target.supply};
+  return {ok:true,months,seaCost,sea:!!link.sea,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:target.supply,vacatedTheater:vacatedTheaterRisk(s,armyId)};
 }
 
 export function moveArmy(s,armyId,destination){
@@ -134,13 +144,28 @@ export function moveArmy(s,armyId,destination){
   const months=estimate.months;
   a.move={to:destination,remaining:months,sea:link.sea};
   a.order={kind:'move',target:destination};
-  if(a.owner===s.player)log(s,`${a.name[0]} marched toward ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}向${target.name[1]}行军（${months}个月）。`);
-  return {ok:true};
+  if(a.owner===s.player){log(s,`${a.name[0]} marched toward ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}向${target.name[1]}行军（${months}个月）。`);
+    if(estimate.vacatedTheater)log(s,`Warning: ${estimate.vacatedTheater.name[0]} has no other friendly field army. It may be retaken without a battle.`,`警告：${estimate.vacatedTheater.name[1]}没有其他己方野战军驻守，离开后可能未经战斗就失守。`);
+  }
+  return {ok:true,warning:estimate.vacatedTheater};
 }
 
 // All player and AI field orders use the same state transition. Persistent
 // stances are resolved during combat and monthly upkeep, including old saves
 // whose armies have no order field.
+export function reinforcementQuote(s,armyId,owner=s.player){
+  const a=army(s,armyId),f=s.factions[owner],place=a&&region(s,a.region);
+  if(!a||a.owner!==owner||a.men<=0||!f||!place||a.move||a.siege)return {ok:false,reason:'unavailable'};
+  if(place.owner!==owner)return {ok:false,reason:'not_owned'};
+  if(a.lastReinforcedAt===s.year*12+s.month)return {ok:false,reason:'monthly_limit'};
+  if(a.men>=15000)return {ok:false,reason:'full_strength'};
+  const men=Math.min(1000,15000-a.men),treasury=Math.ceil(men/1000*10),food=Math.ceil(men/1000*3),manpower=men;
+  if(f.treasury<treasury)return {ok:false,reason:'treasury',men,treasury,food,manpower};
+  if(f.food<food)return {ok:false,reason:'food',men,treasury,food,manpower};
+  if(f.manpower<manpower)return {ok:false,reason:'manpower',men,treasury,food,manpower};
+  return {ok:true,men,treasury,food,manpower};
+}
+
 export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player){
   const a=army(s,armyId),f=s.factions[owner],place=a&&region(s,a.region);
   if(!a||a.owner!==owner||a.men<=0||!f||!place)return {ok:false,reason:'unavailable'};
@@ -164,10 +189,13 @@ export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player){
     if(!link||!dest||dest.owner!==owner||a.move)return {ok:false,reason:'target'};
     if(link.sea&&f.treasury<8)return {ok:false,reason:'transport'};
     if(link.sea)f.treasury-=8;
+    const warning=vacatedTheaterRisk(s,armyId);
     a.siege=null;a.order={kind,target:targetId};a.move={to:targetId,remaining:link.sea?3:1,sea:link.sea,intent:'retreat'};
     a.morale=Math.max(20,a.morale-3);
-    if(owner===s.player)log(s,`${a.name[0]} withdrew toward ${dest.name[0]}.`,`${a.name[1]}向${dest.name[1]}撤退。`);
-    return {ok:true};
+    if(owner===s.player){log(s,`${a.name[0]} withdrew toward ${dest.name[0]}.`,`${a.name[1]}向${dest.name[1]}撤退。`);
+      if(warning)log(s,`Warning: ${warning.name[0]} has no other friendly field army and may be retaken without a battle.`,`警告：${warning.name[1]}没有其他己方野战军驻守，可能未经战斗就失守。`);
+    }
+    return {ok:true,warning};
   }
   if(a.move||a.siege)return {ok:false,reason:'unavailable'};
   if(['defend','hold','guard'].includes(kind)){
@@ -177,10 +205,10 @@ export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player){
     return {ok:true};
   }
   if(kind==='reinforce'){
-    if(place.owner!==owner||f.treasury<6||f.food<2||f.manpower<1000||a.men>=15000)return {ok:false,reason:'resources'};
-    f.treasury-=6;f.food-=2;f.manpower-=1000;a.men+=1000;
-    if(owner===s.player)log(s,`${a.name[0]} received 1,000 reinforcements at ${place.name[0]}.`,`${a.name[1]}在${place.name[1]}获得1000名援兵。`);
-    return {ok:true};
+    const quote=reinforcementQuote(s,armyId,owner);if(!quote.ok)return quote;
+    f.treasury-=quote.treasury;f.food-=quote.food;f.manpower-=quote.manpower;a.men+=quote.men;a.lastReinforcedAt=s.year*12+s.month;
+    if(owner===s.player)log(s,`${a.name[0]} received ${quote.men.toLocaleString()} reinforcements at ${place.name[0]} (cost ${quote.treasury} treasury, ${quote.food} food, ${quote.manpower} manpower).`,`${a.name[1]}在${place.name[1]}补充${quote.men}人（花费国库${quote.treasury}、粮食${quote.food}、兵源${quote.manpower}）。`);
+    return {ok:true,quote};
   }
   if(kind==='rally'){
     if(f.treasury<5||f.food<2||a.morale>=90)return {ok:false,reason:'resources'};
@@ -444,7 +472,14 @@ export function resolveBattle(s,attacker,defender,target){
   report.ownerAfter=target.owner;report.attackerRemaining=attacker.men;report.defenderRemaining=defender.men;
   attacker.move=null;attacker.order=null;defender.order=defender.region===target.id?defender.order:null;attacker.experience=Math.min(5,attacker.experience+1);
   defender.experience=Math.min(5,defender.experience+1);
-  if(attacker.owner===s.player||defender.owner===s.player){const ownLoss=attacker.owner===s.player?lossA:lossD,ownStart=attacker.owner===s.player?report.attacker.men:report.defender.men,capture=attackerWins&&target.owner===attacker.owner?` ${target.name[0]} is now under ${FACTIONS[target.owner].short[0]} control.`:'';log(s,`${FACTIONS[attacker.owner].short[0]} ${attackerWins?'won':'lost'} at ${target.name[0]}. Casualties: own ${ownLoss.toLocaleString()}; enemy unknown.${capture}${ownLoss>ownStart*.3?' Severe friendly losses.':''}`,`${FACTIONS[attacker.owner].short[1]}在${target.name[1]}${attackerWins?'获胜':'战败'}。己方伤亡：${ownLoss.toLocaleString()}；敌方伤亡未知。${capture?` ${target.name[1]}现由${FACTIONS[target.owner].short[1]}控制。`:''}${ownLoss>ownStart*.3?' 己方伤亡惨重。':''}`)}
+  if(attacker.owner===s.player||defender.owner===s.player){
+    const ownAttacks=attacker.owner===s.player,ownLoss=ownAttacks?lossA:lossD,ownStart=ownAttacks?report.attacker.men:report.defender.men;
+    const playerWon=ownAttacks?attackerWins:!attackerWins,estimate=enemyBattleLossEstimate(report,s.player);
+    const estimateEn=estimate?`estimated enemy losses ${estimate.low.toLocaleString()}–${estimate.high.toLocaleString()} (battlefield estimate; exact count unverified)`:'enemy losses could not be estimated';
+    const estimateZh=estimate?`敌方伤亡估计${estimate.low.toLocaleString()}—${estimate.high.toLocaleString()}人（战场估算，确数未核实）`:'无法估计敌方伤亡';
+    const capture=attackerWins&&target.owner===attacker.owner?` ${target.name[0]} is now under ${FACTIONS[target.owner].short[0]} control.`:'';
+    log(s,`${FACTIONS[s.player].short[0]} ${playerWon?'won':'lost'} at ${target.name[0]}. Casualties: ${ownLoss.toLocaleString()} friendly; ${estimateEn}.${capture}${ownLoss>ownStart*.3?' Severe friendly losses.':''}`,`${FACTIONS[s.player].short[1]}在${target.name[1]}${playerWon?'获胜':'战败'}。己方伤亡：${ownLoss.toLocaleString()}；${estimateZh}。${capture?` ${target.name[1]}现由${FACTIONS[target.owner].short[1]}控制。`:''}${ownLoss>ownStart*.3?' 己方伤亡惨重。':''}`);
+  }
   for(const lost of s.armies.filter(a=>a.men<=0&&a.characterId)){
     const person=s.world.characters[lost.characterId];if(!person||!person.alive)continue;person.location=null;person.missing={origin:target.id,remaining:3,year:s.year,month:s.month};
     if(lost.owner===s.player)log(s,`${CHARACTER_CATALOG[person.id].name[0]}'s location is unknown after the army was destroyed.`,`${CHARACTER_CATALOG[person.id].name[1]}的军队覆灭后，其位置不明。`);

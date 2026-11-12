@@ -1,4 +1,4 @@
-import {newGame,estimatedStrength} from './engine.js?v=newborn-age-1';
+import {newGame,estimatedStrength} from './engine.js?v=field-recovery-1';
 import {createFictionalPerson} from './dynasties.js?v=newborn-age-1';
 import {formCoalition} from './coalitions.js?v=multipolar-2';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';

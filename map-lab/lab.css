@@ -82,3 +82,16 @@
 .imperium-links{display:flex;flex-wrap:wrap;gap:6px 14px;margin:2px 0 10px}
 
 .tax-projection{margin-top:.7rem;border-top:1px solid rgba(153,125,75,.35);padding-top:.55rem;font-size:.82rem}.tax-row{display:flex;gap:.65rem;flex-wrap:wrap;padding:.18rem 0;border-bottom:1px solid rgba(153,125,75,.16)}.tax-row strong{min-width:5rem}.tax-projection small{display:block;margin-top:.4rem;opacity:.8}
+
+/* Keep tutorial, campaign brief, and command panel in separate reading bands. */
+.reinforcement-note{margin:6px 0 9px;color:#e5c98f;font:11px/1.5 Manrope,'Microsoft YaHei',sans-serif}
+#status.territory-risk-alert,#status.territory-loss-alert{background:#512e29f2;border:1px solid #e3aa78;color:#fff1d5;font-size:12px;max-width:min(450px,calc(100vw - 20px));z-index:12}
+@media(max-width:700px){
+  body:has(#guide:not([hidden])) #guide{left:8px;right:8px;bottom:8px;transform:none;width:auto;max-height:28vh;overflow-y:auto;padding:10px 12px}
+  body:has(#guide:not([hidden])) #guide p{font-size:13px;line-height:1.45}
+  body:has(#guide:not([hidden])) .brief:not(.collapsed){top:72px;max-height:28vh;overflow-y:auto}
+  body:has(#guide:not([hidden])) .selection:not(.collapsed){bottom:calc(28vh + 24px);max-height:28vh;overflow-y:auto}
+  #status.territory-risk-alert,#status.territory-loss-alert{top:60px;left:8px;right:8px;max-width:none}
+}
+
+.monthly-loss{display:inline-block;margin-left:8px;color:#eab19b;font-weight:700}
