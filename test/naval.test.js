@@ -119,7 +119,7 @@ test('a returning convoy diverts from a captured port and unloads cargo only at 
  advanceNaval(s);assert.equal(s.naval.reports.filter(r=>r.kind==='supply-return'&&r.owner==='senate').length,1);
 });
 test('a convoy keeps its cargo offshore until a friendly port becomes available',()=>{
- const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate');s.month=2;
+ let s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate');s.month=2;
  for(const other of s.naval.fleets.filter(x=>x!==f))other.zone='western';
  for(const pirate of s.naval.pirates)pirate.ships=0;
  assert.equal(orderFleet(s,'senate',f.id,'supply','epirus').ok,true);
@@ -129,6 +129,8 @@ test('a convoy keeps its cargo offshore until a friendly port becomes available'
  advanceNaval(s);
  assert.equal(f.port,null);assert.equal(f.order?.kind,'return');assert.equal(f.order?.targetPort,null);assert.equal(f.order?.cargo,cargo);
  assert.equal(s.naval.reports.some(r=>r.kind==='supply-return'&&r.owner==='senate'),false);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));f=s.naval.fleets.find(x=>x.owner==='senate');
+ assert.equal(f.order?.cargo,cargo,'save reload must retain undelivered cargo');
  s.regions.find(r=>r.id==='epirus').owner='senate';
  advanceNaval(s);
  assert.equal(f.port,'epirus');assert.equal(s.naval.reports.filter(r=>r.kind==='supply-return'&&r.owner==='senate').length,1);
