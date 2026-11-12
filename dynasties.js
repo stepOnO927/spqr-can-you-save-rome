@@ -28,7 +28,7 @@ function ensureCatalog(s){
 
 export function initializeDynasties(s){
  const d=s.world.dynasties||= {families:{},lives:{},catalog:{},marriages:[],memories:[],rulers:[],seed:220049,nextPerson:1,nextFamily:1};
- d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.familyAccords||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
+ d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.rulingHouses||={};d.houseTransitions||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.familyAccords||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
  for(const [id,c] of Object.entries(s.world.characters)){
   if(CHARACTER_CATALOG[id]?.fictional)c.portraitSeed??=portraitSeedFor(id,c,CHARACTER_CATALOG[id]);
   c.parents||=[];c.adoptiveParents||=[];c.children||=[];c.spouse||=null;c.wealth??=0;
@@ -52,6 +52,8 @@ export function initializeDynasties(s){
   d.hanFamilySeeded=true;
  }
  for(const [faction,ids] of Object.entries(s.world.leadership||{}))if(s.factions[faction]){
+  const founding=ids.find(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
+  if(founding)d.rulingHouses[faction]??=faction==='han'?'han-liu':s.world.characters[founding].familyId;
   const current=ids.filter(id=>s.world.characters[id]?.alive).join(':');
   if(d.rulers.filter(r=>r.faction===faction).at(-1)?.current!==current)d.rulers.push({faction,current,year:s.year,month:s.month});
  }

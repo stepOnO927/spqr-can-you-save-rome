@@ -41,10 +41,20 @@ a compact procedural portrait for the player's own people; a foreign portrait
 is only observed after a successful personal meeting. That meeting stores the
 observed seed and political affiliation, so later hidden changes do not alter
 the previously observed artwork. Existing bespoke portraits remain in use.
+The family tree now uses the same artwork and the portraits vary face shape,
+details and age without changing the person's saved identity. A foreign
+portrait remains gated by the viewer's own meeting record.
+Reported sovereign labels now distinguish Han, Parthian, Egyptian and other
+institutions. When an unrelated fictional court member succeeds a hereditary
+ruler, the new house, founder and political cost are saved and shown in the
+player's genealogy. A documented Liu descendant may succeed in the direct Han
+campaign; an unrelated minister with a Liu-looking name cannot. These are
+partial Stage D/E integrations, not a claim that every requested political
+route or important portrait is finished.
 
 The expansion remains incomplete: wider Central Asian name datasets and
-characters, a general procedural portrait system, integrated physical
-commodity trade across the Roman campaign, market AI, and the full acceptance
+characters, major fixed portraits, additional routes to fictional sovereignty,
+integrated physical commodity trade across the Roman campaign, market AI, and the full acceptance
 scenarios are still outstanding. New names
 and emblems are game reconstructions, not documented personal identities.
 

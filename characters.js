@@ -78,7 +78,24 @@ export function assignSuccession(s,faction){
   const preferred=model==='later_empire'&&s.world.coEmperors?.[faction]||s.world.successionPlans?.[faction],eligible=[...new Set([...children,...candidates])];
   const military=id=>s.armies.filter(a=>a.owner===faction&&a.characterId===id).reduce((n,a)=>n+Math.min(35,Math.floor((a.men||0)/500)),0);
   const ranked=imperial?[...eligible].sort((a,b)=>((s.world.characters[b].influence||0)+military(b)+(children.includes(b)?12:0))-((s.world.characters[a].influence||0)+military(a)+(children.includes(a)?12:0))):eligible;
-  const next=eligible.includes(preferred)?preferred:model==='liu_imperial'?candidates[0]||children[0]:model==='arsacid_nobility'?candidates[0]||children[0]:imperial?ranked[0]:children[0]||candidates[0];if(next)current.push(next);
+  const next=eligible.includes(preferred)?preferred:model==='liu_imperial'?candidates[0]||children[0]:model==='arsacid_nobility'?candidates[0]||children[0]:imperial?ranked[0]:children[0]||candidates[0];
+  if(next){
+   current.push(next);
+   // A court outsider's accession is a political change, not an invisible
+   // continuation of the previous dynasty. Blood descendants retain the house.
+   const d=s.world.dynasties,person=s.world.characters[next],oldHouse=d?.rulingHouses?.[faction];
+   if(d&&CHARACTER_CATALOG[next]?.fictional&&!['republican_command','liu_imperial'].includes(model)){
+    const descends=previous.some(id=>person.parents?.includes(id)||person.adoptiveParents?.includes(id));
+    const newHouse=descends?oldHouse||person.familyId:person.familyId;
+    if(oldHouse&&newHouse&&oldHouse!==newHouse){
+     d.houseTransitions||=[];
+     d.houseTransitions.push({faction,from:oldHouse,to:newHouse,founder:next,year:s.year,month:s.month,kind:'new_house',simulated:true});
+     s.factions[faction].legitimacy=Math.max(0,(s.factions[faction].legitimacy??50)-5);
+     s.factions[faction].stability=Math.max(0,(s.factions[faction].stability??50)-2);
+    }
+    d.rulingHouses||={};d.rulingHouses[faction]=newHouse;
+   }
+  }
   if(imperial&&next){const rival=ranked.find(id=>id!==next&&s.world.characters[id].influence>=35&&((s.world.characters[id].influence||0)+military(id)>=(s.world.characters[next].influence||0)+military(next)-25||s.factions[faction]?.stability<45));if(rival){s.world.claimants[faction]||=[];if(!s.world.claimants[faction].includes(rival))s.world.claimants[faction].push(rival);s.world.disputes[faction]||={months:0,support:{}};s.world.disputes[faction].support||={};s.world.disputes[faction].support[rival]??=Math.min(30,military(rival))}}
   if(model==='arsacid_nobility'&&next){const bypassed=children.filter(id=>id!==next);if(bypassed.length){s.world.claimants[faction]||=[];for(const id of bypassed)if(!s.world.claimants[faction].includes(id))s.world.claimants[faction].push(id);s.world.disputes[faction]||={months:0,support:{}};s.world.disputes[faction].support||={};for(const id of bypassed)s.world.disputes[faction].support[id]??=10}}
  }
@@ -86,7 +103,14 @@ export function assignSuccession(s,faction){
 }
 export function knownLeaders(s,viewer,target){initializeWorld(s);return s.knowledge[viewer]?.[target]?.reportedLeaders||[]}
 // Derive a public-facing description only from the reported names, never the hidden government state.
-export function leadershipTitle(faction,reported){if(!reported?.length)return ['Authority unconfirmed','领导身份未确认'];if(faction==='caesar'||faction==='senate')return ['Roman faction leadership','罗马派系领袖'];if(faction==='egypt_claimant'||faction==='parthia_claimant')return ['Reported claimant leadership','报告的竞争者领袖'];if(faction==='egypt'&&reported.length>1)return ['Joint rulers','共同统治者'];if(faction==='mauretania')return ['Rulers of separate kingdoms','各王国统治者'];return ['Ruler','统治者']}
+export function leadershipTitle(faction,reported,state=null){
+ if(!reported?.length)return ['Authority unconfirmed','领导身份未确认'];
+ if(faction==='caesar'||faction==='senate')return state?.world?.romanRegimes?.[faction]==='roman_principate'?['Roman princeps','罗马元首']:state?.world?.romanRegimes?.[faction]==='later_empire'?['Roman emperor','罗马皇帝']:['Roman faction leadership','罗马派系领袖'];
+ if(faction==='egypt_claimant'||faction==='parthia_claimant')return ['Reported claimant leadership','报告的竞争者领袖'];
+ if(faction==='egypt'&&reported.length>1)return ['Joint rulers','共同统治者'];
+ if(faction==='mauretania')return ['Rulers of separate kingdoms','各王国统治者'];
+ return {han:['Han emperor','汉皇帝'],egypt:['Ptolemaic ruler','托勒密王朝统治者'],parthia:['Parthian king','安息国王'],armenia:['Armenian king','亚美尼亚国王'],numidia:['Numidian king','努米底亚国王'],galatia:['Galatian ruler','加拉太统治者'],bosporus:['Bosporan ruler','博斯普鲁斯统治者'],shanshan:['Oasis king','绿洲国王']}[faction]||['Ruler','统治者'];
+}
 
 // Historical encyclopedia text; later campaign events and health are simulated.
 export const HISTORICAL_BIO={
