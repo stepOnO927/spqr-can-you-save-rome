@@ -121,6 +121,25 @@ test('peace withdraws besieging units from the former enemy theater',()=>{
  assert.equal(region(s,unit.region).owner,'egypt');assert.equal(unit.siege,null);
  assert.equal(isWar(s,'egypt','senate'),false);
 });
+test('a formal military victory ends the civil war for an observing command',()=>{
+ const s=newGrandGame('egypt');
+ for(const theater of s.regions)if(theater.owner==='senate')theater.owner='caesar';
+ s.armies=s.armies.filter(unit=>unit.owner!=='senate');
+ s.factions.senate.treasury=0;s.factions.senate.manpower=0;
+ tick(s);
+ assert.equal(s.civilWarOutcome?.kind,'military');
+ assert.equal(s.civilWarOutcome?.winner,'caesar');
+ assert.equal(isWar(s,'caesar','senate'),false);
+ assert.equal(upgradeSave(structuredClone(s)).wars.some(w=>w.includes('caesar')&&w.includes('senate')),false);
+});
+test('older military-victory saves close their stale civil-war flag on load',()=>{
+ const s=newGrandGame('egypt');
+ s.civilWarOutcome={kind:'military',winner:'senate',loser:'caesar',year:s.year,month:s.month};
+ assert.equal(isWar(s,'caesar','senate'),true);
+ const restored=upgradeSave(structuredClone(s));
+ assert.equal(restored.civilWarOutcome.winner,'senate');
+ assert.equal(isWar(restored,'caesar','senate'),false);
+});
 test('alliance war reaching player is recorded and notified',()=>{
  const s=newGame('caesar');s.alliances.push(['caesar','numidia']);const before=s.notifications.length;
  assert.equal(diplomacy(s,'parthia','numidia','war'),true);

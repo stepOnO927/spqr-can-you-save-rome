@@ -12,13 +12,13 @@ import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=15';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion} from './local-society.js?v=4';
 import {initializeFigures,advanceFigures} from './great-figures.js';
-import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=21';
+import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=22';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
 import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=2';
 import {nationalBudget} from './national-budget.js?v=7';
 export {nationalBudget} from './national-budget.js?v=7';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
-export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=21';
+export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=22';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
 export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=15';
 export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
@@ -89,7 +89,10 @@ export function upgradeSave(s){
   const completed=s.achievementState;
   if(completed?.finalized&&completed.result==='retired'&&completed.summary?.winner===s.civilWarOutcome.winner){completed.summary.civilWarOutcome=s.civilWarOutcome;completed.summary.winner=null;completed.summary.method=null}
  }
- migrateRegionalPowers(s);initializeReports(s);updateObjectives(s,true);initializeFigures(initializeDevelopment(refreshReportConfidence(initializeGovernments(s))));initializeLocalSociety(s);initializeNaval(s);initializeAchievements(s);if(s.victory&&!s.campaignOutcome)s.campaignOutcome={kind:'military',winner:s.player,loser:s.player==='caesar'?'senate':'caesar',year:s.year,month:s.month,legacy:true};s.briefingBaseline ||= beginBriefing(s);return s;
+ if(s.victory&&!s.campaignOutcome)s.campaignOutcome={kind:'military',winner:s.player,loser:s.player==='caesar'?'senate':'caesar',year:s.year,month:s.month,legacy:true};
+ const civilResult=s.civilWarOutcome||s.campaignOutcome;
+ if(civilResult?.kind==='military'&&['caesar','senate'].includes(civilResult.winner)&&['caesar','senate'].includes(civilResult.loser)&&isWar(s,'caesar','senate'))concludePeace(s,'caesar','senate');
+ migrateRegionalPowers(s);initializeReports(s);updateObjectives(s,true);initializeFigures(initializeDevelopment(refreshReportConfidence(initializeGovernments(s))));initializeLocalSociety(s);initializeNaval(s);initializeAchievements(s);s.briefingBaseline ||= beginBriefing(s);return s;
 }
 
 export function previewMarch(s,armyId,destination){
@@ -704,6 +707,7 @@ export function tick(s){
   s.militaryAlerts=(s.militaryAlerts||[]).filter(a=>a.year*12+a.month>=s.year*12+s.month);
   if(!s.campaignOutcome&&!s.civilWarOutcome&&isWar(s,'caesar','senate'))for(const faction of ['caesar','senate'].includes(s.player)?[s.player,s.player==='caesar'?'senate':'caesar']:['caesar','senate']){
     const outcome=militaryResult(s,faction);if(outcome&&setCampaignOutcome(s,outcome)){
+      concludePeace(s,'caesar','senate');
       log(s,`${FACTIONS[outcome.winner].short[0]} prevailed in the civil war.`,`${FACTIONS[outcome.winner].short[1]}在内战中获胜。`);break;
     }
   }

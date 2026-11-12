@@ -22,6 +22,18 @@ test('AI reserves an unaffordable docked fleet and recommissions it after a date
  s=upgradeSave(JSON.parse(JSON.stringify(s)));f=s.naval.fleets.find(x=>x.id===id);s.factions.caesar.treasury=45;s.naval.intel.caesar={'senate-adriatic':{owner:'senate',zone:f.zone,year:s.year,month:s.month,source:'sighting',range:[1,5],confidence:'low'}};advanceNaval(s);assert.equal(f.reserve,true);assert.ok(!f.mobilizing);
  s.factions.caesar.treasury=120;advanceNaval(s);assert.equal(f.reserve,true);assert.equal(f.mobilizing,1);advanceNaval(s);assert.equal(f.reserve,false);assert.equal(f.mobilizing,0);
 });
+test('outnumbered AI preserves its land-war budget before optional patrols, but responds to a reported sea threat',()=>{
+ const s=newGrandGame('egypt'),fleet=s.naval.fleets.find(f=>f.id==='caesar-adriatic'),full=fleetUpkeepDue(fleet);
+ assert.equal(s.factions.caesar.treasury,180);
+ assert.ok(nationalBudget(s,'caesar').projectedNet< -6);
+ advanceNaval(s);
+ assert.equal(fleet.reserve,true);
+ assert.ok(fleetUpkeepDue(fleet)<full);
+ const threatened=newGrandGame('egypt'),warned=threatened.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ threatened.naval.intel.caesar={'senate-adriatic':{owner:'senate',zone:warned.zone,year:threatened.year,month:threatened.month,source:'sighting',range:[1,5],confidence:'low'}};
+ advanceNaval(threatened);
+ assert.ok(!warned.reserve,'a current nearby hostile report keeps the fleet ready while the reserve can sustain it');
+});
 test('a captured harbor cannot resupply, repair or train its former active fleet',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),port=s.regions.find(r=>r.id===f.port),messages=[];
  port.buildings.push('naval-training');f.supply=30;f.hull=60;f.experience=20;f.sailors-=20;
