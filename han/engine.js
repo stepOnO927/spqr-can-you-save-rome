@@ -12,6 +12,7 @@ import {initSilk,advanceSilk} from './silk-road.js?v=han-1';
 import {advanceFocus,focusState} from './focus.js?v=han-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf,recruit,recruitQuote,neighbours} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
+import {ensureFieldCommanders} from './field-identities.js';
 
 export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
 export const SCENARIOS={
@@ -86,7 +87,7 @@ export function newHanGame(player='han',{scenario='historical',difficulty='stand
  if(scenario==='usurper')applyUsurperScenario(s);
  if(scenario==='disputed')applyDisputedScenario(s);
  if(difficulty==='beginner'&&player)s.factions[player].treasury+=100;
- computeMandate(s);recomputeInfluence(s);observe(s);
+ ensureFieldCommanders(s);computeMandate(s);recomputeInfluence(s);observe(s);
  if(start!=='roman')log(s,['Liu Shi has taken the throne. The court looks to the regents named by Emperor Xuan.','刘奭已即位，朝廷仰赖宣帝遗诏所命辅政大臣。'],{kind:'throne'});
  return s;
 }
@@ -281,7 +282,7 @@ export function tick(s){
  scheduledEvents(s);movement(s);battles(s);sieges(s);supply(s);economy(s);lives(s);
  hanAI(s);advanceCourt(s);
  advanceFrontier(s,{issueMove:(a,to)=>moveArmy(s,a.id,to,{owner:a.owner})});
- advanceSilk(s);advanceDependencies(s);advanceFocus(s);
+ advanceSilk(s);advanceDependencies(s);advanceFocus(s);ensureFieldCommanders(s);
  if(s.throne.dynasty&&!s.throne.dynasty.orthodox)s.usurperMonths=(s.usurperMonths||0)+1;
  if(s.throne.orthodox&&s.throne.dynasty?.orthodox)s.orthodoxMonths=(s.orthodoxMonths||0)+1;
  if(!s.wars.length)s.peaceMonths=(s.peaceMonths||0)+1;else s.peaceMonths=0;
@@ -303,6 +304,6 @@ export function loadHanSave(raw){
  initDependencies(s);
  s.version=SAVE_VERSION;s.throne.claimants||=[];s.throne.support||={};s.throne.history||=[];
  const fixes=enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
- s.loadFixes=fixes;computeMandate(s);return s;
+ s.loadFixes=fixes;ensureFieldCommanders(s);computeMandate(s);return s;
 }
 export {statusOf,eligibility,claimStrength,emperorAuthority,adminCapacity};

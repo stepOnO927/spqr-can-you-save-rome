@@ -44,6 +44,7 @@ jobs:
           node tools/construction-smoke.mjs
           node tools/browser-smoke.mjs
           node tools/han-smoke.mjs
+          node tools/han-field-smoke.mjs
           node tools/phase-v-smoke.mjs
           node tools/capture-check.mjs
           node tools/map-benchmark.mjs

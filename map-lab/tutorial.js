@@ -39,7 +39,7 @@ export function createTutorial({language,onReset,onMode,getState,skipInitial=fal
  const senateSteps={en:[
   ['Who are you?','You command the Senate and Pompey against Caesar. Your first goal is to challenge Caesar in Cisalpine Gaul.'],
   ['Identify your command','Your standards are blue-gray; Caesar’s are red. Other powers are neutral unless at war. Select the Italian levies. Shared outlines do not imply a precise border.'],
-  ['Inspect your forces','The Italian levies begin with 5,200 soldiers under an unnamed officer. Morale and experience affect battle; the local supply limit is informational.'],
+  ['Inspect your forces','The Italian levies begin with 5,200 soldiers under a named fictional officer. Morale and experience affect battle; the local supply limit is informational.'],
   ['Preview a route','Choose any highlighted adjacent destination. Cisalpine Gaul is hostile and may hold Caesar’s forces; you may inspect a safer route.'],
   ['Choose your plan','Review travel time and food. Confirm a march or advance the month to defend and postpone the attack.'],
   ['Orders and time','A march can be cancelled before arrival. Advance a month to resolve orders, sieges, economy and enemy moves.'],
@@ -50,7 +50,7 @@ export function createTutorial({language,onReset,onMode,getState,skipInitial=fal
  ],zh:[
   ['你是谁？','你指挥元老院与庞培派，对抗凯撒。第一个目标是争夺山南高卢。'],
   ['辨认你的军队','你指挥蓝灰色的元老院派；凯撒派为红色，其他势力是否敌对取决于战争状态。点击意大利征召军。共用轮廓不代表精确边界。'],
-  ['查看你的部队','意大利征召军最初有5200人，由未具名军官指挥。士气与经验影响战斗；当地补给上限目前仅供参考。'],
+  ['查看你的部队','意大利征召军最初有5200人，由有独立档案的虚构军官指挥。士气与经验影响战斗；当地补给上限目前仅供参考。'],
   ['预览路线','选择任意高亮的相邻战区。山南高卢属于敌方，可能有凯撒军队；也可先看更安全的路线。'],
   ['决定行动','检查行程和粮食。可以确认行军，也可以推进月份防守，暂缓进攻。'],
   ['命令与时间','抵达前可取消行军。推进一个月将结算命令、围攻、经济和敌军行动。'],

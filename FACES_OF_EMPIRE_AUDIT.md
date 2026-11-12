@@ -22,6 +22,11 @@ Roman campaigns, with its own eastern map, court, portraits, trade and delayed
 reports. This optional Roman expansion coexists with the directly playable Han
 campaign. The setup keeps the Roman option out of direct Han starts; neither
 simulation silently replaces the other or changes an existing save.
+Its opening armies and newly recruited formations now receive saved, named
+field commanders from distinct Han, steppe, oasis and western cultural pools;
+the independent campaign displays those names instead of raw IDs. Historical
+leaders keep their documented identities. A browser regression checks a named
+officer across save/load and both interface languages.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, a general procedural portrait system, integrated physical
