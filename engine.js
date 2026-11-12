@@ -12,13 +12,13 @@ import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=15';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion} from './local-society.js?v=4';
 import {initializeFigures,advanceFigures} from './great-figures.js';
-import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=22';
+import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=23';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
 import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=2';
 import {nationalBudget} from './national-budget.js?v=7';
 export {nationalBudget} from './national-budget.js?v=7';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
-export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=22';
+export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=23';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
 export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=15';
 export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
@@ -394,7 +394,11 @@ function seasonalWaterStress(s){
     const marker=[...r.id].reduce((n,c)=>n+c.charCodeAt(0),0)+Math.abs(s.year)*7;
     if(marker%9!==0)continue;
     const protection=(r.buildings||[]).includes('dam')?6:(r.buildings||[]).includes('reservoir')?4:(r.buildings||[]).includes('irrigation')?3:0;
-    const loss=Math.max(0,8-protection);
+    // A dry month can erase at most two months of this theater's own harvest.
+    // The old fixed eight-food loss could exceed a small site's entire annual
+    // output and turn one July event into a multi-year national famine.
+    const exposedHarvest=Math.min(8,Math.ceil(Math.max(0,r.food)*2));
+    const loss=Math.ceil(exposedHarvest*Math.max(0,8-protection)/8);
     s.factions[r.owner].food=Math.max(-100,s.factions[r.owner].food-loss);
     if(r.owner===s.player)log(s,`Water stress in ${r.name[0]} cost ${loss} food after local works.`,`水源紧张使${r.name[1]}损失${loss}粮食（水利工程已计入）。`);
   }
@@ -479,6 +483,9 @@ export function aiTurn(s,owner){
   if(alert&&f.treasury>=40&&f.food>=6&&f.manpower>=3000)raiseAt(alert.regionId);
   const outnumbered=s.wars.some(w=>w.includes(owner)&&s.regions.filter(r=>r.owner===w.find(id=>id!==owner)).length>owned.length*1.5);
   const civilianReserve=outnumbered?24+3*Math.max(0,-nationalBudget(s,owner).projectedNet):0;
+  const reconFoodReserve=outnumbered?9+3*Math.max(0,-nationalBudget(s,owner).foodNet):0;
+  const canFundScouts=(cost,foodCost=2)=>f.treasury>=cost+civilianReserve&&f.food>=foodCost+reconFoodReserve;
+  const canFundProbe=()=>f.food>=3+reconFoodReserve;
   if(s.grandMap&&outnumbered&&f.treasury>=24&&f.food>=6&&f.manpower>=3000){
     const exposedWin=(s.battles||[]).find(b=>b.year===s.year&&b.month===s.month&&b.attacker?.owner===owner&&b.attackerWins&&region(s,b.region)?.owner===owner&&adjacent(b.region,s).some(e=>isWar(s,owner,region(s,e.to)?.owner)));
     if(exposedWin)raiseAt(exposedWin.region);
@@ -634,9 +641,9 @@ export function aiTurn(s,owner){
         if(a.men<estimatedStrength(s,owner,opponent)*.75){
           const safe=borders.some(e=>{const report=latestRecon(s,owner,e.to);return (report?.min!=null&&report.age<=5&&report.max<=a.men*1.15)||willingToRisk(report,a.men)});
           if(!safe){
-            const scout=borders.find(e=>{const report=latestRecon(s,owner,e.to);return !report||report.age>5||report.min==null&&report.age>=2});
-            if(scout&&f.treasury>=4&&f.food>=2)sendScouts(s,a.id,scout.to,owner);
-            else if(scout&&f.treasury<4&&f.food>=3)probePositions(s,a.id,scout.to,owner);
+            const scout=borders.find(e=>{const report=latestRecon(s,owner,e.to);return !report||report.age>5||report.min==null&&report.age>=4});
+            if(scout&&canFundScouts(4))sendScouts(s,a.id,scout.to,owner);
+            else if(scout&&f.treasury<4+civilianReserve&&canFundProbe())probePositions(s,a.id,scout.to,owner);
             continue;
           }
         }
@@ -647,8 +654,8 @@ export function aiTurn(s,owner){
       const reconWindow=s.year>=-48&&s.month%3===0,investigate=((s.seed+owner.length+a.id.length+s.month)%5)!==0;
       const prior=isWar(s,owner,defenderOwner)?estimatedStrength(s,owner,defenderOwner)/(s.grandMap?1:Math.max(1,s.regions.filter(x=>x.owner===defenderOwner).length)):0;
       if(destination.owner!==owner&&(!report||report.age>5)&&reconWindow&&investigate){
-        if(f.treasury>=8&&f.food>=4&&sendScouts(s,a.id,step,owner).ok)break;
-        if(f.treasury<8&&f.food>=3&&probePositions(s,a.id,step,owner).ok)break;
+        if(canFundScouts(8,4)&&sendScouts(s,a.id,step,owner).ok)break;
+        if(f.treasury<8+civilianReserve&&canFundProbe()&&probePositions(s,a.id,step,owner).ok)break;
       }
       const defenders=report?.min!=null&&report.age<=5?Math.round((report.min+report.max)/2):willingToRisk(report,a.men)?a.men:prior;
       if(defenders>a.men*1.35||f.food<0||s.grandMap&&destination.owner===owner&&armySupply(s,{...a,region:step})<.45)continue;

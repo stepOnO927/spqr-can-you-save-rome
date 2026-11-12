@@ -33,6 +33,16 @@ test('AI uses fresh opening-battle intelligence before repeating an attack',()=>
  assert.equal(army(s,'italy').move,null);
  assert.equal(latestRecon(s,'senate','cisalpine').source,'battle');
 });
+test('outnumbered AI preserves famine and levy reserves before optional probes',()=>{
+ const lean=newGrandGame('egypt');lean.year=-48;lean.month=3;lean.factions.caesar.treasury=4;lean.factions.caesar.food=10;
+ aiTurn(lean,'caesar');
+ assert.equal(lean.factions.caesar.food,10);
+ assert.ok(!lean.armies.some(unit=>unit.owner==='caesar'&&unit.reconPending?.kind==='probe'));
+ const stocked=newGrandGame('egypt');stocked.year=-48;stocked.month=3;stocked.factions.caesar.treasury=4;stocked.factions.caesar.food=50;
+ aiTurn(stocked,'caesar');
+ assert.ok(stocked.armies.some(unit=>unit.owner==='caesar'&&unit.reconPending?.kind==='probe'));
+ assert.ok(stocked.factions.caesar.food<50);
+});
 
 test('an AI command with no field army raises an emergency force when resources allow',()=>{
  const s=newGame('egypt');s.armies=s.armies.filter(unit=>unit.owner!=='caesar');

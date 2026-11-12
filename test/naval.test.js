@@ -85,6 +85,7 @@ test('reserve cuts real upkeep but suspends orders and troop transports until mo
 });
 test('reserve ships cannot carry merchant cargo, and loss of their harbor ends reserve',()=>{
  const s=newGrandGame('senate'),egypt=s.naval.fleets.find(x=>x.owner==='egypt'),senate=s.naval.fleets.find(x=>x.owner==='senate');
+ s.factions.senate.food=0;
  assert.equal(reserveFleet(s,'egypt',egypt.id).ok,true);advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
  assert.equal(mobilizeFleet(s,'egypt',egypt.id).ok,true);advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');assert.equal(egypt.reserve,false);advanceNaval(s);assert.notEqual(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
  assert.equal(reserveFleet(s,'senate',senate.id).ok,true);s.regions.find(r=>r.id===senate.port).owner='caesar';s.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';advanceNaval(s);assert.equal(senate.reserve,false);assert.equal(senate.port,null);assert.ok(senate.hull<100);
@@ -217,6 +218,23 @@ test('trade prices respond to scarcity and charge for the quantity delivered',()
  const short=newGrandGame('senate');short.regions.find(r=>r.id==='africa').owner='egypt';const egyptian=short.naval.fleets.find(f=>f.owner==='egypt');egyptian.zone='african';egyptian.port=null;advanceNaval(short);assert.ok(ample.unitPrice>short.naval.routes.find(r=>r.id==='africa-sicily').last.unitPrice);
  const cashPoor=newGrandGame('senate');cashPoor.factions.senate.food=10;cashPoor.factions.senate.treasury=12;advanceNaval(cashPoor);const partial=cashPoor.naval.routes.find(r=>r.id==='egypt-italy').last;assert.ok(partial.amount>0&&partial.amount<4);assert.equal(partial.paid,partial.amount*partial.unitPrice);
 });
+test('grain imports stop charging an already provisioned command and fill only a real shortfall',()=>{
+ const stocked=newGrandGame('senate');stocked.factions.senate.food=25;advanceNaval(stocked);
+ const route=stocked.naval.routes.find(r=>r.id==='egypt-italy');
+ assert.equal(route.last.reason,'stocked');assert.equal(route.last.amount,0);assert.equal(route.last.paid,0);
+ const needy=newGrandGame('senate');needy.factions.senate.food=15;advanceNaval(needy);
+ const delivery=needy.naval.routes.find(r=>r.id==='egypt-italy').last;
+ assert.equal(delivery.reason,'delivered');assert.equal(delivery.amount,3);
+ assert.equal(needy.factions.senate.food,18);assert.equal(delivery.paid,3*delivery.unitPrice);
+});
+test('an outnumbered grain buyer preserves a levy fund unless food is critical',()=>{
+ const setup=food=>{const s=newGrandGame('egypt');s.regions.find(r=>r.id==='t016').owner='caesar';s.factions.caesar.treasury=25;s.factions.caesar.food=food;
+  assert.equal(reserveFleet(s,'caesar','caesar-adriatic').ok,true);advanceNaval(s);return s};
+ const stable=setup(15),deferred=stable.naval.routes.find(r=>r.id==='egypt-italy').last;
+ assert.equal(deferred.reason,'war-reserve');assert.equal(deferred.amount,0);assert.equal(deferred.paid,0);
+ const hungry=setup(4),delivery=hungry.naval.routes.find(r=>r.id==='egypt-italy').last;
+ assert.equal(delivery.reason,'delivered');assert.ok(delivery.amount>0);assert.ok(delivery.paid>0);
+});
 test('foreign trade routes keep shipment and security figures private',()=>{
  const s=newGrandGame('senate'),foreign={from:'egypt',to:'mauretania',good:'grain',volume:9,last:{amount:7,security:99,reason:'delivered',unitPrice:4,paid:28}};
  for(const zh of [false,true]){const html=tradeCard(s,foreign,zh);assert.match(html,zh?/外国商路/:/Foreign route/);assert.doesNotMatch(html,/99|28|计划货量|Planned volume/)}
@@ -224,7 +242,7 @@ test('foreign trade routes keep shipment and security figures private',()=>{
  assert.doesNotMatch(tradeCard(s,own,false),/<img|<svg/);
 });
 test('a hostile trade raid physically transfers captured cargo to its fleet owner',()=>{
- const s=newGrandGame('senate'),raider=s.naval.fleets.find(f=>f.owner==='caesar');raider.zone='alexandrian';raider.port=null;
+ const s=newGrandGame('senate'),raider=s.naval.fleets.find(f=>f.owner==='caesar');s.factions.senate.food=0;raider.zone='alexandrian';raider.port=null;
  assert.equal(orderFleet(s,'caesar',raider.id,'raid','egypt-italy').ok,true);
  const relationKey='caesar:egypt',before={egypt:s.factions.egypt.food,caesar:s.factions.caesar.food,senate:s.factions.senate.food,relation:s.relations[relationKey]??0};advanceNaval(s);
  const result=s.naval.routes.find(r=>r.id==='egypt-italy').last;
@@ -425,7 +443,7 @@ test('pirate suppression and covert sponsorship alter pressure and resources',()
  const s=newGrandGame('senate'),p=s.naval.pirates.find(x=>x.id==='illyrian-raiders'),before=p.pressure,treasury=s.factions.senate.treasury;assert.equal(supportPirates(s,'senate',p.id).ok,true);assert.equal(s.factions.senate.treasury,treasury-12);assert.equal(p.pressure,before+8);assert.equal(orderFleet(s,'senate','senate-adriatic','patrol','adriatic').ok,true);advanceNaval(s);assert.ok(p.pressure<before+8)
 });
 test('pirate raids move cargo into persistent inventory and patrols can recover it',()=>{
- const s=newGrandGame('senate');s.seed=100004;s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';
+ const s=newGrandGame('senate');s.seed=100004;s.factions.senate.food=0;s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';
  const pirate=s.naval.pirates.find(p=>p.id==='cilician-raiders');pirate.zone='alexandrian';pirate.pressure=70;
  const egyptianFood=s.factions.egypt.food;advanceNaval(s);const route=s.naval.routes.find(r=>r.id==='egypt-italy');
  assert.equal(route.last.reason,'piracy');assert.equal(route.last.captured,4);assert.equal(pirate.cargo.grain,4);assert.equal(s.factions.egypt.food,egyptianFood-4);

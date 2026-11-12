@@ -474,6 +474,15 @@ test('waterworks and libraries change real food losses and research spending',()
   assert.equal(researchInnovation(learned,'egypt','idea','rhetorical-education').ok,true);
   assert.equal(beforeLearned-learned.factions.egypt.treasury,(beforePlain-plain.factions.egypt.treasury)-3);
 });
+test('a grand-campaign dry July cannot erase more than two months of each exposed theater harvest',()=>{
+ const s=newGrandGame('caesar');s.year=-48;s.month=6;s.wars=[];s.factions.caesar.food=50;
+ const atRisk=s.regions.filter(r=>r.owner==='caesar'&&['plain','desert'].includes(r.terrain)&&([...r.id].reduce((n,c)=>n+c.charCodeAt(0),0)+Math.abs(s.year)*7)%9===0);
+ const maximum=atRisk.reduce((n,r)=>n+Math.min(8,Math.ceil(Math.max(0,r.food)*2)),0);
+ assert.ok(atRisk.length>=2);
+ const expectedWithoutWeather=s.factions.caesar.food+nationalBudget(s,'caesar').foodNet;
+ tick(s);
+ assert.ok(expectedWithoutWeather-s.factions.caesar.food<=maximum);
+});
 test('road and bridge construction shortens relevant grand-campaign travel',()=>{
  const edge={sea:false,distance:350,river:true},destination={terrain:'plain',buildings:[]},origin={buildings:[]};
  const baseline=edgeMonths(edge,destination,origin);origin.buildings.push('road');assert.equal(edgeMonths(edge,destination,origin),baseline-1);

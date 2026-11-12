@@ -69,7 +69,12 @@ function settleRoute(s,route,log,merchantCapacity){
  const escorts=n.fleets.filter(f=>zones.includes(f.zone)&&['patrol','escort'].includes(f.order?.kind)&&ships(f)),raiders=n.fleets.filter(f=>f.order?.kind==='raid'&&f.order.target===route.id&&zones.includes(f.zone)&&ships(f)&&f.owner!==from.owner&&f.owner!==to.owner&&hostileTradeRoute(s,f.owner,route));
  let security=Math.max(0,Math.min(100,100-piracy+escorts.length*16-raiders.length*28+(activeEffects(s,to.owner).navalSecurity||0)+navalJobEffect(s,to.owner,'harbor',to.id)*4-(war?35:0)));if(block)security=0;
  const safe=security>=50||rng(s)<security/50,price=tradeUnitPrice(s,route,zones,to.owner);let amount=0,captured=0,paid=0,reason='delivered';
- if(block)reason='blockade';else if(war)reason='war';else if(from.owner!==to.owner&&relations<=-40)reason='diplomacy';else if(!merchant)reason='merchant';else{
+ const foodBudget=route.good==='grain'&&from.owner!==to.owner?nationalBudget(s,to.owner):null;
+ const grainNeed=foodBudget?Math.max(0,Math.ceil(Math.max(18,12+3*Math.max(0,-foodBudget.foodNet))-s.factions[to.owner].food)):Infinity;
+ const buyerHoldings=foodBudget?s.regions.filter(r=>r.owner===to.owner).length:0;
+ const outnumbered=foodBudget&&s.wars.some(w=>w.includes(to.owner)&&s.regions.filter(r=>r.owner===w.find(id=>id!==to.owner)).length>buyerHoldings*1.5);
+ const grainCashFloor=outnumbered&&s.factions[to.owner].food>=6+3*Math.max(0,-foodBudget.foodNet)?24:0;
+ if(block)reason='blockade';else if(war)reason='war';else if(from.owner!==to.owner&&relations<=-40)reason='diplomacy';else if(!grainNeed)reason='stocked';else if(!merchant)reason='merchant';else{
   merchantCapacity.set(vessel.id,merchantCapacity.get(vessel.id)-1);
   if(raiders.length&&security<75){
    reason='raid';const raider=raiders[0];raider.supply=Math.max(0,raider.supply-3);
@@ -82,10 +87,10 @@ function settleRoute(s,route,log,merchantCapacity){
     if(from.owner===s.player||raider.owner===s.player)log(s,'A raid on enemy commerce seized neutral cargo and damaged relations with its origin.','袭扰敌方商路时夺取中立商人的货物，损害了与货源地的关系。');
    }
    if(to.owner===s.player||from.owner===s.player||raider.owner===s.player)log(s,'A hostile fleet seized cargo from a maritime shipment.','敌方舰队夺走海上货运的货物。');
-  }else if(!safe)reason='piracy';else if(from.owner!==to.owner&&s.factions[to.owner].treasury<price)reason='payment';else{
+  }else if(!safe)reason='piracy';else if(from.owner!==to.owner&&s.factions[to.owner].treasury<price+grainCashFloor)reason=grainCashFloor?'war-reserve':'payment';else{
    const planned=route.volume+(activeEffects(s,to.owner).navalTrade||0)+(s.development?.[to.owner]?.knownMaterial?.includes('maritime-warehousing')?1:0)+navalJobEffect(s,to.owner,'trade')+(to.buildings?.includes('warehouse')?1:0);
-   const affordable=from.owner===to.owner?planned:Math.floor(s.factions[to.owner].treasury/price);
-   amount=transferGood(s,from.owner,to.owner,route.good,Math.min(planned,affordable));
+   const affordable=from.owner===to.owner?planned:Math.floor((s.factions[to.owner].treasury-grainCashFloor)/price);
+   amount=transferGood(s,from.owner,to.owner,route.good,Math.min(planned,affordable,grainNeed));
    if(amount){paid=from.owner===to.owner?0:amount*price;s.factions[to.owner].treasury-=paid;s.factions[from.owner].treasury+=paid}else reason=affordable<1?'payment':'capacity';
   }
  }

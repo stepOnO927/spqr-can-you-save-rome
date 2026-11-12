@@ -29,15 +29,28 @@ try{
  assert.match(await page.locator('.naval-content').innerText(),/份粮在途/);
  assert.match(await page.locator('.naval-content').innerText(),/军需载量 6粮/);
  const reports=await page.evaluate(async()=>{
-  const {newGrandGame}=await import('../engine.js?v=147');
-  const {renderNavalPanel}=await import('./naval-ui.js?v=36');
+  const {newGrandGame}=await import('../engine.js?v=150');
+  const {advanceNaval,reserveFleet}=await import('../naval.js?v=23');
+  const {renderNavalPanel}=await import('./naval-ui.js?v=39');
   const state=newGrandGame('senate');state.naval.reports.unshift({id:'supply-test',kind:'supply-delivery',owner:'senate',port:'t016',cargo:6,year:-49,month:4});
   const root=document.createElement('div');
   const render=lang=>{renderNavalPanel({state,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};
-  return {en:render('en'),zh:render('zh')};
+  const result={en:render('en'),zh:render('zh')};
+  state.factions.senate.food=25;advanceNaval(state);
+  const trade=lang=>{renderNavalPanel({state,lang,root,section:'trade',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};
+  result.stockedEn=trade('en');result.stockedZh=trade('zh');
+  const reserved=newGrandGame('egypt');reserved.regions.find(r=>r.id==='t016').owner='caesar';reserved.factions.caesar.treasury=25;reserved.factions.caesar.food=15;
+  reserveFleet(reserved,'caesar','caesar-adriatic');advanceNaval(reserved);
+  const reserveText=lang=>{renderNavalPanel({state:reserved,lang,root,section:'trade',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};
+  result.reserveEn=reserveText('en');result.reserveZh=reserveText('zh');
+  return result;
  });
  assert.match(reports.en,/Army supplies delivered/);assert.match(reports.en,/Food 6/);
  assert.match(reports.zh,/陆军补给抵港/);assert.match(reports.zh,/粮食 6/);
+ assert.match(reports.stockedEn,/Grain reserve sufficient; no purchase/);
+ assert.match(reports.stockedZh,/储粮充足，本月未购买/);
+ assert.match(reports.reserveEn,/Treasury reserved for wartime levy/);
+ assert.match(reports.reserveZh,/国库留作战时征募/);
  assert.deepEqual(errors,[]);
  console.log('Naval supply browser smoke passed in English and Chinese');
 }finally{await browser.close()}
