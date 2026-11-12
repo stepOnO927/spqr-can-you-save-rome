@@ -90,9 +90,15 @@ Roman campaign's optional Han NPC simulation now settles westward Silk Road
 caravans through its measured stock and finite external buyer budget, with
 actual tariff, merchant-fee and transport entries. Road closures and bandits
 settle cargo and escrow without inventing revenue. Older saved caravans
-continue carrying reports but cannot mint new treasury or horses. Roman and
-Han campaign ledgers still run separately and need a common interstate
-settlement model.
+continue carrying reports but cannot mint new treasury or horses. Delivered
+silk can now leave the Han Mediterranean gate and enter an actual Roman
+eastern port market when a Roman court can pay for it. The Roman treasury
+pays the external buyer, whose finite Han-side budget is replenished by the
+same amount; both ledgers retain a linked shipment receipt. Unaffordable
+cargo waits at the gate, and older delivered cargo is marked as historical
+instead of imported twice. The Roman player sees only their own purchases.
+This is a first cross-campaign settlement bridge; the two simulations do
+not yet share a general interstate market.
 The independent Han campaign also has its own market panel. Known courts can
 receive a frontier-market proposal; once a treaty exists, players can see
 public offers, quote a route and full price, dispatch a named merchant, and
@@ -164,7 +170,7 @@ bilingual alert. The embedded NPC eastern simulation does not self-finalize.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,
-shared Roman–Han settlement, intermediary resale rather than only tariffs,
+general Roman–Han settlement, autonomous intermediary resale at scale,
 broader player and merchant competition, and the full acceptance
 scenarios are still outstanding. New names
 and emblems are game reconstructions, not documented personal identities.
