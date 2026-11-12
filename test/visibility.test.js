@@ -6,7 +6,7 @@ import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer,visibleSummaryEv
 
 test('battle projection hides opponent details while preserving actual simulation evidence',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii'),d=s.armies.find(x=>x.id==='italy');resolveBattle(s,a,d,region(s,'italiaN'));const b=s.battles[0],own=battleSideForPlayer(b,'caesar','attacker'),enemy=battleSideForPlayer(b,'caesar','defender');
- assert.equal(own.casualties,b.lossA);assert.deepEqual(enemy,{owner:'senate',unknown:true});assert.equal(typeof b.defender.men,'number');assert.match(s.log[0].en,/enemy unknown/);assert.doesNotMatch(s.log[0].en,/\d+ \/ \d+/);
+ assert.equal(own.casualties,b.lossA);assert.deepEqual(enemy,{owner:'senate',unknown:true});assert.equal(typeof b.defender.men,'number');assert.match(s.log[0].en,/estimated enemy losses/i);assert.doesNotMatch(s.log[0].en,new RegExp(`\\b${b.lossD.toLocaleString()}\\b`));assert.doesNotMatch(s.log[0].en,/\d+ \/ \d+/);
 });
 test('legacy casualty logs do not reveal exact enemy numbers in either language',()=>{
  const event={en:'Caesar won. Casualties: 1,234 / 5,678.',zh:'凯撒获胜。伤亡：1,234 / 5,678。'};assert.equal(visibleLogText(event,'en'),'Caesar won. Casualties: details unverified.');assert.equal(visibleLogText(event,'zh'),'凯撒获胜。伤亡：详情未核实。');

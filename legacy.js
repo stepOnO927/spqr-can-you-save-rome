@@ -1,4 +1,4 @@
-import {syncChronicleDispatches} from './chronicle.js?v=succession-feedback-1';
+import {syncChronicleDispatches} from './chronicle.js?v=field-recovery-1';
 import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
 import {initializeDynasties} from './dynasties.js?v=safe-save-1';
 
