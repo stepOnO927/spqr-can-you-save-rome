@@ -1,5 +1,5 @@
 import {reportedControl} from '../control-intelligence.js?v=phase-x-1';
-import {deriveGovernment} from '../governance.js?v=safe-save-1';
+import {deriveGovernment} from '../governance.js?v=newborn-age-1';
 
 // Project government authority from the viewer's own state or dated reports.
 // The theater-level political authority is not a claim of presence in a city.

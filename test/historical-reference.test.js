@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {HISTORICAL_DEATHS} from '../historical-reference.js';
-import {CHARACTER_CATALOG} from '../characters.js?v=safe-save-1';
-import {newGame} from '../engine.js?v=mission-discount-1';
-import {advanceCharacters} from '../character-system.js?v=mission-discount-1';
+import {HISTORICAL_DEATHS} from '../historical-reference.js?v=phase-x-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=newborn-age-1';
+import {newGame} from '../engine.js?v=newborn-age-1';
+import {advanceCharacters} from '../character-system.js?v=newborn-age-1';
 
 test('sourced historical death years preserve disputed and unknown entries',()=>{
  assert.deepEqual(HISTORICAL_DEATHS.caesar.years,[44]);assert.deepEqual(HISTORICAL_DEATHS.cleopatra.years,[30]);assert.deepEqual(HISTORICAL_DEATHS.orodes.years,[38,37]);assert.equal(HISTORICAL_DEATHS.orodes.disputed,true);assert.deepEqual(HISTORICAL_DEATHS.labienus.years,[45]);assert.deepEqual(HISTORICAL_DEATHS.lepidus.years,[13,12]);assert.equal(HISTORICAL_DEATHS.lepidus.disputed,true);assert.deepEqual(HISTORICAL_DEATHS.deiotarus.years,[41,40]);assert.equal(HISTORICAL_DEATHS.deiotarus.disputed,true);assert.deepEqual(Object.keys(HISTORICAL_DEATHS).sort(),Object.keys(CHARACTER_CATALOG).sort());
@@ -14,10 +14,10 @@ test('a historical death year does not determine a simulated character’s lifes
 });
 
 test('approximate single-year birth references remain unbounded and do not create precise simulation ages',async()=>{
- const {HISTORICAL_BIRTH_ESTIMATES}=await import('../historical-reference.js');const {ageRange}=await import('../characters.js?v=safe-save-1');assert.equal(ageRange('labienus',-49),null);assert.equal(ageRange('lepidus',-49),null);assert.deepEqual(ageRange('ptolemy',-49),[11,13]);assert.match(HISTORICAL_BIRTH_ESTIMATES.labienus.text[1],/误差范围不明/);assert.ok(HISTORICAL_BIRTH_ESTIMATES.ptolemy.sources.length);
+ const {HISTORICAL_BIRTH_ESTIMATES}=await import('../historical-reference.js');const {ageRange}=await import('../characters.js?v=newborn-age-1');assert.equal(ageRange('labienus',-49),null);assert.equal(ageRange('lepidus',-49),null);assert.deepEqual(ageRange('ptolemy',-49),[11,13]);assert.match(HISTORICAL_BIRTH_ESTIMATES.labienus.text[1],/误差范围不明/);assert.ok(HISTORICAL_BIRTH_ESTIMATES.ptolemy.sources.length);
 });
 test('disputed Roman birth dates remain sourced and represented as inclusive age bounds',async()=>{
- const {HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS}=await import('../historical-reference.js');const {ageRange}=await import('../characters.js?v=safe-save-1');
+ const {HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS}=await import('../historical-reference.js');const {ageRange}=await import('../characters.js?v=newborn-age-1');
  assert.deepEqual(ageRange('caesar',-49),[50,53]);assert.deepEqual(ageRange('antony',-49),[32,37]);
  assert.match(HISTORICAL_BIRTH_ESTIMATES.caesar.text[1],/较常用/);assert.match(HISTORICAL_BIRTH_ESTIMATES.antony.text[1],/可能性较低/);
  assert.ok(HISTORICAL_BIRTH_ESTIMATES.caesar.sources.some(x=>x.url.includes('cambridge.org')));assert.ok(HISTORICAL_BIRTH_ESTIMATES.antony.sources.some(x=>x.url.includes('jstor.org')));

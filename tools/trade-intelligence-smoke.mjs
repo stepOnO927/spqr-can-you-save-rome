@@ -6,7 +6,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const e=await import('/engine.js?v=succession-feedback-1'),c=await import('/character-system.js?v=succession-feedback-1');
+  const e=await import('/engine.js?v=newborn-age-1'),c=await import('/character-system.js?v=newborn-age-1');
   const s=e.newGame('caesar');s.alliances.push(['caesar','numidia']);s.agreements.push({id:'test-trade',type:'trade',status:'active',parties:['caesar','parthia'],expiresAt:s.year*12+s.month+12});
   c.addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'ill',source:'spy',confidence:'unverified'});
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));

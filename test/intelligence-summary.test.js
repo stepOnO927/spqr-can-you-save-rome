@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=mission-discount-1';
-import {addReport} from '../character-system.js?v=mission-discount-1';
-import {leadershipIntelligence} from '../map-lab/intelligence-summary.js';
+import {newGame} from '../engine.js?v=newborn-age-1';
+import {addReport} from '../character-system.js?v=newborn-age-1';
+import {leadershipIntelligence} from '../map-lab/intelligence-summary.js?v=phase-x-1';
 
 test('leadership summary uses only the viewer’s reports, including their observation dates',()=>{
  const s=newGame('caesar');

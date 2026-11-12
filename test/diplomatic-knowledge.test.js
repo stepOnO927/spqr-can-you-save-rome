@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=mission-discount-1';
+import {newGame,upgradeSave} from '../engine.js?v=newborn-age-1';
 import {proposeAgreement,terminateAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
 

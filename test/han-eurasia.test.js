@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,tick,moveArmy,serialize,loadHanSave} from '../han/engine.js';
-import {REGIONS,ROUTES,PLAYABLE} from '../han/data.js';
-import {tradePath,TRADE_END} from '../han/silk-road.js';
-import {declareWar} from '../han/frontier.js';
+import {newHanGame,tick,moveArmy,serialize,loadHanSave} from '../han/engine.js?v=han-1';
+import {REGIONS,ROUTES,PLAYABLE} from '../han/data.js?v=han-1';
+import {tradePath,TRADE_END} from '../han/silk-road.js?v=han-1';
+import {declareWar} from '../han/frontier.js?v=han-1';
 import {changeDependency,dependencyOf} from '../han/dependencies.js';
-import {drawMap} from '../han/map.js';
+import {drawMap} from '../han/map.js?v=han-1';
 test('49 BCE start and playable polities share a connected Eurasian route',()=>{
  const s=newHanGame('shanshan',{seed:49});
  assert.equal(s.year,-49);assert.equal(s.month,1);assert.equal(s.throne.orthodox,'liu-xun');

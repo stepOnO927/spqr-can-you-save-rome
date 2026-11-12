@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
-import {startDynasticWar} from './civil-war.js?v=safe-save-1';
+import {CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
+import {startDynasticWar} from './civil-war.js?v=newborn-age-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=faces-of-empire-1';
 import {portraitSeedFor} from './portrait-registry.js?v=faces-of-empire-1';

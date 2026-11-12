@@ -1,7 +1,7 @@
 // Runs in CI with Playwright installed separately; the application stays dependency-free.
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-import roads from '../republican-roads.js';
+import roads from '../republican-roads.js?v=phase-x-1';
 
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1920,height:1080},deviceScaleFactor:1});

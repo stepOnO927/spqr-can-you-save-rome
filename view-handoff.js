@@ -1,4 +1,4 @@
-import {snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=safe-save-1';
+import {snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=newborn-age-1';
 // A one-use transfer between views in the same tab; saved game slots are untouched.
 export const HANDOFF_KEY = 'spqr-view-handoff-v1';
 
