@@ -378,12 +378,13 @@ function economy(s){
     f.legitimacy=Math.max(0,Math.min(100,f.legitimacy+budget.legitimacy));
     f.manpower+=budget.manpowerNet;
     if(f.treasury<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.morale=Math.max(20,a.morale-4))}
-    if(f.food<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.men=Math.max(1,Math.round(a.men*.96)))}
+    if(f.food<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id&&a.men>0).forEach(a=>a.men=Math.max(0,a.men-Math.max(1,Math.round(a.men*.04))))}
     f.treasury=Math.max(-100,Math.round(f.treasury));
     f.foodCapacity=budget.foodCapacity;
     f.food=Math.max(-100,Math.min(f.foodCapacity,Math.round(f.food)));
     owned.forEach(r=>{const governor=governorLoyaltyEffect(s,r.id),works=localBuildingEffects(r),rural=productiveEstateRegion(r)&&s.month%3===0,estateStrain=effects.estateLabor&&rural?1:0,tenantSupport=effects.tenantShares&&rural?1:0,taxReview=s.grandMap&&f.tax==='high'&&effects.taxReview&&(r.integration??60)>=65?1:0,taxPressure=({low:2,normal:0,high:-2}[f.tax])+taxReview;if(s.grandMap){r.civicSatisfaction=Math.max(0,Math.min(100,(r.civicSatisfaction??r.loyalty)+taxPressure+(f.food<0?-3:0)+(works.loyalty||0)+faithSatisfaction(s,r)-estateStrain+tenantSupport));r.integration=Math.max(0,Math.min(100,(r.integration??60)+(governor>0?1:0)+(works.stability>0?1:0)));}r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+taxReview+(f.food<0?-2:0)+governor+(effects.loyalty||0)+(works.loyalty||0)+(s.grandMap?(r.civicSatisfaction<30?-1:r.civicSatisfaction>75?1:0)+(r.integration<35?-1:0):0)-estateStrain+tenantSupport))});
   }
+  s.armies=s.armies.filter(a=>a.men>0);
   advanceDemography(s);
 }
 

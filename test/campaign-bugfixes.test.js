@@ -204,6 +204,17 @@ test('older military-victory saves close their stale civil-war flag on load',()=
  assert.equal(restored.civilWarOutcome.winner,'senate');
  assert.equal(isWar(restored,'caesar','senate'),false);
 });
+test('a landless starving command loses its last soldier and reaches a terminal defeat',()=>{
+ const s=newGrandGame('egypt');
+ for(const site of s.regions)if(site.owner==='egypt')site.owner='senate';
+ s.armies=s.armies.filter(a=>a.owner!=='egypt'||a.id==='egyptguard');
+ army(s,'egyptguard').men=1;s.factions.egypt.food=-100;
+ tick(s);
+ assert.equal(s.armies.some(a=>a.owner==='egypt'),false);
+ assert.equal(s.terminalResult,'defeat');
+ assert.equal(s.achievementState.finalized,true);
+ assert.equal(upgradeSave(structuredClone(s)).achievementState.result,'defeat');
+});
 test('alliance war reaching player is recorded and notified',()=>{
  const s=newGame('caesar');s.alliances.push(['caesar','numidia']);const before=s.notifications.length;
  assert.equal(diplomacy(s,'parthia','numidia','war'),true);
