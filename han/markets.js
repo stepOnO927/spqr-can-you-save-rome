@@ -92,7 +92,13 @@ export function placeEasternTrade(s,request){
 function publishOffers(s){
  const markets=s.tradeMarkets,offers=[];
  for(const r of s.regions){if(!r.owner||!s.factions[r.owner])continue;const market=markets.regions[r.id];
-  for(const [good,item] of Object.entries(market.goods)){const available=Math.max(0,item.stock-Math.max(4,item.production*2));if(available>0&&item.production>0)offers.push({seller:r.owner,origin:r.id,commodity:good,available,price:marketPrice(market,good)})}}
+  for(const [good,item] of Object.entries(market.goods)){
+   // A non-producing market can resell a physically imported surplus. Its
+   // opening buffer is two units; local consumption keeps priority over export.
+   const reserve=item.production>0?Math.max(4,item.production*2):Math.max(2,item.consumption*3);
+   const available=Math.max(0,item.stock-reserve);
+   if(available>0)offers.push({seller:r.owner,origin:r.id,commodity:good,available,price:marketPrice(market,good),resale:item.production===0});
+  }}
  markets.offers=offers;return offers;
 }
 

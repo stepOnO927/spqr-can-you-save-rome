@@ -105,6 +105,13 @@ The 120-month market simulation verifies that at least four AI courts place
 orders against real surplus, deliveries complete, stocks and prices remain
 bounded, escrow resolves, merchant IDs persist, transport fees balance, and
 save migration works halfway through.
+An oasis market with no local silk production can now offer imported surplus
+above its consumption reserve for resale. A two-contract test moves real Han
+silk to Shanshan and then to Qiemo, with distinct prepaid shipments,
+delivery transactions, merchant identities and a save reload. The player
+offer list labels such stock as resale in both languages. This is a first
+intermediary sale mechanism; autonomous long-distance arbitrage still needs
+to be demonstrated at continental scale.
 Twelve historical opening Han ministers, frontier commanders and an envoy
 now have separate artistic reconstruction portraits and an inspectable
 bilingual court roster in the

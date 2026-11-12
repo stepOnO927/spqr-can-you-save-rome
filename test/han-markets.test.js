@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=han-1';
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=han-1';
-import {advanceEasternMarkets,placeEasternTrade,quoteEasternTrade} from '../han/markets.js?v=faces-of-empire-1';
+import {advanceEasternMarkets,placeEasternTrade,quoteEasternTrade,easternMarketOffers} from '../han/markets.js?v=faces-of-empire-1';
 import {advanceSilk} from '../han/silk-road.js?v=han-1';
 import {roll} from '../han/util.js?v=han-1';
 
@@ -24,6 +24,30 @@ test('Eastern markets use measured stock and a real Kangju–Han horse route',()
  assert.equal(loaded.tradeMarkets.shipments[0].status,'delivered');
  assert.equal(loaded.tradeMarkets.transactions.filter(x=>x.shipment===result.shipment.id).length,1);
  assert.equal(loaded.tradeMarkets.transportSpent+loaded.tradeMarkets.merchantFees,loaded.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
+});
+
+test('an oasis intermediary resells delivered Han silk as a second paid shipment',()=>{
+ let s=newHanGame('han',{seed:15});s.tradeMarkets.embeddedRoman=true;
+ for(const r of s.regions){r.fort=2;r.unrest=0}
+ s.treaties.push({type:'market',parties:['han','shanshan']},{type:'market',parties:['shanshan','qiemo']});
+ s.factions.shanshan.treasury=1000;s.factions.qiemo.treasury=1000;
+ const source=s.tradeMarkets.regions.changan.goods.silk,middle=s.tradeMarkets.regions.shanshan.goods.silk,destination=s.tradeMarkets.regions.qiemo.goods.silk;
+ source.stock=20;source.production=0;source.consumption=0;middle.production=0;middle.consumption=0;middle.stock=2;destination.production=0;destination.consumption=0;
+ assert.equal(easternMarketOffers(s).some(o=>o.origin==='shanshan'&&o.commodity==='silk'),false);
+ const first=placeEasternTrade(s,{seller:'han',buyer:'shanshan',origin:'changan',destination:'shanshan',commodity:'silk',quantity:4});
+ assert.equal(first.ok,true,first.reason);
+ for(let i=0;i<first.quote.months;i++)next(s);
+ assert.equal(first.shipment.status,'delivered');
+ const offer=easternMarketOffers(s).find(o=>o.origin==='shanshan'&&o.commodity==='silk');
+ assert.ok(offer?.resale);assert.ok(offer.available>=4);
+ const middleBefore=middle.stock,destBefore=destination.stock,cashBefore=s.factions.shanshan.treasury;
+ const second=placeEasternTrade(s,{seller:'shanshan',buyer:'qiemo',origin:'shanshan',destination:'qiemo',commodity:'silk',quantity:2});
+ assert.equal(second.ok,true,second.reason);assert.equal(middle.stock,middleBefore-2);
+ s=loadHanSave(serialize(s));for(let i=0;i<second.quote.months;i++)next(s);
+ assert.equal(s.tradeMarkets.shipments.find(x=>x.id===second.shipment.id).status,'delivered');
+ assert.equal(s.tradeMarkets.regions.qiemo.goods.silk.stock,destBefore+2);
+ assert.equal(s.factions.shanshan.treasury,cashBefore+second.quote.price);
+ assert.equal(s.tradeMarkets.transactions.filter(x=>x.commodity==='silk').length,2);
 });
 
 test('Han, Kangju, Yuezhi and Parthia can negotiate and trade without player orders',()=>{
