@@ -103,9 +103,10 @@ test('lead eligibility comes from the observer’s records, not the simulated co
  const s=newGame('caesar');s.knowledge.caesar.egypt.reportedLeaders=[];s.knowledge.senate.egypt.reportedLeaders=[];
  s.world.leadership.egypt=['cleopatra'];s.world.claimants.egypt=['ptolemy'];
  assert.deepEqual(reportedHealthSubjects(s,'caesar','egypt'),[]);
+ const priorSenateLeads=reportedHealthSubjects(s,'senate','egypt');assert.ok(!priorSenateLeads.includes('ptolemy'));
  addReport(s,'senate','egypt',{kind:'claimants',leaders:['ptolemy'],source:'travelers'});
  assert.deepEqual(reportedHealthSubjects(s,'caesar','egypt'),[]);
- assert.deepEqual(reportedHealthSubjects(s,'senate','egypt'),['ptolemy']);
+ assert.deepEqual(reportedHealthSubjects(s,'senate','egypt'),['ptolemy',...priorSenateLeads]);
  addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'unknown',source:'spy'});
  assert.deepEqual(reportedHealthSubjects(s,'caesar','egypt'),['cleopatra']);
 });

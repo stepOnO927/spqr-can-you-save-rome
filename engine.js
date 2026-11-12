@@ -63,7 +63,7 @@ export function newGame(player='caesar'){
   // A new campaign starts with frontier observations, not every foreign army's
   // exact opening location. Existing saves keep their accumulated sightings.
   for(const targets of Object.values(s.knowledge))for(const knowledge of Object.values(targets))knowledge.sightings={};
-  linkCommanders(s);observeArmies(s);observeControl(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);return initializeGovernments(s);
+  linkCommanders(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);observeArmies(s);observeControl(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);return initializeGovernments(s);
 }
 
 export function newDynastyScenario(){const s=newGame('egypt');createDisputedHeirScenario(s);return s}

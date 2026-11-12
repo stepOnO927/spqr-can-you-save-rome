@@ -19,6 +19,12 @@ test('opening officers have distinct saved identities without changing the openi
  for(const profile of STARTING_COMMANDERS){const army=loaded.armies.find(a=>a.id===profile.army);assert.deepEqual(loaded.world.dynasties.catalog[army.characterId].name,profile.name)}
 });
 
+test('a nearby opening officer is reported by a frontier observer without revealing him to distant courts',()=>{
+ const s=newGame('senate'),viii=s.armies.find(a=>a.id==='viii');
+ assert.equal(s.knowledge.senate.caesar.sightings.viii.commanderId,viii.characterId);
+ assert.equal(s.knowledge.egypt.caesar.sightings.viii,undefined);
+});
+
 test('migration preserves an existing commander and never resurrects a destroyed opening army',()=>{
  const s=newGame('caesar');const egypt=s.armies.find(a=>a.id==='egyptguard');egypt.commander=['Existing officer','现有军官'];egypt.characterId=null;
  s.armies=s.armies.filter(a=>a.id!=='spain');delete s.world.openingCommandersSeeded;
