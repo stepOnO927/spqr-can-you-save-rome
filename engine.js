@@ -9,6 +9,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=safe-save-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=safe-save-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-feedback-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=han-4';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=grand-chessboard-2';
@@ -105,7 +106,7 @@ export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
@@ -783,6 +784,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   }
   observeDiplomacy(s);
   advanceRomanDefeat(s);if(!s.defeat){advanceRomanVictory(s);advancePeacefulSettlement(s)}
+  advanceHanWorld(s);
   recordCampaignTurn(s,chronicleBefore);
   return s;
 }
