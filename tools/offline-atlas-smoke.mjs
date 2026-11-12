@@ -53,7 +53,9 @@ try{
  await page.locator('.maplibregl-canvas').waitFor();
  await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',null,{timeout:60000});
  await page.waitForTimeout(1200);
- assert.equal(await page.locator('.grand-site').count(),120);
+ assert.equal(newGrandGame('caesar').regions.length,120);
+ const visibleSites=await page.locator('.grand-site').count();
+ assert.ok(visibleSites>0&&visibleSites<120,'Only settlements near the current view should keep live map markers');
  assert.equal(await page.locator('.maplibregl-canvas').isVisible(),true);
  assert.deepEqual(errors,[]);
  assert.ok(terrainRequests.length>0,'Overview terrain tiles were not requested');

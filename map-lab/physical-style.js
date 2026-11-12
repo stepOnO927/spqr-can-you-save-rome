@@ -77,7 +77,6 @@ export const physicalStyle={
   {id:'nile-delta-alluvium',type:'fill',source:'nile-delta',paint:{'fill-color':'#98a77e','fill-opacity':['interpolate',['linear'],['zoom'],4,.16,7,.31,9,.24]}},
   {id:'sea-mask',type:'fill',source:'ocean',paint:{'fill-color':'#356f79','fill-opacity':1}},
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},
-  {id:'coastal-halo',type:'line',source:'land',paint:{'line-color':'#e1d2aa','line-width':['interpolate',['linear'],['zoom'],4,3,8,5],'line-blur':2,'line-opacity':.27}},
   {id:'coastline',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,.9,8,1.7],'line-opacity':.87}},
   {id:'natural-lakes',type:'fill',source:'lakes',paint:{'fill-color':'#5b9093','fill-opacity':.88}},
   {id:'lake-shores',type:'line',source:'lakes',paint:{'line-color':'#c6d2ba','line-opacity':.65,'line-width':.65}},
@@ -97,6 +96,9 @@ export const physicalStyle={
   {id:'isobath-200',type:'line',source:'bathymetry',filter:['==',['get','depth'],200],paint:{'line-color':'#a5c5bd','line-width':['interpolate',['linear'],['zoom'],4,1,8,1.5],'line-blur':1.2,'line-opacity':['interpolate',['linear'],['zoom'],5,.12,7,.08,8.5,0]}},
   {id:'isobath-1000',type:'line',source:'bathymetry',filter:['==',['get','depth'],1000],paint:{'line-color':'#a5b8ad','line-width':.65,'line-opacity':['interpolate',['linear'],['zoom'],5,.12,7,.08,8.5,0]}},
   {id:'isobath-2000',type:'line',source:'bathymetry',filter:['==',['get','depth'],2000],paint:{'line-color':'#a5b8ad','line-width':.65,'line-opacity':['interpolate',['linear'],['zoom'],5,.09,7,.05,8.5,0]}},
+  // Draw the coastal glow above the final ocean fill; otherwise the sea mask
+  // erases its seaward half. It follows shoreline geometry, not a depth claim.
+  {id:'coastal-halo',type:'line',source:'land',paint:{'line-color':'#92beb8','line-width':['interpolate',['linear'],['zoom'],4,2,8,9,9,14],'line-blur':['interpolate',['linear'],['zoom'],4,1,9,6],'line-opacity':['interpolate',['linear'],['zoom'],4,.04,7,.13,9,.22]}},
   {id:'coastline-finish',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,1,8,1.8],'line-opacity':.9}}
  ]
 };
