@@ -32,6 +32,10 @@ envoys and couriers. Captives retain the same person ID through release, and
 the player's mission and captive lists display their names. Active missions
 and held captives in older saves acquire an identity once; completed older
 records remain as recorded.
+Newborn fictional people now use their faction's naming tradition instead of
+receiving Roman given names in every court. Han children retain a recorded
+father's surname in the displayed name while legal lineage continues to rely
+on saved parent IDs; Egyptian female children use Greek-speaking court names.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, a general procedural portrait system, integrated physical

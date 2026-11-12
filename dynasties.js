@@ -1,7 +1,7 @@
 import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
 import {startDynasticWar} from './civil-war.js?v=safe-save-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,generateFictionalName} from './fictional-names.js?v=faces-of-empire-1';
+import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=faces-of-empire-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -420,7 +420,13 @@ export function advanceDynasties(s){
   if(age>=7&&age<25)c.education=Math.min(100,(c.education||0)+Math.round(1+roll(s)*4));
   if(age===18){c.influence=Math.max(c.influence,10+Math.floor((c.education||0)/4));record(s,id,'Reached adulthood in the campaign.','在战役中成年。')}
   if(c.sex!=='female'||age<18||age>42||!c.spouse||!s.world.characters[c.spouse]?.alive||s.world.characters[c.spouse].sex!=='male')continue;
-  if(roll(s)<.24){const names=[['Aulus','奥卢斯','male'],['Lucius','卢基乌斯','male'],['Marcia','玛尔基娅','female'],['Livia','莉维娅','female']];const given=names[Math.floor(roll(s)*names.length)],familyId=["caesar","senate"].includes(c.faction)?s.world.characters[c.spouse].familyId:c.familyId,family=d.families[familyId].name;const child=createFictionalPerson(s,{name:[`${given[0]} ${family[0]}`,`${family[1]}·${given[1]}`],faction:c.faction,birthYear:s.year,familyId,parents:[id,c.spouse],location:c.location,sex:given[2]});record(s,id,`Child ${CHARACTER_CATALOG[child].name[0]} was born.`,`子女${CHARACTER_CATALOG[child].name[1]}出生。`)}
+  if(roll(s)<.24){
+   const names=[['Aulus','奥卢斯','male'],['Lucius','卢基乌斯','male'],['Marcia','玛尔基娅','female'],['Livia','莉维娅','female']],given=names[Math.floor(roll(s)*names.length)];
+   const roman=['caesar','senate'].includes(c.faction),familyId=roman?s.world.characters[c.spouse].familyId:c.familyId,family=d.families[familyId].name;
+   const identity=roman?{name:[`${given[0]} ${family[0]}`,`${family[1]}·${given[1]}`]}:generateFictionalChildName(s,{faction:c.faction,fatherId:c.spouse,sex:given[2],location:c.location});
+   const child=createFictionalPerson(s,{...identity,faction:c.faction,birthYear:s.year,familyId,parents:[id,c.spouse],location:c.location,sex:given[2]});
+   record(s,id,`Child ${CHARACTER_CATALOG[child].name[0]} was born.`,`子女${CHARACTER_CATALOG[child].name[1]}出生。`);
+  }
  }
  // Family memory has a small, fading effect. Personal choices can override it.
  if(s.month===6)for(const memory of d.memories){const age=s.year-memory.year;if(age>60)continue;const members=Object.values(s.world.characters).filter(c=>c.alive&&c.familyId===memory.familyId&&personAge(s,c.id)>=18);for(const c of members)if(roll(s)<.08)c.loyalty=Math.max(0,Math.min(100,c.loyalty+Math.sign(memory.weight)))}

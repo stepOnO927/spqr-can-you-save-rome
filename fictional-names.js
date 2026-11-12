@@ -6,7 +6,7 @@ export const FACTION_NAME_CULTURE=Object.freeze({caesar:'roman',senate:'roman',c
 export const NAME_POOLS=Object.freeze({
  roman:{culture:['Roman','罗马'],given:[['Gaius','盖乌斯'],['Lucius','卢基乌斯'],['Marcus','马库斯'],['Publius','普布利乌斯'],['Aulus','奥卢斯']],family:[['Furius','弗里乌斯'],['Valerius','瓦勒里乌斯'],['Aemilius','埃米利乌斯'],['Cassius','卡西乌斯'],['Fabius','法比乌斯']],epithet:[['Naso','纳索'],['Crispus','克里斯普斯'],['Luscus','卢斯库斯'],['Varro','瓦罗']]},
  han:{culture:['Han Chinese','汉'],family:[['Zhao','赵'],['Xu','徐'],['Cai','蔡'],['Wang','王'],['Li','李'],['Zhang','张']],given:[['He','和'],['Jian','俭'],['Ming','明'],['Huan','桓'],['Cheng','成'],['Yan','延']]},
- greek_egyptian:{culture:['Ptolemaic Egyptian court (Greek-speaking)','托勒密埃及宫廷（希腊语）'],given:[['Kleon','克勒翁'],['Theon','提翁'],['Nikandros','尼坎德罗斯'],['Philotas','菲洛塔斯'],['Damon','达蒙']],place:['Alexandria','亚历山大里亚']},
+ greek_egyptian:{culture:['Ptolemaic Egyptian court (Greek-speaking)','托勒密埃及宫廷（希腊语）'],given:[['Kleon','克勒翁'],['Theon','提翁'],['Nikandros','尼坎德罗斯'],['Philotas','菲洛塔斯'],['Damon','达蒙']],female:[['Kleio','克勒伊奥'],['Thaleia','塔莉娅'],['Dione','狄俄涅']],place:['Alexandria','亚历山大里亚']},
  numidian:{culture:['Numidian (game reconstruction)','努米底亚（游戏复原）'],given:[['Mastan','马斯坦'],['Iftas','伊夫塔斯'],['Mazir','马齐尔'],['Adun','阿敦']],place:['Cirta','瑟尔塔']},
  mauretanian:{culture:['Mauretanian (game reconstruction)','毛里塔尼亚（游戏复原）'],given:[['Bostar','博斯塔尔'],['Maza','马扎'],['Izel','伊泽尔'],['Tamar','塔马尔']],place:['Iol','伊奥尔']},
  armenian:{culture:['Armenian (game reconstruction)','亚美尼亚（游戏复原）'],given:[['Arsham','阿尔沙姆'],['Vardan','瓦尔丹'],['Artanes','阿尔塔涅斯'],['Tigran','提格兰']],place:['Artaxata','阿尔塔克萨塔']},
@@ -42,4 +42,19 @@ export function generateFictionalName(s,{originFaction,location=null}={}){
  // A locative remains intelligible when a small pool is exhausted. The saved
  // numeric suffix identifies a game person; it is not an ancient title.
  const name=candidates[start];return {name:[`${name[0]} (${serial})`,`${name[1]}（${serial}）`],culture:pool.culture,homeland:location};
+}
+
+// Children inherit a saved family relationship; their displayed name does not
+// establish ancestry. Han given names can share a recorded father's surname,
+// while other simulated courts use their own cultural naming pool.
+export function generateFictionalChildName(s,{faction,fatherId,sex='unknown',location=null}={}){
+ const style=FACTION_NAME_CULTURE[faction]||'regional',pool=NAME_POOLS[style];
+ if(style==='roman')return generateFictionalName(s,{originFaction:faction,location});
+ const serial=s.world?.dynasties?.nextPerson||1,used=new Set(Object.keys(s.world?.characters||{}).map(id=>(s.world?.dynasties?.catalog?.[id]||CHARACTER_CATALOG[id])?.name?.[0]).filter(Boolean));
+ const given=sex==='female'&&pool.female||pool.given;
+ const father=(s.world?.dynasties?.catalog?.[fatherId]||CHARACTER_CATALOG[fatherId])?.name;
+ const family=style==='han'&&father?.[0]?.split(' ')[0]&&father?.[1]?.[0]?[father[0].split(' ')[0],father[1][0]]:pool.family?.[serial%pool.family.length];
+ const names=given.map(pair=>style==='han'?[`${family[0]} ${pair[0]}`,`${family[1]}${pair[1]}`]:[`${pair[0]} of ${pool.place[0]}`,`${pool.place[1]}的${pair[1]}`]);
+ for(let i=0;i<names.length;i++){const name=names[(serial+i)%names.length];if(!used.has(name[0]))return {name,culture:pool.culture,homeland:location}}
+ const name=names[serial%names.length];return {name:[`${name[0]} (${serial})`,`${name[1]}（${serial}）`],culture:pool.culture,homeland:location};
 }
