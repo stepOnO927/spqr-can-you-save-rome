@@ -18,14 +18,32 @@ class Element {
  prepend(...elements){this.children.unshift(...elements)}
  replaceChildren(...elements){this.children=elements}
 }
-test('fictional people without dedicated artwork use an explicit silhouette without revealing hidden foreign details',()=>{
+test('own fictional people receive saved procedural portraits while unobserved foreign people remain silhouettes',()=>{
  const prior=globalThis.document,s=newGame('caesar'),panel=new Element();globalThis.document={createElement:tag=>new Element(tag),querySelector:()=>panel};
  try{
   const id=createFictionalPerson(s,{name:['Test Person','测试人物'],faction:'caesar',birthYear:-70,location:'cisalpine'}),ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});
-  ui.show(id);assert.match(panel.innerHTML,/暂无专属肖像/);assert.match(panel.innerHTML,/<svg class="portrait-unknown"/);assert.doesNotMatch(panel.innerHTML,/肖像为艺术复原|<img /);
+  ui.show(id);assert.match(panel.innerHTML,/肖像为游戏创作/);assert.match(panel.innerHTML,/<svg class="portrait-procedural"/);assert.doesNotMatch(panel.innerHTML,/肖像为艺术复原|<img /);
   const other='fictional:1';s.world.characters[other].faction='senate';addReport(s,'caesar','senate',{kind:'leaders',leaders:[other],source:'spy'});panel.children=[];ui.show(other);const first=panel.innerHTML;
   assert.match(first,/报告身份未经证实；肖像未取得/);assert.match(first,/<svg class="portrait-unknown"/);assert.doesNotMatch(first,/fictional-varenus-128/);
   s.world.characters[other].birthYear+=9;panel.children=[];ui.show(other);assert.equal(panel.innerHTML,first);
+ }finally{globalThis.document=prior}
+});
+test('a foreign procedural portrait is observed only after a meeting and keeps its saved appearance',()=>{
+ const prior=globalThis.document,s=newGame('caesar'),panel=new Element();globalThis.document={createElement:tag=>new Element(tag),querySelector:()=>panel};
+ try{
+  s.wars=[];s.world.characters.caesar.location='roma';
+  const id=createFictionalPerson(s,{name:['Theon of Alexandria','亚历山大里亚的提翁'],faction:'egypt',birthYear:-75,location:'roma'});
+  addReport(s,'caesar','egypt',{kind:'leaders',leaders:[id],source:'spy'});
+  const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});
+  ui.show(id);assert.match(panel.innerHTML,/portrait-unknown/);assert.doesNotMatch(panel.innerHTML,/portrait-procedural/);
+  assert.equal(requestPersonalMeeting(s,'caesar',id,'egypt').ok,true);
+  s.world.intelSeed=1000;advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);
+  const meeting=s.meetings.find(m=>m.target===id);assert.equal(meeting.status,'met');assert.equal(meeting.portraitSeed,s.world.characters[id].portraitSeed);
+  panel.children=[];ui.show(id);const observed=panel.innerHTML.match(/<svg class="portrait-procedural"[^]*?<\/svg>/)?.[0];assert.ok(observed);
+  s.world.characters[id].portraitSeed++;
+  panel.children=[];ui.show(id);assert.match(panel.innerHTML,/portrait-procedural/);assert.ok(panel.innerHTML.includes(observed));
+  const restored=upgradeSave(structuredClone(s));panel.children=[];createCharacterUI({getState:()=>restored,getLanguage:()=> 'zh',inspect:()=>{}}).show(id);assert.ok(panel.innerHTML.includes(observed));
+  restored.player='senate';panel.children=[];createCharacterUI({getState:()=>restored,getLanguage:()=> 'zh',inspect:()=>{}}).show(id);assert.doesNotMatch(panel.innerHTML,/portrait-procedural/);
  }finally{globalThis.document=prior}
 });
 test('a personal meeting records an observed foreign fictional portrait without tracking hidden changes',()=>{

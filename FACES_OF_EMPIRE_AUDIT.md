@@ -36,6 +36,11 @@ Newborn fictional people now use their faction's naming tradition instead of
 receiving Roman given names in every court. Han children retain a recorded
 father's surname in the displayed name while legal lineage continues to rely
 on saved parent IDs; Egyptian female children use Greek-speaking court names.
+Generated fictional people also have a saved appearance seed. The atlas draws
+a compact procedural portrait for the player's own people; a foreign portrait
+is only observed after a successful personal meeting. That meeting stores the
+observed seed and political affiliation, so later hidden changes do not alter
+the previously observed artwork. Existing bespoke portraits remain in use.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, a general procedural portrait system, integrated physical

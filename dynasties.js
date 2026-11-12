@@ -2,6 +2,7 @@ import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
 import {startDynasticWar} from './civil-war.js?v=safe-save-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=faces-of-empire-1';
+import {portraitSeedFor} from './portrait-registry.js?v=faces-of-empire-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -29,6 +30,7 @@ export function initializeDynasties(s){
  const d=s.world.dynasties||= {families:{},lives:{},catalog:{},marriages:[],memories:[],rulers:[],seed:220049,nextPerson:1,nextFamily:1};
  d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.familyAccords||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
  for(const [id,c] of Object.entries(s.world.characters)){
+  if(CHARACTER_CATALOG[id]?.fictional)c.portraitSeed??=portraitSeedFor(id,c,CHARACTER_CATALOG[id]);
   c.parents||=[];c.adoptiveParents||=[];c.children||=[];c.spouse||=null;c.wealth??=0;
   c.sex||=(['cleopatra','arsinoe'].includes(id)?'female':CHARACTER_CATALOG[id]?.fictional?'unknown':'male');
   c.familyId||=`family:${id}`;
@@ -68,6 +70,7 @@ export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,
  d.catalog[id]={name:Array.isArray(name)?name:[name,name],birth:[birthYear,birthYear],faction,role,culture,source:null,fictional:true};
  CHARACTER_CATALOG[id]=d.catalog[id];
  s.world.characters[id]={id,faction,health:'healthy',location,homeland:homeland||location,alive:true,loyalty:65,influence:20,wealth,parents:[...parents],adoptiveParents:[...adoptiveParents],children:[],spouse:null,familyId:family,birthYear,sex,education:0,ambition:ambition??Math.floor(20+roll(s)*60),personalitySeed:personalitySeed??Math.floor(roll(s)*0xffffffff),militaryOnly,wounds:0,illnessEpisodes:0};
+ s.world.characters[id].portraitSeed=portraitSeedFor(id,s.world.characters[id],d.catalog[id]);
  for(const parent of [...parents,...adoptiveParents])if(s.world.characters[parent])s.world.characters[parent].children.push(id);
  record(s,id,'Born in the simulated campaign.','出生于模拟战役。');return id;
 }
