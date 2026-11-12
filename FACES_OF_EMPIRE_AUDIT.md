@@ -65,6 +65,11 @@ to and from Parthia along the pre-existing Han oasis and Central Asian route
 graph. Distinct intermediate authorities collect buyer-funded tariffs; a war
 at an intermediate leg blocks the shipment until passage reopens. No direct
 Han–Parthian shortcut or Han provincial ownership is invented.
+An imported horse batch can equip one hundred mounted scouts in a newly
+recruited Han force. The batch leaves the destination market, the scouts are
+visible in the army inspector, their terrain-dependent contribution changes
+actual battle power, and casualties reduce their number. Han infantry can
+still be raised when the local horse market is empty.
 Treaty partners now make bounded quarterly AI purchases through the
 same order validation and escrow path. AI-to-AI deliveries do not generate
 player dispatches, and AI buyers cannot silently take goods from a player

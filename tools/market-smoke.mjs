@@ -64,6 +64,17 @@ try{
  const silkRoadOrder=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-2')).markets.shipments[0]);
  assert.ok(silkRoadOrder.route.includes('silk:parthia'));
  assert.ok(silkRoadOrder.legs.some(x=>x.network==='silk'));
+ // A delivered horse batch becomes visible mounted scouts when Han raises
+ // a force in the receiving theater.
+ await page.evaluate(async()=>{
+  const {newGame,recruit}=await import('/engine.js?v=faces-empire-2');
+  const state=newGame('han');state.markets.regions.hanHexi.goods.horses.stock=1;
+  if(!recruit(state,'hanHexi'))throw Error('Han recruitment failed');
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
+ });
+ await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.locator('[data-army="levy1"]').evaluate(element=>element.click());
+ assert.match(await page.locator('#command-detail').innerText(),/Mounted scouts|骑乘侦察兵/);
  assert.deepEqual(errors,[]);
- console.log('Local and Han–Parthian market orders, route delivery, bilingual panel and save/load passed in Chromium.');
+ console.log('Market orders, merchant dossiers, Han horse recruitment, bilingual panel and save/load passed in Chromium.');
 }catch(error){console.error('Browser page errors:',errors);throw error}finally{await browser.close()}

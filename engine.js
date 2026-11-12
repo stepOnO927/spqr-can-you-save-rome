@@ -216,9 +216,13 @@ export function recruit(s,regionId,owner=s.player){
   const id=`levy${s.nextArmy++}`;
   const roman=owner==='caesar'||owner==='senate';
   const army={id,name:roman?['Newly raised legion','新编军团']:['Newly raised forces','新征召军队'],owner,region:regionId,men:3000,morale:58+(buildingModifiers(r).recruit||0)*4,skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null};
+  // A delivered horse batch can equip one hundred mounted scouts in a new
+  // Han force. Infantry recruitment remains available without horse stock.
+  const horses=owner==='han'?s.markets?.regions?.[regionId]?.goods?.horses:null;
+  if(horses?.stock>=1){horses.stock--;army.mounted=100}
   assignFictionalFieldCommander(s,army);s.armies.push(army);
   r.loyalty=Math.max(0,r.loyalty-3);
-  if(owner===s.player)log(s,`New forces were raised in ${r.name[0]}.`,`在${r.name[1]}征召了新军队。`);
+  if(owner===s.player)log(s,`New forces were raised in ${r.name[0]}.${army.mounted?' A horse batch equipped 100 mounted scouts.':''}`,`在${r.name[1]}征召了新军队。${army.mounted?'一批马匹装备了100名骑乘侦察兵。':''}`);
   return true;
 }
 
@@ -438,7 +442,9 @@ export function resolveBattle(s,attacker,defender,target){
   let powerA=attacker.men*(.65+attacker.morale/200+attacker.skill*.055+attacker.experience*.025)*supplyA*commandA*(1+(activeModifiers(s,attacker.owner).battle||0)+(buildingModifiers(region(s,attacker.region)).battle||0)*.03);
   let powerD=defender.men*(.65+defender.morale/200+defender.skill*.055+defender.experience*.025)*terrain*(1+target.fort*.12)*supplyD*commandD*stanceD*(1+(activeModifiers(s,defender.owner).battle||0)+(activeModifiers(s,defender.owner).defense||0)+(buildingModifiers(target).battle||0)*.03);
   // IMPERIUM: formation composition, terrain fit, training and commander specialty.
-  const formationA=formationCombatFactor(s,attacker,target.terrain,'attack'),formationD=formationCombatFactor(s,defender,target.terrain,'defend');powerA*=formationA;powerD*=formationD;
+  const formationA=formationCombatFactor(s,attacker,target.terrain,'attack'),formationD=formationCombatFactor(s,defender,target.terrain,'defend');
+  const mountedFactor=unit=>1+Math.min(unit.men,unit.mounted||0)/Math.max(1,unit.men)*({plain:1,desert:.8,hills:.3,forest:.2,urban:.1}[target.terrain]||.3);
+  powerA*=formationA*mountedFactor(attacker);powerD*=formationD*mountedFactor(defender);
   const roll=.85+rnd(s)*.3;
   const attackerWins=powerA*roll>powerD;
   if(attacker.characterId)recordLifeEvent(s,attacker.characterId,`${attackerWins?'Won':'Lost'} a battle at ${target.name[0]}.`,`在${target.name[1]}的战斗中${attackerWins?'获胜':'战败'}。`);
@@ -448,7 +454,8 @@ export function resolveBattle(s,attacker,defender,target){
   s.nextBattle??=(s.battles?.length||0)+1;
   const report={id:`battle:${s.nextBattle++}`,year:s.year,month:s.month,region:target.id,attacker:{id:attacker.id,name:[...attacker.name],commander:[...attacker.commander],owner:attacker.owner,men:attacker.men,morale:attacker.morale,food:s.factions[attacker.owner].food,power:Math.round(powerA),supply:supplyA,command:commandA},defender:{id:defender.id,name:[...defender.name],commander:[...defender.commander],owner:defender.owner,men:defender.men,morale:defender.morale,food:s.factions[defender.owner].food,power:Math.round(powerD),supply:supplyD,command:commandD,stance:stanceD},terrain:target.terrain,fort:target.fort,roll,attackerWins,lossA,lossD};
   (s.battles ||= []).unshift(report);
-  attacker.men-=lossA;defender.men-=lossD;for(const unit of [attacker,defender]){const person=s.world.characters[unit.characterId];if(person?.alive)person.battlesCommanded=(Number.isFinite(person.battlesCommanded)?person.battlesCommanded:0)+1}battlefieldWound(s,attacker);battlefieldWound(s,defender);
+  for(const [unit,loss] of [[attacker,lossA],[defender,lossD]]){const before=unit.men;unit.men-=loss;if(unit.mounted)unit.mounted=Math.round(unit.mounted*unit.men/before);const person=s.world.characters[unit.characterId];if(person?.alive)person.battlesCommanded=(Number.isFinite(person.battlesCommanded)?person.battlesCommanded:0)+1}
+  battlefieldWound(s,attacker);battlefieldWound(s,defender);
   attacker.morale=Math.max(20,attacker.morale+(attackerWins?7:-16));
   defender.morale=Math.max(20,defender.morale+(attackerWins?-16:7));
   if(attackerWins){

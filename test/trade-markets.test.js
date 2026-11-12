@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
+import {newGame,upgradeSave,recruit,resolveBattle} from '../engine.js?v=faces-empire-2';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=faces-empire-2';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=newborn-age-1';
@@ -116,4 +116,18 @@ test('parallel caravans receive separate merchants and preserve both identities'
  assert.equal(s.markets.merchants.armenia.length,2);
  const restored=upgradeSave(structuredClone(s));
  assert.deepEqual(restored.markets.shipments.map(x=>x.merchantId),[first.shipment.merchantId,second.shipment.merchantId]);
+});
+
+test('imported horses equip Han scouts and improve their actual battlefield power',()=>{
+ const s=newGame('han');s.relations['han:parthia']=45;assert.equal(proposeAgreement(s,'han','parthia','trade').ok,true);
+ const horses=s.markets.regions.hanHexi.goods.horses;horses.stock=0;horses.production=0;horses.consumption=0;
+ const order=placeTradeOrder(s,{seller:'parthia',buyer:'han',origin:'parthia',destination:'hanHexi',commodity:'horses',quantity:1});assert.equal(order.ok,true);
+ for(let i=0;i<order.quote.months;i++){if(++s.month>12){s.month=1;s.year++}advanceMarkets(s)}
+ assert.equal(order.shipment.status,'delivered');assert.equal(horses.stock,1);
+ assert.equal(recruit(s,'hanHexi'),true);const recruited=s.armies.at(-1);
+ assert.equal(recruited.mounted,100);assert.equal(horses.stock,0);
+ const mounted=structuredClone(s),infantry=structuredClone(s);delete infantry.armies.find(a=>a.id===recruited.id).mounted;
+ const fight=state=>{state.wars.push(['han','shanshan']);const attacker=state.armies.find(a=>a.id===recruited.id),defender=state.armies.find(a=>a.id==='shanshanGuard'),target=state.regions.find(r=>r.id==='shanshanOasis');resolveBattle(state,attacker,defender,target);return state.battles[0].attacker.power};
+ assert.ok(fight(mounted)>fight(infantry));
+ assert.equal(upgradeSave(structuredClone(s)).armies.find(a=>a.id===recruited.id).mounted,100);
 });
