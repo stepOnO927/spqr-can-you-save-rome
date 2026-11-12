@@ -478,7 +478,7 @@ export function resolveBattle(s,attacker,defender,target){
     const estimateEn=estimate?`estimated enemy losses ${estimate.low.toLocaleString()}–${estimate.high.toLocaleString()} (battlefield estimate; exact count unverified)`:'enemy losses could not be estimated';
     const estimateZh=estimate?`敌方伤亡估计${estimate.low.toLocaleString()}—${estimate.high.toLocaleString()}人（战场估算，确数未核实）`:'无法估计敌方伤亡';
     const capture=attackerWins&&target.owner===attacker.owner?` ${target.name[0]} is now under ${FACTIONS[target.owner].short[0]} control.`:'';
-    log(s,`${FACTIONS[s.player].short[0]} ${playerWon?'won':'lost'} at ${target.name[0]}. Friendly casualties: ${ownLoss.toLocaleString()}; ${estimateEn}.${capture}${ownLoss>ownStart*.3?' Severe friendly losses.':''}`,`${FACTIONS[s.player].short[1]}在${target.name[1]}${playerWon?'获胜':'战败'}。己方伤亡：${ownLoss.toLocaleString()}；${estimateZh}。${capture?` ${target.name[1]}现由${FACTIONS[target.owner].short[1]}控制。`:''}${ownLoss>ownStart*.3?' 己方伤亡惨重。':''}`);
+    log(s,`${FACTIONS[s.player].short[0]} ${playerWon?'won':'lost'} at ${target.name[0]}. Casualties: ${ownLoss.toLocaleString()} friendly; ${estimateEn}.${capture}${ownLoss>ownStart*.3?' Severe friendly losses.':''}`,`${FACTIONS[s.player].short[1]}在${target.name[1]}${playerWon?'获胜':'战败'}。己方伤亡：${ownLoss.toLocaleString()}；${estimateZh}。${capture?` ${target.name[1]}现由${FACTIONS[target.owner].short[1]}控制。`:''}${ownLoss>ownStart*.3?' 己方伤亡惨重。':''}`);
   }
   for(const lost of s.armies.filter(a=>a.men<=0&&a.characterId)){
     const person=s.world.characters[lost.characterId];if(!person||!person.alive)continue;person.location=null;person.missing={origin:target.id,remaining:3,year:s.year,month:s.month};
