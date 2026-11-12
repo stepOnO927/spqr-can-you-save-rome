@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=6';
 import {nationalBudget} from '../national-budget.js?v=6';
 import {budgetHtml} from '../budget-ui.js?v=8';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=14';
+import {physicalStyle} from './physical-style.js?v=15';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=147';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=29';
 import {FACTIONS} from '../data.js?v=9';
@@ -120,7 +120,7 @@ const originalCityTheater={...cityTheater};
 const namedPoints={cisalpine:[11.6,44.75],narbo:[3.3,43.4],italiaN:[13.05,44.0],roma:[12.45,42.1],italiaS:[17.5,40.8],illyricum:[16.49,43.54],gaul:[4.5,47.54],hispaniaN:[1.25,41.12],sicilia:[15.29,37.08],epirus:[19.45,41.31],hispaniaS:[-4.78,37.88],africa:[10.05,37.05],achaia:[23.73,37.98],anatolia:[27.34,37.94],syria:[36.16,36.20],egypt:[29.92,31.20],numidia:[6.61,36.37],mauretania:[2.19,36.60],armenia:[44.55,39.95],parthia:[44.5,33.1],galatia:[32,39.7],bosporus:[36.5,45.3],...Object.fromEntries(GRAND_SITES.map(site=>[site.id,[site.lon,site.lat]]))};
 const campaignCenter=faction=>['caesar','senate'].includes(faction)?[12.4,43.2]:namedPoints[faction]||[12.4,43.2];
 if(received&&!['caesar','senate'].includes(state.player))map.flyTo({center:campaignCenter(state.player),zoom:5.45});
-const reliefLayers=['relief','relief-detail','relief-fine','relief-aegean-ultra','relief-aegean-higher','relief-ultra','relief-higher','relief-egypt-ultra','relief-egypt-higher'];
+const reliefLayers=['relief','relief-detail','relief-fine','relief-aegean-ultra','relief-aegean-higher','relief-iberia-ultra','relief-iberia-higher','relief-ultra','relief-higher','relief-egypt-ultra','relief-egypt-higher'];
 function setDetailedRelief(){for(const id of reliefLayers.slice(2)){if(!map.getLayer(id))continue;map.setPaintProperty(id,'hillshade-exaggeration',.32);map.setPaintProperty(id,'hillshade-shadow-color','#675f50');map.setPaintProperty(id,'hillshade-highlight-color','#fff7e1');map.setPaintProperty(id,'hillshade-accent-color','#a79a7a')}}
 const terrainName=id=>lang==='zh'?({plain:'平原',hills:'丘陵',forest:'森林',urban:'城市',desert:'沙漠'}[id]||id):id;
 const marchReason=reason=>({adjacent:lang==='zh'?'目的地不相邻':'Destination is not adjacent',peace:lang==='zh'?'尚未与该势力交战':'Not at war with this faction',transport:lang==='zh'?'海运需要8国库':'Sea transport requires 8 treasury',unavailable:lang==='zh'?'军队正行军或围攻':'Army is marching or besieging'})[reason]||'';
