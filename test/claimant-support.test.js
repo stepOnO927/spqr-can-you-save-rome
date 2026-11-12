@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=civic-portraits-1';
+import {newGame,upgradeSave} from '../engine.js?v=letter-cost-1';
 import {addReport,reportedClaimants,supportClaimant,claimantRepresentatives,contestLeadership,advanceOperations,advanceDisputes} from '../character-system.js?v=succession-feedback-1';
 import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=civic-portraits-1';
 

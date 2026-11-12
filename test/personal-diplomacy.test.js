@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=civic-portraits-1';
+import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=letter-cost-1';
 import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,advancePersonalDiplomacy,personalDiplomaticCredit} from '../personal-diplomacy.js?v=civic-portraits-1';
 import {addReport,contestLeadership} from '../character-system.js?v=succession-feedback-1';
 

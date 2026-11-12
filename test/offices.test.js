@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=civic-portraits-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=letter-cost-1';
 import {appointOffice,dismissOffice,officeCandidates,officeEffects,advanceOffices} from '../office-system.js?v=safe-save-1';
 import {availableCommanders} from '../command-appointments.js';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=civic-portraits-1';
