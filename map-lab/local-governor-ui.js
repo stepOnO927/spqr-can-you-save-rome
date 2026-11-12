@@ -2,7 +2,7 @@ import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
 import {reportedControl} from '../control-intelligence.js?v=phase-x-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=newborn-age-1';
-import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=newborn-age-1';
+import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=born-portraits-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 

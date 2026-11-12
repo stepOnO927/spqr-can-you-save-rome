@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy} from './engine.js?v=calendar-1';
+import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy} from './engine.js?v=born-portraits-1';
 import {assignSuccession,knownLeaders,ageRange} from './characters.js?v=newborn-age-1';
-import {addReport,commandFactor,advanceCharacters,advanceOperations,contestLeadership,observeArmies,reportedArmies,missionDuration,previewMission} from './character-system.js?v=newborn-age-1';
+import {addReport,commandFactor,advanceCharacters,advanceOperations,contestLeadership,observeArmies,reportedArmies,missionDuration,previewMission} from './character-system.js?v=born-portraits-1';
 
 test('foreign intelligence is independent from actual leadership and other observers',()=>{
  const s=newGame(),opening=knownLeaders(s,'caesar','egypt');
