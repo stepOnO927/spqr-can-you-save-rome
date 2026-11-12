@@ -14,7 +14,7 @@ import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligi
 import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=25';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
-import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=2';
+import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=3';
 import {nationalBudget} from './national-budget.js?v=8';
 export {nationalBudget} from './national-budget.js?v=8';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';

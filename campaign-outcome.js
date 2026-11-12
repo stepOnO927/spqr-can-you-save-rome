@@ -6,15 +6,22 @@ const rival=id=>id==='caesar'?'senate':'caesar';
 const opening=(s,id)=>({territories:REGIONS.filter(r=>r.owner===id).reduce((n,r)=>n+(s.grandMap?(GRAND_GROUPS[r.id]?.length||1):1),0),troops:INITIAL_ARMIES.filter(a=>a.owner===id).reduce((n,a)=>n+a.men,0)});
 const holdings=(s,id)=>s.regions.filter(r=>r.owner===id).length;
 const troops=(s,id)=>s.armies.filter(a=>a.owner===id&&a.men>0).reduce((n,a)=>n+a.men,0);
-const strategic=(s,id)=>s.regions.some(r=>r.owner===id&&(r.id===(id==='caesar'?'roma':'cisalpine')||r.macro===(id==='caesar'?'roma':'cisalpine')));
+// The named objective cell, not another cell in its broad theater, anchors a
+// Roman claim to decisive control. Ostia is not Roma; Mutina alone does not
+// control the campaign's Cisalpine objective.
+const strategic=(s,id)=>s.regions.some(r=>r.id===(id==='caesar'?'roma':'cisalpine')&&r.owner===id);
 const battleWon=(s,id)=>s.battles?.some(b=>(b.attackerWins?b.attacker?.owner:b.defender?.owner)===id&&[b.attacker?.owner,b.defender?.owner].includes(rival(id)));
 
 export function militaryResult(s,id){
  if(!roman(id)||!s.factions[id])return null;
  const enemy=rival(id),base=opening(s,enemy),remaining=holdings(s,enemy),field=troops(s,enemy);
  const collapsed=remaining===0&&field<500;
- const decisive=strategic(s,id)&&(id!=='senate'||s.regions.find(r=>r.id==='roma')?.owner==='senate')&&battleWon(s,id)&&remaining<=Math.floor(base.territories*.35)&&field<=Math.floor(base.troops*.25)&&troops(s,id)>=1000;
- return collapsed||decisive?{kind:'military',winner:id,loser:enemy,year:s.year,month:s.month,enemyTerritories:remaining,enemyFieldStrength:field}:null;
+ const fieldBroken=field<=Math.floor(base.troops*.25);
+ const coreId=enemy==='caesar'?'xiii':'pompey';
+ const coreBroken=!s.armies.some(a=>a.id===coreId&&a.owner===enemy&&a.men>=500);
+ const territorialRout=remaining<=Math.floor(base.territories*.35);
+ const decisive=strategic(s,id)&&(id!=='senate'||s.regions.find(r=>r.id==='roma')?.owner==='senate')&&battleWon(s,id)&&fieldBroken&&(territorialRout||coreBroken)&&troops(s,id)>=1000;
+ return collapsed||decisive?{kind:'military',winner:id,loser:enemy,year:s.year,month:s.month,enemyTerritories:remaining,enemyFieldStrength:field,basis:collapsed?'collapse':territorialRout?'territorial-rout':'field-collapse'}:null;
 }
 
 // This is a proposal to end the Roman civil war, distinct from an ordinary peace.

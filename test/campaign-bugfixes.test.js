@@ -4,6 +4,8 @@ import {newGame,newGrandGame,army,region,resolveBattle,moveArmy,diplomacy,isWar,
 import {recordMovement,eventText,recordEvent} from '../campaign-reports.js';
 import {chronicleHtml,battleReportHtml,eventDate} from '../reports-ui.js';
 import {requestReinforcements,probePositions,latestRecon,advanceRecon} from '../reconnaissance.js';
+import {militaryResult,settlementEligible} from '../campaign-outcome.js';
+import {campaignVictoryHtml} from '../achievement-ui.js';
 
 test('opposing marches meet without swapping theaters or taking a fort bonus',()=>{
  const s=newGame('senate'),caesar=army(s,'xiii'),levies=army(s,'italy');
@@ -143,7 +145,7 @@ test('peace withdraws besieging units from the former enemy theater',()=>{
  assert.equal(isWar(s,'egypt','senate'),false);
 });
 test('a formal military victory ends the civil war for an observing command',()=>{
- const s=newGrandGame('egypt');
+  const s=newGrandGame('egypt');
  for(const theater of s.regions)if(theater.owner==='senate')theater.owner='caesar';
  s.armies=s.armies.filter(unit=>unit.owner!=='senate');
  s.factions.senate.treasury=0;s.factions.senate.manpower=0;
@@ -152,6 +154,47 @@ test('a formal military victory ends the civil war for an observing command',()=
  assert.equal(s.civilWarOutcome?.winner,'caesar');
  assert.equal(isWar(s,'caesar','senate'),false);
  assert.equal(upgradeSave(structuredClone(s)).wars.some(w=>w.includes('caesar')&&w.includes('senate')),false);
+});
+test('Ostia does not count as Roma for Caesarian victory or settlement',()=>{
+ const s=newGrandGame('caesar');
+ for(const r of s.regions.filter(r=>r.owner==='senate'&&r.id!=='roma').slice(0,12))r.owner='caesar';
+ s.armies=s.armies.filter(a=>a.owner!=='senate'||a.id==='pompey');
+ army(s,'pompey').men=400;
+ s.battles=[{attacker:{owner:'caesar'},defender:{owner:'senate'},attackerWins:true}];
+ assert.equal(region(s,'roma').owner,'senate');
+ assert.equal(region(s,'t016').owner,'caesar');
+ assert.equal(militaryResult(s,'caesar'),null);
+ assert.equal(settlementEligible(s,'caesar','senate'),false);
+ region(s,'roma').owner='caesar';
+ assert.equal(militaryResult(s,'caesar')?.basis,'field-collapse');
+ assert.equal(settlementEligible(s,'caesar','senate'),true);
+ s.factions.senate.treasury=0;s.factions.senate.manpower=0;
+ tick(s);
+ assert.equal(s.campaignOutcome?.winner,'caesar');
+ assert.equal(s.campaignOutcome?.basis,'field-collapse');
+ assert.equal(isWar(s,'caesar','senate'),false);
+ assert.equal(s.achievementState.finalized,false,'victory can continue without revealing achievements');
+ assert.equal(upgradeSave(structuredClone(s)).campaignOutcome?.basis,'field-collapse');
+ assert.match(campaignVictoryHtml(s,'en'),/enemy core army and remaining field force were broken/);
+ assert.match(campaignVictoryHtml(s,'zh'),/敌方核心军团被击溃/);
+ assert.doesNotMatch(campaignVictoryHtml(s,'en'),/ending-achievements/);
+});
+test('a broken core field army can end either Roman war without conquering most provinces',()=>{
+ const caesar=newGrandGame('caesar');
+ region(caesar,'roma').owner='caesar';
+ caesar.armies=caesar.armies.filter(a=>a.owner!=='senate'||a.id==='pompey');army(caesar,'pompey').men=400;
+ caesar.battles=[{attacker:{owner:'caesar'},defender:{owner:'senate'},attackerWins:true}];
+ assert.equal(caesar.regions.filter(r=>r.owner==='senate').length,71);
+ assert.equal(militaryResult(caesar,'caesar')?.basis,'field-collapse');
+ const s=newGrandGame('egypt');
+ region(s,'t006').owner='senate';
+ army(s,'xiii').men=400;army(s,'viii').men=1000;
+ s.battles=[{attacker:{owner:'senate'},defender:{owner:'caesar'},attackerWins:true}];
+ assert.equal(militaryResult(s,'senate'),null,'a neighboring city does not replace Cisalpine');
+ region(s,'cisalpine').owner='senate';
+ assert.equal(militaryResult(s,'senate')?.basis,'field-collapse');
+ army(s,'viii').men=5000;
+ assert.equal(militaryResult(s,'senate'),null,'the coalition still has a fighting field force');
 });
 test('older military-victory saves close their stale civil-war flag on load',()=>{
  const s=newGrandGame('egypt');

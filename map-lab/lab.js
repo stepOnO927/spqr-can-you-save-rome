@@ -12,12 +12,12 @@ import {holdPosition,strategicRetreat,armySupply,encircled} from '../grand-opera
 import {importCampaign,downloadCampaign} from '../save-files.js?v=10';
 import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js?v=6';
 import {endCampaign} from '../achievement-system.js?v=5';
-import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=6';
+import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=8';
 import {nationalBudget} from '../national-budget.js?v=8';
 import {budgetHtml} from '../budget-ui.js?v=10';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=20';
-import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,royalCourtCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=153';
+import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,royalCourtCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=154';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=31';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
@@ -34,7 +34,7 @@ import {assessment,sendScouts,probePositions,delayAttack,markReconRegion,request
 import {intelligenceHtml,afterActionHtml,fortificationText} from '../recon-ui.js?v=4';
 import {renderNavalPanel} from './naval-ui.js?v=41';
 import {SEA_ZONES,reportedHostileFleets} from '../naval.js?v=25';
-import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=153';
+import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=154';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
@@ -108,7 +108,7 @@ const atlasFocus=document.createElement('button');atlasFocus.id='atlas-focus';at
 const settingsButton=document.createElement('button');settingsButton.id='settings';settingsButton.className='hud-button';document.querySelector('.mast').insertBefore(settingsButton,document.querySelector('#guide-restart'));
 const navalButton=document.createElement('button');navalButton.id='naval';navalButton.className='hud-button';document.querySelector('.mast').insertBefore(navalButton,document.querySelector('#development'));
 const endButton=document.createElement('button');endButton.id='end-campaign';endButton.className='hud-button';document.querySelector('.mast').insertBefore(endButton,document.querySelector('#save-slot'));
-function refreshEnding(){let overlay=document.querySelector('#ending-overlay');const html=state.achievementState?.finalized?campaignEndingHtml(state,lang):campaignVictoryHtml(state,lang);if(!html){overlay?.remove();return}if(!overlay){overlay=document.createElement('div');overlay.id='ending-overlay';document.body.append(overlay)}overlay.innerHTML=html;overlay.querySelector('#ending-download')?.addEventListener('click',()=>downloadCampaign(state));overlay.querySelector('#ending-language')?.addEventListener('click',()=>document.querySelector('#language').click());overlay.querySelector('#victory-continue')?.addEventListener('click',()=>{state.victoryAcknowledged=true;renderHud()});overlay.querySelector('#victory-end')?.addEventListener('click',()=>finalizeCampaign('victory'));overlay.querySelector('#victory-chronicle')?.addEventListener('click',()=>{state.victoryAcknowledged=true;renderHud();document.querySelector('#chronicle')?.click()})}
+function refreshEnding(){let overlay=document.querySelector('#ending-overlay');const html=state.achievementState?.finalized?campaignEndingHtml(state,lang):campaignVictoryHtml(state,lang);if(!html){overlay?.remove();return}if(!overlay){overlay=document.createElement('div');overlay.id='ending-overlay';document.body.append(overlay)}overlay.innerHTML=html;overlay.querySelector('#ending-download')?.addEventListener('click',()=>downloadCampaign(state));overlay.querySelector('#ending-language')?.addEventListener('click',()=>document.querySelector('#language').click());overlay.querySelector('#victory-language')?.addEventListener('click',()=>document.querySelector('#language').click());overlay.querySelector('#victory-continue')?.addEventListener('click',()=>{state.victoryAcknowledged=true;renderHud()});overlay.querySelector('#victory-end')?.addEventListener('click',()=>finalizeCampaign('victory'));overlay.querySelector('#victory-chronicle')?.addEventListener('click',()=>{state.victoryAcknowledged=true;renderHud();document.querySelector('#chronicle')?.click()})}
 function syncFinalizedProfile(){if(!state.achievementState?.finalized)return;const profile=loadProfile();recordCampaign(profile,state);saveProfile(profile)}
 function finalizeCampaign(result){setPlaying(false);const ended=endCampaign(state,result);if(ended.ok)syncFinalizedProfile();renderHud()}
 endButton.onclick=()=>finalizeCampaign('retired');
