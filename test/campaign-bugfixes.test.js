@@ -44,6 +44,17 @@ test('outnumbered AI preserves famine and levy reserves before optional probes',
  assert.ok(stocked.factions.caesar.food<50);
 });
 
+test('outnumbered wartime AI does not spend its deficit runway on optional construction',()=>{
+ const lean=newGrandGame('egypt');
+ tick(lean);
+ assert.equal(lean.regions.some(r=>r.owner==='caesar'&&r.construction),false);
+ assert.equal(lean.development.caesar.materials.metal,3,'scarce metal should not trigger an optional purchase');
+ assert.ok(lean.factions.caesar.treasury>=160,'the opening war chest should remain available for field operations');
+ const rich=newGrandGame('egypt');rich.factions.caesar.treasury=500;
+ aiTurn(rich,'caesar');
+ assert.ok(rich.regions.some(r=>r.owner==='caesar'&&r.construction),'a funded command can still invest');
+});
+
 test('an AI command with no field army raises an emergency force when resources allow',()=>{
  const s=newGame('egypt');s.armies=s.armies.filter(unit=>unit.owner!=='caesar');
  s.factions.caesar.treasury=50;s.factions.caesar.food=20;s.factions.caesar.manpower=4000;
