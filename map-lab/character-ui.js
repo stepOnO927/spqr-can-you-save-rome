@@ -1,13 +1,13 @@
 import {identityKnowledge} from './identity-knowledge.js?v=phase-x-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=civic-portraits-1';
 import {HISTORICAL_DEATHS,HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS,HISTORICAL_RELATIONSHIPS} from '../historical-reference.js?v=phase-x-1';
-import {officeOf} from '../office-system.js?v=safe-save-1';
-import {reportedClaimants,reportedHealthSubjects,reportedOfficeTheaters,intelligencePartners,intelligencePartnerAccess,supportClaimant,recognizeClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,missionCost,previewMission,reportEvidence} from '../character-system.js?v=mission-discount-1';
-import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan,successionCandidates} from '../governance.js?v=safe-save-1';
+import {officeOf} from '../office-system.js?v=newborn-age-1';
+import {reportedClaimants,reportedHealthSubjects,reportedOfficeTheaters,intelligencePartners,intelligencePartnerAccess,supportClaimant,recognizeClaimant,claimantRepresentatives,availableAgents,requestAgentRelease,missionDuration,missionCost,previewMission,reportEvidence} from '../character-system.js?v=newborn-age-1';
+import {deriveGovernment,eligibleDeputies,appointDeputy,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan,successionCandidates} from '../governance.js?v=newborn-age-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=safe-save-1';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,ageRange,successorFor,HISTORICAL_BIO} from '../characters.js?v=newborn-age-1';
 import {queueMission} from '../engine.js?v=field-recovery-1';
-import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from '../personal-diplomacy.js?v=mission-discount-1';
+import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from '../personal-diplomacy.js?v=newborn-age-1';
 const portraits=new Set(['caesar','pompey','cleopatra','arsinoe','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function evidenceText(state,actor,target,report,zh){

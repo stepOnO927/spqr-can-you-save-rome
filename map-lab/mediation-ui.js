@@ -1,4 +1,4 @@
-import {canMediate,requestMediation} from '../civil-war.js?v=safe-save-1';
+import {canMediate,requestMediation} from '../civil-war.js?v=newborn-age-1';
 
 export function renderMediation({panel,state,target,language,refresh}){
  if(!['egypt','parthia'].includes(target))return;

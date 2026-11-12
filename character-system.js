@@ -1,11 +1,11 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=safe-save-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=safe-save-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=newborn-age-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=newborn-age-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=safe-save-1';
-import {potentialConspirators} from './conspiracies.js?v=safe-save-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=safe-save-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=newborn-age-1';
+import {potentialConspirators} from './conspiracies.js?v=newborn-age-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=newborn-age-1';
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=safe-save-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=newborn-age-1';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');

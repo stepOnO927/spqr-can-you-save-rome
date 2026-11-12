@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=mission-discount-1';
-import {addReport,reportEvidence,queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=mission-discount-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=newborn-age-1';
+import {addReport,reportEvidence,queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=newborn-age-1';
 import {leadershipIntelligence} from '../map-lab/intelligence-summary.js';
 
 test('evidence identifies independent support and conflicts without counting forwarded duplicates',()=>{

@@ -1,10 +1,10 @@
 import {REGIONS,ROUTES,FACTIONS} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
-import {mapPoint} from './map.js?v=mission-discount-1';
+import {CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
+import {mapPoint} from './map.js?v=newborn-age-1';
 import {BRANCH_NAMES,PATH_NAMES} from './imperium-focus-data.js?v=imperium-1';
-import {treeFor,focusStatus,focusState,canStartFocus,startFocus,cancelFocus,focusCost,focusReportsFor,focusById} from './national-focus.js?v=safe-save-1';
-import {COMPONENTS,CULTURE_NAMES,templatesFor,templateStats,saveTemplate,duplicateTemplate,deleteTemplate,validateTemplate,availableComponents,cultureOf,reorganizationQuote,reorganizeArmy,recruitmentQuote,recruitFormation,commanderSpecialty,commandConcentration,seedTemplates,formationState,outdatedArmies} from './legion-designer.js?v=safe-save-1';
-import {ROLES,ROLE_NAMES,MODES,plansFor,planById,createPlan,assignRole,removeRole,approvePlan,pausePlan,cancelPlan,editPlan,assessPlan,adviserCounsel,approveRecommendation,legalStep} from './battle-plans.js?v=safe-save-1';
+import {treeFor,focusStatus,focusState,canStartFocus,startFocus,cancelFocus,focusCost,focusReportsFor,focusById} from './national-focus.js?v=newborn-age-1';
+import {COMPONENTS,CULTURE_NAMES,templatesFor,templateStats,saveTemplate,duplicateTemplate,deleteTemplate,validateTemplate,availableComponents,cultureOf,reorganizationQuote,reorganizeArmy,recruitmentQuote,recruitFormation,commanderSpecialty,commandConcentration,seedTemplates,formationState,outdatedArmies} from './legion-designer.js?v=newborn-age-1';
+import {ROLES,ROLE_NAMES,MODES,plansFor,planById,createPlan,assignRole,removeRole,approvePlan,pausePlan,cancelPlan,editPlan,assessPlan,adviserCounsel,approveRecommendation,legalStep} from './battle-plans.js?v=newborn-age-1';
 
 // IMPERIUM screens: national strategy tree, legion designer, operational planner.
 // UI state is local to this module; game state changes only through engine APIs.
