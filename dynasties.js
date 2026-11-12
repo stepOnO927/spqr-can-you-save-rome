@@ -1,7 +1,7 @@
 import {CHARACTER_CATALOG} from './characters.js?v=safe-save-1';
 import {startDynasticWar} from './civil-war.js?v=safe-save-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS} from './fictional-names.js?v=faces-of-empire-1';
+import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,generateFictionalName} from './fictional-names.js?v=faces-of-empire-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -95,6 +95,17 @@ export function seedOpeningCommanders(s){
   army.characterId=id;army.commander=[...profile.name];
  }
  s.world.openingCommandersSeeded=true;
+}
+
+// All newly raised formations use the same identity path, including armies
+// created by a custom legion template. This is not an automatic appointment
+// to a civil or hereditary office.
+export function assignFictionalFieldCommander(s,army){
+ if(!army||army.characterId||army.men<=0)return army?.characterId||null;
+ const identity=generateFictionalName(s,{originFaction:army.owner,location:army.region});
+ const hash=[...army.id].reduce((h,c)=>Math.imul(h,31)+c.charCodeAt(0)|0,0)>>>0;
+ const id=createFictionalPerson(s,{...identity,faction:army.owner,birthYear:s.year-35,location:army.region,sex:'male',role:['Fictional field commander','虚构野战指挥官'],militaryOnly:true,ambition:30+hash%45,personalitySeed:hash});
+ army.characterId=id;army.commander=[...identity.name];return id;
 }
 
 // These are original scenario commanders, not claims about documented officers.

@@ -53,7 +53,7 @@ try{
  await page.locator('[data-faction="han"]').click();
  assert.match(await page.locator('.office-row').first().innerText(),/王桓/);
  await page.locator('#language').click();
- assert.match(await page.locator('.brief h1').innerText(),/Guanzhong/);
+ assert.match(await page.locator('.brief h1').textContent(),/Guanzhong/);
  assert.deepEqual(errors,[]);
  console.log('Han browser smoke passed: setup, atlas, command, march, profile, save/load, English and Chinese.');
 }catch(error){console.error('Han smoke context:',{url:page.url(),errors,heading:await page.locator('.brief h1').textContent().catch(()=>null),markers:await page.locator('[data-theater]').count(),handoff:await page.evaluate(()=>{try{const x=JSON.parse(sessionStorage.getItem('spqr-view-handoff-v1'));return x&&{target:x.target,player:x.state?.player}}catch{return null}})});throw error}finally{await browser.close()}

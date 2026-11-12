@@ -7,8 +7,7 @@ import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-syste
 import {advanceConspiracies} from './conspiracies.js?v=safe-save-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=safe-save-1';
-import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,createFictionalPerson,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=safe-save-1';
-import {generateFictionalName} from './fictional-names.js?v=faces-of-empire-1';
+import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,assignFictionalFieldCommander,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=safe-save-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-feedback-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
@@ -215,8 +214,7 @@ export function recruit(s,regionId,owner=s.player){
   const id=`levy${s.nextArmy++}`;
   const roman=owner==='caesar'||owner==='senate';
   const army={id,name:roman?['Newly raised legion','新编军团']:['Newly raised forces','新征召军队'],owner,region:regionId,men:3000,morale:58+(buildingModifiers(r).recruit||0)*4,skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null};
-  const identity=generateFictionalName(s,{originFaction:owner,location:regionId}),hash=[...id].reduce((h,c)=>Math.imul(h,31)+c.charCodeAt(0)|0,0)>>>0;
-  army.characterId=createFictionalPerson(s,{...identity,faction:owner,birthYear:s.year-35,location:regionId,sex:'male',role:['Fictional field commander','虚构野战指挥官'],militaryOnly:true,ambition:30+hash%45,personalitySeed:hash});army.commander=[...identity.name];s.armies.push(army);
+  assignFictionalFieldCommander(s,army);s.armies.push(army);
   r.loyalty=Math.max(0,r.loyalty-3);
   if(owner===s.player)log(s,`New forces were raised in ${r.name[0]}.`,`在${r.name[1]}征召了新军队。`);
   return true;
