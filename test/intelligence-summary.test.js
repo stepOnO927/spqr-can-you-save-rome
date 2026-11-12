@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=born-portraits-1';
-import {addReport} from '../character-system.js?v=born-portraits-1';
+import {newGame} from '../engine.js?v=inheritance-fix-1';
+import {addReport} from '../character-system.js?v=inheritance-fix-1';
 import {leadershipIntelligence} from '../map-lab/intelligence-summary.js';
 
 test('leadership summary uses only the viewer’s reports, including their observation dates',()=>{

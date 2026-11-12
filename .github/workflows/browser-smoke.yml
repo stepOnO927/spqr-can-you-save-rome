@@ -37,6 +37,7 @@ jobs:
           node tools/health-succession-smoke.mjs
           node tools/newborn-age-smoke.mjs
           node tools/born-portraits-smoke.mjs
+          node tools/inheritance-settlement-smoke.mjs
           node tools/campaign-date-smoke.mjs
           node tools/scenario-general-portrait-smoke.mjs
           node tools/civic-portrait-smoke.mjs

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=born-portraits-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=inheritance-fix-1';
 import {MATERIALS,IDEAS,CATEGORIES,activeModifiers,buildingModifiers,startResearch,startConstruction,equipIdea,removeIdea,expandSlot,requestKnowledge,offerKnowledge,inviteScholars,canEquip} from '../inventions.js?v=mission-discount-1';
 
 const advance=(s,n)=>{for(let i=0;i<n;i++)tick(s)};

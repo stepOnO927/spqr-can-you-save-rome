@@ -42,9 +42,12 @@ export function initializeDynasties(s){
  // The only opening kinship modeled here is an explicitly documented sibling
  // relationship; all other unknown parents and spouses stay unknown.
  if(!d.historicalSeeded&&s.world.characters.cleopatra&&s.world.characters.arsinoe){
-  const family=d.families['family:cleopatra'];s.world.characters.arsinoe.familyId=family.id;delete d.families['family:arsinoe'];
+  const family=d.families['family:cleopatra'],oldFamily=d.families['family:arsinoe'];if(oldFamily&&oldFamily!==family&&Number.isFinite(oldFamily.wealth))family.wealth=(Number.isFinite(family.wealth)?family.wealth:0)+oldFamily.wealth;s.world.characters.arsinoe.familyId=family.id;delete d.families['family:arsinoe'];
   d.historicalSeeded=true;
  }
+ // Perform recovery after legacy family merging, so a restored remainder is
+ // never deposited into a family record that the migration then removes.
+ for(const [id,c] of Object.entries(s.world.characters))if(c.alive===false&&c.inheritanceSettled&&Number.isFinite(c.wealth)&&c.wealth>0){const amount=c.wealth,family=d.families[c.familyId];family.wealth=(Number.isFinite(family.wealth)?family.wealth:0)+amount;c.wealth=0;record(s,id,`Recovered ${amount} previously stranded private wealth into the family estate.`,`已将之前滞留的${amount}私人财富转入家族公产。`)}
  for(const [faction,ids] of Object.entries(s.world.leadership||{}))if(s.factions[faction]){
   const current=ids.filter(id=>s.world.characters[id]?.alive).join(':');
   if(d.rulers.filter(r=>r.faction===faction).at(-1)?.current!==current)d.rulers.push({faction,current,year:s.year,month:s.month});
@@ -264,7 +267,7 @@ export function settleInheritance(s,id){
   return;
  }
  if(eligibleWill){const amount=Math.floor(wealth*c.will.share);s.world.characters[eligibleWill].wealth+=amount;c.wealth-=amount;record(s,eligibleWill,`Inherited ${amount} private wealth from ${CHARACTER_CATALOG[id].name[0]}.`,`从${CHARACTER_CATALOG[id].name[1]}继承${amount}私人财富。`)}
- const remaining=Math.max(0,Math.floor(c.wealth||0));if(heirs.length){for(const heir of heirs)s.world.characters[heir].wealth+=Math.floor(remaining/heirs.length);c.wealth=remaining%heirs.length}else{familyOf(s,id).wealth+=remaining;c.wealth=0}
+ const remaining=Math.max(0,Math.floor(c.wealth||0));if(heirs.length){for(const heir of heirs)s.world.characters[heir].wealth+=Math.floor(remaining/heirs.length);familyOf(s,id).wealth+=remaining%heirs.length}else familyOf(s,id).wealth+=remaining;c.wealth=0;
  record(s,id,'Died; private property was settled separately from the state treasury.','去世；私人财产与国库分别结算。');
 }
 
@@ -273,18 +276,22 @@ export function resolveInheritanceDispute(s,disputeId,choice){
  if(!caseFile)return {ok:false,reason:'unavailable'};
  if(!['will','compromise','heirs'].includes(choice))return {ok:false,reason:'choice'};
  const faction=s.factions[caseFile.faction],beneficiary=s.world.characters[caseFile.beneficiary],heirs=caseFile.heirs.map(id=>s.world.characters[id]).filter(c=>c?.alive);
- if(!beneficiary?.alive&&!heirs.length)return {ok:false,reason:'no_heirs'};
+ if(!beneficiary?.alive&&!heirs.length){
+  const family=d.families[s.world.characters[caseFile.deceased].familyId];family.wealth+=caseFile.estate;caseFile.status='resolved';caseFile.choice='family';caseFile.resolvedYear=s.year;caseFile.resolvedMonth=s.month;
+  record(s,caseFile.deceased,'No claimant received the estate; it passed to the family estate.','无人领取的遗产已转入家族公产。');if(caseFile.faction===s.player)note(s,'The unclaimed private estate passed to the family estate.','无人领取的私人遗产已转入家族公产。');return {ok:true,outcome:'family'};
+ }
+ if(!beneficiary?.alive&&choice!=='heirs')return {ok:false,reason:'unavailable'};
  if(choice==='compromise'&&faction?.treasury<6)return {ok:false,reason:'treasury'};
  const willAmount=beneficiary?.alive?(choice==='will'?Math.floor(caseFile.estate*caseFile.share):choice==='compromise'?Math.floor(caseFile.estate*.5):0):0;
- if(beneficiary)beneficiary.wealth+=willAmount;
+ if(beneficiary?.alive)beneficiary.wealth+=willAmount;
  const rest=caseFile.estate-willAmount;
  if(heirs.length){const portion=Math.floor(rest/heirs.length);for(const heir of heirs)heir.wealth+=portion;d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest-portion*heirs.length}
- else if(beneficiary)beneficiary.wealth+=rest;
+ else if(beneficiary?.alive)beneficiary.wealth+=rest;
  else d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest;
  if(choice==='compromise'){faction.treasury-=6;faction.stability=Math.min(100,faction.stability+2)}
  if(choice==='will'){for(const heir of heirs)heir.loyalty=Math.max(0,heir.loyalty-8);if(faction)faction.stability=Math.max(0,faction.stability-2)}
- if(choice==='heirs'&&beneficiary){beneficiary.loyalty=Math.max(0,beneficiary.loyalty-10);if(faction)faction.stability=Math.max(0,faction.stability-1)}
- if(beneficiary&&beneficiary.faction!==caseFile.faction){const key=pair(beneficiary.faction,caseFile.faction);s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+(choice==='heirs'?-4:2)))}
+ if(choice==='heirs'&&beneficiary?.alive){beneficiary.loyalty=Math.max(0,beneficiary.loyalty-10);if(faction)faction.stability=Math.max(0,faction.stability-1)}
+ if(beneficiary?.alive&&beneficiary.faction!==caseFile.faction){const key=pair(beneficiary.faction,caseFile.faction);s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+(choice==='heirs'?-4:2)))}
  d.memories.push({familyId:s.world.characters[caseFile.deceased].familyId,targetFamilyId:beneficiary?.familyId,kind:`inheritance_${choice}`,year:s.year,month:s.month,weight:choice==='compromise'?2:-6});
  caseFile.status='resolved';caseFile.choice=choice;caseFile.resolvedYear=s.year;caseFile.resolvedMonth=s.month;
  const labels={will:['will upheld','维持遗嘱'],compromise:['estate divided','分割遗产'],heirs:['children favored','支持子女']};
@@ -331,7 +338,8 @@ export function advanceDynasties(s){
  }
  for(const dispute of d.inheritanceDisputes.filter(x=>x.status==='pending')){
   const age=(s.year-dispute.year)*12+s.month-dispute.month;
-  if((dispute.faction!==s.player&&age>=3)||age>=12){const choice=s.factions[dispute.faction]?.treasury>=6?'compromise':'heirs';resolveInheritanceDispute(s,dispute.id,choice)}
+  const beneficiaryAlive=!!s.world.characters[dispute.beneficiary]?.alive,anyHeir=dispute.heirs.some(id=>s.world.characters[id]?.alive);
+  if(!beneficiaryAlive&&!anyHeir||(dispute.faction!==s.player&&age>=3)||age>=12){const choice=beneficiaryAlive&&s.factions[dispute.faction]?.treasury>=6?'compromise':'heirs';resolveInheritanceDispute(s,dispute.id,choice)}
  }
  const crisis=d.scenario,months=crisis?(s.year-crisis.startedYear)*12+s.month-crisis.startedMonth:0;
  if(crisis?.concessionMonths>0&&s.factions.egypt&&s.factions.numidia){s.factions.egypt.treasury-=1;s.factions.numidia.treasury+=1;crisis.concessionMonths--}

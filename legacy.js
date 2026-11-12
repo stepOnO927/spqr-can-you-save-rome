@@ -1,6 +1,6 @@
 import {syncChronicleDispatches} from './chronicle.js?v=calendar-1';
 import {CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
-import {initializeDynasties} from './dynasties.js?v=born-portraits-1';
+import {initializeDynasties} from './dynasties.js?v=inheritance-fix-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 
