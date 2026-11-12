@@ -116,6 +116,7 @@ export function eventText(s,e,lang='en'){
   if(e.type==='siege')return {title:z?`${r}${e.phase==='begun'?'开始围攻':'围攻结束'}`:`Siege ${e.phase==='begun'?'began':'completed'} at ${r}`,description:z?`${u}参与${r}的围攻。`:`${u} operated at ${r}.`};
   if(e.type==='movement')return {title:z?`${u}抵达${r}`:`${u} arrived in ${r}`,description:z?`从${place(s,e.fromRegionId,lang)}出发。`:`From ${place(s,e.fromRegionId,lang)}.`};
   if(e.type==='recruitment')return {title:z?`${r}完成征召`:`Forces recruited in ${r}`,description:z?`${u}已加入战场。`:`${u} joined the field army.`};
+  if(e.type==='warContribution')return {title:z?'战时城镇筹款':'Wartime municipal contributions',description:z?`${e.regions||0}个城镇筹得${e.income||0}国库；地方忠诚、满意度和国家稳定度下降。`:`${e.regions||0} communities raised ${e.income||0} treasury; local loyalty, satisfaction and national stability fell.`};
   if(e.type==='rebellion')return {title:z?`${r}爆发叛乱`:`Rebellion in ${r}`,description:z?`${r}脱离${old}控制。`:`${r} broke from ${old} control.`};
   if(e.type==='armyDestroyed'){const name=e.armyName?.[z?1:0]||e.armyId;return {title:z?`${name}在${r}覆灭`:`${name} destroyed at ${r}`,description:z?'军队已从战场序列移除。':'The army is no longer in the field.'};}
   if(e.type==='construction'){const name=BUILDINGS.find(x=>x.id===e.buildingId)?.name?.[z?1:0]||e.buildingId;return {title:z?`${r}建成${name}`:`${name} completed in ${r}`,description:''};}

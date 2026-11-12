@@ -149,9 +149,11 @@ test('AI probes a contested border using only local reports before a cash-starve
  const {s,legion}=setup(50),food=s.factions.caesar.food;
  aiTurn(s,'caesar');assert.equal(legion.reconPending?.kind,'scouts');assert.equal(legion.reconPending.regionId,'t017');assert.equal(s.factions.caesar.treasury,46);assert.equal(s.factions.caesar.food,food-2);
  legion.reconPending=null;s.factions.caesar.treasury=20;
+ s.lastWarContribution={caesar:s.year*12+s.month};
  s.militaryRecon=[{owner:'caesar',regionId:'t017',year:s.year,month:s.month,observationYear:s.year,observationMonth:s.month,source:'scouts',min:null,max:null}];
  aiTurn(s,'caesar');assert.equal(legion.move?.to,'t017');assert.equal(s.factions.caesar.treasury,20);
  const poor=setup(3),beforeFood=poor.s.factions.caesar.food;
+ poor.s.lastWarContribution={caesar:poor.s.year*12+poor.s.month};
  aiTurn(poor.s,'caesar');assert.equal(poor.legion.reconPending?.kind,'probe');assert.equal(poor.legion.reconPending.regionId,'t017');assert.equal(poor.s.factions.caesar.treasury,3);assert.equal(poor.s.factions.caesar.food,beforeFood-3);
  assert.equal(poor.s.militaryRecon[0].source,'probe');
 });

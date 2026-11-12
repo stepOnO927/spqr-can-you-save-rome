@@ -103,3 +103,5 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
 #locator-position{position:absolute;width:10px;height:10px;transform:translate(-50%,-50%);border:2px solid #fff0c2;border-radius:50%;background:#9d4939;box-shadow:0 0 0 3px #9d4939b8,0 1px 6px #001b22}
 @media(max-width:900px){#locator{display:none}}
 @media(min-width:901px) and (max-width:1450px){.mast .identity small,.mast .identity strong{display:none}.mast .identity{margin-right:0}.mast{gap:6px}.mast .hud-button{padding:5px 6px}}
+
+.war-contribution-panel{margin-top:12px;padding-top:10px;border-top:1px solid #b69862}.war-contribution-panel .action{margin:6px 0}.war-contribution-panel a{color:#65421f}

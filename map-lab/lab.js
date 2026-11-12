@@ -14,10 +14,10 @@ import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js?v
 import {endCampaign} from '../achievement-system.js?v=5';
 import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=8';
 import {nationalBudget} from '../national-budget.js?v=8';
-import {budgetHtml} from '../budget-ui.js?v=10';
+import {budgetHtml} from '../budget-ui.js?v=11';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=22';
-import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=158';
+import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=159';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=32';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
@@ -27,14 +27,14 @@ import {reportedArmies} from '../character-system.js?v=60';
 import {createTutorial} from './tutorial.js?v=8';
 import {friendlyPersonnelInTheater} from './personnel.js?v=1';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from '../reports-ui.js?v=4';
-import {objectiveDefinitions,eventText,unreadCount,markRead,latestCritical,campaignTurn} from '../campaign-reports.js?v=3';
+import {objectiveDefinitions,eventText,unreadCount,markRead,latestCritical,campaignTurn} from '../campaign-reports.js?v=4';
 import {leadershipIntelligence} from './intelligence-summary.js?v=2';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=9';
 import {assessment,sendScouts,probePositions,delayAttack,markReconRegion,requestReinforcements,latestRecon} from '../reconnaissance.js?v=7';
 import {intelligenceHtml,afterActionHtml,fortificationText} from '../recon-ui.js?v=4';
 import {renderNavalPanel} from './naval-ui.js?v=41';
 import {SEA_ZONES,reportedHostileFleets} from '../naval.js?v=25';
-import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=158';
+import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=159';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
@@ -467,7 +467,7 @@ function resourceHelp(id){
   stability:zh?`稳定度 ${f.stability}%。债务或粮食短缺会降低稳定度。`:`Stability ${f.stability}%. Debt and food shortages reduce stability.`,
   legitimacy:zh?`合法性 ${f.legitimacy}%。宣战会降低合法性，内战和议可以提高合法性。`:`Legitimacy ${f.legitimacy}%. War declarations reduce it; a civil settlement can improve it.`
  };return info[id]||'';
-}function showResource(id){activeInfo={type:'resources',id};activeFaction=null;activeBattle=null;activeArmy=null;previewDestination='';clearReach();inspect(lang==='zh'?'资源与政治':'RESOURCES & POLITICS',lang==='zh'?'每月变化根据当前战区和军队估算。':'Monthly changes are estimates based on current theaters and armies.');const panel=document.querySelector('#command-detail'),zh=lang==='zh',tax=state.factions[state.player].tax;panel.innerHTML=`<div class="help-list">${['treasury','food','manpower','stability','legitimacy'].map(k=>`<p>${esc(resourceHelp(k))}</p>`).join('')}</div><p class="battle-note">${zh?'税率影响收入与地方忠诚：低税每月恢复忠诚，高税每月降低忠诚。':'Tax rates affect income and theater loyalty: low tax restores loyalty, high tax reduces it.'}</p><div class="diplomacy-actions">${['low','normal','high'].map(level=>`<button data-tax="${level}" ${tax===level?'disabled':''}>${zh?({low:'低税',normal:'标准税',high:'高税'})[level]:({low:'LOW TAX',normal:'NORMAL TAX',high:'HIGH TAX'})[level]}</button>`).join('')}</div>`;panel.insertAdjacentHTML('afterbegin',budgetHtml(state,lang));panel.querySelectorAll('[data-tax]').forEach(b=>b.onclick=()=>{if(setTax(state,state.player,b.dataset.tax)){renderHud();showResource(id)}});emit('resources')}
+}function showResource(id){activeInfo={type:'resources',id};activeFaction=null;activeBattle=null;activeArmy=null;previewDestination='';clearReach();inspect(lang==='zh'?'资源与政治':'RESOURCES & POLITICS',lang==='zh'?'每月变化根据当前战区和军队估算。':'Monthly changes are estimates based on current theaters and armies.');const panel=document.querySelector('#command-detail'),zh=lang==='zh',tax=state.factions[state.player].tax;panel.innerHTML=`<div class="help-list">${['treasury','food','manpower','stability','legitimacy'].map(k=>`<p>${esc(resourceHelp(k))}</p>`).join('')}</div><p class="battle-note">${zh?'税率影响收入与地方忠诚：低税每月恢复忠诚，高税每月降低忠诚。':'Tax rates affect income and theater loyalty: low tax restores loyalty, high tax reduces it.'}</p><div class="diplomacy-actions">${['low','normal','high'].map(level=>`<button data-tax="${level}" ${tax===level?'disabled':''}>${zh?({low:'低税',normal:'标准税',high:'高税'})[level]:({low:'LOW TAX',normal:'NORMAL TAX',high:'HIGH TAX'})[level]}</button>`).join('')}</div>`;panel.insertAdjacentHTML('afterbegin',budgetHtml(state,lang,warContributionPlan(state,state.player)));panel.querySelector('#war-contribution')?.addEventListener('click',()=>{const result=collectWarContributions(state,state.player);if(result.ok){renderHud();showResource(id)}});panel.querySelectorAll('[data-tax]').forEach(b=>b.onclick=()=>{if(setTax(state,state.player,b.dataset.tax)){renderHud();showResource(id)}});emit('resources')}
 document.querySelector('#resources-help').onclick=()=>showResource('treasury');
 const helpEntries=[
  {kind:'game',en:'Move an army',zh:'如何行军',enBody:'Select your army, choose an adjacent destination, review the route and confirm. Advance months to finish travel. Crossing by sea costs 8 treasury.',zhBody:'选择己方军队，在相邻战区中选择目的地，检查路线后确认。推进月份完成行军；海上运输需要8国库。'},

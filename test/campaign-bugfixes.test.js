@@ -136,6 +136,7 @@ test('cash-poor AI sends a nearby relief column to Rome without conjuring a levy
  region(s,'roma').owner='caesar';region(s,'t014').owner='caesar';
  main.region='roma';main.move=null;relief.region='t014';relief.move=null;
  s.factions.caesar.treasury=0;
+ s.lastWarContribution={caesar:s.year*12+s.month};
  aiTurn(s,'caesar');
  assert.equal(relief.move?.to,'roma');
  assert.equal(relief.aiGarrisonRegion,'roma');

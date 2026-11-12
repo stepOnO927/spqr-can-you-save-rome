@@ -6,7 +6,7 @@ import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,ad
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
 import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=28';
-import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=3';
+import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=4';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=7';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=18';
@@ -152,6 +152,32 @@ export function setTax(s,owner,level){
   s.factions[owner].tax=level;
   log(s,`${FACTIONS[owner].short[0]} set ${level} taxation.`,`${FACTIONS[owner].short[1]}实行${{low:'低',normal:'标准',high:'高'}[level]}税率。`);
   return true;
+}
+
+// Caesar alleges that municipal contributions were demanded during the opening
+// mobilization (Civil War 1.6.8). The amount, loyalty cost and cooldown here
+// are game balance values. Only established, willing taxpayers can contribute.
+export function warContributionPlan(s,owner){
+ const f=s.factions?.[owner],now=s.year*12+s.month,last=s.lastWarContribution?.[owner];
+ if(s.achievementState?.finalized)return {ok:false,reason:'campaign'};
+ if(!s.grandMap||!f||owner==='rebels'||!s.wars.some(pair=>pair.includes(owner)&&pair.some(id=>id!==owner&&id!=='rebels')))return {ok:false,reason:'war'};
+ if(Number.isFinite(last)&&now-last<12)return {ok:false,reason:'cooldown',remaining:12-(now-last)};
+ if(f.stability<40)return {ok:false,reason:'stability'};
+ const candidates=s.regions.filter(r=>r.owner===owner&&r.loyalty>=65&&(r.civicSatisfaction??r.loyalty)>=55&&r.tax>0).sort((a,b)=>b.tax-a.tax||a.id.localeCompare(b.id));
+ const sites=[];let taxable=0;
+ for(const site of candidates){if(taxable*3>=40)break;sites.push(site);taxable+=site.tax}
+ const income=Math.min(40,Math.round(taxable*3));
+ if(income<8)return {ok:false,reason:'support'};
+ return {ok:true,income,regions:sites.length,regionIds:sites.map(r=>r.id),loyaltyLoss:5,satisfactionLoss:4,stabilityLoss:2};
+}
+export function collectWarContributions(s,owner){
+ const plan=warContributionPlan(s,owner);if(!plan.ok)return plan;
+ const f=s.factions[owner];f.treasury+=plan.income;f.stability=Math.max(0,f.stability-plan.stabilityLoss);
+ for(const id of plan.regionIds){const site=region(s,id),satisfaction=site.civicSatisfaction??site.loyalty;site.loyalty=Math.max(0,site.loyalty-plan.loyaltyLoss);site.civicSatisfaction=Math.max(0,satisfaction-plan.satisfactionLoss)}
+ (s.lastWarContribution||={})[owner]=s.year*12+s.month;
+ (s.warContributions||=[]).push({owner,year:s.year,month:s.month,income:plan.income,regionIds:[...plan.regionIds],loyaltyLoss:plan.loyaltyLoss,satisfactionLoss:plan.satisfactionLoss,stabilityLoss:plan.stabilityLoss});
+ if(owner===s.player){log(s,`War contributions raised ${plan.income} treasury from ${plan.regions} established communities; loyalty and satisfaction fell.`,`战时筹款从${plan.regions}个稳定城镇取得${plan.income}国库；地方忠诚与满意度下降。`);recordEvent(s,{type:'warContribution',category:'economy',severity:'significant',factionId:owner,income:plan.income,regions:plan.regions})}
+ return {ok:true,income:plan.income,regions:plan.regions};
 }
 
 function concludePeace(s,actor,target){
@@ -489,7 +515,7 @@ export function aiTurn(s,owner){
   if(!owned.length)return;
   const alert=(s.militaryAlerts||[]).find(a=>a.owner===owner&&a.year*12+a.month>=s.year*12+s.month-1&&region(s,a.regionId)?.owner===owner);
   const willingToRisk=(report,men)=>['scouts','probe'].includes(report?.source)&&report.age<=3&&report.min==null&&f.treasury<30&&men>=5000;
-  const newlyRecruited=new Set(),recruitHere=(regionId,garrison=false)=>{const before=s.armies.length;if(!recruit(s,regionId,owner))return false;const unit=s.armies[before];newlyRecruited.add(unit.id);if(garrison)unit.aiGarrisonRegion=regionId;return true};
+  const newlyRecruited=new Set(),recruitHere=(regionId,garrison=false)=>{if(garrison&&f.food+6*(nationalBudget(s,owner).foodNet-3)<12)return false;const before=s.armies.length;if(!recruit(s,regionId,owner))return false;const unit=s.armies[before];newlyRecruited.add(unit.id);if(garrison)unit.aiGarrisonRegion=regionId;return true};
   const raiseAt=regionId=>{
     if(s.armies.some(a=>a.owner===owner&&a.region===regionId&&a.reconPending?.kind==='reinforce'))return false;
     const stationed=s.grandMap?s.armies.filter(a=>a.owner===owner&&a.region===regionId&&a.men>0&&!a.move&&!a.siege&&!a.reconPending):[];
@@ -499,6 +525,7 @@ export function aiTurn(s,owner){
   };
   if(alert&&f.treasury>=40&&f.food>=6&&f.manpower>=3000)raiseAt(alert.regionId);
   const outnumbered=s.wars.some(w=>w.includes(owner)&&s.regions.filter(r=>r.owner===w.find(id=>id!==owner)).length>owned.length*1.5);
+  if(owner!=='rebels'&&f.treasury<30&&nationalBudget(s,owner).projectedNet<0)collectWarContributions(s,owner);
   const civilianReserve=outnumbered?24+3*Math.max(0,-nationalBudget(s,owner).projectedNet):0;
   const reconFoodReserve=outnumbered?9+3*Math.max(0,-nationalBudget(s,owner).foodNet):0;
   const canFundScouts=(cost,foodCost=2)=>f.treasury>=cost+civilianReserve&&f.food>=foodCost+reconFoodReserve;
@@ -636,8 +663,7 @@ export function aiTurn(s,owner){
   if(strategicCity?.owner===owner&&isWar(s,owner,owner==='caesar'?'senate':'caesar')){
     const defenders=s.armies.filter(a=>a.owner===owner&&a.region===strategicCity.id&&a.men>0&&!a.move);
     if(defenders.length===1&&defenders[0].men>=3000&&defenders[0].aiGarrisonRegion!==strategicCity.id){
-      if(f.treasury>=24&&f.food>=6&&f.manpower>=3000)recruitHere(strategicCity.id,true);
-      else{
+      if(!recruitHere(strategicCity.id,true)){
         const relief=s.armies.filter(a=>a.owner===owner&&a.id!==defenders[0].id&&a.men>=1500&&!a.move&&!a.siege&&!a.reconPending&&!newlyRecruited.has(a.id)&&!a.aiGarrisonRegion).map(a=>({unit:a,route:grandRoute(s,a,strategicCity.id,isWar)})).filter(x=>x.route?.months<=3&&x.route.path.every(step=>!step.sea&&region(s,step.id)?.owner===owner)).sort((a,b)=>a.route.months-b.route.months||b.unit.men-a.unit.men)[0];
         if(relief&&moveArmy(s,relief.unit.id,strategicCity.id).ok)relief.unit.aiGarrisonRegion=strategicCity.id;
       }
