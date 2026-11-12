@@ -92,6 +92,16 @@ test('light-only fleets use ship speed and merchant hulls set cargo capacity',()
 test('shipbuilding spends treasury, materials, crew and time at a real shipyard',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),before={treasury:s.factions.senate.treasury,timber:s.development.senate.materials.timber,crew:s.factions.senate.manpower};const result=queueShip(s,'senate','italiaS','merchant');assert.equal(result.ok,true);assert.equal(s.factions.senate.treasury,before.treasury-17);assert.equal(s.development.senate.materials.timber,before.timber-2);assert.equal(s.factions.senate.manpower,before.crew-45);assert.equal(queueShip(s,'senate','italiaS','trireme').ok,false);for(let i=0;i<result.months-1;i++)advanceNaval(s);assert.equal(f.ships.merchant||0,0);advanceNaval(s);assert.equal(f.ships.merchant,1)
 });
+test('a captured shipyard cancels unfinished ships before launch',()=>{
+ const s=newGrandGame('senate'),messages=[];s.month=2;
+ assert.equal(queueShip(s,'senate','italiaS','merchant').ok,true);
+ s.naval.queues.find(q=>q.owner==='senate').remaining=1;
+ s.regions.find(r=>r.id==='italiaS').owner='caesar';
+ advanceNaval(s,(_state,en,zh)=>messages.push({en,zh}));
+ assert.equal(s.naval.queues.some(q=>q.owner==='senate'),false);
+ assert.equal(s.naval.fleets.filter(f=>f.owner==='senate').reduce((n,f)=>n+(f.ships.merchant||0),0),0);
+ assert.ok(messages.some(m=>m.en.includes('Shipbuilding stopped')&&m.zh.includes('造船工程中止')));
+});
 test('fleet commander appointments cost pay, take travel time, and can be dismissed',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),person=Object.entries(s.world.characters).find(([id,p])=>p.faction==='senate'&&p.alive&&!p.missing&&p.loyalty>=35&&!s.armies.some(a=>a.characterId===id));assert.ok(person);s.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';const treasury=s.factions.senate.treasury,out=appointFleet(s,'senate',f.id,person[0]);assert.equal(out.ok,true);assert.equal(s.factions.senate.treasury,treasury-5);assert.equal(f.commanderId,null);for(let i=0;i<out.months;i++)advanceNaval(s);assert.equal(f.commanderId,person[0]);const loyalty=person[1].loyalty;assert.equal(dismissFleetCommander(s,'senate',f.id).ok,true);assert.equal(f.commanderId,null);assert.equal(person[1].loyalty,loyalty-2)
 });
