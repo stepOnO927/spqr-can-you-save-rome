@@ -243,8 +243,8 @@ function bind(){
   document.querySelector('#political').onclick=()=>{mapMode='political';render()};document.querySelector('#terrain-map').onclick=()=>{mapMode='terrain';render()};
   const zoom=factor=>{const w=Math.min(1200,Math.max(300,view[2]*factor)),h=Math.min(650,Math.max(162.5,view[3]*factor));view=[Math.max(0,Math.min(1200-w,view[0]+(view[2]-w)/2)),Math.max(0,Math.min(650-h,view[1]+(view[3]-h)/2)),w,h];render()};
   document.querySelector('#zoom-in').onclick=()=>zoom(.8);document.querySelector('#zoom-out').onclick=()=>zoom(1.25);
-  const svg=document.querySelector('#map-svg');svg.onwheel=e=>{e.preventDefault();zoom(e.deltaY<0?.8:1.25)};
-  let drag=null;svg.onpointerdown=e=>{if(e.target.closest('[data-map-group],[data-army]'))return;drag={x:e.clientX,y:e.clientY,v:[...view]};svg.setPointerCapture(e.pointerId)};svg.onpointermove=e=>{if(!drag)return;const box=svg.getBoundingClientRect();view[0]=Math.max(0,Math.min(1200-view[2],drag.v[0]-(e.clientX-drag.x)*view[2]/box.width));view[1]=Math.max(0,Math.min(650-view[3],drag.v[1]-(e.clientY-drag.y)*view[3]/box.height));svg.setAttribute('viewBox',view.join(' '))};svg.onpointerup=()=>{drag=null};
+  const svg=document.querySelector('#map-svg');if(svg){svg.onwheel=e=>{e.preventDefault();zoom(e.deltaY<0?.8:1.25)};
+  let drag=null;svg.onpointerdown=e=>{if(e.target.closest('[data-map-group],[data-army]'))return;drag={x:e.clientX,y:e.clientY,v:[...view]};svg.setPointerCapture(e.pointerId)};svg.onpointermove=e=>{if(!drag)return;const box=svg.getBoundingClientRect();view[0]=Math.max(0,Math.min(1200-view[2],drag.v[0]-(e.clientX-drag.x)*view[2]/box.width));view[1]=Math.max(0,Math.min(650-view[3],drag.v[1]-(e.clientY-drag.y)*view[3]/box.height));svg.setAttribute('viewBox',view.join(' '))};svg.onpointerup=()=>{drag=null};}
   bindImperium({state,lang,render,flash,log:imperiumLog});
 }
 render();
