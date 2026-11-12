@@ -95,3 +95,23 @@ export const physicalStyle={
   {id:'coastline-finish',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,1,8,1.8],'line-opacity':.9}}
  ]
 };
+
+// These separate source bounds avoid requesting empty sea or land tiles across
+// the large gaps between the remaining eastern and North African theaters.
+const regionalDetail=[
+ ['pontic',[30,38,38,47]],
+ ['armenia',[39,36,46,42]],
+ ['syria',[34,32,40,38]],
+ ['parthia',[42,30,51,38]],
+ ['leptis',[12,31,16,34]]
+];
+const localLayers=[];
+for(const [region,bounds] of regionalDetail)for(const [level,zoom] of [['ultra',8],['higher',9]]){
+ const source=`elevation-${region}-${level}`;
+ physicalStyle.sources[source]={type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:zoom,maxzoom:zoom,bounds,attribution:terrainAttribution};
+ localLayers.push(
+  {id:`land-${source}`,type:'color-relief',source,minzoom:zoom,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
+  {id:`relief-${region}-${level}`,type:'hillshade',source,minzoom:zoom,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}}
+ );
+}
+physicalStyle.layers.splice(physicalStyle.layers.findIndex(layer=>layer.id==='land-elevation-ultra'),0,...localLayers);

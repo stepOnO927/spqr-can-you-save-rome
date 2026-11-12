@@ -159,12 +159,12 @@ try{
  catch(error){const status=await page.locator('#status').evaluate(el=>({display:el.style.display,text:el.textContent})).catch(()=>null);throw Error(`Atlas reload did not finish: ${JSON.stringify({status,errors,missingTerrain:missingTerrain.slice(-8)})}`,{cause:error})}
  await page.waitForTimeout(1400);
  terrainRequests.length=0;
- const aegeanCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');map.jumpTo({center:[27.1,38.6],zoom:9.1});return map.getCenter().toArray()});
+ const aegeanCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=209');map.jumpTo({center:[27.1,38.6],zoom:9.1});return map.getCenter().toArray()});
  assert.ok(Math.abs(aegeanCenter[0]-27.1)<.1&&Math.abs(aegeanCenter[1]-38.6)<.1,'Aegean screenshot must actually focus on the coast');
  await waitForTerrain(/\/terrain\/9\/294\//,'Aegean maximum zoom did not use bundled high-detail terrain');
  assert.deepEqual(missingTerrain,[],'Aegean maximum zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Aegean terrain unexpectedly needed the network');
- const aegeanRelief=()=>page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');return ['relief-aegean-ultra','relief-aegean-higher'].map(id=>({visibility:map.getLayoutProperty(id,'visibility')||'visible',strength:map.getPaintProperty(id,'hillshade-exaggeration')}))});
+ const aegeanRelief=()=>page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=209');return ['relief-aegean-ultra','relief-aegean-higher'].map(id=>({visibility:map.getLayoutProperty(id,'visibility')||'visible',strength:map.getPaintProperty(id,'hillshade-exaggeration')}))});
  assert.deepEqual(await aegeanRelief(),[{visibility:'visible',strength:.32},{visibility:'visible',strength:.32}]);
  await page.locator('#relief-toggle').click();
  assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['none','none']);
@@ -172,17 +172,17 @@ try{
  assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['visible','visible']);
  if(process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT){await page.waitForTimeout(650);await page.screenshot({path:process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT})}
  terrainRequests.length=0;
- const iberianCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');map.jumpTo({center:[-4.78,37.888],zoom:9.1});return map.getCenter().toArray()});
+ const iberianCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=209');map.jumpTo({center:[-4.78,37.888],zoom:9.1});return map.getCenter().toArray()});
  assert.ok(Math.abs(iberianCenter[0]+4.78)<.1&&Math.abs(iberianCenter[1]-37.888)<.1,'Iberian check must focus on Corduba');
  await waitForTerrain(/\/terrain\/9\/249\//,'Iberian maximum zoom did not use native zoom-9 terrain');
- await page.waitForFunction(async()=>{const {map}=await import('/map-lab/lab.js?v=208');return map.isSourceLoaded('elevation-iberia-ultra')&&map.isSourceLoaded('elevation-iberia-higher')},null,{timeout:45000});
+ await page.waitForFunction(async()=>{const {map}=await import('/map-lab/lab.js?v=209');return map.isSourceLoaded('elevation-iberia-ultra')&&map.isSourceLoaded('elevation-iberia-higher')},null,{timeout:45000});
  assert.deepEqual(missingTerrain,[],'Iberian close zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Iberian terrain unexpectedly needed the network');
- assert.equal(await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');return map.getPaintProperty('relief-iberia-higher','hillshade-exaggeration')}),.32);
+ assert.equal(await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=209');return map.getPaintProperty('relief-iberia-higher','hillshade-exaggeration')}),.32);
  terrainRequests.length=0;
- await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');map.jumpTo({center:[-2.448,41.808],zoom:9.1})});
+ await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=209');map.jumpTo({center:[-2.448,41.808],zoom:9.1})});
  await waitForTerrain(/\/terrain\/9\/252\//,'Numantia maximum zoom did not use native Iberian terrain');
- await page.waitForFunction(async()=>{const {map}=await import('/map-lab/lab.js?v=208');return map.isSourceLoaded('elevation-iberia-higher')},null,{timeout:45000});
+ await page.waitForFunction(async()=>{const {map}=await import('/map-lab/lab.js?v=209');return map.isSourceLoaded('elevation-iberia-higher')},null,{timeout:45000});
  assert.deepEqual(missingTerrain,[],'Numantia close zoom requested missing terrain tiles');
  if(page.viewportSize().width>=1000)await page.waitForFunction(()=>{
   const source=document.querySelector('#map canvas.maplibregl-canvas');if(!source)return false;
@@ -194,14 +194,34 @@ try{
  },null,{timeout:45000,polling:400});
  if(process.env.SPQR_ATLAS_IBERIA_Z9_SCREENSHOT){await page.waitForTimeout(400);await page.screenshot({path:process.env.SPQR_ATLAS_IBERIA_Z9_SCREENSHOT})}
  terrainRequests.length=0;
- const gallicCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');map.jumpTo({center:[3.136,45.72],zoom:9.1});return map.getCenter().toArray()});
+ const gallicCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=209');map.jumpTo({center:[3.136,45.72],zoom:9.1});return map.getCenter().toArray()});
  assert.ok(Math.abs(gallicCenter[0]-3.136)<.1&&Math.abs(gallicCenter[1]-45.72)<.1,'Gallic close zoom must focus on Gergovia');
  await waitForTerrain(/\/terrain\/9\/260\//,'Gallic maximum zoom did not use native zoom-9 terrain');
- await page.waitForFunction(async()=>{const {map}=await import('/map-lab/lab.js?v=208');return map.isSourceLoaded('elevation-gaul-ultra')&&map.isSourceLoaded('elevation-gaul-higher')},null,{timeout:45000});
+ await page.waitForFunction(async()=>{const {map}=await import('/map-lab/lab.js?v=209');return map.isSourceLoaded('elevation-gaul-ultra')&&map.isSourceLoaded('elevation-gaul-higher')},null,{timeout:45000});
  assert.deepEqual(missingTerrain,[],'Gallic close zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Gallic terrain unexpectedly needed the network');
- assert.equal(await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=208');return map.getPaintProperty('relief-gaul-higher','hillshade-exaggeration')}),.32);
+ assert.equal(await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=209');return map.getPaintProperty('relief-gaul-higher','hillshade-exaggeration')}),.32);
  if(process.env.SPQR_ATLAS_GAUL_Z9_SCREENSHOT){await page.waitForTimeout(4000);await page.screenshot({path:process.env.SPQR_ATLAS_GAUL_Z9_SCREENSHOT})}
+ for(const [region,lon,lat,tileX] of [
+  ['pontic',35.154,42.026,305],['armenia',44.58,39.885,319],['syria',36.16,36.2,307],
+  ['parthia',48.51,34.8,324],['leptis',14.293,32.638,276]
+ ]){
+  terrainRequests.length=0;
+  const center=await page.evaluate(async({lon,lat})=>{const {map}=await import('/map-lab/lab.js?v=209');map.jumpTo({center:[lon,lat],zoom:9.1});return map.getCenter().toArray()},{lon,lat});
+  assert.ok(Math.abs(center[0]-lon)<.1&&Math.abs(center[1]-lat)<.1,`${region} close zoom must reach its named site`);
+  await waitForTerrain(new RegExp(`/terrain/9/${tileX}/`),`${region} maximum zoom did not request native terrain`);
+  await page.waitForFunction(async region=>{const {map}=await import('/map-lab/lab.js?v=209');return map.isSourceLoaded(`elevation-${region}-higher`)},region,{timeout:45000});
+  assert.deepEqual(missingTerrain,[],`${region} close zoom requested missing terrain tiles`);
+  assert.equal(await page.evaluate(async region=>{const {map}=await import('/map-lab/lab.js?v=209');return map.getPaintProperty(`relief-${region}-higher`,'hillshade-exaggeration')},region),.32);
+  if(region==='armenia'){
+   const visibility=()=>page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=209');return map.getLayoutProperty('relief-armenia-higher','visibility')||'visible'});
+   await page.locator('#relief-toggle').click();assert.equal(await visibility(),'none','Armenian detail must honor relief off');
+   await page.locator('#relief-toggle').click();assert.equal(await visibility(),'visible','Armenian detail must honor relief on');
+  }
+  const screenshot=process.env[`SPQR_ATLAS_${region.toUpperCase()}_Z9_SCREENSHOT`];
+  if(screenshot){await page.waitForTimeout(4000);await page.screenshot({path:screenshot})}
+ }
+ assert.equal(external.includes('s3.amazonaws.com'),false,'Remaining regional terrain unexpectedly needed the network');
  await page.locator('#resources-help').click();assert.match(await page.locator('.national-budget').innerText(),/Home domain dues · game estimate/);
  await page.locator('#language').click();assert.match(await page.locator('.national-budget').innerText(),/本土领地储粮 · 游戏估算/);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'the translated budget must not overflow the screen');
@@ -216,5 +236,5 @@ try{
  await waitForTerrain(/\/terrain\/7\/(7[8-9]|8[0-2])\//,'Armenian zoom 7 did not use bundled mountain terrain');
  assert.deepEqual(missingTerrain,[],'Armenian mountain zoom requested missing terrain tiles');
  if(process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT});
- console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and Italy, the Aegean, Iberia, Gaul and Egypt through zoom 9.');
+ console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and native zoom 8-9 relief at every settlement anchor.');
 }finally{await browser.close()}
