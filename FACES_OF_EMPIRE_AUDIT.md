@@ -73,12 +73,20 @@ orders, shipments and deliveries in English and Chinese. A Chromium smoke
 test places an order and checks delivery and save/load. Old and new trade
 treaties grant market access instead of generating one treasury unit per
 party each month without a payer. This is a first commercial behavior, not
-the requested merchant-character network or continental competition. The
+the requested continental merchant competition. Orders now acquire a saved,
+culture-named buyer-side merchant with a portrait and inspectable dossier.
+The merchant is paid a measured share of the prepaid transport charge only
+on delivery; the remainder is recorded as transport spending. Old in-flight
+orders gain one stable carrier without changing their stock reservation or
+escrow. A carrier committed to an active shipment cannot be sent on an
+unrelated personal journey. This is a first merchant-character integration;
+the merchant still does not plan independently of its faction's trade AI. The
 Roman campaign's optional Han NPC simulation still uses abstract silk income
 and has not yet been joined to the physical market ledger.
 The 120-month market simulation verifies that at least four AI courts place
 orders against real surplus, deliveries complete, stocks and prices remain
-bounded, escrow resolves, and save migration works halfway through.
+bounded, escrow resolves, merchant IDs persist, transport fees balance, and
+save migration works halfway through.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, major fixed portraits, additional routes to fictional sovereignty,

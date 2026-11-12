@@ -1,6 +1,8 @@
 import {ROUTES} from './data.js?v=phase-x-1';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
 import {ROUTES as EURASIAN_ROUTES,REGIONS as EURASIAN_REGIONS} from './han/data.js?v=han-1';
+import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=faces-empire-2';
+import {generateFictionalName} from './fictional-names.js?v=faces-of-empire-1';
 
 // One unit is an economic batch, not a single animal or artifact. Prices use
 // the campaign's treasury scale. Production and consumption remain separate
@@ -47,14 +49,30 @@ function profile(r,good){
  return {production,consumption,stock:Math.max(0,production*4+2-consumption),price:COMMODITIES[good].basePrice};
 }
 export function initializeMarkets(s){
- const markets=s.markets||={regions:{},shipments:[],transactions:[],nextShipment:1,tariffs:{},lastTick:null,transportSpent:0,transitTreasury:{}};
+ const markets=s.markets||={regions:{},shipments:[],transactions:[],nextShipment:1,tariffs:{},lastTick:null,transportSpent:0,transitTreasury:{},merchants:{},merchantFees:0};
  markets.regions||={};markets.shipments||=[];markets.transactions||=[];markets.tariffs||={};markets.nextShipment||=1;markets.transportSpent??=0;markets.transitTreasury||={};
+ markets.merchants||={};markets.merchantFees??=0;
+ for(const [buyer,ids] of Object.entries(markets.merchants))if(!Array.isArray(ids))markets.merchants[buyer]=ids?[ids]:[];
  for(const r of s.regions){
   const market=markets.regions[r.id]||={id:r.id,goods:{},disruption:0};market.goods||={};
   for(const good of Object.keys(COMMODITIES))market.goods[good]||=profile(r,good);
   markets.regions[r.id]=market;
  }
+ // Earlier in-flight orders had no named carrier. Assign one once, while
+ // retaining the original inventory reservation and escrow unchanged.
+ for(const shipment of markets.shipments)if(['traveling','blocked'].includes(shipment.status)&&!shipment.merchantId&&s.factions[shipment.buyer])shipment.merchantId=merchantFor(s,shipment.buyer,shipment.origin);
  return markets;
+}
+
+function merchantFor(s,buyer,location){
+ const markets=s.markets,previous=markets.merchants[buyer]||[],available=previous.find(id=>s.world.characters[id]?.alive&&!markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status)));
+ if(available)return available;
+ const identity=generateFictionalName(s,{originFaction:buyer,location});
+ const id=createFictionalPerson(s,{...identity,faction:buyer,birthYear:s.year-35,location,sex:'unknown',role:['Fictional merchant','虚构商人'],wealth:0});
+ const person=s.world.characters[id];person.institutionalOnly=true;person.profession='merchant';person.title=['Caravan merchant','商队商人'];
+ markets.merchants[buyer]=[...previous,id];
+ recordLifeEvent(s,id,'Entered the campaign market network.','加入战役商贸网络。');
+ return id;
 }
 
 export function marketPrice(market,good){
@@ -99,8 +117,9 @@ export function placeTradeOrder(s,request){
  const quote=quoteTrade(s,request);if(!quote.ok)return quote;
  if(request.maxTotal!=null&&(!Number.isFinite(request.maxTotal)||quote.total>request.maxTotal))return {ok:false,reason:'price'};
  const markets=s.markets,source=markets.regions[request.origin].goods[request.commodity];
+ const merchantId=merchantFor(s,request.buyer,request.origin);
  source.stock-=request.quantity;s.factions[request.buyer].treasury-=quote.total;
- const shipment={id:`shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,route:quote.route,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month};
+ const shipment={id:`shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,merchantId,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,route:quote.route,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month};
  markets.shipments.push(shipment);return {ok:true,shipment,quote};
 }
 
@@ -126,9 +145,11 @@ export function advanceMarkets(s){
   markets.regions[shipment.destination].goods[shipment.commodity].stock+=shipment.quantity;
   s.factions[shipment.seller].treasury+=shipment.price;
   for(const tariff of shipment.tariffs)if(s.factions[tariff.owner])s.factions[tariff.owner].treasury+=tariff.amount;else markets.transitTreasury[tariff.owner]=(markets.transitTreasury[tariff.owner]||0)+tariff.amount;
-  markets.transportSpent+=shipment.transport;
+  const merchant=shipment.merchantId&&s.world.characters[shipment.merchantId],fee=merchant?.alive?Math.min(shipment.transport,Math.ceil(shipment.transport/4)):0;
+  if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.location=shipment.destination;recordLifeEvent(s,merchant.id,`Delivered ${shipment.quantity} batches of ${shipment.commodity} to ${destination.name[0]}.`,`向${destination.name[1]}运抵${shipment.quantity}批${COMMODITIES[shipment.commodity].name[1]}。`)}
+  markets.transportSpent+=shipment.transport-fee;markets.merchantFees+=fee;
   shipment.escrow=0;shipment.status='delivered';shipment.deliveredYear=s.year;shipment.deliveredMonth=s.month;
-  markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,commodity:shipment.commodity,quantity:shipment.quantity,price:shipment.price,transport:shipment.transport,tariffs:shipment.tariffs,year:s.year,month:s.month});
+  markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,merchantId:shipment.merchantId||null,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:shipment.price,transport:shipment.transport,tariffs:shipment.tariffs,year:s.year,month:s.month});
   if(markets.transactions.length>200)markets.transactions.shift();
   if(shipment.seller===s.player||shipment.buyer===s.player){const item=COMMODITIES[shipment.commodity].name;s.log.unshift({year:s.year,month:s.month,en:`${shipment.quantity} ${item[0]} trade batches reached ${destination.name[0]}.`,zh:`${shipment.quantity}批${item[1]}运抵${destination.name[1]}。`});s.log=s.log.slice(0,80)}
  }

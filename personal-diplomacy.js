@@ -28,7 +28,7 @@ export function personalDiplomaticCredit(s,actor,target){
 // Civilian journeys use the campaign theater graph, not precise historical roads.
 export function previewPersonTravel(s,id,destination){
  initializeWorld(s);const c=s.world.characters[id],owner=s.player;
- if(!c||c.faction!==owner||!c.alive||c.missing||!c.location||c.travel||officeOf(s,owner,id)||['seriously_ill','dying','deceased'].includes(c.health)||s.armies.some(a=>a.characterId===id))return {ok:false,reason:'unavailable'};
+ if(!c||c.faction!==owner||!c.alive||c.missing||!c.location||c.travel||officeOf(s,owner,id)||['seriously_ill','dying','deceased'].includes(c.health)||s.armies.some(a=>a.characterId===id)||s.markets?.shipments?.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status)))return {ok:false,reason:'unavailable'};
  if(c.location===destination||!s.regions.some(r=>r.id===destination))return {ok:false,reason:'destination'};
  const distances={[c.location]:0},paths={[c.location]:[]},unvisited=new Set(s.regions.map(r=>r.id));
  while(unvisited.size){const current=[...unvisited].filter(x=>distances[x]!==undefined).sort((a,b)=>distances[a]-distances[b])[0];if(!current)break;unvisited.delete(current);if(current===destination)break;

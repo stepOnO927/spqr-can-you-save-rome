@@ -26,9 +26,11 @@ for(let i=0;i<120;i++){
  for(const shipment of state.markets.shipments){
   assert.ok(shipment.quantity>=1&&shipment.quantity<=20);
   assert.ok(shipment.escrow>=0);
+  assert.ok(state.world.characters[shipment.merchantId],`missing merchant for ${shipment.id}`);
   if(shipment.status==='delivered')assert.equal(shipment.escrow,0);
  }
 }
-const summary={months:120,year:state.year,month:state.month,openingBuyers:openingOrders.map(x=>x.buyer),shipments:state.markets.shipments.length,delivered:state.markets.transactions.length,blocked:state.markets.shipments.filter(x=>x.status==='blocked').length,transportSpent:state.markets.transportSpent,treasuryChange:Object.fromEntries(Object.entries(initialTreasury).map(([id,before])=>[id,(state.factions[id]?.treasury??0)-before]))};
+assert.equal(state.markets.transportSpent+state.markets.merchantFees,state.markets.transactions.reduce((sum,x)=>sum+x.transport,0),'transport payments must have one destination');
+const summary={months:120,year:state.year,month:state.month,openingBuyers:openingOrders.map(x=>x.buyer),shipments:state.markets.shipments.length,delivered:state.markets.transactions.length,blocked:state.markets.shipments.filter(x=>x.status==='blocked').length,merchants:Object.keys(state.markets.merchants).length,merchantFees:state.markets.merchantFees,transportSpent:state.markets.transportSpent,treasuryChange:Object.fromEntries(Object.entries(initialTreasury).map(([id,before])=>[id,(state.factions[id]?.treasury??0)-before]))};
 assert.ok(summary.delivered>=4,'the four opening orders must result in actual deliveries');
 console.log(JSON.stringify(summary));

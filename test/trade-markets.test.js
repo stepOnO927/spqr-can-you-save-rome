@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=faces-empire-2';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=newborn-age-1';
 
 const deal=()=>{
  const s=newGame('armenia');s.relations['armenia:parthia']=45;
@@ -26,6 +27,9 @@ test('a horse order escrows goods and money, travels, then pays and delivers exa
  const s=deal(),quote=quoteTrade(s,request),stock=s.markets.regions.parthia.goods.horses.stock,buyerMoney=s.factions.armenia.treasury,sellerMoney=s.factions.parthia.treasury;
  assert.equal(quote.ok,true);assert.ok(quote.months>=1);assert.deepEqual(quote.route,['parthia','armenia']);
  const result=placeTradeOrder(s,request);assert.equal(result.ok,true);
+ assert.ok(s.world.characters[result.shipment.merchantId]);
+ assert.equal(s.world.characters[result.shipment.merchantId].profession,'merchant');
+ assert.equal(previewPersonTravel(s,result.shipment.merchantId,'parthia').reason,'unavailable');
  assert.equal(s.markets.regions.parthia.goods.horses.stock,stock-2);
  assert.equal(s.factions.armenia.treasury,buyerMoney-quote.total);
  assert.equal(s.factions.parthia.treasury,sellerMoney);
@@ -36,11 +40,12 @@ test('a horse order escrows goods and money, travels, then pays and delivers exa
  assert.equal(loaded.markets.shipments[0].status,'delivered');
  assert.equal(loaded.markets.shipments[0].escrow,0);
  assert.equal(loaded.factions.parthia.treasury,sellerMoney+quote.price);
- assert.equal(loaded.markets.transportSpent,quote.transport);
+ assert.equal(loaded.markets.transportSpent+loaded.markets.merchantFees,quote.transport);
+ assert.equal(loaded.world.characters[result.shipment.merchantId].wealth,loaded.markets.merchantFees);
  assert.equal(loaded.markets.regions.armenia.goods.horses.stock,destination+quote.months*(local.production-local.consumption)+2);
  assert.equal(loaded.markets.transactions.length,1);
  advanceMarkets(loaded);assert.equal(loaded.markets.transactions.length,1);
- assert.equal(loaded.markets.transportSpent,quote.transport);
+ assert.equal(loaded.markets.transportSpent+loaded.markets.merchantFees,quote.transport);
  assert.equal(upgradeSave(structuredClone(loaded)).markets.transactions.length,1);
 });
 
@@ -80,7 +85,8 @@ test('Han silk travels through independent oasis and Central Asian markets, with
  assert.equal(saved.factions.han.treasury,sellerCash+quote.price);
  assert.equal(saved.factions.shanshan.treasury,shanshanCash+quote.tariffs.find(x=>x.owner==='shanshan').amount);
  assert.equal(saved.markets.transitTreasury.yuezhi,quote.tariffs.find(x=>x.owner==='yuezhi').amount);
- assert.equal(saved.markets.transactions.length,1);assert.equal(saved.markets.transportSpent,quote.transport);
+ assert.equal(saved.markets.transactions.length,1);assert.equal(saved.markets.transportSpent+saved.markets.merchantFees,quote.transport);
+ assert.equal(saved.markets.transactions[0].merchantId,saved.markets.shipments[0].merchantId);
  assert.equal(shipment.status,'traveling','serialized state advances independently');
 });
 
@@ -90,6 +96,24 @@ test('old saves gain markets once without changing existing treasury or region o
  assert.equal(restored.factions.caesar.treasury,cash);
  assert.deepEqual(restored.regions.map(r=>r.owner),owners);
  assert.deepEqual(restored.markets.transitTreasury,{});
+ assert.deepEqual(restored.markets.merchants,{});
  assert.deepEqual(again.markets,restored.markets);
  assert.equal(Object.keys(initializeMarkets(again).regions).length,again.regions.length);
+});
+
+test('an older in-flight order gains one stable merchant without changing escrow',()=>{
+ const s=deal(),shipment=placeTradeOrder(s,request).shipment,escrow=shipment.escrow;
+ delete shipment.merchantId;delete s.markets.merchants;delete s.markets.merchantFees;
+ const restored=upgradeSave(structuredClone(s)),id=restored.markets.shipments[0].merchantId;
+ assert.ok(id);assert.equal(restored.markets.shipments[0].escrow,escrow);
+ assert.equal(upgradeSave(structuredClone(restored)).markets.shipments[0].merchantId,id);
+});
+
+test('parallel caravans receive separate merchants and preserve both identities',()=>{
+ const s=deal(),first=placeTradeOrder(s,request),second=placeTradeOrder(s,request);
+ assert.equal(first.ok,true);assert.equal(second.ok,true);
+ assert.notEqual(first.shipment.merchantId,second.shipment.merchantId);
+ assert.equal(s.markets.merchants.armenia.length,2);
+ const restored=upgradeSave(structuredClone(s));
+ assert.deepEqual(restored.markets.shipments.map(x=>x.merchantId),[first.shipment.merchantId,second.shipment.merchantId]);
 });
