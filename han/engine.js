@@ -44,7 +44,7 @@ export function newHanGame(player='han',{scenario='historical',difficulty='stand
  const s={dlc:DLC_ID,version:SAVE_VERSION,scenario,difficulty,player,seed:seed??(Date.now()%2147483647),year:startYear,month:startMonth,startMode:start,scheduled:[],
   regions:REGIONS.map(r=>({...r,name:[...r.name]})),factions:{},armies:[],persons:{},genealogy:{},
   throne:{orthodox:null,lastOrthodox:'liu-xun',occupant:null,regent:null,deFacto:null,heir:null,puppet:null,claimants:[],deposed:[],support:{},history:[],dynasty:{id:'han',name:['Han','汉'],orthodox:true,founder:'liu-bang'},restorations:0,usurpations:0,displaced:false},
-  relations:{},treaties:[],wars:[],proposals:[],pendingRequests:[],coalitions:[],focus:{},templates:{},log:[],taxLevel:'normal',militaryRecord:0,crises:[],stats:{provenAudits:0,battlesWon:0,startMonth:0},finalized:null};
+  relations:{},treaties:[],wars:[],proposals:[],pendingRequests:[],coalitions:[],focus:{},templates:{},log:[],taxLevel:'normal',militaryRecord:0,crises:[],stats:{provenAudits:0,battlesWon:0,startMonth:0},finalized:null,noArmyWarMonths:0,territorylessMonths:0};
  s.stats.startMonth=monthIndex(s);
  for(const id of Object.keys(FACTIONS))if(!FACTIONS[id].dynamic)s.factions[id]={id,...(RES[id]||{treasury:20,grain:30,manpower:6000,horses:3000,stability:55})};
  // people and their birth records (historical records come from people.js)
@@ -198,6 +198,7 @@ function sieges(s){
    const prev=r.owner,taker=r.siege.by;r.owner=taker;r.loyalty=30;r.siege=null;
    if(OASIS.includes(prev)&&taker==='han'){for(const o of OASIS){const st=s.protectorate.oasis[o];st.concern=clamp(st.concern+20);st.han=clamp(st.han-8)}log(s,['Direct annexation of an oasis alarms every Western Regions ruler.','直接吞并城郭之国，令西域诸王震恐。'],{kind:'frontier'})}
    log(s,['%REGION% falls to %FACTION%.','%REGION%为%FACTION%所得。'],{region:r.id,faction:taker,kind:'war'});
+   if(prev===s.player)s.lastPlayerTerritoryLoss={region:r.id,to:taker,year:s.year,month:s.month};
    if(!s.regions.some(x=>x.owner===prev)&&s.factions[prev]){s.factions[prev].defeated=true;s.wars=s.wars.filter(w=>!w.includes(prev))}
   }
  }
@@ -279,6 +280,18 @@ function regionalAI(s){
   }
  }
 }
+function settleCampaign(s){
+ if(!s.player||s.finalized)return;
+ const land=s.regions.some(r=>r.owner===s.player),army=s.armies.some(a=>a.owner===s.player&&a.men>0);
+ const war=s.wars.some(w=>w.includes(s.player));
+ s.territorylessMonths=land?0:(s.territorylessMonths||0)+1;
+ s.noArmyWarMonths=army||!war?0:(s.noArmyWarMonths||0)+1;
+ if(!army&&war&&s.noArmyWarMonths===1)log(s,['No field army remains. Raise a new force or the campaign will collapse.','已无野战军。须尽速重建军队，否则战役将崩溃。'],{kind:'warning',faction:s.player});
+ const reason=!land&&!army?'conquest':!army&&war&&s.noArmyWarMonths>=6?'army_collapse':!land&&s.territorylessMonths>=12?'exile':null;
+ if(!reason)return;
+ s.finalized={outcome:'defeat',reason,year:s.year,month:s.month,regions:s.regions.filter(r=>r.owner===s.player).length,armies:s.armies.filter(a=>a.owner===s.player&&a.men>0).length};
+ log(s,[reason==='army_collapse'?'Campaign lost: six months without a field army in wartime.':'Campaign lost: the realm has no power left to recover its territory.',reason==='army_collapse'?'战役失败：交战期间连续六个月没有野战军。':'战役失败：已无力量收复失地。'],{kind:'finale',faction:s.player});
+}
 export function tick(s){
  if(s.finalized)return s;
  advanceDate(s);
@@ -289,6 +302,7 @@ export function tick(s){
  if(s.throne.dynasty&&!s.throne.dynasty.orthodox)s.usurperMonths=(s.usurperMonths||0)+1;
  if(s.throne.orthodox&&s.throne.dynasty?.orthodox)s.orthodoxMonths=(s.orthodoxMonths||0)+1;
  if(!s.wars.length)s.peaceMonths=(s.peaceMonths||0)+1;else s.peaceMonths=0;
+ settleCampaign(s);
  return s;
 }
 
@@ -305,12 +319,15 @@ export function loadHanSave(raw){
  for(const [id,f] of Object.entries(FACTIONS))if(!f.dynamic&&!s.factions[id])s.factions[id]={id,treasury:20,grain:30,manpower:6000,horses:3000,stability:55};
  s.rulers||=Object.fromEntries(EURASIAN_RULERS.map(p=>[p.faction,{...p,attested:true}]));
  ensureForeignRulers(s);
+ s.noArmyWarMonths??=0;s.territorylessMonths??=0;
  initDependencies(s);
  // Older saves did not date opening appointments. Begin the observation clock
  // at load instead of exposing a guessed historical tenure or private skill.
  for(const [office,id] of Object.entries(s.court?.offices||{}))if(id&&s.persons[id]?.alive&&s.persons[id].office===office)s.persons[id].officeSince??={year:s.year,month:s.month};
  s.version=SAVE_VERSION;s.throne.claimants||=[];s.throne.support||={};s.throne.history||=[];
  const fixes=enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
- s.loadFixes=fixes;initializeEasternMarkets(s);ensureFieldCommanders(s);computeMandate(s);return s;
+ s.loadFixes=fixes;initializeEasternMarkets(s);ensureFieldCommanders(s);computeMandate(s);
+ if(s.player&&!s.finalized&&!s.regions.some(r=>r.owner===s.player)&&!s.armies.some(a=>a.owner===s.player&&a.men>0))settleCampaign(s);
+ return s;
 }
 export {statusOf,eligibility,claimStrength,emperorAuthority,adminCapacity};

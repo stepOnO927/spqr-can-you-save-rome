@@ -152,6 +152,14 @@ languages, and older saves gain missing links without overwriting a recorded
 ruler. Targeted tests cover Parthia, Armenia, Wusun, Kangju and Shanshan,
 plus save restoration and a Kangju browser succession. The Roman campaign's
 separate succession model still needs the full cross-campaign acceptance run.
+The standalone Han campaign now settles a player defeat when no land and no
+field army remain, after six wartime months without a field army, or after a
+year of territorial exile without recovery. The final state stores the
+reason, date and remaining forces; the playable screen shows a bilingual
+summary and stops month advancement. Peace without armies remains recoverable.
+An actual siege loss records a recent territory alert in the realm overview.
+Unit and Chromium tests cover defeat, save/load, a frozen date and the
+bilingual alert. The embedded NPC eastern simulation does not self-finalize.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,
