@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=letter-cost-1';
-import {createCharacterUI} from '../map-lab/character-ui.js?v=letter-cost-1';
-import {addReport} from '../character-system.js?v=succession-feedback-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=civic-portraits-1';
+import {newGame,upgradeSave} from '../engine.js?v=mission-discount-1';
+import {createCharacterUI} from '../map-lab/character-ui.js?v=mission-discount-1';
+import {addReport,queueMission} from '../character-system.js?v=mission-discount-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=mission-discount-1';
 import {createFictionalPerson} from '../dynasties.js';
 
 // A small DOM stub exercises the real handler without requiring a network listener.
@@ -171,6 +171,12 @@ test('claimant support exposes only the player’s established personal contacts
 test('a held agent can be sent a release request from the diplomacy panel',()=>{
  const prior=globalThis.document,s=newGame('senate'),content=new Element();s.world.captives.push({id:'p1',owner:'senate',holder:'egypt',state:'held'});let refreshed=0;globalThis.document={createElement:tag=>new Element(tag)};
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{},onStateChanged:()=>refreshed++});ui.addMissions(content,'egypt');const box=content.children[3],cash=s.factions.senate.treasury;assert.match(box.innerHTML,/未具名被俘人员/);box.releases[0].onclick();box.querySelector('#release-feedback').children[0].onclick();assert.equal(s.factions.senate.treasury,cash-8);assert.equal(s.releaseRequests[0].remaining,4);assert.equal(refreshed,1)}finally{globalThis.document=prior}
+});
+test('mission and captive lists show the same saved agent name',()=>{
+ const prior=globalThis.document,s=newGame('senate'),content=new Element(),mission=queueMission(s,'senate','egypt','spy','health');
+ s.world.captives.push({id:'saved-captive',owner:'senate',holder:'egypt',personId:mission.agentId,state:'held'});
+ globalThis.document={createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const name=s.world.dynasties.catalog[mission.agentId].name[1],missionBox=content.children.find(x=>x.querySelector('#mission-records')),captiveBox=content.children.find(x=>x.querySelector('#release-feedback'));assert.ok(missionBox);assert.ok(captiveBox);assert.match(missionBox.querySelector('#mission-records').innerHTML,new RegExp(name));assert.match(captiveBox.innerHTML,new RegExp(name))}finally{globalThis.document=prior}
 });
 test('foreign leadership cards use reported arrangements rather than hidden leadership',()=>{
  const prior=globalThis.document,s=newGame('caesar'),panel=new Element();globalThis.document={createElement:tag=>new Element(tag)};

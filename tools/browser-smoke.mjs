@@ -83,6 +83,7 @@ try{
  await page.locator('#mission-subject').selectOption('succession');await page.locator('[data-mission="spy"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/继任安排/);await page.locator('#mission-feedback button').last().click();
  await page.locator('#mission-subject').selectOption('stability');await page.locator('[data-mission="spy"]').click();assert.match(await page.locator('#mission-feedback').innerText(),/政治稳定度/);assert.match(await page.locator('#mission-feedback').innerText(),/关系降低10/);assert.match(await page.locator('#mission-feedback').innerText(),/可能被捕/);await page.locator('#mission-feedback button').first().click();
  assert.equal(await page.locator('#agent-available').innerText(),'2');
+ assert.match(await page.locator('#mission-records').innerText(),/间谍 · (?:盖乌斯|卢基乌斯|马库斯|普布利乌斯|奥卢斯)·/);
  for(let i=0;i<4;i++)await page.locator('#advance').click();
  await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/间谍/);

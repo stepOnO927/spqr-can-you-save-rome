@@ -42,7 +42,7 @@ export const IDEAS=[
  idea('legal_reform','government','Legal reform','法律整顿',['Stability +1 per month','每月稳定度+1'],['Monthly administration expense 2','每月行政支出2'],{stability:1,treasury:-2},23,5,[],url.law),
  idea('hardline_diplomacy','diplomacy','Hardline diplomacy','强硬外交',['Diplomatic pressure +10','外交施压+10'],['Foreign relations decay','与外国的关系逐渐恶化'],{pressure:10,relations:-1},19,4,[],url.law),
  idea('diplomatic_accommodation','diplomacy','Diplomatic accommodation','外交妥协',['Foreign relations recover','与外国关系逐渐恢复'],['Diplomatic pressure −10','外交施压−10'],{relations:1,pressure:-10},19,4,[],url.law),
- idea('intelligence_networks','diplomacy','Intelligence networks','情报网络',['Intelligence expense reduced','情报行动费用降低'],['Monthly agent expense 2','每月情报人员支出2'],{intelligence:1,treasury:-2},22,5,[],url.law),
+ idea('intelligence_networks','diplomacy','Intelligence networks','情报网络',['Inquiries and intelligence missions cost 1 less (minimum 1)','询问信与情报行动费用减少1（最低1）'],['Monthly agent expense 2','每月情报人员支出2'],{intelligence:1,treasury:-2},22,5,[],url.law),
  idea('client_influence','diplomacy','Client kingdom influence','附属王国影响',['Diplomatic pressure +5','外交施压+5'],['Monthly patronage expense 2','每月资助支出2'],{pressure:5,treasury:-2},22,5,[],url.law),
  idea('provincial_tenancy','economy','Provincial tenancy','行省租佃',['Tax receipts +5%','税收+5%'],['Local loyalty −1 per month','地方忠诚每月−1'],{tax:.05,loyalty:-1},19,4,[],url.tax),
  idea('tax_farming','economy','Tax farming oversight','包税监督',['Tax receipts +12%','税收+12%'],['Stability −1 per month','每月稳定度−1'],{tax:.12,stability:-1},21,4,[],url.tax),
@@ -82,22 +82,21 @@ export function advanceInventions(s){initializeInventions(s);for(const [owner,x]
  s.log=s.log.slice(0,80);
 }
 export function aiInnovation(s,owner){
- const x=inventionState(s,owner),f=s.factions[owner];
- // The Han court keeps a real treasury reserve for its long frontier supply
- // line. It receives no free money or research; it postpones discretionary work.
- const reserve=owner==='han'?170:38;
- if(!x||!f||f.treasury<reserve)return;
- const candidates=ALL.filter(i=>!canResearch(s,owner,i.id));
- if(!x.research&&candidates.length){const pick=candidates[(Math.abs(s.year*12+s.month+owner.length*7))%candidates.length];startResearch(s,owner,pick.id)}
+ const x=inventionState(s,owner),f=s.factions[owner];if(!x||!f||f.treasury<38)return;
+ // The distant Han court needs a war chest to defend its frontier and capital.
+ const reserve=owner==='han'?125:0;
+ const affordable=cost=>f.treasury-cost>=reserve;
+ const candidates=ALL.filter(i=>!canResearch(s,owner,i.id)&&affordable(i.cost));
+ if(!x.research&&candidates.length){const pick=candidates[Math.abs(s.year*12+s.month+owner.length*7)%candidates.length];startResearch(s,owner,pick.id)}
  if(s.month%4===0){
-  const project=s.regions.filter(r=>r.owner===owner).flatMap(r=>x.knownMaterial.map(id=>[r,id])).find(([r,id])=>!canConstruct(s,owner,r.id,id));
-  if(project&&f.treasury>(owner==='han'?205:50))startConstruction(s,owner,project[0].id,project[1]);
+  const project=s.regions.filter(r=>r.owner===owner).flatMap(r=>x.knownMaterial.map(id=>[r,id])).find(([r,id])=>!canConstruct(s,owner,r.id,id)&&affordable(byId(id).buildCost));
+  if(project&&f.treasury>50)startConstruction(s,owner,project[0].id,project[1]);
   const idea=x.knownIdeas.find(id=>!Object.values(x.active).flat().includes(id)&&!canEquip(s,owner,id));
-  if(idea&&f.treasury>(owner==='han'?195:50))equipIdea(s,owner,idea);
+  if(idea&&f.treasury>50&&affordable(8))equipIdea(s,owner,idea);
  }
  if(s.month%6===0&&!s.knowledgeTrades.some(t=>t.actor===owner)){
   const targets=Object.keys(s.inventions).filter(id=>id!==owner&&!s.wars?.some(w=>w.includes(id)&&w.includes(owner))&&connected(s,owner,id));
   const target=targets[(s.month+owner.length)%targets.length],wanted=ALL.find(i=>!x.knownMaterial.includes(i.id)&&!x.knownIdeas.includes(i.id)&&!s.knowledgeTrades.some(t=>t.actor===owner&&t.id===i.id));
-  if(target&&wanted&&f.treasury>(owner==='han'?205:65))requestKnowledge(s,owner,target,wanted.id);
+  if(target&&wanted&&f.treasury>65&&affordable(Math.max(12,Math.round(wanted.cost*.8))))requestKnowledge(s,owner,target,wanted.id);
  }
 }

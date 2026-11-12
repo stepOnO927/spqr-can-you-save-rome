@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=letter-cost-1';
-import {addReport,queueMission,advanceOperations,observeArmies} from '../character-system.js?v=succession-feedback-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=civic-portraits-1';
+import {newGame,upgradeSave} from '../engine.js?v=mission-discount-1';
+import {addReport,queueMission,advanceOperations,observeArmies} from '../character-system.js?v=mission-discount-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=mission-discount-1';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 function finish(s,actor,target,type,person,q){const task=queueMission(s,actor,target,type,'location',null,person);assert.equal(task.ok,true);s.world.intelSeed=seedFor(q,q+.01);for(let i=0;i<task.duration;i++)advanceOperations(s);return s.knowledge[actor][target].reports.find(r=>r.kind==='location')}

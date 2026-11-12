@@ -6,7 +6,7 @@ import {recordLifeEvent,assignFictionalFieldCommander} from './dynasties.js?v=sa
 export function availableCommanders(s,armyId){
  initializeWorld(s);const unit=s.armies.find(a=>a.id===armyId);
  if(!unit||unit.owner!==s.player||unit.men<=0||unit.move||unit.siege)return [];
- return Object.values(s.world.characters).filter(c=>c.faction===s.player&&(c.birthYear==null||s.year-c.birthYear>=20)&&c.alive&&c.location===unit.region&&!c.travel&&!c.missing&&!officeOf(s,s.player,c.id)&&!['seriously_ill','dying','deceased'].includes(c.health)&&!s.armies.some(a=>a.characterId===c.id)).map(c=>c.id);
+ return Object.values(s.world.characters).filter(c=>c.faction===s.player&&!c.institutionalOnly&&(c.birthYear==null||s.year-c.birthYear>=20)&&c.alive&&c.location===unit.region&&!c.travel&&!c.missing&&!officeOf(s,s.player,c.id)&&!['seriously_ill','dying','deceased'].includes(c.health)&&!s.armies.some(a=>a.characterId===c.id)).map(c=>c.id);
 }
 export function appointCommander(s,armyId,id){
  if(!availableCommanders(s,armyId).includes(id))return {ok:false,reason:'unavailable'};

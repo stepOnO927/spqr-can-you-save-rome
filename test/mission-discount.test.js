@@ -1,0 +1,9 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {newGame,tick,upgradeSave} from '../engine.js?v=mission-discount-1';import {missionCost,previewMission,queueMission} from '../character-system.js?v=mission-discount-1';
+const actions=[['spy','egypt','health',null,12],['envoy','egypt','leaders',null,8],['travelers','egypt','health',null,4],['audience','egypt','leaders',null,10],['exchange','egypt','health','parthia',6],['counter','caesar','conspiracy',null,8]];
+function setup(discount){const s=newGame('caesar');s.alliances.push(['caesar','parthia']);if(discount)s.inventions.caesar.active.diplomacy.push('intelligence_networks');return s}
+test('intelligence network reduces each mission by one and preview matches actual deduction',()=>{
+ for(const [type,target,subject,partner,base] of actions)for(const discount of [false,true]){const s=setup(discount),expected=base-(discount?1:0);s.factions.caesar.treasury=expected;assert.equal(missionCost(s,'caesar',type),expected);assert.equal(previewMission(s,'caesar',target,type,subject,partner).cost,expected);assert.equal(s.factions.caesar.treasury,expected);assert.equal(queueMission(s,'caesar',target,type,subject,partner).ok,true);assert.equal(s.factions.caesar.treasury,0);assert.equal(s.operations[0].status,'pending');assert.ok(s.operations[0].remaining>=2)}
+});
+test('insufficient funds still prevent a discounted mission and pending operations survive old-style saves',()=>{
+ const s=setup(true);s.factions.caesar.treasury=10;assert.equal(queueMission(s,'caesar','egypt','spy','health').reason,'treasury');assert.equal(s.operations.length,0);s.factions.caesar.treasury=11;assert.equal(queueMission(s,'caesar','egypt','spy','health').ok,true);const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(loaded.operations[0].remaining,4);tick(loaded);assert.equal(loaded.operations[0].remaining,3);assert.equal(loaded.knowledge.caesar.egypt.reports.length,0);
+});

@@ -1,5 +1,6 @@
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=safe-save-1';
-import {settleInheritance,dynastyRoll,assignFictionalFieldCommander} from './dynasties.js?v=safe-save-1';
+import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=safe-save-1';
+import {generateFictionalName} from './fictional-names.js?v=faces-of-empire-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
 import {deriveGovernment,validSuccessionPlan} from './governance.js?v=safe-save-1';
 import {potentialConspirators} from './conspiracies.js?v=safe-save-1';
@@ -7,6 +8,7 @@ import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=safe-save
 import {reportedControl} from './control-intelligence.js?v=phase-x-1';
 import {canHoldOffice,localGovernor} from './office-system.js?v=safe-save-1';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
+import {activeModifiers} from './inventions.js?v=mission-discount-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -17,6 +19,34 @@ const notify=(s,en,zh,metadata={})=>{s.log.unshift({year:s.year,month:s.month,en
 const healthNames={healthy:['healthy','健康'],recovering:['recovering','康复中'],wounded:['wounded','受伤'],frail:['frail','衰弱'],ill:['ill','患病'],seriously_ill:['seriously ill','重病'],dying:['dying','垂危'],deceased:['deceased','已故']};
 const configs={spy:{cost:12,months:4},counter:{cost:8,months:3},envoy:{cost:8,months:3},travelers:{cost:4,months:2},audience:{cost:10,months:4},exchange:{cost:6,months:3}};
 export const MISSION_RULES=configs;
+const missionRoles={spy:['Fictional intelligence officer','虚构情报官'],counter:['Fictional security officer','虚构保安官'],envoy:['Fictional envoy','虚构使者'],travelers:['Fictional trader','虚构商旅'],audience:['Fictional envoy','虚构使者'],exchange:['Fictional courier','虚构信使']};
+function nameMissionActor(s,op){
+ if(!missionRoles[op.type])return null;
+ if(op.agentId&&s.world.characters[op.agentId])return op.agentId;
+ const location=s.regions.find(r=>r.owner===op.actor)?.id||null,identity=generateFictionalName(s,{originFaction:op.actor,location});
+ const hash=[op.actor,op.target,op.type,op.sentYear,op.sentMonth,s.world.dynasties?.nextPerson].join(':').split('').reduce((h,c)=>(Math.imul(h,31)+c.charCodeAt(0))>>>0,0);
+ const id=createFictionalPerson(s,{...identity,faction:op.actor,birthYear:s.year-35,location,sex:'unknown',role:missionRoles[op.type],ambition:20+hash%60,personalitySeed:hash});
+ const person=s.world.characters[id];person.institutionalOnly=true;person.profession=op.type;person.title=[...missionRoles[op.type]];
+ op.agentId=id;return id;
+}
+// Older active missions and captives gain records once. Completed old missions
+// remain historical records without retroactively inventing a participant.
+export function upgradeMissionIdentities(s){
+ initializeWorld(s);
+ for(const op of s.operations||[])if(['pending','captured'].includes(op.status)&&missionRoles[op.type])nameMissionActor(s,op);
+ for(const captive of s.world.captives||[]){
+  if(!captive.personId){const op=s.operations.find(o=>o.captiveId===captive.id&&o.agentId);if(op)captive.personId=op.agentId}
+  if(!captive.personId&&captive.state==='held')captive.personId=nameMissionActor(s,{actor:captive.owner,target:captive.holder,type:'spy',sentYear:captive.year??s.year,sentMonth:captive.month??s.month});
+  if(captive.state==='held'&&captive.personId&&s.world.characters[captive.personId])s.world.characters[captive.personId].detainedBy=captive.holder;
+ }
+ return s;
+}
+function releaseAgent(s,c){
+ c.state='released';c.releasedYear=s.year;c.releasedMonth=s.month;
+ const person=s.world.characters[c.personId];if(person){delete person.detainedBy;person.location=s.regions.find(r=>r.owner===c.owner)?.id||null}
+}
+// The active intelligence network reduces each investigation expense by one; never below one.
+export function missionCost(s,actor,type){const cfg=configs[type];return cfg?Math.max(1,cfg.cost-(activeModifiers(s,actor).intelligence||0)):null}
 // This is a theater-graph estimate, not a reconstruction of an actual ancient route.
 export function missionDuration(s,actor,target,type){
  const cfg=configs[type];if(!cfg)return null;
@@ -65,9 +95,9 @@ export function advanceAgentRequests(s,{autoplayPlayer=false}={}){initializeWorl
  if(request.phase==='return'){
   if(!c||c.state!=='held'||c.holder!==request.holder||q<.2){request.status='no_reply';request.phase='lost';continue}
   request.status=request.decision==='release'?'released':'refused';request.phase='delivered';
-  if(request.status==='released'){c.state='released';c.releasedYear=s.year;c.releasedMonth=s.month}continue;
+  if(request.status==='released'){releaseAgent(s,c)}continue;
  }
- const war=s.wars.some(w=>w.includes(request.actor)&&w.includes(request.holder));if(!c||c.state!=='held'||!s.regions.some(r=>r.owner===request.holder)||q<.2)request.status='no_reply';else if(q<(war?.65:.45))request.status='refused';else{request.status='released';c.state='released';c.releasedYear=s.year;c.releasedMonth=s.month}if(request.actor===s.player)notify(s,request.status==='released'?'The unnamed agent was released and is available again.':request.status==='refused'?'The court refused to release the agent.':'No response arrived; the correspondence may have been lost.',request.status==='released'?'未具名人员获释，情报人手恢复。':request.status==='refused'?'对方拒绝释放人员。':'未收到回信；书信可能遗失。');
+ const war=s.wars.some(w=>w.includes(request.actor)&&w.includes(request.holder));if(!c||c.state!=='held'||!s.regions.some(r=>r.owner===request.holder)||q<.2)request.status='no_reply';else if(q<(war?.65:.45))request.status='refused';else{request.status='released';releaseAgent(s,c)}if(request.actor===s.player)notify(s,request.status==='released'?`${CHARACTER_CATALOG[c.personId]?.name?.[0]||'The agent'} was released and is available again.`:request.status==='refused'?'The court refused to release the agent.':'No response arrived; the correspondence may have been lost.',request.status==='released'?`${CHARACTER_CATALOG[c.personId]?.name?.[1]||'情报人员'}获释，情报人手恢复。`:request.status==='refused'?'对方拒绝释放人员。':'未收到回信；书信可能遗失。');
 }}
 const sourceFamily=r=>{const source=r.originSource||r.source;return ({official:'court',envoy:'court',audience:'court',exchange:'unknown'}[source]||source||'unknown')};
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
@@ -174,15 +204,16 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
  const partners=intelligencePartners(s,actor,target);
  if(type==='exchange'&&(!partners.length||(partnerId&&!partners.includes(partnerId))))return {ok:false,reason:'alliance'};
  if(['spy','counter'].includes(type)&&!availableAgents(s,actor))return {ok:false,reason:'agents'};
- if(s.factions[actor].treasury<cfg.cost)return {ok:false,reason:'treasury'};
+ const cost=missionCost(s,actor,type);if(s.factions[actor].treasury<cost)return {ok:false,reason:'treasury'};
  if(s.operations.some(x=>x.actor===actor&&x.target===target&&x.status==='pending'&&x.type===type))return {ok:false,reason:'pending'};
- return {ok:true,cost:cfg.cost,duration:missionDuration(s,actor,target,type),partner:type==='exchange'?(partnerId||partners[0]):undefined};
+ return {ok:true,cost,duration:missionDuration(s,actor,target,type),partner:type==='exchange'?(partnerId||partners[0]):undefined};
 }
 export function queueMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;
  const {duration,partner,cost}=plan,subjectCharacter=['health','age','location'].includes(subject)?(characterId||(['health','location'].includes(subject)&&type!=='exchange'?reportedHealthSubjects(s,actor,target)[0]:null)||null):null;
- s.factions[actor].treasury-=cost;s.operations.unshift({actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month});
- if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months.`,`已派出${({spy:'间谍',counter:'内部调查',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月。`);return {ok:true,duration};
+ s.factions[actor].treasury-=cost;const op={actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month};
+ const agentId=nameMissionActor(s,op);s.operations.unshift(op);
+ if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months. ${CHARACTER_CATALOG[agentId].name[0]} leads it.`,`已派出${({spy:'间谍',counter:'内部调查',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月；由${CHARACTER_CATALOG[agentId].name[1]}负责。`,{characterId:agentId});return {ok:true,duration,agentId};
 }
 // The ally selects its own record when the request reaches it. The sealed
 // response stays out of the recipient's knowledge until the return journey.
@@ -219,7 +250,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
  if((op.type!=='exchange'&&(!s.regions.some(r=>r.owner===op.target)||replacedCourt))||q<.18){op.status='failed';delete op.exchangeSealed;if(op.actor===s.player)notify(s,'The intelligence mission ended without a report; the reason is unknown.','情报行动结束，未收到报告；原因不明。');continue}
  if(op.type==='counter'&&op.subject==='counter_spies'){const now=s.year*12+s.month;(s.world.securityWatches||={})[op.actor]={start:now+1,end:now+6};op.status='complete';if(op.actor===s.player)notify(s,'A counterintelligence watch will operate for the next six months.','反间谍警戒将在接下来的六个月运行。');continue}
  const watch=op.type==='spy'&&counterWatchActive(s,op.target),captureLimit=watch?.36:.24,discoveryLimit=watch?.52:.33;
- if(op.type==='spy'&&q<discoveryLimit){op.status=q<captureLimit?'captured':'detected';if(op.status==='captured'){op.captiveId='captive'+s.world.nextCaptive++;s.world.captives.push({id:op.captiveId,owner:op.actor,holder:op.target,state:'held',year:s.year,month:s.month})}const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,op.status==='captured'?`A spy from ${FACTIONS[op.actor].short[0]} was captured by ${FACTIONS[op.target].short[0]}.`:`A spy from ${FACTIONS[op.actor].short[0]} was detected by ${FACTIONS[op.target].short[0]}.`,op.status==='captured'?`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}抓获，双方关系恶化。`:`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现，双方关系恶化。`);continue}
+ if(op.type==='spy'&&q<discoveryLimit){op.status=q<captureLimit?'captured':'detected';if(op.status==='captured'){op.captiveId='captive'+s.world.nextCaptive++;s.world.captives.push({id:op.captiveId,owner:op.actor,holder:op.target,personId:op.agentId,state:'held',year:s.year,month:s.month});const agent=s.world.characters[op.agentId];if(agent){agent.detainedBy=op.target;agent.location=s.regions.find(r=>r.owner===op.target)?.id||null}}const k=[op.actor,op.target].sort().join(':');s.relations[k]=(s.relations[k]||0)-10;if(op.actor===s.player||op.target===s.player)notify(s,op.status==='captured'?`A spy from ${FACTIONS[op.actor].short[0]} was captured by ${FACTIONS[op.target].short[0]}; ${CHARACTER_CATALOG[op.agentId]?.name?.[0]||'an unidentified person'} is held.`:`A spy from ${FACTIONS[op.actor].short[0]} was detected by ${FACTIONS[op.target].short[0]}; ${CHARACTER_CATALOG[op.agentId]?.name?.[0]||'an unidentified person'} returned.`,op.status==='captured'?`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}抓获：${CHARACTER_CATALOG[op.agentId]?.name?.[1]||'身份不明者'}。双方关系恶化。`:`${FACTIONS[op.actor].short[1]}的间谍被${FACTIONS[op.target].short[1]}发现：${CHARACTER_CATALOG[op.agentId]?.name?.[1]||'身份不明者'}。双方关系恶化。`);continue}
  const relation=s.relations[[op.actor,op.target].sort().join(':')]||0,atWar=s.wars.some(w=>w.includes(op.actor)&&w.includes(op.target));
  const refusal=Math.max(.23,Math.min(.70,.38-relation*.0015+(atWar?.18:0)+(s.factions[op.target]?.stability<35?.08:0)));
  if((op.type==='audience'||op.type==='envoy')&&q<refusal){op.status='declined';if(op.actor===s.player)notify(s,'The court declined the envoy or audience request.','宫廷拒绝了使者或会面请求。');continue}

@@ -27,6 +27,11 @@ field commanders from distinct Han, steppe, oasis and western cultural pools;
 the independent campaign displays those names instead of raw IDs. Historical
 leaders keep their documented identities. A browser regression checks a named
 officer across save/load and both interface languages.
+New Roman-campaign intelligence missions now assign saved fictional agents,
+envoys and couriers. Captives retain the same person ID through release, and
+the player's mission and captive lists display their names. Active missions
+and held captives in older saves acquire an identity once; completed older
+records remain as recorded.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, a general procedural portrait system, integrated physical

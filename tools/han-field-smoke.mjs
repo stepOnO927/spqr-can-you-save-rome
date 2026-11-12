@@ -9,7 +9,7 @@ try{
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
  await page.locator('#overview [data-select-army]').nth(1).click();
- const commander=page.locator('#inspector dt', {hasText:'Commander'}).locator('xpath=following-sibling::dd[1]');
+ const commander=page.locator('#inspector dt', {hasText:/Commander|统帅/}).locator('xpath=following-sibling::dd[1]');
  const english=await commander.innerText();assert.match(english,/^[A-Z][a-z]+ [A-Z][a-z]+$/);
  await page.locator('#save').click();await page.reload();await page.locator('#load').click();
  await page.locator('#overview [data-select-army]').nth(1).click();assert.equal(await commander.innerText(),english);

@@ -1,8 +1,8 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=civic-portraits-1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=mission-discount-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=safe-save-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=safe-save-1';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=succession-feedback-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives,upgradeMissionIdentities} from './character-system.js?v=mission-discount-1';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=safe-save-1';
 import {advanceConspiracies} from './conspiracies.js?v=safe-save-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
@@ -12,7 +12,7 @@ import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chr
 import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=han-4';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
-import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=grand-chessboard-2';
+import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
 import {advanceFocuses,focusModifiers} from './national-focus.js?v=safe-save-1';
 import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=safe-save-1';
 import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=safe-save-1';
@@ -118,7 +118,7 @@ export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);migrateHanFrontier(s);initializeDynasties(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);migrateHanFrontier(s);initializeDynasties(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeMissionIdentities(s);upgradeHanWorld(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
