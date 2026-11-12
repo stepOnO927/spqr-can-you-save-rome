@@ -159,11 +159,17 @@ try{
  catch(error){const status=await page.locator('#status').evaluate(el=>({display:el.style.display,text:el.textContent})).catch(()=>null);throw Error(`Atlas reload did not finish: ${JSON.stringify({status,errors,missingTerrain:missingTerrain.slice(-8)})}`,{cause:error})}
  await page.waitForTimeout(1400);
  terrainRequests.length=0;
- const aegeanCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=205');map.jumpTo({center:[27.1,38.6],zoom:9.1});return map.getCenter().toArray()});
+ const aegeanCenter=await page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=206');map.jumpTo({center:[27.1,38.6],zoom:9.1});return map.getCenter().toArray()});
  assert.ok(Math.abs(aegeanCenter[0]-27.1)<.1&&Math.abs(aegeanCenter[1]-38.6)<.1,'Aegean screenshot must actually focus on the coast');
  await waitForTerrain(/\/terrain\/9\/294\//,'Aegean maximum zoom did not use bundled high-detail terrain');
  assert.deepEqual(missingTerrain,[],'Aegean maximum zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Aegean terrain unexpectedly needed the network');
+ const aegeanRelief=()=>page.evaluate(async()=>{const {map}=await import('/map-lab/lab.js?v=206');return ['relief-aegean-ultra','relief-aegean-higher'].map(id=>({visibility:map.getLayoutProperty(id,'visibility')||'visible',strength:map.getPaintProperty(id,'hillshade-exaggeration')}))});
+ assert.deepEqual(await aegeanRelief(),[{visibility:'visible',strength:.32},{visibility:'visible',strength:.32}]);
+ await page.locator('#relief-toggle').click();
+ assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['none','none']);
+ await page.locator('#relief-toggle').click();
+ assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['visible','visible']);
  if(process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT){await page.waitForTimeout(650);await page.screenshot({path:process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT})}
  await page.locator('#resources-help').click();assert.match(await page.locator('.national-budget').innerText(),/Home domain dues · game estimate/);
  await page.locator('#language').click();assert.match(await page.locator('.national-budget').innerText(),/本土领地储粮 · 游戏估算/);
