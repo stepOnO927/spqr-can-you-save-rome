@@ -24,8 +24,23 @@ for(const feature of source.features){
 }
 if(polygons.length<1000)throw new Error('GSHHG clipping discarded too many islands');
 const ocean=polygonClipping.difference(rectangle,...polygons);
+// GeoJSON tilers can triangulate the 85,000-vertex sea polygon across an
+// interior land ring. Split the already-computed complement into small cells
+// before MapLibre tiles it; land and sea still derive from the same shoreline.
+const oceanCells=[];
+const cellSize=4;
+const oceanBounds=ocean.map(polygon=>polygon[0].reduce((box,[x,y])=>[Math.min(box[0],x),Math.min(box[1],y),Math.max(box[2],x),Math.max(box[3],y)],[Infinity,Infinity,-Infinity,-Infinity]));
+for(let west=bounds[0];west<bounds[2];west+=cellSize)for(let south=bounds[1];south<bounds[3];south+=cellSize){
+ const east=Math.min(bounds[2],west+cellSize),north=Math.min(bounds[3],south+cellSize);
+ const cell=[[[west,south],[east,south],[east,north],[west,north],[west,south]]];
+ for(let i=0;i<ocean.length;i++){
+  const [minX,minY,maxX,maxY]=oceanBounds[i];
+  if(maxX<west||minX>east||maxY<south||minY>north)continue;
+  oceanCells.push(...polygonClipping.intersection(ocean[i],cell));
+ }
+}
 const collection=parts=>({type:'FeatureCollection',features:parts.map((coordinates,id)=>({type:'Feature',properties:{id},geometry:{type:'Polygon',coordinates}}))});
-for(const [name,parts] of [['land',polygons],['ocean',ocean]]){
+for(const [name,parts] of [['land',polygons],['ocean',oceanCells]]){
  const target=path.join(root,`mediterranean-${name}.js`);
  await writeFile(target,`// GSHHG 2.3.7 high-resolution L1 shorelines, LGPL; cropped to the campaign region.\nexport default ${JSON.stringify(collection(parts))};\n`);
  console.log(name,parts.length,Math.round((await readFile(target)).length/1024)+' KiB');

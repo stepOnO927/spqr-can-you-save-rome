@@ -1,5 +1,5 @@
 import land from '../mediterranean-land.js';
-import ocean from '../mediterranean-ocean.js';
+import ocean from '../mediterranean-ocean.js?v=2';
 import bathymetry from '../mediterranean-bathymetry.js?v=2';
 import rivers from '../mediterranean-rivers.js';
 import lakes from '../mediterranean-lakes.js';
