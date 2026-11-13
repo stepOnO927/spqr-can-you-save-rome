@@ -319,3 +319,20 @@ test('campaign estimate reports uncertainty without predicting the ballot',()=>{
  assert.equal(estimate.observed.year,s.year);
  assert.equal(estimate.ballots,undefined);
 });
+
+test('distinct official contact routes enforce delivered evidence and real networks',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;
+ s.factions.senate.treasury=1000;
+ c.intel.senate={parthia:{stage:3,reports:[{stage:3,people:[id],officeholders:{administration:id},commanders:[id],observed:{year:s.year,month:s.month}}]}};
+ c.networks[c.varroId]=[id];
+ for(const route of ['banquet','provincial_visit','military_visit','family','ceremony']){
+  const result=contactOfficial(s,'parthia',id,route);
+  assert.equal(result.ok,true,route);assert.ok(result.cost>0&&result.months>0);
+  c.contacts.at(-1).status='refused';
+ }
+ const senator=c.senators.find(x=>x.faction==='caesar');
+ c.intel.senate.caesar={stage:3,reports:[{stage:3,people:[senator.id],senators:[senator.id],observed:{year:s.year,month:s.month}}]};
+ assert.equal(contactOfficial(s,'caesar',senator.id,'senatorial').ok,true);
+ const unknown=c.foreignPosts.egypt.administration;
+ assert.equal(contactOfficial(s,'egypt',unknown,'banquet').reason,'unknown');
+});
