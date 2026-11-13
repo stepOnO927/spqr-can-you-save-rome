@@ -10,6 +10,13 @@ import {canMediate,requestMediation} from './civil-war.js?v=succession-ui-recove
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
 const atWar = (s, a, b) => (s.wars || []).some(w => w.includes(a) && w.includes(b));
+// A stored theater is the last known position while a person travels or marches.
+// It must not be treated as physical attendance at a gathering.
+function presentAtGathering(s,person,venue){
+  return !!venue&&!!person?.alive&&person.faction===s.player&&!person.missing&&!person.travel&&
+    !['seriously_ill','dying','deceased','incapacitated'].includes(person.health)&&person.location===venue&&
+    !(s.armies||[]).some(a=>a.characterId===person.id&&a.move);
+}
 const name = id => CHARACTER_CATALOG[id]?.name || FACTIONS[id]?.short || [id, id];
 const home = (s, faction) => s.regions.find(r => r.owner === faction)?.id || null;
 const historicalPortraits=new Set(['caesar','pompey','cleopatra','arsinoe','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
@@ -194,7 +201,7 @@ export function replyToLetter(s, id, choice, actions) {
     if (!host?.alive || !guest?.alive) return {ok:false,reason:'unavailable'};
     if (choice === 'accept' || choice === 'representative' || choice==='private_meeting') {
       const travel=courierMonths(s,guest.location,host.location);
-      const participant=choice==='representative'?Object.values(s.world.characters).find(p=>p.faction===s.player&&p.alive&&p.id!==guest.id&&p.location===guest.location):guest;
+      const participant=choice==='representative'?Object.values(s.world.characters).find(p=>p.id!==guest.id&&p.id!==host.id&&presentAtGathering(s,p,guest.location)):guest;
       if(!participant)return {ok:false,reason:'representative'};
       const date=monthIndex(s.year,s.month)+travel;
       if((s.mail.events||[]).some(e=>e.status==='scheduled'&&e.date===date&&e.participantId===participant.id))return {ok:false,reason:'commitment'};
@@ -445,13 +452,14 @@ export function advanceMail(s, actions = {}) {
       continue;
     }
     const host=s.world.characters[event.hostId],participant=s.world.characters[event.participantId||event.guestId];
-    event.status=host?.alive&&participant?.alive&&host.location===event.venue&&participant.location===event.venue&&participant.health!=='incapacitated'?'held':'missed';
+    event.status=presentAtGathering(s,host,event.venue)&&presentAtGathering(s,participant,event.venue)&&host.id!==participant.id?'held':'missed';
     if(event.status==='held'){
       const key=pair(event.hostId,participant.id),bond=s.world.personalRelations[key]||{trust:0,meetings:0};
       bond.trust=Math.min(100,bond.trust+(event.representative?1:event.privateMeeting?3:2));bond.meetings++;s.world.personalRelations[key]=bond;
     }
     const original=mail.messages.find(m=>m.id===event.letterId);
-    if(original)sendLetter(s,{senderId:host?.alive?event.hostId:null,senderInstitution:host?.alive?null:s.player,senderFaction:s.player,recipient:s.player,category:'invitations',priority:'routine',
+    const resultSender=presentAtGathering(s,host,event.venue)?event.hostId:null;
+    if(original)sendLetter(s,{senderId:resultSender,senderInstitution:resultSender?null:s.player,senderFaction:s.player,recipient:s.player,category:'invitations',priority:'routine',
       subject:event.status==='held'?['The gathering was held','宴会已举行']:['The gathering was missed','宴会未能举行'],
       body:event.status==='held'?['The invited guest and host met as arranged.','受邀者与主人如约会面。']:['The invited guest and host could not meet at the appointed place.','受邀者与主人未能在约定地点会面。'],
       threadId:original.threadId,options:['acknowledge'],context:{kind:'invitation_result'}});

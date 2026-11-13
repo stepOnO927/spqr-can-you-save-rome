@@ -5,7 +5,7 @@ page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
- await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=succession-ui-recovery-1');const {addReport}=await import('/character-system.js?v=succession-ui-recovery-1');const s=newGame('caesar');s.year=0;s.month=1;addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'travelers',confidence:'rumor'});s.year=-1;s.month=12;sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}))});
+ await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=gathering-presence-1');const {addReport}=await import('/character-system.js?v=succession-ui-recovery-1');const s=newGame('caesar');s.year=0;s.month=1;addReport(s,'caesar','egypt',{kind:'health',character:'cleopatra',value:'ill',source:'travelers',confidence:'rumor'});s.year=-1;s.month=12;sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}))});
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  assert.match(await page.locator('#turn-date').innerText(),/公元前1年12月.*公元1年1月/);
  await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click();await page.locator('#send-inquiry').click();
