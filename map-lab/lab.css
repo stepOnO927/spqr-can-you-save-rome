@@ -124,3 +124,7 @@
 .cursus-application-actions{margin:7px 0;border-top:1px solid rgba(173,145,96,.24);padding-top:6px}
 .cursus-application-actions summary{cursor:pointer;color:#d5bd8e;font:10px Georgia,serif;letter-spacing:.06em}
 .cursus-application-actions button{margin:3px 4px 3px 0;white-space:normal}
+.cursus-assemblies{margin:11px 0;border-bottom:1px solid rgba(173,145,96,.25);padding-bottom:6px}
+.cursus-assemblies summary{cursor:pointer;color:#dfc797;font:11px Georgia,serif;letter-spacing:.07em}
+.cursus-assemblies p{margin:7px 0;font-size:11px}
+.cursus-assemblies small{display:block;color:#bdb199;line-height:1.4;margin:3px 0}

@@ -459,3 +459,13 @@ test('rejecting an application preserves the person and expires next year',()=>{
  assert.ok(s.world.characters[id].alive);
  s.year++;s.month=1;assert.equal(appointmentApplicationStatus(s,id).ok,true);
 });
+
+test('the Curiate Assembly handles formal imperium without replacing a consular election',()=>{
+ const s=newGame('senate'),c=initializeCursus(s);s.month=10;
+ const result=resolveElection(s,'consul').result;assert.equal(result.elected.length,2);
+ s.year++;s.month=1;advanceCursus(s);
+ assert.equal(c.curiateFormalities.filter(x=>x.year===s.year&&x.status==='pending').length,2);
+ c.assemblies.curiate=10;s.month=2;advanceCursus(s);
+ assert.ok(c.curiateFormalities.filter(x=>x.year===s.year).every(x=>x.status==='contested'));
+ assert.deepEqual(c.elections.find(x=>x.office==='consul'&&x.year===result.year).elected,result.elected);
+});

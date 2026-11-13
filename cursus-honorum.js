@@ -64,14 +64,15 @@ function seedSenators(s,c){
 }
 export function initializeCursus(s){
  initializeWorld(s);initializeOffices(s);
- if(!s.world.cursus)s.world.cursus={version:1,seeded:false,year:s.year,magistrates:Object.fromEntries(Object.keys(MAGISTRACIES).map(k=>[k,[]])),pendingTerms:[],careers:{},obedience:{},applicants:[],elections:[],endorsements:[],senate:{caesar:42,senate:58},assemblies:{centuriate:50,tribal:50,plebeian:50},foreignPosts:{},intel:{},contacts:[],offers:[],advisers:[],investigations:[],networks:{},referrals:{},reforms:[],proposals:[],senators:[],senatorTies:{},campaignActions:[],politicalReviews:[],retirements:[],retired:{},referralSources:{},termHistory:[],talentSearches:[],talents:[],cooperations:[],institutionalResponses:[],recommendations:[],appointmentHistory:[],officeLastSeen:{},applicationHistory:[],applicationReviews:[],applicationDecisions:{}};
+ if(!s.world.cursus)s.world.cursus={version:1,seeded:false,year:s.year,magistrates:Object.fromEntries(Object.keys(MAGISTRACIES).map(k=>[k,[]])),pendingTerms:[],careers:{},obedience:{},applicants:[],elections:[],endorsements:[],senate:{caesar:42,senate:58},assemblies:{centuriate:50,tribal:50,plebeian:50,curiate:50},foreignPosts:{},intel:{},contacts:[],offers:[],advisers:[],investigations:[],networks:{},referrals:{},reforms:[],proposals:[],senators:[],senatorTies:{},campaignActions:[],politicalReviews:[],retirements:[],retired:{},referralSources:{},termHistory:[],talentSearches:[],talents:[],cooperations:[],institutionalResponses:[],recommendations:[],appointmentHistory:[],officeLastSeen:{},applicationHistory:[],applicationReviews:[],applicationDecisions:{},curiateFormalities:[]};
  const c=s.world.cursus;
  for(const key of ['magistrates','careers','obedience','senate','assemblies','foreignPosts','intel','networks','referrals','senatorTies','retired','referralSources','officeLastSeen','applicationDecisions'])c[key]||={};
- for(const key of ['pendingTerms','applicants','elections','endorsements','contacts','offers','advisers','investigations','reforms','proposals','senators','campaignActions','politicalReviews','retirements','termHistory','talentSearches','talents','cooperations','institutionalResponses','recommendations','appointmentHistory','applicationHistory','applicationReviews'])c[key]||=[];
+ for(const key of ['pendingTerms','applicants','elections','endorsements','contacts','offers','advisers','investigations','reforms','proposals','senators','campaignActions','politicalReviews','retirements','termHistory','talentSearches','talents','cooperations','institutionalResponses','recommendations','appointmentHistory','applicationHistory','applicationReviews','curiateFormalities'])c[key]||=[];
  if(!Object.keys(c.officeLastSeen).length)c.officeLastSeen=Object.fromEntries(Object.entries(s.world.offices||{}).map(([faction,posts])=>[faction,{...posts}]));
  for(const [actor,ids] of Object.entries(c.referrals)){c.referralSources[actor]||=[];for(const id of ids){if(c.referralSources[actor].some(x=>x.id===id))continue;const offer=c.offers.findLast(x=>x.actor===actor&&x.status==='accepted');if(offer)c.referralSources[actor].push({id,target:offer.target,from:offer.id,observed:{year:offer.year,month:offer.month},confidence:'legacy'})}}
  for(const contact of c.contacts){if(contact.status==='open'){contact.relationship||={familiarity:clamp((contact.trust||20)+10),trust:contact.trust||20,respect:clamp(30+(person(s,contact.id)?.education||50)/5),professional:20,alignment:30,obligation:0,rivalry:0,willingness:25};contact.trust=contact.relationship.trust}}
  for(const offer of c.offers.filter(x=>x.status==='accepted'&&person(s,x.id)?.faction===x.actor))if(!c.advisers.some(a=>a.id===offer.id))c.advisers.push({id:offer.id,actor:offer.actor,formerFaction:offer.target,year:offer.year,month:offer.month});
+ c.assemblies.curiate??=50;
  for(const key of Object.keys(MAGISTRACIES))c.magistrates[key]||=[];
  if(!c.seeded){
   c.seeded=true;
@@ -283,8 +284,19 @@ function startTerms(s){
  for(const term of c.pendingTerms.filter(x=>x.year===s.year&&present(s,x.id))){
   c.magistrates[term.office].push({id:term.id,startYear:s.year,endYear:s.year,faction:term.faction});
   c.careers[term.id]||=[];c.careers[term.id].push({office:term.office,year:s.year,source:'election',simulated:true});
+  if(['consul','praetor'].includes(term.office)&&!c.curiateFormalities.some(x=>x.id===term.id&&x.office===term.office&&x.year===s.year))c.curiateFormalities.push({id:term.id,office:term.office,faction:term.faction,year:s.year,status:'pending'});
  }
  c.pendingTerms=c.pendingTerms.filter(x=>x.year>s.year);
+}
+function advanceCuriateFormalities(s,c){
+ if(s.month!==2)return;
+ const controller=factionOfRome(s);
+ for(const record of c.curiateFormalities.filter(x=>x.year===s.year&&x.status==='pending')){
+  record.status=controller!==record.faction?'unavailable':c.assemblies.curiate>=40?'confirmed':'contested';
+  record.resolved={year:s.year,month:s.month};
+  if(record.status==='contested'){c.senate[record.faction]=clamp((c.senate[record.faction]||50)-2);if(record.faction===s.player)note(s,'The Curiate Assembly contested a formal grant of imperium; the election itself stands.','库里亚大会对正式授予统帅权提出争议；选举结果本身仍有效。')}
+ }
+ c.curiateFormalities=c.curiateFormalities.slice(-120);
 }
 export function investigateGovernment(s,target,actor=s.player){
  const c=initializeCursus(s),f=s.factions[actor];
@@ -635,8 +647,8 @@ function recordPoliticalYear(s,c){
 }
 export function advanceCursus(s){
  const c=initializeCursus(s);
- if(s.month===1){startTerms(s);annualApplicants(s);const controller=factionOfRome(s),f=s.factions[controller],rome=s.regions.find(r=>r.id==='roma');if(f&&rome)for(const body of ['centuriate','tribal','plebeian'])c.assemblies[body]=clamp((c.assemblies[body]*3+f.stability+rome.loyalty)/5)}
- recordOfficeChanges(s,c);reconcileForeignPosts(s,c);advanceIntel(s,c);advanceContacts(s,c);advanceCooperations(s,c);advanceTalentSearches(s,c);advanceApplicantReviews(s,c);advanceEndorsements(s,c);advanceMeasures(s,c);advancePromises(s,c);advanceInvestigations(s,c);
+ if(s.month===1){startTerms(s);annualApplicants(s);const controller=factionOfRome(s),f=s.factions[controller],rome=s.regions.find(r=>r.id==='roma');if(f&&rome)for(const body of ['centuriate','tribal','plebeian','curiate'])c.assemblies[body]=clamp((c.assemblies[body]*3+f.stability+rome.loyalty)/5)}
+ advanceCuriateFormalities(s,c);recordOfficeChanges(s,c);reconcileForeignPosts(s,c);advanceIntel(s,c);advanceContacts(s,c);advanceCooperations(s,c);advanceTalentSearches(s,c);advanceApplicantReviews(s,c);advanceEndorsements(s,c);advanceMeasures(s,c);advancePromises(s,c);advanceInvestigations(s,c);
  aiPolitical(s,c);autonomousCampaign(s,c);
  if(ROMAN.has(factionOfRome(s)))for(const [office,o] of Object.entries(MAGISTRACIES))if(o.month===s.month&&(!o.cycle||Math.abs(s.year)%o.cycle===0))resolveElection(s,office);
  if(s.month===12)recordPoliticalYear(s,c);
