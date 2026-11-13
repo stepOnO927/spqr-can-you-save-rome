@@ -1,6 +1,6 @@
 import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=separate-crowns-1';
-import {officeOf} from './office-system.js?v=regional-court-1';
-import {recordLifeEvent} from './dynasties.js?v=regional-court-1';
+import {officeOf} from './office-system.js?v=court-portraits-1';
+import {recordLifeEvent} from './dynasties.js?v=court-portraits-1';
 
 // Theater-level appointments are simulated, not claims about historical commands.
 export function availableCommanders(s,armyId){

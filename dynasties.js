@@ -1,7 +1,7 @@
 import {CHARACTER_CATALOG} from './characters.js?v=separate-crowns-1';
 import {startDynasticWar} from './civil-war.js?v=separate-crowns-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {assignBornPortrait} from './portrait-registry.js?v=portrait-pool-2';
+import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=court-portraits-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -70,7 +70,7 @@ export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,
  for(const parent of [...parents,...adoptiveParents])if(s.world.characters[parent])s.world.characters[parent].children.push(id);
  if(origin==='court_nominee')record(s,id,'Entered this campaign as a fictional court nominee; no historical identity or family relationship is asserted.','作为虚构宫廷人选进入本次战役；不代表历史人物或历史亲属关系。');
  else record(s,id,'Born in the simulated campaign.','出生于模拟战役。');
- if(origin==='birth'&&birthYear===s.year)assignBornPortrait(s,id);return id;
+ if(origin==='birth'&&birthYear===s.year)assignBornPortrait(s,id);if(origin==='court_nominee')assignCourtPortrait(s,id);return id;
 }
 
 export function seedOpeningFictionalHouseholds(s){
@@ -330,6 +330,7 @@ export function advanceDynasties(s){
  // Old saves keep their existing identities. Allocate only to identifiable
  // campaign-born children with a recorded birth and known parents, once.
  if((d.bornPortraitPoolVersion||0)<2){d.bornPortraitClaims||={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id);d.bornPortraitPoolVersion=2}
+ if(!d.courtPortraitPoolVersion){for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))assignCourtPortrait(s,id);d.courtPortraitPoolVersion=1}
  advanceMarriageOffers(s);
  advanceAsylumRequests(s);
  advanceFamilyAccords(s);

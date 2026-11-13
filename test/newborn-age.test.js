@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=regional-mail-merge-1';
-import {createFictionalPerson} from '../dynasties.js?v=regional-court-1';
+import {newGame,upgradeSave} from '../engine.js?v=court-portraits-1';
+import {createFictionalPerson} from '../dynasties.js?v=court-portraits-1';
 import {ageRange} from '../characters.js?v=separate-crowns-1';
 
 test('a newborn has no negative age, including after loading a save',()=>{
