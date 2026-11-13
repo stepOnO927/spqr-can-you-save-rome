@@ -2,12 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=fort-intel-1';
-import {advanceStrategicWarnings,warningCandidates,warningLedger} from '../strategic-warnings.js?v=fort-intel-1';
+import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=fort-intel-1';
+import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
 import {assessOpportunities} from '../multipolar.js?v=fort-intel-1';
 import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
 import {buildChessboard} from '../chessboard.js?v=fort-intel-1';
-import {renderChessboard} from '../chessboard-ui.js?v=fort-intel-1';
+import {renderChessboard} from '../chessboard-ui.js?v=warning-privacy-1';
 import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=fort-intel-1';
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {advanceGovernments} from '../governance.js?v=fort-intel-1';
@@ -205,9 +206,22 @@ test('a human recipient is informed bilingually and keeps the decision; automate
  const auto=run(true);assert.notEqual(auto.l.decision.kind,'player_discretion');
 });
 
-test('the sighted faction cannot see warnings about it, and the sender does not learn the recipient’s decision',()=>{
- const s=sendFirst();assert.equal(warningLedger(s,'caesar').length,0);
- assert.equal(warningLedger(s,'senate').length,1);assert.ok(!('decision' in warningLedger(s,'senate')[0]));assert.ok('decision' in warningLedger(s,'numidia')[0]);
+test('warnings remain private until delivery and transport outcomes stay private from the sender',()=>{
+ const s=sendFirst(),letter=s.warningLetters[0];assert.equal(warningLedger(s,'caesar').length,0);
+ const initial=warningLedger(s,'senate');assert.equal(initial.length,1);assert.ok(!('decision' in initial[0]));
+ assert.deepEqual(warningLedger(s,'numidia'),[]);
+ s.player='numidia';assert.doesNotMatch(renderChessboard(s,'zh',null,'power'),/5000–10000/);
+ for(const status of ['delayed','lost','expired']){
+  letter.status=status;letter.history.push({status,year:s.year,month:s.month+1});
+  assert.deepEqual(warningLedger(s,'numidia'),[]);assert.deepEqual(warningLedger(s,'senate'),initial);
+ }
+ letter.status='responded';letter.deliveredYear=s.year;letter.deliveredMonth=s.month+2;letter.decision={kind:'heeded'};
+ letter.history.push({status:'responded',year:letter.deliveredYear,month:letter.deliveredMonth});
+ assert.deepEqual(warningLedger(s,'senate'),initial);
+ const received=warningLedger(s,'numidia');assert.equal(received.length,1);assert.equal(received[0].decision,'heeded');assert.deepEqual(received[0].history,[letter.history.at(-1)]);
+ const zh=renderChessboard(s,'zh',null,'power'),en=renderChessboard(s,'en',null,'power');
+ assert.match(zh,/收到的盟友预警/);assert.match(zh,/5000–10000/);assert.match(en,/Forwarded scout report/);
+ assert.equal(warningLedger(s,'caesar').length,0);
  assert.doesNotMatch(renderChessboard(s,'zh','f:senate','power'),/warning:/);
 });
 
