@@ -82,3 +82,6 @@
 .imperium-links{display:flex;flex-wrap:wrap;gap:6px 14px;margin:2px 0 10px}
 
 .tax-projection{margin-top:.7rem;border-top:1px solid rgba(153,125,75,.35);padding-top:.55rem;font-size:.82rem}.tax-row{display:flex;gap:.65rem;flex-wrap:wrap;padding:.18rem 0;border-bottom:1px solid rgba(153,125,75,.16)}.tax-row strong{min-width:5rem}.tax-projection small{display:block;margin-top:.4rem;opacity:.8}
+
+.feather-counsel{margin:12px 0 10px;padding:10px 12px;border-left:3px solid #c3a775;background:linear-gradient(90deg,rgba(184,151,91,.15),transparent);color:#e2d7bc;font:11px/1.5 Manrope,'Microsoft YaHei',sans-serif}
+.feather-counsel strong{display:block;color:#ead3a0;letter-spacing:.13em;font-size:9px}.feather-counsel ol{margin:6px 0 0;padding-left:17px}.feather-counsel li{margin:3px 0}
