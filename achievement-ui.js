@@ -1,7 +1,7 @@
 import {revealedAchievements,campaignSummary} from './achievement-system.js?v=5';
 import {FACTIONS} from './data.js';
 import {CHARACTER_CATALOG} from './characters.js';
-import {eventText} from './campaign-reports.js?v=6';
+import {eventText} from './campaign-reports.js?v=7';
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function civilWarNote(summary,zh){const outcome=summary.civilWarOutcome;if(!outcome)return '';const victor=esc(FACTIONS[outcome.winner]?.short?.[zh?1:0]||outcome.winner);return `<p class="ending-world-result">${zh?`罗马内战：${victor}获胜。`:`Roman civil war: ${victor} prevailed.`}</p>`}

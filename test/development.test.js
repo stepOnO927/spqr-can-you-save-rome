@@ -11,6 +11,49 @@ import {budgetHtml} from '../budget-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
+test('Egyptian multiscript decrees require adoption and affect only Egyptian-culture integration',()=>{
+ const id='egyptian-multiscript-decrees',idea=IDEAS.find(x=>x.id===id),s=newGrandGame('egypt');
+ assert.match(idea.source.url,/britishmuseum\.org/);
+ assert.match(developmentPanel(s,'en','idea'),/Egyptian Multiscript Decrees/);
+ assert.match(developmentPanel(s,'zh','idea'),/埃及多文字诏令/);
+ assert.match(developmentPanel(s,'en','idea'),/Egyptian-culture territories \/ month \+1/);
+ assert.match(developmentPanel(s,'zh','idea'),/埃及文化领土行政融合度 \/ 月 \+1/);
+ s.wars=[];s.factions.egypt.treasury=500;
+ const d=development(s,'egypt');
+ assert.equal(researchInnovation(s,'egypt','idea',id).ok,true);
+ assert.equal(activeEffects(s,'egypt').egyptianDecrees,undefined);
+ months(s,idea.months);
+ assert.ok(d.knownIdeas.includes(id));
+ assert.equal(activeEffects(s,'egypt').egyptianDecrees,undefined);
+ assert.equal(adoptIdea(s,'egypt',id).ok,true);
+ assert.equal(activeEffects(s,'egypt').egyptianDecrees,undefined);
+ months(s,2);
+ assert.equal(d.slots.government[0],id);
+ const control=upgradeSave(JSON.parse(JSON.stringify(s)));
+ development(control,'egypt').slots.government[0]=null;
+ const egyptian=s.regions.find(r=>r.owner==='egypt'&&r.culture==='egypt');
+ const other=s.regions.find(r=>r.culture!=='egypt'&&r.owner!=='rebels');
+ other.owner='egypt';control.regions.find(r=>r.id===other.id).owner='egypt';
+ const beforeUpkeep=nationalBudget(control,'egypt').ideaUpkeep;
+ assert.equal(nationalBudget(s,'egypt').ideaUpkeep,beforeUpkeep+2);
+ tick(s);tick(control);
+ assert.equal(egyptian.integration,control.regions.find(r=>r.id===egyptian.id).integration+1);
+ assert.equal(other.integration,control.regions.find(r=>r.id===other.id).integration);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(activeEffects(restored,'egypt').egyptianDecrees,1);
+ assert.equal(restored.regions.find(r=>r.id===egyptian.id).integration,egyptian.integration);
+ const foreign=newGrandGame('senate');foreign.wars=[];foreign.factions.senate.treasury=500;
+ const foreignIdea=development(foreign,'senate');foreignIdea.knownIdeas.push(id);
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).months,4,'a foreign ruler must adapt the practice even after direct research');
+ assert.match(ideasPanel(foreign,'en'),/Foreign adaptation adds time/);
+ assert.match(ideasPanel(foreign,'zh'),/外来理念适应增加时间/);
+ const nile=foreign.regions.find(r=>r.culture==='egypt');nile.owner='senate';
+ const foreignControl=upgradeSave(JSON.parse(JSON.stringify(foreign)));
+ foreignIdea.slots.government[0]=id;
+ tick(foreign);tick(foreignControl);
+ assert.equal(nile.integration,foreignControl.regions.find(r=>r.id===nile.id).integration+1);
+});
+
 test('monthly budget records paid construction and research orders without double counting',()=>{
  const s=newGrandGame('senate');s.factions.senate.treasury=500;
  const projected=nationalBudget(s,'senate').projectedNet;
@@ -193,7 +236,7 @@ test('local rites affect a neighboring court only through an influential shared 
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,38);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,39);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);

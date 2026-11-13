@@ -34,6 +34,7 @@ try{
   assert.match(await page.locator('#tech-ancestral-rites').innerText(),/Other rites satisfaction \/ quarter −1/);
   assert.match(await page.locator('#tech-public-legal-reference').innerText(),/Public Legal Reference/);
   assert.match(await page.locator('#tech-citizen-registration').innerText(),/Allied Citizen Registration/);
+  assert.match(await page.locator('#tech-egyptian-multiscript-decrees').innerText(),/Egyptian Multiscript Decrees[\s\S]*Egyptian-culture territories \/ month \+1/);
   assert.match(await page.locator('#tech-civic-exercise').innerText(),/Recruit morale in urban territory with integration ≥65/);
   assert.match(await page.locator('#tech-estate-labor-control').innerText(),/distressed outmigration halved/);
   assert.match(await page.locator('#tech-negotiated-crop-shares').innerText(),/State-available food \/ month −1/);
@@ -69,6 +70,7 @@ try{
   assert.match(await page.locator('#tech-ancestral-rites').innerText(),/异地祭仪满意度 \/ 季 −1/);
   assert.match(await page.locator('#tech-public-legal-reference').innerText(),/公开法律参照/);
   assert.match(await page.locator('#tech-citizen-registration').innerText(),/盟邦公民登记/);
+  assert.match(await page.locator('#tech-egyptian-multiscript-decrees').innerText(),/埃及多文字诏令[\s\S]*埃及文化领土行政融合度 \/ 月 \+1/);
   assert.match(await page.locator('#tech-civic-exercise').innerText(),/融合度≥65的城市新兵士气/);
   assert.match(await page.locator('#tech-estate-labor-control').innerText(),/不满人口迁出减半/);
   assert.match(await page.locator('#tech-negotiated-crop-shares').innerText(),/国库可用粮食 \/ 月 −1/);

@@ -1,4 +1,4 @@
-import {nationalBudget} from './national-budget.js?v=12';
+import {nationalBudget} from './national-budget.js?v=13';
 import {expensesThisMonth} from './expense-ledger.js?v=1';
 const number=x=>(Object.is(x,-0)?0:Number(x)).toLocaleString(undefined,{maximumFractionDigits:1});
 export function budgetHtml(s,lang,contribution=null,provisions=null){

@@ -5,7 +5,7 @@ import detailedRivers from './mediterranean-rivers.js';
 import lakes from './mediterranean-lakes.js';
 import historical from './historical-territories.js?v=7';
 import {FACTIONS,REGIONS} from './data.js?v=9';
-import {reportedArmies} from './character-system.js?v=61';
+import {reportedArmies} from './character-system.js?v=62';
 import grandTerritories from './grand-territory-polygons.js';
 import bathymetry from './mediterranean-bathymetry.js';
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js';
