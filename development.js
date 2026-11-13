@@ -194,6 +194,8 @@ export function initializeDevelopment(s){
     d.knownMaterial ||= fresh(id).knownMaterial;d.knownIdeas ||= [];
     d.slots ||= fresh(id).slots;for(const c of IDEA_CATEGORIES)d.slots[c.id] ||= [null];
     d.materials ||= {stone:6,timber:7,metal:3};d.trade ||= [];d.offers=Array.isArray(d.offers)?d.offers.filter(o=>o&&typeof o.seller==='string'&&s.factions[o.seller]&&['material','idea'].includes(o.branch)&&typeof o.id==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];d.purchaseRequests=Array.isArray(d.purchaseRequests)?d.purchaseRequests.filter(o=>o&&typeof o.buyer==='string'&&o.buyer!=='rebels'&&s.factions[o.buyer]&&['material','idea'].includes(o.branch)&&typeof o.id==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];d.foreignOrigins ||= {};d.visitingScholars ||= [];
+    d.merchantContacts=d.merchantContacts&&typeof d.merchantContacts==='object'&&!Array.isArray(d.merchantContacts)?d.merchantContacts:{};
+    d.merchantLeads=Array.isArray(d.merchantLeads)?d.merchantLeads.filter(lead=>lead&&s.factions[lead.seller]&&MATERIALS.some(item=>item.id===lead.id)&&Number.isInteger(lead.expiresTurn)&&lead.expiresTurn>s.year*12+s.month&&!d.knownMaterial.includes(lead.id)):[];
     d.exchangeRequests=Array.isArray(d.exchangeRequests)?d.exchangeRequests.filter(o=>o&&o.partner!==id&&o.partner!=='rebels'&&s.factions[o.partner]&&['material','idea'].includes(o.offerBranch)&&['material','idea'].includes(o.wantBranch)&&typeof o.offerId==='string'&&typeof o.wantId==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];
     d.agreementRequests=Array.isArray(d.agreementRequests)?d.agreementRequests.filter(o=>o&&o.partner!==id&&o.partner!=='rebels'&&s.factions[o.partner]&&Number.isInteger(o.remaining)&&o.remaining>0&&o.remaining<=4&&Number.isInteger(o.sentYear)&&Number.isInteger(o.sentMonth)&&o.sentMonth>=1&&o.sentMonth<=12):[];
   }
@@ -203,6 +205,31 @@ export function initializeDevelopment(s){
 export const development = (s,id) => (initializeDevelopment(s),s.development[id]);
 const visitingScholarFor=(s,owner,branch,id)=>development(s,owner)?.visitingScholars.find(visit=>visit.remaining>0&&!visit.travelRemaining&&(!visit.id||visit.branch===branch&&visit.id===id));
 export function scholarResearchBonus(s,owner,branch,id){return !!visitingScholarFor(s,owner,branch,id)}
+export function merchantResearchLead(s,owner,branch,id){
+ if(branch!=='material')return null;
+ return development(s,owner)?.merchantLeads.find(lead=>lead.id===id&&lead.expiresTurn>s.year*12+s.month)||null;
+}
+export function recordMerchantContact(s,route){
+ const last=route?.last,buyer=last?.buyer,seller=last?.seller;
+ if(!last||last.year!==s.year||last.month!==s.month||last.reason!=='delivered'||last.amount<1||last.paid<=0||last.security<50||!buyer||!seller||buyer===seller||s.wars.some(w=>w.includes(buyer)&&w.includes(seller)))return null;
+ initializeDevelopment(s);
+ const recipient=s.development[buyer],source=s.development[seller];if(!recipient||!source)return null;
+ const turn=s.year*12+s.month,previous=recipient.merchantContacts[route.id];
+ if(previous?.seller===seller&&previous.lastTurn===turn)return null;
+ const contact=previous?.seller===seller&&turn-previous.lastTurn<=3?previous:{seller,months:0,lastTurn:null};
+ contact.months++;contact.lastTurn=turn;recipient.merchantContacts[route.id]=contact;
+ if(contact.months<2)return null;
+ contact.months=0;
+ const item=MATERIALS.find(candidate=>source.knownMaterial.includes(candidate.id)&&!recipient.knownMaterial.includes(candidate.id)&&recipient.research?.id!==candidate.id&&!strategicKnowledge.has(candidate.id)&&candidate.prerequisites.every(id=>recipient.knownMaterial.includes(id))&&!recipient.trade.some(t=>t.branch==='material'&&t.id===candidate.id)&&!recipient.merchantLeads.some(lead=>lead.id===candidate.id));
+ if(!item||recipient.merchantLeads.length>=3)return null;
+ const lead={seller,routeId:route.id,id:item.id,year:s.year,month:s.month,expiresTurn:turn+6};recipient.merchantLeads.push(lead);
+ return {buyer,...lead,name:item.name};
+}
+export function researchTerms(s,owner,branch,id){
+ const item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id);if(!item)return null;
+ const visitor=!!visitingScholarFor(s,owner,branch,id),merchant=merchantResearchLead(s,owner,branch,id),scholar=figureActive(s,owner,'scholar');
+ return {cost:Math.max(8,item.cost-(activeEffects(s,owner).researchDiscount||0)-(scholar?3:0)-(visitor?3:0)-(merchant?3:0)),months:Math.max(1,item.months-(scholar?1:0)-(visitor?1:0)-(merchant?1:0)),merchant};
+}
 export function activeEffects(s,id){
   const d=development(s,id),result={};if(!d)return result;
   for(const ideaId of Object.values(d.slots).flat().filter(Boolean))for(const [key,value] of Object.entries(IDEAS.find(i=>i.id===ideaId)?.effects||{}))result[key]=(result[key]||0)+value;
@@ -217,10 +244,11 @@ export function researchInnovation(s,owner,branch,id){
   const d=development(s,owner),item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id),f=s.factions[owner];
   if(!item||d.research||d[branch==='material'?'knownMaterial':'knownIdeas'].includes(id))return {ok:false,reason:'unavailable'};
   if(item.prerequisites.some(pre=>!d[branch==='material'?'knownMaterial':'knownIdeas'].includes(pre)))return {ok:false,reason:'prerequisite'};
-  const visitingScholar=visitingScholarFor(s,owner,branch,id),visitor=!!visitingScholar;
-  const cost=Math.max(8,item.cost-(activeEffects(s,owner).researchDiscount||0)-(figureActive(s,owner,'scholar')?3:0)-(visitor?3:0));
-  if(f.treasury<cost)return {ok:false,reason:'treasury'};
-  f.treasury-=cost;recordExpense(s,owner,'research',cost);d.research={branch,id,remaining:Math.max(1,item.months-(figureActive(s,owner,'scholar')?1:0)-(visitor?1:0)),scholarPartner:visitingScholar?.id?visitingScholar.partner:null};return {ok:true};
+  const terms=researchTerms(s,owner,branch,id),visitingScholar=visitingScholarFor(s,owner,branch,id);
+  if(f.treasury<terms.cost)return {ok:false,reason:'treasury'};
+  f.treasury-=terms.cost;recordExpense(s,owner,'research',terms.cost);d.research={branch,id,remaining:terms.months,scholarPartner:visitingScholar?.id?visitingScholar.partner:null};
+  if(terms.merchant)d.merchantLeads.splice(d.merchantLeads.indexOf(terms.merchant),1);
+  return {ok:true};
 }
 export function ideaCompatibility(s,owner,ideaId,slot){
   const d=development(s,owner),idea=IDEAS.find(i=>i.id===ideaId);

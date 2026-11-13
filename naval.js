@@ -1,5 +1,5 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js';
-import {activeEffects} from './development.js?v=31';
+import {activeEffects,recordMerchantContact} from './development.js?v=33';
 import {officeOf} from './office-system.js';
 import {nationalBudget} from './national-budget.js?v=15';
 
@@ -96,7 +96,10 @@ function settleRoute(s,route,log,merchantCapacity){
   }
  }
  if(reason==='piracy'&&piracy>20&&rng(s)<piracy/100){const p=n.pirates.find(x=>zones.includes(x.zone)),victim=n.fleets.find(f=>(f.owner===from.owner||f.owner===to.owner)&&(f.ships.merchant||0)>0&&!f.reserve&&f.zone===p?.zone);if(p&&victim){captured=pirateSeize(s,p,from.owner,route.good,route.volume);p.wealth+=captured;p.pressure=Math.min(70,p.pressure+2);damageFleet(s,victim,3);report(s,{kind:'pirate-raid',zone:p.zone,owner:victim.owner,good:route.good,captured});if(victim.owner===s.player)log(s,'Pirates struck a merchant vessel and seized cargo.','海盗袭击商船并夺走货物。')}}
- route.last={year:s.year,month:s.month,buyer:to.owner,seller:from.owner,amount,security,reason,unitPrice:price,paid,captured};if(route.id==='egypt-italy'&&to.owner===s.player&&grainNeed>0&&amount===0&&security<40&&!['paused','stocked'].includes(reason)){s.factions[to.owner].stability=Math.max(0,s.factions[to.owner].stability-1);log(s,'Egyptian grain delivery was disrupted.','埃及粮船受阻，稳定度下降。')}
+ route.last={year:s.year,month:s.month,buyer:to.owner,seller:from.owner,amount,security,reason,unitPrice:price,paid,captured};
+ const lead=recordMerchantContact(s,route);
+ if(lead?.buyer===s.player)log(s,`Merchant contact brought a research lead on ${lead.name[0]}. It expires in six months; research is still required.`,`商贸往来带来了${lead.name[1]}的研究线索。线索六个月后失效，仍须投入研究。`);
+ if(route.id==='egypt-italy'&&to.owner===s.player&&grainNeed>0&&amount===0&&security<40&&!['paused','stocked'].includes(reason)){s.factions[to.owner].stability=Math.max(0,s.factions[to.owner].stability-1);log(s,'Egyptian grain delivery was disrupted.','埃及粮船受阻，稳定度下降。')}
 }
 export function initializeNaval(s){if(!s.grandMap)return s;if(s.naval){s.naval.intel||={};s.naval.reports||=[];s.naval.queues||=[];s.naval.jobs||=[];s.naval.captives||=[];s.naval.provisions||={};for(const p of s.naval.pirates||[])p.cargo||={};ensureTrade(s);return s}const senatePort=s.regions.find(r=>r.id==='italiaS'&&r.owner==='senate')?'italiaS':'epirus',caesarPort=s.regions.find(r=>r.id==='cisalpine'&&r.owner==='caesar')?'cisalpine':'narbo';s.naval={version:1,fleets:[makeFleet('senate-adriatic',['Adriatic Squadron','亚得里亚分舰队'],'senate',senatePort,{trireme:2,transport:2}),makeFleet('caesar-adriatic',['Caesarian Coastal Fleet','凯撒沿岸舰队'],'caesar',caesarPort,{trireme:2,light:2,transport:2}),makeFleet('egypt-grain',['Alexandrian Grain Fleet','亚历山大运粮船队'],'egypt','egypt',{trireme:1,merchant:3})],pirates:[{id:'illyrian-raiders',zone:'adriatic',ships:2,pressure:24,wealth:8,backer:null,cargo:{}},{id:'cilician-raiders',zone:'eastern',ships:2,pressure:20,wealth:7,backer:null,cargo:{}}],routes:[{id:'egypt-italy',from:'egypt',to:'t016',good:'grain',volume:4,last:null},{id:'africa-sicily',from:'africa',to:'sicilia',good:'grain',volume:2,last:null},{id:'adriatic-commerce',from:'illyricum',to:'italiaS',good:'timber',volume:2,last:null}],queues:[],reports:[],intel:{},jobs:[],captives:[],provisions:{},nextFleet:1};for(const id of [senatePort,caesarPort]){const r=s.regions.find(x=>x.id===id);if(!r)continue;r.buildings||=[];for(const b of ['port','shipyard'])if(!r.buildings.includes(b))r.buildings.push(b);const d=s.development?.[r.owner];if(d)for(const tech of ['port-facilities','shipyard-craft'])if(!d.knownMaterial.includes(tech))d.knownMaterial.push(tech)}ensureTrade(s);return s}
 export function fleet(s,id){return s.naval?.fleets.find(f=>f.id===id)}

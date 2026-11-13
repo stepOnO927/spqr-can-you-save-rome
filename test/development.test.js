@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,purchaseMaterials} from '../engine.js';
-import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics} from '../development.js';
+import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms} from '../development.js';
+import {advanceNaval} from '../naval.js';
 import {developmentPanel,ideasPanel} from '../development-ui.js';
 import {edgeMonths,grandRoute} from '../grand-operations.js';
 import {techIllustration} from '../tech-art.js';
@@ -10,6 +11,47 @@ import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
+
+test('two paid foreign shipments create a dated research lead, not free knowledge',()=>{
+ const s=newGrandGame('senate');s.wars=[];s.factions.senate.treasury=300;s.factions.senate.food=100;
+ const normal=researchTerms(s,'senate','material','water-control');
+ s.month=2;advanceNaval(s);
+ const first=s.naval.routes.find(r=>r.id==='egypt-papyrus').last;
+ assert.equal(first.reason,'delivered');assert.ok(first.amount>0&&first.paid>0);
+ assert.equal(s.development.senate.merchantLeads.length,0);
+ advanceNaval(s);assert.equal(s.development.senate.merchantLeads.length,0,'the same calendar month cannot count twice');
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ restored.month=3;advanceNaval(restored);
+ const lead=restored.development.senate.merchantLeads.find(x=>x.id==='water-control');
+ assert.ok(lead);assert.equal(lead.seller,'egypt');assert.equal(lead.month,3);
+ assert.ok(!restored.development.senate.knownMaterial.includes('water-control'));
+ const terms=researchTerms(restored,'senate','material','water-control');
+ assert.equal(terms.cost,normal.cost-3);assert.equal(terms.months,normal.months-1);
+ const expiring=upgradeSave(JSON.parse(JSON.stringify(restored)));
+ assert.match(developmentPanel(restored,'en','material'),/Merchant research lead/);
+ assert.match(developmentPanel(restored,'zh','material'),/商贸研究线索/);
+ const unrelated=researchTerms(restored,'senate','material','quarrying');
+ assert.equal(unrelated.merchant,null);
+ const cash=restored.factions.senate.treasury;
+ assert.equal(researchInnovation(restored,'senate','material','water-control').ok,true);
+ assert.equal(restored.factions.senate.treasury,cash-terms.cost);
+ assert.equal(restored.development.senate.research.remaining,terms.months);
+ assert.equal(restored.development.senate.merchantLeads.some(x=>x.id==='water-control'),false);
+ months(restored,terms.months);
+ assert.ok(restored.development.senate.knownMaterial.includes('water-control'));
+ const paused=newGrandGame('senate');paused.wars=[];paused.factions.senate.treasury=300;paused.factions.senate.food=100;
+ for(const route of paused.naval.routes.filter(r=>paused.regions.find(x=>x.id===r.from)?.owner==='egypt'&&paused.regions.find(x=>x.id===r.to)?.owner==='senate'))route.pausedBy=['senate'];
+ for(const month of [2,3]){paused.month=month;advanceNaval(paused)}
+ assert.equal(paused.development.senate.merchantLeads.length,0,'paused trade cannot create a lead');
+ const observer=newGrandGame('egypt');observer.wars=[];observer.factions.senate.treasury=300;observer.factions.senate.food=100;
+ for(const month of [2,3]){observer.month=month;advanceNaval(observer)}
+ assert.ok(observer.development.senate.merchantLeads.some(x=>x.id==='water-control'));
+ observer.month=8;aiTurn(observer,'senate');
+ assert.equal(observer.development.senate.research?.id,'water-control','the AI should use a valid commercial research opportunity');
+ expiring.month=8;assert.ok(researchTerms(expiring,'senate','material','water-control').merchant);
+ expiring.month=9;
+ assert.equal(researchTerms(expiring,'senate','material','water-control').merchant,null);
+});
 
 test('Egyptian multiscript decrees require adoption and affect only Egyptian-culture integration',()=>{
  const id='egyptian-multiscript-decrees',idea=IDEAS.find(x=>x.id===id),s=newGrandGame('egypt');

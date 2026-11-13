@@ -5,6 +5,7 @@ import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {newGrandGame,proposeKnowledgeSale,proposeKnowledgePurchase,proposeKnowledgeExchange,proposeKnowledgeAgreement} from '../engine.js';
 import {scholarVisitCheck} from '../development.js';
+import {advanceNaval} from '../naval.js';
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:Number(process.env.SPQR_XIV_WIDTH||1440),height:Number(process.env.SPQR_XIV_HEIGHT||900)}});
@@ -261,6 +262,22 @@ try{
     assert.match(await page.locator('.inspector').innerText(),language==='zh'?/采石.*个月指导期剩余/:/Quarrying.*m of guidance left/);
     assert.match(await page.locator('[data-research="quarrying"]').innerText(),language==='zh'?/17¤ \/ 2月/:/17¤ \/ 2m/);
   }
+  const merchantCampaign=newGrandGame('senate');merchantCampaign.wars=[];merchantCampaign.factions.senate.treasury=300;merchantCampaign.factions.senate.food=100;
+  for(const month of [2,3]){merchantCampaign.month=month;advanceNaval(merchantCampaign)}
+  assert.ok(merchantCampaign.development.senate.merchantLeads.some(lead=>lead.id==='water-control'));
+  for(const language of ['en','zh']){
+    await page.evaluate(value=>localStorage.setItem('spqr-lang',value),language);
+    await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+    await page.locator('#entry-file').setInputFiles({name:`merchant-${language}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(merchantCampaign))});
+    await page.locator('[data-tab="development"]').click();
+    const node=page.locator('#tech-water-control');
+    assert.match(await node.innerText(),language==='zh'?/商贸研究线索/:/Merchant research lead/);
+    assert.match(await page.locator('[data-research="water-control"]').innerText(),language==='zh'?/21¤ \/ 3月/:/21¤ \/ 3m/);
+  }
+  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),merchantCampaign);
+  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+  await page.locator('#development').click();
+  assert.match(await page.locator('#tech-water-control').innerText(),/商贸研究线索/);
   const atlasScholar=newGrandGame('caesar');atlasScholar.wars=[];atlasScholar.relations['caesar:egypt']=25;atlasScholar.factions.caesar.treasury=300;atlasScholar.development.egypt.knownMaterial.push('quarrying');
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),atlasScholar);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
