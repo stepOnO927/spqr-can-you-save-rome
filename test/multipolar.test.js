@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=multipolar-autoplay-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=multipolar-autoplay-1';
 import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=fort-intel-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
 import {assessOpportunities} from '../multipolar.js?v=multipolar-confidence-1';
@@ -111,6 +111,24 @@ test('AI-only simulation continues after Rome loses while the human campaign sta
  assert.equal((automatic.year-s.year)*12+automatic.month-s.month,6);assert.equal(automatic.defeat,true);
  for(const actor of ['egypt','parthia','armenia'])assert.ok(automatic.world.multipolarPlans[actor]);
  assert.deepEqual(automatic.defeatDate,s.defeatDate);
+});
+
+test('seeded Roman-Egyptian war continues as a multipolar AI simulation',()=>{
+ function scenario(seed,autoplayPlayer){
+  const s=newGame('caesar');s.seed=seed;s.difficulty='expert';assert.equal(diplomacy(s,'caesar','egypt','war'),true);
+  const wars=new Set(),reviewed=new Set();let months=0;
+  for(let i=0;i<36;i++){
+   const before=s.year*12+s.month;tick(s,{autoplayPlayer});if(s.year*12+s.month===before)break;months++;
+   for(const war of s.wars)wars.add([...war].sort().join(':'));
+   for(const actor of Object.keys(s.world.multipolarPlans||{}))reviewed.add(actor);
+  }
+  return {s,months,wars,reviewed};
+ }
+ const runs=[scenario(103,true),scenario(14057,true)];
+ for(const run of runs){assert.equal(run.months,36);for(const actor of ['caesar','egypt','parthia','armenia'])assert.ok(run.reviewed.has(actor));}
+ assert.notDeepEqual([...runs[0].wars].sort(),[...runs[1].wars].sort());
+ const human=scenario(103,false);assert.ok(human.months>0&&human.months<36);assert.ok(human.s.defeat);
+ for(const actor of ['egypt','parthia','armenia'])assert.ok(human.reviewed.has(actor));
 });
 
 test('peace addressed to the automated side is answered by AI, while a human still decides',()=>{
