@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js';
 import {advanceForeignRulers,rulerPortrait,rulerMilitaryJudgment,rulerGovernanceFactor} from '../han/rulers.js';
 import {ownRulerHtml} from '../han/ruler-ui.js';
-import {birthRecordValid,recordBirth,eligibility,crown} from '../han/dynasty.js';
+import {birthRecordValid,recordBirth,eligibility,crown,seizeThrone} from '../han/dynasty.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';
 
 test('an original Liu heir gains a persistent portrait when legitimately crowned',()=>{
@@ -26,6 +26,18 @@ test('an original Liu heir gains a persistent portrait when legitimately crowned
  assert.equal(courtPortraitSrc(s.persons[id]),image);
  assert.ok(ownRulerHtml(s,0).includes(image));
  assert.equal(crown(s,'shi-gao','court_selection').ok,false);
+});
+
+test('a non-Liu founder is never labeled the Han emperor in the ruler card',()=>{
+ let s=newHanGame('han',{seed:413});
+ s.court.control['shi-gao']=80;
+ assert.equal(seizeThrone(s,'shi-gao').ok,true);
+ assert.equal(s.throne.orthodox,null);
+ assert.match(ownRulerHtml(s,0),/Founder of Another Dynasty/);
+ assert.doesNotMatch(ownRulerHtml(s,0),/Han emperor/);
+ assert.match(ownRulerHtml(s,1),/新朝建立者/);
+ s=loadHanSave(serialize(s));
+ assert.match(ownRulerHtml(s,0),/Founder of Another Dynasty/);
 });
 
 test('foreign rulers keep historical identities and unknown opening names distinct',()=>{

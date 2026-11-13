@@ -44,6 +44,18 @@ try{
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
  assert.equal(await card.locator('img').getAttribute('src'),heirImage);
  await page.locator('#lang').click();assert.match(await card.innerText(),/刘翊/);
+ await page.locator('#save').click();
+ await page.evaluate(async()=>{
+  const {seizeThrone}=await import('/han/dynasty.js');
+  const key='spqr-han-save-browser',s=JSON.parse(localStorage.getItem(key));
+  s.court.control['shi-gao']=80;
+  if(!seizeThrone(s,'shi-gao').ok)throw Error('non-Liu founding failed');
+  localStorage.setItem(key,JSON.stringify(s));
+ });
+ await page.locator('#load').click();
+ assert.equal(await card.getAttribute('data-ruler'),'shi-gao');
+ assert.match(await card.innerText(),/新朝建立者/);
+ assert.doesNotMatch(await card.innerText(),/汉皇帝/);
  assert.deepEqual(errors,[]);
  console.log('Han ruler browser smoke passed: foreign and original Liu succession, portrait, save/load and both languages.');
 }finally{await browser.close()}
