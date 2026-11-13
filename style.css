@@ -64,3 +64,7 @@ body{min-width:0;background:#292d29}.top{height:54px;padding:0 12px;gap:15px;bac
 .board-link.kind-shared_threat{stroke:#8a6a96;stroke-width:2;stroke-dasharray:3 6}
 
 .tax-projection{margin-top:.7rem;border-top:1px solid rgba(153,125,75,.35);padding-top:.55rem;font-size:.82rem}.tax-row{display:flex;gap:.65rem;flex-wrap:wrap;padding:.18rem 0;border-bottom:1px solid rgba(153,125,75,.16)}.tax-row strong{min-width:5rem}.tax-projection small{display:block;margin-top:.4rem;opacity:.8}.victory-progress.defeat{border-color:#8c453c;color:#7c3028}.victory-progress.defeat-warning{border-color:#a87537}
+
+/* Feather reads like a campaign dispatch, not a dashboard card. */
+.feather-panel{margin:0 18px 10px;padding:9px 15px;border-left:3px solid #b89b63;background:linear-gradient(90deg,rgba(171,139,80,.13),transparent);color:#d8d1c0;font:12px/1.5 Manrope,'Microsoft YaHei',sans-serif}
+.feather-panel strong{display:block;color:#e0c48d;font-size:10px;letter-spacing:.12em}.feather-panel ol{margin:5px 0 0;padding-left:20px}.feather-panel li{margin:2px 0}
