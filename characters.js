@@ -54,9 +54,34 @@ export function initializeWorld(s){
 export function ageRange(id,year){const b=CHARACTER_CATALOG[id]?.birth;if(!b||!Number.isFinite(year)||!Number.isFinite(b[0])||!Number.isFinite(b[1])||year<b[0])return null;return [Math.max(0,year-b[1]-1),year-b[0]]}
 export const successionModel=(faction,s)=>['caesar','senate'].includes(faction)?(s?.world?.romanRegimes?.[faction]||'republican_command'):faction==='egypt'?'ptolemaic_court':faction==='parthia'?'arsacid_nobility':faction==='mauretania'?'separate_kingdoms':'regional_dynasty';
 export function successorFor(s,faction){const fictional=['egypt','parthia','armenia','numidia','mauretania','galatia','bosporus'].includes(faction)||['roman_principate','later_empire'].includes(successionModel(faction,s))?Object.values(s.world.characters).filter(c=>CHARACTER_CATALOG[c.id]?.fictional&&c.faction===faction&&!c.institutionalOnly&&c.birthYear!=null&&s.year-c.birthYear>=18).map(c=>c.id):[];return [...new Set([...(SUCCESSORS[faction]||[]),...fictional])].filter(id=>s.world.characters[id]?.alive&&!s.world.characters[id].missing&&!s.world.characters[id].asylumHost&&s.world.characters[id].faction===faction&&!(s.world.leadership[faction]||[]).includes(id)).sort((a,b)=>(s.world.characters[b].influence??50)-(s.world.characters[a].influence??50));}
+// These keys identify separate simulated offices, not a claim that the two
+// historical kingdoms shared a crown. Older saves default to their founders.
+export function mauretanianSeatHolders(s){const seats=s.world?.constituentSeats?.mauretania||{};return {bocchus:seats.bocchus??'bocchus',bogud:seats.bogud??'bogud'}}
 export function assignSuccession(s,faction){
  const previous=s.world.leadership[faction]||[],current=previous.filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
  const model=successionModel(faction,s),imperial=['roman_principate','later_empire'].includes(model);
+ if(model==='separate_kingdoms'){
+  const seats=mauretanianSeatHolders(s),reserved=new Set(Object.values(seats).filter(id=>current.includes(id))),assigned=new Set(),leaders=[];
+  for(const seat of ['bocchus','bogud']){
+   const holder=seats[seat],person=s.world.characters[holder];let next=current.includes(holder)&&!assigned.has(holder)?holder:null;
+   if(!next&&person&&!person.alive){
+    // Only recorded biological or adoptive descendants can inherit this seat.
+    // A surviving ruler of the other seat is never silently given both crowns.
+    const queue=(person.children||[]).map(id=>({id,parent:holder})),seen=new Set([holder]);
+    for(let i=0;i<queue.length&&!next;i++){
+     const {id,parent}=queue[i],c=s.world.characters[id];if(seen.has(id)||!c||c.faction!==faction||![...(c.parents||[]),...(c.adoptiveParents||[])].includes(parent))continue;seen.add(id);
+     if(c.alive){if(!c.missing&&!c.asylumHost&&!c.institutionalOnly&&!reserved.has(id)&&!assigned.has(id))next=id}
+     else for(const child of c.children||[])queue.push({id:child,parent:id});
+    }
+    if(next)seats[seat]=next;
+   }
+   if(next){leaders.push(next);assigned.add(next)}
+  }
+  // Preserve legacy leaders with no reliable seat record without assigning
+  // them to a kingdom or discarding them during migration.
+  for(const id of current)if(!assigned.has(id))leaders.push(id);
+  (s.world.constituentSeats||={}).mauretania=seats;s.world.leadership[faction]=leaders;return leaders;
+ }
  const contested=(['egypt','parthia'].includes(faction)||imperial)&&s.world.disputes?.[faction]&&(s.world.claimants?.[faction]||[]).some(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
  if(!current.length&&contested&&!s.world.disputes[faction].vacancySince){s.world.disputes[faction].months=0;s.world.disputes[faction].vacancySince={year:s.year,month:s.month}}
  if(!current.length&&!contested){

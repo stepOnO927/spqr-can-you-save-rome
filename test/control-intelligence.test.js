@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=unknown-person-1';
+import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=separate-crowns-1';
 import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=fort-intel-1';
-import {drawMap} from '../map.js?v=unknown-person-1';
-import {advanceMovements} from '../movements.js?v=portrait-pool-2';
+import {drawMap} from '../map.js?v=separate-crowns-1';
+import {advanceMovements} from '../movements.js?v=separate-crowns-1';
 
 test('remote control changes do not automatically change a faction’s map or turn knowledge',()=>{
  let s=newGame('caesar');const before=reportedControl(s,'caesar','parthia');

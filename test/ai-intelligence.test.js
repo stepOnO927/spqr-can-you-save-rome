@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,aiClaimantChoice,tick,upgradeSave} from '../engine.js?v=unknown-person-1';
-import {addReport} from '../character-system.js?v=unknown-person-1';
+import {newGame,estimatedStrength,aiClaimantChoice,tick,upgradeSave} from '../engine.js?v=separate-crowns-1';
+import {addReport} from '../character-system.js?v=separate-crowns-1';
 // These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
 // they run with the expansion's AI layer switched off (world.imperium.enabled=false).
 const legacyIsolated=g=>{g.world.imperium={enabled:false};return g};

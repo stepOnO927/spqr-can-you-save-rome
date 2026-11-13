@@ -1,8 +1,8 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=fort-intel-1';
-import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange,successionModel} from './characters.js?v=newborn-age-1';
-import {recordLifeEvent,dynastyRoll,personAge} from './dynasties.js?v=portrait-pool-2';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=separate-crowns-1';
+import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=separate-crowns-1';
+import {recordLifeEvent,dynastyRoll,personAge} from './dynasties.js?v=separate-crowns-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {startDynasticWar} from './civil-war.js?v=fort-intel-1';
+import {startDynasticWar} from './civil-war.js?v=separate-crowns-1';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
@@ -29,7 +29,8 @@ export function deriveGovernment(s,faction){
  // invent a single shared regency, even if both kings are absent or dead.
  if(faction==='mauretania'){
   const capable=nominal.filter(id=>!unable(s.world.characters[id])&&!definitelyMinor(s,faction,id));
-  if(['bocchus','bogud'].some(id=>!nominal.includes(id)))return {kind:'constituent_vacant',nominal,acting:capable};
+  const seats=Object.values(mauretanianSeatHolders(s));
+  if(new Set(seats).size!==2||seats.some(id=>!nominal.includes(id)))return {kind:'constituent_vacant',nominal,acting:capable};
   if(capable.length<nominal.length)return {kind:'constituent_unavailable',nominal,acting:capable};
   return {kind:'normal',nominal,acting:capable};
  }
@@ -128,7 +129,8 @@ export function secureRegency(s){
 export function advanceGovernments(s,{autoplayPlayer=false}={}){
  initializeGovernments(s);s.world.regencies||={};for(const faction of Object.keys(s.world.governments)){
   if(!s.factions[faction]||!s.regions.some(r=>r.owner===faction))continue;
-  const before=s.world.governments[faction],after=deriveGovernment(s,faction);s.world.governments[faction]=after;
+  const before=s.world.governments[faction];if(faction==='mauretania')assignSuccession(s,faction);
+  const after=deriveGovernment(s,faction);s.world.governments[faction]=after;
   if(after.kind==='regency'&&after.acting.length){
    const regent=s.world.characters[after.acting[0]],ward=after.nominal[0],previous=s.world.regencies[faction];
    const tenure=previous?.regent===regent.id&&previous.ward===ward?previous:{regent:regent.id,ward,months:0,startedYear:s.year,startedMonth:s.month};
