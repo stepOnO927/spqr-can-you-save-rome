@@ -1,0 +1,53 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+
+const base=process.env.SPQR_TEST_URL||'http://127.0.0.1:5173';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
+page.on('pageerror',error=>errors.push(error.message));
+try{
+ await page.addInitScript(()=>{localStorage.setItem('spqr-han-lang','en');Date.now=()=>123456});
+ await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
+ await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
+ await page.locator('#save').click();
+ await page.evaluate(async()=>{
+  const {loadHanSave,serialize,SAVE_KEY}=await import('/han/engine.js?v=han-1');
+  const {setRelation}=await import('/han/frontier.js?v=han-1');
+  const state=loadHanSave(localStorage.getItem(SAVE_KEY('browser')));
+  setRelation(state,'han','kangju',70);
+  localStorage.setItem(SAVE_KEY('browser'),serialize(state));
+ });
+ await page.locator('#load').click();
+ await page.locator('#trade-panel').click();
+ assert.deepEqual(errors,[]);
+ await page.locator('#east-market-partner').selectOption('kangju');await page.locator('#east-market-propose').click();
+ assert.match(await page.locator('#message').innerText(),/accepted/);
+ const value=await page.locator('#east-market-offer option').evaluateAll(options=>options.find(o=>o.textContent.includes('Kangju')&&o.textContent.includes('Horses'))?.value);
+ assert.ok(value,'Kangju horses must be offered under the new treaty');
+ await page.locator('#east-market-offer').selectOption(value);
+ await page.locator('#east-market-destination').selectOption('dunhuang');
+ await page.locator('#east-contract-interval').selectOption('3');
+ await page.locator('#east-contract-duration').selectOption('12');
+ assert.equal(await page.locator('#east-contract-create').isEnabled(),true);
+ await page.locator('#east-contract-create').click();
+ assert.match(await page.locator('#message').innerText(),/first caravan dispatched/);
+ await page.locator('#save').click();
+ let saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ const contract=saved.tradeMarkets.supplyContracts[0],first=saved.tradeMarkets.shipments.find(x=>x.contractId===contract.id);
+ assert.equal(contract.dispatched,1);assert.equal(first.quantity,1);assert.ok(first.escrow>0);
+ await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#trade-panel').click();
+ for(let i=0;i<3;i++)await page.locator('#advance').click();
+ await page.locator('#save').click();saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ assert.equal(saved.tradeMarkets.supplyContracts[0].dispatched,2);
+ assert.equal(saved.tradeMarkets.shipments.filter(x=>x.contractId===contract.id).length,2);
+ await page.locator('#lang').click();
+ assert.match(await page.locator('#inspector').innerText(),/定期供货约定/);
+ await page.locator('[data-east-cancel-contract]').click();
+ assert.match(await page.locator('#east-contract-feedback').innerText(),/确认撤回/);
+ await page.locator('#east-contract-feedback button').click();
+ await page.locator('#save').click();saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ assert.equal(saved.tradeMarkets.supplyContracts[0].status,'withdrawn');
+ assert.equal(saved.tradeMarkets.shipments.filter(x=>x.contractId===contract.id).length,2);
+ assert.deepEqual(errors,[]);
+ console.log('Han recurring supply agreement browser smoke passed: dispatch, save/load, next installment, bilingual UI, withdrawal.');
+}finally{await browser.close()}

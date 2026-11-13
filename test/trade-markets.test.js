@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,recruit,resolveBattle} from '../engine.js?v=faces-empire-2';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
-import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=faces-empire-2';
+import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,advanceMarkets,proposeSupplyContract,cancelSupplyContract} from '../trade-markets.js?v=faces-empire-2';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=newborn-age-1';
 
 const deal=()=>{
@@ -47,6 +47,48 @@ test('a horse order escrows goods and money, travels, then pays and delivers exa
  advanceMarkets(loaded);assert.equal(loaded.markets.transactions.length,1);
  assert.equal(loaded.markets.transportSpent+loaded.markets.merchantFees,quote.transport);
  assert.equal(upgradeSave(structuredClone(loaded)).markets.transactions.length,1);
+});
+
+test('a long-term supply contract prepays each physical installment and survives save/load',()=>{
+ let s=deal(),source=s.markets.regions.parthia.goods.horses,buyerCash=s.factions.armenia.treasury;
+ const proposed=proposeSupplyContract(s,{...request,interval:3,duration:12});assert.equal(proposed.ok,true);
+ const {contract,quote}=proposed;assert.equal(contract.unitPrice,quote.unitPrice);
+ assert.equal(contract.negotiationCost,2);assert.equal(s.factions.armenia.treasury,buyerCash-quote.total-2);
+ assert.equal(s.markets.shipments.length,1);assert.equal(s.markets.shipments[0].contractId,contract.id);
+ assert.equal(placeTradeOrder(s,{...request,contractId:contract.id}).reason,'contract','one installment cannot be ordered twice');
+ assert.equal(placeTradeOrder(s,{...request,quantity:1,contractId:contract.id}).reason,'contract','a contract ID cannot underprice a different order');
+ s=upgradeSave(structuredClone(s));assert.equal(s.markets.supplyContracts[0].id,contract.id);
+ for(let i=0;i<3;i++){s.month++;advanceMarkets(s)}
+ assert.equal(s.markets.supplyContracts[0].dispatched,2);
+ assert.equal(s.markets.shipments[1].price,quote.price,'the agreed goods price is locked');
+ assert.ok(source.stock>=0);assert.equal(s.markets.shipments[0].status,'delivered');
+ for(let i=0;i<9;i++){s.month++;if(s.month>12){s.month=1;s.year++}advanceMarkets(s)}
+ assert.equal(s.markets.supplyContracts[0].status,'completed');
+ assert.equal(s.markets.supplyContracts[0].dispatched,4);
+ assert.equal(s.markets.shipments.filter(x=>x.contractId===contract.id).length,4);
+ assert.equal(s.markets.transportSpent+s.markets.merchantFees,s.markets.transactions.reduce((sum,x)=>sum+x.transport,0));
+});
+
+test('two missed supply installments create a saved breach; war ends future orders without erasing a caravan',()=>{
+ const s=deal(),first=proposeSupplyContract(s,{...request,interval:3,duration:12});assert.equal(first.ok,true);
+ const source=s.markets.regions.parthia.goods.horses;source.production=0;source.consumption=0;source.stock=0;
+ for(let i=0;i<6;i++){s.month++;advanceMarkets(s)}
+ const contract=s.markets.supplyContracts[0];assert.equal(contract.status,'breached');assert.equal(contract.missed,2);
+ assert.equal(contract.endedReason,'unavailable');assert.equal(s.diplomaticCredibility.parthia,92);
+ assert.equal(s.markets.shipments.length,1,'a breach cannot mint replacement cargo');
+ const restored=upgradeSave(structuredClone(s));assert.equal(restored.markets.supplyContracts[0].status,'breached');
+ const wartime=deal(),second=proposeSupplyContract(wartime,{...request,interval:3,duration:12});assert.equal(second.ok,true);
+ wartime.wars.push(['armenia','parthia']);wartime.month++;advanceMarkets(wartime);
+ assert.equal(second.contract.status,'terminated');assert.equal(second.contract.endedReason,'access_lost');
+ assert.equal(second.shipment.status,'blocked');assert.equal(wartime.markets.shipments.length,1);
+});
+
+test('withdrawing a supply contract changes relations but retains already prepaid shipments',()=>{
+ const s=deal(),created=proposeSupplyContract(s,{...request});assert.equal(created.ok,true);
+ const before=s.relations['armenia:parthia'];assert.equal(cancelSupplyContract(s,created.contract.id).ok,true);
+ assert.equal(s.relations['armenia:parthia'],before-8);assert.equal(s.markets.shipments[0].status,'traveling');
+ assert.equal(cancelSupplyContract(s,created.contract.id).reason,'unavailable');
+ s.month++;advanceMarkets(s);assert.equal(s.markets.supplyContracts[0].status,'withdrawn');
 });
 
 test('border war blocks an actual shipment until passage is restored',()=>{

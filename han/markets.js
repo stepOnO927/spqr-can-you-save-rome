@@ -1,6 +1,6 @@
 import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-of-empire-1';
 import {REGIONS,ROUTES} from './data.js?v=han-1';
-import {atWar,propose,relation,treaty} from './frontier.js?v=han-1';
+import {atWar,propose,relation,shiftRelation,treaty} from './frontier.js?v=han-1';
 import {legOpen,tradePath} from './silk-road.js?v=han-1';
 import {createMarketMerchant} from './field-identities.js';
 import {roll} from './util.js?v=han-1';
@@ -44,9 +44,12 @@ function profile(r,good){
 }
 
 export function initializeEasternMarkets(s){
- const markets=s.tradeMarkets||={regions:{},offers:[],saleOrders:[],shipments:[],transactions:[],nextSaleOrder:1,nextShipment:1,merchants:{},tariffs:{},exportRestrictions:{},transitTreasury:{},transportSpent:0,merchantFees:0,diplomacy:{attempts:[],nextAt:{}},lastTick:null};
+ const markets=s.tradeMarkets||={regions:{},offers:[],saleOrders:[],shipments:[],transactions:[],supplyContracts:[],nextSupplyContract:1,nextSaleOrder:1,nextShipment:1,merchants:{},tariffs:{},exportRestrictions:{},transitTreasury:{},transportSpent:0,merchantFees:0,diplomacy:{attempts:[],nextAt:{}},lastTick:null};
  markets.regions||={};markets.offers||=[];if(!Array.isArray(markets.saleOrders))markets.saleOrders=[];markets.shipments||=[];markets.transactions||=[];markets.merchants||={};markets.tariffs||={};markets.exportRestrictions||={};markets.transitTreasury||={};markets.diplomacy||={attempts:[],nextAt:{}};
  markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};if(!Number.isSafeInteger(markets.nextSaleOrder)||markets.nextSaleOrder<1)markets.nextSaleOrder=1;markets.nextShipment||=1;markets.transportSpent??=0;markets.merchantFees??=0;
+ if(!Array.isArray(markets.supplyContracts))markets.supplyContracts=[];
+ if(!Number.isSafeInteger(markets.nextSupplyContract)||markets.nextSupplyContract<1)markets.nextSupplyContract=1;
+ while(markets.supplyContracts.some(contract=>contract.id===`eastern-supply:${markets.nextSupplyContract}`))markets.nextSupplyContract++;
  markets.externalTreasury??=10000;
  markets.lostGoods||={};
  for(const [owner,rate] of Object.entries(markets.tariffs))markets.tariffs[owner]=Number.isFinite(rate)?clamp(rate,0,.3):TARIFF_POLICIES.standard;
@@ -96,17 +99,19 @@ function travelQuote(s,path,quantity,price,buyer,seller){
  return {legs,months,transport,tariffs,total:price+transport+tariffs.reduce((n,t)=>n+t.amount,0)};
 }
 
-export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId}){
+export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId,contractId}){
  const markets=initializeEasternMarkets(s),from=region(s,origin),to=region(s,destination),stock=markets.regions[origin]?.goods?.[commodity];
  const external=buyer==='external'&&seller==='han'&&destination==='mediterranean_gate'&&to?.owner==null;
  if(!COMMODITIES[commodity]||!Number.isSafeInteger(quantity)||quantity<1||quantity>20||!from||!to||from.owner!==seller||!s.factions[seller]||!external&&(to.owner!==buyer||!s.factions[buyer])||origin===destination)return {ok:false,reason:'invalid'};
  const sale=saleOrderId?markets.saleOrders.find(x=>x.id===saleOrderId):null;
+ const contract=contractId?markets.supplyContracts.find(x=>x.id===contractId):null;
+ if(contractId&&(!contract||contract.status!=='active'||month(s)<contract.nextDueAt||month(s)>=contract.expiresAt||saleOrderId||['seller','buyer','origin','destination','commodity','quantity'].some(key=>contract[key]!==({seller,buyer,origin,destination,commodity,quantity})[key])))return {ok:false,reason:'contract'};
  if(saleOrderId&&(!sale||sale.status!=='open'||sale.seller!==seller||sale.origin!==origin||sale.commodity!==commodity||sale.available<quantity))return {ok:false,reason:'unavailable'};
  if(buyer!==seller&&markets.exportRestrictions[seller]?.includes(commodity))return {ok:false,reason:'export_restricted'};
  if(!external&&(atWar(s,buyer,seller)||!tradeTreaty(s,buyer,seller)))return {ok:false,reason:'access'};
  if(!sale&&stock.stock<quantity)return {ok:false,reason:'unavailable'};
  const path=tradePath(s,origin,destination,external?seller:buyer);if(!path)return {ok:false,reason:'route'};
- const unitPrice=sale?.unitPrice??marketPrice(markets.regions[origin],commodity),price=unitPrice*quantity,travel=travelQuote(s,path,quantity,price,buyer,seller);
+ const unitPrice=contract?.unitPrice??sale?.unitPrice??marketPrice(markets.regions[origin],commodity),price=unitPrice*quantity,travel=travelQuote(s,path,quantity,price,buyer,seller);
  if((external?markets.externalTreasury:s.factions[buyer].treasury)<travel.total)return {ok:false,reason:'treasury'};
  return {ok:true,unitPrice,price,path,...travel};
 }
@@ -141,8 +146,51 @@ export function placeEasternTrade(s,request){
  if(request.saleOrderId){const sale=markets.saleOrders.find(x=>x.id===request.saleOrderId);sale.available-=request.quantity;if(sale.available===0)sale.status='filled'}
  else markets.regions[request.origin].goods[request.commodity].stock-=request.quantity;
  if(external)markets.externalTreasury-=quote.total;else s.factions[request.buyer].treasury-=quote.total;
- const shipment={id:`eastern-shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,sponsor:external?request.seller:request.buyer,merchantId,saleOrderId:request.saleOrderId||null,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,path:quote.path,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month};
- markets.shipments.push(shipment);return {ok:true,shipment,quote};
+ const shipment={id:`eastern-shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,sponsor:external?request.seller:request.buyer,merchantId,saleOrderId:request.saleOrderId||null,contractId:request.contractId||null,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,path:quote.path,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month};
+ markets.shipments.push(shipment);
+ if(request.contractId){const contract=markets.supplyContracts.find(x=>x.id===request.contractId);contract.shipments.push(shipment.id);contract.dispatched++;contract.consecutiveMisses=0;contract.nextDueAt=month(s)+contract.interval;contract.lastOutcome='dispatched'}
+ return {ok:true,shipment,quote};
+}
+
+export function proposeEasternSupplyContract(s,{actor=s.player,seller,buyer,origin,destination,commodity,quantity,interval=3,duration=12}={}){
+ const markets=initializeEasternMarkets(s),now=month(s),fee=2;
+ if(s.finalized||actor!==s.player||![seller,buyer].includes(actor)||seller===buyer||![3,6,12].includes(interval)||![6,12,24,36].includes(duration)||interval>duration||markets.supplyContracts.some(x=>x.status==='active'&&x.seller===seller&&x.buyer===buyer&&x.origin===origin&&x.destination===destination&&x.commodity===commodity))return {ok:false,reason:'invalid'};
+ const quote=quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,quantity});if(!quote.ok)return quote;
+ if(s.factions[actor].treasury<fee+(actor===buyer?quote.total:0))return {ok:false,reason:'treasury'};
+ const recipient=actor===buyer?seller:buyer,source=markets.regions[origin].goods[commodity],need=markets.regions[destination].goods[commodity];
+ if(relation(s,actor,recipient)<20||actor===buyer&&source.production<1||actor===seller&&need.stock>=Math.max(4,need.consumption*3+need.production))return {ok:false,reason:'declined'};
+ let id;do{id=`eastern-supply:${markets.nextSupplyContract++}`}while(markets.supplyContracts.some(x=>x.id===id));
+ const contract={id,actor,seller,buyer,origin,destination,commodity,quantity,unitPrice:quote.unitPrice,interval,duration,createdAt:now,nextDueAt:now,expiresAt:now+duration,negotiationCost:fee,obligations:['dispatch_on_schedule','prepay_each_shipment','honor_trade_access'],termination:'expiry, war, lost market, treaty loss, withdrawal, or repeated breach',breachPenalty:8,status:'active',consecutiveMisses:0,missed:0,dispatched:0,shipments:[],lastOutcome:null};
+ markets.supplyContracts.push(contract);
+ const first=placeEasternTrade(s,{seller,buyer,origin,destination,commodity,quantity,contractId:id,maxTotal:quote.total});
+ if(!first.ok){markets.supplyContracts.pop();return first}
+ s.factions[actor].treasury-=fee;
+ return {ok:true,contract,shipment:first.shipment,quote:first.quote};
+}
+
+export function cancelEasternSupplyContract(s,id,actor=s.player){
+ const contract=initializeEasternMarkets(s).supplyContracts.find(x=>x.id===id);
+ if(!contract||contract.status!=='active'||actor!==s.player||![contract.buyer,contract.seller].includes(actor))return {ok:false,reason:'unavailable'};
+ contract.status='withdrawn';contract.endedAt=month(s);contract.endedReason='withdrawal';shiftRelation(s,actor,actor===contract.buyer?contract.seller:contract.buyer,-contract.breachPenalty);
+ return {ok:true,contract};
+}
+
+function advanceEasternSupplyContracts(s,now){
+ for(const contract of s.tradeMarkets.supplyContracts){
+  if(contract.status!=='active')continue;
+  if(now>=contract.expiresAt){contract.status='completed';contract.endedAt=now;continue}
+  if(region(s,contract.origin)?.owner!==contract.seller||region(s,contract.destination)?.owner!==contract.buyer||!tradeTreaty(s,contract.seller,contract.buyer)||atWar(s,contract.seller,contract.buyer)){
+   contract.status='terminated';contract.endedAt=now;contract.endedReason='access_lost';continue;
+  }
+  if(now<contract.nextDueAt)continue;
+  const request={seller:contract.seller,buyer:contract.buyer,origin:contract.origin,destination:contract.destination,commodity:contract.commodity,quantity:contract.quantity,contractId:contract.id};
+  const result=placeEasternTrade(s,request);if(result.ok)continue;
+  contract.missed++;contract.nextDueAt=now+contract.interval;contract.lastOutcome=result.reason;
+  const responsible=result.reason==='treasury'?contract.buyer:['unavailable','export_restricted'].includes(result.reason)?contract.seller:null;
+  contract.consecutiveMisses=responsible?contract.consecutiveMisses+1:0;
+  if(responsible)shiftRelation(s,responsible,responsible===contract.buyer?contract.seller:contract.buyer,-2);
+  if(responsible&&contract.consecutiveMisses>=2){contract.status='breached';contract.endedAt=now;contract.endedReason=result.reason;shiftRelation(s,responsible,responsible===contract.buyer?contract.seller:contract.buyer,-contract.breachPenalty)}
+ }
 }
 
 function publishOffers(s){
@@ -265,7 +313,7 @@ export function advanceEasternMarkets(s){
   const limit=Math.max(80,item.production*24);if(item.stock>limit){item.surplusDiscarded=(item.surplusDiscarded||0)+item.stock-limit;item.stock=limit}
   item.price=marketPrice(markets.regions[r.id],good);
  }
- advanceShipments(s);publishOffers(s);
+ advanceShipments(s);publishOffers(s);advanceEasternSupplyContracts(s,now);
  if(!markets.embeddedRoman&&s.month%3===0)advanceEasternMarketAI(s);
  return markets;
 }

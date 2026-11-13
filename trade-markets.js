@@ -46,11 +46,14 @@ function profile(r,good){
  return {production,consumption,stock:Math.max(0,production*4+2-consumption),price:COMMODITIES[good].basePrice};
 }
 export function initializeMarkets(s){
- const markets=s.markets||={regions:{},saleOrders:[],nextSaleOrder:1,shipments:[],transactions:[],nextShipment:1,tariffs:{},exportRestrictions:{},lastTick:null,transportSpent:0,transitTreasury:{},merchants:{},merchantFees:0};
+ const markets=s.markets||={regions:{},saleOrders:[],nextSaleOrder:1,shipments:[],transactions:[],nextShipment:1,supplyContracts:[],nextSupplyContract:1,tariffs:{},exportRestrictions:{},lastTick:null,transportSpent:0,transitTreasury:{},merchants:{},merchantFees:0};
  markets.regions||={};if(!Array.isArray(markets.saleOrders))markets.saleOrders=[];if(!Number.isSafeInteger(markets.nextSaleOrder)||markets.nextSaleOrder<1)markets.nextSaleOrder=1;markets.shipments||=[];markets.transactions||=[];markets.tariffs||={};markets.exportRestrictions||={};markets.nextShipment||=1;markets.transportSpent??=0;markets.transitTreasury||={};
  for(const [owner,rate] of Object.entries(markets.tariffs))markets.tariffs[owner]=Number.isFinite(rate)?clamp(rate,0,.3):TARIFF_POLICIES.standard;
  for(const [owner,goods] of Object.entries(markets.exportRestrictions))markets.exportRestrictions[owner]=Array.isArray(goods)?[...new Set(goods.filter(good=>Object.hasOwn(COMMODITIES,good)))]:[];
  markets.merchants||={};markets.merchantFees??=0;
+ if(!Array.isArray(markets.supplyContracts))markets.supplyContracts=[];
+ if(!Number.isSafeInteger(markets.nextSupplyContract)||markets.nextSupplyContract<1)markets.nextSupplyContract=1;
+ while(markets.supplyContracts.some(contract=>contract.id===`supply:${markets.nextSupplyContract}`))markets.nextSupplyContract++;
  markets.diplomacy||={attempts:[],nextAt:{},lastTick:null};
  markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};
  for(const [buyer,ids] of Object.entries(markets.merchants))if(!Array.isArray(ids))markets.merchants[buyer]=ids?[ids]:[];
@@ -140,16 +143,18 @@ function routeFor(s,origin,destination,buyer,seller,{planFor=null}={}){
  return null;
 }
 
-export function quoteTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId}){
+export function quoteTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId,contractId}){
  const markets=initializeMarkets(s),from=region(s,origin),to=region(s,destination),stock=markets.regions[origin]?.goods?.[commodity];
  if(!COMMODITIES[commodity]||!Number.isSafeInteger(quantity)||quantity<1||quantity>20||!from||!to||!s.factions[seller]||!s.factions[buyer]||from.owner!==seller||to.owner!==buyer||origin===destination)return {ok:false,reason:'invalid'};
  const sale=saleOrderId?markets.saleOrders.find(x=>x.id===saleOrderId):null;
+ const contract=contractId?markets.supplyContracts.find(x=>x.id===contractId):null;
+ if(contractId&&(!contract||contract.status!=='active'||month(s)<contract.nextDueAt||month(s)>=contract.expiresAt||saleOrderId||['seller','buyer','origin','destination','commodity','quantity'].some(key=>contract[key]!==({seller,buyer,origin,destination,commodity,quantity})[key])))return {ok:false,reason:'contract'};
  if(saleOrderId&&(!sale||sale.status!=='open'||sale.seller!==seller||sale.origin!==origin||sale.commodity!==commodity||sale.available<quantity||buyer===seller))return {ok:false,reason:'unavailable'};
  if(buyer!==seller&&markets.exportRestrictions[seller]?.includes(commodity))return {ok:false,reason:'export_restricted'};
  if(atWar(s,seller,buyer)||seller!==buyer&&!activeAgreement(s,seller,buyer,'trade'))return {ok:false,reason:'access'};
  if(!sale&&stock.stock<quantity)return {ok:false,reason:'unavailable'};
  const route=routeFor(s,origin,destination,buyer,seller);if(!route)return {ok:false,reason:'route'};
- const unitPrice=sale?.unitPrice??marketPrice(markets.regions[origin],commodity),price=unitPrice*quantity;
+ const unitPrice=contract?.unitPrice??sale?.unitPrice??marketPrice(markets.regions[origin],commodity),price=unitPrice*quantity;
  const transport=Math.max(1,Math.ceil(route.cost*quantity/5));
  const customs=[...new Set(route.path.slice(1,-1).map(id=>node(s,id)?.owner).filter(owner=>owner&&owner!==seller&&owner!==buyer))];
  const tariffs=customs.map(owner=>({owner,amount:Math.ceil(price*clamp(markets.tariffs[owner]??.05,0,.3))}));
@@ -166,8 +171,61 @@ export function placeTradeOrder(s,request){
  if(request.saleOrderId){const sale=markets.saleOrders.find(x=>x.id===request.saleOrderId);sale.available-=request.quantity;if(sale.available===0)sale.status='filled'}
  else source.stock-=request.quantity;
  s.factions[request.buyer].treasury-=quote.total;
- const shipment={id:`shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,merchantId,saleOrderId:request.saleOrderId||null,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,route:quote.route,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month};
- markets.shipments.push(shipment);return {ok:true,shipment,quote};
+ const shipment={id:`shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,merchantId,saleOrderId:request.saleOrderId||null,contractId:request.contractId||null,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,route:quote.route,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month};
+ markets.shipments.push(shipment);
+ if(request.contractId){const contract=markets.supplyContracts.find(x=>x.id===request.contractId);contract.shipments.push(shipment.id);contract.dispatched++;contract.consecutiveMisses=0;contract.nextDueAt=month(s)+contract.interval;contract.lastOutcome='dispatched'}
+ return {ok:true,shipment,quote};
+}
+
+// A supply contract is a recurring obligation, never an upfront grant of
+// goods or money. Every installment goes through the ordinary escrow and
+// physical shipment rules at the agreed goods price; route costs are current.
+export function proposeSupplyContract(s,{actor=s.player,seller,buyer,origin,destination,commodity,quantity,interval=3,duration=12}={}){
+ const markets=initializeMarkets(s),now=month(s),fee=2;
+ if(s.defeat||actor!==s.player||![seller,buyer].includes(actor)||seller===buyer||![3,6,12].includes(interval)||![6,12,24,36].includes(duration)||interval>duration||markets.supplyContracts.some(x=>x.status==='active'&&x.seller===seller&&x.buyer===buyer&&x.origin===origin&&x.destination===destination&&x.commodity===commodity))return {ok:false,reason:'invalid'};
+ const quote=quoteTrade(s,{seller,buyer,origin,destination,commodity,quantity});if(!quote.ok)return quote;
+ if(s.factions[actor].treasury<fee+(actor===buyer?quote.total:0))return {ok:false,reason:'treasury'};
+ const recipient=actor===buyer?seller:buyer,source=markets.regions[origin].goods[commodity],destinationStock=markets.regions[destination].goods[commodity];
+ if(relationValue(s,actor,recipient)<20||actor===buyer&&source.production<1||actor===seller&&destinationStock.stock>=Math.max(4,destinationStock.consumption*3+destinationStock.production))return {ok:false,reason:'declined'};
+ let id;do{id=`supply:${markets.nextSupplyContract++}`}while(markets.supplyContracts.some(x=>x.id===id));
+ const contract={id,actor,seller,buyer,origin,destination,commodity,quantity,unitPrice:quote.unitPrice,interval,duration,createdAt:now,nextDueAt:now,expiresAt:now+duration,negotiationCost:fee,obligations:['dispatch_on_schedule','prepay_each_shipment','honor_trade_access'],termination:'expiry, war, lost market, treaty loss, withdrawal, or repeated breach',breachPenalty:8,status:'active',consecutiveMisses:0,missed:0,dispatched:0,shipments:[],lastOutcome:null};
+ markets.supplyContracts.push(contract);
+ const first=placeTradeOrder(s,{seller,buyer,origin,destination,commodity,quantity,contractId:id,maxTotal:quote.total});
+ if(!first.ok){markets.supplyContracts.pop();return first}
+ s.factions[actor].treasury-=fee;
+ return {ok:true,contract,shipment:first.shipment,quote:first.quote};
+}
+
+function supplyBreach(s,contract,actor,amount){
+ const other=actor===contract.seller?contract.buyer:contract.seller,key=[actor,other].sort().join(':');
+ s.relations[key]=Math.max(-100,(s.relations[key]??0)-amount);
+ if(amount>=contract.breachPenalty){s.diplomaticCredibility||={};s.diplomaticCredibility[actor]=Math.max(0,(s.diplomaticCredibility[actor]??100)-amount)}
+}
+
+export function cancelSupplyContract(s,id,actor=s.player){
+ const contract=initializeMarkets(s).supplyContracts.find(x=>x.id===id);
+ if(!contract||contract.status!=='active'||actor!==s.player||![contract.buyer,contract.seller].includes(actor))return {ok:false,reason:'unavailable'};
+ contract.status='withdrawn';contract.endedAt=month(s);contract.endedReason='withdrawal';supplyBreach(s,contract,actor,contract.breachPenalty);
+ return {ok:true,contract};
+}
+
+function advanceSupplyContracts(s,now){
+ for(const contract of s.markets.supplyContracts){
+  if(contract.status!=='active')continue;
+  if(now>=contract.expiresAt){contract.status='completed';contract.endedAt=now;continue}
+  if(region(s,contract.origin)?.owner!==contract.seller||region(s,contract.destination)?.owner!==contract.buyer||!activeAgreement(s,contract.seller,contract.buyer,'trade')||atWar(s,contract.seller,contract.buyer)){
+   contract.status='terminated';contract.endedAt=now;contract.endedReason='access_lost';continue;
+  }
+  if(now<contract.nextDueAt)continue;
+  const request={seller:contract.seller,buyer:contract.buyer,origin:contract.origin,destination:contract.destination,commodity:contract.commodity,quantity:contract.quantity,contractId:contract.id};
+  const result=placeTradeOrder(s,request);
+  if(result.ok)continue;
+  contract.missed++;contract.nextDueAt=now+contract.interval;contract.lastOutcome=result.reason;
+  const responsible=result.reason==='treasury'?contract.buyer:['unavailable','export_restricted'].includes(result.reason)?contract.seller:null;
+  contract.consecutiveMisses=responsible?contract.consecutiveMisses+1:0;
+  if(responsible)supplyBreach(s,contract,responsible,2);
+  if(responsible&&contract.consecutiveMisses>=2){contract.status='breached';contract.endedAt=now;contract.endedReason=result.reason;supplyBreach(s,contract,responsible,contract.breachPenalty)}
+ }
 }
 
 function settleBlockedShipment(s,shipment){
@@ -229,6 +287,7 @@ export function advanceMarkets(s){
   if(shipment.seller===s.player||shipment.buyer===s.player){const item=COMMODITIES[shipment.commodity].name;s.log.unshift({year:s.year,month:s.month,en:`${shipment.quantity} ${item[0]} trade batches reached ${destination.name[0]}.`,zh:`${shipment.quantity}批${item[1]}运抵${destination.name[1]}。`});s.log=s.log.slice(0,80)}
  }
  if(markets.shipments.length>300){const completed=markets.shipments.filter(x=>x.status==='delivered');const excess=markets.shipments.length-300;const remove=new Set(completed.slice(0,excess).map(x=>x.id));markets.shipments=markets.shipments.filter(x=>!remove.has(x.id))}
+ advanceSupplyContracts(s,current);
  return markets;
 }
 

@@ -37,6 +37,7 @@ jobs:
           node tools/court-portrait-smoke.mjs
           node tools/succession-ui-recovery-smoke.mjs
           node tools/roman-market-sales-smoke.mjs
+          node tools/roman-supply-contract-smoke.mjs
           node tools/roman-economy-forecast-smoke.mjs
           node tools/mailbox-smoke.mjs
           node tools/mail-privacy-smoke.mjs
@@ -71,6 +72,7 @@ jobs:
           node tools/browser-smoke.mjs
           node tools/han-smoke.mjs
           node tools/han-market-smoke.mjs
+          node tools/han-supply-contract-smoke.mjs
           node tools/han-court-smoke.mjs
           node tools/han-ruler-smoke.mjs
           node tools/han-defeat-smoke.mjs

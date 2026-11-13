@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=han-1';
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=han-1';
-import {advanceEasternMarkets,cancelEasternSale,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-of-empire-1';
+import {advanceEasternMarkets,cancelEasternSale,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-of-empire-1';
 import {advanceSilk} from '../han/silk-road.js?v=han-1';
 import {roll} from '../han/util.js?v=han-1';
 
@@ -24,6 +24,39 @@ test('Eastern markets use measured stock and a real Kangju–Han horse route',()
  assert.equal(loaded.tradeMarkets.shipments[0].status,'delivered');
  assert.equal(loaded.tradeMarkets.transactions.filter(x=>x.shipment===result.shipment.id).length,1);
  assert.equal(loaded.tradeMarkets.transportSpent+loaded.tradeMarkets.merchantFees,loaded.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
+});
+
+test('Han recurring horse agreement uses real caravans, locked goods price and saved obligations',()=>{
+ let s=newHanGame('han',{seed:49});s.tradeMarkets.embeddedRoman=true;setRelation(s,'han','kangju',70);
+ assert.equal(propose(s,'han','kangju','market').proposal.status,'accepted');
+ const request={seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1};
+ const cash=s.factions.han.treasury,created=proposeEasternSupplyContract(s,{...request,interval:12,duration:24});
+ assert.equal(created.ok,true,created.reason);assert.equal(s.factions.han.treasury,cash-created.quote.total-2);
+ assert.equal(s.tradeMarkets.shipments[0].contractId,created.contract.id);
+ assert.equal(placeEasternTrade(s,{...request,contractId:created.contract.id}).reason,'contract');
+ s=loadHanSave(serialize(s));assert.equal(s.tradeMarkets.supplyContracts[0].unitPrice,created.quote.unitPrice);
+ for(let i=0;i<12;i++)next(s);
+ assert.equal(s.tradeMarkets.supplyContracts[0].dispatched,2);
+ assert.equal(s.tradeMarkets.shipments[1].price,created.quote.price);
+ assert.ok(s.tradeMarkets.shipments[0].status==='delivered');
+ const before=s.relations['han:kangju'];assert.equal(cancelEasternSupplyContract(s,created.contract.id).ok,true);
+ assert.equal(s.relations['han:kangju'],before-8);
+ assert.equal(s.tradeMarkets.shipments.length,2);
+ assert.equal(loadHanSave(serialize(s)).tradeMarkets.supplyContracts[0].status,'withdrawn');
+});
+
+test('Han supply obligations stop after repeated shortage or a war while existing cargo remains accounted for',()=>{
+ const s=newHanGame('han',{seed:50});s.tradeMarkets.embeddedRoman=true;setRelation(s,'han','kangju',70);propose(s,'han','kangju','market');
+ const request={seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1};
+ const first=proposeEasternSupplyContract(s,{...request,interval:3,duration:12});assert.equal(first.ok,true,first.reason);
+ const stock=s.tradeMarkets.regions.kangju.goods.horses;stock.production=0;stock.consumption=0;stock.stock=0;
+ for(let i=0;i<6;i++)next(s);
+ assert.equal(first.contract.status,'breached');assert.equal(first.contract.missed,2);
+ assert.equal(s.tradeMarkets.shipments.length,1);
+ const wartime=newHanGame('han',{seed:51});setRelation(wartime,'han','kangju',70);propose(wartime,'han','kangju','market');
+ const second=proposeEasternSupplyContract(wartime,{...request});assert.equal(second.ok,true,second.reason);
+ declareWar(wartime,'han','kangju');next(wartime);
+ assert.equal(second.contract.status,'terminated');assert.equal(second.shipment.status,'blocked');
 });
 
 test('a transit state can set customs duties without repricing a caravan already underway',()=>{

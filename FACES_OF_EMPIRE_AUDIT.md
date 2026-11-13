@@ -282,8 +282,7 @@ The eastern market now lets the player restrict or reopen exports by measured
 commodity. New foreign quotes, public offers and autonomous buyers honor the
 restriction; domestic transfers and caravans already in transit keep their
 existing terms. The policy survives old and new saves and appears in both
-languages. This is one market policy, not the full set of merchant privileges,
-long-term supply contracts or Roman-wide export controls.
+languages. Merchant privileges remain outside this policy.
 The direct Han and Roman markets now support measured player sale listings.
 Posting removes goods from local stock; only the listed quantity becomes
 visible to AI buyers, who must still have a treaty, route and treasury and pay
@@ -296,7 +295,15 @@ customs and restrict or reopen exports of each measured good. New quotes and
 AI buyers respect export controls, while dispatched caravans retain their
 original terms. Customs accrue to the transit court on delivery; both
 policies persist across saves. Unit and bilingual Chromium tests cover these
-controls. Long-term supply contracts and merchant privileges remain open.
+controls. Both Roman and direct Han markets now offer recurring supply
+agreements. A negotiated agreement dispatches and prepays its first measured
+shipment immediately; later installments check stock, funds, route and treaty
+access, while retaining the agreed goods price. Shortages and unpaid orders
+can breach the agreement and lower relations; withdrawal also has a real
+diplomatic cost. War or lost access ends future obligations without rewriting
+caravans already underway. The terms, due dates and shipments survive saves.
+Unit and browser tests cover both markets, including bilingual controls.
+Merchant privileges and competing merchant bids remain open.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,
