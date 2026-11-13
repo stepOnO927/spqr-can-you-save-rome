@@ -1,4 +1,4 @@
-import {OFFICE_TYPES,initializeOffices,officeCandidates,appointOffice,dismissOffice} from '../office-system.js?v=inheritance-fix-1';
+import {OFFICE_TYPES,initializeOffices,officeCandidates,appointOffice,dismissOffice} from '../office-system.js?v=fort-intel-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=newborn-age-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

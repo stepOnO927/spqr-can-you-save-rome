@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
-import {newGame,sendInquiry,tick,upgradeSave} from '../engine.js?v=inheritance-fix-1';
-import {formatChronicleEntry} from '../chronicle.js?v=calendar-1';
+import {newGame,sendInquiry,tick,upgradeSave} from '../engine.js?v=fort-intel-1';
+import {formatChronicleEntry} from '../chronicle.js?v=fort-intel-1';
 
 test('continuous save years display without a historical year zero',()=>{
  assert.equal(campaignDate(12,-1,'zh'),'公元前1年12月');

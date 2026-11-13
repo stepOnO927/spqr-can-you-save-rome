@@ -1,5 +1,5 @@
 import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
-import {recordLifeEvent} from './dynasties.js?v=inheritance-fix-1';
+import {recordLifeEvent} from './dynasties.js?v=fort-intel-1';
 import {rememberPersonalEvent} from './political-memory.js?v=grand-chessboard-2';
 
 // These are simulated administrative assignments, not historical magistracies.

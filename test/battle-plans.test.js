@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=inheritance-fix-1';
-import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=inheritance-fix-1';
-import {templatesFor,recruitFormation} from '../legion-designer.js?v=inheritance-fix-1';
+import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=fort-intel-1';
+import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=fort-intel-1';
+import {templatesFor,recruitFormation} from '../legion-designer.js?v=fort-intel-1';
 import {ROUTES} from '../data.js?v=phase-x-1';
 
 const roundTrip=s=>upgradeSave(JSON.parse(JSON.stringify(s)));
@@ -29,7 +29,7 @@ test('plans use the real territory graph and refuse impossible routes',()=>{
  assert.equal(validatePath(s,'caesar','gaul',['narbo','hispaniaN']).ok,true);
  // Neutral territory without access cannot be entered.
  const route=findRoute(s,'caesar','cisalpine','egypt');assert.ok(!route||route.every((id,i)=>adjacent(i?route[i-1]:'cisalpine',id)));
- const p=createPlan(s,'caesar',{mode:'automatic'}).plan;assert.equal(assignRole(s,'caesar',p.id,{armyId:'xiii',role:'siege',target:'cisalpine'}).reason,'not_fortified');
+ const p=createPlan(s,'caesar',{mode:'automatic'}).plan;assert.equal(assignRole(s,'caesar',p.id,{armyId:'xiii',role:'siege',target:'cisalpine'}).reason,'own_territory');
  assert.equal(assignRole(s,'caesar',p.id,{armyId:'xiii',role:'defensive',target:'italiaN'}).reason,'own_territory');
 });
 
@@ -120,7 +120,7 @@ test('with spare forces and stale intelligence, expert AI adds reconnaissance an
 });
 
 test('an AI ally coordinates with a live allied operation against the same objective',async()=>{
- const {observeControl}=await import('../control-intelligence.js?v=phase-x-1');
+ const {observeControl}=await import('../control-intelligence.js?v=fort-intel-1');
  const s=newGame('senate');s.difficulty='expert';
  s.regions.find(r=>r.id==='africa').owner='caesar';s.wars.push(['caesar','numidia']);s.alliances.push(['numidia','senate']);observeControl(s);
  for(const a of s.armies.filter(a=>a.owner==='numidia'))a.men=15000;

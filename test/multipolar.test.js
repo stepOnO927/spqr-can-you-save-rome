@@ -1,18 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=inheritance-fix-1';
-import {advanceStrategicWarnings,warningCandidates,warningLedger} from '../strategic-warnings.js?v=multipolar-2';
-import {assessOpportunities} from '../multipolar.js?v=multipolar-2';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=fort-intel-1';
+import {advanceStrategicWarnings,warningCandidates,warningLedger} from '../strategic-warnings.js?v=fort-intel-1';
+import {assessOpportunities} from '../multipolar.js?v=fort-intel-1';
 import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=inheritance-fix-1';
-import {renderChessboard} from '../chessboard-ui.js?v=inheritance-fix-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=inheritance-fix-1';
+import {buildChessboard} from '../chessboard.js?v=fort-intel-1';
+import {renderChessboard} from '../chessboard-ui.js?v=fort-intel-1';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=fort-intel-1';
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
-import {advanceGovernments} from '../governance.js?v=inheritance-fix-1';
-import {advanceMovements} from '../movements.js?v=inheritance-fix-1';
-import {newRevolutionScenario} from '../scenarios.js?v=inheritance-fix-1';
+import {advanceGovernments} from '../governance.js?v=fort-intel-1';
+import {advanceMovements} from '../movements.js?v=fort-intel-1';
+import {newRevolutionScenario} from '../scenarios.js?v=fort-intel-1';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
@@ -216,6 +216,6 @@ test('old saves without a warning queue keep working and do not duplicate existi
  for(let i=0;i<3;i++)tick(save,{autoplayPlayer:true});assert.ok(Array.isArray(save.warningLetters));
  // The warning layer reuses courier, report and memory helpers; it does not call
  // the existing war, breach, aid or claimant-support decision paths.
- const source=fs.readFileSync(new URL('../strategic-warnings.js',import.meta.url),'utf8');
+ const source=fs.readFileSync(new URL('../strategic-warnings.js?v=fort-intel-1',import.meta.url),'utf8');
  assert.doesNotMatch(source,/diplomacy\(|proposeAgreement|terminateAgreement|supportClaimant|wars\.push|alliances\.push|opportunistic_war|treaty_breach/);
 });

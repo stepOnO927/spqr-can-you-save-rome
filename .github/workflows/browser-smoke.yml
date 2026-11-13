@@ -26,6 +26,7 @@ jobs:
           node scripts/multipolar-sim.mjs > multipolar-simulation.json
           node tools/multipolar-smoke.mjs
           node tools/imperium-smoke.mjs
+          node tools/fort-intelligence-smoke.mjs
           node scripts/imperium-sim.mjs > imperium-simulation.json
           node tools/onboarding-smoke.mjs
           node tools/systems-smoke.mjs
