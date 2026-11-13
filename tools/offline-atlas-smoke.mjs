@@ -154,6 +154,17 @@ try{
  await waitForTerrain(/\/terrain\/9\/(29\d|30[0-7])\//,'Egyptian maximum zoom did not use bundled high-detail terrain');
  assert.deepEqual(missingTerrain,[],'Egyptian maximum zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Egyptian terrain unexpectedly needed the network');
+ const seaLabel=page.locator('[data-physical-label="mediterranean"]');
+ assert.equal(await seaLabel.isVisible(),true,'close Egyptian map needs a sea reference');
+ for(const id of ['mediterranean','nile-delta','western-desert']){
+  const bounds=await page.locator(`[data-physical-label="${id}"]`).evaluate(el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:innerWidth,height:innerHeight}});
+  if(bounds.width>=900)assert.ok(bounds.left>350&&bounds.right<bounds.width-20&&bounds.top>75&&bounds.bottom<bounds.height-25,`${id} must fit in the usable map viewport: ${JSON.stringify(bounds)}`);
+ }
+ const firstSeaName=await seaLabel.textContent();
+ assert.ok(['Mediterranean Sea','地中海'].includes(firstSeaName));
+ await page.locator('#language').click();
+ assert.equal(await seaLabel.textContent(),firstSeaName==='地中海'?'Mediterranean Sea':'地中海');
+ await page.locator('#language').click();
  if(process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT});
  if(process.env.SPQR_ATLAS_EGYPT_Z9_TERRAIN_SCREENSHOT){await page.locator('#map-mode').selectOption('terrain');await page.waitForTimeout(400);await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_TERRAIN_SCREENSHOT});await page.locator('#map-mode').selectOption('political')}
  const galatia=newGrandGame('galatia');

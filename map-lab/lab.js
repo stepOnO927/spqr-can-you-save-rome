@@ -17,6 +17,7 @@ import {nationalBudget} from '../national-budget.js?v=9';
 import {budgetHtml} from '../budget-ui.js?v=12';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=23';
+import {physicalLabels} from './physical-labels.js?v=1';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=161';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=33';
 import {FACTIONS} from '../data.js?v=9';
@@ -100,6 +101,19 @@ L.en.credits='GSHHG MODERN COAST · MODERN ELEVATION · HISTORICAL BORDERS APPRO
 L.zh.credits='GSHHG 现代海岸线 · 现代高程 · 历史边界为近似';
 const status = document.querySelector('#status');
 export const map = new maplibregl.Map({container:'map',canvasContextAttributes:{preserveDrawingBuffer:true},center:[12.4,43.2],zoom:5.45,minZoom:3.6,maxZoom:9.2,maxBounds:[[-20,18],[60,58]],attributionControl:{compact:true},style:physicalStyle});
+const physicalLabelMarkers=physicalLabels.map(label=>{
+ const element=document.createElement('span');element.className=`physical-label physical-label-${label.kind}`;
+ element.dataset.physicalLabel=label.id;element.textContent=label[lang];element.setAttribute('aria-hidden','true');
+ new maplibregl.Marker({element,anchor:'center'}).setLngLat(label.point).addTo(map);
+ return {label,element};
+});
+function refreshPhysicalLabels(){
+ const zoom=map.getZoom?.()||0;
+ for(const {label,element} of physicalLabelMarkers){element.textContent=label[lang];element.hidden=zoom<7.4}
+}
+map.on('zoom',refreshPhysicalLabels);
+map.on('load',refreshPhysicalLabels);
+refreshPhysicalLabels();
 const locator=document.createElement('aside');locator.id='locator';locator.hidden=true;locator.innerHTML='<strong class="locator-title"></strong><div class="locator-map"><img src="./italy-locator.svg?v=1" alt=""><span id="locator-position"></span></div>';document.body.append(locator);
 function updateLocator(){const center=map.getCenter?.(),zoom=map.getZoom?.()||0;if(!center||zoom<7||center.lng<4||center.lng>23||center.lat<35||center.lat>48){locator.hidden=true;return}locator.hidden=false;locator.querySelector('.locator-title').textContent=lang==='zh'?'当前位置 · 意大利':'YOUR POSITION · ITALY';locator.setAttribute('aria-label',lang==='zh'?'意大利海岸及当前地图中心':'Italy coast and current map center');const dot=locator.querySelector('#locator-position');dot.style.left=`${(center.lng-4)/19*100}%`;dot.style.top=`${(48-center.lat)/13*100}%`}
 map.on('move',updateLocator);map.on('load',updateLocator);document.querySelector('#language').addEventListener('click',()=>setTimeout(updateLocator,0));
@@ -302,6 +316,7 @@ function renderHudBase(){document.querySelector('#development').textContent=lang
 
 function renderHud(){
  renderHudBase();
+ refreshPhysicalLabels();
  if(['caesar','senate'].includes(state.player))document.querySelector('.identity strong').innerHTML='ITALIA <i>·</i> XLIX BC';
  endButton.textContent=lang==='zh'?'结束战役':'END CAMPAIGN';endButton.disabled=!!state.achievementState?.finalized;document.querySelector('#advance').disabled=!!state.achievementState?.finalized;document.querySelector('#play-time').disabled=!!state.achievementState?.finalized;refreshEnding();
  atlasFocus.textContent=lang==='zh'?(document.body.classList.contains('atlas-focus')?'返回':'观图'):(document.body.classList.contains('atlas-focus')?'BACK':'MAP');atlasFocus.title=lang==='zh'?'切换地图专注视图':'Toggle map focus view';
