@@ -433,7 +433,8 @@ function advanceCooperations(s,c){
 }
 export function offerEmployment(s,target,id,actor=s.player,mode='administrative'){
  const c=initializeCursus(s),p=person(s,id),contact=c.contacts.find(x=>x.actor===actor&&x.id===id&&x.status==='open');
- if(!contact||!p||p.faction!==target||s.world.leadership[target]?.includes(id)||!['administrative','military'].includes(mode)||mode==='administrative'&&s.armies.some(a=>a.characterId===id)||mode==='military'&&!s.armies.some(a=>a.characterId===id&&a.owner===target))return {ok:false,reason:'eligibility'};
+ if(!contact||!p||p.faction===actor||!['administrative','military'].includes(mode)||!s.factions[actor]||!s.factions[target])return {ok:false,reason:'eligibility'};
+ if(mode==='military'&&!c.intel[actor]?.[target]?.reports?.some(r=>r.commanders?.includes(id)))return {ok:false,reason:'intelligence'};
  if(c.offers.some(x=>x.id===id&&x.actor===actor&&['pending','accepted'].includes(x.status)))return {ok:false,reason:'pending'};
  if(s.factions[actor].treasury<18)return {ok:false,reason:'treasury',cost:18};
  s.factions[actor].treasury-=18;c.offers.push({actor,target,id,mode,remaining:3,status:'pending',cost:18,year:s.year,month:s.month});
@@ -474,8 +475,8 @@ function advanceContacts(s,c){
   if(!ready.has(x.id))ready.set(x.id,[]);ready.get(x.id).push(x);
  }
  for(const [id,offers] of ready){
-  const p=person(s,id),eligible=offers.filter(x=>p?.alive&&p.faction===x.target&&present(s,id));
-  for(const x of offers.filter(x=>!eligible.includes(x)))x.status='lapsed';
+  const p=person(s,id),eligible=offers.filter(x=>p?.alive&&p.faction===x.target&&present(s,id)&&!s.world.leadership[x.target]?.includes(id));
+  for(const x of offers.filter(x=>!eligible.includes(x))){x.status='lapsed';x.resolved={year:s.year,month:s.month}}
   const interested=[];
   for(const x of eligible){
    const contact=c.contacts.findLast(y=>y.actor===x.actor&&y.id===id&&y.status==='open'),r=contact?.relationship||{};
@@ -491,7 +492,7 @@ function advanceContacts(s,c){
   for(const other of interested.slice(1)){other.x.status='outbid';other.x.resolved={year:s.year,month:s.month}}
   for(const [role,holder] of Object.entries(c.foreignPosts[formerFaction]||{}))if(holder===id){delete c.foreignPosts[formerFaction][role];formerPosts.push(role)}
   if(ROMAN.has(formerFaction))for(const [office,holder] of Object.entries(s.world.offices?.[formerFaction]||{}))if(holder===id){delete s.world.offices[formerFaction][office];formerPosts.push(office)}
-  if(winner.mode==='military')for(const army of s.armies.filter(a=>a.owner===formerFaction&&a.characterId===id)){army.characterId=null;army.commander=['Unassigned command','指挥官空缺']}
+  for(const army of s.armies.filter(a=>a.owner===formerFaction&&a.characterId===id)){army.characterId=null;army.commander=['Unassigned command','指挥官空缺']}
   p.faction=winner.actor;p.location=s.regions.find(r=>r.owner===winner.actor)?.id||null;p.loyalty=clamp((p.loyalty||50)*.7);changeObedience(s,id,-10,'foreign employment');
   winner.status='accepted';winner.resolved={year:s.year,month:s.month};
   c.careers[id]||=[];c.careers[id].push({office:winner.mode==='military'?'military_defector':'foreign_adviser',year:s.year,from:formerFaction,to:winner.actor,simulated:true});

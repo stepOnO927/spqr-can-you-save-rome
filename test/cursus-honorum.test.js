@@ -273,7 +273,7 @@ test('limited cooperation and competing offers preserve the official agency',()=
 });
 test('a recruited commander changes allegiance personally without transferring an army',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration,army=s.armies.find(a=>a.owner==='parthia');
- army.characterId=id;c.contacts.push({actor:'senate',target:'parthia',id,route:'formal',status:'open',trust:70,relationship:{familiarity:75,trust:70,respect:70,professional:30,alignment:60,obligation:0,rivalry:0,willingness:75}});
+ army.characterId=id;c.intel.senate={parthia:{stage:3,reports:[{stage:3,people:[id],commanders:[id],observed:{year:s.year,month:s.month}}]}};c.contacts.push({actor:'senate',target:'parthia',id,route:'formal',status:'open',trust:70,relationship:{familiarity:75,trust:70,respect:70,professional:30,alignment:60,obligation:0,rivalry:0,willingness:75}});
  assert.equal(offerEmployment(s,'parthia',id,'senate','military').ok,true);
  s.world.intelSeed=0;for(let i=0;i<3;i++)advanceCursus(s);
  assert.equal(c.offers.at(-1).status,'accepted');assert.equal(army.owner,'parthia');assert.equal(army.characterId,null);
@@ -422,4 +422,15 @@ test('foreign offices vacate on death while the old report stays stale until rei
  assert.equal(c.foreignPosts.parthia.administration,undefined);
  assert.equal(governmentReport(s,'parthia').reports.at(-1).officeholders.administration,id);
  assert.equal(officialKnowledge(s,'parthia',id).level,'identified');
+});
+
+test('stale employment contact spends time before a lapsed offer is known',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;
+ c.contacts.push({actor:'senate',target:'parthia',id,route:'formal',status:'open',trust:45});
+ s.world.characters[id].faction='egypt';
+ const before=s.factions.senate.treasury;
+ assert.equal(offerEmployment(s,'parthia',id).ok,true);
+ assert.equal(s.factions.senate.treasury,before-18);
+ for(let i=0;i<3;i++)advanceCursus(s);
+ assert.equal(c.offers.at(-1).status,'lapsed');
 });
