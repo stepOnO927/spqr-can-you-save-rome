@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,trainArmy} from '../engine.js';
 import {assessment,sendScouts,probePositions,delayAttack,latestRecon,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
+import {campaignEndingHtml} from '../achievement-ui.js';
+import {campaignTurn} from '../campaign-reports.js';
+import {endCampaign,revealedAchievements} from '../achievement-system.js';
 
 // A cautious Senate player: investigate Caesar's Italian approach, reinforce,
 // move Pompey forward, then decide whether to take the reported risk.
@@ -54,9 +57,21 @@ for(let month=2;month<48&&!s.achievementState.finalized;month++){
   journal.push(`${s.year}/${s.month} reload`);
  }
 }
-assert.equal(`${s.year}/${s.month}`,'-45/1');
+assert.ok(campaignTurn(s.year,s.month)-campaignTurn(-49,1)>=36,'the player route must cover at least 36 monthly turns');
 for(const decision of ['probe north Italy','delay for Pompey','Pompey attacks north Italy','reload'])assert.ok(journal.some(entry=>entry.includes(decision)),`${decision} must occur in the long play`);
 assert.ok((s.battles?.length||0)>=4,'the simulation must produce genuine battlefield outcomes');
 for(const battle of s.battles||[])if(battle.attacker.owner==='senate'||battle.defender.owner==='senate')for(const language of ['en','zh'])assert.match(afterActionHtml(battle,'senate',language),language==='en'?/AFTER-ACTION REVIEW/:/战后复盘/);
-assert.equal(s.achievementState.finalized,false,'an unfinished campaign must not reveal achievements');
-console.log(JSON.stringify({date:`${s.year}/${s.month}`,senateTerritories:s.regions.filter(r=>r.owner==='senate').length,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,rome:region(s,'roma').owner,senateTreasury:s.factions.senate.treasury,senateFood:s.factions.senate.food,senateManpower:s.factions.senate.manpower,outcome:s.campaignOutcome?.winner||s.achievementState.result||'ongoing',battles:s.battles?.length||0,armies:s.armies.filter(a=>a.owner==='senate').map(a=>({id:a.id,region:a.region,men:a.men,morale:a.morale,move:a.move?.to})),battleHistory:(s.battles||[]).map(b=>({id:b.id,date:`${b.year}/${b.month}`,region:b.region,winner:b.attackerWins?b.attacker.owner:b.defender.owner,attacker:b.attacker.owner,defender:b.defender.owner})),journal},null,2));
+if(s.achievementState.finalized){
+ assert.equal(s.achievementState.result,'defeat');assert.equal(s.campaignOutcome?.winner,'caesar');
+ for(const [language,title,summary] of [['en','Defeat','CAMPAIGN SUMMARY'],['zh','战败','战役总览']]){
+  assert.match(campaignEndingHtml(s,language),new RegExp(title));
+  assert.match(campaignEndingHtml(s,language),new RegExp(summary));
+ }
+ const revealed=revealedAchievements(s),restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(revealedAchievements(restored).map(x=>x.id),revealed.map(x=>x.id));
+ assert.equal(endCampaign(restored,'defeat').ok,false,'reloading a final result cannot finalize it again');
+}else{
+ assert.equal(`${s.year}/${s.month}`,'-45/1');
+ assert.deepEqual(revealedAchievements(s),[],'an unfinished campaign must not reveal achievements');
+}
+console.log(JSON.stringify({date:`${s.year}/${s.month}`,finalized:s.achievementState.finalized,senateTerritories:s.regions.filter(r=>r.owner==='senate').length,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,rome:region(s,'roma').owner,senateTreasury:s.factions.senate.treasury,senateFood:s.factions.senate.food,senateManpower:s.factions.senate.manpower,outcome:s.campaignOutcome?.winner||s.achievementState.result||'ongoing',battles:s.battles?.length||0,armies:s.armies.filter(a=>a.owner==='senate').map(a=>({id:a.id,region:a.region,men:a.men,morale:a.morale,move:a.move?.to})),battleHistory:(s.battles||[]).map(b=>({id:b.id,date:`${b.year}/${b.month}`,region:b.region,winner:b.attackerWins?b.attacker.owner:b.defender.owner,attacker:b.attacker.owner,defender:b.defender.owner})),journal},null,2));

@@ -3,15 +3,18 @@ import {newGrandGame,region,tick,isWar} from '../engine.js';
 
 // Compare deterministic campaigns without declaring any one outcome correct.
 // The player observes as Egypt so both Roman commands use the AI.
-// --long checks twelve seeds across six years; the default is a fast 36-month check.
+// --long checks twelve widely separated seeds across six years; the default is
+// a fast 36-month check. Adjacent LCG seeds 1..12 produced near-identical
+// openings and the same settlement window, so --legacy-seeds exists only to
+// reproduce older reports.
 // --months=N extends the twelve-seed check to expose late campaign stalemates.
 const requested=process.argv.find(arg=>arg.startsWith('--months='));
 const duration=requested?Number(requested.slice('--months='.length)):null;
 if(requested&&(!Number.isInteger(duration)||duration<1||duration>240))throw new Error('Use --months=1..240');
-const long=process.argv.includes('--long')||requested!=null,months=duration??(long?72:36),seeds=long?12:5;
+const long=process.argv.includes('--long')||requested!=null,months=duration??(long?72:36),seeds=long?12:5,legacySeeds=process.argv.includes('--legacy-seeds');
 const outcomes={};
 for(let seed=1;seed<=seeds;seed++){
- const state=newGrandGame('egypt');state.seed=seed;
+ const state=newGrandGame('egypt'),variantSeed=legacySeeds?seed:Math.imul(seed,0x9e3779b1)>>>0;state.seed=variantSeed;
  for(let month=0;month<months&&!state.civilWarOutcome;month++){
   tick(state);
   assert.ok(isWar(state,'caesar','senate')||state.civilWarOutcome?.winner,'the civil war cannot disappear without a formal result');
@@ -23,6 +26,6 @@ for(let seed=1;seed<=seeds;seed++){
  const caesar=state.regions.filter(r=>r.owner==='caesar').length;
  const senate=state.regions.filter(r=>r.owner==='senate').length;
  const winner=state.civilWarOutcome?.winner||'ongoing';outcomes[winner]=(outcomes[winner]||0)+1;
- console.log(`seed ${seed}: Caesar ${caesar}, Senate ${senate}, Rome ${region(state,'roma').owner}, Caesar field ${state.armies.filter(a=>a.owner==='caesar').reduce((men,a)=>men+a.men,0)}, civil war ${state.civilWarOutcome?`${state.civilWarOutcome.kind}:${state.civilWarOutcome.winner}`:'ongoing'}`);
+ console.log(`seed ${seed} (${variantSeed}): Caesar ${caesar}, Senate ${senate}, Rome ${region(state,'roma').owner}, Caesar field ${state.armies.filter(a=>a.owner==='caesar').reduce((men,a)=>men+a.men,0)}, civil war ${state.civilWarOutcome?`${state.civilWarOutcome.kind}:${state.civilWarOutcome.winner}`:'ongoing'}`);
 }
-console.log(`${months}-month outcomes: ${JSON.stringify(outcomes)}`);
+console.log(`${months}-month ${legacySeeds?'legacy adjacent':'spaced'}-seed outcomes: ${JSON.stringify(outcomes)}`);

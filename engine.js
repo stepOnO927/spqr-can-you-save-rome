@@ -760,7 +760,7 @@ export function aiTurn(s,owner){
   if(owner!=='rebels' && s.month===12){
     const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);
     if(enemy && ['caesar','senate'].includes(owner)&&enemy===(owner==='caesar'?'senate':'caesar')){
-      const strategic=owned.some(r=>r.id===(owner==='caesar'?'roma':'cisalpine')||r.macro===(owner==='caesar'?'roma':'cisalpine'));
+      const strategic=region(s,owner==='caesar'?'roma':'cisalpine')?.owner===owner;
       if(strategic&&f.treasury>=4&&f.stability>=30&&f.legitimacy>=35&&strength(s,owner)>=estimatedStrength(s,owner,enemy)*1.4)diplomacy(s,owner,enemy,'settlement');
     }else if(enemy && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=estimatedStrength(s,owner,enemy)*.6)diplomacy(s,owner,enemy,'peace');
     if(!INDEPENDENT_COMMANDS.has(owner)&&!enemy && f.treasury>35){const neighbor=owned.flatMap(r=>adjacent(r.id,s).map(e=>region(s,e.to))).find(r=>r.owner!==owner&&r.owner!=='rebels'&&relation(s,owner,r.owner)>=0&&!isAllied(s,owner,r.owner));if(neighbor && rnd(s)<.2)diplomacy(s,owner,neighbor.owner,'improve')}

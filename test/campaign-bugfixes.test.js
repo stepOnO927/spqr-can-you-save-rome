@@ -195,6 +195,18 @@ test('a formal military victory ends the civil war for an observing command',()=
  assert.equal(isWar(s,'caesar','senate'),false);
  assert.equal(upgradeSave(structuredClone(s)).wars.some(w=>w.includes('caesar')&&w.includes('senate')),false);
 });
+test('Roman AI does not pay for a settlement proposal while only a nearby cell is held',()=>{
+ const s=newGrandGame('egypt'),caesar=s.factions.caesar;
+ s.month=12;caesar.treasury=200;army(s,'xiii').men=100000;
+ region(s,'t016').owner='caesar';
+ assert.equal(region(s,'roma').owner,'senate');
+ aiTurn(s,'caesar');
+ assert.equal(s.lastSettlementOffer,undefined);
+ region(s,'roma').owner='caesar';
+ aiTurn(s,'caesar');
+ assert.equal(s.lastSettlementOffer['caesar:senate'],s.year*12+s.month);
+});
+
 test('Ostia does not count as Roma for Caesarian victory or settlement',()=>{
  const s=newGrandGame('caesar');
  for(const r of s.regions.filter(r=>r.owner==='senate'&&r.id!=='roma').slice(0,12))r.owner='caesar';
