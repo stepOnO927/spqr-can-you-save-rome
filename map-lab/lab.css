@@ -106,3 +106,7 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
 @media(min-width:901px) and (max-width:1450px){.mast .identity small,.mast .identity strong{display:none}.mast .identity{margin-right:0}.mast{gap:6px}.mast .hud-button{padding:5px 6px}}
 
 .war-contribution-panel{margin-top:12px;padding-top:10px;border-top:1px solid #b69862}.war-contribution-panel .action{margin:6px 0}.war-contribution-panel a{color:#65421f}
+
+/* Keep map labels underneath command panels from showing through the text. */
+.brief,.selection{background:linear-gradient(135deg,#1c2928,#182321)}
+#locator{background:#172b2c}
