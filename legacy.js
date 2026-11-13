@@ -1,4 +1,4 @@
-import {syncChronicleDispatches} from './chronicle.js?v=calendar-1';
+import {syncChronicleDispatches} from './chronicle.js?v=faces-empire-3';
 import {CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
 import {initializeDynasties} from './dynasties.js?v=faces-empire-2';
 

@@ -1,4 +1,4 @@
-import {reportedControl} from '../control-intelligence.js?v=phase-x-1';
+import {reportedControl} from '../control-intelligence.js?v=faces-empire-3';
 import {deriveGovernment} from '../governance.js?v=faces-empire-2';
 
 // Project government authority from the viewer's own state or dated reports.

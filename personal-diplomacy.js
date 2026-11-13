@@ -1,4 +1,4 @@
-import {reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
+import {reportedControl,observeArrival} from './control-intelligence.js?v=faces-empire-3';
 import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {addReport,reportedHealthSubjects,apparentAgeRange} from './character-system.js?v=faces-empire-2';

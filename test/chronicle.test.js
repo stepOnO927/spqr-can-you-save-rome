@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine.js?v=faces-empire-2';
-import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports,syncChronicleDispatches} from '../chronicle.js?v=calendar-1';
+import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports,syncChronicleDispatches} from '../chronicle.js?v=faces-empire-3';
 
 test('between-turn dispatches appear once with their original dates without importing unverified legacy entries',()=>{
  const s=newGame('caesar');s.log.unshift({year:-49,month:2,en:'An offer arrived.',zh:'议和信已送达。'},{year:-49,month:1,en:'SECRET',zh:'秘密',legacyUnverified:true});

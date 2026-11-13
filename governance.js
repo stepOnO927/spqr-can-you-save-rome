@@ -2,7 +2,7 @@ import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=newborn-
 import {initializeWorld,successorFor,assignSuccession,eligibleLiuImperial,CHARACTER_CATALOG,ageRange,successionModel} from './characters.js?v=faces-empire-2';
 import {recordLifeEvent,dynastyRoll,personAge} from './dynasties.js?v=faces-empire-2';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {startDynasticWar} from './civil-war.js?v=newborn-age-1';
+import {startDynasticWar} from './civil-war.js?v=faces-empire-3';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,region,isWar,sendInquiry,tick} from '../engine.js?v=faces-empire-2';
-import {startDynasticWar,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=newborn-age-1';
+import {startDynasticWar,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=faces-empire-3';
 import {assignSuccession} from '../characters.js?v=faces-empire-2';
 import {egyptianClaimantCandidate,advanceCharacters,contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,queueMission} from '../character-system.js?v=faces-empire-2';
 // These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;

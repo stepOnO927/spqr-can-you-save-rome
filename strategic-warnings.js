@@ -1,5 +1,5 @@
 import {ROUTES,FACTIONS,REGIONS} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=phase-x-1';
+import {reportedControl} from './control-intelligence.js?v=faces-empire-3';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
@@ -122,8 +122,3 @@ export function advanceStrategicWarnings(s,{autoplayPlayer=false,letterMonths={}
  return s;
 }
 
-// Only the sender and the recipient know a letter exists. The sighted faction
-// never learns that it was reported.
-export function warningLedger(s,viewer){
- return (s.warningLetters||[]).filter(l=>l.from===viewer||l.to===viewer).map(l=>({id:l.id,from:l.from,to:l.to,threat:l.threat,near:l.near,status:l.status,sentYear:l.sentYear,sentMonth:l.sentMonth,sighting:{...l.sighting,strengthBand:[...l.sighting.strengthBand]},history:l.history.map(h=>({...h})),...(l.to===viewer?{decision:l.decision?.kind||null}:{})}));
-}

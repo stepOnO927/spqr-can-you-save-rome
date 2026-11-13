@@ -4,7 +4,7 @@ import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2
 import {proposeAgreement} from './agreements.js?v=grand-chessboard-2';
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=newborn-age-1';
 import {successionCandidates} from './governance.js?v=faces-empire-2';
-import {reportedControl} from './control-intelligence.js?v=phase-x-1';
+import {reportedControl} from './control-intelligence.js?v=faces-empire-3';
 
 // IMPERIUM national focus engine. One primary focus per state progresses with
 // the monthly tick. Costs are paid when a focus starts and shown beforehand;

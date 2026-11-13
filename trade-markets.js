@@ -3,7 +3,7 @@ import {activeAgreement,proposeAgreement} from './agreements.js?v=grand-chessboa
 import {ROUTES as EURASIAN_ROUTES,REGIONS as EURASIAN_REGIONS} from './han/data.js?v=han-1';
 import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=faces-empire-2';
 import {generateFictionalName} from './fictional-names.js?v=faces-of-empire-1';
-import {reportedControl} from './control-intelligence.js?v=phase-x-1';
+import {reportedControl} from './control-intelligence.js?v=faces-empire-3';
 import {COMMODITIES,marketPrice} from './market-goods.js?v=faces-of-empire-1';
 export {COMMODITIES,marketPrice};
 

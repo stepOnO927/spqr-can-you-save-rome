@@ -1,5 +1,5 @@
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
-import {filterChronicle,formatChronicleEntry,chronicleDate,syncChronicleDispatches} from '../chronicle.js?v=calendar-1';
+import {filterChronicle,formatChronicleEntry,chronicleDate,syncChronicleDispatches} from '../chronicle.js?v=faces-empire-3';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=faces-empire-2';
 

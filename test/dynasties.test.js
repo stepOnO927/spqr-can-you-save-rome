@@ -8,7 +8,7 @@ import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynast
 import {canHoldOffice} from '../office-system.js?v=faces-empire-2';
 import {renderGenealogy} from '../genealogy-ui.js?v=faces-empire-2';
 import {finalizeCampaign} from '../legacy.js?v=calendar-1';
-import {startDynasticWar} from '../civil-war.js?v=newborn-age-1';
+import {startDynasticWar} from '../civil-war.js?v=faces-empire-3';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=faces-empire-2';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';

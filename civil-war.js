@@ -1,5 +1,5 @@
 import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=faces-empire-2';
-import {reportedControl} from './control-intelligence.js?v=phase-x-1';
+import {reportedControl} from './control-intelligence.js?v=faces-empire-3';
 import {assignFictionalFieldCommander} from './dynasties.js?v=faces-empire-2';
 
 // Alternate-history claimant commands use real game theaters and armies.

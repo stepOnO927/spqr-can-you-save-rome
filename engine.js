@@ -5,10 +5,10 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatal
 import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives,upgradeMissionIdentities} from './character-system.js?v=faces-empire-2';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=faces-empire-2';
 import {advanceConspiracies} from './conspiracies.js?v=newborn-age-1';
-import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
-import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=newborn-age-1';
+import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=faces-empire-3';
+import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=faces-empire-3';
 import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,assignFictionalFieldCommander,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=faces-empire-2';
-import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=calendar-1';
+import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=faces-empire-3';
 import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=han-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
@@ -498,7 +498,7 @@ export function projectTaxPath(s,owner=s.player,level=s.factions[owner].tax,mont
  for(let i=0;i<months;i++){const before={treasury:copy.factions[owner].treasury,food:copy.factions[owner].food,manpower:copy.factions[owner].manpower};economy(copy);const f=copy.factions[owner],owned=copy.regions.filter(r=>r.owner===owner);rows.push({month:i+1,treasury:f.treasury-before.treasury,food:f.food-before.food,manpower:f.manpower-before.manpower,loyalty:owned.length?Math.round(owned.reduce((n,r)=>n+r.loyalty,0)/owned.length):0})}
  return rows;
 }
-function baseForecastEconomy(s,id=s.player){const f=s.factions[id],owned=s.regions.filter(r=>r.owner===id),offices=officeEffects(s,id),ideas=activeModifiers(s,id),troops=s.armies.filter(a=>a.owner===id).reduce((n,a)=>n+a.men,0),rate={low:.65,normal:1,high:1.4}[f.tax],difficulty=id===s.player&&s.economicHandicap===true?({hard:.9,expert:.8}[s.difficulty]||1):1;return {treasury:Math.round(owned.reduce((n,r)=>n+(r.tax+(buildingModifiers(r).tax||0))*rate*(r.loyalty/100)*populationFactor(r)*(1-Math.min(80,Math.max(0,r.autonomy||0))/200),0)*difficulty*(1+(ideas.tax||0))-troops/1100)+offices.treasury+(ideas.treasury||0)-religiousTaxCost(s,id)-owned.reduce((n,r)=>n+(buildingModifiers(r).upkeep||0),0)-Math.max(0,Object.values(s.inventions?.[id]?.slots||{}).reduce((n,v)=>n+v-1,0)),food:Math.round(owned.reduce((n,r)=>n+r.food+(buildingModifiers(r).food||0),0)*difficulty-troops/1200-owned.length*2)+offices.food+(ideas.food||0),manpower:owned.length*170+(ideas.manpower||0)}}
+function baseForecastEconomy(s,id=s.player){const f=s.factions[id],owned=s.regions.filter(r=>r.owner===id),offices=officeEffects(s,id),ideas=activeModifiers(s,id),troops=s.armies.filter(a=>a.owner===id).reduce((n,a)=>n+a.men,0),rate={low:.65,normal:1,high:1.4}[f.tax],difficulty=id===s.player&&s.economicHandicap===true?({hard:.9,expert:.8}[s.difficulty]||1):1,travel=id===s.player&&s.difficulty==='travel';return {treasury:Math.round(owned.reduce((n,r)=>n+(r.tax+(buildingModifiers(r).tax||0))*rate*(r.loyalty/100)*populationFactor(r)*(1-Math.min(80,Math.max(0,r.autonomy||0))/200),0)*difficulty*(1+(ideas.tax||0))-troops/1100)+offices.treasury+(ideas.treasury||0)-religiousTaxCost(s,id)-owned.reduce((n,r)=>n+(buildingModifiers(r).upkeep||0),0)-Math.max(0,Object.values(s.inventions?.[id]?.slots||{}).reduce((n,v)=>n+v-1,0))+(travel?20:0),food:Math.round(owned.reduce((n,r)=>n+r.food+(buildingModifiers(r).food||0),0)*difficulty-troops/1200-owned.length*2)+offices.food+(ideas.food||0)+(travel?20:0),manpower:owned.length*170+(ideas.manpower||0)+(travel?600:0)}}
 function economy(s){
   for(const [id,f] of Object.entries(s.factions)){
     const owned=s.regions.filter(r=>r.owner===id);
@@ -508,11 +508,11 @@ function economy(s){
     // Legacy resource handicaps are opt-in; decision quality is independent
     // of the difficulty setting. Old saves remain valid without the option.
     const difficulty=id===s.player&&s.economicHandicap===true?({hard:.9,expert:.8}[s.difficulty]||1):1;
-    f.treasury+=Math.round(owned.reduce((n,r)=>n+(r.tax+(buildingModifiers(r).tax||0))*rate*(r.loyalty/100)*populationFactor(r)*(1-Math.min(80,Math.max(0,r.autonomy||0))/200),0)*difficulty*(1+(ideas.tax||0))-troops/1100)+offices.treasury+(ideas.treasury||0)-religiousTaxCost(s,id)-owned.reduce((n,r)=>n+(buildingModifiers(r).upkeep||0),0)-Math.max(0,Object.values(s.inventions?.[id]?.slots||{}).reduce((n,v)=>n+v-1,0));
-    f.food+=Math.round(owned.reduce((n,r)=>n+r.food+(buildingModifiers(r).food||0),0)*difficulty-troops/1200-owned.length*2)+offices.food+(ideas.food||0);
+    f.treasury+=Math.round(owned.reduce((n,r)=>n+(r.tax+(buildingModifiers(r).tax||0))*rate*(r.loyalty/100)*populationFactor(r)*(1-Math.min(80,Math.max(0,r.autonomy||0))/200),0)*difficulty*(1+(ideas.tax||0))-troops/1100)+offices.treasury+(ideas.treasury||0)-religiousTaxCost(s,id)-owned.reduce((n,r)=>n+(buildingModifiers(r).upkeep||0),0)-Math.max(0,Object.values(s.inventions?.[id]?.slots||{}).reduce((n,v)=>n+v-1,0))+(id===s.player&&s.difficulty==='travel'?20:0);
+    f.food+=Math.round(owned.reduce((n,r)=>n+r.food+(buildingModifiers(r).food||0),0)*difficulty-troops/1200-owned.length*2)+offices.food+(ideas.food||0)+(id===s.player&&s.difficulty==='travel'?20:0);
     {const fu=formationUpkeepDelta(s,id);f.treasury-=Math.round(fu.treasury);f.food-=Math.round(fu.food)}
     f.stability=Math.max(0,Math.min(100,f.stability+offices.stability+(ideas.stability||0)+(s.month===1&&s.world.constitutionalOversight?.[id]?1:0)));
-    const manpowerGain=owned.length*170+(ideas.manpower||0);
+    const manpowerGain=owned.length*170+(ideas.manpower||0)+(id===s.player&&s.difficulty==='travel'?600:0);
     if(f.food<0)f.manpower=Math.max(0,f.manpower-Math.max(170,Math.ceil(Math.abs(f.food)*3)));
     else f.manpower+=f.treasury<=-50?Math.floor(manpowerGain*.25):manpowerGain;
     if(f.treasury<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.morale=Math.max(20,a.morale-4))}
@@ -669,7 +669,8 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
       if(defenders>a.men*(internalOpponent(defenderOwner)?2:({hard:1.15,expert:1.05}[s.difficulty]||1.35))||f.food<0){if(hostile&&strongPlanning){heldForPreparation=true;if(here.owner===owner)break}continue}
       if(hostile&&strongPlanning&&strategy&&!internalOpponent(defenderOwner)){
        const dest=region(s,step),now=s.year*12+s.month,sightings=Object.values(s.knowledge?.[owner]?.[defenderOwner]?.sightings||{}).filter(x=>x.region===step&&now-(x.year*12+x.month)>=0&&now-(x.year*12+x.month)<=12).length;
-       const assessment=(unit)=>assessAttack({ownMen:unit.men,morale:unit.morale,skill:unit.skill,experience:unit.experience,food:f.food,estimatedTotal:estimate,reportedTheaters:theaters,sightings,terrain:dest.terrain,fort:dest.fort,difficulty:s.difficulty});
+       const fortReport=reportedFortification(s,owner,step),estimatedFort=fortReport&&!fortReport.stale?fortReport.band[0]:1;
+       const assessment=(unit)=>assessAttack({ownMen:unit.men,morale:unit.morale,skill:unit.skill,experience:unit.experience,food:f.food,estimatedTotal:estimate,reportedTheaters:theaters,sightings,terrain:dest.terrain,fort:estimatedFort,difficulty:s.difficulty});
        if(!assessment(a).favorable&&here.owner===owner){
         const support=s.armies.filter(b=>b!==a&&b.owner===owner&&b.region===a.region&&!b.move&&!b.siege&&b.men>0&&a.men+b.men<=15000&&a.men+b.men<=here.supply*1000).sort((x,y)=>y.men-x.men).find(b=>{const total=a.men+b.men;return assessment({men:total,morale:(a.morale*a.men+b.morale*b.men)/total,skill:(a.skill*a.men+b.skill*b.men)/total,experience:(a.experience*a.men+b.experience*b.men)/total}).favorable});
         if(support){const total=a.men+support.men;for(const property of ['morale','skill','experience'])a[property]=Math.round((a[property]*a.men+support[property]*support.men)/total*10)/10;a.men=total;(a.mergedFrom||=[]).push(support.id,...(support.mergedFrom||[]));s.armies=s.armies.filter(b=>b!==support)}
