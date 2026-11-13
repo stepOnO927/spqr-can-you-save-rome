@@ -14,6 +14,9 @@ const nileDelta={type:'Feature',properties:{name:'Nile Delta (approximate)'},geo
 // At local scale, separate lowland, upland and exposed rock more clearly.
 // These are modern elevation bands, not reconstructed ancient land cover.
 const localElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e5d9b8',0,'#dfd5b1',100,'#c6cba1',300,'#a7b88d',700,'#829c7d',1200,'#6c8676',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
+// Around the Nile Delta the local DEM changes mostly within 0–50 m. Use
+// narrower earth-tone intervals there so real low relief remains legible.
+const egyptElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e6dcb9',0,'#ddd7b3',10,'#d9d2aa',25,'#d6c99f',50,'#cbbd96',100,'#c2b996',300,'#a9ab88',700,'#82977c',1200,'#6c8676',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
 const regionalElevationPalette=['interpolate',['linear'],['elevation'],-100,'#ded6b8',0,'#d8d2b0',100,'#c3c9a1',300,'#a3b68d',700,'#849f80',1200,'#6d8979',1800,'#838e83',2600,'#b0b2a4',3500,'#ded9c7'];
 const terrainAttribution='Elevation: Mapzen Terrain Tiles; Copernicus EU-DEM, NOAA ETOPO1 and USGS SRTM/GMTED2010 contributors';
 
@@ -69,9 +72,9 @@ export const physicalStyle={
   {id:'relief-ultra',type:'hillshade',source:'elevation-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
   {id:'relief-higher',type:'hillshade',source:'elevation-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-egypt-ultra',type:'color-relief',source:'elevation-egypt-ultra',minzoom:8,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-egypt-ultra',type:'color-relief',source:'elevation-egypt-ultra',minzoom:8,paint:{'color-relief-opacity':.94,'color-relief-color':egyptElevationPalette}},
   {id:'relief-egypt-ultra',type:'hillshade',source:'elevation-egypt-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-egypt-higher',type:'color-relief',source:'elevation-egypt-higher',minzoom:9,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-egypt-higher',type:'color-relief',source:'elevation-egypt-higher',minzoom:9,paint:{'color-relief-opacity':.94,'color-relief-color':egyptElevationPalette}},
   {id:'relief-egypt-higher',type:'hillshade',source:'elevation-egypt-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'idealized-landcover',type:'raster',source:'landcover',paint:{'raster-opacity':['interpolate',['linear'],['zoom'],4,.86,6,.74,7.2,0],'raster-fade-duration':0}},
   {id:'nile-delta-alluvium',type:'fill',source:'nile-delta',paint:{'fill-color':'#98a77e','fill-opacity':['interpolate',['linear'],['zoom'],4,.16,7,.26,8.2,.12,9,0]}},

@@ -8,6 +8,7 @@ import {physicalStyle} from '../map-lab/physical-style.js';
 import {identity} from '../identity.js';
 import {newGrandGame} from '../engine.js';
 
+assert.equal(physicalStyle.version,8,'MapLibre style specification version must remain 8');
 assert.deepEqual([...new Set(bathymetry.features.map(feature=>feature.properties.depth))].sort((a,b)=>a-b),[200,1000,2000,3000]);
 assert.ok(physicalStyle.layers.some(layer=>layer.id==='depth-200'&&layer.source==='bathymetry'));
 assert.ok(physicalStyle.sources.rivers.data.features.some(feature=>feature.properties.name==='Tevere'));

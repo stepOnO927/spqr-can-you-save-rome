@@ -26,6 +26,8 @@ All terrain levels used by the playable atlas are bundled; web fonts may require
 
 The restrained land palette uses modern elevation color. Directional hill shading is off by default, with stronger local relief at close Italy zoom when switched on with REL. The setting is remembered. The eleven sea zones, initial fleet strength, ship costs, commercial lanes, cargo quantities and piracy pressures in `../naval.js` are gameplay abstractions, not measured 49 BCE records. They do not imply exact ancient maritime borders or shipping volumes.
 
+The close Egyptian palette separates the low 0–50 m intervals of the bundled modern DEM with earth tones. It does not encode vegetation, irrigated fields, or reconstructed ancient land use. It makes the faint terrain near Alexandria more legible while the naturally flat Nile Delta remains sparse at close zoom.
+
 ## Named road reconstructions
 
 The displayed linework is a subset of [Ancient World Mapping Center road data](https://github.com/AWMC/geodata/tree/master/Cultural-Data/roads), derived from the Barrington Atlas and AWMC modifications to OpenStreetMap, © AWMC and OpenStreetMap contributors, available under the [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/). The derived database is `../republican-roads.js`, generated from AWMC `roads.geojson` blob `e5b53dfb7aab621eb25d31d66457562240524ff2` by `../tools/build-republican-roads.mjs`. It selects named features 637 (Via Appia, Rome–Capua), 1467 (Via Aemilia), and 1480 and 1550 (Via Flaminia), preserves the source feature IDs and source-map attributes, and rounds coordinates to five decimal places. Decimal precision is not a claim of survey accuracy.
