@@ -1,12 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=cursus-1';
-import {initializeCursus,officeEligibility,supportCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,contactOfficial,offerEmployment,obedience,institutionalBalance} from '../cursus-honorum.js?v=cursus-1';
+import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=cursus-1';
+import {appointOffice} from '../office-system.js?v=fort-intel-1';
+import {initializeCursus,officeEligibility,supportCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,contactOfficial,offerEmployment,obedience,institutionalBalance,proposeMeasure} from '../cursus-honorum.js?v=cursus-1';
 
 test('fictional candidates are persistent people; Roman consuls require an assembly election',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
  assert.ok(id.startsWith('fictional:'));assert.equal(s.world.characters[id].faction,'senate');
  assert.equal(c.magistrates.consul.length,0);assert.equal(officeEligibility(s,id,'consul').ok,true);
+ for(const office of ['praetor','quaestor','aedile','tribune'])assert.ok(c.applicants.filter(x=>x.office===office&&x.faction==='senate').length>=2);
  const treasury=s.factions.senate.treasury,before=obedience(s,id);
  assert.equal(supportCandidate(s,id,'support').ok,true);
  assert.equal(s.factions.senate.treasury,treasury-8);
@@ -28,6 +30,11 @@ test('obstructive competence differs from loyalty and institutional support',()=
  const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
  c.obedience[id].value=20;s.world.characters[id].education=95;s.world.characters[id].loyalty=90;
  assert.equal(obedience(s,id),20);
+ assert.equal(appointOffice(s,'finance',id).ok,true);
+ s.world.characters[id].education=20;const low=forecastEconomy(s).treasury;
+ s.world.characters[id].education=95;const competent=forecastEconomy(s).treasury;
+ c.obedience[id].value=95;const cooperative=forecastEconomy(s).treasury;
+ assert.ok(competent>low);assert.ok(cooperative>competent);
  const b=institutionalBalance(s);
  assert.ok(Number.isFinite(b.magistrate));assert.ok(Number.isFinite(b.senate));assert.ok(Number.isFinite(b.assembly));
  s.regions.find(r=>r.id==='roma').owner='caesar';
@@ -55,7 +62,23 @@ test('dated Parthian office reports, two contact routes and negotiated employmen
  assert.equal(s.world.characters[official].faction,'senate');
  assert.equal(s.armies.length,armies);assert.equal(s.regions.length,regions);
  assert.equal(c.foreignPosts.parthia.administration,undefined);
+ const referred=c.referrals.senate?.[0];assert.ok(referred);assert.equal(s.world.characters[referred].faction,'parthia');
+ assert.equal(contactOfficial(s,target,referred,'introduction').ok,true);
  const restored=upgradeSave(structuredClone(s));assert.equal(restored.world.cursus.offers.at(-1).status,'accepted');
+});
+test('Senate consultation, assembly voting and administration remain separate',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
+ s.month=2;c.magistrates.consul=[{id,faction:'senate',startYear:s.year,endYear:s.year}];
+ c.senate.senate=25;assert.equal(proposeMeasure(s,'public_works').ok,true);
+ advanceCursus(s);assert.equal(c.proposals.at(-1).status,'opposed');
+ c.senate.senate=70;c.assemblies.tribal=20;assert.equal(proposeMeasure(s,'public_works').ok,true);
+ advanceCursus(s);assert.equal(c.proposals.at(-1).status,'voting');
+ advanceCursus(s);assert.equal(c.proposals.at(-1).status,'rejected');
+ c.assemblies.tribal=75;const before=s.factions.senate.stability;
+ assert.equal(proposeMeasure(s,'public_works').ok,true);
+ for(let i=0;i<3;i++)advanceCursus(s);
+ assert.equal(c.proposals.at(-1).status,'implemented');
+ assert.equal(s.factions.senate.stability,before+2);
 });
 test('120 monthly turns retain identities, elections and bounded applications',()=>{
  const s=newGame('senate'),id=initializeCursus(s).varroId;
@@ -63,5 +86,6 @@ test('120 monthly turns retain identities, elections and bounded applications',(
  assert.equal(s.world.cursus.varroId,id);
  assert.ok(s.world.cursus.elections.length>=10);
  assert.ok(s.world.cursus.applicants.length<100);
+ assert.ok(s.world.cursus.intel.egypt?.parthia?.stage>=1);
  assert.equal(upgradeSave(structuredClone(s)).world.cursus.varroId,id);
 });
