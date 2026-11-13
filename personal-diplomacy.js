@@ -1,9 +1,9 @@
 import {reportedControl,observeArrival} from './control-intelligence.js?v=fort-intel-1';
 import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=separate-crowns-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {addReport,reportedHealthSubjects,apparentAgeRange} from './character-system.js?v=regional-mail-merge-1';
-import {officeOf} from './office-system.js?v=regional-court-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=portrait-pool-2';
+import {addReport,reportedHealthSubjects,apparentAgeRange} from './character-system.js?v=court-portraits-1';
+import {officeOf} from './office-system.js?v=court-portraits-1';
+import {fictionalPortraitKey} from './portrait-registry.js?v=court-portraits-1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 // A commander in transit has not arrived in a theater where an audience can occur.

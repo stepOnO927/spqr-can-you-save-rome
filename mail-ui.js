@@ -1,5 +1,5 @@
-import {receivedMail,unreadCount} from './epistulae.js?v=regional-mail-merge-1';
-import {wartimePolicy} from './epistulae-personnel.js?v=regional-mail-merge-1';
+import {receivedMail,unreadCount} from './epistulae.js?v=court-portraits-1';
+import {wartimePolicy} from './epistulae-personnel.js?v=court-portraits-1';
 
 const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const local=(value,zh)=>Array.isArray(value)?value[zh?1:0]:value;
