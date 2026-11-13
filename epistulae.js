@@ -3,7 +3,7 @@ import {CHARACTER_CATALOG,ageRange} from './characters.js?v=newborn-age-1';
 import {AGREEMENT_TYPES} from './agreements.js?v=grand-chessboard-2';
 import {formatChronicleEntry} from './chronicle.js?v=fort-intel-1';
 import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=epistulae-2';
-import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=born-portraits-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=portrait-pool-2';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 
 const monthIndex = (year, month) => year * 12 + month;
@@ -193,11 +193,12 @@ export function replyToLetter(s, id, choice, actions) {
     body:responseBody,
     arrival:m.context?.kind === 'treaty' ? monthIndex(s.year,s.month) + courierMonths(s,m.destination,m.source) : null,
     resolved:m.context?.kind !== 'treaty'});
-  if(!['ignore','acknowledge'].includes(choice)){
+  if(!['ignore','acknowledge','seek_allies'].includes(choice)){
     const leader=senderFor(s,s.player),to=m.senderFaction;
+    const phrase={accept:['We accept the proposed accord.','本朝接受所议协定。'],reject:['We decline the proposed accord.','本朝谢绝所议协定。'],negotiate:['We request further negotiations.','本朝请求继续商议。'],condemn:['We condemn this declaration.','本朝谴责此项宣战。'],apologize:['We regret the strain between our courts.','两国关系紧张，本朝深表遗憾。'],defend:['Our court maintains its position.','本朝坚持原有立场。']}[choice]||[choice.replaceAll('_',' '),choice];
     if(to!==s.player){sendLetter(s,{senderId:leader,senderInstitution:leader?null:s.player,senderFaction:s.player,recipient:to,
       category:m.category,priority:m.priority,subject:[`Re: ${m.subject[0]}`,`复：${m.subject[1]}`],
-      body:responseBody||[choice.replaceAll('_',' '),choice],threadId:m.threadId,
+      body:responseBody||phrase,threadId:m.threadId,
       context:{kind:'reply',replyTo:m.id}})}
   }
   return {ok:true, open:choice === 'war_council' ? 'military' : choice === 'view_location' ? m.context?.region : null};
