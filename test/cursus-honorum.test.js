@@ -235,9 +235,6 @@ test('foreign knowledge and relationship dimensions remain distinct',()=>{
  assert.equal(officialKnowledge(s,'parthia',id).level,'unknown');
  for(let stage=1;stage<=3;stage++){assert.equal(investigateGovernment(s,'parthia').ok,true);for(let i=0;i<2+stage;i++)advanceCursus(s)}
  assert.equal(officialKnowledge(s,'parthia',id).level,'identified');
- const attempt=contactOfficial(s,'parthia',id,'formal');assert.equal(attempt.ok,true);
- for(let i=0;i<3;i++)advanceCursus(s);
- assert.equal(c.contacts.at(-1).status,'refused');
  c.contacts.push({actor:'senate',target:'parthia',id,route:'formal',status:'open',trust:35,relationship:{familiarity:40,trust:35,respect:40,professional:20,alignment:30,obligation:0,rivalry:0,willingness:25}});
  assert.equal(officialKnowledge(s,'parthia',id).level,'connected');
  const before=c.contacts.at(-1).relationship;
@@ -422,6 +419,9 @@ test('foreign offices vacate on death while the old report stays stale until rei
  assert.equal(c.foreignPosts.parthia.administration,undefined);
  assert.equal(governmentReport(s,'parthia').reports.at(-1).officeholders.administration,id);
  assert.equal(officialKnowledge(s,'parthia',id).level,'identified');
+ const attempt=contactOfficial(s,'parthia',id,'formal');assert.equal(attempt.ok,true);
+ for(let i=0;i<3;i++)advanceCursus(s);
+ assert.equal(c.contacts.at(-1).status,'refused');
 });
 
 test('stale employment contact spends time before a lapsed offer is known',()=>{
