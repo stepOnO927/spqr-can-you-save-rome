@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=fort-intel-1';
-import {authorityForTheater} from '../map-lab/authority-view.js?v=fort-intel-1';
+import {newGame,upgradeSave} from '../engine.js?v=unknown-person-1';
+import {authorityForTheater} from '../map-lab/authority-view.js?v=portrait-pool-2';
 
 test('foreign authority uses only the viewer’s most recent observed report',()=>{
  let s=newGame('senate');s.year=-48;s.month=7;

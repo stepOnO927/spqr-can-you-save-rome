@@ -1,11 +1,18 @@
 import {ROUTES, FACTIONS} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=newborn-age-1';
+import {AGREEMENT_TYPES} from './agreements.js?v=grand-chessboard-2';
+import {formatChronicleEntry} from './chronicle.js?v=fort-intel-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=epistulae-2';
+import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=born-portraits-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
 const atWar = (s, a, b) => (s.wars || []).some(w => w.includes(a) && w.includes(b));
 const name = id => CHARACTER_CATALOG[id]?.name || FACTIONS[id]?.short || [id, id];
 const home = (s, faction) => s.regions.find(r => r.owner === faction)?.id || null;
+const historicalPortraits=new Set(['caesar','pompey','cleopatra','arsinoe','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
+const portrait=(s,id)=>!id?null:historicalPortraits.has(id)?id:id.startsWith('fictional:')?(s.world.characters[id]?.faction===s.player?fictionalPortraitKey(s,id):observedFictionalPortrait(s,id)):null;
 
 export function initializeMail(s) {
   if (!s.mail || typeof s.mail !== 'object') s.mail = {};
@@ -15,6 +22,7 @@ export function initializeMail(s) {
   s.mail.preferences ||= {muteRoutine:false, pauseCritical:false, autoArchiveRoutine:false};
   s.mail.warPolicies ||= {};
   s.mail.events ||= [];
+  initializePersonnel(s);
   return s.mail;
 }
 
@@ -22,15 +30,18 @@ export function initializeMail(s) {
 export function courierMonths(s, source, destination, urgent = false) {
   if (!source || !destination) return urgent ? 2 : 4;
   if (source === destination) return 1;
-  const queue = [[source, 0]], seen = new Set([source]);
+  const queue = [[source, 0]], best = new Map([[source,0]]);
   while (queue.length) {
+    queue.sort((a,b)=>a[1]-b[1]);
     const [place, distance] = queue.shift();
+    if(distance!==best.get(place))continue;
+    if(place===destination)return Math.max(1,urgent?Math.ceil(distance/2):distance);
     for (const [a, b, kind] of ROUTES) {
       const next = a === place ? b : b === place ? a : null;
-      if (!next || seen.has(next)) continue;
+      if (!next) continue;
       const cost = distance + (kind === 'sea' ? 2 : 1);
-      if (next === destination) return Math.max(1, urgent ? Math.ceil(cost / 2) : cost);
-      seen.add(next); queue.push([next, cost]);
+      if(cost >= (best.get(next)??Infinity))continue;
+      best.set(next,cost);queue.push([next,cost]);
     }
   }
   return urgent ? 2 : 4;
@@ -50,12 +61,14 @@ export function sendLetter(s, spec) {
   const letter = {
     id, threadId:spec.threadId || id, senderId:senderId || null, senderInstitution:senderInstitution || null,
     senderFaction, recipient, senderName:senderId ? name(senderId) : name(senderFaction),
+    senderPortrait:portrait(s,senderId),
     subject:spec.subject, body:spec.body, category, priority:spec.priority || 'routine',
     created:{year:s.year, month:s.month}, arrival:sent + travel,
     source, destination, delivery:'traveling', read:false, archived:false,
     responses:[], options:spec.options || [], eventId:spec.eventId || null,
     context:spec.context || null, confidentiality:spec.confidentiality || 'ordinary',
-    confidence:spec.confidence || null, expires:spec.expires || null
+    confidence:spec.confidence || null, expires:spec.expires || null,
+    politicalState:spec.politicalState || null, recipientId:spec.recipientId || null
   };
   mail.messages.push(letter);
   return {ok:true, letter};
@@ -109,6 +122,25 @@ export function replyToLetter(s, id, choice, actions) {
   } else if (m.context?.kind === 'war' && choice === 'condemn') {
     const key = pair(m.senderFaction, m.recipient);
     s.relations[key] = Math.max(-100, (s.relations[key] || 0) - 5);
+    s.factions[s.player].legitimacy=Math.min(100,s.factions[s.player].legitimacy+1);
+    rememberPoliticalEvent(s,m.senderFaction,s.player,'formal_condemnation',-3);
+    s.log.unshift({year:s.year,month:s.month,en:`Our court formally condemned ${name(m.senderFaction)[0]}'s declaration of war.`,zh:`本朝正式谴责${name(m.senderFaction)[1]}的宣战。`,other:m.senderFaction});
+  } else if (m.context?.kind === 'war' && choice === 'seek_allies') {
+    const allies=(s.alliances||[]).filter(a=>a.includes(s.player)).map(a=>a.find(id=>id!==s.player)).filter(id=>s.factions[id]&&!atWar(s,id,m.senderFaction));
+    if(!allies.length)return {ok:false,reason:'no_allies'};
+    const ally=allies[0],leader=senderFor(s,s.player);
+    sendLetter(s,{senderId:leader,senderInstitution:leader?null:s.player,senderFaction:s.player,recipient:ally,
+      category:'diplomatic',priority:'important',subject:['Request for allied support','请求盟友支持'],
+      body:[`Our court requests support against ${name(m.senderFaction)[0]}.`,`本朝请求援助，对抗${name(m.senderFaction)[1]}。`],
+      context:{kind:'allied_support',enemy:m.senderFaction,original:m.id},threadId:m.threadId});
+  } else if (m.context?.kind === 'chronicle' && choice === 'request_reinforcements') {
+    const place=m.context.region;
+    if(!place||!s.regions.some(r=>r.id===place&&r.owner===s.player))return {ok:false,reason:'region'};
+    ok=actions.recruit?.(s,place,s.player)===true;
+  } else if (m.context?.kind === 'chronicle' && choice === 'contact_governor') {
+    const place=m.context.region;
+    if(!place||!s.regions.some(r=>r.id===place&&r.owner===s.player))return {ok:false,reason:'region'};
+    s.mail.events.push({id:'governor:'+m.id,letterId:m.id,type:'governor',region:place,date:monthIndex(s.year,s.month)+2,status:'scheduled'});
   } else if (m.context?.kind === 'personal_age') {
     const leader=s.world.characters[m.context.leader],sender=s.world.characters[m.senderId];
     if (!leader?.alive || !sender?.alive) return {ok:false,reason:'unavailable'};
@@ -116,19 +148,35 @@ export function replyToLetter(s, id, choice, actions) {
     const key=pair(m.senderId,m.context.leader),bond=s.world.personalRelations[key]||{trust:0,meetings:0};
     bond.trust=Math.max(-100,Math.min(100,bond.trust+({truth:3,polite:0,humor:2,ask_why:1,ignore:-2}[choice]||0)));
     s.world.personalRelations[key]=bond;
+  } else if(m.context?.kind==='personal_flavor'){
+    const sender=s.world.characters[m.senderId],leader=s.world.characters[m.context.leader];
+    if(!sender?.alive||!leader?.alive)return {ok:false,reason:'unavailable'};
+    const key=pair(m.senderId,m.context.leader),bond=s.world.personalRelations[key]||{trust:0,meetings:0};
+    bond.trust=Math.max(-100,Math.min(100,bond.trust+({respond_warmly:2,respond_formally:0,ignore:-1}[choice]||0)));
+    s.world.personalRelations[key]=bond;
+  } else if(m.context?.kind==='complaint'){
+    const key=pair(s.player,m.senderFaction),delta={apologize:4,defend:-2,ignore:-1}[choice]||0;
+    s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+delta));
+    rememberPoliticalEvent(s,m.senderFaction,s.player,'complaint_answer',delta);
   } else if (m.context?.kind === 'banquet') {
     const host=s.world.characters[m.senderId],guest=s.world.characters[m.context.leader];
     if (!host?.alive || !guest?.alive) return {ok:false,reason:'unavailable'};
-    if (choice === 'accept' || choice === 'representative') {
-      const travel=choice === 'representative' ? 1 : courierMonths(s,guest.location,host.location);
+    if (choice === 'accept' || choice === 'representative' || choice==='private_meeting') {
+      const travel=courierMonths(s,guest.location,host.location);
+      const participant=choice==='representative'?Object.values(s.world.characters).find(p=>p.faction===s.player&&p.alive&&p.id!==guest.id&&p.location===guest.location):guest;
+      if(!participant)return {ok:false,reason:'representative'};
+      const date=monthIndex(s.year,s.month)+travel;
+      if((s.mail.events||[]).some(e=>e.status==='scheduled'&&e.date===date&&e.participantId===participant.id))return {ok:false,reason:'commitment'};
       s.mail.events.push({id:'invitation:'+m.id,letterId:m.id,hostId:m.senderId,guestId:m.context.leader,
-        representative:choice === 'representative',date:monthIndex(s.year,s.month)+travel,status:'scheduled'});
+        participantId:participant.id,representative:choice === 'representative',privateMeeting:choice==='private_meeting',date,status:'scheduled',venue:host.location});
     }
     if (choice === 'decline') host.loyalty=Math.max(0,(host.loyalty||50)-1);
   } else if (m.context?.kind === 'treasury' && choice === 'audit') {
     if (s.factions[s.player].treasury < 3) return {ok:false,reason:'treasury'};
     s.factions[s.player].treasury -= 3;
     s.mail.events.push({id:'audit:'+m.id,letterId:m.id,type:'audit',date:monthIndex(s.year,s.month)+2,status:'scheduled'});
+  } else if (m.context?.kind === 'treasury' && choice === 'consult_official') {
+    s.mail.events.push({id:'consult:'+m.id,letterId:m.id,type:'consult',date:monthIndex(s.year,s.month)+1,status:'scheduled'});
   }
   if (!ok) return {ok:false, reason:'conditions'};
   m.read = true;
@@ -145,6 +193,13 @@ export function replyToLetter(s, id, choice, actions) {
     body:responseBody,
     arrival:m.context?.kind === 'treaty' ? monthIndex(s.year,s.month) + courierMonths(s,m.destination,m.source) : null,
     resolved:m.context?.kind !== 'treaty'});
+  if(!['ignore','acknowledge'].includes(choice)){
+    const leader=senderFor(s,s.player),to=m.senderFaction;
+    if(to!==s.player){sendLetter(s,{senderId:leader,senderInstitution:leader?null:s.player,senderFaction:s.player,recipient:to,
+      category:m.category,priority:m.priority,subject:[`Re: ${m.subject[0]}`,`复：${m.subject[1]}`],
+      body:responseBody||[choice.replaceAll('_',' '),choice],threadId:m.threadId,
+      context:{kind:'reply',replyTo:m.id}})}
+  }
   return {ok:true, open:choice === 'war_council' ? 'military' : choice === 'view_location' ? m.context?.region : null};
 }
 
@@ -183,19 +238,49 @@ function localCorrespondence(s) {
     mail.generated[`banquet:${s.year}:${s.player}`]=true;
     sendLetter(s,{senderId,senderFaction:s.player,recipient:s.player,category:'invitations',priority:'routine',
       subject:['Invitation to a private banquet','私人宴会邀请'],body:['Your Excellency, I would be honored to receive you at a modest banquet.','阁下，若蒙光临寒舍薄宴，不胜荣幸。'],
-      options:['accept','decline','representative','ignore'],context:{kind:'banquet',leader,region:sender.location},expires:monthIndex(s.year,s.month)+4});
+      options:['accept','decline','representative','private_meeting','ignore'],context:{kind:'banquet',leader,region:sender.location},expires:monthIndex(s.year,s.month)+4});
+  }
+  if(s.month===10&&!mail.generated[`flavor:${s.year}:${s.player}`]){
+    const seed=sender.personalitySeed||0,war=(s.wars||[]).some(w=>w.includes(s.player));
+    const subjects=war?[
+      [['News from the court','宫廷近讯'],['Your Excellency, the court awaits news of our forces and hopes for steadiness in your counsel.','阁下，宫中盼望前线音讯，也盼您持重筹谋。']]
+    ]:[
+      [['A courtly greeting','宫廷问候'],['Your Excellency, I send greetings and hope this season finds the court at peace.','阁下，谨致问候，愿本季宫廷安宁。']],
+      [['A few verses','诗笺数行'],['A quiet morning brought a few verses to mind; I offer them for your amusement.','清晨偶得诗句数行，谨呈阁下闲览。']],
+      [['A matter of counsel','请教一事'],['May I ask how you judge the temper of our court this season?','敢问阁下如何看待本季朝中人心？']]
+    ];
+    const [subject,body]=subjects[Math.abs(seed)%subjects.length];
+    if(sendLetter(s,{senderId,senderFaction:s.player,recipient:s.player,category:'personal',subject,body,
+      options:['respond_warmly','respond_formally','ignore'],context:{kind:'personal_flavor',leader}}).ok)mail.generated[`flavor:${s.year}:${s.player}`]=true;
+  }
+}
+
+function foreignCourtNotes(s){
+  const mail=initializeMail(s);
+  if(s.month!==6)return;
+  const candidates=Object.keys(s.factions).filter(id=>id!==s.player&&id!=='rebels'&&s.regions.some(r=>r.owner===id)&&!atWar(s,id,s.player));
+  for(const faction of candidates){
+    const relation=s.relations[pair(faction,s.player)]||0;
+    if(relation>-25||mail.generated[`complaint:${s.year}:${faction}`])continue;
+    const senderId=senderFor(s,faction);
+    if(sendLetter(s,{senderId,senderInstitution:senderId?null:faction,senderFaction:faction,recipient:s.player,
+      category:'diplomatic',priority:'important',subject:['A diplomatic complaint','外交申诉'],
+      body:[`${name(faction)[0]}'s court objects to the current strain in relations and asks for an answer.`,`${name(faction)[1]}宫廷对当前紧张关系表示不满，请求答复。`],
+      options:['apologize','defend','ignore'],context:{kind:'complaint',relationAtSending:relation}}).ok)
+      mail.generated[`complaint:${s.year}:${faction}`]=true;
   }
 }
 
 export function treatyLetter(s, senderFaction, recipient, treatyType = 'non_aggression') {
   const senderId = senderFor(s, senderFaction);
-  if (!senderId || atWar(s, senderFaction, recipient) || (s.agreements || []).some(a => a.status === 'active' && a.type === treatyType && a.parties.includes(senderFaction) && a.parties.includes(recipient))) return {ok:false, reason:'unavailable'};
+  if (!AGREEMENT_TYPES[treatyType]||!s.factions[senderFaction]||!s.factions[recipient]||senderFaction===recipient||atWar(s, senderFaction, recipient) || (s.mail?.accessRestrictions?.[senderFaction]??-Infinity)>monthIndex(s.year,s.month) || (s.agreements || []).some(a => a.status === 'active' && a.type === treatyType && a.parties.includes(senderFaction) && a.parties.includes(recipient))) return {ok:false, reason:'unavailable'};
+  const label={non_aggression:['non-aggression','互不侵犯'],trade:['trade','贸易'],military_access:['military access','军事通行'],intelligence:['intelligence sharing','情报共享'],defensive:['defensive','防御'],offensive:['offensive','共同进攻'],military_support:['military support','军事援助'],political:['political cooperation','政治合作'],guarantee:['guarantee','保障']}[treatyType];
   return sendLetter(s, {
-    senderId, senderFaction, recipient, category:'diplomatic', priority:'important',
+    senderId, senderInstitution:senderId?null:senderFaction,senderFaction, recipient, category:'diplomatic', priority:'important',
     subject:[`Proposed accord with ${name(senderFaction)[0]}`,`与${name(senderFaction)[1]}的协定提议`],
-    body:[`Our court proposes a ${treatyType.replaceAll('_',' ')} accord. Your answer will be carried back by courier.`,`本朝提议缔结${treatyType === 'non_aggression' ? '互不侵犯' : '外交'}协定。答复将由信使带回。`],
+    body:[`Our court proposes a ${label[0]} accord. Your answer will be carried back by courier.`,`本朝提议缔结${label[1]}协定。答复将由信使带回。`],
     options:['accept','reject','negotiate'], context:{kind:'treaty', treatyType},
-    expires:monthIndex(s.year, s.month) + 12
+    expires:monthIndex(s.year, s.month) + 18,politicalState:{agreementType:treatyType}
   });
 }
 
@@ -207,6 +292,7 @@ export function warLetters(s, before) {
     const eventId = `war:${key}:${s.year}:${s.month}`;
     if (mail.generated[eventId]) continue;
     mail.generated[eventId] = true;
+    applyWarPersonnel(s,war,eventId);
     for (const [senderFaction, recipient] of [[war[0], war[1]], [war[1], war[0]]]) {
       if (senderFaction !== war[0]) continue;
       const senderId = senderFor(s, senderFaction);
@@ -215,9 +301,46 @@ export function warLetters(s, before) {
         category:'diplomatic', priority:'critical', eventId,
         subject:['Declaration of war','宣战文书'],
         body:[`${name(senderFaction)[0]} has declared war. Hostilities are already in effect; this dispatch confirms the decision.`,`${name(senderFaction)[1]}已宣战。敌对状态现已生效；此书正式告知该决定。`],
-        options:['negotiate','condemn','war_council','ignore'], context:{kind:'war'}
+        options:['negotiate','condemn','seek_allies','war_council','ignore'], context:{kind:'war',other:senderFaction}
       });
     }
+  }
+}
+
+// Chronicle entries contain only events the player is entitled to know.
+// A letter records that observation once, with the original event as its source.
+export function chronicleLetters(s, entries) {
+  const mail=initializeMail(s);
+  mail.activeSieges||={};
+  const underway=new Set((s.armies||[]).filter(a=>a.owner===s.player&&a.siege).map(a=>`${a.id}:${a.siege.region}`));
+  for(const key of Object.keys(mail.activeSieges))if(!underway.has(key))delete mail.activeSieges[key];
+  for(const e of entries||[]){
+    if(e.kind==='economy'||e.kind==='movement'||e.kind==='diplomacy'&&e.change==='war')continue;
+    if(e.priority==='routine'&&e.kind!=='intelligence')continue;
+    if(e.kind==='siege'){
+      const key=`${e.armyId}:${e.region}`;
+      if(mail.activeSieges[key])continue;
+      mail.activeSieges[key]=true;
+    }
+    const eventId=`chronicle:${e.id}`;
+    if(mail.generated[eventId])continue;
+    const category=['territory','battle','army','siege'].includes(e.kind)?'military'
+      :e.kind==='character'?'personal':e.kind==='intelligence'?'government'
+      :e.kind==='government'||e.topic==='economy'?'government':e.topic==='battle'||e.topic==='siege'?'military':'diplomatic';
+    const commander=e.ownArmyId&&s.armies.find(a=>a.id===e.ownArmyId)?.commanderId;
+    const senderId=(commander&&s.world.characters[commander]?.alive?commander:null)||
+      (e.characterId&&s.world.characters[e.characterId]?.alive?e.characterId:null);
+    const subject={territory:['Provincial dispatch','行省急报'],battle:['Battle report','战斗报告'],army:['Army report','军情报告'],siege:['Siege report','围城报告'],government:['Government notice','政务通报'],character:['Court notice','宫廷通报'],intelligence:['Intelligence report','情报报告']}[e.kind]||['Campaign dispatch','战役通报'];
+    const options=category==='military'?(e.region?['view_location','war_council','request_reinforcements','contact_governor','acknowledge']:['war_council','acknowledge'])
+      :category==='government'?['review_budget','acknowledge']:['acknowledge'];
+    const result=sendLetter(s,{senderId,senderInstitution:senderId?null:s.player,senderFaction:s.player,recipient:s.player,
+      category,priority:e.priority==='critical'?'critical':e.priority==='major'?'important':'routine',eventId,
+      subject,body:[formatChronicleEntry(e,'en'),formatChronicleEntry(e,'zh')],
+      source:e.region||home(s,s.player),destination:home(s,s.player),
+      options,context:{kind:'chronicle',region:e.region||null,entryId:e.id},
+      confidence:e.kind==='intelligence'?'unverified':null,
+      politicalState:{kind:e.kind,topic:e.topic||null}});
+    if(result.ok)mail.generated[eventId]=true;
   }
 }
 
@@ -234,12 +357,28 @@ export function advanceMail(s, actions = {}) {
         options:['review_budget','acknowledge'],threadId:mail.messages.find(m=>m.id===event.letterId)?.threadId,context:{kind:'treasury'}});
       continue;
     }
-    const host=s.world.characters[event.hostId],guest=s.world.characters[event.guestId];
-    event.status=host?.alive && guest?.alive && (event.representative || host.location===guest.location) ? 'held' : 'missed';
-    if (event.status==='held' && !event.representative) {
-      const key=pair(event.hostId,event.guestId),bond=s.world.personalRelations[key]||{trust:0,meetings:0};
-      bond.trust=Math.min(100,bond.trust+2);bond.meetings++;s.world.personalRelations[key]=bond;
+    if(event.type==='governor'||event.type==='consult'){
+      event.status='completed';
+      const place=s.regions.find(r=>r.id===event.region),f=s.factions[s.player];
+      sendLetter(s,{senderInstitution:s.player,senderFaction:s.player,recipient:s.player,category:event.type==='consult'?'government':'military',priority:'routine',
+        subject:event.type==='consult'?['Financial consultation','财政磋商']:['Governor response','总督回函'],
+        body:event.type==='consult'?[`The current treasury holds ${f.treasury}; the next budget remains subject to changing events.`,`当前国库存有 ${f.treasury}；下期预算仍受局势变化影响。`]:[
+          `${place?.name?.[0]||event.region}: ${place?.owner===s.player?`loyalty ${place.loyalty}, fortification ${place.fort}`:'the province is no longer under our authority'}.`,
+          `${place?.name?.[1]||event.region}：${place?.owner===s.player?`忠诚度 ${place.loyalty}，防御等级 ${place.fort}`:'此地已不受本方管辖'}。`],
+        threadId:mail.messages.find(m=>m.id===event.letterId)?.threadId,options:['acknowledge'],context:{kind:'report'}});
+      continue;
     }
+    const host=s.world.characters[event.hostId],participant=s.world.characters[event.participantId||event.guestId];
+    event.status=host?.alive&&participant?.alive&&host.location===event.venue&&participant.location===event.venue&&participant.health!=='incapacitated'?'held':'missed';
+    if(event.status==='held'){
+      const key=pair(event.hostId,participant.id),bond=s.world.personalRelations[key]||{trust:0,meetings:0};
+      bond.trust=Math.min(100,bond.trust+(event.representative?1:event.privateMeeting?3:2));bond.meetings++;s.world.personalRelations[key]=bond;
+    }
+    const original=mail.messages.find(m=>m.id===event.letterId);
+    if(original)sendLetter(s,{senderId:event.hostId,senderFaction:s.player,recipient:s.player,category:'invitations',priority:'routine',
+      subject:event.status==='held'?['The gathering was held','宴会已举行']:['The gathering was missed','宴会未能举行'],
+      body:event.status==='held'?['The invited guest and host met as arranged.','受邀者与主人如约会面。']:['The invited guest and host could not meet at the appointed place.','受邀者与主人未能在约定地点会面。'],
+      threadId:original.threadId,options:['acknowledge'],context:{kind:'invitation_result'}});
   }
   for (const m of [...mail.messages]) for (const response of m.responses) {
     if (response.resolved || response.arrival === null || response.arrival > now || m.context?.kind !== 'treaty') continue;
@@ -254,6 +393,7 @@ export function advanceMail(s, actions = {}) {
     }
     if (result === 'reject') {
       const key=pair(m.senderFaction,m.recipient);s.relations[key]=Math.max(-100,(s.relations[key]||0)-2);
+      rememberPoliticalEvent(s,m.senderFaction,m.recipient,'proposal_refused',-2);
     }
     response.outcome = result;
     const words = result === 'accept' ? [['The treaty has been sealed.','条约已经缔结。'],['Your acceptance is recorded at our court.','贵方的接受已载入本朝记录。']]
@@ -265,8 +405,18 @@ export function advanceMail(s, actions = {}) {
   for (const m of mail.messages) {
     if (m.delivery !== 'traveling' || m.arrival > now) continue;
     m.delivery = 'received';
+    if(m.recipient!==s.player&&m.context?.kind==='allied_support'){
+      const enemy=m.context.enemy,ally=m.recipient,relation=s.relations[pair(ally,s.player)]||0;
+      const help=relation>=20&&s.factions[ally].treasury>=12&&atWar(s,s.player,enemy);
+      if(help){s.factions[ally].treasury-=5;s.factions[s.player].treasury+=5}
+      const senderId=senderFor(s,ally);
+      sendLetter(s,{senderId,senderInstitution:senderId?null:ally,senderFaction:ally,recipient:s.player,
+        category:'diplomatic',priority:'important',threadId:m.threadId,
+        subject:help?['Support dispatched','援助已送出']:['Support declined','援助请求遭拒'],
+        body:help?['The allied court has sent 5 treasury units in support.','盟邦已送出 5 单位国库援助。']:['The allied court cannot offer support at present.','盟邦目前无法提供援助。'],options:['acknowledge'],context:{kind:'support_result'}});
+    }
     if (m.recipient !== s.player && m.context?.kind === 'treaty' && actions.proposeAgreement) {
-      const key = pair(m.senderFaction, m.recipient), willingness = (s.relations[key] || 0) >= 0;
+      const key = pair(m.senderFaction, m.recipient),def=AGREEMENT_TYPES[m.context.treatyType],willingness=(s.relations[key] || 0)>=def.threshold&&s.factions[m.senderFaction].treasury>=def.cost;
       m.responses.push({choice:willingness ? 'accept' : 'reject', year:s.year, month:s.month, ai:true,
         arrival:now + courierMonths(s,m.destination,m.source), resolved:false});
     }
@@ -274,14 +424,16 @@ export function advanceMail(s, actions = {}) {
       m.archived = true; m.read = true;
     }
   }
-  // One court initiative per year keeps AI correspondence independent of the mailbox UI.
+  // One distinct proposal per foreign court each year, bounded for long campaigns.
   const factions = Object.keys(s.factions).filter(id => id !== 'rebels' && s.regions.some(r => r.owner === id));
-  if (s.month === 2) for (const sender of factions) {
-    const target = factions.find(id => id !== sender && !atWar(s, sender, id) && !(s.agreements || []).some(a => a.status === 'active' && a.type === 'non_aggression' && a.parties.includes(sender) && a.parties.includes(id)));
-    if (!target) continue;
-    const key = pair(sender, target);
-    if ((s.relations[key] || 0) < 0) continue;
-    if (treatyLetter(s, sender, target).ok) mail.generated[`accord:${s.year}:${sender}:${target}`] = true;
+  if (s.month === 2) for (const sender of factions.filter(id=>id!==s.player)) {
+    const candidates=factions.filter(id=>id!==sender&&!atWar(s,sender,id)).sort((a,b)=>((s.relations[pair(sender,b)]||0)-(s.relations[pair(sender,a)]||0))||(a===s.player?-1:b===s.player?1:0));
+    for(const target of candidates){
+      const relation=s.relations[pair(sender,target)]||0;
+      const types=relation>=35?['defensive','trade','military_access','non_aggression']:relation>=20?['trade','military_access','non_aggression']:['non_aggression'];
+      const type=types.find(t=>relation>=AGREEMENT_TYPES[t].threshold&&s.factions[sender].treasury>=AGREEMENT_TYPES[t].cost&&!(s.agreements||[]).some(a=>a.status==='active'&&a.type===t&&a.parties.includes(sender)&&a.parties.includes(target)));
+      if(type&&treatyLetter(s,sender,target,type).ok){mail.generated[`accord:${s.year}:${sender}:${target}`]=true;break}
+    }
   }
   if (s.month === 1 && s.year !== -49) {
     const id = `treasury:${s.year}:${s.player}`;
@@ -293,12 +445,12 @@ export function advanceMail(s, actions = {}) {
         category:'government', priority:'routine', eventId:id,
         subject:['Annual treasury ledger','年度国库报告'],
         body:[`Treasury: ${f.treasury}; food: ${f.food}; manpower: ${f.manpower}.`,`国库：${f.treasury}；粮食：${f.food}；兵源：${f.manpower}。`],
-        options:['review_budget','audit','acknowledge'], context:{kind:'treasury'},source:home(s,s.player), destination:home(s,s.player)});
+        options:['review_budget','audit','consult_official','acknowledge'], context:{kind:'treasury'},source:home(s,s.player), destination:home(s,s.player)});
       // Government institutions may address their own court.
       if (!m.ok) delete mail.generated[id];
     }
   }
   localCorrespondence(s);
-  if (mail.messages.length > 500) mail.messages = mail.messages.filter(m => !m.archived).slice(-500);
+  foreignCourtNotes(s);
   return mail;
 }

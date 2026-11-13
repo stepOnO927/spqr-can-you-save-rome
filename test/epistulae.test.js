@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters} from '../epistulae.js';
-import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer} from '../engine.js';
+import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js';
+import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js';
+import {setWartimePolicy} from '../epistulae-personnel.js';
 import {mailboxHtml} from '../mail-ui.js';
 
 const state = () => {
@@ -26,7 +27,8 @@ test('delayed treaty reaches inbox, reply changes state and persists with thread
   assert.equal(agreements.length,0);
   advance(s,10,{proposeAgreement:(_s,actor,target,type)=>{agreements.push([actor,target,type]);return {ok:true}}});
   assert.deepEqual(agreements,[['egypt','caesar','non_aggression']]);
-  assert.equal(s.mail.messages.filter(m=>m.threadId===sent.letter.threadId).length,2);
+  assert.equal(s.mail.messages.filter(m=>m.threadId===sent.letter.threadId).length,3);
+  assert.ok(s.mail.messages.some(m=>m.context?.replyTo===sent.letter.id&&m.senderFaction===s.player));
   assert.equal(receivedMail(JSON.parse(JSON.stringify(s))).find(m=>m.id===sent.letter.id).responses[0].choice,'accept');
   assert.equal(archiveLetter(s,sent.letter.id),true);
 });
@@ -113,4 +115,96 @@ test('treasury audit spends real funds and reports measured state after two mont
   assert.ok(audit);
   assert.ok(audit.body[0].includes(String(before-3)));
   assert.equal(audit.threadId,report.threadId);
+});
+
+test('war applies separate policies only to foreign personnel actually in the host territory',()=>{
+  const s=newGame('caesar');
+  assert.equal(queueMission(s,'egypt','caesar','envoy','relations').ok,true);
+  assert.equal(queueMission(s,'egypt','caesar','travelers','leaders').ok,true);
+  for(let i=0;i<3;i++)tick(s);
+  const envoy=s.mail.personnel.find(p=>p.kind==='envoy'),merchant=s.mail.personnel.find(p=>p.kind==='merchant');
+  assert.equal(envoy.status,'active_mission');
+  assert.equal(merchant.status,'returning');
+  assert.equal(setWartimePolicy(s,'caesar','envoys','detain').ok,true);
+  assert.equal(setWartimePolicy(s,'caesar','merchants','freeze').ok,true);
+  const unrelated=s.world.characters.caesar;
+  assert.equal(diplomacy(s,'egypt','caesar','war'),true);
+  assert.equal(envoy.status,'temporarily_detained');
+  assert.equal(merchant.status,'assets_frozen');
+  assert.equal(s.world.characters[envoy.characterId].alive,true);
+  assert.equal(unrelated.alive,true);
+  const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+  assert.equal(loaded.mail.personnel.find(p=>p.kind==='envoy').status,'temporarily_detained');
+  assert.equal(loaded.mail.personnel.find(p=>p.kind==='merchant').status,'assets_frozen');
+});
+
+test('default war policy grants an envoy safe departure without affecting merchants',()=>{
+  const s=newGame('caesar');
+  assert.equal(queueMission(s,'egypt','caesar','envoy','relations').ok,true);
+  for(let i=0;i<3;i++)tick(s);
+  const envoy=s.mail.personnel.find(p=>p.kind==='envoy');
+  assert.equal(diplomacy(s,'egypt','caesar','war'),true);
+  assert.equal(envoy.status,'ordered_depart');
+  assert.equal(envoy.safeConduct,true);
+  assert.equal(s.world.characters[envoy.characterId].alive,true);
+});
+
+test('an explicitly selected extreme envoy policy carries lasting diplomatic costs',()=>{
+  const s=newGame('caesar');
+  assert.equal(queueMission(s,'egypt','caesar','envoy','relations').ok,true);
+  for(let i=0;i<3;i++)tick(s);
+  const envoy=s.mail.personnel.find(p=>p.kind==='envoy'),stable=s.factions.caesar.stability;
+  assert.equal(setWartimePolicy(s,'caesar','envoys','execute').ok,true);
+  assert.equal(diplomacy(s,'egypt','caesar','war'),true);
+  assert.equal(envoy.status,'deceased');
+  assert.equal(s.world.characters[envoy.characterId].alive,false);
+  assert.equal(s.world.characters.caesar.alive,true);
+  assert.ok(s.diplomaticCredibility.caesar<=65);
+  assert.ok(s.factions.caesar.stability<stable);
+  assert.ok(s.mail.accessRestrictions.caesar>s.year*12+s.month);
+});
+
+test('war suspends a real trade accord and peace releases detained visitors',()=>{
+  const s=newGame('caesar');
+  assert.equal(queueMission(s,'egypt','caesar','envoy','relations').ok,true);
+  for(let i=0;i<3;i++)tick(s);
+  const envoy=s.mail.personnel.find(p=>p.kind==='envoy');
+  s.agreements.push({id:'agreement:test-trade',type:'trade',parties:['egypt','caesar'],status:'active'});
+  setWartimePolicy(s,'caesar','envoys','detain');
+  assert.equal(diplomacy(s,'egypt','caesar','war'),true);
+  assert.equal(s.agreements.at(-1).status,'ended_by_war');
+  assert.equal(s.mail.tradeSuspensions.at(-1).agreementId,'agreement:test-trade');
+  assert.equal(envoy.status,'temporarily_detained');
+  assert.equal(diplomacy(s,'egypt','caesar','peace',{acceptedByPlayer:true}),true);
+  assert.equal(envoy.status,'returning');
+  for(let i=0;i<2;i++)tick(s);
+  assert.equal(envoy.status,'at_home');
+});
+
+test('chronicle dispatch creates one state-backed bilingual military letter',()=>{
+  const s=newGame('caesar'),region=s.regions.find(r=>r.owner==='caesar');
+  const entry={id:901,year:s.year,month:s.month,kind:'siege',priority:'major',faction:s.player,
+    region:region.id,place:region.name,armyId:'test',armyName:['Field army','野战军'],remaining:2};
+  chronicleLetters(s,[entry]);chronicleLetters(s,[entry]);
+  const letters=s.mail.messages.filter(m=>m.eventId==='chronicle:901');
+  assert.equal(letters.length,1);
+  assert.equal(letters[0].category,'military');
+  assert.match(letters[0].body[0],/besieging/);
+  assert.match(letters[0].body[1],/围攻/);
+  assert.ok(letters[0].options.includes('war_council'));
+});
+
+test('five-year campaign keeps message identities, categories and delivery state bounded',()=>{
+  const s=newGame('egypt');
+  for(let i=0;i<60;i++)tick(s);
+  const ids=s.mail.messages.map(m=>m.id);
+  assert.equal(new Set(ids).size,ids.length);
+  assert.ok(ids.length>20&&ids.length<500);
+  assert.ok(s.mail.messages.every(m=>m.senderId?s.world.characters[m.senderId]:m.senderInstitution));
+  assert.ok(s.mail.messages.every(m=>['traveling','received'].includes(m.delivery)));
+  assert.ok(s.mail.messages.some(m=>m.category==='government'));
+  assert.ok(s.mail.messages.some(m=>m.category==='personal'));
+  const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+  assert.equal(loaded.mail.messages.length,s.mail.messages.length);
+  assert.match(mailboxHtml(loaded,{lang:'zh'}),/帝国来信/);
 });

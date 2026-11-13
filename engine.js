@@ -1,22 +1,23 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=fort-intel-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters} from './epistulae.js?v=epistulae-1';
-import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=fort-intel-1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=unknown-person-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,chronicleLetters} from './epistulae.js?v=epistulae-2';
+import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=epistulae-2';
+import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=portrait-pool-2';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=newborn-age-1';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=fort-intel-1';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=fort-intel-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=unknown-person-1';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=portrait-pool-2';
 import {advanceConspiracies} from './conspiracies.js?v=fort-intel-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=fort-intel-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=fort-intel-1';
-import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=fort-intel-1';
+import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=portrait-pool-2';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=fort-intel-1';
 import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=han-4';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
-import {advanceFocuses,focusModifiers} from './national-focus.js?v=fort-intel-1';
-import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=fort-intel-1';
-import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=fort-intel-1';
+import {advanceFocuses,focusModifiers} from './national-focus.js?v=portrait-pool-2';
+import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=portrait-pool-2';
+import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=portrait-pool-2';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
@@ -28,8 +29,8 @@ import {advanceStrategicWarnings} from './strategic-warnings.js?v=fort-intel-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {formCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=fort-intel-1';
 import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=fort-intel-1';
-import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=fort-intel-1';
-import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=fort-intel-1';
+import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=portrait-pool-2';
+import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=portrait-pool-2';
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
 export {queueMission};
 export {personalDiplomaticCredit};
@@ -249,6 +250,7 @@ export function diplomacy(s, actor, target, action, options={}){
     // The responding government knows its own forces, but judges the sender by its reports.
     if(!options.acceptedByPlayer && estimatedStrength(s,target,actor)<strength(s,target)*Math.max(.35,.6-(activeModifiers(s,actor).pressure||0)/100) && s.factions[target].stability>35)return false;
     s.wars=s.wars.filter(w=>!(w.includes(actor)&&w.includes(target)));
+    reconcilePeacePersonnel(s);
     s.relations[key]=-20;
     for(const a of s.armies.filter(a=>a.owner===actor||a.owner===target)){
       const other=a.owner===actor?target:actor;
@@ -769,6 +771,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   if(s.defeat)return s;
   initializeWorld(s);initializeMail(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
   const chronicleBefore=captureCampaignState(s);
+  const warsBefore=s.wars.map(w=>w.slice());
   s.month++;if(s.month>12){s.month=1;s.year++}
   refreshReportConfidence(s);
   advanceInventions(s);advanceOffices(s);economy(s);advanceAgreements(s);advanceCoalitions(s);advanceReligion(s);
@@ -780,7 +783,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   advanceMovements(s,{autoplayPlayer});
-  resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});linkCommanders(s);advancePersonalDiplomacy(s);
+  resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});linkCommanders(s);advancePersonalDiplomacy(s);
   advanceControlScouts(s);observeArmies(s);observeFormationRecon(s);observeControl(s);if(s.month%6===0)observeBalanceOfPower(s);
   if(imperiumOn(s)){advanceBattlePlans(s,{autoplayPlayer,issueOrder:issueMilitaryOrder,estimatedStrength,log});advanceCommandInfluence(s,{log})}
   // Friendly courts may forward fresh scout sightings; recipients judge them on their own.
@@ -793,9 +796,10 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
     try{aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner)}finally{if(hadDifficulty)s.difficulty=originalDifficulty;else delete s.difficulty}
   }
   observeDiplomacy(s);
+  warLetters(s,warsBefore);
   advanceRomanDefeat(s);if(!s.defeat){advanceRomanVictory(s);advancePeacefulSettlement(s)}
   advanceHanWorld(s);
-  recordCampaignTurn(s,chronicleBefore);
+  chronicleLetters(s,recordCampaignTurn(s,chronicleBefore));
   return s;
 }
 

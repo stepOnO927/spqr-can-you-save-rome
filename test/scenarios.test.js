@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newScenario} from '../scenarios.js?v=fort-intel-1';
-import {tick,upgradeSave} from '../engine.js?v=fort-intel-1';
+import {newScenario} from '../scenarios.js?v=unknown-person-1';
+import {tick,upgradeSave} from '../engine.js?v=unknown-person-1';
 import {potentialConspirators} from '../conspiracies.js?v=fort-intel-1';
 import {leaveCoalition} from '../coalitions.js?v=fort-intel-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=born-portraits-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=portrait-pool-2';
 import {advancePersonalPlans} from '../personal-plans.js?v=multipolar-2';
 
 test('both Roman sides can start and reload each required scenario',()=>{

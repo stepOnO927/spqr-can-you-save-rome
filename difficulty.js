@@ -1,5 +1,5 @@
-import {createFictionalPerson} from './dynasties.js?v=fort-intel-1';
-import {initializeOffices,OFFICE_TYPES,canHoldOffice,localGovernor} from './office-system.js?v=fort-intel-1';
+import {createFictionalPerson} from './dynasties.js?v=portrait-pool-2';
+import {initializeOffices,OFFICE_TYPES,canHoldOffice,localGovernor} from './office-system.js?v=portrait-pool-2';
 
 // Both campaign views use the same one-time setup. Difficulty affects AI
 // decisions; the separate economic handicap is explicitly opt-in.

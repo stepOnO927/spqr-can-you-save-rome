@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=fort-intel-1';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=fort-intel-1';
-import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=fort-intel-1';
-import {deriveGovernment} from '../governance.js?v=fort-intel-1';
+import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=unknown-person-1';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=portrait-pool-2';
+import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=unknown-person-1';
+import {deriveGovernment} from '../governance.js?v=portrait-pool-2';
 import {successorFor} from '../characters.js?v=newborn-age-1';
 
 test('a local friendly person may command a vacant army and the appointment survives saving',()=>{

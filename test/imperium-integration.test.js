@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,estimatedStrength} from '../engine.js?v=fort-intel-1';
-import {startFocus,focusState,treeFor,scoreFocus,focusReportsFor} from '../national-focus.js?v=fort-intel-1';
-import {templatesFor,reorganizeArmy,commandConcentration} from '../legion-designer.js?v=fort-intel-1';
-import {createPlan,assignRole,approvePlan,planById} from '../battle-plans.js?v=fort-intel-1';
+import {newGame,tick,upgradeSave,estimatedStrength} from '../engine.js?v=unknown-person-1';
+import {startFocus,focusState,treeFor,scoreFocus,focusReportsFor} from '../national-focus.js?v=portrait-pool-2';
+import {templatesFor,reorganizeArmy,commandConcentration} from '../legion-designer.js?v=portrait-pool-2';
+import {createPlan,assignRole,approvePlan,planById} from '../battle-plans.js?v=portrait-pool-2';
 import {assessOpportunities} from '../multipolar.js?v=fort-intel-1';
-import {finalizeCampaign} from '../legacy.js?v=fort-intel-1';
+import {finalizeCampaign} from '../legacy.js?v=portrait-pool-2';
 
 const run=(s,id,actor=s.player)=>{const f=treeFor(actor).find(x=>x.id===id);const r=startFocus(s,actor,id);assert.ok(r.ok,`${id}: ${r.reason}`);for(let i=0;i<f.months;i++)tick(s)};
 

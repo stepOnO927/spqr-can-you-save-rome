@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=fort-intel-1';
-import {appointGovernor,dismissGovernor,governorCandidates,localGovernor,officeOf,officeCandidates,advanceOffices,governorLoyaltyEffect} from '../office-system.js?v=fort-intel-1';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=fort-intel-1';
-import {availableCommanders} from '../command-appointments.js?v=fort-intel-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=unknown-person-1';
+import {appointGovernor,dismissGovernor,governorCandidates,localGovernor,officeOf,officeCandidates,advanceOffices,governorLoyaltyEffect} from '../office-system.js?v=portrait-pool-2';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=unknown-person-1';
+import {availableCommanders} from '../command-appointments.js?v=portrait-pool-2';
 
 test('a local administrator costs resources and improves only that theater quarterly',()=>{
  let s=newGame('senate');const cash=s.factions.senate.treasury;assert.ok(governorCandidates(s,'roma').includes('cicero'));

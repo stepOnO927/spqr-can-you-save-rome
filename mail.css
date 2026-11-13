@@ -23,8 +23,10 @@
 .mail-letter h3{font:21px Georgia,'Noto Serif SC',serif;margin:14px 0 8px;color:#55392b}
 .mail-letter p{max-width:65ch}.mail-letter .mail-from{border-bottom:1px solid #b8a17e;padding-bottom:9px;color:#79543a}
 .mail-seal{float:right;border:2px double #a05240;border-radius:50%;width:72px;height:72px;display:grid;place-items:center;text-align:center;transform:rotate(-13deg);font:700 12px Georgia,serif;color:#9a4938;opacity:.7}
+.mail-portrait{float:left;width:54px;height:54px;margin:0 12px 8px 0;border:2px solid #ac9470;border-radius:50%;object-fit:cover}
 .mail-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:24px}.mail-actions button:hover{background:#dfcda9}.mail-response{font-style:italic;color:#76513c}
 .mail-empty{padding:18px;color:#806c55;font:13px Georgia,serif}
 .mail-thread{border-top:1px solid #baa481;margin-top:18px;padding-top:10px}.mail-thread h4{font:700 11px Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#76513c}.mail-thread p{font-size:12px;margin:6px 0}
 .mail-settings{display:flex;flex-wrap:wrap;gap:12px;padding:9px 15px;border-top:1px solid #bba784;font:11px Arial,'Microsoft YaHei',sans-serif}
+.mail-settings label{display:flex;align-items:center;gap:5px}.mail-settings select{max-width:170px;padding:5px;border:1px solid #ac9470;background:#fcf4e2;color:#483426}.mail-expired{color:#9a4938;font-weight:700}
 @media(max-width:700px){body{min-width:0}.top{padding:0 7px;gap:7px}.mail-backdrop{padding:5px}.mailbox{max-height:98vh}.mail-head{padding:9px 11px}.mail-head h2{font-size:18px}.mail-tabs{max-height:80px;overflow:auto}.mail-columns{grid-template-columns:1fr;max-height:none}.mail-list{max-height:150px;border-right:0;border-bottom:1px solid #b6a17c}.mail-letter{min-height:250px;max-height:42vh;padding:14px}.mail-icon{width:32px;height:30px;font-size:18px}}
