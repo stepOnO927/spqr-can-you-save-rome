@@ -310,8 +310,8 @@ export function officialKnowledge(s,target,id,actor=s.player){
 }
 export function contactOfficial(s,target,id,route='formal',actor=s.player){
  const c=initializeCursus(s),routes={formal:{cost:10,months:3,chance:.72},merchant:{cost:7,months:5,chance:.52},introduction:{cost:5,months:2,chance:.78},embassy:{cost:12,months:2,chance:.70},scholarly:{cost:6,months:4,chance:.68},professional:{cost:8,months:3,chance:.64},intelligence:{cost:9,months:3,chance:.60},banquet:{cost:11,months:3,chance:.68},senatorial:{cost:8,months:2,chance:.72},provincial_visit:{cost:9,months:4,chance:.63},military_visit:{cost:10,months:3,chance:.60},family:{cost:6,months:3,chance:.70},ceremony:{cost:6,months:4,chance:.58}},spec=routes[route],p=person(s,id),report=c.intel[actor]?.[target];
- if(!spec||actor===target||!p||p.faction!==target||!knownForeignOfficial(s,target,id,actor))return {ok:false,reason:'unknown'};
- if(!present(s,id))return {ok:false,reason:'unavailable'};
+ if(!spec||actor===target||!p||!knownForeignOfficial(s,target,id,actor))return {ok:false,reason:'unknown'};
+ // A dated foreign report may be stale; a failed approach resolves after time and cost.
  if(route==='introduction'&&!Object.entries(c.networks).some(([source,ids])=>person(s,source)?.faction===actor&&present(s,source)&&ids.includes(id)))return {ok:false,reason:'introduction'};
  if(route==='family'&&!Object.entries(c.networks).some(([source,ids])=>person(s,source)?.faction===actor&&present(s,source)&&ids.includes(id)))return {ok:false,reason:'introduction'};
  if(route==='senatorial'&&(!ROMAN.has(target)||!c.senators.some(x=>x.id===id)))return {ok:false,reason:'profession'};
