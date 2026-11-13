@@ -1,9 +1,32 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
-import {assignSuccession,eligibleLiuImperial,leadershipTitle} from '../characters.js?v=faces-empire-2';
+import {assignSuccession,eligibleLiuImperial,leadershipTitle,successorFor} from '../characters.js?v=faces-empire-2';
 import {createFictionalPerson} from '../dynasties.js?v=faces-empire-2';
 import {renderGenealogy} from '../genealogy-ui.js?v=faces-empire-2';
+import {deriveGovernment} from '../governance.js?v=faces-empire-2';
+import {proceduralPortraitSvg} from '../portrait-registry.js?v=faces-empire-2';
+
+test('each Republican command can elevate an original adult political leader after historical successors are lost',()=>{
+ for(const [faction,historical] of [['caesar',['caesar','antony','lepidus']],['senate',['pompey','cato','scipio','labienus','cicero']]]){
+  let s=newGame(faction);
+  const leader=createFictionalPerson(s,{name:[`Original ${faction} leader`,`原创${faction}领袖`],faction,birthYear:-80,sex:'male',location:faction==='caesar'?'cisalpine':'roma'});
+  s.world.characters[leader].influence=88;
+  const agent=createFictionalPerson(s,{name:['Field courier','野战信使'],faction,birthYear:-80,sex:'male'});
+  s.world.characters[agent].profession='courier';s.world.characters[agent].influence=99;
+  for(const id of historical)if(s.world.characters[id])s.world.characters[id].alive=false;
+  assert.equal(successorFor(s,faction).includes(agent),false);
+  assert.deepEqual(assignSuccession(s,faction),[leader]);
+  assert.equal(deriveGovernment(s,faction).kind,'normal');
+  assert.deepEqual(leadershipTitle(faction,[leader],s),['Roman faction leadership','罗马派系领袖']);
+  const image=proceduralPortraitSvg(s,leader);assert.match(image,/<svg/);
+  const seed=s.world.characters[leader].portraitSeed;
+  s=upgradeSave(structuredClone(s));
+  assert.deepEqual(s.world.leadership[faction],[leader]);
+  assert.equal(s.world.characters[leader].portraitSeed,seed);
+  assert.equal(proceduralPortraitSvg(s,leader),image);
+ }
+});
 
 test('a fictional Parthian court outsider founds a saved house with political cost',()=>{
  const s=newGame('parthia'),oldHouse=s.world.dynasties.rulingHouses.parthia;

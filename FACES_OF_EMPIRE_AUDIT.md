@@ -174,6 +174,12 @@ portrait after a valid succession. A lineage-backed succession test rejects
 a non-Liu minister, and a browser check keeps the heir's image through reload.
 If a non-Liu minister establishes another dynasty, the Han ruler card now
 shows the founder's actual status instead of falsely calling him Han emperor.
+Both Republican commands can now choose a politically active original adult
+when all documented successor candidates have been lost. This selection uses
+the existing faction leadership and government simulation; it excludes
+military-only people and active specialist professions, and Republican command
+does not pass automatically from parent to child. A browser regression checks
+the selected original leader's portrait and identity after save/load.
 Repeatedly appointing the same officeholder no longer grants more favor or
 resets the observed-service clock. The court browser test verifies bilingual
 career display and persistence through save/load.

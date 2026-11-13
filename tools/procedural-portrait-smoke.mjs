@@ -38,6 +38,23 @@ try{
  await page.locator('#save').click();const saved=await page.evaluate(foreign=>JSON.parse(localStorage.getItem('spqr-save-1')).meetings.find(m=>m.target===foreign).portraitSeed,ids.foreign);assert.equal(saved,observed);
  await page.locator('#load').click();await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator(`[data-character="${ids.foreign}"]`).first().click();
  assert.equal(await page.locator('#command-detail .portrait-procedural').first().evaluate(el=>el.outerHTML),art);
+ const romanLeader=await page.evaluate(async()=>{
+  const engine=await import('/engine.js?v=faces-empire-2'),dynasties=await import('/dynasties.js?v=faces-empire-2'),characters=await import('/characters.js?v=faces-empire-2');
+  const s=engine.newGame('caesar'),id=dynasties.createFictionalPerson(s,{name:['Lucius Aemilius','卢基乌斯·埃米利乌斯'],faction:'caesar',birthYear:-84,location:'cisalpine',sex:'male'});
+  s.world.characters[id].influence=90;
+  for(const historic of ['caesar','antony','lepidus'])s.world.characters[historic].alive=false;
+  if(characters.assignSuccession(s,'caesar')[0]!==id)throw Error('original Republican succession failed');
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
+  return id;
+ });
+ await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.locator('#factions').click();await page.locator('[data-faction="caesar"]').click();
+ await page.locator(`[data-character="${romanLeader}"]`).first().click();
+ const leaderArt=await page.locator('#command-detail .portrait-procedural').first().evaluate(el=>el.outerHTML);
+ assert.match(leaderArt,/<svg/);
+ await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#start-free').click();await page.locator('#load').click();
+ await page.locator('#factions').click();await page.locator('[data-faction="caesar"]').click();await page.locator(`[data-character="${romanLeader}"]`).first().click();
+ assert.equal(await page.locator('#command-detail .portrait-procedural').first().evaluate(el=>el.outerHTML),leaderArt);
  assert.deepEqual(errors,[]);
- console.log('Procedural commander portrait and foreign observed portrait survive a personal meeting and save/load.');
+ console.log('Procedural commander, foreign observed and original Roman leader portraits survive save/load.');
 }finally{await browser.close()}
