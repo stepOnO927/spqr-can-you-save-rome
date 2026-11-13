@@ -112,3 +112,9 @@
 .cursus-foreign-list .diplomacy-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:5px}
 .cursus-foreign-list .diplomacy-actions button{white-space:normal;min-width:0;text-align:left}
 @media(max-width:700px){.cursus-foreign-list .diplomacy-actions{grid-template-columns:1fr 1fr}}
+
+.cursus-advanced,.cursus-contact-more{margin:7px 0;border-top:1px solid rgba(173,145,96,.24);padding-top:5px}
+.cursus-advanced summary,.cursus-contact-more summary{cursor:pointer;color:#d5bd8e;font:10px Georgia,serif;letter-spacing:.06em}
+.cursus-contact-more{grid-column:1/-1}
+.cursus-contact-more .diplomacy-actions{margin-top:6px}
+.cursus-outlook{color:#e2cb9c}

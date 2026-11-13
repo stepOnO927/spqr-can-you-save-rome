@@ -21,6 +21,9 @@ try{
  const official=page.locator('.cursus-foreign-list article').filter({hasText:'阿尔塔巴努斯'});
  assert.equal(await official.count(),1);
  assert.equal(await official.locator('[data-cursus-contact="scholarly"]').isDisabled(),true);
+ await official.locator('.cursus-contact-more summary').click();
+ assert.equal(await official.locator('[data-cursus-contact="provincial_visit"]').isDisabled(),false);
+ assert.equal(await official.locator('[data-cursus-contact="military_visit"]').isDisabled(),true);
  await official.locator('[data-cursus-contact="embassy"]').click();
  assert.match(await page.locator('.cursus-records').innerText(),/外交使节.*进行中/);
  assert.deepEqual(errors,[]);
