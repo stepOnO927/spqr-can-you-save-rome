@@ -71,6 +71,20 @@ test('an outnumbered cash-losing AI recalls an optional patrol while it can stil
  const restored=upgradeSave(JSON.parse(JSON.stringify(s))),saved=restored.naval.fleets.find(x=>x.id===f.id);
  advanceNaval(restored);assert.equal(saved.port,'cisalpine');assert.equal(saved.reserve,true);
 });
+test('a cash-poor AI returns an idle offshore fleet to a friendly port for reserve',()=>{
+ const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='caesar');
+ s.naval.fleets.find(x=>x.owner==='senate').zone='tyrrhenian';
+ f.port=null;f.zone='ligurian';f.order=null;s.factions.caesar.treasury=20;
+ advanceNaval(s);
+ assert.equal(f.order?.kind,'return');
+ const safePort=f.order.targetPort;
+ assert.equal(s.regions.find(r=>r.id===safePort)?.owner,'caesar');
+ const loaded=upgradeSave(structuredClone(s)),saved=loaded.naval.fleets.find(x=>x.id===f.id);
+ advanceNaval(loaded);
+ assert.equal(saved.port,safePort);
+ assert.equal(saved.reserve,true);
+ assert.ok(fleetUpkeepDue(saved)<fleetUpkeepDue({...saved,reserve:false}));
+});
 test('critically damaged and unsupplied fleets can retreat but cannot start a new mission',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate');
  s.naval.fleets.find(x=>x.owner==='caesar').zone='western';
@@ -105,6 +119,7 @@ test('reserve ships cannot carry merchant cargo, and loss of their harbor ends r
 });
 test('a fleet mobilizing in harbor stays sheltered until it sorties',()=>{
  const s=newGrandGame('senate'),own=s.naval.fleets.find(x=>x.owner==='senate'),enemy=s.naval.fleets.find(x=>x.owner==='caesar');
+ s.factions.caesar.treasury=300;
  assert.equal(reserveFleet(s,'senate',own.id).ok,true);assert.equal(mobilizeFleet(s,'senate',own.id).ok,true);enemy.zone=own.zone;enemy.port=null;advanceNaval(s);
  assert.equal(s.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(own.id)),false);assert.equal(own.reserve,false);
  assert.equal(orderFleet(s,'senate',own.id,'patrol','adriatic').ok,true);advanceNaval(s);

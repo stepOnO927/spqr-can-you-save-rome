@@ -321,7 +321,7 @@ function aiNavalOrders(s,owner,f){
  // operating deficit. Preserve that reserve before paying for optional patrols.
  // The fleet can still sail when a nearby hostile fleet is actually reported.
  const landWarFloor=24+12*Math.max(0,-cashflow);
- const retireOptionalFleet=cashflow< -6&&(!nearbyThreat||landReserveAtRisk)&&(treasury<110||outnumbered&&treasury<=landWarFloor);
+ const retireOptionalFleet=cashflow< -6&&(!nearbyThreat||landReserveAtRisk)&&(treasury<110||outnumbered&&treasury<=landWarFloor)||treasury<24&&!nearbyThreat;
  if(f.reserve){
   const activeCashflow=cashflow-fleetUpkeepDue({...f,reserve:false})+fleetUpkeepDue(f);
   const reserveFloor=cashflow< -6&&(!nearbyThreat||outnumbered)?116:0;
@@ -336,6 +336,7 @@ function aiNavalOrders(s,owner,f){
  }
  if(f.order||f.mobilizing)return;
  if(f.supply<25||f.hull<35){if(f.port){if(retireOptionalFleet)reserveFleet(s,owner,f.id);return}const home=s.regions.filter(r=>r.owner===owner&&r.port).sort((a,b)=>(seaRoute(f.zone,portZone(a.id))?.length??99)-(seaRoute(f.zone,portZone(b.id))?.length??99))[0];if(home)orderFleet(s,owner,f.id,'return',home.id);return}
+ if(!f.port&&retireOptionalFleet){const home=s.regions.filter(r=>r.owner===owner&&r.port).map(r=>({id:r.id,path:seaRoute(f.zone,portZone(r.id))})).filter(x=>x.path).sort((a,b)=>a.path.length-b.path.length)[0];if(home)return orderFleet(s,owner,f.id,'return',home.id)}
  const transportBudget=treasury>=Math.max(35,26+3*Math.max(0,-cashflow));
  if(transportBudget){
   if(f.port&&s.armies.some(a=>a.owner===owner&&a.region===f.port&&!a.move&&!a.siege&&a.men>=1200&&a.men<=fleetCapacity(f,s)&&hostileSeaLanding(s,owner,f.port)))return;

@@ -128,6 +128,8 @@ The latest Phase XII balance pass traced one repeatable failure: Caesar could ta
 
 Extending the same twelve observer seeds to 120 months with `--months=120` produces eleven Senate victories and one unresolved war. Two trial rules that raised additional AI armies whenever its owned or opposing area seemed thinly covered instead produced twelve Senate victories by month 72, so they were reverted. The persistent asymmetry needs a deeper review: the Senate can replace armies with stronger food and treasury income, whereas Caesar's early treasury and harvest remain fragile.
 
+A later naval AI fix returns an idle offshore fleet to a reachable friendly port when its command cannot fund an ordinary levy and has no current nearby hostile-fleet report. It can then enter the ordinary lower-cost reserve; paid transports, live orders and player-controlled fleets remain under their existing decisions. A save-reload regression and all 466 tests pass. The twelve-seed 72-month Egypt-observer audit changes from two Senate victories and ten ongoing wars to one Senate victory and eleven ongoing wars. At 120 months it still yields eleven Senate victories and one ongoing war. This saves cash in a specific situation but does not solve civil-war balance. A separate player-like Caesar route commands only the XIII and leaves other player armies unattended, so its losses cannot be used as an AI-only balance measure.
+
 ## Release checks
 
 Run `node tools/coast-mask-smoke.mjs` after changes to GSHHG masks or map styling; it checks actual rendered pixels at four Mediterranean coastlines, which geometry queries alone cannot verify.
