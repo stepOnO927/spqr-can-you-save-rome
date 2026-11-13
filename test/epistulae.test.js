@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters} from '../epistulae.js';
-import {newGame,diplomacy,tick,upgradeSave} from '../engine.js';
+import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters} from '../epistulae.js';
+import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer} from '../engine.js';
 import {mailboxHtml} from '../mail-ui.js';
 
 const state = () => {
@@ -46,9 +46,11 @@ test('unknown sender is rejected and AI correspondence resolves without player i
   assert.equal(sendLetter(s,{senderId:'imaginary',senderFaction:'egypt',recipient:'caesar',subject:['x','x'],body:['x','x']}).ok,false);
   const offered=treatyLetter(s,'egypt','parthia');
   assert.equal(offered.ok,true);
-  advance(s,8,{proposeAgreement:()=>({ok:true})});
+  const agreements=[];
+  advance(s,20,{proposeAgreement:(_s,a,b,t)=>{agreements.push([a,b,t]);return {ok:true}}});
   assert.equal(offered.letter.responses[0].ai,true);
-  assert.equal(unreadCount(s),0);
+  assert.deepEqual(agreements.filter(([a,b])=>a==='egypt'&&b==='parthia'),[['egypt','parthia','non_aggression']]);
+  assert.equal(offered.letter.recipient,'parthia');
 });
 
 test('campaign war creates delayed critical mail and mailbox renders in both languages', () => {
@@ -82,4 +84,33 @@ test('existing fictional courtier sends personal letter and invitation with pers
   s.month=11;advanceMail(s);
   assert.equal(s.mail.events.at(-1).status,'held');
   assert.equal(s.world.personalRelations[trustKey].trust,5);
+});
+
+test('existing peace inquiry appears once in mailbox and uses real reply route', () => {
+  const s=newGame('caesar');
+  assert.equal(diplomacy(s,'parthia','caesar','war'),true);
+  (s.inquiries ||= []).unshift({actor:'parthia',target:'caesar',subject:'peace',status:'awaiting_decision',duration:4,remaining:6});
+  syncPeaceLetters(s);syncPeaceLetters(s);
+  const letters=receivedMail(s).filter(m=>m.context?.kind==='peace');
+  assert.equal(letters.length,1);
+  assert.equal(replyToLetter(s,letters[0].id,'accept',{answerPeaceOffer}).ok,true);
+  assert.equal(s.inquiries[0].status,'pending');
+  assert.equal(s.inquiries[0].phase,'return');
+  assert.equal(s.wars.some(w=>w.includes('parthia')&&w.includes('caesar')),true);
+});
+
+test('treasury audit spends real funds and reports measured state after two months', () => {
+  const s=newGame('caesar');
+  s.year=-48;s.month=1;advanceMail(s);
+  const report=s.mail.messages.find(m=>m.eventId==='treasury:-48:caesar');
+  assert.ok(report);
+  s.month=2;advanceMail(s);
+  const before=s.factions.caesar.treasury;
+  assert.equal(replyToLetter(s,report.id,'audit',{}).ok,true);
+  assert.equal(s.factions.caesar.treasury,before-3);
+  s.month=4;advanceMail(s);
+  const audit=s.mail.messages.find(m=>m.subject?.[0]==='Requested treasury audit');
+  assert.ok(audit);
+  assert.ok(audit.body[0].includes(String(before-3)));
+  assert.equal(audit.threadId,report.threadId);
 });

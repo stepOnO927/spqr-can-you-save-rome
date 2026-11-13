@@ -97,8 +97,14 @@ export function replyToLetter(s, id, choice, actions) {
   const m = receivedMail(s).find(x => x.id === id);
   if (!m || m.recipient !== s.player || m.responses.length || !m.options.includes(choice)) return {ok:false, reason:'unavailable'};
   if (m.expires !== null && monthIndex(s.year, s.month) > m.expires) return {ok:false, reason:'expired'};
+  if (['war_council','view_location','review_budget'].includes(choice)) {
+    m.read=true;
+    return {ok:true,open:choice==='war_council'?'military':choice==='review_budget'?'government':m.context?.region};
+  }
   let ok = true;
-  if (m.context?.kind === 'war' && choice === 'negotiate') {
+  if (m.context?.kind === 'peace') {
+    ok = actions.answerPeaceOffer?.(s,m.senderFaction,choice).ok === true;
+  } else if (m.context?.kind === 'war' && choice === 'negotiate') {
     ok = actions.sendInquiry(s, s.player, m.senderFaction, 'peace').ok;
   } else if (m.context?.kind === 'war' && choice === 'condemn') {
     const key = pair(m.senderFaction, m.recipient);
@@ -119,6 +125,10 @@ export function replyToLetter(s, id, choice, actions) {
         representative:choice === 'representative',date:monthIndex(s.year,s.month)+travel,status:'scheduled'});
     }
     if (choice === 'decline') host.loyalty=Math.max(0,(host.loyalty||50)-1);
+  } else if (m.context?.kind === 'treasury' && choice === 'audit') {
+    if (s.factions[s.player].treasury < 3) return {ok:false,reason:'treasury'};
+    s.factions[s.player].treasury -= 3;
+    s.mail.events.push({id:'audit:'+m.id,letterId:m.id,type:'audit',date:monthIndex(s.year,s.month)+2,status:'scheduled'});
   }
   if (!ok) return {ok:false, reason:'conditions'};
   m.read = true;
@@ -136,6 +146,25 @@ export function replyToLetter(s, id, choice, actions) {
     arrival:m.context?.kind === 'treaty' ? monthIndex(s.year,s.month) + courierMonths(s,m.destination,m.source) : null,
     resolved:m.context?.kind !== 'treaty'});
   return {ok:true, open:choice === 'war_council' ? 'military' : choice === 'view_location' ? m.context?.region : null};
+}
+
+export function syncPeaceLetters(s) {
+  const mail=initializeMail(s);
+  for (const inquiry of s.inquiries || []) {
+    if (inquiry.subject !== 'peace' || inquiry.target !== s.player || inquiry.status !== 'awaiting_decision' || inquiry.mailId) continue;
+    const senderId=senderFor(s,inquiry.actor);
+    const result=sendLetter(s,{senderId,senderInstitution:senderId?null:inquiry.actor,senderFaction:inquiry.actor,
+      recipient:s.player,category:'diplomatic',priority:'important',
+      subject:['Peace proposal','议和提议'],
+      body:[`${name(inquiry.actor)[0]} requests an end to the present war. The war continues until an acceptance reaches the sender.`,`${name(inquiry.actor)[1]}请求结束当前战争。接受书送达发信方之前，战争仍将继续。`],
+      options:['accept','refuse','war_council'],context:{kind:'peace'}});
+    if (result.ok) {
+      inquiry.mailId=result.letter.id;
+      result.letter.arrival=monthIndex(s.year,s.month);
+      result.letter.delivery='received';
+      mail.generated['peace:'+result.letter.id]=true;
+    }
+  }
 }
 
 function localCorrespondence(s) {
@@ -196,6 +225,15 @@ export function advanceMail(s, actions = {}) {
   const mail = initializeMail(s), now = monthIndex(s.year, s.month);
   for (const event of mail.events) {
     if (event.status !== 'scheduled' || event.date > now) continue;
+    if (event.type === 'audit') {
+      event.status='completed';
+      const f=s.factions[s.player];
+      sendLetter(s,{senderInstitution:s.player,senderFaction:s.player,recipient:s.player,category:'government',priority:'important',
+        subject:['Requested treasury audit','受命国库审计'],
+        body:[`At completion of the audit: treasury ${f.treasury}, food ${f.food}, manpower ${f.manpower}.`,`审计完成时：国库 ${f.treasury}，粮食 ${f.food}，兵源 ${f.manpower}。`],
+        options:['review_budget','acknowledge'],threadId:mail.messages.find(m=>m.id===event.letterId)?.threadId,context:{kind:'treasury'}});
+      continue;
+    }
     const host=s.world.characters[event.hostId],guest=s.world.characters[event.guestId];
     event.status=host?.alive && guest?.alive && (event.representative || host.location===guest.location) ? 'held' : 'missed';
     if (event.status==='held' && !event.representative) {
@@ -229,8 +267,8 @@ export function advanceMail(s, actions = {}) {
     m.delivery = 'received';
     if (m.recipient !== s.player && m.context?.kind === 'treaty' && actions.proposeAgreement) {
       const key = pair(m.senderFaction, m.recipient), willingness = (s.relations[key] || 0) >= 0;
-      const accepted = willingness && actions.proposeAgreement(s, m.senderFaction, m.recipient, m.context.treatyType).ok;
-      m.responses.push({choice:accepted ? 'accept' : 'reject', year:s.year, month:s.month, ai:true});
+      m.responses.push({choice:willingness ? 'accept' : 'reject', year:s.year, month:s.month, ai:true,
+        arrival:now + courierMonths(s,m.destination,m.source), resolved:false});
     }
     if (m.recipient === s.player && m.priority === 'routine' && mail.preferences.autoArchiveRoutine) {
       m.archived = true; m.read = true;
@@ -255,7 +293,7 @@ export function advanceMail(s, actions = {}) {
         category:'government', priority:'routine', eventId:id,
         subject:['Annual treasury ledger','年度国库报告'],
         body:[`Treasury: ${f.treasury}; food: ${f.food}; manpower: ${f.manpower}.`,`国库：${f.treasury}；粮食：${f.food}；兵源：${f.manpower}。`],
-        options:['acknowledge'], source:home(s,s.player), destination:home(s,s.player)});
+        options:['review_budget','audit','acknowledge'], context:{kind:'treasury'},source:home(s,s.player), destination:home(s,s.player)});
       // Government institutions may address their own court.
       if (!m.ok) delete mail.generated[id];
     }

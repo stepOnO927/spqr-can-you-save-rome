@@ -8,13 +8,14 @@ const labels = {
   invitations:['Invitations','邀请'], sent:['Sent','已发送'], archive:['Archive','档案']
 };
 const choices = {
-  accept:['Accept accord','接受协定'], reject:['Reject','拒绝'], negotiate:['Negotiate','商议条款'],
+  accept:['Accept accord','接受协定'], reject:['Reject','拒绝'], refuse:['Refuse','拒绝'], negotiate:['Negotiate','商议条款'],
   condemn:['Condemn the aggressor','谴责侵略者'], war_council:['Open War Council','打开战争会议'],
   ignore:['No official reply','不予回复'], acknowledge:['Acknowledge','知悉'],
   view_location:['View location','查看地点'],truth:['Answer truthfully','如实回答'],
   polite:['Decline politely','婉言谢绝'],humor:['Reply humorously','幽默作答'],
   ask_why:['Ask why','询问缘由'],decline:['Decline','谢绝'],
-  representative:['Send a representative','派代表出席']
+  representative:['Send a representative','派代表出席'],review_budget:['Review budget','审阅预算'],
+  audit:['Request audit · 3¤','请求审计 · 3国库']
 };
 export function mailboxHtml(s, {lang='en',filter='inbox',query='',sort='newest',sender='',selected=null} = {}) {
   const zh = lang === 'zh', all = s.mail?.messages || [];
