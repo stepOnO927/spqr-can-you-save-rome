@@ -14,6 +14,7 @@ import {advanceFocus,focusState} from './focus.js?v=han-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
 import {ensureFieldCommanders} from './field-identities.js';
+import {ensureHanPortraitSeed,ensureHanPortraitSeeds} from './court-portrait.js';
 import {ensureForeignRulers,advanceForeignRulers,rulerGovernanceFactor} from './rulers.js';
 
 export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
@@ -90,7 +91,7 @@ export function newHanGame(player='han',{scenario='historical',difficulty='stand
  if(scenario==='usurper')applyUsurperScenario(s);
  if(scenario==='disputed')applyDisputedScenario(s);
  if(difficulty==='beginner'&&player)s.factions[player].treasury+=100;
- ensureFieldCommanders(s);computeMandate(s);recomputeInfluence(s);observe(s);
+ ensureFieldCommanders(s);ensureHanPortraitSeeds(s);computeMandate(s);recomputeInfluence(s);observe(s);
  if(start!=='roman')log(s,['Liu Shi has taken the throne. The court looks to the regents named by Emperor Xuan.','刘奭已即位，朝廷仰赖宣帝遗诏所命辅政大臣。'],{kind:'throne'});
  return s;
 }
@@ -233,11 +234,12 @@ function lives(s){
 }
 export function generateOfficial(s,office){
  const sn=SURNAMES[Math.floor(roll(s,'sn'+office)*SURNAMES.length)],gv=GIVEN[Math.floor(roll(s,'gv'+office)*GIVEN.length)];
- const id=`gen-${monthIndex(s)}-${office}`;if(s.persons[id])return s.persons[id];
+ const id=`gen-${monthIndex(s)}-${office}`;if(s.persons[id]){ensureHanPortraitSeed(s.persons[id]);return s.persons[id]}
  const birth=s.year-30-Math.floor(roll(s,'age'+office)*20);
  recordBirth(s,{id,father:null,mother:null,birthSurname:sn[0],birth,sex:'m'});
  const factions=['ru','waiqi','frontier','haoqiang'];
  s.persons[id]={id,name:[`${sn[0]} ${gv[0]}`,`${sn[1]}${gv[1]}`],surname:sn[0],birthSurname:sn[0],sex:'m',birth,death:null,father:null,mother:null,record:'fictional',faction:'han',role:office==='duhu'||office==='hexi'?'general':'official',courtFaction:factions[Math.floor(roll(s,'cf'+id)*factions.length)],alive:true,ambition:Math.floor(20+roll(s,'a'+id)*70),competence:Math.floor(35+roll(s,'c'+id)*50),loyalty:Math.floor(40+roll(s,'l'+id)*50),corruption:Math.floor(roll(s,'k'+id)*60),military:Math.floor(30+roll(s,'m'+id)*50),spouse:[]};
+ ensureHanPortraitSeed(s.persons[id]);
  return s.persons[id];
 }
 // Recorded events at fixed dates (only the opening succession of 48 BCE).
@@ -305,7 +307,7 @@ export function loadHanSave(raw){
  ensureCourtCareers(s);
  s.version=SAVE_VERSION;s.throne.claimants||=[];s.throne.support||={};s.throne.history||=[];
  const fixes=enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
- s.loadFixes=fixes;initializeEasternMarkets(s);ensureFieldCommanders(s);computeMandate(s);
+ s.loadFixes=fixes;initializeEasternMarkets(s);ensureFieldCommanders(s);ensureHanPortraitSeeds(s);computeMandate(s);
  if(s.player&&!s.finalized&&!s.regions.some(r=>r.owner===s.player)&&!s.armies.some(a=>a.owner===s.player&&a.men>0))settleCampaign(s);
  return s;
 }

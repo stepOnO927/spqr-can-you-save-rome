@@ -160,6 +160,14 @@ and actual appointment, replacement, dismissal and audit events on the saved
 person. These careers remain visible after the shared Chronicle trims older
 entries; older saves recover retained events without inventing an appointment
 date or reusing a historical opening record for a mismatched person ID.
+The court roster now also includes current and former dynamically appointed
+officials. Original Han officials and field commanders receive a deterministic
+saved portrait seed and compact game artwork; authored portraits stay in use.
+The dossier identifies original people as game creations. Appointment and
+dismissal remain visible after Chronicle trimming and save restoration, and
+older generated people acquire the same portrait on load. A Chromium test
+selects an appointed original official, renders the portrait, changes language
+and reloads the save. Broader generated-character art remains unfinished.
 Repeatedly appointing the same officeholder no longer grants more favor or
 resets the observed-service clock. The court browser test verifies bilingual
 career display and persistence through save/load.

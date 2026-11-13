@@ -1,5 +1,6 @@
 import {FACTIONS} from './data.js?v=han-1';
 import {recordBirth} from './dynasty.js?v=han-1';
+import {ensureHanPortraitSeed} from './court-portrait.js';
 
 // Original game names. These are cultural reconstructions, never documented
 // people or claims that a particular historical army had this commander.
@@ -40,7 +41,7 @@ export function assignFieldCommander(s,army){
  let name=null;for(let i=0;i<pool.names.length;i++){const choice=pool.names[(start+i)%pool.names.length];if(!used.has(choice[0])){name=choice;break}}
  if(!name){const choice=pool.names[start];name=[`${choice[0]} (${s.nextFieldPerson-1})`,`${choice[1]}（${s.nextFieldPerson-1}）`]}
  const birth=s.year-35,person={id,name:[...name],record:'fictional',culture:[...pool.culture],faction:army.owner,role:'general',profession:'general',title:['Field commander','野战指挥官'],homeland:army.region,location:army.region,sex:'m',birth,death:null,alive:true,ambition:35,competence:55,loyalty:65,military:50,spouse:[],history:[{year:s.year,month:s.month,kind:'appointed',army:army.id}]};
- s.persons[id]=person;recordBirth(s,{id,birthSurname:null,birth,sex:'m'});army.commander=id;return id;
+ s.persons[id]=person;recordBirth(s,{id,birthSurname:null,birth,sex:'m'});ensureHanPortraitSeed(person);army.commander=id;return id;
 }
 
 export function ensureFieldCommanders(s){for(const army of s.armies)if(army.men>0&&(!army.commander||!s.persons[army.commander]?.alive))assignFieldCommander(s,army);return s}

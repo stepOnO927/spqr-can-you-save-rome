@@ -16,18 +16,16 @@ export function ensureCourtCareers(s,{opening=false}={}){
  for(const id of COURT_PROFILE_IDS){
   const person=s.persons?.[id];if(!person)continue;
   const canonical=PERSON[id],matches=canonical&&person.birth===canonical.birth&&person.name?.[0]===canonical.name[0];
-  if(Array.isArray(person.career)){
-   if(!matches)person.career=person.career.filter(entry=>entry.kind!=='opening_service');
-   continue;
-  }
-  person.career=[];
-  if(matches&&Number.isInteger(s.stats?.startMonth)){
+  const existing=Array.isArray(person.career);
+  if(!existing)person.career=[];
+  if(!matches)person.career=person.career.filter(entry=>entry.kind!=='opening_service');
+  if(matches&&!person.career.some(entry=>entry.kind==='opening_service')&&Number.isInteger(s.stats?.startMonth)){
    const start=s.stats.startMonth,year=Math.floor((start-1)/12),month=start-year*12;
    const office=opening&&s.court?.offices?.[person.office]===id?OFFICES[person.office]:null;
    const text=office?[`At campaign opening, %NAME% serves as ${office.name[0]}.`,`战役开始时，%NAME%任${office.name[1]}。`]:['At campaign opening, %NAME% is in Han service.','战役开始时，%NAME%在汉廷任事。'];
-   person.career.push({year,month,kind:'opening_service',who:id,text});
+   person.career.unshift({year,month,kind:'opening_service',who:id,text});
   }
-  for(const entry of s.log||[])if(entry.who===id||entry.who2===id)person.career.push({...entry});
+  if(!existing)for(const entry of s.log||[])if(entry.who===id||entry.who2===id)person.career.push({...entry});
  }
 }
 export const age=(s,id)=>yearsBetween(s.persons[id]?.birth??s.year,s.year);
@@ -79,13 +77,13 @@ export function appoint(s,office,personId,{actor='emperor',logFn=null}={}){
  if(p.office&&p.office!==office)s.court.offices[p.office]=null;
  const prev=s.court.offices[office];
  // the court reacts: the displaced official's faction resents the change
- if(prev&&prev!==personId&&alive(s,prev)){s.persons[prev].office=null;const pf=s.persons[prev].courtFaction;s.court.enmity[prev]=(s.court.enmity[prev]||0)+15;if(pf)s.court.factions[pf].influence=Math.max(5,s.court.factions[pf].influence-4);log(s,['%NAME% is replaced as '+o.name[0]+'.','%NAME%卸任'+o.name[1]+'。'],{who:prev,kind:'court'})}
+ if(prev&&prev!==personId&&alive(s,prev)){s.persons[prev].office=null;const pf=s.persons[prev].courtFaction;s.court.enmity[prev]=(s.court.enmity[prev]||0)+15;if(pf)s.court.factions[pf].influence=Math.max(5,s.court.factions[pf].influence-4);if(!Array.isArray(s.persons[prev].career))s.persons[prev].career=[];log(s,['%NAME% is replaced as '+o.name[0]+'.','%NAME%卸任'+o.name[1]+'。'],{who:prev,kind:'court',office})}
  s.court.offices[office]=personId;p.office=office;s.court.favor[personId]=(s.court.favor[personId]||0)+10;p.officeSince={year:s.year,month:s.month};
  recomputeInfluence(s);
- log(s,['%NAME% appointed '+o.name[0]+'.','%NAME%任'+o.name[1]+'。'],{who:personId,kind:'court'});
+ if(!Array.isArray(p.career))p.career=[];log(s,['%NAME% appointed '+o.name[0]+'.','%NAME%任'+o.name[1]+'。'],{who:personId,kind:'court',office});
  return {ok:true,displaced:prev||null};
 }
-export function dismiss(s,office){const id=s.court.offices[office];if(!id)return {ok:false};s.court.offices[office]=null;if(s.persons[id]){s.persons[id].office=null;s.court.enmity[id]=(s.court.enmity[id]||0)+20}recomputeInfluence(s);log(s,['%NAME% is dismissed as '+OFFICES[office].name[0]+'.','%NAME%被免去'+OFFICES[office].name[1]+'。'],{who:id,kind:'court'});return {ok:true,id}}
+export function dismiss(s,office){const id=s.court.offices[office];if(!id)return {ok:false};s.court.offices[office]=null;if(s.persons[id]){s.persons[id].office=null;if(!Array.isArray(s.persons[id].career))s.persons[id].career=[];s.court.enmity[id]=(s.court.enmity[id]||0)+20}recomputeInfluence(s);log(s,['%NAME% is dismissed as '+OFFICES[office].name[0]+'.','%NAME%被免去'+OFFICES[office].name[1]+'。'],{who:id,kind:'court',office});return {ok:true,id}}
 export const officeHolder=(s,office)=>{const id=s.court.offices[office];return id&&alive(s,id)?s.persons[id]:null};
 
 // ---------- edicts: orders take time and need support ----------
@@ -145,6 +143,7 @@ export function startAudit(s,targetId,{owner='han'}={}){
  if(s.court.audits.some(a=>a.target===targetId&&a.status==='open'))return {ok:false,reason:'already'};
  const cost=15;if(s.factions[owner].treasury<cost)return {ok:false,reason:'cost'};s.factions[owner].treasury-=cost;
  const a={id:s.court.nextId++,target:targetId,evidence:0,months:0,status:'open',interfered:false};s.court.audits.push(a);
+ if(!Array.isArray(t.career))t.career=[];
  log(s,['An investigation of %NAME% begins.','开始稽查%NAME%。'],{who:targetId,kind:'audit'});return {ok:true,audit:a};
 }
 function advanceAudits(s){

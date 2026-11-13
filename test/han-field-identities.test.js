@@ -29,6 +29,9 @@ test('recruitment immediately assigns a persistent officer and never replaces an
  const army=s.armies.find(a=>a.id===result.id),id=army.commander;
  assert.match(id,/^field:\d+$/);assert.equal(s.persons[id].profession,'general');
  assert.equal(s.persons[id].homeland,'changan');assert.equal(birthRecordValid(s,id),true);
+ assert.ok(Number.isSafeInteger(s.persons[id].appearanceSeed));
  ensureFieldCommanders(s);assert.equal(army.commander,id);
- assert.equal(loadHanSave(serialize(s)).armies.find(a=>a.id===result.id).commander,id);
+ const loaded=loadHanSave(serialize(s));
+ assert.equal(loaded.armies.find(a=>a.id===result.id).commander,id);
+ assert.equal(loaded.persons[id].appearanceSeed,s.persons[id].appearanceSeed);
 });

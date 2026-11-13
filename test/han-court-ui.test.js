@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js';
+import {newHanGame,loadHanSave,serialize,generateOfficial} from '../han/engine.js';
 import {hanCourtHtml} from '../han/court-ui.js';
+import {courtPortraitSrc} from '../han/court-portrait.js';
 import {appoint,dismiss,startAudit} from '../han/court.js';
 import {log} from '../han/util.js';
 
@@ -105,4 +106,31 @@ test('a pending disaster offers executable bilingual responses with real resourc
  assert.match(zh,/黄河决溢/);assert.match(zh,/40 粮食/);
  assert.match(zh,/data-court-disaster="relief" disabled/);
  assert.match(en,/data-court-disaster="blame_faction"/);
+});
+
+test('appointed original official remains selectable with the same portrait and career after dismissal and reload',()=>{
+ let s=newHanGame('han',{seed:64});
+ const person=generateOfficial(s,'dasinong'),id=person.id;
+ assert.ok(Number.isSafeInteger(person.appearanceSeed));
+ assert.match(courtPortraitSrc(person),/^data:image\/svg\+xml,/);
+ assert.equal(appoint(s,'dasinong',id).ok,true);
+ for(const lang of [0,1]){
+  const html=hanCourtHtml(s,lang,id);
+  assert.ok(html.includes(`data-court-person="${id}"`));
+  assert.ok(html.includes(`data-person="${id}"`));
+  assert.ok(html.includes(person.name[lang]));
+  assert.ok(html.includes('data:image/svg+xml,'));
+ }
+ assert.match(hanCourtHtml(s,0,id),/appointed Grand Minister of Agriculture/);
+ const originalSrc=courtPortraitSrc(person);
+ assert.equal(dismiss(s,'dasinong').ok,true);
+ assert.match(hanCourtHtml(s,0,id),/dismissed as Grand Minister of Agriculture/);
+ assert.ok(hanCourtHtml(s,0).includes(`data-court-person="${id}"`));
+ s=loadHanSave(serialize(s));
+ assert.equal(courtPortraitSrc(s.persons[id]),originalSrc);
+ assert.match(hanCourtHtml(s,1,id),/游戏创作/);
+ assert.match(hanCourtHtml(s,0,id),/dismissed as Grand Minister of Agriculture/);
+ delete s.persons[id].appearanceSeed;
+ s=loadHanSave(serialize(s));
+ assert.equal(courtPortraitSrc(s.persons[id]),originalSrc,'older saves regenerate a stable portrait');
 });

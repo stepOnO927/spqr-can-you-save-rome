@@ -10,7 +10,7 @@ try{
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
  await page.locator('#court-panel').click();
- assert.equal(await page.locator('[data-court-person]').count(),12);
+ assert.equal(await page.locator('[data-court-person]').count(),13);
  assert.equal(await page.locator('[data-court-person] img').evaluateAll(images=>images.every(image=>image.complete&&image.naturalWidth>0)),true);
  await page.locator('[data-court-person="shi-gao"]').click();
  const profile=page.locator('.court-profile');
@@ -53,6 +53,29 @@ try{
  await page.locator('#save').click();
  const result=await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-han-save-browser'));return {pending:state.court.pendingDisaster,influence:state.court.factions.waiqi.influence}});
  assert.equal(result.pending,null);assert.ok(result.influence<prior,'chosen faction should lose influence');
+ const generated=await page.evaluate(async()=>{
+  const {generateOfficial}=await import('/han/engine.js');
+  const {appoint}=await import('/han/court.js');
+  const key='spqr-han-save-browser',state=JSON.parse(localStorage.getItem(key));
+  const person=generateOfficial(state,'dasinong');
+  if(!appoint(state,'dasinong',person.id).ok)throw Error('generated official appointment failed');
+  localStorage.setItem(key,JSON.stringify(state));
+  return {id:person.id,name:person.name,seed:person.appearanceSeed};
+ });
+ await page.locator('#load').click();await page.locator('#court-panel').click();
+ await page.locator(`[data-court-person="${generated.id}"]`).click();
+ assert.match(await profile.innerText(),new RegExp(generated.name[1]));
+ assert.match(await profile.innerText(),/大司农/);
+ assert.match(await profile.innerText(),/游戏创作/);
+ const generatedSrc=await profile.locator('img').getAttribute('src');
+ assert.match(generatedSrc,/^data:image\/svg\+xml,/);
+ assert.equal((await profile.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0)),true);
+ await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#court-panel').click();
+ await page.locator(`[data-court-person="${generated.id}"]`).click();
+ assert.equal(await profile.locator('img').getAttribute('src'),generatedSrc);
+ assert.match(await profile.innerText(),new RegExp(generated.name[0]));
+ await page.locator('#lang').click();
+ assert.match(await profile.innerText(),new RegExp(generated.name[1]));
  assert.deepEqual(errors,[]);
- console.log('Han court browser smoke passed: twelve portraits, persistent careers, appointment, audit, disaster decision, save/load and both languages.');
+ console.log('Han court browser smoke passed: historical and original portraits, dynamic roster, persistent careers, appointment, audit, disaster decision, save/load and both languages.');
 }finally{await browser.close()}
