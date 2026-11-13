@@ -63,10 +63,10 @@ function seedSenators(s,c){
 }
 export function initializeCursus(s){
  initializeWorld(s);initializeOffices(s);
- if(!s.world.cursus)s.world.cursus={version:1,seeded:false,year:s.year,magistrates:Object.fromEntries(Object.keys(MAGISTRACIES).map(k=>[k,[]])),pendingTerms:[],careers:{},obedience:{},applicants:[],elections:[],endorsements:[],senate:{caesar:42,senate:58},assemblies:{centuriate:50,tribal:50,plebeian:50},foreignPosts:{},intel:{},contacts:[],offers:[],advisers:[],investigations:[],networks:{},referrals:{},reforms:[],proposals:[],senators:[],senatorTies:{},campaignActions:[],politicalReviews:[],retirements:[],retired:{},referralSources:{},termHistory:[],talentSearches:[],talents:[],cooperations:[],institutionalResponses:[],recommendations:[],appointmentHistory:[],officeLastSeen:{}};
+ if(!s.world.cursus)s.world.cursus={version:1,seeded:false,year:s.year,magistrates:Object.fromEntries(Object.keys(MAGISTRACIES).map(k=>[k,[]])),pendingTerms:[],careers:{},obedience:{},applicants:[],elections:[],endorsements:[],senate:{caesar:42,senate:58},assemblies:{centuriate:50,tribal:50,plebeian:50},foreignPosts:{},intel:{},contacts:[],offers:[],advisers:[],investigations:[],networks:{},referrals:{},reforms:[],proposals:[],senators:[],senatorTies:{},campaignActions:[],politicalReviews:[],retirements:[],retired:{},referralSources:{},termHistory:[],talentSearches:[],talents:[],cooperations:[],institutionalResponses:[],recommendations:[],appointmentHistory:[],officeLastSeen:{},applicationHistory:[]};
  const c=s.world.cursus;
  for(const key of ['magistrates','careers','obedience','senate','assemblies','foreignPosts','intel','networks','referrals','senatorTies','retired','referralSources','officeLastSeen'])c[key]||={};
- for(const key of ['pendingTerms','applicants','elections','endorsements','contacts','offers','advisers','investigations','reforms','proposals','senators','campaignActions','politicalReviews','retirements','termHistory','talentSearches','talents','cooperations','institutionalResponses','recommendations','appointmentHistory'])c[key]||=[];
+ for(const key of ['pendingTerms','applicants','elections','endorsements','contacts','offers','advisers','investigations','reforms','proposals','senators','campaignActions','politicalReviews','retirements','termHistory','talentSearches','talents','cooperations','institutionalResponses','recommendations','appointmentHistory','applicationHistory'])c[key]||=[];
  if(!Object.keys(c.officeLastSeen).length)c.officeLastSeen=Object.fromEntries(Object.entries(s.world.offices||{}).map(([faction,posts])=>[faction,{...posts}]));
  for(const [actor,ids] of Object.entries(c.referrals)){c.referralSources[actor]||=[];for(const id of ids){if(c.referralSources[actor].some(x=>x.id===id))continue;const offer=c.offers.findLast(x=>x.actor===actor&&x.status==='accepted');if(offer)c.referralSources[actor].push({id,target:offer.target,from:offer.id,observed:{year:offer.year,month:offer.month},confidence:'legacy'})}}
  for(const contact of c.contacts){if(contact.status==='open'){contact.relationship||={familiarity:clamp((contact.trust||20)+10),trust:contact.trust||20,respect:clamp(30+(person(s,contact.id)?.education||50)/5),professional:20,alignment:30,obligation:0,rivalry:0,willingness:25};contact.trust=contact.relationship.trust}}
@@ -161,7 +161,7 @@ export function institutionalBalance(s,faction=s.player){
 }
 export function annualApplicants(s){
  const c=initializeCursus(s);if(c.year===s.year)return c.applicants.filter(x=>x.year===s.year);
- c.year=s.year;c.applicants=c.applicants.filter(x=>x.year>=s.year-1||x.promises?.some(p=>['pending','delayed'].includes(p.status)));
+ c.year=s.year;const retained=x=>x.year>=s.year-1||x.promises?.some(p=>['pending','delayed'].includes(p.status));for(const old of c.applicants.filter(x=>!retained(x)))if(!c.applicationHistory.some(x=>x.id===old.id&&x.year===old.year&&x.office===old.office))c.applicationHistory.push({...old,promises:(old.promises||[]).map(p=>({...p}))});c.applicants=c.applicants.filter(retained);
  const renewed=new Set();for(const old of c.applicants.filter(x=>x.year===s.year-1&&x.status==='lost'&&present(s,x.id)&&!c.retired[x.id]&&officeEligibility(s,x.id,x.office).ok).sort((a,b)=>b.support-a.support)){const key=old.faction+':'+old.office;if(renewed.has(key))continue;renewed.add(key);c.applicants.push({...old,year:s.year,status:'eligible',support:0,opposition:0,campaignExpense:0,promises:[]})}
  for(const [id,history] of Object.entries(c.careers)){
   if(!present(s,id)||c.retired[id]||!history?.some(x=>x.source==='election'))continue;
@@ -556,9 +556,9 @@ function aiPolitical(s,c){
    else{c.foreignPosts[actor]||={};for(const role of ['administration','scholar'])if(!c.foreignPosts[actor][role]){const candidate=available.find(x=>!Object.values(c.foreignPosts[actor]).includes(x.id));if(candidate)c.foreignPosts[actor][role]=candidate.id}}
   }
   const report=c.intel[actor]?.[target];
-  const named=(report?.reports||[]).flatMap(x=>x.people||[]).find(id=>person(s,id)?.faction===target&&!s.world.leadership[target]?.includes(id));
+  const named=(report?.reports||[]).flatMap(x=>[...Object.values(x.officeholders||{}),...(x.commanders||[])]).find(Boolean);
   const observed=report?.reports?.at(-1)?.observed,stale=observed&&date(s)-(observed.year*12+observed.month)>=12;
-  if(s.month===1&&(!report||report.stage<4||!named&&stale)&&!report?.pending&&s.factions[actor].treasury>=24){investigateGovernment(s,target,actor);continue}
+  if(s.month===1&&(!report||report.stage<4||stale)&&!report?.pending&&s.factions[actor].treasury>=24){investigateGovernment(s,target,actor);continue}
   if(!named)continue;
   if(s.month===7&&!c.contacts.some(x=>x.actor===actor&&x.id===named&&['pending','open'].includes(x.status))&&s.factions[actor].treasury>=10)contactOfficial(s,target,named,'formal',actor);
   if(s.month===11&&c.contacts.some(x=>x.actor===actor&&x.id===named&&x.status==='open')&&!c.offers.some(x=>x.actor===actor&&x.id===named)&&s.factions[actor].treasury>=18)offerEmployment(s,target,named,actor);

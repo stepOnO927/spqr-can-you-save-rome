@@ -364,3 +364,21 @@ test('institutional blockage differs from abandoning a campaign promise',()=>{
  assert.equal(app.promises.at(-1).status,'blocked');
  assert.equal(app.promises.at(-1).resolved.reason,'blocked');
 });
+
+test('past applications and commitments remain in saved political history',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
+ assert.equal(supportCandidate(s,id,'promise').ok,true);
+ for(let i=0;i<3;i++){s.year++;s.month=1;advanceCursus(s)}
+ assert.ok(c.applicationHistory.some(x=>x.id===id&&x.promises.some(p=>p.kind==='public_works')));
+ assert.ok(upgradeSave(structuredClone(s)).world.cursus.applicationHistory.some(x=>x.id===id));
+});
+
+test('Lucius Varro can lose a real assembly ballot and remain a political character',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),varro=campaignFor(s,c.varroId);
+ varro.support=0;varro.opposition=150;
+ for(const rival of c.applicants.filter(x=>x.year===s.year&&x.office==='consul'&&x.faction==='senate'&&x.id!==c.varroId))rival.support=80;
+ s.month=10;const result=resolveElection(s,'consul').result;
+ assert.equal(result.body,'centuriate');assert.equal(result.ballots.length,386);
+ assert.ok(!result.elected.includes(c.varroId));assert.equal(varro.status,'lost');
+ assert.ok(s.world.characters[c.varroId].alive);
+});
