@@ -1,6 +1,6 @@
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=fort-intel-1';
 import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange,successionModel} from './characters.js?v=newborn-age-1';
-import {recordLifeEvent,dynastyRoll,personAge} from './dynasties.js?v=fort-intel-1';
+import {recordLifeEvent,dynastyRoll,personAge} from './dynasties.js?v=portrait-pool-2';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {startDynasticWar} from './civil-war.js?v=fort-intel-1';
 
