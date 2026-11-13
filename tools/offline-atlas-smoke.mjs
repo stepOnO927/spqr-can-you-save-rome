@@ -181,7 +181,13 @@ try{
  assert.equal(await seaLabel.textContent(),firstSeaName==='地中海'?'Mediterranean Sea':'地中海');
  await page.locator('#language').click();
  if(process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT});
- if(process.env.SPQR_ATLAS_EGYPT_Z9_TERRAIN_SCREENSHOT){await page.locator('#map-mode').selectOption('terrain');await page.waitForTimeout(400);await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_TERRAIN_SCREENSHOT});await page.locator('#map-mode').selectOption('political')}
+ await page.locator('#map-mode').selectOption('terrain');
+ assert.match(await page.locator('.legend').innerText(),firstSeaName==='地中海'?/现代高程等高线/:/Modern elevation contours/);
+ await page.locator('#language').click();
+ assert.match(await page.locator('.legend').innerText(),firstSeaName==='地中海'?/Modern elevation contours/:/现代高程等高线/);
+ await page.locator('#language').click();
+ if(process.env.SPQR_ATLAS_EGYPT_Z9_TERRAIN_SCREENSHOT){await page.waitForTimeout(400);await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_TERRAIN_SCREENSHOT})}
+ await page.locator('#map-mode').selectOption('political');
  const galatia=newGrandGame('galatia');
  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),galatia);
  await page.reload({waitUntil:'domcontentloaded'});

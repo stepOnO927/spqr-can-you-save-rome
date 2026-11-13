@@ -4,6 +4,7 @@ import bathymetry from '../mediterranean-bathymetry.js?v=2';
 import rivers from '../mediterranean-rivers.js';
 import lakes from '../mediterranean-lakes.js';
 import historical from '../historical-territories.js';
+import egyptContours from './egypt-contours.js?v=1';
 
 // An approximate alluvial plain between the two mapped Nile branches. The
 // matched sea mask clips its northern edge to the GSHHG shoreline.
@@ -45,6 +46,7 @@ export const physicalStyle={
   rivers:{type:'geojson',data:rivers,attribution:'Hydrography: Natural Earth 1:10m, public domain'},
   'nile-delta':{type:'geojson',data:nileDelta,attribution:'Approximate Nile Delta between Natural Earth river branches'},
   lakes:{type:'geojson',data:lakes},
+  'egypt-contours':{type:'geojson',data:egyptContours,attribution:terrainAttribution},
   landcover:{type:'raster',tiles:['./landcover/{z}/{x}/{y}.png'],tileSize:256,minzoom:4,maxzoom:6,bounds:[-30,10,65,65],attribution:'Natural Earth II idealized land cover, public domain'}
  },
  layers:[
@@ -78,6 +80,8 @@ export const physicalStyle={
   {id:'relief-egypt-higher',type:'hillshade',source:'elevation-egypt-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'idealized-landcover',type:'raster',source:'landcover',paint:{'raster-opacity':['interpolate',['linear'],['zoom'],4,.86,6,.74,7.2,0],'raster-fade-duration':0}},
   {id:'nile-delta-alluvium',type:'fill',source:'nile-delta',paint:{'fill-color':'#98a77e','fill-opacity':['interpolate',['linear'],['zoom'],4,.16,7,.26,8.2,.12,9,0]}},
+  {id:'egypt-contours-minor',type:'line',source:'egypt-contours',minzoom:8.25,filter:['<',['get','height'],50],paint:{'line-color':'#957d5c','line-width':['interpolate',['linear'],['zoom'],8.25,.45,9.2,.75],'line-opacity':.28}},
+  {id:'egypt-contours-major',type:'line',source:'egypt-contours',minzoom:8.25,filter:['>=',['get','height'],50],paint:{'line-color':'#8b755a','line-width':['interpolate',['linear'],['zoom'],8.25,.6,9.2,.95],'line-opacity':.36}},
   {id:'sea-mask',type:'fill',source:'ocean',paint:{'fill-color':'#356f79','fill-opacity':1}},
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},
   {id:'coastline',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,.9,8,1.7],'line-opacity':.87}},
