@@ -195,6 +195,7 @@ try{
  assert.deepEqual(missingTerrain,[],'Aegean maximum zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Aegean terrain unexpectedly needed the network');
  const aegeanRelief=()=>page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return ['relief-aegean-ultra','relief-aegean-higher'].map(id=>({visibility:map.getLayoutProperty(id,'visibility')||'visible',strength:map.getPaintProperty(id,'hillshade-exaggeration')}))});
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return (map.getLayoutProperty('relief-aegean-higher','visibility')||'visible')==='visible'},null,{timeout:5000});
  assert.deepEqual(await aegeanRelief(),[{visibility:'visible',strength:.1},{visibility:'visible',strength:.1}]);
  await page.locator('#relief-toggle').click();
  assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['none','none']);
@@ -266,5 +267,15 @@ try{
  await waitForTerrain(/\/terrain\/7\/(7[8-9]|8[0-2])\//,'Armenian zoom 7 did not use bundled mountain terrain');
  assert.deepEqual(missingTerrain,[],'Armenian mountain zoom requested missing terrain tiles');
  if(process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT});
+ await page.waitForTimeout(1200);
+ await page.locator('#relief-toggle').evaluate(el=>{if(el.getAttribute('aria-pressed')==='false')el.click()});
+ const reliefVisibility=()=>page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getLayoutProperty('relief-armenia-higher','visibility')||'visible'});
+ const dragX=Math.round(page.viewportSize().width*.72),dragY=Math.round(page.viewportSize().height*.45);
+ await page.mouse.move(dragX,dragY);await page.mouse.down();await page.mouse.move(dragX+30,dragY+20,{steps:3});
+ assert.equal(await reliefVisibility(),'none','Hill shading should pause while the player drags the map');
+ await page.mouse.up();
+ await page.waitForTimeout(1000);
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&(map.getLayoutProperty('relief-armenia-higher','visibility')||'visible')==='visible'},null,{timeout:5000});
+ assert.equal(await reliefVisibility(),'visible','Hill shading should return after the map settles');
  console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and native zoom 8-9 relief at every settlement anchor.');
 }finally{await browser.close()}
