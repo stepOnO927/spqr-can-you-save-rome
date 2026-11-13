@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,estimatedStrength} from '../engine.js?v=portrait-pool-2';
+import {newGame,tick,upgradeSave,estimatedStrength} from '../engine.js?v=unknown-person-1';
 import {startFocus,focusState,treeFor,scoreFocus,focusReportsFor} from '../national-focus.js?v=portrait-pool-2';
 import {templatesFor,reorganizeArmy,commandConcentration} from '../legion-designer.js?v=portrait-pool-2';
 import {createPlan,assignRole,approvePlan,planById} from '../battle-plans.js?v=portrait-pool-2';

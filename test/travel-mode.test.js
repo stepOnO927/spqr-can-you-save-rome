@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=portrait-pool-2';
+import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=unknown-person-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=portrait-pool-2';
 import {OFFICE_TYPES,canHoldOffice,localGovernor} from '../office-system.js?v=portrait-pool-2';
 import {featherAdvice} from '../feather.js?v=travel-1';
