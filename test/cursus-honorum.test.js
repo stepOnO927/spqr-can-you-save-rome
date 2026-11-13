@@ -121,7 +121,7 @@ test('foreign contact routes have distinct access requirements and costs',()=>{
  s.factions.senate.treasury=500;
  assert.equal(contactOfficial(s,target,official,'embassy').ok,false);
  for(let stage=1;stage<=4;stage++){assert.equal(investigateGovernment(s,target).ok,true);for(let i=0;i<2+stage;i++)advanceCursus(s)}
- assert.equal(contactOfficial(s,target,official,'scholarly').reason,'profession');
+ assert.equal(contactOfficial(s,target,official,'scholarly').reason,'intelligence');
  const embassy=contactOfficial(s,target,official,'embassy');assert.deepEqual({ok:embassy.ok,cost:embassy.cost,months:embassy.months},{ok:true,cost:12,months:2});
  const invitation=contactOfficial(s,target,scholar,'scholarly');assert.deepEqual({ok:invitation.ok,cost:invitation.cost,months:invitation.months},{ok:true,cost:6,months:4});
  assert.equal(contactOfficial(s,target,scholar,'professional').reason,'representative');

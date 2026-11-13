@@ -192,6 +192,8 @@ export function supportCandidate(s,id,action='support',actor=s.player,detail=nul
  if(!(action in costs))return {ok:false,reason:'action'};
  if(s.month>=MAGISTRACIES[candidate.office].month)return {ok:false,reason:'closed'};
  if(action==='games'&&candidate.office!=='aedile'&&!c.careers[id]?.some(x=>x.office==='aedile'))return {ok:false,reason:'authority'};
+ if(action==='family'&&!c.senators.some(x=>x.faction===actor&&present(s,x.id)))return {ok:false,reason:'unavailable'};
+ if(action==='debate'&&!c.applicants.some(x=>x.year===s.year&&x.office===candidate.office&&x.id!==id&&x.status==='eligible'))return {ok:false,reason:'unavailable'};
  if(c.campaignActions.some(x=>x.id===id&&x.action===action&&x.actor===actor&&x.year===s.year&&x.month===s.month))return {ok:false,reason:'cooldown'};
  const cost=costs[action];if(s.factions[actor].treasury<cost)return {ok:false,reason:'treasury',cost};
  if(action==='support'&&p.faction!==actor&&obedience(s,id)<55)return {ok:false,reason:'refused'};
