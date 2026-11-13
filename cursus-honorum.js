@@ -316,7 +316,7 @@ export function contactOfficial(s,target,id,route='formal',actor=s.player){
  if(route==='provincial_visit'&&!report?.reports?.some(r=>Object.values(r.officeholders||{}).includes(id)))return {ok:false,reason:'profession'};
  if(route==='military_visit'&&!report?.reports?.some(r=>r.commanders?.includes(id)))return {ok:false,reason:'profession'};
  if(route==='embassy'&&(report?.stage||0)<2)return {ok:false,reason:'intelligence'};
- if(['scholarly','professional'].includes(route)&&c.foreignPosts[target]?.scholar!==id)return {ok:false,reason:'profession'};
+ if(['scholarly','professional'].includes(route)&&!report?.reports?.some(r=>r.officeholders?.scholar===id))return {ok:false,reason:'intelligence'};
  if(['scholarly','professional','intelligence'].includes(route)&&(report?.stage||0)<4)return {ok:false,reason:'intelligence'};
  if(route==='professional'&&!Object.values(s.world.offices?.[actor]||{}).some(holder=>person(s,holder)?.education>=70&&present(s,holder)))return {ok:false,reason:'representative'};
  if(c.contacts.some(x=>x.actor===actor&&x.id===id&&x.status==='pending'))return {ok:false,reason:'pending'};
@@ -456,7 +456,7 @@ function advanceContacts(s,c){
  for(const x of c.contacts.filter(x=>x.status==='pending')){
   if(--x.remaining>0)continue;
   const p=person(s,x.id),chance=x.chance??{formal:.72,merchant:.52,introduction:.78,embassy:.70,scholarly:.68,professional:.64,intelligence:.60}[x.route]??.5,watch=s.world.securityWatches?.[x.target],watched=watch&&date(s)>=watch.start&&date(s)<=watch.end;
-  x.status=p?.alive&&p.faction===x.target&&roll(s)<chance*(watched?(x.route==='intelligence'?.4:.75):1)?'open':'refused';if(x.status==='open'){x.trust=Math.min(55,Math.round(15+(p.education||50)/10+roll(s)*20));x.relationship={familiarity:clamp(x.trust+10),trust:x.trust,respect:clamp(30+(p.education||50)/5),professional:20,alignment:30,obligation:0,rivalry:0,willingness:25}}if(watched&&roll(s)<(x.route==='intelligence'?.3:.12)){x.status='compromised';if(x.target===s.player)note(s,'A watched foreign approach to an official was detected; the source remains uncertain.','反间谍警戒发现有人接近官员；来者身份仍不确定。')}
+  x.status=p?.alive&&p.faction===x.target&&roll(s)<chance*(watched?(x.route==='intelligence'?.4:.75):1)*(['scholarly','professional'].includes(x.route)&&c.foreignPosts[x.target]?.scholar!==x.id ? .5 : 1)?'open':'refused';if(x.status==='open'){x.trust=Math.min(55,Math.round(15+(p.education||50)/10+roll(s)*20));x.relationship={familiarity:clamp(x.trust+10),trust:x.trust,respect:clamp(30+(p.education||50)/5),professional:20,alignment:30,obligation:0,rivalry:0,willingness:25}}if(watched&&roll(s)<(x.route==='intelligence'?.3:.12)){x.status='compromised';if(x.target===s.player)note(s,'A watched foreign approach to an official was detected; the source remains uncertain.','反间谍警戒发现有人接近官员；来者身份仍不确定。')}
   x.resolved={year:s.year,month:s.month};
   if(x.actor===s.player)note(s,x.status==='open'?'A named official accepted contact; no allegiance has changed.':'A contact request received no usable reply.',x.status==='open'?'一名具名官员同意接触；其政治归属尚未改变。':'接触请求未获有效答复。');
  }

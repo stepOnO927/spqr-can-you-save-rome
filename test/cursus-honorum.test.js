@@ -382,3 +382,12 @@ test('Lucius Varro can lose a real assembly ballot and remain a political charac
  assert.ok(!result.elected.includes(c.varroId));assert.equal(varro.status,'lost');
  assert.ok(s.world.characters[c.varroId].alive);
 });
+
+test('a stale scholar report permits an uncertain contact without revealing the current office',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.scholar;
+ c.intel.senate={parthia:{stage:4,reports:[{stage:4,people:[id],officeholders:{scholar:id},observed:{year:s.year-1,month:1}}]}};
+ delete c.foreignPosts.parthia.scholar;
+ const result=contactOfficial(s,'parthia',id,'scholarly');
+ assert.equal(result.ok,true);assert.equal(result.months,4);
+ assert.equal(c.contacts.at(-1).status,'pending');
+});
