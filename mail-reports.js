@@ -1,5 +1,5 @@
-import {sendLetter,initializeMail} from './epistulae.js?v=epistulae-2';
-import {reportedArmies} from './character-system.js?v=separate-crowns-1';
+import {sendLetter,initializeMail} from './epistulae.js?v=regional-mail-merge-1';
+import {reportedArmies} from './character-system.js?v=regional-mail-merge-1';
 import {CHARACTER_CATALOG} from './characters.js?v=separate-crowns-1';
 import {MATERIALS} from './inventions.js?v=mission-discount-1';
 import {ROUTES} from './data.js?v=phase-x-1';

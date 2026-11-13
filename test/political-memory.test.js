@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,diplomacy} from '../engine.js?v=separate-crowns-1';
+import {newGame,upgradeSave,diplomacy} from '../engine.js?v=regional-mail-merge-1';
 import {proposeAgreement,terminateAgreement,advanceAgreements} from '../agreements.js?v=grand-chessboard-2';
 import {politicalMemoryAdjustment,personalMemoryAdjustment} from '../political-memory.js?v=grand-chessboard-2';
-import {appointOffice,dismissOffice} from '../office-system.js?v=separate-crowns-1';
+import {appointOffice,dismissOffice} from '../office-system.js?v=regional-court-1';
 import {plotFormationChance} from '../conspiracies.js?v=separate-crowns-1';
 
 test('a leader remembers a broken treaty, affecting negotiations but fading over time',()=>{

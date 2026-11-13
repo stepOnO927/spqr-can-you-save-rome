@@ -4,7 +4,7 @@ import {marchReason as sharedMarchReason} from '../movement-help.js?v=defeat-1';
 import {renderTerritoryFacts} from './territory-facts.js?v=calendar-1';
 import {createInventionUI} from './invention-ui.js?v=mission-discount-1';
 import {buildingModifiers} from '../inventions.js?v=mission-discount-1';
-import {authorityForTheater} from './authority-view.js?v=separate-crowns-1';
+import {authorityForTheater} from './authority-view.js?v=regional-court-1';
 import {renderMediation} from './mediation-ui.js?v=separate-crowns-1';
 import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from './turn-report.js?v=fort-intel-1';
 import {syncChronicleDispatches} from '../chronicle.js?v=separate-crowns-1';
@@ -12,32 +12,32 @@ import {renderChronicle} from './chronicle-ui.js?v=separate-crowns-1';
 import {formatChronicleEntry} from '../chronicle.js?v=separate-crowns-1';
 import {knownDynasticFactions} from '../civil-war.js?v=separate-crowns-1';
 import {reportedControl,requestControlReport} from '../control-intelligence.js?v=fort-intel-1';
-import {renderLocalGovernor} from './local-governor-ui.js?v=separate-crowns-1';
-import {renderSecurity} from './security-ui.js?v=separate-crowns-1';
-import {renderOffices} from './offices-ui.js?v=separate-crowns-1';
-import {officeEffects} from '../office-system.js?v=separate-crowns-1';
-import {populationFactor,religiousTaxCost} from '../religion.js?v=separate-crowns-1';
+import {renderLocalGovernor} from './local-governor-ui.js?v=regional-court-1';
+import {renderSecurity} from './security-ui.js?v=regional-mail-merge-1';
+import {renderOffices} from './offices-ui.js?v=regional-court-1';
+import {officeEffects} from '../office-system.js?v=regional-court-1';
+import {populationFactor,religiousTaxCost} from '../religion.js?v=regional-court-1';
 import {satisfactionForOutline} from './satisfaction-map.js?v=satisfaction-map-1';
 import {activeAgreement} from '../agreements.js?v=grand-chessboard-2';
-import {configureStartingDifficulty} from '../difficulty.js?v=separate-crowns-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=regional-court-1';
 import {featherAdvice} from '../feather.js?v=travel-2';
 import {waitForMapIdle} from './capture-wait.js?v=phase-x-1';
 import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=separate-crowns-1';
-import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=separate-crowns-1';
+import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=regional-mail-merge-1';
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=separate-crowns-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=regional-mail-merge-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=separate-crowns-1';
-import {createCharacterUI} from './character-ui.js?v=separate-crowns-1';
+import {createCharacterUI} from './character-ui.js?v=regional-mail-merge-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=portrait-pool-2';
-import {reportedArmies} from '../character-system.js?v=separate-crowns-1';
+import {reportedArmies} from '../character-system.js?v=regional-mail-merge-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=travel-2';
 import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=phase-x-1';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=separate-crowns-1';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=regional-court-1';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGame();
@@ -191,6 +191,7 @@ document.querySelector('#play-time').onclick=()=>setPlaying(!playing);document.q
 
 function openCampaign(section=''){try{stageHandoff(sessionStorage,state,'campaign');setPlaying(false);location.assign('../'+(section?'#'+section:''))}catch{status.textContent=lang==='zh'?'无法切换：浏览器未能暂存战役，请检查存储设置。':'Could not transfer the campaign. Check browser storage settings.';status.style.display='block'}}
 document.querySelector('#return-campaign').onclick=e=>{e.preventDefault();openCampaign()};
+const mailButton=document.createElement('button');mailButton.id='atlas-mail';mailButton.className='hud-button';mailButton.textContent=lang==='zh'?'书信':'MAIL';mailButton.title=lang==='zh'?'切换到战役视图查看书信':'Open correspondence in the campaign view';document.querySelector('#return-campaign').before(mailButton);mailButton.onclick=()=>openCampaign('mail');
 document.querySelector('#campaign-government').onclick=()=>openCampaign('government');
 // IMPERIUM screens live in the campaign view; the campaign carries over.
 for(const [id,section] of [['#campaign-focus','focus'],['#campaign-legions','legions'],['#campaign-plans','plans']]){const el=document.querySelector(id);if(el)el.onclick=()=>openCampaign(section)}
@@ -255,6 +256,7 @@ const helpEntries=[
  {kind:'history',en:'Who was Pompey?',zh:'庞培是谁？',enBody:'Gnaeus Pompeius Magnus was a Roman commander and politician who opposed Caesar during the civil war.',zhBody:'格奈乌斯·庞培是罗马将领和政治人物，在内战中与凯撒对立。'}
 ];
 helpEntries.push({kind:'game',en:'Family and government',zh:'家族与政府政策',control:'#campaign-government',enBody:'Open Government, Families & Policies to manage your court, write wills, arrange marriages, plan succession, propose agreements and manage domestic policy. Your campaign carries between maps.',zhBody:'点击政府、家族与政策，进入战役地图管理家族、遗嘱、婚姻和继任安排，并处理条约及国内政策。切换地图会保留当前战役。'});
+helpEntries.push({kind:'game',en:'Vacant regional courts',zh:'周边国家的执政空缺',control:'#factions',enBody:'When a surviving Armenian, Numidian, Galatian or Bosporan state loses its last ruler, an existing eligible candidate takes precedence. If none exists, after at least six months the court may spend 5 treasury to select a fictional nominee; disagreements, war or lack of funds can delay this. The new person is a game invention, not an undocumented historical ruler or asserted relative. Foreign changes require reports.',zhBody:'亚美尼亚、努米底亚、加拉太或博斯普鲁斯国家仍存在而最后一位统治者去世时，先考虑已有合适人选。无人可用时，至少六个月后宫廷可能花费5国库推举一名虚构人物；争议、战争或资金不足可能拖延。该人物是游戏创作，不是未被记载的历史统治者，也不代表历史亲属关系。外国变化须通过报告获知。'});
 helpEntries.push({kind:'game',en:'Separate Mauretanian succession',zh:'毛里塔尼亚的分别继承',control:'#factions',enBody:'The two rulers represent separate kingdoms. A recorded simulated descendant can inherit only the relevant seat; a definitely underage or seriously ill ruler cannot exercise it. A seat with no eligible heir stays vacant and the other ruler does not acquire it automatically. Foreign changes require a report through Letters & Intelligence; family events created in the campaign are alternate history.',zhBody:'两位统治者代表各自独立的王国。游戏中有记录的后代只能继承相应席位；确定未成年或重病的统治者暂不能行使政务。没有合适继承人时席位保持空缺，另一位统治者不会自动兼领。外国变化需通过书信与情报获知；战役中产生的家族事件属于架空模拟。'});
 for(const c of Object.values(CHARACTER_CATALOG).filter(c=>!c.fictional))helpEntries.push({kind:'history',en:c.name[0],zh:c.name[1],enBody:(HISTORICAL_BIO[Object.keys(CHARACTER_CATALOG).find(id=>CHARACTER_CATALOG[id]===c)]?.[0]||c.role[0])+' Simulated health and later events are fictional.',zhBody:(HISTORICAL_BIO[Object.keys(CHARACTER_CATALOG).find(id=>CHARACTER_CATALOG[id]===c)]?.[1]||c.role[1])+' 游戏中的健康和之后的事件属于模拟。',source:c.source});
 function openHelp(){activeInfo={type:'help'};activeFaction=null;activeBattle=null;activeArmy=null;previewDestination='';clearReach();const zh=lang==='zh';inspect(zh?'游戏帮助与历史':'GAME HELP & HISTORY',zh?'选择分类或搜索；游戏规则与历史知识分开。':'Choose a category or search; gameplay and history are separate.');const target=document.querySelector('#command-detail');target.innerHTML=`<div class="diplomacy-tabs"><button id="help-game">${zh?'游戏指南':'GAMEPLAY GUIDE'}</button><button id="help-history">${zh?'历史百科':'HISTORICAL ENCYCLOPEDIA'}</button></div><input id="help-search" type="search" aria-label="${zh?'搜索帮助':'Search help'}" placeholder="${zh?'搜索帮助':'Search help'}"><div id="help-results" class="help-list"></div>`;const input=target.querySelector('#help-search'),out=target.querySelector('#help-results');let category='game';const update=()=>{const q=input.value.trim().toLowerCase();out.innerHTML=helpEntries.filter(x=>x.kind===category&&[x.en,x.zh,x.enBody,x.zhBody].some(v=>v.toLowerCase().includes(q))).map(x=>{const index=helpEntries.indexOf(x);return `<article><strong>${esc(zh?x.zh:x.en)}</strong><p>${esc(zh?x.zhBody:x.enBody)}</p>${x.kind==='game'?`<button data-help-locate="${index}">${zh?'指出相关控件':'HIGHLIGHT CONTROL'}</button>`:''}${x.source?`<a href="${esc(x.source)}" target="_blank" rel="noreferrer">${zh?'查看历史资料':'Historical source'}</a>`:''}</article>`}).join('')||`<p>${zh?'没有匹配的条目。':'No matching entries.'}</p>`;out.querySelectorAll('[data-help-locate]').forEach(b=>b.onclick=()=>{const entry=helpEntries[Number(b.dataset.helpLocate)],selector=entry.control|| (/Recruitment|Theater administrators|loyalty|control reports/i.test(entry.en)?'#map [data-city="MEDIOLANUM"]':/Diplomacy|mediation|civil wars|administrative intelligence/i.test(entry.en)?'#factions':/Turns/i.test(entry.en)?'#advance':/Food/i.test(entry.en)?'#resources-help':/Terrain/i.test(entry.en)?'#relief-toggle':/Battles/i.test(entry.en)?'#recent-battle':/Move|commander/i.test(entry.en)?(state.player==='senate'?'#map [data-army="italy"]':'#map [data-army="xiii"]'):/outcome/i.test(entry.en)?'#campaign-government':'#help');const el=document.querySelector(selector);if(!el){b.textContent=zh?'当前控件尚未出现':'Control is not available yet';return}el.classList.add('guide-highlight');el.scrollIntoView({block:'nearest',inline:'nearest'});setTimeout(()=>el.classList.remove('guide-highlight'),5000)})};input.oninput=update;target.querySelector('#help-game').onclick=()=>{category='game';update()};target.querySelector('#help-history').onclick=()=>{category='history';update()};update()}
@@ -267,7 +269,7 @@ if(received&&location.hash.startsWith('#person=')){const id=new URLSearchParams(
 
 // Keep the atlas readable on narrow screens without changing campaign state.
 const compactViewport=window.matchMedia('(max-width:700px)'),mast=document.querySelector('.mast'),compactMenu=document.querySelector('#compact-menu'),compactToggle=document.querySelector('#compact-menu-toggle'),selectionPanel=document.querySelector('.selection'),selectionToggle=document.querySelector('#selection-toggle');
-const compactActionIds=['resources-help','help','guide-restart','factions','chronicle','inventions','save-slot','save','load','capture','return-campaign'];
+const compactActionIds=['resources-help','help','guide-restart','factions','chronicle','inventions','save-slot','save','load','capture','atlas-mail','return-campaign'];
 function syncCompactLayout(){if(compactViewport.matches){for(const id of compactActionIds)compactMenu.append(document.getElementById(id));if(!compactViewport.initialized){document.querySelector('.brief').classList.add('collapsed');document.querySelector('#brief-toggle').textContent='›';document.querySelector('#brief-toggle').setAttribute('aria-expanded','false');selectionPanel.classList.add('collapsed');selectionToggle.setAttribute('aria-expanded','false');compactViewport.initialized=true}}else{for(const id of compactActionIds)mast.append(document.getElementById(id));compactMenu.hidden=true;compactToggle.setAttribute('aria-expanded','false');selectionPanel.classList.remove('collapsed');selectionToggle.setAttribute('aria-expanded','true')}}
 compactViewport.addEventListener('change',syncCompactLayout);syncCompactLayout();
 compactToggle.onclick=()=>{compactMenu.hidden=!compactMenu.hidden;compactToggle.setAttribute('aria-expanded',String(!compactMenu.hidden))};
