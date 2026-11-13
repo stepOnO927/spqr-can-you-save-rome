@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=cursus-integrated-1';
 import {appointOffice} from '../office-system.js?v=succession-ui-recovery-1';
-import {initializeCursus,officeEligibility,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,knownForeignOfficial,contactOfficial,cultivateOfficial,offerEmployment,obedience,institutionalBalance,campaignPhase,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=cursus-integrated-1';
+import {initializeCursus,officeEligibility,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,offerEmployment,obedience,institutionalBalance,campaignPhase,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=cursus-integrated-1';
 
 test('fictional candidates are persistent people; Roman consuls require an assembly election',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
@@ -227,4 +227,55 @@ test('campaign actions have a monthly limit while political candidates act indep
  s.month=4;advanceCursus(s);
  assert.ok(c.campaignActions.some(x=>x.actor===id&&x.action==='independent canvass'));
  assert.equal(s.world.characters[id].wealth,wealth-3);
+});
+
+test('foreign knowledge and relationship dimensions remain distinct',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;
+ assert.equal(officialKnowledge(s,'parthia',id).level,'unknown');
+ for(let stage=1;stage<=3;stage++){assert.equal(investigateGovernment(s,'parthia').ok,true);for(let i=0;i<2+stage;i++)advanceCursus(s)}
+ assert.equal(officialKnowledge(s,'parthia',id).level,'identified');
+ c.contacts.push({actor:'senate',target:'parthia',id,route:'formal',status:'open',trust:35,relationship:{familiarity:40,trust:35,respect:40,professional:20,alignment:30,obligation:0,rivalry:0,willingness:25}});
+ assert.equal(officialKnowledge(s,'parthia',id).level,'connected');
+ const before=c.contacts.at(-1).relationship;
+ const result=cultivateOfficial(s,'parthia',id,'senate','professional');
+ assert.equal(result.ok,true);assert.ok(before.professional>20);assert.equal(before.alignment,30);
+ assert.equal(cultivateOfficial(s,'parthia',id,'senate','political').reason,'cooldown');
+ assert.equal(upgradeSave(structuredClone(s)).world.cursus.contacts.at(-1).relationship.professional,before.professional);
+});
+test('regional talent search costs money, takes time and never repeats freely',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),before=s.factions.senate.treasury;
+ assert.equal(searchTalent(s,'roma','provincial').ok,true);
+ assert.equal(s.factions.senate.treasury,before-10);
+ assert.equal(searchTalent(s,'roma','scholarly').reason,'annual_limit');
+ s.world.intelSeed=0;for(let i=0;i<3;i++)advanceCursus(s);
+ assert.equal(c.talentSearches.at(-1).status,'found');
+ const id=c.talentSearches.at(-1).id;assert.equal(s.world.characters[id].faction,'senate');
+ assert.equal(c.talents.at(-1).id,id);
+ assert.equal(upgradeSave(structuredClone(s)).world.cursus.talents.at(-1).id,id);
+});
+test('limited cooperation and competing offers preserve the official agency',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;
+ for(const actor of ['senate','egypt'])c.contacts.push({actor,target:'parthia',id,route:'formal',status:'open',trust:60,relationship:{familiarity:65,trust:60,respect:70,professional:75,alignment:40,obligation:0,rivalry:0,willingness:55}});
+ assert.equal(proposeCooperation(s,'parthia',id,'professional').ok,true);
+ s.world.intelSeed=0;advanceCursus(s);advanceCursus(s);
+ assert.equal(c.cooperations.at(-1).status,'active');assert.equal(s.world.characters[id].faction,'parthia');
+ assert.equal(offerEmployment(s,'parthia',id,'senate').ok,true);
+ assert.equal(offerEmployment(s,'parthia',id,'egypt').ok,true);
+ const armies=s.armies.length,regions=s.regions.length;
+ s.world.intelSeed=0;for(let i=0;i<3;i++)advanceCursus(s);
+ assert.equal(c.offers.filter(x=>x.id===id&&x.status==='accepted').length,1);
+ assert.equal(s.armies.length,armies);assert.equal(s.regions.length,regions);
+ assert.ok(['senate','egypt'].includes(s.world.characters[id].faction));
+});
+test('a recruited commander changes allegiance personally without transferring an army',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration,army=s.armies.find(a=>a.owner==='parthia');
+ army.characterId=id;c.contacts.push({actor:'senate',target:'parthia',id,route:'formal',status:'open',trust:70,relationship:{familiarity:75,trust:70,respect:70,professional:30,alignment:60,obligation:0,rivalry:0,willingness:75}});
+ assert.equal(offerEmployment(s,'parthia',id,'senate','military').ok,true);
+ s.world.intelSeed=0;for(let i=0;i<3;i++)advanceCursus(s);
+ assert.equal(c.offers.at(-1).status,'accepted');assert.equal(army.owner,'parthia');assert.equal(army.characterId,null);
+ assert.equal(s.world.characters[id].faction,'senate');
+});
+test('AI governments seek talent from their own territories',()=>{
+ const s=newGame('senate'),c=initializeCursus(s);s.year=-48;s.month=2;advanceCursus(s);
+ assert.ok(c.talentSearches.some(x=>x.actor==='caesar'&&x.status==='pending'));
 });
