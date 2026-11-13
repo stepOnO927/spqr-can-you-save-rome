@@ -2,6 +2,7 @@ import {sendLetter,initializeMail} from './epistulae.js?v=epistulae-2';
 import {reportedArmies} from './character-system.js?v=unknown-person-1';
 import {CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
 import {MATERIALS} from './inventions.js?v=mission-discount-1';
+import {ROUTES} from './data.js?v=phase-x-1';
 
 const month=s=>s.year*12+s.month;
 const owned=s=>s.regions.filter(r=>r.owner===s.player);
@@ -54,8 +55,10 @@ export function advanceMailReports(s){
  for(const [id,seen] of Object.entries(after.sightings)){
   if(before.sightings[id]?.region===seen.region||seen.year!==s.year||seen.month!==s.month)continue;
   const place=s.regions.find(r=>r.id===seen.region);
-  report(s,`sighting:${id}:${seen.region}:${now}`,'military','important',['Foreign army sighted','发现外国军队'],
-   [`A dated report places a foreign army near ${place?.name?.[0]||seen.region}; its present position may have changed.`,`一份有日期的报告显示外国军队曾在${place?.name?.[1]||seen.region}附近；现址可能已变化。`],
+  const border=region=>ROUTES.some(([a,b])=>a===region&&s.regions.some(r=>r.id===b&&r.owner===s.player)||b===region&&s.regions.some(r=>r.id===a&&r.owner===s.player));
+  const approaching=border(seen.region)&&!border(before.sightings[id]?.region);
+  report(s,`sighting:${id}:${seen.region}:${now}`,'military',approaching?'critical':'important',approaching?['Foreign force near the frontier','边境附近发现外国军队']:['Foreign army sighted','发现外国军队'],
+   [approaching?`A dated sighting places a foreign army near our frontier at ${place?.name?.[0]||seen.region}; its present position is uncertain.`:`A dated report places a foreign army near ${place?.name?.[0]||seen.region}; its present position may have changed.`,approaching?`有日期的目击报告显示外国军队曾在本方边境附近的${place?.name?.[1]||seen.region}出现；现址不明。`:`一份有日期的报告显示外国军队曾在${place?.name?.[1]||seen.region}附近；现址可能已变化。`],
    {region:seen.region,confidence:'unverified',options:['view_location','war_council','acknowledge']});
  }
  if(s.month===9)report(s,`harvest:${s.year}`,'government','routine',['Agricultural report','农业报告'],
