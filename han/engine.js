@@ -224,7 +224,7 @@ function lives(s){
    const sex=roll(s,'sex'+e)<0.5?'m':'f',given=GIVEN[Math.floor(roll(s,'gn'+e)*GIVEN.length)];
    const id=`sim-liu-${monthIndex(s)}-${Math.floor(roll(s,'id'+e)*1e6)}`;
    const rb=recordBirth(s,{id,father:e,mother:consort.id,birthSurname:'Liu',birth:s.year,sex});
-   if(rb.ok){s.persons[id]={id,name:[`Liu ${given[0]}`,`刘${given[1]}`],surname:'Liu',birthSurname:'Liu',sex,birth:s.year,death:null,father:e,mother:consort.id,record:'simulated',faction:ep.faction,role:sex==='m'?'prince':'princess',alive:true,ambition:Math.floor(roll(s,'amb'+id)*70),competence:Math.floor(30+roll(s,'cmp'+id)*50),loyalty:80,spouse:[]};
+   if(rb.ok){s.persons[id]={id,name:[`Liu ${given[0]}`,`刘${given[1]}`],surname:'Liu',birthSurname:'Liu',sex,birth:s.year,death:null,father:e,mother:consort.id,record:'simulated',faction:ep.faction,role:sex==='m'?'prince':'princess',alive:true,ambition:Math.floor(roll(s,'amb'+id)*70),competence:Math.floor(30+roll(s,'cmp'+id)*50),loyalty:80,spouse:[]};ensureHanPortraitSeed(s.persons[id]);
     log(s,['A child is born to the emperor: %NAME%.','皇帝得子女：%NAME%。'],{who:id,kind:'life'})}
   }}
  // vacant offices draw new officials from the empire’s gentry (never Liu unless clan office)

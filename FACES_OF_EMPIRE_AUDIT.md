@@ -168,6 +168,10 @@ dismissal remain visible after Chronicle trimming and save restoration, and
 older generated people acquire the same portrait on load. A Chromium test
 selects an appointed original official, renders the portrait, changes language
 and reloads the save. Broader generated-character art remains unfinished.
+The same saved artwork now covers simulated Liu children, including a prince
+who later becomes orthodox emperor. The own-ruler card uses that person's
+portrait after a valid succession. A lineage-backed succession test rejects
+a non-Liu minister, and a browser check keeps the heir's image through reload.
 Repeatedly appointing the same officeholder no longer grants more favor or
 resets the observed-service clock. The court browser test verifies bilingual
 career display and persistence through save/load.

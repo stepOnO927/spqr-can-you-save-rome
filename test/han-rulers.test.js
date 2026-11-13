@@ -3,7 +3,30 @@ import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js';
 import {advanceForeignRulers,rulerPortrait,rulerMilitaryJudgment,rulerGovernanceFactor} from '../han/rulers.js';
 import {ownRulerHtml} from '../han/ruler-ui.js';
-import {birthRecordValid} from '../han/dynasty.js';
+import {birthRecordValid,recordBirth,eligibility,crown} from '../han/dynasty.js';
+import {courtPortraitSrc} from '../han/court-portrait.js';
+
+test('an original Liu heir gains a persistent portrait when legitimately crowned',()=>{
+ let s=newHanGame('han',{seed:412});
+ const id='simulated-liu-heir',father='liu-shi';
+ s.persons[id]={id,name:['Liu Yi','刘翊'],surname:'Liu',birthSurname:'Liu',sex:'m',birth:-60,father,mother:null,record:'simulated',faction:'han',role:'prince',alive:true,spouse:[]};
+ assert.equal(recordBirth(s,{id,father,birthSurname:'Liu',birth:-60,sex:'m'}).ok,true);
+ assert.equal(eligibility(s,id).ok,true);
+ s.throne.support[id]=Object.fromEntries(Object.keys(s.court.factions).map(f=>[f,80]));
+ s=loadHanSave(serialize(s));
+ const image=courtPortraitSrc(s.persons[id]);assert.match(image,/^data:image\/svg\+xml,/);
+ assert.equal(crown(s,id,'court_selection').ok,true);
+ assert.match(ownRulerHtml(s,0),/Liu Yi/);
+ assert.match(ownRulerHtml(s,0),/Original campaign character/);
+ assert.ok(ownRulerHtml(s,0).includes(image));
+ assert.match(ownRulerHtml(s,1),/刘翊/);
+ assert.match(ownRulerHtml(s,1),/汉皇帝/);
+ s=loadHanSave(serialize(s));
+ assert.equal(s.throne.orthodox,id);
+ assert.equal(courtPortraitSrc(s.persons[id]),image);
+ assert.ok(ownRulerHtml(s,0).includes(image));
+ assert.equal(crown(s,'shi-gao','court_selection').ok,false);
+});
 
 test('foreign rulers keep historical identities and unknown opening names distinct',()=>{
  const s=newHanGame('parthia',{seed:112});

@@ -23,6 +23,27 @@ try{
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
  assert.equal(await card.getAttribute('data-ruler'),name);
  await page.locator('#lang').click();assert.match(await card.innerText(),/本战役原创人物/);
+ await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
+ await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();await page.locator('#save').click();
+ await page.evaluate(async()=>{
+  const {recordBirth,crown}=await import('/han/dynasty.js');
+  const key='spqr-han-save-browser',s=JSON.parse(localStorage.getItem(key));
+  const id='simulated-liu-browser',father='liu-shi';
+  s.persons[id]={id,name:['Liu Yi','刘翊'],surname:'Liu',birthSurname:'Liu',sex:'m',birth:-60,father,mother:null,record:'simulated',faction:'han',role:'prince',alive:true,spouse:[]};
+  if(!recordBirth(s,{id,father,birthSurname:'Liu',birth:-60,sex:'m'}).ok)throw Error('birth record failed');
+  s.throne.support[id]=Object.fromEntries(Object.keys(s.court.factions).map(f=>[f,80]));
+  if(!crown(s,id,'court_selection').ok)throw Error('valid Liu succession failed');
+  localStorage.setItem(key,JSON.stringify(s));
+ });
+ await page.locator('#load').click();
+ assert.equal(await card.getAttribute('data-ruler'),'simulated-liu-browser');
+ assert.match(await card.innerText(),/Liu Yi/);
+ assert.match(await card.innerText(),/Original campaign character/);
+ assert.equal(await card.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0),true);
+ const heirImage=await card.locator('img').getAttribute('src');assert.match(heirImage,/^data:image\/svg\+xml,/);
+ await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
+ assert.equal(await card.locator('img').getAttribute('src'),heirImage);
+ await page.locator('#lang').click();assert.match(await card.innerText(),/刘翊/);
  assert.deepEqual(errors,[]);
- console.log('Han ruler browser smoke passed: unknown opening ruler, succession, portrait, save/load and both languages.');
+ console.log('Han ruler browser smoke passed: foreign and original Liu succession, portrait, save/load and both languages.');
 }finally{await browser.close()}
