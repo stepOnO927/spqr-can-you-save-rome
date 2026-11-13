@@ -1,5 +1,5 @@
-import {newGame,estimatedStrength} from './engine.js?v=separate-crowns-1';
-import {createFictionalPerson} from './dynasties.js?v=separate-crowns-1';
+import {newGame,estimatedStrength} from './engine.js?v=regional-court-1';
+import {createFictionalPerson} from './dynasties.js?v=regional-court-1';
 import {formCoalition} from './coalitions.js?v=fort-intel-1';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
 
