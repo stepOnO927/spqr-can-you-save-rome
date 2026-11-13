@@ -83,9 +83,26 @@ export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,q
 }
 
 function merchantFor(s,buyer,location){
- const markets=s.tradeMarkets,ids=markets.merchants[buyer]||[],free=ids.find(id=>s.persons[id]?.alive&&!markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status)));
- if(free)return free;
- const id=createMarketMerchant(s,buyer,location);markets.merchants[buyer]=[...ids,id];return id;
+ const markets=s.tradeMarkets,ids=markets.merchants[buyer]||[],free=ids.find(id=>{const person=s.persons[id];return person?.alive&&person.location===location&&!person.marketReturn&&!markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status))});
+ if(free){s.persons[free].marketHome=location;return free}
+ const id=createMarketMerchant(s,buyer,location);s.persons[id].marketHome=location;markets.merchants[buyer]=[...ids,id];return id;
+}
+
+function releaseMerchant(s,shipment,location){
+ const person=s.persons[shipment.merchantId];if(!person?.alive)return;
+ person.location=location;
+ const home=person.marketHome||shipment.origin;
+ if(location===home)delete person.marketReturn;
+ else {const months=shipment.legs.reduce((sum,leg)=>sum+leg.months,0);person.marketReturn={to:home,months,arrive:month(s)+months}}
+}
+
+function advanceMerchantReturns(s,now){
+ for(const [faction,ids] of Object.entries(s.tradeMarkets.merchants))for(const id of ids){
+  const person=s.persons[id],trip=person?.marketReturn;
+  if(!person?.alive||!trip||now<trip.arrive)continue;
+  if(!tradePath(s,person.location,trip.to,faction)){trip.arrive=now+Math.max(1,trip.months||1);continue}
+  person.location=trip.to;delete person.marketReturn;
+ }
 }
 
 export function placeEasternTrade(s,request){
@@ -133,7 +150,7 @@ function advanceShipments(s){
   s.factions[shipment.seller].treasury+=shipment.price;
   for(const tariff of shipment.tariffs){if(s.factions[tariff.owner])s.factions[tariff.owner].treasury+=tariff.amount;else markets.transitTreasury[tariff.owner]=(markets.transitTreasury[tariff.owner]||0)+tariff.amount}
   const merchant=s.persons[shipment.merchantId],fee=merchant?.alive?Math.min(shipment.transport,Math.ceil(shipment.transport/4)):0;
-  if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.location=shipment.destination;(merchant.history||=[]).push({year:s.year,month:s.month,kind:'trade_delivery',shipment:shipment.id})}
+  if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;releaseMerchant(s,shipment,shipment.destination);(merchant.history||=[]).push({year:s.year,month:s.month,kind:'trade_delivery',shipment:shipment.id})}
   markets.transportSpent+=shipment.transport-fee;markets.merchantFees+=fee;shipment.escrow=0;shipment.status='delivered';shipment.deliveredAt=month(s);
   markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,origin:shipment.origin,destination:shipment.destination,merchantId:shipment.merchantId,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:shipment.price,transport:shipment.transport,tariffs:shipment.tariffs,year:s.year,month:s.month});
   if(markets.transactions.length>300)markets.transactions.shift();
@@ -145,7 +162,7 @@ function settleLostShipment(s,shipment,location){
  if(shipment.buyer==='external')markets.externalTreasury+=refund;else s.factions[shipment.buyer].treasury+=refund;
  markets.lostGoods[shipment.commodity]=(markets.lostGoods[shipment.commodity]||0)+shipment.quantity;
  const merchant=s.persons[shipment.merchantId],fee=merchant?.alive?Math.min(shipment.transport,Math.ceil(shipment.transport/4)):0;
- if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.location=location}
+ if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;releaseMerchant(s,shipment,location)}
  markets.transportSpent+=shipment.transport-fee;markets.merchantFees+=fee;
  shipment.escrow=0;shipment.status='lost';shipment.lostAt=month(s);shipment.lostNear=location;
  markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,origin:shipment.origin,destination:location,merchantId:shipment.merchantId,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:0,transport:shipment.transport,tariffs:[],refund,status:'lost',year:s.year,month:s.month});
@@ -158,7 +175,7 @@ function settleStrandedShipment(s,shipment){
  const refund=shipment.price+shipment.tariffs.reduce((sum,t)=>sum+t.amount,0);
  if(shipment.buyer==='external')markets.externalTreasury+=refund;else s.factions[shipment.buyer].treasury+=refund;
  const merchant=s.persons[shipment.merchantId],fee=merchant?.alive?Math.min(shipment.transport,Math.ceil(shipment.transport/4)):0;
- if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.location=location}
+ if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;releaseMerchant(s,shipment,location)}
  markets.transportSpent+=shipment.transport-fee;markets.merchantFees+=fee;
  shipment.escrow=0;shipment.status='stranded';shipment.settledAt=month(s);
  markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,origin:shipment.origin,destination:location,merchantId:shipment.merchantId,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:0,transport:shipment.transport,tariffs:[],refund,status:'stranded',year:s.year,month:s.month});
@@ -209,6 +226,7 @@ function advanceEasternMarketAI(s){
 export function advanceEasternMarkets(s){
  const markets=initializeEasternMarkets(s),now=month(s);if(markets.lastTick===now)return markets;
  markets.lastTick=now;
+ advanceMerchantReturns(s,now);
  for(const r of s.regions)for(const [good,item] of Object.entries(markets.regions[r.id].goods)){
   item.stock+=item.production;const used=Math.min(item.stock,item.consumption);item.stock-=used;item.consumed+=used;item.shortage=item.consumption-used;
   const limit=Math.max(80,item.production*24);if(item.stock>limit){item.surplusDiscarded=(item.surplusDiscarded||0)+item.stock-limit;item.stock=limit}

@@ -114,6 +114,35 @@ test('a closed route settles its escrow and goods after twelve months',()=>{
  assert.equal(s.tradeMarkets.transportSpent+s.tradeMarkets.merchantFees,s.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
 });
 
+test('an eastern merchant returns over time before serving the same origin again',()=>{
+ let s=newHanGame('han',{seed:77});s.tradeMarkets.embeddedRoman=true;
+ assert.equal(propose(s,'han','kangju','market').proposal.status,'accepted');
+ const request={seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1};
+ const first=placeEasternTrade(s,request);assert.equal(first.ok,true);
+ for(let i=0;i<first.quote.months;i++)next(s);
+ const person=s.persons[first.shipment.merchantId];
+ assert.equal(person.location,'dunhuang');assert.equal(person.marketReturn.to,'kangju');
+ const second=placeEasternTrade(s,request);assert.equal(second.ok,true);
+ assert.notEqual(second.shipment.merchantId,first.shipment.merchantId);
+ s=loadHanSave(serialize(s));
+ for(let i=0;i<first.quote.months;i++)next(s);
+ assert.equal(s.persons[first.shipment.merchantId].location,'kangju');
+ assert.equal(s.persons[first.shipment.merchantId].marketReturn,undefined);
+ const third=placeEasternTrade(s,request);assert.equal(third.ok,true);
+ assert.equal(third.shipment.merchantId,first.shipment.merchantId);
+});
+
+test('an eastern merchant does not return through a newly closed border',()=>{
+ const s=newHanGame('han',{seed:77});s.tradeMarkets.embeddedRoman=true;
+ assert.equal(propose(s,'han','kangju','market').proposal.status,'accepted');
+ const first=placeEasternTrade(s,{seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1});assert.equal(first.ok,true);
+ for(let i=0;i<first.quote.months;i++)next(s);
+ const person=s.persons[first.shipment.merchantId];assert.equal(person.location,'dunhuang');
+ assert.equal(declareWar(s,'han','kangju').ok,true);
+ for(let i=0;i<first.quote.months;i++)next(s);
+ assert.equal(person.location,'dunhuang');assert.ok(person.marketReturn);
+});
+
 test('120 autonomous market months conserve goods and money through save reload',()=>{
  let s=newHanGame(null,{seed:93});const powers=['han','kangju','yuezhi','parthia'];
  for(const a of powers)for(const b of powers)if(a!==b)setRelation(s,a,b,55);

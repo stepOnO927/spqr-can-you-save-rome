@@ -63,14 +63,32 @@ export function initializeMarkets(s){
 }
 
 function merchantFor(s,buyer,location){
- const markets=s.markets,previous=markets.merchants[buyer]||[],available=previous.find(id=>s.world.characters[id]?.alive&&!markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status)));
- if(available)return available;
+ const markets=s.markets,previous=markets.merchants[buyer]||[],available=previous.find(id=>{const person=s.world.characters[id];return person?.alive&&person.location===location&&!person.marketReturn&&!markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status))});
+ if(available){s.world.characters[available].marketHome=location;return available}
  const identity=generateFictionalName(s,{originFaction:buyer,location});
  const id=createFictionalPerson(s,{...identity,faction:buyer,birthYear:s.year-35,location,sex:'unknown',role:['Fictional merchant','虚构商人'],wealth:0});
- const person=s.world.characters[id];person.institutionalOnly=true;person.profession='merchant';person.title=['Caravan merchant','商队商人'];
+ const person=s.world.characters[id];person.institutionalOnly=true;person.profession='merchant';person.title=['Caravan merchant','商队商人'];person.marketHome=location;
  markets.merchants[buyer]=[...previous,id];
  recordLifeEvent(s,id,'Entered the campaign market network.','加入战役商贸网络。');
  return id;
+}
+
+function releaseMerchant(s,shipment,location){
+ const person=shipment.merchantId&&s.world.characters[shipment.merchantId];if(!person?.alive)return null;
+ person.location=location;
+ const home=person.marketHome||shipment.origin;
+ if(location===home)delete person.marketReturn;
+ else {const months=shipment.legs.reduce((sum,leg)=>sum+leg.months,0);person.marketReturn={to:home,months,arrive:month(s)+months}}
+ return person;
+}
+
+function advanceMerchantReturns(s,current){
+ for(const [faction,ids] of Object.entries(s.markets.merchants))for(const id of ids){
+  const person=s.world.characters[id],trip=person?.marketReturn;
+  if(!person?.alive||!trip||current<trip.arrive)continue;
+  if(!routeFor(s,person.location,trip.to,faction,faction)){trip.arrive=current+Math.max(1,trip.months||1);continue}
+  person.location=trip.to;delete person.marketReturn;
+ }
 }
 
 function routeFor(s,origin,destination,buyer,seller,{planFor=null}={}){
@@ -126,7 +144,7 @@ function settleBlockedShipment(s,shipment){
  s.factions[shipment.buyer].treasury+=refund;
  const merchant=shipment.merchantId&&s.world.characters[shipment.merchantId];
  const fee=merchant?.alive?Math.min(shipment.transport,Math.ceil(shipment.transport/4)):0;
- if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.location=location}
+ if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;releaseMerchant(s,shipment,location)}
  markets.transportSpent+=shipment.transport-fee;markets.merchantFees+=fee;
  shipment.escrow=0;shipment.status='stranded';shipment.settledAt=month(s);shipment.returnedTo=location;
  markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,origin:shipment.origin,destination:location,merchantId:shipment.merchantId||null,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:0,transport:shipment.transport,tariffs:[],refund,status:'stranded',year:s.year,month:s.month});
@@ -140,6 +158,7 @@ function settleBlockedShipment(s,shipment){
 export function advanceMarkets(s){
  const markets=initializeMarkets(s),current=month(s);if(markets.lastTick===current)return markets;
  markets.lastTick=current;
+ advanceMerchantReturns(s,current);
  for(const r of s.regions)for(const [good,item] of Object.entries(markets.regions[r.id].goods)){
   item.stock+=item.production;
   const used=Math.min(item.stock,item.consumption);item.stock-=used;
@@ -164,7 +183,7 @@ export function advanceMarkets(s){
   s.factions[shipment.seller].treasury+=shipment.price;
   for(const tariff of shipment.tariffs)if(s.factions[tariff.owner])s.factions[tariff.owner].treasury+=tariff.amount;else markets.transitTreasury[tariff.owner]=(markets.transitTreasury[tariff.owner]||0)+tariff.amount;
   const merchant=shipment.merchantId&&s.world.characters[shipment.merchantId],fee=merchant?.alive?Math.min(shipment.transport,Math.ceil(shipment.transport/4)):0;
-  if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.location=shipment.destination;recordLifeEvent(s,merchant.id,`Delivered ${shipment.quantity} batches of ${shipment.commodity} to ${destination.name[0]}.`,`向${destination.name[1]}运抵${shipment.quantity}批${COMMODITIES[shipment.commodity].name[1]}。`)}
+  if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;releaseMerchant(s,shipment,shipment.destination);recordLifeEvent(s,merchant.id,`Delivered ${shipment.quantity} batches of ${shipment.commodity} to ${destination.name[0]}.`,`向${destination.name[1]}运抵${shipment.quantity}批${COMMODITIES[shipment.commodity].name[1]}。`)}
   markets.transportSpent+=shipment.transport-fee;markets.merchantFees+=fee;
   shipment.escrow=0;shipment.status='delivered';shipment.deliveredYear=s.year;shipment.deliveredMonth=s.month;
   markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,origin:shipment.origin,destination:shipment.destination,merchantId:shipment.merchantId||null,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:shipment.price,transport:shipment.transport,tariffs:shipment.tariffs,year:s.year,month:s.month});

@@ -147,6 +147,11 @@ outcomes in its recent transaction list. Each settlement records the refund
 and physical location; old settlement records recover that detail from their
 saved shipment. Bilingual Chromium coverage confirms a blocked horse caravan
 is visible after a save reload.
+Merchants in both campaign engines now retain a saved origin and return clock.
+A delivered carrier cannot immediately take a new order from its distant
+starting market; it becomes available after the return travel time, provided
+the route is actually open. A newly closed border delays return. Tests cover
+distinct concurrent merchants, reuse after return, blockade and save reload.
 An oasis market with no local silk production can now offer imported surplus
 above its consumption reserve for resale. A two-contract test moves real Han
 silk to Shanshan and then to Qiemo, with distinct prepaid shipments,

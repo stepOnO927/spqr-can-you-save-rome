@@ -145,6 +145,35 @@ test('parallel caravans receive separate merchants and preserve both identities'
  assert.deepEqual(restored.markets.shipments.map(x=>x.merchantId),[first.shipment.merchantId,second.shipment.merchantId]);
 });
 
+test('a delivered merchant travels home before accepting another remote order',()=>{
+ let s=deal(),first=placeTradeOrder(s,request);assert.equal(first.ok,true);
+ const next=()=>{if(++s.month>12){s.month=1;s.year++}advanceMarkets(s)};
+ for(let i=0;i<first.quote.months;i++)next();
+ const person=s.world.characters[first.shipment.merchantId];
+ assert.equal(person.location,'armenia');assert.equal(person.marketReturn.to,'parthia');
+ const second=placeTradeOrder(s,request);assert.equal(second.ok,true);
+ assert.notEqual(second.shipment.merchantId,first.shipment.merchantId);
+ s=upgradeSave(structuredClone(s));
+ for(let i=0;i<first.quote.months;i++)next();
+ assert.equal(s.world.characters[first.shipment.merchantId].location,'parthia');
+ assert.equal(s.world.characters[first.shipment.merchantId].marketReturn,undefined);
+ const third=placeTradeOrder(s,request);assert.equal(third.ok,true);
+ assert.equal(third.shipment.merchantId,first.shipment.merchantId);
+});
+
+test('a closed border delays a merchant return until passage is restored',()=>{
+ const s=deal(),first=placeTradeOrder(s,request);assert.equal(first.ok,true);
+ const next=()=>{if(++s.month>12){s.month=1;s.year++}advanceMarkets(s)};
+ for(let i=0;i<first.quote.months;i++)next();
+ const person=s.world.characters[first.shipment.merchantId];
+ s.wars.push(['armenia','parthia']);
+ for(let i=0;i<first.quote.months;i++)next();
+ assert.equal(person.location,'armenia');assert.ok(person.marketReturn);
+ s.wars=[];
+ for(let i=0;i<first.quote.months;i++)next();
+ assert.equal(person.location,'parthia');assert.equal(person.marketReturn,undefined);
+});
+
 test('imported horses equip Han scouts and improve their actual battlefield power',()=>{
  const s=newGame('han');s.relations['han:parthia']=45;assert.equal(proposeAgreement(s,'han','parthia','trade').ok,true);
  const horses=s.markets.regions.hanHexi.goods.horses;horses.stock=0;horses.production=0;horses.consumption=0;
