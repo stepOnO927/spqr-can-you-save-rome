@@ -17,6 +17,7 @@ try{
  assert.equal(await page.locator('.cursus-candidate').count(),4);
  const first=page.locator('.cursus-candidate').first();
  assert.match(await first.innerText(),/卢基乌斯·瓦罗/);
+ assert.match(await first.innerText(),/选情估计/);
  const candidatePortraits=await page.locator('.cursus-candidate .cursus-person img').evaluateAll(nodes=>nodes.slice(0,2).map(n=>n.src));
  assert.equal(candidatePortraits.length,2);
  assert.notEqual(candidatePortraits[0],candidatePortraits[1]);
@@ -48,6 +49,7 @@ try{
  await page.locator('#factions').click();
  await page.locator('[data-faction="senate"]').click();
  assert.match(await page.locator('.cursus-tree').innerText(),/GOVERNMENT TREE/);
+ assert.match(await page.locator('.cursus-tree').innerText(),/Electoral outlook/);
  assert.match(await page.locator('.cursus-tree').innerText(),/Office/);
  assert.deepEqual(errors,[]);
  console.log('Cursus Honorom candidate, support, foreign inquiry, save and language switch passed');

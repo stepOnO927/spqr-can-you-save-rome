@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=cursus-integrated-1';
 import {appointOffice} from '../office-system.js?v=succession-ui-recovery-1';
-import {initializeCursus,officeEligibility,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=cursus-integrated-1';
+import {initializeCursus,officeEligibility,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=cursus-integrated-1';
 
 test('fictional candidates are persistent people; Roman consuls require an assembly election',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
@@ -310,4 +310,12 @@ test('campaign phases allow distinct actions while withdrawn candidates leave th
  rival.status='withdrawn';s.month=10;
  const election=resolveElection(s,'consul').result;
  assert.ok(!election.candidates.some(x=>x.id===rival.id));
+});
+
+test('campaign estimate reports uncertainty without predicting the ballot',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),estimate=campaignEstimate(s,c.varroId);
+ assert.ok(['strong_lead','narrow_lead','competitive','trailing','uncertain'].includes(estimate.tier));
+ assert.ok(['low','moderate'].includes(estimate.certainty));
+ assert.equal(estimate.observed.year,s.year);
+ assert.equal(estimate.ballots,undefined);
 });

@@ -173,6 +173,14 @@ export function annualApplicants(s){
  return c.applicants.filter(x=>x.year===s.year);
 }
 export function campaignFor(s,id){return initializeCursus(s).applicants.find(x=>x.id===id&&x.year===s.year)}
+export function campaignEstimate(s,id){
+ const c=initializeCursus(s),candidate=campaignFor(s,id);
+ if(!candidate||candidate.status!=='eligible')return {tier:'unavailable',certainty:'low'};
+ const field=c.applicants.filter(x=>x.year===s.year&&x.office===candidate.office&&x.faction===candidate.faction&&x.status==='eligible');
+ const publicScore=x=>{const p=person(s,x.id),endorsements=c.endorsements.filter(e=>e.candidateId===x.id&&e.year===s.year&&e.status==='accepted').length;return (x.support||0)-(x.opposition||0)+(p?.influence||50)*.2+(p?.wealth||0)*.08+(p?.education||50)*.12+endorsements*3+(c.senate[x.faction]||50)*.08};
+ const ranked=field.map(x=>({id:x.id,score:publicScore(x)})).sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id)),position=ranked.findIndex(x=>x.id===id),seats=MAGISTRACIES[candidate.office]?.seats||1,cutoff=ranked[Math.min(seats,ranked.length)-1]?.score??0,gap=publicScore(candidate)-cutoff;
+ return {tier:ranked.length<=seats?'uncertain':position<seats?(gap>12?'strong_lead':gap>3?'narrow_lead':'competitive'):gap< -15?'trailing':'competitive',certainty:Math.abs(gap)<8?'low':'moderate',observed:{year:s.year,month:s.month}};
+}
 export function supportCandidate(s,id,action='support',actor=s.player,detail=null){
  const c=initializeCursus(s),candidate=campaignFor(s,id),p=person(s,id),controller=factionOfRome(s);
  if(!ROMAN.has(actor)||!candidate||candidate.status!=='eligible'||!p||!present(s,id)||!officeEligibility(s,id,candidate.office).ok)return {ok:false,reason:'candidate'};
