@@ -8,6 +8,8 @@ if(!source.includes('export const physicalStyle='))throw new Error('Atlas style 
 const prefix=source.replace('export const physicalStyle=','const physicalStyle=');
 const variants={
  flat:"!['color-relief','hillshade','raster'].includes(layer.type)",
+ 'no-landcover':"layer.id!=='idealized-landcover'",
+ 'no-color-relief':"layer.type!=='color-relief'",
  'flat-no-ocean':"!['color-relief','hillshade','raster'].includes(layer.type)&&layer.source!=='ocean'",
  'flat-no-land':"!['color-relief','hillshade','raster'].includes(layer.type)&&layer.source!=='land'"
 };
