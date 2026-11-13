@@ -1,0 +1,35 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const page=await browser.newPage({viewport:{width:1366,height:768}});
+const errors=[];page.on('pageerror',e=>errors.push(e.message));
+try{
+ await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
+ await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.locator('#start-overlay:not([hidden])').waitFor();
+ await page.locator('#roman-faction').selectOption('senate');
+ await page.locator('#difficulty').selectOption('travel');
+ await page.locator('#start-free').click();
+ await page.locator('#factions').click();
+ await page.locator('[data-faction="senate"]').click();
+ await page.locator('.cursus-tree').waitFor();
+ assert.match(await page.locator('.cursus-tree').innerText(),/官员树/);
+ assert.equal(await page.locator('.cursus-candidate').count(),4);
+ const first=page.locator('.cursus-candidate').first();
+ assert.match(await first.innerText(),/卢基乌斯·瓦罗/);
+ await first.locator('[data-cursus-action="support"]').click();
+ await page.locator('#save').click();
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
+ assert.ok(saved.world.cursus.varroId);
+ assert.ok(saved.world.cursus.applicants.find(x=>x.id===saved.world.cursus.varroId).support>0);
+ await page.locator('[data-cursus-foreign]').selectOption('parthia');
+ await page.locator('[data-cursus-investigate]').click();
+ assert.match(await page.locator('.cursus-tree').innerText(),/进行中/);
+ await page.locator('#advance').click();
+ await page.locator('#language').click();
+ await page.locator('#factions').click();
+ await page.locator('[data-faction="senate"]').click();
+ assert.match(await page.locator('.cursus-tree').innerText(),/GOVERNMENT TREE/);
+ assert.deepEqual(errors,[]);
+ console.log('Cursus Honorom candidate, support, foreign inquiry, save and language switch passed');
+}finally{await browser.close()}

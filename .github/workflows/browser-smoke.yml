@@ -24,6 +24,7 @@ jobs:
           node server.mjs > server.log 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
           node tools/travel-smoke.mjs
+          node tools/cursus-smoke.mjs
           node scripts/multipolar-sim.mjs > multipolar-simulation.json
           node tools/multipolar-smoke.mjs
           node tools/imperium-smoke.mjs
