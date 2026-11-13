@@ -410,3 +410,13 @@ test('low obedience impedes political coordination without erasing professional 
  assert.equal(officeEffects(s,'senate').treasury,routine);
  assert.ok(institutionalBalance(s).magistrate<before);
 });
+
+test('foreign offices vacate on death while the old report stays stale until reinvestigation',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;
+ c.intel.senate={parthia:{stage:3,reports:[{stage:3,people:[id],officeholders:{administration:id},observed:{year:s.year,month:s.month}}]}};
+ s.world.characters[id].alive=false;s.world.characters[id].health='deceased';
+ advanceCursus(s);
+ assert.equal(c.foreignPosts.parthia.administration,undefined);
+ assert.equal(governmentReport(s,'parthia').reports.at(-1).officeholders.administration,id);
+ assert.equal(officialKnowledge(s,'parthia',id).level,'identified');
+});

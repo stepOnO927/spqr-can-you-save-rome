@@ -439,6 +439,11 @@ export function offerEmployment(s,target,id,actor=s.player,mode='administrative'
  s.factions[actor].treasury-=18;c.offers.push({actor,target,id,mode,remaining:3,status:'pending',cost:18,year:s.year,month:s.month});
  return {ok:true,cost:18,months:3};
 }
+function reconcileForeignPosts(s,c){
+ for(const [faction,posts] of Object.entries(c.foreignPosts))for(const [role,id] of Object.entries(posts)){
+  const incumbent=person(s,id);if(!incumbent?.alive||incumbent.faction!==faction||incumbent.health==='deceased')delete posts[role];
+ }
+}
 function advanceIntel(s,c){
  for(const [actor,targets] of Object.entries(c.intel))for(const [target,report] of Object.entries(targets)){
   if(!report.pending||--report.pending.remaining>0)continue;
@@ -599,7 +604,7 @@ function recordPoliticalYear(s,c){
 export function advanceCursus(s){
  const c=initializeCursus(s);
  if(s.month===1){startTerms(s);annualApplicants(s);const controller=factionOfRome(s),f=s.factions[controller],rome=s.regions.find(r=>r.id==='roma');if(f&&rome)for(const body of ['centuriate','tribal','plebeian'])c.assemblies[body]=clamp((c.assemblies[body]*3+f.stability+rome.loyalty)/5)}
- recordOfficeChanges(s,c);advanceIntel(s,c);advanceContacts(s,c);advanceCooperations(s,c);advanceTalentSearches(s,c);advanceEndorsements(s,c);advanceMeasures(s,c);advancePromises(s,c);advanceInvestigations(s,c);
+ recordOfficeChanges(s,c);reconcileForeignPosts(s,c);advanceIntel(s,c);advanceContacts(s,c);advanceCooperations(s,c);advanceTalentSearches(s,c);advanceEndorsements(s,c);advanceMeasures(s,c);advancePromises(s,c);advanceInvestigations(s,c);
  aiPolitical(s,c);autonomousCampaign(s,c);
  if(ROMAN.has(factionOfRome(s)))for(const [office,o] of Object.entries(MAGISTRACIES))if(o.month===s.month&&(!o.cycle||Math.abs(s.year)%o.cycle===0))resolveElection(s,office);
  if(s.month===12)recordPoliticalYear(s,c);
