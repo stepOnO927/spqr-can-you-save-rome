@@ -2,6 +2,8 @@
 
 The campaign starts in 49 BCE. A card represents learning, local adaptation, or organization, not the first invention of its subject. Game costs and effects are balance values, not measurements from the sources. The drawings are original interpretive diagrams, not excavated objects.
 
+Commissioning instruction is a game transaction, not a claim that every listed technique was taught by a documented 49 BCE envoy. The selected subject must be attested in the partner's game knowledge and separately researched by the receiving country; each subject's card retains its own evidence and dating limits below.
+
 | Card IDs | Evidence now linked from the game | Limit |
 | --- | --- | --- |
 | `roadmaking`, `road-milestones`, `bridge-engineering` | [UNESCO, Via Appia](https://whc.unesco.org/en/list/1708): road begun in 312 BCE; the property includes bridges and milestones. | The heritage property includes additions through late antiquity. A surviving bridge or marker is not necessarily dated to 49 BCE. |

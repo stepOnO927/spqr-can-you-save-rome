@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,purchaseMaterials} from '../engine.js';
-import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan} from '../development.js';
+import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics} from '../development.js';
 import {developmentPanel,ideasPanel} from '../development-ui.js';
 import {edgeMonths,grandRoute} from '../grand-operations.js';
 import {techIllustration} from '../tech-art.js';
@@ -757,6 +757,29 @@ test('states can exchange, sell and host scholars through priced delayed knowled
  const old=upgradeSave(JSON.parse(JSON.stringify(visit)));old.development.caesar.visitingScholars=[{partner:'egypt',remaining:2}];
  const oldBefore=old.factions.caesar.treasury;assert.equal(researchInnovation(old,'caesar','material','quarrying').ok,true);
  assert.equal(oldBefore-old.factions.caesar.treasury,17,'legacy visiting scholars retain their old broad bonus until expiry');
+});
+test('commissioned instruction follows the selected subject instead of the first available one',()=>{
+ const s=newGame('caesar');s.wars=[];s.relations['caesar:egypt']=25;s.factions.caesar.treasury=300;
+ s.development.egypt.knownMaterial.push('quarrying');
+ const topics=scholarVisitTopics(s,'caesar','egypt').map(x=>x.item.id);
+ assert.ok(topics.includes('water-control')&&topics.includes('quarrying'));
+ assert.match(developmentPanel(s,'en','material'),/Commission instruction/);
+ assert.match(developmentPanel(s,'zh','material'),/委托指导/);
+ const before=s.factions.caesar.treasury;
+ assert.equal(inviteForeignScholars(s,'caesar','egypt','idea','quarrying').reason,'expertise');
+ assert.equal(s.factions.caesar.treasury,before);
+ const chosen=inviteForeignScholars(s,'caesar','egypt','material','quarrying');
+ assert.equal(chosen.ok,true);assert.equal(chosen.id,'quarrying');
+ assert.equal(s.factions.caesar.treasury,before-24);
+ assert.equal(s.development.caesar.knownMaterial.includes('quarrying'),false);
+ const arrived=upgradeSave(JSON.parse(JSON.stringify(s)));months(arrived,chosen.travel);
+ const other=upgradeSave(JSON.parse(JSON.stringify(arrived))),otherBefore=other.factions.caesar.treasury;
+ assert.equal(researchInnovation(other,'caesar','material','water-control').ok,true);
+ assert.equal(otherBefore-other.factions.caesar.treasury,24);
+ const subjectBefore=arrived.factions.caesar.treasury;
+ assert.equal(researchInnovation(arrived,'caesar','material','quarrying').ok,true);
+ assert.equal(subjectBefore-arrived.factions.caesar.treasury,17);
+ assert.equal(arrived.development.caesar.research.remaining,2);
 });
 test('AI knowledge buyers keep a levy reserve while human buyers may choose to spend it',()=>{
  const ai=newGame('caesar');ai.relations['caesar:egypt']=30;

@@ -417,20 +417,25 @@ export function declineKnowledgeExchange(s,player,partner,offerBranch,offerId,wa
  if(!request||player!==s.player)return {ok:false,reason:'request'};
  recipient.exchangeRequests.splice(recipient.exchangeRequests.indexOf(request),1);return {ok:true};
 }
-export function scholarVisitCheck(s,host,partner){
+export function scholarVisitTopics(s,host,partner){
+ initializeDevelopment(s);const hd=s.development[host],pd=s.development[partner];
+ if(!hd||!pd)return [];
+ return [...MATERIALS.map(item=>({branch:'material',item})),...IDEAS.map(item=>({branch:'idea',item}))].filter(({branch,item})=>{const key=branch==='material'?'knownMaterial':'knownIdeas';return !strategicKnowledge.has(item.id)&&pd[key].includes(item.id)&&!hd[key].includes(item.id)&&!hd.trade.some(t=>t.branch===branch&&t.id===item.id)&&!(hd.research?.branch===branch&&hd.research.id===item.id)&&item.prerequisites.every(id=>hd[key].includes(id))});
+}
+export function scholarVisitCheck(s,host,partner,branch,id){
  initializeDevelopment(s);const hd=s.development[host],pd=s.development[partner],relation=s.relations[[host,partner].sort().join(':')]??0;
  if(!hd||!pd||host===partner||!s.regions.some(r=>r.owner===host)||!s.regions.some(r=>r.owner===partner)||s.wars.some(w=>w.includes(host)&&w.includes(partner)))return {ok:false,reason:'partner'};
  if(relation<20)return {ok:false,reason:'relations'};
  if(hd.visitingScholars.some(x=>x.partner===partner))return {ok:false,reason:'already invited'};
- const candidate=[...MATERIALS.map(item=>({branch:'material',item})),...IDEAS.map(item=>({branch:'idea',item}))].find(({branch,item})=>{const key=branch==='material'?'knownMaterial':'knownIdeas';return !strategicKnowledge.has(item.id)&&pd[key].includes(item.id)&&!hd[key].includes(item.id)&&!hd.trade.some(t=>t.branch===branch&&t.id===item.id)&&!(hd.research?.branch===branch&&hd.research.id===item.id)&&item.prerequisites.every(id=>hd[key].includes(id))});
+ const topics=scholarVisitTopics(s,host,partner),candidate=branch===undefined&&id===undefined?topics[0]:topics.find(topic=>topic.branch===branch&&topic.item.id===id);
  if(!candidate)return {ok:false,reason:'expertise'};
  const origin=s.regions.find(r=>r.owner===partner&&r.terrain==='urban')||s.regions.find(r=>r.owner===partner),destination=s.regions.find(r=>r.owner===host&&r.terrain==='urban')||s.regions.find(r=>r.owner===host);
  const distance=[origin.x,origin.y,destination.x,destination.y].every(Number.isFinite)?Math.hypot(origin.x-destination.x,origin.y-destination.y):320,travel=Math.max(2,Math.min(6,Math.ceil(distance/160)));
  if(s.factions[host].treasury<24)return {ok:false,reason:'treasury',travel};
  return {ok:true,branch:candidate.branch,id:candidate.item.id,travel,months:6,cost:24,origin:origin.id,destination:destination.id};
 }
-export function inviteForeignScholars(s,host,partner){
- const check=scholarVisitCheck(s,host,partner);if(!check.ok)return check;
+export function inviteForeignScholars(s,host,partner,branch,id){
+ const check=scholarVisitCheck(s,host,partner,branch,id);if(!check.ok)return check;
  s.factions[host].treasury-=check.cost;s.factions[partner].treasury+=10;
  s.development[host].visitingScholars.push({partner,branch:check.branch,id:check.id,origin:check.origin,destination:check.destination,travelRemaining:check.travel,remaining:check.months,sentYear:s.year,sentMonth:s.month});
  return check;
