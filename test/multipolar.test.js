@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=multipolar-confidence-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=multipolar-autoplay-1';
 import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=fort-intel-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
 import {assessOpportunities} from '../multipolar.js?v=multipolar-confidence-1';
@@ -13,7 +13,7 @@ import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {advanceGovernments} from '../governance.js?v=succession-ui-recovery-1';
 import {advanceMovements} from '../movements.js?v=succession-ui-recovery-1';
-import {newRevolutionScenario} from '../scenarios.js?v=multipolar-confidence-1';
+import {newRevolutionScenario} from '../scenarios.js?v=multipolar-autoplay-1';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
@@ -101,6 +101,16 @@ test('AI-only simulation reviews multiple states and preserves private plans on 
  for(const actor of ['caesar','senate','egypt','parthia','armenia'])assert.ok(s.world.multipolarPlans[actor]);
  const plans=JSON.parse(JSON.stringify(s.world.multipolarPlans));s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(s.world.multipolarPlans,plans);
  assert.ok(Object.values(plans).every(p=>p.opportunities.length<=8));
+});
+
+test('AI-only simulation continues after Rome loses while the human campaign stays ended',()=>{
+ const s=newGame('caesar');s.difficulty='expert';s.defeat=true;s.victor='senate';s.defeatDate={year:s.year,month:s.month};
+ const saved=JSON.stringify(s),human=upgradeSave(JSON.parse(saved)),automatic=upgradeSave(JSON.parse(saved));
+ tick(human);assert.equal(human.month,s.month);assert.equal(human.year,s.year);
+ for(let i=0;i<6;i++)tick(automatic,{autoplayPlayer:true});
+ assert.equal((automatic.year-s.year)*12+automatic.month-s.month,6);assert.equal(automatic.defeat,true);
+ for(const actor of ['egypt','parthia','armenia'])assert.ok(automatic.world.multipolarPlans[actor]);
+ assert.deepEqual(automatic.defeatDate,s.defeatDate);
 });
 
 test('peace addressed to the automated side is answered by AI, while a human still decides',()=>{

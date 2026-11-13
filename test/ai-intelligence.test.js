@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,aiClaimantChoice,tick,upgradeSave} from '../engine.js?v=multipolar-confidence-1';
+import {newGame,estimatedStrength,aiClaimantChoice,tick,upgradeSave} from '../engine.js?v=multipolar-autoplay-1';
 import {addReport} from '../character-system.js?v=succession-ui-recovery-1';
 // These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
 // they run with the expansion's AI layer switched off (world.imperium.enabled=false).

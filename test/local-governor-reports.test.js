@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=multipolar-confidence-1';
+import {newGame,upgradeSave} from '../engine.js?v=multipolar-autoplay-1';
 import {addReport} from '../character-system.js?v=succession-ui-recovery-1';
 import {reportedTheaterAdministrators,renderLocalGovernor} from '../map-lab/local-governor-ui.js?v=succession-ui-recovery-1';
 

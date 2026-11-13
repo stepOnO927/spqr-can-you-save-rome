@@ -12,7 +12,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=succession-ui-recovery-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=succession-ui-recovery-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=multipolar-confidence-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=multipolar-autoplay-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -769,7 +769,9 @@ export function advancePeacefulSettlement(s){
 }
 
 export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
-  if(s.defeat)return s;
+  // A human campaign ends in defeat. An explicitly requested AI-only run
+  // continues so the surviving countries can still make their own decisions.
+  if(s.defeat&&!autoplayPlayer)return s;
   initializeWorld(s);initializeMail(s);initializeMailReports(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
   const chronicleBefore=captureCampaignState(s);
   const warsBefore=s.wars.map(w=>w.slice());

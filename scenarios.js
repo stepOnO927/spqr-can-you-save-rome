@@ -1,4 +1,4 @@
-import {newGame,estimatedStrength} from './engine.js?v=multipolar-confidence-1';
+import {newGame,estimatedStrength} from './engine.js?v=multipolar-autoplay-1';
 import {createFictionalPerson} from './dynasties.js?v=succession-ui-recovery-1';
 import {formCoalition} from './coalitions.js?v=fort-intel-1';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';

@@ -1,4 +1,4 @@
-import {newGame,tick,upgradeSave} from '../engine.js?v=multipolar-confidence-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=multipolar-autoplay-1';
 import assert from 'node:assert/strict';
 // IMPERIUM Grandmaster observation: fully automated campaigns over 36+ months.
 // Reports what every AI actually did with focuses, formations and operations,

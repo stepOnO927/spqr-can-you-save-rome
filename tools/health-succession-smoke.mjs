@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
- await page.evaluate(async()=>{const e=await import('/engine.js?v=multipolar-confidence-1'),s=e.newGame('caesar');s.world.characters.caesar.health='dying';s.wars=[];sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}))});
+ await page.evaluate(async()=>{const e=await import('/engine.js?v=multipolar-autoplay-1'),s=e.newGame('caesar');s.world.characters.caesar.health='dying';s.wars=[];sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}))});
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#factions').click();await page.locator('[data-faction="caesar"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/临时代行|临时指挥/);
  await page.locator('#succession-choice').selectOption('lepidus');await page.locator('#succession-plan').click();await page.locator('#succession-feedback button').click();assert.match(await page.locator('#command-detail').innerText(),/当前安排：马尔库斯·埃米利乌斯·雷必达/);
