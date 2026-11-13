@@ -16,7 +16,7 @@ try{
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#factions').click();
  await page.locator('[data-faction="senate"]').click();
- await page.locator('.cursus-talent summary').click();
+ await page.locator('.cursus-talent > summary').click();
  const talent=page.locator('.cursus-talent-person').filter({hasText:'卢基乌斯·瓦罗'});
  assert.equal(await talent.count(),1);
  await talent.locator('.cursus-application-actions summary').click();
@@ -35,14 +35,14 @@ try{
  assert.equal(saved.world.cursus.applicationReviews.at(-1).status,'complete');
  await page.locator('#factions').click();
  await page.locator('[data-faction="senate"]').click();
- await page.locator('.cursus-talent summary').click();
+ await page.locator('.cursus-talent > summary').click();
  const after=page.locator('.cursus-talent-person').filter({hasText:'卢基乌斯·瓦罗'});
  await after.locator('.cursus-application-actions summary').click();
  assert.match(await after.innerText(),/面谈.*已完成/);
  await page.locator('#language').click();
  await page.locator('#factions').click();
  await page.locator('[data-faction="senate"]').click();
- await page.locator('.cursus-talent summary').click();
+ await page.locator('.cursus-talent > summary').click();
  assert.match(await page.locator('.cursus-talent-person').first().innerText(),/APPLICATION REVIEW/);
  assert.deepEqual(errors,[]);
  console.log('Applicant interview, month resolution, save/load and bilingual controls passed in cloud browser');
