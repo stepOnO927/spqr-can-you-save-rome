@@ -1,5 +1,5 @@
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
-import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=regional-court-1';
+import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=regional-mail-merge-1';
 import {reassurePerson} from '../conspiracies.js?v=separate-crowns-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=separate-crowns-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=regional-court-1';
-import {addReport} from '../character-system.js?v=regional-court-1';
+import {newGame,upgradeSave} from '../engine.js?v=regional-mail-merge-1';
+import {addReport} from '../character-system.js?v=regional-mail-merge-1';
 import {reportedTheaterAdministrators,renderLocalGovernor} from '../map-lab/local-governor-ui.js?v=regional-court-1';
 
 test('foreign city administration uses dated reports and retains conflicting or unknown claims',()=>{

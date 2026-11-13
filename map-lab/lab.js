@@ -13,7 +13,7 @@ import {formatChronicleEntry} from '../chronicle.js?v=separate-crowns-1';
 import {knownDynasticFactions} from '../civil-war.js?v=separate-crowns-1';
 import {reportedControl,requestControlReport} from '../control-intelligence.js?v=fort-intel-1';
 import {renderLocalGovernor} from './local-governor-ui.js?v=regional-court-1';
-import {renderSecurity} from './security-ui.js?v=regional-court-1';
+import {renderSecurity} from './security-ui.js?v=regional-mail-merge-1';
 import {renderOffices} from './offices-ui.js?v=regional-court-1';
 import {officeEffects} from '../office-system.js?v=regional-court-1';
 import {populationFactor,religiousTaxCost} from '../religion.js?v=regional-court-1';
@@ -23,17 +23,17 @@ import {configureStartingDifficulty} from '../difficulty.js?v=regional-court-1';
 import {featherAdvice} from '../feather.js?v=travel-2';
 import {waitForMapIdle} from './capture-wait.js?v=phase-x-1';
 import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=separate-crowns-1';
-import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=regional-court-1';
+import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=regional-mail-merge-1';
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=regional-court-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=regional-mail-merge-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=separate-crowns-1';
-import {createCharacterUI} from './character-ui.js?v=regional-court-1';
+import {createCharacterUI} from './character-ui.js?v=regional-mail-merge-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=portrait-pool-2';
-import {reportedArmies} from '../character-system.js?v=regional-court-1';
+import {reportedArmies} from '../character-system.js?v=regional-mail-merge-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=travel-2';
 import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=phase-x-1';
@@ -191,6 +191,7 @@ document.querySelector('#play-time').onclick=()=>setPlaying(!playing);document.q
 
 function openCampaign(section=''){try{stageHandoff(sessionStorage,state,'campaign');setPlaying(false);location.assign('../'+(section?'#'+section:''))}catch{status.textContent=lang==='zh'?'无法切换：浏览器未能暂存战役，请检查存储设置。':'Could not transfer the campaign. Check browser storage settings.';status.style.display='block'}}
 document.querySelector('#return-campaign').onclick=e=>{e.preventDefault();openCampaign()};
+const mailButton=document.createElement('button');mailButton.id='atlas-mail';mailButton.className='hud-button';mailButton.textContent=lang==='zh'?'书信':'MAIL';mailButton.title=lang==='zh'?'切换到战役视图查看书信':'Open correspondence in the campaign view';document.querySelector('#return-campaign').before(mailButton);mailButton.onclick=()=>openCampaign('mail');
 document.querySelector('#campaign-government').onclick=()=>openCampaign('government');
 // IMPERIUM screens live in the campaign view; the campaign carries over.
 for(const [id,section] of [['#campaign-focus','focus'],['#campaign-legions','legions'],['#campaign-plans','plans']]){const el=document.querySelector(id);if(el)el.onclick=()=>openCampaign(section)}
@@ -268,7 +269,7 @@ if(received&&location.hash.startsWith('#person=')){const id=new URLSearchParams(
 
 // Keep the atlas readable on narrow screens without changing campaign state.
 const compactViewport=window.matchMedia('(max-width:700px)'),mast=document.querySelector('.mast'),compactMenu=document.querySelector('#compact-menu'),compactToggle=document.querySelector('#compact-menu-toggle'),selectionPanel=document.querySelector('.selection'),selectionToggle=document.querySelector('#selection-toggle');
-const compactActionIds=['resources-help','help','guide-restart','factions','chronicle','inventions','save-slot','save','load','capture','return-campaign'];
+const compactActionIds=['resources-help','help','guide-restart','factions','chronicle','inventions','save-slot','save','load','capture','atlas-mail','return-campaign'];
 function syncCompactLayout(){if(compactViewport.matches){for(const id of compactActionIds)compactMenu.append(document.getElementById(id));if(!compactViewport.initialized){document.querySelector('.brief').classList.add('collapsed');document.querySelector('#brief-toggle').textContent='›';document.querySelector('#brief-toggle').setAttribute('aria-expanded','false');selectionPanel.classList.add('collapsed');selectionToggle.setAttribute('aria-expanded','false');compactViewport.initialized=true}}else{for(const id of compactActionIds)mast.append(document.getElementById(id));compactMenu.hidden=true;compactToggle.setAttribute('aria-expanded','false');selectionPanel.classList.remove('collapsed');selectionToggle.setAttribute('aria-expanded','true')}}
 compactViewport.addEventListener('change',syncCompactLayout);syncCompactLayout();
 compactToggle.onclick=()=>{compactMenu.hidden=!compactMenu.hidden;compactToggle.setAttribute('aria-expanded',String(!compactMenu.hidden))};

@@ -8,6 +8,7 @@ import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 import {canHoldOffice,localGovernor} from './office-system.js?v=regional-court-1';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=regional-mail-merge-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -184,7 +185,10 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
 export function queueMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;
  const {duration,partner,cost}=plan,subjectCharacter=['health','age','location'].includes(subject)?(characterId===''?null:(characterId||(['health','location'].includes(subject)&&type!=='exchange'?reportedHealthSubjects(s,actor,target)[0]:null)||null)):null;
- s.factions[actor].treasury-=cost;s.operations.unshift({actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month});
+ s.factions[actor].treasury-=cost;
+ const operation={id:`mission:${s.nextOperationId||1}`,actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month};
+ s.nextOperationId=(s.nextOperationId||1)+1;s.operations.unshift(operation);
+ if(actor!==target&&['envoy','travelers'].includes(type))registerMissionPersonnel(s,operation);
  if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months.`,`已派出${({spy:'间谍',counter:'内部调查',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月。`);return {ok:true,duration};
 }
 // The ally selects its own record when the request reaches it. The sealed
@@ -238,10 +242,8 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   addReport(s,op.actor,op.target,sealed.report);op.status='complete';if(op.actor===s.player)notify(s,'A partner forwarded an existing report; its original date and source still matter.','伙伴转交了一份既有报告；仍需留意原始日期与来源。');continue
  }
  let healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(reportedHealthSubjects(s,op.actor,op.target)[0]||null);
- // A general health or location investigation can encounter a public figure
- // even when the sender had no name to address. Discover the name only during
- // resolution, through a successful local observation; absence is not proof of
- // a vacancy or of anyone's health. A named request never changes its target.
+ // A general investigation may discover a public figure through a successful
+ // local observation. An explicitly named request never changes its target.
  if(!healthId&&['health','location'].includes(op.subject)&&q>=(op.type==='travelers'?.85:.7)){
   const known=new Set(reportedHealthSubjects(s,op.actor,op.target));
   const candidates=(s.world.leadership[op.target]||[]).filter(candidate=>{const c=s.world.characters[candidate];return CHARACTER_CATALOG[candidate]&&c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health)&&s.regions.some(r=>r.id===c.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===candidate&&a.move)});
@@ -484,3 +486,4 @@ export function observeArmies(s){
  }
 }
 export function reportedArmies(s,viewer){initializeWorld(s);const result=[];for(const [owner,k] of Object.entries(s.knowledge[viewer]||{})){if(owner===viewer)continue;for(const x of Object.values(k.sightings||{}))result.push({...x,reported:true})}return result}
+

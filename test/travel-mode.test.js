@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=regional-court-1';
+import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=regional-mail-merge-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=regional-court-1';
 import {OFFICE_TYPES,canHoldOffice,localGovernor} from '../office-system.js?v=regional-court-1';
 import {featherAdvice} from '../feather.js?v=travel-1';

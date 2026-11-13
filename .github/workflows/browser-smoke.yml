@@ -33,6 +33,7 @@ jobs:
           node tools/unknown-person-smoke.mjs
           node tools/separate-kingdom-succession-smoke.mjs
           node tools/regional-court-vacancy-smoke.mjs
+          node tools/mail-privacy-smoke.mjs
           node scripts/imperium-sim.mjs > imperium-simulation.json
           node tools/onboarding-smoke.mjs
           node tools/systems-smoke.mjs
