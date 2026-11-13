@@ -1,8 +1,8 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=separate-crowns-1';
-import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=separate-crowns-1';
-import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=court-portraits-1';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=succession-ui-recovery-1';
+import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=succession-ui-recovery-1';
+import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=succession-ui-recovery-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {startDynasticWar} from './civil-war.js?v=separate-crowns-1';
+import {startDynasticWar} from './civil-war.js?v=succession-ui-recovery-1';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
@@ -72,6 +72,10 @@ export function initializeGovernments(s){
 }
 
 export function successionCandidates(s,faction){
+ // The two Mauretanian thrones have separate inheritance lines. A single
+ // faction-wide nomination cannot designate either seat and must not charge
+ // the court or be presented as an actionable succession plan.
+ if(successionModel(faction,s)==='separate_kingdoms')return [];
  const candidates=successorFor(s,faction);
  if(!['roman_principate','later_empire'].includes(successionModel(faction,s)))return candidates;
  const children=(s.world.leadership[faction]||[]).flatMap(id=>s.world.characters[id]?.children||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!s.world.characters[id].missing&&!s.world.characters[id].asylumHost);

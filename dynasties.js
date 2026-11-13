@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=separate-crowns-1';
-import {startDynasticWar} from './civil-war.js?v=separate-crowns-1';
+import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
+import {startDynasticWar} from './civil-war.js?v=succession-ui-recovery-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=court-portraits-1';
 

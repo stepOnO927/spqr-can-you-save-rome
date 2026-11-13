@@ -90,7 +90,10 @@ export function assignSuccession(s,faction){
   const preferred=model==='later_empire'&&s.world.coEmperors?.[faction]||s.world.successionPlans?.[faction],eligible=[...new Set([...children,...candidates])];
   const military=id=>s.armies.filter(a=>a.owner===faction&&a.characterId===id).reduce((n,a)=>n+Math.min(35,Math.floor((a.men||0)/500)),0);
   const ranked=imperial?[...eligible].sort((a,b)=>((s.world.characters[b].influence||0)+military(b)+(children.includes(b)?12:0))-((s.world.characters[a].influence||0)+military(a)+(children.includes(a)?12:0))):eligible;
-  const next=eligible.includes(preferred)?preferred:model==='arsacid_nobility'?candidates[0]||children[0]:imperial?ranked[0]:children[0]||candidates[0];if(next)current.push(next);
+  const next=eligible.includes(preferred)?preferred:model==='arsacid_nobility'?candidates[0]||children[0]:imperial?ranked[0]:children[0]||candidates[0];
+  // A designation applies to this vacancy. Once someone actually succeeds,
+  // the new ruler must make a new arrangement instead of inheriting a stale one.
+  if(next){current.push(next);if(s.world.successionPlans)delete s.world.successionPlans[faction]}
   if(imperial&&next){const rival=ranked.find(id=>id!==next&&s.world.characters[id].influence>=35&&((s.world.characters[id].influence||0)+military(id)>=(s.world.characters[next].influence||0)+military(next)-25||s.factions[faction]?.stability<45));if(rival){s.world.claimants[faction]||=[];if(!s.world.claimants[faction].includes(rival))s.world.claimants[faction].push(rival);s.world.disputes[faction]||={months:0,support:{}};s.world.disputes[faction].support||={};s.world.disputes[faction].support[rival]??=Math.min(30,military(rival))}}
   if(model==='arsacid_nobility'&&next){const bypassed=children.filter(id=>id!==next);if(bypassed.length){s.world.claimants[faction]||=[];for(const id of bypassed)if(!s.world.claimants[faction].includes(id))s.world.claimants[faction].push(id);s.world.disputes[faction]||={months:0,support:{}};s.world.disputes[faction].support||={};for(const id of bypassed)s.world.disputes[faction].support[id]??=10}}
  }

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=court-portraits-1';
-import {considerDefection,advanceCharacters} from '../character-system.js?v=court-portraits-1';
-import {assignSuccession,knownLeaders} from '../characters.js?v=separate-crowns-1';
+import {newGame,upgradeSave} from '../engine.js?v=gathering-presence-1';
+import {considerDefection,advanceCharacters} from '../character-system.js?v=succession-ui-recovery-1';
+import {assignSuccession,knownLeaders} from '../characters.js?v=succession-ui-recovery-1';
 
 test('a disloyal unattached officer may defect and is no longer an eligible successor',()=>{
  let s=newGame('caesar');s.world.characters.antony.loyalty=10;s.world.characters.antony.travel={destination:'gaul',remaining:1,legs:[]};s.world.successionPlans.caesar='antony';const old=s.factions.caesar.stability;s.world.intelSeed=1972;

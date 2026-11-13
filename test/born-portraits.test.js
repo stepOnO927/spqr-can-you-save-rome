@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=court-portraits-1';
-import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=court-portraits-1';
+import {newGame,upgradeSave} from '../engine.js?v=gathering-presence-1';
+import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=succession-ui-recovery-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=court-portraits-1';
 
 const child=(s,name,sex)=>createFictionalPerson(s,{name:[name,name],faction:'caesar',birthYear:s.year,parents:['caesar'],sex});

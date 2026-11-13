@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=court-portraits-1';
-import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js?v=court-portraits-1';
-import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js?v=separate-crowns-1';
-import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=court-portraits-1';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=court-portraits-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=gathering-presence-1';
+import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js?v=succession-ui-recovery-1';
+import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js?v=succession-ui-recovery-1';
+import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=succession-ui-recovery-1';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=succession-ui-recovery-1';
+import {createFictionalPerson} from '../dynasties.js?v=succession-ui-recovery-1';
 
 test('a sick Roman commander retains nominal office while an available officer acts temporarily',()=>{
  const s=newGame('caesar');s.world.characters.caesar.health='seriously_ill';const g=deriveGovernment(s,'caesar');assert.equal(g.kind,'acting_command');assert.deepEqual(g.nominal,['caesar']);assert.deepEqual(g.acting,['antony']);assert.deepEqual(s.world.leadership.caesar,['caesar']);
@@ -93,6 +94,27 @@ test('appointment rejects outsiders, unavailable candidates and insufficient fun
 test('succession plans are saved and select an eligible designated successor only after the office is vacant',()=>{
  let s=newGame('caesar');const treasury=s.factions.caesar.treasury;assert.equal(planSuccession(s,'lepidus').ok,true);assert.equal(s.factions.caesar.treasury,treasury-5);assert.deepEqual(s.world.leadership.caesar,['caesar']);s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.characters.caesar.alive=false;assignSuccession(s,'caesar');assert.deepEqual(s.world.leadership.caesar,['lepidus']);
  const fallback=newGame('caesar');planSuccession(fallback,'lepidus');fallback.world.characters.lepidus.alive=false;fallback.world.characters.caesar.alive=false;assignSuccession(fallback,'caesar');assert.deepEqual(fallback.world.leadership.caesar,['antony']);
+});
+
+test('a designation is consumed only when a vacancy is actually filled',()=>{
+ let s=newGame('caesar');assert.equal(planSuccession(s,'lepidus').ok,true);s.world.characters.caesar.alive=false;
+ assert.deepEqual(assignSuccession(s,'caesar'),['lepidus']);assert.equal(s.world.successionPlans.caesar,undefined);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(s.world.successionPlans.caesar,undefined);
+ const fallback=newGame('caesar');planSuccession(fallback,'lepidus');fallback.world.characters.lepidus.alive=false;fallback.world.characters.caesar.alive=false;
+ assert.deepEqual(assignSuccession(fallback,'caesar'),['antony']);assert.equal(fallback.world.successionPlans.caesar,undefined);
+ const empty=newGame('caesar');planSuccession(empty,'lepidus');for(const id of ['caesar','lepidus','antony'])empty.world.characters[id].alive=false;
+ assert.deepEqual(assignSuccession(empty,'caesar'),[]);assert.equal(empty.world.successionPlans.caesar,'lepidus');assert.equal(withdrawSuccessionPlan(empty).ok,true);
+ const joint=newGame('egypt');joint.world.successionPlans.egypt='arsinoe';joint.world.characters.cleopatra.alive=false;
+ assert.deepEqual(assignSuccession(joint,'egypt'),['ptolemy']);assert.equal(joint.world.successionPlans.egypt,'arsinoe');
+});
+
+test('separate Mauretanian kingdoms do not spend money on an unusable joint succession plan',()=>{
+ const s=newGame('caesar'),candidate=createFictionalPerson(s,{name:['Court member','宫廷成员'],faction:'mauretania',birthYear:-80,location:'mauretania'});
+ s.month=6;s.factions.mauretania.stability=35;const treasury=s.factions.mauretania.treasury;advanceGovernments(s);
+ assert.equal(s.world.successionPlans.mauretania,undefined);assert.equal(s.factions.mauretania.treasury,treasury);
+ s.world.successionPlans.mauretania=candidate;assert.equal(validSuccessionPlan(s,'mauretania'),null);
+ const spy=queueMission(s,'caesar','mauretania','spy','succession');assert.equal(spy.ok,true);s.world.intelSeed=1000;for(let i=0;i<spy.duration;i++)advanceOperations(s);
+ assert.equal(s.knowledge.caesar.mauretania.reports[0].value,'unknown');
 });
 test('succession plans cannot displace a surviving co-ruler or appoint a foreign defector',()=>{
  const s=newGame('egypt');assert.equal(planSuccession(s,'ptolemy').reason,'unavailable');s.world.characters.cleopatra.alive=false;assignSuccession(s,'egypt');assert.deepEqual(s.world.leadership.egypt,['ptolemy']);
