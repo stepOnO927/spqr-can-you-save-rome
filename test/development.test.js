@@ -96,6 +96,28 @@ test('Egyptian multiscript decrees require adoption and affect only Egyptian-cul
  assert.equal(nile.integration,foreignControl.regions.find(r=>r.id===nile.id).integration+1);
 });
 
+test('foreign multiscript policy needs an Egyptian community willing to receive it',()=>{
+ const id='egyptian-multiscript-decrees',s=newGrandGame('senate');s.wars=[];s.factions.senate.treasury=500;
+ const d=development(s,'senate');d.knownIdeas.push(id);
+ const treasury=s.factions.senate.treasury;
+ assert.equal(ideaAdoptionPlan(s,'senate',id).reason,'cultural-base');
+ assert.equal(adoptIdea(s,'senate',id).reason,'cultural-base');
+ assert.equal(s.factions.senate.treasury,treasury);
+ assert.match(ideasPanel(s,'en'),/Requires an owned territory of the originating culture/);
+ assert.match(ideasPanel(s,'zh'),/需要统治该理念起源文化的领土/);
+ const nile=s.regions.find(r=>r.culture==='egypt');nile.owner='senate';nile.civicSatisfaction=44;
+ assert.equal(ideaAdoptionPlan(s,'senate',id).reason,'local-support');
+ assert.match(ideasPanel(s,'en'),/Local satisfaction must reach 45/);
+ assert.match(ideasPanel(s,'zh'),/当地满意度须达到45/);
+ nile.civicSatisfaction=45;
+ const plan=ideaAdoptionPlan(s,'senate',id);assert.equal(plan.ok,true);assert.equal(plan.months,4);
+ assert.equal(adoptIdea(s,'senate',id).ok,true);assert.equal(s.factions.senate.treasury,treasury-plan.cost);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(restored.development.senate.adoption.remaining,4);
+ months(restored,4);
+ assert.equal(restored.development.senate.slots.government[0],id);
+});
+
 test('monthly budget records paid construction and research orders without double counting',()=>{
  const s=newGrandGame('senate');s.factions.senate.treasury=500;
  const projected=nationalBudget(s,'senate').projectedNet;
