@@ -92,7 +92,10 @@ await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});await page.l
 await page.evaluate(()=>localStorage.setItem('spqr-lang','zh'));await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});assert.match(await page.locator('#entry-senate').innerText(),/元老院/);await page.screenshot({path:path.join(root,'outputs','entry-zh.png')});
 await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('.grand-site').first().waitFor();
 const routeReload=newGrandGame('senate'),routeReloadBytes=Buffer.from(JSON.stringify(routeReload));
+await page.locator('#upload-save-file').setInputFiles({name:'broken.json',mimeType:'application/json',buffer:Buffer.from('{')});
+assert.match(await page.locator('#status').innerText(),/存档文件无法读取/);
 await page.locator('#upload-save-file').setInputFiles({name:'route-reload.json',mimeType:'application/json',buffer:routeReloadBytes});
+assert.equal(await page.locator('#status').evaluate(el=>el.style.display),'none','A successful upload must clear the previous error');
 await page.locator('[data-army="italy"]').evaluate(el=>el.click());
 assert.ok(await page.locator('.reachable-destination').count()>0,'Selected army should show possible destinations');
 await page.locator('#upload-save-file').setInputFiles({name:'route-reload-again.json',mimeType:'application/json',buffer:routeReloadBytes});
