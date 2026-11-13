@@ -59,6 +59,7 @@ try{
  const visibleSites=await page.locator('.grand-site').count();
  assert.ok(visibleSites>0&&visibleSites<120,'Only settlements near the current view should keep live map markers');
  assert.equal(await page.locator('.maplibregl-canvas').isVisible(),true);
+ assert.deepEqual(await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return ['land-grain','sea-grain'].map(id=>map.hasImage(id))}),[true,true],'Local cartographic patterns must register with the real map renderer');
  assert.deepEqual(errors,[]);
  assert.ok(terrainRequests.length>0,'Overview terrain tiles were not requested');
  assert.deepEqual(missingTerrain,[]);
