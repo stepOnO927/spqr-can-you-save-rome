@@ -11,7 +11,8 @@ export const MAGISTRACIES={
  consul:{name:['Consul','执政官'],seats:2,month:10,body:'centuriate',age:42,previous:'praetor'},
  praetor:{name:['Praetor','裁判官'],seats:2,month:11,body:'centuriate',age:39,previous:'quaestor'},
  quaestor:{name:['Quaestor','财务官'],seats:2,month:12,body:'tribal',age:30},
- aedile:{name:['Aedile','营造官'],seats:1,month:12,body:'tribal',age:36},
+ aedile:{name:['Curule Aedile','高级营造官'],seats:2,month:12,body:'tribal',age:36},
+ plebeian_aedile:{name:['Plebeian Aedile','平民营造官'],seats:2,month:12,body:'plebeian',age:36},
  tribune:{name:['Tribune of the Plebs','保民官'],seats:2,month:12,body:'plebeian',age:30},
  censor:{name:['Censor','监察官'],seats:2,month:10,body:'centuriate',age:42,previous:'consul',cycle:5},
  dictator:{name:['Dictator','独裁官'],seats:1,body:'exceptional'}
@@ -28,7 +29,7 @@ function addFictional(s,faction,kind,index){
  const family=['Varro','Cassianus','Varenus','Marcellinus','Fabius','Valerius'][((Math.floor(index/6)%6)+6)%6];
  const zhFirst=['卢基乌斯','普布利乌斯','奥卢斯','盖乌斯','马尔库斯','提图斯'][((index%6)+6)%6];
  const zhFamily=['瓦罗','卡西亚努斯','瓦雷努斯','马尔凯利努斯','法比乌斯','瓦莱里乌斯'][((Math.floor(index/6)%6)+6)%6];
- const id=createFictionalPerson(s,{name:[first+' '+family,zhFirst+'·'+zhFamily],faction,birthYear:s.year-({quaestor:33,aedile:38,tribune:35,praetor:41,consul:45,censor:50}[kind]||40)-((index%4+4)%4),location:s.regions.find(r=>r.owner===faction)?.id||null,sex:'male',role:['Simulated political candidate','模拟政治候选人']});
+ const id=createFictionalPerson(s,{name:[first+' '+family,zhFirst+'·'+zhFamily],faction,birthYear:s.year-({quaestor:33,aedile:38,plebeian_aedile:38,tribune:35,praetor:41,consul:45,censor:50}[kind]||40)-((index%4+4)%4),location:s.regions.find(r=>r.owner===faction)?.id||null,sex:'male',role:['Simulated political candidate','模拟政治候选人']});
  const p=person(s,id);p.education=65+index%5*5;p.influence=42+index%4*8;p.loyalty=50+index%5*7;p.wealth=14+index%4*5;
  const c=s.world.cursus;c.careers[id]=kind==='consul'?[{office:'quaestor',year:s.year-11,simulated:true},{office:'praetor',year:s.year-4,simulated:true}]:kind==='praetor'||kind==='aedile'?[{office:'quaestor',year:s.year-5,simulated:true}]:[];
  c.obedience[id]={value:clamp(45+p.loyalty/3-(p.ambition||40)/6),history:[{year:s.year,month:s.month,cause:'initial',delta:0}]};
@@ -75,7 +76,7 @@ export function initializeCursus(s){
  if(!c.seeded){
   c.seeded=true;
   // These people and prior offices are explicit alternate-history simulations.
-  for(const faction of ['caesar','senate']){const offset=faction==='senate'?0:12;for(let i=0;i<4;i++){const id=addFictional(s,faction,'consul',offset+i);if(faction==='senate'&&i===0){c.varroId=id;const varro=person(s,id);varro.education=96;varro.influence=86;varro.wealth=36;varro.ambition=100;varro.eloquence=92;c.applicants.find(x=>x.id===id).senatorialSupport=80;c.obedience[id].value=34}}for(const office of ['praetor','quaestor','aedile','tribune'])for(let i=0;i<MAGISTRACIES[office].seats+1;i++)addFictional(s,faction,office,offset+4+i+Object.keys(MAGISTRACIES).indexOf(office)*4)}
+  for(const faction of ['caesar','senate']){const offset=faction==='senate'?0:12;for(let i=0;i<4;i++){const id=addFictional(s,faction,'consul',offset+i);if(faction==='senate'&&i===0){c.varroId=id;const varro=person(s,id);varro.education=96;varro.influence=86;varro.wealth=36;varro.ambition=100;varro.eloquence=92;c.applicants.find(x=>x.id===id).senatorialSupport=80;c.obedience[id].value=34}}for(const office of ['praetor','quaestor','aedile','plebeian_aedile','tribune'])for(let i=0;i<MAGISTRACIES[office].seats+1;i++)addFictional(s,faction,office,offset+4+i+Object.keys(MAGISTRACIES).indexOf(office)*4)}
   for(const [faction,administrator,scholar] of [
    ['parthia',['Artabanus of Media','米底的阿尔塔巴努斯'],['Mithradates the Scholar','学者米特拉达梯']],
    ['egypt',['Dionysios of Alexandria','亚历山大里亚的狄奥尼西奥斯'],['Herakleides the Scholar','学者赫拉克利德']],
@@ -169,7 +170,7 @@ export function annualApplicants(s){
   if(next&&officeEligibility(s,id,next).ok&&!c.applicants.some(x=>x.id===id&&x.year===s.year&&x.office===next)&&c.applicants.filter(x=>x.year===s.year&&x.office===next&&x.faction===person(s,id).faction).length<2)c.applicants.push({id,year:s.year,office:next,status:'eligible',faction:person(s,id).faction,statement:'career promotion',platform:'administration',support:0,opposition:0,campaignExpense:0,promises:[]});
  }
  for(const faction of ['caesar','senate'])if(s.factions[faction]&&s.regions.some(r=>r.owner===faction)){
-  for(const office of ['consul','praetor','quaestor','aedile','tribune'])addFictional(s,faction,office,Math.abs(s.year)*13+Object.keys(MAGISTRACIES).indexOf(office)*3+(faction==='senate'?0:1));
+  for(const office of ['consul','praetor','quaestor','aedile','plebeian_aedile','tribune'])addFictional(s,faction,office,Math.abs(s.year)*13+Object.keys(MAGISTRACIES).indexOf(office)*3+(faction==='senate'?0:1));
   for(const id of Object.keys(c.careers))if(c.careers[id]?.some(x=>x.office==='consul')&&person(s,id)?.faction===faction&&officeEligibility(s,id,'censor').ok&&Math.abs(s.year)%5===0)c.applicants.push({id,year:s.year,office:'censor',status:'eligible',faction,support:0,opposition:0,promises:[]});
  }
  note(s,'Annual office applications have opened; candidates remain independent political actors.','年度官员申请已开放；候选人仍是独立的政治人物。');
@@ -191,7 +192,7 @@ export function supportCandidate(s,id,action='support',actor=s.player,detail=nul
  const costs={support:8,oppose:6,canvass:5,speech:4,family:7,games:12,debate:5,negotiate:4,withdraw:3,promise:3,improper:14};
  if(!(action in costs))return {ok:false,reason:'action'};
  if(s.month>=MAGISTRACIES[candidate.office].month)return {ok:false,reason:'closed'};
- if(action==='games'&&candidate.office!=='aedile'&&!c.careers[id]?.some(x=>x.office==='aedile'))return {ok:false,reason:'authority'};
+ if(action==='games'&&!['aedile','plebeian_aedile'].includes(candidate.office)&&!c.careers[id]?.some(x=>['aedile','plebeian_aedile'].includes(x.office)))return {ok:false,reason:'authority'};
  if(action==='family'&&!c.senators.some(x=>x.faction===actor&&present(s,x.id)))return {ok:false,reason:'unavailable'};
  if(action==='debate'&&!c.applicants.some(x=>x.year===s.year&&x.office===candidate.office&&x.id!==id&&x.status==='eligible'))return {ok:false,reason:'unavailable'};
  if(c.campaignActions.some(x=>x.id===id&&x.action===action&&x.actor===actor&&x.year===s.year&&x.month===s.month))return {ok:false,reason:'cooldown'};

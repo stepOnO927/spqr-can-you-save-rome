@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=cursus-integrated-1';
-import {appointOffice} from '../office-system.js?v=succession-ui-recovery-1';
-import {initializeCursus,officeEligibility,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=cursus-integrated-1';
+import {appointOffice,officeEffects} from '../office-system.js?v=succession-ui-recovery-1';
+import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=cursus-integrated-1';
 
 test('fictional candidates are persistent people; Roman consuls require an assembly election',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
@@ -390,4 +390,23 @@ test('a stale scholar report permits an uncertain contact without revealing the 
  const result=contactOfficial(s,'parthia',id,'scholarly');
  assert.equal(result.ok,true);assert.equal(result.months,4);
  assert.equal(c.contacts.at(-1).status,'pending');
+});
+
+test('plebeian aediles are elected by the Plebeian Council in paired seats',()=>{
+ const s=newGame('senate'),c=initializeCursus(s);
+ const pool=c.applicants.filter(x=>x.year===s.year&&x.faction==='senate'&&x.office==='plebeian_aedile');
+ assert.ok(pool.length>=3);assert.ok(pool.every(x=>officeEligibility(s,x.id,'plebeian_aedile').ok));
+ s.month=12;const result=resolveElection(s,'plebeian_aedile').result;
+ assert.equal(result.body,'plebeian');assert.equal(result.elected.length,2);
+ assert.equal(result.ballots.length,16);
+});
+
+test('low obedience impedes political coordination without erasing professional routine work',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
+ assert.equal(appointOffice(s,'finance',id).ok,true);
+ const routine=officeEffects(s,'senate').treasury,before=institutionalBalance(s).magistrate;
+ assert.equal(routine,2);
+ changeObedience(s,id,-15,'disputed instructions');
+ assert.equal(officeEffects(s,'senate').treasury,routine);
+ assert.ok(institutionalBalance(s).magistrate<before);
 });
