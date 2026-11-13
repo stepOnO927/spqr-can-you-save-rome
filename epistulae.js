@@ -52,7 +52,7 @@ export function sendLetter(s, spec) {
   const mail = initializeMail(s);
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   if (!s.factions?.[senderFaction] || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
-  if (senderId && (!s.world?.characters?.[senderId]||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
+  if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
   const source = spec.source || (senderId ? s.world.characters[senderId].location : null) || home(s, senderFaction);
   const destination = spec.destination || home(s, recipient);
@@ -446,7 +446,7 @@ export function advanceMail(s, actions = {}) {
       bond.trust=Math.min(100,bond.trust+(event.representative?1:event.privateMeeting?3:2));bond.meetings++;s.world.personalRelations[key]=bond;
     }
     const original=mail.messages.find(m=>m.id===event.letterId);
-    if(original)sendLetter(s,{senderId:event.hostId,senderFaction:s.player,recipient:s.player,category:'invitations',priority:'routine',
+    if(original)sendLetter(s,{senderId:host?.alive?event.hostId:null,senderInstitution:host?.alive?null:s.player,senderFaction:s.player,recipient:s.player,category:'invitations',priority:'routine',
       subject:event.status==='held'?['The gathering was held','宴会已举行']:['The gathering was missed','宴会未能举行'],
       body:event.status==='held'?['The invited guest and host met as arranged.','受邀者与主人如约会面。']:['The invited guest and host could not meet at the appointed place.','受邀者与主人未能在约定地点会面。'],
       threadId:original.threadId,options:['acknowledge'],context:{kind:'invitation_result'}});

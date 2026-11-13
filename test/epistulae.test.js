@@ -47,6 +47,9 @@ test('war notification follows real war and is only generated once', () => {
 test('unknown sender is rejected and AI correspondence resolves without player inbox', () => {
   const s=state();
   assert.equal(sendLetter(s,{senderId:'imaginary',senderFaction:'egypt',recipient:'caesar',subject:['x','x'],body:['x','x']}).ok,false);
+  s.world.characters.cleopatra.alive=false;
+  assert.equal(sendLetter(s,{senderId:'cleopatra',senderFaction:'egypt',recipient:'caesar',subject:['x','x'],body:['x','x']}).ok,false);
+  s.world.characters.cleopatra.alive=true;
   const offered=treatyLetter(s,'egypt','parthia');
   assert.equal(offered.ok,true);
   const agreements=[];
