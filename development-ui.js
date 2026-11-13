@@ -1,9 +1,9 @@
-import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,knowledgeAgreementCheck,scholarVisitCheck,scholarResearchBonus} from './development.js?v=28';
+import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,knowledgeAgreementCheck,scholarVisitCheck,scholarResearchBonus} from './development.js?v=29';
 import {FIGURE_ROLES,initializeFigures,figureStatus,figureActive} from './great-figures.js';
 import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';
-import {religionPanel} from './local-society.js?v=5';
-import {techIllustration} from './tech-art.js?v=10';
+import {religionPanel} from './local-society.js?v=6';
+import {techIllustration} from './tech-art.js?v=11';
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const factionLabel=(id,zh)=>esc(FACTIONS[id]?.short?.[zh?1:0]||id);
 const knowledgeLabel=(branch,id,zh)=>esc((branch==='material'?MATERIALS:IDEAS).find(item=>item.id===id)?.name[zh?1:0]||id);
@@ -13,6 +13,7 @@ const effectNames={treasury:['Treasury / month','国库 / 月'],food:['Food / mo
 const enzh=(zh,en,cn)=>zh?cn:en;
 function effectsText(e,zh){return Object.entries(e||{}).map(([key,value])=>{
  if(key==='ancestralRites')return `<span class="dev-effect positive">${zh?'本国祭仪满意度 / 季 +1':'Own rites satisfaction / quarter +1'}</span><span class="dev-effect negative">${zh?'异地祭仪满意度 / 季 −1':'Other rites satisfaction / quarter −1'}</span>`;
+ if(key==='provincialRitesCharter')return `<span class="dev-effect positive">${zh?'承认地方祭仪时：异地传统且少数信仰≥25%的行省满意度 / 季 +1':'With local rites recognized: satisfaction / quarter +1 in provinces with a different dominant tradition and minority faith ≥25%'}</span>`;
  if(key==='estateLabor')return `<span class="dev-effect positive">${zh?'有产出乡村领土每处粮食 / 月 +1（上限4）':'Food / month +1 per productive rural territory (max 4)'}</span><span class="dev-effect negative">${zh?'这些领土满意度与忠诚 / 季 −1；不满人口迁出减半':'Satisfaction and loyalty / quarter −1 there; distressed outmigration halved'}</span>`;
  if(key==='tenantShares')return `<span class="dev-effect positive">${zh?'有产出乡村领土满意度与忠诚 / 季 +1；不满人口迁出上限 225':'Productive rural satisfaction and loyalty / quarter +1; distressed outmigration cap 225'}</span><span class="dev-effect negative">${zh?'国库可用粮食 / 月 −1 每处（上限3）':'State-available food / month −1 per territory (max 3)'}</span>`;
  if(key==='taxReview')return `<span class="dev-effect positive">${zh?'行政融合度≥65且实行高税时，当地满意度与忠诚的月度损失各减少1':'With high taxes and integration ≥65, monthly satisfaction and loyalty losses each fall by 1'}</span><span class="dev-effect negative">${zh?'高税期间，每12处受益领土另需1国库／月的复核费用':'While taxes are high, review costs 1 treasury / month per 12 eligible territories'}</span>`;

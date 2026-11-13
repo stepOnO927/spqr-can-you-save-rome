@@ -41,7 +41,7 @@ test('monthly budget records paid construction and research orders without doubl
 
 test('every development node has its own interpretive illustration',()=>{
  const art=[...MATERIALS,...IDEAS].map(item=>techIllustration(item));
- assert.equal(art.length,70);assert.equal(new Set(art).size,70);
+ assert.equal(art.length,71);assert.equal(new Set(art).size,71);
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
@@ -193,7 +193,7 @@ test('local rites affect a neighboring court only through an influential shared 
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,36);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,37);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
@@ -266,6 +266,40 @@ test('sanctuary protection helps only attended local rites and carries a monthly
   for(const [lang,label] of [['en','Provincial rites support'],['zh','地方祭仪支持']])assert.match(developmentPanel(s,lang,'idea'),new RegExp(label));
 });
 
+test('provincial rites accord needs an adopted idea, local rites, and a substantial minority',()=>{
+ const s=newGrandGame('caesar'),d=development(s,'caesar'),province=s.regions.find(r=>r.id==='egypt');
+ province.owner='caesar';province.integration=30;s.month=3;s.wars=[];
+ const idea=IDEAS.find(x=>x.id==='provincial-rites-charter');
+ assert.match(idea.source.url,/verres24_3/);
+ assert.match(techIllustration(idea),/<svg/);
+ assert.match(developmentPanel(s,'en','idea'),/Provincial Rites Accord/);
+ assert.match(developmentPanel(s,'zh','idea'),/地方祭仪协定/);
+ const baseline=faithSatisfaction(s,province);
+ d.slots.culture[0]='cultural-accommodation';
+ assert.equal(faithSatisfaction(s,province),baseline);
+ d.slots.culture[0]=null;
+ s.factions.caesar.treasury=500;
+ assert.equal(researchInnovation(s,'caesar','idea',idea.id).ok,true);
+ assert.equal(faithSatisfaction(s,province),baseline);
+ months(s,idea.months);
+ assert.ok(d.knownIdeas.includes(idea.id));
+ assert.equal(adoptIdea(s,'caesar',idea.id,0).ok,true);
+ assert.equal(activeEffects(s,'caesar').provincialRitesCharter,undefined);
+ months(s,d.adoption.remaining);
+ assert.equal(d.slots.culture[0],idea.id);
+ const before=nationalBudget(s,'caesar').ideaUpkeep;
+ assert.ok(before>=idea.effects.upkeep);
+ province.owner='caesar';province.integration=30;s.month=3;
+ assert.equal(faithSatisfaction(s,province),baseline);
+ s.religion.caesar.policy='local-rites';
+ assert.equal(faithSatisfaction(s,province),2);
+ province.faiths=[{id:'egyptian-cults',share:80},{id:'roman-cults',share:20}];
+ assert.equal(faithSatisfaction(s,province),1);
+ province.faiths=[{id:'egyptian-cults',share:70},{id:'roman-cults',share:30}];
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(faithSatisfaction(saved,saved.regions.find(r=>r.id==='egypt')),2);
+});
+
 test('ancestral rites patronage has a real provincial tradeoff, upkeep, and a preserved save',()=>{
  const idea=IDEAS.find(x=>x.id==='ancestral-rites');
  assert.match(idea.source.url,/univ-grenoble-alpes/);
@@ -283,9 +317,10 @@ test('ancestral rites patronage has a real provincial tradeoff, upkeep, and a pr
  foreign.priesthood.influence=20;
  assert.equal(faithSatisfaction(s,foreign),-1);
  foreign.priesthood.influence=40;
- assert.equal(ideaCompatibility(s,'caesar','cultural-accommodation',0).ok,true);
+ assert.equal(ideaCompatibility(s,'caesar','provincial-rites-charter',0).ok,true);
  d.slots.culture.push(null);
- assert.equal(ideaCompatibility(s,'caesar','cultural-accommodation',1).reason,'conflict');
+ assert.equal(ideaCompatibility(s,'caesar','provincial-rites-charter',1).reason,'conflict');
+ assert.equal(ideaCompatibility(s,'caesar','cultural-accommodation',1).ok,true);
  const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
  assert.equal(faithSatisfaction(loaded,loaded.regions.find(r=>r.id==='roma')),1);
  assert.equal(faithSatisfaction(loaded,loaded.regions.find(r=>r.id==='egypt')),-2);

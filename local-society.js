@@ -29,12 +29,13 @@ export function advanceReligion(state){
 }
 export function faithSatisfaction(state,region){
  if(!state.grandMap||state.month%3!==0)return 0;
- const ideas=state.development?.[region.owner]?.slots?.culture||[],accommodation=ideas.includes('cultural-accommodation'),policy=state.religion?.[region.owner]?.policy||'customary',dominant=region.faiths?.[0]?.id,aligned=dominant===traditionFor(region.owner);
+ const ideas=state.development?.[region.owner]?.slots?.culture||[],policy=state.religion?.[region.owner]?.policy||'customary',dominant=region.faiths?.[0]?.id,aligned=dominant===traditionFor(region.owner);
  const attendedRites=region.priesthood?.tradition===dominant&&region.priesthood.influence>=35;
  const protectedSanctuary=ideas.includes('sanctuary-protection')&&!aligned&&attendedRites;
  const ancestralPatronage=ideas.includes('ancestral-rites')&&attendedRites?(aligned?1:-1):0;
- const baseline=policy==='local-rites'?(!aligned||accommodation?1:0):policy==='civic-patronage'?(aligned?1:accommodation?0:-2):accommodation?(region.integration<85?1:0):region.integration<65&&!aligned?-1:0;
- return baseline+(protectedSanctuary?1:0)+ancestralPatronage;
+ const baseline=policy==='local-rites'?(!aligned?1:0):policy==='civic-patronage'?(aligned?1:-2):region.integration<65&&!aligned?-1:0;
+ const ritesAccord=policy==='local-rites'&&ideas.includes('provincial-rites-charter')&&!aligned&&region.faiths?.some(faith=>faith.id!==dominant&&faith.share>=25);
+ return baseline+(protectedSanctuary?1:0)+ancestralPatronage+(ritesAccord?1:0);
 }
 // A neighboring court can weigh the treatment of an influential border cult
 // that it shares. Cicero describes allies protesting damage to Sicilian rites
