@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGrandGame,upgradeSave,warContributionPlan,collectWarContributions,aiTurn} from '../engine.js';
+import {newGrandGame,upgradeSave,warContributionPlan,collectWarContributions,emergencyProvisionsPlan,collectEmergencyProvisions,nationalBudget,tick,aiTurn} from '../engine.js';
 import {budgetHtml} from '../budget-ui.js';
 import {eventText} from '../campaign-reports.js';
 
@@ -43,4 +43,50 @@ test('an AI can raise the same contributions but avoids a garrison it cannot fee
  aiTurn(state,'caesar');
  assert.equal(state.lastWarContribution.caesar,state.year*12+state.month);
  assert.equal(state.armies.some(unit=>unit.owner==='caesar'&&unit.aiGarrisonRegion==='roma'),false);
+});
+
+test('emergency provisions draw bounded local stores with real three-month harvest costs and saved cooldown',()=>{
+ const state=newGrandGame('caesar'),plan=emergencyProvisionsPlan(state,'caesar');
+ assert.equal(plan.ok,true);assert.ok(plan.food>=6&&plan.food<=24);assert.ok(plan.regions>0&&plan.regions<=4);
+ const before=state.factions.caesar.food,stability=state.factions.caesar.stability,baseBudget=nationalBudget(state,'caesar');
+ const selected=plan.regionIds.map(id=>state.regions.find(r=>r.id===id));
+ assert.deepEqual(collectEmergencyProvisions(state,'caesar'),{ok:true,food:plan.food,regions:plan.regions});
+ assert.equal(state.factions.caesar.food,before+plan.food);assert.equal(state.factions.caesar.stability,stability-2);
+ assert.ok(selected.every(r=>r.foodRequisitionRemaining===3&&r.foodRequisitionLoss>0));
+ assert.ok(nationalBudget(state,'caesar').requisitionLoss>0);
+ assert.ok(nationalBudget(state,'caesar').foodNet<=baseBudget.foodNet);
+ assert.equal(emergencyProvisionsPlan(state,'caesar').reason,'cooldown');
+ const restored=upgradeSave(JSON.parse(JSON.stringify(state)));
+ assert.deepEqual(restored.emergencyProvisions,state.emergencyProvisions);
+ assert.equal(emergencyProvisionsPlan(restored,'caesar').reason,'cooldown');
+ const report=restored.campaignEvents.find(e=>e.type==='emergencyProvisions');
+ assert.match(eventText(restored,report,'en').description,new RegExp(`${plan.food} food`));
+ assert.match(eventText(restored,report,'zh').description,new RegExp(`${plan.food}粮食`));
+ restored.wars=[];
+ for(let i=0;i<2;i++){tick(restored);assert.ok(nationalBudget(restored,'caesar').requisitionLoss>0)}
+ tick(restored);assert.equal(nationalBudget(restored,'caesar').requisitionLoss,0);
+ assert.ok(selected.every(r=>r.foodRequisitionRemaining===3),'the source save must remain independent');
+});
+
+test('provision limits and both language views expose the decision without hiding future cost',()=>{
+ const state=newGrandGame('caesar'),plan=emergencyProvisionsPlan(state,'caesar');
+ assert.match(budgetHtml(state,'en',null,plan),/GATHER LOCAL STORES/);
+ assert.match(budgetHtml(state,'zh',null,plan),/征集地方储粮/);
+ assert.match(budgetHtml(state,'en',null,plan),/Civil Wars 1\.52/);
+ collectEmergencyProvisions(state,'caesar');
+ assert.match(budgetHtml(state,'en',null,emergencyProvisionsPlan(state,'caesar')),/Local stores recovery/);
+ assert.match(budgetHtml(state,'zh',null,emergencyProvisionsPlan(state,'caesar')),/还需等待12个月/);
+ state.lastEmergencyProvisions.caesar=undefined;state.factions.caesar.food=nationalBudget(state,'caesar').foodCapacity-5;
+ assert.equal(emergencyProvisionsPlan(state,'caesar').reason,'storage');
+ state.factions.caesar.food=20;for(const r of state.regions.filter(r=>r.owner==='caesar'))r.loyalty=0;
+ assert.equal(emergencyProvisionsPlan(state,'caesar').reason,'support');
+});
+
+test('AI uses the same provisions only for a real food deficit',()=>{
+ const state=newGrandGame('egypt');state.factions.caesar.food=5;
+ assert.ok(nationalBudget(state,'caesar').foodNet<0);
+ aiTurn(state,'caesar');
+ assert.equal(state.lastEmergencyProvisions.caesar,state.year*12+state.month);
+ assert.ok(state.factions.caesar.food>5);
+ const renewed=state.factions.caesar.food;aiTurn(state,'caesar');assert.ok(state.factions.caesar.food<=renewed);
 });

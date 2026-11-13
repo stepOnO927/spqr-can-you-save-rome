@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {newGrandGame,upgradeSave,tick,army,region,moveArmy,previewMarch,recruit,reserveFleet,nationalBudget,collectWarContributions} from '../engine.js';
+import {newGrandGame,upgradeSave,tick,army,region,moveArmy,previewMarch,recruit,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions} from '../engine.js';
 import {assessment,sendScouts,delayAttack,latestRecon,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {revealedAchievements} from '../achievement-system.js';
@@ -23,6 +23,7 @@ assert.deepEqual(revealedAchievements(s),[]);
 for(let month=1;month<48&&!s.achievementState.finalized;month++){
  const legion=army(s,'xiii'),f=s.factions.caesar;
  if(f.treasury<30&&nationalBudget(s,'caesar').projectedNet<0)record('collect wartime contributions',collectWarContributions(s,'caesar'));
+ if(f.food<24&&nationalBudget(s,'caesar').foodNet<0)record('gather emergency provisions',collectEmergencyProvisions(s,'caesar'));
  const ready=legion&&legion.men>=600&&!legion.move&&!legion.siege&&!legion.reconPending&&!legion.trainingRemaining;
  if(ready&&region(s,legion.region)?.owner==='caesar'){
   const index=corridor.indexOf(legion.region),next=index>=0&&index<corridor.length-1?corridor[index+1]:null;

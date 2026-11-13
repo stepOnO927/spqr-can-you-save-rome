@@ -6,7 +6,7 @@ import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,ad
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
 import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=30';
-import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=5';
+import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=6';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=8';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=20';
@@ -15,8 +15,8 @@ import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=28';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
 import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=3';
-import {nationalBudget} from './national-budget.js?v=10';
-export {nationalBudget} from './national-budget.js?v=10';
+import {nationalBudget} from './national-budget.js?v=11';
+export {nationalBudget} from './national-budget.js?v=11';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
 export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=28';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
@@ -178,6 +178,31 @@ export function collectWarContributions(s,owner){
  (s.warContributions||=[]).push({owner,year:s.year,month:s.month,income:plan.income,regionIds:[...plan.regionIds],loyaltyLoss:plan.loyaltyLoss,satisfactionLoss:plan.satisfactionLoss,stabilityLoss:plan.stabilityLoss});
  if(owner===s.player){log(s,`War contributions raised ${plan.income} treasury from ${plan.regions} established communities; loyalty and satisfaction fell.`,`战时筹款从${plan.regions}个稳定城镇取得${plan.income}国库；地方忠诚与满意度下降。`);recordEvent(s,{type:'warContribution',category:'economy',severity:'significant',factionId:owner,income:plan.income,regions:plan.regions})}
  return {ok:true,income:plan.income,regions:plan.regions};
+}
+
+// Caesar reports drawing emergency provisions from friendly communities during
+// the Ilerda shortage (Civil Wars 1.52). Stored food, local strain and timing
+// below are bounded game values, not quantities reported in that passage.
+export function emergencyProvisionsPlan(s,owner){
+ const f=s.factions?.[owner],now=s.year*12+s.month,last=s.lastEmergencyProvisions?.[owner];
+ if(s.achievementState?.finalized)return {ok:false,reason:'campaign'};
+ if(!s.grandMap||!f||owner==='rebels'||!s.wars.some(w=>w.includes(owner)&&w.some(id=>id!==owner&&id!=='rebels')))return {ok:false,reason:'war'};
+ if(Number.isFinite(last)&&now-last<12)return {ok:false,reason:'cooldown',remaining:12-(now-last)};
+ if(f.stability<40)return {ok:false,reason:'stability'};
+ const candidates=s.regions.filter(r=>r.owner===owner&&r.food>=.5&&r.loyalty>=60&&(r.civicSatisfaction??r.loyalty)>=55&&!(r.foodRequisitionRemaining>0)).sort((a,b)=>b.food-a.food||a.id.localeCompare(b.id)).slice(0,4);
+ const capacity=Math.max(0,nationalBudget(s,owner).foodCapacity-f.food);
+ const food=Math.max(0,Math.min(24,Math.round(candidates.reduce((sum,r)=>sum+r.food*6,0)),capacity));
+ if(food<6)return {ok:false,reason:capacity<6?'storage':'support'};
+ return {ok:true,food,regions:candidates.length,regionIds:candidates.map(r=>r.id),loyaltyLoss:4,satisfactionLoss:5,stabilityLoss:2,harvestMonths:3};
+}
+export function collectEmergencyProvisions(s,owner){
+ const plan=emergencyProvisionsPlan(s,owner);if(!plan.ok)return plan;
+ const f=s.factions[owner];f.food+=plan.food;f.stability=Math.max(0,f.stability-plan.stabilityLoss);
+ for(const id of plan.regionIds){const site=region(s,id),satisfaction=site.civicSatisfaction??site.loyalty;site.loyalty=Math.max(0,site.loyalty-plan.loyaltyLoss);site.civicSatisfaction=Math.max(0,satisfaction-plan.satisfactionLoss);site.foodRequisitionRemaining=plan.harvestMonths;site.foodRequisitionLoss=Math.min(.5,site.food*.4)}
+ (s.lastEmergencyProvisions||={})[owner]=s.year*12+s.month;
+ (s.emergencyProvisions||=[]).push({owner,year:s.year,month:s.month,food:plan.food,regionIds:[...plan.regionIds],loyaltyLoss:plan.loyaltyLoss,satisfactionLoss:plan.satisfactionLoss,stabilityLoss:plan.stabilityLoss,harvestMonths:plan.harvestMonths});
+ if(owner===s.player){log(s,`Emergency provisions gathered ${plan.food} food from ${plan.regions} friendly communities; their next three harvests and local support will suffer.`,`紧急征集粮食：从${plan.regions}处己方城镇取得${plan.food}粮食；当地接下来三个月的产量与民心将受损。`);recordEvent(s,{type:'emergencyProvisions',category:'economy',severity:'significant',factionId:owner,food:plan.food,regions:plan.regions})}
+ return {ok:true,food:plan.food,regions:plan.regions};
 }
 
 function concludePeace(s,actor,target){
@@ -410,6 +435,7 @@ function economy(s){
     f.food=Math.max(-100,Math.min(f.foodCapacity,Math.round(f.food)));
     owned.forEach(r=>{const governor=governorLoyaltyEffect(s,r.id),works=localBuildingEffects(r),rural=productiveEstateRegion(r)&&s.month%3===0,estateStrain=effects.estateLabor&&rural?1:0,tenantSupport=effects.tenantShares&&rural?1:0,taxReview=s.grandMap&&f.tax==='high'&&effects.taxReview&&(r.integration??60)>=65?1:0,taxPressure=({low:2,normal:0,high:-2}[f.tax])+taxReview;if(s.grandMap){r.civicSatisfaction=Math.max(0,Math.min(100,(r.civicSatisfaction??r.loyalty)+taxPressure+(f.food<0?-3:0)+(works.loyalty||0)+faithSatisfaction(s,r)-estateStrain+tenantSupport));r.integration=Math.max(0,Math.min(100,(r.integration??60)+(governor>0?1:0)+(works.stability>0?1:0)));}r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+taxReview+(f.food<0?-2:0)+governor+(effects.loyalty||0)+(works.loyalty||0)+(s.grandMap?(r.civicSatisfaction<30?-1:r.civicSatisfaction>75?1:0)+(r.integration<35?-1:0):0)-estateStrain+tenantSupport))});
   }
+  for(const site of s.regions)if(site.foodRequisitionRemaining>0){site.foodRequisitionRemaining--;if(!site.foodRequisitionRemaining)delete site.foodRequisitionLoss}
   advanceDemography(s);
 }
 
@@ -526,10 +552,11 @@ export function aiTurn(s,owner){
   if(alert&&f.treasury>=40&&f.food>=6&&f.manpower>=3000)raiseAt(alert.regionId);
   const outnumbered=s.wars.some(w=>w.includes(owner)&&s.regions.filter(r=>r.owner===w.find(id=>id!==owner)).length>owned.length*1.5);
   if(owner!=='rebels'&&f.treasury<30&&nationalBudget(s,owner).projectedNet<0)collectWarContributions(s,owner);
+  const emergencyProvisionsUsed=owner!=='rebels'&&f.food<24&&nationalBudget(s,owner).foodNet<0&&collectEmergencyProvisions(s,owner).ok;
   const civilianReserve=outnumbered?24+3*Math.max(0,-nationalBudget(s,owner).projectedNet):0;
   const reconFoodReserve=outnumbered?9+3*Math.max(0,-nationalBudget(s,owner).foodNet):0;
-  const canFundScouts=(cost,foodCost=2)=>f.treasury>=cost+civilianReserve&&f.food>=foodCost+reconFoodReserve;
-  const canFundProbe=()=>f.food>=3+reconFoodReserve;
+  const canFundScouts=(cost,foodCost=2)=>!emergencyProvisionsUsed&&f.treasury>=cost+civilianReserve&&f.food>=foodCost+reconFoodReserve;
+  const canFundProbe=()=>!emergencyProvisionsUsed&&f.food>=3+reconFoodReserve;
   if(s.grandMap&&outnumbered&&f.treasury>=24&&f.food>=6&&f.manpower>=3000){
     const exposedWin=(s.battles||[]).find(b=>b.year===s.year&&b.month===s.month&&b.attacker?.owner===owner&&b.attackerWins&&region(s,b.region)?.owner===owner&&adjacent(b.region,s).some(e=>isWar(s,owner,region(s,e.to)?.owner)));
     if(exposedWin)raiseAt(exposedWin.region);

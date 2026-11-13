@@ -21,16 +21,23 @@ try{
  const atlas=await context.newPage();atlas.on('pageerror',error=>errors.push(error.message));
  await atlas.goto('http://spqr.test/map-lab/');await atlas.locator('#start-free').click();await atlas.locator('#resources-help').click();
  assert.equal(await atlas.locator('#war-contribution').isEnabled(),true);
+ assert.equal(await atlas.locator('#emergency-provisions').isEnabled(),true);
  assert.match(await atlas.locator('.national-budget').last().innerText(),/WARTIME MUNICIPAL CONTRIBUTIONS/);
+ assert.match(await atlas.locator('.national-budget').last().innerText(),/EMERGENCY PROVISIONS/);
+ await atlas.locator('#emergency-provisions').click();assert.equal(await atlas.locator('#emergency-provisions').isDisabled(),true);
  await atlas.locator('#war-contribution').click();assert.equal(await atlas.locator('#war-contribution').isDisabled(),true);
- await atlas.locator('#language').click();assert.match(await atlas.locator('.national-budget').last().innerText(),/战时城镇筹款/);
+ await atlas.locator('#language').click();assert.match(await atlas.locator('.national-budget').last().innerText(),/战时城镇筹款[\s\S]*紧急征集粮食/);
  await atlas.locator('#save').click();await atlas.reload();if(await atlas.locator('#start-free').isVisible())await atlas.locator('#start-free').click();await atlas.locator('#load').click();await atlas.locator('#resources-help').click();
  assert.equal(await atlas.locator('#war-contribution').isDisabled(),true,'Reloading the saved campaign must retain the contribution cooldown');
+ assert.equal(await atlas.locator('#emergency-provisions').isDisabled(),true,'Reloading the saved campaign must retain the provisions cooldown');
  const campaign=await context.newPage();campaign.on('pageerror',error=>errors.push(error.message));
  await campaign.goto('http://spqr.test/');await campaign.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state})),newGrandGame('senate'));await campaign.reload();
  await campaign.locator('[data-tab="government"]').click();assert.equal(await campaign.locator('#war-contribution').isEnabled(),true);
+ assert.equal(await campaign.locator('#emergency-provisions').isEnabled(),true);
+ await campaign.locator('#emergency-provisions').click();assert.equal(await campaign.locator('#emergency-provisions').isDisabled(),true);
  await campaign.locator('#war-contribution').click();assert.equal(await campaign.locator('#war-contribution').isDisabled(),true);
  await campaign.locator('#lang').click();assert.match(await campaign.locator('.national-budget').last().innerText(),/WARTIME MUNICIPAL CONTRIBUTIONS|战时城镇筹款/);
+ assert.match(await campaign.locator('.national-budget').last().innerText(),/EMERGENCY PROVISIONS|紧急征集粮食/);
  assert.deepEqual(errors,[]);
- console.log('Wartime contributions work in both campaign views, both languages and saved campaigns.');
+ console.log('Wartime contributions and emergency provisions work in both campaign views, both languages and saved campaigns.');
 }finally{await browser.close()}

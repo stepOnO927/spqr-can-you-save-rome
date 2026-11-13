@@ -1,5 +1,5 @@
 import {observeArmies} from '../character-system.js';
-import {beginBriefing} from '../campaign-reports.js?v=5';
+import {beginBriefing} from '../campaign-reports.js?v=6';
 import {achievementDefinition,campaignSummary} from '../achievement-system.js?v=5';
 export const PROFILE_KEY='spqr-legacy-profile-v1';
 export const BUILDINGS={curia:{name:['Curia','元老院'],price:0,position:[48,35],icon:'♜'},archive:{name:['Archive','档案馆'],price:0,position:[33,53],icon:'▤'},arch:{name:['Triumphal Arch','凯旋门'],price:0,position:[64,52],icon:'⌒'},camp:{name:['Military Camp','军营'],price:300,position:[16,31],icon:'⚑'},museum:{name:['Museum','博物馆'],price:350,position:[75,28],icon:'◈'},temple:{name:['Temple District','神庙区'],price:450,position:[31,16],icon:'♙'},circus:{name:['Circus of Mars','战车赛马场'],price:550,position:[78,71],icon:'◎',requires:'temple'},library:{name:['Library & Academy','图书馆与学院'],price:500,position:[48,68],icon:'▦'},harbor:{name:['Harbor Office','港务局'],price:450,position:[88,43],icon:'⚓'},court:{name:['Court','法庭'],price:400,position:[56,16],icon:'⚖'},intelligence:{name:['Intelligence Office','情报局'],price:500,position:[17,67],icon:'◉'},palace:{name:['State Residence','国政官邸'],price:1200,position:[50,7],icon:'♛'}};
