@@ -157,13 +157,25 @@ test('a minor foreign heir keeps the throne while a named regent actually govern
  assert.doesNotMatch(ownRulerHtml(s,0),/Court regent/);
 });
 
+test('another court does not learn a foreign minority regency at once',()=>{
+ const s=newHanGame('han',{seed:707}),old=s.rulers.armenia.personId,id='unreported-armenian-heir';
+ s.persons[id]={id,name:['Aram','阿拉姆'],faction:'armenia',role:'prince',record:'fictional',birth:s.year-7,sex:'m',father:old,alive:true,competence:60,military:50};
+ recordBirth(s,{id,father:old,birth:s.year-7,birthSurname:null,sex:'m'});
+ s.persons[old].alive=false;advanceForeignRulers(s);
+ assert.ok(s.rulers.armenia.regentId);
+ assert.equal(s.log.some(event=>event.faction==='armenia'&&['succession','regency'].includes(event.kind)),false);
+});
+
 test('succession has a simulation cost and ruler judgment affects AI threshold',()=>{
  const s=newHanGame('han',{seed:42}),f='armenia',old=s.rulers[f],before=s.factions[f].stability;
  s.persons[old.personId].alive=false;advanceForeignRulers(s);
  assert.equal(s.factions[f].stability,before-5);
  const p=s.persons[s.rulers[f].personId];p.military=35;const cautious=rulerMilitaryJudgment(s,f);p.military=90;
  assert.ok(rulerMilitaryJudgment(s,f)>cautious);
- assert.equal(s.log.at(-1).kind,'succession');
+ assert.equal(s.log.some(event=>event.kind==='succession'&&event.faction===f),false,'foreign court succession must not appear as instant knowledge');
+ const own=newHanGame('armenia',{seed:42}),ownOld=own.rulers.armenia;
+ own.persons[ownOld.personId].alive=false;advanceForeignRulers(own);
+ assert.equal(own.log.at(-1).kind,'succession');
 });
 
 test('the reigning ruler changes actual taxation rather than only the displayed dossier',()=>{

@@ -35,7 +35,7 @@ function ensureRegency(s,f){
  const r=s.rulers[f],p=s.persons[r?.personId];if(!r||!p?.alive)return;
  if(!isMinor(s,p)){
   if(r.regentId){const former=s.persons[r.regentId];if(former?.regentFor===p.id)delete former.regentFor;delete r.regentId;
-   log(s,[`${p.name[0]} comes of age and takes personal rule.`,`${p.name[1]}成年并亲自执政。`],{kind:'regency',faction:f,who:p.id});}
+   if(f===s.player)log(s,[`${p.name[0]} comes of age and takes personal rule.`,`${p.name[1]}成年并亲自执政。`],{kind:'regency',faction:f,who:p.id});}
   return;
  }
  const seated=s.persons[r.regentId];
@@ -43,7 +43,7 @@ function ensureRegency(s,f){
  if(seated?.regentFor===p.id)delete seated.regentFor;
  const regent=makeRuler(s,f,p,{role:'regent',minimumAge:35});regent.regentFor=p.id;regent.title=['Court regent','宫廷摄政'];
  r.regentId=regent.id;
- log(s,[`${regent.name[0]} governs ${FACTIONS[f]?.name?.[0]||f} as regent for the minor ${p.name[0]}.`,`${regent.name[1]}为年幼的${p.name[1]}摄政，治理${FACTIONS[f]?.name?.[1]||f}。`],{kind:'regency',faction:f,who:regent.id});
+ if(f===s.player)log(s,[`${regent.name[0]} governs ${FACTIONS[f]?.name?.[0]||f} as regent for the minor ${p.name[0]}.`,`${regent.name[1]}为年幼的${p.name[1]}摄政，治理${FACTIONS[f]?.name?.[1]||f}。`],{kind:'regency',faction:f,who:regent.id});
 }
 function makeTitleOnlyRuler(s,f){
  const court=FACTIONS[f];let id=`unrecorded-ruler-${f}`,suffix=1;while(s.persons[id])id=`unrecorded-ruler-${f}-${++suffix}`;
@@ -56,7 +56,7 @@ function seat(s,f,p,old=null){
  if(old?.regentId&&s.persons[old.regentId]?.regentFor===old.personId)delete s.persons[old.regentId].regentFor;
  s.rulers[f]={id:p.id,personId:p.id,name:[...p.name],title:rulerTitle(f),faction:f,record:p.record,titleOnly:!!p.titleOnly,attested:p.record==='historical'&&!p.titleOnly,source:p.source||null,portraitSeed:p.portraitSeed??hash(`${s.seed}:${p.id}:portrait`),since:{year:s.year,month:s.month},predecessor:old?.id||null};
  if(old){const stability=s.factions[f]?.stability;if(stability!=null)s.factions[f].stability=clamp(stability-(p.father===old.id||p.mother===old.id?2:5));
-  log(s,[`${p.name[0]} succeeds ${old.name[0]} as ${rulerTitle(f)[0]}.`,`${p.name[1]}继${old.name[1]}为${rulerTitle(f)[1]}。`],{kind:'succession',faction:f,who:p.id});}
+  if(f===s.player)log(s,[`${p.name[0]} succeeds ${old.name[0]} as ${rulerTitle(f)[0]}.`,`${p.name[1]}继${old.name[1]}为${rulerTitle(f)[1]}。`],{kind:'succession',faction:f,who:p.id});}
  return s.rulers[f];
 }
 export function ensureForeignRulers(s){
