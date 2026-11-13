@@ -58,6 +58,33 @@ test('border war blocks an actual shipment until passage is restored',()=>{
  assert.equal(shipment.status,'delivered');assert.equal(s.markets.transactions.length,1);
 });
 
+test('a year-long blocked caravan settles its stock and escrow once after save/load',()=>{
+ const s=deal(),source=s.markets.regions.parthia.goods.horses;
+ source.production=0;source.consumption=0;
+ const startingStock=source.stock,buyerCash=s.factions.armenia.treasury,sellerCash=s.factions.parthia.treasury;
+ const placed=placeTradeOrder(s,request);assert.equal(placed.ok,true);
+ s.wars.push(['armenia','parthia']);
+ const next=state=>{if(++state.month>12){state.month=1;state.year++}advanceMarkets(state)};
+ next(s);assert.equal(placed.shipment.status,'blocked');
+ const loaded=upgradeSave(structuredClone(s)),shipment=loaded.markets.shipments[0];
+ for(let i=0;i<11;i++)next(loaded);
+ assert.equal(shipment.status,'blocked');assert.equal(shipment.escrow,placed.quote.total);
+ next(loaded);
+ assert.equal(shipment.status,'stranded');assert.equal(shipment.escrow,0);
+ assert.equal(shipment.returnedTo,'parthia');assert.equal(loaded.markets.regions.parthia.goods.horses.stock,startingStock);
+ assert.equal(loaded.factions.armenia.treasury,buyerCash-placed.quote.transport);
+ assert.equal(loaded.factions.parthia.treasury,sellerCash);
+ assert.equal(loaded.markets.transportSpent+loaded.markets.merchantFees,placed.quote.transport);
+ assert.equal(loaded.markets.transactions.length,1);
+ assert.equal(loaded.markets.transactions[0].refund,placed.quote.price);
+ assert.match(loaded.log[0].en,/Blocked caravan settled/);
+ const settled=upgradeSave(structuredClone(loaded));settled.wars=[];next(settled);
+ assert.equal(settled.markets.shipments[0].status,'stranded');
+ assert.equal(settled.markets.regions.parthia.goods.horses.stock,startingStock);
+ assert.equal(settled.factions.armenia.treasury,buyerCash-placed.quote.transport);
+ assert.equal(settled.markets.transactions.length,1);
+});
+
 test('orders reject unaffordable and missing-stock trades while using mapped Eurasian routes',()=>{
  const s=deal(),before=structuredClone(s.markets.regions.parthia.goods.horses);
  assert.equal(placeTradeOrder(s,{...request,quantity:1000}).reason,'invalid');

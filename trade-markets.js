@@ -115,6 +115,28 @@ export function placeTradeOrder(s,request){
  markets.shipments.push(shipment);return {ok:true,shipment,quote};
 }
 
+function settleBlockedShipment(s,shipment){
+ const markets=s.markets;
+ // Roman market inventories exist only at campaign regions. A caravan that
+ // cannot resume returns to the last such market it passed, including origin.
+ const visited=(shipment.route||[]).slice(0,shipment.leg+1);
+ const location=[...visited].reverse().find(id=>markets.regions[id])||shipment.origin;
+ markets.regions[location].goods[shipment.commodity].stock+=shipment.quantity;
+ const refund=shipment.price+shipment.tariffs.reduce((sum,t)=>sum+t.amount,0);
+ s.factions[shipment.buyer].treasury+=refund;
+ const merchant=shipment.merchantId&&s.world.characters[shipment.merchantId];
+ const fee=merchant?.alive?Math.min(shipment.transport,Math.ceil(shipment.transport/4)):0;
+ if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.location=location}
+ markets.transportSpent+=shipment.transport-fee;markets.merchantFees+=fee;
+ shipment.escrow=0;shipment.status='stranded';shipment.settledAt=month(s);shipment.returnedTo=location;
+ markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,origin:shipment.origin,destination:location,merchantId:shipment.merchantId||null,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:0,transport:shipment.transport,tariffs:[],refund,status:'stranded',year:s.year,month:s.month});
+ if(markets.transactions.length>200)markets.transactions.shift();
+ if(shipment.seller===s.player||shipment.buyer===s.player){
+  const good=COMMODITIES[shipment.commodity].name,place=region(s,location)?.name||[location,location];
+  s.log.unshift({year:s.year,month:s.month,en:`Blocked caravan settled: ${shipment.quantity} ${good[0]} batches returned to ${place[0]}; ${refund}¤ refunded, ${shipment.transport}¤ spent on transport.`,zh:`受阻商队已结算：${shipment.quantity}批${good[1]}退回${place[1]}；退还${refund}¤，运费支出${shipment.transport}¤。`});s.log=s.log.slice(0,80);
+ }
+}
+
 export function advanceMarkets(s){
  const markets=initializeMarkets(s),current=month(s);if(markets.lastTick===current)return markets;
  markets.lastTick=current;
@@ -128,12 +150,16 @@ export function advanceMarkets(s){
  }
  for(const shipment of markets.shipments.filter(x=>x.status==='traveling'||x.status==='blocked')){
   const leg=shipment.legs[shipment.leg],next=node(s,leg?.to);
-  if(!leg||!next||!permitted(s,next.owner,shipment.buyer,shipment.seller,leg.network)||atWar(s,next.owner,shipment.buyer)||atWar(s,next.owner,shipment.seller)){shipment.status='blocked';continue}
-  shipment.status='traveling';shipment.remaining--;if(shipment.remaining>0)continue;
+  if(!leg||!next||!permitted(s,next.owner,shipment.buyer,shipment.seller,leg.network)||atWar(s,next.owner,shipment.buyer)||atWar(s,next.owner,shipment.seller)){
+   shipment.status='blocked';shipment.blockedAt??=current;
+   if(current-shipment.blockedAt>=12)settleBlockedShipment(s,shipment);
+   continue;
+  }
+  shipment.status='traveling';shipment.blockedAt=null;shipment.remaining--;if(shipment.remaining>0)continue;
   shipment.leg++;
   if(shipment.leg<shipment.legs.length){shipment.remaining=shipment.legs[shipment.leg].months;continue}
   const destination=region(s,shipment.destination);
-  if(destination?.owner!==shipment.buyer){shipment.status='blocked';shipment.leg--;shipment.remaining=1;continue}
+  if(destination?.owner!==shipment.buyer){shipment.status='blocked';shipment.leg--;shipment.remaining=1;shipment.blockedAt??=current;continue}
   markets.regions[shipment.destination].goods[shipment.commodity].stock+=shipment.quantity;
   s.factions[shipment.seller].treasury+=shipment.price;
   for(const tariff of shipment.tariffs)if(s.factions[tariff.owner])s.factions[tariff.owner].treasury+=tariff.amount;else markets.transitTreasury[tariff.owner]=(markets.transitTreasury[tariff.owner]||0)+tariff.amount;

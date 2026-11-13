@@ -38,7 +38,7 @@ try{
  assert.equal(await page.locator('[data-market-merchant]').first().getAttribute('data-market-merchant'),merchant);
  await page.locator('#advance').click();
  await page.locator('#markets').click();
- assert.match(await page.locator('.market-panel').innerText(),/RECENT DELIVERIES/);
+ assert.match(await page.locator('.market-panel').innerText(),/RECENT TRADE RESULTS/);
  assert.match(await page.locator('.market-panel').innerText(),/Cisalpine.*Narbo|Northern Italy.*Narbo/);
  assert.match(await page.locator('.market-panel').innerText(),/Goods.*Transport.*Customs.*Total/);
  await page.locator('#save').click();
@@ -48,6 +48,28 @@ try{
  assert.equal(delivered.markets.transactions[0].merchantId,merchant);
  assert.equal(delivered.markets.transactions[0].origin,'cisalpine');
  assert.equal(delivered.markets.transactions[0].destination,'narbo');
+ // A long border closure must leave a readable refund rather than a ghost
+ // shipment that remains in the transit list indefinitely.
+ await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=faces-empire-2');
+  const {proposeAgreement}=await import('/agreements.js?v=grand-chessboard-2');
+  const {placeTradeOrder,advanceMarkets}=await import('/trade-markets.js?v=faces-empire-2');
+  const state=newGame('han');state.relations['han:parthia']=45;
+  if(!proposeAgreement(state,'han','parthia','trade').ok)throw Error('Trade treaty unavailable');
+  const placed=placeTradeOrder(state,{seller:'han',buyer:'parthia',origin:'hanGuanzhong',destination:'parthia',commodity:'silk',quantity:1});
+  if(!placed.ok)throw Error('Trade order unavailable');
+  state.wars.push(['han','parthia']);
+  for(let i=0;i<13;i++){if(++state.month>12){state.month=1;state.year++}advanceMarkets(state)}
+  if(placed.shipment.status!=='stranded')throw Error('Blocked caravan did not settle');
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
+ });
+ await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.locator('#markets').click();
+ assert.match(await page.locator('.market-panel').innerText(),/商队中止.*货物退回.*退款.*运费支出/s);
+ assert.match(await page.locator('.market-panel').innerText(),/西汉帝国.*帕提亚/);
+ await page.locator('#language').click();
+ assert.match(await page.locator('.market-panel').innerText(),/Caravan stranded.*Goods returned to.*Refund.*Transport spent/s);
+ assert.doesNotMatch(await page.locator('.market-panel').innerText(),/Silk ×1.*TRAVELING/s);
  // A direct Han player can buy from Parthia through the existing oasis and
  // Central Asian network without receiving a fictitious direct border.
  await page.evaluate(async()=>{

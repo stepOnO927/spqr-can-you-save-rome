@@ -134,6 +134,14 @@ The 120-month market simulation verifies that at least four AI courts place
 orders against real surplus, deliveries complete, stocks and prices remain
 bounded, escrow resolves, merchant IDs persist, transport fees balance, and
 save migration works halfway through.
+Roman-campaign caravans blocked for twelve consecutive months now settle
+against their escrow: cargo returns to the last actual campaign market,
+the buyer recovers goods payment and customs, and transport spending plus the
+named merchant fee is recorded once. Reloading an interrupted shipment keeps
+its closure clock. The market panel and Chronicle report the stranded result
+in both languages instead of showing an endless in-transit caravan or a false
+delivery. Unit and Chromium regressions cover stock, treasury, receipt and
+save/load conservation.
 An oasis market with no local silk production can now offer imported surplus
 above its consumption reserve for resale. A two-contract test moves real Han
 silk to Shanshan and then to Qiemo, with distinct prepaid shipments,
