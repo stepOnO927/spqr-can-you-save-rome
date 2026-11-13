@@ -1,6 +1,6 @@
-import {newGame,estimatedStrength} from './engine.js?v=inheritance-fix-1';
-import {createFictionalPerson} from './dynasties.js?v=inheritance-fix-1';
-import {formCoalition} from './coalitions.js?v=multipolar-2';
+import {newGame,estimatedStrength} from './engine.js?v=fort-intel-1';
+import {createFictionalPerson} from './dynasties.js?v=fort-intel-1';
+import {formCoalition} from './coalitions.js?v=fort-intel-1';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
 
 // A fictional political crisis in the 49 BCE campaign. Conditions make

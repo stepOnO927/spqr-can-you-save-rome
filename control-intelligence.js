@@ -10,6 +10,21 @@ export function initializeControlKnowledge(s){
  return s;
 }
 
+// Fortifications are separate dated observations, not the current hidden
+// world state. A band is a rough field report, not proof of an exact level.
+export function observeFortification(s,viewer,id,source='frontier'){
+ const r=s.regions.find(x=>x.id===id);if(!r||!s.factions[viewer]||!Number.isFinite(r.fort))return;
+ const band=r.fort<=0?[0,0]:r.fort<=2?[1,2]:[3,5];s.fortKnowledge||={};s.fortKnowledge[viewer]||={};
+ s.fortKnowledge[viewer][id]={band,year:s.year,month:s.month,source};
+}
+export function reportedFortification(s,viewer,id){
+ const region=s.regions.find(x=>x.id===id);if(!region)return null;
+ if(region.owner===viewer&&Number.isFinite(region.fort))return {band:[region.fort,region.fort],year:s.year,month:s.month,source:'own',stale:false};
+ const report=s.fortKnowledge?.[viewer]?.[id],age=(s.year-report?.year)*12+s.month-report?.month;
+ if(!report||!Array.isArray(report.band)||report.band.length!==2||!report.band.every(Number.isFinite)||!Number.isFinite(age)||age<0)return null;
+ return {band:[...report.band],year:report.year,month:report.month,source:report.source||'unknown',stale:age>24};
+}
+
 export function observeControl(s){
  initializeControlKnowledge(s);
  for(const [viewer,reports] of Object.entries(s.controlKnowledge)){
@@ -18,7 +33,7 @@ export function observeControl(s){
   for(const [a,b] of ROUTES){if(owned.has(a))observed.add(b);if(owned.has(b))observed.add(a)}
   // A lost friendly theater is known to have changed hands even when the last
   // neighboring friendly theater is lost in the same monthly resolution.
-  for(const r of s.regions)if(observed.has(r.id)||reports[r.id]?.owner===viewer)reports[r.id]={owner:r.owner,year:s.year,month:s.month};
+  for(const r of s.regions)if(observed.has(r.id)||reports[r.id]?.owner===viewer){reports[r.id]={owner:r.owner,year:s.year,month:s.month};if(observed.has(r.id))observeFortification(s,viewer,r.id)}
  }
 }
 
@@ -33,7 +48,7 @@ export function reportedControl(s,viewer,id){
 // location is outside the observer's normal monthly frontier observation.
 export function observeArrival(s,viewer,id){
  initializeControlKnowledge(s);const r=s.regions.find(x=>x.id===id);
- if(r&&s.controlKnowledge[viewer])s.controlKnowledge[viewer][id]={owner:r.owner,year:s.year,month:s.month,source:'arrival'};
+ if(r&&s.controlKnowledge[viewer]){s.controlKnowledge[viewer][id]={owner:r.owner,year:s.year,month:s.month,source:'arrival'};observeFortification(s,viewer,id,'arrival')}
 }
 
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};

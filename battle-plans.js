@@ -1,9 +1,9 @@
 import {ROUTES,REGIONS} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=phase-x-1';
+import {reportedControl,reportedFortification,observeFortification} from './control-intelligence.js?v=fort-intel-1';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
-import {politicalAmbition} from './conspiracies.js?v=newborn-age-1';
-import {focusModifiers} from './national-focus.js?v=inheritance-fix-1';
-import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=inheritance-fix-1';
+import {politicalAmbition} from './conspiracies.js?v=fort-intel-1';
+import {focusModifiers} from './national-focus.js?v=fort-intel-1';
+import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=fort-intel-1';
 
 // OPERATIONAL BATTLE PLANNER. Plans are an order layer over the existing War
 // Council orders: every movement goes through issueMilitaryOrder/moveArmy, so
@@ -66,7 +66,6 @@ export function assignRole(s,owner,planId,{armyId,role,path=[],target=null}){
  if(role==='offensive'){const v=validatePath(s,owner,a.region,path);if(!v.ok)return v}
  else{const t=route[0];if(!region(s,t))return {ok:false,reason:'unknown_region'};
   if(['frontline','defensive','fallback','reserve','supply_guard'].includes(role)&&region(s,t).owner!==owner)return {ok:false,reason:'own_territory'};
-  if(role==='siege'&&!(region(s,t).fort>0))return {ok:false,reason:'not_fortified'};
   if(role==='siege'&&reportedControl(s,owner,t)?.owner===owner)return {ok:false,reason:'own_territory'};
   if(!findRoute(s,owner,a.region,role==='recon'?nearestApproach(s,owner,a.region,t):t)&&a.region!==t)return {ok:false,reason:'unreachable'}}
  plan.roles=plan.roles.filter(r=>r.armyId!==armyId);
@@ -133,7 +132,7 @@ export function assessPlan(s,owner,planId,{previewMarch=null,estimatedStrength=n
  const terrains=route.map(id=>region(s,id)?.terrain).filter(Boolean),f=s.factions[owner];
  const supplyRatio=armies.length?Math.min(...armies.map(a=>{const r=region(s,a.region);return r?r.supply*1000/Math.max(1,a.men):1})):1;
  const reinforce=targets.length?Math.min(...targets.map(t=>{const r=findRoute(s,owner,t,s.regions.filter(x=>x.owner===owner).sort((a,b)=>b.supply-a.supply)[0]?.id||t);return r?r.length:9})):0;
- const siege=targets.map(t=>({region:t,fort:region(s,t)?.fort||0})).filter(x=>x.fort>0);
+ const siege=targets.map(t=>{const observation=reportedFortification(s,owner,t);return {region:t,fort:observation&&!observation.stale?Math.round((observation.band[0]+observation.band[1])/2):null,observation}});
  const enemyEstimate=known.filter(x=>isWar(s,owner,x.owner)).reduce((n,x)=>n+(x.band[0]+x.band[1])/2,0);
  const counter=known.filter(x=>isWar(s,owner,x.owner)&&!targets.includes(x.region)&&(x.band[1]>=friendly*.4)).length;
  const political=[];if(plan.commanderId){const c=commandConcentration(s,owner,plan.commanderId);if(c.level!=='low')political.push({kind:'concentration',level:c.level,share:c.share})}
@@ -189,6 +188,7 @@ function nextOrder(s,plan,r,a,{estimatedStrength}){
 }
 function reconSweep(s,plan,r,a){
  const places=new Set([a.region,...adjacentIds(a.region)]);let count=0;
+ for(const id of places)observeFortification(s,plan.owner,id,'recon');
  for(const u of s.armies){if(u.owner===plan.owner||u.move||!places.has(u.region)||!s.knowledge?.[plan.owner]?.[u.owner])continue;const k=s.knowledge[plan.owner][u.owner];k.sightings||={};k.sightings[u.id]={id:u.id,name:[...u.name],owner:u.owner,region:u.region,year:s.year,month:s.month,commanderId:null,strengthBand:[Math.max(0,Math.floor(u.men*.75/1000)*1000),Math.max(1000,Math.ceil(u.men*1.25/1000)*1000)],profile:u.formation?.profile||null,source:'recon',planId:plan.id};count++}
  return count;
 }
@@ -225,8 +225,8 @@ export function advanceBattlePlans(s,{autoplayPlayer=false,issueOrder,estimatedS
    for(const id of r.state.captured)if(region(s,id)?.owner!==plan.owner){event(s,plan,'recaptured',{region:id},log);r.state.captured=r.state.captured.filter(x=>x!==id)}
    for(const id of r.path)if(region(s,id)?.owner===plan.owner&&!r.state.captured.includes(id)&&['offensive','siege'].includes(r.role))r.state.captured.push(id);
    if(a.move||a.reorg){r.state.lastRegion=a.region;continue}
-   if(a.siege){r.state.siegeSince??=date(s);const expected=(region(s,a.siege.region)?.fort||1)*2;if(date(s)-r.state.siegeSince>expected+2&&!r.state.siegeWarned){r.state.siegeWarned=true;event(s,plan,'siege_delay',{region:a.siege.region},log);if(!automatedOwner){plan.status='needs_attention';plan.attention='siege_delay'}}continue}
-   r.state.siegeSince=null;
+   if(a.siege){r.state.siegeSince??=date(s);r.state.siegeExpected??=Math.max(1,a.siege.remaining||1);if(date(s)-r.state.siegeSince>r.state.siegeExpected+2&&!r.state.siegeWarned){r.state.siegeWarned=true;event(s,plan,'siege_delay',{region:a.siege.region},log);if(!automatedOwner){plan.status='needs_attention';plan.attention='siege_delay'}}continue}
+   r.state.siegeSince=null;r.state.siegeExpected=null;
    // Fallback for battered offensive armies.
    if(['offensive','siege'].includes(r.role)&&plan.fallback&&(a.morale<40||a.men<r.state.startMen*.4)&&a.region!==plan.fallback){const route=findRoute(s,plan.owner,a.region,plan.fallback);if(route){const own=region(s,route[0])?.owner===plan.owner;const order={kind:own?'retreat':'move',target:route[0]};if(plan.mode==='automatic'&&issueOrder(s,a.id,order.kind,order.target,plan.owner).ok){event(s,plan,'fallback',{region:plan.fallback},log);r.state.done=true;continue}if(plan.mode==='assisted')plan.recommendations.push({armyId:a.id,...order,why:'fallback'})}}
    // Stronger enemy reported at the next objective.
@@ -278,13 +278,13 @@ export function aiBattlePlans(s,owner,{estimatedStrength,log=()=>{}}={}){
  const allies=Object.keys(s.factions).filter(o=>o!==owner&&((s.alliances||[]).some(a=>a.includes(owner)&&a.includes(o))||activeAgreement(s,owner,o,'defensive')||activeAgreement(s,owner,o,'offensive')));
  const allied=new Set(plansState(s).filter(p=>allies.includes(p.owner)&&LIVE.includes(p.status)).flatMap(p=>p.roles.filter(r=>['offensive','siege'].includes(r.role)).map(r=>r.target)));
  const candidates=[];
- for(const id of new Set(own.flatMap(r=>adjacentIds(r.id)))){const rep=reportedControl(s,owner,id)?.owner;if(!enemies.includes(rep)||ownIds.has(id))continue;const seen=sightings.filter(x=>x.region===id&&x.owner===rep);const est=seen.length?seen.reduce((n,x)=>n+(x.strengthBand[0]+x.strengthBand[1])/2,0):perRegion(rep);const reg=region(s,id);candidates.push({id,rep,est:est*(1+reg.fort*.25),value:reg.tax+reg.food+(reg.terrain==='urban'?4:0)+(allied.has(id)?6:0),coordinated:allied.has(id)})}
+ for(const id of new Set(own.flatMap(r=>adjacentIds(r.id)))){const rep=reportedControl(s,owner,id)?.owner;if(!enemies.includes(rep)||ownIds.has(id))continue;const seen=sightings.filter(x=>x.region===id&&x.owner===rep);const est=seen.length?seen.reduce((n,x)=>n+(x.strengthBand[0]+x.strengthBand[1])/2,0):perRegion(rep);const reg=region(s,id),baseline=REGIONS.find(r=>r.id===id),observation=reportedFortification(s,owner,id),fort=observation&&!observation.stale?(observation.band[0]+observation.band[1])/2:1;candidates.push({id,rep,est:est*(1+fort*.25),value:(baseline?.tax||0)+(baseline?.food||0)+(reg.terrain==='urban'?4:0)+(allied.has(id)?6:0),coordinated:allied.has(id)})}
  candidates.sort((a,b)=>(b.value/Math.max(1,b.est/1000))-(a.value/Math.max(1,a.est/1000))||a.id.localeCompare(b.id));
  const margin=level==='expert'?1.4:1.25;
  for(const c of candidates){
   const strike=free.find(a=>a.men>c.est*margin&&a.morale>=55&&findRoute(s,owner,a.region,c.id));if(!strike)continue;
   const route=findRoute(s,owner,strike.region,c.id);
-  const reg=region(s,c.id),siegeRole=reg.fort>0;
+  const reg=region(s,c.id),observation=reportedFortification(s,owner,c.id),siegeRole=!!(observation&&!observation.stale&&observation.band[1]>0);
   const r=createPlan(s,owner,{name:`${reg.name[0]} campaign`,mode:'automatic',objective:c.id,commanderId:strike.characterId||null,condition:{kind:level==='expert'?'prepared':'immediate'},fallback:strike.region,supplyPriority:level==='expert'&&s.factions[owner].treasury>90,ai:true});
   assignRole(s,owner,r.plan.id,siegeRole?{armyId:strike.id,role:'siege',target:c.id}:{armyId:strike.id,role:'offensive',path:route});
   const rest=free.filter(a=>a!==strike);

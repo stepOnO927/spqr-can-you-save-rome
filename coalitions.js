@@ -1,5 +1,5 @@
 import {ROUTES} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=phase-x-1';
+import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';

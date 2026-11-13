@@ -1,34 +1,34 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=inheritance-fix-1';
-import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=inheritance-fix-1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=fort-intel-1';
+import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=fort-intel-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=newborn-age-1';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=inheritance-fix-1';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=inheritance-fix-1';
-import {advanceConspiracies} from './conspiracies.js?v=newborn-age-1';
-import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,observeArrival} from './control-intelligence.js?v=phase-x-1';
-import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=newborn-age-1';
-import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=inheritance-fix-1';
-import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=calendar-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=fort-intel-1';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=fort-intel-1';
+import {advanceConspiracies} from './conspiracies.js?v=fort-intel-1';
+import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=fort-intel-1';
+import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=fort-intel-1';
+import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=fort-intel-1';
+import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=fort-intel-1';
 import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=han-4';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
-import {advanceFocuses,focusModifiers} from './national-focus.js?v=inheritance-fix-1';
-import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=inheritance-fix-1';
-import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=inheritance-fix-1';
+import {advanceFocuses,focusModifiers} from './national-focus.js?v=fort-intel-1';
+import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=fort-intel-1';
+import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=fort-intel-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
-import {assessOpportunities} from './multipolar.js?v=multipolar-2';
-import {advanceStrategicWarnings} from './strategic-warnings.js?v=multipolar-2';
+import {assessOpportunities} from './multipolar.js?v=fort-intel-1';
+import {advanceStrategicWarnings} from './strategic-warnings.js?v=fort-intel-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {formCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=multipolar-2';
-import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=newborn-age-1';
-import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=inheritance-fix-1';
-import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=inheritance-fix-1';
+import {formCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=fort-intel-1';
+import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=fort-intel-1';
+import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=fort-intel-1';
+import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=fort-intel-1';
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
 export {queueMission};
 export {personalDiplomaticCredit};
@@ -633,7 +633,8 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
       if(defenders>a.men*(internalOpponent(defenderOwner)?2:({hard:1.15,expert:1.05}[s.difficulty]||1.35))||f.food<0){if(hostile&&strongPlanning){heldForPreparation=true;if(here.owner===owner)break}continue}
       if(hostile&&strongPlanning&&strategy&&!internalOpponent(defenderOwner)){
        const dest=region(s,step),now=s.year*12+s.month,sightings=Object.values(s.knowledge?.[owner]?.[defenderOwner]?.sightings||{}).filter(x=>x.region===step&&now-(x.year*12+x.month)>=0&&now-(x.year*12+x.month)<=12).length;
-       const assessment=(unit)=>assessAttack({ownMen:unit.men,morale:unit.morale,skill:unit.skill,experience:unit.experience,food:f.food,estimatedTotal:estimate,reportedTheaters:theaters,sightings,terrain:dest.terrain,fort:dest.fort,difficulty:s.difficulty});
+       const fortReport=reportedFortification(s,owner,step),estimatedFort=fortReport&&!fortReport.stale?fortReport.band[0]:1;
+       const assessment=(unit)=>assessAttack({ownMen:unit.men,morale:unit.morale,skill:unit.skill,experience:unit.experience,food:f.food,estimatedTotal:estimate,reportedTheaters:theaters,sightings,terrain:dest.terrain,fort:estimatedFort,difficulty:s.difficulty});
        if(!assessment(a).favorable&&here.owner===owner){
         const support=s.armies.filter(b=>b!==a&&b.owner===owner&&b.region===a.region&&!b.move&&!b.siege&&b.men>0&&a.men+b.men<=15000&&a.men+b.men<=here.supply*1000).sort((x,y)=>y.men-x.men).find(b=>{const total=a.men+b.men;return assessment({men:total,morale:(a.morale*a.men+b.morale*b.men)/total,skill:(a.skill*a.men+b.skill*b.men)/total,experience:(a.experience*a.men+b.experience*b.men)/total}).favorable});
         if(support){const total=a.men+support.men;for(const property of ['morale','skill','experience'])a[property]=Math.round((a[property]*a.men+support[property]*support.men)/total*10)/10;a.men=total;(a.mergedFrom||=[]).push(support.id,...(support.mergedFrom||[]));s.armies=s.armies.filter(b=>b!==support)}
