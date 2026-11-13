@@ -118,3 +118,6 @@
 .cursus-contact-more{grid-column:1/-1}
 .cursus-contact-more .diplomacy-actions{margin-top:6px}
 .cursus-outlook{color:#e2cb9c}
+.cursus-review{margin:14px 0;border-top:1px solid rgba(173,145,96,.3);padding-top:7px}
+.cursus-review summary{cursor:pointer;color:#e3c893;font:11px Georgia,serif;letter-spacing:.06em}
+.cursus-review p{font-size:11px;line-height:1.45;margin:6px 0}

@@ -7,12 +7,13 @@ import {initializeCursus,officeEligibility,supportCandidate,investigateCandidate
 test('fictional candidates are persistent people; Roman consuls require an assembly election',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
  assert.ok(id.startsWith('fictional:'));assert.equal(s.world.characters[id].faction,'senate');
+ assert.equal(c.applicants.find(x=>x.id===id).senatorialSupport,80);
  assert.equal(c.magistrates.consul.length,0);assert.equal(officeEligibility(s,id,'consul').ok,true);
  for(const office of ['praetor','quaestor','aedile','tribune'])assert.ok(c.applicants.filter(x=>x.office===office&&x.faction==='senate').length>=2);
  const treasury=s.factions.senate.treasury,before=obedience(s,id);
  assert.equal(supportCandidate(s,id,'support').ok,true);
  assert.equal(s.factions.senate.treasury,treasury-8);
- assert.ok(obedience(s,id)>before);assert.equal(c.magistrates.consul.length,0);
+ assert.ok(obedience(s,id)>before);assert.ok(c.applicants.find(x=>x.id===id).senatorialSupport>80);assert.equal(c.magistrates.consul.length,0);
  assert.equal(supportCandidate(s,id,'oppose').ok,true);
  s.month=10;const election=resolveElection(s,'consul');
  assert.equal(election.ok,true);assert.equal(election.result.body,'centuriate');
@@ -335,4 +336,14 @@ test('distinct official contact routes enforce delivered evidence and real netwo
  assert.equal(contactOfficial(s,'caesar',senator.id,'senatorial').ok,true);
  const unknown=c.foreignPosts.egypt.administration;
  assert.equal(contactOfficial(s,'egypt',unknown,'banquet').reason,'unknown');
+});
+
+test('annual review records real administrative appointments without inventing opening assignments',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
+ assert.equal(c.appointmentHistory.length,0);
+ assert.equal(appointOffice(s,'finance',id).ok,true);
+ s.month=12;advanceCursus(s);
+ const review=c.politicalReviews.at(-1);
+ assert.ok(review.appointed.some(x=>x.id===id&&x.office==='finance'&&x.faction==='senate'));
+ assert.equal(upgradeSave(structuredClone(s)).world.cursus.appointmentHistory.at(-1).id,id);
 });
