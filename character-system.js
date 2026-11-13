@@ -9,6 +9,7 @@ import {reportedControl} from './control-intelligence.js?v=faces-empire-3';
 import {canHoldOffice,localGovernor} from './office-system.js?v=faces-empire-2';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=epistulae-2';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -33,7 +34,13 @@ function nameMissionActor(s,op){
 // remain historical records without retroactively inventing a participant.
 export function upgradeMissionIdentities(s){
  initializeWorld(s);
- for(const op of s.operations||[])if(['pending','captured'].includes(op.status)&&missionRoles[op.type])nameMissionActor(s,op);
+ for(const op of s.operations||[])if(['pending','captured'].includes(op.status)&&missionRoles[op.type]){
+  nameMissionActor(s,op);
+  if(op.status==='pending'&&op.actor!==op.target&&['envoy','travelers'].includes(op.type)&&!op.personnelId){
+   if(!op.id){do{op.id=`mission:${s.nextOperationId||1}`;s.nextOperationId=(s.nextOperationId||1)+1}while(s.operations.some(other=>other!==op&&other.id===op.id))}
+   registerMissionPersonnel(s,op);
+  }
+ }
  for(const captive of s.world.captives||[]){
   if(!captive.personId){const op=s.operations.find(o=>o.captiveId===captive.id&&o.agentId);if(op)captive.personId=op.agentId}
   if(!captive.personId&&captive.state==='held')captive.personId=nameMissionActor(s,{actor:captive.owner,target:captive.holder,type:'spy',sentYear:captive.year??s.year,sentMonth:captive.month??s.month});
@@ -211,8 +218,11 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
 export function queueMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;
  const {duration,partner,cost}=plan,subjectCharacter=['health','age','location'].includes(subject)?(characterId===''?null:(characterId||(['health','location'].includes(subject)&&type!=='exchange'?reportedHealthSubjects(s,actor,target)[0]:null)||null)):null;
- s.factions[actor].treasury-=cost;const op={actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month};
+ s.factions[actor].treasury-=cost;
+ let id;do{id=`mission:${s.nextOperationId||1}`;s.nextOperationId=(s.nextOperationId||1)+1}while(s.operations.some(x=>x.id===id));
+ const op={id,actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month};
  const agentId=nameMissionActor(s,op);s.operations.unshift(op);
+ if(actor!==target&&['envoy','travelers'].includes(type))registerMissionPersonnel(s,op);
  if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months. ${CHARACTER_CATALOG[agentId].name[0]} leads it.`,`已派出${({spy:'间谍',counter:'内部调查',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月；由${CHARACTER_CATALOG[agentId].name[1]}负责。`,{characterId:agentId});return {ok:true,duration,agentId};
 }
 // The ally selects its own record when the request reaches it. The sealed
@@ -266,10 +276,8 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   addReport(s,op.actor,op.target,sealed.report);op.status='complete';if(op.actor===s.player)notify(s,'A partner forwarded an existing report; its original date and source still matter.','伙伴转交了一份既有报告；仍需留意原始日期与来源。');continue
  }
  let healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(reportedHealthSubjects(s,op.actor,op.target)[0]||null);
- // A general health or location investigation can encounter a public figure
- // even when the sender had no name to address. Discover the name only during
- // resolution, through a successful local observation; absence is not proof of
- // a vacancy or of anyone's health. A named request never changes its target.
+ // A general investigation may discover a public figure through a successful
+ // local observation. An explicitly named request never changes its target.
  if(!healthId&&['health','location'].includes(op.subject)&&q>=(op.type==='travelers'?.85:.7)){
   const known=new Set(reportedHealthSubjects(s,op.actor,op.target));
   const candidates=(s.world.leadership[op.target]||[]).filter(candidate=>{const c=s.world.characters[candidate];return CHARACTER_CATALOG[candidate]&&c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health)&&s.regions.some(r=>r.id===c.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===candidate&&a.move)});
