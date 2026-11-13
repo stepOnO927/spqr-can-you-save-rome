@@ -1,6 +1,6 @@
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=separate-crowns-1';
 import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=separate-crowns-1';
-import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=regional-court-1';
+import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=court-portraits-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {startDynasticWar} from './civil-war.js?v=separate-crowns-1';
 
@@ -146,7 +146,8 @@ function advanceRegionalVacancy(s,faction,autoplayPlayer){
  if(dynastyRoll(s)>=chance)return;
  const serials=s.world.courtNomineeSerials||={},serial=(serials[faction]||0)+1;serials[faction]=serial;
  const [en,zh]=regionalCourts[faction],place=s.regions.find(r=>r.owner===faction)?.id;
- const id=createFictionalPerson(s,{name:[`Fictional ${en} court nominee ${serial}`,`虚构${zh}宫廷人选${serial}`],faction,birthYear:s.year-35,location:place,sex:'unknown',role:['Fictional court nominee in this campaign','本战役虚构宫廷人选'],origin:'court_nominee'});
+ const sex=serial===1?(faction==='bosporus'?'female':'male'):'unknown';
+ const id=createFictionalPerson(s,{name:[`Fictional ${en} court nominee ${serial}`,`虚构${zh}宫廷人选${serial}`],faction,birthYear:s.year-35,location:place,sex,role:['Fictional court nominee in this campaign','本战役虚构宫廷人选'],origin:'court_nominee'});
  f.treasury-=5;s.world.leadership[faction]=[id];delete vacancies[faction];
 }
 
