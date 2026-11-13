@@ -5,7 +5,7 @@ import {buildChessboard} from '../chessboard.js?v=fort-intel-1';
 import {addReport} from '../character-system.js?v=fort-intel-1';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {observeDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
-import {renderChessboard} from '../chessboard-ui.js?v=fort-intel-1';
+import {renderChessboard} from '../chessboard-ui.js?v=warning-privacy-1';
 
 test('the board does not read hidden foreign plans, plots, armies, personal loyalties or secret treaties',()=>{
  const s=newGame('caesar'),before=buildChessboard(s);s.world.conspiracies={senate:{person:'cato',participants:['cato']}};s.world.strategicPlans={senate:{goal:'secret'}};s.world.doubleAgents=[{person:'antony',allegiance:'senate'}];
