@@ -228,13 +228,13 @@ export function resolveElection(s,office='consul'){
  if(c.elections.some(x=>x.year===s.year&&x.office===office))return {ok:false,reason:'complete'};
  const candidates=c.applicants.filter(x=>x.year===s.year&&x.office===office&&x.status!=='disqualified'&&officeEligibility(s,x.id,office).ok&&x.faction===controller);
  const entries=candidates.map(x=>({id:x.id,score:score(s,x,o.body).total,votes:0}));
- const groups=o.body==='centuriate'?[['senior',4],['middle',3],['other',3]]:o.body==='plebeian'?[['urban',4],['rural',4]]:[['urban',3],['rural',5]];
+ const groups=o.body==='centuriate'?[['equites',18],['first',80],['second',20],['third',20],['fourth',20],['fifth',30],['unarmed',5]]:o.body==='plebeian'?[['urban',4],['rural',4]]:[['urban',3],['rural',5]];
  const ballots=[],elected=[];
  for(let seat=0;seat<o.seats;seat++){
   const standing=entries.filter(x=>!elected.includes(x.id));if(!standing.length)break;
   const tally=new Map(standing.map(x=>[x.id,0]));
   for(const [group,count] of groups)for(let unit=0;unit<count;unit++){
-   const ranked=standing.map(x=>{const p=person(s,x.id),bias=group==='senior'?(p.wealth||0)*.18:group==='urban'?(p.influence||0)*.12:(p.loyalty||50)*.08;return {id:x.id,value:x.score+bias+roll(s)*25}}).sort((a,b)=>b.value-a.value||a.id.localeCompare(b.id));
+   const ranked=standing.map(x=>{const p=person(s,x.id),classRank={equites:1.1,first:1,second:.72,third:.5,fourth:.3,fifth:.15,unarmed:0}[group],elite=classRank===undefined?0:(p.wealth||0)*classRank*.18,publicWeight=classRank===undefined?1:1-classRank*.45,bias=elite+(p.influence||0)*publicWeight*.09+(p.loyalty||50)*(1-classRank*.25)*.06;return {id:x.id,value:x.score+bias+roll(s)*25}}).sort((a,b)=>b.value-a.value||a.id.localeCompare(b.id));
    const chosen=ranked[0].id;tally.set(chosen,tally.get(chosen)+1);ballots.push({seat:seat+1,group,unit:unit+1,candidateId:chosen});
   }
   const winner=[...tally].sort((a,b)=>b[1]-a[1]||(entries.find(x=>x.id===b[0])?.score||0)-(entries.find(x=>x.id===a[0])?.score||0)||a[0].localeCompare(b[0]))[0][0];
@@ -242,7 +242,7 @@ export function resolveElection(s,office='consul'){
  }
  entries.sort((a,b)=>b.votes-a.votes||b.score-a.score||a.id.localeCompare(b.id));
  const result={year:s.year,month:s.month,office,body:o.body,controller,candidates:entries,ballots,elected,termYear:officeYear(s),status:elected.length===o.seats?'complete':'incomplete'};
- c.elections.push(result);c.elections=c.elections.slice(-80);
+ c.elections.push(result);c.elections=c.elections.slice(-240);
  for(const id of elected){c.pendingTerms.push({id,office,year:officeYear(s),faction:controller});changeObedience(s,id,3,'election victory')}
  for(const x of candidates){x.status=elected.includes(x.id)?'elected':'lost';for(const promise of x.promises||[])if(promise.status==='offered')promise.status=elected.includes(x.id)?'pending':'void';if(!elected.includes(x.id))changeObedience(s,x.id,-2,'election defeat')}
  if(elected.length)note(s,'The '+ASSEMBLIES[o.body][0]+' elected '+elected.map(id=>name(id)).join(' and ')+' as '+o.name[0]+' for the next term.','由'+ASSEMBLIES[o.body][1]+'选出'+elected.map(id=>name(id,1)).join('与')+'担任下届'+o.name[1]+'。');
@@ -251,7 +251,7 @@ export function resolveElection(s,office='consul'){
 function startTerms(s){
  const c=initializeCursus(s);
  for(const office of Object.keys(MAGISTRACIES)){const current=c.magistrates[office]||[];for(const term of current.filter(x=>x.endYear<s.year||!present(s,x.id)||c.retired[x.id]))c.termHistory.push({...term,office,ended:{year:s.year,month:s.month},reason:!present(s,term.id)?'incapacitated':c.retired[term.id]?'retired':'term completed'});c.magistrates[office]=current.filter(x=>x.endYear>=s.year&&present(s,x.id)&&!c.retired[x.id]);}
- c.termHistory=c.termHistory.slice(-100);
+ c.termHistory=c.termHistory.slice(-240);
  for(const id of Object.keys(c.careers))if(!c.retired[id]&&present(s,id)&&age(s,id)>=68&&roll(s)<.16){c.retired[id]={year:s.year,month:s.month,reason:'age'};c.retirements.push({id,year:s.year,month:s.month,reason:'age'});if(person(s,id)?.faction===s.player)note(s,name(id)+' retired from political applications.',name(id,1)+'退出官员申请。')}
  for(const term of c.pendingTerms.filter(x=>x.year===s.year&&present(s,x.id))){
   c.magistrates[term.office].push({id:term.id,startYear:s.year,endYear:s.year,faction:term.faction});

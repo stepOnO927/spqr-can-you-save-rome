@@ -204,9 +204,9 @@ test('named senators endorse candidates but collective century votes choose cons
  assert.equal(c.endorsements.at(-1).status,'accepted');
  s.month=10;const result=resolveElection(s,'consul').result;
  assert.equal(result.body,'centuriate');assert.equal(result.elected.length,2);
- assert.equal(result.ballots.length,20);
- assert.equal(result.ballots.filter(x=>x.seat===1).length,10);
- assert.equal(result.candidates.reduce((n,x)=>n+x.votes,0),20);
+ assert.equal(result.ballots.length,386);
+ assert.equal(result.ballots.filter(x=>x.seat===1).length,193);
+ assert.equal(result.candidates.reduce((n,x)=>n+x.votes,0),386);
  assert.equal(upgradeSave(structuredClone(s)).world.cursus.endorsements.at(-1).status,'accepted');
 });
 test('career advancement and annual political review use actual elections',()=>{
@@ -278,4 +278,18 @@ test('a recruited commander changes allegiance personally without transferring a
 test('AI governments seek talent from their own territories',()=>{
  const s=newGame('senate'),c=initializeCursus(s);s.year=-48;s.month=2;advanceCursus(s);
  assert.ok(c.talentSearches.some(x=>x.actor==='caesar'&&x.status==='pending'));
+});
+
+test('twenty-year government simulation preserves elections, careers, intelligence and save state',()=>{
+ const s=newGame('senate'),c=initializeCursus(s);s.wars=[];
+ for(const f of Object.values(s.factions))f.treasury=10000;
+ for(let i=0;i<240;i++){advanceCursus(s);if(s.month===12){s.year++;s.month=1}else s.month++}
+ const consuls=c.elections.filter(x=>x.office==='consul');
+ assert.equal(consuls.length,20);assert.ok(consuls.every(x=>x.body==='centuriate'&&x.ballots.length===386));
+ assert.equal(c.politicalReviews.length,20);
+ assert.ok(c.careers&&Object.values(c.careers).some(h=>h.some(x=>x.source==='election')));
+ assert.ok(c.intel.caesar?.senate?.reports?.length>0);
+ assert.ok(c.talentSearches.some(x=>x.actor==='caesar'));
+ const saved=upgradeSave(structuredClone(s));assert.equal(saved.world.cursus.elections.length,c.elections.length);
+ assert.equal(saved.world.cursus.politicalReviews.length,20);
 });
