@@ -72,6 +72,10 @@ export function initializeGovernments(s){
 }
 
 export function successionCandidates(s,faction){
+ // The two Mauretanian thrones have separate inheritance lines. A single
+ // faction-wide nomination cannot designate either seat and must not charge
+ // the court or be presented as an actionable succession plan.
+ if(successionModel(faction,s)==='separate_kingdoms')return [];
  const candidates=successorFor(s,faction);
  if(!['roman_principate','later_empire'].includes(successionModel(faction,s)))return candidates;
  const children=(s.world.leadership[faction]||[]).flatMap(id=>s.world.characters[id]?.children||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&!s.world.characters[id].missing&&!s.world.characters[id].asylumHost);
@@ -146,7 +150,8 @@ function advanceRegionalVacancy(s,faction,autoplayPlayer){
  if(dynastyRoll(s)>=chance)return;
  const serials=s.world.courtNomineeSerials||={},serial=(serials[faction]||0)+1;serials[faction]=serial;
  const [en,zh]=regionalCourts[faction],place=s.regions.find(r=>r.owner===faction)?.id;
- const id=createFictionalPerson(s,{name:[`Fictional ${en} court nominee ${serial}`,`虚构${zh}宫廷人选${serial}`],faction,birthYear:s.year-35,location:place,sex:'unknown',role:['Fictional court nominee in this campaign','本战役虚构宫廷人选'],origin:'court_nominee'});
+ const sex=serial===1?(faction==='bosporus'?'female':'male'):'unknown';
+ const id=createFictionalPerson(s,{name:[`Fictional ${en} court nominee ${serial}`,`虚构${zh}宫廷人选${serial}`],faction,birthYear:s.year-35,location:place,sex,role:['Fictional court nominee in this campaign','本战役虚构宫廷人选'],origin:'court_nominee'});
  f.treasury-=5;s.world.leadership[faction]=[id];delete vacancies[faction];
 }
 

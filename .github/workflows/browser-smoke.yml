@@ -33,8 +33,15 @@ jobs:
           node tools/chronicle-person-smoke.mjs
           node tools/unknown-person-smoke.mjs
           node tools/separate-kingdom-succession-smoke.mjs
+          node tools/regional-court-vacancy-smoke.mjs
+          node tools/court-portrait-smoke.mjs
+          node tools/succession-ui-recovery-smoke.mjs
           node tools/roman-market-sales-smoke.mjs
+          node tools/roman-economy-forecast-smoke.mjs
           node tools/mailbox-smoke.mjs
+          node tools/mail-privacy-smoke.mjs
+          node tools/atlas-mail-alert-smoke.mjs
+          node tools/gathering-presence-smoke.mjs
           node scripts/imperium-sim.mjs > imperium-simulation.json
           node tools/onboarding-smoke.mjs
           node tools/systems-smoke.mjs

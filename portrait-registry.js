@@ -30,6 +30,25 @@ const INSTITUTION_PORTRAITS=[
 // Limited individual artwork for campaign-born Roman people. A saved claim
 // binds each pair of childhood/adult assets to one person and their parentage.
 const BORN_PORTRAITS={male:['born-m1','born-m2','born-m3'],female:['born-f1','born-f2','born-f3']};
+// Each portrait is reserved permanently for the first documented fictional
+// nominee of that court in a save; names alone never establish identity.
+const COURT_PORTRAITS={
+ armenia:['Fictional Armenian court nominee 1','虚构亚美尼亚宫廷人选1','fictional-court-armenia'],
+ numidia:['Fictional Numidian court nominee 1','虚构努米底亚宫廷人选1','fictional-court-numidia'],
+ galatia:['Fictional Galatian court nominee 1','虚构加拉太宫廷人选1','fictional-court-galatia'],
+ bosporus:['Fictional Bosporan court nominee 1','虚构博斯普鲁斯宫廷人选1','fictional-court-bosporus']
+};
+export function assignCourtPortrait(state,id){
+ const d=state.world?.dynasties,c=state.world?.characters?.[id],saved=d?.catalog?.[id],entry=COURT_PORTRAITS[saved?.faction];
+ if(!entry||!c||!saved?.fictional||saved.name?.[0]!==entry[0]||saved.name?.[1]!==entry[1]||!Number.isInteger(c.birthYear)||!(d.lives?.[id]||[]).some(e=>e.simulated&&e.en?.startsWith('Entered this campaign as a fictional court nominee;')))return null;
+ d.courtPortraitClaims||={};if(d.courtPortraitClaims[id]||Object.values(d.courtPortraitClaims).some(x=>x?.key===entry[2]))return null;
+ d.courtPortraitClaims[id]={key:entry[2],name:[...saved.name],faction:saved.faction,birthYear:c.birthYear};return entry[2];
+}
+function courtPortraitKey(state,id){
+ const d=state.world?.dynasties,claim=d?.courtPortraitClaims?.[id],c=state.world?.characters?.[id],saved=d?.catalog?.[id],entry=COURT_PORTRAITS[claim?.faction];
+ if(!entry||!c||!saved?.fictional||saved.faction!==claim.faction||claim.key!==entry[2]||c.birthYear!==claim.birthYear||JSON.stringify(saved.name)!==JSON.stringify(claim.name)||claim.name?.[0]!==entry[0]||claim.name?.[1]!==entry[1])return null;
+ return claim.key;
+}
 export function assignBornPortrait(state,id){
  const d=state.world?.dynasties,c=state.world?.characters?.[id],saved=d?.catalog?.[id];
  if(!d||!c||!saved?.fictional||!Array.isArray(saved.name)||!saved.name[0]||!['caesar','senate'].includes(state.player)||c.faction!==state.player||c.institutionalOnly||!BORN_PORTRAITS[c.sex]||!Number.isInteger(c.birthYear)||c.birthYear< -49||c.birthYear>state.year||!Array.isArray(c.parents)||!c.parents.length||!c.parents.every(parent=>state.world.characters[parent]))return null;
@@ -82,6 +101,7 @@ export function observedProceduralPortrait(state,id){
 }
 export function fictionalPortraitKey(state,id){
  const entry=OPENING_PORTRAITS[id],person=state.world?.characters?.[id],saved=state.world?.dynasties?.catalog?.[id];
+ const court=courtPortraitKey(state,id);if(court)return court;
  const born=bornPortraitKey(state,id);if(born)return born;
  if(entry&&saved?.fictional&&saved.name?.[0]===entry[0]&&person?.birthYear===entry[1])return entry[2];
  if(state.scenario==='ambitious_general'&&state.scenarioGeneral===id&&saved?.fictional&&saved.name?.[0]==='Lucius Valerius Varus'&&person?.birthYear===-86)return 'fictional-varus';
@@ -93,6 +113,6 @@ export function fictionalPortraitKey(state,id){
 // Foreign artwork becomes available only from this viewer's completed meeting
 // snapshot. It must not be recomputed from the person's current hidden state.
 export function observedFictionalPortrait(state,id){
- const allowed=new Set([...Object.values(OPENING_PORTRAITS).map(x=>x[2]),...Object.values(SCENARIO_PORTRAITS).map(x=>x[2]),...INSTITUTION_PORTRAITS.map(x=>x[4]),...Object.values(BORN_PORTRAITS).flatMap(keys=>keys.flatMap(key=>[key+'-child',key+'-adult'])),'fictional-varus']),now=state.year*12+state.month;
+ const allowed=new Set([...Object.values(OPENING_PORTRAITS).map(x=>x[2]),...Object.values(SCENARIO_PORTRAITS).map(x=>x[2]),...INSTITUTION_PORTRAITS.map(x=>x[4]),...Object.values(COURT_PORTRAITS).map(x=>x[2]),...Object.values(BORN_PORTRAITS).flatMap(keys=>keys.flatMap(key=>[key+'-child',key+'-adult'])),'fictional-varus']),now=state.year*12+state.month;
  return (state.meetings||[]).filter(m=>m.actor===state.player&&m.target===id&&m.status==='met'&&allowed.has(m.portraitKey)&&Number.isFinite(m.resolvedYear??m.year)&&Number.isFinite(m.resolvedMonth??m.month)&&(m.resolvedYear??m.year)*12+(m.resolvedMonth??m.month)<=now).sort((a,b)=>((b.resolvedYear??b.year)*12+(b.resolvedMonth??b.month))-((a.resolvedYear??a.year)*12+(a.resolvedMonth??a.month)))[0]?.portraitKey||null;
 }

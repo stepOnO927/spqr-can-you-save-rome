@@ -112,6 +112,8 @@ export function assignSuccession(s,faction){
   const next=eligible.includes(preferred)?preferred:model==='liu_imperial'?candidates[0]||children[0]:model==='arsacid_nobility'?candidates[0]||children[0]:imperial?ranked[0]:children[0]||candidates[0];
   if(next){
    current.push(next);
+   // A designation governs this vacancy; the successor must arrange the next.
+   if(s.world.successionPlans)delete s.world.successionPlans[faction];
    // A court outsider's accession is a political change, not an invisible
    // continuation of the previous dynasty. Blood descendants retain the house.
    const d=s.world.dynasties,person=s.world.characters[next],oldHouse=d?.rulingHouses?.[faction];

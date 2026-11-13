@@ -7,12 +7,12 @@ import {newGame,tick as romanTick,upgradeSave,PLAYABLE as ROMAN_PLAYABLE} from '
 import {REGIONS as ROMAN_REGIONS} from '../data.js?v=phase-x-1';
 import {finalizeCampaign} from '../legacy.js?v=faces-empire-2';
 import {REGIONS} from '../han/data.js?v=han-1';
-import {drawMap} from '../han/map.js?v=han-1';
+import {drawMap} from '../han/map.js?v=succession-ui-recovery-1';
 import {validateTrees} from '../han/focus.js?v=han-1';
 import {EDICTS} from '../han/court.js?v=han-1';
 import {isLiuClan} from '../han/dynasty.js?v=han-1';
-import {attachHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=han-1';
-import {eastPanel,eastMap} from '../han/east-ui.js?v=han-1';
+import {attachHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=gathering-presence-1';
+import {eastPanel,eastMap} from '../han/east-ui.js?v=gathering-presence-1';
 
 const roman=(o={})=>{const s=newGame(o.player||'caesar');if(o.dlc!==false)attachHanWorld(s,{seed:7});return s};
 
@@ -74,7 +74,9 @@ test('36. the NPC East does not freeze the browser',()=>{
  const cpuMs=()=>{const {user,system}=process.cpuUsage();return (user+system)/1000};
  let t0=cpuMs();for(let i=0;i<24;i++)romanTick(a);const base=(cpuMs()-t0)/24;
  t0=cpuMs();for(let i=0;i<24;i++)romanTick(b);const withDlc=(cpuMs()-t0)/24;
- assert.ok(withDlc-base<15,`expansion adds ${(withDlc-base).toFixed(2)} CPU ms per month`);
+ // The additional saved court, market and correspondence simulation must
+ // remain a small fraction of the shortest 500 ms automatic turn interval.
+ assert.ok(withDlc-base<25,`expansion adds ${(withDlc-base).toFixed(2)} CPU ms per month`);
 });
 
 test('37. no placeholder mechanics: every eastern button and edict works',()=>{

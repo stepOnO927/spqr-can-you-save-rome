@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {satisfactionForOutline} from '../map-lab/satisfaction-map.js?v=satisfaction-map-1';
+import {satisfactionForOutline} from '../map-lab/satisfaction-map.js?v=succession-ui-recovery-1';
 
 const region=(owner,satisfaction)=>({owner,population:{satisfaction}});
 test('satisfaction color represents only own theaters and averages shared outlines',()=>{
