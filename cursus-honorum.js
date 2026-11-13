@@ -161,7 +161,7 @@ export function institutionalBalance(s,faction=s.player){
 }
 export function annualApplicants(s){
  const c=initializeCursus(s);if(c.year===s.year)return c.applicants.filter(x=>x.year===s.year);
- c.year=s.year;c.applicants=c.applicants.filter(x=>x.year>=s.year-1||x.promises?.some(p=>p.status==='pending'));
+ c.year=s.year;c.applicants=c.applicants.filter(x=>x.year>=s.year-1||x.promises?.some(p=>['pending','delayed'].includes(p.status)));
  const renewed=new Set();for(const old of c.applicants.filter(x=>x.year===s.year-1&&x.status==='lost'&&present(s,x.id)&&!c.retired[x.id]&&officeEligibility(s,x.id,x.office).ok).sort((a,b)=>b.support-a.support)){const key=old.faction+':'+old.office;if(renewed.has(key))continue;renewed.add(key);c.applicants.push({...old,year:s.year,status:'eligible',support:0,opposition:0,campaignExpense:0,promises:[]})}
  for(const [id,history] of Object.entries(c.careers)){
   if(!present(s,id)||c.retired[id]||!history?.some(x=>x.source==='election'))continue;
@@ -510,7 +510,7 @@ function advanceMeasures(s,c){
  for(const p of c.proposals.filter(x=>['consulting','voting','implementing'].includes(x.status))){
   if(--p.remaining>0)continue;
   if(p.status==='consulting'){
-   p.senateRoll=senateAssessment(s,p.actor,p.kind);for(const application of c.applicants)if(application.faction===p.actor&&application.status==='elected')for(const promise of application.promises||[])if(promise.status==='pending'&&promise.requiredAction==='consultation'){promise.status='fulfilled';promise.fulfilled={year:s.year,month:s.month};changeObedience(s,application.id,2,'honored consultation')}if(p.senateRoll.support<40||p.senateRoll.for<=p.senateRoll.against){p.status='opposed';if(p.actor===s.player)note(s,'The Senate opposed a proposed measure; no assembly vote followed.','元老院反对一项提案；公民大会未进行表决。');continue}
+   p.senateRoll=senateAssessment(s,p.actor,p.kind);for(const application of c.applicants)if(application.faction===p.actor&&application.status==='elected')for(const promise of application.promises||[])if(['pending','delayed'].includes(promise.status)&&promise.requiredAction==='consultation'){promise.status='fulfilled';promise.fulfilled={year:s.year,month:s.month};changeObedience(s,application.id,2,'honored consultation')}if(p.senateRoll.support<40||p.senateRoll.for<=p.senateRoll.against){p.status='opposed';if(p.actor===s.player)note(s,'The Senate opposed a proposed measure; no assembly vote followed.','元老院反对一项提案；公民大会未进行表决。');continue}
    p.status='voting';p.remaining=1;continue;
   }
   if(p.status==='voting'){
@@ -524,7 +524,21 @@ function advanceMeasures(s,c){
   p.status='implemented';p.completed={year:s.year,month:s.month};for(const application of c.applicants)if(application.faction===p.actor&&application.status==='elected')for(const promise of application.promises||[])if(promise.status==='pending'&&promise.requiredAction===p.kind){promise.status='fulfilled';promise.fulfilled={year:s.year,month:s.month};changeObedience(s,application.id,3,'fulfilled public promise')}if(p.actor===s.player)note(s,'A measure passed the Senate consultation and assembly vote, then entered administration.','一项提案经过元老院咨询与公民大会表决，现已落实。');
  }
 }
-function advancePromises(s,c){for(const application of c.applicants)for(const promise of application.promises||[])if(promise.status==='pending'&&s.year>promise.deadlineYear){promise.status='abandoned';promise.resolved={year:s.year,month:s.month};application.senatorialSupport=clamp((application.senatorialSupport||50)-4);changeObedience(s,application.id,-8,'unmet public promise');c.senate[application.faction]=clamp((c.senate[application.faction]||50)-4);if(promise.by===s.player)note(s,'An elected candidate failed to pursue a public works promise by its deadline.','一位当选者未在期限内兑现公共工程承诺。')}
+function advancePromises(s,c){
+ for(const application of c.applicants)for(const promise of application.promises||[]){
+  if(!['pending','delayed'].includes(promise.status)||s.year<=promise.deadlineYear)continue;
+  const proposals=c.proposals.filter(x=>x.actor===application.faction&&x.kind===promise.requiredAction&&x.year>=promise.year);
+  const blocked=proposals.findLast(x=>['opposed','rejected','vetoed'].includes(x.status));
+  const progressing=proposals.some(x=>['consulting','voting','implementing'].includes(x.status));
+  if(!person(s,application.id)?.alive)promise.status='impossible';
+  else if(blocked)promise.status='blocked';
+  else if(progressing&&!promise.delayCount){promise.status='delayed';promise.delayCount=1;promise.deadlineYear++;promise.resolved={year:s.year,month:s.month,reason:'institutional procedure'};continue}
+  else promise.status='abandoned';
+  promise.resolved={year:s.year,month:s.month,reason:promise.status};
+  if(promise.status==='abandoned'){application.senatorialSupport=clamp((application.senatorialSupport||50)-4);changeObedience(s,application.id,-8,'unmet public promise');c.senate[application.faction]=clamp((c.senate[application.faction]||50)-4)}
+  else if(promise.status==='blocked'){application.senatorialSupport=clamp((application.senatorialSupport||50)-1);changeObedience(s,application.id,-2,'blocked public promise')}
+  if(promise.by===s.player)note(s,promise.status==='blocked'?'A campaign commitment was blocked by an institution.':promise.status==='impossible'?'A campaign commitment became impossible after the candidate died.':'A campaign commitment was abandoned after its deadline.',promise.status==='blocked'?'一项竞选承诺受到制度阻碍。':promise.status==='impossible'?'候选人去世后，一项竞选承诺无法履行。':'一项竞选承诺在期限后被放弃。');
+ }
 }
 function aiPolitical(s,c){
  const controller=factionOfRome(s);

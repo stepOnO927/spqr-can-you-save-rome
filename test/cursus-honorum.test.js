@@ -347,3 +347,20 @@ test('annual review records real administrative appointments without inventing o
  assert.ok(review.appointed.some(x=>x.id===id&&x.office==='finance'&&x.faction==='senate'));
  assert.equal(upgradeSave(structuredClone(s)).world.cursus.appointmentHistory.at(-1).id,id);
 });
+
+test('campaign promises retain their public policy and separate enactment cost',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
+ assert.equal(supportCandidate(s,id,'promise','senate','grain_relief').ok,true);
+ const promise=campaignFor(s,id).promises.at(-1);
+ assert.equal(promise.kind,'grain_relief');assert.equal(promise.requiredAction,'grain_relief');assert.equal(promise.cost,10);
+ assert.equal(promise.status,'offered');assert.equal(upgradeSave(structuredClone(s)).world.cursus.applicants.find(x=>x.id===id).promises.at(-1).kind,'grain_relief');
+});
+
+test('institutional blockage differs from abandoning a campaign promise',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.varroId,app=campaignFor(s,id);
+ app.status='elected';app.promises.push({id:'promise:test:blocked',by:'senate',year:s.year,month:1,kind:'public_works',requiredAction:'public_works',deadlineYear:s.year,status:'pending'});
+ c.proposals.push({actor:'senate',kind:'public_works',status:'opposed',remaining:0,year:s.year,month:2});
+ s.year++;s.month=1;advanceCursus(s);
+ assert.equal(app.promises.at(-1).status,'blocked');
+ assert.equal(app.promises.at(-1).resolved.reason,'blocked');
+});
