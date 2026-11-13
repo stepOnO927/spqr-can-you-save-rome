@@ -178,7 +178,8 @@ Both Republican commands can now choose a politically active original adult
 when all documented successor candidates have been lost. This selection uses
 the existing faction leadership and government simulation; it excludes
 military-only people and active specialist professions, and Republican command
-does not pass automatically from parent to child. A browser regression checks
+requires at least 35 influence before an original court member is considered.
+It does not pass automatically from parent to child. A browser regression checks
 the selected original leader's portrait and identity after save/load.
 Repeatedly appointing the same officeholder no longer grants more favor or
 resets the observed-service clock. The court browser test verifies bilingual

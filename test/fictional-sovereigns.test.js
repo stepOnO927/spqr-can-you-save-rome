@@ -11,6 +11,7 @@ test('each Republican command can elevate an original adult political leader aft
  for(const [faction,historical] of [['caesar',['caesar','antony','lepidus']],['senate',['pompey','cato','scipio','labienus','cicero']]]){
   let s=newGame(faction);
   const leader=createFictionalPerson(s,{name:[`Original ${faction} leader`,`原创${faction}领袖`],faction,birthYear:-80,sex:'male',location:faction==='caesar'?'cisalpine':'roma'});
+  assert.equal(successorFor(s,faction).includes(leader),false,'an unbacked court member is not a command successor');
   s.world.characters[leader].influence=88;
   const agent=createFictionalPerson(s,{name:['Field courier','野战信使'],faction,birthYear:-80,sex:'male'});
   s.world.characters[agent].profession='courier';s.world.characters[agent].influence=99;

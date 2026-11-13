@@ -69,7 +69,7 @@ export function eligibleLiuImperial(s,id,seen=new Set()){
 export function successorFor(s,faction){
  const model=successionModel(faction,s);
  const supportsOriginal=['egypt','parthia','armenia','numidia','mauretania','galatia','bosporus','han'].includes(faction)||['republican_command','roman_principate','later_empire'].includes(model);
- const fictional=supportsOriginal?Object.values(s.world.characters).filter(c=>CHARACTER_CATALOG[c.id]?.fictional&&c.faction===faction&&!c.institutionalOnly&&!c.militaryOnly&&!['spy','envoy','courier','merchant'].includes(c.profession)&&c.birthYear!=null&&s.year-c.birthYear>=18).map(c=>c.id):[];
+ const fictional=supportsOriginal?Object.values(s.world.characters).filter(c=>CHARACTER_CATALOG[c.id]?.fictional&&c.faction===faction&&!c.institutionalOnly&&!c.militaryOnly&&!['spy','envoy','courier','merchant'].includes(c.profession)&&c.birthYear!=null&&s.year-c.birthYear>=18&&(model!=='republican_command'||(c.influence??0)>=35)).map(c=>c.id):[];
  return [...new Set([...(SUCCESSORS[faction]||[]),...fictional])].filter(id=>s.world.characters[id]?.alive&&!s.world.characters[id].missing&&!s.world.characters[id].asylumHost&&s.world.characters[id].faction===faction&&!(s.world.leadership[faction]||[]).includes(id)&&(faction!=='han'||eligibleLiuImperial(s,id))).sort((a,b)=>(s.world.characters[b].influence??50)-(s.world.characters[a].influence??50));
 }
 export function assignSuccession(s,faction){
