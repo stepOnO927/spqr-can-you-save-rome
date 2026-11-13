@@ -1,4 +1,4 @@
-import {claimReward} from './legacy-core.js?v=7';
+import {claimReward} from './legacy-core.js?v=8';
 
 // A fictional constitutional exercise in the permanent city. The opinions
 // come from invited groups, never from hidden campaign characters or events.

@@ -1,4 +1,4 @@
-import {claimReward} from './legacy-core.js?v=6';
+import {claimReward} from './legacy-core.js?v=8';
 
 export const HARBOR_DOSSIER='harbor-seal';
 export const HARBOR_COSTS={registry:20,informant:30,corroboration:15};

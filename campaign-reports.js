@@ -1,6 +1,6 @@
 import {FACTIONS} from './data.js';
 import {CHARACTER_CATALOG} from './characters.js';
-import {BUILDINGS,IDEAS,MATERIALS} from './development.js?v=29';
+import {BUILDINGS,IDEAS,MATERIALS} from './development.js?v=30';
 export const campaignTurn=(year,month)=>(year<0?49+year:48+year)*12+month;
 
 export function initializeReports(s){

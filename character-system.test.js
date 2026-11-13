@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy} from './engine.js';
+import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy,researchInnovation,adoptIdea} from './engine.js';
 import {assignSuccession,knownLeaders,ageRange} from './characters.js';
-import {addReport,commandFactor,advanceCharacters,advanceOperations,contestLeadership,observeArmies,reportedArmies,missionDuration,previewMission} from './character-system.js';
+import {addReport,availableAgents,commandFactor,advanceCharacters,advanceOperations,contestLeadership,observeArmies,reportedArmies,missionDuration,previewMission} from './character-system.js';
+import {IDEAS,development,activeEffects} from './development.js';
+import {developmentPanel} from './development-ui.js';
 
 test('foreign intelligence is independent from actual leadership and other observers',()=>{
  const s=newGame(),opening=knownLeaders(s,'caesar','egypt');
@@ -49,6 +51,35 @@ test('spies cost resources and resolve by month with isolated records',()=>{
  assert.equal(queueMission(s,'caesar','egypt','spy','health').reason,'pending');for(let i=0;i<3;i++)tick(s);
  assert.equal(s.operations[0].status,'pending');const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));tick(loaded);
  assert.notEqual(loaded.operations[0].status,'pending');assert.equal(loaded.knowledge.senate.egypt.reports.length,0);
+});
+test('informant patronage funds a fourth real mission without disclosing a foreign court',()=>{
+ const idea=IDEAS.find(x=>x.id==='court-informant-patronage');assert.match(idea.source.url,/Frontinus\/Strategemata/);
+ const s=newGame('senate');s.wars=[];s.factions.senate.treasury=500;
+ const d=development(s,'senate');
+ assert.match(developmentPanel(s,'en','idea'),/Court Informant Patronage/);
+ assert.match(developmentPanel(s,'zh','idea'),/宫廷情报人员扶持/);
+ assert.equal(availableAgents(s,'senate'),3);
+ assert.equal(researchInnovation(s,'senate','idea',idea.id).ok,true);
+ assert.equal(s.factions.senate.treasury,500-idea.cost);
+ for(let i=0;i<idea.months;i++)tick(s);
+ assert.ok(d.knownIdeas.includes(idea.id));
+ assert.equal(availableAgents(s,'senate'),3);
+ assert.equal(adoptIdea(s,'senate',idea.id,0).ok,true);
+ tick(s);
+ assert.equal(availableAgents(s,'senate'),3);
+ tick(s);assert.equal(availableAgents(s,'senate'),4);
+ assert.equal(activeEffects(s,'senate').upkeep,3);
+ const knowledge=structuredClone(s.knowledge.senate.egypt),before=s.factions.senate.treasury;
+ for(const [target,type,subject] of [['egypt','spy','leaders'],['parthia','spy','leaders'],['senate','counter','conspiracy'],['caesar','spy','leaders']])assert.equal(queueMission(s,'senate',target,type,subject).ok,true);
+ assert.equal(s.factions.senate.treasury,before-44);
+ assert.equal(availableAgents(s,'senate'),0);
+ assert.deepEqual(s.knowledge.senate.egypt,knowledge);
+ const restored=upgradeSave(structuredClone(s));assert.equal(availableAgents(restored,'senate'),0);
+ const campaign=upgradeSave(structuredClone(s));for(let i=0;i<4;i++)tick(campaign);
+ assert.ok(campaign.operations.filter(op=>op.actor==='senate'&&['spy','counter'].includes(op.type)).every(op=>op.status!=='pending'));
+ restored.operations[0].status='complete';assert.equal(availableAgents(restored,'senate'),1);
+ restored.world.captives.push({id:'held-test',owner:'senate',holder:'egypt',state:'held'});
+ assert.equal(availableAgents(restored,'senate'),0);
 });
 test('mission preview gives actionable requirements without spending or revealing foreign secrets',()=>{
  const s=newGame(),before=JSON.stringify(s),plan=previewMission(s,'caesar','egypt','spy','health');

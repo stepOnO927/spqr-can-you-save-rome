@@ -3,7 +3,7 @@ import {FACTIONS,ROUTES} from './data.js?v=9';
 import {GRAND_ROUTES} from './grand-map-data.js';
 import {deriveGovernment} from './governance.js?v=16';
 import {potentialConspirators} from './conspiracies.js?v=7';
-import {localBuildingEffects} from './development.js?v=29';
+import {activeEffects,localBuildingEffects} from './development.js?v=30';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 const claimantAvailable=c=>!!c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health);
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
@@ -20,7 +20,7 @@ export function missionDuration(s,actor,target,type){
  for(let i=0;i<queue.length;i++){const [id,steps]=queue[i];if(goals.has(id)){distance=steps;break}for(const edge of ROUTES){const next=edge[0]===id?edge[1]:edge[1]===id?edge[0]:null;if(next&&!seen.has(next)){seen.add(next);queue.push([next,steps+1])}}}
  return cfg.months+(distance===null?2:distance>=5?2:distance>=3?1:0);
 }
-export function availableAgents(s,actor){initializeWorld(s);const held=s.world.captives.filter(c=>c.owner===actor&&c.state==='held').length,pending=s.operations.filter(o=>o.actor===actor&&['spy','counter'].includes(o.type)&&o.status==='pending').length;return Math.max(0,3-held-pending)}
+export function availableAgents(s,actor){initializeWorld(s);const held=s.world.captives.filter(c=>c.owner===actor&&c.state==='held').length,pending=s.operations.filter(o=>o.actor===actor&&['spy','counter'].includes(o.type)&&o.status==='pending').length,patronage=Math.min(1,Math.max(0,activeEffects(s,actor).agentCapacity||0));return Math.max(0,3+patronage-held-pending)}
 export function requestAgentRelease(s,actor,captiveId){
  initializeWorld(s);const c=s.world.captives.find(x=>x.id===captiveId&&x.owner===actor&&x.state==='held');if(actor!==s.player||!c)return {ok:false,reason:'unavailable'};
  if(s.releaseRequests.some(x=>x.captiveId===captiveId&&x.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[actor].treasury<8)return {ok:false,reason:'treasury'};

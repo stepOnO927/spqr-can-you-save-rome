@@ -1,21 +1,21 @@
 import {stageHandoff,receiveHandoff} from './view-handoff.js?v=2';
-import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=26';
+import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=27';
 import {identity,factionMark} from './identity.js?v=2';
 import {CHARACTER_CATALOG} from './characters.js?v=15';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=9';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,warContributionPlan,collectWarContributions,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=162';
-import {importCampaign,downloadCampaign} from './save-files.js?v=10';
-import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js?v=6';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,warContributionPlan,collectWarContributions,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=163';
+import {importCampaign,downloadCampaign} from './save-files.js?v=11';
+import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js?v=8';
 import {endCampaign} from './achievement-system.js?v=5';
-import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js?v=8';
-import {budgetHtml} from './budget-ui.js?v=12';
-import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js?v=19';
-import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from './development-ui.js?v=33';
-import {drawMap,mapPoint} from './map.js?v=59';
-import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=4';
-import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=4';
-import {assessment,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=7';
-import {intelligenceHtml,fortificationText} from './recon-ui.js?v=4';
+import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js?v=9';
+import {budgetHtml} from './budget-ui.js?v=13';
+import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js?v=20';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from './development-ui.js?v=34';
+import {drawMap,mapPoint} from './map.js?v=60';
+import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=5';
+import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=5';
+import {assessment,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=8';
+import {intelligenceHtml,fortificationText} from './recon-ui.js?v=5';
 
 const ui={
   en:{subtitle:'A republic at war with itself',campaign:'49 BCE · Caesar’s Civil War',historical:'Historical campaign',schematic:'Schematic operational map · theaters and routes are gameplay abstractions',new:'New campaign',save:'Save',load:'Load',pause:'Pause',play:'Play',speed:'Speed',month:'MONTH',treasury:'TREASURY',food:'FOOD',manpower:'MANPOWER',stability:'STABILITY',legitimacy:'LEGITIMACY',strength:'FIELD STRENGTH',map:'Campaign',military:'Military',government:'Government',chronicle:'Chronicle',sources:'Sources',select:'Select a theater or army',selected:'SELECTED THEATER',owner:'Command',terrain:'Terrain',city:'Principal city',supply:'Supply limit',loyalty:'Local loyalty',fort:'Fortification',recruit:'Raise legion · 24¤ / 3,000 men / 6 grain',recruitFail:'Insufficient resources or this theater is not yours.',army:'SELECTED ARMY',men:'Soldiers',morale:'Morale',commander:'Commander',order:'Order march',cancel:'Cancel order',target:'Select an adjacent theater on the map.',invalid:'No legal march route. War is required to enter another command’s theater.',marching:'Marching',siege:'Besieging',available:'Ready',armies:'Field armies',tax:'Tax policy',low:'Low',normal:'Normal',high:'High',taxText:'Higher taxes raise revenue but erode local loyalty. Low taxes recover loyalty.',revolt:'Rebellion',revoltText:'A disloyal, undefended theater can secede when stability is low. The rebels gain land and an army.',war:'Civil war',warText:'Caesar and Pompey command opposing Roman factions. Their colors show military control during the conflict, not separate sovereign states.',log:'Campaign dispatches',sourceNote:'Historical framework: Caesar crossed the Rubicon in January 49 BCE. Theater ownership, troop totals, income, travel times, and battle ratings are simplified gameplay estimates. The coastline follows public-domain Natural Earth physical geography; operational borders are gameplay approximations, not ancient administrative boundaries.',instructions:'Choose an army, select Order march, then click a connected theater. Advance time to resolve travel and combat.',savePrompt:'Choose save slot 1–3',saved:'Campaign saved in slot',loaded:'Campaign loaded from slot',empty:'That slot is empty.',victory:'Pompeian command defeated · the campaign continues',noArmy:'No field army selected',atWar:'At war',neutral:'Independent',terrainNames:{plain:'Plain',hills:'Hills',forest:'Forest',urban:'Urban',desert:'Desert'},sourceTitle:'Research and accuracy notes',open:'Open source ↗',legend:'CAMPAIGN CONTROL',sea:'Sea crossing · 8¤',land:'Land route',clear:'Clear selection'},

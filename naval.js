@@ -1,7 +1,7 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js';
-import {activeEffects} from './development.js?v=29';
+import {activeEffects} from './development.js?v=30';
 import {officeOf} from './office-system.js';
-import {nationalBudget} from './national-budget.js?v=9';
+import {nationalBudget} from './national-budget.js?v=10';
 
 // Sea areas and costs are game-scale approximations of the 49 BCE Mediterranean.
 export const SEA_ZONES=[

@@ -41,6 +41,8 @@ try{
   assert.match(await page.locator('#tech-provincial-tax-review').innerText(),/integration ≥65, monthly satisfaction and loyalty losses each fall by 1/);
   assert.match(await page.locator('#tech-field-march-coordination').innerText(),/Coordinated Field Marches[\s\S]*Land march reduction \+1/);
   assert.match(await page.locator('#tech-field-march-coordination a[target="_blank"]').getAttribute('href'),/Civil_Wars\/1B/);
+  assert.match(await page.locator('#tech-court-informant-patronage').innerText(),/Court Informant Patronage[\s\S]*Concurrent spy and counterintelligence missions \+1/);
+  assert.match(await page.locator('#tech-court-informant-patronage a[target="_blank"]').getAttribute('href'),/Frontinus\/Strategemata/);
   await page.locator('[data-research="legion-training"]').click();
   assert.match(await page.locator('.dev-status').first().innerText(),/Researching/);
   for(let i=0;i<3;i++)await page.locator('#step').click();
@@ -73,6 +75,7 @@ try{
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/国库 \/ 月 −2/);
   assert.match(await page.locator('#tech-provincial-tax-review').innerText(),/行政融合度≥65且实行高税时/);
   assert.match(await page.locator('#tech-field-march-coordination').innerText(),/野战行军调度[\s\S]*陆路行军缩减 \+1/);
+  assert.match(await page.locator('#tech-court-informant-patronage').innerText(),/宫廷情报人员扶持[\s\S]*同时进行的间谍与反谍任务 \+1/);
   await page.screenshot({path:'tools/phase-xiv-ui.png'});
   for(const lang of ['en','zh']){
     const replacing=newGrandGame('caesar');
@@ -258,6 +261,8 @@ try{
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
   await page.locator('#development').click();
   assert.match(await page.locator('#command-detail').innerText(),/水利管理.*个月后抵达/);
+  await page.locator('[data-dev-branch="idea"]').click();
+  assert.match(await page.locator('#tech-court-informant-patronage').innerText(),/宫廷情报人员扶持/);
   assert.deepEqual(errors,[]);
   console.log('Phase XIV browser smoke passed: research, adoption, construction, knowledge agreements and consent-based trades in both languages.');
 }finally{await browser.close()}
