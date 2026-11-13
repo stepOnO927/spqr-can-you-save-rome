@@ -14,6 +14,11 @@ try{
  await page.locator('[data-export-good="silk"]').click();
  assert.match(await page.locator('#message').innerText(),/Export policy updated/);
  assert.equal(await page.locator('[data-export-good="silk"]').getAttribute('aria-pressed'),'true');
+ await page.locator('#east-market-sale-good').selectOption('grain');
+ assert.match(await page.locator('#east-market-sale-stock').innerText(),/Available stock [1-9]/);
+ await page.locator('#east-market-sale-post').click();
+ assert.match(await page.locator('#message').innerText(),/Goods reserved and offered/);
+ assert.equal(await page.locator('[data-cancel-sale]').count(),1);
  await page.locator('#east-market-tariff').selectOption('high');
  assert.match(await page.locator('#message').innerText(),/Customs policy updated/);
  assert.equal(await page.locator('#east-market-tariff').inputValue(),'high');
@@ -30,6 +35,9 @@ try{
  assert.match(await page.locator('#message').innerText(),/Merchant dispatched/);
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Horses/);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#trade-panel').click();
+ assert.equal(await page.locator('[data-cancel-sale]').count(),1);
+ await page.locator('[data-cancel-sale]').click();
+ assert.match(await page.locator('#message').innerText(),/stock returned/);
  assert.equal(await page.locator('[data-export-good="silk"]').getAttribute('aria-pressed'),'true');
  await page.locator('[data-export-good="silk"]').click();
  assert.equal(await page.locator('[data-export-good="silk"]').getAttribute('aria-pressed'),'false');
@@ -42,6 +50,7 @@ try{
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
  assert.match(await page.locator('#inspector').innerText(),/过境关税/);
  assert.match(await page.locator('#inspector').innerText(),/出口管制/);
+ assert.match(await page.locator('#inspector').innerText(),/挂牌出售/);
  assert.match(await page.locator('.market-receipts').innerText(),/货价.*运费.*过境税.*总计/);
  await page.evaluate(async()=>{
   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js');
@@ -60,5 +69,5 @@ try{
  await page.locator('#lang').click();
  assert.match(await page.locator('.market-receipts').innerText(),/Returned after blockade.*Goods returned to.*Refund.*Transport spent/s);
  assert.deepEqual(errors,[]);
- console.log('Han market browser smoke passed: customs and export policy, treaty, horse quote, dispatch, saved merchant, delivery and bilingual panel.');
+ console.log('Han market browser smoke passed: measured sale listing, customs and export policy, treaty, horse dispatch, delivery and bilingual panel.');
 }finally{await browser.close()}

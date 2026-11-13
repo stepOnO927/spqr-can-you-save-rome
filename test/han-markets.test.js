@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=han-1';
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=han-1';
-import {advanceEasternMarkets,placeEasternTrade,quoteEasternTrade,easternMarketOffers,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-of-empire-1';
+import {advanceEasternMarkets,cancelEasternSale,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-of-empire-1';
 import {advanceSilk} from '../han/silk-road.js?v=han-1';
 import {roll} from '../han/util.js?v=han-1';
 
@@ -75,6 +75,46 @@ test('an export restriction blocks new foreign silk contracts but honors an exis
  assert.equal(s.tradeMarkets.shipments.find(x=>x.id===placed.shipment.id).status,'delivered');
  assert.equal(setEasternExportRestriction(s,'han','silk',false).ok,true);
  assert.equal(quoteEasternTrade(s,request).ok,true);
+});
+
+test('a player sale reserves goods and an AI court buys only the listed stock',()=>{
+ let s=newHanGame('han',{seed:49});s.treaties.push({type:'market',parties:['han','kangju']});
+ for(const r of s.regions){r.fort=2;r.unrest=0}
+ for(const market of Object.values(s.tradeMarkets.regions))for(const item of Object.values(market.goods)){item.stock=0;item.production=0;item.consumption=0}
+ for(const [id,faction] of Object.entries(s.factions))faction.treasury=id==='kangju'?1000:0;
+ const source=s.tradeMarkets.regions.changan.goods.silk;source.stock=10;
+ assert.equal(easternMarketOffers(s).some(o=>o.seller==='han'&&o.commodity==='silk'),false,'AI cannot take unlisted player stock');
+ const posted=postEasternSale(s,{origin:'changan',commodity:'silk',quantity:5,unitPrice:1});assert.equal(posted.ok,true,posted.reason);
+ assert.equal(source.stock,5);assert.equal(easternMarketOffers(s).find(o=>o.saleOrderId===posted.order.id).available,5);
+ s.month=3;advanceEasternMarkets(s);
+ const shipment=s.tradeMarkets.shipments.find(x=>x.saleOrderId===posted.order.id&&x.buyer==='kangju');
+ assert.ok(shipment,'the AI buyer should purchase a treaty-backed player listing');
+ assert.equal(shipment.price,shipment.quantity);assert.equal(source.stock,5);
+ assert.equal(posted.order.available,5-shipment.quantity);
+ const blocked=quoteEasternTrade(s,{seller:'han',buyer:'kangju',origin:'changan',destination:'kangju',commodity:'silk',quantity:5,saleOrderId:posted.order.id});
+ assert.equal(blocked.reason,'unavailable','reserved stock cannot be sold twice');
+ s=loadHanSave(serialize(s));const saved=s.tradeMarkets.saleOrders.find(x=>x.id===posted.order.id);
+ assert.equal(saved.available,5-shipment.quantity);
+ assert.equal(cancelEasternSale(s,posted.order.id).ok,true);
+ assert.equal(s.tradeMarkets.regions.changan.goods.silk.stock,10-shipment.quantity,'the remainder returns to market stock');
+ s.tradeMarkets.nextSaleOrder=1;
+ const another=postEasternSale(s,{origin:'changan',commodity:'silk',quantity:1,unitPrice:2});assert.equal(another.ok,true);
+ assert.notEqual(another.order.id,posted.order.id,'a stale save counter cannot overwrite a listed sale');
+ assert.equal(cancelEasternSale(s,another.order.id).ok,true);
+ for(let i=0;i<shipment.legs.reduce((n,leg)=>n+leg.months,0);i++)next(s);
+ assert.equal(s.tradeMarkets.shipments.find(x=>x.id===shipment.id).status,'delivered');
+ assert.equal(s.factions.han.treasury,shipment.price);
+ assert.equal(s.tradeMarkets.regions.kangju.goods.silk.stock,shipment.quantity);
+});
+
+test('a conquered market releases an unsold listing into the captured local stock',()=>{
+ const s=newHanGame('han',{seed:49});s.tradeMarkets.embeddedRoman=true;
+ const item=s.tradeMarkets.regions.changan.goods.silk,starting=item.stock;
+ const posted=postEasternSale(s,{origin:'changan',commodity:'silk',quantity:2,unitPrice:10});assert.equal(posted.ok,true);
+ s.regions.find(r=>r.id==='changan').owner='xiongnu';next(s);
+ assert.equal(posted.order.status,'seized');assert.equal(posted.order.available,0);
+ assert.equal(item.stock,starting+item.production-item.consumption);
+ assert.equal(cancelEasternSale(s,posted.order.id).ok,false);
 });
 
 test('an oasis intermediary resells delivered Han silk as a second paid shipment',()=>{

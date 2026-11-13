@@ -44,9 +44,9 @@ function profile(r,good){
 }
 
 export function initializeEasternMarkets(s){
- const markets=s.tradeMarkets||={regions:{},offers:[],shipments:[],transactions:[],nextShipment:1,merchants:{},tariffs:{},exportRestrictions:{},transitTreasury:{},transportSpent:0,merchantFees:0,diplomacy:{attempts:[],nextAt:{}},lastTick:null};
- markets.regions||={};markets.offers||=[];markets.shipments||=[];markets.transactions||=[];markets.merchants||={};markets.tariffs||={};markets.exportRestrictions||={};markets.transitTreasury||={};markets.diplomacy||={attempts:[],nextAt:{}};
- markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};markets.nextShipment||=1;markets.transportSpent??=0;markets.merchantFees??=0;
+ const markets=s.tradeMarkets||={regions:{},offers:[],saleOrders:[],shipments:[],transactions:[],nextSaleOrder:1,nextShipment:1,merchants:{},tariffs:{},exportRestrictions:{},transitTreasury:{},transportSpent:0,merchantFees:0,diplomacy:{attempts:[],nextAt:{}},lastTick:null};
+ markets.regions||={};markets.offers||=[];if(!Array.isArray(markets.saleOrders))markets.saleOrders=[];markets.shipments||=[];markets.transactions||=[];markets.merchants||={};markets.tariffs||={};markets.exportRestrictions||={};markets.transitTreasury||={};markets.diplomacy||={attempts:[],nextAt:{}};
+ markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};if(!Number.isSafeInteger(markets.nextSaleOrder)||markets.nextSaleOrder<1)markets.nextSaleOrder=1;markets.nextShipment||=1;markets.transportSpent??=0;markets.merchantFees??=0;
  markets.externalTreasury??=10000;
  markets.lostGoods||={};
  for(const [owner,rate] of Object.entries(markets.tariffs))markets.tariffs[owner]=Number.isFinite(rate)?clamp(rate,0,.3):TARIFF_POLICIES.standard;
@@ -71,6 +71,23 @@ export function setEasternExportRestriction(s,faction,commodity,restricted){
  return {ok:true,commodity,restricted};
 }
 
+export function postEasternSale(s,{origin,commodity,quantity,unitPrice}){
+ const markets=initializeEasternMarkets(s),from=region(s,origin),item=markets.regions[origin]?.goods?.[commodity];
+ if(s.finalized||!s.player||from?.owner!==s.player||!Object.hasOwn(COMMODITIES,commodity)||!Number.isSafeInteger(quantity)||quantity<1||quantity>50||!Number.isSafeInteger(unitPrice)||unitPrice<1||unitPrice>1000)return {ok:false,reason:'invalid'};
+ if(item.stock<quantity)return {ok:false,reason:'unavailable'};
+ item.stock-=quantity;
+ let id;do{id=`eastern-sale:${markets.nextSaleOrder++}`}while(markets.saleOrders.some(order=>order.id===id));
+ const order={id,seller:s.player,origin,commodity,available:quantity,unitPrice,status:'open',year:s.year,month:s.month};
+ markets.saleOrders.push(order);publishOffers(s);return {ok:true,order};
+}
+
+export function cancelEasternSale(s,id){
+ const markets=initializeEasternMarkets(s),order=markets.saleOrders.find(x=>x.id===id&&x.seller===s.player&&x.status==='open');
+ if(s.finalized||!order||region(s,order.origin)?.owner!==s.player)return {ok:false,reason:'invalid'};
+ markets.regions[order.origin].goods[order.commodity].stock+=order.available;
+ order.available=0;order.status='cancelled';publishOffers(s);return {ok:true,order};
+}
+
 function legsFor(path){return path.slice(1).map((to,i)=>{const from=path[i],link=route(from,to);return {from,to,months:Math.max(1,link.months),kind:link.kind}})}
 function travelQuote(s,path,quantity,price,buyer,seller){
  const legs=legsFor(path),months=legs.reduce((n,l)=>n+l.months,0),transport=Math.max(1,Math.ceil(months*quantity/5));
@@ -79,15 +96,17 @@ function travelQuote(s,path,quantity,price,buyer,seller){
  return {legs,months,transport,tariffs,total:price+transport+tariffs.reduce((n,t)=>n+t.amount,0)};
 }
 
-export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,quantity}){
+export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId}){
  const markets=initializeEasternMarkets(s),from=region(s,origin),to=region(s,destination),stock=markets.regions[origin]?.goods?.[commodity];
  const external=buyer==='external'&&seller==='han'&&destination==='mediterranean_gate'&&to?.owner==null;
  if(!COMMODITIES[commodity]||!Number.isSafeInteger(quantity)||quantity<1||quantity>20||!from||!to||from.owner!==seller||!s.factions[seller]||!external&&(to.owner!==buyer||!s.factions[buyer])||origin===destination)return {ok:false,reason:'invalid'};
+ const sale=saleOrderId?markets.saleOrders.find(x=>x.id===saleOrderId):null;
+ if(saleOrderId&&(!sale||sale.status!=='open'||sale.seller!==seller||sale.origin!==origin||sale.commodity!==commodity||sale.available<quantity))return {ok:false,reason:'unavailable'};
  if(buyer!==seller&&markets.exportRestrictions[seller]?.includes(commodity))return {ok:false,reason:'export_restricted'};
  if(!external&&(atWar(s,buyer,seller)||!tradeTreaty(s,buyer,seller)))return {ok:false,reason:'access'};
- if(stock.stock<quantity)return {ok:false,reason:'unavailable'};
+ if(!sale&&stock.stock<quantity)return {ok:false,reason:'unavailable'};
  const path=tradePath(s,origin,destination,external?seller:buyer);if(!path)return {ok:false,reason:'route'};
- const unitPrice=marketPrice(markets.regions[origin],commodity),price=unitPrice*quantity,travel=travelQuote(s,path,quantity,price,buyer,seller);
+ const unitPrice=sale?.unitPrice??marketPrice(markets.regions[origin],commodity),price=unitPrice*quantity,travel=travelQuote(s,path,quantity,price,buyer,seller);
  if((external?markets.externalTreasury:s.factions[buyer].treasury)<travel.total)return {ok:false,reason:'treasury'};
  return {ok:true,unitPrice,price,path,...travel};
 }
@@ -119,15 +138,16 @@ export function placeEasternTrade(s,request){
  const quote=quoteEasternTrade(s,request);if(!quote.ok)return quote;
  if(request.maxTotal!=null&&quote.total>request.maxTotal)return {ok:false,reason:'price'};
  const markets=s.tradeMarkets,external=request.buyer==='external',merchantId=merchantFor(s,external?request.seller:request.buyer,request.origin);
- markets.regions[request.origin].goods[request.commodity].stock-=request.quantity;
+ if(request.saleOrderId){const sale=markets.saleOrders.find(x=>x.id===request.saleOrderId);sale.available-=request.quantity;if(sale.available===0)sale.status='filled'}
+ else markets.regions[request.origin].goods[request.commodity].stock-=request.quantity;
  if(external)markets.externalTreasury-=quote.total;else s.factions[request.buyer].treasury-=quote.total;
- const shipment={id:`eastern-shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,sponsor:external?request.seller:request.buyer,merchantId,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,path:quote.path,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month};
+ const shipment={id:`eastern-shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,sponsor:external?request.seller:request.buyer,merchantId,saleOrderId:request.saleOrderId||null,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,path:quote.path,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month};
  markets.shipments.push(shipment);return {ok:true,shipment,quote};
 }
 
 function publishOffers(s){
  const markets=s.tradeMarkets,offers=[];
- for(const r of s.regions){if(!r.owner||!s.factions[r.owner])continue;const market=markets.regions[r.id];
+ for(const r of s.regions){if(!r.owner||!s.factions[r.owner]||r.owner===s.player)continue;const market=markets.regions[r.id];
   for(const [good,item] of Object.entries(market.goods)){
    if(markets.exportRestrictions[r.owner]?.includes(good))continue;
    // A non-producing market can resell a physically imported surplus. Its
@@ -136,6 +156,7 @@ function publishOffers(s){
    const available=Math.max(0,item.stock-reserve);
    if(available>0)offers.push({seller:r.owner,origin:r.id,commodity:good,available,price:marketPrice(market,good),resale:item.production===0});
   }}
+ for(const sale of markets.saleOrders)if(sale.status==='open'&&sale.available>0&&region(s,sale.origin)?.owner===sale.seller&&!markets.exportRestrictions[sale.seller]?.includes(sale.commodity))offers.push({seller:sale.seller,origin:sale.origin,commodity:sale.commodity,available:sale.available,price:sale.unitPrice,saleOrderId:sale.id});
  markets.offers=offers;return offers;
 }
 
@@ -203,7 +224,7 @@ function advanceEasternMarketAI(s){
   const candidates=[];
   for(const destination of s.regions.filter(r=>r.owner===buyer&&(r.pop||0)>=8))for(const [good,item] of Object.entries(markets.regions[destination.id].goods)){
    const target=Math.max(4,item.consumption*3+item.production),deficit=target-item.stock;if(deficit<=0)continue;
-   const nearby=markets.offers.filter(x=>x.commodity===good&&x.seller!==buyer&&x.seller!==s.player)
+   const nearby=markets.offers.filter(x=>x.commodity===good&&x.seller!==buyer&&(x.seller!==s.player||x.saleOrderId))
     .sort((a,b)=>{const sourceA=region(s,a.origin),sourceB=region(s,b.origin);
      const costA=a.price+Math.abs(sourceA.lon-destination.lon)*.15+Math.abs(sourceA.lat-destination.lat)*.15;
      const costB=b.price+Math.abs(sourceB.lon-destination.lon)*.15+Math.abs(sourceB.lat-destination.lat)*.15;
@@ -214,7 +235,7 @@ function advanceEasternMarketAI(s){
     const quantity=Math.min(3,deficit,offer.available),price=offer.price*quantity,travel=travelQuote(s,path,quantity,price,buyer,offer.seller);
     const utility=marketPrice(markets.regions[destination.id],good)*quantity+(item.stock===0?COMMODITIES[good].basePrice*quantity:0)-travel.total;
     if(utility<0||s.factions[buyer].treasury-travel.total<(buyer==='han'?100:12))continue;
-    candidates.push({request:{seller:offer.seller,buyer,origin:offer.origin,destination:destination.id,commodity:good,quantity},utility,path:travel.months});
+    candidates.push({request:{seller:offer.seller,buyer,origin:offer.origin,destination:destination.id,commodity:good,quantity,saleOrderId:offer.saleOrderId},utility,path:travel.months});
    }
   }
   candidates.sort((a,b)=>b.utility-a.utility||a.path-b.path||a.request.seller.localeCompare(b.request.seller));
@@ -237,6 +258,7 @@ function advanceEasternMarketAI(s){
 export function advanceEasternMarkets(s){
  const markets=initializeEasternMarkets(s),now=month(s);if(markets.lastTick===now)return markets;
  markets.lastTick=now;
+ for(const sale of markets.saleOrders)if(sale.status==='open'&&region(s,sale.origin)?.owner!==sale.seller){markets.regions[sale.origin].goods[sale.commodity].stock+=sale.available;sale.available=0;sale.status='seized'}
  advanceMerchantReturns(s,now);
  for(const r of s.regions)for(const [good,item] of Object.entries(markets.regions[r.id].goods)){
   item.stock+=item.production;const used=Math.min(item.stock,item.consumption);item.stock-=used;item.consumed+=used;item.shortage=item.consumption-used;
