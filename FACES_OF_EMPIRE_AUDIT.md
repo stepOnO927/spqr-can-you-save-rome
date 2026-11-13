@@ -172,6 +172,11 @@ The same saved artwork now covers simulated Liu children, including a prince
 who later becomes orthodox emperor. The own-ruler card uses that person's
 portrait after a valid succession. A lineage-backed succession test rejects
 a non-Liu minister, and a browser check keeps the heir's image through reload.
+The Roman campaign's embedded Han succession now also requires a male
+biological Liu father line and Liu names in both languages. Female descendants,
+maternal-only descendants, adopted children and people with another surname
+cannot occupy its orthodox throne. Existing historical Liu rulers and saved
+male-line original heirs still pass after save migration.
 If a non-Liu minister establishes another dynasty, the Han ruler card now
 shows the founder's actual status instead of falsely calling him Han emperor.
 Both Republican commands can now choose a politically active original adult

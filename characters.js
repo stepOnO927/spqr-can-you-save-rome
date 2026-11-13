@@ -64,7 +64,9 @@ export function eligibleLiuImperial(s,id,seen=new Set()){
  seen.add(id);
  if(DOCUMENTED_IMPERIAL_LIU.has(id))return true;
  const c=s.world?.characters?.[id];
- return !!(c?.faction==='han'&&c.parents?.some(parent=>eligibleLiuImperial(s,parent,seen)));
+ const name=CHARACTER_CATALOG[id]?.name;
+ if(c?.faction!=='han'||c.sex!=='male'||!/^Liu\s/.test(name?.[0]||'')||!/^刘/.test(name?.[1]||''))return false;
+ return !!c.parents?.some(parent=>(DOCUMENTED_IMPERIAL_LIU.has(parent)||s.world.characters[parent]?.sex==='male')&&eligibleLiuImperial(s,parent,new Set(seen)));
 }
 export function successorFor(s,faction){
  const model=successionModel(faction,s);

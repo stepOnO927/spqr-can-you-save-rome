@@ -35,7 +35,7 @@ test('orthodox Han succession requires documented or biological Liu imperial des
  const s=newGame('han');
  const unrelated=createFictionalPerson(s,{name:['Liu Qian','刘谦'],faction:'han',birthYear:-80,location:'hanGuanzhong'});
  const adopted=createFictionalPerson(s,{name:['Liu Wen','刘文'],faction:'han',birthYear:-80,location:'hanGuanzhong',adoptiveParents:['han_xuan']});
- const child=createFictionalPerson(s,{name:['Liu Min','刘敏'],faction:'han',birthYear:-80,location:'hanGuanzhong',parents:['han_xuan']});
+ const child=createFictionalPerson(s,{name:['Liu Min','刘敏'],faction:'han',birthYear:-80,location:'hanGuanzhong',sex:'male',parents:['han_xuan']});
  assert.equal(eligibleLiuImperial(s,unrelated),false);
  assert.equal(eligibleLiuImperial(s,adopted),false);
  assert.equal(eligibleLiuImperial(s,child),true);

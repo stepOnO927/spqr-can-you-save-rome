@@ -60,3 +60,19 @@ test('a documented Liu descendant may inherit Han while an unrelated minister re
  assert.equal(s.world.dynasties.houseTransitions.length,0);
  assert.deepEqual(upgradeSave(structuredClone(s)).world.leadership.han,[prince]);
 });
+
+test('embedded Han succession requires a male Liu birth line and displayed Liu surname',()=>{
+ let s=newGame('han');
+ const father=createFictionalPerson(s,{name:['Liu Yuan','刘渊'],faction:'han',birthYear:-69,sex:'male',parents:['han_xuan']});
+ const grandson=createFictionalPerson(s,{name:['Liu Jun','刘峻'],faction:'han',birthYear:-50,sex:'male',parents:[father]});
+ const daughter=createFictionalPerson(s,{name:['Liu Lan','刘兰'],faction:'han',birthYear:-70,sex:'female',parents:['han_xuan']});
+ const maternal=createFictionalPerson(s,{name:['Liu Ming','刘明'],faction:'han',birthYear:-52,sex:'male',parents:[daughter]});
+ const wrongSurname=createFictionalPerson(s,{name:['Zhang Yi','张义'],faction:'han',birthYear:-70,sex:'male',parents:['han_xuan']});
+ const adopted=createFictionalPerson(s,{name:['Liu Wei','刘威'],faction:'han',birthYear:-70,sex:'male',adoptiveParents:['han_xuan']});
+ assert.equal(eligibleLiuImperial(s,father),true);
+ assert.equal(eligibleLiuImperial(s,grandson),true);
+ for(const id of [daughter,maternal,wrongSurname,adopted])assert.equal(eligibleLiuImperial(s,id),false,id);
+ s=upgradeSave(structuredClone(s));
+ assert.equal(eligibleLiuImperial(s,grandson),true);
+ for(const id of [daughter,maternal,wrongSurname,adopted])assert.equal(eligibleLiuImperial(s,id),false,id);
+});
