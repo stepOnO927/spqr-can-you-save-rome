@@ -28,6 +28,15 @@ try{
  assert.match(await page.locator('.naval-content').innerText(),/三段己方陆路/);
  assert.match(await page.locator('.naval-content').innerText(),/份粮在途/);
  assert.match(await page.locator('.naval-content').innerText(),/军需载量 6粮/);
+ await page.locator('[data-naval-tab="trade"]').click();
+ assert.match(await page.locator('.naval-content').innerText(),/暂停己方参与的商路/);
+ await page.locator('[data-toggle-trade="egypt-italy"]').click();
+ assert.match(await page.locator('.naval-content').innerText(),/已按你的命令暂停/);
+ assert.match(await page.locator('[data-toggle-trade="egypt-italy"]').innerText(),/恢复商路/);
+ await page.locator('#language').click();
+ assert.match(await page.locator('.naval-content').innerText(),/Paused by your order/);
+ await page.locator('[data-toggle-trade="egypt-italy"]').click();
+ assert.match(await page.locator('[data-toggle-trade="egypt-italy"]').innerText(),/PAUSE IMPORTS/);
  const reports=await page.evaluate(async()=>{
   const {newGrandGame}=await import('../engine.js?v=150');
   const {advanceNaval,reserveFleet}=await import('../naval.js?v=23');

@@ -1,4 +1,4 @@
-import {nationalBudget} from './national-budget.js?v=13';
+import {nationalBudget} from './national-budget.js?v=14';
 import {expensesThisMonth} from './expense-ledger.js?v=1';
 const number=x=>(Object.is(x,-0)?0:Number(x)).toLocaleString(undefined,{maximumFractionDigits:1});
 export function budgetHtml(s,lang,contribution=null,provisions=null){
@@ -12,6 +12,7 @@ export function budgetHtml(s,lang,contribution=null,provisions=null){
   b.reviewExpense?row('Provincial tax review','行省税务复核',-b.reviewExpense):'',
   row('Religious patronage','地方祭仪资助',-b.religiousExpense),row('Projected treasury change','预计国库变化',b.projectedNet),
   row('Construction paid this month','本月已付建造费',-spent.construction),row('Research paid this month','本月已付研究费',-spent.research),
+  b.tradeImportPaid?row('Maritime imports paid this month','本月已付海运进口费',-b.tradeImportPaid):'',
   row('Food production / consumption','粮食产出／消耗',`${number(b.foodProduction)} / ${number(b.foodConsumption)}`),
   b.requisitionLoss?row('Local stores recovery · production loss','地方储粮恢复 · 产量损失',-b.requisitionLoss):'',
   b.homeFood?row('Home domain stores · game estimate','本土领地储粮 · 游戏估算',b.homeFood):'',

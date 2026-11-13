@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn} from '../engine.js';
-import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue} from '../naval.js';
+import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue} from '../naval.js';
 import {tradeCard} from '../map-lab/naval-ui.js';
 import {armySupply,supplyNetwork} from '../grand-operations.js';
 import {nationalBudget} from '../national-budget.js';
+import {budgetHtml} from '../budget-ui.js';
 import {advanceMissingCommanders} from '../character-system.js';
 
 test('chosen tactics survive saves and change actual naval losses',()=>{
@@ -264,6 +265,47 @@ test('an outnumbered grain buyer preserves a levy fund unless food is critical',
  assert.equal(deferred.reason,'war-reserve');assert.equal(deferred.amount,0);assert.equal(deferred.paid,0);
  const hungry=setup(4),delivery=hungry.naval.routes.find(r=>r.id==='egypt-italy').last;
  assert.equal(delivery.reason,'delivered');assert.ok(delivery.amount>0);assert.ok(delivery.paid>0);
+});
+test('a ruler may pause and resume a real sea import without paying for paused cargo',()=>{
+ const s=newGrandGame('senate'),route=s.naval.routes.find(r=>r.id==='egypt-italy');
+ s.factions.senate.food=0;s.factions.egypt.food=60;s.naval.pirates=[];
+ assert.equal(toggleTradeRoute(s,'caesar',route.id).ok,false);
+ assert.equal(toggleTradeRoute(s,'senate','missing').ok,false);
+ assert.match(tradeCard(s,route,false),/PAUSE IMPORTS/);
+ assert.match(tradeCard(s,route,true),/暂停进口/);
+ assert.equal(toggleTradeRoute(s,'senate',route.id).paused,true);
+ assert.match(tradeCard(s,route,false),/RESUME ROUTE/);
+ const stability=s.factions.senate.stability;
+ advanceNaval(s);
+ assert.equal(route.last.reason,'paused');assert.equal(route.last.amount,0);assert.equal(route.last.paid,0);
+ assert.equal(s.factions.senate.food,0);assert.equal(s.factions.senate.stability,stability);
+ assert.equal(nationalBudget(s,'senate').tradeImportPaid,s.naval.routes.filter(r=>r.id!==route.id&&r.last?.buyer==='senate'&&r.last.seller!=='senate').reduce((sum,r)=>sum+r.last.paid,0));
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(loaded.naval.routes.find(r=>r.id===route.id).pausedBy,['senate']);
+ assert.equal(toggleTradeRoute(loaded,'senate',route.id).paused,false);
+ advanceNaval(loaded);
+ const completed=loaded.naval.routes.find(r=>r.id===route.id).last;
+ assert.equal(completed.reason,'delivered');assert.ok(completed.amount>0&&completed.paid>0);
+ assert.ok(nationalBudget(loaded,'senate').tradeImportPaid>=completed.paid);
+ assert.match(budgetHtml(loaded,'en'),/Maritime imports paid this month/);
+ assert.match(budgetHtml(loaded,'zh'),/本月已付海运进口费/);
+ const exporter=newGrandGame('egypt'),exportRoute=exporter.naval.routes.find(r=>r.id===route.id);
+ assert.match(tradeCard(exporter,exportRoute,false),/PAUSE EXPORTS/);
+ assert.equal(toggleTradeRoute(exporter,'egypt',route.id).paused,true);
+ advanceNaval(exporter);assert.equal(exportRoute.last.reason,'paused');
+});
+test('taking a foreign trade port does not reveal its previous owner’s shipment',()=>{
+ const s=newGrandGame('caesar'),route=s.naval.routes.find(r=>r.id==='egypt-italy');
+ s.factions.senate.food=0;s.naval.pirates=[];advanceNaval(s);
+ assert.equal(route.last.buyer,'senate');assert.equal(route.last.seller,'egypt');
+ s.regions.find(r=>r.id==='t016').owner='caesar';
+ const en=tradeCard(s,route,false),zh=tradeCard(s,route,true);
+ assert.match(en,/Awaiting first voyage under your control/);assert.match(zh,/等待己方首次航行/);
+ assert.doesNotMatch(en,/Unit price|Paid|Route security \d/);
+ assert.doesNotMatch(zh,/单价|实际付款|航路安全 \d/);
+ assert.equal(nationalBudget(s,'caesar').tradeImportPaid,0);
+ delete route.last.buyer;delete route.last.seller;
+ assert.doesNotMatch(tradeCard(s,route,false),/Unit price|Paid/,'old saves without shipment provenance stay private');
 });
 test('foreign trade routes keep shipment and security figures private',()=>{
  const s=newGrandGame('senate'),foreign={from:'egypt',to:'mauretania',good:'grain',volume:9,last:{amount:7,security:99,reason:'delivered',unitPrice:4,paid:28}};
