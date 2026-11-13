@@ -17,6 +17,8 @@ try{
  await page.locator('#factions').click();
  await page.locator('[data-faction="senate"]').click();
  await page.locator('.cursus-talent > summary').click();
+ await page.locator('[data-cursus-zoom]').selectOption('80');
+ assert.equal(await page.locator('.cursus-offices').evaluate(el=>el.style.zoom),'80%');
  const talent=page.locator('.cursus-talent-person').filter({hasText:'卢基乌斯·瓦罗'});
  assert.equal(await talent.count(),1);
  await talent.locator('.cursus-application-actions summary').click();
@@ -44,6 +46,10 @@ try{
  await page.locator('[data-faction="senate"]').click();
  await page.locator('.cursus-talent > summary').click();
  assert.match(await page.locator('.cursus-talent-person').first().innerText(),/APPLICATION REVIEW/);
+ await page.setViewportSize({width:600,height:800});
+ assert.equal(await page.locator('[data-cursus-zoom]').inputValue(),'80');
+ const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth);
+ assert.ok(overflow<=1,'600px campaign atlas must not cause page-wide horizontal scrolling: '+overflow);
  assert.deepEqual(errors,[]);
  console.log('Applicant interview, month resolution, save/load and bilingual controls passed in cloud browser');
 }finally{await browser.close()}

@@ -128,3 +128,6 @@
 .cursus-assemblies summary{cursor:pointer;color:#dfc797;font:11px Georgia,serif;letter-spacing:.07em}
 .cursus-assemblies p{margin:7px 0;font-size:11px}
 .cursus-assemblies small{display:block;color:#bdb199;line-height:1.4;margin:3px 0}
+
+.cursus-tree-tools{display:flex;align-items:center;justify-content:flex-end;margin:8px 0;color:#c5b99d;font-size:11px}.cursus-tree-tools select{width:auto;min-width:70px;margin-left:6px}.cursus-offices{overflow:auto;max-width:100%}
+.cursus-office{padding-left:8px;border-left:2px solid #745f42}.cursus-office[data-cursus-body=centuriate]{border-left-color:#b79862}.cursus-office[data-cursus-body=tribal]{border-left-color:#8d9b82}.cursus-office[data-cursus-body=plebeian]{border-left-color:#b88475}.cursus-office[data-cursus-body=exceptional]{border-left-color:#8a7891}.cursus-tree-tools{gap:8px;flex-wrap:wrap}.cursus-tree-tools small{color:#aaa38d}
