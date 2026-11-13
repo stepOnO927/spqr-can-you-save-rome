@@ -11,8 +11,8 @@ import {drawMap} from '../han/map.js?v=succession-ui-recovery-1';
 import {validateTrees} from '../han/focus.js?v=han-1';
 import {EDICTS} from '../han/court.js?v=han-1';
 import {isLiuClan} from '../han/dynasty.js?v=han-1';
-import {attachHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=gathering-presence-1';
-import {eastPanel,eastMap} from '../han/east-ui.js?v=gathering-presence-1';
+import {attachHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=gathering-delegate-1';
+import {eastPanel,eastMap} from '../han/east-ui.js?v=gathering-delegate-1';
 
 const roman=(o={})=>{const s=newGame(o.player||'caesar');if(o.dlc!==false)attachHanWorld(s,{seed:7});return s};
 

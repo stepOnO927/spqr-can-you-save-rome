@@ -64,6 +64,22 @@ export function courierMonths(s, source, destination, urgent = false) {
   return urgent ? 2 : 4;
 }
 
+// Only the player's own known, stationary people are offered as delegates.
+// Recompute at confirmation so a stale selection cannot silently switch people.
+export function gatheringPlan(s,m){
+  if(m?.context?.kind!=='banquet'||m.recipient!==s.player||m.senderFaction!==s.player)return null;
+  const host=s.world?.characters?.[m.senderId],guest=s.world?.characters?.[m.context.leader];
+  const knownLocation=p=>p?.alive&&p.faction===s.player&&!p.missing&&!p.travel&&p.location&&
+    !(s.armies||[]).some(a=>a.characterId===p.id&&a.move);
+  if(!knownLocation(host)||!knownLocation(guest)||host.id===guest.id||!s.regions.some(r=>r.id===host.location)||!s.regions.some(r=>r.id===guest.location))return null;
+  const date=monthIndex(s.year,s.month)+courierMonths(s,guest.location,host.location);
+  const identified=p=>{const id=p?.id,entry=CHARACTER_CATALOG[id],saved=s.world?.dynasties?.catalog?.[id];return typeof id==='string'&&Array.isArray(entry?.name)&&entry.name.length>=2&&entry.name.every(x=>typeof x==='string'&&x.trim())&&(!id.startsWith('fictional:')||(saved?.fictional&&Array.isArray(saved.name)&&JSON.stringify(saved.name)===JSON.stringify(entry.name)))};
+  const oldEnough=p=>{if(p.id.startsWith('fictional:')){const birth=s.world.dynasties?.catalog?.[p.id]?.birth;return Number.isFinite(p.birthYear)&&Array.isArray(birth)&&birth.length===2&&birth.every(Number.isFinite)&&s.year-Math.max(...birth)-1>=16}const age=ageRange(p.id,s.year);return age?age[0]>=16:true};
+  const candidates=Object.values(s.world.characters).filter(p=>p.id!==guest.id&&p.id!==host.id&&identified(p)&&oldEnough(p)&&presentAtGathering(s,p,guest.location)&&
+    !(s.mail?.events||[]).some(e=>e.status==='scheduled'&&e.date===date&&e.participantId===p.id)).map(p=>p.id);
+  return {date,venue:host.location,candidates};
+}
+
 export function sendLetter(s, spec) {
   const mail = initializeMail(s);
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
@@ -125,7 +141,7 @@ function replyNotice(s, original, subject, body, priority = 'routine') {
   });
 }
 
-export function replyToLetter(s, id, choice, actions) {
+export function replyToLetter(s, id, choice, actions, details={}) {
   const m = receivedMail(s).find(x => x.id === id);
   if (!m || m.recipient !== s.player || m.responses.length || !m.options.includes(choice)) return {ok:false, reason:'unavailable'};
   if (m.expires !== null && monthIndex(s.year, s.month) > m.expires) return {ok:false, reason:'expired'};
@@ -133,7 +149,7 @@ export function replyToLetter(s, id, choice, actions) {
     m.read=true;
     return {ok:true,open:choice==='war_council'?'military':choice==='review_budget'?'government':m.context?.region};
   }
-  let ok = true;
+  let ok = true,selectedRepresentative=null;
   if (m.context?.kind === 'peace') {
     ok = actions.answerPeaceOffer?.(s,m.senderFaction,choice).ok === true;
   } else if (m.context?.kind === 'war' && choice === 'negotiate') {
@@ -200,15 +216,16 @@ export function replyToLetter(s, id, choice, actions) {
     const host=s.world.characters[m.senderId],guest=s.world.characters[m.context.leader];
     if (!host?.alive || !guest?.alive) return {ok:false,reason:'unavailable'};
     if (choice === 'accept' || choice === 'representative' || choice==='private_meeting') {
-      const travel=courierMonths(s,guest.location,host.location);
-      const participant=choice==='representative'?Object.values(s.world.characters).find(p=>p.id!==guest.id&&p.id!==host.id&&presentAtGathering(s,p,guest.location)):guest;
+      const plan=gatheringPlan(s,m);if(!plan)return {ok:false,reason:'location'};
+      const participant=choice==='representative'&&plan?.candidates.includes(details.representativeId)?s.world.characters[details.representativeId]:choice==='representative'?null:guest;
       if(!participant)return {ok:false,reason:'representative'};
-      const date=monthIndex(s.year,s.month)+travel;
+      const date=plan.date;
       if((s.mail.events||[]).some(e=>e.status==='scheduled'&&e.date===date&&e.participantId===participant.id))return {ok:false,reason:'commitment'};
+      selectedRepresentative=choice==='representative'?{id:participant.id,name:[...CHARACTER_CATALOG[participant.id].name]}:null;
       s.mail.events.push({id:'invitation:'+m.id,letterId:m.id,hostId:m.senderId,guestId:m.context.leader,
-        participantId:participant.id,representative:choice === 'representative',privateMeeting:choice==='private_meeting',date,status:'scheduled',venue:host.location});
+        participantId:participant.id,representative:choice === 'representative',representativeName:selectedRepresentative?.name||null,privateMeeting:choice==='private_meeting',date,status:'scheduled',venue:host.location});
     }
-    if (choice === 'decline') host.loyalty=Math.max(0,(host.loyalty||50)-1);
+    if (choice === 'decline'&&host.faction===s.player&&!host.missing) host.loyalty=Math.max(0,(host.loyalty||50)-1);
   } else if (m.context?.kind === 'treasury' && choice === 'audit') {
     if (s.factions[s.player].treasury < 3) return {ok:false,reason:'treasury'};
     s.factions[s.player].treasury -= 3;
@@ -230,6 +247,7 @@ export function replyToLetter(s, id, choice, actions) {
   const delayed=choice!=='ignore'&&['treaty','full_alliance','aid_request','ultimatum','complaint','greeting'].includes(m.context?.kind);
   m.responses.push({choice, year:s.year, month:s.month,
     body:responseBody,
+    ...(selectedRepresentative?{representativeId:selectedRepresentative.id,representativeName:selectedRepresentative.name}:{}),
     arrival:delayed ? monthIndex(s.year,s.month) + courierMonths(s,m.destination,m.source) : null,
     resolved:!delayed});
   if(m.context?.kind==='personal_age'&&choice==='ask_why')replyNotice(s,m,['Why I asked','为何相问'],['I wished to know you better, and meant no offense.','只盼多了解阁下，并无冒犯之意。']);
@@ -459,9 +477,10 @@ export function advanceMail(s, actions = {}) {
     }
     const original=mail.messages.find(m=>m.id===event.letterId);
     const resultSender=presentAtGathering(s,host,event.venue)?event.hostId:null;
+    const delegate=event.representative&&Array.isArray(event.representativeName)?event.representativeName:null;
     if(original)sendLetter(s,{senderId:resultSender,senderInstitution:resultSender?null:s.player,senderFaction:s.player,recipient:s.player,category:'invitations',priority:'routine',
       subject:event.status==='held'?['The gathering was held','宴会已举行']:['The gathering was missed','宴会未能举行'],
-      body:event.status==='held'?['The invited guest and host met as arranged.','受邀者与主人如约会面。']:['The invited guest and host could not meet at the appointed place.','受邀者与主人未能在约定地点会面。'],
+      body:event.status==='held'?(delegate?[`${delegate[0]} attended as your representative and met the host.`,`${delegate[1]}作为代表出席并与主人会面。`]:['The invited guest and host met as arranged.','受邀者与主人如约会面。']):(delegate?[`${delegate[0]} and the host could not meet at the appointed place.`,`${delegate[1]}与主人未能在约定地点会面。`]:['The invited guest and host could not meet at the appointed place.','受邀者与主人未能在约定地点会面。']),
       threadId:original.threadId,options:['acknowledge'],context:{kind:'invitation_result'}});
   }
   for (const m of [...mail.messages]) for (const response of m.responses) {
