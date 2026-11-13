@@ -26,6 +26,7 @@ jobs:
           node tools/travel-smoke.mjs
           node tools/cursus-smoke.mjs
           node tools/cursus-deep-smoke.mjs
+          node tools/cursus-applicant-smoke.mjs
           node tools/han-court-smoke.mjs
           node scripts/multipolar-sim.mjs > multipolar-simulation.json
           node tools/multipolar-smoke.mjs
