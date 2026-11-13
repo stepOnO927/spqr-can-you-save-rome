@@ -23,9 +23,13 @@ try{
  assert.match(await page.locator('.cursus-tree').innerText(),/财务官/);
  assert.ok(await page.locator('.cursus-candidate').count()>=2);
  await page.locator('[data-cursus-office]').selectOption('consul');
+ await page.locator('.cursus-senate summary').click();
+ assert.equal(await page.locator('.cursus-senator').count(),12);
+ await page.locator('.cursus-senator').first().locator('[data-senator-endorse]').click();
  await page.locator('#save').click();
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.ok(saved.world.cursus.varroId);
+ assert.equal(saved.world.cursus.endorsements.at(-1).status,'pending');
  assert.ok(saved.world.cursus.applicants.find(x=>x.id===saved.world.cursus.varroId).support>0);
  await page.locator('[data-cursus-foreign]').selectOption('parthia');
  await page.locator('[data-cursus-investigate]').click();

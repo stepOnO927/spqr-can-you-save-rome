@@ -32,21 +32,47 @@ function addFictional(s,faction,kind,index){
  const p=person(s,id);p.education=65+index%5*5;p.influence=42+index%4*8;p.loyalty=50+index%5*7;p.wealth=14+index%4*5;
  const c=s.world.cursus;c.careers[id]=kind==='consul'?[{office:'quaestor',year:s.year-11,simulated:true},{office:'praetor',year:s.year-4,simulated:true}]:kind==='praetor'||kind==='aedile'?[{office:'quaestor',year:s.year-5,simulated:true}]:[];
  c.obedience[id]={value:clamp(45+p.loyalty/3-(p.ambition||40)/6),history:[{year:s.year,month:s.month,cause:'initial',delta:0}]};
- c.applicants.push({id,year:s.year,office:kind,status:'eligible',faction,statement:'simulated',support:0,opposition:0,promises:[]});
+ c.applicants.push({id,year:s.year,office:kind,status:'eligible',faction,statement:'simulated',platform:['administration','finance','war','reform','law'][Math.abs(index)%5],support:0,opposition:0,campaignExpense:0,promises:[]});
  return id;
+}
+function seedSenators(s,c){
+ if(c.senators.length)return;
+ const houses=[
+  [['Publius Lentulus','普布利乌斯·伦图卢斯'],'aristocratic','finance'],
+  [['Aulus Domitius','奥卢斯·多米提乌斯'],'military','war'],
+  [['Gaius Calpurnius','盖乌斯·卡尔普尔尼乌斯'],'provincial','administration'],
+  [['Marcus Aemilius','马尔库斯·埃米利乌斯'],'reform','reform'],
+  [['Titus Licinius','提图斯·李锡尼乌斯'],'aristocratic','law'],
+  [['Quintus Sulpicius','昆图斯·苏尔皮基乌斯'],'military','war'],
+  [['Lucius Cassius','卢基乌斯·卡西乌斯'],'reform','reform'],
+  [['Gnaeus Valerius','格奈乌斯·瓦莱里乌斯'],'provincial','administration'],
+  [['Sextus Fabius','塞克斯图斯·法比乌斯'],'aristocratic','finance'],
+  [['Decimus Junius','德基穆斯·尤尼乌斯'],'military','war'],
+  [['Servius Claudius','塞尔维乌斯·克劳狄乌斯'],'reform','law'],
+  [['Appius Cornelius','阿庇乌斯·科尔内利乌斯'],'provincial','administration']
+ ];
+ for(let i=0;i<houses.length;i++){
+  const faction=i<6?'senate':'caesar',[names,network,interest]=houses[i];
+  const id=createFictionalPerson(s,{name:names,faction,birthYear:s.year-49-(i%9),location:s.regions.find(r=>r.owner===faction)?.id||null,sex:'male',role:['Simulated senator','模拟元老']});
+  const p=person(s,id);p.education=62+(i*7)%28;p.influence=50+(i*9)%38;p.wealth=20+(i*5)%24;p.loyalty=45+(i*7)%35;
+  c.senators.push({id,faction,network,interest,influence:p.influence,publicPosition:faction,joined:{year:s.year,month:s.month}});
+  c.careers[id]=[{office:'quaestor',year:s.year-17-i%5,simulated:true}];
+  c.obedience[id]={value:clamp(38+p.loyalty/3),history:[{year:s.year,month:s.month,cause:'initial',delta:0}]};
+ }
+ for(const a of c.senators)for(const b of c.senators)if(a.id!==b.id&&a.network===b.network){c.networks[a.id]||=[];if(!c.networks[a.id].includes(b.id))c.networks[a.id].push(b.id)}
 }
 export function initializeCursus(s){
  initializeWorld(s);initializeOffices(s);
- if(!s.world.cursus)s.world.cursus={version:1,seeded:false,year:s.year,magistrates:Object.fromEntries(Object.keys(MAGISTRACIES).map(k=>[k,[]])),pendingTerms:[],careers:{},obedience:{},applicants:[],elections:[],endorsements:[],senate:{caesar:42,senate:58},assemblies:{centuriate:50,tribal:50,plebeian:50},foreignPosts:{},intel:{},contacts:[],offers:[],advisers:[],investigations:[],networks:{},referrals:{},reforms:[],proposals:[]};
+ if(!s.world.cursus)s.world.cursus={version:1,seeded:false,year:s.year,magistrates:Object.fromEntries(Object.keys(MAGISTRACIES).map(k=>[k,[]])),pendingTerms:[],careers:{},obedience:{},applicants:[],elections:[],endorsements:[],senate:{caesar:42,senate:58},assemblies:{centuriate:50,tribal:50,plebeian:50},foreignPosts:{},intel:{},contacts:[],offers:[],advisers:[],investigations:[],networks:{},referrals:{},reforms:[],proposals:[],senators:[],senatorTies:{},campaignActions:[],politicalReviews:[],retirements:[],retired:{},termHistory:[]};
  const c=s.world.cursus;
- for(const key of ['magistrates','careers','obedience','senate','assemblies','foreignPosts','intel','networks','referrals'])c[key]||={};
- for(const key of ['pendingTerms','applicants','elections','endorsements','contacts','offers','advisers','investigations','reforms','proposals'])c[key]||=[];
+ for(const key of ['magistrates','careers','obedience','senate','assemblies','foreignPosts','intel','networks','referrals','senatorTies','retired'])c[key]||={};
+ for(const key of ['pendingTerms','applicants','elections','endorsements','contacts','offers','advisers','investigations','reforms','proposals','senators','campaignActions','politicalReviews','retirements','termHistory'])c[key]||=[];
  for(const offer of c.offers.filter(x=>x.status==='accepted'&&person(s,x.id)?.faction===x.actor))if(!c.advisers.some(a=>a.id===offer.id))c.advisers.push({id:offer.id,actor:offer.actor,formerFaction:offer.target,year:offer.year,month:offer.month});
  for(const key of Object.keys(MAGISTRACIES))c.magistrates[key]||=[];
  if(!c.seeded){
   c.seeded=true;
   // These people and prior offices are explicit alternate-history simulations.
-  for(const faction of ['caesar','senate']){const offset=faction==='senate'?0:12;for(let i=0;i<4;i++){const id=addFictional(s,faction,'consul',offset+i);if(faction==='senate'&&i===0)c.varroId=id}for(const office of ['praetor','quaestor','aedile','tribune'])for(let i=0;i<MAGISTRACIES[office].seats+1;i++)addFictional(s,faction,office,offset+4+i+Object.keys(MAGISTRACIES).indexOf(office)*4)}
+  for(const faction of ['caesar','senate']){const offset=faction==='senate'?0:12;for(let i=0;i<4;i++){const id=addFictional(s,faction,'consul',offset+i);if(faction==='senate'&&i===0){c.varroId=id;const varro=person(s,id);varro.education=96;varro.influence=86;varro.wealth=36;varro.ambition=100;varro.eloquence=92;c.obedience[id].value=34}}for(const office of ['praetor','quaestor','aedile','tribune'])for(let i=0;i<MAGISTRACIES[office].seats+1;i++)addFictional(s,faction,office,offset+4+i+Object.keys(MAGISTRACIES).indexOf(office)*4)}
   for(const [faction,administrator,scholar] of [
    ['parthia',['Artabanus of Media','米底的阿尔塔巴努斯'],['Mithradates the Scholar','学者米特拉达梯']],
    ['egypt',['Dionysios of Alexandria','亚历山大里亚的狄奥尼西奥斯'],['Herakleides the Scholar','学者赫拉克利德']],
@@ -65,11 +91,12 @@ export function initializeCursus(s){
    c.foreignPosts[faction]={administration:id,scholar:scholarId};c.networks[id]=[scholarId];c.networks[scholarId]=[id];
   }
  }
+ seedSenators(s,c);
  return c;
 }
 export function officeEligibility(s,id,office){
  const c=initializeCursus(s),o=MAGISTRACIES[office],p=person(s,id);
- if(!o||office==='dictator'||!p||!ROMAN.has(p.faction)||!present(s,id))return {ok:false,reason:'unavailable'};
+ if(!o||office==='dictator'||!p||!ROMAN.has(p.faction)||!present(s,id)||c.retired[id])return {ok:false,reason:'unavailable'};
  const a=age(s,id);if(a==null||a<o.age)return {ok:false,reason:'age'};
  if(o.previous&&!c.careers[id]?.some(x=>x.office===o.previous))return {ok:false,reason:'career'};
  if(c.magistrates[office].some(x=>x.id===id)||c.pendingTerms.some(x=>x.id===id))return {ok:false,reason:'incumbent'};
@@ -77,17 +104,65 @@ export function officeEligibility(s,id,office){
 }
 export function obedience(s,id){const c=initializeCursus(s),p=person(s,id);if(!p)return null;if(!c.obedience[id])c.obedience[id]={value:clamp(45+(p.loyalty||50)/3-(p.ambition||40)/6),history:[]};return c.obedience[id].value}
 export function changeObedience(s,id,delta,cause){const c=initializeCursus(s),p=person(s,id);if(!p||!cause)return {ok:false};const entry=c.obedience[id]||{value:obedience(s,id),history:[]};entry.value=clamp(entry.value+delta);entry.history.push({year:s.year,month:s.month,cause,delta});entry.history=entry.history.slice(-24);c.obedience[id]=entry;return {ok:true,value:entry.value}}
+export function campaignPhase(s,office='consul'){
+ const electionMonth=MAGISTRACIES[office]?.month||10;
+ if(s.month<=2)return 'registration';
+ if(s.month<=4)return 'alliances';
+ if(s.month<=Math.max(5,electionMonth-3))return 'public';
+ if(s.month<electionMonth)return 'negotiations';
+ if(s.month===electionMonth)return 'election';
+ return 'transition';
+}
+export function senateAssessment(s,actor=s.player,issue='general'){
+ const c=initializeCursus(s),senators=c.senators.filter(x=>present(s,x.id)&&!c.retired[x.id]);
+ if(!senators.length)return {support:clamp(c.senate[actor]??50),votes:[]};
+ const votes=senators.map(x=>{
+  const p=person(s,x.id),tie=c.senatorTies[x.id]?.[actor]||0;
+  const value=clamp((c.senate[actor]??50)*.65+(x.faction===actor?25:0)+6+tie*.3+(x.interest===issue?6:0)+(p.loyalty||50)/20-3);
+  return {id:x.id,actor,issue,support:value,position:value>=50?'support':'oppose',network:x.network};
+ });
+ const total=votes.reduce((n,x)=>n+x.support,0),support=clamp(total/votes.length);
+ return {support,votes,for:votes.filter(x=>x.position==='support').length,against:votes.filter(x=>x.position==='oppose').length};
+}
+export function seekSenatorEndorsement(s,senatorId,candidateId,actor=s.player){
+ const c=initializeCursus(s),senator=c.senators.find(x=>x.id===senatorId),candidate=campaignFor(s,candidateId),p=person(s,candidateId);
+ if(!senator||!present(s,senatorId)||!candidate||!p||!present(s,candidateId)||candidate.status!=='eligible'||!officeEligibility(s,candidateId,candidate.office).ok)return {ok:false,reason:'candidate'};
+ if(factionOfRome(s)!==actor||!ROMAN.has(actor))return {ok:false,reason:'rome'};
+ if(s.month>=MAGISTRACIES[candidate.office].month)return {ok:false,reason:'closed'};
+ if(c.endorsements.some(x=>x.senatorId===senatorId&&x.candidateId===candidateId&&x.year===s.year&&['pending','accepted'].includes(x.status)))return {ok:false,reason:'pending'};
+ const cost=5;if(s.factions[actor].treasury<cost)return {ok:false,reason:'treasury',cost};
+ s.factions[actor].treasury-=cost;
+ const item={senatorId,candidateId,actor,year:s.year,month:s.month,remaining:2,status:'pending',cost};
+ c.endorsements.push(item);return {ok:true,cost,months:2};
+}
+function advanceEndorsements(s,c){
+ for(const item of c.endorsements.filter(x=>x.status==='pending')){
+  if(--item.remaining>0)continue;
+  const senator=c.senators.find(x=>x.id===item.senatorId),candidate=c.applicants.find(x=>x.id===item.candidateId&&x.year===item.year),p=person(s,item.candidateId);
+  if(!senator||!present(s,item.senatorId)||!candidate||!p||candidate.status!=='eligible'||s.month>=MAGISTRACIES[candidate.office].month){item.status='lapsed';continue}
+  const chance=Math.max(.12,Math.min(.88,.3+(p.influence||40)/250+(senator.faction===p.faction ? .12 : -.16)+(senator.interest===candidate.platform ? .12 : 0)+(c.senatorTies[senator.id]?.[p.faction]||0)/500));
+  item.status=roll(s)<chance?'accepted':'refused';item.resolved={year:s.year,month:s.month};
+  c.senatorTies[senator.id]||={};c.senatorTies[senator.id][p.faction]=clamp((c.senatorTies[senator.id][p.faction]||0)+(item.status==='accepted'?8:-3));
+  if(item.status==='accepted'){c.networks[senator.id]||=[];if(!c.networks[senator.id].includes(item.candidateId))c.networks[senator.id].push(item.candidateId);senator.publicPosition=item.candidateId}
+  if(item.actor===s.player)note(s,item.status==='accepted'?'A named senator endorsed a candidate; the assembly remains free to choose.':'A named senator declined to endorse a candidate.',item.status==='accepted'?'一位具名元老支持候选人；公民大会仍独立表决。':'一位具名元老拒绝为候选人背书。');
+ }
+}
 export function institutionalBalance(s,faction=s.player){
  const c=initializeCursus(s),posts=initializeOffices(s)[faction]||{},holders=Object.values(posts).filter(id=>present(s,id));
  const magistrate=holders.length?clamp(holders.reduce((n,id)=>n+obedience(s,id),0)/holders.length):40;
- const senate=clamp(c.senate[faction]??50),assembly=clamp((c.assemblies.centuriate+c.assemblies.tribal+c.assemblies.plebeian)/3);
+ const senate=senateAssessment(s,faction).support,assembly=clamp((c.assemblies.centuriate+c.assemblies.tribal+c.assemblies.plebeian)/3);
  const advisers=(c.advisers||[]).filter(x=>x.actor===faction&&person(s,x.id)?.faction===faction&&present(s,x.id)).length;
  return {magistrate,senate,assembly,administrative:clamp((magistrate*2+(s.factions[faction]?.stability||50))/3+Math.min(10,advisers*3)),reform:clamp((senate+assembly)/2)};
 }
 export function annualApplicants(s){
  const c=initializeCursus(s);if(c.year===s.year)return c.applicants.filter(x=>x.year===s.year);
  c.year=s.year;c.applicants=c.applicants.filter(x=>x.year>=s.year-2);
- for(const old of c.applicants.filter(x=>x.year===s.year-1&&x.status==='lost'&&present(s,x.id)&&officeEligibility(s,x.id,x.office).ok))c.applicants.push({...old,year:s.year,status:'eligible',support:0,opposition:0,promises:[]});
+ for(const old of c.applicants.filter(x=>x.year===s.year-1&&x.status==='lost'&&present(s,x.id)&&!c.retired[x.id]&&officeEligibility(s,x.id,x.office).ok))c.applicants.push({...old,year:s.year,status:'eligible',support:0,opposition:0,campaignExpense:0,promises:[]});
+ for(const [id,history] of Object.entries(c.careers)){
+  if(!present(s,id)||c.retired[id]||!history?.some(x=>x.source==='election'))continue;
+  const last=[...history].reverse().find(x=>x.source==='election'),next=last?.office==='quaestor'?'praetor':last?.office==='praetor'?'consul':null;
+  if(next&&officeEligibility(s,id,next).ok&&!c.applicants.some(x=>x.id===id&&x.year===s.year&&x.office===next))c.applicants.push({id,year:s.year,office:next,status:'eligible',faction:person(s,id).faction,statement:'career promotion',platform:'administration',support:0,opposition:0,campaignExpense:0,promises:[]});
+ }
  for(const faction of ['caesar','senate'])if(s.factions[faction]&&s.regions.some(r=>r.owner===faction)){
   for(const office of ['consul','praetor','quaestor','aedile','tribune'])addFictional(s,faction,office,Math.abs(s.year)*13+Object.keys(MAGISTRACIES).indexOf(office)*3+(faction==='senate'?0:1));
   for(const id of Object.keys(c.careers))if(c.careers[id]?.some(x=>x.office==='consul')&&person(s,id)?.faction===faction&&officeEligibility(s,id,'censor').ok&&Math.abs(s.year)%5===0)c.applicants.push({id,year:s.year,office:'censor',status:'eligible',faction,support:0,opposition:0,promises:[]});
@@ -98,13 +173,15 @@ export function annualApplicants(s){
 export function campaignFor(s,id){return initializeCursus(s).applicants.find(x=>x.id===id&&x.year===s.year)}
 export function supportCandidate(s,id,action='support',actor=s.player){
  const c=initializeCursus(s),candidate=campaignFor(s,id),p=person(s,id),controller=factionOfRome(s);
- if(!ROMAN.has(actor)||!candidate||candidate.status==='disqualified'||!p||!present(s,id)||!officeEligibility(s,id,candidate.office).ok)return {ok:false,reason:'candidate'};
+ if(!ROMAN.has(actor)||!candidate||candidate.status!=='eligible'||!p||!present(s,id)||!officeEligibility(s,id,candidate.office).ok)return {ok:false,reason:'candidate'};
  if(controller!==actor)return {ok:false,reason:'rome'};
  if(!['support','oppose','canvass','promise','improper'].includes(action))return {ok:false,reason:'action'};
+ if(s.month>=MAGISTRACIES[candidate.office].month)return {ok:false,reason:'closed'};
+ if(c.campaignActions.some(x=>x.id===id&&x.action===action&&x.actor===actor&&x.year===s.year&&x.month===s.month))return {ok:false,reason:'cooldown'};
  const cost={support:8,oppose:6,canvass:5,promise:3,improper:14}[action];if(s.factions[actor].treasury<cost)return {ok:false,reason:'treasury',cost};
  // A candidate may decline a sponsor whose program conflicts with their priorities.
  if(action==='support'&&p.faction!==actor&&obedience(s,id)<55)return {ok:false,reason:'refused'};
- s.factions[actor].treasury-=cost;
+ s.factions[actor].treasury-=cost;candidate.campaignExpense=(candidate.campaignExpense||0)+cost;c.campaignActions.push({id,actor,action,cost,year:s.year,month:s.month,phase:campaignPhase(s,candidate.office)});
  if(action==='oppose'){candidate.opposition+=8;changeObedience(s,id,-6,'public opposition');if(roll(s)<.25)candidate.allegation={public:true,source:'opposition',year:s.year,month:s.month}}
  else if(action==='improper'){candidate.support+=roll(s)<.55?12:3;candidate.irregularity={actor,evidence:35+Math.round(roll(s)*50),public:roll(s)<.35,year:s.year,month:s.month};if(candidate.irregularity.public)candidate.allegation={public:true,source:'witness',year:s.year,month:s.month}}
  else if(action==='promise'){candidate.promises.push({id:`promise:${id}:${s.year}:${s.month}:${candidate.promises.length+1}`,by:actor,year:s.year,month:s.month,kind:'public_works',beneficiary:actor,body:'tribal',requiredAction:'public_works',public:true,benefit:3,cost:8,deadlineYear:s.year+1,status:'offered'});candidate.support+=3;changeObedience(s,id,2,'campaign promise')}
@@ -137,7 +214,9 @@ function advanceInvestigations(s,c){
 function score(s,candidate,body){
  const p=person(s,candidate.id),career=initializeCursus(s).careers[candidate.id]||[],rome=factionOfRome(s),support=initializeCursus(s).senate[candidate.faction]||45;
  const merit=(p.education||50)*.35+career.length*5+(p.influence||40)*.25+(p.wealth||0)*.12;
- const patronage=candidate.support-candidate.opposition+support*.18+(candidate.faction===rome?8:-10);
+ const backers=initializeCursus(s).endorsements.filter(x=>x.candidateId===candidate.id&&x.year===s.year&&x.status==='accepted');
+ const endorsement=Math.min(18,backers.reduce((n,x)=>n+(initializeCursus(s).senators.find(y=>y.id===x.senatorId)?.influence||50)/25,0));
+ const patronage=candidate.support-candidate.opposition+support*.18+endorsement+(candidate.faction===rome?8:-10);
  const groups=body==='centuriate'?[['senior',.48],['middle',.32],['other',.20]]:body==='plebeian'?[['urban',.42],['rural',.58]]:[['urban',.30],['rural',.70]];
  return {total:Math.round(groups.reduce((n,[group,weight])=>n+weight*(merit+patronage+(group==='senior'?(p.wealth||0)*.25:group==='urban'?(p.influence||0)*.1:(p.loyalty||50)*.08)+roll(s)*16),0)),groups:groups.map(([group,weight])=>({group,weight}))};
 }
@@ -146,9 +225,21 @@ export function resolveElection(s,office='consul'){
  if(!o?.body||!ROMAN.has(controller)||o.cycle&&Math.abs(s.year)%o.cycle!==0)return {ok:false,reason:'procedure'};
  if(c.elections.some(x=>x.year===s.year&&x.office===office))return {ok:false,reason:'complete'};
  const candidates=c.applicants.filter(x=>x.year===s.year&&x.office===office&&x.status!=='disqualified'&&officeEligibility(s,x.id,office).ok&&x.faction===controller);
- const entries=candidates.map(x=>({id:x.id,score:score(s,x,o.body).total})).sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id));
- const elected=entries.slice(0,o.seats).map(x=>x.id);
- const result={year:s.year,month:s.month,office,body:o.body,controller,candidates:entries,elected,termYear:officeYear(s),status:elected.length===o.seats?'complete':'incomplete'};
+ const entries=candidates.map(x=>({id:x.id,score:score(s,x,o.body).total,votes:0}));
+ const groups=o.body==='centuriate'?[['senior',4],['middle',3],['other',3]]:o.body==='plebeian'?[['urban',4],['rural',4]]:[['urban',3],['rural',5]];
+ const ballots=[],elected=[];
+ for(let seat=0;seat<o.seats;seat++){
+  const standing=entries.filter(x=>!elected.includes(x.id));if(!standing.length)break;
+  const tally=new Map(standing.map(x=>[x.id,0]));
+  for(const [group,count] of groups)for(let unit=0;unit<count;unit++){
+   const ranked=standing.map(x=>{const p=person(s,x.id),bias=group==='senior'?(p.wealth||0)*.18:group==='urban'?(p.influence||0)*.12:(p.loyalty||50)*.08;return {id:x.id,value:x.score+bias+roll(s)*25}}).sort((a,b)=>b.value-a.value||a.id.localeCompare(b.id));
+   const chosen=ranked[0].id;tally.set(chosen,tally.get(chosen)+1);ballots.push({seat:seat+1,group,unit:unit+1,candidateId:chosen});
+  }
+  const winner=[...tally].sort((a,b)=>b[1]-a[1]||(entries.find(x=>x.id===b[0])?.score||0)-(entries.find(x=>x.id===a[0])?.score||0)||a[0].localeCompare(b[0]))[0][0];
+  elected.push(winner);for(const x of entries)x.votes+=tally.get(x.id)||0;
+ }
+ entries.sort((a,b)=>b.votes-a.votes||b.score-a.score||a.id.localeCompare(b.id));
+ const result={year:s.year,month:s.month,office,body:o.body,controller,candidates:entries,ballots,elected,termYear:officeYear(s),status:elected.length===o.seats?'complete':'incomplete'};
  c.elections.push(result);c.elections=c.elections.slice(-80);
  for(const id of elected){c.pendingTerms.push({id,office,year:officeYear(s),faction:controller});changeObedience(s,id,3,'election victory')}
  for(const x of candidates){x.status=elected.includes(x.id)?'elected':'lost';for(const promise of x.promises||[])if(promise.status==='offered')promise.status=elected.includes(x.id)?'pending':'void';if(!elected.includes(x.id))changeObedience(s,x.id,-2,'election defeat')}
@@ -157,10 +248,12 @@ export function resolveElection(s,office='consul'){
 }
 function startTerms(s){
  const c=initializeCursus(s);
- for(const office of Object.keys(MAGISTRACIES)){const current=c.magistrates[office]||[];c.magistrates[office]=current.filter(x=>x.endYear>=s.year&&present(s,x.id));}
+ for(const office of Object.keys(MAGISTRACIES)){const current=c.magistrates[office]||[];for(const term of current.filter(x=>x.endYear<s.year||!present(s,x.id)||c.retired[x.id]))c.termHistory.push({...term,office,ended:{year:s.year,month:s.month},reason:!present(s,term.id)?'incapacitated':c.retired[term.id]?'retired':'term completed'});c.magistrates[office]=current.filter(x=>x.endYear>=s.year&&present(s,x.id)&&!c.retired[x.id]);}
+ c.termHistory=c.termHistory.slice(-100);
+ for(const id of Object.keys(c.careers))if(!c.retired[id]&&present(s,id)&&age(s,id)>=68&&roll(s)<.16){c.retired[id]={year:s.year,month:s.month,reason:'age'};c.retirements.push({id,year:s.year,month:s.month,reason:'age'});if(person(s,id)?.faction===s.player)note(s,name(id)+' retired from political applications.',name(id,1)+'退出官员申请。')}
  for(const term of c.pendingTerms.filter(x=>x.year===s.year&&present(s,x.id))){
   c.magistrates[term.office].push({id:term.id,startYear:s.year,endYear:s.year,faction:term.faction});
-  c.careers[term.id]||=[];c.careers[term.id].push({office:term.office,year:s.year,simulated:true});
+  c.careers[term.id]||=[];c.careers[term.id].push({office:term.office,year:s.year,source:'election',simulated:true});
  }
  c.pendingTerms=c.pendingTerms.filter(x=>x.year>s.year);
 }
@@ -260,7 +353,7 @@ function advanceMeasures(s,c){
  for(const p of c.proposals.filter(x=>['consulting','voting','implementing'].includes(x.status))){
   if(--p.remaining>0)continue;
   if(p.status==='consulting'){
-   if((c.senate[p.actor]||0)<40){p.status='opposed';if(p.actor===s.player)note(s,'The Senate opposed a proposed measure; no assembly vote followed.','元老院反对一项提案；公民大会未进行表决。');continue}
+   p.senateRoll=senateAssessment(s,p.actor,p.kind);if(p.senateRoll.support<40||p.senateRoll.for<=p.senateRoll.against){p.status='opposed';if(p.actor===s.player)note(s,'The Senate opposed a proposed measure; no assembly vote followed.','元老院反对一项提案；公民大会未进行表决。');continue}
    p.status='voting';p.remaining=1;continue;
   }
   if(p.status==='voting'){
@@ -294,10 +387,32 @@ function aiPolitical(s,c){
   if(s.month===11&&c.contacts.some(x=>x.actor===actor&&x.id===named&&x.status==='open')&&!c.offers.some(x=>x.actor===actor&&x.id===named)&&s.factions[actor].treasury>=18)offerEmployment(s,target,named,actor);
  }
 }
+function autonomousCampaign(s,c){
+ const controller=factionOfRome(s);if(!ROMAN.has(controller))return;
+ if([4,7,9].includes(s.month)){
+  const pool=c.applicants.filter(x=>x.year===s.year&&x.faction===controller&&x.office==='consul'&&x.status==='eligible'&&officeEligibility(s,x.id,x.office).ok&&person(s,x.id)?.wealth>=3);
+  const choice=pool.sort((a,b)=>(person(s,b.id)?.ambition||50)-(person(s,a.id)?.ambition||50)||a.id.localeCompare(b.id))[0];
+  if(choice){const p=person(s,choice.id),spent=3;p.wealth-=spent;choice.support+=Math.max(2,Math.round((p.eloquence||p.influence||50)/25));choice.campaignExpense=(choice.campaignExpense||0)+spent;c.campaignActions.push({id:choice.id,actor:choice.id,action:'independent canvass',cost:spent,year:s.year,month:s.month,phase:campaignPhase(s,choice.office)});}
+ }
+ if(s.month===6)for(const senator of c.senators.filter(x=>present(s,x.id)&&!c.retired[x.id])){
+  const pool=c.applicants.filter(x=>x.year===s.year&&x.faction===controller&&x.office==='consul'&&x.status==='eligible'&&x.platform===senator.interest);
+  if(!pool.length||roll(s)>.45)continue;
+  const chosen=pool.sort((a,b)=>(person(s,b.id)?.influence||0)-(person(s,a.id)?.influence||0))[0];
+  if(!c.endorsements.some(x=>x.year===s.year&&x.senatorId===senator.id&&x.candidateId===chosen.id)){c.endorsements.push({senatorId:senator.id,candidateId:chosen.id,actor:senator.id,year:s.year,month:s.month,status:'accepted',cost:0,reason:'shared issue'});senator.publicPosition=chosen.id;c.networks[senator.id]||=[];if(!c.networks[senator.id].includes(chosen.id))c.networks[senator.id].push(chosen.id)}
+ }
+}
+function recordPoliticalYear(s,c){
+ if(c.politicalReviews.some(x=>x.year===s.year))return;
+ const elections=c.elections.filter(x=>x.year===s.year);
+ const review={year:s.year,month:s.month,elected:elections.flatMap(x=>x.elected.map(id=>({id,office:x.office}))),failed:c.applicants.filter(x=>x.year===s.year&&x.status==='lost').map(x=>({id:x.id,office:x.office})),outgoing:c.termHistory.filter(x=>x.ended?.year===s.year).map(x=>({id:x.id,office:x.office,reason:x.reason})),retired:c.retirements.filter(x=>x.year===s.year).map(x=>x.id),disputes:c.proposals.filter(x=>x.year===s.year&&['opposed','rejected','vetoed'].includes(x.status)).map(x=>({kind:x.kind,status:x.status})),support:{...c.senate},endorsements:c.endorsements.filter(x=>x.year===s.year&&x.status==='accepted').map(x=>({senatorId:x.senatorId,candidateId:x.candidateId}))};
+ c.politicalReviews.push(review);c.politicalReviews=c.politicalReviews.slice(-30);
+ if(elections.length)note(s,'The annual political review records '+review.elected.length+' elected magistrates and '+review.failed.length+' unsuccessful candidates.','年度政治回顾记载'+review.elected.length+'位当选官员及'+review.failed.length+'位落选者。');
+}
 export function advanceCursus(s){
  const c=initializeCursus(s);
  if(s.month===1){startTerms(s);annualApplicants(s);const controller=factionOfRome(s),f=s.factions[controller],rome=s.regions.find(r=>r.id==='roma');if(f&&rome)for(const body of ['centuriate','tribal','plebeian'])c.assemblies[body]=clamp((c.assemblies[body]*3+f.stability+rome.loyalty)/5)}
- advanceIntel(s,c);advanceContacts(s,c);advanceMeasures(s,c);advancePromises(s,c);advanceInvestigations(s,c);
- aiPolitical(s,c);
+ advanceIntel(s,c);advanceContacts(s,c);advanceEndorsements(s,c);advanceMeasures(s,c);advancePromises(s,c);advanceInvestigations(s,c);
+ aiPolitical(s,c);autonomousCampaign(s,c);
  if(ROMAN.has(factionOfRome(s)))for(const [office,o] of Object.entries(MAGISTRACIES))if(o.month===s.month&&(!o.cycle||Math.abs(s.year)%o.cycle===0))resolveElection(s,office);
+ if(s.month===12)recordPoliticalYear(s,c);
 }

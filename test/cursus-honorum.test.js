@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=cursus-crowns-1';
-import {appointOffice} from '../office-system.js?v=fort-intel-1';
-import {initializeCursus,officeEligibility,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,knownForeignOfficial,contactOfficial,cultivateOfficial,offerEmployment,obedience,institutionalBalance,proposeMeasure} from '../cursus-honorum.js?v=cursus-crowns-1';
+import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=cursus-integrated-1';
+import {appointOffice} from '../office-system.js?v=succession-ui-recovery-1';
+import {initializeCursus,officeEligibility,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,knownForeignOfficial,contactOfficial,cultivateOfficial,offerEmployment,obedience,institutionalBalance,campaignPhase,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=cursus-integrated-1';
 
 test('fictional candidates are persistent people; Roman consuls require an assembly election',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
@@ -188,4 +188,43 @@ test('named official relationships grow only through paid monthly contact',()=>{
  s.month+=1;const next=cultivateOfficial(s,'parthia',id,'senate');
  assert.equal(next.ok,true);assert.ok(next.trust>first.trust);
  assert.equal(upgradeSave(structuredClone(s)).world.cursus.contacts.at(-1).trust,next.trust);
+});
+
+test('named senators endorse candidates but collective century votes choose consuls',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),varro=c.varroId,senator=c.senators[0];
+ assert.equal(c.senators.length,12);assert.equal(new Set(c.senators.map(x=>x.id)).size,12);
+ assert.equal(s.world.characters[varro].education,96);assert.equal(obedience(s,varro),34);
+ assert.equal(senateAssessment(s,'senate').votes.length,12);
+ assert.equal(campaignPhase(s,'consul'),'registration');
+ const before=s.factions.senate.treasury;
+ assert.equal(seekSenatorEndorsement(s,senator.id,varro).ok,true);
+ assert.equal(s.factions.senate.treasury,before-5);
+ assert.equal(seekSenatorEndorsement(s,senator.id,varro).reason,'pending');
+ s.world.intelSeed=0;advanceCursus(s);advanceCursus(s);
+ assert.equal(c.endorsements.at(-1).status,'accepted');
+ s.month=10;const result=resolveElection(s,'consul').result;
+ assert.equal(result.body,'centuriate');assert.equal(result.elected.length,2);
+ assert.equal(result.ballots.length,20);
+ assert.equal(result.ballots.filter(x=>x.seat===1).length,10);
+ assert.equal(result.candidates.reduce((n,x)=>n+x.votes,0),20);
+ assert.equal(upgradeSave(structuredClone(s)).world.cursus.endorsements.at(-1).status,'accepted');
+});
+test('career advancement and annual political review use actual elections',()=>{
+ const s=newGame('senate'),c=initializeCursus(s);
+ s.month=12;const election=resolveElection(s,'quaestor').result,holder=election.elected[0];
+ assert.ok(holder);s.world.characters[holder].birthYear=s.year-41;
+ advanceCursus(s);assert.ok(c.politicalReviews.at(-1).elected.some(x=>x.id===holder&&x.office==='quaestor'));
+ s.year++;s.month=1;advanceCursus(s);
+ assert.ok(c.careers[holder].some(x=>x.office==='quaestor'&&x.source==='election'));
+ assert.ok(c.applicants.some(x=>x.id===holder&&x.office==='praetor'&&x.year===s.year));
+ assert.equal(upgradeSave(structuredClone(s)).world.cursus.politicalReviews.at(-1).year,s.year-1);
+});
+test('campaign actions have a monthly limit while political candidates act independently',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
+ assert.equal(supportCandidate(s,id,'support').ok,true);
+ assert.equal(supportCandidate(s,id,'support').reason,'cooldown');
+ const wealth=s.world.characters[id].wealth;
+ s.month=4;advanceCursus(s);
+ assert.ok(c.campaignActions.some(x=>x.actor===id&&x.action==='independent canvass'));
+ assert.equal(s.world.characters[id].wealth,wealth-3);
 });
