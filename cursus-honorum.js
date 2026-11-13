@@ -173,23 +173,36 @@ export function annualApplicants(s){
  return c.applicants.filter(x=>x.year===s.year);
 }
 export function campaignFor(s,id){return initializeCursus(s).applicants.find(x=>x.id===id&&x.year===s.year)}
-export function supportCandidate(s,id,action='support',actor=s.player){
+export function supportCandidate(s,id,action='support',actor=s.player,detail=null){
  const c=initializeCursus(s),candidate=campaignFor(s,id),p=person(s,id),controller=factionOfRome(s);
  if(!ROMAN.has(actor)||!candidate||candidate.status!=='eligible'||!p||!present(s,id)||!officeEligibility(s,id,candidate.office).ok)return {ok:false,reason:'candidate'};
  if(controller!==actor)return {ok:false,reason:'rome'};
- if(!['support','oppose','canvass','promise','improper'].includes(action))return {ok:false,reason:'action'};
+ const costs={support:8,oppose:6,canvass:5,speech:4,family:7,games:12,debate:5,negotiate:4,withdraw:3,promise:3,improper:14};
+ if(!(action in costs))return {ok:false,reason:'action'};
  if(s.month>=MAGISTRACIES[candidate.office].month)return {ok:false,reason:'closed'};
+ if(action==='games'&&candidate.office!=='aedile'&&!c.careers[id]?.some(x=>x.office==='aedile'))return {ok:false,reason:'authority'};
  if(c.campaignActions.some(x=>x.id===id&&x.action===action&&x.actor===actor&&x.year===s.year&&x.month===s.month))return {ok:false,reason:'cooldown'};
- const cost={support:8,oppose:6,canvass:5,promise:3,improper:14}[action];if(s.factions[actor].treasury<cost)return {ok:false,reason:'treasury',cost};
- // A candidate may decline a sponsor whose program conflicts with their priorities.
+ const cost=costs[action];if(s.factions[actor].treasury<cost)return {ok:false,reason:'treasury',cost};
  if(action==='support'&&p.faction!==actor&&obedience(s,id)<55)return {ok:false,reason:'refused'};
- s.factions[actor].treasury-=cost;candidate.campaignExpense=(candidate.campaignExpense||0)+cost;c.campaignActions.push({id,actor,action,cost,year:s.year,month:s.month,phase:campaignPhase(s,candidate.office)});
+ s.factions[actor].treasury-=cost;candidate.campaignExpense=(candidate.campaignExpense||0)+cost;
+ const record={id,actor,action,cost,year:s.year,month:s.month,phase:campaignPhase(s,candidate.office),outcome:'completed'};
+ c.campaignActions.push(record);
  if(action==='oppose'){candidate.opposition+=8;changeObedience(s,id,-6,'public opposition');if(roll(s)<.25)candidate.allegation={public:true,source:'opposition',year:s.year,month:s.month}}
  else if(action==='improper'){candidate.support+=roll(s)<.55?12:3;candidate.irregularity={actor,evidence:35+Math.round(roll(s)*50),public:roll(s)<.35,year:s.year,month:s.month};if(candidate.irregularity.public)candidate.allegation={public:true,source:'witness',year:s.year,month:s.month}}
- else if(action==='promise'){candidate.promises.push({id:`promise:${id}:${s.year}:${s.month}:${candidate.promises.length+1}`,by:actor,year:s.year,month:s.month,kind:'public_works',beneficiary:actor,body:'tribal',requiredAction:'public_works',public:true,benefit:3,cost:8,deadlineYear:s.year+1,status:'offered'});candidate.support+=3;changeObedience(s,id,2,'campaign promise')}
- else {candidate.support+=action==='support'?12:7;changeObedience(s,id,action==='support'?4:2,'campaign support')}
- c.senate[actor]=clamp((c.senate[actor]||50)+(action==='oppose'?-2:1));
- return {ok:true,cost,candidate:id,action};
+ else if(action==='promise'){
+  const kind=['public_works','grain_relief'].includes(detail)?detail:'public_works';
+  candidate.promises.push({id:`promise:${id}:${s.year}:${s.month}:${candidate.promises.length+1}`,by:actor,year:s.year,month:s.month,kind,beneficiary:kind==='grain_relief'?'plebs':actor,body:kind==='grain_relief'?'plebeian':'tribal',requiredAction:kind,public:true,benefit:3,cost:kind==='grain_relief'?10:8,deadlineYear:s.year+1,status:'offered'});
+  candidate.support+=3;changeObedience(s,id,2,'campaign promise');
+ }
+ else if(action==='speech'){const gain=Math.max(1,Math.round(((p.eloquence||p.influence||50)+(p.reputation||50))/35+roll(s)*4-2));candidate.support+=gain;record.gain=gain}
+ else if(action==='family'){const senator=c.senators.filter(x=>x.faction===actor&&present(s,x.id)).sort((x,y)=>y.influence-x.influence)[0];if(senator){c.networks[id]||=[];if(!c.networks[id].includes(senator.id))c.networks[id].push(senator.id);candidate.support+=5;candidate.promises.push({id:`family:${id}:${s.year}:${s.month}`,by:id,year:s.year,month:s.month,kind:'patronage',beneficiary:senator.id,body:'senate',requiredAction:'consultation',public:false,benefit:5,cost:4,deadlineYear:s.year+1,status:'offered'})}else record.outcome='no_patron'}
+ else if(action==='games'){const gain=4+Math.floor(roll(s)*5);candidate.support+=gain;record.gain=gain}
+ else if(action==='debate'){const rival=c.applicants.filter(x=>x.year===s.year&&x.office===candidate.office&&x.id!==id&&x.status==='eligible').sort((x,y)=>y.support-x.support)[0];if(rival){const won=(p.eloquence||p.influence||50)+roll(s)*35>(person(s,rival.id)?.eloquence||person(s,rival.id)?.influence||50)+roll(s)*35;candidate.support+=won?5:0;candidate.opposition+=won?0:3;rival.opposition+=won?3:0;record.outcome=won?'won':'lost';record.rivalId=rival.id}else record.outcome='no_rival'}
+ else if(action==='negotiate'){const accepts=roll(s)<Math.max(.15,Math.min(.8,.32+obedience(s,id)/250-(p.ambition||50)/500));if(accepts){candidate.support+=6;changeObedience(s,id,3,'conditional support');candidate.promises.push({id:`agreement:${id}:${s.year}:${s.month}`,by:id,year:s.year,month:s.month,kind:'consultation',beneficiary:actor,body:'senate',requiredAction:'consultation',public:false,benefit:6,cost:0,deadlineYear:s.year+1,status:'offered'})}else{changeObedience(s,id,-2,'rejected conditions');record.outcome='refused'}}
+ else if(action==='withdraw'){const accepts=roll(s)<Math.max(.05,Math.min(.75,.12+(candidate.opposition-candidate.support)/100+obedience(s,id)/300));if(accepts){candidate.status='withdrawn';record.outcome='withdrawn'}else{changeObedience(s,id,-3,'withdrawal pressure');record.outcome='refused'}}
+ else{candidate.support+=action==='support'?12:7;changeObedience(s,id,action==='support'?4:2,'campaign support')}
+ c.senate[actor]=clamp((c.senate[actor]||50)+(action==='oppose'?-2:action==='withdraw'&&record.outcome==='refused'?-1:1));
+ return {ok:true,cost,candidate:id,action,outcome:record.outcome};
 }
 export function investigateCandidate(s,id,actor=s.player){
  const c=initializeCursus(s),candidate=campaignFor(s,id),office=MAGISTRACIES[candidate?.office];
@@ -226,7 +239,7 @@ export function resolveElection(s,office='consul'){
  const c=initializeCursus(s),o=MAGISTRACIES[office],controller=factionOfRome(s);
  if(!o?.body||!ROMAN.has(controller)||o.cycle&&Math.abs(s.year)%o.cycle!==0)return {ok:false,reason:'procedure'};
  if(c.elections.some(x=>x.year===s.year&&x.office===office))return {ok:false,reason:'complete'};
- const candidates=c.applicants.filter(x=>x.year===s.year&&x.office===office&&x.status!=='disqualified'&&officeEligibility(s,x.id,office).ok&&x.faction===controller);
+ const candidates=c.applicants.filter(x=>x.year===s.year&&x.office===office&&x.status==='eligible'&&officeEligibility(s,x.id,office).ok&&x.faction===controller);
  const entries=candidates.map(x=>({id:x.id,score:score(s,x,o.body).total,votes:0}));
  const groups=o.body==='centuriate'?[['equites',18],['first',80],['second',20],['third',20],['fourth',20],['fifth',30],['unarmed',5]]:o.body==='plebeian'?[['urban',4],['rural',4]]:[['urban',3],['rural',5]];
  const ballots=[],elected=[];
@@ -480,7 +493,7 @@ function advanceMeasures(s,c){
  for(const p of c.proposals.filter(x=>['consulting','voting','implementing'].includes(x.status))){
   if(--p.remaining>0)continue;
   if(p.status==='consulting'){
-   p.senateRoll=senateAssessment(s,p.actor,p.kind);if(p.senateRoll.support<40||p.senateRoll.for<=p.senateRoll.against){p.status='opposed';if(p.actor===s.player)note(s,'The Senate opposed a proposed measure; no assembly vote followed.','元老院反对一项提案；公民大会未进行表决。');continue}
+   p.senateRoll=senateAssessment(s,p.actor,p.kind);for(const application of c.applicants)if(application.faction===p.actor&&application.status==='elected')for(const promise of application.promises||[])if(promise.status==='pending'&&promise.requiredAction==='consultation'){promise.status='fulfilled';promise.fulfilled={year:s.year,month:s.month};changeObedience(s,application.id,2,'honored consultation')}if(p.senateRoll.support<40||p.senateRoll.for<=p.senateRoll.against){p.status='opposed';if(p.actor===s.player)note(s,'The Senate opposed a proposed measure; no assembly vote followed.','元老院反对一项提案；公民大会未进行表决。');continue}
    p.status='voting';p.remaining=1;continue;
   }
   if(p.status==='voting'){

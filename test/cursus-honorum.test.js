@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=cursus-integrated-1';
 import {appointOffice} from '../office-system.js?v=succession-ui-recovery-1';
-import {initializeCursus,officeEligibility,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,offerEmployment,obedience,institutionalBalance,campaignPhase,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=cursus-integrated-1';
+import {initializeCursus,officeEligibility,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=cursus-integrated-1';
 
 test('fictional candidates are persistent people; Roman consuls require an assembly election',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
@@ -292,4 +292,22 @@ test('twenty-year government simulation preserves elections, careers, intelligen
  assert.ok(c.talentSearches.some(x=>x.actor==='caesar'));
  const saved=upgradeSave(structuredClone(s));assert.equal(saved.world.cursus.elections.length,c.elections.length);
  assert.equal(saved.world.cursus.politicalReviews.length,20);
+});
+
+test('campaign phases allow distinct actions while withdrawn candidates leave the ballot',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.varroId,app=campaignFor(s,id);
+ const start=s.factions.senate.treasury;
+ assert.equal(supportCandidate(s,id,'speech').ok,true);
+ assert.ok(app.support>0);assert.equal(s.factions.senate.treasury,start-4);
+ assert.equal(supportCandidate(s,id,'family').ok,true);
+ assert.ok(app.promises.some(x=>x.kind==='patronage'));
+ assert.equal(supportCandidate(s,id,'games').reason,'authority');
+ assert.equal(supportCandidate(s,id,'negotiate').ok,true);
+ assert.ok(['completed','refused'].includes(c.campaignActions.at(-1).outcome));
+ const aedile=c.applicants.find(x=>x.office==='aedile'&&x.faction==='senate');
+ assert.equal(supportCandidate(s,aedile.id,'games').ok,true);
+ const rival=c.applicants.find(x=>x.office==='consul'&&x.faction==='senate'&&x.id!==id);
+ rival.status='withdrawn';s.month=10;
+ const election=resolveElection(s,'consul').result;
+ assert.ok(!election.candidates.some(x=>x.id===rival.id));
 });
