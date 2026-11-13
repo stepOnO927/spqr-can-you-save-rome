@@ -260,6 +260,8 @@ document.querySelector('#help').onclick=openHelp;
 const tutorial=createTutorial({skipInitial:!!received,language:()=>lang,getState:()=>state,onMode:()=>{},onReset:(mode,faction='caesar',economicHandicap=false)=>{setPlaying(false);state=configureStartingDifficulty(newGame(faction),mode,economicHandicap);activeInfo=null;activeFaction=null;activeArmy=null;activeBattle=null;previewDestination='';clearReach();battleMarkers.forEach(m=>m.remove());battleMarkers=[];renderArmies();renderHud();inspect(lang==='zh'?'选择军队':'Select a command',lang==='zh'?'点击军团或城市查看详情。':'Select an army or city to inspect it.');map.flyTo({center:[12.4,43.2],zoom:5.45})}});
 if(received?.tutorial?.running)tutorial.restore(received.tutorial);
 if(received&&location.hash==='#factions'){factionDirectory();history.replaceState(null,'',location.pathname+location.search)}
+// Only an entry already visible in the transferred chronicle can request a person.
+if(received&&location.hash.startsWith('#person=')){const id=new URLSearchParams(location.hash.slice(1)).get('person');history.replaceState(null,'',location.pathname+location.search);if(id&&state.chronicle?.entries?.some(e=>e.characterId===id)&&CHARACTER_CATALOG[id]&&state.world.characters[id])characterUI.show(id)}
 
 // Keep the atlas readable on narrow screens without changing campaign state.
 const compactViewport=window.matchMedia('(max-width:700px)'),mast=document.querySelector('.mast'),compactMenu=document.querySelector('#compact-menu'),compactToggle=document.querySelector('#compact-menu-toggle'),selectionPanel=document.querySelector('.selection'),selectionToggle=document.querySelector('#selection-toggle');
