@@ -138,6 +138,10 @@ The following AI spending pass stops routine wartime levies just because a facti
 
 ## Release checks
 
+### Latest atlas performance isolation
+
+The latest 1920 × 1080 SwiftShader isolation used `node tools/map-benchmark.mjs` and disposable variants from `node tools/build-map-style-trials.mjs`. The current atlas measured 3.29 pan and 3.95 zoom callbacks per second; removing color relief, hillshade and land-cover raster measured 4.99 and 6.17; also removing ocean-source layers measured 5.39 and 6.38; instead removing land-source layers measured 6.99 and 8.42. Idle remained about 60. These are callback cadences on one software renderer, not player-device frame rates. The evidence implicates both terrain drawing and detailed land geometry more than the ocean mask. A matched, lighter overview coast with full-resolution near-zoom masks is the next cartographic performance candidate; no approximation or layer-removal trial is in the playable map.
+
 Run `node tools/coast-mask-smoke.mjs` after changes to GSHHG masks or map styling; it checks actual rendered pixels at four Mediterranean coastlines, which geometry queries alone cannot verify.
 
 Run `npm test`, `node tools/audit-site-coast.mjs`, `node tools/offline-atlas-smoke.mjs`, `node tools/phase-xi-atlas-smoke.mjs`, `node tools/phase-xiv-smoke.mjs`, `node tools/phase-xiv-rites-smoke.mjs`, `node tools/phase-xii-browser-smoke.mjs`, `node tools/phase-xii-campaign-audit.mjs`, `node tools/phase-xii-balance-seeds.mjs`, `node tools/war-contributions-browser-smoke.mjs`, `node tools/palace-council-browser-smoke.mjs`, `node tools/egypt-long-play.mjs`, `node tools/senate-long-play.mjs`, `node tools/caesar-long-play.mjs`, `node tools/independent-long-play.mjs`, and `node tools/grand-browser-smoke.mjs`. Inspect both languages and actual browser rendering. Keep the independent branch separate from `main` until the user chooses otherwise.
