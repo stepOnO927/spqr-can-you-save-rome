@@ -134,6 +134,11 @@ The 120-month market simulation verifies that at least four AI courts place
 orders against real surplus, deliveries complete, stocks and prices remain
 bounded, escrow resolves, merchant IDs persist, transport fees balance, and
 save migration works halfway through.
+It now also runs the direct Han campaign for 120 months, including the
+scheduled Liu succession, foreign ruler and portrait persistence, fiscal and
+market bounds, physical deliveries, transport accounting and a midpoint save
+reload. This broadens Test H but does not replace targeted political crisis
+and combat acceptance scenarios.
 Roman-campaign caravans blocked for twelve consecutive months now settle
 against their escrow: cargo returns to the last actual campaign market,
 the buyer recovers goods payment and customs, and transport spending plus the
