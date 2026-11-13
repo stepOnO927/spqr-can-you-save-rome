@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=gathering-delegate-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=multipolar-autoplay-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=succession-ui-recovery-1';
-import {newScenario} from '../scenarios.js?v=gathering-delegate-1';
+import {newScenario} from '../scenarios.js?v=multipolar-autoplay-1';
 
 test('difficulty does not secretly penalize the player economy',()=>{
  const states=['standard','hard','expert'].map(difficulty=>{const s=newGame('caesar');s.difficulty=difficulty;tick(s);return s});

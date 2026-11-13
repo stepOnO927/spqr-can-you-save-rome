@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=gathering-delegate-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=multipolar-autoplay-1';
 import {FOCUS_TREES,BRANCHES} from '../imperium-focus-data.js?v=imperium-1';
 import {validateFocusTrees,focusStatus,startFocus,cancelFocus,focusState,canStartFocus,treeFor,focusModifiers,scoreFocus,focusReportsFor,legitimateFocusView,unlockedComponents} from '../national-focus.js?v=succession-ui-recovery-1';
 import {COMPONENTS} from '../legion-designer.js?v=succession-ui-recovery-1';
