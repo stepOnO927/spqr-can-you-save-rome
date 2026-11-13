@@ -6,7 +6,7 @@ import {EURASIAN_FACTIONS,EURASIAN_RULERS} from './eurasia-data.js';
 import {initDependencies,advanceDependencies,changeDependency} from './dependencies.js';
 import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=han-1';
 import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,statusOf,yearsBetween,claimStrength} from './dynasty.js?v=han-1';
-import {initCourt,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,issueEdict,EDICTS,adminCapacity,emperorAuthority} from './court.js?v=han-1';
+import {initCourt,ensureCourtCareers,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,issueEdict,EDICTS,adminCapacity,emperorAuthority} from './court.js?v=han-1';
 import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=han-1';
 import {initSilk,advanceSilk} from './silk-road.js?v=han-1';
 import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=faces-of-empire-1';
@@ -302,6 +302,7 @@ export function loadHanSave(raw){
  // Older saves did not date opening appointments. Begin the observation clock
  // at load instead of exposing a guessed historical tenure or private skill.
  for(const [office,id] of Object.entries(s.court?.offices||{}))if(id&&s.persons[id]?.alive&&s.persons[id].office===office)s.persons[id].officeSince??={year:s.year,month:s.month};
+ ensureCourtCareers(s);
  s.version=SAVE_VERSION;s.throne.claimants||=[];s.throne.support||={};s.throne.history||=[];
  const fixes=enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
  s.loadFixes=fixes;initializeEasternMarkets(s);ensureFieldCommanders(s);computeMandate(s);

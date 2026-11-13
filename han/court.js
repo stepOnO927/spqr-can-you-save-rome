@@ -8,8 +8,28 @@
 import {OFFICES,COURT_FACTIONS,REGIONS as STATIC_REGIONS} from './data.js?v=han-1';
 import {crown,eligibility,isLiuClan,claimStrength,recognition,establishRegency,deposeAndReplace,seizeThrone,addClaimant,yearsBetween,enforceDynasticInvariants} from './dynasty.js?v=han-1';
 import {roll,clamp,log,name} from './util.js?v=han-1';
+import {PERSON} from './people.js?v=han-1';
 
 const alive=(s,id)=>!!s.persons[id]?.alive;
+export const COURT_PROFILE_IDS=['shi-gao','xiao-wangzhi','hong-gong','yu-dingguo','chen-wannian','liu-xiang','zhou-kan','shi-xian','feng-fengshi','gan-yanshou','chen-tang','feng-liao'];
+export function ensureCourtCareers(s,{opening=false}={}){
+ for(const id of COURT_PROFILE_IDS){
+  const person=s.persons?.[id];if(!person)continue;
+  const canonical=PERSON[id],matches=canonical&&person.birth===canonical.birth&&person.name?.[0]===canonical.name[0];
+  if(Array.isArray(person.career)){
+   if(!matches)person.career=person.career.filter(entry=>entry.kind!=='opening_service');
+   continue;
+  }
+  person.career=[];
+  if(matches&&Number.isInteger(s.stats?.startMonth)){
+   const start=s.stats.startMonth,year=Math.floor((start-1)/12),month=start-year*12;
+   const office=opening&&s.court?.offices?.[person.office]===id?OFFICES[person.office]:null;
+   const text=office?[`At campaign opening, %NAME% serves as ${office.name[0]}.`,`战役开始时，%NAME%任${office.name[1]}。`]:['At campaign opening, %NAME% is in Han service.','战役开始时，%NAME%在汉廷任事。'];
+   person.career.push({year,month,kind:'opening_service',who:id,text});
+  }
+  for(const entry of s.log||[])if(entry.who===id||entry.who2===id)person.career.push({...entry});
+ }
+}
 export const age=(s,id)=>yearsBetween(s.persons[id]?.birth??s.year,s.year);
 const officials=s=>Object.values(s.persons).filter(p=>p.alive&&p.faction===govFaction(s)&&['official','general','consort','dowager','envoy'].includes(p.role));
 export const govFaction=s=>'han';
@@ -17,7 +37,7 @@ export const govFaction=s=>'han';
 export function initCourt(s,offices){
  s.court={offices:{...offices},factions:Object.fromEntries(Object.keys(COURT_FACTIONS).map(k=>[k,{influence:20}])),control:{},favor:{},knowledge:{},edicts:[],audits:[],enmity:{},pendingDisaster:null,debates:[],nextId:1,schemes:[],implemented:[]};
  for(const [office,id] of Object.entries(offices))if(id&&s.persons[id]){s.persons[id].office=office;s.persons[id].officeSince??={year:s.year,month:s.month}}
- recomputeInfluence(s);return s.court;
+ recomputeInfluence(s);ensureCourtCareers(s,{opening:true});return s.court;
 }
 
 // ---------- authority & capacity ----------
@@ -55,16 +75,17 @@ export function appoint(s,office,personId,{actor='emperor',logFn=null}={}){
  if(p.faction!==govFaction(s))return {ok:false,reason:'foreign'};
  if(o.requiresLiu&&!isLiuClan(s,personId))return {ok:false,reason:'requires_liu_clan'};
  if(p.eunuch&&['chengxiang','yushi','dasima'].includes(office))return {ok:false,reason:'eunuch_bar'};
+ if(s.court.offices[office]===personId&&p.office===office)return {ok:false,reason:'already'};
  if(p.office&&p.office!==office)s.court.offices[p.office]=null;
  const prev=s.court.offices[office];
  // the court reacts: the displaced official's faction resents the change
- if(prev&&prev!==personId&&alive(s,prev)){s.persons[prev].office=null;const pf=s.persons[prev].courtFaction;s.court.enmity[prev]=(s.court.enmity[prev]||0)+15;if(pf)s.court.factions[pf].influence=Math.max(5,s.court.factions[pf].influence-4)}
+ if(prev&&prev!==personId&&alive(s,prev)){s.persons[prev].office=null;const pf=s.persons[prev].courtFaction;s.court.enmity[prev]=(s.court.enmity[prev]||0)+15;if(pf)s.court.factions[pf].influence=Math.max(5,s.court.factions[pf].influence-4);log(s,['%NAME% is replaced as '+o.name[0]+'.','%NAME%卸任'+o.name[1]+'。'],{who:prev,kind:'court'})}
  s.court.offices[office]=personId;p.office=office;s.court.favor[personId]=(s.court.favor[personId]||0)+10;p.officeSince={year:s.year,month:s.month};
  recomputeInfluence(s);
  log(s,['%NAME% appointed '+o.name[0]+'.','%NAME%任'+o.name[1]+'。'],{who:personId,kind:'court'});
  return {ok:true,displaced:prev||null};
 }
-export function dismiss(s,office){const id=s.court.offices[office];if(!id)return {ok:false};s.court.offices[office]=null;if(s.persons[id]){s.persons[id].office=null;s.court.enmity[id]=(s.court.enmity[id]||0)+20}recomputeInfluence(s);return {ok:true,id}}
+export function dismiss(s,office){const id=s.court.offices[office];if(!id)return {ok:false};s.court.offices[office]=null;if(s.persons[id]){s.persons[id].office=null;s.court.enmity[id]=(s.court.enmity[id]||0)+20}recomputeInfluence(s);log(s,['%NAME% is dismissed as '+OFFICES[office].name[0]+'.','%NAME%被免去'+OFFICES[office].name[1]+'。'],{who:id,kind:'court'});return {ok:true,id}}
 export const officeHolder=(s,office)=>{const id=s.court.offices[office];return id&&alive(s,id)?s.persons[id]:null};
 
 // ---------- edicts: orders take time and need support ----------

@@ -1,18 +1,21 @@
 import {OFFICES,COURT_FACTIONS} from './data.js';
-import {knownAttributes,DISASTERS,DISASTER_RESPONSES} from './court.js';
+import {knownAttributes,DISASTERS,DISASTER_RESPONSES,COURT_PROFILE_IDS} from './court.js';
 import {yearsBetween,isLiuClan} from './dynasty.js';
+import {dateLabel} from './util.js';
 
-const FEATURED=['shi-gao','xiao-wangzhi','hong-gong','yu-dingguo','chen-wannian','liu-xiang','zhou-kan','shi-xian','feng-fengshi','gan-yanshou','chen-tang','feng-liao'];
 const ROLE_NAMES={official:['Official','朝官'],general:['General','将领'],envoy:['Envoy','使者']};
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const label=(value,lang)=>Array.isArray(value)?value[lang]??value[0]:value;
 const term=(lang,en,zh)=>lang?zh:en;
 
-export function hanCourtHtml(s,lang=0,selected=FEATURED[0]){
- const people=FEATURED.map(id=>s.persons[id]).filter(Boolean),person=s.persons[selected]&&people.some(p=>p.id===selected)?s.persons[selected]:people[0];
+export function hanCourtHtml(s,lang=0,selected=COURT_PROFILE_IDS[0]){
+ const people=COURT_PROFILE_IDS.map(id=>s.persons[id]).filter(Boolean),person=s.persons[selected]&&people.some(p=>p.id===selected)?s.persons[selected]:people[0];
  if(!person)return '';
  const known=knownAttributes(s,person.id),office=person.office&&s.court.offices[person.office]===person.id?OFFICES[person.office]:null;
- const activity=s.log.filter(entry=>entry.who===person.id).slice(-4).reverse();
+ const career=Array.isArray(person.career)?person.career:s.log.filter(entry=>entry.who===person.id||entry.who2===person.id);
+ const recent=career.slice(-5).reverse(),opening=career[0]?.kind==='opening_service'&&!recent.includes(career[0])?career[0]:null;
+ const activity=opening?[...recent,opening]:recent;
+ const careerText=e=>String(label(e.text,lang)||'').replaceAll('%NAME2%',label(s.persons[e.who2]?.name,lang)||'').replaceAll('%NAME%',label(s.persons[e.who]?.name,lang)||label(person.name,lang));
  const status=person.alive?term(lang,'Serving','在世'):term(lang,'Deceased in this campaign','本战役中已故');
  const years=person.birth==null?null:yearsBetween(person.birth,person.alive?s.year:person.death??s.year);
  const ageText=years==null?term(lang,'Not recorded','未记载'):person.birthApprox?term(lang,`about ${years}`,`约${years}岁`):term(lang,`${years}`,`${years}岁`);
@@ -30,7 +33,7 @@ export function hanCourtHtml(s,lang=0,selected=FEATURED[0]){
  <dl><dt>${term(lang,'Stable ID','固定编号')}</dt><dd>${esc(person.id)}</dd><dt>${term(lang,'Approximate age','约略年龄')}</dt><dd>${esc(ageText)}</dd><dt>${term(lang,'Known family','已知家族')}</dt><dd>${esc(familyText)}</dd><dt>${term(lang,'Court group','朝廷派系')}</dt><dd>${esc(label(COURT_FACTIONS[person.courtFaction]?.name,lang)||'—')}</dd><dt>${term(lang,'Loyalty','忠诚')}</dt><dd>${esc(person.loyalty??'—')}</dd><dt>${term(lang,'Skill assessment','能力评估')}</dt><dd>${esc(observed)}</dd><dt>${term(lang,'Audit finding','稽查结论')}</dt><dd>${esc(evidence)}</dd><dt>${term(lang,'Ambition','野心')}</dt><dd>${esc(known?.ambition==='exposed'?term(lang,'Exposed by a scheme','因阴谋暴露'):term(lang,'Unknown','未知'))}</dd></dl>
  <h3>${term(lang,'Current responsibilities','当前职责')}</h3><p>${esc(office?label(office.gloss,lang):term(lang,'No office is currently assigned.','当前未任官职。'))}</p>
  ${person.note?`<p>${esc(label(person.note,lang))}</p>`:''}<p class="muted">${term(lang,'Birth dates may be approximate; deaths and health in this campaign are simulated. The image is not a documented likeness.','生年可能仅为约数；本战役中的死亡与健康属于模拟。画像并非史载容貌。')}</p>
- <h3>${term(lang,'Career in this campaign','本战役履历')}</h3>${activity.map(e=>`<p class="court-event">${esc(Math.abs(e.year))} ${term(lang,'BCE','年前')} · ${esc(label(e.text,lang).replace('%NAME%',label(person.name,lang)))}</p>`).join('')||`<p class="muted">${term(lang,'No recorded court event yet.','尚无朝廷事件记录。')}</p>`}
+ <h3>${term(lang,'Career in this campaign','本战役履历')}</h3>${activity.map(e=>`<p class="court-event">${esc(dateLabel(e.year,e.month,lang))} · ${esc(careerText(e))}</p>`).join('')||`<p class="muted">${term(lang,'No recorded court event yet.','尚无朝廷事件记录。')}</p>`}
  ${person.alive?`<label class="court-appoint">${term(lang,'Appoint to an office','任命官职')}<select id="court-office">${options}</select></label><button id="court-appoint" class="action">${term(lang,'Make appointment','正式任命')}</button><button id="court-audit" class="action" ${s.court.audits.some(a=>a.target===person.id&&a.status==='open')||s.factions.han.treasury<15?'disabled':''}>${term(lang,'Open audit · 15 treasury','启动稽查 · 国库15')}</button>`:''}</article>`;
 }
 
@@ -40,7 +43,12 @@ export function renderHanCourtPanel({root,state,lang=0,selected,onSelect,onAppoi
  if(active){const a=active.getBoundingClientRect(),r=roster.getBoundingClientRect();roster.scrollTop+=a.top-r.top-(r.height-a.height)/2}
  root.querySelectorAll('[data-court-person]').forEach(button=>button.onclick=()=>onSelect(button.dataset.courtPerson));
  const person=root.querySelector('.court-profile')?.dataset.person;
- const appoint=root.querySelector('#court-appoint');if(appoint)appoint.onclick=()=>onAppoint(person,root.querySelector('#court-office').value);
+ const appoint=root.querySelector('#court-appoint'),officeSelect=root.querySelector('#court-office');
+ if(appoint&&officeSelect){
+  const sync=()=>appoint.disabled=state.persons[person]?.office===officeSelect.value&&state.court.offices[officeSelect.value]===person;
+  officeSelect.addEventListener('change',sync);sync();
+  appoint.onclick=()=>onAppoint(person,officeSelect.value);
+ }
  const audit=root.querySelector('#court-audit');if(audit)audit.onclick=()=>onAudit(person);
  root.querySelectorAll('[data-court-disaster]').forEach(button=>button.onclick=()=>onDisaster(button.dataset.courtDisaster,button.dataset.courtDisaster==='blame_faction'?root.querySelector('#court-blame-faction').value:null));
 }

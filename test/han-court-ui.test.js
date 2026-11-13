@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js';
 import {hanCourtHtml} from '../han/court-ui.js';
+import {appoint,dismiss,startAudit} from '../han/court.js';
+import {log} from '../han/util.js';
 
 const MINISTERS=['shi-gao','xiao-wangzhi','hong-gong','yu-dingguo','chen-wannian','liu-xiang','zhou-kan','shi-xian','feng-fengshi','gan-yanshou','chen-tang','feng-liao'];
 
@@ -30,6 +32,46 @@ test('twelve opening officials have individual portraits and bilingual profiles 
  assert.match(hanCourtHtml(state,0,'yu-dingguo'),/Head of the outer administration/);
 });
 
+test('opening court careers and later decisions survive chronicle trimming and save reload',()=>{
+ let s=newHanGame('han',{seed:26});
+ for(const id of MINISTERS){
+  const career=s.persons[id].career;
+  assert.equal(career[0].kind,'opening_service');
+  assert.deepEqual([career[0].year,career[0].month],[-49,1]);
+  assert.match(hanCourtHtml(s,0,id),/At campaign opening/);
+  assert.match(hanCourtHtml(s,1,id),/战役开始时/);
+ }
+ assert.equal(appoint(s,'dasinong','shi-gao').ok,true);
+ const firstFavor=s.court.favor['shi-gao'],firstSince={...s.persons['shi-gao'].officeSince},firstLog=s.log.length;
+ assert.deepEqual(appoint(s,'dasinong','shi-gao'),{ok:false,reason:'already'});
+ assert.equal(s.court.favor['shi-gao'],firstFavor);
+ assert.deepEqual(s.persons['shi-gao'].officeSince,firstSince);
+ assert.equal(s.log.length,firstLog);
+ assert.equal(appoint(s,'dasinong','chen-wannian').ok,true);
+ assert.match(hanCourtHtml(s,0,'shi-gao'),/replaced as Grand Minister of Agriculture/);
+ assert.equal(dismiss(s,'dasinong').ok,true);
+ assert.match(hanCourtHtml(s,0,'chen-wannian'),/dismissed as Grand Minister of Agriculture/);
+ assert.equal(startAudit(s,'shi-gao').ok,true);
+ for(let i=0;i<410;i++)log(s,['A background court event.','朝廷日常事务。'],{kind:'court'});
+ assert.equal(s.log.some(e=>e.who==='shi-gao'),false,'the shared chronicle has been trimmed');
+ s=loadHanSave(serialize(s));
+ assert.match(hanCourtHtml(s,0,'shi-gao'),/investigation of Shi Gao begins/);
+ assert.match(hanCourtHtml(s,0,'shi-gao'),/replaced as Grand Minister of Agriculture/);
+ assert.match(hanCourtHtml(s,1,'shi-gao'),/战役开始时/);
+ assert.equal(s.persons['shi-gao'].career.length,4);
+});
+
+test('legacy Han saves rebuild only identity-matched court careers from retained events',()=>{
+ const old=newHanGame('han',{seed:27});
+ for(const id of MINISTERS)delete old.persons[id].career;
+ assert.equal(appoint(old,'dasinong','shi-gao').ok,true);
+ old.persons['chen-wannian'].name=['Another Chen','别的陈某'];
+ const loaded=loadHanSave(serialize(old));
+ assert.match(hanCourtHtml(loaded,0,'shi-gao'),/appointed Grand Minister of Agriculture/);
+ assert.match(hanCourtHtml(loaded,0,'shi-gao'),/At campaign opening/);
+ assert.equal(loaded.persons['chen-wannian'].career.some(e=>e.kind==='opening_service'),false);
+});
+
 test('older save gains a portrait only when the saved historical identity matches',()=>{
  const old=newHanGame('han',{seed:9});
  for(const id of MINISTERS)delete old.persons[id].portrait;
@@ -38,6 +80,7 @@ test('older save gains a portrait only when the saved historical identity matche
  for(const id of MINISTERS.filter(id=>id!=='chen-wannian'))assert.equal(loaded.persons[id].portrait,`han-${id}`);
  assert.equal(loaded.persons['chen-wannian'].portrait,undefined);
  assert.doesNotMatch(hanCourtHtml(loaded,0,'chen-wannian'),/han-chen-wannian-128.jpg/);
+ assert.equal(loaded.persons['chen-wannian'].career.some(e=>e.kind==='opening_service'),false);
 });
 
 test('opening and legacy appointments reveal assessed skill only after a year of observed service',()=>{

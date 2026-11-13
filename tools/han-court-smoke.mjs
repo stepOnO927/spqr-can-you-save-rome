@@ -16,6 +16,7 @@ try{
  const profile=page.locator('.court-profile');
  assert.match(await profile.innerText(),/Shi Gao/);
  assert.match(await profile.innerText(),/No office is currently assigned/);
+ assert.match(await profile.innerText(),/At campaign opening/);
  assert.match(await profile.innerText(),/No finding/);
  assert.equal(await profile.locator('img').getAttribute('src'),'../assets/portraits/han-shi-gao-128.jpg');
  assert.equal((await profile.locator('img').evaluate(img=>img.naturalWidth))>0,true);
@@ -23,6 +24,8 @@ try{
  await page.locator('#court-appoint').click();
  assert.match(await page.locator('#message').innerText(),/Appointment made/);
  assert.match(await profile.innerText(),/Grand Minister of Agriculture/);
+ assert.match(await profile.innerText(),/Shi Gao appointed Grand Minister of Agriculture/);
+ assert.equal(await page.locator('#court-appoint').isDisabled(),true,'the current office cannot be granted repeatedly');
  await page.locator('#court-audit').click();
  assert.match(await page.locator('#message').innerText(),/Audit opened/);
  assert.equal(await page.locator('#court-audit').isDisabled(),true);
@@ -36,9 +39,11 @@ try{
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#court-panel').click();
  await page.locator('[data-court-person="shi-gao"]').click();
  assert.match(await profile.innerText(),/Grand Minister of Agriculture/);
+ assert.match(await profile.innerText(),/Shi Gao appointed Grand Minister of Agriculture/);
  assert.equal(await page.locator('#court-audit').isDisabled(),true);
  await page.locator('#lang').click();assert.match(await profile.innerText(),/史高/);
  assert.match(await profile.innerText(),/大司农/);
+ assert.match(await profile.innerText(),/战役开始时/);
  const prior=await page.evaluate(()=>{const key='spqr-han-save-browser',state=JSON.parse(localStorage.getItem(key));state.court.pendingDisaster={id:999,type:'flood',region:'changan',readings:[{faction:'huanguan',stance:'blame'}],deadline:2};localStorage.setItem(key,JSON.stringify(state));return state.court.factions.waiqi.influence});
  await page.locator('#load').click();await page.locator('#court-panel').click();
  assert.match(await page.locator('.court-disaster').innerText(),/黄河决溢/);
@@ -49,5 +54,5 @@ try{
  const result=await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-han-save-browser'));return {pending:state.court.pendingDisaster,influence:state.court.factions.waiqi.influence}});
  assert.equal(result.pending,null);assert.ok(result.influence<prior,'chosen faction should lose influence');
  assert.deepEqual(errors,[]);
- console.log('Han court browser smoke passed: twelve portraits, appointment, audit, disaster decision, save/load and both languages.');
+ console.log('Han court browser smoke passed: twelve portraits, persistent careers, appointment, audit, disaster decision, save/load and both languages.');
 }finally{await browser.close()}

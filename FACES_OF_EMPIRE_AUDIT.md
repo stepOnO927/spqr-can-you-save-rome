@@ -155,6 +155,14 @@ Opening officeholders now record when service began in the campaign, so
 their ability assessment can become visible after a year. Old saves that
 lacked this date start the observation clock on load rather than exposing a
 historical tenure or hidden skill without evidence.
+The twelve featured court dossiers now retain a dated opening service record
+and actual appointment, replacement, dismissal and audit events on the saved
+person. These careers remain visible after the shared Chronicle trims older
+entries; older saves recover retained events without inventing an appointment
+date or reusing a historical opening record for a mismatched person ID.
+Repeatedly appointing the same officeholder no longer grants more favor or
+resets the observed-service clock. The court browser test verifies bilingual
+career display and persistence through save/load.
 The disaster response now applies blame to the court faction actually chosen
 by the player. Invalid faction IDs are rejected before altering influence;
 previously the conditional expression silently redirected every choice to
