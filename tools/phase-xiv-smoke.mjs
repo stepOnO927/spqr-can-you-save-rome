@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {newGrandGame,proposeKnowledgeSale,proposeKnowledgePurchase,proposeKnowledgeExchange,proposeKnowledgeAgreement} from '../engine.js';
+import {newGrandGame,proposeKnowledgeSale,proposeKnowledgePurchase,proposeKnowledgeExchange,proposeKnowledgeAgreement,inviteForeignScholars} from '../engine.js';
 import {scholarVisitCheck} from '../development.js';
 import {advanceNaval} from '../naval.js';
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
@@ -285,6 +285,24 @@ try{
   await page.locator('[data-scholar-topic="egypt"]').selectOption('material:quarrying');
   await page.locator('[data-invite-scholar="egypt"]').click();
   assert.match(await page.locator('#command-detail').innerText(),/采石.*个月后抵达/);
+  const scholarRequest=newGrandGame('egypt');scholarRequest.wars=[];scholarRequest.relations['egypt:senate']=50;scholarRequest.factions.senate.treasury=300;
+  assert.equal(inviteForeignScholars(scholarRequest,'senate','egypt','material','water-control').pending,true);
+  for(const language of ['en','zh']){
+    await page.evaluate(value=>localStorage.setItem('spqr-lang',value),language);
+    await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+    await page.locator('#entry-file').setInputFiles({name:`scholar-request-${language}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(scholarRequest))});
+    await page.locator('[data-tab="development"]').click();
+    assert.match(await page.locator('.inspector').innerText(),language==='zh'?/技术指导请求来自[\s\S]*水利管理/:/Instruction request from[\s\S]*Water Management/);
+    if(language==='en')await page.locator('[data-accept-scholar-host="senate"]').click();
+    else await page.locator('[data-decline-scholar-host="senate"]').click();
+    assert.equal(await page.locator('[data-accept-scholar-host="senate"]').count(),0);
+  }
+  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),scholarRequest);
+  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+  await page.locator('#development').click();
+  assert.match(await page.locator('#command-detail').innerText(),/技术指导请求来自[\s\S]*水利管理/);
+  await page.locator('[data-accept-scholar-host="senate"]').click();
+  assert.equal(await page.locator('[data-accept-scholar-host="senate"]').count(),0);
   await page.locator('[data-dev-branch="idea"]').click();
   assert.match(await page.locator('#tech-court-informant-patronage').innerText(),/宫廷情报人员扶持/);
   assert.deepEqual(errors,[]);

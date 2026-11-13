@@ -5,7 +5,7 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=62';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
-import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,researchTerms,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=33';
+import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,scholarVisitCheck,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,researchTerms,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=34';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=7';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=9';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
@@ -21,7 +21,7 @@ export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
 export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=33';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
 export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=24';
-export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
+export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
 export {setReligiousPolicy,provincialRitesCredit};
 export {queueMission};
 export {personalDiplomaticCredit};
@@ -624,7 +624,9 @@ export function aiTurn(s,owner){
         return f.treasury>=i.cost&&ideaCompatibility(s,owner,i.id,empty>=0?empty:undefined).ok;
       }).sort((a,b)=>ideaScore(b)-ideaScore(a));
       const materials=MATERIALS.filter(i=>!d.knownMaterial.includes(i.id)&&i.prerequisites.every(id=>d.knownMaterial.includes(id))&&f.treasury>=researchTerms(s,owner,'material',i.id).cost).sort((a,b)=>Number(!!researchTerms(s,owner,'material',b.id).merchant)-Number(!!researchTerms(s,owner,'material',a.id).merchant));
-      if(ideaTurn&&ideas.length)researchInnovation(s,owner,'idea',ideas[0].id);
+      const visitor=d.visitingScholars.find(v=>v.travelRemaining===0&&v.remaining>0&&(v.branch==='material'?materials:ideas).some(item=>item.id===v.id));
+      if(visitor)researchInnovation(s,owner,visitor.branch,visitor.id);
+      else if(ideaTurn&&ideas.length)researchInnovation(s,owner,'idea',ideas[0].id);
       else if(materials.length)researchInnovation(s,owner,'material',materials[0].id);
       else if(ideas.length)researchInnovation(s,owner,'idea',ideas[0].id);
     }
@@ -638,6 +640,15 @@ export function aiTurn(s,owner){
         .map(i=>({idea:i,slot:d.slots[i.category].indexOf(null)})).filter(x=>x.slot>=0&&ideaAdoptionPlan(s,owner,x.idea.id,x.slot).ok)
         .sort((a,b)=>ideaScore(b.idea)-ideaScore(a.idea));
       if(available.length)adoptIdea(s,owner,available[0].idea.id,available[0].slot);
+    }
+    if(!atWar&&s.month===2&&f.treasury>140+civilianReserve&&budget.projectedNet>=0&&!d.research){
+      const partners=Object.keys(s.development).filter(id=>id!==owner&&id!=='rebels').sort((a,b)=>relation(s,owner,b)-relation(s,owner,a));
+      for(const partner of partners){
+        const plan=scholarVisitCheck(s,owner,partner);if(!plan.ok)continue;
+        const result=inviteForeignScholars(s,owner,partner,plan.branch,plan.id);if(!result.ok)continue;
+        if(result.pending){const name=(plan.branch==='material'?MATERIALS:IDEAS).find(x=>x.id===plan.id)?.name||[plan.id,plan.id];log(s,`${FACTIONS[owner].short[0]} asks to send civilian specialists to teach ${name[0]}. Open Development to accept or decline.`,`${FACTIONS[owner].short[1]}请求派遣民间技术人员传授${name[1]}。请在“发展”界面接受或拒绝。`)}
+        break;
+      }
     }
     // A smaller wartime command must fund its army through a projected deficit
     // before purchasing optional materials or starting another building.

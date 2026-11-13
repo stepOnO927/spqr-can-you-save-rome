@@ -178,7 +178,8 @@ const ideaPrerequisites={'reserve-mobilization':['legion-training'],'field-march
 for(const item of MATERIALS)item.prerequisites=materialPrerequisites[item.id]||item.prerequisites||[];
 for(const item of IDEAS)item.prerequisites=ideaPrerequisites[item.id]||[];
 import {figureActive} from './great-figures.js';
-import {FACTIONS} from './data.js';
+import {FACTIONS,ROUTES} from './data.js';
+import {GRAND_ROUTES} from './grand-map-data.js';
 const ids = x => x.map(item=>item.id);
 const strategicKnowledge=new Set(['stone-fortification','siege-machinery','legion-training']);
 const metalDeposits=new Set(['hispaniaN','hispaniaS','illyricum','anatolia','armenia','gaul']);
@@ -193,7 +194,8 @@ export function initializeDevelopment(s){
     const d=s.development[id] ||= fresh(id);
     d.knownMaterial ||= fresh(id).knownMaterial;d.knownIdeas ||= [];
     d.slots ||= fresh(id).slots;for(const c of IDEA_CATEGORIES)d.slots[c.id] ||= [null];
-    d.materials ||= {stone:6,timber:7,metal:3};d.trade ||= [];d.offers=Array.isArray(d.offers)?d.offers.filter(o=>o&&typeof o.seller==='string'&&s.factions[o.seller]&&['material','idea'].includes(o.branch)&&typeof o.id==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];d.purchaseRequests=Array.isArray(d.purchaseRequests)?d.purchaseRequests.filter(o=>o&&typeof o.buyer==='string'&&o.buyer!=='rebels'&&s.factions[o.buyer]&&['material','idea'].includes(o.branch)&&typeof o.id==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];d.foreignOrigins ||= {};d.visitingScholars ||= [];
+    d.materials ||= {stone:6,timber:7,metal:3};d.trade ||= [];d.offers=Array.isArray(d.offers)?d.offers.filter(o=>o&&typeof o.seller==='string'&&s.factions[o.seller]&&['material','idea'].includes(o.branch)&&typeof o.id==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];d.purchaseRequests=Array.isArray(d.purchaseRequests)?d.purchaseRequests.filter(o=>o&&typeof o.buyer==='string'&&o.buyer!=='rebels'&&s.factions[o.buyer]&&['material','idea'].includes(o.branch)&&typeof o.id==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];d.foreignOrigins ||= {};d.visitingScholars=Array.isArray(d.visitingScholars)?d.visitingScholars.filter(v=>v&&s.factions[v.partner]&&Number.isFinite(v.remaining)&&v.remaining>0):[];
+    d.scholarRequests=Array.isArray(d.scholarRequests)?d.scholarRequests.filter(v=>v&&s.factions[v.host]&&['material','idea'].includes(v.branch)&&typeof v.id==='string'&&Number.isInteger(v.remaining)&&v.remaining>0&&v.remaining<=12):[];
     d.merchantContacts=d.merchantContacts&&typeof d.merchantContacts==='object'&&!Array.isArray(d.merchantContacts)?d.merchantContacts:{};
     d.merchantLeads=Array.isArray(d.merchantLeads)?d.merchantLeads.filter(lead=>lead&&s.factions[lead.seller]&&MATERIALS.some(item=>item.id===lead.id)&&Number.isInteger(lead.expiresTurn)&&lead.expiresTurn>s.year*12+s.month&&!d.knownMaterial.includes(lead.id)):[];
     d.exchangeRequests=Array.isArray(d.exchangeRequests)?d.exchangeRequests.filter(o=>o&&o.partner!==id&&o.partner!=='rebels'&&s.factions[o.partner]&&['material','idea'].includes(o.offerBranch)&&['material','idea'].includes(o.wantBranch)&&typeof o.offerId==='string'&&typeof o.wantId==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];
@@ -203,7 +205,7 @@ export function initializeDevelopment(s){
   return s;
 }
 export const development = (s,id) => (initializeDevelopment(s),s.development[id]);
-const visitingScholarFor=(s,owner,branch,id)=>development(s,owner)?.visitingScholars.find(visit=>visit.remaining>0&&!visit.travelRemaining&&(!visit.id||visit.branch===branch&&visit.id===id));
+const visitingScholarFor=(s,owner,branch,id)=>development(s,owner)?.visitingScholars.find(visit=>visit.remaining>0&&!visit.travelRemaining&&(!visit.route||visit.currentRegion===visit.destination)&&(!visit.id||visit.branch===branch&&visit.id===id));
 export function scholarResearchBonus(s,owner,branch,id){return !!visitingScholarFor(s,owner,branch,id)}
 export function merchantResearchLead(s,owner,branch,id){
  if(branch!=='material')return null;
@@ -450,23 +452,65 @@ export function scholarVisitTopics(s,host,partner){
  if(!hd||!pd)return [];
  return [...MATERIALS.map(item=>({branch:'material',item})),...IDEAS.map(item=>({branch:'idea',item}))].filter(({branch,item})=>{const key=branch==='material'?'knownMaterial':'knownIdeas';return !strategicKnowledge.has(item.id)&&pd[key].includes(item.id)&&!hd[key].includes(item.id)&&!hd.trade.some(t=>t.branch===branch&&t.id===item.id)&&!(hd.research?.branch===branch&&hd.research.id===item.id)&&item.prerequisites.every(id=>hd[key].includes(id))});
 }
-export function scholarVisitCheck(s,host,partner,branch,id){
+const atWarWith=(s,a,b)=>s.wars.some(w=>w.includes(a)&&w.includes(b));
+function scholarRoute(s,origin,destination,partner){
+ const regions=new Map(s.regions.map(r=>[r.id,r])),links=s.grandMap?GRAND_ROUTES:ROUTES,neighbors=new Map();
+ for(const [a,b,kind,detail] of links){
+  if(!regions.has(a)||!regions.has(b))continue;
+  const from=regions.get(a),to=regions.get(b),distance=detail?.distance||Math.hypot(from.x-to.x,from.y-to.y),cost=Math.max(1,distance)*(kind==='sea'?1.1:1);
+  for(const [start,end] of [[a,b],[b,a]]){if(!neighbors.has(start))neighbors.set(start,[]);neighbors.get(start).push({id:end,cost})}
+ }
+ const queue=[{id:origin,weight:0,path:[origin]}],best=new Map([[origin,0]]);
+ while(queue.length){
+  queue.sort((a,b)=>a.weight-b.weight);const current=queue.shift();if(current.weight!==best.get(current.id))continue;
+  if(current.id===destination)return current.path;
+  for(const next of neighbors.get(current.id)||[]){
+   const ruler=regions.get(next.id)?.owner;
+   // Civilian passage follows the sending court's relations, not the host's
+   // military access. A war involving the sender closes that transit route.
+   if(next.id!==destination&&(ruler==='rebels'||atWarWith(s,partner,ruler)))continue;
+   const weight=current.weight+next.cost;if(weight>= (best.get(next.id)??Infinity))continue;
+   best.set(next.id,weight);queue.push({id:next.id,weight,path:[...current.path,next.id]});
+  }
+ }
+ return null;
+}
+export function scholarVisitCheck(s,host,partner,branch,id,ignoreRequest=false){
  initializeDevelopment(s);const hd=s.development[host],pd=s.development[partner],relation=s.relations[[host,partner].sort().join(':')]??0;
  if(!hd||!pd||host===partner||!s.regions.some(r=>r.owner===host)||!s.regions.some(r=>r.owner===partner)||s.wars.some(w=>w.includes(host)&&w.includes(partner)))return {ok:false,reason:'partner'};
  if(relation<20)return {ok:false,reason:'relations'};
- if(hd.visitingScholars.some(x=>x.partner===partner))return {ok:false,reason:'already invited'};
+ if(hd.visitingScholars.some(x=>x.partner===partner)||!ignoreRequest&&pd.scholarRequests.some(x=>x.host===host))return {ok:false,reason:'already invited'};
  const topics=scholarVisitTopics(s,host,partner),candidate=branch===undefined&&id===undefined?topics[0]:topics.find(topic=>topic.branch===branch&&topic.item.id===id);
  if(!candidate)return {ok:false,reason:'expertise'};
  const origin=s.regions.find(r=>r.owner===partner&&r.terrain==='urban')||s.regions.find(r=>r.owner===partner),destination=s.regions.find(r=>r.owner===host&&r.terrain==='urban')||s.regions.find(r=>r.owner===host);
- const distance=[origin.x,origin.y,destination.x,destination.y].every(Number.isFinite)?Math.hypot(origin.x-destination.x,origin.y-destination.y):320,travel=Math.max(2,Math.min(6,Math.ceil(distance/160)));
+ const route=scholarRoute(s,origin.id,destination.id,partner);if(!route)return {ok:false,reason:'access'};
+ const travel=Math.max(2,Math.min(6,Math.ceil((route.length-1)/4)));
  if(s.factions[host].treasury<24)return {ok:false,reason:'treasury',travel};
- return {ok:true,branch:candidate.branch,id:candidate.item.id,travel,months:6,cost:24,origin:origin.id,destination:destination.id};
+ return {ok:true,branch:candidate.branch,id:candidate.item.id,travel,months:6,cost:24,origin:origin.id,destination:destination.id,route,requiresConsent:partner===s.player&&host!==s.player};
+}
+function beginScholarVisit(s,host,partner,check,acceptedBy){
+ s.factions[host].treasury-=check.cost;s.factions[partner].treasury+=10;
+ s.development[host].visitingScholars.push({partner,branch:check.branch,id:check.id,expertise:{branch:check.branch,id:check.id},origin:check.origin,destination:check.destination,route:check.route,currentRegion:check.origin,travelTotal:check.travel,travelRemaining:check.travel,remaining:check.months,sentYear:s.year,sentMonth:s.month,acceptedYear:s.year,acceptedMonth:s.month,acceptedBy});
+ return {...check,accepted:true};
 }
 export function inviteForeignScholars(s,host,partner,branch,id){
  const check=scholarVisitCheck(s,host,partner,branch,id);if(!check.ok)return check;
- s.factions[host].treasury-=check.cost;s.factions[partner].treasury+=10;
- s.development[host].visitingScholars.push({partner,branch:check.branch,id:check.id,origin:check.origin,destination:check.destination,travelRemaining:check.travel,remaining:check.months,sentYear:s.year,sentMonth:s.month});
- return check;
+ if(check.requiresConsent){s.development[partner].scholarRequests.push({host,branch:check.branch,id:check.id,remaining:12,sentYear:s.year,sentMonth:s.month});return {...check,pending:true}}
+ const relation=s.relations[[host,partner].sort().join(':')]??0;
+ if(relation<25||relation<40&&s.wars.some(w=>w.includes(partner)))return {ok:false,reason:'refused'};
+ return beginScholarVisit(s,host,partner,check,'ai');
+}
+export function acceptScholarVisit(s,partner,host,branch,id){
+ const d=development(s,partner),request=d?.scholarRequests.find(x=>x.host===host&&x.branch===branch&&x.id===id);
+ if(partner!==s.player||!request)return {ok:false,reason:'request'};
+ const check=scholarVisitCheck(s,host,partner,branch,id,true);if(!check.ok)return check;
+ d.scholarRequests.splice(d.scholarRequests.indexOf(request),1);
+ return beginScholarVisit(s,host,partner,check,'player');
+}
+export function declineScholarVisit(s,partner,host,branch,id){
+ const d=development(s,partner),request=d?.scholarRequests.find(x=>x.host===host&&x.branch===branch&&x.id===id);
+ if(partner!==s.player||!request)return {ok:false,reason:'request'};
+ d.scholarRequests.splice(d.scholarRequests.indexOf(request),1);return {ok:true};
 }
 function agreementCandidate(s,seller,buyer,cycle=0){
  const source=s.development[seller],recipient=s.development[buyer];if(!source||!recipient)return null;
@@ -532,10 +576,25 @@ export function advanceDevelopment(s,log=()=>{}){
     d.purchaseRequests=d.purchaseRequests.filter(request=>--request.remaining>0&&!s.wars.some(w=>w.includes(owner)&&w.includes(request.buyer))&&d[request.branch==='material'?'knownMaterial':'knownIdeas'].includes(request.id)&&!s.development[request.buyer]?.[request.branch==='material'?'knownMaterial':'knownIdeas'].includes(request.id)&&!s.development[request.buyer]?.trade.some(t=>t.branch===request.branch&&t.id===request.id));
     d.exchangeRequests=d.exchangeRequests.filter(request=>--request.remaining>0&&!s.wars.some(w=>w.includes(owner)&&w.includes(request.partner))&&d[request.wantBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.wantId)&&!d[request.offerBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.offerId)&&s.development[request.partner]?.[request.offerBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.offerId)&&!s.development[request.partner]?.[request.wantBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.wantId)&&!d.trade.some(t=>t.branch===request.offerBranch&&t.id===request.offerId)&&!s.development[request.partner]?.trade.some(t=>t.branch===request.wantBranch&&t.id===request.wantId));
     d.agreementRequests=d.agreementRequests.filter(request=>--request.remaining>0&&!s.wars.some(w=>w.includes(owner)&&w.includes(request.partner))&&(s.relations[[owner,request.partner].sort().join(':')]??0)>=20&&s.regions.some(r=>r.owner===owner)&&s.regions.some(r=>r.owner===request.partner)&&!s.knowledgeAgreements.some(a=>a.a===owner&&a.b===request.partner||a.a===request.partner&&a.b===owner));
+    d.scholarRequests=d.scholarRequests.filter(request=>--request.remaining>0&&!atWarWith(s,owner,request.host)&&s.regions.some(r=>r.owner===owner)&&s.regions.some(r=>r.owner===request.host));
     for(const trade of [...d.trade])if(--trade.remaining<=0){const key=trade.branch==='material'?'knownMaterial':'knownIdeas';if(!d[key].includes(trade.id))d[key].push(trade.id);if(trade.branch==='idea')d.foreignOrigins[trade.id]=trade.seller;d.trade.splice(d.trade.indexOf(trade),1);if(owner===s.player){const name=(trade.branch==='material'?MATERIALS:IDEAS).find(item=>item.id===trade.id)?.name||[trade.id,trade.id],seller=FACTIONS[trade.seller]?.short||[trade.seller,trade.seller];log(`Knowledge arrived from ${seller[0]}: ${name[0]}.`,`来自${seller[1]}的知识已传入：${name[1]}。`)}}
     for(const visit of [...d.visitingScholars]){
-      if(s.wars.some(w=>w.includes(owner)&&w.includes(visit.partner))||!s.regions.some(r=>r.owner===owner)||!s.regions.some(r=>r.owner===visit.partner)){d.visitingScholars.splice(d.visitingScholars.indexOf(visit),1);continue}
-      if(visit.travelRemaining>0){visit.travelRemaining--;if(!visit.travelRemaining&&owner===s.player){const name=(visit.branch==='material'?MATERIALS:IDEAS).find(item=>item.id===visit.id)?.name||[visit.id,visit.id];log(`Scholars arrived to advise research on ${name[0]}.`,`外国学者抵达，将协助研究${name[1]}。`)}continue}
+      if(atWarWith(s,owner,visit.partner)||!s.regions.some(r=>r.owner===owner)||!s.regions.some(r=>r.owner===visit.partner)||visit.destination&&s.regions.find(r=>r.id===visit.destination)?.owner!==owner){d.visitingScholars.splice(d.visitingScholars.indexOf(visit),1);continue}
+      if(visit.travelRemaining>0){
+        if(Array.isArray(visit.route)&&visit.route.length>1){
+          const current=visit.currentRegion||visit.origin,position=Math.max(0,visit.route.indexOf(current));
+          if(visit.route.slice(position+1).some(id=>{const ruler=s.regions.find(r=>r.id===id)?.owner;return ruler==='rebels'||atWarWith(s,visit.partner,ruler)})){
+            const reroute=scholarRoute(s,current,visit.destination,visit.partner);
+            if(!reroute){d.visitingScholars.splice(d.visitingScholars.indexOf(visit),1);if(owner===s.player)log('Foreign instruction was cancelled when the civilian route closed.','民间通行路线中断，外国技术指导取消。');continue}
+            visit.route=reroute;visit.travelTotal=Math.max(visit.travelRemaining,Math.min(6,Math.ceil((reroute.length-1)/4)));
+            visit.travelRemaining=visit.travelTotal;
+          }
+          visit.travelRemaining--;
+          const total=visit.travelTotal||1,progress=Math.floor((total-visit.travelRemaining)*(visit.route.length-1)/total);
+          visit.currentRegion=visit.route[Math.min(visit.route.length-1,progress)];
+        }else visit.travelRemaining--;
+        if(!visit.travelRemaining&&owner===s.player){const name=(visit.branch==='material'?MATERIALS:IDEAS).find(item=>item.id===visit.id)?.name||[visit.id,visit.id];log(`Scholars arrived to advise research on ${name[0]}.`,`外国学者抵达，将协助研究${name[1]}。`)}continue;
+      }
       if(--visit.remaining<=0)d.visitingScholars.splice(d.visitingScholars.indexOf(visit),1);
     }
     const added={stone:0,timber:0,metal:0};

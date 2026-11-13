@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,purchaseMaterials} from '../engine.js';
+import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms} from '../development.js';
 import {advanceNaval} from '../naval.js';
 import {developmentPanel,ideasPanel} from '../development-ui.js';
@@ -822,6 +822,68 @@ test('commissioned instruction follows the selected subject instead of the first
  assert.equal(researchInnovation(arrived,'caesar','material','quarrying').ok,true);
  assert.equal(subjectBefore-arrived.factions.caesar.treasury,17);
  assert.equal(arrived.development.caesar.research.remaining,2);
+});
+test('foreign instruction follows a saved civilian route and requires an accepting court',()=>{
+ const refused=newGame('caesar');refused.wars=[];refused.relations['caesar:egypt']=20;refused.factions.caesar.treasury=300;
+ const before=refused.factions.caesar.treasury;
+ assert.equal(inviteForeignScholars(refused,'caesar','egypt','material','water-control').reason,'refused');
+ assert.equal(refused.factions.caesar.treasury,before);
+ assert.equal(refused.development.caesar.visitingScholars.length,0);
+ const s=newGrandGame('caesar');s.wars=[];s.relations['caesar:egypt']=25;s.factions.caesar.treasury=300;
+ const accepted=inviteForeignScholars(s,'caesar','egypt','material','water-control');assert.equal(accepted.ok,true);assert.equal(accepted.accepted,true);
+ const visit=s.development.caesar.visitingScholars[0];
+ assert.equal(visit.acceptedBy,'ai');assert.deepEqual(visit.expertise,{branch:'material',id:'water-control'});
+ assert.equal(visit.route[0],visit.origin);assert.equal(visit.route.at(-1),visit.destination);assert.ok(visit.route.length>2);
+ assert.equal(visit.currentRegion,visit.origin);assert.equal(researchTerms(s,'caesar','material','water-control').cost,24);
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s)));months(saved,1);
+ const traveling=saved.development.caesar.visitingScholars[0];assert.ok(traveling.travelRemaining>0);assert.ok(traveling.route.includes(traveling.currentRegion));
+ assert.equal(researchTerms(saved,'caesar','material','water-control').cost,24,'the journey is not an immediate research bonus');
+ months(saved,traveling.travelRemaining);assert.equal(saved.development.caesar.visitingScholars[0].currentRegion,visit.destination);
+ assert.equal(researchTerms(saved,'caesar','material','water-control').cost,21);
+});
+test('a player may accept or refuse a foreign request without silent payment',()=>{
+ const s=newGame('egypt');s.wars=[];s.relations['caesar:egypt']=25;s.factions.caesar.treasury=300;
+ const caesarBefore=s.factions.caesar.treasury,egyptBefore=s.factions.egypt.treasury;
+ const proposal=inviteForeignScholars(s,'caesar','egypt','material','water-control');assert.equal(proposal.pending,true);
+ assert.equal(s.factions.caesar.treasury,caesarBefore);assert.equal(s.factions.egypt.treasury,egyptBefore);
+ assert.equal(s.development.caesar.visitingScholars.length,0);
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.match(developmentPanel(saved,'en','material'),/Instruction request from/);
+ assert.match(developmentPanel(saved,'zh','material'),/技术指导请求来自/);
+ assert.equal(acceptScholarVisit(saved,'caesar','caesar','material','water-control').reason,'request');
+ assert.equal(acceptScholarVisit(saved,'egypt','caesar','material','water-control').ok,true);
+ assert.equal(saved.factions.caesar.treasury,caesarBefore-24);assert.equal(saved.factions.egypt.treasury,egyptBefore+10);
+ assert.equal(saved.development.egypt.scholarRequests.length,0);assert.equal(saved.development.caesar.visitingScholars[0].acceptedBy,'player');
+ assert.equal(acceptScholarVisit(saved,'egypt','caesar','material','water-control').reason,'request');
+ const declined=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(declineScholarVisit(declined,'egypt','caesar','material','water-control').ok,true);
+ assert.equal(declined.factions.caesar.treasury,caesarBefore);assert.equal(declined.factions.egypt.treasury,egyptBefore);
+ assert.equal(declined.development.egypt.scholarRequests.length,0);
+});
+test('an occupied destination cancels a traveling delegation before it can advise research',()=>{
+ const s=newGame('caesar');s.wars=[];s.relations['caesar:egypt']=25;s.factions.caesar.treasury=300;
+ assert.equal(inviteForeignScholars(s,'caesar','egypt','material','water-control').ok,true);
+ const destination=s.development.caesar.visitingScholars[0].destination;
+ s.regions.find(r=>r.id===destination).owner='senate';months(s,1);
+ assert.equal(s.development.caesar.visitingScholars.length,0);
+ assert.equal(researchTerms(s,'caesar','material','water-control').cost,24);
+});
+test('war closes a sender transit route and removes the unfinished visit',()=>{
+ const s=newGame('caesar');s.wars=[];s.relations['caesar:egypt']=25;s.factions.caesar.treasury=300;
+ assert.equal(inviteForeignScholars(s,'caesar','egypt','material','water-control').ok,true);
+ assert.ok(s.development.caesar.visitingScholars[0].route.some(id=>s.regions.find(r=>r.id===id)?.owner==='senate'));
+ s.wars.push(['egypt','senate']);months(s,1);
+ assert.equal(s.development.caesar.visitingScholars.length,0);
+ assert.equal(researchTerms(s,'caesar','material','water-control').cost,24);
+});
+test('a solvent peacetime AI court can request player expertise without deciding for the player',()=>{
+ const s=newGame('egypt');s.wars=[];s.month=2;s.relations['egypt:senate']=50;s.factions.senate.treasury=300;
+ aiTurn(s,'senate');
+ assert.ok(s.development.egypt.scholarRequests.some(x=>x.host==='senate'&&x.branch==='material'&&x.id==='water-control'));
+ assert.equal(s.development.senate.visitingScholars.length,0);
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(acceptScholarVisit(saved,'egypt','senate','material','water-control').ok,true);
+ assert.equal(saved.development.senate.visitingScholars[0].acceptedBy,'player');
 });
 test('AI knowledge buyers keep a levy reserve while human buyers may choose to spend it',()=>{
  const ai=newGame('caesar');ai.relations['caesar:egypt']=30;
