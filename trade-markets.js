@@ -45,8 +45,8 @@ function profile(r,good){
  return {production,consumption,stock:Math.max(0,production*4+2-consumption),price:COMMODITIES[good].basePrice};
 }
 export function initializeMarkets(s){
- const markets=s.markets||={regions:{},shipments:[],transactions:[],nextShipment:1,tariffs:{},lastTick:null,transportSpent:0,transitTreasury:{},merchants:{},merchantFees:0};
- markets.regions||={};markets.shipments||=[];markets.transactions||=[];markets.tariffs||={};markets.nextShipment||=1;markets.transportSpent??=0;markets.transitTreasury||={};
+ const markets=s.markets||={regions:{},saleOrders:[],nextSaleOrder:1,shipments:[],transactions:[],nextShipment:1,tariffs:{},lastTick:null,transportSpent:0,transitTreasury:{},merchants:{},merchantFees:0};
+ markets.regions||={};if(!Array.isArray(markets.saleOrders))markets.saleOrders=[];if(!Number.isSafeInteger(markets.nextSaleOrder)||markets.nextSaleOrder<1)markets.nextSaleOrder=1;markets.shipments||=[];markets.transactions||=[];markets.tariffs||={};markets.nextShipment||=1;markets.transportSpent??=0;markets.transitTreasury||={};
  markets.merchants||={};markets.merchantFees??=0;
  markets.diplomacy||={attempts:[],nextAt:{},lastTick:null};
  markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};
@@ -60,6 +60,23 @@ export function initializeMarkets(s){
  // retaining the original inventory reservation and escrow unchanged.
  for(const shipment of markets.shipments)if(['traveling','blocked'].includes(shipment.status)&&!shipment.merchantId&&s.factions[shipment.buyer])shipment.merchantId=merchantFor(s,shipment.buyer,shipment.origin);
  return markets;
+}
+
+export function postTradeSale(s,{origin,commodity,quantity,unitPrice}){
+ const markets=initializeMarkets(s),from=region(s,origin),item=markets.regions[origin]?.goods?.[commodity];
+ if(!s.player||from?.owner!==s.player||!Object.hasOwn(COMMODITIES,commodity)||!Number.isSafeInteger(quantity)||quantity<1||quantity>50||!Number.isSafeInteger(unitPrice)||unitPrice<1||unitPrice>1000)return {ok:false,reason:'invalid'};
+ if(item.stock<quantity)return {ok:false,reason:'unavailable'};
+ item.stock-=quantity;
+ let id;do{id=`sale:${markets.nextSaleOrder++}`}while(markets.saleOrders.some(order=>order.id===id));
+ const order={id,seller:s.player,origin,commodity,available:quantity,unitPrice,status:'open',year:s.year,month:s.month};
+ markets.saleOrders.push(order);return {ok:true,order};
+}
+
+export function cancelTradeSale(s,id){
+ const markets=initializeMarkets(s),order=markets.saleOrders.find(x=>x.id===id&&x.seller===s.player&&x.status==='open');
+ if(!order||region(s,order.origin)?.owner!==s.player)return {ok:false,reason:'invalid'};
+ markets.regions[order.origin].goods[order.commodity].stock+=order.available;
+ order.available=0;order.status='cancelled';return {ok:true,order};
 }
 
 function merchantFor(s,buyer,location){
@@ -108,13 +125,15 @@ function routeFor(s,origin,destination,buyer,seller,{planFor=null}={}){
  return null;
 }
 
-export function quoteTrade(s,{seller,buyer,origin,destination,commodity,quantity}){
+export function quoteTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId}){
  const markets=initializeMarkets(s),from=region(s,origin),to=region(s,destination),stock=markets.regions[origin]?.goods?.[commodity];
  if(!COMMODITIES[commodity]||!Number.isSafeInteger(quantity)||quantity<1||quantity>20||!from||!to||!s.factions[seller]||!s.factions[buyer]||from.owner!==seller||to.owner!==buyer||origin===destination)return {ok:false,reason:'invalid'};
+ const sale=saleOrderId?markets.saleOrders.find(x=>x.id===saleOrderId):null;
+ if(saleOrderId&&(!sale||sale.status!=='open'||sale.seller!==seller||sale.origin!==origin||sale.commodity!==commodity||sale.available<quantity||buyer===seller))return {ok:false,reason:'unavailable'};
  if(atWar(s,seller,buyer)||seller!==buyer&&!activeAgreement(s,seller,buyer,'trade'))return {ok:false,reason:'access'};
- if(stock.stock<quantity)return {ok:false,reason:'unavailable'};
+ if(!sale&&stock.stock<quantity)return {ok:false,reason:'unavailable'};
  const route=routeFor(s,origin,destination,buyer,seller);if(!route)return {ok:false,reason:'route'};
- const unitPrice=marketPrice(markets.regions[origin],commodity),price=unitPrice*quantity;
+ const unitPrice=sale?.unitPrice??marketPrice(markets.regions[origin],commodity),price=unitPrice*quantity;
  const transport=Math.max(1,Math.ceil(route.cost*quantity/5));
  const customs=[...new Set(route.path.slice(1,-1).map(id=>node(s,id)?.owner).filter(owner=>owner&&owner!==seller&&owner!==buyer))];
  const tariffs=customs.map(owner=>({owner,amount:Math.ceil(price*clamp(markets.tariffs[owner]??.05,0,.3))}));
@@ -128,8 +147,10 @@ export function placeTradeOrder(s,request){
  if(request.maxTotal!=null&&(!Number.isFinite(request.maxTotal)||quote.total>request.maxTotal))return {ok:false,reason:'price'};
  const markets=s.markets,source=markets.regions[request.origin].goods[request.commodity];
  const merchantId=merchantFor(s,request.buyer,request.origin);
- source.stock-=request.quantity;s.factions[request.buyer].treasury-=quote.total;
- const shipment={id:`shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,merchantId,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,route:quote.route,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month};
+ if(request.saleOrderId){const sale=markets.saleOrders.find(x=>x.id===request.saleOrderId);sale.available-=request.quantity;if(sale.available===0)sale.status='filled'}
+ else source.stock-=request.quantity;
+ s.factions[request.buyer].treasury-=quote.total;
+ const shipment={id:`shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,merchantId,saleOrderId:request.saleOrderId||null,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,route:quote.route,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month};
  markets.shipments.push(shipment);return {ok:true,shipment,quote};
 }
 
@@ -158,6 +179,7 @@ function settleBlockedShipment(s,shipment){
 export function advanceMarkets(s){
  const markets=initializeMarkets(s),current=month(s);if(markets.lastTick===current)return markets;
  markets.lastTick=current;
+ for(const sale of markets.saleOrders)if(sale.status==='open'&&region(s,sale.origin)?.owner!==sale.seller){markets.regions[sale.origin].goods[sale.commodity].stock+=sale.available;sale.available=0;sale.status='seized'}
  advanceMerchantReturns(s,current);
  for(const r of s.regions)for(const [good,item] of Object.entries(markets.regions[r.id].goods)){
   item.stock+=item.production;
@@ -247,18 +269,21 @@ export function advanceMarketAI(s,{autoplayPlayer=false}={}){
   if(markets.shipments.some(x=>x.buyer===buyer&&['traveling','blocked'].includes(x.status)))continue;
   const candidates=[];
   for(const destination of s.regions.filter(r=>r.owner===buyer)){
-   const treatyMarkets=s.regions.filter(r=>r.owner!==buyer&&r.owner!=='rebels'&&(autoplayPlayer||r.owner!==s.player)&&!!activeAgreement(s,buyer,r.owner,'trade'));
+   const treatyMarkets=s.regions.filter(r=>r.owner!==buyer&&r.owner!=='rebels'&&!!activeAgreement(s,buyer,r.owner,'trade'));
    for(const origin of treatyMarkets){
-    const seller=origin.owner;if(seller===buyer||seller===s.player&&!autoplayPlayer||!s.factions[seller]||!activeAgreement(s,seller,buyer,'trade'))continue;
+    const seller=origin.owner;if(seller===buyer||!s.factions[seller]||!activeAgreement(s,seller,buyer,'trade'))continue;
     for(const commodity of Object.keys(COMMODITIES)){
      const need=markets.regions[destination.id].goods[commodity],supply=markets.regions[origin.id].goods[commodity];
      const target=Math.max(4,need.consumption*3+need.production),available=supply.stock-Math.max(4,supply.production*2);
-     if(need.stock>=target||available<1)continue;
-     const quantity=Math.min(3,target-need.stock,available),request={seller,buyer,origin:origin.id,destination:destination.id,commodity,quantity},quote=quoteTrade(s,request);
-     if(!quote.ok||s.factions[buyer].treasury-quote.total<(buyer==='han'?100:20))continue;
-     const gain=marketPrice(markets.regions[destination.id],commodity)*quantity-quote.total;
-     if(gain<0)continue;
-     candidates.push({request,gain});
+     const sales=seller===s.player&&!autoplayPlayer?markets.saleOrders.filter(x=>x.status==='open'&&x.seller===seller&&x.origin===origin.id&&x.commodity===commodity):[null];
+     for(const sale of sales){
+      const offered=sale?sale.available:available;if(need.stock>=target||offered<1)continue;
+      const quantity=Math.min(3,target-need.stock,offered),request={seller,buyer,origin:origin.id,destination:destination.id,commodity,quantity,...(sale?{saleOrderId:sale.id}:{})},quote=quoteTrade(s,request);
+      if(!quote.ok||s.factions[buyer].treasury-quote.total<(buyer==='han'?100:20))continue;
+      const gain=marketPrice(markets.regions[destination.id],commodity)*quantity-quote.total;
+      if(gain<0)continue;
+      candidates.push({request,gain});
+     }
     }
    }
   }

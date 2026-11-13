@@ -279,13 +279,13 @@ restriction; domestic transfers and caravans already in transit keep their
 existing terms. The policy survives old and new saves and appears in both
 languages. This is one market policy, not the full set of merchant privileges,
 long-term supply contracts or Roman-wide export controls.
-The direct Han market now supports measured player sale listings. Posting
-removes goods from local stock; only the listed quantity becomes visible to AI
-buyers, who must still have a treaty, route and treasury and pay the seller
-after delivery. Cancelling returns the unfilled stock, while conquest releases
-it into the captured local market. Listings, partial fills and merchant
-shipments persist across saves. Broader Roman selling and competing merchant
-bids remain open work.
+The direct Han and Roman markets now support measured player sale listings.
+Posting removes goods from local stock; only the listed quantity becomes
+visible to AI buyers, who must still have a treaty, route and treasury and pay
+the seller after delivery. Cancelling returns the unfilled stock, while
+conquest releases it into the captured local market. Listings, partial fills
+and merchant shipments persist across saves. Competing merchant bids remain
+open work.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,
