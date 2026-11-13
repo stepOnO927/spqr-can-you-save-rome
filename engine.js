@@ -9,18 +9,18 @@ import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activ
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=4';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=7';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
-import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=18';
+import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=19';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion,provincialRitesCredit} from './local-society.js?v=5';
 import {initializeFigures,advanceFigures} from './great-figures.js';
-import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=25';
+import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=26';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
 import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=3';
-import {nationalBudget} from './national-budget.js?v=8';
-export {nationalBudget} from './national-budget.js?v=8';
+import {nationalBudget} from './national-budget.js?v=9';
+export {nationalBudget} from './national-budget.js?v=9';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
-export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=25';
+export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates} from './naval.js?v=26';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
-export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=18';
+export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=19';
 export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
 export {setReligiousPolicy,provincialRitesCredit};
 export {queueMission};
@@ -644,7 +644,9 @@ export function aiTurn(s,owner){
   // peacetime cash threshold. Replace losses at the ordinary player cost;
   // political control and its own current force are enough to judge pressure.
   const stretched=s.grandMap&&outnumbered&&enemies.length>0&&fieldStrength<Math.max(6000,owned.length*350);
-  if((emergency||s.month%4===0&&f.manpower>5500&&(f.treasury>65||stretched))&&f.treasury>=24&&f.manpower>=3000&&f.food>=6){
+  const reportedThreat=Math.max(0,...s.wars.filter(w=>w.includes(owner)).map(w=>estimatedStrength(s,owner,w.find(id=>id!==owner))));
+  const routineForceNeed=!enemies.length||fieldStrength<Math.max(6000,reportedThreat*1.25);
+  if((emergency||s.month%4===0&&f.manpower>5500&&(f.treasury>65&&routineForceNeed||stretched))&&f.treasury>=24&&f.manpower>=3000&&f.food>=6){
     const landFrontier=owned.filter(r=>adjacent(r.id,s).some(e=>!e.sea&&isWar(s,owner,region(s,e.to).owner)));
     const frontier=landFrontier.length?landFrontier:owned.filter(r=>adjacent(r.id,s).some(e=>isWar(s,owner,region(s,e.to).owner)));
     // When a smaller command has troops on one front but none on another,

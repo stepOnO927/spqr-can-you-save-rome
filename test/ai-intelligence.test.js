@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength} from '../engine.js';
+import {newGame,newGrandGame,aiTurn,estimatedStrength} from '../engine.js';
 import {addReport} from '../character-system.js';
 
 test('AI without numerical reports estimates from its own sightings rather than real enemy forces',()=>{
@@ -18,4 +18,14 @@ test('an older forwarded report does not supersede a more recent observation',()
  const s=newGame('caesar');s.knowledge.senate.caesar.sightings={};s.month=6;addReport(s,'senate','caesar',{kind:'strength',value:18000,source:'spy',confidence:'unverified'});
  s.month=7;addReport(s,'senate','caesar',{kind:'strength',value:1000,source:'exchange',originSource:'court',observationYear:-49,observationMonth:1,confidence:'unverified'});
  assert.equal(estimatedStrength(s,'senate','caesar'),18000);
+});
+test('routine wartime recruitment responds to reported strength rather than hidden enemy troops or spare cash alone',()=>{
+ const base=newGrandGame('egypt');base.month=4;base.factions.senate.treasury=200;
+ for(const unit of base.armies.filter(a=>a.owner==='senate'))unit.region='achaia';
+ const before=base.armies.length,quiet=structuredClone(base),warned=structuredClone(base);
+ aiTurn(quiet,'senate');
+ assert.equal(quiet.armies.length,before);
+ addReport(warned,'senate','caesar',{kind:'strength',value:30000,source:'spy',confidence:'unverified'});
+ aiTurn(warned,'senate');
+ assert.ok(warned.armies.length>before);
 });
