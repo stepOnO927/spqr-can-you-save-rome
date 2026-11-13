@@ -17,6 +17,9 @@ try{
  assert.equal(await page.locator('.cursus-candidate').count(),4);
  const first=page.locator('.cursus-candidate').first();
  assert.match(await first.innerText(),/卢基乌斯·瓦罗/);
+ const candidatePortraits=await page.locator('.cursus-candidate .cursus-person img').evaluateAll(nodes=>nodes.slice(0,2).map(n=>n.src));
+ assert.equal(candidatePortraits.length,2);
+ assert.notEqual(candidatePortraits[0],candidatePortraits[1]);
  await first.locator('[data-cursus-action="support"]').click();
  await page.locator('.cursus-candidate').first().locator('[data-cursus-action="improper"]').click();
  await page.locator('[data-cursus-office]').selectOption('quaestor');
