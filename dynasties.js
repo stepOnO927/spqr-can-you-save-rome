@@ -62,7 +62,7 @@ export function initializeDynasties(s){
  return d;
 }
 
-export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员'],culture=['Simulated','模拟'],homeland=null,ambition,personalitySeed,militaryOnly=false}){
+export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员'],culture=['Simulated','模拟'],homeland=null,ambition,personalitySeed,militaryOnly=false,origin='birth'}){
  const d=initializeDynasties(s);
  // Reserve identities mentioned anywhere in older saves, including reports
  // and relationships whose original person or family is no longer present.
@@ -76,7 +76,9 @@ export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,
  s.world.characters[id]={id,faction,health:'healthy',location,homeland:homeland||location,alive:true,loyalty:65,influence:20,wealth,parents:[...parents],adoptiveParents:[...adoptiveParents],children:[],spouse:null,familyId:family,birthYear,sex,education:0,ambition:ambition??Math.floor(20+roll(s)*60),personalitySeed:personalitySeed??Math.floor(roll(s)*0xffffffff),militaryOnly,wounds:0,illnessEpisodes:0};
  s.world.characters[id].portraitSeed=portraitSeedFor(id,s.world.characters[id],d.catalog[id]);
  for(const parent of [...parents,...adoptiveParents])if(s.world.characters[parent])s.world.characters[parent].children.push(id);
- record(s,id,'Born in the simulated campaign.','出生于模拟战役。');if(birthYear===s.year)assignBornPortrait(s,id);return id;
+ if(origin==='court_nominee')record(s,id,'Entered this campaign as a fictional court nominee; no historical identity or family relationship is asserted.','作为虚构宫廷人选进入本次战役；不代表历史人物或历史亲属关系。');
+ else record(s,id,'Born in the simulated campaign.','出生于模拟战役。');
+ if(origin==='birth'&&birthYear===s.year)assignBornPortrait(s,id);return id;
 }
 
 export function seedOpeningFictionalHouseholds(s){

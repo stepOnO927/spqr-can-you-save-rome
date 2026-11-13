@@ -64,6 +64,7 @@ const received=receiveHandoff(sessionStorage,'campaign',upgradeSave);
 setupRequired=!received;setupOpen=setupRequired;
 if(received){state=received;selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0]?.id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;chosenFaction=state.player;chosenDifficulty=state.difficulty||'standard';chosenHandicap=!!state.economicHandicap}
 if(received&&['#government','#focus','#legions','#plans'].includes(location.hash)){tab=location.hash.slice(1);panelOpen=true;history.replaceState(null,'',location.pathname+location.search)}
+if(received&&location.hash==='#mail'){mailOpen=true;selectedMail=receivedMail(state).find(m=>!m.archived)?.id||null;if(selectedMail)markRead(state,selectedMail);history.replaceState(null,'',location.pathname+location.search)}
 const t=k=>ui[lang][k]; const n=a=>a?.[lang==='zh'?1:0]||'';
 const labelFaction=id=>n(FACTIONS[id]?.short)||id;
 const fmt=x=>Math.round(x).toLocaleString(lang==='zh'?'zh-CN':'en-US');

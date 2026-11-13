@@ -14,6 +14,15 @@ const name = id => CHARACTER_CATALOG[id]?.name || FACTIONS[id]?.short || [id, id
 const home = (s, faction) => s.regions.find(r => r.owner === faction)?.id || null;
 const historicalPortraits=new Set(['caesar','pompey','cleopatra','arsinoe','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
 const portrait=(s,id)=>!id?null:historicalPortraits.has(id)?id:id.startsWith('fictional:')?(s.world.characters[id]?.faction===s.player?fictionalPortraitKey(s,id):observedFictionalPortrait(s,id)):null;
+// A stable per-letter roll does not consume battle or diplomacy randomness.
+// The sender is not told whether a missing letter or answer was lost.
+function courierLost(s,m,leg='outbound'){
+  if(m.senderFaction===m.recipient||!Number.isFinite(m.courierSeed))return false;
+  let h=((m.courierSeed??0)^0x9e3779b9)>>>0;
+  for(const c of `${m.id}:${leg}`)h=Math.imul(h^c.charCodeAt(0),16777619)>>>0;
+  h^=h>>>16;h=Math.imul(h,0x7feb352d)>>>0;h^=h>>>15;
+  return (h>>>0)/4294967296 < (m.courierRisk??.08);
+}
 
 export function initializeMail(s) {
   if (!s.mail || typeof s.mail !== 'object') s.mail = {};
@@ -64,7 +73,8 @@ export function sendLetter(s, spec) {
     senderFaction, recipient, senderName:senderId ? name(senderId) : name(senderFaction),
     senderPortrait:portrait(s,senderId),
     subject:spec.subject, body:spec.body, category, priority:spec.priority || 'routine',
-    created:{year:s.year, month:s.month}, arrival:sent + travel,
+    created:{year:s.year, month:s.month}, arrival:sent + travel, courierSeed:(s.seed??0)>>>0,
+    courierRisk:atWar(s,senderFaction,recipient)?.16:.08,
     source, destination, delivery:'traveling', read:false, archived:false,
     responses:[], options:spec.options || [], eventId:spec.eventId || null,
     context:spec.context || null, confidentiality:spec.confidentiality || 'ordinary',
@@ -167,12 +177,6 @@ export function replyToLetter(s, id, choice, actions) {
     }
     bond.trust=Math.max(-100,Math.min(100,bond.trust+({respond_warmly:2,respond_formally:0,grant_favor:3,grant_audience:1,ignore:-1}[choice]||0)));
     s.world.personalRelations[key]=bond;
-  } else if(m.context?.kind==='complaint'){
-    const key=pair(s.player,m.senderFaction),delta={apologize:4,defend:-2,ignore:-1}[choice]||0;
-    s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+delta));
-    rememberPoliticalEvent(s,m.senderFaction,s.player,'complaint_answer',delta);
-  } else if(m.context?.kind==='greeting'){
-    if(choice==='welcome')s.relations[pair(s.player,m.senderFaction)]=Math.min(100,(s.relations[pair(s.player,m.senderFaction)]||0)+2);
   } else if(m.context?.kind==='aid_request'){
     if(choice==='send_aid'){
       if(s.factions[s.player].treasury<5)return {ok:false,reason:'treasury'};
@@ -182,7 +186,7 @@ export function replyToLetter(s, id, choice, actions) {
     if(choice==='concede'){
       if(s.factions[s.player].treasury<6)return {ok:false,reason:'treasury'};
       s.factions[s.player].treasury-=6;
-    }else if(choice==='reject')s.relations[pair(s.player,m.senderFaction)]=Math.max(-100,(s.relations[pair(s.player,m.senderFaction)]||0)-5);
+    }
   } else if(m.context?.kind==='mediation'&&choice==='mediate'){
     ok=requestMediation(s,s.player,m.senderFaction).ok===true;
   } else if (m.context?.kind === 'banquet') {
@@ -216,19 +220,20 @@ export function replyToLetter(s, id, choice, actions) {
     ask_why:['Why do you inquire?','不知何故问起？'],
     ignore:['No answer was sent.','未寄出答复。']
   })[choice] : null;
+  const delayed=choice!=='ignore'&&['treaty','full_alliance','aid_request','ultimatum','complaint','greeting'].includes(m.context?.kind);
   m.responses.push({choice, year:s.year, month:s.month,
     body:responseBody,
-    arrival:['treaty','full_alliance','aid_request','ultimatum'].includes(m.context?.kind) ? monthIndex(s.year,s.month) + courierMonths(s,m.destination,m.source) : null,
-    resolved:!['treaty','full_alliance','aid_request','ultimatum'].includes(m.context?.kind)});
+    arrival:delayed ? monthIndex(s.year,s.month) + courierMonths(s,m.destination,m.source) : null,
+    resolved:!delayed});
   if(m.context?.kind==='personal_age'&&choice==='ask_why')replyNotice(s,m,['Why I asked','为何相问'],['I wished to know you better, and meant no offense.','只盼多了解阁下，并无冒犯之意。']);
   if(m.context?.kind==='personal_flavor'&&choice==='grant_favor')replyNotice(s,m,['A note of thanks','致谢短笺'],['I am grateful for the court’s assistance.','承蒙朝廷资助，谨致谢意。']);
   if(!['ignore','acknowledge','seek_allies'].includes(choice)){
     const leader=senderFor(s,s.player),to=m.senderFaction;
     const phrase={accept:['We accept the proposed accord.','本朝接受所议协定。'],reject:['We decline the proposed accord.','本朝谢绝所议协定。'],negotiate:['We request further negotiations.','本朝请求继续商议。'],condemn:['We condemn this declaration.','本朝谴责此项宣战。'],apologize:['We regret the strain between our courts.','两国关系紧张，本朝深表遗憾。'],defend:['Our court maintains its position.','本朝坚持原有立场。'],welcome:['We welcome this correspondence.','本朝欣然收到来函。'],send_aid:['We have committed five treasury units in support.','本朝决定提供五单位国库援助。'],concede:['We accept the requested settlement.','本朝同意所请和解。']}[choice]||[choice.replaceAll('_',' '),choice];
-    if(to!==s.player){sendLetter(s,{senderId:leader,senderInstitution:leader?null:s.player,senderFaction:s.player,recipient:to,
+    if(to!==s.player){const sent=sendLetter(s,{senderId:leader,senderInstitution:leader?null:s.player,senderFaction:s.player,recipient:to,source:m.destination,destination:m.source,
       category:m.category,priority:m.priority,subject:[`Re: ${m.subject[0]}`,`复：${m.subject[1]}`],
       body:responseBody||phrase,threadId:m.threadId,
-      context:{kind:'reply',replyTo:m.id}})}
+      context:{kind:'reply',replyTo:m.id}});if(sent.ok&&m.responses.at(-1).arrival!==null){m.responses.at(-1).replyMailId=sent.letter.id;sent.letter.arrival=m.responses.at(-1).arrival}}
   }
   return {ok:true, open:choice === 'war_council' ? 'military' : choice === 'view_location' ? m.context?.region : null};
 }
@@ -454,6 +459,16 @@ export function advanceMail(s, actions = {}) {
   for (const m of [...mail.messages]) for (const response of m.responses) {
     if (response.resolved || response.arrival === null || response.arrival > now) continue;
     response.resolved = true;
+    const reply=response.replyMailId?mail.messages.find(x=>x.id===response.replyMailId):null;
+    if(courierLost(s,reply||m,reply?'outbound':'return')){response.outcome='lost';continue}
+    if(m.context?.kind==='complaint'||m.context?.kind==='greeting'){
+      const key=pair(m.senderFaction,m.recipient);
+      const delta=m.context.kind==='complaint'?({apologize:4,defend:-2}[response.choice]||0):(response.choice==='welcome'?2:0);
+      s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+delta));
+      if(m.context.kind==='complaint')rememberPoliticalEvent(s,m.senderFaction,m.recipient,'complaint_answer',delta);
+      response.outcome='delivered';
+      continue;
+    }
     if(m.context?.kind==='full_alliance'){
       const accepted=response.choice==='accept'&&!atWar(s,m.senderFaction,m.recipient)&&actions.diplomacy?.(s,m.senderFaction,m.recipient,'alliance')===true;
       response.outcome=accepted?'accept':response.choice==='accept'?'failed':response.choice;
@@ -493,16 +508,18 @@ export function advanceMail(s, actions = {}) {
   }
   for (const m of mail.messages) {
     if (m.delivery !== 'traveling' || m.arrival > now) continue;
+    if(courierLost(s,m)){m.delivery='lost';continue}
     m.delivery = 'received';
+    if(m.recipient===s.player&&m.context?.kind==='support_result'&&m.context.transfer>0){s.factions[s.player].treasury+=m.context.transfer;m.context.transfer=0}
     if(m.recipient!==s.player&&m.context?.kind==='allied_support'){
       const enemy=m.context.enemy,ally=m.recipient,relation=s.relations[pair(ally,s.player)]||0;
       const help=relation>=20&&s.factions[ally].treasury>=12&&atWar(s,s.player,enemy);
-      if(help){s.factions[ally].treasury-=5;s.factions[s.player].treasury+=5}
+      if(help)s.factions[ally].treasury-=5;
       const senderId=senderFor(s,ally);
       sendLetter(s,{senderId,senderInstitution:senderId?null:ally,senderFaction:ally,recipient:s.player,
         category:'diplomatic',priority:'important',threadId:m.threadId,
         subject:help?['Support dispatched','援助已送出']:['Support declined','援助请求遭拒'],
-        body:help?['The allied court has sent 5 treasury units in support.','盟邦已送出 5 单位国库援助。']:['The allied court cannot offer support at present.','盟邦目前无法提供援助。'],options:['acknowledge'],context:{kind:'support_result'}});
+        body:help?['The allied court has sent 5 treasury units in support.','盟邦已送出 5 单位国库援助。']:['The allied court cannot offer support at present.','盟邦目前无法提供援助。'],options:['acknowledge'],context:{kind:'support_result',transfer:help?5:0}});
     }
     if (m.recipient !== s.player && m.context?.kind === 'treaty' && actions.proposeAgreement) {
       const key = pair(m.senderFaction, m.recipient),def=AGREEMENT_TYPES[m.context.treatyType],willingness=(s.relations[key] || 0)>=def.threshold&&s.factions[m.senderFaction].treasury>=def.cost;

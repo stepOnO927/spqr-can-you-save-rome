@@ -286,6 +286,12 @@ the seller after delivery. Cancelling returns the unfilled stock, while
 conquest releases it into the captured local market. Listings, partial fills
 and merchant shipments persist across saves. Competing merchant bids remain
 open work.
+The Roman market also lets the player choose low, standard or high transit
+customs and restrict or reopen exports of each measured good. New quotes and
+AI buyers respect export controls, while dispatched caravans retain their
+original terms. Customs accrue to the transit court on delivery; both
+policies persist across saves. Unit and bilingual Chromium tests cover these
+controls. Long-term supply contracts and merchant privileges remain open.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,

@@ -1,6 +1,6 @@
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=newborn-age-1';
 import {initializeWorld,successorFor,assignSuccession,mauretanianSeatHolders,eligibleLiuImperial,CHARACTER_CATALOG,ageRange,successionModel} from './characters.js?v=faces-empire-2';
-import {recordLifeEvent,dynastyRoll,personAge} from './dynasties.js?v=faces-empire-2';
+import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=faces-empire-2';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {startDynasticWar} from './civil-war.js?v=faces-empire-3';
 
@@ -126,10 +126,35 @@ export function secureRegency(s){
  return {ok:true,cost:8};
 }
 
+// These courts have no documented successor in the opening catalog. A later
+// nominee is explicitly fictional, never a historical person or implied heir.
+const regionalCourts={armenia:['Armenian','亚美尼亚'],numidia:['Numidian','努米底亚'],galatia:['Galatian','加拉太'],bosporus:['Bosporan','博斯普鲁斯']};
+function advanceRegionalVacancy(s,faction,autoplayPlayer){
+ if(!regionalCourts[faction]||faction===s.player&&!autoplayPlayer)return;
+ const vacancies=s.world.courtVacancies||={},now=s.year*12+s.month;
+ if((s.world.leadership[faction]||[]).some(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction)){delete vacancies[faction];return}
+ // An unresolved claimant must retain autonomy; do not appoint over them.
+ if(s.world.disputes?.[faction]||(s.world.claimants?.[faction]||[]).some(id=>s.world.characters[id]?.alive))return;
+ assignSuccession(s,faction);
+ if((s.world.leadership[faction]||[]).length){delete vacancies[faction];return}
+ let vacancy=vacancies[faction];if(!vacancy||!Number.isFinite(vacancy.nextReview))vacancy=vacancies[faction]={started:now,nextReview:now+6,attempts:0};
+ if(now<vacancy.nextReview)return;vacancy.nextReview=now+3;vacancy.attempts++;
+ // A strained court may fail to agree; the process is bounded and costs real
+ // resources. It does not force peace, an alliance, or an outcome elsewhere.
+ const f=s.factions[faction];if(f.treasury<5)return;
+ const atWar=s.wars.some(w=>w.includes(faction)),chance=Math.max(.15,Math.min(.75,.35+(f.stability||0)/250-(atWar?.15:0)));
+ if(dynastyRoll(s)>=chance)return;
+ const serials=s.world.courtNomineeSerials||={},serial=(serials[faction]||0)+1;serials[faction]=serial;
+ const [en,zh]=regionalCourts[faction],place=s.regions.find(r=>r.owner===faction)?.id;
+ const id=createFictionalPerson(s,{name:[`Fictional ${en} court nominee ${serial}`,`虚构${zh}宫廷人选${serial}`],faction,birthYear:s.year-35,location:place,sex:'unknown',role:['Fictional court nominee in this campaign','本战役虚构宫廷人选'],origin:'court_nominee'});
+ f.treasury-=5;s.world.leadership[faction]=[id];delete vacancies[faction];
+}
+
 export function advanceGovernments(s,{autoplayPlayer=false}={}){
  initializeGovernments(s);s.world.regencies||={};for(const faction of Object.keys(s.world.governments)){
-  if(!s.factions[faction]||!s.regions.some(r=>r.owner===faction))continue;
+  if(!s.factions[faction]||!s.regions.some(r=>r.owner===faction)){if(s.world.courtVacancies)delete s.world.courtVacancies[faction];continue}
   const before=s.world.governments[faction];if(faction==='mauretania')assignSuccession(s,faction);
+  advanceRegionalVacancy(s,faction,autoplayPlayer);
   const after=deriveGovernment(s,faction);s.world.governments[faction]=after;
   if(after.kind==='regency'&&after.acting.length){
    const regent=s.world.characters[after.acting[0]],ward=after.nominal[0],previous=s.world.regencies[faction];

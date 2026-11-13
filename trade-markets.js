@@ -6,6 +6,7 @@ import {generateFictionalName} from './fictional-names.js?v=faces-of-empire-1';
 import {reportedControl} from './control-intelligence.js?v=faces-empire-3';
 import {COMMODITIES,marketPrice} from './market-goods.js?v=faces-of-empire-1';
 export {COMMODITIES,marketPrice};
+export const TARIFF_POLICIES=Object.freeze({low:.02,standard:.05,high:.15});
 
 // One unit is an economic batch, not a single animal or artifact. Prices use
 // the campaign's treasury scale. Production and consumption remain separate
@@ -45,8 +46,10 @@ function profile(r,good){
  return {production,consumption,stock:Math.max(0,production*4+2-consumption),price:COMMODITIES[good].basePrice};
 }
 export function initializeMarkets(s){
- const markets=s.markets||={regions:{},saleOrders:[],nextSaleOrder:1,shipments:[],transactions:[],nextShipment:1,tariffs:{},lastTick:null,transportSpent:0,transitTreasury:{},merchants:{},merchantFees:0};
- markets.regions||={};if(!Array.isArray(markets.saleOrders))markets.saleOrders=[];if(!Number.isSafeInteger(markets.nextSaleOrder)||markets.nextSaleOrder<1)markets.nextSaleOrder=1;markets.shipments||=[];markets.transactions||=[];markets.tariffs||={};markets.nextShipment||=1;markets.transportSpent??=0;markets.transitTreasury||={};
+ const markets=s.markets||={regions:{},saleOrders:[],nextSaleOrder:1,shipments:[],transactions:[],nextShipment:1,tariffs:{},exportRestrictions:{},lastTick:null,transportSpent:0,transitTreasury:{},merchants:{},merchantFees:0};
+ markets.regions||={};if(!Array.isArray(markets.saleOrders))markets.saleOrders=[];if(!Number.isSafeInteger(markets.nextSaleOrder)||markets.nextSaleOrder<1)markets.nextSaleOrder=1;markets.shipments||=[];markets.transactions||=[];markets.tariffs||={};markets.exportRestrictions||={};markets.nextShipment||=1;markets.transportSpent??=0;markets.transitTreasury||={};
+ for(const [owner,rate] of Object.entries(markets.tariffs))markets.tariffs[owner]=Number.isFinite(rate)?clamp(rate,0,.3):TARIFF_POLICIES.standard;
+ for(const [owner,goods] of Object.entries(markets.exportRestrictions))markets.exportRestrictions[owner]=Array.isArray(goods)?[...new Set(goods.filter(good=>Object.hasOwn(COMMODITIES,good)))]:[];
  markets.merchants||={};markets.merchantFees??=0;
  markets.diplomacy||={attempts:[],nextAt:{},lastTick:null};
  markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};
@@ -60,6 +63,18 @@ export function initializeMarkets(s){
  // retaining the original inventory reservation and escrow unchanged.
  for(const shipment of markets.shipments)if(['traveling','blocked'].includes(shipment.status)&&!shipment.merchantId&&s.factions[shipment.buyer])shipment.merchantId=merchantFor(s,shipment.buyer,shipment.origin);
  return markets;
+}
+
+export function setTradeTariffPolicy(s,faction,policy){
+ if(faction!==s.player||s.defeat||!s.regions.some(r=>r.owner===faction)||!Object.hasOwn(TARIFF_POLICIES,policy))return {ok:false,reason:'invalid'};
+ const markets=initializeMarkets(s);markets.tariffs[faction]=TARIFF_POLICIES[policy];return {ok:true,policy,rate:markets.tariffs[faction]};
+}
+
+export function setTradeExportRestriction(s,faction,commodity,restricted){
+ if(faction!==s.player||s.defeat||!s.regions.some(r=>r.owner===faction)||!Object.hasOwn(COMMODITIES,commodity)||typeof restricted!=='boolean')return {ok:false,reason:'invalid'};
+ const markets=initializeMarkets(s),goods=markets.exportRestrictions[faction]||[];
+ markets.exportRestrictions[faction]=restricted?[...new Set([...goods,commodity])]:goods.filter(good=>good!==commodity);
+ return {ok:true,commodity,restricted};
 }
 
 export function postTradeSale(s,{origin,commodity,quantity,unitPrice}){
@@ -130,6 +145,7 @@ export function quoteTrade(s,{seller,buyer,origin,destination,commodity,quantity
  if(!COMMODITIES[commodity]||!Number.isSafeInteger(quantity)||quantity<1||quantity>20||!from||!to||!s.factions[seller]||!s.factions[buyer]||from.owner!==seller||to.owner!==buyer||origin===destination)return {ok:false,reason:'invalid'};
  const sale=saleOrderId?markets.saleOrders.find(x=>x.id===saleOrderId):null;
  if(saleOrderId&&(!sale||sale.status!=='open'||sale.seller!==seller||sale.origin!==origin||sale.commodity!==commodity||sale.available<quantity||buyer===seller))return {ok:false,reason:'unavailable'};
+ if(buyer!==seller&&markets.exportRestrictions[seller]?.includes(commodity))return {ok:false,reason:'export_restricted'};
  if(atWar(s,seller,buyer)||seller!==buyer&&!activeAgreement(s,seller,buyer,'trade'))return {ok:false,reason:'access'};
  if(!sale&&stock.stock<quantity)return {ok:false,reason:'unavailable'};
  const route=routeFor(s,origin,destination,buyer,seller);if(!route)return {ok:false,reason:'route'};
@@ -236,6 +252,7 @@ export function advanceMarketDiplomacy(s,{autoplayPlayer=false}={}){
     if(!seller||seller==='rebels'||seller===buyer||seller===s.player&&!autoplayPlayer||!s.factions[seller]||activeAgreement(s,buyer,seller,'trade')||atWar(s,buyer,seller)||now<(diplomacy.nextAt[key]||-Infinity))continue;
     // Production potential is a public export reputation, not a reading of
     // the seller's current warehouse or concealed military resources.
+    if(markets.exportRestrictions[seller]?.includes(commodity))continue;
     const reputation=profile(origin,commodity).production;
     if(reputation<2)continue;
     const standing=relationValue(s,buyer,seller),distance=Math.hypot((origin.x||0)-(destination.x||0),(origin.y||0)-(destination.y||0))/100;

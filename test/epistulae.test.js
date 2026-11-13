@@ -1,16 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js';
-import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js';
-import {setWartimePolicy} from '../epistulae-personnel.js';
-import {initializeMailReports,advanceMailReports} from '../mail-reports.js';
-import {mailboxHtml} from '../mail-ui.js';
+import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js?v=regional-mail-merge-1';
+import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js?v=regional-mail-merge-1';
+import {setWartimePolicy} from '../epistulae-personnel.js?v=regional-mail-merge-1';
+import {initializeMailReports,advanceMailReports} from '../mail-reports.js?v=regional-mail-merge-1';
+import {mailboxHtml} from '../mail-ui.js?v=regional-mail-merge-1';
 
 const state = () => {
   const factions = Object.fromEntries(['caesar','senate','egypt','parthia'].map(id => [id,{treasury:100}]));
   const places = {caesar:'cisalpine',senate:'roma',egypt:'egypt',parthia:'parthia'};
   const characters = Object.fromEntries(Object.entries({caesar:'caesar',pompey:'senate',cleopatra:'egypt',orodes:'parthia'}).map(([id,faction]) => [id,{id,faction,alive:true,location:places[faction]}]));
-  return {year:-49,month:1,player:'caesar',factions,regions:Object.entries(places).map(([owner,id])=>({id,owner})),wars:[['caesar','senate']],relations:{},world:{characters,leadership:{caesar:['caesar'],senate:['pompey'],egypt:['cleopatra'],parthia:['orodes']}}};
+  return {year:-49,month:1,seed:57,player:'caesar',factions,regions:Object.entries(places).map(([owner,id])=>({id,owner})),wars:[['caesar','senate']],relations:{},world:{characters,leadership:{caesar:['caesar'],senate:['pompey'],egypt:['cleopatra'],parthia:['orodes']}}};
 };
 const advance = (s, months, actions={}) => {for(let i=0;i<months;i++){s.month++;if(s.month>12){s.month=1;s.year++}advanceMail(s,actions)}};
 
@@ -239,7 +239,7 @@ test('five-year campaign keeps message identities, categories and delivery state
   assert.equal(new Set(ids).size,ids.length);
   assert.ok(ids.length>20&&ids.length<500);
   assert.ok(s.mail.messages.every(m=>m.senderId?s.world.characters[m.senderId]:m.senderInstitution));
-  assert.ok(s.mail.messages.every(m=>['traveling','received'].includes(m.delivery)));
+  assert.ok(s.mail.messages.every(m=>['traveling','received','lost'].includes(m.delivery)));
   assert.ok(s.mail.messages.some(m=>m.category==='government'));
   assert.ok(s.mail.messages.some(m=>m.category==='personal'));
   const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
