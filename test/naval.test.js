@@ -300,6 +300,18 @@ test('AI can order a real army transport when a hostile coast is reachable by se
  const s=newGrandGame('caesar');for(const r of s.regions)r.owner='egypt';s.regions.find(r=>r.id==='italiaS').owner='senate';s.regions.find(r=>r.id==='t075').owner='caesar';s.armies=s.armies.filter(a=>a.id==='italy');s.armies[0].region='italiaS';
  aiTurn(s,'senate');assert.equal(s.armies[0].move?.sea,true);assert.equal(s.armies[0].move?.to,'t075');assert.equal(s.naval.fleets.find(f=>f.owner==='senate').order?.armyId,'italy');
 });
+test('same-zone Adriatic transport remains offshore for interception before docking',()=>{
+ const setup=()=>{const s=newGrandGame('senate'),army=s.armies.find(a=>a.id==='italy'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');army.region='italiaS';army.men=5200;s.regions.find(r=>r.id==='t075').owner='caesar';enemy.zone=portZone('italiaS');enemy.port=null;return s};
+ const exposed=setup();assert.equal(moveArmy(exposed,'italy','t075').ok,true);
+ assert.deepEqual(exposed.naval.fleets.find(f=>f.id==='senate-adriatic').order.path,['adriatic']);
+ advanceNaval(exposed);
+ assert.equal(exposed.naval.fleets.find(f=>f.id==='senate-adriatic').port,null);
+ assert.ok(exposed.naval.reports.some(r=>r.kind==='battle'&&r.zone==='adriatic'&&r.participants.includes('senate-adriatic')),'an enemy fleet in the crossing zone can engage the transport');
+ const safe=setup();safe.naval.fleets=safe.naval.fleets.filter(f=>f.owner==='senate');assert.equal(moveArmy(safe,'italy','t075').ok,true);
+ advanceNaval(safe);const loaded=upgradeSave(JSON.parse(JSON.stringify(safe))),fleet=loaded.naval.fleets.find(f=>f.id==='senate-adriatic');
+ assert.equal(fleet.port,null);assert.equal(fleet.order?.kind,'transport');assert.equal(loaded.armies.find(a=>a.id==='italy').move.transportReady,false);
+ advanceNaval(loaded);assert.equal(fleet.port,'t075');assert.equal(fleet.order,null);assert.equal(loaded.armies.find(a=>a.id==='italy').move.transportReady,true);
+});
 test('AI stages a transport fleet at an isolated army port and waits for embarkation',()=>{
  const setup=()=>{
   const s=newGrandGame('caesar');for(const r of s.regions)r.owner='egypt';

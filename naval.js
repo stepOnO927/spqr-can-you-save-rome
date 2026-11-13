@@ -1,7 +1,7 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js';
 import {activeEffects} from './development.js?v=30';
 import {officeOf} from './office-system.js';
-import {nationalBudget} from './national-budget.js?v=11';
+import {nationalBudget} from './national-budget.js?v=12';
 
 // Sea areas and costs are game-scale approximations of the 49 BCE Mediterranean.
 export const SEA_ZONES=[
@@ -183,7 +183,12 @@ function finishMaritimeSupply(s,log){
   if(f.owner===s.player)log(s,`Supply ships delivered ${delivered} food to ${target.name[0]}.`,`补给舰向${target.name[1]}运抵${delivered}份粮食。`);
  }
 }
-export function commitArmyTransport(s,unit,from,to){const f=accessibleFleet(s,unit.owner,from.id,unit.men),path=f&&seaRoute(f.zone,portZone(to.id));if(!f||!to.port||!path)return {ok:false,reason:'vessels'};f.port=null;f.order={kind:'transport',target:to.id,targetPort:to.id,path,armyId:unit.id};return {ok:true,fleetId:f.id,months:Math.max(1,path.length)}}
+export function commitArmyTransport(s,unit,from,to){const f=accessibleFleet(s,unit.owner,from.id,unit.men),path=f&&seaRoute(f.zone,portZone(to.id));if(!f||!to.port||!path)return {ok:false,reason:'vessels'};
+ // Two ports can share one broad sea zone. The crossing still spends a naval
+ // phase offshore, where a hostile fleet can intercept the transport.
+ const voyage=path.length?path:[portZone(to.id)];
+ f.port=null;f.order={kind:'transport',target:to.id,targetPort:to.id,path:voyage,armyId:unit.id};return {ok:true,fleetId:f.id,months:Math.max(1,voyage.length)}
+}
 function recentFleetReports(s,owner){initializeNaval(s);return Object.entries(s.naval.intel[owner]||{}).filter(([,report])=>{const age=s.year*12+s.month-(report.year*12+report.month);return age>=0&&age<=4}).map(([id,report])=>({id,...report}))}
 export function reportedHostileFleets(s,owner){return recentFleetReports(s,owner).filter(report=>atWar(s,owner,report.owner))}
 export function reportedNonHostileFleets(s,owner){return recentFleetReports(s,owner).filter(report=>report.owner!==owner&&!atWar(s,owner,report.owner))}
