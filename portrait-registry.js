@@ -29,7 +29,7 @@ const INSTITUTION_PORTRAITS=[
 ];
 // Limited individual artwork for campaign-born Roman people. A saved claim
 // binds each pair of childhood/adult assets to one person and their parentage.
-const BORN_PORTRAITS={male:['born-m1','born-m2'],female:['born-f1','born-f2']};
+const BORN_PORTRAITS={male:['born-m1','born-m2','born-m3'],female:['born-f1','born-f2','born-f3']};
 export function assignBornPortrait(state,id){
  const d=state.world?.dynasties,c=state.world?.characters?.[id],saved=d?.catalog?.[id];
  if(!d||!c||!saved?.fictional||!Array.isArray(saved.name)||!saved.name[0]||!['caesar','senate'].includes(state.player)||c.faction!==state.player||c.institutionalOnly||!BORN_PORTRAITS[c.sex]||!Number.isInteger(c.birthYear)||c.birthYear< -49||c.birthYear>state.year||!Array.isArray(c.parents)||!c.parents.length||!c.parents.every(parent=>state.world.characters[parent]))return null;

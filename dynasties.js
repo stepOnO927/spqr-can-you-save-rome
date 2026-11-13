@@ -405,7 +405,7 @@ export function advanceDynasties(s){
  const d=initializeDynasties(s);
  // Claim saved artwork only for identifiable campaign-born children with a
  // recorded birth and parents; old identities are never replaced.
- if(!d.bornPortraitClaims){d.bornPortraitClaims={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id)}
+ if((d.bornPortraitPoolVersion||0)<2){d.bornPortraitClaims||={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id);d.bornPortraitPoolVersion=2}
  advanceMarriageOffers(s);
  advanceAsylumRequests(s);
  advanceFamilyAccords(s);
