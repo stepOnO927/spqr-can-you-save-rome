@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js?v=portrait-pool-2';
-import {observeArmies,reportedArmies} from '../character-system.js?v=portrait-pool-2';
-import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer,visibleSummaryEvidence} from '../visibility.js?v=portrait-pool-2';
+import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js?v=unknown-person-1';
+import {observeArmies,reportedArmies} from '../character-system.js?v=unknown-person-1';
+import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer,visibleSummaryEvidence} from '../visibility.js?v=unknown-person-1';
 
 test('battle projection hides opponent details while preserving actual simulation evidence',()=>{
  const s=newGame('caesar'),a=s.armies.find(x=>x.id==='xiii'),d=s.armies.find(x=>x.id==='italy');resolveBattle(s,a,d,region(s,'italiaN'));const b=s.battles[0],own=battleSideForPlayer(b,'caesar','attacker'),enemy=battleSideForPlayer(b,'caesar','defender');

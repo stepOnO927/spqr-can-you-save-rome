@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=portrait-pool-2';
+import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=unknown-person-1';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=portrait-pool-2';
-import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=portrait-pool-2';
+import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=unknown-person-1';
 import {deriveGovernment} from '../governance.js?v=portrait-pool-2';
 import {successorFor} from '../characters.js?v=newborn-age-1';
 

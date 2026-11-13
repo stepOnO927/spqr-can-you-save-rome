@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,moveArmy,tick,upgradeSave} from '../engine.js?v=portrait-pool-2';
+import {newGame,moveArmy,tick,upgradeSave} from '../engine.js?v=unknown-person-1';
 import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from '../map-lab/turn-report.js?v=fort-intel-1';
 import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
 import {FACTIONS} from '../data.js';

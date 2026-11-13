@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=portrait-pool-2';
+import {newGame,upgradeSave} from '../engine.js?v=unknown-person-1';
 import {createFictionalPerson} from '../dynasties.js?v=portrait-pool-2';
 import {ageRange} from '../characters.js?v=newborn-age-1';
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,advanceRomanDefeat,previewMarch,moveArmy,projectTaxPath,forecastEconomy,upgradeSave,adjacent} from '../engine.js?v=portrait-pool-2';
+import {newGame,tick,advanceRomanDefeat,previewMarch,moveArmy,projectTaxPath,forecastEconomy,upgradeSave,adjacent} from '../engine.js?v=unknown-person-1';
 import {marchReason} from '../movement-help.js';
 import {canFinalizeCampaign,finalizeCampaign} from '../legacy.js?v=portrait-pool-2';
 

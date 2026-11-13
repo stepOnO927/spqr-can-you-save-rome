@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick as romanTick,upgradeSave,PLAYABLE as ROMAN_PLAYABLE} from '../engine.js?v=portrait-pool-2';
+import {newGame,tick as romanTick,upgradeSave,PLAYABLE as ROMAN_PLAYABLE} from '../engine.js?v=unknown-person-1';
 import {REGIONS as ROMAN_REGIONS} from '../data.js?v=phase-x-1';
 import {finalizeCampaign} from '../legacy.js?v=portrait-pool-2';
 import {REGIONS} from '../han/data.js?v=han-1';
