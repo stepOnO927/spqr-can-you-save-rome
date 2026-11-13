@@ -1,4 +1,7 @@
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=separate-crowns-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,chronicleLetters} from './epistulae.js?v=epistulae-2';
+import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=epistulae-2';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=epistulae-2';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=separate-crowns-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=separate-crowns-1';
@@ -32,6 +35,7 @@ import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupp
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
 export {queueMission};
 export {personalDiplomaticCredit};
+export {replyToLetter};
 
 const clone = value => JSON.parse(JSON.stringify(value));
 export const region = (s,id) => s.regions.find(r=>r.id===id);
@@ -63,7 +67,7 @@ export function newGame(player='caesar'){
   // A new campaign starts with frontier observations, not every foreign army's
   // exact opening location. Existing saves keep their accumulated sightings.
   for(const targets of Object.values(s.knowledge))for(const knowledge of Object.values(targets))knowledge.sightings={};
-  linkCommanders(s);observeArmies(s);observeControl(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);return initializeGovernments(s);
+  linkCommanders(s);observeArmies(s);observeControl(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);initializeMail(s);return initializeGovernments(s);
 }
 
 export function newDynastyScenario(){const s=newGame('egypt');createDisputedHeirScenario(s);return s}
@@ -106,7 +110,7 @@ export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);syncPeaceLetters(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
@@ -219,6 +223,7 @@ export function diplomacy(s, actor, target, action, options={}){
   if(action==='break' && isAllied(s,actor,target)){const prior=s.alliances.find(p=>p.includes(actor)&&p.includes(target)),terms=prior[2]||fullAllianceTerms(s,{legacy:true});(s.world.allianceHistory||=[]).push({parties:prior.slice(0,2),terms,ended:{year:s.year,month:s.month,actor},outcome:'breached'});s.alliances=s.alliances.filter(p=>!(p.includes(actor)&&p.includes(target)));s.relations[key]=relation(s,actor,target)-20;s.diplomaticCredibility||={};s.diplomaticCredibility[actor]=Math.max(0,(s.diplomaticCredibility[actor]??100)-terms.breachPenalty);rememberPoliticalEvent(s,target,actor,'broken_treaty',-12);if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} broke its alliance with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}解除了与${FACTIONS[target].short[1]}的同盟。`,{other:actor===s.player?target:actor});return true}
   if(action==='war' && !isWar(s,actor,target)){
     if(isAllied(s,actor,target)||activeAgreement(s,actor,target,'non_aggression'))return false;
+    const warsBefore=s.wars.map(w=>w.slice());
     const playerWarsBefore=new Set(s.wars.filter(w=>w.includes(s.player)).map(w=>w.find(id=>id!==s.player)));
     s.wars.push([actor,target]);
     for(const p of s.alliances.filter(p=>p.includes(target))){const ally=p.find(x=>x!==target);if(ally!==actor&&!isWar(s,ally,actor)&&!isAllied(s,ally,actor)&&!activeAgreement(s,ally,actor,'non_aggression'))s.wars.push([ally,actor])}
@@ -239,12 +244,14 @@ export function diplomacy(s, actor, target, action, options={}){
     s.factions[actor].legitimacy=Math.max(0,s.factions[actor].legitimacy-5);
     if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} declared war on ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}向${FACTIONS[target].short[1]}宣战。`,{other:actor===s.player?target:actor});
     else for(const enemy of s.wars.filter(w=>w.includes(s.player)).map(w=>w.find(id=>id!==s.player)).filter(id=>!playerWarsBefore.has(id))){log(s,`An alliance has brought your faction into war with ${FACTIONS[enemy].short[0]}.`,`同盟义务使本方与${FACTIONS[enemy].short[1]}进入战争。`)}
+    warLetters(s,warsBefore);
     return true;
   }
   if(action==='peace' && isWar(s,actor,target)){
     // The responding government knows its own forces, but judges the sender by its reports.
     if(!options.acceptedByPlayer && estimatedStrength(s,target,actor)<strength(s,target)*Math.max(.35,.6-(activeModifiers(s,actor).pressure||0)/100) && s.factions[target].stability>35)return false;
     s.wars=s.wars.filter(w=>!(w.includes(actor)&&w.includes(target)));
+    reconcilePeacePersonnel(s);
     s.relations[key]=-20;
     for(const a of s.armies.filter(a=>a.owner===actor||a.owner===target)){
       const other=a.owner===actor?target:actor;
@@ -464,6 +471,10 @@ function arrive(s,a){
   if(target.owner!==a.owner&&isWar(s,a.owner,target.owner)){
     if(target.fort>0){a.siege={region:target.id,remaining:Math.max(1,target.fort*2-siegeWorks)};delete a.planSiegeWorks;if(a.owner===s.player||target.owner===s.player)log(s,`${a.name[0]} began a siege at ${target.name[0]}.`,`${a.name[1]}开始围攻${target.name[1]}。`)}
     else {const witnessed=a.owner===s.player||target.owner===s.player;target.owner=a.owner;target.loyalty=38;if(witnessed)log(s,`${FACTIONS[a.owner].short[0]} occupied ${target.name[0]}.`,`${FACTIONS[a.owner].short[1]}占领了${target.name[1]}。`)}
+    if(target.fort>0&&target.owner===s.player)sendLetter(s,{senderInstitution:s.player,senderFaction:s.player,recipient:s.player,category:'military',priority:'critical',
+      subject:[`${target.name[0]} under siege`,`${target.name[1]}遭到围攻`],
+      body:[`An enemy force has begun a siege at ${target.name[0]}. This report records the situation when dispatched.`,`敌军已开始围攻${target.name[1]}。本报告记载发信时的局势。`],
+      source:target.id,options:['view_location','war_council','acknowledge'],context:{kind:'siege',region:target.id}});
   }
 }
 
@@ -759,8 +770,9 @@ export function advancePeacefulSettlement(s){
 
 export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   if(s.defeat)return s;
-  initializeWorld(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
+  initializeWorld(s);initializeMail(s);initializeMailReports(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
   const chronicleBefore=captureCampaignState(s);
+  const warsBefore=s.wars.map(w=>w.slice());
   s.month++;if(s.month>12){s.month=1;s.year++}
   refreshReportConfidence(s);
   advanceInventions(s);advanceOffices(s);economy(s);advanceAgreements(s);advanceCoalitions(s);advanceReligion(s);
@@ -772,20 +784,24 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   advanceMovements(s,{autoplayPlayer});
-  resolveInquiries(s,{autoplayPlayer});advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});linkCommanders(s);advancePersonalDiplomacy(s);
+  resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});linkCommanders(s);advancePersonalDiplomacy(s);
   advanceControlScouts(s);observeArmies(s);observeFormationRecon(s);observeControl(s);if(s.month%6===0)observeBalanceOfPower(s);
   if(imperiumOn(s)){advanceBattlePlans(s,{autoplayPlayer,issueOrder:issueMilitaryOrder,estimatedStrength,log});advanceCommandInfluence(s,{log})}
   // Friendly courts may forward fresh scout sightings; recipients judge them on their own.
   advanceStrategicWarnings(s,{autoplayPlayer,letterMonths,issueOrder:issueMilitaryOrder,log});
   advanceStrategicOffers(s,{autoplayPlayer});
+  advanceMail(s,{proposeAgreement,diplomacy});
   for(const owner of Object.keys(s.factions).filter(id=>autoplayPlayer||id!==s.player)){
     const override=autoplayPlayer&&owner===s.player&&playerDifficulty;if(!override){aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner);continue}
     const originalDifficulty=s.difficulty,hadDifficulty=Object.prototype.hasOwnProperty.call(s,'difficulty');s.difficulty=playerDifficulty;
     try{aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner)}finally{if(hadDifficulty)s.difficulty=originalDifficulty;else delete s.difficulty}
   }
   observeDiplomacy(s);
+  warLetters(s,warsBefore);
   advanceRomanDefeat(s);if(!s.defeat){advanceRomanVictory(s);advancePeacefulSettlement(s)}
   advanceHanWorld(s);
-  recordCampaignTurn(s,chronicleBefore);
+  chronicleLetters(s,recordCampaignTurn(s,chronicleBefore));
+  advanceMailReports(s);
   return s;
 }
+
