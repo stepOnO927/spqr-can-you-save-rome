@@ -14,7 +14,7 @@ import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligi
 import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=32';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
-import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=3';
+import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=4';
 import {nationalBudget} from './national-budget.js?v=15';
 export {nationalBudget} from './national-budget.js?v=15';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
@@ -219,10 +219,37 @@ function concludePeace(s,actor,target){
 const royalCourts=new Set(['egypt','numidia','mauretania','armenia','parthia','galatia','bosporus']);
 export function royalCourtCredit(s,actor,target){return royalCourts.has(target)?activeEffects(s,actor).royalCourtCredit||0:0}
 
+const civilConcession=(s,actor,target)=>s.regions.find(r=>r.owner===target&&adjacent(r.id,s).some(link=>region(s,link.to)?.owner===actor));
+function concludeCivilSettlement(s,actor,target,playerAccepted=false){
+ const concession=civilConcession(s,actor,target);
+ if(concession){const previousOwner=concession.owner;concession.owner=actor;concession.loyalty=Math.max(35,concession.loyalty);recordControl(s,concession,previousOwner,'settlement',{attacker:actor,defender:target})}
+ concludePeace(s,actor,target);
+ s.factions[actor].legitimacy=Math.min(100,s.factions[actor].legitimacy+8);
+ s.factions[actor].stability=Math.min(100,s.factions[actor].stability+3);
+ s.relations[pair(actor,target)]=0;
+ s.civilSettlement={winner:actor,loser:target,year:s.year,month:s.month,territory:concession?.id||null};
+ s.world.governments[actor]=deriveGovernment(s,actor);s.world.governments[target]=deriveGovernment(s,target);
+ setCampaignOutcome(s,{kind:'settlement',winner:actor,loser:target,year:s.year,month:s.month,territory:concession?.id||null,playerAccepted});
+ log(s,`${FACTIONS[target].short[0]} accepted a civil settlement. The war ended and ${FACTIONS[actor].short[0]} gained political legitimacy.`,`${FACTIONS[target].short[1]}接受内战和议。战争结束，${FACTIONS[actor].short[1]}获得政治合法性。`);
+ recordDiplomacy(s,actor,target,'settlement');evaluateAchievements(s);
+}
+
+export function respondCivilSettlement(s,accept){
+ const offer=s.pendingCivilSettlement;
+ if(!offer||offer.target!==s.player)return {ok:false,reason:'offer'};
+ delete s.pendingCivilSettlement;
+ if(!accept){log(s,'You rejected the civil settlement. The war continues.','你拒绝了内战和议，战争继续。');return {ok:true,accepted:false}}
+ if(s.campaignOutcome||!settlementEligible(s,offer.actor,offer.target))return {ok:false,reason:'terms-changed'};
+ concludeCivilSettlement(s,offer.actor,offer.target,true);
+ endCampaign(s,'defeat');
+ return {ok:true,accepted:true};
+}
+
 export function diplomacy(s, actor, target, action){
   if(actor===target || !s.factions[actor] || !s.factions[target] || target==='rebels'||actor==='rebels' || !s.regions.some(r=>r.owner===actor) || !s.regions.some(r=>r.owner===target))return false;
   const key=pair(actor,target);
   if(action==='settlement'&&['caesar','senate'].includes(actor)&&target===(actor==='caesar'?'senate':'caesar')&&isWar(s,actor,target)){
+    if(s.pendingCivilSettlement)return false;
     const offerKey=pair(actor,target),now=s.year*12+s.month,last=s.lastSettlementOffer?.[offerKey]??-Infinity;
     if(s.factions[actor].treasury<4||now-last<3)return false;
     s.factions[actor].treasury-=4;(s.lastSettlementOffer||={})[offerKey]=now;
@@ -230,17 +257,8 @@ export function diplomacy(s, actor, target, action){
       if(actor===s.player)log(s,`${FACTIONS[target].short[0]} rejected the civil settlement proposal. The diplomatic mission cost 4 treasury.`,`${FACTIONS[target].short[1]}拒绝内战和议。外交使团消耗4国库。`);
       return false;
     }
-    const concession=s.regions.find(r=>r.owner===target&&adjacent(r.id,s).some(link=>region(s,link.to)?.owner===actor));
-    if(concession){const previousOwner=concession.owner;concession.owner=actor;concession.loyalty=Math.max(35,concession.loyalty);recordControl(s,concession,previousOwner,'settlement',{attacker:actor,defender:target})}
-    concludePeace(s,actor,target);
-    s.factions[actor].legitimacy=Math.min(100,s.factions[actor].legitimacy+8);
-    s.factions[actor].stability=Math.min(100,s.factions[actor].stability+3);
-    s.relations[key]=0;
-    s.civilSettlement={winner:actor,loser:target,year:s.year,month:s.month,territory:concession?.id||null};
-    s.world.governments[actor]=deriveGovernment(s,actor);s.world.governments[target]=deriveGovernment(s,target);
-    setCampaignOutcome(s,{kind:'settlement',winner:actor,loser:target,year:s.year,month:s.month,territory:concession?.id||null});
-    log(s,`${FACTIONS[target].short[0]} accepted a civil settlement. The war ended and ${FACTIONS[actor].short[0]} gained political legitimacy.`,`${FACTIONS[target].short[1]}接受内战和议。战争结束，${FACTIONS[actor].short[1]}获得政治合法性。`);
-    recordDiplomacy(s,actor,target,'settlement');evaluateAchievements(s);
+    if(target===s.player){s.pendingCivilSettlement={actor,target,year:s.year,month:s.month,territory:civilConcession(s,actor,target)?.id||null};log(s,`${FACTIONS[actor].short[0]} offered a civil settlement. You must accept or decline before the war can end.`,`${FACTIONS[actor].short[1]}提出内战和议。是否结束战争由你决定。`);return true}
+    concludeCivilSettlement(s,actor,target);
     return true;
   }
   if(action==='improve' && !isWar(s,actor,target) && s.factions[actor].treasury>=10){s.factions[actor].treasury-=10;s.relations[key]=Math.min(100,relation(s,actor,target)+15+(activeEffects(s,actor).diplomacy||0));log(s,`${FACTIONS[actor].short[0]} improved relations with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}改善了与${FACTIONS[target].short[1]}的关系。`);recordDiplomacy(s,actor,target,action);return true}

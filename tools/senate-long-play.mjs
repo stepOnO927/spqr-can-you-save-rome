@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,trainArmy} from '../engine.js';
+import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,trainArmy,respondCivilSettlement} from '../engine.js';
 import {assessment,sendScouts,probePositions,delayAttack,latestRecon,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
-import {campaignEndingHtml} from '../achievement-ui.js';
+import {campaignEndingHtml,campaignSettlementHtml} from '../achievement-ui.js';
 import {campaignTurn} from '../campaign-reports.js';
 import {endCampaign,revealedAchievements} from '../achievement-system.js';
 
@@ -22,7 +22,7 @@ assert.equal(order('Pompey to Italian front',moveArmy(s,'pompey','t011')),true);
 const front=army(s,'italy');
 if(front?.region==='t011'&&region(s,'italiaN').owner==='caesar')order('scouts north Italy',sendScouts(s,'italy','italiaN'));
 
-for(let month=2;month<48&&!s.achievementState.finalized;month++){
+for(let month=2;month<48&&!s.achievementState.finalized&&!s.pendingCivilSettlement;month++){
  const levies=army(s,'italy'),pompey=army(s,'pompey');
  const canOrder=u=>u&&u.men>=600&&!u.move&&!u.siege&&!u.reconPending&&!u.trainingRemaining;
  if(month===4&&canOrder(levies)&&region(s,'italiaN').owner==='caesar')order('probe north Italy',probePositions(s,'italy','italiaN'));
@@ -61,14 +61,40 @@ assert.ok(campaignTurn(s.year,s.month)-campaignTurn(-49,1)>=36,'the player route
 for(const decision of ['probe north Italy','delay for Pompey','Pompey attacks north Italy','reload'])assert.ok(journal.some(entry=>entry.includes(decision)),`${decision} must occur in the long play`);
 assert.ok((s.battles?.length||0)>=4,'the simulation must produce genuine battlefield outcomes');
 for(const battle of s.battles||[])if(battle.attacker.owner==='senate'||battle.defender.owner==='senate')for(const language of ['en','zh'])assert.match(afterActionHtml(battle,'senate',language),language==='en'?/AFTER-ACTION REVIEW/:/战后复盘/);
-if(s.achievementState.finalized){
+if(s.pendingCivilSettlement){
+ assert.equal(s.achievementState.finalized,false,'an AI proposal must not force the player to concede');
+ assert.equal(s.campaignOutcome??null,null,'a proposal is not a result');
+ assert.deepEqual(revealedAchievements(s),[],'a proposal must not reveal achievements');
+ for(const [language,prompt] of [['en','DECLINE · CONTINUE WAR'],['zh','拒绝，继续战争']]){
+  const offer=campaignSettlementHtml(s,language);
+  assert.match(offer,new RegExp(prompt));
+  if(s.pendingCivilSettlement.territory)assert.ok(offer.includes(region(s,s.pendingCivilSettlement.territory).name[language==='zh'?1:0]),'the exact concession must be disclosed');
+ }
+ const offered=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.ok(offered.pendingCivilSettlement,'the offer must survive save reload');
+ const ceded=offered.pendingCivilSettlement.territory;
+ assert.equal(respondCivilSettlement(offered,true).ok,true);
+ assert.equal(offered.achievementState.result,'defeat');
+ assert.equal(offered.campaignOutcome?.kind,'settlement');
+ assert.equal(offered.campaignOutcome?.playerAccepted,true);
+ if(ceded)assert.equal(region(offered,ceded).owner,'caesar');
+ for(const [language,explanation] of [['en','You accepted the rival'],['zh','你接受了对方提出的内战和议']])assert.match(campaignEndingHtml(offered,language),new RegExp(explanation));
+ assert.equal(endCampaign(upgradeSave(JSON.parse(JSON.stringify(offered))),'defeat').ok,false,'final rewards cannot be claimed again after reload');
+ assert.equal(respondCivilSettlement(s,false).ok,true);
+ assert.equal(s.achievementState.finalized,false);
+ assert.ok(s.wars.some(w=>w.includes('senate')&&w.includes('caesar')),'declining must keep the war active');
+ assert.equal(campaignEndingHtml(s,'en'),'');
+}else if(s.achievementState.finalized){
  assert.equal(s.achievementState.result,'defeat');assert.equal(s.campaignOutcome?.winner,'caesar');
  for(const [language,title,summary] of [['en','Defeat','CAMPAIGN SUMMARY'],['zh','战败','战役总览']]){
-  assert.match(campaignEndingHtml(s,language),new RegExp(title));
-  assert.match(campaignEndingHtml(s,language),new RegExp(summary));
+  const ending=campaignEndingHtml(s,language);
+  assert.match(ending,new RegExp(title));
+  assert.match(ending,new RegExp(summary));
+  assert.match(ending,/ending-result-reason/,'a defeat must explain its cause in both languages');
  }
  const revealed=revealedAchievements(s),restored=upgradeSave(JSON.parse(JSON.stringify(s)));
  assert.deepEqual(revealedAchievements(restored).map(x=>x.id),revealed.map(x=>x.id));
+ assert.match(campaignEndingHtml(restored,'en'),/ending-result-reason/,'the final explanation must survive save reload');
  assert.equal(endCampaign(restored,'defeat').ok,false,'reloading a final result cannot finalize it again');
 }else{
  assert.equal(`${s.year}/${s.month}`,'-45/1');

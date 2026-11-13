@@ -41,6 +41,7 @@ export function setCampaignOutcome(s,outcome){
   return true;
  }
  if(s.campaignOutcome)return false;
+ delete s.pendingCivilSettlement;
  s.campaignOutcome=outcome;s.victory=outcome.winner===s.player;
  if(outcome.loser===s.player)s.terminalResult='defeat';
  return true;

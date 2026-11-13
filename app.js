@@ -3,11 +3,11 @@ import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=28';
 import {identity,factionMark} from './identity.js?v=2';
 import {CHARACTER_CATALOG} from './characters.js?v=15';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=9';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,warContributionPlan,collectWarContributions,emergencyProvisionsPlan,collectEmergencyProvisions,diplomacy,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=170';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,previewMarch,recruit,trainArmy,setTax,warContributionPlan,collectWarContributions,emergencyProvisionsPlan,collectEmergencyProvisions,diplomacy,respondCivilSettlement,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials,recruitFigure} from './engine.js?v=171';
 import {importCampaign,downloadCampaign} from './save-files.js?v=16';
 import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js?v=9';
 import {endCampaign} from './achievement-system.js?v=5';
-import {campaignEndingHtml,campaignVictoryHtml} from './achievement-ui.js?v=10';
+import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from './achievement-ui.js?v=11';
 import {budgetHtml} from './budget-ui.js?v=18';
 import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js?v=24';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from './development-ui.js?v=36';
@@ -100,6 +100,7 @@ function render(){
   document.querySelector('.controls').insertAdjacentHTML('afterbegin',`<button id="open-notifications" class="notification-toggle">${reportLabel('notifications',lang)} <b>${unreadCount(state)}</b></button>`);
   document.querySelector('.controls').insertAdjacentHTML('beforeend',`<button id="end-campaign" ${state.achievementState?.finalized?'disabled':''}>${lang==='zh'?'结束战役':'END CAMPAIGN'}</button>`);
   if(state.achievementState?.finalized){document.querySelector('#play').disabled=true;document.querySelector('#step').disabled=true;document.querySelector('#app').insertAdjacentHTML('beforeend',campaignEndingHtml(state,lang))}
+  else if(state.pendingCivilSettlement)document.querySelector('#app').insertAdjacentHTML('beforeend',campaignSettlementHtml(state,lang));
   else if(state.victory&&!state.victoryAcknowledged)document.querySelector('#app').insertAdjacentHTML('beforeend',campaignVictoryHtml(state,lang));
   const latest=state.campaignEvents?.find(e=>e.type==='control'&&e.previousOwner===state.player&&e.year===state.year&&e.month===state.month);
   if(latest&&tab==='map'&&latest.id!==dismissedAlert){const copy=eventText(state,latest,lang);document.querySelector('.map-wrap').insertAdjacentHTML('beforeend',`<div class="territory-alert">${factionMark(latest.newOwner,'insignia')}<small>${lang==='zh'?'紧急军报':'URGENT DISPATCH'} · ${eventDate(latest,lang)}</small><strong>${esc(copy.title)}</strong><span>${esc(copy.description)}</span><button data-report-region="${latest.regionId}">${reportLabel('location',lang)}</button>${latest.battleId?`<button data-report-battle="${latest.battleId}">${reportLabel('battle',lang)}</button>`:''}<button data-report-army-list="1">${reportLabel('armies',lang)}</button><button data-dismiss-alert="${latest.id}">${reportLabel('close',lang)}</button></div>`)}
@@ -141,8 +142,8 @@ function bindEntry(){
 function stop(){playing=false;if(timer){clearInterval(timer);timer=null}}
 function syncFinalizedProfile(){if(!state.achievementState?.finalized)return;const profile=loadProfile();recordCampaign(profile,state);saveProfile(profile)}
 function finalizeCampaign(result){stop();const ended=endCampaign(state,result);if(ended.ok)syncFinalizedProfile();render()}
-function advanceMonth(){if(state.achievementState?.finalized){stop();render();return}const before=state.nextCampaignEvent;tick(state);if(state.achievementState?.finalized){syncFinalizedProfile();stop()}if(playing&&state.reportPreferences?.pauseCritical&&latestCritical(state,before))stop();render()}
-function setPlaying(on){stop();if(state.achievementState?.finalized){render();return}playing=on;if(on)timer=setInterval(advanceMonth,speed===1?1500:speed===2?800:350);render()}
+function advanceMonth(){if(state.achievementState?.finalized||state.pendingCivilSettlement){stop();render();return}const before=state.nextCampaignEvent;tick(state);if(state.achievementState?.finalized){syncFinalizedProfile();stop()}if(state.pendingCivilSettlement||playing&&state.reportPreferences?.pauseCritical&&latestCritical(state,before))stop();render()}
+function setPlaying(on){stop();if(state.achievementState?.finalized||state.pendingCivilSettlement){render();return}playing=on;if(on)timer=setInterval(advanceMonth,speed===1?1500:speed===2?800:350);render()}
 function slot(action){const choice=prompt(t('savePrompt'),'1');if(!choice||!['1','2','3'].includes(choice))return;const key=`spqr-save-${choice}`;if(action==='save'){localStorage.setItem(key,JSON.stringify(state));flash(`${t('saved')} ${choice}`)}else{const raw=localStorage.getItem(key);if(!raw){flash(t('empty'));return}try{const loaded=importCampaign(raw);offerMigration(loaded)}catch{flash(lang==='zh'?'存档无法读取。':'This save could not be read.')}}}
 function bind(){
   document.querySelector('#open-notifications').onclick=()=>{tab='notifications';panelOpen=true;render()};
@@ -186,6 +187,9 @@ function bind(){
   document.querySelector('#lang').onclick=()=>{lang=lang==='en'?'zh':'en';localStorage.setItem('spqr-lang',lang);render()};
   document.querySelector('#ending-download')?.addEventListener('click',()=>downloadCampaign(state));
   document.querySelector('#ending-language')?.addEventListener('click',()=>document.querySelector('#lang').click());
+  document.querySelector('#settlement-language')?.addEventListener('click',()=>document.querySelector('#lang').click());
+  document.querySelector('#settlement-decline')?.addEventListener('click',()=>{respondCivilSettlement(state,false);render()});
+  document.querySelector('#settlement-accept')?.addEventListener('click',()=>{const result=respondCivilSettlement(state,true);if(result.ok)syncFinalizedProfile();render()});
   document.querySelector('#victory-language')?.addEventListener('click',()=>document.querySelector('#lang').click());
   document.querySelector('#open-atlas').onclick=()=>{try{stageHandoff(sessionStorage,state,'atlas');stop();location.assign('./map-lab/')}catch{flash(lang==='zh'?'无法切换：浏览器未能暂存战役，请检查存储设置。':'Could not transfer the campaign. Check browser storage settings.')}};
   document.querySelector('#new').onclick=()=>{stop();setupOpen=true;render()};

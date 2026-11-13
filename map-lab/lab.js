@@ -12,13 +12,13 @@ import {holdPosition,strategicRetreat,armySupply,encircled} from '../grand-opera
 import {importCampaign,downloadCampaign} from '../save-files.js?v=16';
 import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js?v=9';
 import {endCampaign} from '../achievement-system.js?v=5';
-import {campaignEndingHtml,campaignVictoryHtml} from '../achievement-ui.js?v=10';
+import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../achievement-ui.js?v=11';
 import {nationalBudget} from '../national-budget.js?v=15';
 import {budgetHtml} from '../budget-ui.js?v=18';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=24';
 import {physicalLabels} from './physical-labels.js?v=1';
-import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=170';
+import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=171';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=36';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
@@ -35,7 +35,7 @@ import {assessment,sendScouts,probePositions,delayAttack,markReconRegion,request
 import {intelligenceHtml,afterActionHtml,fortificationText} from '../recon-ui.js?v=6';
 import {renderNavalPanel} from './naval-ui.js?v=48';
 import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=32';
-import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=170';
+import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=171';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
@@ -122,7 +122,7 @@ const atlasFocus=document.createElement('button');atlasFocus.id='atlas-focus';at
 const settingsButton=document.createElement('button');settingsButton.id='settings';settingsButton.className='hud-button';document.querySelector('.mast').insertBefore(settingsButton,document.querySelector('#guide-restart'));
 const navalButton=document.createElement('button');navalButton.id='naval';navalButton.className='hud-button';document.querySelector('.mast').insertBefore(navalButton,document.querySelector('#development'));
 const endButton=document.createElement('button');endButton.id='end-campaign';endButton.className='hud-button';document.querySelector('.mast').insertBefore(endButton,document.querySelector('#save-slot'));
-function refreshEnding(){let overlay=document.querySelector('#ending-overlay');const html=state.achievementState?.finalized?campaignEndingHtml(state,lang):campaignVictoryHtml(state,lang);if(!html){overlay?.remove();return}if(!overlay){overlay=document.createElement('div');overlay.id='ending-overlay';document.body.append(overlay)}overlay.innerHTML=html;overlay.querySelector('#ending-download')?.addEventListener('click',()=>downloadCampaign(state));overlay.querySelector('#ending-language')?.addEventListener('click',()=>document.querySelector('#language').click());overlay.querySelector('#victory-language')?.addEventListener('click',()=>document.querySelector('#language').click());overlay.querySelector('#victory-continue')?.addEventListener('click',()=>{state.victoryAcknowledged=true;renderHud()});overlay.querySelector('#victory-end')?.addEventListener('click',()=>finalizeCampaign('victory'));overlay.querySelector('#victory-chronicle')?.addEventListener('click',()=>{state.victoryAcknowledged=true;renderHud();document.querySelector('#chronicle')?.click()})}
+function refreshEnding(){let overlay=document.querySelector('#ending-overlay');const html=state.achievementState?.finalized?campaignEndingHtml(state,lang):state.pendingCivilSettlement?campaignSettlementHtml(state,lang):campaignVictoryHtml(state,lang);if(!html){overlay?.remove();return}if(!overlay){overlay=document.createElement('div');overlay.id='ending-overlay';document.body.append(overlay)}overlay.innerHTML=html;overlay.querySelector('#settlement-language')?.addEventListener('click',()=>document.querySelector('#language').click());overlay.querySelector('#settlement-decline')?.addEventListener('click',()=>{respondCivilSettlement(state,false);renderHud()});overlay.querySelector('#settlement-accept')?.addEventListener('click',()=>{const result=respondCivilSettlement(state,true);if(result.ok)syncFinalizedProfile();renderHud()});overlay.querySelector('#ending-download')?.addEventListener('click',()=>downloadCampaign(state));overlay.querySelector('#ending-language')?.addEventListener('click',()=>document.querySelector('#language').click());overlay.querySelector('#victory-language')?.addEventListener('click',()=>document.querySelector('#language').click());overlay.querySelector('#victory-continue')?.addEventListener('click',()=>{state.victoryAcknowledged=true;renderHud()});overlay.querySelector('#victory-end')?.addEventListener('click',()=>finalizeCampaign('victory'));overlay.querySelector('#victory-chronicle')?.addEventListener('click',()=>{state.victoryAcknowledged=true;renderHud();document.querySelector('#chronicle')?.click()})}
 function syncFinalizedProfile(){if(!state.achievementState?.finalized)return;const profile=loadProfile();recordCampaign(profile,state);saveProfile(profile)}
 function finalizeCampaign(result){setPlaying(false);const ended=endCampaign(state,result);if(ended.ok)syncFinalizedProfile();renderHud()}
 endButton.onclick=()=>finalizeCampaign('retired');
@@ -417,10 +417,11 @@ function stepZoom(delta){const now=performance.now(),base=lastButtonZoom!==null&
 document.querySelector('#zoom-in').onclick=()=>stepZoom(1);document.querySelector('#zoom-out').onclick=()=>stepZoom(-1);document.querySelector('#reset').onclick=()=>{lastButtonZoom=null;map.flyTo({center:campaignCenter(state.player),zoom:5.45})};
 
 function advanceTurn(){
- if(state.achievementState?.finalized){setPlaying(false);return}
+ if(state.achievementState?.finalized||state.pendingCivilSettlement){setPlaying(false);return}
  const before=state.nextCampaignEvent;
  tick(state);
  if(state.achievementState?.finalized){syncFinalizedProfile();setPlaying(false)}
+ if(state.pendingCivilSettlement)setPlaying(false);
  const currentEvents=state.campaignEvents.filter(e=>Number(e.id.slice(3))>=before);
  renderArmies();
  for(const event of currentEvents.filter(e=>e.type==='battle'&&e.regionId&&namedPoints[e.regionId])){
@@ -456,7 +457,7 @@ function advanceTurn(){
 }
 document.querySelector('#advance').onclick=advanceTurn;
 document.querySelector('#development').onclick=()=>showDevelopment();
-function setPlaying(on){if(timer)clearInterval(timer);timer=null;playing=on&&!state.achievementState?.finalized;if(playing)timer=setInterval(advanceTurn,speed===1?2000:speed===2?1000:500);renderHud()}
+function setPlaying(on){if(timer)clearInterval(timer);timer=null;playing=on&&!state.achievementState?.finalized&&!state.pendingCivilSettlement;if(playing)timer=setInterval(advanceTurn,speed===1?2000:speed===2?1000:500);renderHud()}
 document.querySelector('#play-time').onclick=()=>setPlaying(!playing);document.querySelector('#time-speed').onclick=()=>{speed=speed===1?2:speed===2?4:1;if(playing)setPlaying(true);else renderHud()};
 
 document.querySelector('#return-campaign').onclick=e=>{e.preventDefault();try{stageHandoff(sessionStorage,state,'campaign');setPlaying(false);location.assign('../')}catch{status.textContent=lang==='zh'?'无法切换：浏览器未能暂存战役，请检查存储设置。':'Could not transfer the campaign. Check browser storage settings.';status.style.display='block'}};
