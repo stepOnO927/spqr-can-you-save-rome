@@ -123,6 +123,13 @@ Kangju-to-Han horse purchase and delivery in English and Chinese. Han,
 Kangju, Yuezhi and Parthia AI courts can seek treaties and place orders
 without player input; their route plans use dated control reports, while
 dispatch checks the actual road.
+The independent campaign now lets a player set low, standard or high transit
+customs duties. New caravan quotes and AI route costs use that saved rate;
+already dispatched caravans retain their prepaid customs charge. A real
+Han-to-Parthia shipment crossing Yuezhi territory verifies that the Yuezhi
+treasury receives the locked duty once after delivery. The bilingual market
+browser test checks the policy control and save/load. Export bans, merchant
+privileges and broader tariff diplomacy remain to be built.
 The 120-month market simulation verifies that at least four AI courts place
 orders against real surplus, deliveries complete, stocks and prices remain
 bounded, escrow resolves, merchant IDs persist, transport fees balance, and

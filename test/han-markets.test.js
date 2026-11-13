@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=han-1';
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=han-1';
-import {advanceEasternMarkets,placeEasternTrade,quoteEasternTrade,easternMarketOffers} from '../han/markets.js?v=faces-of-empire-1';
+import {advanceEasternMarkets,placeEasternTrade,quoteEasternTrade,easternMarketOffers,setEasternTariffPolicy} from '../han/markets.js?v=faces-of-empire-1';
 import {advanceSilk} from '../han/silk-road.js?v=han-1';
 import {roll} from '../han/util.js?v=han-1';
 
@@ -24,6 +24,36 @@ test('Eastern markets use measured stock and a real Kangju–Han horse route',()
  assert.equal(loaded.tradeMarkets.shipments[0].status,'delivered');
  assert.equal(loaded.tradeMarkets.transactions.filter(x=>x.shipment===result.shipment.id).length,1);
  assert.equal(loaded.tradeMarkets.transportSpent+loaded.tradeMarkets.merchantFees,loaded.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
+});
+
+test('a transit state can set customs duties without repricing a caravan already underway',()=>{
+ let s=newHanGame('yuezhi',{seed:21});s.tradeMarkets.embeddedRoman=true;
+ for(const r of s.regions){r.fort=2;r.unrest=0}
+ s.treaties.push({type:'market',parties:['han','parthia']});s.factions.parthia.treasury=2000;
+ s.tradeMarkets.regions.changan.goods.silk.stock=60;
+ const request={seller:'han',buyer:'parthia',origin:'changan',destination:'parthia',commodity:'silk',quantity:10};
+ const standard=quoteEasternTrade(s,request);assert.equal(standard.ok,true,standard.reason);
+ assert.ok(standard.tariffs.some(t=>t.owner==='yuezhi'),'the caravan must actually cross Yuezhi territory');
+ assert.equal(setEasternTariffPolicy(s,'han','high').ok,false,'a player cannot change a foreign policy');
+ assert.equal(setEasternTariffPolicy(s,'yuezhi','extreme').ok,false);
+ assert.equal(setEasternTariffPolicy(s,'yuezhi','high').ok,true);
+ const high=quoteEasternTrade(s,request);assert.equal(high.ok,true);assert.ok(high.total>standard.total);
+ const duty=high.tariffs.find(t=>t.owner==='yuezhi').amount,cash=s.factions.yuezhi.treasury;
+ const placed=placeEasternTrade(s,request);assert.equal(placed.ok,true,placed.reason);
+ assert.equal(placed.shipment.tariffs.find(t=>t.owner==='yuezhi').amount,duty);
+ assert.equal(setEasternTariffPolicy(s,'yuezhi','low').ok,true);
+ const low=quoteEasternTrade(s,request);assert.ok(low.total<high.total);
+ s=loadHanSave(serialize(s));assert.equal(s.tradeMarkets.tariffs.yuezhi,.02);
+ const shipment=s.tradeMarkets.shipments.find(x=>x.id===placed.shipment.id);
+ assert.equal(shipment.tariffs.find(t=>t.owner==='yuezhi').amount,duty);
+ for(let i=0;i<high.months;i++)next(s);
+ assert.equal(shipment.status,'delivered');
+ assert.equal(s.factions.yuezhi.treasury,cash+duty,'the actual transit government receives the locked duty exactly once');
+ assert.equal(s.tradeMarkets.transactions.filter(t=>t.shipment===shipment.id).length,1);
+ s.tradeMarkets.tariffs.yuezhi=.2;
+ s=loadHanSave(serialize(s));assert.equal(s.tradeMarkets.tariffs.yuezhi,.2,'an older custom rate remains compatible');
+ s.tradeMarkets.tariffs.yuezhi=NaN;
+ s=loadHanSave(serialize(s));assert.equal(s.tradeMarkets.tariffs.yuezhi,.05,'an invalid saved rate cannot poison future quotes');
 });
 
 test('an oasis intermediary resells delivered Han silk as a second paid shipment',()=>{

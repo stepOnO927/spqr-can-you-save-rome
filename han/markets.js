@@ -10,6 +10,7 @@ const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
 const region=(s,id)=>s.regions.find(r=>r.id===id);
 const route=(a,b)=>ROUTES.find(r=>r.a===a&&r.b===b||r.a===b&&r.b===a);
 const tradeTreaty=(s,a,b)=>a===b||!!(treaty(s,'market',a,b)||treaty(s,'caravan',a,b));
+export const TARIFF_POLICIES=Object.freeze({low:.02,standard:.05,high:.15});
 const initialOwner=new Map(REGIONS.map(r=>[r.id,r.owner]));
 const network=new Map(REGIONS.map(r=>[r.id,[]]));
 for(const link of ROUTES){network.get(link.a)?.push({next:link.b,months:link.months});network.get(link.b)?.push({next:link.a,months:link.months})}
@@ -48,9 +49,17 @@ export function initializeEasternMarkets(s){
  markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};markets.nextShipment||=1;markets.transportSpent??=0;markets.merchantFees??=0;
  markets.externalTreasury??=10000;
  markets.lostGoods||={};
+ for(const [owner,rate] of Object.entries(markets.tariffs))markets.tariffs[owner]=Number.isFinite(rate)?clamp(rate,0,.3):TARIFF_POLICIES.standard;
  for(const [faction,ids] of Object.entries(markets.merchants))if(!Array.isArray(ids))markets.merchants[faction]=ids?[ids]:[];
  for(const r of s.regions){const market=markets.regions[r.id]||={id:r.id,goods:{}};market.goods||={};for(const good of Object.keys(COMMODITIES)){const item=market.goods[good]||=profile(r,good);item.consumed??=0;item.surplusDiscarded??=0}markets.regions[r.id]=market}
  return markets;
+}
+
+export function setEasternTariffPolicy(s,faction,policy){
+ if(faction!==s.player||s.finalized||!s.regions.some(r=>r.owner===faction)||!Object.hasOwn(TARIFF_POLICIES,policy))return {ok:false,reason:'invalid'};
+ const markets=initializeEasternMarkets(s);
+ markets.tariffs[faction]=TARIFF_POLICIES[policy];
+ return {ok:true,policy,rate:markets.tariffs[faction]};
 }
 
 function legsFor(path){return path.slice(1).map((to,i)=>{const from=path[i],link=route(from,to);return {from,to,months:Math.max(1,link.months),kind:link.kind}})}

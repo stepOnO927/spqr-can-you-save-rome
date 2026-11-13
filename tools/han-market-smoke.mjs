@@ -11,6 +11,9 @@ try{
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
  await page.locator('#trade-panel').click();
  assert.match(await page.locator('#inspector').innerText(),/Own stock/);
+ await page.locator('#east-market-tariff').selectOption('high');
+ assert.match(await page.locator('#message').innerText(),/Customs policy updated/);
+ assert.equal(await page.locator('#east-market-tariff').inputValue(),'high');
  await page.locator('#east-market-partner').selectOption('kangju');await page.locator('#east-market-propose').click();
  assert.match(await page.locator('#message').innerText(),/accepted/);
  const value=await page.locator('#east-market-offer option').evaluateAll(options=>options.find(o=>o.textContent.includes('Kangju')&&o.textContent.includes('Horses'))?.value);
@@ -24,13 +27,15 @@ try{
  assert.match(await page.locator('#message').innerText(),/Merchant dispatched/);
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Horses/);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#trade-panel').click();
+ assert.equal(await page.locator('#east-market-tariff').inputValue(),'high');
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Horses/);
  for(let i=0;i<months+2;i++)await page.locator('#advance').click();
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Delivered/);
  assert.match(await page.locator('.market-receipts').innerText(),/Kangju.*Dunhuang/);
  assert.match(await page.locator('.market-receipts').innerText(),/Goods.*Transport.*Tariffs.*Total/);
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
+ assert.match(await page.locator('#inspector').innerText(),/过境关税/);
  assert.match(await page.locator('.market-receipts').innerText(),/货价.*运费.*过境税.*总计/);
  assert.deepEqual(errors,[]);
- console.log('Han market browser smoke passed: treaty, horse quote, dispatch, saved merchant, delivery and bilingual panel.');
+ console.log('Han market browser smoke passed: customs policy, treaty, horse quote, dispatch, saved merchant, delivery and bilingual panel.');
 }finally{await browser.close()}
