@@ -44,12 +44,13 @@ function profile(r,good){
 }
 
 export function initializeEasternMarkets(s){
- const markets=s.tradeMarkets||={regions:{},offers:[],shipments:[],transactions:[],nextShipment:1,merchants:{},tariffs:{},transitTreasury:{},transportSpent:0,merchantFees:0,diplomacy:{attempts:[],nextAt:{}},lastTick:null};
- markets.regions||={};markets.offers||=[];markets.shipments||=[];markets.transactions||=[];markets.merchants||={};markets.tariffs||={};markets.transitTreasury||={};markets.diplomacy||={attempts:[],nextAt:{}};
+ const markets=s.tradeMarkets||={regions:{},offers:[],shipments:[],transactions:[],nextShipment:1,merchants:{},tariffs:{},exportRestrictions:{},transitTreasury:{},transportSpent:0,merchantFees:0,diplomacy:{attempts:[],nextAt:{}},lastTick:null};
+ markets.regions||={};markets.offers||=[];markets.shipments||=[];markets.transactions||=[];markets.merchants||={};markets.tariffs||={};markets.exportRestrictions||={};markets.transitTreasury||={};markets.diplomacy||={attempts:[],nextAt:{}};
  markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};markets.nextShipment||=1;markets.transportSpent??=0;markets.merchantFees??=0;
  markets.externalTreasury??=10000;
  markets.lostGoods||={};
  for(const [owner,rate] of Object.entries(markets.tariffs))markets.tariffs[owner]=Number.isFinite(rate)?clamp(rate,0,.3):TARIFF_POLICIES.standard;
+ for(const [owner,goods] of Object.entries(markets.exportRestrictions))markets.exportRestrictions[owner]=Array.isArray(goods)?[...new Set(goods.filter(good=>Object.hasOwn(COMMODITIES,good)))]:[];
  for(const [faction,ids] of Object.entries(markets.merchants))if(!Array.isArray(ids))markets.merchants[faction]=ids?[ids]:[];
  for(const r of s.regions){const market=markets.regions[r.id]||={id:r.id,goods:{}};market.goods||={};for(const good of Object.keys(COMMODITIES)){const item=market.goods[good]||=profile(r,good);item.consumed??=0;item.surplusDiscarded??=0}markets.regions[r.id]=market}
  return markets;
@@ -60,6 +61,14 @@ export function setEasternTariffPolicy(s,faction,policy){
  const markets=initializeEasternMarkets(s);
  markets.tariffs[faction]=TARIFF_POLICIES[policy];
  return {ok:true,policy,rate:markets.tariffs[faction]};
+}
+
+export function setEasternExportRestriction(s,faction,commodity,restricted){
+ if(faction!==s.player||s.finalized||!s.regions.some(r=>r.owner===faction)||!Object.hasOwn(COMMODITIES,commodity)||typeof restricted!=='boolean')return {ok:false,reason:'invalid'};
+ const markets=initializeEasternMarkets(s),goods=markets.exportRestrictions[faction]||[];
+ markets.exportRestrictions[faction]=restricted?[...new Set([...goods,commodity])]:goods.filter(good=>good!==commodity);
+ publishOffers(s);
+ return {ok:true,commodity,restricted};
 }
 
 function legsFor(path){return path.slice(1).map((to,i)=>{const from=path[i],link=route(from,to);return {from,to,months:Math.max(1,link.months),kind:link.kind}})}
@@ -74,6 +83,7 @@ export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,q
  const markets=initializeEasternMarkets(s),from=region(s,origin),to=region(s,destination),stock=markets.regions[origin]?.goods?.[commodity];
  const external=buyer==='external'&&seller==='han'&&destination==='mediterranean_gate'&&to?.owner==null;
  if(!COMMODITIES[commodity]||!Number.isSafeInteger(quantity)||quantity<1||quantity>20||!from||!to||from.owner!==seller||!s.factions[seller]||!external&&(to.owner!==buyer||!s.factions[buyer])||origin===destination)return {ok:false,reason:'invalid'};
+ if(buyer!==seller&&markets.exportRestrictions[seller]?.includes(commodity))return {ok:false,reason:'export_restricted'};
  if(!external&&(atWar(s,buyer,seller)||!tradeTreaty(s,buyer,seller)))return {ok:false,reason:'access'};
  if(stock.stock<quantity)return {ok:false,reason:'unavailable'};
  const path=tradePath(s,origin,destination,external?seller:buyer);if(!path)return {ok:false,reason:'route'};
@@ -119,6 +129,7 @@ function publishOffers(s){
  const markets=s.tradeMarkets,offers=[];
  for(const r of s.regions){if(!r.owner||!s.factions[r.owner])continue;const market=markets.regions[r.id];
   for(const [good,item] of Object.entries(market.goods)){
+   if(markets.exportRestrictions[r.owner]?.includes(good))continue;
    // A non-producing market can resell a physically imported surplus. Its
    // opening buffer is two units; local consumption keeps priority over export.
    const reserve=item.production>0?Math.max(4,item.production*2):Math.max(2,item.consumption*3);

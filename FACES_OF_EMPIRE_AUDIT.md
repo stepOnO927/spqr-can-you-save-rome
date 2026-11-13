@@ -273,6 +273,12 @@ The finished screen offers a new campaign without deleting the saved record.
 An actual siege loss records a recent territory alert in the realm overview.
 Unit and Chromium tests cover defeat, save/load, a frozen date and the
 bilingual alert. The embedded NPC eastern simulation does not self-finalize.
+The eastern market now lets the player restrict or reopen exports by measured
+commodity. New foreign quotes, public offers and autonomous buyers honor the
+restriction; domestic transfers and caravans already in transit keep their
+existing terms. The policy survives old and new saves and appears in both
+languages. This is one market policy, not the full set of merchant privileges,
+long-term supply contracts or Roman-wide export controls.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,

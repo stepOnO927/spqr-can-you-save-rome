@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=han-1';
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=han-1';
-import {advanceEasternMarkets,placeEasternTrade,quoteEasternTrade,easternMarketOffers,setEasternTariffPolicy} from '../han/markets.js?v=faces-of-empire-1';
+import {advanceEasternMarkets,placeEasternTrade,quoteEasternTrade,easternMarketOffers,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-of-empire-1';
 import {advanceSilk} from '../han/silk-road.js?v=han-1';
 import {roll} from '../han/util.js?v=han-1';
 
@@ -54,6 +54,27 @@ test('a transit state can set customs duties without repricing a caravan already
  s=loadHanSave(serialize(s));assert.equal(s.tradeMarkets.tariffs.yuezhi,.2,'an older custom rate remains compatible');
  s.tradeMarkets.tariffs.yuezhi=NaN;
  s=loadHanSave(serialize(s));assert.equal(s.tradeMarkets.tariffs.yuezhi,.05,'an invalid saved rate cannot poison future quotes');
+});
+
+test('an export restriction blocks new foreign silk contracts but honors an existing caravan',()=>{
+ let s=newHanGame('han',{seed:49});s.tradeMarkets.embeddedRoman=true;
+ s.treaties.push({type:'market',parties:['han','kangju']});s.factions.kangju.treasury=1000;
+ for(const r of s.regions){r.fort=2;r.unrest=0}
+ const request={seller:'han',buyer:'kangju',origin:'changan',destination:'kangju',commodity:'silk',quantity:1};
+ const before=quoteEasternTrade(s,request);assert.equal(before.ok,true,before.reason);
+ const placed=placeEasternTrade(s,request);assert.equal(placed.ok,true,placed.reason);
+ assert.equal(setEasternExportRestriction(s,'kangju','silk',true).ok,false,'a player cannot edit a foreign policy');
+ assert.equal(setEasternExportRestriction(s,'han','unknown',true).ok,false);
+ assert.equal(setEasternExportRestriction(s,'han','silk',true).ok,true);
+ assert.equal(quoteEasternTrade(s,request).reason,'export_restricted');
+ assert.equal(quoteEasternTrade(s,{...request,buyer:'external',destination:'mediterranean_gate'}).reason,'export_restricted');
+ assert.equal(easternMarketOffers(s).some(offer=>offer.seller==='han'&&offer.commodity==='silk'),false);
+ assert.equal(quoteEasternTrade(s,{...request,buyer:'han',destination:'dunhuang'}).ok,true,'domestic transport remains possible');
+ s=loadHanSave(serialize(s));assert.deepEqual(s.tradeMarkets.exportRestrictions.han,['silk']);
+ for(let i=0;i<before.months;i++)next(s);
+ assert.equal(s.tradeMarkets.shipments.find(x=>x.id===placed.shipment.id).status,'delivered');
+ assert.equal(setEasternExportRestriction(s,'han','silk',false).ok,true);
+ assert.equal(quoteEasternTrade(s,request).ok,true);
 });
 
 test('an oasis intermediary resells delivered Han silk as a second paid shipment',()=>{
