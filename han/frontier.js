@@ -9,7 +9,7 @@
 // Every AI decision uses the deciding faction's own intelligence picture
 // (s.intel[faction]); nobody reads the true map.
 import {OASIS,STEPPE,FACTIONS,PLAYABLE} from './data.js?v=han-1';
-import {neighbours,templateStats,routeBetween,marchMonths} from './military.js?v=han-1';
+import {neighbours,templateStats,routeBetween,marchMonths,recruit,recruitQuote} from './military.js?v=han-1';
 import {roll,clamp,log,monthIndex} from './util.js?v=han-1';
 import {rulerMilitaryJudgment} from './rulers.js';
 
@@ -187,13 +187,46 @@ function garrisonWatch(s){
 }
 
 // ---------- AI military ----------
+function observedFronts(s,f){
+ return s.regions.filter(r=>r.owner===f).map(r=>{
+  // A hostile army remains a threat even while standing in neutral land.
+  // knownStrength already filters armies by actual wars in the dated report.
+  const reports=[r.id,...neighbours(r.id)].map(id=>knownStrength(s,f,id)).filter(k=>k&&k.age>=0&&k.age<=6&&k.men>0);
+  const enemy=Math.max(0,...reports.map(k=>k.men));
+  const defenders=s.armies.filter(a=>a.owner===f&&a.region===r.id&&a.men>0).reduce((n,a)=>n+a.men,0);
+  return {r,enemy,defenders,importance:(r.kind==='capital'?4:0)+(r.frontier||r.kind==='protectorate'?2:0)+(r.supply>=5?1:0)};
+ }).filter(x=>x.enemy>0);
+}
+function recruitHanReserve(s,fronts){
+ if(!fronts.length||s.month%3!==0)return;
+ const underDefended=fronts.some(x=>x.defenders+neighbours(x.r.id).reduce((n,id)=>n+s.armies.filter(a=>a.owner==='han'&&a.region===id&&a.men>0).reduce((sum,a)=>sum+a.men,0),0)<x.enemy*0.8);
+ if(!underDefended||monthIndex(s)-(s.aiHanDefense?.lastRecruitMonth??-Infinity)<6)return;
+ const home=s.regions.filter(r=>r.owner==='han'&&r.supply>=6).map(r=>({r,headroom:r.supply*2500-s.armies.filter(a=>a.owner==='han'&&a.region===r.id&&a.men>0).reduce((n,a)=>n+a.men,0)})).filter(x=>x.headroom>=5000).sort((a,b)=>b.headroom-a.headroom)[0]?.r;
+ if(!home)return;
+ const quote=recruitQuote(s,'han',home.id,'field',5000),f=s.factions.han;
+ if(!quote.ok||f.treasury<quote.quote.treasury+200||f.grain<quote.quote.grain+100)return;
+ const result=recruit(s,'han',home.id,'field',{men:5000,log:(msg,meta)=>{if(s.player==='han'||s.intel[s.player]?.[home.id]?.month===monthIndex(s))log(s,msg,{...meta,kind:'recruit'})}});
+ if(result.ok)(s.aiHanDefense||={}).lastRecruitMonth=monthIndex(s);
+}
 export function aiMilitary(s,f,{issueMove}){
  if(f===s.player)return;
+ const fronts=s.wars.some(w=>w.includes(f))?observedFronts(s,f):[],byRegion=new Map(fronts.map(x=>[x.r.id,x]));
+ if(f==='han')recruitHanReserve(s,fronts);
  for(const a of s.armies.filter(x=>x.owner===f&&x.men>0&&!x.move&&!x.forming)){
   if(a.withdrawing){const back=neighbours(a.region).find(n=>{const r=s.regions.find(x=>x.id===n);return r.owner===f||access(s,f,r.owner)});if(back)issueMove(a,back);a.withdrawing=false;continue}
+  const current=byRegion.get(a.region);
+  // Keep defenders at an observed threatened position. Adjacent reserves can
+  // join only where the local supply capacity can support their arrival.
+  if(current&&current.enemy>current.defenders*0.7)continue;
+  const relief=neighbours(a.region).map(id=>byRegion.get(id)).filter(x=>x&&x.defenders<x.enemy*0.9&&x.r.supply*2500>=x.defenders+a.men)
+   .sort((x,y)=>y.importance-x.importance||y.enemy-y.defenders-(x.enemy-x.defenders))[0];
+  if(relief&&(!current||current.defenders-a.men>=current.enemy*0.8)){
+   const order=issueMove(a,relief.r.id);
+   if(order?.ok){relief.defenders+=a.men;continue}
+  }
   const mine=a.men;
   const options=neighbours(a.region).map(n=>{const r=s.regions.find(x=>x.id===n),k=knownStrength(s,f,n);return {n,r,k}})
-   .filter(o=>o.r.owner&&atWar(s,f,o.r.owner)&&o.k&&o.k.age<=6);
+   .filter(o=>o.k?.owner&&o.k.age>=0&&o.k.age<=6&&atWar(s,f,o.k.owner));
   // The reigning ruler's military judgment changes risk tolerance. Only
   // dated observations in knownStrength may inform the target choice.
   const target=options.filter(o=>o.k.men<mine*rulerMilitaryJudgment(s,f)).sort((x,y)=>x.k.men-y.k.men)[0];

@@ -22,6 +22,16 @@ Roman campaigns, with its own eastern map, court, portraits, trade and delayed
 reports. This optional Roman expansion coexists with the directly playable Han
 campaign. The setup keeps the Roman option out of direct Han starts; neither
 simulation silently replaces the other or changes an existing save.
+Han military AI now treats a dated sighting of hostile troops in neutral land
+as a frontier threat, holds threatened garrisons, and reinforces a fort only
+when its supply can support another army. An underdefended front can trigger
+one paid core reserve formation through the normal recruitment rules, with a
+saved six-month cooldown and no distant player intelligence leak. Attack
+planning uses the last observed owner rather than hidden live control; the
+actual march still validates current access. A 36-month invasion test verifies
+that this response has real resource costs and does not erase Han core power.
+This is a frontier-defense improvement, not a claim that the full Grandmaster
+Han economic, diplomatic and court AI is complete.
 Its opening armies and newly recruited formations now receive saved, named
 field commanders from distinct Han, steppe, oasis and western cultural pools;
 the independent campaign displays those names instead of raw IDs. Historical

@@ -11,7 +11,7 @@ import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,ac
 import {initSilk,advanceSilk} from './silk-road.js?v=han-1';
 import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=faces-of-empire-1';
 import {advanceFocus,focusState} from './focus.js?v=han-1';
-import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf,recruit,recruitQuote,neighbours} from './military.js?v=han-1';
+import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
 import {ensureFieldCommanders} from './field-identities.js';
 import {ensureForeignRulers,advanceForeignRulers,rulerGovernanceFactor} from './rulers.js';
@@ -258,28 +258,6 @@ function hanAI(s){
  if(s.month===3&&s.court&&roll(s,'hanEdict')<0.4){const types=Object.keys(EDICTS).filter(t=>!s.court.edicts.some(e=>e.type===t&&e.status!=='stalled'));const t=types[Math.floor(roll(s,'et')*types.length)];if(t)issueEdict(s,t)}
 }
 
-function regionalAI(s){
- for(const id of Object.keys(EURASIAN_FACTIONS)){
-  if(id===s.player)continue;
-  const own=s.regions.filter(r=>r.owner===id),f=s.factions[id];
-  if(!own.length||!f||f.defeated)continue;
-  const fronts=[...new Set(own.flatMap(r=>neighbours(r.id)))].map(rid=>s.regions.find(r=>r.id===rid)).filter(r=>r?.owner&&atWar(s,id,r.owner));
-  if(!fronts.length)continue;
-  const forces=s.armies.filter(a=>a.owner===id&&a.men>0);
-  if(forces.length<Math.max(1,Math.ceil(own.length/3))&&s.month%3===0){
-   const home=own.find(r=>fronts.some(t=>neighbours(r.id).includes(t.id)))||own[0];
-   const t=cultureOf(id)==='steppe'?'kangju_host':'town';
-   if(recruitQuote(s,id,home.id,t,600).ok)recruit(s,id,home.id,t,{men:600,log:(msg,meta)=>log(s,msg,{...meta,kind:'recruit'})});
-  }
-  if(s.month%2!==0)continue;
-  for(const a of forces.filter(a=>!a.move&&!a.forming)){
-   const adjacent=neighbours(a.region).map(rid=>s.regions.find(r=>r.id===rid)).filter(r=>r&&r.owner!==id&&atWar(s,id,r.owner));
-   // Decisions use bordering provinces and observed local forces only.
-   const viable=adjacent.find(r=>a.men>=(s.armies.filter(e=>e.region===r.id&&e.owner===r.owner).reduce((n,e)=>n+e.men,0)*1.3||500));
-   if(viable){moveArmy(s,a.id,viable.id,{owner:id});break}
-  }
- }
-}
 function settleCampaign(s){
  if(!s.player||s.finalized)return;
  const land=s.regions.some(r=>r.owner===s.player),army=s.armies.some(a=>a.owner===s.player&&a.men>0);
