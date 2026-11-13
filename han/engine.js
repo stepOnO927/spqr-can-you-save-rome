@@ -68,7 +68,7 @@ export function newHanGame(player='han',{scenario='historical',difficulty='stand
  }else{
   initCourt(s,STARTING_OFFICES);
   // the reigning emperor: Liu Shi, enthroned 29 January 48 BCE
-  crown(s,'liu-shi','accession',{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
+  crown(s,'liu-shi','accession',{log:(t,m)=>{if(s.player==='han')log(s,t,{...m,kind:'throne'})}});
   s.throne.history[0]={...s.throne.history[0],year:-48,month:1,note:'29 January 48 BCE'};
   s.persons['wang-zhengjun'].empress=false;s.pendingEmpress='wang-zhengjun';
  }
@@ -124,7 +124,7 @@ export function designateHeir(s,id){
  s.throne.heir=id;s.throne.support[id]||={};for(const f of Object.keys(s.court.factions))s.throne.support[id][f]=Math.max(s.throne.support[id][f]||0,55);
  log(s,['%NAME% is named heir apparent.','立%NAME%为皇太子。'],{who:id,kind:'throne'});return {ok:true};
 }
-export function elevateEmpress(s,id){const p=s.persons[id];if(!p||p.sex!=='f'||!p.alive)return {ok:false};for(const q of Object.values(s.persons))q.empress=false;p.empress=true;s.pendingEmpress=null;s.court.factions.waiqi.influence+=5;log(s,['%NAME% is made empress.','立%NAME%为皇后。'],{who:id,kind:'court'});return {ok:true}}
+export function elevateEmpress(s,id){const p=s.persons[id];if(!p||p.sex!=='f'||!p.alive)return {ok:false};for(const q of Object.values(s.persons))q.empress=false;p.empress=true;s.pendingEmpress=null;s.court.factions.waiqi.influence+=5;if(s.player==='han')log(s,['%NAME% is made empress.','立%NAME%为皇后。'],{who:id,kind:'court'});return {ok:true}}
 
 // ---------- monthly simulation ----------
 function economy(s){
@@ -212,7 +212,7 @@ function lives(s){
   if(roll(s,'death'+p.id)<mortality(age,p.health??60)){
    p.alive=false;p.death=s.year;p.deathMonth=s.month;
    if(p.office&&s.court){s.court.offices[p.office]=null;p.office=null}
-   log(s,['%NAME% dies.','%NAME%去世。'],{who:p.id,kind:'life'});
+   if((p.faction||'han')===s.player)log(s,['%NAME% dies.','%NAME%去世。'],{who:p.id,kind:'life'});
    if(s.throne.orthodox===p.id){s.throne.lastOrthodox=p.id;s.throne.orthodox=null;s.throne.regent=null;s.throne.puppet=null;s.crises.push({kind:'succession',year:s.year,month:s.month});resolveSuccession(s)}
    if(s.throne.occupant===p.id&&!isLiuClan(s,p.id)){s.throne.occupant=null}
   }
@@ -225,7 +225,7 @@ function lives(s){
    const id=`sim-liu-${monthIndex(s)}-${Math.floor(roll(s,'id'+e)*1e6)}`;
    const rb=recordBirth(s,{id,father:e,mother:consort.id,birthSurname:'Liu',birth:s.year,sex});
    if(rb.ok){s.persons[id]={id,name:[`Liu ${given[0]}`,`刘${given[1]}`],surname:'Liu',birthSurname:'Liu',sex,birth:s.year,death:null,father:e,mother:consort.id,record:'simulated',faction:ep.faction,role:sex==='m'?'prince':'princess',alive:true,ambition:Math.floor(roll(s,'amb'+id)*70),competence:Math.floor(30+roll(s,'cmp'+id)*50),loyalty:80,spouse:[]};ensureHanPortraitSeed(s.persons[id]);
-    log(s,['A child is born to the emperor: %NAME%.','皇帝得子女：%NAME%。'],{who:id,kind:'life'})}
+    if((ep.faction||'han')===s.player)log(s,['A child is born to the emperor: %NAME%.','皇帝得子女：%NAME%。'],{who:id,kind:'life'})}
   }}
  // vacant offices draw new officials from the empire’s gentry (never Liu unless clan office)
  if(s.court&&s.month%3===0){for(const [office,holder] of Object.entries(s.court.offices)){if(holder)continue;if(s.player==='han'&&office!=='zongzheng')continue;
@@ -246,11 +246,11 @@ export function generateOfficial(s,office){
 function scheduledEvents(s){
  for(const e of (s.scheduled||[]).filter(e=>!e.done&&e.year===s.year&&e.month===s.month)){
   e.done=true;
-  if(e.kind==='death'){const p=s.persons[e.id];if(p?.alive){p.alive=false;p.death=s.year;p.deathMonth=s.month;p.scheduledDeath=false;log(s,['%NAME% dies (10 January 48 BCE).','%NAME%崩（公元前48年1月10日）。'],{who:p.id,kind:'throne'});
+  if(e.kind==='death'){const p=s.persons[e.id];if(p?.alive){p.alive=false;p.death=s.year;p.deathMonth=s.month;p.scheduledDeath=false;if((p.faction||'han')===s.player)log(s,['%NAME% dies (10 January 48 BCE).','%NAME%崩（公元前48年1月10日）。'],{who:p.id,kind:'throne'});
    if(s.throne.orthodox===p.id){s.throne.lastOrthodox=p.id;s.throne.orthodox=null;resolveSuccession(s)}}}
   if(e.kind==='deathbed_regents'){for(const [office,id] of [['dasima','shi-gao'],['qianjiangjun','xiao-wangzhi']])if(s.persons[id]?.alive)appoint(s,office,id);
    if(s.persons['liu-shi']?.alive&&s.throne.orthodox==='liu-shi'){s.persons['liu-shi'].role='emperor';s.pendingEmpress='wang-zhengjun'}
-   log(s,['By Emperor Xuan’s testament Shi Gao, Xiao Wangzhi and Zhou Kan assist the new emperor.','宣帝遗诏，史高、萧望之、周堪辅政。'],{kind:'throne'})}
+   if(s.player==='han')log(s,['By Emperor Xuan’s testament Shi Gao, Xiao Wangzhi and Zhou Kan assist the new emperor.','宣帝遗诏，史高、萧望之、周堪辅政。'],{kind:'throne'})}
  }
 }
 function hanAI(s){
@@ -306,7 +306,7 @@ export function loadHanSave(raw){
  for(const [office,id] of Object.entries(s.court?.offices||{}))if(id&&s.persons[id]?.alive&&s.persons[id].office===office)s.persons[id].officeSince??={year:s.year,month:s.month};
  ensureCourtCareers(s);
  s.version=SAVE_VERSION;s.throne.claimants||=[];s.throne.support||={};s.throne.history||=[];
- const fixes=enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
+ const fixes=enforceDynasticInvariants(s,{log:(t,m)=>{if(s.player==='han')log(s,t,{...m,kind:'throne'})}});
  s.loadFixes=fixes;initializeEasternMarkets(s);ensureFieldCommanders(s);ensureHanPortraitSeeds(s);computeMandate(s);
  if(s.player&&!s.finalized&&!s.regions.some(r=>r.owner===s.player)&&!s.armies.some(a=>a.owner===s.player&&a.men>0))settleCampaign(s);
  return s;

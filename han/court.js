@@ -7,8 +7,13 @@
 // by audits, long service in office, or exposed schemes.
 import {OFFICES,COURT_FACTIONS,REGIONS as STATIC_REGIONS} from './data.js?v=han-1';
 import {crown,eligibility,isLiuClan,claimStrength,recognition,establishRegency,deposeAndReplace,seizeThrone,addClaimant,yearsBetween,enforceDynasticInvariants} from './dynasty.js?v=han-1';
-import {roll,clamp,log,name} from './util.js?v=han-1';
+import {roll,clamp,log as appendLog,name} from './util.js?v=han-1';
 import {PERSON} from './people.js?v=han-1';
+
+function log(s,text,meta={}){
+ if(s.player!=='han')return;
+ return appendLog(s,text,meta);
+}
 
 const alive=(s,id)=>!!s.persons[id]?.alive;
 export const COURT_PROFILE_IDS=['shi-gao','xiao-wangzhi','hong-gong','yu-dingguo','chen-wannian','liu-xiang','zhou-kan','shi-xian','feng-fengshi','gan-yanshou','chen-tang','feng-liao'];

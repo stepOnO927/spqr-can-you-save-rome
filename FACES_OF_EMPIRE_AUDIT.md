@@ -245,6 +245,11 @@ adulthood. Unit tests measure the regent's actual tax effect across a turn,
 save/load and succession; a Chromium smoke checks both languages and images.
 Foreign court succession and regency no longer enter the player's Chronicle
 as instant knowledge; the realm's own Chronicle still names its participants.
+The same privacy check now covers ordinary foreign deaths, imperial births,
+Emperor Xuan's scheduled death, the Han accession and internal court notices.
+Historical Han people without an explicit faction field count as Han for
+their own Chronicle. The dates and succession still advance in the simulation;
+other courts must learn them through the existing intelligence routes.
 The expanded Eurasian roster now opens with title-only, explicitly unnamed
 rulers where no contemporary personal name is documented. A named original
 successor appears only after a simulated succession. New ruler names avoid

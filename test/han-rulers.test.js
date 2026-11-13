@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js';
+import {newHanGame,loadHanSave,serialize,tick,elevateEmpress} from '../han/engine.js';
 import {advanceForeignRulers,rulerPortrait,regentPortrait,rulerMilitaryJudgment,rulerGovernanceFactor} from '../han/rulers.js';
 import {ownRulerHtml} from '../han/ruler-ui.js';
 import {birthRecordValid,recordBirth,eligibility,crown,seizeThrone} from '../han/dynasty.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';
+import {roll} from '../han/util.js';
 
 test('an original Liu heir gains a persistent portrait when legitimately crowned',()=>{
  let s=newHanGame('han',{seed:412});
@@ -164,6 +165,41 @@ test('another court does not learn a foreign minority regency at once',()=>{
  s.persons[old].alive=false;advanceForeignRulers(s);
  assert.ok(s.rulers.armenia.regentId);
  assert.equal(s.log.some(event=>event.faction==='armenia'&&['succession','regency'].includes(event.kind)),false);
+});
+
+test('foreign deaths stay out of the Chronicle while a court records its own loss',()=>{
+ const id='original-parthian-courtier',person={id,name:['Courtier of Ctesiphon','泰西封廷臣'],faction:'parthia',birth:-140,health:-1000,alive:true};
+ const base=newHanGame('han',{seed:1});base.persons[id]={...person};
+ const next={...base,month:base.month+1};
+ for(let seed=1;seed<10000;seed++)if(roll({...next,seed},'death'+id)<0.29){base.seed=seed;break}
+ const own=newHanGame('parthia',{seed:base.seed});own.persons[id]={...person};
+ tick(base);tick(own);
+ assert.equal(base.persons[id].alive,false);
+ assert.equal(own.persons[id].alive,false);
+ assert.equal(base.log.some(event=>event.who===id),false);
+ assert.equal(own.log.some(event=>event.who===id&&event.kind==='life'),true);
+});
+
+test('Emperor Xuan dies on schedule without instantly informing a foreign court',()=>{
+ const han=newHanGame('han',{seed:7}),foreign=newHanGame('parthia',{seed:7});
+ for(const s of [han,foreign])s.month=12;
+ tick(han);tick(foreign);
+ for(const s of [han,foreign]){
+  assert.equal(s.persons['liu-xun'].alive,false);
+  assert.equal(s.scheduled.find(event=>event.kind==='death'&&event.id==='liu-xun').done,true);
+  assert.notEqual(s.throne.orthodox,'liu-xun');
+ }
+ assert.equal(han.log.some(event=>event.who==='liu-xun'&&event.kind==='throne'),true);
+ assert.equal(foreign.log.some(event=>event.who==='liu-xun'),false);
+ assert.equal(foreign.log.some(event=>event.who==='liu-shi'&&event.kind==='throne'),false);
+ assert.equal(han.log.some(event=>event.kind==='throne'&&event.text[0].startsWith('By Emperor Xuan')),true);
+ assert.equal(foreign.log.some(event=>event.kind==='throne'&&event.text[0].startsWith('By Emperor Xuan')),false);
+ assert.equal(han.log.some(event=>event.kind==='court'&&event.who==='shi-gao'),true);
+ assert.equal(foreign.log.some(event=>event.kind==='court'&&event.who==='shi-gao'),false);
+ assert.equal(elevateEmpress(han,'wang-zhengjun').ok,true);
+ assert.equal(elevateEmpress(foreign,'wang-zhengjun').ok,true);
+ assert.equal(han.log.some(event=>event.who==='wang-zhengjun'&&event.kind==='court'),true);
+ assert.equal(foreign.log.some(event=>event.who==='wang-zhengjun'&&event.kind==='court'),false);
 });
 
 test('succession has a simulation cost and ruler judgment affects AI threshold',()=>{
