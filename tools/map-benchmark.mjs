@@ -70,6 +70,6 @@ try{
  assert.ok(idle.frames>0,'idle sample must contain observations');
  assert.deepEqual(errors,[],'uncaught browser errors');
  const report={note:'Browser requestAnimationFrame callback cadence, not presented-frame timing; results depend on runner load, software renderer and local file cache.',viewport:{width:1920,height:1080,deviceScaleFactor:1},environment:{platform:os.platform(),architecture:os.arch(),cpu:os.cpus()[0]?.model,browser:browser.version(),renderer},tileRequests:tiles,scenarios:{idle,fullRelief,reducedRelief},pageErrors:errors};
- await writeFile('map-benchmark.json',JSON.stringify(report,null,2)+'\n');
+ await writeFile(process.env.SPQR_BENCH_OUTPUT||'map-benchmark.json',JSON.stringify(report,null,2)+'\n');
  console.log(JSON.stringify(report,null,2));
 }finally{await browser.close()}

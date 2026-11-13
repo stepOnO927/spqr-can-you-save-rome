@@ -74,7 +74,7 @@ export const physicalStyle={
   {id:'land-elevation-egypt-higher',type:'color-relief',source:'elevation-egypt-higher',minzoom:9,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
   {id:'relief-egypt-higher',type:'hillshade',source:'elevation-egypt-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'idealized-landcover',type:'raster',source:'landcover',paint:{'raster-opacity':['interpolate',['linear'],['zoom'],4,.86,6,.74,7.2,0],'raster-fade-duration':0}},
-  {id:'nile-delta-alluvium',type:'fill',source:'nile-delta',paint:{'fill-color':'#98a77e','fill-opacity':['interpolate',['linear'],['zoom'],4,.16,7,.31,9,.24]}},
+  {id:'nile-delta-alluvium',type:'fill',source:'nile-delta',paint:{'fill-color':'#98a77e','fill-opacity':['interpolate',['linear'],['zoom'],4,.16,7,.26,8.2,.12,9,0]}},
   {id:'sea-mask',type:'fill',source:'ocean',paint:{'fill-color':'#356f79','fill-opacity':1}},
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},
   {id:'coastline',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,.9,8,1.7],'line-opacity':.87}},
