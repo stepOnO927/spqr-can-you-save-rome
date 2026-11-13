@@ -18,6 +18,10 @@ try{
  const first=page.locator('.cursus-candidate').first();
  assert.match(await first.innerText(),/卢基乌斯·瓦罗/);
  await first.locator('[data-cursus-action="support"]').click();
+ await page.locator('[data-cursus-office]').selectOption('quaestor');
+ assert.match(await page.locator('.cursus-tree').innerText(),/财务官/);
+ assert.ok(await page.locator('.cursus-candidate').count()>=2);
+ await page.locator('[data-cursus-office]').selectOption('consul');
  await page.locator('#save').click();
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.ok(saved.world.cursus.varroId);
@@ -30,6 +34,7 @@ try{
  await page.locator('#factions').click();
  await page.locator('[data-faction="senate"]').click();
  assert.match(await page.locator('.cursus-tree').innerText(),/GOVERNMENT TREE/);
+ assert.match(await page.locator('.cursus-tree').innerText(),/Office/);
  assert.deepEqual(errors,[]);
  console.log('Cursus Honorom candidate, support, foreign inquiry, save and language switch passed');
 }finally{await browser.close()}
