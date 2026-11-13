@@ -528,6 +528,7 @@ export function advanceMail(s, actions = {}) {
   const mail = initializeMail(s), now = monthIndex(s.year, s.month);
   for (const event of mail.events) {
     if(event.status==='invited'&&event.date<=now){event.status='expired';continue}
+    if(event.status==='awaiting_choice'&&now>event.date+2){event.status='completed';event.choice='no_reply';event.outcome={trust:0};continue}
     if (event.status !== 'scheduled' || event.date > now) continue;
     if (event.type === 'audit') {
       event.status='completed';
@@ -564,7 +565,7 @@ export function advanceMail(s, actions = {}) {
         body:[`At ${place[0]}, ${name(event.hostId)[0]} receives ${name(event.participantId)[0]} at dusk. ${others.length?`Also present: ${others.map(x=>x[0]).join(', ')}.`:'The other invitees have not arrived.'} Bread and conversation are offered; the host is ready to speak. What will you do?`,
           `黄昏，${name(event.hostId)[1]}在${place[1]}迎接${name(event.participantId)[1]}。${others.length?`在场宾客：${others.map(x=>x[1]).join('、')}。`:'其他受邀者尚未到场。'}席间备有饮食，主人愿意交谈。您将如何行动？`],
         threadId:original?.threadId,options:['speak_host',...(others.length?['meet_guest']:[]),'discuss_issue','join_activity','leave_early'],
-        context:{kind:'banquet_scene',eventId:event.id,region:event.venue,venueId:event.venueId},source:event.venue,destination:event.venue});
+        context:{kind:'banquet_scene',eventId:event.id,region:event.venue,venueId:event.venueId},source:event.venue,destination:event.venue,expires:now+2});
       if(scene.ok){scene.letter.arrival=now;scene.letter.delivery='received'}
       continue;
     }

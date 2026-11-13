@@ -71,6 +71,18 @@ test('declining removes marker eligibility and an absent guest cannot attend',()
  assert.ok(!second.mail.messages.some(m=>m.context?.kind==='banquet_scene'&&m.context.eventId===scheduled.id));
 });
 
+test('an unanswered event scene closes without a relationship reward',()=>{
+ const s=newGame('caesar');s.month=8;advanceMail(s);
+ const invite=s.mail.messages.find(m=>m.context?.kind==='banquet'),event=s.mail.events.find(e=>e.letterId===invite.id);
+ at(s,invite.arrival);advanceMail(s);assert.equal(replyToLetter(s,invite.id,'accept',{}).ok,true);
+ at(s,event.date);advanceMail(s);assert.equal(event.status,'awaiting_choice');
+ const key=[event.hostId,event.participantId].sort().join(':'),before=s.world.personalRelations[key]?.trust||0;
+ at(s,event.date+3);advanceMail(s);
+ assert.equal(event.status,'completed');
+ assert.equal(event.choice,'no_reply');
+ assert.equal(s.world.personalRelations[key]?.trust||0,before);
+});
+
 test('genre writing uses verified war and treasury state across 100 letters',()=>{
  const s=newGame('caesar'),cultures=['caesar','senate','egypt','parthia','armenia','numidia'];
  const kinds=['personal_flavor','treasury','greeting','treaty','complaint','aid_request','banquet_followup'];

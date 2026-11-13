@@ -108,8 +108,8 @@ export function composeLetter(s,spec){
  if(kind==='treaty'||kind==='full_alliance'){
   const type=spec.context?.treatyType||'alliance';
   return [
-   paragraph(`To ${recipient(0)},`,`Our court proposes ${type.replaceAll('_',' ')}. An accord would set terms for the conduct of both sides; neither court is bound until your answer is returned and the terms are accepted.`,`Please reply with acceptance, refusal, or a request to negotiate. We will judge your answer against conditions when it reaches us.`,signature(0)),
-   paragraph(`致${recipient(1)}：`,`本朝提议商定${type==='alliance'?'同盟':type.replaceAll('_',' ')}条款。答复送达且双方同意前，双方均不受此提议约束。`,`请回函接受、拒绝，或提出继续商议；答复送达时仍须核对届时局势。`,signature(1))];
+   paragraph(`To ${recipient(0)},`,base[0],`Our court proposes ${type.replaceAll('_',' ')}. An accord would set terms for the conduct of both sides; neither court is bound until your answer is returned and the terms are accepted.`,`Please reply with acceptance, refusal, or a request to negotiate. We will judge your answer against conditions when it reaches us.`,signature(0)),
+   paragraph(`致${recipient(1)}：`,base[1],`本朝提议商定${type==='alliance'?'同盟':type.replaceAll('_',' ')}条款。答复送达且双方同意前，双方均不受此提议约束。`,`请回函接受、拒绝，或提出继续商议；答复送达时仍须核对届时局势。`,signature(1))];
  }
  if(kind==='complaint'||kind==='ultimatum'){
   const relation=spec.context?.relationAtSending??s.relations?.[[spec.senderFaction,spec.recipient].sort().join(':')]??0;
