@@ -31,3 +31,13 @@
 .mail-settings{display:flex;flex-wrap:wrap;gap:12px;padding:9px 15px;border-top:1px solid #bba784;font:11px Arial,'Microsoft YaHei',sans-serif}
 .mail-settings label{display:flex;align-items:center;gap:5px}.mail-settings select{max-width:170px;padding:5px;border:1px solid #ac9470;background:#fcf4e2;color:#483426}.mail-expired{color:#9a4938;font-weight:700}
 @media(max-width:700px){body{min-width:0}.top{padding:0 7px;gap:7px}.mail-backdrop{padding:5px}.mailbox{max-height:98vh}.mail-head{padding:9px 11px}.mail-head h2{font-size:18px}.mail-tabs{max-height:80px;overflow:auto}.mail-columns{grid-template-columns:1fr;max-height:none}.mail-list{max-height:150px;border-right:0;border-bottom:1px solid #b6a17c}.mail-letter{min-height:250px;max-height:42vh;padding:14px}.mail-icon{width:32px;height:30px;font-size:18px}}
+
+.mail-prose{white-space:pre-line;line-height:1.75;margin:1.1rem 0;color:#e9e2cf}
+.mail-to{color:#b8ad94;font-size:.9rem}
+.mail-venue{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;padding:.8rem 1rem;margin:1rem 0;border:1px solid #896e48;background:#2b2b27}
+.mail-venue b{color:#f0d29c}.mail-venue small{color:#c9baa0}.mail-venue button,.mail-calendar-entry{border:1px solid #a77d4b;background:#453a2b;color:#f9e9ca;cursor:pointer;padding:.45rem .8rem}
+.mail-calendar{margin:.7rem 1rem;padding:.8rem;border:1px solid #65553c;background:#202622;max-height:13rem;overflow:auto}.mail-calendar h3{margin:.1rem 0 .6rem;color:#d9bc82}
+.mail-calendar-entry{display:inline-flex;flex-direction:column;text-align:left;gap:.2rem;margin:.2rem .4rem .2rem 0;min-width:13rem}.mail-calendar-entry small{opacity:.75}
+.map-event-card{position:absolute;bottom:3.5rem;left:1rem;z-index:5;display:flex;flex-direction:column;gap:.35rem;max-width:20rem;padding:1rem;background:#1d2829ee;color:#f7e5c4;border:1px solid #d5a763;box-shadow:0 4px 20px #0008}.map-event-card button{align-self:flex-start;background:#d5a763;color:#1e2828;border:0;padding:.4rem .7rem;cursor:pointer}
+[data-event-marker]{cursor:pointer;outline:none}[data-event-marker]:focus path,[data-event-marker]:hover path{stroke:#fff4c6;stroke-width:3}
+.mail-response{white-space:pre-line;line-height:1.5}

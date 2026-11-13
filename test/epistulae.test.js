@@ -87,8 +87,14 @@ test('existing fictional courtier sends personal letter and invitation with pers
   s.month=10;advanceMail(s);
   assert.equal(replyToLetter(s,invite.id,'accept',{}).ok,true);
   assert.equal(s.mail.events.at(-1).status,'scheduled');
-  s.month=11;advanceMail(s);
-  assert.equal(s.mail.events.at(-1).status,'held');
+  const event=s.mail.events.at(-1),year=Math.floor((event.date-1)/12);
+  s.year=year;s.month=event.date-year*12;advanceMail(s);
+  assert.equal(event.status,'awaiting_choice');
+  s.month++;if(s.month===13){s.month=1;s.year++}advanceMail(s);
+  const scene=s.mail.messages.find(m=>m.context?.kind==='banquet_scene'&&m.delivery==='received');
+  assert.ok(scene);
+  assert.equal(replyToLetter(s,scene.id,'speak_host',{}).ok,true);
+  assert.equal(event.status,'completed');
   assert.equal(s.world.personalRelations[trustKey].trust,5);
 });
 
@@ -247,3 +253,4 @@ test('five-year campaign keeps message identities, categories and delivery state
   assert.deepEqual(loaded.mail.reportSnapshot,s.mail.reportSnapshot);
   assert.match(mailboxHtml(loaded,{lang:'zh'}),/帝国来信/);
 });
+
