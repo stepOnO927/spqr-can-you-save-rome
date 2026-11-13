@@ -26,9 +26,15 @@ try{
  await page.locator('.cursus-senate summary').click();
  assert.equal(await page.locator('.cursus-senator').count(),12);
  await page.locator('.cursus-senator').first().locator('[data-senator-endorse]').click();
+ await page.locator('.cursus-talent summary').click();
+ await page.locator('[data-talent-region]').selectOption('roma');
+ await page.locator('[data-talent-field]').selectOption('scholarly');
+ await page.locator('[data-talent-search]').click();
  await page.locator('#save').click();
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.ok(saved.world.cursus.varroId);
+ assert.equal(saved.world.cursus.talentSearches.at(-1).field,'scholarly');
+ assert.equal(saved.world.cursus.talentSearches.at(-1).status,'pending');
  assert.equal(saved.world.cursus.endorsements.at(-1).status,'pending');
  assert.ok(saved.world.cursus.applicants.find(x=>x.id===saved.world.cursus.varroId).support>0);
  await page.locator('[data-cursus-foreign]').selectOption('parthia');
