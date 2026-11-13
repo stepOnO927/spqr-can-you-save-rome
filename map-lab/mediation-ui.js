@@ -1,5 +1,5 @@
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
-import {canMediate,requestMediation} from '../civil-war.js?v=fort-intel-1';
+import {canMediate,requestMediation} from '../civil-war.js?v=separate-crowns-1';
 
 export function renderMediation({panel,state,target,language,refresh}){
  if(!['egypt','parthia'].includes(target))return;

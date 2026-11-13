@@ -1,6 +1,6 @@
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
-import {createFictionalPerson} from './dynasties.js?v=portrait-pool-2';
+import {CHARACTER_CATALOG} from './characters.js?v=separate-crowns-1';
+import {createFictionalPerson} from './dynasties.js?v=separate-crowns-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 import {activeAgreement,terminateAgreement} from './agreements.js?v=grand-chessboard-2';
 

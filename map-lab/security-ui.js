@@ -1,7 +1,7 @@
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
-import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=unknown-person-1';
-import {reassurePerson} from '../conspiracies.js?v=fort-intel-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=newborn-age-1';
+import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=separate-crowns-1';
+import {reassurePerson} from '../conspiracies.js?v=separate-crowns-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=separate-crowns-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
