@@ -497,6 +497,30 @@ test('naval AI assigns orders to each available fleet instead of only its first'
  const s=newGrandGame('caesar'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first);second.id='senate-east';second.zone='eastern';second.port=null;s.naval.fleets.push(second);
  advanceNaval(s);assert.equal(first.order?.kind,'patrol');assert.equal(second.order?.kind,'patrol');
 });
+test('AI divides escorts between two raided trade routes and uses current route losses',()=>{
+ const s=newGrandGame('caesar'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first),merchant=structuredClone(first),raider=s.naval.fleets.find(f=>f.owner==='caesar'),otherRaider=structuredClone(raider);
+ s.factions.senate.treasury=500;s.factions.senate.food=100;
+ s.naval.routes=s.naval.routes.filter(r=>['africa-sicily','eastern-stone'].includes(r.id));
+ for(const pirate of s.naval.pirates)pirate.pressure=0;
+ first.ships={trireme:2};first.port=null;first.zone='tyrrhenian';
+ second.id='senate-east';second.ships={trireme:2};second.port=null;second.zone='ionian';
+ merchant.id='senate-merchants';merchant.ships={merchant:2};merchant.port=null;merchant.zone='sicilian';
+ raider.zone='african';raider.port=null;
+ otherRaider.id='caesar-east';otherRaider.zone='aegean';otherRaider.port=null;
+ s.naval.fleets.push(second,merchant,otherRaider);
+ assert.equal(orderFleet(s,'caesar',raider.id,'raid','africa-sicily').ok,true);
+ assert.equal(orderFleet(s,'caesar',otherRaider.id,'raid','eastern-stone').ok,true);
+ advanceNaval(s);
+ assert.equal(s.naval.routes.find(r=>r.id==='africa-sicily').last.reason,'raid');
+ assert.equal(s.naval.routes.find(r=>r.id==='eastern-stone').last.reason,'raid');
+ assert.equal(first.order?.kind,'escort');assert.equal(second.order?.kind,'escort');
+ assert.deepEqual(new Set([first.order.target,second.order.target]),new Set(['africa-sicily','eastern-stone']));
+ const restored=upgradeSave(structuredClone(s));
+ assert.deepEqual(new Set(restored.naval.fleets.filter(f=>f.owner==='senate'&&f.order?.kind==='escort').map(f=>f.order.target)),new Set(['africa-sicily','eastern-stone']));
+ const previousSecurity=new Map(restored.naval.routes.filter(r=>['africa-sicily','eastern-stone'].includes(r.id)).map(r=>[r.id,r.last.security]));
+ advanceNaval(restored);
+ for(const id of previousSecurity.keys())assert.ok(restored.naval.routes.find(r=>r.id===id).last.security>previousSecurity.get(id));
+});
 test('naval state survives save migration and 36 campaign months',()=>{
  const s=newGrandGame('senate');for(let i=0;i<36;i++)tick(s);const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(restored.naval.fleets.length,s.naval.fleets.length);assert.equal(restored.naval.routes.length,12);assert.ok(restored.naval.routes.every(r=>Number.isFinite(r.last?.security)));assert.ok(restored.naval.fleets.every(f=>Number.isFinite(f.hull)&&Number.isFinite(f.supply)))
 });

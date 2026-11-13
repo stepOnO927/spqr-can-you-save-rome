@@ -1,5 +1,5 @@
 import {GRAND_ROUTES} from './grand-map-data.js';
-import {accessibleFleet,portZone} from './naval.js?v=26';
+import {accessibleFleet,portZone} from './naval.js?v=27';
 import {activeEffects} from './development.js?v=29';
 
 const byId=s=>Object.fromEntries(s.regions.map(r=>[r.id,r]));
