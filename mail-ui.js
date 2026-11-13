@@ -1,5 +1,5 @@
-import {receivedMail,unreadCount} from './epistulae.js?v=court-portraits-1';
-import {wartimePolicy} from './epistulae-personnel.js?v=court-portraits-1';
+import {receivedMail,unreadCount} from './epistulae.js?v=succession-ui-recovery-1';
+import {wartimePolicy} from './epistulae-personnel.js?v=succession-ui-recovery-1';
 
 const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const local=(value,zh)=>Array.isArray(value)?value[zh?1:0]:value;

@@ -1,6 +1,6 @@
 import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=separate-crowns-1';
+import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 
 const copy=x=>JSON.parse(JSON.stringify(x));
