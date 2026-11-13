@@ -22,7 +22,7 @@ export function recordLifeEvent(s,id,en,zh){initializeDynasties(s);if(s.world.ch
 // for a legacy person whose saved catalog entry is missing or malformed.
 function ensureCatalog(s){
  for(const id of Object.keys(CHARACTER_CATALOG))if(/^fictional:\d+$/.test(id))delete CHARACTER_CATALOG[id];
- for(const [id,entry] of Object.entries(s.world.dynasties.catalog))if(/^fictional:\d+$/.test(id)&&entry?.fictional&&Array.isArray(entry.name)&&entry.name.length>=2&&entry.name.every(x=>typeof x==='string'&&x.trim()))CHARACTER_CATALOG[id]=entry;
+ for(const [id,entry] of Object.entries(s.world.dynasties.catalog))if(/^fictional:\d+$/.test(id)&&entry?.fictional&&Array.isArray(entry.name)&&entry.name.length>=2&&entry.name.every(x=>typeof x==='string'&&x.trim()))CHARACTER_CATALOG[id]=structuredClone(entry);
  for(const [id,person] of Object.entries(s.world.characters))if(/^fictional:\d+$/.test(id)&&!CHARACTER_CATALOG[id])CHARACTER_CATALOG[id]={name:['Unknown simulated person','身份不明的模拟人物'],birth:null,faction:person.faction,role:['Identity not recorded','身份未记录'],culture:['Simulated','模拟'],source:null,fictional:true};
 }
 
@@ -72,7 +72,7 @@ export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,
  let family=familyId;if(!family){const familyNo=nextFree(d.nextFamily,families);d.nextFamily=familyNo+1;family=`family:fictional:${familyNo}`}
  if(!d.families[family])d.families[family]={id:family,name:Array.isArray(name)?name:[name,name],wealth:0,reputation:50,influence:20,leader:id,patrons:[]};
  d.catalog[id]={name:Array.isArray(name)?name:[name,name],birth:[birthYear,birthYear],faction,role,culture,source:null,fictional:true};
- CHARACTER_CATALOG[id]=d.catalog[id];
+ CHARACTER_CATALOG[id]=structuredClone(d.catalog[id]);
  s.world.characters[id]={id,faction,health:'healthy',location,homeland:homeland||location,alive:true,loyalty:65,influence:20,wealth,parents:[...parents],adoptiveParents:[...adoptiveParents],children:[],spouse:null,familyId:family,birthYear,sex,education:0,ambition:ambition??Math.floor(20+roll(s)*60),personalitySeed:personalitySeed??Math.floor(roll(s)*0xffffffff),militaryOnly,wounds:0,illnessEpisodes:0};
  s.world.characters[id].portraitSeed=portraitSeedFor(id,s.world.characters[id],d.catalog[id]);
  for(const parent of [...parents,...adoptiveParents])if(s.world.characters[parent])s.world.characters[parent].children.push(id);

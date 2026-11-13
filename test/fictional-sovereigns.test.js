@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
-import {assignSuccession,eligibleLiuImperial,leadershipTitle,successorFor} from '../characters.js?v=faces-empire-2';
+import {assignSuccession,eligibleLiuImperial,leadershipTitle,successorFor,CHARACTER_CATALOG} from '../characters.js?v=faces-empire-2';
 import {createFictionalPerson} from '../dynasties.js?v=faces-empire-2';
 import {renderGenealogy} from '../genealogy-ui.js?v=faces-empire-2';
 import {deriveGovernment} from '../governance.js?v=faces-empire-2';
@@ -72,6 +72,12 @@ test('embedded Han succession requires a male Liu birth line and displayed Liu s
  assert.equal(eligibleLiuImperial(s,father),true);
  assert.equal(eligibleLiuImperial(s,grandson),true);
  for(const id of [daughter,maternal,wrongSurname,adopted])assert.equal(eligibleLiuImperial(s,id),false,id);
+ const priorName=[...CHARACTER_CATALOG[grandson].name];
+ CHARACTER_CATALOG[grandson].name=['Zhang from another game','另一战役的张某'];
+ try{
+  assert.equal(eligibleLiuImperial(s,grandson),true,'the saved name takes precedence over a global catalog entry');
+  assert.deepEqual(s.world.dynasties.catalog[grandson].name,priorName,'display catalog changes cannot rewrite the save');
+ }finally{CHARACTER_CATALOG[grandson].name=priorName}
  s=upgradeSave(structuredClone(s));
  assert.equal(eligibleLiuImperial(s,grandson),true);
  for(const id of [daughter,maternal,wrongSurname,adopted])assert.equal(eligibleLiuImperial(s,id),false,id);

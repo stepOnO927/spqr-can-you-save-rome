@@ -56,15 +56,15 @@ export function initializeWorld(s){
 // Birthdays are not specified in the catalog: either side of the birthday may apply.
 export function ageRange(id,year){const b=CHARACTER_CATALOG[id]?.birth;if(!b||!Number.isFinite(year)||!Number.isFinite(b[0])||!Number.isFinite(b[1])||year<b[0])return null;return [Math.max(0,year-b[1]-1),year-b[0]]}
 export const successionModel=(faction,s)=>['caesar','senate'].includes(faction)?(s?.world?.romanRegimes?.[faction]||'republican_command'):faction==='han'?'liu_imperial':faction==='egypt'?'ptolemaic_court':faction==='parthia'?'arsacid_nobility':faction==='mauretania'?'separate_kingdoms':'regional_dynasty';
-// Biological descent from a documented imperial Liu is required. A surname,
-// adoption, office or marriage alone never establishes orthodox eligibility.
+// An orthodox successor needs a male biological line to a documented imperial
+// Liu and a Liu birth name. Adoption, office or marriage cannot create that line.
 const DOCUMENTED_IMPERIAL_LIU=new Set(['han_xuan','han_yuan']);
 export function eligibleLiuImperial(s,id,seen=new Set()){
  if(!id||seen.has(id))return false;
  seen.add(id);
  if(DOCUMENTED_IMPERIAL_LIU.has(id))return true;
  const c=s.world?.characters?.[id];
- const name=CHARACTER_CATALOG[id]?.name;
+ const name=s.world?.dynasties?.catalog?.[id]?.name||CHARACTER_CATALOG[id]?.name;
  if(c?.faction!=='han'||c.sex!=='male'||!/^Liu\s/.test(name?.[0]||'')||!/^刘/.test(name?.[1]||''))return false;
  return !!c.parents?.some(parent=>(DOCUMENTED_IMPERIAL_LIU.has(parent)||s.world.characters[parent]?.sex==='male')&&eligibleLiuImperial(s,parent,new Set(seen)));
 }

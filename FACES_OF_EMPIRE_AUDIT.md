@@ -177,6 +177,9 @@ biological Liu father line and Liu names in both languages. Female descendants,
 maternal-only descendants, adopted children and people with another surname
 cannot occupy its orthodox throne. Existing historical Liu rulers and saved
 male-line original heirs still pass after save migration.
+The saved fictional-person catalog is now copied when it is exposed through
+the shared display registry. Reusing an ID in another campaign or mutating a
+display entry cannot silently rewrite this campaign's saved identity.
 If a non-Liu minister establishes another dynasty, the Han ruler card now
 shows the founder's actual status instead of falsely calling him Han emperor.
 Both Republican commands can now choose a politically active original adult
