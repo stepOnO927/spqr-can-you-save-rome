@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js';
 import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js';
 import {setWartimePolicy} from '../epistulae-personnel.js';
+import {initializeMailReports,advanceMailReports} from '../mail-reports.js';
 import {mailboxHtml} from '../mail-ui.js';
 
 const state = () => {
@@ -194,6 +195,40 @@ test('chronicle dispatch creates one state-backed bilingual military letter',()=
   assert.ok(letters[0].options.includes('war_council'));
 });
 
+test('government and military dispatches follow measured changes without invented events',()=>{
+  const s=newGame('caesar'),r=s.regions.find(x=>x.owner===s.player);
+  initializeMailReports(s);s.month=2;
+  s.factions.caesar.tax='high';s.factions.caesar.food=-3;
+  r.loyalty=25;r.fort++;r.buildings.push('granaries');
+  advanceMailReports(s);advanceMailReports(s);
+  const ids=s.mail.messages.map(m=>m.eventId).filter(Boolean);
+  assert.equal(new Set(ids).size,ids.length);
+  assert.ok(s.mail.messages.some(m=>m.subject[0]==='Tax policy changed'));
+  assert.ok(s.mail.messages.some(m=>m.subject[0]==='Food shortage'&&m.body[0].includes('-3')));
+  assert.ok(s.mail.messages.some(m=>m.subject[0]==='Provincial unrest'&&m.context.region===r.id));
+  assert.ok(s.mail.messages.some(m=>m.subject[0]==='Construction completed'&&m.body[0].includes('Granary')));
+  assert.ok(s.mail.messages.some(m=>m.subject[0]==='Frontier fortification improved'&&m.category==='military'));
+});
+
+test('alliance and aid requests resolve only after the reply courier returns',()=>{
+  const s=state();s.wars=[];
+  const alliance=sendLetter(s,{senderId:'cleopatra',senderFaction:'egypt',recipient:'caesar',category:'diplomatic',
+    subject:['Alliance','结盟'],body:['Join our court.','请与本朝结盟。'],options:['accept','reject'],context:{kind:'full_alliance'}}).letter;
+  advance(s,10);
+  assert.equal(replyToLetter(s,alliance.id,'accept',{}).ok,true);
+  let joined=0;advance(s,10,{diplomacy:()=>{joined++;return true}});
+  assert.equal(joined,1);
+  assert.equal(alliance.responses[0].outcome,'accept');
+  const aid=sendLetter(s,{senderId:'cleopatra',senderFaction:'egypt',recipient:'caesar',category:'diplomatic',
+    subject:['Aid','援助'],body:['Support requested.','请求援助。'],options:['send_aid','decline'],context:{kind:'aid_request'}}).letter;
+  advance(s,10);
+  const caesarBefore=s.factions.caesar.treasury,egyptBefore=s.factions.egypt.treasury;
+  assert.equal(replyToLetter(s,aid.id,'send_aid',{}).ok,true);
+  assert.equal(s.factions.caesar.treasury,caesarBefore-5);
+  assert.equal(s.factions.egypt.treasury,egyptBefore);
+  advance(s,10);assert.equal(s.factions.egypt.treasury,egyptBefore+5);
+});
+
 test('five-year campaign keeps message identities, categories and delivery state bounded',()=>{
   const s=newGame('egypt');
   for(let i=0;i<60;i++)tick(s);
@@ -206,5 +241,6 @@ test('five-year campaign keeps message identities, categories and delivery state
   assert.ok(s.mail.messages.some(m=>m.category==='personal'));
   const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
   assert.equal(loaded.mail.messages.length,s.mail.messages.length);
+  assert.deepEqual(loaded.mail.reportSnapshot,s.mail.reportSnapshot);
   assert.match(mailboxHtml(loaded,{lang:'zh'}),/帝国来信/);
 });

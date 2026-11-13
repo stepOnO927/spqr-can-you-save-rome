@@ -1,6 +1,7 @@
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=unknown-person-1';
 import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,chronicleLetters} from './epistulae.js?v=epistulae-2';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=epistulae-2';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=epistulae-2';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=portrait-pool-2';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=newborn-age-1';
@@ -769,7 +770,7 @@ export function advancePeacefulSettlement(s){
 
 export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   if(s.defeat)return s;
-  initializeWorld(s);initializeMail(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
+  initializeWorld(s);initializeMail(s);initializeMailReports(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
   const chronicleBefore=captureCampaignState(s);
   const warsBefore=s.wars.map(w=>w.slice());
   s.month++;if(s.month>12){s.month=1;s.year++}
@@ -789,7 +790,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   // Friendly courts may forward fresh scout sightings; recipients judge them on their own.
   advanceStrategicWarnings(s,{autoplayPlayer,letterMonths,issueOrder:issueMilitaryOrder,log});
   advanceStrategicOffers(s,{autoplayPlayer});
-  advanceMail(s,{proposeAgreement});
+  advanceMail(s,{proposeAgreement,diplomacy});
   for(const owner of Object.keys(s.factions).filter(id=>autoplayPlayer||id!==s.player)){
     const override=autoplayPlayer&&owner===s.player&&playerDifficulty;if(!override){aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner);continue}
     const originalDifficulty=s.difficulty,hadDifficulty=Object.prototype.hasOwnProperty.call(s,'difficulty');s.difficulty=playerDifficulty;
@@ -800,6 +801,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   advanceRomanDefeat(s);if(!s.defeat){advanceRomanVictory(s);advancePeacefulSettlement(s)}
   advanceHanWorld(s);
   chronicleLetters(s,recordCampaignTurn(s,chronicleBefore));
+  advanceMailReports(s);
   return s;
 }
 
