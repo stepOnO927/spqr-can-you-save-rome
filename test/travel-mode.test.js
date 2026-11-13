@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=multipolar-autoplay-1';
+import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=strategic-player-offer-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=succession-ui-recovery-1';
 import {OFFICE_TYPES,canHoldOffice,localGovernor} from '../office-system.js?v=succession-ui-recovery-1';
 import {featherAdvice} from '../feather.js?v=travel-1';

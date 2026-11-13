@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=multipolar-autoplay-1';
+import {newGame} from '../engine.js?v=strategic-player-offer-1';
 import {addReport} from '../character-system.js?v=succession-ui-recovery-1';
 import {leadershipIntelligence} from '../map-lab/intelligence-summary.js';
 
