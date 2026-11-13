@@ -1,17 +1,37 @@
-import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY} from './engine.js';
-import {FACTIONS,PLAYABLE,ROUTES} from './data.js';
+import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=cursus-han-2';
+import {FACTIONS,PLAYABLE,ROUTES,OFFICES} from './data.js';
+import {appoint,knownAttributes,emperorAuthority} from './court.js';
+import {isLiuClan} from './dynasty.js';
 import {drawMap} from './map.js';
 import {templatesFor,recruitQuote,recruit,neighbours} from './military.js';
 import {changeDependency,dependencyOf} from './dependencies.js';
 import {declareWar,propose,atWar} from './frontier.js';
 const $=id=>document.getElementById(id),D=(en,zh)=>lang?zh:en,L=a=>Array.isArray(a)?a[lang]||a[0]:a;
-let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,camera='all',mode='political';
+let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,camera='all',mode='political',courtOpen=false,courtOffice='dasinong',courtCandidate=null;
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function message(en,zh){$('message').textContent=D(en,zh)}
 function save(){if(!s)return;localStorage.setItem(SAVE_KEY('browser'),serialize(s));message('Campaign saved.','战役已保存。')}
 function load(){const raw=localStorage.getItem(SAVE_KEY('browser'));if(!raw){message('No saved campaign.','尚无存档。');return}try{s=loadHanSave(raw);selected=null;army=null;render();message('Campaign loaded.','战役已读取。')}catch(e){message('Save could not be loaded: '+e.message,'无法读取存档：'+e.message)}}
 function begin(f){s=newHanGame(f);selected=s.regions.find(r=>r.owner===f)?.id||null;army=null;render();message('Select an army, inspect a route, then advance a month.','选择军队、查看路线，再推进一个月。')}
 function date(){return lang?`公元前${Math.abs(s.year)}年${s.month}月`:`${Math.abs(s.year)} BCE · month ${s.month}`}
+function courtCandidates(office){
+ return Object.values(s.persons).filter(p=>p.alive&&p.faction==='han'&&['official','general','consort','dowager','envoy'].includes(p.role)&&(!OFFICES[office].requiresLiu||isLiuClan(s,p.id))&&!(p.eunuch&&['chengxiang','yushi','dasima'].includes(office)));
+}
+function courtPanel(){
+ if(s.player!=='han'||!s.court?.offices)return '';
+ const candidates=courtCandidates(courtOffice),chosen=candidates.find(p=>p.id===courtCandidate)||candidates[0],office=OFFICES[courtOffice],holder=s.persons[s.court.offices[courtOffice]],knowledge=chosen?knownAttributes(s,chosen.id):null;
+ courtCandidate=chosen?.id||null;
+ const pending=s.court.recommendations?.find(x=>x.office===courtOffice&&x.status==='pending');
+ return `<details id="han-court" ${courtOpen?'open':''}><summary>${D('Imperial Court · appointments','汉廷官员树 · 任命')}</summary><p class="muted">${D('Han offices are appointed by imperial authority, not Roman assemblies. Replacing a holder causes court resentment; there is no treasury charge.','汉廷官职由皇权任命，不经罗马公民大会。撤换在任者会引起朝廷怨怼；任命不耗国库。')}</p><p>${D('Imperial authority','皇权威望')} ${emperorAuthority(s)}/100</p><div class="han-office-list">${Object.entries(OFFICES).map(([key,o])=>`<div><span>${esc(L(o.name))}</span><strong>${esc(L(s.persons[s.court.offices[key]]?.name)||D('Vacant','空缺'))}</strong></div>`).join('')}</div><label>${D('Choose office','选择官职')}<select id="court-office">${Object.entries(OFFICES).map(([key,o])=>`<option value="${esc(key)}" ${key===courtOffice?'selected':''}>${esc(L(o.name))}</option>`).join('')}</select></label><p class="muted">${esc(L(office.gloss))}</p><label>${D('Candidate','候选人')}<select id="court-candidate">${candidates.map(person=>`<option value="${esc(person.id)}" ${person.id===chosen?.id?'selected':''}>${esc(L(person.name))}${person.office?' · '+esc(L(OFFICES[person.office]?.name)):''}</option>`).join('')}</select></label><p class="muted">${chosen?esc(D('Known competence','已知才能')+': '+(knowledge.competence??D('unverified','未核实'))+' · '+D('Hidden motives remain uncertain.','私下动机仍不明。')):D('No eligible official is available.','暂无合格官员。')}</p><button id="court-appoint" ${chosen?'':'disabled'}>${D('Appoint to office','任命此官')}</button><small>${holder?D('Current holder will be displaced; their faction may resent the decision.','现任官员将被撤换，其派系可能不满。'):D('This office is vacant.','此官职空缺。')}</small><button id="court-recommend" ${office.requiresLiu||pending||s.factions.han.treasury<15?'disabled':''}>${pending?D(`Recommendation in progress · ${pending.remaining} months`,`察举进行中 · 剩余${pending.remaining}个月`):D('Seek a new official · 15 treasury · 3 months','察举新官 · 15国库 · 3个月')}</button><small>${office.requiresLiu?D('The clan office requires a documented Liu candidate.','宗正必须由具备刘氏宗籍者担任。'):D('A recommended person is generated after the inquiry; appointment remains a separate decision.','察举完成后产生具名人选；任命仍需另作决定。')}</small></details>`;
+}
+function bindCourt(){
+ const details=$('han-court');if(!details)return;
+ details.ontoggle=()=>{courtOpen=details.open};
+ $('court-office').onchange=e=>{courtOpen=true;courtOffice=e.target.value;courtCandidate=null;render()};
+ $('court-candidate').onchange=e=>{courtOpen=true;courtCandidate=e.target.value;render()};
+ $('court-recommend').onclick=()=>{courtOpen=true;const result=recommendOfficial(s,courtOffice);render();message(result.ok?'Recommendation requested; return in three months.':'Recommendation unavailable: '+result.reason,result.ok?'已提出察举请求；三个月后查看。':'无法察举：'+result.reason)};
+ $('court-appoint').onclick=()=>{if(!courtCandidate)return;const result=appoint(s,courtOffice,courtCandidate);render();message(result.ok?(result.displaced?'The office changed hands; the displaced official may resent it.':'Appointment recorded.'):'Appointment unavailable: '+result.reason,result.ok?(result.displaced?'官职已易主；被撤官员可能心生怨怼。':'任命已记录。'):'无法任命：'+result.reason)};
+}
 function render(){
  document.documentElement.lang=lang?'zh-CN':'en';$('title').textContent=D('MANDATE OF HEAVEN · SILK ROAD','天命 · 丝路诸国');$('lang').textContent=lang?'English':'中文';$('save').textContent=D('Save','保存');$('load').textContent=D('Load','读取');$('campaignTitle').textContent=s?`${esc(L(FACTIONS[s.player]?.name))} · ${date()}`:D('Choose a polity','选择政体');
  $('advance').textContent=D('Next month','推进一月');$('advance').disabled=!s;
@@ -21,7 +41,8 @@ function render(){
  $('setup').innerHTML=s?`<p class="muted">${D('All polities share one simulated campaign. Regional centers are approximate, not precise borders.','所有政体共用同一战役模拟。政体中心为概略位置，不代表精确国界。')}</p>`:`<p>${D('49 BCE. Emperor Xuan rules Han. Choose a kingdom, confederation, client or oasis state.','公元前49年，汉宣帝在位。选择王国、联盟、属邦或绿洲政体。')}</p><select id="factionSelect">${PLAYABLE.map(id=>`<option value="${esc(id)}">${esc(L(FACTIONS[id].name))}</option>`).join('')}</select><button id="begin">${D('Begin campaign','开始战役')}</button>`;
  if(!s){$('begin').onclick=()=>begin($('factionSelect').value);$('map').innerHTML='';$('overview').innerHTML='';$('inspector').innerHTML='';$('chronicle').innerHTML='';return}
  const f=s.factions[s.player],owned=s.regions.filter(r=>r.owner===s.player),mine=s.armies.filter(a=>a.owner===s.player&&a.men>0);
- $('overview').innerHTML=`<h3>${D('Realm','国势')}</h3><dl><dt>${D('Treasury','国库')}</dt><dd>${f.treasury}</dd><dt>${D('Grain','粮食')}</dt><dd>${f.grain}</dd><dt>${D('Manpower','兵源')}</dt><dd>${f.manpower}</dd><dt>${D('Stability','稳定')}</dt><dd>${f.stability}</dd><dt>${D('Regions','领地')}</dt><dd>${owned.length}</dd><dt>${D('Armies','军队')}</dt><dd>${mine.length}</dd><dt>${D('Known ruler','可考君主')}</dt><dd>${esc(L(s.rulers?.[s.player]?.name)||D('Uncertain','未详'))}</dd></dl><h3>${D('Your armies','麾下军队')}</h3>${mine.map(a=>`<div class="list"><button data-select-army="${esc(a.id)}">${esc(a.id)} · ${esc(L(s.regions.find(r=>r.id===a.region)?.name))} · ${a.men}</button></div>`).join('')||D('No armies remain.','已无军队。')}`;
+ $('overview').innerHTML=`<h3>${D('Realm','国势')}</h3><dl><dt>${D('Treasury','国库')}</dt><dd>${f.treasury}</dd><dt>${D('Grain','粮食')}</dt><dd>${f.grain}</dd><dt>${D('Manpower','兵源')}</dt><dd>${f.manpower}</dd><dt>${D('Stability','稳定')}</dt><dd>${f.stability}</dd><dt>${D('Regions','领地')}</dt><dd>${owned.length}</dd><dt>${D('Armies','军队')}</dt><dd>${mine.length}</dd><dt>${D('Known ruler','可考君主')}</dt><dd>${esc(L(s.rulers?.[s.player]?.name)||D('Uncertain','未详'))}</dd></dl><h3>${D('Your armies','麾下军队')}</h3>${mine.map(a=>`<div class="list"><button data-select-army="${esc(a.id)}">${esc(a.id)} · ${esc(L(s.regions.find(r=>r.id===a.region)?.name))} · ${a.men}</button></div>`).join('')||D('No armies remain.','已无军队。')}`+courtPanel();
+ bindCourt();
  $('overview').querySelectorAll('[data-select-army]').forEach(b=>b.onclick=()=>{army=b.dataset.selectArmy;selected=s.armies.find(a=>a.id===army)?.region;render()});
  const colors=Object.fromEntries(Object.values(FACTIONS).map(f=>[f.id,f.color]));
  const targets=new Set(army?neighbours(s.armies.find(a=>a.id===army)?.region||'').map(x=>typeof x==='string'?x:x.id):[]);
