@@ -108,6 +108,9 @@ test('a closed route settles its escrow and goods after twelve months',()=>{
  assert.equal(source.stock,startingStock);
  assert.equal(s.factions.han.treasury,startingCash-placed.shipment.transport);
  assert.equal(s.tradeMarkets.transactions.filter(x=>x.shipment===placed.shipment.id).length,1);
+ const receipt=s.tradeMarkets.transactions.find(x=>x.shipment===placed.shipment.id);
+ assert.equal(receipt.destination,'kangju');assert.equal(receipt.refund,placed.shipment.price+placed.shipment.tariffs.reduce((sum,t)=>sum+t.amount,0));
+ assert.deepEqual(loadHanSave(serialize(s)).tradeMarkets.transactions.find(x=>x.shipment===placed.shipment.id),receipt);
  assert.equal(s.tradeMarkets.transportSpent+s.tradeMarkets.merchantFees,s.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
 });
 
@@ -173,6 +176,9 @@ test('bandit risk consumes real cargo while route security can protect it',()=>{
  assert.equal(s.tradeMarkets.lostGoods.silk,1);assert.equal(s.tradeMarkets.externalTreasury,externalBefore+shipment.price+shipment.tariffs.reduce((n,t)=>n+t.amount,0));
  assert.equal(s.factions.han.treasury,hanBefore);
  assert.equal(s.tradeMarkets.transportSpent+s.tradeMarkets.merchantFees,shipment.transport);
+ const receipt=s.tradeMarkets.transactions.find(x=>x.shipment===shipment.id);
+ assert.equal(receipt.status,'lost');assert.equal(receipt.destination,nextRegion.id);
+ assert.equal(receipt.refund,shipment.price+shipment.tariffs.reduce((sum,t)=>sum+t.amount,0));
 });
 
 test('a legacy caravan without prepaid goods carries reports without minting money or horses',()=>{

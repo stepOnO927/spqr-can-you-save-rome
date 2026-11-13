@@ -142,6 +142,11 @@ its closure clock. The market panel and Chronicle report the stranded result
 in both languages instead of showing an endless in-transit caravan or a false
 delivery. Unit and Chromium regressions cover stock, treasury, receipt and
 save/load conservation.
+The standalone Han market also exposes real lost and returned caravan
+outcomes in its recent transaction list. Each settlement records the refund
+and physical location; old settlement records recover that detail from their
+saved shipment. Bilingual Chromium coverage confirms a blocked horse caravan
+is visible after a save reload.
 An oasis market with no local silk production can now offer imported surplus
 above its consumption reserve for resale. A two-contract test moves real Han
 silk to Shanshan and then to Qiemo, with distinct prepaid shipments,

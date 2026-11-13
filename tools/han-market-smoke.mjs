@@ -36,6 +36,22 @@ try{
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
  assert.match(await page.locator('#inspector').innerText(),/过境关税/);
  assert.match(await page.locator('.market-receipts').innerText(),/货价.*运费.*过境税.*总计/);
+ await page.evaluate(async()=>{
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js');
+  const {propose,declareWar}=await import('/han/frontier.js?v=han-1');
+  const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=faces-of-empire-1');
+  const state=newHanGame('han',{seed:77});
+  if(propose(state,'han','kangju','market').proposal.status!=='accepted')throw Error('Market treaty unavailable');
+  const placed=placeEasternTrade(state,{seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1});
+  if(!placed.ok||!declareWar(state,'han','kangju').ok)throw Error('Blockade setup failed');
+  for(let i=0;i<13;i++){if(++state.month>12){state.month=1;state.year++}advanceEasternMarkets(state)}
+  if(placed.shipment.status!=='stranded')throw Error('Blocked caravan did not settle');
+  localStorage.setItem(SAVE_KEY('browser'),serialize(state));
+ });
+ await page.locator('#load').click();await page.locator('#trade-panel').click();
+ assert.match(await page.locator('.market-receipts').innerText(),/封路后退回.*货物退回.*退款.*运费支出/s);
+ await page.locator('#lang').click();
+ assert.match(await page.locator('.market-receipts').innerText(),/Returned after blockade.*Goods returned to.*Refund.*Transport spent/s);
  assert.deepEqual(errors,[]);
  console.log('Han market browser smoke passed: customs policy, treaty, horse quote, dispatch, saved merchant, delivery and bilingual panel.');
 }finally{await browser.close()}

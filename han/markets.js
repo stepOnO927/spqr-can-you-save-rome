@@ -148,7 +148,7 @@ function settleLostShipment(s,shipment,location){
  if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.location=location}
  markets.transportSpent+=shipment.transport-fee;markets.merchantFees+=fee;
  shipment.escrow=0;shipment.status='lost';shipment.lostAt=month(s);shipment.lostNear=location;
- markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,merchantId:shipment.merchantId,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:0,transport:shipment.transport,tariffs:[],status:'lost',year:s.year,month:s.month});
+ markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,origin:shipment.origin,destination:location,merchantId:shipment.merchantId,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:0,transport:shipment.transport,tariffs:[],refund,status:'lost',year:s.year,month:s.month});
  if(markets.transactions.length>300)markets.transactions.shift();
 }
 
@@ -161,7 +161,7 @@ function settleStrandedShipment(s,shipment){
  if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.location=location}
  markets.transportSpent+=shipment.transport-fee;markets.merchantFees+=fee;
  shipment.escrow=0;shipment.status='stranded';shipment.settledAt=month(s);
- markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,merchantId:shipment.merchantId,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:0,transport:shipment.transport,tariffs:[],status:'stranded',year:s.year,month:s.month});
+ markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,origin:shipment.origin,destination:location,merchantId:shipment.merchantId,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:0,transport:shipment.transport,tariffs:[],refund,status:'stranded',year:s.year,month:s.month});
  if(markets.transactions.length>300)markets.transactions.shift();
 }
 
