@@ -24,6 +24,27 @@ try{
  assert.equal(await card.getAttribute('data-ruler'),name);
  await page.locator('#lang').click();assert.match(await card.innerText(),/本战役原创人物/);
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
+ await page.locator('#factionSelect').selectOption('armenia');await page.locator('#begin').click();await page.locator('#save').click();
+ await page.evaluate(async()=>{
+  const {recordBirth}=await import('/han/dynasty.js');
+  const {advanceForeignRulers}=await import('/han/rulers.js');
+  const key='spqr-han-save-browser',s=JSON.parse(localStorage.getItem(key)),old=s.rulers.armenia.personId,id='original-armenian-browser-heir';
+  s.persons[id]={id,name:['Aram of Artaxata','阿尔塔克萨塔的阿拉姆'],faction:'armenia',role:'prince',record:'fictional',birth:s.year-8,sex:'m',father:old,alive:true,competence:60,military:50};
+  if(!recordBirth(s,{id,father:old,birth:s.year-8,birthSurname:null,sex:'m'}).ok)throw Error('minor heir birth record failed');
+  s.persons[old].alive=false;advanceForeignRulers(s);
+  if(!s.rulers.armenia.regentId)throw Error('minor ruler lacks regent');
+  localStorage.setItem(key,JSON.stringify(s));
+ });
+ await page.locator('#load').click();
+ assert.equal(await card.getAttribute('data-ruler'),'original-armenian-browser-heir');
+ assert.match(await card.innerText(),/Court regent; exercises civil and military authority/);
+ assert.equal(await card.locator('[data-regent] img').evaluate(img=>img.complete&&img.naturalWidth>0),true);
+ const regentId=await card.locator('[data-regent]').getAttribute('data-regent');
+ await page.locator('#lang').click();assert.match(await card.innerText(),/宫廷摄政/);
+ await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
+ assert.equal(await card.locator('[data-regent]').getAttribute('data-regent'),regentId);
+ assert.match(await card.innerText(),/Court regent; exercises civil and military authority/);
+ await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();await page.locator('#save').click();
  await page.evaluate(async()=>{
   const {recordBirth,crown}=await import('/han/dynasty.js');

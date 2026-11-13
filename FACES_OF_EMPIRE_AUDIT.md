@@ -236,6 +236,13 @@ languages, and older saves gain missing links without overwriting a recorded
 ruler. Targeted tests cover Parthia, Armenia, Wusun, Kangju and Shanshan,
 plus save restoration and a Kangju browser succession. The Roman campaign's
 separate succession model still needs the full cross-campaign acceptance run.
+When a foreign ruler's surviving child inherits before age eighteen, the
+child retains the culturally titled throne while a distinct original adult
+regent holds the governing and military judgment used by the simulation. The
+regent has a saved ID, portrait, relationship to the young ruler and bilingual
+card; a dead regent is replaced, and authority returns to the ruler at
+adulthood. Unit tests measure the regent's actual tax effect across a turn,
+save/load and succession; a Chromium smoke checks both languages and images.
 The expanded Eurasian roster now opens with title-only, explicitly unnamed
 rulers where no contemporary personal name is documented. A named original
 successor appears only after a simulated succession. New ruler names avoid

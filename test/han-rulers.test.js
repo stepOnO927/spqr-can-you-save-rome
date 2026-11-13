@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js';
-import {advanceForeignRulers,rulerPortrait,rulerMilitaryJudgment,rulerGovernanceFactor} from '../han/rulers.js';
+import {advanceForeignRulers,rulerPortrait,regentPortrait,rulerMilitaryJudgment,rulerGovernanceFactor} from '../han/rulers.js';
 import {ownRulerHtml} from '../han/ruler-ui.js';
 import {birthRecordValid,recordBirth,eligibility,crown,seizeThrone} from '../han/dynasty.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';
@@ -114,6 +114,47 @@ test('Parthia, Armenia, Wusun, Kangju and an oasis kingdom gain persistent succe
   assert.equal(rulerPortrait(restored,f),rulerPortrait(s,f),f);
   const id=restored.rulers[f].id;tick(restored);assert.equal(restored.rulers[f].id,id,f);
  }
+});
+
+test('a minor foreign heir keeps the throne while a named regent actually governs',()=>{
+ let s=newHanGame('armenia',{seed:706}),old=s.rulers.armenia,id='original-armenian-heir';
+ s.persons[id]={id,name:['Aram of Artaxata','阿尔塔克萨塔的阿拉姆'],faction:'armenia',role:'prince',record:'fictional',birth:s.year-8,sex:'m',father:old.personId,mother:null,alive:true,competence:99,military:99};
+ assert.equal(recordBirth(s,{id,father:old.personId,birth:s.year-8,birthSurname:null,sex:'m'}).ok,true);
+ s.persons[old.personId].alive=false;advanceForeignRulers(s);
+ assert.equal(s.rulers.armenia.personId,id);
+ const regent=s.persons[s.rulers.armenia.regentId];
+ assert.ok(regent&&regent.alive&&regent.role==='regent'&&s.year-regent.birth>=35);
+ assert.equal(regent.regentFor,id);
+ assert.match(regentPortrait(s,'armenia'),/^data:image\/svg\+xml,/);
+ assert.match(ownRulerHtml(s,0),/Court regent; exercises civil and military authority/);
+ assert.match(ownRulerHtml(s,1),/宫廷摄政/);
+ regent.competence=0;regent.military=35;
+ assert.equal(rulerGovernanceFactor(s,'armenia'),0.9);
+ const cautious=rulerMilitaryJudgment(s,'armenia');
+ regent.competence=100;regent.military=90;
+ assert.equal(rulerGovernanceFactor(s,'armenia'),1.1);
+ assert.ok(rulerMilitaryJudgment(s,'armenia')>cautious);
+ for(const region of s.regions)if(region.owner==='armenia')region.tax=100;
+ const low=structuredClone(s),high=structuredClone(s);
+ low.persons[regent.id].competence=0;
+ tick(low);tick(high);
+ assert.ok(high.factions.armenia.treasury>low.factions.armenia.treasury,'regent competence must change actual revenue');
+ const portrait=regentPortrait(s,'armenia'),regentId=regent.id;
+ s=loadHanSave(serialize(s));
+ assert.equal(s.rulers.armenia.regentId,regentId);
+ assert.equal(regentPortrait(s,'armenia'),portrait);
+ s.persons[regentId].alive=false;advanceForeignRulers(s);
+ const replacement=s.rulers.armenia.regentId;
+ assert.notEqual(replacement,regentId);
+ assert.equal(s.rulers.armenia.personId,id);
+ assert.equal(s.persons[regentId].regentFor,undefined);
+ assert.equal(loadHanSave(serialize(s)).rulers.armenia.regentId,replacement);
+ s.year+=10;advanceForeignRulers(s);
+ assert.equal(s.rulers.armenia.personId,id);
+ assert.equal(s.rulers.armenia.regentId,undefined);
+ assert.equal(s.persons[replacement].regentFor,undefined);
+ assert.equal(rulerGovernanceFactor(s,'armenia'),0.9+s.persons[id].competence/500);
+ assert.doesNotMatch(ownRulerHtml(s,0),/Court regent/);
 });
 
 test('succession has a simulation cost and ruler judgment affects AI threshold',()=>{
