@@ -71,9 +71,10 @@ test('35. the eastern map stays responsive and draws only reported control',()=>
 
 test('36. the NPC East does not freeze the browser',()=>{
  const a=newGame('caesar'),b=roman();
- let t0=performance.now();for(let i=0;i<24;i++)romanTick(a);const base=(performance.now()-t0)/24;
- t0=performance.now();for(let i=0;i<24;i++)romanTick(b);const withDlc=(performance.now()-t0)/24;
- assert.ok(withDlc-base<15,`expansion adds ${(withDlc-base).toFixed(2)} ms per month`);
+ const cpuMs=()=>{const {user,system}=process.cpuUsage();return (user+system)/1000};
+ let t0=cpuMs();for(let i=0;i<24;i++)romanTick(a);const base=(cpuMs()-t0)/24;
+ t0=cpuMs();for(let i=0;i<24;i++)romanTick(b);const withDlc=(cpuMs()-t0)/24;
+ assert.ok(withDlc-base<15,`expansion adds ${(withDlc-base).toFixed(2)} CPU ms per month`);
 });
 
 test('37. no placeholder mechanics: every eastern button and edict works',()=>{

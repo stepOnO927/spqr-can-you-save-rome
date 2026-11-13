@@ -55,8 +55,8 @@ test('IMPERIUM achievements stay hidden during play and appear only at finalizat
 
 test('performance: 36 all-AI months with all three systems stay bounded',()=>{
  const s=newGame('caesar');s.difficulty='expert';const times=[];
- for(let i=0;i<36;i++){const t=performance.now();tick(s,{autoplayPlayer:true});times.push(performance.now()-t)}
- const size=JSON.stringify(s).length;assert.ok(Math.max(...times)<250,`slowest month ${Math.max(...times)}ms`);assert.ok(size<600000,`save ${size} bytes`);
+ for(let i=0;i<36;i++){const t=process.cpuUsage();tick(s,{autoplayPlayer:true});const {user,system}=process.cpuUsage(t);times.push((user+system)/1000)}
+ const size=JSON.stringify(s).length;assert.ok(Math.max(...times)<250,`slowest month ${Math.max(...times)} CPU ms`);assert.ok(size<600000,`save ${size} bytes`);
  assert.ok(s.world.battlePlans.length<=40);assert.ok(Object.keys(s.world.formations.templates).length<=80);
  const up=upgradeSave(JSON.parse(JSON.stringify(s)));tick(up,{autoplayPlayer:true});
 });

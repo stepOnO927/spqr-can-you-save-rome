@@ -210,7 +210,7 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
 }
 export function queueMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;
- const {duration,partner,cost}=plan,subjectCharacter=['health','age','location'].includes(subject)?(characterId||(['health','location'].includes(subject)&&type!=='exchange'?reportedHealthSubjects(s,actor,target)[0]:null)||null):null;
+ const {duration,partner,cost}=plan,subjectCharacter=['health','age','location'].includes(subject)?(characterId===''?null:(characterId||(['health','location'].includes(subject)&&type!=='exchange'?reportedHealthSubjects(s,actor,target)[0]:null)||null)):null;
  s.factions[actor].treasury-=cost;const op={actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month};
  const agentId=nameMissionActor(s,op);s.operations.unshift(op);
  if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months. ${CHARACTER_CATALOG[agentId].name[0]} leads it.`,`已派出${({spy:'间谍',counter:'内部调查',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月；由${CHARACTER_CATALOG[agentId].name[1]}负责。`,{characterId:agentId});return {ok:true,duration,agentId};
@@ -265,7 +265,17 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   if(!sealed?.available){op.status='failed';if(op.actor===s.player)notify(s,'The intelligence exchange ended without a report; the reason is unknown.','情报交换结束，未收到报告；原因不明。');continue}
   addReport(s,op.actor,op.target,sealed.report);op.status='complete';if(op.actor===s.player)notify(s,'A partner forwarded an existing report; its original date and source still matter.','伙伴转交了一份既有报告；仍需留意原始日期与来源。');continue
  }
- const healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(reportedHealthSubjects(s,op.actor,op.target)[0]||null),healthCandidate=s.world.characters[healthId];
+ let healthId=Object.hasOwn(op,'subjectCharacter')?op.subjectCharacter:(reportedHealthSubjects(s,op.actor,op.target)[0]||null);
+ // A general health or location investigation can encounter a public figure
+ // even when the sender had no name to address. Discover the name only during
+ // resolution, through a successful local observation; absence is not proof of
+ // a vacancy or of anyone's health. A named request never changes its target.
+ if(!healthId&&['health','location'].includes(op.subject)&&q>=(op.type==='travelers'?.85:.7)){
+  const known=new Set(reportedHealthSubjects(s,op.actor,op.target));
+  const candidates=(s.world.leadership[op.target]||[]).filter(candidate=>{const c=s.world.characters[candidate];return CHARACTER_CATALOG[candidate]&&c?.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health)&&s.regions.some(r=>r.id===c.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===candidate&&a.move)});
+  healthId=candidates.find(candidate=>!known.has(candidate))||candidates[0]||null;
+ }
+ const healthCandidate=s.world.characters[healthId];
  // A lead can be stale or wrong. Investigating a court must not read the live
  // health of someone who has left it, or whose whereabouts are unknown.
  // Return the same uninformative report instead of disclosing the hidden reason.
