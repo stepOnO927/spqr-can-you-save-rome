@@ -20,6 +20,9 @@ function record(s,en,zh){s.log.unshift({year:s.year,month:s.month,en,zh});s.log=
 export function appointOffice(s,office,id,actor=s.player){
  const offices=initializeOffices(s);if(!roman(actor)||!OFFICE_TYPES.includes(office)||!s.regions.some(r=>r.owner===actor)||!officeCandidates(s,actor,office).includes(id))return {ok:false,reason:'unavailable'};
  if(offices[actor][office]===id)return {ok:false,reason:'already'};
+ const decision=s.world.cursus?.applicationDecisions?.[actor+':'+id];
+ if(decision?.status==='rejected'&&decision.year===s.year)return {ok:false,reason:'rejected'};
+ if(decision?.status==='postponed'&&s.year*12+s.month<decision.until)return {ok:false,reason:'postponed'};
  if(s.factions[actor].treasury<5)return {ok:false,reason:'treasury'};
  const previous=offices[actor][office];if(previous&&previous!==id)rememberPersonalEvent(s,previous,actor,'dismissal',-8);
  s.factions[actor].treasury-=5;offices[actor][office]=id;rememberPersonalEvent(s,id,actor,'appointment',4);

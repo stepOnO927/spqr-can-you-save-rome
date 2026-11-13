@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=cursus-integrated-1';
 import {appointOffice,officeEffects} from '../office-system.js?v=succession-ui-recovery-1';
-import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=cursus-integrated-1';
+import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=cursus-integrated-1';
 
 test('fictional candidates are persistent people; Roman consuls require an assembly election',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
@@ -433,4 +433,29 @@ test('stale employment contact spends time before a lapsed offer is known',()=>{
  assert.equal(s.factions.senate.treasury,before-18);
  for(let i=0;i<3;i++)advanceCursus(s);
  assert.equal(c.offers.at(-1).status,'lapsed');
+});
+
+test('appointed applicants can be interviewed, postponed and then appointed through one office system',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
+ c.talents.push({actor:'senate',id,field:'provincial',regionId:'roma',year:s.year,month:s.month});
+ const start=s.factions.senate.treasury;
+ assert.equal(reviewApplicant(s,id,'interview').ok,true);
+ assert.equal(s.factions.senate.treasury,start-3);
+ advanceCursus(s);
+ const report=c.applicationReviews.at(-1).report;
+ assert.ok(['strong','credible','uncertain'].includes(report.qualification));
+ assert.equal(report.education,undefined);
+ s.month=2;assert.equal(reviewApplicant(s,id,'postpone').ok,true);
+ assert.equal(appointmentApplicationStatus(s,id).reason,'postponed');
+ assert.equal(appointOffice(s,'finance',id).reason,'postponed');
+ s.month=5;assert.equal(appointOffice(s,'finance',id).ok,true);
+ assert.equal(upgradeSave(structuredClone(s)).world.cursus.applicationReviews[0].report.source,'interview');
+});
+test('rejecting an application preserves the person and expires next year',()=>{
+ const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
+ c.talents.push({actor:'senate',id,field:'provincial',regionId:'roma',year:s.year,month:s.month});
+ assert.equal(reviewApplicant(s,id,'reject').ok,true);
+ assert.equal(appointOffice(s,'finance',id).reason,'rejected');
+ assert.ok(s.world.characters[id].alive);
+ s.year++;s.month=1;assert.equal(appointmentApplicationStatus(s,id).ok,true);
 });
