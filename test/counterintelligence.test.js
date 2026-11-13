@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=gathering-delegate-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=multipolar-confidence-1';
 import {queueMission,advanceOperations,availableAgents,counterWatchRemaining} from '../character-system.js?v=succession-ui-recovery-1';
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 function dispatchWatch(s){const cash=s.factions[s.player].treasury;assert.equal(queueMission(s,s.player,s.player,'counter','counter_spies').ok,true);assert.equal(s.factions[s.player].treasury,cash-8);assert.equal(availableAgents(s,s.player),2);for(let i=0;i<2;i++)advanceOperations(s);assert.equal(counterWatchRemaining(s,s.player),0);s.world.intelSeed=seedFor(.7,.8);advanceOperations(s);assert.equal(s.operations[0].status,'complete');assert.equal(counterWatchRemaining(s,s.player),6);return s}

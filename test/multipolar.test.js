@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=gathering-delegate-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=multipolar-confidence-1';
 import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=fort-intel-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
-import {assessOpportunities} from '../multipolar.js?v=fort-intel-1';
+import {assessOpportunities} from '../multipolar.js?v=multipolar-confidence-1';
 import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
 import {buildChessboard} from '../chessboard.js?v=succession-ui-recovery-1';
@@ -13,7 +13,7 @@ import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {advanceGovernments} from '../governance.js?v=succession-ui-recovery-1';
 import {advanceMovements} from '../movements.js?v=succession-ui-recovery-1';
-import {newRevolutionScenario} from '../scenarios.js?v=gathering-delegate-1';
+import {newRevolutionScenario} from '../scenarios.js?v=multipolar-confidence-1';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
@@ -21,6 +21,19 @@ test('opportunities use the observer’s reports, not hidden military or politic
  other.factions.armenia.stability=0;other.factions.armenia.treasury=-100;other.wars.push(['armenia','egypt']);
  assert.deepEqual(assessOpportunities(s,'parthia',estimatedStrength),assessOpportunities(other,'parthia',estimatedStrength));
  const unknown=assessOpportunities(s,'parthia',estimatedStrength).find(x=>x.target==='armenia');assert.equal(unknown.instability,'unknown');assert.equal(unknown.knownWars,0);
+});
+
+test('AI weighs instability by evidence confidence and ignores stale or disputed claims',()=>{
+ const base=newGame('caesar'),score=s=>assessOpportunities(s,'parthia',estimatedStrength).find(x=>x.target==='armenia');
+ const before=score(base).score;
+ addReport(base,'parthia','armenia',{kind:'stability',value:'fragile',source:'spy',confidence:'rumor'});
+ const rumor=score(base);assert.equal(rumor.instabilityConfidence,'rumor');assert.equal(rumor.score,before+1);
+ addReport(base,'parthia','armenia',{kind:'stability',value:'fragile',source:'travelers'});
+ addReport(base,'parthia','armenia',{kind:'stability',value:'fragile',source:'official'});
+ const corroborated=score(base);assert.equal(corroborated.instabilityConfidence,'confirmed');assert.equal(corroborated.score,before+4);
+ addReport(base,'parthia','armenia',{kind:'stability',value:'stable',source:'envoy'});
+ const disputed=score(base);assert.equal(disputed.instabilityConfidence,'disputed');assert.equal(disputed.score,before);
+ base.year+=3;const stale=score(base),without=JSON.parse(JSON.stringify(base));without.knowledge.parthia.armenia.reports=[];assert.equal(stale.instability,'unknown');assert.equal(stale.instabilityConfidence,'unknown');assert.equal(stale.score,score(without).score);
 });
 
 test('a court weighs its own trade commitments without learning secret foreign agreements',()=>{
