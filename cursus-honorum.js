@@ -156,12 +156,12 @@ export function institutionalBalance(s,faction=s.player){
 }
 export function annualApplicants(s){
  const c=initializeCursus(s);if(c.year===s.year)return c.applicants.filter(x=>x.year===s.year);
- c.year=s.year;c.applicants=c.applicants.filter(x=>x.year>=s.year-2);
- for(const old of c.applicants.filter(x=>x.year===s.year-1&&x.status==='lost'&&present(s,x.id)&&!c.retired[x.id]&&officeEligibility(s,x.id,x.office).ok))c.applicants.push({...old,year:s.year,status:'eligible',support:0,opposition:0,campaignExpense:0,promises:[]});
+ c.year=s.year;c.applicants=c.applicants.filter(x=>x.year>=s.year-1||x.promises?.some(p=>p.status==='pending'));
+ const renewed=new Set();for(const old of c.applicants.filter(x=>x.year===s.year-1&&x.status==='lost'&&present(s,x.id)&&!c.retired[x.id]&&officeEligibility(s,x.id,x.office).ok).sort((a,b)=>b.support-a.support)){const key=old.faction+':'+old.office;if(renewed.has(key))continue;renewed.add(key);c.applicants.push({...old,year:s.year,status:'eligible',support:0,opposition:0,campaignExpense:0,promises:[]})}
  for(const [id,history] of Object.entries(c.careers)){
   if(!present(s,id)||c.retired[id]||!history?.some(x=>x.source==='election'))continue;
   const last=[...history].reverse().find(x=>x.source==='election'),next=last?.office==='quaestor'?'praetor':last?.office==='praetor'?'consul':null;
-  if(next&&officeEligibility(s,id,next).ok&&!c.applicants.some(x=>x.id===id&&x.year===s.year&&x.office===next))c.applicants.push({id,year:s.year,office:next,status:'eligible',faction:person(s,id).faction,statement:'career promotion',platform:'administration',support:0,opposition:0,campaignExpense:0,promises:[]});
+  if(next&&officeEligibility(s,id,next).ok&&!c.applicants.some(x=>x.id===id&&x.year===s.year&&x.office===next)&&c.applicants.filter(x=>x.year===s.year&&x.office===next&&x.faction===person(s,id).faction).length<2)c.applicants.push({id,year:s.year,office:next,status:'eligible',faction:person(s,id).faction,statement:'career promotion',platform:'administration',support:0,opposition:0,campaignExpense:0,promises:[]});
  }
  for(const faction of ['caesar','senate'])if(s.factions[faction]&&s.regions.some(r=>r.owner===faction)){
   for(const office of ['consul','praetor','quaestor','aedile','tribune'])addFictional(s,faction,office,Math.abs(s.year)*13+Object.keys(MAGISTRACIES).indexOf(office)*3+(faction==='senate'?0:1));
