@@ -58,7 +58,7 @@ test('dated Parthian office reports, two contact routes and negotiated employmen
  const restored=upgradeSave(structuredClone(s));assert.equal(restored.world.cursus.offers.at(-1).status,'accepted');
 });
 test('120 monthly turns retain identities, elections and bounded applications',()=>{
- const s=newGame('senate'),id=s.world.cursus.varroId;
+ const s=newGame('senate'),id=initializeCursus(s).varroId;
  for(let i=0;i<120;i++){s.month++;if(s.month>12){s.month=1;s.year++}advanceCursus(s)}
  assert.equal(s.world.cursus.varroId,id);
  assert.ok(s.world.cursus.elections.length>=10);
