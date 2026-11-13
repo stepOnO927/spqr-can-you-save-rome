@@ -240,7 +240,7 @@ export function bindImperium({state,lang,render,flash,log}){
   all('[data-imp-approve]').forEach(el=>el.onclick=()=>{const r=approvePlan(state,owner,plan.id,{log});if(!r.ok)flash(r.reason);render()});
   all('[data-imp-pause]').forEach(el=>el.onclick=()=>{pausePlan(state,owner,plan.id);render()});
   all('[data-imp-cancel-plan]').forEach(el=>el.onclick=()=>{cancelPlan(state,owner,plan.id);ui.drawing=null;render()});
-  all('[data-imp-rec]').forEach(el=>el.onclick=async()=>{const {issueMilitaryOrder}=await import('./engine.js?v=gathering-delegate-1');const r=approveRecommendation(state,owner,plan.id,Number(el.dataset.impRec),{issueOrder:issueMilitaryOrder});if(!r.ok)flash(r.reason||'');render()});
+  all('[data-imp-rec]').forEach(el=>el.onclick=async()=>{const {issueMilitaryOrder}=await import('./engine.js?v=multipolar-autoplay-1');const r=approveRecommendation(state,owner,plan.id,Number(el.dataset.impRec),{issueOrder:issueMilitaryOrder});if(!r.ok)flash(r.reason||'');render()});
  }
  // Route drawing captures map clicks before the normal region selection.
  if(ui.drawing){all('[data-map-group]').forEach(el=>el.addEventListener('click',e=>{e.stopImmediatePropagation();e.preventDefault();const a=state.armies.find(x=>x.id===ui.drawing.armyId);if(!a)return;const last=ui.drawing.path.at(-1)||a.region,ids=el.dataset.mapGroup.split(','),next=ids.find(id=>legalStep(state,owner,last,id).ok);

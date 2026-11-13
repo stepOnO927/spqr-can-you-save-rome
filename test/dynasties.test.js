@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=gathering-delegate-1';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=multipolar-autoplay-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 import {assignSuccession,successionModel} from '../characters.js?v=succession-ui-recovery-1';
 import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=succession-ui-recovery-1';
