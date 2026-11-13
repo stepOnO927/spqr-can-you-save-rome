@@ -25,6 +25,7 @@
 .mail-seal{float:right;border:2px double #a05240;border-radius:50%;width:72px;height:72px;display:grid;place-items:center;text-align:center;transform:rotate(-13deg);font:700 12px Georgia,serif;color:#9a4938;opacity:.7}
 .mail-portrait{float:left;width:54px;height:54px;margin:0 12px 8px 0;border:2px solid #ac9470;border-radius:50%;object-fit:cover}
 .mail-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:24px}.mail-actions button:hover{background:#dfcda9}.mail-response{font-style:italic;color:#76513c}
+.mail-actions label,.mail-actions small{flex-basis:100%;font:12px Arial,'Microsoft YaHei',sans-serif;color:#76513c}.mail-actions select{flex-basis:100%;max-width:100%;padding:7px;border:1px solid #ac9470;background:#fcf4e2;color:#483426}.mail-actions button:disabled{opacity:.5;cursor:not-allowed}
 .mail-empty{padding:18px;color:#806c55;font:13px Georgia,serif}
 .mail-thread{border-top:1px solid #baa481;margin-top:18px;padding-top:10px}.mail-thread h4{font:700 11px Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#76513c}.mail-thread p{font-size:12px;margin:6px 0}
 .mail-settings{display:flex;flex-wrap:wrap;gap:12px;padding:9px 15px;border-top:1px solid #bba784;font:11px Arial,'Microsoft YaHei',sans-serif}

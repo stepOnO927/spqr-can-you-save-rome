@@ -36,6 +36,7 @@ jobs:
           node tools/court-portrait-smoke.mjs
           node tools/mail-privacy-smoke.mjs
           node tools/gathering-presence-smoke.mjs
+          node tools/gathering-delegate-smoke.mjs
           node tools/atlas-mail-alert-smoke.mjs
           node scripts/imperium-sim.mjs > imperium-simulation.json
           node tools/onboarding-smoke.mjs
