@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=newborn-age-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=separate-crowns-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 
 // Alternate-history claimant commands use real game theaters and armies.

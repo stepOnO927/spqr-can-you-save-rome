@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=newborn-age-1';
-import {startDynasticWar} from './civil-war.js?v=fort-intel-1';
+import {CHARACTER_CATALOG} from './characters.js?v=separate-crowns-1';
+import {startDynasticWar} from './civil-war.js?v=separate-crowns-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {assignBornPortrait} from './portrait-registry.js?v=portrait-pool-2';
 

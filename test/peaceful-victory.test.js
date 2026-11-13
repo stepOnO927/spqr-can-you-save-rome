@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,diplomacy,sendInquiry,isWar,advancePeacefulSettlement,upgradeSave} from '../engine.js?v=unknown-person-1';
-import {canFinalizeCampaign,finalizeCampaign} from '../legacy.js?v=portrait-pool-2';
+import {newGame,tick,diplomacy,sendInquiry,isWar,advancePeacefulSettlement,upgradeSave} from '../engine.js?v=separate-crowns-1';
+import {canFinalizeCampaign,finalizeCampaign} from '../legacy.js?v=separate-crowns-1';
 
 test('a year of stable peace creates a real archival outcome without military conquest',()=>{
  let s=newGame('senate');s.seed=(Math.imul(7,2654435761)>>>0);for(let i=0;i<12;i++)tick(s);s.seed=1587;assert.ok(sendInquiry(s,'senate','caesar','peace').ok);

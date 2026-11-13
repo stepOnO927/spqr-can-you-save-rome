@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=unknown-person-1';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=portrait-pool-2';
-import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=unknown-person-1';
-import {deriveGovernment} from '../governance.js?v=portrait-pool-2';
-import {successorFor} from '../characters.js?v=newborn-age-1';
+import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=separate-crowns-1';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=separate-crowns-1';
+import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=separate-crowns-1';
+import {deriveGovernment} from '../governance.js?v=separate-crowns-1';
+import {successorFor} from '../characters.js?v=separate-crowns-1';
 
 test('a local friendly person may command a vacant army and the appointment survives saving',()=>{
  let s=newGame('senate');assert.equal(recruit(s,'roma'),true);const unit=s.armies.find(a=>a.id==='levy1');
