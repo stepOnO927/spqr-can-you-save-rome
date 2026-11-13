@@ -575,6 +575,41 @@ test('AI divides escorts between two raided trade routes and uses current route 
  advanceNaval(restored);
  for(const id of previousSecurity.keys())assert.ok(restored.naval.routes.find(r=>r.id===id).last.security>previousSecurity.get(id));
 });
+test('AI releases a quiet trade escort after three dated reviews and preserves its streak on reload',()=>{
+ const s=newGrandGame('caesar'),escort=s.naval.fleets.find(f=>f.owner==='senate');
+ s.factions.senate.treasury=500;
+ s.wars=[];
+ for(const pirate of s.naval.pirates){pirate.pressure=0;pirate.ships=0}
+ assert.equal(orderFleet(s,'senate',escort.id,'escort','africa-sicily').ok,true);
+ advanceNaval(s);
+ assert.equal(escort.order?.quietMonths,1);
+ advanceNaval(s);
+ assert.equal(escort.order?.quietMonths,1,'A second resolution in the same calendar month is not another review');
+ const restored=upgradeSave(structuredClone(s)),reviewed=restored.naval.fleets.find(f=>f.id===escort.id);
+ restored.month++;
+ advanceNaval(restored);
+ assert.equal(reviewed.order?.kind,'escort');
+ assert.equal(reviewed.order?.quietMonths,2);
+ restored.month++;
+ advanceNaval(restored);
+ assert.notEqual(reviewed.order?.kind,'escort');
+});
+test('AI can reassign a released escort to a newly raided route',()=>{
+ const s=newGrandGame('caesar'),escort=s.naval.fleets.find(f=>f.owner==='senate'),merchant=structuredClone(escort),raider=s.naval.fleets.find(f=>f.owner==='caesar');
+ s.factions.senate.treasury=500;s.factions.senate.food=100;
+ s.naval.routes=s.naval.routes.filter(r=>['africa-sicily','eastern-stone'].includes(r.id));
+ for(const pirate of s.naval.pirates){pirate.pressure=0;pirate.ships=0}
+ escort.zone='african';escort.port=null;
+ merchant.id='reassignment-merchants';merchant.ships={merchant:2};merchant.zone='sicilian';merchant.port=null;s.naval.fleets.push(merchant);
+ raider.zone='aegean';raider.port=null;
+ assert.equal(orderFleet(s,'senate',escort.id,'escort','africa-sicily').ok,true);
+ escort.order.quietMonths=2;escort.order.lastReviewMonth=s.year*12+s.month-1;
+ assert.equal(orderFleet(s,'caesar',raider.id,'raid','eastern-stone').ok,true);
+ advanceNaval(s);
+ assert.equal(s.naval.routes.find(r=>r.id==='eastern-stone').last.reason,'raid');
+ assert.equal(escort.order?.kind,'escort');
+ assert.equal(escort.order?.target,'eastern-stone');
+});
 test('naval state survives save migration and 36 campaign months',()=>{
  const s=newGrandGame('senate');for(let i=0;i<36;i++)tick(s);const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(restored.naval.fleets.length,s.naval.fleets.length);assert.equal(restored.naval.routes.length,12);assert.ok(restored.naval.routes.every(r=>Number.isFinite(r.last?.security)));assert.ok(restored.naval.fleets.every(f=>Number.isFinite(f.hull)&&Number.isFinite(f.supply)))
 });

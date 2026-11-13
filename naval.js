@@ -1,7 +1,7 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js';
 import {activeEffects} from './development.js?v=31';
 import {officeOf} from './office-system.js';
-import {nationalBudget} from './national-budget.js?v=14';
+import {nationalBudget} from './national-budget.js?v=15';
 
 // Sea areas and costs are game-scale approximations of the 49 BCE Mediterranean.
 export const SEA_ZONES=[
@@ -329,6 +329,21 @@ function aiEscortTarget(s,owner,f){
  }).filter(Boolean).sort((a,b)=>b.score-a.score||a.route.id.localeCompare(b.route.id))[0]?.route||null;
 }
 function aiNavalOrders(s,owner,f){
+ if(f.order?.kind==='escort'){
+  const order=f.order,route=s.naval.routes.find(r=>r.id===order.target);
+  const from=route&&s.regions.find(r=>r.id===route.from),to=route&&s.regions.find(r=>r.id===route.to);
+  if(!from||!to||from.owner!==owner&&to.owner!==owner||route.pausedBy?.includes(from.owner)||route.pausedBy?.includes(to.owner))f.order=null;
+  else{
+   const month=s.year*12+s.month,last=route.last;
+   if(last?.year*12+last.month===month&&order.lastReviewMonth!==month){
+    const zones=new Set(routeZones(route));
+    const reportedThreat=reportedHostileFleets(s,owner).some(report=>zones.has(report.zone));
+    order.quietMonths=['raid','piracy'].includes(last.reason)||last.security<75||reportedThreat?0:(order.quietMonths||0)+1;
+    order.lastReviewMonth=month;
+    if(order.quietMonths>=3)f.order=null;
+   }
+  }
+ }
  const cashflow=aiNavalCashflow(s,owner),treasury=s.factions[owner].treasury;
  const nearbyThreat=reportedHostileFleets(s,owner).some(r=>atWar(s,owner,r.owner)&&seaRoute(f.zone,r.zone)?.length<=1);
  const wartimeReserve=Math.max(35,24+6*Math.max(0,-cashflow));
