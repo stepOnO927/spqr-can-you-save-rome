@@ -1,7 +1,7 @@
 import {newGame,tick} from '../engine.js?v=fort-intel-1';
 import assert from 'node:assert/strict';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
-import {warningLedger} from '../strategic-warnings.js?v=fort-intel-1';
+import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
 
 // Identical unforced openings, different seeded random streams; both the
 // fully automated world and an ordinary passive Roman player are exercised.
