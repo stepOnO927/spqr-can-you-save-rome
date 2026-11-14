@@ -26,7 +26,7 @@ An AI government at war can pay five treasury to ask a known, non-hostile court 
 
 ## Observed frontier pressure
 
-Non-Roman AI courts may place an idle army already at home on a temporary defensive stance when their own recent sighting reports a significant hostile force on or next to that frontier. They do not inspect unseen forces, override existing orders or operational plans, move forces, declare war, or issue orders to a human-controlled army. The stance ends when the report is stale or corrected, or after two months; a cooldown gives the army time to pursue other goals. Roman commanders retain their existing defensive planning. This adds a bounded reaction, not full tactical coordination or proof that every desired multi-state chain occurs.
+Non-Roman AI courts at peace may place an idle army already at home on a temporary defensive stance when their own recent sighting reports a significant hostile force on or next to that frontier. They do not inspect unseen forces, override existing orders or operational plans, move forces, declare war, or issue orders to a human-controlled army. The stance ends if war begins, when the report is stale or corrected, or after two months; a cooldown gives the army time to pursue other goals. Wartime and Roman commanders retain their existing planning. This adds a bounded reaction, not full tactical coordination or proof that every desired multi-state chain occurs.
 
 ## Scout-based allied warnings
 

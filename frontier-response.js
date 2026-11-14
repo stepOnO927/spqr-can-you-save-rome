@@ -25,7 +25,9 @@ export function reportedFrontierThreats(s,actor){
 // Existing orders and operational plans remain autonomous; a stance we made
 // is withdrawn when the evidence expires or is visibly corrected.
 export function respondToFrontierReports(s,actor,{issueOrder,canCommand=()=>true}={}){
- const reports=reportedFrontierThreats(s,actor),regions=new Set(reports.map(x=>x.region));
+ // Active wars use the existing combat planner; don't pin a force that needs
+ // to advance, reinforce an ally or resolve a civil war.
+ const reports=s.wars.some(w=>w.includes(actor))?[]:reportedFrontierThreats(s,actor),regions=new Set(reports.map(x=>x.region));
  for(const army of s.armies.filter(a=>a.owner===actor&&a.order?.source==='frontier_ai'))if(!regions.has(army.region)||now(s)>=(army.order.until??0)){if(army.order.kind==='defend')army.order=null}
  let ordered=0;
  for(const report of reports){

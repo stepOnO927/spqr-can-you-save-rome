@@ -11,6 +11,9 @@ test('a continuous sighting does not freeze an army in defense indefinitely',()=
  const s=setup(),a=s.armies.find(x=>x.owner==='armenia');assert.equal(respond(s).ordered,1);s.month+=2;s.knowledge.armenia.parthia.sightings.reported.month=s.month;assert.equal(respond(s).ordered,0);assert.equal(a.order,null);
  s.month+=4;s.knowledge.armenia.parthia.sightings.reported.month=s.month;assert.equal(respond(s).ordered,1);
 });
+test('the temporary peacetime stance yields immediately to the existing wartime planner',()=>{
+ const s=setup(),a=s.armies.find(x=>x.owner==='armenia');assert.equal(respond(s).ordered,1);s.wars.push(['armenia','parthia']);assert.equal(respond(s).ordered,0);assert.equal(a.order,null);
+});
 test('unseen foreign movements and strength do not produce a defensive response',()=>{
  const a=setup(),b=structuredClone(a);for(const unit of b.armies.filter(x=>x.owner==='parthia')){unit.men=999999;unit.region='egypt'}
  assert.deepEqual(reportedFrontierThreats(a,'armenia'),reportedFrontierThreats(b,'armenia'));
