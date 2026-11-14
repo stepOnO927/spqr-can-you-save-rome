@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy} from './engine.js?v=portraits-hundred-days-1';
+import {newGame,upgradeSave,tick,queueMission,diplomacy,sendInquiry,moveArmy} from './engine.js?v=government-courier-guidance-1';
 import {assignSuccession,knownLeaders,ageRange} from './characters.js?v=succession-ui-recovery-1';
 import {addReport,commandFactor,advanceCharacters,advanceOperations,contestLeadership,observeArmies,reportedArmies,missionDuration,previewMission} from './character-system.js?v=portraits-hundred-days-1';
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=portraits-hundred-days-1';
+import {newGame,upgradeSave} from '../engine.js?v=government-courier-guidance-1';
 import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=succession-ui-recovery-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 

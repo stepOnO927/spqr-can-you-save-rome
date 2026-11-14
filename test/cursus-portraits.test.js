@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,upgradeSave} from '../engine.js?v=portraits-hundred-days-1';
-import {initializeCursus} from '../cursus-honorum.js?v=portraits-hundred-days-1';
+import {newGame,upgradeSave} from '../engine.js?v=government-courier-guidance-1';
+import {initializeCursus} from '../cursus-honorum.js?v=government-courier-guidance-1';
 import {createFictionalPerson} from '../dynasties.js?v=portraits-hundred-days-1';
 import {assignCursusPortraits,fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=portraits-hundred-days-1';
-import {cursusPortraitHtml,cursusPersonLabel} from '../map-lab/cursus-ui.js?v=portraits-hundred-days-1';
+import {cursusPortraitHtml,cursusPersonLabel} from '../map-lab/cursus-ui.js?v=government-courier-guidance-1';
 
 const expected=[['senate','Lucius Varro','fictional-cursus-lucius-varro'],['senate','Publius Varro','fictional-cursus-publius-varro'],['senate','Aulus Varro','fictional-cursus-aulus-varro'],['senate','Gaius Varro','fictional-cursus-gaius-varro'],['caesar','Lucius Varenus','fictional-cursus-lucius-varenus'],['caesar','Publius Varenus','fictional-cursus-publius-varenus'],['caesar','Aulus Varenus','fictional-cursus-aulus-varenus'],['caesar','Gaius Varenus','fictional-cursus-gaius-varenus']];
 const applicant=(s,faction,name)=>s.world.cursus.applicants.find(x=>x.faction===faction&&x.office==='consul'&&s.world.dynasties.catalog[x.id].name[0]===name);

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,isWar,upgradeSave} from '../engine.js?v=portraits-hundred-days-1';
+import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,isWar,upgradeSave} from '../engine.js?v=government-courier-guidance-1';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {observeDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
 import {buildChessboard} from '../chessboard.js?v=portraits-hundred-days-1';

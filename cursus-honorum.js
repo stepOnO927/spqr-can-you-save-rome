@@ -300,17 +300,27 @@ function advanceCuriateFormalities(s,c){
  }
  c.curiateFormalities=c.curiateFormalities.slice(-120);
 }
-export function investigateGovernment(s,target,actor=s.player){
+export function previewGovernmentInquiry(s,target,actor=s.player){
  const c=initializeCursus(s),f=s.factions[actor];
  if(actor===target||!f||!s.factions[target]||target==='rebels')return {ok:false,reason:'target'};
- const intel=c.intel[actor]||={};c.intel[actor]=intel;
+ const intel=c.intel[actor]||{};
  if(intel[target]?.pending)return {ok:false,reason:'pending'};
  const stage=Math.min(5,(intel[target]?.stage||0)+1),cost=5+stage*3;
  if(f.treasury<cost)return {ok:false,reason:'treasury',cost};
- f.treasury-=cost;intel[target]||={stage:0,reports:[]};intel[target].pending={remaining:2+stage,cost,stage};
  return {ok:true,cost,months:2+stage,stage};
 }
-export function governmentReport(s,target,actor=s.player){return initializeCursus(s).intel[actor]?.[target]||null}
+export function investigateGovernment(s,target,actor=s.player){
+ const plan=previewGovernmentInquiry(s,target,actor);if(!plan.ok)return plan;
+ const c=initializeCursus(s),f=s.factions[actor],intel=c.intel[actor]||={}, {stage,cost}=plan;c.intel[actor]=intel;
+ f.treasury-=cost;intel[target]||={stage:0,reports:[]};intel[target].pending={remaining:2+stage,duration:2+stage,cost,stage,sent:{year:s.year,month:s.month}};
+ return plan;
+}
+export function governmentReport(s,target,actor=s.player){
+ const report=initializeCursus(s).intel[actor]?.[target];if(!report)return null;
+ // The return courier's sealed observations are simulation state, not an
+ // intelligence report the sender can read before delivery.
+ if(!report.pending)return report;const {sealed,...pending}=report.pending;return {...report,pending};
+}
 export function knownForeignOfficial(s,target,id,actor=s.player){
  const r=governmentReport(s,target,actor);
  return !!(r?.reports?.some(x=>x.people?.includes(id))||s.knowledge?.[actor]?.[target]?.reportedLeaders?.includes(id)||initializeCursus(s).referralSources[actor]?.some(x=>x.id===id&&x.target===target));
@@ -492,8 +502,15 @@ function reconcileForeignPosts(s,c){
 }
 function advanceIntel(s,c){
  for(const [actor,targets] of Object.entries(c.intel))for(const [target,report] of Object.entries(targets)){
-  if(!report.pending||--report.pending.remaining>0)continue;
-  const stage=report.pending.stage;report.stage=stage;delete report.pending;
+  const pending=report.pending;if(!pending)continue;pending.remaining=Math.max(0,pending.remaining-1);
+  const stage=pending.stage,duration=pending.duration||2+stage;
+  // The investigation observes the court on the outward trip; subsequent
+  // changes do not rewrite a report already carried by the returning courier.
+  if(!pending.sealed&&pending.remaining<=Math.floor(duration/2)){
+   const q=roll(s),hostile=s.wars.some(w=>w.includes(actor)&&w.includes(target));
+   if(q<.12||!s.regions.some(r=>r.owner===target))pending.sealed={outcome:'no_reply'};
+   else if(q<(hostile?.40:.28))pending.sealed={outcome:'refused'};
+   else{
   const posts=ROMAN.has(target)?(s.world.offices?.[target]||{}):(c.foreignPosts[target]||{});
   const knownPosts=stage>=4?Object.entries(posts):stage>=3?Object.entries(posts).filter(([role])=>['administration','finance','supply'].includes(role)):[];
   const officeholders=Object.fromEntries(knownPosts.filter(([,id])=>person(s,id)?.faction===target));
@@ -502,8 +519,14 @@ function advanceIntel(s,c){
   const people=stage>=3?[...new Set([...(s.world.leadership[target]||[]),...Object.values(officeholders),...commanders,...senators])]:stage>=1?(s.world.leadership[target]||[]):[];
   const offices=stage>=2?(ROMAN.has(target)?['administration','finance','supply','senate']:Object.keys(posts)) : [];
   const links=stage>=4?people.flatMap(id=>(c.networks[id]||[]).filter(other=>people.includes(other)).map(other=>({from:id,to:other,confidence:'low'}))):[];
-  report.reports.push({stage,source:'investigation',observed:{year:s.year,month:s.month},delivered:{year:s.year,month:s.month},confidence:stage>=4?'unverified':stage>=3?'estimate':'public',people,offices,officeholders,commanders,senators,links,possibleContradictions:[],access:stage>=5?['formal','merchant','introduction']:[]});
-  if(actor===s.player)note(s,'A dated foreign government report has arrived; offices and people may change.','一份注明日期的外国官制报告已经送达；职务与人物可能变化。');
+   pending.sealed={outcome:'report',record:{stage,source:'investigation',observed:{year:s.year,month:s.month},confidence:stage>=4?'unverified':stage>=3?'estimate':'public',reliability:'unknown',verified:false,people,offices,officeholders,commanders,senators,links,possibleContradictions:[],access:stage>=5?['formal','merchant','introduction']:[]}};
+   }
+  }
+  if(pending.remaining>0)continue;
+  const sealed=pending.sealed||{outcome:'no_reply'},lost=sealed.outcome==='no_reply'||roll(s)<(s.wars.some(w=>w.includes(actor)&&w.includes(target))?.18:.08),outcome=lost?'no_reply':sealed.outcome;
+  delete report.pending;report.lastOutcome={status:outcome,stage,year:s.year,month:s.month};
+  if(outcome==='report'){report.stage=stage;report.reports.push({...sealed.record,delivered:{year:s.year,month:s.month}});if(actor===s.player)note(s,'A dated foreign government report has arrived; offices and people may change.','一份注明日期的外国官制报告已经送达；职务与人物可能变化。')}
+  else if(actor===s.player)note(s,outcome==='refused'?'The foreign court declined the government inquiry.':'No government report arrived; the request or reply may have been lost.',outcome==='refused'?'外国宫廷拒绝了官制调查。':'未收到官制报告；请求或回信可能遗失。');
  }
 }
 function advanceContacts(s,c){

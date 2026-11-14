@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=portraits-hundred-days-1';
+import {newGame,upgradeSave} from '../engine.js?v=government-courier-guidance-1';
 import {authorityForTheater} from '../map-lab/authority-view.js?v=portraits-hundred-days-1';
 
 test('foreign authority uses only the viewer’s most recent observed report',()=>{

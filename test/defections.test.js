@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=portraits-hundred-days-1';
+import {newGame,upgradeSave} from '../engine.js?v=government-courier-guidance-1';
 import {considerDefection,advanceCharacters} from '../character-system.js?v=portraits-hundred-days-1';
 import {assignSuccession,knownLeaders} from '../characters.js?v=succession-ui-recovery-1';
 
