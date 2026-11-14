@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,isWar,upgradeSave} from '../engine.js?v=frontier-response-1';
+import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,isWar,upgradeSave} from '../engine.js?v=player-aid-letter-1';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {observeDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {buildChessboard} from '../chessboard.js?v=diplomatic-chronicle-1';
-import {receivedMail} from '../epistulae.js?v=portraits-hundred-days-1';
-import {mailboxHtml} from '../mail-ui.js?v=portraits-hundred-days-1';
+import {receivedMail} from '../epistulae.js?v=player-aid-letter-1';
+import {mailboxHtml} from '../mail-ui.js?v=player-aid-letter-1';
 
 function setup(seed){
  const s=newGame('caesar');s.seed=seed;s.wars.push(['egypt','senate']);s.relations['egypt:parthia']=40;
@@ -86,8 +86,8 @@ test('a delivered AI offer appears once in the player mailbox and needs a real d
 });
 test('player may decline, ignore, or let the offer expire without starting a war',()=>{
  for(const choice of ['refuse','ignore','expired']){const s=playerOffer(),offer=s.world.strategicOffers[0],m=receivedMail(s).find(x=>x.context?.offerId===offer.id);
-  if(choice==='expired'){advance(s,6);assert.equal(offer.status,'no_reply');assert.equal(replyToLetter(s,m.id,'join_war',{answerStrategicOffer}).ok,false)}
-  else {assert.equal(replyToLetter(s,m.id,choice,{answerStrategicOffer}).ok,true);if(choice==='refuse'){assert.equal(offer.status,'pending');advance(s,2);assert.ok(['refused','no_reply'].includes(offer.status))}else assert.equal(offer.status,'no_reply')}
+  if(choice==='expired'){advance(s,6);assert.equal(offer.status,'pending');assert.equal(replyToLetter(s,m.id,'join_war',{answerStrategicOffer}).ok,false);advance(s,2);assert.equal(offer.status,'no_reply')}
+  else {assert.equal(replyToLetter(s,m.id,choice,{answerStrategicOffer}).ok,true);assert.equal(offer.status,'pending');advance(s,2);if(choice==='refuse')assert.ok(['refused','no_reply'].includes(offer.status));else assert.equal(offer.status,'no_reply')}
   assert.equal(isWar(s,'caesar','parthia'),false);
  }
 });

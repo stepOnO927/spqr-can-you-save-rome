@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,estimatedStrength} from '../engine.js?v=frontier-response-1';
+import {newGame,tick,upgradeSave,estimatedStrength} from '../engine.js?v=player-aid-letter-1';
 import {startFocus,focusState,treeFor,scoreFocus,focusReportsFor} from '../national-focus.js?v=portraits-hundred-days-1';
 import {templatesFor,reorganizeArmy,commandConcentration} from '../legion-designer.js?v=portraits-hundred-days-1';
 import {createPlan,assignRole,approvePlan,planById} from '../battle-plans.js?v=portraits-hundred-days-1';

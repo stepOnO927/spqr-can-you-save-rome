@@ -1,7 +1,7 @@
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=portraits-hundred-days-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,chronicleLetters} from './epistulae.js?v=portraits-hundred-days-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,chronicleLetters} from './epistulae.js?v=player-aid-letter-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=portraits-hundred-days-1';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=portraits-hundred-days-1';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=player-aid-letter-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=portraits-hundred-days-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=succession-ui-recovery-1';
@@ -13,7 +13,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=succession-ui-recovery-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=portraits-hundred-days-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=frontier-response-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=player-aid-letter-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -274,7 +274,6 @@ export function sendStrategicOffer(s,actor,recipient,target,{autoplayPlayer=fals
  if(!s.factions[actor]||!s.factions[recipient]||!s.factions[target]||new Set([actor,recipient,target]).size!==3||[actor,recipient,target].includes('rebels')||!isWar(s,actor,target))return {ok:false,reason:'unavailable'};
  if(!['join_war','request_aid'].includes(kind))return {ok:false,reason:'unavailable'};
  if(!autoplayPlayer&&actor===s.player)return {ok:false,reason:'player_decision'};
- if(!autoplayPlayer&&recipient===s.player&&kind==='request_aid')return {ok:false,reason:'player_decision'};
  const owned=s.regions.filter(r=>r.owner===actor),frontier=owned.some(r=>adjacent(r.id).some(e=>reportedControl(s,actor,e.to)?.owner===recipient)),docs=reportedDiplomacy(s,actor),contact=docs.some(x=>x.status==='active'&&x.parties.includes(actor)&&x.parties.includes(recipient));
  if(!frontier&&!contact)return {ok:false,reason:'contact'};
  if(s.factions[actor].treasury<5)return {ok:false,reason:'treasury'};
@@ -289,13 +288,13 @@ export function advanceStrategicOffers(s,{autoplayPlayer=false}={}){
  for(const offer of s.world.strategicOffers||[]){
   if(offer.status==='awaiting_decision'){
    if(autoplayPlayer){offer.status='pending';offer.phase='outbound';offer.remaining=1}
-   else {if(--offer.remaining<=0){offer.status='no_reply';offer.phase='expired'}continue}
+   else {if(--offer.remaining<=0){offer.status='pending';offer.phase='return';offer.remaining=2;offer.sealed={decision:'no_reply',year:s.year,month:s.month}}continue}
   }
   if(offer.status!=='pending'||--offer.remaining>0)continue;
   const date=s.year*12+s.month;
   if(offer.phase==='outbound'){
    if(strategicRoll(s,offer.actor,offer.id+30)<.1||!s.factions[offer.recipient]||!s.factions[offer.target]){offer.status='no_reply';offer.phase='lost';continue}
-   if(!autoplayPlayer&&offer.recipient===s.player){if(offer.kind==='request_aid'){offer.status='no_reply';offer.phase='unavailable';continue}offer.status='awaiting_decision';offer.phase='at_court';offer.remaining=6;syncStrategicOfferLetters(s);continue}
+   if(!autoplayPlayer&&offer.recipient===s.player){offer.status='awaiting_decision';offer.phase='at_court';offer.remaining=6;syncStrategicOfferLetters(s);continue}
    const recipient=s.factions[offer.recipient],view=assessOpportunities(s,offer.recipient,estimatedStrength).find(x=>x.target===offer.target),trust=relation(s,offer.recipient,offer.actor),ownWars=s.wars.filter(w=>w.includes(offer.recipient)).length;
    if(offer.kind==='request_aid'){
     const commonEnemy=isWar(s,offer.recipient,offer.target),memory=politicalMemoryAdjustment(s,offer.recipient,offer.actor),eligible=!isWar(s,offer.recipient,offer.actor)&&recipient.treasury>=24&&recipient.food>=20&&(trust+memory>=0||commonEnemy);
@@ -326,10 +325,12 @@ export function advanceStrategicOffers(s,{autoplayPlayer=false}={}){
 // The sender learns the decision only if the reply survives its return trip.
 export function answerStrategicOffer(s,id,decision){
  const offer=(s.world.strategicOffers||[]).find(o=>o.id===id&&o.recipient===s.player&&o.status==='awaiting_decision'&&o.phase==='at_court');
- if(!offer||!['join_war','refuse','ignore'].includes(decision))return {ok:false,reason:'unavailable'};
+ if(!offer||!(offer.kind==='request_aid'?['send_war_aid','refuse','ignore']:['join_war','refuse','ignore']).includes(decision))return {ok:false,reason:'unavailable'};
  if(decision==='join_war'&&!isWar(s,s.player,offer.target)&&!diplomacy(s,s.player,offer.target,'war'))return {ok:false,reason:'conditions'};
- if(decision==='ignore'){offer.status='no_reply';offer.phase='ignored';return {ok:true}}
- offer.status='pending';offer.phase='return';offer.remaining=2;offer.sealed={decision:decision==='join_war'?'accepted':'refused',year:s.year,month:s.month};return {ok:true};
+ if(decision==='send_war_aid'&&(isWar(s,s.player,offer.actor)||s.factions[s.player].treasury<12||s.factions[s.player].food<8))return {ok:false,reason:'conditions'};
+ if(decision==='ignore'){offer.status='pending';offer.phase='return';offer.remaining=2;offer.sealed={decision:'no_reply',year:s.year,month:s.month};return {ok:true}}
+ if(decision==='send_war_aid'){s.factions[s.player].treasury-=12;s.factions[s.player].food-=8}
+ offer.status='pending';offer.phase='return';offer.remaining=2;offer.sealed={decision:['join_war','send_war_aid'].includes(decision)?'accepted':'refused',year:s.year,month:s.month,...(decision==='send_war_aid'?{aid:{treasury:12,food:8}}:{})};return {ok:true};
 }
 
 // Official letters are simulated per sender and persist in compatible saves.
@@ -765,7 +766,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     if(enemy&&partner&&f.treasury>50&&strategicRoll(s,owner,149)<.35)sendStrategicOffer(s,owner,partner,enemy,{autoplayPlayer});
     // A court already fighting the same enemy can also be asked for supplies;
     // candidate selection uses reported wars, never the partner's hidden stocks.
-    const aidPartner=contacts.filter(id=>id!==owner&&id!==enemy&&PLAYABLE.includes(id)&&(autoplayPlayer||id!==s.player)&&!isWar(s,owner,id)&&relation(s,owner,id)>=0).sort((a,b)=>Number(documents.some(d=>d.kind==='war'&&d.parties.includes(b)&&d.parties.includes(enemy)))-Number(documents.some(d=>d.kind==='war'&&d.parties.includes(a)&&d.parties.includes(enemy)))||relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b))[0];
+    const aidPartner=contacts.filter(id=>id!==owner&&id!==enemy&&PLAYABLE.includes(id)&&!isWar(s,owner,id)&&relation(s,owner,id)>=0).sort((a,b)=>Number(documents.some(d=>d.kind==='war'&&d.parties.includes(b)&&d.parties.includes(enemy)))-Number(documents.some(d=>d.kind==='war'&&d.parties.includes(a)&&d.parties.includes(enemy)))||relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b))[0];
     if(enemy&&aidPartner&&f.treasury>=5&&strategicRoll(s,owner,150)<.5)sendStrategicOffer(s,owner,aidPartner,enemy,{autoplayPlayer,kind:'request_aid'});
   }
   if(review&&s.month%6===0&&f.treasury>40&&f.food>=25&&f.stability>=40&&strength(s,owner)>2000&&s.wars.filter(w=>w.includes(owner)).length<2){
