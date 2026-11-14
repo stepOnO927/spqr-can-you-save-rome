@@ -14,7 +14,7 @@ const handoff=async missing=>{await page.evaluate(async missing=>{
  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
  },missing);await page.reload()};
 const save=async()=>{await page.locator('#mail-close').click();await page.locator('#new').click();await page.locator('[data-slot="save"]').click();return page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')))};
-const setAtEvent=async state=>{await page.evaluate(async state=>{const {advanceMail}=await import('/epistulae.js?v=gathering-delegate-1');const event=state.mail.events.find(e=>e.id.startsWith('invitation:')),year=Math.floor((event.date-1)/12);state.year=year;state.month=event.date-year*12;advanceMail(state);sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state}))},state);await page.reload()};
+const setAtEvent=async state=>{const status=await page.evaluate(async state=>{const {advanceMail}=await import('/epistulae.js?v=gathering-delegate-1');const event=state.mail.events.find(e=>e.id.startsWith('invitation:')),year=Math.floor((event.date-1)/12);state.year=year;state.month=event.date-year*12;advanceMail(state);sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state}));return event.status},state);await page.reload();return status};
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
@@ -31,9 +31,7 @@ try{
  await page.locator('[data-mail-reply="accept"]').click();
  let state=await save(),event=state.mail.events.find(e=>e.id.startsWith('invitation:'));
  assert.equal(event.status,'scheduled');
- await setAtEvent(state);
- event=(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('spqr-view-handoff-v1')).state)).mail.events.find(e=>e.id.startsWith('invitation:'));
- assert.equal(event.status,'awaiting_choice');
+ assert.equal(await setAtEvent(state),'awaiting_choice');
  await page.locator('#mail-open').click();
  await page.locator('[data-mail-select]').filter({hasText:'宴会开始'}).click();
  await page.locator('[data-mail-reply="speak_host"]').click();
@@ -44,9 +42,7 @@ try{
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await handoff(false);await page.locator('#mail-open').click();await page.locator('[data-mail-reply="accept"]').click();
  state=await save();state.world.characters['fictional:1'].health='seriously_ill';
- await setAtEvent(state);
- event=(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('spqr-view-handoff-v1')).state)).mail.events.find(e=>e.id.startsWith('invitation:'));
- assert.equal(event.status,'missed');
+ assert.equal(await setAtEvent(state),'missed');
  assert.deepEqual(errors,[]);
  console.log('A real venue marker, RSVP, event scene, choice, saved effects and missed attendance all worked.');
 }finally{await browser.close()}
