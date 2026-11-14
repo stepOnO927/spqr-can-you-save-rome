@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=government-courier-guidance-1';
-import {initializeCursus,previewGovernmentInquiry,investigateGovernment,governmentReport,advanceCursus} from '../cursus-honorum.js?v=government-courier-guidance-1';
+import {newGame,upgradeSave} from '../engine.js?v=multipolar-courier-review-1';
+import {initializeCursus,previewGovernmentInquiry,investigateGovernment,governmentReport,advanceCursus} from '../cursus-honorum.js?v=multipolar-courier-review-1';
 
 function setup(stage=0){const s=newGame('caesar'),c=initializeCursus(s);s.month=3;s.factions.caesar.treasury=500;c.intel.caesar={parthia:{stage,reports:[]}};return {s,c}}
 function step(s,seed=1000){s.world.intelSeed=seed;s.month++;advanceCursus(s)}

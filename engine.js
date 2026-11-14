@@ -7,13 +7,13 @@ import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=succession-ui-recovery-1';
 import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=portraits-hundred-days-1';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=portraits-hundred-days-1';
-import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=government-courier-guidance-1';
+import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=multipolar-courier-review-1';
 import {advanceConspiracies} from './conspiracies.js?v=succession-ui-recovery-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=fort-intel-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=succession-ui-recovery-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=portraits-hundred-days-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=government-courier-guidance-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=multipolar-courier-review-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -26,7 +26,7 @@ const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
-import {assessOpportunities} from './multipolar.js?v=multipolar-confidence-1';
+import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=multipolar-courier-review-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=fort-intel-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {formCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=fort-intel-1';
@@ -610,7 +610,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   // sighting is treated as an empty garrison.
   let review=null;
   if(owner!=='rebels'&&owned.length){
-    s.world.multipolarPlans||={};const date=s.year*12+s.month,knownWars=reportedDiplomacy(s,owner).filter(x=>x.kind==='war'&&x.status==='active'&&date-(x.year*12+x.month)>=0&&date-(x.year*12+x.month)<=24),signature=knownWars.map(x=>x.id).sort().join('|'),old=s.world.multipolarPlans[owner];
+    s.world.multipolarPlans||={};const date=s.year*12+s.month,signature=opportunityEvidenceSignature(s,owner),old=s.world.multipolarPlans[owner];
     if(!old||old.signature!==signature||date-old.date>=3){review={date,signature,opportunities:assessOpportunities(s,owner,estimatedStrength),lastAction:old?.lastAction||null};s.world.multipolarPlans[owner]=review}else review=old;
     if(review.date===date&&(!review.lastAction||date-review.lastAction.date>=12)){
       const chance=review.opportunities.find(x=>x.border&&x.readiness&&x.knownWars>0&&x.relation<0&&!x.allied&&!x.treaty&&!isWar(s,owner,x.target)&&x.score>=14&&x.ownStrength>x.estimate*1.25);
