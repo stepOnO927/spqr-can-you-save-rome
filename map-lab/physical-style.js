@@ -17,7 +17,7 @@ const nileDelta={type:'Feature',properties:{name:'Nile Delta (approximate)'},geo
 const localElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e5d9b8',0,'#dfd5b1',100,'#c6cba1',300,'#a7b88d',700,'#829c7d',1200,'#6c8676',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
 // Around the Nile Delta the local DEM changes mostly within 0–50 m. Use
 // narrower earth-tone intervals there so real low relief remains legible.
-const egyptElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e6dcb9',0,'#ddd7b3',10,'#d9d2aa',25,'#d6c99f',50,'#cbbd96',100,'#c2b996',300,'#a9ab88',700,'#82977c',1200,'#6c8676',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
+const egyptElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e8ddb9',0,'#e3d9b6',10,'#dfd0aa',25,'#d7c399',50,'#cbb288',100,'#bea178',300,'#aa8d6c',700,'#887866',1200,'#69796f',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
 const regionalElevationPalette=['interpolate',['linear'],['elevation'],-100,'#ded6b8',0,'#d8d2b0',100,'#c3c9a1',300,'#a3b68d',700,'#849f80',1200,'#6d8979',1800,'#838e83',2600,'#b0b2a4',3500,'#ded9c7'];
 const terrainAttribution='Elevation: Mapzen Terrain Tiles; Copernicus EU-DEM, NOAA ETOPO1 and USGS SRTM/GMTED2010 contributors';
 
@@ -80,8 +80,8 @@ export const physicalStyle={
   {id:'relief-egypt-higher',type:'hillshade',source:'elevation-egypt-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'idealized-landcover',type:'raster',source:'landcover',paint:{'raster-opacity':['interpolate',['linear'],['zoom'],4,.86,6,.74,7.2,0],'raster-fade-duration':0}},
   {id:'nile-delta-alluvium',type:'fill',source:'nile-delta',paint:{'fill-color':'#98a77e','fill-opacity':['interpolate',['linear'],['zoom'],4,.16,7,.26,8.2,.12,9,0]}},
-  {id:'egypt-contours-minor',type:'line',source:'egypt-contours',minzoom:8.25,filter:['<',['get','height'],50],paint:{'line-color':'#957d5c','line-width':['interpolate',['linear'],['zoom'],8.25,.45,9.2,.75],'line-opacity':.28}},
-  {id:'egypt-contours-major',type:'line',source:'egypt-contours',minzoom:8.25,filter:['>=',['get','height'],50],paint:{'line-color':'#8b755a','line-width':['interpolate',['linear'],['zoom'],8.25,.6,9.2,.95],'line-opacity':.36}},
+  {id:'egypt-contours-minor',type:'line',source:'egypt-contours',minzoom:8.25,filter:['<',['get','height'],50],paint:{'line-color':'#8a7255','line-width':['interpolate',['linear'],['zoom'],8.25,.5,9.2,.8],'line-opacity':.38}},
+  {id:'egypt-contours-major',type:'line',source:'egypt-contours',minzoom:8.25,filter:['>=',['get','height'],50],paint:{'line-color':'#785f49','line-width':['interpolate',['linear'],['zoom'],8.25,.7,9.2,1.05],'line-opacity':.46}},
   {id:'sea-mask',type:'fill',source:'ocean',paint:{'fill-color':'#356f79','fill-opacity':1}},
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},
   {id:'coastline',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,.9,8,1.7],'line-opacity':.87}},

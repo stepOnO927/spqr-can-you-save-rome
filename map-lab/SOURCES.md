@@ -27,7 +27,7 @@ All terrain levels used by the playable atlas are bundled; web fonts may require
 
 The restrained land palette uses modern elevation color. Directional hill shading is off by default, with stronger local relief at close Italy zoom when switched on with REL. The setting is remembered. The eleven sea zones, initial fleet strength, ship costs, commercial lanes, cargo quantities and piracy pressures in `../naval.js` are gameplay abstractions, not measured 49 BCE records. They do not imply exact ancient maritime borders or shipping volumes.
 
-The close Egyptian palette separates the low 0–50 m intervals of the bundled modern DEM with earth tones. It does not encode vegetation, irrigated fields, or reconstructed ancient land use. It makes the faint terrain near Alexandria more legible while the naturally flat Nile Delta remains sparse at close zoom.
+The close Egyptian palette separates the low 0–50 m intervals of the bundled modern DEM with warmer, higher-contrast earth tones; the 100–700 m steps and the derived contour lines are also clearer. It does not encode vegetation, irrigated fields, or reconstructed ancient land use. It makes the faint terrain near Alexandria more legible while the naturally flat Nile Delta remains sparse at close zoom.
 
 ## Named road reconstructions
 

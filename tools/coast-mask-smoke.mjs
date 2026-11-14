@@ -33,15 +33,20 @@ try{
  for(const scene of scenes){
   await page.evaluate(async({center,zoom})=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center,zoom})},scene);
   await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.loaded()&&!map.isMoving()},null,{timeout:30000});
-  await page.waitForTimeout(300);
-  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);await new Promise(resolve=>{map.once('render',resolve);map.triggerRepaint()})});
-  const screenshot=await page.screenshot({path:`outputs/coast-mask-${scene.name}.png`});
-  const pixels=await page.evaluate(async({land,sea,png})=>{
+  // A frame can precede the GeoJSON worker's new tiles after a long jump.
+  // Check actual rendered pixels until the coast settles, with a hard limit.
+  let pixels;
+  for(let attempt=0;attempt<20;attempt++){
+   const screenshot=await page.screenshot({path:`outputs/coast-mask-${scene.name}.png`});
+   pixels=await page.evaluate(async({land,sea,png})=>{
    const {map}=await import(document.querySelector('script[type="module"]').src),image=new Image();image.src=`data:image/png;base64,${png}`;await image.decode();
    const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(image,0,0);
    const box=map.getContainer().getBoundingClientRect(),sample=coordinate=>{const point=map.project(coordinate);return [...context.getImageData(Math.round(box.left+point.x),Math.round(box.top+point.y),1,1).data]};
    return {land:sample(land),sea:sample(sea)};
-  },{...scene,png:screenshot.toString('base64')});
+   },{...scene,png:screenshot.toString('base64')});
+   if(pixels.land[0]>pixels.sea[0]+55&&pixels.land[0]>110&&pixels.sea[0]<100)break;
+   await page.waitForTimeout(500);
+  }
   assert.ok(pixels.land[0]>pixels.sea[0]+55&&pixels.land[0]>110,`${scene.name}: land should remain visibly distinct from sea: ${JSON.stringify(pixels)}`);
   assert.ok(pixels.sea[0]<100,`${scene.name}: offshore water should retain its sea palette: ${JSON.stringify(pixels)}`);
   console.log(scene.name,pixels);

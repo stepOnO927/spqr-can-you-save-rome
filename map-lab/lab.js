@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../
 import {nationalBudget} from '../national-budget.js?v=15';
 import {budgetHtml} from '../budget-ui.js?v=18';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=25';
+import {physicalStyle} from './physical-style.js?v=26';
 import {physicalLabels} from './physical-labels.js?v=1';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=174';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=39';
@@ -359,7 +359,7 @@ function renderTerrainLegend(){
  const close=map.getZoom()>=8.5;
  document.querySelector('#map-mode-note').textContent=close?(lang==='zh'?'近景显示现代高程、河湖与海岸；粗略海底深度边界在此比例尺隐藏。岸边柔光不代表测得水深。':'Close view shows modern elevation, rivers, lakes and shoreline. Coarse depth boundaries are hidden at this scale; the coastal glow is not measured depth.'):(lang==='zh'?'总览显示海底深度分带；近景隐藏粗略深度边界。岸边柔光只标示海岸，不代表测得水深。可单独开启山体光影。':'Overview shows sea-depth bands; close zoom hides their coarse boundaries. The shoreline glow marks the coast, not measured depth. Hill shading can be toggled separately.');
  const items=close?[['#c5c4a7',lang==='zh'?'陆地与高程':'Land & elevation'],['#5c9293',lang==='zh'?'河流与天然湖泊':'Rivers & natural lakes'],['#efe1bb',lang==='zh'?'海岸线':'Shoreline'],['#356f79',lang==='zh'?'海水':'Sea']]:[['#c5c4a7',lang==='zh'?'理想化地表与高程':'Land cover & elevation'],['#5c9293',lang==='zh'?'河流与天然湖泊':'Rivers & natural lakes'],['#356f79',lang==='zh'?'近岸浅海（约0–200米）':'Coastal shelf (about 0–200 m)'],['#225565',lang==='zh'?'较深海域（超过200米）':'Deeper sea (over 200 m)']];
- const center=map.getCenter();if(close&&center.lng>=28&&center.lng<=34&&center.lat>=29&&center.lat<=33)items.splice(1,0,['#957d5c',lang==='zh'?'现代高程等高线（10–200米）':'Modern elevation contours (10–200 m)']);
+ const center=map.getCenter();if(map.getZoom()>=8.25&&center.lng>=28&&center.lng<=34&&center.lat>=29&&center.lat<=33)items.splice(1,0,['#785f49',lang==='zh'?'现代高程等高线（10–200米）':'Modern elevation contours (10–200 m)']);
  document.querySelector('.legend').innerHTML=items.map(([color,label])=>`<span><b class="swatch" style="background:${color}"></b>${label}</span>`).join('');
 }
 function renderHud(){
