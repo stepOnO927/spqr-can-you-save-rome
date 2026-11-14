@@ -1,4 +1,4 @@
-import {HANDOFF_KEY,stageHandoff} from '../view-handoff.js?v=integrated-panel-1';
+import {HANDOFF_KEY,stageHandoff} from '../view-handoff.js?v=succession-ui-recovery-1';
 
 export function createCampaignPanel({getState,pause,getLanguage,onError}) {
   const dialog=document.querySelector('#campaign-panel');
