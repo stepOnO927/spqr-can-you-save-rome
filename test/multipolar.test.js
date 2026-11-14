@@ -1,19 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=coalition-courier-1';
-import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=fort-intel-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=diplomatic-chronicle-1';
+import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=diplomatic-chronicle-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
-import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=multipolar-courier-review-1';
-import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=diplomatic-chronicle-1';
+import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=portraits-hundred-days-1';
-import {renderChessboard} from '../chessboard-ui.js?v=portraits-hundred-days-1';
+import {buildChessboard} from '../chessboard.js?v=diplomatic-chronicle-1';
+import {renderChessboard} from '../chessboard-ui.js?v=diplomatic-chronicle-1';
 import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=portraits-hundred-days-1';
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {advanceGovernments} from '../governance.js?v=portraits-hundred-days-1';
 import {advanceMovements} from '../movements.js?v=portraits-hundred-days-1';
-import {newRevolutionScenario} from '../scenarios.js?v=coalition-courier-1';
+import {newRevolutionScenario} from '../scenarios.js?v=diplomatic-chronicle-1';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
@@ -279,6 +279,6 @@ test('old saves without a warning queue keep working and do not duplicate existi
  for(let i=0;i<3;i++)tick(save,{autoplayPlayer:true});assert.ok(Array.isArray(save.warningLetters));
  // The warning layer reuses courier, report and memory helpers; it does not call
  // the existing war, breach, aid or claimant-support decision paths.
- const source=fs.readFileSync(new URL('../strategic-warnings.js?v=fort-intel-1',import.meta.url),'utf8');
+ const source=fs.readFileSync(new URL('../strategic-warnings.js?v=diplomatic-chronicle-1',import.meta.url),'utf8');
  assert.doesNotMatch(source,/diplomacy\(|proposeAgreement|terminateAgreement|supportClaimant|wars\.push|alliances\.push|opportunistic_war|treaty_breach/);
 });

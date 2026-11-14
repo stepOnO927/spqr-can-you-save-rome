@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=coalition-courier-1';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=diplomatic-chronicle-1';
 import {observeArmies,reportedArmies,reportedHealthSubjects} from '../character-system.js?v=portraits-hundred-days-1';
 import {requestPersonalMeeting} from '../personal-diplomacy.js?v=portraits-hundred-days-1';
 
