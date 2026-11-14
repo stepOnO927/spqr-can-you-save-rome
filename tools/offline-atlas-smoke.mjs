@@ -214,11 +214,11 @@ try{
  assert.equal(external.includes('s3.amazonaws.com'),false,'Aegean terrain unexpectedly needed the network');
  const aegeanRelief=()=>page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return ['relief-aegean-ultra','relief-aegean-higher'].map(id=>({visibility:map.getLayoutProperty(id,'visibility')||'visible',strength:map.getPaintProperty(id,'hillshade-exaggeration')}))});
  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return (map.getLayoutProperty('relief-aegean-higher','visibility')||'visible')==='visible'},null,{timeout:5000});
- assert.deepEqual(await aegeanRelief(),[{visibility:'visible',strength:.1},{visibility:'visible',strength:.1}]);
+ assert.deepEqual(await aegeanRelief(),[{visibility:'none',strength:.1},{visibility:'visible',strength:.1}]);
  await page.locator('#relief-toggle').click();
  assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['none','none']);
  await page.locator('#relief-toggle').click();
- assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['visible','visible']);
+ assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['none','visible']);
  if(process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT){await page.waitForTimeout(650);await page.screenshot({path:process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT})}
  terrainRequests.length=0;
  const iberianCenter=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[-4.78,37.888],zoom:9.1});return map.getCenter().toArray()});

@@ -140,10 +140,25 @@ if(received&&!['caesar','senate'].includes(state.player))map.flyTo({center:campa
 const reliefLayers=physicalStyle.layers.filter(layer=>layer.type==='hillshade').map(layer=>layer.id);
 function setDetailedRelief(){for(const id of reliefLayers.filter(layer=>layer!=='relief'&&layer!=='relief-detail')){if(!map.getLayer(id))continue;map.setPaintProperty(id,'hillshade-exaggeration',.1);map.setPaintProperty(id,'hillshade-shadow-color','#a49b82');map.setPaintProperty(id,'hillshade-highlight-color','#efe5cf');map.setPaintProperty(id,'hillshade-accent-color','#c3b99c')}}
 let reliefRestoreTimer=null,reliefVisible=reliefEnabled;
+function localReliefLayer(){
+ const bounds=map.getBounds?.(),zoom=map.getZoom?.()||0;
+ if(!bounds||zoom<8)return null;
+ const viewport=[bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()];
+ for(const level of zoom>=8.9?['higher','ultra']:['ultra']){
+  const source=Object.entries(physicalStyle.sources).filter(([id,item])=>id.startsWith('elevation-')&&id.endsWith(`-${level}`)&&item.bounds&&item.bounds[0]<=viewport[0]&&item.bounds[1]<=viewport[1]&&item.bounds[2]>=viewport[2]&&item.bounds[3]>=viewport[3])
+   .sort((a,b)=>(a[1].bounds[2]-a[1].bounds[0])*(a[1].bounds[3]-a[1].bounds[1])-(b[1].bounds[2]-b[1].bounds[0])*(b[1].bounds[3]-b[1].bounds[1]))[0];
+  if(source)return source[0].replace('elevation','relief');
+ }
+ return null;
+}
 function showRelief(visible){
- if(reliefVisible===visible)return;
  reliefVisible=visible;
- for(const id of reliefLayers)if(map.getLayer(id))map.setLayoutProperty(id,'visibility',visible?'visible':'none');
+ const local=visible?localReliefLayer():null;
+ for(const id of reliefLayers){
+  if(!map.getLayer(id))continue;
+  const wanted=visible&&(!local||id===local)?'visible':'none';
+  if((map.getLayoutProperty?.(id,'visibility')||'visible')!==wanted)map.setLayoutProperty(id,'visibility',wanted);
+ }
 }
 function pauseReliefWhileMoving(){
  clearTimeout(reliefRestoreTimer);
@@ -456,7 +471,8 @@ map.on('load',()=>{
 });
 map.on('load',()=>{if(!reliefEnabled)for(const id of reliefLayers)if(map.getLayer(id))map.setLayoutProperty(id,'visibility','none');status.style.display='none';map.addSource('preview',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'preview-line',type:'line',source:'preview',paint:{'line-color':'#ffdd8b','line-width':3,'line-dasharray':[2,2]}});map.addSource('marches',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'march-lines',type:'line',source:'marches',paint:{'line-color':'#f6df9d','line-width':3,'line-opacity':.9,'line-dasharray':[2,2]}});renderArmies();map.addSource('route',{type:'geojson',data:republicanRoads});map.addLayer({id:'ancient-route',type:'line',source:'route',paint:{'line-color':'#f2d8a0','line-width':['interpolate',['linear'],['zoom'],3.6,.8,5.5,1.5,9,2.6],'line-opacity':.85,'line-dasharray':[3,2]}},'control');map.addLayer({id:'road-hit',type:'line',source:'route',paint:{'line-color':'#f2d8a0','line-width':12,'line-opacity':.01}});map.on('click','road-hit',e=>{e.originalEvent.stopPropagation();showRoad(e.features[0].properties.name)});map.on('mouseenter','road-hit',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','road-hit',()=>map.getCanvas().style.cursor='');map.on('click','control',e=>{if(state.grandMap)return;if(map.queryRenderedFeatures(e.point,{layers:['road-hit']}).length)return;const p=e.features[0].properties;(()=>{const ids=Array.isArray(p.regions)?p.regions:JSON.parse(p.regions||'[]');if(ids.length===1){showRegion(region(state,ids[0]));return}activeArmy=null;clearReach();inspect(p.id.toUpperCase(),t('shared'));const controls=document.querySelector('#lab-orders');for(const id of ids){const r=region(state,id);if(!r)continue;const b=document.createElement('button');b.textContent=n(r.name);b.onclick=()=>showRegion(r);controls.append(b)}})()});map.on('mouseenter','control',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','control',()=>map.getCanvas().style.cursor='')});
 let tileErrors=0;map.on('error',e=>{if(++tileErrors===3){status.textContent='Some map data could not be loaded; check network access.';status.style.display='block'}console.warn('Map data error',e.error?.message||e.error)});
-map.on('load',()=>{if(reliefEnabled)setDetailedRelief();addCartographicGrain()});
+map.on('load',()=>{if(reliefEnabled)setDetailedRelief();addCartographicGrain();showRelief(reliefEnabled)});
+map.on('idle',()=>{if(reliefEnabled&&reliefVisible)showRelief(true)});
 map.on('load',()=>{map.on('movestart',pauseReliefWhileMoving);map.on('moveend',restoreReliefAfterMoving);map.on('dragend',restoreReliefAfterMoving);map.on('zoomend',restoreReliefAfterMoving)});
 function zoomClass(){document.body.classList.toggle('low-zoom',map.getZoom()<5.2);document.body.classList.toggle('mid-zoom',map.getZoom()<6.5);document.body.classList.toggle('leader-overview',map.getZoom()<4.8)}map.on('zoom',zoomClass);map.on('zoomend',renderTerrainLegend);map.on('moveend',renderTerrainLegend);zoomClass();
 document.querySelector('#relief-toggle').onclick=()=>{
