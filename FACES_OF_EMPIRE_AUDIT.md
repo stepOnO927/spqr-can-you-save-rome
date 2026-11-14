@@ -320,6 +320,19 @@ the actual Han transport saving, pending activation and expiry; bilingual
 market browser checks exercise the player control; both networks have
 measured long-route transport savings in unit tests. Broader merchant
 negotiation, reputations and competing private commercial networks remain open.
+Small oasis courts now participate in the autonomous market even below the
+former population threshold. They can buy an affordable one-unit lot instead
+of being excluded when a three-unit quote exceeds their cash. Local town
+levies use household service at home but still draw treasury upkeep when sent
+away; AI oasis focus spending keeps an operating reserve. In a normal
+40-month Parthian-observed campaign, Han silk reaches Qiuci and a subsequent
+Qiuci-to-Shule resale settles without player orders, including across a save
+reload. A separate embargo scenario confirms Shanshan-to-Qiemo resale after
+the direct Han offer closes. Both legs use stock, treaties, routes, escrow,
+named carriers and seller payment; existing 120-month conservation checks
+remain in place. Per-quarter route caching keeps the enlarged buyer pool
+within the market test's prior runtime. Wider autonomous intermediary volume
+and merchant financing are still open.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,

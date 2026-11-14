@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=han-1';
+import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js?v=han-1';
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=han-1';
 import {activeEasternMerchantPrivilege,advanceEasternMarkets,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-of-empire-1';
 import {advanceSilk} from '../han/silk-road.js?v=han-1';
@@ -207,6 +207,50 @@ test('an oasis intermediary resells delivered Han silk as a second paid shipment
  assert.equal(s.tradeMarkets.regions.qiemo.goods.silk.stock,destBefore+2);
  assert.equal(s.factions.shanshan.treasury,cashBefore+second.quote.price);
  assert.equal(s.tradeMarkets.transactions.filter(x=>x.commodity==='silk').length,2);
+});
+
+test('oasis AI can finance and resell physical silk when the direct Han offer closes',()=>{
+ let s=newHanGame('parthia',{seed:49});
+ // Keep competing courts outside this corridor unfunded so both decisions
+ // and the two real payments belong to the autonomous oasis buyers.
+ for(const id of Object.keys(s.factions))if(!['han','shanshan','parthia'].includes(id))s.factions[id].treasury=0;
+ let first;
+ for(let i=0;i<24&&!first;i++){
+  next(s);
+  first=s.tradeMarkets.shipments.find(x=>x.seller==='han'&&x.buyer==='shanshan'&&x.commodity==='silk'&&x.status==='delivered');
+ }
+ assert.ok(first,'Shanshan should independently buy and receive real Han silk');
+ const offer=easternMarketOffers(s).find(x=>x.origin==='shanshan'&&x.commodity==='silk');
+ assert.ok(offer?.resale&&offer.available>0);
+ s.tradeMarkets.exportRestrictions.han=['silk'];
+ s.factions.qiemo.treasury=20;
+ s=loadHanSave(serialize(s));
+ let second;
+ for(let i=0;i<48&&!second;i++){
+  next(s);
+  second=s.tradeMarkets.shipments.find(x=>x.seller==='shanshan'&&x.buyer==='qiemo'&&x.commodity==='silk'&&x.status==='delivered');
+ }
+ assert.ok(second,'Qiemo should independently take the nearby intermediary offer');
+ assert.ok(second.year*12+second.month>first.year*12+first.month);
+ assert.equal(s.tradeMarkets.transactions.filter(x=>x.shipment===first.id||x.shipment===second.id).length,2);
+ assert.equal(s.tradeMarkets.regions.qiemo.goods.silk.stock,2+second.quantity);
+ assert.ok(second.price>0&&second.transport>0&&s.persons[second.merchantId]?.profession==='merchant');
+ assert.equal(second.escrow,0);
+ assert.ok(s.factions.qiemo.treasury>=0);
+});
+
+test('a normal forty-month campaign produces an autonomous two-court silk chain',()=>{
+ let s=newHanGame('parthia',{seed:49});
+ for(let i=0;i<40;i++){
+  tick(s);
+  if(i===19)s=loadHanSave(serialize(s));
+ }
+ const deliveries=s.tradeMarkets.transactions.filter(x=>x.commodity==='silk');
+ const first=deliveries.find(x=>x.seller==='han'&&x.buyer==='qiuci');
+ const second=deliveries.find(x=>x.seller==='qiuci'&&x.buyer==='shule');
+ assert.ok(first&&second,'the funded intermediary should buy and resell without player orders');
+ assert.ok(second.year*12+second.month>first.year*12+first.month);
+ assert.ok(s.factions.qiuci.treasury>=0&&s.factions.shule.treasury>=0);
 });
 
 test('Han, Kangju, Yuezhi and Parthia can negotiate and trade without player orders',()=>{

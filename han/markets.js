@@ -288,14 +288,21 @@ function settleStrandedShipment(s,shipment){
 }
 
 function advanceEasternMarketAI(s){
- const markets=s.tradeMarkets,now=month(s),orders=[],plans=new Map();
- const buyers=Object.keys(s.factions).filter(id=>id!==s.player&&s.regions.some(r=>r.owner===id&&(r.pop||0)>=8));
+ const markets=s.tradeMarkets,now=month(s),orders=[],plans=new Map(),pathCache=new Map();
+ const pathFor=(origin,destination,buyer)=>{
+  const key=`${buyer}:${origin}:${destination}`;
+  if(!pathCache.has(key))pathCache.set(key,projectedPath(s,origin,destination,buyer));
+  return pathCache.get(key);
+ };
+ const oasis=id=>s.regions.some(r=>r.owner===id&&r.kind?.startsWith('oasis'));
+ const reserve=(id,good)=>id==='han'?100:oasis(id)?good==='silk'?2:12:12;
+ const buyers=Object.keys(s.factions).filter(id=>id!==s.player&&s.regions.some(r=>r.owner===id&&((r.pop||0)>=8||r.kind?.startsWith('oasis'))));
  for(const buyer of buyers){
-  if(s.factions[buyer].treasury<20)continue;
+  if(s.factions[buyer].treasury<2+COMMODITIES.grain.basePrice)continue;
   const active=markets.shipments.filter(x=>x.buyer===buyer&&['traveling','blocked'].includes(x.status));
   if(active.some(x=>x.status==='traveling')||active.some(x=>x.status==='blocked'&&now-(x.blockedAt??now)<3))continue;
   const candidates=[];
-  for(const destination of s.regions.filter(r=>r.owner===buyer&&(r.pop||0)>=8))for(const [good,item] of Object.entries(markets.regions[destination.id].goods)){
+  for(const destination of s.regions.filter(r=>r.owner===buyer&&((r.pop||0)>=8||r.kind?.startsWith('oasis'))))for(const [good,item] of Object.entries(markets.regions[destination.id].goods)){
    const target=Math.max(4,item.consumption*3+item.production),deficit=target-item.stock;if(deficit<=0)continue;
    const nearby=markets.offers.filter(x=>x.commodity===good&&x.seller!==buyer&&(x.seller!==s.player||x.saleOrderId))
     .sort((a,b)=>{const sourceA=region(s,a.origin),sourceB=region(s,b.origin);
@@ -304,11 +311,15 @@ function advanceEasternMarketAI(s){
      return costA-costB}).slice(0,4);
    for(const offer of nearby){
     if(atWar(s,buyer,offer.seller)||active.some(x=>x.seller===offer.seller&&x.commodity===good))continue;
-    const path=projectedPath(s,offer.origin,destination.id,buyer);if(!path)continue;
-    const quantity=Math.min(3,deficit,offer.available),price=offer.price*quantity,travel=travelQuote(s,path,quantity,price,buyer,offer.seller);
-    const utility=marketPrice(markets.regions[destination.id],good)*quantity+(item.stock===0?COMMODITIES[good].basePrice*quantity:0)-travel.total;
-    if(utility<0||s.factions[buyer].treasury-travel.total<(buyer==='han'?100:12))continue;
-    candidates.push({request:{seller:offer.seller,buyer,origin:offer.origin,destination:destination.id,commodity:good,quantity,saleOrderId:offer.saleOrderId},utility,path:travel.months,route:path,unitPrice:offer.price,value:utility+travel.total});
+    const path=pathFor(offer.origin,destination.id,buyer);if(!path)continue;
+    // Small intermediary courts can fund one batch when a larger lot would
+    // exceed their treasury reserve. Every size still uses the real route.
+    for(let quantity=Math.min(3,deficit,offer.available);quantity>=1;quantity--){
+     const price=offer.price*quantity,travel=travelQuote(s,path,quantity,price,buyer,offer.seller);
+     const utility=marketPrice(markets.regions[destination.id],good)*quantity+(item.stock===0?COMMODITIES[good].basePrice*quantity:0)-travel.total;
+     if(utility<0||s.factions[buyer].treasury-travel.total<reserve(buyer,good))continue;
+     candidates.push({request:{seller:offer.seller,buyer,origin:offer.origin,destination:destination.id,commodity:good,quantity,saleOrderId:offer.saleOrderId},utility,path:travel.months,route:path,unitPrice:offer.price,value:utility+travel.total});break;
+    }
    }
   }
   candidates.sort((a,b)=>b.utility-a.utility||a.path-b.path||a.request.seller.localeCompare(b.request.seller));
@@ -333,11 +344,11 @@ function advanceEasternMarketAI(s){
   for(const group of groups.values()){
    const scarce=group.reduce((sum,c)=>sum+c.request.quantity,0)>available(group[0].request);
    const bids=group.map(candidate=>{
-    const {request,route,value}=candidate,reserve=request.buyer==='han'?100:12;
+    const {request,route,value}=candidate,minCash=reserve(request.buyer,request.commodity);
     for(let premium=scarce?Math.ceil(COMMODITIES[request.commodity].basePrice*.5):0;premium>=0;premium--){
      const unitPrice=candidate.unitPrice+premium,price=unitPrice*request.quantity;
      const travel=travelQuote(s,route,request.quantity,price,request.buyer,request.seller);
-     if(travel.total<=value&&s.factions[request.buyer].treasury-travel.total>=reserve)return {candidate,premium,unitPrice};
+     if(travel.total<=value&&s.factions[request.buyer].treasury-travel.total>=minCash)return {candidate,premium,unitPrice};
     }
     return null;
    }).filter(Boolean);
@@ -352,8 +363,8 @@ function advanceEasternMarketAI(s){
     if(markets.diplomacy.attempts.length>150)markets.diplomacy.attempts.shift();
     if(!tradeTreaty(s,buyer,seller)){plans.get(buyer)?.shift();continue}
    }
-   const bid={...request,bidPremium:winner.premium},quote=quoteEasternTrade(s,bid),reserve=buyer==='han'?100:12;
-   const placed=quote.ok&&quote.total<=value&&s.factions[buyer].treasury-quote.total>=reserve?placeEasternTrade(s,bid):{ok:false,reason:quote.reason||'price'};
+   const bid={...request,bidPremium:winner.premium},quote=quoteEasternTrade(s,bid),minCash=reserve(buyer,request.commodity);
+   const placed=quote.ok&&quote.total<=value&&s.factions[buyer].treasury-quote.total>=minCash?placeEasternTrade(s,bid):{ok:false,reason:quote.reason||'price'};
    if(placed.ok){orders.push(placed.shipment);plans.delete(buyer)}
    else {plans.get(buyer)?.shift();if(placed.reason==='route'){markets.diplomacy.attempts.push({year:s.year,month:s.month,buyer,seller,status:'route_blocked'});markets.diplomacy.nextAt[key]=now+3}}
   }

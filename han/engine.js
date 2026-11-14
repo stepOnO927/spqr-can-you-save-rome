@@ -136,7 +136,9 @@ function economy(s){
   const income=own.reduce((a,r)=>a+r.tax*loyaltyF(r),0)*0.12*(id==='han'?0.5+capacity:rulerGovernanceFactor(s,id))*taxRate*(s.throne.paralysis>0&&id==='han'?0.6:1);
   const grain=own.reduce((a,r)=>a+(r.grain+(r.irrigation||0))*loyaltyF(r),0)*0.27;
   const armies=s.armies.filter(a=>a.owner===id&&a.men>0);
-  const upkeep=armies.reduce((a,x)=>a+x.men/1000*templateStats(x.template).cost*0.22,0);
+  // Home town levies serve through households. A court pays the normal
+  // campaign upkeep once it sends them beyond its own settlement.
+  const upkeep=armies.reduce((a,x)=>a+(x.template?.id==='town'&&own.some(r=>r.id===x.region)?0:x.men/1000*templateStats(x.template).cost*0.22),0);
   const eat=armies.reduce((a,x)=>a+x.men/1000*templateStats(x.template).grain*0.3,0);
   f.treasury=Math.round(f.treasury+income-upkeep);f.grain=Math.round(f.grain+grain-eat-own.reduce((a,r)=>a+r.pop*0.02,0));
   f.manpower=Math.round(Math.min(own.reduce((a,r)=>a+r.pop*1500,0),f.manpower+own.reduce((a,r)=>a+r.pop*4,0)));f.horses=Math.round((f.horses||0)+own.filter(r=>r.horses).length*150);
