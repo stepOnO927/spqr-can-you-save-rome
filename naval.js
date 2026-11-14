@@ -1,5 +1,5 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js';
-import {activeEffects,recordMerchantContact} from './development.js?v=37';
+import {activeEffects,recordMerchantContact} from './development.js?v=38';
 import {officeOf} from './office-system.js';
 import {nationalBudget} from './national-budget.js?v=16';
 

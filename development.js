@@ -96,7 +96,7 @@ export const BUILDINGS = [
   {id:'fort',name:['Fortification','防御工事'],tech:'stone-fortification',cost:28,months:5,materials:{stone:4,timber:2,metal:2},upkeep:2,effects:{fort:1},terrain:['hills','plain','urban']},
   {id:'quarry',name:['Quarry','采石场'],tech:'quarrying',cost:18,months:3,materials:{timber:2},upkeep:1,effects:{stone:2},terrain:['hills']},
   {id:'mine',name:['Mine','矿场'],tech:'metal-extraction',cost:24,months:5,materials:{stone:2,timber:2},upkeep:2,effects:{metal:2,loyalty:-1},terrain:['hills']},
-  {id:'granary',name:['Granary','粮仓'],tech:'grain-storage',cost:18,months:3,materials:{stone:1,timber:2},upkeep:1,effects:{food:1,foodCapacity:45},terrain:['plain','urban','hills','desert']},
+  {id:'granary',name:['Granary','粮仓'],tech:'grain-storage',cost:18,months:3,materials:{stone:1,timber:2},upkeep:1,effects:{food:1,foodCapacity:21,localFoodCapacity:24},terrain:['plain','urban','hills','desert']},
   {id:'drain',name:['Urban Drainage','城市排水'],tech:'urban-drainage',cost:30,months:5,materials:{stone:4,timber:1},upkeep:2,effects:{loyalty:2,stability:1},terrain:['urban']}
 ];
 // Further historically plausible families. Each entry has a distinct bilingual
@@ -635,4 +635,33 @@ export function advanceDevelopment(s,log=()=>{}){
   }
 }
 export function localBuildingEffects(r){const out={};for(const id of r.buildings||[]){const b=BUILDINGS.find(x=>x.id===id);if(!b)continue;for(const [k,v] of Object.entries(b.effects))out[k]=(out[k]||0)+v;out.upkeep=(out.upkeep||0)+b.upkeep}return out}
+
+export const GRANARY_RESERVE_CAPACITY=24;
+const storedGrain=site=>Math.max(0,Math.min(GRANARY_RESERVE_CAPACITY,Math.floor(Number(site.grainReserve)||0)));
+// Transfer actual state food into a provincial store; no food is created by storage.
+export function settleGranaryReserves(s,owner){
+ const treasury=s.factions[owner],stores=s.regions.filter(r=>r.owner===owner&&r.buildings?.includes('granary'));
+ if(!treasury||!stores.length)return 0;
+ let transferred=0;
+ if(treasury.food<0){
+  for(const site of stores){const reserve=storedGrain(site),amount=Math.min(4,reserve,-treasury.food);site.grainReserve=reserve-amount;treasury.food+=amount;transferred+=amount;if(treasury.food>=0)break}
+ }else if(treasury.food>30){
+  for(const site of stores){const reserve=storedGrain(site),amount=Math.min(2,GRANARY_RESERVE_CAPACITY-reserve,Math.max(0,treasury.food-25));site.grainReserve=reserve+amount;treasury.food-=amount;transferred+=amount;if(treasury.food<=25)break}
+ }
+ return transferred;
+}
+// Older saves counted all 45 granary spaces in the national pool. Move only
+// the excess above the new national limit into owned stores, exactly once.
+export function migrateGranaryReserves(s,nationalCapacity){
+ if(s.granaryReservesVersion===1)return;
+ for(const [owner,faction] of Object.entries(s.factions||{})){
+  let overflow=Math.max(0,Math.floor(faction.food-(nationalCapacity(s,owner)||0)));
+  for(const site of s.regions.filter(r=>r.owner===owner&&r.buildings?.includes('granary'))){
+   const reserve=storedGrain(site),amount=Math.min(overflow,GRANARY_RESERVE_CAPACITY-reserve);
+   site.grainReserve=reserve+amount;faction.food-=amount;overflow-=amount;
+   if(!overflow)break;
+  }
+ }
+ s.granaryReservesVersion=1;
+}
 export const developmentCatalogIds={ideas:ids(IDEAS),materials:ids(MATERIALS),buildings:ids(BUILDINGS)};

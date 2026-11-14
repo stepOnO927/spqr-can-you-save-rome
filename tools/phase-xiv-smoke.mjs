@@ -22,6 +22,8 @@ try{
   await page.locator('#entry-continue').click();
   await page.locator('[data-tab="development"]').click();
   assert.match(await page.locator('.inspector h2').innerText(),/Development/);
+  await page.locator('.dev-reference summary').click();
+  assert.match(await page.locator('.dev-reference').innerText(),/Provincial grain reserve \+24/);
   await page.locator('[data-dev-branch="idea"]').click();
   assert.equal(await page.locator('[data-tree-pan="left"]').isDisabled(),true);
   assert.equal(await page.locator('[data-tree-pan="right"]').isEnabled(),true);
@@ -67,6 +69,9 @@ try{
   await page.locator('#lang').click();
   await page.locator('[data-tab="development"]').click();
   assert.match(await page.locator('.inspector h2').innerText(),/文明发展/);
+  await page.locator('[data-dev-branch="material"]').click();
+  await page.locator('.dev-reference summary').click();
+  assert.match(await page.locator('.dev-reference').innerText(),/当地粮仓储量 \+24/);
   await page.locator('[data-dev-branch="idea"]').click();
   assert.match(await page.locator('#tech-sanctuary-protection').innerText(),/行省圣所保护/);
   assert.match(await page.locator('#tech-ancestral-rites').innerText(),/传统祭仪扶持/);
@@ -266,7 +271,9 @@ try{
     assert.match(await page.locator('[data-research="quarrying"]').innerText(),language==='zh'?/17¤ \/ 2月/:/17¤ \/ 2m/);
   }
   const merchantCampaign=newGrandGame('senate');merchantCampaign.wars=[];merchantCampaign.factions.senate.treasury=300;merchantCampaign.factions.senate.food=100;
-  for(const month of [2,3]){merchantCampaign.month=month;advanceNaval(merchantCampaign)}
+  for(const month of [2,3,4,5,6,7,8,9]){merchantCampaign.month=month;advanceNaval(merchantCampaign)}
+  assert.equal(merchantCampaign.naval.routes.find(route=>route.id==='egypt-papyrus').last.reason,'delivered');
+  assert.ok(merchantCampaign.naval.routes.find(route=>route.id==='egypt-papyrus').last.paid>0);
   assert.ok(merchantCampaign.development.senate.merchantLeads.some(lead=>lead.id==='water-control'));
   for(const language of ['en','zh']){
     await page.evaluate(value=>localStorage.setItem('spqr-lang',value),language);
