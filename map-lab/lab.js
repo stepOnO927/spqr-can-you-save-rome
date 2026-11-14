@@ -15,6 +15,7 @@ import {reportedControl,requestControlReport} from '../control-intelligence.js?v
 import {renderLocalGovernor} from './local-governor-ui.js?v=succession-ui-recovery-1';
 import {renderSecurity} from './security-ui.js?v=succession-ui-recovery-1';
 import {renderOffices} from './offices-ui.js?v=succession-ui-recovery-1';
+import {renderCursus} from './cursus-ui.js?v=cursus-strategic-1';
 import {officeEffects} from '../office-system.js?v=succession-ui-recovery-1';
 import {populationFactor,religiousTaxCost} from '../religion.js?v=succession-ui-recovery-1';
 import {satisfactionForOutline} from './satisfaction-map.js?v=succession-ui-recovery-1';
@@ -27,18 +28,18 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=peace-mail-courier-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=peace-cursus-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=succession-ui-recovery-1';
-import {createCharacterUI} from './character-ui.js?v=peace-mail-courier-1';
+import {createCharacterUI} from './character-ui.js?v=peace-cursus-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=court-portraits-1';
 import {reportedArmies} from '../character-system.js?v=succession-ui-recovery-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=travel-2';
 import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=phase-x-1';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=succession-ui-recovery-1';
-import {receivedMail,unreadCount} from '../epistulae.js?v=peace-mail-courier-1';
+import {receivedMail,unreadCount} from '../epistulae.js?v=peace-cursus-1';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGame();
@@ -134,7 +135,8 @@ function showFaction(id,section='diplomacy'){
  const relationText=id===me?(zh?'玩家指挥':'Player command'):war?(zh?'交战中':'At war'):allied?(zh?'同盟':'Allied'):(zh?'和平':'At peace');
  const panel=document.querySelector('#command-detail');panel.innerHTML=`<div class="identity-header faction-focus">${factionMark(id,'banner')}<span><small>${zh?'势力与外交':'FACTION & DIPLOMACY'}</small><strong>${esc(n(faction.short))}</strong></span></div><div class="detail-grid"><span>${zh?'公开报告的领导者（可能过时）':'Reported leader (may be outdated)'}</span><b>${esc((id===me?state.world.leadership[id]:knownLeaders(state,me,id)).map(cid=>n(CHARACTER_CATALOG[cid]?.name)).filter(Boolean).join(lang==='zh'?'、':', ')||(lang==='zh'?'未知':'Unknown'))}</b><span>${zh?'报告的身份':'Reported position'}</span><b>${esc(n(leadershipTitle(id,id===me?state.world.leadership[id]:knownLeaders(state,me,id))))}</b><span>${zh?'外交状态':'Diplomatic status'}</span><b>${relationText}</b>${id!==me?`<span>${zh?'关系':'Relations'}</span><b>${rel}</b>`:''}</div><button class="identity-focus-map" id="focus-faction">${zh?'定位战区':'FOCUS ON THEATER'}</button>`;
  if(id!==me){const info=leadershipIntelligence(state,me,id),labels={confirmed:['Corroborated','多方证实'],credible:['Highly credible','高可信度'],unverified:['Unverified','未经核实'],rumor:['Rumor','传闻'],disputed:['Disputed','存在争议'],outdated:['Outdated','情报过期'],unknown:['Unknown','未知']},date=d=>d?campaignDate(d.month,d.year):(zh?'未知':'Unknown'),summary=document.createElement('p');summary.id='leader-intelligence-summary';summary.className='battle-note';summary.textContent=(zh?'当前领袖报告：':'Current leadership report: ')+n(labels[info.confidence]||labels.unknown)+' · '+(zh?'观察日期：':'Observed: ')+date(info.observed)+' · '+(zh?'上次领袖报告获独立佐证（可能不是当前说法）：':'Last independently corroborated leadership report (may differ from the current claim): ')+date(info.lastVerified);panel.append(summary)}
- panel.querySelector('#focus-faction').onclick=()=>{const r=own.find(x=>namedPoints[x.id]);if(r)map.flyTo({center:namedPoints[r.id],zoom:5.3})};characterUI.addLeaders(panel,id);if(id===me){renderOffices({panel,state,language:lang,refresh:()=>{renderHud();showFaction(id)}});renderSecurity({panel,state,language:lang,refresh:()=>{renderHud();showFaction(id)}});return;}
+ panel.querySelector('#focus-faction').onclick=()=>{const r=own.find(x=>namedPoints[x.id]);if(r)map.flyTo({center:namedPoints[r.id],zoom:5.3})};characterUI.addLeaders(panel,id);if(id===me){renderOffices({panel,state,language:lang,refresh:()=>{renderHud();showFaction(id)}});renderCursus({panel,state,language:lang,refresh:()=>{renderHud();showFaction(id)},onCharacter:person=>characterUI.show(person)});renderSecurity({panel,state,language:lang,refresh:()=>{renderHud();showFaction(id)}});return;}
+ renderCursus({panel,state,language:lang,target:id,refresh:()=>{renderHud();showFaction(id)},onCharacter:person=>characterUI.show(person)});
  const nav=document.createElement('div');nav.className='diplomacy-tabs';nav.innerHTML=`<button data-page="diplomacy">${zh?'外交':'DIPLOMACY'}</button><button data-page="intelligence">${zh?'书信与情报':'LETTERS & INTELLIGENCE'}</button>`;panel.append(nav);nav.querySelectorAll('button').forEach(b=>b.onclick=()=>showFaction(id,b.dataset.page));
  const content=document.createElement('div');content.className='diplomacy-content';panel.append(content);
  const incoming=(state.inquiries||[]).filter(x=>x.actor===id&&x.target===me&&x.subject==='peace'&&(x.status==='awaiting_decision'||x.phase==='return')).slice(0,3);

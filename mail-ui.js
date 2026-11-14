@@ -1,4 +1,4 @@
-import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=peace-mail-courier-1';
+import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=peace-cursus-1';
 import {wartimePolicy} from './epistulae-personnel.js?v=succession-ui-recovery-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';

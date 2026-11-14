@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=peace-mail-courier-1';
+import {newGame,upgradeSave} from '../engine.js?v=peace-cursus-1';
 import {createFictionalPerson,makeWill,settleInheritance,resolveInheritanceDispute,advanceDynasties} from '../dynasties.js?v=succession-ui-recovery-1';
 
 function caseFixture(){
