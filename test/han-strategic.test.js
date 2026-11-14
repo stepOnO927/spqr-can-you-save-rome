@@ -1,7 +1,7 @@
 // MANDATE OF HEAVEN — strategic acceptance tests 11–20.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,tick,moveArmy} from '../han/engine.js?v=multipolar-courier-review-1';
+import {newHanGame,tick,moveArmy} from '../han/engine.js?v=ai-wartime-aid-1';
 import {ROUTES,REGIONS,OASIS} from '../han/data.js?v=han-1';
 import {PRESETS,templateStats,supplyFor,resolveBattle,marchMonths,recruitQuote,recruit,validateMix,saveTemplate} from '../han/military.js?v=han-1';
 import {propose,proposalScore,protectorateAction,access,declareWar,knownStrength,aiMilitary,observe,relation} from '../han/frontier.js?v=han-1';

@@ -27,6 +27,13 @@ cooperation travel as letters, and wakes multipolar AI planning when new
 reported evidence arrives. These changes are integrated with the expansion's
 saved characters and separate Han theater; hidden foreign state alone does
 not trigger the AI review.
+The subsequent main updates add coalition invitations by courier, reported
+foreign treaty changes to the Chronicle, and autonomous wartime aid requests.
+The merged branch now advances those invitations and aid letters through the
+existing turn sequence; accepted aid spends the donor's real treasury and food
+before the return courier delivers it. New modules share the branch's cache
+versions so the campaign and atlas use one module instance. The corresponding
+unit and Chromium flows pass after integration.
 Han military AI now treats a dated sighting of hostile troops in neutral land
 as a frontier threat, holds threatened garrisons, and reinforces a fort only
 when its supply can support another army. An underdefended front can trigger

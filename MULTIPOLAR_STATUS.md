@@ -16,6 +16,14 @@ The current implementation does not yet provide tactical synchronization of acce
 
 Between quarterly reviews, a court also reevaluates when its own reported stability or troop sightings change, when it learns of a war, when one of its own agreements changes, or when its own army positions or broad resource bands change. The signature is built from the court's own information and bounded recent records; hidden foreign changes alone cannot trigger a review. This does not yet cover every kind of intelligence or deliver the full multipolar acceptance scenario.
 
+## Coalition invitations
+
+Courts select prospective partners from their own known contacts rather than reading the candidates' private threat assessments. An invitation costs 3 treasury, takes approximately four months round trip and can be lost or declined. Recipients decide from their own resources, relations and perceived danger; a successful coalition costs each member 5 treasury. The player can send invitations from the government panel. AI invitations currently exclude a human recipient rather than committing that player without consent. The existing coalition system remains responsible for membership and obligations, and invitation history is saved with a twelve-month repeat limit.
+
+## Wartime aid between AI courts
+
+An AI government at war can pay five treasury to ask a known, non-hostile court for aid, including a court it has heard is already fighting the same enemy. The recipient independently weighs its own treasury, food, relations and wars; it may refuse. An accepted shipment deducts 12 treasury and 8 food from the donor, travels with the return courier, and can be lost; only a delivered shipment reaches the requester. The request and sealed response do not expose the donor's reserves to other countries. Normal play never commits the human to send aid automatically; incoming human aid requests are not implemented yet. The seeded simulation includes a Roman-Egyptian war both with autonomous Rome and with a passive human Rome; only the initial war is set, not the later diplomatic outcomes.
+
 ## Scout-based allied warnings
 
 `strategic-warnings.js` lets a court forward a fresh (at most one month old) scout sighting of a hostile force near a friendly court's territory. A friendly court is one with an alliance, a defensive, guarantee, intelligence, military-support or offensive agreement, or a relation of at least 35 with the sender. The threat must be at war with the sender, or the sender must hold a dated report of a war between the threat and the recipient. The sender reads only its own sightings, control reports, diplomatic reports, treaties and relations.

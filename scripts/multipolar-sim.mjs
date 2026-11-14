@@ -7,7 +7,7 @@ import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
 // fully automated world and an ordinary passive Roman player are exercised.
 const seeds=Number(process.env.SPQR_SEEDS||6),months=Number(process.env.SPQR_MONTHS||24),actors=['caesar','egypt','parthia','armenia'];
 if(!Number.isInteger(seeds)||seeds<2||!Number.isInteger(months)||months<1)throw Error('Invalid simulation dimensions');
-function simulate(seed,autoplayPlayer,regionalTension=false,alliedFrontier=false){
+function simulate(seed,autoplayPlayer,regionalTension=false,alliedFrontier=false,romanEgyptWar=false){
  const s=newGame('caesar');s.difficulty='expert';s.seed=seed;s.world.intelSeed=(seed^0x53a2)>>>0;s.world.dynasties.seed=(seed^0xd3c1)>>>0;const histories=new Set(),wars=new Set(),agreements=new Set(),operations=new Set(),goals=new Set(),offers=new Set();
  // A second fictional opening changes incentives, not diplomatic outcomes:
  // the existing Roman war is unchanged and no new war or alliance is forced.
@@ -16,6 +16,9 @@ function simulate(seed,autoplayPlayer,regionalTension=false,alliedFrontier=false
  // is already at war with a prepared Parthia. Warnings, their delivery and every
  // recipient decision remain unforced.
  if(alliedFrontier){s.relations['armenia:senate']=40;assert.ok(proposeAgreement(s,'armenia','senate','defensive').ok);s.wars.push(['parthia','senate']);s.factions.parthia.food=100;s.factions.parthia.treasury=100;for(const a of s.armies.filter(x=>x.owner==='parthia'))a.men=15000}
+ // This opening specifies only an existing Roman-Egyptian war; no aid,
+ // alliance, later declaration or military movement is predetermined.
+ if(romanEgyptWar)s.wars.push(['caesar','egypt']);
  let elapsedMonths=0;
  for(let i=0;i<months;i++){
   const before=s.year*12+s.month;tick(s,{autoplayPlayer});
@@ -25,7 +28,7 @@ function simulate(seed,autoplayPlayer,regionalTension=false,alliedFrontier=false
   for(const w of s.wars)wars.add([...w].sort().join(':'));
   for(const t of s.agreements||[])agreements.add(`${t.type}:${t.parties.slice().sort().join(':')}`);
   for(const o of s.operations||[])operations.add(`${o.actor}:${o.type}:${o.target}:${o.status}`);
-  for(const o of s.world.strategicOffers||[])offers.add(`${o.actor}:${o.recipient}:${o.target}:${o.status}`);
+  for(const o of s.world.strategicOffers||[])offers.add(`${o.actor}:${o.recipient}:${o.target}:${o.kind||'join_war'}:${o.status}`);
  }
  for(const actor of actors.filter(x=>autoplayPlayer||x!==s.player))assert.ok(histories.has(actor),`${actor} did not review the situation`);
  const letters=s.warningLetters||[];for(const l of letters)assert.equal(warningLedger(s,l.threat).filter(x=>x.id===l.id).length,0,'the sighted court must not learn of a warning');
@@ -33,9 +36,10 @@ function simulate(seed,autoplayPlayer,regionalTension=false,alliedFrontier=false
  if(autoplayPlayer)assert.equal(elapsedMonths,months,'AI-only simulation stopped before the requested duration');
  return {seed,elapsedMonths,endedInDefeat:!!s.defeat,warnings,reviewed:[...histories].sort(),wars:[...wars].sort(),agreements:[...agreements].sort(),operations:[...operations].sort(),offers:[...offers].sort(),decisions:[...goals].sort(),peaceLetters:(s.inquiries||[]).filter(x=>x.subject==='peace').map(x=>`${x.actor}:${x.target}:${x.status}`).sort()};
 }
-const report={months,seeds,automated:[],passiveRome:[],regionalTension:[],alliedFrontier:[]};for(let i=1;i<=seeds;i++){const seed=(Math.imul(i,2654435761)^49049)>>>0;report.automated.push(simulate(seed,true));report.passiveRome.push(simulate(seed,false));report.regionalTension.push(simulate(seed,true,true));report.alliedFrontier.push(simulate(seed,true,false,true))}
+const report={months,seeds,automated:[],passiveRome:[],regionalTension:[],alliedFrontier:[],romanEgyptAI:[],romanEgyptPassive:[]};for(let i=1;i<=seeds;i++){const seed=(Math.imul(i,2654435761)^49049)>>>0;report.automated.push(simulate(seed,true));report.passiveRome.push(simulate(seed,false));report.regionalTension.push(simulate(seed,true,true));report.alliedFrontier.push(simulate(seed,true,false,true));report.romanEgyptAI.push(simulate(seed,true,false,false,true));report.romanEgyptPassive.push(simulate(seed,false,false,false,true))}
 assert.ok(new Set(report.automated.map(x=>JSON.stringify([x.wars,x.agreements,x.operations,x.offers,x.decisions,x.peaceLetters]))).size>1,'different seeds must not yield identical outcomes');
 if(seeds>=6&&months>=24){assert.ok(report.regionalTension.some(x=>x.decisions.some(d=>d.startsWith('parthia:opportunistic_war:'))),'a prepared court should sometimes exploit a reported war');assert.ok(report.regionalTension.some(x=>!x.decisions.some(d=>d.startsWith('parthia:opportunistic_war:'))),'exploitation must not be inevitable')}
+if(seeds>=6&&months>=24)for(const key of ['romanEgyptAI','romanEgyptPassive']){const requests=report[key].flatMap(x=>x.offers).filter(x=>x.startsWith('egypt:')&&x.includes(':request_aid:'));assert.ok(requests.some(x=>x.endsWith(':accepted')),'Egypt should sometimes receive aid');assert.ok(requests.some(x=>x.endsWith(':refused')),'aid must not be guaranteed')}
 // The same seed must reproduce the same warnings and decisions.
 assert.deepEqual(simulate(report.alliedFrontier[0].seed,true,false,true),report.alliedFrontier[0],'warning outcomes must be deterministic per seed');
 if(seeds>=6&&months>=24){const all=report.alliedFrontier.flatMap(x=>x.warnings);assert.ok(all.length>0,'friendly courts should sometimes forward a scout warning');assert.ok(all.some(w=>w.endsWith(':responded:heeded')),'some recipients should act on a warning');assert.ok(all.some(w=>!w.endsWith(':responded:heeded')),'acting on a warning must not be inevitable')}

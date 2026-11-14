@@ -26,12 +26,15 @@ test('coalition threat evaluation is unaffected by unseen enemy troops',()=>{
  for(const a of s.armies.filter(a=>a.owner==='senate'))a.men=900000;
  assert.deepEqual(coalitionInterest(s,'egypt','senate',estimatedStrength),before);
 });
-test('three AI states can independently form a coalition against a perceived common threat',()=>{
- const s=newGame('caesar');s.difficulty='expert';s.month=4;
- s.relations['egypt:numidia']=40;s.relations['egypt:galatia']=40;
- s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;s.relations['galatia:senate']=-30;
- tick(s);const c=s.coalitions?.find(x=>x.target==='senate'&&x.parties.includes('egypt')&&x.parties.includes('numidia')&&x.parties.includes('galatia'));
- assert.ok(c);assert.ok(!c.parties.includes(s.player));
+test('AI states exchange invitations and independently form or decline a coalition',()=>{
+ const outcomes=[];
+ for(let seed=1;seed<=20;seed++){const s=newGame('caesar');s.difficulty='expert';s.month=4;s.seed=seed;
+  s.relations['egypt:numidia']=40;s.relations['egypt:galatia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;s.relations['galatia:senate']=-30;
+  s.world.diplomaticKnowledge.egypt={numidia:{id:'numidia',kind:'agreement',status:'active',parties:['egypt','numidia'],year:s.year,month:s.month},galatia:{id:'galatia',kind:'agreement',status:'active',parties:['egypt','galatia'],year:s.year,month:s.month}};
+  tick(s);const invitation=s.world.coalitionInvitations.find(x=>x.leader==='egypt');assert.ok(invitation);assert.equal(invitation.status,'pending');assert.ok(!s.coalitions?.length);
+  for(let i=0;i<4;i++)tick(s);outcomes.push(invitation.status);if(invitation.status==='accepted')assert.ok(s.coalitions.some(x=>x.target==='senate'&&!x.parties.includes(s.player)));
+ }
+ assert.ok(outcomes.includes('accepted'));assert.ok(outcomes.some(x=>x!=='accepted'));
 });
 test('member trust follows relationships and military contributors prioritize the shared enemy only in war',()=>{
  const s=setup(),c=formCoalition(s,'caesar',['egypt','numidia'],'senate',estimatedStrength).coalition;
