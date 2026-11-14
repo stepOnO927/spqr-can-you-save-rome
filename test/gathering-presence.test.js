@@ -1,21 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=strategic-player-offer-1';
-import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=strategic-player-offer-1';
-import {mailboxHtml} from '../mail-ui.js?v=strategic-player-offer-1';
+import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=living-letters-2';
+import {mailboxHtml} from '../mail-ui.js?v=living-letters-2';
 import {createFictionalPerson} from '../dynasties.js?v=succession-ui-recovery-1';
+import {banquetInvitation} from '../living-letters.js?v=living-letters-1';
 
 function invitation(){
  const s=newGame('caesar'),host=s.world.characters['fictional:1'],guest=s.world.characters.caesar;
  host.location=guest.location='cisalpine';s.wars=[];
- const result=sendLetter(s,{senderId:host.id,senderFaction:'caesar',recipient:'caesar',category:'invitations',subject:['Gathering','聚会'],body:['Please come','请出席'],options:['accept','representative'],context:{kind:'banquet',leader:guest.id}});
+ const invitation=banquetInvitation(s,host.id,guest.id);
+ const result=sendLetter(s,{senderId:host.id,senderFaction:'caesar',recipient:'caesar',category:'invitations',subject:['Gathering','聚会'],body:invitation.body,options:['accept','representative'],context:{kind:'banquet',leader:guest.id,region:invitation.region,venueId:invitation.venue.id,eventDate:invitation.date,day:invitation.day,time:invitation.time,guestIds:invitation.guestIds,invitation}});
  result.letter.delivery='received';return {s,host,guest,letter:result.letter};
 }
 function advanceTo(s,date){s.year=Math.floor((date-1)/12);s.month=date-s.year*12;advanceMail(s)}
 
 test('a real gathering happens only when both participants are able and present',()=>{
- const fixture=invitation(),{s,host,guest,letter}=fixture;assert.match(mailboxHtml(s,{lang:'zh',selected:letter.id}),/不会自动移动人物/);assert.equal(replyToLetter(s,letter.id,'accept',{}).ok,true);
- const event=s.mail.events.at(-1);advanceTo(s,event.date);assert.equal(event.status,'held');
+ const fixture=invitation(),{s,host,guest,letter}=fixture;assert.match(mailboxHtml(s,{lang:'zh',selected:letter.id}),/接受邀请时会检查路程/);assert.equal(replyToLetter(s,letter.id,'accept',{}).ok,true);
+ const event=s.mail.events.at(-1);advanceTo(s,event.date);assert.equal(event.status,'awaiting_choice');
+ const scene=receivedMail(s).find(m=>m.context?.kind==='banquet_scene');assert.ok(scene);
+ assert.equal(replyToLetter(s,scene.id,'speak_host',{}).ok,true);
  const bond=s.world.personalRelations[[host.id,guest.id].sort().join(':')];assert.equal(bond.meetings,1);assert.equal(bond.trust,2);
 });
 
@@ -52,7 +56,7 @@ test('the chosen delegate is explicit, revalidated, and persists with the schedu
  const id=letter.id;s=upgradeSave(JSON.parse(JSON.stringify(s)));letter=receivedMail(s).find(m=>m.id===id);let event=s.mail.events.find(e=>e.letterId===id);
  assert.equal(event.participantId,lepidus.id);assert.equal(letter.responses[0].representativeId,lepidus.id);assert.equal(letter.responses[0].representativeName[1],'马尔库斯·埃米利乌斯·雷必达');
  const html=mailboxHtml(s,{lang:'zh',selected:id});assert.match(html,/约定安排/);assert.match(html,/代表: 马尔库斯·埃米利乌斯·雷必达/);
- advanceTo(s,event.date);assert.equal(event.status,'held');const notice=s.mail.messages.find(m=>m.context?.kind==='invitation_result');assert.match(notice.body[1],/雷必达作为代表出席/);
+ advanceTo(s,event.date);assert.equal(event.status,'awaiting_choice');const scene=s.mail.messages.find(m=>m.context?.kind==='banquet_scene');assert.match(scene.body[1],/雷必达/);
  delete event.representativeName;delete letter.responses[0].representativeName;const legacy=mailboxHtml(s,{lang:'zh',selected:id});assert.match(legacy,/旧记录未保存姓名/);assert.doesNotMatch(legacy,/representativeId/);
 });
 
@@ -80,3 +84,4 @@ test('children and fictional people with unknown ages are not sent as political 
  const candidates=gatheringPlan(s,letter).candidates;assert.ok(!candidates.includes(child));assert.ok(!candidates.includes(unknown));assert.ok(candidates.includes('lepidus'),'a historical officer with no recorded birth year is not assigned a fictional age');
  assert.equal(replyToLetter(s,letter.id,'representative',{},{representativeId:child}).reason,'representative');
 });
+

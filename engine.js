@@ -1,5 +1,5 @@
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=succession-ui-recovery-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,chronicleLetters} from './epistulae.js?v=strategic-player-offer-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,chronicleLetters} from './epistulae.js?v=living-letters-2';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=succession-ui-recovery-1';
 import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=strategic-player-offer-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=succession-ui-recovery-1';

@@ -39,7 +39,7 @@ import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=travel-2';
 import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=phase-x-1';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=succession-ui-recovery-1';
-import {receivedMail,unreadCount} from '../epistulae.js?v=strategic-player-offer-1';
+import {receivedMail,unreadCount} from '../epistulae.js?v=living-letters-2';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGame();

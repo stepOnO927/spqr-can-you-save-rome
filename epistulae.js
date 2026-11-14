@@ -6,6 +6,9 @@ import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=
 import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=court-portraits-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {canMediate,requestMediation} from './civil-war.js?v=succession-ui-recovery-1';
+import {banquetInvitation,composeLetter,composeReply} from './living-letters.js?v=living-letters-1';
+import {previewPersonTravel,startPersonTravel} from './personal-diplomacy.js?v=succession-ui-recovery-1';
+import {officeCandidates,officeOf,appointOffice} from './office-system.js?v=succession-ui-recovery-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
@@ -39,6 +42,7 @@ export function initializeMail(s) {
   s.mail.preferences ||= {muteRoutine:false, pauseCritical:false, autoArchiveRoutine:false};
   s.mail.warPolicies ||= {};
   s.mail.events ||= [];
+  s.mail.venues ||= {};
   initializePersonnel(s);
   return s.mail;
 }
@@ -72,12 +76,17 @@ export function gatheringPlan(s,m){
   const knownLocation=p=>p?.alive&&p.faction===s.player&&!p.missing&&!p.travel&&p.location&&
     !(s.armies||[]).some(a=>a.characterId===p.id&&a.move);
   if(!knownLocation(host)||!knownLocation(guest)||host.id===guest.id||!s.regions.some(r=>r.id===host.location)||!s.regions.some(r=>r.id===guest.location))return null;
-  const date=monthIndex(s.year,s.month)+courierMonths(s,guest.location,host.location);
+  const date=m.context.eventDate??monthIndex(s.year,s.month)+courierMonths(s,guest.location,host.location);
+  if(date<=monthIndex(s.year,s.month))return null;
+  const travelFor=p=>p.location===host.location?{ok:true,months:0,cost:0}:previewPersonTravel(s,p.id,host.location);
+  const travel=travelFor(guest),available=date-monthIndex(s.year,s.month)-1;
   const identified=p=>{const id=p?.id,entry=CHARACTER_CATALOG[id],saved=s.world?.dynasties?.catalog?.[id];return typeof id==='string'&&Array.isArray(entry?.name)&&entry.name.length>=2&&entry.name.every(x=>typeof x==='string'&&x.trim())&&(!id.startsWith('fictional:')||(saved?.fictional&&Array.isArray(saved.name)&&JSON.stringify(saved.name)===JSON.stringify(entry.name)))};
   const oldEnough=p=>{const age=ageRange(p.id,s.year);return age?age[0]>=16:!p.id.startsWith('fictional:')};
-  const candidates=Object.values(s.world.characters).filter(p=>p.id!==guest.id&&p.id!==host.id&&identified(p)&&oldEnough(p)&&presentAtGathering(s,p,guest.location)&&
+  const candidates=Object.values(s.world.characters).filter(p=>p.id!==guest.id&&p.id!==host.id&&identified(p)&&oldEnough(p)&&presentAtGathering(s,p,guest.location)&&travelFor(p).ok&&travelFor(p).months<=available&&
     !(s.mail?.events||[]).some(e=>e.status==='scheduled'&&e.date===date&&e.participantId===p.id)).map(p=>p.id);
-  return {date,venue:host.location,candidates};
+  const canAttend=travel.ok&&travel.months<=available;
+  if(!canAttend&&!candidates.length)return null;
+  return {date,venue:host.location,candidates,canAttend,travel:canAttend?{months:travel.months,cost:travel.cost}:null};
 }
 
 export function sendLetter(s, spec) {
@@ -86,6 +95,12 @@ export function sendLetter(s, spec) {
   if (!s.factions?.[senderFaction] || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
+  if(spec.context?.kind==='war'&&!atWar(s,senderFaction,recipient))return {ok:false,reason:'war'};
+  if(spec.context?.kind==='banquet'){
+    const venue=mail.venues?.[spec.context.venueId];
+    if(!venue||!s.regions.some(r=>r.id===venue.territoryId)||!Number.isFinite(spec.context.eventDate)||spec.context.eventDate<=monthIndex(s.year,s.month)||
+      !(spec.context.guestIds||[]).every(id=>s.world.characters[id]?.alive&&CHARACTER_CATALOG[id]))return {ok:false,reason:'event'};
+  }
   const source = spec.source || (senderId ? s.world.characters[senderId].location : null) || home(s, senderFaction);
   const destination = spec.destination || home(s, recipient);
   const sent = monthIndex(s.year, s.month);
@@ -95,7 +110,7 @@ export function sendLetter(s, spec) {
     id, threadId:spec.threadId || id, senderId:senderId || null, senderInstitution:senderInstitution || null,
     senderFaction, recipient, senderName:senderId ? name(senderId) : name(senderFaction),
     senderPortrait:portrait(s,senderId),
-    subject:spec.subject, body:spec.body, category, priority:spec.priority || 'routine',
+    subject:spec.subject, body:composeLetter(s,spec), category, priority:spec.priority || 'routine',
     created:{year:s.year, month:s.month}, arrival:sent + travel, courierSeed:(s.seed??0)>>>0,
     courierRisk:atWar(s,senderFaction,recipient)?.16:.08,
     source, destination, delivery:'traveling', read:false, archived:false,
@@ -143,7 +158,7 @@ function replyNotice(s, original, subject, body, priority = 'routine') {
 
 export function replyToLetter(s, id, choice, actions, details={}) {
   const m = receivedMail(s).find(x => x.id === id);
-  if (!m || m.recipient !== s.player || m.responses.length || !m.options.includes(choice)) return {ok:false, reason:'unavailable'};
+  if (!m || m.recipient !== s.player || m.responses.some(r=>!['ask_guests','send_gift','ask_qualifications'].includes(r.choice)) || !m.options.includes(choice) || m.responses.some(r=>r.choice===choice)) return {ok:false, reason:'unavailable'};
   if (m.expires !== null && monthIndex(s.year, s.month) > m.expires) return {ok:false, reason:'expired'};
   if (['war_council','view_location','review_budget'].includes(choice)) {
     m.read=true;
@@ -214,18 +229,71 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     }
   } else if(m.context?.kind==='mediation'&&choice==='mediate'){
     ok=requestMediation(s,s.player,m.senderFaction).ok===true;
+  } else if(m.context?.kind==='appointment_request'){
+    const candidate=s.world.characters[m.senderId],office=m.context.office;
+    if(!candidate?.alive||candidate.faction!==s.player)return {ok:false,reason:'unavailable'};
+    if(choice==='appoint'&&!appointOffice(s,office,candidate.id,s.player).ok)return {ok:false,reason:'office'};
+    if(choice==='ask_qualifications')replyNotice(s,m,['Service record','任职资料'],[
+      `${name(candidate.id)[0]} currently has influence ${candidate.influence} and education ${candidate.education??0}; the court has not yet made an appointment.`,
+      `${name(candidate.id)[1]}目前影响力为 ${candidate.influence}，教育程度为 ${candidate.education??0}；朝廷尚未作出任命。`]);
+  } else if (m.context?.kind === 'banquet_scene') {
+    const event=s.mail.events.find(e=>e.id===m.context.eventId);
+    if(!event||event.status!=='awaiting_choice')return {ok:false,reason:'event'};
+    const host=s.world.characters[event.hostId],participant=s.world.characters[event.participantId];
+    if(!host?.alive||!participant?.alive)return {ok:false,reason:'unavailable'};
+    const guestId=event.attendees?.find(id=>id!==event.hostId&&id!==event.participantId);
+    if(choice==='meet_guest'&&!guestId)return {ok:false,reason:'guest'};
+    const target=choice==='meet_guest'?guestId:event.hostId;
+    const key=pair(target,participant.id),bond=s.world.personalRelations[key]||{trust:0,meetings:0};
+    const delta={speak_host:2,meet_guest:1,discuss_issue:1,join_activity:2,leave_early:0}[choice]??0;
+    bond.trust=Math.max(-100,Math.min(100,bond.trust+delta));bond.meetings++;
+    s.world.personalRelations[key]=bond;
+    if(choice==='discuss_issue'&&host.faction===s.player)host.loyalty=Math.min(100,(host.loyalty||50)+1);
+    event.status='completed';event.choice=choice;event.outcome={targetId:target,trust:delta};
+    const targetName=name(target),venue=s.mail.venues?.[event.venueId],place=venue?.name||s.regions.find(r=>r.id===event.venue)?.name||[event.venue,event.venue];
+    sendLetter(s,{senderId:host.id,senderFaction:host.faction,recipient:s.player,category:'personal',priority:'routine',threadId:event.threadId,
+      subject:['After our gathering','宴后致意'],
+      body:[`Thank you for coming to ${place[0]}. ${choice==='leave_early'?'I understood that your duties called you away.':choice==='meet_guest'?`I hope your conversation with ${targetName[0]} continues.`:choice==='discuss_issue'?'Our discussion deserves another day.':'Your company made the evening warmer.'} I shall remember the meeting. Respectfully, ${name(host.id)[0]}`,
+        `感谢莅临${place[1]}。${choice==='leave_early'?'我理解您因公务提前离席。':choice==='meet_guest'?`愿您与${targetName[1]}继续往来。`:choice==='discuss_issue'?'席间议题值得改日再谈。':'有您在席，今夜更为欢畅。'}此次会面我会记在心中。谨上，${name(host.id)[1]}`],
+      options:['acknowledge'],context:{kind:'banquet_followup',eventId:event.id,region:event.venue,venueId:event.venueId}});
   } else if (m.context?.kind === 'banquet') {
     const host=s.world.characters[m.senderId],guest=s.world.characters[m.context.leader];
     if (!host?.alive || !guest?.alive) return {ok:false,reason:'unavailable'};
     if (choice === 'accept' || choice === 'representative' || choice==='private_meeting') {
       const plan=gatheringPlan(s,m);if(!plan)return {ok:false,reason:'location'};
+      if(choice!=='representative'&&!plan.canAttend)return {ok:false,reason:'travel'};
       const participant=choice==='representative'&&plan?.candidates.includes(details.representativeId)?s.world.characters[details.representativeId]:choice==='representative'?null:guest;
       if(!participant)return {ok:false,reason:'representative'};
       const date=plan.date;
       if((s.mail.events||[]).some(e=>e.status==='scheduled'&&e.date===date&&e.participantId===participant.id))return {ok:false,reason:'commitment'};
+      if(participant.location!==host.location){
+        const journey=previewPersonTravel(s,participant.id,host.location);
+        if(!journey.ok||journey.months>date-monthIndex(s.year,s.month)-1)return {ok:false,reason:'travel'};
+        if(!startPersonTravel(s,participant.id,host.location).ok)return {ok:false,reason:'travel'};
+      }
       selectedRepresentative=choice==='representative'?{id:participant.id,name:[...CHARACTER_CATALOG[participant.id].name]}:null;
-      s.mail.events.push({id:'invitation:'+m.id,letterId:m.id,hostId:m.senderId,guestId:m.context.leader,
-        participantId:participant.id,representative:choice === 'representative',representativeName:selectedRepresentative?.name||null,privateMeeting:choice==='private_meeting',date,status:'scheduled',venue:host.location});
+      const event=s.mail.events.find(e=>e.id==='invitation:'+m.id);
+      const scheduled={id:'invitation:'+m.id,letterId:m.id,threadId:m.threadId,hostId:m.senderId,guestId:m.context.leader,
+        participantId:participant.id,representative:choice === 'representative',representativeName:selectedRepresentative?.name||null,
+        privateMeeting:choice==='private_meeting',date,day:m.context.day||15,time:m.context.time||['at dusk','黄昏'],
+        venueId:m.context.venueId||null,guestIds:m.context.guestIds||[],guestRsvps:event?.guestRsvps||Object.fromEntries((m.context.guestIds||[]).map(id=>[id,'invited'])),purpose:m.context.purpose||null,
+        status:'scheduled',venue:host.location};
+      if(event)Object.assign(event,scheduled);else s.mail.events.push(scheduled);
+    }
+    if(choice==='decline'){
+      const event=s.mail.events.find(e=>e.id==='invitation:'+m.id);if(event)event.status='declined';
+    }
+    if(choice==='send_gift'){
+      if(s.factions[s.player].treasury<2)return {ok:false,reason:'treasury'};
+      s.factions[s.player].treasury-=2;
+      const key=pair(m.senderId,m.context.leader),bond=s.world.personalRelations[key]||{trust:0,meetings:0};
+      bond.trust=Math.min(100,bond.trust+1);s.world.personalRelations[key]=bond;
+    }
+    if(choice==='ask_guests'){
+      const invited=(m.context.guestIds||[]).filter(id=>s.world.characters[id]?.alive&&CHARACTER_CATALOG[id]);
+      replyNotice(s,m,['Those invited','受邀宾客'],[
+        invited.length?`I invited ${invited.map(id=>name(id)[0]).join(', ')}; none has yet confirmed.`:'No other guest has yet confirmed.',
+        invited.length?`已邀请${invited.map(id=>name(id)[1]).join('、')}；目前尚无人确认。`:'其余宾客目前尚未确认。']);
     }
     if (choice === 'decline'&&host.faction===s.player&&!host.missing) host.loyalty=Math.max(0,(host.loyalty||50)-1);
   } else if (m.context?.kind === 'treasury' && choice === 'audit') {
@@ -245,7 +313,7 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     humor:['The years are fewer than my burdens, I hope.','但愿岁月尚不及肩上重担之多。'],
     ask_why:['Why do you inquire?','不知何故问起？'],
     ignore:['No answer was sent.','未寄出答复。']
-  })[choice] : null;
+  })[choice] : composeReply(s,m,choice,selectedRepresentative?.name);
   const delayed=choice!=='ignore'&&['treaty','full_alliance','aid_request','ultimatum','complaint','greeting'].includes(m.context?.kind);
   m.responses.push({choice, year:s.year, month:s.month,
     body:responseBody,
@@ -311,22 +379,33 @@ function localCorrespondence(s) {
     sendLetter(s,{senderId,senderFaction:s.player,recipient:s.player,category:'personal',
       subject:['A personal question','一件私事'],body:[`Your Excellency, if it is not improper, may I ask your age? ${address}`,'阁下，若不冒犯，可否请教您的年岁？'],options:['truth','polite','humor','ask_why','ignore'],context:{kind:'personal_age',leader}});
   }
+  if(s.month===7&&!mail.generated[`office_request:${s.year}:${senderId}`]&&sender.ambition>=55&&!officeOf(s,s.player,senderId)){
+    const office=['finance','supply','administration'].find(id=>!s.world.offices?.[s.player]?.[id]&&officeCandidates(s,s.player,id).includes(senderId));
+    if(office){
+      const title={finance:['finance assignment','财务职务'],supply:['supply assignment','粮秣职务'],administration:['administrative assignment','行政职务']}[office];
+      if(sendLetter(s,{senderId,senderFaction:s.player,recipient:s.player,category:'government',priority:'routine',
+        subject:['A request for public service','请求任职'],body:['I would like to serve where the court has need.','愿在朝廷需要之处效劳。'],
+        options:['appoint','decline','ask_qualifications','ignore'],context:{kind:'appointment_request',office,officeName:title}}).ok)
+        mail.generated[`office_request:${s.year}:${senderId}`]=true;
+    }
+  }
   if (s.month===8 && sender.location && recipient.location && sender.location===recipient.location && !mail.generated[`banquet:${s.year}:${s.player}`]) {
-    mail.generated[`banquet:${s.year}:${s.player}`]=true;
-    const occasions=[
-      [['Invitation to a private banquet','私人宴会邀请'],['Your Excellency, I would be honored to receive you at a modest banquet.','阁下，若蒙光临寒舍薄宴，不胜荣幸。']],
-      [['Invitation to a court dinner','宫廷晚宴邀请'],['May I invite you to a court dinner in our city?','敢请阁下莅临本城宫廷晚宴。']],
-      [['Invitation to a political meeting','政务聚会邀请'],['Several officials will gather for a private discussion of court affairs.','数位官员将私下商议朝中事务，谨邀阁下莅临。']],
-      [['Invitation to a scholarly gathering','学术聚会邀请'],['A small gathering of scholars would welcome your company.','学者小聚，敬邀阁下。']],
-      [['Invitation to a family celebration','家族庆典邀请'],['My household invites you to a modest family celebration.','寒舍将举行家族小庆，恭请阁下莅临。']]
-    ];
-    if(['caesar','senate'].includes(s.player))occasions.push([['Invitation to a Senate gathering','元老院聚会邀请'],['A gathering of senators will meet in our city.','本城将举行元老聚会，谨邀阁下。']]);
-    if((s.world.religiousInstitutions||[]).some(o=>o.region===sender.location))occasions.push([['Invitation to a civic festival','公民节庆邀请'],['A local institution will host a civic festival.','本地机构将举办公民节庆，谨邀阁下。']]);
-    if((s.wars||[]).some(w=>w.includes(s.player)))occasions.push([['Invitation to a military ceremony','军中仪式邀请'],['A ceremony will honor service in this campaign.','将举行仪式表彰本次战役中的服役者。']]);
-    const [subject,body]=occasions[Math.abs(s.year)%occasions.length];
-    sendLetter(s,{senderId,senderFaction:s.player,recipient:s.player,category:'invitations',priority:'routine',
-      subject,body,
-      options:['accept','decline','representative','private_meeting','ignore'],context:{kind:'banquet',leader,region:sender.location},expires:monthIndex(s.year,s.month)+4});
+    const invitation=banquetInvitation(s,senderId,leader);
+    if(invitation){
+      const sent=sendLetter(s,{senderId,senderFaction:s.player,recipient:s.player,category:'invitations',priority:'routine',
+        subject:['An invitation to gather','相聚宴请'],
+        body:invitation.body,
+        options:['accept','decline','representative','ask_guests','private_meeting','send_gift','ignore'],
+        context:{kind:'banquet',leader,region:invitation.region,venueId:invitation.venue.id,eventDate:invitation.date,
+          day:invitation.day,time:invitation.time,guestIds:invitation.guestIds,activity:invitation.activity,
+          food:invitation.food,purpose:invitation.purpose,invitation},
+        expires:invitation.date-1,eventId:`invitation:pending:${s.year}:${s.player}`});
+      if(sent.ok){sent.letter.eventId=`invitation:${sent.letter.id}`;
+        mail.events.push({id:sent.letter.eventId,letterId:sent.letter.id,threadId:sent.letter.threadId,
+          hostId:senderId,guestId:leader,participantId:leader,venueId:invitation.venue.id,venue:invitation.region,
+          guestIds:invitation.guestIds,guestRsvps:Object.fromEntries(invitation.guestIds.map(id=>[id,'invited'])),date:invitation.date,day:invitation.day,time:invitation.time,purpose:invitation.purpose,status:'invited'});
+        mail.generated[`banquet:${s.year}:${s.player}`]=true}
+    }
   }
   if(s.month===10&&!mail.generated[`flavor:${s.year}:${s.player}`]){
     const seed=sender.personalitySeed||0,war=(s.wars||[]).some(w=>w.includes(s.player));
@@ -465,6 +544,8 @@ export function chronicleLetters(s, entries) {
 export function advanceMail(s, actions = {}) {
   const mail = initializeMail(s), now = monthIndex(s.year, s.month);
   for (const event of mail.events) {
+    if(event.status==='invited'&&event.date<=now){event.status='expired';continue}
+    if(event.status==='awaiting_choice'&&now>event.date+2){event.status='completed';event.choice='no_reply';event.outcome={trust:0};continue}
     if (event.status !== 'scheduled' || event.date > now) continue;
     if (event.type === 'audit') {
       event.status='completed';
@@ -488,6 +569,23 @@ export function advanceMail(s, actions = {}) {
     }
     const host=s.world.characters[event.hostId],participant=s.world.characters[event.participantId||event.guestId];
     event.status=presentAtGathering(s,host,event.venue)&&presentAtGathering(s,participant,event.venue)&&host.id!==participant.id?'held':'missed';
+    if(event.id?.startsWith('invitation:')&&event.status==='held'){
+      const eligible=event.privateMeeting?[]:(event.guestIds||[]).filter(id=>id!==event.participantId&&id!==event.hostId&&presentAtGathering(s,s.world.characters[id],event.venue));
+      event.guestRsvps||={};for(const id of event.guestIds||[])event.guestRsvps[id]=eligible.includes(id)?'attended':'absent';
+      event.attendees=[event.hostId,event.participantId,...eligible];
+      event.status='awaiting_choice';
+      const venue=mail.venues?.[event.venueId],place=venue?.name||s.regions.find(r=>r.id===event.venue)?.name||[event.venue,event.venue];
+      const others=eligible.map(id=>name(id));
+      const original=mail.messages.find(m=>m.id===event.letterId);
+      const scene=sendLetter(s,{senderId:event.hostId,senderFaction:host.faction,recipient:s.player,category:'invitations',priority:'important',
+        subject:['The gathering begins','宴会开始'],
+        body:[`At ${place[0]}, ${name(event.hostId)[0]} receives ${name(event.participantId)[0]} at dusk. ${others.length?`Also present: ${others.map(x=>x[0]).join(', ')}.`:'The other invitees have not arrived.'} Bread and conversation are offered; the host is ready to speak. What will you do?`,
+          `黄昏，${name(event.hostId)[1]}在${place[1]}迎接${name(event.participantId)[1]}。${others.length?`在场宾客：${others.map(x=>x[1]).join('、')}。`:'其他受邀者尚未到场。'}席间备有饮食，主人愿意交谈。您将如何行动？`],
+        threadId:original?.threadId,options:['speak_host',...(others.length?['meet_guest']:[]),'discuss_issue','join_activity','leave_early'],
+        context:{kind:'banquet_scene',eventId:event.id,region:event.venue,venueId:event.venueId},source:event.venue,destination:event.venue,expires:now+2});
+      if(scene.ok){scene.letter.arrival=now;scene.letter.delivery='received'}
+      continue;
+    }
     if(event.status==='held'){
       const key=pair(event.hostId,participant.id),bond=s.world.personalRelations[key]||{trust:0,meetings:0};
       bond.trust=Math.min(100,bond.trust+(event.representative?1:event.privateMeeting?3:2));bond.meetings++;s.world.personalRelations[key]=bond;
@@ -604,3 +702,4 @@ export function advanceMail(s, actions = {}) {
   foreignCourtNotes(s);
   return mail;
 }
+
