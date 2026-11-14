@@ -25,8 +25,14 @@ jobs:
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
           node tools/hundred-days-smoke.mjs
           node tools/travel-smoke.mjs
+          node tools/cursus-smoke.mjs
+          node tools/cursus-deep-smoke.mjs
+          node tools/cursus-applicant-smoke.mjs
+          node tools/han-court-smoke.mjs
           node scripts/multipolar-sim.mjs > multipolar-simulation.json
           node tools/multipolar-smoke.mjs
+          node tools/player-strategic-offer-smoke.mjs
+          node tools/peace-mail-courier-smoke.mjs
           node tools/imperium-smoke.mjs
           node tools/fort-intelligence-smoke.mjs
           node tools/warning-ledger-smoke.mjs
@@ -37,6 +43,7 @@ jobs:
           node tools/court-portrait-smoke.mjs
           node tools/mail-privacy-smoke.mjs
           node tools/gathering-presence-smoke.mjs
+          node tools/gathering-delegate-smoke.mjs
           node tools/atlas-mail-alert-smoke.mjs
           node scripts/imperium-sim.mjs > imperium-simulation.json
           node tools/onboarding-smoke.mjs
@@ -77,3 +84,4 @@ jobs:
             map-benchmark.json
             multipolar-simulation.json
             server.log
+

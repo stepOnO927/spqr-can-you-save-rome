@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,sendInquiry,tick,upgradeSave} from '../engine.js?v=gathering-presence-1';
+import {newGame,sendInquiry,tick,upgradeSave} from '../engine.js?v=peace-cursus-1';
 import {queueMission,advanceOperations,previewMission} from '../character-system.js?v=succession-ui-recovery-1';
 function prepared(available,wanted){
  const start=newGame('caesar');start.relations['caesar:egypt']=50;if(!available)start.world.characters.cleopatra.health='seriously_ill';assert.equal(sendInquiry(start,'caesar','egypt','availability').duration,4);tick(start);

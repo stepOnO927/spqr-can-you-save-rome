@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=gathering-presence-1';
+import {newGame,upgradeSave} from '../engine.js?v=peace-cursus-1';
 import {assignSuccession,knownLeaders,CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 import {advanceGovernments,deriveGovernment} from '../governance.js?v=succession-ui-recovery-1';
 import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=succession-ui-recovery-1';

@@ -1,4 +1,4 @@
-import {sendLetter,initializeMail} from './epistulae.js?v=gathering-presence-1';
+import {sendLetter,initializeMail} from './epistulae.js?v=peace-cursus-1';
 import {reportedArmies} from './character-system.js?v=succession-ui-recovery-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {MATERIALS} from './inventions.js?v=mission-discount-1';

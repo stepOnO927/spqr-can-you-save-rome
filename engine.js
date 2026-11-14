@@ -1,18 +1,19 @@
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=succession-ui-recovery-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,chronicleLetters} from './epistulae.js?v=gathering-presence-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,chronicleLetters} from './epistulae.js?v=peace-cursus-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=succession-ui-recovery-1';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=gathering-presence-1';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=peace-cursus-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=succession-ui-recovery-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=succession-ui-recovery-1';
 import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=succession-ui-recovery-1';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=succession-ui-recovery-1';
+import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=cursus-strategic-1';
 import {advanceConspiracies} from './conspiracies.js?v=succession-ui-recovery-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=fort-intel-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=succession-ui-recovery-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=succession-ui-recovery-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=gathering-presence-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=peace-cursus-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -25,7 +26,7 @@ const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
-import {assessOpportunities} from './multipolar.js?v=fort-intel-1';
+import {assessOpportunities} from './multipolar.js?v=multipolar-confidence-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=fort-intel-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {formCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=fort-intel-1';
@@ -110,7 +111,7 @@ export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);syncPeaceLetters(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
@@ -269,7 +270,7 @@ export function diplomacy(s, actor, target, action, options={}){
 // resources and intelligence. The human cannot be committed by an AI offer.
 export function sendStrategicOffer(s,actor,recipient,target,{autoplayPlayer=false}={}){
  if(!s.factions[actor]||!s.factions[recipient]||!s.factions[target]||new Set([actor,recipient,target]).size!==3||[actor,recipient,target].includes('rebels')||!isWar(s,actor,target))return {ok:false,reason:'unavailable'};
- if(!autoplayPlayer&&(actor===s.player||recipient===s.player))return {ok:false,reason:'player_decision'};
+ if(!autoplayPlayer&&actor===s.player)return {ok:false,reason:'player_decision'};
  const owned=s.regions.filter(r=>r.owner===actor),frontier=owned.some(r=>adjacent(r.id).some(e=>reportedControl(s,actor,e.to)?.owner===recipient)),docs=reportedDiplomacy(s,actor),contact=docs.some(x=>x.status==='active'&&x.parties.includes(actor)&&x.parties.includes(recipient));
  if(!frontier&&!contact)return {ok:false,reason:'contact'};
  if(s.factions[actor].treasury<5)return {ok:false,reason:'treasury'};
@@ -282,11 +283,15 @@ export function sendStrategicOffer(s,actor,recipient,target,{autoplayPlayer=fals
 
 export function advanceStrategicOffers(s,{autoplayPlayer=false}={}){
  for(const offer of s.world.strategicOffers||[]){
+  if(offer.status==='awaiting_decision'){
+   if(autoplayPlayer){offer.status='pending';offer.phase='outbound';offer.remaining=1}
+   else {if(--offer.remaining<=0){offer.status='no_reply';offer.phase='expired'}continue}
+  }
   if(offer.status!=='pending'||--offer.remaining>0)continue;
   const date=s.year*12+s.month;
   if(offer.phase==='outbound'){
    if(strategicRoll(s,offer.actor,offer.id+30)<.1||!s.factions[offer.recipient]||!s.factions[offer.target]){offer.status='no_reply';offer.phase='lost';continue}
-   if(!autoplayPlayer&&offer.recipient===s.player){offer.status='no_reply';offer.phase='unavailable';continue}
+   if(!autoplayPlayer&&offer.recipient===s.player){offer.status='awaiting_decision';offer.phase='at_court';offer.remaining=6;syncStrategicOfferLetters(s);continue}
    const recipient=s.factions[offer.recipient],view=assessOpportunities(s,offer.recipient,estimatedStrength).find(x=>x.target===offer.target),trust=relation(s,offer.recipient,offer.actor),ownWars=s.wars.filter(w=>w.includes(offer.recipient)).length;
    // The sender may have made peace since writing; the recipient has only the
    // letter and its own dated reports, so do not inspect that hidden change.
@@ -296,11 +301,22 @@ export function advanceStrategicOffers(s,{autoplayPlayer=false}={}){
    offer.sealed={decision:accepted?'accepted':'refused',year:s.year,month:s.month};offer.phase='return';offer.remaining=2;continue;
   }
   if(offer.phase==='return'){
-   if(strategicRoll(s,offer.actor,offer.id+90)<.1){offer.status='no_reply';offer.phase='lost';delete offer.sealed;continue}
+   if(strategicRoll(s,offer.actor,offer.id+90)<.1){offer.status='no_reply';offer.phase='lost';const reply=s.mail?.messages?.find(m=>m.id===offer.replyMailId);if(reply)reply.delivery='lost';delete offer.sealed;continue}
    offer.status=offer.sealed?.decision||'no_reply';offer.answeredYear=offer.sealed?.year;offer.answeredMonth=offer.sealed?.month;offer.deliveredYear=s.year;offer.deliveredMonth=s.month;delete offer.sealed;offer.phase='delivered';
+   const reply=s.mail?.messages?.find(m=>m.id===offer.replyMailId);if(reply)reply.delivery='received';
    if(offer.status==='accepted'||offer.status==='refused')rememberPoliticalEvent(s,offer.actor,offer.recipient,offer.status==='accepted'?'cooperation_accepted':'cooperation_refused',offer.status==='accepted'?2:-2);
   }
  }
+}
+
+// Acceptance is the player's own declaration, not an instruction from an AI.
+// The sender learns the decision only if the reply survives its return trip.
+export function answerStrategicOffer(s,id,decision){
+ const offer=(s.world.strategicOffers||[]).find(o=>o.id===id&&o.recipient===s.player&&o.status==='awaiting_decision'&&o.phase==='at_court');
+ if(!offer||!['join_war','refuse','ignore'].includes(decision))return {ok:false,reason:'unavailable'};
+ if(decision==='join_war'&&!isWar(s,s.player,offer.target)&&!diplomacy(s,s.player,offer.target,'war'))return {ok:false,reason:'conditions'};
+ if(decision==='ignore'){offer.status='no_reply';offer.phase='ignored';return {ok:true}}
+ offer.status='pending';offer.phase='return';offer.remaining=2;offer.sealed={decision:decision==='join_war'?'accepted':'refused',year:s.year,month:s.month};return {ok:true};
 }
 
 // Official letters are simulated per sender and persist in compatible saves.
@@ -405,6 +421,10 @@ function resolveInquiries(s,{autoplayPlayer=false}={}){
   // use the same rule without changing their already-composed response.
   let reply=letter.sealed;
   if(reply.status!=='no_reply'&&rnd(s)<(isWar(s,letter.actor,letter.target) ? 0.18 : 0.08))reply={status:'no_reply'};
+  // A mailbox reply and the diplomatic settlement share this courier result.
+  // Delivery can still fail to settle a war if circumstances changed.
+  const replyMail=letter.replyMailId?s.mail?.messages?.find(m=>m.id===letter.replyMailId):null;
+  if(replyMail)replyMail.delivery=reply.status==='no_reply'?'lost':'received';
   // A provisional acceptance only takes effect when it reaches the sender.
   // Circumstances may change during the return journey.
   if(letter.subject==='peace'&&reply.status==='answered'&&!diplomacy(s,letter.actor,letter.target,'peace',{acceptedByPlayer:!!reply.acceptedByPlayer&&letter.target===s.player}))reply={status:'no_reply'};
@@ -484,11 +504,12 @@ export function projectTaxPath(s,owner=s.player,level=s.factions[owner].tax,mont
  for(let i=0;i<months;i++){const before={treasury:copy.factions[owner].treasury,food:copy.factions[owner].food,manpower:copy.factions[owner].manpower};economy(copy);const f=copy.factions[owner],owned=copy.regions.filter(r=>r.owner===owner);rows.push({month:i+1,treasury:f.treasury-before.treasury,food:f.food-before.food,manpower:f.manpower-before.manpower,loyalty:owned.length?Math.round(owned.reduce((n,r)=>n+r.loyalty,0)/owned.length):0})}
  return rows;
 }
-function baseForecastEconomy(s,id=s.player){const f=s.factions[id],owned=s.regions.filter(r=>r.owner===id),offices=officeEffects(s,id),ideas=activeModifiers(s,id),troops=s.armies.filter(a=>a.owner===id).reduce((n,a)=>n+a.men,0),rate={low:.65,normal:1,high:1.4}[f.tax],difficulty=id===s.player&&s.economicHandicap===true?({hard:.9,expert:.8}[s.difficulty]||1):1;return {treasury:Math.round(owned.reduce((n,r)=>n+(r.tax+(buildingModifiers(r).tax||0))*rate*(r.loyalty/100)*populationFactor(r)*(1-Math.min(80,Math.max(0,r.autonomy||0))/200),0)*difficulty*(1+(ideas.tax||0))-troops/1100)+offices.treasury+(ideas.treasury||0)-religiousTaxCost(s,id)-owned.reduce((n,r)=>n+(buildingModifiers(r).upkeep||0),0)-Math.max(0,Object.values(s.inventions?.[id]?.slots||{}).reduce((n,v)=>n+v-1,0))+(id===s.player&&s.difficulty==='travel'?20:0),food:Math.round(owned.reduce((n,r)=>n+r.food+(buildingModifiers(r).food||0),0)*difficulty-troops/1200-owned.length*2)+offices.food+(ideas.food||0)+(id===s.player&&s.difficulty==='travel'?20:0),manpower:owned.length*170+(ideas.manpower||0)+(id===s.player&&s.difficulty==='travel'?600:0)}}
+function effectiveOfficeEffects(s,id){const effects=officeEffects(s,id);if(!s.world?.cursus)return effects;for(const [office,key] of [['finance','treasury'],['supply','food']]){const holder=s.world.offices?.[id]?.[office],p=s.world.characters?.[holder],obedience=s.world.cursus.obedience?.[holder]?.value??60;if(holder&&effects[key])effects[key]=Math.max(1,effects[key]+(obedience>=85&&p?.education>=75?1:0)-(obedience<35&&p?.education<75?1:0))}const advisers=(s.world.cursus.advisers||[]).filter(x=>x.actor===id&&s.world.characters?.[x.id]?.faction===id&&s.world.characters[x.id].alive&&s.world.characters[x.id].education>=75);effects.treasury+=Math.min(2,advisers.length);return effects}
+function baseForecastEconomy(s,id=s.player){const f=s.factions[id],owned=s.regions.filter(r=>r.owner===id),offices=effectiveOfficeEffects(s,id),ideas=activeModifiers(s,id),troops=s.armies.filter(a=>a.owner===id).reduce((n,a)=>n+a.men,0),rate={low:.65,normal:1,high:1.4}[f.tax],difficulty=id===s.player&&s.economicHandicap===true?({hard:.9,expert:.8}[s.difficulty]||1):1;return {treasury:Math.round(owned.reduce((n,r)=>n+(r.tax+(buildingModifiers(r).tax||0))*rate*(r.loyalty/100)*populationFactor(r)*(1-Math.min(80,Math.max(0,r.autonomy||0))/200),0)*difficulty*(1+(ideas.tax||0))-troops/1100)+offices.treasury+(ideas.treasury||0)-religiousTaxCost(s,id)-owned.reduce((n,r)=>n+(buildingModifiers(r).upkeep||0),0)-Math.max(0,Object.values(s.inventions?.[id]?.slots||{}).reduce((n,v)=>n+v-1,0))+(id===s.player&&s.difficulty==='travel'?20:0),food:Math.round(owned.reduce((n,r)=>n+r.food+(buildingModifiers(r).food||0),0)*difficulty-troops/1200-owned.length*2)+offices.food+(ideas.food||0)+(id===s.player&&s.difficulty==='travel'?20:0),manpower:owned.length*170+(ideas.manpower||0)+(id===s.player&&s.difficulty==='travel'?600:0)}}
 function economy(s){
   for(const [id,f] of Object.entries(s.factions)){
     const owned=s.regions.filter(r=>r.owner===id);
-    const offices=officeEffects(s,id),ideas=activeModifiers(s,id);
+    const offices=effectiveOfficeEffects(s,id),ideas=activeModifiers(s,id);
     const troops=s.armies.filter(a=>a.owner===id).reduce((n,a)=>n+a.men,0);
     const rate={low:.65,normal:1,high:1.4}[f.tax];
     // Legacy resource handicaps are opt-in; decision quality is independent
@@ -724,7 +745,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   if(PLAYABLE.includes(owner)&&s.month%6===1&&f.treasury>50){
     const enemy=s.wars.filter(w=>w.includes(owner)).map(w=>w.find(id=>id!==owner)).find(id=>PLAYABLE.includes(id));
     const documents=reportedDiplomacy(s,owner).filter(d=>d.status==='active'),contacts=[...new Set([...reportedNeighbors().map(x=>x.owner),...documents.filter(d=>d.parties.includes(owner)).flatMap(d=>d.parties)])];
-    const partner=contacts.filter(id=>id!==owner&&id!==enemy&&PLAYABLE.includes(id)&&(autoplayPlayer||id!==s.player)&&relation(s,owner,id)>=15&&!documents.some(d=>d.kind==='war'&&d.parties.includes(id)&&d.parties.includes(enemy))).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b))[0];
+    const partner=contacts.filter(id=>id!==owner&&id!==enemy&&PLAYABLE.includes(id)&&relation(s,owner,id)>=15&&!documents.some(d=>d.kind==='war'&&d.parties.includes(id)&&d.parties.includes(enemy))).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b))[0];
     if(enemy&&partner&&strategicRoll(s,owner,149)<.35)sendStrategicOffer(s,owner,partner,enemy,{autoplayPlayer});
   }
   if(review&&s.month%6===0&&f.treasury>40&&f.food>=25&&f.stability>=40&&strength(s,owner)>2000&&s.wars.filter(w=>w.includes(owner)).length<2){
@@ -769,7 +790,7 @@ export function advancePeacefulSettlement(s){
 }
 
 export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
-  if(s.defeat)return s;
+  if(s.defeat&&!autoplayPlayer)return s;
   initializeWorld(s);initializeMail(s);initializeMailReports(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
   const chronicleBefore=captureCampaignState(s);
   const warsBefore=s.wars.map(w=>w.slice());
@@ -784,7 +805,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
     else if(a.siege){a.siege.remaining--;if(a.siege.remaining<=0){const r=region(s,a.siege.region),witnessed=a.owner===s.player||r.owner===s.player;r.owner=a.owner;r.loyalty=36;a.siege=null;if(witnessed)log(s,`${r.name[0]} surrendered after a siege.`,`${r.name[1]}在围攻后投降。`)}}
   }
   advanceMovements(s,{autoplayPlayer});
-  resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});linkCommanders(s);advancePersonalDiplomacy(s);
+  resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});if(s.world?.cursus)advanceCursus(s);linkCommanders(s);advancePersonalDiplomacy(s);
   advanceControlScouts(s);observeArmies(s);observeFormationRecon(s);observeControl(s);if(s.month%6===0)observeBalanceOfPower(s);
   if(imperiumOn(s)){advanceBattlePlans(s,{autoplayPlayer,issueOrder:issueMilitaryOrder,estimatedStrength,log});advanceCommandInfluence(s,{log})}
   // Friendly courts may forward fresh scout sightings; recipients judge them on their own.

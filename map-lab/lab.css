@@ -85,3 +85,49 @@
 
 .feather-counsel{margin:12px 0 10px;padding:10px 12px;border-left:3px solid #c3a775;background:linear-gradient(90deg,rgba(184,151,91,.15),transparent);color:#e2d7bc;font:11px/1.5 Manrope,'Microsoft YaHei',sans-serif}
 .feather-counsel strong{display:block;color:#ead3a0;letter-spacing:.13em;font-size:9px}.feather-counsel ol{margin:6px 0 0;padding-left:17px}.feather-counsel li{margin:3px 0}
+
+.cursus-tree{margin-top:14px;border-top:1px solid #9f845b;padding-top:12px}
+.cursus-tree h3,.cursus-tree h4{font-family:Georgia,serif;letter-spacing:.08em;color:#dec99f}
+.cursus-tree h4{margin:18px 0 8px;font-size:12px}
+.cursus-institutions{display:flex;flex-wrap:wrap;gap:9px;border-top:1px solid #665940;border-bottom:1px solid #665940;padding:10px 0}
+.cursus-institutions>div{min-width:115px;flex:1;display:flex;flex-direction:column;gap:4px}
+.cursus-institutions strong{font-size:10px;font-weight:500;color:#bcb59f}
+.cursus-institutions b{font-family:Georgia,serif;font-size:17px;color:#e3c893}
+.cursus-offices{margin-top:10px}
+.cursus-office{padding:8px 0;border-bottom:1px solid rgba(173,145,96,.25)}
+.cursus-office>b{display:block;font-family:Georgia,serif;color:#e6d4aa}
+.cursus-office small{display:block;color:#aaa68e;margin:2px 0 5px}
+.cursus-office em{font-size:11px;color:#a9a38f}
+.cursus-person{display:inline-flex!important;align-items:center;gap:8px;text-align:left!important;margin:3px 5px 3px 0!important;padding:3px 6px 3px 3px!important;max-width:100%;white-space:normal!important}
+.cursus-person img,.cursus-portrait{display:inline-grid;place-items:center;flex:none;width:33px;height:38px;object-fit:cover;border:1px solid #9c8358}
+.cursus-portrait{font:12px Georgia,serif;color:#e8d4aa;background:hsl(var(--portrait-hue) 18% 27%)}
+.cursus-person span:last-child{display:flex;flex-direction:column;gap:2px}
+.cursus-person small{font-size:9px}
+.cursus-candidate,.cursus-foreign-list article{padding:9px 0;border-top:1px solid rgba(173,145,96,.23)}
+.cursus-candidate p,.cursus-foreign-list p{margin:4px 0;font-size:11px}
+.cursus-candidate .diplomacy-actions,.cursus-foreign-list .diplomacy-actions{display:flex;flex-wrap:wrap;gap:5px}
+.cursus-feedback{min-height:1.5em;color:#e5c68e;margin-top:8px}
+@media(max-width:700px){.cursus-institutions>div{min-width:90px}.cursus-offices{max-height:42vh;overflow:auto}}
+
+.cursus-foreign-list .diplomacy-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:5px}
+.cursus-foreign-list .diplomacy-actions button{white-space:normal;min-width:0;text-align:left}
+@media(max-width:700px){.cursus-foreign-list .diplomacy-actions{grid-template-columns:1fr 1fr}}
+
+.cursus-advanced,.cursus-contact-more{margin:7px 0;border-top:1px solid rgba(173,145,96,.24);padding-top:5px}
+.cursus-advanced summary,.cursus-contact-more summary{cursor:pointer;color:#d5bd8e;font:10px Georgia,serif;letter-spacing:.06em}
+.cursus-contact-more{grid-column:1/-1}
+.cursus-contact-more .diplomacy-actions{margin-top:6px}
+.cursus-outlook{color:#e2cb9c}
+.cursus-review{margin:14px 0;border-top:1px solid rgba(173,145,96,.3);padding-top:7px}
+.cursus-review summary{cursor:pointer;color:#e3c893;font:11px Georgia,serif;letter-spacing:.06em}
+.cursus-review p{font-size:11px;line-height:1.45;margin:6px 0}
+.cursus-application-actions{margin:7px 0;border-top:1px solid rgba(173,145,96,.24);padding-top:6px}
+.cursus-application-actions summary{cursor:pointer;color:#d5bd8e;font:10px Georgia,serif;letter-spacing:.06em}
+.cursus-application-actions button{margin:3px 4px 3px 0;white-space:normal}
+.cursus-assemblies{margin:11px 0;border-bottom:1px solid rgba(173,145,96,.25);padding-bottom:6px}
+.cursus-assemblies summary{cursor:pointer;color:#dfc797;font:11px Georgia,serif;letter-spacing:.07em}
+.cursus-assemblies p{margin:7px 0;font-size:11px}
+.cursus-assemblies small{display:block;color:#bdb199;line-height:1.4;margin:3px 0}
+
+.cursus-tree-tools{display:flex;align-items:center;justify-content:flex-end;margin:8px 0;color:#c5b99d;font-size:11px}.cursus-tree-tools select{width:auto;min-width:70px;margin-left:6px}.cursus-offices{overflow:auto;max-width:100%}
+.cursus-office{padding-left:8px;border-left:2px solid #745f42}.cursus-office[data-cursus-body=centuriate]{border-left-color:#b79862}.cursus-office[data-cursus-body=tribal]{border-left-color:#8d9b82}.cursus-office[data-cursus-body=plebeian]{border-left-color:#b88475}.cursus-office[data-cursus-body=exceptional]{border-left-color:#8a7891}.cursus-tree-tools{gap:8px;flex-wrap:wrap}.cursus-tree-tools small{color:#aaa38d}
