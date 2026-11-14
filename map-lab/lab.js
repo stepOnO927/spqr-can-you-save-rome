@@ -33,7 +33,7 @@ import {leadershipIntelligence} from './intelligence-summary.js?v=2';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=9';
 import {assessment,sendScouts,probePositions,delayAttack,markReconRegion,requestReinforcements,latestRecon} from '../reconnaissance.js?v=9';
 import {intelligenceHtml,afterActionHtml,fortificationText} from '../recon-ui.js?v=6';
-import {renderNavalPanel} from './naval-ui.js?v=48';
+import {renderNavalPanel} from './naval-ui.js?v=49';
 import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=33';
 import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=175';
 

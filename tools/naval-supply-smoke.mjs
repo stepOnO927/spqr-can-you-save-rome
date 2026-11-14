@@ -40,11 +40,16 @@ try{
  const reports=await page.evaluate(async()=>{
   const {newGrandGame}=await import('../engine.js?v=150');
   const {advanceNaval,reserveFleet}=await import('../naval.js?v=23');
-  const {renderNavalPanel}=await import('./naval-ui.js?v=39');
+  const {renderNavalPanel}=await import('./naval-ui.js?v=49');
   const state=newGrandGame('senate');state.naval.reports.unshift({id:'supply-test',kind:'supply-delivery',owner:'senate',port:'t016',cargo:6,year:-49,month:4});
   const root=document.createElement('div');
   const render=lang=>{renderNavalPanel({state,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};
   const result={en:render('en'),zh:render('zh')};
+  const friendly=state.naval.fleets.find(f=>f.owner==='senate'),enemy=state.naval.fleets.find(f=>f.owner==='caesar');
+  const capture={id:'capture-test',kind:'battle',participants:[friendly.id,enemy.id],zone:'adriatic',year:-49,month:4,winner:'caesar',captured:1,weather:100,snapshots:{[friendly.id]:{name:friendly.name,ships:friendly.ships,commanderId:null,tactic:'formation'}},losses:{[friendly.id]:{sailors:20,sunk:0}},damage:{[friendly.id]:10},tactics:{[friendly.id]:'formation'},observedLosses:{senate:{ships:[0,2],sailors:[10,50]}}};
+  state.naval.reports.unshift(capture);
+  result.enemyCaptureEn=render('en');result.enemyCaptureZh=render('zh');
+  capture.winner='senate';result.friendlyCaptureEn=render('en');result.friendlyCaptureZh=render('zh');
   state.factions.senate.food=25;advanceNaval(state);
   const trade=lang=>{renderNavalPanel({state,lang,root,section:'trade',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};
   result.stockedEn=trade('en');result.stockedZh=trade('zh');
@@ -56,6 +61,10 @@ try{
  });
  assert.match(reports.en,/Army supplies delivered/);assert.match(reports.en,/Food 6/);
  assert.match(reports.zh,/陆军补给抵港/);assert.match(reports.zh,/粮食 6/);
+ assert.match(reports.enemyCaptureEn,/Friendly ships captured: 1/);
+ assert.match(reports.enemyCaptureZh,/己舰被俘: 1/);
+ assert.match(reports.friendlyCaptureEn,/Enemy ships captured: 1/);
+ assert.match(reports.friendlyCaptureZh,/俘获敌舰: 1/);
  assert.match(reports.stockedEn,/Grain reserve sufficient; no purchase/);
  assert.match(reports.stockedZh,/储粮充足，本月未购买/);
  assert.match(reports.reserveEn,/Treasury reserved for wartime levy/);
