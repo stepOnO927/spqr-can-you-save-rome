@@ -5,6 +5,7 @@ import rivers from '../mediterranean-rivers.js';
 import lakes from '../mediterranean-lakes.js';
 import historical from '../historical-territories.js';
 import egyptContours from './egypt-contours.js?v=1';
+import italyContours from './italy-contours.js?v=1';
 
 // An approximate alluvial plain between the two mapped Nile branches. The
 // matched sea mask clips its northern edge to the GSHHG shoreline.
@@ -47,6 +48,7 @@ export const physicalStyle={
   'nile-delta':{type:'geojson',data:nileDelta,attribution:'Approximate Nile Delta between Natural Earth river branches'},
   lakes:{type:'geojson',data:lakes},
   'egypt-contours':{type:'geojson',data:egyptContours,attribution:terrainAttribution},
+  'italy-contours':{type:'geojson',data:italyContours,attribution:terrainAttribution},
   landcover:{type:'raster',tiles:['./landcover/{z}/{x}/{y}.png'],tileSize:256,minzoom:4,maxzoom:6,bounds:[-30,10,65,65],attribution:'Natural Earth II idealized land cover, public domain'}
  },
  layers:[
@@ -82,6 +84,10 @@ export const physicalStyle={
   {id:'nile-delta-alluvium',type:'fill',source:'nile-delta',paint:{'fill-color':'#98a77e','fill-opacity':['interpolate',['linear'],['zoom'],4,.16,7,.26,8.2,.12,9,0]}},
   {id:'egypt-contours-minor',type:'line',source:'egypt-contours',minzoom:8.25,filter:['<',['get','height'],50],paint:{'line-color':'#8a7255','line-width':['interpolate',['linear'],['zoom'],8.25,.5,9.2,.8],'line-opacity':.38}},
   {id:'egypt-contours-major',type:'line',source:'egypt-contours',minzoom:8.25,filter:['>=',['get','height'],50],paint:{'line-color':'#785f49','line-width':['interpolate',['linear'],['zoom'],8.25,.7,9.2,1.05],'line-opacity':.46}},
+  // Modern DEM elevation creates the contour shapes; line styling is
+  // deliberately restrained so game borders and standards remain legible.
+  {id:'italy-contours-minor',type:'line',source:'italy-contours',minzoom:8.3,filter:['<',['get','height'],1000],paint:{'line-color':'#6d694c','line-width':['interpolate',['linear'],['zoom'],8.3,.35,9.2,.65],'line-opacity':['interpolate',['linear'],['zoom'],8.3,0,9.2,.4]}},
+  {id:'italy-contours-major',type:'line',source:'italy-contours',minzoom:8.3,filter:['>=',['get','height'],1000],paint:{'line-color':'#565e4a','line-width':['interpolate',['linear'],['zoom'],8.3,.45,9.2,.85],'line-opacity':['interpolate',['linear'],['zoom'],8.3,0,9.2,.52]}},
   {id:'sea-mask',type:'fill',source:'ocean',paint:{'fill-color':'#356f79','fill-opacity':1}},
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},
   {id:'coastline',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,.9,8,1.7],'line-opacity':.87}},

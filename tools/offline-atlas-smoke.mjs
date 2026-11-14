@@ -19,6 +19,8 @@ assert.deepEqual(physicalStyle.sources['elevation-fine'].bounds,[-20,18,60,58]);
 assert.deepEqual(physicalStyle.sources['elevation-aegean-higher'].bounds,[21.9,34,31,43]);
 assert.equal(physicalStyle.sources['nile-delta'].data.geometry.type,'Polygon');
 assert.ok(physicalStyle.layers.some(layer=>layer.id==='nile-delta-alluvium'));
+assert.ok(physicalStyle.sources['italy-contours'].data.features.length>=100);
+assert.ok(physicalStyle.layers.some(layer=>layer.id==='italy-contours-major'));
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -161,6 +163,16 @@ try{
  for(let i=0;i<3;i++){await page.locator('#zoom-in').click();await page.waitForTimeout(500)}
  const site=await page.locator('[data-site="italiaN"]').boundingBox();
  assert.ok(Math.abs(site.x-page.viewportSize().width/2)<15,'Ariminum must stay at the map focus');
+ await page.locator('#map-mode').selectOption('terrain');
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded('italy-contours')},null,{timeout:20000});
+ const visibleContours=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.queryRenderedFeatures({layers:['italy-contours-minor','italy-contours-major']}).length});
+ assert.ok(visibleContours>0,'Modern Italy contour lines should render around Ariminum');
+ const italyLegendLanguage=await page.locator('html').getAttribute('lang');
+ assert.match(await page.locator('.legend').innerText(),italyLegendLanguage==='zh-CN'?/现代高程等高线（500–1500米）/:/Modern elevation contours \(500–1500 m\)/);
+ await page.locator('#language').click();
+ assert.match(await page.locator('.legend').innerText(),italyLegendLanguage==='zh-CN'?/Modern elevation contours \(500–1500 m\)/:/现代高程等高线（500–1500米）/);
+ await page.locator('#language').click();
+ await page.locator('#map-mode').selectOption('political');
  if(process.env.SPQR_ATLAS_OBJECTIVE_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_OBJECTIVE_SCREENSHOT});
  if(process.env.SPQR_ATLAS_Z9_RELIEF_SCREENSHOT){if(await page.locator('#relief-toggle').getAttribute('aria-pressed')==='false')await page.locator('#relief-toggle').click();await page.waitForTimeout(650);await page.screenshot({path:process.env.SPQR_ATLAS_Z9_RELIEF_SCREENSHOT})}
  if(process.env.SPQR_ATLAS_RIVER_SCREENSHOT){if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();await page.locator('[data-objective="roma"]').click();await page.waitForTimeout(1200);for(let i=0;i<3;i++){await page.locator('#zoom-in').click();await page.waitForTimeout(500)}await page.screenshot({path:process.env.SPQR_ATLAS_RIVER_SCREENSHOT})}
@@ -206,6 +218,7 @@ try{
  try{await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',null,{timeout:60000})}
  catch(error){const status=await page.locator('#status').evaluate(el=>({display:el.style.display,text:el.textContent})).catch(()=>null);throw Error(`Atlas reload did not finish: ${JSON.stringify({status,errors,missingTerrain:missingTerrain.slice(-8)})}`,{cause:error})}
  await page.waitForTimeout(1400);
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()},null,{timeout:20000});
  terrainRequests.length=0;
  const aegeanCenter=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[27.1,38.6],zoom:9.1});return map.getCenter().toArray()});
  assert.ok(Math.abs(aegeanCenter[0]-27.1)<.1&&Math.abs(aegeanCenter[1]-38.6)<.1,'Aegean screenshot must actually focus on the coast');
@@ -213,7 +226,8 @@ try{
  assert.deepEqual(missingTerrain,[],'Aegean maximum zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Aegean terrain unexpectedly needed the network');
  const aegeanRelief=()=>page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return ['relief-aegean-ultra','relief-aegean-higher'].map(id=>({visibility:map.getLayoutProperty(id,'visibility')||'visible',strength:map.getPaintProperty(id,'hillshade-exaggeration')}))});
- await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return (map.getLayoutProperty('relief-aegean-higher','visibility')||'visible')==='visible'},null,{timeout:5000});
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&(map.getLayoutProperty('relief-aegean-higher','visibility')||'visible')==='visible'},null,{timeout:20000});
+ await page.waitForTimeout(750);
  assert.deepEqual(await aegeanRelief(),[{visibility:'none',strength:.1},{visibility:'visible',strength:.1}]);
  await page.locator('#relief-toggle').click();
  assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['none','none']);
