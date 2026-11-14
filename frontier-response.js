@@ -9,7 +9,7 @@ const adjacent=(a,b)=>a===b||ROUTES.some(([x,y])=>x===a&&y===b||x===b&&y===a);
 export function reportedFrontierThreats(s,actor){
  const owned=s.regions.filter(r=>r.owner===actor),out=[];
  for(const [target,k] of Object.entries(s.knowledge?.[actor]||{})){
-  if(target===actor||target==='rebels'||!s.factions[target]||(s.alliances||[]).some(a=>a.includes(actor)&&a.includes(target)))continue;
+  if(target===actor||target==='rebels'||(s.alliances||[]).some(a=>a.includes(actor)&&a.includes(target)))continue;
   const hostile=s.wars.some(w=>w.includes(actor)&&w.includes(target))||(s.relations[pair(actor,target)]??0)<=-20;
   if(!hostile)continue;
   for(const sighting of Object.values(k?.sightings||{})){
