@@ -6,7 +6,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=multipolar-courier-review-1'),{sendLetter}=await import('/epistulae.js?v=portraits-hundred-days-1'),s=newGame('caesar');
+  const {newGame}=await import('/engine.js?v=coalition-courier-1'),{sendLetter}=await import('/epistulae.js?v=portraits-hundred-days-1'),s=newGame('caesar');
   const send=(from,to,thread,body)=>sendLetter(s,{senderInstitution:from,senderFaction:from,recipient:to,threadId:thread,category:'diplomatic',subject:['Notice','来信'],body:[body,body],options:['accept','reject'],context:{kind:'treaty',treatyType:'non_aggression'}}).letter;
   const visible=send('senate','caesar',null,'VISIBLE_MESSAGE');visible.delivery='received';
   const hidden=send('egypt','caesar',visible.threadId,'SECRET_IN_TRANSIT');hidden.senderName=['HIDDEN_SENDER','隐藏发件人'];

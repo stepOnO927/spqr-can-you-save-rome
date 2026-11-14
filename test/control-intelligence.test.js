@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=multipolar-courier-review-1';
+import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=coalition-courier-1';
 import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=fort-intel-1';
 import {drawMap} from '../map.js?v=portraits-hundred-days-1';
 import {advanceMovements} from '../movements.js?v=portraits-hundred-days-1';
