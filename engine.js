@@ -27,7 +27,7 @@ const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
 import {initializeMarkets,advanceMarkets,advanceMarketAI,advanceMarketDiplomacy} from './trade-markets.js?v=faces-empire-2';
-import {assessOpportunities} from './multipolar.js?v=multipolar-confidence-1';
+import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=multipolar-courier-review-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=multipolar-2';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {formCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=multipolar-2';
@@ -635,7 +635,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   // sighting is treated as an empty garrison.
   let review=null;
   if(owner!=='rebels'&&owned.length){
-    s.world.multipolarPlans||={};const date=s.year*12+s.month,knownWars=reportedDiplomacy(s,owner).filter(x=>x.kind==='war'&&x.status==='active'&&date-(x.year*12+x.month)>=0&&date-(x.year*12+x.month)<=24),signature=knownWars.map(x=>x.id).sort().join('|'),old=s.world.multipolarPlans[owner];
+    s.world.multipolarPlans||={};const date=s.year*12+s.month,signature=opportunityEvidenceSignature(s,owner),old=s.world.multipolarPlans[owner];
     if(!old||old.signature!==signature||date-old.date>=3){review={date,signature,opportunities:assessOpportunities(s,owner,estimatedStrength),lastAction:old?.lastAction||null};s.world.multipolarPlans[owner]=review}else review=old;
     if(review.date===date&&(!review.lastAction||date-review.lastAction.date>=12)){
       const chance=review.opportunities.find(x=>x.border&&x.readiness&&x.knownWars>0&&x.relation<0&&!x.allied&&!x.treaty&&!isWar(s,owner,x.target)&&x.score>=14&&x.ownStrength>x.estimate*1.25);

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=faces-empire-3';
 import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=multipolar-2';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
-import {assessOpportunities} from '../multipolar.js?v=multipolar-2';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=multipolar-2';
 import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
 import {buildChessboard} from '../chessboard.js?v=faces-empire-2';
@@ -21,6 +21,14 @@ test('opportunities use the observer’s reports, not hidden military or politic
  other.factions.armenia.stability=0;other.factions.armenia.treasury=-100;other.wars.push(['armenia','egypt']);
  assert.deepEqual(assessOpportunities(s,'parthia',estimatedStrength),assessOpportunities(other,'parthia',estimatedStrength));
  const unknown=assessOpportunities(s,'parthia',estimatedStrength).find(x=>x.target==='armenia');assert.equal(unknown.instability,'unknown');assert.equal(unknown.knownWars,0);
+});
+
+test('new reports trigger reassessment without revealing hidden foreign changes',()=>{
+ const s=newGame('caesar'),copy=structuredClone(s),signature=opportunityEvidenceSignature(s,'parthia');
+ copy.factions.armenia.stability=0;for(const army of copy.armies.filter(x=>x.owner==='armenia'))army.men=999999;
+ assert.equal(opportunityEvidenceSignature(copy,'parthia'),signature);
+ addReport(copy,'parthia','armenia',{kind:'stability',value:'fragile',source:'spy',confidence:'rumor'});
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),signature);
 });
 
 test('AI weighs instability by evidence confidence and ignores stale or disputed claims',()=>{

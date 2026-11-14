@@ -333,12 +333,12 @@ export function officialKnowledge(s,target,id,actor=s.player){
  return {level,observed:latest?.observed||contact?.resolved||null,confidence:latest?.confidence||'unverified',trust:contact?trust:null};
 }
 export function contactOfficial(s,target,id,route='formal',actor=s.player){
- const c=initializeCursus(s),routes={formal:{cost:10,months:3,chance:.72},merchant:{cost:7,months:5,chance:.52},introduction:{cost:5,months:2,chance:.78},embassy:{cost:12,months:2,chance:.70},scholarly:{cost:6,months:4,chance:.68},professional:{cost:8,months:3,chance:.64},intelligence:{cost:9,months:3,chance:.60},banquet:{cost:11,months:3,chance:.68},senatorial:{cost:8,months:2,chance:.72},provincial_visit:{cost:9,months:4,chance:.63},military_visit:{cost:10,months:3,chance:.60},family:{cost:6,months:3,chance:.70},ceremony:{cost:6,months:4,chance:.58}},spec=routes[route],p=person(s,id),report=c.intel[actor]?.[target];
- if(!spec||actor===target||!p||!knownForeignOfficial(s,target,id,actor))return {ok:false,reason:'unknown'};
+ const c=initializeCursus(s),routes={formal:{cost:10,months:3,chance:.72},merchant:{cost:7,months:5,chance:.52},introduction:{cost:5,months:2,chance:.78},embassy:{cost:12,months:2,chance:.70},scholarly:{cost:6,months:4,chance:.68},professional:{cost:8,months:3,chance:.64},intelligence:{cost:9,months:3,chance:.60},banquet:{cost:11,months:3,chance:.68},senatorial:{cost:8,months:2,chance:.72},provincial_visit:{cost:9,months:4,chance:.63},military_visit:{cost:10,months:3,chance:.60},family:{cost:6,months:3,chance:.70},ceremony:{cost:6,months:4,chance:.58}},spec=routes[route],report=c.intel[actor]?.[target];
+ if(!spec||actor===target||!s.factions[actor]||!s.factions[target]||!knownForeignOfficial(s,target,id,actor))return {ok:false,reason:'unknown'};
  // A dated foreign report may be stale; a failed approach resolves after time and cost.
  if(route==='introduction'&&!Object.entries(c.networks).some(([source,ids])=>person(s,source)?.faction===actor&&present(s,source)&&ids.includes(id)))return {ok:false,reason:'introduction'};
  if(route==='family'&&!Object.entries(c.networks).some(([source,ids])=>person(s,source)?.faction===actor&&present(s,source)&&ids.includes(id)))return {ok:false,reason:'introduction'};
- if(route==='senatorial'&&(!ROMAN.has(target)||!c.senators.some(x=>x.id===id)))return {ok:false,reason:'profession'};
+ if(route==='senatorial'&&(!ROMAN.has(target)||!report?.reports?.some(r=>r.senators?.includes(id))))return {ok:false,reason:'profession'};
  if(['banquet','ceremony','provincial_visit','military_visit'].includes(route)&&(report?.stage||0)<3)return {ok:false,reason:'intelligence'};
  if(route==='provincial_visit'&&!report?.reports?.some(r=>Object.values(r.officeholders||{}).includes(id)))return {ok:false,reason:'profession'};
  if(route==='military_visit'&&!report?.reports?.some(r=>r.commanders?.includes(id)))return {ok:false,reason:'profession'};
@@ -352,25 +352,18 @@ export function contactOfficial(s,target,id,route='formal',actor=s.player){
  return {ok:true,cost:spec.cost,months:spec.months};
 }
 export function cultivateOfficial(s,target,id,actor=s.player,approach='professional'){
- const c=initializeCursus(s),p=person(s,id),contact=c.contacts.findLast(x=>x.actor===actor&&x.id===id&&x.status==='open');
- if(!contact||!p||p.faction!==target||!present(s,id))return {ok:false,reason:'contact'};
+ const c=initializeCursus(s),contact=c.contacts.findLast(x=>x.actor===actor&&x.target===target&&x.id===id&&x.status==='open');
+ // An open contact is the sender's last information, not proof of the
+ // recipient's present health, allegiance or willingness to answer.
+ if(!contact||!s.factions[actor]||!s.factions[target]||actor===target)return {ok:false,reason:'contact'};
  if(contact.lastCultivated===date(s))return {ok:false,reason:'cooldown'};
+ if(contact.pendingCultivation)return {ok:false,reason:'pending'};
  if(!['professional','personal','political','favour'].includes(approach))return {ok:false,reason:'approach'};
  if((contact.trust||0)>=80)return {ok:false,reason:'trust'};
  const cost=approach==='favour'?9:6;if(s.factions[actor].treasury<cost)return {ok:false,reason:'treasury',cost};
  s.factions[actor].treasury-=cost;contact.lastCultivated=date(s);
- const watch=s.world.securityWatches?.[target],watched=watch&&date(s)>=watch.start&&date(s)<=watch.end;
- if(watched&&roll(s)<.18){contact.status='compromised';contact.trust=0;if(contact.relationship)contact.relationship.trust=0;contact.history||=[];contact.history.push({year:s.year,month:s.month,outcome:'compromised'});return {ok:true,cost,outcome:'compromised'}}
- const relation=contact.relationship||={familiarity:contact.trust||20,trust:contact.trust||20,respect:30,professional:20,alignment:30,obligation:0,rivalry:0,willingness:25};
- const gain=4+Math.floor(roll(s)*7);
- relation.familiarity=clamp(relation.familiarity+gain);
- relation.trust=Math.min(80,clamp(relation.trust+(approach==='personal'?gain:Math.max(2,Math.floor(gain/2)))));
- if(approach==='professional'){relation.professional=clamp(relation.professional+gain);relation.respect=clamp(relation.respect+Math.max(2,Math.floor(gain/2)))}
- if(approach==='political'){relation.alignment=clamp(relation.alignment+gain);relation.rivalry=clamp(relation.rivalry+(p.loyalty>75?2:0))}
- if(approach==='favour'){relation.obligation=clamp(relation.obligation+gain);relation.willingness=clamp(relation.willingness+Math.floor(gain/2))}
- contact.trust=relation.trust;
- contact.history||=[];contact.history.push({year:s.year,month:s.month,outcome:'cultivated',approach,gain,trust:contact.trust});
- return {ok:true,cost,outcome:'cultivated',gain,trust:contact.trust,approach};
+ contact.pendingCultivation={approach,cost,remaining:3,duration:3,sent:{year:s.year,month:s.month}};
+ return {ok:true,cost,months:3,outcome:'pending'};
 }
 export function retainOfficial(s,id,actor=s.player){
  const c=initializeCursus(s),p=person(s,id);
@@ -434,7 +427,7 @@ export function requestRecommendation(s,sourceId,actor=s.player){
 function advanceTalentSearches(s,c){
  for(const q of c.talentSearches.filter(x=>x.status==='pending')){
   if(--q.remaining>0)continue;
-  const r=s.regions.find(x=>x.id===q.regionId),cooperating=c.cooperations.some(x=>x.actor===q.actor&&x.kind==='professional'&&x.status==='active'),chance=Math.min(.9,.55+(r?.loyalty||50)/300+(cooperating ? .08 : 0));
+  const r=s.regions.find(x=>x.id===q.regionId),cooperating=c.cooperations.some(x=>x.actor===q.actor&&x.kind==='professional'&&x.status==='active'&&person(s,x.id)?.faction===x.target&&present(s,x.id)),chance=Math.min(.9,.55+(r?.loyalty||50)/300+(cooperating ? .08 : 0));
   if(r?.owner!==q.actor||roll(s)>=chance){q.status='no_candidate';q.resolved={year:s.year,month:s.month};continue}
   const n=c.talents.length+1,first=['Aulus','Gaius','Marcus','Titus','Publius','Lucius'][n%6],family=['Varenus','Marcellinus','Cassianus','Valerius','Fabius','Sennius'][Math.floor(n/6)%6];
   const eastern=['Aram','Nikanor','Mithradates','Dionysios','Vahan','Leucon'][n%6];
@@ -454,35 +447,37 @@ function advanceTalentSearches(s,c){
  }
 }
 export function proposeCooperation(s,target,id,kind='professional',actor=s.player){
- const c=initializeCursus(s),p=person(s,id),contact=c.contacts.findLast(x=>x.actor===actor&&x.id===id&&x.status==='open');
+ const c=initializeCursus(s),contact=c.contacts.findLast(x=>x.actor===actor&&x.target===target&&x.id===id&&x.status==='open');
  const options={professional:{cost:7,months:2},diplomatic:{cost:8,months:3},information:{cost:9,months:3},political:{cost:8,months:3}},spec=options[kind];
- if(!spec||!contact||!p||p.faction!==target||!present(s,id))return {ok:false,reason:'contact'};
+ if(!spec||!contact||!s.factions[actor]||!s.factions[target]||actor===target)return {ok:false,reason:'contact'};
  if(c.cooperations.some(x=>x.actor===actor&&x.id===id&&x.kind===kind&&['pending','active'].includes(x.status)))return {ok:false,reason:'pending'};
  if(kind==='political'&&!ROMAN.has(actor))return {ok:false,reason:'authority'};
  if(s.factions[actor].treasury<spec.cost)return {ok:false,reason:'treasury',cost:spec.cost};
- s.factions[actor].treasury-=spec.cost;c.cooperations.push({actor,target,id,kind,cost:spec.cost,remaining:spec.months,status:'pending',year:s.year,month:s.month});
+ s.factions[actor].treasury-=spec.cost;c.cooperations.push({actor,target,id,kind,cost:spec.cost,remaining:spec.months,duration:spec.months,status:'pending',year:s.year,month:s.month});
  return {ok:true,cost:spec.cost,months:spec.months};
 }
 function advanceCooperations(s,c){
  for(const x of c.cooperations.filter(x=>x.status==='active'))if(date(s)>=x.endsAt)x.status='ended';
  for(const x of c.cooperations.filter(x=>x.status==='pending')){
-  if(--x.remaining>0)continue;
-  const p=person(s,x.id),contact=c.contacts.findLast(y=>y.actor===x.actor&&y.id===x.id&&y.status==='open');
-  if(!p?.alive||p.faction!==x.target||!contact){x.status='lapsed';continue}
-  const r=contact.relationship||{},basis=x.kind==='professional'?r.professional:x.kind==='political'?r.alignment:x.kind==='information'?r.trust:r.respect;
-  const chance=Math.max(.12,Math.min(.82,.32+(basis||30)/180-(p.loyalty||50)/500));
-  x.status=roll(s)<chance?'active':'refused';x.resolved={year:s.year,month:s.month};
+  x.remaining=Math.max(0,x.remaining-1);
+  if(!x.sealed&&x.remaining<=Math.floor((x.duration||({professional:2,diplomatic:3,information:3,political:3}[x.kind]||3))/2)){
+   const p=person(s,x.id),contact=c.contacts.findLast(y=>y.actor===x.actor&&y.target===x.target&&y.id===x.id&&y.status==='open'),q=roll(s);
+   if(!p||p.faction!==x.target||!present(s,x.id)||!contact||q<.12)x.sealed={outcome:'no_reply'};
+   else{const r=contact.relationship||{},basis=x.kind==='professional'?r.professional:x.kind==='political'?r.alignment:x.kind==='information'?r.trust:r.respect,chance=Math.max(.12,Math.min(.82,.32+(basis||30)/180-(p.loyalty||50)/500));x.sealed={outcome:q<.12+.88*chance?'active':'refused',observed:{year:s.year,month:s.month}}}
+  }
+  if(x.remaining>0)continue;
+  const sealed=x.sealed||{outcome:'no_reply'};x.status=sealed.outcome==='no_reply'||roll(s)<.08?'no_reply':sealed.outcome;x.resolved={year:s.year,month:s.month};delete x.sealed;
   if(x.status==='active'){
-   x.endsAt=date(s)+6;
+   x.observed=sealed.observed;x.endsAt=(sealed.observed.year*12+sealed.observed.month)+6;
    const key=[x.actor,x.target].sort().join(':');
    if(x.kind==='diplomatic')s.relations[key]=Math.min(100,(s.relations[key]||0)+3);
    if(x.kind==='political')c.senate[x.actor]=clamp((c.senate[x.actor]||50)+2);
    if(x.kind==='information'){
     c.intel[x.actor]||={};c.intel[x.actor][x.target]||={stage:0,reports:[]};
-    c.intel[x.actor][x.target].reports.push({stage:0,source:'public professional exchange',observed:{year:s.year,month:s.month},delivered:{year:s.year,month:s.month},confidence:'public',people:[x.id],offices:[],links:[],possibleContradictions:[]});
+    c.intel[x.actor][x.target].reports.push({stage:0,source:'public professional exchange',observed:sealed.observed,delivered:{year:s.year,month:s.month},confidence:'public',people:[x.id],offices:[],links:[],possibleContradictions:[]});
    }
   }
-  if(x.actor===s.player)note(s,x.status==='active'?'A named official agreed to limited cooperation without changing allegiance.':'A named official declined a cooperation proposal.',x.status==='active'?'一位具名官员同意有限合作，政治归属未变。':'一位具名官员拒绝合作提议。');
+  if(x.actor===s.player)note(s,x.status==='active'?'A named official agreed to limited cooperation without changing allegiance.':x.status==='refused'?'A named official declined a cooperation proposal.':'No cooperation reply arrived; the request or answer may have been lost.',x.status==='active'?'一位具名官员同意有限合作，政治归属未变。':x.status==='refused'?'一位具名官员拒绝合作提议。':'未收到合作回信；请求或答复可能遗失。');
  }
  c.cooperations=c.cooperations.filter(x=>x.status==='pending'||x.status==='active'||date(s)-(x.resolved?.year*12+x.resolved?.month||date(s))<60);
 }
@@ -527,6 +522,32 @@ function advanceIntel(s,c){
   delete report.pending;report.lastOutcome={status:outcome,stage,year:s.year,month:s.month};
   if(outcome==='report'){report.stage=stage;report.reports.push({...sealed.record,delivered:{year:s.year,month:s.month}});if(actor===s.player)note(s,'A dated foreign government report has arrived; offices and people may change.','一份注明日期的外国官制报告已经送达；职务与人物可能变化。')}
   else if(actor===s.player)note(s,outcome==='refused'?'The foreign court declined the government inquiry.':'No government report arrived; the request or reply may have been lost.',outcome==='refused'?'外国宫廷拒绝了官制调查。':'未收到官制报告；请求或回信可能遗失。');
+ }
+}
+function advanceCultivations(s,c){
+ for(const contact of c.contacts){
+  const pending=contact.pendingCultivation;if(!pending)continue;pending.remaining=Math.max(0,pending.remaining-1);
+  if(!pending.sealed&&pending.remaining<=Math.floor((pending.duration||3)/2)){
+   const p=person(s,contact.id),q=roll(s),watch=s.world.securityWatches?.[contact.target],watched=watch&&date(s)>=watch.start&&date(s)<=watch.end;
+   if(!p||p.faction!==contact.target||!present(s,contact.id)||q<.12)pending.sealed={outcome:'no_reply'};
+   else if(q<.3)pending.sealed={outcome:'refused',observed:{year:s.year,month:s.month}};
+   else if(watched&&roll(s)<.18)pending.sealed={outcome:'compromised',observed:{year:s.year,month:s.month}};
+   else pending.sealed={outcome:'cultivated',gain:4+Math.floor(roll(s)*7),rivalry:pending.approach==='political'&&p.loyalty>75?2:0,observed:{year:s.year,month:s.month}};
+  }
+  if(pending.remaining>0)continue;
+  const sealed=pending.sealed||{outcome:'no_reply'},outcome=sealed.outcome==='no_reply'||roll(s)<.08?'no_reply':sealed.outcome;
+  if(outcome==='compromised'){contact.status='compromised';contact.trust=0;if(contact.relationship)contact.relationship.trust=0}
+  if(outcome==='cultivated'){
+   const approach=pending.approach,gain=sealed.gain,relation=contact.relationship||={familiarity:contact.trust||20,trust:contact.trust||20,respect:30,professional:20,alignment:30,obligation:0,rivalry:0,willingness:25};
+   relation.familiarity=clamp(relation.familiarity+gain);relation.trust=Math.min(80,clamp(relation.trust+(approach==='personal'?gain:Math.max(2,Math.floor(gain/2)))));
+   if(approach==='professional'){relation.professional=clamp(relation.professional+gain);relation.respect=clamp(relation.respect+Math.max(2,Math.floor(gain/2)))}
+   if(approach==='political'){relation.alignment=clamp(relation.alignment+gain);relation.rivalry=clamp(relation.rivalry+sealed.rivalry)}
+   if(approach==='favour'){relation.obligation=clamp(relation.obligation+gain);relation.willingness=clamp(relation.willingness+Math.floor(gain/2))}
+   contact.trust=relation.trust;
+  }
+  contact.history||=[];contact.history.push({year:s.year,month:s.month,outcome,approach:pending.approach,...(outcome==='cultivated'?{gain:sealed.gain,trust:contact.trust,observed:sealed.observed}:{})});
+  contact.lastCultivation={outcome,year:s.year,month:s.month};delete contact.pendingCultivation;
+  if(contact.actor===s.player)note(s,outcome==='cultivated'?'A reply arrived and the reported relationship improved.':outcome==='refused'?'The contact declined the approach.':outcome==='compromised'?'The contact reported that the approach was exposed.':'No reply arrived; the request or answer may have been lost.',outcome==='cultivated'?'收到回信；报告中的关系有所改善。':outcome==='refused'?'对方拒绝了接触。':outcome==='compromised'?'对方回报这次接触已暴露。':'未收到回信；请求或答复可能遗失。');
  }
 }
 function advanceContacts(s,c){
@@ -673,7 +694,7 @@ function recordPoliticalYear(s,c){
 export function advanceCursus(s){
  const c=initializeCursus(s);
  if(s.month===1){startTerms(s);annualApplicants(s);const controller=factionOfRome(s),f=s.factions[controller],rome=s.regions.find(r=>r.id==='roma');if(f&&rome)for(const body of ['centuriate','tribal','plebeian','curiate'])c.assemblies[body]=clamp((c.assemblies[body]*3+f.stability+rome.loyalty)/5)}
- advanceCuriateFormalities(s,c);recordOfficeChanges(s,c);reconcileForeignPosts(s,c);advanceIntel(s,c);advanceContacts(s,c);advanceCooperations(s,c);advanceTalentSearches(s,c);advanceApplicantReviews(s,c);advanceEndorsements(s,c);advanceMeasures(s,c);advancePromises(s,c);advanceInvestigations(s,c);
+ advanceCuriateFormalities(s,c);recordOfficeChanges(s,c);reconcileForeignPosts(s,c);advanceIntel(s,c);advanceCultivations(s,c);advanceContacts(s,c);advanceCooperations(s,c);advanceTalentSearches(s,c);advanceApplicantReviews(s,c);advanceEndorsements(s,c);advanceMeasures(s,c);advancePromises(s,c);advanceInvestigations(s,c);
  aiPolitical(s,c);autonomousCampaign(s,c);
  if(ROMAN.has(factionOfRome(s)))for(const [office,o] of Object.entries(MAGISTRACIES))if(o.month===s.month&&(!o.cycle||Math.abs(s.year)%o.cycle===0))resolveElection(s,office);
  if(s.month===12)recordPoliticalYear(s,c);

@@ -5,6 +5,20 @@ import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
 import {politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 
 const pair=(a,b)=>[a,b].sort().join(':'),now=s=>s.year*12+s.month;
+// Only an actor's own condition and delivered intelligence can trigger an
+// early review. A hidden foreign change must not wake its strategic planner.
+export function opportunityEvidenceSignature(s,actor){
+ const f=s.factions[actor];if(!f)return '';
+ const evidence=Object.entries(s.knowledge?.[actor]||{}).sort(([a],[b])=>a.localeCompare(b)).map(([target,k])=>{
+  const reports=(k.reports||[]).filter(r=>r.kind==='stability').slice(-32).map(r=>[r.value,r.confidence,r.observationYear??r.year,r.observationMonth??r.month]).sort();
+  const sightings=Object.values(k.sightings||{}).sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month)).slice(0,32).map(x=>[x.id,x.region,x.year,x.month]).sort();
+  return [target,reports,sightings];
+ });
+ const wars=reportedDiplomacy(s,actor).filter(x=>x.kind==='war'&&x.status==='active').map(x=>x.id).sort();
+ const agreements=(s.agreements||[]).filter(x=>x.parties.includes(actor)&&x.status==='active').map(x=>[x.id,x.type]).sort();
+ const ownArmies=s.armies.filter(a=>a.owner===actor&&a.men>0).map(a=>[a.id,a.region,Math.floor(a.men/5000)]).sort();
+ return JSON.stringify([evidence,wars,agreements,ownArmies,Math.floor(f.treasury/25),Math.floor(f.food/25),Math.floor(f.stability/10)]);
+}
 // These are estimates from the actor's own evidence, not foreign hidden state.
 // No sighting does not mean that a frontier is undefended.
 export function assessOpportunities(s,actor,estimateStrength){

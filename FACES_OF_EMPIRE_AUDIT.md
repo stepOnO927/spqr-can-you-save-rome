@@ -22,6 +22,11 @@ Roman campaigns, with its own eastern map, court, portraits, trade and delayed
 reports. This optional Roman expansion coexists with the directly playable Han
 campaign. The setup keeps the Roman option out of direct Han starts; neither
 simulation silently replaces the other or changes an existing save.
+The later main update also makes foreign-official relationship requests and
+cooperation travel as letters, and wakes multipolar AI planning when new
+reported evidence arrives. These changes are integrated with the expansion's
+saved characters and separate Han theater; hidden foreign state alone does
+not trigger the AI review.
 Han military AI now treats a dated sighting of hostile troops in neutral land
 as a frontier threat, holds threatened garrisons, and reinforces a fort only
 when its supply can support another army. An underdefended front can trigger
