@@ -1,4 +1,4 @@
-import {createFictionalPerson,initializeDynasties} from './dynasties.js?v=cursus-portraits-1';
+import {createFictionalPerson,initializeDynasties} from './dynasties.js?v=portraits-hundred-days-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));

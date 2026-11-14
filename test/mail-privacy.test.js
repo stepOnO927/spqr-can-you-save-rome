@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=cursus-portraits-1';
-import {sendLetter} from '../epistulae.js?v=cursus-portraits-1';
-import {mailboxHtml} from '../mail-ui.js?v=cursus-portraits-1';
+import {newGame} from '../engine.js?v=portraits-hundred-days-1';
+import {sendLetter} from '../epistulae.js?v=portraits-hundred-days-1';
+import {mailboxHtml} from '../mail-ui.js?v=portraits-hundred-days-1';
 function letter(s,sender,recipient,thread,body){return sendLetter(s,{senderInstitution:sender,senderFaction:sender,recipient,category:'diplomatic',subject:['Notice','来信'],body:[body,body],threadId:thread,options:['accept','reject'],context:{kind:'treaty',treatyType:'non_aggression'}}).letter}
 test('undelivered letters do not expose their sender or contents through the thread or filter',()=>{
  const s=newGame('caesar'),first=letter(s,'senate','caesar',null,'visible');first.delivery='received';

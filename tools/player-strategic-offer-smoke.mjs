@@ -5,7 +5,7 @@ page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const e=await import('/engine.js?v=cursus-portraits-1'),a=await import('/agreements.js?v=grand-chessboard-2'),d=await import('/diplomatic-knowledge.js?v=multipolar-2');
+  const e=await import('/engine.js?v=portraits-hundred-days-1'),a=await import('/agreements.js?v=grand-chessboard-2'),d=await import('/diplomatic-knowledge.js?v=multipolar-2');
   for(let seed=1;seed<200;seed++){
    const s=e.newGame('caesar');s.seed=seed;s.wars.push(['egypt','parthia']);s.relations['caesar:egypt']=40;a.proposeAgreement(s,'egypt','caesar','trade');d.observeDiplomacy(s);
    assertOffer(e.sendStrategicOffer(s,'egypt','caesar','parthia').ok);for(let i=0;i<2;i++){s.month++;e.advanceStrategicOffers(s)}

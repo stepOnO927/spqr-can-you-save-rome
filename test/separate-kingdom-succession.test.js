@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=cursus-portraits-1';
+import {newGame,upgradeSave} from '../engine.js?v=portraits-hundred-days-1';
 import {assignSuccession,knownLeaders,mauretanianSeatHolders} from '../characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from '../dynasties.js?v=cursus-portraits-1';
-import {deriveGovernment,advanceGovernments} from '../governance.js?v=cursus-portraits-1';
-import {queueMission,advanceOperations} from '../character-system.js?v=cursus-portraits-1';
+import {createFictionalPerson} from '../dynasties.js?v=portraits-hundred-days-1';
+import {deriveGovernment,advanceGovernments} from '../governance.js?v=portraits-hundred-days-1';
+import {queueMission,advanceOperations} from '../character-system.js?v=portraits-hundred-days-1';
 const child=(s,parent,name,years=10)=>createFictionalPerson(s,{name:[name,name],faction:'mauretania',birthYear:s.year-years,parents:[parent],location:'mauretania',sex:'male'});
 function death(s,id){s.world.characters[id].alive=false;s.world.characters[id].health='deceased'}
 test('each Mauretanian crown passes to its own recorded child without revealing succession abroad',()=>{

@@ -2,8 +2,8 @@ import {ROUTES, FACTIONS} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=succession-ui-recovery-1';
 import {AGREEMENT_TYPES} from './agreements.js?v=grand-chessboard-2';
 import {formatChronicleEntry} from './chronicle.js?v=succession-ui-recovery-1';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=cursus-portraits-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=cursus-portraits-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=portraits-hundred-days-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=portraits-hundred-days-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {canMediate,requestMediation} from './civil-war.js?v=succession-ui-recovery-1';
 
@@ -202,6 +202,16 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     }
     bond.trust=Math.max(-100,Math.min(100,bond.trust+({respond_warmly:2,respond_formally:0,grant_favor:3,grant_audience:1,ignore:-1}[choice]||0)));
     s.world.personalRelations[key]=bond;
+  } else if(m.context?.kind==='provincial_relief'){
+    const place=s.regions.find(r=>r.id===m.context.region&&r.owner===s.player),officer=s.world.characters[m.senderId],f=s.factions[s.player];
+    if(!place||!officer?.alive||officer.faction!==s.player)return {ok:false,reason:'changed_state'};
+    const cost=choice==='full_relief'?12:choice==='limited_relief'?5:0;
+    if(f.treasury<cost)return {ok:false,reason:'treasury'};
+    const before={treasury:f.treasury,loyalty:place.loyalty};
+    if(choice==='request_report')s.mail.events.push({id:'governor:'+m.id,letterId:m.id,type:'governor',region:place.id,date:monthIndex(s.year,s.month)+2,status:'scheduled'});
+    else {f.treasury-=cost;place.loyalty=Math.max(0,Math.min(100,place.loyalty+(choice==='full_relief'?7:choice==='limited_relief'?3:-1)));officer.loyalty=Math.max(0,Math.min(100,(officer.loyalty||50)+(cost?2:-1)))}
+    s.log.unshift({year:s.year,month:s.month,en:`${place.name[0]} relief decision: treasury ${before.treasury} → ${f.treasury}, loyalty ${before.loyalty} → ${place.loyalty}.`,zh:`${place.name[1]}赈济决策：国库 ${before.treasury} → ${f.treasury}，忠诚度 ${before.loyalty} → ${place.loyalty}。`,region:place.id});
+    s.log=s.log.slice(0,80);
   } else if(m.context?.kind==='aid_request'){
     if(choice==='send_aid'){
       if(s.factions[s.player].treasury<5)return {ok:false,reason:'treasury'};
@@ -479,6 +489,12 @@ export function chronicleLetters(s, entries) {
 
 export function advanceMail(s, actions = {}) {
   const mail = initializeMail(s), now = monthIndex(s.year, s.month);
+  const last=mail.generated.lastReliefMonth??-Infinity;
+  if(now-last>=8&&!mail.messages.some(m=>m.context?.kind==='provincial_relief'&&m.delivery!=='lost'&&!m.responses.length)){
+    const place=s.regions.filter(r=>r.owner===s.player&&r.loyalty<55).sort((a,b)=>a.loyalty-b.loyalty)[0];
+    const officer=place&&Object.values(s.world.characters).find(p=>p.alive&&p.faction===s.player&&p.location===place.id&&p.id!==senderFor(s,s.player));
+    if(place&&officer){const result=sendLetter(s,{senderId:officer.id,senderFaction:s.player,recipient:s.player,category:'government',priority:place.loyalty<35?'important':'routine',source:place.id,subject:[`Relief request from ${place.name[0]}`,`${place.name[1]}赈济请求`],body:[`Local loyalty is ${place.loyalty}. I ask for provincial relief: full aid costs 12 treasury, limited aid costs 5; alternatively request a report or decline.`,`当地忠诚度为 ${place.loyalty}。请考虑赈济：全额花费12国库，有限援助花费5；亦可索取报告或拒绝。`],options:['full_relief','limited_relief','request_report','decline'],context:{kind:'provincial_relief',region:place.id}});if(result.ok)mail.generated.lastReliefMonth=now}
+  }
   for (const event of mail.events) {
     if (event.status !== 'scheduled' || event.date > now) continue;
     if (event.type === 'audit') {

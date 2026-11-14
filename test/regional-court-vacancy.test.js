@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=cursus-portraits-1';
+import {newGame,upgradeSave} from '../engine.js?v=portraits-hundred-days-1';
 import {assignSuccession,knownLeaders,CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
-import {advanceGovernments,deriveGovernment} from '../governance.js?v=cursus-portraits-1';
-import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=cursus-portraits-1';
-import {createFictionalPerson} from '../dynasties.js?v=cursus-portraits-1';
+import {advanceGovernments,deriveGovernment} from '../governance.js?v=portraits-hundred-days-1';
+import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=portraits-hundred-days-1';
+import {createFictionalPerson} from '../dynasties.js?v=portraits-hundred-days-1';
 const states={armenia:'artavasdes',numidia:'juba',galatia:'deiotarus',bosporus:'pharnaces'};
 const high=Array.from({length:100000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296>.98);
 function setup(faction){const s=newGame('caesar'),id=states[faction];s.wars=[];s.world.characters[id].alive=false;s.world.characters[id].health='deceased';assignSuccession(s,faction);s.factions[faction].treasury=100;s.factions[faction].stability=60;s.world.dynasties.seed=1;return s}
