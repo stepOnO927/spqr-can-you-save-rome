@@ -13,7 +13,7 @@ import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=fac
 import {advanceFocus,focusState} from './focus.js?v=han-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
-import {ensureFieldCommanders} from './field-identities.js';
+import {CULTURAL_NAME_POOLS,ensureFieldCommanders} from './field-identities.js';
 import {ensureHanPortraitSeed,ensureHanPortraitSeeds} from './court-portrait.js';
 import {ensureForeignRulers,advanceForeignRulers,rulerGovernanceFactor} from './rulers.js';
 
@@ -242,7 +242,10 @@ export function generateOfficial(s,office){
  const birth=s.year-30-Math.floor(roll(s,'age'+office)*20);
  recordBirth(s,{id,father:null,mother:null,birthSurname:sn[0],birth,sex:'m'});
  const factions=['ru','waiqi','frontier','haoqiang'];
- s.persons[id]={id,name:[`${sn[0]} ${gv[0]}`,`${sn[1]}${gv[1]}`],surname:sn[0],birthSurname:sn[0],sex:'m',birth,death:null,father:null,mother:null,record:'fictional',faction:'han',role:office==='duhu'||office==='hexi'?'general':'official',courtFaction:factions[Math.floor(roll(s,'cf'+id)*factions.length)],alive:true,ambition:Math.floor(20+roll(s,'a'+id)*70),competence:Math.floor(35+roll(s,'c'+id)*50),loyalty:Math.floor(40+roll(s,'l'+id)*50),corruption:Math.floor(roll(s,'k'+id)*60),military:Math.floor(30+roll(s,'m'+id)*50),spouse:[]};
+ const hanRegions=s.regions.filter(r=>r.owner==='han'),homeland=hanRegions.length?hanRegions[Math.floor(roll(s,'origin'+id)*hanRegions.length)].id:null;
+ const location=hanRegions.find(r=>r.id==='changan')?.id||hanRegions[0]?.id||null;
+ const role=office==='duhu'||office==='hexi'?'general':'official';
+ s.persons[id]={id,name:[`${sn[0]} ${gv[0]}`,`${sn[1]}${gv[1]}`],surname:sn[0],birthSurname:sn[0],sex:'m',birth,death:null,father:null,mother:null,record:'fictional',culture:[...CULTURAL_NAME_POOLS.han.culture],homeland,location,faction:'han',role,profession:role,courtFaction:factions[Math.floor(roll(s,'cf'+id)*factions.length)],alive:true,ambition:Math.floor(20+roll(s,'a'+id)*70),competence:Math.floor(35+roll(s,'c'+id)*50),loyalty:Math.floor(40+roll(s,'l'+id)*50),corruption:Math.floor(roll(s,'k'+id)*60),military:Math.floor(30+roll(s,'m'+id)*50),spouse:[],career:[{year:s.year,month:s.month,kind:'entered_service',who:id,text:['Entered Han court service.','入汉廷候任。']}]};
  ensureHanPortraitSeed(s.persons[id]);
  return s.persons[id];
 }
@@ -317,6 +320,13 @@ export function loadHanSave(raw){
   if(s.persons[p.id]){s.persons[p.id].birthSurname=p.birthSurname;if(p.portrait&&!s.persons[p.id].portrait&&s.persons[p.id].birth===p.birth&&s.persons[p.id].name?.[0]===p.name[0])s.persons[p.id].portrait=p.portrait}}
  for(const r of REGIONS)if(!s.regions.some(x=>x.id===r.id))s.regions.push({...r,siege:null,unrest:0});
  for(const [id,f] of Object.entries(FACTIONS))if(!f.dynamic&&!s.factions[id])s.factions[id]={id,treasury:20,grain:30,manpower:6000,horses:3000,stability:55};
+ // Older campaign officials retain their names and any recorded origin;
+ // unknown birthplace or location stays unknown rather than being invented.
+ for(const person of Object.values(s.persons))if(person.record==='fictional'&&person.id?.startsWith('gen-')){
+  person.culture??=[...CULTURAL_NAME_POOLS.han.culture];person.profession??=person.role;
+  person.homeland??=null;person.location??=null;
+  person.career??=(s.log||[]).filter(entry=>entry.who===person.id||entry.who2===person.id);
+ }
  s.rulers||=Object.fromEntries(EURASIAN_RULERS.map(p=>[p.faction,{...p,attested:true}]));
  ensureForeignRulers(s);
  s.noArmyWarMonths??=0;s.territorylessMonths??=0;

@@ -37,11 +37,16 @@ try{
  const recommended=afterRecommendation.find(id=>!beforeRecommendation.includes(id));assert.ok(recommended);
  await page.locator(`[data-court-person="${recommended}"]`).click();
  assert.match(await profile.innerText(),/original campaign person/);
+ assert.match(await profile.innerText(),/Culture\s+Han Chinese/);
+ assert.match(await profile.innerText(),/Recorded origin\s+\S+/);
+ assert.match(await profile.innerText(),/Last recorded location\s+\S+/);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#court-panel').click();
  assert.equal(await page.locator(`[data-court-person="${recommended}"]`).count(),1);
+ await page.locator(`[data-court-person="${recommended}"]`).click();assert.match(await profile.innerText(),/Culture\s+Han Chinese/);
  await page.locator('[data-court-person="hong-gong"]').click();
  assert.equal(await page.locator('#court-office option[value="chengxiang"]').count(),0);
  await page.locator('[data-court-person="liu-xiang"]').click();
+ assert.equal(await profile.getAttribute('data-person'),'liu-xiang');
  assert.equal(await page.locator('#court-office option[value="zongzheng"]').count(),1);
  await page.locator('[data-court-person="feng-liao"]').click();
  assert.match(await profile.innerText(),/Envoy/);
@@ -78,6 +83,8 @@ try{
  assert.match(await profile.innerText(),new RegExp(generated.name[1]));
  assert.match(await profile.innerText(),/大司农/);
  assert.match(await profile.innerText(),/游戏创作/);
+ assert.match(await profile.innerText(),/文化\s+汉/);
+ assert.match(await profile.innerText(),/记载的出身地\s+\S+/);
  const generatedSrc=await profile.locator('img').getAttribute('src');
  assert.match(generatedSrc,/^data:image\/svg\+xml,/);
  assert.equal((await profile.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0)),true);
@@ -87,6 +94,7 @@ try{
  assert.match(await profile.innerText(),new RegExp(generated.name[0]));
  await page.locator('#lang').click();
  assert.match(await profile.innerText(),new RegExp(generated.name[1]));
+ assert.match(await profile.innerText(),/文化\s+汉/);
  assert.deepEqual(errors,[]);
  console.log('Han court browser smoke passed: historical and original portraits, dynamic roster, persistent careers, appointment, audit, disaster decision, save/load and both languages.');
 }finally{await browser.close()}

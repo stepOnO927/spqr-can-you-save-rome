@@ -210,6 +210,11 @@ dismissal remain visible after Chronicle trimming and save restoration, and
 older generated people acquire the same portrait on load. A Chromium test
 selects an appointed original official, renders the portrait, changes language
 and reloads the save. Broader generated-character art remains unfinished.
+Newly generated Han officials now save their culture, recorded origin, current
+court location, profession and first service event alongside that portrait.
+Their dossier shows those fields in both languages after save restoration.
+Older generated officials keep their saved names; unknown origins and locations
+remain explicitly unrecorded rather than receiving invented birthplaces.
 The same saved artwork now covers simulated Liu children, including a prince
 who later becomes orthodox emperor. The own-ruler card uses that person's
 portrait after a valid succession. A lineage-backed succession test rejects

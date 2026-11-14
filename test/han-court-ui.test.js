@@ -111,6 +111,11 @@ test('a pending disaster offers executable bilingual responses with real resourc
 test('appointed original official remains selectable with the same portrait and career after dismissal and reload',()=>{
  let s=newHanGame('han',{seed:64});
  const person=generateOfficial(s,'dasinong'),id=person.id;
+ assert.deepEqual(person.culture,['Han Chinese','汉']);
+ assert.equal(s.regions.find(r=>r.id===person.homeland)?.owner,'han');
+ assert.equal(person.location,'changan');
+ assert.equal(person.profession,'official');
+ assert.equal(person.career[0].kind,'entered_service');
  assert.ok(Number.isSafeInteger(person.appearanceSeed));
  assert.match(courtPortraitSrc(person),/^data:image\/svg\+xml,/);
  assert.equal(appoint(s,'dasinong',id).ok,true);
@@ -120,6 +125,8 @@ test('appointed original official remains selectable with the same portrait and 
   assert.ok(html.includes(`data-person="${id}"`));
   assert.ok(html.includes(person.name[lang]));
   assert.ok(html.includes('data:image/svg+xml,'));
+  assert.ok(html.includes(person.culture[lang]));
+  assert.ok(html.includes(s.regions.find(r=>r.id===person.homeland).name[lang]));
  }
  assert.match(hanCourtHtml(s,0,id),/appointed Grand Minister of Agriculture/);
  const originalSrc=courtPortraitSrc(person);
@@ -128,9 +135,28 @@ test('appointed original official remains selectable with the same portrait and 
  assert.ok(hanCourtHtml(s,0).includes(`data-court-person="${id}"`));
  s=loadHanSave(serialize(s));
  assert.equal(courtPortraitSrc(s.persons[id]),originalSrc);
+ assert.equal(s.persons[id].homeland,person.homeland);
+ assert.equal(s.persons[id].location,person.location);
+ assert.equal(s.persons[id].career[0].kind,'entered_service');
  assert.match(hanCourtHtml(s,1,id),/游戏创作/);
  assert.match(hanCourtHtml(s,0,id),/dismissed as Grand Minister of Agriculture/);
  delete s.persons[id].appearanceSeed;
  s=loadHanSave(serialize(s));
  assert.equal(courtPortraitSrc(s.persons[id]),originalSrc,'older saves regenerate a stable portrait');
+});
+
+test('legacy generated officials keep their names and unknown origins on load',()=>{
+ const s=newHanGame('han',{seed:91}),person=generateOfficial(s,'dasinong'),id=person.id;
+ assert.equal(appoint(s,'dasinong',id).ok,true);
+ const originalName=[...person.name];
+ for(const key of ['culture','homeland','location','profession','career'])delete person[key];
+ const loaded=loadHanSave(serialize(s)),restored=loaded.persons[id];
+ assert.deepEqual(restored.name,originalName);
+ assert.deepEqual(restored.culture,['Han Chinese','汉']);
+ assert.equal(restored.homeland,null);
+ assert.equal(restored.location,null);
+ assert.equal(restored.profession,'official');
+ assert.ok(restored.career.some(entry=>entry.kind==='court'&&entry.office==='dasinong'));
+ assert.match(hanCourtHtml(loaded,0,id),/<dt>Recorded origin<\/dt><dd>Not recorded<\/dd>/);
+ assert.match(hanCourtHtml(loaded,1,id),/<dt>记载的出身地<\/dt><dd>未记载<\/dd>/);
 });
