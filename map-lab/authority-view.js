@@ -1,5 +1,5 @@
 import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
-import {deriveGovernment} from '../governance.js?v=succession-ui-recovery-1';
+import {deriveGovernment} from '../governance.js?v=cursus-portraits-1';
 
 // Project government authority from the viewer's own state or dated reports.
 // The theater-level political authority is not a claim of presence in a city.

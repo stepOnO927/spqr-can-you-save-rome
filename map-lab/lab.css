@@ -98,8 +98,8 @@
 .cursus-office>b{display:block;font-family:Georgia,serif;color:#e6d4aa}
 .cursus-office small{display:block;color:#aaa68e;margin:2px 0 5px}
 .cursus-office em{font-size:11px;color:#a9a38f}
-.cursus-person{display:inline-flex!important;align-items:center;gap:8px;text-align:left!important;margin:3px 5px 3px 0!important;padding:3px 6px 3px 3px!important;max-width:100%;white-space:normal!important}
-.cursus-person img,.cursus-portrait{display:inline-grid;place-items:center;flex:none;width:33px;height:38px;object-fit:cover;border:1px solid #9c8358}
+.cursus-person{display:inline-flex!important;align-items:center;gap:8px;text-align:left!important;margin:3px 5px 3px 0!important;padding:3px 8px 3px 3px!important;max-width:100%;white-space:normal!important;background:#26332f!important;color:#f2e7c8!important;border:1px solid #8c7954!important}
+.cursus-person img,.cursus-portrait{display:inline-grid;place-items:center;flex:none;width:42px;height:48px;object-fit:cover;border:1px solid #9c8358}
 .cursus-portrait{font:12px Georgia,serif;color:#e8d4aa;background:hsl(var(--portrait-hue) 18% 27%)}
 .cursus-person span:last-child{display:flex;flex-direction:column;gap:2px}
 .cursus-person small{font-size:9px}

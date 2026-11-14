@@ -1,4 +1,4 @@
-import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=peace-cursus-1';
+import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=cursus-portraits-1';
 import {FACTIONS,PLAYABLE,ROUTES,OFFICES} from './data.js';
 import {appoint,knownAttributes,emperorAuthority} from './court.js';
 import {isLiuClan} from './dynasty.js';

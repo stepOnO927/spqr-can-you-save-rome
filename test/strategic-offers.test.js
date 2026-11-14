@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,isWar,upgradeSave} from '../engine.js?v=peace-cursus-1';
+import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,isWar,upgradeSave} from '../engine.js?v=cursus-portraits-1';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {observeDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=succession-ui-recovery-1';
-import {receivedMail} from '../epistulae.js?v=peace-cursus-1';
-import {mailboxHtml} from '../mail-ui.js?v=peace-cursus-1';
+import {buildChessboard} from '../chessboard.js?v=cursus-portraits-1';
+import {receivedMail} from '../epistulae.js?v=cursus-portraits-1';
+import {mailboxHtml} from '../mail-ui.js?v=cursus-portraits-1';
 
 function setup(seed){
  const s=newGame('caesar');s.seed=seed;s.wars.push(['egypt','senate']);s.relations['egypt:parthia']=40;
