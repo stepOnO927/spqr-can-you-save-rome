@@ -29,6 +29,16 @@ try{
  await page.locator('#court-audit').click();
  assert.match(await page.locator('#message').innerText(),/Audit opened/);
  assert.equal(await page.locator('#court-audit').isDisabled(),true);
+ const beforeRecommendation=await page.locator('[data-court-person]').evaluateAll(nodes=>nodes.map(node=>node.dataset.courtPerson));
+ await page.locator('#court-recommend').click();
+ assert.match(await page.locator('#message').innerText(),/Recommendation requested/);
+ for(let i=0;i<3;i++)await page.locator('#advance').click();
+ const afterRecommendation=await page.locator('[data-court-person]').evaluateAll(nodes=>nodes.map(node=>node.dataset.courtPerson));
+ const recommended=afterRecommendation.find(id=>!beforeRecommendation.includes(id));assert.ok(recommended);
+ await page.locator(`[data-court-person="${recommended}"]`).click();
+ assert.match(await profile.innerText(),/original campaign person/);
+ await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#court-panel').click();
+ assert.equal(await page.locator(`[data-court-person="${recommended}"]`).count(),1);
  await page.locator('[data-court-person="hong-gong"]').click();
  assert.equal(await page.locator('#court-office option[value="chengxiang"]').count(),0);
  await page.locator('[data-court-person="liu-xiang"]').click();

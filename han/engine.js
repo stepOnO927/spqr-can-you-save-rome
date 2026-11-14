@@ -1,7 +1,7 @@
 // MANDATE OF HEAVEN — campaign engine. Independent of the Roman engine: the
 // Roman campaign, its saves and its modules are untouched. Han saves use
 // their own storage keys and carry dlc:'mandate-of-heaven'.
-import {START,REGIONS,FACTIONS,PLAYABLE,OASIS} from './data.js?v=han-1';
+import {START,REGIONS,FACTIONS,PLAYABLE,OASIS,OFFICES} from './data.js?v=han-1';
 import {EURASIAN_FACTIONS,EURASIAN_RULERS} from './eurasia-data.js';
 import {initDependencies,advanceDependencies,changeDependency} from './dependencies.js';
 import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=han-1';
@@ -242,6 +242,22 @@ export function generateOfficial(s,office){
  ensureHanPortraitSeed(s.persons[id]);
  return s.persons[id];
 }
+export function recommendOfficial(s,office){
+ if(s.player!=='han'||!OFFICES[office]||OFFICES[office].requiresLiu)return {ok:false,reason:'authority'};
+ s.court.recommendations||=[];
+ if(s.court.recommendations.some(x=>x.office===office&&x.status==='pending'))return {ok:false,reason:'pending'};
+ if(s.factions.han.treasury<15)return {ok:false,reason:'treasury',cost:15};
+ s.factions.han.treasury-=15;
+ const request={id:`recommendation:${monthIndex(s)}:${office}`,office,remaining:3,status:'pending',requested:{year:s.year,month:s.month}};
+ s.court.recommendations.push(request);return {ok:true,cost:15,months:3,id:request.id};
+}
+function advanceRecommendations(s){
+ for(const request of s.court.recommendations||[]){
+  if(request.status!=='pending'||--request.remaining>0)continue;
+  const candidate=generateOfficial(s,request.office);request.status='arrived';request.personId=candidate.id;request.arrived={year:s.year,month:s.month};
+  log(s,['A recommended official arrives: %NAME%.','察举荐来的官员抵达：%NAME%。'],{who:candidate.id,kind:'court'});
+ }
+}
 // Recorded events at fixed dates (only the opening succession of 48 BCE).
 function scheduledEvents(s){
  for(const e of (s.scheduled||[]).filter(e=>!e.done&&e.year===s.year&&e.month===s.month)){
@@ -276,7 +292,7 @@ export function tick(s){
  if(s.finalized)return s;
  advanceDate(s);
  scheduledEvents(s);movement(s);battles(s);sieges(s);supply(s);economy(s);lives(s);advanceForeignRulers(s);
- hanAI(s);advanceCourt(s);
+ hanAI(s);advanceCourt(s);advanceRecommendations(s);
  advanceFrontier(s,{issueMove:(a,to)=>moveArmy(s,a.id,to,{owner:a.owner})});
  advanceEasternMarkets(s);advanceSilk(s);advanceDependencies(s);advanceFocus(s);ensureFieldCommanders(s);
  if(s.throne.dynasty&&!s.throne.dynasty.orthodox)s.usurperMonths=(s.usurperMonths||0)+1;
@@ -301,6 +317,7 @@ export function loadHanSave(raw){
  ensureForeignRulers(s);
  s.noArmyWarMonths??=0;s.territorylessMonths??=0;
  initDependencies(s);
+ s.court.recommendations||=[];
  // Older saves did not date opening appointments. Begin the observation clock
  // at load instead of exposing a guessed historical tenure or private skill.
  for(const [office,id] of Object.entries(s.court?.offices||{}))if(id&&s.persons[id]?.alive&&s.persons[id].office===office)s.persons[id].officeSince??={year:s.year,month:s.month};

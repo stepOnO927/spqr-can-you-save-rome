@@ -11,6 +11,7 @@ const term=(lang,en,zh)=>lang?zh:en;
 function courtPeople(s){
  const ids=new Set(COURT_PROFILE_IDS);
  for(const id of Object.values(s.court?.offices||{}))if(id)ids.add(id);
+ for(const request of s.court?.recommendations||[])if(request.status==='arrived'&&request.personId)ids.add(request.personId);
  for(const person of Object.values(s.persons))if(person.faction==='han'&&person.career?.some(entry=>entry.kind==='court'&&entry.office))ids.add(person.id);
  return [...ids].map(id=>s.persons[id]).filter(person=>person&&person.faction==='han');
 }
@@ -41,10 +42,10 @@ export function hanCourtHtml(s,lang=0,selected=COURT_PROFILE_IDS[0]){
  <h3>${term(lang,'Current responsibilities','当前职责')}</h3><p>${esc(office?label(office.gloss,lang):term(lang,'No office is currently assigned.','当前未任官职。'))}</p>
  ${person.note?`<p>${esc(label(person.note,lang))}</p>`:''}<p class="muted">${person.record==='fictional'?term(lang,'This is an original campaign person. Their portrait is game artwork.','此人为战役原创人物，肖像为游戏创作。'):term(lang,'Birth dates may be approximate; deaths and health in this campaign are simulated. The image is not a documented likeness.','生年可能仅为约数；本战役中的死亡与健康属于模拟。画像并非史载容貌。')}</p>
  <h3>${term(lang,'Career in this campaign','本战役履历')}</h3>${activity.map(e=>`<p class="court-event">${esc(dateLabel(e.year,e.month,lang))} · ${esc(careerText(e))}</p>`).join('')||`<p class="muted">${term(lang,'No recorded court event yet.','尚无朝廷事件记录。')}</p>`}
- ${person.alive?`<label class="court-appoint">${term(lang,'Appoint to an office','任命官职')}<select id="court-office">${options}</select></label><button id="court-appoint" class="action">${term(lang,'Make appointment','正式任命')}</button><button id="court-audit" class="action" ${s.court.audits.some(a=>a.target===person.id&&a.status==='open')||s.factions.han.treasury<15?'disabled':''}>${term(lang,'Open audit · 15 treasury','启动稽查 · 国库15')}</button>`:''}</article>`;
+ ${person.alive?`<label class="court-appoint">${term(lang,'Appoint to an office','任命官职')}<select id="court-office">${options}</select></label><button id="court-appoint" class="action">${term(lang,'Make appointment','正式任命')}</button><button id="court-recommend" class="action" ${s.factions.han.treasury<15?'disabled':''}>${term(lang,'Seek a new official · 15 treasury · 3 months','察举新官 · 15国库 · 3个月')}</button><p id="court-recommend-status" class="muted">${(s.court.recommendations||[]).filter(x=>x.status==='pending').map(x=>`${esc(label(OFFICES[x.office]?.name,lang))} · ${term(lang,`${x.remaining} months remaining`,`剩余${x.remaining}个月`)}`).join(' · ')}</p><button id="court-audit" class="action" ${s.court.audits.some(a=>a.target===person.id&&a.status==='open')||s.factions.han.treasury<15?'disabled':''}>${term(lang,'Open audit · 15 treasury','启动稽查 · 国库15')}</button>`:''}</article>`;
 }
 
-export function renderHanCourtPanel({root,state,lang=0,selected,onSelect,onAppoint,onAudit,onDisaster}){
+export function renderHanCourtPanel({root,state,lang=0,selected,onSelect,onAppoint,onRecommend,onAudit,onDisaster}){
  root.innerHTML=hanCourtHtml(state,lang,selected);
  const roster=root.querySelector('.court-roster'),active=roster?.querySelector('[aria-pressed="true"]');
  if(active){const a=active.getBoundingClientRect(),r=roster.getBoundingClientRect();roster.scrollTop+=a.top-r.top-(r.height-a.height)/2}
@@ -52,9 +53,11 @@ export function renderHanCourtPanel({root,state,lang=0,selected,onSelect,onAppoi
  const person=root.querySelector('.court-profile')?.dataset.person;
  const appoint=root.querySelector('#court-appoint'),officeSelect=root.querySelector('#court-office');
  if(appoint&&officeSelect){
-  const sync=()=>appoint.disabled=state.persons[person]?.office===officeSelect.value&&state.court.offices[officeSelect.value]===person;
+  const recommend=root.querySelector('#court-recommend');
+  const sync=()=>{appoint.disabled=state.persons[person]?.office===officeSelect.value&&state.court.offices[officeSelect.value]===person;if(recommend)recommend.disabled=state.factions.han.treasury<15||OFFICES[officeSelect.value]?.requiresLiu||(state.court.recommendations||[]).some(x=>x.office===officeSelect.value&&x.status==='pending')};
   officeSelect.addEventListener('change',sync);sync();
   appoint.onclick=()=>onAppoint(person,officeSelect.value);
+  if(recommend)recommend.onclick=()=>onRecommend(officeSelect.value);
  }
  const audit=root.querySelector('#court-audit');if(audit)audit.onclick=()=>onAudit(person);
  root.querySelectorAll('[data-court-disaster]').forEach(button=>button.onclick=()=>onDisaster(button.dataset.courtDisaster,button.dataset.courtDisaster==='blame_faction'?root.querySelector('#court-blame-faction').value:null));

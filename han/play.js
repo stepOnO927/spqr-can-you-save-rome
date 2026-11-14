@@ -1,4 +1,4 @@
-import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY} from './engine.js';
+import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=cursus-han-2';
 import {FACTIONS,PLAYABLE,ROUTES} from './data.js';
 import {drawMap} from './map.js';
 import {templatesFor,recruitQuote,recruit,neighbours} from './military.js';
@@ -50,6 +50,7 @@ function render(){
   renderHanCourtPanel({root:$('inspector'),state:s,lang,selected:selectedCourt,
    onSelect:id=>{selectedCourt=id;render()},
    onAppoint:(id,office)=>{const result=appoint(s,office,id);message(result.ok?'Appointment made.':`Appointment failed: ${result.reason}.`,result.ok?'任命已生效。':'任命未获准。');render()},
+   onRecommend:office=>{const result=recommendOfficial(s,office);message(result.ok?'Recommendation requested; return in three months.':`Recommendation unavailable: ${result.reason}.`,result.ok?'已提出察举请求；三个月后查看。':'无法察举此官。');render()},
    onAudit:id=>{const result=startAudit(s,id);message(result.ok?'Audit opened.':`Audit unavailable: ${result.reason}.`,result.ok?'稽查已启动。':'无法启动稽查。');render()},
    onDisaster:(response,faction)=>{const result=respondToDisaster(s,response,{faction});message(result.ok?'Court response enacted.':`Response failed: ${result.reason}.`,result.ok?'朝廷已作出应对。':'应对未获执行。');render()}
   });renderChronicle();return

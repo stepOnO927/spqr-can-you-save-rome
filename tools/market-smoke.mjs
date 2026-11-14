@@ -1,18 +1,19 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+const base=process.env.SPQR_TEST_URL||'http://127.0.0.1:5173';
 
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1500,height:950}}),errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
- await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+ await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=faces-empire-2');
   const state=newGame('caesar');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
  });
- await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#markets').click();
  await page.locator('#market-origin').selectOption('cisalpine');
  await page.locator('#market-destination').selectOption('narbo');
@@ -63,7 +64,7 @@ try{
   if(placed.shipment.status!=='stranded')throw Error('Blocked caravan did not settle');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
  });
- await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#markets').click();
  assert.match(await page.locator('.market-panel').innerText(),/商队中止.*货物退回.*退款.*运费支出/s);
  assert.match(await page.locator('.market-panel').innerText(),/西汉帝国.*帕提亚/);
@@ -78,7 +79,7 @@ try{
   if(!proposeAgreement(state,'han','parthia','trade').ok)throw Error('Han-Parthia treaty unavailable');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
  });
- await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#markets').click();
  assert.ok((await page.locator('#market-origin option').evaluateAll(options=>options.map(x=>x.value))).includes('parthia'));
  await page.locator('#market-origin').selectOption('parthia');
@@ -98,7 +99,7 @@ try{
   if(!recruit(state,'hanHexi'))throw Error('Han recruitment failed');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
  });
- await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('[data-army="levy1"]').evaluate(element=>element.click());
  assert.match(await page.locator('#command-detail').innerText(),/Mounted scouts|骑乘侦察兵/);
  assert.deepEqual(errors,[]);
