@@ -273,8 +273,13 @@ successor appears only after a simulated succession. New ruler names avoid
 duplicates among living people where the cultural pool permits; an existing
 save's ruler identity is retained, and a stale ID counter cannot overwrite
 an earlier person. Tests cover several neighboring courts and a dynamic
-new court. If an older save retains an unnamed ruler receipt but lacks that
-person record, migration restores the title-only marker instead of claiming
+new court. Generated successors now draw from the same distinct reconstructed
+Xiongnu, Wusun, Kangju, Bactrian, Yuezhi, Sogdian, Saka and oasis name pools
+used by field characters. Their saved person records include cultural origin,
+homeland, current location, role and succession history. The opening rulers
+and names in older saves remain intact. If an older save retains an unnamed
+ruler receipt but lacks that person record, migration restores the title-only
+marker instead of claiming
 the placeholder is a documented historical individual.
 The [Hanshu Western Regions account](https://ctext.org/wiki.pl?chapter=325663&if=en)
 describes Gumo's king by office without identifying a 49 BCE personal name;

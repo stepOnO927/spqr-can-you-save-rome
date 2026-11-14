@@ -19,6 +19,7 @@ const POOLS={
  qiang:{culture:['Qiang (game reconstruction)','羌（游戏复原）'],names:[['Daru','达如'],['Mile','米勒'],['Qima','奇玛'],['Talu','塔鲁']]},
  steppe:{culture:['Steppe community (game reconstruction)','草原社群（游戏复原）'],names:[['Arta','阿尔塔'],['Turan','图兰'],['Madu','马都'],['Kara','卡拉']]}
 };
+export const CULTURAL_NAME_POOLS=Object.freeze(POOLS);
 
 export function fieldCulture(faction){
  if(faction==='kangju'||faction==='chorasmia')return 'kangju';

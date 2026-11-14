@@ -2,31 +2,24 @@
 import {FACTIONS} from './data.js?v=han-1';
 import {EURASIAN_RULERS} from './eurasia-data.js';
 import {recordBirth} from './dynasty.js?v=han-1';
+import {CULTURAL_NAME_POOLS,fieldCulture} from './field-identities.js';
 import {clamp,log} from './util.js?v=han-1';
 
 const TITLES={huhanye:['Chanyu','单于'],zhizhi:['Chanyu','单于'],wusun:['Greater Kunmi','大昆弥'],wusun_lesser:['Lesser Kunmi','小昆弥'],kangju:['King of Kangju','康居王'],dayuan:['King of Dayuan','大宛王'],parthia:['King of Kings','万王之王'],armenia:['King of Armenia','亚美尼亚王'],commagene:['King of Commagene','科马吉尼王']};
-const POOLS={
- parthian:[['Vardanes','瓦尔达内斯'],['Phraates','弗拉特斯'],['Artabanus','阿尔塔巴努斯'],['Pacorus','帕科鲁斯']],
- western:[['Aram','阿拉姆'],['Tigranes','提格兰'],['Artaxias','阿尔塔克西亚斯'],['Mithridates','米特里达梯']],
- steppe:[['Tulan','图兰'],['Boru','博鲁'],['Yazgan','亚兹干'],['Kulan','库兰']],
- yuezhi:[['Vima','维玛'],['Kada','迦达'],['Yasa','亚萨'],['Mora','莫拉']],
- saka:[['Mauka','毛迦'],['Ranu','拉努'],['Saka','塞迦'],['Vara','瓦拉']],
- sogdian:[['Varkhuman','瓦尔库曼'],['Nana','娜娜'],['Roxan','罗珊'],['Bagha','巴伽']],
- oasis:[['Yana','耶那'],['Vira','毗罗'],['Nanda','难陀'],['Mitra','密多']]
-};
 const culture=f=>{const c=FACTIONS[f]?.culture||'oasis';return ['xiongnu','wusun','qiang'].includes(c)?'steppe':c};
 export const rulerTitle=f=>TITLES[f]||(FACTIONS[f]?.state==='yuezhi_chiefdom'?['Xihou chief','翕侯']:FACTIONS[f]?.state==='urban_community'?['Council head','城邦首领']:FACTIONS[f]?.state==='confederation'?['High chief','联盟首领']:['steppe','saka','yuezhi'].includes(culture(f))?['Chief','首领']:['King','国王']);
 const hash=x=>{let h=2166136261;for(const c of x)h=Math.imul(h^c.charCodeAt(0),16777619)>>>0;return h>>>0};
 function makeRuler(s,f,predecessor=null,{role='ruler',minimumAge=18}={}){
  let n=s.nextRuler||0,id;do{id=`sim-${role}-${f}-${++n}`}while(s.persons[id]);s.nextRuler=n;
- const pool=POOLS[culture(f)]||POOLS.oasis;
- const start=hash(`${s.seed}:${f}:${n}`)%pool.length,used=new Set(Object.values(s.persons).filter(p=>p.alive).map(p=>p.name?.[0]));
- let name=pool.slice(start).concat(pool.slice(0,start)).find(pair=>!used.has(pair[0]));
- if(!name){const court=FACTIONS[f]?.name||[f,f],base=pool[start];name=[`${base[0]} of ${court[0]}`,`${court[1]}的${base[1]}`];for(let suffix=2;used.has(name[0]);suffix++)name=[`${base[0]} of ${court[0]} (${suffix})`,`${court[1]}的${base[1]}（${suffix}）`]}
+ const pool=CULTURAL_NAME_POOLS[fieldCulture(f)]||CULTURAL_NAME_POOLS.oasis,names=pool.names;
+ const start=hash(`${s.seed}:${f}:${n}`)%names.length,used=new Set(Object.values(s.persons).filter(p=>p.alive).map(p=>p.name?.[0]));
+ let name=names.slice(start).concat(names.slice(0,start)).find(pair=>!used.has(pair[0]));
+ if(!name){const court=FACTIONS[f]?.name||[f,f],base=names[start];name=[`${base[0]} of ${court[0]}`,`${court[1]}的${base[1]}`];for(let suffix=2;used.has(name[0]);suffix++)name=[`${base[0]} of ${court[0]} (${suffix})`,`${court[1]}的${base[1]}（${suffix}）`]}
  const sex=hash(`${id}:sex`)%7===0?'f':'m',birth=s.year-minimumAge-hash(`${id}:age`)%16;
  const kin=predecessor?.birth!=null&&s.genealogy[predecessor.id]&&birth-predecessor.birth>=14;
+ const homeland=s.regions.find(r=>r.owner===f)?.id||null;
  const p={id,name:[...name],surname:null,birthSurname:null,sex,birth,death:null,father:kin&&predecessor.sex==='m'?predecessor.id:null,mother:kin&&predecessor.sex==='f'?predecessor.id:null,politicalPredecessor:predecessor?.id||null,
-  faction:f,role,record:'fictional',alive:true,ambition:30+hash(`${id}:ambition`)%61,competence:35+hash(`${id}:competence`)%51,military:35+hash(`${id}:military`)%56,loyalty:100,portraitSeed:hash(`${s.seed}:${id}:portrait`),
+  faction:f,role,record:'fictional',culture:[...pool.culture],homeland,location:homeland,profession:role,title:role==='regent'?['Court regent','宫廷摄政']:rulerTitle(f),spouse:[],history:[],alive:true,ambition:30+hash(`${id}:ambition`)%61,competence:35+hash(`${id}:competence`)%51,military:35+hash(`${id}:military`)%56,loyalty:100,portraitSeed:hash(`${s.seed}:${id}:portrait`),
   note:['Original character created for this campaign; no historical personal name is asserted.','本战役原创人物，不作为史载国王名讳。']};
  s.persons[id]=p;recordBirth(s,{id,father:p.father,mother:p.mother,birthSurname:null,birth:p.birth,sex});return p;
 }
@@ -42,6 +35,7 @@ function ensureRegency(s,f){
  if(seated?.alive&&seated.faction===f&&seated.regentFor===p.id&&!isMinor(s,seated))return;
  if(seated?.regentFor===p.id)delete seated.regentFor;
  const regent=makeRuler(s,f,p,{role:'regent',minimumAge:35});regent.regentFor=p.id;regent.title=['Court regent','宫廷摄政'];
+ regent.history.push({year:s.year,month:s.month,kind:'regency',for:p.id});
  r.regentId=regent.id;
  if(f===s.player)log(s,[`${regent.name[0]} governs ${FACTIONS[f]?.name?.[0]||f} as regent for the minor ${p.name[0]}.`,`${regent.name[1]}为年幼的${p.name[1]}摄政，治理${FACTIONS[f]?.name?.[1]||f}。`],{kind:'regency',faction:f,who:regent.id});
 }
@@ -54,6 +48,7 @@ function makeTitleOnlyRuler(s,f){
 }
 function seat(s,f,p,old=null){
  if(old?.regentId&&s.persons[old.regentId]?.regentFor===old.personId)delete s.persons[old.regentId].regentFor;
+ if(old&&(p.record==='fictional'||p.record==='simulated'))(p.history||=[]).push({year:s.year,month:s.month,kind:'succession',predecessor:old.id});
  s.rulers[f]={id:p.id,personId:p.id,name:[...p.name],title:rulerTitle(f),faction:f,record:p.record,titleOnly:!!p.titleOnly,attested:p.record==='historical'&&!p.titleOnly,source:p.source||null,portraitSeed:p.portraitSeed??hash(`${s.seed}:${p.id}:portrait`),since:{year:s.year,month:s.month},predecessor:old?.id||null};
  if(old){const stability=s.factions[f]?.stability;if(stability!=null)s.factions[f].stability=clamp(stability-(p.father===old.id||p.mother===old.id?2:5));
   if(f===s.player)log(s,[`${p.name[0]} succeeds ${old.name[0]} as ${rulerTitle(f)[0]}.`,`${p.name[1]}继${old.name[1]}为${rulerTitle(f)[1]}。`],{kind:'succession',faction:f,who:p.id});}

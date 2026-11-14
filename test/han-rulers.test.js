@@ -88,6 +88,29 @@ test('new sovereign names stay distinct across neighboring courts and dynamic st
  assert.equal(s.persons[s.rulers['new-oasis-court'].personId].record,'fictional');
 });
 
+test('steppe and western successors retain distinct reconstructed cultures and origins',()=>{
+ const s=newHanGame('wusun',{seed:730});
+ const origins={huhanye:'Xiongnu',wusun:'Wusun',kangju:'Kangju',dayuan:'Bactrian',yuezhi:'Yuezhi',sogd_samarkand:'Sogdian',sakastan:'Saka',shanshan:'Tarim oasis'};
+ const former=Object.fromEntries(Object.keys(origins).map(f=>[f,s.rulers[f].personId]));
+ for(const id of Object.values(former))s.persons[id].alive=false;
+ advanceForeignRulers(s);
+ const names=[];
+ for(const [f,culturalLabel] of Object.entries(origins)){
+  const p=s.persons[s.rulers[f].personId];
+  assert.equal(p.record,'fictional',f);
+  assert.match(p.culture[0],new RegExp(culturalLabel),f);
+  assert.ok(s.regions.some(r=>r.id===p.homeland&&r.owner===f),f);
+  assert.equal(p.location,p.homeland,f);
+  assert.equal(p.politicalPredecessor,former[f],f);
+  assert.ok(p.history.some(e=>e.kind==='succession'&&e.predecessor===former[f]),f);
+  assert.match(p.note[0],/Original character/,f);
+  names.push(p.name[0]);
+ }
+ assert.equal(new Set(names).size,names.length);
+ const saved=loadHanSave(serialize(s));
+ for(const f of Object.keys(origins))assert.deepEqual(saved.persons[s.rulers[f].personId],s.persons[s.rulers[f].personId],f);
+});
+
 test('a missing legacy ruler counter cannot overwrite an existing person',()=>{
  const s=newHanGame('gumo',{seed:32}),old=s.rulers.gumo;
  s.persons['sim-ruler-gumo-1']={id:'sim-ruler-gumo-1',name:['Earlier person','先前人物'],alive:false,record:'fictional'};
