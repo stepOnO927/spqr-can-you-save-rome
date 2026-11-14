@@ -25,6 +25,15 @@ test('oasis courts keep operating cash while local levies cost treasury after de
  assert.equal(home.focus.shanshan.current,null);
 });
 
+test('steppe hosts forage at home but spend treasury and grain when deployed',()=>{
+ const home=game('parthia',{seed:49}),deployed=game('parthia',{seed:49});
+ home.tradeMarkets.embeddedRoman=true;deployed.tradeMarkets.embeddedRoman=true;
+ deployed.armies.find(a=>a.owner==='wusun').region='jushi';
+ tick(home);tick(deployed);
+ assert.ok(home.factions.wusun.treasury>deployed.factions.wusun.treasury);
+ assert.ok(home.factions.wusun.grain>deployed.factions.wusun.grain);
+});
+
 test('11. Han troops march across valid Chinese territories along real routes',()=>{
  const s=game();const a=s.armies.find(x=>x.owner==='han'&&x.region==='changan');
  assert.equal(moveArmy(s,a.id,'shu').ok,false,'Chang’an and Shu are not adjacent');

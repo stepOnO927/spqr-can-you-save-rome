@@ -140,6 +140,12 @@ scheduled Liu succession, foreign ruler and portrait persistence, fiscal and
 market bounds, physical deliveries, transport accounting and a midpoint save
 reload. This broadens Test H but does not replace targeted political crisis
 and combat acceptance scenarios.
+The same long-run check now guards the home-pasture economy of four steppe
+polities. Their mounted hosts draw sustenance from local herds while stationed
+in friendly steppe territory; campaigning elsewhere resumes normal treasury
+and grain upkeep. A separate test compares those two cases, while the
+120-month Parthian run confirms the home hosts no longer bankrupt their courts
+merely by remaining in place. Campaign losses can still strain a treasury.
 Roman-campaign caravans blocked for twelve consecutive months now settle
 against their escrow: cargo returns to the last actual campaign market,
 the buyer recovers goods payment and customs, and transport spending plus the

@@ -36,6 +36,10 @@ test('120 months remain stable for Han, oasis and western campaigns; saves prese
   assert.equal(s.year,-39);assert.equal(s.month,1);
   assert.ok(s.silk.farWestDeliveries>0);
   assert.equal(s.throne.orthodox==null||s.persons[s.throne.orthodox]?.birthSurname==='Liu',true);
+  if(player==='parthia')for(const id of ['wusun','wusun_lesser','kangju','jiankun']){
+   assert.ok(s.factions[id].treasury>=0,`${id} cannot fund its home pastoral host`);
+   assert.ok(s.factions[id].grain>=0,`${id} cannot feed its home pastoral host`);
+  }
   const saved=loadHanSave(serialize(s));
   assert.equal(saved.regions.length,s.regions.length);
   assert.equal(saved.dependencies.length,s.dependencies.length);
