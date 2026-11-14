@@ -2,6 +2,7 @@
 // issues orders or uses unreported foreign strength, locations or intentions.
 import {receivedMail,sendLetter} from './epistulae.js?v=portraits-hundred-days-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
+import {treeFor,canStartFocus,focusCost} from './national-focus.js?v=portraits-hundred-days-1';
 
 const label=(en,zh)=>[en,zh];
 const month=s=>s.year*12+s.month;
@@ -19,12 +20,13 @@ export const DIRECTIONS={
 export function initializeExperience(s,{guided=false,presentation='beginner',openingLetter=false}={}){
  if(!s.experience||typeof s.experience!=='object')s.experience={direction:'',presentation,guide:{running:!!guided,paused:false,skipped:!guided,step:0,hints:true},actions:{},milestones:[],decisions:[],started:month(s),openingLetter:null};
  const x=s.experience;x.guide||={running:false,paused:false,skipped:true,step:0,hints:true};x.actions||={};x.milestones||=[];x.decisions||=[];x.presentation||=presentation;
- if(openingLetter&&!x.openingLetter){const leader=aliveLeader(s),home=ownRegions(s)[0]?.id;if(leader&&home){const result=sendLetter(s,{senderId:leader,senderFaction:s.player,recipient:s.player,destination:home,category:'government',priority:'important',subject:s.player==='senate'?label('Pompey asks for a first assessment','庞培请求初步评估'):label('Caesar asks for a first assessment','凯撒请求初步评估'),body:s.player==='senate'?label('Our command is divided and Caesar remains in the field. Review our forces and finances, then decide whether to defend, negotiate or prepare a campaign.','本方指挥分散，凯撒仍有野战军。请先检查军力与财务，再决定防守、谈判或准备行动。'):label('The civil war has begun. Review our legion and supplies, then choose whether to negotiate, develop our resources or prepare a campaign.','内战已起。请检查军团与补给，再决定谈判、发展资源或准备行动。'),options:['war_council','review_budget','acknowledge'],context:{kind:'opening_brief',region:home}});if(result.ok)x.openingLetter=result.letter.id}}
+ if(openingLetter&&!x.openingLetter){const leader=aliveLeader(s),home=ownRegions(s)[0]?.id;if(leader&&home){const result=sendLetter(s,{senderId:leader,senderFaction:s.player,recipient:s.player,destination:home,category:'government',priority:'important',subject:s.player==='senate'?label('Pompey asks for a first assessment','庞培请求初步评估'):label('Caesar asks for a first assessment','凯撒请求初步评估'),body:s.player==='senate'?label('Our command is divided and Caesar remains in the field. Review our forces and finances, then decide whether to defend, negotiate or prepare a campaign.','本方指挥分散，凯撒仍有野战军。请先检查军力与财务，再决定防守、谈判或准备行动。'):label('The civil war has begun. Review our legion and supplies, then choose whether to negotiate, develop our resources or prepare a campaign.','内战已起。请检查军团与补给，再决定谈判、发展资源或准备行动。'),options:['war_council','review_budget','acknowledge'],context:{kind:'opening_brief',region:home}});if(result.ok){result.letter.arrival=month(s)+1;result.letter.courierRisk=0;x.openingLetter=result.letter.id}}}
  return x;
 }
 
 export function recordExperience(s,action,detail=''){
  const x=initializeExperience(s);x.actions[action]=(x.actions[action]||0)+1;
+ if(['order','peace','tax','recruit','agreement','appointment','reply'].includes(action))x.actions.course=(x.actions.course||0)+1;
  if(['direction','order','peace','tax','focus','reply','recruit','appointment','agreement'].includes(action)){
   x.decisions.unshift({year:s.year,month:s.month,action,detail:String(detail).slice(0,100)});x.decisions=x.decisions.slice(0,16);
  }
@@ -36,20 +38,23 @@ export function setGuide(s,command){const g=initializeExperience(s).guide;
  if(command==='pause'&&g.running)g.paused=true;
  if(command==='resume'){g.running=true;g.paused=false;g.skipped=false}
  if(command==='skip'){g.running=false;g.paused=false;g.skipped=true}
- if(command==='restart'){g.running=true;g.paused=false;g.skipped=false;g.step=0;for(const key of ['army','supply','direction','advance','chronicle','mail','reply'])delete s.experience.actions[key]}
+ if(command==='restart'){g.running=true;g.paused=false;g.skipped=false;g.step=0;for(const key of ['army','supply','threat','leadership','direction','course','advance','chronicle','mail','reply'])delete s.experience.actions[key]}
  if(command==='hints')g.hints=!g.hints;
  return g;
 }
 
 const paths={
- caesar:[['army','Select one of your legions on the map.','在地图上选择一支己方军团。','army'],['supply','Inspect its supply and condition.','查看该军团的补给与状态。','army'],['direction','Choose your strategic direction.','选择战略方向。','direction'],['advance','Advance one month and observe the world.','推进一个月，观察局势。','advance'],['chronicle','Open the Chronicle and review the result.','打开编年史，检查本月结果。','chronicle'],['mail','Read the political letter in your mailbox.','阅读邮箱中的政治来信。','mail'],['reply','Reply to a political development.','回复一项政治事态。','mail']],
- senate:[['army','Select a Senate field army before judging a threat.','先选择元老院野战军，再判断威胁。','army'],['supply','Review its supply and readiness.','检查该军的补给与战备。','army'],['direction','Choose defense, settlement or development as your emphasis.','选择防守、和解或发展作为重点。','direction'],['advance','Advance time; do not commit to an unknown battle.','推进时间；无须贸然投入未知战斗。','advance'],['chronicle','Review political and military developments.','检查政治与军事新动向。','chronicle'],['mail','Read the leadership message.','阅读领导层来信。','mail'],['reply','Respond to the message.','答复来信。','mail']]
+ caesar:[['army','Select one of your legions on the map.','在地图上选择一支己方军团。','army'],['supply','Inspect its supply and condition.','查看该军团的补给与状态。','army'],['threat','Inspect a known rival theater without ordering an attack.','查看一个已知的敌方战区，不必下令进攻。','map'],['direction','Choose your strategic direction.','选择战略方向。','direction'],['course','Take one real step: adjust tax, seek peace, recruit or issue a legal order.','实际采取一步：调整税率、寻求议和、征募或下达合法命令。','course'],['advance','Advance one month and observe the world.','推进一个月，观察局势。','advance'],['chronicle','Open the Chronicle and review the result.','打开编年史，检查本月结果。','chronicle'],['mail','Read the political letter in your mailbox.','阅读邮箱中的政治来信。','mail'],['reply','Reply to a political development.','回复一项政治事态。','mail']],
+ senate:[['army','Select a Senate field army before judging a threat.','先选择元老院野战军，再判断威胁。','army'],['supply','Review its supply and readiness.','检查该军的补给与战备。','army'],['threat','Inspect a known Caesarian theater before deciding whether to defend.','决定是否防守前，先查看已知的凯撒派战区。','map'],['leadership','Inspect the Senate government and its political options.','检查元老院政府及政治选择。','government'],['direction','Choose defense, settlement or development as your emphasis.','选择防守、和解或发展作为重点。','direction'],['course','Take a defensible step: adjust tax, seek peace, recruit or issue a legal order.','采取可防守的一步：调整税率、寻求议和、征募或下达合法命令。','course'],['advance','Advance time; do not commit to an unknown battle.','推进时间；无须贸然投入未知战斗。','advance'],['chronicle','Review political and military developments.','检查政治与军事新动向。','chronicle'],['mail','Read the leadership message.','阅读领导层来信。','mail'],['reply','Respond to the message.','答复来信。','mail']]
 };
-export function tutorialStep(s){const x=initializeExperience(s),steps=paths[s.player]||paths.caesar;let index=x.guide.step||0;
- while(index<steps.length){const [key]=steps[index];if((x.actions[key]||0)>0){index++;continue}break}x.guide.step=index;
- return index<steps.length?{index,total:steps.length,key:steps[index][0],title:label(steps[index][1],steps[index][2]),target:steps[index][3]}:null;
+export const tutorialLessons=s=>paths[s.player]||paths.caesar;
+export function tutorialStep(s){const x=initializeExperience(s),steps=tutorialLessons(s);let index=x.guide.step||0;
+ while(index<steps.length){const [key]=steps[index];if((x.actions[key]||0)>0||key==='threat'&&!s.regions.some(r=>r.owner!==s.player)){index++;continue}break}x.guide.step=index;
+ if(index>=steps.length)return null;
+ const target=steps[index][3]==='course'?(x.direction==='military'?'military':'government'):steps[index][3];
+ return {index,total:steps.length,key:steps[index][0],title:label(steps[index][1],steps[index][2]),target};
 }
-export function replayLesson(s,index){const x=initializeExperience(s),steps=paths[s.player]||paths.caesar;if(index<0||index>=steps.length)return false;x.guide={...x.guide,running:true,paused:false,skipped:false,step:index};delete x.actions[steps[index][0]];return true}
+export function replayLesson(s,index){const x=initializeExperience(s),steps=tutorialLessons(s);if(index<0||index>=steps.length)return false;x.guide={...x.guide,running:true,paused:false,skipped:false,step:index};delete x.actions[steps[index][0]];return true}
 
 export function refreshExperience(s){const x=initializeExperience(s),add=(id,en,zh)=>{if(!x.milestones.some(m=>m.id===id))x.milestones.push({id,year:s.year,month:s.month,title:label(en,zh)})};
  if(x.actions.army)add('first_army','Inspected a field army','检查了野战军');
@@ -72,7 +77,7 @@ export function recommendations(s){
  if(!x.actions.army&&armies.length)choices.push(suggestion('army',80,['Inspect your first field army','检查第一支野战军'],['You can judge readiness before giving orders.','先了解战备，再考虑下令。'],[armies[0].name?.[0]||armies[0].id,armies[0].name?.[1]||armies[0].id],['Free','免费'],['See strength, morale and supply','查看兵力、士气与补给'],['No order is issued','不会自动下令'],{kind:'army',id:armies[0].id}));
  if(atWar&&f.treasury>=8&&x.direction==='political')choices.push(suggestion('peace',75,['Examine peace correspondence','考虑议和书信'],['A political route remains open during war.','战争中仍可尝试政治途径。'],['Government · diplomacy','政府 · 外交'],['Courier and inquiry cost shown in panel','面板中显示使者及询问费用'],['A negotiated end may preserve control','谈判结束战争可能保留控制权'],['Delivery or acceptance is uncertain','送达或接受均不确定'],{kind:'government'}));
  if(!x.actions.chronicle&&month(s)>x.started)choices.push(suggestion('report',72,['Review the last turn','查看上月结果'],['Time advanced; consequences may be recorded.','时间已推进，结果可能已入史录。'],['Chronicle','编年史'],['Free','免费'],['See confirmed developments','查看已确认进展'],['Reports can reflect limited knowledge','报告受己方认知限制'],{kind:'chronicle'}));
- if(f.treasury>=30&&x.direction!=='military')choices.push(suggestion('focus',55,['Review a national focus','查看国家方针'],['The treasury can support a longer plan.','国库足以考虑长期计划。'],['National focus','国家方针'],['Check project cost in panel','面板中查看项目费用'],['Build economic or administrative capacity','发展经济或行政能力'],['Investment uses time and resources','投资需要时间与资源'],{kind:'focus'}));
+ const availableFocus=x.direction!=='military'?(treeFor(s.player)||[]).find(item=>!canStartFocus(s,s.player,item.id)):null;if(availableFocus){const cost=focusCost(s,s.player,availableFocus.id);choices.push(suggestion('focus',55,['Review a viable national focus','查看可启动的国家方针'],['This project meets its current prerequisites.','这项方针目前满足前置条件。'],availableFocus.name,[`${cost.treasury} treasury · ${availableFocus.months} months`,`${cost.treasury}国库 · ${availableFocus.months}个月`],['See the listed project effects','查看列出的项目效果'],['Starting it spends resources and time','启动后消耗资源与时间'],{kind:'focus',id:availableFocus.id}))}
  if(f.treasury<25||f.food<15)choices.push(suggestion('budget',70,['Review next month’s budget','查看下月预算'],['A core resource is running low.','核心资源储备偏低。'],['Government · treasury','政府 · 国库'],['Free to review','查看免费'],['Adjust feasible policies','调整可行政策'],['War and events can change the forecast','战争与事件会改变预测'],{kind:'government'}));
  if(!choices.length||choices.length<3)choices.push(suggestion('development',35,['Review government and development','查看政府与发展'],['A quiet month allows institution building.','平静月份适合建设制度。'],['Government','政府'],['Costs vary by action','费用视操作而定'],['Improve stability and capacity','改善稳定度与能力'],['Policy tradeoffs still apply','政策仍有取舍'],{kind:'government'}));
  choices.push(suggestion('time',15,['Advance time when ready','准备好后推进时间'],['Orders, finances and other courts resolve each month.','命令、财政及其他政体按月结算。'],['Time control','时间控制'],['One month','一个月'],['See the consequences of your choices','观察决策结果'],['Unanswered opportunities may change','未处理机会可能变化'],{kind:'time'}));
@@ -80,7 +85,7 @@ export function recommendations(s){
 }
 
 export function objectives(s){const x=refreshExperience(s),step=x.guide.running&&!x.guide.paused?tutorialStep(s):null,regions=ownRegions(s),f=s.factions[s.player],atWar=(s.wars||[]).some(w=>w.includes(s.player));
- const immediate=step?{title:step.title,done:false,target:step.target}:receivedMail(s).some(m=>!m.read&&!m.archived)?{title:label('Read a new letter','阅读新来信'),done:false,target:'mail'}:{title:label('Review this month and decide your next action','检查本月局势并决定下一步'),done:false,target:'chronicle'};
+ const next=recommendations(s)[0];const immediate=step?{title:step.title,done:false,target:step.target}:next?{title:next.action,done:false,target:next.target.kind}:{title:label('Review this month and decide your next action','检查本月局势并决定下一步'),done:false,target:'chronicle'};
  const inquiry=(s.inquiries||[]).find(q=>q.actor===s.player&&q.subject==='peace'&&['pending','awaiting_decision'].includes(q.status));
  const focus=s.world?.nationalFocus?.[s.player],activeFocus=focus?.active||focus?.current,completedFocus=focus?.completed?.length||0,peaceMonths=s.world?.peacefulSettlementMonths||0;
  const ready=s.armies.filter(a=>a.owner===s.player&&a.men>0&&a.morale>=55).length,total=s.armies.filter(a=>a.owner===s.player&&a.men>0).length;

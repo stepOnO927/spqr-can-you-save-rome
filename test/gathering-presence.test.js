@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=government-intel-courier-1';
+import {newGame,upgradeSave} from '../engine.js?v=government-courier-guidance-1';
 import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=portraits-hundred-days-1';
 import {mailboxHtml} from '../mail-ui.js?v=portraits-hundred-days-1';
 import {createFictionalPerson} from '../dynasties.js?v=portraits-hundred-days-1';

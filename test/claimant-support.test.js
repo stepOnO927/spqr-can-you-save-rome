@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=government-intel-courier-1';
+import {newGame,upgradeSave} from '../engine.js?v=government-courier-guidance-1';
 import {addReport,reportedClaimants,supportClaimant,claimantRepresentatives,contestLeadership,advanceOperations,advanceDisputes} from '../character-system.js?v=portraits-hundred-days-1';
 import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=portraits-hundred-days-1';
 

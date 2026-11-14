@@ -1,4 +1,4 @@
-import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=government-intel-courier-1';
+import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=government-courier-guidance-1';
 import {FACTIONS,PLAYABLE,ROUTES,OFFICES} from './data.js';
 import {appoint,knownAttributes,emperorAuthority} from './court.js';
 import {isLiuClan} from './dynasty.js';
@@ -6,8 +6,8 @@ import {drawMap} from './map.js';
 import {templatesFor,recruitQuote,recruit,neighbours} from './military.js';
 import {changeDependency,dependencyOf} from './dependencies.js';
 import {declareWar,propose,atWar} from './frontier.js';
-import {init as initExperience,act as experienceAction} from './experience.js?v=portraits-hundred-days-1';
-import {renderExperience} from './experience-ui.js?v=portraits-hundred-days-1';
+import {init as initExperience,act as experienceAction} from './experience.js?v=government-courier-guidance-1';
+import {renderExperience} from './experience-ui.js?v=government-courier-guidance-1';
 const $=id=>document.getElementById(id),D=(en,zh)=>lang?zh:en,L=a=>Array.isArray(a)?a[lang]||a[0]:a;
 let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,camera='all',mode='political',courtOpen=false,courtOffice='dasinong',courtCandidate=null;
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
