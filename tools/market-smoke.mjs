@@ -24,6 +24,9 @@ try{
  assert.match(await page.locator('.market-panel').innerText(),/在途商队/);
  const merchant=await page.locator('[data-market-merchant]').first().getAttribute('data-market-merchant');
  assert.ok(merchant);
+ assert.match(await page.locator('.market-panel').innerText(),/商人特权/);
+ await page.locator(`[data-grant-merchant="${merchant}"][data-duration="12"]`).click();
+ assert.match(await page.locator('.market-panel').innerText(),/待下次承运时生效/);
  await page.locator('[data-market-merchant]').first().click();
  assert.match(await page.locator('#command-detail').innerText(),/虚构商人/);
  await page.locator('#markets').click();
@@ -32,8 +35,10 @@ try{
  assert.equal(saved.markets.shipments.length,1);
  assert.equal(saved.markets.shipments[0].commodity,'grain');
  assert.equal(saved.markets.shipments[0].merchantId,merchant);
+ assert.equal(saved.markets.merchantPrivileges[merchant].duration,12);
  await page.locator('#language').click();
  assert.match(await page.locator('.market-panel').innerText(),/SHIPMENTS IN TRANSIT/);
+ assert.match(await page.locator('.market-panel').innerText(),/MERCHANT PRIVILEGES/);
  await page.locator('#load').click();await page.locator('#markets').click();
  assert.match(await page.locator('.market-panel').innerText(),/Grain ×2/);
  assert.equal(await page.locator('[data-market-merchant]').first().getAttribute('data-market-merchant'),merchant);

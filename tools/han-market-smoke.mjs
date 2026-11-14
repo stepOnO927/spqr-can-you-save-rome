@@ -34,7 +34,12 @@ try{
  await page.locator('#east-market-order').click();
  assert.match(await page.locator('#message').innerText(),/Merchant dispatched/);
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Horses/);
+ assert.match(await page.locator('#inspector').innerText(),/Merchant privileges/);
+ await page.locator('[data-east-grant-merchant][data-duration="24"]').first().click();
+ assert.match(await page.locator('#message').innerText(),/Merchant privilege granted/);
+ assert.match(await page.locator('#inspector').innerText(),/Begins with the next caravan/);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#trade-panel').click();
+ assert.match(await page.locator('#inspector').innerText(),/Begins with the next caravan/);
  assert.equal(await page.locator('[data-cancel-sale]').count(),1);
  await page.locator('[data-cancel-sale]').click();
  assert.match(await page.locator('#message').innerText(),/stock returned/);
@@ -48,6 +53,7 @@ try{
  assert.match(await page.locator('.market-receipts').innerText(),/Kangju.*Dunhuang/);
  assert.match(await page.locator('.market-receipts').innerText(),/Goods.*Transport.*Tariffs.*Total/);
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
+ assert.match(await page.locator('#inspector').innerText(),/商人特权/);
  assert.match(await page.locator('#inspector').innerText(),/过境关税/);
  assert.match(await page.locator('#inspector').innerText(),/出口管制/);
  assert.match(await page.locator('#inspector').innerText(),/挂牌出售/);

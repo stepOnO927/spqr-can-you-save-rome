@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,recruit,resolveBattle} from '../engine.js?v=faces-empire-2';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
-import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,advanceMarkets,proposeSupplyContract,cancelSupplyContract} from '../trade-markets.js?v=faces-empire-2';
+import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,advanceMarkets,proposeSupplyContract,cancelSupplyContract,grantMerchantPrivilege,activeMerchantPrivilege} from '../trade-markets.js?v=faces-empire-2';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=newborn-age-1';
 
 const deal=()=>{
@@ -11,6 +11,44 @@ const deal=()=>{
  return s;
 };
 const request={seller:'parthia',buyer:'armenia',origin:'parthia',destination:'armenia',commodity:'horses',quantity:2};
+
+test('a Roman merchant privilege pays the named carrier, persists and expires without repricing cargo',()=>{
+ const s=deal(),first=placeTradeOrder(s,request);assert.equal(first.ok,true);
+ const id=first.shipment.merchantId,merchant=s.world.characters[id],cash=s.factions.armenia.treasury;
+ assert.equal(grantMerchantPrivilege(s,id,12).ok,true);
+ assert.equal(s.factions.armenia.treasury,cash-5);assert.equal(merchant.wealth,5);
+ assert.equal(s.markets.merchantPrivilegeFees,5);assert.equal(activeMerchantPrivilege(s,id,'armenia'),true);
+ assert.equal(s.markets.merchantPrivileges[id].status,'pending');
+ assert.equal(first.shipment.transport,first.quote.transport,'an escrowed shipment keeps its original cost');
+ assert.equal(grantMerchantPrivilege(s,id,12).reason,'invalid');
+ const loaded=upgradeSave(structuredClone(s));assert.equal(activeMerchantPrivilege(loaded,id,'armenia'),true);
+ loaded.world.characters[id].location='parthia';delete loaded.world.characters[id].marketReturn;
+ loaded.markets.shipments[0].status='delivered';
+ const eligible=quoteTrade(loaded,request);assert.equal(eligible.merchantId,id);assert.equal(eligible.merchantPrivilege,true);
+ const second=placeTradeOrder(loaded,request);assert.equal(second.ok,true);assert.equal(second.shipment.merchantId,id);
+ assert.equal(loaded.markets.merchantPrivileges[id].startsAt,loaded.year*12+loaded.month);
+ assert.equal(loaded.markets.merchantPrivileges[id].status,'active');
+ loaded.year++;assert.equal(activeMerchantPrivilege(loaded,id,'armenia'),false);
+ const expired=quoteTrade(loaded,request);assert.equal(expired.merchantPrivilege,false);
+ assert.equal(grantMerchantPrivilege(loaded,id,24).ok,true);
+ assert.equal(loaded.markets.merchantPrivileges[id].duration,24);
+});
+
+test('a licensed Roman-network merchant lowers a long Silk Road transport quote',()=>{
+ const s=newGame('han');s.relations['han:parthia']=45;
+ assert.equal(proposeAgreement(s,'han','parthia','trade').ok,true);
+ const route={seller:'parthia',buyer:'han',origin:'parthia',destination:'hanHexi',commodity:'horses',quantity:5};
+ const ordinary=quoteTrade(s,route);assert.equal(ordinary.ok,true);assert.ok(ordinary.transport>1);
+ const first=placeTradeOrder(s,{...route,quantity:1});assert.equal(first.ok,true);
+ const id=first.shipment.merchantId;assert.equal(grantMerchantPrivilege(s,id,24).ok,true);
+ // Make this carrier available at the same origin to isolate the next quote.
+ first.shipment.status='delivered';s.world.characters[id].location='parthia';delete s.world.characters[id].marketReturn;
+ const licensed=quoteTrade(s,route);assert.equal(licensed.ok,true);
+ assert.equal(licensed.merchantId,id);assert.ok(licensed.transport<ordinary.transport);
+ const placed=placeTradeOrder(s,route);assert.equal(placed.ok,true);
+ assert.equal(placed.shipment.transport,licensed.transport);
+ assert.equal(s.markets.merchantPrivileges[id].status,'active');
+});
 
 test('markets have measured units, local output and bounded shortage prices',()=>{
  const s=newGame('armenia'),parthia=s.markets.regions.parthia,egypt=s.markets.regions.egypt;

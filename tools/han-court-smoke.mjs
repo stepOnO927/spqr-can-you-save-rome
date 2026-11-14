@@ -50,7 +50,8 @@ try{
  await page.locator('[data-court-person="shi-gao"]').click();
  assert.match(await profile.innerText(),/Grand Minister of Agriculture/);
  assert.match(await profile.innerText(),/Shi Gao appointed Grand Minister of Agriculture/);
- assert.equal(await page.locator('#court-audit').isDisabled(),true);
+ if(await page.locator('#court-audit').count())assert.equal(await page.locator('#court-audit').isDisabled(),true);
+ else assert.match(await profile.innerText(),/Deceased in this campaign/);
  await page.locator('#lang').click();assert.match(await profile.innerText(),/史高/);
  assert.match(await profile.innerText(),/大司农/);
  assert.match(await profile.innerText(),/战役开始时/);

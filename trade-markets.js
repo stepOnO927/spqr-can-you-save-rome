@@ -50,7 +50,7 @@ export function initializeMarkets(s){
  markets.regions||={};if(!Array.isArray(markets.saleOrders))markets.saleOrders=[];if(!Number.isSafeInteger(markets.nextSaleOrder)||markets.nextSaleOrder<1)markets.nextSaleOrder=1;markets.shipments||=[];markets.transactions||=[];markets.tariffs||={};markets.exportRestrictions||={};markets.nextShipment||=1;markets.transportSpent??=0;markets.transitTreasury||={};
  for(const [owner,rate] of Object.entries(markets.tariffs))markets.tariffs[owner]=Number.isFinite(rate)?clamp(rate,0,.3):TARIFF_POLICIES.standard;
  for(const [owner,goods] of Object.entries(markets.exportRestrictions))markets.exportRestrictions[owner]=Array.isArray(goods)?[...new Set(goods.filter(good=>Object.hasOwn(COMMODITIES,good)))]:[];
- markets.merchants||={};markets.merchantFees??=0;
+ markets.merchants||={};markets.merchantFees??=0;markets.merchantPrivileges||={};markets.merchantPrivilegeFees??=0;
  if(!Array.isArray(markets.supplyContracts))markets.supplyContracts=[];
  if(!Number.isSafeInteger(markets.nextSupplyContract)||markets.nextSupplyContract<1)markets.nextSupplyContract=1;
  while(markets.supplyContracts.some(contract=>contract.id===`supply:${markets.nextSupplyContract}`))markets.nextSupplyContract++;
@@ -97,8 +97,29 @@ export function cancelTradeSale(s,id){
  order.available=0;order.status='cancelled';return {ok:true,order};
 }
 
+function availableMerchant(s,buyer,location){
+ const markets=s.markets,previous=markets.merchants[buyer]||[],free=previous.filter(id=>{const person=s.world.characters[id];return person?.alive&&person.location===location&&!person.marketReturn&&!markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status))});
+ return free.find(id=>activeMerchantPrivilege(s,id,buyer))||free[0]||null;
+}
+
+export function activeMerchantPrivilege(s,id,faction){
+ const privilege=s.markets?.merchantPrivileges?.[id],person=s.world?.characters?.[id];
+ return !!(privilege&&person?.alive&&person.faction===faction&&privilege.faction===faction&&(privilege.status==='pending'||month(s)<privilege.expiresAt));
+}
+
+export function grantMerchantPrivilege(s,id,duration=12){
+ const markets=initializeMarkets(s),person=s.world?.characters?.[id],faction=s.player,fee=5;
+ if(s.defeat||!faction||!person?.alive||person.faction!==faction||!(markets.merchants[faction]||[]).includes(id)||![12,24].includes(duration)||activeMerchantPrivilege(s,id,faction))return {ok:false,reason:'invalid'};
+ if(s.factions[faction].treasury<fee)return {ok:false,reason:'treasury'};
+ s.factions[faction].treasury-=fee;person.wealth=(person.wealth||0)+fee;markets.merchantPrivilegeFees+=fee;
+ const privilege={merchantId:id,faction,createdAt:month(s),startsAt:null,expiresAt:null,status:'pending',duration,fee,transportDiscount:.2};
+ markets.merchantPrivileges[id]=privilege;
+ recordLifeEvent(s,id,'Received a limited caravan privilege from the court.','获宫廷授予有期限的商队特权。');
+ return {ok:true,privilege};
+}
+
 function merchantFor(s,buyer,location){
- const markets=s.markets,previous=markets.merchants[buyer]||[],available=previous.find(id=>{const person=s.world.characters[id];return person?.alive&&person.location===location&&!person.marketReturn&&!markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status))});
+ const markets=s.markets,previous=markets.merchants[buyer]||[],available=availableMerchant(s,buyer,location);
  if(available){s.world.characters[available].marketHome=location;return available}
  const identity=generateFictionalName(s,{originFaction:buyer,location});
  const id=createFictionalPerson(s,{...identity,faction:buyer,birthYear:s.year-35,location,sex:'unknown',role:['Fictional merchant','虚构商人'],wealth:0});
@@ -155,12 +176,13 @@ export function quoteTrade(s,{seller,buyer,origin,destination,commodity,quantity
  if(!sale&&stock.stock<quantity)return {ok:false,reason:'unavailable'};
  const route=routeFor(s,origin,destination,buyer,seller);if(!route)return {ok:false,reason:'route'};
  const unitPrice=(contract?.unitPrice??sale?.unitPrice??marketPrice(markets.regions[origin],commodity))+bidPremium,price=unitPrice*quantity;
- const transport=Math.max(1,Math.ceil(route.cost*quantity/5));
+ const carrier=availableMerchant(s,buyer,origin),discount=carrier&&activeMerchantPrivilege(s,carrier,buyer)?markets.merchantPrivileges[carrier].transportDiscount:0;
+ const transport=Math.max(1,Math.ceil(Math.ceil(route.cost*quantity/5)*(1-discount)));
  const customs=[...new Set(route.path.slice(1,-1).map(id=>node(s,id)?.owner).filter(owner=>owner&&owner!==seller&&owner!==buyer))];
  const tariffs=customs.map(owner=>({owner,amount:Math.ceil(price*clamp(markets.tariffs[owner]??.05,0,.3))}));
  const total=price+transport+tariffs.reduce((sum,t)=>sum+t.amount,0);
  if(s.factions[buyer].treasury<total)return {ok:false,reason:'treasury'};
- return {ok:true,unitPrice,price,transport,tariffs,total,route:route.path,legs:route.legs,months:route.cost};
+ return {ok:true,unitPrice,price,transport,tariffs,total,route:route.path,legs:route.legs,months:route.cost,merchantId:carrier,merchantPrivilege:!!discount};
 }
 
 export function placeTradeOrder(s,request){
@@ -168,6 +190,8 @@ export function placeTradeOrder(s,request){
  if(request.maxTotal!=null&&(!Number.isFinite(request.maxTotal)||quote.total>request.maxTotal))return {ok:false,reason:'price'};
  const markets=s.markets,source=markets.regions[request.origin].goods[request.commodity];
  const merchantId=merchantFor(s,request.buyer,request.origin);
+ const privilege=markets.merchantPrivileges[merchantId];
+ if(privilege?.status==='pending'&&activeMerchantPrivilege(s,merchantId,request.buyer)){privilege.status='active';privilege.startsAt=month(s);privilege.expiresAt=month(s)+privilege.duration}
  if(request.saleOrderId){const sale=markets.saleOrders.find(x=>x.id===request.saleOrderId);sale.available-=request.quantity;if(sale.available===0)sale.status='filled'}
  else source.stock-=request.quantity;
  s.factions[request.buyer].treasury-=quote.total;

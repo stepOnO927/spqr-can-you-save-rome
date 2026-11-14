@@ -2,11 +2,35 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=han-1';
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=han-1';
-import {advanceEasternMarkets,cancelEasternSale,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-of-empire-1';
+import {activeEasternMerchantPrivilege,advanceEasternMarkets,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-of-empire-1';
 import {advanceSilk} from '../han/silk-road.js?v=han-1';
 import {roll} from '../han/util.js?v=han-1';
 
 const next=s=>{if(++s.month>12){s.month=1;s.year++}advanceEasternMarkets(s)};
+
+test('Han merchant privileges reduce a real caravan cost and survive save/load',()=>{
+ let s=newHanGame('han',{seed:57});s.tradeMarkets.embeddedRoman=true;setRelation(s,'han','kangju',70);propose(s,'han','kangju','market');
+ const request={seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1};
+ const first=placeEasternTrade(s,request);assert.equal(first.ok,true);
+ const id=first.shipment.merchantId,cash=s.factions.han.treasury,wealth=s.persons[id].wealth;
+ const privilege=grantEasternMerchantPrivilege(s,id,24);assert.equal(privilege.ok,true);
+ assert.equal(privilege.privilege.status,'pending');
+ assert.equal(s.factions.han.treasury,cash-5);assert.equal(s.persons[id].wealth,wealth+5);
+ assert.equal(s.tradeMarkets.merchantPrivilegeFees,5);
+ assert.equal(first.shipment.transport,first.quote.transport,'the existing caravan retains its paid terms');
+ assert.equal(grantEasternMerchantPrivilege(s,id,12).reason,'invalid');
+ s=loadHanSave(serialize(s));assert.equal(activeEasternMerchantPrivilege(s,id,'han'),true);
+ for(let i=0;i<first.quote.months*2;i++)next(s);
+ assert.equal(s.persons[id].location,'kangju');assert.equal(s.persons[id].marketReturn,undefined);
+ const larger={...request,quantity:5},quoted=quoteEasternTrade(s,larger);
+ assert.equal(quoted.ok,true);assert.equal(quoted.merchantId,id);assert.equal(quoted.merchantPrivilege,true);
+ assert.equal(quoted.transport,Math.max(1,Math.ceil(Math.ceil(quoted.months*5/5)*.8)));
+ assert.ok(quoted.transport<Math.ceil(quoted.months*5/5));
+ const second=placeEasternTrade(s,larger);assert.equal(second.ok,true);assert.equal(second.shipment.merchantId,id);assert.equal(second.shipment.transport,quoted.transport);
+ assert.equal(s.tradeMarkets.merchantPrivileges[id].status,'active');
+ assert.equal(s.tradeMarkets.merchantPrivileges[id].startsAt,s.year*12+s.month);
+ s.year+=2;assert.equal(activeEasternMerchantPrivilege(s,id,'han'),false);
+});
 
 test('Eastern markets use measured stock and a real Kangju–Han horse route',()=>{
  const s=newHanGame('han',{seed:49});

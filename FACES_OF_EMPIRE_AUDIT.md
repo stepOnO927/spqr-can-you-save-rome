@@ -282,7 +282,7 @@ The eastern market now lets the player restrict or reopen exports by measured
 commodity. New foreign quotes, public offers and autonomous buyers honor the
 restriction; domestic transfers and caravans already in transit keep their
 existing terms. The policy survives old and new saves and appears in both
-languages. Merchant privileges remain outside this policy.
+languages. Merchant privileges are tracked separately from export controls.
 The direct Han and Roman markets now support measured player sale listings.
 Posting removes goods from local stock; only the listed quantity becomes
 visible to AI buyers, who must still have a treaty, route and treasury and pay
@@ -308,7 +308,17 @@ can breach the agreement and lower relations; withdrawal also has a real
 diplomatic cost. War or lost access ends future obligations without rewriting
 caravans already underway. The terms, due dates and shipments survive saves.
 Unit and browser tests cover both markets, including bilingual controls.
-Merchant privileges and broader player-to-merchant negotiation remain open.
+Both Roman and direct Han markets now let the player pay a named carrier a
+five-treasury privilege fee for 12 or 24 months. The license starts when that
+merchant next carries a new order, so a long journey already underway cannot
+consume its term. An eligible licensed carrier receives priority at the
+origin and lowers the new order's transport cost by 20%, with a minimum cost
+of one; existing shipment escrow remains unchanged. Fees move into the
+merchant's saved wealth, and license terms survive save/load. Unit tests cover
+the actual Han transport saving, pending activation and expiry; bilingual
+market browser checks exercise the player control; both networks have
+measured long-route transport savings in unit tests. Broader merchant
+negotiation, reputations and competing private commercial networks remain open.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,

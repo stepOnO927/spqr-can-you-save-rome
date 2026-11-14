@@ -49,7 +49,7 @@ export function renderHanCourtPanel({root,state,lang=0,selected,onSelect,onAppoi
  root.innerHTML=hanCourtHtml(state,lang,selected);
  const roster=root.querySelector('.court-roster'),active=roster?.querySelector('[aria-pressed="true"]');
  if(active){const a=active.getBoundingClientRect(),r=roster.getBoundingClientRect();roster.scrollTop+=a.top-r.top-(r.height-a.height)/2}
- root.querySelectorAll('[data-court-person]').forEach(button=>button.onclick=()=>onSelect(button.dataset.courtPerson));
+ root.querySelectorAll('[data-court-person]').forEach(button=>button.onclick=()=>{onSelect(button.dataset.courtPerson);root.querySelector('.court-profile')?.scrollIntoView({block:'nearest'})});
  const person=root.querySelector('.court-profile')?.dataset.person;
  const appoint=root.querySelector('#court-appoint'),officeSelect=root.querySelector('#court-office');
  if(appoint&&officeSelect){
