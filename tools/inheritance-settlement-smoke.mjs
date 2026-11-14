@@ -6,7 +6,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  async function setup(noClaimants){return page.evaluate(async noClaimants=>{
-  const {newGame}=await import('/engine.js?v=frontier-response-1'),{createFictionalPerson,makeWill,settleInheritance}=await import('/dynasties.js?v=portraits-hundred-days-1');
+  const {newGame}=await import('/engine.js?v=player-aid-letter-1'),{createFictionalPerson,makeWill,settleInheritance}=await import('/dynasties.js?v=portraits-hundred-days-1');
   const s=newGame('caesar'),parent=createFictionalPerson(s,{name:['Testator','立遗嘱者'],faction:'caesar',birthYear:-90,wealth:35}),family=s.world.characters[parent].familyId;
   const heir=createFictionalPerson(s,{name:['Child','子女'],faction:'caesar',birthYear:-66,parents:[parent],familyId:family}),beneficiary=createFictionalPerson(s,{name:['Beneficiary','受益人'],faction:'caesar',birthYear:-70});
   makeWill(s,parent,beneficiary);s.world.characters[parent].alive=false;settleInheritance(s,parent);if(noClaimants){s.world.characters[heir].alive=false;s.world.characters[beneficiary].alive=false;s.factions.caesar.treasury=0}
