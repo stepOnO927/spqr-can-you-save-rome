@@ -7,7 +7,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const engine=await import('/engine.js?v=coalition-courier-1');
+  const engine=await import('/engine.js?v=diplomatic-chronicle-1');
   const politics=await import('/cursus-honorum.js?v=multipolar-courier-review-1');
   const state=engine.newGame('senate'),c=politics.initializeCursus(state);
   c.talents.push({actor:'senate',id:c.varroId,field:'provincial',regionId:'roma',year:state.year,month:state.month});

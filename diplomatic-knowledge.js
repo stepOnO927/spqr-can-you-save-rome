@@ -16,6 +16,11 @@ function currentDocuments(s,viewer){
  for(const c of s.coalitions||[])if(c.status==='active'&&s.year*12+s.month<c.expiresAt)result.push({id:c.id,kind:'coalition',type:'defensive',parties:[...c.parties],leader:c.leader,target:c.target});
  return result;
 }
+function reportAgreementChange(s,doc,ended=false){
+ const names=doc.parties.map(id=>FACTIONS[id]?.short||[id,id]),en=names.map(n=>n[0]).join(', '),zh=names.map(n=>n[1]).join('、');
+ const label=doc.kind==='alliance'?['alliance','同盟']:doc.kind==='coalition'?['defensive coalition','防御联盟']:['treaty','条约'];
+ s.log.unshift({year:s.year,month:s.month,en:ended?`Frontier reports that the ${label[0]} involving ${en} has ended; this report may be outdated.`:`Frontier reports a ${label[0]} involving ${en}; this report may be outdated.`,zh:ended?`边境报告${zh}之间的${label[1]}已经结束；消息可能过时。`:`边境报告${zh}之间出现${label[1]}；消息可能过时。`});s.log=s.log.slice(0,80);
+}
 export function observeDiplomacy(s){
  initializeDiplomaticKnowledge(s);
  for(const viewer of Object.keys(s.factions)){
@@ -26,11 +31,13 @@ export function observeDiplomacy(s){
     const [a,b]=doc.parties.map(id=>FACTIONS[id]?.short||[id,id]);
     s.log.unshift({year:s.year,month:s.month,en:`Frontier reports a war between ${a[0]} and ${b[0]}; the report may become outdated.`,zh:`边境报告${a[1]}与${b[1]}发生战争；消息可能过时。`});s.log=s.log.slice(0,80);
    }
+   if(viewer===s.player&&['alliance','coalition','agreement'].includes(doc.kind)&&!doc.parties.includes(viewer)&&records[doc.id]?.status!=='active')reportAgreementChange(s,doc);
    records[doc.id]={...doc,status:'active',year:s.year,month:s.month,source:doc.parties.includes(viewer)?'participant':'frontier'};
   }
   for(const report of Object.values(records))if(report.status==='active'&&!seen.has(report.id)&&hasContact(s,viewer,report.parties)){
    report.status='ended';report.year=s.year;report.month=s.month;
    if(viewer===s.player&&report.kind==='war'&&!report.parties.includes(viewer)){const [a,b]=report.parties.map(id=>FACTIONS[id]?.short||[id,id]);s.log.unshift({year:s.year,month:s.month,en:`Frontier reports that the war between ${a[0]} and ${b[0]} has ended; the report may become outdated.`,zh:`边境报告${a[1]}与${b[1]}的战争已经结束；消息可能过时。`});s.log=s.log.slice(0,80)}
+   if(viewer===s.player&&['alliance','coalition','agreement'].includes(report.kind)&&!report.parties.includes(viewer))reportAgreementChange(s,report,true);
   }
   const entries=Object.values(records).sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month));for(const stale of entries.slice(100))delete records[stale.id];
  }

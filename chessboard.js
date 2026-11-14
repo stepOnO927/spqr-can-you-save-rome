@@ -1,6 +1,6 @@
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {reportedMovements} from './movements.js?v=portraits-hundred-days-1';
 
 const opening=['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
