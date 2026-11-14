@@ -12,6 +12,41 @@ import {budgetHtml} from '../budget-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
+test('scholarly patronage connects an owned collection to future idea research only',()=>{
+ const id='philosophical-patronage',s=newGrandGame('senate'),d=development(s,'senate'),idea=IDEAS.find(x=>x.id===id);
+ s.wars=[];s.factions.senate.treasury=500;s.factions.senate.food=500;
+ assert.match(idea.source.url,/attalus\.org\/cicero\/atticus4/);
+ assert.match(developmentPanel(s,'en','idea'),/Philosophical and Scholarly Patronage/);
+ assert.match(developmentPanel(s,'zh','idea'),/哲学与学术赞助/);
+ assert.match(developmentPanel(s,'en','idea'),/National-idea research discount \+3/);
+ assert.match(developmentPanel(s,'zh','idea'),/理念研究折扣 \+3/);
+ assert.equal(researchInnovation(s,'senate','idea',id).ok,true);
+ months(s,idea.months);
+ assert.ok(d.knownIdeas.includes(id));
+ const cash=s.factions.senate.treasury;
+ assert.equal(adoptIdea(s,'senate',id).reason,'building');
+ assert.equal(s.factions.senate.treasury,cash);
+ assert.match(ideasPanel(s,'en'),/Build an owned Private Book Collection first/);
+ assert.match(ideasPanel(s,'zh'),/先在领土内建成私人藏书室/);
+ d.knownMaterial.push('library-organization');d.materials.stone=20;d.materials.timber=20;
+ assert.equal(constructionCheck(s,'senate','roma','library').ok,true);
+ assert.equal(startConstruction(s,'senate','roma','library').ok,true);
+ assert.equal(ideaAdoptionPlan(s,'senate',id).reason,'building','a project is not yet an active collection');
+ months(s,4);
+ assert.ok(s.regions.find(r=>r.id==='roma').buildings.includes('library'));
+ const ideaBefore=researchTerms(s,'senate','idea','civic-education').cost;
+ const materialBefore=researchTerms(s,'senate','material','quarrying').cost;
+ assert.equal(adoptIdea(s,'senate',id).ok,true);
+ assert.equal(researchTerms(s,'senate','idea','civic-education').cost,ideaBefore,'adoption has a real transition');
+ months(s,2);
+ assert.equal(d.slots.culture[0],id);
+ assert.equal(researchTerms(s,'senate','idea','civic-education').cost,ideaBefore-3);
+ assert.equal(researchTerms(s,'senate','material','quarrying').cost,materialBefore);
+ assert.equal(nationalBudget(s,'senate').ideaUpkeep,2);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(researchTerms(restored,'senate','idea','civic-education').cost,ideaBefore-3);
+});
+
 test('two paid foreign shipments create a dated research lead, not free knowledge',()=>{
  const s=newGrandGame('senate');s.wars=[];s.factions.senate.treasury=300;s.factions.senate.food=100;
  const normal=researchTerms(s,'senate','material','water-control');
@@ -300,7 +335,7 @@ test('local rites affect a neighboring court only through an influential shared 
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,39);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,40);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
