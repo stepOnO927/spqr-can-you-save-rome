@@ -61,6 +61,7 @@ test('Han and a minor polity sustain distinct guidance through long campaigns',(
   const restored=loadHanSave(serialize(s));assert.equal(restored.experience.start,s.experience.start);
   assert.ok(restored.experience.milestones.some(m=>m.id==='three'));
   if(side==='han'&&restored.throne.orthodox)assert.equal(isLiuClan(restored,restored.throne.orthodox),true);
+  if(side==='han'&&restored.focus.han.done.length){restored.experience.direction='administration';assert.equal(hanObjectives(restored).shortDone,true)}
  }
 });
 
