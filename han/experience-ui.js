@@ -1,4 +1,4 @@
-import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=hundred-days-1';
+import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=portraits-hundred-days-1';
 import {treeFor,focusState,focusStatus,startFocus} from './focus.js?v=han-1';
 import {OFFICES,FACTIONS,REGIONS} from './data.js?v=han-1';
 import {appoint} from './court.js?v=han-1';

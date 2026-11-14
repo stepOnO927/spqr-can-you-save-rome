@@ -1,7 +1,7 @@
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {startDynasticWar} from './civil-war.js?v=succession-ui-recovery-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=court-portraits-1';
+import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=portraits-hundred-days-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.

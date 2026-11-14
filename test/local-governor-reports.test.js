@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=peace-cursus-1';
-import {addReport} from '../character-system.js?v=succession-ui-recovery-1';
-import {reportedTheaterAdministrators,renderLocalGovernor} from '../map-lab/local-governor-ui.js?v=succession-ui-recovery-1';
+import {newGame,upgradeSave} from '../engine.js?v=portraits-hundred-days-1';
+import {addReport} from '../character-system.js?v=portraits-hundred-days-1';
+import {reportedTheaterAdministrators,renderLocalGovernor} from '../map-lab/local-governor-ui.js?v=portraits-hundred-days-1';
 
 test('foreign city administration uses dated reports and retains conflicting or unknown claims',()=>{
  let s=newGame('caesar');s.year=-46;s.month=6;s.world.localGovernors={roma:{faction:'senate',person:'cato'}};

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=peace-cursus-1';
-import {queueMission,advanceOperations,availableAgents,requestAgentRelease,advanceAgentRequests,answerAgentRelease} from '../character-system.js?v=succession-ui-recovery-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=portraits-hundred-days-1';
+import {queueMission,advanceOperations,availableAgents,requestAgentRelease,advanceAgentRequests,answerAgentRelease} from '../character-system.js?v=portraits-hundred-days-1';
 
 function captured(){const s=newGame('caesar');assert.equal(queueMission(s,'caesar','egypt','spy','health').ok,true);s.world.intelSeed=0;for(let i=0;i<4;i++)advanceOperations(s);assert.equal(s.operations[0].status,'captured');return s}
 test('captured unnamed agents occupy capacity until a delayed successful release',()=>{

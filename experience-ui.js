@@ -1,4 +1,4 @@
-import {DIRECTIONS,refreshExperience,tutorialStep,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=hundred-days-1';
+import {DIRECTIONS,refreshExperience,tutorialStep,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=portraits-hundred-days-1';
 
 let open='';
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
