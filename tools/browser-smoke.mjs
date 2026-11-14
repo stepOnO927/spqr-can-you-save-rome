@@ -62,7 +62,9 @@ try{
  assert.match(await page.locator('#command-detail').innerText(),/正在旅行/);assert.match(await page.locator('#command-detail').innerText(),/旅途中；最后记录战区：拉丁姆/);
  await page.locator('#person-halt').click();assert.match(await page.locator('#command-detail').innerText(),/已下令抵达下一战区后停下/);assert.match(await page.locator('#command-detail').innerText(),/已付旅费不退还/);await page.locator('#person-halt').click();assert.match(await page.locator('#command-detail').innerText(),/行程按原计划继续/);
  await page.locator('[data-city="ROMA"]').click({force:true});await page.locator('#city-region').click();await page.locator('#recruit-region').click();
- await page.locator('[data-army="levy1"]').click({force:true});await page.locator('#commander-choice').selectOption('cato');await page.locator('#commander-appoint').click();
+ // The newly raised counter can overlap Rome's city marker at CI font sizes.
+ // Select the counter itself, then verify the army inspector before appointing.
+ await page.locator('[data-army="levy1"]').dispatchEvent('click');assert.equal(await page.locator('[data-army="levy1"]').evaluate(el=>el.classList.contains('selected')),true);assert.match(await page.locator('#selection-title').innerText(),/军团/);await page.locator('#commander-choice').selectOption('cato');await page.locator('#commander-appoint').click();
  await page.locator('#commander-feedback button').click();assert.match(await page.locator('#selection-detail').innerText(),/小加图/);
  await page.locator('#commander-choice').selectOption('scipio');await page.locator('#commander-appoint').click();await page.locator('#commander-feedback button').click();assert.match(await page.locator('#selection-detail').innerText(),/西庇阿/);
  await page.locator('#commander-release').click();await page.locator('#commander-release-feedback button').click();assert.match(await page.locator('#selection-detail').innerText(),/指挥官: [^·]+·[^·]+·[^·]+/);
