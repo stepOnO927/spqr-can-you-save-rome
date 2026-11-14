@@ -52,6 +52,8 @@ export function createCampaignPanel({getState,pause,getLanguage,onError}) {
       try {
         const transfer=JSON.parse(sessionStorage.getItem(HANDOFF_KEY)||'null');
         if(transfer?.target!=='atlas')throw Error('Missing campaign transfer');
+        const section=event.data.section;
+        if(section==='factions'||/^person=[a-zA-Z0-9:%_-]+$/.test(section||''))history.replaceState(null,'',location.pathname+location.search+'#'+section);
         location.reload();
       }catch{
         close.disabled=false;
