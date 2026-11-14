@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {newGrandGame,upgradeSave,tick,army,region,moveArmy,previewMarch,recruit,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions} from '../engine.js';
+import {newGrandGame,upgradeSave,tick,army,region,moveArmy,previewMarch,recruit,holdPosition,orderFleet,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions} from '../engine.js';
 import {assessment,sendScouts,delayAttack,latestRecon,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {revealedAchievements} from '../achievement-system.js';
@@ -11,6 +11,7 @@ let s=newGrandGame('caesar');
 const journal=[],snapshots=[],seen=new Set(),corridor=['cisalpine','italiaN','t013','t012','t014','roma'];
 const record=(label,result)=>{if(result?.ok)journal.push(`${s.year}/${s.month} ${label}`);return !!result?.ok};
 assert.equal(record('reserve Adriatic fleet',reserveFleet(s,'caesar','caesar-adriatic')),true);
+for(const unit of s.armies.filter(a=>a.owner==='caesar'&&a.id!=='xiii'))record(`hold ${unit.id}`,holdPosition(s,unit.id));
 assert.equal(assessment(s,'xiii','italiaN').risk,'high uncertainty');
 assert.equal(record('scout northern Italy',sendScouts(s,'xiii','italiaN')),true);
 tick(s);
@@ -24,6 +25,15 @@ for(let month=1;month<48&&!s.achievementState.finalized;month++){
  const legion=army(s,'xiii'),f=s.factions.caesar;
  if(f.treasury<30&&nationalBudget(s,'caesar').projectedNet<0)record('collect wartime contributions',collectWarContributions(s,'caesar'));
  if(f.food<24&&nationalBudget(s,'caesar').foodNet<0)record('gather emergency provisions',collectEmergencyProvisions(s,'caesar'));
+ const adriatic=s.naval.fleets.find(v=>v.id==='caesar-adriatic');
+ if(adriatic&&!adriatic.reserve&&!adriatic.order){
+  if(adriatic.port&&region(s,adriatic.port)?.owner==='caesar')record('reserve fleet in safe harbor',reserveFleet(s,'caesar',adriatic.id));
+  else if(f.treasury<80&&nationalBudget(s,'caesar').projectedNet<0){
+   for(const port of s.regions.filter(r=>r.owner==='caesar'&&r.port)){
+    if(record(`return fleet to ${port.id}`,orderFleet(s,'caesar',adriatic.id,'return',port.id)))break;
+   }
+  }
+ }
  const ready=legion&&legion.men>=600&&!legion.move&&!legion.siege&&!legion.reconPending&&!legion.trainingRemaining;
  if(ready&&region(s,legion.region)?.owner==='caesar'){
   const index=corridor.indexOf(legion.region),next=index>=0&&index<corridor.length-1?corridor[index+1]:null;
@@ -39,7 +49,7 @@ for(let month=1;month<48&&!s.achievementState.finalized;month++){
   if(legion.region==='roma'&&region(s,'roma').owner==='caesar'&&!s.armies.some(a=>a.owner==='caesar'&&a.id!==legion.id&&a.region==='roma')&&f.treasury>=24&&f.food>=9&&f.manpower>=3000)record('raise Roman garrison',recruit(s,'roma','caesar')?{ok:true}:{ok:false});
  }
  tick(s);
- if(month%6===5)snapshots.push({date:`${s.year}/${s.month}`,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,budget:nationalBudget(s,'caesar'),territories:s.regions.filter(r=>r.owner==='caesar').length,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0)});
+ if(month%6===5)snapshots.push({date:`${s.year}/${s.month}`,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,budget:nationalBudget(s,'caesar'),fleet:{port:adriatic?.port,reserve:adriatic?.reserve,order:adriatic?.order?.kind},territories:s.regions.filter(r=>r.owner==='caesar').length,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0)});
  for(const b of s.battles||[])if(!seen.has(b.id)){
   seen.add(b.id);
   if(b.attacker.owner==='caesar'||b.defender.owner==='caesar'){
@@ -60,4 +70,6 @@ for(let month=1;month<48&&!s.achievementState.finalized;month++){
 }
 assert.ok(journal.some(x=>x.includes('scout')));
 assert.ok(journal.some(x=>x.includes('collect wartime contributions')));
+assert.ok(journal.some(x=>x.includes('return fleet')));
+assert.ok(journal.some(x=>x.includes('reserve fleet in safe harbor')));
 console.log(JSON.stringify({date:`${s.year}/${s.month}`,result:s.achievementState.result||s.campaignOutcome?.winner||'ongoing',rome:region(s,'roma').owner,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),armies:s.armies.filter(a=>a.owner==='caesar').map(a=>({id:a.id,men:a.men,region:a.region,morale:a.morale})),fleets:s.naval.fleets.filter(f=>f.owner==='caesar').map(f=>({id:f.id,port:f.port,reserve:f.reserve,ships:f.ships,order:f.order?.kind})),battles:seen.size,snapshots,journal},null,2));
