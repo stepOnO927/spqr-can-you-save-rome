@@ -24,6 +24,10 @@ Courts select prospective partners from their own known contacts rather than rea
 
 An AI government at war can pay five treasury to ask a known, non-hostile court for aid, including a court it has heard is already fighting the same enemy. The recipient independently weighs its own treasury, food, relations and wars; it may refuse. An accepted shipment deducts 12 treasury and 8 food from the donor, travels with the return courier, and can be lost; only a delivered shipment reaches the requester. The request and sealed response do not expose the donor's reserves to other countries. Normal play never commits the human to send aid automatically; incoming human aid requests are not implemented yet. The seeded simulation includes a Roman-Egyptian war both with autonomous Rome and with a passive human Rome; only the initial war is set, not the later diplomatic outcomes.
 
+## Observed frontier pressure
+
+Non-Roman AI courts may place an idle army already at home on a temporary defensive stance when their own recent sighting reports a significant hostile force on or next to that frontier. They do not inspect unseen forces, override existing orders or operational plans, move forces, declare war, or issue orders to a human-controlled army. The stance ends when the report is stale or corrected, or after two months; a cooldown gives the army time to pursue other goals. Roman commanders retain their existing defensive planning. This adds a bounded reaction, not full tactical coordination or proof that every desired multi-state chain occurs.
+
 ## Scout-based allied warnings
 
 `strategic-warnings.js` lets a court forward a fresh (at most one month old) scout sighting of a hostile force near a friendly court's territory. A friendly court is one with an alliance, a defensive, guarantee, intelligence, military-support or offensive agreement, or a relation of at least 35 with the sender. The threat must be at war with the sender, or the sender must hold a dated report of a war between the threat and the recipient. The sender reads only its own sightings, control reports, diplomatic reports, treaties and relations.
