@@ -211,6 +211,16 @@ function sieges(s){
 }
 // lives: deaths, vacated offices, the emperor's death and births
 function mortality(age,health=60){const base=age<30?0.0006:age<45?0.0015:age<55?0.003:age<65?0.006:age<75?0.012:0.025;return base*(1.6-health/100)}
+function aiCourtCandidate(s,office){
+ const military=!!OFFICES[office]?.military;
+ const eligible=Object.values(s.persons).filter(p=>p.alive&&p.faction==='han'&&!p.office&&p.id!==s.throne.orthodox&&
+  (military?['general','official'].includes(p.role):p.role==='official')&&
+  (!OFFICES[office].requiresLiu||isLiuClan(s,p.id))&&
+  (!p.eunuch||!['chengxiang','yushi','dasima'].includes(office))&&
+  (office!=='zhongshu'||p.eunuch));
+ const score=p=>(p.competence??40)*0.7+(p.loyalty??60)*0.2-(p.corruption??20)*0.35+(military?(p.military??40)*0.6:0);
+ return eligible.sort((a,b)=>score(b)-score(a)||a.id.localeCompare(b.id))[0]||null;
+}
 function lives(s){
  for(const p of Object.values(s.persons).filter(p=>p.alive&&(p.birth!=null||p.simulatedAge!=null)&&!p.scheduledDeath)){
   const age=p.birth!=null?yearsBetween(p.birth,s.year):p.simulatedAge+s.year-p.ageBaseYear;
@@ -234,7 +244,7 @@ function lives(s){
   }}
  // vacant offices draw new officials from the empire’s gentry (never Liu unless clan office)
  if(s.court&&s.month%3===0){for(const [office,holder] of Object.entries(s.court.offices)){if(holder)continue;if(s.player==='han'&&office!=='zongzheng')continue;
-  const cand=office==='zongzheng'?Object.values(s.persons).find(p=>p.alive&&p.faction==='han'&&isLiuClan(s,p.id)&&!p.office&&s.throne.orthodox!==p.id&&p.role!=='prince'):generateOfficial(s,office);
+  const cand=office==='zongzheng'?Object.values(s.persons).find(p=>p.alive&&p.faction==='han'&&isLiuClan(s,p.id)&&!p.office&&s.throne.orthodox!==p.id&&p.role!=='prince'):aiCourtCandidate(s,office)||generateOfficial(s,office);
   if(cand)appoint(s,office,cand.id)}}
 }
 export function generateOfficial(s,office){

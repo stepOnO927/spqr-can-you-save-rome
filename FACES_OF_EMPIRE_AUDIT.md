@@ -44,6 +44,13 @@ actual march still validates current access. A 36-month invasion test verifies
 that this response has real resource costs and does not erase Han core power.
 This is a frontier-defense improvement, not a claim that the full Grandmaster
 Han economic, diplomatic and court AI is complete.
+The Han NPC court now compares its own available ministers before filling a
+quarterly vacancy. Competence, loyalty, corruption and the office's military
+responsibility affect the choice; a new official is generated only when no
+eligible courtier is available. The appointment uses the existing court rules,
+changes administrative capacity, persists in the save, and stays out of a
+foreign player's immediate Chronicle. Player-controlled Han vacancies still
+await the player's appointment decision.
 Its opening armies and newly recruited formations now receive saved, named
 field commanders from distinct Han, steppe, oasis and western cultural pools;
 the independent campaign displays those names instead of raw IDs. Historical
