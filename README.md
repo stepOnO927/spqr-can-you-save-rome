@@ -8,7 +8,7 @@ npm start
 
 Open `http://localhost:5173` for the original campaign or `/map-lab/` for the terrain-map prototype. The original campaign works without network access; the prototype loads MapLibre and geographic tiles over the network. No account is needed. Run `npm test` for the simulation tests.
 
-The **Terrain Map Lab** and **Return to Campaign** controls transfer the current game between the two views in the same browser tab. The transfer uses temporary session storage and does not overwrite the three save slots. Both views remain available; the prototype is not yet a complete replacement for the original campaign screen. Save separately for longer-term persistence.
+The **Terrain Map Lab** now opens government, national strategy, legion design, operations and mail inside its campaign affairs panel. The panel returns changes to the map without navigating away or overwriting the three save slots. **Classic View** remains available as a separate page. Save separately for longer-term persistence. The terrain map is still not a complete replacement for every classic screen.
 
 ## How to play
 

@@ -62,6 +62,7 @@ let lang=localStorage.getItem('spqr-lang')==='zh'?'zh':'en';
 const initialView=()=>window.innerWidth<=800?[310,0,580,650]:[0,0,1200,650];
 let state=newGame(),selectedRegion='cisalpine',selectedArmy='xiii',tab='map',ordering=false,speed=1,playing=false,timer=null,toast='',chosenFaction='caesar',chosenScenario='historical',chosenDifficulty='standard',chosenHandicap=false,chosenGuide=true,chosenSlot='1',setupOpen=false,setupRequired=false,panelOpen=false,mapMode='political',view=initialView(),boardSelected=null,boardView='all',chosenMandate=true,eastSelected=null,eastCamera='all',eastMode='political';
 let mailOpen=false,mailFilter='inbox',mailQuery='',mailSort='newest',mailSender='',selectedMail=null;
+const embeddedCampaign=new URLSearchParams(location.search).get('embedded')==='1'&&window.parent!==window;
 const received=receiveHandoff(sessionStorage,'campaign',upgradeSave);
 setupRequired=!received;setupOpen=setupRequired;
 if(received){state=received;selectedRegion=state.regions.find(r=>r.owner===state.player)?.id||state.regions[0]?.id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;chosenFaction=state.player;chosenDifficulty=state.difficulty||'standard';chosenHandicap=!!state.economicHandicap}
@@ -203,6 +204,18 @@ function render(){syncChronicleDispatches(state);
 }
 
 function stop(){playing=false;if(timer){clearInterval(timer);timer=null}}
+function closeEmbeddedPanel(section=''){
+  try{
+    stop();
+    stageHandoff(sessionStorage,state,'atlas');
+    window.parent.postMessage({type:'spqr:panel-return',section},location.origin);
+  }catch{
+    window.parent.postMessage({type:'spqr:panel-error'},location.origin);
+  }
+}
+if(embeddedCampaign)window.addEventListener('message',event=>{
+  if(event.origin===location.origin&&event.source===window.parent&&event.data?.type==='spqr:close-panel-request')closeEmbeddedPanel();
+});
 function advanceMonth(){
  if(state.defeat){stop();render();return}
  const previous=state.chronicle?.nextId||1,mailBefore=new Set(receivedMail(state).map(m=>m.id));
@@ -257,7 +270,7 @@ function bind(){
   if(tab==='government')bindGenealogy(document.querySelector('.inspector'),state,lang==='zh',render);
   if(tab==='chronicle')renderChronicle({root:document.querySelector('#chronicle-root'),state,language:lang,onRegion:id=>{selectedRegion=id;tab='map';panelOpen=true;render()},onBattle:id=>{const e=state.chronicle?.entries.find(x=>x.battleId===id&&x.kind==='battle');if(!e)return;const root=document.querySelector('#chronicle-root');root.innerHTML='<button id="history-back">'+(lang==='zh'?'返回编年史':'Back to Chronicle')+'</button><article class="dispatch"><strong>'+esc(chronicleDate(e,lang))+'</strong><p>'+esc(formatChronicleEntry(e,lang))+'</p></article>';root.querySelector('#history-back').onclick=render},onArmies:e=>{selectedArmy=state.armies.find(a=>a.owner===state.player&&e&&(a.region===e.region||adjacent(a.region).some(route=>route.to===e.region)))?.id||null;tab='military';panelOpen=true;render()},onCharacter:id=>{const person=state.world.characters[id];if(person?.faction===state.player&&CHARACTER_CATALOG[id]){const people=Object.values(state.world.characters).filter(c=>c.faction===state.player&&CHARACTER_CATALOG[c.id]),index=people.findIndex(c=>c.id===id);if(index<0)return;state.world.dynasties.treePage=Math.floor(index/100);tab='government';panelOpen=true;render();const button=[...document.querySelectorAll('[data-gene-person]')].find(el=>el.dataset.genePerson===id);if(button){button.click();button.scrollIntoView({block:'nearest',inline:'nearest'})}else flash(lang==='zh'?'无法打开此人物档案。':'Could not open this person’s record.')}else if(person&&CHARACTER_CATALOG[id])openAtlas('person='+encodeURIComponent(id));else flash(lang==='zh'?'该人物档案不可用。':'This person’s record is unavailable.')}});
   document.querySelector('#lang').onclick=()=>{lang=lang==='en'?'zh':'en';localStorage.setItem('spqr-lang',lang);render()};
-  const openAtlas=(section='')=>{if(!['caesar','senate'].includes(state.player)){flash(lang==='zh'?'此剧本请使用当前战役地图。':'Use the campaign map for this scenario.');return}try{stageHandoff(sessionStorage,state,'atlas');stop();location.assign('./map-lab/'+(section?'#'+section:''))}catch{flash(lang==='zh'?'无法切换：浏览器未能暂存战役，请检查存储设置。':'Could not transfer the campaign. Check browser storage settings.')}};
+  const openAtlas=(section='')=>{if(!['caesar','senate'].includes(state.player)){flash(lang==='zh'?'此剧本请使用当前战役地图。':'Use the campaign map for this scenario.');return}if(embeddedCampaign){closeEmbeddedPanel(section);return}try{stageHandoff(sessionStorage,state,'atlas');stop();location.assign('./map-lab/'+(section?'#'+section:''))}catch{flash(lang==='zh'?'无法切换：浏览器未能暂存战役，请检查存储设置。':'Could not transfer the campaign. Check browser storage settings.')}};
   document.querySelector('#open-intelligence')?.addEventListener('click',()=>openAtlas('factions'));
   document.querySelector('#open-atlas').onclick=()=>openAtlas();
   document.querySelector('#new').onclick=()=>{stop();closeExperience();toast='';setupRequired=false;setupOpen=true;render()};
@@ -299,4 +312,4 @@ function bind(){
   bindImperium({state,lang,render,flash,log:imperiumLog});
 }
 render();
-
+if(embeddedCampaign)window.parent.postMessage({type:'spqr:panel-ready'},location.origin);
