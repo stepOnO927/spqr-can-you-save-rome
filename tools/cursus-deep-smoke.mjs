@@ -14,10 +14,18 @@ try{
  await page.locator('[data-faction="senate"]').click();
  await page.locator('[data-cursus-foreign]').selectOption('parthia');
  for(let stage=1;stage<=3;stage++){
-  await page.locator('[data-cursus-investigate]').click();
-  for(let month=0;month<2+stage;month++)await page.locator('#advance').click();
+  for(let attempt=0;attempt<12;attempt++){
+   await page.locator('[data-cursus-investigate]').click();await page.locator('[data-confirm-government-inquiry]').click();
+   for(let month=0;month<2+stage;month++)await page.locator('#advance').click();
+   if((await page.locator('.cursus-tree').innerText()).includes('调查阶段 '+stage+'/5'))break;
+   assert.match(await page.locator('.cursus-tree').innerText(),/未收到报告|拒绝了调查/);
+  }
   assert.match(await page.locator('.cursus-tree').innerText(),new RegExp('调查阶段 '+stage+'/5'));
  }
+ assert.match(await page.locator('.cursus-tree').innerText(),/最近观察.*送达/);
+ await page.locator('.cursus-report-history summary').click();
+ assert.ok(await page.locator('.cursus-report-history p').count()>=3);
+ assert.match(await page.locator('.cursus-report-history').innerText(),/来源可靠性未知.*未独立核实/);
  const official=page.locator('.cursus-foreign-list article').filter({hasText:'阿尔塔巴努斯'});
  assert.equal(await official.count(),1);
  assert.equal(await official.locator('[data-cursus-contact="scholarly"]').isDisabled(),true);

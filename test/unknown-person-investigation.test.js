@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=portraits-hundred-days-1';
+import {newGame,upgradeSave} from '../engine.js?v=government-intel-courier-1';
 import {previewMission,queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=portraits-hundred-days-1';
 const highSeed=Array.from({length:100000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296>.96);
 function setup(){const s=newGame('caesar'),k=s.knowledge.caesar.egypt;k.reportedLeaders=[];k.reports=[];k.sightings={};k.commanderReports=[];s.factions.caesar.treasury=100;return s}

@@ -1,8 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=portraits-hundred-days-1';
+import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=government-intel-courier-1';
 import {appointOffice,officeEffects} from '../office-system.js?v=portraits-hundred-days-1';
-import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=portraits-hundred-days-1';
+import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=government-intel-courier-1';
+
+// Later contact scenarios need a delivered report; a failed inquiry is retried.
+function reachGovernmentStage(s,target,level,actor=s.player){
+ let attempts=0;while((governmentReport(s,target,actor)?.stage||0)<level){assert.ok(++attempts<=30,'investigations never reached the required stage');const plan=investigateGovernment(s,target,actor);assert.ok(plan.ok);for(let i=0;i<plan.months;i++)advanceCursus(s)}
+}
 
 test('fictional candidates are persistent people; Roman consuls require an assembly election',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
@@ -43,12 +48,9 @@ test('obstructive competence differs from loyalty and institutional support',()=
  assert.equal(officeEligibility(s,id,'dictator').ok,false);
 });
 test('dated Parthian office reports, two contact routes and negotiated employment',()=>{
- const s=newGame('senate'),c=initializeCursus(s),target='parthia',official=c.foreignPosts.parthia.administration;
+ const s=newGame('senate'),c=initializeCursus(s),target='parthia',official=c.foreignPosts.parthia.administration;s.factions.senate.treasury=500;
  assert.equal(governmentReport(s,target),null);
- for(let stage=1;stage<=3;stage++){
-  assert.equal(investigateGovernment(s,target).ok,true);
-  for(let i=0;i<2+stage;i++)advanceCursus(s);
- }
+ reachGovernmentStage(s,target,3);
  const report=governmentReport(s,target);
  assert.equal(report.stage,3);assert.ok(report.reports.at(-1).people.includes(official));
  assert.equal(report.reports.at(-1).confidence,'estimate');
@@ -120,7 +122,7 @@ test('foreign contact routes have distinct access requirements and costs',()=>{
  const s=newGame('senate'),c=initializeCursus(s),target='numidia',official=c.foreignPosts.numidia.administration,scholar=c.foreignPosts.numidia.scholar;
  s.factions.senate.treasury=500;
  assert.equal(contactOfficial(s,target,official,'embassy').ok,false);
- for(let stage=1;stage<=4;stage++){assert.equal(investigateGovernment(s,target).ok,true);for(let i=0;i<2+stage;i++)advanceCursus(s)}
+ reachGovernmentStage(s,target,4);
  assert.equal(contactOfficial(s,target,official,'scholarly').reason,'intelligence');
  const embassy=contactOfficial(s,target,official,'embassy');assert.deepEqual({ok:embassy.ok,cost:embassy.cost,months:embassy.months},{ok:true,cost:12,months:2});
  const invitation=contactOfficial(s,target,scholar,'scholarly');assert.deepEqual({ok:invitation.ok,cost:invitation.cost,months:invitation.months},{ok:true,cost:6,months:4});
@@ -150,7 +152,7 @@ test('AI must discover a Roman officeholder before contact, and defection clears
  assert.equal(appointOffice(s,'finance',id).ok,true);
  assert.equal(knownForeignOfficial(s,'senate',id,actor),false);
  assert.equal(contactOfficial(s,'senate',id,'formal',actor).ok,false);
- for(let stage=1;stage<=3;stage++){assert.equal(investigateGovernment(s,'senate',actor).ok,true);for(let i=0;i<2+stage;i++)advanceCursus(s)}
+ reachGovernmentStage(s,'senate',3,actor);
  assert.equal(knownForeignOfficial(s,'senate',id,actor),true);
  assert.equal(governmentReport(s,'senate',actor).reports.at(-1).people.includes(id),true);
  assert.equal(contactOfficial(s,'senate',id,'formal',actor).ok,true);
@@ -233,7 +235,7 @@ test('campaign actions have a monthly limit while political candidates act indep
 test('foreign knowledge and relationship dimensions remain distinct',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;
  assert.equal(officialKnowledge(s,'parthia',id).level,'unknown');
- for(let stage=1;stage<=3;stage++){assert.equal(investigateGovernment(s,'parthia').ok,true);for(let i=0;i<2+stage;i++)advanceCursus(s)}
+ s.factions.senate.treasury=500;reachGovernmentStage(s,'parthia',3);
  assert.equal(officialKnowledge(s,'parthia',id).level,'identified');
  c.contacts.push({actor:'senate',target:'parthia',id,route:'formal',status:'open',trust:35,relationship:{familiarity:40,trust:35,respect:40,professional:20,alignment:30,obligation:0,rivalry:0,willingness:25}});
  assert.equal(officialKnowledge(s,'parthia',id).level,'connected');
