@@ -610,6 +610,35 @@ test('AI can reassign a released escort to a newly raided route',()=>{
  assert.equal(escort.order?.kind,'escort');
  assert.equal(escort.order?.target,'eastern-stone');
 });
+test('AI pursues a dated hostile fleet report through a real sea battle without reading hidden positions',()=>{
+ const setup=()=>{
+  const s=newGrandGame('caesar'),hunter=s.naval.fleets.find(f=>f.owner==='senate'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');
+  s.factions.senate.treasury=500;s.factions.senate.food=100;
+  hunter.ships={trireme:4};hunter.sailors=720;
+  enemy.port=null;enemy.zone='aegean';
+  for(const pirate of s.naval.pirates){pirate.pressure=0;pirate.ships=0}
+  return {s,hunter,enemy};
+ };
+ const unseen=setup();advanceNaval(unseen.s);assert.notEqual(unseen.hunter.order?.kind,'intercept');
+ const strong=setup();strong.s.naval.intel.senate={[strong.enemy.id]:{owner:'caesar',zone:'aegean',year:strong.s.year,month:strong.s.month,source:'recon',range:[9,12],confidence:'medium'}};
+ advanceNaval(strong.s);assert.notEqual(strong.hunter.order?.kind,'intercept');
+ const {s,hunter,enemy}=setup();s.naval.intel.senate={[enemy.id]:{owner:'caesar',zone:'aegean',year:s.year,month:s.month,source:'recon',range:[3,5],confidence:'medium'}};
+ advanceNaval(s);assert.equal(hunter.order?.kind,'intercept');assert.equal(hunter.order.target,'aegean');assert.equal(hunter.order.reportId,enemy.id);
+ const restored=upgradeSave(structuredClone(s)),saved=restored.naval.fleets.find(f=>f.id===hunter.id);
+ assert.equal(saved.order.reportId,enemy.id);
+ advanceNaval(restored);
+ assert.ok(restored.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(hunter.id)&&r.participants.includes(enemy.id)));
+});
+test('AI changes or ends fleet pursuit when its dated report moves or expires',()=>{
+ const s=newGrandGame('caesar'),hunter=s.naval.fleets.find(f=>f.owner==='senate'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');
+ s.factions.senate.treasury=500;s.factions.senate.food=100;hunter.ships={trireme:4};hunter.sailors=720;enemy.port=null;enemy.zone='western';
+ for(const pirate of s.naval.pirates){pirate.pressure=0;pirate.ships=0}
+ s.naval.intel.senate={[enemy.id]:{owner:'caesar',zone:'aegean',year:s.year,month:s.month,source:'recon',range:[3,5],confidence:'medium'}};
+ advanceNaval(s);assert.equal(hunter.order?.target,'aegean');
+ s.month++;s.naval.intel.senate[enemy.id]={...s.naval.intel.senate[enemy.id],zone:'western',month:s.month};
+ advanceNaval(s);assert.equal(hunter.order?.kind,'intercept');assert.equal(hunter.order.target,'western');
+ s.month+=3;advanceNaval(s);assert.notEqual(hunter.order?.kind,'intercept');
+});
 test('naval state survives save migration and 36 campaign months',()=>{
  const s=newGrandGame('senate');for(let i=0;i<36;i++)tick(s);const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(restored.naval.fleets.length,s.naval.fleets.length);assert.equal(restored.naval.routes.length,12);assert.ok(restored.naval.routes.every(r=>Number.isFinite(r.last?.security)));assert.ok(restored.naval.fleets.every(f=>Number.isFinite(f.hull)&&Number.isFinite(f.supply)))
 });
