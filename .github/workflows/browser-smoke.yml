@@ -23,6 +23,8 @@ jobs:
       - run: |
           node server.mjs > server.log 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
+          node tools/integrated-panel-smoke.mjs
+          node tools/satisfaction-map-smoke.mjs
           node tools/hundred-days-smoke.mjs
           node tools/travel-smoke.mjs
           node tools/cursus-smoke.mjs
@@ -58,7 +60,6 @@ jobs:
           node tools/newborn-age-smoke.mjs
           node tools/born-portraits-smoke.mjs
           node tools/inheritance-settlement-smoke.mjs
-          node tools/satisfaction-map-smoke.mjs
           node tools/campaign-date-smoke.mjs
           node tools/scenario-general-portrait-smoke.mjs
           node tools/civic-portrait-smoke.mjs
