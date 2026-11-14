@@ -49,6 +49,17 @@ test('a horse order escrows goods and money, travels, then pays and delivers exa
  assert.equal(upgradeSave(structuredClone(loaded)).markets.transactions.length,1);
 });
 
+test('a competitive premium cannot underprice goods or rewrite a locked contract',()=>{
+ const s=deal(),base=quoteTrade(s,request);
+ assert.equal(quoteTrade(s,{...request,bidPremium:-1}).reason,'invalid');
+ assert.equal(quoteTrade(s,{...request,bidPremium:4}).reason,'invalid');
+ const bid=quoteTrade(s,{...request,bidPremium:2});
+ assert.equal(bid.ok,true);assert.equal(bid.price,base.price+4);
+ const contract=proposeSupplyContract(s,{...request,interval:3,duration:12});
+ assert.equal(contract.ok,true);
+ assert.equal(quoteTrade(s,{...request,contractId:contract.contract.id,bidPremium:1}).reason,'contract');
+});
+
 test('a long-term supply contract prepays each physical installment and survives save/load',()=>{
  let s=deal(),source=s.markets.regions.parthia.goods.horses,buyerCash=s.factions.armenia.treasury;
  const proposed=proposeSupplyContract(s,{...request,interval:3,duration:12});assert.equal(proposed.ok,true);
