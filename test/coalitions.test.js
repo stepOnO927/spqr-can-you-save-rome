@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,diplomacy,isWar,upgradeSave,tick} from '../engine.js?v=multipolar-autoplay-1';
+import {newGame,estimatedStrength,diplomacy,isWar,upgradeSave,tick} from '../engine.js?v=strategic-player-offer-1';
 import {formCoalition,leaveCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,perceivedBalance} from '../coalitions.js?v=fort-intel-1';
 import {addReport} from '../character-system.js?v=succession-ui-recovery-1';
 

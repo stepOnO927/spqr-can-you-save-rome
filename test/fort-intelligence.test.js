@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=multipolar-autoplay-1';
+import {newGame,upgradeSave} from '../engine.js?v=strategic-player-offer-1';
 import {observeControl,reportedFortification} from '../control-intelligence.js?v=fort-intel-1';
 import {createPlan,assignRole,assessPlan} from '../battle-plans.js?v=succession-ui-recovery-1';
 

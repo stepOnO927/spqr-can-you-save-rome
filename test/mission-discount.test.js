@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {newGame,tick,upgradeSave} from '../engine.js?v=multipolar-autoplay-1';import {missionCost,previewMission,queueMission} from '../character-system.js?v=succession-ui-recovery-1';
+import test from 'node:test';import assert from 'node:assert/strict';import {newGame,tick,upgradeSave} from '../engine.js?v=strategic-player-offer-1';import {missionCost,previewMission,queueMission} from '../character-system.js?v=succession-ui-recovery-1';
 const actions=[['spy','egypt','health',null,12],['envoy','egypt','leaders',null,8],['travelers','egypt','health',null,4],['audience','egypt','leaders',null,10],['exchange','egypt','health','parthia',6],['counter','caesar','conspiracy',null,8]];
 function setup(discount){const s=newGame('caesar');s.alliances.push(['caesar','parthia']);if(discount)s.inventions.caesar.active.diplomacy.push('intelligence_networks');return s}
 test('intelligence network reduces each mission by one and preview matches actual deduction',()=>{
