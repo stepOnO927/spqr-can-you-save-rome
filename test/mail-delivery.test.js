@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=ai-wartime-aid-1';
+import {newGame} from '../engine.js?v=frontier-response-1';
 import {sendLetter,advanceMail,replyToLetter,receivedMail} from '../epistulae.js?v=portraits-hundred-days-1';
 import {mailboxHtml} from '../mail-ui.js?v=portraits-hundred-days-1';
 

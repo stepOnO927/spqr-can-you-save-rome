@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=ai-wartime-aid-1';
+import {newGame,upgradeSave} from '../engine.js?v=frontier-response-1';
 import {queueMission,advanceOperations} from '../character-system.js?v=portraits-hundred-days-1';
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 const resolve=(s,op,seed)=>{op.remaining=1;s.world.intelSeed=seed;advanceOperations(s)};
