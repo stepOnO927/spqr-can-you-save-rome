@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,tick,serialize,loadHanSave} from '../han/engine.js?v=ai-wartime-aid-1';
-import {appoint,adminCapacity,recomputeInfluence,advanceAmbitions,ambitionOptions,issueEdict,startAudit,knownAttributes,answerDebate,respondToDisaster,emperorAuthority,onUsurpation} from '../han/court.js?v=han-1';
+import {appoint,adminCapacity,recomputeInfluence,advanceAmbitions,ambitionOptions,issueEdict,startAudit,knownAttributes,answerDebate,respondToDisaster,emperorAuthority,onUsurpation,advanceCourt} from '../han/court.js?v=han-1';
 import {seizeThrone,statusOf,isLiuClan} from '../han/dynasty.js?v=han-1';
 import {startFocus,focusState,advanceFocus,aiChooseFocus,TREES} from '../han/focus.js?v=han-1';
 import {protectorateAction} from '../han/frontier.js?v=han-1';
@@ -98,6 +98,26 @@ test('a disaster response blames the selected court faction and rejects an unkno
  assert.ok(s.court.factions.waiqi.influence<before,'selected faction loses influence');
  assert.ok(s.court.factions.ru.influence>ru,'rival faction gains influence');
  assert.equal(s.court.pendingDisaster,null);
+});
+
+test('an unresolved disaster survives new rolls and receives an affordable response at its deadline',()=>{
+ for(const [grain,treasury,loyaltyGain] of [[40,0,10],[0,20,5],[0,0,6]]){
+  let s=newHanGame('kangju',{seed:97,start:'accession'});
+  const capital=s.regions.find(r=>r.id==='changan'),beforeLoyalty=capital.loyalty;
+  s.factions.han.grain=grain;s.factions.han.treasury=treasury;
+  s.court.pendingDisaster={id:999,type:'flood',region:'changan',deadline:1,readings:[]};
+  s=loadHanSave(serialize(s));advanceCourt(s);
+  assert.equal(s.court.pendingDisaster,null);
+  assert.equal(s.regions.find(r=>r.id==='changan').loyalty,beforeLoyalty+loyaltyGain);
+  assert.equal(s.regions.find(r=>r.id==='nanyang').disaster,undefined,'a new disaster cannot overwrite the pending choice');
+  assert.equal(s.factions.han.grain,grain===40?0:grain);
+  assert.equal(s.factions.han.treasury,treasury===20?0:treasury);
+ }
+ const player=game({seed:97});player.factions.han.grain=0;player.factions.han.treasury=0;
+ player.court.pendingDisaster={id:1000,type:'flood',region:'changan',deadline:1,readings:[]};
+ advanceCourt(player);
+ assert.equal(player.court.pendingDisaster,null,'an insolvent player court also resolves an ignored deadline');
+ assert.ok(player.log.some(entry=>entry.kind==='disaster'&&entry.text?.[0]?.includes('magnates')));
 });
 
 test('29. character relationships persist across time and saves',()=>{

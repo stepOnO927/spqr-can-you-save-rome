@@ -255,6 +255,11 @@ The disaster response now applies blame to the court faction actually chosen
 by the player. Invalid faction IDs are rejected before altering influence;
 previously the conditional expression silently redirected every choice to
 the classicist officials.
+An unresolved disaster now stays pending when another random disaster roll
+would otherwise replace it. At its deadline the court uses grain relief,
+treasury-funded self-reproach or the politically costly magnate offer according
+to resources actually available; this also clears older saves whose AI court
+could otherwise retry an unaffordable response forever.
 The direct Han court panel now displays pending disasters with the affected
 region, a response deadline, costs and available actions. The player can
 choose whom to blame, or use the existing relief, self-reproach, dismissal

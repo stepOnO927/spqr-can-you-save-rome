@@ -217,6 +217,7 @@ const INTERPRETERS={
  haoqiang:{stance:'relief',text:['Magnates offer grain — at a price in local influence.','豪强愿出粮赈济，但求地方权柄。']}
 };
 function rollDisasters(s){
+ if(s.court.pendingDisaster)return;
  for(const r of s.regions.filter(r=>r.owner==='han')){
   for(const [k,d] of Object.entries(DISASTERS)){
    if(!d.where(r))continue;const chance=k==='flood'?0.004*(r.irrigation?0.5:1):0.002;
@@ -427,7 +428,10 @@ export function settleThroneWars(s){
 
 export function advanceCourt(s){
  advanceEdicts(s);advanceAudits(s);advanceAmbitions(s);rollDisasters(s);unrest(s);
- if(s.court.pendingDisaster&&--s.court.pendingDisaster.deadline<=0){const isAI=s.player!=='han';respondToDisaster(s,isAI||s.factions.han.grain>=40?'relief':'self_reproach')}
+ if(s.court.pendingDisaster&&--s.court.pendingDisaster.deadline<=0){
+  const f=s.factions.han;
+  respondToDisaster(s,f.grain>=40?'relief':f.treasury>=20?'self_reproach':'magnates');
+ }
  for(const d of [...s.court.debates]){if(d.created===undefined){d.created=s.year*12+s.month;continue}if(--d.deadline<=0)answerDebate(s,d.id,d.kind==='unrest'?(s.mandate.value>45?'reform':'suppress'):d.options[0])}
  for(const r of s.regions)if(r.disaster&&--r.disaster.months<=0)delete r.disaster;
  s.recentDisasters=Math.max(0,(s.recentDisasters||0)*0.9-0.02);
