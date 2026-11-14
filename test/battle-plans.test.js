@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=diplomatic-chronicle-1';
+import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=ai-wartime-aid-1';
 import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=portraits-hundred-days-1';
 import {templatesFor,recruitFormation} from '../legion-designer.js?v=portraits-hundred-days-1';
 import {ROUTES} from '../data.js?v=phase-x-1';

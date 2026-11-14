@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,resolveBattle,upgradeSave,isWar,tick,sendInquiry} from '../engine.js?v=diplomatic-chronicle-1';
+import {newGame,region,resolveBattle,upgradeSave,isWar,tick,sendInquiry} from '../engine.js?v=ai-wartime-aid-1';
 import {contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,previewMission,queueMission} from '../character-system.js?v=portraits-hundred-days-1';
 import {knownDynasticFactions,resolveDynasticWars} from '../civil-war.js?v=succession-ui-recovery-1';
 import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
