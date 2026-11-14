@@ -215,6 +215,11 @@ court location, profession and first service event alongside that portrait.
 Their dossier shows those fields in both languages after save restoration.
 Older generated officials keep their saved names; unknown origins and locations
 remain explicitly unrecorded rather than receiving invented birthplaces.
+Opening court people now carry their cultural identity and profession in new
+campaigns; old saves gain those missing fields without replacing a recorded
+location. Simulated Liu children also retain cultural identity, royal role and
+an exact birth event with their actual parents. Old child records keep unknown
+places unknown and do not acquire a fabricated birth month.
 The same saved artwork now covers simulated Liu children, including a prince
 who later becomes orthodox emperor. The own-ruler card uses that person's
 portrait after a valid succession. A lineage-backed succession test rejects

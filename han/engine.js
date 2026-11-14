@@ -26,6 +26,7 @@ export const SCENARIOS={
 
 const STARTING_OFFICES={chengxiang:'yu-dingguo',yushi:'chen-wannian',dasima:'shi-gao',qianjiangjun:'xiao-wangzhi',zhongshu:'hong-gong',dasinong:null,zongzheng:'liu-xiang',duhu:null,hexi:'fictional-zhao-lie',jingzhao:null};
 const RES={han:{treasury:600,grain:500,manpower:60000,horses:20000,stability:62},huhanye:{treasury:40,grain:40,manpower:30000,horses:60000,stability:55},zhizhi:{treasury:60,grain:60,manpower:40000,horses:80000,stability:60},wusun:{treasury:40,grain:50,manpower:25000,horses:60000,stability:50},wusun_lesser:{treasury:30,grain:40,manpower:18000,horses:40000,stability:55},kangju:{treasury:60,grain:60,manpower:30000,horses:50000,stability:55},dayuan:{treasury:70,grain:90,manpower:20000,horses:30000,stability:60}};
+const startingCulture=p=>p.culture||CULTURAL_NAME_POOLS[FACTIONS[p.faction||'han']?.culture||'han']?.culture||CULTURAL_NAME_POOLS.han.culture;
 const ARMY=(owner,region,template,men,commander=null)=>({owner,region,template,men,commander});
 const OPENING_ARMIES=[
  ARMY('han','changan','field',20000,'feng-fengshi'),ARMY('han','henan','field',12000),ARMY('han','shuofang','garrison',8000),ARMY('han','yunzhong','garrison',6000),
@@ -51,7 +52,7 @@ export function newHanGame(player='han',{scenario='historical',difficulty='stand
  // people and their birth records (historical records come from people.js)
  for(const p of PEOPLE){
   // anyone with a recorded death in or before January 48 BCE is dead at the start
-  s.persons[p.id]={...p,name:[...p.name],alive:p.death==null||p.death>startYear,spouse:[...(p.spouse||[])]};
+  s.persons[p.id]={...p,name:[...p.name],culture:[...startingCulture(p)],homeland:p.homeland??null,location:p.location??null,profession:p.profession??p.role??null,alive:p.death==null||p.death>startYear,spouse:[...(p.spouse||[])]};
   recordBirth(s,{id:p.id,father:p.father,mother:p.mother,birthSurname:p.birthSurname,birth:p.birth,sex:p.sex});
  }
  for(const f of ['liu-shi','liu-xun'])s.throne.support[f]=Object.fromEntries(['waiqi','ru','huanguan','frontier','haoqiang'].map(k=>[k,80]));
@@ -228,7 +229,7 @@ function lives(s){
    const sex=roll(s,'sex'+e)<0.5?'m':'f',given=GIVEN[Math.floor(roll(s,'gn'+e)*GIVEN.length)];
    const id=`sim-liu-${monthIndex(s)}-${Math.floor(roll(s,'id'+e)*1e6)}`;
    const rb=recordBirth(s,{id,father:e,mother:consort.id,birthSurname:'Liu',birth:s.year,sex});
-   if(rb.ok){s.persons[id]={id,name:[`Liu ${given[0]}`,`刘${given[1]}`],surname:'Liu',birthSurname:'Liu',sex,birth:s.year,death:null,father:e,mother:consort.id,record:'simulated',faction:ep.faction,role:sex==='m'?'prince':'princess',alive:true,ambition:Math.floor(roll(s,'amb'+id)*70),competence:Math.floor(30+roll(s,'cmp'+id)*50),loyalty:80,spouse:[]};ensureHanPortraitSeed(s.persons[id]);
+   if(rb.ok){const role=sex==='m'?'prince':'princess';s.persons[id]={id,name:[`Liu ${given[0]}`,`刘${given[1]}`],surname:'Liu',birthSurname:'Liu',sex,birth:s.year,death:null,father:e,mother:consort.id,record:'simulated',culture:[...CULTURAL_NAME_POOLS.han.culture],homeland:null,location:null,faction:ep.faction,role,profession:role,alive:true,ambition:Math.floor(roll(s,'amb'+id)*70),competence:Math.floor(30+roll(s,'cmp'+id)*50),loyalty:80,spouse:[],history:[{year:s.year,month:s.month,kind:'birth',father:e,mother:consort.id}]};ensureHanPortraitSeed(s.persons[id]);
     if((ep.faction||'han')===s.player)log(s,['A child is born to the emperor: %NAME%.','皇帝得子女：%NAME%。'],{who:id,kind:'life'})}
   }}
  // vacant offices draw new officials from the empire’s gentry (never Liu unless clan office)
@@ -317,7 +318,7 @@ export function loadHanSave(raw){
  if(!s||s.dlc!==DLC_ID)throw new Error('Not a Mandate of Heaven save');
  // canonical historical birth records always come from the static record
  for(const p of PEOPLE){const rec=s.genealogy[p.id];if(rec&&(rec.father!==p.father||rec.birthSurname!==p.birthSurname||rec.sex!==p.sex||rec.birth!==p.birth)){delete s.genealogy[p.id];recordBirth(s,{id:p.id,father:p.father,mother:p.mother,birthSurname:p.birthSurname,birth:p.birth,sex:p.sex})}
-  if(s.persons[p.id]){s.persons[p.id].birthSurname=p.birthSurname;if(p.portrait&&!s.persons[p.id].portrait&&s.persons[p.id].birth===p.birth&&s.persons[p.id].name?.[0]===p.name[0])s.persons[p.id].portrait=p.portrait}}
+  if(s.persons[p.id]){const person=s.persons[p.id];person.birthSurname=p.birthSurname;person.culture??=[...startingCulture(p)];person.homeland??=null;person.location??=null;person.profession??=person.role??p.role??null;if(p.portrait&&!person.portrait&&person.birth===p.birth&&person.name?.[0]===p.name[0])person.portrait=p.portrait}}
  for(const r of REGIONS)if(!s.regions.some(x=>x.id===r.id))s.regions.push({...r,siege:null,unrest:0});
  for(const [id,f] of Object.entries(FACTIONS))if(!f.dynamic&&!s.factions[id])s.factions[id]={id,treasury:20,grain:30,manpower:6000,horses:3000,stability:55};
  // Older campaign officials retain their names and any recorded origin;
@@ -326,6 +327,10 @@ export function loadHanSave(raw){
   person.culture??=[...CULTURAL_NAME_POOLS.han.culture];person.profession??=person.role;
   person.homeland??=null;person.location??=null;
   person.career??=(s.log||[]).filter(entry=>entry.who===person.id||entry.who2===person.id);
+ }
+ for(const person of Object.values(s.persons))if(person.record==='simulated'&&person.id?.startsWith('sim-liu-')){
+  person.culture??=[...CULTURAL_NAME_POOLS.han.culture];person.profession??=person.role??null;
+  person.homeland??=null;person.location??=null;person.history??=[];
  }
  s.rulers||=Object.fromEntries(EURASIAN_RULERS.map(p=>[p.faction,{...p,attested:true}]));
  ensureForeignRulers(s);

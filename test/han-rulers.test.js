@@ -7,6 +7,28 @@ import {birthRecordValid,recordBirth,eligibility,crown,seizeThrone} from '../han
 import {courtPortraitSrc} from '../han/court-portrait.js';
 import {roll} from '../han/util.js';
 
+test('simulated Liu children keep their parents, culture and dated birth through a legacy save',()=>{
+ let s=newHanGame('han',{seed:146,start:'han'});
+ tick(s);
+ const child=Object.values(s.persons).find(p=>p.id.startsWith('sim-liu-'));
+ assert.ok(child);
+ assert.deepEqual(child.culture,['Han Chinese','汉']);
+ assert.equal(child.profession,child.role);
+ assert.equal(child.homeland,null);
+ assert.equal(child.location,null);
+ assert.deepEqual(child.history,[{year:-48,month:3,kind:'birth',father:'liu-shi',mother:'wang-zhengjun'}]);
+ for(const key of ['culture','profession','homeland','location','history'])delete child[key];
+ s=loadHanSave(serialize(s));
+ const restored=s.persons[child.id];
+ assert.deepEqual(restored.culture,['Han Chinese','汉']);
+ assert.equal(restored.profession,restored.role);
+ assert.equal(restored.homeland,null);
+ assert.equal(restored.location,null);
+ assert.deepEqual(restored.history,[]);
+ assert.equal(restored.father,'liu-shi');
+ assert.equal(restored.mother,'wang-zhengjun');
+});
+
 test('an original Liu heir gains a persistent portrait when legitimately crowned',()=>{
  let s=newHanGame('han',{seed:412});
  const id='simulated-liu-heir',father='liu-shi';

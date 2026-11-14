@@ -47,6 +47,8 @@ try{
  assert.equal(await page.locator('#court-office option[value="chengxiang"]').count(),0);
  await page.locator('[data-court-person="liu-xiang"]').click();
  assert.equal(await profile.getAttribute('data-person'),'liu-xiang');
+ assert.match(await profile.innerText(),/Culture\s+Han Chinese/);
+ assert.match(await profile.innerText(),/Recorded origin\s+Not recorded/);
  assert.equal(await page.locator('#court-office option[value="zongzheng"]').count(),1);
  await page.locator('[data-court-person="feng-liao"]').click();
  assert.match(await profile.innerText(),/Envoy/);

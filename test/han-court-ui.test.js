@@ -160,3 +160,21 @@ test('legacy generated officials keep their names and unknown origins on load',(
  assert.match(hanCourtHtml(loaded,0,id),/<dt>Recorded origin<\/dt><dd>Not recorded<\/dd>/);
  assert.match(hanCourtHtml(loaded,1,id),/<dt>记载的出身地<\/dt><dd>未记载<\/dd>/);
 });
+
+test('starting court people retain culture and do not gain invented origins on save migration',()=>{
+ const s=newHanGame('han',{seed:92}),minister=s.persons['liu-xiang'],steppe=s.persons.huhanye;
+ assert.deepEqual(minister.culture,['Han Chinese','汉']);
+ assert.equal(minister.profession,'official');
+ assert.equal(minister.homeland,null);
+ assert.match(steppe.culture[0],/Xiongnu/);
+ assert.match(hanCourtHtml(s,0,'liu-xiang'),/<dt>Culture<\/dt><dd>Han Chinese<\/dd>/);
+ assert.match(hanCourtHtml(s,1,'liu-xiang'),/<dt>文化<\/dt><dd>汉<\/dd>/);
+ delete minister.culture;delete minister.homeland;delete minister.location;delete minister.profession;
+ steppe.location='monan';
+ const restored=loadHanSave(serialize(s));
+ assert.deepEqual(restored.persons['liu-xiang'].culture,['Han Chinese','汉']);
+ assert.equal(restored.persons['liu-xiang'].homeland,null);
+ assert.equal(restored.persons['liu-xiang'].location,null);
+ assert.equal(restored.persons['liu-xiang'].profession,'official');
+ assert.equal(restored.persons.huhanye.location,'monan');
+});
