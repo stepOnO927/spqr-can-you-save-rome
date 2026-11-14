@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,setTax} from '../engine.js';
-import {treeFor as romanFocuses,canStartFocus,startFocus} from '../national-focus.js';
+import {treeFor as romanFocuses,canStartFocus,startFocus as startRomanFocus} from '../national-focus.js';
 import {initializeExperience,recordExperience,setDirection,setGuide,tutorialStep,recommendations,objectives} from '../experience.js';
 import {advanceMail,receivedMail,replyToLetter} from '../epistulae.js';
 import {newHanGame,tick as hanTick,loadHanSave,serialize} from '../han/engine.js';
@@ -71,7 +71,7 @@ test('guidance recommends only startable national focuses and supports peaceful 
  const s=newGame('senate');initializeExperience(s,{guided:false});setDirection(s,'development');s.wars=[];
  s.factions.senate.treasury=0;assert.equal(recommendations(s).some(r=>r.id==='focus'),false);
  s.factions.senate.treasury=200;s.factions.senate.stability=80;s.factions.senate.legitimacy=80;
- const project=romanFocuses('senate').find(f=>!canStartFocus(s,'senate',f.id));assert.ok(project);assert.equal(startFocus(s,'senate',project.id).ok,true);
+ const project=romanFocuses('senate').find(f=>!canStartFocus(s,'senate',f.id));assert.ok(project);assert.equal(startRomanFocus(s,'senate',project.id).ok,true);
  setTax(s,'senate','low');recordExperience(s,'tax','low');
  for(let i=0;i<60;i++){const advice=recommendations(s);assert.ok(advice.length>=2);assert.ok(advice.every(r=>['mail','army','region','direction','government','chronicle','focus','time'].includes(r.target.kind)));tick(s);if(i===23)assert.ok(objectives(s).months>=24)}
  const saved=upgradeSave(JSON.parse(JSON.stringify(s)));assert.ok(saved.experience);assert.ok(objectives(saved).months>=60);assert.ok(saved.experience.milestones.some(m=>m.id==='three_years'));
