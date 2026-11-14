@@ -165,7 +165,9 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     return {ok:true,open:choice==='war_council'?'military':choice==='review_budget'?'government':m.context?.region};
   }
   let ok = true,selectedRepresentative=null;
-  if (m.context?.kind === 'peace') {
+  if (m.context?.kind === 'strategic_offer') {
+    ok = actions.answerStrategicOffer?.(s,m.context.offerId,choice).ok === true;
+  } else if (m.context?.kind === 'peace') {
     ok = actions.answerPeaceOffer?.(s,m.senderFaction,choice).ok === true;
   } else if (m.context?.kind === 'war' && choice === 'negotiate') {
     ok = actions.sendInquiry(s, s.player, m.senderFaction, 'peace').ok;
@@ -322,13 +324,28 @@ export function replyToLetter(s, id, choice, actions, details={}) {
   if(m.context?.kind==='personal_flavor'&&choice==='grant_favor')replyNotice(s,m,['A note of thanks','致谢短笺'],['I am grateful for the court’s assistance.','承蒙朝廷资助，谨致谢意。']);
   if(!['ignore','acknowledge','seek_allies'].includes(choice)){
     const leader=senderFor(s,s.player),to=m.senderFaction;
-    const phrase={accept:['We accept the proposed accord.','本朝接受所议协定。'],reject:['We decline the proposed accord.','本朝谢绝所议协定。'],negotiate:['We request further negotiations.','本朝请求继续商议。'],condemn:['We condemn this declaration.','本朝谴责此项宣战。'],apologize:['We regret the strain between our courts.','两国关系紧张，本朝深表遗憾。'],defend:['Our court maintains its position.','本朝坚持原有立场。'],welcome:['We welcome this correspondence.','本朝欣然收到来函。'],send_aid:['We have committed five treasury units in support.','本朝决定提供五单位国库援助。'],concede:['We accept the requested settlement.','本朝同意所请和解。']}[choice]||[choice.replaceAll('_',' '),choice];
+    const phrase={accept:['We accept the proposed accord.','本朝接受所议协定。'],join_war:['We have agreed to enter the war.','本朝同意加入战争。'],refuse:['We decline the request.','本朝谢绝此项请求。'],reject:['We decline the proposed accord.','本朝谢绝所议协定。'],negotiate:['We request further negotiations.','本朝请求继续商议。'],condemn:['We condemn this declaration.','本朝谴责此项宣战。'],apologize:['We regret the strain between our courts.','两国关系紧张，本朝深表遗憾。'],defend:['Our court maintains its position.','本朝坚持原有立场。'],welcome:['We welcome this correspondence.','本朝欣然收到来函。'],send_aid:['We have committed five treasury units in support.','本朝决定提供五单位国库援助。'],concede:['We accept the requested settlement.','本朝同意所请和解。']}[choice]||[choice.replaceAll('_',' '),choice];
     if(to!==s.player){const sent=sendLetter(s,{senderId:leader,senderInstitution:leader?null:s.player,senderFaction:s.player,recipient:to,source:m.destination,destination:m.source,
       category:m.category,priority:m.priority,subject:[`Re: ${m.subject[0]}`,`复：${m.subject[1]}`],
       body:responseBody||phrase,threadId:m.threadId,
-      context:{kind:'reply',replyTo:m.id}});if(sent.ok&&m.responses.at(-1).arrival!==null){m.responses.at(-1).replyMailId=sent.letter.id;sent.letter.arrival=m.responses.at(-1).arrival}}
+      context:m.context?.kind==='strategic_offer'?{kind:'strategic_reply',replyTo:m.id,offerId:m.context.offerId}:{kind:'reply',replyTo:m.id}});if(sent.ok&&m.context?.kind==='strategic_offer'){const offer=s.world.strategicOffers.find(o=>o.id===m.context.offerId);if(offer){offer.replyMailId=sent.letter.id;sent.letter.arrival=monthIndex(s.year,s.month)+offer.remaining}}else if(sent.ok&&m.responses.at(-1).arrival!==null){m.responses.at(-1).replyMailId=sent.letter.id;sent.letter.arrival=m.responses.at(-1).arrival}}
   }
   return {ok:true, open:choice === 'war_council' ? 'military' : choice === 'view_location' ? m.context?.region : null};
+}
+
+// The strategic courier has already completed its outbound journey. Create a
+// single received letter without running a second, unrelated delivery roll.
+export function syncStrategicOfferLetters(s){
+ const mail=initializeMail(s);
+ for(const offer of s.world?.strategicOffers||[]){
+  if(offer.recipient!==s.player||offer.status!=='awaiting_decision'||offer.mailId)continue;
+  const target=name(offer.target),senderId=senderFor(s,offer.actor);
+  const result=sendLetter(s,{senderId,senderInstitution:senderId?null:offer.actor,senderFaction:offer.actor,recipient:s.player,category:'diplomatic',priority:'critical',
+   subject:['Request for military cooperation','请求军事协作'],
+   body:[`${name(offer.actor)[0]} asks us to join its war against ${target[0]}. Accepting declares war immediately unless we are already at war; alliances may involve other states. A reply takes time and may be lost.`,` ${name(offer.actor)[1]}请求本方加入其对${target[1]}的战争。接受将立即宣战（若尚未交战），同盟可能使其他国家卷入。回信需要时间且可能遗失。`],
+   options:['join_war','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,offer.remaining-1),context:{kind:'strategic_offer',offerId:offer.id}});
+  if(result.ok){offer.mailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['strategic:'+offer.id]=true}
+ }
 }
 
 export function syncPeaceLetters(s) {
@@ -632,7 +649,7 @@ export function advanceMail(s, actions = {}) {
     if (m.recipient === s.player) replyNotice(s,m,words[0],words[1]);
   }
   for (const m of mail.messages) {
-    if (m.delivery !== 'traveling' || m.arrival > now) continue;
+    if (m.delivery !== 'traveling' || m.arrival > now || m.context?.kind==='strategic_reply') continue;
     if(courierLost(s,m)){m.delivery='lost';continue}
     m.delivery = 'received';
     if(m.recipient===s.player&&m.context?.kind==='support_result'&&m.context.transfer>0){s.factions[s.player].treasury+=m.context.transfer;m.context.transfer=0}

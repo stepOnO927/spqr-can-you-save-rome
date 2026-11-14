@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=gathering-delegate-1';
-import {advanceMail,replyToLetter,receivedMail,unreadCount,sendLetter} from '../epistulae.js?v=gathering-delegate-1';
-import {mailboxHtml} from '../mail-ui.js?v=gathering-delegate-1';
+import {newGame,upgradeSave} from '../engine.js?v=strategic-player-offer-1';
+import {advanceMail,replyToLetter,receivedMail,unreadCount,sendLetter} from '../epistulae.js?v=living-letters-2';
+import {mailboxHtml} from '../mail-ui.js?v=living-letters-2';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 import {mapPoint} from '../map.js?v=succession-ui-recovery-1';
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=multipolar-autoplay-1';
+import {newGame,upgradeSave} from '../engine.js?v=strategic-player-offer-1';
 import {createFictionalPerson} from '../dynasties.js?v=succession-ui-recovery-1';
 import {ageRange} from '../characters.js?v=succession-ui-recovery-1';
 
