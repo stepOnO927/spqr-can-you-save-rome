@@ -4,7 +4,7 @@ const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use
 page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
- await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=strategic-player-offer-1');const s=newGame('caesar'),rome=s.regions.find(r=>r.id==='roma');rome.owner='caesar';rome.population.satisfaction=40;s.factions.caesar.treasury=100;s.world.religiousInstitutions.find(o=>o.id==='roman_college').relations.caesar=0;sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}))});
+ await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=peace-mail-courier-1');const s=newGame('caesar'),rome=s.regions.find(r=>r.id==='roma');rome.owner='caesar';rome.population.satisfaction=40;s.factions.caesar.treasury=100;s.world.religiousInstitutions.find(o=>o.id==='roman_college').relations.caesar=0;sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}))});
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#status').waitFor({state:'hidden',timeout:60000});
  const canvas=page.locator('#map canvas').first(),before=await canvas.screenshot();await page.locator('#map-mode').selectOption('satisfaction');await page.locator('#map-mode-details summary').click();
  assert.match(await page.locator('#map-mode-note').innerText(),/外国数据不显示/);const row=page.locator('[data-satisfaction-region="roma"]');assert.match(await row.innerText(),/40\/100/);assert.equal(await row.locator('.swatch').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(194, 170, 107)');

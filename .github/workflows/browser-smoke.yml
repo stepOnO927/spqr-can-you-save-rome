@@ -27,6 +27,7 @@ jobs:
           node scripts/multipolar-sim.mjs > multipolar-simulation.json
           node tools/multipolar-smoke.mjs
           node tools/player-strategic-offer-smoke.mjs
+          node tools/peace-mail-courier-smoke.mjs
           node tools/imperium-smoke.mjs
           node tools/fort-intelligence-smoke.mjs
           node tools/warning-ledger-smoke.mjs

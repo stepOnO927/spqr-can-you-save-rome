@@ -1,7 +1,7 @@
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=succession-ui-recovery-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,chronicleLetters} from './epistulae.js?v=strategic-player-offer-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,chronicleLetters} from './epistulae.js?v=peace-mail-courier-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=succession-ui-recovery-1';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=strategic-player-offer-1';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=peace-mail-courier-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=succession-ui-recovery-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=succession-ui-recovery-1';
@@ -12,7 +12,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=succession-ui-recovery-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=succession-ui-recovery-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=strategic-player-offer-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=peace-mail-courier-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -420,6 +420,10 @@ function resolveInquiries(s,{autoplayPlayer=false}={}){
   // use the same rule without changing their already-composed response.
   let reply=letter.sealed;
   if(reply.status!=='no_reply'&&rnd(s)<(isWar(s,letter.actor,letter.target) ? 0.18 : 0.08))reply={status:'no_reply'};
+  // A mailbox reply and the diplomatic settlement share this courier result.
+  // Delivery can still fail to settle a war if circumstances changed.
+  const replyMail=letter.replyMailId?s.mail?.messages?.find(m=>m.id===letter.replyMailId):null;
+  if(replyMail)replyMail.delivery=reply.status==='no_reply'?'lost':'received';
   // A provisional acceptance only takes effect when it reaches the sender.
   // Circumstances may change during the return journey.
   if(letter.subject==='peace'&&reply.status==='answered'&&!diplomacy(s,letter.actor,letter.target,'peace',{acceptedByPlayer:!!reply.acceptedByPlayer&&letter.target===s.player}))reply={status:'no_reply'};

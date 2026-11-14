@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=strategic-player-offer-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=peace-mail-courier-1';
 import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=fort-intel-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
 import {assessOpportunities} from '../multipolar.js?v=multipolar-confidence-1';
@@ -13,7 +13,7 @@ import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {advanceGovernments} from '../governance.js?v=succession-ui-recovery-1';
 import {advanceMovements} from '../movements.js?v=succession-ui-recovery-1';
-import {newRevolutionScenario} from '../scenarios.js?v=strategic-player-offer-1';
+import {newRevolutionScenario} from '../scenarios.js?v=peace-mail-courier-1';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
