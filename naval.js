@@ -1,7 +1,7 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js';
-import {activeEffects,recordMerchantContact} from './development.js?v=36';
+import {activeEffects,recordMerchantContact} from './development.js?v=37';
 import {officeOf} from './office-system.js';
-import {nationalBudget} from './national-budget.js?v=15';
+import {nationalBudget} from './national-budget.js?v=16';
 
 // Sea areas and costs are game-scale approximations of the 49 BCE Mediterranean.
 export const SEA_ZONES=[
@@ -22,7 +22,8 @@ export const SHIPS={
  trireme:{name:['Trireme','三列桨战船'],cost:22,months:3,crew:180,power:5,speed:2,upkeep:2,capacity:0,materials:{timber:2,metal:1}},
  quadrireme:{name:['Quadrireme','四列桨战船'],cost:32,months:4,crew:250,power:7,speed:2,upkeep:3,capacity:0,materials:{timber:3,metal:2}},
  quinquereme:{name:['Quinquereme','五列桨战船'],cost:43,months:5,crew:310,power:9,speed:1,upkeep:4,capacity:0,materials:{timber:4,metal:2}},
- merchant:{name:['Merchant vessel','商船'],cost:17,months:3,crew:45,power:0,speed:1,upkeep:1,capacity:4,materials:{timber:2}},
+ // Civilian freight covers merchant crews; the state pays for hull construction and naval escorts.
+ merchant:{name:['Merchant vessel','商船'],cost:17,months:3,crew:45,power:0,speed:1,upkeep:0,capacity:4,materials:{timber:2}},
  transport:{name:['Military transport','军用运输船'],cost:20,months:3,crew:70,power:1,speed:1,upkeep:2,capacity:3000,materials:{timber:2}}
 };
 export const NAVAL_JOBS={harbor:{name:['Harbor Administrator','港口行政官'],port:true,building:'port'},engineer:{name:['Naval Engineer','海军工程师'],port:true,building:'shipyard'},trade:{name:['Trade Administrator','贸易行政官'],port:false},supervisor:{name:['Shipyard Supervisor','造船厂监工'],port:true,building:'shipyard'},intelligence:{name:['Maritime Intelligence Officer','海事情报官'],port:false}};
@@ -42,14 +43,14 @@ export const fleetCapacity=(f,s)=>(f.ships.transport||0)*(SHIPS.transport.capaci
 export const fleetCargoCapacity=f=>(f.ships.merchant||0)*SHIPS.merchant.capacity;
 export const fleetSpeed=f=>Math.max(1,Math.min(...Object.entries(f.ships).filter(([,count])=>count>0).map(([type])=>SHIPS[type]?.speed||1)));
 export const fleetUpkeep=f=>Object.entries(f.ships).reduce((n,[id,count])=>n+(SHIPS[id]?.upkeep||0)*count,0);
-export const fleetUpkeepDue=f=>(f.reserve&&f.port?Math.max(1,Math.ceil(fleetUpkeep(f)*.35)):fleetUpkeep(f))+(f.commanderId?1:0);
+export const fleetUpkeepDue=f=>(f.reserve&&f.port&&fleetUpkeep(f)>0?Math.max(1,Math.ceil(fleetUpkeep(f)*.35)):fleetUpkeep(f))+(f.commanderId?1:0);
 export function portZone(id){const s=site(id);if(!s)return null;if(['italiaS','illyricum','epirus'].includes(id))return 'adriatic';if(id==='egypt')return 'alexandrian';if(id==='sicilia')return 'sicilian';if(id==='t016'||s.macro==='roma')return 'tyrrhenian';if(s.macro==='cisalpine'&&s.lon>11)return 'adriatic';if(s.macro==='italiaN'&&s.lon>11)return 'adriatic';if(s.macro==='africa'||s.macro==='numidia'||s.macro==='mauretania')return 'african';if(s.macro==='achaia'||s.macro==='anatolia')return 'aegean';if(s.macro==='syria')return 'eastern';return SEA_ZONES.reduce((best,z)=>Math.hypot((s.lon-z.point[0])*Math.cos(s.lat*Math.PI/180),s.lat-z.point[1])<Math.hypot((s.lon-best.point[0])*Math.cos(s.lat*Math.PI/180),s.lat-best.point[1])?z:best).id}
 export function seaRoute(from,to){if(!byId[from]||!byId[to])return null;if(from===to)return [];const previous=new Map([[from,null]]),queue=[from];while(queue.length){const id=queue.shift();for(const next of byId[id].links){if(previous.has(next))continue;previous.set(next,id);if(next===to){const path=[];let at=to;while(at!==from){path.unshift(at);at=previous.get(at)}return path}queue.push(next)}}return null}
 const makeFleet=(id,name,owner,port,composition,commanderId=null)=>({id,name,owner,port,zone:portZone(port),commanderId,ships:{...composition},sailors:Object.entries(composition).reduce((n,[k,v])=>n+(SHIPS[k]?.crew||0)*v,0),morale:65,experience:18,supply:100,hull:100,tactic:'formation',order:null});
 const additionalRoutes=[
  ['narbo-wine','narbo','t016','wine',2],['african-oil','africa','t016','oil',2],['eastern-stone','t091','t016','stone',1],['aegean-textiles','egypt','anatolia','textiles',2],['egypt-papyrus','egypt','t016','papyrus',2],['levant-luxury','t114','t016','luxury',1],['western-horses','mauretania','t016','horses',1],['pontic-timber','t092','t016','timber',2],['hispanic-metal','hispaniaN','t016','metal',1]
 ];
-function ensureTrade(s){s.naval.stock||={};for(const owner of Object.keys(s.factions)){s.naval.stock[owner]||={wine:0,oil:0,textiles:0,papyrus:0,luxury:0,horses:0}}for(const [id,from,to,good,volume] of additionalRoutes)if(!s.naval.routes.some(r=>r.id===id))s.naval.routes.push({id,from,to,good,volume,last:null});for(const route of s.naval.routes)route.pausedBy=Array.isArray(route.pausedBy)?[...new Set(route.pausedBy.filter(id=>typeof id==='string'&&s.factions[id]))]:[]}
+function ensureTrade(s){s.naval.stock||={};s.naval.voyages||=[];s.naval.nextVoyage||=1;for(const owner of Object.keys(s.factions)){s.naval.stock[owner]||={wine:0,oil:0,textiles:0,papyrus:0,luxury:0,horses:0}}for(const [id,from,to,good,volume] of additionalRoutes)if(!s.naval.routes.some(r=>r.id===id))s.naval.routes.push({id,from,to,good,volume,last:null});for(const route of s.naval.routes)route.pausedBy=Array.isArray(route.pausedBy)?[...new Set(route.pausedBy.filter(id=>typeof id==='string'&&s.factions[id]))]:[]}
 export function toggleTradeRoute(s,actor,id){initializeNaval(s);const route=s.naval?.routes.find(r=>r.id===id),from=route&&s.regions.find(r=>r.id===route.from),to=route&&s.regions.find(r=>r.id===route.to);if(actor!==s.player||!route||!from||!to||from.owner!==actor&&to.owner!==actor)return {ok:false,reason:'route'};const at=route.pausedBy.indexOf(actor);if(at<0)route.pausedBy.push(actor);else route.pausedBy.splice(at,1);return {ok:true,paused:at<0}}
 function produceGoods(s){ensureTrade(s);for(const r of s.regions.filter(x=>x.port)){const stock=s.naval.stock[r.owner];if(!stock)continue;const kinds=({narbo:['wine'],africa:['oil'],egypt:['papyrus','textiles'],syria:['luxury'],mauretania:['horses'],achaia:['wine'],anatolia:['textiles']})[r.macro]||[];for(const kind of kinds)stock[kind]=Math.min(30,(stock[kind]||0)+1)}}
 function transferGood(s,from,to,good,planned){const origin=s.factions[from],destination=s.factions[to];if(!origin||!destination)return 0;const material=['timber','metal','stone'].includes(good),grain=good==='grain',left=grain?origin.food:material?s.development?.[from]?.materials?.[good]:s.naval.stock[from]?.[good],right=grain?destination.food:material?s.development?.[to]?.materials?.[good]:s.naval.stock[to]?.[good],cap=grain?(destination.foodCapacity??100):material?100:20;if(left==null||right==null)return 0;const amount=Math.max(0,Math.min(planned,left,cap-right));if(amount<=0)return 0;if(grain){origin.food-=amount;destination.food+=amount}else if(material){s.development[from].materials[good]-=amount;s.development[to].materials[good]+=amount}else{s.naval.stock[from][good]-=amount;s.naval.stock[to][good]+=amount}return amount}
@@ -63,45 +64,115 @@ function tradeUnitPrice(s,route,zones,buyer){
  const scarce=stock!=null&&stock<(route.good==='grain'?25:4)?1:0;
  return base+distance+scarce;
 }
-function settleRoute(s,route,log,merchantCapacity){
- const n=s.naval,from=s.regions.find(r=>r.id===route.from),to=s.regions.find(r=>r.id===route.to);if(!from||!to)return;
- const zones=routeZones(route),war=atWar(s,from.owner,to.owner),block=n.fleets.some(f=>f.order?.kind==='blockade'&&[route.from,route.to].includes(f.order.targetPort)&&f.zone===portZone(f.order.targetPort)&&atWar(s,f.owner,s.regions.find(r=>r.id===f.order.targetPort)?.owner));
- const vessel=n.fleets.find(f=>(f.owner===from.owner||f.owner===to.owner)&&(merchantCapacity.get(f.id)||0)>0&&zones.includes(f.zone)&&f.hull>20),merchant=!!vessel,piracy=Math.max(0,...n.pirates.filter(p=>zones.includes(p.zone)).map(p=>p.pressure)),relations=s.relations?.[[from.owner,to.owner].sort().join(':')]??0;
- const escorts=n.fleets.filter(f=>zones.includes(f.zone)&&['patrol','escort'].includes(f.order?.kind)&&ships(f)),raiders=n.fleets.filter(f=>f.order?.kind==='raid'&&f.order.target===route.id&&zones.includes(f.zone)&&ships(f)&&f.owner!==from.owner&&f.owner!==to.owner&&hostileTradeRoute(s,f.owner,route));
- let security=Math.max(0,Math.min(100,100-piracy+escorts.length*16-raiders.length*28+(activeEffects(s,to.owner).navalSecurity||0)+navalJobEffect(s,to.owner,'harbor',to.id)*4-(war?35:0)));if(block)security=0;
- const safe=security>=50||rng(s)<security/50,price=tradeUnitPrice(s,route,zones,to.owner);let amount=0,captured=0,paid=0,reason='delivered';
- const foodBudget=route.good==='grain'&&from.owner!==to.owner?nationalBudget(s,to.owner):null;
- const grainNeed=foodBudget?Math.max(0,Math.ceil(Math.max(18,12+3*Math.max(0,-foodBudget.foodNet))-s.factions[to.owner].food)):Infinity;
- const buyerHoldings=foodBudget?s.regions.filter(r=>r.owner===to.owner).length:0;
- const outnumbered=foodBudget&&s.wars.some(w=>w.includes(to.owner)&&s.regions.filter(r=>r.owner===w.find(id=>id!==to.owner)).length>buyerHoldings*1.5);
- const grainCashFloor=outnumbered&&s.factions[to.owner].food>=6+3*Math.max(0,-foodBudget.foodNet)?24:0;
- if(route.pausedBy?.includes(from.owner)||route.pausedBy?.includes(to.owner))reason='paused';else if(block)reason='blockade';else if(war)reason='war';else if(from.owner!==to.owner&&relations<=-40)reason='diplomacy';else if(!grainNeed)reason='stocked';else if(!merchant)reason='merchant';else{
-  merchantCapacity.set(vessel.id,merchantCapacity.get(vessel.id)-1);
-  if(raiders.length&&security<75){
-   reason='raid';const raider=raiders[0];raider.supply=Math.max(0,raider.supply-3);
-   captured=transferGood(s,from.owner,raider.owner,route.good,Math.max(1,Math.min(route.volume,Math.floor(combatPower(s,raider)/3))));
-   report(s,{kind:'trade-raid',zone:raider.zone,owner:to.owner,raider:raider.owner,good:route.good,captured});
-   if(captured&&!atWar(s,raider.owner,from.owner)){
-    const key=[raider.owner,from.owner].sort().join(':');
-    s.relations[key]=Math.max(-100,(s.relations[key]??0)-6);
-    report(s,{kind:'trade-incident',zone:raider.zone,owner:from.owner,raider:raider.owner,good:route.good,captured});
-    if(from.owner===s.player||raider.owner===s.player)log(s,'A raid on enemy commerce seized neutral cargo and damaged relations with its origin.','袭扰敌方商路时夺取中立商人的货物，损害了与货源地的关系。');
-   }
-   if(to.owner===s.player||from.owner===s.player||raider.owner===s.player)log(s,'A hostile fleet seized cargo from a maritime shipment.','敌方舰队夺走海上货运的货物。');
-  }else if(!safe)reason='piracy';else if(from.owner!==to.owner&&s.factions[to.owner].treasury<price+grainCashFloor)reason=grainCashFloor?'war-reserve':'payment';else{
-   const planned=route.volume+(activeEffects(s,to.owner).navalTrade||0)+(s.development?.[to.owner]?.knownMaterial?.includes('maritime-warehousing')?1:0)+navalJobEffect(s,to.owner,'trade')+(to.buildings?.includes('warehouse')?1:0);
-   const affordable=from.owner===to.owner?planned:Math.floor((s.factions[to.owner].treasury-grainCashFloor)/price);
-   amount=transferGood(s,from.owner,to.owner,route.good,Math.min(planned,affordable,grainNeed));
-   if(amount){paid=from.owner===to.owner?0:amount*price;s.factions[to.owner].treasury-=paid;s.factions[from.owner].treasury+=paid}else reason=affordable<1?'payment':'capacity';
-  }
- }
- if(reason==='piracy'&&piracy>20&&rng(s)<piracy/100){const p=n.pirates.find(x=>zones.includes(x.zone)),victim=n.fleets.find(f=>(f.owner===from.owner||f.owner===to.owner)&&(f.ships.merchant||0)>0&&!f.reserve&&f.zone===p?.zone);if(p&&victim){captured=pirateSeize(s,p,from.owner,route.good,route.volume);p.wealth+=captured;p.pressure=Math.min(70,p.pressure+2);damageFleet(s,victim,3);report(s,{kind:'pirate-raid',zone:p.zone,owner:victim.owner,good:route.good,captured});if(victim.owner===s.player)log(s,'Pirates struck a merchant vessel and seized cargo.','海盗袭击商船并夺走货物。')}}
- route.last={year:s.year,month:s.month,buyer:to.owner,seller:from.owner,amount,security,reason,unitPrice:price,paid,captured};
- const lead=recordMerchantContact(s,route);
- if(lead?.buyer===s.player)log(s,`Merchant contact brought a research lead on ${lead.name[0]}. It expires in six months; research is still required.`,`商贸往来带来了${lead.name[1]}的研究线索。线索六个月后失效，仍须投入研究。`);
- if(route.id==='egypt-italy'&&to.owner===s.player&&grainNeed>0&&amount===0&&security<40&&!['paused','stocked'].includes(reason)){s.factions[to.owner].stability=Math.max(0,s.factions[to.owner].stability-1);log(s,'Egyptian grain delivery was disrupted.','埃及粮船受阻，稳定度下降。')}
+function tradeAccountMove(s,owner,good,amount,into){
+ const account=cargoAccount(s,owner,good);if(!account.stock)return 0;
+ const held=account.stock[account.key]||0,actual=Math.max(0,Math.min(amount,into?account.cap-held:held));
+ account.stock[account.key]=held+(into?actual:-actual);return actual;
 }
-export function initializeNaval(s){if(!s.grandMap)return s;if(s.naval){s.naval.intel||={};s.naval.reports||=[];s.naval.queues||=[];s.naval.jobs||=[];s.naval.captives||=[];s.naval.provisions||={};s.naval.inlandProvisions||={};s.naval.wagons||=[];for(const p of s.naval.pirates||[])p.cargo||={};ensureTrade(s);return s}const senatePort=s.regions.find(r=>r.id==='italiaS'&&r.owner==='senate')?'italiaS':'epirus',caesarPort=s.regions.find(r=>r.id==='cisalpine'&&r.owner==='caesar')?'cisalpine':'narbo';s.naval={version:1,fleets:[makeFleet('senate-adriatic',['Adriatic Squadron','亚得里亚分舰队'],'senate',senatePort,{trireme:2,transport:2}),makeFleet('caesar-adriatic',['Caesarian Coastal Fleet','凯撒沿岸舰队'],'caesar',caesarPort,{trireme:2,light:2,transport:2}),makeFleet('egypt-grain',['Alexandrian Grain Fleet','亚历山大运粮船队'],'egypt','egypt',{trireme:1,merchant:3})],pirates:[{id:'illyrian-raiders',zone:'adriatic',ships:2,pressure:24,wealth:8,backer:null,cargo:{}},{id:'cilician-raiders',zone:'eastern',ships:2,pressure:20,wealth:7,backer:null,cargo:{}}],routes:[{id:'egypt-italy',from:'egypt',to:'t016',good:'grain',volume:4,last:null},{id:'africa-sicily',from:'africa',to:'sicilia',good:'grain',volume:2,last:null},{id:'adriatic-commerce',from:'illyricum',to:'italiaS',good:'timber',volume:2,last:null}],queues:[],reports:[],intel:{},jobs:[],captives:[],provisions:{},inlandProvisions:{},wagons:[],nextFleet:1};for(const id of [senatePort,caesarPort]){const r=s.regions.find(x=>x.id===id);if(!r)continue;r.buildings||=[];for(const b of ['port','shipyard'])if(!r.buildings.includes(b))r.buildings.push(b);const d=s.development?.[r.owner];if(d)for(const tech of ['port-facilities','shipyard-craft'])if(!d.knownMaterial.includes(tech))d.knownMaterial.push(tech)}ensureTrade(s);return s}
+function tradeRecord(s,route,buyer,seller,reason,security,price,extra={}){
+ if(route.last?.year===s.year&&route.last?.month===s.month&&route.last.reason==='delivered'&&reason==='enroute')return;
+ if(route.last?.year===s.year&&route.last?.month===s.month&&route.last.reason==='delivered'&&reason==='delivered'){
+  route.last.amount+=extra.amount||0;route.last.paid+=extra.paid||0;return;
+ }
+ route.last={year:s.year,month:s.month,buyer,seller,reason,security,unitPrice:price,amount:0,paid:0,captured:0,...extra};
+}
+function tradeGrainNeed(s,buyer,good,seller){
+ if(good!=='grain'||buyer===seller)return Infinity;
+ const budget=nationalBudget(s,buyer);
+ return Math.max(0,Math.ceil(Math.max(18,12+3*Math.max(0,-budget.foodNet))-s.factions[buyer].food));
+}
+function tradeCashFloor(s,buyer,good){
+ if(good!=='grain')return 0;
+ const budget=nationalBudget(s,buyer),holdings=s.regions.filter(r=>r.owner===buyer).length;
+ const outnumbered=s.wars.some(w=>w.includes(buyer)&&s.regions.filter(r=>r.owner===w.find(id=>id!==buyer)).length>holdings*1.5);
+ return outnumbered&&s.factions[buyer].food>=6+3*Math.max(0,-budget.foodNet)?24:0;
+}
+function tradeExposure(s,route,zone,buyer,seller){
+ const pirates=s.naval.pirates.filter(p=>p.zone===zone&&p.ships>0),piracy=Math.max(0,...pirates.map(p=>p.pressure));
+ const escorts=s.naval.fleets.filter(f=>f.zone===zone&&['patrol','escort'].includes(f.order?.kind)&&ships(f));
+ const raiders=s.naval.fleets.filter(f=>f.zone===zone&&f.order?.kind==='raid'&&f.order.target===route.id&&ships(f)&&f.owner!==buyer&&f.owner!==seller&&hostileTradeRoute(s,f.owner,route));
+ const security=Math.max(0,Math.min(100,100-piracy+escorts.length*16-raiders.length*28+(activeEffects(s,buyer).navalSecurity||0)+navalJobEffect(s,buyer,'harbor',route.to)*4-(atWar(s,buyer,seller)?35:0)));
+ return {security,piracy,pirates,raiders};
+}
+function tradeHome(s,v){
+ return s.regions.find(r=>r.id===v.from&&r.owner===v.vesselOwner)||s.regions.filter(r=>r.owner===v.vesselOwner&&r.port).map(r=>({r,path:seaRoute(v.zone,portZone(r.id))})).filter(x=>x.path).sort((a,b)=>a.path.length-b.path.length)[0]?.r||null;
+}
+function tradeCargoHome(s,v){
+ return s.regions.find(r=>r.id===v.from&&r.owner===v.seller)||s.regions.filter(r=>r.owner===v.seller&&r.port).map(r=>({r,path:seaRoute(v.zone,portZone(r.id))})).filter(x=>x.path).sort((a,b)=>a.path.length-b.path.length)[0]?.r||null;
+}
+function sendTradeHome(s,v){
+ v.phase='return';const home=v.cargo?tradeCargoHome(s,v):tradeHome(s,v);v.returnPort=home?.id||null;v.path=home?seaRoute(v.zone,portZone(home.id))||[]:[];
+}
+function finishTradeHome(s,v){
+ const landing=v.cargo?tradeCargoHome(s,v):tradeHome(s,v);
+ if(!landing){v.returnPort=null;return}
+ if(v.zone!==portZone(landing.id)){v.returnPort=landing.id;v.path=seaRoute(v.zone,portZone(landing.id))||[];return}
+ v.returnPort=landing.id;
+ if(v.cargo){v.cargo-=tradeAccountMove(s,v.seller,v.good,v.cargo,true);if(v.cargo)return}
+ if(v.vesselOwner!==v.seller){const vesselHome=tradeHome(s,v);if(vesselHome&&v.zone!==portZone(vesselHome.id)){sendTradeHome(s,v);return}}
+ const n=s.naval,home=n.fleets.find(f=>f.id===v.fleetId&&f.owner===v.vesselOwner&&f.zone===v.zone)||n.fleets.find(f=>f.owner===v.vesselOwner&&f.zone===v.zone&&f.port===v.returnPort&&!f.reserve);
+ if(home){home.ships.merchant=(home.ships.merchant||0)+1;home.sailors+=v.crew}
+ else{const port=v.returnPort&&s.regions.find(r=>r.id===v.returnPort)?.owner===v.vesselOwner?v.returnPort:null,f=makeFleet(`fleet-${n.nextFleet++}`,[`Merchant at ${site(port)?.site[0]||v.zone}`,`${site(port)?.site[1]||v.zone}商船`],v.vesselOwner,port,{merchant:1});f.zone=v.zone;f.sailors=v.crew;n.fleets.push(f)}
+ n.voyages.splice(n.voyages.indexOf(v),1);
+}
+function advanceTradeVoyages(s,log){
+ const n=s.naval;
+ for(const v of [...n.voyages]){
+  const route=n.routes.find(r=>r.id===v.routeId),owner=s.factions[v.vesselOwner];
+  if(!owner){n.voyages.splice(n.voyages.indexOf(v),1);continue}
+  owner.treasury=Math.max(-100,owner.treasury-SHIPS.merchant.upkeep);
+  if(v.path.length)v.zone=v.path.shift();
+  if(v.phase==='return'){if(!v.path.length)finishTradeHome(s,v);continue}
+  if(!route){sendTradeHome(s,v);continue}
+  const {security,piracy,pirates,raiders}=tradeExposure(s,route,v.zone,v.buyer,v.seller);
+  if(raiders.length&&security<75){
+   const raider=raiders[0],captured=tradeAccountMove(s,raider.owner,v.good,Math.min(v.cargo,Math.max(1,Math.floor(combatPower(s,raider)/3))),true);v.cargo-=captured;raider.supply=Math.max(0,raider.supply-3);
+   report(s,{kind:'trade-raid',zone:v.zone,owner:v.buyer,raider:raider.owner,good:v.good,captured});
+   if(captured&&!atWar(s,raider.owner,v.seller)){const key=[raider.owner,v.seller].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]??0)-6);report(s,{kind:'trade-incident',zone:v.zone,owner:v.seller,raider:raider.owner,good:v.good,captured})}
+   tradeRecord(s,route,v.buyer,v.seller,'raid',security,v.price,{captured,zone:v.zone});sendTradeHome(s,v);
+   if([v.buyer,v.seller,raider.owner].includes(s.player))log(s,'A hostile fleet seized cargo from a maritime shipment.','敌方舰队夺走海上货运的货物。');continue;
+  }
+  if(piracy>0&&security<50&&rng(s)>=security/50){
+   const pirate=pirates[0];let captured=0;
+   if(pirate&&rng(s)<piracy/100){captured=Math.min(v.cargo,route.volume);v.cargo-=captured;pirate.cargo||={};pirate.cargo[v.good]=(pirate.cargo[v.good]||0)+captured;pirate.wealth+=captured;pirate.pressure=Math.min(70,pirate.pressure+2);report(s,{kind:'pirate-raid',zone:v.zone,owner:v.vesselOwner,good:v.good,captured})}
+   tradeRecord(s,route,v.buyer,v.seller,'piracy',security,v.price,{captured,zone:v.zone});sendTradeHome(s,v);
+   if(v.vesselOwner===s.player)log(s,'Pirates struck a merchant vessel and seized cargo.','海盗袭击商船并夺走货物。');continue;
+  }
+  if(v.path.length){tradeRecord(s,route,v.buyer,v.seller,'enroute',security,v.price,{cargo:v.cargo,zone:v.zone,eta:v.path.length});continue}
+  const from=s.regions.find(r=>r.id===v.from),to=s.regions.find(r=>r.id===v.to),relations=s.relations?.[[v.buyer,v.seller].sort().join(':')]??0;
+  const open=from?.owner===v.seller&&to?.owner===v.buyer&&!atWar(s,v.buyer,v.seller)&&relations>-40&&!route.pausedBy?.includes(v.buyer)&&!route.pausedBy?.includes(v.seller);
+  const floor=tradeCashFloor(s,v.buyer,v.good),affordable=v.buyer===v.seller?v.cargo:Math.floor(Math.max(0,s.factions[v.buyer].treasury-floor)/v.price);
+  const wanted=open?Math.min(v.cargo,affordable,tradeGrainNeed(s,v.buyer,v.good,v.seller)):0;
+  const amount=tradeAccountMove(s,v.buyer,v.good,wanted,true),paid=v.buyer===v.seller?0:amount*v.price;v.cargo-=amount;s.factions[v.buyer].treasury-=paid;s.factions[v.seller].treasury+=paid;
+  const reason=amount?'delivered':!open?'closed':!wanted?(floor?'war-reserve':'payment'):'capacity';tradeRecord(s,route,v.buyer,v.seller,reason,security,v.price,{amount,paid,zone:v.zone});
+  if(amount){const lead=recordMerchantContact(s,route);if(lead?.buyer===s.player)log(s,`Merchant contact brought a research lead on ${lead.name[0]}. It expires in six months; research is still required.`,`商贸往来带来了${lead.name[1]}的研究线索。线索六个月后失效，仍须投入研究。`)}
+  sendTradeHome(s,v);
+ }
+}
+function dispatchTradeVoyage(s,route,log){
+ const n=s.naval,from=s.regions.find(r=>r.id===route.from),to=s.regions.find(r=>r.id===route.to);if(!from||!to)return;
+ if(route.lastDispatch?.year===s.year&&route.lastDispatch?.month===s.month||route.last?.year===s.year&&route.last?.month===s.month&&['raid','piracy','closed'].includes(route.last.reason))return;
+ const zones=routeZones(route),originZone=zones[0],vessel=n.fleets.find(f=>(f.owner===from.owner||f.owner===to.owner)&&(f.ships.merchant||0)>0&&f.sailors>=SHIPS.merchant.crew&&f.zone===originZone&&(!f.port||f.port===route.from)&&!f.reserve&&!f.mobilizing&&!f.order?.cargo&&f.hull>20);
+ if(!vessel&&n.voyages.some(v=>v.routeId===route.id&&v.phase==='outbound'))return;
+ if(!vessel&&route.last?.year===s.year&&route.last?.month===s.month&&route.last.reason==='delivered')return;
+ const price=tradeUnitPrice(s,route,zones,to.owner),{security,piracy,pirates,raiders}=tradeExposure(s,route,originZone,to.owner,from.owner);
+ const block=n.fleets.some(f=>f.order?.kind==='blockade'&&[route.from,route.to].includes(f.order.targetPort)&&f.zone===portZone(f.order.targetPort)&&atWar(s,f.owner,s.regions.find(r=>r.id===f.order.targetPort)?.owner));
+ const relations=s.relations?.[[from.owner,to.owner].sort().join(':')]??0,need=tradeGrainNeed(s,to.owner,route.good,from.owner),floor=tradeCashFloor(s,to.owner,route.good);
+ const reason=route.pausedBy?.includes(from.owner)||route.pausedBy?.includes(to.owner)?'paused':block?'blockade':atWar(s,from.owner,to.owner)?'war':from.owner!==to.owner&&relations<=-40?'diplomacy':!need?'stocked':!vessel?'merchant':null;
+ if(reason){tradeRecord(s,route,to.owner,from.owner,reason,block?0:security,price);return}
+ const planned=Math.min(route.volume+(activeEffects(s,to.owner).navalTrade||0)+(s.development?.[to.owner]?.knownMaterial?.includes('maritime-warehousing')?1:0)+navalJobEffect(s,to.owner,'trade')+(to.buildings?.includes('warehouse')?1:0),SHIPS.merchant.capacity,need);
+ const affordable=from.owner===to.owner?planned:Math.floor(Math.max(0,s.factions[to.owner].treasury-floor)/price),account=cargoAccount(s,from.owner,route.good);
+ if(affordable<1){tradeRecord(s,route,to.owner,from.owner,floor?'war-reserve':'payment',security,price);return}
+ if(!account.stock||!(account.stock[account.key]>0)){tradeRecord(s,route,to.owner,from.owner,'capacity',security,price);return}
+ if(raiders.length&&security<75){const raider=raiders[0],captured=transferGood(s,from.owner,raider.owner,route.good,Math.min(planned,affordable,Math.max(1,Math.floor(combatPower(s,raider)/3))));raider.supply=Math.max(0,raider.supply-3);report(s,{kind:'trade-raid',zone:originZone,owner:to.owner,raider:raider.owner,good:route.good,captured});if(captured&&!atWar(s,raider.owner,from.owner)){const key=[raider.owner,from.owner].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]??0)-6);report(s,{kind:'trade-incident',zone:originZone,owner:from.owner,raider:raider.owner,good:route.good,captured})}tradeRecord(s,route,to.owner,from.owner,'raid',security,price,{captured,zone:originZone});if([to.owner,from.owner,raider.owner].includes(s.player))log(s,'A hostile fleet seized cargo from a maritime shipment.','敌方舰队夺走海上货运的货物。');return}
+ if(piracy>0&&security<50&&rng(s)>=security/50){const pirate=pirates[0];let captured=0;if(pirate&&rng(s)<piracy/100){captured=pirateSeize(s,pirate,from.owner,route.good,Math.min(planned,affordable));pirate.wealth+=captured;pirate.pressure=Math.min(70,pirate.pressure+2);report(s,{kind:'pirate-raid',zone:originZone,owner:vessel.owner,good:route.good,captured})}tradeRecord(s,route,to.owner,from.owner,'piracy',security,price,{captured,zone:originZone});if(vessel.owner===s.player)log(s,'Pirates struck a merchant vessel and seized cargo.','海盗袭击商船并夺走货物。');return}
+ const cargo=tradeAccountMove(s,from.owner,route.good,Math.min(planned,affordable),false);if(!cargo){tradeRecord(s,route,to.owner,from.owner,'capacity',security,price);return}
+ vessel.ships.merchant--;vessel.sailors=Math.max(0,vessel.sailors-SHIPS.merchant.crew);const path=seaRoute(originZone,portZone(route.to))||[];
+ n.voyages.push({id:`voyage-${n.nextVoyage++}`,routeId:route.id,from:route.from,to:route.to,seller:from.owner,buyer:to.owner,good:route.good,cargo,price,vesselOwner:vessel.owner,fleetId:vessel.id,crew:SHIPS.merchant.crew,zone:originZone,path,phase:'outbound'});
+ route.lastDispatch={year:s.year,month:s.month};
+ tradeRecord(s,route,to.owner,from.owner,'enroute',security,price,{cargo,zone:originZone,eta:Math.max(1,path.length)});
+}
+export function initializeNaval(s){if(!s.grandMap)return s;if(s.naval){s.naval.version=2;s.naval.intel||={};s.naval.reports||=[];s.naval.queues||=[];s.naval.jobs||=[];s.naval.captives||=[];s.naval.provisions||={};s.naval.inlandProvisions||={};s.naval.wagons||=[];for(const p of s.naval.pirates||[])p.cargo||={};ensureTrade(s);return s}const senatePort=s.regions.find(r=>r.id==='italiaS'&&r.owner==='senate')?'italiaS':'epirus',caesarPort=s.regions.find(r=>r.id==='cisalpine'&&r.owner==='caesar')?'cisalpine':'narbo';s.naval={version:2,fleets:[makeFleet('senate-adriatic',['Adriatic Squadron','亚得里亚分舰队'],'senate',senatePort,{trireme:2,transport:2}),makeFleet('caesar-adriatic',['Caesarian Coastal Fleet','凯撒沿岸舰队'],'caesar',caesarPort,{trireme:2,light:2,transport:2}),makeFleet('egypt-grain',['Alexandrian Grain Fleet','亚历山大运粮船队'],'egypt','egypt',{trireme:1,merchant:3})],pirates:[{id:'illyrian-raiders',zone:'adriatic',ships:2,pressure:24,wealth:8,backer:null,cargo:{}},{id:'cilician-raiders',zone:'eastern',ships:2,pressure:20,wealth:7,backer:null,cargo:{}}],routes:[{id:'egypt-italy',from:'egypt',to:'t016',good:'grain',volume:4,last:null},{id:'africa-sicily',from:'africa',to:'sicilia',good:'grain',volume:2,last:null},{id:'adriatic-commerce',from:'illyricum',to:'italiaS',good:'timber',volume:2,last:null}],queues:[],reports:[],intel:{},jobs:[],captives:[],provisions:{},inlandProvisions:{},wagons:[],nextFleet:1};for(const id of [senatePort,caesarPort]){const r=s.regions.find(x=>x.id===id);if(!r)continue;r.buildings||=[];for(const b of ['port','shipyard'])if(!r.buildings.includes(b))r.buildings.push(b);const d=s.development?.[r.owner];if(d)for(const tech of ['port-facilities','shipyard-craft'])if(!d.knownMaterial.includes(tech))d.knownMaterial.push(tech)}ensureTrade(s);return s}
 export function fleet(s,id){return s.naval?.fleets.find(f=>f.id===id)}
 export function setFleetTactic(s,owner,id,tactic){initializeNaval(s);const f=fleet(s,id),month=s.year*12+s.month;if(!f||f.owner!==owner||!NAVAL_TACTICS[tactic]||f.reserve||f.mobilizing||f.order?.armyId||f.lastTacticChange===month)return {ok:false,reason:'tactic'};if((f.tactic||'formation')===tactic)return {ok:false,reason:'unchanged'};f.tactic=tactic;f.lastTacticChange=month;return {ok:true}}
 export function ransomFleetCommander(s,owner,characterId){initializeNaval(s);const captive=s.naval?.captives?.find(c=>c.characterId===characterId&&c.owner===owner&&c.status==='held'),payer=s.factions[owner],holder=captive&&s.factions[captive.holder];if(!captive||!payer||!holder)return {ok:false,reason:'captive'};if(payer.treasury<18)return {ok:false,reason:'treasury'};payer.treasury-=18;holder.treasury+=18;captive.status='returning';captive.remaining=2;return {ok:true,months:2,cost:18}}
@@ -132,7 +203,7 @@ export function orderFleet(s,owner,id,kind,target){
   const route=s.naval.routes.find(x=>x.id===target);
   if(!route)return {ok:false,reason:'route'};
   if(kind==='raid'&&!hostileTradeRoute(s,owner,route))return {ok:false,reason:'war'};
-  targetZone=portZone(route.from);
+  targetZone=kind==='raid'&&routeZones(route).includes(f.zone)?f.zone:portZone(route.from);
  }
  const path=seaRoute(f.zone,targetZone);
  if(!path)return {ok:false,reason:'sea'};
@@ -509,7 +580,7 @@ export function advanceNaval(s,log=()=>{}){initializeNaval(s);if(!s.naval)return
   for(const a of n.fleets)for(const b of n.fleets){if(a.id>=b.id||!ships(a)||!ships(b)||a.zone!==b.zone||!atWar(s,a.owner,b.owner)||avoidedNavalBattles.has(encounterKey(a.id,b.id)))continue;if(a.port||b.port)continue;resolveBattle(s,a,b,a.zone,log)}
  finishMaritimeSupply(s,log);
  for(const p of n.pirates){const patrol=n.fleets.filter(f=>f.zone===p.zone&&['patrol','escort','intercept'].includes(f.order?.kind)&&ships(f));if(patrol.length){if(p.ships>0&&p.pressure>=24){const engaged=patrol[0],loss=damageFleet(s,engaged,Math.min(9,2+p.ships)),recovered=pirateRecover(s,p,engaged.owner);p.ships=Math.max(0,p.ships-1);p.wealth=Math.max(0,p.wealth-1);report(s,{kind:'pirate-clash',zone:p.zone,owner:engaged.owner,sailors:loss.sailors,pirateShipsLost:1,recovered});if(engaged.owner===s.player)log(s,recovered?`Patrols fought pirates and recovered ${recovered.amount} ${recovered.good}.`:'Patrols fought pirate vessels; sailors were lost.',recovered?`巡逻舰击退海盗，收回${recovered.amount}份${recovered.good}。`:'巡逻舰与海盗船交战，水手有所伤亡。')}p.pressure=Math.max(0,p.pressure-patrol.length*5);if(p.pressure<8&&rng(s)<.3)p.zone=byId[p.zone].links[Math.floor(rng(s)*byId[p.zone].links.length)]}else p.pressure=p.ships>0?Math.min(70,p.pressure+1):Math.max(0,p.pressure-2);if(p.backer&&rng(s)<.05){const sponsor=p.backer;p.backer=null;s.factions[sponsor].legitimacy=Math.max(0,s.factions[sponsor].legitimacy-3);for(const r of n.routes.filter(r=>routeZones(r).includes(p.zone))){const victim=s.regions.find(x=>x.id===r.to)?.owner;if(victim&&victim!==sponsor){const key=[sponsor,victim].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]??0)-4)}}report(s,{kind:'scandal',zone:p.zone,owner:sponsor});if(sponsor===s.player)log(s,'Secret pirate support was exposed; legitimacy fell.','秘密资助海盗曝光，合法性下降。')}}
- const merchantCapacity=new Map(n.fleets.map(f=>[f.id,f.reserve||f.order?.kind==='supply'||f.order?.cargo?0:(f.ships.merchant||0)]));for(const route of n.routes)settleRoute(s,route,log,merchantCapacity);
+ advanceTradeVoyages(s,log);for(const route of [...n.routes].sort((a,b)=>(a.lastDispatch?a.lastDispatch.year*12+a.lastDispatch.month:-Infinity)-(b.lastDispatch?b.lastDispatch.year*12+b.lastDispatch.month:-Infinity)))dispatchTradeVoyage(s,route,log);
  for(const f of n.fleets){if(f.mobilizing){f.mobilizing--;if(f.mobilizing<=0){f.mobilizing=0;f.reserve=false;f.morale=Math.min(100,f.morale+2);if(f.owner===s.player)log(s,'The fleet has completed mobilization and can receive orders.','舰队完成整备，可以接受命令。')}}}
  for(const owner of Object.keys(s.factions).filter(x=>x!==s.player&&x!=='rebels')){for(const f of n.fleets.filter(x=>x.owner===owner&&ships(x)))aiNavalOrders(s,owner,f);if(s.month===1&&s.factions[owner].treasury>90&&aiNavalCashflow(s,owner)>0){const dock=s.regions.find(r=>r.owner===owner&&r.buildings?.includes('shipyard'));if(dock)queueShip(s,owner,dock.id,'light')}}
  for(const owner of Object.keys(s.factions).filter(x=>x!==s.player&&x!=='rebels'))aiWagonOrders(s,owner);

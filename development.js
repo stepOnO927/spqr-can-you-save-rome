@@ -219,7 +219,7 @@ export function recordMerchantContact(s,route){
  const recipient=s.development[buyer],source=s.development[seller];if(!recipient||!source)return null;
  const turn=s.year*12+s.month,previous=recipient.merchantContacts[route.id];
  if(previous?.seller===seller&&previous.lastTurn===turn)return null;
- const contact=previous?.seller===seller&&turn-previous.lastTurn<=3?previous:{seller,months:0,lastTurn:null};
+ const contact=previous?.seller===seller&&turn-previous.lastTurn<=9?previous:{seller,months:0,lastTurn:null};
  contact.months++;contact.lastTurn=turn;recipient.merchantContacts[route.id]=contact;
  if(contact.months<2)return null;
  contact.months=0;

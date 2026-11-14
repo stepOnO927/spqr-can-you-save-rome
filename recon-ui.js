@@ -1,4 +1,4 @@
-import {reconReports} from './reconnaissance.js?v=9';
+import {reconReports} from './reconnaissance.js?v=10';
 
 const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const date=(y,m,z)=>y==null?'—':m+'/'+Math.abs(y)+' '+(z?'公元前':'BCE');

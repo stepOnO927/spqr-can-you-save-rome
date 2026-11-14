@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials} from '../engine.js';
-import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms} from '../development.js';
+import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms,recordMerchantContact} from '../development.js';
 import {advanceNaval} from '../naval.js';
 import {developmentPanel,ideasPanel} from '../development-ui.js';
 import {edgeMonths,grandRoute} from '../grand-operations.js';
@@ -52,13 +52,17 @@ test('two paid foreign shipments create a dated research lead, not free knowledg
  const normal=researchTerms(s,'senate','material','water-control');
  s.month=2;advanceNaval(s);
  const first=s.naval.routes.find(r=>r.id==='egypt-papyrus').last;
- assert.equal(first.reason,'delivered');assert.ok(first.amount>0&&first.paid>0);
+ assert.equal(first.reason,'enroute');assert.equal(first.amount,0);assert.equal(first.paid,0);
  assert.equal(s.development.senate.merchantLeads.length,0);
- advanceNaval(s);assert.equal(s.development.senate.merchantLeads.length,0,'the same calendar month cannot count twice');
+ assert.deepEqual(s.naval.routes.find(r=>r.id==='egypt-papyrus').lastDispatch,{year:s.year,month:s.month});
  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
- restored.month=3;advanceNaval(restored);
+ for(const month of [3,4,5]){restored.month=month;advanceNaval(restored)}
+ const arrived=restored.naval.routes.find(r=>r.id==='egypt-papyrus').last;
+ assert.equal(arrived.reason,'delivered');assert.ok(arrived.amount>0&&arrived.paid>0);assert.equal(restored.development.senate.merchantLeads.length,0);
+ assert.equal(recordMerchantContact(restored,restored.naval.routes.find(r=>r.id==='egypt-papyrus')),null,'the same calendar month cannot count twice');
+ for(const month of [6,7,8,9]){restored.month=month;advanceNaval(restored)}
  const lead=restored.development.senate.merchantLeads.find(x=>x.id==='water-control');
- assert.ok(lead);assert.equal(lead.seller,'egypt');assert.equal(lead.month,3);
+ assert.ok(lead);assert.equal(lead.seller,'egypt');assert.equal(lead.month,9);
  assert.ok(!restored.development.senate.knownMaterial.includes('water-control'));
  const terms=researchTerms(restored,'senate','material','water-control');
  assert.equal(terms.cost,normal.cost-3);assert.equal(terms.months,normal.months-1);
@@ -76,15 +80,15 @@ test('two paid foreign shipments create a dated research lead, not free knowledg
  assert.ok(restored.development.senate.knownMaterial.includes('water-control'));
  const paused=newGrandGame('senate');paused.wars=[];paused.factions.senate.treasury=300;paused.factions.senate.food=100;
  for(const route of paused.naval.routes.filter(r=>paused.regions.find(x=>x.id===r.from)?.owner==='egypt'&&paused.regions.find(x=>x.id===r.to)?.owner==='senate'))route.pausedBy=['senate'];
- for(const month of [2,3]){paused.month=month;advanceNaval(paused)}
+ for(let month=2;month<=9;month++){paused.month=month;advanceNaval(paused)}
  assert.equal(paused.development.senate.merchantLeads.length,0,'paused trade cannot create a lead');
  const observer=newGrandGame('egypt');observer.wars=[];observer.factions.senate.treasury=300;observer.factions.senate.food=100;
- for(const month of [2,3]){observer.month=month;advanceNaval(observer)}
+ for(let month=2;month<=9;month++){observer.month=month;advanceNaval(observer)}
  assert.ok(observer.development.senate.merchantLeads.some(x=>x.id==='water-control'));
- observer.month=8;aiTurn(observer,'senate');
+ observer.month=12;observer.factions.senate.treasury=500;aiTurn(observer,'senate');
  assert.equal(observer.development.senate.research?.id,'water-control','the AI should use a valid commercial research opportunity');
- expiring.month=8;assert.ok(researchTerms(expiring,'senate','material','water-control').merchant);
- expiring.month=9;
+ expiring.year=-48;expiring.month=2;assert.ok(researchTerms(expiring,'senate','material','water-control').merchant);
+ expiring.month=3;
  assert.equal(researchTerms(expiring,'senate','material','water-control').merchant,null);
 });
 
@@ -735,7 +739,7 @@ test('opposed five-idea development paths survive 36 months in the grand campaig
    assert.equal(s.achievementState?.finalized,false,`${player}: month ${month+1}`);
   }
   assert.equal(s.year,-46);assert.equal(s.month,1);
-  assert.deepEqual(Object.values(d.slots).flat(),plan);
+  assert.deepEqual(Object.values(d.slots).flat(),plan,`${player} treasury ${s.factions[player].treasury}, paid trade ${s.naval.routes.filter(r=>r.last?.seller===player).reduce((sum,r)=>sum+(r.last.paid||0),0)}`);
   assert.ok(Number.isFinite(s.factions[player].treasury));
   assert.doesNotThrow(()=>upgradeSave(JSON.parse(JSON.stringify(s))));
   if(player==='senate'){

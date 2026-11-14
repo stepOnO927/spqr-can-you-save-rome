@@ -29,7 +29,7 @@ try{
  assert.match(await page.locator('.naval-content').innerText(),/份粮在途/);
  assert.match(await page.locator('.naval-content').innerText(),/军需载量 6粮/);
  await page.locator('[data-naval-tab="trade"]').click();
- assert.match(await page.locator('.naval-content').innerText(),/暂停己方参与的商路/);
+ assert.match(await page.locator('.naval-content').innerText(),/货物在出发港装船，逐月穿越海区/);
  await page.locator('[data-toggle-trade="egypt-italy"]').click();
  assert.match(await page.locator('.naval-content').innerText(),/已按你的命令暂停/);
  assert.match(await page.locator('[data-toggle-trade="egypt-italy"]').innerText(),/恢复商路/);
@@ -38,9 +38,9 @@ try{
  await page.locator('[data-toggle-trade="egypt-italy"]').click();
  assert.match(await page.locator('[data-toggle-trade="egypt-italy"]').innerText(),/PAUSE IMPORTS/);
  const reports=await page.evaluate(async()=>{
-  const {newGrandGame}=await import('../engine.js?v=177');
-  const {advanceNaval,reserveFleet}=await import('../naval.js?v=34');
-  const {renderNavalPanel}=await import('./naval-ui.js?v=50');
+  const {newGrandGame}=await import('../engine.js?v=178');
+  const {advanceNaval,reserveFleet}=await import('../naval.js?v=35');
+  const {renderNavalPanel}=await import('./naval-ui.js?v=51');
   const state=newGrandGame('senate');state.naval.reports.unshift({id:'supply-test',kind:'supply-delivery',owner:'senate',port:'t016',cargo:6,year:-49,month:4});
   const root=document.createElement('div');
   const render=lang=>{renderNavalPanel({state,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};
@@ -53,6 +53,10 @@ try{
   state.factions.senate.food=25;advanceNaval(state);
   const trade=lang=>{renderNavalPanel({state,lang,root,section:'trade',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};
   result.stockedEn=trade('en');result.stockedZh=trade('zh');
+  state.month++;state.factions.senate.food=0;state.factions.egypt.food=60;advanceNaval(state);
+  result.enrouteEn=trade('en');result.enrouteZh=trade('zh');
+  for(let i=0;i<3;i++){state.month++;advanceNaval(state)}
+  result.deliveredEn=trade('en');result.deliveredZh=trade('zh');
   const reserved=newGrandGame('egypt');reserved.regions.find(r=>r.id==='t016').owner='caesar';reserved.factions.caesar.treasury=25;reserved.factions.caesar.food=15;
   reserveFleet(reserved,'caesar','caesar-adriatic');advanceNaval(reserved);
   const reserveText=lang=>{renderNavalPanel({state:reserved,lang,root,section:'trade',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};
@@ -67,6 +71,8 @@ try{
  assert.match(reports.friendlyCaptureZh,/俘获敌舰: 1/);
  assert.match(reports.stockedEn,/Grain reserve sufficient; no purchase/);
  assert.match(reports.stockedZh,/储粮充足，本月未购买/);
+ assert.match(reports.enrouteEn,/Cargo at sea 4/);assert.match(reports.enrouteZh,/在途货物 4/);
+ assert.match(reports.deliveredEn,/Cargo delivered/);assert.match(reports.deliveredZh,/货物已交付/);
  assert.match(reports.reserveEn,/Treasury reserved for wartime levy/);
  assert.match(reports.reserveZh,/国库留作战时征募/);
  await page.evaluate(async()=>{
