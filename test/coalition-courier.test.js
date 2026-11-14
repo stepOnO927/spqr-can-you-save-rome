@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=coalition-courier-1';
 import {sendCoalitionInvitation,advanceCoalitionInvitations} from '../coalition-negotiations.js?v=coalition-courier-1';
+import {initializeChronicle,syncChronicleDispatches} from '../chronicle.js?v=succession-ui-recovery-1';
 
 function setup(){
  const s=newGame('caesar');s.relations['caesar:egypt']=40;s.relations['caesar:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;
@@ -11,11 +12,11 @@ function setup(){
 const roll=()=>.5;
 function step(s,random=roll){s.month++;advanceCoalitionInvitations(s,estimatedStrength,random)}
 test('a coalition invitation travels, recipients decide, and membership costs real money only on formation',()=>{
- let s=setup();const before=s.factions.caesar.treasury,egypt=s.factions.egypt.treasury;
+ let s=setup();initializeChronicle(s);const before=s.factions.caesar.treasury,egypt=s.factions.egypt.treasury;
  assert.deepEqual(sendCoalitionInvitation(s,'caesar',['egypt','numidia'],'senate'),{ok:true,id:1,cost:3,months:4});
  assert.equal(s.factions.caesar.treasury,before-3);assert.equal(s.factions.egypt.treasury,egypt);assert.equal((s.coalitions?.length||0),0);
  step(s);step(s);assert.equal(s.world.coalitionInvitations[0].status,'pending');assert.equal((s.coalitions?.length||0),0);
- s=upgradeSave(structuredClone(s));step(s);step(s);assert.equal(s.world.coalitionInvitations[0].status,'accepted');assert.equal(s.coalitions.length,1);assert.equal(s.factions.egypt.treasury,egypt-5);
+ s=upgradeSave(structuredClone(s));step(s);step(s);assert.equal(s.world.coalitionInvitations[0].status,'accepted');assert.equal(s.coalitions.length,1);assert.equal(s.factions.egypt.treasury,egypt-5);syncChronicleDispatches(s);assert.ok(s.chronicle.entries.some(e=>e.topic==='diplomacy'&&e.zh==='各方同意结盟。'));
 });
 test('private recipient finances do not prevent sending or produce a premature visible refusal',()=>{
  const a=setup(),b=setup();b.factions.egypt.treasury=0;

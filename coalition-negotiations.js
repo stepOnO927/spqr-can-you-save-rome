@@ -47,6 +47,6 @@ export function advanceCoalitionInvitations(s,estimateStrength,roll,{autoplayPla
    if(result.ok){x.coalition=result.coalition.id;for(const member of x.members){rememberPoliticalEvent(s,x.leader,member,'cooperation_accepted',2);rememberPoliticalEvent(s,member,x.leader,'cooperation_accepted',2)}}else x.status='lapsed';
   }
   x.delivered={year:s.year,month:s.month};delete x.sealed;x.phase='delivered';
-  if(x.leader===s.player){s.log.unshift({year:s.year,month:s.month,en:x.status==='accepted'?'The coalition was agreed.':x.status==='refused'?'A court declined the coalition invitation.':x.status==='lapsed'?'The proposed coalition could not be concluded.':'No coalition reply arrived; a letter may have been lost.',zh:x.status==='accepted'?'各方同意成立联盟。':x.status==='refused'?'一国拒绝了联盟邀请。':x.status==='lapsed'?'拟议中的联盟未能最终成立。':'未收到联盟回信；书信可能遗失。'});s.log=s.log.slice(0,80)}
+  if(x.leader===s.player){s.log.unshift({year:s.year,month:s.month,en:x.status==='accepted'?'The defensive alliance was agreed.':x.status==='refused'?'A court declined the coalition invitation.':x.status==='lapsed'?'The proposed coalition could not be concluded.':'No coalition reply arrived; a letter may have been lost.',zh:x.status==='accepted'?'各方同意结盟。':x.status==='refused'?'一国拒绝了联盟邀请。':x.status==='lapsed'?'拟议中的联盟未能最终成立。':'未收到联盟回信；书信可能遗失。'});s.log=s.log.slice(0,80)}
  }
 }
