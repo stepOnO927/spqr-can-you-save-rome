@@ -258,6 +258,57 @@ test('Egyptian grain requires merchant shipping and transfers bounded food and p
  s.month++;advanceNaval(s);assert.equal(route.last.reason,'delivered');assert.equal(route.last.amount,4);assert.equal(s.factions.senate.food,4);assert.ok(s.factions.senate.treasury<=before);
  const shipless=newGrandGame('senate');shipless.naval.fleets.find(f=>f.owner==='egypt').ships.merchant=0;shipless.factions.senate.food=0;advanceNaval(shipless);assert.equal(shipless.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
 });
+test('a staffed market ship carries finite civic goods by sea and the destination consumes them once',()=>{
+ let s=newGrandGame('senate');s.naval.pirates=[];
+ for(const route of s.naval.routes)if(route.id!=='african-oil')route.pausedBy=[s.regions.find(r=>r.id===route.from).owner];
+ const route=s.naval.routes.find(r=>r.id==='african-oil'),city=s.regions.find(r=>r.id===route.to),starting=city.civicSatisfaction;
+ assert.equal(s.naval.fleets.find(f=>f.id==='market-africa').ships.merchant,1);
+ advanceNaval(s);assert.equal(route.last.reason,'enroute');assert.equal(s.naval.voyages.find(v=>v.routeId===route.id).cargo,2);
+ s=upgradeSave(structuredClone(s));assert.equal(s.naval.fleets.filter(f=>f.id==='market-africa').length,1);
+ for(let i=0;i<4&&s.naval.routes.find(r=>r.id===route.id).last.reason!=='delivered';i++){s.month++;advanceNaval(s)}
+ const delivered=s.naval.routes.find(r=>r.id===route.id).last;
+ assert.equal(delivered.amount,2);assert.equal(delivered.marketBenefit,2);assert.equal(delivered.paid,0);
+ assert.equal(s.regions.find(r=>r.id===city.id).civicSatisfaction,starting+2);
+ assert.match(tradeCard(s,s.naval.routes.find(r=>r.id===route.id),false),/Destination civic satisfaction \+2/);
+ assert.match(tradeCard(s,s.naval.routes.find(r=>r.id===route.id),true),/目的港满意度 \+2/);
+ s.regions.find(r=>r.id===city.id).civicSatisfaction=80;s.month++;advanceNaval(s);
+ assert.equal(s.naval.routes.find(r=>r.id===route.id).last.reason,'stocked');
+ assert.equal(s.naval.voyages.some(v=>v.routeId===route.id&&v.phase==='outbound'),false);
+});
+test('foreign market cargo transfers only paid treasury and raises the receiving city',()=>{
+ const s=newGrandGame('senate');s.naval.pirates=[];
+ s.naval.fleets=s.naval.fleets.filter(f=>f.id==='market-mauretania');
+ for(const route of s.naval.routes)if(route.id!=='western-horses')route.pausedBy=[s.regions.find(r=>r.id===route.from).owner];
+ const route=s.naval.routes.find(r=>r.id==='western-horses'),city=s.regions.find(r=>r.id===route.to),before={buyer:s.factions.senate.treasury,seller:s.factions.mauretania.treasury,civic:city.civicSatisfaction};
+ for(let i=0;i<8&&route.last?.reason!=='delivered';i++){if(i)s.month++;advanceNaval(s)}
+ assert.equal(route.last.reason,'delivered');assert.ok(route.last.amount>0&&route.last.paid>0);
+ assert.equal(s.factions.senate.treasury,before.buyer-route.last.paid);
+ assert.equal(s.factions.mauretania.treasury,before.seller+route.last.paid);
+ assert.equal(city.civicSatisfaction,before.civic+route.last.marketBenefit);
+});
+test('a wartime command reserves levy cash instead of buying optional foreign market goods',()=>{
+ const s=newGrandGame('senate');s.naval.pirates=[];
+ for(const route of s.naval.routes)if(route.id!=='western-horses')route.pausedBy=[s.regions.find(r=>r.id===route.from).owner];
+ const route=s.naval.routes.find(r=>r.id==='western-horses');
+ s.factions.senate.treasury=25;advanceNaval(s);
+ assert.equal(route.last.reason,'war-reserve');assert.equal(s.naval.voyages.some(v=>v.routeId===route.id),false);
+ s.month++;s.factions.senate.treasury=100;advanceNaval(s);
+ assert.equal(route.last.reason,'enroute');assert.equal(s.naval.voyages.some(v=>v.routeId===route.id),true);
+});
+test('a delivery remains in the monthly trade report when the city reaches its demand cap',()=>{
+ const s=newGrandGame('senate');s.naval.pirates=[];
+ for(const route of s.naval.routes)if(route.id!=='african-oil')route.pausedBy=[s.regions.find(r=>r.id===route.from).owner];
+ const city=s.regions.find(r=>r.id==='t016'),fleet=s.naval.fleets.find(f=>f.id==='market-africa'),route=s.naval.routes.find(r=>r.id==='african-oil');
+ city.civicSatisfaction=78;fleet.ships.merchant=3;fleet.sailors=135;
+ for(let i=0;i<3;i++){if(i)s.month++;advanceNaval(s)}
+ assert.equal(city.civicSatisfaction,80);assert.equal(route.last.reason,'delivered');assert.equal(route.last.marketBenefit,2);
+});
+test('older saves receive missing market vessels once without duplicating existing hulls',()=>{
+ let s=newGrandGame('senate');s.naval.version=2;s.naval.fleets=s.naval.fleets.filter(f=>!f.id.startsWith('market-'));
+ s=upgradeSave(structuredClone(s));const ids=s.naval.fleets.filter(f=>f.id.startsWith('market-')).map(f=>f.id);
+ assert.equal(s.naval.version,3);assert.deepEqual(ids.sort(),['market-africa','market-mauretania','market-narbo','market-t114']);
+ s=upgradeSave(structuredClone(s));assert.deepEqual(s.naval.fleets.filter(f=>f.id.startsWith('market-')).map(f=>f.id).sort(),ids);
+});
 test('an uncrewed merchant hull cannot create sailors when trade departs',()=>{
  const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.id==='egypt-grain');s.factions.senate.food=0;fleet.sailors=0;
  advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');assert.equal(s.naval.voyages.some(v=>v.routeId==='egypt-italy'),false);
@@ -267,7 +318,7 @@ test('merchant cargo and its hull survive reload, arrive by sea, and return with
  const route=s.naval.routes[0],fleet=s.naval.fleets.find(f=>f.id==='egypt-grain');fleet.ships.merchant=1;
  advanceNaval(s);assert.equal(route.last.reason,'enroute');assert.equal(fleet.ships.merchant,0);assert.equal(s.factions.egypt.food,56);assert.equal(s.factions.senate.food,0);
  assert.match(tradeCard(s,route,false),/Cargo at sea 4/);assert.match(tradeCard(s,route,true),/在途货物 4/);
- s=upgradeSave(structuredClone(s));assert.equal(s.naval.version,2);assert.equal(s.naval.voyages[0].cargo,4);assert.equal(s.naval.voyages[0].zone,'alexandrian');
+ s=upgradeSave(structuredClone(s));assert.equal(s.naval.version,3);assert.equal(s.naval.voyages[0].cargo,4);assert.equal(s.naval.voyages[0].zone,'alexandrian');
  const delivered=tradeArrival(s,route.id);assert.equal(delivered.amount,4);assert.equal(delivered.paid,4*delivered.unitPrice);assert.equal(s.factions.senate.food,4);assert.equal(s.factions.egypt.food,56);
  assert.equal(toggleTradeRoute(s,'senate',route.id).paused,true);
  for(let i=0;i<3;i++){s.month++;advanceNaval(s)}
@@ -308,7 +359,7 @@ test('a merchant return diverts from a captured origin harbor with its cargo int
  assert.ok(s.naval.fleets.some(f=>f.owner==='egypt'&&f.zone==='aegean'&&(f.ships.merchant||0)>0));
 });
 test('a buyer-owned merchant returns refused goods to the seller before sailing home',()=>{
- const s=newGrandGame('senate');s.naval.pirates=[];s.factions.senate.food=0;s.factions.egypt.food=60;
+ const s=newGrandGame('senate');s.naval.pirates=[];s.naval.fleets=s.naval.fleets.filter(f=>!f.id.startsWith('market-'));s.factions.senate.food=0;s.factions.egypt.food=60;
  const sellerFleet=s.naval.fleets.find(f=>f.id==='egypt-grain');sellerFleet.ships.merchant=0;
  const buyerFleet={...structuredClone(sellerFleet),id:'senate-trader',owner:'senate',ships:{merchant:1},sailors:45,zone:'alexandrian',port:null,order:null};s.naval.fleets.push(buyerFleet);
  const route=s.naval.routes.find(r=>r.id==='egypt-italy');advanceNaval(s);assert.equal(s.naval.voyages.find(v=>v.routeId===route.id).vesselOwner,'senate');assert.equal(s.factions.egypt.food,56);
@@ -324,7 +375,9 @@ test('trade prices respond to scarcity and charge for the quantity delivered',()
  const run=food=>{const s=newGrandGame('senate');s.factions.senate.food=food;s.factions.egypt.food=80;advanceNaval(s);const route=s.naval.routes.find(r=>r.id==='egypt-italy');if(route.last.reason!=='enroute')return route.last;s.month++;return tradeArrival(s,'egypt-italy')};
  const scarce=run(10),ample=run(80);assert.equal(scarce.reason,'delivered');assert.equal(scarce.amount,4);assert.ok(scarce.unitPrice>ample.unitPrice);assert.equal(scarce.paid,scarce.amount*scarce.unitPrice);
  const short=newGrandGame('senate');short.regions.find(r=>r.id==='africa').owner='egypt';const egyptian=short.naval.fleets.find(f=>f.owner==='egypt');egyptian.zone='african';egyptian.port=null;advanceNaval(short);assert.ok(ample.unitPrice>short.naval.routes.find(r=>r.id==='africa-sicily').last.unitPrice);
- const cashPoor=newGrandGame('senate');cashPoor.factions.senate.food=10;cashPoor.factions.senate.treasury=44;const partial=tradeArrival(cashPoor,'egypt-italy');assert.ok(partial.amount>0&&partial.amount<4);assert.equal(partial.paid,partial.amount*partial.unitPrice);
+ const cashPoor=newGrandGame('senate');cashPoor.factions.senate.food=10;cashPoor.factions.senate.treasury=40;
+ for(const route of cashPoor.naval.routes)if(route.id!=='egypt-italy')route.pausedBy=[cashPoor.regions.find(r=>r.id===route.from).owner];
+ const partial=tradeArrival(cashPoor,'egypt-italy');assert.ok(partial.amount>0&&partial.amount<4);assert.equal(partial.paid,partial.amount*partial.unitPrice);
 });
 test('grain imports stop charging an already provisioned command and fill only a real shortfall',()=>{
  const stocked=newGrandGame('senate');stocked.factions.senate.food=25;advanceNaval(stocked);
@@ -515,8 +568,8 @@ test('a blockade holds loaded supply ships outside port, and returning cargo ref
  assert.equal(s.naval.reports.filter(r=>r.kind==='supply-return').length,1);
 });
 test('merchant hulls assigned to army supplies cannot also carry trade cargo',()=>{
- const s=newGrandGame('egypt');s.regions.find(r=>r.id==='t016').owner='egypt';
- assert.equal(orderFleet(s,'egypt','egypt-grain','supply','t016').ok,true);
+ const s=newGrandGame('egypt');s.regions.find(r=>r.id==='anatolia').owner='egypt';s.factions.senate.food=0;
+ assert.equal(orderFleet(s,'egypt','egypt-grain','supply','anatolia').ok,true);
  advanceNaval(s);
  assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
 });
@@ -683,25 +736,25 @@ test('naval AI assigns orders to each available fleet instead of only its first'
 test('AI divides escorts between two raided trade routes and uses current route losses',()=>{
  const s=newGrandGame('caesar'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first),merchant=structuredClone(first),raider=s.naval.fleets.find(f=>f.owner==='caesar'),otherRaider=structuredClone(raider);
  s.factions.senate.treasury=500;s.factions.senate.food=100;
- s.naval.routes=s.naval.routes.filter(r=>['africa-sicily','eastern-stone'].includes(r.id));
+ s.naval.routes=s.naval.routes.filter(r=>['african-oil','levant-luxury'].includes(r.id));
  for(const pirate of s.naval.pirates)pirate.pressure=0;
  first.ships={trireme:2};first.port=null;first.zone='tyrrhenian';
  second.id='senate-east';second.ships={trireme:2};second.port=null;second.zone='ionian';
  merchant.id='senate-merchants';merchant.ships={merchant:2};merchant.port='africa';merchant.zone='african';
  raider.zone='african';raider.port=null;
- otherRaider.id='caesar-east';otherRaider.zone='aegean';otherRaider.port=null;
- const easternMerchant=structuredClone(merchant);easternMerchant.id='eastern-merchants';easternMerchant.port='t091';easternMerchant.zone='aegean';
+ otherRaider.id='caesar-east';otherRaider.zone='eastern';otherRaider.port=null;
+ const easternMerchant=structuredClone(merchant);easternMerchant.id='eastern-merchants';easternMerchant.port='t114';easternMerchant.zone='eastern';
  s.naval.fleets.push(second,merchant,easternMerchant,otherRaider);
- assert.equal(orderFleet(s,'caesar',raider.id,'raid','africa-sicily').ok,true);
- assert.equal(orderFleet(s,'caesar',otherRaider.id,'raid','eastern-stone').ok,true);
+ assert.equal(orderFleet(s,'caesar',raider.id,'raid','african-oil').ok,true);
+ assert.equal(orderFleet(s,'caesar',otherRaider.id,'raid','levant-luxury').ok,true);
  advanceNaval(s);
- assert.equal(s.naval.routes.find(r=>r.id==='africa-sicily').last.reason,'raid');
- assert.equal(s.naval.routes.find(r=>r.id==='eastern-stone').last.reason,'raid');
+ assert.equal(s.naval.routes.find(r=>r.id==='african-oil').last.reason,'raid');
+ assert.equal(s.naval.routes.find(r=>r.id==='levant-luxury').last.reason,'raid');
  assert.equal(first.order?.kind,'escort');assert.equal(second.order?.kind,'escort');
- assert.deepEqual(new Set([first.order.target,second.order.target]),new Set(['africa-sicily','eastern-stone']));
+ assert.deepEqual(new Set([first.order.target,second.order.target]),new Set(['african-oil','levant-luxury']));
  const restored=upgradeSave(structuredClone(s));
- assert.deepEqual(new Set(restored.naval.fleets.filter(f=>f.owner==='senate'&&f.order?.kind==='escort').map(f=>f.order.target)),new Set(['africa-sicily','eastern-stone']));
- const previousSecurity=new Map(restored.naval.routes.filter(r=>['africa-sicily','eastern-stone'].includes(r.id)).map(r=>[r.id,r.last.security]));
+ assert.deepEqual(new Set(restored.naval.fleets.filter(f=>f.owner==='senate'&&f.order?.kind==='escort').map(f=>f.order.target)),new Set(['african-oil','levant-luxury']));
+ const previousSecurity=new Map(restored.naval.routes.filter(r=>['african-oil','levant-luxury'].includes(r.id)).map(r=>[r.id,r.last.security]));
  restored.month++;advanceNaval(restored);
  for(const id of previousSecurity.keys()){const now=restored.naval.routes.find(r=>r.id===id).last;assert.ok(now.security>previousSecurity.get(id),`${id}: ${previousSecurity.get(id)} → ${now.security} (${now.reason})`)}
 });
@@ -727,18 +780,18 @@ test('AI releases a quiet trade escort after three dated reviews and preserves i
 test('AI can reassign a released escort to a newly raided route',()=>{
  const s=newGrandGame('caesar'),escort=s.naval.fleets.find(f=>f.owner==='senate'),merchant=structuredClone(escort),raider=s.naval.fleets.find(f=>f.owner==='caesar');
  s.factions.senate.treasury=500;s.factions.senate.food=100;
- s.naval.routes=s.naval.routes.filter(r=>['africa-sicily','eastern-stone'].includes(r.id));
+ s.naval.routes=s.naval.routes.filter(r=>['african-oil','levant-luxury'].includes(r.id));
  for(const pirate of s.naval.pirates){pirate.pressure=0;pirate.ships=0}
  escort.zone='african';escort.port=null;
- merchant.id='reassignment-merchants';merchant.ships={merchant:2};merchant.zone='aegean';merchant.port='t091';s.naval.fleets.push(merchant);
- raider.zone='aegean';raider.port=null;
- assert.equal(orderFleet(s,'senate',escort.id,'escort','africa-sicily').ok,true);
+ merchant.id='reassignment-merchants';merchant.ships={merchant:2};merchant.zone='eastern';merchant.port='t114';s.naval.fleets.push(merchant);
+ raider.zone='eastern';raider.port=null;
+ assert.equal(orderFleet(s,'senate',escort.id,'escort','african-oil').ok,true);
  escort.order.quietMonths=2;escort.order.lastReviewMonth=s.year*12+s.month-1;
- assert.equal(orderFleet(s,'caesar',raider.id,'raid','eastern-stone').ok,true);
+ assert.equal(orderFleet(s,'caesar',raider.id,'raid','levant-luxury').ok,true);
  advanceNaval(s);
- assert.equal(s.naval.routes.find(r=>r.id==='eastern-stone').last.reason,'raid');
+ assert.equal(s.naval.routes.find(r=>r.id==='levant-luxury').last.reason,'raid');
  assert.equal(escort.order?.kind,'escort');
- assert.equal(escort.order?.target,'eastern-stone');
+ assert.equal(escort.order?.target,'levant-luxury');
 });
 test('AI pursues a dated hostile fleet report through a real sea battle without reading hidden positions',()=>{
  const setup=()=>{
@@ -778,5 +831,5 @@ test('older naval saves acquire an empty maritime supply inventory',()=>{
  assert.deepEqual(upgradeSave(old).naval.provisions,{});
  assert.deepEqual(upgradeSave(old).naval.inlandProvisions,{});
  assert.deepEqual(upgradeSave(old).naval.wagons,[]);
- assert.equal(upgradeSave(old).naval.version,2);assert.deepEqual(upgradeSave(old).naval.voyages,[]);assert.equal(upgradeSave(old).naval.nextVoyage,1);
+ assert.equal(upgradeSave(old).naval.version,3);assert.deepEqual(upgradeSave(old).naval.voyages,[]);assert.equal(upgradeSave(old).naval.nextVoyage,1);
 });

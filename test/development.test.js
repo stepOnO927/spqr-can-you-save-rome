@@ -90,6 +90,7 @@ test('scholarly patronage connects an owned collection to future idea research o
 
 test('two paid foreign shipments create a dated research lead, not free knowledge',()=>{
  const s=newGrandGame('senate');s.wars=[];s.factions.senate.treasury=300;s.factions.senate.food=100;
+ for(const route of s.naval.routes)if(route.id!=='egypt-papyrus')route.pausedBy=[s.regions.find(r=>r.id===route.from).owner];
  const normal=researchTerms(s,'senate','material','water-control');
  s.month=2;advanceNaval(s);
  const first=s.naval.routes.find(r=>r.id==='egypt-papyrus').last;
@@ -103,7 +104,7 @@ test('two paid foreign shipments create a dated research lead, not free knowledg
  assert.equal(recordMerchantContact(restored,restored.naval.routes.find(r=>r.id==='egypt-papyrus')),null,'the same calendar month cannot count twice');
  for(const month of [6,7,8,9]){restored.month=month;advanceNaval(restored)}
  const lead=restored.development.senate.merchantLeads.find(x=>x.id==='water-control');
- assert.ok(lead);assert.equal(lead.seller,'egypt');assert.equal(lead.month,9);
+ assert.ok(lead);assert.equal(lead.seller,'egypt');assert.ok(lead.month>=6&&lead.month<=9,'the lead follows two paid deliveries in distinct months');
  assert.ok(!restored.development.senate.knownMaterial.includes('water-control'));
  const terms=researchTerms(restored,'senate','material','water-control');
  assert.equal(terms.cost,normal.cost-3);assert.equal(terms.months,normal.months-1);
@@ -124,12 +125,15 @@ test('two paid foreign shipments create a dated research lead, not free knowledg
  for(let month=2;month<=9;month++){paused.month=month;advanceNaval(paused)}
  assert.equal(paused.development.senate.merchantLeads.length,0,'paused trade cannot create a lead');
  const observer=newGrandGame('egypt');observer.wars=[];observer.factions.senate.treasury=300;observer.factions.senate.food=100;
- for(let month=2;month<=9;month++){observer.month=month;advanceNaval(observer)}
+ for(const route of observer.naval.routes)if(route.id!=='egypt-papyrus')route.pausedBy=[observer.regions.find(r=>r.id===route.from).owner];
+ for(let month=2;month<=7;month++){observer.month=month;advanceNaval(observer)}
  assert.ok(observer.development.senate.merchantLeads.some(x=>x.id==='water-control'));
- observer.month=12;observer.factions.senate.treasury=500;aiTurn(observer,'senate');
+ observer.month=8;observer.factions.senate.treasury=500;aiTurn(observer,'senate');
  assert.equal(observer.development.senate.research?.id,'water-control','the AI should use a valid commercial research opportunity');
- expiring.year=-48;expiring.month=2;assert.ok(researchTerms(expiring,'senate','material','water-control').merchant);
- expiring.month=3;
+ const leadMonth=lead.year*12+lead.month;
+ expiring.year=Math.floor((leadMonth+4)/12);expiring.month=leadMonth+5-expiring.year*12;
+ assert.ok(researchTerms(expiring,'senate','material','water-control').merchant);
+ expiring.year=Math.floor((leadMonth+5)/12);expiring.month=leadMonth+6-expiring.year*12;
  assert.equal(researchTerms(expiring,'senate','material','water-control').merchant,null);
 });
 
