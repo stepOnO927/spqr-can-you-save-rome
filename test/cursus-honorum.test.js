@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=government-courier-guidance-1';
+import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=multipolar-courier-review-1';
 import {appointOffice,officeEffects} from '../office-system.js?v=portraits-hundred-days-1';
-import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=government-courier-guidance-1';
+import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=multipolar-courier-review-1';
 
 // Later contact scenarios need a delivered report; a failed inquiry is retried.
 function reachGovernmentStage(s,target,level,actor=s.player){
@@ -185,12 +185,12 @@ test('named official relationships grow only through paid monthly contact',()=>{
  c.contacts.push({actor:'senate',target:'parthia',id,route:'formal',status:'open',trust:20});
  const before=s.factions.senate.treasury;
  const first=cultivateOfficial(s,'parthia',id,'senate');
- assert.equal(first.ok,true);assert.equal(first.cost,6);assert.ok(first.trust>20);
+ assert.equal(first.ok,true);assert.equal(first.cost,6);assert.equal(c.contacts.at(-1).trust,20);
  assert.equal(s.factions.senate.treasury,before-6);
  assert.equal(cultivateOfficial(s,'parthia',id,'senate').reason,'cooldown');
- s.month+=1;const next=cultivateOfficial(s,'parthia',id,'senate');
- assert.equal(next.ok,true);assert.ok(next.trust>first.trust);
- assert.equal(upgradeSave(structuredClone(s)).world.cursus.contacts.at(-1).trust,next.trust);
+ for(let i=0;i<3;i++){s.month++;s.world.intelSeed=1000;advanceCursus(s);if(i<2)assert.equal(c.contacts.at(-1).trust,20)}
+ assert.ok(c.contacts.at(-1).trust>20);
+ assert.equal(upgradeSave(structuredClone(s)).world.cursus.contacts.at(-1).trust,c.contacts.at(-1).trust);
 });
 
 test('named senators endorse candidates but collective century votes choose consuls',()=>{
@@ -241,8 +241,10 @@ test('foreign knowledge and relationship dimensions remain distinct',()=>{
  assert.equal(officialKnowledge(s,'parthia',id).level,'connected');
  const before=c.contacts.at(-1).relationship;
  const result=cultivateOfficial(s,'parthia',id,'senate','professional');
- assert.equal(result.ok,true);assert.ok(before.professional>20);assert.equal(before.alignment,30);
+ assert.equal(result.ok,true);assert.equal(before.professional,20);assert.equal(before.alignment,30);
  assert.equal(cultivateOfficial(s,'parthia',id,'senate','political').reason,'cooldown');
+ for(let i=0;i<3;i++){s.month++;s.world.intelSeed=1000;advanceCursus(s)}
+ assert.ok(before.professional>20);
  assert.equal(upgradeSave(structuredClone(s)).world.cursus.contacts.at(-1).relationship.professional,before.professional);
 });
 test('regional talent search costs money, takes time and never repeats freely',()=>{

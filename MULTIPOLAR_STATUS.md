@@ -12,6 +12,10 @@ Run `node scripts/multipolar-sim.mjs` for six seeds across the ordinary all-AI o
 
 The current implementation does not yet provide tactical synchronization of accepted attacks, territorial concessions or a general negotiation system for all forms of neutrality. It does not infer an empty garrison or full supply-line status from missing observations. Wider AI-only diplomacy, event-driven reevaluation of every kind of intelligence, long-run balance, betrayal and mediation chains need further work and validation. Existing save data is retained; plans initialize lazily.
 
+## Evidence-triggered reviews
+
+Between quarterly reviews, a court also reevaluates when its own reported stability or troop sightings change, when it learns of a war, when one of its own agreements changes, or when its own army positions or broad resource bands change. The signature is built from the court's own information and bounded recent records; hidden foreign changes alone cannot trigger a review. This does not yet cover every kind of intelligence or deliver the full multipolar acceptance scenario.
+
 ## Scout-based allied warnings
 
 `strategic-warnings.js` lets a court forward a fresh (at most one month old) scout sighting of a hostile force near a friendly court's territory. A friendly court is one with an alliance, a defensive, guarantee, intelligence, military-support or offensive agreement, or a relation of at least 35 with the sender. The threat must be at war with the sender, or the sender must hold a dated report of a war between the threat and the recipient. The sender reads only its own sightings, control reports, diplomatic reports, treaties and relations.
