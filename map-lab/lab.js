@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../
 import {nationalBudget} from '../national-budget.js?v=15';
 import {budgetHtml} from '../budget-ui.js?v=18';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=26';
+import {physicalStyle} from './physical-style.js?v=27';
 import {physicalLabels} from './physical-labels.js?v=1';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=177';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=41';
@@ -104,6 +104,48 @@ L.en.credits='GSHHG MODERN COAST · MODERN ELEVATION · HISTORICAL BORDERS APPRO
 L.zh.credits='GSHHG 现代海岸线 · 现代高程 · 历史边界为近似';
 const status = document.querySelector('#status');
 export const map = new maplibregl.Map({container:'map',canvasContextAttributes:{preserveDrawingBuffer:true},center:[12.4,43.2],zoom:5.45,minZoom:3.6,maxZoom:9.2,maxBounds:[[-20,18],[60,58]],attributionControl:{compact:true},style:physicalStyle});
+// A long camera jump can show DEM colors before the GeoJSON coastline worker
+// finishes its new tiles. Dim the intermediate frame until the masks are ready.
+const mapElement=document.querySelector('#map');
+const mapCurtain=document.createElement('div');mapCurtain.id='map-charting';mapCurtain.hidden=true;mapCurtain.setAttribute('role','status');mapCurtain.setAttribute('aria-live','polite');document.body.append(mapCurtain);
+let mapSettled={lng:12.4,lat:43.2,zoom:5.45},mapMoveStart=null,mapChartedAt=0,mapSourceAt=0,mapChartToken=0,mapChartTimer=null;
+function revealChart(){
+ clearTimeout(mapChartTimer);
+ mapCurtain.hidden=true;mapElement.classList.remove('charting');
+}
+async function waitForChartedMap(timeoutMs=11000){
+ const deadline=performance.now()+timeoutMs;
+ while(!mapCurtain.hidden||Number(getComputedStyle(mapElement).opacity)<.99){
+  if(performance.now()>deadline)return false;
+  await new Promise(resolve=>setTimeout(resolve,100));
+ }
+ return true;
+}
+map.on('movestart',event=>{mapMoveStart={...mapSettled,interactive:!!event?.originalEvent}});
+map.on('dragstart',()=>{if(mapMoveStart)mapMoveStart.interactive=true});
+map.on('zoomstart',event=>{if(mapMoveStart&&event?.originalEvent)mapMoveStart.interactive=true});
+map.on('move',event=>{
+ if(!mapMoveStart||mapMoveStart.interactive||event?.originalEvent)return;
+ const center=map.getCenter?.();if(!center)return;
+ const distance=Math.abs(center.lng-mapMoveStart.lng)+Math.abs(center.lat-mapMoveStart.lat);
+ if(distance<2&&Math.abs((map.getZoom?.()||0)-mapMoveStart.zoom)<1.5)return;
+ if(!mapCurtain.hidden)return;
+ mapChartedAt=performance.now();mapCurtain.textContent=lang==='zh'?'正在绘制海岸与地形…':'CHARTING COAST AND TERRAIN…';mapCurtain.hidden=false;mapElement.classList.add('charting');
+});
+map.on('sourcedata',event=>{if(event?.sourceId==='land'||event?.sourceId==='ocean')mapSourceAt=performance.now()});
+map.on('moveend',()=>{
+ const center=map.getCenter?.();if(center)mapSettled={lng:center.lng,lat:center.lat,zoom:map.getZoom?.()||0};
+ if(mapCurtain.hidden)return;
+ const token=++mapChartToken;clearTimeout(mapChartTimer);
+ const check=()=>{
+  if(token!==mapChartToken)return;
+  const now=performance.now(),masksReady=['land','ocean'].every(id=>map.isSourceLoaded?.(id)??true);
+  const ready=now-mapChartedAt>=2000&&now-mapSourceAt>=450&&masksReady&&!(map.isMoving?.()??false);
+  if(ready||now-mapChartedAt>10000){revealChart();return}
+  mapChartTimer=setTimeout(check,150);
+ };
+ mapChartTimer=setTimeout(check,500);
+});
 const physicalLabelMarkers=physicalLabels.map(label=>{
  const element=document.createElement('span');element.className=`physical-label physical-label-${label.kind}`;
  element.dataset.physicalLabel=label.id;element.textContent=label[lang];element.setAttribute('aria-hidden','true');
@@ -190,7 +232,7 @@ function addCartographicGrain(){
  }
  map.addImage('sea-grain',{width:size,height:size,data:context.getImageData(0,0,size,size).data});
  map.addLayer({id:'land-cartographic-grain',type:'fill',source:'land',minzoom:7,paint:{'fill-pattern':'land-grain','fill-opacity':['interpolate',['linear'],['zoom'],7,0,8,.55,9,.8]}},'coastal-halo');
- map.addLayer({id:'sea-cartographic-grain',type:'fill',source:'ocean',minzoom:7,paint:{'fill-pattern':'sea-grain','fill-opacity':['interpolate',['linear'],['zoom'],7,0,8,.6,9,1]}},'coastal-halo');
+ map.addLayer({id:'sea-cartographic-grain',type:'fill',source:'ocean',minzoom:7,paint:{'fill-pattern':'sea-grain','fill-opacity':['interpolate',['linear'],['zoom'],7,0,8,.25,9,.32]}},'coastal-halo');
 }
 const terrainName=id=>lang==='zh'?({plain:'平原',hills:'丘陵',forest:'森林',urban:'城市',desert:'沙漠'}[id]||id):id;
 const marchReason=reason=>({adjacent:lang==='zh'?'目的地不相邻':'Destination is not adjacent',peace:lang==='zh'?'尚未与该势力交战':'Not at war with this faction',transport:lang==='zh'?'海运需要8国库':'Sea transport requires 8 treasury',unavailable:lang==='zh'?'军队正行军或围攻':'Army is marching or besieging'})[reason]||'';
@@ -553,7 +595,7 @@ document.addEventListener('click',e=>{if(e.target.closest('button'))return;const
 
 syncFinalizedProfile();renderHud();
 
-document.querySelector('#capture').onclick=async()=>{const button=document.querySelector('#capture');button.disabled=true;status.style.display='none';try{if(!window.html2canvas){await new Promise((resolve,reject)=>{const script=document.createElement('script'),timer=setTimeout(()=>{script.remove();reject(Error('Screenshot library timed out'))},12000);script.src='./vendor/html2canvas.min.js?v=1.4.1';script.onload=()=>{clearTimeout(timer);resolve()};script.onerror=()=>{clearTimeout(timer);script.remove();reject(Error('Screenshot library unavailable'))};document.head.append(script)})}const ready=await waitForMapIdle(map);const canvas=await html2canvas(document.body,{backgroundColor:'#17262a',scale:1,useCORS:true,logging:false});const link=document.createElement('a');link.download=`spqr-map-${canvas.width}x${canvas.height}.png`;const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Screenshot encoding failed');const imageUrl=URL.createObjectURL(blob);link.href=imageUrl;let preview=document.querySelector('#capture-result');if(!preview){preview=document.createElement('img');preview.id='capture-result';preview.hidden=true;document.body.append(preview)}preview.src=imageUrl;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(imageUrl),60000);if(!ready||tileErrors){status.textContent=lang==='zh'?'地图资源可能未全部加载，截图可能不完整。':'Some map data may not have loaded; the screenshot may be incomplete.';status.style.display='block'}}catch(e){status.textContent=lang==='zh'?'截图失败，请重试。':'Screenshot failed; please retry.';status.style.display='block';console.warn(e)}finally{button.disabled=false}};
+document.querySelector('#capture').onclick=async()=>{const button=document.querySelector('#capture');button.disabled=true;status.style.display='none';try{if(!window.html2canvas){await new Promise((resolve,reject)=>{const script=document.createElement('script'),timer=setTimeout(()=>{script.remove();reject(Error('Screenshot library timed out'))},12000);script.src='./vendor/html2canvas.min.js?v=1.4.1';script.onload=()=>{clearTimeout(timer);resolve()};script.onerror=()=>{clearTimeout(timer);script.remove();reject(Error('Screenshot library unavailable'))};document.head.append(script)})}const ready=await waitForMapIdle(map);if(!(await waitForChartedMap()))throw Error('Map is still drawing');const canvas=await html2canvas(document.body,{backgroundColor:'#17262a',scale:1,useCORS:true,logging:false});const link=document.createElement('a');link.download=`spqr-map-${canvas.width}x${canvas.height}.png`;const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Screenshot encoding failed');const imageUrl=URL.createObjectURL(blob);link.href=imageUrl;let preview=document.querySelector('#capture-result');if(!preview){preview=document.createElement('img');preview.id='capture-result';preview.hidden=true;document.body.append(preview)}preview.src=imageUrl;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(imageUrl),60000);if(!ready||tileErrors){status.textContent=lang==='zh'?'地图资源可能未全部加载，截图可能不完整。':'Some map data may not have loaded; the screenshot may be incomplete.';status.style.display='block'}}catch(e){status.textContent=lang==='zh'?'截图失败，请重试。':'Screenshot failed; please retry.';status.style.display='block';console.warn(e)}finally{button.disabled=false}};
 
 if(new URLSearchParams(location.search).has('perf')){let count=0,start=performance.now();function sample(now){count++;if(now-start<3000)requestAnimationFrame(sample);else{document.body.dataset.perfFps=String(Math.round(count*1000/(now-start)));document.body.dataset.perfSeconds=String(((now-start)/1000).toFixed(1))}}requestAnimationFrame(sample)}
 

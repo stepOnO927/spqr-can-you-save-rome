@@ -32,6 +32,7 @@ try{
  ];
  for(const scene of scenes){
   await page.evaluate(async({center,zoom})=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center,zoom})},scene);
+  await page.waitForFunction(()=>document.querySelector('#map-charting')?.hidden!==false&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99,null,{timeout:12000});
   await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.loaded()&&!map.isMoving()},null,{timeout:30000});
   // A frame can precede the GeoJSON worker's new tiles after a long jump.
   // Check actual rendered pixels until the coast settles, with a hard limit.

@@ -119,3 +119,9 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
 .army:is(.spaced-right,.spaced-left):after{content:'';position:absolute;bottom:0;width:var(--standard-displacement);border-bottom:1px dashed #f0d8a5b8;pointer-events:none}
 .army.spaced-right:after{right:100%}
 .army.spaced-left:after{left:100%}
+
+/* A distant atlas jump waits for its matching coast and terrain tiles. */
+#map{transition:opacity .25s ease}
+#map.charting{opacity:.18}
+#map-charting{position:fixed;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;padding:17px 25px;border:1px solid #bfa671;background:#1b2d2ddc;box-shadow:0 12px 32px #081719a6;color:#e9d7ac;font:700 11px Manrope,'Microsoft YaHei',sans-serif;letter-spacing:.14em;text-align:center;text-shadow:0 1px 2px #0d2022}
+#map-charting:before{content:'◇';display:block;margin-bottom:8px;color:#dac48f;font:28px Georgia,serif;line-height:1}

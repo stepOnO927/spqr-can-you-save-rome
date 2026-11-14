@@ -105,7 +105,7 @@ export const physicalStyle={
   {id:'isobath-2000',type:'line',source:'bathymetry',filter:['==',['get','depth'],2000],paint:{'line-color':'#a5b8ad','line-width':.65,'line-opacity':['interpolate',['linear'],['zoom'],5,.09,7,.05,8.5,0]}},
   // Draw the coastal glow above the final ocean fill; otherwise the sea mask
   // erases its seaward half. It follows shoreline geometry, not a depth claim.
-  {id:'coastal-halo',type:'line',source:'land',paint:{'line-color':'#92beb8','line-width':['interpolate',['linear'],['zoom'],4,2,8,9,9,14],'line-blur':['interpolate',['linear'],['zoom'],4,1,9,6],'line-opacity':['interpolate',['linear'],['zoom'],4,.04,7,.13,9,.22]}},
+  {id:'coastal-halo',type:'line',source:'land',paint:{'line-color':'#92beb8','line-width':['interpolate',['linear'],['zoom'],4,2,8,3,9,4],'line-blur':['interpolate',['linear'],['zoom'],4,1,9,1],'line-opacity':['interpolate',['linear'],['zoom'],4,.04,7,.1,9,.14]}},
   {id:'coastline-finish',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,1,8,1.8],'line-opacity':.9}}
  ]
 };
