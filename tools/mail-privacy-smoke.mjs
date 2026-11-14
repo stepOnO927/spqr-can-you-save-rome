@@ -15,11 +15,12 @@ try{
  });
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#atlas-mail').click();
- await page.locator('.mailbox').waitFor();let text=await page.locator('.mailbox').innerText();
+ const affairs=page.frameLocator('#campaign-panel-frame');
+ await affairs.locator('.mailbox').waitFor();let text=await affairs.locator('.mailbox').innerText();
  assert.match(text,/VISIBLE_MESSAGE/);assert.doesNotMatch(text,/SECRET_IN_TRANSIT|隐藏发件人/);
- assert.doesNotMatch(await page.locator('#mail-sender').innerText(),/隐藏发件人/);
- await page.locator('[data-mail-filter="sent"]').click();text=await page.locator('.mailbox').innerText();
+ assert.doesNotMatch(await affairs.locator('#mail-sender').innerText(),/隐藏发件人/);
+ await affairs.locator('[data-mail-filter="sent"]').click();text=await affairs.locator('.mailbox').innerText();
  assert.match(text,/OUTGOING_MESSAGE/);assert.match(text,/已寄出/);assert.doesNotMatch(text,/接受协定/);
- await page.locator('#mail-close').click();assert.equal(await page.locator('.mailbox').count(),0);assert.deepEqual(errors,[]);
+ await affairs.locator('#mail-close').click();assert.equal(await affairs.locator('.mailbox').count(),0);assert.deepEqual(errors,[]);
  console.log('Atlas opens the real mailbox; undelivered contents and unknown responses stay hidden.');
 }finally{await browser.close()}
