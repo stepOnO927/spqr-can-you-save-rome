@@ -6,10 +6,14 @@ import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-regist
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const knownArt=new Set(['caesar','pompey','cleopatra','arsinoe','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);
+export function cursusPersonLabel(s,id,zh=false){
+ const fictional=s.world?.dynasties?.catalog?.[id]?.fictional||CHARACTER_CATALOG[id]?.fictional;
+ return fictional?(zh?'模拟人物 · 查看档案':'Simulated person · open dossier'):CHARACTER_CATALOG[id]?(zh?'历史人物 · 查看档案':'Historical person · open dossier'):(zh?'人物 · 查看档案':'Person · open dossier');
+}
 export function cursusPortraitHtml(s,id,foreign=false){
  const key=knownArt.has(id)?id:foreign?observedFictionalPortrait(s,id):fictionalPortraitKey(s,id);
  if(key)return '<img src="../assets/portraits/'+esc(key)+'-128.jpg" alt="">';
- if(foreign)return '<svg class="cursus-portrait" viewBox="0 0 36 42" role="img" aria-label="Unverified portrait"><rect width="36" height="42" fill="#30271e"/><circle cx="18" cy="15" r="7" fill="#8e806b"/><path d="M4 41 Q5 25 18 25 Q31 25 32 41" fill="#8e806b"/></svg>';
+ if(foreign)return '<svg class="cursus-portrait" viewBox="0 0 36 42" role="img" aria-label="Unverified portrait / 画像未经证实"><rect width="36" height="42" fill="#30271e"/><circle cx="18" cy="15" r="7" fill="#8e806b"/><path d="M4 41 Q5 25 18 25 Q31 25 32 41" fill="#8e806b"/></svg>';
  const hash=[...id].reduce((n,ch)=>Math.imul(n^ch.charCodeAt(0),16777619)>>>0,2166136261);
  const bronze=['#8e633e','#a27447','#735335','#a68455'][hash%4],skin=['#c6a079','#b48760','#d3ad82','#a77958'][(hash>>>3)%4],hair=['#3c3028','#4c392b','#68472e','#242728'][(hash>>>5)%4],cloak=['#872e2a','#6f4533','#374a52','#5f5941'][(hash>>>7)%4];
  const faceX=18+((hash>>>11)%5)-2,faceW=7+((hash>>>14)%3),hairY=10+((hash>>>16)%3),laurel=(hash>>>18)%3===0;
@@ -28,7 +32,7 @@ export function renderCursus({panel,state,language,refresh,onCharacter,target=st
  const term=office=>c.magistrates[office]?.map(x=>x.id)||[];
  const responsibility={consul:zh?'军事与最高常设行政权':'Military and senior executive authority',praetor:zh?'司法与合格的军事职权':'Judicial and eligible military authority',quaestor:zh?'公共财务':'Public finance',aedile:zh?'城市管理、市场与公共活动':'Urban administration, markets and games',plebeian_aedile:zh?'平民城市事务与公共活动':'Plebeian urban affairs and games',tribune:zh?'平民权益与相关否决权':'Plebeian interests and relevant veto',censor:zh?'人口登记、元老名册与公共合同':'Census, Senate roll and public contracts',dictator:zh?'非常设、须合法授权':'Exceptional authority requiring lawful process'};
  const campaignCost={support:8,oppose:6,canvass:5,promise:3,improper:14,speech:4,family:7,games:12,debate:5,negotiate:4,withdraw:3};
- const card=(id,foreign=false)=>'<button type="button" class="cursus-person" data-cursus-person="'+esc(id)+'">'+cursusPortraitHtml(state,id,foreign)+'<span><strong>'+esc(display(state,id,zh))+'</strong><small>'+esc(zh?'模拟人物 · 查看档案':'Simulated person · open dossier')+'</small></span></button>';
+ const card=(id,foreign=false)=>'<button type="button" class="cursus-person" data-cursus-person="'+esc(id)+'">'+cursusPortraitHtml(state,id,foreign)+'<span><strong>'+esc(display(state,id,zh))+'</strong><small>'+esc(cursusPersonLabel(state,id,zh))+'</small></span></button>';
  if(own){
   let rows=Object.entries(MAGISTRACIES).map(([office,o])=>'<div class="cursus-office" data-cursus-body="'+esc(o.body||'exceptional')+'"><b>'+esc(label(o.name,zh))+'</b><small>'+esc(o.body?label(ASSEMBLIES[o.body],zh):zh?'非常设；须特殊合法程序':'Exceptional; no routine election')+' · '+responsibility[office]+'</small><div>'+((term(office).length?c.magistrates[office].map(entry=>card(entry.id)+'<small>'+esc((zh?'任期 ':'Term ')+Math.abs(entry.startYear)+(entry.startYear<0?(zh?'年（公元前）':' BCE'):'')+' · '+(zh?'年龄 ':'Age ')+(Number.isFinite(state.world.characters[entry.id]?.birthYear)?state.year-state.world.characters[entry.id].birthYear:'—')+' · '+(zh?'服从度 ':'Obedience ')+obedience(state,entry.id)+'/100')+'</small>').join(''):'<em>'+esc(zh?'空缺或尚未建模的历史任职':'Vacant or historical holder not modeled')+'</em>'))+'</div></div>').join('');
   const selectedOffice=c.selectedOffice?.[state.player]||'consul',selectedRules=MAGISTRACIES[selectedOffice];

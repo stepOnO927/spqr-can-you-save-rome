@@ -5,7 +5,7 @@ import {newGame,upgradeSave} from '../engine.js?v=cursus-portraits-1';
 import {initializeCursus} from '../cursus-honorum.js?v=cursus-portraits-1';
 import {createFictionalPerson} from '../dynasties.js?v=cursus-portraits-1';
 import {assignCursusPortraits,fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=cursus-portraits-1';
-import {cursusPortraitHtml} from '../map-lab/cursus-ui.js?v=cursus-portraits-1';
+import {cursusPortraitHtml,cursusPersonLabel} from '../map-lab/cursus-ui.js?v=cursus-portraits-1';
 
 const expected=[['senate','Lucius Varro','fictional-cursus-lucius-varro'],['senate','Publius Varro','fictional-cursus-publius-varro'],['senate','Aulus Varro','fictional-cursus-aulus-varro'],['senate','Gaius Varro','fictional-cursus-gaius-varro'],['caesar','Lucius Varenus','fictional-cursus-lucius-varenus'],['caesar','Publius Varenus','fictional-cursus-publius-varenus'],['caesar','Aulus Varenus','fictional-cursus-aulus-varenus'],['caesar','Gaius Varenus','fictional-cursus-gaius-varenus']];
 const applicant=(s,faction,name)=>s.world.cursus.applicants.find(x=>x.faction===faction&&x.office==='consul'&&s.world.dynasties.catalog[x.id].name[0]===name);
@@ -33,4 +33,8 @@ test('a foreign fictional portrait requires an actual recorded meeting snapshot'
  s.meetings.push({actor:'caesar',target:id,status:'met',portraitKey:key,resolvedYear:s.year,resolvedMonth:s.month});assert.equal(observedFictionalPortrait(s,id),key);
  assert.match(cursusPortraitHtml(s,id,true),new RegExp(key));
  s.world.characters[id].health='dying';assert.equal(observedFictionalPortrait(s,id),key);
+});
+test('political cards distinguish historical people from fictional candidates',()=>{
+ const s=newGame('caesar');initializeCursus(s);const id=applicant(s,'senate','Lucius Varro').id;
+ assert.match(cursusPersonLabel(s,'caesar',true),/历史人物/);assert.match(cursusPersonLabel(s,id,true),/模拟人物/);assert.match(cursusPersonLabel(s,'caesar',false),/Historical person/);assert.match(cursusPersonLabel(s,id,false),/Simulated person/);
 });
