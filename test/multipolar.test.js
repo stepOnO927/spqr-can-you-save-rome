@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder} from '../engine.js?v=faces-empire-2';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=faces-empire-3';
 import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=multipolar-2';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
 import {assessOpportunities} from '../multipolar.js?v=multipolar-2';
@@ -21,6 +21,19 @@ test('opportunities use the observer’s reports, not hidden military or politic
  other.factions.armenia.stability=0;other.factions.armenia.treasury=-100;other.wars.push(['armenia','egypt']);
  assert.deepEqual(assessOpportunities(s,'parthia',estimatedStrength),assessOpportunities(other,'parthia',estimatedStrength));
  const unknown=assessOpportunities(s,'parthia',estimatedStrength).find(x=>x.target==='armenia');assert.equal(unknown.instability,'unknown');assert.equal(unknown.knownWars,0);
+});
+
+test('AI weighs instability by evidence confidence and ignores stale or disputed claims',()=>{
+ const base=newGame('caesar'),score=s=>assessOpportunities(s,'parthia',estimatedStrength).find(x=>x.target==='armenia');
+ const before=score(base).score;
+ addReport(base,'parthia','armenia',{kind:'stability',value:'fragile',source:'spy',confidence:'rumor'});
+ const rumor=score(base);assert.equal(rumor.instabilityConfidence,'rumor');assert.equal(rumor.score,before+1);
+ addReport(base,'parthia','armenia',{kind:'stability',value:'fragile',source:'travelers'});
+ addReport(base,'parthia','armenia',{kind:'stability',value:'fragile',source:'official'});
+ const corroborated=score(base);assert.equal(corroborated.instabilityConfidence,'confirmed');assert.equal(corroborated.score,before+4);
+ addReport(base,'parthia','armenia',{kind:'stability',value:'stable',source:'envoy'});
+ const disputed=score(base);assert.equal(disputed.instabilityConfidence,'disputed');assert.equal(disputed.score,before);
+ base.year+=3;const stale=score(base),without=JSON.parse(JSON.stringify(base));without.knowledge.parthia.armenia.reports=[];assert.equal(stale.instability,'unknown');assert.equal(stale.instabilityConfidence,'unknown');assert.equal(stale.score,score(without).score);
 });
 
 test('a court weighs its own trade commitments without learning secret foreign agreements',()=>{
@@ -88,6 +101,36 @@ test('AI-only simulation reviews multiple states and preserves private plans on 
  for(const actor of ['caesar','senate','egypt','parthia','armenia'])assert.ok(s.world.multipolarPlans[actor]);
  const plans=JSON.parse(JSON.stringify(s.world.multipolarPlans));s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(s.world.multipolarPlans,plans);
  assert.ok(Object.values(plans).every(p=>p.opportunities.length<=8));
+});
+
+test('AI-only simulation continues after Rome loses while the human campaign stays ended',()=>{
+ const s=newGame('caesar');s.difficulty='expert';s.defeat=true;s.victor='senate';s.defeatDate={year:s.year,month:s.month};
+ const saved=JSON.stringify(s),human=upgradeSave(JSON.parse(saved)),automatic=upgradeSave(JSON.parse(saved));
+ tick(human);assert.equal(human.month,s.month);assert.equal(human.year,s.year);
+ for(let i=0;i<6;i++)tick(automatic,{autoplayPlayer:true});
+ assert.equal((automatic.year-s.year)*12+automatic.month-s.month,6);assert.equal(automatic.defeat,true);
+ for(const actor of ['egypt','parthia','armenia'])assert.ok(automatic.world.multipolarPlans[actor]);
+ assert.deepEqual(automatic.defeatDate,s.defeatDate);
+});
+
+test('seeded Roman-Egyptian war continues as a multipolar AI simulation',()=>{
+ function scenario(seed,autoplayPlayer){
+  const s=newGame('caesar');s.seed=seed;s.world.intelSeed=(seed^0x53a2)>>>0;s.world.dynasties.seed=(seed^0xd3c1)>>>0;s.difficulty='expert';assert.equal(diplomacy(s,'caesar','egypt','war'),true);
+  const wars=new Set(),agreements=new Set(),reviewed=new Set();let months=0;
+  for(let i=0;i<36;i++){
+   const before=s.year*12+s.month;tick(s,{autoplayPlayer});if(s.year*12+s.month===before)break;months++;
+   for(const war of s.wars)wars.add([...war].sort().join(':'));
+   for(const agreement of s.agreements||[])agreements.add(`${agreement.type}:${agreement.parties.slice().sort().join(':')}`);
+   for(const actor of Object.keys(s.world.multipolarPlans||{}))reviewed.add(actor);
+  }
+  return {s,months,wars,agreements,reviewed};
+ }
+ const runs=[scenario(103,true),scenario(14057,true)];
+ for(const run of runs){assert.equal(run.months,36);for(const actor of ['caesar','egypt','parthia','armenia'])assert.ok(run.reviewed.has(actor));}
+ for(const run of runs)assert.ok(run.wars.has('caesar:egypt'));
+ assert.notDeepEqual([...runs[0].agreements].sort(),[...runs[1].agreements].sort(),'different seeds should yield distinct diplomacy during the same real war');
+ const human=scenario(103,false);assert.ok(human.months>0&&human.months<36);assert.ok(human.s.defeat);
+ for(const actor of ['egypt','parthia','armenia'])assert.ok(human.reviewed.has(actor));
 });
 
 test('peace addressed to the automated side is answered by AI, while a human still decides',()=>{

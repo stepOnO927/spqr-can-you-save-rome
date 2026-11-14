@@ -12,7 +12,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=faces-empire-3';
 import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,assignFictionalFieldCommander,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=faces-empire-2';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=faces-empire-3';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=han-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=multipolar-autoplay-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -26,7 +26,7 @@ const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
 import {initializeMarkets,advanceMarkets,advanceMarketAI,advanceMarketDiplomacy} from './trade-markets.js?v=faces-empire-2';
-import {assessOpportunities} from './multipolar.js?v=multipolar-2';
+import {assessOpportunities} from './multipolar.js?v=multipolar-confidence-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=multipolar-2';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {formCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=multipolar-2';
@@ -805,7 +805,9 @@ export function advancePeacefulSettlement(s){
 }
 
 export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
-  if(s.defeat)return s;
+  // A human campaign ends in defeat. An explicitly requested AI-only run
+  // continues so the surviving countries can still make their own decisions.
+  if(s.defeat&&!autoplayPlayer)return s;
   initializeWorld(s);initializeMail(s);initializeMailReports(s);linkCommanders(s);relieveIncapacitatedCommanders(s);
   const chronicleBefore=captureCampaignState(s);
   const warsBefore=s.wars.map(w=>w.slice());
