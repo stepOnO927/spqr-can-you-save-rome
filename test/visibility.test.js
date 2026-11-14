@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js?v=multipolar-autoplay-1';
+import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js?v=strategic-player-offer-1';
 import {observeArmies,reportedArmies} from '../character-system.js?v=succession-ui-recovery-1';
 import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer,visibleSummaryEvidence} from '../visibility.js?v=succession-ui-recovery-1';
 
