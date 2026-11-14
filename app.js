@@ -6,7 +6,7 @@ import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=phase-x-1';
 import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, inquiryCost, answerPeaceOffer,answerStrategicOffer,replyToLetter,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=portraits-hundred-days-1';
-import {receivedMail,unreadCount,markRead,archiveLetter,markAllRead} from './epistulae.js?v=portraits-hundred-days-1';
+import {receivedMail,unreadCount,markRead,archiveLetter,markAllRead} from './epistulae.js?v=hundred-days-recovery-1';
 import {mailboxHtml} from './mail-ui.js?v=portraits-hundred-days-1';
 import {setWartimePolicy} from './epistulae-personnel.js?v=portraits-hundred-days-1';
 import {decideDisputedHeir,personAge} from './dynasties.js?v=portraits-hundred-days-1';
@@ -32,7 +32,7 @@ import {IDEAS,startResearch,equipIdea} from './inventions.js?v=mission-discount-
 import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium} from './imperium-ui.js?v=portraits-hundred-days-1';
 import {attachHanWorld,hanWorld,sendEmbassyToSeres} from './han/world.js?v=portraits-hundred-days-1';
 import {eastMap,eastPanel,eastToolbar} from './han/east-ui.js?v=portraits-hundred-days-1';
-import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=portraits-hundred-days-1';
+import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=hundred-days-recovery-1';
 import {renderExperienceUi,closeExperience} from './experience-ui.js?v=portraits-hundred-days-1';
 
 const ui={
@@ -153,7 +153,8 @@ function navigateExperience(kind,id){
  if(kind==='army'||kind==='supply'){const a=state.armies.find(x=>x.id===id&&x.owner===state.player)||state.armies.find(x=>x.owner===state.player&&x.men>0);if(a){selectedArmy=a.id;selectedRegion=a.region;tab='map';panelOpen=true;recordExperience(state,'army',a.id)}}
  else if(kind==='region'){if(state.regions.some(r=>r.id===id&&r.owner===state.player)){selectedRegion=id;tab='map';panelOpen=true}}
  else if(kind==='mail'||kind==='reply'){mailOpen=true;selectedMail=receivedMail(state).find(m=>m.id===id)?.id||receivedMail(state).find(m=>!m.archived)?.id||null;if(selectedMail){markRead(state,selectedMail);recordExperience(state,'mail',selectedMail)}}
- else if(['focus','government','military','chronicle'].includes(kind)){tab=kind;panelOpen=true;if(kind==='chronicle')recordExperience(state,'chronicle')}
+ else if(['focus','government','military','chronicle'].includes(kind)){tab=kind;panelOpen=true;if(kind==='chronicle')recordExperience(state,'chronicle');if(kind==='government')recordExperience(state,'leadership')}
+ else if(kind==='map'){tab='map';panelOpen=false}
  else if(kind==='direction'){render();document.querySelector('#campaign-progress')?.click();return}
  else if(kind==='time'||kind==='advance'){render();document.querySelector('#step')?.focus();return}
  render();
@@ -276,15 +277,15 @@ function bind(){
   document.querySelector('#play').onclick=()=>setPlaying(!playing);
   document.querySelector('#step').onclick=advanceMonth;
   document.querySelector('#speed').onclick=()=>{speed=speed===1?2:speed===2?4:1;if(playing)setPlaying(true);else render()};
-  document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>{tab=el.dataset.tab;panelOpen=true;if(tab==='chronicle')recordExperience(state,'chronicle');render()});
-  const chooseRegion=id=>{if(ordering&&selectedArmy){const result=moveArmy(state,selectedArmy,id);if(!result.ok){flash(marchReason(result.reason,lang));return}recordExperience(state,'order',id);ordering=false}selectedRegion=id;tab='map';panelOpen=true;render()};
+  document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>{tab=el.dataset.tab;panelOpen=true;if(tab==='chronicle')recordExperience(state,'chronicle');if(tab==='government')recordExperience(state,'leadership');render()});
+  const chooseRegion=id=>{if(ordering&&selectedArmy){const result=moveArmy(state,selectedArmy,id);if(!result.ok){flash(marchReason(result.reason,lang));return}recordExperience(state,'order',id);ordering=false}else{const known=reportedControl(state,state.player,id);if(known?.owner&&known.owner!==state.player)recordExperience(state,'threat',id)}selectedRegion=id;tab='map';panelOpen=true;render()};
   document.querySelectorAll('[data-map-group]').forEach(el=>el.onclick=e=>{const svg=document.querySelector('#map-svg'),point=svg.createSVGPoint();point.x=e.clientX;point.y=e.clientY;const p=point.matrixTransform(svg.getScreenCTM().inverse());let ids=el.dataset.mapGroup.split(',');if(ordering&&selectedArmy){const a=army(state,selectedArmy),links=adjacent(a.region).map(x=>x.to),valid=ids.filter(id=>links.includes(id));if(valid.length)ids=valid}const id=ids.sort((x,y)=>{const a=mapPoint(x),b=mapPoint(y);return Math.hypot(p.x-a[0],p.y-a[1])-Math.hypot(p.x-b[0],p.y-b[1])})[0];chooseRegion(id)});
   document.querySelectorAll('.evidence-command').forEach(el=>el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click()}});
   const regionChoice=document.querySelector('#region-choice');if(regionChoice)regionChoice.onchange=e=>chooseRegion(e.target.value);
   const marchDestination=document.querySelector('#march-destination');if(marchDestination)marchDestination.onchange=e=>{if(e.target.value)chooseRegion(e.target.value)};
   document.querySelectorAll('[data-army]').forEach(el=>el.onclick=e=>{e.stopPropagation();const reportedRegion=el.dataset.region;if(ordering&&selectedArmy){const result=moveArmy(state,selectedArmy,reportedRegion);if(!result.ok){flash(marchReason(result.reason,lang));return}recordExperience(state,'order',reportedRegion);selectedRegion=reportedRegion;ordering=false;panelOpen=true;tab='map';render();return}selectedArmy=el.dataset.army;selectedRegion=reportedRegion;recordExperience(state,'army',selectedArmy);tab='map';panelOpen=true;ordering=false;render()});
   document.querySelectorAll('[data-select-army]').forEach(el=>el.onclick=()=>{selectedArmy=el.dataset.selectArmy;selectedRegion=army(state,selectedArmy).region;recordExperience(state,'army',selectedArmy);tab='map';render()});
-  document.querySelectorAll('[data-tax]').forEach(el=>el.onclick=()=>{const before=state.factions[state.player].tax;setTax(state,state.player,el.dataset.tax);recordExperience(state,'tax',el.dataset.tax);flash(lang==='zh'?`税率 ${before} → ${state.factions[state.player].tax}；下月影响见预测。`:`Tax policy ${before} → ${state.factions[state.player].tax}; see next-month forecast.`)});
+  document.querySelectorAll('[data-tax]').forEach(el=>el.onclick=()=>{const before=state.factions[state.player].tax;setTax(state,state.player,el.dataset.tax);if(before!==state.factions[state.player].tax)recordExperience(state,'tax',el.dataset.tax);flash(lang==='zh'?`税率 ${before} → ${state.factions[state.player].tax}；下月影响见预测。`:`Tax policy ${before} → ${state.factions[state.player].tax}; see next-month forecast.`)});
   document.querySelectorAll('[data-dip]').forEach(el=>el.onclick=()=>{if(el.dataset.act==='peace'){const result=sendInquiry(state,state.player,el.dataset.dip,'peace');if(result.ok){recordExperience(state,'peace',el.dataset.dip);render();flash(lang==='zh'?`议和书信已寄出，约需${result.duration}个月；可能遗失或被拒，战争继续。`:`Peace offer sent; about ${result.duration} months. It may be lost or rejected; the war continues.`)}else flash(lang==='zh'?'无法寄信：请检查国库及待回复信件。':'Cannot send; check treasury and pending letters.')}else if(!diplomacy(state,state.player,el.dataset.dip,el.dataset.act))flash(t('rejected'));else{recordExperience(state,'agreement',el.dataset.act);render()}});
   document.querySelectorAll('[data-answer-peace]').forEach(el=>el.onclick=()=>{if(answerPeaceOffer(state,el.dataset.answerPeace,el.dataset.decision).ok){render();flash(lang==='zh'?'答复已寄出；是否送达未知。':'Reply sent; delivery is unknown.')}else flash(lang==='zh'?'此来信已不可答复。':'This offer can no longer be answered.')});
   const rec=document.querySelector('#recruit');if(rec)rec.onclick=()=>{const f=state.factions[state.player],before={treasury:f.treasury,food:f.food,manpower:f.manpower};if(!recruit(state,selectedRegion))flash(t('recruitFail'));else{recordExperience(state,'recruit',selectedRegion);flash(lang==='zh'?`征募已启动：国库 ${before.treasury} → ${f.treasury}，粮食 ${before.food} → ${f.food}，兵源 ${before.manpower} → ${f.manpower}。`:`Recruitment begun: treasury ${before.treasury} → ${f.treasury}, food ${before.food} → ${f.food}, manpower ${before.manpower} → ${f.manpower}.`)}};

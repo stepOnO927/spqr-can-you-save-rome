@@ -16,11 +16,16 @@ test('Caesar and Senate tutorial follows real actions, correspondence and save s
   assert.ok(opening?.senderId&&s.world.characters[opening.senderId]?.alive);
   const unit=s.armies.find(a=>a.owner===side&&a.men>0);
   recordExperience(s,'army',unit.id);assert.equal(tutorialStep(s).key,'supply');
-  recordExperience(s,'supply',unit.id);setDirection(s,'political');assert.equal(tutorialStep(s).key,'advance');
-  tick(s);recordExperience(s,'advance');recordExperience(s,'chronicle');
+  recordExperience(s,'supply',unit.id);assert.equal(tutorialStep(s).key,'threat');
+  recordExperience(s,'threat',s.regions.find(r=>r.owner!==side).id);
+  if(side==='senate'){assert.equal(tutorialStep(s).key,'leadership');recordExperience(s,'leadership')}
+  setDirection(s,'political');assert.equal(tutorialStep(s).key,'course');
+  recordExperience(s,'tax','low');assert.equal(tutorialStep(s).key,'advance');
+  tick(s);assert.ok(receivedMail(s).some(m=>m.id===opening.id));recordExperience(s,'advance');recordExperience(s,'chronicle');
   assert.equal(tutorialStep(s).key,'mail');
   for(let i=0;i<8&&!receivedMail(s).some(m=>m.id===opening.id);i++)tick(s);
   assert.ok(receivedMail(s).some(m=>m.id===opening.id));
+  assert.equal(opening.courierRisk,0);assert.equal(opening.arrival,s.experience.started+1);
   recordExperience(s,'mail',opening.id);assert.equal(tutorialStep(s).key,'reply');
   assert.equal(replyToLetter(s,opening.id,'acknowledge',{}).ok,true);recordExperience(s,'reply','acknowledge');
   assert.equal(tutorialStep(s),null);
@@ -46,7 +51,8 @@ test('Han and a minor polity sustain distinct guidance through long campaigns',(
   const s=newHanGame(side,{seed:49});initHan(s,{guided:true});
   assert.equal(hanLesson(s).key,side==='han'?'court':'realm');
   assert.ok(hanRecommendations(s).length>=2);
-  assert.ok(hanObjectives(s).long[0]);
+  assert.ok(hanObjectives(s).long[0]);assert.ok(hanObjectives(s).shortProgress[0]);assert.equal(typeof hanObjectives(s).longDone,'boolean');
+  for(const rec of hanRecommendations(s))if(rec.target.kind==='diplomacy')assert.ok(s.factions[rec.target.id]);
   if(side==='han'){hanAction(s,'court');hanAction(s,'official');hanAction(s,'finance');hanAction(s,'frontier');hanAction(s,'dynasty');hanAction(s,'proposal');hanAction(s,'appoint');assert.equal(hanLesson(s).key,'focus')}
   const available=treeFor(side).find(x=>focusStatus(s,side,x.id)==='available'&&(x.cost.treasury||0)<=s.factions[side].treasury);
   if(available){assert.equal(startFocus(s,side,available.id).ok,true);hanAction(s,'focus',available.id)}
@@ -56,4 +62,13 @@ test('Han and a minor polity sustain distinct guidance through long campaigns',(
   assert.ok(restored.experience.milestones.some(m=>m.id==='three'));
   if(side==='han'&&restored.throne.orthodox)assert.equal(isLiuClan(restored,restored.throne.orthodox),true);
  }
+});
+
+
+test('guidance recommends only startable national focuses and supports peaceful months',()=>{
+ const s=newGame('senate');initializeExperience(s,{guided:false});setDirection(s,'development');s.wars=[];
+ s.factions.senate.treasury=0;assert.equal(recommendations(s).some(r=>r.id==='focus'),false);
+ s.factions.senate.treasury=200;s.factions.senate.stability=80;s.factions.senate.legitimacy=80;
+ for(let i=0;i<24;i++){const advice=recommendations(s);assert.ok(advice.length>=2);assert.ok(advice.every(r=>['mail','army','region','direction','government','chronicle','focus','time'].includes(r.target.kind)));tick(s)}
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s)));assert.ok(saved.experience);assert.ok(objectives(saved).months>=24);
 });
