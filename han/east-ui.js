@@ -2,7 +2,7 @@
 // and a panel of dispatches. Nothing here reads the live Han simulation.
 import {REGIONS,FACTIONS,ZHOU,THEATERS} from './data.js?v=han-1';
 import {drawMap,CAMERAS,MODES} from './map.js?v=portraits-hundred-days-1';
-import {romanView,EMBASSY_COST,EMBASSY_MONTHS} from './world.js?v=ai-wartime-aid-1';
+import {romanView,EMBASSY_COST,EMBASSY_MONTHS} from './world.js?v=faces-government-courier-1';
 
 const esc=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const colors=Object.fromEntries(Object.entries(FACTIONS).map(([k,v])=>[k,v.color]));colors.rebels='#3c3c3c';colors.rival_court='#d07a3a';
@@ -35,6 +35,7 @@ export function eastPanel(s,{lang=0,selected=null}={}){
  <h3 class="section-title">${lang?'商旅传闻':'Merchant dispatches'}</h3>
  ${v.dispatches.length?`<ol class="east-dispatches">${v.dispatches.slice(0,25).map(d=>`<li><small>${lang?'事在':'events of'} ${date(d.origin,lang)} · ${lang?'收到':'received'} ${date(d.received,lang)}</small>${esc(lang?d.zh:d.en)}</li>`).join('')}</ol>`:`<p class="hint">${lang?'尚无新的消息传到地中海。从东方到叙利亚的商路要走两年以上。':'No fresh news has reached the Mediterranean yet. The road from the East to Syria takes more than two years.'}</p>`}
  <p>${lang?'经安息运抵的丝绸货批':'Silk cargoes arrived through Parthia'}: ${v.silkCargoes}</p>
+ ${v.imports?.length?`<div class="rule-block"><h3>${lang?'本方港口购入':'Purchases at your ports'}</h3>${v.imports.map(x=>`<p>${date(x,lang)} · ${esc(s.regions.find(r=>r.id===x.port)?.name?.[lang]||x.port)} · ${lang?'丝绸':'silk'} × ${x.quantity} · ${lang?'支付':'paid'} ${x.price} ${lang?'国库':'treasury'}</p>`).join('')}</div>`:''}
  <div class="rule-block"><h3>${lang?'遣使赛里斯（架空历史）':'An embassy to the Seres (alternate history)'}</h3>
  ${v.embassy?`<p>${{travelling:lang?'使者在途':'Envoys on the road',arrived:lang?'使者应已抵达，回报尚在路上':'The envoys should have arrived; their report is still on the road',returned:lang?'使者回报已到':'The envoys’ report has arrived'}[v.embassy.status]} · ${lang?'出发于':'sent'} ${date(v.embassy.sent,lang)}</p>`:`<p class="hint">${lang?`需要：已收到东方传闻、安息允许通行、国库至少${EMBASSY_COST}。单程约${EMBASSY_MONTHS}个月。`:`Requires news already flowing, passage through Parthia and ${EMBASSY_COST} treasury. About ${EMBASSY_MONTHS} months each way.`} ${[['reports',lang?'传闻':'news'],['parthia',lang?'安息通行':'Parthia'],['treasury',lang?'国库':'treasury']].map(([k,n])=>`${n} ${c[k]?'✓':'✗'}`).join(' · ')}</p><button class="action" id="east-embassy" ${c.ok?'':'disabled'}>${lang?`遣使 · ${EMBASSY_COST}¤`:`Send envoys · ${EMBASSY_COST}¤`}</button>`}</div>`;
 }

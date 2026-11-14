@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry,answerPeaceOffer} from './engine.js?v=ai-wartime-aid-1';
-import historical from './historical-territories.js';
-import {REGIONS} from './data.js';
-import {identity,factionMark} from './identity.js';
+import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry,answerPeaceOffer} from './engine.js?v=faces-empire-2';
+import historical from './historical-territories.js?v=phase-x-1';
+import {REGIONS} from './data.js?v=phase-x-1';
+import {identity,factionMark} from './identity.js?v=phase-x-1';
 // These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
 // they run with the expansion's AI layer switched off (world.imperium.enabled=false).
 const legacyIsolated=g=>{g.world.imperium={enabled:false};return g};
@@ -75,9 +75,9 @@ test('major powers retain distinct, usable visual identities',()=>{
   assert.notEqual(identity('shared').primary,identity('caesar').primary);
 });
 
-test('historical polygons map known theaters and leave unmapped Illyricum explicit',()=>{
+test('historical polygons map Mediterranean theaters and leave unmapped theaters explicit',()=>{
   const groups=historical.features.flatMap(f=>f.properties.regions);
-  for(const r of REGIONS)assert.equal(groups.filter(x=>x===r.id).length,['illyricum','galatia','bosporus'].includes(r.id)?0:1,`${r.id} mapping must reflect available source coverage`);
+  for(const r of REGIONS)assert.equal(groups.filter(x=>x===r.id).length,['illyricum','galatia','bosporus','hanGuanzhong','hanHenan','hanShu','hanHexi','shanshanOasis'].includes(r.id)?0:1,`${r.id} mapping must reflect available source coverage`);
   for(const id of ['egypt','numidia','mauretania','armenia','parthia']){const f=historical.features.find(x=>x.properties.id===id);assert.ok(f.properties.period[0]<=-49&&f.properties.period[1]>=-49);assert.ok(f.geometry.coordinates.length)}
   assert.ok(adjacent('italiaS').find(e=>e.to==='illyricum').sea);
 });

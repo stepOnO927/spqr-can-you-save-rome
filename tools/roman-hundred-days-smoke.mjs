@@ -1,15 +1,17 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 
+const base=process.env.SPQR_TEST_URL||'http://127.0.0.1:5173';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 try{
  for(const side of ['caesar','senate']){
   const page=await browser.newPage({viewport:{width:1366,height:768}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
   await page.locator('.setup-panel').waitFor();
   await page.locator('#faction-choice').selectOption(side);
   await page.locator('#start-campaign').click();
+  await page.waitForURL('**/map-lab/');await page.locator('#return-campaign').click();await page.waitForURL(base+'/');
   await page.locator('#what-now').click();
   assert.ok(await page.locator('.experience-cards article').count()>=2);
   await page.locator('#experience-close').click();

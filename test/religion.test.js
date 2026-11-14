@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=ai-wartime-aid-1';
-import {initializeReligion,religiousPolicy,advanceReligion,religiousTaxCost,populationFactor} from '../religion.js?v=portraits-hundred-days-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from '../dynasties.js?v=portraits-hundred-days-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=faces-empire-2';
+import {initializeReligion,religiousPolicy,advanceReligion,religiousTaxCost,populationFactor} from '../religion.js?v=faces-empire-2';
+import {CHARACTER_CATALOG} from '../characters.js?v=faces-empire-2';
+import {createFictionalPerson} from '../dynasties.js?v=faces-empire-2';
 
 test('49 BCE institutions use existing characters and populations, without an anachronistic church',()=>{
  const s=newGame('senate'),list=s.world.religiousInstitutions;

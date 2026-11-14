@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=ai-wartime-aid-1';
-import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js?v=portraits-hundred-days-1';
-import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js?v=succession-ui-recovery-1';
-import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=portraits-hundred-days-1';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=portraits-hundred-days-1';
-import {createFictionalPerson} from '../dynasties.js?v=portraits-hundred-days-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=faces-empire-2';
+import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js?v=faces-empire-2';
+import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js?v=faces-empire-2';
+import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=faces-empire-2';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=faces-empire-2';
+import {createFictionalPerson} from '../dynasties.js?v=faces-empire-2';
 
 test('a sick Roman commander retains nominal office while an available officer acts temporarily',()=>{
  const s=newGame('caesar');s.world.characters.caesar.health='seriously_ill';const g=deriveGovernment(s,'caesar');assert.equal(g.kind,'acting_command');assert.deepEqual(g.nominal,['caesar']);assert.deepEqual(g.acting,['antony']);assert.deepEqual(s.world.leadership.caesar,['caesar']);
@@ -143,8 +143,10 @@ test('an unknown succession report does not prove a plan is absent',()=>{
  const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.5&&q<.6});s.world.intelSeed=seed;for(let i=0;i<mission.duration;i++)advanceOperations(s);
  assert.equal(s.knowledge.caesar.parthia.reports[0].value,'unknown');assert.equal(s.world.successionPlans.parthia,'pacorus');assert.equal(s.knowledge.caesar.parthia.reports[0].verified,false);
 });
-test('reported titles distinguish Roman factions, Egyptian joint rule and separate Mauretanian kingdoms',()=>{
- assert.equal(leadershipTitle('caesar',['caesar'])[1],'罗马派系领袖');assert.equal(leadershipTitle('egypt',['cleopatra','ptolemy'])[1],'共同统治者');assert.equal(leadershipTitle('egypt',['ptolemy'])[1],'统治者');assert.equal(leadershipTitle('mauretania',['bocchus','bogud'])[1],'各王国统治者');assert.equal(leadershipTitle('egypt',[])[1],'领导身份未确认');
+test('reported titles distinguish Roman factions, joint rule and culturally specific sovereigns',()=>{
+ assert.equal(leadershipTitle('caesar',['caesar'])[1],'罗马派系领袖');assert.equal(leadershipTitle('egypt',['cleopatra','ptolemy'])[1],'共同统治者');assert.equal(leadershipTitle('egypt',['ptolemy'])[1],'托勒密王朝统治者');assert.equal(leadershipTitle('mauretania',['bocchus','bogud'])[1],'各王国统治者');assert.equal(leadershipTitle('egypt',[])[1],'领导身份未确认');
+ assert.equal(leadershipTitle('han',['han_yuan'])[0],'Han emperor');assert.equal(leadershipTitle('parthia',['orodes'])[0],'Parthian king');assert.equal(leadershipTitle('shanshan',['fictional:1'])[1],'绿洲国王');
+ const reformed=newGame('caesar');reformed.world.romanRegimes={caesar:'roman_principate'};assert.equal(leadershipTitle('caesar',['caesar'],reformed)[0],'Roman princeps');assert.equal(leadershipTitle('caesar',['caesar'])[0],'Roman faction leadership');
 });
 
 test('a nomination can be withdrawn without a refund and default succession survives save migration',()=>{

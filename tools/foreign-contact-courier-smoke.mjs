@@ -1,10 +1,11 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+const base=process.env.SPQR_TEST_URL||'http://127.0.0.1:5173';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),page=await browser.newPage({viewport:{width:1366,height:768}}),errors=[];
 page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
- await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=ai-wartime-aid-1'),{initializeCursus}=await import('/cursus-honorum.js?v=multipolar-courier-review-1'),s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;
   c.intel.senate={parthia:{stage:3,reports:[{stage:3,people:[id],officeholders:{administration:id},observed:{year:s.year,month:s.month},delivered:{year:s.year,month:s.month},confidence:'public',offices:['administration'],links:[]}]}};

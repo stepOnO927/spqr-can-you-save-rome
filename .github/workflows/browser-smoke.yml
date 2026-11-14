@@ -35,6 +35,7 @@ jobs:
           node tools/cursus-applicant-smoke.mjs
           node tools/han-court-smoke.mjs
           node scripts/multipolar-sim.mjs > multipolar-simulation.json
+          node scripts/market-120-sim.mjs > market-120-simulation.json
           node tools/multipolar-smoke.mjs
           node tools/player-strategic-offer-smoke.mjs
           node tools/peace-mail-courier-smoke.mjs
@@ -46,20 +47,25 @@ jobs:
           node tools/separate-kingdom-succession-smoke.mjs
           node tools/regional-court-vacancy-smoke.mjs
           node tools/court-portrait-smoke.mjs
+          node tools/succession-ui-recovery-smoke.mjs
+          node tools/roman-market-sales-smoke.mjs
+          node tools/roman-supply-contract-smoke.mjs
+          node tools/roman-economy-forecast-smoke.mjs
+          node tools/mailbox-smoke.mjs
           node tools/mail-privacy-smoke.mjs
+          node tools/atlas-mail-alert-smoke.mjs
           node tools/gathering-presence-smoke.mjs
           node tools/gathering-delegate-smoke.mjs
-          node tools/atlas-mail-alert-smoke.mjs
           node scripts/imperium-sim.mjs > imperium-simulation.json
           node tools/onboarding-smoke.mjs
           node tools/systems-smoke.mjs
           node tools/intelligence-partners-smoke.mjs
           node tools/trade-intelligence-smoke.mjs
           node tools/portrait-institutions-smoke.mjs
+          node tools/procedural-portrait-smoke.mjs
           node tools/legacy-identity-smoke.mjs
           node tools/safe-save-smoke.mjs
           node tools/health-succession-smoke.mjs
-          node tools/succession-ui-recovery-smoke.mjs
           node tools/newborn-age-smoke.mjs
           node tools/born-portraits-smoke.mjs
           node tools/inheritance-settlement-smoke.mjs
@@ -74,8 +80,17 @@ jobs:
           node tools/merge-map-switch-smoke.mjs
           node tools/scenario-systems-smoke.mjs
           node tools/construction-smoke.mjs
+          node tools/market-smoke.mjs
           node tools/browser-smoke.mjs
+          node tools/han-smoke.mjs
+          node tools/han-market-smoke.mjs
+          node tools/han-supply-contract-smoke.mjs
+          node tools/han-court-smoke.mjs
+          node tools/han-ruler-smoke.mjs
+          node tools/han-defeat-smoke.mjs
+          node tools/han-field-smoke.mjs
           node tools/phase-v-smoke.mjs
+          node tools/roman-defeat-smoke.mjs
           node tools/capture-check.mjs
           node tools/map-benchmark.mjs
       - uses: actions/upload-artifact@v4
@@ -88,5 +103,6 @@ jobs:
             map-benchmark-1920x1080.png
             map-benchmark.json
             multipolar-simulation.json
+            market-120-simulation.json
             server.log
 

@@ -1,19 +1,20 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];
+const base=process.env.SPQR_TEST_URL||'http://127.0.0.1:5173';
 page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
- await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+ await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=ai-wartime-aid-1'),{sendLetter}=await import('/epistulae.js?v=portraits-hundred-days-1'),s=newGame('caesar');
+  const {newGame}=await import('/engine.js?v=faces-empire-2'),{sendLetter}=await import('/epistulae.js?v=epistulae-2'),s=newGame('caesar');
   const send=(from,to,thread,body)=>sendLetter(s,{senderInstitution:from,senderFaction:from,recipient:to,threadId:thread,category:'diplomatic',subject:['Notice','来信'],body:[body,body],options:['accept','reject'],context:{kind:'treaty',treatyType:'non_aggression'}}).letter;
   const visible=send('senate','caesar',null,'VISIBLE_MESSAGE');visible.delivery='received';
   const hidden=send('egypt','caesar',visible.threadId,'SECRET_IN_TRANSIT');hidden.senderName=['HIDDEN_SENDER','隐藏发件人'];
   const sent=send('caesar','egypt',null,'OUTGOING_MESSAGE');sent.delivery='received';sent.responses.push({choice:'accept',ai:true,resolved:false,arrival:s.year*12+s.month+3});
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
  });
- await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});
  await page.locator('#atlas-mail').click();
  await page.locator('.mailbox').waitFor();let text=await page.locator('.mailbox').innerText();
  assert.match(text,/VISIBLE_MESSAGE/);assert.doesNotMatch(text,/SECRET_IN_TRANSIT|隐藏发件人/);

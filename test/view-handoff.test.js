@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=ai-wartime-aid-1';
-import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=succession-ui-recovery-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
+import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=newborn-age-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=faces-empire-2';
 
 function memoryStorage() {
   const values=new Map();
@@ -23,6 +23,19 @@ test('switching views preserves the entire campaign without touching save slots'
   assert.equal(storage.getItem('spqr-save-3'),'existing save');
   assert.equal(storage.getItem(HANDOFF_KEY),null);
   assert.equal(receiveHandoff(storage,'atlas',upgradeSave),null);
+});
+
+test('Han campaigns transfer between campaign and atlas with their named commanders',()=>{
+ const storage=memoryStorage(),state=newGame('han');
+ const commander=state.armies.find(a=>a.id==='hanCapitalGuard').characterId;
+ stageHandoff(storage,state,'atlas');
+ const atlas=receiveHandoff(storage,'atlas',upgradeSave);
+ assert.equal(atlas.player,'han');
+ assert.equal(atlas.armies.find(a=>a.id==='hanCapitalGuard').characterId,commander);
+ stageHandoff(storage,atlas,'campaign');
+ const campaign=receiveHandoff(storage,'campaign',upgradeSave);
+ assert.equal(campaign.player,'han');
+ assert.equal(campaign.world.dynasties.catalog[commander].fictional,true);
 });
 
 test('invalid transfers are not consumed and storage failures do not appear successful',()=>{

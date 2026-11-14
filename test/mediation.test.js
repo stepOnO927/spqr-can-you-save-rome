@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,upgradeSave,isWar} from '../engine.js?v=ai-wartime-aid-1';
-import {contestLeadership,advanceDisputes,addReport} from '../character-system.js?v=portraits-hundred-days-1';
-import {requestMediation,advanceMediations,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=succession-ui-recovery-1';
+import {newGame,region,upgradeSave,isWar} from '../engine.js?v=faces-empire-2';
+import {contestLeadership,advanceDisputes,addReport} from '../character-system.js?v=faces-empire-2';
+import {requestMediation,advanceMediations,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=faces-empire-3';
 
 const rolls=seed=>{const out=[];for(let i=0;i<3;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;out.push(seed/4294967296)}return out};
 const seedFor=fn=>Array.from({length:300000},(_,i)=>i).find(i=>fn(...rolls(i)));

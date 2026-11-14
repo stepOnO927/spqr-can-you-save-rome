@@ -1,7 +1,8 @@
-import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {startDynasticWar} from './civil-war.js?v=succession-ui-recovery-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
+import {startDynasticWar} from './civil-war.js?v=faces-empire-3';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=portraits-hundred-days-1';
+import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=faces-of-empire-1';
+import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=faces-empire-2';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -21,14 +22,15 @@ export function recordLifeEvent(s,id,en,zh){initializeDynasties(s);if(s.world.ch
 // for a legacy person whose saved catalog entry is missing or malformed.
 function ensureCatalog(s){
  for(const id of Object.keys(CHARACTER_CATALOG))if(/^fictional:\d+$/.test(id))delete CHARACTER_CATALOG[id];
- for(const [id,entry] of Object.entries(s.world.dynasties.catalog))if(/^fictional:\d+$/.test(id)&&entry?.fictional&&Array.isArray(entry.name)&&entry.name.length>=2&&entry.name.every(x=>typeof x==='string'&&x.trim()))CHARACTER_CATALOG[id]=entry;
+ for(const [id,entry] of Object.entries(s.world.dynasties.catalog))if(/^fictional:\d+$/.test(id)&&entry?.fictional&&Array.isArray(entry.name)&&entry.name.length>=2&&entry.name.every(x=>typeof x==='string'&&x.trim()))CHARACTER_CATALOG[id]=structuredClone(entry);
  for(const [id,person] of Object.entries(s.world.characters))if(/^fictional:\d+$/.test(id)&&!CHARACTER_CATALOG[id])CHARACTER_CATALOG[id]={name:['Unknown simulated person','身份不明的模拟人物'],birth:null,faction:person.faction,role:['Identity not recorded','身份未记录'],culture:['Simulated','模拟'],source:null,fictional:true};
 }
 
 export function initializeDynasties(s){
  const d=s.world.dynasties||= {families:{},lives:{},catalog:{},marriages:[],memories:[],rulers:[],seed:220049,nextPerson:1,nextFamily:1};
- d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.familyAccords||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
+ d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.rulingHouses||={};d.houseTransitions||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.familyAccords||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
  for(const [id,c] of Object.entries(s.world.characters)){
+  if(CHARACTER_CATALOG[id]?.fictional)c.portraitSeed??=portraitSeedFor(id,c,CHARACTER_CATALOG[id]);
   c.parents||=[];c.adoptiveParents||=[];c.children||=[];c.spouse||=null;c.wealth??=0;
   c.sex||=(['cleopatra','arsinoe'].includes(id)?'female':CHARACTER_CATALOG[id]?.fictional?'unknown':'male');
   c.familyId||=`family:${id}`;
@@ -45,17 +47,22 @@ export function initializeDynasties(s){
   const family=d.families['family:cleopatra'],oldFamily=d.families['family:arsinoe'];if(oldFamily&&oldFamily!==family&&Number.isFinite(oldFamily.wealth))family.wealth=(Number.isFinite(family.wealth)?family.wealth:0)+oldFamily.wealth;s.world.characters.arsinoe.familyId=family.id;delete d.families['family:arsinoe'];
   d.historicalSeeded=true;
  }
- // Perform recovery after legacy family merging, so a restored remainder is
- // never deposited into a family record that the migration then removes.
+ if(!d.hanFamilySeeded&&s.world.characters.han_xuan&&s.world.characters.han_yuan){
+  const family=d.families['family:han_xuan'];s.world.characters.han_yuan.familyId=family.id;delete d.families['family:han_yuan'];
+  d.hanFamilySeeded=true;
+ }
+ // Recover a settled remainder after legacy family merging, only once.
  for(const [id,c] of Object.entries(s.world.characters))if(c.alive===false&&c.inheritanceSettled&&Number.isFinite(c.wealth)&&c.wealth>0){const amount=c.wealth,family=d.families[c.familyId];family.wealth=(Number.isFinite(family.wealth)?family.wealth:0)+amount;c.wealth=0;record(s,id,`Recovered ${amount} previously stranded private wealth into the family estate.`,`已将之前滞留的${amount}私人财富转入家族公产。`)}
  for(const [faction,ids] of Object.entries(s.world.leadership||{}))if(s.factions[faction]){
+  const founding=ids.find(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction);
+  if(founding)d.rulingHouses[faction]??=faction==='han'?'han-liu':s.world.characters[founding].familyId;
   const current=ids.filter(id=>s.world.characters[id]?.alive).join(':');
   if(d.rulers.filter(r=>r.faction===faction).at(-1)?.current!==current)d.rulers.push({faction,current,year:s.year,month:s.month});
  }
  return d;
 }
 
-export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员'],origin='birth'}){
+export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员'],culture=['Simulated','模拟'],homeland=null,ambition,personalitySeed,militaryOnly=false,origin='birth'}){
  const d=initializeDynasties(s);
  // Reserve identities mentioned anywhere in older saves, including reports
  // and relationships whose original person or family is no longer present.
@@ -64,9 +71,10 @@ export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,
  const personNo=nextFree(d.nextPerson,people);d.nextPerson=personNo+1;const id=`fictional:${personNo}`;
  let family=familyId;if(!family){const familyNo=nextFree(d.nextFamily,families);d.nextFamily=familyNo+1;family=`family:fictional:${familyNo}`}
  if(!d.families[family])d.families[family]={id:family,name:Array.isArray(name)?name:[name,name],wealth:0,reputation:50,influence:20,leader:id,patrons:[]};
- d.catalog[id]={name:Array.isArray(name)?name:[name,name],birth:[birthYear,birthYear],faction,role,culture:['Simulated','模拟'],source:null,fictional:true};
- CHARACTER_CATALOG[id]=d.catalog[id];
- s.world.characters[id]={id,faction,health:'healthy',location,alive:true,loyalty:65,influence:20,wealth,parents:[...parents],adoptiveParents:[...adoptiveParents],children:[],spouse:null,familyId:family,birthYear,sex,education:0,ambition:Math.floor(20+roll(s)*60),personalitySeed:Math.floor(roll(s)*0xffffffff),wounds:0,illnessEpisodes:0};
+ d.catalog[id]={name:Array.isArray(name)?name:[name,name],birth:[birthYear,birthYear],faction,role,culture,source:null,fictional:true};
+ CHARACTER_CATALOG[id]=structuredClone(d.catalog[id]);
+ s.world.characters[id]={id,faction,health:'healthy',location,homeland:homeland||location,alive:true,loyalty:65,influence:20,wealth,parents:[...parents],adoptiveParents:[...adoptiveParents],children:[],spouse:null,familyId:family,birthYear,sex,education:0,ambition:ambition??Math.floor(20+roll(s)*60),personalitySeed:personalitySeed??Math.floor(roll(s)*0xffffffff),militaryOnly,wounds:0,illnessEpisodes:0};
+ s.world.characters[id].portraitSeed=portraitSeedFor(id,s.world.characters[id],d.catalog[id]);
  for(const parent of [...parents,...adoptiveParents])if(s.world.characters[parent])s.world.characters[parent].children.push(id);
  if(origin==='court_nominee')record(s,id,'Entered this campaign as a fictional court nominee; no historical identity or family relationship is asserted.','作为虚构宫廷人选进入本次战役；不代表历史人物或历史亲属关系。');
  else record(s,id,'Born in the simulated campaign.','出生于模拟战役。');
@@ -82,6 +90,76 @@ export function seedOpeningFictionalHouseholds(s){
   [['Marcia Valeria','玛尔基娅·瓦莱里娅'],'senate','female',-76,'roma']
  ])createFictionalPerson(s,{name,faction,sex,birthYear,location,wealth:8});
  d.openingFictionalSeeded=true;
+}
+
+// Historical commanders are linked by character-system. These remaining
+// officers are original scenario people and are saved with their armies.
+export function seedOpeningCommanders(s){
+ initializeDynasties(s);if(s.world.openingCommandersSeeded)return;
+ for(const profile of STARTING_COMMANDERS){
+  const army=s.armies.find(a=>a.id===profile.army&&a.owner===profile.faction&&a.men>0);
+  if(!army||army.characterId||army.commander?.[0]&&!['Unnamed officer','Unnamed legate'].includes(army.commander[0]))continue;
+  const hash=[...profile.army].reduce((h,c)=>Math.imul(h,31)+c.charCodeAt(0)|0,0)>>>0;
+  const id=createFictionalPerson(s,{name:profile.name,faction:profile.faction,birthYear:profile.birthYear,location:army.region,homeland:army.region,sex:'male',role:['Fictional field commander','虚构野战指挥官'],culture:NAME_POOLS[FACTION_NAME_CULTURE[profile.faction]].culture,ambition:30+hash%45,personalitySeed:hash,militaryOnly:true});
+  army.characterId=id;army.commander=[...profile.name];
+ }
+ s.world.openingCommandersSeeded=true;
+}
+
+// All newly raised formations use the same identity path, including armies
+// created by a custom legion template. This is not an automatic appointment
+// to a civil or hereditary office.
+export function assignFictionalFieldCommander(s,army){
+ if(!army||army.characterId||army.men<=0)return army?.characterId||null;
+ const identity=generateFictionalName(s,{originFaction:army.owner,location:army.region});
+ const hash=[...army.id].reduce((h,c)=>Math.imul(h,31)+c.charCodeAt(0)|0,0)>>>0;
+ const id=createFictionalPerson(s,{...identity,faction:army.owner,birthYear:s.year-35,location:army.region,sex:'male',role:['Fictional field commander','虚构野战指挥官'],militaryOnly:true,ambition:30+hash%45,personalitySeed:hash});
+ army.characterId=id;army.commander=[...identity.name];return id;
+}
+
+// These are original scenario commanders, not claims about documented officers.
+export function seedHanCommanders(s){
+ if(!s.factions.han||s.world.hanCommandersSeeded)return;
+ for(const [armyId,name,birthYear,homeland] of [
+  ['hanCapitalGuard',['Zhang Shou','张守'],-85,'hanGuanzhong'],
+  ['hanHexiGarrison',['Li Yan','李延'],-82,'hanHexi'],
+  ['hanEasternReserve',['Wang Cheng','王成'],-79,'hanHenan']
+ ]){
+  const army=s.armies.find(a=>a.id===armyId);
+  if(!army||army.characterId&&s.world.characters[army.characterId])continue;
+  const id=createFictionalPerson(s,{name,faction:'han',birthYear,location:army.region,homeland,sex:'male',role:['Military commander','军事指挥官'],culture:['Han Chinese','汉']});
+  army.characterId=id;army.commander=[...name];
+ }
+ s.world.hanCommandersSeeded=true;
+}
+
+// Original court personnel give the Han campaign visible, replaceable
+// administrators. They are not presented as documented officials of 49 BCE.
+export function seedHanCourt(s){
+ if(!s.factions.han||s.world.hanCourtSeeded)return;
+ s.world.offices||={};s.world.offices.han||={};
+ for(const [name,birthYear,location,office] of [
+  [['Zhao He','赵和'],-83,'hanGuanzhong','finance'],
+  [['Xu Jian','徐俭'],-81,'hanHexi','supply'],
+  [['Cai Ming','蔡明'],-87,'hanHenan','administration'],
+  [['Wang Huan','王桓'],-79,'hanGuanzhong',null]
+ ]){
+  const id=createFictionalPerson(s,{name,faction:'han',birthYear,location,homeland:location,sex:'male',role:['Han court official (fictional)','汉廷官员（虚构）'],culture:['Han Chinese','汉']});
+  if(office&&!s.world.offices.han[office]){s.world.offices.han[office]=id;recordLifeEvent(s,id,`Appointed to the simulated ${office} assignment.`,`获任模拟的${{finance:'财务',supply:'粮秣',administration:'政务'}[office]}职务。`)}
+ }
+ s.world.hanCourtSeeded=true;
+}
+
+// These original game characters represent an independent oasis court. The
+// historical source identifies Shanshan as a kingdom but not these people.
+export function seedHanFrontierPeople(s){
+ if(!s.factions.shanshan||s.world.hanFrontierPeopleSeeded)return;
+ const common={faction:'shanshan',location:'shanshanOasis',homeland:'shanshanOasis',culture:['Shanshan oasis (game reconstruction)','鄯善绿洲（游戏复原）'],sex:'male'};
+ const ruler=createFictionalPerson(s,{...common,name:['Tura of Shanshan','鄯善的图拉'],birthYear:-88,role:['Fictional oasis ruler','虚构绿洲国王']});
+ s.world.leadership.shanshan=[ruler];
+ const army=s.armies.find(a=>a.id==='shanshanGuard');
+ if(army){const name=['Dama of Shanshan','鄯善的达玛'];army.characterId=createFictionalPerson(s,{...common,name,birthYear:-78,role:['Fictional oasis commander','虚构绿洲指挥官']});army.commander=[...name]}
+ s.world.hanFrontierPeopleSeeded=true;
 }
 
 export function proposeMarriage(s,aId,bId){
@@ -327,8 +405,8 @@ export function requestFamilyResources(s,familyId,choice){
 
 export function advanceDynasties(s){
  const d=initializeDynasties(s);
- // Old saves keep their existing identities. Allocate only to identifiable
- // campaign-born children with a recorded birth and known parents, once.
+ // Claim saved artwork only for identifiable campaign-born children with a
+ // recorded birth and parents; old identities are never replaced.
  if((d.bornPortraitPoolVersion||0)<2){d.bornPortraitClaims||={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id);d.bornPortraitPoolVersion=2}
  if(!d.courtPortraitPoolVersion){for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))assignCourtPortrait(s,id);d.courtPortraitPoolVersion=1}
  advanceMarriageOffers(s);
@@ -360,7 +438,13 @@ export function advanceDynasties(s){
   if(age>=7&&age<25)c.education=Math.min(100,(c.education||0)+Math.round(1+roll(s)*4));
   if(age===18){c.influence=Math.max(c.influence,10+Math.floor((c.education||0)/4));record(s,id,'Reached adulthood in the campaign.','在战役中成年。')}
   if(c.sex!=='female'||age<18||age>42||!c.spouse||!s.world.characters[c.spouse]?.alive||s.world.characters[c.spouse].sex!=='male')continue;
-  if(roll(s)<.24){const names=[['Aulus','奥卢斯','male'],['Lucius','卢基乌斯','male'],['Marcia','玛尔基娅','female'],['Livia','莉维娅','female']];const given=names[Math.floor(roll(s)*names.length)],familyId=["caesar","senate"].includes(c.faction)?s.world.characters[c.spouse].familyId:c.familyId,family=d.families[familyId].name;const child=createFictionalPerson(s,{name:[`${given[0]} ${family[0]}`,`${family[1]}·${given[1]}`],faction:c.faction,birthYear:s.year,familyId,parents:[id,c.spouse],location:c.location,sex:given[2]});record(s,id,`Child ${CHARACTER_CATALOG[child].name[0]} was born.`,`子女${CHARACTER_CATALOG[child].name[1]}出生。`)}
+  if(roll(s)<.24){
+   const names=[['Aulus','奥卢斯','male'],['Lucius','卢基乌斯','male'],['Marcia','玛尔基娅','female'],['Livia','莉维娅','female']],given=names[Math.floor(roll(s)*names.length)];
+   const roman=['caesar','senate'].includes(c.faction),familyId=roman?s.world.characters[c.spouse].familyId:c.familyId,family=d.families[familyId].name;
+   const identity=roman?{name:[`${given[0]} ${family[0]}`,`${family[1]}·${given[1]}`]}:generateFictionalChildName(s,{faction:c.faction,fatherId:c.spouse,sex:given[2],location:c.location});
+   const child=createFictionalPerson(s,{...identity,faction:c.faction,birthYear:s.year,familyId,parents:[id,c.spouse],location:c.location,sex:given[2]});
+   record(s,id,`Child ${CHARACTER_CATALOG[child].name[0]} was born.`,`子女${CHARACTER_CATALOG[child].name[1]}出生。`);
+  }
  }
  // Family memory has a small, fading effect. Personal choices can override it.
  if(s.month===6)for(const memory of d.memories){const age=s.year-memory.year;if(age>60)continue;const members=Object.values(s.world.characters).filter(c=>c.alive&&c.familyId===memory.familyId&&personAge(s,c.id)>=18);for(const c of members)if(roll(s)<.08)c.loyalty=Math.max(0,Math.min(100,c.loyalty+Math.sign(memory.weight)))}

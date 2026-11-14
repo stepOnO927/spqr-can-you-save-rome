@@ -1,0 +1,280 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {newGame,upgradeSave,recruit,resolveBattle} from '../engine.js?v=faces-empire-2';
+import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
+import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,advanceMarkets,proposeSupplyContract,cancelSupplyContract,grantMerchantPrivilege,activeMerchantPrivilege} from '../trade-markets.js?v=faces-empire-2';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=newborn-age-1';
+
+const deal=()=>{
+ const s=newGame('armenia');s.relations['armenia:parthia']=45;
+ assert.equal(proposeAgreement(s,'armenia','parthia','trade').ok,true);
+ return s;
+};
+const request={seller:'parthia',buyer:'armenia',origin:'parthia',destination:'armenia',commodity:'horses',quantity:2};
+
+test('a Roman merchant privilege pays the named carrier, persists and expires without repricing cargo',()=>{
+ const s=deal(),first=placeTradeOrder(s,request);assert.equal(first.ok,true);
+ const id=first.shipment.merchantId,merchant=s.world.characters[id],cash=s.factions.armenia.treasury;
+ assert.equal(grantMerchantPrivilege(s,id,12).ok,true);
+ assert.equal(s.factions.armenia.treasury,cash-5);assert.equal(merchant.wealth,5);
+ assert.equal(s.markets.merchantPrivilegeFees,5);assert.equal(activeMerchantPrivilege(s,id,'armenia'),true);
+ assert.equal(s.markets.merchantPrivileges[id].status,'pending');
+ assert.equal(first.shipment.transport,first.quote.transport,'an escrowed shipment keeps its original cost');
+ assert.equal(grantMerchantPrivilege(s,id,12).reason,'invalid');
+ const loaded=upgradeSave(structuredClone(s));assert.equal(activeMerchantPrivilege(loaded,id,'armenia'),true);
+ loaded.world.characters[id].location='parthia';delete loaded.world.characters[id].marketReturn;
+ loaded.markets.shipments[0].status='delivered';
+ const eligible=quoteTrade(loaded,request);assert.equal(eligible.merchantId,id);assert.equal(eligible.merchantPrivilege,true);
+ const second=placeTradeOrder(loaded,request);assert.equal(second.ok,true);assert.equal(second.shipment.merchantId,id);
+ assert.equal(loaded.markets.merchantPrivileges[id].startsAt,loaded.year*12+loaded.month);
+ assert.equal(loaded.markets.merchantPrivileges[id].status,'active');
+ loaded.year++;assert.equal(activeMerchantPrivilege(loaded,id,'armenia'),false);
+ const expired=quoteTrade(loaded,request);assert.equal(expired.merchantPrivilege,false);
+ assert.equal(grantMerchantPrivilege(loaded,id,24).ok,true);
+ assert.equal(loaded.markets.merchantPrivileges[id].duration,24);
+});
+
+test('a licensed Roman-network merchant lowers a long Silk Road transport quote',()=>{
+ const s=newGame('han');s.relations['han:parthia']=45;
+ assert.equal(proposeAgreement(s,'han','parthia','trade').ok,true);
+ const route={seller:'parthia',buyer:'han',origin:'parthia',destination:'hanHexi',commodity:'horses',quantity:5};
+ const ordinary=quoteTrade(s,route);assert.equal(ordinary.ok,true);assert.ok(ordinary.transport>1);
+ const first=placeTradeOrder(s,{...route,quantity:1});assert.equal(first.ok,true);
+ const id=first.shipment.merchantId;assert.equal(grantMerchantPrivilege(s,id,24).ok,true);
+ // Make this carrier available at the same origin to isolate the next quote.
+ first.shipment.status='delivered';s.world.characters[id].location='parthia';delete s.world.characters[id].marketReturn;
+ const licensed=quoteTrade(s,route);assert.equal(licensed.ok,true);
+ assert.equal(licensed.merchantId,id);assert.ok(licensed.transport<ordinary.transport);
+ const placed=placeTradeOrder(s,route);assert.equal(placed.ok,true);
+ assert.equal(placed.shipment.transport,licensed.transport);
+ assert.equal(s.markets.merchantPrivileges[id].status,'active');
+});
+
+test('markets have measured units, local output and bounded shortage prices',()=>{
+ const s=newGame('armenia'),parthia=s.markets.regions.parthia,egypt=s.markets.regions.egypt;
+ assert.deepEqual(COMMODITIES.horses.unit,['100 head','百匹']);
+ assert.ok(parthia.goods.horses.production>0);
+ assert.ok(egypt.goods.papyrus.production>0);
+ const normal=parthia.goods.horses.price;
+ parthia.goods.horses.stock=0;s.month++;advanceMarkets(s);
+ assert.ok(parthia.goods.horses.price>=normal);
+ assert.ok(parthia.goods.horses.price<=COMMODITIES.horses.basePrice*3);
+});
+
+test('a horse order escrows goods and money, travels, then pays and delivers exactly once',()=>{
+ const s=deal(),quote=quoteTrade(s,request),stock=s.markets.regions.parthia.goods.horses.stock,buyerMoney=s.factions.armenia.treasury,sellerMoney=s.factions.parthia.treasury;
+ assert.equal(quote.ok,true);assert.ok(quote.months>=1);assert.deepEqual(quote.route,['parthia','armenia']);
+ const result=placeTradeOrder(s,request);assert.equal(result.ok,true);
+ assert.ok(s.world.characters[result.shipment.merchantId]);
+ assert.equal(s.world.characters[result.shipment.merchantId].profession,'merchant');
+ assert.equal(previewPersonTravel(s,result.shipment.merchantId,'parthia').reason,'unavailable');
+ assert.equal(s.markets.regions.parthia.goods.horses.stock,stock-2);
+ assert.equal(s.factions.armenia.treasury,buyerMoney-quote.total);
+ assert.equal(s.factions.parthia.treasury,sellerMoney);
+ let loaded=upgradeSave(structuredClone(s)),destination=loaded.markets.regions.armenia.goods.horses.stock;
+ const local=loaded.markets.regions.armenia.goods.horses;
+ for(let i=0;i<quote.months-1;i++){loaded.month++;advanceMarkets(loaded);assert.equal(loaded.markets.shipments[0].status,'traveling')}
+ loaded.month++;advanceMarkets(loaded);
+ assert.equal(loaded.markets.shipments[0].status,'delivered');
+ assert.equal(loaded.markets.shipments[0].escrow,0);
+ assert.equal(loaded.factions.parthia.treasury,sellerMoney+quote.price);
+ assert.equal(loaded.markets.transportSpent+loaded.markets.merchantFees,quote.transport);
+ assert.equal(loaded.world.characters[result.shipment.merchantId].wealth,loaded.markets.merchantFees);
+ assert.equal(loaded.markets.regions.armenia.goods.horses.stock,destination+quote.months*(local.production-local.consumption)+2);
+ assert.equal(loaded.markets.transactions.length,1);
+ advanceMarkets(loaded);assert.equal(loaded.markets.transactions.length,1);
+ assert.equal(loaded.markets.transportSpent+loaded.markets.merchantFees,quote.transport);
+ assert.equal(upgradeSave(structuredClone(loaded)).markets.transactions.length,1);
+});
+
+test('a competitive premium cannot underprice goods or rewrite a locked contract',()=>{
+ const s=deal(),base=quoteTrade(s,request);
+ assert.equal(quoteTrade(s,{...request,bidPremium:-1}).reason,'invalid');
+ assert.equal(quoteTrade(s,{...request,bidPremium:4}).reason,'invalid');
+ const bid=quoteTrade(s,{...request,bidPremium:2});
+ assert.equal(bid.ok,true);assert.equal(bid.price,base.price+4);
+ const contract=proposeSupplyContract(s,{...request,interval:3,duration:12});
+ assert.equal(contract.ok,true);
+ assert.equal(quoteTrade(s,{...request,contractId:contract.contract.id,bidPremium:1}).reason,'contract');
+});
+
+test('a long-term supply contract prepays each physical installment and survives save/load',()=>{
+ let s=deal(),source=s.markets.regions.parthia.goods.horses,buyerCash=s.factions.armenia.treasury;
+ const proposed=proposeSupplyContract(s,{...request,interval:3,duration:12});assert.equal(proposed.ok,true);
+ const {contract,quote}=proposed;assert.equal(contract.unitPrice,quote.unitPrice);
+ assert.equal(contract.negotiationCost,2);assert.equal(s.factions.armenia.treasury,buyerCash-quote.total-2);
+ assert.equal(s.markets.shipments.length,1);assert.equal(s.markets.shipments[0].contractId,contract.id);
+ assert.equal(placeTradeOrder(s,{...request,contractId:contract.id}).reason,'contract','one installment cannot be ordered twice');
+ assert.equal(placeTradeOrder(s,{...request,quantity:1,contractId:contract.id}).reason,'contract','a contract ID cannot underprice a different order');
+ s=upgradeSave(structuredClone(s));assert.equal(s.markets.supplyContracts[0].id,contract.id);
+ for(let i=0;i<3;i++){s.month++;advanceMarkets(s)}
+ assert.equal(s.markets.supplyContracts[0].dispatched,2);
+ assert.equal(s.markets.shipments[1].price,quote.price,'the agreed goods price is locked');
+ assert.ok(source.stock>=0);assert.equal(s.markets.shipments[0].status,'delivered');
+ for(let i=0;i<9;i++){s.month++;if(s.month>12){s.month=1;s.year++}advanceMarkets(s)}
+ assert.equal(s.markets.supplyContracts[0].status,'completed');
+ assert.equal(s.markets.supplyContracts[0].dispatched,4);
+ assert.equal(s.markets.shipments.filter(x=>x.contractId===contract.id).length,4);
+ assert.equal(s.markets.transportSpent+s.markets.merchantFees,s.markets.transactions.reduce((sum,x)=>sum+x.transport,0));
+});
+
+test('two missed supply installments create a saved breach; war ends future orders without erasing a caravan',()=>{
+ const s=deal(),first=proposeSupplyContract(s,{...request,interval:3,duration:12});assert.equal(first.ok,true);
+ const source=s.markets.regions.parthia.goods.horses;source.production=0;source.consumption=0;source.stock=0;
+ for(let i=0;i<6;i++){s.month++;advanceMarkets(s)}
+ const contract=s.markets.supplyContracts[0];assert.equal(contract.status,'breached');assert.equal(contract.missed,2);
+ assert.equal(contract.endedReason,'unavailable');assert.equal(s.diplomaticCredibility.parthia,92);
+ assert.equal(s.markets.shipments.length,1,'a breach cannot mint replacement cargo');
+ const restored=upgradeSave(structuredClone(s));assert.equal(restored.markets.supplyContracts[0].status,'breached');
+ const wartime=deal(),second=proposeSupplyContract(wartime,{...request,interval:3,duration:12});assert.equal(second.ok,true);
+ wartime.wars.push(['armenia','parthia']);wartime.month++;advanceMarkets(wartime);
+ assert.equal(second.contract.status,'terminated');assert.equal(second.contract.endedReason,'access_lost');
+ assert.equal(second.shipment.status,'blocked');assert.equal(wartime.markets.shipments.length,1);
+});
+
+test('withdrawing a supply contract changes relations but retains already prepaid shipments',()=>{
+ const s=deal(),created=proposeSupplyContract(s,{...request});assert.equal(created.ok,true);
+ const before=s.relations['armenia:parthia'];assert.equal(cancelSupplyContract(s,created.contract.id).ok,true);
+ assert.equal(s.relations['armenia:parthia'],before-8);assert.equal(s.markets.shipments[0].status,'traveling');
+ assert.equal(cancelSupplyContract(s,created.contract.id).reason,'unavailable');
+ s.month++;advanceMarkets(s);assert.equal(s.markets.supplyContracts[0].status,'withdrawn');
+});
+
+test('border war blocks an actual shipment until passage is restored',()=>{
+ const s=deal(),shipment=placeTradeOrder(s,request).shipment;
+ s.wars.push(['armenia','parthia']);s.month++;advanceMarkets(s);
+ assert.equal(shipment.status,'blocked');assert.equal(s.markets.transactions.length,0);
+ s.wars=s.wars.filter(w=>!w.includes('armenia'));
+ for(let i=0;i<shipment.legs[0].months;i++){s.month++;advanceMarkets(s)}
+ assert.equal(shipment.status,'delivered');assert.equal(s.markets.transactions.length,1);
+});
+
+test('a year-long blocked caravan settles its stock and escrow once after save/load',()=>{
+ const s=deal(),source=s.markets.regions.parthia.goods.horses;
+ source.production=0;source.consumption=0;
+ const startingStock=source.stock,buyerCash=s.factions.armenia.treasury,sellerCash=s.factions.parthia.treasury;
+ const placed=placeTradeOrder(s,request);assert.equal(placed.ok,true);
+ s.wars.push(['armenia','parthia']);
+ const next=state=>{if(++state.month>12){state.month=1;state.year++}advanceMarkets(state)};
+ next(s);assert.equal(placed.shipment.status,'blocked');
+ const loaded=upgradeSave(structuredClone(s)),shipment=loaded.markets.shipments[0];
+ for(let i=0;i<11;i++)next(loaded);
+ assert.equal(shipment.status,'blocked');assert.equal(shipment.escrow,placed.quote.total);
+ next(loaded);
+ assert.equal(shipment.status,'stranded');assert.equal(shipment.escrow,0);
+ assert.equal(shipment.returnedTo,'parthia');assert.equal(loaded.markets.regions.parthia.goods.horses.stock,startingStock);
+ assert.equal(loaded.factions.armenia.treasury,buyerCash-placed.quote.transport);
+ assert.equal(loaded.factions.parthia.treasury,sellerCash);
+ assert.equal(loaded.markets.transportSpent+loaded.markets.merchantFees,placed.quote.transport);
+ assert.equal(loaded.markets.transactions.length,1);
+ assert.equal(loaded.markets.transactions[0].refund,placed.quote.price);
+ assert.match(loaded.log[0].en,/Blocked caravan settled/);
+ const settled=upgradeSave(structuredClone(loaded));settled.wars=[];next(settled);
+ assert.equal(settled.markets.shipments[0].status,'stranded');
+ assert.equal(settled.markets.regions.parthia.goods.horses.stock,startingStock);
+ assert.equal(settled.factions.armenia.treasury,buyerCash-placed.quote.transport);
+ assert.equal(settled.markets.transactions.length,1);
+});
+
+test('orders reject unaffordable and missing-stock trades while using mapped Eurasian routes',()=>{
+ const s=deal(),before=structuredClone(s.markets.regions.parthia.goods.horses);
+ assert.equal(placeTradeOrder(s,{...request,quantity:1000}).reason,'invalid');
+ assert.equal(placeTradeOrder(s,{...request,quantity:20}).reason,'unavailable');
+ s.factions.armenia.treasury=0;assert.equal(placeTradeOrder(s,request).reason,'treasury');
+ assert.deepEqual(s.markets.regions.parthia.goods.horses,before);
+ const han=newGame('han');han.relations['han:parthia']=45;assert.equal(proposeAgreement(han,'han','parthia','trade').ok,true);
+ assert.equal(quoteTrade(han,{seller:'han',buyer:'parthia',origin:'hanGuanzhong',destination:'parthia',commodity:'silk',quantity:1}).ok,true);
+});
+
+test('Han silk travels through independent oasis and Central Asian markets, with war blocking its actual leg',()=>{
+ const s=newGame('han');s.relations['han:parthia']=45;assert.equal(proposeAgreement(s,'han','parthia','trade').ok,true);
+ const request={seller:'han',buyer:'parthia',origin:'hanGuanzhong',destination:'parthia',commodity:'silk',quantity:1};
+ const quote=quoteTrade(s,request),sellerStock=s.markets.regions.hanGuanzhong.goods.silk.stock,buyerStock=s.markets.regions.parthia.goods.silk.stock,buyerCash=s.factions.parthia.treasury,sellerCash=s.factions.han.treasury,shanshanCash=s.factions.shanshan.treasury;
+ assert.equal(quote.ok,true);assert.ok(quote.months>=20);assert.deepEqual(quote.route.slice(0,3),['hanGuanzhong','hanHexi','shanshanOasis']);
+ assert.ok(quote.route.includes('silk:bactra')&&quote.route.includes('silk:parthia'));assert.ok(quote.tariffs.some(x=>x.owner==='yuezhi'));
+ const shipment=placeTradeOrder(s,request).shipment;assert.equal(s.markets.regions.hanGuanzhong.goods.silk.stock,sellerStock-1);assert.equal(s.factions.parthia.treasury,buyerCash-quote.total);
+ const saved=upgradeSave(structuredClone(s));saved.wars.push(['han','yuezhi']);
+ const next=()=>{if(++saved.month>12){saved.month=1;saved.year++}advanceMarkets(saved)};
+ for(let i=0;i<quote.months;i++){next();if(saved.markets.shipments[0].status==='blocked')break}
+ assert.equal(saved.markets.shipments[0].status,'blocked');assert.equal(saved.markets.regions.parthia.goods.silk.stock,buyerStock);assert.equal(saved.markets.shipments[0].escrow,quote.total);
+ saved.wars=saved.wars.filter(w=>!w.includes('yuezhi'));
+ for(let i=0;i<quote.months+2&&saved.markets.shipments[0].status!=='delivered';i++)next();
+ assert.equal(saved.markets.shipments[0].status,'delivered');assert.equal(saved.markets.regions.parthia.goods.silk.stock,buyerStock+1);
+ assert.equal(saved.factions.han.treasury,sellerCash+quote.price);
+ assert.equal(saved.factions.shanshan.treasury,shanshanCash+quote.tariffs.find(x=>x.owner==='shanshan').amount);
+ assert.equal(saved.markets.transitTreasury.yuezhi,quote.tariffs.find(x=>x.owner==='yuezhi').amount);
+ assert.equal(saved.markets.transactions.length,1);assert.equal(saved.markets.transportSpent+saved.markets.merchantFees,quote.transport);
+ assert.equal(saved.markets.transactions[0].merchantId,saved.markets.shipments[0].merchantId);
+ assert.equal(shipment.status,'traveling','serialized state advances independently');
+});
+
+test('old saves gain markets once without changing existing treasury or region ownership',()=>{
+ const s=newGame('caesar'),cash=s.factions.caesar.treasury,owners=s.regions.map(r=>r.owner);delete s.markets;
+ const restored=upgradeSave(structuredClone(s)),again=upgradeSave(structuredClone(restored));
+ assert.equal(restored.factions.caesar.treasury,cash);
+ assert.deepEqual(restored.regions.map(r=>r.owner),owners);
+ assert.deepEqual(restored.markets.transitTreasury,{});
+ assert.deepEqual(restored.markets.merchants,{});
+ assert.deepEqual(again.markets,restored.markets);
+ assert.equal(Object.keys(initializeMarkets(again).regions).length,again.regions.length);
+});
+
+test('an older in-flight order gains one stable merchant without changing escrow',()=>{
+ const s=deal(),shipment=placeTradeOrder(s,request).shipment,escrow=shipment.escrow;
+ delete shipment.merchantId;delete s.markets.merchants;delete s.markets.merchantFees;
+ const restored=upgradeSave(structuredClone(s)),id=restored.markets.shipments[0].merchantId;
+ assert.ok(id);assert.equal(restored.markets.shipments[0].escrow,escrow);
+ assert.equal(upgradeSave(structuredClone(restored)).markets.shipments[0].merchantId,id);
+});
+
+test('parallel caravans receive separate merchants and preserve both identities',()=>{
+ const s=deal(),first=placeTradeOrder(s,request),second=placeTradeOrder(s,request);
+ assert.equal(first.ok,true);assert.equal(second.ok,true);
+ assert.notEqual(first.shipment.merchantId,second.shipment.merchantId);
+ assert.equal(s.markets.merchants.armenia.length,2);
+ const restored=upgradeSave(structuredClone(s));
+ assert.deepEqual(restored.markets.shipments.map(x=>x.merchantId),[first.shipment.merchantId,second.shipment.merchantId]);
+});
+
+test('a delivered merchant travels home before accepting another remote order',()=>{
+ let s=deal(),first=placeTradeOrder(s,request);assert.equal(first.ok,true);
+ const next=()=>{if(++s.month>12){s.month=1;s.year++}advanceMarkets(s)};
+ for(let i=0;i<first.quote.months;i++)next();
+ const person=s.world.characters[first.shipment.merchantId];
+ assert.equal(person.location,'armenia');assert.equal(person.marketReturn.to,'parthia');
+ const second=placeTradeOrder(s,request);assert.equal(second.ok,true);
+ assert.notEqual(second.shipment.merchantId,first.shipment.merchantId);
+ s=upgradeSave(structuredClone(s));
+ for(let i=0;i<first.quote.months;i++)next();
+ assert.equal(s.world.characters[first.shipment.merchantId].location,'parthia');
+ assert.equal(s.world.characters[first.shipment.merchantId].marketReturn,undefined);
+ const third=placeTradeOrder(s,request);assert.equal(third.ok,true);
+ assert.equal(third.shipment.merchantId,first.shipment.merchantId);
+});
+
+test('a closed border delays a merchant return until passage is restored',()=>{
+ const s=deal(),first=placeTradeOrder(s,request);assert.equal(first.ok,true);
+ const next=()=>{if(++s.month>12){s.month=1;s.year++}advanceMarkets(s)};
+ for(let i=0;i<first.quote.months;i++)next();
+ const person=s.world.characters[first.shipment.merchantId];
+ s.wars.push(['armenia','parthia']);
+ for(let i=0;i<first.quote.months;i++)next();
+ assert.equal(person.location,'armenia');assert.ok(person.marketReturn);
+ s.wars=[];
+ for(let i=0;i<first.quote.months;i++)next();
+ assert.equal(person.location,'parthia');assert.equal(person.marketReturn,undefined);
+});
+
+test('imported horses equip Han scouts and improve their actual battlefield power',()=>{
+ const s=newGame('han');s.relations['han:parthia']=45;assert.equal(proposeAgreement(s,'han','parthia','trade').ok,true);
+ const horses=s.markets.regions.hanHexi.goods.horses;horses.stock=0;horses.production=0;horses.consumption=0;
+ const order=placeTradeOrder(s,{seller:'parthia',buyer:'han',origin:'parthia',destination:'hanHexi',commodity:'horses',quantity:1});assert.equal(order.ok,true);
+ for(let i=0;i<order.quote.months;i++){if(++s.month>12){s.month=1;s.year++}advanceMarkets(s)}
+ assert.equal(order.shipment.status,'delivered');assert.equal(horses.stock,1);
+ assert.equal(recruit(s,'hanHexi'),true);const recruited=s.armies.at(-1);
+ assert.equal(recruited.mounted,100);assert.equal(horses.stock,0);
+ const mounted=structuredClone(s),infantry=structuredClone(s);delete infantry.armies.find(a=>a.id===recruited.id).mounted;
+ const fight=state=>{state.wars.push(['han','shanshan']);const attacker=state.armies.find(a=>a.id===recruited.id),defender=state.armies.find(a=>a.id==='shanshanGuard'),target=state.regions.find(r=>r.id==='shanshanOasis');resolveBattle(state,attacker,defender,target);return state.battles[0].attacker.power};
+ assert.ok(fight(mounted)>fight(infantry));
+ assert.equal(upgradeSave(structuredClone(s)).armies.find(a=>a.id===recruited.id).mounted,100);
+});

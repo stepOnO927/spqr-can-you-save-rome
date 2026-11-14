@@ -247,3 +247,16 @@ test('five-year campaign keeps message identities, categories and delivery state
   assert.deepEqual(loaded.mail.reportSnapshot,s.mail.reportSnapshot);
   assert.match(mailboxHtml(loaded,{lang:'zh'}),/帝国来信/);
 });
+
+test('an older active envoy keeps one person identity when mailbox personnel are migrated',()=>{
+  const s=newGame('caesar');
+  assert.equal(queueMission(s,'egypt','caesar','envoy','relations').ok,true);
+  const op=s.operations[0],agentId=op.agentId;
+  delete op.id;delete op.personnelId;delete s.nextOperationId;delete s.mail;
+  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+  const mission=restored.operations[0],personnel=restored.mail.personnel;
+  assert.ok(mission.id);assert.equal(mission.personnelId,agentId);
+  assert.equal(personnel.length,1);assert.equal(personnel[0].characterId,agentId);
+  const again=upgradeSave(JSON.parse(JSON.stringify(restored)));
+  assert.equal(again.operations[0].id,mission.id);assert.equal(again.mail.personnel.length,1);
+});

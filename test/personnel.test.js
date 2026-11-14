@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=ai-wartime-aid-1';
-import {friendlyPersonnelInTheater} from '../map-lab/personnel.js';
+import {newGame} from '../engine.js?v=faces-empire-2';
+import {friendlyPersonnelInTheater} from '../map-lab/personnel.js?v=phase-x-1';
 
 test('city personnel projection contains only living friendly people stationary in that theater',()=>{
  const s=newGame('senate');

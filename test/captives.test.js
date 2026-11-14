@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=ai-wartime-aid-1';
-import {queueMission,advanceOperations,availableAgents,requestAgentRelease,advanceAgentRequests,answerAgentRelease} from '../character-system.js?v=portraits-hundred-days-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=faces-empire-2';
+import {queueMission,advanceOperations,availableAgents,requestAgentRelease,advanceAgentRequests,answerAgentRelease} from '../character-system.js?v=faces-empire-2';
 
 function captured(){const s=newGame('caesar');assert.equal(queueMission(s,'caesar','egypt','spy','health').ok,true);s.world.intelSeed=0;for(let i=0;i<4;i++)advanceOperations(s);assert.equal(s.operations[0].status,'captured');return s}
-test('captured unnamed agents occupy capacity until a delayed successful release',()=>{
+test('captured named agents occupy capacity until a delayed successful release',()=>{
  let s=captured();const id=s.world.captives[0].id;assert.equal(availableAgents(s,'caesar'),2);const treasury=s.factions.caesar.treasury;assert.equal(requestAgentRelease(s,'caesar',id).ok,true);assert.equal(s.factions.caesar.treasury,treasury-8);assert.equal(requestAgentRelease(s,'caesar',id).reason,'pending');for(let i=0;i<3;i++)advanceAgentRequests(s);assert.equal(s.world.captives[0].state,'held');s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.intelSeed=1000;advanceAgentRequests(s);assert.equal(s.releaseRequests[0].status,'released');assert.equal(availableAgents(s,'caesar'),3);
 });
 test('refused and unanswered letters leave the agent held and can be retried',()=>{

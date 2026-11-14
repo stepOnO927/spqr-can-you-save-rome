@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=ai-wartime-aid-1';
-import {knownLeaders} from '../characters.js?v=succession-ui-recovery-1';
-import {advanceOperations,availableAgents} from '../character-system.js?v=portraits-hundred-days-1';
-import {advanceConspiracies,reassurePerson,politicalAmbition,potentialConspirators} from '../conspiracies.js?v=succession-ui-recovery-1';
-import {supportSuccessor} from '../governance.js?v=portraits-hundred-days-1';
-import {resolveDynasticWars} from '../civil-war.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from '../dynasties.js?v=portraits-hundred-days-1';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=faces-empire-2';
+import {knownLeaders} from '../characters.js?v=faces-empire-2';
+import {advanceOperations,availableAgents} from '../character-system.js?v=faces-empire-2';
+import {advanceConspiracies,reassurePerson,politicalAmbition,potentialConspirators} from '../conspiracies.js?v=newborn-age-1';
+import {supportSuccessor} from '../governance.js?v=faces-empire-2';
+import {resolveDynasticWars} from '../civil-war.js?v=faces-empire-3';
+import {createFictionalPerson} from '../dynasties.js?v=faces-empire-2';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 function unrest(s){s.factions.senate.stability=30;s.world.characters.cato.loyalty=25;}

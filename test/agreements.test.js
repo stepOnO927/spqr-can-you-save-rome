@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,diplomacy,isWar,moveArmy,previewMarch,tick} from '../engine.js?v=ai-wartime-aid-1';
+import {newGame,upgradeSave,diplomacy,isWar,moveArmy,previewMarch,tick} from '../engine.js?v=faces-empire-2';
 import {proposeAgreement,terminateAgreement,activeAgreement,advanceAgreements,visibleAgreements} from '../agreements.js?v=grand-chessboard-2';
-import {addReport,queueMission,advanceOperations} from '../character-system.js?v=portraits-hundred-days-1';
+import {addReport,queueMission,advanceOperations} from '../character-system.js?v=faces-empire-2';
 
 function friendly(s,a,b){s.relations[[a,b].sort().join(':')]=60}
 test('treaties cost resources, expire, survive saves and breaches affect credibility',()=>{
@@ -12,11 +12,11 @@ test('treaties cost resources, expire, survive saves and breaches affect credibi
  assert.equal(visibleAgreements(s,'caesar').length,0);assert.equal(diplomacy(s,'egypt','parthia','war'),false);
  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.ok(activeAgreement(s,'parthia','egypt','non_aggression'));
  assert.ok(terminateAgreement(s,result.agreement.id,'egypt').ok);assert.equal(s.diplomaticCredibility.egypt,80);assert.equal(s.relations['egypt:parthia'],40);assert.ok(diplomacy(s,'egypt','parthia','war'));
- const t=newGame('egypt');friendly(t,'egypt','parthia');const trade=proposeAgreement(t,'egypt','parthia','trade').agreement;const before=t.factions.egypt.treasury;advanceAgreements(t);assert.equal(t.factions.egypt.treasury,before+1);t.year+=3;advanceAgreements(t);assert.equal(trade.status,'expired');assert.equal(t.factions.egypt.treasury,before+1);
+ const t=newGame('egypt');friendly(t,'egypt','parthia');const trade=proposeAgreement(t,'egypt','parthia','trade').agreement;const before=t.factions.egypt.treasury;advanceAgreements(t);assert.equal(t.factions.egypt.treasury,before);assert.equal(trade.terms.marketAccess,true);t.year+=3;advanceAgreements(t);assert.equal(trade.status,'expired');assert.equal(t.factions.egypt.treasury,before);
 });
 test('older treaties receive structured terms on save migration without changing the deal',()=>{
  const s=newGame('egypt');friendly(s,'egypt','parthia');const t=proposeAgreement(s,'egypt','parthia','trade').agreement;delete t.terms;const restored=upgradeSave(JSON.parse(JSON.stringify(s))),saved=restored.agreements.find(x=>x.id===t.id);
- assert.equal(saved.terms.kind,'trade');assert.equal(saved.start.year,t.start.year);assert.equal(saved.expiresAt,t.expiresAt);assert.equal(saved.status,'active');
+ assert.equal(saved.terms.kind,'trade');assert.equal(saved.terms.marketAccess,true);assert.deepEqual(saved.benefits,['market_access']);assert.equal(saved.start.year,t.start.year);assert.equal(saved.expiresAt,t.expiresAt);assert.equal(saved.status,'active');
 });
 test('legacy full alliances gain terms without an invented start and breaking one damages credibility',()=>{
  const old=newGame('egypt');old.alliances.push(['egypt','armenia']);let s=upgradeSave(JSON.parse(JSON.stringify(old)));

@@ -1,9 +1,9 @@
-import {reportedControl,observeArrival} from './control-intelligence.js?v=fort-intel-1';
-import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
+import {reportedControl,observeArrival} from './control-intelligence.js?v=faces-empire-3';
+import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {addReport,reportedHealthSubjects,apparentAgeRange} from './character-system.js?v=portraits-hundred-days-1';
-import {officeOf} from './office-system.js?v=portraits-hundred-days-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=portraits-hundred-days-1';
+import {addReport,reportedHealthSubjects,apparentAgeRange} from './character-system.js?v=faces-empire-2';
+import {officeOf} from './office-system.js?v=faces-empire-2';
+import {fictionalPortraitKey,portraitSeedFor} from './portrait-registry.js?v=faces-empire-2';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 // A commander in transit has not arrived in a theater where an audience can occur.
@@ -28,7 +28,7 @@ export function personalDiplomaticCredit(s,actor,target){
 // Civilian journeys use the campaign theater graph, not precise historical roads.
 export function previewPersonTravel(s,id,destination){
  initializeWorld(s);const c=s.world.characters[id],owner=s.player;
- if(!c||c.faction!==owner||!c.alive||c.missing||!c.location||c.travel||officeOf(s,owner,id)||['seriously_ill','dying','deceased'].includes(c.health)||s.armies.some(a=>a.characterId===id))return {ok:false,reason:'unavailable'};
+ if(!c||c.faction!==owner||!c.alive||c.missing||!c.location||c.travel||officeOf(s,owner,id)||['seriously_ill','dying','deceased'].includes(c.health)||s.armies.some(a=>a.characterId===id)||s.markets?.shipments?.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status)))return {ok:false,reason:'unavailable'};
  if(c.location===destination||!s.regions.some(r=>r.id===destination))return {ok:false,reason:'destination'};
  const distances={[c.location]:0},paths={[c.location]:[]},unvisited=new Set(s.regions.map(r=>r.id));
  while(unvisited.size){const current=[...unvisited].filter(x=>distances[x]!==undefined).sort((a,b)=>distances[a]-distances[b])[0];if(!current)break;unvisited.delete(current);if(current===destination)break;
@@ -74,7 +74,7 @@ export function advancePersonalDiplomacy(s){
   if(!a?.alive||a.missing||a.faction!==m.actor||a.travel||commandingMarch(s,m.person)||a.location!==m.location||['seriously_ill','dying','deceased'].includes(a.health)||!b?.alive||b.missing||b.faction!==m.targetFaction||b.travel||commandingMarch(s,m.target)||b.location!==m.location||atWar(s,m.actor,m.targetFaction))m.status='no_contact';
   else if(q<.2)m.status='no_reply';
   else if(q<declineLimit||['seriously_ill','dying','deceased'].includes(b.health))m.status='declined';
-  else{m.status='met';const portrait=fictionalPortraitKey(s,m.target);if(portrait)m.portraitKey=portrait;const rel=s.world.personalRelations[personKey]||{trust:0,meetings:0};rel.trust=Math.min(100,rel.trust+5);rel.meetings++;rel.lastYear=s.year;rel.lastMonth=s.month;s.world.personalRelations[personKey]=rel;s.relations[factionKey]=Math.min(100,relations+3);addReport(s,m.actor,m.targetFaction,{kind:'location',character:m.target,value:m.location,source:'meeting',confidence:'unverified',reliability:'moderate'});const stance=relations<0&&trust<15?'guarded':relations>=30||trust>=15?'receptive':'noncommittal';addReport(s,m.actor,m.targetFaction,{kind:'stance',character:m.target,value:stance,source:'meeting',confidence:'unverified',reliability:'low'});const age=apparentAgeRange(m.target,s.year);if(age)addReport(s,m.actor,m.targetFaction,{kind:'age',character:m.target,value:age,source:'meeting',confidence:'unverified',reliability:'low'});addReport(s,m.actor,m.targetFaction,{kind:'health',character:m.target,value:b.health==='wounded'?'wounded':'unknown',source:'meeting',confidence:'unverified',reliability:'low'})}
+  else{m.status='met';const portrait=fictionalPortraitKey(s,m.target);if(portrait)m.portraitKey=portrait;else if(s.world.dynasties?.catalog?.[m.target]?.fictional){const person=s.world.characters[m.target];m.portraitSeed=Number.isInteger(person.portraitSeed)?person.portraitSeed:portraitSeedFor(m.target,person,s.world.dynasties.catalog[m.target]);m.portraitFaction=person.faction}const rel=s.world.personalRelations[personKey]||{trust:0,meetings:0};rel.trust=Math.min(100,rel.trust+5);rel.meetings++;rel.lastYear=s.year;rel.lastMonth=s.month;s.world.personalRelations[personKey]=rel;s.relations[factionKey]=Math.min(100,relations+3);addReport(s,m.actor,m.targetFaction,{kind:'location',character:m.target,value:m.location,source:'meeting',confidence:'unverified',reliability:'moderate'});const stance=relations<0&&trust<15?'guarded':relations>=30||trust>=15?'receptive':'noncommittal';addReport(s,m.actor,m.targetFaction,{kind:'stance',character:m.target,value:stance,source:'meeting',confidence:'unverified',reliability:'low'});const age=apparentAgeRange(m.target,s.year);if(age)addReport(s,m.actor,m.targetFaction,{kind:'age',character:m.target,value:age,source:'meeting',confidence:'unverified',reliability:'low'});addReport(s,m.actor,m.targetFaction,{kind:'health',character:m.target,value:b.health==='wounded'?'wounded':'unknown',source:'meeting',confidence:'unverified',reliability:'low'})}
   m.resolvedYear=s.year;m.resolvedMonth=s.month;if(m.actor===s.player)log(s,`Personal audience: ${m.status.replace('_',' ')}.`,({no_contact:'未能见到对方；对方可能不在、无法会面或局势有变。',no_reply:'个人会面请求没有收到答复。',declined:'个人会面请求被拒绝。',met:'双方在同一战区举行了个人会面，关系有所改善。'})[m.status]);
  }
 }

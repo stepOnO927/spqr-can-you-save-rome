@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=portraits-hundred-days-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
+import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=faces-empire-2';
 
 const date=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');
@@ -48,7 +48,12 @@ function commissionedName(s,faction,kind){
 export function registerMissionPersonnel(s,operation){
   if(!['envoy','travelers'].includes(operation.type)||!s.factions[operation.actor]||!s.factions[operation.target])return null;
   const people=initializePersonnel(s),kind=operation.type==='envoy'?'envoy':'merchant',actor=operation.actor,target=operation.target;
-  let entry=people.find(p=>p.homeFaction===actor&&p.kind===kind&&p.status==='at_home'&&s.world.characters[p.characterId]?.alive);
+  let entry=operation.agentId&&people.find(p=>p.characterId===operation.agentId);
+  if(!entry&&operation.agentId&&s.world.characters[operation.agentId]?.alive){
+    entry={id:'personnel:'+s.mail.nextPersonnelId++,characterId:operation.agentId,kind,homeFaction:actor,status:'at_home',safeConduct:false,history:[]};
+    people.push(entry);
+  }
+  if(!entry)entry=people.find(p=>p.homeFaction===actor&&p.kind===kind&&p.status==='at_home'&&s.world.characters[p.characterId]?.alive);
   if(!entry){
     const role=kind==='envoy'?['Fictional diplomatic envoy','虚构外交使者']:['Fictional traveling merchant','虚构商旅'];
     const characterId=createFictionalPerson(s,{name:commissionedName(s,actor,kind),faction:actor,birthYear:s.year-35,location:home(s,actor),role,wealth:kind==='merchant'?12:5});

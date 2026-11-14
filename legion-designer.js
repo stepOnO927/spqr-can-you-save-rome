@@ -1,7 +1,8 @@
 import {ROUTES} from './data.js?v=phase-x-1';
-import {unlockedComponents,focusModifiers} from './national-focus.js?v=portraits-hundred-days-1';
-import {politicalAmbition} from './conspiracies.js?v=succession-ui-recovery-1';
-import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
+import {unlockedComponents,focusModifiers} from './national-focus.js?v=faces-empire-2';
+import {politicalAmbition} from './conspiracies.js?v=newborn-age-1';
+import {reportedControl} from './control-intelligence.js?v=faces-empire-3';
+import {assignFictionalFieldCommander} from './dynasties.js?v=faces-empire-2';
 
 // LEGION DESIGNER. Templates are data; an army carries a snapshot of the
 // composition it was actually organized into, so editing a template never
@@ -247,7 +248,8 @@ export function recruitFormation(s,owner,regionId,templateId,{log=()=>{}}={}){
  if(f.treasury<q.treasury||f.manpower<q.manpower||f.food<q.food)return {ok:false,reason:'resources',quote:q};
  f.treasury-=q.treasury;f.manpower-=q.manpower;f.food-=q.food;
  const id=`levy${s.nextArmy++}`,st=templateStats(t);
- s.armies.push({id,name:[t.name,t.nameZh||t.name],owner,region:regionId,men:q.personnel,morale:Math.min(80,st.morale),skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null,characterId:null,formation:snapshotOf(t),formationFill:1,training:q.training});
+ const army={id,name:[t.name,t.nameZh||t.name],owner,region:regionId,men:q.personnel,morale:Math.min(80,st.morale),skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null,characterId:null,formation:snapshotOf(t),formationFill:1,training:q.training};
+ assignFictionalFieldCommander(s,army);s.armies.push(army);
  r.loyalty=Math.max(0,r.loyalty-3);
  if(owner===s.player)log(s,`“${t.name}” was raised in ${r.name[0]}; it needs ${q.training} months of training.`,`在${r.name[1]}征召了“${t.nameZh||t.name}”；需要训练${q.training}个月。`,{kind:'formation'});
  return {ok:true,armyId:id,quote:q};

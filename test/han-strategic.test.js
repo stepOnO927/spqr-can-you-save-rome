@@ -11,6 +11,29 @@ import {monthIndex} from '../han/util.js?v=han-1';
 const game=(p='han',o={})=>newHanGame(p,{seed:5,...o});
 const army=(s,owner,region,tpl,men=10000)=>{const t=PRESETS[tpl];const a={id:'t'+Math.random().toString(36).slice(2),owner,region,men,morale:70,training:50,supply:100,template:{id:t.id,name:t.name,mix:{...t.mix}},commander:null,move:null};s.armies.push(a);return a};
 
+test('oasis courts keep operating cash while local levies cost treasury after deployment',()=>{
+ const home=game('parthia',{seed:49}),deployed=game('parthia',{seed:49});
+ for(const s of [home,deployed]){
+  s.tradeMarkets.embeddedRoman=true;
+  s.armies.find(a=>a.owner==='shanshan').men=5000;
+ }
+ deployed.armies.find(a=>a.owner==='shanshan').region='jushi';
+ tick(home);tick(deployed);
+ assert.equal(home.factions.shanshan.treasury,deployed.factions.shanshan.treasury+1);
+ for(let i=1;i<24;i++)tick(home);
+ assert.equal(home.factions.shanshan.treasury,10);
+ assert.equal(home.focus.shanshan.current,null);
+});
+
+test('steppe hosts forage at home but spend treasury and grain when deployed',()=>{
+ const home=game('parthia',{seed:49}),deployed=game('parthia',{seed:49});
+ home.tradeMarkets.embeddedRoman=true;deployed.tradeMarkets.embeddedRoman=true;
+ deployed.armies.find(a=>a.owner==='wusun').region='jushi';
+ tick(home);tick(deployed);
+ assert.ok(home.factions.wusun.treasury>deployed.factions.wusun.treasury);
+ assert.ok(home.factions.wusun.grain>deployed.factions.wusun.grain);
+});
+
 test('11. Han troops march across valid Chinese territories along real routes',()=>{
  const s=game();const a=s.armies.find(x=>x.owner==='han'&&x.region==='changan');
  assert.equal(moveArmy(s,a.id,'shu').ok,false,'Chang’an and Shu are not adjacent');

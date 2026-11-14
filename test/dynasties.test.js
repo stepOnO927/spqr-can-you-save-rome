@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=ai-wartime-aid-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
-import {assignSuccession,successionModel} from '../characters.js?v=succession-ui-recovery-1';
-import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=portraits-hundred-days-1';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=portraits-hundred-days-1';
-import {canHoldOffice} from '../office-system.js?v=portraits-hundred-days-1';
-import {renderGenealogy} from '../genealogy-ui.js?v=portraits-hundred-days-1';
-import {finalizeCampaign} from '../legacy.js?v=portraits-hundred-days-1';
-import {startDynasticWar} from '../civil-war.js?v=succession-ui-recovery-1';
-import {fictionalPortraitKey} from '../portrait-registry.js?v=portraits-hundred-days-1';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=faces-empire-2';
+import {CHARACTER_CATALOG} from '../characters.js?v=faces-empire-2';
+import {assignSuccession,successionModel} from '../characters.js?v=faces-empire-2';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=faces-empire-2';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=faces-empire-2';
+import {canHoldOffice} from '../office-system.js?v=faces-empire-2';
+import {renderGenealogy} from '../genealogy-ui.js?v=faces-empire-2';
+import {finalizeCampaign} from '../legacy.js?v=calendar-1';
+import {startDynasticWar} from '../civil-war.js?v=faces-empire-3';
+import {fictionalPortraitKey} from '../portrait-registry.js?v=faces-empire-2';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 
@@ -234,7 +234,7 @@ test('opening fictional portraits stay distinct and are not assigned to a reused
  const portrait=(html,id)=>html.match(new RegExp('data-gene-person="'+id+'"[^>]*><img src="([^"]+)"'))?.[1];
  for(const [side,expected] of [['caesar',['fictional-varenus','fictional-livia']],['senate',['fictional-cassianus','fictional-valeria']]]){
   const s=newGame(side),html=renderGenealogy(s,false),ids=side==='caesar'?['fictional:1','fictional:2']:['fictional:3','fictional:4'];
-  assert.ok(portrait(html,ids[0]).includes(expected[0]));assert.ok(portrait(html,ids[1]).includes(expected[1]));assert.notEqual(portrait(html,ids[0]),portrait(html,ids[1]));assert.match(html,/childhood and adult images/);
+  assert.ok(portrait(html,ids[0]).includes(expected[0]));assert.ok(portrait(html,ids[1]).includes(expected[1]));assert.notEqual(portrait(html,ids[0]),portrait(html,ids[1]));assert.match(html,/game artwork and age with the person/);
   const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(portrait(renderGenealogy(restored,false),ids[0]),portrait(html,ids[0]));
   restored.world.dynasties.catalog[ids[0]].name=['A different person','另一人'];assert.match(portrait(renderGenealogy(restored,false),ids[0]),/^data:image\/svg\+xml/);
  }
@@ -242,20 +242,21 @@ test('opening fictional portraits stay distinct and are not assigned to a reused
 
 test('stale legacy counters cannot reuse identities referenced by the campaign',()=>{
  let s=newGame('caesar');const before=JSON.parse(JSON.stringify(s.world.characters['fictional:1'])),catalog=JSON.parse(JSON.stringify(s.world.dynasties.catalog['fictional:1']));
- s.meetings.push({actor:'caesar',target:'fictional:11',status:'met',portraitKey:'fictional-cassianus',year:s.year,month:s.month});
- s.world.dynasties.memories.push({person:'fictional:12',familyId:'family:fictional:11',kind:'legacy'});
+ const firstFree=s.world.dynasties.nextPerson,firstFamily=s.world.dynasties.nextFamily,reserved=`fictional:${firstFree}`;
+ s.meetings.push({actor:'caesar',target:reserved,status:'met',portraitKey:'fictional-cassianus',year:s.year,month:s.month});
+ s.world.dynasties.memories.push({person:`fictional:${firstFree+1}`,familyId:`family:fictional:${firstFamily}`,kind:'legacy'});
  delete s.world.dynasties.nextPerson;delete s.world.dynasties.nextFamily;s=upgradeSave(JSON.parse(JSON.stringify(s)));
  const id=createFictionalPerson(s,{name:['New person','新人物'],faction:'caesar',birthYear:-40,location:'roma'});
- assert.equal(id,'fictional:13');assert.equal(s.world.characters[id].familyId,'family:fictional:12');assert.deepEqual(s.world.characters['fictional:1'],before);assert.deepEqual(s.world.dynasties.catalog['fictional:1'],catalog);assert.equal(fictionalPortraitKey(s,'fictional:1'),'fictional-varenus');
- assert.equal(s.meetings[0].target,'fictional:11');assert.notEqual(id,s.meetings[0].target);
+ assert.equal(id,`fictional:${firstFree+2}`);assert.equal(s.world.characters[id].familyId,`family:fictional:${firstFamily+1}`);assert.deepEqual(s.world.characters['fictional:1'],before);assert.deepEqual(s.world.dynasties.catalog['fictional:1'],catalog);assert.equal(fictionalPortraitKey(s,'fictional:1'),'fictional-varenus');
+ assert.equal(s.meetings[0].target,reserved);assert.notEqual(id,s.meetings[0].target);
  s.world.dynasties.nextPerson=1;s.world.dynasties.nextFamily=1;
- const another=createFictionalPerson(s,{name:['Another person','另一人物'],faction:'caesar',birthYear:-40,parents:['fictional:14']});
- assert.equal(another,'fictional:15');assert.equal(s.world.characters[another].familyId,'family:fictional:13');assert.notEqual(another,s.world.characters[another].parents[0]);
+ const another=createFictionalPerson(s,{name:['Another person','另一人物'],faction:'caesar',birthYear:-40,parents:[`fictional:${firstFree+3}`]});
+ assert.equal(another,`fictional:${firstFree+4}`);assert.equal(s.world.characters[another].familyId,`family:fictional:${firstFamily+2}`);assert.notEqual(another,s.world.characters[another].parents[0]);
 });
 
 test('a new campaign does not import fictional people from a previously loaded campaign',()=>{
  const first=newGame('caesar'),id=createFictionalPerson(first,{name:['Previous campaign','前次战役人物'],faction:'caesar',birthYear:-70});
- const second=newGame('senate');assert.equal(second.world.characters[id],undefined);assert.deepEqual(Object.keys(second.world.dynasties.catalog),Array.from({length:10},(_,i)=>`fictional:${i+1}`));
+ const second=newGame('senate');assert.equal(second.world.characters[id],undefined);assert.deepEqual(Object.keys(second.world.dynasties.catalog),Array.from({length:second.world.dynasties.nextPerson-1},(_,i)=>`fictional:${i+1}`));
  assert.equal(second.world.dynasties.catalog['fictional:3'].name[0],'Aulus Cassianus');
  const restored=upgradeSave(JSON.parse(JSON.stringify(first)));assert.equal(restored.world.dynasties.catalog[id].name[0],'Previous campaign');assert.ok(restored.world.characters[id]);
 });
@@ -264,7 +265,7 @@ test('a legacy person with missing identity never inherits another save’s name
  const first=newGame('caesar'),id=createFictionalPerson(first,{name:['Other campaign person','另一战役人物'],faction:'caesar',birthYear:-70});
  const firstSave=JSON.parse(JSON.stringify(first));let legacy=newGame('caesar');legacy.world.characters[id]={id,faction:'caesar',alive:true,health:'healthy',birthYear:-80,location:'roma'};delete legacy.world.dynasties.catalog[id];
  legacy=upgradeSave(JSON.parse(JSON.stringify(legacy)));assert.equal(legacy.world.dynasties.catalog[id],undefined,'do not write invented details into the save');assert.deepEqual(CHARACTER_CATALOG[id].name,['Unknown simulated person','身份不明的模拟人物']);
- const view=renderGenealogy(legacy,true);assert.match(view,/身份不明的模拟人物/);assert.doesNotMatch(view,/另一战役人物/);assert.equal(fictionalPortraitKey(legacy,id),null);
+ const view=renderGenealogy(legacy,true),missingPortrait=view.match(new RegExp('data-gene-person="'+id+'"[^>]*><img src="([^"]+)"'))?.[1];assert.match(view,/身份不明的模拟人物/);assert.doesNotMatch(view,/另一战役人物/);assert.match(missingPortrait,/^data:image\/svg\+xml/);assert.doesNotMatch(missingPortrait,/portrait-procedural/);assert.equal(fictionalPortraitKey(legacy,id),null);
  const again=upgradeSave(firstSave);assert.equal(CHARACTER_CATALOG[id].name[0],'Other campaign person');assert.match(renderGenealogy(again,true),/另一战役人物/);
  const malformed=JSON.parse(JSON.stringify(legacy));malformed.world.dynasties.catalog[id]={fictional:true,name:[null,'错误']};CHARACTER_CATALOG[id]={name:['Leaked','错误姓名'],fictional:false};upgradeSave(malformed);assert.deepEqual(CHARACTER_CATALOG[id].name,['Unknown simulated person','身份不明的模拟人物']);
 });

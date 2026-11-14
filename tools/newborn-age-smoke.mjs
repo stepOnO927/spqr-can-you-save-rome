@@ -7,8 +7,8 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  const id=await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=ai-wartime-aid-1');
-  const {createFictionalPerson}=await import('/dynasties.js?v=portraits-hundred-days-1');
+  const {newGame}=await import('/engine.js?v=faces-empire-2');
+  const {createFictionalPerson}=await import('/dynasties.js?v=faces-empire-2');
   const s=newGame('caesar'),id=createFictionalPerson(s,{name:['Newborn','新生儿'],faction:'caesar',birthYear:s.year});
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));return id;
  });

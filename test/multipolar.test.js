@@ -1,19 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=ai-wartime-aid-1';
-import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=diplomatic-chronicle-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=faces-empire-3';
+import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=multipolar-2';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
-import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=diplomatic-chronicle-1';
-import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=multipolar-2';
+import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=diplomatic-chronicle-1';
-import {renderChessboard} from '../chessboard-ui.js?v=diplomatic-chronicle-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=portraits-hundred-days-1';
+import {buildChessboard} from '../chessboard.js?v=faces-empire-2';
+import {renderChessboard} from '../chessboard-ui.js?v=faces-empire-2';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=faces-empire-2';
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
-import {advanceGovernments} from '../governance.js?v=portraits-hundred-days-1';
-import {advanceMovements} from '../movements.js?v=portraits-hundred-days-1';
-import {newRevolutionScenario} from '../scenarios.js?v=ai-wartime-aid-1';
+import {advanceGovernments} from '../governance.js?v=faces-empire-2';
+import {advanceMovements} from '../movements.js?v=faces-empire-2';
+import {newRevolutionScenario} from '../scenarios.js?v=faces-empire-2';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
@@ -123,18 +123,20 @@ test('AI-only simulation continues after Rome loses while the human campaign sta
 
 test('seeded Roman-Egyptian war continues as a multipolar AI simulation',()=>{
  function scenario(seed,autoplayPlayer){
-  const s=newGame('caesar');s.seed=seed;s.difficulty='expert';assert.equal(diplomacy(s,'caesar','egypt','war'),true);
-  const wars=new Set(),reviewed=new Set();let months=0;
+  const s=newGame('caesar');s.seed=seed;s.world.intelSeed=(seed^0x53a2)>>>0;s.world.dynasties.seed=(seed^0xd3c1)>>>0;s.difficulty='expert';assert.equal(diplomacy(s,'caesar','egypt','war'),true);
+  const wars=new Set(),agreements=new Set(),reviewed=new Set();let months=0;
   for(let i=0;i<36;i++){
    const before=s.year*12+s.month;tick(s,{autoplayPlayer});if(s.year*12+s.month===before)break;months++;
    for(const war of s.wars)wars.add([...war].sort().join(':'));
+   for(const agreement of s.agreements||[])agreements.add(`${agreement.type}:${agreement.parties.slice().sort().join(':')}`);
    for(const actor of Object.keys(s.world.multipolarPlans||{}))reviewed.add(actor);
   }
-  return {s,months,wars,reviewed};
+  return {s,months,wars,agreements,reviewed};
  }
  const runs=[scenario(103,true),scenario(14057,true)];
  for(const run of runs){assert.equal(run.months,36);for(const actor of ['caesar','egypt','parthia','armenia'])assert.ok(run.reviewed.has(actor));}
- assert.notDeepEqual([...runs[0].wars].sort(),[...runs[1].wars].sort());
+ for(const run of runs)assert.ok(run.wars.has('caesar:egypt'));
+ assert.notDeepEqual([...runs[0].agreements].sort(),[...runs[1].agreements].sort(),'different seeds should yield distinct diplomacy during the same real war');
  const human=scenario(103,false);assert.ok(human.months>0&&human.months<36);assert.ok(human.s.defeat);
  for(const actor of ['egypt','parthia','armenia'])assert.ok(human.reviewed.has(actor));
 });

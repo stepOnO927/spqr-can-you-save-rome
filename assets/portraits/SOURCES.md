@@ -92,6 +92,27 @@ All eighteen Han and steppe portraits were generated on 2026-11-09 with Canva's 
 
 Fictional characters are original to this DLC and do not depict any documented person. In game, none of them can hold `orthodox_han_emperor` unless the engine's Liu-lineage validator accepts them. 庞崇 is not a Liu and can therefore only reach de facto power or found a new dynasty.
 
+### Han opening ministers
+
+Twelve separate court and frontier portraits were generated with the built-in image generation tool on 2026-11-12. Existing `han-liu-shi-master.jpg` and, for Feng Liao, `han-fictional-su-heng-master.jpg` supplied only style, lighting and framing references; each person received a distinct face and clothing direction. These are **interpretive game reconstructions, not documented likenesses**. The original generated PNGs remain in the local workspace under `C:/Users/Chu_s/.codex/generated_images/01a1b123-b7e0-7bc2-85c8-19cd58b4b0ca/`; the game includes 512, 128 and 64 pixel JPEG renditions. They do not change with simulated age or office.
+
+| Asset prefix | Historical person | Individual prompt direction |
+| --- | --- | --- |
+| han-shi-gao | Shi Gao / 史高 | Older regent, graying hair, alert expression, dark robe with rust trim. |
+| han-xiao-wangzhi | Xiao Wangzhi / 萧望之 | Elderly classicist, narrow face, silver-streaked beard, plain scholar robe. |
+| han-hong-gong | Hong Gong / 弘恭 | Mature Palace Secretariat official, rounder clean-shaven face, plum robe. |
+| han-yu-dingguo | Yu Dingguo / 于定国 | Older chancellor, broad weathered face, gray beard, blue-gray robe. |
+| han-chen-wannian | Chen Wannian / 陈万年 | Mature imperial counsellor, angular face, trimmed beard, brown robe. |
+| han-liu-xiang | Liu Gengsheng (later Liu Xiang) / 刘更生（刘向） | Young imperial-clan scholar, narrow features, dark robe. |
+| han-zhou-kan | Zhou Kan / 周堪 | Middle-aged classicist, graying temples, tan scholar robe. |
+| han-shi-xian | Shi Xian / 石显 | Mature Palace Secretariat eunuch, angular clean-shaven face, indigo robe. |
+| han-feng-fengshi | Feng Fengshi / 冯奉世 | Mature frontier general, weathered face, lamellar armor and blue mantle. |
+| han-gan-yanshou | Gan Yanshou / 甘延寿 | Young frontier commander, athletic face, lamellar armor and brown cloak. |
+| han-chen-tang | Chen Tang / 陈汤 | Young junior official, keen expression, civilian green robe. |
+| han-feng-liao | Feng Liao / 冯嫽 | Mature woman envoy, tied-back hair, cream and blue travel dress. |
+
+Each prompt specified a Western Han head-and-shoulders portrait, painterly realism, warm side light, dark olive background, and no text, dragons, modern objects, watermark or frame. Names, opening offices and simulated political attributes come from `han/people.js` and `han/data.js`; the image is not evidence for any person's real appearance or character.
+
 ## Fictional scenario general
 
 Lucius Valerius Varus / 卢基乌斯·瓦勒里乌斯·瓦鲁斯 is a fictional character, not a documented historical person. His original portrait was generated with the built-in image generation tool on 2026-11-11; the project contains a 512×512 master and 128×128 and 64×64 derivatives. It is game artwork, not a historical likeness. Assignment requires the matching scenario, saved character ID, fictional name and birth year. Foreign viewers can see it only through a saved personal-meeting observation; it does not establish current identity, health or position.

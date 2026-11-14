@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=ai-wartime-aid-1';
-import {createFictionalPerson,makeWill,settleInheritance,resolveInheritanceDispute,advanceDynasties} from '../dynasties.js?v=portraits-hundred-days-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
+import {createFictionalPerson,makeWill,settleInheritance,resolveInheritanceDispute,advanceDynasties} from '../dynasties.js?v=faces-empire-2';
 
 function caseFixture(){
  const s=newGame('caesar'),parent=createFictionalPerson(s,{name:['Testator','立遗嘱者'],faction:'caesar',birthYear:-90,wealth:35}),family=s.world.characters[parent].familyId;

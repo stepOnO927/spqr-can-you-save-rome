@@ -1,6 +1,7 @@
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from './dynasties.js?v=portraits-hundred-days-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
+import {createFictionalPerson} from './dynasties.js?v=faces-empire-2';
+import {generateFictionalName} from './fictional-names.js?v=faces-of-empire-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 import {activeAgreement,terminateAgreement} from './agreements.js?v=grand-chessboard-2';
 
@@ -29,7 +30,7 @@ function appointLeader(s,m,r){
  const officials=s.world.religiousInstitutions||[],religious=officials.find(o=>o.region===r.id&&(o.relations[m.parent]??0)<-20&&(o.institutionalLoyalty??50)<70&&capable(s.world.characters[o.leader]));
  const candidates=Object.values(s.world.characters).filter(c=>c.faction===m.parent&&capable(c)&&c.location===r.id&&!(s.world.leadership[m.parent]||[]).includes(c.id)&&!s.armies.some(a=>a.characterId===c.id));
  let person=religious&&candidates.find(c=>c.id===religious.leader)||candidates.filter(c=>!c.institutionalOnly&&c.loyalty<60).sort((a,b)=>b.influence-a.influence||a.id.localeCompare(b.id))[0];
- if(!person){const id=createFictionalPerson(s,{name:['Local civic organizer','地方公民组织者'],faction:m.parent,birthYear:s.year-35,location:r.id,wealth:0,role:['Simulated movement organizer','模拟运动组织者']});person=s.world.characters[id];person.loyalty=45}
+ if(!person){const identity=generateFictionalName(s,{originFaction:m.parent,location:r.id});const id=createFictionalPerson(s,{...identity,faction:m.parent,birthYear:s.year-35,location:r.id,wealth:0,role:['Simulated movement organizer','模拟运动组织者']});person=s.world.characters[id];person.loyalty=45}
  m.leader=person.id;m.network=[person.id];
  if(religious&&religious.leader===person.id)m.organizations.push(religious.id);
 }
@@ -144,7 +145,7 @@ function resolveArmedMovement(s,m){
  const rebelAlive=s.regions.some(r=>r.owner===id)||s.armies.some(a=>a.owner===id&&a.men>0),governmentAlive=s.regions.some(r=>r.owner===parent)||s.armies.some(a=>a.owner===parent&&a.men>0);
  if(rebelAlive&&!s.world.characters[m.leader]?.alive){
   let successor=m.network.find(person=>s.world.characters[person]?.alive&&s.world.characters[person].faction===id);
-  if(!successor){const place=s.regions.find(r=>r.owner===id)?.id||s.armies.find(a=>a.owner===id&&a.men>0)?.region;successor=createFictionalPerson(s,{name:['Movement representative','运动代表'],faction:id,birthYear:s.year-30,location:place,wealth:0,role:['Simulated movement representative','模拟运动代表']});m.network.push(successor)}
+  if(!successor){const place=s.regions.find(r=>r.owner===id)?.id||s.armies.find(a=>a.owner===id&&a.men>0)?.region;const identity=generateFictionalName(s,{originFaction:m.parent,location:place});successor=createFictionalPerson(s,{...identity,faction:id,birthYear:s.year-30,location:place,wealth:0,role:['Simulated movement representative','模拟运动代表']});m.network.push(successor)}
   m.leader=successor;s.world.leadership[id]=[successor];
  }
  if(rebelAlive&&governmentAlive)return;
@@ -177,7 +178,7 @@ export function advanceMovements(s,{autoplayPlayer=false}={}){
    for(const id of m.organizations){const o=s.world.religiousInstitutions.find(x=>x.id===id);if(o&&o.wealth>6){o.wealth--;m.funds++}}
    const person=Object.values(s.world.characters).filter(c=>c.faction===m.parent&&capable(c)&&c.location===r.id&&c.loyalty<65&&!m.network.includes(c.id)&&!(s.world.leadership[m.parent]||[]).includes(c.id)&&!s.armies.some(a=>a.characterId===c.id)).sort((a,b)=>b.influence-a.influence||a.id.localeCompare(b.id))[0];
    if(person&&m.funds>=1&&m.network.length<5){m.funds--;m.network.push(person.id)}
-   else if(!person&&m.funds>=2&&m.network.length<2&&m.supporters>=5000){const id=createFictionalPerson(s,{name:['Movement organizer','运动组织者'],faction:m.parent,birthYear:s.year-30,location:r.id,wealth:0,role:['Simulated movement organizer','模拟运动组织者']});s.world.characters[id].loyalty=40;m.funds-=2;m.network.push(id)}
+   else if(!person&&m.funds>=2&&m.network.length<2&&m.supporters>=5000){const identity=generateFictionalName(s,{originFaction:m.parent,location:r.id});const id=createFictionalPerson(s,{...identity,faction:m.parent,birthYear:s.year-30,location:r.id,wealth:0,role:['Simulated movement organizer','模拟运动组织者']});s.world.characters[id].loyalty=40;m.funds-=2;m.network.push(id)}
   }
   m.stage=share>=.12?'crisis':share>=.08?'negotiation':share>=.05?'network':share>=.03?'organized':'dissatisfaction';
   if(pressure>=75&&r.population.satisfaction<20)m.radicalism=clamp(m.radicalism+1,0,100);else if(pressure<45)m.radicalism=Math.max(0,m.radicalism-1);

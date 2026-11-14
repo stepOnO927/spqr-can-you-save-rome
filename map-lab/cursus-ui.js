@@ -1,8 +1,8 @@
-import {initializeCursus,MAGISTRACIES,ASSEMBLIES,officeEligibility,obedience,institutionalBalance,campaignPhase,campaignEstimate,senateAssessment,seekSenatorEndorsement,campaignFor,supportCandidate,investigateCandidate,proposeMeasure,previewGovernmentInquiry,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment} from '../cursus-honorum.js?v=multipolar-courier-review-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
+import {initializeCursus,MAGISTRACIES,ASSEMBLIES,officeEligibility,obedience,institutionalBalance,campaignPhase,campaignEstimate,senateAssessment,seekSenatorEndorsement,campaignFor,supportCandidate,investigateCandidate,proposeMeasure,previewGovernmentInquiry,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment} from '../cursus-honorum.js?v=faces-government-courier-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=faces-empire-2';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {appointOffice,officeCandidates,OFFICE_TYPES} from '../office-system.js?v=portraits-hundred-days-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=portraits-hundred-days-1';
+import {appointOffice,officeCandidates,OFFICE_TYPES} from '../office-system.js?v=faces-empire-2';
+import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=faces-empire-2';
 import {campaignDate} from '../campaign-date.js?v=calendar-1';
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

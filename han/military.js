@@ -7,6 +7,7 @@
 // modern division table.
 import {ROUTES,REGIONS} from './data.js?v=han-1';
 import {EURASIAN_FACTIONS} from './eurasia-data.js';
+import {assignFieldCommander} from './field-identities.js';
 
 const T=(plain,hills,mountain,river,desert,steppe,oasis,urban)=>({plain,hills,mountain,river,desert,steppe,oasis,urban});
 const C=(id,culture,name,desc,st)=>({id,culture,name,desc,...st});
@@ -102,7 +103,8 @@ export function recruit(s,owner,regionId,templateId,{men=5000,commander=null,log
  const f=s.factions[owner],t=templateById(s,owner,templateId);
  f.treasury-=q.quote.treasury;f.grain-=q.quote.grain;f.manpower-=men;f.horses=(f.horses||0)-q.quote.horses;
  const id=`a${s.nextArmy=(s.nextArmy||100)+1}`;
- s.armies.push({id,owner,region:regionId,men,morale:60,training:30,supply:100,template:{id:t.id,name:t.name,mix:{...t.mix}},commander,move:null,forming:q.quote.months});
+ const army={id,owner,region:regionId,men,morale:60,training:30,supply:100,template:{id:t.id,name:t.name,mix:{...t.mix}},commander,move:null,forming:q.quote.months};
+ s.armies.push(army);assignFieldCommander(s,army);
  log(['New formation raised in %REGION%.','于%REGION%新编一军。'],{region:regionId,owner});return {ok:true,id};
 }
 

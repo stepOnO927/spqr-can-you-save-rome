@@ -1,11 +1,12 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+const base=process.env.SPQR_TEST_URL||'http://127.0.0.1:5173';
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];
 page.on('pageerror',e=>errors.push(e.message));
 try{
- await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+ await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const e=await import('/engine.js?v=ai-wartime-aid-1'),a=await import('/agreements.js?v=grand-chessboard-2'),d=await import('/diplomatic-knowledge.js?v=diplomatic-chronicle-1');
+  const e=await import('/engine.js?v=faces-empire-4'),a=await import('/agreements.js?v=grand-chessboard-2'),d=await import('/diplomatic-knowledge.js?v=multipolar-2');
   for(let seed=1;seed<200;seed++){
    const s=e.newGame('caesar');s.seed=seed;s.wars.push(['egypt','parthia']);s.relations['caesar:egypt']=40;a.proposeAgreement(s,'egypt','caesar','trade');d.observeDiplomacy(s);
    assertOffer(e.sendStrategicOffer(s,'egypt','caesar','parthia').ok);for(let i=0;i<2;i++){s.month++;e.advanceStrategicOffers(s)}
