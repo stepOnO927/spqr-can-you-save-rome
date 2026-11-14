@@ -6,6 +6,35 @@ import {chronicleHtml,battleReportHtml,eventDate} from '../reports-ui.js';
 import {requestReinforcements,probePositions,latestRecon,advanceRecon} from '../reconnaissance.js';
 import {militaryResult,settlementEligible} from '../campaign-outcome.js';
 import {campaignVictoryHtml} from '../achievement-ui.js';
+import {budgetHtml} from '../budget-ui.js';
+
+test('food shortage penalties scale with the actual national deficit',()=>{
+ const run=target=>{
+  const s=newGrandGame('caesar');s.wars=[];
+  for(const r of s.regions.filter(r=>r.owner==='caesar')){r.buildings=[];r.grainReserve=0}
+  const f=s.factions.caesar,province=region(s,'cisalpine'),unit=army(s,'xiii');
+  f.food=target-nationalBudget(s,'caesar').foodNet;
+  const before={stability:f.stability,civic:province.civicSatisfaction,loyalty:province.loyalty,men:unit.men};
+  tick(s);
+  return {food:f.food,stability:before.stability-f.stability,civic:before.civic-province.civicSatisfaction,loyalty:before.loyalty-province.loyalty,loss:before.men-unit.men,population:province.population};
+ };
+ const none=run(0),mild=run(-5),moderate=run(-12),severe=run(-25);
+ assert.equal(none.food,0);assert.equal(mild.food,-5);assert.equal(moderate.food,-12);assert.equal(severe.food,-25);
+ assert.equal(mild.stability-none.stability,1);
+ assert.equal(moderate.stability-none.stability,2);
+ assert.equal(severe.stability-none.stability,3);
+ assert.equal(mild.civic-none.civic,1);
+ assert.equal(moderate.civic-none.civic,2);
+ assert.equal(severe.civic-none.civic,4);
+ assert.equal(mild.loyalty-none.loyalty,0);
+ assert.equal(moderate.loyalty-none.loyalty,1);
+ assert.equal(severe.loyalty-none.loyalty,2);
+ assert.ok(mild.loss>none.loss&&moderate.loss>mild.loss&&severe.loss>moderate.loss);
+ assert.ok(none.population>mild.population&&mild.population>moderate.population&&moderate.population>severe.population);
+ const s=newGrandGame('caesar');
+ assert.match(budgetHtml(s,'en'),/deficit reaches 8 or 20/);
+ assert.match(budgetHtml(s,'zh'),/缺口达到8或20/);
+});
 
 test('opposing marches meet without swapping theaters or taking a fort bonus',()=>{
  const s=newGame('senate'),caesar=army(s,'xiii'),levies=army(s,'italy');

@@ -10,7 +10,7 @@ import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,rec
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=10';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=27';
-import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion,provincialRitesCredit} from './local-society.js?v=6';
+import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion,provincialRitesCredit,foodShortageTier} from './local-society.js?v=7';
 import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=36';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
@@ -444,15 +444,16 @@ function economy(s){
     f.treasury+=budget.landNet;
     f.food+=budget.foodNet;
     settleGranaryReserves(s,id);
+    const shortage=foodShortageTier(f.food);
     f.stability=Math.max(0,Math.min(100,f.stability+budget.stability));
     f.legitimacy=Math.max(0,Math.min(100,f.legitimacy+budget.legitimacy));
     f.manpower+=budget.manpowerNet;
     if(f.treasury<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.morale=Math.max(20,a.morale-4))}
-    if(f.food<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id&&a.men>0).forEach(a=>a.men=Math.max(0,a.men-Math.max(1,Math.round(a.men*.04))))}
+    if(shortage){f.stability=Math.max(0,f.stability-shortage);s.armies.filter(a=>a.owner===id&&a.men>0).forEach(a=>a.men=Math.max(0,a.men-Math.max(1,Math.round(a.men*(shortage===3?.04:shortage===2?.02:.01)))))}
     f.treasury=Math.max(-100,Math.round(f.treasury));
     f.foodCapacity=budget.foodCapacity;
     f.food=Math.max(-100,Math.min(f.foodCapacity,Math.round(f.food)));
-    owned.forEach(r=>{const governor=governorLoyaltyEffect(s,r.id),works=localBuildingEffects(r),rural=productiveEstateRegion(r)&&s.month%3===0,estateStrain=effects.estateLabor&&rural?1:0,tenantSupport=effects.tenantShares&&rural?1:0,taxReview=s.grandMap&&f.tax==='high'&&effects.taxReview&&(r.integration??60)>=65?1:0,taxPressure=({low:2,normal:0,high:-2}[f.tax])+taxReview;if(s.grandMap){r.civicSatisfaction=Math.max(0,Math.min(100,(r.civicSatisfaction??r.loyalty)+taxPressure+(f.food<0?-3:0)+(works.loyalty||0)+faithSatisfaction(s,r)-estateStrain+tenantSupport));r.integration=Math.max(0,Math.min(100,(r.integration??60)+(governor>0?1:0)+(works.stability>0?1:0)+(effects.egyptianDecrees&&r.culture==='egypt'?1:0)));}r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+taxReview+(f.food<0?-2:0)+governor+(effects.loyalty||0)+(works.loyalty||0)+(s.grandMap?(r.civicSatisfaction<30?-1:r.civicSatisfaction>75?1:0)+(r.integration<35?-1:0):0)-estateStrain+tenantSupport))});
+    owned.forEach(r=>{const governor=governorLoyaltyEffect(s,r.id),works=localBuildingEffects(r),rural=productiveEstateRegion(r)&&s.month%3===0,estateStrain=effects.estateLabor&&rural?1:0,tenantSupport=effects.tenantShares&&rural?1:0,taxReview=s.grandMap&&f.tax==='high'&&effects.taxReview&&(r.integration??60)>=65?1:0,taxPressure=({low:2,normal:0,high:-2}[f.tax])+taxReview;if(s.grandMap){r.civicSatisfaction=Math.max(0,Math.min(100,(r.civicSatisfaction??r.loyalty)+taxPressure-shortage+(works.loyalty||0)+faithSatisfaction(s,r)-estateStrain+tenantSupport));r.integration=Math.max(0,Math.min(100,(r.integration??60)+(governor>0?1:0)+(works.stability>0?1:0)+(effects.egyptianDecrees&&r.culture==='egypt'?1:0)));}r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+taxReview-Math.max(0,shortage-1)+governor+(effects.loyalty||0)+(works.loyalty||0)+(s.grandMap?(r.civicSatisfaction<30?-1:r.civicSatisfaction>75?1:0)+(r.integration<35?-1:0):0)-estateStrain+tenantSupport))});
   }
   for(const site of s.regions)if(site.foodRequisitionRemaining>0){site.foodRequisitionRemaining--;if(!site.foodRequisitionRemaining)delete site.foodRequisitionLoss}
   advanceDemography(s);

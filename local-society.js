@@ -57,10 +57,11 @@ export function religionPanel(state,lang){
  const mismatched=state.regions.filter(r=>r.owner===state.player&&r.faiths?.[0]?.id!==traditionFor(state.player)).length;
  return '<section class="dev-category religion-panel"><h3>'+(zh?'地方宗教与祭司团':'PROVINCIAL RITES & PRIESTHOODS')+'</h3><p>'+(zh?'这是公元前49年的地方祭仪政策，不是后世的国教制度。政策与各省主要信仰、祭司团影响、人口迁移及有共同边境祭仪的王廷结盟互动。':'These are local rites in 49 BCE, not a later state religion. Policy interacts with provincial traditions, priesthood influence, migration and alliances with neighboring courts that share an influential border cult.')+'</p><p>'+(zh?'当前政策':'Current policy')+': '+label[record.policy]+' · '+(zh?'主要信仰与本国习俗不同的领土':'territories with a different dominant tradition')+' '+mismatched+'</p>'+(record.transition?'<p class="dev-status">'+(zh?'政策过渡中':'Transition underway')+' · '+record.transition.remaining+(zh?'月':'m')+'</p>':'')+policy+'</section>';
 }
+export function foodShortageTier(food){return food<=-20?3:food<=-8?2:food<0?1:0}
 export function advanceDemography(state){
  if(!state.grandMap)return;
  const changes=[];
- for(const r of state.regions){const faction=state.factions[r.owner];if(!faction||r.owner==='rebels')continue;const population=r.population||0;if(faction.food<0){r.population=Math.max(1000,Math.round(population*.998));r.civicSatisfaction=Math.max(0,r.civicSatisfaction-1)}else if(r.civicSatisfaction>65)r.population=Math.round(population*1.0003);
+ for(const r of state.regions){const faction=state.factions[r.owner];if(!faction||r.owner==='rebels')continue;const population=r.population||0;const shortage=foodShortageTier(faction.food);if(shortage){r.population=Math.max(1000,Math.round(population*([1,.9995,.999,.998][shortage])));if(shortage===3)r.civicSatisfaction=Math.max(0,r.civicSatisfaction-1)}else if(r.civicSatisfaction>65)r.population=Math.round(population*1.0003);
   if(r.civicSatisfaction>=35)continue;
   const destination=grandAdjacent(r.id).map(e=>state.regions.find(x=>x.id===e.to)).filter(x=>x?.owner===r.owner&&x.civicSatisfaction>r.civicSatisfaction+20).sort((a,b)=>b.civicSatisfaction-a.civicSatisfaction)[0];
   if(destination){const rural=productiveEstateRegion(r),limit=rural&&estateLaborActive(state,r.owner)?75:rural&&tenantSharesActive(state,r.owner)?225:150;changes.push({from:r,to:destination,people:Math.min(limit,Math.floor(population*.002))})}
