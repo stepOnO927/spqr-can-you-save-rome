@@ -52,6 +52,8 @@ try{
  assert.ok(saved.world.cursus.applicants.find(x=>x.id===saved.world.cursus.varroId).support>0);
  await page.locator('[data-cursus-foreign]').selectOption('parthia');
  await page.locator('[data-cursus-investigate]').click();
+ assert.match(await page.locator('.cursus-feedback').innerText(),/国库.*个月/);
+ await page.locator('[data-confirm-government-inquiry]').click();
  assert.match(await page.locator('.cursus-tree').innerText(),/进行中/);
  await page.locator('#advance').click();
  await page.locator('#language').click();

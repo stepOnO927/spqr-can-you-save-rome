@@ -1,4 +1,4 @@
-import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=cursus-han-2';
+import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=faces-government-courier-1';
 import {FACTIONS,PLAYABLE,ROUTES} from './data.js';
 import {drawMap} from './map.js';
 import {templatesFor,recruitQuote,recruit,neighbours} from './military.js';
@@ -8,8 +8,8 @@ import {marketReasonName,renderEasternMarketPanel} from './market-ui.js?v=faces-
 import {renderHanCourtPanel} from './court-ui.js?v=faces-of-empire-4';
 import {ownRulerHtml} from './ruler-ui.js';
 import {appoint,startAudit,respondToDisaster} from './court.js?v=han-1';
-import {init as initExperience,act as experienceAction} from './experience.js?v=hundred-days-recovery-1';
-import {renderExperience} from './experience-ui.js?v=hundred-days-recovery-1';
+import {init as initExperience,act as experienceAction} from './experience.js?v=government-courier-guidance-1';
+import {renderExperience} from './experience-ui.js?v=government-courier-guidance-1';
 const $=id=>document.getElementById(id),D=(en,zh)=>lang?zh:en,L=a=>Array.isArray(a)?a[lang]||a[0]:a;
 let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,camera='all',mode='political',marketOpen=false,courtOpen=false,selectedCourt='shi-gao';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
