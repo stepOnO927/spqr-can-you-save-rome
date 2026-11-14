@@ -6,7 +6,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=multipolar-courier-review-1'),{initializeCursus}=await import('/cursus-honorum.js?v=multipolar-courier-review-1'),s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;
+  const {newGame}=await import('/engine.js?v=coalition-courier-1'),{initializeCursus}=await import('/cursus-honorum.js?v=multipolar-courier-review-1'),s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;
   c.intel.senate={parthia:{stage:3,reports:[{stage:3,people:[id],officeholders:{administration:id},observed:{year:s.year,month:s.month},delivered:{year:s.year,month:s.month},confidence:'public',offices:['administration'],links:[]}]}};
   c.contacts.push({actor:'senate',target:'parthia',id,status:'open',route:'formal',trust:35});
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));

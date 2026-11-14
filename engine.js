@@ -13,7 +13,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=succession-ui-recovery-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=portraits-hundred-days-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=multipolar-courier-review-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=coalition-courier-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -29,7 +29,8 @@ import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,
 import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=multipolar-courier-review-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=fort-intel-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {formCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=fort-intel-1';
+import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=fort-intel-1';
+import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=coalition-courier-1';
 import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=succession-ui-recovery-1';
 import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=portraits-hundred-days-1';
 import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=portraits-hundred-days-1';
@@ -736,8 +737,9 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   if(owner!=='rebels'&&['standard','hard','expert'].includes(level)&&s.month===5&&f.treasury>45&&(level!=='standard'||s.year%2===0&&s.wars.some(w=>w.includes(owner)))){
     const threats=[...new Set(reportedNeighbors().map(r=>r.owner))].filter(id=>id!==owner&&id!=='rebels'&&s.factions[id]&&coalitionInterest(s,owner,id,estimatedStrength).interested);
     for(const threat of threats){
-      const partners=PLAYABLE.filter(id=>s.factions[id]&&id!==owner&&id!==threat&&(autoplayPlayer||id!==s.player)&&relation(s,owner,id)>=15&&coalitionInterest(s,id,threat,estimatedStrength).interested).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b)).slice(0,2);
-      if(partners.length===2&&formCoalition(s,owner,partners,threat,estimatedStrength,{allowPlayer:autoplayPlayer}).ok)break;
+      const known=new Set([...reportedNeighbors().map(x=>x.owner),...reportedDiplomacy(s,owner).filter(x=>x.status==='active'&&x.parties.includes(owner)).flatMap(x=>x.parties)]);
+      const partners=PLAYABLE.filter(id=>s.factions[id]&&known.has(id)&&id!==owner&&id!==threat&&(autoplayPlayer||id!==s.player)&&relation(s,owner,id)>=15).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b)).slice(0,2);
+      if(partners.length===2&&sendCoalitionInvitation(s,owner,partners,threat,{autoplayPlayer}).ok)break;
     }
   }
   // Ask one known partner to consider the sender's existing war. Sending
@@ -811,6 +813,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   // Friendly courts may forward fresh scout sightings; recipients judge them on their own.
   advanceStrategicWarnings(s,{autoplayPlayer,letterMonths,issueOrder:issueMilitaryOrder,log});
   advanceStrategicOffers(s,{autoplayPlayer});
+  advanceCoalitionInvitations(s,estimatedStrength,strategicRoll,{autoplayPlayer});
   advanceMail(s,{proposeAgreement,diplomacy});
   for(const owner of Object.keys(s.factions).filter(id=>autoplayPlayer||id!==s.player)){
     const override=autoplayPlayer&&owner===s.player&&playerDifficulty;if(!override){aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner);continue}

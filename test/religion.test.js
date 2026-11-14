@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=multipolar-courier-review-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=coalition-courier-1';
 import {initializeReligion,religiousPolicy,advanceReligion,religiousTaxCost,populationFactor} from '../religion.js?v=portraits-hundred-days-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 import {createFictionalPerson} from '../dynasties.js?v=portraits-hundred-days-1';
