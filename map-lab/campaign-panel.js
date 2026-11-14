@@ -1,6 +1,6 @@
 import {HANDOFF_KEY,stageHandoff} from '../view-handoff.js?v=succession-ui-recovery-1';
 
-export function createCampaignPanel({getState,pause,getLanguage,onError}) {
+export function createCampaignPanel({getState,pause,getLanguage,onReturn,onError}) {
   const dialog=document.querySelector('#campaign-panel');
   const frame=document.querySelector('#campaign-panel-frame');
   const close=document.querySelector('#campaign-panel-close');
@@ -52,9 +52,10 @@ export function createCampaignPanel({getState,pause,getLanguage,onError}) {
       try {
         const transfer=JSON.parse(sessionStorage.getItem(HANDOFF_KEY)||'null');
         if(transfer?.target!=='atlas')throw Error('Missing campaign transfer');
-        const section=event.data.section;
-        if(section==='factions'||/^person=[a-zA-Z0-9:%_-]+$/.test(section||''))history.replaceState(null,'',location.pathname+location.search+'#'+section);
-        location.reload();
+        onReturn(event.data.section||'');
+        ready=false;
+        dialog.hidden=true;
+        frame.src='about:blank';
       }catch{
         close.disabled=false;
         report(getLanguage()==='zh'?'战役状态未能返回地图，请在事务面板保存后重试。':'Campaign state did not return to the map. Save in the panel and retry.');
