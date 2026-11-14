@@ -38,9 +38,9 @@ try{
  await page.locator('[data-toggle-trade="egypt-italy"]').click();
  assert.match(await page.locator('[data-toggle-trade="egypt-italy"]').innerText(),/PAUSE IMPORTS/);
  const reports=await page.evaluate(async()=>{
-  const {newGrandGame}=await import('../engine.js?v=150');
-  const {advanceNaval,reserveFleet}=await import('../naval.js?v=23');
-  const {renderNavalPanel}=await import('./naval-ui.js?v=49');
+  const {newGrandGame}=await import('../engine.js?v=177');
+  const {advanceNaval,reserveFleet}=await import('../naval.js?v=34');
+  const {renderNavalPanel}=await import('./naval-ui.js?v=50');
   const state=newGrandGame('senate');state.naval.reports.unshift({id:'supply-test',kind:'supply-delivery',owner:'senate',port:'t016',cargo:6,year:-49,month:4});
   const root=document.createElement('div');
   const render=lang=>{renderNavalPanel({state,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};
@@ -69,6 +69,28 @@ try{
  assert.match(reports.stockedZh,/储粮充足，本月未购买/);
  assert.match(reports.reserveEn,/Treasury reserved for wartime levy/);
  assert.match(reports.reserveZh,/国库留作战时征募/);
+ await page.evaluate(async()=>{
+  const {newGrandGame}=await import('../engine.js?v=177');
+  const state=newGrandGame('senate'),army=state.armies.find(a=>a.id==='italy');
+  state.wars=[];state.factions.senate.treasury=200;army.region='t023';army.operationalSupply=.3;
+  state.naval.provisions.t016={owner:'senate',food:10};
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
+ });
+ await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.locator('.grand-site').first().waitFor();await page.locator('#naval').click();
+ assert.match(await page.locator('.naval-content').innerText(),/INLAND SUPPLY WAGONS/);
+ assert.match(await page.locator('.naval-content').innerText(),/four to eight friendly land links/);
+ await page.locator('[data-wagon-target="t016"]').selectOption('t023');
+ await page.locator('[data-wagon-port="t016"]').click();
+ assert.match(await page.locator('.naval-content').innerText(),/food in transit/);
+ await page.locator('#advance').click();await page.locator('#advance').click();
+ assert.match(await page.locator('.naval-content').innerText(),/food in inland store/);
+ await page.locator('[data-naval-tab="reports"]').click();
+ assert.match(await page.locator('.naval-content').innerText(),/Wagon supplies delivered/);
+ await page.locator('#language').click();
+ assert.match(await page.locator('.naval-content').innerText(),/粮车补给送达/);
+ await page.locator('[data-naval-tab="fleets"]').click();
+ assert.match(await page.locator('.naval-content').innerText(),/内陆粮车/);
  assert.deepEqual(errors,[]);
  console.log('Naval supply browser smoke passed in English and Chinese');
 }finally{await browser.close()}

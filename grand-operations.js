@@ -1,5 +1,5 @@
 import {GRAND_ROUTES} from './grand-map-data.js';
-import {accessibleFleet,portZone} from './naval.js?v=32';
+import {accessibleFleet,portZone} from './naval.js?v=34';
 import {activeEffects} from './development.js?v=36';
 
 const byId=s=>Object.fromEntries(s.regions.map(r=>[r.id,r]));
@@ -39,6 +39,11 @@ export function supplyNetwork(s,owner,established=false){
   while(frontier.length){const id=frontier.shift(),depth=steps.get(id);distance.set(id,Math.min(distance.get(id)??Infinity,depth));if(depth>=3)continue;
    for(const edge of grandAdjacent(id)){const next=regions[edge.to];if(edge.sea||next?.owner!==owner||steps.has(next.id))continue;steps.set(next.id,depth+1);frontier.push(next.id)}
   }
+ }
+ if(established)for(const [depot,store] of Object.entries(s.naval?.inlandProvisions||{})){
+  if(store.owner!==owner||store.food<=0||regions[depot]?.owner!==owner)continue;
+  distance.set(depot,Math.min(distance.get(depot)??Infinity,0));
+  for(const edge of grandAdjacent(depot)){const next=regions[edge.to];if(!edge.sea&&next?.owner===owner)distance.set(next.id,Math.min(distance.get(next.id)??Infinity,1))}
  }
  return distance;
 }

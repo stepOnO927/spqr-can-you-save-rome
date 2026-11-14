@@ -5,7 +5,7 @@ import {DRIVERS,startRace,settleRace} from './race.js?v=7';
 import {availableActivities,resolveActivity} from './activities.js?v=8';
 import {harborDossier,beginHarborDossier,corroborateHarborDossier,closeHarborDossier,HARBOR_COSTS} from './intelligence-case.js?v=3';
 import {palaceCouncil,conveneCouncil,draftCharter,settleCouncil,COUNCIL_COST,COUNCIL_AUDIENCES,COUNCIL_CHARTERS,COUNCIL_RESPONSES} from './palace-council.js?v=3';
-import {newGrandGame} from '../engine.js?v=176';
+import {newGrandGame} from '../engine.js?v=177';
 import {stageHandoff} from '../view-handoff.js';
 import {achievementDefinition} from '../achievement-system.js?v=5';
 import {archivePanelHtml} from './archive-ui.js?v=2';

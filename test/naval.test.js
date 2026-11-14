@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn} from '../engine.js';
-import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue} from '../naval.js';
+import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply} from '../naval.js';
 import {tradeCard} from '../map-lab/naval-ui.js';
 import {armySupply,supplyNetwork} from '../grand-operations.js';
 import {nationalBudget} from '../national-budget.js';
@@ -499,6 +499,60 @@ test('a provisioned port establishes a finite three-link inland supply reach',()
  assert.equal(supplyNetwork(s,'senate',true).has('t021'),false);
  assert.ok(armySupply(s,army)<supplied);
 });
+test('paid wagons carry finite port food beyond three links over a saved friendly route',()=>{
+ const s=newGrandGame('senate'),corridor=new Set(['t016','t017','t019','t021','t023']);
+ for(const r of s.regions)if(r.owner==='senate')r.owner=corridor.has(r.id)?'senate':'caesar';
+ for(const id of corridor)s.regions.find(r=>r.id===id).food=.4;
+ const army=s.armies.find(a=>a.id==='italy');army.region='t023';army.men=8000;
+ for(const other of s.armies)if(other.owner==='senate'&&other.id!==army.id)other.men=0;
+ s.naval.provisions.t016={owner:'senate',food:10};s.factions.senate.treasury=100;
+ const baseline=armySupply(s,army),plan=wagonSupplyPlan(s,'senate','t016','t023');
+ assert.equal(plan.ok,true);assert.equal(plan.months,2);assert.equal(plan.expectedDelivery,6);
+ const cash=s.factions.senate.treasury;
+ assert.equal(dispatchWagonSupply(s,'senate','t016','t023').ok,true);
+ assert.equal(s.factions.senate.treasury,cash-plan.cost);
+ assert.equal(s.naval.provisions.t016.food,2);
+ assert.equal(dispatchWagonSupply(s,'senate','t016','t023').reason,'pending');
+ advanceNaval(s);assert.equal(s.naval.wagons[0].index,2);assert.equal(s.naval.inlandProvisions.t023,undefined);
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ advanceNaval(loaded);
+ assert.equal(loaded.naval.wagons.length,0);
+ assert.equal(loaded.naval.inlandProvisions.t023.food,3,'six units arrive, then the 8,000-man army draws three');
+ assert.ok(armySupply(loaded,loaded.armies.find(a=>a.id==='italy'))>baseline);
+ assert.ok(loaded.naval.reports.some(r=>r.kind==='wagon-delivery'&&r.lost===2&&r.cargo===6));
+ advanceNaval(loaded);assert.equal(loaded.naval.inlandProvisions.t023,undefined);
+ assert.equal(armySupply(loaded,loaded.armies.find(a=>a.id==='italy')),baseline);
+});
+test('occupation cuts an inland wagon route and AI uses stocked ports for distant fronts',()=>{
+ const setup=player=>{const s=newGrandGame(player),corridor=new Set(['t016','t017','t019','t021','t023']);for(const r of s.regions)if(r.owner==='senate')r.owner=corridor.has(r.id)?'senate':'caesar';const army=s.armies.find(a=>a.id==='italy');army.region='t023';army.men=8000;army.operationalSupply=.3;for(const other of s.armies)if(other.owner==='senate'&&other.id!==army.id)other.men=0;s.naval.provisions.t016={owner:'senate',food:10};s.factions.senate.treasury=150;return s};
+ const cut=setup('senate');assert.equal(dispatchWagonSupply(cut,'senate','t016','t023').ok,true);
+ cut.regions.find(r=>r.id==='t019').owner='caesar';advanceNaval(cut);
+ assert.equal(cut.naval.wagons.length,0);assert.equal(cut.naval.inlandProvisions.t023,undefined);
+ assert.ok(cut.naval.reports.some(r=>r.kind==='wagon-loss'&&r.reason==='route occupied'));
+ const ai=setup('egypt');advanceNaval(ai);
+ assert.equal(ai.naval.wagons[0]?.owner,'senate');assert.equal(ai.naval.wagons[0]?.to,'t023');
+});
+test('AI sends a real sea shipment and then a paid wagon column to a distant front',()=>{
+ const s=newGrandGame('egypt'),army=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ s.factions.senate.treasury=300;s.factions.senate.food=80;army.region='t023';army.operationalSupply=.3;
+ for(const r of s.regions)if(r.owner==='senate'&&r.port)r.food=r.id==='t016'?.3:.9;
+ for(const other of s.armies)if(other.owner==='senate'&&other.id!==army.id)other.men=0;
+ advanceNaval(s);assert.equal(fleet.order?.targetPort,'t016');assert.equal(s.factions.senate.food,74);
+ for(let i=0;i<3;i++)advanceNaval(s);
+ assert.equal(s.factions.senate.food,74,'one needy army must not trigger overlapping shipments from other ports');
+ assert.equal(s.naval.wagons[0]?.from,'t016');assert.equal(s.naval.wagons[0]?.to,'t023');
+ assert.ok(s.naval.reports.some(r=>r.kind==='supply-delivery'&&r.port==='t016'));
+});
+test('overlapping inland and port stores provision an army once, and captured depots vanish',()=>{
+ const s=newGrandGame('senate'),army=s.armies.find(a=>a.id==='italy');army.region='t017';army.men=8000;
+ for(const other of s.armies)if(other.owner==='senate'&&other.id!==army.id)other.men=0;
+ s.naval.provisions.t016={owner:'senate',food:10};s.naval.inlandProvisions.t017={owner:'senate',food:7};
+ advanceNaval(s);
+ assert.equal(s.naval.inlandProvisions.t017.food,4);
+ assert.equal(s.naval.provisions.t016.food,9,'the same army cannot draw a second port ration');
+ s.regions.find(r=>r.id==='t017').owner='caesar';advanceNaval(s);
+ assert.equal(s.naval.inlandProvisions.t017,undefined);
+});
 test('overlapping port stores charge an army to only one port when that store runs dry',()=>{
  const s=newGrandGame('senate'),army=s.armies.find(a=>a.id==='italy');army.region='t017';army.men=8000;
  for(const other of s.armies)if(other.owner==='senate'&&other.id!==army.id)other.men=0;
@@ -644,6 +698,8 @@ test('naval state survives save migration and 36 campaign months',()=>{
 });
 
 test('older naval saves acquire an empty maritime supply inventory',()=>{
- const old=JSON.parse(JSON.stringify(newGrandGame('senate')));delete old.naval.provisions;
+ const old=JSON.parse(JSON.stringify(newGrandGame('senate')));delete old.naval.provisions;delete old.naval.inlandProvisions;delete old.naval.wagons;
  assert.deepEqual(upgradeSave(old).naval.provisions,{});
+ assert.deepEqual(upgradeSave(old).naval.inlandProvisions,{});
+ assert.deepEqual(upgradeSave(old).naval.wagons,[]);
 });
