@@ -333,6 +333,13 @@ named carriers and seller payment; existing 120-month conservation checks
 remain in place. Per-quarter route caching keeps the enlarged buyer pool
 within the market test's prior runtime. Wider autonomous intermediary volume
 and merchant financing are still open.
+Delivered horse batches can now be assigned from an owned local market to the
+military remount pool at 100 head per batch. Assignment removes the measured
+stock, records the transfer in the save, and lets cavalry recruitment spend
+the acquired horses. In-flight cargo and a second assignment from exhausted
+stock are rejected. A save/reload test follows a Kangju-to-Dunhuang shipment
+through cavalry recruitment; the bilingual market browser test uses the
+actual button and verifies both ledgers change exactly once.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,

@@ -46,6 +46,8 @@ function profile(r,good){
 export function initializeEasternMarkets(s){
  const markets=s.tradeMarkets||={regions:{},offers:[],saleOrders:[],shipments:[],transactions:[],supplyContracts:[],nextSupplyContract:1,nextSaleOrder:1,nextShipment:1,merchants:{},tariffs:{},exportRestrictions:{},transitTreasury:{},transportSpent:0,merchantFees:0,diplomacy:{attempts:[],nextAt:{}},lastTick:null};
  markets.regions||={};markets.offers||=[];if(!Array.isArray(markets.saleOrders))markets.saleOrders=[];markets.shipments||=[];markets.transactions||=[];markets.merchants||={};markets.tariffs||={};markets.exportRestrictions||={};markets.transitTreasury||={};markets.diplomacy||={attempts:[],nextAt:{}};
+ if(!Array.isArray(markets.militaryHorseTransfers))markets.militaryHorseTransfers=[];
+ if(!Number.isSafeInteger(markets.requisitionedHorses)||markets.requisitionedHorses<0)markets.requisitionedHorses=0;
  markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};if(!Number.isSafeInteger(markets.nextSaleOrder)||markets.nextSaleOrder<1)markets.nextSaleOrder=1;markets.nextShipment||=1;markets.transportSpent??=0;markets.merchantFees??=0;markets.merchantPrivileges||={};markets.merchantPrivilegeFees??=0;
  if(!Array.isArray(markets.supplyContracts))markets.supplyContracts=[];
  if(!Number.isSafeInteger(markets.nextSupplyContract)||markets.nextSupplyContract<1)markets.nextSupplyContract=1;
@@ -72,6 +74,21 @@ export function setEasternExportRestriction(s,faction,commodity,restricted){
  markets.exportRestrictions[faction]=restricted?[...new Set([...goods,commodity])]:goods.filter(good=>good!==commodity);
  publishOffers(s);
  return {ok:true,commodity,restricted};
+}
+
+// A market batch is 100 head. Only arrived, unreserved local stock may be
+// moved into the military remount pool; recruitment then consumes that pool.
+export function requisitionEasternHorses(s,regionId,quantity=1){
+ const markets=initializeEasternMarkets(s),site=region(s,regionId),item=markets.regions[regionId]?.goods?.horses;
+ if(s.finalized||!s.player||site?.owner!==s.player||!Number.isSafeInteger(quantity)||quantity<1||quantity>50)return {ok:false,reason:'invalid'};
+ if(item.stock<quantity)return {ok:false,reason:'unavailable'};
+ item.stock-=quantity;s.factions[s.player].horses=(s.factions[s.player].horses||0)+quantity*100;
+ markets.requisitionedHorses+=quantity;
+ const transfer={year:s.year,month:s.month,faction:s.player,region:regionId,quantity,head:quantity*100};
+ markets.militaryHorseTransfers.push(transfer);
+ if(markets.militaryHorseTransfers.length>100)markets.militaryHorseTransfers.shift();
+ publishOffers(s);
+ return {ok:true,transfer};
 }
 
 export function postEasternSale(s,{origin,commodity,quantity,unitPrice}){

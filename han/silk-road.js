@@ -8,7 +8,7 @@
 // There is no state-to-state contact between Han and Rome at the start.
 import {ROUTES,FAR_WEST,OASIS} from './data.js?v=han-1';
 import {access,atWar,relation,treaty} from './frontier.js?v=han-1';
-import {placeEasternTrade} from './markets.js?v=faces-of-empire-1';
+import {placeEasternTrade} from './markets.js?v=faces-horse-remounts-1';
 // Merchants pass where armies may not: peace and a tolerable relationship
 // suffice, or a caravan/market agreement; oasis rulers must not be estranged.
 export function tradeAccess(s,sponsor,owner){if(!owner||owner===sponsor)return true;if(atWar(s,sponsor,owner))return false;if(treaty(s,'caravan',sponsor,owner)||treaty(s,'market',sponsor,owner)||access(s,sponsor,owner))return true;if(OASIS.includes(owner))return (s.protectorate.oasis[owner]?.han||0)>=35;return relation(s,sponsor,owner)>=-35}

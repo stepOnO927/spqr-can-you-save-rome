@@ -9,7 +9,7 @@ import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,status
 import {initCourt,ensureCourtCareers,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,issueEdict,EDICTS,adminCapacity,emperorAuthority} from './court.js?v=han-1';
 import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=han-1';
 import {initSilk,advanceSilk} from './silk-road.js?v=han-1';
-import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=faces-of-empire-1';
+import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=faces-horse-remounts-1';
 import {advanceFocus,focusState} from './focus.js?v=han-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';

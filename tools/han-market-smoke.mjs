@@ -48,11 +48,23 @@ try{
  assert.equal(await page.locator('[data-export-good="silk"]').getAttribute('aria-pressed'),'false');
  assert.equal(await page.locator('#east-market-tariff').inputValue(),'high');
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Horses/);
- for(let i=0;i<months+2;i++)await page.locator('#advance').click();
+ for(let i=0;i<months;i++)await page.locator('#advance').click();
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Delivered/);
  assert.match(await page.locator('.market-receipts').innerText(),/Kangju.*Dunhuang/);
  assert.match(await page.locator('.market-receipts').innerText(),/Goods.*Transport.*Tariffs.*Total/);
+ await page.locator('.territory[data-region="dunhuang"]').click({force:true});await page.locator('#trade-panel').click();
+ assert.equal(await page.locator('#east-remount-assign').isDisabled(),false);
+ await page.locator('#save').click();const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ await page.locator('#east-remount-assign').click();
+ assert.match(await page.locator('#message').innerText(),/Assigned 100 army horses/);
+ await page.locator('#save').click();const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ assert.equal(after.factions.han.horses,before.factions.han.horses+100);
+ assert.equal(after.tradeMarkets.regions.dunhuang.goods.horses.stock,before.tradeMarkets.regions.dunhuang.goods.horses.stock-1);
+ assert.equal(after.tradeMarkets.requisitionedHorses,before.tradeMarkets.requisitionedHorses+1);
+ await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('.territory[data-region="dunhuang"]').click({force:true});await page.locator('#trade-panel').click();
+ assert.equal(await page.locator('#east-remount-assign').isDisabled(),true);
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
+ assert.match(await page.locator('#inspector').innerText(),/拨付军马/);
  assert.match(await page.locator('#inspector').innerText(),/商人特权/);
  assert.match(await page.locator('#inspector').innerText(),/过境关税/);
  assert.match(await page.locator('#inspector').innerText(),/出口管制/);
@@ -61,7 +73,7 @@ try{
  await page.evaluate(async()=>{
   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js');
   const {propose,declareWar}=await import('/han/frontier.js?v=han-1');
-  const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=faces-of-empire-1');
+  const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=faces-horse-remounts-1');
   const state=newHanGame('han',{seed:77});
   if(propose(state,'han','kangju','market').proposal.status!=='accepted')throw Error('Market treaty unavailable');
   const placed=placeEasternTrade(state,{seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1});
@@ -75,5 +87,5 @@ try{
  await page.locator('#lang').click();
  assert.match(await page.locator('.market-receipts').innerText(),/Returned after blockade.*Goods returned to.*Refund.*Transport spent/s);
  assert.deepEqual(errors,[]);
- console.log('Han market browser smoke passed: measured sale listing, customs and export policy, treaty, horse dispatch, delivery and bilingual panel.');
+ console.log('Han market browser smoke passed: listings, customs, treaty, horse delivery, army remounts, save/load and bilingual panel.');
 }finally{await browser.close()}

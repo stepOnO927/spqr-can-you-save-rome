@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js?v=han-1';
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=han-1';
-import {activeEasternMerchantPrivilege,advanceEasternMarkets,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-of-empire-1';
+import {activeEasternMerchantPrivilege,advanceEasternMarkets,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-horse-remounts-1';
+import {recruit,recruitQuote} from '../han/military.js?v=han-1';
 import {advanceSilk} from '../han/silk-road.js?v=han-1';
 import {roll} from '../han/util.js?v=han-1';
 
@@ -48,6 +49,33 @@ test('Eastern markets use measured stock and a real Kangju–Han horse route',()
  assert.equal(loaded.tradeMarkets.shipments[0].status,'delivered');
  assert.equal(loaded.tradeMarkets.transactions.filter(x=>x.shipment===result.shipment.id).length,1);
  assert.equal(loaded.tradeMarkets.transportSpent+loaded.tradeMarkets.merchantFees,loaded.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
+});
+
+test('arrived horse batches become cavalry remounts exactly once across saves',()=>{
+ let s=newHanGame('han',{seed:49});s.tradeMarkets.embeddedRoman=true;s.factions.han.horses=0;
+ const depot=s.tradeMarkets.regions.dunhuang.goods.horses;depot.stock=0;depot.production=0;depot.consumption=0;
+ assert.equal(propose(s,'han','kangju','market').proposal.status,'accepted');
+ const request={seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:2};
+ const first=placeEasternTrade(s,request);assert.equal(first.ok,true,first.reason);
+ assert.equal(requisitionEasternHorses(s,'dunhuang',1).reason,'unavailable','in-flight horses cannot be used');
+ assert.equal(requisitionEasternHorses(s,'kangju',1).reason,'invalid','foreign stock cannot be assigned');
+ assert.ok(recruitQuote(s,'han','wuwei','cavalry',500).problems.includes('horses'));
+ s=loadHanSave(serialize(s));for(let i=0;i<first.quote.months;i++)next(s);
+ assert.equal(s.tradeMarkets.regions.dunhuang.goods.horses.stock,2);
+ const transfer=requisitionEasternHorses(s,'dunhuang',2);assert.equal(transfer.ok,true);
+ assert.equal(transfer.transfer.head,200);
+ assert.equal(s.tradeMarkets.regions.dunhuang.goods.horses.stock,0);
+ assert.equal(s.factions.han.horses,200);
+ assert.equal(requisitionEasternHorses(s,'dunhuang',1).reason,'unavailable');
+ assert.equal(recruitQuote(s,'han','wuwei','cavalry',500).ok,true);
+ assert.equal(recruit(s,'han','wuwei','cavalry',{men:500}).ok,true);
+ s=loadHanSave(serialize(s));
+ assert.equal(s.factions.han.horses,39);
+ assert.equal(s.tradeMarkets.regions.dunhuang.goods.horses.stock,0);
+ assert.equal(s.tradeMarkets.requisitionedHorses,2);
+ assert.equal(s.tradeMarkets.militaryHorseTransfers.length,1);
+ const old=JSON.parse(serialize(s));delete old.tradeMarkets.militaryHorseTransfers;delete old.tradeMarkets.requisitionedHorses;
+ const migrated=loadHanSave(old);assert.deepEqual(migrated.tradeMarkets.militaryHorseTransfers,[]);assert.equal(migrated.tradeMarkets.requisitionedHorses,0);
 });
 
 test('eastern bids have a bounded premium and cannot alter a supply agreement',()=>{

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
 import {attachHanWorld,hanWorld,advanceHanWorld,romanView} from '../han/world.js?v=han-1';
-import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-of-empire-1';
+import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-horse-remounts-1';
 import {advanceDate} from '../han/util.js?v=han-1';
 import {eastPanel} from '../han/east-ui.js?v=han-1';
 
