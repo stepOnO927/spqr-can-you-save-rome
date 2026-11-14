@@ -29,6 +29,7 @@ try{
   await page.locator('#mail-open').click();
   assert.match(await page.locator('.mailbox').innerText(),/first assessment/i);
   await page.locator('[data-mail-reply="acknowledge"]').first().click();
+  await page.locator('#mail-close').click();
   await page.locator('#new').click();
   await page.locator('[data-slot="save"]').click();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
