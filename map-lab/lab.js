@@ -192,12 +192,27 @@ function showNaval(section='fleets'){
 navalButton.onclick=()=>showNaval();
 const characterUI=createCharacterUI({getState:()=>state,getLanguage:()=>lang,inspect,onShowCharacter:id=>{activeInfo={type:"character",id};activeArmy=null;activeBattle=null;activeFaction=null;clearReach()},onGovernmentChanged:()=>{renderHud();showFaction(state.player)},onStateChanged:()=>renderHud()});
 function marker(element,coordinates,anchor='center',offset=[0,0]){return new maplibregl.Marker({element,anchor,offset}).setLngLat(coordinates).addTo(map)}
-function refreshGrandSiteElement(element,site){const owner=region(state,site.id)?.owner;element.textContent=n(site.site);element.style.setProperty('--site-accent',identity(owner).map);element.title=n(site.site)+' · '+n(FACTIONS[owner]?.short||['Unknown','未知'])}
+function refreshGrandSiteElement(element,site){const owner=region(state,site.id)?.owner;element.textContent=n(site.site);element.style.setProperty('--site-accent',identity(owner).map);element.title=n(site.site)+' · '+n(FACTIONS[owner]?.short||['Unknown','未知']);element.setAttribute('aria-label',element.title)}
 for(const city of cities){const el=document.createElement('button');el.className=`city-marker ${city.kind}`;el.dataset.city=city.name;el.setAttribute('aria-label',`${t('inspect')} ${city.name}`);const icon=city.kind.includes('fort')?'<path d="M3 11V5h2v2h2V5h2v2h2V5h2v6H3zm3 0V9h4v2"/>':city.kind.includes('port')?'<circle cx="8" cy="4" r="1.4"/><path d="M8 5.5v7M4 9c0 4 8 4 8 0M3 9h2m6 0h2"/>':'<path d="M2 12h12M4 11V7l4-3 4 3v4M7 11V8h2v3"/>';el.innerHTML=`<span class="city-icon"><svg viewBox="0 0 16 16" aria-hidden="true">${icon}</svg></span><span class="name">${esc(city.name)}</span>`;el.addEventListener('click',e=>{e.stopPropagation();activeFaction=null;activeArmy=null;activeBattle=null;previewDestination='';clearReach();renderArmies();showCity(city);emit('city',city.name)});marker(el,city.p,'left')}
 let leaderMarkers=[];let factionSection='diplomacy';
 // These accessible theater markers do not assert geographic borders or exact capitals.
 for(const id of ['galatia','bosporus']){const el=document.createElement('button');el.className='outlying-theater';el.dataset.theater=id;el.textContent=n(region(state,id).name);el.title=lang==='zh'?'模拟战区，历史边界未绘制':'Simulated theater; historical borders not drawn';el.addEventListener('click',e=>{e.stopPropagation();renderArmies();showRegion(region(state,id))});marker(el,namedPoints[id],'top',[-24,18])}
 let activeArmy=null, activeBattle=null, activeFaction=null, activeInfo=null, previewDestination='', armyMarkers=[],battleMarkers=[],reachMarkers=[],densityMarkers=[],maritimeMarkers=[];
+let syncSiteCrowding=()=>{};
+function layoutArmyStandards(){
+ if(typeof map.project!=='function')return;
+ const placed=[];
+ for(const standard of armyMarkers.filter(mark=>mark.unitRegion)){
+  const point=map.project(namedPoints[standard.unitRegion]),base=standard.baseOffset||0;
+  const offsets=[base,base+72,base-72,base+144,base-144];
+  const offset=offsets.find(x=>placed.every(other=>Math.abs(point.x+x-other.x)>=65||Math.abs(point.y-other.y)>=54))??base;
+  standard.currentOffset=offset;standard.displayPoint={x:point.x+offset,y:point.y};
+  if(typeof standard.setOffset==='function')standard.setOffset([offset,0]);
+  const element=standard.getElement?.();
+  if(element){element.classList.toggle('spaced-right',offset>32);element.classList.toggle('spaced-left',offset< -32);element.style.setProperty('--standard-displacement',`${Math.max(0,Math.abs(offset)-28)}px`)}
+  placed.push(standard.displayPoint);
+ }
+}
 function updateControl(){
  if(state.grandMap&&map.getLayer('grand-control')){
   const pairs=[],borders=[];for(const feature of grandTerritories.features){const r=region(state,feature.properties.id);if(!r)continue;const own=r.owner===state.player;let color=identity(r.owner).map;
@@ -272,10 +287,11 @@ function renderArmies(){
   const kit=identity(unit.owner),designation=unit.id==='xiii'?'XIII':unit.id==='pompey'?'POMP':unit.id==='italy'?'ITAL':unit.id==='viii'?'GAL':unit.id==='spain'?'HISP':kit.abbr;
   el.style.setProperty('--unit-primary',kit.primary);el.style.setProperty('--unit-accent',kit.accent);
   el.innerHTML=`<span class="standard-pole"></span><span class="standard-field">${factionMark(unit.owner,'standard')}</span><span class="counter-text"><strong>${designation}</strong><small>${unit.owner===state.player?(unit.men/1000).toFixed(1)+'K':'?'} ${unit.reported?'':unit.move?'›':unit.siege?'•':''}</small></span>`;
-  el.addEventListener('click',e=>{e.stopPropagation();activeArmy=unit.id;previewDestination='';renderArmies();showArmy(unit);renderReach(unit);emit('army',unit.id)});armyMarkers.push(marker(el,namedPoints[unit.region],'bottom',[stack*58,0]));
+  el.addEventListener('click',e=>{e.stopPropagation();activeArmy=unit.id;previewDestination='';renderArmies();showArmy(unit);renderReach(unit);emit('army',unit.id)});const standard=marker(el,namedPoints[unit.region],'bottom',[stack*58,0]);standard.unitRegion=unit.region;standard.baseOffset=stack*58;armyMarkers.push(standard);
  }
  for(const a of state.armies.filter(a=>a.owner===state.player&&a.move&&namedPoints[a.region]&&namedPoints[a.move.to])){const from=namedPoints[a.region],to=namedPoints[a.move.to],el=document.createElement('div');el.className='arrow-wrap';el.title=n(region(state,a.move.to).name);el.innerHTML=`<span class="destination-arrow" style="transform:rotate(${Math.atan2(to[0]-from[0],to[1]-from[1])*180/Math.PI}deg)"></span>`;armyMarkers.push(marker(el,to))}
  if(map.getSource('marches'))map.getSource('marches').setData({type:'FeatureCollection',features:state.armies.filter(a=>a.owner===state.player&&a.move&&namedPoints[a.region]&&namedPoints[a.move.to]).map(a=>({type:'Feature',properties:{owner:a.owner},geometry:{type:'LineString',coordinates:[namedPoints[a.region],namedPoints[a.move.to]]}}))});
+ layoutArmyStandards();syncSiteCrowding();
  renderMaritime();
 }
 function clearReach(){reachMarkers.forEach(m=>m.remove());reachMarkers=[];if(map.getSource('preview'))map.getSource('preview').setData({type:'FeatureCollection',features:[]})}
@@ -426,6 +442,15 @@ map.on('load',()=>{
  for(const site of GRAND_SITES){const el=document.createElement('button');el.className=`grand-site ${site.id===site.macro?'major':''}`;el.dataset.site=site.id;refreshGrandSiteElement(el,site);el.onclick=e=>{e.stopPropagation();const r=region(state,site.id),unit=state.armies.find(a=>a.id===activeArmy&&a.owner===state.player);if(unit&&!unit.move&&r.id!==unit.region&&previewMarch(state,unit.id,r.id).ok){previewDestination=r.id;showArmy(unit);renderReach(unit)}else showRegion(r)};siteMarkers.push({site,element:el,marker:new maplibregl.Marker({element:el,anchor:'left'}).setLngLat([site.lon,site.lat]),attached:false})}
  const syncSiteMarkers=()=>{const bounds=map.getBounds?.(),west=bounds?.getWest(),east=bounds?.getEast(),south=bounds?.getSouth(),north=bounds?.getNorth(),lonMargin=bounds?Math.min(4,(east-west)*.15):0,latMargin=bounds?Math.min(3,(north-south)*.15):0;
   for(const entry of siteMarkers){const {site,marker,element}=entry,visible=!bounds||site.lon>=west-lonMargin&&site.lon<=east+lonMargin&&site.lat>=south-latMargin&&site.lat<=north+latMargin;if(visible&&!entry.attached){refreshGrandSiteElement(element,site);marker.addTo(map);entry.attached=true}else if(!visible&&entry.attached){marker.remove();entry.attached=false}}
+  layoutArmyStandards();syncSiteCrowding();
+ };
+ syncSiteCrowding=()=>{
+  const zoom=map.getZoom?.(),canProject=typeof map.project==='function';
+  const candidates=state.grandMap&&canProject&&zoom>=4.8&&zoom<6.5?armyMarkers.filter(mark=>mark.unitRegion&&mark.displayPoint).map(mark=>mark.displayPoint):[];
+  for(const {site,element,attached} of siteMarkers){
+   const point=attached&&candidates.length?map.project([site.lon,site.lat]):null;
+   element.classList.toggle('near-army',!!point&&candidates.some(flag=>Math.abs(point.x-flag.x)<52&&Math.abs(point.y-flag.y)<38));
+  }
  };
  syncSiteMarkers();map.on('moveend',syncSiteMarkers);map.on('resize',syncSiteMarkers);
 });

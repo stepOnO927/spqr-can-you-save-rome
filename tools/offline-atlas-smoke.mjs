@@ -107,6 +107,18 @@ try{
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Rivers & natural lakes/:/河流与天然湖泊/);
  assert.match(await page.locator('.file-transfer a').innerText(),firstLanguage==='zh-CN'?/LEGACY HUB/:/罗马遗产/);
  await page.locator('#map-mode').selectOption('political');
+ const crowdedSite=page.locator('.grand-site.near-army:visible').first();
+ await crowdedSite.waitFor();
+ assert.equal(await crowdedSite.evaluate(el=>getComputedStyle(el).fontSize),'0px','A city beside an army standard should use a compact map mark');
+ assert.ok(await crowdedSite.getAttribute('aria-label'),'The compact city mark must retain its accessible name');
+ await crowdedSite.focus();
+ assert.notEqual(await crowdedSite.evaluate(el=>getComputedStyle(el).fontSize),'0px','Keyboard focus should reveal the city name');
+ await page.locator('#map-mode').focus();
+ const standards=await page.locator('.army').evaluateAll(elements=>elements.map(el=>{const box=el.getBoundingClientRect();return {id:el.dataset.army,x:box.x,y:box.y,width:box.width,height:box.height}}).filter(box=>box.width>0&&box.height>0));
+ for(let i=0;i<standards.length;i++)for(let j=i+1;j<standards.length;j++){
+  const a=standards[i],b=standards[j];
+  assert.ok(a.x+a.width<=b.x||b.x+b.width<=a.x||a.y+a.height<=b.y||b.y+b.height<=a.y,`Army standards ${a.id} and ${b.id} overlap at opening zoom`);
+ }
  if(page.viewportSize().width<=600){await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),false)}
  if(process.env.SPQR_ATLAS_OVERVIEW_SCREENSHOT){await page.waitForTimeout(600);await page.screenshot({path:process.env.SPQR_ATLAS_OVERVIEW_SCREENSHOT})}
  if(process.env.SPQR_ATLAS_WIDE_SCREENSHOT){await page.locator('#zoom-out').click();await page.locator('#zoom-out').click();await page.waitForTimeout(1300);assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('leader-overview')),true);assert.equal(await page.locator('[data-site="roma"]').evaluate(el=>getComputedStyle(el).fontSize),'0px','Wide overview should show a settlement dot, not a label competing with army flags');await page.screenshot({path:process.env.SPQR_ATLAS_WIDE_SCREENSHOT});await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(800);assert.notEqual(await page.locator('[data-site="roma"]').evaluate(el=>getComputedStyle(el).fontSize),'0px','City names should return at regional zoom')}

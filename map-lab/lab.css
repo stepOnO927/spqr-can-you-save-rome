@@ -110,3 +110,12 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
 /* Keep map labels underneath command panels from showing through the text. */
 .brief,.selection{background:linear-gradient(135deg,#1c2928,#182321)}
 #locator{background:#172b2c}
+
+/* A nearby standard takes visual priority; the city remains clickable and named. */
+.grand-campaign .grand-site.near-army{width:14px;height:14px;padding:0;border:2px solid var(--site-accent,#eac985);border-radius:50%;background:#1b2928;box-shadow:0 0 0 2px #f1dfb4b0,0 2px 5px #0b1d20a8;font-size:0;text-shadow:none}
+.grand-campaign .grand-site.near-army:before{content:''}
+.grand-campaign .grand-site.near-army:is(:hover,:focus){width:auto;height:auto;padding:3px 6px 3px 8px;border-radius:2px;font-size:11px;z-index:6}
+.grand-campaign .grand-site.near-army:is(:hover,:focus):before{content:'◆'}
+.army:is(.spaced-right,.spaced-left):after{content:'';position:absolute;bottom:0;width:var(--standard-displacement);border-bottom:1px dashed #f0d8a5b8;pointer-events:none}
+.army.spaced-right:after{right:100%}
+.army.spaced-left:after{left:100%}
