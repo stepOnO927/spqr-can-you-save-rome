@@ -140,6 +140,8 @@ export function composeLetter(s,spec){
 export function composeReply(s,m,choice,representativeName=null){
  if(choice==='ignore')return null;
  const from=s.world?.leadership?.[s.player]?.find(id=>s.world.characters[id]?.alive)||s.player;
+ const strategicTarget=s.world?.strategicOffers?.find(offer=>offer.id===m.context?.offerId)?.target;
+ const strategicEnemy=strategicTarget?[label(strategicTarget,0),label(strategicTarget,1)]:['the named enemy','来函所指敌国'];
  const subject=m.context?.kind==='banquet'?m.context.invitation?.venue?.name||[region(s,m.context.region,0),region(s,m.context.region,1)]:m.subject;
  const decisions={
   accept:[`I accept your invitation to ${subject[0]} and intend to attend at the appointed time.`,`我接受赴${subject[1]}之邀，拟按约定时间出席。`],
@@ -157,6 +159,8 @@ export function composeReply(s,m,choice,representativeName=null){
   condemn:['I reject the grounds of your declaration and record my court’s condemnation.','我方拒绝贵方宣战理由，并正式记载本朝谴责。'],
   seek_allies:['I have asked our allies for support in the present war.','我已就当前战事向盟邦请求援助。'],
   accept_accord:['I accept the proposal under the terms stated in your letter.','我方接受来函所列条件。'],
+  join_war:[`I accept your request for military cooperation against ${strategicEnemy[0]}. Our declaration of war is now in force; this answer still needs to reach your court.`,`我方接受对抗${strategicEnemy[1]}的军事协作请求。宣战已经生效；此回函仍须送达贵朝。`],
+  refuse:['I decline your request to join the war. Our forces will not enter this conflict on the terms proposed.','我方谢绝加入战事的请求，不会依照来函条件参战。'],
   reject:['I cannot accept the terms you have proposed.','我方无法接受贵方所提条件。'],
   acknowledge:['Your report has been received and entered in the court record.','来报已收，业已载入朝廷记录。'],
   audit:['I have commissioned the requested audit; its actual cost has been charged to the treasury.','已命开展审计，实际费用已从国库支出。'],
