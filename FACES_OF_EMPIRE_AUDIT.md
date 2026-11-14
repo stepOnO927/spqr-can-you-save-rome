@@ -288,13 +288,13 @@ Posting removes goods from local stock; only the listed quantity becomes
 visible to AI buyers, who must still have a treaty, route and treasury and pay
 the seller after delivery. Cancelling returns the unfilled stock, while
 conquest releases it into the captured local market. Listings, partial fills
-and merchant shipments persist across saves. In the Roman campaign, AI buyers
-now plan before committing limited stock. A seller compares affordable premium
-bids, and a losing buyer can seek another stocked origin. The premium is
-bounded by local value and treasury reserve; the winning price, goods,
-merchant and route use ordinary escrow and delivery settlement. A save/load
-regression checks the accepted price and seller payment. Direct Han merchant
-bidding remains open work.
+and merchant shipments persist across saves. In both the Roman and direct Han
+campaigns, AI buyers now plan before committing limited stock. A seller
+compares affordable premium bids, and a losing buyer can seek another stocked
+origin. The premium is bounded by local value and treasury reserve; the winning
+price, goods, merchant and route use ordinary escrow and delivery settlement.
+Save/load regressions check the accepted price and seller payment. Quarterly
+eastern offers refresh after orders so displayed availability is current.
 The Roman market also lets the player choose low, standard or high transit
 customs and restrict or reopen exports of each measured good. New quotes and
 AI buyers respect export controls, while dispatched caravans retain their
@@ -308,7 +308,7 @@ can breach the agreement and lower relations; withdrawal also has a real
 diplomatic cost. War or lost access ends future obligations without rewriting
 caravans already underway. The terms, due dates and shipments survive saves.
 Unit and browser tests cover both markets, including bilingual controls.
-Merchant privileges and direct Han merchant bidding remain open.
+Merchant privileges and broader player-to-merchant negotiation remain open.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,

@@ -99,19 +99,19 @@ function travelQuote(s,path,quantity,price,buyer,seller){
  return {legs,months,transport,tariffs,total:price+transport+tariffs.reduce((n,t)=>n+t.amount,0)};
 }
 
-export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId,contractId}){
+export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId,contractId,bidPremium=0}){
  const markets=initializeEasternMarkets(s),from=region(s,origin),to=region(s,destination),stock=markets.regions[origin]?.goods?.[commodity];
  const external=buyer==='external'&&seller==='han'&&destination==='mediterranean_gate'&&to?.owner==null;
- if(!COMMODITIES[commodity]||!Number.isSafeInteger(quantity)||quantity<1||quantity>20||!from||!to||from.owner!==seller||!s.factions[seller]||!external&&(to.owner!==buyer||!s.factions[buyer])||origin===destination)return {ok:false,reason:'invalid'};
+ if(!COMMODITIES[commodity]||!Number.isSafeInteger(quantity)||quantity<1||quantity>20||!Number.isSafeInteger(bidPremium)||bidPremium<0||bidPremium>Math.ceil(COMMODITIES[commodity].basePrice*.5)||!from||!to||from.owner!==seller||!s.factions[seller]||!external&&(to.owner!==buyer||!s.factions[buyer])||origin===destination)return {ok:false,reason:'invalid'};
  const sale=saleOrderId?markets.saleOrders.find(x=>x.id===saleOrderId):null;
  const contract=contractId?markets.supplyContracts.find(x=>x.id===contractId):null;
- if(contractId&&(!contract||contract.status!=='active'||month(s)<contract.nextDueAt||month(s)>=contract.expiresAt||saleOrderId||['seller','buyer','origin','destination','commodity','quantity'].some(key=>contract[key]!==({seller,buyer,origin,destination,commodity,quantity})[key])))return {ok:false,reason:'contract'};
+ if(contractId&&(!contract||contract.status!=='active'||month(s)<contract.nextDueAt||month(s)>=contract.expiresAt||saleOrderId||bidPremium||['seller','buyer','origin','destination','commodity','quantity'].some(key=>contract[key]!==({seller,buyer,origin,destination,commodity,quantity})[key])))return {ok:false,reason:'contract'};
  if(saleOrderId&&(!sale||sale.status!=='open'||sale.seller!==seller||sale.origin!==origin||sale.commodity!==commodity||sale.available<quantity))return {ok:false,reason:'unavailable'};
  if(buyer!==seller&&markets.exportRestrictions[seller]?.includes(commodity))return {ok:false,reason:'export_restricted'};
  if(!external&&(atWar(s,buyer,seller)||!tradeTreaty(s,buyer,seller)))return {ok:false,reason:'access'};
  if(!sale&&stock.stock<quantity)return {ok:false,reason:'unavailable'};
  const path=tradePath(s,origin,destination,external?seller:buyer);if(!path)return {ok:false,reason:'route'};
- const unitPrice=contract?.unitPrice??sale?.unitPrice??marketPrice(markets.regions[origin],commodity),price=unitPrice*quantity,travel=travelQuote(s,path,quantity,price,buyer,seller);
+ const unitPrice=(contract?.unitPrice??sale?.unitPrice??marketPrice(markets.regions[origin],commodity))+bidPremium,price=unitPrice*quantity,travel=travelQuote(s,path,quantity,price,buyer,seller);
  if((external?markets.externalTreasury:s.factions[buyer].treasury)<travel.total)return {ok:false,reason:'treasury'};
  return {ok:true,unitPrice,price,path,...travel};
 }
@@ -263,7 +263,7 @@ function settleStrandedShipment(s,shipment){
 }
 
 function advanceEasternMarketAI(s){
- const markets=s.tradeMarkets,now=month(s),orders=[];
+ const markets=s.tradeMarkets,now=month(s),orders=[],plans=new Map();
  const buyers=Object.keys(s.factions).filter(id=>id!==s.player&&s.regions.some(r=>r.owner===id&&(r.pop||0)>=8));
  for(const buyer of buyers){
   if(s.factions[buyer].treasury<20)continue;
@@ -283,21 +283,54 @@ function advanceEasternMarketAI(s){
     const quantity=Math.min(3,deficit,offer.available),price=offer.price*quantity,travel=travelQuote(s,path,quantity,price,buyer,offer.seller);
     const utility=marketPrice(markets.regions[destination.id],good)*quantity+(item.stock===0?COMMODITIES[good].basePrice*quantity:0)-travel.total;
     if(utility<0||s.factions[buyer].treasury-travel.total<(buyer==='han'?100:12))continue;
-    candidates.push({request:{seller:offer.seller,buyer,origin:offer.origin,destination:destination.id,commodity:good,quantity,saleOrderId:offer.saleOrderId},utility,path:travel.months});
+    candidates.push({request:{seller:offer.seller,buyer,origin:offer.origin,destination:destination.id,commodity:good,quantity,saleOrderId:offer.saleOrderId},utility,path:travel.months,route:path,unitPrice:offer.price,value:utility+travel.total});
    }
   }
   candidates.sort((a,b)=>b.utility-a.utility||a.path-b.path||a.request.seller.localeCompare(b.request.seller));
-  for(const candidate of candidates){
-   const {seller}=candidate.request,key=[buyer,seller].sort().join(':');
+  if(candidates.length)plans.set(buyer,candidates);
+ }
+ // A listed lot and ordinary regional stock are separate finite supplies.
+ const available=request=>{
+  if(request.saleOrderId)return markets.saleOrders.find(x=>x.id===request.saleOrderId&&x.status==='open')?.available??0;
+  const item=markets.regions[request.origin].goods[request.commodity];
+  const reserve=item.production>0?Math.max(4,item.production*2):Math.max(2,item.consumption*3);
+  return Math.max(0,item.stock-reserve);
+ };
+ while(plans.size){
+  const groups=new Map();
+  for(const [buyer,candidates] of plans){
+   while(candidates.length&&(candidates[0].request.quantity>available(candidates[0].request)||atWar(s,buyer,candidates[0].request.seller)))candidates.shift();
+   if(!candidates.length){plans.delete(buyer);continue}
+   const candidate=candidates[0],r=candidate.request,key=r.saleOrderId||`${r.origin}:${r.commodity}`;
+   if(!groups.has(key))groups.set(key,[]);groups.get(key).push(candidate);
+  }
+  if(!groups.size)break;
+  for(const group of groups.values()){
+   const scarce=group.reduce((sum,c)=>sum+c.request.quantity,0)>available(group[0].request);
+   const bids=group.map(candidate=>{
+    const {request,route,value}=candidate,reserve=request.buyer==='han'?100:12;
+    for(let premium=scarce?Math.ceil(COMMODITIES[request.commodity].basePrice*.5):0;premium>=0;premium--){
+     const unitPrice=candidate.unitPrice+premium,price=unitPrice*request.quantity;
+     const travel=travelQuote(s,route,request.quantity,price,request.buyer,request.seller);
+     if(travel.total<=value&&s.factions[request.buyer].treasury-travel.total>=reserve)return {candidate,premium,unitPrice};
+    }
+    return null;
+   }).filter(Boolean);
+   bids.sort((a,b)=>b.unitPrice-a.unitPrice||relation(s,b.candidate.request.seller,b.candidate.request.buyer)-relation(s,a.candidate.request.seller,a.candidate.request.buyer)||a.candidate.path-b.candidate.path||a.candidate.request.buyer.localeCompare(b.candidate.request.buyer));
+   const winner=bids[0];
+   if(!winner){for(const candidate of group)plans.get(candidate.request.buyer)?.shift();continue}
+   const {request,value}=winner.candidate,{buyer,seller}=request,key=[buyer,seller].sort().join(':');
    if(!tradeTreaty(s,buyer,seller)){
-    if(now<(markets.diplomacy.nextAt[key]||-Infinity))continue;
+    if(now<(markets.diplomacy.nextAt[key]||-Infinity)){plans.get(buyer)?.shift();continue}
     const result=propose(s,buyer,seller,'market');markets.diplomacy.nextAt[key]=now+(result.proposal?.status==='accepted'?36:12);
     markets.diplomacy.attempts.push({year:s.year,month:s.month,buyer,seller,status:result.proposal?.status||result.reason});
     if(markets.diplomacy.attempts.length>150)markets.diplomacy.attempts.shift();
-    if(!tradeTreaty(s,buyer,seller))continue;
+    if(!tradeTreaty(s,buyer,seller)){plans.get(buyer)?.shift();continue}
    }
-   const placed=placeEasternTrade(s,candidate.request);if(placed.ok){orders.push(placed.shipment);break}
-   if(placed.reason==='route'){markets.diplomacy.attempts.push({year:s.year,month:s.month,buyer,seller,status:'route_blocked'});markets.diplomacy.nextAt[key]=now+3}
+   const bid={...request,bidPremium:winner.premium},quote=quoteEasternTrade(s,bid),reserve=buyer==='han'?100:12;
+   const placed=quote.ok&&quote.total<=value&&s.factions[buyer].treasury-quote.total>=reserve?placeEasternTrade(s,bid):{ok:false,reason:quote.reason||'price'};
+   if(placed.ok){orders.push(placed.shipment);plans.delete(buyer)}
+   else {plans.get(buyer)?.shift();if(placed.reason==='route'){markets.diplomacy.attempts.push({year:s.year,month:s.month,buyer,seller,status:'route_blocked'});markets.diplomacy.nextAt[key]=now+3}}
   }
  }
  return orders;
@@ -314,6 +347,6 @@ export function advanceEasternMarkets(s){
   item.price=marketPrice(markets.regions[r.id],good);
  }
  advanceShipments(s);publishOffers(s);advanceEasternSupplyContracts(s,now);
- if(!markets.embeddedRoman&&s.month%3===0)advanceEasternMarketAI(s);
+ if(!markets.embeddedRoman&&s.month%3===0){advanceEasternMarketAI(s);publishOffers(s)}
  return markets;
 }

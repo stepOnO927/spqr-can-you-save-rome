@@ -26,6 +26,17 @@ test('Eastern markets use measured stock and a real Kangju–Han horse route',()
  assert.equal(loaded.tradeMarkets.transportSpent+loaded.tradeMarkets.merchantFees,loaded.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
 });
 
+test('eastern bids have a bounded premium and cannot alter a supply agreement',()=>{
+ const s=newHanGame('han',{seed:49});setRelation(s,'han','kangju',70);propose(s,'han','kangju','market');
+ const request={seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1};
+ const base=quoteEasternTrade(s,request),bid=quoteEasternTrade(s,{...request,bidPremium:2});
+ assert.equal(base.ok,true);assert.equal(bid.ok,true);assert.equal(bid.price,base.price+2);
+ assert.equal(quoteEasternTrade(s,{...request,bidPremium:-1}).reason,'invalid');
+ assert.equal(quoteEasternTrade(s,{...request,bidPremium:4}).reason,'invalid');
+ const contract=proposeEasternSupplyContract(s,{...request,interval:3,duration:12});assert.equal(contract.ok,true);
+ assert.equal(quoteEasternTrade(s,{...request,contractId:contract.contract.id,bidPremium:1}).reason,'contract');
+});
+
 test('Han recurring horse agreement uses real caravans, locked goods price and saved obligations',()=>{
  let s=newHanGame('han',{seed:49});s.tradeMarkets.embeddedRoman=true;setRelation(s,'han','kangju',70);
  assert.equal(propose(s,'han','kangju','market').proposal.status,'accepted');
@@ -191,8 +202,29 @@ test('Han, Kangju, Yuezhi and Parthia can negotiate and trade without player ord
  assert.ok(s.tradeMarkets.shipments.every(x=>s.persons[x.merchantId]?.profession==='merchant'));
 });
 
+test('independent Han markets award a scarce horse lot to the stronger funded bid',()=>{
+ const s=newHanGame('shanshan',{seed:99});s.month=3;
+ s.treaties.push({type:'market',parties:['han','kangju']},{type:'market',parties:['yuezhi','kangju']});
+ for(const market of Object.values(s.tradeMarkets.regions))for(const [good,item] of Object.entries(market.goods))item.stock=good==='horses'?0:100;
+ const source=s.tradeMarkets.regions.kangju.goods.horses;source.stock=5;source.production=0;source.consumption=1;
+ for(const id of ['jiuquan','yuezhi']){const item=s.tradeMarkets.regions[id].goods.horses;item.stock=0;item.production=0}
+ s.factions.han.treasury=300;s.factions.yuezhi.treasury=20;
+ advanceEasternMarkets(s);
+ const lot=s.tradeMarkets.shipments.filter(x=>x.origin==='kangju'&&x.commodity==='horses');
+ assert.equal(lot.length,1);assert.equal(lot[0].buyer,'han');assert.ok(lot[0].price>5);
+ assert.equal(source.stock,3);
+ assert.equal(s.factions.han.treasury,300-lot[0].escrow);
+ s.tradeMarkets.embeddedRoman=true;
+ const loaded=loadHanSave(serialize(s)),sellerCash=loaded.factions.kangju.treasury;
+ for(let i=0;i<lot[0].legs.reduce((n,leg)=>n+leg.months,0);i++)next(loaded);
+ const delivered=loaded.tradeMarkets.shipments.find(x=>x.id===lot[0].id);
+ assert.equal(delivered.status,'delivered');
+ assert.equal(loaded.factions.kangju.treasury,sellerCash+lot[0].price);
+ assert.ok(loaded.tradeMarkets.transactions.some(x=>x.shipment===lot[0].id&&x.price===lot[0].price));
+});
+
 test('a closed route settles its escrow and goods after twelve months',()=>{
- const s=newHanGame('han',{seed:77});assert.equal(propose(s,'han','kangju','market').proposal.status,'accepted');
+ const s=newHanGame('han',{seed:77});s.tradeMarkets.embeddedRoman=true;assert.equal(propose(s,'han','kangju','market').proposal.status,'accepted');
  const request={seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1};
  const startingCash=s.factions.han.treasury,startingStock=s.tradeMarkets.regions.kangju.goods.horses.stock;
  const placed=placeEasternTrade(s,request);assert.equal(placed.ok,true);
