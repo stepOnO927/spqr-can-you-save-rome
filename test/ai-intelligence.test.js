@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newGrandGame,aiTurn,estimatedStrength} from '../engine.js';
 import {addReport} from '../character-system.js';
+import {nationalBudget} from '../national-budget.js';
 
 test('AI without numerical reports estimates from its own sightings rather than real enemy forces',()=>{
  const s=newGame('caesar');s.knowledge.senate.caesar.sightings={};const before=estimatedStrength(s,'senate','caesar');assert.equal(before,4000);
@@ -28,4 +29,22 @@ test('routine wartime recruitment responds to reported strength rather than hidd
  addReport(warned,'senate','caesar',{kind:'strength',value:30000,source:'spy',confidence:'unverified'});
  aiTurn(warned,'senate');
  assert.ok(warned.armies.length>before);
+});
+test('a solvent command with territorial parity can replace a serious reported field deficit below the peacetime cash threshold',()=>{
+ const base=newGrandGame('egypt');base.month=4;base.factions.caesar.treasury=55;base.factions.caesar.food=100;
+ for(const territory of base.regions.filter(r=>r.owner==='senate'&&r.id!=='roma').slice(0,25))territory.owner='caesar';
+ assert.ok(base.regions.filter(r=>r.owner==='caesar').length>base.regions.filter(r=>r.owner==='senate').length);
+ const quiet=structuredClone(base),warned=structuredClone(base),deficit=structuredClone(base),rumor=structuredClone(base),stale=structuredClone(base),contaminated=structuredClone(base),before=base.armies.length;
+ aiTurn(quiet,'caesar');assert.equal(quiet.armies.length,before);
+ for(const state of [warned,deficit])addReport(state,'caesar','senate',{kind:'strength',value:30000,source:'spy',confidence:'unverified'});
+ assert.ok(nationalBudget(warned,'caesar').projectedNet>=0);aiTurn(warned,'caesar');assert.equal(warned.armies.length,before+1);assert.ok(warned.factions.caesar.treasury<base.factions.caesar.treasury-24);
+ for(const territory of deficit.regions.filter(r=>r.owner==='caesar'))territory.tax=0;
+ assert.ok(nationalBudget(deficit,'caesar').projectedNet<0);aiTurn(deficit,'caesar');assert.equal(deficit.armies.length,before);
+ addReport(rumor,'caesar','senate',{kind:'strength',value:30000,source:'spy',confidence:'rumor'});
+ aiTurn(rumor,'caesar');assert.equal(rumor.armies.length,before);
+ addReport(stale,'caesar','senate',{kind:'strength',value:30000,source:'spy',confidence:'unverified',observationYear:stale.year-3,observationMonth:stale.month});
+ aiTurn(stale,'caesar');assert.equal(stale.armies.length,before);
+ addReport(contaminated,'caesar','senate',{kind:'strength',value:30000,source:'spy',confidence:'unverified',observationYear:contaminated.year,observationMonth:contaminated.month-1});
+ addReport(contaminated,'caesar','senate',{kind:'strength',value:35000,source:'spy',confidence:'rumor'});
+ aiTurn(contaminated,'caesar');assert.equal(contaminated.armies.length,before);
 });

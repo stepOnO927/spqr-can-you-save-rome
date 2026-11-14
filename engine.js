@@ -706,18 +706,27 @@ export function aiTurn(s,owner){
   const stretched=s.grandMap&&outnumbered&&enemies.length>0&&fieldStrength<Math.max(6000,owned.length*350);
   const reportedThreat=Math.max(0,...s.wars.filter(w=>w.includes(owner)).map(w=>estimatedStrength(s,owner,w.find(id=>id!==owner))));
   const routineForceNeed=!enemies.length||fieldStrength<Math.max(6000,reportedThreat*1.25);
-  if((emergency||s.month%4===0&&f.manpower>5500&&(f.treasury>65&&routineForceNeed||stretched))&&f.treasury>=24&&f.manpower>=3000&&f.food>=6){
+  const warBudget=nationalBudget(s,owner);
+  const now=s.year*12+s.month;
+  const actionableReportedThreat=Math.max(0,...s.wars.filter(w=>w.includes(owner)).map(w=>{
+    const enemy=w.find(id=>id!==owner);
+    const latest=(s.knowledge?.[owner]?.[enemy]?.reports||[]).filter(report=>report.kind==='strength'&&Number.isFinite(report.value)&&Number.isFinite((report.observationYear??report.year)*12+(report.observationMonth??report.month))).sort((a,b)=>((b.observationYear??b.year)*12+(b.observationMonth??b.month))-((a.observationYear??a.year)*12+(a.observationMonth??a.month)))[0];
+    const observed=(latest?.observationYear??latest?.year)*12+(latest?.observationMonth??latest?.month);
+    return latest&&latest.confidence!=='rumor'&&latest.confidence!=='disputed'&&['spy','envoy','official','exchange'].includes(latest.source)&&now-observed>=0&&now-observed<=24?estimatedStrength(s,owner,enemy):0;
+  }));
+  const sustainableReplacement=actionableReportedThreat>0&&fieldStrength<Math.min(18000,actionableReportedThreat*.7)&&warBudget.projectedNet>=0&&f.food+6*(warBudget.foodNet-3)>=12;
+  if((emergency||s.month%4===0&&f.manpower>5500&&(f.treasury>65&&routineForceNeed||stretched||sustainableReplacement))&&f.treasury>=24&&f.manpower>=3000&&f.food>=6){
     const landFrontier=owned.filter(r=>adjacent(r.id,s).some(e=>!e.sea&&isWar(s,owner,region(s,e.to).owner)));
     const frontier=landFrontier.length?landFrontier:owned.filter(r=>adjacent(r.id,s).some(e=>isWar(s,owner,region(s,e.to).owner)));
     // When a smaller command has troops on one front but none on another,
     // raise the next paid levy at the exposed front instead of always using
     // the first map cell in data order.
     const coverage=new Map();
-    if(stretched)for(const unit of s.armies){
+    if(stretched||sustainableReplacement)for(const unit of s.armies){
       const here=region(s,unit.region);
       if(unit.owner===owner&&unit.men>0&&!unit.move&&!unit.siege&&here?.owner===owner)coverage.set(here.macro,(coverage.get(here.macro)||0)+unit.men);
     }
-    const border=stretched?frontier.map(r=>({r,coverage:coverage.get(r.macro)||0,pressure:adjacent(r.id,s).filter(e=>!e.sea&&isWar(s,owner,region(s,e.to).owner)).length})).sort((a,b)=>a.coverage-b.coverage||b.pressure-a.pressure||b.r.supply-a.r.supply)[0]?.r:frontier[0];
+    const border=stretched||sustainableReplacement?frontier.map(r=>({r,coverage:coverage.get(r.macro)||0,pressure:adjacent(r.id,s).filter(e=>!e.sea&&isWar(s,owner,region(s,e.to).owner)).length})).sort((a,b)=>a.coverage-b.coverage||b.pressure-a.pressure||b.r.supply-a.r.supply)[0]?.r:frontier[0];
     const rally=emergency?owned.find(r=>r.port||r.terrain==='urban')||border||owned[0]:border;
     if(rally)raiseAt(rally.id);
   }
