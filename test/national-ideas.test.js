@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=strategic-player-offer-1';
+import {newGame,upgradeSave} from '../engine.js?v=peace-cursus-1';
 import {startResearch,equipIdea,advanceInventions} from '../inventions.js?v=mission-discount-1';
 import {hasNationalIdea} from '../national-ideas.js?v=grand-chessboard-2';
 import {plotFormationChance} from '../conspiracies.js?v=succession-ui-recovery-1';
 import {religiousPolicy} from '../religion.js?v=succession-ui-recovery-1';
-import {newRevolutionScenario} from '../scenarios.js?v=strategic-player-offer-1';
+import {newRevolutionScenario} from '../scenarios.js?v=peace-cursus-1';
 import {advanceMovements} from '../movements.js?v=succession-ui-recovery-1';
 const enact=(s,id)=>{s.factions.senate.treasury=200;assert.ok(startResearch(s,'senate','gc_'+id).ok);for(let i=0;i<6;i++)advanceInventions(s);assert.ok(equipIdea(s,'senate','gc_'+id).ok);for(let i=0;i<6;i++)advanceInventions(s)};
 test('expansion ideas use existing research and reform slots, surviving saves',()=>{let s=newGame('senate');const before=plotFormationChance(s,'cato');enact(s,'oversight');assert.ok(hasNationalIdea(s,'senate','oversight'));assert.ok(plotFormationChance(s,'cato')<before);s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.ok(hasNationalIdea(s,'senate','oversight'));assert.ok(s.inventions.senate.knownIdeas.includes('gc_oversight'))});

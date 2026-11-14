@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=cursus-strategic-1';
+import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=peace-cursus-1';
 import {appointOffice,officeEffects} from '../office-system.js?v=succession-ui-recovery-1';
 import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=cursus-strategic-1';
 

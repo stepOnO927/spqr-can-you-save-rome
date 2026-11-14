@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,diplomacy,isWar,moveArmy,previewMarch,tick} from '../engine.js?v=strategic-player-offer-1';
+import {newGame,upgradeSave,diplomacy,isWar,moveArmy,previewMarch,tick} from '../engine.js?v=peace-cursus-1';
 import {proposeAgreement,terminateAgreement,activeAgreement,advanceAgreements,visibleAgreements} from '../agreements.js?v=grand-chessboard-2';
 import {addReport,queueMission,advanceOperations} from '../character-system.js?v=succession-ui-recovery-1';
 

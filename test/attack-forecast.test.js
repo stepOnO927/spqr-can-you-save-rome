@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region} from '../engine.js?v=strategic-player-offer-1';
+import {newGame,region} from '../engine.js?v=peace-cursus-1';
 import {reportedArmies} from '../character-system.js?v=succession-ui-recovery-1';
 import {estimateAttackLosses} from '../attack-forecast.js';
 

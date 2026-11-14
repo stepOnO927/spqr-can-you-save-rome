@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,isWar,upgradeSave} from '../engine.js?v=strategic-player-offer-1';
+import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,isWar,upgradeSave} from '../engine.js?v=peace-cursus-1';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {observeDiplomacy} from '../diplomatic-knowledge.js?v=multipolar-2';
 import {buildChessboard} from '../chessboard.js?v=succession-ui-recovery-1';
-import {receivedMail} from '../epistulae.js?v=strategic-player-offer-1';
-import {mailboxHtml} from '../mail-ui.js?v=strategic-player-offer-1';
+import {receivedMail} from '../epistulae.js?v=peace-cursus-1';
+import {mailboxHtml} from '../mail-ui.js?v=peace-cursus-1';
 
 function setup(seed){
  const s=newGame('caesar');s.seed=seed;s.wars.push(['egypt','senate']);s.relations['egypt:parthia']=40;
@@ -76,7 +76,9 @@ function playerOffer(){
 test('a delivered AI offer appears once in the player mailbox and needs a real decision',()=>{
  let s=playerOffer();const offer=s.world.strategicOffers[0],m=receivedMail(s).find(x=>x.context?.offerId===offer.id);
  assert.ok(m);assert.match(mailboxHtml(s,{lang:'zh',selected:m.id}),/请求军事协作/);assert.match(mailboxHtml(s,{lang:'zh',selected:m.id}),/立即宣战/);assert.equal(isWar(s,'caesar','parthia'),false);
+ assert.deepEqual(m.created,{year:offer.year,month:offer.month});m.created={year:s.year,month:s.month};
  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(receivedMail(s).filter(x=>x.context?.offerId===offer.id).length,1);
+ assert.deepEqual(receivedMail(s).find(x=>x.id===m.id).created,{year:offer.year,month:offer.month});
  assert.equal(replyToLetter(s,m.id,'join_war',{answerStrategicOffer}).ok,true);assert.equal(isWar(s,'caesar','parthia'),true);
  assert.equal(s.world.strategicOffers[0].phase,'return');assert.equal(s.world.strategicOffers[0].status,'pending');assert.equal(replyToLetter(s,m.id,'join_war',{answerStrategicOffer}).ok,false);
  const sent=s.mail.messages.find(x=>x.context?.kind==='strategic_reply');assert.ok(sent);assert.equal(sent.delivery,'traveling');advance(s,1);assert.equal(sent.delivery,'traveling');advance(s,1);

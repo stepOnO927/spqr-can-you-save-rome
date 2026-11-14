@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine.js?v=strategic-player-offer-1';
+import {newGame,tick,upgradeSave,resolveBattle,region,diplomacy} from '../engine.js?v=peace-cursus-1';
 import {captureCampaignState,recordCampaignTurn,filterChronicle,formatChronicleEntry,recordIntelligenceReports,syncChronicleDispatches} from '../chronicle.js?v=succession-ui-recovery-1';
 
 test('between-turn dispatches appear once with their original dates without importing unverified legacy entries',()=>{
