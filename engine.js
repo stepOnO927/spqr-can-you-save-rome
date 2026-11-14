@@ -1,7 +1,7 @@
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=newborn-age-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,chronicleLetters} from './epistulae.js?v=epistulae-2';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,chronicleLetters} from './epistulae.js?v=strategic-player-offer-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=epistulae-2';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=epistulae-2';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=strategic-player-offer-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=faces-empire-2';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=faces-empire-2';
@@ -12,7 +12,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=faces-empire-3';
 import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,assignFictionalFieldCommander,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=faces-empire-2';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=faces-empire-3';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=multipolar-autoplay-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=strategic-player-offer-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -123,7 +123,7 @@ export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);migrateHanFrontier(s);initializeDynasties(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeMarkets(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeMissionIdentities(s);upgradeHanWorld(s);initializeMail(s);syncPeaceLetters(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);migrateHanFrontier(s);initializeDynasties(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeMarkets(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeMissionIdentities(s);upgradeHanWorld(s);initializeMail(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
@@ -291,7 +291,7 @@ export function diplomacy(s, actor, target, action, options={}){
 // resources and intelligence. The human cannot be committed by an AI offer.
 export function sendStrategicOffer(s,actor,recipient,target,{autoplayPlayer=false}={}){
  if(!s.factions[actor]||!s.factions[recipient]||!s.factions[target]||new Set([actor,recipient,target]).size!==3||[actor,recipient,target].includes('rebels')||!isWar(s,actor,target))return {ok:false,reason:'unavailable'};
- if(!autoplayPlayer&&(actor===s.player||recipient===s.player))return {ok:false,reason:'player_decision'};
+ if(!autoplayPlayer&&actor===s.player)return {ok:false,reason:'player_decision'};
  const owned=s.regions.filter(r=>r.owner===actor),frontier=owned.some(r=>adjacent(r.id).some(e=>reportedControl(s,actor,e.to)?.owner===recipient)),docs=reportedDiplomacy(s,actor),contact=docs.some(x=>x.status==='active'&&x.parties.includes(actor)&&x.parties.includes(recipient));
  if(!frontier&&!contact)return {ok:false,reason:'contact'};
  if(s.factions[actor].treasury<5)return {ok:false,reason:'treasury'};
@@ -304,11 +304,15 @@ export function sendStrategicOffer(s,actor,recipient,target,{autoplayPlayer=fals
 
 export function advanceStrategicOffers(s,{autoplayPlayer=false}={}){
  for(const offer of s.world.strategicOffers||[]){
+  if(offer.status==='awaiting_decision'){
+   if(autoplayPlayer){offer.status='pending';offer.phase='outbound';offer.remaining=1}
+   else {if(--offer.remaining<=0){offer.status='no_reply';offer.phase='expired'}continue}
+  }
   if(offer.status!=='pending'||--offer.remaining>0)continue;
   const date=s.year*12+s.month;
   if(offer.phase==='outbound'){
    if(strategicRoll(s,offer.actor,offer.id+30)<.1||!s.factions[offer.recipient]||!s.factions[offer.target]){offer.status='no_reply';offer.phase='lost';continue}
-   if(!autoplayPlayer&&offer.recipient===s.player){offer.status='no_reply';offer.phase='unavailable';continue}
+   if(!autoplayPlayer&&offer.recipient===s.player){offer.status='awaiting_decision';offer.phase='at_court';offer.remaining=6;syncStrategicOfferLetters(s);continue}
    const recipient=s.factions[offer.recipient],view=assessOpportunities(s,offer.recipient,estimatedStrength).find(x=>x.target===offer.target),trust=relation(s,offer.recipient,offer.actor),ownWars=s.wars.filter(w=>w.includes(offer.recipient)).length;
    // The sender may have made peace since writing; the recipient has only the
    // letter and its own dated reports, so do not inspect that hidden change.
@@ -318,11 +322,22 @@ export function advanceStrategicOffers(s,{autoplayPlayer=false}={}){
    offer.sealed={decision:accepted?'accepted':'refused',year:s.year,month:s.month};offer.phase='return';offer.remaining=2;continue;
   }
   if(offer.phase==='return'){
-   if(strategicRoll(s,offer.actor,offer.id+90)<.1){offer.status='no_reply';offer.phase='lost';delete offer.sealed;continue}
+   if(strategicRoll(s,offer.actor,offer.id+90)<.1){offer.status='no_reply';offer.phase='lost';const reply=s.mail?.messages?.find(m=>m.id===offer.replyMailId);if(reply)reply.delivery='lost';delete offer.sealed;continue}
    offer.status=offer.sealed?.decision||'no_reply';offer.answeredYear=offer.sealed?.year;offer.answeredMonth=offer.sealed?.month;offer.deliveredYear=s.year;offer.deliveredMonth=s.month;delete offer.sealed;offer.phase='delivered';
+   const reply=s.mail?.messages?.find(m=>m.id===offer.replyMailId);if(reply)reply.delivery='received';
    if(offer.status==='accepted'||offer.status==='refused')rememberPoliticalEvent(s,offer.actor,offer.recipient,offer.status==='accepted'?'cooperation_accepted':'cooperation_refused',offer.status==='accepted'?2:-2);
   }
  }
+}
+
+// Acceptance is the player's own declaration, not an instruction from an AI.
+// The sender learns the decision only if the reply survives its return trip.
+export function answerStrategicOffer(s,id,decision){
+ const offer=(s.world.strategicOffers||[]).find(o=>o.id===id&&o.recipient===s.player&&o.status==='awaiting_decision'&&o.phase==='at_court');
+ if(!offer||!['join_war','refuse','ignore'].includes(decision))return {ok:false,reason:'unavailable'};
+ if(decision==='join_war'&&!isWar(s,s.player,offer.target)&&!diplomacy(s,s.player,offer.target,'war'))return {ok:false,reason:'conditions'};
+ if(decision==='ignore'){offer.status='no_reply';offer.phase='ignored';return {ok:true}}
+ offer.status='pending';offer.phase='return';offer.remaining=2;offer.sealed={decision:decision==='join_war'?'accepted':'refused',year:s.year,month:s.month};return {ok:true};
 }
 
 // Official letters are simulated per sender and persist in compatible saves.
@@ -760,7 +775,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   if(PLAYABLE.includes(owner)&&s.month%6===1&&f.treasury>50){
     const enemy=s.wars.filter(w=>w.includes(owner)).map(w=>w.find(id=>id!==owner)).find(id=>PLAYABLE.includes(id));
     const documents=reportedDiplomacy(s,owner).filter(d=>d.status==='active'),contacts=[...new Set([...reportedNeighbors().map(x=>x.owner),...documents.filter(d=>d.parties.includes(owner)).flatMap(d=>d.parties)])];
-    const partner=contacts.filter(id=>id!==owner&&id!==enemy&&PLAYABLE.includes(id)&&(autoplayPlayer||id!==s.player)&&relation(s,owner,id)>=15&&!documents.some(d=>d.kind==='war'&&d.parties.includes(id)&&d.parties.includes(enemy))).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b))[0];
+    const partner=contacts.filter(id=>id!==owner&&id!==enemy&&PLAYABLE.includes(id)&&relation(s,owner,id)>=15&&!documents.some(d=>d.kind==='war'&&d.parties.includes(id)&&d.parties.includes(enemy))).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b))[0];
     if(enemy&&partner&&strategicRoll(s,owner,149)<.35)sendStrategicOffer(s,owner,partner,enemy,{autoplayPlayer});
   }
   if(review&&s.month%6===0&&f.treasury>40&&f.food>=25&&f.stability>=40&&strength(s,owner)>2000&&s.wars.filter(w=>w.includes(owner)).length<2){

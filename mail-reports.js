@@ -1,4 +1,4 @@
-import {sendLetter,initializeMail} from './epistulae.js?v=epistulae-2';
+import {sendLetter,initializeMail} from './epistulae.js?v=strategic-player-offer-1';
 import {reportedArmies} from './character-system.js?v=faces-empire-2';
 import {CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
 import {MATERIALS} from './inventions.js?v=mission-discount-1';

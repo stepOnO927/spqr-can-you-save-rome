@@ -27,6 +27,7 @@ jobs:
           node scripts/multipolar-sim.mjs > multipolar-simulation.json
           node scripts/market-120-sim.mjs > market-120-simulation.json
           node tools/multipolar-smoke.mjs
+          node tools/player-strategic-offer-smoke.mjs
           node tools/imperium-smoke.mjs
           node tools/fort-intelligence-smoke.mjs
           node tools/warning-ledger-smoke.mjs

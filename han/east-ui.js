@@ -2,7 +2,7 @@
 // and a panel of dispatches. Nothing here reads the live Han simulation.
 import {REGIONS,FACTIONS,ZHOU,THEATERS} from './data.js?v=han-1';
 import {drawMap,CAMERAS,MODES} from './map.js?v=succession-ui-recovery-1';
-import {romanView,EMBASSY_COST,EMBASSY_MONTHS} from './world.js?v=multipolar-autoplay-1';
+import {romanView,EMBASSY_COST,EMBASSY_MONTHS} from './world.js?v=strategic-player-offer-1';
 
 const esc=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const colors=Object.fromEntries(Object.entries(FACTIONS).map(([k,v])=>[k,v.color]));colors.rebels='#3c3c3c';colors.rival_court='#d07a3a';
