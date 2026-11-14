@@ -1,6 +1,7 @@
 import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
 import {createFictionalPerson} from './dynasties.js?v=faces-empire-2';
 import {initializeOffices,appointOffice} from './office-system.js?v=faces-empire-2';
+import {assignCursusPortraits} from './portrait-registry.js?v=faces-empire-2';
 
 const ROMAN=new Set(['caesar','senate']);
 const clamp=n=>Math.max(0,Math.min(100,Math.round(n)));
@@ -98,6 +99,7 @@ export function initializeCursus(s){
  }
  seedSenators(s,c);
  for(const applicant of c.applicants)if(!Number.isFinite(applicant.senatorialSupport))applicant.senatorialSupport=applicant.id===c.varroId?80:clamp(38+(person(s,applicant.id)?.influence||40)/3);
+ assignCursusPortraits(s);
  return c;
 }
 export function officeEligibility(s,id,office){

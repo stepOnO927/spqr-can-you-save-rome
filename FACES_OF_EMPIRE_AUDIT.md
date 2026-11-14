@@ -128,8 +128,9 @@ customs duties. New caravan quotes and AI route costs use that saved rate;
 already dispatched caravans retain their prepaid customs charge. A real
 Han-to-Parthia shipment crossing Yuezhi territory verifies that the Yuezhi
 treasury receives the locked duty once after delivery. The bilingual market
-browser test checks the policy control and save/load. Export bans, merchant
-privileges and broader tariff diplomacy remain to be built.
+browser test checks the policy control and save/load. Export controls and
+named merchant privileges are described below; broader tariff diplomacy
+remains to be built.
 The 120-month market simulation verifies that at least four AI courts place
 orders against real surplus, deliveries complete, stocks and prices remain
 bounded, escrow resolves, merchant IDs persist, transport fees balance, and

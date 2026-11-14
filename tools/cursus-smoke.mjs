@@ -19,9 +19,17 @@ try{
  const first=page.locator('.cursus-candidate').first();
  assert.match(await first.innerText(),/卢基乌斯·瓦罗/);
  assert.match(await first.innerText(),/选情估计/);
- const candidatePortraits=await page.locator('.cursus-candidate .cursus-person img').evaluateAll(nodes=>nodes.slice(0,2).map(n=>n.src));
- assert.equal(candidatePortraits.length,2);
- assert.notEqual(candidatePortraits[0],candidatePortraits[1]);
+ const candidatePortraits=await page.locator('.cursus-candidate .cursus-person img').evaluateAll(nodes=>nodes.map(n=>n.src));
+ assert.equal(candidatePortraits.length,4);
+ assert.equal(new Set(candidatePortraits).size,4);
+ assert.match(candidatePortraits[0],/fictional-cursus-lucius-varro-128\.jpg/);
+ assert.match(candidatePortraits[1],/fictional-cursus-publius-varro-128\.jpg/);
+ assert.match(candidatePortraits[2],/fictional-cursus-aulus-varro-128\.jpg/);
+ assert.match(candidatePortraits[3],/fictional-cursus-gaius-varro-128\.jpg/);
+ await page.locator('.cursus-candidate .cursus-person img').evaluateAll(nodes=>Promise.all(nodes.map(img=>img.decode())));
+ await first.locator('.cursus-person').click();
+ assert.match(await page.locator('#command-detail .character-card img').getAttribute('src'),/fictional-cursus-lucius-varro-128\.jpg/);
+ await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();
  await first.locator('[data-cursus-action="support"]').click();
  await page.locator('.cursus-candidate').first().locator('[data-cursus-action="improper"]').click();
  await page.locator('[data-cursus-office]').selectOption('quaestor');
@@ -52,6 +60,13 @@ try{
  assert.match(await page.locator('.cursus-tree').innerText(),/GOVERNMENT TREE/);
  assert.match(await page.locator('.cursus-tree').innerText(),/Electoral outlook/);
  assert.match(await page.locator('.cursus-tree').innerText(),/Office/);
+ await page.evaluate(()=>{localStorage.clear();sessionStorage.clear()});
+ await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#start-overlay:not([hidden])').waitFor();
+ await page.locator('#roman-faction').selectOption('caesar');await page.locator('#difficulty').selectOption('travel');await page.locator('#start-free').click();await page.locator('#factions').click();await page.locator('[data-faction="caesar"]').click();
+ const caesarPortraits=await page.locator('.cursus-candidate .cursus-person img').evaluateAll(nodes=>nodes.map(n=>n.src));
+ assert.equal(caesarPortraits.length,4);assert.equal(new Set(caesarPortraits).size,4);
+ for(const [index,name] of ['lucius','publius','aulus','gaius'].entries())assert.match(caesarPortraits[index],new RegExp('fictional-cursus-'+name+'-varenus-128\\.jpg'));
+ await page.locator('.cursus-candidate .cursus-person img').evaluateAll(nodes=>Promise.all(nodes.map(img=>img.decode())));
  assert.deepEqual(errors,[]);
  console.log('Cursus Honorom candidate, support, foreign inquiry, save and language switch passed');
 }finally{await browser.close()}
