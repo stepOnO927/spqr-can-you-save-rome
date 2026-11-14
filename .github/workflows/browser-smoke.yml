@@ -86,6 +86,7 @@ jobs:
           node tools/han-defeat-smoke.mjs
           node tools/han-field-smoke.mjs
           node tools/phase-v-smoke.mjs
+          node tools/roman-defeat-smoke.mjs
           node tools/capture-check.mjs
           node tools/map-benchmark.mjs
       - uses: actions/upload-artifact@v4

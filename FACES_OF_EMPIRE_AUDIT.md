@@ -285,6 +285,11 @@ The finished screen offers a new campaign without deleting the saved record.
 An actual siege loss records a recent territory alert in the realm overview.
 Unit and Chromium tests cover defeat, save/load, a frozen date and the
 bilingual alert. The embedded NPC eastern simulation does not self-finalize.
+The Roman recovery deadline now also has a complete Chromium regression:
+after the last field army is removed, the player receives three months to
+rebuild, the fourth turn ends the campaign, the month control freezes, and a
+saved defeat can be opened in both languages and archived through Legacy of
+Rome. This runs in the Browser smoke workflow alongside the Han defeat flow.
 The eastern market now lets the player restrict or reopen exports by measured
 commodity. New foreign quotes, public offers and autonomous buyers honor the
 restriction; domestic transfers and caravans already in transit keep their
