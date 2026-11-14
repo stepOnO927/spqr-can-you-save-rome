@@ -1,0 +1,31 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const page=await browser.newPage({viewport:{width:1366,height:768}});
+const errors=[];page.on('pageerror',e=>errors.push(e.message));
+try{
+ await page.goto('http://127.0.0.1:5173/han/',{waitUntil:'domcontentloaded'});
+ await page.locator('#factionSelect').selectOption('han');
+ await page.locator('#begin').click();
+ await page.locator('#han-court summary').click();
+ await page.locator('#court-office').selectOption('dasinong');
+ const before=await page.locator('#court-candidate option').evaluateAll(els=>els.map(e=>e.value));
+ await page.locator('#court-recommend').click();
+ for(let i=0;i<3;i++)await page.locator('#advance').click();
+ const after=await page.locator('#court-candidate option').evaluateAll(els=>els.map(e=>e.value));
+ const id=after.find(value=>!before.includes(value));assert.ok(id);
+ await page.locator('#court-candidate').selectOption(id);
+ await page.locator('#court-appoint').click();
+ assert.match(await page.locator('#han-court').innerText(),/Grand Minister of Agriculture/);
+ await page.locator('#save').click();
+ let saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ assert.equal(saved.court.offices.dasinong,id);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#load').click();
+ await page.locator('#han-court summary').click();
+ assert.match(await page.locator('#han-court').innerText(),/Grand Minister of Agriculture/);
+ await page.locator('#lang').click();
+ assert.match(await page.locator('#han-court').innerText(),/汉廷官员树/);
+ assert.deepEqual(errors,[]);
+ console.log('Han court appointment, save/load and bilingual browser interaction passed');
+}finally{await browser.close()}
