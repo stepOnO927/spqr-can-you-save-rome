@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {newHanGame,loadHanSave,serialize,generateOfficial} from '../han/engine.js';
+import {newHanGame,loadHanSave,serialize,generateOfficial,tick} from '../han/engine.js';
 import {hanCourtHtml} from '../han/court-ui.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';
-import {appoint,dismiss,startAudit} from '../han/court.js';
+import {appoint,dismiss,startAudit,answerPolicyAdvice} from '../han/court.js';
 import {log} from '../han/util.js';
 
 const MINISTERS=['shi-gao','xiao-wangzhi','hong-gong','yu-dingguo','chen-wannian','liu-xiang','zhou-kan','shi-xian','feng-fengshi','gan-yanshou','chen-tang','feng-liao'];
@@ -106,6 +106,20 @@ test('a pending disaster offers executable bilingual responses with real resourc
  assert.match(zh,/黄河决溢/);assert.match(zh,/40 粮食/);
  assert.match(zh,/data-court-disaster="relief" disabled/);
  assert.match(en,/data-court-disaster="blame_faction"/);
+});
+
+test('ministerial advice and completed policy are visible in both court languages',()=>{
+ const s=newHanGame('han',{seed:500,start:'accession'});tick(s);
+ const en=hanCourtHtml(s,0,'yu-dingguo'),zh=hanCourtHtml(s,1,'yu-dingguo');
+ assert.match(en,/Ministerial advice/);assert.match(en,/Yu Dingguo/);
+ assert.match(en,/Reform recommendations for office/);assert.match(en,/30 treasury/);
+ assert.match(en,/id="court-policy-accept"/);assert.match(en,/id="court-policy-decline"/);
+ assert.match(zh,/大臣建言/);assert.match(zh,/改革察举/);assert.match(zh,/30 国库/);
+ assert.equal(answerPolicyAdvice(s,'accept').ok,true);
+ for(let month=0;month<30&&s.court.edicts[0].status==='implementing';month++)tick(s);
+ assert.equal(s.court.edicts[0].status,'done');
+ assert.match(hanCourtHtml(s,0,'yu-dingguo'),/Implemented policies<\/h3><p class="court-event">[^<]+ · Reform recommendations for office/);
+ assert.match(hanCourtHtml(s,1,'yu-dingguo'),/已完成的政务<\/h3><p class="court-event">[^<]+ · 改革察举/);
 });
 
 test('appointed original official remains selectable with the same portrait and career after dismissal and reload',()=>{

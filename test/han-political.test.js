@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,tick,serialize,loadHanSave} from '../han/engine.js?v=ai-wartime-aid-1';
-import {appoint,adminCapacity,recomputeInfluence,advanceAmbitions,ambitionOptions,issueEdict,startAudit,knownAttributes,answerDebate,respondToDisaster,emperorAuthority,onUsurpation,advanceCourt} from '../han/court.js?v=han-1';
+import {appoint,dismiss,adminCapacity,recomputeInfluence,advanceAmbitions,ambitionOptions,issueEdict,startAudit,knownAttributes,answerDebate,respondToDisaster,emperorAuthority,onUsurpation,advanceCourt,answerPolicyAdvice} from '../han/court.js?v=han-1';
 import {seizeThrone,statusOf,isLiuClan} from '../han/dynasty.js?v=han-1';
 import {startFocus,focusState,advanceFocus,aiChooseFocus,TREES} from '../han/focus.js?v=han-1';
 import {protectorateAction} from '../han/frontier.js?v=han-1';
@@ -118,6 +118,73 @@ test('an unresolved disaster survives new rolls and receives an affordable respo
  advanceCourt(player);
  assert.equal(player.court.pendingDisaster,null,'an insolvent player court also resolves an ignored deadline');
  assert.ok(player.log.some(entry=>entry.kind==='disaster'&&entry.text?.[0]?.includes('magnates')));
+});
+
+test('a named minister proposes a funded edict and owns its completed achievement',()=>{
+ let s=game({seed:500});tick(s);
+ const advice=s.court.policyAdvice;
+ assert.deepEqual([advice.who,advice.office,advice.type],['yu-dingguo','chengxiang','appointment_reform']);
+ const treasury=s.factions.han.treasury;
+ const answer=answerPolicyAdvice(s,'accept');
+ assert.equal(answer.ok,true);assert.equal(s.factions.han.treasury,treasury-30);
+ assert.equal(answer.edict.sponsorId,'yu-dingguo');
+ assert.equal(s.court.policyAdvice,null);
+ s=loadHanSave(serialize(s));
+ assert.equal(s.court.adviceHistory[0].status,'accepted');
+ for(let month=0;month<30&&s.court.edicts[0].status==='implementing';month++)tick(s);
+ assert.equal(s.court.edicts[0].status,'done');
+ assert.equal(s.court.implemented[0].sponsorId,'yu-dingguo');
+ assert.equal(s.court.reformLevel,1);
+ assert.ok(s.persons['yu-dingguo'].career.some(entry=>entry.text?.[0]?.includes('completes Reform recommendations')));
+});
+
+test('declining ministerial advice has a political cost without spending edict resources',()=>{
+ const s=game({seed:500});tick(s);
+ const before={treasury:s.factions.han.treasury,favor:s.court.favor['yu-dingguo']||0,edicts:s.court.edicts.length};
+ assert.equal(answerPolicyAdvice(s,'decline').ok,true);
+ assert.equal(s.court.favor['yu-dingguo'],before.favor-3);
+ assert.equal(s.factions.han.treasury,before.treasury);
+ assert.equal(s.court.edicts.length,before.edicts);
+ assert.equal(s.court.adviceHistory[0].status,'declined');
+});
+
+test('unanswered advice expires, while a legacy court can create new advice after load',()=>{
+ let s=game({seed:500});tick(s);
+ const first=s.court.policyAdvice.id;
+ s.court.policyAdvice.remaining=1;
+ tick(s);
+ assert.equal(s.court.policyAdvice,null);
+ assert.equal(s.court.adviceHistory.find(item=>item.id===first).status,'expired');
+ const old=game({seed:501});delete old.court.policyAdvice;delete old.court.adviceHistory;
+ const restored=loadHanSave(serialize(old));
+ assert.equal(restored.court.policyAdvice,null);
+ assert.deepEqual(restored.court.adviceHistory,[]);
+ tick(restored);
+ assert.equal(restored.court.policyAdvice?.status,'pending');
+});
+
+test('advice from a dismissed sponsor can be cleared but cannot issue an edict',()=>{
+ const s=game({seed:500});tick(s);
+ assert.equal(dismiss(s,'chengxiang').ok,true);
+ assert.equal(answerPolicyAdvice(s,'accept').reason,'sponsor');
+ assert.equal(answerPolicyAdvice(s,'decline').ok,true);
+ assert.equal(s.court.adviceHistory[0].status,'withdrawn');
+ assert.equal(s.court.edicts.length,0);
+});
+
+test('Han AI funds its own minister proposal without revealing the decision to a foreign player',()=>{
+ let s=newHanGame('kangju',{seed:500,start:'accession'});tick(s);
+ const edict=s.court.edicts.find(item=>item.type==='granary'&&item.sponsorId==='zhou-kan');
+ assert.ok(edict);
+ assert.equal(s.court.policyAdvice,null);
+ assert.equal(s.court.adviceHistory[0].status,'accepted');
+ assert.equal(s.log.some(entry=>entry.who==='zhou-kan'),false);
+ s=loadHanSave(serialize(s));
+ for(let month=0;month<20&&s.court.edicts.find(item=>item.id===edict.id)?.status==='implementing';month++)tick(s);
+ assert.equal(s.court.edicts.find(item=>item.id===edict.id).status,'done');
+ assert.ok(s.regions.some(r=>r.owner==='han'&&r.granary>0));
+ assert.ok(s.persons['zhou-kan'].career.some(entry=>entry.text?.[0]?.includes('completes Build ever-normal granaries')));
+ assert.equal(s.log.some(entry=>entry.who==='zhou-kan'),false);
 });
 
 test('29. character relationships persist across time and saves',()=>{

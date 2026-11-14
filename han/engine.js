@@ -6,7 +6,7 @@ import {EURASIAN_FACTIONS,EURASIAN_RULERS} from './eurasia-data.js';
 import {initDependencies,advanceDependencies,changeDependency} from './dependencies.js';
 import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=han-1';
 import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,statusOf,yearsBetween,claimStrength} from './dynasty.js?v=han-1';
-import {initCourt,ensureCourtCareers,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,issueEdict,EDICTS,adminCapacity,emperorAuthority} from './court.js?v=han-1';
+import {initCourt,ensureCourtCareers,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,adminCapacity,emperorAuthority} from './court.js?v=han-1';
 import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=han-1';
 import {initSilk,advanceSilk} from './silk-road.js?v=han-1';
 import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=faces-horse-remounts-1';
@@ -291,7 +291,6 @@ function hanAI(s){
  if(s.player==='han')return;
  if(s.pendingEmpress&&s.month>=5)elevateEmpress(s,s.pendingEmpress);
  if(!s.throne.heir&&s.throne.orthodox){const sons=Object.values(s.persons).filter(p=>p.alive&&p.father===s.throne.orthodox&&eligibility(s,p.id).ok);if(sons[0])s.throne.heir=sons[0].id}
- if(s.month===3&&s.court&&roll(s,'hanEdict')<0.4){const types=Object.keys(EDICTS).filter(t=>!s.court.edicts.some(e=>e.type===t&&e.status!=='stalled'));const t=types[Math.floor(roll(s,'et')*types.length)];if(t)issueEdict(s,t)}
 }
 
 function settleCampaign(s){
@@ -347,6 +346,7 @@ export function loadHanSave(raw){
  s.noArmyWarMonths??=0;s.territorylessMonths??=0;
  initDependencies(s);
  s.court.recommendations||=[];
+ s.court.policyAdvice||=null;s.court.adviceHistory||=[];
  // Older saves did not date opening appointments. Begin the observation clock
  // at load instead of exposing a guessed historical tenure or private skill.
  for(const [office,id] of Object.entries(s.court?.offices||{}))if(id&&s.persons[id]?.alive&&s.persons[id].office===office)s.persons[id].officeSince??={year:s.year,month:s.month};

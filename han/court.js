@@ -11,8 +11,14 @@ import {roll,clamp,log as appendLog,name} from './util.js?v=han-1';
 import {PERSON} from './people.js?v=han-1';
 
 function log(s,text,meta={}){
- if(s.player!=='han')return;
- return appendLog(s,text,meta);
+ if(s.player==='han')return appendLog(s,text,meta);
+ const entry={year:s.year,month:s.month,text,...meta};
+ for(const id of new Set([meta.who,meta.who2]))if(id&&s.persons?.[id]){
+  const career=s.persons[id].career||=[];career.push({...entry});
+  if(career.length>80)career.splice(1,career.length-80);
+  s.persons[id].career=career;
+ }
+ return entry;
 }
 
 const alive=(s,id)=>!!s.persons[id]?.alive;
@@ -38,7 +44,7 @@ const officials=s=>Object.values(s.persons).filter(p=>p.alive&&p.faction===govFa
 export const govFaction=s=>'han';
 
 export function initCourt(s,offices){
- s.court={offices:{...offices},factions:Object.fromEntries(Object.keys(COURT_FACTIONS).map(k=>[k,{influence:20}])),control:{},favor:{},knowledge:{},edicts:[],audits:[],enmity:{},pendingDisaster:null,debates:[],nextId:1,schemes:[],implemented:[]};
+ s.court={offices:{...offices},factions:Object.fromEntries(Object.keys(COURT_FACTIONS).map(k=>[k,{influence:20}])),control:{},favor:{},knowledge:{},edicts:[],audits:[],enmity:{},pendingDisaster:null,policyAdvice:null,adviceHistory:[],debates:[],nextId:1,schemes:[],implemented:[]};
  for(const [office,id] of Object.entries(offices))if(id&&s.persons[id]){s.persons[id].office=office;s.persons[id].officeSince??={year:s.year,month:s.month}}
  recomputeInfluence(s);ensureCourtCareers(s,{opening:true});return s.court;
 }
@@ -107,15 +113,16 @@ export function edictSupport(s,type){
  for(const [k,f] of Object.entries(s.court.factions)){tot+=f.influence;sup+=f.influence*(e.favours.includes(k)?85:e.harms.includes(k)?15:50)}
  return Math.round(sup/Math.max(1,tot)*0.7+emperorAuthority(s)*0.3);
 }
-export function issueEdict(s,type,{region=null,owner='han'}={}){
+export function issueEdict(s,type,{region=null,owner='han',sponsorId=null}={}){
  const e=EDICTS[type],f=s.factions[owner];if(!e)return {ok:false,reason:'unknown'};
+ if(sponsorId&&(!s.persons[sponsorId]?.alive||!Object.values(s.court.offices).includes(sponsorId)))return {ok:false,reason:'sponsor'};
  if(s.court.edicts.some(x=>x.type===type&&x.status==='implementing'))return {ok:false,reason:'already'};
  if((e.cost.treasury||0)>f.treasury||(e.cost.grain||0)>f.grain)return {ok:false,reason:'cost'};
  f.treasury-=e.cost.treasury||0;f.grain-=e.cost.grain||0;
  const support=edictSupport(s,type),cap=adminCapacity(s);
  const needed=Math.max(1,Math.round(e.months*(1.6-cap/100)));
- const ed={id:s.court.nextId++,type,region,support,needed,progress:0,status:'implementing',start:{year:s.year,month:s.month}};
- s.court.edicts.push(ed);log(s,['Edict issued: '+e.name[0]+'. Implementation needs court support ('+support+'%).','下诏：'+e.name[1]+'。推行需朝廷支持（'+support+'%）。'],{kind:'court'});
+ const ed={id:s.court.nextId++,type,region,sponsorId,support,needed,progress:0,status:'implementing',start:{year:s.year,month:s.month}};
+ s.court.edicts.push(ed);log(s,sponsorId?['%NAME% begins implementing '+e.name[0]+'. Court support: '+support+'%.','%NAME%奉诏推行'+e.name[1]+'。朝廷支持：'+support+'%。']:['Edict issued: '+e.name[0]+'. Implementation needs court support ('+support+'%).','下诏：'+e.name[1]+'。推行需朝廷支持（'+support+'%）。'],{who:sponsorId,kind:'court',edict:ed.id});
  return {ok:true,edict:ed};
 }
 function applyEdict(s,ed){
@@ -131,15 +138,72 @@ function applyEdict(s,ed){
   case 'salt_iron':s.saltIron=(s.saltIron||0)+1;f.stability=clamp(f.stability+3);break;
   case 'ritual':s.mandateRitual=(s.mandateRitual||0)+4;break;
  }
- s.court.implemented.push({type:ed.type,year:s.year,month:s.month});
+ s.court.implemented.push({type:ed.type,year:s.year,month:s.month,sponsorId:ed.sponsorId||null});
 }
 function advanceEdicts(s){
  for(const ed of s.court.edicts.filter(x=>x.status==='implementing')){
   ed.support=Math.round(ed.support*0.7+edictSupport(s,ed.type)*0.3);
-  if(ed.support<30&&roll(s,'edict'+ed.id)<0.25){ed.status='stalled';log(s,['Officials obstruct the edict “'+EDICTS[ed.type].name[0]+'”; it stalls.','百官阻挠诏令“'+EDICTS[ed.type].name[1]+'”，推行停滞。'],{kind:'court'});continue}
+  if(ed.support<30&&roll(s,'edict'+ed.id)<0.25){ed.status='stalled';log(s,['Officials obstruct the edict “'+EDICTS[ed.type].name[0]+'”; it stalls.','百官阻挠诏令“'+EDICTS[ed.type].name[1]+'”，推行停滞。'],{who:ed.sponsorId,kind:'court',edict:ed.id});continue}
   ed.progress+=ed.support>=50?1:0.5;
-  if(ed.progress>=ed.needed){ed.status='done';applyEdict(s,ed);log(s,['Edict implemented: '+EDICTS[ed.type].name[0]+'.','诏令推行完毕：'+EDICTS[ed.type].name[1]+'。'],{kind:'court'})}
+  if(ed.progress>=ed.needed){ed.status='done';applyEdict(s,ed);log(s,ed.sponsorId?['%NAME% completes '+EDICTS[ed.type].name[0]+'.','%NAME%完成'+EDICTS[ed.type].name[1]+'。']:['Edict implemented: '+EDICTS[ed.type].name[0]+'.','诏令推行完毕：'+EDICTS[ed.type].name[1]+'。'],{who:ed.sponsorId,kind:'court',edict:ed.id})}
  }
+}
+
+function proposedCourtPolicy(s){
+ const han=s.factions.han,own=s.regions.filter(r=>r.owner==='han');
+ const loyalty=own.reduce((sum,r)=>sum+r.loyalty,0)/Math.max(1,own.length);
+ const plans=[
+  {office:'chengxiang',type:'tax_relief',priority:loyalty<62?100:0},
+  {office:'hexi',type:'frontier_levy',priority:s.wars.some(w=>w.includes('han'))?80:0},
+  {office:'dasinong',type:'granary',priority:own.some(r=>r.grain>=7&&(r.granary||0)<3)?han.grain<180?75:50:0},
+  {office:'chengxiang',type:'appointment_reform',priority:(s.court.reformLevel||0)<1?40:0}
+ ];
+ return plans.filter(plan=>{
+  const id=s.court.offices[plan.office],person=s.persons[id],edict=EDICTS[plan.type];
+  return plan.priority&&person?.alive&&person.faction==='han'&&person.office===plan.office&&
+   (edict.cost.treasury||0)+(s.player!=='han'&&edict.cost.treasury?80:0)<=han.treasury&&(edict.cost.grain||0)<=han.grain&&
+   !s.court.edicts.some(item=>item.type===plan.type&&['implementing','done'].includes(item.status));
+ }).sort((a,b)=>b.priority-a.priority||(s.persons[s.court.offices[b.office]].competence||0)-(s.persons[s.court.offices[a.office]].competence||0))[0]||null;
+}
+
+export function answerPolicyAdvice(s,response,{autonomous=false}={}){
+ const advice=s.court.policyAdvice;
+ if(!advice||!['accept','decline'].includes(response)||(!autonomous&&s.player!=='han'))return {ok:false,reason:'invalid'};
+ const sponsor=s.persons[advice.who];
+ const sponsorActive=sponsor?.alive&&s.court.offices[advice.office]===advice.who;
+ if(response==='accept'&&!sponsorActive)return {ok:false,reason:'sponsor'};
+ let edict=null;
+ if(response==='accept'){
+  const result=issueEdict(s,advice.type,{sponsorId:advice.who});
+  if(!result.ok)return result;
+  edict=result.edict;
+  s.court.favor[advice.who]=(s.court.favor[advice.who]||0)+3;
+ }else if(sponsorActive){
+  s.court.favor[advice.who]=(s.court.favor[advice.who]||0)-3;
+  log(s,['The court declines %NAME%’s policy proposal.','朝廷未采纳%NAME%的施政建议。'],{who:advice.who,kind:'court'});
+ }
+ advice.status=response==='accept'?'accepted':sponsorActive?'declined':'withdrawn';advice.resolved={year:s.year,month:s.month};
+ s.court.adviceHistory.push(advice);if(s.court.adviceHistory.length>40)s.court.adviceHistory.shift();
+ s.court.policyAdvice=null;recomputeInfluence(s);
+ return {ok:true,advice,edict};
+}
+
+function advancePolicyAdvice(s){
+ const pending=s.court.policyAdvice;
+ if(pending){
+  pending.remaining--;
+  if(pending.remaining<=0||!s.persons[pending.who]?.alive||s.court.offices[pending.office]!==pending.who){
+   pending.status='expired';pending.resolved={year:s.year,month:s.month};
+   s.court.adviceHistory.push(pending);if(s.court.adviceHistory.length>40)s.court.adviceHistory.shift();
+   s.court.policyAdvice=null;
+  }
+ }
+ if(s.month!==3||s.court.pendingDisaster||s.court.policyAdvice||s.court.adviceHistory.some(item=>item.created?.year===s.year))return;
+ const plan=proposedCourtPolicy(s);if(!plan)return;
+ const who=s.court.offices[plan.office],advice={id:s.court.nextId++,who,office:plan.office,type:plan.type,created:{year:s.year,month:s.month},remaining:3,status:'pending'};
+ s.court.policyAdvice=advice;
+ log(s,['%NAME% recommends '+EDICTS[plan.type].name[0]+'.','%NAME%建议'+EDICTS[plan.type].name[1]+'。'],{who,kind:'court',advice:advice.id});
+ if(s.player!=='han')answerPolicyAdvice(s,'accept',{autonomous:true});
 }
 
 // ---------- audits & corruption (evidence only) ----------
@@ -439,5 +503,6 @@ export function advanceCourt(s){
  advanceDispute(s);settleThroneWars(s);
  enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
  computeMandate(s);
+ advancePolicyAdvice(s);
 }
 export {STATIC_REGIONS};

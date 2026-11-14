@@ -35,6 +35,8 @@ try{
  for(let i=0;i<3;i++)await page.locator('#advance').click();
  const afterRecommendation=await page.locator('[data-court-person]').evaluateAll(nodes=>nodes.map(node=>node.dataset.courtPerson));
  const recommended=afterRecommendation.find(id=>!beforeRecommendation.includes(id));assert.ok(recommended);
+ assert.match(await page.locator('.court-advice').innerText(),/Ministerial advice/);
+ assert.match(await page.locator('.court-advice').innerText(),/Build ever-normal granaries/);
  await page.locator(`[data-court-person="${recommended}"]`).click();
  assert.match(await profile.innerText(),/original campaign person/);
  assert.match(await profile.innerText(),/Culture\s+Han Chinese/);
@@ -42,6 +44,12 @@ try{
  assert.match(await profile.innerText(),/Last recorded location\s+\S+/);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#court-panel').click();
  assert.equal(await page.locator(`[data-court-person="${recommended}"]`).count(),1);
+ assert.match(await page.locator('.court-advice').innerText(),/Build ever-normal granaries/);
+ await page.locator('#court-policy-accept').click();
+ assert.match(await page.locator('#message').innerText(),/Edict issued/);
+ assert.equal(await page.locator('#court-policy-accept').count(),0);
+ await page.locator('[data-court-person="shi-gao"]').click();
+ assert.match(await profile.innerText(),/Shi Gao begins implementing Build ever-normal granaries/);
  await page.locator(`[data-court-person="${recommended}"]`).click();assert.match(await profile.innerText(),/Culture\s+Han Chinese/);
  await page.locator('[data-court-person="hong-gong"]').click();
  assert.equal(await page.locator('#court-office option[value="chengxiang"]').count(),0);

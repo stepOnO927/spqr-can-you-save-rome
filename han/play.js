@@ -7,7 +7,7 @@ import {declareWar,propose,atWar} from './frontier.js';
 import {marketReasonName,renderEasternMarketPanel} from './market-ui.js?v=faces-horse-remounts-1';
 import {renderHanCourtPanel} from './court-ui.js?v=faces-of-empire-4';
 import {ownRulerHtml} from './ruler-ui.js';
-import {appoint,startAudit,respondToDisaster} from './court.js?v=han-1';
+import {appoint,startAudit,respondToDisaster,answerPolicyAdvice} from './court.js?v=han-1';
 import {init as initExperience,act as experienceAction} from './experience.js?v=government-courier-guidance-1';
 import {renderExperience} from './experience-ui.js?v=government-courier-guidance-1';
 const $=id=>document.getElementById(id),D=(en,zh)=>lang?zh:en,L=a=>Array.isArray(a)?a[lang]||a[0]:a;
@@ -61,7 +61,8 @@ function render(){
    onAppoint:(id,office)=>{const result=appoint(s,office,id);message(result.ok?'Appointment made.':`Appointment failed: ${result.reason}.`,result.ok?'任命已生效。':'任命未获准。');render()},
    onRecommend:office=>{const result=recommendOfficial(s,office);message(result.ok?'Recommendation requested; return in three months.':`Recommendation unavailable: ${result.reason}.`,result.ok?'已提出察举请求；三个月后查看。':'无法察举此官。');render()},
    onAudit:id=>{const result=startAudit(s,id);message(result.ok?'Audit opened.':`Audit unavailable: ${result.reason}.`,result.ok?'稽查已启动。':'无法启动稽查。');render()},
-   onDisaster:(response,faction)=>{const result=respondToDisaster(s,response,{faction});message(result.ok?'Court response enacted.':`Response failed: ${result.reason}.`,result.ok?'朝廷已作出应对。':'应对未获执行。');render()}
+   onDisaster:(response,faction)=>{const result=respondToDisaster(s,response,{faction});message(result.ok?'Court response enacted.':`Response failed: ${result.reason}.`,result.ok?'朝廷已作出应对。':'应对未获执行。');render()},
+   onPolicyAdvice:response=>{const result=answerPolicyAdvice(s,response);message(result.ok?response==='accept'?'Edict issued.':'Advice declined.':`Policy unavailable: ${result.reason}.`,result.ok?response==='accept'?'诏令已颁行。':'建言未获采纳。':'此项建言暂不可执行。');render()}
   });renderChronicle();return
  }
  let detail=`<h2>${D('Inspect','检视')}</h2>`;

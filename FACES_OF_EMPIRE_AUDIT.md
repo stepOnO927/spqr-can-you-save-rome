@@ -51,6 +51,17 @@ eligible courtier is available. The appointment uses the existing court rules,
 changes administrative capacity, persists in the save, and stays out of a
 foreign player's immediate Chronicle. Player-controlled Han vacancies still
 await the player's appointment decision.
+Senior Han officeholders now propose an annual policy from measured loyalty,
+war pressure, grain and local granary coverage. The player can accept or
+decline the named minister's advice in either language; acceptance uses the
+existing edict's treasury, court support, implementation time and actual
+regional effect. Declining reduces that minister's favor. The Han NPC court
+accepts an affordable proposal through the same edict path instead of issuing
+a random March edict. The sponsor and completed policy stay in the person's
+career and save, while a foreign player receives no immediate court notice.
+Unanswered advice expires and older saves initialize the new advice fields.
+Broader autonomous investigations, minister alliances and diplomatic
+negotiations remain open.
 Its opening armies and newly recruited formations now receive saved, named
 field commanders from distinct Han, steppe, oasis and western cultural pools;
 the independent campaign displays those names instead of raw IDs. Historical
