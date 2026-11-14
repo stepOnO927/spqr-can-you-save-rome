@@ -31,7 +31,7 @@ test('boarding can capture a named commander who stays captive through save relo
 test('AI reserves an unaffordable docked fleet and recommissions it after a dated hostile sighting',()=>{
  let s=newGrandGame('senate');s.factions.caesar.treasury=90;const id='caesar-adriatic',full=fleetUpkeepDue(s.naval.fleets.find(f=>f.id===id));advanceNaval(s);let f=s.naval.fleets.find(x=>x.id===id);assert.equal(f.reserve,true);assert.equal(f.order,null);assert.ok(fleetUpkeepDue(f)<full);
  s=upgradeSave(JSON.parse(JSON.stringify(s)));f=s.naval.fleets.find(x=>x.id===id);s.factions.caesar.treasury=45;s.naval.intel.caesar={'senate-adriatic':{owner:'senate',zone:f.zone,year:s.year,month:s.month,source:'sighting',range:[1,5],confidence:'low'}};advanceNaval(s);assert.equal(f.reserve,true);assert.ok(!f.mobilizing);
- s.factions.caesar.treasury=120;advanceNaval(s);assert.equal(f.reserve,true);assert.equal(f.mobilizing,1);advanceNaval(s);assert.equal(f.reserve,false);assert.equal(f.mobilizing,0);
+ s.factions.caesar.treasury=120;advanceNaval(s);assert.equal(f.reserve,true);assert.equal(f.mobilizing,2);advanceNaval(s);assert.equal(f.reserve,true);assert.equal(f.mobilizing,1);advanceNaval(s);assert.equal(f.reserve,false);assert.equal(f.mobilizing,0);
 });
 test('an offshore patrol cannot fight a fleet sheltered in port until it sorties',()=>{
  const s=newGrandGame('senate'),patrol=s.naval.fleets.find(f=>f.id==='senate-adriatic'),sheltered=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
@@ -115,24 +115,26 @@ test('critically damaged and unsupplied fleets can retreat but cannot start a ne
 test('reserve cuts real upkeep but suspends orders and troop transports until mobilization completes',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),full=fleetUpkeepDue(f),before=nationalBudget(s,'senate');
  assert.equal(reserveFleet(s,'senate',f.id).ok,true);assert.equal(reserveFleet(s,'senate',f.id).ok,false);
- assert.equal(fleetUpkeepDue(f),Math.ceil(fleetUpkeep(f)*.35));assert.equal(nationalBudget(s,'senate').navyUpkeep,before.navyUpkeep-full+fleetUpkeepDue(f));
+ assert.equal(fleetUpkeepDue(f),Math.ceil(fleetUpkeep(f)*.15));assert.equal(nationalBudget(s,'senate').navyUpkeep,before.navyUpkeep-full+fleetUpkeepDue(f));
  assert.equal(orderFleet(s,'senate',f.id,'patrol','adriatic').ok,false);assert.equal(accessibleFleet(s,'senate',f.port,2000),undefined);
  const money=s.factions.senate.treasury,food=s.factions.senate.food;assert.equal(mobilizeFleet(s,'senate',f.id).ok,true);assert.equal(s.factions.senate.treasury,money-6);assert.equal(s.factions.senate.food,food-2);assert.equal(orderFleet(s,'senate',f.id,'patrol','adriatic').ok,false);
- const restored=upgradeSave(JSON.parse(JSON.stringify(s))),saved=restored.naval.fleets.find(x=>x.id===f.id);assert.equal(saved.reserve,true);assert.equal(saved.mobilizing,1);
- restored.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';advanceNaval(restored);assert.equal(saved.reserve,false);assert.equal(saved.mobilizing,0);assert.equal(fleetUpkeepDue(saved),full);assert.equal(orderFleet(restored,'senate',saved.id,'patrol','adriatic').ok,true);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s))),saved=restored.naval.fleets.find(x=>x.id===f.id);assert.equal(saved.reserve,true);assert.equal(saved.mobilizing,2);
+ restored.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';advanceNaval(restored);assert.equal(saved.reserve,true);assert.equal(saved.mobilizing,1);assert.equal(orderFleet(restored,'senate',saved.id,'patrol','adriatic').ok,false);
+ advanceNaval(restored);assert.equal(saved.reserve,false);assert.equal(saved.mobilizing,0);assert.equal(fleetUpkeepDue(saved),full);assert.equal(orderFleet(restored,'senate',saved.id,'patrol','adriatic').ok,true);
 });
 test('reserve ships cannot carry merchant cargo, and loss of their harbor ends reserve',()=>{
  const s=newGrandGame('senate'),egypt=s.naval.fleets.find(x=>x.owner==='egypt'),senate=s.naval.fleets.find(x=>x.owner==='senate');
  s.factions.senate.food=0;
  assert.equal(reserveFleet(s,'egypt',egypt.id).ok,true);advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
- assert.equal(mobilizeFleet(s,'egypt',egypt.id).ok,true);advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');assert.equal(egypt.reserve,false);advanceNaval(s);assert.notEqual(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
+ assert.equal(mobilizeFleet(s,'egypt',egypt.id).ok,true);advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');assert.equal(egypt.reserve,true);advanceNaval(s);assert.equal(egypt.reserve,false);advanceNaval(s);assert.notEqual(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
  assert.equal(reserveFleet(s,'senate',senate.id).ok,true);s.regions.find(r=>r.id===senate.port).owner='caesar';s.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';advanceNaval(s);assert.equal(senate.reserve,false);assert.equal(senate.port,null);assert.ok(senate.hull<100);
 });
 test('a fleet mobilizing in harbor stays sheltered until it sorties',()=>{
  const s=newGrandGame('senate'),own=s.naval.fleets.find(x=>x.owner==='senate'),enemy=s.naval.fleets.find(x=>x.owner==='caesar');
  s.factions.caesar.treasury=300;
  assert.equal(reserveFleet(s,'senate',own.id).ok,true);assert.equal(mobilizeFleet(s,'senate',own.id).ok,true);enemy.zone=own.zone;enemy.port=null;advanceNaval(s);
- assert.equal(s.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(own.id)),false);assert.equal(own.reserve,false);
+ assert.equal(s.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(own.id)),false);assert.equal(own.reserve,true);
+ advanceNaval(s);assert.equal(own.reserve,false);
  assert.equal(orderFleet(s,'senate',own.id,'patrol','adriatic').ok,true);advanceNaval(s);
  assert.ok(s.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(own.id)));
 });
