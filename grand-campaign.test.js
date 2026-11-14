@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {GRAND_SITES,GRAND_ROUTES,GRAND_GROUPS} from './grand-map-data.js';
-import {newGame,newGrandGame,convertToGrandMap,upgradeSave,previewMarch,moveArmy,tick,aiTurn,recruitFigure,setReligiousPolicy,portZone,nationalBudget} from './engine.js';
+import {newGame,newGrandGame,convertToGrandMap,upgradeSave,previewMarch,moveArmy,tick,aiTurn,recruitFigure,researchInnovation,setReligiousPolicy,portZone,nationalBudget} from './engine.js';
 import {budgetHtml} from './budget-ui.js';
 import {grandAdjacent,armySupply,encircled,holdPosition,strategicRetreat,flankFactor,navalCapacity,availableNavalLift,canEmbark,supplyBottlenecks} from './grand-operations.js';
 import {advanceFigures,figureActive} from './great-figures.js';
+import {MATERIALS,researchTerms} from './development.js';
 import {faithSatisfaction,advanceDemography,advanceReligion,religionPanel} from './local-society.js';
 import {advanceRecon} from './reconnaissance.js';
 import grandPolygons from './grand-territory-polygons.js';
@@ -159,6 +160,36 @@ test('AI probes a contested border using only local reports before a cash-starve
 });
 test('historical engineer travels before construction bonus and faith affects local society',()=>{
  const s=newGrandGame('caesar'),offer=recruitFigure(s,'caesar','mamurra');assert.equal(offer.ok,true);assert.equal(figureActive(s,'caesar','engineer'),false);for(let i=0;i<offer.months;i++)advanceFigures(s);assert.equal(figureActive(s,'caesar','engineer'),true);const region=s.regions.find(r=>r.id==='egypt');region.owner='caesar';region.integration=30;s.month=3;assert.equal(faithSatisfaction(s,region),-1);s.development.caesar.slots.culture[0]='cultural-accommodation';assert.equal(faithSatisfaction(s,region),-1);const origin=s.regions.find(r=>r.id==='cisalpine'),neighbor=s.regions.find(r=>r.id==='t005');neighbor.owner='caesar';origin.civicSatisfaction=20;neighbor.civicSatisfaction=80;const before=origin.population;advanceDemography(s);assert.ok(origin.population<before)
+});
+test('foreign historical specialist answers before paid travel, survives reload and changes real research',()=>{
+ let s=newGrandGame('egypt');s.relations['egypt:senate']=60;s.factions.egypt.treasury=300;s.seed=1;
+ const original=s.factions.egypt.treasury,offer=recruitFigure(s,'egypt','varro');
+ assert.equal(offer.ok,true);assert.equal(offer.pending,true);assert.equal(s.factions.egypt.treasury,original-5);
+ assert.equal(figureActive(s,'egypt','scholar'),false);assert.equal(s.greatFigures.invitations.length,1);
+ assert.equal(recruitFigure(s,'egypt','varro').ok,false,'a reload or second click cannot create a duplicate invitation');
+ s=upgradeSave(structuredClone(s));const messages=[];advanceFigures(s,(en,zh)=>messages.push({en,zh}));
+ assert.equal(s.greatFigures.invitations.length,0);assert.equal(s.greatFigures.journeys.length,1);
+ assert.equal(s.factions.egypt.treasury,original-35);assert.equal(s.world.characters.varro.faction,'senate');
+ assert.ok(messages.some(m=>m.en.includes('accepted')&&m.zh.includes('接受')));
+ const months=s.greatFigures.journeys[0].remaining;
+ for(let i=0;i<months;i++)advanceFigures(s);
+ assert.equal(figureActive(s,'egypt','scholar'),true);
+ const known=s.development.egypt.knownMaterial.includes('roadmaking');assert.equal(known,false);
+ const terms=researchTerms(s,'egypt','material','roadmaking'),base=MATERIALS.find(item=>item.id==='roadmaking');
+ assert.equal(terms.cost,Math.max(8,base.cost-3));assert.equal(terms.months,Math.max(1,base.months-1));
+ const before=s.factions.egypt.treasury;const research=researchInnovation(s,'egypt','material','roadmaking');
+ assert.equal(research.ok,true);assert.equal(s.factions.egypt.treasury,before-terms.cost);assert.equal(s.development.egypt.research.remaining,terms.months);
+});
+test('a declined or invalid foreign invitation spends only its courier fee once',()=>{
+ const refused=newGrandGame('egypt');refused.relations['egypt:senate']=30;refused.factions.egypt.treasury=300;refused.seed=1000;
+ const before=refused.factions.egypt.treasury;assert.equal(recruitFigure(refused,'egypt','varro').pending,true);
+ const messages=[];advanceFigures(refused,(en,zh)=>messages.push({en,zh}));
+ assert.equal(refused.factions.egypt.treasury,before-5);assert.equal(refused.greatFigures.journeys.length,0);assert.equal(refused.greatFigures.invitations.length,0);
+ assert.ok(messages.some(m=>m.en.includes('declined')&&m.zh.includes('遭拒')));
+ const saved=upgradeSave(structuredClone(refused));advanceFigures(saved);assert.equal(saved.factions.egypt.treasury,before-5);
+ const blocked=newGrandGame('egypt');blocked.relations['egypt:senate']=60;blocked.factions.egypt.treasury=300;
+ assert.equal(recruitFigure(blocked,'egypt','varro').pending,true);blocked.wars.push(['egypt','senate']);advanceFigures(blocked);
+ assert.equal(blocked.factions.egypt.treasury,295);assert.equal(blocked.greatFigures.journeys.length,0);
 });
 test('regional rites change satisfaction after a political transition and migration carries traditions',()=>{
  const s=newGrandGame('caesar'),egypt=s.regions.find(r=>r.id==='egypt');egypt.owner='caesar';egypt.integration=30;s.month=3;

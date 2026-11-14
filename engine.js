@@ -808,7 +808,7 @@ export function tick(s){
   const before=s.briefingBaseline||beginBriefing(s);
   s.month++;if(s.month>12){s.month=1;s.year++;if(s.year===0)s.year=1}
   refreshReportConfidence(s);
-  advanceRecon(s);advanceFigures(s);
+  advanceRecon(s);advanceFigures(s,(en,zh)=>log(s,en,zh));
   advanceOffices(s);advanceDevelopment(s,(en,zh)=>log(s,en,zh));advanceReligion(s);economy(s);removeDepletedArmies(s,'food');advanceNaval(s,log);seasonalWaterStress(s);advanceOperationalState(s);removeDepletedArmies(s,'supply');
   for(const unit of s.armies.filter(a=>a.trainingRemaining>0)){unit.trainingRemaining--;if(unit.trainingRemaining===0&&unit.men>0){unit.experience=Math.min(5,unit.experience+1);unit.morale=Math.min(100,unit.morale+4);if(unit.owner===s.player)log(s,`${unit.name[0]} completed field training.`,`${unit.name[1]}完成野战训练。`)}}
   const intercepted=new Set();

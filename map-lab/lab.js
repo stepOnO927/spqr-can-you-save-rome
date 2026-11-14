@@ -18,8 +18,8 @@ import {budgetHtml} from '../budget-ui.js?v=18';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=26';
 import {physicalLabels} from './physical-labels.js?v=1';
-import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials} from '../engine.js?v=174';
-import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=39';
+import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=175';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=40';
 import {FACTIONS} from '../data.js?v=9';
 import {identity,factionMark} from '../identity.js?v=2';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=15';
@@ -35,7 +35,7 @@ import {assessment,sendScouts,probePositions,delayAttack,markReconRegion,request
 import {intelligenceHtml,afterActionHtml,fortificationText} from '../recon-ui.js?v=6';
 import {renderNavalPanel} from './naval-ui.js?v=48';
 import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=33';
-import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=174';
+import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates} from '../engine.js?v=175';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
@@ -71,6 +71,7 @@ function showDevelopment(page='research'){
   panel.querySelectorAll('[data-dev-branch]').forEach(button=>button.onclick=()=>{devBranch=button.dataset.devBranch;showDevelopment(page)});
   const act=(selector,fn)=>panel.querySelectorAll(selector).forEach(button=>button.onclick=()=>{const result=fn(button);if(result.ok){renderHud();showDevelopment(page)}else{const feedback=document.createElement('p');feedback.className='dev-status';feedback.textContent=`${lang==='zh'?'操作不可用':'Unavailable'}: ${result.reason}`;button.after(feedback)}});
   act('[data-research]',b=>researchInnovation(state,state.player,b.dataset.researchBranch,b.dataset.research));
+  act('[data-recruit-figure]',b=>recruitFigure(state,state.player,b.dataset.recruitFigure));
   act('[data-adopt-idea]',b=>adoptIdea(state,state.player,b.dataset.adoptIdea,Number(b.dataset.slot)));
   act('[data-remove-idea]',b=>removeIdea(state,state.player,b.dataset.removeIdea,Number(b.dataset.slot)));
   act('[data-expand-idea]',b=>expandIdeaSlot(state,state.player,b.dataset.expandIdea));

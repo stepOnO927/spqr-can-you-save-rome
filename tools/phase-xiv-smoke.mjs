@@ -305,6 +305,31 @@ try{
   assert.equal(await page.locator('[data-accept-scholar-host="senate"]').count(),0);
   await page.locator('[data-dev-branch="idea"]').click();
   assert.match(await page.locator('#tech-court-informant-patronage').innerText(),/宫廷情报人员扶持/);
+  for(const language of ['en','zh']){
+    const figureCampaign=newGrandGame('egypt');figureCampaign.relations['egypt:senate']=60;figureCampaign.factions.egypt.treasury=300;figureCampaign.seed=1;
+    await page.evaluate(value=>localStorage.setItem('spqr-lang',value),language);
+    await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+    await page.locator('#entry-file').setInputFiles({name:`figure-${language}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(figureCampaign))});
+    await page.locator('[data-tab="development"]').click();
+    const invite=page.locator('[data-recruit-figure="varro"]');
+    assert.equal(await invite.isEnabled(),true);
+    assert.match(await page.locator('.dev-build-row').filter({has:invite}).locator('a').getAttribute('href'),/oxford|academic\.oup\.com/i);
+    assert.match(await invite.innerText(),language==='zh'?/先付5国库；接受后付30国库/:/5¤ now \+ 30¤ on acceptance/);
+    await invite.click();
+    assert.match(await page.locator('.inspector').innerText(),language==='zh'?/1个月后答复/:/1m until reply/);
+    assert.equal(await page.locator('[data-recruit-figure="varro"]').isDisabled(),true);
+    await page.locator('#step').click();
+    assert.match(await page.locator('.inspector').innerText(),language==='zh'?/个月行程/:/m travel/);
+  }
+  const atlasFigure=newGrandGame('egypt');atlasFigure.relations['egypt:senate']=60;atlasFigure.factions.egypt.treasury=300;atlasFigure.seed=1;
+  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),atlasFigure);
+  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+  await page.locator('#development').click();
+  assert.equal(await page.locator('[data-recruit-figure="varro"]').isEnabled(),true);
+  await page.locator('[data-recruit-figure="varro"]').click();
+  assert.match(await page.locator('#command-detail').innerText(),/1个月后答复/);
+  await page.locator('#advance').click();
+  assert.match(await page.locator('#command-detail').innerText(),/个月行程/);
   assert.deepEqual(errors,[]);
   console.log('Phase XIV browser smoke passed: research, adoption, construction, knowledge agreements and consent-based trades in both languages.');
 }finally{await browser.close()}
