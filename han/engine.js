@@ -1,7 +1,7 @@
 // MANDATE OF HEAVEN — campaign engine. Independent of the Roman engine: the
 // Roman campaign, its saves and its modules are untouched. Han saves use
 // their own storage keys and carry dlc:'mandate-of-heaven'.
-import {START,REGIONS,FACTIONS,PLAYABLE,OASIS} from './data.js?v=han-1';
+import {START,REGIONS,FACTIONS,PLAYABLE,OASIS,OFFICES} from './data.js?v=han-1';
 import {EURASIAN_FACTIONS,EURASIAN_RULERS} from './eurasia-data.js';
 import {initDependencies,advanceDependencies,changeDependency} from './dependencies.js';
 import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=han-1';
@@ -235,6 +235,22 @@ export function generateOfficial(s,office){
  s.persons[id]={id,name:[`${sn[0]} ${gv[0]}`,`${sn[1]}${gv[1]}`],surname:sn[0],birthSurname:sn[0],sex:'m',birth,death:null,father:null,mother:null,record:'fictional',faction:'han',role:office==='duhu'||office==='hexi'?'general':'official',courtFaction:factions[Math.floor(roll(s,'cf'+id)*factions.length)],alive:true,ambition:Math.floor(20+roll(s,'a'+id)*70),competence:Math.floor(35+roll(s,'c'+id)*50),loyalty:Math.floor(40+roll(s,'l'+id)*50),corruption:Math.floor(roll(s,'k'+id)*60),military:Math.floor(30+roll(s,'m'+id)*50),spouse:[]};
  return s.persons[id];
 }
+export function recommendOfficial(s,office){
+ if(s.player!=='han'||!OFFICES[office]||OFFICES[office].requiresLiu)return {ok:false,reason:'authority'};
+ s.court.recommendations||=[];
+ if(s.court.recommendations.some(x=>x.office===office&&x.status==='pending'))return {ok:false,reason:'pending'};
+ if(s.factions.han.treasury<15)return {ok:false,reason:'treasury',cost:15};
+ s.factions.han.treasury-=15;
+ const request={id:`recommendation:${monthIndex(s)}:${office}`,office,remaining:3,status:'pending',requested:{year:s.year,month:s.month}};
+ s.court.recommendations.push(request);return {ok:true,cost:15,months:3,id:request.id};
+}
+function advanceRecommendations(s){
+ for(const request of s.court.recommendations||[]){
+  if(request.status!=='pending'||--request.remaining>0)continue;
+  const candidate=generateOfficial(s,request.office);request.status='arrived';request.personId=candidate.id;request.arrived={year:s.year,month:s.month};
+  log(s,['A recommended official arrives: %NAME%.','察举荐来的官员抵达：%NAME%。'],{who:candidate.id,kind:'court'});
+ }
+}
 // Recorded events at fixed dates (only the opening succession of 48 BCE).
 function scheduledEvents(s){
  for(const e of (s.scheduled||[]).filter(e=>!e.done&&e.year===s.year&&e.month===s.month)){
@@ -279,7 +295,7 @@ export function tick(s){
  if(s.finalized)return s;
  advanceDate(s);
  scheduledEvents(s);movement(s);battles(s);sieges(s);supply(s);economy(s);lives(s);
- hanAI(s);advanceCourt(s);
+ hanAI(s);advanceCourt(s);advanceRecommendations(s);
  advanceFrontier(s,{issueMove:(a,to)=>moveArmy(s,a.id,to,{owner:a.owner})});
  advanceSilk(s);advanceDependencies(s);advanceFocus(s);
  if(s.throne.dynasty&&!s.throne.dynasty.orthodox)s.usurperMonths=(s.usurperMonths||0)+1;
@@ -301,6 +317,7 @@ export function loadHanSave(raw){
  for(const [id,f] of Object.entries(FACTIONS))if(!f.dynamic&&!s.factions[id])s.factions[id]={id,treasury:20,grain:30,manpower:6000,horses:3000,stability:55};
  s.rulers||=Object.fromEntries(EURASIAN_RULERS.map(p=>[p.faction,{...p,attested:true}]));
  initDependencies(s);
+ s.court.recommendations||=[];
  s.version=SAVE_VERSION;s.throne.claimants||=[];s.throne.support||={};s.throne.history||=[];
  const fixes=enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
  s.loadFixes=fixes;computeMandate(s);return s;
