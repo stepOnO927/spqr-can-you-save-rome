@@ -6,7 +6,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(process.env.SPQR_TEST_URL||'http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  async function campaign(delivered){
-  await page.evaluate(async delivered=>{const {newGame}=await import('/engine.js?v=diplomatic-chronicle-1');const s=newGame('caesar');
+  await page.evaluate(async delivered=>{const {newGame}=await import('/engine.js?v=ai-wartime-aid-1');const s=newGame('caesar');
    const warning={id:'warning:test',from:'numidia',to:'caesar',threat:'senate',near:'italiaN',sentYear:s.year,sentMonth:s.month,status:delivered?'unresponded':'delayed',sighting:{armyId:'test-army',region:'italiaN',year:s.year,month:s.month,strengthBand:[9999,12345]},history:[{status:'sent',year:s.year,month:s.month}]};
    if(delivered){warning.deliveredYear=s.year;warning.deliveredMonth=s.month;warning.decision={kind:'player_discretion'};warning.history.push({status:'unresponded',year:s.year,month:s.month})}
    s.warningLetters=[warning];sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
