@@ -6,7 +6,18 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `e8954004`. The newer report-delivery
+The draft now includes main through `0e6a2413`. Its Han trade-map mode shows
+owned market stock and prices, known corridors, player-involved caravans,
+blocked legs and dated broad foreign reports without exposing hidden foreign
+warehouses or unrelated AI shipments. Market and caravan markers open the
+existing market panel. A unit regression covers visibility and save/load;
+the cloud browser smoke also exercises the mode. The merged personal-meeting
+update records the name in the campaign's saved catalog at the time of a
+completed audience, so a stale shared catalog cannot overwrite that
+observation. The full 1,178-test local simulation suite passes; the latest
+GitHub browser run is still pending.
+
+The newer report-delivery
 checks are reconciled in planning, battle estimates, faction views, national
 focus and legion design; the added unit and browser regressions pass. Its
 Roman trade routes now reuse a static adjacency index and look up campaign

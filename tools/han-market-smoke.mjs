@@ -84,7 +84,8 @@ try{
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('.territory[data-region="dunhuang"]').click({force:true});await page.locator('#trade-panel').click();
  assert.equal(await page.locator('#east-remount-assign').isDisabled(),true);
  assert.match(await page.locator('#inspector').innerText(),/Reputation 1.*Known routes 1/s);
- await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
+  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
+  await page.locator('#mode').selectOption('trade');
  assert.match(await page.locator('#overview').innerText(),/外国库存未知/);
  assert.match(await page.locator('#inspector').innerText(),/信誉 1.*熟悉线路 1/s);
  assert.match(await page.locator('#inspector').innerText(),/保护商路/);
