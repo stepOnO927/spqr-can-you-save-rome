@@ -69,6 +69,21 @@ function constructionPanelBase(s,lang,r){
   const zh=lang==='zh',d=development(s,s.player),local=localBuildingEffects(r);
   return `<section class="dev-construction"><div class="separator"></div><span class="eyebrow">AEDIFICIA</span><h3>${enzh(zh,'Material Construction','物质建造')}</h3><p class="hint">${enzh(zh,'Local terrain, knowledge, funds and materials determine availability.','可建项目取决于当地地形、知识、资金和材料。')}</p><p class="dev-meta">${enzh(zh,'Materials','材料')}: ${d.materials.stone} ${enzh(zh,'stone','石')} · ${d.materials.timber} ${enzh(zh,'timber','木')} · ${d.materials.metal} ${enzh(zh,'metal','金属')}</p>${r.buildings.includes('granary')?`<p class="dev-status">${enzh(zh,'Provincial grain reserve','地方粮仓储备')}: ${Math.max(0,Math.min(24,Math.floor(Number(r.grainReserve)||0)))}/24 · ${enzh(zh,'Stores 2 food per month from the state pool above 30; releases up to 4 per month during shortages. Capturing the province transfers its stored grain.','全国存粮超过30时每月转存2粮；缺粮时每月最多释放4粮。领土易手时储粮随之转移。')}</p>`:''}${r.construction?`<p class="dev-status">${enzh(zh,'Building','建造中')} ${esc(BUILDINGS.find(b=>b.id===r.construction.buildingId)?.name[zh?1:0]||r.construction.buildingId)} · ${r.construction.remaining}${enzh(zh,'m','月')}</p>`:''}<div class="dev-effects">${effectsText(local,zh)}</div>${BUILDINGS.map(b=>{const check=constructionCheck(s,s.player,r.id,b.id),done=r.buildings.includes(b.id);return `<div class="dev-build-row"><div><b>${esc(b.name[zh?1:0])}</b><small>${done?enzh(zh,'Built','已建成'):!check.ok?enzh(zh,`Unavailable: ${check.reason}`,`不可建：${({technology:'缺少技术',terrain:'地形不适合',deposit:'缺少矿藏',queue:'队列占用或已建成',treasury:'国库不足',materials:'材料不足',coast:'需要海岸',water:'需要水源',settlement:'需要大型聚落',port:'需要港口'})[check.reason]||check.reason}`):`${b.months}${enzh(zh,' months','个月')} · ${Object.entries(b.materials).map(([k,v])=>`${k} ${v}`).join(', ')}`}</small></div><button class="action" data-build="${b.id}" ${check.ok?'':'disabled'}>${enzh(zh,'Build','建造')} · ${check.cost||b.cost}¤</button></div>`}).join('')}</section>`;
 }
+export function openInscriptionEditor(button,lang,owner,onSubmit){
+  const row=button.closest('.dev-build-row');
+  if(!row||row.querySelector('.dev-inscription-editor'))return;
+  const zh=lang==='zh',roman=['caesar','senate'].includes(owner);
+  const form=document.createElement('form');
+  form.className='dev-inscription-editor';
+  form.innerHTML=`<label>${enzh(zh,'Draft the inscription','撰写石刻铭文')}<textarea maxlength="120" rows="3" required aria-label="${enzh(zh,'Inscription text','铭文正文')}" placeholder="${enzh(zh,'Write a civic dedication in a form suited to this culture and era.','写下符合本国文化与时代的公共纪念文字。')}"></textarea></label><p class="hint">${enzh(zh,'A civic dedication is part of this monument’s record. Avoid modern titles or claims about events that have not happened. Maximum 120 characters.','这段公共纪念文字会保存在石碑记录中。避免现代头衔或尚未发生的事件。最多120字。')}</p><blockquote class="dev-inscription" aria-live="polite"></blockquote><small class="dev-inscription-count">0 / 120</small><div class="dev-inscription-actions"><button class="action" type="submit">${enzh(zh,'Begin construction','开始建造')}</button><button class="action" type="button" data-inscription-cancel>${enzh(zh,'Cancel','取消')}</button></div>`;
+  const input=form.querySelector('textarea'),preview=form.querySelector('blockquote'),count=form.querySelector('.dev-inscription-count');
+  if(roman)input.value='SENATVS POPVLVSQVE ROMANVS';
+  const update=()=>{preview.textContent=input.value.trim()||enzh(zh,'Your inscription will appear here.','铭文将在这里预览。');count.textContent=`${input.value.length} / 120`};
+  input.addEventListener('input',update);update();
+  form.querySelector('[data-inscription-cancel]').onclick=()=>{row.classList.remove('editor-open');button.hidden=false;form.remove();button.focus()};
+  form.onsubmit=event=>{event.preventDefault();const text=input.value.trim();if(!text){input.focus();return}onSubmit(text)};
+  row.classList.add('editor-open');button.hidden=true;row.append(form);input.focus();
+}
 function purchaseRequestsHtml(s,zh,d){
  const rows=(d.purchaseRequests||[]).map(request=>{
   const item=(request.branch==='material'?MATERIALS:IDEAS).find(x=>x.id===request.id);

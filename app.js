@@ -10,7 +10,7 @@ import {endCampaign} from './achievement-system.js?v=5';
 import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from './achievement-ui.js?v=11';
 import {budgetHtml} from './budget-ui.js?v=23';
 import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js?v=29';
-import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from './development-ui.js?v=43';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from './development-ui.js?v=44';
 import {drawMap,mapPoint} from './map.js?v=61';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=6';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=8';
@@ -176,7 +176,7 @@ function bind(){
   document.querySelectorAll('[data-adopt-idea]').forEach(el=>el.onclick=()=>{const r=adoptIdea(state,state.player,el.dataset.adoptIdea,Number(el.dataset.slot));if(!r.ok)flash(`${lang==='zh'?'无法装配':'Cannot equip'}: ${r.reason}`);else render()});
   document.querySelectorAll('[data-remove-idea]').forEach(el=>el.onclick=()=>{const r=removeIdea(state,state.player,el.dataset.removeIdea,Number(el.dataset.slot));if(!r.ok)flash(`${lang==='zh'?'无法移除':'Cannot remove'}: ${r.reason}`);else render()});
   document.querySelectorAll('[data-expand-idea]').forEach(el=>el.onclick=()=>{const r=expandIdeaSlot(state,state.player,el.dataset.expandIdea);if(!r.ok)flash(`${lang==='zh'?'无法扩展':'Cannot expand'}: ${r.reason}`);else render()});
-  document.querySelectorAll('[data-build]').forEach(el=>el.onclick=()=>{const inscription=el.dataset.build==='monument'?prompt(lang==='zh'?'输入符合本国时代的石刻铭文':'Enter a period-appropriate inscription',['caesar','senate'].includes(state.player)?'SENATVS POPVLVSQVE ROMANVS':''):'';if(inscription===null)return;const r=startConstruction(state,state.player,selectedRegion,el.dataset.build,inscription);if(!r.ok)flash(`${lang==='zh'?'无法建造':'Cannot build'}: ${r.reason}`);else render()});
+  document.querySelectorAll('[data-build]').forEach(el=>el.onclick=()=>{const build=inscription=>{const r=startConstruction(state,state.player,selectedRegion,el.dataset.build,inscription);if(!r.ok)flash(`${lang==='zh'?'无法建造':'Cannot build'}: ${r.reason}`);else render()};if(el.dataset.build==='monument')openInscriptionEditor(el,lang,state.player,build);else build('')});
   document.querySelectorAll('[data-buy-material]').forEach(el=>el.onclick=()=>{const r=purchaseMaterials(state,state.player,el.dataset.buyMaterial);if(!r.ok)flash(`${lang==='zh'?'无法购买':'Cannot purchase'}: ${r.reason}`);else render()});
   document.querySelectorAll('[data-trade-id]').forEach(el=>el.onclick=()=>{const r=knowledgeTrade(state,state.player,el.dataset.tradeSeller,el.dataset.tradeBranch,el.dataset.tradeId);if(!r.ok)flash(r.reason==='access'?(lang==='zh'?'没有可通行的知识传递路线。':'No civilian route for knowledge transfer.'):`${lang==='zh'?'无法交易':'Trade unavailable'}: ${r.reason}`);else render()});
   document.querySelectorAll('[data-accept-offer-seller]').forEach(el=>el.onclick=()=>{const r=acceptKnowledgeOffer(state,state.player,el.dataset.acceptOfferSeller,el.dataset.offerBranch,el.dataset.offerId);if(!r.ok)flash(`${lang==='zh'?'无法接受报价':'Cannot accept offer'}: ${r.reason}`);else render()});

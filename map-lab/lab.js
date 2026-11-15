@@ -19,7 +19,7 @@ import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=29';
 import {physicalLabels} from './physical-labels.js?v=1';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=185';
-import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=43';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from '../development-ui.js?v=44';
 import {FACTIONS} from '../data.js?v=9';
 import {cultureLabel} from '../culture-labels.js?v=1';
 import {identity,factionMark} from '../identity.js?v=2';
@@ -52,11 +52,13 @@ function showRegion(r){
   const panel=document.querySelector('#command-detail');
   panel.insertAdjacentHTML('beforeend',constructionPanel(state,lang,r));
   panel.querySelectorAll('[data-build]').forEach(button=>button.onclick=()=>{
-    const inscription=button.dataset.build==='monument'?prompt(lang==='zh'?'输入符合本国时代的石刻铭文':'Enter a period-appropriate inscription',['caesar','senate'].includes(state.player)?'SENATVS POPVLVSQVE ROMANVS':''):'';
-    if(inscription===null)return;
-    const result=startConstruction(state,state.player,r.id,button.dataset.build,inscription);
-    if(result.ok){renderHud();showRegion(r)}
-    else{const output=panel.querySelector('#recruit-feedback');if(output)output.textContent=`${lang==='zh'?'无法建造':'Cannot build'}: ${result.reason}`}
+    const build=inscription=>{
+      const result=startConstruction(state,state.player,r.id,button.dataset.build,inscription);
+      if(result.ok){renderHud();showRegion(r)}
+      else{const output=panel.querySelector('#recruit-feedback');if(output)output.textContent=`${lang==='zh'?'无法建造':'Cannot build'}: ${result.reason}`}
+    };
+    if(button.dataset.build==='monument')openInscriptionEditor(button,lang,state.player,build);
+    else build('');
   });
   panel.querySelectorAll('[data-buy-material]').forEach(button=>button.onclick=()=>{const result=purchaseMaterials(state,state.player,button.dataset.buyMaterial);if(result.ok){renderHud();showRegion(r)}});
 }
