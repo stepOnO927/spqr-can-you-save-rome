@@ -44,3 +44,9 @@ test('future sightings cannot expose identities or open a political contact',asy
 test('a partner cannot forward an intelligence report before receiving it',async()=>{
  const {queueMission,advanceOperations}=await import('../character-system.js?v=world-kings-trade-1');const s=newGame('caesar');s.alliances.push(['caesar','egypt']);s.knowledge.egypt.parthia.reports.unshift({kind:'strength',value:99999,source:'spy',year:s.year+1,month:s.month,observationYear:s.year,observationMonth:s.month});const result=queueMission(s,'caesar','parthia','exchange','strength','egypt');assert.equal(result.ok,true);const op=s.operations[0];while(!op.exchangeSealed){s.month++;advanceOperations(s)}assert.equal(op.exchangeSealed.available,false);
 });
+
+test('pending and future meetings cannot reveal a fictional person’s name',()=>{
+ let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Hidden','秘密姓名'],faction:'egypt',birthYear:-75});const meeting={actor:'caesar',target:id,person:'caesar',status:'pending',year:s.year,month:s.month,reportedName:['Meeting name','会面姓名']};s.meetings.push(meeting);
+ assert.deepEqual(visiblePersonName(s,'caesar',id),['Unrecorded name','姓名未记录']);meeting.status='met';meeting.resolvedYear=s.year+1;meeting.resolvedMonth=s.month;assert.deepEqual(visiblePersonName(s,'caesar',id),['Unrecorded name','姓名未记录']);
+ s=upgradeSave(structuredClone(s));assert.deepEqual(visiblePersonName(s,'caesar',id),['Unrecorded name','姓名未记录']);s.year++;assert.deepEqual(visiblePersonName(s,'caesar',id),['Meeting name','会面姓名']);
+});
