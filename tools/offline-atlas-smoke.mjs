@@ -151,6 +151,7 @@ try{
  if(process.env.SPQR_ATLAS_Z7_SCREENSHOT){await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded('elevation-fine')},null,{timeout:45000});await page.waitForTimeout(500);await page.screenshot({path:process.env.SPQR_ATLAS_Z7_SCREENSHOT})}
  if(page.viewportSize().width>900){
   assert.equal(await page.locator('#locator').isVisible(),true,'Zoomed Italy needs a geographic locator');
+  assert.ok(await page.locator('#locator .locator-map img').evaluate(img=>img.complete&&img.naturalWidth>0),'Italy locator coast image must load');
   assert.match(await page.locator('.locator-title').innerText(),firstLanguage==='zh-CN'?/YOUR POSITION/:/当前位置/);
   const dot=await page.locator('#locator-position').evaluate(el=>({x:parseFloat(el.style.left),y:parseFloat(el.style.top)}));
   assert.ok(dot.x>0&&dot.x<100&&dot.y>0&&dot.y<100,'Locator dot must stay inside the Italy coast inset');
@@ -160,6 +161,7 @@ try{
  await page.locator('#zoom-in').click();await page.waitForTimeout(1200);
  await waitForTerrain(/\/terrain\/9\//,'Zoom 9 did not use bundled terrain');
  assert.deepEqual(missingTerrain,[],'Zoomed Italy requested missing terrain tiles');
+ if(process.env.SPQR_ATLAS_ITALY_Z9_SCREENSHOT){await page.waitForTimeout(600);await page.screenshot({path:process.env.SPQR_ATLAS_ITALY_Z9_SCREENSHOT})}
  assert.equal(external.includes('s3.amazonaws.com'),false,'Italy zoom needed network terrain');
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await selectMapMode('terrain');

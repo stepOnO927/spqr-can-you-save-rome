@@ -27,7 +27,9 @@ test('Galatian auxiliaries require research and adoption and affect only support
  assert.equal(activeEffects(s,'galatia').galatianMuster,undefined);
  months(s,d.adoption.remaining);
  assert.equal(activeEffects(s,'galatia').galatianMuster,6);
+ assert.equal(nationalBudget(s,'galatia').ideaUpkeep,2);
  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(nationalBudget(restored,'galatia').ideaUpkeep,2);
  const recruitMorale=state=>{const before=state.armies.length;assert.equal(recruit(state,'galatia','galatia'),true);return state.armies[before].morale};
  restored.factions.galatia.treasury=500;restored.factions.galatia.manpower=9000;restored.factions.galatia.food=100;
  assert.equal(recruitMorale(restored),64);
