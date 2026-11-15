@@ -10,7 +10,7 @@ import {newHanGame,tick as hanTick,loadHanSave} from './engine.js?v=faces-report
 import {REGIONS,FACTIONS} from './data.js?v=faces-reported-names-1';
 import {isLiuClan} from './dynasty.js?v=faces-reported-names-1';
 import {initializeMarkets} from '../trade-markets.js?v=faces-reported-names-1';
-import {COMMODITIES} from '../market-goods.js?v=faces-reported-names-1';
+import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-reported-names-1';
 
 export const DLC_KEY='hanWorld';
 const mi=(y,m)=>y*12+m;
@@ -20,6 +20,8 @@ const PUBLIC_KINDS=new Set(['throne','war','disaster','frontier']);
 // hearsay passes, slowly.
 export const RELAY_MONTHS={trade:26,hearsay:40};
 const EAST_PORTS=['syria','egypt','anatolia','achaia'];
+const EASTERN_RELAY_MARKETS={parthia:'ctesiphon',media:'ecbatana'};
+const historicalRomanExports=s=>Object.fromEntries((s.markets?.transactions||[]).filter(tx=>tx.shipment&&['caesar','senate'].includes(tx.seller)&&tx.buyer==='parthia'&&EASTERN_RELAY_MARKETS[tx.destination]).map(tx=>[tx.shipment,{status:'legacy'}]));
 const PLAYER_IMPORT_PRIORITY_MONTHS=3;
 
 export const hanWorld=s=>s.world?.[DLC_KEY]||null;
@@ -33,7 +35,7 @@ export function attachHanWorld(s,{seed=null}={}){
  state.year=s.year;state.month=s.month;
  // An old merchant account already circulating in the eastern ports (51 BCE).
  const snapshot={year:-51,month:6,via:'old',owners:Object.fromEntries(state.regions.map(r=>[r.id,r.owner])),emperor:'liu-xun',emperorName:state.persons['liu-xun'].name,dynasty:['Han','汉'],dynastyOrthodox:true};
- s.world[DLC_KEY]={state,queue:[],known:{snapshot,dispatches:[],firstLive:null,silkCargoes:0},embassy:null,lastDeliveries:0,bridge:{settled:{}}};
+ s.world[DLC_KEY]={state,queue:[],known:{snapshot,dispatches:[],firstLive:null,silkCargoes:0},embassy:null,lastDeliveries:0,bridge:{settled:{},romanExports:historicalRomanExports(s)}};
  return s.world[DLC_KEY];
 }
 const fill=(h,e,lang)=>{const n=id=>h.persons[id]?.name?.[lang]||id;const f=id=>FACTIONS[id]?.name?.[lang]||id;const reg=id=>REGIONS.find(r=>r.id===id)?.name?.[lang]||id;
@@ -48,6 +50,31 @@ function ensureBridge(w){
  // delivered goods were never imported and may still be bought from the gate.
  const settled={};for(const x of w.state.tradeMarkets?.shipments||[])if(x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.commodity==='silk'&&x.status==='delivered')settled[x.id]={status:'legacy'};
  w.bridge={settled};return w.bridge;
+}
+function ensureRomanExportBridge(s,w){
+ const bridge=ensureBridge(w);
+ if(bridge.romanExports)return bridge.romanExports;
+ // Older attached saves already settled these Roman market deliveries. Do
+ // not move their historical destination stock into the East on upgrade.
+ const exports=historicalRomanExports(s);
+ bridge.romanExports=exports;return exports;
+}
+function relayRomanExports(s,w){
+ const exports=ensureRomanExportBridge(s,w);
+ const pending=(s.markets?.transactions||[]).filter(tx=>tx.shipment&&!exports[tx.shipment]&&['caesar','senate'].includes(tx.seller)&&tx.buyer==='parthia'&&EASTERN_RELAY_MARKETS[tx.destination]&&COMMODITIES[tx.commodity]&&Number.isSafeInteger(tx.quantity)&&tx.quantity>=1&&tx.quantity<=20&&Number.isSafeInteger(tx.price)&&tx.price>=0&&(!tx.status||tx.status==='delivered'));
+ if(!pending.length)return;
+ const roman=initializeMarkets(s),eastern=w.state.tradeMarkets;
+ for(const tx of pending){
+  const eastId=EASTERN_RELAY_MARKETS[tx.destination],romanRegion=s.regions.find(r=>r.id===tx.destination),eastRegion=w.state.regions.find(r=>r.id===eastId);
+  const source=roman.regions[tx.destination]?.goods?.[tx.commodity],target=eastern?.regions?.[eastId]?.goods?.[tx.commodity];
+  if(romanRegion?.owner!=='parthia'||eastRegion?.owner!=='parthia'||!source||!target||!Number.isSafeInteger(source.stock)||source.stock<tx.quantity||!Number.isSafeInteger(target.stock)||target.stock<0){exports[tx.shipment]={status:'unavailable'};continue}
+  // Seleucia/Ctesiphon and the Median/Ecbatana labels describe the same
+  // broad local market across the two campaign projections. The Roman trade
+  // buyer has already prepaid; only its delivered stock crosses this ledger.
+  source.stock-=tx.quantity;source.price=marketPrice(roman.regions[tx.destination],tx.commodity);
+  target.stock+=tx.quantity;target.price=marketPrice(eastern.regions[eastId],tx.commodity);
+  exports[tx.shipment]={status:'transferred',romanShipment:tx.shipment,seller:tx.seller,broker:'parthia',origin:tx.origin,destination:eastId,commodity:tx.commodity,quantity:tx.quantity,price:tx.price,merchantId:tx.merchantId||null,year:s.year,month:s.month};
+ }
 }
 function importAtPort(s,w,cargo,port){
  const h=w.state,bridge=ensureBridge(w),roman=initializeMarkets(s),gate=h.tradeMarkets?.regions?.mediterranean_gate?.goods?.[cargo.commodity];
@@ -103,6 +130,7 @@ export function advanceHanWorld(s){
  if(s.month===7)w.queue.push({arrive:now+delay,kind:'snapshot',snapshot:snapshotOf(h)});
  // Physically transfer paid cargo from the Han gate to a Roman market.
  w.lastDeliveries=h.silk.farWestDeliveries||w.lastDeliveries;
+ relayRomanExports(s,w);
  settleRomanImports(s,w);
  // the Roman embassy, if any
  if(w.embassy?.status==='travelling'&&now>=w.embassy.arrive){w.embassy.status='arrived';h.silk.contact.lijian={level:'embassy',heardAt:mi(h.year,h.month)};
@@ -135,11 +163,11 @@ export function sendEmbassyToSeres(s){
  s.factions[s.player].treasury-=EMBASSY_COST;hanWorld(s).embassy={status:'travelling',sent:{year:s.year,month:s.month},arrive:mi(s.year,s.month)+EMBASSY_MONTHS,by:s.player};
  romanLog(s,'Envoys leave for the land of the Seres by way of Parthia. The journey will take years.','使者经安息启程前往赛里斯之国，此行将历时数年。');return {ok:true};
 }
-export function upgradeHanWorld(s){const w=hanWorld(s);if(!w)return;w.state=loadHanSave(w.state);w.state.tradeMarkets.autonomousEnabled=true;w.queue||=[];w.known||={snapshot:null,dispatches:[]};w.known.silkCargoes??=0;ensureBridge(w)}
+export function upgradeHanWorld(s){const w=hanWorld(s);if(!w)return;w.state=loadHanSave(w.state);w.state.tradeMarkets.autonomousEnabled=true;w.queue||=[];w.known||={snapshot:null,dispatches:[]};w.known.silkCargoes??=0;ensureBridge(w);ensureRomanExportBridge(s,w)}
 // What the Roman player knows, never the live Han state.
 export function romanView(s){const w=hanWorld(s);if(!w)return null;
  const ports=EAST_PORTS.filter(id=>s.regions.find(r=>r.id===id)?.owner===s.player),goods=w.state.tradeMarkets?.regions?.mediterranean_gate?.goods||{};
  const rivalPort=EAST_PORTS.some(id=>{const owner=s.regions.find(r=>r.id===id)?.owner;return owner&&owner!==s.player&&['caesar','senate'].includes(owner)});
  const availableImports=ports.length?(w.state.tradeMarkets?.shipments||[]).filter(x=>x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.status==='delivered'&&!ensureBridge(w).settled[x.id]&&COMMODITIES[x.commodity]&&Number.isSafeInteger(x.quantity)&&x.quantity>0&&Number.isSafeInteger(x.price)&&x.price>=0&&goods[x.commodity]?.stock>=x.quantity).map(x=>({id:x.id,commodity:x.commodity,quantity:x.quantity,price:x.price,merchantId:x.merchantId||null,merchantName:w.state.persons?.[x.merchantId]?.name||null,rivalBidIn:rivalPort&&Number.isSafeInteger(x.deliveredAt)?Math.max(0,PLAYER_IMPORT_PRIORITY_MONTHS-(mi(s.year,s.month)-x.deliveredAt)):null,ports})):[];
- return {snapshot:w.known.snapshot,dispatches:w.known.dispatches,silkCargoes:w.known.silkCargoes,imports:Object.values(w.bridge?.settled||{}).filter(x=>x.status==='delivered'&&x.owner===s.player).slice(-8).reverse(),availableImports,embassy:w.embassy?{...w.embassy}:null,conditions:embassyConditions(s)};
+ return {snapshot:w.known.snapshot,dispatches:w.known.dispatches,silkCargoes:w.known.silkCargoes,imports:Object.values(w.bridge?.settled||{}).filter(x=>x.status==='delivered'&&x.owner===s.player).slice(-8).reverse(),exports:Object.values(w.bridge?.romanExports||{}).filter(x=>x.status==='transferred'&&x.seller===s.player).slice(-8).reverse(),availableImports,embassy:w.embassy?{...w.embassy}:null,conditions:embassyConditions(s)};
 }

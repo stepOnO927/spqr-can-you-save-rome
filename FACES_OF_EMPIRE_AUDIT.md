@@ -47,6 +47,19 @@ The Yutian jade and Central Asian textile placements are game abstractions
 informed by [Encyclopaedia Iranica's account of Parthian commerce](https://www.iranicaonline.org/articles/commerce-iii/);
 the prices and quantities are balance values rather than historical records.
 
+Roman players can now list stock at an owned eastern port for a Parthian buyer.
+The existing treaty, AI purchase, prepaid caravan and timed delivery must all
+complete before the delivered batch enters the corresponding Parthian market in
+the eastern simulation. It is the same stock and payment, not a second sale or
+a direct Roman–Han treaty. Eastern merchants may then buy that stock for a
+separate paid Silk Road journey. The player's own export receipts appear in
+the bilingual East panel; a rival court cannot inspect them. Save/load and
+midcampaign attachment mark historical Roman deliveries as settled, so old
+inventory cannot enter the eastern network a second time. Unit tests exercise
+both paid legs, onward customs, stock conservation, privacy and migrations;
+the browser flow checks the receipt and reload. Autonomous resale volume and
+the broader Roman–Han settlement model remain open.
+
 The atlas now has a trade map mode tied to the existing market and route
 simulation. It shows owned market grain stocks, prices, production and demand;
 public geographic corridors adjacent to owned markets; and the planned route

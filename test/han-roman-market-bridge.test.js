@@ -6,6 +6,9 @@ import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces
 import {advanceDate} from '../han/util.js?v=faces-reported-names-1';
 import {eastPanel} from '../han/east-ui.js?v=faces-reported-names-1';
 import {setRelation} from '../han/frontier.js?v=faces-reported-names-1';
+import {propose} from '../han/frontier.js?v=faces-reported-names-1';
+import {proposeAgreement} from '../agreements.js?v=faces-reported-names-1';
+import {postTradeSale,advanceMarketAI,advanceMarkets} from '../trade-markets.js?v=faces-reported-names-1';
 
 test('the attached eastern world trades autonomously without publishing private orders to Rome',()=>{
  const s=newGame('caesar');attachHanWorld(s,{seed:82});const h=hanWorld(s).state;
@@ -25,6 +28,65 @@ test('the attached eastern world trades autonomously without publishing private 
  const restored=upgradeSave(structuredClone(s));
  assert.equal(hanWorld(restored).state.tradeMarkets.autonomousEnabled,true);
  assert.deepEqual(hanWorld(restored).state.tradeMarkets.shipments,h.tradeMarkets.shipments);
+});
+
+test('a Roman listing reaches Han through two paid Parthian intermediary shipments',()=>{
+ let s=newGame('caesar');attachHanWorld(s,{seed:49});
+ s.regions.find(r=>r.id==='syria').owner='caesar';s.relations['caesar:parthia']=70;
+ assert.equal(proposeAgreement(s,'caesar','parthia','trade').ok,true);
+ const h=hanWorld(s).state;h.tradeMarkets.autonomousEnabled=false;
+ const source=s.markets.regions.syria.goods.copper,romanRelay=s.markets.regions.parthia.goods.copper,eastRelay=h.tradeMarkets.regions.ctesiphon.goods.copper;
+ Object.assign(source,{stock:20,production:0,consumption:0});Object.assign(romanRelay,{stock:0,production:0,consumption:0});Object.assign(eastRelay,{stock:0,production:0,consumption:0});s.factions.parthia.treasury=200;
+ const posted=postTradeSale(s,{origin:'syria',commodity:'copper',quantity:5,unitPrice:1});assert.equal(posted.ok,true);
+ s.month=3;const sellerCash=s.factions.caesar.treasury,brokerCash=s.factions.parthia.treasury;
+ const romanShipment=advanceMarketAI(s).find(x=>x.seller==='caesar'&&x.buyer==='parthia'&&x.commodity==='copper'&&x.saleOrderId===posted.order.id);
+ assert.ok(romanShipment,'Parthia must buy a listed, treaty-backed lot through normal AI');
+ assert.equal(source.stock,15);assert.equal(eastRelay.stock,0);assert.equal(s.factions.parthia.treasury,brokerCash-romanShipment.escrow);
+ for(let i=0;i<romanShipment.legs[0].months;i++){advanceDate(s);advanceMarkets(s);advanceHanWorld(s);if(i===0)assert.equal(eastRelay.stock,0,'cargo cannot teleport before Roman delivery')}
+ assert.equal(romanShipment.status,'delivered');assert.equal(s.factions.caesar.treasury,sellerCash+romanShipment.price);
+ assert.equal(romanRelay.stock,0);assert.equal(eastRelay.stock,romanShipment.quantity);
+ assert.equal(hanWorld(s).bridge.romanExports[romanShipment.id].status,'transferred');
+ assert.equal(romanView(s).exports[0].romanShipment,romanShipment.id);
+ s.player='senate';assert.deepEqual(romanView(s).exports,[],'the rival Roman court cannot inspect this receipt');s.player='caesar';
+ assert.match(eastPanel(s,{lang:0}),/Your cargo received by Parthian brokers.*Copper/s);
+ assert.match(eastPanel(s,{lang:1}),/经安息商人转售的本方货物.*铜/s);
+ s=upgradeSave(structuredClone(s));const world=hanWorld(s).state,beforeRelay=world.tradeMarkets.regions.ctesiphon.goods.copper.stock;
+ advanceDate(s);advanceHanWorld(s);assert.equal(world.tradeMarkets.regions.ctesiphon.goods.copper.stock,beforeRelay,'reload cannot bridge the same Roman batch twice');
+ setRelation(world,'han','parthia',70);assert.equal(propose(world,'han','parthia','market').proposal.status,'accepted');
+ world.silk.security=10;const destination=world.tradeMarkets.regions.dunhuang.goods.copper;Object.assign(destination,{stock:0,production:0,consumption:0});
+ const hanCash=world.factions.han.treasury,eastOrder=placeEasternTrade(world,{seller:'parthia',buyer:'han',origin:'ctesiphon',destination:'dunhuang',commodity:'copper',quantity:1});
+ assert.equal(eastOrder.ok,true,eastOrder.reason);assert.equal(world.factions.han.treasury,hanCash-eastOrder.quote.total);
+ assert.equal(destination.stock,0);assert.equal(world.tradeMarkets.regions.ctesiphon.goods.copper.stock,beforeRelay-1);
+ assert.ok(eastOrder.quote.months>12,'the long Silk Road leg must take time');
+ for(let i=0;i<eastOrder.quote.months;i++){advanceDate(world);advanceEasternMarkets(world)}
+ assert.equal(eastOrder.shipment.status,'delivered');assert.equal(destination.stock,1);
+ assert.equal(world.tradeMarkets.transactions.filter(x=>x.shipment===eastOrder.shipment.id).length,1);
+ assert.equal(s.markets.transactions.filter(x=>x.shipment===romanShipment.id).length,1);
+});
+
+test('old Roman deliveries remain in their saved market instead of entering the East on upgrade',()=>{
+ const s=newGame('caesar');attachHanWorld(s,{seed:16});
+ s.markets.regions.parthia.goods.copper.stock=3;
+ s.markets.transactions.push({shipment:'shipment:historical',seller:'caesar',buyer:'parthia',origin:'syria',destination:'parthia',commodity:'copper',quantity:3,price:6,year:s.year,month:s.month});
+ const easternGood=hanWorld(s).state.tradeMarkets.regions.ctesiphon.goods.copper;Object.assign(easternGood,{production:0,consumption:0});const eastern=easternGood.stock;
+ delete hanWorld(s).bridge.romanExports;
+ const loaded=upgradeSave(structuredClone(s));
+ assert.equal(hanWorld(loaded).bridge.romanExports['shipment:historical'].status,'legacy');
+ advanceDate(loaded);advanceHanWorld(loaded);
+ assert.equal(loaded.markets.regions.parthia.goods.copper.stock,3);
+ assert.equal(hanWorld(loaded).state.tradeMarkets.regions.ctesiphon.goods.copper.stock,eastern);
+});
+
+test('attaching the eastern world midcampaign does not bridge historical Roman sales',()=>{
+ const s=newGame('caesar');
+ s.markets.regions.parthia.goods.copper.stock=3;
+ s.markets.transactions.push({shipment:'shipment:before-attachment',seller:'caesar',buyer:'parthia',origin:'syria',destination:'parthia',commodity:'copper',quantity:3,price:6,year:s.year,month:s.month});
+ attachHanWorld(s,{seed:16});
+ assert.equal(hanWorld(s).bridge.romanExports['shipment:before-attachment'].status,'legacy');
+ const easternGood=hanWorld(s).state.tradeMarkets.regions.ctesiphon.goods.copper;Object.assign(easternGood,{production:0,consumption:0});const eastern=easternGood.stock;
+ advanceDate(s);advanceHanWorld(s);
+ assert.equal(s.markets.regions.parthia.goods.copper.stock,3);
+ assert.equal(easternGood.stock,eastern);
 });
 
 test('ten years of attached eastern trade survive a Roman save migration',()=>{
