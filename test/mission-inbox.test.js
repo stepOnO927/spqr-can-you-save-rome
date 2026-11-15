@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=mission-inbox-1';
-import {advanceMailReports} from '../mail-reports.js?v=mission-inbox-1';
-import {receivedMail} from '../epistulae.js?v=dossier-delivery-1';
+import {newGame,upgradeSave} from '../engine.js?v=agent-mail-1';
+import {advanceMailReports} from '../mail-reports.js?v=agent-mail-1';
+import {receivedMail} from '../epistulae.js?v=agent-mail-1';
 
 test('only received mission outcomes enter the inbox, once, and survive a save',()=>{
  const s=newGame(),date={resolvedYear:s.year,resolvedMonth:s.month};

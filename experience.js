@@ -1,6 +1,6 @@
 // The First Hundred Days: guidance reads observable campaign state. It never
 // issues orders or uses unreported foreign strength, locations or intentions.
-import {receivedMail,sendLetter} from './epistulae.js?v=dossier-delivery-1';
+import {receivedMail,sendLetter} from './epistulae.js?v=agent-mail-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {treeFor,canStartFocus,focusCost} from './national-focus.js?v=dossier-delivery-1';
 

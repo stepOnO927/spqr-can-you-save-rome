@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=mission-inbox-1';
+import {newGame,upgradeSave} from '../engine.js?v=agent-mail-1';
 import {createFictionalPerson} from '../dynasties.js?v=dossier-delivery-1';
 import {renderGenealogy,renderGenealogyDossier} from '../genealogy-ui.js?v=dossier-delivery-1';
 

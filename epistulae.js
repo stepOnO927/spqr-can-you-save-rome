@@ -86,7 +86,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A sealed aid reply can outlive the court that dispatched it; its arrival
   // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result','asylum_result','family_marriage_result','family_accord_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result','asylum_result','family_marriage_result','family_accord_result','agent_release_request'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -161,6 +161,10 @@ export function replyToLetter(s, id, choice, actions, details={}) {
   let ok = true,selectedRepresentative=null;
   if (m.context?.kind === 'strategic_offer') {
     ok = actions.answerStrategicOffer?.(s,m.context.offerId,choice).ok === true;
+  } else if (m.context?.kind === 'agent_release_request') {
+    const request=(s.releaseRequests||[]).find(r=>r.mailId===m.id&&r.holder===s.player&&r.status==='awaiting_decision');
+    if(!request)return {ok:false,reason:'unavailable'};
+    if(choice!=='ignore')ok=actions.answerAgentRelease?.(s,request.captiveId,choice==='release_agent'?'release':choice).ok===true;
   } else if (m.context?.kind === 'coalition_offer') {
     ok = actions.answerCoalitionInvitation?.(s,m.context.invitationId,choice).ok === true;
   } else if (m.context?.kind === 'peace') {
@@ -275,7 +279,7 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     resolved:!delayed});
   if(m.context?.kind==='personal_age'&&choice==='ask_why')replyNotice(s,m,['Why I asked','为何相问'],['I wished to know you better, and meant no offense.','只盼多了解阁下，并无冒犯之意。']);
   if(m.context?.kind==='personal_flavor'&&choice==='grant_favor')replyNotice(s,m,['A note of thanks','致谢短笺'],['I am grateful for the court’s assistance.','承蒙朝廷资助，谨致谢意。']);
-  if(!['ignore','acknowledge','seek_allies'].includes(choice)&&m.context?.kind!=='coalition_offer'){
+  if(!['ignore','acknowledge','seek_allies'].includes(choice)&&!['coalition_offer','agent_release_request'].includes(m.context?.kind)){
     const leader=senderFor(s,s.player),to=m.senderFaction;
     const phrase={accept:['We accept the proposed accord.','本朝接受所议协定。'],join_war:['We have agreed to enter the war.','本朝同意加入战争。'],send_war_aid:['We have dispatched treasury and food in support.','本朝已派出国库和粮食援助。'],refuse:['We decline the request.','本朝谢绝此项请求。'],reject:['We decline the proposed accord.','本朝谢绝所议协定。'],negotiate:['We request further negotiations.','本朝请求继续商议。'],condemn:['We condemn this declaration.','本朝谴责此项宣战。'],apologize:['We regret the strain between our courts.','两国关系紧张，本朝深表遗憾。'],defend:['Our court maintains its position.','本朝坚持原有立场。'],welcome:['We welcome this correspondence.','本朝欣然收到来函。'],send_aid:['We have committed five treasury units in support.','本朝决定提供五单位国库援助。'],concede:['We accept the requested settlement.','本朝同意所请和解。']}[choice]||[choice.replaceAll('_',' '),choice];
     if(to!==s.player){const sent=sendLetter(s,{senderId:leader,senderInstitution:leader?null:s.player,senderFaction:s.player,recipient:to,source:m.destination,destination:m.source,
@@ -288,6 +292,21 @@ export function replyToLetter(s, id, choice, actions, details={}) {
 
 // A human invitation arrives only after its outbound courier; the outcome is
 // visible only after a further confirmation reaches the consenting player.
+// The inbound request has already survived its courier journey. Its reply and
+// any handover are resolved by advanceAgentRequests, never by a second letter roll.
+export function syncAgentReleaseLetters(s){
+ initializeMail(s);
+ for(const r of s.releaseRequests||[]){
+  if(r.holder!==s.player||r.status!=='awaiting_decision'||r.mailId)continue;
+  const sender=FACTIONS[r.actor]?.short||['Another faction','另一势力'];
+  const result=sendLetter(s,{senderInstitution:r.actor,senderFaction:r.actor,recipient:s.player,category:'diplomatic',priority:'important',
+   subject:['Request to release an agent','释放情报人员请求'],
+   body:[`${sender[0]} requests the release of an agent held by your government. Answer within six months; a reply and any handover take about two months and may be lost.`,` ${sender[1]}请求释放本方扣押的一名情报人员。请在六个月内答复；回信及可能的交接约需两个月，也可能遗失。`],
+   options:['release_agent','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,r.remaining-1),context:{kind:'agent_release_request',captiveId:r.captiveId}});
+  if(result.ok){r.mailId=result.letter.id;result.letter.created={year:r.year,month:r.month};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
+ }
+}
+
 export function syncCoalitionLetters(s){
  const mail=initializeMail(s);
  for(const x of s.world?.coalitionInvitations||[]){
