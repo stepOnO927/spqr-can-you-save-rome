@@ -3,7 +3,9 @@
 export const physicalLabels=[
  {id:'mediterranean',kind:'sea',point:[30.0,31.45],en:'Mediterranean Sea',zh:'地中海'},
  {id:'tyrrhenian',kind:'sea',point:[11.3,40.5],en:'Tyrrhenian Sea',zh:'第勒尼安海'},
- {id:'adriatic',kind:'sea',point:[17.2,42.4],en:'Adriatic Sea',zh:'亚得里亚海'},
+ {id:'adriatic',kind:'sea',point:[17.2,42.4],en:'Adriatic Sea',zh:'亚得里亚海',maxZoom:8.3},
+ {id:'northern-adriatic',kind:'sea',point:[13.0,44.3],en:'Northern Adriatic',zh:'北亚得里亚海',minZoom:8.3},
+ {id:'ligurian',kind:'sea',point:[8.6,43.75],en:'Ligurian Sea',zh:'利古里亚海',minZoom:8.3},
  {id:'ionian',kind:'sea',point:[19.1,37.2],en:'Ionian Sea',zh:'爱奥尼亚海'},
  {id:'aegean',kind:'sea',point:[25.2,37.8],en:'Aegean Sea',zh:'爱琴海'},
  {id:'black-sea',kind:'sea',point:[35.2,43.1],en:'Black Sea',zh:'黑海'},

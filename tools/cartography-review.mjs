@@ -51,6 +51,12 @@ try{
   jumps.push({name,ms:Date.now()-jumpStarted,readiness:await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {loaded:map.loaded(),tilesLoaded:map.areTilesLoaded(),unloadedSources:Object.keys(map.getStyle().sources).filter(id=>!map.isSourceLoaded(id))}})});
   await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()},null,{timeout:20000});
   await page.waitForTimeout(3500);
+  if(name==='ariminum'){
+   const nearSea=page.locator('[data-physical-label="northern-adriatic"]');
+   if(await nearSea.isHidden()||await nearSea.textContent()!=='北亚得里亚海')throw Error('Northern Adriatic must be named on the Chinese Italian close map');
+   if(!(await page.locator('[data-physical-label="adriatic"]').isHidden()))throw Error('Broad Adriatic label must yield to its near-scale label');
+  }
+  if(name==='alexandria'&&await page.locator('[data-physical-label="mediterranean"]').isHidden())throw Error('Mediterranean label must remain visible at the Egyptian coast');
   await page.screenshot({path:resolve(output,`${name}-before.png`)});
   await page.evaluate(async()=>{
    const {map}=await import(document.querySelector('script[type="module"]').src);
@@ -61,7 +67,10 @@ try{
   });
   await page.waitForTimeout(900);
   await page.screenshot({path:resolve(output,`${name}-trial.png`)});
-  if(name==='ariminum')await page.locator('#language').click();
+  if(name==='ariminum'){
+   await page.locator('#language').click();
+   if(await page.locator('[data-physical-label="northern-adriatic"]').textContent()!=='Northern Adriatic')throw Error('Northern Adriatic label must translate to English');
+  }
  }
  const samples=await page.evaluate(async()=>{
   const read=async([longitude,latitude])=>{
@@ -75,8 +84,15 @@ try{
   };
   return {egyptSea:await read([29.8,31.6]),egyptLand:await read([29.8,30.9]),italySea:await read([13,44.3]),italyLand:await read([12.4,43.8])};
  });
+ await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[8.8,43.9],zoom:9.05})});
+ await page.waitForFunction(()=>document.querySelector('#map-charting').hidden,null,{timeout:12000});
+ if(await page.locator('[data-physical-label="ligurian"]').isHidden()||await page.locator('[data-physical-label="ligurian"]').textContent()!=='Ligurian Sea')throw Error('Ligurian Sea must be named on the English Italian close map');
+ const ligurianBox=await page.locator('[data-physical-label="ligurian"]').boundingBox();
+ if(!ligurianBox||ligurianBox.x<380||ligurianBox.y<110||ligurianBox.x+ligurianBox.width>1080||ligurianBox.y+ligurianBox.height>700)throw Error(`Ligurian Sea label is outside unobstructed water: ${JSON.stringify(ligurianBox)}`);
+ await page.screenshot({path:resolve(output,'liguria-close.png')});
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[12.4,43.2],zoom:5.45})});
  await page.waitForFunction(()=>document.querySelector('#map-charting').hidden,null,{timeout:12000});
+ if(!(await page.locator('[data-physical-label="northern-adriatic"]').isHidden()))throw Error('Close-sea label must hide on the overview');
  await page.mouse.move(720,450);await page.mouse.down();await page.mouse.move(1250,450,{steps:12});
  if(!(await page.locator('#map-charting').isHidden()))throw Error('A player drag must not hide the map');
  await page.mouse.up();
