@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=senate-record-privacy-1';
-import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=succession-ui-recovery-1';
+import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=opening-choices-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 
 function memoryStorage() {
@@ -33,6 +33,8 @@ test('invalid transfers are not consumed and storage failures do not appear succ
   storage.setItem(HANDOFF_KEY,JSON.stringify({target:'atlas',state:{player:'egypt',regions:[],armies:[],factions:{}}}));
   assert.equal(receiveHandoff(storage,'atlas',upgradeSave),null);
   assert.throws(()=>stageHandoff({setItem(){throw Error('storage blocked')}},newGame(),'atlas'),/storage blocked/);
+  const silentlyVolatile={persistent:true,setItem(){this.persistent=false}};
+  assert.throws(()=>stageHandoff(silentlyVolatile,newGame(),'atlas'),/could not persist/);
 });
 
 test('failed migration and failed transfer consumption restore the active fictional catalog',()=>{
