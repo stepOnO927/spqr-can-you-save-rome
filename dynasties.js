@@ -2,7 +2,7 @@ import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './per
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {startDynasticWar} from './civil-war.js?v=future-dated-reports-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=infant-portraits-1';
+import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=born-portraits-six-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -339,7 +339,7 @@ export function advanceDynasties(s){
  const d=initializeDynasties(s);
  // Old saves keep their existing identities. Allocate only to identifiable
  // campaign-born children with a recorded birth and known parents, once.
- if((d.bornPortraitPoolVersion||0)<3){d.bornPortraitClaims||={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id);d.bornPortraitPoolVersion=3}
+ if((d.bornPortraitPoolVersion||0)<4){d.bornPortraitClaims||={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id);d.bornPortraitPoolVersion=4}
  if(!d.courtPortraitPoolVersion){for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))assignCourtPortrait(s,id);d.courtPortraitPoolVersion=1}
  advanceMarriageOffers(s);
  advanceAsylumRequests(s);
