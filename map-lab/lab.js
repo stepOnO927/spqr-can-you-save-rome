@@ -30,7 +30,7 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, answerBorderIncident, queueMission, setTax, personalDiplomaticCredit, administrationQuote, startAdministration} from '../engine.js?v=world-kings-3';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, answerBorderIncident, queueMission, setTax, personalDiplomaticCredit, administrationQuote, startAdministration} from '../engine.js?v=world-kings-4';
 import {renderRoutePlanner} from './route-ui.js';
 import {renderFootholdPanel} from './foothold-ui.js';
 import {armyExpeditionSupply} from '../expedition-supply.js';
@@ -41,9 +41,9 @@ import {localEntity,localContactQuote,offerLocalContact,localSubmissionQuote,off
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=succession-ui-recovery-1';
-import {createCharacterUI} from './character-ui.js?v=world-kings-2';
+import {createCharacterUI} from './character-ui.js?v=world-kings-4';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=infant-portraits-1';
-import {renderAidRequest} from '../strategic-aid-ui.js?v=world-kings-3';
+import {renderAidRequest} from '../strategic-aid-ui.js?v=world-kings-4';
 import {reportedArmies,visiblePersonName} from '../character-system.js?v=foreign-name-privacy-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=travel-2';
 import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';

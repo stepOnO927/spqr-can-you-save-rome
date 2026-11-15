@@ -602,6 +602,29 @@ function shortestStep(s,start,goal,owner){
   return null;
 }
 
+// A cautious AI may consider one explicitly unauthorized transit through a
+// reported neutral theater when every legal route to a current war target is
+// blocked. Unknown control never counts as permission or a suitable breach.
+function oneBreachStep(s,start,goal,owner){
+  const queue=[{id:start,first:null,breach:null}],seen=new Set([start+':0']);
+  while(queue.length){
+    const path=queue.shift();
+    if(path.id===goal)return {step:path.first,breach:path.breach};
+    for(const edge of adjacent(path.id)){
+      const reported=reportedControl(s,owner,edge.to)?.owner;
+      const access=militaryAccessStatus(s,owner,edge.to,reported??null);
+      if(access.basis==='unconfirmed')continue;
+      const breach=access.allowed?path.breach:(!path.breach&&reported&&reported!==owner&&!isWar(s,owner,reported)?edge.to:null);
+      if(!access.allowed&&!breach)continue;
+      const key=edge.to+':'+Number(!!breach);
+      if(seen.has(key))continue;
+      seen.add(key);
+      queue.push({id:edge.to,first:path.first||edge.to,breach});
+    }
+  }
+  return null;
+}
+
 // AI uses its own reports and approximate sightings, never the real enemy roster.
 // After two years, a numerical report fades gradually toward an uncertain prior.
 export function estimatedStrength(s,observer,target){
@@ -732,7 +755,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     const sharedTarget=coalitionMilitaryObjective(s,owner);
     const targets=enemies.map(r=>({r,d:Math.hypot(r.x-region(s,a.region).x,r.y-region(s,a.region).y),shared:sharedTarget&&reportedControl(s,owner,r.id)?.owner===sharedTarget})).sort((x,y)=>Number(!!y.shared)-Number(!!x.shared)||x.d-y.d);
     let heldForPreparation=false;
-    for(const {r} of targets){const step=shortestStep(s,a.region,r.id,owner);if(step&&step!==a.region){const defenderOwner=reportedControl(s,owner,step)?.owner;const hostile=isWar(s,owner,defenderOwner),theaters=s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length,estimate=hostile?estimatedStrength(s,owner,defenderOwner):0;const defenders=hostile?estimate/Math.max(1,theaters):0;
+    for(const {r} of targets){let step=shortestStep(s,a.region,r.id,owner);if(!step&&strongPlanning&&strategy?.goal==='campaign'&&here.owner===owner&&f.food>=30&&f.treasury>=45&&a.morale>=70&&a.men>=5000&&(s.world.lastUnauthorizedAttempt?.[owner]??-Infinity)+12<=now){const proposed=oneBreachStep(s,a.region,r.id,owner),reported=proposed&&reportedControl(s,owner,proposed.step)?.owner,access=proposed&&militaryAccessStatus(s,owner,proposed.step,reported);if(proposed&&reported&&access.allowed&&['own','treaty','limited_treaty'].includes(access.basis)){if(issueMilitaryOrder(s,a.id,'move',proposed.step,owner).ok)break}else if(proposed&&reported&&!access.allowed&&!(s.borderIncidents||[]).some(incident=>incident.attacker===owner&&incident.defender===reported&&['open','protested'].includes(incident.status))){if(issueMilitaryOrder(s,a.id,'unauthorized_entry',proposed.step,owner).ok){s.world.lastUnauthorizedAttempt||={};s.world.lastUnauthorizedAttempt[owner]=now;break}}}if(step&&step!==a.region){const defenderOwner=reportedControl(s,owner,step)?.owner;const hostile=isWar(s,owner,defenderOwner),theaters=s.regions.filter(x=>reportedControl(s,owner,x.id)?.owner===defenderOwner).length,estimate=hostile?estimatedStrength(s,owner,defenderOwner):0;const defenders=hostile?estimate/Math.max(1,theaters):0;
       const next=region(s,step),nextThreatened=adjacent(step).some(e=>isWar(s,owner,reportedControl(s,owner,e.to)?.owner));
       if(strongPlanning&&strategy&&!hostile&&next.owner===owner&&nextThreatened&&next.supply*1000<a.men*.75&&here.supply>next.supply)continue;
       if(defenders>a.men*(internalOpponent(defenderOwner)?2:({hard:1.15,expert:1.05}[s.difficulty]||1.35))||f.food<0){if(hostile&&strongPlanning){heldForPreparation=true;if(here.owner===owner)break}continue}
