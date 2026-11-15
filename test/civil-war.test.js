@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,resolveBattle,upgradeSave,isWar,tick,sendInquiry} from '../engine.js?v=born-portraits-eight-1';
-import {contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,previewMission,queueMission} from '../character-system.js?v=born-portraits-eight-1';
+import {newGame,region,resolveBattle,upgradeSave,isWar,tick,sendInquiry} from '../engine.js?v=inheritance-privacy-1';
+import {contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,previewMission,queueMission} from '../character-system.js?v=inheritance-privacy-1';
 import {knownDynasticFactions,resolveDynasticWars} from '../civil-war.js?v=sighting-consumers-1';
 import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
 

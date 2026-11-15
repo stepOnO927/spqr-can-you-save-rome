@@ -1,5 +1,5 @@
-import {newGame,estimatedStrength} from './engine.js?v=born-portraits-eight-1';
-import {createFictionalPerson} from './dynasties.js?v=born-portraits-eight-1';
+import {newGame,estimatedStrength} from './engine.js?v=inheritance-privacy-1';
+import {createFictionalPerson} from './dynasties.js?v=inheritance-privacy-1';
 import {formCoalition} from './coalitions.js?v=sighting-consumers-1';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 
