@@ -648,8 +648,15 @@ of one; existing shipment escrow remains unchanged. Fees move into the
 merchant's saved wealth, and license terms survive save/load. Unit tests cover
 the actual Han transport saving, pending activation and expiry; bilingual
 market browser checks exercise the player control; both networks have
-measured long-route transport savings in unit tests. Broader merchant
-negotiation, reputations and competing private commercial networks remain open.
+measured long-route transport savings in unit tests. Eastern merchants now
+retain route experience after actual deliveries. An available merchant with
+experience on the requested route takes priority after any privileged carrier;
+repeat voyages receive a bounded transport discount and a one or two point
+reduction in simulated raider risk. A lost shipment lowers that merchant's
+reputation. These records persist in saves and appear in both languages in the
+market panel. This is an initial consequence of merchant experience, while
+individual merchant negotiation, independent investment and competing private
+commercial networks remain open.
 Small oasis courts now participate in the autonomous market even below the
 former population threshold. They can buy an affordable one-unit lot instead
 of being excluded when a three-unit quote exceeds their cash. Local town

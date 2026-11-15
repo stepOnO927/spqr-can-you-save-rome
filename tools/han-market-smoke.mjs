@@ -58,6 +58,7 @@ try{
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Horses/);
  for(let i=0;i<months;i++)await page.locator('#advance').click();
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Delivered/);
+ assert.match(await page.locator('#inspector').innerText(),/Reputation 1.*Known routes 1/s);
  assert.match(await page.locator('.market-receipts').innerText(),/Kangju.*Dunhuang/);
  assert.match(await page.locator('.market-receipts').innerText(),/Goods.*Transport.*Tariffs.*Total/);
  assert.match(await page.locator('.market-receipts').innerText(),/Destination stock \d+ → \d+.*Local price \d+ → \d+/s);
@@ -73,7 +74,9 @@ try{
  assert.equal(after.tradeMarkets.requisitionedHorses,before.tradeMarkets.requisitionedHorses+1);
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('.territory[data-region="dunhuang"]').click({force:true});await page.locator('#trade-panel').click();
  assert.equal(await page.locator('#east-remount-assign').isDisabled(),true);
+ assert.match(await page.locator('#inspector').innerText(),/Reputation 1.*Known routes 1/s);
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
+ assert.match(await page.locator('#inspector').innerText(),/信誉 1.*熟悉线路 1/s);
  assert.match(await page.locator('#inspector').innerText(),/保护商路/);
  assert.match(await page.locator('#inspector').innerText(),/牲畜.*铜.*毛织物.*玉石/s);
  assert.match(await page.locator('.market-intelligence').innerText(),/成交单价.*所见供给/);

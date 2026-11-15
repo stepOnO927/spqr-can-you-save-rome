@@ -122,6 +122,37 @@ test('Han merchant privileges reduce a real caravan cost and survive save/load',
  s.year+=2;assert.equal(activeEasternMerchantPrivilege(s,id,'han'),false);
 });
 
+test('a merchant learns a delivered route, keeps experience on reload, and reduces the next caravan risk',()=>{
+ let s=newHanGame('han',{seed:57});s.tradeMarkets.embeddedRoman=true;setRelation(s,'han','kangju',70);propose(s,'han','kangju','market');
+ const request={seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:5};
+ const first=placeEasternTrade(s,request);assert.equal(first.ok,true,first.reason);
+ const id=first.shipment.merchantId;assert.equal(first.shipment.merchantExperience,0);
+ for(let i=0;i<first.quote.months*2;i++)next(s);
+ assert.equal(s.tradeMarkets.shipments.find(x=>x.id===first.shipment.id).status,'delivered');
+ assert.equal(s.persons[id].marketRoutes['kangju:dunhuang'],1);
+ assert.equal(s.persons[id].marketReputation,1);
+ s=loadHanSave(serialize(s));
+ const quote=quoteEasternTrade(s,request);assert.equal(quote.merchantId,id);assert.equal(quote.merchantExperience,1);
+ assert.equal(quote.transport,Math.max(1,Math.ceil(Math.ceil(quote.months*request.quantity/5)*.95)));
+ const second=placeEasternTrade(s,request);assert.equal(second.ok,true,second.reason);
+ assert.equal(second.shipment.merchantExperience,1);assert.equal(second.shipment.transport,quote.transport);
+ const nextRegion=s.regions.find(r=>r.id===second.shipment.legs[0].to);
+ nextRegion.unrest=1;nextRegion.fort=0;for(const army of s.armies.filter(a=>a.region===nextRegion.id))army.men=0;
+ second.shipment.remaining=1;
+ const targetMonth={...s,month:s.month===12?1:s.month+1,year:s.month===12?s.year+1:s.year};
+ let selected=null;for(let seed=1;seed<10000;seed++){s.seed=seed;targetMonth.seed=seed;const chance=roll(targetMonth,`market-bandit:${second.shipment.id}:${nextRegion.id}`);if(chance>=.07&&chance<.08){selected=seed;break}}
+ assert.ok(selected);
+ const inexperienced=loadHanSave(serialize(s)),experienced=loadHanSave(serialize(s));
+ inexperienced.tradeMarkets.shipments.find(x=>x.id===second.shipment.id).merchantExperience=0;
+ next(inexperienced);next(experienced);
+ assert.equal(inexperienced.tradeMarkets.shipments.find(x=>x.id===second.shipment.id).status,'lost');
+ assert.equal(experienced.tradeMarkets.shipments.find(x=>x.id===second.shipment.id).status,'traveling');
+ assert.equal(inexperienced.persons[id].marketReputation,-1);
+ assert.equal(experienced.persons[id].marketReputation,1);
+ const legacy=JSON.parse(serialize(experienced));delete legacy.persons[id].marketRoutes;delete legacy.persons[id].marketReputation;
+ assert.equal(loadHanSave(JSON.stringify(legacy)).persons[id].marketRoutes,undefined);
+});
+
 test('Eastern markets use measured stock and a real Kangju–Han horse route',()=>{
  const s=newHanGame('han',{seed:49});
  for(const faction of ['han','kangju','yuezhi','parthia'])assert.ok(s.regions.some(r=>r.owner===faction&&s.tradeMarkets.regions[r.id]));
