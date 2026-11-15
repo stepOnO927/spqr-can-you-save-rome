@@ -16,7 +16,7 @@ http.createServer((req,res)=>{
     if(err){res.writeHead(404);res.end('Not found');return}
     let body=data;
     if(path.extname(target)==='.html'){
-      const html=data.toString('utf8').replace(/<script\b[^>]*cloudflareinsights\.com[^>]*><\/script>/gi,'');
+      const html=data.toString('utf8').replace(/<script\b[^>]*cloudflareinsights\.com[^>]*>\s*<\/script>/gi,'');
       const marker='<script>window.__SPQR_TEST_MODE={kind:"local_preview"}</script>';
       body=Buffer.from(html.replace(/<head([^>]*)>/i,'<head$1>'+marker));
     }
