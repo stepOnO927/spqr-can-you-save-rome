@@ -73,7 +73,9 @@ export function initializeCursus(s){
  for(const key of ['pendingTerms','applicants','elections','endorsements','contacts','offers','advisers','investigations','reforms','proposals','senators','campaignActions','politicalReviews','retirements','termHistory','talentSearches','talents','cooperations','institutionalResponses','recommendations','appointmentHistory','applicationHistory','applicationReviews','curiateFormalities'])c[key]||=[];
  if(!Object.keys(c.officeLastSeen).length)c.officeLastSeen=Object.fromEntries(Object.entries(s.world.offices||{}).map(([faction,posts])=>[faction,{...posts}]));
  for(const [actor,ids] of Object.entries(c.referrals)){c.referralSources[actor]||=[];for(const id of ids){if(c.referralSources[actor].some(x=>x.id===id))continue;const offer=c.offers.findLast(x=>x.actor===actor&&x.status==='accepted');if(offer)c.referralSources[actor].push({id,target:offer.target,from:offer.id,observed:{year:offer.year,month:offer.month},confidence:'legacy'})}}
- for(const contact of c.contacts){if(contact.status==='open'){contact.relationship||={familiarity:clamp((contact.trust||20)+10),trust:contact.trust||20,respect:clamp(30+(person(s,contact.id)?.education||50)/5),professional:20,alignment:30,obligation:0,rivalry:0,willingness:25};contact.trust=contact.relationship.trust}}
+ // Old saves did not record these relationship dimensions. A neutral
+ // migration must not infer them from a foreign person's current secret traits.
+ for(const contact of c.contacts){if(contact.status==='open'){contact.relationship||={familiarity:clamp((contact.trust||20)+10),trust:contact.trust||20,respect:40,professional:20,alignment:30,obligation:0,rivalry:0,willingness:25};contact.trust=contact.relationship.trust}}
  for(const offer of c.offers.filter(x=>x.status==='accepted'&&person(s,x.id)?.faction===x.actor))if(!c.advisers.some(a=>a.id===offer.id))c.advisers.push({id:offer.id,actor:offer.actor,formerFaction:offer.target,year:offer.year,month:offer.month});
  c.assemblies.curiate??=50;
  for(const key of Object.keys(MAGISTRACIES))c.magistrates[key]||=[];
@@ -339,7 +341,7 @@ export function knownForeignOfficial(s,target,id,actor=s.player){
  return !!(r?.reports?.some(x=>x.people?.includes(id))||s.knowledge?.[actor]?.[target]?.reportedLeaders?.includes(id)||initializeCursus(s).referralSources[actor]?.some(x=>x.id===id&&x.target===target));
 }
 export function officialKnowledge(s,target,id,actor=s.player){
- const c=initializeCursus(s),report=c.intel[actor]?.[target],named=(report?.reports||[]).filter(x=>x.people?.includes(id)),latest=named.at(-1),contact=c.contacts.findLast(x=>x.actor===actor&&x.id===id&&x.status==='open');
+ const c=initializeCursus(s),report=c.intel[actor]?.[target],named=(report?.reports||[]).filter(x=>x.people?.includes(id)),latest=named.at(-1),contact=c.contacts.findLast(x=>x.actor===actor&&x.target===target&&x.id===id&&x.status==='open');
  if(!latest&&!contact&&!c.referralSources[actor]?.some(x=>x.id===id&&x.target===target)&&!s.knowledge?.[actor]?.[target]?.reportedLeaders?.includes(id))return {level:'unknown',observed:null,confidence:null};
  const trust=contact?.relationship?.trust??contact?.trust??0,familiarity=contact?.relationship?.familiarity??0,bestStage=Math.max(0,...named.map(x=>x.stage||0));
  const level=trust>=60&&familiarity>=60?'trusted_contact':bestStage>=5?'well_known':contact?'connected':bestStage>=4?'profiled':'identified';
@@ -495,8 +497,10 @@ function advanceCooperations(s,c){
  c.cooperations=c.cooperations.filter(x=>x.status==='pending'||x.status==='active'||date(s)-(x.resolved?.year*12+x.resolved?.month||date(s))<60);
 }
 export function offerEmployment(s,target,id,actor=s.player,mode='administrative'){
- const c=initializeCursus(s),p=person(s,id),contact=c.contacts.find(x=>x.actor===actor&&x.id===id&&x.status==='open');
- if(!contact||!p||p.faction===actor||!['administrative','military'].includes(mode)||!s.factions[actor]||!s.factions[target])return {ok:false,reason:'eligibility'};
+ const c=initializeCursus(s),contact=c.contacts.findLast(x=>x.actor===actor&&x.target===target&&x.id===id&&x.status==='open');
+ // A contact and a dated destination are known; the person's current fate is
+ // resolved by the later correspondence, not exposed on dispatch.
+ if(!contact||actor===target||!['administrative','military'].includes(mode)||!s.factions[actor]||!s.factions[target])return {ok:false,reason:'eligibility'};
  if(mode==='military'&&!c.intel[actor]?.[target]?.reports?.some(r=>r.commanders?.includes(id)))return {ok:false,reason:'intelligence'};
  if(c.offers.some(x=>x.id===id&&x.actor===actor&&['pending','accepted'].includes(x.status)))return {ok:false,reason:'pending'};
  if(s.factions[actor].treasury<18)return {ok:false,reason:'treasury',cost:18};
@@ -582,7 +586,7 @@ function advanceContacts(s,c){
   for(const x of offers.filter(x=>!eligible.includes(x))){x.status='lapsed';x.resolved={year:s.year,month:s.month}}
   const interested=[];
   for(const x of eligible){
-   const contact=c.contacts.findLast(y=>y.actor===x.actor&&y.id===id&&y.status==='open'),r=contact?.relationship||{};
+   const contact=c.contacts.findLast(y=>y.actor===x.actor&&y.target===x.target&&y.id===id&&y.status==='open'),r=contact?.relationship||{};
    if(!contact){x.status='lapsed';continue}
    const retain=c.institutionalResponses.findLast(y=>y.kind==='retention'&&y.faction===x.target&&y.id===id&&y.until>=date(s));
    const chance=Math.max(.05,Math.min(.72,.25+(p.ambition||40)/300-(p.loyalty||60)/250+(p.education||50)/500+(r.willingness||25)/350+(r.trust||contact.trust||0)/500-(retain?.strength||0)/200));
