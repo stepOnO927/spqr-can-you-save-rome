@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {newGrandGame} from '../engine.js';
-import {resolveBattle} from '../naval.js';
+import {resolveBattle,orderFleet,advanceNaval} from '../naval.js';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const s=newGrandGame('senate'),own=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
@@ -36,4 +36,12 @@ const oldSighting=newGrandGame('senate');oldSighting.naval.intel.senate={'caesar
 await page.evaluate(async state=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js');renderNavalPanel({state,lang:'en',root:document.querySelector('#root'),section:'fleets',onAction:()=>{},onZone:()=>{},onPort:()=>{}})},oldSighting);
 await page.locator('[data-order-kind="senate-adriatic"]').selectOption('pursue');
 assert.match(await page.locator('[data-order-target="senate-adriatic"]').innerText(),/ship count unknown/);
-assert.deepEqual(errors,[]);await browser.close();console.log('Naval battle reports and dated fleet pursuit passed in English and Chinese; older saves remain readable.');
+const pirateState=newGrandGame('senate'),weak=pirateState.naval.fleets.find(f=>f.owner==='senate'),pirates=pirateState.naval.pirates.find(p=>p.zone==='adriatic');
+pirateState.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';weak.ships={light:1};weak.sailors=65;pirates.ships=8;pirates.pressure=70;
+assert.equal(orderFleet(pirateState,'senate',weak.id,'patrol','adriatic').ok,true);advanceNaval(pirateState);
+assert.equal(pirateState.naval.reports.find(r=>r.kind==='pirate-clash').outcome,'repelled');
+for(const [lang,label] of [['en',/Patrol repelled/],['zh',/巡逻舰被击退/]]){
+ await page.evaluate(async({state,language})=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js');renderNavalPanel({state,lang:language,root:document.querySelector('#root'),section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}})},{state:pirateState,language:lang});
+ const text=await page.locator('.naval-content').innerText();assert.match(text,label);assert.match(text,lang==='en'?/Pirate ships lost 0/:/海盗船损失 0/);
+}
+assert.deepEqual(errors,[]);await browser.close();console.log('Naval battle, pirate defeat, and dated fleet pursuit passed in English and Chinese; older saves remain readable.');

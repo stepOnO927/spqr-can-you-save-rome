@@ -841,9 +841,46 @@ test('patrols can fight pirate vessels with real sailor losses and finite pirate
  const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.owner==='senate'),pirates=s.naval.pirates.find(p=>p.zone==='adriatic');s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';
  pirates.pressure=30;const crew=fleet.sailors,ships=pirates.ships;
  assert.equal(orderFleet(s,'senate',fleet.id,'patrol','adriatic').ok,true);advanceNaval(s);
- assert.ok(s.naval.reports.some(r=>r.kind==='pirate-clash'&&r.owner==='senate'));
- assert.ok(fleet.sailors<crew);assert.equal(pirates.ships,ships-1);
+ const clash=s.naval.reports.find(r=>r.kind==='pirate-clash'&&r.owner==='senate');assert.ok(clash);
+ assert.ok(fleet.sailors<crew);assert.equal(pirates.ships,ships-clash.pirateShipsLost);
+ assert.equal(clash.losses[fleet.id].sailors,crew-fleet.sailors);
  assert.ok(pirates.pressure<30);
+});
+test('weak pirate patrols can be repelled without automatically recovering seized cargo',()=>{
+ const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.owner==='senate'),pirates=s.naval.pirates.find(p=>p.zone==='adriatic');
+ s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';fleet.ships={light:1};fleet.sailors=65;
+ pirates.ships=8;pirates.pressure=70;pirates.cargo={grain:3};s.factions.senate.food=10;
+ assert.equal(orderFleet(s,'senate',fleet.id,'patrol','adriatic').ok,true);advanceNaval(s);
+ const clash=s.naval.reports.find(r=>r.kind==='pirate-clash');
+ assert.equal(clash.outcome,'repelled');assert.equal(clash.pirateShipsLost,0);
+ assert.equal(pirates.ships,8);assert.equal(pirates.cargo.grain,3);assert.equal(s.factions.senate.food,10);
+ assert.equal(clash.recovered,null);assert.ok(clash.losses[fleet.id].sailors>0);
+ assert.deepEqual(upgradeSave(structuredClone(s)).naval.reports.find(r=>r.id===clash.id),clash);
+ for(const [lang,label] of [['en','Patrol repelled'],['zh','巡逻舰被击退']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:s,lang,root,section:'reports'});
+  assert.match(content.innerHTML,new RegExp(label));
+  assert.match(content.innerHTML,lang==='en'?/Friendly sailor casualties/:/己方水手伤亡/);
+  renderNavalPanel({state:s,lang,root,section:'intelligence'});
+  assert.match(content.innerHTML,lang==='en'?/exact ship count is unknown before combat/:/交战前无法得知其确切船数/);
+ }
+ const old=upgradeSave(structuredClone(s));old.naval.reports[0]={kind:'pirate-clash',owner:'senate',year:s.year,month:s.month,zone:'adriatic'};
+ const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+ renderNavalPanel({state:old,lang:'en',root,section:'reports'});
+ assert.match(content.innerHTML,/Outcome unrecorded/);
+});
+test('two patrol fleets share a real pirate engagement and record their own losses',()=>{
+ const s=newGrandGame('senate'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first),pirates=s.naval.pirates.find(p=>p.zone==='adriatic');
+ s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';first.ships={trireme:3};first.sailors=540;
+ second.id='senate-second-patrol';second.ships={trireme:3};second.sailors=540;s.naval.fleets.push(second);
+ pirates.ships=8;pirates.pressure=70;s.seed=2257;
+ for(const f of [first,second])assert.equal(orderFleet(s,'senate',f.id,'patrol','adriatic').ok,true);
+ advanceNaval(s);
+ const clashes=s.naval.reports.filter(r=>r.kind==='pirate-clash'&&r.zone==='adriatic');
+ assert.equal(clashes.length,1);assert.equal(clashes[0].outcome,'victory');
+ assert.deepEqual(new Set(clashes[0].participants),new Set([first.id,second.id]));
+ for(const f of [first,second])assert.ok(clashes[0].losses[f.id]&&clashes[0].snapshots[f.id]);
+ assert.equal(pirates.ships,8-clashes[0].pirateShipsLost);
 });
 test('naval AI assigns orders to each available fleet instead of only its first',()=>{
  const s=newGrandGame('caesar'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first);second.id='senate-east';second.zone='eastern';second.port=null;s.naval.fleets.push(second);

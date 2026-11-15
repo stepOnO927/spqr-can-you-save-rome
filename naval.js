@@ -519,6 +519,31 @@ function resolveCoordinatedBattle(s,sideA,sideB,zone,log){
  for(const observer of sideA)for(const seen of sideB)observe(s,observer.owner,seen,'battle');
  for(const observer of sideB)for(const seen of sideA)observe(s,observer.owner,seen,'battle');
 }
+function resolvePirateClash(s,p,eligible,log){
+ const lead=eligible[0],patrol=eligible.filter(f=>f.owner===lead.owner&&!f.port&&!f.reserve&&!f.mobilizing&&f.hull>0&&f.sailors>0);
+ if(!patrol.length||p.ships<=0||p.pressure<24)return;
+ const before={ships:p.ships,pressure:p.pressure},tactics=Object.fromEntries(patrol.map(f=>[f.id,battleTactic(s,f)]));
+ const snapshots=Object.fromEntries(patrol.map(f=>[f.id,{name:[...f.name],owner:f.owner,ships:{...f.ships},sailors:f.sailors,hull:f.hull,morale:f.morale,tactic:tactics[f.id]}]));
+ const powers=Object.fromEntries(patrol.map(f=>[f.id,combatPower(s,f)*tacticPower(f,tactics[f.id])]));
+ const strength=patrol.reduce((sum,f)=>sum+powers[f.id],0);
+ const piratePower=p.ships*2.8*(.7+p.pressure/100),weather=1+(rng(s)-.5)*.24,roll=(rng(s)-.5)*.24;
+ const victory=strength*weather*(1+roll)>=piratePower*(1-roll);
+ const losses={},damage={};
+ const totalDamage=battleDamage(piratePower,strength,victory,'ramming','formation');let assigned=0;
+ for(let i=0;i<patrol.length;i++){
+  const f=patrol[i],share=i===patrol.length-1?totalDamage-assigned:Math.min(totalDamage-assigned,Math.round(totalDamage*powers[f.id]/Math.max(1,strength)));
+  assigned+=share;const hull=f.hull,loss=damageFleet(s,f,share,'ramming',tactics[f.id]);adjustBattleSailors(f,loss,tactics[f.id],'ramming');
+  losses[f.id]=loss;damage[f.id]=hull-f.hull;f.experience=Math.min(100,f.experience+2);
+ }
+ const sunk=victory?Math.min(p.ships,Math.max(1,Math.floor(strength/Math.max(1,piratePower)))):0;
+ p.ships=Math.max(0,p.ships-sunk);p.wealth=Math.max(0,p.wealth-sunk);
+ p.pressure=victory?Math.max(0,p.pressure-5*patrol.length-5*sunk):Math.min(70,p.pressure+3);
+ const recovered=victory?pirateRecover(s,p,lead.owner):null;
+ const casualties=Object.values(losses).reduce((sum,loss)=>sum+(loss.sailors||0),0);
+ report(s,{kind:'pirate-clash',zone:p.zone,owner:lead.owner,participants:patrol.map(f=>f.id),snapshots,outcome:victory?'victory':'repelled',strengthBefore:before,losses,damage,sailors:casualties,pirateShipsLost:sunk,recovered,weather:Math.round(weather*100)});
+ if(lead.owner===s.player)log(s,victory?(recovered?`Patrols defeated pirates and recovered ${recovered.amount} ${recovered.good}.`:'Patrols defeated pirate vessels.'): 'Patrols were repelled by pirates; sailors were lost.',victory?(recovered?`巡逻舰击败海盗，收回${recovered.amount}份${recovered.good}。`:'巡逻舰击败海盗船。'):'巡逻舰被海盗击退，水手有所伤亡。');
+ if(p.pressure<8&&rng(s)<.3)p.zone=byId[p.zone].links[Math.floor(rng(s)*byId[p.zone].links.length)];
+}
 function advanceNavalCaptives(s,log){
  for(const captive of s.naval.captives){
   const person=s.world?.characters?.[captive.characterId];if(!person?.alive){captive.status='deceased';continue}
@@ -755,7 +780,7 @@ export function advanceNaval(s,log=()=>{}){initializeNaval(s);if(!s.naval)return
    }else resolveBattle(s,a,b,a.zone,log);
   }
  finishMaritimeSupply(s,log);
- for(const p of n.pirates){const patrol=n.fleets.filter(f=>f.zone===p.zone&&['patrol','escort','intercept'].includes(f.order?.kind)&&ships(f));if(patrol.length){if(p.ships>0&&p.pressure>=24){const engaged=patrol[0],loss=damageFleet(s,engaged,Math.min(9,2+p.ships)),recovered=pirateRecover(s,p,engaged.owner);p.ships=Math.max(0,p.ships-1);p.wealth=Math.max(0,p.wealth-1);report(s,{kind:'pirate-clash',zone:p.zone,owner:engaged.owner,sailors:loss.sailors,pirateShipsLost:1,recovered});if(engaged.owner===s.player)log(s,recovered?`Patrols fought pirates and recovered ${recovered.amount} ${recovered.good}.`:'Patrols fought pirate vessels; sailors were lost.',recovered?`巡逻舰击退海盗，收回${recovered.amount}份${recovered.good}。`:'巡逻舰与海盗船交战，水手有所伤亡。')}p.pressure=Math.max(0,p.pressure-patrol.length*5);if(p.pressure<8&&rng(s)<.3)p.zone=byId[p.zone].links[Math.floor(rng(s)*byId[p.zone].links.length)]}else p.pressure=p.ships>0?Math.min(70,p.pressure+1):Math.max(0,p.pressure-2);if(p.backer&&rng(s)<.05){const sponsor=p.backer;p.backer=null;s.factions[sponsor].legitimacy=Math.max(0,s.factions[sponsor].legitimacy-3);for(const r of n.routes.filter(r=>routeZones(r).includes(p.zone))){const victim=s.regions.find(x=>x.id===r.to)?.owner;if(victim&&victim!==sponsor){const key=[sponsor,victim].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]??0)-4)}}report(s,{kind:'scandal',zone:p.zone,owner:sponsor});if(sponsor===s.player)log(s,'Secret pirate support was exposed; legitimacy fell.','秘密资助海盗曝光，合法性下降。')}}
+ for(const p of n.pirates){const patrol=n.fleets.filter(f=>f.zone===p.zone&&!f.port&&!f.reserve&&!f.mobilizing&&f.hull>0&&f.sailors>0&&['patrol','escort','intercept'].includes(f.order?.kind)&&ships(f));if(patrol.length){if(p.ships>0&&p.pressure>=24)resolvePirateClash(s,p,patrol,log);else p.pressure=Math.max(0,p.pressure-patrol.length*5)}else p.pressure=p.ships>0?Math.min(70,p.pressure+1):Math.max(0,p.pressure-2);if(p.backer&&rng(s)<.05){const sponsor=p.backer;p.backer=null;s.factions[sponsor].legitimacy=Math.max(0,s.factions[sponsor].legitimacy-3);for(const r of n.routes.filter(r=>routeZones(r).includes(p.zone))){const victim=s.regions.find(x=>x.id===r.to)?.owner;if(victim&&victim!==sponsor){const key=[sponsor,victim].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]??0)-4)}}report(s,{kind:'scandal',zone:p.zone,owner:sponsor});if(sponsor===s.player)log(s,'Secret pirate support was exposed; legitimacy fell.','秘密资助海盗曝光，合法性下降。')}}
  advanceTradeVoyages(s,log);for(const route of [...n.routes].sort((a,b)=>(a.lastDispatch?a.lastDispatch.year*12+a.lastDispatch.month:-Infinity)-(b.lastDispatch?b.lastDispatch.year*12+b.lastDispatch.month:-Infinity)))dispatchTradeVoyage(s,route,log);
  for(const f of n.fleets){if(f.mobilizing){f.mobilizing--;if(f.mobilizing<=0){f.mobilizing=0;f.reserve=false;f.morale=Math.min(100,f.morale+2);if(f.owner===s.player)log(s,'The fleet has completed mobilization and can receive orders.','舰队完成整备，可以接受命令。')}}}
  for(const owner of Object.keys(s.factions).filter(x=>x!==s.player&&x!=='rebels')){for(const f of n.fleets.filter(x=>x.owner===owner&&ships(x)))aiNavalOrders(s,owner,f);if(s.month===1&&s.factions[owner].treasury>90&&aiNavalCashflow(s,owner)>0){const dock=s.regions.find(r=>r.owner===owner&&r.buildings?.includes('shipyard'));if(dock)queueShip(s,owner,dock.id,'light')}}
