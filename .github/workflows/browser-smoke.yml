@@ -57,6 +57,7 @@ jobs:
               node tools/alliance-courier-smoke.mjs
               node tools/family-letter-name-privacy-smoke.mjs
               node tools/future-family-reports-smoke.mjs
+              node tools/future-dossier-smoke.mjs
               node tools/player-request-aid-smoke.mjs
               node tools/official-name-snapshots-smoke.mjs
               node tools/procedural-portrait-smoke.mjs
