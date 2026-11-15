@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=undated-name-1';
+import {newGame} from '../engine.js?v=foreign-heir-knowledge-1';
 import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
-import {religiousPolicy} from '../religion.js?v=undated-name-1';
-import {finalizeCampaign} from '../legacy.js?v=undated-name-1';
+import {religiousPolicy} from '../religion.js?v=foreign-heir-knowledge-1';
+import {finalizeCampaign} from '../legacy.js?v=foreign-heir-knowledge-1';
 
 test('new distinctions are computed only on official finalization and have no repeatable reward',()=>{
  const s=newGame('senate');s.relations['armenia:senate']=60;assert.ok(proposeAgreement(s,'senate','armenia','trade').ok);

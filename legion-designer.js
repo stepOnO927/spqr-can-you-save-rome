@@ -1,5 +1,5 @@
 import {ROUTES} from './data.js?v=phase-x-1';
-import {unlockedComponents,focusModifiers} from './national-focus.js?v=undated-name-1';
+import {unlockedComponents,focusModifiers} from './national-focus.js?v=foreign-heir-knowledge-1';
 import {politicalAmbition} from './conspiracies.js?v=undated-name-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=undated-name-1';

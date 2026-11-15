@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,issueMilitaryOrder,tick,region,resolveBattle} from '../engine.js?v=undated-name-1';
+import {newGame,issueMilitaryOrder,tick,region,resolveBattle} from '../engine.js?v=foreign-heir-knowledge-1';
 
 for(const side of ['caesar','senate'])test(`${side} commands survive a march, combat, and second order`,()=>{
  const s=newGame(side),unit=s.armies.find(a=>a.owner===side),enemy=side==='caesar'?'italiaN':'cisalpine';
