@@ -152,8 +152,13 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters,startYe
  const count=Math.min(sites.length,integer(rng,...band.count)),used=new Set(),usedRulers=new Set();
  const result=[];
  const selected=[];
- if(count>=3)for(const type of ['city_state','microstate','tribe']){const index=sites.findIndex(site=>site.type===type);if(index>=0)selected.push(...sites.splice(index,1))}
- if(count>=4){const index=sites.findIndex(site=>site.type==='strongman');if(index>=0)selected.push(...sites.splice(index,1))}
+ const quota=count===1?[sites.find(site=>['city_state','microstate'].includes(site.type))?.type||'city_state']:
+  count===2?['city_state','microstate']:
+  count===3?['city_state','microstate','tribe']:
+  count<=5?['city_state','microstate','tribe','strongman']:
+  count<=7?['city_state','microstate','city_state','microstate','tribe','strongman']:
+  ['city_state','microstate','city_state','microstate','tribe','strongman','tribe','strongman'];
+ for(const type of quota){const index=sites.findIndex(site=>site.type===type);if(index>=0)selected.push(...sites.splice(index,1))}
  selected.push(...sites.slice(0,count-selected.length));
  for(const site of selected){
   let name,english;
