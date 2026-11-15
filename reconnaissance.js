@@ -19,6 +19,13 @@ export function reconReports(s,owner,regionId){
 export function latestRecon(s,owner,regionId){
  return reconReports(s,owner,regionId)[0]||null;
 }
+export function firstHostileOnRoute(s,armyId,destination,plan){
+ const unit=army(s,armyId);
+ if(!unit||!plan?.hostile)return null;
+ const step=plan.path?.find(x=>region(s,x.id)?.owner!==unit.owner);
+ const regionId=step?.id||destination;
+ return {regionId,adjacent:adjacent(unit.region,s).some(x=>x.to===regionId),travelMonths:step?plan.path.slice(0,plan.path.indexOf(step)+1).reduce((total,x)=>total+x.months,0):plan.months};
+}
 export function assessment(s,armyId,regionId,plan=null){
  const unit=army(s,armyId),target=region(s,regionId);
  if(!unit||!target||unit.owner!==s.player)return null;

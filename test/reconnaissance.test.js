@@ -1,12 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,army,moveArmy,tick,upgradeSave,aiTurn,resolveBattle,adoptIdea,researchInnovation} from '../engine.js';
-import {assessment,sendScouts,probePositions,latestRecon,reconReports,delayAttack,markReconRegion,advanceRecon} from '../reconnaissance.js';
+import {newGame,newGrandGame,army,moveArmy,previewMarch,region,tick,upgradeSave,aiTurn,resolveBattle,adoptIdea,researchInnovation} from '../engine.js';
+import {assessment,firstHostileOnRoute,sendScouts,probePositions,latestRecon,reconReports,delayAttack,markReconRegion,advanceRecon} from '../reconnaissance.js';
 import {development,activeEffects,IDEAS,ideaAdoptionPlan} from '../development.js';
 import {developmentPanel} from '../development-ui.js';
 import {intelligenceHtml,afterActionHtml,fortificationText,reconSummaryHtml} from '../recon-ui.js';
 import {eventText} from '../campaign-reports.js';
 import {briefingHtml,chronicleHtml} from '../reports-ui.js';
+
+test('a march to friendly territory assesses the first hostile theater along its actual route',()=>{
+ const s=newGrandGame('caesar');
+ region(s,'t010').owner='caesar';
+ let plan=previewMarch(s,'xiii','t010');
+ assert.deepEqual(plan.path.map(step=>step.id),['italiaN','t011','t010']);
+ let threat=firstHostileOnRoute(s,'xiii','t010',plan);
+ assert.deepEqual(threat,{regionId:'italiaN',adjacent:true,travelMonths:1});
+ assert.equal(assessment(s,'xiii',threat.regionId,plan).owner,'senate');
+ region(s,'italiaN').owner='caesar';
+ plan=previewMarch(s,'xiii','t010');
+ threat=firstHostileOnRoute(s,'xiii','t010',plan);
+ assert.deepEqual(threat,{regionId:'t011',adjacent:false,travelMonths:2});
+ assert.equal(sendScouts(s,'xiii',threat.regionId).ok,false,'distant enemy territory cannot be scouted from the origin');
+ region(s,'t011').owner='caesar';
+ plan=previewMarch(s,'xiii','t010');
+ assert.equal(firstHostileOnRoute(s,'xiii','t010',plan),null);
+});
 
 test('enemy fortification remains hidden until a dated military report is available',()=>{
  const s=newGame('senate'),target=s.regions.find(r=>r.id==='cisalpine');target.fort=3;
