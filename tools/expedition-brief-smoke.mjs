@@ -24,7 +24,9 @@ try{
  await page.locator('#load').click();
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(saved.armies.find(army=>army.id==='xiii').expedition.destination,'gaul');
- await page.locator('.army[data-army="xiii"]').click();
+ await page.locator('#factions').click();
+ await page.locator('[data-faction="caesar"]').click();
+ await page.locator('[data-faction-army="xiii"]').click();
  assert.match(await page.locator('#command-detail').innerText(),/LEG-BY-LEG EXPEDITION/);
  assert.deepEqual(errors,[]);
  console.log('War Council opens the real route brief; a leg-by-leg expedition starts and survives save/load.');
