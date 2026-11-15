@@ -25,6 +25,7 @@ try{
     try{await route.fulfill({status:200,contentType:mime,body:await readFile(file)})}catch{await route.fulfill({status:404,body:'Not found'})}
   });
   await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+  console.log('Phase XIV: campaign loaded');
   await page.locator('#entry-continue').click();
   await page.locator('[data-tab="development"]').click();
   assert.match(await page.locator('.inspector h2').innerText(),/Development/);
@@ -38,11 +39,13 @@ try{
   assert.match(await page.locator('#tech-improved-shipbuilding').innerText(),/Ship construction −1 month/);
   assert.match(await page.locator('#tech-maritime-warehousing').innerText(),/limited by hull capacity/);
   await page.locator('[data-dev-branch="idea"]').click();
+  console.log('Phase XIV: idea tree open');
   await page.locator('.dev-tree-links path[data-from="legion-training"][data-to="reserve-mobilization"]').waitFor();
   assert.equal(await page.locator('.dev-tree-links path[data-from="legion-training"][data-to="reserve-mobilization"]').count(),1);
   assert.equal(await page.locator('[data-tree-pan="left"]').isDisabled(),true);
   assert.equal(await page.locator('[data-tree-pan="right"]').isEnabled(),true);
   await page.locator('[data-tree-pan="right"]').click();
+  console.log('Phase XIV: panning tree');
   await page.waitForFunction(()=>document.querySelector('.dev-tree')?.scrollLeft>100);
   await page.screenshot({path:'outputs/phase-xiv-later-stage.png'});
   await page.locator('[data-tree-pan="left"]').click();
@@ -64,6 +67,8 @@ try{
   assert.match(await page.locator('#tech-field-march-coordination a[target="_blank"]').getAttribute('href'),/Civil_Wars\/1B/);
   assert.match(await page.locator('#tech-court-informant-patronage').innerText(),/Court Informant Patronage[\s\S]*Concurrent spy and counterintelligence missions \+1/);
   assert.match(await page.locator('#tech-court-informant-patronage a[target="_blank"]').getAttribute('href'),/Frontinus\/Strategemata/);
+  assert.match(await page.locator('#tech-galatian-auxiliary-muster').innerText(),/Galatian Auxiliary Muster[\s\S]*Recruit morale in Galatian territory with integration and satisfaction ≥45 \+6/);
+  assert.match(await page.locator('#tech-galatian-auxiliary-muster a[target="_blank"]').getAttribute('href'),/Civil_Wars\/3A/);
   assert.match(await page.locator('#tech-philosophical-patronage').innerText(),/Philosophical and Scholarly Patronage[\s\S]*National-idea research discount \+3/);
   assert.match(await page.locator('#tech-philosophical-patronage a[target="_blank"]').getAttribute('href'),/cicero\/atticus4/);
   await page.locator('[data-research="legion-training"]').click();
@@ -107,6 +112,7 @@ try{
   assert.match(await page.locator('#tech-field-march-coordination').innerText(),/野战行军调度[\s\S]*陆路行军缩减 \+1/);
   assert.match(await page.locator('#tech-philosophical-patronage').innerText(),/哲学与学术赞助[\s\S]*理念研究折扣 \+3/);
   assert.match(await page.locator('#tech-court-informant-patronage').innerText(),/宫廷情报人员扶持[\s\S]*同时进行的间谍与反谍任务 \+1/);
+  assert.match(await page.locator('#tech-galatian-auxiliary-muster').innerText(),/加拉太辅助兵征募[\s\S]*加拉太领土融合度与满意度均≥45的新兵士气 \+6/);
   await page.screenshot({path:'tools/phase-xiv-ui.png'});
   for(const lang of ['en','zh']){
     const replacing=newGrandGame('caesar');

@@ -12,6 +12,39 @@ import {budgetHtml} from '../budget-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
+test('Galatian auxiliaries require research and adoption and affect only supported local recruits',()=>{
+ const id='galatian-auxiliary-muster',idea=IDEAS.find(item=>item.id===id);
+ assert.match(idea.source.url,/Civil_Wars\/3A/);
+ assert.match(techIllustration(idea),/<svg/);
+ const s=newGrandGame('galatia');s.wars=[];s.factions.galatia.treasury=500;
+ const d=development(s,'galatia'),home=s.regions.find(r=>r.id==='galatia');
+ assert.match(ideasPanel(s,'en'),/Galatian Auxiliary Muster/);
+ assert.match(ideasPanel(s,'zh'),/加拉太辅助兵征募/);
+ assert.equal(researchInnovation(s,'galatia','idea',id).ok,true);
+ assert.equal(activeEffects(s,'galatia').galatianMuster,undefined);
+ months(s,idea.months);assert.ok(d.knownIdeas.includes(id));
+ assert.equal(adoptIdea(s,'galatia',id).ok,true);
+ assert.equal(activeEffects(s,'galatia').galatianMuster,undefined);
+ months(s,d.adoption.remaining);
+ assert.equal(activeEffects(s,'galatia').galatianMuster,6);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ const recruitMorale=state=>{const before=state.armies.length;assert.equal(recruit(state,'galatia','galatia'),true);return state.armies[before].morale};
+ restored.factions.galatia.treasury=500;restored.factions.galatia.manpower=9000;restored.factions.galatia.food=100;
+ assert.equal(recruitMorale(restored),64);
+ const lowIntegration=upgradeSave(JSON.parse(JSON.stringify(restored)));lowIntegration.regions.find(r=>r.id==='galatia').integration=44;
+ assert.equal(recruitMorale(lowIntegration),58);
+ const lowSupport=upgradeSave(JSON.parse(JSON.stringify(restored)));lowSupport.regions.find(r=>r.id==='galatia').civicSatisfaction=44;
+ assert.equal(recruitMorale(lowSupport),58);
+ const otherCulture=upgradeSave(JSON.parse(JSON.stringify(restored)));otherCulture.regions.find(r=>r.id==='galatia').culture='anatolian';
+ assert.equal(recruitMorale(otherCulture),58);
+ const foreign=newGrandGame('senate');foreign.wars=[];foreign.factions.senate.treasury=500;development(foreign,'senate').knownIdeas.push(id);
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).reason,'cultural-base');
+ const enclave=foreign.regions.find(r=>r.id==='galatia');enclave.owner='senate';enclave.civicSatisfaction=44;
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).reason,'local-support');
+ enclave.civicSatisfaction=45;
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).months,4);
+});
+
 test('Egyptian temple revenue guarantees require local priesthood, cost the state, and act through provincial faith',()=>{
  const idea=IDEAS.find(item=>item.id==='egyptian-temple-revenues');
  assert.match(idea.source.url,/ptolemy_viii_decrees/);
@@ -690,7 +723,7 @@ test('local rites affect a neighboring court only through an influential shared 
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,43);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,44);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
