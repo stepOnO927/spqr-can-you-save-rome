@@ -114,7 +114,10 @@ try{
  await page.screenshot({path:resolve(output,'liguria-close.png')});
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[10.5,45.1],zoom:8.6})});
  await page.waitForTimeout(3500);
- await page.waitForFunction(()=>!window.__reviewMap.isMoving()&&window.__reviewMap.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99,null,{timeout:30000});
+ try{await page.waitForFunction(()=>!window.__reviewMap.isMoving()&&window.__reviewMap.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99,null,{timeout:30000})}catch(error){
+  const status=await page.evaluate(()=>{const map=window.__reviewMap;return {center:map.getCenter().toArray(),zoom:map.getZoom(),moving:map.isMoving(),tiles:map.areTilesLoaded(),loaded:map.loaded(),curtain:document.querySelector('#map-charting').hidden,opacity:getComputedStyle(document.querySelector('#map')).opacity,unloaded:Object.keys(map.getStyle().sources).filter(id=>!map.isSourceLoaded(id)),sourceTiles:Object.entries(map.style?.sourceCaches||{}).filter(([id])=>!map.isSourceLoaded(id)).map(([id,cache])=>({id,tiles:Object.entries(cache?._tiles||{}).map(([key,tile])=>({key,state:tile.state,error:String(tile.error||'')})).slice(0,12)})).slice(0,12)}});
+  throw Error(`Po Plain did not settle: ${JSON.stringify(status)}; ${error.message}`)
+ }
  const plain=page.locator('[data-physical-label="po-plain"]'),plainBox=await plain.boundingBox();
  if(await plain.isHidden()||await plain.textContent()!=='Po Plain'||!plainBox||plainBox.x<380||plainBox.y<110||plainBox.x+plainBox.width>1080||plainBox.y+plainBox.height>740)throw Error(`Po Plain label is obscured or off-map: ${JSON.stringify(plainBox)}`);
  const poLayer=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {close:map.getLayer('waterways-po-close')?.minzoom,overview:map.getLayer('waterways-po-overview')?.maxzoom,loaded:map.isSourceLoaded('po-river-detail')}});

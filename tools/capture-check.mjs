@@ -1,15 +1,23 @@
 // Exercise the player's download control, not Playwright's screenshot API.
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
 
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1920,height:1080},deviceScaleFactor:1,acceptDownloads:true});
-const port=Number(process.env.SPQR_TEST_PORT||5173);
 const errors=[];page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.route('https://**/*',route=>route.abort());
+ await page.route('http://spqr.test/**',async route=>{
+  const url=new URL(route.request().url()),relative=url.pathname==='/map-lab/'?'map-lab/index.html':url.pathname.slice(1),target=path.resolve(root,relative);
+  if(!target.startsWith(root+path.sep)){await route.abort();return}
+  try{const body=await readFile(target),ext=path.extname(target),type={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.json':'application/json'}[ext]||'application/octet-stream';await route.fulfill({status:200,contentType:type,body})}catch{await route.fulfill({status:404,body:'Not found'})}
+ });
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
- await page.goto(`http://127.0.0.1:${port}/map-lab/`,{waitUntil:'domcontentloaded'});
+ await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});await page.locator('#start-free').click();
  await page.locator('.grand-site').first().waitFor({state:'attached'});await page.waitForTimeout(1500);
  const [download]=await Promise.all([page.waitForEvent('download',{timeout:90000}),page.locator('#capture').click()]);

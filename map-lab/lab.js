@@ -121,6 +121,18 @@ const initialStyle={...physicalStyle,state:{...physicalStyle.state,activeRelief:
  }};
 })};
 export const map = new maplibregl.Map({container:'map',canvasContextAttributes:{preserveDrawingBuffer:true},center:[12.4,43.2],zoom:5.45,minZoom:3.6,maxZoom:9.2,maxBounds:[[-20,18],[60,58]],attributionControl:{compact:true},style:initialStyle});
+function updateAttributionLabel(){
+ const summary=document.querySelector('#map .maplibregl-ctrl-attrib-button');
+ if(!summary)return;
+ const label=lang==='zh'?'查看地图数据来源与许可':'View map data sources and licenses';
+ summary.title=label;summary.setAttribute('aria-label',label);
+}
+map.on('load',()=>{
+ const details=document.querySelector('#map .maplibregl-ctrl-attrib');
+ if(details){details.classList.remove('maplibregl-compact-show');details.open=false}
+ updateAttributionLabel();
+});
+document.querySelector('#language').addEventListener('click',()=>setTimeout(updateAttributionLabel,0));
 // A long camera jump can show DEM colors before the GeoJSON coastline worker
 // finishes its new tiles. Dim the intermediate frame until the masks are ready.
 const mapElement=document.querySelector('#map');
@@ -230,14 +242,10 @@ let elevationView=0,elevationReadyView=-1,elevationReadySource=null,elevationTim
 map.on('movestart',()=>{elevationView++;clearTimeout(elevationTimer)});
 function selectElevationDetail(acceptReady=false){
  const local=localReliefLayer(),source=local?.replace(/^relief/,'elevation');
- // Once this camera's native detail has arrived, keep the coarse fallback
- // retired. Style updates can transiently mark the native DEM as reloading;
- // switching the fallback back on then causes another style update and loop.
+  // Keep the broad color relief and its DEM source stable while local detail
+  // arrives. Visibility changes here can strand a shared DEM tile in reload.
  const becameReady=acceptReady&&source&&(map.isSourceLoaded?.(source)??false)&&(elevationReadyView!==elevationView||elevationReadySource!==source);
  if(becameReady){elevationReadyView=elevationView;elevationReadySource=source}
- const fineNeeded=!source||elevationReadyView!==elevationView||elevationReadySource!==source;
- const wanted=fineNeeded?'visible':'none';
- if(map.getLayer('land-elevation-fine')&&(map.getLayoutProperty('land-elevation-fine','visibility')||'visible')!==wanted)map.setLayoutProperty('land-elevation-fine','visibility',wanted);
  if(becameReady&&reliefEnabled)showRelief(true);
 }
 function watchElevationDetail(){

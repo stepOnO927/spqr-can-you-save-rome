@@ -130,6 +130,8 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
 .mast{background:linear-gradient(#101b1d,#17211f)}
 .maplibregl-ctrl-attrib{background:#172826e8!important;color:#e3d4ae!important;border-top:1px solid #b9a36b66;border-radius:3px 3px 0 0}
 .maplibregl-ctrl-attrib a{color:#e8cd8a!important}
+/* Keep the source-credit control reachable beside the map controls on narrow screens. */
+@media(max-width:800px){.maplibregl-ctrl-bottom-right{top:94px!important;right:50px!important;bottom:auto!important}.maplibregl-ctrl-attrib{max-width:calc(100vw - 24px)}.maplibregl-ctrl-attrib-inner{max-height:38vh;overflow:auto}.credits{right:12px;bottom:12px;max-width:150px}}
 .brief.po-history .legend{gap:6px;margin-top:10px}
 .maritime-alert{min-width:23px;height:23px;border:1px solid #d9c89e;border-radius:50%;background:#243d3b;color:#f2e7c8;font:bold 13px Arial,sans-serif;box-shadow:0 2px 7px #091c25ab;cursor:pointer}
 .maritime-alert.blockade{border-color:#d8a293;background:#6a3932}
