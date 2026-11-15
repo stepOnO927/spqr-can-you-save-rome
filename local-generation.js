@@ -60,7 +60,10 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters){
  for(let i=sites.length-1;i>0;i--){const j=integer(rng,0,i);[sites[i],sites[j]]=[sites[j],sites[i]]}
  const count=Math.min(sites.length,integer(rng,...band.count)),used=new Set();
  const result=[];
- for(const site of sites.slice(0,count)){
+ const selected=[];
+ if(count>=3)for(const type of ['city_state','microstate','tribe']){const index=sites.findIndex(site=>site.type===type);if(index>=0)selected.push(...sites.splice(index,1))}
+ selected.push(...sites.slice(0,count-selected.length));
+ for(const site of selected){
   let name,english;
   do{const stem=STEMS[integer(rng,0,STEMS.length-1)],title=TITLES[site.type][integer(rng,0,TITLES[site.type].length-1)];name=[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`];english=name[0]}while(used.has(english));
   used.add(english);
