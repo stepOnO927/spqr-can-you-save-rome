@@ -13,7 +13,7 @@ try{
   const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-trade-1');
   const {localDiscoveryLevel}=await import('/local-discovery.js?v=world-kings-trade-1');
   const s=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:2});
-  const entities=s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&!entity.proceduralVillage);
+  const entities=s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&!entity.proceduralVillage&&!entity.proceduralNomad&&!entity.proceduralWilderness);
   const known=entities.find(entity=>entity.type==='city_state'&&localDiscoveryLevel(s,s.player,entity.id)>=3);
   const chief=entities.find(entity=>entity.type==='strongman'&&localDiscoveryLevel(s,s.player,entity.id)>=3);
   const village=s.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.sponsor===chief?.id);
