@@ -21,7 +21,7 @@ async function check(path,start,advance,save,confirmation){
   await context.close();
 }
 try{
-  await check('/','#start-campaign','#step','[data-slot="save"]','.setup-feedback');
+  await check('/','#start-campaign','#step','[data-slot="save"]','.toast');
   await check('/han/','#begin','#advance','#save','#message');
   await check('/map-lab/','#start-game','#advance','#save','#status');
   console.log('Roman, Han and atlas continue without browser storage; temporary saves are labeled');

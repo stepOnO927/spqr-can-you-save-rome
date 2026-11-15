@@ -13,7 +13,7 @@ try{
  await page.locator('#run:not([disabled])').waitFor({timeout:120000});
  assert.equal(await page.locator('.result').count(),10);
  assert.equal(await page.locator('.result .status.FAIL').count(),0,await page.locator('#results').textContent());
- assert.equal(await page.locator('.result .status.BLOCKED').count(),1);
+ assert.equal(await page.locator('.result .status.BLOCKED').count(),0);
  assert.equal(await page.evaluate(()=>localStorage.getItem('spqr-save-1')),'inspector-must-not-touch-this');
  const promise=page.waitForEvent('download');
  await page.locator('#export').click();

@@ -22,7 +22,14 @@ jobs:
       - name: Inventory source and import graph
         run: node scripts/audit-inventory.mjs
       - name: Run simulation and invariant tests
-        run: npm test
+        run: |
+          mkdir -p diagnostics
+          set -o pipefail
+          npm test | tee diagnostics/unit.tap
+      - name: Prove controlled regression is detected and restored
+        run: node scripts/inspector-regression.mjs | tee diagnostics/regression.json
+      - name: Write evidence reports
+        run: node scripts/write-diagnostics.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

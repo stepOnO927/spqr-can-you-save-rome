@@ -44,6 +44,9 @@ for(const p of ['index.html','map-lab/index.html','han/index.html','map-lab/lab.
  for(const u of body.matchAll(/https?:\/\/[^'"\s)<>]+/g))if(!u[0].startsWith('https://game-cdn.poki.com/')&&!/historical|source|Via |source:|source=/.test(body.slice(Math.max(0,u.index-70),u.index)))external.push({file:p,url:u[0]});
 }
 const sizes=await Promise.all(runtime.map(async p=>({path:p,bytes:(await stat(join(out,p))).size})));
-const manifest={entrypoints:['index.html','map-lab/index.html','han/index.html'],files:runtime.length+5,bytes:sizes.reduce((n,x)=>n+x.bytes,0),externalCandidates:external};
+const vendorFiles=['maplibre-gl.js','maplibre-gl.css','html2canvas.min.js'];
+const vendorBytes=(await Promise.all(vendorFiles.map(async p=>(await stat(join(vendor,p))).size))).reduce((a,b)=>a+b,0);
+const addedBytes=(await Promise.all(['poki-bridge.js','map-lab/poki-style.js'].map(async p=>(await stat(join(out,p))).size))).reduce((a,b)=>a+b,0);
+const manifest={entrypoints:['index.html','map-lab/index.html','han/index.html'],files:runtime.length+5,bytes:sizes.reduce((n,x)=>n+x.bytes,0)+vendorBytes+addedBytes,externalCandidates:external};
 await writeFile(join(out,'poki-build-report.json'),JSON.stringify(manifest,null,2));
 console.log(JSON.stringify({out,files:manifest.files,bytes:manifest.bytes,externalCandidates:external.length}));
