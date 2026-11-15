@@ -34,6 +34,11 @@ existing turn sequence; accepted aid spends the donor's real treasury and food
 before the return courier delivers it. New modules share the branch's cache
 versions so the campaign and atlas use one module instance. The corresponding
 unit and Chromium flows pass after integration.
+Main through `735d9ec` also adds a bounded frontier-defense response from
+the AI court's own dated sightings, plus the existing site's Cloudflare
+analytics tags. Both are retained here. The frontier order yields to wartime
+planning; its own test, the map browser smoke and the Han browser smoke pass
+after integration.
 Han military AI now treats a dated sighting of hostile troops in neutral land
 as a frontier threat, holds threatened garrisons, and reinforces a fort only
 when its supply can support another army. An underdefended front can trigger

@@ -28,6 +28,7 @@ const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
 import {initializeMarkets,advanceMarkets,advanceMarketAI,advanceMarketDiplomacy} from './trade-markets.js?v=faces-empire-2';
 import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=multipolar-courier-review-1';
+import {respondToFrontierReports} from './frontier-response.js?v=frontier-response-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=multipolar-2';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=multipolar-2';
@@ -661,11 +662,13 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     }
   }
   const enemies=s.regions.filter(r=>isWar(s,owner,reportedControl(s,owner,r.id)?.owner));
+  if(owner!=='rebels'&&!['caesar','senate'].includes(owner))respondToFrontierReports(s,owner,{issueOrder:issueMilitaryOrder,canCommand:a=>!planControlled(s,a.id)});
   // IMPERIUM: armies under an automatic operational plan or reorganizing follow that plan.
   const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&!a.reorg&&a.men>1200&&!planControlled(s,a.id));
   const observedPressure=strongPlanning?observeAttackPattern(s,owner):null;
   for(const a of available){
     if(!s.armies.includes(a))continue;
+    if(a.order?.source==='frontier_ai')continue;
     const here=region(s,a.region),neighbors=adjacent(a.region).map(e=>region(s,e.to)).filter(Boolean);
     const now=s.year*12+s.month,feint=s.world.aiFeints?.[owner];
     if(feint?.army===a.id){
