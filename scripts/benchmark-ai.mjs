@@ -1,5 +1,5 @@
-import {newScenario} from '../scenarios.js?v=sighting-consumers-1';
-import {tick,diplomacy,isWar} from '../engine.js?v=sighting-consumers-1';
+import {newScenario} from '../scenarios.js?v=born-portraits-eight-1';
+import {tick,diplomacy,isWar} from '../engine.js?v=born-portraits-eight-1';
 
 // Paired seeds give each difficulty the same initial state and random streams.
 // The player is passive, so these are comparable simulations, not matches
