@@ -93,9 +93,9 @@ The 120-month conservation test includes the new manufacturing ledger, and
 bilingual browser coverage checks loading, recruitment and save/reload.
 Roman field-ration use, generic non-formation recruitment, and fuller
 military maintenance integration remain open.
-After integrating main through `e6d9212d`, the complete serial simulation
-suite passed 1,148/1,148. After integrating `b4a01eba`, focused tests for
-family couriers, inheritance privacy, and module versions passed. The local
+After integrating main through `b4a01eba`, the complete serial simulation
+suite passed 1,149/1,149, including family couriers, inheritance privacy,
+and module versions. The local
 Chromium regressions passed for Han field
 recruitment and rations, Roman legion design, the expanded born-portrait
 pool, inherited foreign-name privacy, and saved asylum reply outcomes.
