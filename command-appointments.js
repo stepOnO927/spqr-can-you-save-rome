@@ -1,6 +1,6 @@
-import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=exchange-observation-1';
-import {officeOf} from './office-system.js?v=exchange-observation-1';
-import {recordLifeEvent,assignFictionalFieldCommander} from './dynasties.js?v=exchange-observation-1';
+import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=exchange-undated-1';
+import {officeOf} from './office-system.js?v=exchange-undated-1';
+import {recordLifeEvent,assignFictionalFieldCommander} from './dynasties.js?v=exchange-undated-1';
 
 // Theater-level appointments are simulated, not claims about historical commands.
 export function availableCommanders(s,armyId){

@@ -1,9 +1,9 @@
 import {localStore as localStorage} from '../safe-storage.js';
-import {campaignYear,campaignDate} from '../campaign-date.js?v=exchange-observation-1';
-import {filterChronicle,formatChronicleEntry,chronicleDate,syncChronicleDispatches} from '../chronicle.js?v=exchange-observation-1';
-import {FACTIONS} from '../data.js?v=exchange-observation-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=exchange-observation-1';
-import {visiblePersonName} from '../character-system.js?v=exchange-observation-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=exchange-undated-1';
+import {filterChronicle,formatChronicleEntry,chronicleDate,syncChronicleDispatches} from '../chronicle.js?v=exchange-undated-1';
+import {FACTIONS} from '../data.js?v=exchange-undated-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=exchange-undated-1';
+import {visiblePersonName} from '../character-system.js?v=exchange-undated-1';
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=(e,zh)=>({territory:zh?'领土':'Territory',battle:zh?'战斗':'Battle',siege:zh?'围攻':'Siege',movement:zh?'行军':'Movement',army:zh?'军队':'Army',politics:zh?'政治':'Politics',diplomacy:zh?'外交':'Diplomacy',government:zh?'政务':'Government',character:zh?'人物':'People',economy:zh?'经济':'Economy',intelligence:zh?'情报':'Intelligence',dispatch:zh?'战报':'Dispatch'})[e]||e;

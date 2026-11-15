@@ -1,8 +1,8 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=exchange-observation-1';
-import {createFictionalPerson} from './dynasties.js?v=exchange-observation-1';
-import {initializeOffices,appointOffice} from './office-system.js?v=exchange-observation-1';
-import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=exchange-observation-1';
-import {generateFictionalName} from './fictional-names.js?v=exchange-observation-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=exchange-undated-1';
+import {createFictionalPerson} from './dynasties.js?v=exchange-undated-1';
+import {initializeOffices,appointOffice} from './office-system.js?v=exchange-undated-1';
+import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=exchange-undated-1';
+import {generateFictionalName} from './fictional-names.js?v=exchange-undated-1';
 
 const ROMAN=new Set(['caesar','senate']);
 const clamp=n=>Math.max(0,Math.min(100,Math.round(n)));

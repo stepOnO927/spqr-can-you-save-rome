@@ -9,7 +9,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=exchange-observation-1'),s=newGame('caesar');
+  const {newGame}=await import('/engine.js?v=exchange-undated-1'),s=newGame('caesar');
   s.wars=[];s.factions.caesar.food=-100;s.markets.regions.cisalpine.goods.provisions.stock=2;s.markets.regions.cisalpine.goods.provisions.production=0;
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
  });
@@ -25,7 +25,7 @@ try{
  assert.equal(saved.armies.find(a=>a.id==='xiii').provisionsUsed,7200);
 
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=exchange-observation-1'),s=newGame('caesar');
+  const {newGame}=await import('/engine.js?v=exchange-undated-1'),s=newGame('caesar');
   s.markets.regions.cisalpine.goods.provisions.stock=1;
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
  });
@@ -42,7 +42,7 @@ try{
  assert.match(await page.locator('#command-detail').innerText(),/6,000 soldier-months/);
 
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=exchange-observation-1'),s=newGame('caesar');
+  const {newGame}=await import('/engine.js?v=exchange-undated-1'),s=newGame('caesar');
   s.markets.regions.cisalpine.goods.weapons.stock=0;s.markets.regions.cisalpine.goods.weapons.production=0;
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
  });
@@ -52,7 +52,7 @@ try{
  assert.match(await page.locator('#recruit').innerText(),/本地兵器1批（库存0）/);
  assert.match(await page.locator('.recruit-reason').innerText(),/本地至少需要1批兵器/);
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=exchange-observation-1'),s=newGame('caesar');
+  const {newGame}=await import('/engine.js?v=exchange-undated-1'),s=newGame('caesar');
   s.markets.regions.cisalpine.goods.weapons.stock=1;s.markets.regions.cisalpine.goods.weapons.production=0;
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
  });
@@ -65,7 +65,7 @@ try{
  assert.equal(saved.armies.find(a=>a.id==='levy1').equipmentMaterials.weapons,1);
 
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=exchange-observation-1'),s=newGame('caesar');
+  const {newGame}=await import('/engine.js?v=exchange-undated-1'),s=newGame('caesar');
   s.markets.regions.cisalpine.goods.weapons.stock=0;s.markets.regions.cisalpine.goods.weapons.production=0;
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
  });
@@ -77,7 +77,7 @@ try{
  await page.locator('[data-city="MEDIOLANUM"]').first().dispatchEvent('click');await page.locator('#city-region').click();
  assert.match(await page.locator('#recruit-feedback').innerText(),/Requires 1 local weapons batch/);
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=exchange-observation-1'),s=newGame('caesar');
+  const {newGame}=await import('/engine.js?v=exchange-undated-1'),s=newGame('caesar');
   s.markets.regions.cisalpine.goods.weapons.stock=1;s.markets.regions.cisalpine.goods.weapons.production=0;
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
  });

@@ -104,8 +104,8 @@ try{
  assert.match(await page.locator('.market-receipts').innerText(),/目的地库存 \d+ → \d+.*当地市价 \d+ → \d+/s);
  await page.evaluate(async()=>{
   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js');
-  const {propose,declareWar}=await import('/han/frontier.js?v=exchange-observation-1');
-  const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=exchange-observation-1');
+  const {propose,declareWar}=await import('/han/frontier.js?v=exchange-undated-1');
+  const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=exchange-undated-1');
   const state=newHanGame('han',{seed:77});
   if(propose(state,'han','kangju','market').proposal.status!=='accepted')throw Error('Market treaty unavailable');
   const placed=placeEasternTrade(state,{seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1});
@@ -122,7 +122,7 @@ try{
  assert.match(await page.locator('.market-intelligence').innerText(),/Own caravan blocked/);
  await page.evaluate(async()=>{
   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js');
-  const {advanceEasternMarkets}=await import('/han/markets.js?v=exchange-observation-1');
+  const {advanceEasternMarkets}=await import('/han/markets.js?v=exchange-undated-1');
   const state=newHanGame('han',{seed:79});state.wars.push(['han','zhizhi']);
   const invader=state.armies.find(a=>a.owner==='zhizhi');invader.region='changan';invader.move=null;
   advanceEasternMarkets(state);
@@ -143,8 +143,8 @@ try{
  assert.doesNotMatch(await page.locator('.market-receipts').innerText(),/987654|987655/,'foreign destination stock is private');
  await page.evaluate(async()=>{
   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js');
-  const {propose}=await import('/han/frontier.js?v=exchange-observation-1');
-  const {placeEasternTrade}=await import('/han/markets.js?v=exchange-observation-1');
+  const {propose}=await import('/han/frontier.js?v=exchange-undated-1');
+  const {placeEasternTrade}=await import('/han/markets.js?v=exchange-undated-1');
   const {createMarketMerchant}=await import('/han/field-identities.js');
   const state=newHanGame('han',{seed:57});propose(state,'han','kangju','market');
   const id=createMarketMerchant(state,'han','kangju'),person=state.persons[id];
@@ -158,10 +158,10 @@ try{
  await page.locator('#lang').click();
  assert.match(await page.locator('#inspector').innerText(),/Merchant-funded escort 2¤.*Raided routes 1/s);
   await page.evaluate(async()=>{
-   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=exchange-observation-1');
-   const {advanceSilk}=await import('/han/silk-road.js?v=exchange-observation-1');
-   const {advanceEasternMarkets}=await import('/han/markets.js?v=exchange-observation-1');
-   const {roll}=await import('/han/util.js?v=exchange-observation-1');
+   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=exchange-undated-1');
+   const {advanceSilk}=await import('/han/silk-road.js?v=exchange-undated-1');
+   const {advanceEasternMarkets}=await import('/han/markets.js?v=exchange-undated-1');
+   const {roll}=await import('/han/util.js?v=exchange-undated-1');
    const state=newHanGame('shanshan',{seed:38});state.tradeMarkets.embeddedRoman=true;state.month=2;advanceSilk(state);
    const caravan=state.silk.caravans.find(c=>c.shipmentId),shipment=state.tradeMarkets.shipments.find(x=>x.id===caravan?.shipmentId),hazard=state.regions.find(r=>r.id===shipment?.legs[0].to);
    if(!hazard)throw Error('AI caravan missing');hazard.unrest=1;hazard.fort=0;for(const army of state.armies.filter(a=>a.region===hazard.id))army.men=0;
@@ -175,9 +175,9 @@ try{
   await page.locator('#load').click();await page.locator('#advance').click();await page.locator('#save').click();
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')).silk.protectionSpent),20);
  await page.evaluate(async()=>{
-  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=exchange-observation-1');
-  const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=exchange-observation-1');
-  const {roll}=await import('/han/util.js?v=exchange-observation-1');
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=exchange-undated-1');
+  const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=exchange-undated-1');
+  const {roll}=await import('/han/util.js?v=exchange-undated-1');
   const state=newHanGame('han',{seed:49});state.tradeMarkets.embeddedRoman=true;
   const placed=placeEasternTrade(state,{seller:'han',buyer:'han',origin:'hongnong',destination:'changan',commodity:'provisions',quantity:1});
   if(!placed.ok)throw Error('Player caravan missing');

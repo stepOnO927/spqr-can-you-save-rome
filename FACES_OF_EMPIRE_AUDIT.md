@@ -6,16 +6,19 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `c6f7c072`. Main's optional analytics
+The draft now includes main through `35ffa754`. Main's optional analytics
 is connected across the campaign, atlas and standalone Han views after
 reconciling their differing controls. Its privacy choice remains opt-in;
-the six new analytics unit cases and the full 1,191-test local suite pass. Main's ninth
+the six new analytics unit cases and the full 1,193-test local suite pass. Main's ninth
 campaign-born portrait pair is also available to new births and compatible
 old saves. Han trade arrivals and completed tutorial steps use the same
 optional analytics events as the rest of the campaign.
 The intelligence exchange now forwards the freshest delivered observation
 available when the reply is sealed, preserving delayed delivery and dated
 foreign-report privacy.
+An exchanged legacy observation with no known date remains explicitly
+undated in the dossier; its delivery date is shown separately and cannot
+become current verified evidence merely because the courier arrived.
 The new personal-audience
 mail records completed meetings and explicit refusals, while silence and
 failed contact produce no invented correspondence. Its names are saved at
