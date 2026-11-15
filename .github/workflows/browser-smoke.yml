@@ -23,6 +23,7 @@ jobs:
       - run: |
           node server.mjs > server.log 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
+          node() { echo "BROWSER_CHECK: $*" >&2; command timeout 240s node "$@"; }
           node tools/poki-mobile-smoke.mjs
           node tools/storage-fallback-smoke.mjs
           node tools/inspector-smoke.mjs
