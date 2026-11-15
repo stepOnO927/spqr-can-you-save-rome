@@ -60,6 +60,7 @@ jobs:
               node tools/han-court-smoke.mjs
               node tools/genealogy-dossier-smoke.mjs
               node tools/genealogy-personal-actions-smoke.mjs
+              node tools/foreign-name-privacy-smoke.mjs
               node scripts/multipolar-sim.mjs > multipolar-simulation.json
               node scripts/market-120-sim.mjs > market-120-simulation.json
               node tools/multipolar-smoke.mjs
