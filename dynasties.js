@@ -166,7 +166,7 @@ export function seedHanFrontierPeople(s){
  const ruler=createFictionalPerson(s,{...common,name:['Tura of Shanshan','鄯善的图拉'],birthYear:-88,role:['Fictional oasis ruler','虚构绿洲国王']});
  s.world.leadership.shanshan=[ruler];
  const army=s.armies.find(a=>a.id==='shanshanGuard');
- if(army){const name=['Dama of Shanshan','鄯善的达玛'];army.characterId=createFictionalPerson(s,{...common,name,birthYear:-78,role:['Fictional oasis commander','虚构绿洲指挥官']});army.commander=[...name]}
+ if(army){const name=['Dama of Shanshan','鄯善的达玛'];army.characterId=createFictionalPerson(s,{...common,name,birthYear:-78,role:['Fictional oasis commander','虚构绿洲指挥官'],militaryOnly:true});army.commander=[...name]}
  s.world.hanFrontierPeopleSeeded=true;
 }
 

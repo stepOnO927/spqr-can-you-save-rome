@@ -52,7 +52,9 @@ test('an established frontier kingdom can elevate a saved local successor',()=>{
  const successor=createFictionalPerson(s,{name:['Suli of Shanshan','鄯善的苏利'],faction,birthYear:-80,location:'shanshanOasis',sex:'male',culture:['Shanshan oasis (game reconstruction)','鄯善绿洲（游戏复原）']});
  assert.ok(successorFor(s,faction).includes(successor));
  s.world.characters[former].alive=false;
- for(const army of s.armies.filter(a=>a.owner===faction&&a.characterId))s.world.characters[army.characterId].alive=false;
+ const guard=s.armies.find(a=>a.owner===faction&&a.characterId).characterId;
+ assert.equal(s.world.characters[guard].alive,true);
+ assert.equal(successorFor(s,faction).includes(guard),false);
  assert.deepEqual(assignSuccession(s,faction),[successor]);
  assert.equal(deriveGovernment(s,faction).kind,'normal');
  assert.match(proceduralPortraitSvg(s,successor),/<svg/);

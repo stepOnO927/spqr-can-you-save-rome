@@ -67,8 +67,9 @@ test('a human-controlled court is never assigned an unrequested nominee',()=>{
 
 test('an empty Shanshan court can restore a distinct local ruler without notifying Han immediately',()=>{
  let s=newGame('han'),former=s.world.leadership.shanshan[0];
- for(const person of Object.values(s.world.characters))if(person.faction==='shanshan'){person.alive=false;person.health='deceased'}
+ s.world.characters[former].alive=false;s.world.characters[former].health='deceased';
  assignSuccession(s,'shanshan');
+ assert.deepEqual(s.world.leadership.shanshan,[],'the surviving guard does not inherit by default');
  s.factions.shanshan.treasury=100;s.world.dynasties.seed=1;
  const known=[...knownLeaders(s,'han','shanshan')];
  step(s,7);
