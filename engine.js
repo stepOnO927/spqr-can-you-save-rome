@@ -454,7 +454,7 @@ function resolveInquiries(s,{autoplayPlayer=false}={}){
    }
    else{sealed.claim=stated.length?[stated.map(id=>CHARACTER_CATALOG[id].name[0]).join(', '),stated.map(id=>CHARACTER_CATALOG[id].name[1]).join('、')]:['Authority uncertain','执政者不明'];sealed.report={kind:'leaders',leaders:[...stated],exhaustive:true}}
    }
-   if(sealed.report)sealed.report.peopleNames=snapshotReportedPeople(sealed.report);
+   if(sealed.report)sealed.report.peopleNames=snapshotReportedPeople(sealed.report,s);
    letter.sealed=sealed;
   }
   if(letter.remaining>0)continue;

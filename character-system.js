@@ -111,7 +111,7 @@ const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observ
 // Preserve only names present when a report was made. Forwarded and legacy
 // reports never acquire a new name from the foreign court's current state.
 const namedReportSubjects=r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:r.kind?.startsWith('office_')||r.kind==='succession'?[r.value]:[];
-export function snapshotReportedPeople(report){const result={};for(const id of namedReportSubjects(report)){const name=CHARACTER_CATALOG[id]?.name;if(Array.isArray(name)&&name.length===2&&name.every(x=>typeof x==='string'&&x.length>0))result[id]=[...name]}return result}
+export function snapshotReportedPeople(report,s=null){const result={};for(const id of namedReportSubjects(report)){const name=s?.world?.dynasties?.catalog?.[id]?.name||CHARACTER_CATALOG[id]?.name;if(Array.isArray(name)&&name.length===2&&name.every(x=>typeof x==='string'&&x.length>0))result[id]=[...name]}return result}
 export function reportedPersonName(s,actor,target,id){
  const reports=s.knowledge?.[actor]?.[target]?.reports||[];
  const found=reports.filter(r=>reportAge(s,r)>=0&&namedReportSubjects(r).includes(id)&&Array.isArray(r.peopleNames?.[id])&&r.peopleNames[id].length===2&&r.peopleNames[id].every(x=>typeof x==='string'&&x.length>0)).sort((a,b)=>reportAge(s,a)-reportAge(s,b))[0];
@@ -151,7 +151,7 @@ export function addReport(s,actor,target,report){
  initializeWorld(s);const k=s.knowledge[actor]?.[target];if(!k)return;
  const r={...report,year:s.year,month:s.month,baseConfidence:report.baseConfidence||report.confidence||'unverified',verified:false};
  if(report.source==='exchange'||report.peopleNames||report.observationYear!=null||report.observationMonth!=null)r.peopleNames=structuredClone(report.peopleNames||{});
- else r.peopleNames=snapshotReportedPeople(r);
+ else r.peopleNames=snapshotReportedPeople(r,s);
  // An older forwarded message may be useful evidence but must not replace a newer report.
  const newerLeader=r.kind==='leaders'&&k.reports.some(x=>x.kind==='leaders'&&knownReport(x)&&reportAge(s,x)<reportAge(s,r));
  k.reports.unshift(r);k.reports=k.reports.slice(0,30);

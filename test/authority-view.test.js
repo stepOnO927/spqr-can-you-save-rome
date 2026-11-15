@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-reported-names-1';
 import {authorityForTheater} from '../map-lab/authority-view.js?v=faces-reported-names-1';
+import {addReport} from '../character-system.js?v=faces-reported-names-1';
 
 test('foreign authority uses only the viewer’s most recent observed report',()=>{
  let s=newGame('senate');s.year=-48;s.month=7;
@@ -33,4 +34,16 @@ test('each conflicting authority claim retains its own observed name and ignores
  reports.unshift({kind:'authority',value:{kind:'regency',actors:[id]},source:'spy',year:s.year,month:s.month,peopleNames:{[id]:['First name','首份姓名']}},{kind:'authority',value:{kind:'acting_command',actors:[id]},source:'envoy',year:s.year,month:s.month,peopleNames:{[id]:['Second name','第二份姓名']}},{kind:'authority',value:{kind:'normal',actors:[id]},source:'spy',year:s.year+1,month:s.month,peopleNames:{[id]:['Future name','未来姓名']}});
  const claim=authorityForTheater(s,'egypt');assert.deepEqual(claim.peopleNames[id],['First name','首份姓名']);assert.deepEqual(claim.alternatives[0].peopleNames[id],['Second name','第二份姓名']);assert.equal(claim.alternatives.length,1);
  delete reports[0].peopleNames;assert.deepEqual(authorityForTheater(s,'egypt').peopleNames[id],['Unrecorded name','姓名未记录']);
+});
+
+test('new reports snapshot names from this campaign when an identity changes',()=>{
+ const s=newGame('caesar'),id='fictional:801';
+ s.world.dynasties.catalog[id]={id,name:['First name','首份姓名'],faction:'senate',fictional:true};
+ const first=addReport(s,'caesar','senate',{kind:'authority',value:{kind:'regency',actors:[id]},source:'spy'});
+ s.world.dynasties.catalog[id].name=['Second name','第二份姓名'];
+ const second=addReport(s,'caesar','senate',{kind:'authority',value:{kind:'acting_command',actors:[id]},source:'envoy'});
+ assert.deepEqual(first.peopleNames[id],['First name','首份姓名']);
+ assert.deepEqual(second.peopleNames[id],['Second name','第二份姓名']);
+ s.world.dynasties.catalog[id].name=['Secret name','秘密姓名'];
+ assert.deepEqual(upgradeSave(structuredClone(s)).knowledge.caesar.senate.reports.map(r=>r.peopleNames[id]),[['Second name','第二份姓名'],['First name','首份姓名']]);
 });

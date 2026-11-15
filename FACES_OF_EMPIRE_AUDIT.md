@@ -6,12 +6,18 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `38c63d97`. Its overview layout and
+The draft now includes main through `8fc5508f`. Its overview layout and
 attack-preview privacy changes are connected to the expanded faction atlas:
 crowded cities and armies remain selectable through faction directories, and
 attack scenarios use reported fortification bands without reading foreign
 supply. The Roman campaign browser flow, both new overview/privacy browser
 checks, and both market browser checks pass after the integration.
+The newer theater-authority name snapshots are integrated as well. A browser
+regression exposed that a second report could copy the first name from the
+shared character catalog after the saved person's name changed. Reports now
+capture the current campaign's name at observation, retain each dated name
+through save/load, and open a dossier with that report's name rather than a
+future one. The direct regression and authority browser flow pass.
 The ten-year Roman/Han market simulation also checks sustainable population,
 bounded faction resources, living named Han officeholders with portraits, and
 exact preservation of saved Han names and portrait identities at its midpoint
