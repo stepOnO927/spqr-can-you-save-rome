@@ -77,6 +77,11 @@ try{
     if(await marker.isHidden()||await marker.textContent()!==name)throw Error(`${name}: local ancient-place label missing in English: ${JSON.stringify(await marker.evaluate(el=>({hidden:el.hidden,text:el.textContent,display:getComputedStyle(el).display,box:el.getBoundingClientRect().toJSON()})))}`);
    }
    await page.screenshot({path:resolve(output,'ariminum-local-en.png')});
+   const mountain=page.locator('[data-physical-label="apennines-north"]'),mountainBox=await mountain.boundingBox();
+   if(await mountain.isHidden()||await mountain.textContent()!=='Apennines'||!mountainBox||mountainBox.x<380||mountainBox.y<110||mountainBox.x+mountainBox.width>1080||mountainBox.y+mountainBox.height>740)throw Error(`Apennine label is obscured or off-map: ${JSON.stringify(mountainBox)}`);
+   await page.locator('#language').click();
+   if(await mountain.textContent()!=='亚平宁山脉')throw Error('Apennine terrain label must translate to Chinese');
+   await page.locator('#language').click();
    await page.locator('#language').click();
    if(await page.locator('[data-ancient-place="caesena"]').textContent()!=='凯塞纳')throw Error('Ancient-place label must translate to Chinese');
    await page.locator('#language').click();
@@ -100,6 +105,15 @@ try{
  const ligurianBox=await page.locator('[data-physical-label="ligurian"]').boundingBox();
  if(!ligurianBox||ligurianBox.x<380||ligurianBox.y<110||ligurianBox.x+ligurianBox.width>1080||ligurianBox.y+ligurianBox.height>700)throw Error(`Ligurian Sea label is outside unobstructed water: ${JSON.stringify(ligurianBox)}`);
  await page.screenshot({path:resolve(output,'liguria-close.png')});
+ await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[10.5,45.1],zoom:8.6})});
+ await page.waitForTimeout(3500);
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
+ const plain=page.locator('[data-physical-label="po-plain"]'),plainBox=await plain.boundingBox();
+ if(await plain.isHidden()||await plain.textContent()!=='Po Plain'||!plainBox||plainBox.x<380||plainBox.y<110||plainBox.x+plainBox.width>1080||plainBox.y+plainBox.height>740)throw Error(`Po Plain label is obscured or off-map: ${JSON.stringify(plainBox)}`);
+ await page.screenshot({path:resolve(output,'po-plain-close.png')});
+ await page.locator('#language').click();
+ if(await plain.textContent()!=='波河平原')throw Error('Po Plain terrain label must translate to Chinese');
+ await page.locator('#language').click();
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[12.4,43.2],zoom:5.45})});
  await page.waitForFunction(()=>document.querySelector('#map-charting').hidden,null,{timeout:12000});
  if(!(await page.locator('[data-physical-label="northern-adriatic"]').isHidden()))throw Error('Close-sea label must hide on the overview');

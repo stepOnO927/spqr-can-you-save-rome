@@ -12,6 +12,10 @@ export const physicalLabels=[
  {id:'nile-delta',kind:'land',point:[30.45,31.05],en:'Nile Delta',zh:'尼罗河三角洲'},
  {id:'western-desert',kind:'land',point:[29.7,30.95],en:'Western Desert',zh:'西部沙漠'},
  {id:'alps',kind:'land',point:[10.5,46.7],en:'Alps',zh:'阿尔卑斯山'},
- {id:'apennines',kind:'land',point:[13.3,42.9],en:'Apennines',zh:'亚平宁山脉'},
+ {id:'po-plain',kind:'land',point:[10.5,45.1],en:'Po Plain',zh:'波河平原',minZoom:7.7},
+ {id:'apennines',kind:'land',point:[13.3,42.9],en:'Apennines',zh:'亚平宁山脉',maxZoom:8.3},
+ {id:'apennines-north',kind:'land',point:[12.34,43.86],en:'Apennines',zh:'亚平宁山脉',minZoom:8.3},
+ {id:'apennines-central',kind:'land',point:[13.3,42.9],en:'Apennines',zh:'亚平宁山脉',minZoom:8.3},
+ {id:'apennines-south',kind:'land',point:[15.45,40.45],en:'Apennines',zh:'亚平宁山脉',minZoom:8.3},
  {id:'anatolian-plateau',kind:'land',point:[32.1,38.5],en:'Anatolian Plateau',zh:'安纳托利亚高原'}
 ];
