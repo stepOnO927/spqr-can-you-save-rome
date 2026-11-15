@@ -6,7 +6,8 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `d55f24d3`. Main's optional analytics
+The draft now includes main through `0f664ae9`, including its production GA4
+stream setting. Main's optional analytics
 is connected across the campaign, atlas and standalone Han views after
 reconciling their differing controls. Its privacy choice remains opt-in;
 the six new analytics unit cases and the full 1,195-test local suite pass. Main's ninth
