@@ -25,8 +25,9 @@ export function nationalBudget(s,id){
  const estateFood=effects.estateLabor?Math.min(4,owned.filter(productiveEstateRegion).length):0;
  const tenantFood=effects.tenantShares?Math.min(3,owned.filter(productiveEstateRegion).length):0;
  const requisitionLoss=owned.reduce((n,r)=>n+(r.foodRequisitionRemaining>0?Math.min(r.food,r.foodRequisitionLoss||0):0),0);
- const foodProduction=owned.reduce((n,r)=>n+r.food,0)+estateFood,foodConsumption=troops/1200+units*2;
- const foodNet=Math.round(foodProduction-foodConsumption-tenantFood-requisitionLoss)+homeFood+offices.food+(effects.food||0)+buildings.reduce((n,e)=>n+(e.food||0),0);
+ const foodProduction=owned.reduce((n,r)=>n+r.food,0)+estateFood,troopFood=troops/1200,regionalFood=units*2,foodConsumption=troopFood+regionalFood;
+ const officeFood=offices.food,ideaFood=effects.food||0,buildingFood=buildings.reduce((n,e)=>n+(e.food||0),0);
+ const foodNet=Math.round(foodProduction-foodConsumption-tenantFood-requisitionLoss)+homeFood+officeFood+ideaFood+buildingFood;
  const manpowerNet=Math.round(units*170*(s.grandMap?Math.max(.6,Math.min(1.2,owned.reduce((n,r)=>n+(r.civicSatisfaction??60),0)/Math.max(1,owned.length)/60)):1))+(effects.manpower||0);
- return {tax,armyUpkeep,homeIncome,homeFood,officeIncome,ideaIncome,buildingIncome,buildingUpkeep,ideaUpkeep,landNet,navyUpkeep,navalJobs,tradeImportPaid,administrationExpense,reviewExpense,templeExpense,religiousExpense,projectedNet:landNet-navyUpkeep-navalJobs-administrationExpense-reviewExpense-templeExpense-religiousExpense,foodProduction,requisitionLoss,estateFood,tenantFood,foodConsumption,foodNet,manpowerNet,stability:offices.stability+(effects.stability||0)+buildings.reduce((n,e)=>n+(e.stability||0),0),legitimacy:buildings.reduce((n,e)=>n+(e.legitimacy||0),0),foodCapacity:100+units*25+buildings.reduce((n,e)=>n+(e.foodCapacity||0),0)};
+ return {tax,armyUpkeep,homeIncome,homeFood,officeIncome,ideaIncome,buildingIncome,buildingUpkeep,ideaUpkeep,landNet,navyUpkeep,navalJobs,tradeImportPaid,administrationExpense,reviewExpense,templeExpense,religiousExpense,projectedNet:landNet-navyUpkeep-navalJobs-administrationExpense-reviewExpense-templeExpense-religiousExpense,foodProduction,troopFood,regionalFood,requisitionLoss,estateFood,tenantFood,officeFood,ideaFood,buildingFood,foodConsumption,foodNet,manpowerNet,stability:offices.stability+(effects.stability||0)+buildings.reduce((n,e)=>n+(e.stability||0),0),legitimacy:buildings.reduce((n,e)=>n+(e.legitimacy||0),0),foodCapacity:100+units*25+buildings.reduce((n,e)=>n+(e.foodCapacity||0),0)};
 }

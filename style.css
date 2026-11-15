@@ -32,3 +32,4 @@ body{min-width:0;background:#292d29}.top{height:54px;padding:0 12px;gap:15px;bac
 .ending-chronicle{width:min(920px,90vw);text-align:left}.ending-chronicle summary{padding:9px 12px;border:1px solid #c5a86c;cursor:pointer}.ending-chronicle>div{max-height:25vh;overflow:auto;padding:8px 14px;background:#e9dbc0;color:#322c23}.ending-chronicle p{margin:5px 0;font:13px/1.4 Arial}
 
 .war-contribution-panel{margin-top:12px;padding-top:10px;border-top:1px solid #b69862}.war-contribution-panel .action{margin:6px 0}.war-contribution-panel a{color:#65421f}
+.national-budget .budget-runway{margin:10px 0;padding:8px 10px;background:#f4deb2;border-left:3px solid #9b5239;color:#5b3226;font:700 13px/1.45 Arial,sans-serif}
