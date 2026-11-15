@@ -26,7 +26,7 @@ for (const [path, width, height] of [['/', 640, 360], ['/', 836, 470], ['/han/',
         map: rect('#map-svg') || rect('#map'),
         inspector: rect('.inspector') || rect('.selection') || rect('#inspector'),
         nextMonth: rect('#step') || rect('#advance'),
-        firstRenderMs: Math.round(performance.now()),
+        sampledAtMs: Math.round(performance.now()),
         domContentLoadedMs: Math.round(nav?.domContentLoadedEventEnd || 0),
         sameOriginBytes: resources.filter(x => x.name.startsWith(location.origin)).reduce((n,x) => n + (x.transferSize || 0), 0),
         resourceCount: resources.length,
@@ -34,7 +34,38 @@ for (const [path, width, height] of [['/', 640, 360], ['/', 836, 470], ['/han/',
       };
     });
     await page.screenshot({ path: `poki-audit-${path === '/' ? 'rome' : path.replace(/[^a-z]/g,'')}-${width}x${height}.png`, fullPage: false });
-    results.push({ path, width, height, layout, errors, external: [...external] });
+    const touch = {};
+    try {
+      if (path === '/') {
+        await page.locator('#start-campaign').tap({ timeout: 5000 });
+        touch.started = await page.locator('.setup-backdrop').count() === 0;
+        const army = page.locator('#map-svg [data-army]').first();
+        touch.armyMarkers = await page.locator('#map-svg [data-army]').count();
+        if (touch.armyMarkers) {
+          await army.tap({ timeout: 5000 });
+          touch.inspectorOpen = await page.locator('.inspector:not(.closed)').count() > 0;
+        }
+        touch.advanceInViewport = await page.locator('#step').evaluate(el => { const b = el.getBoundingClientRect(); return b.top >= 0 && b.bottom <= innerHeight; });
+      } else if (path === '/han/') {
+        await page.locator('#begin').tap({ timeout: 5000 });
+        touch.started = await page.locator('#map [data-region]').count() > 0;
+        if (touch.started) {
+          await page.locator('#map [data-region]').first().tap({ timeout: 5000 });
+          touch.inspectorPopulated = (await page.locator('#inspector').textContent()).trim().length > 0;
+        }
+      } else {
+        await page.locator('#start-game').tap({ timeout: 5000 });
+        touch.started = await page.locator('#start-overlay:not([hidden])').count() === 0;
+        touch.markers = await page.locator('.maplibregl-marker').count();
+        if (touch.markers) {
+          await page.locator('.maplibregl-marker').first().tap({ timeout: 5000 });
+          touch.selectionOpen = await page.locator('.selection:not(.collapsed)').count() > 0;
+        }
+      }
+    } catch (error) {
+      touch.error = error.message;
+    }
+    results.push({ path, width, height, layout, touch, errors, external: [...external] });
   } catch (error) {
     results.push({ path, width, height, fatal: error.message, errors, external: [...external] });
   }
@@ -53,7 +84,7 @@ for (const path of ['/', '/han/', '/map-lab/']) {
   try {
     await page.goto(origin + path, { waitUntil: 'domcontentloaded', timeout: 25000 });
     await page.waitForTimeout(1000);
-    results.push({ path, storageDenied: true, errors, playable: await page.locator('#start-campaign, #start-game, #setup button').count() > 0 });
+    results.push({ path, storageDenied: true, errors, playable: errors.length === 0 && await page.locator('#start-campaign, #start-game, #setup button').count() > 0 });
   } catch (error) {
     results.push({ path, storageDenied: true, fatal: error.message, errors });
   }
