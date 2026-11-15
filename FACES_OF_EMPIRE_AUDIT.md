@@ -6,6 +6,25 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The atlas now has a trade map mode tied to the existing market and route
+simulation. It shows owned market grain stocks, prices, production and demand;
+public geographic corridors adjacent to owned markets; and the planned route
+and estimated position of the player's paid caravans, including a blocked
+status. The Han atlas exposes the same mode. The projection excludes foreign
+live inventories and foreign caravans. A unit test checks that boundary, and
+the Roman/Han market browser flow checks that an actual order creates a map
+marker immediately and that changing modes removes it. It remains an atlas
+view of the modeled markets, not a second trade engine. Wider foreign market
+intelligence and autonomous rerouting remain open.
+
+Actual hostile siege or occupation now halves local agricultural output in
+both campaigns. This affects monthly food or grain, measured market stock,
+and local prices when shortages arise; unrelated provinces are unaffected.
+The owned-market panels explain the disruption in both languages. Separately,
+completed official referrals name both saved participants, and regional talent
+searches draw names and cultural identity from the same faction-specific pools
+as other generated characters.
+
 The baseline table is a historical snapshot. Later commits added an eastern
 Han theater, a separate Shanshan polity, Han court personnel and succession
 rules, and a browser exercised Han start and save restoration. The current
