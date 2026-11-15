@@ -1,0 +1,12 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),page=await browser.newPage({viewport:{width:1366,height:768}}),errors=[];
+page.on('pageerror',e=>errors.push(e.message));
+try{
+ await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+ const id=await page.evaluate(async()=>{localStorage.setItem('spqr-lang','zh');const {newGame}=await import('/engine.js?v=senate-record-privacy-1'),{initializeCursus}=await import('/cursus-honorum.js?v=senate-record-privacy-1');const state=newGame('senate'),c=initializeCursus(state),foreign=c.senators.find(x=>x.faction==='caesar');state.world.dynasties.catalog[foreign.id].name=['Secret changed name','秘密改名'];delete state.world.characters[foreign.id];sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));return foreign.id});
+ await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();await page.locator('.cursus-senate summary').click();
+ let row=page.locator('.cursus-senator').filter({hasText:'卢基乌斯·卡西乌斯'});assert.equal(await row.count(),1);assert.doesNotMatch(await page.locator('.cursus-senate').innerText(),/秘密改名/);await row.locator('[data-senator-endorse]').click();
+ assert.match(await page.locator('.cursus-tree').innerText(),/背书请求：卢基乌斯·卡西乌斯 · 等待回复/);await page.locator('#save').click();const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));assert.equal(saved.world.cursus.endorsements.find(x=>x.senatorId===id)?.status,'pending');
+ await page.locator('.cursus-senate summary').click();row=page.locator('.cursus-senator').filter({hasText:'卢基乌斯·卡西乌斯'});await row.locator('.cursus-person').click();assert.doesNotMatch(await page.locator('#command-detail').innerText(),/秘密改名/);assert.deepEqual(errors,[]);console.log('Senate records and delayed endorsement respect hidden changes');
+}finally{await browser.close()}

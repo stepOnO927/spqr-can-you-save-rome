@@ -15,7 +15,7 @@ import {reportedControl,requestControlReport} from '../control-intelligence.js?v
 import {renderLocalGovernor} from './local-governor-ui.js?v=senator-portraits-1';
 import {renderSecurity} from './security-ui.js?v=senator-portraits-1';
 import {renderOffices} from './offices-ui.js?v=senator-portraits-1';
-import {renderCursus} from './cursus-ui.js?v=senator-portraits-1';
+import {renderCursus} from './cursus-ui.js?v=senate-record-privacy-1';
 import {officeEffects} from '../office-system.js?v=senator-portraits-1';
 import {populationFactor,religiousTaxCost} from '../religion.js?v=senator-portraits-1';
 import {satisfactionForOutline} from './satisfaction-map.js?v=senator-portraits-1';
@@ -28,13 +28,13 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=player-request-aid-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=senate-record-privacy-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=succession-ui-recovery-1';
-import {createCharacterUI} from './character-ui.js?v=player-request-aid-1';
+import {createCharacterUI} from './character-ui.js?v=senate-record-privacy-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=senator-portraits-1';
-import {renderAidRequest} from '../strategic-aid-ui.js?v=player-request-aid-1';
+import {renderAidRequest} from '../strategic-aid-ui.js?v=senate-record-privacy-1';
 import {reportedArmies} from '../character-system.js?v=senator-portraits-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=travel-2';
 import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';
