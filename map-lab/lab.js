@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../
 import {nationalBudget} from '../national-budget.js?v=21';
 import {budgetHtml} from '../budget-ui.js?v=25';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=31';
+import {physicalStyle} from './physical-style.js?v=32';
 import {physicalLabels} from './physical-labels.js?v=4';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=190';
@@ -140,6 +140,7 @@ map.on('move',event=>{
 map.on('sourcedata',event=>{if(event?.sourceId==='land'||event?.sourceId==='ocean')mapSourceAt=performance.now()});
 map.on('moveend',()=>{
  const center=map.getCenter?.();if(center)mapSettled={lng:center.lng,lat:center.lat,zoom:map.getZoom?.()||0};
+ mapMoveStart=null;
  if(mapCurtain.hidden)return;
  const token=++mapChartToken;clearTimeout(mapChartTimer);
  const check=()=>{
@@ -149,7 +150,12 @@ map.on('moveend',()=>{
   // The exact shoreline may settle before its native close-up DEM. Revealing
   // that intermediate frame briefly makes the atlas look low resolution.
   const terrainReady=!terrainSource||(map.isSourceLoaded?.(terrainSource)??true);
-  const ready=now-mapChartedAt>=2000&&now-mapSourceAt>=450&&masksReady&&terrainReady&&!(map.isMoving?.()??false);
+  // A distant jump can otherwise reveal a sharp coast before its rivers or
+  // local lake polygon have arrived, leaving a briefly empty water body.
+  const zoom=map.getZoom?.()||0;
+  const hydroSources=['rivers','lakes',...(zoom>=8?['garda-lake-detail']:[]),...(zoom>=8.1?['po-river-detail']:[])];
+  const hydroReady=hydroSources.every(id=>map.isSourceLoaded?.(id)??true);
+  const ready=now-mapChartedAt>=2000&&now-mapSourceAt>=450&&masksReady&&terrainReady&&hydroReady&&!(map.isMoving?.()??false);
   if(ready||now-mapChartedAt>10000){revealChart();return}
   mapChartTimer=setTimeout(check,150);
  };

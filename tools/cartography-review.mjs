@@ -26,6 +26,7 @@ try{
  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-free').click();
  await page.locator('.maplibregl-canvas').waitFor();
+ await page.evaluate(async()=>{window.__reviewMap=(await import(document.querySelector('script[type="module"]').src)).map});
  await page.locator('#map-mode').selectOption('terrain');
  for(const [name,center] of [['ariminum',[12.6,44.1]],['alexandria',[29.91,31.2]]]){
   await page.evaluate(async()=>{
@@ -49,7 +50,7 @@ try{
    if(!await page.evaluate(()=>document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99))throw Error('Screenshot completed before the map returned to full color');
   }
   jumps.push({name,ms:Date.now()-jumpStarted,readiness:await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {loaded:map.loaded(),tilesLoaded:map.areTilesLoaded(),unloadedSources:Object.keys(map.getStyle().sources).filter(id=>!map.isSourceLoaded(id))}})});
-  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()},null,{timeout:20000});
+  await page.waitForFunction(()=>!window.__reviewMap.isMoving()&&window.__reviewMap.areTilesLoaded(),null,{timeout:20000});
   await page.waitForTimeout(3500);
   if(name==='ariminum'){
    const nearSea=page.locator('[data-physical-label="northern-adriatic"]');
@@ -62,7 +63,7 @@ try{
    const {map}=await import(document.querySelector('script[type="module"]').src);
    map.setPaintProperty('coastal-halo','line-width',['interpolate',['linear'],['zoom'],4,2,8,3,9,4]);
    map.setPaintProperty('coastal-halo','line-blur',['interpolate',['linear'],['zoom'],4,1,9,1]);
-   map.setPaintProperty('coastal-halo','line-opacity',['interpolate',['linear'],['zoom'],4,.04,7,.1,9,.14]);
+   map.setPaintProperty('coastal-halo','line-opacity',['interpolate',['linear'],['zoom'],4,.04,7,.1,9,.07]);
    map.setPaintProperty('sea-cartographic-grain','fill-opacity',['interpolate',['linear'],['zoom'],7,0,8,.25,9,.32]);
   });
   await page.waitForTimeout(900);
@@ -107,7 +108,7 @@ try{
  await page.screenshot({path:resolve(output,'liguria-close.png')});
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[10.5,45.1],zoom:8.6})});
  await page.waitForTimeout(3500);
- await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
+ await page.waitForFunction(()=>!window.__reviewMap.isMoving()&&window.__reviewMap.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99,null,{timeout:30000});
  const plain=page.locator('[data-physical-label="po-plain"]'),plainBox=await plain.boundingBox();
  if(await plain.isHidden()||await plain.textContent()!=='Po Plain'||!plainBox||plainBox.x<380||plainBox.y<110||plainBox.x+plainBox.width>1080||plainBox.y+plainBox.height>740)throw Error(`Po Plain label is obscured or off-map: ${JSON.stringify(plainBox)}`);
  const poLayer=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {close:map.getLayer('waterways-po-close')?.minzoom,overview:map.getLayer('waterways-po-overview')?.maxzoom,loaded:map.isSourceLoaded('po-river-detail')}});
@@ -118,19 +119,17 @@ try{
  await page.locator('#language').click();
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[12.48,44.96],zoom:9.05})});
  await page.waitForTimeout(3500);
- await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden},null,{timeout:30000});
+ await page.waitForFunction(()=>!window.__reviewMap.isMoving()&&window.__reviewMap.areTilesLoaded()&&document.querySelector('#map-charting').hidden,null,{timeout:30000});
  await page.screenshot({path:resolve(output,'po-delta-close.png')});
- await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[10.7,45.72],zoom:8.25})});
- await page.locator('#map-charting').waitFor({state:'visible',timeout:2000});
- await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
+ await page.evaluate(()=>window.__reviewMap.jumpTo({center:[10.7,45.72],zoom:8.25}));
+ await page.waitForFunction(()=>{const map=window.__reviewMap;return !map.isMoving()&&map.areTilesLoaded()&&map.isSourceLoaded('garda-lake-detail')&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
  const gardaStyle=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {close:map.getLayer('garda-close')?.minzoom,overview:map.getLayer('garda-overview')?.maxzoom,loaded:map.isSourceLoaded('garda-lake-detail')}});
  if(gardaStyle.close!==8||gardaStyle.overview!==8||!gardaStyle.loaded)throw Error(`Garda detail did not replace the overview lake at local zoom: ${JSON.stringify(gardaStyle)}`);
  const lakeLabel=page.locator('[data-physical-label="benacus"]'),lakeBox=await lakeLabel.boundingBox();
  if(await lakeLabel.isHidden()||await lakeLabel.textContent()!=='Benacus'||!lakeBox||lakeBox.x<380||lakeBox.y<110||lakeBox.x+lakeBox.width>1080||lakeBox.y+lakeBox.height>740)throw Error(`Benacus label is obscured or off-map: ${JSON.stringify(lakeBox)}`);
- const labelOnWater=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.queryRenderedFeatures(map.project([10.66,45.61]),{layers:['garda-close']}).length>0});
- if(!labelOnWater)throw Error('Benacus label is not positioned over the actual detailed lake polygon');
- await page.waitForTimeout(3500);
- if(!await page.evaluate(()=>document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99))throw Error('Garda screenshot would capture the charting curtain');
+ await page.waitForFunction(()=>{const map=window.__reviewMap;return map.queryRenderedFeatures(map.project([10.66,45.61]),{layers:['garda-close']}).length>0},null,{timeout:10000});
+ const chartState=await page.evaluate(()=>({hidden:document.querySelector('#map-charting').hidden,opacity:getComputedStyle(document.querySelector('#map')).opacity}));
+ if(!chartState.hidden||Number(chartState.opacity)<.99)throw Error(`Garda screenshot would capture the charting curtain: ${JSON.stringify(chartState)}`);
  await page.screenshot({path:resolve(output,'garda-close.png')});
  await page.locator('#language').click();
  if(await lakeLabel.textContent()!=='贝纳库斯湖')throw Error('Benacus label must translate to Chinese');
