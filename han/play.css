@@ -5,3 +5,4 @@
 .court-advice{border:1px solid #998363;padding:10px;margin:10px 0;background:#302b24}.court-advice h3{margin-top:0}.court-advice p{margin:6px 0}.court-advice .action{margin:5px 6px 0 0}
 .ruler-card{border:1px solid #806b4b;padding:9px;margin:12px 0;background:#2e2820}.ruler-card-head{display:flex;align-items:center;gap:10px}.ruler-card-head img{width:72px;height:72px;object-fit:cover;flex:none}.ruler-card-head strong,.ruler-card-head small{display:block}.ruler-card p{font-size:12px;margin:7px 0 0}
 .campaign-defeat{border:2px solid #b55d4b;background:#40221f;padding:12px;margin:10px 0}.campaign-defeat h3{color:#ffd9a3}.territory-alert{border:2px solid #d4a04c;background:#49321f;padding:9px;font-weight:bold}
+.trade-map-key{padding:.55rem .7rem;border-left:3px solid #b8862e;background:#e7dcc5;color:#3d3024;line-height:1.4}

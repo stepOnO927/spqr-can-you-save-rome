@@ -402,6 +402,16 @@ Kangju-to-Han horse purchase and delivery in English and Chinese. Han,
 Kangju, Yuezhi and Parthia AI courts can seek treaties and place orders
 without player input; their route plans use dated control reports, while
 dispatch checks the actual road.
+The standalone Han campaign now has a trade map mode on its existing Eurasian
+map. It marks own markets with their actual grain, horse and silk stock and
+prices; known foreign market centers show only dated paid price reports and
+broad supply categories, otherwise stating that inventory is unknown.
+Public geographic corridors, player-involved active routes and blocked legs,
+the external exchange port, and the current position of player-involved
+caravans use distinct restrained marks. Own market and caravan marks open the
+existing trade panel. Unit checks prevent foreign warehouse totals and
+unrelated AI shipments from leaking into the map; the Han market cloud browser
+flow checks marker interaction, save/load and English/Chinese labels.
 The independent campaign now lets a player set low, standard or high transit
 customs duties. New caravan quotes and AI route costs use that saved rate;
 already dispatched caravans retain their prepaid customs charge. A real

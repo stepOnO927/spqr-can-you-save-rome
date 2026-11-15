@@ -9,7 +9,11 @@ try{
  await page.addInitScript(()=>{localStorage.setItem('spqr-han-lang','en');Date.now=()=>123456});
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
- await page.locator('#trade-panel').click();
+ await page.locator('#mode').selectOption('trade');
+ assert.match(await page.locator('#overview').innerText(),/Foreign inventory is unknown/);
+ assert.ok(await page.locator('.trade-market.own').count()>0);
+ assert.ok(await page.locator('.trade-market.foreign').count()>0);
+ await page.locator('[data-market="changan"]').click();
  assert.match(await page.locator('#inspector').innerText(),/Own stock/);
  assert.match(await page.locator('#east-route-security').innerText(),/0\/5/);
  await page.locator('#east-protect-route').click();
@@ -39,6 +43,9 @@ try{
  assert.equal(await page.locator('#east-market-order').isDisabled(),false);
  await page.locator('#east-market-order').click();
  assert.match(await page.locator('#message').innerText(),/Merchant dispatched/);
+ assert.equal(await page.locator('.trade-caravan').count(),1);
+ await page.locator('.trade-caravan').click();
+ assert.match(await page.locator('#inspector').innerText(),/Your shipments/);
  assert.match(await page.locator('.market-intelligence').innerText(),/Paid unit price.*Observed supply/);
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Horses/);
  assert.match(await page.locator('#inspector').innerText(),/Merchant privileges/);
@@ -46,6 +53,8 @@ try{
  assert.match(await page.locator('#message').innerText(),/Merchant privilege granted/);
  assert.match(await page.locator('#inspector').innerText(),/Begins with the next caravan/);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#trade-panel').click();
+ await page.locator('#mode').selectOption('trade');
+ assert.equal(await page.locator('.trade-caravan').count(),1);
  assert.match(await page.locator('#inspector').innerText(),/Begins with the next caravan/);
  assert.match(await page.locator('#east-route-security').innerText(),/1\/5/);
  assert.equal(await page.locator('[data-cancel-sale]').count(),1);
@@ -76,6 +85,7 @@ try{
  assert.equal(await page.locator('#east-remount-assign').isDisabled(),true);
  assert.match(await page.locator('#inspector').innerText(),/Reputation 1.*Known routes 1/s);
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
+ assert.match(await page.locator('#overview').innerText(),/外国库存未知/);
  assert.match(await page.locator('#inspector').innerText(),/信誉 1.*熟悉线路 1/s);
  assert.match(await page.locator('#inspector').innerText(),/保护商路/);
  assert.match(await page.locator('#inspector').innerText(),/牲畜.*铜.*毛织物.*玉石/s);

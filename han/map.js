@@ -10,6 +10,9 @@
 import LAND from '../land.js?v=faces-reported-names-1';
 import {REGIONS,ROUTES,ZHOU,THEATERS} from './data.js?v=faces-reported-names-1';
 import {REGION_GEO,OUTSIDE,TERRAIN,LAKES,RIVERS,FRONTIER} from './geography.js?v=faces-reported-names-1';
+import {COMMODITIES} from '../market-goods.js?v=faces-reported-names-1';
+import {ownMarketIntelligence} from '../trade-intelligence.js?v=faces-reported-names-1';
+import {campaignDate} from '../campaign-date.js?v=faces-reported-names-1';
 
 export const VIEW={lon0:27,lon1:127,lat0:55,lat1:23,W:1400,H:760};
 export const project=([lon,lat])=>[Math.round((lon-VIEW.lon0)/(VIEW.lon1-VIEW.lon0)*VIEW.W*10)/10,Math.round((VIEW.lat0-lat)/(VIEW.lat0-VIEW.lat1)*VIEW.H*10)/10];
@@ -90,6 +93,7 @@ const defsFor=k=>`<defs>
 // ---------- draw ----------
 export function drawMap(s,{lang=0,selected=null,selectedArmy=null,visibleArmy=()=>true,colors={},targets=new Set(),silkPath=null,camera='all',mode='political',oasisStanding={}}={}){
  const g=geometry(),L=v=>Array.isArray(v)?v[lang]:v,k=cameraScale(camera),f=n=>(n*k).toFixed(2);
+ const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const owner=Object.fromEntries(s.regions.map(r=>[r.id,r.owner]));
  const reg=Object.fromEntries(s.regions.map(r=>[r.id,r]));
  const fillFor=id=>{if(id.startsWith('outside'))return '#cfc3a6';const r=reg[id];
@@ -117,7 +121,27 @@ export function drawMap(s,{lang=0,selected=null,selectedArmy=null,visibleArmy=()
  const rivers=g.rivers.map(r=>`<path class="river ${r.major?'major':''}" d="${r.d}"><title>${L(r.name)}</title></path>`).join('');
  const silkSet=new Set();if(silkPath)for(let i=0;i<silkPath.length-1;i++)silkSet.add([silkPath[i],silkPath[i+1]].sort().join(':'));
  const routeName={road:['road','道路'],river:['river route','水道'],pass:['pass','关隘'],desert:['desert crossing','沙碛'],steppe:['steppe route','草原道'],oasis:['oasis road','绿洲道']};
- const routes=ROUTES.map(l=>{const [x1,y1]=regionPoint(l.a),[x2,y2]=regionPoint(l.b),k=[l.a,l.b].sort().join(':');return `<line class="route r-${l.kind} ${silkSet.has(k)?'silk-leg':''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><title>${L(l.name||routeName[l.kind])} · ${l.months}${lang?'月':' mo'}</title></line>`}).join('');
+ const ownShipments=mode==='trade'?(s.tradeMarkets?.shipments||[]).filter(x=>x.buyer===s.player||x.seller===s.player):[];
+ const tradeLegs=new Set(),blockedLegs=new Set();for(const shipment of ownShipments.filter(x=>['traveling','blocked'].includes(x.status))){for(const leg of shipment.legs||[])tradeLegs.add([leg.from,leg.to].sort().join(':'));if(shipment.status==='blocked'){const leg=shipment.legs?.[shipment.leg];if(leg)blockedLegs.add([leg.from,leg.to].sort().join(':'))}}
+ const routes=ROUTES.map(l=>{const [x1,y1]=regionPoint(l.a),[x2,y2]=regionPoint(l.b),key=[l.a,l.b].sort().join(':');return `<line class="route r-${l.kind} ${silkSet.has(key)?'silk-leg':''} ${mode==='trade'?(blockedLegs.has(key)?'trade-blocked':tradeLegs.has(key)?'trade-active':'trade-corridor'):''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><title>${L(l.name||routeName[l.kind])} · ${l.months}${lang?'月':' mo'}</title></line>`}).join('');
+ const markets=s.tradeMarkets?.regions||{},observations=mode==='trade'?ownMarketIntelligence(s.tradeMarkets,s.player).observations:[];
+ const supplyLabel={scarce:['scarce','偏紧'],adequate:['adequate','尚可'],surplus:['surplus','充裕']};
+ const tradeMarkets=mode==='trade'?s.regions.filter(r=>r.owner===s.player||r.id===r.owner||observations.some(o=>o.origin===r.id)||['capital','protectorate','oasis','external_market','arsacid_monarchy'].includes(r.kind)).map(r=>{
+  const [x,y]=regionPoint(r.id),own=r.owner===s.player,item=markets[r.id]?.goods,known=observations.filter(o=>o.origin===r.id).slice(0,2);
+  const ownedGoods=own&&item?['grain','horses','silk'].map(good=>`${L(COMMODITIES[good].name)} ${item[good]?.stock??0} @${item[good]?.price??COMMODITIES[good].basePrice}`).join(' · '):'';
+  const reports=known.map(o=>`${L(COMMODITIES[o.commodity]?.name||[o.commodity,o.commodity])} ${o.unitPrice} · ${L(supplyLabel[o.supply]||['unknown','未知'])} (${campaignDate(o.month,o.year,lang?'zh':'en')})`).join(' · ');
+  const detail=own?ownedGoods:(reports||L(['Foreign stock unknown','外国库存未知']));
+  const restrictions=own?(s.tradeMarkets?.exportRestrictions?.[s.player]||[]):[];
+  const title=`${L(r.name)} · ${detail}${restrictions.length?` · ${L(['Export restricted','限制出口'])}: ${restrictions.map(good=>L(COMMODITIES[good]?.name||[good,good])).join(', ')}`:''}`;
+  const port=r.kind==='external_market';
+  return `<g class="trade-market ${own?'own':'foreign'} ${port?'port':''} ${restrictions.length?'restricted':''}" ${own?`data-market="${escape(r.id)}" role="button" tabindex="0"`:''}><title>${escape(title)}</title><circle cx="${(x+9*k).toFixed(1)}" cy="${(y+9*k).toFixed(1)}" r="${f(port?7:5)}"/></g>`
+ }).join(''):'';
+ const tradeCaravans=mode==='trade'?ownShipments.filter(x=>['traveling','blocked'].includes(x.status)).map(shipment=>{
+  const leg=shipment.legs?.[shipment.leg];if(!leg)return '';
+  const [ax,ay]=regionPoint(leg.from),[bx,by]=regionPoint(leg.to),progress=shipment.status==='blocked'?0:Math.max(0,Math.min(1,(leg.months-(shipment.remaining||0))/Math.max(1,leg.months))),x=ax+(bx-ax)*progress,y=ay+(by-ay)*progress;
+  const good=L(COMMODITIES[shipment.commodity]?.name||[shipment.commodity,shipment.commodity]),title=`${good} × ${shipment.quantity} · ${L(reg[shipment.origin]?.name||[shipment.origin,shipment.origin])} → ${L(reg[shipment.destination]?.name||[shipment.destination,shipment.destination])} · ${shipment.status==='blocked'?L(['Road blocked','道路受阻']):L(['En route','运输中'])}`;
+  return `<g class="trade-caravan ${shipment.status}" data-shipment="${escape(shipment.id)}" role="button" tabindex="0" aria-label="${escape(title)}"><title>${escape(title)}</title><path d="M${x.toFixed(1)} ${(y-7*k).toFixed(1)}L${(x+7*k).toFixed(1)} ${y.toFixed(1)}L${x.toFixed(1)} ${(y+7*k).toFixed(1)}L${(x-7*k).toFixed(1)} ${y.toFixed(1)}Z"/></g>`
+ }).join(''):'';
  const groupLabels=mode==='theaters'?Object.entries(g.theaterCentre).map(([t,[x,y]])=>`<text class="group-label theater" x="${x.toFixed(0)}" y="${(y-14*k).toFixed(1)}">${L(THEATERS[t].name)}</text>`).join('')
   :mode==='circuits'?Object.entries(g.zhouCentre).map(([z,[x,y]])=>`<text class="group-label circuit" x="${x.toFixed(0)}" y="${(y-14*k).toFixed(1)}">${L(ZHOU[z].name)}</text>`).join(''):'';
  const seats=s.regions.map(r=>{const [x,y]=regionPoint(r.id),[cx,cy]=g.centres[r.id];const cap=r.kind==='capital';
@@ -130,11 +154,11 @@ export function drawMap(s,{lang=0,selected=null,selectedArmy=null,visibleArmy=()
   const label=lang&&a.men>=10000?(a.men/10000).toFixed(1).replace('.0','')+'万':Math.round(a.men/1000)+'k';
   return `<g class="army ${sel?'selected':''} ${a.move?'moving':''}" data-army="${a.id}" role="button" tabindex="0"><title>${a.men}</title>${a.move?(()=>{const [tx,ty]=regionPoint(a.move.to);return `<path class="march" d="M${ax},${ay+8*k}L${tx},${ty}" marker-end="url(#arrow)"/>`})():''}<g transform="translate(${ax} ${ay}) scale(${k})"><rect x="-11" y="-9" width="24" height="18" rx="2" fill="${colors[a.owner]||'#555'}"/><rect x="-11" y="-9" width="9" height="18" rx="2" fill="#0003"/><text class="glyph" x="-6.5" y="4">${glyph(a.owner)}</text><text class="count" x="6" y="4">${label}</text></g></g>`}).join('')}).join('');
  const box=cameraBox(camera);
- return `<svg class="han-map mode-${mode} camera-${camera}" viewBox="${box}" preserveAspectRatio="xMidYMid meet" style="font-size:${f(21)}px" role="img" aria-label="${lang?'汉代战略地图':'Han strategic map'}">${defsFor(k).replace(`<path d="${''}"/>`,`<path d="${g.land}"/>`)}<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fff8e6"/></marker>
+ return `<svg class="han-map mode-${mode} camera-${camera}" viewBox="${box}" preserveAspectRatio="xMidYMid meet" style="font-size:${f(21)}px" role="img" aria-label="${mode==='trade'?(lang?'汉代商路与市场地图':'Han trade routes and markets map'):(lang?'汉代战略地图':'Han strategic map')}">${defsFor(k).replace(`<path d="${''}"/>`,`<path d="${g.land}"/>`)}<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fff8e6"/></marker>
 <rect class="sea" x="-100" y="-100" width="${VIEW.W+200}" height="${VIEW.H+200}"/>
 <path class="land" d="${g.land}" filter="url(#paper)"/>
 <g clip-path="url(#land-clip)">${terrain}${territories}${borders}${lakes}${rivers}</g>
 <path class="coast" d="${g.land}"/>
 <path class="frontier-wall" d="${g.frontier}"><title>${lang?'汉塞：长城、亭障与烽燧（示意）':'Han frontier: walls, forts and beacons (schematic)'}</title></path>
-${terrainLabels}<g class="routes">${routes}</g>${groupLabels}${seats}${armies}</svg>`;
+${terrainLabels}<g class="routes">${routes}</g>${groupLabels}${seats}${tradeMarkets}${armies}${tradeCaravans}</svg>`;
 }
