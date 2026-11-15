@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=campaign-intelligence-privacy-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=attack-preview-intelligence-1';
 import {addReport,reportEvidence,queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=foreign-name-privacy-1';
 import {leadershipIntelligence} from '../map-lab/intelligence-summary.js';
 

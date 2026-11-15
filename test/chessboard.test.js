@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=campaign-intelligence-privacy-1';
+import {newGame,upgradeSave} from '../engine.js?v=attack-preview-intelligence-1';
 import {createFictionalPerson} from '../dynasties.js?v=infant-portraits-1';
 import {buildChessboard} from '../chessboard.js?v=strategy-board-name-privacy-1';
 import {addReport} from '../character-system.js?v=foreign-name-privacy-1';
