@@ -8,6 +8,7 @@ import {rememberPoliticalEvent} from './political-memory.js?v=world-kings-trade-
 import {canMediate,requestMediation} from './civil-war.js?v=world-kings-trade-1';
 import {voteCoalitionMotion} from './coalition-motions.js?v=world-kings-trade-1';
 import {storedCorrespondentName} from './person-knowledge.js?v=world-kings-trade-1';
+import {answerCoalitionAidRequest,COALITION_AID} from './coalition-assistance.js?v=world-kings-trade-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
@@ -87,7 +88,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A sealed aid reply can outlive the court that dispatched it; its arrival
   // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result','asylum_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result','asylum_result','coalition_aid_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -168,6 +169,8 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     ok = actions.answerCoalitionAdmission?.(s,m.context.admissionId,choice).ok === true;
   } else if (m.context?.kind === 'coalition_motion') {
     ok = voteCoalitionMotion(s,m.context.motionId,s.player,choice).ok === true;
+  } else if (m.context?.kind === 'coalition_aid_request') {
+    ok = answerCoalitionAidRequest(s,m.context.requestId,choice).ok === true;
   } else if (m.context?.kind === 'peace') {
     ok = actions.answerPeaceOffer?.(s,m.senderFaction,choice).ok === true;
   } else if (m.context?.kind === 'war' && choice === 'negotiate') {
@@ -338,16 +341,39 @@ export function syncCoalitionMotionLetters(s){
  const mail=initializeMail(s);
  for(const m of s.world?.coalitionMotions||[]){
   if(!m.electorate.includes(s.player))continue;
-  const c=(s.coalitions||[]).find(x=>x.id===m.coalitionId),label=c?.name||m.coalitionId,who=name(m.target),subject=m.kind==='leadership'?['Coalition leadership ballot','联盟盟主改选']:['Coalition expulsion ballot','联盟除名表决'];
+  const c=(s.coalitions||[]).find(x=>x.id===m.coalitionId),label=c?.name||m.coalitionId,who=name(m.target),sponsor=name(m.sponsor);
+  const subjects={leadership:['Coalition leadership ballot','联盟盟主改选'],expulsion:['Coalition expulsion ballot','联盟除名表决'],admission:['Coalition membership ballot','联盟增员表决'],contribution:['Coalition contribution ballot','联盟责任调整'],dissolution:['Coalition dissolution ballot','联盟解散表决']};
+  const subject=subjects[m.kind]||['Coalition council ballot','联盟议事表决'];
+  const policies={military:['military support','军事支持'],funding:['funding','资金支持'],supplies:['supplies','粮食支持'],diplomacy:['diplomacy','外交支持']};
+  const issue={leadership:[`appointing ${who[0]} as leader`,`由${who[1]}担任盟主`],expulsion:[`expelling ${who[0]}`,`将${who[1]}除名`],admission:[`inviting ${who[0]} to join; the court must still consent`,`邀请${who[1]}加入；受邀国仍须同意`],contribution:[`changing ${sponsor[0]}'s contribution to ${policies[m.policy]?.[0]||m.policy}`,`将${sponsor[1]}的承担责任改为${policies[m.policy]?.[1]||m.policy}`],dissolution:['dissolving the coalition','解散联盟']}[m.kind]||[m.kind,m.kind];
   if(m.status==='voting'&&monthIndex(s.year,s.month)>=m.noticeAt&&!m.votes[s.player]&&!m.mailId){
-   const result=sendLetter(s,{senderId:null,senderInstitution:m.sponsor,senderFaction:m.sponsor,recipient:s.player,category:'diplomatic',priority:'important',subject,body:[`${label} has opened a member ballot on ${m.kind==='leadership'?`appointing ${who[0]} as leader`:`expelling ${who[0]}`}. A majority of all members is required. Vote before the council closes; silence counts as abstention.`,`${label}发起成员表决：${m.kind==='leadership'?`由${who[1]}担任盟主`:`将${who[1]}除名`}。须全体成员过半数赞成；截止前投票，未答复按弃权处理。`],options:['yes','no','abstain'],expires:m.closesAt-1,context:{kind:'coalition_motion',motionId:m.id}});
+   const threshold=m.kind==='dissolution'?Math.ceil(m.electorate.length*2/3):Math.floor(m.electorate.length/2)+1;
+   const result=sendLetter(s,{senderId:null,senderInstitution:m.sponsor,senderFaction:m.sponsor,recipient:s.player,category:'diplomatic',priority:'important',subject,body:[`${label} has opened a member ballot on ${issue[0]}. ${threshold} of ${m.electorate.length} members must approve. Vote before the council closes; silence counts as abstention.`,`${label}发起成员表决：${issue[1]}。${m.electorate.length}名成员中须${threshold}名赞成；截止前投票，未答复按弃权处理。`],options:['yes','no','abstain'],expires:m.closesAt-1,context:{kind:'coalition_motion',motionId:m.id}});
    if(result.ok){m.mailId=result.letter.id;result.letter.created={...m.opened};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-motion:'+m.id]=true}
   }
   if(m.status!=='voting'&&!m.resultMailId){
    const sender=m.sponsor===s.player?m.electorate.find(id=>id!==s.player&&s.factions[id]):m.sponsor;
    if(!sender)continue;
-   const passed=m.status==='passed',result=sendLetter(s,{senderId:null,senderInstitution:sender,senderFaction:sender,recipient:s.player,category:'diplomatic',priority:'important',subject:['Coalition council decision','联盟议事结果'],body:[`${label}: the ${m.kind} motion ${passed?'passed':m.status==='lapsed'?'lapsed':'failed'}. ${Object.values(m.votes).filter(x=>x==='yes').length} of ${m.electorate.length} members voted yes.`,`${label}：${m.kind==='leadership'?'盟主改选':'除名'}议案${passed?'通过':m.status==='lapsed'?'失效':'未通过'}；${m.electorate.length}名成员中${Object.values(m.votes).filter(x=>x==='yes').length}名赞成。`],options:[],context:{kind:'coalition_motion_result',motionId:m.id}});
+   const passed=m.status==='passed',result=sendLetter(s,{senderId:null,senderInstitution:sender,senderFaction:sender,recipient:s.player,category:'diplomatic',priority:'important',subject:['Coalition council decision','联盟议事结果'],body:[`${label}: the ${m.kind} motion ${passed?'passed':m.status==='lapsed'?'lapsed':'failed'}. ${Object.values(m.votes).filter(x=>x==='yes').length} of ${m.electorate.length} members voted yes.${m.kind==='admission'&&passed?' An invitation was sent; membership still depends on the recipient.':''}`,`${label}：${({leadership:'盟主改选',expulsion:'除名',admission:'增员',contribution:'责任调整',dissolution:'解散'})[m.kind]||m.kind}议案${passed?'通过':m.status==='lapsed'?'失效':'未通过'}；${m.electorate.length}名成员中${Object.values(m.votes).filter(x=>x==='yes').length}名赞成。${m.kind==='admission'&&passed?'邀请已寄出，成员资格仍待受邀方答复。':''}`],options:[],context:{kind:'coalition_motion_result',motionId:m.id}});
    if(result.ok){m.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-motion-result:'+m.id]=true}
+  }
+ }
+}
+
+export function syncCoalitionAidLetters(s){
+ const mail=initializeMail(s);
+ for(const x of s.world?.coalitionAidRequests||[]){
+  if(x.humanRecipient===s.player&&x.status==='pending'&&x.phase==='awaiting_player'&&!x.mailId){
+   const asker=name(x.requester),c=(s.coalitions||[]).find(y=>y.id===x.coalitionId);
+   const result=sendLetter(s,{senderId:null,senderInstitution:x.requester,senderFaction:x.requester,recipient:s.player,category:'diplomatic',priority:'important',subject:['Coalition ally requests supplies','联盟盟友请求援助'],body:[`${asker[0]} requests ${COALITION_AID.treasury} treasury and ${COALITION_AID.food} food through ${c?.name||'the coalition'}. Accepting commits the resources now; the return shipment takes two months and may be lost. Our own court decides.`,`${asker[1]}通过${c?.name||'联盟'}请求${COALITION_AID.treasury}国库和${COALITION_AID.food}粮食。接受即划拨物资；运输还需两个月且可能遗失。本朝自行决定。`],options:['send_coalition_aid','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,x.remaining-1),context:{kind:'coalition_aid_request',requestId:x.id}});
+   if(result.ok){x.mailId=result.letter.id;result.letter.created={...x.sent};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-aid-request:'+x.id]=true}
+  }
+  if(x.phase==='delivered'&&(x.requester===s.player||x.recipient===s.player&&x.decision==='accepted')&&!x.resultMailId){
+   const sender=x.requester===s.player?x.recipient:x.requester,accepted=x.status==='accepted';
+   const en=accepted?`Coalition aid reached ${x.requester===s.player?'our court':name(x.requester)[0]}.`:`Coalition aid did not arrive: ${x.status.replaceAll('_',' ')}.`;
+   const zh=accepted?`联盟援助已抵达${x.requester===s.player?'本朝':name(x.requester)[1]}。`:`联盟援助未能抵达：${x.status==='refused'?'遭拒':x.status==='no_reply'?'未收到回信或运输遗失':'请求失效'}。`;
+   const result=sendLetter(s,{senderId:null,senderInstitution:sender,senderFaction:sender,recipient:s.player,category:'diplomatic',priority:'important',subject:['Coalition aid outcome','联盟援助结果'],body:[en,zh],options:[],context:{kind:'coalition_aid_result',requestId:x.id}});
+   if(result.ok){x.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-aid-result:'+x.id]=true}
   }
  }
 }

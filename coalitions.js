@@ -18,6 +18,7 @@ export function initializeCoalitionCharters(s){
   c.kind||='defensive';
   c.foundingMembers||=[...c.parties];
   c.charter||={purpose:'defend_against_threat',admission:'invitation_and_consent',decision:'independent_members',dues:'contribution_policy'};
+  c.charter.expulsion||='member_majority';c.charter.dissolution||='two_thirds_member_vote';c.charter.contributionChanges||='member_majority';
   c.admissions||=[];
   c.motions||=[];
  }
@@ -68,7 +69,7 @@ export function formCoalition(s,leader,members,target,estimateStrength,{allowPla
  if(consentingPlayer&&contributions[s.player])contributions[s.player].policy='diplomacy';
  const trust=Object.fromEntries(parties.flatMap((a,i)=>parties.slice(i+1).map(b=>[pair(a,b),Math.round((rel(s,a,b)+100)/2)])));
  const id=s.nextCoalitionId||1;
- const c={id:`coalition:${id}`,name:`Defensive Coalition ${id}`,kind:'defensive',foundingMembers:[...parties],charter:{purpose:'defend_against_threat',admission:'invitation_and_consent',decision:'independent_members',dues:'contribution_policy'},leader,parties,target,objective:'defend_against_threat',start:{year:s.year,month:s.month},expiresAt:now(s)+36,status:'active',cohesion:70,trust,contributions,admissions:[],departures:[],motions:[],obligations:['defend_members'],jointPlan:{target,kind:'coordinate_defense'},disagreements:[]};
+ const c={id:`coalition:${id}`,name:`Defensive Coalition ${id}`,kind:'defensive',foundingMembers:[...parties],charter:{purpose:'defend_against_threat',admission:'invitation_and_consent',decision:'independent_members',dues:'contribution_policy',expulsion:'member_majority',dissolution:'two_thirds_member_vote',contributionChanges:'member_majority'},leader,parties,target,objective:'defend_against_threat',start:{year:s.year,month:s.month},expiresAt:now(s)+36,status:'active',cohesion:70,trust,contributions,admissions:[],departures:[],motions:[],obligations:['defend_members'],jointPlan:{target,kind:'coordinate_defense'},disagreements:[]};
  s.nextCoalitionId=(s.nextCoalitionId||1)+1;s.coalitions.push(c);return {ok:true,coalition:c};
 }
 export function renameCoalition(s,id,actor,name){

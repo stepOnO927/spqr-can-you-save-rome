@@ -13,19 +13,19 @@ function knownContact(s,actor,target){
  return ROUTES.some(([a,b])=>owned.has(a)&&reportedControl(s,actor,b)?.owner===target||owned.has(b)&&reportedControl(s,actor,a)?.owner===target);
 }
 export function eligibleCoalitionAdmissionTargets(s,coalition,actor){
- if(!coalition||coalition.status!=='active'||coalition.leader!==actor||coalition.parties.length>=5)return [];
+ if(!coalition||coalition.status!=='active'||!coalition.parties.includes(actor)||coalition.parties.length>=5)return [];
  return Object.keys(s.factions).filter(id=>id!=='rebels'&&id!==coalition.target&&!coalition.parties.includes(id)&&knownContact(s,actor,id)).sort((a,b)=>relation(s,actor,b)-relation(s,actor,a)||a.localeCompare(b));
 }
-export function sendCoalitionAdmission(s,coalitionId,leader,target){
+export function sendCoalitionAdmission(s,coalitionId,leader,target,{introducedBy=leader,prepaid=false}={}){
  initializeCoalitionAdmissions(s);
  const c=(s.coalitions||[]).find(x=>x.id===coalitionId&&x.status==='active'&&now(s)<x.expiresAt);
- if(!c||c.leader!==leader||!eligibleCoalitionAdmissionTargets(s,c,leader).includes(target))return {ok:false,reason:'contact'};
- if(s.factions[leader].treasury<3)return {ok:false,reason:'treasury'};
+ if(!c||c.leader!==leader||!c.parties.includes(introducedBy)||!eligibleCoalitionAdmissionTargets(s,c,introducedBy).includes(target))return {ok:false,reason:'contact'};
+ if(!prepaid&&s.factions[leader].treasury<3)return {ok:false,reason:'treasury'};
  s.world.coalitionAdmissions||=[];
  if(s.world.coalitionAdmissions.some(x=>x.coalitionId===coalitionId&&x.target===target&&x.status==='pending'))return {ok:false,reason:'pending'};
  if(s.world.coalitionAdmissions.some(x=>x.coalitionId===coalitionId&&x.target===target&&now(s)-(x.sent.year*12+x.sent.month)<12))return {ok:false,reason:'cooldown'};
- const id=s.world.nextCoalitionAdmission||1;s.world.nextCoalitionAdmission=id+1;s.factions[leader].treasury-=3;
- s.world.coalitionAdmissions.push({id,coalitionId,leader,target,status:'pending',phase:'outbound',remaining:2,sent:{year:s.year,month:s.month},...(target===s.player?{humanRecipient:s.player}:{})});
+ const id=s.world.nextCoalitionAdmission||1;s.world.nextCoalitionAdmission=id+1;if(!prepaid)s.factions[leader].treasury-=3;
+ s.world.coalitionAdmissions.push({id,coalitionId,leader,target,introducedBy,courierPayer:prepaid?introducedBy:leader,status:'pending',phase:'outbound',remaining:2,sent:{year:s.year,month:s.month},...(target===s.player?{humanRecipient:s.player}:{})});
  if(s.world.coalitionAdmissions.length>100){const old=s.world.coalitionAdmissions.findIndex(x=>x.status!=='pending');if(old>=0)s.world.coalitionAdmissions.splice(old,1)}
  return {ok:true,id,cost:3,months:4};
 }
@@ -39,7 +39,7 @@ function canStillConclude(s,x){const c=(s.coalitions||[]).find(y=>y.id===x.coali
 function finish(s,x,estimateStrength,autoplayPlayer){
  if(x.status==='accepted'){
   const result=canStillConclude(s,x)&&admitCoalitionMember(s,x.coalitionId,x.leader,x.target,estimateStrength,{consentingPlayer:x.target===s.player&&(autoplayPlayer||x.playerDecision==='accepted')});
-  if(result?.ok){rememberPoliticalEvent(s,x.leader,x.target,'cooperation_accepted',2);rememberPoliticalEvent(s,x.target,x.leader,'cooperation_accepted',2)}else x.status='lapsed';
+  if(result?.ok){const record=result.coalition.admissions.at(-1);if(record?.member===x.target)record.introducedBy=x.introducedBy||x.leader;rememberPoliticalEvent(s,x.leader,x.target,'cooperation_accepted',2);rememberPoliticalEvent(s,x.target,x.leader,'cooperation_accepted',2)}else x.status='lapsed';
  }
  x.delivered={year:s.year,month:s.month};x.phase='delivered';delete x.sealed;
  if(x.leader===s.player){s.log.unshift({year:s.year,month:s.month,en:x.status==='accepted'?'A new court joined our defensive coalition.':x.status==='refused'?'The court declined coalition membership.':'The membership invitation did not result in an agreement.',zh:x.status==='accepted'?'新成员加入了本方防御联盟。':x.status==='refused'?'对方拒绝加入联盟。':'成员邀请未能达成协议。'});s.log=s.log.slice(0,80)}
