@@ -22,9 +22,13 @@ try{
   await page.locator('#entry-continue').click();
   await page.locator('[data-tab="development"]').click();
   assert.match(await page.locator('.inspector h2').innerText(),/Development/);
+  await page.locator('.dev-tree-links path[data-from="water-control"][data-to="urban-drainage"]').waitFor();
+  assert.ok(await page.locator('.dev-tree-links path[data-from="water-control"][data-to="urban-drainage"]').getAttribute('d'));
   await page.locator('.dev-reference summary').click();
   assert.match(await page.locator('.dev-reference').innerText(),/Provincial grain reserve \+24/);
   await page.locator('[data-dev-branch="idea"]').click();
+  await page.locator('.dev-tree-links path[data-from="legion-training"][data-to="reserve-mobilization"]').waitFor();
+  assert.equal(await page.locator('.dev-tree-links path[data-from="legion-training"][data-to="reserve-mobilization"]').count(),1);
   assert.equal(await page.locator('[data-tree-pan="left"]').isDisabled(),true);
   assert.equal(await page.locator('[data-tree-pan="right"]').isEnabled(),true);
   await page.locator('[data-tree-pan="right"]').click();
@@ -164,6 +168,7 @@ try{
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),offered);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
   await page.locator('#development').click();
+  await page.locator('.dev-tree-links path[data-from="water-control"][data-to="urban-drainage"]').waitFor();
   assert.equal(await page.locator('[data-tree-pan="right"]').isEnabled(),true);
   await page.locator('[data-tree-pan="right"]').click();
   await page.waitForFunction(()=>document.querySelector('.dev-tree')?.scrollLeft>100);

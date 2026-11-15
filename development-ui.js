@@ -37,14 +37,14 @@ function figurePanel(s,zh){
  }).join('');
  return `<section class="dev-category"><h3>${enzh(zh,'Historical specialists','历史人物与专长')}</h3><p class="hint">${enzh(zh,'Domestic appointments require travel. A foreign invitation costs 5 treasury now; the person may decline after one month. Only acceptance charges the remaining 30 treasury and starts a real journey. Historical identities are sourced; assignments and bonuses are game models.','本国任命需要行程。外国邀请现在花费5国库，人物可能在一个月后拒绝；只有接受时才再付30国库并开始实际行程。人物身份有史料来源；任命与加成为游戏模拟。')}</p>${rows}</section>`;
 }
-function card(item,zh,body,extra=''){const previous=(item.prerequisites||[]).map(id=>({id,name:(IDEAS.find(x=>x.id===id)||MATERIALS.find(x=>x.id===id))?.name[zh?1:0]||id}));return `<article id="tech-${item.id}" class="dev-card dev-card-${item.category||'material'}" data-tech-node="${item.id}"><div class="dev-illustration" aria-hidden="true">${techIllustration(item)}</div><div class="dev-card-body"><h3>${esc(item.name[zh?1:0])}</h3><small>${esc(item.name[zh?0:1])}</small>${previous.length?`<p class="dev-prerequisite">↳ ${enzh(zh,'Requires','前置')}: ${previous.map(x=>`<a href="#tech-${x.id}" class="dev-prereq-link">${esc(x.name)}</a>`).join(' + ')}</p>`:''}<p>${esc(item.context[zh?1:0])}</p>${body}${sourceLink(item,zh)}${extra}</div></article>`}
+function card(item,zh,body,extra=''){const previous=(item.prerequisites||[]).map(id=>({id,name:(IDEAS.find(x=>x.id===id)||MATERIALS.find(x=>x.id===id))?.name[zh?1:0]||id}));return `<article id="tech-${item.id}" class="dev-card dev-card-${item.category||'material'}" data-tech-node="${item.id}" data-prerequisites="${esc(previous.map(x=>x.id).join(' '))}"><div class="dev-illustration" aria-hidden="true">${techIllustration(item)}</div><div class="dev-card-body"><h3>${esc(item.name[zh?1:0])}</h3><small>${esc(item.name[zh?0:1])}</small>${previous.length?`<p class="dev-prerequisite">↳ ${enzh(zh,'Requires','前置')}: ${previous.map(x=>`<a href="#tech-${x.id}" class="dev-prereq-link">${esc(x.name)}</a>`).join(' + ')}</p>`:''}<p>${esc(item.context[zh?1:0])}</p>${body}${sourceLink(item,zh)}${extra}</div></article>`}
 function treeLanes(list,zh,render){
  const byId=new Map(list.map(x=>[x.id,x])),depthCache=new Map();
  const depth=id=>{if(depthCache.has(id))return depthCache.get(id);const item=byId.get(id),parents=(item?.prerequisites||[]).filter(x=>byId.has(x));const value=parents.length?Math.max(...parents.map(x=>depth(x)))+1:0;depthCache.set(id,value);return value};
  const root=id=>{let item=byId.get(id);while(item?.prerequisites?.some(x=>byId.has(x)))item=byId.get(item.prerequisites.find(x=>byId.has(x)));return item?.id||id};
  const groups=new Map();for(const item of list){const key=item.category||root(item.id);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(item)}
  return [...groups].map(([key,items])=>{const title=byId.get(key)?.name[zh?1:0]||IDEA_CATEGORIES.find(c=>c.id===key)?.name[zh?1:0]||key,levels=[...new Set(items.map(x=>depth(x.id)))].sort((a,b)=>a-b);
-  return `<section class="dev-tree-lane"><h3>${esc(title)}</h3><div class="dev-tree-steps">${levels.map(level=>`<div class="dev-tree-tier"><small>${enzh(zh,'Stage','阶段')} ${level+1}</small>${items.filter(x=>depth(x.id)===level).map(render).join('')}</div>`).join('')}</div></section>`;
+  return `<section class="dev-tree-lane"><h3>${esc(title)}</h3><div class="dev-tree-steps"><svg class="dev-tree-links" aria-hidden="true"></svg>${levels.map(level=>`<div class="dev-tree-tier"><small>${enzh(zh,'Stage','阶段')} ${level+1}</small>${items.filter(x=>depth(x.id)===level).map(render).join('')}</div>`).join('')}</div></section>`;
  }).join('');
 }
 function materialUnlock(item,zh){const building=BUILDINGS.find(b=>b.id===item.building);if(building)return building.name[zh?1:0];return ({'improved-shipbuilding':['Faster ship construction','缩短造船时间'],'naval-equipment':['Heavy warship construction','大型战船建造'],'repair-facilities':['Dockyard repairs','船坞维修'],'maritime-warehousing':['More cargo per shipment','每航次增载货物'],'military-transport-organization':['Greater troop capacity per transport','每艘运输船增载士兵']})[item.id]?.[zh?1:0]||item.name[zh?1:0]}
@@ -127,13 +127,33 @@ export function developmentPanel(s,lang,branch){
   const reference=branch==='material'?`<details class="dev-reference"><summary>${enzh(zh,'Building reference · costs and effects','建筑图鉴 · 费用与效果')}</summary>${BUILDINGS.map(b=>{const invention=MATERIALS.find(x=>x.id===b.tech);return `<article><b>${esc(b.name[zh?1:0])}</b><small>${esc(b.name[zh?0:1])} · ${b.cost}¤ · ${b.months}${enzh(zh,' months','个月')} · ${enzh(zh,'upkeep','维护')} ${b.upkeep}¤</small><p>${esc(invention.context[zh?1:0])}</p><div class="dev-effects">${effectsText(b.effects,zh)}</div>${sourceLink(invention,zh)}</article>`}).join('')}</details>`:'';
   return `<div class="dev-zoom"><span>${zh?'后续阶段':'LATER STAGES'}</span><button data-tree-pan="left" aria-label="${zh?'查看前一阶段':'Show earlier stages'}">←</button><button data-tree-pan="right" aria-label="${zh?'查看后一阶段':'Show later stages'}">→</button><span>${zh?'缩放':'ZOOM'}</span><button data-tree-zoom="out" aria-label="${zh?'缩小':'Zoom out'}">−</button><button data-tree-zoom="in" aria-label="${zh?'放大':'Zoom in'}">+</button></div>`+developmentPanelContent(s,lang,branch)+figurePanel(s,zh)+reference;
 }
+let linkResizeObserver;
 export function bindDevelopmentTreeNavigation(root){
  const tree=root.querySelector('.dev-tree');if(!tree)return;
  const previous=root.querySelector('[data-tree-pan="left"]'),next=root.querySelector('[data-tree-pan="right"]');
  const update=()=>{previous.disabled=tree.scrollLeft<=1;next.disabled=tree.scrollLeft+tree.clientWidth>=tree.scrollWidth-1};
  previous.onclick=()=>tree.scrollBy({left:-Math.max(240,tree.clientWidth*.8),behavior:'smooth'});
  next.onclick=()=>tree.scrollBy({left:Math.max(240,tree.clientWidth*.8),behavior:'smooth'});
- tree.addEventListener('scroll',update,{passive:true});update();
+ const drawLinks=()=>{for(const steps of tree.querySelectorAll('.dev-tree-steps')){
+  const svg=steps.querySelector('.dev-tree-links'),cards=new Map([...steps.querySelectorAll('[data-tech-node]')].map(card=>[card.dataset.techNode,card]));
+  const bounds=steps.getBoundingClientRect(),scale=bounds.width/(steps.offsetWidth||bounds.width)||1,width=steps.scrollWidth,height=steps.scrollHeight;
+  svg.setAttribute('viewBox',`0 0 ${width} ${height}`);svg.setAttribute('width',width);svg.setAttribute('height',height);
+  const lines=[];for(const child of cards.values())for(const id of (child.dataset.prerequisites||'').split(' ').filter(Boolean)){
+   const parent=cards.get(id);if(!parent)continue;
+   const a=parent.getBoundingClientRect(),b=child.getBoundingClientRect(),x1=(a.right-bounds.left)/scale,y1=(a.top+a.height/2-bounds.top)/scale,x2=(b.left-bounds.left)/scale,y2=(b.top+b.height/2-bounds.top)/scale,bend=Math.max(20,(x2-x1)*.45);
+   const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',`M ${x1} ${y1} C ${x1+bend} ${y1}, ${x2-bend} ${y2}, ${x2} ${y2}`);path.dataset.from=id;path.dataset.to=child.dataset.techNode;lines.push(path);
+  }
+  svg.replaceChildren(...lines);
+ }};
+ let scheduled=false;const refresh=()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;if(tree.isConnected)drawLinks()})};
+ linkResizeObserver?.disconnect();linkResizeObserver=new ResizeObserver(refresh);
+ for(const steps of tree.querySelectorAll('.dev-tree-steps')){linkResizeObserver.observe(steps);for(const card of steps.querySelectorAll('[data-tech-node]'))linkResizeObserver.observe(card)}
+ const focusLink=id=>{tree.classList.toggle('dev-link-focused',!!id);for(const path of tree.querySelectorAll('.dev-tree-links path'))path.classList.toggle('emphasis',!!id&&(path.dataset.from===id||path.dataset.to===id))};
+ tree.addEventListener('pointerover',event=>{const card=event.target.closest('[data-tech-node]');if(card)focusLink(card.dataset.techNode)});
+ tree.addEventListener('pointerout',event=>{if(!event.relatedTarget?.closest?.('[data-tech-node]'))focusLink(null)});
+ tree.addEventListener('focusin',event=>{const card=event.target.closest('[data-tech-node]');if(card)focusLink(card.dataset.techNode)});
+ tree.addEventListener('focusout',event=>{if(!event.relatedTarget?.closest?.('[data-tech-node]'))focusLink(null)});
+ tree.addEventListener('scroll',()=>{update();refresh()},{passive:true});update();refresh();
 }
 export function constructionPanel(s,lang,r){
   const inscriptions=(r?.inscriptions||[]).map(record=>`<blockquote class="dev-inscription">${esc(record.text)}<small>${record.month}/${Math.abs(record.year)} BCE</small></blockquote>`).join('');
