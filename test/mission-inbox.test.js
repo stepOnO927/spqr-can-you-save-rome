@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=foreign-heir-knowledge-1';
-import {advanceMailReports} from '../mail-reports.js?v=foreign-heir-knowledge-1';
-import {receivedMail} from '../epistulae.js?v=foreign-heir-knowledge-1';
+import {newGame,upgradeSave} from '../engine.js?v=guardian-age-1';
+import {advanceMailReports} from '../mail-reports.js?v=guardian-age-1';
+import {receivedMail} from '../epistulae.js?v=guardian-age-1';
 
 test('only received mission outcomes enter the inbox, once, and survive a save',()=>{
  const s=newGame(),date={resolvedYear:s.year,resolvedMonth:s.month};

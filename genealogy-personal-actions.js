@@ -1,8 +1,8 @@
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
-import {reportedHealthSubjects,reportedPersonName} from './character-system.js?v=foreign-heir-knowledge-1';
-import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from './personal-diplomacy.js?v=foreign-heir-knowledge-1';
+import {reportedHealthSubjects,reportedPersonName} from './character-system.js?v=guardian-age-1';
+import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from './personal-diplomacy.js?v=guardian-age-1';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=(pair,zh)=>Array.isArray(pair)?pair[zh?1:0]:'';
