@@ -1,4 +1,4 @@
-import {nationalBudget} from './national-budget.js?v=24';
+import {nationalBudget} from './national-budget.js?v=25';
 import {expensesThisMonth} from './expense-ledger.js?v=1';
 const number=x=>(Object.is(x,-0)?0:Number(x)).toLocaleString(undefined,{maximumFractionDigits:1});
 export function budgetHtml(s,lang,contribution=null,provisions=null,aerarium=null){
@@ -16,6 +16,7 @@ export function budgetHtml(s,lang,contribution=null,provisions=null,aerarium=nul
   b.tradeImportPaid?row('Maritime imports paid this month','本月已付海运进口费',-b.tradeImportPaid):'',
   s.aerariumSeizure?.year===s.year&&s.aerariumSeizure.month===s.month&&s.aerariumSeizure.owner===s.player?row('Roman public reserve taken this month','本月动用罗马公共金库',s.aerariumSeizure.income):'',
   row('Local food production','地方粮食产出',b.foodProduction),
+  b.granaryFood?row('Food held in provincial granaries','行省粮仓储粮',b.granaryFood):'',
   row('Army rations','军队口粮',-b.troopFood),
   row('Regional consumption','地方消耗',-b.regionalFood),
   b.requisitionLoss?row('Local stores recovery · production loss','地方储粮恢复 · 产量损失',-b.requisitionLoss):'',
@@ -27,7 +28,7 @@ export function budgetHtml(s,lang,contribution=null,provisions=null,aerarium=nul
   row('Projected food change','预计粮食变化',b.foodNet),row('Projected manpower gain','预计兵源恢复',b.manpowerNet)
  ].join('');
  const foodStores=s.factions[s.player].food,runway=b.foodNet<0&&foodStores>=0?Math.floor(foodStores/-b.foodNet)+1:null;
- const foodRunway=runway===null?'':`<p class="budget-runway">${zh?`若每月收支不变，现有存粮约${runway}个月后会跌破零；贸易与战事可能改变结果。`:`At the current monthly rate, food stores may fall below zero in about ${runway} month${runway===1?'':'s'}; trade and war can change this.`}</p>`;
+ const foodRunway=runway===null?'':`<p class="budget-runway">${zh?`若每月收支不变，全国存粮约${runway}个月后会跌破零；行省粮仓可能延后缺粮，贸易与战事也会改变结果。`:`At the current monthly rate, national food may fall below zero in about ${runway} month${runway===1?'':'s'}; provincial granaries may delay the shortage, and trade or war can change this.`}</p>`;
  const reason=contribution?.reason,status=contribution?.ok?(zh?`从${contribution.regions}个稳定领土取得${contribution.income}国库；每处忠诚−5、满意度−4，国家稳定度−2。`:`Raise ${contribution.income} treasury from ${contribution.regions} stable territories; each loses 5 loyalty and 4 satisfaction, and national stability falls by 2.`):reason==='cooldown'?(zh?`还需等待${contribution.remaining}个月。`:`Available again in ${contribution.remaining} months.`):reason==='stability'?(zh?'国家稳定度须至少为40。':'National stability must reach 40.'):reason==='support'?(zh?'当前没有足够的稳定城镇愿意出资。':'Too few stable communities can contribute.'):reason==='campaign'?(zh?'战役已经正式结束。':'The campaign has ended.'):zh?'仅在与其他国家交战时可用。':'Available during a war with another state.';
  const contributionHtml=contribution?`<div class="war-contribution-panel"><h3>${zh?'战时城镇筹款':'WARTIME MUNICIPAL CONTRIBUTIONS'}</h3><p>${status}</p><button class="action" id="war-contribution" ${contribution.ok?'':'disabled'}>${zh?'征集战时款项':'COLLECT WAR CONTRIBUTIONS'}</button><p>${zh?'每12个月最多一次。凯撒在《内战记》1.6.8中指称对手向意大利城镇征款；此行动的数值与社会后果属于游戏设计。':'At most once every 12 months. Caesar alleges municipal contributions in Civil War 1.6.8; the amounts and social consequences here are game design.'} <a href="https://classics.andrewgadsden.com/library/caesar/de-bello-civili/1?line=76" target="_blank" rel="noopener noreferrer">${zh?'查看原文':'Primary text'}</a></p></div>`:'';
  const supplyReason=provisions?.reason,supplyStatus=provisions?.ok?(zh?`从${provisions.regions}处己方城镇取得${provisions.food}粮食；每处忠诚−4、满意度−5，国家稳定度−2，未来三个月产量降低。`:`Gather ${provisions.food} food from ${provisions.regions} friendly communities; each loses 4 loyalty and 5 satisfaction, national stability falls by 2, and production falls for three months.`):supplyReason==='cooldown'?(zh?`还需等待${provisions.remaining}个月。`:`Available again in ${provisions.remaining} months.`):supplyReason==='storage'?(zh?'粮仓没有足够空间。':'Not enough storage capacity.'):supplyReason==='support'?(zh?'没有足够愿意提供储粮的稳定城镇。':'Too few stable communities have stores to contribute.'):supplyReason==='stability'?(zh?'国家稳定度须至少为40。':'National stability must reach 40.'):supplyReason==='campaign'?(zh?'战役已经正式结束。':'The campaign has ended.'):zh?'仅在与其他国家交战时可用。':'Available during a war with another state.';

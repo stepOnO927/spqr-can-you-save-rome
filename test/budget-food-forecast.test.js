@@ -15,5 +15,16 @@ test('the food budget explains its deficit and dates the current-rate shortage i
  for(const label of ['地方粮食产出','军队口粮','地方消耗','预计粮食变化'])assert.ok(zh.includes(label));
  assert.match(en,new RegExp(`about ${months} month`));
  assert.match(zh,new RegExp(`约${months}个月后`));
- assert.match(en,/trade and war can change this/i);
+ assert.match(en,/trade or war can change this/i);
+ const site=state.regions.find(r=>r.owner==='caesar');
+ site.buildings.push('granary');site.grainReserve=8;
+ state.armies.find(a=>a.owner==='caesar').men+=2400;
+ const stored=nationalBudget(state,'caesar');
+ assert.equal(stored.granaryFood,8);
+ assert.ok(stored.foodNet<0);
+ const withGranary=budgetHtml(state,'en'),withGranaryZh=budgetHtml(state,'zh');
+ assert.match(withGranary,/Food held in provincial granaries<\/td><td>8/);
+ assert.match(withGranary,/provincial granaries may delay the shortage/i);
+ assert.match(withGranaryZh,/行省粮仓储粮<\/td><td>8/);
+ assert.match(withGranaryZh,/行省粮仓可能延后缺粮/);
 });
