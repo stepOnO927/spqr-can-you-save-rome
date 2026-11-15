@@ -1,4 +1,4 @@
-import {REGIONS,ROUTES} from './data.js?v=faces-main-20261115-1';
+import {REGIONS,ROUTES} from './data.js?v=faces-reported-names-1';
 
 // Opening control is common campaign knowledge, not a reconstruction of the
 // current world in an old save. Later observations belong to each faction.

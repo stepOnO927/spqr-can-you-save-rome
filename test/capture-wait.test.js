@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {waitForMapIdle} from '../map-lab/capture-wait.js?v=faces-main-20261115-1';
+import {waitForMapIdle} from '../map-lab/capture-wait.js?v=faces-reported-names-1';
 
 function fakeMap(){
  let listener=null;

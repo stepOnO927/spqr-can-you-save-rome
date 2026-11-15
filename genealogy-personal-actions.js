@@ -1,7 +1,8 @@
-import {CHARACTER_CATALOG} from './characters.js?v=faces-main-20261115-1';
-import {FACTIONS} from './data.js?v=faces-main-20261115-1';
-import {reportedHealthSubjects} from './character-system.js?v=faces-main-20261115-1';
-import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from './personal-diplomacy.js?v=faces-main-20261115-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-reported-names-1';
+import {FACTIONS} from './data.js?v=faces-reported-names-1';
+import {campaignDate} from './campaign-date.js?v=faces-reported-names-1';
+import {reportedHealthSubjects,reportedPersonName} from './character-system.js?v=faces-reported-names-1';
+import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from './personal-diplomacy.js?v=faces-reported-names-1';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=(pair,zh)=>Array.isArray(pair)?pair[zh?1:0]:'';

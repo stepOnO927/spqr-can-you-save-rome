@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=faces-main-20261115-1';
-import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js?v=faces-main-20261115-1';
-import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js?v=faces-main-20261115-1';
-import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=faces-main-20261115-1';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=faces-main-20261115-1';
-import {createFictionalPerson} from '../dynasties.js?v=faces-main-20261115-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=faces-reported-names-1';
+import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js?v=faces-reported-names-1';
+import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js?v=faces-reported-names-1';
+import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=faces-reported-names-1';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=faces-reported-names-1';
+import {createFictionalPerson} from '../dynasties.js?v=faces-reported-names-1';
 
 test('a sick Roman commander retains nominal office while an available officer acts temporarily',()=>{
  const s=newGame('caesar');s.world.characters.caesar.health='seriously_ill';const g=deriveGovernment(s,'caesar');assert.equal(g.kind,'acting_command');assert.deepEqual(g.nominal,['caesar']);assert.deepEqual(g.acting,['antony']);assert.deepEqual(s.world.leadership.caesar,['caesar']);

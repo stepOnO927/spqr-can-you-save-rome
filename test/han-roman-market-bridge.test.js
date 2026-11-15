@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-main-20261115-1';
-import {attachHanWorld,hanWorld,advanceHanWorld,romanView,buyEasternImport} from '../han/world.js?v=roman-imports-1';
-import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-main-20261115-1';
-import {advanceDate} from '../han/util.js?v=faces-main-20261115-1';
-import {eastPanel} from '../han/east-ui.js?v=faces-main-20261115-1';
-import {setRelation} from '../han/frontier.js?v=faces-main-20261115-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-reported-names-1';
+import {attachHanWorld,hanWorld,advanceHanWorld,romanView,buyEasternImport} from '../han/world.js?v=faces-reported-names-1';
+import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-reported-names-1';
+import {advanceDate} from '../han/util.js?v=faces-reported-names-1';
+import {eastPanel} from '../han/east-ui.js?v=faces-reported-names-1';
+import {setRelation} from '../han/frontier.js?v=faces-reported-names-1';
 
 test('the attached eastern world trades autonomously without publishing private orders to Rome',()=>{
  const s=newGame('caesar');attachHanWorld(s,{seed:82});const h=hanWorld(s).state;

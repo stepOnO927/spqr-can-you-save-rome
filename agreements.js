@@ -1,5 +1,5 @@
-import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=faces-main-20261115-1';
-import {hasNationalIdea} from './national-ideas.js?v=faces-main-20261115-1';
+import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=faces-reported-names-1';
+import {hasNationalIdea} from './national-ideas.js?v=faces-reported-names-1';
 // Agreements supplement the existing full-alliance pairs; they do not copy them.
 // All effects are derived from the active agreement itself, so expiration or a
 // breach immediately removes its privileges.

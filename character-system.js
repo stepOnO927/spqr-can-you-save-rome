@@ -1,15 +1,15 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=faces-main-20261115-1';
-import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=faces-main-20261115-1';
-import {generateFictionalName} from './fictional-names.js?v=faces-main-20261115-1';
-import {FACTIONS,ROUTES} from './data.js?v=faces-main-20261115-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=faces-main-20261115-1';
-import {potentialConspirators} from './conspiracies.js?v=faces-main-20261115-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=faces-main-20261115-1';
-import {reportedControl} from './control-intelligence.js?v=faces-main-20261115-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=faces-main-20261115-1';
-import {activeAgreement} from './agreements.js?v=faces-main-20261115-1';
-import {activeModifiers} from './inventions.js?v=faces-main-20261115-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=faces-main-20261115-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=faces-reported-names-1';
+import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=faces-reported-names-1';
+import {generateFictionalName} from './fictional-names.js?v=faces-reported-names-1';
+import {FACTIONS,ROUTES} from './data.js?v=faces-reported-names-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=faces-reported-names-1';
+import {potentialConspirators} from './conspiracies.js?v=faces-reported-names-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=faces-reported-names-1';
+import {reportedControl} from './control-intelligence.js?v=faces-reported-names-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=faces-reported-names-1';
+import {activeAgreement} from './agreements.js?v=faces-reported-names-1';
+import {activeModifiers} from './inventions.js?v=faces-reported-names-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=faces-reported-names-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -108,6 +108,15 @@ export function advanceAgentRequests(s,{autoplayPlayer=false}={}){initializeWorl
 }}
 const sourceFamily=r=>{const source=r.originSource||r.source;return ({official:'court',envoy:'court',audience:'court',exchange:'unknown'}[source]||source||'unknown')};
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
+// Preserve only names present when a report was made. Forwarded and legacy
+// reports never acquire a new name from the foreign court's current state.
+const namedReportSubjects=r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:r.kind?.startsWith('office_')||r.kind==='succession'?[r.value]:[];
+export function snapshotReportedPeople(report){const result={};for(const id of namedReportSubjects(report)){const name=CHARACTER_CATALOG[id]?.name;if(Array.isArray(name)&&name.length===2&&name.every(x=>typeof x==='string'&&x.length>0))result[id]=[...name]}return result}
+export function reportedPersonName(s,actor,target,id){
+ const reports=s.knowledge?.[actor]?.[target]?.reports||[];
+ const found=reports.filter(r=>reportAge(s,r)>=0&&namedReportSubjects(r).includes(id)&&Array.isArray(r.peopleNames?.[id])&&r.peopleNames[id].length===2&&r.peopleNames[id].every(x=>typeof x==='string'&&x.length>0)).sort((a,b)=>reportAge(s,a)-reportAge(s,b))[0];
+ return found?{name:[...found.peopleNames[id]],year:found.observationYear??found.year,month:found.observationMonth??found.month}:null;
+}
 const knownReport=x=>['leaders','claimants'].includes(x.kind)?Array.isArray(x.leaders)&&x.leaders.length>0:x.value!=='unknown'&&x.value!=null;
 const validStrengthRange=r=>r.kind==='strength'&&Array.isArray(r.range)&&r.range.length===2&&r.range.every(Number.isFinite)&&r.range[0]>=0&&r.range[0]<=r.range[1];
 const strengthRange=r=>validStrengthRange(r)?r.range:Number.isFinite(r.value)?[r.value,r.value]:null;
@@ -135,6 +144,8 @@ export function reportEvidence(s,actor,target,report){
 export function addReport(s,actor,target,report){
  initializeWorld(s);const k=s.knowledge[actor]?.[target];if(!k)return;
  const r={...report,year:s.year,month:s.month,baseConfidence:report.baseConfidence||report.confidence||'unverified',verified:false};
+ if(report.source==='exchange'||report.peopleNames||report.observationYear!=null||report.observationMonth!=null)r.peopleNames=structuredClone(report.peopleNames||{});
+ else r.peopleNames=snapshotReportedPeople(r);
  // An older forwarded message may be useful evidence but must not replace a newer report.
  const newerLeader=r.kind==='leaders'&&k.reports.some(x=>x.kind==='leaders'&&knownReport(x)&&reportAge(s,x)<reportAge(s,r));
  k.reports.unshift(r);k.reports=k.reports.slice(0,30);
@@ -240,7 +251,7 @@ function prepareExchange(s,op){
   if(rand(s)<refusal)return {available:false,declined:true};
  }
  if(!prior)return {available:false};
- return {available:true,report:{kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,range:validStrengthRange(prior)?[...prior.range]:undefined,exhaustive:prior.exhaustive===true,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'}};
+ return {available:true,report:{kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,peopleNames:structuredClone(prior.peopleNames||{}),range:validStrengthRange(prior)?[...prior.range]:undefined,exhaustive:prior.exhaustive===true,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'}};
 }
 export function advanceOperations(s){initializeWorld(s);for(const op of s.operations){if(op.status!=='pending')continue;op.remaining--;
  if(op.type==='exchange'&&!op.exchangeSealed&&op.remaining<=Math.floor((op.duration||configs.exchange.months)/2))op.exchangeSealed=prepareExchange(s,op);

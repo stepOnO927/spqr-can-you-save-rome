@@ -74,6 +74,31 @@ try{
  assert.match(await page.locator('[data-gene-meeting-history]').innerText(),/未能见面/);
  state=await save();
  assert.equal(state.meetings[0].status,'no_contact');
+
+ // A delivered fictional name remains the one used in an audience request.
+ actorId=await page.evaluate(async()=>{
+  const {newGame,upgradeSave}=await import('/engine.js?v=faces-main-20261115-1');
+  const {createFictionalPerson}=await import('/dynasties.js?v=faces-main-20261115-1');
+  const {addReport}=await import('/character-system.js?v=faces-main-20261115-1');
+  let s=newGame('caesar');
+  const actor=createFictionalPerson(s,{name:['Test traveler','测试旅人'],faction:'caesar',birthYear:-80,location:'cisalpine'});
+  const target=createFictionalPerson(s,{name:['Reported Person','报告中的人物'],faction:'egypt',birthYear:-75,location:'egypt'});
+  addReport(s,'caesar','egypt',{kind:'leaders',leaders:[target],source:'spy'});
+  s.world.dynasties.catalog[target].name=['Secret rename','秘密改名'];
+  s=upgradeSave(structuredClone(s));
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
+  return actor;
+ });
+ await open();
+ const reported=page.locator('[data-gene-meeting-target] option').filter({hasText:'报告中的人物'});
+ assert.equal(await reported.count(),1);
+ assert.doesNotMatch(await page.locator('[data-gene-meeting-target]').innerText(),/秘密改名/);
+ await page.locator('[data-gene-meeting-target]').selectOption(await reported.getAttribute('value'));
+ await page.locator('[data-gene-meeting]').click();
+ await page.locator('[data-gene-meeting-feedback] button').click();
+ assert.match(await page.locator('[data-gene-meeting-history]').innerText(),/报告中的人物/);
+ state=await save();
+ assert.deepEqual(state.meetings[0].reportedName,['Reported Person','报告中的人物']);
  assert.deepEqual(errors,[]);
- console.log('Personal travel and delayed audience work from the family tree, including saving, stopping and stale information.');
+ console.log('Personal travel and delayed audiences work from the family tree with saved reported names and no hidden-name leak.');
 }finally{await browser.close()}

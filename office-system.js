@@ -1,6 +1,6 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=faces-main-20261115-1';
-import {recordLifeEvent} from './dynasties.js?v=faces-main-20261115-1';
-import {rememberPersonalEvent} from './political-memory.js?v=faces-main-20261115-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=faces-reported-names-1';
+import {recordLifeEvent} from './dynasties.js?v=faces-reported-names-1';
+import {rememberPersonalEvent} from './political-memory.js?v=faces-reported-names-1';
 
 // These are simulated administrative assignments, not historical magistracies.
 export const OFFICE_TYPES=['finance','supply','administration'];

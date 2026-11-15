@@ -1,9 +1,9 @@
-import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,leadershipTitle,ageRange} from './characters.js?v=faces-main-20261115-1';
-import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=faces-main-20261115-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=faces-main-20261115-1';
-import {FACTIONS} from './data.js?v=faces-main-20261115-1';
-import {fictionalPortraitKey,proceduralPortraitSvg} from './portrait-registry.js?v=faces-main-20261115-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=genealogy-personal-actions-1';
+import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,leadershipTitle,ageRange} from './characters.js?v=faces-reported-names-1';
+import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=faces-reported-names-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=faces-reported-names-1';
+import {FACTIONS} from './data.js?v=faces-reported-names-1';
+import {fictionalPortraitKey,proceduralPortraitSvg} from './portrait-registry.js?v=faces-reported-names-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=faces-reported-names-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);

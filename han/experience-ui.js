@@ -1,9 +1,9 @@
-import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=faces-main-20261115-1';
-import {treeFor,focusState,focusStatus,startFocus} from './focus.js?v=faces-main-20261115-1';
-import {OFFICES,FACTIONS} from './data.js?v=faces-main-20261115-1';
-import {appoint} from './court.js?v=faces-main-20261115-1';
-import {answerProposal,atWar,propose,treaty,relation,TREATY_TYPES} from './frontier.js?v=faces-main-20261115-1';
-import {neighbours} from './military.js?v=faces-main-20261115-1';
+import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=faces-reported-names-1';
+import {treeFor,focusState,focusStatus,startFocus} from './focus.js?v=faces-reported-names-1';
+import {OFFICES,FACTIONS} from './data.js?v=faces-reported-names-1';
+import {appoint} from './court.js?v=faces-reported-names-1';
+import {answerProposal,atWar,propose,treaty,relation,TREATY_TYPES} from './frontier.js?v=faces-reported-names-1';
+import {neighbours} from './military.js?v=faces-reported-names-1';
 
 let panel='',lastResult='',preferredTarget='';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
