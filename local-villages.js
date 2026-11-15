@@ -35,6 +35,7 @@ function villageEvent(state, region, entity) {
       if (sent.ok) {sent.letter.senderName=[...village.leader]; village.lastPetitionAt={year:state.year,month:state.month};}
     }
   }
+  return kind;
 }
 const projects = Object.freeze({
   granary: {treasury: 8, food: 2, months: 2},
@@ -109,6 +110,7 @@ export function takeVillageFood(state, id, actor = state.player, options = {}) {
 
 export function advanceVillages(state) {
   if (state.dlc) return;
+  const reports=[];
   for (const region of state.regions) for (const entity of region.localEntities || []) {
     if (entity.type !== 'village' || !entity.village) continue;
     const village = entity.village;
@@ -164,6 +166,15 @@ export function advanceVillages(state) {
       if (village.satisfaction >= 65) village.localIssue = null;
     }
     if (state.month % 3 === 0 && village.shrine > 0 && village.storedFood >= village.foodNeed * 2) village.satisfaction = clamp(village.satisfaction + 1);
-    villageEvent(state, region, entity);
+    const event=villageEvent(state, region, entity);
+    if (event && !['tax_complaint','road_request'].includes(event) && entity.controller===state.player && region.owner===state.player) reports.push({name:entity.name,kind:event});
+  }
+  if(reports.length){
+    const en={harvest:'harvest gathering',merchants:'merchant arrival',festival:'community festival'};
+    const zh={harvest:'丰收聚会',merchants:'商人抵达',festival:'社区节庆'};
+    sendLetter(state,{senderInstitution:state.player,senderFaction:state.player,recipient:state.player,category:'government',priority:'routine',
+      subject:['Village developments','村落近况'],
+      body:[`Local reports for this half-year: ${reports.map(item=>`${item.name[0]} — ${en[item.kind]}`).join('; ')}.`,`本半年村落近况：${reports.map(item=>`${item.name[1]}——${zh[item.kind]}`).join('；')}。`],
+      options:['acknowledge'],context:{kind:'village_digest',year:state.year,month:state.month,sites:reports.map(item=>item.name[0])}});
   }
 }

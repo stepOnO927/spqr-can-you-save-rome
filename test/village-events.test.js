@@ -15,12 +15,23 @@ test('a surplus supports one dated village gathering without repeated notificati
   assert.deepEqual(village.lastEvent, {kind: 'harvest', year: -49, month: 6});
   assert.equal(village.storedFood, food + village.foodProduction - village.foodNeed - 1);
   assert.equal(village.satisfaction, satisfaction + 2);
+  const digest=state.mail.messages.find(mail=>mail.context?.kind==='village_digest');
+  assert.ok(digest);
+  assert.ok(digest.body[0].includes(`${site.name[0]} — harvest gathering`));
+  assert.ok(digest.arrival>state.year*12+state.month);
   advanceVillages(state);
   assert.equal(village.satisfaction, satisfaction + 2);
+  assert.equal(state.mail.messages.filter(mail=>mail.context?.kind==='village_digest').length,1);
   assert.equal(inspectState(state).filter(item => item.code.startsWith('invalid-village-event')).length, 0);
   assert.deepEqual(upgradeSave(structuredClone(state)).regions.find(region => region.id === site.theater).localEntities.find(entity => entity.id === site.id).village.lastEvent, village.lastEvent);
   village.lastEvent.kind = 'impossible';
   assert.ok(inspectState(state).some(item => item.code === 'invalid-village-event'));
+});
+
+test('another court does not receive private village developments',()=>{
+  const state=newGame('senate'),site=localEntity(state,'ravenna-farms');
+  site.village.road=1;state.month=6;advanceVillages(state);
+  assert.equal(state.mail.messages.some(mail=>mail.context?.kind==='village_digest'&&mail.recipient==='senate'),false);
 });
 
 test('high tax complaints and road requests arise from actual village conditions', () => {
