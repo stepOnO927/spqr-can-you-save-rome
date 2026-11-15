@@ -35,6 +35,7 @@ jobs:
           node tools/ai-wartime-aid-smoke.mjs
           node tools/frontier-response-smoke.mjs
           node tools/player-aid-letter-smoke.mjs
+          node tools/player-request-aid-smoke.mjs
           node tools/official-name-snapshots-smoke.mjs
           node tools/cursus-applicant-smoke.mjs
           node tools/han-court-smoke.mjs

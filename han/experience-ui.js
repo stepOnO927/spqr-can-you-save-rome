@@ -1,4 +1,4 @@
-import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=senator-portraits-1';
+import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=player-request-aid-1';
 import {treeFor,focusState,focusStatus,startFocus} from './focus.js?v=han-1';
 import {OFFICES,FACTIONS} from './data.js?v=han-1';
 import {appoint} from './court.js?v=han-1';
