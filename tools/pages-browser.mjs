@@ -7,11 +7,12 @@ const base='http://127.0.0.1:5174',other='http://localhost:5174',failures=[];
 const browser=await chromium.launch({headless:true,...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{}),args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 async function open(url){
   const page=await browser.newPage({acceptDownloads:true,viewport:{width:1920,height:1080}});
-  page.on('request',request=>{if(/cloudflareinsights\.com|googletagmanager\.com/.test(request.url()))failures.push('Automated test requested analytics: '+request.url())});
+  await page.route(/cloudflareinsights\.com|googletagmanager\.com/,route=>route.abort());
   page.on('pageerror',error=>failures.push(`${url}: ${error.message}`));
   page.on('response',response=>{if(response.status()>=400&&new URL(response.url()).origin===new URL(url).origin&&!response.url().endsWith('/favicon.ico'))failures.push(`${response.status()} ${response.url()}`)});
   const response=await page.goto(url,{waitUntil:'domcontentloaded'});
   assert.equal(response.status(),200,url);
+  assert.equal(await page.locator('script[src*="cloudflareinsights.com"]').count(),0,'test server must remove the public beacon');
   assert.equal(await page.evaluate(()=>window.__SPQR_TEST_MODE?.kind),'local_preview');
   await page.locator('#save-transfer-open').waitFor();
   await page.locator('.spqr-version').click();
@@ -56,6 +57,7 @@ try{
   const migrated=await open(other+'/');
   await migrated.locator('#save-transfer-open').click();
   await migrated.locator('#save-transfer-file').setInputFiles({name:'spqr-saves.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exported))});
+  await migrated.waitForFunction(()=>localStorage.getItem('spqr-save-1')!==null,undefined,{timeout:10000});
   assert.equal(await migrated.evaluate(()=>localStorage.getItem('spqr-save-1')),campaign);
   assert.match(await migrated.locator('#save-transfer-status').innerText(),/Imported 1/);
   const bad={format:'spqr-save-transfer',version:1,saves:{'evil-key':'value'}};
