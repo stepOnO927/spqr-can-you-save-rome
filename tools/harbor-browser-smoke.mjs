@@ -1,0 +1,33 @@
+import {chromium} from 'playwright';
+import {readFile,mkdir} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+const context=await browser.newContext({viewport:{width:1440,height:900}});
+await context.route('https://**/*',route=>route.abort());
+await context.route('http://spqr.test/**',async route=>{
+ const url=new URL(route.request().url()),relative=url.pathname==='/legacy/'?'legacy/index.html':url.pathname.slice(1),target=path.resolve(root,relative);
+ if(!target.startsWith(root+path.sep))return route.abort();
+ try{const body=await readFile(target),ext=path.extname(target),contentType={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml'}[ext]||'application/octet-stream';await route.fulfill({status:200,contentType,body})}catch{await route.fulfill({status:404,body:'Not found'})}
+});
+const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
+await page.goto('http://spqr.test/legacy/');await page.evaluate(()=>{const key='spqr-legacy-profile-v1',profile=JSON.parse(localStorage.getItem(key)||'{}');profile.coins=2500;localStorage.setItem(key,JSON.stringify(profile));localStorage.setItem('spqr-lang','zh')});await page.reload();
+await page.locator('#nav-shop').click();await page.locator('[data-buy="harbor"]').click();await page.locator('#nav-city').click();await page.locator('[data-building="harbor"]').click();
+assert.equal(await page.locator('[data-merchant-report]').count(),3);assert.equal(await page.locator('[data-trade]').isDisabled(),true);
+await page.locator('[data-merchant-report="tyre"]').click();assert.match(await page.locator('.harbor-reports').innerText(),/未经过独立核实|未经独立核实/);assert.equal(await page.locator('[data-trade]').isEnabled(),true);
+const afterTyre=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins);await page.reload();await page.locator('[data-building="harbor"]').click();assert.equal(await page.locator('[data-merchant-report="tyre"]').count(),0);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins),afterTyre);
+await page.locator('[data-trade]').click();assert.equal(await page.locator('[data-trade]').isDisabled(),true);await page.locator('[data-merchant-report="alexandria"]').click();assert.equal(await page.locator('[data-harbor-event]').count(),2);
+await page.locator('[data-harbor-event="audit"]').click();assert.equal(await page.locator('[data-harbor-event]').count(),0);assert.match(await page.locator('.harbor-event').innerText(),/商贸账簿/);
+await page.locator('[data-activity="harbor-grain"][data-activity-choice="0"]').click();assert.match(await page.locator('.civic-activity').innerText(),/遗失的货封/);
+await mkdir(path.join(root,'outputs'),{recursive:true});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(root,'outputs','legacy-harbor-zh.png'),fullPage:true});
+await page.locator('#nav-lang').click();assert.match(await page.locator('.harbor-event').innerText(),/Merchant ledger/);assert.match(await page.locator('.harbor-reports').innerText(),/Merchant testimony/);
+await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(root,'outputs','legacy-harbor-mobile.png'),fullPage:true});await page.setViewportSize({width:1440,height:900});
+await page.locator('[data-open-shop]').click();await page.locator('[data-buy="theme-harbor"]').click();assert.equal(await page.locator('body.harbor-theme').count(),1);
+await page.locator('[data-buy="theme-senate"]').click();assert.equal(await page.locator('body.senate-theme').count(),1);const beforeApply=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins);
+await page.locator('[data-apply="theme-harbor"]').click();assert.equal(await page.locator('body.harbor-theme').count(),1);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins),beforeApply);
+await page.locator('[data-buy="museum"]').click();await page.locator('#nav-museum').click();assert.match(await page.locator('.museum-grid').innerText(),/Merchant exchange ledger/);assert.match(await page.locator('.museum-grid').innerText(),/Tyrian purple cloth/);
+const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')));await page.reload();assert.equal(await page.locator('body.harbor-theme').count(),1);assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).harborEvents),saved.harborEvents);
+assert.deepEqual(errors,[]);await browser.close();console.log('Harbor browser smoke passed: reports, import, event, challenges, museum, cosmetics, bilingual, reload, mobile.');
