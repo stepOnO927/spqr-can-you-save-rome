@@ -4,7 +4,7 @@ const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use
 page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
- const ids=await page.evaluate(async()=>{const {newGame,upgradeSave}=await import('/engine.js?v=meeting-name-1'),{createFictionalPerson}=await import('/dynasties.js?v=meeting-name-1'),{addReport}=await import('/character-system.js?v=meeting-name-1');let s=newGame('caesar');
+ const ids=await page.evaluate(async()=>{const {newGame,upgradeSave}=await import('/engine.js?v=audience-mail-1'),{createFictionalPerson}=await import('/dynasties.js?v=meeting-name-1'),{addReport}=await import('/character-system.js?v=meeting-name-1');let s=newGame('caesar');
   const leader=createFictionalPerson(s,{name:['Reported leader','报告领袖'],faction:'egypt',birthYear:-75}),governor=createFictionalPerson(s,{name:['First name','首份姓名'],faction:'senate',birthYear:-75});addReport(s,'caesar','egypt',{kind:'leaders',leaders:[leader],source:'spy'});addReport(s,'caesar','senate',{kind:'office_theater:roma',value:governor,source:'spy'});
   s.world.dynasties.catalog[governor].name=['Second name','第二份姓名'];s=upgradeSave(structuredClone(s));s.month++;addReport(s,'caesar','senate',{kind:'office_theater:roma',value:governor,source:'envoy'});s.world.dynasties.catalog[leader].name=['Secret leader','秘密领袖'];s.world.dynasties.catalog[governor].name=['Secret governor','秘密行政官'];s=upgradeSave(structuredClone(s));
   sessionStorage.setItem('privacy-fixture',JSON.stringify(s));sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));return {leader,governor};

@@ -1,9 +1,9 @@
 import {advanceAgreementProposals} from './agreement-negotiations.js?v=agreement-courier-1';
 import {isDeliveredReport} from './person-knowledge.js?v=meeting-name-1';
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=meeting-name-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=meeting-name-1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=audience-mail-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=audience-mail-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=meeting-name-1';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=meeting-name-1';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=audience-mail-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=meeting-name-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=succession-ui-recovery-1';
@@ -15,7 +15,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=meeting-name-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=meeting-name-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=meeting-name-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=audience-mail-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
