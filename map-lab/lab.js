@@ -140,7 +140,11 @@ map.on('moveend',()=>{
  const check=()=>{
   if(token!==mapChartToken)return;
   const now=performance.now(),masksReady=['land','ocean'].every(id=>map.isSourceLoaded?.(id)??true);
-  const ready=now-mapChartedAt>=2000&&now-mapSourceAt>=450&&masksReady&&!(map.isMoving?.()??false);
+  const regionalRelief=localReliefLayer(),terrainSource=regionalRelief?.replace(/^relief/,'elevation');
+  // The exact shoreline may settle before its native close-up DEM. Revealing
+  // that intermediate frame briefly makes the atlas look low resolution.
+  const terrainReady=!terrainSource||(map.isSourceLoaded?.(terrainSource)??true);
+  const ready=now-mapChartedAt>=2000&&now-mapSourceAt>=450&&masksReady&&terrainReady&&!(map.isMoving?.()??false);
   if(ready||now-mapChartedAt>10000){revealChart();return}
   mapChartTimer=setTimeout(check,150);
  };

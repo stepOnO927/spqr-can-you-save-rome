@@ -1,0 +1,30 @@
+// Check the separately deployed branch against actual hosted static assets.
+import {chromium} from 'playwright';
+
+const base=process.env.SPQR_PREVIEW_URL||'http://localhost:5173';
+const browser=await chromium.launch({headless:true,executablePath:process.env.SPQR_CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const page=await browser.newPage({viewport:{width:1440,height:900}});
+const errors=[],missing=[];
+page.on('pageerror',error=>errors.push(error.message));
+page.on('response',response=>{if(response.status()>=400&&new URL(response.url()).host===new URL(base).host)missing.push(`${response.status()} ${response.url()}`)});
+try{
+ const response=await page.goto(new URL('/map-lab/',base).href,{waitUntil:'domcontentloaded',timeout:30000});
+ if(response.status()!==200)throw Error(`Atlas returned ${response.status()}`);
+ if((await page.title()).includes('Login – Vercel'))throw Error('Preview requires Vercel login; public browser test cannot continue');
+ await page.locator('#start-free').click();
+ await page.locator('.maplibregl-canvas').waitFor({timeout:30000});
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isStyleLoaded()&&map.areTilesLoaded()},null,{timeout:30000});
+ const local=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {zoom:map.getZoom(),hasSea:!!map.getLayer('sea-final'),hasDetailedTerrain:!!map.getLayer('land-elevation-higher'),hasNaval:!!document.querySelector('#naval')}});
+ if(!local.hasSea||!local.hasDetailedTerrain||!local.hasNaval)throw Error(`Deployed branch is missing expected features: ${JSON.stringify(local)}`);
+ await page.locator('#map-mode').selectOption('terrain');
+ await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[12.6,44.1],zoom:9.05})});
+ await page.locator('#map-charting').waitFor({state:'visible',timeout:3000});
+ await page.locator('#map-charting').waitFor({state:'hidden',timeout:30000});
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.areTilesLoaded()&&map.isSourceLoaded('elevation-higher')&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
+ const terrain=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {zoom:map.getZoom(),center:map.getCenter().toArray(),detailLoaded:map.isSourceLoaded('elevation-higher'),seaLoaded:map.isSourceLoaded('ocean')}});
+ if(!terrain.detailLoaded||!terrain.seaLoaded)throw Error(`Hosted atlas tiles did not settle: ${JSON.stringify({terrain,missing:missing.slice(0,20),errors})}`);
+ await page.locator('#language').click();
+ if(await page.locator('html').getAttribute('lang')!=='en')throw Error('English language switch failed');
+ if(errors.length||missing.length)throw Error(`Hosted atlas errors: ${JSON.stringify({errors,missing})}`);
+ console.log(JSON.stringify({base,local,terrain,errors,missing},null,2));
+}finally{await browser.close()}
