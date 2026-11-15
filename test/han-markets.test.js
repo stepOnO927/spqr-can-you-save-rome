@@ -440,6 +440,21 @@ test('the far-west caravan reserves real silk and a finite buyer budget',()=>{
  assert.equal(s.tradeMarkets.transactions.filter(x=>x.shipment===shipment.id).length,1);
 });
 
+test('a Silk Road caravan marker follows the saved paid shipment after a detour',()=>{
+ const s=newHanGame('han',{seed:38});s.month=2;s.tradeMarkets.embeddedRoman=true;
+ const order={seller:'han',buyer:'external',origin:'changan',destination:'mediterranean_gate',commodity:'silk',quantity:1};
+ const quote=quoteEasternTrade(s,order);assert.equal(quote.ok,true);
+ s.tradeMarkets.externalTreasury=quote.total+10;advanceSilk(s);
+ const caravan=s.silk.caravans.find(x=>x.shipmentId),shipment=s.tradeMarkets.shipments.find(x=>x.id===caravan?.shipmentId);
+ assert.ok(caravan);assert.deepEqual(caravan.path,shipment.path);
+ assert.equal(declareWar(s,'han','yuezhi').ok,true);
+ for(let i=0;i<40&&!shipment.reroutes?.length;i++){next(s);advanceSilk(s)}
+ assert.equal(shipment.reroutes?.length,1);assert.ok(!shipment.path.includes('bactra'));
+ assert.deepEqual(caravan.path,shipment.path);assert.equal(caravan.pos,shipment.leg);
+ const restored=loadHanSave(serialize(s)),savedCaravan=restored.silk.caravans.find(x=>x.id===caravan.id);
+ assert.deepEqual(savedCaravan.path,restored.tradeMarkets.shipments.find(x=>x.id===shipment.id).path);
+});
+
 test('bandit risk consumes real cargo while route security can protect it',()=>{
  const s=newHanGame('han',{seed:1});s.tradeMarkets.embeddedRoman=true;
  const request={seller:'han',buyer:'external',origin:'changan',destination:'mediterranean_gate',commodity:'silk',quantity:1};
