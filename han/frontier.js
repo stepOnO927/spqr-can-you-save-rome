@@ -9,7 +9,7 @@
 // Every AI decision uses the deciding faction's own intelligence picture
 // (s.intel[faction]); nobody reads the true map.
 import {OASIS,STEPPE,FACTIONS,PLAYABLE} from './data.js?v=faces-reported-names-1';
-import {neighbours,templateStats,routeBetween,marchMonths,recruit,recruitQuote} from './military.js?v=faces-reported-names-1';
+import {neighbours,templateStats,routeBetween,marchMonths,recruit,recruitQuote,provisionArmy} from './military.js?v=faces-reported-names-1';
 import {roll,clamp,log,monthIndex} from './util.js?v=faces-reported-names-1';
 import {rulerMilitaryJudgment} from './rulers.js';
 
@@ -212,7 +212,10 @@ function recruitHanReserve(s,fronts){
 export function aiMilitary(s,f,{issueMove}){
  if(f===s.player)return;
  const fronts=s.wars.some(w=>w.includes(f))?observedFronts(s,f):[],byRegion=new Map(fronts.map(x=>[x.r.id,x]));
- if(f==='han')recruitHanReserve(s,fronts);
+ if(f==='han'){
+  recruitHanReserve(s,fronts);
+  if(s.wars.some(w=>w.includes('han')))for(const a of s.armies.filter(x=>x.owner==='han'&&x.men>0&&!x.move&&(x.fieldRations||0)<x.men))provisionArmy(s,'han',a.id);
+ }
  for(const a of s.armies.filter(x=>x.owner===f&&x.men>0&&!x.move&&!x.forming)){
   if(a.withdrawing){const back=neighbours(a.region).find(n=>{const r=s.regions.find(x=>x.id===n);return r.owner===f||access(s,f,r.owner)});if(back)issueMove(a,back);a.withdrawing=false;continue}
   const current=byRegion.get(a.region);

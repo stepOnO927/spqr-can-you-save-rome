@@ -44,9 +44,10 @@ test('Roman siege reduces only the besieged province harvest, market stock, and 
  assert.equal(damaged.warDisrupted,true);
  assert.equal(damaged.produced,Math.floor(full.production/2));
  assert.equal(full.produced,full.production);
- assert.equal(damaged.stock,9+damaged.produced-damaged.consumed);
+ assert.equal(damaged.stock,9+damaged.produced-damaged.consumed-(damaged.usedForManufacture||0));
+ assert.equal(damaged.usedForManufacture,sieged.markets.regions.africa.goods.provisions.produced);
  assert.equal(damaged.stock<full.stock,true);
- assert.equal(damaged.price>full.price,true);
+ assert.equal(damaged.price>=full.price,true);
  const prior=damaged.produced;advanceMarkets(sieged);assert.equal(damaged.produced,prior,'same month cannot produce twice');
  const restored=upgradeSave(structuredClone(sieged));
  assert.equal(restored.markets.regions.africa.goods.grain.produced,damaged.produced);
@@ -67,7 +68,8 @@ test('Han hostile occupation reduces local grain while a distant war leaves farm
  const full=peaceful.tradeMarkets.regions.changan.goods.grain,damaged=occupied.tradeMarkets.regions.changan.goods.grain;
  assert.equal(damaged.warDisrupted,true);
  assert.equal(damaged.produced,Math.floor(full.production/2));
- assert.equal(damaged.stock,8+damaged.produced-damaged.consumed);
+ assert.equal(damaged.stock,8+damaged.produced-damaged.consumed-(damaged.usedForManufacture||0));
+ assert.equal(damaged.usedForManufacture,occupied.tradeMarkets.regions.changan.goods.provisions.produced);
  assert.equal(damaged.stock<full.stock,true);
  assert.equal(damaged.price>=full.price,true);
  const prior=damaged.produced;advanceEasternMarkets(occupied);assert.equal(damaged.produced,prior);

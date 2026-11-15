@@ -1,4 +1,4 @@
-import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-reported-names-1';
+import {COMMODITIES,marketPrice,produceMarketGood} from '../market-goods.js?v=faces-reported-names-1';
 import {REGIONS,ROUTES} from './data.js?v=faces-reported-names-1';
 import {atWar,propose,relation,shiftRelation,treaty} from './frontier.js?v=faces-reported-names-1';
 import {legOpen,tradePath} from './silk-road.js?v=faces-reported-names-1';
@@ -37,9 +37,11 @@ function projectedPathsTo(s,to,buyer){
 function profile(r,good){
  const production={
   grain:Math.max(0,Math.round((r.grain||0)/2)),
+  provisions:(r.grain||0)>=4?1:0,
   livestock:r.terrain==='steppe'?3:r.terrain==='plain'?2:1,
   horses:r.horses?3:r.terrain==='steppe'?2:0,
   iron:r.iron||r.arsenal?2:r.terrain==='mountain'?1:0,
+  weapons:r.arsenal||r.iron?1:0,
   copper:r.iron||r.arsenal?2:['hills','mountain'].includes(r.terrain)?1:0,
   stone:['hills','mountain'].includes(r.terrain)?2:0,
   timber:r.terrain==='forest'?4:['hills','mountain'].includes(r.terrain)?2:1,
@@ -50,8 +52,9 @@ function profile(r,good){
  }[good];
  // Elite demand consumes luxury cargo in populous courts. Smaller caravan
  // towns can still hold imported silk for onward exchange.
- const consumption={grain:Math.max(1,Math.ceil((r.pop||4)/12)),livestock:1,horses:1,iron:1,copper:1,stone:0,timber:1,silk:(r.pop||0)>=12?1:0,wool:(r.pop||0)>=12?1:0,jade:r.kind==='capital'?1:0,papyrus:0}[good];
- return {production,consumption,stock:production===0&&['wool','jade'].includes(good)?0:Math.max(0,production*4+2-consumption),price:COMMODITIES[good].basePrice};
+ const consumption={grain:Math.max(1,Math.ceil((r.pop||4)/12)),provisions:0,livestock:1,horses:1,iron:1,weapons:0,copper:1,stone:0,timber:1,silk:(r.pop||0)>=12?1:0,wool:(r.pop||0)>=12?1:0,jade:r.kind==='capital'?1:0,papyrus:0}[good];
+ const stock=['weapons','provisions'].includes(good)?production*2+(good==='weapons'&&r.owner?1:0):production===0&&['wool','jade'].includes(good)?0:Math.max(0,production*4+2-consumption);
+ return {production,consumption,stock,price:COMMODITIES[good].basePrice};
 }
 
 export function initializeEasternMarkets(s){
@@ -375,6 +378,7 @@ function advanceEasternMarketAI(s){
   if(active.some(x=>x.status==='traveling')||active.some(x=>x.status==='blocked'&&now-(x.blockedAt??now)<3))continue;
   const candidates=[];
   for(const destination of (regionsByOwner.get(buyer)||[]).filter(r=>(r.pop||0)>=8||r.kind?.startsWith('oasis')))for(const [good,item] of Object.entries(markets.regions[destination.id].goods)){
+   if(['weapons','provisions'].includes(good)&&!s.wars.some(w=>w.includes(buyer)))continue;
    const target=Math.max(4,item.consumption*3+item.production),deficit=target-item.stock;if(deficit<=0)continue;
    const nearby=(offersByGood.get(good)||[]).filter(x=>x.seller!==buyer&&(x.seller!==s.player||x.saleOrderId)&&!atWar(s,buyer,x.seller)&&!activeSellerGood.has(`${x.seller}:${good}`)&&towardFor(destination.id,buyer).has(x.origin))
     .sort((a,b)=>{const sourceA=regionsById.get(a.origin),sourceB=regionsById.get(b.origin);
@@ -443,20 +447,22 @@ function advanceEasternMarketAI(s){
  return orders;
 }
 
-// A threatened NPC Han depot must receive real iron before it can raise
-// crossbow formations. Use the same paid caravan and loss rules as any trade.
+// A threatened NPC Han depot must receive real equipment before it can raise
+// formations. Use the same paid caravan and loss rules as any trade.
 export function advanceHanMilitarySupply(s){
  const markets=initializeEasternMarkets(s),destination=s.aiHanDefense?.reserveDepot;
  if(s.player==='han'||!s.wars.some(w=>w.includes('han'))||!destination||region(s,destination)?.owner!=='han')return null;
- const depot=markets.regions[destination]?.goods.iron;
- if(!depot||depot.stock>=1||markets.shipments.some(x=>x.buyer==='han'&&x.destination===destination&&x.commodity==='iron'&&['traveling','blocked'].includes(x.status)))return null;
  if(s.factions.han.treasury<200)return null;
- const sources=s.regions.filter(r=>r.owner==='han'&&r.id!==destination&&markets.regions[r.id]?.goods.iron.stock>Math.max(4,markets.regions[r.id].goods.iron.consumption*3));
- const options=sources.map(r=>({origin:r.id,quote:quoteEasternTrade(s,{seller:'han',buyer:'han',origin:r.id,destination,commodity:'iron',quantity:1})})).filter(x=>x.quote.ok&&s.factions.han.treasury-x.quote.total>=200).sort((a,b)=>a.quote.months-b.quote.months||a.quote.total-b.quote.total);
- if(!options.length)return null;
- const placed=placeEasternTrade(s,{seller:'han',buyer:'han',origin:options[0].origin,destination,commodity:'iron',quantity:1});
- if(placed.ok)placed.shipment.purpose='military_recruitment';
- return placed.ok?placed.shipment:null;
+ for(const commodity of ['iron','weapons']){
+  const depot=markets.regions[destination]?.goods[commodity];
+  if(!depot||depot.stock>=1||markets.shipments.some(x=>x.buyer==='han'&&x.destination===destination&&x.commodity===commodity&&['traveling','blocked'].includes(x.status)))continue;
+  const sources=s.regions.filter(r=>{const item=markets.regions[r.id]?.goods[commodity];return r.owner==='han'&&r.id!==destination&&item?.stock>(commodity==='iron'?Math.max(4,item.consumption*3):Math.max(2,item.production*2))});
+  const options=sources.map(r=>({origin:r.id,quote:quoteEasternTrade(s,{seller:'han',buyer:'han',origin:r.id,destination,commodity,quantity:1})})).filter(x=>x.quote.ok&&s.factions.han.treasury-x.quote.total>=200).sort((a,b)=>a.quote.months-b.quote.months||a.quote.total-b.quote.total);
+  if(!options.length)continue;
+  const placed=placeEasternTrade(s,{seller:'han',buyer:'han',origin:options[0].origin,destination,commodity,quantity:1});
+  if(placed.ok){placed.shipment.purpose='military_recruitment';return placed.shipment}
+ }
+ return null;
 }
 
 export function advanceEasternMarkets(s){
@@ -465,12 +471,13 @@ export function advanceEasternMarkets(s){
  for(const sale of markets.saleOrders)if(sale.status==='open'&&region(s,sale.origin)?.owner!==sale.seller){markets.regions[sale.origin].goods[sale.commodity].stock+=sale.available;sale.available=0;sale.status='seized'}
  advanceMerchantReturns(s,now);
  for(const r of s.regions)for(const [good,item] of Object.entries(markets.regions[r.id].goods)){
-  const produced=good==='grain'?agriculturalProduction(s,r,item.production):item.production;
+  const produced=produceMarketGood(markets.regions[r.id],good,good==='grain'?agriculturalProduction(s,r,item.production):item.production);
   item.stock+=produced;item.produced+=produced;item.warDisrupted=good==='grain'&&agriculturalDisruption(s,r);
   const used=Math.min(item.stock,item.consumption);item.stock-=used;item.consumed+=used;item.shortage=item.consumption-used;
   const limit=Math.max(80,item.production*24);if(item.stock>limit){item.surplusDiscarded=(item.surplusDiscarded||0)+item.stock-limit;item.stock=limit}
   item.price=marketPrice(markets.regions[r.id],good);
  }
+ for(const market of Object.values(markets.regions))for(const [good,item] of Object.entries(market.goods))item.price=marketPrice(market,good);
  advanceShipments(s);publishOffers(s);advanceEasternSupplyContracts(s,now);
  if(s.month%3===0)advanceHanMilitarySupply(s);
  if((!markets.embeddedRoman||markets.autonomousEnabled)&&s.month%3===0){advanceEasternMarketAI(s);publishOffers(s)}

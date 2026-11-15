@@ -78,11 +78,21 @@ deducts it at recruitment, and saves the consumed equipment material on the
 army. A threatened NPC Han depot can order a finite paid iron caravan from
 its own productive market; cargo cannot equip troops before arrival. Unit
 tests cover shortage, transport, consumption and reload, and a bilingual
-browser regression checks the recruit control. The 1,135-test full local
-simulation suite passed before the latest main merge; the merged report-
-delivery suite and both affected browser flows passed afterward. Separate
-measured weapons and military provisions in recruitment and upkeep remain
-open.
+browser regression checks the recruit control. Both markets now also list
+weapons (6,000 sets per batch) and field rations (100 tons per batch). Local
+iron is converted into weapons and local grain into rations; the input and
+finished stock ledgers record the exact quantities. A completed Roman
+metalworking project starts weapon production. Han and Roman formation
+recruitment require and deduct local weapon batches, including after a paid
+caravan delivery. A Han army can load a local ration batch into a saved
+6,000-soldier-month reserve; carried rations reduce actual supply attrition
+when the army reaches a poor-supply region. War-time Han AI can load its own
+depots and seek paid iron or weapons shipments for a threatened recruitment
+depot. Peace-time market buyers do not divert scarce funds to military goods.
+The 120-month conservation test includes the new manufacturing ledger, and
+bilingual browser coverage checks loading, recruitment and save/reload.
+Roman field-ration use, generic non-formation recruitment, and fuller
+military maintenance integration remain open.
 Eastern market AI now indexes offers, owned regions and active caravans once
 per planning turn and only builds full paths for shortlisted bids. The
 120-month trade simulation retained its results before the subsequent main

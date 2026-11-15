@@ -88,11 +88,12 @@ export function recruitQuote(s,owner,regionId,templateId,men=5000){
  const t=templateById(s,owner,templateId),r=s.regions.find(x=>x.id===regionId),f=s.factions[owner];
  if(!t||!r||!f)return {ok:false,reason:'unknown'};
  const st=templateStats(t),k=men/1000;
- const q={treasury:Math.round(st.cost*k*4),grain:Math.round(st.grain*k*2),manpower:men,horses:Math.round(st.horses*k*300),iron:st.needs.includes('iron')?Math.max(1,Math.ceil(men/5000)):0,months:t.culture==='han'?2:1};
+ const q={treasury:Math.round(st.cost*k*4),grain:Math.round(st.grain*k*2),manpower:men,horses:Math.round(st.horses*k*300),iron:st.needs.includes('iron')?Math.max(1,Math.ceil(men/5000)):0,weapons:t.culture==='han'?Math.max(1,Math.ceil(men/6000)):0,months:t.culture==='han'?2:1};
  const problems=[];
  if(r.owner!==owner)problems.push('not_owner');
  if(f.treasury<q.treasury)problems.push('treasury');if(f.grain<q.grain)problems.push('grain');if(f.manpower<men)problems.push('manpower');if((f.horses||0)<q.horses)problems.push('horses');
  if(q.iron&&(s.tradeMarkets?.regions?.[regionId]?.goods?.iron?.stock??0)<q.iron)problems.push('iron');
+ if(q.weapons&&(s.tradeMarkets?.regions?.[regionId]?.goods?.weapons?.stock??0)<q.weapons)problems.push('weapons');
  if(t.req.frontier&&!r.frontier&&r.kind!=='protectorate')problems.push('frontier_only');
  if(t.req.arsenal&&!s.regions.some(x=>x.owner===owner&&x.arsenal))problems.push('arsenal');
  if(t.req.horses&&!s.regions.some(x=>x.owner===owner&&x.horses)&&cultureOf(owner)==='han')problems.push('horse_country');
@@ -103,10 +104,25 @@ export function recruit(s,owner,regionId,templateId,{men=5000,commander=null,log
  const f=s.factions[owner],t=templateById(s,owner,templateId);
  f.treasury-=q.quote.treasury;f.grain-=q.quote.grain;f.manpower-=men;f.horses=(f.horses||0)-q.quote.horses;
  if(q.quote.iron){const item=s.tradeMarkets.regions[regionId].goods.iron;item.stock-=q.quote.iron;item.usedForRecruitment=(item.usedForRecruitment||0)+q.quote.iron}
+ if(q.quote.weapons){const item=s.tradeMarkets.regions[regionId].goods.weapons;item.stock-=q.quote.weapons;item.usedForRecruitment=(item.usedForRecruitment||0)+q.quote.weapons}
  const id=`a${s.nextArmy=(s.nextArmy||100)+1}`;
- const army={id,owner,region:regionId,men,morale:60,training:30,supply:100,template:{id:t.id,name:t.name,mix:{...t.mix}},commander,move:null,forming:q.quote.months,...(q.quote.iron?{equipmentMaterials:{iron:q.quote.iron}}:{})};
+ const equipmentMaterials=Object.fromEntries(['iron','weapons'].filter(good=>q.quote[good]).map(good=>[good,q.quote[good]]));
+ const army={id,owner,region:regionId,men,morale:60,training:30,supply:100,template:{id:t.id,name:t.name,mix:{...t.mix}},commander,move:null,forming:q.quote.months,...(Object.keys(equipmentMaterials).length?{equipmentMaterials}:{})};
  s.armies.push(army);assignFieldCommander(s,army);
  log(['New formation raised in %REGION%.','于%REGION%新编一军。'],{region:regionId,owner});return {ok:true,id};
+}
+
+// One 100-ton field-ration batch supports 6,000 soldier-months. Loading is
+// possible only from an owned local depot; it moves with this saved army.
+export function provisionArmy(s,owner,armyId,quantity=1){
+ const army=s.armies.find(a=>a.id===armyId),site=s.regions.find(r=>r.id===army?.region);
+ const item=s.tradeMarkets?.regions?.[army?.region]?.goods?.provisions;
+ if(s.finalized||!army||army.owner!==owner||army.men<=0||army.move||site?.owner!==owner||!Number.isSafeInteger(quantity)||quantity<1||quantity>20)return {ok:false,reason:'invalid'};
+ if(!item||item.stock<quantity)return {ok:false,reason:'provisions'};
+ if((army.fieldRations||0)+quantity*6000>army.men*6+6000)return {ok:false,reason:'capacity'};
+ item.stock-=quantity;item.usedForMilitary=(item.usedForMilitary||0)+quantity;
+ army.fieldRations=(army.fieldRations||0)+quantity*6000;
+ return {ok:true,quantity,fieldRations:army.fieldRations};
 }
 
 // ---------- movement and supply ----------

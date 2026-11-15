@@ -163,7 +163,9 @@ function movement(s){
 function supply(s){
  for(const a of s.armies.filter(x=>x.men>0)){
   const sp=supplyFor(s,a,{access:(x,y)=>access(s,x,y)});
-  let att=sp.attrition;if(sp.fodderShort&&!(focusState(s,a.owner).mod.cavalrySupply))att+=0.01;
+  let att=sp.attrition;
+  if(att>0&&a.fieldRations>0){const used=Math.min(a.fieldRations,a.men),coverage=used/a.men;att=Math.max(0,att-0.03*coverage);a.fieldRations-=used;a.provisionsUsed=(a.provisionsUsed||0)+used}
+  if(sp.fodderShort&&!(focusState(s,a.owner).mod.cavalrySupply))att+=0.01;
   if(att>0){a.men=Math.max(0,Math.round(a.men*(1-att)));a.supply=clamp(a.supply-10)}else a.supply=clamp(a.supply+10);
   a.training=clamp((a.training||0)+(a.move?0:1));a.morale=clamp(a.morale+(a.supply>60?1:-2));
  }

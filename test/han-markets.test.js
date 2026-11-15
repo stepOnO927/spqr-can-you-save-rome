@@ -3,11 +3,58 @@ import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js?v=faces-reported-names-1';
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=faces-reported-names-1';
 import {activeEasternMerchantPrivilege,advanceEasternMarkets,advanceHanMilitarySupply,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-reported-names-1';
-import {recruit,recruitQuote} from '../han/military.js?v=faces-reported-names-1';
+import {recruit,recruitQuote,provisionArmy} from '../han/military.js?v=faces-reported-names-1';
 import {advanceSilk} from '../han/silk-road.js?v=faces-reported-names-1';
 import {roll} from '../han/util.js?v=faces-reported-names-1';
 
 const next=s=>{if(++s.month>12){s.month=1;s.year++}advanceEasternMarkets(s)};
+
+test('grain becomes finite carried field rations, delivered before they can prevent losses',()=>{
+ let s=newHanGame('han',{seed:214});s.tradeMarkets.embeddedRoman=true;
+ const from=s.tradeMarkets.regions.hongnong.goods,to=s.tradeMarkets.regions.changan.goods;
+ Object.assign(from.grain,{stock:2,production:0,consumption:0});Object.assign(from.provisions,{stock:0,production:1,consumption:0});
+ Object.assign(to.provisions,{stock:0,production:0,consumption:0});
+ next(s);assert.equal(from.grain.stock,1);assert.equal(from.grain.usedForManufacture,1);
+ assert.equal(from.provisions.stock,1);assert.equal(from.provisions.produced,1);
+ const army=s.armies.find(a=>a.owner==='han'&&a.region==='changan');
+ assert.equal(provisionArmy(s,'han',army.id).reason,'provisions');
+ const order=placeEasternTrade(s,{seller:'han',buyer:'han',origin:'hongnong',destination:'changan',commodity:'provisions',quantity:1});
+ assert.equal(order.ok,true,order.reason);assert.equal(from.provisions.stock,0);
+ assert.equal(provisionArmy(s,'han',army.id).reason,'provisions','in-flight rations are unusable');
+ s=loadHanSave(serialize(s));for(let i=0;i<order.quote.months;i++)next(s);
+ assert.equal(s.tradeMarkets.shipments.find(x=>x.id===order.shipment.id).status,'delivered');
+ const before=s.factions.han.grain,loaded=provisionArmy(s,'han',army.id);
+ assert.equal(loaded.ok,true);assert.equal(loaded.fieldRations,6000);
+ assert.equal(s.factions.han.grain,before,'loading moves market stock, not the separate grain budget');
+ assert.equal(s.tradeMarkets.regions.changan.goods.provisions.stock,0);
+ assert.equal(s.tradeMarkets.regions.changan.goods.provisions.usedForMilitary,1);
+ s=loadHanSave(serialize(s));const dry=loadHanSave(serialize(s));
+ const ready=s.armies.find(a=>a.id===army.id),unready=dry.armies.find(a=>a.id===army.id);
+ unready.fieldRations=0;
+ ready.region='dunhuang';unready.region='dunhuang';ready.men=6000;unready.men=6000;
+ s.regions.find(r=>r.id==='dunhuang').supply=0;dry.regions.find(r=>r.id==='dunhuang').supply=0;
+ tick(s);tick(dry);assert.ok(ready.men>unready.men,'carried rations prevent actual attrition');
+ assert.ok(ready.provisionsUsed>0);assert.ok(ready.fieldRations<6000);
+});
+
+test('forged Han weapons consume local iron and cannot equip recruits before delivery',()=>{
+ let s=newHanGame('han',{seed:215});s.tradeMarkets.embeddedRoman=true;
+ const source=s.tradeMarkets.regions.henan.goods,destination=s.tradeMarkets.regions.changan.goods;
+ Object.assign(source.iron,{stock:1,production:0,consumption:0});Object.assign(source.weapons,{stock:0,production:1,consumption:0});
+ Object.assign(destination.weapons,{stock:0,production:0,consumption:0});
+ Object.assign(destination.iron,{stock:1,production:0,consumption:0});
+ next(s);assert.equal(source.iron.stock,0);assert.equal(source.iron.usedForManufacture,1);
+ assert.equal(source.weapons.stock,1);assert.equal(source.weapons.produced,1);
+ assert.ok(recruitQuote(s,'han','changan','field',500).problems.includes('weapons'));
+ const order=placeEasternTrade(s,{seller:'han',buyer:'han',origin:'henan',destination:'changan',commodity:'weapons',quantity:1});
+ assert.equal(order.ok,true,order.reason);assert.ok(recruitQuote(s,'han','changan','field',500).problems.includes('weapons'));
+ s=loadHanSave(serialize(s));for(let i=0;i<order.quote.months;i++)next(s);
+ assert.equal(s.tradeMarkets.shipments.find(x=>x.id===order.shipment.id).status,'delivered');
+ const recruited=recruit(s,'han','changan','field',{men:500});assert.equal(recruited.ok,true);
+ assert.equal(s.tradeMarkets.regions.changan.goods.weapons.stock,0);
+ assert.equal(s.tradeMarkets.regions.changan.goods.weapons.usedForRecruitment,1);
+ assert.equal(s.armies.find(a=>a.id===recruited.id).equipmentMaterials.weapons,1);
+});
 
 test('Han crossbow recruits consume delivered local iron once, including after a save reload',()=>{
  let s=newHanGame('han',{seed:212});s.tradeMarkets.embeddedRoman=true;
@@ -24,11 +71,14 @@ test('Han crossbow recruits consume delivered local iron once, including after a
  assert.equal(s.tradeMarkets.shipments.find(x=>x.id===order.shipment.id).status,'delivered');
  assert.equal(recruitQuote(s,'han','changan','field',500).ok,true);
  const result=recruit(s,'han','changan','field',{men:500});assert.equal(result.ok,true);
- assert.deepEqual(s.armies.find(a=>a.id===result.id).equipmentMaterials,{iron:1});
+ assert.deepEqual(s.armies.find(a=>a.id===result.id).equipmentMaterials,{iron:1,weapons:1});
  assert.equal(s.tradeMarkets.regions.changan.goods.iron.stock,0);
  assert.equal(s.tradeMarkets.regions.changan.goods.iron.usedForRecruitment,1);
+ assert.equal(s.tradeMarkets.regions.changan.goods.weapons.stock,0);
+ assert.equal(s.tradeMarkets.regions.changan.goods.weapons.usedForRecruitment,1);
  s=loadHanSave(serialize(s));assert.equal(s.tradeMarkets.regions.changan.goods.iron.stock,0);
  assert.equal(s.tradeMarkets.regions.changan.goods.iron.usedForRecruitment,1);
+ assert.equal(s.tradeMarkets.regions.changan.goods.weapons.usedForRecruitment,1);
  assert.ok(recruitQuote(s,'han','changan','field',500).problems.includes('iron'));
 });
 
@@ -448,8 +498,8 @@ test('120 autonomous market months conserve goods and money through save reload'
  for(let i=0;i<120;i++){next(s);if(i===59)s=loadHanSave(serialize(s))}
  for(const good of goods){
   const items=Object.values(s.tradeMarkets.regions).map(m=>m.goods[good]);
-  const production=items.reduce((n,x)=>n+x.production*120,0);
-  const consumed=items.reduce((n,x)=>n+x.consumed,0);
+  const production=items.reduce((n,x)=>n+x.produced,0);
+  const consumed=items.reduce((n,x)=>n+x.consumed+(x.usedForManufacture||0),0);
   const discarded=items.reduce((n,x)=>n+x.surplusDiscarded,0);
   assert.equal(quantity(good)+consumed+discarded+(s.tradeMarkets.lostGoods[good]||0),initial[good]+production,`${good} was created or lost`);
  }

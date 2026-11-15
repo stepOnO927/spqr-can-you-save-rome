@@ -17,10 +17,17 @@ try{
  assert.match(await page.locator('#overview [data-select-army]').nth(1).innerText(),new RegExp(english));
  await page.locator('#overview [data-select-army]').first().click();
  assert.match(await page.locator('#inspector').innerText(),/local iron batch/);
+ assert.match(await page.locator('#inspector').innerText(),/local weapons batch/);
+ assert.equal(await page.locator('#load-rations').isDisabled(),false);
+ await page.locator('#load-rations').click();
+ assert.match(await page.locator('#message').innerText(),/6000 soldier-months aboard/);
+ assert.match(await page.locator('#inspector').innerText(),/Carried field rations: 6000 soldier-months/);
  await page.locator('#recruit').click();
  assert.match(await page.locator('#message').innerText(),/local iron \d+ → \d+/);
+ assert.match(await page.locator('#message').innerText(),/local weapons \d+ → \d+/);
  assert.equal(await page.locator('#recruit').isDisabled(),true);
  await page.locator('#save').click();await page.reload();await page.locator('#load').click();
+ await page.locator('#overview [data-select-army]').first().click();assert.match(await page.locator('#inspector').innerText(),/Carried field rations: 6000 soldier-months/);
  await page.locator('#overview [data-select-army]').nth(1).click();assert.equal(await commander.innerText(),english);
  assert.match(await page.locator('#inspector h3').last().innerText(),new RegExp(english));
  await page.locator('#lang').click();const chinese=await commander.innerText();assert.match(chinese,/[\u3400-\u9fff]/);
@@ -28,6 +35,7 @@ try{
  assert.doesNotMatch(await page.locator('#overview [data-select-army]').nth(1).innerText(),new RegExp(`\\b${armyId}\\b`));
  await page.locator('#overview [data-select-army]').first().click();
  assert.match(await page.locator('#inspector').innerText(),/当地铁料/);
+ assert.match(await page.locator('#inspector').innerText(),/随军口粮: 6000 人月/);
  assert.equal(await page.locator('#recruit').isDisabled(),true);
  assert.deepEqual(errors,[]);
  console.log('Han field commander browser smoke passed: named officer, save/load and both languages.');

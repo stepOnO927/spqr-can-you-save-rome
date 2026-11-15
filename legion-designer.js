@@ -240,16 +240,19 @@ export function advanceReorganizations(s,{log=()=>{}}={}){
   if(a.owner===s.player)log(s,`${a.name[0]} completed its reorganization as “${a.formation.name}”.`,`${a.name[1]}完成改编：“${a.formation.name}”。`,{kind:'formation'});
  }
 }
-export function recruitmentQuote(s,owner,templateId){const t=formationState(s).templates[templateId];if(!t||t.owner!==owner)return null;const st=templateStats(t);return {treasury:st.recruitCost+st.equipment,manpower:st.personnel,food:Math.ceil(st.personnel/500),training:st.training,personnel:st.personnel}}
+export function recruitmentQuote(s,owner,templateId){const t=formationState(s).templates[templateId];if(!t||t.owner!==owner)return null;const st=templateStats(t);return {treasury:st.recruitCost+st.equipment,manpower:st.personnel,food:Math.ceil(st.personnel/500),weapons:Math.max(1,Math.ceil(st.personnel/6000)),training:st.training,personnel:st.personnel}}
 export function recruitFormation(s,owner,regionId,templateId,{log=()=>{}}={}){
  const r=s.regions.find(x=>x.id===regionId),f=s.factions[owner],t=formationState(s).templates[templateId];
  if(!r||r.owner!==owner||!t||t.owner!==owner)return {ok:false,reason:'unavailable'};
  if(validateTemplate(s,owner,t).length)return {ok:false,reason:'template'};
  const q=recruitmentQuote(s,owner,templateId);
  if(f.treasury<q.treasury||f.manpower<q.manpower||f.food<q.food)return {ok:false,reason:'resources',quote:q};
+ const weapons=s.markets?.regions?.[regionId]?.goods?.weapons;
+ if((weapons?.stock??0)<q.weapons)return {ok:false,reason:'weapons',quote:q};
  f.treasury-=q.treasury;f.manpower-=q.manpower;f.food-=q.food;
+ weapons.stock-=q.weapons;weapons.usedForRecruitment=(weapons.usedForRecruitment||0)+q.weapons;
  const id=`levy${s.nextArmy++}`,st=templateStats(t);
- const army={id,name:[t.name,t.nameZh||t.name],owner,region:regionId,men:q.personnel,morale:Math.min(80,st.morale),skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null,characterId:null,formation:snapshotOf(t),formationFill:1,training:q.training};
+ const army={id,name:[t.name,t.nameZh||t.name],owner,region:regionId,men:q.personnel,morale:Math.min(80,st.morale),skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null,characterId:null,formation:snapshotOf(t),formationFill:1,training:q.training,equipmentMaterials:{weapons:q.weapons}};
  assignFictionalFieldCommander(s,army);s.armies.push(army);
  r.loyalty=Math.max(0,r.loyalty-3);
  if(owner===s.player)log(s,`“${t.name}” was raised in ${r.name[0]}; it needs ${q.training} months of training.`,`在${r.name[1]}征召了“${t.nameZh||t.name}”；需要训练${q.training}个月。`,{kind:'formation'});

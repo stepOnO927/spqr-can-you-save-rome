@@ -4,7 +4,7 @@ import {ROUTES as EURASIAN_ROUTES,REGIONS as EURASIAN_REGIONS} from './han/data.
 import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=faces-reported-names-1';
 import {generateFictionalName} from './fictional-names.js?v=faces-reported-names-1';
 import {reportedControl} from './control-intelligence.js?v=faces-reported-names-1';
-import {COMMODITIES,marketPrice} from './market-goods.js?v=faces-reported-names-1';
+import {COMMODITIES,marketPrice,produceMarketGood} from './market-goods.js?v=faces-reported-names-1';
 import {agriculturalDisruption,agriculturalProduction} from './war-economy.js?v=faces-reported-names-1';
 import {merchantMarketObservation} from './trade-intelligence.js?v=faces-reported-names-1';
 export {COMMODITIES,marketPrice};
@@ -38,9 +38,11 @@ function profile(r,good){
  const east=r.id.startsWith('han'),egypt=r.id.startsWith('egypt');
  const production={
   grain:Math.max(1,Math.floor((r.food||0)/2)),
+  provisions:(r.food||0)>=4?1:0,
   livestock:['numidia','mauretania','galatia'].includes(r.id)?3:r.terrain==='plain'?2:1,
   horses:['parthia','media','armenia','numidia','mauretania','shanshanOasis','hanHexi'].includes(r.id)?3:0,
   iron:['media','armenia','galatia','hanShu','hanHenan','cisalpine'].includes(r.id)?2:r.terrain==='hills'?1:0,
+  weapons:r.buildings?.includes('metalworking')||['roma','cisalpine','media','egypt'].includes(r.id)?1:0,
   copper:['media','armenia','galatia','hanShu','hanHenan','cisalpine'].includes(r.id)?2:r.terrain==='hills'||r.terrain==='mountain'?1:0,
   stone:['hills','mountain'].includes(r.terrain)?2:0,
   timber:r.terrain==='forest'?4:r.terrain==='hills'?2:1,
@@ -49,8 +51,9 @@ function profile(r,good){
   jade:0,
   papyrus:egypt?3:0
  }[good];
- const consumption={grain:Math.max(1,Math.floor((r.supply||8)/6)),livestock:1,horses:1,iron:1,copper:1,stone:0,timber:1,silk:0,wool:r.supply>=8?1:0,jade:r.tax>=6?1:0,papyrus:0}[good];
- return {production,consumption,stock:production===0&&['wool','jade'].includes(good)?0:Math.max(0,production*4+2-consumption),price:COMMODITIES[good].basePrice};
+ const consumption={grain:Math.max(1,Math.floor((r.supply||8)/6)),provisions:0,livestock:1,horses:1,iron:1,weapons:0,copper:1,stone:0,timber:1,silk:0,wool:r.supply>=8?1:0,jade:r.tax>=6?1:0,papyrus:0}[good];
+ const stock=['weapons','provisions'].includes(good)?production*2+(good==='weapons'&&r.owner?1:0):production===0&&['wool','jade'].includes(good)?0:Math.max(0,production*4+2-consumption);
+ return {production,consumption,stock,price:COMMODITIES[good].basePrice};
 }
 export function initializeMarkets(s){
  const markets=s.markets||={regions:{},saleOrders:[],nextSaleOrder:1,shipments:[],transactions:[],nextShipment:1,supplyContracts:[],nextSupplyContract:1,tariffs:{},exportRestrictions:{},lastTick:null,transportSpent:0,transitTreasury:{},merchants:{},merchantFees:0};
@@ -314,7 +317,7 @@ export function advanceMarkets(s){
  for(const sale of markets.saleOrders)if(sale.status==='open'&&region(s,sale.origin)?.owner!==sale.seller){markets.regions[sale.origin].goods[sale.commodity].stock+=sale.available;sale.available=0;sale.status='seized'}
  advanceMerchantReturns(s,current);
  for(const r of s.regions)for(const [good,item] of Object.entries(markets.regions[r.id].goods)){
-  const produced=good==='grain'?agriculturalProduction(s,r,item.production):item.production;
+  const produced=produceMarketGood(markets.regions[r.id],good,good==='grain'?agriculturalProduction(s,r,item.production):item.production);
   item.stock+=produced;item.produced+=produced;item.warDisrupted=good==='grain'&&agriculturalDisruption(s,r);
   const used=Math.min(item.stock,item.consumption);item.stock-=used;item.consumed+=used;
   item.shortage=item.consumption-used;
@@ -322,6 +325,7 @@ export function advanceMarkets(s){
   if(item.stock>warehouseLimit){item.surplusDiscarded=(item.surplusDiscarded||0)+item.stock-warehouseLimit;item.stock=warehouseLimit}
   item.price=marketPrice(markets.regions[r.id],good);
  }
+ for(const market of Object.values(markets.regions))for(const [good,item] of Object.entries(market.goods))item.price=marketPrice(market,good);
  for(const shipment of markets.shipments.filter(x=>x.status==='traveling'||x.status==='blocked')){
   let leg=shipment.legs[shipment.leg],next=node(s,leg?.to);
   if(!leg||!next||!permitted(s,next.owner,shipment.buyer,shipment.seller,leg.network)||atWar(s,next.owner,shipment.buyer)||atWar(s,next.owner,shipment.seller)||shipment.leg===shipment.legs.length-1&&region(s,shipment.destination)?.owner!==shipment.buyer){
@@ -415,6 +419,7 @@ export function advanceMarketAI(s,{autoplayPlayer=false}={}){
    for(const origin of treatyMarkets){
     const seller=origin.owner;if(seller===buyer||!s.factions[seller]||!activeAgreement(s,seller,buyer,'trade'))continue;
     for(const commodity of Object.keys(COMMODITIES)){
+     if(['weapons','provisions'].includes(commodity)&&!s.wars.some(w=>w.includes(buyer)))continue;
      const need=markets.regions[destination.id].goods[commodity],supply=markets.regions[origin.id].goods[commodity];
      const target=Math.max(4,need.consumption*3+need.production),available=supply.stock-Math.max(4,supply.production*2);
      const sales=seller===s.player&&!autoplayPlayer?markets.saleOrders.filter(x=>x.status==='open'&&x.seller===seller&&x.origin===origin.id&&x.commodity===commodity):[null];
