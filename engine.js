@@ -1,7 +1,7 @@
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=senator-portraits-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=player-request-aid-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=player-coalition-letters-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=senator-portraits-1';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=player-request-aid-1';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=player-coalition-letters-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=senator-portraits-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=succession-ui-recovery-1';
@@ -13,7 +13,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=succession-ui-recovery-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=senator-portraits-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=senate-record-privacy-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=player-coalition-letters-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -30,8 +30,8 @@ import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?
 import {respondToFrontierReports} from './frontier-response.js?v=frontier-response-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=diplomatic-chronicle-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
-import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=diplomatic-chronicle-1';
-import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=diplomatic-chronicle-1';
+import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=player-coalition-letters-1';
+import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=player-coalition-letters-1';
 import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=succession-ui-recovery-1';
 import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=senator-portraits-1';
 import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=senator-portraits-1';
@@ -113,7 +113,7 @@ export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
@@ -758,7 +758,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     const threats=[...new Set(reportedNeighbors().map(r=>r.owner))].filter(id=>id!==owner&&id!=='rebels'&&s.factions[id]&&coalitionInterest(s,owner,id,estimatedStrength).interested);
     for(const threat of threats){
       const known=new Set([...reportedNeighbors().map(x=>x.owner),...reportedDiplomacy(s,owner).filter(x=>x.status==='active'&&x.parties.includes(owner)).flatMap(x=>x.parties)]);
-      const partners=PLAYABLE.filter(id=>s.factions[id]&&known.has(id)&&id!==owner&&id!==threat&&(autoplayPlayer||id!==s.player)&&relation(s,owner,id)>=15).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b)).slice(0,2);
+      const partners=PLAYABLE.filter(id=>s.factions[id]&&known.has(id)&&id!==owner&&id!==threat&&relation(s,owner,id)>=15).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b)).slice(0,2);
       if(partners.length===2&&sendCoalitionInvitation(s,owner,partners,threat,{autoplayPlayer}).ok)break;
     }
   }
@@ -838,6 +838,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   advanceStrategicWarnings(s,{autoplayPlayer,letterMonths,issueOrder:issueMilitaryOrder,log});
   advanceStrategicOffers(s,{autoplayPlayer});
   advanceCoalitionInvitations(s,estimatedStrength,strategicRoll,{autoplayPlayer});
+  if(!autoplayPlayer)syncCoalitionLetters(s);
   advanceMail(s,{proposeAgreement,diplomacy});
   for(const owner of Object.keys(s.factions).filter(id=>autoplayPlayer||id!==s.player)){
     const override=autoplayPlayer&&owner===s.player&&playerDifficulty;if(!override){aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner);continue}

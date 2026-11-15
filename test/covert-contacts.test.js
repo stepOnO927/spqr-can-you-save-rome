@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,queueMission} from '../engine.js?v=senate-record-privacy-1';
+import {newGame,upgradeSave,tick,queueMission} from '../engine.js?v=player-coalition-letters-1';
 import {addReport,advanceOperations,contestLeadership,supportClaimant} from '../character-system.js?v=senator-portraits-1';
 // These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
 // they run with the expansion's AI layer switched off (world.imperium.enabled=false).
