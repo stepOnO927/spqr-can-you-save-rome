@@ -83,7 +83,7 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
   if(available&&region(s,supporting.region)?.owner==='caesar'){
    const destination=supporting.region==='narbo'?'t049':supporting.region==='t049'?'cisalpine':supporting.region==='cisalpine'&&region(s,'italiaN').owner==='caesar'?'italiaN':supporting.region==='italiaN'&&region(s,'roma').owner==='caesar'?'roma':supporting.region==='t011'&&region(s,'roma').owner==='caesar'?'roma':null;
    if(destination&&previewMarch(s,supporting.id,destination).ok)record(`VIII supports Italy at ${destination}`,moveArmy(s,supporting.id,destination));
-   else if(supporting.region==='roma')record('VIII holds Rome',holdPosition(s,supporting.id));
+   else if(supporting.region==='roma'&&supporting.stance!=='hold')record('VIII holds Rome',holdPosition(s,supporting.id));
   }
  }
  if(secondFront){
