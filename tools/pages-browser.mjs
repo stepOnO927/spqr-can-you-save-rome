@@ -12,6 +12,7 @@ async function open(url){
   page.on('response',response=>{if(response.status()>=400&&new URL(response.url()).origin===new URL(url).origin&&!response.url().endsWith('/favicon.ico'))failures.push(`${response.status()} ${response.url()}`)});
   const response=await page.goto(url,{waitUntil:'domcontentloaded'});
   assert.equal(response.status(),200,url);
+  assert.equal(await page.locator('script[src*="cloudflareinsights.com"]').count(),0,'test server must remove the public beacon');
   assert.equal(await page.evaluate(()=>window.__SPQR_TEST_MODE?.kind),'local_preview');
   await page.locator('#save-transfer-open').waitFor();
   await page.locator('.spqr-version').click();
