@@ -26,6 +26,10 @@ try{
   assert.ok(await page.locator('.dev-tree-links path[data-from="water-control"][data-to="urban-drainage"]').getAttribute('d'));
   await page.locator('.dev-reference summary').click();
   assert.match(await page.locator('.dev-reference').innerText(),/Provincial grain reserve \+24/);
+  assert.match(await page.locator('#tech-port-facilities').innerText(),/Port[\s\S]*Naval Supply Depot[\s\S]*Base build cost 23¤[\s\S]*coast/);
+  assert.match(await page.locator('#tech-stone-fortification').innerText(),/Fortification[\s\S]*Coastal Fortification/);
+  assert.match(await page.locator('#tech-improved-shipbuilding').innerText(),/Ship construction −1 month/);
+  assert.match(await page.locator('#tech-maritime-warehousing').innerText(),/limited by hull capacity/);
   await page.locator('[data-dev-branch="idea"]').click();
   await page.locator('.dev-tree-links path[data-from="legion-training"][data-to="reserve-mobilization"]').waitFor();
   assert.equal(await page.locator('.dev-tree-links path[data-from="legion-training"][data-to="reserve-mobilization"]').count(),1);
@@ -76,6 +80,8 @@ try{
   await page.locator('[data-dev-branch="material"]').click();
   await page.locator('.dev-reference summary').click();
   assert.match(await page.locator('.dev-reference').innerText(),/当地粮仓储量 \+24/);
+  assert.match(await page.locator('#tech-port-facilities').innerText(),/港口[\s\S]*海军补给站[\s\S]*基础建造费 23¤[\s\S]*海岸/);
+  assert.match(await page.locator('#tech-military-transport-organization').innerText(),/每艘军用运输船增载 600 名士兵/);
   await page.locator('[data-dev-branch="idea"]').click();
   assert.match(await page.locator('#tech-sanctuary-protection').innerText(),/行省圣所保护/);
   assert.match(await page.locator('#tech-ancestral-rites').innerText(),/传统祭仪扶持/);
