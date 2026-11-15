@@ -417,6 +417,7 @@ export function knowledgeTransitStatus(s,owner,trade){
   if(atWarWith(s,owner,trade.seller))return 'war';
   return knowledgeCorridor(s,trade.seller,owner)?'open':'route';
 }
+export const KNOWLEDGE_BLOCKED_LIMIT=12;
 export function knowledgeTrade(s,buyer,seller,branch,id){
   initializeDevelopment(s);
   if(seller===s.player&&buyer!==s.player)return {ok:false,reason:'consent'};
@@ -676,10 +677,17 @@ export function advanceDevelopment(s,log=()=>{}){
       const transit=knowledgeTransitStatus(s,owner,trade);
       if(transit!=='open'){
         if(trade.pausedReason!==transit&&owner===s.player)log(transit==='war'?'Foreign knowledge transfer paused by war.':'Foreign knowledge transfer paused: no civilian route.',transit==='war'?'战争使外国知识传递暂停。':'民间通行路线中断，外国知识传递暂停。');
-        trade.pausedReason=transit;continue;
+        trade.pausedReason=transit;
+        trade.blockedMonths=Math.min(KNOWLEDGE_BLOCKED_LIMIT,Math.max(0,Number.isInteger(trade.blockedMonths)?trade.blockedMonths:0)+1);
+        if(trade.blockedMonths>=KNOWLEDGE_BLOCKED_LIMIT){
+          d.trade.splice(d.trade.indexOf(trade),1);
+          if(owner===s.player)log('Foreign knowledge transfer expired after a year without a passable route. The original payment is not returned.','外国知识传递因一年未能通行而失效，原付款不退还。');
+        }
+        continue;
       }
       if(trade.pausedReason&&owner===s.player)log('Foreign knowledge transfer resumed.','外国知识传递已恢复。');
       delete trade.pausedReason;
+      delete trade.blockedMonths;
       if(--trade.remaining>0)continue;
       const key=trade.branch==='material'?'knownMaterial':'knownIdeas',newKnowledge=!d[key].includes(trade.id);
       if(newKnowledge)d[key].push(trade.id);

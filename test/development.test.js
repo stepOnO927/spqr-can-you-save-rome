@@ -185,6 +185,26 @@ test('both directions of a knowledge exchange pause during war',()=>{
  assert.ok(s.development.egypt.knownMaterial.includes('roadmaking'));
 });
 
+test('a year-long closed route expires pending knowledge without trapping research',()=>{
+ const s=newGrandGame('caesar');s.relations['caesar:egypt']=60;s.factions.caesar.treasury=300;
+ assert.equal(knowledgeTrade(s,'caesar','egypt','material','water-control').ok,true);
+ const paid=s.factions.caesar.treasury,owners=new Map(s.regions.map(r=>[r.id,r.owner]));
+ for(const region of s.regions)region.owner='rebels';
+ s.regions.find(r=>r.id==='cisalpine').owner='caesar';s.regions.find(r=>r.id==='egypt').owner='egypt';
+ for(let i=0;i<6;i++)advanceDevelopment(s);
+ assert.equal(s.development.caesar.trade[0].blockedMonths,6);
+ assert.match(developmentPanel(s,'en','material'),/6m until expiry; payment not refunded/);
+ assert.match(developmentPanel(s,'zh','material'),/6个月后失效；付款不退/);
+ const restored=upgradeSave(structuredClone(s)),messages=[];
+ for(let i=0;i<6;i++)advanceDevelopment(restored,(en,zh)=>messages.push([en,zh]));
+ assert.equal(restored.development.caesar.trade.length,0);
+ assert.ok(!restored.development.caesar.knownMaterial.includes('water-control'));
+ assert.equal(restored.factions.caesar.treasury,paid);
+ assert.ok(messages.some(([en])=>en.includes('expired after a year')));
+ for(const region of restored.regions)region.owner=owners.get(region.id);
+ assert.equal(researchInnovation(restored,'caesar','material','water-control').ok,true);
+});
+
 test('granaries hold finite provincial food, buffer shortages, and migrate old national storage without duplication',()=>{
  const built=newGrandGame('egypt');
  assert.equal(startConstruction(built,'egypt','egypt','granary').ok,true);

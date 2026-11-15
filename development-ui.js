@@ -1,4 +1,4 @@
-import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,knowledgeTransitStatus,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=44';
+import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,knowledgeTransitStatus,KNOWLEDGE_BLOCKED_LIMIT,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=44';
 import {FIGURE_ROLES,initializeFigures,figureStatus,figureActive} from './great-figures.js';
 import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';
@@ -10,7 +10,8 @@ const knowledgeLabel=(branch,id,zh)=>esc((branch==='material'?MATERIALS:IDEAS).f
 function inTransitHtml(s,d,zh){return d.trade.map(trade=>{
  const status=knowledgeTransitStatus(s,s.player,trade);
  const note=status==='war'?enzh(zh,' · Paused by war',' · 因战争暂停'):status==='route'?enzh(zh,' · Paused: civilian route closed',' · 民间路线中断，传递暂停'):enzh(zh,'m in transit','个月后送达');
- return `<p class="dev-status">${knowledgeLabel(trade.branch,trade.id,zh)} · ${trade.remaining}${status==='open'?note:`${enzh(zh,'m remaining','个月剩余')}${note}`}</p>`;
+ const expiry=Math.max(0,KNOWLEDGE_BLOCKED_LIMIT-(Number.isInteger(trade.blockedMonths)?trade.blockedMonths:0));
+ return `<p class="dev-status">${knowledgeLabel(trade.branch,trade.id,zh)} · ${trade.remaining}${status==='open'?note:`${enzh(zh,'m remaining','个月剩余')}${note} · ${expiry}${enzh(zh,'m until expiry; payment not refunded','个月后失效；付款不退')}`}</p>`;
 }).join('')}
 const visitingScholarStatus=(d,zh,s)=>d.visitingScholars.map(x=>{const here=s.regions.find(r=>r.id===x.currentRegion),place=x.travelRemaining>0&&here?` · ${enzh(zh,'via','途经')} ${esc(here.name[zh?1:0])}`:'';return `<p class="dev-status">${factionLabel(x.partner,zh)}${x.id?` · ${knowledgeLabel(x.branch,x.id,zh)}`:''}${place} · ${x.travelRemaining>0?`${x.travelRemaining}${enzh(zh,'m until arrival','个月后抵达')}`:`${x.remaining}${enzh(zh,'m of guidance left','个月指导期剩余')}`}</p>`}).join('');
 const guardedKnowledge=new Set(['stone-fortification','siege-machinery','legion-training']);
