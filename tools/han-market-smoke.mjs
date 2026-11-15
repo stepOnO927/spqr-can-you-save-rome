@@ -127,6 +127,22 @@ try{
  await page.locator('#load').click();await page.locator('#trade-panel').click();
  assert.match(await page.locator('.market-receipts').innerText(),/公元前49年/);
  assert.doesNotMatch(await page.locator('.market-receipts').innerText(),/987654|987655/,'foreign destination stock is private');
+ await page.evaluate(async()=>{
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js');
+  const {propose}=await import('/han/frontier.js?v=faces-reported-names-1');
+  const {placeEasternTrade}=await import('/han/markets.js?v=faces-reported-names-1');
+  const {createMarketMerchant}=await import('/han/field-identities.js');
+  const state=newHanGame('han',{seed:57});propose(state,'han','kangju','market');
+  const id=createMarketMerchant(state,'han','kangju'),person=state.persons[id];
+  state.tradeMarkets.merchants.han=[id];person.marketHome='kangju';person.marketLossRoutes={'kangju:dunhuang':1};person.wealth=3;
+  const placed=placeEasternTrade(state,{seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1});
+  if(!placed.ok||placed.shipment.merchantEscortCost!==2)throw Error('Merchant escort was not funded');
+  localStorage.setItem(SAVE_KEY('browser'),serialize(state));
+ });
+ await page.locator('#load').click();await page.locator('#trade-panel').click();
+ assert.match(await page.locator('#inspector').innerText(),/商人自费护卫 2¤.*亲历劫掠线路 1/s);
+ await page.locator('#lang').click();
+ assert.match(await page.locator('#inspector').innerText(),/Merchant-funded escort 2¤.*Raided routes 1/s);
  assert.deepEqual(errors,[]);
  console.log('Han market browser smoke passed: listings, customs, treaty, horse delivery, army remounts, save/load and bilingual panel.');
 }finally{await browser.close()}

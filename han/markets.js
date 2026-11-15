@@ -62,7 +62,7 @@ export function initializeEasternMarkets(s){
  markets.regions||={};markets.offers||=[];if(!Array.isArray(markets.saleOrders))markets.saleOrders=[];markets.shipments||=[];markets.transactions||=[];markets.merchants||={};markets.tariffs||={};markets.exportRestrictions||={};markets.transitTreasury||={};markets.diplomacy||={attempts:[],nextAt:{}};
  if(!Array.isArray(markets.militaryHorseTransfers))markets.militaryHorseTransfers=[];
  if(!Number.isSafeInteger(markets.requisitionedHorses)||markets.requisitionedHorses<0)markets.requisitionedHorses=0;
- markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};if(!Number.isSafeInteger(markets.nextSaleOrder)||markets.nextSaleOrder<1)markets.nextSaleOrder=1;markets.nextShipment||=1;markets.transportSpent??=0;markets.merchantFees??=0;markets.merchantPrivileges||={};markets.merchantPrivilegeFees??=0;
+ markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};if(!Number.isSafeInteger(markets.nextSaleOrder)||markets.nextSaleOrder<1)markets.nextSaleOrder=1;markets.nextShipment||=1;markets.transportSpent??=0;markets.merchantFees??=0;markets.merchantEscortSpent??=0;markets.merchantPrivileges||={};markets.merchantPrivilegeFees??=0;
  if(!Array.isArray(markets.supplyContracts))markets.supplyContracts=[];
  if(!Number.isSafeInteger(markets.nextSupplyContract)||markets.nextSupplyContract<1)markets.nextSupplyContract=1;
  while(markets.supplyContracts.some(contract=>contract.id===`eastern-supply:${markets.nextSupplyContract}`))markets.nextSupplyContract++;
@@ -210,7 +210,11 @@ export function placeEasternTrade(s,request){
  if(request.saleOrderId){const sale=markets.saleOrders.find(x=>x.id===request.saleOrderId);sale.available-=request.quantity;if(sale.available===0)sale.status='filled'}
  else markets.regions[request.origin].goods[request.commodity].stock-=request.quantity;
  if(external)markets.externalTreasury-=quote.total;else s.factions[request.buyer].treasury-=quote.total;
- const shipment={id:`eastern-shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,sponsor:external?request.seller:request.buyer,merchantId,merchantExperience:quote.merchantExperience,saleOrderId:request.saleOrderId||null,contractId:request.contractId||null,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,path:quote.path,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month,...(observation?{marketObservation:observation}:{})};
+ const merchant=s.persons[merchantId],riskMemory=merchant?.marketLossRoutes?.[merchantRouteKey(request.origin,request.destination)]||0;
+ const merchantEscortCost=merchant?.alive&&riskMemory>0&&(merchant.riskTolerance??50)<=60&&(merchant.wealth||0)>=2?2:0;
+ if(merchantEscortCost){merchant.wealth-=merchantEscortCost;markets.merchantEscortSpent+=merchantEscortCost}
+ const shipment={id:`eastern-shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,sponsor:external?request.seller:request.buyer,merchantId,merchantExperience:quote.merchantExperience,merchantEscortCost,saleOrderId:request.saleOrderId||null,contractId:request.contractId||null,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,path:quote.path,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month,...(observation?{marketObservation:observation}:{})};
+ if(merchantEscortCost)(merchant.history||=[]).push({year:s.year,month:s.month,kind:'funded_escort',shipment:shipment.id,cost:merchantEscortCost});
  markets.shipments.push(shipment);
  if(request.contractId){const contract=markets.supplyContracts.find(x=>x.id===request.contractId);contract.shipments.push(shipment.id);contract.dispatched++;contract.consecutiveMisses=0;contract.nextDueAt=month(s)+contract.interval;contract.lastOutcome='dispatched'}
  return {ok:true,shipment,quote};
@@ -317,7 +321,7 @@ function advanceShipments(s){
   shipment.status='traveling';shipment.blockedAt=null;shipment.remaining--;if(shipment.remaining>0)continue;
   const next=region(s,leg.to),guarded=s.armies.some(x=>x.region===leg.to&&x.owner===shipment.sponsor&&x.men>0)||next.fort>=2;
   const protection=shipment.sponsor==='han'?(s.silk?.security||0):0;
-  const risk=Math.max(0,(next.unrest?.06:0)+(guarded?0:.02)-protection*.01-Math.min(2,shipment.merchantExperience||0)*.01);
+  const risk=Math.max(0,(next.unrest?.06:0)+(guarded?0:.02)-protection*.01-Math.min(2,shipment.merchantExperience||0)*.01-(shipment.merchantEscortCost||0)*.01);
   if(roll(s,`market-bandit:${shipment.id}:${leg.to}`)<risk){settleLostShipment(s,shipment,leg.to);continue}
   shipment.leg++;if(shipment.leg<shipment.legs.length){shipment.remaining=shipment.legs[shipment.leg].months;continue}
   const dest=region(s,shipment.destination);if(shipment.buyer==='external'?dest?.owner!=null:dest?.owner!==shipment.buyer){(shipment.routeDisruptions||=[]).push({at:month(s),location:shipment.legs[shipment.leg-1]?.from||shipment.origin});shipment.status='blocked';shipment.leg--;shipment.remaining=1;shipment.blockedAt??=month(s);continue}
@@ -340,7 +344,7 @@ function settleLostShipment(s,shipment,location){
  if(shipment.buyer==='external')markets.externalTreasury+=refund;else s.factions[shipment.buyer].treasury+=refund;
  markets.lostGoods[shipment.commodity]=(markets.lostGoods[shipment.commodity]||0)+shipment.quantity;
  const merchant=s.persons[shipment.merchantId],fee=merchant?.alive?Math.min(shipment.transport,Math.ceil(shipment.transport/4)):0;
- if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.marketReputation=Math.max(-100,(merchant.marketReputation||0)-2);releaseMerchant(s,shipment,location);(merchant.history||=[]).push({year:s.year,month:s.month,kind:'trade_loss',shipment:shipment.id})}
+ if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.marketReputation=Math.max(-100,(merchant.marketReputation||0)-2);merchant.marketLossRoutes||={};const key=merchantRouteKey(shipment.origin,shipment.destination);merchant.marketLossRoutes[key]=Math.min(3,(merchant.marketLossRoutes[key]||0)+1);releaseMerchant(s,shipment,location);(merchant.history||=[]).push({year:s.year,month:s.month,kind:'trade_loss',shipment:shipment.id})}
  markets.transportSpent+=shipment.transport-fee;markets.merchantFees+=fee;
  shipment.escrow=0;shipment.status='lost';shipment.lostAt=month(s);shipment.lostNear=location;
  markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,origin:shipment.origin,destination:location,merchantId:shipment.merchantId,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:0,transport:shipment.transport,tariffs:[],refund,status:'lost',year:s.year,month:s.month});

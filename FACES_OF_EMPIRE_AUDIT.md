@@ -657,8 +657,18 @@ reputation. These records persist in saves and appear in both languages in the
 market panel. The Roman-facing market also saves delivered route experience,
 uses it for carrier selection and bounded transport discounts, and shows it
 alongside reputation in its bilingual panel. This is an initial consequence of merchant experience, while
-individual merchant negotiation, independent investment and competing private
+individual merchant negotiation, broader independent investment and competing private
 commercial networks remain open.
+Eastern merchant characters now also react to a route they personally lost
+cargo on. A less risk-tolerant merchant with at least two wealth pays two of
+their own wealth for an escort on a later caravan along that same route. That
+saved shipment has two percentage points less modeled raider risk per leg;
+the escort expense enters its own ledger rather than faction treasury or
+the buyer's prepaid transport. The market panel shows the merchant's risk
+tolerance, raided routes, escort on an active caravan and aggregate spending
+in English and Chinese. An actual lost-and-retried caravan, not a random
+market bonus, proves this behavior; wider independent merchant investment
+and negotiation still remain open.
 Small oasis courts now participate in the autonomous market even below the
 former population threshold. They can buy an affordable one-unit lot instead
 of being excluded when a three-unit quote exceeds their cash. Local town

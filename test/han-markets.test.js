@@ -153,6 +153,37 @@ test('a merchant learns a delivered route, keeps experience on reload, and reduc
  assert.equal(loadHanSave(JSON.stringify(legacy)).persons[id].marketRoutes,undefined);
 });
 
+test('a raided merchant autonomously pays for a later escort without charging the court',()=>{
+ let s=newHanGame('han',{seed:1});s.tradeMarkets.embeddedRoman=true;setRelation(s,'han','kangju',70);propose(s,'han','kangju','market');
+ const request={seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1};
+ const first=placeEasternTrade(s,request);assert.equal(first.ok,true,first.reason);
+ const id=first.shipment.merchantId;assert.equal(s.persons[id].riskTolerance,50);
+ assert.equal(grantEasternMerchantPrivilege(s,id,12).ok,true);
+ const hazard=s.regions.find(r=>r.id===first.shipment.legs[0].to);
+ hazard.unrest=1;hazard.fort=0;for(const army of s.armies.filter(a=>a.region===hazard.id))army.men=0;
+ first.shipment.remaining=1;
+ const upcoming=state=>({...state,month:state.month===12?1:state.month+1,year:state.month===12?state.year+1:state.year});
+ let selected=null;for(let seed=1;seed<10000;seed++){const chance=roll({...upcoming(s),seed},`market-bandit:${first.shipment.id}:${hazard.id}`);if(chance<.08){selected=seed;break}}
+ assert.ok(selected);s.seed=selected;next(s);
+ assert.equal(first.shipment.status,'lost');assert.equal(s.persons[id].marketLossRoutes['kangju:dunhuang'],1);
+ for(let i=0;i<first.quote.months;i++)next(s);
+ assert.equal(s.persons[id].location,'kangju');
+ const courtCash=s.factions.han.treasury,wealth=s.persons[id].wealth,second=placeEasternTrade(s,request);
+ assert.equal(second.ok,true,second.reason);assert.equal(second.shipment.merchantId,id);
+ assert.equal(second.shipment.merchantEscortCost,2);assert.equal(s.persons[id].wealth,wealth-2);
+ assert.equal(s.tradeMarkets.merchantEscortSpent,2);assert.equal(s.factions.han.treasury,courtCash-second.quote.total);
+ s=loadHanSave(serialize(s));assert.equal(s.tradeMarkets.shipments.find(x=>x.id===second.shipment.id).merchantEscortCost,2);
+ const nextHazard=s.regions.find(r=>r.id===second.shipment.legs[0].to);nextHazard.unrest=1;nextHazard.fort=0;for(const army of s.armies.filter(a=>a.region===nextHazard.id))army.men=0;
+ s.tradeMarkets.shipments.find(x=>x.id===second.shipment.id).remaining=1;
+ selected=null;for(let seed=1;seed<10000;seed++){const chance=roll({...upcoming(s),seed},`market-bandit:${second.shipment.id}:${nextHazard.id}`);if(chance>=.06&&chance<.08){selected=seed;break}}
+ assert.ok(selected);s.seed=selected;
+ const unescorted=loadHanSave(serialize(s)),escorted=loadHanSave(serialize(s));
+ unescorted.tradeMarkets.shipments.find(x=>x.id===second.shipment.id).merchantEscortCost=0;
+ next(unescorted);next(escorted);
+ assert.equal(unescorted.tradeMarkets.shipments.find(x=>x.id===second.shipment.id).status,'lost');
+ assert.equal(escorted.tradeMarkets.shipments.find(x=>x.id===second.shipment.id).status,'traveling');
+});
+
 test('Eastern markets use measured stock and a real Kangju–Han horse route',()=>{
  const s=newHanGame('han',{seed:49});
  for(const faction of ['han','kangju','yuezhi','parthia'])assert.ok(s.regions.some(r=>r.owner===faction&&s.tradeMarkets.regions[r.id]));
@@ -524,7 +555,7 @@ test('120 autonomous market months conserve goods and money through save reload'
  const goods=Object.keys(s.tradeMarkets.regions.changan.goods);
  const quantity=good=>Object.values(s.tradeMarkets.regions).reduce((n,m)=>n+m.goods[good].stock,0)+s.tradeMarkets.shipments.filter(x=>['traveling','blocked'].includes(x.status)&&x.commodity===good).reduce((n,x)=>n+x.quantity,0);
  const initial=Object.fromEntries(goods.map(good=>[good,quantity(good)]));
- const cash=()=>Object.values(s.factions).reduce((n,f)=>n+f.treasury,0)+Object.values(s.tradeMarkets.merchants).flat().reduce((n,id)=>n+(s.persons[id]?.wealth||0),0)+s.tradeMarkets.shipments.reduce((n,x)=>n+(x.escrow||0),0)+s.tradeMarkets.transportSpent+Object.values(s.tradeMarkets.transitTreasury).reduce((n,x)=>n+x,0);
+ const cash=()=>Object.values(s.factions).reduce((n,f)=>n+f.treasury,0)+Object.values(s.tradeMarkets.merchants).flat().reduce((n,id)=>n+(s.persons[id]?.wealth||0),0)+s.tradeMarkets.shipments.reduce((n,x)=>n+(x.escrow||0),0)+s.tradeMarkets.transportSpent+s.tradeMarkets.merchantEscortSpent+Object.values(s.tradeMarkets.transitTreasury).reduce((n,x)=>n+x,0);
  const initialCash=cash();
  for(let i=0;i<120;i++){next(s);if(i===59)s=loadHanSave(serialize(s))}
  for(const good of goods){
@@ -546,7 +577,7 @@ test('the far-west caravan reserves real silk and a finite buyer budget',()=>{
  s.tradeMarkets.externalTreasury=quote.total;
  const source=s.tradeMarkets.regions.changan.goods.silk,destination=s.tradeMarkets.regions.mediterranean_gate.goods.silk;
  const initialStock=source.stock,initialDestination=destination.stock,initialHan=s.factions.han.treasury;
- const cash=()=>Object.values(s.factions).reduce((sum,f)=>sum+f.treasury,0)+s.tradeMarkets.externalTreasury+s.tradeMarkets.shipments.reduce((sum,x)=>sum+x.escrow,0)+Object.values(s.tradeMarkets.merchants).flat().reduce((sum,id)=>sum+(s.persons[id]?.wealth||0),0)+s.tradeMarkets.transportSpent;
+ const cash=()=>Object.values(s.factions).reduce((sum,f)=>sum+f.treasury,0)+s.tradeMarkets.externalTreasury+s.tradeMarkets.shipments.reduce((sum,x)=>sum+x.escrow,0)+Object.values(s.tradeMarkets.merchants).flat().reduce((sum,id)=>sum+(s.persons[id]?.wealth||0),0)+s.tradeMarkets.transportSpent+s.tradeMarkets.merchantEscortSpent;
  const initialCash=cash();advanceSilk(s);
  const caravan=s.silk.caravans.find(c=>c.shipmentId),shipment=s.tradeMarkets.shipments.find(x=>x.id===caravan?.shipmentId);
  assert.ok(caravan);assert.ok(s.persons[caravan.merchantId]);assert.equal(source.stock,initialStock-1);
