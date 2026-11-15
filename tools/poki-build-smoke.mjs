@@ -42,7 +42,7 @@ try{
  await p.locator('#begin').tap();
  await p.waitForFunction(()=>window._pokiEvents?.includes('start'));
  assert.deepEqual(await p.evaluate(()=>_pokiEvents.slice(0,2)),['load','start'],'Han SDK lifecycle');
- await p.locator('#map path.territory[data-region="changan"]').tap({timeout:5000});
+ await p.locator('#map .seat-g[data-region="changan"] .seat').tap({timeout:5000});
  assert.ok((await p.locator('#inspector').textContent()).trim().length>20);
  assert.deepEqual(errors,[]);
  entryBytes.han=bytes.reduce((a,b)=>a+b,0)-entryBytes.roman-entryBytes.atlas;
