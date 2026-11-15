@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,diplomacy} from '../engine.js?v=undated-name-1';
+import {newGame,upgradeSave,diplomacy} from '../engine.js?v=foreign-heir-knowledge-1';
 import {proposeAgreement,terminateAgreement,advanceAgreements} from '../agreements.js?v=agreement-courier-1';
 import {politicalMemoryAdjustment,personalMemoryAdjustment} from '../political-memory.js?v=grand-chessboard-2';
-import {appointOffice,dismissOffice} from '../office-system.js?v=undated-name-1';
+import {appointOffice,dismissOffice} from '../office-system.js?v=foreign-heir-knowledge-1';
 import {plotFormationChance} from '../conspiracies.js?v=undated-name-1';
 
 test('a leader remembers a broken treaty, affecting negotiations but fading over time',()=>{
