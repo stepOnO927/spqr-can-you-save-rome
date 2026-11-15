@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=frontier-response-1';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=player-aid-letter-1';
 import {knownLeaders} from '../characters.js?v=succession-ui-recovery-1';
 import {advanceOperations,availableAgents} from '../character-system.js?v=portraits-hundred-days-1';
 import {advanceConspiracies,reassurePerson,politicalAmbition,potentialConspirators} from '../conspiracies.js?v=succession-ui-recovery-1';

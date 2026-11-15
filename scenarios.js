@@ -1,4 +1,4 @@
-import {newGame,estimatedStrength} from './engine.js?v=frontier-response-1';
+import {newGame,estimatedStrength} from './engine.js?v=player-aid-letter-1';
 import {createFictionalPerson} from './dynasties.js?v=portraits-hundred-days-1';
 import {formCoalition} from './coalitions.js?v=diplomatic-chronicle-1';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';

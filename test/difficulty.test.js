@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=frontier-response-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=player-aid-letter-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=portraits-hundred-days-1';
-import {newScenario} from '../scenarios.js?v=frontier-response-1';
+import {newScenario} from '../scenarios.js?v=player-aid-letter-1';
 
 test('difficulty does not secretly penalize the player economy',()=>{
  const states=['standard','hard','expert'].map(difficulty=>{const s=newGame('caesar');s.difficulty=difficulty;tick(s);return s});
