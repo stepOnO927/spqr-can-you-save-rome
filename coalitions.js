@@ -1,3 +1,4 @@
+import {isDeliveredReport} from './person-knowledge.js?v=faces-reported-names-1';
 import {ROUTES} from './data.js?v=faces-reported-names-1';
 import {reportedControl} from './control-intelligence.js?v=faces-reported-names-1';
 import {activeAgreement} from './agreements.js?v=faces-reported-names-1';

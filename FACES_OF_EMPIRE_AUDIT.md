@@ -6,7 +6,7 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `447371d1`. Its overview layout and
+The draft now includes main through `a22a8b77`. Its overview layout and
 attack-preview privacy changes are connected to the expanded faction atlas:
 crowded cities and armies remain selectable through faction directories, and
 attack scenarios use reported fortification bands without reading foreign
@@ -24,6 +24,10 @@ name as reported when the message was sent. Old unnamed letters remain
 anonymous in the family panel and final archive. The merged family-letter
 unit cases and the Chromium privacy flow pass alongside the earlier authority
 report regression.
+The subsequent future-dated report fix is also integrated, including its
+delivery checks in character, military and political views. Its eight new
+unit cases and bilingual browser privacy scenario pass after reconciling the
+overlapping expansion code.
 The ten-year Roman/Han market simulation also checks sustainable population,
 bounded faction resources, living named Han officeholders with portraits, and
 exact preservation of saved Han names and portrait identities at its midpoint

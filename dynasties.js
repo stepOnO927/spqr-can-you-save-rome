@@ -1,3 +1,4 @@
+import {isDeliveredReport} from './person-knowledge.js?v=faces-reported-names-1';
 import {CHARACTER_CATALOG} from './characters.js?v=faces-reported-names-1';
 import {startDynasticWar} from './civil-war.js?v=faces-reported-names-1';
 import {ROUTES} from './data.js?v=faces-reported-names-1';

@@ -1,3 +1,4 @@
+import {isDeliveredReport} from './person-knowledge.js?v=faces-reported-names-1';
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=faces-reported-names-1';
 import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=faces-reported-names-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=faces-reported-names-1';
