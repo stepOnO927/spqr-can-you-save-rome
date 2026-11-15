@@ -1,3 +1,4 @@
+import {ROUTES} from './data.js?v=world-kings-trade-1';
 // Read-only startup and deep state checks. Never migrates or mutates a save.
 export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
  const findings=[],add=(severity,code,path,detail)=>findings.push({severity,code,path,detail});
@@ -26,6 +27,13 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
  }
  for(const [i,war] of (s.wars||[]).entries())if(!Array.isArray(war)||war.some(id=>!factionIds.has(id)))add('warning','invalid-war',`wars[${i}]`,JSON.stringify(war));
  if(mode==='roman'){
+  const tradeIds=new Set();
+  for(const [i,cargo] of (s.tradeCargo||[]).entries()){
+   const base=`tradeCargo[${i}]`,route=cargo?.path;
+   if(!cargo?.id||tradeIds.has(cargo.id))add('fatal','duplicate-trade-cargo',base,String(cargo?.id));else tradeIds.add(cargo.id);
+   if(!factionIds.has(cargo?.from)||!factionIds.has(cargo?.to)||!s.agreements?.some(t=>t.id===cargo.agreementId&&t.type==='trade'&&t.parties.includes(cargo.from)&&t.parties.includes(cargo.to))||!['transit','delivered','lost'].includes(cargo?.status)||!Number.isInteger(cargo?.value)||cargo.value<1||!Number.isInteger(cargo?.leg)||cargo.leg<0||!Number.isInteger(cargo?.remaining)||cargo.remaining<0||!Number.isInteger(cargo?.blockedMonths)||cargo.blockedMonths<0||!Number.isInteger(cargo?.legStarted?.year)||!Number.isInteger(cargo?.legStarted?.month)||cargo.legStarted.month<1||cargo.legStarted.month>12)add('warning','invalid-trade-cargo',base,String(cargo?.id));
+   if(!Array.isArray(route)||route.length<2||route.some(id=>!regionIds.has(id))||route.some((id,j)=>j>0&&!ROUTES.some(edge=>edge[0]===id&&edge[1]===route[j-1]||edge[1]===id&&edge[0]===route[j-1]))||cargo.leg>=route.length)add('warning','invalid-trade-route',`${base}.path`,String(cargo?.id));
+  }
   const borderIds=new Set();
   for(const [i,incident] of (s.borderIncidents||[]).entries()){
    const base=`borderIncidents[${i}]`;

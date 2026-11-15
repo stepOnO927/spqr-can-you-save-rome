@@ -20,7 +20,7 @@ const date=s=>s.year*12+s.month;
 const key=(a,b)=>[a,b].sort().join(':');
 const atWar=(s,a,b)=>s.wars.some(w=>w.includes(a)&&w.includes(b));
 export function fullAllianceTerms(s,{legacy=false}={}){return {type:'full',start:legacy?null:{year:s.year,month:s.month},duration:null,obligations:['mutual_defense','mutual_offense','intelligence_exchange'],benefits:['military_support','reports'],termination:'until broken or a party ceases to exist',diplomaticCost:0,breachPenalty:20}}
-export function initializeAgreements(s){s.agreements||=[];s.diplomaticCredibility||={};for(const pair of s.alliances||[])if(pair.length===2)pair.push(fullAllianceTerms(s,{legacy:true}));for(const t of s.agreements){const def=AGREEMENT_TYPES[t.type];if(!t.terms&&def)t.terms=['military_support','guarantee'].includes(t.type)?{provider:t.parties[0],recipient:t.parties[1]}:{kind:t.type,obligations:[...def.obligations],benefits:[...def.benefits]}}return s}
+export function initializeAgreements(s){s.agreements||=[];s.tradeCargo||=[];s.nextTradeCargoId||=1;s.diplomaticCredibility||={};for(const pair of s.alliances||[])if(pair.length===2)pair.push(fullAllianceTerms(s,{legacy:true}));for(const t of s.agreements){const def=AGREEMENT_TYPES[t.type];if(!t.terms&&def)t.terms=['military_support','guarantee'].includes(t.type)?{provider:t.parties[0],recipient:t.parties[1]}:{kind:t.type,obligations:[...def.obligations],benefits:[...def.benefits]}}return s}
 export function activeAgreement(s,a,b,type){
  return (s.agreements||[]).find(t=>t.status==='active'&&t.type===type&&t.parties.includes(a)&&t.parties.includes(b)&&date(s)<t.expiresAt&&!atWar(s,a,b));
 }
@@ -39,6 +39,48 @@ export function commercialCorridor(s,actor,target){
   }
  }
  return {ok:false,reason:'blocked'};
+}
+function tradeLegMonths(s,from,to){
+ const edge=ROUTES.find(route=>route[0]===from&&route[1]===to||route[1]===from&&route[0]===to);
+ const terrain=s.regions.find(region=>region.id===to)?.terrain;
+ // Winter storms and difficult overland terrain add travel time.
+ return 1+(edge?.[2]==='sea'?1:0)+(['hills','desert'].includes(terrain)?1:0)+([12,1,2].includes(s.month)&&(edge?.[2]==='sea'||terrain==='hills')?1:0);
+}
+function winterTradeHazard(s,cargo,from,to){
+ if(![12,1,2].includes(cargo.legStarted.month))return false;
+ const edge=ROUTES.find(route=>route[0]===from&&route[1]===to||route[1]===from&&route[0]===to);
+ const divisor=edge?.[2]==='sea'?16:s.regions.find(region=>region.id===to)?.terrain==='hills'?32:0;
+ if(!divisor)return false;
+ let hash=2166136261;
+ for(const char of `${cargo.id}:${cargo.leg}:${cargo.legStarted.year}:${cargo.legStarted.month}`)hash=Math.imul(hash^char.charCodeAt(0),16777619);
+ return (hash>>>0)%divisor===0;
+}
+function advanceTradeCargo(s){
+ for(const cargo of s.tradeCargo){
+  if(cargo.status!=='transit')continue;
+  const treaty=s.agreements.find(item=>item.id===cargo.agreementId);
+  if(!treaty||!s.factions[cargo.from]||!s.factions[cargo.to]||!activeAgreement(s,cargo.from,cargo.to,'trade')||treaty.status!=='active'){
+   cargo.status='lost';cargo.reason='treaty_ended';continue;
+  }
+  if(cargo.remaining>0){cargo.remaining--;if(cargo.remaining>0)continue}
+  const next=cargo.path[cargo.leg+1];
+  if(!next){cargo.status='delivered';cargo.delivered={year:s.year,month:s.month};s.factions[cargo.to].treasury+=cargo.value;continue}
+  if(winterTradeHazard(s,cargo,cargo.path[cargo.leg],next)){cargo.status='lost';cargo.reason='winter_hazard';continue}
+  const owner=s.regions.find(region=>region.id===next)?.owner;
+  if(next===cargo.path.at(-1)&&owner!==cargo.to||!nonMilitaryAccessStatus(s,cargo.from,next,owner,'commercial').allowed){
+   cargo.blockedMonths++;if(cargo.blockedMonths>=3){cargo.status='lost';cargo.reason='blocked'}continue;
+  }
+  cargo.blockedMonths=0;cargo.leg++;
+  if(cargo.leg===cargo.path.length-1){cargo.status='delivered';cargo.delivered={year:s.year,month:s.month};s.factions[cargo.to].treasury+=cargo.value}
+  else{cargo.remaining=tradeLegMonths(s,next,cargo.path[cargo.leg+1]);cargo.legStarted={year:s.year,month:s.month}}
+ }
+ // Retain a short audit trail without growing saves forever.
+ const settled=s.tradeCargo.filter(cargo=>cargo.status!=='transit');
+ if(settled.length>80){const keep=new Set(settled.slice(-80));s.tradeCargo=s.tradeCargo.filter(cargo=>cargo.status==='transit'||keep.has(cargo))}
+}
+function dispatchTradeCargo(s,t,from,to){
+ const route=commercialCorridor(s,from,to);if(!route.ok||route.path.length<2)return;
+ s.tradeCargo.push({id:`trade:${s.nextTradeCargoId++}`,agreementId:t.id,from,to,value:1,path:route.path,leg:0,remaining:tradeLegMonths(s,route.path[0],route.path[1]),blockedMonths:0,dispatched:{year:s.year,month:s.month},legStarted:{year:s.year,month:s.month},status:'transit'});
 }
 export function proposeAgreement(s,actor,target,type,{secret=false,access=null}={}){
  initializeAgreements(s);const def=AGREEMENT_TYPES[type];
@@ -68,11 +110,15 @@ export function terminateAgreement(s,id,actor,{mutual=false}={}){
 }
 export function advanceAgreements(s){
  initializeAgreements(s);
+ // This function is also used by previews and tests. A month settles once.
+ if(s.tradeCargoLastAdvancedAt===date(s))return;
+ s.tradeCargoLastAdvancedAt=date(s);
+ advanceTradeCargo(s);
  for(const t of s.agreements){
   if(t.status!=='active')continue;
   if(date(s)>=t.expiresAt||t.parties.some(p=>!s.factions[p])){t.status='expired';t.ended={year:s.year,month:s.month};continue}
   if(atWar(s,t.parties[0],t.parties[1])){t.status='ended_by_war';t.ended={year:s.year,month:s.month};continue}
-  if(t.type==='trade'&&commercialCorridor(s,t.parties[0],t.parties[1]).ok)for(const p of t.parties)s.factions[p].treasury+=1;
+  if(t.type==='trade')for(const [from,to] of [[t.parties[0],t.parties[1]],[t.parties[1],t.parties[0]]])dispatchTradeCargo(s,t,from,to);
   if(t.type==='military_support'&&s.month%3===0){const source=t.terms?.provider||t.parties[0],destination=t.terms?.recipient||t.parties[1],provider=s.factions[source],recipient=s.factions[destination];if(provider&&recipient&&s.wars.some(w=>w.includes(destination))&&provider.treasury>=12&&provider.food>=12){provider.treasury-=2;provider.food-=2;recipient.treasury+=2;recipient.food+=2;rememberPoliticalEvent(s,destination,source,'military_aid',1)}}
   if(t.type==='political'&&s.month%6===0&&t.parties.every(p=>s.factions[p].treasury>=10)){for(const p of t.parties){s.factions[p].treasury--;s.factions[p].stability=Math.min(100,s.factions[p].stability+1)}}
  }
