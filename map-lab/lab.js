@@ -37,6 +37,7 @@ import {assessment,sendScouts,probePositions,delayAttack,markReconRegion,request
 import {intelligenceHtml,afterActionHtml,fortificationText} from '../recon-ui.js?v=6';
 import {renderNavalPanel} from './naval-ui.js?v=59';
 import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=42';
+import {maritimeMapIntel} from './maritime-map-intel.js?v=1';
 import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates,dispatchWagonSupply} from '../engine.js?v=190';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
@@ -375,12 +376,57 @@ function renderLeaders(){
   leaderMarkers.push(marker(el,namedPoints[anchor.id],'bottom'));
  }
 }
-function renderMaritime(){maritimeMarkers.forEach(m=>m.remove());maritimeMarkers=[];if(map.isStyleLoaded&&!map.isStyleLoaded())return;if(!map.getSource('naval-lanes')){map.addSource('naval-lanes',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'naval-lanes',type:'line',source:'naval-lanes',paint:{'line-color':['match',['get','status'],'blockade','#bd6553','piracy','#bd9c63','#afd5d5'],'line-width':2,'line-opacity':0,'line-dasharray':[3,2]}},'control')}
- const features=state.naval?.routes.map(r=>{const a=namedPoints[r.from],b=namedPoints[r.to];return a&&b?{type:'Feature',properties:{status:r.last?.reason||'open'},geometry:{type:'LineString',coordinates:[a,b]}}:null}).filter(Boolean)||[];map.getSource('naval-lanes').setData({type:'FeatureCollection',features});map.setPaintProperty('naval-lanes','line-opacity',currentMapMode==='maritime'?.7:0);if(currentMapMode!=='maritime'||!state.naval)return;
- for(const z of SEA_ZONES){const el=document.createElement('button');el.className='sea-zone';el.textContent=n(z.name);el.title=lang==='zh'?'海上作战区；航行按相邻海域逐月推进。':'Sea zone; fleets cross connected waters each month.';el.onclick=e=>{e.stopPropagation();map.flyTo({center:z.point,zoom:6});showNaval('intelligence')};maritimeMarkers.push(marker(el,z.point))}
- const counts={};for(const f of state.naval.fleets.filter(x=>x.owner===state.player&&Object.values(x.ships).some(Boolean))){const z=SEA_ZONES.find(x=>x.id===f.zone);if(!z)continue;const el=document.createElement('button');el.className='fleet-map-marker';el.textContent=`⚓ ${Object.values(f.ships).reduce((v,n)=>v+n,0)}`;el.title=n(f.name);el.onclick=e=>{e.stopPropagation();showNaval('fleets')};const stack=counts[z.id]||0;counts[z.id]=stack+1;maritimeMarkers.push(marker(el,z.point,'bottom',[stack*43,-18]))}
- for(const sighting of reportedHostileFleets(state,state.player)){const z=SEA_ZONES.find(x=>x.id===sighting.zone);if(!z)continue;const el=document.createElement('button');el.className='fleet-map-marker reported';el.textContent='? ⚓';el.title=`${sighting.month}/${Math.abs(sighting.year)} BCE · ${lang==='zh'?'敌舰旧目击':'Enemy fleet sighting'}`;el.onclick=e=>{e.stopPropagation();showNaval('intelligence')};maritimeMarkers.push(marker(el,z.point,'bottom',[58,-20]))}
- for(const r of state.regions.filter(x=>x.owner===state.player&&x.port&&x.buildings?.includes('shipyard'))){const el=document.createElement('button');el.className='naval-port';el.textContent='⚒';el.title=`${n(r.name)} · ${lang==='zh'?'造船厂':'Shipyard'}`;el.onclick=e=>{e.stopPropagation();showNaval('yards')};maritimeMarkers.push(marker(el,namedPoints[r.id],'top',[0,19]))}}
+let maritimeRetryPending=false,maritimeRouteKey=null;
+function renderMaritime(){
+ maritimeMarkers.forEach(m=>m.remove());maritimeMarkers=[];
+ const laneOpacity=currentMapMode==='maritime'?.7:0;
+ if(map.getLayer('naval-lanes')&&map.getPaintProperty('naval-lanes','line-opacity')!==laneOpacity)map.setPaintProperty('naval-lanes','line-opacity',laneOpacity);
+ if(currentMapMode!=='maritime'||!state.naval){
+  if(map.getSource('naval-lanes')&&maritimeRouteKey!==''){map.getSource('naval-lanes').setData({type:'FeatureCollection',features:[]});maritimeRouteKey=''}
+  return;
+ }
+ if(!map.getLayer('control')){
+  if(!maritimeRetryPending){maritimeRetryPending=true;map.once('load',()=>{maritimeRetryPending=false;renderMaritime()})}
+  return;
+ }
+ if(!map.getSource('naval-lanes')){
+  map.addSource('naval-lanes',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+  map.addLayer({id:'naval-lanes',type:'line',source:'naval-lanes',paint:{'line-color':['match',['get','status'],'blockade','#bd6553','raid','#bd6553','piracy','#bd9c63','#afd5d5'],'line-width':2,'line-opacity':0,'line-dasharray':[3,2]}},'control');
+  maritimeRouteKey=null;
+ }
+ const intel=maritimeMapIntel(state,state.player);
+ const routeKey=JSON.stringify(intel.routes);
+ if(routeKey!==maritimeRouteKey){
+  const features=intel.routes.map(route=>{const a=namedPoints[route.from],b=namedPoints[route.to];return a&&b?{type:'Feature',properties:{status:route.status},geometry:{type:'LineString',coordinates:[a,b]}}:null}).filter(Boolean);
+  map.getSource('naval-lanes').setData({type:'FeatureCollection',features});
+  maritimeRouteKey=routeKey;
+ }
+ if(map.getPaintProperty('naval-lanes','line-opacity')!==laneOpacity)map.setPaintProperty('naval-lanes','line-opacity',laneOpacity);
+ const zonePoint=id=>SEA_ZONES.find(zone=>zone.id===id)?.point;
+ const addBadge=(className,label,title,point,section,anchor='center',offset=[0,0])=>{
+  if(!point)return;
+  const el=document.createElement('button');el.className=className;el.textContent=label;el.title=title;el.onclick=event=>{event.stopPropagation();showNaval(section)};
+  maritimeMarkers.push(marker(el,point,anchor,offset));
+ };
+ for(const zone of SEA_ZONES){const el=document.createElement('button');el.className='sea-zone';el.textContent=n(zone.name);el.title=lang==='zh'?'海上作战区；航行按相邻海域逐月推进。':'Sea zone; fleets cross connected waters each month.';el.onclick=event=>{event.stopPropagation();map.flyTo({center:zone.point,zoom:6});showNaval('intelligence')};maritimeMarkers.push(marker(el,zone.point))}
+ const counts={};for(const fleet of state.naval.fleets.filter(item=>item.owner===state.player&&Object.values(item.ships).some(Boolean))){
+  const stack=counts[fleet.zone]||0;counts[fleet.zone]=stack+1;
+  addBadge('fleet-map-marker',`⚓ ${Object.values(fleet.ships).reduce((sum,count)=>sum+count,0)}`,n(fleet.name),zonePoint(fleet.zone),'fleets','bottom',[stack*43,-18]);
+ }
+ for(const sighting of reportedHostileFleets(state,state.player))addBadge('fleet-map-marker reported','? ⚓',`${sighting.month}/${Math.abs(sighting.year)} BCE · ${lang==='zh'?'敌舰旧目击':'Enemy fleet sighting'}`,zonePoint(sighting.zone),'intelligence','bottom',[58,-20]);
+ const facilityNames={'shipyard':['Shipyard','造船厂'],'dockyard':['Dockyard','修船坞'],'naval-depot':['Naval depot','海军补给站'],'coastal-fort':['Coastal fort','海岸工事'],warehouse:['Warehouse','仓库'],'naval-training':['Naval training','海军训练场']};
+ for(const port of intel.ports){
+  const place=state.regions.find(region=>region.id===port.id),point=namedPoints[port.id];
+  if(port.facilities.length)addBadge('naval-port',port.facilities.includes('shipyard')?'⚒':'⚓',`${n(place.name)} · ${port.facilities.map(id=>n(facilityNames[id])).join(', ')}`,point,'yards','top',[0,19]);
+  if(port.blockaded)addBadge('maritime-alert blockade','⊘',`${n(place.name)} · ${lang==='zh'?'港口正受封锁':'Port is blockaded'}`,point,'reports','top',[23,23]);
+ }
+ for(const blockade of intel.blockades){
+  const place=state.regions.find(region=>region.id===blockade.port);
+  if(place)addBadge('maritime-alert blockade','⊘',`${n(place.name)} · ${blockade.active?(lang==='zh'?'己方封锁生效':'Friendly blockade in force'):(lang==='zh'?'己方封锁命令尚未生效':'Friendly blockade not yet effective')}`,namedPoints[blockade.port],'fleets','top',[-23,23]);
+ }
+ intel.convoys.forEach((convoy,index)=>addBadge('maritime-alert convoy','▰',`${lang==='zh'?'己方海上补给':'Friendly maritime supply'} · ${convoy.cargo} ${lang==='zh'?'粮':'food'}`,zonePoint(convoy.zone),'reports','bottom',[-22-index*18,-28]));
+ intel.hazards.forEach((hazard,index)=>addBadge('maritime-alert hazard','⚠',`${hazard.month}/${Math.abs(hazard.year)} BCE · ${hazard.kind==='raid'?(lang==='zh'?'商路遇袭报告':'Trade raid report'):(lang==='zh'?'海盗活动报告':'Piracy report')}`,zonePoint(hazard.zone),'reports','bottom',[90+index*18,-20]));
+}
 function renderArmies(){
  document.body.classList.toggle('grand-campaign',!!state.grandMap);
  Object.assign(cityTheater,originalCityTheater);if(state.grandMap)for(const site of GRAND_SITES){const key=site.site[0].toUpperCase();if(key in cityTheater)cityTheater[key]=site.id}
@@ -522,7 +568,7 @@ function renderHud(){
  if(state.grandMap&&currentMapMode==='supply')document.querySelector('.legend').innerHTML=`<span><b class="swatch" style="background:#8ca87d"></b>${lang==='zh'?'补给较强':'Stronger supply'}</span><span><b class="swatch" style="background:#c49b69"></b>${lang==='zh'?'补给较弱':'Weaker supply'}</span><span>✚ ${lang==='zh'?'补给源':'Supply source'}</span><span>! ${lang==='zh'?'被围困军队':'Isolated army'}</span>`;
  if(currentMapMode==='military'){document.querySelector('#map-mode-note').textContent=lang==='zh'?'底色和边界表示派系控制；米白色◎数字表示己方兵力，敌军旗帜只来自可能过时的目击。':'Faction colors and borders show control; ivory ◎ counters show friendly strength. Enemy banners come only from possibly stale sightings.';document.querySelector('.legend').innerHTML=['caesar','senate','shared'].map((id,i)=>`<span class="identity-legend">${factionMark(id)} ${t(['caesar','senate','mixed'][i])}</span>`).join('')+`<span><b class="density-key">◎</b> ${lang==='zh'?'己方兵力（千人）':'Friendly troops (thousands)'}</span><span> ? ${lang==='zh'?'敌军旧目击，数量未知':'Enemy sighting, strength unknown'}</span>`}
  if(currentMapMode==='military')document.querySelector('.legend').insertAdjacentHTML('beforeend',`<span>⌕ ${lang==='zh'?'军议待侦察地点':'War Council recon target'}</span>`);
- if(currentMapMode==='maritime'){document.querySelector('#map-mode-note').textContent=lang==='zh'?'海区与商路为游戏近似；敌舰仅显示有日期的目击。':'Sea zones and trade lanes are game approximations; enemy fleets require dated sightings.';document.querySelector('.legend').innerHTML=`<span>⚓ ${lang==='zh'?'己方舰队':'Friendly fleet'}</span><span>? ⚓ ${lang==='zh'?'敌舰目击':'Enemy sighting'}</span><span>⚒ ${lang==='zh'?'己方造船厂':'Friendly shipyard'}</span><span>─ ${lang==='zh'?'商路':'Trade lane'}</span>`}
+ if(currentMapMode==='maritime'){document.querySelector('#map-mode-note').textContent=lang==='zh'?'海区与商路为游戏近似；敌舰与海盗危险仅显示有日期的己方报告。封锁仅标己方命令或己港实况。':'Sea zones and lanes are game approximations. Enemy fleets and piracy hazards use dated reports; blockades show our orders or the condition of our own ports.';document.querySelector('.legend').innerHTML=`<span>⚓ ${lang==='zh'?'己方舰队':'Friendly fleet'}</span><span>? ⚓ ${lang==='zh'?'敌舰目击':'Enemy sighting'}</span><span>⚒ ${lang==='zh'?'己方港口设施':'Friendly port facilities'}</span><span>⊘ ${lang==='zh'?'封锁':'Blockade'}</span><span>▰ ${lang==='zh'?'己方补给船':'Friendly supply convoy'}</span><span>⚠ ${lang==='zh'?'有日期的危险报告':'Dated hazard report'}</span><span>─ ${lang==='zh'?'己方商路':'Friendly trade lane'}</span>`}
  const goals=objectiveDefinitions(state);
  document.querySelectorAll('#objectives [data-objective]').forEach((button,index)=>{
   const progress=state.objectiveProgress?.[goals[index]?.id];if(!progress)return;
