@@ -102,6 +102,15 @@ try{
  assert.match(await page.locator('#inspector').innerText(),/Enemy occupation halved this market’s grain output this month/);
  await page.locator('#lang').click();
  assert.match(await page.locator('#inspector').innerText(),/敌军围困使本地本月谷物产量减半/);
+ await page.evaluate(async()=>{
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js');
+  const state=newHanGame('han',{seed:79});
+  state.tradeMarkets.transactions.push({shipment:'foreign-sale',seller:'han',buyer:'kangju',origin:'changan',destination:'kangju',commodity:'silk',quantity:1,price:8,transport:2,tariffs:[],year:-49,month:1,marketEffect:{stockBefore:987654,stockAfter:987655,priceBefore:9,priceAfter:8}});
+  localStorage.setItem(SAVE_KEY('browser'),serialize(state));
+ });
+ await page.locator('#load').click();await page.locator('#trade-panel').click();
+ assert.match(await page.locator('.market-receipts').innerText(),/公元前49年/);
+ assert.doesNotMatch(await page.locator('.market-receipts').innerText(),/987654|987655/,'foreign destination stock is private');
  assert.deepEqual(errors,[]);
  console.log('Han market browser smoke passed: listings, customs, treaty, horse delivery, army remounts, save/load and bilingual panel.');
 }finally{await browser.close()}

@@ -29,8 +29,10 @@ Existing prepaid transit duties keep their original rates when a caravan
 still crosses those states. The Roman and Han market receipts now format
 transaction dates with BCE/CE calendar labels in English and Chinese.
 Delivered receipts also keep the destination's actual stock and price before
-and after arrival. The local cached market price refreshes in the same month;
-older receipts without these fields remain readable.
+and after arrival. The UI shows this exact effect only for a player-owned
+destination; selling to a foreign court does not expose its private warehouse.
+The local cached market price refreshes in the same month; older receipts
+without these fields remain readable.
 
 Actual hostile siege or occupation now halves local agricultural output in
 both campaigns. This affects monthly food or grain, measured market stock,

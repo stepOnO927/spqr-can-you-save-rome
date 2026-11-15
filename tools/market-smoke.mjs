@@ -137,6 +137,15 @@ try{
  assert.match(await page.locator('.market-panel').innerText(),/本月围城减产.*谷物产量减半/s);
  await page.locator('#language').click();
  assert.match(await page.locator('.market-panel').innerText(),/Sieged markets this month.*grain output halved/s);
+ await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=faces-reported-names-1');
+  const state=newGame('caesar');
+  state.markets.transactions.push({shipment:'foreign-sale',seller:'caesar',buyer:'armenia',origin:'narbo',destination:'armenia',commodity:'grain',quantity:1,price:2,transport:1,tariffs:[],year:-49,month:1,marketEffect:{stockBefore:987654,stockAfter:987655,priceBefore:9,priceAfter:8}});
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
+ });
+ await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#markets').click();
+ assert.match(await page.locator('.market-panel').innerText(),/公元前49年/);
+ assert.doesNotMatch(await page.locator('.market-panel').innerText(),/987654|987655/,'foreign destination stock is private');
  assert.deepEqual(errors,[]);
  console.log('Market orders, merchant dossiers, Han horse recruitment, bilingual panel and save/load passed in Chromium.');
 }catch(error){console.error('Browser page errors:',errors);throw error}finally{await browser.close()}

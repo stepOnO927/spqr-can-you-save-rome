@@ -25,7 +25,7 @@ export function renderEasternMarketPanel({root,state:s,lang=0,selected=null,onOr
   const place=id=>name(s.regions.find(r=>r.id===id)?.name||id||'?',lang);
   const party=id=>id==='external'?(lang?'境外商人':'Outside merchants'):name(FACTIONS[id]?.name||id||'?',lang);
   const customs=(x.tariffs||[]).reduce((sum,t)=>sum+t.amount,0),total=(x.price||0)+(x.transport||0)+customs;
-  const effect=x.marketEffect?`<br><small>${lang?'目的地库存':'Destination stock'} ${x.marketEffect.stockBefore} → ${x.marketEffect.stockAfter} · ${lang?'当地市价':'Local price'} ${x.marketEffect.priceBefore} → ${x.marketEffect.priceAfter}</small>`:'';
+  const effect=x.buyer===s.player&&x.marketEffect?`<br><small>${lang?'目的地库存':'Destination stock'} ${x.marketEffect.stockBefore} → ${x.marketEffect.stockAfter} · ${lang?'当地市价':'Local price'} ${x.marketEffect.priceBefore} → ${x.marketEffect.priceAfter}</small>`:'';
   if(x.status==='stranded'||x.status==='lost'){
    const outcome=x.status==='stranded'?(lang?'货物退回':'Goods returned to'):(lang?'货物损失于':'Goods lost near');
    const refund=x.refund??(shipment?(shipment.price||0)+(shipment.tariffs||[]).reduce((sum,t)=>sum+t.amount,0):0);
