@@ -4,7 +4,7 @@ import {join,dirname,extname} from 'node:path';
 
 const root=process.cwd(),out=join(root,'dist','poki');
 const tracked=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(Boolean);
-const runtime=tracked.filter(p=>!p.startsWith('test/')&&!p.startsWith('tests/')&&!p.startsWith('tools/')&&!p.startsWith('scripts/')&&!p.startsWith('.github/')&&!p.includes('-master.')&&!/\\.(test|spec)\\.[cm]?js$/.test(p)&&
+const runtime=tracked.filter(p=>!p.startsWith('test/')&&!p.startsWith('tests/')&&!p.startsWith('tools/')&&!p.startsWith('scripts/')&&!p.startsWith('.github/')&&!p.startsWith('inspector.')&&!p.startsWith('inspector-ui.')&&!p.startsWith('inspector-diagnostics.test.')&&!p.includes('-master.')&&!/\\.(test|spec)\\.[cm]?js$/.test(p)&&
   (['.js','.css','.html','.json','.geojson','.png','.jpg','.jpeg','.webp','.svg','.woff','.woff2'].includes(extname(p))||p==='map-lab/SOURCES.md'));
 await rm(out,{recursive:true,force:true});
 for(const p of runtime){const dest=join(out,p);await mkdir(dirname(dest),{recursive:true});await copyFile(join(root,p),dest)}

@@ -10,7 +10,7 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
  if(s.player!=null&&!factionIds.has(s.player))add('fatal','invalid-player','player',String(s.player));
  for(const [i,r] of s.regions.entries()){
   if(!r?.id||regionIds.has(r.id))add('fatal','duplicate-region',`regions[${i}]`,String(r?.id));else regionIds.add(r.id);
-  if(!factionIds.has(r.owner))add('fatal','invalid-owner',`regions[${i}].owner`,String(r.owner));
+  if(!(mode==='han'&&r.owner==null)&&!factionIds.has(r.owner))add('fatal','invalid-owner',`regions[${i}].owner`,String(r.owner));
  }
  for(const [i,a] of s.armies.entries()){
   if(!a?.id||armyIds.has(a.id))add('fatal','duplicate-army',`armies[${i}]`,String(a?.id));else armyIds.add(a.id);
@@ -36,7 +36,7 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
   if(ruler&&(!s.persons?.[ruler]||!isLiuClan?.(s,ruler)))add('fatal','non-liu-orthodox','throne.orthodox',String(ruler));
   for(const [id,p] of Object.entries(s.persons||{}))if(p.id!==id)add('warning','unstable-person-id',`persons.${id}`,String(p.id));
  }
- // Treasury and food/grain may be negative under the modeled debt and famine
+ // Han frontier territories can be unclaimed (owner === null).\n // Treasury and food/grain may be negative under the modeled debt and famine
  // rules. This is deliberate; no generic nonnegative assertion is applied.
  return findings;
 }
