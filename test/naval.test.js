@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn} from '../engine.js';
-import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply} from '../naval.js';
+import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn,startConstruction} from '../engine.js';
+import {SEA_ZONES,seaRoute,portZone,isPortBlockaded,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply} from '../naval.js';
 import {tradeCard} from '../map-lab/naval-ui.js';
+import {developmentPanel,constructionPanel} from '../development-ui.js';
+import {advanceDevelopment} from '../development.js';
 import {armySupply,supplyNetwork} from '../grand-operations.js';
 import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js';
@@ -564,6 +566,42 @@ test('a hostile naval blockade cuts port army supply until the blockade ends',()
  const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');unit.region='italiaS';enemy.zone=portZone('italiaS');enemy.port=null;
  const normal=armySupply(s,unit);assert.equal(orderFleet(s,'caesar',enemy.id,'blockade','italiaS').ok,true);assert.ok(armySupply(s,unit)<normal);
  assert.equal(orderFleet(s,'caesar',enemy.id,'intercept','aegean').ok,true);assert.equal(armySupply(s,unit),normal);
+});
+test('coastal fortifications resist light blockades but not a supplied warship squadron',()=>{
+ const s=newGrandGame('senate'),port=s.regions.find(r=>r.id==='t016'),unit=s.armies.find(a=>a.id==='italy'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');
+ unit.region=port.id;enemy.zone=portZone(port.id);enemy.port=null;enemy.ships={light:1};enemy.sailors=65;
+ const normal=armySupply(s,unit);
+ assert.equal(orderFleet(s,'caesar',enemy.id,'blockade',port.id).ok,true);
+ assert.equal(isPortBlockaded(s,port.id),true);assert.ok(armySupply(s,unit)<normal);
+ s.development.senate.knownMaterial.push('stone-fortification');
+ assert.equal(startConstruction(s,'senate',port.id,'coastal-fort').ok,true);
+ for(let month=0;month<5;month++)advanceDevelopment(s);
+ assert.ok(port.buildings.includes('coastal-fort'));
+ assert.equal(isPortBlockaded(s,port.id),false);assert.equal(armySupply(s,unit),normal);
+ assert.match(constructionPanel(s,'en',port),/Port blockade resistance/);
+ assert.match(constructionPanel(s,'zh',port),/港口抵抗封锁能力/);
+ assert.match(developmentPanel(s,'en','material'),/At Brundisium in 49 BCE/);
+ assert.match(developmentPanel(s,'zh','material'),/前49年凯撒在布伦迪西乌姆/);
+ enemy.ships.trireme=1;enemy.sailors+=180;
+ assert.equal(isPortBlockaded(s,port.id),true);assert.ok(armySupply(s,unit)<normal);
+ enemy.hull=19;assert.equal(isPortBlockaded(s,port.id),false);
+});
+test('a blockade raised after merchant departure holds cargo offshore until the port reopens',()=>{
+ let s=newGrandGame('senate');s.naval.routes=s.naval.routes.filter(r=>r.id==='egypt-italy');s.naval.pirates=[];s.factions.senate.food=0;s.factions.egypt.food=60;
+ const egypt=s.naval.fleets.find(f=>f.id==='egypt-grain'),caesar=s.naval.fleets.find(f=>f.owner==='caesar'),route=s.naval.routes[0];egypt.ships.merchant=1;
+ advanceNaval(s);assert.equal(route.last.reason,'enroute');assert.equal(s.naval.voyages[0].cargo,4);
+ caesar.zone=portZone(route.to);caesar.port=null;caesar.order=null;caesar.reserve=false;assert.equal(orderFleet(s,'caesar',caesar.id,'blockade',route.to).ok,true);
+ s=upgradeSave(structuredClone(s));
+ for(let i=0;i<8&&s.naval.routes[0].last.reason!=='blockade';i++){s.month++;advanceNaval(s)}
+ assert.equal(s.naval.routes[0].last.reason,'blockade');assert.equal(s.naval.voyages[0].cargo,4);assert.equal(s.factions.senate.food,0);
+ assert.match(tradeCard(s,s.naval.routes[0],false),/Waiting outside blockaded port/);
+ assert.match(tradeCard(s,s.naval.routes[0],true),/封锁港外等待/);
+ const payment=s.factions.egypt.treasury;
+ const blocker=s.naval.fleets.find(f=>f.id===caesar.id);blocker.order=null;
+ s.month++;advanceNaval(s);
+ assert.equal(s.naval.routes[0].last.reason,'delivered');assert.equal(s.naval.routes[0].last.amount,4);
+ assert.equal(s.factions.senate.food,4);assert.ok(s.factions.egypt.treasury>payment);
+ assert.equal(s.naval.voyages.filter(v=>v.routeId===route.id&&v.phase==='outbound').length,0);
 });
 test('a fleet moves finite food from a home port to an isolated land front through save reload',()=>{
  const s=newGrandGame('senate');

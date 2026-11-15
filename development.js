@@ -162,6 +162,10 @@ BUILDINGS.push(
  {id:'coastal-fort',name:['Coastal Fortification','海岸堡垒'],tech:'stone-fortification',cost:30,months:5,materials:{stone:4,timber:1,metal:1},upkeep:2,effects:{navalDefense:4},terrain:['plain','hills','urban'],site:'coast'},
  {id:'naval-training',name:['Naval Training Facility','海军训练场'],tech:'shipyard-craft',cost:22,months:4,materials:{timber:2,stone:1},upkeep:2,effects:{navalExperience:2},terrain:['plain','hills','urban'],site:'coast'}
 );
+Object.assign(BUILDINGS.find(b=>b.id==='coastal-fort'),{
+ context:['At Brundisium in 49 BCE, Caesar tried to close the harbor with moles and rafts; Pompey sent towered ships against those works. A maintained coastal work resisting a light close blockade is a game abstraction, not evidence of a permanent stone harbor fort.','前49年凯撒在布伦迪西乌姆试图用堤道和木筏封港；庞培派装有高塔的船只攻击这些工事。常设海岸工事抵抗轻型近港封锁属于游戏抽象，并非永久石砌港垒存在的证据。'],
+ source:source('https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html','Caesar, Civil Wars 1.25–26')
+});
 IDEAS.push(
  {id:'naval-crew-training',category:'military',name:['Naval Crew Training','海军船员训练'],cost:23,months:3,adopt:12,effects:{navalPower:.08,upkeep:2},context:['Caesar gathered rowers, sailors and helmsmen for a Gallic campaign; regular drills and combat gains are game interpretations.','凯撒为高卢战役召集桨手、水手和舵手；定期操练与战力加成属于游戏诠释。'],source:source(gallicNavySource,'Caesar, Gallic War 3.9')},
  {id:'fleet-coordination',category:'military',name:['Fleet Coordination','舰队协同'],cost:25,months:4,adopt:13,effects:{navalPower:.06,navalSupply:3,upkeep:1},context:['Caesar placed Brutus over his new fleet at Massilia and prepared crews for battle; the combat bonus is a game abstraction.','凯撒在马赛任命布鲁图斯统领新舰队并备战；战斗加成属于游戏抽象。'],source:source(massiliaSource,'Caesar, Civil Wars 1.36, 1.57')},

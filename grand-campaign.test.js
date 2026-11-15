@@ -138,7 +138,7 @@ test('AI low-supply withdrawal obeys the same retreat limits and preparation los
  for(const r of s.regions)if(r.owner==='caesar'&&!['cisalpine','t005'].includes(r.id))r.owner='senate';
  s.regions.find(r=>r.id==='t005').owner='caesar';
  for(const id of ['cisalpine','t005'])s.regions.find(r=>r.id===id).food=0;
- const blocker=s.naval.fleets.find(f=>f.owner==='senate');blocker.zone=portZone('cisalpine');blocker.order={kind:'blockade',targetPort:'cisalpine',path:[]};
+ const blocker=s.naval.fleets.find(f=>f.owner==='senate');blocker.port=null;blocker.zone=portZone('cisalpine');blocker.order={kind:'blockade',targetPort:'cisalpine',path:[]};
  a.stance='hold';a.prepared=3;s.factions.caesar.treasury=0;
  assert.ok(armySupply(s,a)<.55);
  assert.ok(armySupply(s,{...a,region:'t005'})>armySupply(s,a)+.15);

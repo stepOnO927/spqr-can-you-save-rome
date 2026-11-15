@@ -1,5 +1,5 @@
 import {GRAND_ROUTES} from './grand-map-data.js';
-import {accessibleFleet,portZone} from './naval.js?v=39';
+import {accessibleFleet,isPortBlockaded} from './naval.js?v=41';
 import {activeEffects} from './development.js?v=38';
 
 const byId=s=>Object.fromEntries(s.regions.map(r=>[r.id,r]));
@@ -57,7 +57,7 @@ export function armySupply(s,unit){if(!s.grandMap)return 1;const site=s.regions.
  let base=!Number.isFinite(distance)?site.food>=1?.36:.18:Math.max(.38,Math.min(1,1-distance*.075+(site.food>=1?.08:0)+((site.buildings||[]).includes('supply-depot')?.2:0)));
  const established=supplyNetwork(s,unit.owner,true);
  if(!established.has(site.id)&&!(unit.siege&&grandAdjacent(site.id).some(e=>established.has(e.to))))base=Math.min(base,.68);
- const blockaded=site.port&&s.naval?.fleets?.some(f=>f.order?.kind==='blockade'&&f.order.targetPort===site.id&&f.zone===portZone(site.id)&&s.wars.some(w=>w.includes(f.owner)&&w.includes(unit.owner)));
+ const blockaded=site.port&&isPortBlockaded(s,site.id);
  return blockaded?Math.max(.18,Math.round(base*.7*100)/100):base;
 }
 export function encircled(s,unit){if(!s.grandMap)return false;const network=supplyNetwork(s,unit.owner);if(network.has(unit.region))return false;return !grandAdjacent(unit.region).some(e=>{const r=s.regions.find(x=>x.id===e.to);return r?.owner===unit.owner&&network.has(r.id)})}

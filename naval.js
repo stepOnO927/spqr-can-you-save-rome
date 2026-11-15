@@ -1,7 +1,7 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js';
-import {activeEffects,recordMerchantContact} from './development.js?v=38';
+import {activeEffects,localBuildingEffects,recordMerchantContact} from './development.js?v=40';
 import {officeOf} from './office-system.js';
-import {nationalBudget} from './national-budget.js?v=19';
+import {nationalBudget} from './national-budget.js?v=21';
 
 // Sea areas and costs are game-scale approximations of the 49 BCE Mediterranean.
 export const SEA_ZONES=[
@@ -45,6 +45,19 @@ export const fleetSpeed=f=>Math.max(1,Math.min(...Object.entries(f.ships).filter
 export const fleetUpkeep=f=>Object.entries(f.ships).reduce((n,[id,count])=>n+(SHIPS[id]?.upkeep||0)*count,0);
 export const fleetUpkeepDue=f=>(f.reserve&&f.port&&fleetUpkeep(f)>0?Math.max(1,Math.ceil(fleetUpkeep(f)*.15)):fleetUpkeep(f))+(f.commanderId?1:0);
 export function portZone(id){const s=site(id);if(!s)return null;if(['italiaS','illyricum','epirus'].includes(id))return 'adriatic';if(id==='egypt')return 'alexandrian';if(id==='sicilia')return 'sicilian';if(id==='t016'||s.macro==='roma')return 'tyrrhenian';if(s.macro==='cisalpine'&&s.lon>11)return 'adriatic';if(s.macro==='italiaN'&&s.lon>11)return 'adriatic';if(s.macro==='africa'||s.macro==='numidia'||s.macro==='mauretania')return 'african';if(s.macro==='achaia'||s.macro==='anatolia')return 'aegean';if(s.macro==='syria')return 'eastern';return SEA_ZONES.reduce((best,z)=>Math.hypot((s.lon-z.point[0])*Math.cos(s.lat*Math.PI/180),s.lat-z.point[1])<Math.hypot((s.lon-best.point[0])*Math.cos(s.lat*Math.PI/180),s.lat-best.point[1])?z:best).id}
+// Harbor works can resist a light close blockade, but cannot protect ships
+// elsewhere in the same broad sea zone. Only crewed warships on station count.
+export function isPortBlockaded(s,portId){
+ const port=s.regions.find(r=>r.id===portId);if(!port?.port)return false;
+ const defense=localBuildingEffects(port).navalDefense||0;
+ const power=(s.naval?.fleets||[]).filter(f=>f.order?.kind==='blockade'&&f.order.targetPort===portId&&f.zone===portZone(portId)&&!f.port&&!f.reserve&&!f.mobilizing&&f.hull>=20&&f.supply>=20&&atWar(s,f.owner,port.owner)).reduce((total,f)=>{
+  const warships=['light','trireme','quadrireme','quinquereme'],crew=warships.reduce((n,type)=>n+(f.ships[type]||0)*SHIPS[type].crew,0);
+  if(!crew||f.sailors<crew/2)return total;
+  const strength=warships.reduce((n,type)=>n+(f.ships[type]||0)*SHIPS[type].power,0);
+  return total+strength*Math.min(1,f.hull/50,f.sailors/crew);
+ },0);
+ return power>defense;
+}
 export function seaRoute(from,to){if(!byId[from]||!byId[to])return null;if(from===to)return [];const previous=new Map([[from,null]]),queue=[from];while(queue.length){const id=queue.shift();for(const next of byId[id].links){if(previous.has(next))continue;previous.set(next,id);if(next===to){const path=[];let at=to;while(at!==from){path.unshift(at);at=previous.get(at)}return path}queue.push(next)}}return null}
 const makeFleet=(id,name,owner,port,composition,commanderId=null)=>({id,name,owner,port,zone:portZone(port),commanderId,ships:{...composition},sailors:Object.entries(composition).reduce((n,[k,v])=>n+(SHIPS[k]?.crew||0)*v,0),morale:65,experience:18,supply:100,hull:100,tactic:'formation',order:null});
 const additionalRoutes=[
@@ -168,6 +181,7 @@ function advanceTradeVoyages(s,log){
    if(v.vesselOwner===s.player)log(s,'Pirates struck a merchant vessel and seized cargo.','海盗袭击商船并夺走货物。');continue;
   }
   if(v.path.length){tradeRecord(s,route,v.buyer,v.seller,'enroute',security,v.price,{cargo:v.cargo,zone:v.zone,eta:v.path.length});continue}
+  if(isPortBlockaded(s,v.to)){tradeRecord(s,route,v.buyer,v.seller,'blockade',0,v.price,{cargo:v.cargo,zone:v.zone});continue}
   const from=s.regions.find(r=>r.id===v.from),to=s.regions.find(r=>r.id===v.to),relations=s.relations?.[[v.buyer,v.seller].sort().join(':')]??0;
   const open=from?.owner===v.seller&&to?.owner===v.buyer&&!atWar(s,v.buyer,v.seller)&&relations>-40&&!route.pausedBy?.includes(v.buyer)&&!route.pausedBy?.includes(v.seller);
   const floor=tradeCashFloor(s,v.buyer,v.good),affordable=v.buyer===v.seller?v.cargo:Math.floor(Math.max(0,s.factions[v.buyer].treasury-floor)/v.price);
@@ -186,7 +200,7 @@ function dispatchTradeVoyage(s,route,log){
  if(!vessel&&n.voyages.some(v=>v.routeId===route.id&&v.phase==='outbound'))return;
  if(!vessel&&route.last?.year===s.year&&route.last?.month===s.month&&route.last.reason==='delivered')return;
  const price=tradeUnitPrice(s,route,zones,to.owner),{security,piracy,pirates,raiders}=tradeExposure(s,route,originZone,to.owner,from.owner);
- const block=n.fleets.some(f=>f.order?.kind==='blockade'&&[route.from,route.to].includes(f.order.targetPort)&&f.zone===portZone(f.order.targetPort)&&atWar(s,f.owner,s.regions.find(r=>r.id===f.order.targetPort)?.owner));
+ const block=isPortBlockaded(s,route.from)||isPortBlockaded(s,route.to);
  const relations=s.relations?.[[from.owner,to.owner].sort().join(':')]??0,need=tradeNeed(s,route,to.owner,from.owner),floor=tradeCashFloor(s,to.owner,route.good);
  const reason=route.pausedBy?.includes(from.owner)||route.pausedBy?.includes(to.owner)?'paused':block?'blockade':atWar(s,from.owner,to.owner)?'war':from.owner!==to.owner&&relations<=-40?'diplomacy':!need?'stocked':!vessel?'merchant':null;
  if(reason){tradeRecord(s,route,to.owner,from.owner,reason,block?0:security,price);return}
@@ -348,7 +362,7 @@ function finishMaritimeSupply(s,log){
    if(f.owner===s.player)log(s,'A maritime supply shipment was lost.','一批海运军需损失。');
    f.order=null;continue;
   }
-  const blockaded=s.naval.fleets.some(enemy=>enemy.owner!==f.owner&&atWar(s,f.owner,enemy.owner)&&enemy.order?.kind==='blockade'&&enemy.order.targetPort===target.id&&enemy.zone===portZone(target.id)&&ships(enemy)&&enemy.hull>0);
+  const blockaded=isPortBlockaded(s,target.id);
   if(blockaded){if(!order.blocked){order.blocked=true;report(s,{kind:'supply-blocked',owner:f.owner,port:target.id,cargo});if(f.owner===s.player)log(s,'A blockade kept supply ships outside the harbor.','封锁迫使补给舰停在港外。')}continue}
   const current=s.naval.provisions[target.id],stored=current?.owner===f.owner?current.food:0,carried=Math.min(cargo,carryingCapacity),delivered=Math.min(carried,Math.max(0,24-stored));
   if(carried<cargo)report(s,{kind:'supply-loss',owner:f.owner,port:target.id,cargo:cargo-carried,reason:'carrier lost'});
