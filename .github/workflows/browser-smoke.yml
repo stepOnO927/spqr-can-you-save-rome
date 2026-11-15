@@ -99,6 +99,7 @@ jobs:
               node tools/succession-ui-recovery-smoke.mjs
               node tools/newborn-age-smoke.mjs
               node tools/born-portraits-smoke.mjs
+              node tools/born-portraits-six-smoke.mjs
               node tools/inheritance-settlement-smoke.mjs
               node tools/satisfaction-map-smoke.mjs
               node tools/campaign-date-smoke.mjs

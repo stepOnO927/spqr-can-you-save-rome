@@ -13,15 +13,18 @@ test('a natural birth through the family simulation reserves a portrait',()=>{
   advanceDynasties(s);const id=mother.children.find(x=>s.world.characters[x]?.birthYear===s.year);
   if(id)found={s,id};
  }
- assert.ok(found,'a birth should occur for a suitable deterministic seed');found.s.year+=5;assert.match(fictionalPortraitKey(found.s,found.id),/^born-[mf][1234]-child$/);
+ assert.ok(found,'a birth should occur for a suitable deterministic seed');found.s.year+=5;assert.match(fictionalPortraitKey(found.s,found.id),/^born-[mf][123456]-child$/);
 });
 test('campaign-born children receive unique, persistent images at the appropriate life stage',()=>{
- let s=newGame('caesar');const ids=[child(s,'Boy one','male'),child(s,'Boy two','male'),child(s,'Girl one','female'),child(s,'Girl two','female'),child(s,'Boy three','male'),child(s,'Girl three','female'),child(s,'Boy four','male'),child(s,'Girl four','female'),child(s,'Extra boy','male')];
- const infants=ids.map(id=>fictionalPortraitKey(s,id));assert.equal(new Set(infants.slice(0,8)).size,8);assert.ok(infants.slice(0,8).every(x=>x.endsWith('-infant')));assert.equal(infants[8],null);
- s.year+=5;const portraits=ids.map(id=>fictionalPortraitKey(s,id));assert.equal(new Set(portraits.slice(0,8)).size,8);assert.equal(portraits[8],null);assert.ok(portraits.slice(0,8).every(x=>x.endsWith('-child')));
+ let s=newGame('caesar');const ids=Array.from({length:6},(_,i)=>[child(s,`Boy ${i}`,'male'),child(s,`Girl ${i}`,'female')]).flat(),extraBoy=child(s,'Extra boy','male'),extraGirl=child(s,'Extra girl','female');
+ const infants=ids.map(id=>fictionalPortraitKey(s,id));assert.equal(new Set(infants).size,12);assert.ok(infants.every(x=>x.endsWith('-infant')));assert.equal(fictionalPortraitKey(s,extraBoy),null);assert.equal(fictionalPortraitKey(s,extraGirl),null);
+ s.year+=5;const portraits=ids.map(id=>fictionalPortraitKey(s,id));assert.equal(new Set(portraits).size,12);assert.ok(portraits.every(x=>x.endsWith('-child')));
  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(ids.map(id=>fictionalPortraitKey(s,id)),portraits);
- s.year+=13;assert.equal(fictionalPortraitKey(s,ids[0]),portraits[0].replace('-child','-adult'));
+ s.year+=13;for(let i=0;i<ids.length;i++)assert.equal(fictionalPortraitKey(s,ids[i]),portraits[i].replace('-child','-adult'));
  s.world.characters[ids[0]].alive=false;s.world.characters[ids[0]].deathYear=s.year;const extra=child(s,'Another boy','male');s.year+=5;assert.equal(fictionalPortraitKey(s,extra),null,'a dead person’s portrait is never reused');
+});
+test('existing saves gain the fifth and sixth portraits without changing prior identities',()=>{
+ let s=newGame('caesar');const ids=Array.from({length:6},(_,i)=>child(s,`Girl ${i}`,'female'));delete s.world.dynasties.bornPortraitClaims[ids[4]];delete s.world.dynasties.bornPortraitClaims[ids[5]];s.world.dynasties.bornPortraitPoolVersion=3;const prior=structuredClone(s.world.dynasties.bornPortraitClaims);s=upgradeSave(structuredClone(s));s.year+=5;s.month=2;advanceDynasties(s);assert.equal(fictionalPortraitKey(s,ids[4]),'born-f5-child');assert.equal(fictionalPortraitKey(s,ids[5]),'born-f6-child');for(const id of ids.slice(0,4))assert.deepEqual(s.world.dynasties.bornPortraitClaims[id],prior[id]);
 });
 test('existing saves acquire new portraits only for recorded births without changing prior claims',()=>{
  let s=newGame('caesar');const ids=[child(s,'First','female'),child(s,'Second','female'),child(s,'Third','female')];
