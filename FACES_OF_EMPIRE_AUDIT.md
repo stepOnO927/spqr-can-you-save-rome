@@ -15,7 +15,16 @@ live inventories and foreign caravans. A unit test checks that boundary, and
 the Roman/Han market browser flow checks that an actual order creates a map
 marker immediately and that changing modes removes it. It remains an atlas
 view of the modeled markets, not a second trade engine. Wider foreign market
-intelligence and autonomous rerouting remain open.
+intelligence remains open.
+
+Both the Roman-linked and standalone Han market systems now try an open
+alternate route when a paid caravan encounters a closed leg. The merchant
+keeps the same cargo and shipment identity; the buyer prepays any extra travel
+and revised customs, or receives the difference when customs fall. No route
+or insufficient funds retains the existing blocked-caravan settlement. Saved
+reroute history, the Silk Road caravan display, and one-time delivery are
+covered by focused tests. This does not imply that trade networks can bypass
+every blockade.
 
 Actual hostile siege or occupation now halves local agricultural output in
 both campaigns. This affects monthly food or grain, measured market stock,

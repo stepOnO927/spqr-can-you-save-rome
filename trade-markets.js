@@ -275,6 +275,30 @@ function settleBlockedShipment(s,shipment){
  }
 }
 
+function rerouteBlockedShipment(s,shipment){
+ const leg=shipment.legs?.[shipment.leg];if(!leg||region(s,shipment.destination)?.owner!==shipment.buyer)return false;
+ const detour=routeFor(s,leg.from,shipment.destination,shipment.buyer,shipment.seller);
+ if(!detour?.legs.length)return false;
+ const prefix=shipment.route.slice(0,shipment.leg+1),route=[...prefix,...detour.path.slice(1)];
+ if(route.join('|')===shipment.route.join('|'))return false;
+ const owners=[...new Set(route.slice(1,-1).map(id=>node(s,id)?.owner).filter(owner=>owner&&owner!==shipment.seller&&owner!==shipment.buyer))];
+ const tariffs=owners.map(owner=>({owner,amount:Math.ceil(shipment.price*clamp(s.markets.tariffs[owner]??.05,0,.3))}));
+ const oldTariffs=shipment.tariffs.reduce((sum,t)=>sum+t.amount,0),newTariffs=tariffs.reduce((sum,t)=>sum+t.amount,0);
+ const oldMonths=shipment.legs.slice(shipment.leg).reduce((sum,item)=>sum+item.months,0);
+ const extraTransport=Math.ceil(Math.max(0,detour.cost-oldMonths)*shipment.quantity/5);
+ const additional=extraTransport+newTariffs-oldTariffs,buyer=s.factions[shipment.buyer];
+ if(!buyer||buyer.treasury<additional)return false;
+ buyer.treasury-=additional;shipment.escrow+=additional;shipment.transport+=extraTransport;shipment.tariffs=tariffs;
+ shipment.route=route;shipment.legs=[...shipment.legs.slice(0,shipment.leg),...detour.legs];shipment.remaining=detour.legs[0].months;
+ shipment.status='traveling';shipment.blockedAt=null;
+ (shipment.reroutes||=[]).push({at:month(s),from:leg.from,via:detour.path.slice(1),extraTransport,tariffChange:newTariffs-oldTariffs});
+ if(shipment.buyer===s.player||shipment.seller===s.player){
+  const place=tradeRouteName(s,leg.from);
+  s.log.unshift({year:s.year,month:s.month,en:`Caravan rerouted from ${place[0]}; additional transport ${extraTransport}¤, customs change ${newTariffs-oldTariffs}¤.`,zh:`商队从${place[1]}改道；新增运费${extraTransport}¤，关税变化${newTariffs-oldTariffs}¤。`});s.log=s.log.slice(0,80);
+ }
+ return true;
+}
+
 export function advanceMarkets(s){
  const markets=initializeMarkets(s),current=month(s);if(markets.lastTick===current)return markets;
  markets.lastTick=current;
@@ -290,11 +314,14 @@ export function advanceMarkets(s){
   item.price=marketPrice(markets.regions[r.id],good);
  }
  for(const shipment of markets.shipments.filter(x=>x.status==='traveling'||x.status==='blocked')){
-  const leg=shipment.legs[shipment.leg],next=node(s,leg?.to);
+  let leg=shipment.legs[shipment.leg],next=node(s,leg?.to);
   if(!leg||!next||!permitted(s,next.owner,shipment.buyer,shipment.seller,leg.network)||atWar(s,next.owner,shipment.buyer)||atWar(s,next.owner,shipment.seller)){
+   if(rerouteBlockedShipment(s,shipment)){leg=shipment.legs[shipment.leg];next=node(s,leg.to)}
+   else {
    shipment.status='blocked';shipment.blockedAt??=current;
    if(current-shipment.blockedAt>=12)settleBlockedShipment(s,shipment);
    continue;
+   }
   }
   shipment.status='traveling';shipment.blockedAt=null;shipment.remaining--;if(shipment.remaining>0)continue;
   shipment.leg++;

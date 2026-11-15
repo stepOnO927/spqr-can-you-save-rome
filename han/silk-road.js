@@ -63,7 +63,7 @@ function moveCaravans(s){
   if(c.shipmentId){
    const shipment=s.tradeMarkets?.shipments.find(x=>x.id===c.shipmentId);
    if(!shipment){c.status='turned_back';c.settledAt=monthIndex(s);continue}
-   c.pos=Math.min(shipment.leg,c.path.length-1);c.wait=shipment.remaining;
+   c.path=shipment.path;c.pos=Math.min(shipment.leg,c.path.length-1);c.wait=shipment.remaining;
    const here=s.regions.find(x=>x.id===c.path[c.pos]);
    if(here?.owner==='parthia'&&s.silk.contact.anxi.level==='hearsay')s.silk.contact.anxi={level:'trade',heardAt:monthIndex(s)};
    if(shipment.status==='delivered'){c.tolls=shipment.tariffs.reduce((sum,t)=>sum+t.amount,0);arrive(s,c)}

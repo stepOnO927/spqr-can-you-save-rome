@@ -149,6 +149,33 @@ test('border war blocks an actual shipment until passage is restored',()=>{
  assert.equal(shipment.status,'delivered');assert.equal(s.markets.transactions.length,1);
 });
 
+test('a caravan bypasses a closed transit border and settles the revised escrow once',()=>{
+ const s=newGame('senate');
+ for(const [a,b] of [['senate','parthia'],['senate','armenia'],['armenia','parthia']]){
+  s.relations[[a,b].sort().join(':')]=80;
+  assert.equal(proposeAgreement(s,a,b,'trade').ok,true);
+ }
+ const order={seller:'parthia',buyer:'senate',origin:'parthia',destination:'anatolia',commodity:'horses',quantity:2};
+ const placed=placeTradeOrder(s,order);assert.equal(placed.ok,true);
+ assert.deepEqual(placed.shipment.route,['parthia','armenia','anatolia']);
+ const cash=s.factions.senate.treasury,source=s.markets.regions.parthia.goods.horses;
+ source.production=0;source.consumption=0;
+ s.wars.push(['senate','armenia']);s.month++;advanceMarkets(s);
+ const rerouted=s.markets.shipments[0];
+ assert.deepEqual(rerouted.route,['parthia','syria','anatolia']);
+ assert.equal(rerouted.reroutes.length,1);assert.equal(rerouted.status,'traveling');
+ assert.deepEqual(rerouted.tariffs,[]);
+ assert.equal(s.factions.senate.treasury,cash+placed.quote.tariffs[0].amount-rerouted.reroutes[0].extraTransport);
+ assert.equal(rerouted.escrow,rerouted.price+rerouted.transport);
+ const loaded=upgradeSave(structuredClone(s)),shipment=loaded.markets.shipments[0];
+ for(let i=0;i<6&&shipment.status!=='delivered';i++){loaded.month++;advanceMarkets(loaded)}
+ assert.equal(shipment.status,'delivered');assert.equal(shipment.escrow,0);
+ assert.equal(loaded.markets.transactions.filter(x=>x.shipment===shipment.id).length,1);
+ assert.equal(loaded.factions.armenia.treasury,s.factions.armenia.treasury);
+ assert.equal(loaded.markets.transportSpent+loaded.markets.merchantFees,shipment.transport);
+ assert.equal(loaded.markets.regions.anatolia.goods.horses.stock>=2,true);
+});
+
 test('a year-long blocked caravan settles its stock and escrow once after save/load',()=>{
  const s=deal(),source=s.markets.regions.parthia.goods.horses;
  source.production=0;source.consumption=0;
@@ -186,7 +213,7 @@ test('orders reject unaffordable and missing-stock trades while using mapped Eur
  assert.equal(quoteTrade(han,{seller:'han',buyer:'parthia',origin:'hanGuanzhong',destination:'parthia',commodity:'silk',quantity:1}).ok,true);
 });
 
-test('Han silk travels through independent oasis and Central Asian markets, with war blocking its actual leg',()=>{
+test('Han silk bypasses a Central Asian war through a paid alternate corridor',()=>{
  const s=newGame('han');s.relations['han:parthia']=45;assert.equal(proposeAgreement(s,'han','parthia','trade').ok,true);
  const request={seller:'han',buyer:'parthia',origin:'hanGuanzhong',destination:'parthia',commodity:'silk',quantity:1};
  const quote=quoteTrade(s,request),sellerStock=s.markets.regions.hanGuanzhong.goods.silk.stock,buyerStock=s.markets.regions.parthia.goods.silk.stock,buyerCash=s.factions.parthia.treasury,sellerCash=s.factions.han.treasury,shanshanCash=s.factions.shanshan.treasury;
@@ -195,15 +222,17 @@ test('Han silk travels through independent oasis and Central Asian markets, with
  const shipment=placeTradeOrder(s,request).shipment;assert.equal(s.markets.regions.hanGuanzhong.goods.silk.stock,sellerStock-1);assert.equal(s.factions.parthia.treasury,buyerCash-quote.total);
  const saved=upgradeSave(structuredClone(s));saved.wars.push(['han','yuezhi']);
  const next=()=>{if(++saved.month>12){saved.month=1;saved.year++}advanceMarkets(saved)};
- for(let i=0;i<quote.months;i++){next();if(saved.markets.shipments[0].status==='blocked')break}
- assert.equal(saved.markets.shipments[0].status,'blocked');assert.equal(saved.markets.regions.parthia.goods.silk.stock,buyerStock);assert.equal(saved.markets.shipments[0].escrow,quote.total);
- saved.wars=saved.wars.filter(w=>!w.includes('yuezhi'));
- for(let i=0;i<quote.months+2&&saved.markets.shipments[0].status!=='delivered';i++)next();
+ for(let i=0;i<quote.months;i++){next();if(saved.markets.shipments[0].reroutes?.length)break}
+ assert.equal(saved.markets.shipments[0].reroutes?.length,1);
+ assert.equal(saved.markets.shipments[0].status,'traveling');
+ assert.equal(saved.markets.regions.parthia.goods.silk.stock,buyerStock);
+ assert.ok(!saved.markets.shipments[0].tariffs.some(x=>x.owner==='yuezhi'));
+ for(let i=0;i<60&&saved.markets.shipments[0].status!=='delivered';i++)next();
  assert.equal(saved.markets.shipments[0].status,'delivered');assert.equal(saved.markets.regions.parthia.goods.silk.stock,buyerStock+1);
  assert.equal(saved.factions.han.treasury,sellerCash+quote.price);
- assert.equal(saved.factions.shanshan.treasury,shanshanCash+quote.tariffs.find(x=>x.owner==='shanshan').amount);
- assert.equal(saved.markets.transitTreasury.yuezhi,quote.tariffs.find(x=>x.owner==='yuezhi').amount);
- assert.equal(saved.markets.transactions.length,1);assert.equal(saved.markets.transportSpent+saved.markets.merchantFees,quote.transport);
+ assert.equal(saved.factions.shanshan.treasury,shanshanCash+saved.markets.shipments[0].tariffs.find(x=>x.owner==='shanshan').amount);
+ assert.equal(saved.markets.transitTreasury.yuezhi||0,0);
+ assert.equal(saved.markets.transactions.length,1);assert.equal(saved.markets.transportSpent+saved.markets.merchantFees,saved.markets.shipments[0].transport);
  assert.equal(saved.markets.transactions[0].merchantId,saved.markets.shipments[0].merchantId);
  assert.equal(shipment.status,'traveling','serialized state advances independently');
 });

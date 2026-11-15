@@ -338,6 +338,31 @@ test('a closed route settles its escrow and goods after twelve months',()=>{
  assert.equal(s.tradeMarkets.transportSpent+s.tradeMarkets.merchantFees,s.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
 });
 
+test('an eastern caravan reroutes around a wartime transit state and pays the revised costs',()=>{
+ let s=newHanGame('han',{seed:49});s.tradeMarkets.embeddedRoman=true;
+ assert.equal(propose(s,'han','kangju','market').proposal.status,'accepted');
+ const order={seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1};
+ const placed=placeEasternTrade(s,order);assert.equal(placed.ok,true);
+ assert.deepEqual(placed.shipment.path,['kangju','wusun','qiuci','wulei','shanshan','dunhuang']);
+ const cash=s.factions.han.treasury,duty=placed.shipment.tariffs.find(x=>x.owner==='wusun').amount;
+ assert.equal(declareWar(s,'han','wusun').ok,true);
+ next(s);
+ const rerouted=s.tradeMarkets.shipments[0];
+ assert.deepEqual(rerouted.path.slice(0,3),['kangju','dayuan','shule']);
+ assert.equal(rerouted.reroutes.length,1);assert.equal(rerouted.status,'traveling');
+ assert.ok(!rerouted.tariffs.some(x=>x.owner==='wusun'));
+ assert.equal(s.factions.han.treasury,cash-rerouted.reroutes[0].extraTransport-rerouted.reroutes[0].tariffChange);
+ assert.equal(rerouted.escrow,rerouted.price+rerouted.transport+rerouted.tariffs.reduce((sum,t)=>sum+t.amount,0));
+ s=loadHanSave(serialize(s));const shipment=s.tradeMarkets.shipments[0];
+ for(let i=0;i<30&&shipment.status!=='delivered';i++)next(s);
+ assert.equal(shipment.status,'delivered');assert.equal(shipment.escrow,0);
+ assert.equal(s.tradeMarkets.transactions.filter(x=>x.shipment===shipment.id).length,1);
+ assert.equal(s.tradeMarkets.transitTreasury.wusun||0,0);
+ assert.equal(s.tradeMarkets.transportSpent+s.tradeMarkets.merchantFees,shipment.transport);
+ assert.equal(s.tradeMarkets.regions.dunhuang.goods.horses.stock>0,true);
+ assert.ok(duty>0);
+});
+
 test('an eastern merchant returns over time before serving the same origin again',()=>{
  let s=newHanGame('han',{seed:77});s.tradeMarkets.embeddedRoman=true;
  assert.equal(propose(s,'han','kangju','market').proposal.status,'accepted');

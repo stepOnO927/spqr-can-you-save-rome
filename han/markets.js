@@ -3,7 +3,7 @@ import {REGIONS,ROUTES} from './data.js?v=faces-reported-names-1';
 import {atWar,propose,relation,shiftRelation,treaty} from './frontier.js?v=faces-reported-names-1';
 import {legOpen,tradePath} from './silk-road.js?v=faces-reported-names-1';
 import {createMarketMerchant} from './field-identities.js';
-import {roll} from './util.js?v=faces-reported-names-1';
+import {roll,log} from './util.js?v=faces-reported-names-1';
 import {agriculturalDisruption,agriculturalProduction} from '../war-economy.js?v=faces-reported-names-1';
 
 const month=s=>s.year*12+s.month;
@@ -257,14 +257,43 @@ function publishOffers(s){
 
 export function easternMarketOffers(s){initializeEasternMarkets(s);return publishOffers(s)}
 
+function rerouteEasternShipment(s,shipment){
+ const leg=shipment.legs?.[shipment.leg],sponsor=shipment.sponsor||shipment.buyer;
+ if(!leg||atWar(s,sponsor,shipment.seller))return false;
+ const dest=region(s,shipment.destination);
+ if(shipment.buyer==='external'?dest?.owner!=null:dest?.owner!==shipment.buyer)return false;
+ const detour=tradePath(s,leg.from,shipment.destination,sponsor);
+ if(!detour||detour.length<2)return false;
+ const path=[...shipment.path.slice(0,shipment.leg+1),...detour.slice(1)];
+ if(path.join('|')===shipment.path.join('|'))return false;
+ const legs=legsFor(detour),oldMonths=shipment.legs.slice(shipment.leg).reduce((sum,item)=>sum+item.months,0);
+ const extraTransport=Math.ceil(Math.max(0,legs.reduce((sum,item)=>sum+item.months,0)-oldMonths)*shipment.quantity/5);
+ const tariffs=travelQuote(s,path,shipment.quantity,shipment.price,shipment.buyer,shipment.seller).tariffs;
+ const oldTariffs=shipment.tariffs.reduce((sum,item)=>sum+item.amount,0),newTariffs=tariffs.reduce((sum,item)=>sum+item.amount,0);
+ const additional=extraTransport+newTariffs-oldTariffs;
+ const cash=shipment.buyer==='external'?s.tradeMarkets.externalTreasury:s.factions[shipment.buyer]?.treasury;
+ if(cash==null||cash<additional)return false;
+ if(shipment.buyer==='external')s.tradeMarkets.externalTreasury-=additional;else s.factions[shipment.buyer].treasury-=additional;
+ shipment.escrow+=additional;shipment.transport+=extraTransport;shipment.tariffs=tariffs;
+ shipment.path=path;shipment.legs=[...shipment.legs.slice(0,shipment.leg),...legs];shipment.remaining=legs[0].months;
+ shipment.status='traveling';shipment.blockedAt=null;
+ (shipment.reroutes||=[]).push({at:month(s),from:leg.from,via:detour.slice(1),extraTransport,tariffChange:newTariffs-oldTariffs});
+ if(shipment.buyer===s.player||shipment.seller===s.player){const place=region(s,leg.from)?.name||[leg.from,leg.from];
+  log(s,[`Caravan rerouted from ${place[0]}; additional transport ${extraTransport}¤, customs change ${newTariffs-oldTariffs}¤.`,`商队从${place[1]}改道；新增运费${extraTransport}¤，关税变化${newTariffs-oldTariffs}¤。`],{kind:'trade',region:leg.from});}
+ return true;
+}
+
 function advanceShipments(s){
  const markets=s.tradeMarkets;
  for(const shipment of markets.shipments.filter(x=>['traveling','blocked'].includes(x.status))){
-  const leg=shipment.legs[shipment.leg];
+  let leg=shipment.legs[shipment.leg];
   if(!leg||!legOpen(s,leg.from,leg.to,shipment.sponsor||shipment.buyer).ok||atWar(s,shipment.sponsor||shipment.buyer,shipment.seller)){
+   if(rerouteEasternShipment(s,shipment))leg=shipment.legs[shipment.leg];
+   else {
    shipment.status='blocked';shipment.blockedAt??=month(s);
    if(month(s)-shipment.blockedAt>=12)settleStrandedShipment(s,shipment);
    continue;
+   }
   }
   shipment.status='traveling';shipment.blockedAt=null;shipment.remaining--;if(shipment.remaining>0)continue;
   const next=region(s,leg.to),guarded=s.armies.some(x=>x.region===leg.to&&x.owner===shipment.sponsor&&x.men>0)||next.fort>=2;
