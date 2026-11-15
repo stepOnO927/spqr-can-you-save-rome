@@ -88,7 +88,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A sealed aid reply can outlive the court that dispatched it; its arrival
   // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result','asylum_result','coalition_aid_result','family_marriage_result','family_accord_result','agent_release_request','inquiry_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result','asylum_result','coalition_aid_result','family_marriage_result','family_accord_result','agent_release_request','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
