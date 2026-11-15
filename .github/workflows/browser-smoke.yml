@@ -57,6 +57,7 @@ jobs:
             2)
               node tools/cursus-applicant-smoke.mjs
               node tools/han-court-smoke.mjs
+              node tools/genealogy-dossier-smoke.mjs
               node scripts/multipolar-sim.mjs > multipolar-simulation.json
               node tools/multipolar-smoke.mjs
               node tools/player-strategic-offer-smoke.mjs
