@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=asylum-reply-1';
-import {addReport} from '../character-system.js?v=asylum-reply-1';
+import {newGame,upgradeSave} from '../engine.js?v=family-reply-1';
+import {addReport} from '../character-system.js?v=family-reply-1';
 import {offerPoliticalContact,advancePoliticalContacts} from '../political-contacts.js?v=sighting-consumers-1';
 
 const seedFor=(f)=>Array.from({length:10000},(_,i)=>i).find(i=>{const a=(Math.imul(i,1664525)+1013904223)>>>0,b=(Math.imul(a,1664525)+1013904223)>>>0;return f(a/4294967296,b/4294967296)});

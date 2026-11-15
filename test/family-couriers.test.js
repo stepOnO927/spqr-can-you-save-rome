@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=asylum-reply-1';
-import {createFictionalPerson,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,advanceDynasties} from '../dynasties.js?v=asylum-reply-1';
-import {syncAsylumReplies,receivedMail} from '../epistulae.js?v=asylum-reply-1';
-import {mailboxHtml} from '../mail-ui.js?v=asylum-reply-1';
+import {newGame,upgradeSave} from '../engine.js?v=family-reply-1';
+import {createFictionalPerson,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,advanceDynasties} from '../dynasties.js?v=family-reply-1';
+import {syncAsylumReplies,syncFamilyReplies,receivedMail} from '../epistulae.js?v=family-reply-1';
+import {mailboxHtml} from '../mail-ui.js?v=family-reply-1';
 
 function scenario(kind,seed){
  const s=newGame('caesar');let request,person;
@@ -50,8 +50,23 @@ test('asylum replies distinguish acceptance, delivered refusal and no reply afte
  const accepted=outcomes.get('accepted');assert.equal(accepted.s.world.characters[accepted.person].asylumHost,'caesar');assert.equal(accepted.s.relations['caesar:egypt'],accepted.before-6);
 });
 
+for(const kind of ['marriage','pledge','wardship'])test(`${kind} delivers one inbox reply only when an answer arrives`,()=>{
+ const outcomes=new Set(),duration=kind==='marriage'?3:4;
+ for(let seed=1;seed<=150&&outcomes.size<3;seed++){
+  let {s,request}=scenario(kind,(seed*1000003)>>>0);
+  for(let i=0;i<duration-1;i++){s.month++;s.world.dynasties.seed=(seed*7000013)>>>0;advanceDynasties(s);syncFamilyReplies(s);assert.equal(request.status,'pending');assert.equal(receivedMail(s).filter(m=>m.context?.kind?.startsWith('family_')).length,0)}
+  s=upgradeSave(structuredClone(s));s.month++;s.world.dynasties.seed=(seed*7000013)>>>0;advanceDynasties(s);request=kind==='marriage'?s.world.dynasties.marriageOffers[0]:s.world.dynasties.familyAccords[0];syncFamilyReplies(s);syncFamilyReplies(s);outcomes.add(request.status);
+  const replies=receivedMail(s).filter(m=>m.context?.kind===(kind==='marriage'?'family_marriage_result':'family_accord_result'));assert.equal(replies.length,request.status==='no_reply'?0:1);if(replies.length){assert.equal(replies[0].sentDateKnown,false);assert.match(JSON.stringify(replies[0].body),/Cleopatra/);const saved=upgradeSave(structuredClone(s));syncFamilyReplies(saved);assert.equal(receivedMail(saved).filter(m=>m.context?.kind===replies[0].context.kind).length,1)}
+ }
+ assert.deepEqual(outcomes,new Set([kind==='marriage'?'accepted':'active','declined','no_reply']));
+});
+
+test('a marriage envoy cannot bind a person who has left the sending faction',()=>{
+ const {s,request,person}=scenario('marriage',1);s.world.characters[person].faction='senate';for(let i=0;i<3;i++){s.month++;advanceDynasties(s);syncFamilyReplies(s)}assert.equal(request.status,'no_reply');assert.equal(s.world.characters[person].spouse,null);assert.equal(receivedMail(s).some(m=>m.context?.kind==='family_marriage_result'),false);
+});
+
  test('family correspondence and life events retain reported names despite hidden changes and later reports',async()=>{
- const {addReport}=await import('../character-system.js?v=asylum-reply-1');
+ const {addReport}=await import('../character-system.js?v=family-reply-1');
  let accepted=false,declined=false;
  for(let seed=1;seed<100&&(!accepted||!declined);seed++){
   let s=newGame('caesar');const own=createFictionalPerson(s,{name:['Roman','罗马人'],faction:'caesar',birthYear:-80,sex:'male'}),foreign=createFictionalPerson(s,{name:['Reported name','报告姓名'],faction:'egypt',birthYear:-78,sex:'female'});
@@ -59,7 +74,7 @@ test('asylum replies distinguish acceptance, delivered refusal and no reply afte
   const result=offerForeignMarriage(s,own,foreign,'egypt');assert.equal(result.ok,true);assert.deepEqual(result.offer.reportedName,['Reported name','报告姓名']);assert.match(JSON.stringify(s.world.dynasties.lives[own]),/报告姓名/);assert.doesNotMatch(JSON.stringify(s.world.dynasties.lives[own]),/秘密姓名/);
   s=upgradeSave(structuredClone(s));const offer=s.world.dynasties.marriageOffers[0];offer.courierSeed=(seed*1000003)>>>0;s.month++;addReport(s,'caesar','egypt',{kind:'leaders',leaders:[foreign],source:'envoy',peopleNames:{[foreign]:['Later name','后续姓名']},observationYear:s.year,observationMonth:s.month});
   for(let i=0;i<3;i++){s.month++;s.world.dynasties.seed=(seed*1000003)>>>0;advanceDynasties(s)}
-  const text=JSON.stringify([s.world.dynasties.lives[own],s.log]);assert.doesNotMatch(text,/秘密姓名|后续姓名/);if(offer.status==='accepted'){accepted=true;assert.match(text,/报告姓名/);const {finalizeCampaign}=await import('../legacy.js?v=asylum-reply-1');s.victory=true;const archive=finalizeCampaign(s).archive;assert.deepEqual(archive.marriages[0].names[1],['Reported name','报告姓名']);assert.deepEqual(archive.marriageOffers[0].foreignName,['Reported name','报告姓名'])}if(offer.status==='declined'){declined=true;assert.match(text,/报告姓名/)}
+  const text=JSON.stringify([s.world.dynasties.lives[own],s.log]);assert.doesNotMatch(text,/秘密姓名|后续姓名/);if(offer.status==='accepted'){accepted=true;assert.match(text,/报告姓名/);const {finalizeCampaign}=await import('../legacy.js?v=family-reply-1');s.victory=true;const archive=finalizeCampaign(s).archive;assert.deepEqual(archive.marriages[0].names[1],['Reported name','报告姓名']);assert.deepEqual(archive.marriageOffers[0].foreignName,['Reported name','报告姓名'])}if(offer.status==='declined'){declined=true;assert.match(text,/报告姓名/)}
  }
  assert.ok(accepted,'some letters must be accepted');assert.ok(declined,'some letters must be declined');
 });
@@ -70,7 +85,7 @@ test('old family letters never reconstruct a missing fictional correspondent nam
 });
 
 test('wardship, family guarantees and asylum keep the named correspondent from dispatch',async()=>{
- const {addReport}=await import('../character-system.js?v=asylum-reply-1');let accepted=false;
+ const {addReport}=await import('../character-system.js?v=family-reply-1');let accepted=false;
  for(let seed=1;seed<100&&!accepted;seed++){
   let s=newGame('caesar');const ward=createFictionalPerson(s,{name:['Ward','受监护者'],faction:'caesar',birthYear:-57}),foreign=createFictionalPerson(s,{name:['Reported','已报告姓名'],faction:'egypt',birthYear:-75});s.world.claimants.egypt=[foreign];addReport(s,'caesar','egypt',{kind:'claimants',leaders:[foreign],source:'spy'});s.world.dynasties.catalog[foreign].name=['Secret','秘密姓名'];
   const asylum=requestClaimantAsylum(s,foreign,'egypt'),pledge=offerFamilyAccord(s,'pledge',foreign,'egypt'),wardship=offerFamilyAccord(s,'wardship',foreign,'egypt',ward);for(const item of [asylum.request,pledge.accord,wardship.accord])assert.deepEqual(item.reportedName,['Reported','已报告姓名']);
@@ -80,6 +95,6 @@ test('wardship, family guarantees and asylum keep the named correspondent from d
 });
 
 test('final archive preserves each letter name and leaves old unnamed correspondents anonymous',async()=>{
- const {addReport}=await import('../character-system.js?v=asylum-reply-1'),{finalizeCampaign}=await import('../legacy.js?v=asylum-reply-1');const s=newGame('caesar'),own=createFictionalPerson(s,{name:['Roman','罗马人'],faction:'caesar',birthYear:-80,sex:'male'}),foreign=createFictionalPerson(s,{name:['Reported','报告姓名'],faction:'egypt',birthYear:-78,sex:'female'});s.world.claimants.egypt=[foreign];addReport(s,'caesar','egypt',{kind:'claimants',leaders:[foreign],source:'spy'});s.world.dynasties.catalog[foreign].name=['Secret','秘密姓名'];assert.ok(offerForeignMarriage(s,own,foreign,'egypt').ok);assert.ok(offerFamilyAccord(s,'pledge',foreign,'egypt').ok);assert.ok(requestClaimantAsylum(s,foreign,'egypt').ok);s.world.dynasties.marriageOffers.push({...s.world.dynasties.marriageOffers[0],id:'old',reportedName:undefined});s.victory=true;
+ const {addReport}=await import('../character-system.js?v=family-reply-1'),{finalizeCampaign}=await import('../legacy.js?v=family-reply-1');const s=newGame('caesar'),own=createFictionalPerson(s,{name:['Roman','罗马人'],faction:'caesar',birthYear:-80,sex:'male'}),foreign=createFictionalPerson(s,{name:['Reported','报告姓名'],faction:'egypt',birthYear:-78,sex:'female'});s.world.claimants.egypt=[foreign];addReport(s,'caesar','egypt',{kind:'claimants',leaders:[foreign],source:'spy'});s.world.dynasties.catalog[foreign].name=['Secret','秘密姓名'];assert.ok(offerForeignMarriage(s,own,foreign,'egypt').ok);assert.ok(offerFamilyAccord(s,'pledge',foreign,'egypt').ok);assert.ok(requestClaimantAsylum(s,foreign,'egypt').ok);s.world.dynasties.marriageOffers.push({...s.world.dynasties.marriageOffers[0],id:'old',reportedName:undefined});s.victory=true;
  const archive=finalizeCampaign(s).archive;assert.deepEqual(archive.marriageOffers[0].foreignName,['Reported','报告姓名']);assert.deepEqual(archive.marriageOffers[1].foreignName,['Unrecorded name','姓名未记录']);assert.deepEqual(archive.familyAccords[0].contactName,['Reported','报告姓名']);assert.deepEqual(archive.asylumRequests[0].claimantName,['Reported','报告姓名']);
 });
