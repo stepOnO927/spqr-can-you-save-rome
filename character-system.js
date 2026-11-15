@@ -2,7 +2,7 @@ import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredRepo
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=succession-ui-recovery-1';
 import {settleInheritance,dynastyRoll} from './dynasties.js?v=conspiracy-name-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=conspiracy-name-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=regency-tenure-1';
 import {potentialConspirators} from './conspiracies.js?v=conspiracy-name-1';
 import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=conspiracy-name-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';

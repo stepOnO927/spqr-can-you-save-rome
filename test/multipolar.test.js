@@ -1,19 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=conspiracy-name-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=regency-tenure-1';
 import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=conspiracy-name-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
 import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=conspiracy-name-1';
 import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=conspiracy-name-1';
-import {renderChessboard} from '../chessboard-ui.js?v=conspiracy-name-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=conspiracy-name-1';
+import {buildChessboard} from '../chessboard.js?v=regency-tenure-1';
+import {renderChessboard} from '../chessboard-ui.js?v=regency-tenure-1';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=regency-tenure-1';
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=agreement-courier-1';
-import {advanceGovernments} from '../governance.js?v=conspiracy-name-1';
+import {advanceGovernments} from '../governance.js?v=regency-tenure-1';
 import {advanceMovements} from '../movements.js?v=conspiracy-name-1';
-import {newRevolutionScenario} from '../scenarios.js?v=conspiracy-name-1';
+import {newRevolutionScenario} from '../scenarios.js?v=regency-tenure-1';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
