@@ -7,6 +7,13 @@ const out=path.join(root,'dist');
 const entries=['index.html','map-lab/index.html','han/index.html'];
 const publicDocs=['map-lab/SOURCES.md','MAP_SOURCES.md','assets/portraits/SOURCES.md'];
 const selected=new Set();
+const limit=25*1024*1024;
+const vendor=new Map([
+  ['vendor/maplibre-gl.js','node_modules/maplibre-gl/dist/maplibre-gl.mjs'],
+  ['vendor/maplibre-gl-worker.js','node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs'],
+  ['vendor/maplibre-gl.css','node_modules/maplibre-gl/dist/maplibre-gl.css'],
+  ['vendor/LICENSE.txt','node_modules/maplibre-gl/LICENSE.txt']
+]);
 
 function add(relative){
   const clean=relative.replaceAll('\\','/').split('?')[0].split('#')[0];
@@ -42,11 +49,30 @@ for(const doc of publicDocs)add(doc);
 for(const name of fs.readdirSync(path.join(root,'assets/portraits'))){
   if(/-128\.jpg$/i.test(name))add(`assets/portraits/${name}`);
 }
+for(const name of vendor.keys())selected.add(name);
+if(selected.size>20000)throw Error('Cloudflare Pages Free plan file count exceeded');
+for(const relative of selected){
+  if(/(^|\/)(?:test|tests|tools|scripts|\.github|node_modules)\//.test(relative)||/(?:^|\/)\./.test(relative)||/\.(?:test|spec)\.[cm]?js$/.test(relative))throw Error(`Internal file selected: ${relative}`);
+  if(relative.endsWith('.md')&&!publicDocs.includes(relative))throw Error(`Internal document selected: ${relative}`);
+}
 
 fs.rmSync(out,{recursive:true,force:true});
+let total=0,largest=0;
 for(const relative of [...selected].sort()){
   const target=path.join(out,relative);
+  const source=path.join(root,vendor.get(relative)||relative);
+  let data=fs.readFileSync(source);
+  if(relative.endsWith('.html')){
+    let html=data.toString('utf8').replace(/(?:\s*<!-- Cloudflare Web Analytics -->)?\s*<script\b[^>]*\bsrc="https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js"[^>]*>\s*<\/script>(?:\s*<!-- End Cloudflare Web Analytics -->)?/g,'');
+    if(relative==='map-lab/index.html')html=html.replace('https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.css','../vendor/maplibre-gl.css').replace(/<script src="https:\/\/unpkg\.com\/maplibre-gl@5\.9\.0\/dist\/maplibre-gl\.js"><\/script><script type="module" src="([^"]+)"><\/script>/,(_,lab)=>`<script type="module">import * as maplibregl from "../vendor/maplibre-gl.js"; maplibregl.setWorkerUrl(new URL("../vendor/maplibre-gl-worker.js",location.href).href); window.maplibregl=maplibregl; await import("${lab}");</script>`);
+    if(html.includes('static.cloudflareinsights.com/beacon.min.js')||html.includes('unpkg.com/maplibre-gl@5.9.0'))throw Error(`Unconverted public dependency: ${relative}`);
+    data=Buffer.from(html);
+  }
+  if(relative==='map-lab/SOURCES.md')data=Buffer.from(data.toString('utf8').replace('MapLibre GL JS 5.9.0','MapLibre GL JS 6.18.0'));
+  if(relative==='vendor/maplibre-gl.js'||relative==='vendor/maplibre-gl-worker.js')data=Buffer.from(data.toString('utf8').replace(/\n\/\/# sourceMappingURL=.*$/m,''));
+  if(data.length>limit)throw Error(`${relative} exceeds Cloudflare Pages' 25 MiB static asset limit`);
   fs.mkdirSync(path.dirname(target),{recursive:true});
-  fs.copyFileSync(path.join(root,relative),target);
+  fs.writeFileSync(target,data);
+  total+=data.length;largest=Math.max(largest,data.length);
 }
-console.log(`Cloudflare Pages: ${selected.size} public files in dist/`);
+console.log(`Cloudflare Pages: ${selected.size} public files in dist/; ${(total/1048576).toFixed(2)} MiB total; largest ${(largest/1048576).toFixed(2)} MiB`);
