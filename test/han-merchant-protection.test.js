@@ -23,6 +23,11 @@ test('a raided merchant petitions the player; one paid escort changes the next r
  const poor=loadHanSave(serialize(s));poor.factions.han.treasury=MERCHANT_PROTECTION_COST-1;
  assert.equal(answerEasternMerchantProtection(poor,petition.id,'fund').reason,'treasury');
  assert.equal(poor.tradeMarkets.merchantProtectionRequests[0].status,'pending');
+ const defected=loadHanSave(serialize(s));defected.persons[lost.merchantId].faction='shanshan';
+ assert.equal(answerEasternMerchantProtection(defected,petition.id,'fund').reason,'invalid');
+ assert.equal(defected.tradeMarkets.courtEscortSpent,0,'a changed allegiance cannot use another court’s pledge');
+ const expired=loadHanSave(serialize(s));expired.year++;advanceEasternMarkets(expired);
+ assert.equal(expired.tradeMarkets.merchantProtectionRequests[0].status,'expired');
  const declined=loadHanSave(serialize(s)),cash=declined.factions.han.treasury;
  assert.equal(answerEasternMerchantProtection(declined,petition.id,'decline').ok,true);
  assert.equal(declined.factions.han.treasury,cash);assert.equal(answerEasternMerchantProtection(declined,petition.id,'fund').reason,'invalid');

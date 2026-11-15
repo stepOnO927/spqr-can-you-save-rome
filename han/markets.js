@@ -176,7 +176,7 @@ function settleMerchantProtection(s,request,decision){
   if(s.factions[request.faction].treasury<MERCHANT_PROTECTION_COST)return {ok:false,reason:'treasury'};
   s.factions[request.faction].treasury-=MERCHANT_PROTECTION_COST;
   markets.courtEscortSpent+=MERCHANT_PROTECTION_COST;
-  merchant.courtEscort={origin:request.origin,destination:request.destination,expiresAt:month(s)+12};
+  merchant.courtEscort={faction:request.faction,origin:request.origin,destination:request.destination,expiresAt:month(s)+12};
  }
  request.status=decision==='fund'?'funded':'declined';request.answeredAt=month(s);
  (merchant.history||=[]).push({year:s.year,month:s.month,kind:'protection_request',decision,route:[request.origin,request.destination]});
@@ -185,7 +185,7 @@ function settleMerchantProtection(s,request,decision){
 
 export function answerEasternMerchantProtection(s,id,decision){
  const markets=initializeEasternMarkets(s),request=markets.merchantProtectionRequests.find(x=>x.id===id&&x.status==='pending');
- if(s.finalized||!request||request.faction!==s.player||!['fund','decline'].includes(decision)||!s.persons[request.merchantId]?.alive)return {ok:false,reason:'invalid'};
+ if(s.finalized||!request||request.faction!==s.player||!['fund','decline'].includes(decision)||!s.persons[request.merchantId]?.alive||s.persons[request.merchantId].faction!==request.faction)return {ok:false,reason:'invalid'};
  return settleMerchantProtection(s,request,decision);
 }
 
@@ -237,7 +237,7 @@ export function placeEasternTrade(s,request){
  const merchant=s.persons[merchantId],riskMemory=merchant?.marketLossRoutes?.[merchantRouteKey(request.origin,request.destination)]||0;
  const merchantEscortCost=merchant?.alive&&riskMemory>0&&(merchant.riskTolerance??50)<=60&&(merchant.wealth||0)>=2?2:0;
  if(merchantEscortCost){merchant.wealth-=merchantEscortCost;markets.merchantEscortSpent+=merchantEscortCost}
- const guard=merchant?.courtEscort,courtEscort=!!(guard&&guard.origin===request.origin&&guard.destination===request.destination&&guard.expiresAt>month(s));
+ const guard=merchant?.courtEscort,courtEscort=!!(guard&&guard.faction===(external?request.seller:request.buyer)&&guard.origin===request.origin&&guard.destination===request.destination&&guard.expiresAt>month(s));
  if(courtEscort)delete merchant.courtEscort;
  const shipment={id:`eastern-shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,sponsor:external?request.seller:request.buyer,merchantId,merchantExperience:quote.merchantExperience,merchantEscortCost,courtEscort,saleOrderId:request.saleOrderId||null,contractId:request.contractId||null,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,path:quote.path,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month,...(observation?{marketObservation:observation}:{})};
  if(merchantEscortCost)(merchant.history||=[]).push({year:s.year,month:s.month,kind:'funded_escort',shipment:shipment.id,cost:merchantEscortCost});
@@ -374,7 +374,7 @@ function settleLostShipment(s,shipment,location){
  markets.transportSpent+=shipment.transport-fee;markets.merchantFees+=fee;
  shipment.escrow=0;shipment.status='lost';shipment.lostAt=month(s);shipment.lostNear=location;
  const sponsor=shipment.sponsor;
- if(merchant?.alive&&s.factions[sponsor]&&!(sponsor==='han'&&s.player!=='han')&&!markets.merchantProtectionRequests.some(x=>x.status==='pending'&&x.merchantId===merchant.id&&x.origin===shipment.origin&&x.destination===shipment.destination)){
+ if(merchant?.alive&&merchant.faction===sponsor&&s.factions[sponsor]&&!(sponsor==='han'&&s.player!=='han')&&!markets.merchantProtectionRequests.some(x=>x.status==='pending'&&x.merchantId===merchant.id&&x.origin===shipment.origin&&x.destination===shipment.destination)){
   const request={id:`eastern-protection:${markets.nextProtectionRequest++}`,merchantId:merchant.id,faction:sponsor,origin:shipment.origin,destination:shipment.destination,shipmentId:shipment.id,createdAt:month(s),status:'pending'};
   markets.merchantProtectionRequests.push(request);
   if(sponsor!==s.player){const worthwhile=shipment.quantity*COMMODITIES[shipment.commodity].basePrice>=MERCHANT_PROTECTION_COST,funded=worthwhile&&s.factions[sponsor].treasury>=120+MERCHANT_PROTECTION_COST;settleMerchantProtection(s,request,funded?'fund':'decline')}
@@ -510,7 +510,7 @@ export function advanceHanMilitarySupply(s){
 export function advanceEasternMarkets(s){
  const markets=initializeEasternMarkets(s),now=month(s);if(markets.lastTick===now)return markets;
  markets.lastTick=now;
- for(const request of markets.merchantProtectionRequests)if(request.status==='pending'&&now-request.createdAt>=12){request.status='expired';request.answeredAt=now}
+ for(const request of markets.merchantProtectionRequests)if(request.status==='pending'&&(now-request.createdAt>=12||!s.persons[request.merchantId]?.alive||s.persons[request.merchantId].faction!==request.faction)){request.status='expired';request.answeredAt=now}
  markets.merchantProtectionRequests=markets.merchantProtectionRequests.filter(request=>request.status==='pending'||now-(request.answeredAt??request.createdAt)<24);
  for(const sale of markets.saleOrders)if(sale.status==='open'&&region(s,sale.origin)?.owner!==sale.seller){markets.regions[sale.origin].goods[sale.commodity].stock+=sale.available;sale.available=0;sale.status='seized'}
  advanceMerchantReturns(s,now);
