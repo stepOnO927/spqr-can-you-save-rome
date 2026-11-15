@@ -166,7 +166,7 @@ export function advanceGovernments(s,{autoplayPlayer=false}={}){
   const after=deriveGovernment(s,faction);s.world.governments[faction]=after;
   if(after.kind==='regency'&&after.acting.length){
    const regent=s.world.characters[after.acting[0]],ward=after.nominal[0],previous=s.world.regencies[faction];
-   const tenure=previous?.regent===regent.id&&previous.ward===ward?previous:{regent:regent.id,ward,months:0,startedYear:s.year,startedMonth:s.month};
+   const tenure=previous?.endedYear==null&&previous?.regent===regent.id&&previous.ward===ward?previous:{regent:regent.id,ward,months:0,startedYear:s.year,startedMonth:s.month};
    tenure.months++;s.world.regencies[faction]=tenure;
    if(tenure.months%3===0){regent.influence=Math.min(100,(regent.influence??20)+1);regent.ambition=Math.min(100,(regent.ambition??30)+1)}
    if((['egypt','parthia'].includes(faction)||['roman_principate','later_empire'].includes(successionModel(faction,s)))&&personAge(s,ward)!==null&&personAge(s,ward)<16&&tenure.months>=6&&(regent.ambition??0)>=75&&s.factions[faction].stability<35&&dynastyRoll(s)<.12){
@@ -174,7 +174,7 @@ export function advanceGovernments(s,{autoplayPlayer=false}={}){
     s.world.disputes[faction]||={months:0,support:{}};s.world.disputes[faction].support||={};s.world.disputes[faction].support[regent.id]=Math.max(30,s.world.disputes[faction].support[regent.id]||0);
     if(startDynasticWar(s,faction,regent.id)){tenure.usurpation=true;if(faction===s.player)s.log.unshift({year:s.year,month:s.month,en:'The regent raised a rival court and seized a province with an army.',zh:'摄政者另立宫廷，率军夺取一处行省。'})}
    }
-  }else if(s.world.regencies[faction]&&!s.world.regencies[faction].endedYear){s.world.regencies[faction].endedYear=s.year;s.world.regencies[faction].endedMonth=s.month}
+  }else if(s.world.regencies[faction]&&s.world.regencies[faction].endedYear==null){s.world.regencies[faction].endedYear=s.year;s.world.regencies[faction].endedMonth=s.month}
   for(const id of after.nominal.filter(id=>!before.nominal.includes(id)))recordLifeEvent(s,id,`Assumed political leadership of ${FACTIONS[faction]?.short[0]||faction} in the simulation.`,`在模拟中成为${FACTIONS[faction]?.short[1]||faction}的政治领袖。`);
   // NPC preparations are internal game state, not an announcement to the player.
   if((autoplayPlayer||faction!==s.player)&&s.month%6===0){

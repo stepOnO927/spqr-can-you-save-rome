@@ -7,6 +7,8 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | New campaign, difficulty, tutorial and save/load | Opening setup | `tools/onboarding-smoke.mjs` |
 | Roman elections and change of office | Terrain map → Factions → Roman faction → Government tree | `tools/election-results-smoke.mjs` supports a candidate, advances the consul, praetor and quaestor elections, checks selected-office results and the quaestor's next term, and saves/reloads; other offices and outcomes remain to be checked |
 | Incoming captured-agent requests | Terrain map → Mail → received request | `tools/agent-release-mail-smoke.mjs` checks arrival, response, delayed handover and save/load; `test/agent-release-mail.test.js` covers loss, refusal, ignoring, repeat requests and the security-panel path |
+| Conspiracy report identity | Terrain map → own faction → internal security | `tools/conspiracy-name-smoke.mjs` checks separately recorded names, legacy reports, undelivered reports and save/load; allegations remain unverified |
+| Regency after renewed illness | Terrain map → own faction → government | `tools/regency-tenure-smoke.mjs` checks a new regency, advancing time and save/load; `test/regency-tenure.test.js` also covers end dates and undisclosed foreign regencies |
 | Short landscape Roman campaign | Opening setup and campaign controls at 640×360, 836×470 and 1031×580 | `tools/short-screen-smoke.mjs` checks visible faction and difficulty, touch start, advance, government access and save |
 | Army inspection, marches, battles and AI turns | Terrain map → army | `tools/phase-v-smoke.mjs`, `tools/browser-smoke.mjs` |
 | Recruitment | Terrain map → owned city → manage theater | `tools/systems-smoke.mjs` |

@@ -6,20 +6,20 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `c0a17c33`. The newer report-delivery
+The draft now includes main through `e8954004`. The newer report-delivery
 checks are reconciled in planning, battle estimates, faction views, national
 focus and legion design; the added unit and browser regressions pass. Its
 Roman trade routes now reuse a static adjacency index and look up campaign
 regions directly during pathfinding, reducing repeated market-AI route work.
 Roman and Han market prices are each recalculated once per monthly production
-pass, after raw-to-finished manufacturing. The full 1,163-test suite passes
+pass, after raw-to-finished manufacturing. The full 1,168-test suite passes
 locally with concurrent execution. The older NPC Han timing check sometimes
 measured 26–32 CPU ms of added work after the two manufactured military goods
 were introduced; its ceiling is now 40 ms, still under 8% of the shortest
 500 ms automatic turn interval. Eight isolated repeats pass. The previous
-GitHub head passed quality, browser and Pages checks; its Poki check failed
-only on a 254.9 ms outlier in the separate 250 ms all-AI monthly timing gate.
-The route optimization is awaiting CI verification for that gate. Main's
+GitHub head `9dcbd696` passed quality, all three browser jobs, Pages and Poki
+checks. Later pushed heads have not produced reported workflow runs yet;
+their local tests remain separate evidence. Main's
 mission-result inbox is also integrated: received operations appear once as
 saved correspondence, while pending or unanswered missions remain absent.
 Its unit cases and Chromium inbox flow pass after restoring the shared module
@@ -697,6 +697,12 @@ each January. The action, risk difference, bilingual panel and save reload
 have unit and Chromium coverage. The old route-protection API accepted a
 negative charge and could add money; it now rejects nonstandard amounts,
 unfunded orders, non-Han players and purchases above the cap.
+Main's later conspiracy report fix now keeps the name actually recorded at
+the report date in the security panel, including after save/load; future and
+unnamed reports cannot borrow a hidden later identity. The regency tenure
+fix also restarts its counter when the same ward and regent enter a new spell,
+including an ended spell recorded in 1 CE. The five new unit checks and both
+Chromium scenarios pass with the expansion's shared module imports.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,
