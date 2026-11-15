@@ -139,3 +139,5 @@
 .leader-map-label.is-compact small{display:none}
 .leader-map-label::after{content:'';position:absolute;left:50%;top:100%;width:var(--leader-link-length,0px);height:1px;background:#d8c68fa8;transform-origin:left center;transform:rotate(var(--leader-link-angle,0rad));pointer-events:none}
 .leader-overview .army::after{content:'';position:absolute;left:50%;top:100%;width:var(--army-link-length,0px);height:1px;background:#d8c68fa8;transform-origin:left center;transform:rotate(var(--army-link-angle,0rad));pointer-events:none}
+.leader-overview .city-marker.is-compact .name{display:none}
+.leader-overview .city-marker.major::after{content:'';position:absolute;left:0;top:50%;width:var(--city-link-length,0px);height:1px;background:#d8c68fa8;transform-origin:left center;transform:rotate(var(--city-link-angle,0rad));pointer-events:none}

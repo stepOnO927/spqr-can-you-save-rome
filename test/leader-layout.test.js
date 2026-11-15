@@ -16,3 +16,6 @@ test('crowded layouts fall back safely and restore full names when space returns
 test('a narrow available space keeps the faction name when only its compact label fits',()=>{
  const result=placeLeaderLabels([label('a',100,60)],[],{left:60,top:0,right:140,bottom:120})[0];assert.equal(result.hidden,false);assert.equal(result.compact,true);assert.ok(result.box.left>=60&&result.box.right<=140);
 });
+test('city labels use their left-hand geographic anchor and avoid nearby cities',()=>{
+ const cities=[{...label('rome',300,200),anchor:'left'},{...label('ravenna',310,205),anchor:'left'}],result=placeLeaderLabels(cities,[],bounds);assert.equal(result.filter(x=>!x.hidden).length,2);assert.equal(result[0].box.left,300);assert.equal(result[0].box.top,181);assert.ok(!overlap(result[0].box,result[1].box));
+});
