@@ -60,3 +60,6 @@
 
 /* Routes explain geography but do not consume territory touch input. */
 #map .routes,#map .routes *{pointer-events:none}
+
+/* Rivers are visual context and must not intercept territory taps. */
+#map .river,#map .river *{pointer-events:none}

@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#1b211f" />
   <title>SPQR — Can You Save Rome?</title>
-  <link rel="stylesheet" href="./style.css?v=poki-landscape-1" />
+  <link rel="stylesheet" href="./style.css?v=inspector-touch-1" />
   <link rel="stylesheet" href="./mail.css?v=gathering-delegate-1" />
   <link rel="stylesheet" href="./imperium.css?v=imperium-1" />
-  <link rel="stylesheet" href="./han/han-map.css?v=han-2" />
+  <link rel="stylesheet" href="./han/han-map.css?v=inspector-touch-1" />
   <link rel="stylesheet" href="./experience.css?v=hundred-days-1" />
 </head>
 <body>
-  <div id="app"></div>
-  <script type="module" src="./app.js?v=player-aid-poki-1"></script>
+  <div id="app"><p id="boot-status" role="status">Loading SPQR…</p></div>
+  <script>setTimeout(()=>{const el=document.getElementById("boot-status");if(el)el.textContent=navigator.language.startsWith("zh")?"游戏未能启动，请刷新页面；存档不会自动重置。":"The game could not start. Refresh the page; your save has not been reset."},12000)</script>
+  <script type="module" src="./app.js?v=inspector-1"></script>
   <!-- Cloudflare Web Analytics -->
   <script
     defer

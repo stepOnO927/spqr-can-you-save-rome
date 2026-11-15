@@ -1,4 +1,5 @@
 import {localStore as localStorage,sessionStore as sessionStorage} from './safe-storage.js';
+import {startupDiagnostics} from './inspector-diagnostics.js';
 import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
 import {stageHandoff,receiveHandoff} from './view-handoff.js?v=succession-ui-recovery-1';
 import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=portraits-hundred-days-1';
@@ -301,5 +302,11 @@ function bind(){
   let drag=null;svg.onpointerdown=e=>{if(e.target.closest('[data-map-group],[data-army]'))return;drag={x:e.clientX,y:e.clientY,v:[...view]};svg.setPointerCapture(e.pointerId)};svg.onpointermove=e=>{if(!drag)return;const box=svg.getBoundingClientRect();view[0]=Math.max(0,Math.min(1200-view[2],drag.v[0]-(e.clientX-drag.x)*view[2]/box.width));view[1]=Math.max(0,Math.min(650-view[3],drag.v[1]-(e.clientY-drag.y)*view[3]/box.height));svg.setAttribute('viewBox',view.join(' '))};svg.onpointerup=()=>{drag=null};}
   bindImperium({state,lang,render,flash,log:imperiumLog});
 }
-render();
-
+const startupReport=startupDiagnostics(state);
+if(startupReport.fatal.length){
+ const message=lang==='zh'?'战役数据无法安全读取。请保留存档并联系开发者。':'Campaign data could not be read safely. Keep your save and contact the developer.';
+ document.getElementById('app').innerHTML=`<main class="startup-error" role="alert"><h1>SPQR</h1><p>${message}</p><small>${startupReport.fatal.map(f=>esc(f.code+': '+f.path)).join('<br>')}</small></main>`;
+}else{
+ if(startupReport.warnings.length)toast=lang==='zh'?'发现可恢复的存档异常；可继续游玩。':'A recoverable save issue was found; you can keep playing.';
+ render();
+}
