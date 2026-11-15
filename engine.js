@@ -52,6 +52,8 @@ import {advanceVillages,migrateVillageRecords,villageProjectQuote,startVillagePr
 import {planRoutes} from './route-planner.js';
 import {titleAssetQuote,settleTitleByTreaty} from './peace-titles.js';
 import {advanceLocalResistance} from './local-resistance.js';
+import {advanceNomadicCommunities} from './nomadic-communities.js';
+import {advanceWildernessSurveys} from './frontier-wilderness.js';
 export {queueMission};
 export {personalDiplomaticCredit};
 export {replyToLetter};
@@ -739,9 +741,10 @@ export function aiClaimantChoice(s,actor,target){
 function aiTurn(s,owner,{autoplayPlayer=false}={}){
   const occupation=s.regions.find(r=>r.owner===owner&&r.administrativeStatus==='occupied'&&s.factions[owner]?.treasury>=45&&administrationQuote(s,r.id,owner).ok);
   if(occupation)startAdministration(s,occupation.id,owner);
-  const autonomous=s.regions.flatMap(r=>r.localEntities||[]).filter(entity=>['city_state','tribe','microstate','strongman'].includes(entity.type)).sort((a,b)=>Number(s.regions.find(r=>r.id===b.theater)?.owner===owner)-Number(s.regions.find(r=>r.id===a.theater)?.owner===owner)||Number(b.type==='city_state')-Number(a.type==='city_state')||a.id.localeCompare(b.id));
+  const autonomous=s.regions.flatMap(r=>r.localEntities||[]).filter(entity=>['city_state','tribe','microstate','strongman','nomadic'].includes(entity.type)).sort((a,b)=>Number(s.regions.find(r=>r.id===b.theater)?.owner===owner)-Number(s.regions.find(r=>r.id===a.theater)?.owner===owner)||Number(b.type==='city_state')-Number(a.type==='city_state')||a.id.localeCompare(b.id));
   if(owner!=='rebels'&&s.month%6===2){const contact=autonomous.find(entity=>localContactQuote(s,entity.id,owner,'access').ok);if(contact)offerLocalContact(s,contact.id,owner,'access')}
   if(owner!=='rebels'&&s.month%6===4&&s.factions[owner]?.treasury>=20){const chief=autonomous.find(entity=>entity.type==='strongman'&&localContactQuote(s,entity.id,owner,'service').ok);if(chief)offerLocalContact(s,chief.id,owner,'service')}
+  if(owner!=='rebels'&&['hard','expert'].includes(s.difficulty)&&s.month%6===4&&s.factions[owner]?.treasury>=20){const camp=autonomous.find(entity=>entity.type==='nomadic'&&localContactQuote(s,entity.id,owner,'pasture').ok);if(camp)offerLocalContact(s,camp.id,owner,'pasture')}
   if(owner!=='rebels'&&s.month%6===2&&s.factions[owner]?.treasury>=16&&s.wars.filter(war=>war.includes(owner)).length<=1){const village=s.regions.flatMap(r=>r.localEntities||[]).find(entity=>entity.type==='village'&&villageProjectQuote(s,entity.id,entity.village?.granary<1?'granary':'irrigation',owner).ok);if(village)startVillageProject(s,village.id,village.village.granary<1?'granary':'irrigation',owner)}
   if(owner!=='rebels'&&s.month%6===5){const refused=autonomous.find(entity=>entity.lastOutcome?.actor===owner&&entity.lastOutcome.proposal==='access'&&!entity.lastOutcome.accepted&&!entity.pending&&!entity.siege&&s.armies.some(a=>a.owner===owner&&a.region===entity.theater&&localSiegeQuote(s,entity.id,a.id,owner).ok));if(refused){const army=s.armies.find(a=>a.owner===owner&&a.region===refused.theater&&localSiegeQuote(s,refused.id,a.id,owner).ok);besiegeLocalEntity(s,refused.id,army.id,owner)}}
   if(s.factions[owner]?.treasury>=35){const occupied=autonomous.find(entity=>entity.controller===owner&&localAdministrationQuote(s,entity.id,owner).ok);if(occupied)startLocalAdministration(s,occupied.id,owner)}
@@ -995,6 +998,8 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   }
   advanceTerritories(s);
   advanceLocalEntities(s);
+  advanceNomadicCommunities(s);
+  for(const survey of advanceWildernessSurveys(s))if(survey.actor===s.player){const place=localEntity(s,survey.id);log(s,`${place.name[0]} was surveyed; a limited outpost may now be possible where supply and local authority permit.`,`${place.name[1]}勘察完成；补给与地方权利允许时可建立有限前哨。`)}
   advanceVillages(s);
   for(const event of advanceLocalResistance(s))if([event.prior,event.claimant].includes(s.player)){const place=localEntity(s,event.id);log(s,place.type==='strongman'?`${place.name[0]} restored personal control after its occupier lost local security.`:`${place.name[0]} returned to its former legal authority after losing local security.`,place.type==='strongman'?`${place.name[1]}在占领者失去地方控制后恢复个人势力。`:`${place.name[1]}失去驻军与联络后回归原法理归属方。`)}
   advanceFootholds(s);

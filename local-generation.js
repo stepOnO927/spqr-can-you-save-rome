@@ -8,6 +8,22 @@ export const LOCAL_GENERATION_BANDS=Object.freeze({
  expert:{count:[8,9],population:1.5,militia:[.14,.2],wealth:1.5,skill:[4,5]}
 });
 
+export const NOMADIC_GENERATION_BANDS=Object.freeze({travel:[0,0],beginner:[0,1],standard:[1,1],hard:[1,2],expert:[2,2]});
+export const NOMADIC_RANGES=Object.freeze([
+ {id:'western-pasture',camps:[{theater:'numidia',coordinates:[6.5,34.2]},{theater:'mauretania',coordinates:[2.1,35.0]}]},
+ {id:'nile-fringe',camps:[{theater:'egypt',coordinates:[29.5,28.5]},{theater:'egyptUpper',coordinates:[32.4,25.1]}]},
+ {id:'iranian-upland',camps:[{theater:'parthia',coordinates:[48.8,33.8]},{theater:'media',coordinates:[46.3,35.3]}]},
+ {id:'anatolian-pasture',camps:[{theater:'galatia',coordinates:[31.1,38.6]},{theater:'armenia',coordinates:[42.0,39.4]}]}
+]);
+export const WILDERNESS_SITES=Object.freeze([
+ {theater:'gaul',coordinates:[2.4,47.5],kind:'forest_interior',passability:'difficult',settlement:'limited',occupancy:'sparse'},
+ {theater:'illyricum',coordinates:[17.2,44.4],kind:'highland_valley',passability:'seasonal',settlement:'limited',occupancy:'seasonal'},
+ {theater:'hispaniaN',coordinates:[-2.4,42.2],kind:'remote_hills',passability:'difficult',settlement:'limited',occupancy:'sparse'},
+ {theater:'syria',coordinates:[37.3,34.8],kind:'dry_frontier',passability:'seasonal',settlement:'camp_only',occupancy:'seasonal'},
+ {theater:'egyptUpper',coordinates:[31.5,24.5],kind:'desert_margin',passability:'seasonal',settlement:'camp_only',occupancy:'unknown'},
+ {theater:'media',coordinates:[48.1,35.8],kind:'mountain_barrier',passability:'impassable',settlement:'none',occupancy:'unknown'}
+]);
+
 export const LOCAL_GENERATION_SITES=Object.freeze([
  {theater:'narbo',type:'city_state',coordinates:[3.1,43.2],scale:.9},
  {theater:'sicilia',type:'city_state',coordinates:[14.3,37.7],scale:1},
@@ -52,6 +68,9 @@ const RULER_NAMES=Object.freeze([
  ['Oryon','奥里翁'],['Pheron','菲隆'],['Rovena','罗薇娜'],['Salyra','萨莉拉'],['Taron','塔隆'],
  ['Velira','维莉拉'],['Xeron','泽隆'],['Ylena','伊蕾娜'],['Zareon','扎雷翁'],['Mirena','米蕾娜']
 ]);
+const NOMAD_TITLES=Object.freeze([['Pastoral Camp','牧营'],['Seasonal Encampment','季节营地'],['Herding Band','游牧群体'],['Range Council','牧地议事群']]);
+const WILDERNESS_NAMES=Object.freeze([['Remote Tract','偏远地带'],['Interior Reach','内陆荒地'],['Outer Range','边缘地带'],['Sparse Corridor','稀疏走廊'],['Wild Margin','荒野边缘'],['High Frontier','高地边疆']]);
+const WILDERNESS_KINDS=Object.freeze({forest_interior:['Forest Interior','森林腹地'],highland_valley:['Highland Valley','高地山谷'],remote_hills:['Remote Hills','偏远丘陵'],dry_frontier:['Dry Frontier','干旱边疆'],desert_margin:['Desert Margin','沙漠边缘'],mountain_barrier:['Mountain Barrier','山地屏障']});
 const RULER_TITLES=Object.freeze({city_state:['Archon','执政官'],microstate:['Ruler','地方君主'],tribe:['Elder','长老'],strongman:['Chief','地方首领']});
 const PERSONALITIES=Object.freeze(['cautious','pragmatic','bold','ambitious']);
 const BASE=Object.freeze({city_state:[6000,13000,1.25,1.1],microstate:[8000,17000,1.1,1],tribe:[4500,11000,.75,1.2],strongman:[1200,4200,.7,1.1]});
@@ -95,6 +114,41 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters,startYe
    maxFootholdLevel:site.type==='strongman'?2:site.type==='tribe'?2:3,...profile(rng,site.type,site.scale,band),seed:integer(rng,0,0xffffffff)});
  }
  return result;
+}
+
+export function generatedNomadicCommunities(seed,difficulty,availableTheaters,startYear=-49){
+ const band=LOCAL_GENERATION_BANDS[difficulty]||LOCAL_GENERATION_BANDS.standard,countBand=NOMADIC_GENERATION_BANDS[difficulty]||NOMADIC_GENERATION_BANDS.standard;
+ const rng={value:(seed^0x9e3779b9)>>>0},ranges=NOMADIC_RANGES.filter(range=>range.camps.every(camp=>availableTheaters.has(camp.theater))).map(range=>({...range}));
+ for(let i=ranges.length-1;i>0;i--){const j=integer(rng,0,i);[ranges[i],ranges[j]]=[ranges[j],ranges[i]]}
+ const count=Math.min(ranges.length,integer(rng,...countBand));
+ return ranges.slice(0,count).map(route=>{
+  const stem=STEMS[integer(rng,0,STEMS.length-1)],title=NOMAD_TITLES[integer(rng,0,NOMAD_TITLES.length-1)],person=RULER_NAMES[integer(rng,0,RULER_NAMES.length-1)];
+  const population=Math.round(integer(rng,1000,3200)*band.population/100)*100;
+  const militia=Math.max(100,Math.round(population*range(rng,...band.militia)/50)*50);
+  const treasury=Math.max(3,Math.round(population/550*band.wealth*range(rng,.8,1.2)));
+  const food=Math.max(4,Math.round(population/800*band.wealth*range(rng,.8,1.2)));
+  const camps=route.camps.map(camp=>({theater:camp.theater,coordinates:[...camp.coordinates]}));
+  return {id:`generated-nomad:${route.id}`,type:'nomadic',theater:camps[0].theater,coordinates:[...camps[0].coordinates],name:[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`],
+   historical:false,procedural:true,proceduralNomad:true,spatialAccuracy:'fictional_approximate_point',
+   description:['Fictional mobile herding community generated for this campaign. Its camps are approximate seasonal points, not a sovereign border.','本局生成的架空流动牧群；营地是季节性的近似点，不代表主权边界。'],
+   ruler:{id:`local-ruler:nomad:${route.id}`,name:[`Herd Elder ${person[0]}`,`${person[1]}牧群长老`],birthYear:startYear-integer(rng,28,64),personality:PERSONALITIES[integer(rng,0,PERSONALITIES.length-1)],fictional:true},
+   government:'seasonal_camp',population,militia,treasury,food,fort:0,strategy:integer(rng,...band.skill),herds:Math.max(4,Math.round(population/250)),
+   seasonalRange:camps,rangeIndex:0,pastureRights:{},waterSecurity:integer(rng,50,80),maxFootholdLevel:0,seed:integer(rng,0,0xffffffff)};
+ });
+}
+
+export function generatedWildernessSites(seed,availableTheaters){
+ const rng={value:(seed^0x85ebca6b)>>>0},sites=WILDERNESS_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site}));
+ for(let i=sites.length-1;i>0;i--){const j=integer(rng,0,i);[sites[i],sites[j]]=[sites[j],sites[i]]}
+ const count=Math.min(sites.length,integer(rng,3,4));
+ return sites.slice(0,count).map((site,index)=>{
+  const label=WILDERNESS_NAMES[integer(rng,0,WILDERNESS_NAMES.length-1)],kind=WILDERNESS_KINDS[site.kind];
+  return {id:`generated-wilderness:${site.theater}`,type:'wilderness',theater:site.theater,coordinates:[...site.coordinates],
+   name:[`${label[0]} · ${kind[0]}`,`${kind[1]}·${label[1]}`],historical:false,procedural:true,proceduralWilderness:true,spatialAccuracy:'fictional_approximate_point',
+   description:['Simulated sparse or difficult terrain in this broad theater. This point is approximate; it is not proof of empty land or a free sovereign claim.','此广域战区内模拟的稀疏或难行地带。地点为近似点，不代表无人土地或可自由取得的主权。'],
+   wilderness:{kind:site.kind,passability:site.passability,settlement:site.settlement,occupancy:site.occupancy,populationEstimate:integer(rng,0,site.occupancy==='sparse'?180:90),surveyedBy:{},surveyProject:null},
+   maxFootholdLevel:site.settlement==='none'?0:1,seed:integer(rng,0,0xffffffff),generatedIndex:index};
+ });
 }
 
 export function historicalLocalProfile(seed,difficulty,type,scale=1){

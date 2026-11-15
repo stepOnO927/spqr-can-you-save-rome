@@ -9,10 +9,10 @@ const costs = Object.freeze({
   4: {treasury: 40, food: 16, months: 4, garrison: 2000}
 });
 const now = state => state.year * 12 + state.month;
-const maxLevel = entity => entity.maxFootholdLevel || ({city_state: 4, microstate: 3, strongman: 2, village: 2, tribe: 1, wilderness: 1, nomadic: 1})[entity.type] || 0;
+const maxLevel = entity => entity.maxFootholdLevel ?? (({city_state: 4, microstate: 3, strongman: 2, village: 2, tribe: 1, wilderness: 1, nomadic: 1})[entity.type] || 0);
 const host = (state, entity) => state.regions.find(region => region.id === entity.theater);
 const garrison = (state, entity, actor, minimum) => state.armies.some(army => army.owner === actor && army.region === entity.theater && army.men >= minimum && !army.move);
-const hasLocalRight = (state, entity, actor) => entity.controller === actor || entity.controller === entity.id && (entity.overlord === actor || entity.access?.[actor] > now(state));
+const hasLocalRight = (state, entity, actor) => entity.controller === actor || entity.controller === entity.id && (entity.overlord === actor || entity.access?.[actor] > now(state)) || entity.proceduralWilderness && entity.wilderness?.surveyedBy?.[actor] && host(state, entity)?.owner === actor && entity.access?.[actor] > now(state);
 const supplyPassable = (state, actor, region) => {
   const access = militaryAccessStatus(state, actor, region.id, region.owner);
   return access.allowed && !['war', 'unconfirmed'].includes(access.basis);

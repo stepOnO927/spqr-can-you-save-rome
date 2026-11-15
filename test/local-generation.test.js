@@ -10,7 +10,7 @@ import {receivedMail,replyToLetter} from '../epistulae.js?v=world-kings-trade-1'
 import {inspectState} from '../inspector-diagnostics.js?v=world-kings-trade-1';
 
 const start=(mode,seed)=>configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:seed});
-const generated=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&!entity.proceduralVillage);
+const generated=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&!entity.proceduralVillage&&!entity.proceduralNomad&&!entity.proceduralWilderness);
 const villages=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.proceduralVillage);
 
 test('difficulty raises generated polity counts and coherent population, militia and resource bands',()=>{

@@ -145,3 +145,8 @@
 .city-marker.village .city-icon{background:#425343;border-radius:50%}
 .city-marker.village .name{display:none}
 .city-marker.village:hover .name,.city-marker.village:focus-visible .name{display:inline;position:absolute;left:22px;top:0;z-index:3}
+.city-marker.nomad .city-icon{background:#6b5a34;border-radius:50%;border-style:dashed}
+.city-marker.wilderness .city-icon{background:#3b4945;border-color:#9aab91;transform:rotate(45deg)}
+.city-marker.wilderness .city-icon svg{transform:rotate(-45deg)}
+.city-marker.wilderness .name{display:none}
+.city-marker.wilderness:hover .name,.city-marker.wilderness:focus-visible .name{display:inline;position:absolute;left:22px;top:0;z-index:3}

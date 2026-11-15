@@ -2,15 +2,16 @@ import {localEntity, localContactQuote, offerLocalContact, localSiegeQuote, besi
 import {localSecurity} from '../local-resistance.js';
 import {renderFootholdPanel} from './foothold-ui.js';
 import {FACTIONS} from '../data.js?v=world-kings-trade-1';
+import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-trade-1';
 
 export function renderTribalEntity({state, id, actor, language, panel, refresh}) {
   const entity = localEntity(state, id), zh = language === 'zh';
-  if (!entity || !['tribe', 'microstate', 'city_state','strongman'].includes(entity.type)) return;
+  if (!entity || !['tribe', 'microstate', 'city_state','strongman','nomadic'].includes(entity.type)) return;
   const host = state.regions.find(region => region.id === entity.theater);
-  const visible = host?.owner === actor || entity.controller === actor || entity.overlord === actor || entity.access?.[actor] > state.year * 12 + state.month || state.armies.some(army => army.owner === actor && army.region === entity.theater && army.men > 0);
+  const visible = host?.owner === actor || entity.controller === actor || entity.overlord === actor || entity.access?.[actor] > state.year * 12 + state.month || state.armies.some(army => army.owner === actor && army.region === entity.theater && army.men > 0) || entity.type==='nomadic'&&localDiscoveryLevel(state,actor,id)>=3&&state.localDiscovery?.[actor]?.[id]?.seenTheater===entity.theater;
   const section = document.createElement('section');
   section.className = 'theater-facts';
-  const title = document.createElement('h3'); title.textContent = `${entity.type === 'microstate' ? (zh ? '独立小国' : 'MICROSTATE') : entity.type === 'city_state' ? (zh ? '自治城邦' : 'CITY-STATE') : entity.type==='strongman'?(zh?'地方豪强':'LOCAL STRONGMAN'):(zh ? '地方部族' : 'LOCAL POLITY')} · ${entity.name[zh ? 1 : 0]}`; section.append(title);
+  const title = document.createElement('h3'); title.textContent = `${entity.type === 'microstate' ? (zh ? '独立小国' : 'MICROSTATE') : entity.type === 'city_state' ? (zh ? '自治城邦' : 'CITY-STATE') : entity.type==='strongman'?(zh?'地方豪强':'LOCAL STRONGMAN'):entity.type==='nomadic'?(zh?'游牧营地':'NOMADIC CAMP'):(zh ? '地方部族' : 'LOCAL POLITY')} · ${entity.name[zh ? 1 : 0]}`; section.append(title);
   const history = document.createElement('p');
   history.textContent = `${entity.description[zh ? 1 : 0]} ${zh ? '地点为近似点；守军、资源和谈判概率为游戏模拟。' : 'The point is approximate; militia, resources and negotiation chances are gameplay estimates.'}`;
   section.append(history);
@@ -23,6 +24,7 @@ export function renderTribalEntity({state, id, actor, language, panel, refresh})
   status.textContent = zh ? `地方控制：${entity.controller === entity.id ? localAuthority : factionName(entity.controller)} · 法理归属：${entity.legalSovereign === entity.id ? '地方自治' : factionName(entity.legalSovereign)} · 守军约 ${entity.militia.toLocaleString()} 人` : `Local control: ${entity.controller === entity.id ? localAuthority : factionName(entity.controller)} · legal title: ${entity.legalSovereign === entity.id ? 'local self-rule' : factionName(entity.legalSovereign)} · militia about ${entity.militia.toLocaleString()}`;
   section.append(status);
   if(Number.isInteger(entity.population)){const resources=document.createElement('p');resources.textContent=zh?`本局模拟人口约 ${entity.population.toLocaleString()} 人 · 地方国库 ${entity.treasury} · 存粮 ${entity.food} · 防务 ${entity.fort} · 地方决策能力 ${entity.strategy}/5`:`Campaign population about ${entity.population.toLocaleString()} · local treasury ${entity.treasury} · food ${entity.food} · fort ${entity.fort} · ${entity.type==='strongman'?'chief strategy':'council skill'} ${entity.strategy}/5`;section.append(resources)}
+  if(entity.type==='nomadic'){const route=document.createElement('p'),places=entity.seasonalRange.map(camp=>state.regions.find(region=>region.id===camp.theater)?.name?.[zh?1:0]||camp.theater).join(' ↔ ');route.textContent=zh?`牲畜 ${entity.herds} · 水源安全 ${entity.waterSecurity}/100 · 季节范围 ${places}。营地只沿相邻陆路移动；战争和缺水可能阻止迁徙。`:`Herds ${entity.herds} · water security ${entity.waterSecurity}/100 · seasonal range ${places}. The camp moves only along adjacent land routes; war or scarce water can block migration.`;section.append(route);if(entity.pastureRights?.[actor]>state.year*12+state.month){const right=document.createElement('p');right.textContent=zh?'本方牧地协定有效；不授予军队通行或主权。':'Pasture compact active; it grants neither army transit nor sovereignty.';section.append(right)}}
   const remaining=entity.access?.[actor]==null?0:Math.max(0,entity.access[actor]-(state.year*12+state.month));
   if(remaining){const right=document.createElement('p');right.textContent=zh?`地方通行已获准 · 剩余 ${remaining} 个月。`:`Local access granted · ${remaining} months remaining.`;section.append(right)}
   if(entity.overlord===actor){const relation=document.createElement('p');relation.textContent=zh?'本方为自治宗主；地方仍保有自己的法理归属。':'We are the autonomous overlord; local legal title remains separate.';section.append(relation)}
@@ -36,7 +38,7 @@ export function renderTribalEntity({state, id, actor, language, panel, refresh})
   if (entity.pending?.actor === actor) { const pending = document.createElement('p'); pending.textContent = zh ? `提议尚需 ${entity.pending.remaining} 个月；地方统治者可以拒绝。` : `Offer takes ${entity.pending.remaining} more months; the local ruler may refuse.`; section.append(pending); }
   if (entity.siege?.actor === actor) { const pending = document.createElement('p'); pending.textContent = zh ? `围城尚需 ${entity.siege.remaining} 个月。` : `Siege takes ${entity.siege.remaining} more months.`; section.append(pending); }
   const army = state.armies.find(unit => unit.owner === actor && unit.region === entity.theater && !unit.move && unit.men > 0);
-  const actions = [
+  const actions = entity.type==='nomadic'?[{id:'nomad-pasture',label:zh?'商谈牧地协定 · 6国库':'NEGOTIATE PASTURE COMPACT · 6 TREASURY',quote:localContactQuote(state,id,actor,'pasture'),run:()=>offerLocalContact(state,id,actor,'pasture')}]:[
     {id: 'tribal-access', label: zh ? '商谈地方通行 · 8国库' : 'NEGOTIATE LOCAL ACCESS · 8 TREASURY', quote: localContactQuote(state, id, actor, 'access'), run: () => offerLocalContact(state, id, actor, 'access')},
     entity.type==='strongman'?{id:'tribal-service',label:zh?'邀请首领效忠 · 12国库':'INVITE CHIEF INTO SERVICE · 12 TREASURY',quote:localContactQuote(state,id,actor,'service'),run:()=>offerLocalContact(state,id,actor,'service')}:{id: 'tribal-protectorate', label: zh ? '提议自治附属 · 16国库' : 'OFFER AUTONOMOUS PROTECTORATE · 16 TREASURY', quote: localContactQuote(state, id, actor, 'protectorate'), run: () => offerLocalContact(state, id, actor, 'protectorate')},
     {id: 'tribal-siege', label: entity.type==='strongman'?(zh?'讨伐地方豪强 · 8粮食':'ASSAULT CHIEF’S HOLD · 8 FOOD'):(zh ? '围攻地方城镇 · 8粮食' : 'BESIEGE LOCAL TOWN · 8 FOOD'), quote: localSiegeQuote(state, id, army?.id, actor), run: () => besiegeLocalEntity(state, id, army?.id, actor)}
@@ -44,5 +46,5 @@ export function renderTribalEntity({state, id, actor, language, panel, refresh})
   for (const action of actions) { const button = document.createElement('button'); button.id = action.id; button.disabled = !action.quote.ok; button.textContent = action.label; button.onclick = () => { if (action.run().ok) refresh(); }; section.append(button); }
   if (entity.controller === actor && entity.administrativeStatus === 'occupied') { const quote = localAdministrationQuote(state, id, actor), button = document.createElement('button'); button.id = 'tribal-administer'; button.disabled = !quote.ok; button.textContent = zh ? '整顿地方行政 · 12国库 / 3粮食' : 'ADMINISTER TOWN · 12 TREASURY / 3 FOOD'; button.onclick = () => { if (startLocalAdministration(state, id, actor).ok) refresh(); }; section.append(button); }
   panel.append(section);
-  renderFootholdPanel({state, entity, actor, language, panel: section, refresh});
+  if(entity.type!=='nomadic')renderFootholdPanel({state, entity, actor, language, panel: section, refresh});
 }

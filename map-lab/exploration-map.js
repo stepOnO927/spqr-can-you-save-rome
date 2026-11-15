@@ -9,7 +9,9 @@ export function explorationEntries(state,viewer){
  return Object.entries(records).flatMap(([id,record])=>{
   const found=byId.get(id),level=record?.level;
   if(!found||!Number.isInteger(level)||level<1||level>5)return [];
-  return [{id,theaterId:found.theater.id,theaterName:found.theater.name,level,source:record.source,year:record.year,month:record.month,name:level>=LOCAL_DISCOVERY_LEVELS.identified?found.entity.name:null}];
+  const theater=found.entity.type==='nomadic'&&record.seenTheater?state.regions.find(region=>region.id===record.seenTheater):found.theater;
+  if(!theater)return [];
+  return [{id,theaterId:theater.id,theaterName:theater.name,level,source:record.source,year:record.year,month:record.month,name:level>=LOCAL_DISCOVERY_LEVELS.identified?found.entity.name:null}];
  });
 }
 

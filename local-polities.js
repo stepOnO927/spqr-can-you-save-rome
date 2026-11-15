@@ -1,5 +1,5 @@
 import {ROUTES} from './data.js?v=world-kings-trade-1';
-import {generatedLocalPolities,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js';
+import {generatedLocalPolities,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js';
 import {sendLetter} from './epistulae.js?v=world-kings-trade-1';
 
 // Settlement control is stored inside its host theater. An autonomous city
@@ -169,7 +169,21 @@ export function generateOpeningLocalPolities(state,difficulty,seed){
    if(!region.localEntities.some(entity=>entity.id===`generated-village:${template.theater}`))region.localEntities.push(dependentStrongmanVillage(template,region));
   }
  }
- state.world.localGeneration={version:1,seed:number,difficulty,count:candidates.length};
+ const nomads=generatedNomadicCommunities(number,difficulty,new Set(state.regions.map(region=>region.id)),state.year);
+ for(const template of nomads){
+  const region=host(state,template);if(!region)continue;
+  region.localEntities||=[];
+  if(region.localEntities.some(entity=>entity.id===template.id))continue;
+  region.localEntities.push({...template,controller:template.id,legalSovereign:region.owner,claimedSovereignty:false,militaryOccupier:null,administrativeStatus:'seasonal_camp',overlord:null,allegiance:null,access:{},pending:null,siege:null,administrationProject:null,resistance:0,lastOfferAt:{}});
+ }
+ const wilds=generatedWildernessSites(number,new Set(state.regions.map(region=>region.id)));
+ for(const template of wilds){
+  const region=host(state,template);if(!region)continue;
+  region.localEntities||=[];
+  if(region.localEntities.some(entity=>entity.id===template.id))continue;
+  region.localEntities.push({...template,controller:null,legalSovereign:region.owner,militaryOccupier:null,administrativeStatus:'unadministered_land',overlord:null,access:{},pending:null,siege:null,administrationProject:null,resistance:0,militia:0,fort:0,treasury:0,food:0,lastOfferAt:{}});
+ }
+ state.world.localGeneration={version:3,seed:number,difficulty,count:candidates.length,nomadCount:nomads.length,wildernessCount:wilds.length};
  return initializeLocalRulers(state);
 }
 
@@ -178,11 +192,11 @@ function reportLocalOffer(state,entity,pending,accepted){
  const zhName=entity.name[1],enName=entity.name[0];
  const ruler=state.world?.localRulers?.[entity.ruler?.id];
  const officialEn=ruler?.name?.[0]||'the local council',officialZh=ruler?.name?.[1]||'当地议事机构';
- const kind=pending.proposal==='access'?'access':pending.proposal==='protectorate'?'protectorate':pending.proposal==='service'?'service':'submission';
- const subject={access:[`Access reply from ${enName}`,`${zhName}的通行答复`],protectorate:[`Protectorate reply from ${enName}`,`${zhName}的附属答复`],service:[`Service reply from ${enName}`,`${zhName}的效忠答复`],submission:[`Submission reply from ${enName}`,`${zhName}的归降答复`]}[kind];
+ const kind=pending.proposal==='access'?'access':pending.proposal==='protectorate'?'protectorate':pending.proposal==='service'?'service':pending.proposal==='pasture'?'pasture':'submission';
+ const subject={access:[`Access reply from ${enName}`,`${zhName}的通行答复`],protectorate:[`Protectorate reply from ${enName}`,`${zhName}的附属答复`],service:[`Service reply from ${enName}`,`${zhName}的效忠答复`],pasture:[`Pasture reply from ${enName}`,`${zhName}的牧地答复`],submission:[`Submission reply from ${enName}`,`${zhName}的归降答复`]}[kind];
  const outcome=accepted?['accepted','接受']:['refused','拒绝'];
  const body=[`Our envoy reports that ${officialEn} has ${outcome[0]} the ${kind} proposal at ${enName}.`,
-  `我方使者回报：${officialZh}已${outcome[1]}向${zhName}提出的${{access:'通行',protectorate:'自治附属',service:'个人效忠',submission:'归降'}[kind]}提议。`];
+  `我方使者回报：${officialZh}已${outcome[1]}向${zhName}提出的${{access:'通行',protectorate:'自治附属',service:'个人效忠',pasture:'牧地协定',submission:'归降'}[kind]}提议。`];
  const sent=sendLetter(state,{senderFaction:pending.actor,senderInstitution:pending.actor,recipient:pending.actor,category:'government',
   subject,body,options:['acknowledge'],source:entity.theater,priority:'routine',
   eventId:`local:${entity.id}:${kind}:${pending.sentYear}:${pending.sentMonth}`,
@@ -195,8 +209,8 @@ function reportLocalOffer(state,entity,pending,accepted){
 
 export function localContactQuote(state, id, actor = state.player, proposal = 'access') {
   const entity = localEntity(state, id), faction = state.factions[actor];
-  if (!entity || !faction || !['access', 'protectorate','service'].includes(proposal)) return {ok: false, reason: 'unavailable'};
-  if((proposal==='service'&&entity.type!=='strongman')||(proposal==='protectorate'&&entity.type==='strongman'))return {ok:false,reason:'unavailable'};
+  if (!entity || !faction || !['access', 'protectorate','service','pasture'].includes(proposal)) return {ok: false, reason: 'unavailable'};
+  if((proposal==='service'&&entity.type!=='strongman')||(proposal==='pasture'&&entity.type!=='nomadic')||(entity.type==='nomadic'&&proposal!=='pasture')||(proposal==='protectorate'&&entity.type==='strongman'))return {ok:false,reason:'unavailable'};
   if (entity.controller !== entity.id) return {ok: false, reason: 'controlled'};
   if (entity.pending || entity.siege) return {ok: false, reason: 'busy'};
   const theater = host(state, entity), neighbors = ROUTES.filter(([a, b]) => a === entity.theater || b === entity.theater).map(([a, b]) => a === entity.theater ? b : a);
@@ -206,7 +220,8 @@ export function localContactQuote(state, id, actor = state.player, proposal = 'a
   if (proposal === 'access' && entity.access[actor] > now(state)) return {ok: false, reason: 'already_granted'};
   if (proposal === 'protectorate' && entity.overlord) return {ok: false, reason: 'already_subject'};
   if(proposal==='service'&&entity.allegiance)return {ok:false,reason:'already_affiliated'};
-  const cost = proposal === 'access' ? 8 : proposal==='service'?12:16;
+  if(proposal==='pasture'&&entity.pastureRights?.[actor]>now(state))return {ok:false,reason:'already_granted'};
+  const cost = proposal === 'access' ? 8 : proposal==='service'?12:proposal==='pasture'?6:16;
   if (faction.treasury < cost) return {ok: false, reason: 'resources'};
   return {ok: true, cost, months: proposal === 'protectorate' ? 3 : 2};
 }
@@ -245,6 +260,7 @@ export function offerLocalSubmission(state, id, actor = state.player) {
 
 export function localSiegeQuote(state, id, armyId, actor = state.player) {
   const entity = localEntity(state, id), army = state.armies.find(unit => unit.id === armyId);
+  if(entity?.type==='nomadic')return {ok:false,reason:'mobile_camp'};
   if (entity?.overlord === actor) return {ok: false, reason: 'own_subject'};
   const eligible = entity?.controller === entity?.id || entity?.type === 'roman_town' && state.wars.some(pair => pair.includes(actor) && pair.includes(entity.controller));
   if (!entity || !eligible || entity.controller === actor || entity.siege || !army || army.owner !== actor || army.region !== entity.theater || army.move || army.siege || army.men < entity.militia * 1.5) return {ok: false, reason: 'army_or_resistance'};
@@ -292,12 +308,13 @@ export function localOfferChance(state,entity,actor,proposal){
  const pressure=army/Math.max(500,entity.militia);
  if(proposal==='access')return Math.max(.08,Math.min(.9,(actor==='senate'?.7:.45)+(pressure>=2?.025*skill:entity.treasury>=25?-.018*skill:0)));
  if(proposal==='service')return Math.max(.08,Math.min(.75,.4+(pressure>=2?.035*skill:-.02*skill)+(host(state,entity)?.owner===actor ? .1 : 0)-(entity.treasury>=18 ? .05 : 0)));
+ if(proposal==='pasture')return Math.max(.12,Math.min(.9,.65-.035*skill+(host(state,entity)?.owner===actor ? .1 : 0)+(entity.waterSecurity<60 ? .08 : 0)));
  return Math.max(.04,Math.min(.75,.22+(pressure>=2?.045*skill:-.028*skill)+(entity.food<8?.06:0)));
 }
 
 export function advanceLocalEntities(state) {
   for (const region of state.regions) for (const entity of region.localEntities || []) {
-    if(entity.procedural&&entity.controller===entity.id&&!entity.siege){
+    if(entity.procedural&&!entity.proceduralVillage&&entity.controller===entity.id&&!entity.siege){
       if(entity.type==='strongman'&&state.month%3===0&&(entity.lastVillageLevy?.year!==state.year||entity.lastVillageLevy?.month!==state.month)){
         entity.lastVillageLevy={year:state.year,month:state.month};
         const dependent=region.localEntities.find(site=>site.sponsor===entity.id&&site.controller===entity.id),village=dependent?.village;
@@ -307,7 +324,7 @@ export function advanceLocalEntities(state) {
       if(state.month%3===0&&entity.strategy>=3&&threat>entity.militia&&entity.treasury>=4&&entity.food>=2&&(entity.lastMobilized?.year!==state.year||entity.lastMobilized?.month!==state.month)){
         const recruits=Math.min(Math.max(0,Math.floor(entity.population*.22)-entity.militia),entity.strategy*60);
         if(recruits>0){entity.treasury-=4;entity.food-=2;entity.militia+=recruits;entity.lastMobilized={year:state.year,month:state.month}}
-      }else if(state.month===12&&entity.strategy>=4&&threat===0&&entity.fort<3&&entity.treasury>=16&&entity.food>=6&&(entity.lastFortified?.year!==state.year||entity.lastFortified?.month!==state.month)){
+      }else if(entity.type!=='nomadic'&&state.month===12&&entity.strategy>=4&&threat===0&&entity.fort<3&&entity.treasury>=16&&entity.food>=6&&(entity.lastFortified?.year!==state.year||entity.lastFortified?.month!==state.month)){
         entity.treasury-=12;entity.food-=2;entity.fort++;entity.lastFortified={year:state.year,month:state.month};
       }
     }
@@ -320,6 +337,7 @@ export function advanceLocalEntities(state) {
       if (accepted && proposal === 'access') entity.access[actor] = now(state) + 24;
       if (accepted && proposal === 'protectorate') entity.overlord = actor;
       if (accepted && proposal === 'service') {entity.allegiance=actor;entity.access[actor]=now(state)+24;}
+      if (accepted && proposal === 'pasture') {entity.pastureRights[actor]=now(state)+24;entity.treasury+=6;}
       if (accepted && submission) { entity.controller = actor; entity.militaryOccupier = actor; entity.administrativeStatus = 'occupied'; entity.resistance = 18; }
       entity.lastOutcome.mailId=reportLocalOffer(state,entity,pending,accepted);
     }
