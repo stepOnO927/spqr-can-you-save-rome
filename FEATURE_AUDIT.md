@@ -5,6 +5,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Feature | Player entry | Browser coverage |
 | --- | --- | --- |
 | New campaign, difficulty, tutorial and save/load | Opening setup | `tools/onboarding-smoke.mjs` |
+| Short landscape Roman campaign | Opening setup and campaign controls at 640×360, 836×470 and 1031×580 | `tools/short-screen-smoke.mjs` checks visible faction and difficulty, touch start, advance, government access and save |
 | Army inspection, marches, battles and AI turns | Terrain map → army | `tools/phase-v-smoke.mjs`, `tools/browser-smoke.mjs` |
 | Recruitment | Terrain map → owned city → manage theater | `tools/systems-smoke.mjs` |
 | Family adoption and marriage | Campaign map → government → family tree | `tools/scenario-systems-smoke.mjs` |
@@ -36,3 +37,5 @@ The remaining family actions, other treaty types, and other political movement s
 The health and succession browser scenario starts from an explicitly simulated dying-leader fixture; it does not imply that an ordinary new campaign starts with an imminent death.
 
 When browser storage is denied at startup, the three views use temporary in-memory storage where the browser permits replacing the storage property. A bilingual warning explains that temporary saves must be exported before reload, and save messages say they are temporary. If session storage is unavailable, the game prevents cross-view handoffs instead of silently losing the campaign. Readable existing saves remain available if writing fails due to quota. `tools/storage-denied-smoke.mjs` tests actual starts, month advances, export and blocked handoffs; an environment that forbids even replacing its denied storage property is not covered by this fallback.
+
+`tools/runtime-storage-failure-smoke.mjs` additionally checks that a session write which fails after startup blocks the attempted transition in either direction instead of navigating with an unsaved campaign.
