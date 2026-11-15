@@ -227,10 +227,20 @@ try{
  if(process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT});
  await selectMapMode('terrain');
  assert.match(await page.locator('.legend').innerText(),firstSeaName==='地中海'?/现代高程等高线/:/Modern elevation contours/);
+ assert.match(await page.locator('.legend').innerText(),firstSeaName==='地中海'?/尼罗河三角洲低地（示意）/:/Nile Delta lowland \(schematic\)/);
+ assert.match(await page.locator('#map-mode-note').innerText(),firstSeaName==='地中海'?/不代表前49年的冲积土或耕地边界/:/not a surveyed 49 BCE alluvial or farmland boundary/);
  await page.locator('#language').click();
  assert.match(await page.locator('.legend').innerText(),firstSeaName==='地中海'?/Modern elevation contours/:/现代高程等高线/);
+ assert.match(await page.locator('.legend').innerText(),firstSeaName==='地中海'?/Nile Delta lowland \(schematic\)/:/尼罗河三角洲低地（示意）/);
  await page.locator('#language').click();
+ if(page.viewportSize().width<=600){await page.locator('.legend').scrollIntoViewIfNeeded();assert.equal(await page.locator('.legend').isVisible(),true,'Nile Delta legend must remain reachable on mobile')}
  if(process.env.SPQR_ATLAS_EGYPT_Z9_TERRAIN_SCREENSHOT){await page.waitForTimeout(400);await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_TERRAIN_SCREENSHOT})}
+ if(page.viewportSize().width<=600){
+  const clipped=await page.evaluate(()=>[...document.querySelectorAll('.physical-label:not([hidden])')].filter(el=>getComputedStyle(el).visibility!=='hidden').map(el=>({id:el.dataset.physicalLabel,box:el.getBoundingClientRect().toJSON()})).filter(({box})=>box.left<4||box.right>innerWidth-4||box.top<76||box.bottom>innerHeight-20));
+  assert.deepEqual(clipped,[],'Physical geography labels must not be cut by the mobile viewport');
+  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[29.7,30.95],zoom:9.05})});
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-physical-label="western-desert"]')).visibility==='visible');
+ }
  await selectMapMode('political');
  const galatia=newGrandGame('galatia');
  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),galatia);

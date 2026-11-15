@@ -90,7 +90,7 @@ export const physicalStyle={
   {id:'land-elevation-egypt-higher',type:'color-relief',source:'elevation-egypt-higher',minzoom:9,paint:{'color-relief-opacity':.94,'color-relief-color':egyptElevationPalette}},
   {id:'relief-egypt-higher',type:'hillshade',source:'elevation-egypt-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'idealized-landcover',type:'raster',source:'landcover',paint:{'raster-opacity':['interpolate',['linear'],['zoom'],4,.86,6,.74,7.2,0],'raster-fade-duration':0}},
-  {id:'nile-delta-alluvium',type:'fill',source:'nile-delta',paint:{'fill-color':'#98a77e','fill-opacity':['interpolate',['linear'],['zoom'],4,.16,7,.26,8.2,.12,9,0]}},
+  {id:'nile-delta-alluvium',type:'fill',source:'nile-delta',paint:{'fill-color':'#829a72','fill-opacity':['interpolate',['linear'],['zoom'],4,.16,7,.26,8.2,.25,9,.32,10,.3]}},
   {id:'egypt-contours-minor',type:'line',source:'egypt-contours',minzoom:8.25,filter:['<',['get','height'],50],paint:{'line-color':'#8a7255','line-width':['interpolate',['linear'],['zoom'],8.25,.5,9.2,.8],'line-opacity':.16}},
   {id:'egypt-contours-major',type:'line',source:'egypt-contours',minzoom:8.25,filter:['>=',['get','height'],50],paint:{'line-color':'#785f49','line-width':['interpolate',['linear'],['zoom'],8.25,.7,9.2,1.05],'line-opacity':.2}},
   // Modern DEM elevation creates the contour shapes; the sparse source
