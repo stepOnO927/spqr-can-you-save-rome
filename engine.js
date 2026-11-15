@@ -40,6 +40,7 @@ import {initializeTerritories,transferTerritory,territoryTaxFactor,administratio
 import {initializeLocalEntities,advanceLocalEntities,localEntity,localEntityRevenue,localContactQuote,offerLocalContact,localSubmissionQuote,offerLocalSubmission,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from './local-polities.js';
 import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing,respondBorderIncident} from './border-access.js';
 import {advanceFootholds,footholdQuote,footholdShipmentQuote,startFoothold,stockFoothold} from './foothold.js';
+import {advanceExpeditionSupply} from './expedition-supply.js';
 import {titleAssetQuote,settleTitleByTreaty} from './peace-titles.js';
 import {advanceLocalResistance} from './local-resistance.js';
 export {queueMission};
@@ -885,6 +886,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   advanceLocalEntities(s);
   for(const event of advanceLocalResistance(s))if([event.prior,event.claimant].includes(s.player)){const place=localEntity(s,event.id);log(s,`${place.name[0]} returned to its former legal authority after losing local security.`,`${place.name[1]}失去驻军与联络后回归原法理归属方。`)}
   advanceFootholds(s);
+  for(const event of advanceExpeditionSupply(s))if(event.owner===s.player&&['partial','cut_off'].includes(event.status)){const army=s.armies.find(unit=>unit.id===event.armyId);if(army)log(s,`${army.name[0]} has strained or severed expedition supply.`,`${army.name[1]}的远征补给不足或中断。`)}
   advanceBorderIncidentAI(s,{autoplayPlayer});
   advanceMovements(s,{autoplayPlayer});
   resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});if(s.world?.cursus)advanceCursus(s);linkCommanders(s);advancePersonalDiplomacy(s);
