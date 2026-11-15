@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,army,moveArmy,tick,upgradeSave,aiTurn,resolveBattle} from '../engine.js';
+import {newGame,newGrandGame,army,moveArmy,tick,upgradeSave,aiTurn,resolveBattle,adoptIdea,researchInnovation} from '../engine.js';
 import {assessment,sendScouts,probePositions,latestRecon,reconReports,delayAttack,markReconRegion,advanceRecon} from '../reconnaissance.js';
-import {development,activeEffects,IDEAS} from '../development.js';
+import {development,activeEffects,IDEAS,ideaAdoptionPlan} from '../development.js';
 import {developmentPanel} from '../development-ui.js';
 import {intelligenceHtml,afterActionHtml,fortificationText,reconSummaryHtml} from '../recon-ui.js';
 import {eventText} from '../campaign-reports.js';
@@ -51,6 +51,38 @@ test('field scout coordination improves reports without revealing exact troops',
  assert.ok(outcomes.trained>outcomes.plain,'coordination should increase detection over seeded encounters');
  assert.ok(outcomes.narrower>0,'some estimates should become narrower');
  assert.ok(outcomes.trainedMisses>0,'training must not make detection certain');
+});
+test('Numidian mounted scouts require a supportive local base and improve uncertain field reports only after adoption',()=>{
+ const s=newGrandGame('numidia'),idea=IDEAS.find(x=>x.id==='numidian-mounted-scouts');
+ assert.match(idea.source.url,/Civil_Wars\/2B%2A/);
+ for(const [lang,label] of [['en','Numidian Mounted Scouts'],['zh','努米底亚骑马斥候']])assert.match(developmentPanel(s,lang,'idea'),new RegExp(label));
+ const original=s.factions.numidia.treasury;
+ assert.equal(researchInnovation(s,'numidia','idea',idea.id).ok,true);
+ assert.equal(activeEffects(s,'numidia').scoutReliability||0,0,'research alone has no effect');
+ for(let i=0;i<5&&s.development.numidia.research;i++)tick(s);
+ assert.equal(ideaAdoptionPlan(s,'numidia',idea.id).ok,true);
+ assert.equal(adoptIdea(s,'numidia',idea.id).ok,true);
+ assert.equal(activeEffects(s,'numidia').scoutReliability||0,0,'transition alone has no effect');
+ for(let i=0;i<5&&s.development.numidia.adoption;i++)tick(s);
+ assert.equal(activeEffects(s,'numidia').scoutReliability,.08);
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(activeEffects(loaded,'numidia').scoutReliability,.08);
+ assert.ok(loaded.factions.numidia.treasury<original,'research, adoption and upkeep cost treasury');
+ const encounter=newGame('senate');development(encounter,'senate').slots.military[0]=idea.id;
+ assert.equal(sendScouts(encounter,'italy','cisalpine').ok,true);
+ assert.equal(army(encounter,'italy').reconPending.scoutBonus,.08);
+ advanceRecon(encounter);
+ const fieldReport=latestRecon(encounter,'senate','cisalpine');
+ assert.equal(fieldReport.source,'scouts');
+ assert.ok(fieldReport.min==null||fieldReport.max>fieldReport.min,'mounted scouts still produce uncertain ranges');
+
+ const outsider=newGrandGame('caesar');outsider.development.caesar.knownIdeas.push(idea.id);outsider.factions.caesar.treasury=200;
+ assert.equal(ideaAdoptionPlan(outsider,'caesar',idea.id).reason,'cultural-base');
+ const local=outsider.regions.find(r=>r.owner==='numidia'&&r.culture==='north-african');local.owner='caesar';local.civicSatisfaction=44;
+ assert.equal(ideaAdoptionPlan(outsider,'caesar',idea.id).reason,'local-support');
+ local.civicSatisfaction=45;
+ assert.equal(ideaAdoptionPlan(outsider,'caesar',idea.id).ok,true);
+ assert.ok(ideaAdoptionPlan(outsider,'caesar',idea.id).months>ideaAdoptionPlan(s,'numidia',idea.id).months,'foreign court needs adaptation time');
 });
 test('Senate can assess, scout, then attack without a scripted outcome or exact intelligence',()=>{
  const s=newGame('senate'),unit=army(s,'italy'),actual=army(s,'xiii').men;

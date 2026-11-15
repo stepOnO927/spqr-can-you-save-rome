@@ -1,9 +1,9 @@
-import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,knowledgeTransitStatus,KNOWLEDGE_BLOCKED_LIMIT,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=45';
+import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,knowledgeTransitStatus,KNOWLEDGE_BLOCKED_LIMIT,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=46';
 import {FIGURE_ROLES,initializeFigures,figureStatus,figureActive} from './great-figures.js';
 import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';
 import {religionPanel} from './local-society.js?v=8';
-import {techIllustration} from './tech-art.js?v=16';
+import {techIllustration} from './tech-art.js?v=17';
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const factionLabel=(id,zh)=>esc(FACTIONS[id]?.short?.[zh?1:0]||id);
 const knowledgeLabel=(branch,id,zh)=>esc((branch==='material'?MATERIALS:IDEAS).find(item=>item.id===id)?.name[zh?1:0]||id);
