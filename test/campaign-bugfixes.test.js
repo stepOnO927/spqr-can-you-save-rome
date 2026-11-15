@@ -87,6 +87,29 @@ test('outnumbered wartime AI does not spend its deficit runway on optional const
  assert.ok(rich.regions.some(r=>r.owner==='caesar'&&r.construction),'a funded command can still invest');
 });
 
+test('AI invests in a real food project when shortage is approaching and the war chest covers it',()=>{
+ const funded=newGrandGame('egypt'),f=funded.factions.caesar;
+ f.food=35;f.treasury=160;
+ const before=nationalBudget(funded,'caesar').foodNet;
+ assert.ok(before<0);
+ aiTurn(funded,'caesar');
+ const project=funded.regions.find(r=>r.owner==='caesar'&&r.construction?.buildingId==='granary');
+ assert.ok(project,'known grain-storage technology should produce a physical project');
+ assert.equal(f.treasury,142);
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(funded)));
+ assert.equal(region(loaded,project.id).construction.buildingId,'granary');
+ for(let i=0;i<3;i++)tick(loaded);
+ assert.ok(region(loaded,project.id).buildings.includes('granary'));
+ assert.ok(nationalBudget(loaded,'caesar').foodNet>=before+1);
+ const lean=newGrandGame('egypt');lean.factions.caesar.food=35;lean.factions.caesar.treasury=80;
+ aiTurn(lean,'caesar');
+ assert.equal(lean.regions.some(r=>r.owner==='caesar'&&r.construction),false,'a projected deficit must preserve army cash');
+ const overextended=newGrandGame('egypt');overextended.factions.caesar.food=35;overextended.factions.caesar.treasury=200;army(overextended,'xiii').men=50000;
+ assert.ok(nationalBudget(overextended,'caesar').projectedNet<-30);
+ aiTurn(overextended,'caesar');
+ assert.equal(overextended.regions.some(r=>r.owner==='caesar'&&r.construction),false,'an unaffordable food project must not be replaced by optional construction');
+});
+
 test('an AI command with no field army raises an emergency force when resources allow',()=>{
  const s=newGame('egypt');s.armies=s.armies.filter(unit=>unit.owner!=='caesar');
  s.factions.caesar.treasury=50;s.factions.caesar.food=20;s.factions.caesar.manpower=4000;

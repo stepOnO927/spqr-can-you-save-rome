@@ -680,7 +680,14 @@ export function aiTurn(s,owner){
     // A smaller wartime command must fund its army through a projected deficit
     // before purchasing optional materials or starting another building.
     const infrastructureReserve=atWar&&outnumbered?Math.max(civilianReserve,24+12*Math.max(0,-budget.projectedNet)):civilianReserve;
-    if(f.treasury>120+infrastructureReserve){for(const kind of ['stone','timber','metal'])if(d.materials[kind]<5)purchaseMaterials(s,owner,kind,5);const project=owned.flatMap(site=>BUILDINGS.map(b=>({site,b}))).find(({site,b})=>constructionCheck(s,owner,site.id,b.id).ok);if(project)startConstruction(s,owner,project.site.id,project.b.id)}
+    const foodWorkPending=owned.some(site=>['irrigation','grain-mill','granary'].includes(site.construction?.buildingId));
+    const foodProjects=budget.foodNet<0&&f.food<50&&!foodWorkPending?owned.flatMap(site=>['irrigation','grain-mill','granary'].map(id=>({site,b:BUILDINGS.find(b=>b.id===id)})))
+      .map(project=>({...project,check:constructionCheck(s,owner,project.site.id,project.b.id)}))
+      .filter(project=>project.check.ok)
+      .sort((a,b)=>(b.b.effects.food||0)-(a.b.effects.food||0)||adjacent(b.site.id,s).filter(link=>region(s,link.to)?.owner===owner).length-adjacent(a.site.id,s).filter(link=>region(s,link.to)?.owner===owner).length):[];
+    const foodProject=foodProjects.find(project=>f.treasury>=project.check.cost+(atWar?Math.max(24,6*Math.max(0,-budget.projectedNet)):12));
+    if(foodProject)startConstruction(s,owner,foodProject.site.id,foodProject.b.id);
+    else if(!foodProjects.length&&f.treasury>120+infrastructureReserve){for(const kind of ['stone','timber','metal'])if(d.materials[kind]<5)purchaseMaterials(s,owner,kind,5);const project=owned.flatMap(site=>BUILDINGS.map(b=>({site,b}))).find(({site,b})=>constructionCheck(s,owner,site.id,b.id).ok);if(project)startConstruction(s,owner,project.site.id,project.b.id)}
     if(s.month%12===0&&f.treasury>75+civilianReserve){for(const seller of Object.keys(s.development)){
       if(seller===owner||isWar(s,owner,seller)||relation(s,owner,seller)<0)continue;
       const item=s.development[seller].knownMaterial.find(k=>!d.knownMaterial.includes(k));if(!item)continue;

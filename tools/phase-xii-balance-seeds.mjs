@@ -15,8 +15,10 @@ const long=process.argv.includes('--long')||requested!=null,months=duration??(lo
 const outcomes={};
 for(let seed=1;seed<=seeds;seed++){
  const state=newGrandGame('egypt'),variantSeed=legacySeeds?seed:Math.imul(seed,0x9e3779b1)>>>0;state.seed=variantSeed;
+ const foodProjects=new Set();
  for(let month=0;month<months&&!state.civilWarOutcome;month++){
   tick(state);
+  for(const site of state.regions)if(['caesar','senate'].includes(site.owner)&&['irrigation','grain-mill','granary'].includes(site.construction?.buildingId))foodProjects.add(`${site.owner}:${site.id}:${site.construction.buildingId}`);
   assert.ok(isWar(state,'caesar','senate')||state.civilWarOutcome?.winner,'the civil war cannot disappear without a formal result');
   if(state.civilWarOutcome)assert.equal(isWar(state,'caesar','senate'),false,'a concluded civil war must no longer be an active war');
   assert.equal(state.regions.length,120);
@@ -26,6 +28,6 @@ for(let seed=1;seed<=seeds;seed++){
  const caesar=state.regions.filter(r=>r.owner==='caesar').length;
  const senate=state.regions.filter(r=>r.owner==='senate').length;
  const winner=state.civilWarOutcome?.winner||'ongoing';outcomes[winner]=(outcomes[winner]||0)+1;
- console.log(`seed ${seed} (${variantSeed}): Caesar ${caesar}, Senate ${senate}, Rome ${region(state,'roma').owner}, Caesar field ${state.armies.filter(a=>a.owner==='caesar').reduce((men,a)=>men+a.men,0)}, civil war ${state.civilWarOutcome?`${state.civilWarOutcome.kind}:${state.civilWarOutcome.winner}`:'ongoing'}`);
+ console.log(`seed ${seed} (${variantSeed}): Caesar ${caesar}, Senate ${senate}, Rome ${region(state,'roma').owner}, Caesar field ${state.armies.filter(a=>a.owner==='caesar').reduce((men,a)=>men+a.men,0)}, food projects Caesar ${[...foodProjects].filter(x=>x.startsWith('caesar:')).length}/Senate ${[...foodProjects].filter(x=>x.startsWith('senate:')).length}, civil war ${state.civilWarOutcome?`${state.civilWarOutcome.kind}:${state.civilWarOutcome.winner}`:'ongoing'}`);
 }
 console.log(`${months}-month ${legacySeeds?'legacy adjacent':'spaced'}-seed outcomes: ${JSON.stringify(outcomes)}`);
