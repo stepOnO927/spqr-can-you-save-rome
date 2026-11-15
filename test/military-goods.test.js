@@ -14,6 +14,7 @@ test('ordinary Roman levies require delivered local weapons and debit them exact
  local.stock=0;local.production=0;source.stock=1;source.production=0;
  const before={treasury:faction.treasury,food:faction.food,manpower:faction.manpower,armies:s.armies.length};
  assert.equal(recruitEquipmentStock(s,'cisalpine','caesar'),0);
+ assert.equal(recruitEquipmentStock(s,'roma','caesar'),null,'foreign depot stock stays hidden');
  assert.equal(recruit(s,'cisalpine'),false);
  assert.equal(faction.treasury,before.treasury);assert.equal(faction.food,before.food);
  assert.equal(faction.manpower,before.manpower);assert.equal(s.armies.length,before.armies);

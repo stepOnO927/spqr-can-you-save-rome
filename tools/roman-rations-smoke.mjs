@@ -49,13 +49,16 @@ try{
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  await page.locator('[data-army="xiii"]').first().click();
  assert.equal(await page.locator('#recruit').isDisabled(),true);
+ assert.match(await page.locator('#recruit').innerText(),/本地兵器1批（库存0）/);
  assert.match(await page.locator('.recruit-reason').innerText(),/本地至少需要1批兵器/);
  await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=faces-reported-names-1'),s=newGame('caesar');
   s.markets.regions.cisalpine.goods.weapons.stock=1;s.markets.regions.cisalpine.goods.weapons.production=0;
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
  });
- await page.reload();await page.locator('[data-army="xiii"]').first().click();await page.locator('#recruit').click();
+ await page.reload();await page.locator('[data-army="xiii"]').first().click();
+ assert.match(await page.locator('#recruit').innerText(),/本地兵器1批（库存1）/);
+ await page.locator('#recruit').click();
  await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
  saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(saved.markets.regions.cisalpine.goods.weapons.stock,0);

@@ -223,7 +223,7 @@ export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player){
 // A levy is equipped from its own depot. A batch contains 6,000 sets, so the
 // unused half remains with the new 3,000-person force as replacement gear.
 export function recruitEquipmentStock(s,regionId,owner=s.player){
- if(owner!=='caesar'&&owner!=='senate')return null;
+ if((owner!=='caesar'&&owner!=='senate')||region(s,regionId)?.owner!==owner)return null;
  return initializeMarkets(s).regions[regionId]?.goods?.weapons?.stock??0;
 }
 
