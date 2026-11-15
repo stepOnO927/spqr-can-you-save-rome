@@ -20,4 +20,20 @@ for(const [lang,expected] of [['en',/Friendly warship maneuver/],['zh',/己方�
 }
 const old=structuredClone(s);delete old.naval.reports.find(r=>r.kind==='battle').maneuver;
 await page.evaluate(async state=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js');renderNavalPanel({state,lang:'en',root:document.querySelector('#root'),section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}})},old);
-assert.doesNotMatch(await page.locator('.naval-content').innerText(),/Friendly warship maneuver/);assert.deepEqual(errors,[]);await browser.close();console.log('Naval battle reports passed in English and Chinese; older saves remain readable.');
+assert.doesNotMatch(await page.locator('.naval-content').innerText(),/Friendly warship maneuver/);
+for(const [lang,label] of [['en',/Pursue reported fleet/],['zh',/追击已目击舰队/]]){
+ const sighted=newGrandGame('senate');sighted.naval.intel.senate={'caesar-adriatic':{owner:'caesar',zone:'ionian',year:sighted.year,month:sighted.month,source:'recon',range:[2,6],confidence:'medium'}};
+ await page.evaluate(async({state,language})=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js'),{orderFleet}=await import('/naval.js');window.pursuitState=state;renderNavalPanel({state,lang:language,root:document.querySelector('#root'),section:'fleets',onAction:(action,id,kind,target)=>action==='order'?orderFleet(state,state.player,id,kind,target):{ok:true},onZone:()=>{},onPort:()=>{}})},{state:sighted,language:lang});
+ await page.locator('[data-order-kind="senate-adriatic"]').selectOption('pursue');
+ assert.match(await page.locator('[data-order-target="senate-adriatic"]').innerText(),lang==='en'?/2–6 estimated ships/:/估计2–6艘/);
+ await page.locator('[data-order="senate-adriatic"]').click();
+ assert.deepEqual(await page.evaluate(()=>{const order=window.pursuitState.naval.fleets.find(f=>f.id==='senate-adriatic').order;return {kind:order.kind,reportId:order.reportId,target:order.target}}),{kind:'intercept',reportId:'caesar-adriatic',target:'ionian'});
+ await page.evaluate(async language=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js');renderNavalPanel({state:window.pursuitState,lang:language,root:document.querySelector('#root'),section:'fleets',onAction:()=>{},onZone:()=>{},onPort:()=>{}})},lang);
+ assert.match(await page.locator('.naval-content').innerText(),label);
+ assert.match(await page.locator('.naval-content').innerText(),lang==='en'?/Last sighting: Ionian Sea/:/上次目击：爱奥尼亚海/);
+}
+const oldSighting=newGrandGame('senate');oldSighting.naval.intel.senate={'caesar-adriatic':{owner:'caesar',zone:'ionian',year:oldSighting.year,month:oldSighting.month,source:'sighting',confidence:'low'}};
+await page.evaluate(async state=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js');renderNavalPanel({state,lang:'en',root:document.querySelector('#root'),section:'fleets',onAction:()=>{},onZone:()=>{},onPort:()=>{}})},oldSighting);
+await page.locator('[data-order-kind="senate-adriatic"]').selectOption('pursue');
+assert.match(await page.locator('[data-order-target="senate-adriatic"]').innerText(),/ship count unknown/);
+assert.deepEqual(errors,[]);await browser.close();console.log('Naval battle reports and dated fleet pursuit passed in English and Chinese; older saves remain readable.');

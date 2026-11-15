@@ -20,6 +20,29 @@ function tradeArrival(s,id,maxMonths=8){
  assert.fail(`No delivered voyage for ${id} within ${maxMonths} months`);
 }
 
+test('fleet pursuit follows only fresh reported positions and survives a save',()=>{
+ let s=newGrandGame('senate');
+ const own=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ enemy.port='cisalpine';enemy.zone='ligurian';
+ assert.equal(orderFleet(s,'senate',own.id,'pursue',enemy.id).reason,'intelligence');
+ (s.naval.intel.senate||={})[enemy.id]={owner:'caesar',zone:'ionian',year:s.year,month:s.month,source:'sighting',range:[1,5],confidence:'low'};
+ assert.equal(orderFleet(s,'senate',own.id,'pursue',enemy.id).ok,true);
+ assert.equal(own.order.kind,'intercept');assert.equal(own.order.reportId,enemy.id);assert.equal(own.order.target,'ionian');
+ assert.deepEqual(own.order.path,seaRoute('adriatic','ionian'));
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ const pursuing=s.naval.fleets.find(f=>f.id===own.id),hidden=s.naval.fleets.find(f=>f.id===enemy.id);
+ assert.equal(pursuing.order.reportId,enemy.id);assert.equal(hidden.zone,'ligurian');
+ s.month=2;s.naval.intel.senate[enemy.id]={...s.naval.intel.senate[enemy.id],zone:'aegean',month:2};
+ const messages=[];advanceNaval(s,(_state,en)=>messages.push(en));
+ assert.equal(pursuing.order.target,'aegean');assert.equal(pursuing.zone,'ionian');assert.equal(hidden.zone,'ligurian');
+ assert.ok(messages.some(message=>message.includes('new dated sighting')));
+ s.month=3;advanceNaval(s);assert.equal(pursuing.zone,'aegean');
+ s.month=6;advanceNaval(s);assert.equal(pursuing.order,null);
+ assert.equal(orderFleet(s,'senate',pursuing.id,'pursue',enemy.id).reason,'intelligence');
+ s.month=7;s.naval.intel.senate[enemy.id].month=7;s.wars=[];
+ assert.equal(orderFleet(s,'senate',pursuing.id,'pursue',enemy.id).reason,'intelligence');
+});
+
 test('battle sinking follows ship roles rather than save-object key order',()=>{
  const run=composition=>{const s=newGrandGame('senate'),attacker=s.naval.fleets.find(f=>f.id==='senate-adriatic'),defender=s.naval.fleets.find(f=>f.id==='caesar-adriatic');s.factions.caesar.treasury=500;attacker.port=null;attacker.ships={trireme:4};attacker.sailors=720;defender.port=null;defender.zone=attacker.zone;defender.ships=composition;defender.sailors=430;defender.hull=50;defender.order={kind:'patrol',target:defender.zone,path:[]};s.seed=83;advanceNaval(s);return s.naval.reports.find(r=>r.kind==='battle')?.losses[defender.id]};
  const first=run({transport:3,light:1,trireme:1}),reordered=run({trireme:1,light:1,transport:3});

@@ -239,8 +239,13 @@ export function appointFleet(s,owner,id,characterId){const f=fleet(s,id),person=
 export function dismissFleetCommander(s,owner,id){const f=fleet(s,id);if(!f||f.owner!==owner||!(f.commanderId||f.pendingCommanderId))return {ok:false,reason:'commander'};const person=s.world?.characters?.[f.commanderId||f.pendingCommanderId];if(person)person.loyalty=Math.max(0,person.loyalty-2);f.commanderId=null;f.pendingCommanderId=null;f.pendingMonths=0;return {ok:true}}
 export function orderFleet(s,owner,id,kind,target){
  const f=fleet(s,id);
- if(!f||f.owner!==owner||f.order?.armyId||f.reserve||f.mobilizing||!['patrol','escort','intercept','blockade','raid','return','recon','supply'].includes(kind))return {ok:false,reason:'fleet'};
- let targetZone=target,targetPort=null,cargo=0;
+ if(!f||f.owner!==owner||f.order?.armyId||f.reserve||f.mobilizing||!['patrol','escort','intercept','pursue','blockade','raid','return','recon','supply'].includes(kind))return {ok:false,reason:'fleet'};
+ let targetZone=target,targetPort=null,cargo=0,reportId=null;
+ if(kind==='pursue'){
+  const sighting=reportedHostileFleets(s,owner).find(report=>report.id===target&&s.year*12+s.month-(report.year*12+report.month)<=2);
+  if(!sighting)return {ok:false,reason:'intelligence'};
+  targetZone=sighting.zone;reportId=sighting.id;
+ }
  if(['return','blockade','supply'].includes(kind)){
   const r=s.regions.find(x=>x.id===target&&x.port);
   if(!r||kind==='return'&&r.owner!==owner||kind==='blockade'&&!atWar(s,owner,r.owner)||kind==='supply'&&r.owner!==owner)return {ok:false,reason:'port'};
@@ -266,7 +271,7 @@ export function orderFleet(s,owner,id,kind,target){
  const returning=kind==='return'?f.order?.cargo||0:0;
  if(f.order?.kind==='supply'&&kind!=='return')report(s,{kind:'supply-loss',owner,port:f.order.targetPort,cargo:f.order.cargo,reason:'cancelled'});
  if(kind==='supply')s.factions[owner].food-=cargo;
- f.port=null;f.order={kind,target,targetPort,path,...(cargo?{cargo}:{}),...(returning?{cargo:returning}: {})};
+ f.port=null;f.order={kind:kind==='pursue'?'intercept':kind,target:reportId?targetZone:target,targetPort,path,...(reportId?{reportId}:{}),...(cargo?{cargo}:{}),...(returning?{cargo:returning}: {})};
  return {ok:true,months:Math.max(1,Math.ceil(path.length/fleetSpeed(f))),...(cargo?{cargo}: {})};
 }
 // Food landed at a port can be carted a few friendly land links inland. A
@@ -582,7 +587,7 @@ function aiNavalOrders(s,owner,f){
  }
  if(f.order?.kind==='intercept'&&f.order.reportId){
   const report=reportedHostileFleets(s,owner).find(x=>x.id===f.order.reportId);
-  if(!report||s.year*12+s.month-(report.year*12+report.month)>2||report.zone!==f.order.target)f.order=null;
+  if(!report||s.year*12+s.month-(report.year*12+report.month)>2)f.order=null;
  }
  const cashflow=aiNavalCashflow(s,owner),treasury=s.factions[owner].treasury;
  const nearbyThreat=reportedHostileFleets(s,owner).some(r=>atWar(s,owner,r.owner)&&seaRoute(f.zone,r.zone)?.length<=1);
@@ -621,7 +626,20 @@ function aiNavalOrders(s,owner,f){
  const pursuit=aiPursuitTarget(s,owner,f);if(pursuit){const order=orderFleet(s,owner,f.id,'intercept',pursuit.zone);if(order.ok)f.order.reportId=pursuit.id;return order}
  const known=reportedHostileFleets(s,owner),enemyPort=s.regions.find(r=>r.port&&atWar(s,owner,r.owner)&&seaRoute(f.zone,portZone(r.id))?.length<=1&&!known.some(x=>x.zone===portZone(r.id)&&x.range[1]>(ships(f)*1.5)));if(enemyPort&&combatPower(s,f)>4)return orderFleet(s,owner,f.id,'blockade',enemyPort.id);
 }
+function updatePursuitOrders(s,log){
+ for(const f of s.naval.fleets){
+  const order=f.order;if(order?.kind!=='intercept'||!order.reportId)continue;
+  const sighting=reportedHostileFleets(s,f.owner).find(report=>report.id===order.reportId&&s.year*12+s.month-(report.year*12+report.month)<=2);
+  if(!sighting){f.order=null;if(f.owner===s.player)log(s,'Fleet pursuit ended: the sighting expired or the target is no longer hostile.','舰队追击结束：目击情报过期，或目标已不再交战。');continue}
+  if(sighting.zone===order.target)continue;
+  const path=seaRoute(f.zone,sighting.zone);
+  if(!path){f.order=null;continue}
+  order.target=sighting.zone;order.path=path;
+  if(f.owner===s.player)log(s,'Fleet pursuit changed course after a new dated sighting. The target may have moved again.','舰队根据新的注明日期的目击报告改航；目标仍可能再次移动。');
+ }
+}
 export function advanceNaval(s,log=()=>{}){initializeNaval(s);if(!s.naval)return;const n=s.naval,avoidedNavalBattles=new Set();advanceWagons(s,log);consumeMaritimeProvisions(s);produceGoods(s);for(const j of [...n.jobs]){const p=s.world?.characters?.[j.characterId],budget=s.factions[j.owner];if(!p?.alive||p.faction!==j.owner||j.port&&s.regions.find(r=>r.id===j.port)?.owner!==j.owner){n.jobs.splice(n.jobs.indexOf(j),1);continue}if(j.remaining>0){j.remaining--;continue}budget.treasury=Math.max(-100,budget.treasury-1);if(budget.treasury<0)p.loyalty=Math.max(0,p.loyalty-1);j.experience=(j.experience||0)+1;if(j.experience%12===0){const skill=navalSkill(p,j.kind);p.navalSkills[j.kind]=Math.min(100,skill+2)}}for(const q of [...n.queues]){if(s.regions.find(r=>r.id===q.port)?.owner!==q.owner){n.queues.splice(n.queues.indexOf(q),1);if(q.owner===s.player)log(s,'Shipbuilding stopped when the shipyard was lost.','船厂失守，造船工程中止。');continue}q.remaining--;if(q.remaining>0)continue;n.queues.splice(n.queues.indexOf(q),1);let f=n.fleets.find(x=>x.owner===q.owner&&x.port===q.port&&!x.order&&!x.reserve);if(!f){f=makeFleet(`fleet-${n.nextFleet++}`,[`Fleet at ${site(q.port)?.site[0]||q.port}`,`${site(q.port)?.site[1]||q.port}舰队`],q.owner,q.port,{});n.fleets.push(f)}f.ships[q.type]=(f.ships[q.type]||0)+1;f.sailors+=SHIPS[q.type].crew;if(q.owner===s.player)log(s,`A ${SHIPS[q.type].name[0]} was launched at ${site(q.port)?.site[0]}.`,`${SHIPS[q.type].name[1]}在${site(q.port)?.site[1]}下水。`)}
+ updatePursuitOrders(s,log);
  for(const f of n.fleets){
   const lostHarbor=f.port&&s.regions.find(r=>r.id===f.port)?.owner!==f.owner;
   if(!lostHarbor&&(!f.reserve||f.port))continue;
