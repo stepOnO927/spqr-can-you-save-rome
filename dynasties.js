@@ -1,5 +1,5 @@
 import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=undated-name-1';
-import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=succession-ui-recovery-1';
 import {startDynasticWar} from './civil-war.js?v=undated-name-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=born-portraits-nine-1';
@@ -11,7 +11,12 @@ export const dynastyRoll=roll;
 const note=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
 const born=(s,id)=>s.world.characters[id]?.birthYear??CHARACTER_CATALOG[id]?.birth?.[1]??null;
 export const personAge=(s,id)=>{const year=born(s,id);return year==null?null:s.year-year};
-const eligibleAdult=(s,id)=>{const c=s.world.characters[id],age=personAge(s,id);return !!c?.alive&&!c.missing&&age!==null&&age>=18};
+// Fictional birthdays are campaign facts; historical birth estimates are
+// ranges. Do not turn an unknown or ambiguous age into a child or adult.
+const eligibilityAgeRange=(s,id)=>{if(CHARACTER_CATALOG[id]?.fictional){const age=personAge(s,id);return Number.isFinite(age)&&age>=0?[age,age]:null}return ageRange(id,s.year)};
+export const isKnownMinor=(s,id)=>{const age=eligibilityAgeRange(s,id);return !!age&&age[0]>=0&&age[1]<16};
+export const isKnownAdult=(s,id)=>{const age=eligibilityAgeRange(s,id);return !!age&&age[0]>=18};
+const eligibleAdult=(s,id)=>{const c=s.world.characters[id];return !!c?.alive&&!c.missing&&isKnownAdult(s,id)};
 const familyOf=(s,id)=>s.world.dynasties.families[s.world.characters[id]?.familyId];
 const pair=(a,b)=>[a,b].sort().join(':');
 // A diplomatic proposal and its answer each have a separate journey.  The
@@ -196,7 +201,7 @@ function courtDistance(a,b){
 export function offerFamilyAccord(s,kind,contactId,reportedFaction,childId=null){
  const d=initializeDynasties(s),host=s.player,cost=kind==='wardship'?8:6;
  if(!['pledge','wardship'].includes(kind)||!reportedDynasticContacts(s).some(x=>x.id===contactId&&x.faction===reportedFaction)||host===reportedFaction)return {ok:false,reason:'unknown'};
- if(kind==='wardship'&&(!s.world.characters[childId]?.alive||s.world.characters[childId].faction!==host||personAge(s,childId)>=16||personAge(s,childId)<0))return {ok:false,reason:'child'};
+ if(kind==='wardship'&&(!s.world.characters[childId]?.alive||s.world.characters[childId].faction!==host||!isKnownMinor(s,childId)))return {ok:false,reason:'child'};
  if(s.wars.some(w=>w.includes(host)&&w.includes(reportedFaction))||(s.relations[pair(host,reportedFaction)]??0)<0)return {ok:false,reason:'diplomacy'};
  if(d.familyAccords.some(x=>x.host===host&&x.target===reportedFaction&&x.kind===kind&&['pending','active'].includes(x.status)))return {ok:false,reason:'commitment'};
  if(kind==='wardship'&&d.familyAccords.some(x=>x.child===childId&&['pending','active'].includes(x.status)))return {ok:false,reason:'commitment'};
@@ -211,7 +216,7 @@ function advanceFamilyAccords(s){
   const war=s.wars.some(w=>w.includes(a.host)&&w.includes(a.target));
   if(a.status==='pending'){
    if(--a.months>0)continue;
-   const contact=s.world.characters[a.contact],child=s.world.characters[a.child],valid=contact?.alive&&!contact.missing&&contact.faction===a.target&&s.factions[a.target]&&!war&&(!a.child||child?.alive&&child.faction===a.host&&personAge(s,a.child)<16)&&(!a.child||personAge(s,a.contact)>=18);
+   const contact=s.world.characters[a.contact],child=s.world.characters[a.child],valid=contact?.alive&&!contact.missing&&contact.faction===a.target&&s.factions[a.target]&&!war&&(!a.child||child?.alive&&child.faction===a.host&&isKnownMinor(s,a.child))&&(!a.child||isKnownAdult(s,a.contact));
    if(!familyCourierArrives(s,a)||!valid){a.status='no_reply';if(a.host===s.player)note(s,'No family accord reply arrived; the letter may have been lost or the contact report outdated.','未收到家族协定回信；书信可能遗失，联系人情报也可能过时。')}
    else{
     const relation=s.relations[pair(a.host,a.target)]??0,distance=courtDistance(a.host,a.target),[culture,faith]=courtProfile[a.host]||[],[otherCulture,otherFaith]=courtProfile[a.target]||[];
@@ -238,7 +243,7 @@ function advanceFamilyAccords(s){
 export function adoptHeir(s,parentId,childId){
  initializeDynasties(s);const parent=s.world.characters[parentId],child=s.world.characters[childId];
  if(!eligibleAdult(s,parentId)||!child?.alive||childId===parentId||parent.faction!==child.faction||parent.children.includes(childId)||child.parents.includes(parentId)||child.adoptiveParents.length)return {ok:false,reason:'eligibility'};
- const age=personAge(s,childId),senior=personAge(s,parentId);if(age===null||senior===null||senior-age<16)return {ok:false,reason:'age'};
+ const age=personAge(s,childId),senior=personAge(s,parentId);if(!Number.isFinite(age)||age<0||!Number.isFinite(senior)||senior-age<16)return {ok:false,reason:'age'};
  child.adoptiveParents.push(parentId);parent.children.push(childId);child.familyId=parent.familyId;
  record(s,childId,`Adopted by ${CHARACTER_CATALOG[parentId].name[0]}; this did not confer office.`,`由${CHARACTER_CATALOG[parentId].name[1]}收养；收养不授予官职。`);
  record(s,parentId,`Adopted ${CHARACTER_CATALOG[childId].name[0]}.`,`收养了${CHARACTER_CATALOG[childId].name[1]}。`);
@@ -259,7 +264,7 @@ export function makeWill(s,id,beneficiary,share=1){
 export function nominateGuardian(s,parentId,childId,guardianId){
  initializeDynasties(s);const parent=s.world.characters[parentId],child=s.world.characters[childId],guardian=s.world.characters[guardianId];
  if(!eligibleAdult(s,parentId)||!child?.alive||!eligibleAdult(s,guardianId)||parentId===guardianId||childId===guardianId||parent.faction!==child.faction||child.faction!==guardian.faction||!child.parents.includes(parentId)&&!child.adoptiveParents.includes(parentId))return {ok:false,reason:'eligibility'};
- const age=personAge(s,childId);if(age===null||age>=16)return {ok:false,reason:'age'};
+ if(!isKnownMinor(s,childId))return {ok:false,reason:'age'};
  child.guardianNominee=guardianId;record(s,parentId,`Nominated ${CHARACTER_CATALOG[guardianId].name[0]} as guardian of ${CHARACTER_CATALOG[childId].name[0]}; this conferred no office.`,`提名${CHARACTER_CATALOG[guardianId].name[1]}为${CHARACTER_CATALOG[childId].name[1]}的监护人；这不授予官职。`);
  return {ok:true};
 }
@@ -267,7 +272,7 @@ export function nominateGuardian(s,parentId,childId,guardianId){
 function activateGuardianships(s,id){
  const parent=s.world.characters[id];for(const childId of parent.children){
   const child=s.world.characters[childId],guardian=s.world.characters[child?.guardianNominee];
-  if(!child?.alive||personAge(s,childId)>=16||!guardian?.alive||guardian.missing||guardian.faction!==child.faction)continue;
+  if(!child?.alive||!isKnownMinor(s,childId)||!guardian?.alive||guardian.missing||guardian.faction!==child.faction)continue;
   if([...child.parents,...child.adoptiveParents].some(pid=>pid!==id&&eligibleAdult(s,pid)))continue;
   child.guardian=guardian.id;record(s,childId,`${CHARACTER_CATALOG[guardian.id].name[0]} became guardian; no political office was inherited.`,`${CHARACTER_CATALOG[guardian.id].name[1]}成为监护人；没有继承政治职务。`);
  }

@@ -1,8 +1,8 @@
 // The First Hundred Days: guidance reads observable campaign state. It never
 // issues orders or uses unreported foreign strength, locations or intentions.
-import {receivedMail,sendLetter} from './epistulae.js?v=foreign-heir-knowledge-1';
+import {receivedMail,sendLetter} from './epistulae.js?v=guardian-age-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {treeFor,canStartFocus,focusCost} from './national-focus.js?v=foreign-heir-knowledge-1';
+import {treeFor,canStartFocus,focusCost} from './national-focus.js?v=guardian-age-1';
 
 const label=(en,zh)=>[en,zh];
 const month=s=>s.year*12+s.month;
