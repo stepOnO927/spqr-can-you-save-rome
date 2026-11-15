@@ -37,6 +37,13 @@ test('simultaneous battles and territory changes retain distinct stable referenc
 test('rebellion and defeat are reported without inventing foreign intelligence',()=>{
  const s=newGame();region(s,'gaul').loyalty=0;s.factions.caesar.stability=0;tick(s);
  assert.ok(s.campaignEvents.some(e=>e.type==='rebellion'&&e.regionId==='gaul'));
+ assert.ok(s.log.some(e=>e.en.includes('Gaul has risen in rebellion')));
+ const unseen=newGame();region(unseen,'numidia').loyalty=0;unseen.factions.numidia.stability=0;
+ const weakGuard=unseen.armies.find(a=>a.id==='numidiaarmy');weakGuard.men=100;weakGuard.morale=50;
+ tick(unseen);
+ assert.equal(region(unseen,'numidia').owner,'rebels');
+ assert.equal(unseen.campaignEvents.some(e=>e.type==='rebellion'&&e.regionId==='numidia'),false);
+ assert.equal(unseen.log.some(e=>e.en.includes('Numidia has risen in rebellion')||e.zh.includes('努米底亚爆发叛乱')),false);
  const weak=newGame();weak.armies.find(a=>a.id==='xiii').men=100;moveArmy(weak,'xiii','italiaN');tick(weak);
  assert.ok(weak.campaignEvents.some(e=>e.type==='battle'&&e.outcome==='lost'&&e.severity==='critical'));
  const foreign=newGame();const count=foreign.campaignEvents.length;

@@ -537,13 +537,16 @@ function seasonalWaterStress(s){
 }
 
 function rebellion(s){
-  const candidate=s.regions.find(r=>r.owner!=='rebels'&&r.loyalty<25&&s.factions[r.owner].stability<60&&!s.armies.some(a=>a.region===r.id&&a.owner===r.owner));
+  // A few starving stragglers cannot police a province indefinitely. Compare
+  // the local force's morale-adjusted strength with half the uprising levy.
+  const localOrderStrength=r=>s.armies.filter(a=>a.region===r.id&&a.owner===r.owner&&a.men>0).reduce((total,a)=>total+a.men*Math.max(0,Math.min(100,a.morale??50))/100,0);
+  const candidate=s.regions.find(r=>r.owner!=='rebels'&&r.loyalty<25&&s.factions[r.owner].stability<60&&localOrderStrength(r)<1200);
   if(!candidate)return;
   const previousOwner=candidate.owner;
   candidate.owner='rebels';candidate.loyalty=45;
   s.armies.push({id:`rebel${s.nextArmy++}`,name:['Provincial uprising','行省起义军'],owner:'rebels',region:candidate.id,men:2400,morale:59,skill:1,experience:0,commander:['Local leaders','地方首领'],move:null,siege:null});
   if(!isWar(s,'rebels',previousOwner))s.wars.push(['rebels',previousOwner]);recordRebellion(s,candidate,previousOwner,s.armies.at(-1).id);recordControl(s,candidate,previousOwner,'rebellion',{armyId:s.armies.at(-1).id});
-  log(s,`${candidate.name[0]} has risen in rebellion and formed an armed faction.`,`${candidate.name[1]}爆发叛乱，形成了武装派系。`);
+  if(previousOwner===s.player)log(s,`${candidate.name[0]} has risen in rebellion and formed an armed faction.`,`${candidate.name[1]}爆发叛乱，形成了武装派系。`);
 }
 
 function shortestStep(s,start,goal,owner,unit){

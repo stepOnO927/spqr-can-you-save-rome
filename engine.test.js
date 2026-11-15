@@ -93,6 +93,21 @@ test('tax pressure causes an actual territorial rebellion',()=>{
   assert.ok(isWar(s,'caesar','rebels'));
 });
 
+test('a depleted local army cannot suppress a collapsing province forever',()=>{
+  const setup=(men,morale)=>{
+    const s=newGame(),guard=army(s,'xiii');
+    s.factions.caesar.stability=40;
+    region(s,'gaul').loyalty=0;
+    guard.region='gaul';guard.men=men;guard.morale=morale;
+    return s;
+  };
+  const weak=upgradeSave(JSON.parse(JSON.stringify(setup(100,50))));tick(weak);
+  assert.equal(region(weak,'gaul').owner,'rebels');
+  assert.ok(weak.armies.some(a=>a.owner==='rebels'&&a.region==='gaul'&&a.men===2400));
+  const strong=setup(3000,60);tick(strong);
+  assert.equal(region(strong,'gaul').owner,'caesar');
+});
+
 test('AI issues real movement orders after a monthly update',()=>{
   const s=newGame();tick(s);
   assert.ok(s.armies.some(a=>a.owner==='senate'&&a.move));
