@@ -1,8 +1,8 @@
-import {isDeliveredReport} from './person-knowledge.js?v=sighting-delivery-1';
+import {isDeliveredReport} from './person-knowledge.js?v=sighting-consumers-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
-import {reportedMovements,movementReportLeaderName} from './movements.js?v=sighting-delivery-1';
-import {visiblePersonName} from './character-system.js?v=sighting-delivery-1';
+import {reportedMovements,movementReportLeaderName} from './movements.js?v=sighting-consumers-1';
+import {visiblePersonName} from './character-system.js?v=sighting-consumers-1';
 
 const opening=['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair=(a,b)=>[a,b].sort().join(':');
@@ -32,8 +32,8 @@ export function buildChessboard(s,viewer=s.player){
  for(const id of [...factionIds].filter(id=>id!==viewer&&FACTIONS[id]).slice(0,14)){
   const relation=s.relations[pair(viewer,id)]??0,enemy=atWar(s,viewer,id),id2='f:'+id;
   add(id2,'faction',name(id),'reported',[[`Official relationship with your command: ${relation}. Other information may be old or absent.`,`与本方的官方关系：${relation}。其他情报可能过时或缺失。`]]);
-  const sightings=Object.values(s.knowledge?.[viewer]?.[id]?.sightings||{}).filter(x=>age(s,x)>=0&&age(s,x)<=24&&x.region).sort((a,b)=>age(s,a)-age(s,b)).slice(0,3);
-  for(const sighting of sightings){const location=s.regions.find(r=>r.id===sighting.region)?.name||[sighting.region,sighting.region],year=sighting.year<0?Math.abs(sighting.year):sighting.year+1;byId.get(id2).detail.push([`A force was reported near ${location[0]} in ${sighting.month}/${year} ${sighting.year<0?'BCE':'CE'}; current location and strength are unknown.`,`曾于${sighting.year<0?'公元前':'公元'}${year}年${sighting.month}月在${location[1]}附近发现一支军队；当前位置及兵力未知。`])}
+  const sightings=Object.values(s.knowledge?.[viewer]?.[id]?.sightings||{}).filter(x=>isDeliveredReport(s,x)&&age(s,x)>=0&&age(s,x)<=24&&x.region).sort((a,b)=>age(s,a)-age(s,b)).slice(0,3);
+  for(const sighting of sightings){const location=s.regions.find(r=>r.id===sighting.region)?.name||[sighting.region,sighting.region],observedYear=sighting.observationYear??sighting.year,month=sighting.observationMonth??sighting.month,year=observedYear<0?Math.abs(observedYear):observedYear+1;byId.get(id2).detail.push([`A force was reported near ${location[0]} in ${month}/${year} ${observedYear<0?'BCE':'CE'}; current location and strength are unknown.`,`曾于${observedYear<0?'公元前':'公元'}${year}年${month}月在${location[1]}附近发现一支军队；当前位置及兵力未知。`])}
   if(enemy)link(ownId,id2,'war','confirmed',['Your command is at war with this faction.','本方与该势力交战。']);
   else if(relation!==0)link(ownId,id2,'relation','confirmed',[`Official relationship: ${relation}.`,`官方关系：${relation}。`]);
  }

@@ -1,7 +1,7 @@
-import {initializeCursus,MAGISTRACIES,ASSEMBLIES,officeEligibility,obedience,institutionalBalance,campaignPhase,campaignEstimate,senateAssessment,seekSenatorEndorsement,campaignFor,supportCandidate,investigateCandidate,proposeMeasure,previewGovernmentInquiry,investigateGovernment,governmentReport,reportedOfficialName,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment} from '../cursus-honorum.js?v=sighting-delivery-1';
+import {initializeCursus,MAGISTRACIES,ASSEMBLIES,officeEligibility,obedience,institutionalBalance,campaignPhase,campaignEstimate,senateAssessment,seekSenatorEndorsement,campaignFor,supportCandidate,investigateCandidate,proposeMeasure,previewGovernmentInquiry,investigateGovernment,governmentReport,reportedOfficialName,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment} from '../cursus-honorum.js?v=sighting-consumers-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {appointOffice,officeCandidates,OFFICE_TYPES} from '../office-system.js?v=sighting-delivery-1';
+import {appointOffice,officeCandidates,OFFICE_TYPES} from '../office-system.js?v=sighting-consumers-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=born-portraits-six-1';
 import {campaignDate} from '../campaign-date.js?v=calendar-1';
 
