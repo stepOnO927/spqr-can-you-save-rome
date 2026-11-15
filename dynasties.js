@@ -1,4 +1,4 @@
-import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=family-correspondent-names-1';
+import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=future-dated-reports-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {startDynasticWar} from './civil-war.js?v=succession-ui-recovery-1';
 import {ROUTES} from './data.js?v=phase-x-1';
@@ -116,7 +116,7 @@ export function reportedDynasticContacts(s,viewer=s.player){
  initializeDynasties(s);const contacts=[];
  for(const [faction,k] of Object.entries(s.knowledge?.[viewer]||{})){
   if(faction===viewer||faction==='rebels')continue;
-  const ids=[...(k.reportedLeaders||[]),...(k.reports||[]).flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['age','health','location'].includes(r.kind)&&r.character?[r.character]:[])];
+  const ids=[...(k.reportedLeaders||[]),...(k.reports||[]).filter(r=>isDeliveredReport(s,r)).flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['age','health','location'].includes(r.kind)&&r.character?[r.character]:[])];
   for(const id of new Set(ids))if(CHARACTER_CATALOG[id])contacts.push({id,faction});
  }
  return contacts;
@@ -151,7 +151,7 @@ function advanceMarriageOffers(s){
 export function requestClaimantAsylum(s,claimantId,reportedFaction){
  const d=initializeDynasties(s),actor=s.player;
  const reports=s.knowledge?.[actor]?.[reportedFaction]?.reports||[];
- const known=reports.some(r=>r.kind==='claimants'&&(r.leaders||[]).includes(claimantId));
+ const known=reports.some(r=>isDeliveredReport(s,r)&&r.kind==='claimants'&&(r.leaders||[]).includes(claimantId));
  if(!known||!['egypt','parthia'].includes(reportedFaction)||!['caesar','senate'].includes(actor)||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unknown'};
  if(s.wars.some(w=>w.includes(actor)&&w.includes(reportedFaction)))return {ok:false,reason:'war'};
  if(d.asylumRequests.some(x=>x.claimant===claimantId&&x.status==='pending'))return {ok:false,reason:'pending'};
