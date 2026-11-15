@@ -1,13 +1,13 @@
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
-import {reportedHealthSubjects,reportedPersonName} from './character-system.js?v=exchange-undated-1';
-import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from './personal-diplomacy.js?v=exchange-undated-1';
+import {reportedHealthSubjects,reportedPersonName} from './character-system.js?v=undated-name-1';
+import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting} from './personal-diplomacy.js?v=undated-name-1';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=(pair,zh)=>Array.isArray(pair)?pair[zh?1:0]:'';
 
-// Foreign fictional names are taken only from delivered, dated reports.
+// Foreign fictional names are taken only from delivered report snapshots.
 export function genealogyMeetingContacts(s,zh=false){
  const result=[];
  for(const faction of Object.keys(s.knowledge?.[s.player]||{})){
@@ -15,7 +15,7 @@ export function genealogyMeetingContacts(s,zh=false){
   const ids=reportedHealthSubjects(s,s.player,faction);let unknown=0;
   for(const id of ids){const person=CHARACTER_CATALOG[id];if(!person)continue;
    const reported=person.fictional?reportedPersonName(s,s.player,faction,id):null;
-   const personName=person.fictional?(reported?`${label(reported.name,zh)} (${zh?'报告于':'reported'} ${campaignDate(reported.month,reported.year,zh?'zh':'en')})`:(zh?`未核实人物 ${++unknown}`:`Unverified person ${++unknown}`)):label(person.name,zh);
+   const personName=person.fictional?(reported?`${label(reported.name,zh)} (${Number.isFinite(reported.year)&&Number.isInteger(reported.month)?`${zh?'报告于':'reported'} ${campaignDate(reported.month,reported.year,zh?'zh':'en')}`:(zh?'报告日期未知':'report date unknown')})`:(zh?`未核实人物 ${++unknown}`:`Unverified person ${++unknown}`)):label(person.name,zh);
    result.push({id,faction,label:`${personName} · ${label(FACTIONS[faction].short,zh)}`});
   }
  }
