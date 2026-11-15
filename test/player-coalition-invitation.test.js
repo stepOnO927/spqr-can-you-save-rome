@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=born-portraits-eight-1';
+import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=inheritance-privacy-1';
 import {sendCoalitionInvitation,advanceCoalitionInvitations,answerCoalitionInvitation} from '../coalition-negotiations.js?v=sighting-consumers-1';
-import {receivedMail,replyToLetter,syncCoalitionLetters} from '../epistulae.js?v=born-portraits-eight-1';
+import {receivedMail,replyToLetter,syncCoalitionLetters} from '../epistulae.js?v=inheritance-privacy-1';
 
 function setup(){
  const s=newGame('caesar');s.relations['caesar:egypt']=40;s.relations['egypt:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;
