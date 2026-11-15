@@ -142,3 +142,6 @@
 .leader-overview .army::after{content:'';position:absolute;left:50%;top:100%;width:var(--army-link-length,0px);height:1px;background:#d8c68fa8;transform-origin:left center;transform:rotate(var(--army-link-angle,0rad));pointer-events:none}
 .leader-overview .city-marker.is-compact .name{display:none}
 .leader-overview .city-marker.major::after{content:'';position:absolute;left:0;top:50%;width:var(--city-link-length,0px);height:1px;background:#d8c68fa8;transform-origin:left center;transform:rotate(var(--city-link-angle,0rad));pointer-events:none}
+.city-marker.village .city-icon{background:#425343;border-radius:50%}
+.city-marker.village .name{display:none}
+.city-marker.village:hover .name,.city-marker.village:focus-visible .name{display:inline;position:absolute;left:22px;top:0;z-index:3}

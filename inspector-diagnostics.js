@@ -79,7 +79,7 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
    if(!factionIds.has(incident?.attacker)||!factionIds.has(incident?.defender)||!regionIds.has(incident?.territory)||incident?.origin&&!regionIds.has(incident.origin))add('warning','invalid-border-incident',base,String(incident?.territory));
    if(!Number.isFinite(incident?.attackerLoss)||incident.attackerLoss<0||!Number.isFinite(incident?.defenderLoss)||incident.defenderLoss<0)add('warning','invalid-border-loss',base,String(incident?.attackerLoss));
   }
-  const localIds=new Set(),localRulerIds=new Set();let generatedCount=0;
+  const localIds=new Set(),localRulerIds=new Set();let generatedCount=0,generatedVillageCount=0,generatedStrongmanCount=0;
   for(const [i,r] of s.regions.entries())for(const [j,entity] of (r.localEntities||[]).entries()){
    const base=`regions[${i}].localEntities[${j}]`;
    if(!entity?.id||localIds.has(entity.id))add('fatal','duplicate-local-entity',base,String(entity?.id));else localIds.add(entity.id);
@@ -91,9 +91,10 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
     if(localRulerIds.has(entity.ruler.id)||!ruler||ruler.polityId!==entity.id||JSON.stringify(ruler.name)!==JSON.stringify(entity.ruler.name)||ruler.alive!==true||entity.procedural&&(!Number.isInteger(ruler.birthYear)||!ruler.fictional))add('warning','invalid-local-ruler-registry',`${base}.ruler`,String(entity.ruler.id));
     localRulerIds.add(entity.ruler.id);
    }
-   if(entity?.controller!==entity?.id&&!factionIds.has(entity?.controller))add('fatal','invalid-local-controller',`${base}.controller`,String(entity?.controller));
+   if(entity?.controller!==entity?.id&&!factionIds.has(entity?.controller)&&!(entity?.proceduralVillage&&entity.controller===entity.sponsor&&r.localEntities?.some(site=>site.id===entity.sponsor&&site.type==='strongman')))add('fatal','invalid-local-controller',`${base}.controller`,String(entity?.controller));
    if(!Number.isFinite(entity?.militia)||entity.militia<0)add('fatal','invalid-local-militia',`${base}.militia`,String(entity?.militia));
-   if(entity?.procedural){generatedCount++;if(entity.historical!==false||entity.spatialAccuracy!=='fictional_approximate_point'||!Array.isArray(entity.name)||entity.name.length!==2||entity.name.some(name=>typeof name!=='string'||!name)||!entity.ruler?.id||!Number.isInteger(entity.population)||entity.population<100||entity.militia>entity.population/4||!Number.isFinite(entity.treasury)||entity.treasury<0||!Number.isFinite(entity.food)||entity.food<0||!Number.isInteger(entity.strategy)||entity.strategy<1||entity.strategy>5)add('warning','invalid-generated-polity',base,String(entity.id))}
+   if(entity?.procedural&&!entity.proceduralVillage){generatedCount++;if(entity.type==='strongman')generatedStrongmanCount++;if(entity.historical!==false||entity.spatialAccuracy!=='fictional_approximate_point'||!Array.isArray(entity.name)||entity.name.length!==2||entity.name.some(name=>typeof name!=='string'||!name)||!entity.ruler?.id||!Number.isInteger(entity.population)||entity.population<100||entity.militia>entity.population/4||!Number.isFinite(entity.treasury)||entity.treasury<0||!Number.isFinite(entity.food)||entity.food<0||!Number.isInteger(entity.strategy)||entity.strategy<1||entity.strategy>5||entity.type==='strongman'&&(!factionIds.has(entity.legalSovereign)||entity.claimedSovereignty!==false||entity.government!=='personal_following'))add('warning','invalid-generated-polity',base,String(entity.id))}
+   if(entity?.proceduralVillage){generatedVillageCount++;const patron=r.localEntities?.find(site=>site.id===entity.sponsor&&site.type==='strongman');if(!patron||entity.type!=='village'||entity.historical!==false||entity.spatialAccuracy!=='fictional_approximate_point'||!factionIds.has(entity.legalSovereign)||!factionIds.has(entity.lastHostOwner)||entity.lastPatronController!==patron.controller||!Array.isArray(entity.name)||entity.name.length!==2||!entity.village||entity.village.population>patron.population||entity.village.foodProduction<entity.village.foodNeed)add('warning','invalid-generated-village',base,String(entity.id))}
    if(entity.resistance!=null&&(!Number.isFinite(entity.resistance)||entity.resistance<0||entity.resistance>100))add('fatal','invalid-local-resistance',`${base}.resistance`,String(entity.resistance));
    if(entity.type==='village'){
     const v=entity.village,level=(key,max)=>Number.isInteger(v?.[key])&&v[key]>=0&&v[key]<=max;
@@ -106,6 +107,7 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
   }
   const generation=s.world?.localGeneration;
   if(generation&&(!Number.isInteger(generation.seed)||generation.seed<0||generation.seed>0xffffffff||!LOCAL_GENERATION_BANDS[generation.difficulty]||!Number.isInteger(generation.count)||generation.count!==generatedCount))add('warning','invalid-local-generation','world.localGeneration',String(generation?.count));
+  if(generation&&generatedVillageCount!==generatedStrongmanCount)add('warning','invalid-generated-village-count','world.localGeneration',String(generatedVillageCount));
   for(const [viewer,records] of Object.entries(s.localDiscovery||{})){
    if(!factionIds.has(viewer)||!records||typeof records!=='object'||Array.isArray(records)){add('warning','invalid-local-discovery',`localDiscovery.${viewer}`,'Invalid viewer or record list');continue}
    for(const [id,record] of Object.entries(records))if(!localIds.has(id)||!Number.isInteger(record?.level)||record.level<1||record.level>5||!Number.isInteger(record?.year)||!Number.isInteger(record?.month)||record.month<1||record.month>12||typeof record.source!=='string')add('warning','invalid-local-discovery',`localDiscovery.${viewer}.${id}`,String(record?.level));

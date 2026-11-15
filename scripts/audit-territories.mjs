@@ -27,7 +27,7 @@ const audit = {
     localEntities: LOCAL_ENTITY_TEMPLATES.length,
     invalidLocalEntities: LOCAL_ENTITY_TEMPLATES.filter(entity => !mainIds.has(entity.theater) || !Array.isArray(entity.coordinates) || entity.coordinates.length !== 2 || entity.coordinates.some(value => !Number.isFinite(value)) || (entity.historical && !entity.source) || (!entity.historical && entity.spatialAccuracy !== 'fictional_approximate_point')).map(entity => entity.id),
     generatedSites: LOCAL_GENERATION_SITES.length,
-    invalidGeneratedSites: LOCAL_GENERATION_SITES.filter(site => !mainIds.has(site.theater) || !['city_state','microstate','tribe'].includes(site.type) || !Array.isArray(site.coordinates) || site.coordinates.length !== 2 || site.coordinates.some(value => !Number.isFinite(value)) || !Number.isFinite(site.scale) || site.scale <= 0).map(site => site.theater),
+    invalidGeneratedSites: LOCAL_GENERATION_SITES.filter(site => !mainIds.has(site.theater) || !['city_state','microstate','tribe','strongman'].includes(site.type) || !Array.isArray(site.coordinates) || site.coordinates.length !== 2 || site.coordinates.some(value => !Number.isFinite(value)) || !Number.isFinite(site.scale) || site.scale <= 0).map(site => site.theater),
     duplicateGeneratedTheaters: LOCAL_GENERATION_SITES.filter((site,index) => LOCAL_GENERATION_SITES.findIndex(item => item.theater === site.theater) !== index).map(site => site.theater)
   },
   han: {

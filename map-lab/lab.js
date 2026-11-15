@@ -126,12 +126,12 @@ function syncProceduralMarkers(){
  proceduralMarkers.length=0;
  for(let i=cities.length-1;i>=0;i--)if(cities[i].procedural){const name=cities[i].name;delete cityZh[name];delete cityTheater[name];delete localCityId[name];cities.splice(i,1)}
  for(const entity of state.regions.flatMap(r=>r.localEntities||[]).filter(e=>e.procedural)){
-  const name=entity.name[0].toUpperCase(),city={name,p:entity.coordinates,kind:entity.fort?'minor fort':'minor',desc:entity.description[0],procedural:true};
+  const name=entity.name[0].toUpperCase(),city={name,p:entity.coordinates,kind:entity.type==='village'?'minor village':entity.fort?'minor fort':'minor',desc:entity.description[0],procedural:true};
   cities.push(city);cityZh[name]=entity.name[1];cityTheater[name]=entity.theater;localCityId[name]=entity.id;
   const el=document.createElement('button');el.className=`city-marker ${city.kind}`;el.dataset.city=name;el.setAttribute('aria-label',`${t('inspect')} ${name}`);
   el.innerHTML=`<span class="city-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 12h12M4 11V7l4-3 4 3v4M7 11V8h2v3"/></svg></span><span class="name">${esc(lang==='zh'?entity.name[1]:name)}</span>`;
   el.addEventListener('click',e=>{e.stopPropagation();activeFaction=null;activeArmy=null;activeBattle=null;previewDestination='';clearReach();renderArmies();showCity(city);emit('city',name)});
-  const item=marker(el,city.p,'left');cityMarkers.push(item);proceduralMarkers.push(item);
+  const item=marker(el,city.p,'left',entity.type==='village'?[0,28]:[0,0]);cityMarkers.push(item);proceduralMarkers.push(item);
  }
  refreshLocalCityMarkers();
 }
@@ -498,7 +498,7 @@ function renderAdministrationAction(territory){
 
 function renderLocalEntity(city){
  const generatedId=localCityId[city.name];
- if(localEntity(state,generatedId)?.procedural){renderTribalEntity({state,id:generatedId,actor:state.player,language:lang,panel:document.querySelector('#command-detail'),refresh:()=>{renderHud();showCity(city)}});return}
+ if(localEntity(state,generatedId)?.procedural){const entity=localEntity(state,generatedId),render=entity.type==='village'?renderVillage:renderTribalEntity;render({state,id:generatedId,actor:state.player,language:lang,panel:document.querySelector('#command-detail'),refresh:()=>{renderHud();showCity(city)}});return}
  if(city.name==='RAVENNA FARMS'){renderVillage({state,id:'ravenna-farms',actor:state.player,language:lang,panel:document.querySelector('#command-detail'),refresh:()=>{renderHud();showCity(city)}});return}
  const regionalPolity={BIBRACTE:'bibracte',SAMOSATA:'commagene'}[city.name];
  if(regionalPolity){renderTribalEntity({state,id:regionalPolity,actor:state.player,language:lang,panel:document.querySelector('#command-detail'),refresh:()=>{renderHud();showCity(city)}});return}

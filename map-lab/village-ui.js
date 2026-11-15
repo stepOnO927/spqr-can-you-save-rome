@@ -1,5 +1,6 @@
 import {localEntity, villageDevelopment} from '../local-polities.js';
 import {villageProjectQuote, startVillageProject, villageFoodQuote, takeVillageFood} from '../local-villages.js';
+import {FACTIONS} from '../data.js?v=world-kings-trade-1';
 
 export function renderVillage({state, id, actor, language, panel, refresh}) {
   const entity = localEntity(state, id), zh = language === 'zh';
@@ -10,6 +11,7 @@ export function renderVillage({state, id, actor, language, panel, refresh}) {
   const heading = document.createElement('h3'); heading.textContent = zh ? `村落 · ${entity.name[1]}` : `VILLAGE · ${entity.name[0]}`; section.append(heading);
   const description = document.createElement('p'); description.textContent = entity.description[zh ? 1 : 0]; section.append(description);
   if (!visible) { const unknown = document.createElement('p'); unknown.textContent = zh ? '尚无可靠的村落报告。' : 'No reliable village report yet.'; section.append(unknown); panel.append(section); return; }
+  if(entity.sponsor){const patron=localEntity(state,entity.sponsor),control=document.createElement('p'),faction=id=>FACTIONS[id]?.short?.[zh?1:0]||id;control.textContent=zh?`地方豪强：${patron?.name?.[1]||'未知'} · 实际控制：${entity.controller===entity.sponsor?'豪强部曲':faction(entity.controller)} · 法理归属：${faction(entity.legalSovereign)}。效忠谈判不会自动转移村落。`:`Local chief: ${patron?.name?.[0]||'unknown'} · current control: ${entity.controller===entity.sponsor?'chief’s retinue':faction(entity.controller)} · legal title: ${faction(entity.legalSovereign)}. Personal service does not transfer the village.`;section.append(control)}
   const v = entity.village, facts = document.createElement('p');
   facts.textContent = zh
     ? `人口约 ${v.population} · ${v.leader[1]} · 特产${v.specialty[1]} · 储粮 ${v.storedFood} · 月产 ${v.foodProduction + v.irrigation + v.agriculture} / 村民月需 ${v.foodNeed} · 粮仓 ${v.granary}/2 · 灌溉 ${v.irrigation}/2 · 农田 ${v.agriculture}/2 · 市场 ${v.market}/1 · 水井 ${v.well}/1 · 道路 ${v.road}/1 · 围墙 ${v.wall}/1 · 社区祭所 ${v.shrine}/1 · 市场通达 ${v.marketAccess}/100 · 满意 ${v.satisfaction}/100 · 安全 ${v.security}/100`

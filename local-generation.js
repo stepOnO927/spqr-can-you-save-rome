@@ -24,7 +24,13 @@ export const LOCAL_GENERATION_SITES=Object.freeze([
  {theater:'armenia',type:'microstate',coordinates:[43.3,40.1],scale:.85},
  {theater:'media',type:'microstate',coordinates:[47.5,34.8],scale:.9},
  {theater:'mauretania',type:'microstate',coordinates:[.5,35.6],scale:.8},
- {theater:'egyptUpper',type:'microstate',coordinates:[31.9,25.4],scale:.8}
+ {theater:'egyptUpper',type:'microstate',coordinates:[31.9,25.4],scale:.8},
+ {theater:'gaul',type:'strongman',coordinates:[1.5,46.0],scale:.8},
+ {theater:'cisalpine',type:'strongman',coordinates:[10.3,45.1],scale:.8},
+ {theater:'italiaN',type:'strongman',coordinates:[11.5,44.3],scale:.9},
+ {theater:'egypt',type:'strongman',coordinates:[30.6,29.8],scale:1},
+ {theater:'parthia',type:'strongman',coordinates:[53.4,34.6],scale:.85},
+ {theater:'epirus',type:'strongman',coordinates:[20.3,39.7],scale:.75}
 ]);
 
 const STEMS=Object.freeze([
@@ -37,7 +43,8 @@ const STEMS=Object.freeze([
 const TITLES=Object.freeze({
  city_state:[['Free Port','自由港'],['Harbor Council','港口议事城'],['Maritime Commune','海滨公社']],
  microstate:[['March','边地小国'],['Court','地方王廷'],['Highland Realm','高地小国']],
- tribe:[['Hill Council','山地议事会'],['River Clan','河谷部族'],['Frontier Assembly','边地部落联盟']]
+ tribe:[['Hill Council','山地议事会'],['River Clan','河谷部族'],['Frontier Assembly','边地部落联盟']],
+ strongman:[['Household','地方家族'],['Retinue','地方部曲'],['River Following','河谷武装']]
 });
 const RULER_NAMES=Object.freeze([
  ['Aleron','阿勒隆'],['Beren','贝伦'],['Damar','达马尔'],['Elyon','埃利翁'],['Haron','哈隆'],
@@ -45,9 +52,9 @@ const RULER_NAMES=Object.freeze([
  ['Oryon','奥里翁'],['Pheron','菲隆'],['Rovena','罗薇娜'],['Salyra','萨莉拉'],['Taron','塔隆'],
  ['Velira','维莉拉'],['Xeron','泽隆'],['Ylena','伊蕾娜'],['Zareon','扎雷翁'],['Mirena','米蕾娜']
 ]);
-const RULER_TITLES=Object.freeze({city_state:['Archon','执政官'],microstate:['Ruler','地方君主'],tribe:['Elder','长老']});
+const RULER_TITLES=Object.freeze({city_state:['Archon','执政官'],microstate:['Ruler','地方君主'],tribe:['Elder','长老'],strongman:['Chief','地方首领']});
 const PERSONALITIES=Object.freeze(['cautious','pragmatic','bold','ambitious']);
-const BASE=Object.freeze({city_state:[6000,13000,1.25,1.1],microstate:[8000,17000,1.1,1],tribe:[4500,11000,.75,1.2]});
+const BASE=Object.freeze({city_state:[6000,13000,1.25,1.1],microstate:[8000,17000,1.1,1],tribe:[4500,11000,.75,1.2],strongman:[1200,4200,.7,1.1]});
 const next=state=>{state.value=(Math.imul(state.value,1664525)+1013904223)>>>0;return state.value/4294967296};
 const integer=(rng,low,high)=>low+Math.floor(next(rng)*(high-low+1));
 const range=(rng,low,high)=>low+next(rng)*(high-low);
@@ -58,7 +65,7 @@ function profile(rng,type,scale,band){
  const militia=Math.max(100,Math.round(population*range(rng,...band.militia)/50)*50);
  const treasury=Math.max(3,Math.round(population/450*wealth*band.wealth*range(rng,.8,1.2)));
  const food=Math.max(4,Math.round(population/650*foodValue*band.wealth*range(rng,.8,1.2)));
- const fort=Math.max(0,Math.min(3,(type==='tribe'?0:1)+(band.skill[0]>=3?1:0)+(band.skill[0]>=4&&next(rng)>.5?1:0)));
+ const fort=Math.max(0,Math.min(3,(['tribe','strongman'].includes(type)?0:1)+(band.skill[0]>=3?1:0)+(band.skill[0]>=4&&next(rng)>.5?1:0)));
  return {population,militia,treasury,food,fort,strategy:integer(rng,...band.skill)};
 }
 
@@ -70,6 +77,7 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters,startYe
  const result=[];
  const selected=[];
  if(count>=3)for(const type of ['city_state','microstate','tribe']){const index=sites.findIndex(site=>site.type===type);if(index>=0)selected.push(...sites.splice(index,1))}
+ if(count>=4){const index=sites.findIndex(site=>site.type==='strongman');if(index>=0)selected.push(...sites.splice(index,1))}
  selected.push(...sites.slice(0,count-selected.length));
  for(const site of selected){
   let name,english;
@@ -81,9 +89,10 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters,startYe
   const age=integer(rng,28,64);
   result.push({id:`generated:${site.theater}`,type:site.type,theater:site.theater,coordinates:site.coordinates,name,
    historical:false,procedural:true,spatialAccuracy:'fictional_approximate_point',
-   description:['Fictional autonomous polity generated for this campaign; the point is approximate and does not define a border.','本局生成的架空自治政权；地点为近似点，不代表真实历史边界。'],
+   description:site.type==='strongman'?['Fictional local strongman and armed household generated for this campaign; personal control is not a recognized sovereign border.','本局生成的架空地方豪强及其部曲；个人控制不等于获得承认的主权边界。']:['Fictional autonomous polity generated for this campaign; the point is approximate and does not define a border.','本局生成的架空自治政权；地点为近似点，不代表真实历史边界。'],
    ruler:{id:`local-ruler:${site.theater}`,name:rulerName,birthYear:startYear-age,personality:PERSONALITIES[integer(rng,0,PERSONALITIES.length-1)],fictional:true},
-   maxFootholdLevel:site.type==='tribe'?2:3,...profile(rng,site.type,site.scale,band),seed:integer(rng,0,0xffffffff)});
+   government:site.type==='strongman'?'personal_following':site.type==='city_state'?'civic_council':site.type==='tribe'?'tribal_assembly':'local_dynasty',
+   maxFootholdLevel:site.type==='strongman'?2:site.type==='tribe'?2:3,...profile(rng,site.type,site.scale,band),seed:integer(rng,0,0xffffffff)});
  }
  return result;
 }

@@ -77,11 +77,16 @@ export function advanceVillages(state) {
   for (const region of state.regions) for (const entity of region.localEntities || []) {
     if (entity.type !== 'village' || !entity.village) continue;
     const village = entity.village;
-    if (entity.controller !== region.owner && state.factions[region.owner]) {
+    const patron=entity.sponsor?localEntity(state,entity.sponsor):null;
+    const hostChanged=!!entity.sponsor&&entity.lastHostOwner!==region.owner;
+    const patronChanged=!!patron&&entity.lastPatronController!==patron.controller;
+    if(entity.sponsor){entity.lastHostOwner=region.owner;entity.lastPatronController=patron?.controller??entity.lastPatronController}
+    if ((hostChanged||patronChanged||!entity.sponsor&&entity.controller !== region.owner)&&state.factions[region.owner]) {
       const occupationShock = Math.max(4, 10 - village.wall * 3 - (villageDevelopment(village).fortified ? 3 : 0));
-      entity.controller = region.owner;
-      entity.militaryOccupier = region.owner;
-      entity.administrativeStatus = entity.legalSovereign === region.owner ? 'integrated' : 'occupied';
+      const occupier=hostChanged||!entity.sponsor?region.owner:patron.controller;
+      entity.controller = occupier;
+      entity.militaryOccupier = occupier;
+      entity.administrativeStatus = entity.legalSovereign === occupier ? 'integrated' : 'occupied';
       village.project = null;
       village.satisfaction = clamp(village.satisfaction - occupationShock);
       village.security = clamp(village.security - occupationShock);
