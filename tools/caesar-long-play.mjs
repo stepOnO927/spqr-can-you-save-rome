@@ -81,8 +81,12 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
  if(supportItaly){
   const supporting=army(s,'viii'),available=supporting&&supporting.men>=600&&!supporting.move&&!supporting.siege&&!supporting.reconPending&&!supporting.trainingRemaining;
   if(available&&region(s,supporting.region)?.owner==='caesar'){
-   const destination=supporting.region==='narbo'?'t049':supporting.region==='t049'?'cisalpine':supporting.region==='cisalpine'&&region(s,'italiaN').owner==='caesar'?'italiaN':supporting.region==='italiaN'&&region(s,'roma').owner==='caesar'?'roma':supporting.region==='t011'&&region(s,'roma').owner==='caesar'?'roma':null;
-   if(destination&&previewMarch(s,supporting.id,destination).ok)record(`VIII supports Italy at ${destination}`,moveArmy(s,supporting.id,destination));
+   // Follow XIII's secured corridor one theater at a time. A direct order to
+   // friendly Rome can otherwise route VIII through an enemy-held shortcut.
+   const supportRoute=['narbo','t049','cisalpine','italiaN','t013','t012','t014','roma'];
+   const at=supportRoute.indexOf(supporting.region);
+   const destination=at>=0&&at<supportRoute.length-1?supportRoute[at+1]:null;
+   if(destination&&region(s,destination).owner==='caesar'&&previewMarch(s,supporting.id,destination).ok)record(`VIII supports Italy at ${destination}`,moveArmy(s,supporting.id,destination));
    else if(supporting.region==='roma'&&supporting.stance!=='hold')record('VIII holds Rome',holdPosition(s,supporting.id));
   }
  }
@@ -121,7 +125,8 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
    else if(month%3===0&&legion.men>=4500)record(`accept uncertain risk at ${next}`,moveArmy(s,legion.id,next));
    else record(`delay ${next}`,delayAttack(s,legion.id,next));
   }
-  if(legion.region==='roma'&&region(s,'roma').owner==='caesar'&&!s.armies.some(a=>a.owner==='caesar'&&a.id!==legion.id&&a.region==='roma')&&f.treasury>=24&&f.food>=9&&f.manpower>=3000)record('raise Roman garrison',recruit(s,'roma','caesar')?{ok:true}:{ok:false});
+  const supportApproachingRome=supportItaly&&army(s,'viii')?.owner==='caesar'&&army(s,'viii')?.men>=3000&&['t014','roma'].includes(army(s,'viii')?.region);
+  if(legion.region==='roma'&&region(s,'roma').owner==='caesar'&&!supportApproachingRome&&!s.armies.some(a=>a.owner==='caesar'&&a.id!==legion.id&&a.region==='roma')&&f.treasury>=24&&f.food>=9&&f.manpower>=3000)record('raise Roman garrison',recruit(s,'roma','caesar')?{ok:true}:{ok:false});
  }
  tick(s);
  everHeldOstia ||= region(s,'t016').owner==='caesar';
