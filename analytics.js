@@ -56,8 +56,8 @@ function createBrowserAnalytics(){
   if(!force&&now-lastCheckpointAt<15000)return;
   const body=JSON.stringify({sessionId:id,sequence:++sequence,channel,releaseVersion,context,totals,gameStarted,tutorialCompleted,turns,events:events.splice(0,16),clientSignals:navigator.webdriver?['webdriver']:[],ended:!!beacon});
   lastCheckpointAt=now;lastCheckpointActions=totals.actions;lastCheckpointActive=totals.activeMs;
-  if(beacon&&navigator.sendBeacon){try{navigator.sendBeacon(endpoint,new Blob([body],{type:'application/json'}));return}catch{}}
-  fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',keepalive:beacon,headers:{'Content-Type':'application/json'},body}).catch(()=>{});
+  if(beacon&&navigator.sendBeacon){try{if(navigator.sendBeacon(endpoint,new Blob([body],{type:'application/json'})))return}catch{}}
+  try{fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',keepalive:beacon,headers:{'Content-Type':'application/json'},body}).catch(()=>{})}catch{}
  }
  function track(name,params={},options={}){
   if(!allowed.has(name)||ended)return;
