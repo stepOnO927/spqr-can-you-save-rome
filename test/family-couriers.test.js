@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-reported-names-1';
 import {createFictionalPerson,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,advanceDynasties} from '../dynasties.js?v=faces-reported-names-1';
-import {syncAsylumReplies,receivedMail} from '../epistulae.js?v=faces-reported-names-1';
+import {syncAsylumReplies,syncFamilyReplies,receivedMail} from '../epistulae.js?v=faces-reported-names-1';
 import {mailboxHtml} from '../mail-ui.js?v=faces-reported-names-1';
 
 function scenario(kind,seed){

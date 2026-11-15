@@ -6,7 +6,7 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `b4a01eba`. The newer report-delivery
+The draft now includes main through `696bf8b7`. The newer report-delivery
 checks are reconciled in planning, battle estimates, faction views, national
 focus and legion design; the added unit and browser regressions pass. Its
 overview layout and
@@ -94,11 +94,13 @@ bilingual browser coverage checks loading, recruitment and save/reload.
 Roman field-ration use, generic non-formation recruitment, and fuller
 military maintenance integration remain open.
 After integrating main through `b4a01eba`, the complete serial simulation
-suite passed 1,149/1,149, including family couriers, inheritance privacy,
-and module versions. The local
+suite passed 1,149/1,149. Main's subsequent family-reply change through
+`696bf8b7` passed 18 focused family, inheritance and module-version tests.
+The local
 Chromium regressions passed for Han field
 recruitment and rations, Roman legion design, the expanded born-portrait
-pool, inherited foreign-name privacy, and saved asylum reply outcomes.
+pool, inherited foreign-name privacy, saved asylum reply outcomes, and the
+new marriage/guarantee/wardship reply outcomes.
 Eastern market AI now indexes offers, owned regions and active caravans once
 per planning turn and only builds full paths for shortlisted bids. The
 120-month trade simulation retained its results before the subsequent main
