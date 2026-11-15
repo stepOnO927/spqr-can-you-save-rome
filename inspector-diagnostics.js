@@ -34,6 +34,12 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
    if(!Number.isInteger(invitation?.id)||admissionIds.has(invitation.id))add('warning','invalid-coalition-admission',base,String(invitation?.id));else admissionIds.add(invitation.id);
    if(!coalition||!factionIds.has(invitation?.leader)||!factionIds.has(invitation?.target)||invitation?.leader===invitation?.target||!['pending','accepted','refused','no_reply','lapsed'].includes(invitation?.status)||!['outbound','awaiting_player','return','confirmation','delivered'].includes(invitation?.phase)||!Number.isInteger(invitation?.remaining)||invitation.remaining<0||!Number.isInteger(invitation?.sent?.year)||!Number.isInteger(invitation?.sent?.month)||invitation.sent.month<1||invitation.sent.month>12)add('warning','invalid-coalition-admission',base,String(invitation?.coalitionId));
   }
+  const motionIds=new Set();
+  for(const [i,motion] of (s.world?.coalitionMotions||[]).entries()){
+   const base=`world.coalitionMotions[${i}]`,coalition=(s.coalitions||[]).find(c=>c.id===motion?.coalitionId),electorate=motion?.electorate;
+   if(!Number.isInteger(motion?.id)||motionIds.has(motion.id))add('warning','invalid-coalition-motion',base,String(motion?.id));else motionIds.add(motion.id);
+   if(!coalition||!['leadership','expulsion'].includes(motion?.kind)||!['voting','passed','rejected','lapsed'].includes(motion?.status)||!factionIds.has(motion?.sponsor)||!factionIds.has(motion?.target)||!Array.isArray(electorate)||electorate.length<3||new Set(electorate).size!==electorate.length||electorate.some(id=>!factionIds.has(id))||!motion?.votes||Object.entries(motion.votes).some(([id,vote])=>!electorate.includes(id)||!['yes','no','abstain'].includes(vote))||!Number.isInteger(motion?.noticeAt)||!Number.isInteger(motion?.closesAt)||motion.closesAt<=motion.noticeAt)add('warning','invalid-coalition-motion',base,String(motion?.coalitionId));
+  }
   const subjects=new Map();
   for(const [i,treaty] of (s.agreements||[]).entries()){
    if(!SUBJECT_TYPES.includes(treaty?.type)||treaty.status!=='active')continue;

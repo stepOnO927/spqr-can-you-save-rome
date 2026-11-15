@@ -6,6 +6,7 @@ import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=
 import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=world-kings-trade-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=world-kings-trade-1';
 import {canMediate,requestMediation} from './civil-war.js?v=world-kings-trade-1';
+import {voteCoalitionMotion} from './coalition-motions.js?v=world-kings-trade-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
@@ -164,6 +165,8 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     ok = actions.answerCoalitionInvitation?.(s,m.context.invitationId,choice).ok === true;
   } else if (m.context?.kind === 'coalition_admission') {
     ok = actions.answerCoalitionAdmission?.(s,m.context.admissionId,choice).ok === true;
+  } else if (m.context?.kind === 'coalition_motion') {
+    ok = voteCoalitionMotion(s,m.context.motionId,s.player,choice).ok === true;
   } else if (m.context?.kind === 'peace') {
     ok = actions.answerPeaceOffer?.(s,m.senderFaction,choice).ok === true;
   } else if (m.context?.kind === 'war' && choice === 'negotiate') {
@@ -324,6 +327,26 @@ export function syncCoalitionAdmissionLetters(s){
   if(x.phase==='delivered'&&x.playerDecision==='accepted'&&!x.resultMailId&&!mail.generated['coalition-admission-result:'+x.id]){
    const accepted=x.status==='accepted',result=sendLetter(s,{senderId:null,senderInstitution:x.leader,senderFaction:x.leader,recipient:s.player,category:'diplomatic',priority:'important',subject:accepted?['Coalition membership confirmed','联盟成员资格已确认']:['Coalition membership not concluded','未能加入联盟'],body:accepted?[`Our membership in ${label} is confirmed. Five treasury was paid.`,`本方加入${label}已获确认，支付了5国库。`]:['The membership invitation did not conclude; no membership cost was paid.','成员邀请未能达成协议；没有支付会费。'],options:[],context:{kind:'coalition_admission_result',admissionId:x.id}});
    if(result.ok){x.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-admission-result:'+x.id]=true}
+  }
+ }
+}
+
+// The council notice reaches members one month after the sponsor opens debate.
+// Human votes remain explicit; silence is an abstention when the ballot closes.
+export function syncCoalitionMotionLetters(s){
+ const mail=initializeMail(s);
+ for(const m of s.world?.coalitionMotions||[]){
+  if(!m.electorate.includes(s.player))continue;
+  const c=(s.coalitions||[]).find(x=>x.id===m.coalitionId),label=c?.name||m.coalitionId,who=name(m.target),subject=m.kind==='leadership'?['Coalition leadership ballot','联盟盟主改选']:['Coalition expulsion ballot','联盟除名表决'];
+  if(m.status==='voting'&&monthIndex(s.year,s.month)>=m.noticeAt&&!m.votes[s.player]&&!m.mailId){
+   const result=sendLetter(s,{senderId:null,senderInstitution:m.sponsor,senderFaction:m.sponsor,recipient:s.player,category:'diplomatic',priority:'important',subject,body:[`${label} has opened a member ballot on ${m.kind==='leadership'?`appointing ${who[0]} as leader`:`expelling ${who[0]}`}. A majority of all members is required. Vote before the council closes; silence counts as abstention.`,`${label}发起成员表决：${m.kind==='leadership'?`由${who[1]}担任盟主`:`将${who[1]}除名`}。须全体成员过半数赞成；截止前投票，未答复按弃权处理。`],options:['yes','no','abstain'],expires:m.closesAt-1,context:{kind:'coalition_motion',motionId:m.id}});
+   if(result.ok){m.mailId=result.letter.id;result.letter.created={...m.opened};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-motion:'+m.id]=true}
+  }
+  if(m.status!=='voting'&&!m.resultMailId){
+   const sender=m.sponsor===s.player?m.electorate.find(id=>id!==s.player&&s.factions[id]):m.sponsor;
+   if(!sender)continue;
+   const passed=m.status==='passed',result=sendLetter(s,{senderId:null,senderInstitution:sender,senderFaction:sender,recipient:s.player,category:'diplomatic',priority:'important',subject:['Coalition council decision','联盟议事结果'],body:[`${label}: the ${m.kind} motion ${passed?'passed':m.status==='lapsed'?'lapsed':'failed'}. ${Object.values(m.votes).filter(x=>x==='yes').length} of ${m.electorate.length} members voted yes.`,`${label}：${m.kind==='leadership'?'盟主改选':'除名'}议案${passed?'通过':m.status==='lapsed'?'失效':'未通过'}；${m.electorate.length}名成员中${Object.values(m.votes).filter(x=>x==='yes').length}名赞成。`],options:[],context:{kind:'coalition_motion_result',motionId:m.id}});
+   if(result.ok){m.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-motion-result:'+m.id]=true}
   }
  }
 }

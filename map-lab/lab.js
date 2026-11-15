@@ -30,6 +30,7 @@ import {frontierEntries,frontierOutlineColor} from './frontier-map.js?v=world-ki
 import {explorationEntries,explorationOutlineColor} from './exploration-map.js?v=world-kings-trade-1';
 import {renameCoalition,leaveCoalition} from '../coalitions.js?v=world-kings-trade-1';
 import {eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from '../coalition-admissions.js?v=world-kings-trade-1';
+import {proposeCoalitionMotion} from '../coalition-motions.js?v=world-kings-trade-1';
 import {activeAgreement} from '../agreements.js?v=world-kings-trade-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-trade-1';
 import {featherAdvice} from '../feather.js?v=world-kings-trade-1';
@@ -186,6 +187,19 @@ function renderOrganizationMapDetails(host){
    const pending=(state.world.coalitionAdmissions||[]).filter(x=>x.coalitionId===selected.id&&x.leader===state.player&&x.status==='pending');for(const item of pending){const p=document.createElement('p');p.textContent=`${n(FACTIONS[item.target]?.short)||item.target} · ${zh?'等待回信':'Awaiting reply'}`;box.append(p)}
   }
  if(selected.own){const leave=document.createElement('button');leave.textContent=zh?'退出联盟':'LEAVE COALITION';leave.onclick=()=>{if(!window.confirm(zh?'退出会损害外交信誉与成员关系。确认退出？':'Leaving harms credibility and member relations. Leave?'))return;if(leaveCoalition(state,selected.id,state.player).ok){renderHud();updateControl()}};box.append(leave)}
+ if(selected.own){
+  const council=document.createElement('div'),record=state.coalitions.find(c=>c.id===selected.id),pending=(state.world.coalitionMotions||[]).find(m=>m.coalitionId===selected.id&&m.status==='voting');
+  council.className='help-list';const heading=document.createElement('strong');heading.textContent=zh?'联盟议事':'COALITION COUNCIL';council.append(heading);
+  if(pending){const note=document.createElement('p');note.textContent=`${pending.kind==='leadership'?(zh?'盟主改选':'Leadership vote'):(zh?'成员除名':'Expulsion vote')} · ${n(FACTIONS[pending.target]?.short)||pending.target} · ${zh?'等待表决':'ballot open'}`;council.append(note)}
+  else if(record){
+   const propose=(kind,target,label)=>{const button=document.createElement('button'),status=document.createElement('span');button.textContent=label;button.onclick=()=>{const result=proposeCoalitionMotion(state,record.id,state.player,kind,typeof target==='function'?target():target);if(result.ok){renderHud();updateControl()}else status.textContent=zh?'无法提出议案；请检查国库与成员资格。':'Cannot propose: check treasury and membership.'};council.append(button,status)};
+   if(record.leader!==state.player)propose('leadership',state.player,zh?'发起盟主改选 · 2国库':'PROPOSE LEADERSHIP VOTE · 2 TREASURY');
+   const targets=record.parties.filter(id=>id!==state.player&&id!==record.leader);
+   if(record.parties.length>=4&&targets.length){const select=document.createElement('select');select.setAttribute('aria-label',zh?'除名对象':'Member to expel');for(const id of targets){const option=document.createElement('option');option.value=id;option.textContent=n(FACTIONS[id]?.short)||id;select.append(option)}council.append(select);propose('expulsion',()=>select.value,zh?'发起除名表决 · 2国库':'PROPOSE EXPULSION · 2 TREASURY')}
+  }
+  for(const m of (record?.motions||[]).slice(-2)){const line=document.createElement('p');line.textContent=`${m.kind==='leadership'?(zh?'盟主改选':'Leadership'):(zh?'成员除名':'Expulsion')} · ${n(FACTIONS[m.target]?.short)||m.target} · ${m.status==='passed'?(zh?'通过':'passed'):(zh?'未通过':'rejected')} · ${m.yes}/${m.eligible}`;council.append(line)}
+  box.append(council);
+ }
  host.append(box);
 }
 function renderRegionOrganizations(panel,reportedOwner){
