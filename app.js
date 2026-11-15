@@ -1,4 +1,4 @@
-import {sendAgreementProposal} from './agreement-negotiations.js?v=agreement-courier-1';
+import {sendAgreementProposal} from './agreement-negotiations.js?v=faces-reported-names-1';
 import {localStore as localStorage,sessionStore as sessionStorage} from './safe-storage.js';
 import {startupDiagnostics} from './inspector-diagnostics.js';
 import {campaignYear,campaignDate} from './campaign-date.js?v=faces-reported-names-1';

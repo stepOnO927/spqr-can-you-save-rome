@@ -6,7 +6,7 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `587b9aa9`. Its overview layout and
+The draft now includes main through `abceb5ba`. Its overview layout and
 attack-preview privacy changes are connected to the expanded faction atlas:
 crowded cities and armies remain selectable through faction directories, and
 attack scenarios use reported fortification bands without reading foreign
@@ -73,7 +73,15 @@ paid timber and iron shipments into actual buildings. Wider use of measured
 weapons and provisions in recruitment and military upkeep remains open.
 Eastern market AI now indexes offers, owned regions and active caravans once
 per planning turn and only builds full paths for shortlisted bids. The
-120-month trade simulation retained the same shipment and treasury results.
+120-month trade simulation retained its results before the subsequent main
+diplomatic update. That update changes Roman treaty timing and therefore
+trade volume; the merged ten-year scenario now completes 55 Roman and 85 Han
+shipments without a blocked caravan.
+Latest main also delivers player treaty and alliance proposals by two-way
+courier. This branch preserves the delayed evaluation, sealed reply, letter
+loss, inbox result, save migration, and both campaign and atlas send actions.
+The combined agreement, family-letter and future-report tests and both new
+Chromium diplomatic flows pass after reconciling shared module imports.
 
 Roman players can now list stock at an owned eastern port for a Parthian buyer.
 The existing treaty, AI purchase, prepaid caravan and timed delivery must all
