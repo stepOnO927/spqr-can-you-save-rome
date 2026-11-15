@@ -233,7 +233,11 @@ function updateLocator(){
 }
 map.on('move',updateLocator);map.on('load',updateLocator);document.querySelector('#language').addEventListener('click',()=>setTimeout(()=>{updateLocator();clipPhysicalLabels()},0));
 if(maplibregl.ScaleControl&&map.addControl)map.addControl(new maplibregl.ScaleControl({maxWidth:110,unit:'metric'}),'bottom-left');
-const atlasFocus=document.createElement('button');atlasFocus.id='atlas-focus';atlasFocus.type='button';atlasFocus.setAttribute('aria-pressed','false');document.querySelector('.map-controls').append(atlasFocus);atlasFocus.onclick=()=>{const focused=document.body.classList.toggle('atlas-focus');if(focused){focusPreviousMode=currentMapMode;currentMapMode='terrain'}else if(focusPreviousMode){currentMapMode=focusPreviousMode;focusPreviousMode=null}atlasFocus.setAttribute('aria-pressed',String(focused));renderArmies();renderHud();map.resize?.()};
+const atlasFocus=document.createElement('button');atlasFocus.id='atlas-focus';atlasFocus.type='button';atlasFocus.setAttribute('aria-pressed','false');document.querySelector('.map-controls').append(atlasFocus);
+const atlasCaption=document.createElement('aside');atlasCaption.id='atlas-caption';document.body.append(atlasCaption);
+function toggleAtlasFocus(){const focused=document.body.classList.toggle('atlas-focus');if(focused){focusPreviousMode=currentMapMode;currentMapMode='terrain'}else if(focusPreviousMode){currentMapMode=focusPreviousMode;focusPreviousMode=null}atlasFocus.setAttribute('aria-pressed',String(focused));renderArmies();renderHud();map.resize?.()}
+atlasFocus.onclick=toggleAtlasFocus;
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.body.classList.contains('atlas-focus'))toggleAtlasFocus()});
 const settingsButton=document.createElement('button');settingsButton.id='settings';settingsButton.className='hud-button';document.querySelector('.mast').insertBefore(settingsButton,document.querySelector('#guide-restart'));
 const navalButton=document.createElement('button');navalButton.id='naval';navalButton.className='hud-button';document.querySelector('.mast').insertBefore(navalButton,document.querySelector('#development'));
 const endButton=document.createElement('button');endButton.id='end-campaign';endButton.className='hud-button';document.querySelector('.mast').insertBefore(endButton,document.querySelector('#save-slot'));
@@ -600,6 +604,7 @@ function renderHud(){
  if(['caesar','senate'].includes(state.player))document.querySelector('.identity strong').innerHTML=`ITALIA <i>·</i> ${state.year===-49?'XLIX':state.year===-48?'XLVIII':Math.abs(state.year)} ${state.year<0?'BC':'AD'}`;
  endButton.textContent=lang==='zh'?'结束战役':'END CAMPAIGN';endButton.disabled=!!state.achievementState?.finalized;document.querySelector('#advance').disabled=!!state.achievementState?.finalized;document.querySelector('#play-time').disabled=!!state.achievementState?.finalized;refreshEnding();
  atlasFocus.textContent=lang==='zh'?(document.body.classList.contains('atlas-focus')?'返回':'观图'):(document.body.classList.contains('atlas-focus')?'BACK':'MAP');atlasFocus.title=lang==='zh'?'切换地图专注视图':'Toggle map focus view';
+ atlasCaption.innerHTML=`<span>SPQR · ${lang==='zh'?'地中海地理图':'MEDITERRANEAN ATLAS'}</span><strong>${lang==='zh'?'陆地 · 海域 · 山脉':'LAND · SEA · RELIEF'}</strong><small>${lang==='zh'?'现代地形与海岸参考；古代边界为近似':'Modern terrain and shoreline; ancient borders are approximate'}</small>`;
  settingsButton.textContent=lang==='zh'?'设置':'SETTINGS';
  navalButton.textContent=lang==='zh'?'海军':'NAVY';
  const legacyLink=document.querySelector('.file-transfer a');if(legacyLink)legacyLink.textContent=lang==='zh'?'罗马遗产':'LEGACY HUB';

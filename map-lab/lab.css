@@ -139,3 +139,7 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
 .maritime-alert.hazard{border-color:#dfc17e;background:#695439}
 .maritime-alert.convoy{border-color:#b8d8c7;background:#27565a}
 .national-budget .budget-runway{margin:10px 0;padding:8px 10px;background:#f4deb2;border-left:3px solid #9b5239;color:#5b3226;font:700 13px/1.45 Arial,sans-serif}
+#atlas-caption{display:none;position:absolute;z-index:4;top:24px;left:24px;max-width:min(340px,calc(100vw - 112px));padding:15px 18px;background:#172726e8;border:1px solid #c6ad79a8;box-shadow:0 5px 20px #07171991;color:#f3e6c8;pointer-events:none}
+#atlas-caption span,#atlas-caption strong,#atlas-caption small{display:block}#atlas-caption span{color:#d8ba7d;font:700 10px Manrope,'Microsoft YaHei',sans-serif;letter-spacing:2px}#atlas-caption strong{margin:5px 0;color:#f5ead0;font:600 23px/1.1 'Cormorant Garamond','Noto Serif SC',serif;letter-spacing:1px}#atlas-caption small{color:#d3c9b4;font:10px/1.5 Manrope,'Microsoft YaHei',sans-serif}
+body.atlas-focus #atlas-caption{display:block}body.atlas-focus :is(#locator,.file-transfer,.army,.grand-site,.outlying-theater,.density-counter,.supply-source,.supply-isolated,.reachable-destination,.destination-arrow,.sea-zone,.fleet-map-marker,.naval-port,.maritime-alert){display:none!important}
+@media(max-width:700px){#atlas-caption{top:14px;left:12px;padding:10px 12px;max-width:calc(100vw - 90px)}#atlas-caption strong{font-size:18px}#atlas-caption small{font-size:9px}}
