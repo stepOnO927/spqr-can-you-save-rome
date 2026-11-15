@@ -22,7 +22,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Damaged saves and denied storage | Campaign or terrain map → load | `tools/safe-save-smoke.mjs` checks a rejected migration and read-access failure, then verifies that active character names stay intact in both views |
 | Material research and completed construction | Terrain map → Inventions → research; owned city → manage theater → construction | `tools/construction-smoke.mjs` |
 | Defensive coalition, civic negotiations and political movement reform | Campaign map → government (coalition test uses a friendly-relations fixture) | `tools/scenario-systems-smoke.mjs` |
-| National idea research and non-aggression treaties | Government, Families & Policies → national ideas / diplomatic agreements | `tools/systems-smoke.mjs` |
+| National idea research and diplomatic agreement letters | Government, Families & Policies → national ideas / diplomatic agreements | `tools/agreement-courier-smoke.mjs` checks actual proposal, pending save/load, acceptance, refusal, lost replies and inbox; unit tests cover all nine agreement types |
 | Discounted inquiries and peace letters | Terrain-map diplomacy / campaign-map government | `tools/inquiry-price-smoke.mjs` verifies default and discounted prices, low-treasury availability, actual payment and delayed save/load |
 | Letters and foreign intelligence | Government → Characters & Intelligence → faction → Letters & Intelligence | `tools/systems-smoke.mjs`, `tools/browser-smoke.mjs` |
 | Intelligence exchange with a pact partner | Factions → foreign faction → Letters & Intelligence → select a partner | `tools/intelligence-partners-smoke.mjs` uses a pact fixture and verifies the delayed request and save/load; delivery may fail |

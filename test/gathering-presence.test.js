@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-six-1';
-import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=born-portraits-six-1';
-import {mailboxHtml} from '../mail-ui.js?v=born-portraits-six-1';
+import {newGame,upgradeSave} from '../engine.js?v=agreement-courier-1';
+import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=agreement-courier-1';
+import {mailboxHtml} from '../mail-ui.js?v=agreement-courier-1';
 import {createFictionalPerson} from '../dynasties.js?v=born-portraits-six-1';
 
 function invitation(){

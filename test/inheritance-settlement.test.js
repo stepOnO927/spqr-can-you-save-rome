@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-six-1';
+import {newGame,upgradeSave} from '../engine.js?v=agreement-courier-1';
 import {createFictionalPerson,makeWill,settleInheritance,resolveInheritanceDispute,advanceDynasties} from '../dynasties.js?v=born-portraits-six-1';
 
 function caseFixture(){

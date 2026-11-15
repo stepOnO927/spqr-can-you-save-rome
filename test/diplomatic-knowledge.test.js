@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-six-1';
-import {proposeAgreement,terminateAgreement} from '../agreements.js?v=grand-chessboard-2';
+import {newGame,upgradeSave} from '../engine.js?v=agreement-courier-1';
+import {proposeAgreement,terminateAgreement} from '../agreements.js?v=agreement-courier-1';
 import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 
 test('only participants or nearby observers learn public agreements; secret terms stay private',()=>{
