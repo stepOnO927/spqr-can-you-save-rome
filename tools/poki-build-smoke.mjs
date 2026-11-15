@@ -23,6 +23,7 @@ try{
  await p.locator('#close-setup').tap();
  await p.waitForFunction(()=>_pokiEvents.filter(x=>x==='start').length===2);
  assert.deepEqual(await p.evaluate(()=>_pokiEvents),['load','start','stop','break','start']);
+ for(const [width,height] of [[836,470],[1031,580]]){await p.setViewportSize({width,height});assert.equal(await p.locator('#step').evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.right<=innerWidth}),true,'Advance outside '+width+'x'+height);await p.locator('#step').tap();assert.ok(await p.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),'Frame scrolls at '+width+'x'+height)}
  assert.deepEqual(errors,[]);
  entryBytes.roman=bytes.reduce((a,b)=>a+b,0);
  await c.close();

@@ -29,6 +29,9 @@ for(const p of ['index.html','map-lab/index.html','han/index.html']){
 let css=await readFile(join(out,'map-lab/lab.css'),'utf8');
 css=css.replace(/@import\s+url\(['"]?https:\/\/fonts\.googleapis\.com[^;]+;/g,'');
 await writeFile(join(out,'map-lab/lab.css'),css);
+let campaign=await readFile(join(out,'app.js'),'utf8');
+campaign=campaign.replace('TERRAIN ATLAS (RECOMMENDED)','HISTORICAL MAP (OFFLINE)').replace('地形地图（推荐）','历史地图（离线）');
+await writeFile(join(out,'app.js'),campaign);
 let lab=await readFile(join(out,'map-lab/lab.js'),'utf8');
 const begin=lab.indexOf('const map = new maplibregl.Map('),end=lab.indexOf('const cities=',begin);
 if(begin<0||end<0)throw Error('Atlas map constructor changed; review Poki offline transform');
@@ -37,6 +40,8 @@ lab=lab.slice(0,begin)+
 '\n\n'+lab.slice(end);
 lab="import {offlineMapStyle} from './poki-style.js';\n"+lab;
 lab=lab.replace('https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js','../vendor/html2canvas.min.js');
+lab=lab.replace('MODERN LAND COVER & ELEVATION · HISTORICAL OVERLAYS APPROXIMATE','LOCAL COASTLINE · HISTORICAL OVERLAYS APPROXIMATE').replace('现代地表与高程 · 历史范围为近似','本地海岸线 · 历史范围为近似');
+lab=lab.replace("reliefButton.textContent=lang==='zh'?'光影':'REL'","reliefButton.textContent=lang==='zh'?'海岸线':'COAST'").replaceAll('关闭地形光影以降低负载','隐藏海岸线轮廓').replaceAll('开启地形光影','显示海岸线轮廓').replaceAll('Turn off terrain relief to reduce load','Hide coastline outline').replaceAll('Turn on terrain relief','Show coastline outline');
 await writeFile(join(out,'map-lab/lab.js'),lab);
 const external=[];
 for(const p of ['index.html','map-lab/index.html','han/index.html','map-lab/lab.css','map-lab/lab.js']){

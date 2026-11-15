@@ -7,7 +7,7 @@ try{
  assert.equal(await page.locator('#close-setup').count(),0);
  await page.locator('#setup-language').click();
  await page.locator('[data-slot="load"]').click();assert.match(await page.locator('.setup-feedback').innerText(),/空/);
- await page.locator('#faction-choice').selectOption('senate');await page.locator('#campaign-difficulty').selectOption('hard');await page.locator('#campaign-handicap').check();await page.locator('#start-campaign').click();
+ await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#faction-choice').selectOption('senate');await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#campaign-difficulty').selectOption('hard');await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#campaign-handicap').check();await page.locator('#start-campaign').click();
  await page.locator('.experience-strip').waitFor();assert.match(await page.locator('.experience-lesson').innerText(),/选择.*军/);
  await page.locator('[data-army="italy"]').first().click();
  await page.locator('#inspect-supply').click();

@@ -8,7 +8,7 @@ async function visibleInFrame(locator){
   return locator.evaluate(el=>{const b=el.getBoundingClientRect();return b.width>0&&b.height>0&&b.top>=0&&b.bottom<=innerHeight&&b.left>=0&&b.right<=innerWidth});
 }
 try{
-  for(const [width,height] of [[640,360],[836,470]]){
+  for(const [width,height] of [[640,360],[836,470],[1031,580]]){
     const context=await browser.newContext({viewport:{width,height},hasTouch:true,isMobile:true});
     const page=await context.newPage(),errors=[];
     page.on('pageerror',e=>errors.push(e.message));
