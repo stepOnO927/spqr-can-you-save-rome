@@ -150,7 +150,7 @@ export function supportClaimant(s,actor,target,claimant,representative=null,aid=
 }
 // The target list is based on the observer's reports, not current control.
 export function reportedOfficeTheaters(s,actor,target){
- initializeWorld(s);const reports=s.knowledge[actor]?.[target]?.reports||[];return s.regions.filter(r=>reportedControl(s,actor,r.id)?.owner===target||reports.some(x=>x.kind==='office_theater:'+r.id)).map(r=>r.id);
+ initializeWorld(s);const reports=s.knowledge[actor]?.[target]?.reports||[];return s.regions.filter(r=>reportedControl(s,actor,r.id)?.owner===target||reports.some(x=>isDeliveredReport(s,x)&&x.kind==='office_theater:'+r.id)).map(r=>r.id);
 }
 // These are the actor's own alliances and agreements, not foreign secrets.
 export function intelligencePartnerAccess(s,actor,partner){
@@ -202,7 +202,7 @@ export function queueMission(s,actor,target,type,subject='health',partnerId=null
 // response stays out of the recipient's knowledge until the return journey.
 function prepareExchange(s,op){
  const partner=op.partner,access=intelligencePartnerAccess(s,op.actor,partner);
- const prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter));
+ const prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter));
  if(!access)return {available:false};
  // Trade is contact, not an obligation to share secrets. The recipient's own
  // relations influence its independent response; the sender learns only the
@@ -300,7 +300,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   // Never follow an unseen person after the observation. An agent may find an
   // available person in this court's territory; travelers may only hear a rumor.
   const p=healthPerson,local=p?.alive&&!p.travel&&!s.armies.some(a=>a.characterId===healthId&&a.move)&&s.regions.some(r=>r.id===p.location&&r.owner===op.target);
-  const old=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>r.kind==='location'&&r.character===healthId&&s.regions.some(region=>region.id===r.value));
+  const old=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>isDeliveredReport(s,r)&&r.kind==='location'&&r.character===healthId&&s.regions.some(region=>region.id===r.value));
   const value=falsehood&&old?old.value:local&&q>=(low?.8:.55)?p.location:'unknown';
   report={kind:'location',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
  }
@@ -492,5 +492,5 @@ export function observeArmies(s){
   }
  }
 }
-export function reportedArmies(s,viewer){initializeWorld(s);const result=[];for(const [owner,k] of Object.entries(s.knowledge[viewer]||{})){if(owner===viewer)continue;for(const x of Object.values(k.sightings||{}))result.push({...x,reported:true})}return result}
+export function reportedArmies(s,viewer){initializeWorld(s);const result=[];for(const [owner,k] of Object.entries(s.knowledge[viewer]||{})){if(owner===viewer)continue;for(const x of Object.values(k.sightings||{}))if(isDeliveredReport(s,x))result.push({...x,reported:true})}return result}
 
