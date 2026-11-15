@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=exchange-observation-1';
+import {newGame,upgradeSave} from '../engine.js?v=exchange-undated-1';
 import {assignSuccession,knownLeaders,CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 import {advanceGovernments,deriveGovernment} from '../governance.js?v=born-portraits-nine-1';
-import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=exchange-observation-1';
+import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=exchange-undated-1';
 import {createFictionalPerson} from '../dynasties.js?v=born-portraits-nine-1';
 const states={armenia:'artavasdes',numidia:'juba',galatia:'deiotarus',bosporus:'pharnaces'};
 const high=Array.from({length:100000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296>.98);

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=exchange-observation-1';
-import {advanceMailReports} from '../mail-reports.js?v=exchange-observation-1';
+import {newGame,upgradeSave} from '../engine.js?v=exchange-undated-1';
+import {advanceMailReports} from '../mail-reports.js?v=exchange-undated-1';
 import {receivedMail} from '../epistulae.js?v=born-portraits-nine-1';
 
 test('only received mission outcomes enter the inbox, once, and survive a save',()=>{
