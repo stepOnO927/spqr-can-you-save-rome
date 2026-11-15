@@ -1,8 +1,8 @@
-import {coalitionInterest,formCoalition} from './coalitions.js?v=born-portraits-nine-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=born-portraits-nine-1';
-import {reportedControl} from './control-intelligence.js?v=born-portraits-nine-1';
-import {ROUTES} from './data.js?v=born-portraits-nine-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=born-portraits-nine-1';
+import {coalitionInterest,formCoalition} from './coalitions.js?v=exchange-observation-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=exchange-observation-1';
+import {reportedControl} from './control-intelligence.js?v=exchange-observation-1';
+import {ROUTES} from './data.js?v=exchange-observation-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=exchange-observation-1';
 
 const relation=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;
 function canWrite(s,actor,target){

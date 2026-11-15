@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-nine-1';
-import {proposeAgreement} from '../agreements.js?v=born-portraits-nine-1';
-import {advanceMarketAI,advanceMarkets,placeTradeOrder,postTradeSale,quoteTrade,setTradeExportRestriction,setTradeTariffPolicy} from '../trade-markets.js?v=born-portraits-nine-1';
+import {newGame,upgradeSave} from '../engine.js?v=exchange-observation-1';
+import {proposeAgreement} from '../agreements.js?v=exchange-observation-1';
+import {advanceMarketAI,advanceMarkets,placeTradeOrder,postTradeSale,quoteTrade,setTradeExportRestriction,setTradeTariffPolicy} from '../trade-markets.js?v=exchange-observation-1';
 
 const treaty=(s,a,b)=>{s.relations[[a,b].sort().join(':')]=80;assert.equal(proposeAgreement(s,a,b,'trade').ok,true)};
 const next=s=>{if(++s.month>12){s.month=1;s.year++}advanceMarkets(s)};

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=born-portraits-nine-1';
-import {advanceEasternMarkets} from '../han/markets.js?v=born-portraits-nine-1';
-import {advanceSilk,protectRoute,ROUTE_PROTECTION_COST} from '../han/silk-road.js?v=born-portraits-nine-1';
-import {roll} from '../han/util.js?v=born-portraits-nine-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=exchange-observation-1';
+import {advanceEasternMarkets} from '../han/markets.js?v=exchange-observation-1';
+import {advanceSilk,protectRoute,ROUTE_PROTECTION_COST} from '../han/silk-road.js?v=exchange-observation-1';
+import {roll} from '../han/util.js?v=exchange-observation-1';
 
 test('AI Han funds route guards after its own paid caravan is actually raided',()=>{
  let s=newHanGame('shanshan',{seed:38});s.tradeMarkets.embeddedRoman=true;s.month=2;advanceSilk(s);

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=born-portraits-nine-1';
-import {tutorialTurnProgress,createTutorial} from '../map-lab/tutorial.js?v=born-portraits-nine-1';
+import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=exchange-observation-1';
+import {tutorialTurnProgress,createTutorial} from '../map-lab/tutorial.js?v=exchange-observation-1';
 
 test('tutorial tracks the commanded army rather than another friendly battle',()=>{
  let s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii');unit.move={to:'italiaN',remaining:2};s.battles=[{year:s.year,month:s.month,attacker:{id:'other',owner:'caesar'},defender:{id:'italy',owner:'senate'}}];assert.deepEqual(tutorialTurnProgress(s,'caesar'),{kind:'marching',armyId:'xiii',remaining:2});

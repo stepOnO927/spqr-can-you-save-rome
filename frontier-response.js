@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=born-portraits-nine-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=born-portraits-nine-1';
+import {ROUTES} from './data.js?v=exchange-observation-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=exchange-observation-1';
 
 const now=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');

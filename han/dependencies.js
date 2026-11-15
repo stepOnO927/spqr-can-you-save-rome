@@ -1,8 +1,8 @@
 // Political subordination is uncertain in several 49 BCE sources. These are
 // adjustable relationships, not modern national borders or annexations.
 import {DEPENDENCIES} from './eurasia-data.js';
-import {relation,atWar,setRelation} from './frontier.js?v=born-portraits-nine-1';
-import {monthIndex,log} from './util.js?v=born-portraits-nine-1';
+import {relation,atWar,setRelation} from './frontier.js?v=exchange-observation-1';
+import {monthIndex,log} from './util.js?v=exchange-observation-1';
 
 export function initDependencies(s){
  if(!s.dependencies)s.dependencies=DEPENDENCIES.map(d=>({...d,autonomy:d.autonomy??70,tribute:d.kind==='political_influence'?0:1,active:true}));

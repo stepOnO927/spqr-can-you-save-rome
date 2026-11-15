@@ -1,9 +1,9 @@
-import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=born-portraits-nine-1';
-import {campaignDate} from '../campaign-date.js?v=born-portraits-nine-1';
-import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=born-portraits-nine-1';
-import {reassurePerson} from '../conspiracies.js?v=born-portraits-nine-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=born-portraits-nine-1';
-import {FACTIONS} from '../data.js?v=born-portraits-nine-1';
+import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=exchange-observation-1';
+import {campaignDate} from '../campaign-date.js?v=exchange-observation-1';
+import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=exchange-observation-1';
+import {reassurePerson} from '../conspiracies.js?v=exchange-observation-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=exchange-observation-1';
+import {FACTIONS} from '../data.js?v=exchange-observation-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function renderSecurity({panel,state,language,refresh}){

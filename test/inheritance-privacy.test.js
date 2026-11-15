@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-nine-1';
-import {createFictionalPerson,makeWill,settleInheritance} from '../dynasties.js?v=born-portraits-nine-1';
-import {addReport} from '../character-system.js?v=born-portraits-nine-1';
+import {newGame,upgradeSave} from '../engine.js?v=exchange-observation-1';
+import {createFictionalPerson,makeWill,settleInheritance} from '../dynasties.js?v=exchange-observation-1';
+import {addReport} from '../character-system.js?v=exchange-observation-1';
 
 function foreignSpouses(){let s=newGame('caesar');const own=createFictionalPerson(s,{name:['Roman','罗马人'],faction:'caesar',birthYear:-80,wealth:24}),foreign=createFictionalPerson(s,{name:['Reported','报告姓名'],faction:'egypt',birthYear:-78});s.world.characters[own].spouse=foreign;s.world.characters[foreign].spouse=own;addReport(s,'caesar','egypt',{kind:'leaders',leaders:[foreign],source:'spy'});s.world.dynasties.catalog[foreign].name=['Secret','秘密姓名'];return {s:upgradeSave(structuredClone(s)),own,foreign}}
 

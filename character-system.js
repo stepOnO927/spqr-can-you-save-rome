@@ -1,18 +1,18 @@
-import {isDeliveredReport} from './person-knowledge.js?v=born-portraits-nine-1';
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=born-portraits-nine-1';
-import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=born-portraits-nine-1';
-import {generateFictionalName} from './fictional-names.js?v=born-portraits-nine-1';
-import {FACTIONS,ROUTES} from './data.js?v=born-portraits-nine-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=born-portraits-nine-1';
-import {potentialConspirators} from './conspiracies.js?v=born-portraits-nine-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=born-portraits-nine-1';
-import {reportedControl} from './control-intelligence.js?v=born-portraits-nine-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=born-portraits-nine-1';
-import {activeAgreement} from './agreements.js?v=born-portraits-nine-1';
-import {activeModifiers} from './inventions.js?v=born-portraits-nine-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=born-portraits-nine-1';
-import {namedReportSubjects} from './person-knowledge.js?v=born-portraits-nine-1';
-export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=born-portraits-nine-1';
+import {isDeliveredReport} from './person-knowledge.js?v=exchange-observation-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=exchange-observation-1';
+import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=exchange-observation-1';
+import {generateFictionalName} from './fictional-names.js?v=exchange-observation-1';
+import {FACTIONS,ROUTES} from './data.js?v=exchange-observation-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=exchange-observation-1';
+import {potentialConspirators} from './conspiracies.js?v=exchange-observation-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=exchange-observation-1';
+import {reportedControl} from './control-intelligence.js?v=exchange-observation-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=exchange-observation-1';
+import {activeAgreement} from './agreements.js?v=exchange-observation-1';
+import {activeModifiers} from './inventions.js?v=exchange-observation-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=exchange-observation-1';
+import {namedReportSubjects} from './person-knowledge.js?v=exchange-observation-1';
+export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=exchange-observation-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -237,7 +237,10 @@ export function queueMission(s,actor,target,type,subject='health',partnerId=null
 // response stays out of the recipient's knowledge until the return journey.
 function prepareExchange(s,op){
  const partner=op.partner,access=intelligencePartnerAccess(s,op.actor,partner);
- const prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter));
+ // Arrival order is not observation order: an older forwarded message must
+ // not displace a fresher observation already held by the partner.
+ const observedAt=r=>{const year=r.observationYear??r.year,month=r.observationMonth??r.month;return Number.isFinite(year)&&Number.isInteger(month)?year*12+month:-Infinity};
+ const prior=(s.knowledge[partner]?.[op.target]?.reports||[]).filter(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter)).reduce((best,r)=>!best||observedAt(r)>observedAt(best)?r:best,null);
  if(!access)return {available:false};
  // Trade is contact, not an obligation to share secrets. The recipient's own
  // relations influence its independent response; the sender learns only the

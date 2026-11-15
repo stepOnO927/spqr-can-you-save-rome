@@ -1,6 +1,6 @@
-import {ROUTES} from './data.js?v=born-portraits-nine-1';
-import {REGIONS as EASTERN_REGIONS} from './han/data.js?v=born-portraits-nine-1';
-import {marketPrice} from './market-goods.js?v=born-portraits-nine-1';
+import {ROUTES} from './data.js?v=exchange-observation-1';
+import {REGIONS as EASTERN_REGIONS} from './han/data.js?v=exchange-observation-1';
+import {marketPrice} from './market-goods.js?v=exchange-observation-1';
 
 const easternPoints=new Map(EASTERN_REGIONS.filter(r=>Number.isFinite(r.lon)&&Number.isFinite(r.lat)).map(r=>[r.id,[r.lon,r.lat]]));
 const visibleStatus=new Set(['traveling','blocked']);

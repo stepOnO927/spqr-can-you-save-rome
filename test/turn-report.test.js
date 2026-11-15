@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,moveArmy,tick,upgradeSave} from '../engine.js?v=born-portraits-nine-1';
-import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from '../map-lab/turn-report.js?v=born-portraits-nine-1';
-import {reportedControl} from '../control-intelligence.js?v=born-portraits-nine-1';
-import {FACTIONS} from '../data.js?v=born-portraits-nine-1';
+import {newGame,moveArmy,tick,upgradeSave} from '../engine.js?v=exchange-observation-1';
+import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from '../map-lab/turn-report.js?v=exchange-observation-1';
+import {reportedControl} from '../control-intelligence.js?v=exchange-observation-1';
+import {FACTIONS} from '../data.js?v=exchange-observation-1';
 
 test('a delayed control report retains its observation date and does not reveal later hidden changes',()=>{
  const s=newGame('caesar'),before=Object.fromEntries(s.regions.map(r=>[r.id,reportedControl(s,'caesar',r.id)?.owner]));

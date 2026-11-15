@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-nine-1';
-import {proposeAgreement,terminateAgreement} from '../agreements.js?v=born-portraits-nine-1';
-import {addReport,queueMission,advanceOperations,intelligencePartners,intelligencePartnerAccess} from '../character-system.js?v=born-portraits-nine-1';
+import {newGame,upgradeSave} from '../engine.js?v=exchange-observation-1';
+import {proposeAgreement,terminateAgreement} from '../agreements.js?v=agreement-courier-1';
+import {addReport,queueMission,advanceOperations,intelligencePartners,intelligencePartnerAccess} from '../character-system.js?v=exchange-observation-1';
 
 function setup(seed){const s=newGame('caesar');s.world.intelSeed=seed;s.relations['caesar:parthia']=40;assert.ok(proposeAgreement(s,'caesar','parthia','trade').ok);addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'ill',source:'spy',confidence:'unverified'});return s}
 function advance(s,n){for(let i=0;i<n;i++){s.month++;advanceOperations(s)}}
@@ -28,6 +28,28 @@ test('trade exchanges have delayed and independently chosen outcomes, and save s
 
 test('a trading court cannot forward information it never possessed',()=>{
  const s=setup(1000);s.knowledge.parthia.egypt.reports=[];assert.ok(queueMission(s,'caesar','egypt','exchange','health','parthia','ptolemy').ok);advance(s,3);assert.ok(['failed','declined'].includes(s.operations[0].status));assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+});
+
+test('a partner forwards its freshest delivered observation, sealed when the request arrives',()=>{
+ let completed=0;
+ for(let i=0;i<40;i++){
+  let s=setup(i*99991+31);s.alliances.push(['caesar','parthia']);s.month=4;
+  addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'recovering',source:'spy',confidence:'unverified'});
+  s.month=5;
+  addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'healthy',source:'exchange',originSource:'court',observationYear:-49,observationMonth:2,confidence:'unverified'});
+  // Neither a different subject nor an undelivered future report is eligible.
+  s.knowledge.parthia.egypt.reports.unshift({kind:'health',character:'cleopatra',value:'ill',source:'spy',year:-49,month:5},{kind:'health',character:'ptolemy',value:'dying',source:'spy',year:-49,month:9});
+  assert.ok(queueMission(s,'caesar','egypt','exchange','health','parthia','ptolemy').ok);
+  advance(s,2);assert.equal(s.operations[0].status,'pending');assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+  // A report acquired after the reply was sealed cannot alter the letter in transit.
+  addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'ill',source:'spy',confidence:'unverified'});
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));advance(s,1);
+  if(s.operations[0].status==='complete'){
+   completed++;const r=s.knowledge.caesar.egypt.reports[0];
+   assert.equal(r.value,'recovering');assert.equal(r.observationMonth,4);assert.equal(r.originSource,'spy');
+  }else assert.equal(s.knowledge.caesar.egypt.reports.length,0);
+ }
+ assert.ok(completed>0,'a seeded response must arrive');
 });
 
 test('the trading court is more willing to share with a trusted partner without guaranteeing a reply',()=>{
