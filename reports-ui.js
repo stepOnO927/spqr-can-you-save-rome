@@ -1,7 +1,7 @@
-import {eventText,unreadCount} from './campaign-reports.js?v=9';
+import {eventText,unreadCount} from './campaign-reports.js?v=10';
 import {FACTIONS} from './data.js';
 import {battleSideForPlayer} from './visibility.js';
-import {afterActionHtml} from './recon-ui.js?v=7';
+import {afterActionHtml} from './recon-ui.js?v=9';
 import {factionMark} from './identity.js';
 
 export const escapeReport=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -18,7 +18,7 @@ export function briefingHtml(s,lang){
   const b=s.briefings?.[0];if(!b)return '';
   const d=dict[lang],events=b.eventIds.map(id=>s.campaignEvents.find(e=>e.id===id)).filter(Boolean),section=(key,filter)=>{const list=events.filter(filter);return list.length?`<details class="report-section" open><summary>${d[key]} (${list.length})</summary>${list.map(e=>eventCard(s,e,lang)).join('')}</details>`:''};
   const delta=Object.entries(b.delta).map(([k,v])=>`<span>${d[k]||k}: ${v>0?'+':''}${v}</span>`).join('');
-  return `<section class="monthly-briefing"><h3>${d.briefing} · ${eventDate(b,lang)}</h3>${section('territory',e=>e.type==='control')}${section('operations',e=>e.category==='military'&&e.type!=='control')}${section('political',e=>e.category==='political')}${section('diplomatic',e=>e.category==='diplomatic')}<details class="report-section" open><summary>${d.economy}</summary><div class="report-deltas">${delta}</div></details></section>`;
+  return `<section class="monthly-briefing"><h3>${d.briefing} · ${eventDate(b,lang)}</h3>${section('territory',e=>e.type==='control')}${section('operations',e=>e.category==='military'&&e.type!=='control')}${section('intelligence',e=>e.category==='intelligence')}${section('political',e=>e.category==='political')}${section('diplomatic',e=>e.category==='diplomatic')}<details class="report-section" open><summary>${d.economy}</summary><div class="report-deltas">${delta}</div></details></section>`;
 }
 function options(items,selected,allLabel){return `<option value="">${escapeReport(allLabel)}</option>${items.map(([value,label])=>`<option value="${escapeReport(value)}" ${value===selected?'selected':''}>${escapeReport(label)}</option>`).join('')}`}
 export function chronicleHtml(s,lang,filters={}){

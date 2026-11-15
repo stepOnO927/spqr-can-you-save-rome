@@ -118,6 +118,11 @@ export function eventText(s,e,lang='en'){
   const z=lang==='zh',r=place(s,e.regionId,lang),a=label(e.factionId,lang),old=label(e.previousOwner,lang),u=e.armyName?.[z?1:0]||unit(s,e.armyId,lang);
   if(e.type==='control')return {title:z?`${r}${e.previousOwner===s.player?'失守':'易主'}`:`${r} ${e.previousOwner===s.player?'lost':'captured'}`,description:z?`${old}失去${r}；${a}取得控制权。${e.reason==='siege'?'围攻结束。':e.reason==='battle'?'战斗后控制权改变。':e.reason==='rebellion'?'地方叛乱。':'部队占领。'}`:`${old} lost ${r}; ${a} now controls it. ${e.reason==='siege'?'The siege ended.':e.reason==='battle'?'Control changed after battle.':e.reason==='rebellion'?'A rebellion occurred.':'The region was occupied.'}`};
   if(e.type==='battle')return {title:z?`${r}战斗：${e.outcome==='won'?'胜利':'失利'}`:`Battle at ${r}: ${e.outcome==='won'?'victory':'defeat'}`,description:z?`己方伤亡 ${e.ownCasualties?.toLocaleString()||0} 人。`:`Own casualties: ${e.ownCasualties?.toLocaleString()||0}.`};
+  if(e.type==='scoutReturn'){
+    const observed=z?`公元${e.observationYear<0?'前':'后'}${Math.abs(e.observationYear)}年${e.observationMonth}月`:`${e.observationMonth}/${Math.abs(e.observationYear)} ${e.observationYear<0?'BCE':'CE'}`;
+    const confidence=z?{rumor:'传闻',unverified:'未经核实',disputed:'存在争议',outdated:'已过时'}[e.reportConfidence]||'未确认':{rumor:'rumor',unverified:'unverified',disputed:'disputed',outdated:'outdated'}[e.reportConfidence]||'unconfirmed';
+    return {title:z?`${r}斥候回报`:`Scouts returned from ${r}`,description:z?`观察于${observed}，本月送达；报告可信度：${confidence}。兵力估计和部署详情见军队的军事侦察记录。`:`Observed ${observed}, delivered this month; report confidence: ${confidence}. Review the army's military reconnaissance for estimated strength and positions.`};
+  }
   if(e.type==='siege')return {title:z?`${r}${e.phase==='begun'?'开始围攻':'围攻结束'}`:`Siege ${e.phase==='begun'?'began':'completed'} at ${r}`,description:z?`${u}参与${r}的围攻。`:`${u} operated at ${r}.`};
   if(e.type==='movement')return {title:z?`${u}抵达${r}`:`${u} arrived in ${r}`,description:z?`从${place(s,e.fromRegionId,lang)}出发。`:`From ${place(s,e.fromRegionId,lang)}.`};
   if(e.type==='recruitment')return {title:z?`${r}完成征召`:`Forces recruited in ${r}`,description:z?`${u}已加入战场。`:`${u} joined the field army.`};

@@ -55,6 +55,11 @@ try{
  assert.match(await page.locator('#map-mode-note').innerText(),/ivory ◎ counters/);
  assert.equal(await page.locator('.legend .swatch').count(),0);
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
+ await page.locator('#chronicle').click();
+ assert.match(await page.locator('#command-detail').innerText(),/Scouts returned from/);
+ await page.locator('#language').click();
+ assert.match(await page.locator('#command-detail').innerText(),/斥候回报/);
+ await page.locator('#language').click();
  await page.locator('#guide-restart').click();await page.locator('#roman-faction').selectOption('senate');await page.locator('#difficulty').selectOption('standard');await page.locator('#start-free').click();
  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('grand-campaign')),true,'free play must retain the grand campaign');
  assert.equal(await page.locator('.grand-site').count(),120);

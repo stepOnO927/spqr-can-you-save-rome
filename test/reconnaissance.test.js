@@ -5,6 +5,8 @@ import {assessment,sendScouts,probePositions,latestRecon,reconReports,delayAttac
 import {development,activeEffects,IDEAS} from '../development.js';
 import {developmentPanel} from '../development-ui.js';
 import {intelligenceHtml,afterActionHtml,fortificationText,reconSummaryHtml} from '../recon-ui.js';
+import {eventText} from '../campaign-reports.js';
+import {briefingHtml,chronicleHtml} from '../reports-ui.js';
 
 test('enemy fortification remains hidden until a dated military report is available',()=>{
  const s=newGame('senate'),target=s.regions.find(r=>r.id==='cisalpine');target.fort=3;
@@ -65,6 +67,15 @@ test('Senate can assess, scout, then attack without a scripted outcome or exact 
  const report=latestRecon(s,'senate','cisalpine');assert.equal(report.source,'scouts');assert.equal(report.month,s.month);
  assert.ok(report.min===null||report.max>report.min);
  assert.equal(report.misinformationRisk,'high');
+ const scoutEvent=s.campaignEvents.find(e=>e.type==='scoutReturn'&&e.regionId==='cisalpine');
+ assert.equal(scoutEvent.observationMonth,1);assert.equal(scoutEvent.month,2);
+ assert.equal(scoutEvent.reportConfidence,report.confidence);
+ for(const [language,title] of [['en','Scouts returned'],['zh','斥候回报']]){
+  assert.match(eventText(s,scoutEvent,language).title,new RegExp(title));
+  assert.match(briefingHtml(s,language),new RegExp(title));
+  assert.match(chronicleHtml(s,language),new RegExp(title));
+ }
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(s))).campaignEvents.filter(e=>e.type==='scoutReturn').length,1);
  assert.deepEqual(reconReports(upgradeSave(JSON.parse(JSON.stringify(s))),'senate','cisalpine')[0],report);
  const order=moveArmy(s,'italy','cisalpine');assert.equal(order.ok,true);
  assert.ok(unit.attackIntel);assert.equal(unit.attackIntel.report?.source,'scouts');

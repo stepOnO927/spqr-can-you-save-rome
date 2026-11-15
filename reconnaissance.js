@@ -1,5 +1,6 @@
 import {adjacent, army, region, isWar} from './engine.js';
 import {activeEffects} from './development.js?v=45';
+import {recordEvent} from './campaign-reports.js?v=10';
 
 const draw=s=>{s.reconSeed??=((s.seed??1)^0x9e3779b9)>>>0;s.reconSeed=(Math.imul(s.reconSeed,1664525)+1013904223)>>>0;return s.reconSeed/4294967296};
 const turn=s=>s.year*12+s.month;
@@ -98,7 +99,10 @@ export function advanceRecon(s){
   const target=region(s,regionId);if(!target)continue;
   const enemy=observedCount==null?s.armies.filter(a=>a.region===regionId&&a.owner!==unit.owner&&!a.move&&a.men>0):observedPresence?[{}]:[];
   const count=observedCount??enemy.reduce((n,a)=>n+a.men,0),detected=draw(s)<(count?.65+scoutBonus:.42+scoutBonus);
-  makeReport(s,unit,target,'scouts',count,detected,enemy,{observationYear,observationMonth,observedFort,scoutBonus});
-  if(unit.owner===s.player)s.log.unshift({year:s.year,month:s.month,en:`Scouts returned from ${target.name[0]}; their estimate is uncertain.`,zh:`斥候从${target.name[1]}返回；估计仍有不确定性。`});
+  const report=makeReport(s,unit,target,'scouts',count,detected,enemy,{observationYear,observationMonth,observedFort,scoutBonus});
+  if(unit.owner===s.player){
+   recordEvent(s,{type:'scoutReturn',category:'intelligence',severity:'routine',factionId:unit.owner,regionId:target.id,armyId:unit.id,observationYear,observationMonth,reportConfidence:report.confidence});
+   s.log.unshift({year:s.year,month:s.month,en:`Scouts returned from ${target.name[0]}; their estimate is uncertain.`,zh:`斥候从${target.name[1]}返回；估计仍有不确定性。`});
+  }
  }
 }
