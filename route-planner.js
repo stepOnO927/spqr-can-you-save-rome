@@ -1,4 +1,4 @@
-import {ROUTES} from './data.js?v=world-kings-trade-1';
+import {ROUTES,REGIONS} from './data.js?v=world-kings-trade-1';
 import {reportedControl} from './control-intelligence.js?v=world-kings-trade-1';
 import {militaryAccessStatus} from './border-access.js?v=world-kings-trade-1';
 
@@ -11,21 +11,54 @@ for (const [from, to, type] of ROUTES) {
 }
 
 const rank = {legal: 0, treaty: 1, supply_risk: 2, unconfirmed: 3, requires_transport: 4, requires_permission: 5};
+const openingSupply=new Map(REGIONS.map(region=>[region.id,region.supply]));
 
 function legFor(state, actor, army, theaterId, edge) {
   const theater = state.regions.find(region => region.id === theaterId);
   const report = reportedControl(state, actor, theaterId);
   const knownOwner = report?.owner ?? null;
   const access = militaryAccessStatus(state, actor, theaterId, knownOwner);
-  const supplyRisk = state.factions[actor].food < 10 || army.men > (theater.supply || 0) * 1000;
+  // Only the published scenario capacity is usable for a distant estimate.
+  // A foreign theater's current improvements and stores may be undiscovered.
+  const supplyRisk = state.factions[actor].food < 10 || army.men > (openingSupply.get(theaterId) || 0) * 1000;
   const months = (edge.sea ? 3 : 1) + (['hills', 'desert'].includes(theater.terrain) ? 1 : 0);
   return {
     from: army.region, to: theaterId, sea: edge.sea, months,
     reportedOwner: knownOwner, status: !access.allowed ? 'requires_permission' :
       access.basis === 'unconfirmed' ? 'unconfirmed' :
       ['treaty', 'limited_treaty'].includes(access.basis) ? 'treaty' : 'legal',
-    supplyRisk
+    supplyRisk, supportUnconfirmed:knownOwner!==actor
   };
+}
+
+// Every item in this brief is either the player's own state, a dated control
+// report, or the public route graph. It is recomputed from the same route that
+// startExpedition validates and orders, so the preview cannot invent a depot.
+export function expeditionBrief(state,armyId,route){
+ const army=state.armies.find(unit=>unit.id===armyId),actor=army?.owner;
+ if(!army||!state.factions[actor]||!route?.nodes?.length||route.nodes[0]!==army.region)return null;
+ const own=id=>state.regions.find(region=>region.id===id&&region.owner===actor);
+ const reported=id=>reportedControl(state,actor,id)?.owner||null;
+ const home=route.nodes.find(id=>own(id)?.administrativeStatus==='integrated')||null;
+ const staging=[];
+ for(const id of route.nodes){
+  const region=own(id);if(!region)continue;
+  const depot=(region.localEntities||[]).find(entity=>entity.foothold?.owner===actor&&entity.foothold.level>=1&&entity.foothold.stockFood>0);
+  if(region.administrativeStatus==='integrated'||depot)staging.push({theater:id,kind:depot?'depot':'integrated',depotId:depot?.id||null,storedFood:depot?.foothold.stockFood||0});
+ }
+ const risk=[];
+ for(const leg of route.legs||[]){
+  if(leg.status==='requires_permission'||leg.status==='unconfirmed')risk.push({theater:leg.to,kind:leg.status});
+  if(leg.supplyRisk)risk.push({theater:leg.to,kind:'supply'});
+  if(leg.supportUnconfirmed)risk.push({theater:leg.to,kind:'support_unconfirmed'});
+  if(leg.sea)risk.push({theater:leg.to,kind:'sea'});
+ }
+ if(route.seaCost>state.factions[actor].treasury)risk.push({theater:null,kind:'transport'});
+ return {objective:route.nodes.at(-1),homeBase:home,staging,
+  monthlyDepotFood:Math.max(1,Math.ceil(army.men/5000)),armyMen:army.men,
+  factionFood:state.factions[actor].food,seaCost:route.seaCost,
+  politicalAccess:(route.legs||[]).map(leg=>({theater:leg.to,reportedOwner:reported(leg.to),status:leg.status})),
+  risk};
 }
 
 function classify(legs, treasury) {
@@ -64,7 +97,8 @@ export function planRoutes(state, armyId, destination, {maxSteps = 24, limit = 3
   if (!found.length) return {ok: false, reason: 'no_route', routes: []};
   const ordered = found.map(path => {
     const status = classify(path.legs, state.factions[army.owner].treasury);
-    return {nodes: path.nodes, legs: path.legs, status, months: path.legs.reduce((sum, leg) => sum + leg.months, 0), seaCost: path.legs.filter(leg => leg.sea).length * 8, firstStep: path.nodes[1], score: path.score};
+    const route={nodes: path.nodes, legs: path.legs, status, months: path.legs.reduce((sum, leg) => sum + leg.months, 0), seaCost: path.legs.filter(leg => leg.sea).length * 8, firstStep: path.nodes[1], score: path.score};
+    route.brief=expeditionBrief(state,armyId,route);return route;
   }).sort((a, b) => rank[a.status] - rank[b.status] || a.score - b.score || a.nodes.join('|').localeCompare(b.nodes.join('|')));
   const alternatives = [];
   for (const path of ordered) if (!alternatives.some(other => other.firstStep === path.firstStep)) alternatives.push(path);

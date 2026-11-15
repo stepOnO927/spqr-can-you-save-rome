@@ -68,6 +68,7 @@ jobs:
               ;;
             2)
               node tools/generated-local-polities-smoke.mjs
+              node tools/expedition-brief-smoke.mjs
               node tools/cursus-applicant-smoke.mjs
               node tools/han-court-smoke.mjs
               node tools/genealogy-dossier-smoke.mjs
