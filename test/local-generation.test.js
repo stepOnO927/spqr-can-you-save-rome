@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-trade-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-trade-1';
-import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS} from '../local-generation.js';
+import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS,generatedLocalPolities} from '../local-generation.js';
 import {localOfferChance,advanceLocalEntities,localEntity,offerLocalContact,localSiegeQuote,besiegeLocalEntity} from '../local-polities.js';
 import {advanceVillages} from '../local-villages.js';
 import {advanceLocalResistance} from '../local-resistance.js';
@@ -14,10 +14,17 @@ const generated=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(en
 const villages=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.proceduralVillage&&!entity.proceduralIndependentVillage);
 const independentVillages=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.proceduralIndependentVillage);
 
+test('fictional local names vary by seed and broad theater without repeating one global style',()=>{
+ const theaters=['hispaniaN','achaia','syria','numidia'];
+ const samples=theaters.map(theater=>new Set(Array.from({length:128},(_,seed)=>generatedLocalPolities(seed+1,'standard',new Set([theater]))[0].name[0].split(' ')[0])));
+ for(const names of samples)assert.ok(names.size>=9);
+ for(let i=0;i<samples.length;i++)for(let j=i+1;j<samples.length;j++)assert.equal([...samples[i]].filter(name=>samples[j].has(name)).length,0);
+});
+
 test('difficulty raises generated polity counts and coherent population, militia and resource bands',()=>{
  const modes=['travel','beginner','standard','hard','expert'];
  for(const seed of [1,42,305419896,4000000000]){
-  let previous=0,previousAnchor=null;
+  let previous=0,previousAnchor=null;const previousProfiles=new Map();
   for(const mode of modes){
    const s=start(mode,seed),entities=generated(s),band=LOCAL_GENERATION_BANDS[mode],anchor=s.regions.flatMap(r=>r.localEntities||[]).find(e=>e.id==='massilia');
    assert.ok(entities.length>=band.count[0]&&entities.length<=band.count[1]);assert.ok(entities.length>previous);previous=entities.length;
@@ -26,7 +33,7 @@ test('difficulty raises generated polity counts and coherent population, militia
    if(entities.length>=3)for(const type of ['city_state','microstate','tribe'])assert.ok(entities.some(entity=>entity.type===type));
    if(entities.length>=4)assert.ok(entities.some(entity=>entity.type==='strongman'));
    assert.equal(new Set(entities.map(e=>e.ruler.name[0])).size,entities.length);
-   for(const e of entities){assert.equal(e.historical,false);assert.equal(e.spatialAccuracy,'fictional_approximate_point');assert.equal(e.controller,e.id);assert.ok(e.population>=e.militia*4);assert.ok(e.food>0&&e.treasury>0);assert.ok(e.strategy>=band.skill[0]&&e.strategy<=band.skill[1]);assert.ok(s.regions.some(r=>r.id===e.theater&&r.localEntities.includes(e)));assert.equal(s.world.localRulers[e.ruler.id].polityId,e.id);assert.deepEqual(s.world.localRulers[e.ruler.id].name,e.ruler.name);assert.ok(s.year-s.world.localRulers[e.ruler.id].birthYear>=28)}
+   for(const e of entities){assert.equal(e.historical,false);assert.equal(e.spatialAccuracy,'fictional_approximate_point');assert.equal(e.controller,e.id);assert.ok(e.population>=e.militia*4);assert.ok(e.food>0&&e.treasury>0);assert.ok(e.strategy>=band.skill[0]&&e.strategy<=band.skill[1]);assert.ok(s.regions.some(r=>r.id===e.theater&&r.localEntities.includes(e)));assert.equal(s.world.localRulers[e.ruler.id].polityId,e.id);assert.deepEqual(s.world.localRulers[e.ruler.id].name,e.ruler.name);assert.ok(s.year-s.world.localRulers[e.ruler.id].birthYear>=28);const prior=previousProfiles.get(e.id);if(prior)for(const key of ['population','militia','treasury','food','fort','strategy'])assert.ok(e[key]>=prior[key],`${e.id} ${key} fell at ${mode}`);previousProfiles.set(e.id,e)}
    assert.equal(villages(s).length,entities.filter(e=>e.type==='strongman').length);
    const independents=independentVillages(s),villageBand=VILLAGE_GENERATION_BANDS[mode];
    assert.ok(independents.length>=villageBand[0]&&independents.length<=villageBand[1]);

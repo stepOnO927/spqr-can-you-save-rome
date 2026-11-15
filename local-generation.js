@@ -65,6 +65,43 @@ const STEMS=Object.freeze([
  ['Tiramon','提拉蒙'],['Vardion','瓦尔迪翁'],['Mekaron','梅卡隆'],['Daronis','达罗尼斯'],
  ['Pyralon','皮拉隆'],['Selaron','塞拉隆'],['Vekrion','维克里翁'],['Olyron','奥利隆']
 ]);
+// Fictional phonetic pools give each broad theater a local flavor without
+// asserting a historical settlement, language boundary or attested ruler.
+const REGIONAL_NAMES=Object.freeze({
+ western:Object.freeze([
+  ['Arvion','阿尔维翁'],['Belaron','贝拉隆'],['Brigion','布里吉翁'],['Carvion','卡尔维翁'],
+  ['Drunon','德鲁农'],['Elvion','埃尔维翁'],['Marvion','马尔维翁'],['Nertion','涅尔提翁'],
+  ['Tavrion','塔夫里翁'],['Uxeron','乌克塞隆'],['Virdon','维尔冬'],['Zerakon','泽拉孔']]),
+ iberian:Object.freeze([
+  ['Arketon','阿尔凯顿'],['Balcion','巴尔西翁'],['Ileron','伊莱隆'],['Karbion','卡尔比翁'],
+  ['Lurakon','卢拉孔'],['Oretun','奥雷吞'],['Saldon','萨尔冬'],['Tarsion','塔尔西翁'],
+  ['Turmion','图尔米翁'],['Veskon','韦斯孔'],['Ybrion','伊布里翁'],['Zaldun','扎尔敦']]),
+ hellenic:Object.freeze([
+  ['Akrion','阿克里翁'],['Delyron','德吕隆'],['Epharon','埃法隆'],['Kallion','卡利翁'],
+  ['Myralon','米拉隆'],['Ortheon','奥尔忒翁'],['Pyralon','皮拉隆'],['Selaron','塞拉隆'],
+  ['Thalaron','塔拉隆'],['Vekrion','维克里翁'],['Xanthion','克桑提翁'],['Zelyron','泽吕隆']]),
+ eastern:Object.freeze([
+  ['Arkanis','阿尔卡尼斯'],['Daronis','达罗尼斯'],['Esharan','埃沙兰'],['Faradon','法拉冬'],
+  ['Harvash','哈尔瓦什'],['Kezaran','凯扎兰'],['Mekaron','梅卡隆'],['Narzash','纳尔扎什'],
+  ['Paradon','帕拉冬'],['Ravash','拉瓦什'],['Tiramon','提拉蒙'],['Vardion','瓦尔迪翁']]),
+ african:Object.freeze([
+  ['Aduron','阿杜隆'],['Barakon','巴拉孔'],['Dazuron','达祖隆'],['Emazir','埃马齐尔'],
+  ['Farsun','法尔孙'],['Imlaron','伊姆拉隆'],['Kezuron','凯祖隆'],['Mazaron','马扎隆'],
+  ['Namarun','纳马伦'],['Taziron','塔齐隆'],['Umaron','乌马隆'],['Zamarun','扎马伦']]),
+ nile:Object.freeze([
+  ['Abaron','阿巴隆'],['Demeron','德梅隆'],['Eshamon','埃沙蒙'],['Faranet','法拉内特'],
+  ['Hekaron','赫卡隆'],['Imeron','伊梅隆'],['Kameret','卡梅雷特'],['Meneron','梅涅隆'],
+  ['Nefaron','涅法隆'],['Pameret','帕梅雷特'],['Tameron','塔梅隆'],['Zekaron','泽卡隆']])
+});
+const REGION_GROUP=Object.freeze({
+ narbo:'western',gaul:'western',cisalpine:'western',italiaN:'western',illyricum:'western',
+ hispaniaN:'iberian',hispaniaS:'iberian',
+ sicilia:'hellenic',achaia:'hellenic',epirus:'hellenic',anatolia:'hellenic',galatia:'hellenic',bosporus:'hellenic',
+ syria:'eastern',armenia:'eastern',media:'eastern',parthia:'eastern',
+ africa:'african',numidia:'african',mauretania:'african',
+ egypt:'nile',egyptUpper:'nile'
+});
+const stemsFor=theater=>REGIONAL_NAMES[REGION_GROUP[theater]]||STEMS;
 const TITLES=Object.freeze({
  city_state:[['Free Port','自由港'],['Harbor Council','港口议事城'],['Maritime Commune','海滨公社']],
  microstate:[['March','边地小国'],['Court','地方王廷'],['Highland Realm','高地小国']],
@@ -87,6 +124,7 @@ const BASE=Object.freeze({city_state:[6000,13000,1.25,1.1],microstate:[8000,1700
 const next=state=>{state.value=(Math.imul(state.value,1664525)+1013904223)>>>0;return state.value/4294967296};
 const integer=(rng,low,high)=>low+Math.floor(next(rng)*(high-low+1));
 const range=(rng,low,high)=>low+next(rng)*(high-low);
+const siteSeed=(seed,theater)=>[...theater].reduce((value,char)=>Math.imul(value^char.charCodeAt(0),16777619)>>>0,seed>>>0);
 
 function profile(rng,type,scale,band){
  const [low,high,wealth,foodValue]=BASE[type];
@@ -110,7 +148,7 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters,startYe
  selected.push(...sites.slice(0,count-selected.length));
  for(const site of selected){
   let name,english;
-  do{const stem=STEMS[integer(rng,0,STEMS.length-1)],title=TITLES[site.type][integer(rng,0,TITLES[site.type].length-1)];name=[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`];english=name[0]}while(used.has(english));
+  do{const stems=stemsFor(site.theater),stem=stems[integer(rng,0,stems.length-1)],title=TITLES[site.type][integer(rng,0,TITLES[site.type].length-1)];name=[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`];english=name[0]}while(used.has(english));
   used.add(english);
   let rulerName,rulerKey;
   do{const person=RULER_NAMES[integer(rng,0,RULER_NAMES.length-1)],title=RULER_TITLES[site.type];rulerName=[`${title[0]} ${person[0]}`,`${person[1]}${title[1]}`];rulerKey=rulerName[0]}while(usedRulers.has(rulerKey));
@@ -121,7 +159,7 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters,startYe
    description:site.type==='strongman'?['Fictional local strongman and armed household generated for this campaign; personal control is not a recognized sovereign border.','本局生成的架空地方豪强及其部曲；个人控制不等于获得承认的主权边界。']:['Fictional autonomous polity generated for this campaign; the point is approximate and does not define a border.','本局生成的架空自治政权；地点为近似点，不代表真实历史边界。'],
    ruler:{id:`local-ruler:${site.theater}`,name:rulerName,birthYear:startYear-age,personality:PERSONALITIES[integer(rng,0,PERSONALITIES.length-1)],fictional:true},
    government:site.type==='strongman'?'personal_following':site.type==='city_state'?'civic_council':site.type==='tribe'?'tribal_assembly':'local_dynasty',
-   maxFootholdLevel:site.type==='strongman'?2:site.type==='tribe'?2:3,...profile(rng,site.type,site.scale,band),seed:integer(rng,0,0xffffffff)});
+   maxFootholdLevel:site.type==='strongman'?2:site.type==='tribe'?2:3,...profile({value:siteSeed(seed,site.theater)},site.type,site.scale,band),seed:integer(rng,0,0xffffffff)});
  }
  return result;
 }
@@ -136,7 +174,7 @@ export function generatedIndependentVillages(seed,difficulty,availableTheaters){
  const used=new Set();
  return sites.slice(0,count).map(site=>{
   let name;
-  do{const stem=STEMS[integer(rng,0,STEMS.length-1)],title=VILLAGE_TITLES[integer(rng,0,VILLAGE_TITLES.length-1)];name=[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`]}while(used.has(name[0]));
+  do{const stems=stemsFor(site.theater),stem=stems[integer(rng,0,stems.length-1)],title=VILLAGE_TITLES[integer(rng,0,VILLAGE_TITLES.length-1)];name=[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`]}while(used.has(name[0]));
   used.add(name[0]);
   const head=RULER_NAMES[integer(rng,0,RULER_NAMES.length-1)];
   const population=Math.round(integer(rng,350,850)*band.population/50)*50;
@@ -158,7 +196,7 @@ export function generatedNomadicCommunities(seed,difficulty,availableTheaters,st
  for(let i=ranges.length-1;i>0;i--){const j=integer(rng,0,i);[ranges[i],ranges[j]]=[ranges[j],ranges[i]]}
  const count=Math.min(ranges.length,integer(rng,...countBand));
  return ranges.slice(0,count).map(route=>{
-  const stem=STEMS[integer(rng,0,STEMS.length-1)],title=NOMAD_TITLES[integer(rng,0,NOMAD_TITLES.length-1)],person=RULER_NAMES[integer(rng,0,RULER_NAMES.length-1)];
+  const stems=stemsFor(route.camps[0].theater),stem=stems[integer(rng,0,stems.length-1)],title=NOMAD_TITLES[integer(rng,0,NOMAD_TITLES.length-1)],person=RULER_NAMES[integer(rng,0,RULER_NAMES.length-1)];
   const population=Math.round(integer(rng,1000,3200)*band.population/100)*100;
   const militia=Math.max(100,Math.round(population*range(rng,...band.militia)/50)*50);
   const treasury=Math.max(3,Math.round(population/550*band.wealth*range(rng,.8,1.2)));
