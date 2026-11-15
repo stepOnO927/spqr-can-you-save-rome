@@ -27,7 +27,8 @@ const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=world-kings-trade-1';
-import {advanceAgreementProposals} from './agreement-negotiations.js?v=agreement-courier-1';
+import {subjectRelation} from './suzerainty.js?v=world-kings-trade-1';
+import {advanceAgreementProposals,sendAgreementProposal} from './agreement-negotiations.js?v=agreement-courier-1';
 import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=world-kings-trade-1';
 import {respondToFrontierReports} from './frontier-response.js?v=world-kings-trade-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=world-kings-trade-1';
@@ -315,6 +316,7 @@ export function setTax(s,owner,level){
 }
 
 export function canFormAlliance(s,actor,target,{priorConsent=false}={}){
+ if(subjectRelation(s,actor)?.terms.subject.diplomaticAutonomy==='limited'&&subjectRelation(s,actor).terms.subject.suzerain!==target)return false;
  return actor!==target&&!!s.factions[actor]&&!!s.factions[target]&&actor!=='rebels'&&target!=='rebels'&&s.regions.some(r=>r.owner===actor)&&s.regions.some(r=>r.owner===target)&&!isWar(s,actor,target)&&(priorConsent||relation(s,actor,target)+personalDiplomaticCredit(s,actor,target)>=30)&&!isAllied(s,actor,target)&&!s.wars.some(w=>(w.includes(actor)&&isAllied(s,target,w.find(x=>x!==actor)))||(w.includes(target)&&isAllied(s,actor,w.find(x=>x!==target))));
 }
 export function diplomacy(s, actor, target, action, options={}){
@@ -324,6 +326,7 @@ export function diplomacy(s, actor, target, action, options={}){
   if(action==='alliance' && canFormAlliance(s,actor,target,{priorConsent:!!options.priorConsent})){s.alliances.push([actor,target,fullAllianceTerms(s)]);rememberPoliticalEvent(s,target,actor,'negotiated_agreement',2);if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} allied with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}结盟。`,{other:actor===s.player?target:actor});return true}
   if(action==='break' && isAllied(s,actor,target)){const prior=s.alliances.find(p=>p.includes(actor)&&p.includes(target)),terms=prior[2]||fullAllianceTerms(s,{legacy:true});(s.world.allianceHistory||=[]).push({parties:prior.slice(0,2),terms,ended:{year:s.year,month:s.month,actor},outcome:'breached'});s.alliances=s.alliances.filter(p=>!(p.includes(actor)&&p.includes(target)));s.relations[key]=relation(s,actor,target)-20;s.diplomaticCredibility||={};s.diplomaticCredibility[actor]=Math.max(0,(s.diplomaticCredibility[actor]??100)-terms.breachPenalty);rememberPoliticalEvent(s,target,actor,'broken_treaty',-12);if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} broke its alliance with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}解除了与${FACTIONS[target].short[1]}的同盟。`,{other:actor===s.player?target:actor});return true}
   if(action==='war' && !isWar(s,actor,target)){
+    if(subjectRelation(s,actor)?.terms.subject.diplomaticAutonomy==='limited'&&subjectRelation(s,actor).terms.subject.suzerain!==target)return false;
     if(isAllied(s,actor,target)||activeAgreement(s,actor,target,'non_aggression'))return false;
     const warsBefore=s.wars.map(w=>w.slice());
     const playerWarsBefore=new Set(s.wars.filter(w=>w.includes(s.player)).map(w=>w.find(id=>id!==s.player)));
@@ -331,10 +334,11 @@ export function diplomacy(s, actor, target, action, options={}){
     for(const p of s.alliances.filter(p=>p.includes(target))){const ally=p.find(x=>x!==target);if(ally!==actor&&!isWar(s,ally,actor)&&!isAllied(s,ally,actor)&&!activeAgreement(s,ally,actor,'non_aggression'))s.wars.push([ally,actor])}
     for(const p of s.alliances.filter(p=>p.includes(actor))){const ally=p.find(x=>x!==actor);if(ally!==target&&!isWar(s,ally,target)&&!isAllied(s,ally,target)&&!activeAgreement(s,ally,target,'non_aggression'))s.wars.push([ally,target])}
     for(const treaty of s.agreements||[]){
-      if(treaty.status!=='active'||!['defensive','offensive','guarantee'].includes(treaty.type))continue;
+      if(treaty.status!=='active'||!['defensive','offensive','guarantee','protectorate','client_kingdom'].includes(treaty.type))continue;
       const supported=treaty.type==='offensive'?actor:target,opponent=treaty.type==='offensive'?target:actor;
       if(!treaty.parties.includes(supported)||!activeAgreement(s,treaty.parties[0],treaty.parties[1],treaty.type))continue;
       if(treaty.type==='guarantee'&&supported!==(treaty.terms?.recipient||treaty.parties[1]))continue;
+      if(['protectorate','client_kingdom'].includes(treaty.type)&&supported!==treaty.terms?.subject?.subject)continue;
       const ally=treaty.parties.find(x=>x!==supported);
       if(ally!==opponent&&!isWar(s,ally,opponent)&&!isAllied(s,ally,opponent)&&!activeAgreement(s,ally,opponent,'non_aggression'))s.wars.push([ally,opponent]);
     }
@@ -879,6 +883,14 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   }
   // Independent courts negotiate with known neighbors; they never bind the
   // player without a decision. One candidate per review keeps work bounded.
+  if(owner!=='rebels'&&['hard','expert'].includes(s.difficulty)&&s.month===6&&f.treasury>=65&&f.stability>=45){
+    const candidates=[...new Set(reportedNeighbors().map(r=>r.owner))].filter(id=>id!==owner&&(autoplayPlayer||id!==s.player)&&id!=='rebels'&&s.factions[id]&&relation(s,owner,id)>=40&&!subjectRelation(s,id));
+    for(const candidate of candidates){
+      const estimated=estimatedStrength(s,owner,candidate);
+      if(!Number.isFinite(estimated)||estimated<1000||strength(s,owner)<estimated*1.25)continue;
+      if(sendAgreementProposal(s,owner,candidate,'client_kingdom').ok)break;
+    }
+  }
   if(owner!=='rebels'&&['hard','expert'].includes(s.difficulty)&&s.month%6===4&&f.treasury>45){
     const partners=[...new Set(reportedNeighbors().map(r=>r.owner))].filter(id=>id!==owner&&(autoplayPlayer||id!==s.player)&&id!=='rebels'&&s.factions[id]&&!isWar(s,owner,id)).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b));
     for(const partner of partners){

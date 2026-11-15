@@ -7,6 +7,7 @@ function roll(letter,salt){let h=((letter.seed??0)^salt)>>>0;for(const c of `${l
 // Sending a proposal cannot inspect the recipient's hidden decision. The
 // courier fee is paid now; the treaty's own cost is paid only if concluded.
 export function sendAgreementProposal(s,actor,target,type,{secret=false,access=null}={}){
+ if(secret&&['protectorate','client_kingdom'].includes(type))return {ok:false,reason:'public_required'};
  const def=proposalDefinition(type),f=s.factions?.[actor];if(!def||!f||!s.factions?.[target]||actor===target||actor==='rebels'||target==='rebels')return {ok:false,reason:'invalid'};
  if(type!=='full_alliance'){const check=checkAgreement(s,actor,target,type,{evaluateRecipient:false,access});if(!check.ok)return check}
  if(!s.regions.some(r=>r.owner===actor)||s.wars.some(w=>w.includes(actor)&&w.includes(target)))return {ok:false,reason:'unavailable'};

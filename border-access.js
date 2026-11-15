@@ -1,4 +1,5 @@
 import {activeAgreement,proposeAgreement} from './agreements.js?v=world-kings-trade-1';
+import {subjectRelation} from './suzerainty.js?v=world-kings-trade-1';
 
 export const BORDER_ACCESS_CATEGORIES = Object.freeze([
   'closed', 'civilian', 'commercial', 'diplomatic',
@@ -46,6 +47,7 @@ export function nonMilitaryAccessStatus(state, actor, theaterId, reportedOwner, 
   const policy = state.borderPolicies?.[owner]?.[kind] || 'open';
   if (policy === 'open') return {allowed: true, basis: 'open_policy', owner};
   if (kind === 'commercial' && activeAgreement(state, actor, owner, 'trade')) return {allowed: true, basis: 'trade_treaty', owner};
+  if (kind === 'commercial' && subjectRelation(state, owner)?.terms.subject.suzerain === actor && subjectRelation(state, owner).terms.subject.commercialPrivileges === 'suzerain_into_subject') return {allowed: true, basis: 'suzerainty', owner};
   return {allowed: false, reason: 'closed', owner};
 }
 
@@ -152,5 +154,6 @@ export function militaryAccessStatus(state, actor, theaterId, reportedOwner) {
       return {allowed: true, basis: Array.isArray(permittedTerritories) ? 'limited_treaty' : 'treaty', owner, treatyId: treaty.id};
     }
   }
+  if (subjectRelation(state, owner)?.terms.subject.suzerain === actor && subjectRelation(state, owner).terms.subject.militaryAccess === 'suzerain_into_subject') return {allowed: true, basis: 'suzerainty', owner};
   return {allowed: false, reason: 'peace', basis: 'closed', owner};
 }

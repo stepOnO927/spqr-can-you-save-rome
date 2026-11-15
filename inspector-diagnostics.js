@@ -1,4 +1,5 @@
 import {ROUTES} from './data.js?v=world-kings-trade-1';
+import {SUBJECT_TYPES} from './suzerainty.js?v=world-kings-trade-1';
 // Read-only startup and deep state checks. Never migrates or mutates a save.
 export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
  const findings=[],add=(severity,code,path,detail)=>findings.push({severity,code,path,detail});
@@ -27,6 +28,20 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
  }
  for(const [i,war] of (s.wars||[]).entries())if(!Array.isArray(war)||war.some(id=>!factionIds.has(id)))add('warning','invalid-war',`wars[${i}]`,JSON.stringify(war));
  if(mode==='roman'){
+  const subjects=new Map();
+  for(const [i,treaty] of (s.agreements||[]).entries()){
+   if(!SUBJECT_TYPES.includes(treaty?.type)||treaty.status!=='active')continue;
+   const terms=treaty.terms?.subject,base=`agreements[${i}]`,client=treaty.type==='client_kingdom';
+   if(!terms||!factionIds.has(terms.suzerain)||!factionIds.has(terms.subject)||terms.suzerain===terms.subject||treaty.parties?.[0]!==terms.suzerain||treaty.parties?.[1]!==terms.subject||!Number.isInteger(terms.established?.year)||!Number.isInteger(terms.established?.month)||terms.established.month<1||terms.established.month>12||terms.tribute?.treasury!==(client?2:0)||terms.tribute?.everyMonths!==3||terms.militaryObligation?.defensiveProtection!==true||terms.militaryObligation?.aidOnRequest!==client||terms.diplomaticAutonomy!==(client?'limited':'independent')||terms.internalAutonomy!==(client?'broad':'full')||terms.militaryAccess!==(client?'suzerain_into_subject':'none')||terms.commercialPrivileges!==(client?'suzerain_into_subject':'none')||!Number.isInteger(terms.politicalLoyalty)||terms.politicalLoyalty<0||terms.politicalLoyalty>100||!Number.isInteger(terms.independenceAspiration)||terms.independenceAspiration<0||terms.independenceAspiration>100)add('fatal','invalid-subject-treaty',base,String(treaty?.id));
+   if(terms?.subject){if(subjects.has(terms.subject))add('fatal','multiple-suzerains',base,terms.subject);subjects.set(terms.subject,terms.suzerain)}
+  }
+  for(const [subject] of subjects){const seen=new Set();for(let current=subject;subjects.has(current);current=subjects.get(current)){if(seen.has(current)){add('fatal','circular-suzerainty','agreements',subject);break}seen.add(current)}}
+  const aidIds=new Set();
+  for(const [i,shipment] of (s.subjectAidShipments||[]).entries()){
+   const base=`subjectAidShipments[${i}]`,path=shipment?.path;
+   if(!shipment?.id||aidIds.has(shipment.id))add('fatal','duplicate-subject-aid',base,String(shipment?.id));else aidIds.add(shipment.id);
+   if(!factionIds.has(shipment?.suzerain)||!factionIds.has(shipment?.subject)||!s.agreements?.some(t=>t.id===shipment.treatyId&&SUBJECT_TYPES.includes(t.type))||!Array.isArray(path)||path.length!==2||path.some(id=>!regionIds.has(id))||!ROUTES.some(edge=>edge[0]===path[0]&&edge[1]===path[1]||edge[1]===path[0]&&edge[0]===path[1])||!Number.isInteger(shipment?.manpower)||shipment.manpower<1||!Number.isInteger(shipment?.food)||shipment.food<1||!Number.isInteger(shipment?.remaining)||shipment.remaining<0||!Number.isInteger(shipment?.blockedMonths)||shipment.blockedMonths<0||!['transit','delivered','lost'].includes(shipment?.status))add('warning','invalid-subject-aid',base,String(shipment?.id));
+  }
   const tradeIds=new Set();
   for(const [i,cargo] of (s.tradeCargo||[]).entries()){
    const base=`tradeCargo[${i}]`,route=cargo?.path;
