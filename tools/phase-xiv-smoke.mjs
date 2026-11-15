@@ -68,6 +68,8 @@ try{
   assert.match(await page.locator('#tech-court-informant-patronage').innerText(),/Court Informant Patronage[\s\S]*Concurrent spy and counterintelligence missions \+1/);
   assert.match(await page.locator('#tech-court-informant-patronage a[target="_blank"]').getAttribute('href'),/Frontinus\/Strategemata/);
   assert.match(await page.locator('#tech-galatian-auxiliary-muster').innerText(),/Galatian Auxiliary Muster[\s\S]*Recruit morale in Galatian territory with integration and satisfaction ≥45 \+6/);
+  assert.match(await page.locator('#tech-armenian-highland-provisioning').innerText(),/Armenian Highland Provisioning[\s\S]*Army supply on reachable, owned Armenian hills \+8%/);
+  assert.match(await page.locator('#tech-armenian-highland-provisioning a[target="_blank"]').getAttribute('href'),/Crassus/);
   assert.match(await page.locator('#tech-galatian-auxiliary-muster a[target="_blank"]').getAttribute('href'),/Civil_Wars\/3A/);
   assert.match(await page.locator('#tech-philosophical-patronage').innerText(),/Philosophical and Scholarly Patronage[\s\S]*National-idea research discount \+3/);
   assert.match(await page.locator('#tech-philosophical-patronage a[target="_blank"]').getAttribute('href'),/cicero\/atticus4/);
@@ -113,6 +115,7 @@ try{
   assert.match(await page.locator('#tech-philosophical-patronage').innerText(),/哲学与学术赞助[\s\S]*理念研究折扣 \+3/);
   assert.match(await page.locator('#tech-court-informant-patronage').innerText(),/宫廷情报人员扶持[\s\S]*同时进行的间谍与反谍任务 \+1/);
   assert.match(await page.locator('#tech-galatian-auxiliary-muster').innerText(),/加拉太辅助兵征募[\s\S]*加拉太领土融合度与满意度均≥45的新兵士气 \+6/);
+  assert.match(await page.locator('#tech-armenian-highland-provisioning').innerText(),/亚美尼亚高地军需筹划[\s\S]*陆路可达的己方亚美尼亚丘陵军队补给 \+8%/);
   await page.screenshot({path:'tools/phase-xiv-ui.png'});
   for(const lang of ['en','zh']){
     const replacing=newGrandGame('caesar');

@@ -4,7 +4,7 @@ import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,pre
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves,advanceDevelopment,mineMetalOutput,localBuildingEffects,templeGuaranteeExpense} from '../development.js';
 import {advanceNaval} from '../naval.js';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js';
-import {edgeMonths,grandRoute} from '../grand-operations.js';
+import {edgeMonths,grandRoute,armySupply} from '../grand-operations.js';
 import {techIllustration} from '../tech-art.js';
 import {faithSatisfaction,advanceDemography,advanceReligion} from '../local-society.js';
 import {nationalBudget} from '../national-budget.js';
@@ -83,6 +83,53 @@ test('Parthian arrow trains need adoption and supplied local plains to affect re
  const enclave=foreign.regions.find(r=>r.id==='parthia');enclave.owner='senate';enclave.civicSatisfaction=44;
  assert.equal(ideaAdoptionPlan(foreign,'senate',id).reason,'local-support');
  enclave.civicSatisfaction=45;
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).months,4);
+});
+
+test('Armenian highland provisioning needs adoption and a reachable owned hill',()=>{
+ const id='armenian-highland-provisioning',idea=IDEAS.find(item=>item.id===id);
+ assert.match(idea.source.url,/Crassus/);
+ assert.match(techIllustration(idea),/<svg/);
+ const s=newGrandGame('armenia');s.wars=[];s.factions.armenia.treasury=500;
+ const unit=s.armies.find(a=>a.owner==='armenia'),hill=s.regions.find(r=>r.id==='t099');
+ unit.region=hill.id;
+ assert.equal(hill.owner,'armenia');assert.equal(hill.terrain,'hills');
+ assert.match(ideasPanel(s,'en'),/Armenian Highland Provisioning/);
+ assert.match(ideasPanel(s,'zh'),/亚美尼亚高地军需筹划/);
+ assert.match(ideasPanel(s,'en'),/Army supply on reachable, owned Armenian hills \+8%/);
+ assert.match(ideasPanel(s,'zh'),/陆路可达的己方亚美尼亚丘陵军队补给 \+8%/);
+ const baseline=armySupply(s,unit);
+ assert.ok(baseline<1&&baseline>0);
+ assert.equal(researchInnovation(s,'armenia','idea',id).ok,true);
+ assert.equal(activeEffects(s,'armenia').armenianHighlandSupply,undefined);
+ months(s,idea.months);
+ assert.equal(activeEffects(s,'armenia').armenianHighlandSupply,undefined);
+ assert.equal(adoptIdea(s,'armenia',id).ok,true);
+ assert.equal(activeEffects(s,'armenia').armenianHighlandSupply,undefined);
+ months(s,development(s,'armenia').adoption.remaining);
+ assert.equal(activeEffects(s,'armenia').armenianHighlandSupply,.08);
+ assert.equal(nationalBudget(s,'armenia').ideaUpkeep,2);
+ const active=armySupply(s,unit),restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.ok(Math.abs(active-baseline-.08)<1e-9);
+ assert.equal(armySupply(restored,restored.armies.find(a=>a.id===unit.id)),active);
+ const inactive=upgradeSave(JSON.parse(JSON.stringify(s)));development(inactive,'armenia').slots.military[0]=null;
+ assert.equal(armySupply(inactive,inactive.armies.find(a=>a.id===unit.id)),baseline);
+ const plain=upgradeSave(JSON.parse(JSON.stringify(s)));plain.regions.find(r=>r.id===hill.id).terrain='plain';
+ assert.equal(armySupply(plain,plain.armies.find(a=>a.id===unit.id)),baseline);
+ const foreignHill=upgradeSave(JSON.parse(JSON.stringify(s)));foreignHill.regions.find(r=>r.id===hill.id).culture='hellenic';
+ assert.equal(armySupply(foreignHill,foreignHill.armies.find(a=>a.id===unit.id)),baseline);
+ const lostHill=upgradeSave(JSON.parse(JSON.stringify(s)));lostHill.regions.find(r=>r.id===hill.id).owner='parthia';
+ const lostUnit=lostHill.armies.find(a=>a.id===unit.id);
+ const lostControl=upgradeSave(JSON.parse(JSON.stringify(lostHill)));development(lostControl,'armenia').slots.military[0]=null;
+ assert.equal(armySupply(lostHill,lostUnit),armySupply(lostControl,lostControl.armies.find(a=>a.id===unit.id)));
+ const isolated=upgradeSave(JSON.parse(JSON.stringify(s)));isolated.regions.find(r=>r.id==='armenia').owner='parthia';isolated.regions.find(r=>r.id==='t100').owner='parthia';
+ const isolatedControl=upgradeSave(JSON.parse(JSON.stringify(isolated)));development(isolatedControl,'armenia').slots.military[0]=null;
+ assert.equal(armySupply(isolated,isolated.armies.find(a=>a.id===unit.id)),armySupply(isolatedControl,isolatedControl.armies.find(a=>a.id===unit.id)));
+ const foreign=newGrandGame('senate');foreign.wars=[];foreign.factions.senate.treasury=500;development(foreign,'senate').knownIdeas.push(id);
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).reason,'cultural-base');
+ const community=foreign.regions.find(r=>r.id==='armenia');community.owner='senate';community.civicSatisfaction=44;
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).reason,'local-support');
+ community.civicSatisfaction=45;
  assert.equal(ideaAdoptionPlan(foreign,'senate',id).months,4);
 });
 
@@ -799,7 +846,7 @@ test('local rites affect a neighboring court only through an influential shared 
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,45);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,46);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);

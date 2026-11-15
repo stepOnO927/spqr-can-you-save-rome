@@ -1,6 +1,6 @@
-import {MATERIALS,IDEAS,IDEA_CATEGORIES,BUILDINGS} from '../development.js?v=49';
+import {MATERIALS,IDEAS,IDEA_CATEGORIES,BUILDINGS} from '../development.js?v=50';
 import {CHARACTER_CATALOG} from '../characters.js';
-import {techIllustration} from '../tech-art.js?v=19';
+import {techIllustration} from '../tech-art.js?v=20';
 
 const all=[...MATERIALS,...IDEAS];
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

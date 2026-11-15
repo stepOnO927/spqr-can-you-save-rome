@@ -1,6 +1,6 @@
 import {GRAND_ROUTES} from './grand-map-data.js';
 import {accessibleFleet,isPortBlockaded} from './naval.js?v=48';
-import {activeEffects,localBuildingEffects} from './development.js?v=49';
+import {activeEffects,localBuildingEffects} from './development.js?v=50';
 
 const byId=s=>Object.fromEntries(s.regions.map(r=>[r.id,r]));
 const OPENING_LIFT={caesar:1,senate:2,egypt:2,numidia:1,mauretania:1,armenia:0,parthia:0,galatia:0,bosporus:1,rebels:0};
@@ -57,6 +57,7 @@ export function armySupply(s,unit){if(!s.grandMap)return 1;const site=s.regions.
  let base=!Number.isFinite(distance)?site.food>=1?.36:.18:Math.max(.38,Math.min(1,1-distance*.075+(site.food>=1?.08:0)+((site.buildings||[]).includes('supply-depot')?.2:0)));
  const established=supplyNetwork(s,unit.owner,true);
  if(!established.has(site.id)&&!(unit.siege&&grandAdjacent(site.id).some(e=>established.has(e.to))))base=Math.min(base,.68);
+ if(site.owner===unit.owner&&site.culture==='armenia'&&site.terrain==='hills'&&Number.isFinite(distance))base=Math.min(1,base+(activeEffects(s,unit.owner).armenianHighlandSupply||0));
  const blockaded=site.port&&isPortBlockaded(s,site.id);
  return blockaded?Math.max(.18,Math.round(base*.7*100)/100):base;
 }
