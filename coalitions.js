@@ -1,3 +1,4 @@
+import {isDeliveredReport} from './person-knowledge.js?v=future-dated-reports-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
@@ -26,7 +27,7 @@ export function observeBalanceOfPower(s){
 export function perceivedBalance(s,actor,target,estimateStrength){
  const estimate=estimateStrength(s,actor,target),own=ownStrength(s,actor),border=near(s,actor,target),documents=reportedDiplomacy(s,actor).filter(d=>d.status==='active'&&d.parties.includes(target));
  const network=documents.filter(d=>d.kind==='alliance'||d.kind==='coalition'||d.type==='defensive').length,trade=documents.filter(d=>d.type==='trade').length;
- const history=s.world.balanceOfPower?.[actor]?.[target],growth=Math.max(0,history?.reportedGrowth||0),reports=(s.knowledge?.[actor]?.[target]?.reports||[]).filter(r=>r.kind==='stability'&&['stable','strained','fragile'].includes(r.value)&&now(s)-((r.observationYear??r.year)*12+(r.observationMonth??r.month))>=0&&now(s)-((r.observationYear??r.year)*12+(r.observationMonth??r.month))<=24).sort((a,b)=>((b.observationYear??b.year)*12+(b.observationMonth??b.month))-((a.observationYear??a.year)*12+(a.observationMonth??a.month)));
+ const history=s.world.balanceOfPower?.[actor]?.[target],growth=Math.max(0,history?.reportedGrowth||0),reports=(s.knowledge?.[actor]?.[target]?.reports||[]).filter(r=>isDeliveredReport(s,r)&&r.kind==='stability'&&['stable','strained','fragile'].includes(r.value)&&now(s)-((r.observationYear??r.year)*12+(r.observationMonth??r.month))>=0&&now(s)-((r.observationYear??r.year)*12+(r.observationMonth??r.month))<=24).sort((a,b)=>((b.observationYear??b.year)*12+(b.observationMonth??b.month))-((a.observationYear??a.year)*12+(a.observationMonth??a.month)));
  const stability=reports[0]?.value||'unknown',objective=s.world.strategicPlans?.[actor]?.goal||'unknown',ratio=estimate/Math.max(1000,own);
  const pressure=ratio*2+(border?2:0)+(rel(s,actor,target)<-15?2:0)+Math.min(2,growth)+Math.min(2,network*.5)+Math.min(1,trade*.25)+(stability==='stable'?.5:stability==='fragile'?-.5:0)+(objective==='defend'?.5:0);
  return {estimate,own,border,ratio,network,trade,reportedGrowth:growth,stability,objective,pressure};

@@ -1,8 +1,8 @@
 import {reportedControl,observeArrival} from './control-intelligence.js?v=fort-intel-1';
 import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=family-correspondent-names-1';
-import {officeOf} from './office-system.js?v=family-correspondent-names-1';
+import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=future-dated-reports-1';
+import {officeOf} from './office-system.js?v=future-dated-reports-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=infant-portraits-1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));

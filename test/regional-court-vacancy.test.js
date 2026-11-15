@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=family-correspondent-names-1';
+import {newGame,upgradeSave} from '../engine.js?v=future-dated-reports-1';
 import {assignSuccession,knownLeaders,CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
-import {advanceGovernments,deriveGovernment} from '../governance.js?v=family-correspondent-names-1';
-import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=family-correspondent-names-1';
-import {createFictionalPerson} from '../dynasties.js?v=family-correspondent-names-1';
+import {advanceGovernments,deriveGovernment} from '../governance.js?v=future-dated-reports-1';
+import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=future-dated-reports-1';
+import {createFictionalPerson} from '../dynasties.js?v=future-dated-reports-1';
 const states={armenia:'artavasdes',numidia:'juba',galatia:'deiotarus',bosporus:'pharnaces'};
 const high=Array.from({length:100000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296>.98);
 function setup(faction){const s=newGame('caesar'),id=states[faction];s.wars=[];s.world.characters[id].alive=false;s.world.characters[id].health='deceased';assignSuccession(s,faction);s.factions[faction].treasury=100;s.factions[faction].stability=60;s.world.dynasties.seed=1;return s}
@@ -19,7 +19,7 @@ test('regional courts may recover after a delay using explicitly fictional nomin
 });
 test('a saved vacancy continues without paying twice and a report is required to learn of the nominee',()=>{
  let s=setup('armenia');step(s,3);const started=s.world.courtVacancies.armenia.started;s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(s.world.courtVacancies.armenia.started,started);step(s,4);const id=s.world.leadership.armenia[0],balance=s.factions.armenia.treasury;assert.ok(id);step(s,4);assert.equal(s.factions.armenia.treasury,balance);assert.deepEqual(s.world.leadership.armenia,[id]);
- const op=queueMission(s,'caesar','armenia','spy','leaders');assert.equal(op.ok,true);for(let i=0;i<op.duration-1;i++){s.month++;advanceOperations(s)}s.world.intelSeed=1000;s.month++;advanceOperations(s);assert.deepEqual(knownLeaders(s,'caesar','armenia'),[id]);assert.equal(s.knowledge.senate.armenia.reports.length,0);
+ const op=queueMission(s,'caesar','armenia','spy','leaders');assert.equal(op.ok,true);for(let i=0;i<op.duration;i++){s.month++;if(s.month>12){s.month=1;s.year++}if(i===op.duration-1)s.world.intelSeed=1000;advanceOperations(s)}assert.deepEqual(knownLeaders(s,'caesar','armenia'),[id]);assert.equal(s.knowledge.senate.armenia.reports.length,0);
  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(CHARACTER_CATALOG[id].fictional,true);assert.deepEqual(s.world.leadership.armenia,[id]);
 });
 test('failed deliberation, insufficient funds and living claimants do not force a new ruler',()=>{

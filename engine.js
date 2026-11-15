@@ -1,40 +1,41 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=family-correspondent-names-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=family-correspondent-names-1';
-import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=family-correspondent-names-1';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=family-correspondent-names-1';
-import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=family-correspondent-names-1';
+import {isDeliveredReport} from './person-knowledge.js?v=future-dated-reports-1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=future-dated-reports-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=future-dated-reports-1';
+import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=future-dated-reports-1';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=future-dated-reports-1';
+import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=future-dated-reports-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=succession-ui-recovery-1';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,snapshotReportedPeople,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=family-correspondent-names-1';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=family-correspondent-names-1';
-import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=family-correspondent-names-1';
-import {advanceConspiracies} from './conspiracies.js?v=succession-ui-recovery-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,snapshotReportedPeople,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=future-dated-reports-1';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=future-dated-reports-1';
+import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=future-dated-reports-1';
+import {advanceConspiracies} from './conspiracies.js?v=future-dated-reports-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=fort-intel-1';
-import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=succession-ui-recovery-1';
-import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=family-correspondent-names-1';
+import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=future-dated-reports-1';
+import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=future-dated-reports-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=family-correspondent-names-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=future-dated-reports-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
-import {advanceFocuses,focusModifiers} from './national-focus.js?v=family-correspondent-names-1';
-import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=family-correspondent-names-1';
-import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=family-correspondent-names-1';
+import {advanceFocuses,focusModifiers} from './national-focus.js?v=future-dated-reports-1';
+import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=future-dated-reports-1';
+import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=future-dated-reports-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
-import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=diplomatic-chronicle-1';
+import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=future-dated-reports-1';
 import {respondToFrontierReports} from './frontier-response.js?v=frontier-response-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=diplomatic-chronicle-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
-import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=player-coalition-letters-1';
-import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=player-coalition-letters-1';
-import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=succession-ui-recovery-1';
-import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=family-correspondent-names-1';
-import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=family-correspondent-names-1';
+import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=future-dated-reports-1';
+import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=future-dated-reports-1';
+import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=future-dated-reports-1';
+import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=future-dated-reports-1';
+import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=future-dated-reports-1';
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 export {queueMission};
 export {personalDiplomaticCredit};
@@ -566,7 +567,7 @@ function shortestStep(s,start,goal,owner){
 export function estimatedStrength(s,observer,target){
  const k=s.knowledge?.[observer]?.[target],now=s.year*12+s.month,age=x=>now-((x.observationYear??x.year)*12+(x.observationMonth??x.month));
  const sightings=Object.values(k?.sightings||{}).filter(x=>age(x)>=0&&age(x)<=24).length,prior=4000+Math.min(5,sightings)*1000;
- const reports=(k?.reports||[]).filter(x=>x.kind==='strength'&&Number.isFinite(x.value)&&x.value>=0&&age(x)>=0).sort((a,b)=>age(a)-age(b));
+ const reports=(k?.reports||[]).filter(x=>isDeliveredReport(s,x)&&x.kind==='strength'&&Number.isFinite(x.value)&&x.value>=0&&age(x)>=0).sort((a,b)=>age(a)-age(b));
  if(!reports.length)return prior;
  // Compare only observations from the newest month. Forwarded copies from the
  // same source family must not outvote independent contradictory evidence.
@@ -584,9 +585,9 @@ export function estimatedStrength(s,observer,target){
 export function aiClaimantChoice(s,actor,target){
  const now=s.year*12+s.month,families=new Map();
  for(const report of s.knowledge?.[actor]?.[target]?.reports||[]){
-  if(report.kind!=='claimants'||!Array.isArray(report.leaders))continue;
+  if(!isDeliveredReport(s,report)||report.kind!=='claimants'||!Array.isArray(report.leaders))continue;
   const age=now-((report.observationYear??report.year)*12+(report.observationMonth??report.month));if(!Number.isFinite(age)||age<0||age>24)continue;
-  const ids=report.leaders.filter(id=>CHARACTER_CATALOG[id]?.faction===target);if(!ids.length)continue;
+  const ids=report.leaders.filter(id=>CHARACTER_CATALOG[id]);if(!ids.length)continue;
   const origin=report.originSource||report.source,family=({official:'court',envoy:'court',audience:'court',exchange:'unknown'}[origin]||origin||'unknown'),old=families.get(family);
   if(!old||age<old.age)families.set(family,{age,ids:new Set(ids)});else if(age===old.age)for(const id of ids)old.ids.add(id);
  }

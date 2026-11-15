@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newScenario} from '../scenarios.js?v=family-correspondent-names-1';
-import {tick,upgradeSave} from '../engine.js?v=family-correspondent-names-1';
-import {potentialConspirators} from '../conspiracies.js?v=succession-ui-recovery-1';
-import {leaveCoalition} from '../coalitions.js?v=player-coalition-letters-1';
+import {newScenario} from '../scenarios.js?v=future-dated-reports-1';
+import {tick,upgradeSave} from '../engine.js?v=future-dated-reports-1';
+import {potentialConspirators} from '../conspiracies.js?v=future-dated-reports-1';
+import {leaveCoalition} from '../coalitions.js?v=future-dated-reports-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=infant-portraits-1';
 import {advancePersonalPlans} from '../personal-plans.js?v=multipolar-2';
 

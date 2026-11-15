@@ -1,15 +1,15 @@
-import {namedReportSubjects,reportedPersonName,visiblePersonName} from './person-knowledge.js?v=family-correspondent-names-1';
+import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport} from './person-knowledge.js?v=future-dated-reports-1';
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=succession-ui-recovery-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=family-correspondent-names-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=future-dated-reports-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=family-correspondent-names-1';
-import {potentialConspirators} from './conspiracies.js?v=succession-ui-recovery-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=succession-ui-recovery-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=future-dated-reports-1';
+import {potentialConspirators} from './conspiracies.js?v=future-dated-reports-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=future-dated-reports-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=family-correspondent-names-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=future-dated-reports-1';
 import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=family-correspondent-names-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=future-dated-reports-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -88,17 +88,17 @@ const reportValue=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?[
 const evidenceRelation=(a,b)=>{if((a.observationYear??a.year)!==(b.observationYear??b.year)||(a.observationMonth??a.month)!==(b.observationMonth??b.month))return 'different_time';if(['leaders','claimants'].includes(a.kind)){const aa=new Set(a.leaders||[]),bb=new Set(b.leaders||[]),same=reportValue(a)===reportValue(b);if((a.exhaustive&&[...bb].some(id=>!aa.has(id)))||(b.exhaustive&&[...aa].some(id=>!bb.has(id))))return 'conflict';if(same&&(!a.exhaustive||b.exhaustive))return 'support';return 'compatible'}if(reportValue(a)===reportValue(b))return 'support';if(a.kind==='strength'){const aa=strengthRange(a),bb=strengthRange(b);if(aa&&bb&&Math.max(aa[0],bb[0])<=Math.min(aa[1],bb[1]))return 'compatible'}if(a.kind==='age'&&Array.isArray(a.value)&&Array.isArray(b.value)&&a.value.length===2&&b.value.length===2&&a.value.every(Number.isFinite)&&b.value.every(Number.isFinite)&&Math.max(a.value[0],b.value[0])<=Math.min(a.value[1],b.value[1]))return 'compatible';return 'conflict'};
 const sameSubject=(a,b)=>a.kind===b.kind&&a.character===b.character;
 function refreshKnowledge(s,k){
- const reports=k.reports||[];for(const item of reports){if(!knownReport(item)){item.verified=false;item.confidence=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';continue}if(reportAge(s,item)>24)continue;const group=reports.filter(x=>knownReport(x)&&sameSubject(item,x)&&reportAge(s,x)<=24),disputed=group.some(x=>evidenceRelation(item,x)==='conflict')||group.some(x=>evidenceRelation(item,x)!=='different_time'&&x.baseConfidence==='disputed'),families=new Set(group.filter(x=>evidenceRelation(item,x)==='support').map(sourceFamily).filter(f=>f!=='unknown')).size,base=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';item.confidence=disputed?'disputed':families>=3?'confirmed':families>=2?'credible':base;item.verified=!disputed&&families>=3}
+ const reports=k.reports||[];for(const item of reports){if(!isDeliveredReport(s,item))continue;if(!knownReport(item)){item.verified=false;item.confidence=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';continue}if(reportAge(s,item)>24)continue;const group=reports.filter(x=>isDeliveredReport(s,x)&&knownReport(x)&&sameSubject(item,x)&&reportAge(s,x)>=0&&reportAge(s,x)<=24),disputed=group.some(x=>evidenceRelation(item,x)==='conflict')||group.some(x=>evidenceRelation(item,x)!=='different_time'&&x.baseConfidence==='disputed'),families=new Set(group.filter(x=>evidenceRelation(item,x)==='support').map(sourceFamily).filter(f=>f!=='unknown')).size,base=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';item.confidence=disputed?'disputed':families>=3?'confirmed':families>=2?'credible':base;item.verified=!disputed&&families>=3}
 }
 // Expired reports remain historical records; only fresh reports are recalculated.
-export function refreshReportConfidence(s){initializeWorld(s);for(const targets of Object.values(s.knowledge||{}))for(const k of Object.values(targets)){refreshKnowledge(s,k);if(Array.isArray(k.reportedLeaders)&&!k.reportedLeaders.length){const previous=(k.reports||[]).filter(r=>r.kind==='leaders'&&knownReport(r)).sort((a,b)=>reportAge(s,a)-reportAge(s,b))[0];if(previous)k.reportedLeaders=[...previous.leaders]}}return s}
+export function refreshReportConfidence(s){initializeWorld(s);for(const targets of Object.values(s.knowledge||{}))for(const k of Object.values(targets)){refreshKnowledge(s,k);if(Array.isArray(k.reportedLeaders)&&!k.reportedLeaders.length){const previous=(k.reports||[]).filter(r=>isDeliveredReport(s,r)&&r.kind==='leaders'&&knownReport(r)).sort((a,b)=>reportAge(s,a)-reportAge(s,b))[0];if(previous)k.reportedLeaders=[...previous.leaders]}}return s}
 
 // Explain confidence only from the observer's own recent evidence. A forwarded
 // report keeps the original family; an unknown is neither support nor rebuttal.
 export function reportEvidence(s,actor,target,report){
  const reports=s.knowledge?.[actor]?.[target]?.reports||[];
- if(!reports.includes(report)||!knownReport(report)||reportAge(s,report)>24)return {support:[],conflict:[],unattributed:0,inheritedDispute:false,unavailable:true};
- const comparable=reports.filter(r=>knownReport(r)&&sameSubject(report,r)&&reportAge(s,r)<=24),summarize=list=>{
+ if(!reports.includes(report)||!isDeliveredReport(s,report)||!knownReport(report)||reportAge(s,report)<0||reportAge(s,report)>24)return {support:[],conflict:[],unattributed:0,inheritedDispute:false,unavailable:true};
+ const comparable=reports.filter(r=>isDeliveredReport(s,r)&&knownReport(r)&&sameSubject(report,r)&&reportAge(s,r)>=0&&reportAge(s,r)<=24),summarize=list=>{
   const byFamily=new Map();for(const r of list){const family=sourceFamily(r);if(family==='unknown')continue;const current=byFamily.get(family);if(!current||reportAge(s,r)<reportAge(s,current))byFamily.set(family,r)}
   return [...byFamily].map(([family,r])=>({family,year:r.observationYear??r.year,month:r.observationMonth??r.month}));
  };
@@ -110,21 +110,21 @@ export function addReport(s,actor,target,report){
  if(report.source==='exchange'||report.peopleNames||report.observationYear!=null||report.observationMonth!=null)r.peopleNames=structuredClone(report.peopleNames||{});
  else r.peopleNames=snapshotReportedPeople(r);
  // An older forwarded message may be useful evidence but must not replace a newer report.
- const newerLeader=r.kind==='leaders'&&k.reports.some(x=>x.kind==='leaders'&&knownReport(x)&&reportAge(s,x)<reportAge(s,r));
+ const newerLeader=r.kind==='leaders'&&k.reports.some(x=>isDeliveredReport(s,x)&&x.kind==='leaders'&&knownReport(x)&&reportAge(s,x)<reportAge(s,r));
  k.reports.unshift(r);k.reports=k.reports.slice(0,30);
  // Recalculate after trimming so a source that is no longer retained cannot
  // silently keep a current report marked as independently corroborated.
  refreshKnowledge(s,k);
- if(r.kind==='leaders'&&knownReport(r)&&reportAge(s,r)<=24&&!newerLeader)k.reportedLeaders=[...r.leaders];return r
+ if(isDeliveredReport(s,r)&&r.kind==='leaders'&&knownReport(r)&&reportAge(s,r)>=0&&reportAge(s,r)<=24&&!newerLeader)k.reportedLeaders=[...r.leaders];return r
 }
 export function publicLeaderClaim(s,target){initializeWorld(s);const ids=s.world.leadership[target]||[];return [ids.length?names(ids,0):'Authority uncertain',ids.length?names(ids,1):'执政者不明']}
-export function reportedClaimants(s,actor,target){initializeWorld(s);return [...new Set((s.knowledge[actor]?.[target]?.reports||[]).filter(r=>r.kind==='claimants').flatMap(r=>r.leaders||[]).filter(id=>CHARACTER_CATALOG[id]?.faction===target))]}
+export function reportedClaimants(s,actor,target){initializeWorld(s);return [...new Set((s.knowledge[actor]?.[target]?.reports||[]).filter(r=>isDeliveredReport(s,r)&&r.kind==='claimants').flatMap(r=>r.leaders||[]).filter(id=>CHARACTER_CATALOG[id]))]}
 export function reportedHealthSubjects(s,actor,target){
  initializeWorld(s);const knowledge=s.knowledge[actor]?.[target],reports=knowledge?.reports||[];
  // A later partial roster is not evidence that names in earlier reports vanished.
  // Preserve these as investigable leads only, not as current rulers or verified identities.
- const leads=reports.flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['health','age','location','conspiracy'].includes(r.kind)?[r.character]:r.kind.startsWith('office_')?[r.value]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:[]);
- return [...new Set([...(knowledge?.reportedLeaders||[]),...reportedClaimants(s,actor,target),...Object.values(knowledge?.sightings||{}).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).map(x=>x.commanderId),...leads].filter(id=>CHARACTER_CATALOG[id]))];
+ const leads=reports.filter(r=>isDeliveredReport(s,r)).flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['health','age','location','conspiracy'].includes(r.kind)?[r.character]:r.kind.startsWith('office_')?[r.value]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:[]);
+ return [...new Set([...(knowledge?.reportedLeaders||[]),...reportedClaimants(s,actor,target),...Object.values(knowledge?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...leads].filter(id=>CHARACTER_CATALOG[id]))];
 }
 export function claimantRepresentatives(s,actor,claimant){
  initializeWorld(s);return Object.values(s.world.characters).filter(c=>c.faction===actor&&c.alive&&!c.missing&&!['seriously_ill','dying','deceased'].includes(c.health)&&CHARACTER_CATALOG[c.id]&&(s.world.personalRelations[[c.id,claimant].sort().join(':')]?.trust||0)>0).map(c=>c.id);
@@ -150,7 +150,7 @@ export function supportClaimant(s,actor,target,claimant,representative=null,aid=
 }
 // The target list is based on the observer's reports, not current control.
 export function reportedOfficeTheaters(s,actor,target){
- initializeWorld(s);const reports=s.knowledge[actor]?.[target]?.reports||[];return s.regions.filter(r=>reportedControl(s,actor,r.id)?.owner===target||reports.some(x=>x.kind==='office_theater:'+r.id)).map(r=>r.id);
+ initializeWorld(s);const reports=s.knowledge[actor]?.[target]?.reports||[];return s.regions.filter(r=>reportedControl(s,actor,r.id)?.owner===target||reports.some(x=>isDeliveredReport(s,x)&&x.kind==='office_theater:'+r.id)).map(r=>r.id);
 }
 // These are the actor's own alliances and agreements, not foreign secrets.
 export function intelligencePartnerAccess(s,actor,partner){
@@ -202,7 +202,7 @@ export function queueMission(s,actor,target,type,subject='health',partnerId=null
 // response stays out of the recipient's knowledge until the return journey.
 function prepareExchange(s,op){
  const partner=op.partner,access=intelligencePartnerAccess(s,op.actor,partner);
- const prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter));
+ const prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter));
  if(!access)return {available:false};
  // Trade is contact, not an obligation to share secrets. The recipient's own
  // relations influence its independent response; the sender learns only the
@@ -300,7 +300,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   // Never follow an unseen person after the observation. An agent may find an
   // available person in this court's territory; travelers may only hear a rumor.
   const p=healthPerson,local=p?.alive&&!p.travel&&!s.armies.some(a=>a.characterId===healthId&&a.move)&&s.regions.some(r=>r.id===p.location&&r.owner===op.target);
-  const old=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>r.kind==='location'&&r.character===healthId&&s.regions.some(region=>region.id===r.value));
+  const old=(s.knowledge[op.actor]?.[op.target]?.reports||[]).find(r=>isDeliveredReport(s,r)&&r.kind==='location'&&r.character===healthId&&s.regions.some(region=>region.id===r.value));
   const value=falsehood&&old?old.value:local&&q>=(low?.8:.55)?p.location:'unknown';
   report={kind:'location',character:healthId||null,value,source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
  }
@@ -492,5 +492,5 @@ export function observeArmies(s){
   }
  }
 }
-export function reportedArmies(s,viewer){initializeWorld(s);const result=[];for(const [owner,k] of Object.entries(s.knowledge[viewer]||{})){if(owner===viewer)continue;for(const x of Object.values(k.sightings||{}))result.push({...x,reported:true})}return result}
+export function reportedArmies(s,viewer){initializeWorld(s);const result=[];for(const [owner,k] of Object.entries(s.knowledge[viewer]||{})){if(owner===viewer)continue;for(const x of Object.values(k.sightings||{}))if(isDeliveredReport(s,x))result.push({...x,reported:true})}return result}
 

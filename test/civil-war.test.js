@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,resolveBattle,upgradeSave,isWar,tick,sendInquiry} from '../engine.js?v=family-correspondent-names-1';
-import {contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,previewMission,queueMission} from '../character-system.js?v=family-correspondent-names-1';
-import {knownDynasticFactions,resolveDynasticWars} from '../civil-war.js?v=succession-ui-recovery-1';
+import {newGame,region,resolveBattle,upgradeSave,isWar,tick,sendInquiry} from '../engine.js?v=future-dated-reports-1';
+import {contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,previewMission,queueMission} from '../character-system.js?v=future-dated-reports-1';
+import {knownDynasticFactions,resolveDynasticWars} from '../civil-war.js?v=future-dated-reports-1';
 import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
 
 const seedFor=(min,max)=>Array.from({length:100000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=min&&q<max});
