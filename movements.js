@@ -69,10 +69,13 @@ function observeMovements(s){
  for(const viewer of Object.keys(s.factions))for(const m of s.world.movements){
   const own=viewer===m.parent||viewer===m.force,owned=new Set(s.regions.filter(r=>r.owner===viewer).map(r=>r.id)),near=owned.has(m.region)||ROUTES.some(([a,b])=>a===m.region&&owned.has(b)||b===m.region&&owned.has(a));
   if(!own&&(!near||m.stage==='dissatisfaction'))continue;
-  const reports=s.world.movementKnowledge[viewer]||={};reports[m.id]={id:m.id,parent:m.parent,region:m.region,stage:m.stage,objective:m.objective,leader:m.leader,supportApprox:Math.round(m.supporters/1000)*1000,year:s.year,month:s.month,source:own?'local':'frontier'};
+  const reports=s.world.movementKnowledge[viewer]||={},leaderName=CHARACTER_CATALOG[m.leader]?.name;reports[m.id]={id:m.id,parent:m.parent,region:m.region,stage:m.stage,objective:m.objective,leader:m.leader,leaderName:Array.isArray(leaderName)?[...leaderName]:null,supportApprox:Math.round(m.supporters/1000)*1000,year:s.year,month:s.month,source:own?'local':'frontier'};
  }
 }
-export function reportedMovements(s,viewer){return Object.values(s.world?.movementKnowledge?.[viewer]||{}).map(x=>({...x}))}
+export function reportedMovements(s,viewer){return Object.values(s.world?.movementKnowledge?.[viewer]||{}).map(x=>({...x,leaderName:Array.isArray(x.leaderName)?[...x.leaderName]:null}))}
+// A legacy observation without a saved name cannot borrow a new fictional
+// identity from the live foreign catalog.
+export function movementReportLeaderName(report){const saved=report?.leaderName;if(Array.isArray(saved)&&saved.length===2&&saved.every(x=>typeof x==='string'&&x.length>0))return saved;const person=CHARACTER_CATALOG[report?.leader];return person&&!person.fictional?person.name:null}
 export function recognizeMovement(s,actor,id,recognize=true){
  initializeMovements(s);const report=s.world.movementKnowledge[actor]?.[id],f=s.factions[actor],records=s.world.movementRecognitions[actor]||={};
  if(!report||!f||report.parent===actor||recognize&&!active(report))return {ok:false,reason:'unavailable'};
