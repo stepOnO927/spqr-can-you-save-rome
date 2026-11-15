@@ -134,11 +134,11 @@ try{
   throw Error(`Po delta did not settle: ${JSON.stringify(status)}; terrain requests ${JSON.stringify(failedTiles.slice(-20))}; ${error.message}`)
  }
  await page.screenshot({path:resolve(output,'po-delta-close.png')});
- const poHistory=await page.evaluate(()=>{const map=window.__reviewMap;return {source:map.isSourceLoaded('po-historic-coast'),shore:map.queryRenderedFeatures(undefined,{layers:['po-historic-shore']}).length,zone:map.queryRenderedFeatures(undefined,{layers:['po-coastal-lowland']}).length,visibility:map.getLayoutProperty('po-historic-shore','visibility')}});
- if(!poHistory.source||!poHistory.shore||!poHistory.zone||poHistory.visibility!=='visible')throw Error(`Po historical comparison layer missing: ${JSON.stringify(poHistory)}`);
- if(!/Historic shore \(undated\)/.test(await page.locator('.legend').innerText())||!/not a 49 BCE coastline/.test(await page.locator('#map-mode-note').innerText()))throw Error('English Po historical caveat or legend is missing');
+ const poHistory=await page.evaluate(()=>{const map=window.__reviewMap;return {source:map.isSourceLoaded('po-historic-coast'),shore:map.queryRenderedFeatures(undefined,{layers:['po-historic-shore']}).length,band:map.queryRenderedFeatures(undefined,{layers:['po-historic-band']}).length,bandType:map.getLayer('po-historic-band')?.type,features:map.getSource('po-historic-coast')?._data?.features?.length,visibility:map.getLayoutProperty('po-historic-shore','visibility')}});
+ if(!poHistory.source||!poHistory.shore||!poHistory.band||poHistory.bandType!=='line'||poHistory.features!==1||poHistory.visibility!=='visible')throw Error(`Po historical comparison layer missing: ${JSON.stringify(poHistory)}`);
+ if(!/Historic shore band \(schematic\)/.test(await page.locator('.legend').innerText())||!/modern coast still determines land and sea/.test(await page.locator('#map-mode-note').innerText()))throw Error('English Po historical caveat or legend is missing');
  await page.locator('#language').click();
- if(!/古海岸参考线（年代未定）/.test(await page.locator('.legend').innerText())||!/非前49年岸线/.test(await page.locator('#map-mode-note').innerText()))throw Error('Chinese Po historical caveat or legend is missing');
+ if(!/古海岸参考带（示意）/.test(await page.locator('.legend').innerText())||!/现代海岸仍决定海陆/.test(await page.locator('#map-mode-note').innerText()))throw Error('Chinese Po historical caveat or legend is missing');
  await page.screenshot({path:resolve(output,'po-historic-zh.png')});
  await page.locator('#map-mode').selectOption('political');
  if(await page.evaluate(()=>window.__reviewMap.getLayoutProperty('po-historic-shore','visibility'))!=='none')throw Error('Historical comparison must yield to political map mode');

@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../
 import {nationalBudget} from '../national-budget.js?v=22';
 import {budgetHtml} from '../budget-ui.js?v=26';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=34';
+import {physicalStyle} from './physical-style.js?v=35';
 import {physicalLabels} from './physical-labels.js?v=4';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=193';
@@ -560,16 +560,16 @@ function renderHudBase(){document.querySelector('#development').textContent=lang
 
 function renderTerrainLegend(){
  const historicalVisibility=currentMapMode==='terrain'?'visible':'none';
- for(const id of ['po-coastal-lowland','po-historic-shore'])if(map.getLayer(id)&&(map.getLayoutProperty(id,'visibility')||'visible')!==historicalVisibility)map.setLayoutProperty(id,'visibility',historicalVisibility);
+ for(const id of ['po-historic-band','po-historic-shore'])if(map.getLayer(id)&&(map.getLayoutProperty(id,'visibility')||'visible')!==historicalVisibility)map.setLayoutProperty(id,'visibility',historicalVisibility);
  if(currentMapMode!=='terrain'){document.querySelector('.brief').classList.remove('po-history');return}
  const close=map.getZoom()>=8.5;
  const center=map.getCenter(),poNearby=map.getZoom()>=8.2&&center.lng>=11.8&&center.lng<=13.1&&center.lat>=44.5&&center.lat<=45.4;
  const egyptNearby=map.getZoom()>=8.25&&center.lng>=28&&center.lng<=34&&center.lat>=29&&center.lat<=33;
  document.querySelector('.brief').classList.toggle('po-history',poNearby);
- document.querySelector('#map-mode-note').textContent=(close?(lang==='zh'?'近景采用现代高程、河湖与海岸；不显示粗略海深带，柔光仅作示意。':'Close view uses modern terrain and shoreline; depth bands are hidden and coastal glow is illustrative.'):(lang==='zh'?'总览显示海底深度分带；近景隐藏粗略深度边界。岸边柔光只标示海岸，不代表测得水深。可单独开启山体光影。':'Overview shows sea-depth bands; close zoom hides their coarse boundaries. The shoreline glow marks the coast, not measured depth. Hill shading can be toggled separately.'))+(poNearby?(lang==='zh'?' 波河口虚线为年代未定的古海岸参考；绿色低地为示意，非前49年岸线。':' Po: the dashed, undated historical shore and green lowland are schematic, not a 49 BCE coastline.'):'');
+ document.querySelector('#map-mode-note').textContent=(close?(lang==='zh'?'近景采用现代高程、河湖与海岸；不显示粗略海深带，柔光仅作示意。':'Close view uses modern terrain and shoreline; depth bands are hidden and coastal glow is illustrative.'):(lang==='zh'?'总览显示海底深度分带；近景隐藏粗略深度边界。岸边柔光只标示海岸，不代表测得水深。可单独开启山体光影。':'Overview shows sea-depth bands; close zoom hides their coarse boundaries. The shoreline glow marks the coast, not measured depth. Hill shading can be toggled separately.'))+(poNearby?(lang==='zh'?' 波河口虚线与柔光仅标示年代未定的海岸参考位置；现代海岸仍决定海陆。':' Po: the dashed line and soft band mark an undated shore reference; the modern coast still determines land and sea.'):'');
  if(egyptNearby)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 尼罗河三角洲浅绿色区域根据现代河道示意，不代表前49年的冲积土或耕地边界。':' The pale green Nile Delta follows modern mapped branches schematically, not a surveyed 49 BCE alluvial or farmland boundary.';
  const items=close?[['#c5c4a7',lang==='zh'?'陆地与高程':'Land & elevation'],['#5c9293',lang==='zh'?'河流与天然湖泊':'Rivers & natural lakes'],['#efe1bb',lang==='zh'?'现代海岸线':'Modern shoreline'],['#356f79',lang==='zh'?'海水':'Sea']]:[['#c5c4a7',lang==='zh'?'理想化地表与高程':'Land cover & elevation'],['#5c9293',lang==='zh'?'河流与天然湖泊':'Rivers & natural lakes'],['#356f79',lang==='zh'?'近岸浅海（约0–200米）':'Coastal shelf (about 0–200 m)'],['#225565',lang==='zh'?'较深海域（超过200米）':'Deeper sea (over 200 m)']];
- if(poNearby)items.splice(1,0,['#6b927e',lang==='zh'?'波河低地（示意）':'Po lowland (schematic)'],['#84694d',lang==='zh'?'古海岸参考线（年代未定）':'Historic shore (undated)',true]);
+ if(poNearby)items.splice(1,0,['#a5b599',lang==='zh'?'古海岸参考带（示意）':'Historic shore band (schematic)'],['#84694d',lang==='zh'?'古海岸参考线（年代未定）':'Historic shore (undated)',true]);
  if(egyptNearby)items.splice(1,0,['#829a72',lang==='zh'?'尼罗河三角洲低地（示意）':'Nile Delta lowland (schematic)'],['#785f49',lang==='zh'?'现代高程等高线（10–200米）':'Modern elevation contours (10–200 m)']);
  if(!poNearby&&map.getZoom()>=8.3&&center.lng>=8.4&&center.lng<=16.9&&center.lat>=39.9&&center.lat<=47.5)items.splice(1,0,['#60604b',lang==='zh'?'现代高程等高线（500–1500米）':'Modern elevation contours (500–1500 m)']);
  document.querySelector('.legend').innerHTML=items.map(([color,label,dashed])=>`<span><b class="swatch" style="background:${dashed?`repeating-linear-gradient(90deg,${color} 0 4px,transparent 4px 7px)`:color}"></b>${label}</span>`).join('');
