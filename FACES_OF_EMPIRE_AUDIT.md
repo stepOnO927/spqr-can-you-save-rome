@@ -18,7 +18,7 @@ mode. The merged personal-meeting
 update records the name in the campaign's saved catalog at the time of a
 completed audience, so a stale shared catalog cannot overwrite that
 observation. The full 1,178-test local simulation suite passes. Head
-`8565e31a` passed all three GitHub browser jobs, quality, Pages packaging,
+`cc3e6835` passed all three GitHub browser jobs, quality, Pages packaging,
 and Poki release validation.
 
 The newer report-delivery
