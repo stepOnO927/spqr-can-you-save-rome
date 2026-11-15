@@ -50,6 +50,7 @@ jobs:
           node tools/separate-kingdom-succession-smoke.mjs
           node tools/regional-court-vacancy-smoke.mjs
           node tools/court-portrait-smoke.mjs
+          node tools/senator-portraits-smoke.mjs
           node tools/mail-privacy-smoke.mjs
           node tools/gathering-presence-smoke.mjs
           node tools/gathering-delegate-smoke.mjs
