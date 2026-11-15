@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame, tick, upgradeSave} from '../engine.js?v=world-kings-trade-1';
-import {localEntity} from '../local-polities.js';
+import {localEntity, localEntityRevenue} from '../local-polities.js';
 import {villageProjectQuote, startVillageProject, villageFoodQuote, takeVillageFood, advanceVillages} from '../local-villages.js';
 import {armyExpeditionSupply, advanceExpeditionSupply} from '../expedition-supply.js';
 import {inspectState} from '../inspector-diagnostics.js?v=world-kings-trade-1';
@@ -87,4 +87,71 @@ test('village follows a conquered theater without silently changing legal title'
   assert.equal(villageFoodQuote(state, entity.id, 'senate').ok, true);
   assert.equal(villageFoodQuote(state, entity.id, 'caesar').reason, 'control');
   assert.equal(inspectState(state).filter(item => item.code.startsWith('invalid-local') || item.code === 'invalid-village').length, 0);
+});
+
+test('market construction increases paid purchases and real local revenue', () => {
+  const state = newGame('caesar'), entity = localEntity(state, 'ravenna-farms');
+  const before = localEntityRevenue(state, 'caesar');
+  assert.equal(startVillageProject(state, entity.id, 'market').ok, true);
+  for (let i = 0; i < 3; i++) advanceVillages(state);
+  assert.equal(entity.village.market, 1);
+  assert.equal(entity.village.marketAccess, 70);
+  assert.equal(localEntityRevenue(state, 'caesar'), before + 1);
+  assert.deepEqual(villageFoodQuote(state, entity.id), {ok: true, food: 3, treasury: 3, emergency: false});
+  assert.equal(villageProjectQuote(state, entity.id, 'market').reason, 'maximum');
+  entity.village.satisfaction = 39;
+  assert.equal(localEntityRevenue(state, 'caesar'), before);
+});
+
+test('road, well and wall projects affect transport, growth conditions and civilian security', () => {
+  const state = newGame('caesar'), entity = localEntity(state, 'ravenna-farms'), region = state.regions.find(r => r.id === entity.theater);
+  const supply = region.supply, militia = entity.militia;
+  const army = state.armies.find(unit => unit.owner === 'caesar' && unit.region === entity.theater);
+  army.men = (supply + 1) * 1000;
+  assert.equal(armyExpeditionSupply(state, army).status, 'village_support');
+  assert.equal(startVillageProject(state, entity.id, 'road').ok, true);
+  for (let i = 0; i < 3; i++) advanceVillages(state);
+  assert.equal(region.supply, supply + 1);
+  assert.equal(armyExpeditionSupply(state, army).status, 'full');
+  assert.equal(entity.village.marketAccess, 65);
+  advanceVillages(state);
+  assert.equal(region.supply, supply + 1);
+  assert.equal(startVillageProject(state, entity.id, 'well').ok, true);
+  for (let i = 0; i < 2; i++) advanceVillages(state);
+  assert.equal(entity.village.well, 1);
+  assert.ok(entity.village.satisfaction >= 80);
+  assert.equal(startVillageProject(state, entity.id, 'wall').ok, true);
+  for (let i = 0; i < 4; i++) advanceVillages(state);
+  assert.equal(entity.village.wall, 1);
+  assert.equal(entity.militia, militia + 30);
+  assert.equal(entity.village.security, 82);
+  const saved = upgradeSave(JSON.parse(JSON.stringify(state)));
+  assert.equal(localEntity(saved, entity.id).village.wall, 1);
+  assert.equal(saved.regions.find(r => r.id === entity.theater).supply, supply + 1);
+  assert.equal(inspectState(saved).filter(item => item.code === 'invalid-village').length, 0);
+});
+
+test('save upgrade fills new village project fields without resetting existing village data', () => {
+  const state = newGame('caesar'), old = JSON.parse(JSON.stringify(state)), village = localEntity(old, 'ravenna-farms').village;
+  village.storedFood = 5;
+  for (const key of ['market', 'well', 'road', 'wall', 'marketAccess']) delete village[key];
+  const restored = upgradeSave(old), next = localEntity(restored, 'ravenna-farms').village;
+  assert.equal(next.storedFood, 5);
+  assert.deepEqual([next.market, next.well, next.road, next.wall, next.marketAccess], [0, 0, 0, 0, 50]);
+  assert.equal(inspectState(restored).filter(item => item.code === 'invalid-village').length, 0);
+});
+
+test('population growth raises civilian food need and pauses without a production surplus', () => {
+  const state = newGame('caesar'), village = localEntity(state, 'ravenna-farms').village;
+  village.population = 701;
+  village.storedFood = 7;
+  state.month = 3;
+  assert.equal(villageFoodQuote(state, 'ravenna-farms').food, 1);
+  advanceVillages(state);
+  assert.equal(village.foodNeed, 3);
+  assert.equal(village.population, 701);
+  assert.equal(village.storedFood, 7);
+  village.irrigation = 1;
+  advanceVillages(state);
+  assert.equal(village.population, 702);
 });

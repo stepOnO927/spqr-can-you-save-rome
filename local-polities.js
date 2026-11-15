@@ -55,7 +55,7 @@ export const LOCAL_ENTITY_TEMPLATES = Object.freeze([
     coordinates: [12.10, 44.46], historical: false, spatialAccuracy: 'fictional_approximate_point',
     description: ['A fictional farming village representing the Ravenna hinterland. Its point and people are gameplay estimates.', '虚构农庄村落，代表拉文纳腹地。地点和人口均为游戏模拟。'],
     initialController: 'caesar', militia: 80, fort: 0, treasury: 2, food: 0,
-    village: {population: 620, leader: ['Village council', '村社议事会'], specialty: ['grain', '谷物'], storedFood: 7, foodProduction: 3, foodNeed: 2, granary: 0, irrigation: 0, satisfaction: 70, security: 70, marketAccess: 50, project: null, localIssue: null}
+    village: {population: 620, leader: ['Village council', '村社议事会'], specialty: ['grain', '谷物'], storedFood: 7, foodProduction: 3, foodNeed: 2, granary: 0, irrigation: 0, market: 0, well: 0, road: 0, wall: 0, satisfaction: 70, security: 70, marketAccess: 50, project: null, localIssue: null}
   }
 ]);
 
@@ -76,6 +76,7 @@ export function localEntityRevenue(state, actor) {
   for (const region of state.regions.filter(item => item.owner === actor)) for (const entity of region.localEntities || []) {
     if (entity.type === 'roman_town') revenue += entity.controller === actor ? entity.resistance >= 60 ? 0 : 1 : -1;
     if (entity.type === 'microstate' && entity.controller === actor && entity.resistance < 60) revenue += entity.administrativeStatus === 'administered' ? 2 : 1;
+    if (entity.type === 'village' && entity.controller === actor && entity.village?.market > 0 && entity.village.satisfaction >= 40) revenue++;
   }
   return revenue;
 }
