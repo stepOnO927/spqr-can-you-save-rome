@@ -44,6 +44,8 @@ This file tracks the four supplied specifications as one development goal. The e
 
 - Defensive coalition charters now explicitly permit separate peace with the shared threat. If other members still fight, the bilateral settlement preserves their wars, records the remaining belligerents, lowers cohesion by 12 and relations with fighting allies by 5, and prevents a renewed automatic coalition call to arms for twelve months. The exemption is limited to the coalition duty: a direct attack or another treaty remains independent. The council explains the consequence and shows the active exemption for a player member. Old saves gain the charter field and history array without changing territorial ownership; the Inspector checks malformed peace records.
 
+- The newer `main` mission-result inbox change at `57237f8a` was merged while retaining coalition peace records. Focused mission, peace and module-version checks passed (5/5), followed by the complete serial suite. `npm run build:pages` produced 278 public files, 4.44 MiB total, largest 1.06 MiB. Real Chrome checks against built `dist/` confirmed both the coalition peace notice and a resolved spy result in the campaign inbox, without page errors.
+
 ## Verification
 
 - The newer `main` dossier-delivery fix at `3e683f6f` was merged while retaining coalition governance. Foreign person dossiers now hide reports, commander sightings and meeting details until the report or meeting is delivered. The new meeting-name privacy test and coalition checks passed together (26/26), and the Pages build contains 278 public files, 4.44 MiB total, largest 1.06 MiB. The complete post-merge suite passed serially.
