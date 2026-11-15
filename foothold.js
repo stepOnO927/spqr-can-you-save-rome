@@ -84,6 +84,25 @@ export function footholdQuote(state, entityId, actor = state.player) {
   return {ok: true, level: next, ...cost};
 }
 
+// A nonplayer court weighs where its field army needs a depot before spending
+// on another level at the first eligible place in map order.
+export function chooseAiFoothold(state, actor) {
+  const candidates = state.regions.flatMap(region => region.localEntities || [])
+    .map(entity => ({entity, quote: footholdQuote(state, entity.id, actor)}))
+    .filter(candidate => candidate.quote.ok);
+  if (!candidates.length) return null;
+  if (!['hard', 'expert'].includes(state.difficulty)) return candidates[0].entity;
+  const rank = ({entity, quote}) => {
+    const units = state.armies.filter(army => army.owner === actor && army.region === entity.theater && !army.move && army.men > 0);
+    const strained = units.reduce((total, army) => total + Math.max(0, 75 - (army.morale ?? 75)) * Math.min(2, army.men / 1000), 0);
+    const route = footholdSupplyRoute(state, entity.id, actor);
+    const existing = entity.foothold?.owner === actor ? entity.foothold.level : 0;
+    return (existing ? 12 : 36) + strained + Math.min(12, units.reduce((total, army) => total + army.men, 0) / 1000)
+      - Math.max(0, (route?.months || 1) - 1) * 3 - quote.treasury / 3;
+  };
+  return candidates.sort((a, b) => rank(b) - rank(a) || a.entity.id.localeCompare(b.entity.id))[0].entity;
+}
+
 export function startFoothold(state, entityId, actor = state.player) {
   const quote = footholdQuote(state, entityId, actor);
   if (!quote.ok) return quote;
