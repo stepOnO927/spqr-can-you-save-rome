@@ -13,6 +13,38 @@ import {afterActionHtml} from '../recon-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
+test('cultural accommodation aids administered foreign provinces only after adoption',()=>{
+ const idea=IDEAS.find(item=>item.id==='cultural-accommodation'),s=newGrandGame('senate');
+ s.wars=[];s.factions.senate.treasury=500;
+ assert.match(ideasPanel(s,'en'),/Different-culture territory with integration ≥45: local satisfaction \/ quarter \+1/);
+ assert.match(ideasPanel(s,'zh'),/异文化领土且融合度≥45：当地满意度 \/ 季 \+1/);
+ assert.equal(researchInnovation(s,'senate','idea',idea.id).ok,true);
+ assert.equal(activeEffects(s,'senate').culturalAccommodation,undefined);
+ months(s,idea.months);
+ assert.equal(activeEffects(s,'senate').culturalAccommodation,undefined);
+ assert.equal(adoptIdea(s,'senate',idea.id).ok,true);
+ assert.equal(activeEffects(s,'senate').culturalAccommodation,undefined);
+ months(s,2);
+ assert.equal(activeEffects(s,'senate').culturalAccommodation,1);
+ const eligible=s.regions.find(r=>r.culture==='egypt');
+ const unsupported=s.regions.find(r=>r.culture==='hellenic');
+ const home=s.regions.find(r=>r.culture==='roman-local');
+ for(const region of [eligible,unsupported,home]){region.owner='senate';region.civicSatisfaction=50;region.loyalty=50}
+ eligible.integration=60;unsupported.integration=30;home.integration=60;
+ const control=upgradeSave(JSON.parse(JSON.stringify(s)));
+ development(control,'senate').slots.culture[0]=null;
+ s.month=2;control.month=2;
+ tick(s);tick(control);
+ const compared=region=>control.regions.find(r=>r.id===region.id).civicSatisfaction;
+ assert.equal(eligible.civicSatisfaction,compared(eligible)+1);
+ assert.equal(unsupported.civicSatisfaction,compared(unsupported));
+ assert.equal(home.civicSatisfaction,compared(home));
+ assert.equal(nationalBudget(s,'senate').ideaUpkeep,nationalBudget(control,'senate').ideaUpkeep);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(activeEffects(restored,'senate').culturalAccommodation,1);
+ assert.equal(restored.regions.find(r=>r.id===eligible.id).civicSatisfaction,eligible.civicSatisfaction);
+});
+
 test('Parthian arrow trains need adoption and supplied local plains to affect real combat',()=>{
  const id='parthian-arrow-trains',idea=IDEAS.find(item=>item.id===id);
  assert.match(idea.source.url,/Crassus/);
@@ -1056,10 +1088,10 @@ test('knowledge trade transfers knowledge after travel, never constructs or adop
   development(s,'egypt').knownIdeas.push('cultural-accommodation');
   assert.equal(knowledgeTrade(s,'caesar','egypt','idea','cultural-accommodation').ok,true);
   months(s,2);assert.ok(d.knownIdeas.includes('cultural-accommodation'));
-  assert.equal(activeEffects(s,'caesar').loyalty,undefined);
+  assert.equal(activeEffects(s,'caesar').culturalAccommodation,undefined);
   assert.equal(adoptIdea(s,'caesar','cultural-accommodation',0).ok,true);
-  months(s,2);assert.equal(activeEffects(s,'caesar').loyalty,undefined);
-  months(s,2);assert.equal(activeEffects(s,'caesar').loyalty,2);
+  months(s,2);assert.equal(activeEffects(s,'caesar').culturalAccommodation,undefined);
+  months(s,2);assert.equal(activeEffects(s,'caesar').culturalAccommodation,1);
   s.relations['caesar:egypt']=-20;
   assert.equal(knowledgeTrade(s,'caesar','egypt','material','water-control').ok,false);
 });

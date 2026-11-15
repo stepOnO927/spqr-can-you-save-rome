@@ -1,4 +1,4 @@
-import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,knowledgeTransitStatus,KNOWLEDGE_BLOCKED_LIMIT,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=48';
+import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,knowledgeTransitStatus,KNOWLEDGE_BLOCKED_LIMIT,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=49';
 import {FIGURE_ROLES,initializeFigures,figureStatus,figureActive} from './great-figures.js';
 import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';
@@ -22,6 +22,7 @@ function effectsText(e,zh){return Object.entries(e||{}).map(([key,value])=>{
  if(key==='ideaResearchDiscount')return `<span class="dev-effect positive">${zh?'理念研究折扣':'National-idea research discount'} +${value}</span>`;
  if(key==='egyptianDecrees')return `<span class="dev-effect positive">${zh?'埃及文化领土行政融合度 / 月 +1':'Integration in Egyptian-culture territories / month +1'}</span>`;
  if(key==='hellenicCouncil')return `<span class="dev-effect positive">${zh?'希腊文化领土且融合度≥45：当地满意度 / 季 +1':'Hellenic-culture territory with integration ≥45: local satisfaction / quarter +1'}</span>`;
+ if(key==='culturalAccommodation')return `<span class="dev-effect positive">${zh?'异文化领土且融合度≥45：当地满意度 / 季 +1':'Different-culture territory with integration ≥45: local satisfaction / quarter +1'}</span>`;
  if(key==='ancestralRites')return `<span class="dev-effect positive">${zh?'本国祭仪满意度 / 季 +1':'Own rites satisfaction / quarter +1'}</span><span class="dev-effect negative">${zh?'异地祭仪满意度 / 季 −1':'Other rites satisfaction / quarter −1'}</span>`;
  if(key==='provincialRitesCharter')return `<span class="dev-effect positive">${zh?'承认地方祭仪时：异地传统且少数信仰≥25%的行省满意度 / 季 +1':'With local rites recognized: satisfaction / quarter +1 in provinces with a different dominant tradition and minority faith ≥25%'}</span>`;
  if(key==='templeGuarantees')return `<span class="dev-effect positive">${zh?'埃及文化且埃及祭仪占主导、祭司团有效时：当地满意度 / 季 +1；祭司影响 / 季 +1':'In Egyptian-culture provinces with dominant Egyptian rites: local satisfaction / quarter +1 with an influential priesthood; priestly influence / quarter +1'}</span><span class="dev-effect negative">${zh?'每4处符合条件的领土另付1国库／月（最多6）':'Additional 1 treasury / month per 4 eligible provinces (maximum 6)'}</span>`;

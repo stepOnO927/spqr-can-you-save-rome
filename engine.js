@@ -5,7 +5,7 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=64';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
-import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,settleGranaryReserves,migrateGranaryReserves,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,scholarVisitCheck,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,researchTerms,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=48';
+import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,settleGranaryReserves,migrateGranaryReserves,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,scholarVisitCheck,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,researchTerms,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=49';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=11';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=12';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
@@ -27,6 +27,7 @@ export {queueMission};
 export {personalDiplomaticCredit};
 
 const clone = value => JSON.parse(JSON.stringify(value));
+const HOME_CULTURE={caesar:'roman-local',senate:'roman-local',egypt:'egypt',galatia:'galatia',bosporus:'bosporus',parthia:'parthia',armenia:'armenia',numidia:'north-african',mauretania:'north-african'};
 export const region = (s,id) => s.regions.find(r=>r.id===id);
 export const army = (s,id) => s.armies.find(a=>a.id===id);
 export const adjacent = (id,s) => s?.grandMap?grandAdjacent(id):ROUTES.filter(r=>r[0]===id||r[1]===id).map(r=>({to:r[0]===id?r[1]:r[0],sea:r[2]==='sea'}));
@@ -489,7 +490,9 @@ function economy(s){
       const taxPressure=({low:2,normal:0,high:-2}[f.tax])+taxReview;
       if(s.grandMap){
         const council=effects.hellenicCouncil&&s.month%3===0&&r.culture==='hellenic'&&(r.integration??60)>=45?1:0;
-        r.civicSatisfaction=Math.max(0,Math.min(100,(r.civicSatisfaction??r.loyalty)+taxPressure-shortage+(works.loyalty||0)+faithSatisfaction(s,r)-estateStrain+tenantSupport+council));
+        const homeCulture=HOME_CULTURE[id];
+        const culturalAccommodation=effects.culturalAccommodation&&s.month%3===0&&homeCulture&&r.culture!==homeCulture&&(r.integration??60)>=45?1:0;
+        r.civicSatisfaction=Math.max(0,Math.min(100,(r.civicSatisfaction??r.loyalty)+taxPressure-shortage+(works.loyalty||0)+faithSatisfaction(s,r)-estateStrain+tenantSupport+council+culturalAccommodation));
         r.integration=Math.max(0,Math.min(100,(r.integration??60)+(governor>0?1:0)+(works.stability>0?1:0)+(effects.egyptianDecrees&&r.culture==='egypt'?1:0)));
       }
       r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+taxReview-Math.max(0,shortage-1)+governor+(effects.loyalty||0)+(works.loyalty||0)+(s.grandMap?(r.civicSatisfaction<30?-1:r.civicSatisfaction>75?1:0)+(r.integration<35?-1:0):0)-estateStrain+tenantSupport));
