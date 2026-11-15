@@ -148,6 +148,17 @@ test('declining ministerial advice has a political cost without spending edict r
  assert.equal(s.court.adviceHistory[0].status,'declined');
 });
 
+test('a March disaster delays the annual proposal until the court can hear it',()=>{
+ const s=game({seed:500});s.month=3;
+ s.court.pendingDisaster={id:999,type:'flood',region:'changan',readings:[],deadline:3};
+ advanceCourt(s);assert.equal(s.court.policyAdvice,null);
+ assert.equal(respondToDisaster(s,'self_reproach').ok,true);
+ s.month=4;advanceCourt(s);
+ assert.equal(s.court.policyAdvice?.status,'pending');
+ assert.equal(s.court.policyAdvice.created.month,4);
+ assert.equal(s.court.policyAdvice.who,'yu-dingguo');
+});
+
 test('unanswered advice expires, while a legacy court can create new advice after load',()=>{
  let s=game({seed:500});tick(s);
  const first=s.court.policyAdvice.id;

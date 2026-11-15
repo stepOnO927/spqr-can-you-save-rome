@@ -198,7 +198,9 @@ function advancePolicyAdvice(s){
    s.court.policyAdvice=null;
   }
  }
- if(s.month!==3||s.court.pendingDisaster||s.court.policyAdvice||s.court.adviceHistory.some(item=>item.created?.year===s.year))return;
+ // A disaster can occupy the court in March. Offer the year's advice once
+ // that crisis is resolved instead of silently skipping the whole year.
+ if(s.month<3||s.court.pendingDisaster||s.court.policyAdvice||s.court.adviceHistory.some(item=>item.created?.year===s.year))return;
  const plan=proposedCourtPolicy(s);if(!plan)return;
  const who=s.court.offices[plan.office],advice={id:s.court.nextId++,who,office:plan.office,type:plan.type,created:{year:s.year,month:s.month},remaining:3,status:'pending'};
  s.court.policyAdvice=advice;

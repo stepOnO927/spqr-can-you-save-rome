@@ -6,7 +6,9 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 try{
- await page.addInitScript(()=>localStorage.setItem('spqr-han-lang','en'));
+ // Fix the campaign seed so an unrelated random disaster cannot change the
+ // minister, recommendation or yearly proposal under test.
+ await page.addInitScript(()=>{localStorage.setItem('spqr-han-lang','en');Date.now=()=>500});
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
  await page.locator('#court-panel').click();
