@@ -6,7 +6,7 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `3e683f6f`. The newer report-delivery
+The draft now includes main through `57237f8a`. The newer report-delivery
 checks are reconciled in planning, battle estimates, faction views, national
 focus and legion design; the added unit and browser regressions pass. Its
 Roman trade routes now reuse a static adjacency index and look up campaign
@@ -19,7 +19,11 @@ were introduced; its ceiling is now 40 ms, still under 8% of the shortest
 500 ms automatic turn interval. Eight isolated repeats pass. The previous
 GitHub head passed quality, browser and Pages checks; its Poki check failed
 only on a 254.9 ms outlier in the separate 250 ms all-AI monthly timing gate.
-The route optimization is awaiting CI verification for that gate.
+The route optimization is awaiting CI verification for that gate. Main's
+mission-result inbox is also integrated: received operations appear once as
+saved correspondence, while pending or unanswered missions remain absent.
+Its unit cases and Chromium inbox flow pass after restoring the shared module
+imports in the expansion branch.
 The draft's overview layout and
 attack-preview privacy changes are connected to the expanded faction atlas:
 crowded cities and armies remain selectable through faction directories, and

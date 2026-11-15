@@ -2,7 +2,7 @@ import {sendLetter,initializeMail} from './epistulae.js?v=faces-reported-names-1
 import {reportedArmies} from './character-system.js?v=faces-reported-names-1';
 import {CHARACTER_CATALOG} from './characters.js?v=faces-reported-names-1';
 import {MATERIALS} from './inventions.js?v=faces-reported-names-1';
-import {ROUTES} from './data.js?v=faces-reported-names-1';
+import {ROUTES,FACTIONS} from './data.js?v=faces-reported-names-1';
 
 const month=s=>s.year*12+s.month;
 const owned=s=>s.regions.filter(r=>r.owner===s.player);
@@ -22,6 +22,28 @@ function report(s,eventId,category,priority,subject,body,{region=null,options=['
 }
 export function advanceMailReports(s){
  const mail=initializeMail(s),before=initializeMailReports(s),after=snapshot(s),now=month(s),f=s.factions[s.player];
+ // These missions already include the return journey. Record only a result
+ // actually received this month; an unanswered mission produces no letter.
+ for(const op of s.operations||[]){
+  if(op.actor!==s.player||op.resultMailId||op.resolvedYear!==s.year||op.resolvedMonth!==s.month||!['complete','declined','captured','detected'].includes(op.status))continue;
+  const target=FACTIONS[op.target]?.short||[op.target,op.target];
+  let subject,body;
+  if(op.status==='declined'){
+   subject=['Request declined','请求遭拒'];body=[`The request concerning ${target[0]} was declined.`,`有关${target[1]}的请求遭到拒绝。`];
+  }else if(op.status==='captured'||op.status==='detected'){
+   subject=['Agent compromised','情报人员暴露'];body=op.status==='captured'?[`An agent operating against ${target[0]} was captured.`,`在${target[1]}活动的一名情报人员被抓获。`]:[`An agent operating against ${target[0]} was detected.`,`在${target[1]}活动的一名情报人员被发现。`];
+  }else if(op.type==='support'){
+   subject=['Claimant accepted support','竞争者接受支持'];body=[`The claimant accepted support concerning ${target[0]}; relations with the court worsened.`,`有关${target[1]}的竞争者接受了支持；与宫廷的关系恶化。`];
+  }else if(op.type==='counter'&&op.subject==='counter_spies'){
+   subject=['Counterintelligence watch','反间谍警戒'];body=['The watch will operate for the next six months.','反间谍警戒将在接下来的六个月运行。'];
+  }else if(op.type==='envoy'&&op.subject==='relations'){
+   subject=['Envoy received','使者获接待'];body=[`The envoy was received by ${target[0]} and relations improved by up to 8.`,`使者获得${target[1]}接待，双方关系最多提高8。`];
+  }else{
+   subject=['Intelligence report received','情报报告已送达'];body=[`A report concerning ${target[0]} has arrived. Review the foreign court dossier for its dated contents and source; the information may be wrong or outdated.`,`有关${target[1]}的报告已送达。请查看外国宫廷档案中的报告内容、日期和来源；情报可能有误或已经过时。`];
+  }
+  const result=sendLetter(s,{senderInstitution:s.player,senderFaction:s.player,recipient:s.player,category:'government',priority:'important',subject,body,options:['acknowledge'],confidence:op.status==='complete'?'unverified':null,context:{kind:'mission_result',operationId:op.id||null,target:op.target}});
+  if(result.ok){op.resultMailId=result.letter.id;result.letter.arrival=now;result.letter.delivery='received'}
+ }
  if(before.tax!==after.tax)report(s,`tax:${now}`,'government','important',['Tax policy changed','税政变更报告'],
   [`The court's tax rate is now ${after.tax}.`,`本朝税率现为${({low:'低',normal:'标准',high:'高'})[after.tax]||after.tax}。`],{options:['review_budget','acknowledge']});
  if(before.food>=0&&after.food<0){
