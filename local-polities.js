@@ -325,6 +325,26 @@ export function localOfferChance(state,entity,actor,proposal){
 
 export function advanceLocalEntities(state) {
   for (const region of state.regions) for (const entity of region.localEntities || []) {
+    if(entity.type==='strongman'&&entity.procedural){
+      const charter=entity.localCharter;
+      if(charter?.active&&(region.owner!==charter.host||entity.controller!==entity.id||!state.factions[charter.host]||entity.allegiance&&entity.allegiance!==charter.host)){
+        charter.active=false;charter.ended={year:state.year,month:state.month,reason:'control_changed'};
+        if(entity.administrativeStatus==='chartered_household')entity.administrativeStatus='personal_rule';
+      }
+      if(charter?.active&&[6,12].includes(state.month)&&(charter.lastPayment?.year!==state.year||charter.lastPayment?.month!==state.month)){
+        charter.lastPayment={year:state.year,month:state.month};
+        if(entity.treasury>=2){entity.treasury-=2;state.factions[charter.host].treasury+=2;charter.arrears=0}
+        else if(++charter.arrears>=2){charter.active=false;charter.ended={year:state.year,month:state.month,reason:'arrears'};entity.administrativeStatus='personal_rule'}
+      }
+      const last=entity.lastCharterPetitionAt;
+      if(state.month===4&&entity.controller===entity.id&&!entity.siege&&!entity.pending&&!entity.localCharter?.active&&(!entity.allegiance||entity.allegiance===region.owner)&&region.owner===state.player&&entity.strategy>=4&&entity.treasury>=6&&entity.militia>=Math.max(200,entity.population*.08)&&(!last||now(state)-(last.year*12+last.month)>=12)){
+        const sent=sendLetter(state,{senderFaction:state.player,senderInstitution:state.player,recipient:state.player,category:'government',priority:'important',source:region.id,
+          subject:[`Autonomy petition from ${entity.name[0]}`,`${entity.name[1]}自治请愿`],
+          body:[`${entity.ruler.name[0]} asks for a local household charter. Granting it costs 5 treasury; the chief keeps personal control and legal title stays with the host court. The household owes 2 treasury each half-year while the charter is active.`,` ${entity.ruler.name[1]}请求地方家族自治特许。批准需5国库；首领继续掌管当地，法理归属仍属本方。特许有效时，地方家族每半年缴纳2国库。`],
+          options:['grant_local_charter','refuse'],context:{kind:'strongman_charter_request',polityId:entity.id,host:region.owner}});
+        if(sent.ok){sent.letter.senderName=[...entity.ruler.name];entity.lastCharterPetitionAt={year:state.year,month:state.month};entity.charterPetitionMailId=sent.letter.id}
+      }
+    }
     if(entity.procedural&&!entity.proceduralVillage&&entity.controller===entity.id&&!entity.siege){
       if(entity.type==='strongman'&&state.month%3===0&&(entity.lastVillageLevy?.year!==state.year||entity.lastVillageLevy?.month!==state.month)){
         entity.lastVillageLevy={year:state.year,month:state.month};

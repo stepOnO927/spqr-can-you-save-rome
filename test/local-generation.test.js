@@ -207,6 +207,45 @@ test('hard nonplayer court initiates a paid title negotiation with a local chief
  assert.equal(chief.controller,chief.id);
 });
 
+test('a strongman requests a local charter without gaining sovereignty or army passage',()=>{
+ const s=start('hard',2),chief=generated(s).find(entity=>entity.type==='strongman'&&s.regions.find(region=>region.id===entity.theater).owner==='caesar');
+ assert.ok(chief);chief.strategy=5;chief.treasury=10;chief.militia=Math.max(chief.militia,Math.ceil(chief.population*.1));
+ const village=localEntity(s,`generated-village:${chief.theater}`),legal=chief.legalSovereign;
+ s.month=4;advanceLocalEntities(s);
+ const letter=s.mail.messages.find(mail=>mail.context?.kind==='strongman_charter_request'&&mail.context.polityId===chief.id);
+ assert.ok(letter);assert.deepEqual(letter.senderName,chief.ruler.name);
+ assert.deepEqual(chief.lastCharterPetitionAt,{year:s.year,month:4});
+ letter.delivery='received';const cash=s.factions.caesar.treasury;
+ s.factions.caesar.treasury=4;
+ assert.equal(replyToLetter(s,letter.id,'grant_local_charter',{}).reason,'treasury');
+ assert.equal(letter.responses.length,0);
+ s.factions.caesar.treasury=cash;
+ assert.equal(replyToLetter(s,letter.id,'grant_local_charter',{}).ok,true);
+ assert.equal(s.factions.caesar.treasury,cash-5);
+ assert.equal(chief.localCharter.active,true);
+ assert.equal(chief.controller,chief.id);assert.equal(chief.legalSovereign,legal);assert.equal(chief.access.caesar,undefined);
+ assert.equal(village.controller,chief.id);assert.equal(village.village.satisfaction,65);
+ s.month=6;const paid=s.factions.caesar.treasury;advanceLocalEntities(s);
+ assert.equal(s.factions.caesar.treasury,paid+2);assert.equal(chief.localCharter.arrears,0);
+ advanceLocalEntities(s);assert.equal(s.factions.caesar.treasury,paid+2);
+ const restored=upgradeSave(structuredClone(s));assert.deepEqual(localEntity(restored,chief.id).localCharter,chief.localCharter);
+ assert.equal(inspectState(s).filter(item=>item.code==='invalid-local-charter').length,0);
+ restored.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id===chief.id).localCharter.granted.month=13;
+ assert.ok(inspectState(restored).some(item=>item.code==='invalid-local-charter'));
+ s.month=12;chief.treasury=0;advanceLocalEntities(s);assert.equal(chief.localCharter.arrears,1);
+ s.year++;s.month=6;advanceLocalEntities(s);assert.equal(chief.localCharter.active,false);assert.equal(chief.administrativeStatus,'personal_rule');
+});
+
+test('an old charter petition cannot be granted after the host theater changes hands',()=>{
+ const s=start('hard',2),chief=generated(s).find(entity=>entity.type==='strongman'&&s.regions.find(region=>region.id===entity.theater).owner==='caesar');
+ assert.ok(chief);chief.strategy=5;chief.treasury=10;chief.militia=Math.max(chief.militia,Math.ceil(chief.population*.1));
+ s.month=4;advanceLocalEntities(s);
+ const letter=s.mail.messages.find(mail=>mail.context?.kind==='strongman_charter_request'&&mail.context.polityId===chief.id);
+ assert.ok(letter);letter.delivery='received';s.regions.find(region=>region.id===chief.theater).owner='senate';
+ assert.equal(replyToLetter(s,letter.id,'grant_local_charter',{}).reason,'changed_state');
+ assert.equal(chief.localCharter,undefined);
+});
+
 test('occupation transfers a dependent village and a successful local revolt restores personal control',()=>{
  const s=start('standard',2),chief=generated(s).find(e=>e.type==='strongman'),village=localEntity(s,`generated-village:${chief.theater}`),host=s.regions.find(r=>r.id===chief.theater),actor=host.owner;
  chief.controller=actor;chief.militaryOccupier=actor;chief.administrativeStatus='occupied';chief.resistance=100;

@@ -251,6 +251,18 @@ export function replyToLetter(s, id, choice, actions, details={}) {
       village.satisfaction=Math.min(100,village.satisfaction+8);
       village.localIssue=null;
     } else if(choice==='decline') village.satisfaction=Math.max(0,village.satisfaction-2);
+  } else if (m.context?.kind === 'strongman_charter_request') {
+    const place=s.regions.find(r=>r.id===m.source&&r.owner===s.player&&r.owner===m.context.host);
+    const chief=place?.localEntities?.find(entity=>entity.id===m.context.polityId&&entity.type==='strongman'&&entity.controller===entity.id);
+    if(!chief||chief.siege||chief.localCharter?.active||chief.allegiance&&chief.allegiance!==s.player)return {ok:false,reason:'changed_state'};
+    if(choice==='grant_local_charter'){
+      if(s.factions[s.player].treasury<5)return {ok:false,reason:'treasury'};
+      s.factions[s.player].treasury-=5;
+      chief.localCharter={host:s.player,active:true,granted:{year:s.year,month:s.month},arrears:0,lastPayment:null};
+      chief.administrativeStatus='chartered_household';
+      const village=place.localEntities.find(site=>site.sponsor===chief.id)?.village;
+      if(village)village.satisfaction=Math.min(100,village.satisfaction+3);
+    }
   } else if(m.context?.kind==='aid_request'){
     if(choice==='send_aid'){
       if(s.factions[s.player].treasury<5)return {ok:false,reason:'treasury'};
