@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn,startConstruction} from '../engine.js';
 import {SEA_ZONES,seaRoute,portZone,isPortBlockaded,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply} from '../naval.js';
-import {tradeCard} from '../map-lab/naval-ui.js';
+import {tradeCard,renderNavalPanel} from '../map-lab/naval-ui.js';
 import {developmentPanel,constructionPanel} from '../development-ui.js';
 import {advanceDevelopment} from '../development.js';
 import {armySupply,supplyNetwork} from '../grand-operations.js';
@@ -929,6 +929,65 @@ test('AI pursues a dated hostile fleet report through a real sea battle without 
  assert.equal(saved.order.reportId,enemy.id);
  advanceNaval(restored);
  assert.ok(restored.naval.reports.some(r=>r.kind==='battle'&&r.participants.includes(hunter.id)&&r.participants.includes(enemy.id)));
+});
+test('two AI fleets coordinate against one larger reported fleet and fight together after reload',()=>{
+ const s=newGrandGame('caesar'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first),enemy=s.naval.fleets.find(f=>f.owner==='caesar');
+ s.factions.senate.treasury=500;s.factions.senate.food=100;
+ for(const pirate of s.naval.pirates){pirate.pressure=0;pirate.ships=0}
+ first.id='senate-west';first.zone='ionian';first.port=null;first.ships={trireme:3};first.sailors=540;
+ second.id='senate-east';second.zone='ionian';second.port=null;second.ships={trireme:3};second.sailors=540;
+ enemy.zone='aegean';enemy.port=null;enemy.ships={trireme:6};enemy.sailors=1080;
+ s.naval.fleets.push(second);
+ s.naval.intel.senate={[enemy.id]:{owner:'caesar',zone:'aegean',year:s.year,month:s.month,source:'recon',range:[5,6],confidence:'medium'}};
+ advanceNaval(s);
+ assert.equal(first.order?.kind,'intercept');assert.equal(second.order?.kind,'intercept');
+ assert.equal(first.order.reportId,enemy.id);assert.equal(second.order.reportId,enemy.id);
+ assert.equal(s.naval.reports.some(r=>r.kind==='battle'),false,'orders do not create combat before arrival');
+ const restored=upgradeSave(structuredClone(s));
+ restored.month++;
+ advanceNaval(restored);
+ const battles=restored.naval.reports.filter(r=>r.kind==='battle'&&r.zone==='aegean');
+ assert.equal(battles.length,1,'the same enemy is engaged once by the combined force');
+ assert.equal(battles[0].coordinated,true);
+ assert.deepEqual(new Set(battles[0].participants),new Set([first.id,second.id,enemy.id]));
+ for(const id of [first.id,second.id,enemy.id])assert.ok(battles[0].losses[id]&&battles[0].snapshots[id]);
+ assert.ok(battles[0].observedLosses.senate.ships[1]>battles[0].observedLosses.senate.ships[0]);
+ const reloaded=upgradeSave(structuredClone(restored));
+ assert.deepEqual(reloaded.naval.reports.find(r=>r.id===battles[0].id),battles[0]);
+});
+test('AI will not coordinate an unseen, stale, or outnumbering fleet report',()=>{
+ const setup=()=>{
+  const s=newGrandGame('caesar'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first),enemy=s.naval.fleets.find(f=>f.owner==='caesar');
+  s.factions.senate.treasury=500;s.factions.senate.food=100;
+  for(const pirate of s.naval.pirates){pirate.pressure=0;pirate.ships=0}
+  first.id='senate-west';first.zone='ionian';first.port=null;first.ships={trireme:3};first.sailors=540;
+  second.id='senate-east';second.zone='ionian';second.port=null;second.ships={trireme:3};second.sailors=540;
+  enemy.zone='aegean';enemy.port=null;enemy.ships={trireme:6};enemy.sailors=1080;
+  s.naval.fleets.push(second);
+  return {s,first,second,enemy};
+ };
+ const cases=[['unseen',null],['stale',{year:-49,month:1,range:[5,6]}],['too strong',{year:-49,month:1,range:[11,14]}]];
+ for(const [label,intel] of cases){
+  const {s,first,second,enemy}=setup();s.month=4;
+  if(intel)s.naval.intel.senate={[enemy.id]:{owner:'caesar',zone:'aegean',source:'recon',confidence:'medium',...intel}};
+  advanceNaval(s);
+  assert.notEqual(first.order?.kind,'intercept',label);
+  assert.notEqual(second.order?.kind,'intercept',label);
+ }
+});
+test('coordinated battle report names both friendly fleets in English and Chinese',()=>{
+ const s=newGrandGame('senate'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first),enemy=s.naval.fleets.find(f=>f.owner==='caesar');
+ first.id='senate-west';first.name=['Western Squadron','西部舰队'];
+ second.id='senate-east';second.name=['Eastern Squadron','东部舰队'];s.naval.fleets.push(second);
+ s.naval.reports.unshift({id:'combined-report',kind:'battle',coordinated:true,year:s.year,month:s.month,zone:'aegean',participants:[first.id,second.id,enemy.id],winner:'senate',snapshots:Object.fromEntries([first,second,enemy].map(f=>[f.id,{owner:f.owner,name:f.name,ships:{trireme:3},commanderId:null,tactic:'formation'}])),losses:{[first.id]:{sailors:12,sunk:0},[second.id]:{sailors:9,sunk:0},[enemy.id]:{sailors:21,sunk:0}},damage:{[first.id]:2,[second.id]:3},observedLosses:{senate:{ships:[0,1],sailors:[0,50]}},weather:100,tactics:{[first.id]:'formation',[second.id]:'formation'}});
+ for(const [lang,heading] of [['en','COORDINATED NAVAL BATTLE'],['zh','协同海战']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:s,lang,root,section:'reports'});
+  assert.match(content.innerHTML,new RegExp(heading));
+  assert.match(content.innerHTML,new RegExp(lang==='en'?'Western Squadron':'西部舰队'));
+  assert.match(content.innerHTML,new RegExp(lang==='en'?'Eastern Squadron':'东部舰队'));
+  assert.match(content.innerHTML,/×6/);
+ }
 });
 test('AI changes or ends fleet pursuit when its dated report moves or expires',()=>{
  const s=newGrandGame('caesar'),hunter=s.naval.fleets.find(f=>f.owner==='senate'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');

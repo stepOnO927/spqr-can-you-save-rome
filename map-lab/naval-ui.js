@@ -1,5 +1,5 @@
-import {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,reportedHostileFleets,reportedNonHostileFleets,portZone,fleetSpeed,fleetCargoCapacity,fleetUpkeepDue,wagonSupplyPlan} from '../naval.js?v=45';
-import {adjacent,previewMarch} from '../engine.js?v=200';
+import {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,reportedHostileFleets,reportedNonHostileFleets,portZone,fleetSpeed,fleetCargoCapacity,fleetUpkeepDue,wagonSupplyPlan} from '../naval.js?v=46';
+import {adjacent,previewMarch} from '../engine.js?v=201';
 import {CHARACTER_CATALOG} from '../characters.js';
 import {FACTIONS} from '../data.js?v=9';
 
@@ -18,10 +18,21 @@ function enemyLossHtml(report,owner,zh){
  return `<p>${zh?'敌舰损失目击估计':'Observed enemy ship losses'}: ${quantity(observed.ships[0])}–${quantity(observed.ships[1])} · ${zh?'敌方水手伤亡估计':'Estimated enemy sailor casualties'}: ${quantity(observed.sailors[0])}–${quantity(observed.sailors[1])}</p><p>${zh?'这些是战后目击的概略范围；确切敌情仍未知。':'These are approximate post-battle observations; exact enemy losses remain unknown.'}</p>`;
 }
 function battleFactorsHtml(report,ownIds,zh){
- const id=ownIds[0],maneuver=Number(report.maneuver?.[id]),loss=report.losses?.[id],parts=[];
- if(Number.isFinite(maneuver)&&maneuver>0){const position=maneuver>102?(zh?'有利':'favorable'):maneuver<98?(zh?'不利':'strained'):(zh?'相持':'even');parts.push(`${zh?'己方战船机动形势':'Friendly warship maneuver'}: ${position} (${maneuver}%)`)}
- if(loss?.sunk===1&&loss.type&&SHIPS[loss.type])parts.push(`${zh?'己方沉没船型':'Friendly ship lost'}: ${esc(n(SHIPS[loss.type].name,zh))}`);
+ const parts=[];
+ for(const id of ownIds){
+  const maneuver=Number(report.maneuver?.[id]),loss=report.losses?.[id],fleet=report.snapshots?.[id],label=ownIds.length>1?`${esc(n(fleet?.name,zh))}: `:'';
+  if(Number.isFinite(maneuver)&&maneuver>0){const position=maneuver>102?(zh?'有利':'favorable'):maneuver<98?(zh?'不利':'strained'):(zh?'相持':'even');parts.push(`${label}${ownIds.length>1?(zh?'战船机动形势':'Warship maneuver'):(zh?'己方战船机动形势':'Friendly warship maneuver')}: ${position} (${maneuver}%)`)}
+  if(loss?.sunk===1&&loss.type&&SHIPS[loss.type])parts.push(`${label}${zh?'沉没船型':'Ship lost'}: ${esc(n(SHIPS[loss.type].name,zh))}`);
+ }
  return parts.length?`<p>${parts.join(' · ')}. ${zh?'船型与阵型影响机动；天气和战斗偶然性仍可能改变结局。':'Ship classes and formation affect maneuver; weather and combat chance can still change the outcome.'}</p>`:'';
+}
+function battleFleetHtml(report,ownIds,zh){
+ const fleets=ownIds.map(id=>report.snapshots?.[id]).filter(Boolean);
+ const names=fleets.map(f=>esc(n(f.name,zh))).join(' · ')||'—';
+ const classes={};for(const f of fleets)for(const [type,count] of Object.entries(f.ships||{}))classes[type]=(classes[type]||0)+count;
+ const ships=Object.entries(classes).filter(([,count])=>count>0).map(([type,count])=>`${esc(n(SHIPS[type]?.name,zh))} ×${count}`).join(' · ')||'—';
+ const commanders=fleets.map(f=>f.commanderId?esc(n(CHARACTER_CATALOG[f.commanderId]?.name,zh)):(zh?'未任命':'Unassigned')).join(' · ');
+ return `<p>${names} · ${ships}</p><p>${zh?'舰长':'Commander'}: ${commanders||'—'}</p>`;
 }
 const options=(items,zh)=>items.map(([id,label])=>`<option value="${esc(id)}">${esc(n(label,zh))}</option>`).join('');
 function targetOptions(s,owner,kind,zh,origin=null){
@@ -77,8 +88,8 @@ export function renderNavalPanel({state:s,lang,root,section='fleets',onAction,on
   const visible=s.naval.reports.filter(r=>r.kind==='battle'&&r.participants.some(id=>own.some(f=>f.id===id))||r.owner===s.player||r.raider===s.player).slice(0,20);
   content.innerHTML=visible.map(r=>{
    if(r.kind!=='battle')return `<article class="naval-card"><h3>${esc(n(({ 'pirate-raid':['Pirate raid','海盗袭击'],'trade-raid':['Trade raid','商路袭扰'],'trade-incident':['Neutral cargo incident','中立货物外交事件'],'pirate-clash':['Pirate clash','海盗交战'],scandal:['Diplomatic scandal','外交丑闻'],storm:['Storm damage','风暴损伤'],mutiny:['Naval mutiny','海军哗变'],'supply-delivery':['Army supplies delivered','陆军补给抵港'],'supply-blocked':['Supply convoy blocked','补给船受阻'],'supply-loss':['Supply cargo lost','补给货物损失'],'supply-return':['Supply cargo returned','补给货物返航'],'wagon-delivery':['Wagon supplies delivered','粮车补给送达'],'wagon-loss':['Wagon supplies lost','粮车补给损失']})[r.kind]||[r.kind,r.kind],zh))} · ${quantity(r.month)}/${Math.abs(Number(r.year))} BCE</h3><p>${esc(n(zone(r.zone)?.name,zh))}${r.port?` · ${esc(siteName(s,r.port,zh))}`:''}${r.to?` → ${esc(siteName(s,r.to,zh))}`:''}${r.cargo!=null?` · ${zh?'粮食':'Food'} ${quantity(r.cargo)}`:''}${['trade-raid','pirate-raid','trade-incident'].includes(r.kind)?` · ${zh?'夺得货物':'Cargo seized'} ${quantity(r.captured)} ${esc(n(goods[r.good]||[r.good,r.good],zh))}`:''}${r.recovered?` · ${zh?'收回货物':'Cargo recovered'} ${quantity(r.recovered.amount)} ${esc(n(goods[r.recovered.good]||[r.recovered.good,r.recovered.good],zh))}`:''}</p></article>`;
-   const ownIds=r.participants.filter(id=>own.some(f=>f.id===id)),snapshot=ownIds.map(id=>r.snapshots?.[id]).find(Boolean),ownLoss=ownIds.reduce((v,id)=>v+(r.losses[id]?.sailors||0),0),ownShips=ownIds.reduce((v,id)=>v+(r.losses[id]?.sunk||0),0),classes=snapshot?Object.entries(snapshot.ships).filter(([,count])=>count>0).map(([id,count])=>`${n(SHIPS[id]?.name,zh)} ×${count}`).join(' · '):'—';
-   return `<article class="naval-card"><h3>${zh?'海战':'NAVAL BATTLE'} · ${r.month}/${Math.abs(r.year)} BCE</h3><p>${esc(n(zone(r.zone)?.name,zh))} · ${r.winner===s.player?(zh?'己方获胜':'Friendly victory'):(zh?'己方撤退或失利':'Withdrawal or defeat')}</p><p>${esc(n(snapshot?.name,zh))} · ${esc(classes)}</p><p>${zh?'舰长':'Commander'}: ${snapshot?.commanderId?esc(n(CHARACTER_CATALOG[snapshot.commanderId]?.name,zh)):(zh?'未任命':'Unassigned')}</p><p>${zh?'己方水手伤亡':'Friendly sailor casualties'}: ${ownLoss} · ${zh?'沉船':'Ships sunk'}: ${ownShips} · ${zh?'船体损伤':'Hull damage'}: ${ownIds.reduce((v,id)=>v+(r.damage?.[id]||0),0)}%</p><p>${zh?'战术':'Tactic'}: ${esc(n(NAVAL_TACTICS[(typeof r.tactics==='object'?r.tactics?.[ownIds[0]]:r.tactics)||snapshot?.tactic]?.name,zh))} · ${zh?'天气因素':'Weather factor'}: ${r.weather}% · ${r.captured>0?(r.winner===s.player?(zh?'俘获敌舰':'Enemy ships captured'):(zh?'己舰被俘':'Friendly ships captured')):(zh?'俘获舰船':'Ships captured')}: ${r.captured||0}</p>${battleFactorsHtml(r,ownIds,zh)}${snapshot?.reserve?`<p>${zh?'己方舰队遭遇袭击时仍处于封存或整备状态，战力只有正常水平的40%。':'Our fleet was still in reserve or mobilizing when attacked, with only 40% of normal combat readiness.'}</p>`:''}${r.capturedCommander?.owner===s.player?`<p>${zh?'己方舰长被俘，可在舰队页赎回。':'Our fleet commander was captured. Ransom is available on the Fleets tab.'}</p>`:r.capturedCommander?.holder===s.player?`<p>${zh?'敌方舰长被俘。':'An enemy fleet commander was captured.'}</p>`:''}${enemyLossHtml(r,s.player,zh)}</article>`;
+   const ownIds=r.participants.filter(id=>own.some(f=>f.id===id)),snapshot=ownIds.map(id=>r.snapshots?.[id]).find(Boolean),ownLoss=ownIds.reduce((v,id)=>v+(r.losses[id]?.sailors||0),0),ownShips=ownIds.reduce((v,id)=>v+(r.losses[id]?.sunk||0),0);
+   return `<article class="naval-card"><h3>${r.coordinated?(zh?'协同海战':'COORDINATED NAVAL BATTLE'):(zh?'海战':'NAVAL BATTLE')} · ${r.month}/${Math.abs(r.year)} BCE</h3><p>${esc(n(zone(r.zone)?.name,zh))} · ${r.winner===s.player?(zh?'己方获胜':'Friendly victory'):(zh?'己方撤退或失利':'Withdrawal or defeat')}</p>${battleFleetHtml(r,ownIds,zh)}<p>${zh?'己方水手伤亡':'Friendly sailor casualties'}: ${ownLoss} · ${zh?'沉船':'Ships sunk'}: ${ownShips} · ${zh?'船体损伤':'Hull damage'}: ${ownIds.reduce((v,id)=>v+(r.damage?.[id]||0),0)}%</p><p>${zh?'战术':'Tactic'}: ${esc(n(NAVAL_TACTICS[(typeof r.tactics==='object'?r.tactics?.[ownIds[0]]:r.tactics)||snapshot?.tactic]?.name,zh))} · ${zh?'天气因素':'Weather factor'}: ${r.weather}% · ${r.captured>0?(r.winner===s.player?(zh?'俘获敌舰':'Enemy ships captured'):(zh?'己舰被俘':'Friendly ships captured')):(zh?'俘获舰船':'Ships captured')}: ${r.captured||0}</p>${battleFactorsHtml(r,ownIds,zh)}${snapshot?.reserve?`<p>${zh?'己方舰队遭遇袭击时仍处于封存或整备状态，战力只有正常水平的40%。':'Our fleet was still in reserve or mobilizing when attacked, with only 40% of normal combat readiness.'}</p>`:''}${r.capturedCommander?.owner===s.player?`<p>${zh?'己方舰长被俘，可在舰队页赎回。':'Our fleet commander was captured. Ransom is available on the Fleets tab.'}</p>`:r.capturedCommander?.holder===s.player?`<p>${zh?'敌方舰长被俘。':'An enemy fleet commander was captured.'}</p>`:''}${enemyLossHtml(r,s.player,zh)}</article>`;
   }).join('')||`<p>${zh?'尚无海上报告。':'No naval reports yet.'}</p>`;
  }
  if(selected==='intelligence'){
