@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=faces-reported-names-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-reported-names-1';
+import {createFictionalPerson} from '../dynasties.js?v=faces-reported-names-1';
 import {buildChessboard} from '../chessboard.js?v=faces-reported-names-1';
 import {addReport} from '../character-system.js?v=faces-reported-names-1';
 import {proposeAgreement} from '../agreements.js?v=faces-reported-names-1';
@@ -13,6 +14,12 @@ test('the board does not read hidden foreign plans, plots, armies, personal loya
  for(const a of s.armies.filter(a=>a.owner==='senate'))a.men=999999;
  s.relations['armenia:parthia']=60;assert.ok(proposeAgreement(s,'armenia','parthia','intelligence',{secret:true}).ok);s.coalitions=[{id:'hidden',status:'active',parties:['egypt','parthia','armenia'],target:'caesar',cohesion:1}];
  assert.deepEqual(buildChessboard(s),before);
+});
+test('foreign leaders and movements on the board use reported names rather than current hidden names',()=>{
+ let s=newGame('caesar');const leader=createFictionalPerson(s,{name:['Reported leader','报告领袖'],faction:'egypt',birthYear:-75}),organizer=createFictionalPerson(s,{name:['Organizer','组织者'],faction:'parthia',birthYear:-75});
+ addReport(s,'caesar','egypt',{kind:'leaders',leaders:[leader],source:'spy'});s.world.movementKnowledge.caesar={'movement:test':{id:'movement:test',parent:'parthia',region:'syria',stage:'organized',leader:organizer,leaderName:['Old organizer','旧报告组织者'],supportApprox:1000,year:s.year,month:s.month}};
+ s.world.dynasties.catalog[leader].name=['Hidden leader','秘密领袖'];s.world.dynasties.catalog[organizer].name=['Hidden organizer','秘密组织者'];s=upgradeSave(structuredClone(s));const board=buildChessboard(s);assert.deepEqual(board.nodes.find(n=>n.id==='p:'+leader).label,['Reported leader','报告领袖']);assert.deepEqual(board.nodes.find(n=>n.id==='p:'+organizer).label,['Old organizer','旧报告组织者']);assert.doesNotMatch(JSON.stringify(board),/秘密领袖|秘密组织者/);
+ delete s.world.movementKnowledge.caesar['movement:test'].leaderName;assert.deepEqual(buildChessboard(s).nodes.find(n=>n.id==='p:'+organizer).label,['Unrecorded name','姓名未记录']);
 });
 test('a false accusation is shown as a dated rumor rather than as a confirmed hidden plot',()=>{
  const s=newGame('senate');addReport(s,'senate','senate',{kind:'conspiracy',character:'cato',value:'suspected',source:'spy',confidence:'unverified'});

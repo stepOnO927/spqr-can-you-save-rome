@@ -1,14 +1,13 @@
 import {FACTIONS,ROUTES} from './data.js?v=faces-reported-names-1';
-import {CHARACTER_CATALOG} from './characters.js?v=faces-reported-names-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=faces-reported-names-1';
-import {reportedMovements} from './movements.js?v=faces-reported-names-1';
+import {reportedMovements,movementReportLeaderName} from './movements.js?v=faces-reported-names-1';
+import {visiblePersonName} from './character-system.js?v=faces-reported-names-1';
 
 const opening=['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair=(a,b)=>[a,b].sort().join(':');
 const age=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
 const atWar=(s,a,b)=>s.wars.some(w=>w.includes(a)&&w.includes(b));
 const name=id=>FACTIONS[id]?.short||[id,id];
-const personName=id=>CHARACTER_CATALOG[id]?.name||[id,id];
 const activeMovement=m=>!['settled','collapsed','defeated','victorious'].includes(m.stage);
 const labels={
  war:['At war','交战'],shared_threat:['Possible shared threat','可能的共同威胁'],relation:['Official relations','官方关系'],alliance:['Alliance','同盟'],agreement:['Agreement','条约'],coalition:['Coalition member','联盟成员'],opposes:['Declared concern','公开防范'],leadership:['Reported leadership','报告中的领导'],ownLeadership:['Leadership','本方领导'],office:['Own personnel','本方人员'],family:['Family tie','家族关系'],familyAccord:['Family agreement','家族协定'],patronage:['Recorded family support','已记录的家族支持'],personal:['Recorded personal relationship','已记录的私人关系'],institution:['Local institution','当地机构'],movement:['Political movement','政治运动'],suspicion:['Reported suspicion','报告中的嫌疑']
@@ -20,6 +19,7 @@ const stages={dissatisfaction:['Dissatisfaction','不满'],organized:['Oppositio
 // this projection. In particular, it never reads another actor's plan, plot,
 // true personal allegiance, foreign resources or unobserved military roster.
 export function buildChessboard(s,viewer=s.player){
+ const personName=id=>visiblePersonName(s,viewer,id)||['Unrecorded name','姓名未记录'];
  const nodes=[],links=[],risks=[],advice=[],objectives=[],byId=new Map(),f=s.factions[viewer],ownRegions=s.regions.filter(r=>r.owner===viewer),ownArmies=s.armies.filter(a=>a.owner===viewer&&a.men>0),now=s.year*12+s.month;
  const add=(id,type,label,certainty,detail=[])=>{if(!byId.has(id)){const node={id,type,label,certainty,detail};byId.set(id,node);nodes.push(node)}return byId.get(id)};
  const link=(from,to,kind,certainty,detail,observed=null)=>{if(from!==to&&byId.has(from)&&byId.has(to))links.push({from,to,kind,label:labels[kind],certainty,detail,observed})};
@@ -83,7 +83,7 @@ export function buildChessboard(s,viewer=s.player){
  const foreignMovements=reportedMovements(s,viewer).filter(x=>x.parent!==viewer&&activeMovement(x));
  const ownMovements=(s.world.movements||[]).filter(x=>x.parent===viewer&&activeMovement(x)).map(m=>({id:m.id,parent:m.parent,region:m.region,stage:m.stage,leader:m.leader,supportApprox:Math.round(m.supporters/1000)*1000,own:true}));
  for(const m of [...ownMovements,...foreignMovements].slice(0,6)){
-  const mid='m:'+m.id,place=s.regions.find(r=>r.id===m.region),stage=stages[m.stage]||['Political movement','政治运动'];add(mid,'movement',place?.name||[m.region,m.region],m.own?'confirmed':'reported',[[`${stage[0]} · about ${m.supportApprox} supporters.`,`${stage[1]} · 约 ${m.supportApprox} 名支持者。`],m.own?['Local public movement.','本方当地公开运动。']:['Frontier report; it may be outdated.','边境报告；可能过时。']]);link('f:'+m.parent,mid,'movement',m.own?'confirmed':'reported',['Reported political opposition, not proof of future violence.','报告中的政治反对力量，不代表未来一定诉诸暴力。'],m.own?null:{year:m.year,month:m.month});if(m.leader){const pid='p:'+m.leader;add(pid,'person',personName(m.leader),m.own?'confirmed':'reported',[['A movement representative; reports may be dated.','运动的代表人物；报告可能过时。']]);link(pid,mid,'leadership',m.own?'confirmed':'reported',['Movement leadership','运动领导'],m.own?null:{year:m.year,month:m.month})}
+  const mid='m:'+m.id,place=s.regions.find(r=>r.id===m.region),stage=stages[m.stage]||['Political movement','政治运动'];add(mid,'movement',place?.name||[m.region,m.region],m.own?'confirmed':'reported',[[`${stage[0]} · about ${m.supportApprox} supporters.`,`${stage[1]} · 约 ${m.supportApprox} 名支持者。`],m.own?['Local public movement.','本方当地公开运动。']:['Frontier report; it may be outdated.','边境报告；可能过时。']]);link('f:'+m.parent,mid,'movement',m.own?'confirmed':'reported',['Reported political opposition, not proof of future violence.','报告中的政治反对力量，不代表未来一定诉诸暴力。'],m.own?null:{year:m.year,month:m.month});if(m.leader){const pid='p:'+m.leader;add(pid,'person',m.own?personName(m.leader):(movementReportLeaderName(m)||['Unrecorded name','姓名未记录']),m.own?'confirmed':'reported',[['A movement representative; reports may be dated.','运动的代表人物；报告可能过时。']]);link(pid,mid,'leadership',m.own?'confirmed':'reported',['Movement leadership','运动领导'],m.own?null:{year:m.year,month:m.month})}
  }
  if(f.food<20)risks.push({level:'watch',text:['Food is low. Further losses or interrupted supply could weaken armies.','粮食偏低；进一步损失或补给中断可能削弱军队。'],evidence:['Own treasury and food records','本方财政与粮食记录']});
  for(const r of ownRegions.filter(r=>r.loyalty<35||r.population?.satisfaction<35).slice(0,3))risks.push({level:'watch',text:[`${r.name[0]} shows local discontent; reform may reduce pressure.`,`${r.name[1]}出现地方不满；改革可能缓解压力。`],evidence:['Own theater records','本方战区记录']});
