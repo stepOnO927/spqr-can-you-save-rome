@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=reported-person-names-1';
-import {battlefieldWound,advanceCharacters,illnessRisk} from '../character-system.js?v=reported-person-names-1';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=reported-person-names-1';
+import {newGame,upgradeSave} from '../engine.js?v=campaign-intelligence-privacy-1';
+import {battlefieldWound,advanceCharacters,illnessRisk} from '../character-system.js?v=foreign-name-privacy-1';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=foreign-name-privacy-1';
 import {syncChronicleDispatches,filterChronicle} from '../chronicle.js?v=succession-ui-recovery-1';
 
 test('battle wounds are persisted, affect risk, and notify only the owner',()=>{

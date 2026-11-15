@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=reported-person-names-1';
+import {newGame,upgradeSave} from '../engine.js?v=campaign-intelligence-privacy-1';
 import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=infant-portraits-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=infant-portraits-1';
 

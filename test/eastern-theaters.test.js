@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=reported-person-names-1';
+import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=campaign-intelligence-privacy-1';
 import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
 import historical from '../historical-territories.js';
 

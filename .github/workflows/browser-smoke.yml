@@ -59,6 +59,8 @@ jobs:
               node tools/han-court-smoke.mjs
               node tools/genealogy-dossier-smoke.mjs
               node tools/genealogy-personal-actions-smoke.mjs
+              node tools/foreign-name-privacy-smoke.mjs
+              node tools/campaign-intelligence-privacy-smoke.mjs
               node scripts/multipolar-sim.mjs > multipolar-simulation.json
               node tools/multipolar-smoke.mjs
               node tools/player-strategic-offer-smoke.mjs
