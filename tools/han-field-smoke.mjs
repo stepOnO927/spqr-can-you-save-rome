@@ -15,12 +15,20 @@ try{
  assert.match(await page.locator('#inspector h3').last().innerText(),new RegExp(english));
  assert.doesNotMatch(await page.locator('#inspector h3').last().innerText(),new RegExp(`\\b${armyId}\\b`));
  assert.match(await page.locator('#overview [data-select-army]').nth(1).innerText(),new RegExp(english));
+ await page.locator('#overview [data-select-army]').first().click();
+ assert.match(await page.locator('#inspector').innerText(),/local iron batch/);
+ await page.locator('#recruit').click();
+ assert.match(await page.locator('#message').innerText(),/local iron \d+ → \d+/);
+ assert.equal(await page.locator('#recruit').isDisabled(),true);
  await page.locator('#save').click();await page.reload();await page.locator('#load').click();
  await page.locator('#overview [data-select-army]').nth(1).click();assert.equal(await commander.innerText(),english);
  assert.match(await page.locator('#inspector h3').last().innerText(),new RegExp(english));
  await page.locator('#lang').click();const chinese=await commander.innerText();assert.match(chinese,/[\u3400-\u9fff]/);
  assert.match(await page.locator('#inspector h3').last().innerText(),new RegExp(chinese));
  assert.doesNotMatch(await page.locator('#overview [data-select-army]').nth(1).innerText(),new RegExp(`\\b${armyId}\\b`));
+ await page.locator('#overview [data-select-army]').first().click();
+ assert.match(await page.locator('#inspector').innerText(),/当地铁料/);
+ assert.equal(await page.locator('#recruit').isDisabled(),true);
  assert.deepEqual(errors,[]);
  console.log('Han field commander browser smoke passed: named officer, save/load and both languages.');
 }finally{await browser.close()}

@@ -203,6 +203,7 @@ function recruitHanReserve(s,fronts){
  if(!underDefended||monthIndex(s)-(s.aiHanDefense?.lastRecruitMonth??-Infinity)<6)return;
  const home=s.regions.filter(r=>r.owner==='han'&&r.supply>=6).map(r=>({r,headroom:r.supply*2500-s.armies.filter(a=>a.owner==='han'&&a.region===r.id&&a.men>0).reduce((n,a)=>n+a.men,0)})).filter(x=>x.headroom>=5000).sort((a,b)=>b.headroom-a.headroom)[0]?.r;
  if(!home)return;
+ (s.aiHanDefense||={}).reserveDepot=home.id;
  const quote=recruitQuote(s,'han',home.id,'field',5000),f=s.factions.han;
  if(!quote.ok||f.treasury<quote.quote.treasury+200||f.grain<quote.quote.grain+100)return;
  const result=recruit(s,'han',home.id,'field',{men:5000,log:(msg,meta)=>{if(s.player==='han'||s.intel[s.player]?.[home.id]?.month===monthIndex(s))log(s,msg,{...meta,kind:'recruit'})}});

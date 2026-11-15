@@ -443,6 +443,22 @@ function advanceEasternMarketAI(s){
  return orders;
 }
 
+// A threatened NPC Han depot must receive real iron before it can raise
+// crossbow formations. Use the same paid caravan and loss rules as any trade.
+export function advanceHanMilitarySupply(s){
+ const markets=initializeEasternMarkets(s),destination=s.aiHanDefense?.reserveDepot;
+ if(s.player==='han'||!s.wars.some(w=>w.includes('han'))||!destination||region(s,destination)?.owner!=='han')return null;
+ const depot=markets.regions[destination]?.goods.iron;
+ if(!depot||depot.stock>=1||markets.shipments.some(x=>x.buyer==='han'&&x.destination===destination&&x.commodity==='iron'&&['traveling','blocked'].includes(x.status)))return null;
+ if(s.factions.han.treasury<200)return null;
+ const sources=s.regions.filter(r=>r.owner==='han'&&r.id!==destination&&markets.regions[r.id]?.goods.iron.stock>Math.max(4,markets.regions[r.id].goods.iron.consumption*3));
+ const options=sources.map(r=>({origin:r.id,quote:quoteEasternTrade(s,{seller:'han',buyer:'han',origin:r.id,destination,commodity:'iron',quantity:1})})).filter(x=>x.quote.ok&&s.factions.han.treasury-x.quote.total>=200).sort((a,b)=>a.quote.months-b.quote.months||a.quote.total-b.quote.total);
+ if(!options.length)return null;
+ const placed=placeEasternTrade(s,{seller:'han',buyer:'han',origin:options[0].origin,destination,commodity:'iron',quantity:1});
+ if(placed.ok)placed.shipment.purpose='military_recruitment';
+ return placed.ok?placed.shipment:null;
+}
+
 export function advanceEasternMarkets(s){
  const markets=initializeEasternMarkets(s),now=month(s);if(markets.lastTick===now)return markets;
  markets.lastTick=now;
@@ -456,6 +472,7 @@ export function advanceEasternMarkets(s){
   item.price=marketPrice(markets.regions[r.id],good);
  }
  advanceShipments(s);publishOffers(s);advanceEasternSupplyContracts(s,now);
+ if(s.month%3===0)advanceHanMilitarySupply(s);
  if((!markets.embeddedRoman||markets.autonomousEnabled)&&s.month%3===0){advanceEasternMarketAI(s);publishOffers(s)}
  return markets;
 }

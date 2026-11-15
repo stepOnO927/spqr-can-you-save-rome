@@ -2,12 +2,51 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js?v=faces-reported-names-1';
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=faces-reported-names-1';
-import {activeEasternMerchantPrivilege,advanceEasternMarkets,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-reported-names-1';
+import {activeEasternMerchantPrivilege,advanceEasternMarkets,advanceHanMilitarySupply,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-reported-names-1';
 import {recruit,recruitQuote} from '../han/military.js?v=faces-reported-names-1';
 import {advanceSilk} from '../han/silk-road.js?v=faces-reported-names-1';
 import {roll} from '../han/util.js?v=faces-reported-names-1';
 
 const next=s=>{if(++s.month>12){s.month=1;s.year++}advanceEasternMarkets(s)};
+
+test('Han crossbow recruits consume delivered local iron once, including after a save reload',()=>{
+ let s=newHanGame('han',{seed:212});s.tradeMarkets.embeddedRoman=true;
+ const depot=s.tradeMarkets.regions.changan.goods.iron,source=s.tradeMarkets.regions.hongnong.goods.iron;
+ Object.assign(depot,{stock:0,production:0,consumption:0});Object.assign(source,{stock:5,production:0,consumption:0});
+ const before={treasury:s.factions.han.treasury,manpower:s.factions.han.manpower};
+ assert.ok(recruitQuote(s,'han','changan','field',500).problems.includes('iron'));
+ assert.equal(recruit(s,'han','changan','field',{men:500}).ok,false);
+ assert.equal(s.factions.han.treasury,before.treasury);assert.equal(s.factions.han.manpower,before.manpower);
+ const order=placeEasternTrade(s,{seller:'han',buyer:'han',origin:'hongnong',destination:'changan',commodity:'iron',quantity:1});
+ assert.equal(order.ok,true,order.reason);assert.equal(source.stock,4);
+ assert.ok(recruitQuote(s,'han','changan','field',500).problems.includes('iron'),'iron in transit cannot equip a recruit');
+ s=loadHanSave(serialize(s));for(let i=0;i<order.quote.months;i++)next(s);
+ assert.equal(s.tradeMarkets.shipments.find(x=>x.id===order.shipment.id).status,'delivered');
+ assert.equal(recruitQuote(s,'han','changan','field',500).ok,true);
+ const result=recruit(s,'han','changan','field',{men:500});assert.equal(result.ok,true);
+ assert.deepEqual(s.armies.find(a=>a.id===result.id).equipmentMaterials,{iron:1});
+ assert.equal(s.tradeMarkets.regions.changan.goods.iron.stock,0);
+ assert.equal(s.tradeMarkets.regions.changan.goods.iron.usedForRecruitment,1);
+ s=loadHanSave(serialize(s));assert.equal(s.tradeMarkets.regions.changan.goods.iron.stock,0);
+ assert.equal(s.tradeMarkets.regions.changan.goods.iron.usedForRecruitment,1);
+ assert.ok(recruitQuote(s,'han','changan','field',500).problems.includes('iron'));
+});
+
+test('threatened NPC Han routes finite paid iron to its reserve depot',()=>{
+ let s=newHanGame(null,{seed:213});s.tradeMarkets.embeddedRoman=true;
+ s.wars.push(['han','huhanye']);s.aiHanDefense={reserveDepot:'changan'};
+ Object.assign(s.tradeMarkets.regions.changan.goods.iron,{stock:0,production:0,consumption:0});
+ Object.assign(s.tradeMarkets.regions.hongnong.goods.iron,{stock:5,production:0,consumption:0});
+ const cash=s.factions.han.treasury,shipment=advanceHanMilitarySupply(s);
+ assert.equal(shipment?.purpose,'military_recruitment');assert.equal(shipment.commodity,'iron');
+ assert.equal(shipment.origin,'hongnong');assert.equal(shipment.destination,'changan');
+ assert.ok(s.factions.han.treasury<cash);assert.equal(s.tradeMarkets.regions.hongnong.goods.iron.stock,4);
+ assert.equal(advanceHanMilitarySupply(s),null,'no duplicate while cargo is in transit');
+ s=loadHanSave(serialize(s));for(let i=0;i<shipment.legs.reduce((n,leg)=>n+leg.months,0);i++)next(s);
+ assert.equal(s.tradeMarkets.shipments.find(x=>x.id===shipment.id).status,'delivered');
+ assert.equal(s.tradeMarkets.regions.changan.goods.iron.stock,1);
+ assert.equal(recruitQuote(s,'han','changan','field',5000).ok,true);
+});
 
 test('Han merchant privileges reduce a real caravan cost and survive save/load',()=>{
  let s=newHanGame('han',{seed:57});s.tradeMarkets.embeddedRoman=true;setRelation(s,'han','kangju',70);propose(s,'han','kangju','market');

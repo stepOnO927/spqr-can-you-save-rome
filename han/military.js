@@ -88,11 +88,11 @@ export function recruitQuote(s,owner,regionId,templateId,men=5000){
  const t=templateById(s,owner,templateId),r=s.regions.find(x=>x.id===regionId),f=s.factions[owner];
  if(!t||!r||!f)return {ok:false,reason:'unknown'};
  const st=templateStats(t),k=men/1000;
- const q={treasury:Math.round(st.cost*k*4),grain:Math.round(st.grain*k*2),manpower:men,horses:Math.round(st.horses*k*300),months:t.culture==='han'?2:1};
+ const q={treasury:Math.round(st.cost*k*4),grain:Math.round(st.grain*k*2),manpower:men,horses:Math.round(st.horses*k*300),iron:st.needs.includes('iron')?Math.max(1,Math.ceil(men/5000)):0,months:t.culture==='han'?2:1};
  const problems=[];
  if(r.owner!==owner)problems.push('not_owner');
  if(f.treasury<q.treasury)problems.push('treasury');if(f.grain<q.grain)problems.push('grain');if(f.manpower<men)problems.push('manpower');if((f.horses||0)<q.horses)problems.push('horses');
- if(st.needs.includes('iron')&&!s.regions.some(x=>x.owner===owner&&(x.iron||x.arsenal)))problems.push('iron');
+ if(q.iron&&(s.tradeMarkets?.regions?.[regionId]?.goods?.iron?.stock??0)<q.iron)problems.push('iron');
  if(t.req.frontier&&!r.frontier&&r.kind!=='protectorate')problems.push('frontier_only');
  if(t.req.arsenal&&!s.regions.some(x=>x.owner===owner&&x.arsenal))problems.push('arsenal');
  if(t.req.horses&&!s.regions.some(x=>x.owner===owner&&x.horses)&&cultureOf(owner)==='han')problems.push('horse_country');
@@ -102,8 +102,9 @@ export function recruit(s,owner,regionId,templateId,{men=5000,commander=null,log
  const q=recruitQuote(s,owner,regionId,templateId,men);if(!q.ok)return q;
  const f=s.factions[owner],t=templateById(s,owner,templateId);
  f.treasury-=q.quote.treasury;f.grain-=q.quote.grain;f.manpower-=men;f.horses=(f.horses||0)-q.quote.horses;
+ if(q.quote.iron){const item=s.tradeMarkets.regions[regionId].goods.iron;item.stock-=q.quote.iron;item.usedForRecruitment=(item.usedForRecruitment||0)+q.quote.iron}
  const id=`a${s.nextArmy=(s.nextArmy||100)+1}`;
- const army={id,owner,region:regionId,men,morale:60,training:30,supply:100,template:{id:t.id,name:t.name,mix:{...t.mix}},commander,move:null,forming:q.quote.months};
+ const army={id,owner,region:regionId,men,morale:60,training:30,supply:100,template:{id:t.id,name:t.name,mix:{...t.mix}},commander,move:null,forming:q.quote.months,...(q.quote.iron?{equipmentMaterials:{iron:q.quote.iron}}:{})};
  s.armies.push(army);assignFieldCommander(s,army);
  log(['New formation raised in %REGION%.','于%REGION%新编一军。'],{region:regionId,owner});return {ok:true,id};
 }
