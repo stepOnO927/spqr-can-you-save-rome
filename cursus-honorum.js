@@ -2,6 +2,7 @@ import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=faces-reporte
 import {createFictionalPerson} from './dynasties.js?v=faces-reported-names-1';
 import {initializeOffices,appointOffice} from './office-system.js?v=faces-reported-names-1';
 import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=faces-reported-names-1';
+import {generateFictionalName} from './fictional-names.js?v=faces-reported-names-1';
 
 const ROMAN=new Set(['caesar','senate']);
 const clamp=n=>Math.max(0,Math.min(100,Math.round(n)));
@@ -448,10 +449,8 @@ function advanceTalentSearches(s,c){
   if(--q.remaining>0)continue;
   const r=s.regions.find(x=>x.id===q.regionId),cooperating=c.cooperations.some(x=>x.actor===q.actor&&x.kind==='professional'&&x.status==='active'&&person(s,x.id)?.faction===x.target&&present(s,x.id)),chance=Math.min(.9,.55+(r?.loyalty||50)/300+(cooperating ? .08 : 0));
   if(r?.owner!==q.actor||roll(s)>=chance){q.status='no_candidate';q.resolved={year:s.year,month:s.month};continue}
-  const n=c.talents.length+1,first=['Aulus','Gaius','Marcus','Titus','Publius','Lucius'][n%6],family=['Varenus','Marcellinus','Cassianus','Valerius','Fabius','Sennius'][Math.floor(n/6)%6];
-  const eastern=['Aram','Nikanor','Mithradates','Dionysios','Vahan','Leucon'][n%6];
-  const roman=ROMAN.has(q.actor),namePair=roman?[first+' '+family+' of '+(r.city||r.name[0]),['奥卢斯','盖乌斯','马尔库斯','提图斯','普布利乌斯','卢基乌斯'][n%6]+'·'+['瓦雷努斯','马尔凯利努斯','卡西亚努斯','瓦莱里乌斯','法比乌斯','森尼乌斯'][Math.floor(n/6)%6]+'（'+r.name[1]+'）']:[eastern+' of '+(r.city||r.name[0]),['阿拉姆','尼卡诺尔','米特拉达梯','狄奥尼西奥斯','瓦罕','列乌孔'][n%6]+'（'+r.name[1]+'）'];
-  const id=createFictionalPerson(s,{name:namePair,faction:q.actor,birthYear:s.year-27-n%20,location:r.id,sex:n%5===0?'female':'male',role:['Simulated '+q.field+' talent','模拟'+({provincial:'地方',scholarly:'学术',merchant:'商贸',military:'军务'}[q.field])+'人才']});
+  const n=c.talents.length+1,identity=generateFictionalName(s,{originFaction:q.actor,location:r.id}),namePair=identity.name;
+  const id=createFictionalPerson(s,{...identity,faction:q.actor,birthYear:s.year-27-n%20,location:r.id,sex:n%5===0?'female':'male',role:['Simulated '+q.field+' talent','模拟'+({provincial:'地方',scholarly:'学术',merchant:'商贸',military:'军务'}[q.field])+'人才']});
   const p=person(s,id);p.education=58+Math.floor(roll(s)*31);p.influence=35+Math.floor(roll(s)*35);p.loyalty=45+Math.floor(roll(s)*35);p.ambition=30+Math.floor(roll(s)*55);
   c.talents.push({id,actor:q.actor,regionId:r.id,field:q.field,found:{year:s.year,month:s.month},source:'talent search'});
   q.status='found';q.id=id;q.resolved={year:s.year,month:s.month};

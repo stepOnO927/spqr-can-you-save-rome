@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=faces-reported-names-1';
 import {appointOffice,officeEffects} from '../office-system.js?v=faces-reported-names-1';
 import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=faces-reported-names-1';
+import {FACTION_NAME_CULTURE,NAME_POOLS} from '../fictional-names.js?v=faces-reported-names-1';
 
 // Later contact scenarios need a delivered report; a failed inquiry is retried.
 function reachGovernmentStage(s,target,level,actor=s.player){
@@ -270,6 +271,21 @@ test('regional talent search costs money, takes time and never repeats freely',(
  const id=c.talentSearches.at(-1).id;assert.equal(s.world.characters[id].faction,'senate');
  assert.equal(c.talents.at(-1).id,id);
  assert.equal(upgradeSave(structuredClone(s)).world.cursus.talents.at(-1).id,id);
+});
+test('regional searches generate persistent talent names from each court’s cultural pool',()=>{
+ for(const [faction,region] of [['senate','roma'],['egypt','egypt'],['parthia','parthia'],['han','hanGuanzhong']]){
+  let s=newGame(faction),c=initializeCursus(s);
+  assert.equal(searchTalent(s,region,'provincial').ok,true);
+  s.world.intelSeed=0;for(let i=0;i<3;i++)advanceCursus(s);
+  const id=c.talentSearches.at(-1).id,profile=s.world.dynasties.catalog[id];
+  assert.equal(c.talentSearches.at(-1).status,'found');
+  assert.deepEqual(profile.culture,NAME_POOLS[FACTION_NAME_CULTURE[faction]].culture);
+  assert.equal(s.world.characters[id].faction,faction);
+  assert.equal(s.world.characters[id].homeland,region);
+  s=upgradeSave(structuredClone(s));
+  assert.deepEqual(s.world.dynasties.catalog[id].name,profile.name);
+  assert.deepEqual(s.world.dynasties.catalog[id].culture,profile.culture);
+ }
 });
 test('limited cooperation and competing offers preserve the official agency',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;
