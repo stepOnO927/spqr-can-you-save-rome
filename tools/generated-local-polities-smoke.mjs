@@ -19,7 +19,7 @@ try{
   const chief=entities.find(entity=>entity.type==='strongman'&&localDiscoveryLevel(s,s.player,entity.id)>=3);
   const village=s.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.sponsor===chief?.id);
   if(!known||!chief||!village)throw Error('no discovered generated city, chief and village');
-  village.village.road=1;village.village.storedFood=Math.max(village.village.storedFood,village.village.foodNeed*4);s.month=6;advanceVillages(s);
+  village.village.road=1;village.village.granary=1;village.village.storedFood=Math.max(village.village.storedFood,village.village.foodNeed*4);s.month=6;advanceVillages(s);
   if(village.village.lastEvent?.kind!=='harvest')throw Error('no seeded village harvest event');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
   return {count:entities.length,name:known.name[0].toUpperCase(),population:known.population,ruler:known.ruler.name[0],chief:chief.name[0].toUpperCase(),village:village.name[0].toUpperCase(),chiefPopulation:chief.population,villagePopulation:village.village.population};

@@ -39,6 +39,12 @@ Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/c
 - 仓库原有浏览器长流程测试：最终本地 `dist/` 运行通过，覆盖地图、行军、外交信件、情报、回合及视图切换；CI 和 Cloudflare 真实地址仍需复测。
 - 原 GitHub Pages 的 `/` 与 `/map-lab/` 在准备阶段 HTTP HEAD 均返回 200。本分支未修改 GitHub Pages 配置、`main`、仓库可见性或现有部署。Cloudflare 真实部署尚未创建，因此不能把本地验证当作线上验收。
 
+### 11 月 15 日增量验证
+
+- 草稿 PR #242 的 GitHub Actions `Cloudflare Pages package` 在 `94b19751` 上通过：`dist/` 有 293 个公开文件，总计 4.57 MiB，单个最大文件 1.06 MiB，低于 25 MiB 上限。云端 Chromium 验证主战役、Map Lab、Han、存档、跨源导入、未知键拒绝及站内资源请求均通过。
+- 同一提交的 `SPQR quality` 和 `Poki release validation` 通过；三组较长的浏览器回归在记录本条时仍运行。此前的独立村落提交已通过三组浏览器回归，包括地图村落标记与建设操作。最新地区化名称与难度数值提交 `8347a782` 仍须完成云端复验。
+- 这些均是 GitHub 托管的测试，不是 Cloudflare Pages 实际公网站点验收。GitHub Pages、仓库公开状态和旧部署未改动。
+
 ## 切换验收清单
 
 - [ ] 准备分支审查、CI 通过；仅在准备工作获准后合并到 `main`。

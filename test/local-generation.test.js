@@ -21,6 +21,19 @@ test('fictional local names vary by seed and broad theater without repeating one
  for(let i=0;i<samples.length;i++)for(let j=i+1;j<samples.length;j++)assert.equal([...samples[i]].filter(name=>samples[j].has(name)).length,0);
 });
 
+test('one seeded microstate never weakens when difficulty rises',()=>{
+ const modes=['travel','beginner','standard','hard','expert'];
+ for(let seed=1;seed<=64;seed++){
+  let previous=null;
+  for(const mode of modes){
+   const polity=generatedLocalPolities(seed,mode,new Set(['syria']))[0];
+   assert.equal(polity.type,'microstate');
+   if(previous)for(const key of ['population','militia','treasury','food','fort','strategy'])assert.ok(polity[key]>=previous[key],`${seed}: ${mode} ${key}`);
+   previous=polity;
+  }
+ }
+});
+
 test('difficulty raises generated polity counts and coherent population, militia and resource bands',()=>{
  const modes=['travel','beginner','standard','hard','expert'];
  for(const seed of [1,42,305419896,4000000000]){
