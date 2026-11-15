@@ -24,12 +24,16 @@ try{
  await loss.locator('[data-report-region="italiaN"]').click();assert.equal(await page.locator('#region-choice').inputValue(),'italiaN');
  await page.locator('[data-tab="chronicle"]').click();await page.locator('[data-report-filter="type"]').selectOption('control');
  assert.ok(await page.locator('.report-card').filter({hasText:'Northern Italy'}).count()>=2);
+ assert.equal(await page.locator('[data-report-filter="type"] option[value="battle"]').textContent(),'Battle');
  await page.locator('#lang').click();assert.match(await page.locator('.report-card').first().innerText(),/意大利北部/);
+ assert.equal(await page.locator('[data-report-filter="type"] option[value="battle"]').textContent(),'战斗');
+ assert.equal(await page.locator('[data-report-filter="type"] option[value="siege"]').textContent(),'围攻');
+ assert.equal(await page.locator('[data-report-filter="type"] option[value="scoutReturn"]').textContent(),'斥候回报');
  await page.locator('#new').click();await page.locator('.setup-saves [data-slot="save"]').click();
  await page.locator('#new').click();await page.locator('.setup-saves [data-slot="load"]').click();
  await page.locator('#keep-legacy').click();
  await page.locator('#open-notifications').click();assert.ok(await page.locator('.report-card').count());
- await page.screenshot({path:'tools/phase-x-ui.png',fullPage:true});
+ await page.screenshot({path:resolve(root,'outputs/phase-x-ui.png'),fullPage:true});
  await page.locator('#new').click();await page.locator('#start-campaign').click();
  await page.locator('[data-tab="map"]').click();await page.locator('#order').click();await page.locator('#march-destination').selectOption('italiaN');
  await page.locator('[data-review="attack"]').click();

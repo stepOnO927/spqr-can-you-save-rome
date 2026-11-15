@@ -9,6 +9,10 @@ const dict={en:{chronicle:'Campaign Chronicle',notifications:'Notifications',bri
 Object.assign(dict.en,{construction:'Construction',research:'Research',government:'Government',economy:'Economy',economicCrisis:'Economic crisis',rulerDeath:'Ruler death',armyDestroyed:'Army destroyed',territories:'Territories',search:'Search'});
 Object.assign(dict.zh,{construction:'建造',research:'研究',government:'政府',economy:'经济',economicCrisis:'经济危机',rulerDeath:'统治者逝世',armyDestroyed:'军队覆灭',territories:'战区',search:'搜索'});
 export const reportLabel=(key,lang)=>dict[lang]?.[key]||key;
+const filterTypes={
+ en:{control:'Territorial control',battle:'Battle',siege:'Siege',movement:'Army movement',scoutReturn:'Scout return',recruitment:'Recruitment',objective:'Campaign objective',rebellion:'Rebellion',warContribution:'Wartime contributions',emergencyProvisions:'Emergency provisions'},
+ zh:{control:'领土控制',battle:'战斗',siege:'围攻',movement:'军队行军',scoutReturn:'斥候回报',recruitment:'征召',objective:'战役目标',rebellion:'叛乱',warContribution:'战时城镇筹款',emergencyProvisions:'紧急征粮'}
+};
 export const eventDate=(e,lang)=>lang==='zh'?`公元${e.year<0?'前':'后'}${Math.abs(e.year)||1}年${e.month}月`:`${e.month}/${Math.abs(e.year)||1} ${e.year<0?'BCE':'CE'}`;
 export function eventCard(s,e,lang,notification=false){
   const d=dict[lang],copy=eventText(s,e,lang),note=s.notifications?.find(n=>n.eventId===e.id),read=notification?!!note?.read:true;
@@ -24,7 +28,7 @@ function options(items,selected,allLabel){return `<option value="">${escapeRepor
 export function chronicleHtml(s,lang,filters={}){
   const d=dict[lang],events=(s.campaignEvents||[]).filter(e=>(!filters.date||`${e.year}:${e.month}`===filters.date)&&(!filters.type||e.type===filters.type||e.category===filters.type)&&(!filters.faction||[e.factionId,e.targetFactionId,...(e.affectedFactionIds||[])].includes(filters.faction))&&(!filters.region||e.regionId===filters.region)&&(!filters.query||Object.values(eventText(s,e,lang)).join(' ').toLocaleLowerCase().includes(filters.query.toLocaleLowerCase())));
   const dates=[...new Set((s.campaignEvents||[]).map(e=>`${e.year}:${e.month}`))].map(key=>{const [year,month]=key.split(':').map(Number);return [key,eventDate({year,month},lang)]});
-  const types=['military','political','diplomatic','intelligence','economy','control','battle','siege','movement','objective','rebellion','government','rulerDeath','armyDestroyed','construction','research','economicCrisis'].map(x=>[x,d[x]||x]);
+  const types=['military','political','diplomatic','intelligence','economy','control','battle','siege','movement','scoutReturn','recruitment','objective','rebellion','warContribution','emergencyProvisions','government','rulerDeath','armyDestroyed','construction','research','economicCrisis'].map(x=>[x,filterTypes[lang]?.[x]||d[x]||x]);
   return `<div class="report-filters"><label>${d.search}<input type="search" data-report-filter="query" value="${escapeReport(filters.query||'')}" placeholder="${d.search}"></label><label>${d.date}<select data-report-filter="date">${options(dates,filters.date,d.all)}</select></label><label>${d.type}<select data-report-filter="type">${options(types,filters.type,d.all)}</select></label><label>${d.faction}<select data-report-filter="faction">${options(Object.entries(FACTIONS).map(([id,f])=>[id,f.short[lang==='zh'?1:0]]),filters.faction,d.all)}</select></label><label>${d.region}<select data-report-filter="region">${options(s.regions.map(r=>[r.id,r.name[lang==='zh'?1:0]]),filters.region,d.all)}</select></label></div><div class="report-list">${events.map(e=>eventCard(s,e,lang)).join('')||`<p>${d.noEvents}</p>`}</div>`;
 }
 export function notificationsHtml(s,lang){
