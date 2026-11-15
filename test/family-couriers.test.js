@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=regency-tenure-1';
+import {newGame,upgradeSave} from '../engine.js?v=inquiry-inbox-1';
 import {createFictionalPerson,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,advanceDynasties} from '../dynasties.js?v=conspiracy-name-1';
-import {syncAsylumReplies,syncFamilyReplies,receivedMail} from '../epistulae.js?v=conspiracy-name-1';
-import {mailboxHtml} from '../mail-ui.js?v=conspiracy-name-1';
+import {syncAsylumReplies,syncFamilyReplies,receivedMail} from '../epistulae.js?v=inquiry-inbox-1';
+import {mailboxHtml} from '../mail-ui.js?v=inquiry-inbox-1';
 
 function scenario(kind,seed){
  const s=newGame('caesar');let request,person;

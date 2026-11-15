@@ -32,19 +32,19 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=regency-tenure-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=inquiry-inbox-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=succession-ui-recovery-1';
-import {createCharacterUI} from './character-ui.js?v=regency-tenure-1';
+import {createCharacterUI} from './character-ui.js?v=inquiry-inbox-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=born-portraits-eight-1';
-import {renderAidRequest} from '../strategic-aid-ui.js?v=regency-tenure-1';
+import {renderAidRequest} from '../strategic-aid-ui.js?v=inquiry-inbox-1';
 import {reportedArmies,visiblePersonName} from '../character-system.js?v=regency-tenure-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=travel-2';
 import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=conspiracy-name-1';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=conspiracy-name-1';
-import {receivedMail,unreadCount} from '../epistulae.js?v=conspiracy-name-1';
+import {receivedMail,unreadCount} from '../epistulae.js?v=inquiry-inbox-1';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGame();

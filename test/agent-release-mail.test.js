@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=regency-tenure-1';
+import {newGame,upgradeSave} from '../engine.js?v=inquiry-inbox-1';
 import {requestAgentRelease,advanceAgentRequests,answerAgentRelease} from '../character-system.js?v=regency-tenure-1';
-import {syncAgentReleaseLetters,receivedMail,replyToLetter} from '../epistulae.js?v=conspiracy-name-1';
-import {mailboxHtml} from '../mail-ui.js?v=conspiracy-name-1';
+import {syncAgentReleaseLetters,receivedMail,replyToLetter} from '../epistulae.js?v=inquiry-inbox-1';
+import {mailboxHtml} from '../mail-ui.js?v=inquiry-inbox-1';
 const actions={answerAgentRelease};
 function setup(seed){const s=newGame('caesar');s.world.captives.push({id:'agent1',owner:'senate',holder:'caesar',state:'held'});assert.equal(requestAgentRelease(s,'senate','agent1').ok,true);advanceAgentRequests(s);s.world.intelSeed=seed;advanceAgentRequests(s);syncAgentReleaseLetters(s);return s}
 const letters=s=>receivedMail(s).filter(m=>m.context?.kind==='agent_release_request');

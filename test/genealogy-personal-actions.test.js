@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission,sendInquiry,tick} from '../engine.js?v=regency-tenure-1';
+import {newGame,upgradeSave,queueMission,sendInquiry,tick} from '../engine.js?v=inquiry-inbox-1';
 import {createFictionalPerson} from '../dynasties.js?v=conspiracy-name-1';
 import {genealogyMeetingContacts} from '../genealogy-personal-actions.js?v=regency-tenure-1';
 import {addReport,reportedPersonName,advanceOperations} from '../character-system.js?v=regency-tenure-1';
