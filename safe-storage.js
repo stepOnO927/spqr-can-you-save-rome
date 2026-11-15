@@ -1,0 +1,51 @@
+// Storage may be inaccessible in private browsing or a restricted game frame.
+// The in-memory copy keeps the current session playable without claiming persistence.
+export function createStore(name, host = globalThis) {
+  const memory = new Map();
+  const pending = new Set();
+  let backing;
+  let persistent = false;
+  try {
+    backing = host[name];
+    const probe = '__spqr_storage_probe__';
+    backing.setItem(probe, '1');
+    backing.removeItem(probe);
+    persistent = !host.spqrVolatileStorage?.some?.(item => String(item).startsWith(name));
+  } catch {
+    backing = null;
+  }
+  return {
+    get persistent() { return persistent; },
+    getItem(key) {
+      const id = String(key);
+      if (pending.has(id)) return memory.has(id) ? memory.get(id) : null;
+      if (backing) {
+        try {
+          const value = backing.getItem(id);
+          if (value !== null) return value;
+        } catch { persistent = false; }
+      }
+      return memory.has(id) ? memory.get(id) : null;
+    },
+    setItem(key, value) {
+      const id = String(key), text = String(value);
+      memory.set(id, text);
+      if (backing) {
+        try { backing.setItem(id, text); if (persistent) pending.delete(id); else pending.add(id); }
+        catch { persistent = false; pending.add(id); }
+      } else pending.add(id);
+    },
+    removeItem(key) {
+      const id = String(key);
+      memory.delete(id);
+      pending.add(id);
+      if (backing) {
+        try { backing.removeItem(id); pending.delete(id); }
+        catch { persistent = false; }
+      }
+    }
+  };
+}
+
+export const localStore = createStore('localStorage');
+export const sessionStore = createStore('sessionStorage');

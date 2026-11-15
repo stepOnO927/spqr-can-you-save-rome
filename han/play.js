@@ -1,3 +1,6 @@
+import {localStore as localStorage} from '../safe-storage.js';
+import {startupDiagnostics} from '../inspector-diagnostics.js';
+import {isLiuClan} from './dynasty.js';
 import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=faces-main-20261114-1';
 import {FACTIONS,PLAYABLE,ROUTES} from './data.js';
 import {drawMap} from './map.js';
@@ -15,9 +18,9 @@ let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,a
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function message(en,zh){$('message').textContent=D(en,zh)}
 function armyLabel(a){const formation=L(a.template?.name)||D('Field army','野战军'),commander=L(s.persons[a.commander]?.name);return commander?`${formation} · ${commander}`:formation}
-function save(){if(!s)return;localStorage.setItem(SAVE_KEY('browser'),serialize(s));window.spqrVolatileStorage?.some(x=>x.startsWith('localStorage'))?message('Temporarily saved; export before reloading.','已暂存；刷新前请导出存档。'):message('Campaign saved.','战役已保存。')}
-function load(){const raw=localStorage.getItem(SAVE_KEY('browser'));if(!raw){message('No saved campaign.','尚无存档。');return}try{s=loadHanSave(raw);initExperience(s);selected=null;army=null;marketOpen=false;courtOpen=false;render();message('Campaign loaded.','战役已读取。')}catch(e){message('Save could not be loaded: '+e.message,'无法读取存档：'+e.message)}}
-function begin(f){s=newHanGame(f);initExperience(s,{guided:true});selected=s.regions.find(r=>r.owner===f)?.id||null;army=null;marketOpen=false;courtOpen=false;render();message('Choose an objective, inspect your realm, then act.','先查看目标与国势，再作出选择。')}
+function save(){if(!s)return;localStorage.setItem(SAVE_KEY('browser'),serialize(s));message(localStorage.persistent?'Campaign saved.':'Temporarily saved for this session; reloading or closing the page will lose it.',localStorage.persistent?'战役已保存。':'仅暂存于本次会话；刷新或关闭页面后会丢失。')}
+function load(){const raw=localStorage.getItem(SAVE_KEY('browser'));if(!raw){message('No saved campaign.','尚无存档。');return}try{s=loadHanSave(raw);const report=startupDiagnostics(s,{mode:'han',isLiuClan});if(report.fatal.length)throw Error(report.fatal.map(x=>x.code).join(', '));initExperience(s);selected=null;army=null;marketOpen=false;courtOpen=false;render();message('Campaign loaded.','战役已读取。')}catch(e){message('Save could not be loaded: '+e.message,'无法读取存档：'+e.message)}}
+function begin(f){s=newHanGame(f);const report=startupDiagnostics(s,{mode:'han',isLiuClan});if(report.fatal.length){s=null;render();message('Campaign data could not be initialized.','战役数据无法初始化。');return}initExperience(s,{guided:true});selected=s.regions.find(r=>r.owner===f)?.id||null;army=null;marketOpen=false;courtOpen=false;render();message(localStorage.persistent?'Choose an objective, inspect your realm, then act.':'Play is available; progress cannot persist in this browser.',localStorage.persistent?'先查看目标与国势，再作出选择。':'仍可游玩；此浏览器无法持久保存进度。')}
 function navigateExperience(kind,id){
  marketOpen=false;courtOpen=false;
  if(kind==='army'){const selectedArmy=s.armies.find(a=>a.id===id&&a.owner===s.player)||s.armies.find(a=>a.owner===s.player&&a.men>0);if(selectedArmy){army=selectedArmy.id;selected=selectedArmy.region;experienceAction(s,'army',army)}}

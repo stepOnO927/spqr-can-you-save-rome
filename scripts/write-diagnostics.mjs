@@ -1,0 +1,15 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {FEATURES} from '../feature-registry.js';
+const inventory=JSON.parse(await readFile('diagnostics/inventory.json','utf8')).summary;
+const tap=await readFile('diagnostics/unit.tap','utf8');
+const value=key=>Number([...tap.matchAll(new RegExp('^# '+key+' (\\d+)$','gm'))].at(-1)?.[1]??NaN);
+const tests=value('tests'),passed=value('pass'),failed=value('fail');
+if(!Number.isFinite(tests)||tests!==passed||failed!==0)throw Error('Unit test evidence is incomplete or failing');
+const features=FEATURES.map(feature=>({id:feature.id,status:feature.tests.some(p=>p.endsWith('.test.js'))?'PARTIAL':'NOT TESTED',evidence:feature.tests.filter(p=>p.endsWith('.test.js')),limits:'Browser and full gameplay chain are separate release checks.'}));
+const report={schema:'spqr-diagnostics-v1',createdAt:new Date().toISOString(),environment:'GitHub Actions',fast:{tests,passed,failed,controlledRegression:'detected and restored'},inventory,features};
+await writeFile('diagnostics/latest.json',JSON.stringify(report,null,2));
+await writeFile('diagnostics/feature-status.json',JSON.stringify(features,null,2));
+await writeFile('diagnostics/latest.md',`# SPQR fast diagnostics\n\nGenerated ${report.createdAt} on GitHub Actions.\n\n- Unit and invariant tests: ${passed}/${tests} passed.\n- Controlled negative-troop regression: detected, then clean fixture verified.\n- Tracked files: ${inventory.totalFiles}; runtime sources: ${inventory.runtimeSourceFiles}.\n- Missing local references: ${inventory.missingLocalReferences.length}.\n- Static reachability candidates: ${inventory.unreachedCandidates.length}; these are not proven bugs.\n\nA green fast suite does not verify browser controls, the Poki package or every feature. See the separate browser and Poki workflows.\n`);
+await writeFile('diagnostics/performance.json',JSON.stringify({status:'NOT TESTED',reason:'Performance is measured by the browser and extended workflows, not inferred from the fast suite.'},null,2));
+await writeFile('diagnostics/poki-readiness.md','# Poki readiness\n\nStatus: NOT TESTED in the fast suite. The separate Poki release validation workflow builds and tests the package in a cloud touch browser. Passing this fast suite does not authorize submission.\n');
+console.log(JSON.stringify({tests,passed,failed,featuresPartial:features.filter(f=>f.status==='PARTIAL').length}));

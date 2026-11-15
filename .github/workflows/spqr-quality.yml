@@ -1,0 +1,57 @@
+name: SPQR quality
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * 1'
+permissions:
+  contents: read
+jobs:
+  fast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: git ls-files '*.js' '*.mjs' '*.cjs' | xargs -r -n 1 node --check
+      - name: Inventory source and import graph
+        run: node scripts/audit-inventory.mjs
+      - name: Run simulation and invariant tests
+        run: |
+          mkdir -p diagnostics
+          set -o pipefail
+          npm test | tee diagnostics/unit.tap
+      - name: Prove controlled regression is detected and restored
+        run: node scripts/inspector-regression.mjs | tee diagnostics/regression.json
+      - name: Write evidence reports
+        run: node scripts/write-diagnostics.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spqr-fast-diagnostics
+          path: diagnostics/
+  extended:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run multi-country AI simulation
+        run: node scripts/multipolar-sim.mjs > multipolar-simulation.json
+      - name: Run Roman development simulation
+        run: node scripts/imperium-sim.mjs > imperium-simulation.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spqr-extended-diagnostics
+          path: |
+            multipolar-simulation.json
+            imperium-simulation.json

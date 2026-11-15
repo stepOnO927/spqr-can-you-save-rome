@@ -17,6 +17,7 @@ async function open(url){
 try{
   const main=await open(base+'/');
   assert.equal(await main.locator('#save-transfer-open').evaluate(button=>button.parentElement.classList.contains('setup-saves')),true);
+  await main.locator('.setup-advanced').evaluate(el=>el.open=true);
   await main.locator('#campaign-guide').uncheck();
   await main.locator('#start-campaign').click();
   assert.equal(await main.locator('#save-transfer-open').evaluate(button=>button.parentElement.classList.contains('controls')),true);

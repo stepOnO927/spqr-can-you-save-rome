@@ -9,7 +9,7 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/',{waitUntil:'domcontentloaded'});
   await page.locator('.setup-panel').waitFor();
-  await page.locator('#faction-choice').selectOption(side);
+  await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#faction-choice').selectOption(side);
   await page.locator('#start-campaign').click();
   await page.waitForURL('**/map-lab/');await page.locator('#return-campaign').click();await page.waitForURL(base+'/');
   await page.locator('#what-now').click();

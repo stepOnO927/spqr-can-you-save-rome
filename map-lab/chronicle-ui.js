@@ -1,3 +1,4 @@
+import {localStore as localStorage} from '../safe-storage.js';
 import {campaignYear,campaignDate} from '../campaign-date.js?v=faces-main-20261114-1';
 import {filterChronicle,formatChronicleEntry,chronicleDate,syncChronicleDispatches} from '../chronicle.js?v=faces-main-20261114-1';
 import {FACTIONS} from '../data.js?v=faces-main-20261114-1';
