@@ -72,6 +72,19 @@ test('dated Parthian office reports, two contact routes and negotiated employmen
  assert.equal(contactOfficial(s,target,referred,'introduction').ok,true);
  const restored=upgradeSave(structuredClone(s));assert.equal(restored.world.cursus.offers.at(-1).status,'accepted');
 });
+test('a completed recommendation names both persistent people and keeps its reported name after save/load',()=>{
+ let s=newGame('senate');const c=initializeCursus(s),source=c.varroId,target=c.foreignPosts.parthia.administration;
+ const sourceName=[...s.world.dynasties.catalog[source].name],targetName=[...s.world.dynasties.catalog[target].name];
+ c.networks[source]=[target];assert.equal(requestRecommendation(s,source).ok,true);
+ advanceCursus(s);assert.equal(c.recommendations.at(-1).status,'delivered');
+ const message=s.log.find(entry=>entry.en?.includes('professional contact'));
+ assert.ok(message);assert.match(message.en,new RegExp(sourceName[0]));assert.match(message.en,new RegExp(targetName[0]));
+ assert.match(message.zh,new RegExp(sourceName[1]));assert.match(message.zh,new RegExp(targetName[1]));
+ assert.deepEqual(c.referralSources.senate.at(-1).nameSnapshot,targetName);
+ s.world.dynasties.catalog[target].name=['Changed secretly','秘密改名'];s=upgradeSave(structuredClone(s));
+ assert.deepEqual(s.world.cursus.referralSources.senate.at(-1).nameSnapshot,targetName);
+ assert.equal(s.log.find(entry=>entry.en?.includes('professional contact')).en,message.en);
+});
 test('Senate consultation, assembly voting and administration remain separate',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
  s.month=2;c.magistrates.consul=[{id,faction:'senate',startYear:s.year,endYear:s.year}];

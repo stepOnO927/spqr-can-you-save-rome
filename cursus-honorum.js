@@ -460,9 +460,11 @@ function advanceTalentSearches(s,c){
  for(const q of c.recommendations.filter(x=>x.status==='pending')){
   if(--q.remaining>0)continue;
   if(!present(s,q.sourceId)||!person(s,q.targetId)?.alive){q.status='lapsed';continue}
-  c.referrals[q.actor]||=[];if(!c.referrals[q.actor].includes(q.targetId))c.referrals[q.actor].push(q.targetId);c.referralSources[q.actor]||=[];if(!c.referralSources[q.actor].some(x=>x.id===q.targetId))c.referralSources[q.actor].push({id:q.targetId,target:person(s,q.targetId).faction,from:q.sourceId,observed:{year:s.year,month:s.month},confidence:'reported',nameSnapshot:snapshotName(s,q.targetId)});
+  const sourceName=snapshotName(s,q.sourceId),targetName=snapshotName(s,q.targetId);
+  if(!sourceName||!targetName){q.status='lapsed';continue}
+  c.referrals[q.actor]||=[];if(!c.referrals[q.actor].includes(q.targetId))c.referrals[q.actor].push(q.targetId);c.referralSources[q.actor]||=[];if(!c.referralSources[q.actor].some(x=>x.id===q.targetId))c.referralSources[q.actor].push({id:q.targetId,target:person(s,q.targetId).faction,from:q.sourceId,observed:{year:s.year,month:s.month},confidence:'reported',nameSnapshot:[...targetName]});
   q.status='delivered';q.resolved={year:s.year,month:s.month};
-  if(q.actor===s.player)note(s,'An official introduced a named professional contact; no employment was promised.','一位官员引荐了具名的专业联系人；任职尚未获保证。');
+  if(q.actor===s.player)note(s,`${sourceName[0]} introduced ${targetName[0]} as a professional contact; no employment was promised.`,`${sourceName[1]}引荐${targetName[1]}为专业联系人；任职尚未获保证。`);
  }
 }
 export function proposeCooperation(s,target,id,kind='professional',actor=s.player){
