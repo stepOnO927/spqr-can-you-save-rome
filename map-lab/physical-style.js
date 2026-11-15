@@ -60,7 +60,7 @@ export const physicalStyle={
   landcover:{type:'raster',tiles:['./landcover/{z}/{x}/{y}.png'],tileSize:256,minzoom:4,maxzoom:6,bounds:[-30,10,65,65],attribution:'Natural Earth II idealized land cover, public domain'}
  },
  layers:[
-  {id:'sea',type:'background',paint:{'background-color':'#356f79'}},
+  {id:'sea',type:'background',paint:{'background-color':'#2b626d'}},
   {id:'land-base',type:'fill',source:'land',paint:{'fill-color':'#d4d0ae','fill-opacity':1}},
   {id:'land-elevation',type:'color-relief',source:'elevation',maxzoom:6.5,paint:{'color-relief-opacity':['interpolate',['linear'],['zoom'],5.5,.64,6.5,0],'color-relief-color':regionalElevationPalette}},
   {id:'relief',type:'hillshade',source:'elevation',paint:{'hillshade-exaggeration':.22,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
@@ -99,9 +99,9 @@ export const physicalStyle={
   // polygons can look angular at this scale, so keep their lines secondary.
   {id:'italy-contours-minor',type:'line',source:'italy-contours',minzoom:8.3,filter:['<',['get','height'],1000],paint:{'line-color':'#6d694c','line-width':['interpolate',['linear'],['zoom'],8.3,.35,9.2,.65],'line-opacity':['interpolate',['linear'],['zoom'],8.3,0,9.2,.11]}},
   {id:'italy-contours-major',type:'line',source:'italy-contours',minzoom:8.3,filter:['>=',['get','height'],1000],paint:{'line-color':'#565e4a','line-width':['interpolate',['linear'],['zoom'],8.3,.45,9.2,.85],'line-opacity':['interpolate',['linear'],['zoom'],8.3,0,9.2,.14]}},
-  {id:'sea-mask',type:'fill',source:'ocean',paint:{'fill-color':'#356f79','fill-opacity':1}},
+  {id:'sea-mask',type:'fill',source:'ocean',paint:{'fill-color':'#2b626d','fill-opacity':1}},
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},
-  {id:'coastline',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,.9,8,1.7],'line-opacity':.87}},
+  {id:'coastline',type:'line',source:'land',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,.9,8,1.7],'line-opacity':.87}},
   {id:'natural-lakes',type:'fill',source:'lakes',filter:['!=',['get','name'],'Lago di Garda'],paint:{'fill-color':'#5b9093','fill-opacity':.88}},
   {id:'garda-overview',type:'fill',source:'lakes',maxzoom:8,filter:['==',['get','name'],'Lago di Garda'],paint:{'fill-color':'#5b9093','fill-opacity':.88}},
   {id:'garda-close',type:'fill',source:'garda-lake-detail',minzoom:8,paint:{'fill-color':'#5b9093','fill-opacity':.88}},
@@ -116,7 +116,7 @@ export const physicalStyle={
   // source edges should not masquerade as surveyed provincial borders locally.
   {id:'control',type:'fill',source:'historical',filter:['!=',['get','id'],'roman-extent'],paint:{'fill-color':['match',['get','id'],'gaul','#ad4d3d','narbo','#ad4d3d','italy','#b0a480','greece','#778994','sicilia','#778994','hispania','#778994','asia','#778994','syria','#778994','africa','#778994','#aa9c75'],'fill-opacity':['interpolate',['linear'],['zoom'],6,.30,7,.18,8.5,0]}},
   {id:'province-outline',type:'line',source:'historical',filter:['!=',['get','id'],'roman-extent'],paint:{'line-color':'#f1deb0','line-opacity':['interpolate',['linear'],['zoom'],6,.72,7,.4,8.5,0],'line-width':1.25}},
-  {id:'sea-final',type:'fill',source:'ocean',paint:{'fill-color':'#356f79','fill-opacity':1}},
+  {id:'sea-final',type:'fill',source:'ocean',paint:{'fill-color':'#2b626d','fill-opacity':1}},
   // Natural Earth bathymetry is an overview dataset. Its angular boundaries
   // should disappear before close zoom, where they read as false sea cliffs.
   {id:'depth-200',type:'fill',source:'bathymetry',filter:['==',['get','depth'],200],paint:{'fill-color':'#285d6d','fill-opacity':['interpolate',['linear'],['zoom'],5,.46,7,.32,8.5,0]}},
@@ -128,8 +128,8 @@ export const physicalStyle={
   {id:'isobath-2000',type:'line',source:'bathymetry',filter:['==',['get','depth'],2000],paint:{'line-color':'#a5b8ad','line-width':.65,'line-opacity':['interpolate',['linear'],['zoom'],5,.09,7,.05,8.5,0]}},
   // Draw the coastal glow above the final ocean fill; otherwise the sea mask
   // erases its seaward half. It follows shoreline geometry, not a depth claim.
-  {id:'coastal-halo',type:'line',source:'land',paint:{'line-color':'#92beb8','line-width':['interpolate',['linear'],['zoom'],4,2,8,3,9,4],'line-blur':['interpolate',['linear'],['zoom'],4,1,9,1],'line-opacity':['interpolate',['linear'],['zoom'],4,.04,7,.1,9,.07]}},
-  {id:'coastline-finish',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,1,8,1.8],'line-opacity':['interpolate',['linear'],['zoom'],4,.9,8,.65,9,.75]}},
+  {id:'coastal-halo',type:'line',source:'land',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#a6c9c0','line-width':['interpolate',['linear'],['zoom'],4,2,8,5,9,7],'line-blur':['interpolate',['linear'],['zoom'],4,1,9,2],'line-opacity':['interpolate',['linear'],['zoom'],4,.04,7,.12,9,.11]}},
+  {id:'coastline-finish',type:'line',source:'land',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#f0e4c4','line-width':['interpolate',['linear'],['zoom'],4,1,8,2,9,2.3],'line-opacity':['interpolate',['linear'],['zoom'],4,.9,8,.82,9,.87]}},
   // This visual band follows an undated reference line, not an ancient land mask.
   {id:'po-historic-band',type:'line',source:'po-historic-coast',filter:['==',['get','kind'],'historical-shore'],minzoom:8.2,layout:{visibility:'none','line-join':'round','line-cap':'round'},paint:{'line-color':'#a5b599','line-width':['interpolate',['linear'],['zoom'],8.2,9,9,22],'line-blur':['interpolate',['linear'],['zoom'],8.2,3,9,6],'line-opacity':.26}},
   {id:'po-historic-shore',type:'line',source:'po-historic-coast',filter:['==',['get','kind'],'historical-shore'],minzoom:8.2,layout:{visibility:'none'},paint:{'line-color':'#84694d','line-width':['interpolate',['linear'],['zoom'],8.2,1,9,1.6],'line-opacity':.78,'line-dasharray':[3,2]}}
