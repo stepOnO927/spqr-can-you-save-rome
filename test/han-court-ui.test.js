@@ -22,6 +22,8 @@ test('twelve opening officials have individual portraits and bilingual profiles 
   assert.match(en,/Approximate age/);assert.match(zh,/约略年龄/);
   assert.match(en,/Current responsibilities/);assert.match(zh,/当前职责/);
   assert.match(en,/<dt>Audit finding<\/dt><dd>No finding<\/dd>/);
+  assert.match(en,/<dt>Loyalty<\/dt><dd>Not reliably known<\/dd>/);
+  assert.match(zh,/<dt>忠诚<\/dt><dd>尚无可靠判断<\/dd>/);
   assert.match(en,/<dt>Ambition<\/dt><dd>Unknown<\/dd>/);
  }
  assert.ok(!hanCourtHtml(state,0,'hong-gong').includes('<option value="chengxiang"'));

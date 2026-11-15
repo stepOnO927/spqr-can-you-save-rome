@@ -20,6 +20,7 @@ try{
  assert.match(await profile.innerText(),/No office is currently assigned/);
  assert.match(await profile.innerText(),/At campaign opening/);
  assert.match(await profile.innerText(),/No finding/);
+ assert.match(await profile.innerText(),/Loyalty\s+Not reliably known/);
  assert.equal(await profile.locator('img').getAttribute('src'),'../assets/portraits/han-shi-gao-128.jpg');
  assert.equal((await profile.locator('img').evaluate(img=>img.naturalWidth))>0,true);
  await page.locator('#court-office').selectOption('dasinong');

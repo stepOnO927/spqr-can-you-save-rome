@@ -260,6 +260,9 @@ The standalone Han campaign also renders its original people's saved faces
 with age and current court office, army command or throne details. Appointment,
 dismissal, command, succession and save restoration are covered by simulation
 and browser checks; historical fixed portraits keep their existing artwork.
+The Han court dossier now withholds exact hidden loyalty; it reports the
+assessment as uncertain in both languages while keeping recorded career
+events and actionable appointments visible.
 Newly generated Han officials now save their culture, recorded origin, current
 court location, profession and first service event alongside that portrait.
 Their dossier shows those fields in both languages after save restoration.
