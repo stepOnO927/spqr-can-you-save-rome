@@ -10,7 +10,7 @@ The audit found and repaired blocked-storage startup failures, short landscape c
 
 ## Source and architecture inventory
 
-The first inventory recorded **562 files, 10,113,196 bytes, 121 runtime source files**. It identified three public entry points and generated a file-by-file dependency graph in the fast workflow artifact. The inventory was refined to include the developer Inspector and Poki-only roots and to avoid treating build-script string literals as imports. Static reachability is a candidate signal, never proof that a feature is dead.
+The last measured source inventory before adding these ten reports recorded **562 files, 10,113,196 bytes, 121 runtime source files**. The report files themselves add ten tracked files. It identified three public entry points and generated a file-by-file dependency graph in the fast workflow artifact. The inventory was refined to include the developer Inspector and Poki-only roots and to avoid treating build-script string literals as imports. Static reachability is a candidate signal, never proof that a feature is dead.
 
 - [Inventory generator](../scripts/audit-inventory.mjs)
 - [Feature registry](../feature-registry.js)
@@ -35,7 +35,7 @@ The first inventory recorded **562 files, 10,113,196 bytes, 121 runtime source f
 
 | Measure | Count / status | Basis |
 |---|---:|---|
-| Tracked files classified | 562 | [Generated inventory](../scripts/audit-inventory.mjs), [fast run 43664677062](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43664677062) |
+| Tracked files classified before report commit | 562 | [Generated inventory](../scripts/audit-inventory.mjs), [fast run 43664677062](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43664677062) |
 | Runtime source files identified / statically reachable | 121 / 121 | Same inventory; static reachability is not runtime proof |
 | Runtime source texts inspected for stubs and unsafe dynamic execution | 114 initial files | Original source scan; later additions reviewed when authored |
 | Major feature groups | 20 | [Registry](../feature-registry.js) |

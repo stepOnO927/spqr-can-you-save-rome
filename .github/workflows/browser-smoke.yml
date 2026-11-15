@@ -28,6 +28,7 @@ jobs:
           node tools/inspector-smoke.mjs
           node tools/hundred-days-smoke.mjs
           node tools/roman-hundred-days-smoke.mjs
+          node tools/save-transfer-controls-smoke.mjs
           node tools/travel-smoke.mjs
           node tools/cursus-smoke.mjs
           node tools/cursus-deep-smoke.mjs
@@ -37,6 +38,8 @@ jobs:
           node tools/ai-wartime-aid-smoke.mjs
           node tools/frontier-response-smoke.mjs
           node tools/player-aid-letter-smoke.mjs
+          node tools/player-request-aid-smoke.mjs
+          node tools/official-name-snapshots-smoke.mjs
           node tools/cursus-applicant-smoke.mjs
           node tools/han-court-smoke.mjs
           node scripts/multipolar-sim.mjs > multipolar-simulation.json
@@ -51,6 +54,7 @@ jobs:
           node tools/separate-kingdom-succession-smoke.mjs
           node tools/regional-court-vacancy-smoke.mjs
           node tools/court-portrait-smoke.mjs
+          node tools/senator-portraits-smoke.mjs
           node tools/mail-privacy-smoke.mjs
           node tools/gathering-presence-smoke.mjs
           node tools/gathering-delegate-smoke.mjs

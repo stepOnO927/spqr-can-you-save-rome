@@ -50,6 +50,40 @@ const CURSUS_PORTRAITS=[
  {faction:'caesar',name:['Aulus Varenus','奥卢斯·瓦雷努斯'],age:47,key:'fictional-cursus-aulus-varenus'},
  {faction:'caesar',name:['Gaius Varenus','盖乌斯·瓦雷努斯'],age:48,key:'fictional-cursus-gaius-varenus'}
 ];
+// Original fictional senators only. Generated numeric IDs are not identities.
+const SENATOR_PORTRAITS=[
+ ['senate','Publius Lentulus','普布利乌斯·伦图卢斯','aristocratic','finance',49,'publius-lentulus'],
+ ['senate','Aulus Domitius','奥卢斯·多米提乌斯','military','war',50,'aulus-domitius'],
+ ['senate','Gaius Calpurnius','盖乌斯·卡尔普尔尼乌斯','provincial','administration',51,'gaius-calpurnius'],
+ ['senate','Marcus Aemilius','马尔库斯·埃米利乌斯','reform','reform',52,'marcus-aemilius'],
+ ['senate','Titus Licinius','提图斯·李锡尼乌斯','aristocratic','law',53,'titus-licinius'],
+ ['senate','Quintus Sulpicius','昆图斯·苏尔皮基乌斯','military','war',54,'quintus-sulpicius'],
+ ['caesar','Lucius Cassius','卢基乌斯·卡西乌斯','reform','reform',55,'lucius-cassius'],
+ ['caesar','Gnaeus Valerius','格奈乌斯·瓦莱里乌斯','provincial','administration',56,'gnaeus-valerius'],
+ ['caesar','Sextus Fabius','塞克斯图斯·法比乌斯','aristocratic','finance',57,'sextus-fabius'],
+ ['caesar','Decimus Junius','德基穆斯·尤尼乌斯','military','war',49,'decimus-junius'],
+ ['caesar','Servius Claudius','塞尔维乌斯·克劳狄乌斯','reform','law',50,'servius-claudius'],
+ ['caesar','Appius Cornelius','阿庇乌斯·科尔内利乌斯','provincial','administration',51,'appius-cornelius']
+];
+export function assignSenatorPortraits(state){
+ const d=state.world?.dynasties,c=state.world?.cursus;if(!d||!c?.seeded||!c.varroId)return;
+ if(SENATOR_PORTRAITS.every(entry=>Object.values(d.senatorPortraitClaims||{}).some(claim=>claim?.key==='fictional-senator-'+entry[6])))return;
+ const anchor=[...(c.applicants||[]),...(c.applicationHistory||[])].filter(r=>r.id===c.varroId&&r.faction==='senate'&&r.office==='consul'&&r.statement==='simulated'&&Number.isInteger(r.year)).sort((a,b)=>a.year-b.year)[0];
+ if(!anchor)return;d.senatorPortraitClaims||={};
+ for(const [faction,en,zh,network,interest,age,slug] of SENATOR_PORTRAITS){
+  const key='fictional-senator-'+slug;if(Object.values(d.senatorPortraitClaims).some(claim=>claim?.key===key))continue;
+  const ids=[...new Set((c.senators||[]).filter(r=>r.faction===faction&&r.network===network&&r.interest===interest&&r.joined?.year===anchor.year).map(r=>r.id))].filter(id=>{
+   const saved=d.catalog?.[id],p=state.world.characters?.[id];return saved?.fictional&&saved.faction===faction&&saved.role?.[0]==='Simulated senator'&&JSON.stringify(saved.name)===JSON.stringify([en,zh])&&p?.birthYear===anchor.year-age;
+  });
+  if(ids.length!==1||d.senatorPortraitClaims[ids[0]])continue;
+  d.senatorPortraitClaims[ids[0]]={key,name:[en,zh],faction,birthYear:anchor.year-age,year:anchor.year};
+ }
+}
+function senatorPortraitKey(state,id){
+ const d=state.world?.dynasties,claim=d?.senatorPortraitClaims?.[id],saved=d?.catalog?.[id],p=state.world?.characters?.[id],entry=SENATOR_PORTRAITS.find(x=>'fictional-senator-'+x[6]===claim?.key);
+ if(!entry||!saved?.fictional||saved.role?.[0]!=='Simulated senator'||saved.faction!==entry[0]||claim.faction!==entry[0]||JSON.stringify(saved.name)!==JSON.stringify([entry[1],entry[2]])||JSON.stringify(claim.name)!==JSON.stringify([entry[1],entry[2]])||p?.birthYear!==claim.birthYear||claim.birthYear!==claim.year-entry[5])return null;
+ return claim.key;
+}
 export function assignCursusPortraits(state){
  const d=state.world?.dynasties,c=state.world?.cursus;if(!d||!c?.seeded||!c.varroId)return;
  if(CURSUS_PORTRAITS.every(entry=>Object.values(d.cursusPortraitClaims||{}).some(claim=>claim?.key===entry.key)))return;
@@ -97,6 +131,7 @@ function bornPortraitKey(state,id){
 }
 export function fictionalPortraitKey(state,id){
  const entry=OPENING_PORTRAITS[id],person=state.world?.characters?.[id],saved=state.world?.dynasties?.catalog?.[id];
+ const senator=senatorPortraitKey(state,id);if(senator)return senator;
  const cursus=cursusPortraitKey(state,id);if(cursus)return cursus;
  const court=courtPortraitKey(state,id);if(court)return court;
  const born=bornPortraitKey(state,id);if(born)return born;
@@ -110,6 +145,6 @@ export function fictionalPortraitKey(state,id){
 // Foreign artwork becomes available only from this viewer's completed meeting
 // snapshot. It must not be recomputed from the person's current hidden state.
 export function observedFictionalPortrait(state,id){
- const allowed=new Set([...Object.values(OPENING_PORTRAITS).map(x=>x[2]),...Object.values(SCENARIO_PORTRAITS).map(x=>x[2]),...INSTITUTION_PORTRAITS.map(x=>x[4]),...Object.values(COURT_PORTRAITS).map(x=>x[2]),...CURSUS_PORTRAITS.map(x=>x.key),...Object.values(BORN_PORTRAITS).flatMap(keys=>keys.flatMap(key=>[key+'-child',key+'-adult'])),'fictional-varus']),now=state.year*12+state.month;
+ const allowed=new Set([...Object.values(OPENING_PORTRAITS).map(x=>x[2]),...Object.values(SCENARIO_PORTRAITS).map(x=>x[2]),...INSTITUTION_PORTRAITS.map(x=>x[4]),...Object.values(COURT_PORTRAITS).map(x=>x[2]),...CURSUS_PORTRAITS.map(x=>x.key),...SENATOR_PORTRAITS.map(x=>'fictional-senator-'+x[6]),...Object.values(BORN_PORTRAITS).flatMap(keys=>keys.flatMap(key=>[key+'-child',key+'-adult'])),'fictional-varus']),now=state.year*12+state.month;
  return (state.meetings||[]).filter(m=>m.actor===state.player&&m.target===id&&m.status==='met'&&allowed.has(m.portraitKey)&&Number.isFinite(m.resolvedYear??m.year)&&Number.isFinite(m.resolvedMonth??m.month)&&(m.resolvedYear??m.year)*12+(m.resolvedMonth??m.month)<=now).sort((a,b)=>((b.resolvedYear??b.year)*12+(b.resolvedMonth??b.month))-((a.resolvedYear??a.year)*12+(a.resolvedMonth??a.month)))[0]?.portraitKey||null;
 }

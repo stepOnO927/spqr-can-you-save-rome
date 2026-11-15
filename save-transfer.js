@@ -52,7 +52,13 @@ if(typeof document!=='undefined'){
   const trigger=document.createElement('button');trigger.id='save-transfer-open';trigger.type='button';trigger.textContent=label('Transfer saves','迁移存档');
   const dialog=document.createElement('dialog');dialog.id='save-transfer-dialog';
   dialog.innerHTML='<form method="dialog"><button class="transfer-close" aria-label="Close">×</button></form><h2></h2><p class="transfer-help"></p><div class="transfer-actions"><button type="button" id="save-transfer-export"></button><label id="save-transfer-import-label" for="save-transfer-file"></label><input id="save-transfer-file" type="file" accept=".json,application/json"></div><p id="save-transfer-status" role="status" aria-live="polite"></p>';
-  document.body.append(trigger,dialog);
+  document.body.append(dialog);
+  // Keep the entry with each view's save controls. The campaign redraws its
+  // toolbar, so reattach the same button after a redraw instead of floating
+  // over the map or the advance-month control.
+  const app=document.querySelector('#app'),mast=document.querySelector('.mast');
+  const mount=()=>{const host=app?.querySelector('.map-toolbar .controls')||(mast?document.querySelector('#load')?.parentElement:null)||document.querySelector('body > header > div');if(!host||trigger.parentNode===host)return;const load=host.querySelector('#load');if(load)load.insertAdjacentElement('afterend',trigger);else host.append(trigger)};
+  mount();const observed=app||mast;if(observed)new MutationObserver(mount).observe(observed,{childList:true,subtree:true});
   const refresh=()=>{trigger.textContent=label('Transfer saves','迁移存档');dialog.querySelector('h2').textContent=label('Transfer saves to another site','跨网站迁移存档');dialog.querySelector('.transfer-help').textContent=label('Save your current campaign first. Export on the old site, then import the file on the new site. Existing slots are never overwritten.','请先保存当前战役。在旧网站导出文件，再到新网站导入。已有栏位不会被覆盖。');dialog.querySelector('#save-transfer-export').textContent=label('Export saves','导出存档');dialog.querySelector('#save-transfer-import-label').textContent=label('Import saves','导入存档')};
   trigger.onclick=()=>{refresh();dialog.showModal()};
   dialog.querySelector('#save-transfer-export').onclick=()=>{const status=dialog.querySelector('#save-transfer-status');try{const bundle=exportSaves(localStorage);if(!Object.keys(bundle.saves).length){status.textContent=label('No saved campaigns found on this site.','此网站没有找到已保存的战役。');return}const url=URL.createObjectURL(new Blob([JSON.stringify(bundle)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download=`spqr-saves-${new Date().toISOString().slice(0,10)}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);status.textContent=label('Save file exported. Keep it private.','存档文件已导出，请妥善保管。')}catch{status.textContent=label('Could not read browser saves.','无法读取浏览器存档。')}};
