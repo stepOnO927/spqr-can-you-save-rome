@@ -25,7 +25,7 @@ import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
-import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
+import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=world-kings-1';
 import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=diplomatic-chronicle-1';
 import {respondToFrontierReports} from './frontier-response.js?v=frontier-response-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=diplomatic-chronicle-1';
@@ -38,6 +38,7 @@ import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupp
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {initializeTerritories,transferTerritory,territoryTaxFactor,administrationQuote,startAdministration,advanceTerritories} from './territory.js';
 import {initializeLocalEntities,advanceLocalEntities,localEntity,localEntityRevenue,localContactQuote,offerLocalContact,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from './local-polities.js';
+import {initializeBorderPolicies,militaryAccessStatus} from './border-access.js';
 export {queueMission};
 export {personalDiplomaticCredit};
 export {replyToLetter};
@@ -73,7 +74,7 @@ export function newGame(player='caesar'){
   // A new campaign starts with frontier observations, not every foreign army's
   // exact opening location. Existing saves keep their accumulated sightings.
   for(const targets of Object.values(s.knowledge))for(const knowledge of Object.values(targets))knowledge.sightings={};
-  initializeTerritories(s);initializeLocalEntities(s,{opening:true});linkCommanders(s);observeArmies(s);observeControl(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);initializeMail(s);return initializeGovernments(s);
+  initializeTerritories(s);initializeLocalEntities(s,{opening:true});initializeBorderPolicies(s);linkCommanders(s);observeArmies(s);observeControl(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);initializeMail(s);return initializeGovernments(s);
 }
 
 export function newDynastyScenario(){const s=newGame('egypt');createDisputedHeirScenario(s);return s}
@@ -116,7 +117,7 @@ export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeTerritories(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);initializeTerritories(s);initializeBorderPolicies(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
@@ -127,7 +128,7 @@ export function previewMarch(s,armyId,destination){
   const link=adjacent(a.region).find(e=>e.to===destination);
   if(!link)return {ok:false,reason:'adjacent'};
   const report=reportedControl(s,a.owner,destination),reportedOwner=report?.owner;
-  if(reportedOwner&&reportedOwner!==a.owner&&!isWar(s,a.owner,reportedOwner)&&!activeAgreement(s,a.owner,reportedOwner,'military_access'))return {ok:false,reason:'peace'};
+  if(!militaryAccessStatus(s,a.owner,destination,reportedOwner??null).allowed)return {ok:false,reason:'peace'};
   const faction=s.factions[a.owner];
   const seaCost=Math.max(2,8+(activeModifiers(s,a.owner).seaCost||0));
   if(link.sea&&faction.treasury<seaCost)return {ok:false,reason:'transport'};
@@ -506,7 +507,7 @@ export function resolveBattle(s,attacker,defender,target){
 function arrive(s,a){
   const target=region(s,a.move.to);
   observeArrival(s,a.owner,target.id);
-  if(target.owner!==a.owner&&!isWar(s,a.owner,target.owner)&&!activeAgreement(s,a.owner,target.owner,'military_access')){a.move=null;a.order=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`);return}
+  if(!militaryAccessStatus(s,a.owner,target.id,target.owner).allowed){a.move=null;a.order=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`);return}
   const enemy=s.armies.find(other=>other.id!==a.id&&other.region===target.id&&other.owner!==a.owner&&isWar(s,a.owner,other.owner)&&!other.move);
   if(enemy){resolveBattle(s,a,enemy,target);return}
   const siegeWorks=(buildingModifiers(region(s,a.region)).siege||0)+formationSiegeReduction(s,a)+(a.planSiegeWorks||0);
@@ -560,7 +561,7 @@ function economy(s){
 function shortestStep(s,start,goal,owner){
   const queue=[[start,null]],seen=new Set([start]);
   while(queue.length){const [id,first]=queue.shift();if(id===goal)return first;
-    for(const e of adjacent(id)){if(seen.has(e.to))continue;const controller=reportedControl(s,owner,e.to)?.owner;if(controller&&controller!==owner&&!isWar(s,owner,controller)&&!activeAgreement(s,owner,controller,'military_access'))continue;seen.add(e.to);queue.push([e.to,first||e.to])}}
+    for(const e of adjacent(id)){if(seen.has(e.to))continue;const controller=reportedControl(s,owner,e.to)?.owner;if(!militaryAccessStatus(s,owner,e.to,controller??null).allowed)continue;seen.add(e.to);queue.push([e.to,first||e.to])}}
   return null;
 }
 

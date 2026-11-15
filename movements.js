@@ -2,7 +2,7 @@ import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {createFictionalPerson} from './dynasties.js?v=infant-portraits-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
-import {activeAgreement,terminateAgreement} from './agreements.js?v=grand-chessboard-2';
+import {activeAgreement,terminateAgreement} from './agreements.js?v=world-kings-1';
 import {transferTerritory} from './territory.js';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));

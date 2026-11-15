@@ -20,7 +20,7 @@ import {renderCursus} from './cursus-ui.js?v=infant-portraits-1';
 import {officeEffects} from '../office-system.js?v=infant-portraits-1';
 import {populationFactor,religiousTaxCost} from '../religion.js?v=infant-portraits-1';
 import {satisfactionForOutline} from './satisfaction-map.js?v=foreign-name-privacy-1';
-import {activeAgreement} from '../agreements.js?v=grand-chessboard-2';
+import {activeAgreement} from '../agreements.js?v=world-kings-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=infant-portraits-1';
 import {featherAdvice} from '../feather.js?v=travel-2';
 import {waitForMapIdle} from './capture-wait.js?v=phase-x-1';
@@ -29,7 +29,7 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit, administrationQuote, startAdministration} from '../engine.js?v=campaign-intelligence-privacy-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit, administrationQuote, startAdministration} from '../engine.js?v=world-kings-1';
 import {localEntity,localContactQuote,offerLocalContact,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from '../local-polities.js';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';

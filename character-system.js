@@ -6,7 +6,7 @@ import {potentialConspirators} from './conspiracies.js?v=succession-ui-recovery-
 import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=succession-ui-recovery-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 import {canHoldOffice,localGovernor} from './office-system.js?v=infant-portraits-1';
-import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
+import {activeAgreement} from './agreements.js?v=world-kings-1';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
 import {registerMissionPersonnel} from './epistulae-personnel.js?v=infant-portraits-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');

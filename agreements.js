@@ -23,11 +23,15 @@ export function activeAgreement(s,a,b,type){
  return (s.agreements||[]).find(t=>t.status==='active'&&t.type===type&&t.parties.includes(a)&&t.parties.includes(b)&&date(s)<t.expiresAt&&!atWar(s,a,b));
 }
 export function visibleAgreements(s,viewer){return (s.agreements||[]).filter(t=>!t.secret||t.parties.includes(viewer))}
-export function proposeAgreement(s,actor,target,type,{secret=false}={}){
+export function proposeAgreement(s,actor,target,type,{secret=false,access=null}={}){
  initializeAgreements(s);const def=AGREEMENT_TYPES[type];
  if(!def||actor===target||actor==='rebels'||target==='rebels'||!s.factions[actor]||!s.factions[target])return {ok:false,reason:'invalid'};
  if(!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target)||atWar(s,actor,target))return {ok:false,reason:'unavailable'};
  if(activeAgreement(s,actor,target,type))return {ok:false,reason:'existing'};
+ if(type==='military_access'&&access){
+  if(access.permittedParty&&!['both',actor,target].includes(access.permittedParty))return {ok:false,reason:'invalid'};
+  if(access.permittedTerritories&&(!Array.isArray(access.permittedTerritories)||!access.permittedTerritories.length||access.permittedTerritories.some(id=>!s.regions.some(r=>r.id===id&&[actor,target].includes(r.owner)))))return {ok:false,reason:'invalid'};
+ }
  if(s.factions[actor].treasury<def.cost)return {ok:false,reason:'treasury'};
  const relation=s.relations[key(actor,target)]??0,credibility=s.diplomaticCredibility[actor]??100;
  // The recipient weighs the proposer's public reliability. No foreign hidden
@@ -35,6 +39,7 @@ export function proposeAgreement(s,actor,target,type,{secret=false}={}){
  if(relation-(100-credibility)*.4+politicalMemoryAdjustment(s,target,actor)+(hasNationalIdea(s,actor,'diplomacy')?4:0)<def.threshold)return {ok:false,reason:'declined'};
  s.factions[actor].treasury-=def.cost;
  const t={id:`agreement:${s.nextAgreementId||1}`,type,parties:[actor,target],start:{year:s.year,month:s.month},duration:def.duration,expiresAt:date(s)+def.duration,obligations:[...def.obligations],benefits:[...def.benefits],terms:['military_support','guarantee'].includes(type)?{provider:actor,recipient:target}:{kind:type,obligations:[...def.obligations],benefits:[...def.benefits]},termination:'expiry, mutual consent, or breach',diplomaticCost:def.cost,breachPenalty:20,secret:!!secret,status:'active'};
+ if(type==='military_access'&&access)t.terms.access={permittedParty:access.permittedParty||'both',permittedTerritories:access.permittedTerritories?[...new Set(access.permittedTerritories)]:null,restrictions:Array.isArray(access.restrictions)?[...access.restrictions]:[]};
  s.nextAgreementId=(s.nextAgreementId||1)+1;s.agreements.push(t);rememberPoliticalEvent(s,target,actor,'negotiated_agreement',2);return {ok:true,agreement:t};
 }
 export function terminateAgreement(s,id,actor,{mutual=false}={}){
