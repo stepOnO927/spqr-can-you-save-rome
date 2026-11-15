@@ -8,7 +8,7 @@ style.textContent=[
   '.spqr-release-dialog h2{margin:0 0 12px;color:#f0cf86}',
   '.spqr-release-dialog p{margin:7px 0;overflow-wrap:anywhere}',
   '.spqr-release-dialog ul{padding-left:22px}',
-  '.spqr-release-close,.spqr-release-privacy{float:right;border:1px solid #a68e60;background:#2b3734;color:#efe2c6;padding:4px 9px;cursor:pointer}'
+  '.spqr-release-close,.spqr-release-privacy{float:right;position:relative;z-index:2;border:1px solid #a68e60;background:#2b3734;color:#efe2c6;padding:4px 9px;cursor:pointer}'
 ].join('\n');
 document.head.append(style);
 const badge=document.createElement('button');

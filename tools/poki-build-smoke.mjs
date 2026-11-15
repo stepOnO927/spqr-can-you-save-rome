@@ -30,7 +30,7 @@ try{
  c=await context();p=await c.newPage();errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.goto(origin+'/map-lab/',{waitUntil:'domcontentloaded'});
  await p.locator('#start-game').tap();
- await p.waitForFunction(()=>window._pokiEvents?.includes('start'));
+ try{await p.waitForFunction(()=>window._pokiEvents?.includes('start'))}catch(error){console.error('Atlas start diagnostics',await p.evaluate(()=>({events:window._pokiEvents,sdk:!!window.PokiSDK,overlayHidden:document.querySelector('#start-overlay')?.hidden,activeElement:document.activeElement?.outerHTML?.slice(0,180),startButton:document.querySelector('#start-game')?.outerHTML?.slice(0,200),status:document.querySelector('#status')?.textContent})),errors);throw error};
  assert.deepEqual(await p.evaluate(()=>_pokiEvents.slice(0,2)),['load','start'],'Atlas SDK lifecycle');
  await p.locator('.maplibregl-marker').first().tap({timeout:10000});
  assert.equal(await p.locator('.selection:not(.collapsed)').count(),1);
