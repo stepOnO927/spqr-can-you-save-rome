@@ -1,6 +1,7 @@
 import {ROUTES} from './data.js?v=world-kings-trade-1';
 import {militaryAccessStatus} from './border-access.js?v=world-kings-trade-1';
 import {footholdConnected} from './foothold.js';
+import {villageFoodQuote, takeVillageFood} from './local-villages.js';
 
 const neighbors = new Map();
 for (const [from, to] of ROUTES) {
@@ -31,13 +32,15 @@ function supplyNetwork(state, owner) {
 export function armyExpeditionSupply(state, army, connected = supplyNetwork(state, army?.owner)) {
   const region = state.regions.find(place => place.id === army?.region), faction = state.factions[army?.owner];
   if (!region || !faction || !army?.men || state.dlc) return {status: 'unavailable'};
-  if (region.owner === army.owner && region.administrativeStatus === 'integrated') return {status: 'full'};
   const localLoad = state.armies.filter(unit => unit.owner === army.owner && unit.region === region.id && unit.men > 0).reduce((sum, unit) => sum + unit.men, 0);
   const capacity = Math.max(0, region.supply || 0) * 1000;
+  if (region.owner === army.owner && region.administrativeStatus === 'integrated' && localLoad <= capacity) return {status: 'full'};
   const depot = (region.localEntities || []).find(entity => entity.foothold?.owner === army.owner && entity.foothold.level >= 1 && entity.foothold.stockFood >= Math.max(1, Math.ceil(army.men / 5000)) && footholdConnected(state, entity.id, army.owner));
   if (connected.has(region.id)) {
     if (localLoad <= capacity) return {status: 'full'};
     if (depot) return {status: 'depot', entityId: depot.id, food: Math.max(1, Math.ceil(army.men / 5000))};
+    const village = (region.localEntities || []).find(entity => entity.type === 'village' && villageFoodQuote(state, entity.id, army.owner).ok);
+    if (village) return {status: 'village_support', entityId: village.id};
     return {status: 'partial'};
   }
   if ((neighbors.get(region.id) || []).some(id => connected.has(id)) && localLoad <= capacity && faction.treasury >= 3) return {status: 'local_purchase', treasury: 3};
@@ -59,6 +62,9 @@ export function advanceExpeditionSupply(state) {
     if (assessment.status === 'depot') {
       const depot = state.regions.flatMap(region => region.localEntities || []).find(entity => entity.id === assessment.entityId);
       depot.foothold.stockFood -= assessment.food;
+    } else if (assessment.status === 'village_support') {
+      const result = takeVillageFood(state, assessment.entityId, army.owner);
+      if (result.ok) state.factions[army.owner].food -= result.food;
     } else if (assessment.status === 'local_purchase') {
       state.factions[army.owner].treasury -= assessment.treasury;
     } else if (assessment.status === 'partial' || assessment.status === 'cut_off') {

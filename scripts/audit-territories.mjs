@@ -24,7 +24,7 @@ const audit = {
     invalidRoutes: ROUTES.filter(([a, b]) => !mainIds.has(a) || !mainIds.has(b)),
     isolatedTerritories: [...neighbors].filter(([, links]) => !links.size).map(([id]) => id),
     localEntities: LOCAL_ENTITY_TEMPLATES.length,
-    invalidLocalEntities: LOCAL_ENTITY_TEMPLATES.filter(entity => !mainIds.has(entity.theater) || !Array.isArray(entity.coordinates) || entity.coordinates.length !== 2 || entity.coordinates.some(value => !Number.isFinite(value)) || !entity.source).map(entity => entity.id)
+    invalidLocalEntities: LOCAL_ENTITY_TEMPLATES.filter(entity => !mainIds.has(entity.theater) || !Array.isArray(entity.coordinates) || entity.coordinates.length !== 2 || entity.coordinates.some(value => !Number.isFinite(value)) || (entity.historical && !entity.source) || (!entity.historical && entity.spatialAccuracy !== 'fictional_approximate_point')).map(entity => entity.id)
   },
   han: {
     playableTerritories: HAN_REGIONS.length,

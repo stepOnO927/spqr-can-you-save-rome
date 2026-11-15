@@ -49,6 +49,13 @@ export const LOCAL_ENTITY_TEMPLATES = Object.freeze([
     description: ['Independent kingdom at the Euphrates crossing, ruled by Antiochus I in 49 BCE. The site point does not define its borders or make the Syrian theater Roman territory.', '幼发拉底河渡口的独立王国；公元前49年由安条克一世统治。地点标记不定义王国边界，也不表示整个叙利亚战区属于罗马。'],
     ruler: {id: 'commagene-antiochus-i', name: ['Antiochus I Theos', '安条克一世'], source: 'https://www.iranicaonline.org/articles/antiochus-of-commagene/'},
     spatialAccuracy: 'approximate_site_point', maxFootholdLevel: 3, militia: 1000, fort: 1, treasury: 18, food: 10
+  },
+  {
+    id: 'ravenna-farms', type: 'village', name: ['Ravenna Countryside', '拉文纳乡村'], theater: 'cisalpine',
+    coordinates: [12.10, 44.46], historical: false, spatialAccuracy: 'fictional_approximate_point',
+    description: ['A fictional farming village representing the Ravenna hinterland. Its point and people are gameplay estimates.', '虚构农庄村落，代表拉文纳腹地。地点和人口均为游戏模拟。'],
+    initialController: 'caesar', militia: 80, fort: 0, treasury: 2, food: 0,
+    village: {population: 620, leader: ['Village council', '村社议事会'], specialty: ['grain', '谷物'], storedFood: 7, foodProduction: 3, foodNeed: 2, granary: 0, irrigation: 0, satisfaction: 70, security: 70, marketAccess: 50, project: null, localIssue: null}
   }
 ]);
 

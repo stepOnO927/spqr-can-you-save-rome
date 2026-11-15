@@ -14,6 +14,7 @@ export function localSecurity(state, entity) {
 export function advanceLocalResistance(state) {
   const reverted = [];
   for (const region of state.regions) for (const entity of region.localEntities || []) {
+    if (entity.type === 'village') continue; // Villages follow their host theater; civilian welfare is modeled separately.
     if (!state.factions[entity.controller]) continue;
     entity.resistance ??= entity.administrativeStatus === 'occupied' ? 20 : 0;
     const actor = entity.controller;

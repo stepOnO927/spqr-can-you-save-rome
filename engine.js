@@ -42,6 +42,7 @@ import {initializeLocalEntities,advanceLocalEntities,localEntity,localEntityReve
 import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing,respondBorderIncident} from './border-access.js?v=world-kings-trade-1';
 import {advanceFootholds,footholdQuote,footholdShipmentQuote,startFoothold,stockFoothold} from './foothold.js';
 import {advanceExpeditionSupply} from './expedition-supply.js';
+import {advanceVillages,villageProjectQuote,startVillageProject} from './local-villages.js';
 import {planRoutes} from './route-planner.js';
 import {titleAssetQuote,settleTitleByTreaty} from './peace-titles.js';
 import {advanceLocalResistance} from './local-resistance.js';
@@ -724,6 +725,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   if(occupation)startAdministration(s,occupation.id,owner);
   const autonomous=s.regions.flatMap(r=>r.localEntities||[]).filter(entity=>['city_state','tribe','microstate'].includes(entity.type)).sort((a,b)=>Number(s.regions.find(r=>r.id===b.theater)?.owner===owner)-Number(s.regions.find(r=>r.id===a.theater)?.owner===owner)||Number(b.type==='city_state')-Number(a.type==='city_state')||a.id.localeCompare(b.id));
   if(owner!=='rebels'&&s.month%6===2){const contact=autonomous.find(entity=>localContactQuote(s,entity.id,owner,'access').ok);if(contact)offerLocalContact(s,contact.id,owner,'access')}
+  if(owner!=='rebels'&&s.month%6===2&&s.factions[owner]?.treasury>=16&&s.wars.filter(war=>war.includes(owner)).length<=1){const village=s.regions.flatMap(r=>r.localEntities||[]).find(entity=>entity.type==='village'&&villageProjectQuote(s,entity.id,entity.village?.granary<1?'granary':'irrigation',owner).ok);if(village)startVillageProject(s,village.id,village.village.granary<1?'granary':'irrigation',owner)}
   if(owner!=='rebels'&&s.month%6===5){const refused=autonomous.find(entity=>entity.lastOutcome?.actor===owner&&entity.lastOutcome.proposal==='access'&&!entity.lastOutcome.accepted&&!entity.pending&&!entity.siege&&s.armies.some(a=>a.owner===owner&&a.region===entity.theater&&localSiegeQuote(s,entity.id,a.id,owner).ok));if(refused){const army=s.armies.find(a=>a.owner===owner&&a.region===refused.theater&&localSiegeQuote(s,refused.id,a.id,owner).ok);besiegeLocalEntity(s,refused.id,army.id,owner)}}
   if(s.factions[owner]?.treasury>=35){const occupied=autonomous.find(entity=>entity.controller===owner&&localAdministrationQuote(s,entity.id,owner).ok);if(occupied)startLocalAdministration(s,occupied.id,owner)}
   if(owner!=='rebels'&&s.month%6===3&&s.factions[owner]?.treasury>=35){const town=s.regions.flatMap(r=>r.localEntities||[]).find(entity=>entity.type==='roman_town'&&localSubmissionQuote(s,entity.id,owner).ok);if(town)offerLocalSubmission(s,town.id,owner)}
@@ -968,6 +970,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   }
   advanceTerritories(s);
   advanceLocalEntities(s);
+  advanceVillages(s);
   for(const event of advanceLocalResistance(s))if([event.prior,event.claimant].includes(s.player)){const place=localEntity(s,event.id);log(s,`${place.name[0]} returned to its former legal authority after losing local security.`,`${place.name[1]}失去驻军与联络后回归原法理归属方。`)}
   advanceFootholds(s);
   for(const event of advanceExpeditionSupply(s))if(event.owner===s.player&&['partial','cut_off'].includes(event.status)){const army=s.armies.find(unit=>unit.id===event.armyId);if(army)log(s,`${army.name[0]} has strained or severed expedition supply.`,`${army.name[1]}的远征补给不足或中断。`)}
