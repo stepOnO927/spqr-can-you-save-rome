@@ -7,6 +7,7 @@ import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registr
 import {rememberPoliticalEvent} from './political-memory.js?v=world-kings-trade-1';
 import {canMediate,requestMediation} from './civil-war.js?v=world-kings-trade-1';
 import {voteCoalitionMotion} from './coalition-motions.js?v=world-kings-trade-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=world-kings-trade-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
@@ -86,7 +87,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A sealed aid reply can outlive the court that dispatched it; its arrival
   // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result','asylum_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -352,6 +353,17 @@ export function syncCoalitionMotionLetters(s){
 }
 
 // A proposal's two journeys have already completed; do not roll a second delivery.
+// The family courier has already returned. Unknown composition dates stay unknown.
+export function syncAsylumReplies(s){
+ const mail=initializeMail(s);
+ for(const x of s.world?.dynasties?.asylumRequests||[]){
+  if(x.host!==s.player||!['accepted','declined'].includes(x.status)||x.resolvedYear!==s.year||x.resolvedMonth!==s.month||x.replyMailId||mail.generated['asylum-result:'+x.id])continue;
+  const person=storedCorrespondentName(x.claimant,x.reportedName),accepted=x.status==='accepted';
+  const result=sendLetter(s,{senderId:null,senderInstitution:x.reportedFaction,senderFaction:x.reportedFaction,recipient:x.host,category:'diplomatic',priority:'important',subject:accepted?['Asylum offer accepted','庇护提议获接受']:['Asylum offer declined','庇护提议遭拒'],body:accepted?[`${person[0]} accepted the offer and arrived under protection.`,`${person[1]}接受庇护提议，已抵达并受到保护。`]:[`${person[0]} declined the asylum offer.`,`${person[1]}回信拒绝了庇护提议。`],options:[],context:{kind:'asylum_result',requestId:x.id}});
+  if(result.ok){x.replyMailId=result.letter.id;result.letter.sentDateKnown=false;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['asylum-result:'+x.id]=true}
+ }
+}
+
 export function syncAgreementLetters(s){
   const mail=initializeMail(s),types={full_alliance:['Full alliance','全面同盟'],non_aggression:['Non-aggression pact','互不侵犯条约'],military_access:['Military access','军事通行权'],trade:['Trade agreement','贸易协定'],intelligence:['Intelligence sharing','情报共享'],defensive:['Defensive alliance','防御同盟'],offensive:['Offensive alliance','进攻同盟'],military_support:['Wartime aid agreement','战时援助协定'],political:['Political cooperation','政治合作'],guarantee:['Independence guarantee','独立保障'],protectorate:['Protectorate treaty','保护关系条约'],client_kingdom:['Client kingdom treaty','附属王国条约']};
  for(const x of s.world?.agreementLetters||[]){if(x.actor!==s.player||x.phase!=='delivered'||!['accepted','refused'].includes(x.status)||x.mailId||mail.generated['agreement-result:'+x.id])continue;
