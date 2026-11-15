@@ -1,0 +1,16 @@
+# Anonymous SPQR gameplay analytics
+
+The existing Cloudflare Web Analytics beacon remains the page traffic counter. The new session tracker does not replace it or backfill old visits. It measures page lifetime, focused foreground time, and active gameplay time separately. Idle time after 60 seconds, hidden tabs, and paused gameplay do not add to active gameplay. Every campaign uses a fresh anonymous session ID.
+
+Collection is off by default. The visitor may opt in through the privacy prompt or the version menu, and can opt out later. Global Privacy Control and Do Not Track suppress the new tracker. Names, save files, letters, IP addresses, and raw free text are not sent by this code. Only fixed event names and four short game context fields are accepted. The Cloudflare Web Analytics beacon has its own Cloudflare policy and is unchanged by this opt-in.
+
+`analytics-settings.js` is intentionally blank. Set distinct GA4 Measurement IDs for `production` and `staging`, and optionally an HTTPS `sessionEndpoint` for the Worker. Do not put GA4 API secrets or Worker admin tokens in the public repository. GA4 is loaded only after consent, with its automatic page view disabled; the tracker sends one explicit page view. Poki, localhost, and known automated tests suppress this new telemetry. The local test server also removes the existing Cloudflare beacon, so GitHub Actions browser tests do not increase the public visit counter.
+
+## Optional Worker and private view
+
+`analytics-worker/worker.js` and `analytics-worker/schema.sql` provide a deployable D1 session receiver and an authenticated `/admin` dashboard (`/admin/summary?days=7` gives JSON). These files are preparation only; the Worker is not live until the owner creates a D1 database, applies the schema, binds it as `DB`, sets a strong `ADMIN_TOKEN` Worker secret, deploys the Worker, and fills its HTTPS `/api/session` URL into `analytics-settings.js`. Open `/admin` over HTTPS and enter `admin` as the browser username and the configured token as the password. The admin token belongs only in the Worker secret store and the owner's browser. Never put it in the game bundle, a repository secret intended for public pages, or a chat message.
+
+The receiver accepts requests only from the GitHub Pages origin, validates a narrow schema, caps claimed durations to server-observed time, limits repeated updates for one session, and retains records for 90 days via a scheduled handler. Configure a daily Worker Cron Trigger for retention. For public exposure, add Cloudflare rate limiting for the receiver path; application checks alone cannot prevent an attacker from creating many new anonymous IDs. The dashboard gives counts and anonymous sessions only, never visitor identities. Classification remains conservative: one automation hint is insufficient, and engaged gameplay is not proof of a human.
+
+No Cloudflare account or GA4 property was connected while this feature was prepared, so there are no live session records and no admin dashboard deployment yet. A Measurement ID and Cloudflare D1/Worker access are required for activation. Production and staging are distinguished in every record.
+

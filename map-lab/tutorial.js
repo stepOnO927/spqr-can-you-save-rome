@@ -1,4 +1,5 @@
 import {localStore as localStorage} from '../safe-storage.js';
+import {analytics} from '../analytics.js';
 // The tutorial follows only the selected friendly army, not an unrelated battle.
 export function tutorialTurnProgress(state,side){
  const armyId=side==='senate'?'italy':'xiii',destination=side==='senate'?'cisalpine':'italiaN';
@@ -70,9 +71,9 @@ export function createTutorial({language,onReset,onMode,getState,skipInitial=fal
  function place(){if(!running)return;const selector=targets()[step],target=selector?$(selector):null;if(target!==previous){unmark();previous=target;if(target){target.classList.add('guide-highlight');target.scrollIntoView({block:'nearest',inline:'nearest'})}}if(target){const r=target.getBoundingClientRect();if(r.width&&r.height&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth){arrow.hidden=false;arrow.style.left=Math.max(12,Math.min(innerWidth-32,r.left+r.width/2-10))+'px';arrow.style.top=Math.max(72,r.top-31)+'px'}else arrow.hidden=true}}
  function render(){if(!running)return;const c=data(),steps=allSteps();box.hidden=false;$('#guide-label').textContent=`${c.step} · ${step+1}/${steps.length}`;$('#guide-title').textContent=steps[step][0];$('#guide-body').textContent=steps[step][1];$('#guide-skip').textContent=c.skip;const next=$('#guide-next');next.hidden=![0,2,6,11].includes(step)||(step===6&&battlePending);next.textContent=step===11?c.finish:c.continue;$('#guide-feedback').textContent='';place()}
  function setStep(next){step=next;persist();unmark();render()}
- function stop(){running=false;persist();box.hidden=true;unmark();if(pulseTimer){clearInterval(pulseTimer);pulseTimer=null}}
- function begin(side){faction=side;running=true;ordered=false;battlePending=false;step=0;persist();box.hidden=false;if(pulseTimer)clearInterval(pulseTimer);pulseTimer=setInterval(place,250);render()}
- $('#guide-next').onclick=()=>{if(step===0)setStep(1);else if(step===2)setStep(3);else if(step===6)setStep(7);else if(step===11)stop()};$('#guide-skip').onclick=stop;
+ function stop(reason='skip'){if(running)analytics.track(reason==='complete'?'tutorial_completed':'tutorial_skipped',{}, {humanAction:false});running=false;persist();box.hidden=true;unmark();if(pulseTimer){clearInterval(pulseTimer);pulseTimer=null}}
+ function begin(side){faction=side;running=true;analytics.track('tutorial_started',{}, {humanAction:false});ordered=false;battlePending=false;step=0;persist();box.hidden=false;if(pulseTimer)clearInterval(pulseTimer);pulseTimer=setInterval(place,250);render()}
+ $('#guide-next').onclick=()=>{if(step===0)setStep(1);else if(step===2)setStep(3);else if(step===6)setStep(7);else if(step===11)stop('complete')};$('#guide-skip').onclick=stop;
  document.addEventListener('spqr:action',e=>{if(!running)return;const d=e.detail||{};if(d.type==='invalid'){$('#guide-feedback').textContent=data().invalid;return}
   if(step===1&&d.type==='army'&&d.own)setStep(2);
   else if(step===3&&d.type==='preview')setStep(4);
