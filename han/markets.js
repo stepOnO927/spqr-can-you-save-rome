@@ -353,29 +353,34 @@ function settleStrandedShipment(s,shipment){
 
 function advanceEasternMarketAI(s){
  const markets=s.tradeMarkets,now=month(s),orders=[],plans=new Map(),pathCache=new Map();
- const pathFor=(origin,destination,buyer)=>{
+ const regionsByOwner=new Map(),regionsById=new Map(),oasisOwners=new Set(),offersByGood=new Map(),activeByBuyer=new Map();
+ for(const r of s.regions){regionsById.set(r.id,r);if(!regionsByOwner.has(r.owner))regionsByOwner.set(r.owner,[]);regionsByOwner.get(r.owner).push(r);if(r.kind?.startsWith('oasis'))oasisOwners.add(r.owner)}
+ for(const offer of markets.offers){if(!offersByGood.has(offer.commodity))offersByGood.set(offer.commodity,[]);offersByGood.get(offer.commodity).push(offer)}
+ for(const shipment of markets.shipments)if(['traveling','blocked'].includes(shipment.status)){if(!activeByBuyer.has(shipment.buyer))activeByBuyer.set(shipment.buyer,[]);activeByBuyer.get(shipment.buyer).push(shipment)}
+ const towardFor=(destination,buyer)=>{
   const key=`${buyer}:${destination}`;
   if(!pathCache.has(key))pathCache.set(key,projectedPathsTo(s,destination,buyer));
-  const toward=pathCache.get(key);if(!toward.has(origin))return null;
+  return pathCache.get(key);
+ };
+ const pathFor=(origin,destination,buyer)=>{
+  const toward=towardFor(destination,buyer);if(!toward.has(origin))return null;
   const path=[];for(let id=origin;id;id=toward.get(id))path.push(id);
   return path;
  };
- const oasis=id=>s.regions.some(r=>r.owner===id&&r.kind?.startsWith('oasis'));
- const reserve=(id,good)=>id==='han'?100:oasis(id)?good==='silk'?2:12:12;
- const buyers=Object.keys(s.factions).filter(id=>id!==s.player&&s.regions.some(r=>r.owner===id&&((r.pop||0)>=8||r.kind?.startsWith('oasis'))));
+ const reserve=(id,good)=>id==='han'?100:oasisOwners.has(id)?good==='silk'?2:12:12;
+ const buyers=Object.keys(s.factions).filter(id=>id!==s.player&&(regionsByOwner.get(id)||[]).some(r=>(r.pop||0)>=8||r.kind?.startsWith('oasis')));
  for(const buyer of buyers){
   if(s.factions[buyer].treasury<2+COMMODITIES.grain.basePrice)continue;
-  const active=markets.shipments.filter(x=>x.buyer===buyer&&['traveling','blocked'].includes(x.status));
+  const active=activeByBuyer.get(buyer)||[],activeSellerGood=new Set(active.map(x=>`${x.seller}:${x.commodity}`));
   if(active.some(x=>x.status==='traveling')||active.some(x=>x.status==='blocked'&&now-(x.blockedAt??now)<3))continue;
   const candidates=[];
-  for(const destination of s.regions.filter(r=>r.owner===buyer&&((r.pop||0)>=8||r.kind?.startsWith('oasis'))))for(const [good,item] of Object.entries(markets.regions[destination.id].goods)){
+  for(const destination of (regionsByOwner.get(buyer)||[]).filter(r=>(r.pop||0)>=8||r.kind?.startsWith('oasis')))for(const [good,item] of Object.entries(markets.regions[destination.id].goods)){
    const target=Math.max(4,item.consumption*3+item.production),deficit=target-item.stock;if(deficit<=0)continue;
-   const nearby=markets.offers.filter(x=>x.commodity===good&&x.seller!==buyer&&(x.seller!==s.player||x.saleOrderId)&&!atWar(s,buyer,x.seller)&&!active.some(shipment=>shipment.seller===x.seller&&shipment.commodity===good))
-    .map(offer=>({...offer,path:pathFor(offer.origin,destination.id,buyer)})).filter(offer=>offer.path)
-    .sort((a,b)=>{const sourceA=region(s,a.origin),sourceB=region(s,b.origin);
+   const nearby=(offersByGood.get(good)||[]).filter(x=>x.seller!==buyer&&(x.seller!==s.player||x.saleOrderId)&&!atWar(s,buyer,x.seller)&&!activeSellerGood.has(`${x.seller}:${good}`)&&towardFor(destination.id,buyer).has(x.origin))
+    .sort((a,b)=>{const sourceA=regionsById.get(a.origin),sourceB=regionsById.get(b.origin);
      const costA=a.price+Math.abs(sourceA.lon-destination.lon)*.15+Math.abs(sourceA.lat-destination.lat)*.15;
      const costB=b.price+Math.abs(sourceB.lon-destination.lon)*.15+Math.abs(sourceB.lat-destination.lat)*.15;
-     return costA-costB}).slice(0,4);
+      return costA-costB}).slice(0,4).map(offer=>({...offer,path:pathFor(offer.origin,destination.id,buyer)}));
    for(const offer of nearby){
     const path=offer.path;
     // Small intermediary courts can fund one batch when a larger lot would
