@@ -17,8 +17,11 @@ const independentVillages=s=>s.regions.flatMap(region=>region.localEntities||[])
 test('fictional local names vary by seed and broad theater without repeating one global style',()=>{
  const theaters=['hispaniaN','achaia','syria','numidia'];
  const samples=theaters.map(theater=>new Set(Array.from({length:128},(_,seed)=>generatedLocalPolities(seed+1,'standard',new Set([theater]))[0].name[0].split(' ')[0])));
+ const leaders=theaters.map(theater=>new Set(Array.from({length:128},(_,seed)=>generatedLocalPolities(seed+1,'standard',new Set([theater]))[0].ruler.name[0].split(' ').at(-1))));
  for(const names of samples)assert.ok(names.size>=9);
  for(let i=0;i<samples.length;i++)for(let j=i+1;j<samples.length;j++)assert.equal([...samples[i]].filter(name=>samples[j].has(name)).length,0);
+ for(const names of leaders)assert.ok(names.size>=8);
+ for(let i=0;i<leaders.length;i++)for(let j=i+1;j<leaders.length;j++)assert.equal([...leaders[i]].filter(name=>leaders[j].has(name)).length,0);
 });
 
 test('one seeded microstate never weakens when difficulty rises',()=>{

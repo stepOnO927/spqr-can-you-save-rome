@@ -114,6 +114,15 @@ const RULER_NAMES=Object.freeze([
  ['Oryon','奥里翁'],['Pheron','菲隆'],['Rovena','罗薇娜'],['Salyra','萨莉拉'],['Taron','塔隆'],
  ['Velira','维莉拉'],['Xeron','泽隆'],['Ylena','伊蕾娜'],['Zareon','扎雷翁'],['Mirena','米蕾娜']
 ]);
+const REGIONAL_RULERS=Object.freeze({
+ western:Object.freeze([['Arovas','阿罗瓦斯'],['Belia','贝莉娅'],['Carvos','卡尔沃斯'],['Dervena','德尔维娜'],['Elvar','埃尔瓦尔'],['Maros','马罗斯'],['Nertara','涅尔塔拉'],['Talvion','塔尔维翁'],['Uxer','乌克塞尔'],['Virdessa','维尔德萨']]),
+ iberian:Object.freeze([['Arbel','阿尔贝尔'],['Balsara','巴尔萨拉'],['Karet','卡雷特'],['Lurena','卢蕾娜'],['Oretan','奥雷坦'],['Saldira','萨尔迪拉'],['Tarsen','塔尔森'],['Turmara','图尔马拉'],['Veska','韦斯卡'],['Zaldar','扎尔达尔']]),
+ hellenic:RULER_NAMES,
+ eastern:Object.freeze([['Arzavan','阿尔扎万'],['Darvash','达尔瓦什'],['Eshara','埃沙拉'],['Farazon','法拉宗'],['Harzena','哈尔泽娜'],['Kevar','凯瓦尔'],['Narvaz','纳尔瓦兹'],['Ravazan','拉瓦赞'],['Tiraz','蒂拉兹'],['Vardaz','瓦尔达兹']]),
+ african:Object.freeze([['Adur','阿杜尔'],['Baresa','巴雷萨'],['Dazun','达尊'],['Emazira','埃马齐拉'],['Farsen','法尔森'],['Imlara','伊姆拉拉'],['Kezun','凯尊'],['Mazar','马扎尔'],['Tazira','塔齐拉'],['Zamur','扎穆尔']]),
+ nile:Object.freeze([['Abar','阿巴尔'],['Demera','德梅拉'],['Eshamet','埃沙梅特'],['Faret','法雷特'],['Hekara','赫卡拉'],['Imeret','伊梅雷特'],['Kamer','卡梅尔'],['Menera','梅涅拉'],['Pamer','帕梅尔'],['Tameret','塔梅雷特']])
+});
+const rulersFor=theater=>REGIONAL_RULERS[REGION_GROUP[theater]]||RULER_NAMES;
 const NOMAD_TITLES=Object.freeze([['Pastoral Camp','牧营'],['Seasonal Encampment','季节营地'],['Herding Band','游牧群体'],['Range Council','牧地议事群']]);
 const VILLAGE_TITLES=Object.freeze([['Village','村'],['Hamlet','小村'],['Farmstead','农庄']]);
 const WILDERNESS_NAMES=Object.freeze([['Remote Tract','偏远地带'],['Interior Reach','内陆荒地'],['Outer Range','边缘地带'],['Sparse Corridor','稀疏走廊'],['Wild Margin','荒野边缘'],['High Frontier','高地边疆']]);
@@ -151,7 +160,7 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters,startYe
   do{const stems=stemsFor(site.theater),stem=stems[integer(rng,0,stems.length-1)],title=TITLES[site.type][integer(rng,0,TITLES[site.type].length-1)];name=[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`];english=name[0]}while(used.has(english));
   used.add(english);
   let rulerName,rulerKey;
-  do{const person=RULER_NAMES[integer(rng,0,RULER_NAMES.length-1)],title=RULER_TITLES[site.type];rulerName=[`${title[0]} ${person[0]}`,`${person[1]}${title[1]}`];rulerKey=rulerName[0]}while(usedRulers.has(rulerKey));
+  do{const names=rulersFor(site.theater),person=names[integer(rng,0,names.length-1)],title=RULER_TITLES[site.type];rulerName=[`${title[0]} ${person[0]}`,`${person[1]}${title[1]}`];rulerKey=rulerName[0]}while(usedRulers.has(rulerKey));
   usedRulers.add(rulerKey);
   const age=integer(rng,28,64);
   result.push({id:`generated:${site.theater}`,type:site.type,theater:site.theater,coordinates:site.coordinates,name,
@@ -176,7 +185,7 @@ export function generatedIndependentVillages(seed,difficulty,availableTheaters){
   let name;
   do{const stems=stemsFor(site.theater),stem=stems[integer(rng,0,stems.length-1)],title=VILLAGE_TITLES[integer(rng,0,VILLAGE_TITLES.length-1)];name=[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`]}while(used.has(name[0]));
   used.add(name[0]);
-  const head=RULER_NAMES[integer(rng,0,RULER_NAMES.length-1)];
+  const names=rulersFor(site.theater),head=names[integer(rng,0,names.length-1)];
   const population=Math.round(integer(rng,350,850)*band.population/50)*50;
   const foodNeed=Math.max(2,Math.ceil(population/350));
   const storedFood=Math.min(12,foodNeed*3);
@@ -196,7 +205,7 @@ export function generatedNomadicCommunities(seed,difficulty,availableTheaters,st
  for(let i=ranges.length-1;i>0;i--){const j=integer(rng,0,i);[ranges[i],ranges[j]]=[ranges[j],ranges[i]]}
  const count=Math.min(ranges.length,integer(rng,...countBand));
  return ranges.slice(0,count).map(route=>{
-  const stems=stemsFor(route.camps[0].theater),stem=stems[integer(rng,0,stems.length-1)],title=NOMAD_TITLES[integer(rng,0,NOMAD_TITLES.length-1)],person=RULER_NAMES[integer(rng,0,RULER_NAMES.length-1)];
+  const stems=stemsFor(route.camps[0].theater),names=rulersFor(route.camps[0].theater),stem=stems[integer(rng,0,stems.length-1)],title=NOMAD_TITLES[integer(rng,0,NOMAD_TITLES.length-1)],person=names[integer(rng,0,names.length-1)];
   const population=Math.round(integer(rng,1000,3200)*band.population/100)*100;
   const militia=Math.max(100,Math.round(population*range(rng,...band.militia)/50)*50);
   const treasury=Math.max(3,Math.round(population/550*band.wealth*range(rng,.8,1.2)));

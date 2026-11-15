@@ -44,6 +44,7 @@ Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/c
 - 草稿 PR #242 的 GitHub Actions `Cloudflare Pages package` 在 `94b19751` 上通过：`dist/` 有 293 个公开文件，总计 4.57 MiB，单个最大文件 1.06 MiB，低于 25 MiB 上限。云端 Chromium 验证主战役、Map Lab、Han、存档、跨源导入、未知键拒绝及站内资源请求均通过。
 - 同一提交的 `SPQR quality` 和 `Poki release validation` 通过；三组较长的浏览器回归在记录本条时仍运行。此前的独立村落提交已通过三组浏览器回归，包括地图村落标记与建设操作。最新地区化名称与难度数值提交 `8347a782` 仍须完成云端复验。
 - 这些均是 GitHub 托管的测试，不是 Cloudflare Pages 实际公网站点验收。GitHub Pages、仓库公开状态和旧部署未改动。
+- 11 月 15 日只读复核：GitHub API 报告 `private=false`、默认分支 `main`、`has_pages=true`；旧站 `/` 与 `/map-lab/` 的 HTTP HEAD 均返回 200。这里没有对旧部署执行任何写操作。
 
 ## 切换验收清单
 
