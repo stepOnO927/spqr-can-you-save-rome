@@ -1,0 +1,21 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {newGame,upgradeSave} from '../engine.js?v=faces-reported-names-1';
+import {createFictionalPerson} from '../dynasties.js?v=faces-reported-names-1';
+import {addReport} from '../character-system.js?v=faces-reported-names-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=faces-reported-names-1';
+import {reportedPersonName,visiblePersonName} from '../person-knowledge.js?v=faces-reported-names-1';
+test('an actual meeting observes a new name while preserving the earlier addressed name',()=>{
+ let s=newGame('caesar');s.wars=[];s.world.characters['fictional:1'].location='egypt';const id=createFictionalPerson(s,{name:['Old report','旧报告姓名'],faction:'egypt',birthYear:-75,location:'egypt'});addReport(s,'caesar','egypt',{kind:'leaders',leaders:[id],source:'spy'});
+ assert.ok(requestPersonalMeeting(s,'fictional:1',id,'egypt').ok);s.world.dynasties.catalog[id].name=['Name at meeting','会面时姓名'];assert.deepEqual(visiblePersonName(s,'caesar',id),['Old report','旧报告姓名']);
+ s.world.intelSeed=1000;s.month=2;advancePersonalDiplomacy(s);s.month=3;advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');assert.deepEqual(s.meetings[0].reportedName,['Old report','旧报告姓名']);assert.deepEqual(s.meetings[0].observedName,['Name at meeting','会面时姓名']);
+ s.world.dynasties.catalog[id].name=['Later secret','后来秘密姓名'];s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(visiblePersonName(s,'caesar',id),['Name at meeting','会面时姓名']);assert.deepEqual(reportedPersonName(s,'caesar','egypt',id).name,['Name at meeting','会面时姓名']);
+ s.month=4;addReport(s,'caesar','egypt',{kind:'leaders',leaders:[id],source:'exchange',peopleNames:{[id]:['Newer report','更新的报告姓名']},observationYear:s.year,observationMonth:s.month});assert.deepEqual(visiblePersonName(s,'caesar',id),['Newer report','更新的报告姓名']);
+});
+test('pending, future and legacy meeting names cannot replace a dated report',()=>{
+ const s=newGame('caesar'),id=createFictionalPerson(s,{name:['Known','已知姓名'],faction:'egypt',birthYear:-75});addReport(s,'caesar','egypt',{kind:'leaders',leaders:[id],source:'spy'});
+ s.meetings.push({actor:'caesar',targetFaction:'egypt',target:id,status:'pending',year:s.year,month:s.month,observedName:['Pending','未送达']},{actor:'caesar',targetFaction:'egypt',target:id,status:'met',year:s.year,month:s.month,resolvedYear:s.year+1,resolvedMonth:s.month,observedName:['Future','未来姓名']},{actor:'caesar',targetFaction:'egypt',target:id,status:'met',year:s.year,month:s.month,resolvedYear:s.year,resolvedMonth:s.month,reportedName:['Addressed','旧称呼']});
+ assert.deepEqual(visiblePersonName(s,'caesar',id),['Known','已知姓名']);
+});
+test('a declined request does not discover the hidden current name',()=>{
+ const s=newGame('caesar');s.wars=[];s.world.characters['fictional:1'].location='egypt';const id=createFictionalPerson(s,{name:['Reported','报告姓名'],faction:'egypt',birthYear:-75,location:'egypt'});addReport(s,'caesar','egypt',{kind:'leaders',leaders:[id],source:'spy'});requestPersonalMeeting(s,'fictional:1',id,'egypt');s.world.dynasties.catalog[id].name=['Hidden','秘密姓名'];s.world.intelSeed=0;s.month=2;advancePersonalDiplomacy(s);s.month=3;advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'declined');assert.equal(s.meetings[0].observedName,undefined);assert.deepEqual(visiblePersonName(s,'caesar',id),['Reported','报告姓名']);
+});
