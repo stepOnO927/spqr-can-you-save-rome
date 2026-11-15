@@ -99,6 +99,7 @@ try{
  assert.match(await profile.innerText(),/记载的出身地\s+\S+/);
  const generatedSrc=await profile.locator('img').getAttribute('src');
  assert.match(generatedSrc,/^data:image\/svg\+xml,/);
+ assert.match(decodeURIComponent(generatedSrc),/data-station="official"/);
  assert.equal((await profile.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0)),true);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#court-panel').click();
  await page.locator(`[data-court-person="${generated.id}"]`).click();

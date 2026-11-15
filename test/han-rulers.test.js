@@ -39,15 +39,17 @@ test('an original Liu heir gains a persistent portrait when legitimately crowned
  s=loadHanSave(serialize(s));
  const image=courtPortraitSrc(s.persons[id]);assert.match(image,/^data:image\/svg\+xml,/);
  assert.equal(crown(s,id,'court_selection').ok,true);
+ const crowned=courtPortraitSrc(s.persons[id],128,s);assert.match(decodeURIComponent(crowned),/data-station="ruler"/);
+ assert.notEqual(crowned,image);assert.equal(/<ellipse cx="40" cy="38"[^>]+>/.exec(decodeURIComponent(crowned))?.[0],/<ellipse cx="40" cy="38"[^>]+>/.exec(decodeURIComponent(image))?.[0]);
  assert.match(ownRulerHtml(s,0),/Liu Yi/);
  assert.match(ownRulerHtml(s,0),/Original campaign character/);
- assert.ok(ownRulerHtml(s,0).includes(image));
+ assert.ok(ownRulerHtml(s,0).includes(crowned));
  assert.match(ownRulerHtml(s,1),/刘翊/);
  assert.match(ownRulerHtml(s,1),/汉皇帝/);
  s=loadHanSave(serialize(s));
  assert.equal(s.throne.orthodox,id);
  assert.equal(courtPortraitSrc(s.persons[id]),image);
- assert.ok(ownRulerHtml(s,0).includes(image));
+ assert.ok(ownRulerHtml(s,0).includes(crowned));
  assert.equal(crown(s,'shi-gao','court_selection').ok,false);
 });
 

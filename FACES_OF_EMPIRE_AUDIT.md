@@ -256,6 +256,10 @@ for a current office, army command or leadership role. A successful foreign
 meeting records the observed attire at that date; a later hidden promotion,
 loss of office or aging cannot revise that saved observation. The details are
 game artwork, not claims about a documented ancient garment.
+The standalone Han campaign also renders its original people's saved faces
+with age and current court office, army command or throne details. Appointment,
+dismissal, command, succession and save restoration are covered by simulation
+and browser checks; historical fixed portraits keep their existing artwork.
 Newly generated Han officials now save their culture, recorded origin, current
 court location, profession and first service event alongside that portrait.
 Their dossier shows those fields in both languages after save restoration.

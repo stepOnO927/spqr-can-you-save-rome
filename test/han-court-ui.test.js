@@ -159,6 +159,23 @@ test('appointed original official remains selectable with the same portrait and 
  assert.equal(courtPortraitSrc(s.persons[id]),originalSrc,'older saves regenerate a stable portrait');
 });
 
+test('a generated Han face follows an actual office, command and age across saves',()=>{
+ let s=newHanGame('han',{seed:64});
+ const person=generateOfficial(s,'dasinong'),id=person.id,art=()=>decodeURIComponent(courtPortraitSrc(s.persons[id],128,s));
+ const civilian=art(),face=/<ellipse cx="40" cy="38"[^>]+>/.exec(civilian)?.[0];
+ assert.match(civilian,/data-station="civilian"/);
+ assert.equal(appoint(s,'dasinong',id).ok,true);
+ const official=art();assert.match(official,/data-station="official"/);assert.ok(official.includes(face));
+ assert.ok(hanCourtHtml(s,0,id).includes(courtPortraitSrc(s.persons[id],128,s)));
+ assert.equal(dismiss(s,'dasinong').ok,true);assert.equal(art(),civilian);
+ const army=s.armies.find(a=>a.owner==='han');army.commander=id;
+ const commander=art();assert.match(commander,/data-station="commander"/);assert.ok(commander.includes(face));
+ s=loadHanSave(serialize(s));assert.equal(art(),commander);
+ s.armies.find(a=>a.id===army.id).commander=null;s.year=Math.max(s.year,s.persons[id].birth+66);
+ const senior=art();assert.match(senior,/data-age-band="2"/);assert.match(senior,/data-station="civilian"/);assert.ok(senior.includes(face));
+ s=loadHanSave(serialize(s));assert.equal(art(),senior);
+});
+
 test('legacy generated officials keep their names and unknown origins on load',()=>{
  const s=newHanGame('han',{seed:91}),person=generateOfficial(s,'dasinong'),id=person.id;
  assert.equal(appoint(s,'dasinong',id).ok,true);

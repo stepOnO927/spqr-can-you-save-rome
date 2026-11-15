@@ -8,7 +8,7 @@ export function ownRulerHtml(s,lang=0){
  const f=s.player,r=s.rulers?.[f],p=f==='han'?s.persons[s.throne?.orthodox||s.throne?.occupant]:s.persons[r?.personId||r?.id];
  if(!p)return `<p class="muted">${lang?'当前君主未详。':'Current ruler uncertain.'}</p>`;
  const title=f==='han'?(s.throne?.orthodox===p.id?(lang?'汉皇帝':'Han emperor'):label(STATUS_NAMES[statusOf(s,p.id)]||['Ruler of another dynasty','别朝统治者'],lang)):label(r?.title||rulerTitle(f),lang);
- const portrait=f==='han'?courtPortraitSrc(p):rulerPortrait(s,f);
+ const portrait=f==='han'?courtPortraitSrc(p,128,s):rulerPortrait(s,f);
  const origin=['fictional','simulated'].includes(p.record)?(lang?'本战役原创人物；姓名和肖像均为游戏创作。':'Original campaign character; name and portrait are game artwork.'):
   p.titleOnly?(lang?'史料未载此时王名；仅以王号称之。肖像为游戏创作。':'The contemporary personal name is unrecorded; the title is shown. Portrait is game artwork.'):
   (lang?'历史人物；肖像为艺术复原，生死由战役模拟。':'Historical person; portrait is an artistic reconstruction and campaign events are simulated.');

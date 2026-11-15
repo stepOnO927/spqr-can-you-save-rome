@@ -62,6 +62,7 @@ try{
  assert.match(await card.innerText(),/Original campaign character/);
  assert.equal(await card.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0),true);
  const heirImage=await card.locator('img').getAttribute('src');assert.match(heirImage,/^data:image\/svg\+xml,/);
+ assert.match(decodeURIComponent(heirImage),/data-station="ruler"/);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
  assert.equal(await card.locator('img').getAttribute('src'),heirImage);
  await page.locator('#lang').click();assert.match(await card.innerText(),/刘翊/);
