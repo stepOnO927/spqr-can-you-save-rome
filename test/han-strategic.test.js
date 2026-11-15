@@ -34,6 +34,14 @@ test('steppe hosts forage at home but spend treasury and grain when deployed',()
  assert.ok(home.factions.wusun.grain>deployed.factions.wusun.grain);
 });
 
+test('Qiang highland bands draw household support at home but pay upkeep away',()=>{
+ const home=game('parthia',{seed:49}),deployed=game('parthia',{seed:49});
+ deployed.armies.find(a=>a.owner==='qiang').region='jincheng';
+ tick(home);tick(deployed);
+ assert.ok(home.factions.qiang.treasury>deployed.factions.qiang.treasury);
+ assert.ok(home.factions.qiang.grain>deployed.factions.qiang.grain);
+});
+
 test('11. Han troops march across valid Chinese territories along real routes',()=>{
  const s=game();const a=s.armies.find(x=>x.owner==='han'&&x.region==='changan');
  assert.equal(moveArmy(s,a.id,'shu').ok,false,'Chang’an and Shu are not adjacent');
