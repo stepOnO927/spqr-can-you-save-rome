@@ -57,7 +57,7 @@ if(typeof document!=='undefined'){
   // toolbar, so reattach the same button after a redraw instead of floating
   // over the map or the advance-month control.
   const app=document.querySelector('#app'),mast=document.querySelector('.mast');
-  const mount=()=>{const host=app?.querySelector('.map-toolbar .controls')||(mast?document.querySelector('#load')?.parentElement:null)||document.querySelector('body > header > div');if(!host||trigger.parentNode===host)return;const load=host.querySelector('#load');if(load)load.insertAdjacentElement('afterend',trigger);else host.append(trigger)};
+  const mount=()=>{const host=app?.querySelector('.setup-panel .setup-saves')||app?.querySelector('.map-toolbar .controls')||(mast?document.querySelector('#load')?.parentElement:null)||document.querySelector('body > header > div');if(!host||trigger.parentNode===host)return;const load=host.querySelector('#load');if(load)load.insertAdjacentElement('afterend',trigger);else host.append(trigger)};
   mount();const observed=app||mast;if(observed)new MutationObserver(mount).observe(observed,{childList:true,subtree:true});
   const refresh=()=>{trigger.textContent=label('Transfer saves','迁移存档');dialog.querySelector('h2').textContent=label('Transfer saves to another site','跨网站迁移存档');dialog.querySelector('.transfer-help').textContent=label('Save your current campaign first. Export on the old site, then import the file on the new site. Existing slots are never overwritten.','请先保存当前战役。在旧网站导出文件，再到新网站导入。已有栏位不会被覆盖。');dialog.querySelector('#save-transfer-export').textContent=label('Export saves','导出存档');dialog.querySelector('#save-transfer-import-label').textContent=label('Import saves','导入存档')};
   trigger.onclick=()=>{refresh();dialog.showModal()};
