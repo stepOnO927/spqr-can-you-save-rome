@@ -6,7 +6,7 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `57237f8a`. The newer report-delivery
+The draft now includes main through `9711ddeb`. The newer report-delivery
 checks are reconciled in planning, battle estimates, faction views, national
 focus and legion design; the added unit and browser regressions pass. Its
 Roman trade routes now reuse a static adjacency index and look up campaign
@@ -24,6 +24,10 @@ mission-result inbox is also integrated: received operations appear once as
 saved correspondence, while pending or unanswered missions remain absent.
 Its unit cases and Chromium inbox flow pass after restoring the shared module
 imports in the expansion branch.
+Main's office-specific election results now render from the selected office;
+invalid old selections fall back to consul. The 45 focused Cursus and mission
+tests pass, and Chromium confirms election results, taking office, language,
+and save/load in the atlas.
 The draft's overview layout and
 attack-preview privacy changes are connected to the expanded faction atlas:
 crowded cities and armies remain selectable through faction directories, and
