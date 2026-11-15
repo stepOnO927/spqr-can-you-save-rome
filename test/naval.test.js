@@ -271,6 +271,28 @@ test('naval battle preserves bounded enemy-loss observations across saves',()=>{
  assert.ok(observed.sailors[0]<=loss.sailors&&loss.sailors<=observed.sailors[1]);assert.ok(observed.sailors[1]>observed.sailors[0]);
  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(restored.naval.reports.find(r=>r.id===battle.id).observedLosses.senate,observed);
 });
+test('unarmed merchants do not create battles or damage an escorted warship',()=>{
+ const s=newGrandGame('senate'),senate=s.naval.fleets.find(f=>f.id==='senate-adriatic'),caesar=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ senate.port=caesar.port=null;senate.zone=caesar.zone='adriatic';senate.ships={merchant:1};caesar.ships={merchant:1};senate.sailors=caesar.sailors=45;
+ const before={seed:s.seed,experience:senate.experience,reports:s.naval.reports.length};
+ resolveBattle(s,senate,caesar,'adriatic',()=>{});
+ assert.equal(s.seed,before.seed);assert.equal(s.naval.reports.length,before.reports);assert.equal(senate.experience,before.experience);assert.equal(senate.hull,100);assert.equal(caesar.hull,100);
+ s.naval.fleets=[senate,caesar];advanceNaval(s,()=>{});
+ assert.equal(s.naval.reports.some(r=>r.kind==='battle'),false,'the monthly encounter loop must not fabricate a merchant battle');
+ senate.ships={trireme:1};senate.sailors=180;senate.hull=40;
+ resolveBattle(s,senate,caesar,'adriatic',()=>{});
+ const report=s.naval.reports.at(-1);
+ assert.equal(report.kind,'battle');assert.equal(report.winner,'senate');assert.equal(senate.hull,40);assert.equal(senate.ships.trireme,1);assert.deepEqual(report.losses[senate.id],{sunk:0,type:null,sailors:0});assert.ok(caesar.hull<100);
+});
+test('an uncrewed warship cannot fight with phantom sailors',()=>{
+ const s=newGrandGame('senate'),senate=s.naval.fleets.find(f=>f.id==='senate-adriatic'),caesar=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ senate.port=caesar.port=null;senate.zone=caesar.zone='adriatic';senate.ships={trireme:1};caesar.ships={trireme:1};senate.sailors=180;caesar.sailors=0;
+ resolveBattle(s,senate,caesar,'adriatic',()=>{});
+ assert.equal(senate.hull,100);assert.equal(s.naval.reports.at(-1).winner,'senate');assert.ok(caesar.hull<100);
+ caesar.sailors=1;caesar.hull=100;senate.hull=100;
+ resolveBattle(s,senate,caesar,'adriatic',()=>{});
+ assert.equal(senate.hull,100,'one sailor must not activate the full fixed-damage term');
+});
 test('naval reconnaissance can miss, observe approximately or evade a real encounter',()=>{
   const run=seed=>{const s=newGrandGame('senate'),scout=s.naval.fleets.find(f=>f.id==='senate-adriatic'),messages=[];scout.ships={light:3};scout.sailors=240;s.naval.fleets.find(f=>f.id==='caesar-adriatic').port=null;s.seed=seed;
   assert.deepEqual(reportedHostileFleets(s,'senate'),[]);assert.equal(orderFleet(s,'senate',scout.id,'recon','adriatic').ok,true);advanceNaval(s,(_state,en,zh)=>messages.push({en,zh}));

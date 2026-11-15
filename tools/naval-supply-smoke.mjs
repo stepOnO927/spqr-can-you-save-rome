@@ -9,13 +9,14 @@ const browser=await chromium.launch({headless:true,executablePath:'C:/Program Fi
 try{
  const context=await browser.newContext({viewport:{width:1440,height:900}});
  await context.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
- const mapMock=`window.maplibregl={Map:class{constructor(){this.sources={};this.layers=new Set(['control','relief','sea','landcover','province-outline']);this.canvas=document.createElement('canvas')}on(name,layer,callback){if(name==='load')setTimeout(typeof layer==='function'?layer:callback,0);return this}addSource(id,data){this.sources[id]={...data,setData(x){this.data=x}}}getSource(id){return this.sources[id]}addLayer(layer){this.layers.add(layer.id)}addImage(){}getLayer(id){return this.layers.has(id)}setPaintProperty(){}setLayoutProperty(){}getCanvas(){return this.canvas}getZoom(){return 5.45}flyTo(){}zoomIn(){}zoomOut(){}queryRenderedFeatures(){return []}},Marker:class{constructor({element}){this.element=element}setLngLat(){return this}addTo(){document.querySelector('#map').append(this.element);return this}remove(){this.element.remove()}}}`;
+ const mapMock=`window.maplibregl={Map:class{constructor(){this.sources={};this.layers=new Set(['control','relief','sea','landcover','province-outline']);this.canvas=document.createElement('canvas')}on(name,layer,callback){if(name==='load')setTimeout(typeof layer==='function'?layer:callback,0);return this}addSource(id,data){this.sources[id]={...data,setData(x){this.data=x}}}getSource(id){return this.sources[id]}addLayer(layer){this.layers.add(layer.id)}addImage(){}getLayer(id){return this.layers.has(id)}setPaintProperty(){}setLayoutProperty(){}getCanvas(){return this.canvas}getContainer(){return document.querySelector('#map')}getPaintProperty(){return 0}getZoom(){return 5.45}flyTo(){}zoomIn(){}zoomOut(){}queryRenderedFeatures(){return []}},Marker:class{constructor({element}){this.element=element}setLngLat(){return this}addTo(){document.querySelector('#map').append(this.element);return this}remove(){this.element.remove()}}}`;
  await context.route('https://**/*',route=>route.abort());
  await context.route('http://spqr.test/**',async route=>{const url=new URL(route.request().url());if(url.hostname==='spqr.test'&&url.pathname==='/map-lab/vendor/maplibre-gl.js'){await route.fulfill({status:200,contentType:'text/javascript',body:mapMock});return}const relative=url.pathname==='/'?'index.html':url.pathname==='/map-lab/'?'map-lab/index.html':url.pathname.slice(1),target=path.resolve(root,relative);if(!target.startsWith(root+path.sep)){await route.abort();return}try{const body=await readFile(target),ext=path.extname(target),contentType={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml'}[ext]||'application/octet-stream';await route.fulfill({status:200,contentType,body})}catch{await route.fulfill({status:404,body:'Not found'})}});
  const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
  await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
  await page.locator('#entry-senate').click();await page.waitForURL('**/map-lab/');await page.locator('.grand-site').first().waitFor();
  await page.locator('#naval').click();
+ await page.locator('.naval-content').waitFor({timeout:10000});
  assert.match(await page.locator('.naval-content').innerText(),/MARITIME ARMY SUPPLY/);
  assert.match(await page.locator('.naval-content').innerText(),/three friendly land links/);
  assert.match(await page.locator('.naval-content').innerText(),/Army supply capacity 6 food/);
@@ -38,9 +39,9 @@ try{
  await page.locator('[data-toggle-trade="egypt-italy"]').click();
  assert.match(await page.locator('[data-toggle-trade="egypt-italy"]').innerText(),/PAUSE IMPORTS/);
  const reports=await page.evaluate(async()=>{
-  const {newGrandGame}=await import('../engine.js?v=184');
-  const {advanceNaval,reserveFleet,mobilizeFleet}=await import('../naval.js?v=38');
-  const {renderNavalPanel}=await import('./naval-ui.js?v=54');
+  const {newGrandGame}=await import('../engine.js?v=195');
+  const {advanceNaval,reserveFleet,mobilizeFleet}=await import('../naval.js?v=44');
+  const {renderNavalPanel}=await import('./naval-ui.js?v=62');
   const state=newGrandGame('senate');state.naval.reports.unshift({id:'supply-test',kind:'supply-delivery',owner:'senate',port:'t016',cargo:6,year:-49,month:4});
   const root=document.createElement('div');
   const render=lang=>{renderNavalPanel({state,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};
@@ -96,7 +97,7 @@ try{
  assert.match(reports.civilianZh,/商船队/);assert.match(reports.civilianZh,/独立船队/);
  assert.ok(reports.detached);assert.equal(reports.civilianGrain,'enroute');
  await page.evaluate(async()=>{
-  const {newGrandGame}=await import('../engine.js?v=184');
+  const {newGrandGame}=await import('../engine.js?v=195');
   const state=newGrandGame('senate'),army=state.armies.find(a=>a.id==='italy');
   state.wars=[];state.factions.senate.treasury=200;army.region='t023';army.operationalSupply=.3;
   state.naval.provisions.t016={owner:'senate',food:10};
