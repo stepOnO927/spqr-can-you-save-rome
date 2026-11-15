@@ -1,4 +1,4 @@
-import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=player-aid-letter-1';
+import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=official-name-snapshots-1';
 import {FACTIONS,PLAYABLE,ROUTES,OFFICES} from './data.js';
 import {appoint,knownAttributes,emperorAuthority} from './court.js';
 import {isLiuClan} from './dynasty.js';
