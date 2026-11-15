@@ -6,7 +6,7 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `5c1b05ad`. The newer report-delivery
+The draft now includes main through `e6d9212d`. The newer report-delivery
 checks are reconciled in planning, battle estimates, faction views, national
 focus and legion design; the added unit and browser regressions pass. Its
 overview layout and
@@ -93,6 +93,10 @@ The 120-month conservation test includes the new manufacturing ledger, and
 bilingual browser coverage checks loading, recruitment and save/reload.
 Roman field-ration use, generic non-formation recruitment, and fuller
 military maintenance integration remain open.
+After integrating main through `e6d9212d`, the complete serial simulation
+suite passed 1,148/1,148. The local Chromium regressions passed for Han field
+recruitment and rations, Roman legion design, the expanded born-portrait
+pool, and inherited foreign-name privacy.
 Eastern market AI now indexes offers, owned regions and active caravans once
 per planning turn and only builds full paths for shortlisted bids. The
 120-month trade simulation retained its results before the subsequent main
