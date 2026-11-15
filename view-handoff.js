@@ -5,6 +5,9 @@ export const HANDOFF_KEY = 'spqr-view-handoff-v1';
 export function stageHandoff(storage, state, target) {
   if (!['atlas', 'campaign'].includes(target)) throw new Error('Invalid destination');
   storage.setItem(HANDOFF_KEY, JSON.stringify({target, state}));
+  // A storage wrapper can fall back to memory after a write fails. That copy
+  // will disappear during navigation, so never claim the handoff succeeded.
+  if (storage.persistent === false) throw new Error('Session storage could not persist the campaign');
 }
 
 export function receiveHandoff(storage, target, upgrade) {
