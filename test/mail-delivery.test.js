@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=player-aid-letter-1';
+import {newGame} from '../engine.js?v=official-name-snapshots-1';
 import {sendLetter,advanceMail,replyToLetter,receivedMail} from '../epistulae.js?v=player-aid-letter-1';
 import {mailboxHtml} from '../mail-ui.js?v=player-aid-letter-1';
 

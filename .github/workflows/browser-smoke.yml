@@ -25,6 +25,7 @@ jobs:
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
           node tools/hundred-days-smoke.mjs
           node tools/roman-hundred-days-smoke.mjs
+          node tools/save-transfer-controls-smoke.mjs
           node tools/travel-smoke.mjs
           node tools/cursus-smoke.mjs
           node tools/cursus-deep-smoke.mjs
@@ -34,6 +35,7 @@ jobs:
           node tools/ai-wartime-aid-smoke.mjs
           node tools/frontier-response-smoke.mjs
           node tools/player-aid-letter-smoke.mjs
+          node tools/official-name-snapshots-smoke.mjs
           node tools/cursus-applicant-smoke.mjs
           node tools/han-court-smoke.mjs
           node scripts/multipolar-sim.mjs > multipolar-simulation.json
