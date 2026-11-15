@@ -74,9 +74,9 @@ export const physicalStyle={
   {id:'relief-gaul-higher',type:'hillshade',source:'elevation-gaul-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   // The central Mediterranean detail source covers Italian close views. Keep
   // its color texture light; other ranges need stronger altitude contrast.
-  {id:'land-elevation-ultra',type:'color-relief',source:'elevation-ultra',minzoom:8,paint:{'color-relief-opacity':.62,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-ultra',type:'color-relief',source:'elevation-ultra',minzoom:8,paint:{'color-relief-opacity':.78,'color-relief-color':localElevationPalette}},
   {id:'relief-ultra',type:'hillshade',source:'elevation-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':.62,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':.78,'color-relief-color':localElevationPalette}},
   {id:'relief-higher',type:'hillshade',source:'elevation-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'land-elevation-egypt-ultra',type:'color-relief',source:'elevation-egypt-ultra',minzoom:8,paint:{'color-relief-opacity':.94,'color-relief-color':egyptElevationPalette}},
   {id:'relief-egypt-ultra',type:'hillshade',source:'elevation-egypt-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},

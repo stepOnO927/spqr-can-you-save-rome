@@ -18,6 +18,7 @@ import {budgetHtml} from '../budget-ui.js?v=25';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=29';
 import {physicalLabels} from './physical-labels.js?v=2';
+import {ancientPlaceLabels} from './ancient-place-labels.js';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=188';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from '../development-ui.js?v=48';
 import {FACTIONS} from '../data.js?v=9';
@@ -160,9 +161,16 @@ const physicalLabelMarkers=physicalLabels.map(label=>{
  new maplibregl.Marker({element,anchor:'center'}).setLngLat(label.point).addTo(map);
  return {label,element};
 });
+const ancientPlaceMarkers=ancientPlaceLabels.map(label=>{
+ const element=document.createElement('span');element.className='ancient-place-label';
+ element.dataset.ancientPlace=label.id;element.setAttribute('aria-hidden','true');
+ new maplibregl.Marker({element,anchor:label.anchor||'left',offset:[label.anchor==='right'?-7:7,0]}).setLngLat(label.point).addTo(map);
+ return {label,element};
+});
 function refreshPhysicalLabels(){
  const zoom=map.getZoom?.()||0;
  for(const {label,element} of physicalLabelMarkers){element.textContent=label[lang];element.hidden=zoom<(label.minZoom??7.4)||zoom>=(label.maxZoom??Infinity)}
+ for(const {label,element} of ancientPlaceMarkers){element.textContent=label[lang];element.hidden=zoom<label.minZoom}
 }
 map.on('zoom',refreshPhysicalLabels);
 map.on('load',refreshPhysicalLabels);

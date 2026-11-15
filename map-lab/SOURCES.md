@@ -6,6 +6,8 @@ The atlas and campaign can transfer their current state in the same browser tab 
 
 The bilingual sea and landform names in `physical-labels.js` are original orientation labels placed over the modern physical map. Their anchor coordinates are cartographic layout choices, not surveyed ancient boundaries or archaeological claims.
 
+The small close-scale settlement labels in `ancient-place-labels.js` are non-interactive gazetteer references, separate from controllable campaign cities. [Pleiades](https://pleiades.stoa.org/) identifies [Caesena](https://pleiades.stoa.org/places/393397) and [Pisaurum](https://pleiades.stoa.org/places/413256); place content is CC BY 3.0, credited to Pleiades contributors. Their approximate coordinates follow the Pleiades-derived [ISAW Pliny the Elder's World dataset](https://isaw.nyu.edu/research/pliny-the-elder). These labels do not assert exact settlement footprints, ancient shorelines, or 49 BCE political control. Nearby Fanum Fortunae is omitted because its label collides with Pisaurum at the atlas's current maximum scale. Sena Gallica is omitted because Pleiades records its destruction in 82 BCE and a legible settlement at the 49 BCE campaign start was not established for this layer.
+
 At local zoom, faint repeating stipple on land and small wave marks at sea are original cartographic ornament generated in the browser. They are not terrain, vegetation, currents, bathymetry, or evidence about 49 BCE conditions. The pattern follows the separate land and ocean masks so it cannot repaint sea as land.
 
 - MapLibre GL JS 5.9.0, BSD 3-Clause: https://github.com/maplibre/maplibre-gl-js/blob/main/LICENSE.txt . Its JavaScript, CSS, and license are bundled in `vendor/` so the atlas map engine works offline.

@@ -70,6 +70,16 @@ try{
   if(name==='ariminum'){
    await page.locator('#language').click();
    if(await page.locator('[data-physical-label="northern-adriatic"]').textContent()!=='Northern Adriatic')throw Error('Northern Adriatic label must translate to English');
+   await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[12.55,44.05],zoom:9.2})});
+   await page.waitForFunction(()=>document.querySelector('#map-charting').hidden,null,{timeout:12000});
+   for(const [id,name] of [['caesena','Caesena'],['pisaurum','Pisaurum']]){
+    const marker=page.locator(`[data-ancient-place="${id}"]`);
+    if(await marker.isHidden()||await marker.textContent()!==name)throw Error(`${name}: local ancient-place label missing in English: ${JSON.stringify(await marker.evaluate(el=>({hidden:el.hidden,text:el.textContent,display:getComputedStyle(el).display,box:el.getBoundingClientRect().toJSON()})))}`);
+   }
+   await page.screenshot({path:resolve(output,'ariminum-local-en.png')});
+   await page.locator('#language').click();
+   if(await page.locator('[data-ancient-place="caesena"]').textContent()!=='凯塞纳')throw Error('Ancient-place label must translate to Chinese');
+   await page.locator('#language').click();
   }
  }
  const samples=await page.evaluate(async()=>{
