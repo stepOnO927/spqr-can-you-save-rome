@@ -1,5 +1,5 @@
-import {createFictionalPerson} from './dynasties.js?v=born-portraits-four-1';
-import {initializeOffices,OFFICE_TYPES,canHoldOffice,localGovernor} from './office-system.js?v=born-portraits-four-1';
+import {createFictionalPerson} from './dynasties.js?v=infant-portraits-1';
+import {initializeOffices,OFFICE_TYPES,canHoldOffice,localGovernor} from './office-system.js?v=infant-portraits-1';
 
 // Both campaign views use the same one-time setup. Difficulty affects AI
 // decisions; the separate economic handicap is explicitly opt-in.
