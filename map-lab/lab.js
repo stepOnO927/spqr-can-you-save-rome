@@ -449,8 +449,15 @@ function renderTerrainLegend(){
 }
 function renderHud(){
  renderHudBase();
+ if(state.scenarioLabel){
+  document.querySelector('.brief h1').textContent=n(state.scenarioLabel);
+  document.querySelector('.brief > p').textContent=state.legacyScenario==='scenario-rubicon'
+   ?lang==='zh'?'架空开局：凯撒已控制北意大利，意大利征召军退守阿雷提乌姆。罗马与庞培仍在元老院手中；侦察、固守或反攻由你决定。':'Alternate opening: Caesar holds northern Italy and the Italian levies have withdrawn to Arretium. Rome and Pompey remain with the Senate; scout, hold or counterattack.'
+   :lang==='zh'?'历史背景启发的希腊战区架空部署；结果不预设。':'A Greek theater deployment inspired by history; the outcome is unscripted.';
+ }
+ document.querySelector('.brief .kicker span').textContent=`${String(state.month).padStart(2,'0')} / ${Math.abs(state.year)} ${state.year<0?'BC':'AD'}`;
  refreshPhysicalLabels();
- if(['caesar','senate'].includes(state.player))document.querySelector('.identity strong').innerHTML='ITALIA <i>·</i> XLIX BC';
+ if(['caesar','senate'].includes(state.player))document.querySelector('.identity strong').innerHTML=`ITALIA <i>·</i> ${state.year===-49?'XLIX':state.year===-48?'XLVIII':Math.abs(state.year)} ${state.year<0?'BC':'AD'}`;
  endButton.textContent=lang==='zh'?'结束战役':'END CAMPAIGN';endButton.disabled=!!state.achievementState?.finalized;document.querySelector('#advance').disabled=!!state.achievementState?.finalized;document.querySelector('#play-time').disabled=!!state.achievementState?.finalized;refreshEnding();
  atlasFocus.textContent=lang==='zh'?(document.body.classList.contains('atlas-focus')?'返回':'观图'):(document.body.classList.contains('atlas-focus')?'BACK':'MAP');atlasFocus.title=lang==='zh'?'切换地图专注视图':'Toggle map focus view';
  settingsButton.textContent=lang==='zh'?'设置':'SETTINGS';

@@ -8,7 +8,9 @@ import {ACTIVITIES,availableActivities,resolveActivity} from './activities.js';
 import {ARTIFACTS} from './museum.js';
 import {harborDossier,beginHarborDossier,corroborateHarborDossier,closeHarborDossier} from './intelligence-case.js';
 import {palaceCouncil,conveneCouncil,draftCharter,settleCouncil,COUNCIL_COST} from './palace-council.js';
-import {newGrandGame} from '../engine.js';
+import {newGrandGame,tick,upgradeSave,moveArmy} from '../engine.js';
+import {sendScouts} from '../reconnaissance.js';
+import {objectiveDefinitions} from '../campaign-reports.js';
 import {evaluateAchievements,endCampaign} from '../achievement-system.js';
 
 const memory=()=>{let value=null;return {getItem:()=>value,setItem:(key,v)=>{value=v}}};
@@ -188,7 +190,29 @@ test('race places, trophy, last place punishment and reward guard persist',()=>{
  const p=loadProfile(memory());const race={id:'race-test',driver:'Aurelia',place:1,lastDriver:'Lucius'};assert.equal(settleRace(p,race).payout,100);assert.ok(p.collectibles.includes('race-cup'));assert.ok(p.race.eliminated.includes('Lucius'));assert.equal(settleRace(p,race).ok,false);const last=settleRace(p,{id:'race-last',driver:'Aurelia',place:5,lastDriver:'Aurelia'});assert.equal(last.payout,0);assert.ok(p.race.eliminated.includes('Aurelia'));
 });
 test('unlocked scenario creates a distinct playable alternate history state',()=>{
- const s=createScenario('scenario-rubicon',newGrandGame);assert.equal(s.grandMap,true);assert.equal(s.regions.length,120);assert.equal(s.player,'senate');assert.ok(s.legacyScenario);assert.equal(s.difficulty,'standard');
+ const normal=newGrandGame('senate'),s=createScenario('scenario-rubicon',newGrandGame);
+ assert.equal(s.grandMap,true);assert.equal(s.regions.length,120);assert.equal(s.player,'senate');assert.equal(s.legacyScenario,'scenario-rubicon');assert.equal(s.difficulty,'standard');
+ assert.equal(normal.regions.find(r=>r.id==='italiaN').owner,'senate');
+ assert.equal(s.regions.find(r=>r.id==='italiaN').owner,'caesar');
+ assert.equal(s.armies.find(a=>a.id==='xiii').region,'italiaN');
+ assert.equal(s.armies.find(a=>a.id==='italy').region,s.regions.find(r=>r.site?.[0]==='Arretium').id);
+ assert.equal(objectiveDefinitions(s)[0].regionId,'italiaN');
+ assert.equal(s.objectiveProgress.frontier.status,'not_started');
+ assert.ok(s.factions.senate.treasury<normal.factions.senate.treasury);
+ assert.ok(s.factions.senate.food<normal.factions.senate.food);
+ assert.equal(s.knowledge.senate.caesar.sightings.xiii?.region,'italiaN');
+ const restored=upgradeSave(structuredClone(s));
+ assert.deepEqual(restored.scenarioLabel,s.scenarioLabel);
+ assert.equal(restored.regions.find(r=>r.id==='italiaN').owner,'caesar');
+ assert.equal(sendScouts(restored,'italy','italiaN').ok,true);
+ tick(restored);
+ assert.equal(restored.month,2);
+ assert.equal(restored.militaryRecon[0].source,'scouts');
+ assert.equal(restored.militaryRecon[0].regionId,'italiaN');
+ assert.equal(moveArmy(restored,'italy','italiaN').ok,true);
+ for(let i=0;i<4;i++)tick(restored);
+ assert.ok((restored.battles||[]).length>0);
+ assert.equal(restored.achievementState.finalized,false);
 });
 test('six hub districts contain permanent choices with one-time rewards and civic consequences',()=>{
  const storage=memory(),p=loadProfile(storage);p.coins=5000;for(const building of ['camp','temple','library','harbor','court','intelligence'])assert.equal(purchase(p,building).ok,true);assert.equal(ACTIVITIES.length,13);const before=p.politics.corruption,coins=p.coins;assert.equal(resolveActivity(p,'court-bribe',0).ok,true);assert.equal(p.politics.corruption,before-3);assert.equal(p.coins,coins+40);assert.equal(resolveActivity(p,'court-bribe',0).ok,false);assert.equal(resolveActivity(p,'intelligence-sources',1).correct,false);saveProfile(p,storage);assert.equal(loadProfile(storage).activities.length,2)
