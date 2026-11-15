@@ -30,7 +30,7 @@ import {proposeCoalitionMotion} from './coalition-motions.js?v=world-kings-trade
 import {coalitionCouncilHtml} from './coalition-council-ui.js?v=world-kings-trade-1';
 import {sendCoalitionAidRequest} from './coalition-assistance.js?v=world-kings-trade-1';
 import {offerPoliticalContact} from './political-contacts.js?v=world-kings-trade-1';
-import {reportedHealthSubjects,claimantRepresentatives,visiblePersonName} from './character-system.js?v=world-kings-trade-1';
+import {reportedHealthSubjects,claimantRepresentatives,visiblePersonName,answerAgentRelease} from './character-system.js?v=world-kings-trade-1';
 import {religiousPolicy} from './religion.js?v=world-kings-trade-1';
 import {respondToMovement,reportedMovements,movementReportLeaderName,offerMovementSupport,recognizeMovement} from './movements.js?v=world-kings-trade-1';
 import {newScenario} from './scenarios.js?v=world-kings-trade-1';
@@ -286,7 +286,7 @@ function bind(){
     el.dataset.confirmed='true';
     el.textContent=choice==='send_war_aid'?(lang==='zh'?'确认派出12国库与8粮食':'Confirm sending 12 treasury and 8 food'):choice==='send_coalition_aid'?(lang==='zh'?'确认派出8国库与6粮食':'Confirm sending 8 treasury and 6 food'):['accept_coalition','accept_admission'].includes(choice)?(lang==='zh'?'确认接受邀请；获确认时支付5国库':'Confirm invitation; 5 treasury if confirmed'):(lang==='zh'?'确认加入战争':'Confirm joining the war');return;
    }
-   const result=replyToLetter(state,el.dataset.mailId,choice,{proposeAgreement,sendInquiry,answerPeaceOffer,answerStrategicOffer,answerCoalitionInvitation,answerCoalitionAdmission,recruit},{representativeId:document.querySelector('#mail-representative')?.value});
+   const result=replyToLetter(state,el.dataset.mailId,choice,{proposeAgreement,sendInquiry,answerPeaceOffer,answerStrategicOffer,answerCoalitionInvitation,answerCoalitionAdmission,answerAgentRelease,recruit},{representativeId:document.querySelector('#mail-representative')?.value});
    if(!result.ok){flash(result.reason==='representative'?(lang==='zh'?'代表已不符合条件，请重新选择。':'The representative is no longer available; choose again.'):result.reason==='location'?(lang==='zh'?'地点未知或人物正在途中，暂不能安排会面。':'A participant has no known stationary location; the meeting cannot be scheduled.'):(lang==='zh'?'当前条件不足，无法寄出该答复。':'The reply cannot be sent under current conditions.'));return}
    if(receivedMail(state).find(m=>m.id===el.dataset.mailId)?.responses.length)recordExperience(state,'reply',choice);
    if(result.open==='military'||result.open==='government'){mailOpen=false;tab=result.open;panelOpen=true}else if(result.open){mailOpen=false;selectedRegion=result.open;tab='map';panelOpen=true}render();
