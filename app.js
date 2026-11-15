@@ -5,9 +5,9 @@ import {identity,factionMark} from './identity.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=faces-empire-3';
 import {CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, inquiryCost, answerPeaceOffer,answerStrategicOffer,replyToLetter,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=faces-government-courier-1';
-import {receivedMail,unreadCount,markRead,archiveLetter,markAllRead} from './epistulae.js?v=strategic-player-offer-1';
-import {mailboxHtml} from './mail-ui.js?v=strategic-player-offer-1';
+import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, inquiryCost, answerPeaceOffer,answerStrategicOffer,replyToLetter,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=player-aid-letter-1';
+import {receivedMail,unreadCount,markRead,archiveLetter,markAllRead} from './epistulae.js?v=player-aid-letter-1';
+import {mailboxHtml} from './mail-ui.js?v=player-aid-letter-1';
 import {setWartimePolicy} from './epistulae-personnel.js?v=epistulae-2';
 import {decideDisputedHeir,personAge} from './dynasties.js?v=faces-empire-2';
 import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=faces-empire-2';
@@ -33,7 +33,7 @@ import {IDEAS,startResearch,equipIdea} from './inventions.js?v=mission-discount-
 import {attachHanWorld,hanWorld,sendEmbassyToSeres} from './han/world.js?v=faces-government-courier-1';
 import {eastMap,eastPanel,eastToolbar} from './han/east-ui.js?v=faces-government-courier-1';
 import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium} from './imperium-ui.js?v=faces-government-courier-1';
-import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=government-courier-guidance-1';
+import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=player-aid-letter-1';
 import {renderExperienceUi,closeExperience} from './experience-ui.js?v=government-courier-guidance-1';
 
 const ui={
@@ -238,7 +238,7 @@ function bind(){
   document.querySelector('#mail-read-all')?.addEventListener('click',()=>{markAllRead(state);render()});
   document.querySelectorAll('[data-mail-archive]').forEach(el=>el.onclick=()=>{archiveLetter(state,el.dataset.mailArchive);selectedMail=null;render()});
   document.querySelector('#mail-representative')?.addEventListener('change',e=>{const button=document.querySelector('[data-mail-reply=representative]');if(button)button.disabled=!e.target.value});
-  document.querySelectorAll('[data-mail-reply]').forEach(el=>el.onclick=()=>{if(el.dataset.mailReply==='join_war'&&!el.dataset.confirmed){el.dataset.confirmed='true';el.textContent=lang==='zh'?'确认加入战争':'Confirm joining the war';return}const result=replyToLetter(state,el.dataset.mailId,el.dataset.mailReply,{proposeAgreement,sendInquiry,answerPeaceOffer,answerStrategicOffer,recruit},{representativeId:document.querySelector('#mail-representative')?.value});if(!result.ok){flash(result.reason==='representative'?(lang==='zh'?'代表已不符合条件，请重新选择。':'The representative is no longer available; choose again.'):result.reason==='location'?(lang==='zh'?'地点未知或人物正在途中，暂不能安排会面。':'A participant has no known stationary location; the meeting cannot be scheduled.'):(lang==='zh'?'当前条件不足，无法寄出该答复。':'The reply cannot be sent under current conditions.'));return}if(receivedMail(state).find(m=>m.id===el.dataset.mailId)?.responses.length)recordExperience(state,'reply',el.dataset.mailReply);if(result.open==='military'||result.open==='government'){mailOpen=false;tab=result.open;panelOpen=true}else if(result.open){mailOpen=false;selectedRegion=result.open;tab='map';panelOpen=true}render()});
+  document.querySelectorAll('[data-mail-reply]').forEach(el=>el.onclick=()=>{if(['join_war','send_war_aid'].includes(el.dataset.mailReply)&&!el.dataset.confirmed){el.dataset.confirmed='true';el.textContent=el.dataset.mailReply==='send_war_aid'?(lang==='zh'?'确认派出12国库与8粮食':'Confirm sending 12 treasury and 8 food'):(lang==='zh'?'确认加入战争':'Confirm joining the war');return}const result=replyToLetter(state,el.dataset.mailId,el.dataset.mailReply,{proposeAgreement,sendInquiry,answerPeaceOffer,answerStrategicOffer,recruit},{representativeId:document.querySelector('#mail-representative')?.value});if(!result.ok){flash(result.reason==='representative'?(lang==='zh'?'代表已不符合条件，请重新选择。':'The representative is no longer available; choose again.'):result.reason==='location'?(lang==='zh'?'地点未知或人物正在途中，暂不能安排会面。':'A participant has no known stationary location; the meeting cannot be scheduled.'):(lang==='zh'?'当前条件不足，无法寄出该答复。':'The reply cannot be sent under current conditions.'));return}if(receivedMail(state).find(m=>m.id===el.dataset.mailId)?.responses.length)recordExperience(state,'reply',el.dataset.mailReply);if(result.open==='military'||result.open==='government'){mailOpen=false;tab=result.open;panelOpen=true}else if(result.open){mailOpen=false;selectedRegion=result.open;tab='map';panelOpen=true}render()});
   for(const [id,key] of [['mail-mute','muteRoutine'],['mail-pause','pauseCritical'],['mail-auto-archive','autoArchiveRoutine']])document.querySelector('#'+id)?.addEventListener('change',e=>{state.mail.preferences[key]=e.target.checked});
   for(const [id,kind] of [['mail-envoy-policy','envoys'],['mail-merchant-policy','merchants']])document.querySelector('#'+id)?.addEventListener('change',e=>{setWartimePolicy(state,state.player,kind,e.target.value);render()});
   document.querySelectorAll('[data-east-region]').forEach(el=>el.onclick=()=>{eastSelected=el.dataset.eastRegion;panelOpen=true;render()});

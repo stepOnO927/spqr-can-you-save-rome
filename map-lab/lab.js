@@ -28,7 +28,7 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=faces-government-courier-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=player-aid-letter-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=faces-empire-2';
@@ -40,7 +40,7 @@ import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=phase-x-1';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=newborn-age-1';
 import {renderMarketPanel} from './market-ui.js?v=faces-empire-2';
-import {receivedMail,unreadCount} from '../epistulae.js?v=strategic-player-offer-1';
+import {receivedMail,unreadCount} from '../epistulae.js?v=player-aid-letter-1';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGame();

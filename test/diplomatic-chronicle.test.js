@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=frontier-response-1';
+import {newGame} from '../engine.js?v=player-aid-letter-1';
 import {observeDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {initializeChronicle,syncChronicleDispatches} from '../chronicle.js?v=succession-ui-recovery-1';
 
