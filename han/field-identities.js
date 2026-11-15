@@ -9,12 +9,15 @@ const POOLS={
  xiongnu:{culture:['Xiongnu (game reconstruction)','匈奴（游戏复原）'],names:[['Tule','图勒'],['Yuhe','于和'],['Mudu','穆都'],['Lushan','卢珊']]},
  wusun:{culture:['Wusun (game reconstruction)','乌孙（游戏复原）'],names:[['Natu','纳图'],['Quli','屈离'],['Mida','弥达'],['Yarun','雅伦']]},
  kangju:{culture:['Kangju (game reconstruction)','康居（游戏复原）'],names:[['Aruvan','阿鲁万'],['Kudara','库达拉'],['Vares','瓦雷斯'],['Mirak','米拉克']]},
+ chorasmian:{culture:['Chorasmian / Eastern Iranian (game reconstruction)','花剌子模／东伊朗（游戏复原）'],names:[['Dadavan','达达万'],['Bagatar','巴加塔尔'],['Tirazan','蒂拉赞'],['Ispadak','伊斯帕达克']]},
  yuezhi:{culture:['Yuezhi (game reconstruction)','月氏（游戏复原）'],names:[['Vima','维玛'],['Tara','塔拉'],['Kushan','库珊'],['Arvata','阿尔瓦塔']]},
  sogdian:{culture:['Sogdian (game reconstruction)','粟特（游戏复原）'],names:[['Nanak','纳纳克'],['Vardun','瓦尔敦'],['Mirvan','米尔万'],['Arsang','阿尔桑']]},
  bactrian:{culture:['Bactrian (game reconstruction)','巴克特里亚（游戏复原）'],names:[['Oromis','奥罗米斯'],['Vardak','瓦尔达克'],['Mitraon','米特劳恩'],['Tirak','蒂拉克']]},
  saka:{culture:['Saka (game reconstruction)','塞种（游戏复原）'],names:[['Mauvan','毛万'],['Sparga','斯帕尔加'],['Arsaka','阿尔萨卡'],['Tirama','蒂拉玛']]},
  parthian:{culture:['Parthian (game reconstruction)','帕提亚（游戏复原）'],names:[['Vardanes','瓦尔达内斯'],['Artaban','阿尔塔班'],['Phraates','弗拉特斯'],['Mithradat','米特里达特']]},
  western:{culture:['Western Asian (game reconstruction)','西亚（游戏复原）'],names:[['Arsham','阿尔沙姆'],['Vardan','瓦尔丹'],['Tigran','提格兰'],['Artanes','阿尔塔涅斯']]},
+ caucasian_iberian:{culture:['Caucasian Iberian (game reconstruction)','高加索伊比利亚（游戏复原）'],names:[['Parnav','帕尔纳夫'],['Artan','阿尔坦'],['Armaz','阿尔马兹'],['Mirdat','米尔达特']]},
+ caucasian_albanian:{culture:['Caucasian Albanian (game reconstruction)','高加索阿尔巴尼亚（游戏复原）'],names:[['Orovan','奥罗万'],['Zobar','佐巴尔'],['Kosar','科萨尔'],['Arsan','阿尔桑']]},
  oasis:{culture:['Tarim oasis (game reconstruction)','塔里木绿洲（游戏复原）'],names:[['Tura','图拉'],['Dama','达玛'],['Suli','苏利'],['Mina','米纳'],['Kava','卡瓦']]},
  qiang:{culture:['Qiang (game reconstruction)','羌（游戏复原）'],names:[['Daru','达如'],['Mile','米勒'],['Qima','奇玛'],['Talu','塔鲁']]},
  steppe:{culture:['Steppe community (game reconstruction)','草原社群（游戏复原）'],names:[['Arta','阿尔塔'],['Turan','图兰'],['Madu','马都'],['Kara','卡拉']]}
@@ -22,7 +25,10 @@ const POOLS={
 export const CULTURAL_NAME_POOLS=Object.freeze(POOLS);
 
 export function fieldCulture(faction){
- if(faction==='kangju'||faction==='chorasmia')return 'kangju';
+ if(faction==='kangju')return 'kangju';
+ if(faction==='chorasmia')return 'chorasmian';
+ if(faction==='caucasian_iberia')return 'caucasian_iberian';
+ if(faction==='caucasian_albania')return 'caucasian_albanian';
  if(faction==='dayuan')return 'bactrian';
  if(faction==='yuezhi'||['xiumi','shuangmi','guishuang','xidun','dumi'].includes(faction))return 'yuezhi';
  if(faction==='margiana')return 'bactrian';

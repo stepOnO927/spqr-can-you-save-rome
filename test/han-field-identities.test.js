@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-reported-names-1';
 import {recruit,templatesFor} from '../han/military.js?v=faces-reported-names-1';
-import {fieldCulture,ensureFieldCommanders} from '../han/field-identities.js';
+import {fieldCulture,ensureFieldCommanders,createMarketMerchant} from '../han/field-identities.js';
 import {birthRecordValid} from '../han/dynasty.js?v=faces-reported-names-1';
 
 test('every opening eastern army has a saved person and distinct cultural identity',()=>{
@@ -34,4 +34,21 @@ test('recruitment immediately assigns a persistent officer and never replaces an
  const loaded=loadHanSave(serialize(s));
  assert.equal(loaded.armies.find(a=>a.id===result.id).commander,id);
  assert.equal(loaded.persons[id].appearanceSeed,s.persons[id].appearanceSeed);
+});
+
+test('Chorasmian and Caucasian originals retain distinct reconstructed cultures after load',()=>{
+ let s=newHanGame('han',{seed:31});
+ const courts=[['chorasmia','chorasmian'],['caucasian_iberia','caucasian_iberian'],['caucasian_albania','caucasian_albanian']];
+ const people=courts.map(([court,culture])=>{
+  assert.equal(fieldCulture(court),culture);
+  const person=s.persons[createMarketMerchant(s,court,court)];
+  assert.ok(person.name[0]&&person.name[1]);
+  assert.match(person.culture[0],/game reconstruction/);
+  assert.equal(person.homeland,court);
+  return [person.id,person.name,person.culture,person.appearanceSeed];
+ });
+ assert.equal(new Set(people.map(([,name])=>name[0])).size,people.length);
+ assert.equal(new Set(people.map(([, ,culture])=>culture[0])).size,people.length);
+ s=loadHanSave(serialize(s));
+ assert.deepEqual(people.map(([id])=>[id,s.persons[id].name,s.persons[id].culture,s.persons[id].appearanceSeed]),people);
 });

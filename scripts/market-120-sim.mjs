@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js?v=faces-reported-names-1';
 import {newHanGame,tick as tickHan,loadHanSave} from '../han/engine.js?v=faces-reported-names-1';
 import {rulerPortrait} from '../han/rulers.js?v=faces-reported-names-1';
+import {courtPortraitSrc} from '../han/court-portrait.js?v=faces-reported-names-1';
 import {proposeAgreement} from '../agreements.js?v=faces-reported-names-1';
 import {advanceMarketAI} from '../trade-markets.js?v=faces-reported-names-1';
 
@@ -18,9 +19,14 @@ state.month=3;
 const openingOrders=advanceMarketAI(state);
 for(const buyer of ['senate','egypt','armenia','galatia'])assert.ok(openingOrders.some(x=>x.buyer===buyer),`${buyer} did not place an order`);
 const initialTreasury=Object.fromEntries(Object.entries(state.factions).map(([id,f])=>[id,f.treasury]));
+const romanPopulation=state.regions.reduce((sum,region)=>sum+region.population.total,0);
 for(let i=0;i<120;i++){
  const before=state.year*12+state.month;tick(state);assert.equal(state.year*12+state.month,before+1,'campaign time stalled');
  if(i===59)Object.assign(state,upgradeSave(structuredClone(state)));
+ const population=state.regions.reduce((sum,region)=>sum+region.population.total,0);
+ assert.ok(Number.isSafeInteger(population)&&population>=romanPopulation/2,'Roman population collapsed or diverged');
+ for(const [id,faction] of Object.entries(state.factions))for(const key of ['treasury','food','manpower'])assert.ok(Number.isFinite(faction[key])&&Math.abs(faction[key])<1_000_000,`${id} ${key} diverged`);
+ for(const [id,faction] of Object.entries(state.factions))for(const key of ['stability','legitimacy'])if(faction[key]!=null)assert.ok(Number.isFinite(faction[key])&&faction[key]>=0&&faction[key]<=100,`${id} ${key} left its bounds`);
  for(const market of Object.values(state.markets.regions))for(const item of Object.values(market.goods)){
   assert.ok(Number.isSafeInteger(item.stock)&&item.stock>=0&&item.stock<=Math.max(80,item.production*24),`invalid ${market.id} stock`);
   assert.ok(Number.isFinite(item.price)&&item.price>=1&&item.price<=24,`invalid ${market.id} price`);
@@ -38,11 +44,16 @@ assert.ok(summary.delivered>=4,'the four opening orders must result in actual de
 
 let han=newHanGame('han',{seed:49,start:'roman'});
 const openingHanRuler=han.throne.occupant,openingParthian=han.rulers.parthia.personId;
+const hanPopulation=han.regions.reduce((sum,region)=>sum+region.pop,0);
 const openingPortrait=rulerPortrait(han,'parthia');assert.ok(openingPortrait);
 for(let i=0;i<120;i++){
  const before=han.year*12+han.month;tickHan(han);assert.equal(han.year*12+han.month,before+1,'Han campaign time stalled');
- if(i===59){han=loadHanSave(JSON.parse(JSON.stringify(han)));assert.equal(rulerPortrait(han,'parthia'),openingPortrait,'the saved ruler portrait changed')}
+ if(i===59){const known=new Map(Object.entries(han.persons).map(([id,person])=>[id,[person.name?.[0],person.appearanceSeed,person.portrait]]));han=loadHanSave(JSON.parse(JSON.stringify(han)));assert.equal(rulerPortrait(han,'parthia'),openingPortrait,'the saved ruler portrait changed');for(const [id,identity] of known)assert.deepEqual([han.persons[id]?.name?.[0],han.persons[id]?.appearanceSeed,han.persons[id]?.portrait],identity,`person ${id} changed on load`)}
+ const population=han.regions.reduce((sum,region)=>sum+region.pop,0);
+ assert.ok(Number.isSafeInteger(population)&&population>=hanPopulation/2,'Han population collapsed or diverged');
+ for(const [office,id] of Object.entries(han.court.offices||{})){if(!id)continue;const person=han.persons[id];assert.ok(person?.name?.[0]&&person.alive,`unnamed or dead Han ${office}`);assert.ok(courtPortraitSrc(person,128,han),`missing portrait for Han ${office}`)}
  for(const [id,f] of Object.entries(han.factions))for(const key of ['treasury','grain','manpower','horses','stability'])assert.ok(Number.isFinite(f[key])&&Math.abs(f[key])<1_000_000,`${id} ${key} diverged`);
+ for(const [id,f] of Object.entries(han.factions))assert.ok(f.stability>=0&&f.stability<=100,`${id} stability left its bounds`);
  for(const market of Object.values(han.tradeMarkets.regions))for(const item of Object.values(market.goods)){
   assert.ok(Number.isSafeInteger(item.stock)&&item.stock>=0&&item.stock<=Math.max(80,item.production*24),`Han ${market.id} stock diverged`);
   assert.ok(Number.isFinite(item.price)&&item.price>=1&&item.price<=24,`Han ${market.id} price diverged`);

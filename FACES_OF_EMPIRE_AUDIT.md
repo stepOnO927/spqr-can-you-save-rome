@@ -12,6 +12,17 @@ crowded cities and armies remain selectable through faction directories, and
 attack scenarios use reported fortification bands without reading foreign
 supply. The Roman campaign browser flow, both new overview/privacy browser
 checks, and both market browser checks pass after the integration.
+The ten-year Roman/Han market simulation also checks sustainable population,
+bounded faction resources, living named Han officeholders with portraits, and
+exact preservation of saved Han names and portrait identities at its midpoint
+reload.
+Original Chorasmian, Caucasian Iberian, and Caucasian Albanian field people
+now draw from three separate reconstruction pools rather than Kangju or Tarim
+oasis names. Existing saved identities are not renamed. The cultural split is
+informed by [Chorasmia](https://www.iranicaonline.org/articles/chorasmia/),
+[ancient Iberian royal history](https://journals.ur.edu.pl/anabasis/article/download/10178/9226/19212),
+and [early Albanian accounts](https://api.pageplace.de/preview/DT0400.9781463239893_A43599321/preview-9781463239893_A43599321.pdf).
+The generated people and their exact names remain original game reconstructions.
 
 The atlas now has a trade map mode tied to the existing market and route
 simulation. It shows owned market grain stocks, prices, production and demand;
