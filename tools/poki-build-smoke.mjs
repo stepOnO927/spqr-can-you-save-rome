@@ -30,6 +30,8 @@ try{
  c=await context();p=await c.newPage();errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.goto(origin+'/map-lab/',{waitUntil:'domcontentloaded'});
  await p.locator('#start-game').tap();
+ await p.waitForFunction(()=>window._pokiEvents?.includes('start'));
+ assert.deepEqual(await p.evaluate(()=>_pokiEvents.slice(0,2)),['load','start'],'Atlas SDK lifecycle');
  await p.locator('.maplibregl-marker').first().tap({timeout:10000});
  assert.equal(await p.locator('.selection:not(.collapsed)').count(),1);
  assert.deepEqual(errors,[]);
@@ -38,6 +40,8 @@ try{
  c=await context();p=await c.newPage();errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.goto(origin+'/han/',{waitUntil:'domcontentloaded'});
  await p.locator('#begin').tap();
+ await p.waitForFunction(()=>window._pokiEvents?.includes('start'));
+ assert.deepEqual(await p.evaluate(()=>_pokiEvents.slice(0,2)),['load','start'],'Han SDK lifecycle');
  await p.locator('#map path.territory[data-region="changan"]').tap({timeout:5000});
  assert.ok((await p.locator('#inspector').textContent()).trim().length>20);
  assert.deepEqual(errors,[]);

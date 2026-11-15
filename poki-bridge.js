@@ -4,7 +4,7 @@ if(sdk){
   let active=false,everStarted=false,busy=false,ended=false,loadingSent=false;
   const ready=Promise.resolve().then(()=>sdk.init()).catch(()=>{});
   const safe=name=>{try{sdk[name]?.()}catch(error){console.warn('Poki event failed',name,error)}};
-  const loaded=()=>{if(loadingSent||!document.querySelector('#app')?.children.length)return;loadingSent=true;ready.then(()=>safe('gameLoadingFinished'))};
+  const loaded=()=>{if(loadingSent||!(document.querySelector('#app')?.children.length||document.querySelector('#map')))return;loadingSent=true;ready.then(()=>safe('gameLoadingFinished'))};
   new MutationObserver(()=>{loaded();const now=!!document.querySelector('.victory-progress.defeat,.victory');if(now&&!ended){ended=true;stop()}else if(!now)ended=false}).observe(document.documentElement,{childList:true,subtree:true});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loaded,{once:true});else loaded();
   function stop(){if(!active)return;active=false;ready.then(()=>safe('gameplayStop'))}
