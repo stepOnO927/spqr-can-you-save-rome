@@ -1,0 +1,39 @@
+import {REGIONS, ROUTES} from '../data.js';
+import historical from '../historical-territories.js';
+import {REGIONS as HAN_REGIONS, ROUTES as HAN_ROUTES} from '../han/data.js';
+import {REGION_GEO} from '../han/geography.js';
+import {LOCAL_ENTITY_TEMPLATES} from '../local-polities.js';
+
+const mainIds = new Set(REGIONS.map(region => region.id));
+const mapped = new Set(historical.features.flatMap(feature => feature.properties.regions || []));
+const hanIds = new Set(HAN_REGIONS.map(region => region.id));
+const neighbors = new Map(REGIONS.map(region => [region.id, new Set()]));
+for (const [a, b] of ROUTES) {
+  neighbors.get(a)?.add(b);
+  neighbors.get(b)?.add(a);
+}
+
+const audit = {
+  main: {
+    playableTerritories: REGIONS.length,
+    routes: ROUTES.length,
+    historicalPolygons: historical.features.length,
+    unassociatedHistoricalPolygons: historical.features.filter(feature => !(feature.properties.regions || []).length).map(feature => feature.properties.id),
+    playableWithoutHistoricalPolygon: REGIONS.filter(region => !mapped.has(region.id)).map(region => region.id),
+    invalidPolygonReferences: [...mapped].filter(id => !mainIds.has(id)),
+    invalidRoutes: ROUTES.filter(([a, b]) => !mainIds.has(a) || !mainIds.has(b)),
+    isolatedTerritories: [...neighbors].filter(([, links]) => !links.size).map(([id]) => id),
+    localEntities: LOCAL_ENTITY_TEMPLATES.length,
+    invalidLocalEntities: LOCAL_ENTITY_TEMPLATES.filter(entity => !mainIds.has(entity.theater) || !Array.isArray(entity.coordinates) || entity.coordinates.length !== 2 || entity.coordinates.some(value => !Number.isFinite(value)) || !entity.source).map(entity => entity.id)
+  },
+  han: {
+    playableTerritories: HAN_REGIONS.length,
+    routes: HAN_ROUTES.length,
+    invalidRoutes: HAN_ROUTES.filter(({a, b}) => !hanIds.has(a) || !hanIds.has(b)),
+    customGeometryAnchors: Object.keys(REGION_GEO).length,
+    fallbackToRegionCoordinates: HAN_REGIONS.filter(region => !REGION_GEO[region.id]).map(region => region.id)
+  }
+};
+
+console.log(JSON.stringify(audit, null, 2));
+if (audit.main.invalidPolygonReferences.length || audit.main.invalidRoutes.length || audit.main.isolatedTerritories.length || audit.main.invalidLocalEntities.length || audit.han.invalidRoutes.length) process.exitCode = 1;

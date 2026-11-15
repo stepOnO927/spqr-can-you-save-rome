@@ -24,6 +24,16 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
  }
  for(const [i,war] of (s.wars||[]).entries())if(!Array.isArray(war)||war.some(id=>!factionIds.has(id)))add('warning','invalid-war',`wars[${i}]`,JSON.stringify(war));
  if(mode==='roman'){
+  const localIds=new Set();
+  for(const [i,r] of s.regions.entries())for(const [j,entity] of (r.localEntities||[]).entries()){
+   const base=`regions[${i}].localEntities[${j}]`;
+   if(!entity?.id||localIds.has(entity.id))add('fatal','duplicate-local-entity',base,String(entity?.id));else localIds.add(entity.id);
+   if(entity?.theater!==r.id||!Array.isArray(entity.coordinates)||entity.coordinates.length!==2||entity.coordinates.some(value=>!Number.isFinite(value)))add('fatal','invalid-local-geography',base,String(entity?.theater));
+   if(!['city_state','microstate','tribe','strongman','village','wilderness','nomadic'].includes(entity?.type))add('fatal','invalid-local-type',base,String(entity?.type));
+   if(entity?.controller!==entity?.id&&!factionIds.has(entity?.controller))add('fatal','invalid-local-controller',`${base}.controller`,String(entity?.controller));
+   if(!Number.isFinite(entity?.militia)||entity.militia<0)add('fatal','invalid-local-militia',`${base}.militia`,String(entity?.militia));
+   if(entity?.siege&&(!armyIds.has(entity.siege.armyId)||!factionIds.has(entity.siege.actor)))add('warning','invalid-local-siege',`${base}.siege`,String(entity.siege.armyId));
+  }
   if(!s.world?.characters)add('fatal','missing-characters','world.characters','Roman character registry is missing');
   else{
    for(const [id,c] of Object.entries(s.world.characters))if(c?.id!==id)add('warning','unstable-character-id',`world.characters.${id}`,String(c?.id));
