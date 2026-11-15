@@ -117,6 +117,12 @@ export function reportedPersonName(s,actor,target,id){
  const found=reports.filter(r=>reportAge(s,r)>=0&&namedReportSubjects(r).includes(id)&&Array.isArray(r.peopleNames?.[id])&&r.peopleNames[id].length===2&&r.peopleNames[id].every(x=>typeof x==='string'&&x.length>0)).sort((a,b)=>reportAge(s,a)-reportAge(s,b))[0];
  return found?{name:[...found.peopleNames[id]],year:found.observationYear??found.year,month:found.observationMonth??found.month}:null;
 }
+export function visiblePersonName(s,actor,id){
+ const person=CHARACTER_CATALOG[id];if(!person)return null;
+ if(!person.fictional||s.world.characters[id]?.faction===actor)return person.name;
+ const records=Object.keys(s.knowledge?.[actor]||{}).map(target=>reportedPersonName(s,actor,target,id)).filter(Boolean).sort((a,b)=>(b.year-a.year)*12+b.month-a.month);
+ return records[0]?.name||s.meetings?.find(m=>m.actor===actor&&m.target===id&&Array.isArray(m.reportedName))?.reportedName||['Unrecorded name','姓名未记录'];
+}
 const knownReport=x=>['leaders','claimants'].includes(x.kind)?Array.isArray(x.leaders)&&x.leaders.length>0:x.value!=='unknown'&&x.value!=null;
 const validStrengthRange=r=>r.kind==='strength'&&Array.isArray(r.range)&&r.range.length===2&&r.range.every(Number.isFinite)&&r.range[0]>=0&&r.range[0]<=r.range[1];
 const strengthRange=r=>validStrengthRange(r)?r.range:Number.isFinite(r.value)?[r.value,r.value]:null;
