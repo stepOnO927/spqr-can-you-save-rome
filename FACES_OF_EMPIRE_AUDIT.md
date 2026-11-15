@@ -101,6 +101,12 @@ Chromium regressions passed for Han field
 recruitment and rations, Roman legion design, the expanded born-portrait
 pool, inherited foreign-name privacy, saved asylum reply outcomes, and the
 new marriage/guarantee/wardship reply outcomes.
+The first combined CI run exposed a 36-month all-AI performance regression:
+the half-year market-access planner searched every foreign route for the new
+military goods even though their public export output cannot meet its existing
+reputation threshold. Skipping these impossible candidates preserved trade
+behavior and passed the performance check in five consecutive local runs;
+58 related trade, campaign, and military-goods tests passed.
 Eastern market AI now indexes offers, owned regions and active caravans once
 per planning turn and only builds full paths for shortlisted bids. The
 120-month trade simulation retained its results before the subsequent main

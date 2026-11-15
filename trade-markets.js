@@ -374,6 +374,9 @@ export function advanceMarketDiplomacy(s,{autoplayPlayer=false}={}){
   const owned=s.regions.filter(r=>r.owner===buyer),candidates=[];
   if(!owned.length||s.factions[buyer].treasury<12)continue;
   for(const destination of owned)for(const [commodity,item] of Object.entries(markets.regions[destination.id].goods)){
+   // No region exports these manufactured goods at the reputation threshold
+   // below, so do not search every foreign route for impossible candidates.
+   if(commodity==='weapons'||commodity==='provisions')continue;
    const target=Math.max(4,item.consumption*3+item.production),deficit=target-item.stock;
    if(deficit<=0)continue;
    for(const origin of s.regions){
