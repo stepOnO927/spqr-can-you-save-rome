@@ -58,6 +58,7 @@ This file tracks the four supplied specifications as one development goal. The e
 - Real Chrome loaded both built entries after the AI update; Map Lab advanced one monthly turn and neither entry recorded a script error.
 - Expedition-order tests cover a three-month multi-theater itinerary, save persistence, lost passage, a battle pause, explicit resumption, manual cancellation and refusal of an unconfirmed route.
 - The complete serial suite passed after expedition orders were added. `npm run build:pages` produced 239 public files, 4.18 MiB total, largest 1.06 MiB; the build contains no tests, developer tools or internal expansion documents. In the built Map Lab, the player ordered the Thirteenth Legion from Cisalpine Gaul to Far Gaul, observed its automatic transfer through Narbonensis and confirmed arrival in April 49 BCE. The built `/` entry also loaded, advanced to February 49 BCE and recorded no browser script errors.
+- The later `main` family-letter name-privacy update was merged while retaining the expedition and territory features. The combined full serial suite and focused cache-version, expedition and family-letter tests passed. The rebuilt public output contains 240 files, 4.18 MiB total, largest 1.06 MiB, with no internal tests, developer tools or expansion documents. Both built entries loaded without browser script errors, and the merged Map Lab still exposed the validated expedition command.
 
 ## Remaining work from the four specifications
 

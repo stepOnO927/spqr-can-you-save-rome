@@ -1,3 +1,4 @@
+import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=family-correspondent-names-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {startDynasticWar} from './civil-war.js?v=succession-ui-recovery-1';
 import {ROUTES} from './data.js?v=phase-x-1';
@@ -92,19 +93,20 @@ export function seedOpeningFictionalHouseholds(s){
  d.openingFictionalSeeded=true;
 }
 
-export function proposeMarriage(s,aId,bId){
+export function proposeMarriage(s,aId,bId,{knownNames={}}={}){
  initializeDynasties(s);const a=s.world.characters[aId],b=s.world.characters[bId];
  if(!eligibleAdult(s,aId)||!eligibleAdult(s,bId)||aId===bId||a.spouse||b.spouse)return {ok:false,reason:'eligibility'};
  if(a.sex!=='unknown'&&b.sex!=='unknown'&&a.sex===b.sex)return {ok:false,reason:'legal_status'};
  if(a.familyId===b.familyId||a.parents.includes(bId)||b.parents.includes(aId)||a.adoptiveParents.includes(bId)||b.adoptiveParents.includes(aId)||a.parents.some(id=>b.parents.includes(id))||a.adoptiveParents.some(id=>b.adoptiveParents.includes(id)))return {ok:false,reason:'kinship'};
  if(a.faction!==b.faction&&((s.relations[[a.faction,b.faction].sort().join(':')]??0)<0||s.wars.some(w=>w.includes(a.faction)&&w.includes(b.faction))))return {ok:false,reason:'diplomacy'};
+ const display=id=>knownNames[id]||visiblePersonName(s,s.player,id)||['Unrecorded name','姓名未记录'];
  const chance=Math.max(.15,Math.min(.85,.5+(a.loyalty+b.loyalty-130)/400+(familyOf(s,aId).reputation+familyOf(s,bId).reputation-100)/500));
- if(roll(s)>=chance){record(s,aId,`A marriage proposal to ${CHARACTER_CATALOG[bId].name[0]} was declined.`,`与${CHARACTER_CATALOG[bId].name[1]}的婚事遭到拒绝。`);return {ok:false,reason:'declined'}}
- a.spouse=bId;b.spouse=aId;s.world.dynasties.marriages.push({a:aId,b:bId,year:s.year,month:s.month,simulated:true});
- for(const id of [aId,bId])record(s,id,`Married ${CHARACTER_CATALOG[id===aId?bId:aId].name[0]}.`,`与${CHARACTER_CATALOG[id===aId?bId:aId].name[1]}结婚。`);
+ if(roll(s)>=chance){record(s,aId,`A marriage proposal to ${display(bId)[0]} was declined.`,`与${display(bId)[1]}的婚事遭到拒绝。`);return {ok:false,reason:'declined'}}
+ a.spouse=bId;b.spouse=aId;s.world.dynasties.marriages.push({a:aId,b:bId,reportedNames:[[...display(aId)],[...display(bId)]],year:s.year,month:s.month,simulated:true});
+ for(const id of [aId,bId])record(s,id,`Married ${display(id===aId?bId:aId)[0]}.`,`与${display(id===aId?bId:aId)[1]}结婚。`);
  familyOf(s,aId).influence=Math.min(100,familyOf(s,aId).influence+3);familyOf(s,bId).influence=Math.min(100,familyOf(s,bId).influence+3);
  if(a.faction!==b.faction){const key=pair(a.faction,b.faction);s.relations[key]=Math.min(100,(s.relations[key]||0)+4)}
- if(a.faction===s.player||b.faction===s.player)note(s,`${CHARACTER_CATALOG[aId].name[0]} and ${CHARACTER_CATALOG[bId].name[0]} married in the simulation.`,`模拟战役中，${CHARACTER_CATALOG[aId].name[1]}与${CHARACTER_CATALOG[bId].name[1]}结婚。`);
+ if(a.faction===s.player||b.faction===s.player)note(s,`${display(aId)[0]} and ${display(bId)[0]} married in the simulation.`,`模拟战役中，${display(aId)[1]}与${display(bId)[1]}结婚。`);
  return {ok:true};
 }
 
@@ -128,8 +130,8 @@ export function offerForeignMarriage(s,ownId,foreignId,reportedFaction){
  if(d.marriageOffers.some(x=>x.status==='pending'&&(x.own===ownId||x.foreign===foreignId)))return {ok:false,reason:'pending'};
  if(s.factions[s.player].treasury<4)return {ok:false,reason:'treasury'};
  s.factions[s.player].treasury-=4;
- const offer={id:`marriage:${d.marriageOffers.length+1}`,own:ownId,foreign:foreignId,reportedFaction,status:'pending',months:3,year:s.year,month:s.month,courierSeed:d.seed>>>0};d.marriageOffers.push(offer);
- record(s,ownId,`A marriage envoy was sent concerning ${CHARACTER_CATALOG[foreignId].name[0]}; the report may be outdated.`,`已派使者商议与${CHARACTER_CATALOG[foreignId].name[1]}的婚事；情报可能过时。`);
+ const offer={id:`marriage:${d.marriageOffers.length+1}`,own:ownId,foreign:foreignId,reportedFaction,reportedName:[...(visiblePersonName(s,s.player,foreignId)||['Unrecorded name','姓名未记录'])],status:'pending',months:3,year:s.year,month:s.month,courierSeed:d.seed>>>0};d.marriageOffers.push(offer);
+ record(s,ownId,`A marriage envoy was sent concerning ${offer.reportedName[0]}; the report may be outdated.`,`已派使者商议与${offer.reportedName[1]}的婚事；情报可能过时。`);
  return {ok:true,cost:4,offer};
 }
 
@@ -138,7 +140,7 @@ function advanceMarriageOffers(s){
   if(--offer.months>0)continue;
   const own=s.world.characters[offer.own],foreign=s.world.characters[offer.foreign];
   const valid=familyCourierArrives(s,offer)&&own?.alive&&foreign?.alive&&!own.spouse&&!foreign.spouse&&foreign.faction===offer.reportedFaction&&!s.wars.some(w=>w.includes(s.player)&&w.includes(foreign.faction));
-  const result=valid?proposeMarriage(s,offer.own,offer.foreign):{ok:false,reason:'no_reply'};
+  const result=valid?proposeMarriage(s,offer.own,offer.foreign,{knownNames:{[offer.foreign]:storedCorrespondentName(offer.foreign,offer.reportedName)}}):{ok:false,reason:'no_reply'};
   offer.status=result.ok?'accepted':result.reason==='declined'?'declined':'no_reply';offer.resolvedYear=s.year;offer.resolvedMonth=s.month;
   if(offer.status!=='accepted')note(s,offer.status==='declined'?'The foreign court declined the marriage proposal.':'No marriage reply arrived; the letter may have been lost or the original report may have been outdated.',offer.status==='declined'?'外国宫廷拒绝了婚事。':'未收到婚事回信；书信可能遗失，原情报也可能过时。');
  }
@@ -156,7 +158,7 @@ export function requestClaimantAsylum(s,claimantId,reportedFaction){
  if(d.asylumRequests.some(x=>x.claimant===claimantId&&x.status==='accepted'))return {ok:false,reason:'already'};
  if(s.factions[actor].treasury<6)return {ok:false,reason:'treasury'};
  s.factions[actor].treasury-=6;
- const request={id:`asylum:${d.asylumRequests.length+1}`,claimant:claimantId,reportedFaction,host:actor,months:3,status:'pending',year:s.year,month:s.month,courierSeed:d.seed>>>0};d.asylumRequests.push(request);
+ const request={id:`asylum:${d.asylumRequests.length+1}`,claimant:claimantId,reportedFaction,reportedName:[...(visiblePersonName(s,actor,claimantId)||['Unrecorded name','姓名未记录'])],host:actor,months:3,status:'pending',year:s.year,month:s.month,courierSeed:d.seed>>>0};d.asylumRequests.push(request);
  note(s,'A claimant was offered refuge. A reply may take three months; the report may be outdated.','已向一位竞争者提出庇护。回信可能需要三个月；原情报可能过时。');
  return {ok:true,cost:6,request};
 }
@@ -197,7 +199,7 @@ export function offerFamilyAccord(s,kind,contactId,reportedFaction,childId=null)
  if(d.familyAccords.some(x=>x.host===host&&x.target===reportedFaction&&x.kind===kind&&['pending','active'].includes(x.status)))return {ok:false,reason:'commitment'};
  if(kind==='wardship'&&d.familyAccords.some(x=>x.child===childId&&['pending','active'].includes(x.status)))return {ok:false,reason:'commitment'};
  if(s.factions[host].treasury<cost)return {ok:false,reason:'treasury'};
- s.factions[host].treasury-=cost;const accord={id:`accord:${d.familyAccords.length+1}`,kind,host,target:reportedFaction,contact:contactId,child:childId,status:'pending',months:4,year:s.year,month:s.month,courierSeed:d.seed>>>0};d.familyAccords.push(accord);
+ s.factions[host].treasury-=cost;const accord={id:`accord:${d.familyAccords.length+1}`,kind,host,target:reportedFaction,contact:contactId,reportedName:[...(visiblePersonName(s,host,contactId)||['Unrecorded name','姓名未记录'])],child:childId,status:'pending',months:4,year:s.year,month:s.month,courierSeed:d.seed>>>0};d.familyAccords.push(accord);
  note(s,kind==='pledge'?'An envoy proposed mutual family guarantees; a reply may take four months.':'An envoy proposed diplomatic wardship; a reply may take four months.',kind==='pledge'?'使者提议互保家族保证；回信可能需要四个月。':'使者提议外交监护；回信可能需要四个月。');return {ok:true,cost,accord};
 }
 
@@ -216,7 +218,7 @@ function advanceFamilyAccords(s){
     if(a.status==='active'){
      a.expiresAt=now+(a.kind==='pledge'?24:60);s.relations[pair(a.host,a.target)]=Math.min(100,relation+(a.kind==='pledge'?8:6));
      s.factions[a.host].stability=Math.min(100,s.factions[a.host].stability+1);
-     if(a.kind==='wardship'){child.diplomaticGuardian=a.contact;child.education=Math.min(100,(child.education||0)+8);record(s,child.id,`A diplomatic wardship with ${CHARACTER_CATALOG[a.contact].name[0]} began; legal custody stayed local.`,`与${CHARACTER_CATALOG[a.contact].name[1]}的外交监护开始；法定监护仍留在本地。`)}
+     if(a.kind==='wardship'){child.diplomaticGuardian=a.contact;child.education=Math.min(100,(child.education||0)+8);record(s,child.id,`A diplomatic wardship with ${storedCorrespondentName(a.contact,a.reportedName)[0]} began; legal custody stayed local.`,`与${storedCorrespondentName(a.contact,a.reportedName)[1]}的外交监护开始；法定监护仍留在本地。`)}
      else{const head=Object.values(s.world.characters).find(c=>c.faction===a.host&&c.alive),family=head&&familyOf(s,head.id);if(family)family.reputation=Math.min(100,(family.reputation||50)+2)}
      if(a.host===s.player)note(s,a.kind==='pledge'?'Mutual family guarantees were accepted for two years; no alliance was created.':'Diplomatic wardship was accepted; the child gained education, not a foreign office.',a.kind==='pledge'?'互保家族保证获接受，期限两年；没有自动建立同盟。':'外交监护获接受；子女增加教育，不获得外国职务。');
     }else if(a.host===s.player)note(s,'The foreign court declined the family agreement.','外国宫廷拒绝了家族协定。');

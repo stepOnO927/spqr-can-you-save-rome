@@ -1,9 +1,9 @@
 import {ROUTES,REGIONS} from './data.js?v=phase-x-1';
 import {reportedControl,reportedFortification,observeFortification} from './control-intelligence.js?v=fort-intel-1';
-import {activeAgreement} from './agreements.js?v=world-kings-2';
+import {activeAgreement} from './agreements.js?v=world-kings-family-1';
 import {politicalAmbition} from './conspiracies.js?v=succession-ui-recovery-1';
-import {focusModifiers} from './national-focus.js?v=infant-portraits-1';
-import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=infant-portraits-1';
+import {focusModifiers} from './national-focus.js?v=family-correspondent-names-1';
+import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=family-correspondent-names-1';
 
 // OPERATIONAL BATTLE PLANNER. Plans are an order layer over the existing War
 // Council orders: every movement goes through issueMilitaryOrder/moveArmy, so

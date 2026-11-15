@@ -1,5 +1,5 @@
-import {newGame,estimatedStrength} from './engine.js?v=world-kings-5';
-import {createFictionalPerson} from './dynasties.js?v=infant-portraits-1';
+import {newGame,estimatedStrength} from './engine.js?v=world-kings-family-1';
+import {createFictionalPerson} from './dynasties.js?v=family-correspondent-names-1';
 import {formCoalition} from './coalitions.js?v=player-coalition-letters-1';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 

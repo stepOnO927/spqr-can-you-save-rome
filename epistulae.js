@@ -1,8 +1,8 @@
 import {ROUTES, FACTIONS} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=succession-ui-recovery-1';
-import {AGREEMENT_TYPES} from './agreements.js?v=world-kings-2';
+import {AGREEMENT_TYPES} from './agreements.js?v=world-kings-family-1';
 import {formatChronicleEntry} from './chronicle.js?v=succession-ui-recovery-1';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=infant-portraits-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=family-correspondent-names-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=infant-portraits-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {canMediate,requestMediation} from './civil-war.js?v=succession-ui-recovery-1';
