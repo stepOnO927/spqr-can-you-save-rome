@@ -148,6 +148,43 @@ test('knowledge-sharing waits for a passable route during a temporary blockade',
  assert.equal(restored.development.egypt.trade.some(t=>t.id==='roadmaking'),true);
 });
 
+test('paid knowledge waits through a closed route and resumes after save reload',()=>{
+ const s=newGrandGame('caesar');s.relations['caesar:egypt']=60;s.factions.caesar.treasury=300;
+ assert.equal(knowledgeTrade(s,'caesar','egypt','material','water-control').ok,true);
+ const paid=s.factions.caesar.treasury,owners=new Map(s.regions.map(r=>[r.id,r.owner]));
+ for(const region of s.regions)region.owner='rebels';
+ s.regions.find(r=>r.id==='cisalpine').owner='caesar';s.regions.find(r=>r.id==='egypt').owner='egypt';
+ advanceDevelopment(s);advanceDevelopment(s);
+ assert.equal(s.development.caesar.trade[0].remaining,2);
+ assert.equal(s.development.caesar.trade[0].pausedReason,'route');
+ assert.ok(!s.development.caesar.knownMaterial.includes('water-control'));
+ assert.match(developmentPanel(s,'en','material'),/Paused: civilian route closed/);
+ assert.match(developmentPanel(s,'zh','material'),/民间路线中断，传递暂停/);
+ const restored=upgradeSave(structuredClone(s));
+ for(const region of restored.regions)region.owner=owners.get(region.id);
+ advanceDevelopment(restored);assert.equal(restored.development.caesar.trade[0].remaining,1);
+ advanceDevelopment(restored);assert.equal(restored.development.caesar.trade.length,0);
+ assert.equal(restored.development.caesar.knownMaterial.filter(id=>id==='water-control').length,1);
+ assert.equal(restored.factions.caesar.treasury,paid,'resuming must not charge for the knowledge again');
+});
+
+test('both directions of a knowledge exchange pause during war',()=>{
+ const s=newGrandGame('caesar');s.relations['caesar:egypt']=60;
+ s.factions.caesar.treasury=300;s.factions.egypt.treasury=300;
+ assert.equal(exchangeKnowledge(s,'caesar','egypt','material','roadmaking','material','water-control').ok,true);
+ s.wars.push(['caesar','egypt']);
+ advanceDevelopment(s);advanceDevelopment(s);
+ assert.equal(s.development.caesar.trade[0].remaining,3);
+ assert.equal(s.development.egypt.trade[0].remaining,3);
+ assert.equal(s.development.caesar.trade[0].pausedReason,'war');
+ assert.match(developmentPanel(s,'en','material'),/Paused by war/);
+ assert.match(developmentPanel(s,'zh','material'),/因战争暂停/);
+ s.wars=s.wars.filter(w=>!w.includes('caesar')||!w.includes('egypt'));
+ advanceDevelopment(s);advanceDevelopment(s);advanceDevelopment(s);
+ assert.ok(s.development.caesar.knownMaterial.includes('water-control'));
+ assert.ok(s.development.egypt.knownMaterial.includes('roadmaking'));
+});
+
 test('granaries hold finite provincial food, buffer shortages, and migrate old national storage without duplication',()=>{
  const built=newGrandGame('egypt');
  assert.equal(startConstruction(built,'egypt','egypt','granary').ok,true);

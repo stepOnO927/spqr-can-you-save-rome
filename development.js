@@ -413,6 +413,10 @@ function knowledgeCorridor(s,sender,receiver){
  }
  return false;
 }
+export function knowledgeTransitStatus(s,owner,trade){
+  if(atWarWith(s,owner,trade.seller))return 'war';
+  return knowledgeCorridor(s,trade.seller,owner)?'open':'route';
+}
 export function knowledgeTrade(s,buyer,seller,branch,id){
   initializeDevelopment(s);
   if(seller===s.player&&buyer!==s.player)return {ok:false,reason:'consent'};
@@ -668,7 +672,21 @@ export function advanceDevelopment(s,log=()=>{}){
     d.exchangeRequests=d.exchangeRequests.filter(request=>--request.remaining>0&&!s.wars.some(w=>w.includes(owner)&&w.includes(request.partner))&&d[request.wantBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.wantId)&&!d[request.offerBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.offerId)&&s.development[request.partner]?.[request.offerBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.offerId)&&!s.development[request.partner]?.[request.wantBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.wantId)&&!knowledgeInProgress(d,request.offerBranch,request.offerId)&&!knowledgeInProgress(s.development[request.partner],request.wantBranch,request.wantId));
     d.agreementRequests=d.agreementRequests.filter(request=>--request.remaining>0&&!s.wars.some(w=>w.includes(owner)&&w.includes(request.partner))&&(s.relations[[owner,request.partner].sort().join(':')]??0)>=20&&s.regions.some(r=>r.owner===owner)&&s.regions.some(r=>r.owner===request.partner)&&!s.knowledgeAgreements.some(a=>a.a===owner&&a.b===request.partner||a.a===request.partner&&a.b===owner));
     d.scholarRequests=d.scholarRequests.filter(request=>--request.remaining>0&&!atWarWith(s,owner,request.host)&&s.regions.some(r=>r.owner===owner)&&s.regions.some(r=>r.owner===request.host));
-    for(const trade of [...d.trade])if(--trade.remaining<=0){const key=trade.branch==='material'?'knownMaterial':'knownIdeas',newKnowledge=!d[key].includes(trade.id);if(newKnowledge)d[key].push(trade.id);if(newKnowledge&&trade.branch==='idea')d.foreignOrigins[trade.id]=trade.seller;d.trade.splice(d.trade.indexOf(trade),1);if(newKnowledge&&owner===s.player){const name=(trade.branch==='material'?MATERIALS:IDEAS).find(item=>item.id===trade.id)?.name||[trade.id,trade.id],seller=FACTIONS[trade.seller]?.short||[trade.seller,trade.seller];log(`Knowledge arrived from ${seller[0]}: ${name[0]}.`,`来自${seller[1]}的知识已传入：${name[1]}。`)}}
+    for(const trade of [...d.trade]){
+      const transit=knowledgeTransitStatus(s,owner,trade);
+      if(transit!=='open'){
+        if(trade.pausedReason!==transit&&owner===s.player)log(transit==='war'?'Foreign knowledge transfer paused by war.':'Foreign knowledge transfer paused: no civilian route.',transit==='war'?'战争使外国知识传递暂停。':'民间通行路线中断，外国知识传递暂停。');
+        trade.pausedReason=transit;continue;
+      }
+      if(trade.pausedReason&&owner===s.player)log('Foreign knowledge transfer resumed.','外国知识传递已恢复。');
+      delete trade.pausedReason;
+      if(--trade.remaining>0)continue;
+      const key=trade.branch==='material'?'knownMaterial':'knownIdeas',newKnowledge=!d[key].includes(trade.id);
+      if(newKnowledge)d[key].push(trade.id);
+      if(newKnowledge&&trade.branch==='idea')d.foreignOrigins[trade.id]=trade.seller;
+      d.trade.splice(d.trade.indexOf(trade),1);
+      if(newKnowledge&&owner===s.player){const name=(trade.branch==='material'?MATERIALS:IDEAS).find(item=>item.id===trade.id)?.name||[trade.id,trade.id],seller=FACTIONS[trade.seller]?.short||[trade.seller,trade.seller];log(`Knowledge arrived from ${seller[0]}: ${name[0]}.`,`来自${seller[1]}的知识已传入：${name[1]}。`)}
+    }
     for(const visit of [...d.visitingScholars]){
       if(atWarWith(s,owner,visit.partner)||!s.regions.some(r=>r.owner===owner)||!s.regions.some(r=>r.owner===visit.partner)||visit.destination&&s.regions.find(r=>r.id===visit.destination)?.owner!==owner){d.visitingScholars.splice(d.visitingScholars.indexOf(visit),1);continue}
       if(visit.travelRemaining>0){

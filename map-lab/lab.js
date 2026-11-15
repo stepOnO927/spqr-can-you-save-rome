@@ -19,8 +19,8 @@ import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=33';
 import {physicalLabels} from './physical-labels.js?v=4';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
-import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=191';
-import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from '../development-ui.js?v=50';
+import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=192';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from '../development-ui.js?v=51';
 import {FACTIONS} from '../data.js?v=9';
 import {cultureLabel} from '../culture-labels.js?v=1';
 import {identity,factionMark} from '../identity.js?v=2';
@@ -38,7 +38,7 @@ import {intelligenceHtml,afterActionHtml,fortificationText} from '../recon-ui.js
 import {renderNavalPanel} from './naval-ui.js?v=60';
 import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=42';
 import {maritimeMapIntel} from './maritime-map-intel.js?v=1';
-import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates,dispatchWagonSupply} from '../engine.js?v=191';
+import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates,dispatchWagonSupply} from '../engine.js?v=192';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
