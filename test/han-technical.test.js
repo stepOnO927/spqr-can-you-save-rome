@@ -11,7 +11,7 @@ import {drawMap} from '../han/map.js?v=faces-main-20261115-1';
 import {validateTrees} from '../han/focus.js?v=faces-main-20261115-1';
 import {EDICTS} from '../han/court.js?v=faces-main-20261115-1';
 import {isLiuClan} from '../han/dynasty.js?v=faces-main-20261115-1';
-import {attachHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=faces-main-20261115-1';
+import {attachHanWorld,advanceHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=faces-main-20261115-1';
 import {eastPanel,eastMap} from '../han/east-ui.js?v=faces-main-20261115-1';
 
 const roman=(o={})=>{const s=newGame(o.player||'caesar');if(o.dlc!==false)attachHanWorld(s,{seed:7});return s};
@@ -59,6 +59,23 @@ test('34. Rome sees the East only through delayed merchant reports, in both lang
  assert.ok(s.log.some(e=>e.eastern),'reports enter the Roman dispatches');
  for(const lang of [0,1]){const html=eastPanel(s,{lang,selected:'changan'});assert.doesNotMatch(html,/undefined|NaN|\[object/);if(lang)assert.match(html,/[一-鿿]/)}
  assert.match(eastPanel(newGame('caesar'),{lang:0}),/not enabled/);
+});
+
+test('a capped Han Chronicle still queues new public events for delayed Roman reports',()=>{
+ const s=roman(),w=hanWorld(s),h=w.state;
+ h.log=Array.from({length:400},(_,i)=>({year:-51,month:1,text:[`old ${i}`,`旧 ${i}`],kind:'frontier'}));
+ h.wars.push(['zhizhi','wujie']);h.armies.find(a=>a.owner==='zhizhi').region='wujie';
+ advanceHanWorld(s);
+ assert.equal(h.log.length,400);
+ assert.ok(w.queue.some(x=>x.kind==='event'&&x.en.includes('Battle at Wujie')));
+ assert.equal(romanView(s).dispatches.length,0,'the queued event has not reached Rome yet');
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.ok(hanWorld(restored).queue.some(x=>x.kind==='event'&&x.en.includes('Battle at Wujie')));
+ restored.wars=[];restored.armies=[];
+ const queued=hanWorld(restored).queue.find(x=>x.kind==='event'&&x.en.includes('Battle at Wujie'));
+ const delay=queued.arrive-(restored.year*12+restored.month);
+ for(let i=0;i<delay;i++)romanTick(restored);
+ assert.ok(romanView(restored).dispatches.some(x=>x.en.includes('Battle at Wujie')),'the public battle arrives after the relay delay');
 });
 
 test('35. the eastern map stays responsive and draws only reported control',()=>{

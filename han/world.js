@@ -73,12 +73,15 @@ export function advanceHanWorld(s){
  const w=hanWorld(s);if(!w)return;
  const h=w.state,before=h.log.length?h.log[h.log.length-1]:null;
  (h.tradeMarkets||={}).embeddedRoman=true;
- const startIndex=h.log.length;
  h.year=s.year;h.month=s.month;h.month--;if(h.month<1){h.month=12;h.year--}
  hanTick(h); // advances to the Roman date
  const now=mi(s.year,s.month),delay=relayDelay(h);
  // public events start their long journey west
- const fresh=h.log.slice(startIndex).filter(e=>PUBLIC_KINDS.has(e.kind)).slice(0,4);
+ // The Han Chronicle drops its oldest entries at 400. A length-based slice
+ // would silently lose all new dispatches once that limit is reached.
+ const lastIndex=before?h.log.indexOf(before):-1;
+ const newEntries=lastIndex>=0?h.log.slice(lastIndex+1):h.log.filter(e=>e.year===s.year&&e.month===s.month);
+ const fresh=newEntries.filter(e=>PUBLIC_KINDS.has(e.kind)).slice(0,4);
  for(const e of fresh)w.queue.push({arrive:now+delay,kind:'event',origin:{year:e.year,month:e.month},en:fill(h,e,0),zh:fill(h,e,1),eventKind:e.kind});
  if(s.month===7)w.queue.push({arrive:now+delay,kind:'snapshot',snapshot:snapshotOf(h)});
  // Physically transfer paid cargo from the Han gate to a Roman market.

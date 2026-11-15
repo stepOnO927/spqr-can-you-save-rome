@@ -443,6 +443,10 @@ good. Populous courts now consume one real silk batch per market month when
 stock is present; smaller oasis intermediaries retain stock for onward resale.
 The seeded long run still delivers Qiuci-to-Shule silk and records Dayuan's
 consumption, while checking that Dayuan does not ship it straight back east.
+The Roman-Han relay now detects newly appended public Han events even after
+the Han Chronicle reaches its 400-entry cap. A regression fills that log,
+causes a real battle, saves and restores the campaign, then verifies the
+report reaches Rome only after its actual relay delay.
 Delivered horse batches can now be assigned from an owned local market to the
 military remount pool at 100 head per batch. Assignment removes the measured
 stock, records the transfer in the save, and lets cavalry recruitment spend
