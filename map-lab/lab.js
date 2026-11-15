@@ -217,7 +217,20 @@ map.on('moveend',clipPhysicalLabels);
 map.on('load',clipPhysicalLabels);
 refreshPhysicalLabels();
 const locator=document.createElement('aside');locator.id='locator';locator.hidden=true;locator.innerHTML='<strong class="locator-title"></strong><div class="locator-map"><img src="./italy-locator.svg?v=1" alt=""><span id="locator-position"></span></div>';document.body.append(locator);
-function updateLocator(){const center=map.getCenter?.(),zoom=map.getZoom?.()||0;if(!center||zoom<7||center.lng<4||center.lng>23||center.lat<35||center.lat>48){locator.hidden=true;return}locator.hidden=false;locator.querySelector('.locator-title').textContent=lang==='zh'?'当前位置 · 意大利':'YOUR POSITION · ITALY';locator.setAttribute('aria-label',lang==='zh'?'意大利海岸及当前地图中心':'Italy coast and current map center');const dot=locator.querySelector('#locator-position');dot.style.left=`${(center.lng-4)/19*100}%`;dot.style.top=`${(48-center.lat)/13*100}%`}
+const locatorBounds={italy:{west:4,east:23,south:35,north:48},mediterranean:{west:-20,east:60,south:18,north:58}};
+function updateLocator(){
+ const center=map.getCenter?.(),zoom=map.getZoom?.()||0,broad=locatorBounds.mediterranean;
+ if(!center||zoom<7||center.lng<broad.west||center.lng>broad.east||center.lat<broad.south||center.lat>broad.north){locator.hidden=true;return}
+ const italy=locatorBounds.italy,isItaly=center.lng>=italy.west&&center.lng<=italy.east&&center.lat>=italy.south&&center.lat<=italy.north;
+ const bounds=isItaly?italy:broad,source=isItaly?'./italy-locator.svg?v=1':'./mediterranean-locator.svg?v=1';
+ locator.hidden=false;
+ const image=locator.querySelector('img');if(image.getAttribute('src')!==source)image.setAttribute('src',source);
+ locator.querySelector('.locator-title').textContent=isItaly?(lang==='zh'?'当前位置 · 意大利':'YOUR POSITION · ITALY'):(lang==='zh'?'地中海 · 当前位置':'MEDITERRANEAN · POSITION');
+ locator.setAttribute('aria-label',isItaly?(lang==='zh'?'意大利现代海岸及当前地图中心':'Modern Italy coast and current map center'):(lang==='zh'?'地中海地区现代海岸及当前地图中心':'Modern Mediterranean coast and current map center'));
+ const dot=locator.querySelector('#locator-position');
+ dot.style.left=`${(center.lng-bounds.west)/(bounds.east-bounds.west)*100}%`;
+ dot.style.top=`${(bounds.north-center.lat)/(bounds.north-bounds.south)*100}%`;
+}
 map.on('move',updateLocator);map.on('load',updateLocator);document.querySelector('#language').addEventListener('click',()=>setTimeout(()=>{updateLocator();clipPhysicalLabels()},0));
 if(maplibregl.ScaleControl&&map.addControl)map.addControl(new maplibregl.ScaleControl({maxWidth:110,unit:'metric'}),'bottom-left');
 const atlasFocus=document.createElement('button');atlasFocus.id='atlas-focus';atlasFocus.type='button';atlasFocus.setAttribute('aria-pressed','false');document.querySelector('.map-controls').append(atlasFocus);atlasFocus.onclick=()=>{const focused=document.body.classList.toggle('atlas-focus');if(focused){focusPreviousMode=currentMapMode;currentMapMode='terrain'}else if(focusPreviousMode){currentMapMode=focusPreviousMode;focusPreviousMode=null}atlasFocus.setAttribute('aria-pressed',String(focused));renderArmies();renderHud();map.resize?.()};

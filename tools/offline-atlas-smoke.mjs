@@ -151,6 +151,7 @@ try{
  if(process.env.SPQR_ATLAS_Z7_SCREENSHOT){await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded('elevation-fine')},null,{timeout:45000});await page.waitForTimeout(500);await page.screenshot({path:process.env.SPQR_ATLAS_Z7_SCREENSHOT})}
  if(page.viewportSize().width>900){
   assert.equal(await page.locator('#locator').isVisible(),true,'Zoomed Italy needs a geographic locator');
+  assert.match(await page.locator('#locator .locator-map img').getAttribute('src'),/italy-locator\.svg/);
   assert.ok(await page.locator('#locator .locator-map img').evaluate(img=>img.complete&&img.naturalWidth>0),'Italy locator coast image must load');
   assert.match(await page.locator('.locator-title').innerText(),firstLanguage==='zh-CN'?/YOUR POSITION/:/当前位置/);
   const dot=await page.locator('#locator-position').evaluate(el=>({x:parseFloat(el.style.left),y:parseFloat(el.style.top)}));
@@ -208,6 +209,14 @@ try{
  await page.waitForTimeout(1400);
  await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();
  await waitForTerrain(/\/terrain\/7\/(7[0-9]|8[0-9])\//,'Eastern Mediterranean zoom 7 did not use bundled local terrain');
+ if(page.viewportSize().width>900){
+  assert.equal(await page.locator('#locator').isVisible(),true,'Eastern close view needs a geographic locator');
+  assert.match(await page.locator('.locator-title').innerText(),/MEDITERRANEAN · POSITION|地中海 · 当前位置/);
+  assert.match(await page.locator('#locator .locator-map img').getAttribute('src'),/mediterranean-locator\.svg/);
+  await page.waitForFunction(()=>{const image=document.querySelector('#locator .locator-map img');return image?.complete&&image.naturalWidth>0});
+  const dot=await page.locator('#locator-position').evaluate(el=>({x:parseFloat(el.style.left),y:parseFloat(el.style.top)}));
+  assert.ok(dot.x>0&&dot.x<100&&dot.y>0&&dot.y<100,'Mediterranean locator dot must stay inside its coast inset');
+ }
  assert.deepEqual(missingTerrain,[],'Egyptian close zoom requested missing terrain tiles');
  if(process.env.SPQR_ATLAS_EGYPT_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_SCREENSHOT});
  await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();await page.waitForTimeout(900);
@@ -221,9 +230,11 @@ try{
   if(bounds.width>=900)assert.ok(bounds.left>350&&bounds.right<bounds.width-20&&bounds.top>75&&bounds.bottom<bounds.height-25,`${id} must fit in the usable map viewport: ${JSON.stringify(bounds)}`);
  }
  const firstSeaName=await seaLabel.textContent();
+ const firstLocatorTitle=page.viewportSize().width>900?await page.locator('.locator-title').innerText():null;
  assert.ok(['Mediterranean Sea','地中海'].includes(firstSeaName));
  await page.locator('#language').click();
  assert.equal(await seaLabel.textContent(),firstSeaName==='地中海'?'Mediterranean Sea':'地中海');
+ if(firstLocatorTitle)await page.waitForFunction(before=>document.querySelector('.locator-title')?.textContent!==before,firstLocatorTitle,{timeout:3000});
  await page.locator('#language').click();
  if(process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT});
  await selectMapMode('terrain');
