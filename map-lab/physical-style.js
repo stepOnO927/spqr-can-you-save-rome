@@ -4,6 +4,7 @@ import bathymetry from '../mediterranean-bathymetry.js?v=2';
 import rivers from '../mediterranean-rivers.js';
 import poRiverDetail from '../po-river-detail.js';
 import lakes from '../mediterranean-lakes.js';
+import gardaLakeDetail from '../garda-lake-detail.js';
 import historical from '../historical-territories.js';
 import egyptContours from './egypt-contours.js?v=1';
 import italyContours from './italy-contours.js?v=1';
@@ -22,6 +23,7 @@ const localElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e5d9b
 const egyptElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e8ddb9',0,'#e3d9b6',10,'#dfd0aa',25,'#d7c399',50,'#cbb288',100,'#bea178',300,'#aa8d6c',700,'#887866',1200,'#69796f',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
 const regionalElevationPalette=['interpolate',['linear'],['elevation'],-100,'#ded6b8',0,'#d8d2b0',100,'#c3c9a1',300,'#a3b68d',700,'#849f80',1200,'#6d8979',1800,'#838e83',2600,'#b0b2a4',3500,'#ded9c7'];
 const terrainAttribution='Elevation: Mapzen Terrain Tiles; Copernicus EU-DEM, NOAA ETOPO1 and USGS SRTM/GMTED2010 contributors';
+const euHydroAttribution="Modern Po and Garda: European Union's Copernicus Land Monitoring Service information, EU-Hydro v1.3, DOI 10.2909/393359a7-7ebd-4a52-80ac-1a18d5f3db9c; adapted crops";
 
 // GSHHG land and ocean derive from the same L1 shoreline. The ocean mask is deliberately
 // above the elevation layer so relief never turns the sea into apparent land.
@@ -46,9 +48,10 @@ export const physicalStyle={
   'elevation-egypt-higher':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:9,maxzoom:9,bounds:[24,28,36,34],attribution:terrainAttribution},
   historical:{type:'geojson',data:historical},
   rivers:{type:'geojson',data:rivers,attribution:'Hydrography: Natural Earth 1:10m, public domain'},
-  'po-river-detail':{type:'geojson',data:poRiverDetail,attribution:"Modern Po: European Union's Copernicus Land Monitoring Service information, EU-Hydro v1.3, DOI 10.2909/393359a7-7ebd-4a52-80ac-1a18d5f3db9c; adapted river crop"},
+  'po-river-detail':{type:'geojson',data:poRiverDetail,attribution:euHydroAttribution},
   'nile-delta':{type:'geojson',data:nileDelta,attribution:'Approximate Nile Delta between Natural Earth river branches'},
   lakes:{type:'geojson',data:lakes},
+  'garda-lake-detail':{type:'geojson',data:gardaLakeDetail,attribution:euHydroAttribution},
   'egypt-contours':{type:'geojson',data:egyptContours,attribution:terrainAttribution},
   'italy-contours':{type:'geojson',data:italyContours,attribution:terrainAttribution},
   landcover:{type:'raster',tiles:['./landcover/{z}/{x}/{y}.png'],tileSize:256,minzoom:4,maxzoom:6,bounds:[-30,10,65,65],attribution:'Natural Earth II idealized land cover, public domain'}
@@ -95,8 +98,12 @@ export const physicalStyle={
   {id:'sea-mask',type:'fill',source:'ocean',paint:{'fill-color':'#356f79','fill-opacity':1}},
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},
   {id:'coastline',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,.9,8,1.7],'line-opacity':.87}},
-  {id:'natural-lakes',type:'fill',source:'lakes',paint:{'fill-color':'#5b9093','fill-opacity':.88}},
-  {id:'lake-shores',type:'line',source:'lakes',paint:{'line-color':'#c6d2ba','line-opacity':.65,'line-width':.65}},
+  {id:'natural-lakes',type:'fill',source:'lakes',filter:['!=',['get','name'],'Lago di Garda'],paint:{'fill-color':'#5b9093','fill-opacity':.88}},
+  {id:'garda-overview',type:'fill',source:'lakes',maxzoom:8,filter:['==',['get','name'],'Lago di Garda'],paint:{'fill-color':'#5b9093','fill-opacity':.88}},
+  {id:'garda-close',type:'fill',source:'garda-lake-detail',minzoom:8,paint:{'fill-color':'#5b9093','fill-opacity':.88}},
+  {id:'lake-shores',type:'line',source:'lakes',filter:['!=',['get','name'],'Lago di Garda'],paint:{'line-color':'#c6d2ba','line-opacity':.65,'line-width':.65}},
+  {id:'garda-overview-shore',type:'line',source:'lakes',maxzoom:8,filter:['==',['get','name'],'Lago di Garda'],paint:{'line-color':'#c6d2ba','line-opacity':.65,'line-width':.65}},
+  {id:'garda-close-shore',type:'line',source:'garda-lake-detail',minzoom:8,paint:{'line-color':'#c6d2ba','line-opacity':.65,'line-width':.65}},
   {id:'waterways-major',type:'line',source:'rivers',filter:['all',['<=',['get','rank'],6],['!=',['get','name'],'Po']],paint:{'line-color':'#5c9293','line-opacity':.88,'line-width':['interpolate',['linear'],['zoom'],4,.65,7,1.15,9,2]}},
   {id:'waterways-po-overview',type:'line',source:'rivers',maxzoom:8.1,filter:['==',['get','name'],'Po'],paint:{'line-color':'#5c9293','line-opacity':.88,'line-width':['interpolate',['linear'],['zoom'],4,.65,7,1.15,8.1,1.4]}},
   {id:'waterways-po-close',type:'line',source:'po-river-detail',minzoom:8.1,paint:{'line-color':'#5c9293','line-opacity':.78,'line-width':['interpolate',['linear'],['zoom'],8.1,1,8.6,1.2,9.2,1.55]}},

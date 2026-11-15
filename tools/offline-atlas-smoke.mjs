@@ -14,8 +14,12 @@ assert.ok(physicalStyle.layers.some(layer=>layer.id==='depth-200'&&layer.source=
 assert.ok(physicalStyle.sources.rivers.data.features.some(feature=>feature.properties.name==='Tevere'));
 assert.ok(physicalStyle.sources.rivers.data.features.some(feature=>feature.properties.name==='Po'));
 assert.ok(physicalStyle.sources['po-river-detail'].data.features.length>=900,'Local Po geometry must be bundled for offline play');
+assert.equal(physicalStyle.sources['garda-lake-detail'].data.features.length,1,'Detailed Garda shore must be bundled for offline play');
+assert.ok(physicalStyle.sources['garda-lake-detail'].data.features[0].geometry.coordinates.length>=4,'Garda islands must remain separate from lake water');
 assert.ok(physicalStyle.layers.some(layer=>layer.id==='waterways-po-overview'&&layer.maxzoom===8.1));
 assert.ok(physicalStyle.layers.some(layer=>layer.id==='waterways-po-close'&&layer.minzoom===8.1));
+assert.ok(physicalStyle.layers.some(layer=>layer.id==='garda-overview'&&layer.maxzoom===8));
+assert.ok(physicalStyle.layers.some(layer=>layer.id==='garda-close'&&layer.minzoom===8));
 assert.ok(physicalStyle.sources.rivers.data.features.every(feature=>feature.properties.kind!=='Canal'));
 assert.ok(physicalStyle.sources.lakes.data.features.every(feature=>feature.properties.kind!=='Reservoir'));
 assert.deepEqual(physicalStyle.sources['elevation-fine'].bounds,[-20,18,60,58]);
