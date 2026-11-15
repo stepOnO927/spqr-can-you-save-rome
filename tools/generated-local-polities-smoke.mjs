@@ -12,12 +12,15 @@ try{
   const {newGame}=await import('/engine.js?v=world-kings-trade-1');
   const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-trade-1');
   const {localDiscoveryLevel}=await import('/local-discovery.js?v=world-kings-trade-1');
+  const {advanceVillages}=await import('/local-villages.js');
   const s=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:2});
   const entities=s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&!entity.proceduralVillage&&!entity.proceduralNomad&&!entity.proceduralWilderness);
   const known=entities.find(entity=>entity.type==='city_state'&&localDiscoveryLevel(s,s.player,entity.id)>=3);
   const chief=entities.find(entity=>entity.type==='strongman'&&localDiscoveryLevel(s,s.player,entity.id)>=3);
   const village=s.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.sponsor===chief?.id);
   if(!known||!chief||!village)throw Error('no discovered generated city, chief and village');
+  village.village.road=1;village.village.storedFood=Math.max(village.village.storedFood,village.village.foodNeed*4);s.month=6;advanceVillages(s);
+  if(village.village.lastEvent?.kind!=='harvest')throw Error('no seeded village harvest event');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
   return {count:entities.length,name:known.name[0].toUpperCase(),population:known.population,ruler:known.ruler.name[0],chief:chief.name[0].toUpperCase(),village:village.name[0].toUpperCase(),chiefPopulation:chief.population,villagePopulation:village.village.population};
  });
@@ -42,6 +45,7 @@ try{
  await villageMarker.waitFor({state:'visible'});await villageMarker.click();
  const villagePanel=await page.locator('#command-detail').innerText();
  assert.match(villagePanel,/Local chief:/);assert.match(villagePanel,/Personal service does not transfer the village/);
+ assert.match(villagePanel,/Harvest gathering used one local food/);
  assert.ok(villagePanel.includes(String(generated.villagePopulation)));
  assert.equal(await page.locator('#village-granary').isDisabled(),true);
  await page.locator('#save').click();
@@ -51,7 +55,7 @@ try{
  await marker.click();assert.ok((await page.locator('#command-detail').innerText()).includes(generated.population.toLocaleString('en-US')));
  assert.ok((await page.locator('#command-detail').innerText()).includes(generated.ruler));
  await chiefMarker.click();assert.match(await page.locator('#command-detail').innerText(),/Offer takes 2 more months/);
- await villageMarker.click();assert.match(await page.locator('#command-detail').innerText(),/Personal service does not transfer the village/);
+ await villageMarker.click();assert.match(await page.locator('#command-detail').innerText(),/Personal service does not transfer the village/);assert.match(await page.locator('#command-detail').innerText(),/Harvest gathering used one local food/);
  assert.deepEqual(errors,[]);
  console.log('Built Map Lab displays a generated city, strongman and dependent village; service stays pending across save/load without annexation.');
 }finally{await browser.close()}

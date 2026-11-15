@@ -1,6 +1,26 @@
 import {localEntity, villageDevelopment} from './local-polities.js';
 
 const clamp = value => Math.max(0, Math.min(100, value));
+function villageEvent(state, region, entity) {
+  if (state.month !== 6 && state.month !== 12) return;
+  const village = entity.village;
+  if (village.lastEvent?.year === state.year && village.lastEvent.month === state.month) return;
+  const options = [];
+  if (village.storedFood >= village.foodNeed * 3 && village.satisfaction >= 45) options.push('harvest');
+  if (state.factions[region.owner]?.tax === 'high' && village.satisfaction <= 70) options.push('tax_complaint');
+  if (village.market > 0 && village.marketAccess >= 60) options.push('merchants');
+  if (village.shrine > 0 && village.storedFood >= village.foodNeed * 2) options.push('festival');
+  if (village.road < 1 && village.security >= 40 && !village.localIssue) options.push('road_request');
+  const choices = options.filter(kind => kind !== village.lastEvent?.kind);
+  if (!choices.length) return;
+  village.eventSeed = (Math.imul((village.eventSeed ?? ((entity.seed ?? 0) ^ 0x85ebca6b)) >>> 0, 1664525) + 1013904223) >>> 0;
+  const kind = choices[village.eventSeed % choices.length];
+  if (kind === 'harvest' || kind === 'festival') {village.storedFood--; village.satisfaction = clamp(village.satisfaction + (kind === 'harvest' ? 2 : 3));}
+  if (kind === 'tax_complaint') {village.satisfaction = clamp(village.satisfaction - 2); village.localIssue = 'tax_complaint';}
+  if (kind === 'merchants') {entity.treasury++; village.marketAccess = clamp(village.marketAccess + 1);}
+  if (kind === 'road_request') village.localIssue = 'road_request';
+  village.lastEvent = {kind, year: state.year, month: state.month};
+}
 const projects = Object.freeze({
   granary: {treasury: 8, food: 2, months: 2},
   irrigation: {treasury: 10, food: 2, months: 3},
@@ -98,7 +118,7 @@ export function advanceVillages(state) {
         const completed = village.project.kind;
         village[completed]++;
         if (completed === 'market') village.marketAccess = clamp(village.marketAccess + 20);
-        if (completed === 'road') { village.marketAccess = clamp(village.marketAccess + 15); region.supply++; }
+        if (completed === 'road') { village.marketAccess = clamp(village.marketAccess + 15); region.supply++; if (village.localIssue === 'road_request') village.localIssue = null; }
         if (completed === 'well') village.satisfaction = clamp(village.satisfaction + 6);
         if (completed === 'wall') { village.security = clamp(village.security + 12); entity.militia += 30; }
         if (completed === 'shrine') village.satisfaction = clamp(village.satisfaction + 5);
@@ -124,6 +144,11 @@ export function advanceVillages(state) {
       village.satisfaction = clamp(village.satisfaction + 1);
       if (village.satisfaction >= 60) village.localIssue = null;
     }
+    if (state.month % 3 === 0 && village.localIssue === 'tax_complaint' && state.factions[region.owner]?.tax !== 'high') {
+      village.satisfaction = clamp(village.satisfaction + 1);
+      if (village.satisfaction >= 65) village.localIssue = null;
+    }
     if (state.month % 3 === 0 && village.shrine > 0 && village.storedFood >= village.foodNeed * 2) village.satisfaction = clamp(village.satisfaction + 1);
+    villageEvent(state, region, entity);
   }
 }

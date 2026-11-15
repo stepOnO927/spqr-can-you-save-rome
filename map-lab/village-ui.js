@@ -20,6 +20,12 @@ export function renderVillage({state, id, actor, language, panel, refresh}) {
   const development = villageDevelopment(v), status = document.createElement('p');
   status.textContent = zh ? `聚落发展：${development.marketTown ? '集镇' : '村落'}${development.fortified ? ' · 设防聚落' : ''}。需至少700人口、粮仓及足够粮产；集镇另需市场、道路、通达和满意度，设防另需围墙、道路及安全。` : `Settlement development: ${development.marketTown ? 'market town' : 'village'}${development.fortified ? ' · fortified settlement' : ''}. Requires at least 700 people, a granary and sufficient food production; a market town also needs a market, road, access and satisfaction, while fortification needs a wall, road and security.`;
   section.append(status);
+  if (v.lastEvent) {
+    const names = {harvest:['Harvest gathering used one local food and raised satisfaction.','丰收聚会消耗1份地方储粮，村民满意度上升。'],tax_complaint:['Villagers complained about high taxation.','村民对高税率提出申诉。'],merchants:['Merchants reached the local market, adding one local treasury.','商人抵达市场，地方资金增加1。'],festival:['A community festival used one local food and raised satisfaction.','社区节庆消耗1份地方储粮，村民满意度上升。'],road_request:['Residents requested a road connection.','村民请求修建道路。']};
+    const event = document.createElement('p');
+    event.textContent = `${zh ? '最近村务' : 'Recent village event'} · ${v.lastEvent.month}/${Math.abs(v.lastEvent.year)} ${v.lastEvent.year < 0 ? (zh ? '公元前' : 'BCE') : ''}: ${names[v.lastEvent.kind]?.[zh ? 1 : 0] || (zh ? '地方情况发生变化。' : 'Local conditions changed.')}`;
+    section.append(event);
+  }
   const rules = document.createElement('p'); rules.textContent = zh ? '正常购粮保留两个月村民口粮；紧急征粮会伤害村民。农田提高月产粮，祭所缓慢改善满意度；市场与道路改善收入、购粮和补给，围墙提高安全。集镇另增地方收入与可购粮量。' : 'Normal purchases preserve two months of civilian food; emergency requisition harms villagers. Fields add monthly food and a shrine slowly improves satisfaction; market and road improve income, purchases and supply, while a wall raises security. A market town adds local revenue and purchase capacity.'; section.append(rules);
   if (v.project) { const pending = document.createElement('p'), names = {granary:'粮仓',irrigation:'灌溉',market:'市场',well:'水井',road:'道路',wall:'围墙',shrine:'社区祭所',agriculture:'农田'}; pending.textContent = zh ? `${names[v.project.kind] || v.project.kind}建设剩余 ${v.project.remaining} 个月。` : `${v.project.kind} project: ${v.project.remaining} months remaining.`; section.append(pending); }
   const purchase = villageFoodQuote(state, id, actor);
