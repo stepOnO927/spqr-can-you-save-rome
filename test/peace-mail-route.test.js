@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,diplomacy,answerPeaceOffer,replyToLetter,upgradeSave,isWar} from '../engine.js?v=exchange-observation-1';
+import {newGame,tick,diplomacy,answerPeaceOffer,replyToLetter,upgradeSave,isWar} from '../engine.js?v=exchange-undated-1';
 import {syncPeaceLetters,receivedMail,advanceMail,sendLetter} from '../epistulae.js?v=born-portraits-nine-1';
 import {mailboxHtml} from '../mail-ui.js?v=born-portraits-nine-1';
 
