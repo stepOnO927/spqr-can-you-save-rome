@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=regency-tenure-1';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=inquiry-inbox-1';
 import {observeArmies,reportedArmies,reportedHealthSubjects} from '../character-system.js?v=regency-tenure-1';
 import {requestPersonalMeeting} from '../personal-diplomacy.js?v=regency-tenure-1';
 

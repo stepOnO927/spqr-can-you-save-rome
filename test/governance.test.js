@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=regency-tenure-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=inquiry-inbox-1';
 import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js?v=regency-tenure-1';
 import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js?v=succession-ui-recovery-1';
 import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=regency-tenure-1';

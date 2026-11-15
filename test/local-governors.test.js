@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=regency-tenure-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=inquiry-inbox-1';
 import {appointGovernor,dismissGovernor,governorCandidates,localGovernor,officeOf,officeCandidates,advanceOffices,governorLoyaltyEffect} from '../office-system.js?v=conspiracy-name-1';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=regency-tenure-1';
 import {availableCommanders} from '../command-appointments.js?v=conspiracy-name-1';

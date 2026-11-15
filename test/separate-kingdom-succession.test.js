@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=regency-tenure-1';
+import {newGame,upgradeSave} from '../engine.js?v=inquiry-inbox-1';
 import {assignSuccession,knownLeaders,mauretanianSeatHolders} from '../characters.js?v=succession-ui-recovery-1';
 import {createFictionalPerson} from '../dynasties.js?v=conspiracy-name-1';
 import {deriveGovernment,advanceGovernments} from '../governance.js?v=regency-tenure-1';

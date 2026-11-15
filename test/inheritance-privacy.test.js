@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=regency-tenure-1';
+import {newGame,upgradeSave} from '../engine.js?v=inquiry-inbox-1';
 import {createFictionalPerson,makeWill,settleInheritance} from '../dynasties.js?v=conspiracy-name-1';
 import {addReport} from '../character-system.js?v=regency-tenure-1';
 

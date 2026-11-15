@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,resolveBattle,previewMarch,forecastEconomy,issueMilitaryOrder} from '../engine.js?v=regency-tenure-1';
+import {newGame,tick,upgradeSave,resolveBattle,previewMarch,forecastEconomy,issueMilitaryOrder} from '../engine.js?v=inquiry-inbox-1';
 import {COMPONENTS,PRESETS,templatesFor,templateStats,saveTemplate,duplicateTemplate,renameTemplate,validateTemplate,compareTemplates,reorganizeArmy,reorganizationQuote,recruitFormation,recruitmentQuote,formationCombatFactor,formationUpkeepDelta,commanderSpecialty,commandConcentration,outdatedArmies,aiDesignFormations,availableComponents,cultureOf,formationState} from '../legion-designer.js?v=regency-tenure-1';
 import {focusState} from '../national-focus.js?v=regency-tenure-1';
 

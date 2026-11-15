@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=regency-tenure-1';
+import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=inquiry-inbox-1';
 import {sendCoalitionInvitation,advanceCoalitionInvitations} from '../coalition-negotiations.js?v=conspiracy-name-1';
 import {initializeChronicle,syncChronicleDispatches} from '../chronicle.js?v=succession-ui-recovery-1';
 

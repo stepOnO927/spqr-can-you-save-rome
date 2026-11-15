@@ -1,9 +1,9 @@
 import {advanceAgreementProposals} from './agreement-negotiations.js?v=agreement-courier-1';
 import {isDeliveredReport} from './person-knowledge.js?v=conspiracy-name-1';
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=regency-tenure-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=conspiracy-name-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=inquiry-inbox-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=conspiracy-name-1';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=regency-tenure-1';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=inquiry-inbox-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=regency-tenure-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=succession-ui-recovery-1';
@@ -15,7 +15,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=conspiracy-name-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=conspiracy-name-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=regency-tenure-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=inquiry-inbox-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -453,7 +453,9 @@ function resolveInquiries(s,{autoplayPlayer=false}={}){
   // A provisional acceptance only takes effect when it reaches the sender.
   // Circumstances may change during the return journey.
   if(letter.subject==='peace'&&reply.status==='answered'&&!diplomacy(s,letter.actor,letter.target,'peace',{acceptedByPlayer:!!reply.acceptedByPlayer&&letter.target===s.player}))reply={status:'no_reply'};
-  letter.status=reply.status;delete letter.sealed;
+  letter.status=reply.status;letter.resolvedYear=s.year;letter.resolvedMonth=s.month;
+  if(reply.status==='refused'&&Number.isInteger(reply.year)&&Number.isInteger(reply.month)){letter.responseYear=reply.year;letter.responseMonth=reply.month}
+  delete letter.sealed;
   if(reply.status==='no_reply'){if(letter.actor===s.player)log(s,`No reply has arrived from ${FACTIONS[letter.target].short[0]}; the letter or answer may have been lost.`,`来自${FACTIONS[letter.target].short[1]}的回信尚未到达；书信或回信可能遗失。`)}
   else if(reply.status==='refused'){if(letter.actor===s.player)log(s,letter.subject==='peace'?`A reply from ${FACTIONS[letter.target].short[0]} rejected the peace offer.`:`A reply from ${FACTIONS[letter.target].short[0]} declined to answer.`,letter.subject==='peace'?`${FACTIONS[letter.target].short[1]}回信拒绝议和。`:`${FACTIONS[letter.target].short[1]}回信表示不愿回答。`)}
   else{letter.claim=reply.claim;letter.responseYear=reply.year;letter.responseMonth=reply.month;letter.reportYear=s.year;letter.reportMonth=s.month;

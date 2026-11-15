@@ -1,9 +1,10 @@
-import {sendLetter,initializeMail} from './epistulae.js?v=conspiracy-name-1';
+import {sendLetter,initializeMail} from './epistulae.js?v=inquiry-inbox-1';
 import {reportedArmies} from './character-system.js?v=regency-tenure-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {MATERIALS} from './inventions.js?v=mission-discount-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
+import {campaignDate} from './campaign-date.js?v=calendar-1';
 
 const month=s=>s.year*12+s.month;
 const owned=s=>s.regions.filter(r=>r.owner===s.player);
@@ -23,6 +24,19 @@ function report(s,eventId,category,priority,subject,body,{region=null,options=['
 }
 export function advanceMailReports(s){
  const mail=initializeMail(s),before=initializeMailReports(s),after=snapshot(s),now=month(s),f=s.factions[s.player];
+ // The diplomatic inquiry has already made its return trip. A lost reply is
+ // silence, while a received answer or explicit refusal becomes one letter.
+ for(const inquiry of s.inquiries||[]){
+  if(inquiry.actor!==s.player||inquiry.resultMailId||inquiry.resolvedYear!==s.year||inquiry.resolvedMonth!==s.month||!['answered','refused'].includes(inquiry.status))continue;
+  const court=FACTIONS[inquiry.target]?.short||['The court','对方宫廷'],peace=inquiry.subject==='peace',refused=inquiry.status==='refused';
+  const hasDate=Number.isInteger(inquiry.responseYear)&&Number.isInteger(inquiry.responseMonth)&&inquiry.responseMonth>=1&&inquiry.responseMonth<=12;
+  const when=hasDate?[campaignDate(inquiry.responseMonth,inquiry.responseYear,'en'),campaignDate(inquiry.responseMonth,inquiry.responseYear,'zh')]:['an unrecorded date','日期未记录'];
+  const claim=Array.isArray(inquiry.claim)&&inquiry.claim.length>=2&&inquiry.claim.slice(0,2).every(x=>typeof x==='string')?inquiry.claim:['The reply content was not recorded.','回信内容未记录。'];
+  const subject=peace?(refused?['Peace offer declined','议和提议遭拒']:['Peace reply received','议和回信已送达']):(refused?['Inquiry declined','询问信遭拒']:['Court reply received','宫廷回信已送达']);
+  const body=refused?(peace?[`${court[0]} declined the peace offer.`,`${court[1]}回信拒绝议和。`]:[`${court[0]} declined to answer the inquiry.`,`${court[1]}回信表示不愿回答询问。`]):[`${court[0]} replied on ${when[0]}: ${claim[0]} ${peace?'':'This official statement is unverified and may be outdated.'}`,`${court[1]}于${when[1]}回信：${claim[1]}${peace?'':'此为未经独立核实的官方说法，可能已过时。'}`];
+  const result=sendLetter(s,{senderInstitution:inquiry.target,senderFaction:inquiry.target,recipient:s.player,category:'diplomatic',priority:'important',subject,body,options:['acknowledge'],confidence:!refused&&!peace?'unverified':null,context:{kind:'inquiry_result',subject:inquiry.subject,target:inquiry.target}});
+  if(result.ok){inquiry.resultMailId=result.letter.id;if(hasDate)result.letter.created={year:inquiry.responseYear,month:inquiry.responseMonth};else result.letter.sentDateKnown=false;result.letter.arrival=now;result.letter.delivery='received'}
+ }
  // These missions already include the return journey. Record only a result
  // actually received this month; an unanswered mission produces no letter.
  for(const op of s.operations||[]){
