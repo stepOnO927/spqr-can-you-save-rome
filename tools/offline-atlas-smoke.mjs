@@ -150,10 +150,10 @@ try{
  assert.equal(external.includes('s3.amazonaws.com'),false,'Italy zoom needed network terrain');
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await page.locator('#map-mode').selectOption('terrain');
- assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Shoreline/:/海岸线/);
+ assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Modern shoreline/:/现代海岸线/);
  assert.doesNotMatch(await page.locator('.legend').innerText(),/Coastal shelf|近岸浅海/,'Close zoom must not claim hidden bathymetry is visible');
  await page.locator('#language').click();
- assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/海岸线/:/Shoreline/);
+ assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/现代海岸线/:/Modern shoreline/);
  await page.locator('#language').click();
  await page.locator('#zoom-out').click();await page.locator('#zoom-out').click();
  await page.waitForFunction(()=>/Coastal shelf|近岸浅海/.test(document.querySelector('.legend')?.textContent||''));

@@ -5,6 +5,7 @@ import rivers from '../mediterranean-rivers.js';
 import poRiverDetail from '../po-river-detail.js';
 import lakes from '../mediterranean-lakes.js';
 import gardaLakeDetail from '../garda-lake-detail.js';
+import poHistoricCoast from '../po-historic-coast.js';
 import historical from '../historical-territories.js';
 import egyptContours from './egypt-contours.js?v=1';
 import italyContours from './italy-contours.js?v=1';
@@ -49,6 +50,7 @@ export const physicalStyle={
   historical:{type:'geojson',data:historical},
   rivers:{type:'geojson',data:rivers,attribution:'Hydrography: Natural Earth 1:10m, public domain'},
   'po-river-detail':{type:'geojson',data:poRiverDetail,attribution:euHydroAttribution},
+  'po-historic-coast':{type:'geojson',data:poHistoricCoast,attribution:'Approximate undated historical shoreline: Ancient World Mapping Center and OpenStreetMap contributors, ODbL 1.0; adapted Po crop'},
   'nile-delta':{type:'geojson',data:nileDelta,attribution:'Approximate Nile Delta between Natural Earth river branches'},
   lakes:{type:'geojson',data:lakes},
   'garda-lake-detail':{type:'geojson',data:gardaLakeDetail,attribution:euHydroAttribution},
@@ -97,6 +99,9 @@ export const physicalStyle={
   {id:'italy-contours-major',type:'line',source:'italy-contours',minzoom:8.3,filter:['>=',['get','height'],1000],paint:{'line-color':'#565e4a','line-width':['interpolate',['linear'],['zoom'],8.3,.45,9.2,.85],'line-opacity':['interpolate',['linear'],['zoom'],8.3,0,9.2,.14]}},
   {id:'sea-mask',type:'fill',source:'ocean',paint:{'fill-color':'#356f79','fill-opacity':1}},
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},
+  // The final ocean mask clips this schematic comparison zone to modern land.
+  // It is a historical orientation layer, never a replacement sea boundary.
+  {id:'po-coastal-lowland',type:'fill',source:'po-historic-coast',filter:['==',['get','kind'],'comparison-zone'],minzoom:8.2,layout:{visibility:'none'},paint:{'fill-color':'#6b927e','fill-opacity':['interpolate',['linear'],['zoom'],8.2,.12,9,.28]}},
   {id:'coastline',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,.9,8,1.7],'line-opacity':.87}},
   {id:'natural-lakes',type:'fill',source:'lakes',filter:['!=',['get','name'],'Lago di Garda'],paint:{'fill-color':'#5b9093','fill-opacity':.88}},
   {id:'garda-overview',type:'fill',source:'lakes',maxzoom:8,filter:['==',['get','name'],'Lago di Garda'],paint:{'fill-color':'#5b9093','fill-opacity':.88}},
@@ -125,7 +130,8 @@ export const physicalStyle={
   // Draw the coastal glow above the final ocean fill; otherwise the sea mask
   // erases its seaward half. It follows shoreline geometry, not a depth claim.
   {id:'coastal-halo',type:'line',source:'land',paint:{'line-color':'#92beb8','line-width':['interpolate',['linear'],['zoom'],4,2,8,3,9,4],'line-blur':['interpolate',['linear'],['zoom'],4,1,9,1],'line-opacity':['interpolate',['linear'],['zoom'],4,.04,7,.1,9,.07]}},
-  {id:'coastline-finish',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,1,8,1.8],'line-opacity':['interpolate',['linear'],['zoom'],4,.9,8,.65,9,.35]}}
+  {id:'coastline-finish',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,1,8,1.8],'line-opacity':['interpolate',['linear'],['zoom'],4,.9,8,.65,9,.35]}},
+  {id:'po-historic-shore',type:'line',source:'po-historic-coast',filter:['==',['get','kind'],'historical-shore'],minzoom:8.2,layout:{visibility:'none'},paint:{'line-color':'#84694d','line-width':['interpolate',['linear'],['zoom'],8.2,1,9,1.6],'line-opacity':.78,'line-dasharray':[3,2]}}
  ]
 };
 

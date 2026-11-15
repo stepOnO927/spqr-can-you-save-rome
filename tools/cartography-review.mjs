@@ -10,8 +10,11 @@ await mkdir(output,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.SPQR_CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1440,height:900}});
 const errors=[];
+const failedTiles=[];
 const jumps=[];
 page.on('pageerror',error=>errors.push(error.message));
+page.on('response',response=>{if(response.status()>=400&&response.url().includes('/terrain/'))failedTiles.push({status:response.status(),url:response.url()})});
+page.on('requestfailed',request=>{if(request.url().includes('/terrain/'))failedTiles.push({status:request.failure(),url:request.url()})});
 try{
  await page.route('**/*',async route=>{
   const url=new URL(route.request().url());
@@ -50,7 +53,10 @@ try{
    if(!await page.evaluate(()=>document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99))throw Error('Screenshot completed before the map returned to full color');
   }
   jumps.push({name,ms:Date.now()-jumpStarted,readiness:await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {loaded:map.loaded(),tilesLoaded:map.areTilesLoaded(),unloadedSources:Object.keys(map.getStyle().sources).filter(id=>!map.isSourceLoaded(id))}})});
-  await page.waitForFunction(()=>!window.__reviewMap.isMoving()&&window.__reviewMap.areTilesLoaded(),null,{timeout:20000});
+  try{await page.waitForFunction(()=>!window.__reviewMap.isMoving()&&window.__reviewMap.areTilesLoaded(),null,{timeout:20000})}catch(error){
+   const status=await page.evaluate(()=>{const map=window.__reviewMap;return {center:map.getCenter().toArray(),zoom:map.getZoom(),moving:map.isMoving(),tiles:map.areTilesLoaded(),curtain:document.querySelector('#map-charting').hidden,unloaded:Object.keys(map.getStyle().sources).filter(id=>!map.isSourceLoaded(id))}});
+   throw Error(`${name} did not settle: ${JSON.stringify(status)}; terrain requests ${JSON.stringify(failedTiles.slice(-20))}; ${error.message}`)
+  }
   await page.waitForTimeout(3500);
   if(name==='ariminum'){
    const nearSea=page.locator('[data-physical-label="northern-adriatic"]');
@@ -119,8 +125,23 @@ try{
  await page.locator('#language').click();
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[12.48,44.96],zoom:9.05})});
  await page.waitForTimeout(3500);
- await page.waitForFunction(()=>!window.__reviewMap.isMoving()&&window.__reviewMap.areTilesLoaded()&&document.querySelector('#map-charting').hidden,null,{timeout:30000});
+ try{await page.waitForFunction(()=>!window.__reviewMap.isMoving()&&window.__reviewMap.areTilesLoaded()&&document.querySelector('#map-charting').hidden,null,{timeout:30000})}catch(error){
+  const status=await page.evaluate(()=>{const map=window.__reviewMap,cache=map.style?.sourceCaches?.['elevation-higher'];return {center:map.getCenter().toArray(),zoom:map.getZoom(),moving:map.isMoving(),tiles:map.areTilesLoaded(),loaded:map.loaded(),curtain:document.querySelector('#map-charting').hidden,opacity:getComputedStyle(document.querySelector('#map')).opacity,unloaded:Object.keys(map.getStyle().sources).filter(id=>!map.isSourceLoaded(id)),terrainTiles:Object.entries(cache?._tiles||{}).map(([key,tile])=>({key,state:tile.state,error:String(tile.error||'')})).slice(0,30)}});
+  await page.screenshot({path:resolve(output,'po-delta-timeout.png')});
+  throw Error(`Po delta did not settle: ${JSON.stringify(status)}; terrain requests ${JSON.stringify(failedTiles.slice(-20))}; ${error.message}`)
+ }
  await page.screenshot({path:resolve(output,'po-delta-close.png')});
+ const poHistory=await page.evaluate(()=>{const map=window.__reviewMap;return {source:map.isSourceLoaded('po-historic-coast'),shore:map.queryRenderedFeatures(undefined,{layers:['po-historic-shore']}).length,zone:map.queryRenderedFeatures(undefined,{layers:['po-coastal-lowland']}).length,visibility:map.getLayoutProperty('po-historic-shore','visibility')}});
+ if(!poHistory.source||!poHistory.shore||!poHistory.zone||poHistory.visibility!=='visible')throw Error(`Po historical comparison layer missing: ${JSON.stringify(poHistory)}`);
+ if(!/Historic shore \(undated\)/.test(await page.locator('.legend').innerText())||!/not a 49 BCE coastline/.test(await page.locator('#map-mode-note').innerText()))throw Error('English Po historical caveat or legend is missing');
+ await page.locator('#language').click();
+ if(!/古海岸参考线（年代未定）/.test(await page.locator('.legend').innerText())||!/非前49年岸线/.test(await page.locator('#map-mode-note').innerText()))throw Error('Chinese Po historical caveat or legend is missing');
+ await page.screenshot({path:resolve(output,'po-historic-zh.png')});
+ await page.locator('#map-mode').selectOption('political');
+ if(await page.evaluate(()=>window.__reviewMap.getLayoutProperty('po-historic-shore','visibility'))!=='none')throw Error('Historical comparison must yield to political map mode');
+ await page.locator('#map-mode').selectOption('terrain');
+ if(await page.evaluate(()=>window.__reviewMap.getLayoutProperty('po-historic-shore','visibility'))!=='visible')throw Error('Historical comparison must return in terrain mode');
+ await page.locator('#language').click();
  await page.evaluate(()=>window.__reviewMap.jumpTo({center:[10.7,45.72],zoom:8.25}));
  await page.waitForFunction(()=>{const map=window.__reviewMap;return !map.isMoving()&&map.areTilesLoaded()&&map.isSourceLoaded('garda-lake-detail')&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
  const gardaStyle=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {close:map.getLayer('garda-close')?.minzoom,overview:map.getLayer('garda-overview')?.maxzoom,loaded:map.isSourceLoaded('garda-lake-detail')}});

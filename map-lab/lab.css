@@ -130,3 +130,4 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
 .mast{background:linear-gradient(#101b1d,#17211f)}
 .maplibregl-ctrl-attrib{background:#172826e8!important;color:#e3d4ae!important;border-top:1px solid #b9a36b66;border-radius:3px 3px 0 0}
 .maplibregl-ctrl-attrib a{color:#e8cd8a!important}
+.brief.po-history .legend{gap:6px;margin-top:10px}

@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../
 import {nationalBudget} from '../national-budget.js?v=21';
 import {budgetHtml} from '../budget-ui.js?v=25';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=32';
+import {physicalStyle} from './physical-style.js?v=33';
 import {physicalLabels} from './physical-labels.js?v=4';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=190';
@@ -215,21 +215,42 @@ function localReliefLayer(){
  }
  return null;
 }
-function selectElevationDetail(){
+let elevationView=0,elevationReadyView=-1,elevationReadySource=null,elevationTimer=null;
+map.on('movestart',()=>{elevationView++;clearTimeout(elevationTimer)});
+function selectElevationDetail(acceptReady=false){
  const local=localReliefLayer(),source=local?.replace(/^relief/,'elevation');
- const fineNeeded=!source||mapCurtain.hidden&&!(map.isSourceLoaded?.(source)??false);
+ // Once this camera's native detail has arrived, keep the coarse fallback
+ // retired. Style updates can transiently mark the native DEM as reloading;
+ // switching the fallback back on then causes another style update and loop.
+ const becameReady=acceptReady&&source&&(map.isSourceLoaded?.(source)??false)&&(elevationReadyView!==elevationView||elevationReadySource!==source);
+ if(becameReady){elevationReadyView=elevationView;elevationReadySource=source}
+ const fineNeeded=!source||elevationReadyView!==elevationView||elevationReadySource!==source;
  const wanted=fineNeeded?'visible':'none';
  if(map.getLayer('land-elevation-fine')&&(map.getLayoutProperty('land-elevation-fine','visibility')||'visible')!==wanted)map.setLayoutProperty('land-elevation-fine','visibility',wanted);
+ if(becameReady&&reliefEnabled)showRelief(true);
 }
-map.on('move',selectElevationDetail);
-map.on('sourcedata',selectElevationDetail);
-map.on('load',selectElevationDetail);
+function watchElevationDetail(){
+ clearTimeout(elevationTimer);
+ const started=performance.now(),view=elevationView;
+ const check=()=>{
+  if(view!==elevationView)return;
+  selectElevationDetail(true);
+  if(elevationReadyView===view||!localReliefLayer()||performance.now()-started>10000)return;
+  elevationTimer=setTimeout(check,250);
+ };
+ check();
+}
+map.on('move',()=>selectElevationDetail());
+map.on('moveend',watchElevationDetail);
+map.on('load',watchElevationDetail);
 function showRelief(visible){
  reliefVisible=visible;
- const local=visible?localReliefLayer():null;
+ const candidate=visible?localReliefLayer():null;
+ const local=candidate&&elevationReadyView===elevationView&&elevationReadySource===candidate.replace(/^relief/,'elevation')?candidate:null;
+ const fallback=candidate&&!local?'relief-fine':null;
  for(const id of reliefLayers){
   if(!map.getLayer(id))continue;
-  const wanted=visible&&(!local||id===local)?'visible':'none';
+  const wanted=visible&&((!local&&!fallback)||id===(local||fallback))?'visible':'none';
   if((map.getLayoutProperty?.(id,'visibility')||'visible')!==wanted)map.setLayoutProperty(id,'visibility',wanted);
  }
 }
@@ -466,13 +487,18 @@ function renderHudBase(){document.querySelector('#development').textContent=lang
 
 
 function renderTerrainLegend(){
- if(currentMapMode!=='terrain')return;
+ const historicalVisibility=currentMapMode==='terrain'?'visible':'none';
+ for(const id of ['po-coastal-lowland','po-historic-shore'])if(map.getLayer(id)&&(map.getLayoutProperty(id,'visibility')||'visible')!==historicalVisibility)map.setLayoutProperty(id,'visibility',historicalVisibility);
+ if(currentMapMode!=='terrain'){document.querySelector('.brief').classList.remove('po-history');return}
  const close=map.getZoom()>=8.5;
- document.querySelector('#map-mode-note').textContent=close?(lang==='zh'?'近景显示现代高程、河湖与海岸；粗略海底深度边界在此比例尺隐藏。岸边柔光不代表测得水深。':'Close view shows modern elevation, rivers, lakes and shoreline. Coarse depth boundaries are hidden at this scale; the coastal glow is not measured depth.'):(lang==='zh'?'总览显示海底深度分带；近景隐藏粗略深度边界。岸边柔光只标示海岸，不代表测得水深。可单独开启山体光影。':'Overview shows sea-depth bands; close zoom hides their coarse boundaries. The shoreline glow marks the coast, not measured depth. Hill shading can be toggled separately.');
- const items=close?[['#c5c4a7',lang==='zh'?'陆地与高程':'Land & elevation'],['#5c9293',lang==='zh'?'河流与天然湖泊':'Rivers & natural lakes'],['#efe1bb',lang==='zh'?'海岸线':'Shoreline'],['#356f79',lang==='zh'?'海水':'Sea']]:[['#c5c4a7',lang==='zh'?'理想化地表与高程':'Land cover & elevation'],['#5c9293',lang==='zh'?'河流与天然湖泊':'Rivers & natural lakes'],['#356f79',lang==='zh'?'近岸浅海（约0–200米）':'Coastal shelf (about 0–200 m)'],['#225565',lang==='zh'?'较深海域（超过200米）':'Deeper sea (over 200 m)']];
- const center=map.getCenter();if(map.getZoom()>=8.25&&center.lng>=28&&center.lng<=34&&center.lat>=29&&center.lat<=33)items.splice(1,0,['#785f49',lang==='zh'?'现代高程等高线（10–200米）':'Modern elevation contours (10–200 m)']);
- if(map.getZoom()>=8.3&&center.lng>=8.4&&center.lng<=16.9&&center.lat>=39.9&&center.lat<=47.5)items.splice(1,0,['#60604b',lang==='zh'?'现代高程等高线（500–1500米）':'Modern elevation contours (500–1500 m)']);
- document.querySelector('.legend').innerHTML=items.map(([color,label])=>`<span><b class="swatch" style="background:${color}"></b>${label}</span>`).join('');
+ const center=map.getCenter(),poNearby=map.getZoom()>=8.2&&center.lng>=11.8&&center.lng<=13.1&&center.lat>=44.5&&center.lat<=45.4;
+ document.querySelector('.brief').classList.toggle('po-history',poNearby);
+ document.querySelector('#map-mode-note').textContent=(close?(lang==='zh'?'近景采用现代高程、河湖与海岸；不显示粗略海深带，柔光仅作示意。':'Close view uses modern terrain and shoreline; depth bands are hidden and coastal glow is illustrative.'):(lang==='zh'?'总览显示海底深度分带；近景隐藏粗略深度边界。岸边柔光只标示海岸，不代表测得水深。可单独开启山体光影。':'Overview shows sea-depth bands; close zoom hides their coarse boundaries. The shoreline glow marks the coast, not measured depth. Hill shading can be toggled separately.'))+(poNearby?(lang==='zh'?' 波河口虚线为年代未定的古海岸参考；绿色低地为示意，非前49年岸线。':' Po: the dashed, undated historical shore and green lowland are schematic, not a 49 BCE coastline.'):'');
+ const items=close?[['#c5c4a7',lang==='zh'?'陆地与高程':'Land & elevation'],['#5c9293',lang==='zh'?'河流与天然湖泊':'Rivers & natural lakes'],['#efe1bb',lang==='zh'?'现代海岸线':'Modern shoreline'],['#356f79',lang==='zh'?'海水':'Sea']]:[['#c5c4a7',lang==='zh'?'理想化地表与高程':'Land cover & elevation'],['#5c9293',lang==='zh'?'河流与天然湖泊':'Rivers & natural lakes'],['#356f79',lang==='zh'?'近岸浅海（约0–200米）':'Coastal shelf (about 0–200 m)'],['#225565',lang==='zh'?'较深海域（超过200米）':'Deeper sea (over 200 m)']];
+ if(poNearby)items.splice(1,0,['#6b927e',lang==='zh'?'波河低地（示意）':'Po lowland (schematic)'],['#84694d',lang==='zh'?'古海岸参考线（年代未定）':'Historic shore (undated)',true]);
+ if(map.getZoom()>=8.25&&center.lng>=28&&center.lng<=34&&center.lat>=29&&center.lat<=33)items.splice(1,0,['#785f49',lang==='zh'?'现代高程等高线（10–200米）':'Modern elevation contours (10–200 m)']);
+ if(!poNearby&&map.getZoom()>=8.3&&center.lng>=8.4&&center.lng<=16.9&&center.lat>=39.9&&center.lat<=47.5)items.splice(1,0,['#60604b',lang==='zh'?'现代高程等高线（500–1500米）':'Modern elevation contours (500–1500 m)']);
+ document.querySelector('.legend').innerHTML=items.map(([color,label,dashed])=>`<span><b class="swatch" style="background:${dashed?`repeating-linear-gradient(90deg,${color} 0 4px,transparent 4px 7px)`:color}"></b>${label}</span>`).join('');
 }
 function renderHud(){
  renderHudBase();
