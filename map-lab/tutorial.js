@@ -1,3 +1,4 @@
+import {localStore as localStorage} from '../safe-storage.js';
 // The tutorial follows only the selected friendly army, not an unrelated battle.
 export function tutorialTurnProgress(state,side){
  const armyId=side==='senate'?'italy':'xiii',destination=side==='senate'?'cisalpine':'italiaN';

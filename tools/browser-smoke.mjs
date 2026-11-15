@@ -129,7 +129,7 @@ try{
  const foreignSave=await page.evaluate(()=>localStorage.getItem('spqr-save-3'));
  await page.locator('#new').click();assert.deepEqual(await page.locator('#faction-choice option').evaluateAll(options=>options.map(o=>o.value)),['caesar','senate']);assert.equal(await page.locator('#dynasty-scenario, #start-dynasty').count(),0);
  await page.locator('#slot-choice').selectOption('3');await page.locator('[data-slot="load"]').click();assert.match(await page.locator('.toast').innerText(),/非罗马势力/);assert.equal(await page.evaluate(()=>localStorage.getItem('spqr-save-3')),foreignSave);
- await page.locator('#close-setup').click();await page.locator('#new').click();await page.locator('#faction-choice').selectOption('caesar');await page.locator('#campaign-guide').uncheck();await page.locator('#start-campaign').click();
+ await page.locator('#close-setup').click();await page.locator('#new').click();await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#faction-choice').selectOption('caesar');await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#campaign-guide').uncheck();await page.locator('#start-campaign').click();
  assert.equal(await page.locator('[data-army="italy"]').count(),1,'frontier armies can be reported');
  assert.equal(await page.locator('[data-army="egyptguard"]').count(),0,'distant armies are not automatically revealed');
  await page.locator('#open-atlas').click();await page.waitForFunction(()=>document.querySelector('[data-army="italy"]'));
