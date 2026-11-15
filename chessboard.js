@@ -1,8 +1,8 @@
 import {isDeliveredReport} from './person-knowledge.js?v=sighting-consumers-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
-import {reportedMovements,movementReportLeaderName} from './movements.js?v=inheritance-privacy-1';
-import {visiblePersonName} from './character-system.js?v=inheritance-privacy-1';
+import {reportedMovements,movementReportLeaderName} from './movements.js?v=asylum-reply-1';
+import {visiblePersonName} from './character-system.js?v=asylum-reply-1';
 
 const opening=['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair=(a,b)=>[a,b].sort().join(':');
