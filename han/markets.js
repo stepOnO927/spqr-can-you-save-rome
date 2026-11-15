@@ -41,7 +41,9 @@ function profile(r,good){
   silk:r.silk?3:r.owner==='han'&&r.kind==='capital'?1:0,
   papyrus:0
  }[good];
- const consumption={grain:Math.max(1,Math.ceil((r.pop||4)/12)),horses:1,iron:1,timber:1,silk:0,papyrus:0}[good];
+ // Elite demand consumes luxury cargo in populous courts. Smaller caravan
+ // towns can still hold imported silk for onward exchange.
+ const consumption={grain:Math.max(1,Math.ceil((r.pop||4)/12)),horses:1,iron:1,timber:1,silk:(r.pop||0)>=12?1:0,papyrus:0}[good];
  return {production,consumption,stock:Math.max(0,production*4+2-consumption),price:COMMODITIES[good].basePrice};
 }
 

@@ -437,6 +437,12 @@ named carriers and seller payment; existing 120-month conservation checks
 remain in place. Per-quarter route caching keeps the enlarged buyer pool
 within the market test's prior runtime. Wider autonomous intermediary volume
 and merchant financing are still open.
+The ten-year full campaign exposed a circular silk trade between Shule and
+Dayuan: both courts replenished a target stock but neither consumed the luxury
+good. Populous courts now consume one real silk batch per market month when
+stock is present; smaller oasis intermediaries retain stock for onward resale.
+The seeded long run still delivers Qiuci-to-Shule silk and records Dayuan's
+consumption, while checking that Dayuan does not ship it straight back east.
 Delivered horse batches can now be assigned from an owned local market to the
 military remount pool at 100 head per batch. Assignment removes the measured
 stock, records the transfer in the save, and lets cavalry recruitment spend

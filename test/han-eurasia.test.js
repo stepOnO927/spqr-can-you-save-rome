@@ -37,6 +37,9 @@ test('120 months remain stable for Han, oasis and western campaigns; saves prese
   assert.ok(s.silk.farWestDeliveries>0);
   assert.equal(s.throne.orthodox==null||s.persons[s.throne.orthodox]?.birthSurname==='Liu',true);
   if(player==='parthia'){
+   assert.ok(s.tradeMarkets.regions.dayuan.goods.silk.consumed>0,'a populous western court must actually use imported silk');
+   assert.ok(s.tradeMarkets.shipments.some(x=>x.seller==='qiuci'&&x.buyer==='shule'&&x.commodity==='silk'&&x.status==='delivered'),'silk still passes through oasis intermediaries');
+   assert.equal(s.tradeMarkets.shipments.some(x=>x.seller==='dayuan'&&x.buyer==='shule'&&x.commodity==='silk'),false,'terminal demand must not feed a silk shuttle back east');
    assert.equal(s.regions.find(r=>r.id==='wujie').owner,'zhizhi','the trapped Wujie host cannot withdraw forever and block conquest');
    for(const id of ['wusun','wusun_lesser','kangju','jiankun','zhizhi','qiang']){
    assert.ok(s.factions[id].treasury>=0,`${id} cannot fund its home pastoral host`);

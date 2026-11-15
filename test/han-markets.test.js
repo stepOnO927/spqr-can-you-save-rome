@@ -251,7 +251,9 @@ test('oasis AI can finance and resell physical silk when the direct Han offer cl
  const offer=easternMarketOffers(s).find(x=>x.origin==='shanshan'&&x.commodity==='silk');
  assert.ok(offer?.resale&&offer.available>0);
  s.tradeMarkets.exportRestrictions.han=['silk'];
- s.factions.qiemo.treasury=20;
+ // Qiemo also buys a real horse lot first; fund both that order and its
+ // subsequent silk purchase without inventing an immediate income grant.
+ s.factions.qiemo.treasury=25;
  s=loadHanSave(serialize(s));
  let second;
  for(let i=0;i<48&&!second;i++){
