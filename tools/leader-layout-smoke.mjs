@@ -1,5 +1,6 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+const base=process.env.SPQR_TEST_URL||'http://127.0.0.1:5173';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),page=await browser.newPage({viewport:{width:1920,height:1080},deviceScaleFactor:1}),errors=[];
 page.on('pageerror',e=>errors.push(e.message));
 async function checkLayout(minimum=3){
@@ -7,7 +8,7 @@ async function checkLayout(minimum=3){
  assert.ok(result.labels.length>=minimum,`Expected useful visible faction labels; got ${result.labels.length}`);assert.deepEqual(result.collisions,[],JSON.stringify(result));return result;
 }
 try{
- await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});await page.locator('#start-free').click();await page.locator('[data-city="ROMA"]').waitFor();
+ await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});await page.locator('#start-free').click();await page.locator('[data-city="ROMA"]').waitFor();
  await page.locator('#zoom-out').click();await page.waitForTimeout(800);await page.locator('#zoom-out').click();await page.waitForFunction(()=>document.body.classList.contains('leader-overview'));await page.waitForTimeout(8000);await checkLayout();await page.screenshot({path:'leader-overview-1920x1080.png'});
  await page.mouse.move(1100,350);await page.mouse.down();await page.mouse.move(1180,380,{steps:8});await page.mouse.up();await page.waitForTimeout(1000);await checkLayout();
  await page.setViewportSize({width:900,height:650});await page.waitForTimeout(1000);await checkLayout(0);await page.setViewportSize({width:640,height:360});await page.waitForTimeout(1000);await checkLayout(0);await page.setViewportSize({width:1920,height:1080});await page.waitForTimeout(1000);await checkLayout();
@@ -22,8 +23,8 @@ try{
  await page.locator('#zoom-in').click();await page.waitForTimeout(800);await page.locator('#zoom-in').click();await page.waitForTimeout(800);assert.ok(!await page.locator('body').evaluate(el=>el.classList.contains('leader-overview')));
  // An intentionally crowded theater exercises the directory fallback rather
  // than assuming every unit can fit on a small overview map.
- await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=attack-preview-intelligence-1'),s=newGame('caesar'),template=s.armies.find(a=>a.id==='xiii');for(let i=0;i<25;i++)s.armies.push({...structuredClone(template),id:`crowded-${i}`,name:[`Test legion ${i}`,`测试军团${i}`]});sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}))});
- await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#zoom-out').click();await page.waitForTimeout(800);await page.locator('#zoom-out').click();await page.waitForFunction(()=>document.body.classList.contains('leader-overview'));await page.waitForTimeout(1000);assert.ok(await page.locator('.army').evaluateAll(items=>items.some(el=>getComputedStyle(el).visibility==='hidden')));await page.locator('#factions').click();await page.locator('[data-faction="caesar"]').click();await page.locator('#faction-armies [data-faction-army="crowded-24"]').click();assert.match(await page.locator('#selection-title').innerText(),/测试军团24/);assert.ok(await page.locator('#lab-orders select').count());assert.deepEqual(errors,[]);
+ await page.goto(base+'/',{waitUntil:'domcontentloaded'});await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=faces-reported-names-1'),s=newGame('caesar'),template=s.armies.find(a=>a.id==='xiii');for(let i=0;i<25;i++)s.armies.push({...structuredClone(template),id:`crowded-${i}`,name:[`Test legion ${i}`,`测试军团${i}`]});sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}))});
+ await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#zoom-out').click();await page.waitForTimeout(800);await page.locator('#zoom-out').click();await page.waitForFunction(()=>document.body.classList.contains('leader-overview'));await page.waitForTimeout(1000);assert.ok(await page.locator('.army').evaluateAll(items=>items.some(el=>getComputedStyle(el).visibility==='hidden')));await page.locator('#factions').click();await page.locator('[data-faction="caesar"]').click();await page.locator('#faction-armies [data-faction-army="crowded-24"]').click();assert.match(await page.locator('#selection-title').innerText(),/测试军团24/);assert.ok(await page.locator('#lab-orders select').count());assert.deepEqual(errors,[]);
  console.log('Overview labels avoid map markers, remain accessible after panning, and yield to the normal zoom view.');
 }finally{await browser.close()}
 

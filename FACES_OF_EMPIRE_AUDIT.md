@@ -6,6 +6,13 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The draft now includes main through `38c63d97`. Its overview layout and
+attack-preview privacy changes are connected to the expanded faction atlas:
+crowded cities and armies remain selectable through faction directories, and
+attack scenarios use reported fortification bands without reading foreign
+supply. The Roman campaign browser flow, both new overview/privacy browser
+checks, and both market browser checks pass after the integration.
+
 The atlas now has a trade map mode tied to the existing market and route
 simulation. It shows owned market grain stocks, prices, production and demand;
 public geographic corridors adjacent to owned markets; and the planned route

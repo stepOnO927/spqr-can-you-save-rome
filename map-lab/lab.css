@@ -145,3 +145,10 @@
 .trade-map-summary{max-height:190px;overflow:auto;margin:7px 0 10px;padding:7px 9px;border:1px solid #927b54;background:#23372f;color:#e5dac0;font:11px/1.4 Manrope,'Microsoft YaHei',sans-serif}
 .trade-map-summary strong{display:block;color:#e7ca88;font-size:10px;letter-spacing:.07em;margin:4px 0}
 .trade-map-summary p{margin:4px 0 8px}
+
+/* Keep overview factions readable when nearby map markers compete for space. */
+.leader-map-label.is-compact small{display:none}
+.leader-map-label::after{content:'';position:absolute;left:50%;top:100%;width:var(--leader-link-length,0px);height:1px;background:#d8c68fa8;transform-origin:left center;transform:rotate(var(--leader-link-angle,0rad));pointer-events:none}
+.leader-overview .army::after{content:'';position:absolute;left:50%;top:100%;width:var(--army-link-length,0px);height:1px;background:#d8c68fa8;transform-origin:left center;transform:rotate(var(--army-link-angle,0rad));pointer-events:none}
+.leader-overview .city-marker.is-compact .name{display:none}
+.leader-overview .city-marker.major::after{content:'';position:absolute;left:0;top:50%;width:var(--city-link-length,0px);height:1px;background:#d8c68fa8;transform-origin:left center;transform:rotate(var(--city-link-angle,0rad));pointer-events:none}

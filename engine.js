@@ -147,7 +147,7 @@ export function previewMarch(s,armyId,destination){
   if(faction.treasury<frontierCost.treasury)return {ok:false,reason:'transport'};
   const routeWorks=buildingModifiers(region(s,a.region)).march||0,doctrine=activeModifiers(s,a.owner).march||0;
   const months=Math.max(1,(link.sea?3:1)+(link.frontier?2:0)+(target.terrain==='hills'?1:0)+(target.terrain==='desert'?1:0)-routeWorks-doctrine+formationMarchDelta(s,a,link,target.terrain));
-  return {ok:true,months,seaCost,frontierCost,sea:!!link.sea,frontier:!!link.frontier,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:target.supply};
+  return {ok:true,months,seaCost,frontierCost,sea:!!link.sea,frontier:!!link.frontier,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:report?.own?target.supply:null};
 }
 
 export function moveArmy(s,armyId,destination){
