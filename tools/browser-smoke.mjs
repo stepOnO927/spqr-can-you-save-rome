@@ -15,7 +15,7 @@ try{
  assert.match(await page.locator('#guide-body').innerText(),/元老院与庞培派/);await page.locator('#guide-next').click();
  await page.locator('[data-army="italy"]').click({force:true});assert.match(await page.locator('#guide-body').innerText(),/5200人/);
  await page.locator('#language').click();assert.match(await page.locator('#guide-body').innerText(),/5,200 soldiers/);await page.locator('#language').click();
- await page.locator('#guide-next').click();await page.locator('#lab-orders select').selectOption('cisalpine');assert.match(await page.locator('.preview-detail').innerText(),/报告控制方（可能过时）/);await page.locator('#lab-orders button').click();
+ await page.locator('#guide-next').click();await page.locator('#lab-orders select').selectOption('cisalpine');assert.match(await page.locator('.preview-detail').innerText(),/报告控制方（可能过时）/);await page.locator('#lab-orders button').first().click();
  await page.locator('#advance').click();assert.equal(await page.locator('#guide-title').innerText(),'查看结果');if(await page.locator('#guide-next').isHidden())await page.locator('#recent-battle').click();else await page.locator('#guide-next').click();
  assert.equal(await page.locator('#guide-title').innerText(),'战区与城市');await page.locator('[data-city="RAVENNA"]').click({force:true});await page.locator('#resources-help').click();
  assert.equal(await page.locator('#guide-title').innerText(),'情报与不确定性');await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click();

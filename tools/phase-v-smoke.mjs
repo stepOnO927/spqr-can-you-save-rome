@@ -36,7 +36,7 @@ try{
   await dossier.locator('[data-order="cancel"]').click();
   await page.locator('#lab-orders select').selectOption(destination);
   assert.match(await dossier.locator('.preview-detail').innerText(),/个月|month/);
-  await page.locator('#lab-orders button').click();
+  await page.locator('#lab-orders button').first().click();
   for(let i=0;i<4&&await page.locator('#recent-battle').count()===0;i++)await page.locator('#advance').click();
   assert.equal(await page.locator('#recent-battle').count(),1,`${side} should fight`);
   await page.locator('#recent-battle').click();
