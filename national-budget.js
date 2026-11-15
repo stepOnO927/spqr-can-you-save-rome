@@ -1,7 +1,7 @@
 import {officeEffects} from './office-system.js';
-import {activeEffects,localBuildingEffects,taxReviewExpense} from './development.js?v=44';
-import {fleetUpkeepDue} from './naval.js?v=42';
-import {productiveEstateRegion} from './local-society.js?v=7';
+import {activeEffects,localBuildingEffects,taxReviewExpense,templeGuaranteeExpense} from './development.js?v=45';
+import {fleetUpkeepDue} from './naval.js?v=43';
+import {productiveEstateRegion} from './local-society.js?v=8';
 
 // These six small playable kingdoms have a home-domain reserve outside the
 // regional tax/harvest cells. This is a balance abstraction, not a documented
@@ -20,7 +20,7 @@ export function nationalBudget(s,id){
  const navyUpkeep=(s.naval?.fleets||[]).filter(v=>v.owner===id&&Object.values(v.ships||{}).some(Boolean)).reduce((n,v)=>n+fleetUpkeepDue(v),0);
  const tradeImportPaid=(s.naval?.routes||[]).reduce((sum,route)=>sum+(route.last?.buyer===id&&route.last.seller!==id&&route.last.year===s.year&&route.last.month===s.month?route.last.paid||0:0),0);
  const navalJobs=(s.naval?.jobs||[]).filter(v=>v.owner===id&&v.remaining<=0).length;
- const administrationExpense=Object.values(s.development?.[id]?.slots||{}).reduce((n,slots)=>n+Math.max(0,slots.length-1),0),reviewExpense=id==='rebels'?0:taxReviewExpense(s,id);
+ const administrationExpense=Object.values(s.development?.[id]?.slots||{}).reduce((n,slots)=>n+Math.max(0,slots.length-1),0),reviewExpense=id==='rebels'?0:taxReviewExpense(s,id),templeExpense=id==='rebels'?0:templeGuaranteeExpense(s,id);
  const policy=s.religion?.[id],religiousExpense=(policy?.policy==='civic-patronage'||policy?.transition?.policy==='civic-patronage'&&policy.transition.remaining<=1)&&f.treasury>0?1:0;
  const estateFood=effects.estateLabor?Math.min(4,owned.filter(productiveEstateRegion).length):0;
  const tenantFood=effects.tenantShares?Math.min(3,owned.filter(productiveEstateRegion).length):0;
@@ -28,5 +28,5 @@ export function nationalBudget(s,id){
  const foodProduction=owned.reduce((n,r)=>n+r.food,0)+estateFood,foodConsumption=troops/1200+units*2;
  const foodNet=Math.round(foodProduction-foodConsumption-tenantFood-requisitionLoss)+homeFood+offices.food+(effects.food||0)+buildings.reduce((n,e)=>n+(e.food||0),0);
  const manpowerNet=Math.round(units*170*(s.grandMap?Math.max(.6,Math.min(1.2,owned.reduce((n,r)=>n+(r.civicSatisfaction??60),0)/Math.max(1,owned.length)/60)):1))+(effects.manpower||0);
- return {tax,armyUpkeep,homeIncome,homeFood,officeIncome,ideaIncome,buildingIncome,buildingUpkeep,ideaUpkeep,landNet,navyUpkeep,navalJobs,tradeImportPaid,administrationExpense,reviewExpense,religiousExpense,projectedNet:landNet-navyUpkeep-navalJobs-administrationExpense-reviewExpense-religiousExpense,foodProduction,requisitionLoss,estateFood,tenantFood,foodConsumption,foodNet,manpowerNet,stability:offices.stability+(effects.stability||0)+buildings.reduce((n,e)=>n+(e.stability||0),0),legitimacy:buildings.reduce((n,e)=>n+(e.legitimacy||0),0),foodCapacity:100+units*25+buildings.reduce((n,e)=>n+(e.foodCapacity||0),0)};
+ return {tax,armyUpkeep,homeIncome,homeFood,officeIncome,ideaIncome,buildingIncome,buildingUpkeep,ideaUpkeep,landNet,navyUpkeep,navalJobs,tradeImportPaid,administrationExpense,reviewExpense,templeExpense,religiousExpense,projectedNet:landNet-navyUpkeep-navalJobs-administrationExpense-reviewExpense-templeExpense-religiousExpense,foodProduction,requisitionLoss,estateFood,tenantFood,foodConsumption,foodNet,manpowerNet,stability:offices.stability+(effects.stability||0)+buildings.reduce((n,e)=>n+(e.stability||0),0),legitimacy:buildings.reduce((n,e)=>n+(e.legitimacy||0),0),foodCapacity:100+units*25+buildings.reduce((n,e)=>n+(e.foodCapacity||0),0)};
 }

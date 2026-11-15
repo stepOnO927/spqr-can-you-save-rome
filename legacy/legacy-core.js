@@ -1,5 +1,5 @@
 import {observeArmies} from '../character-system.js';
-import {beginBriefing,updateObjectives} from '../campaign-reports.js?v=8';
+import {beginBriefing,updateObjectives} from '../campaign-reports.js?v=9';
 import {achievementDefinition,campaignSummary} from '../achievement-system.js?v=5';
 import {FACTIONS} from '../data.js?v=9';
 import {ARTIFACTS} from './museum.js';

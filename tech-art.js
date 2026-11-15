@@ -75,7 +75,8 @@ const drawings={
  'estate-labor-control':'M8 52h48M13 51V25l19-12 19 12v26M19 30h26M24 30v21m16-21v21M15 39h10m14 0h10M31 19v24m-5-7 5 7 5-7',
  'negotiated-crop-shares':'M8 52h48M11 37q10-8 21 0t21 0M14 45q10-8 18 0t18 0M19 23l6-10 7 10 7-10 6 10M25 23v11m14-11v11M28 51v-9m8 9v-9M28 42q4-5 8 0',
  'egyptian-multiscript-decrees':'M8 53h48M12 13h40v35H12zM18 20h8m-8 6h8m-8 6h8M31 20h15m-15 6h15m-15 6h15M18 39q4-5 8 0t8 0t8 0M14 48l-3 5m39-5 3 5',
- 'achaean-assembly-practice':'M7 53h50M12 45h40M16 45V23l16-12 16 12v22M12 23h40M20 31h24M23 31v14m18-14v14M26 38h12M18 50h28'
+ 'achaean-assembly-practice':'M7 53h50M12 45h40M16 45V23l16-12 16 12v22M12 23h40M20 31h24M23 31v14m18-14v14M26 38h12M18 50h28',
+ 'egyptian-temple-revenues':'M8 53h48M13 49V23l19-12 19 12v26M16 26h32M23 49V33h18v16M27 40h10M32 17v23M12 35l-5 6 5 6m40-12 5 6-5 6'
 };
 
 export function techIllustration(item){

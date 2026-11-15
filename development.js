@@ -80,6 +80,7 @@ IDEAS.push({id:'estate-labor-control',category:'economy',name:['Restrictive Esta
 IDEAS.push({id:'negotiated-crop-shares',category:'economy',name:['Share Tenancy Arrangements','分成佃作安排'],cost:23,months:3,adopt:12,effects:{tenantShares:1,upkeep:1},conflicts:['estate-labor-control'],context:['Cato, On Agriculture 136–137, records terms for share tenants in particular Italian districts. This optional policy adapts share-tenancy terms in productive rural territories; it is not proof of universal tenant freedom or a 49 BCE public law. Reduced state grain, satisfaction and migration values are game interpretations.','加图《农业志》第136—137章记录意大利部分地区的分成佃作条件。本可选政策在有产出的乡村领土模拟分成佃作安排，并不证明佃农普遍自由，也不是前49年的成文公法。国家存粮、满意度与迁移数值均属游戏设计。'],source:source('https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Cato/De_Agricultura/I%2A.html','Cato, On Agriculture 136–137')});
 IDEAS.push({id:'egyptian-multiscript-decrees',category:'government',origin:'egypt',name:['Egyptian Multiscript Decrees','埃及多文字诏令'],cost:26,months:4,adopt:14,effects:{egyptianDecrees:1,upkeep:2},context:['The Memphis Decree of 196 BCE was published in Greek, Demotic and hieroglyphs for different audiences. This optional adaptation improves administrative integration only in Egyptian-culture territories, regardless of their ruler. Foreign rulers need extra adoption time and an owned Egyptian-culture community with sufficient local support. It does not claim that every decree in 49 BCE used three scripts; the monthly gain and upkeep are game values.','前196年的孟斐斯诏令以希腊文、世俗体和圣书体面向不同读者公布。本可选改编只提高埃及文化领土的行政融合度，不论统治者是谁；外来统治者需要额外适应时间，且须统治有足够当地支持的埃及文化社群。这不表示前49年的每道诏令都使用三种文字。每月增益与维护费是游戏数值。'],source:source('https://www.britishmuseum.org/sites/default/files/2022-10/Hieroglyphs_unlocking_ancient_Egypt_large_print_guide_The_British_Museum.pdf','British Museum, Hieroglyphs: Unlocking Ancient Egypt, pp. 44–45')});
 IDEAS.push({id:'achaean-assembly-practice',category:'government',origin:'hellenic',name:['Achaean Assembly Practice','亚该亚议事传统'],cost:25,months:4,adopt:14,effects:{hellenicCouncil:1,decisionDelay:1,upkeep:2},context:['Polybius describes an Achaean federal assembly hearing cities and envoys in the earlier Social War. This optional policy adapts consultation in Hellenic-culture territories with administrative integration of at least 45. It gives a small quarterly local satisfaction gain, but slows later policy changes and costs upkeep. The source does not establish that every Greek city in 49 BCE used the same assembly, and all effects are game values.','波利比乌斯记述较早同盟战争期间，亚该亚联邦大会听取各城与使节陈述。本可选政策只在行政融合度至少为45的希腊文化领土改编协商惯例：每季度有限提高当地满意度，但拖慢今后的政策更换并增加维护费。史料不能证明前49年所有希腊城市都采用同一种大会，具体效果均为游戏数值。'],source:source('https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Polybius/4%2A.html','Polybius, Histories 4.7')});
+IDEAS.push({id:'egyptian-temple-revenues',category:'culture',origin:'egypt',name:['Egyptian Temple Revenue Guarantees','埃及神庙收入保障'],cost:28,months:4,adopt:14,effects:{templeGuarantees:1,upkeep:2},context:['A royal decree of 118 BCE guaranteed Egyptian temples existing land revenues and treasury payments. This optional 49 BCE policy models a renewed guarantee, not an uninterrupted historical law. It needs a supportive Egyptian priesthood; where that cult remains locally dominant, continued funding gradually strengthens its priests and local satisfaction. Treasury costs and monthly rates are game values.','前118年的王室诏令保障埃及神庙原有的土地收入与国库拨款。本可选前49年政策模拟重新确认保障，不宣称该诏令一直连续有效。它需要当地埃及祭司团支持；在该信仰仍占主导的地方，持续资助逐步增强祭司影响与民众满意度。财政成本和月度数值均为游戏设计。'],source:source('https://www.attalus.org/egypt/ptolemy_viii_decrees.html','Ptolemy VIII, Royal Decrees of 118 BCE, §§50–72')});
 export const MATERIALS = [
   {id:'roadmaking',name:['Road Building','道路修筑'],cost:22,months:3,building:'road',context:['Roman roads predate 49 BCE; this node spreads and improves local technique.','罗马道路早于前49年；此项代表技术传播与改进。'],source:source(appianSource)},
   {id:'water-control',name:['Water Management','水利管理'],cost:24,months:4,building:'irrigation',context:['Cato advises gentle irrigation of beds and maintenance of drainage ditches; local channels adapt these older practices.','加图建议温和引水灌溉苗床并维护排水沟；地方水渠改造这些已有做法。'],source:source(catoWaterSource,'Cato, On Agriculture 151, 155')},
@@ -291,6 +292,11 @@ export function taxReviewExpense(s,owner){
  if(!s.grandMap||s.factions[owner]?.tax!=='high'||!development(s,owner)?.slots?.government?.includes('provincial-tax-review'))return 0;
  return Math.ceil(s.regions.filter(r=>r.owner===owner&&(r.integration??60)>=65).length/12);
 }
+export function templeGuaranteeExpense(s,owner){
+ if(!s.grandMap||!s.development?.[owner]?.slots?.culture?.includes('egyptian-temple-revenues'))return 0;
+ const supported=s.regions.filter(r=>r.owner===owner&&r.culture==='egypt'&&r.faiths?.[0]?.id==='egyptian-cults'&&r.priesthood?.tradition==='egyptian-cults').length;
+ return Math.min(6,Math.ceil(supported/4));
+}
 export function researchInnovation(s,owner,branch,id){
   const d=development(s,owner),item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id),f=s.factions[owner];
   if(!item||d.research||d[branch==='material'?'knownMaterial':'knownIdeas'].includes(id)||knowledgeInProgress(d,branch,id))return {ok:false,reason:'unavailable'};
@@ -310,7 +316,7 @@ export function ideaCompatibility(s,owner,ideaId,slot){
   const conflict=active.find(id=>idea.conflicts?.includes(id)||IDEAS.find(x=>x.id===id)?.conflicts?.includes(ideaId));
   return conflict?{ok:false,reason:'conflict',with:conflict}:{ok:true};
 }
-const religiousAdoptionIdeas=new Set(['sanctuary-protection','ancestral-rites','provincial-rites-charter']);
+const religiousAdoptionIdeas=new Set(['sanctuary-protection','ancestral-rites','provincial-rites-charter','egyptian-temple-revenues']);
 function adoptionSpecialist(idea){
  if(idea.category==='military'||idea.id==='civic-exercise')return 'military';
  if(idea.category==='government'||idea.id==='cultural-accommodation')return 'statesman';
@@ -332,6 +338,7 @@ export function ideaAdoptionPlan(s,owner,ideaId,slot=0){
     if(!culturalBase.length)return {...plan,ok:false,reason:'cultural-base'};
     if(!culturalBase.some(r=>(r.civicSatisfaction??r.loyalty??0)>=45))return {...plan,ok:false,reason:'local-support'};
   }
+  if(idea.id==='egyptian-temple-revenues'&&!s.regions.some(r=>r.owner===owner&&r.culture==='egypt'&&r.faiths?.[0]?.id==='egyptian-cults'&&r.priesthood?.tradition==='egyptian-cults'&&r.priesthood.influence>=35&&(r.civicSatisfaction??r.loyalty??0)>=45))return {...plan,ok:false,reason:'priesthood'};
   if(idea.requiresBuilding&&!s.regions.some(r=>r.owner===owner&&r.buildings.includes(idea.requiresBuilding)))return {...plan,ok:false,reason:'building'};
   if(f.treasury<plan.cost)return {...plan,ok:false,reason:'treasury'};
   return {...plan,ok:true};
@@ -721,7 +728,7 @@ export function advanceDevelopment(s,log=()=>{}){
       const local=localBuildingEffects(r);for(const k of ['stone','timber','metal'])added[k]+=local[k]||0;
     }
     for(const k of Object.keys(added))d.materials[k]=Math.min(100,d.materials[k]+added[k]);
-    f.treasury-=Object.values(d.slots).reduce((n,slots)=>n+Math.max(0,slots.length-1),0)+taxReviewExpense(s,owner);
+    f.treasury-=Object.values(d.slots).reduce((n,slots)=>n+Math.max(0,slots.length-1),0)+taxReviewExpense(s,owner)+templeGuaranteeExpense(s,owner);
     const relationEffect=activeEffects(s,owner).relations||0;
     if(relationEffect)for(const other of Object.keys(s.development).filter(id=>id!==owner&&!s.wars.some(w=>w.includes(owner)&&w.includes(id)))){
       const key=[owner,other].sort().join(':');s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+relationEffect));

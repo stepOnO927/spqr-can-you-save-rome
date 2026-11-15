@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials} from '../engine.js';
-import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves,advanceDevelopment,mineMetalOutput,localBuildingEffects} from '../development.js';
+import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves,advanceDevelopment,mineMetalOutput,localBuildingEffects,templeGuaranteeExpense} from '../development.js';
 import {advanceNaval} from '../naval.js';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js';
 import {edgeMonths,grandRoute} from '../grand-operations.js';
@@ -11,6 +11,54 @@ import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
+
+test('Egyptian temple revenue guarantees require local priesthood, cost the state, and act through provincial faith',()=>{
+ const idea=IDEAS.find(item=>item.id==='egyptian-temple-revenues');
+ assert.match(idea.source.url,/ptolemy_viii_decrees/);
+ assert.match(techIllustration(idea),/<svg/);
+ const s=newGrandGame('egypt'),d=development(s,'egypt'),home=s.regions.find(r=>r.id==='egypt');
+ s.wars=[];s.factions.egypt.treasury=500;
+ assert.equal(researchInnovation(s,'egypt','idea',idea.id).ok,true);
+ assert.equal(activeEffects(s,'egypt').templeGuarantees,undefined);
+ months(s,idea.months);
+ assert.ok(d.knownIdeas.includes(idea.id));
+ for(const region of s.regions.filter(r=>r.owner==='egypt'&&r.culture==='egypt'))region.priesthood.influence=20;
+ const before=s.factions.egypt.treasury;
+ assert.equal(adoptIdea(s,'egypt',idea.id).reason,'priesthood');
+ assert.equal(s.factions.egypt.treasury,before);
+ home.priesthood.influence=40;
+ assert.equal(adoptIdea(s,'egypt',idea.id).ok,true);
+ assert.equal(activeEffects(s,'egypt').templeGuarantees,undefined);
+ months(s,d.adoption.remaining);
+ assert.equal(activeEffects(s,'egypt').templeGuarantees,1);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(activeEffects(restored,'egypt').templeGuarantees,1);
+ const control=upgradeSave(JSON.parse(JSON.stringify(restored)));
+ development(control,'egypt').slots.culture[0]=null;
+ for(const state of [restored,control]){
+  state.month=2;state.wars=[];state.factions.egypt.treasury=300;state.factions.egypt.food=100;
+  state.regions.find(r=>r.id==='egypt').civicSatisfaction=50;
+  state.regions.find(r=>r.id==='egypt').priesthood.influence=40;
+ }
+ const expense=templeGuaranteeExpense(restored,'egypt');
+ assert.ok(expense>0);
+ assert.equal(templeGuaranteeExpense(control,'egypt'),0);
+ assert.equal(nationalBudget(control,'egypt').projectedNet-nationalBudget(restored,'egypt').projectedNet,idea.effects.upkeep+expense);
+ tick(restored);tick(control);
+ const target=restored.regions.find(r=>r.id==='egypt'),plain=control.regions.find(r=>r.id==='egypt');
+ assert.equal(target.priesthood.influence-plain.priesthood.influence,1);
+ assert.equal(target.civicSatisfaction-plain.civicSatisfaction,1);
+ assert.equal(control.factions.egypt.treasury-restored.factions.egypt.treasury,idea.effects.upkeep+expense);
+ target.priesthood.influence=20;
+ assert.equal(faithSatisfaction(restored,target),faithSatisfaction(control,plain));
+ target.priesthood.influence=40;target.faiths=[{id:'hellenic-cults',share:70},{id:'egyptian-cults',share:30}];
+ plain.faiths=target.faiths;
+ assert.equal(faithSatisfaction(restored,target),faithSatisfaction(control,plain));
+ assert.match(ideasPanel(restored,'en'),/Egyptian Temple Revenue Guarantees/);
+ assert.match(ideasPanel(restored,'zh'),/埃及神庙收入保障/);
+ assert.match(budgetHtml(restored,'en'),/Egyptian temple revenue guarantees/);
+ assert.match(budgetHtml(restored,'zh'),/埃及神庙收入保障/);
+});
 
 test('paid research and incoming knowledge cannot charge twice for the same invention',()=>{
  const researching=newGrandGame('caesar');researching.relations['caesar:egypt']=60;
@@ -642,7 +690,7 @@ test('local rites affect a neighboring court only through an influential shared 
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,41);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,42);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);

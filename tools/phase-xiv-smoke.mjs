@@ -159,6 +159,26 @@ try{
     for(let i=0;i<3;i++)await stepMonth();
     assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(3).locator('.dev-slot').first().innerText(),lang==='zh'?/分成佃作安排/:/Share Tenancy Arrangements/);
   }
+  for(const lang of ['en','zh']){
+    const temple=newGrandGame('egypt');temple.wars=[];temple.factions.egypt.treasury=500;
+    temple.development.egypt.knownIdeas.push('egyptian-temple-revenues');
+    await page.evaluate(language=>localStorage.setItem('spqr-lang',language),lang);
+    await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+    await page.locator('#entry-file').setInputFiles({name:`temple-${lang}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(temple))});
+    await page.locator('[data-tab="ideas"]').click();
+    const card=page.locator('#tech-egyptian-temple-revenues'),button=card.locator('[data-adopt-idea="egyptian-temple-revenues"]');
+    assert.match(await card.innerText(),lang==='zh'?/埃及神庙收入保障[\s\S]*祭司影响 \/ 季 \+1/:/Egyptian Temple Revenue Guarantees[\s\S]*priestly influence \/ quarter \+1/);
+    assert.equal(await button.isEnabled(),true,lang);
+    await button.click();for(let i=0;i<2;i++)await stepMonth();
+    assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(4).locator('.dev-slot').first().innerText(),lang==='zh'?/埃及神庙收入保障/:/Egyptian Temple Revenue Guarantees/);
+    const blocked=newGrandGame('egypt');blocked.wars=[];blocked.factions.egypt.treasury=500;blocked.development.egypt.knownIdeas.push('egyptian-temple-revenues');
+    for(const region of blocked.regions.filter(r=>r.owner==='egypt'&&r.culture==='egypt'))region.priesthood.influence=20;
+    await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+    await page.locator('#entry-file').setInputFiles({name:`temple-blocked-${lang}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(blocked))});
+    await page.locator('[data-tab="ideas"]').click();
+    assert.equal(await page.locator('#tech-egyptian-temple-revenues [data-adopt-idea="egyptian-temple-revenues"]').isDisabled(),true,lang);
+    assert.match(await page.locator('#tech-egyptian-temple-revenues').innerText(),lang==='zh'?/需要有影响力的埃及祭司团/:/Requires a supportive Egyptian priesthood/);
+  }
   const offered=newGrandGame('senate');offered.relations['egypt:senate']=20;
   assert.equal(proposeKnowledgeSale(offered,'egypt','senate','material','water-control').ok,true);
   await page.evaluate(()=>localStorage.setItem('spqr-lang','en'));

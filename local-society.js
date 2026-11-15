@@ -24,7 +24,8 @@ export function advanceReligion(state){
  }
  if(state.month%3!==0)return;
  for(const r of state.regions){if(!r.priesthood)continue;const policy=state.religion[r.owner]?.policy||'customary',aligned=r.priesthood.tradition===traditionFor(r.owner);
-  r.priesthood.influence=Math.max(15,Math.min(80,r.priesthood.influence+(policy==='civic-patronage'?(aligned?2:-2):policy==='local-rites'?1:0)));
+  const templeGuarantee=state.development?.[r.owner]?.slots?.culture?.includes('egyptian-temple-revenues')&&r.culture==='egypt'&&r.faiths?.[0]?.id==='egyptian-cults'&&r.priesthood.tradition==='egyptian-cults';
+  r.priesthood.influence=Math.max(15,Math.min(80,r.priesthood.influence+(policy==='civic-patronage'?(aligned?2:-2):policy==='local-rites'?1:0)+(templeGuarantee?1:0)));
  }
 }
 export function faithSatisfaction(state,region){
@@ -35,7 +36,8 @@ export function faithSatisfaction(state,region){
  const ancestralPatronage=ideas.includes('ancestral-rites')&&attendedRites?(aligned?1:-1):0;
  const baseline=policy==='local-rites'?(!aligned?1:0):policy==='civic-patronage'?(aligned?1:-2):region.integration<65&&!aligned?-1:0;
  const ritesAccord=policy==='local-rites'&&ideas.includes('provincial-rites-charter')&&!aligned&&region.faiths?.some(faith=>faith.id!==dominant&&faith.share>=25);
- return baseline+(protectedSanctuary?1:0)+ancestralPatronage+(ritesAccord?1:0);
+ const templeGuarantee=ideas.includes('egyptian-temple-revenues')&&region.culture==='egypt'&&dominant==='egyptian-cults'&&attendedRites;
+ return baseline+(protectedSanctuary?1:0)+ancestralPatronage+(ritesAccord?1:0)+(templeGuarantee?1:0);
 }
 // A neighboring court can weigh the treatment of an influential border cult
 // that it shares. Cicero describes allies protesting damage to Sicilian rites
