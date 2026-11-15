@@ -1,0 +1,12 @@
+import {chromium} from 'playwright';import assert from 'node:assert/strict';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+try{
+ await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+ await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=agent-mail-1'),{requestAgentRelease,advanceAgentRequests}=await import('/character-system.js?v=dossier-delivery-1');const s=newGame('caesar');s.wars=[];s.world.captives.push({id:'agent1',owner:'senate',holder:'caesar',state:'held'});if(!requestAgentRelease(s,'senate','agent1').ok)throw Error('request failed');advanceAgentRequests(s);s.world.intelSeed=1000;sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}))});
+ await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});assert.match(await page.locator('#atlas-mail').getAttribute('aria-label'),/0封未读/);await page.locator('#advance').click();
+ await page.locator('#atlas-mail').click();await page.locator('.mailbox').waitFor();await page.getByText('释放情报人员请求',{exact:true}).first().click();assert.match(await page.locator('.mail-letter').innerText(),/六个月内答复/);
+ await page.locator('[data-mail-reply="release_agent"]').click();assert.match(await page.locator('.mail-letter').innerText(),/已回复.*同意交接/);
+ await page.locator('#mail-close').click();await page.locator('#new').click();await page.locator('[data-slot="save"]').click();let s=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));assert.equal(s.releaseRequests[0].status,'returning');assert.equal(s.world.captives[0].state,'held');
+ await page.locator('#new').click();await page.locator('[data-slot="load"]').click();for(let i=0;i<2;i++)await page.locator('#step').click();await page.locator('#new').click();await page.locator('[data-slot="save"]').click();s=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));assert.ok(['released','no_reply'].includes(s.releaseRequests[0].status));assert.equal(s.world.captives[0].state,s.releaseRequests[0].status==='released'?'released':'held');
+ assert.deepEqual(errors,[]);console.log('Incoming captive request reaches the mailbox, can be answered, and resolves after a saved delayed handover.');
+}finally{await browser.close()}
