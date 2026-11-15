@@ -326,7 +326,8 @@ export function makeWill(s,id,beneficiary,share=1){
  initializeDynasties(s);const c=s.world.characters[id],heir=s.world.characters[beneficiary];
  if(!eligibleAdult(s,id)||!heir?.alive||id===beneficiary||share<=0||share>1)return {ok:false,reason:'eligibility'};
  if(c.faction!==heir.faction){if(c.spouse!==beneficiary&&!c.children.includes(beneficiary))return {ok:false,reason:'foreign_heir'};if(s.wars.some(w=>w.includes(c.faction)&&w.includes(heir.faction))||(s.relations[pair(c.faction,heir.faction)]??0)<0)return {ok:false,reason:'diplomacy'}}
- c.will={beneficiary,share};record(s,id,`Named ${CHARACTER_CATALOG[beneficiary].name[0]} in a personal will.`,`在个人遗嘱中指定${CHARACTER_CATALOG[beneficiary].name[1]}。`);return {ok:true};
+ const beneficiaryName=visiblePersonName(s,c.faction,beneficiary)||['Unrecorded name','姓名未记录'];
+ c.will={beneficiary,share};record(s,id,`Named ${beneficiaryName[0]} in a personal will.`,`在个人遗嘱中指定${beneficiaryName[1]}。`);return {ok:true};
 }
 
 export function nominateGuardian(s,parentId,childId,guardianId){
@@ -354,10 +355,10 @@ export function settleInheritance(s,id){
  if(eligibleWill&&heirs.some(x=>x!==eligibleWill)&&(!heirs.includes(eligibleWill)||s.world.characters[eligibleWill].faction!==c.faction)&&wealth>0){
   d.inheritanceDisputes.push({id:`estate:${id}`,deceased:id,faction:c.faction,beneficiary:eligibleWill,heirs:heirs.filter(x=>x!==eligibleWill),estate:wealth,share:c.will.share,status:'pending',year:s.year,month:s.month});
   c.wealth=0;record(s,id,'Died; the contested private estate is held pending a ruling.','去世；有争议的私人遗产待裁决。');
-  note(s,`The private estate of ${CHARACTER_CATALOG[id].name[0]} is disputed; the court may uphold the will, divide it, or favor the children.`,` ${CHARACTER_CATALOG[id].name[1]}的私人遗产发生争议；宫廷可维持遗嘱、分割遗产或支持子女。`);
+  if(c.faction===s.player)note(s,`The private estate of ${CHARACTER_CATALOG[id].name[0]} is disputed; the court may uphold the will, divide it, or favor the children.`,` ${CHARACTER_CATALOG[id].name[1]}的私人遗产发生争议；宫廷可维持遗嘱、分割遗产或支持子女。`);
   return;
  }
- if(eligibleWill){const amount=Math.floor(wealth*c.will.share);s.world.characters[eligibleWill].wealth+=amount;c.wealth-=amount;record(s,eligibleWill,`Inherited ${amount} private wealth from ${CHARACTER_CATALOG[id].name[0]}.`,`从${CHARACTER_CATALOG[id].name[1]}继承${amount}私人财富。`)}
+ if(eligibleWill){const amount=Math.floor(wealth*c.will.share),heir=s.world.characters[eligibleWill],deceasedName=visiblePersonName(s,heir.faction,id)||['Unrecorded name','姓名未记录'];heir.wealth+=amount;c.wealth-=amount;record(s,eligibleWill,`Inherited ${amount} private wealth from ${deceasedName[0]}.`,`从${deceasedName[1]}继承${amount}私人财富。`)}
  const remaining=Math.max(0,Math.floor(c.wealth||0));if(heirs.length){for(const heir of heirs)s.world.characters[heir].wealth+=Math.floor(remaining/heirs.length);familyOf(s,id).wealth+=remaining%heirs.length}else familyOf(s,id).wealth+=remaining;c.wealth=0;
  record(s,id,'Died; private property was settled separately from the state treasury.','去世；私人财产与国库分别结算。');
 }
