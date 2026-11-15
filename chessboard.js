@@ -1,8 +1,8 @@
-import {isDeliveredReport} from './person-knowledge.js?v=exchange-undated-1';
-import {FACTIONS,ROUTES} from './data.js?v=exchange-undated-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=exchange-undated-1';
-import {reportedMovements,movementReportLeaderName} from './movements.js?v=exchange-undated-1';
-import {visiblePersonName} from './character-system.js?v=exchange-undated-1';
+import {isDeliveredReport} from './person-knowledge.js?v=undated-name-1';
+import {FACTIONS,ROUTES} from './data.js?v=undated-name-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=undated-name-1';
+import {reportedMovements,movementReportLeaderName} from './movements.js?v=undated-name-1';
+import {visiblePersonName} from './character-system.js?v=undated-name-1';
 
 const opening=['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair=(a,b)=>[a,b].sort().join(':');

@@ -1,7 +1,7 @@
-import {isDeliveredReport} from './person-knowledge.js?v=exchange-undated-1';
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=exchange-undated-1';
-import {reportedControl} from './control-intelligence.js?v=exchange-undated-1';
-import {assignFictionalFieldCommander} from './dynasties.js?v=exchange-undated-1';
+import {isDeliveredReport} from './person-knowledge.js?v=undated-name-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=undated-name-1';
+import {reportedControl} from './control-intelligence.js?v=undated-name-1';
+import {assignFictionalFieldCommander} from './dynasties.js?v=undated-name-1';
 
 // Alternate-history claimant commands use real game theaters and armies.
 // The setup is a simulation, not a reconstruction of a historical campaign.

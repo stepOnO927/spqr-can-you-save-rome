@@ -1,7 +1,7 @@
-import {campaignYear,campaignDate} from './campaign-date.js?v=exchange-undated-1';
-import {ROUTES,FACTIONS} from './data.js?v=exchange-undated-1';
-import {CHARACTER_CATALOG} from './characters.js?v=exchange-undated-1';
-import {reportedControl} from './control-intelligence.js?v=exchange-undated-1';
+import {campaignYear,campaignDate} from './campaign-date.js?v=undated-name-1';
+import {ROUTES,FACTIONS} from './data.js?v=undated-name-1';
+import {CHARACTER_CATALOG} from './characters.js?v=undated-name-1';
+import {reportedControl} from './control-intelligence.js?v=undated-name-1';
 
 const copy=x=>JSON.parse(JSON.stringify(x));
 const name=(id,lang)=>FACTIONS[id]?.short?.[lang==='zh'?1:0]||id;

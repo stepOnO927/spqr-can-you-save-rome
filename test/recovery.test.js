@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,advanceRomanDefeat,previewMarch,moveArmy,projectTaxPath,forecastEconomy,upgradeSave,adjacent} from '../engine.js?v=exchange-undated-1';
-import {marchReason} from '../movement-help.js?v=exchange-undated-1';
-import {canFinalizeCampaign,finalizeCampaign} from '../legacy.js?v=exchange-undated-1';
+import {newGame,tick,advanceRomanDefeat,previewMarch,moveArmy,projectTaxPath,forecastEconomy,upgradeSave,adjacent} from '../engine.js?v=undated-name-1';
+import {marchReason} from '../movement-help.js?v=undated-name-1';
+import {canFinalizeCampaign,finalizeCampaign} from '../legacy.js?v=undated-name-1';
 
 test('last field army loss gives a recovery window, then a final archivable defeat',()=>{
  const s=newGame('caesar');s.armies=s.armies.filter(a=>a.owner!=='caesar');

@@ -1,6 +1,6 @@
 // Farming is disrupted in a theater under siege or hostile occupation.
 // A war elsewhere does not reduce an unrelated province's harvest.
-import {COMMODITIES,marketPrice} from './market-goods.js?v=exchange-undated-1';
+import {COMMODITIES,marketPrice} from './market-goods.js?v=undated-name-1';
 
 // Armies buy provisions from their own realm's markets. A force abroad uses
 // the average owned-market quote, never a foreign warehouse's live price.

@@ -1,12 +1,12 @@
-import {isDeliveredReport} from './person-knowledge.js?v=exchange-undated-1';
-import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,leadershipTitle,ageRange} from './characters.js?v=exchange-undated-1';
-import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=exchange-undated-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=exchange-undated-1';
-import {FACTIONS} from './data.js?v=exchange-undated-1';
-import {fictionalPortraitKey,proceduralPortraitSvg} from './portrait-registry.js?v=exchange-undated-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=exchange-undated-1';
-import {visiblePersonName} from './character-system.js?v=exchange-undated-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=exchange-undated-1';
+import {isDeliveredReport} from './person-knowledge.js?v=undated-name-1';
+import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,leadershipTitle,ageRange} from './characters.js?v=undated-name-1';
+import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=undated-name-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=undated-name-1';
+import {FACTIONS} from './data.js?v=undated-name-1';
+import {fictionalPortraitKey,proceduralPortraitSvg} from './portrait-registry.js?v=undated-name-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=undated-name-1';
+import {visiblePersonName} from './character-system.js?v=undated-name-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=undated-name-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);

@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission,sendInquiry,tick} from '../engine.js?v=exchange-undated-1';
-import {createFictionalPerson} from '../dynasties.js?v=exchange-undated-1';
-import {genealogyMeetingContacts} from '../genealogy-personal-actions.js?v=exchange-undated-1';
-import {addReport,reportedPersonName,advanceOperations} from '../character-system.js?v=exchange-undated-1';
-import {requestPersonalMeeting} from '../personal-diplomacy.js?v=exchange-undated-1';
+import {newGame,upgradeSave,queueMission,sendInquiry,tick} from '../engine.js?v=undated-name-1';
+import {createFictionalPerson} from '../dynasties.js?v=undated-name-1';
+import {genealogyMeetingContacts} from '../genealogy-personal-actions.js?v=undated-name-1';
+import {addReport,reportedPersonName,advanceOperations} from '../character-system.js?v=undated-name-1';
+import {requestPersonalMeeting} from '../personal-diplomacy.js?v=undated-name-1';
+import {visiblePersonName} from '../person-knowledge.js?v=undated-name-1';
 
 test('meeting recipients come from reports rather than a foreign court’s hidden state',()=>{
  let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Hidden Person','秘密人物'],faction:'egypt',birthYear:-75,location:'egypt'});
@@ -39,6 +40,32 @@ test('an actual allied exchange delivers its sealed old name and preserves its o
  advanceOperations(s);advanceOperations(s);assert.equal(reportedPersonName(s,'caesar','egypt',id),null);
  s.world.dynasties.catalog[id].name=['Secret change','秘密变化'];s=upgradeSave(structuredClone(s));s.world.intelSeed=1000;advanceOperations(s);
  assert.equal(s.operations[0].status,'complete');const report=s.knowledge.caesar.egypt.reports[0];assert.equal(report.source,'exchange');assert.equal(report.originSource,'spy');assert.deepEqual(reportedPersonName(s,'caesar','egypt',id).name,['Original','原来的名字']);
+});
+test('an undated exchanged name stays usable as an explicitly undated lead after save and meeting request',()=>{
+ let delivered,id;
+ for(let seed=1;seed<50&&!delivered;seed++){
+  let s=newGame('caesar');id=createFictionalPerson(s,{name:['Private name','秘密姓名'],faction:'egypt',birthYear:-75,location:'egypt'});
+  s.alliances.push(['caesar','parthia']);s.world.intelSeed=seed*99991+53;
+  s.knowledge.parthia.egypt.reports=[{kind:'leaders',leaders:[id],peopleNames:{[id]:['Recorded name','报告姓名']},source:'spy',confidence:'unverified'}];
+  assert.ok(queueMission(s,'caesar','egypt','exchange','leaders','parthia').ok);
+  for(let month=0;month<3;month++){s.month++;advanceOperations(s)}
+  if(s.operations[0].status==='complete')delivered=upgradeSave(structuredClone(s));
+ }
+ assert.ok(delivered);const reported=reportedPersonName(delivered,'caesar','egypt',id);
+ assert.deepEqual(reported.name,['Recorded name','报告姓名']);assert.equal(reported.year,undefined);
+ const contact=genealogyMeetingContacts(delivered,true).find(c=>c.id===id);assert.match(contact.label,/报告姓名/);assert.match(contact.label,/报告日期未知/);assert.doesNotMatch(contact.label,/秘密姓名|NaN|undefined/);
+ const own=Object.values(delivered.world.characters).find(c=>c.faction==='caesar'&&c.alive&&c.location&&!c.travel&&!delivered.armies.some(a=>a.characterId===c.id&&a.move));
+ assert.ok(requestPersonalMeeting(delivered,own.id,id,'egypt').ok);assert.deepEqual(delivered.meetings[0].reportedName,['Recorded name','报告姓名']);
+});
+test('a dated name wins over undated records, while conflicting undated names stay uncertain',()=>{
+ const s=newGame('caesar'),id=createFictionalPerson(s,{name:['Private','私密姓名'],faction:'egypt',birthYear:-75});
+ for(const name of [['One','一名'],['Two','二名']])addReport(s,'caesar','egypt',{kind:'leaders',leaders:[id],peopleNames:{[id]:name},source:'exchange',observationUndated:true});
+ assert.equal(reportedPersonName(s,'caesar','egypt',id),null);assert.match(genealogyMeetingContacts(s,true).find(c=>c.id===id).label,/未核实人物/);
+ assert.deepEqual(visiblePersonName(s,'caesar',id),['Unrecorded name','姓名未记录']);
+ addReport(s,'caesar','egypt',{kind:'leaders',leaders:[id],peopleNames:{[id]:['Dated','有日期姓名']},source:'exchange',observationYear:s.year,observationMonth:s.month});
+ assert.deepEqual(reportedPersonName(s,'caesar','egypt',id).name,['Dated','有日期姓名']);
+ assert.deepEqual(visiblePersonName(s,'caesar',id),['Dated','有日期姓名']);
+ const entry=genealogyMeetingContacts(s,true).find(c=>c.id===id);assert.match(entry.label,/有日期姓名/);assert.doesNotMatch(entry.label,/私密姓名|报告日期未知/);
 });
 test('a court letter seals its named response before delivery or loss',()=>{
  const start=newGame('caesar'),id=createFictionalPerson(start,{name:['Court name','宫廷原名'],faction:'egypt',birthYear:-75,location:'egypt'});start.relations['caesar:egypt']=50;

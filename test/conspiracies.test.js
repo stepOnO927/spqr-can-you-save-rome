@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=exchange-undated-1';
-import {knownLeaders} from '../characters.js?v=exchange-undated-1';
-import {advanceOperations,availableAgents} from '../character-system.js?v=exchange-undated-1';
-import {advanceConspiracies,reassurePerson,politicalAmbition,potentialConspirators} from '../conspiracies.js?v=exchange-undated-1';
-import {supportSuccessor} from '../governance.js?v=exchange-undated-1';
-import {resolveDynasticWars} from '../civil-war.js?v=exchange-undated-1';
-import {createFictionalPerson} from '../dynasties.js?v=exchange-undated-1';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=undated-name-1';
+import {knownLeaders} from '../characters.js?v=undated-name-1';
+import {advanceOperations,availableAgents} from '../character-system.js?v=undated-name-1';
+import {advanceConspiracies,reassurePerson,politicalAmbition,potentialConspirators} from '../conspiracies.js?v=undated-name-1';
+import {supportSuccessor} from '../governance.js?v=undated-name-1';
+import {resolveDynasticWars} from '../civil-war.js?v=undated-name-1';
+import {createFictionalPerson} from '../dynasties.js?v=undated-name-1';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 function unrest(s){s.factions.senate.stability=30;s.world.characters.cato.loyalty=25;}

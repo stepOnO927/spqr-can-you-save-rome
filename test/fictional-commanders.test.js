@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,recruit} from '../engine.js?v=exchange-undated-1';
-import {CHARACTER_CATALOG,successorFor} from '../characters.js?v=exchange-undated-1';
-import {STARTING_COMMANDERS,NAME_POOLS,generateFictionalName} from '../fictional-names.js?v=exchange-undated-1';
-import {templatesFor,recruitFormation} from '../legion-designer.js?v=exchange-undated-1';
+import {newGame,upgradeSave,recruit} from '../engine.js?v=undated-name-1';
+import {CHARACTER_CATALOG,successorFor} from '../characters.js?v=undated-name-1';
+import {STARTING_COMMANDERS,NAME_POOLS,generateFictionalName} from '../fictional-names.js?v=undated-name-1';
+import {templatesFor,recruitFormation} from '../legion-designer.js?v=undated-name-1';
 
 test('opening officers have distinct saved identities without changing the opening random sequence',()=>{
  const s=newGame('caesar');assert.equal(s.world.dynasties.seed,786509145);

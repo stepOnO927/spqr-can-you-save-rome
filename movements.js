@@ -1,9 +1,9 @@
-import {FACTIONS,ROUTES} from './data.js?v=exchange-undated-1';
-import {CHARACTER_CATALOG} from './characters.js?v=exchange-undated-1';
-import {createFictionalPerson} from './dynasties.js?v=exchange-undated-1';
-import {generateFictionalName} from './fictional-names.js?v=exchange-undated-1';
-import {hasNationalIdea} from './national-ideas.js?v=exchange-undated-1';
-import {activeAgreement,terminateAgreement} from './agreements.js?v=exchange-undated-1';
+import {FACTIONS,ROUTES} from './data.js?v=undated-name-1';
+import {CHARACTER_CATALOG} from './characters.js?v=undated-name-1';
+import {createFictionalPerson} from './dynasties.js?v=undated-name-1';
+import {generateFictionalName} from './fictional-names.js?v=undated-name-1';
+import {hasNationalIdea} from './national-ideas.js?v=undated-name-1';
+import {activeAgreement,terminateAgreement} from './agreements.js?v=undated-name-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};

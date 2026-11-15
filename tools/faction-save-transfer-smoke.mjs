@@ -8,7 +8,7 @@ const errors=[];page.on('pageerror',error=>errors.push(error.message));
 try{
   await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
   const start=await page.evaluate(async()=>{
-    const {newGame}=await import('/engine.js?v=exchange-undated-1');
+    const {newGame}=await import('/engine.js?v=undated-name-1');
     const egypt=newGame('egypt');
     localStorage.setItem('spqr-save-1',JSON.stringify(egypt));
     sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:newGame('caesar')}));
@@ -26,7 +26,7 @@ try{
   assert.notDeepEqual([afterCampaign.year,afterCampaign.month],[start.year,start.month]);
 
   await page.evaluate(async()=>{
-    const {newGame}=await import('/engine.js?v=exchange-undated-1');
+    const {newGame}=await import('/engine.js?v=undated-name-1');
     sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:newGame('caesar')}));
   });
   await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});

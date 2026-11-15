@@ -1,9 +1,9 @@
 // Foreign courts in the Han campaign. Unrecorded names are explicitly game fiction.
-import {FACTIONS} from './data.js?v=exchange-undated-1';
+import {FACTIONS} from './data.js?v=undated-name-1';
 import {EURASIAN_RULERS} from './eurasia-data.js';
-import {recordBirth} from './dynasty.js?v=exchange-undated-1';
+import {recordBirth} from './dynasty.js?v=undated-name-1';
 import {CULTURAL_NAME_POOLS,fieldCulture} from './field-identities.js';
-import {clamp,log} from './util.js?v=exchange-undated-1';
+import {clamp,log} from './util.js?v=undated-name-1';
 
 const TITLES={huhanye:['Chanyu','单于'],zhizhi:['Chanyu','单于'],wusun:['Greater Kunmi','大昆弥'],wusun_lesser:['Lesser Kunmi','小昆弥'],kangju:['King of Kangju','康居王'],dayuan:['King of Dayuan','大宛王'],parthia:['King of Kings','万王之王'],armenia:['King of Armenia','亚美尼亚王'],commagene:['King of Commagene','科马吉尼王']};
 const culture=f=>{const c=FACTIONS[f]?.culture||'oasis';return ['xiongnu','wusun','qiang'].includes(c)?'steppe':c};

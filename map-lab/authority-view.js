@@ -1,6 +1,6 @@
-import {reportedControl} from '../control-intelligence.js?v=exchange-undated-1';
-import {deriveGovernment} from '../governance.js?v=exchange-undated-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=exchange-undated-1';
+import {reportedControl} from '../control-intelligence.js?v=undated-name-1';
+import {deriveGovernment} from '../governance.js?v=undated-name-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=undated-name-1';
 
 // Project government authority from the viewer's own state or dated reports.
 // The theater-level political authority is not a claim of presence in a city.

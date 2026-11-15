@@ -8,9 +8,9 @@
 //
 // Every AI decision uses the deciding faction's own intelligence picture
 // (s.intel[faction]); nobody reads the true map.
-import {OASIS,STEPPE,FACTIONS,PLAYABLE} from './data.js?v=exchange-undated-1';
-import {neighbours,templateStats,routeBetween,marchMonths,recruit,recruitQuote,provisionArmy} from './military.js?v=exchange-undated-1';
-import {roll,clamp,log,monthIndex} from './util.js?v=exchange-undated-1';
+import {OASIS,STEPPE,FACTIONS,PLAYABLE} from './data.js?v=undated-name-1';
+import {neighbours,templateStats,routeBetween,marchMonths,recruit,recruitQuote,provisionArmy} from './military.js?v=undated-name-1';
+import {roll,clamp,log,monthIndex} from './util.js?v=undated-name-1';
 import {rulerMilitaryJudgment} from './rulers.js';
 
 const key=(a,b)=>[a,b].sort().join(':');

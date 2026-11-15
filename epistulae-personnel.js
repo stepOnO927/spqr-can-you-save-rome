@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=exchange-undated-1';
-import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=exchange-undated-1';
+import {CHARACTER_CATALOG} from './characters.js?v=undated-name-1';
+import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=undated-name-1';
 
 const date=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');
