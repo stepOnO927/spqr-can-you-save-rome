@@ -34,6 +34,12 @@ export const LOCAL_ENTITY_TEMPLATES = Object.freeze([
     coordinates: [17.944, 40.637], source: 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html', historical: true,
     description: ['Adriatic port held by Pompey before his departure', '庞培离境前据守的亚得里亚海港口'],
     initialController: 'senate', maxFootholdLevel: 4, militia: 1200, fort: 1, treasury: 10, food: 12
+  },
+  {
+    id: 'bibracte', type: 'tribe', name: ['Aeduan Bibracte', '埃杜伊人的比布拉克特'], theater: 'gaul',
+    coordinates: [4.038, 46.921], source: 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Gallic_War/7E%2A.html', historical: true,
+    description: ['Aeduan oppidum and council center; its relationship with Rome changed during the Gallic War. This point is not a tribal border', '埃杜伊人的城镇和议事中心；其与罗马的关系在高卢战争中曾变化。此点不是部族边界'],
+    spatialAccuracy: 'approximate_site_point', maxFootholdLevel: 2, militia: 1100, fort: 1, treasury: 12, food: 14
   }
 ]);
 

@@ -1,0 +1,40 @@
+import {localEntity, localContactQuote, offerLocalContact, localSiegeQuote, besiegeLocalEntity, localAdministrationQuote, startLocalAdministration} from '../local-polities.js';
+import {localSecurity} from '../local-resistance.js';
+import {renderFootholdPanel} from './foothold-ui.js';
+import {FACTIONS} from '../data.js?v=phase-x-1';
+
+export function renderTribalEntity({state, id, actor, language, panel, refresh}) {
+  const entity = localEntity(state, id), zh = language === 'zh';
+  if (!entity || entity.type !== 'tribe') return;
+  const host = state.regions.find(region => region.id === entity.theater);
+  const visible = host?.owner === actor || entity.controller === actor || entity.overlord === actor || entity.access?.[actor] > state.year * 12 + state.month || state.armies.some(army => army.owner === actor && army.region === entity.theater && army.men > 0);
+  const section = document.createElement('section');
+  section.className = 'theater-facts';
+  const title = document.createElement('h3'); title.textContent = zh ? '地方部族 · 比布拉克特' : 'LOCAL POLITY · BIBRACTE'; section.append(title);
+  const history = document.createElement('p');
+  history.textContent = zh ? '凯撒记载的埃杜伊人城镇和议事中心。地点为近似点，不表示部族边界；守军、资源和谈判概率为游戏模拟。' : 'An Aeduan town and council center attested by Caesar. This approximate point is not a tribal border; militia, resources and negotiation chances are simulated.';
+  section.append(history);
+  const source = document.createElement('a'); source.href = entity.source; source.target = '_blank'; source.rel = 'noopener noreferrer'; source.textContent = zh ? '史料：凯撒《高卢战记》第七卷' : 'Source: Caesar, Gallic War VII'; section.append(source);
+  if (!visible) { const unknown = document.createElement('p'); unknown.textContent = zh ? '目前没有可靠的地方控制报告。' : 'No reliable local control report yet.'; section.append(unknown); panel.append(section); return; }
+  const status = document.createElement('p');
+  const factionName = id => FACTIONS[id]?.short?.[zh ? 1 : 0] || id;
+  status.textContent = zh ? `地方控制：${entity.controller === entity.id ? '埃杜伊人议事机构' : factionName(entity.controller)} · 法理归属：${entity.legalSovereign === entity.id ? '地方自治' : factionName(entity.legalSovereign)} · 守军约 ${entity.militia.toLocaleString()} 人` : `Local control: ${entity.controller === entity.id ? 'Aeduan council' : factionName(entity.controller)} · legal title: ${entity.legalSovereign === entity.id ? 'local self-rule' : factionName(entity.legalSovereign)} · militia about ${entity.militia.toLocaleString()}`;
+  section.append(status);
+  if (entity.controller === actor) {
+    const security = localSecurity(state, entity), note = document.createElement('p');
+    note.textContent = zh ? `地方阻力 ${entity.resistance ?? 0}/100 · 驻军${security.garrison ? '已到位' : '不足'} · 联络线${security.connected ? '畅通' : '中断'}` : `Local resistance ${entity.resistance ?? 0}/100 · garrison ${security.garrison ? 'present' : 'insufficient'} · supply link ${security.connected ? 'open' : 'cut'}`;
+    section.append(note);
+  }
+  if (entity.pending?.actor === actor) { const pending = document.createElement('p'); pending.textContent = zh ? `提议尚需 ${entity.pending.remaining} 个月；地方议事机构可以拒绝。` : `Offer takes ${entity.pending.remaining} more months; the council may refuse.`; section.append(pending); }
+  if (entity.siege?.actor === actor) { const pending = document.createElement('p'); pending.textContent = zh ? `围城尚需 ${entity.siege.remaining} 个月。` : `Siege takes ${entity.siege.remaining} more months.`; section.append(pending); }
+  const army = state.armies.find(unit => unit.owner === actor && unit.region === entity.theater && !unit.move && unit.men > 0);
+  const actions = [
+    {id: 'tribal-access', label: zh ? '商谈地方通行 · 8国库' : 'NEGOTIATE LOCAL ACCESS · 8 TREASURY', quote: localContactQuote(state, id, actor, 'access'), run: () => offerLocalContact(state, id, actor, 'access')},
+    {id: 'tribal-protectorate', label: zh ? '提议自治附属 · 16国库' : 'OFFER AUTONOMOUS PROTECTORATE · 16 TREASURY', quote: localContactQuote(state, id, actor, 'protectorate'), run: () => offerLocalContact(state, id, actor, 'protectorate')},
+    {id: 'tribal-siege', label: zh ? '围攻地方城镇 · 8粮食' : 'BESIEGE LOCAL TOWN · 8 FOOD', quote: localSiegeQuote(state, id, army?.id, actor), run: () => besiegeLocalEntity(state, id, army?.id, actor)}
+  ];
+  for (const action of actions) { const button = document.createElement('button'); button.id = action.id; button.disabled = !action.quote.ok; button.textContent = action.label; button.onclick = () => { if (action.run().ok) refresh(); }; section.append(button); }
+  if (entity.controller === actor && entity.administrativeStatus === 'occupied') { const quote = localAdministrationQuote(state, id, actor), button = document.createElement('button'); button.id = 'tribal-administer'; button.disabled = !quote.ok; button.textContent = zh ? '整顿地方行政 · 12国库 / 3粮食' : 'ADMINISTER TOWN · 12 TREASURY / 3 FOOD'; button.onclick = () => { if (startLocalAdministration(state, id, actor).ok) refresh(); }; section.append(button); }
+  panel.append(section);
+  renderFootholdPanel({state, entity, actor, language, panel: section, refresh});
+}
