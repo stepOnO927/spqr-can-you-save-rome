@@ -6,7 +6,11 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `0e6a2413`. Its Han trade-map mode shows
+The draft now includes main through `a9f829ed`. The new personal-audience
+mail records completed meetings and explicit refusals, while silence and
+failed contact produce no invented correspondence. Its names are saved at
+request or observation time from the active campaign catalog. The merged
+unit cases and the earlier meeting-name checks pass. Its Han trade-map mode shows
 owned market stock and prices, known corridors, player-involved caravans,
 blocked legs and dated broad foreign reports without exposing hidden foreign
 warehouses or unrelated AI shipments. Market and caravan markers open the
@@ -17,7 +21,8 @@ covers visibility and save/load; the cloud browser smoke also exercises the
 mode. The merged personal-meeting
 update records the name in the campaign's saved catalog at the time of a
 completed audience, so a stale shared catalog cannot overwrite that
-observation. The full 1,178-test local simulation suite passes. Head
+observation. Two full 1,180-test local simulation runs pass after integration;
+the first run had one intermittent failure that did not recur. Earlier head
 `cc3e6835` passed all three GitHub browser jobs, quality, Pages packaging,
 and Poki release validation.
 

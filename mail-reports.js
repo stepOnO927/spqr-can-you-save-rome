@@ -4,6 +4,7 @@ import {CHARACTER_CATALOG} from './characters.js?v=faces-reported-names-1';
 import {MATERIALS} from './inventions.js?v=faces-reported-names-1';
 import {ROUTES,FACTIONS} from './data.js?v=faces-reported-names-1';
 import {campaignDate} from './campaign-date.js?v=faces-reported-names-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=faces-reported-names-1';
 
 const month=s=>s.year*12+s.month;
 const owned=s=>s.regions.filter(r=>r.owner===s.player);
@@ -23,6 +24,17 @@ function report(s,eventId,category,priority,subject,body,{region=null,options=['
 }
 export function advanceMailReports(s){
  const mail=initializeMail(s),before=initializeMailReports(s),after=snapshot(s),now=month(s),f=s.factions[s.player];
+ // A completed audience is a local record; a refusal is a delivered reply.
+ // Silence and failed contact must not become invented correspondence.
+ for(const meeting of s.meetings||[]){
+  if(meeting.actor!==s.player||meeting.resultMailId||meeting.resolvedYear!==s.year||meeting.resolvedMonth!==s.month||!['met','declined'].includes(meeting.status))continue;
+  const met=meeting.status==='met',person=storedCorrespondentName(meeting.person,meeting.observedPersonName||meeting.personName),target=storedCorrespondentName(meeting.target,met?meeting.observedName:meeting.reportedName),place=s.regions.find(r=>r.id===meeting.location)?.name||['an unrecorded theater','未记录的战区'];
+  const subject=met?['Personal audience held','个人会面已举行']:['Personal audience declined','个人会面请求遭拒'];
+  const body=met?[`${person[0]} met ${target[0]} in ${place[0]}. The meeting records what was observed then; later circumstances may differ.`,`${person[1]}在${place[1]}与${target[1]}会面。会面记录只反映当时情况，之后可能发生变化。`]:[`The request addressed to ${target[0]} for an audience was declined.`,`寄给${target[1]}的个人会面请求遭到拒绝。`];
+  const sender=met?s.player:meeting.targetFaction;
+  const result=sendLetter(s,{senderInstitution:sender,senderFaction:sender,recipient:s.player,category:met?'government':'diplomatic',priority:'important',subject,body,options:['acknowledge'],context:{kind:'personal_audience_result'}});
+  if(result.ok){meeting.resultMailId=result.letter.id;if(!met)result.letter.sentDateKnown=false;result.letter.arrival=now;result.letter.delivery='received'}
+ }
  // The diplomatic inquiry has already made its return trip. A lost reply is
  // silence, while a received answer or explicit refusal becomes one letter.
  for(const inquiry of s.inquiries||[]){
