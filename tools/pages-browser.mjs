@@ -16,7 +16,10 @@ async function open(url){
 }
 try{
   const main=await open(base+'/');
+  assert.equal(await main.locator('#save-transfer-open').evaluate(button=>button.parentElement.classList.contains('setup-saves')),true);
   await main.locator('#start-campaign').click();
+  assert.equal(await main.locator('#save-transfer-open').evaluate(button=>button.parentElement.classList.contains('controls')),true);
+  await main.locator('#step').click();
   await main.locator('#save').evaluate(button=>button.click());
   const campaign=await main.evaluate(()=>localStorage.getItem('spqr-save-1'));
   assert.ok(campaign?.includes('"regions"'));
