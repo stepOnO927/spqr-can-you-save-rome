@@ -83,7 +83,10 @@ export function gatheringPlan(s,m){
 export function sendLetter(s, spec) {
   const mail = initializeMail(s);
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
-  if (!s.factions?.[senderFaction] || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
+  // A sealed aid reply can outlive the court that dispatched it; its arrival
+  // must not disclose that court's subsequent hidden disappearance.
+  const formerAidSender=spec.context?.kind==='aid_result'&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
   const source = spec.source || (senderId ? s.world.characters[senderId].location : null) || home(s, senderFaction);

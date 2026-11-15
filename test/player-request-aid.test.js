@@ -26,3 +26,7 @@ test('player cannot use aid requests without a war, funds, or valid known contac
  const s=setup(1);s.wars=[];assert.equal(sendStrategicOffer(s,'caesar','egypt','parthia',{kind:'request_aid'}).ok,false);s.wars.push(['caesar','parthia']);s.factions.caesar.treasury=4;assert.equal(sendStrategicOffer(s,'caesar','egypt','parthia',{kind:'request_aid'}).ok,false);
  assert.equal(sendStrategicOffer(s,'caesar','egypt','parthia',{kind:'join_war'}).ok,false);
 });
+test('a sealed reply can arrive after the donor court disappears',()=>{
+ let delivered=false;for(let seed=1;seed<=120&&!delivered;seed++){const s=setup(seed);sendStrategicOffer(s,'caesar','egypt','parthia',{kind:'request_aid'});advance(s);advance(s);const offer=s.world.strategicOffers[0];if(offer.phase!=='return')continue;delete s.factions.egypt;advance(s);advance(s);if(offer.phase==='delivered'){assert.ok(['accepted','refused'].includes(offer.status));assert.equal(receivedMail(s).filter(m=>m.context?.kind==='aid_result').length,1);delivered=true}}
+ assert.ok(delivered);
+});
