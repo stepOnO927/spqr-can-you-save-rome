@@ -37,6 +37,11 @@ const external=[];
 const terrainRequests=[];
 const missingTerrain=[];
 const landcoverRequests=[],missingLandcover=[];
+const activeRelief=()=>page.evaluate(async()=>{const {activeReliefLayer}=await import(document.querySelector('script[type="module"]').src);return activeReliefLayer});
+async function selectMapMode(mode){
+ if(page.viewportSize().width<=600&&(await page.locator('#brief-toggle').getAttribute('aria-expanded'))==='false')await page.locator('#brief-toggle').click();
+ await page.locator('#map-mode').selectOption(mode);
+}
 async function waitForTerrain(pattern,message){
  for(let i=0;i<40;i++){
   if(terrainRequests.some(path=>pattern.test(path)))return;
@@ -99,15 +104,24 @@ try{
   await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),true);
   await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),false);
  }
+ await page.waitForTimeout(1200);
  const initialRelief=page.viewportSize().width>900;
  assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),String(initialRelief),'Hill shading should default on at desktop size and off on small screens');
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.loaded()&&map.isStyleLoaded()&&map.areTilesLoaded()},null,{timeout:30000});
+ if(initialRelief)await page.waitForFunction(async()=>{const {activeReliefLayer}=await import(document.querySelector('script[type="module"]').src);return activeReliefLayer==='relief'},null,{timeout:5000});
+ const overviewTerrainRequests=terrainRequests.length;
+ assert.equal(await activeRelief(),initialRelief?'relief':'');
  assert.equal(await page.locator('#locator').isVisible(),false,'Locator should not cover the overview');
  await page.locator('#relief-toggle').click();
  assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),String(!initialRelief));
+ assert.equal(await activeRelief(),initialRelief?'':'relief');
  await page.locator('#relief-toggle').click();
  assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),String(initialRelief));
+ assert.equal(await activeRelief(),initialRelief?'relief':'');
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.loaded()&&map.isStyleLoaded()&&map.areTilesLoaded()},null,{timeout:10000});
+ assert.equal(terrainRequests.length,overviewTerrainRequests,'Relief switches must reuse the loaded elevation tiles');
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
- await page.locator('#map-mode').selectOption('terrain');
+ await selectMapMode('terrain');
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/近岸浅海（约0–200米）/:/Coastal shelf \(about 0–200 m\)/);
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/河流与天然湖泊/:/Rivers & natural lakes/);
  await page.locator('#language').click();
@@ -115,7 +129,7 @@ try{
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Coastal shelf \(about 0–200 m\)/:/近岸浅海（约0–200米）/);
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Rivers & natural lakes/:/河流与天然湖泊/);
  assert.match(await page.locator('.file-transfer a').innerText(),firstLanguage==='zh-CN'?/LEGACY HUB/:/罗马遗产/);
- await page.locator('#map-mode').selectOption('political');
+ await selectMapMode('political');
  const crowdedSite=page.locator('.grand-site.near-army:visible').first();
  await crowdedSite.waitFor();
  assert.equal(await crowdedSite.evaluate(el=>getComputedStyle(el).fontSize),'0px','A city beside an army standard should use a compact map mark');
@@ -149,7 +163,7 @@ try{
  assert.deepEqual(missingTerrain,[],'Zoomed Italy requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Italy zoom needed network terrain');
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
- await page.locator('#map-mode').selectOption('terrain');
+ await selectMapMode('terrain');
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Modern shoreline/:/现代海岸线/);
  assert.doesNotMatch(await page.locator('.legend').innerText(),/Coastal shelf|近岸浅海/,'Close zoom must not claim hidden bathymetry is visible');
  await page.locator('#language').click();
@@ -159,18 +173,17 @@ try{
  await page.waitForFunction(()=>/Coastal shelf|近岸浅海/.test(document.querySelector('.legend')?.textContent||''));
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Coastal shelf/:/近岸浅海/,'Overview depth key must return after zooming out');
  await page.locator('#zoom-in').click();await page.locator('#zoom-in').click();
- await page.locator('#map-mode').selectOption('political');
+ await selectMapMode('political');
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  if(process.env.SPQR_ATLAS_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_SCREENSHOT});
- if(process.env.SPQR_ATLAS_TERRAIN_SCREENSHOT){await page.locator('#map-mode').selectOption('terrain');await page.waitForTimeout(500);await page.screenshot({path:process.env.SPQR_ATLAS_TERRAIN_SCREENSHOT});await page.locator('#map-mode').selectOption('political')}
+ if(process.env.SPQR_ATLAS_TERRAIN_SCREENSHOT){await selectMapMode('terrain');await page.waitForTimeout(500);await page.screenshot({path:process.env.SPQR_ATLAS_TERRAIN_SCREENSHOT});await selectMapMode('political')}
  if(process.env.SPQR_ATLAS_RELIEF_SCREENSHOT){if(await page.locator('#relief-toggle').getAttribute('aria-pressed')==='false')await page.locator('#relief-toggle').click();await page.waitForTimeout(500);await page.screenshot({path:process.env.SPQR_ATLAS_RELIEF_SCREENSHOT})}
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await page.locator('[data-objective="italiaN"]').click();await page.waitForTimeout(1200);
- if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  for(let i=0;i<3;i++){await page.locator('#zoom-in').click();await page.waitForTimeout(500)}
  const site=await page.locator('[data-site="italiaN"]').boundingBox();
  assert.ok(Math.abs(site.x-page.viewportSize().width/2)<15,'Ariminum must stay at the map focus');
- await page.locator('#map-mode').selectOption('terrain');
+ await selectMapMode('terrain');
  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded('italy-contours')},null,{timeout:20000});
  const visibleContours=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.queryRenderedFeatures({layers:['italy-contours-minor','italy-contours-major']}).length});
  assert.ok(visibleContours>0,'Modern Italy contour lines should render around Ariminum');
@@ -179,7 +192,7 @@ try{
  await page.locator('#language').click();
  assert.match(await page.locator('.legend').innerText(),italyLegendLanguage==='zh-CN'?/Modern elevation contours \(500–1500 m\)/:/现代高程等高线（500–1500米）/);
  await page.locator('#language').click();
- await page.locator('#map-mode').selectOption('political');
+ await selectMapMode('political');
  if(process.env.SPQR_ATLAS_OBJECTIVE_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_OBJECTIVE_SCREENSHOT});
  if(process.env.SPQR_ATLAS_Z9_RELIEF_SCREENSHOT){if(await page.locator('#relief-toggle').getAttribute('aria-pressed')==='false')await page.locator('#relief-toggle').click();await page.waitForTimeout(650);await page.screenshot({path:process.env.SPQR_ATLAS_Z9_RELIEF_SCREENSHOT})}
  if(process.env.SPQR_ATLAS_RIVER_SCREENSHOT){if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();await page.locator('[data-objective="roma"]').click();await page.waitForTimeout(1200);for(let i=0;i<3;i++){await page.locator('#zoom-in').click();await page.waitForTimeout(500)}await page.screenshot({path:process.env.SPQR_ATLAS_RIVER_SCREENSHOT})}
@@ -212,13 +225,13 @@ try{
  assert.equal(await seaLabel.textContent(),firstSeaName==='地中海'?'Mediterranean Sea':'地中海');
  await page.locator('#language').click();
  if(process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_SCREENSHOT});
- await page.locator('#map-mode').selectOption('terrain');
+ await selectMapMode('terrain');
  assert.match(await page.locator('.legend').innerText(),firstSeaName==='地中海'?/现代高程等高线/:/Modern elevation contours/);
  await page.locator('#language').click();
  assert.match(await page.locator('.legend').innerText(),firstSeaName==='地中海'?/Modern elevation contours/:/现代高程等高线/);
  await page.locator('#language').click();
  if(process.env.SPQR_ATLAS_EGYPT_Z9_TERRAIN_SCREENSHOT){await page.waitForTimeout(400);await page.screenshot({path:process.env.SPQR_ATLAS_EGYPT_Z9_TERRAIN_SCREENSHOT})}
- await page.locator('#map-mode').selectOption('political');
+ await selectMapMode('political');
  const galatia=newGrandGame('galatia');
  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),galatia);
  await page.reload({waitUntil:'domcontentloaded'});
@@ -232,14 +245,14 @@ try{
  await waitForTerrain(/\/terrain\/9\/294\//,'Aegean maximum zoom did not use bundled high-detail terrain');
  assert.deepEqual(missingTerrain,[],'Aegean maximum zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Aegean terrain unexpectedly needed the network');
- const aegeanRelief=()=>page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return ['relief-aegean-ultra','relief-aegean-higher'].map(id=>({visibility:map.getLayoutProperty(id,'visibility')||'visible',strength:map.getPaintProperty(id,'hillshade-exaggeration')}))});
- await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&(map.getLayoutProperty('relief-aegean-higher','visibility')||'visible')==='visible'},null,{timeout:20000});
+ await page.waitForFunction(async()=>{const {map,activeReliefLayer}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&activeReliefLayer==='relief-aegean-higher'},null,{timeout:20000});
  await page.waitForTimeout(750);
- assert.deepEqual(await aegeanRelief(),[{visibility:'none',strength:.1},{visibility:'visible',strength:.1}]);
+ assert.equal(await activeRelief(),'relief-aegean-higher');
  await page.locator('#relief-toggle').click();
- assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['none','none']);
+ assert.equal(await activeRelief(),'');
  await page.locator('#relief-toggle').click();
- assert.deepEqual((await aegeanRelief()).map(layer=>layer.visibility),['none','visible']);
+ assert.equal(await activeRelief(),'relief-aegean-higher');
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.loaded()&&map.isStyleLoaded()&&map.areTilesLoaded()},null,{timeout:10000});
  if(process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT){await page.waitForTimeout(650);await page.screenshot({path:process.env.SPQR_ATLAS_AEGEAN_Z9_SCREENSHOT})}
  terrainRequests.length=0;
  const iberianCenter=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[-4.78,37.888],zoom:9.1});return map.getCenter().toArray()});
@@ -248,7 +261,7 @@ try{
  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded('elevation-iberia-ultra')&&map.isSourceLoaded('elevation-iberia-higher')},null,{timeout:45000});
  assert.deepEqual(missingTerrain,[],'Iberian close zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Iberian terrain unexpectedly needed the network');
- assert.equal(await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getPaintProperty('relief-iberia-higher','hillshade-exaggeration')}),.1);
+ await page.waitForFunction(async()=>{const {activeReliefLayer}=await import(document.querySelector('script[type="module"]').src);return activeReliefLayer==='relief-iberia-higher'},null,{timeout:15000});
  terrainRequests.length=0;
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[-2.448,41.808],zoom:9.1})});
  await waitForTerrain(/\/terrain\/9\/252\//,'Numantia maximum zoom did not use native Iberian terrain');
@@ -270,7 +283,7 @@ try{
  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded('elevation-gaul-ultra')&&map.isSourceLoaded('elevation-gaul-higher')},null,{timeout:45000});
  assert.deepEqual(missingTerrain,[],'Gallic close zoom requested missing terrain tiles');
  assert.equal(external.includes('s3.amazonaws.com'),false,'Gallic terrain unexpectedly needed the network');
- assert.equal(await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getPaintProperty('relief-gaul-higher','hillshade-exaggeration')}),.1);
+ await page.waitForFunction(async()=>{const {activeReliefLayer}=await import(document.querySelector('script[type="module"]').src);return activeReliefLayer==='relief-gaul-higher'},null,{timeout:15000});
  if(process.env.SPQR_ATLAS_GAUL_Z9_SCREENSHOT){await page.waitForTimeout(4000);await page.screenshot({path:process.env.SPQR_ATLAS_GAUL_Z9_SCREENSHOT})}
  for(const [region,lon,lat,tileX] of [
   ['pontic',35.154,42.026,305],['armenia',44.58,39.885,319],['syria',36.16,36.2,307],
@@ -282,11 +295,10 @@ try{
   await waitForTerrain(new RegExp(`/terrain/9/${tileX}/`),`${region} maximum zoom did not request native terrain`);
   await page.waitForFunction(async region=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded(`elevation-${region}-higher`)},region,{timeout:45000});
   assert.deepEqual(missingTerrain,[],`${region} close zoom requested missing terrain tiles`);
-  assert.equal(await page.evaluate(async region=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getPaintProperty(`relief-${region}-higher`,'hillshade-exaggeration')},region),.1);
+  await page.waitForFunction(async region=>{const {activeReliefLayer}=await import(document.querySelector('script[type="module"]').src);return activeReliefLayer===`relief-${region}-higher`},region,{timeout:15000});
   if(region==='armenia'){
-   const visibility=()=>page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getLayoutProperty('relief-armenia-higher','visibility')||'visible'});
-   await page.locator('#relief-toggle').click();assert.equal(await visibility(),'none','Armenian detail must honor relief off');
-   await page.locator('#relief-toggle').click();assert.equal(await visibility(),'visible','Armenian detail must honor relief on');
+   await page.locator('#relief-toggle').click();assert.equal(await activeRelief(),'','Armenian detail must honor relief off');
+   await page.locator('#relief-toggle').click();assert.equal(await activeRelief(),'relief-armenia-higher','Armenian detail must honor relief on');
   }
   const screenshot=process.env[`SPQR_ATLAS_${region.toUpperCase()}_Z9_SCREENSHOT`];
   if(screenshot){await page.waitForTimeout(4000);await page.screenshot({path:screenshot})}
@@ -308,13 +320,13 @@ try{
  if(process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_ARMENIA_SCREENSHOT});
  await page.waitForTimeout(1200);
  await page.locator('#relief-toggle').evaluate(el=>{if(el.getAttribute('aria-pressed')==='false')el.click()});
- const reliefVisibility=()=>page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getLayoutProperty('relief-armenia-higher','visibility')||'visible'});
+ await page.waitForFunction(async()=>{const {activeReliefLayer}=await import(document.querySelector('script[type="module"]').src);return activeReliefLayer==='relief-fine'},null,{timeout:5000});
  const dragX=Math.round(page.viewportSize().width*.72),dragY=Math.round(page.viewportSize().height*.45);
  await page.mouse.move(dragX,dragY);await page.mouse.down();await page.mouse.move(dragX+30,dragY+20,{steps:3});
- assert.equal(await reliefVisibility(),'none','Hill shading should pause while the player drags the map');
+ assert.equal(await activeRelief(),'','Hill shading should pause while the player drags the map');
  await page.mouse.up();
  await page.waitForTimeout(1000);
- await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&(map.getLayoutProperty('relief-armenia-higher','visibility')||'visible')==='visible'},null,{timeout:5000});
- assert.equal(await reliefVisibility(),'visible','Hill shading should return after the map settles');
+ await page.waitForFunction(async()=>{const {map,activeReliefLayer}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&activeReliefLayer==='relief-fine'},null,{timeout:5000});
+ assert.equal(await activeRelief(),'relief-fine','Hill shading should return after the map settles');
  console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and native zoom 8-9 relief at every settlement anchor.');
 }finally{await browser.close()}

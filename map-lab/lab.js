@@ -108,7 +108,19 @@ const t=k=>L[lang][k];const n=a=>a?.[lang==='zh'?1:0]||'';
 L.en.credits='GSHHG MODERN COAST · MODERN ELEVATION · HISTORICAL BORDERS APPROXIMATE';
 L.zh.credits='GSHHG 现代海岸线 · 现代高程 · 历史边界为近似';
 const status = document.querySelector('#status');
-export const map = new maplibregl.Map({container:'map',canvasContextAttributes:{preserveDrawingBuffer:true},center:[12.4,43.2],zoom:5.45,minZoom:3.6,maxZoom:9.2,maxBounds:[[-20,18],[60,58]],attributionControl:{compact:true},style:physicalStyle});
+// Changing a hillshade layer's layout or paint reloads its shared DEM source.
+// Keep the layers stable and select their strength through style global state.
+export let activeReliefLayer=reliefEnabled?'relief':'';
+const initialStyle={...physicalStyle,state:{...physicalStyle.state,activeRelief:activeReliefLayer},layers:physicalStyle.layers.map(layer=>{
+ if(layer.type!=='hillshade')return layer;
+ const detailed=layer.id!=='relief'&&layer.id!=='relief-detail';
+ const strength=detailed ? 0.1 : layer.paint['hillshade-exaggeration'];
+ return {...layer,paint:{...layer.paint,
+  'hillshade-exaggeration':['case',['==',['global-state','activeRelief'],layer.id],strength,0],
+  ...(detailed?{'hillshade-shadow-color':'#a49b82','hillshade-highlight-color':'#efe5cf','hillshade-accent-color':'#c3b99c'}:{})
+ }};
+})};
+export const map = new maplibregl.Map({container:'map',canvasContextAttributes:{preserveDrawingBuffer:true},center:[12.4,43.2],zoom:5.45,minZoom:3.6,maxZoom:9.2,maxBounds:[[-20,18],[60,58]],attributionControl:{compact:true},style:initialStyle});
 // A long camera jump can show DEM colors before the GeoJSON coastline worker
 // finishes its new tiles. Dim the intermediate frame until the masks are ready.
 const mapElement=document.querySelector('#map');
@@ -202,8 +214,6 @@ const originalCityTheater={...cityTheater};
 const namedPoints={cisalpine:[11.6,44.75],narbo:[3.3,43.4],italiaN:[13.05,44.0],roma:[12.45,42.1],italiaS:[17.5,40.8],illyricum:[16.49,43.54],gaul:[4.5,47.54],hispaniaN:[1.25,41.12],sicilia:[15.29,37.08],epirus:[19.45,41.31],hispaniaS:[-4.78,37.88],africa:[10.05,37.05],achaia:[23.73,37.98],anatolia:[27.34,37.94],syria:[36.16,36.20],egypt:[29.92,31.20],numidia:[6.61,36.37],mauretania:[2.19,36.60],armenia:[44.55,39.95],parthia:[44.5,33.1],galatia:[32,39.7],bosporus:[36.5,45.3],...Object.fromEntries(GRAND_SITES.map(site=>[site.id,[site.lon,site.lat]]))};
 const campaignCenter=faction=>['caesar','senate'].includes(faction)?[12.4,43.2]:namedPoints[faction]||[12.4,43.2];
 if(received&&!['caesar','senate'].includes(state.player))map.flyTo({center:campaignCenter(state.player),zoom:5.45});
-const reliefLayers=physicalStyle.layers.filter(layer=>layer.type==='hillshade').map(layer=>layer.id);
-function setDetailedRelief(){for(const id of reliefLayers.filter(layer=>layer!=='relief'&&layer!=='relief-detail')){if(!map.getLayer(id))continue;map.setPaintProperty(id,'hillshade-exaggeration',.1);map.setPaintProperty(id,'hillshade-shadow-color','#a49b82');map.setPaintProperty(id,'hillshade-highlight-color','#efe5cf');map.setPaintProperty(id,'hillshade-accent-color','#c3b99c')}}
 let reliefRestoreTimer=null,reliefVisible=reliefEnabled;
 function localReliefLayer(){
  const bounds=map.getBounds?.(),zoom=map.getZoom?.()||0;
@@ -249,11 +259,9 @@ function showRelief(visible){
  const candidate=visible?localReliefLayer():null;
  const local=candidate&&elevationReadyView===elevationView&&elevationReadySource===candidate.replace(/^relief/,'elevation')?candidate:null;
  const fallback=candidate&&!local?'relief-fine':null;
- for(const id of reliefLayers){
-  if(!map.getLayer(id))continue;
-  const wanted=visible&&((!local&&!fallback)||id===(local||fallback))?'visible':'none';
-  if((map.getLayoutProperty?.(id,'visibility')||'visible')!==wanted)map.setLayoutProperty(id,'visibility',wanted);
- }
+ const zoom=map.getZoom();
+ const selected=visible?(local||fallback||(zoom>=7?'relief-fine':zoom>=6?'relief-detail':'relief')):'';
+ if(selected!==activeReliefLayer){activeReliefLayer=selected;map.setGlobalStateProperty('activeRelief',selected)}
 }
 function pauseReliefWhileMoving(){
  clearTimeout(reliefRestoreTimer);
@@ -628,9 +636,9 @@ map.on('load',()=>{
  };
  syncSiteMarkers();map.on('moveend',syncSiteMarkers);map.on('resize',syncSiteMarkers);
 });
-map.on('load',()=>{if(!reliefEnabled)for(const id of reliefLayers)if(map.getLayer(id))map.setLayoutProperty(id,'visibility','none');status.style.display='none';map.addSource('preview',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'preview-line',type:'line',source:'preview',paint:{'line-color':'#ffdd8b','line-width':3,'line-dasharray':[2,2]}});map.addSource('marches',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'march-lines',type:'line',source:'marches',paint:{'line-color':'#f6df9d','line-width':3,'line-opacity':.9,'line-dasharray':[2,2]}});renderArmies();map.addSource('route',{type:'geojson',data:republicanRoads});map.addLayer({id:'ancient-route',type:'line',source:'route',paint:{'line-color':'#f2d8a0','line-width':['interpolate',['linear'],['zoom'],3.6,.8,5.5,1.5,9,2.6],'line-opacity':.85,'line-dasharray':[3,2]}},'control');map.addLayer({id:'road-hit',type:'line',source:'route',paint:{'line-color':'#f2d8a0','line-width':12,'line-opacity':.01}});map.on('click','road-hit',e=>{e.originalEvent.stopPropagation();showRoad(e.features[0].properties.name)});map.on('mouseenter','road-hit',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','road-hit',()=>map.getCanvas().style.cursor='');map.on('click','control',e=>{if(state.grandMap)return;if(map.queryRenderedFeatures(e.point,{layers:['road-hit']}).length)return;const p=e.features[0].properties;(()=>{const ids=Array.isArray(p.regions)?p.regions:JSON.parse(p.regions||'[]');if(ids.length===1){showRegion(region(state,ids[0]));return}activeArmy=null;clearReach();inspect(p.id.toUpperCase(),t('shared'));const controls=document.querySelector('#lab-orders');for(const id of ids){const r=region(state,id);if(!r)continue;const b=document.createElement('button');b.textContent=n(r.name);b.onclick=()=>showRegion(r);controls.append(b)}})()});map.on('mouseenter','control',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','control',()=>map.getCanvas().style.cursor='')});
+map.on('load',()=>{status.style.display='none';map.addSource('preview',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'preview-line',type:'line',source:'preview',paint:{'line-color':'#ffdd8b','line-width':3,'line-dasharray':[2,2]}});map.addSource('marches',{type:'geojson',data:{type:'FeatureCollection',features:[]}});map.addLayer({id:'march-lines',type:'line',source:'marches',paint:{'line-color':'#f6df9d','line-width':3,'line-opacity':.9,'line-dasharray':[2,2]}});renderArmies();map.addSource('route',{type:'geojson',data:republicanRoads});map.addLayer({id:'ancient-route',type:'line',source:'route',paint:{'line-color':'#f2d8a0','line-width':['interpolate',['linear'],['zoom'],3.6,.8,5.5,1.5,9,2.6],'line-opacity':.85,'line-dasharray':[3,2]}},'control');map.addLayer({id:'road-hit',type:'line',source:'route',paint:{'line-color':'#f2d8a0','line-width':12,'line-opacity':.01}});map.on('click','road-hit',e=>{e.originalEvent.stopPropagation();showRoad(e.features[0].properties.name)});map.on('mouseenter','road-hit',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','road-hit',()=>map.getCanvas().style.cursor='');map.on('click','control',e=>{if(state.grandMap)return;if(map.queryRenderedFeatures(e.point,{layers:['road-hit']}).length)return;const p=e.features[0].properties;(()=>{const ids=Array.isArray(p.regions)?p.regions:JSON.parse(p.regions||'[]');if(ids.length===1){showRegion(region(state,ids[0]));return}activeArmy=null;clearReach();inspect(p.id.toUpperCase(),t('shared'));const controls=document.querySelector('#lab-orders');for(const id of ids){const r=region(state,id);if(!r)continue;const b=document.createElement('button');b.textContent=n(r.name);b.onclick=()=>showRegion(r);controls.append(b)}})()});map.on('mouseenter','control',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','control',()=>map.getCanvas().style.cursor='')});
 let tileErrors=0;map.on('error',e=>{if(++tileErrors===3){status.textContent='Some map data could not be loaded; check network access.';status.style.display='block'}console.warn('Map data error',e.error?.message||e.error)});
-map.on('load',()=>{if(reliefEnabled)setDetailedRelief();addCartographicGrain();showRelief(reliefEnabled)});
+map.on('load',()=>{addCartographicGrain();showRelief(reliefEnabled)});
 map.on('idle',()=>{if(reliefEnabled&&reliefVisible)showRelief(true)});
 map.on('load',()=>{map.on('movestart',pauseReliefWhileMoving);map.on('moveend',restoreReliefAfterMoving);map.on('dragend',restoreReliefAfterMoving);map.on('zoomend',restoreReliefAfterMoving)});
 function zoomClass(){document.body.classList.toggle('low-zoom',map.getZoom()<5.2);document.body.classList.toggle('mid-zoom',map.getZoom()<6.5);document.body.classList.toggle('leader-overview',map.getZoom()<4.8)}map.on('zoom',zoomClass);map.on('zoomend',renderTerrainLegend);map.on('moveend',renderTerrainLegend);zoomClass();
@@ -638,7 +646,6 @@ document.querySelector('#relief-toggle').onclick=()=>{
  reliefEnabled=!reliefEnabled;
  localStorage.setItem('spqr-relief-v2',reliefEnabled?'on':'off');
  clearTimeout(reliefRestoreTimer);
- if(reliefEnabled)setDetailedRelief();
  showRelief(reliefEnabled);
  renderHud();
 };
