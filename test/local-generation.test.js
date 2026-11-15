@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-trade-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-trade-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-trade-1';
 import {LOCAL_GENERATION_BANDS} from '../local-generation.js';
 import {localOfferChance,advanceLocalEntities,localEntity,offerLocalContact,localSiegeQuote,besiegeLocalEntity} from '../local-polities.js';
@@ -124,6 +124,42 @@ test('service is delayed, costs treasury, and never annexes the chief or village
  assert.equal(chief.allegiance,chief.lastOutcome.accepted?actor:null);
  const saved=upgradeSave(JSON.parse(JSON.stringify(s)));
  assert.deepEqual(localEntity(saved,chief.id),chief);assert.deepEqual(localEntity(saved,village.id),village);
+});
+
+test('a host court can recognize a chief title without gaining passage or village control',()=>{
+ const s=start('hard',2),chief=generated(s).find(entity=>entity.type==='strongman'),village=localEntity(s,`generated-village:${chief.theater}`);
+ const actor=s.regions.find(region=>region.id===chief.theater).owner,treasury=s.factions[actor].treasury;
+ chief.seed=0;
+ const before=localOfferChance(s,chief,actor,'service');
+ assert.equal(offerLocalContact(s,chief.id,actor,'recognition').ok,true);
+ assert.equal(s.factions[actor].treasury,treasury-8);
+ assert.equal(chief.pending.remaining,2);
+ advanceLocalEntities(s);advanceLocalEntities(s);
+ assert.equal(chief.lastOutcome.accepted,true);
+ assert.equal(chief.recognizedBy,actor);
+ assert.deepEqual(chief.titleRecognizedAt,{year:s.year,month:s.month});
+ assert.equal(chief.controller,chief.id);
+ assert.equal(chief.allegiance,null);
+ assert.equal(chief.access[actor],undefined);
+ assert.equal(village.controller,chief.id);
+ assert.equal(village.village.satisfaction,65);
+ assert.ok(localOfferChance(s,chief,actor,'service')>before);
+ assert.deepEqual(localEntity(upgradeSave(structuredClone(s)),chief.id).titleRecognizedAt,chief.titleRecognizedAt);
+ assert.equal(inspectState(s).filter(item=>item.code==='invalid-local-recognition').length,0);
+ chief.titleRecognizedAt.month=13;
+ assert.ok(inspectState(s).some(item=>item.code==='invalid-local-recognition'));
+});
+
+test('hard nonplayer court initiates a paid title negotiation with a local chief',()=>{
+ const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:2});
+ const chief=generated(s).find(entity=>entity.type==='strongman'&&s.regions.find(region=>region.id===entity.theater).owner==='caesar');
+ assert.ok(chief);
+ s.factions.caesar.treasury=100;
+ tick(s);
+ assert.equal(chief.pending?.proposal,'recognition');
+ assert.equal(chief.pending?.actor,'caesar');
+ assert.equal(s.factions.caesar.treasury<=92,true);
+ assert.equal(chief.controller,chief.id);
 });
 
 test('occupation transfers a dependent village and a successful local revolt restores personal control',()=>{

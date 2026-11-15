@@ -36,7 +36,8 @@ try{
  const chiefMarker=page.locator(`.city-marker[data-city="${generated.chief}"]`);
  await chiefMarker.waitFor({state:'visible'});await chiefMarker.click();
  const chiefPanel=await page.locator('#command-detail').innerText();
- assert.match(chiefPanel,/LOCAL STRONGMAN/);assert.match(chiefPanel,/INVITE CHIEF INTO SERVICE/);
+ assert.match(chiefPanel,/LOCAL STRONGMAN/);assert.match(chiefPanel,/INVITE CHIEF INTO SERVICE/);assert.match(chiefPanel,/RECOGNIZE LOCAL TITLE/);
+ assert.equal(await page.locator('#tribal-recognition').isDisabled(),false);
  assert.ok(chiefPanel.includes(generated.chiefPopulation.toLocaleString('en-US')));
  assert.match(chiefPanel,/legal title:/);assert.match(chiefPanel,/personal control is not a recognized sovereign border/);
  await page.locator('#tribal-service').click();
