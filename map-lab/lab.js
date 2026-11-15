@@ -16,11 +16,12 @@ import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../
 import {nationalBudget} from '../national-budget.js?v=19';
 import {budgetHtml} from '../budget-ui.js?v=23';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=28';
+import {physicalStyle} from './physical-style.js?v=29';
 import {physicalLabels} from './physical-labels.js?v=1';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=184';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation} from '../development-ui.js?v=43';
 import {FACTIONS} from '../data.js?v=9';
+import {cultureLabel} from '../culture-labels.js?v=1';
 import {identity,factionMark} from '../identity.js?v=2';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=15';
 import {createCharacterUI} from './character-ui.js?v=110';
@@ -46,7 +47,7 @@ let treeZoom=1;
 
 function showRegion(r){
   showRegionBase(r);
-  if(r&&state.grandMap){const grid=document.querySelector('#command-detail .detail-grid');if(grid){const culture=lang==='zh'?({['roman-local']:'意大利与罗马地方文化',['north-african']:'北非地方文化',hellenic:'希腊化地方文化',egypt:'埃及地方文化',parthia:'帕提亚地方文化',armenia:'亚美尼亚地方文化',bosporus:'博斯普鲁斯地方文化',galatia:'加拉太地方文化'}[r.culture]||r.culture):r.culture;grid.insertAdjacentHTML('beforeend',`<span>${lang==='zh'?'人口估计':'Population estimate'}</span><b>${r.population?.toLocaleString()||'—'}</b><span>${lang==='zh'?'地方文化':'Local culture'}</span><b>${esc(culture)}</b><span>${lang==='zh'?'民众满意度':'Civic satisfaction'}</span><b>${r.owner===state.player?r.civicSatisfaction+'%':lang==='zh'?'未知':'Unknown'}</b>`)}}
+  if(r&&state.grandMap){const grid=document.querySelector('#command-detail .detail-grid');if(grid)grid.insertAdjacentHTML('beforeend',`<span>${lang==='zh'?'人口估计':'Population estimate'}</span><b>${r.population?.toLocaleString()||'—'}</b><span>${lang==='zh'?'地方文化':'Local culture'}</span><b>${esc(cultureLabel(r.culture,lang))}</b><span>${lang==='zh'?'民众满意度':'Civic satisfaction'}</span><b>${r.owner===state.player?r.civicSatisfaction+'%':lang==='zh'?'未知':'Unknown'}</b>`)}
   if(!r||r.owner!==state.player)return;
   const panel=document.querySelector('#command-detail');
   panel.insertAdjacentHTML('beforeend',constructionPanel(state,lang,r));
@@ -112,6 +113,7 @@ let mapSettled={lng:12.4,lat:43.2,zoom:5.45},mapMoveStart=null,mapChartedAt=0,ma
 function revealChart(){
  clearTimeout(mapChartTimer);
  mapCurtain.hidden=true;mapElement.classList.remove('charting');
+ selectElevationDetail();
 }
 async function waitForChartedMap(timeoutMs=11000){
  const deadline=performance.now()+timeoutMs;
@@ -197,6 +199,15 @@ function localReliefLayer(){
  }
  return null;
 }
+function selectElevationDetail(){
+ const local=localReliefLayer(),source=local?.replace(/^relief/,'elevation');
+ const fineNeeded=!source||mapCurtain.hidden&&!(map.isSourceLoaded?.(source)??false);
+ const wanted=fineNeeded?'visible':'none';
+ if(map.getLayer('land-elevation-fine')&&(map.getLayoutProperty('land-elevation-fine','visibility')||'visible')!==wanted)map.setLayoutProperty('land-elevation-fine','visibility',wanted);
+}
+map.on('move',selectElevationDetail);
+map.on('sourcedata',selectElevationDetail);
+map.on('load',selectElevationDetail);
 function showRelief(visible){
  reliefVisible=visible;
  const local=visible?localReliefLayer():null;

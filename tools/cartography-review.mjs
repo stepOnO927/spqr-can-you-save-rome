@@ -48,7 +48,7 @@ try{
    await page.locator('#capture-result').waitFor({state:'attached',timeout:30000});
    if(!await page.evaluate(()=>document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99))throw Error('Screenshot completed before the map returned to full color');
   }
-  jumps.push({name,ms:Date.now()-jumpStarted,loaded:await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.loaded()&&map.areTilesLoaded()})});
+  jumps.push({name,ms:Date.now()-jumpStarted,readiness:await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {loaded:map.loaded(),tilesLoaded:map.areTilesLoaded(),unloadedSources:Object.keys(map.getStyle().sources).filter(id=>!map.isSourceLoaded(id))}})});
   await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()},null,{timeout:20000});
   await page.waitForTimeout(3500);
   await page.screenshot({path:resolve(output,`${name}-before.png`)});
@@ -81,5 +81,5 @@ try{
  if(!(await page.locator('#map-charting').isHidden()))throw Error('A player drag must not hide the map');
  await page.mouse.up();
  if(errors.length)throw Error(`Map page errors: ${errors.join(' | ')}`);
- console.log(`Saved matched close-map screenshots in ${output}`,{samples,jumps});
+ console.log(`Saved matched close-map screenshots in ${output}`,JSON.stringify({samples,jumps},null,2));
 }finally{await browser.close()}
