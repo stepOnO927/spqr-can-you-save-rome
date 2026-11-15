@@ -39,6 +39,14 @@ const TITLES=Object.freeze({
  microstate:[['March','边地小国'],['Court','地方王廷'],['Highland Realm','高地小国']],
  tribe:[['Hill Council','山地议事会'],['River Clan','河谷部族'],['Frontier Assembly','边地部落联盟']]
 });
+const RULER_NAMES=Object.freeze([
+ ['Aleron','阿勒隆'],['Beren','贝伦'],['Damar','达马尔'],['Elyon','埃利翁'],['Haron','哈隆'],
+ ['Ilyra','伊莉拉'],['Keren','凯伦'],['Lysara','莉萨拉'],['Maron','马隆'],['Neressa','涅蕾莎'],
+ ['Oryon','奥里翁'],['Pheron','菲隆'],['Rovena','罗薇娜'],['Salyra','萨莉拉'],['Taron','塔隆'],
+ ['Velira','维莉拉'],['Xeron','泽隆'],['Ylena','伊蕾娜'],['Zareon','扎雷翁'],['Mirena','米蕾娜']
+]);
+const RULER_TITLES=Object.freeze({city_state:['Archon','执政官'],microstate:['Ruler','地方君主'],tribe:['Elder','长老']});
+const PERSONALITIES=Object.freeze(['cautious','pragmatic','bold','ambitious']);
 const BASE=Object.freeze({city_state:[6000,13000,1.25,1.1],microstate:[8000,17000,1.1,1],tribe:[4500,11000,.75,1.2]});
 const next=state=>{state.value=(Math.imul(state.value,1664525)+1013904223)>>>0;return state.value/4294967296};
 const integer=(rng,low,high)=>low+Math.floor(next(rng)*(high-low+1));
@@ -54,11 +62,11 @@ function profile(rng,type,scale,band){
  return {population,militia,treasury,food,fort,strategy:integer(rng,...band.skill)};
 }
 
-export function generatedLocalPolities(seed,difficulty,availableTheaters){
+export function generatedLocalPolities(seed,difficulty,availableTheaters,startYear=-49){
  const band=LOCAL_GENERATION_BANDS[difficulty]||LOCAL_GENERATION_BANDS.standard;
  const rng={value:seed>>>0},sites=LOCAL_GENERATION_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site}));
  for(let i=sites.length-1;i>0;i--){const j=integer(rng,0,i);[sites[i],sites[j]]=[sites[j],sites[i]]}
- const count=Math.min(sites.length,integer(rng,...band.count)),used=new Set();
+ const count=Math.min(sites.length,integer(rng,...band.count)),used=new Set(),usedRulers=new Set();
  const result=[];
  const selected=[];
  if(count>=3)for(const type of ['city_state','microstate','tribe']){const index=sites.findIndex(site=>site.type===type);if(index>=0)selected.push(...sites.splice(index,1))}
@@ -67,9 +75,14 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters){
   let name,english;
   do{const stem=STEMS[integer(rng,0,STEMS.length-1)],title=TITLES[site.type][integer(rng,0,TITLES[site.type].length-1)];name=[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`];english=name[0]}while(used.has(english));
   used.add(english);
+  let rulerName,rulerKey;
+  do{const person=RULER_NAMES[integer(rng,0,RULER_NAMES.length-1)],title=RULER_TITLES[site.type];rulerName=[`${title[0]} ${person[0]}`,`${person[1]}${title[1]}`];rulerKey=rulerName[0]}while(usedRulers.has(rulerKey));
+  usedRulers.add(rulerKey);
+  const age=integer(rng,28,64);
   result.push({id:`generated:${site.theater}`,type:site.type,theater:site.theater,coordinates:site.coordinates,name,
    historical:false,procedural:true,spatialAccuracy:'fictional_approximate_point',
    description:['Fictional autonomous polity generated for this campaign; the point is approximate and does not define a border.','本局生成的架空自治政权；地点为近似点，不代表真实历史边界。'],
+   ruler:{id:`local-ruler:${site.theater}`,name:rulerName,birthYear:startYear-age,personality:PERSONALITIES[integer(rng,0,PERSONALITIES.length-1)],fictional:true},
    maxFootholdLevel:site.type==='tribe'?2:3,...profile(rng,site.type,site.scale,band),seed:integer(rng,0,0xffffffff)});
  }
  return result;

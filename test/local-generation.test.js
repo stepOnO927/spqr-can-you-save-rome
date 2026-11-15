@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=world-kings-trade-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-trade-1';
 import {LOCAL_GENERATION_BANDS} from '../local-generation.js';
-import {localOfferChance,advanceLocalEntities} from '../local-polities.js';
+import {localOfferChance,advanceLocalEntities,localEntity,offerLocalContact} from '../local-polities.js';
+import {receivedMail,replyToLetter} from '../epistulae.js?v=world-kings-trade-1';
 import {inspectState} from '../inspector-diagnostics.js?v=world-kings-trade-1';
 
 const start=(mode,seed)=>configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:seed});
@@ -19,10 +20,11 @@ test('difficulty raises generated polity counts and coherent population, militia
    assert.equal(s.world.localGeneration.count,entities.length);assert.equal(s.world.localGeneration.seed,seed);
    assert.equal(new Set(entities.map(e=>e.name[0])).size,entities.length);
    if(entities.length>=3)assert.deepEqual(new Set(entities.map(e=>e.type)),new Set(['city_state','microstate','tribe']));
-   for(const e of entities){assert.equal(e.historical,false);assert.equal(e.spatialAccuracy,'fictional_approximate_point');assert.equal(e.controller,e.id);assert.ok(e.population>=e.militia*4);assert.ok(e.food>0&&e.treasury>0);assert.ok(e.strategy>=band.skill[0]&&e.strategy<=band.skill[1]);assert.ok(s.regions.some(r=>r.id===e.theater&&r.localEntities.includes(e)))}
+   assert.equal(new Set(entities.map(e=>e.ruler.name[0])).size,entities.length);
+   for(const e of entities){assert.equal(e.historical,false);assert.equal(e.spatialAccuracy,'fictional_approximate_point');assert.equal(e.controller,e.id);assert.ok(e.population>=e.militia*4);assert.ok(e.food>0&&e.treasury>0);assert.ok(e.strategy>=band.skill[0]&&e.strategy<=band.skill[1]);assert.ok(s.regions.some(r=>r.id===e.theater&&r.localEntities.includes(e)));assert.equal(s.world.localRulers[e.ruler.id].polityId,e.id);assert.deepEqual(s.world.localRulers[e.ruler.id].name,e.ruler.name);assert.ok(s.year-s.world.localRulers[e.ruler.id].birthYear>=28)}
    if(previousAnchor){assert.ok(anchor.population>previousAnchor.population);assert.ok(anchor.militia>previousAnchor.militia);assert.ok(anchor.treasury>previousAnchor.treasury);assert.ok(anchor.food>previousAnchor.food)}
    previousAnchor=anchor;
-   assert.equal(inspectState(s).filter(f=>f.code==='invalid-generated-polity'||f.code==='invalid-local-generation').length,0);
+   assert.equal(inspectState(s).filter(f=>['invalid-generated-polity','invalid-local-generation','invalid-local-ruler-registry'].includes(f.code)).length,0);
   }
  }
 });
@@ -33,8 +35,10 @@ test('campaigns vary by seed, replay the same seed, and keep all generated value
  assert.notDeepEqual(generated(first).map(e=>e.name),generated(other).map(e=>e.name));
  const saved=upgradeSave(JSON.parse(JSON.stringify(first)));
  assert.deepEqual(generated(saved),generated(first));assert.deepEqual(saved.world.localGeneration,first.world.localGeneration);
+ assert.deepEqual(saved.world.localRulers,first.world.localRulers);
  const legacy=newGame('caesar');const upgraded=upgradeSave(JSON.parse(JSON.stringify(legacy)));
  assert.equal(generated(upgraded).length,0);assert.equal(upgraded.world.localGeneration,undefined);
+ assert.equal(upgraded.world.localRulers['commagene-antiochus-i'].polityId,'commagene');
 });
 
 test('higher council skill weighs local strength and nearby military pressure in negotiations',()=>{
@@ -65,4 +69,25 @@ test('a well funded council can improve its fort once in a quiet year',()=>{
  e.strategy=5;e.fort=1;e.treasury=30;e.food=10;s.month=12;
  advanceLocalEntities(s);assert.equal(e.fort,2);assert.equal(e.treasury,18);assert.equal(e.food,8);
  advanceLocalEntities(s);assert.equal(e.fort,2);assert.equal(e.treasury,18);assert.equal(e.food,8);
+});
+
+test('a generated ruler stays identified in the saved outcome and the player receives one delayed envoy report',()=>{
+ const s=start('expert',2),e=localEntity(s,'generated:narbo');
+ assert.ok(e?.ruler?.name?.[0]);
+ assert.equal(offerLocalContact(s,e.id,'caesar','access').ok,true);
+ assert.equal(receivedMail(s).filter(m=>m.context?.kind==='local_contact_result').length,0);
+ for(let n=0;n<2;n++){s.month++;advanceLocalEntities(s)}
+ const result=receivedMail(s).filter(m=>m.context?.kind==='local_contact_result');
+ assert.equal(result.length,1);assert.equal(result[0].context.polityId,e.id);
+ assert.deepEqual(result[0].context.rulerName,e.ruler.name);
+ assert.ok(result[0].body[0].includes(e.ruler.name[0]));
+ assert.equal(result[0].context.accepted,e.lastOutcome.accepted);
+ assert.equal(e.lastOutcome.mailId,result[0].id);
+ assert.equal(replyToLetter(s,result[0].id,'acknowledge',{}).ok,true);
+ assert.equal(result[0].responses[0].choice,'acknowledge');
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(receivedMail(saved).filter(m=>m.context?.kind==='local_contact_result'),result);
+ advanceLocalEntities(saved);
+ assert.equal(receivedMail(saved).filter(m=>m.context?.kind==='local_contact_result').length,1);
+ assert.equal(inspectState(saved).filter(f=>f.code==='invalid-local-ruler-registry').length,0);
 });

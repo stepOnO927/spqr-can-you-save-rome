@@ -79,16 +79,21 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
    if(!factionIds.has(incident?.attacker)||!factionIds.has(incident?.defender)||!regionIds.has(incident?.territory)||incident?.origin&&!regionIds.has(incident.origin))add('warning','invalid-border-incident',base,String(incident?.territory));
    if(!Number.isFinite(incident?.attackerLoss)||incident.attackerLoss<0||!Number.isFinite(incident?.defenderLoss)||incident.defenderLoss<0)add('warning','invalid-border-loss',base,String(incident?.attackerLoss));
   }
-  const localIds=new Set();let generatedCount=0;
+  const localIds=new Set(),localRulerIds=new Set();let generatedCount=0;
   for(const [i,r] of s.regions.entries())for(const [j,entity] of (r.localEntities||[]).entries()){
    const base=`regions[${i}].localEntities[${j}]`;
    if(!entity?.id||localIds.has(entity.id))add('fatal','duplicate-local-entity',base,String(entity?.id));else localIds.add(entity.id);
    if(entity?.theater!==r.id||!Array.isArray(entity.coordinates)||entity.coordinates.length!==2||entity.coordinates.some(value=>!Number.isFinite(value)))add('fatal','invalid-local-geography',base,String(entity?.theater));
    if(!['city_state','roman_town','microstate','tribe','strongman','village','wilderness','nomadic'].includes(entity?.type))add('fatal','invalid-local-type',base,String(entity?.type));
    if(entity?.ruler&&(!entity.ruler.id||!Array.isArray(entity.ruler.name)||entity.ruler.name.length!==2||entity.ruler.name.some(name=>typeof name!=='string'||!name)))add('warning','invalid-local-ruler',`${base}.ruler`,String(entity.ruler?.id));
+   if(entity?.ruler?.id){
+    const ruler=s.world?.localRulers?.[entity.ruler.id];
+    if(localRulerIds.has(entity.ruler.id)||!ruler||ruler.polityId!==entity.id||JSON.stringify(ruler.name)!==JSON.stringify(entity.ruler.name)||ruler.alive!==true||entity.procedural&&(!Number.isInteger(ruler.birthYear)||!ruler.fictional))add('warning','invalid-local-ruler-registry',`${base}.ruler`,String(entity.ruler.id));
+    localRulerIds.add(entity.ruler.id);
+   }
    if(entity?.controller!==entity?.id&&!factionIds.has(entity?.controller))add('fatal','invalid-local-controller',`${base}.controller`,String(entity?.controller));
    if(!Number.isFinite(entity?.militia)||entity.militia<0)add('fatal','invalid-local-militia',`${base}.militia`,String(entity?.militia));
-   if(entity?.procedural){generatedCount++;if(entity.historical!==false||entity.spatialAccuracy!=='fictional_approximate_point'||!Array.isArray(entity.name)||entity.name.length!==2||entity.name.some(name=>typeof name!=='string'||!name)||!Number.isInteger(entity.population)||entity.population<100||entity.militia>entity.population/4||!Number.isFinite(entity.treasury)||entity.treasury<0||!Number.isFinite(entity.food)||entity.food<0||!Number.isInteger(entity.strategy)||entity.strategy<1||entity.strategy>5)add('warning','invalid-generated-polity',base,String(entity.id))}
+   if(entity?.procedural){generatedCount++;if(entity.historical!==false||entity.spatialAccuracy!=='fictional_approximate_point'||!Array.isArray(entity.name)||entity.name.length!==2||entity.name.some(name=>typeof name!=='string'||!name)||!entity.ruler?.id||!Number.isInteger(entity.population)||entity.population<100||entity.militia>entity.population/4||!Number.isFinite(entity.treasury)||entity.treasury<0||!Number.isFinite(entity.food)||entity.food<0||!Number.isInteger(entity.strategy)||entity.strategy<1||entity.strategy>5)add('warning','invalid-generated-polity',base,String(entity.id))}
    if(entity.resistance!=null&&(!Number.isFinite(entity.resistance)||entity.resistance<0||entity.resistance>100))add('fatal','invalid-local-resistance',`${base}.resistance`,String(entity.resistance));
    if(entity.type==='village'){
     const v=entity.village,level=(key,max)=>Number.isInteger(v?.[key])&&v[key]>=0&&v[key]<=max;

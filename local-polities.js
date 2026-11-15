@@ -1,5 +1,6 @@
 import {ROUTES} from './data.js?v=world-kings-trade-1';
 import {generatedLocalPolities,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js';
+import {sendLetter} from './epistulae.js?v=world-kings-trade-1';
 
 // Settlement control is stored inside its host theater. An autonomous city
 // does not transfer the whole theater, and its point is not a border polygon.
@@ -67,6 +68,17 @@ const roll = entity => {
 };
 const host = (state, entity) => state.regions.find(region => region.id === entity.theater);
 export const localEntity = (state, id) => state.regions.flatMap(region => region.localEntities || []).find(entity => entity.id === id) || null;
+export function initializeLocalRulers(state){
+ state.world ||= {};
+ state.world.localRulers ||= {};
+ for(const region of state.regions)for(const entity of region.localEntities||[]){
+  if(!entity.ruler?.id||state.world.localRulers[entity.ruler.id])continue;
+  const {id,name,birthYear,personality,fictional,source}=entity.ruler;
+  state.world.localRulers[id]={id,polityId:entity.id,name:structuredClone(name),birthYear:birthYear??null,
+   personality:personality??null,fictional:!!fictional,source:source??null,alive:true};
+ }
+ return state;
+}
 // A settlement's status follows current population, production and infrastructure.
 // It is a local classification, never an independent country or legal title.
 export function villageDevelopment(village) {
@@ -113,7 +125,7 @@ export function initializeLocalEntities(state, {opening = false} = {}) {
       seed: 49149
     });
   }
-  return state;
+  return initializeLocalRulers(state);
 }
 
 // Difficulty is selected after the opening state is assembled. Only new
@@ -128,7 +140,7 @@ export function generateOpeningLocalPolities(state,difficulty,seed){
   const profile=historicalLocalProfile(hash(id),difficulty,entity.type,id==='massilia'?1.15:1);
   Object.assign(entity,profile,{seed:hash(`${id}:decisions`)});
  }
- const candidates=generatedLocalPolities(number,difficulty,new Set(state.regions.map(region=>region.id)));
+ const candidates=generatedLocalPolities(number,difficulty,new Set(state.regions.map(region=>region.id)),state.year);
  for(const template of candidates){
   const region=host(state,template);if(!region)continue;
   region.localEntities||=[];
@@ -138,7 +150,27 @@ export function generateOpeningLocalPolities(state,difficulty,seed){
    resistance:0,lastOfferAt:{}});
  }
  state.world.localGeneration={version:1,seed:number,difficulty,count:candidates.length};
- return state;
+ return initializeLocalRulers(state);
+}
+
+function reportLocalOffer(state,entity,pending,accepted){
+ if(pending.actor!==state.player)return null;
+ const zhName=entity.name[1],enName=entity.name[0];
+ const ruler=state.world?.localRulers?.[entity.ruler?.id];
+ const officialEn=ruler?.name?.[0]||'the local council',officialZh=ruler?.name?.[1]||'当地议事机构';
+ const kind=pending.proposal==='access'?'access':pending.proposal==='protectorate'?'protectorate':'submission';
+ const subject={access:[`Access reply from ${enName}`,`${zhName}的通行答复`],protectorate:[`Protectorate reply from ${enName}`,`${zhName}的附属答复`],submission:[`Submission reply from ${enName}`,`${zhName}的归降答复`]}[kind];
+ const outcome=accepted?['accepted','接受']:['refused','拒绝'];
+ const body=[`Our envoy reports that ${officialEn} has ${outcome[0]} the ${kind} proposal at ${enName}.`,
+  `我方使者回报：${officialZh}已${outcome[1]}向${zhName}提出的${{access:'通行',protectorate:'自治附属',submission:'归降'}[kind]}提议。`];
+ const sent=sendLetter(state,{senderFaction:pending.actor,senderInstitution:pending.actor,recipient:pending.actor,category:'government',
+  subject,body,options:['acknowledge'],source:entity.theater,priority:'routine',
+  eventId:`local:${entity.id}:${kind}:${pending.sentYear}:${pending.sentMonth}`,
+  context:{kind:'local_contact_result',polityId:entity.id,proposal:kind,accepted,rulerId:ruler?.id||null,rulerName:ruler?.name||null}});
+ if(!sent.ok)return null;
+ // The negotiation's existing multi-month delay includes the envoy's return trip.
+ sent.letter.arrival=now(state);sent.letter.delivery='received';
+ return sent.letter.id;
 }
 
 export function localContactQuote(state, id, actor = state.player, proposal = 'access') {
@@ -252,7 +284,7 @@ export function advanceLocalEntities(state) {
       }
     }
     if (entity.pending && --entity.pending.remaining <= 0) {
-      const {actor, proposal, expectedController} = entity.pending;
+      const pending=entity.pending,{actor, proposal, expectedController} = pending;
       const submission = proposal === 'submission';
       const accepted = submission ? entity.type === 'roman_town' && entity.controller === expectedController && state.wars.some(pair => pair.includes(actor) && pair.includes(expectedController)) && host(state, entity)?.owner === actor && !entity.siege && state.armies.some(army => army.owner === actor && army.region === entity.theater && !army.move && army.men >= Math.max(1000, entity.militia)) && roll(entity) < 0.6 : entity.controller === entity.id && !entity.siege && roll(entity) < localOfferChance(state,entity,actor,proposal);
       entity.lastOutcome = {actor, proposal, accepted, year: state.year, month: state.month};
@@ -260,6 +292,7 @@ export function advanceLocalEntities(state) {
       if (accepted && proposal === 'access') entity.access[actor] = now(state) + 24;
       if (accepted && proposal === 'protectorate') entity.overlord = actor;
       if (accepted && submission) { entity.controller = actor; entity.militaryOccupier = actor; entity.administrativeStatus = 'occupied'; entity.resistance = 18; }
+      entity.lastOutcome.mailId=reportLocalOffer(state,entity,pending,accepted);
     }
     if (entity.siege) {
       const {actor, armyId} = entity.siege, army = state.armies.find(unit => unit.id === armyId && unit.owner === actor && unit.region === entity.theater && !unit.move && unit.men > 0);

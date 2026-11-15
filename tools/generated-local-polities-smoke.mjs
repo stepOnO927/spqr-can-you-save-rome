@@ -17,7 +17,7 @@ try{
   const known=entities.find(entity=>localDiscoveryLevel(s,s.player,entity.id)>=3);
   if(!known)throw Error('no discovered generated polity');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
-  return {count:entities.length,name:known.name[0].toUpperCase(),population:known.population};
+  return {count:entities.length,name:known.name[0].toUpperCase(),population:known.population,ruler:known.ruler.name[0]};
  });
  assert.ok(generated.count>=6&&generated.count<=7);
  await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});
@@ -26,12 +26,14 @@ try{
  const panel=await page.locator('#command-detail').innerText();
  assert.match(panel,/Fictional autonomous polity generated for this campaign/);
  assert.ok(panel.includes(generated.population.toLocaleString('en-US')));
+ assert.ok(panel.includes(generated.ruler));
  assert.match(panel,/NEGOTIATE LOCAL ACCESS/);
  await page.locator('#save').click();
  await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=world-kings-trade-1');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:newGame('caesar')}))});
  await page.reload();await page.locator('.city-marker').first().waitFor();assert.equal(await marker.count(),0);
  await page.locator('#load').click();await marker.waitFor({state:'visible'});
  await marker.click();assert.ok((await page.locator('#command-detail').innerText()).includes(generated.population.toLocaleString('en-US')));
+ assert.ok((await page.locator('#command-detail').innerText()).includes(generated.ruler));
  assert.deepEqual(errors,[]);
  console.log('Built Map Lab displays a generated polity, local actions and the same saved profile after loading.');
 }finally{await browser.close()}
