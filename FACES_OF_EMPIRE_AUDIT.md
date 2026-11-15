@@ -25,6 +25,9 @@ or insufficient funds retains the existing blocked-caravan settlement. Saved
 reroute history, the Silk Road caravan display, and one-time delivery are
 covered by focused tests. This does not imply that trade networks can bypass
 every blockade.
+Existing prepaid transit duties keep their original rates when a caravan
+still crosses those states. The Roman and Han market receipts now format
+transaction dates with BCE/CE calendar labels in English and Chinese.
 
 Actual hostile siege or occupation now halves local agricultural output in
 both campaigns. This affects monthly food or grain, measured market stock,

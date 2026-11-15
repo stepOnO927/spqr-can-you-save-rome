@@ -282,7 +282,8 @@ function rerouteBlockedShipment(s,shipment){
  const prefix=shipment.route.slice(0,shipment.leg+1),route=[...prefix,...detour.path.slice(1)];
  if(route.join('|')===shipment.route.join('|'))return false;
  const owners=[...new Set(route.slice(1,-1).map(id=>node(s,id)?.owner).filter(owner=>owner&&owner!==shipment.seller&&owner!==shipment.buyer))];
- const tariffs=owners.map(owner=>({owner,amount:Math.ceil(shipment.price*clamp(s.markets.tariffs[owner]??.05,0,.3))}));
+ const prepaid=new Map(shipment.tariffs.map(t=>[t.owner,t.amount]));
+ const tariffs=owners.map(owner=>({owner,amount:prepaid.get(owner)??Math.ceil(shipment.price*clamp(s.markets.tariffs[owner]??.05,0,.3))}));
  const oldTariffs=shipment.tariffs.reduce((sum,t)=>sum+t.amount,0),newTariffs=tariffs.reduce((sum,t)=>sum+t.amount,0);
  const oldMonths=shipment.legs.slice(shipment.leg).reduce((sum,item)=>sum+item.months,0);
  const extraTransport=Math.ceil(Math.max(0,detour.cost-oldMonths)*shipment.quantity/5);

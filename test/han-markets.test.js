@@ -345,12 +345,15 @@ test('an eastern caravan reroutes around a wartime transit state and pays the re
  const placed=placeEasternTrade(s,order);assert.equal(placed.ok,true);
  assert.deepEqual(placed.shipment.path,['kangju','wusun','qiuci','wulei','shanshan','dunhuang']);
  const cash=s.factions.han.treasury,duty=placed.shipment.tariffs.find(x=>x.owner==='wusun').amount;
+ const quotedQiuci=placed.shipment.tariffs.find(x=>x.owner==='qiuci').amount;
+ s.tradeMarkets.tariffs.qiuci=.3;
  assert.equal(declareWar(s,'han','wusun').ok,true);
  next(s);
  const rerouted=s.tradeMarkets.shipments[0];
  assert.deepEqual(rerouted.path.slice(0,3),['kangju','dayuan','shule']);
  assert.equal(rerouted.reroutes.length,1);assert.equal(rerouted.status,'traveling');
  assert.ok(!rerouted.tariffs.some(x=>x.owner==='wusun'));
+ assert.equal(rerouted.tariffs.find(x=>x.owner==='qiuci').amount,quotedQiuci,'an existing transit duty keeps its prepaid rate');
  assert.equal(s.factions.han.treasury,cash-rerouted.reroutes[0].extraTransport-rerouted.reroutes[0].tariffChange);
  assert.equal(rerouted.escrow,rerouted.price+rerouted.transport+rerouted.tariffs.reduce((sum,t)=>sum+t.amount,0));
  s=loadHanSave(serialize(s));const shipment=s.tradeMarkets.shipments[0];

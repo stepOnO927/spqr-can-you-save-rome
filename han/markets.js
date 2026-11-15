@@ -268,7 +268,8 @@ function rerouteEasternShipment(s,shipment){
  if(path.join('|')===shipment.path.join('|'))return false;
  const legs=legsFor(detour),oldMonths=shipment.legs.slice(shipment.leg).reduce((sum,item)=>sum+item.months,0);
  const extraTransport=Math.ceil(Math.max(0,legs.reduce((sum,item)=>sum+item.months,0)-oldMonths)*shipment.quantity/5);
- const tariffs=travelQuote(s,path,shipment.quantity,shipment.price,shipment.buyer,shipment.seller).tariffs;
+ const prepaid=new Map(shipment.tariffs.map(t=>[t.owner,t.amount]));
+ const tariffs=travelQuote(s,path,shipment.quantity,shipment.price,shipment.buyer,shipment.seller).tariffs.map(t=>({owner:t.owner,amount:prepaid.get(t.owner)??t.amount}));
  const oldTariffs=shipment.tariffs.reduce((sum,item)=>sum+item.amount,0),newTariffs=tariffs.reduce((sum,item)=>sum+item.amount,0);
  const additional=extraTransport+newTariffs-oldTariffs;
  const cash=shipment.buyer==='external'?s.tradeMarkets.externalTreasury:s.factions[shipment.buyer]?.treasury;

@@ -52,6 +52,7 @@ try{
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Delivered/);
  assert.match(await page.locator('.market-receipts').innerText(),/Kangju.*Dunhuang/);
  assert.match(await page.locator('.market-receipts').innerText(),/Goods.*Transport.*Tariffs.*Total/);
+ assert.match(await page.locator('.market-receipts').innerText(),/49 BCE/);
  await page.locator('.territory[data-region="dunhuang"]').click({force:true});await page.locator('#trade-panel').click();
  assert.equal(await page.locator('#east-remount-assign').isDisabled(),false);
  await page.locator('#save').click();const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
@@ -70,6 +71,7 @@ try{
  assert.match(await page.locator('#inspector').innerText(),/出口管制/);
  assert.match(await page.locator('#inspector').innerText(),/挂牌出售/);
  assert.match(await page.locator('.market-receipts').innerText(),/货价.*运费.*过境税.*总计/);
+ assert.match(await page.locator('.market-receipts').innerText(),/公元前49年/);
  await page.evaluate(async()=>{
   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js');
   const {propose,declareWar}=await import('/han/frontier.js?v=faces-reported-names-1');

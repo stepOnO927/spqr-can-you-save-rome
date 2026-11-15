@@ -55,6 +55,7 @@ try{
  await page.locator('#advance').click();
  await page.locator('#markets').click();
  assert.match(await page.locator('.market-panel').innerText(),/RECENT TRADE RESULTS/);
+ assert.match(await page.locator('.market-panel').innerText(),/49 BCE/);
  assert.match(await page.locator('.market-panel').innerText(),/Cisalpine.*Narbo|Northern Italy.*Narbo/);
  assert.match(await page.locator('.market-panel').innerText(),/Goods.*Transport.*Customs.*Total/);
  await page.locator('#save').click();
@@ -82,6 +83,7 @@ try{
  await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#markets').click();
  assert.match(await page.locator('.market-panel').innerText(),/商队中止.*货物退回.*退款.*运费支出/s);
+ assert.match(await page.locator('.market-panel').innerText(),/公元前\d+年/);
  assert.match(await page.locator('.market-panel').innerText(),/西汉帝国.*帕提亚/);
  await page.locator('#language').click();
  assert.match(await page.locator('.market-panel').innerText(),/Caravan stranded.*Goods returned to.*Refund.*Transport spent/s);
