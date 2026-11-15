@@ -7,10 +7,13 @@ const base='http://127.0.0.1:5174',other='http://localhost:5174',failures=[];
 const browser=await chromium.launch({headless:true,...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{}),args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 async function open(url){
   const page=await browser.newPage({acceptDownloads:true,viewport:{width:1920,height:1080}});
+  await page.route(/cloudflareinsights\.com|googletagmanager\.com/,route=>route.abort());
   page.on('pageerror',error=>failures.push(`${url}: ${error.message}`));
   page.on('response',response=>{if(response.status()>=400&&new URL(response.url()).origin===new URL(url).origin&&!response.url().endsWith('/favicon.ico'))failures.push(`${response.status()} ${response.url()}`)});
   const response=await page.goto(url,{waitUntil:'domcontentloaded'});
   assert.equal(response.status(),200,url);
+  assert.equal(await page.locator('script[src*="cloudflareinsights.com"]').count(),0,'test server must remove the public beacon');
+  assert.equal(await page.evaluate(()=>window.__SPQR_TEST_MODE?.kind),'local_preview');
   await page.locator('#save-transfer-open').waitFor();
   await page.locator('.spqr-version').click();
   assert.match(await page.locator('.spqr-release-dialog').innerText(),/0\.1\.0/);

@@ -6,7 +6,11 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `a9f829ed`. The new personal-audience
+The draft now includes main through `fa3020c9`. Main's optional analytics
+is connected across the campaign, atlas and standalone Han views after
+reconciling their differing controls. Its privacy choice remains opt-in;
+the six new analytics unit cases and the full 1,187-test local suite pass.
+The new personal-audience
 mail records completed meetings and explicit refusals, while silence and
 failed contact produce no invented correspondence. Its names are saved at
 request or observation time from the active campaign catalog. The merged
@@ -21,7 +25,7 @@ covers visibility and save/load; the cloud browser smoke also exercises the
 mode. The merged personal-meeting
 update records the name in the campaign's saved catalog at the time of a
 completed audience, so a stale shared catalog cannot overwrite that
-observation. The latest 1,181-test local simulation suite and the full
+observation. The earlier 1,181-test local simulation suite and the full
 120-month market script pass. Two earlier 1,180-test runs passed after the
 main integration; an initial intermittent failure did not recur. Earlier head
 `cc3e6835` passed all three GitHub browser jobs, quality, Pages packaging,
