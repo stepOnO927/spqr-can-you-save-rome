@@ -69,7 +69,7 @@ function showDevelopment(page='research'){
   bindDevelopmentTreeNavigation(panel);
   panel.querySelectorAll('[data-dev-page]').forEach(button=>button.onclick=()=>showDevelopment(button.dataset.devPage));
   panel.querySelectorAll('[data-dev-branch]').forEach(button=>button.onclick=()=>{devBranch=button.dataset.devBranch;showDevelopment(page)});
-  const act=(selector,fn)=>panel.querySelectorAll(selector).forEach(button=>button.onclick=()=>{const result=fn(button);if(result.ok){renderHud();showDevelopment(page)}else{const feedback=document.createElement('p');feedback.className='dev-status';feedback.textContent=`${lang==='zh'?'操作不可用':'Unavailable'}: ${result.reason}`;button.after(feedback)}});
+  const act=(selector,fn)=>panel.querySelectorAll(selector).forEach(button=>button.onclick=()=>{const result=fn(button);if(result.ok){renderHud();showDevelopment(page)}else{const feedback=document.createElement('p');feedback.className='dev-status';feedback.textContent=result.reason==='access'?(lang==='zh'?'没有可通行的知识传递路线。':'No civilian route for knowledge transfer.'):`${lang==='zh'?'操作不可用':'Unavailable'}: ${result.reason}`;button.after(feedback)}});
   act('[data-research]',b=>researchInnovation(state,state.player,b.dataset.researchBranch,b.dataset.research));
   act('[data-recruit-figure]',b=>recruitFigure(state,state.player,b.dataset.recruitFigure));
   act('[data-adopt-idea]',b=>adoptIdea(state,state.player,b.dataset.adoptIdea,Number(b.dataset.slot)));

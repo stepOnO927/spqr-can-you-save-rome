@@ -263,11 +263,20 @@ export function ideaCompatibility(s,owner,ideaId,slot){
   const conflict=active.find(id=>idea.conflicts?.includes(id)||IDEAS.find(x=>x.id===id)?.conflicts?.includes(ideaId));
   return conflict?{ok:false,reason:'conflict',with:conflict}:{ok:true};
 }
+const religiousAdoptionIdeas=new Set(['sanctuary-protection','ancestral-rites','provincial-rites-charter']);
+function adoptionSpecialist(idea){
+ if(idea.category==='military'||idea.id==='civic-exercise')return 'military';
+ if(idea.category==='government'||idea.id==='cultural-accommodation')return 'statesman';
+ if(idea.id==='public-works')return 'engineer';
+ if(religiousAdoptionIdeas.has(idea.id))return 'religious';
+ if(idea.category==='culture')return 'scholar';
+ return null;
+}
 export function ideaAdoptionPlan(s,owner,ideaId,slot=0){
   const d=development(s,owner),idea=IDEAS.find(x=>x.id===ideaId),f=s.factions[owner];
   if(!idea||!Number.isInteger(slot)||slot<0||slot>=d.slots[idea.category]?.length)return {ok:false,reason:'unavailable'};
-  const old=d.slots[idea.category][slot],specialist=idea.category==='military'?'military':idea.category==='government'?'statesman':idea.category==='culture'?'religious':null;
-  const plan={cost:idea.adopt,months:Math.max(1,(old?3:2)+(activeEffects(s,owner).decisionDelay||0)+(d.foreignOrigins[ideaId]||idea.origin&&owner!==idea.origin?2:0)-(specialist&&figureActive(s,owner,specialist)?1:0)),stabilityLoss:old&&old!==ideaId?2:0,old};
+  const old=d.slots[idea.category][slot],specialist=adoptionSpecialist(idea),adviserActive=!!(specialist&&figureActive(s,owner,specialist));
+  const plan={cost:idea.adopt,months:Math.max(1,(old?3:2)+(activeEffects(s,owner).decisionDelay||0)+(d.foreignOrigins[ideaId]||idea.origin&&owner!==idea.origin?2:0)-(adviserActive?1:0)),stabilityLoss:old&&old!==ideaId?2:0,old,specialist,adviserActive};
   if(!d.knownIdeas.includes(ideaId)||d.adoption)return {...plan,ok:false,reason:'unavailable'};
   const compatible=ideaCompatibility(s,owner,ideaId,slot);if(!compatible.ok)return {...plan,...compatible};
   if(old===ideaId)return {...plan,ok:false,reason:'active'};
@@ -337,6 +346,25 @@ export function purchaseMaterials(s,owner,kind,amount=5){
   const cost=unit*quantity;if(f.treasury<cost)return {ok:false,reason:'treasury'};
   f.treasury-=cost;d.materials[kind]+=quantity;return {ok:true,cost,quantity};
 }
+function knowledgeCorridor(s,sender,receiver){
+ // Either court may send a civilian courier to hand over the agreed material.
+ for(const [courier,host] of [[sender,receiver],[receiver,sender]]){
+  const regions=new Map(s.regions.map(r=>[r.id,r])),queue=s.regions.filter(r=>r.owner===courier).map(r=>r.id),seen=new Set(queue),neighbors=new Map();
+  for(const [a,b] of s.grandMap?GRAND_ROUTES:ROUTES){
+   if(!regions.has(a)||!regions.has(b))continue;
+   if(!neighbors.has(a))neighbors.set(a,[]);if(!neighbors.has(b))neighbors.set(b,[]);
+   neighbors.get(a).push(b);neighbors.get(b).push(a);
+  }
+  for(let i=0;i<queue.length;i++)for(const id of neighbors.get(queue[i])||[]){
+   if(seen.has(id))continue;
+   const ruler=regions.get(id).owner;
+   if(ruler==='rebels'||atWarWith(s,courier,ruler))continue;
+   if(ruler===host)return true;
+   seen.add(id);queue.push(id);
+  }
+ }
+ return false;
+}
 export function knowledgeTrade(s,buyer,seller,branch,id){
   initializeDevelopment(s);
   if(seller===s.player&&buyer!==s.player)return {ok:false,reason:'consent'};
@@ -345,6 +373,7 @@ export function knowledgeTrade(s,buyer,seller,branch,id){
   const item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id);
   if(!key||!item||!bd||!sd||!sd[key].includes(id)||bd[key].includes(id)||bd.trade.some(t=>t.id===id&&t.branch===branch))return {ok:false,reason:'knowledge'};
   if(s.wars.some(w=>w.includes(buyer)&&w.includes(seller)))return {ok:false,reason:'war'};
+  if(!knowledgeCorridor(s,seller,buyer))return {ok:false,reason:'access'};
   const relation=s.relations[[buyer,seller].sort().join(':')]||0;
   if(relation<0)return {ok:false,reason:'relations'};
   if(strategicKnowledge.has(id)&&relation<30)return {ok:false,reason:'strategic'};
@@ -357,6 +386,7 @@ export function sellKnowledge(s,seller,buyer,branch,id){
  initializeDevelopment(s);const source=s.development[seller],recipient=s.development[buyer],key=branch==='material'?'knownMaterial':branch==='idea'?'knownIdeas':null,item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id);
  if(!source||!recipient||!key||!item||!source[key].includes(id)||recipient[key].includes(id)||recipient.trade.some(t=>t.id===id&&t.branch===branch))return {ok:false,reason:'knowledge'};
  if(s.wars.some(w=>w.includes(seller)&&w.includes(buyer)))return {ok:false,reason:'war'};
+ if(!knowledgeCorridor(s,seller,buyer))return {ok:false,reason:'access'};
  const relation=s.relations[[seller,buyer].sort().join(':')]??0,price=Math.max(12,Math.round(item.cost*.9));
  if(relation<15)return {ok:false,reason:'relations'};
  if(strategicKnowledge.has(id)&&relation<30)return {ok:false,reason:'strategic'};
@@ -373,6 +403,7 @@ export function proposeKnowledgeSale(s,seller,buyer,branch,id){
  const item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id);
  if(!source||!recipient||!key||!item||!source[key].includes(id)||recipient[key].includes(id)||recipient.trade.some(t=>t.branch===branch&&t.id===id)||recipient.offers.some(o=>o.seller===seller&&o.branch===branch&&o.id===id)||recipient.offers.length>=3)return {ok:false,reason:'knowledge'};
  if(s.wars.some(w=>w.includes(seller)&&w.includes(buyer)))return {ok:false,reason:'war'};
+ if(!knowledgeCorridor(s,seller,buyer))return {ok:false,reason:'access'};
  const relation=s.relations[[seller,buyer].sort().join(':')]??0;
  if(relation<15)return {ok:false,reason:'relations'};
  if(strategicKnowledge.has(id)&&relation<30)return {ok:false,reason:'strategic'};
@@ -386,6 +417,7 @@ export function proposeKnowledgePurchase(s,buyer,seller,branch,id){
  const item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id);
  if(!source||!recipient||!key||!item||!source[key].includes(id)||recipient[key].includes(id)||recipient.trade.some(t=>t.branch===branch&&t.id===id)||source.purchaseRequests.some(o=>o.buyer===buyer&&o.branch===branch&&o.id===id)||source.purchaseRequests.length>=3)return {ok:false,reason:'knowledge'};
  if(s.wars.some(w=>w.includes(seller)&&w.includes(buyer)))return {ok:false,reason:'war'};
+ if(!knowledgeCorridor(s,seller,buyer))return {ok:false,reason:'access'};
  const relation=s.relations[[seller,buyer].sort().join(':')]??0;
  if(relation<15)return {ok:false,reason:'relations'};
  if(strategicKnowledge.has(id)&&relation<30)return {ok:false,reason:'strategic'};
@@ -423,6 +455,7 @@ export function exchangeKnowledge(s,a,b,offerBranch,offerId,wantBranch,wantId){
  if(!ad||!bd||!ak||!bk||!ad[ak].includes(offerId)||!bd[bk].includes(wantId)||ad[bk].includes(wantId)||bd[ak].includes(offerId))return {ok:false,reason:'knowledge'};
  if(ad.trade.some(t=>t.id===wantId&&t.branch===wantBranch)||bd.trade.some(t=>t.id===offerId&&t.branch===offerBranch))return {ok:false,reason:'pending'};
  if(s.wars.some(w=>w.includes(a)&&w.includes(b)))return {ok:false,reason:'war'};
+ if(!knowledgeCorridor(s,a,b))return {ok:false,reason:'access'};
  if((s.relations[[a,b].sort().join(':')]??0)<20)return {ok:false,reason:'relations'};
  if((strategicKnowledge.has(offerId)||strategicKnowledge.has(wantId))&&(s.relations[[a,b].sort().join(':')]??0)<30)return {ok:false,reason:'strategic'};
  if(s.factions[a].treasury<8||s.factions[b].treasury<8)return {ok:false,reason:'treasury'};
@@ -437,6 +470,7 @@ export function proposeKnowledgeExchange(s,partner,player,offerBranch,offerId,wa
  const pd=s.development[partner],recipient=s.development[player],offerKey=offerBranch==='material'?'knownMaterial':offerBranch==='idea'?'knownIdeas':null,wantKey=wantBranch==='material'?'knownMaterial':wantBranch==='idea'?'knownIdeas':null;
  if(!pd||!recipient||!offerKey||!wantKey||!(offerBranch==='material'?MATERIALS:IDEAS).some(x=>x.id===offerId)||!(wantBranch==='material'?MATERIALS:IDEAS).some(x=>x.id===wantId)||!pd[offerKey].includes(offerId)||!recipient[wantKey].includes(wantId)||pd[wantKey].includes(wantId)||recipient[offerKey].includes(offerId)||pd.trade.some(t=>t.branch===wantBranch&&t.id===wantId)||recipient.trade.some(t=>t.branch===offerBranch&&t.id===offerId)||recipient.exchangeRequests.some(x=>x.partner===partner)||recipient.exchangeRequests.length>=3)return {ok:false,reason:'knowledge'};
  if(s.wars.some(w=>w.includes(partner)&&w.includes(player)))return {ok:false,reason:'war'};
+ if(!knowledgeCorridor(s,partner,player))return {ok:false,reason:'access'};
  const relation=s.relations[[partner,player].sort().join(':')]??0;
  if(relation<20)return {ok:false,reason:'relations'};
  if((strategicKnowledge.has(offerId)||strategicKnowledge.has(wantId))&&relation<30)return {ok:false,reason:'strategic'};
@@ -534,6 +568,7 @@ export function knowledgeAgreementCheck(s,a,b){
  if(a===b||!s.development[a]||!s.development[b]||!s.regions.some(r=>r.owner===a)||!s.regions.some(r=>r.owner===b))return {ok:false,reason:'partner'};
  if(s.knowledgeAgreements.some(x=>x.a===a&&x.b===b||x.a===b&&x.b===a))return {ok:false,reason:'existing'};
  if(s.wars.some(w=>w.includes(a)&&w.includes(b)))return {ok:false,reason:'war'};
+ if(!knowledgeCorridor(s,a,b))return {ok:false,reason:'access'};
  if((s.relations[[a,b].sort().join(':')]??0)<45)return {ok:false,reason:'relations'};
  if(s.factions[a].treasury<20||s.factions[b].treasury<20)return {ok:false,reason:'treasury'};
  if(!agreementCandidate(s,a,b)||!agreementCandidate(s,b,a))return {ok:false,reason:'knowledge'};
@@ -625,11 +660,14 @@ export function advanceDevelopment(s,log=()=>{}){
       s.knowledgeAgreements.splice(s.knowledgeAgreements.indexOf(agreement),1);continue;
     }
     if(--agreement.next<=0){
-      for(const [seller,buyer] of [[a,b],[b,a]]){
-        const candidate=agreementCandidate(s,seller,buyer,agreement.cycle);
-        if(candidate)s.development[buyer].trade.push({seller,...candidate,remaining:2,method:'agreement'});
+      if(!knowledgeCorridor(s,a,b))agreement.next=1;
+      else{
+        for(const [seller,buyer] of [[a,b],[b,a]]){
+          const candidate=agreementCandidate(s,seller,buyer,agreement.cycle);
+          if(candidate)s.development[buyer].trade.push({seller,...candidate,remaining:2,method:'agreement'});
+        }
+        agreement.next=3;agreement.cycle++;
       }
-      agreement.next=3;agreement.cycle++;
     }
     if(--agreement.remaining<=0)s.knowledgeAgreements.splice(s.knowledgeAgreements.indexOf(agreement),1);
   }

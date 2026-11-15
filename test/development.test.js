@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials} from '../engine.js';
-import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves} from '../development.js';
+import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves,advanceDevelopment} from '../development.js';
 import {advanceNaval} from '../naval.js';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js';
 import {edgeMonths,grandRoute} from '../grand-operations.js';
@@ -11,6 +11,64 @@ import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
+
+test('policy adoption uses the figure whose expertise matches the actual policy',()=>{
+ const s=newGrandGame('senate'),d=development(s,'senate');s.factions.senate.treasury=500;
+ const cases=[
+  ['rhetorical-education','scholar','varro'],
+  ['ancestral-rites','religious','cicero'],
+  ['civic-exercise','military','antony'],
+  ['cultural-accommodation','statesman','cato'],
+  ['public-works','engineer','mamurra']
+ ];
+ for(const [ideaId,role,personId] of cases){
+  d.knownIdeas.push(ideaId);
+  const ordinary=ideaAdoptionPlan(s,'senate',ideaId).months;
+  const person=s.world.characters[personId];person.faction='senate';person.location='roma';
+  s.greatFigures.assignments.senate[role]=personId;
+  assert.equal(ideaAdoptionPlan(s,'senate',ideaId).months,ordinary-1,`${role} should advise ${ideaId}`);
+  delete s.greatFigures.assignments.senate[role];
+ }
+ s.greatFigures.assignments.senate.religious='cicero';
+ assert.equal(ideaAdoptionPlan(s,'senate','rhetorical-education').months,2,'a religious officer cannot speed rhetorical education');
+ delete s.greatFigures.assignments.senate.religious;
+ s.greatFigures.assignments.senate.scholar='varro';
+ assert.equal(ideaAdoptionPlan(s,'senate','ancestral-rites').months,2,'a scholar does not replace the rites adviser');
+ assert.match(ideasPanel(s,'en'),/Adviser: Scholarship · −1 month/);
+ assert.match(ideasPanel(s,'zh'),/顾问: 学者 · −1个月/);
+});
+
+test('knowledge trade requires a civilian corridor and never charges for an impossible transfer',()=>{
+ const s=newGrandGame('caesar');s.relations['caesar:egypt']=60;
+ s.factions.caesar.treasury=150;s.factions.egypt.treasury=150;
+ const funds=[s.factions.caesar.treasury,s.factions.egypt.treasury];
+ for(const site of s.regions)site.owner='rebels';
+ s.regions.find(r=>r.id==='cisalpine').owner='caesar';s.regions.find(r=>r.id==='egypt').owner='egypt';
+ assert.equal(knowledgeTrade(s,'caesar','egypt','material','water-control').reason,'access');
+ assert.equal(sellKnowledge(s,'egypt','caesar','material','water-control').reason,'access');
+ assert.equal(exchangeKnowledge(s,'caesar','egypt','material','roadmaking','material','water-control').reason,'access');
+ assert.equal(knowledgeAgreementCheck(s,'caesar','egypt').reason,'access');
+ assert.deepEqual([s.factions.caesar.treasury,s.factions.egypt.treasury],funds);
+ assert.equal(development(s,'caesar').trade.length,0);
+});
+
+test('knowledge-sharing waits for a passable route during a temporary blockade',()=>{
+ const s=newGrandGame('caesar');s.relations['caesar:egypt']=60;
+ s.factions.caesar.treasury=150;s.factions.egypt.treasury=150;
+ assert.equal(negotiateKnowledgeAgreement(s,'caesar','egypt').ok,true);
+ const owners=new Map(s.regions.map(r=>[r.id,r.owner]));
+ for(const site of s.regions)site.owner='rebels';
+ s.regions.find(r=>r.id==='cisalpine').owner='caesar';s.regions.find(r=>r.id==='egypt').owner='egypt';
+ for(let i=0;i<3;i++)advanceDevelopment(s);
+ assert.equal(s.development.caesar.trade.length,0);
+ assert.equal(s.development.egypt.trade.length,0);
+ assert.equal(s.knowledgeAgreements[0].next,1);
+ const restored=upgradeSave(structuredClone(s));
+ for(const site of restored.regions)site.owner=owners.get(site.id);
+ advanceDevelopment(restored);
+ assert.equal(restored.development.caesar.trade.some(t=>t.id==='water-control'),true);
+ assert.equal(restored.development.egypt.trade.some(t=>t.id==='roadmaking'),true);
+});
 
 test('granaries hold finite provincial food, buffer shortages, and migrate old national storage without duplication',()=>{
  const built=newGrandGame('egypt');

@@ -345,6 +345,21 @@ try{
   assert.match(await page.locator('#command-detail').innerText(),/1个月后答复/);
   await page.locator('#advance').click();
   assert.match(await page.locator('#command-detail').innerText(),/个月行程/);
+  const blockedTrade=newGrandGame('caesar');blockedTrade.relations['caesar:egypt']=60;blockedTrade.factions.caesar.treasury=150;
+  for(const site of blockedTrade.regions)site.owner='rebels';
+  blockedTrade.regions.find(r=>r.id==='cisalpine').owner='caesar';blockedTrade.regions.find(r=>r.id==='egypt').owner='egypt';
+  await page.evaluate(()=>localStorage.setItem('spqr-lang','en'));
+  await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+  await page.locator('#entry-file').setInputFiles({name:'blocked-knowledge.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(blockedTrade))});
+  await page.locator('[data-tab="development"]').click();
+  await page.locator('[data-trade-seller="egypt"][data-trade-id="water-control"]').click();
+  assert.match(await page.locator('.toast').innerText(),/No civilian route for knowledge transfer/);
+  await page.evaluate(()=>localStorage.setItem('spqr-lang','zh'));
+  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),blockedTrade);
+  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+  await page.locator('#development').click();
+  await page.locator('[data-trade-seller="egypt"][data-trade-id="water-control"]').click();
+  assert.match(await page.locator('#command-detail').innerText(),/没有可通行的知识传递路线/);
   assert.deepEqual(errors,[]);
   console.log('Phase XIV browser smoke passed: research, adoption, construction, knowledge agreements and consent-based trades in both languages.');
 }finally{await browser.close()}
