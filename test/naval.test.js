@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn} from '../engine.js';
-import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply} from '../naval.js';
+import {SEA_ZONES,seaRoute,portZone,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply} from '../naval.js';
 import {tradeCard} from '../map-lab/naval-ui.js';
 import {armySupply,supplyNetwork} from '../grand-operations.js';
 import {nationalBudget} from '../national-budget.js';
@@ -17,6 +17,22 @@ function tradeArrival(s,id,maxMonths=8){
  }
  assert.fail(`No delivered voyage for ${id} within ${maxMonths} months`);
 }
+
+test('battle sinking follows ship roles rather than save-object key order',()=>{
+ const run=composition=>{const s=newGrandGame('senate'),attacker=s.naval.fleets.find(f=>f.id==='senate-adriatic'),defender=s.naval.fleets.find(f=>f.id==='caesar-adriatic');s.factions.caesar.treasury=500;attacker.port=null;attacker.ships={trireme:4};attacker.sailors=720;defender.port=null;defender.zone=attacker.zone;defender.ships=composition;defender.sailors=430;defender.hull=50;defender.order={kind:'patrol',target:defender.zone,path:[]};s.seed=83;advanceNaval(s);return s.naval.reports.find(r=>r.kind==='battle')?.losses[defender.id]};
+ const first=run({transport:3,light:1,trireme:1}),reordered=run({trireme:1,light:1,transport:3});
+ assert.ok(first&&reordered);assert.equal(first.type,'light');assert.equal(reordered.type,'light');assert.equal(first.sunk,1);assert.deepEqual(first,reordered);
+});
+
+test('warship screen and attacker tactic determine which hull is exposed',()=>{
+ const run=order=>{const s=newGrandGame('senate'),attacker=s.naval.fleets.find(f=>f.id==='senate-adriatic'),defender=s.naval.fleets.find(f=>f.id==='caesar-adriatic');s.factions.caesar.treasury=500;attacker.port=null;attacker.ships={trireme:4};attacker.sailors=720;attacker.tactic='boarding';defender.port=null;defender.zone=attacker.zone;defender.ships={transport:4,trireme:2,light:1};defender.sailors=705;defender.hull=50;defender.order={kind:order?'patrol':'intercept',target:defender.zone,path:[]};s.seed=83;resolveBattle(s,attacker,defender,attacker.zone,()=>{});const report=s.naval.reports.find(r=>r.kind==='battle');return {loss:report?.losses[defender.id],tactic:report?.tactics[defender.id]}};
+ const screened=run(true),exposed=run(false);assert.equal(screened.tactic,'formation');assert.equal(screened.loss.type,'light');assert.equal(exposed.tactic,'ramming');assert.equal(exposed.loss.type,'transport');
+});
+
+test('warship speed gives bounded maneuver factors recorded in battle reports',()=>{
+ const run=(ownShips,enemyShips)=>{const s=newGrandGame('senate'),own=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');s.factions.caesar.treasury=500;own.port=null;own.ships=ownShips;own.sailors=650;own.tactic='ramming';enemy.port=null;enemy.zone=own.zone;enemy.ships=enemyShips;enemy.sailors=650;s.seed=83;advanceNaval(s);return s.naval.reports.find(r=>r.kind==='battle')};
+ const fast=run({light:2},{quinquereme:2}),slow=run({quinquereme:2},{light:2});assert.ok(fast&&slow);assert.ok(fast.maneuver['senate-adriatic']>100);assert.ok(slow.maneuver['senate-adriatic']<100);assert.ok(fast.maneuver['senate-adriatic']<=112&&slow.maneuver['senate-adriatic']>=88);
+});
 
 test('chosen tactics survive saves and change actual naval losses',()=>{
  const run=tactic=>{const s=newGrandGame('senate'),own=s.naval.fleets.find(f=>f.owner==='senate'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');own.port=null;enemy.port=null;enemy.zone=own.zone;s.seed=83;if(tactic!=='formation')assert.equal(setFleetTactic(s,'senate',own.id,tactic).ok,true);assert.equal(setFleetTactic(s,'senate',own.id,'formation').ok,false);const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(loaded.naval.fleets.find(f=>f.id===own.id).tactic,tactic);advanceNaval(loaded);return loaded.naval.reports.find(r=>r.kind==='battle')};
