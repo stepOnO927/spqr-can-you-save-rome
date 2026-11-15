@@ -14,7 +14,13 @@ http.createServer((req,res)=>{
   if(!target.startsWith(root+path.sep)){res.writeHead(403);res.end();return}
   fs.readFile(target,(err,data)=>{
     if(err){res.writeHead(404);res.end('Not found');return}
+    let body=data;
+    if(path.extname(target)==='.html'){
+      const html=data.toString('utf8').replace(/<script\b[^>]*cloudflareinsights\.com[^>]*><\/script>/gi,'');
+      const marker='<script>window.__SPQR_TEST_MODE={kind:"local_preview"}</script>';
+      body=Buffer.from(html.replace(/<head([^>]*)>/i,'<head$1>'+marker));
+    }
     res.writeHead(200,{'Content-Type':mime[path.extname(target)]||'application/octet-stream','Cache-Control':'no-cache'});
-    res.end(data);
+    res.end(body);
   });
 }).listen(port,()=>console.log(`SPQR local: http://localhost:${port}`));
