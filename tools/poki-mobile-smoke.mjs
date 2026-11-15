@@ -32,7 +32,7 @@ try{
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto(origin+'/han/',{waitUntil:'domcontentloaded'});
     await page.locator('#begin').tap();
-    await page.locator('#map [data-region="changan"]').tap({timeout:5000});
+    await page.locator('#map path.territory[data-region="changan"]').tap({timeout:5000});
     assert.ok((await page.locator('#inspector').textContent()).trim().length>20,'Han touch did not inspect Chang’an');
     assert.deepEqual(errors,[],'Han browser errors');
     reports.push({entry:'han',touch:'changan'});

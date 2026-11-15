@@ -1,0 +1,33 @@
+name: Poki release validation
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  poki-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Core tests
+        run: npm test
+      - name: Install cloud build and browser tools
+        run: npm install --no-save maplibre-gl@5.9.0 html2canvas@1.4.1 playwright@1.64.1
+      - run: npx playwright install chromium
+      - name: Build local-asset Poki package
+        run: node scripts/build-poki.mjs
+      - name: Test package in 640x360 touch browser
+        run: node tools/poki-build-smoke.mjs
+      - name: Upload validated package
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spqr-poki-package
+          path: dist/poki/
+          retention-days: 14
