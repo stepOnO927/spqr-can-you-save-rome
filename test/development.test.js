@@ -314,6 +314,22 @@ test('every development node has its own interpretive illustration',()=>{
  assert.ok(art.every(svg=>svg.includes('<svg')&&svg.includes('tech-art-mark')));
 });
 
+test('each constructed building has its own bilingual encyclopedia entry and historical link',()=>{
+ const english=new Set(),chinese=new Set();
+ for(const building of BUILDINGS){
+  const invention=MATERIALS.find(item=>item.id===building.tech);
+  assert.ok(invention,building.id);
+  assert.ok(building.context?.[0]&&building.context?.[1],building.id);
+  assert.notEqual(building.context[0],invention.context[0],building.id);
+  assert.ok(!english.has(building.context[0])&&!chinese.has(building.context[1]),building.id);
+  assert.match((building.source||invention.source)?.url||'',/^https:\/\//,building.id);
+  english.add(building.context[0]);chinese.add(building.context[1]);
+ }
+ const s=newGrandGame('senate'),en=developmentPanel(s,'en','material'),zh=developmentPanel(s,'zh','material');
+ assert.match(en,/A game depot stores and contributes finite food/);
+ assert.match(zh,/游戏军需仓储存并提供有限粮食/);
+});
+
 test('Republican-era source corrections retain save IDs and avoid later public-library claims',()=>{
  const fort=MATERIALS.find(x=>x.id==='stone-fortification'),library=MATERIALS.find(x=>x.id==='library-organization');
  assert.match(fort.name[0],/Fortification Planning/);
@@ -821,6 +837,17 @@ test('road and bridge construction shortens relevant grand-campaign travel',()=>
  const edge={sea:false,distance:350,river:true},destination={terrain:'plain',buildings:[]},origin={buildings:[]};
  const baseline=edgeMonths(edge,destination,origin);origin.buildings.push('road');assert.equal(edgeMonths(edge,destination,origin),baseline-1);
  origin.buildings.push('bridge');assert.equal(edgeMonths(edge,destination,origin),baseline-2);
+});
+test('a sea crossing uses its embarkation shipyard but cannot borrow a land road',()=>{
+ const edge={sea:true,distance:350,road:true,river:true},destination={terrain:'plain',buildings:['road','bridge','shipyard']},origin={buildings:[]};
+ const ordinary=edgeMonths(edge,destination,origin);
+ assert.equal(ordinary,3,'road and bridge flags must not speed a sea link');
+ origin.buildings.push('shipyard');assert.equal(edgeMonths(edge,destination,origin),ordinary-1);
+ const s=newGrandGame('senate'),army=s.armies.find(unit=>unit.owner==='senate'),port=s.regions.find(site=>site.id==='italiaS');army.region=port.id;
+ const improved=previewMarch(s,army.id,'t075');assert.equal(improved.ok,true);assert.equal(improved.path[0].sea,true);
+ port.buildings=port.buildings.filter(id=>id!=='shipyard');
+ const ordinaryRoute=previewMarch(s,army.id,'t075');assert.equal(ordinaryRoute.ok,true);
+ assert.equal(ordinaryRoute.months,improved.months+1,'the live route preview must use the built embarkation shipyard');
 });
 test('field-march coordination changes paid, active land orders but not known-only or sea orders',()=>{
  const s=newGame('caesar'),d=development(s,'caesar'),idea=IDEAS.find(x=>x.id==='field-march-coordination');

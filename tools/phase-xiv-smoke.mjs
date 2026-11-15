@@ -10,6 +10,12 @@ const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:Number(process.env.SPQR_XIV_WIDTH||1440),height:Number(process.env.SPQR_XIV_HEIGHT||900)}});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
+const stepMonth=async()=>{
+  const reopen=page.viewportSize().width<=700&&await page.locator('.inspector:not(.closed)').count()>0;
+  if(reopen)await page.locator('#close-panel').click();
+  await page.locator('#step').click();
+  if(reopen)await page.locator('.rail-item.active').click();
+};
 try{
   await page.route('http://spqr.test/**',async route=>{
     const pathname=new URL(route.request().url()).pathname;
@@ -26,6 +32,7 @@ try{
   assert.ok(await page.locator('.dev-tree-links path[data-from="water-control"][data-to="urban-drainage"]').getAttribute('d'));
   await page.locator('.dev-reference summary').click();
   assert.match(await page.locator('.dev-reference').innerText(),/Provincial grain reserve \+24/);
+  assert.match(await page.locator('.dev-reference').innerText(),/A game depot stores and contributes finite food/);
   assert.match(await page.locator('#tech-port-facilities').innerText(),/Port[\s\S]*Naval Supply Depot[\s\S]*Base build cost 23¤[\s\S]*coast/);
   assert.match(await page.locator('#tech-stone-fortification').innerText(),/Fortification[\s\S]*Coastal Fortification/);
   assert.match(await page.locator('#tech-improved-shipbuilding').innerText(),/Ship construction −1 month/);
@@ -59,12 +66,12 @@ try{
   assert.match(await page.locator('#tech-philosophical-patronage a[target="_blank"]').getAttribute('href'),/cicero\/atticus4/);
   await page.locator('[data-research="legion-training"]').click();
   assert.match(await page.locator('.dev-status').first().innerText(),/Researching/);
-  for(let i=0;i<3;i++)await page.locator('#step').click();
+  for(let i=0;i<3;i++)await stepMonth();
   await page.locator('[data-tab="ideas"]').click();
   assert.equal(await page.locator('.dev-category:not(.religion-panel)').count(),5);
   assert.equal(await page.locator('.religion-panel').count(),1);
   await page.locator('[data-adopt-idea="legion-training"]').first().click();
-  for(let i=0;i<2;i++)await page.locator('#step').click();
+  for(let i=0;i<2;i++)await stepMonth();
   assert.match(await page.locator('.dev-slot').first().innerText(),/Legion Field Training/);
   await page.locator('[data-tab="map"]').click();
   await page.locator('#region-choice').selectOption('gaul');
@@ -80,6 +87,7 @@ try{
   await page.locator('[data-dev-branch="material"]').click();
   await page.locator('.dev-reference summary').click();
   assert.match(await page.locator('.dev-reference').innerText(),/当地粮仓储量 \+24/);
+  assert.match(await page.locator('.dev-reference').innerText(),/游戏军需仓储存并提供有限粮食/);
   assert.match(await page.locator('#tech-port-facilities').innerText(),/港口[\s\S]*海军补给站[\s\S]*基础建造费 23¤[\s\S]*海岸/);
   assert.match(await page.locator('#tech-military-transport-organization').innerText(),/每艘军用运输船增载 600 名士兵/);
   await page.locator('[data-dev-branch="idea"]').click();
@@ -115,7 +123,7 @@ try{
     assert.match(await comparison.innerText(),lang==='zh'?/当前[\s\S]*拟装配[\s\S]*稳定度 −2/:/Current[\s\S]*Proposed[\s\S]*stability −2/);
     if(lang==='en')await page.screenshot({path:'outputs/idea-replacement-compare.png'});
     await replacement.click();
-    for(let i=0;i<3;i++)await page.locator('#step').click();
+    for(let i=0;i<3;i++)await stepMonth();
     assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(2).locator('.dev-slot').first().innerText(),lang==='zh'?/外交妥协/:/Diplomatic Accommodation/);
   }
   for(const lang of ['en','zh']){
@@ -128,7 +136,7 @@ try{
     const button=page.locator('[data-adopt-idea="ancestral-rites"][data-slot="0"]');
     assert.equal(await button.isEnabled(),true,lang);
     await button.click();
-    for(let i=0;i<3;i++)await page.locator('#step').click();
+    for(let i=0;i<3;i++)await stepMonth();
     assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(4).locator('.dev-slot').first().innerText(),lang==='zh'?/传统祭仪扶持/:/Ancestral Rites Patronage/);
   }
   for(const lang of ['en','zh']){
@@ -141,12 +149,12 @@ try{
     const button=page.locator('[data-adopt-idea="estate-labor-control"][data-slot="0"]');
     assert.equal(await button.isEnabled(),true,lang);
     await button.click();
-    for(let i=0;i<2;i++)await page.locator('#step').click();
+    for(let i=0;i<2;i++)await stepMonth();
     assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(3).locator('.dev-slot').first().innerText(),lang==='zh'?/庄园劳役约束/:/Restrictive Estate Labor/);
     const alternative=page.locator('[data-adopt-idea="negotiated-crop-shares"][data-slot="0"]');
     assert.equal(await alternative.isEnabled(),true,lang);
     await alternative.click();
-    for(let i=0;i<3;i++)await page.locator('#step').click();
+    for(let i=0;i<3;i++)await stepMonth();
     assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(3).locator('.dev-slot').first().innerText(),lang==='zh'?/分成佃作安排/:/Share Tenancy Arrangements/);
   }
   const offered=newGrandGame('senate');offered.relations['egypt:senate']=20;
@@ -277,7 +285,7 @@ try{
     await invite.evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
     await invite.click();
     assert.match(await page.locator('.inspector').innerText(),language==='zh'?/采石.*个月后抵达/:/Quarrying.*m until arrival/);
-    for(let month=0;month<plan.travel;month++)await page.locator('#step').click();
+    for(let month=0;month<plan.travel;month++)await stepMonth();
     assert.match(await page.locator('.inspector').innerText(),language==='zh'?/采石.*个月指导期剩余/:/Quarrying.*m of guidance left/);
     assert.match(await page.locator('[data-research="quarrying"]').innerText(),language==='zh'?/17¤ \/ 2月/:/17¤ \/ 2m/);
   }
@@ -339,7 +347,7 @@ try{
     await invite.click();
     assert.match(await page.locator('.inspector').innerText(),language==='zh'?/1个月后答复/:/1m until reply/);
     assert.equal(await page.locator('[data-recruit-figure="varro"]').isDisabled(),true);
-    await page.locator('#step').click();
+    await stepMonth();
     assert.match(await page.locator('.inspector').innerText(),language==='zh'?/个月行程/:/m travel/);
   }
   const atlasFigure=newGrandGame('egypt');atlasFigure.relations['egypt:senate']=60;atlasFigure.factions.egypt.treasury=300;atlasFigure.seed=1;
