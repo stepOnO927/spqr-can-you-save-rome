@@ -28,6 +28,10 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
  }
  for(const [i,war] of (s.wars||[]).entries())if(!Array.isArray(war)||war.some(id=>!factionIds.has(id)))add('warning','invalid-war',`wars[${i}]`,JSON.stringify(war));
  if(mode==='roman'){
+  for(const [i,c] of (s.coalitions||[]).entries())for(const [j,peace] of (c.separatePeaces||[]).entries()){
+   const base=`coalitions[${i}].separatePeaces[${j}]`;
+   if(!factionIds.has(peace?.member)||peace?.target!==c.target||!c.foundingMembers?.includes(peace.member)&&!c.parties?.includes(peace.member)||!Number.isInteger(peace?.year)||!Number.isInteger(peace?.month)||peace.month<1||peace.month>12||!Number.isInteger(peace?.until)||peace.until<=peace.year*12+peace.month||!Array.isArray(peace?.remainingBelligerents)||peace.remainingBelligerents.some(id=>!factionIds.has(id)||id===peace.member))add('warning','invalid-coalition-separate-peace',base,String(peace?.member));
+  }
   const admissionIds=new Set();
   for(const [i,invitation] of (s.world?.coalitionAdmissions||[]).entries()){
    const base=`world.coalitionAdmissions[${i}]`,coalition=(s.coalitions||[]).find(c=>c.id===invitation?.coalitionId);

@@ -45,6 +45,7 @@ jobs:
               node tools/cursus-deep-smoke.mjs
               node tools/foreign-contact-courier-smoke.mjs
               node tools/coalition-courier-smoke.mjs
+              node tools/coalition-separate-peace-smoke.mjs
               node tools/diplomatic-chronicle-smoke.mjs
               node tools/ai-wartime-aid-smoke.mjs
               node tools/frontier-response-smoke.mjs

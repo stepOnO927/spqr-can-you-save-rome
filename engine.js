@@ -34,7 +34,7 @@ import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?
 import {respondToFrontierReports} from './frontier-response.js?v=world-kings-trade-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=world-kings-trade-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=world-kings-trade-1';
-import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,initializeCoalitionCharters} from './coalitions.js?v=world-kings-trade-1';
+import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,initializeCoalitionCharters,recordCoalitionSeparatePeace,coalitionPeaceExemption} from './coalitions.js?v=world-kings-trade-1';
 import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=world-kings-trade-1';
 import {initializeCoalitionAdmissions,advanceCoalitionAdmissions,proposeCoalitionAdmissionsAI} from './coalition-admissions.js?v=world-kings-trade-1';
 import {initializeCoalitionMotions,advanceCoalitionMotions,proposeCoalitionMotionsAI} from './coalition-motions.js?v=world-kings-trade-1';
@@ -348,7 +348,7 @@ export function diplomacy(s, actor, target, action, options={}){
     }
     for(const coalition of s.coalitions||[]){
       if(coalition.status!=='active'||coalition.target!==actor||!coalition.parties.includes(target))continue;
-      for(const member of coalition.parties)if(s.factions[member]&&member!==target&&!isWar(s,member,actor)&&!isAllied(s,member,actor)&&!activeAgreement(s,member,actor,'non_aggression'))s.wars.push([member,actor]);
+      for(const member of coalition.parties)if(s.factions[member]&&member!==target&&!coalitionPeaceExemption(s,coalition,member,actor)&&!isWar(s,member,actor)&&!isAllied(s,member,actor)&&!activeAgreement(s,member,actor,'non_aggression'))s.wars.push([member,actor]);
     }
     s.relations[key]=-60;
     s.factions[actor].legitimacy=Math.max(0,s.factions[actor].legitimacy-5);
@@ -363,6 +363,8 @@ export function diplomacy(s, actor, target, action, options={}){
     if(!options.acceptedByPlayer && estimatedStrength(s,target,actor)<strength(s,target)*Math.max(.35,.6-(activeModifiers(s,actor).pressure||0)/100) && s.factions[target].stability>35)return false;
     if(options.titleAsset&&!settleTitleByTreaty(s,actor,target,options.titleAsset).ok)return false;
     s.wars=s.wars.filter(w=>!(w.includes(actor)&&w.includes(target)));
+    recordCoalitionSeparatePeace(s,actor,target);
+    recordCoalitionSeparatePeace(s,target,actor);
     reconcilePeacePersonnel(s);
     s.relations[key]=-20;
     for(const a of s.armies.filter(a=>a.owner===actor||a.owner===target)){
