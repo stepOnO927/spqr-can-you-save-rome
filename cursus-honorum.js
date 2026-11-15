@@ -59,7 +59,7 @@ function seedSenators(s,c){
   const faction=i<6?'senate':'caesar',[names,network,interest]=houses[i];
   const id=createFictionalPerson(s,{name:names,faction,birthYear:s.year-49-(i%9),location:s.regions.find(r=>r.owner===faction)?.id||null,sex:'male',role:['Simulated senator','模拟元老']});
   const p=person(s,id);p.education=62+(i*7)%28;p.influence=50+(i*9)%38;p.wealth=20+(i*5)%24;p.loyalty=45+(i*7)%35;
-  c.senators.push({id,faction,network,interest,influence:p.influence,publicPosition:faction,joined:{year:s.year,month:s.month}});
+  c.senators.push({id,faction,network,interest,influence:p.influence,publicPosition:faction,publicName:[...names],joined:{year:s.year,month:s.month}});
   c.careers[id]=[{office:'quaestor',year:s.year-17-i%5,simulated:true}];
   c.obedience[id]={value:clamp(38+p.loyalty/3),history:[{year:s.year,month:s.month,cause:'initial',delta:0}]};
  }
@@ -105,6 +105,9 @@ export function initializeCursus(s){
  for(const applicant of c.applicants)if(!Number.isFinite(applicant.senatorialSupport))applicant.senatorialSupport=applicant.id===c.varroId?80:clamp(38+(person(s,applicant.id)?.influence||40)/3);
  assignCursusPortraits(s);
  assignSenatorPortraits(s);
+ // Only migrate an old public name when an unambiguous opening claim exists;
+ // never reconstruct it from a rival's current, potentially secret identity.
+ for(const senator of c.senators)if(!usableName(senator.publicName)){const claim=s.world.dynasties?.senatorPortraitClaims?.[senator.id];if(claim?.faction===senator.faction&&usableName(claim.name))senator.publicName=[...claim.name]}
  return c;
 }
 export function officeEligibility(s,id,office){
@@ -139,13 +142,13 @@ export function senateAssessment(s,actor=s.player,issue='general'){
 }
 export function seekSenatorEndorsement(s,senatorId,candidateId,actor=s.player){
  const c=initializeCursus(s),senator=c.senators.find(x=>x.id===senatorId),candidate=campaignFor(s,candidateId),p=person(s,candidateId);
- if(!senator||!present(s,senatorId)||!candidate||!p||!present(s,candidateId)||candidate.status!=='eligible'||!officeEligibility(s,candidateId,candidate.office).ok)return {ok:false,reason:'candidate'};
+ if(!senator||(senator.faction===actor&&!present(s,senatorId))||!candidate||!p||!present(s,candidateId)||candidate.status!=='eligible'||!officeEligibility(s,candidateId,candidate.office).ok)return {ok:false,reason:'candidate'};
  if(factionOfRome(s)!==actor||!ROMAN.has(actor))return {ok:false,reason:'rome'};
  if(s.month>=MAGISTRACIES[candidate.office].month)return {ok:false,reason:'closed'};
  if(c.endorsements.some(x=>x.senatorId===senatorId&&x.candidateId===candidateId&&x.year===s.year&&['pending','accepted'].includes(x.status)))return {ok:false,reason:'pending'};
  const cost=5;if(s.factions[actor].treasury<cost)return {ok:false,reason:'treasury',cost};
  s.factions[actor].treasury-=cost;
- const item={senatorId,candidateId,actor,year:s.year,month:s.month,remaining:2,status:'pending',cost};
+ const item={senatorId,candidateId,actor,year:s.year,month:s.month,remaining:2,status:'pending',cost,senatorName:usableName(senator.publicName)};
  c.endorsements.push(item);return {ok:true,cost,months:2};
 }
 function advanceEndorsements(s,c){
