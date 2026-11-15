@@ -9,7 +9,7 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 The draft now includes main through `c6f7c072`. Main's optional analytics
 is connected across the campaign, atlas and standalone Han views after
 reconciling their differing controls. Its privacy choice remains opt-in;
-the six new analytics unit cases and the full 1,189-test local suite pass. Main's ninth
+the six new analytics unit cases and the full 1,191-test local suite pass. Main's ninth
 campaign-born portrait pair is also available to new births and compatible
 old saves. Han trade arrivals and completed tutorial steps use the same
 optional analytics events as the rest of the campaign.
@@ -710,6 +710,17 @@ tolerance, raided routes, escort on an active caravan and aggregate spending
 in English and Chinese. An actual lost-and-retried caravan, not a random
 market bonus, proves this behavior; wider independent merchant investment
 and negotiation still remain open.
+After an eastern carrier actually loses a paid shipment to raiders, it now
+petitions its own court for one route-specific escort. A player can decline
+or pay eight treasury; a funded escort reduces the next caravan by that
+merchant on that route by three percentage points of raider risk per leg.
+The pledge expires after a year and is consumed only when the matching
+caravan departs. Foreign AI courts answer their own petition based on cargo
+value and a treasury reserve. AI Han keeps its existing separate route-guard
+response rather than paying twice. Requests, decisions, merchant identity,
+spent treasury and one-trip protection survive saves. The bilingual eastern
+market panel shows only the player's requests. Tests compare the same
+deterministic raid with and without the funded escort, not just its label.
 Small oasis courts now participate in the autonomous market even below the
 former population threshold. They can buy an affordable one-unit lot instead
 of being excluded when a three-unit quote exceeds their cash. Local town

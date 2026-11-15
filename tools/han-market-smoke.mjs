@@ -174,6 +174,31 @@ try{
   assert.equal(guarded.silk.aiProtectedLossIds.length,1);
   await page.locator('#load').click();await page.locator('#advance').click();await page.locator('#save').click();
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')).silk.protectionSpent),20);
+ await page.evaluate(async()=>{
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=exchange-observation-1');
+  const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=exchange-observation-1');
+  const {roll}=await import('/han/util.js?v=exchange-observation-1');
+  const state=newHanGame('han',{seed:49});state.tradeMarkets.embeddedRoman=true;
+  const placed=placeEasternTrade(state,{seller:'han',buyer:'han',origin:'hongnong',destination:'changan',commodity:'provisions',quantity:1});
+  if(!placed.ok)throw Error('Player caravan missing');
+  const shipment=placed.shipment,hazard=state.regions.find(r=>r.id===shipment.legs[0].to);
+  hazard.unrest=1;hazard.fort=0;for(const army of state.armies.filter(a=>a.region===hazard.id))army.men=0;
+  shipment.remaining=1;state.month++;
+  let selected=null;for(let seed=1;seed<10000;seed++){if(roll({...state,seed},`market-bandit:${shipment.id}:${hazard.id}`)<.08){selected=seed;break}}if(!selected)throw Error('Raid seed missing');state.seed=selected;
+  advanceEasternMarkets(state);if(shipment.status!=='lost'||state.tradeMarkets.merchantProtectionRequests[0]?.status!=='pending')throw Error('Merchant did not request protection after a real raid');
+  localStorage.setItem(SAVE_KEY('browser'),serialize(state));
+ });
+ await page.locator('#load').click();await page.locator('#trade-panel').click();
+ assert.match(await page.locator('#inspector').innerText(),/Merchant protection requests.*Fund escort.*Decline/s);
+ const protectionBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser'))),treasuryBefore=protectionBefore.factions.han.treasury;
+ await page.locator('[data-east-protection][data-decision="fund"]').click();
+ assert.match(await page.locator('#message').innerText(),/Merchant escort funded/);
+ await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#trade-panel').click();
+ const protectedState=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ assert.equal(protectedState.factions.han.treasury,treasuryBefore-8);assert.equal(protectedState.tradeMarkets.courtEscortSpent,8);
+ assert.equal(protectedState.tradeMarkets.merchantProtectionRequests[0].status,'funded');
+ assert.equal(await page.locator('[data-east-protection]').count(),0);
+ await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/商人护路请求.*暂无待答复请求/s);
  assert.deepEqual(errors,[]);
  console.log('Han market browser smoke passed: listings, customs, treaty, horse delivery, army remounts, save/load and bilingual panel.');
 }finally{await browser.close()}
