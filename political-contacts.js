@@ -9,7 +9,7 @@ const notify=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=
 // neither the current location nor the person's true loyalty is checked here.
 export function offerPoliticalContact(s,actor,target,person,representative){
  initializeWorld(s);s.world.politicalContacts||=[];
- const k=s.knowledge?.[actor]?.[target],known=[...(k?.reportedLeaders||[]),...Object.values(k?.sightings||{}).map(x=>x.commanderId),...(k?.commanderReports||[]).map(x=>x.commanderId),...(k?.reports||[]).flatMap(r=>[r.character,...(r.leaders||[])])];
+ const k=s.knowledge?.[actor]?.[target],known=[...(k?.reportedLeaders||[]),...Object.values(k?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(k?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(k?.reports||[]).filter(r=>isDeliveredReport(s,r)).flatMap(r=>[r.character,...(r.leaders||[])])];
  if(actor===target||target==='rebels'||!s.factions[actor]||!s.factions[target]||!known.includes(person))return {ok:false,reason:'unavailable'};
  const own=s.world.characters[representative],trust=s.world.personalRelations[pair(person,representative)]?.trust||0;
  if(!own?.alive||own.faction!==actor||own.missing||own.travel||trust<=0)return {ok:false,reason:'contact'};

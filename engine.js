@@ -592,7 +592,7 @@ function shortestStep(s,start,goal,owner){
 export function estimatedStrength(s,observer,target){
  const k=s.knowledge?.[observer]?.[target],now=s.year*12+s.month,age=x=>now-((x.observationYear??x.year)*12+(x.observationMonth??x.month));
  const sightings=Object.values(k?.sightings||{}).filter(x=>age(x)>=0&&age(x)<=24).length,prior=4000+Math.min(5,sightings)*1000;
- const reports=(k?.reports||[]).filter(x=>x.kind==='strength'&&Number.isFinite(x.value)&&x.value>=0&&age(x)>=0).sort((a,b)=>age(a)-age(b));
+ const reports=(k?.reports||[]).filter(x=>isDeliveredReport(s,x)&&x.kind==='strength'&&Number.isFinite(x.value)&&x.value>=0&&age(x)>=0).sort((a,b)=>age(a)-age(b));
  if(!reports.length)return prior;
  // Compare only observations from the newest month. Forwarded copies from the
  // same source family must not outvote independent contradictory evidence.
@@ -610,9 +610,9 @@ export function estimatedStrength(s,observer,target){
 export function aiClaimantChoice(s,actor,target){
  const now=s.year*12+s.month,families=new Map();
  for(const report of s.knowledge?.[actor]?.[target]?.reports||[]){
-  if(report.kind!=='claimants'||!Array.isArray(report.leaders))continue;
+  if(!isDeliveredReport(s,report)||report.kind!=='claimants'||!Array.isArray(report.leaders))continue;
   const age=now-((report.observationYear??report.year)*12+(report.observationMonth??report.month));if(!Number.isFinite(age)||age<0||age>24)continue;
-  const ids=report.leaders.filter(id=>CHARACTER_CATALOG[id]?.faction===target);if(!ids.length)continue;
+  const ids=report.leaders.filter(id=>CHARACTER_CATALOG[id]);if(!ids.length)continue;
   const origin=report.originSource||report.source,family=({official:'court',envoy:'court',audience:'court',exchange:'unknown'}[origin]||origin||'unknown'),old=families.get(family);
   if(!old||age<old.age)families.set(family,{age,ids:new Set(ids)});else if(age===old.age)for(const id of ids)old.ids.add(id);
  }
