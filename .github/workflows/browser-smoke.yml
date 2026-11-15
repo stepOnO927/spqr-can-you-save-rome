@@ -63,6 +63,8 @@ jobs:
               node tools/mission-inbox-smoke.mjs
               node tools/agent-release-mail-smoke.mjs
               node tools/conspiracy-name-smoke.mjs
+              node tools/regency-tenure-smoke.mjs
+              node tools/inquiry-inbox-smoke.mjs
               node tools/player-request-aid-smoke.mjs
               node tools/official-name-snapshots-smoke.mjs
               ;;
