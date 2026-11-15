@@ -18,7 +18,7 @@ const content=new Map(await Promise.all(textFiles.map(async f=>[f,await fs.readF
 function role(f){
   if(f.startsWith('assets/'))return 'Assets';
   if(f.startsWith('test/')||f.endsWith('.test.js'))return 'Testing';
-  if(f.startsWith('tools/')||f.startsWith('scripts/')||f.startsWith('.github/'))return 'Development Tools';
+  if(f.startsWith('tools/')||f.startsWith('scripts/')||f.startsWith('.github/')||f==='server.mjs')return 'Development Tools';
   if(f.startsWith('han/'))return f.endsWith('.css')||f.endsWith('.html')||/\/(?:play|map|east-ui|experience-ui)\.js$/.test(f)?'DLC UI':'DLC Simulation';
   if(f.startsWith('map-lab/'))return f.endsWith('.css')||f.endsWith('.html')||/-ui\.js$|\/lab\.js$/.test(f)?'Map UI':'Map Data/Logic';
   if(/(?:engine|rome60|multipolar|scenarios)\.js$/.test(f))return 'Core Simulation';
@@ -34,7 +34,7 @@ function role(f){
 }
 const deps=new Map(),missing=[];
 function resolve(from,ref){
-  if(!ref.startsWith('.'))return null;
+  if(!ref.startsWith('.')||ref.endsWith('/'))return null;
   const target=path.posix.normalize(path.posix.join(path.posix.dirname(from),ref.split(/[?#]/)[0]));
   return target;
 }
@@ -59,10 +59,10 @@ for(const f of textFiles){
 }
 const reachable=new Set(),queue=[...entries];
 while(queue.length){const f=queue.shift();if(reachable.has(f)||!set.has(f))continue;reachable.add(f);queue.push(...(deps.get(f)||[]));}
-const source=files.filter(f=>/\.(?:js|mjs|cjs|css|html)$/.test(f)&&!f.startsWith('test/')&&!f.startsWith('tools/')&&!f.startsWith('scripts/')&&!f.startsWith('.github/'));
+const source=files.filter(f=>/\.(?:js|mjs|cjs|css|html)$/.test(f)&&!f.startsWith('test/')&&!f.startsWith('tools/')&&!f.startsWith('scripts/')&&!f.startsWith('.github/')&&!f.endsWith('.test.js')&&f!=='server.mjs');
 const candidates=source.filter(f=>!reachable.has(f));
 const byRole=Object.groupBy(files,role);
-const summary={generatedAt:new Date().toISOString(),entryPoints:entries,totalFiles:files.length,totalBytes:(await Promise.all(files.map(f=>fs.stat(path.join(root,f))))).reduce((n,s)=>n+s.size,0),byRole:Object.fromEntries(Object.entries(byRole).map(([key,value])=>[key,value.length])),runtimeSourceFiles:source.length,reachableRuntimeFiles:source.length-candidates.length,unreachedCandidates:candidates,missingLocalReferences:missing,externalReferenceCount:[...content.values()].reduce((n,s)=>n+[...s.matchAll(/https?:\/\//g)].length,0)};
+const summary={generatedAt:new Date().toISOString(),entryPoints:entries,totalFiles:files.length,totalBytes:(await Promise.all(files.map(f=>fs.stat(path.join(root,f))))).reduce((n,s)=>n+s.size,0),byRole:Object.fromEntries(Object.entries(byRole).map(([key,value])=>[key,value.length])),runtimeSourceFiles:source.length,reachableRuntimeFiles:source.length-candidates.length,unreachedCandidates:candidates,missingLocalReferences:missing,sourceTextUrlCount:[...content.values()].reduce((n,s)=>n+[...s.matchAll(/https?:\/\//g)].length,0)};
 await fs.mkdir(path.join(root,'diagnostics'),{recursive:true});
 await fs.writeFile(path.join(root,'diagnostics','inventory.json'),JSON.stringify({summary,files:files.map(f=>({path:f,role:role(f),reachable:reachable.has(f),dependencies:deps.get(f)||[]}))},null,2));
 await fs.writeFile(path.join(root,'diagnostics','inventory.md'),`# Source inventory\n\nGenerated ${summary.generatedAt}. Import reachability is a candidate signal, not proof that a feature is unused or broken.\n\n- Entry points: ${entries.join(', ')}\n- Files: ${files.length}; runtime source: ${source.length}; statically reachable: ${summary.reachableRuntimeFiles}\n- Unreached runtime candidates: ${candidates.length}; missing local references: ${missing.length}\n\n## Roles\n\n${Object.entries(summary.byRole).map(([k,v])=>`- ${k}: ${v}`).join('\n')}\n\n## Unreached candidates\n\n${candidates.map(x=>`- \`${x}\``).join('\n')||'None'}\n\n## Missing local references\n\n${missing.map(x=>`- \`${x.from}\` → \`${x.ref}\``).join('\n')||'None'}\n`);

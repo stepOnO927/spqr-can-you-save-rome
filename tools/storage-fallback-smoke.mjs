@@ -14,13 +14,14 @@ async function check(path,start,advance,save,confirmation){
   await page.locator(start).click({timeout:15000});
   assert.equal(await page.locator(start).count()===0||await page.locator(start).isHidden(),true,path+' did not start');
   await page.locator(advance).click({timeout:15000});
+  if(path==='/')await page.locator('#new').click({timeout:15000});
   await page.locator(save).click({timeout:15000});
   assert.match(await page.locator(confirmation).textContent(),/session|会话/i,path+' did not explain temporary save');
   assert.deepEqual(errors,[],path+' browser errors');
   await context.close();
 }
 try{
-  await check('/','#start-campaign','#step','#save','.toast');
+  await check('/','#start-campaign','#step','[data-slot="save"]','.setup-feedback');
   await check('/han/','#begin','#advance','#save','#message');
   await check('/map-lab/','#start-game','#advance','#save','#status');
   console.log('Roman, Han and atlas continue without browser storage; temporary saves are labeled');
