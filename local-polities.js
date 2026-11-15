@@ -40,6 +40,15 @@ export const LOCAL_ENTITY_TEMPLATES = Object.freeze([
     coordinates: [4.038, 46.921], source: 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Gallic_War/7E%2A.html', historical: true,
     description: ['Aeduan oppidum and council center; its relationship with Rome changed during the Gallic War. This point is not a tribal border', '埃杜伊人的城镇和议事中心；其与罗马的关系在高卢战争中曾变化。此点不是部族边界'],
     spatialAccuracy: 'approximate_site_point', maxFootholdLevel: 2, militia: 1100, fort: 1, treasury: 12, food: 14
+  },
+  {
+    id: 'commagene', type: 'microstate', name: ['Commagene at Samosata', '萨莫萨塔的科马吉尼'], theater: 'syria',
+    coordinates: [38.471342, 37.564519],
+    source: 'https://www.iranicaonline.org/articles/commagene-a-portion-of-southwestern-asia-minor-modern-turkey/',
+    coordinateSource: 'https://pleiades.stoa.org/places/658587', historical: true,
+    description: ['Independent kingdom at the Euphrates crossing, ruled by Antiochus I in 49 BCE. The site point does not define its borders or make the Syrian theater Roman territory.', '幼发拉底河渡口的独立王国；公元前49年由安条克一世统治。地点标记不定义王国边界，也不表示整个叙利亚战区属于罗马。'],
+    ruler: {id: 'commagene-antiochus-i', name: ['Antiochus I Theos', '安条克一世'], source: 'https://www.iranicaonline.org/articles/antiochus-of-commagene/'},
+    spatialAccuracy: 'approximate_site_point', maxFootholdLevel: 3, militia: 1000, fort: 1, treasury: 18, food: 10
   }
 ]);
 
@@ -58,8 +67,8 @@ export function localEntityRevenue(state, actor) {
     else if (city.controller === city.id && (city.access[actor] > now(state) || city.overlord === actor)) revenue++;
   }
   for (const region of state.regions.filter(item => item.owner === actor)) for (const entity of region.localEntities || []) {
-    if (entity.type !== 'roman_town') continue;
-    revenue += entity.controller === actor ? entity.resistance >= 60 ? 0 : 1 : -1;
+    if (entity.type === 'roman_town') revenue += entity.controller === actor ? entity.resistance >= 60 ? 0 : 1 : -1;
+    if (entity.type === 'microstate' && entity.controller === actor && entity.resistance < 60) revenue += entity.administrativeStatus === 'administered' ? 2 : 1;
   }
   return revenue;
 }

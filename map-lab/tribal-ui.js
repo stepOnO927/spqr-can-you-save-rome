@@ -5,27 +5,33 @@ import {FACTIONS} from '../data.js?v=world-kings-trade-1';
 
 export function renderTribalEntity({state, id, actor, language, panel, refresh}) {
   const entity = localEntity(state, id), zh = language === 'zh';
-  if (!entity || entity.type !== 'tribe') return;
+  if (!entity || !['tribe', 'microstate'].includes(entity.type)) return;
   const host = state.regions.find(region => region.id === entity.theater);
   const visible = host?.owner === actor || entity.controller === actor || entity.overlord === actor || entity.access?.[actor] > state.year * 12 + state.month || state.armies.some(army => army.owner === actor && army.region === entity.theater && army.men > 0);
   const section = document.createElement('section');
   section.className = 'theater-facts';
-  const title = document.createElement('h3'); title.textContent = zh ? '地方部族 · 比布拉克特' : 'LOCAL POLITY · BIBRACTE'; section.append(title);
+  const title = document.createElement('h3'); title.textContent = `${entity.type === 'microstate' ? (zh ? '独立小国' : 'MICROSTATE') : (zh ? '地方部族' : 'LOCAL POLITY')} · ${entity.name[zh ? 1 : 0]}`; section.append(title);
   const history = document.createElement('p');
-  history.textContent = zh ? '凯撒记载的埃杜伊人城镇和议事中心。地点为近似点，不表示部族边界；守军、资源和谈判概率为游戏模拟。' : 'An Aeduan town and council center attested by Caesar. This approximate point is not a tribal border; militia, resources and negotiation chances are simulated.';
+  history.textContent = `${entity.description[zh ? 1 : 0]} ${zh ? '地点为近似点；守军、资源和谈判概率为游戏模拟。' : 'The point is approximate; militia, resources and negotiation chances are gameplay estimates.'}`;
   section.append(history);
-  const source = document.createElement('a'); source.href = entity.source; source.target = '_blank'; source.rel = 'noopener noreferrer'; source.textContent = zh ? '史料：凯撒《高卢战记》第七卷' : 'Source: Caesar, Gallic War VII'; section.append(source);
+  const source = document.createElement('a'); source.href = entity.source; source.target = '_blank'; source.rel = 'noopener noreferrer'; source.textContent = entity.type === 'microstate' ? (zh ? '史料：伊朗百科全书 · 科马吉尼' : 'Source: Encyclopaedia Iranica · Commagene') : (zh ? '史料：凯撒《高卢战记》第七卷' : 'Source: Caesar, Gallic War VII'); section.append(source);
+  if(entity.coordinateSource){const point=document.createElement('a');point.href=entity.coordinateSource;point.target='_blank';point.rel='noopener noreferrer';point.textContent=zh?' · 地点依据：Pleiades':' · Site: Pleiades';section.append(point)}
   if (!visible) { const unknown = document.createElement('p'); unknown.textContent = zh ? '目前没有可靠的地方控制报告。' : 'No reliable local control report yet.'; section.append(unknown); panel.append(section); return; }
   const status = document.createElement('p');
   const factionName = id => FACTIONS[id]?.short?.[zh ? 1 : 0] || id;
-  status.textContent = zh ? `地方控制：${entity.controller === entity.id ? '埃杜伊人议事机构' : factionName(entity.controller)} · 法理归属：${entity.legalSovereign === entity.id ? '地方自治' : factionName(entity.legalSovereign)} · 守军约 ${entity.militia.toLocaleString()} 人` : `Local control: ${entity.controller === entity.id ? 'Aeduan council' : factionName(entity.controller)} · legal title: ${entity.legalSovereign === entity.id ? 'local self-rule' : factionName(entity.legalSovereign)} · militia about ${entity.militia.toLocaleString()}`;
+  const localAuthority=entity.ruler?.name?.[zh?1:0]||(zh?'埃杜伊人议事机构':'Aeduan council');
+  status.textContent = zh ? `地方控制：${entity.controller === entity.id ? localAuthority : factionName(entity.controller)} · 法理归属：${entity.legalSovereign === entity.id ? '地方自治' : factionName(entity.legalSovereign)} · 守军约 ${entity.militia.toLocaleString()} 人` : `Local control: ${entity.controller === entity.id ? localAuthority : factionName(entity.controller)} · legal title: ${entity.legalSovereign === entity.id ? 'local self-rule' : factionName(entity.legalSovereign)} · militia about ${entity.militia.toLocaleString()}`;
   section.append(status);
+  const remaining=entity.access?.[actor]==null?0:Math.max(0,entity.access[actor]-(state.year*12+state.month));
+  if(remaining){const right=document.createElement('p');right.textContent=zh?`地方通行已获准 · 剩余 ${remaining} 个月。`:`Local access granted · ${remaining} months remaining.`;section.append(right)}
+  if(entity.overlord===actor){const relation=document.createElement('p');relation.textContent=zh?'本方为自治宗主；地方仍保有自己的法理归属。':'We are the autonomous overlord; local legal title remains separate.';section.append(relation)}
+  if(entity.lastOutcome?.actor===actor){const outcome=document.createElement('p');outcome.textContent=entity.lastOutcome.proposal==='siege'?(zh?'围城已结束，地方被占领。':'Siege ended in occupation.'):entity.lastOutcome.accepted?(zh?'地方提议已获接受。':'Local offer accepted.'):(zh?'地方提议已遭拒绝。':'Local offer refused.');section.append(outcome)}
   if (entity.controller === actor) {
     const security = localSecurity(state, entity), note = document.createElement('p');
     note.textContent = zh ? `地方阻力 ${entity.resistance ?? 0}/100 · 驻军${security.garrison ? '已到位' : '不足'} · 联络线${security.connected ? '畅通' : '中断'}` : `Local resistance ${entity.resistance ?? 0}/100 · garrison ${security.garrison ? 'present' : 'insufficient'} · supply link ${security.connected ? 'open' : 'cut'}`;
     section.append(note);
   }
-  if (entity.pending?.actor === actor) { const pending = document.createElement('p'); pending.textContent = zh ? `提议尚需 ${entity.pending.remaining} 个月；地方议事机构可以拒绝。` : `Offer takes ${entity.pending.remaining} more months; the council may refuse.`; section.append(pending); }
+  if (entity.pending?.actor === actor) { const pending = document.createElement('p'); pending.textContent = zh ? `提议尚需 ${entity.pending.remaining} 个月；地方统治者可以拒绝。` : `Offer takes ${entity.pending.remaining} more months; the local ruler may refuse.`; section.append(pending); }
   if (entity.siege?.actor === actor) { const pending = document.createElement('p'); pending.textContent = zh ? `围城尚需 ${entity.siege.remaining} 个月。` : `Siege takes ${entity.siege.remaining} more months.`; section.append(pending); }
   const army = state.armies.find(unit => unit.owner === actor && unit.region === entity.theater && !unit.move && unit.men > 0);
   const actions = [
