@@ -3,7 +3,7 @@ import historical from '../historical-territories.js';
 import {REGIONS as HAN_REGIONS, ROUTES as HAN_ROUTES} from '../han/data.js';
 import {REGION_GEO} from '../han/geography.js';
 import {LOCAL_ENTITY_TEMPLATES} from '../local-polities.js';
-import {LOCAL_GENERATION_SITES,NOMADIC_RANGES,WILDERNESS_SITES} from '../local-generation.js';
+import {LOCAL_GENERATION_SITES,INDEPENDENT_VILLAGE_SITES,NOMADIC_RANGES,WILDERNESS_SITES} from '../local-generation.js';
 
 const mainIds = new Set(REGIONS.map(region => region.id));
 const mapped = new Set(historical.features.flatMap(feature => feature.properties.regions || []));
@@ -29,6 +29,9 @@ const audit = {
     generatedSites: LOCAL_GENERATION_SITES.length,
     invalidGeneratedSites: LOCAL_GENERATION_SITES.filter(site => !mainIds.has(site.theater) || !['city_state','microstate','tribe','strongman'].includes(site.type) || !Array.isArray(site.coordinates) || site.coordinates.length !== 2 || site.coordinates.some(value => !Number.isFinite(value)) || !Number.isFinite(site.scale) || site.scale <= 0).map(site => site.theater),
     duplicateGeneratedTheaters: LOCAL_GENERATION_SITES.filter((site,index) => LOCAL_GENERATION_SITES.findIndex(item => item.theater === site.theater) !== index).map(site => site.theater),
+    independentVillageSites: INDEPENDENT_VILLAGE_SITES.length,
+    invalidIndependentVillageSites: INDEPENDENT_VILLAGE_SITES.filter(site => !mainIds.has(site.theater) || !Array.isArray(site.coordinates) || site.coordinates.length !== 2 || site.coordinates.some(value => !Number.isFinite(value))).map(site => site.theater),
+    duplicateIndependentVillageTheaters: INDEPENDENT_VILLAGE_SITES.filter((site,index) => INDEPENDENT_VILLAGE_SITES.findIndex(item => item.theater === site.theater) !== index).map(site => site.theater),
     nomadicRanges: NOMADIC_RANGES.length,
     invalidNomadicRanges: NOMADIC_RANGES.filter(range => !range.id || range.camps?.length !== 2 || range.camps.some(camp => !mainIds.has(camp.theater) || !Array.isArray(camp.coordinates) || camp.coordinates.length !== 2 || camp.coordinates.some(value => !Number.isFinite(value))) || !ROUTES.some(([a,b,kind]) => kind !== 'sea' && (a === range.camps[0].theater && b === range.camps[1].theater || b === range.camps[0].theater && a === range.camps[1].theater))).map(range => range.id),
     wildernessSites: WILDERNESS_SITES.length,
@@ -44,4 +47,4 @@ const audit = {
 };
 
 console.log(JSON.stringify(audit, null, 2));
-if (audit.main.invalidPolygonReferences.length || audit.main.invalidRoutes.length || audit.main.isolatedTerritories.length || audit.main.invalidLocalEntities.length || audit.main.invalidGeneratedSites.length || audit.main.duplicateGeneratedTheaters.length || audit.main.invalidNomadicRanges.length || audit.main.invalidWildernessSites.length || audit.han.invalidRoutes.length) process.exitCode = 1;
+if (audit.main.invalidPolygonReferences.length || audit.main.invalidRoutes.length || audit.main.isolatedTerritories.length || audit.main.invalidLocalEntities.length || audit.main.invalidGeneratedSites.length || audit.main.duplicateGeneratedTheaters.length || audit.main.invalidIndependentVillageSites.length || audit.main.duplicateIndependentVillageTheaters.length || audit.main.invalidNomadicRanges.length || audit.main.invalidWildernessSites.length || audit.han.invalidRoutes.length) process.exitCode = 1;
