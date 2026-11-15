@@ -338,6 +338,55 @@ test('foreign multiscript policy needs an Egyptian community willing to receive 
  assert.equal(restored.development.senate.slots.government[0],id);
 });
 
+test('Achaean assembly practice is local, paid, slow to adopt and culturally gated abroad',()=>{
+ const id='achaean-assembly-practice',idea=IDEAS.find(x=>x.id===id),s=newGrandGame('senate');
+ assert.match(idea.source.url,/Polybius\/4/);
+ assert.ok(techIllustration(idea).includes('<svg'));
+ assert.match(developmentPanel(s,'en','idea'),/Achaean Assembly Practice/);
+ assert.match(developmentPanel(s,'zh','idea'),/亚该亚议事传统/);
+ assert.match(ideasPanel(s,'en'),/Hellenic-culture territory with integration/);
+ assert.match(ideasPanel(s,'zh'),/希腊文化领土且融合度/);
+ s.wars=[];s.factions.senate.treasury=500;
+ const d=development(s,'senate');
+ assert.equal(researchInnovation(s,'senate','idea',id).ok,true);
+ assert.equal(activeEffects(s,'senate').hellenicCouncil,undefined);
+ months(s,idea.months);
+ assert.ok(d.knownIdeas.includes(id));
+ assert.equal(activeEffects(s,'senate').hellenicCouncil,undefined);
+ assert.equal(adoptIdea(s,'senate',id).ok,true);
+ assert.equal(activeEffects(s,'senate').hellenicCouncil,undefined);
+ months(s,4);
+ assert.equal(d.slots.government[0],id);
+ assert.equal(activeEffects(s,'senate').decisionDelay,1);
+ const eligible=s.regions.find(r=>r.owner==='senate'&&r.culture==='hellenic');
+ const low=s.regions.find(r=>r.owner==='senate'&&r.culture==='hellenic'&&r.id!==eligible.id);
+ const other=s.regions.find(r=>r.culture!=='hellenic'&&r.owner!=='rebels');
+ other.owner='senate';eligible.integration=60;eligible.civicSatisfaction=50;
+ low.integration=44;low.civicSatisfaction=50;
+ other.integration=60;other.civicSatisfaction=50;
+ const control=upgradeSave(JSON.parse(JSON.stringify(s)));
+ development(control,'senate').slots.government[0]=null;
+ assert.equal(nationalBudget(s,'senate').ideaUpkeep,nationalBudget(control,'senate').ideaUpkeep+2);
+ months(s,3);months(control,3);
+ const compared=id=>control.regions.find(r=>r.id===id);
+ assert.equal(eligible.civicSatisfaction,compared(eligible.id).civicSatisfaction+1);
+ assert.equal(low.civicSatisfaction,compared(low.id).civicSatisfaction);
+ assert.equal(other.civicSatisfaction,compared(other.id).civicSatisfaction);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(activeEffects(restored,'senate').hellenicCouncil,1);
+
+ const foreign=newGrandGame('egypt');foreign.wars=[];foreign.factions.egypt.treasury=500;
+ development(foreign,'egypt').knownIdeas.push(id);
+ assert.equal(ideaAdoptionPlan(foreign,'egypt',id).reason,'cultural-base');
+ const polis=foreign.regions.find(r=>r.culture==='hellenic');polis.owner='egypt';polis.civicSatisfaction=44;
+ assert.equal(ideaAdoptionPlan(foreign,'egypt',id).reason,'local-support');
+ polis.civicSatisfaction=45;
+ const plan=ideaAdoptionPlan(foreign,'egypt',id);
+ assert.equal(plan.ok,true);assert.equal(plan.months,4);
+ assert.equal(adoptIdea(foreign,'egypt',id).ok,true);
+ assert.equal(foreign.development.egypt.adoption.remaining,4);
+});
+
 test('monthly budget records paid construction and research orders without double counting',()=>{
  const s=newGrandGame('senate');s.factions.senate.treasury=500;
  const projected=nationalBudget(s,'senate').projectedNet;
@@ -536,7 +585,7 @@ test('local rites affect a neighboring court only through an influential shared 
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,40);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,41);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);

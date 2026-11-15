@@ -53,6 +53,8 @@ try{
   assert.match(await page.locator('#tech-public-legal-reference').innerText(),/Public Legal Reference/);
   assert.match(await page.locator('#tech-citizen-registration').innerText(),/Allied Citizen Registration/);
   assert.match(await page.locator('#tech-egyptian-multiscript-decrees').innerText(),/Egyptian Multiscript Decrees[\s\S]*Egyptian-culture territories \/ month \+1/);
+  assert.match(await page.locator('#tech-achaean-assembly-practice').innerText(),/Achaean Assembly Practice[\s\S]*Hellenic-culture territory with integration ≥45/);
+  assert.match(await page.locator('#tech-achaean-assembly-practice a[target="_blank"]').getAttribute('href'),/Polybius\/4/);
   assert.match(await page.locator('#tech-civic-exercise').innerText(),/Recruit morale in urban territory with integration ≥65/);
   assert.match(await page.locator('#tech-estate-labor-control').innerText(),/distressed outmigration halved/);
   assert.match(await page.locator('#tech-negotiated-crop-shares').innerText(),/State-available food \/ month −1/);
@@ -334,6 +336,7 @@ try{
   assert.equal(await page.locator('[data-accept-scholar-host="senate"]').count(),0);
   await page.locator('[data-dev-branch="idea"]').click();
   assert.match(await page.locator('#tech-court-informant-patronage').innerText(),/宫廷情报人员扶持/);
+  assert.match(await page.locator('#tech-achaean-assembly-practice').innerText(),/亚该亚议事传统[\s\S]*希腊文化领土且融合度≥45/);
   for(const language of ['en','zh']){
     const figureCampaign=newGrandGame('egypt');figureCampaign.relations['egypt:senate']=60;figureCampaign.factions.egypt.treasury=300;figureCampaign.seed=1;
     await page.evaluate(value=>localStorage.setItem('spqr-lang',value),language);

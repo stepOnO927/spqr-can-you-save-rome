@@ -1,9 +1,9 @@
-import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=42';
+import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=43';
 import {FIGURE_ROLES,initializeFigures,figureStatus,figureActive} from './great-figures.js';
 import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';
 import {religionPanel} from './local-society.js?v=7';
-import {techIllustration} from './tech-art.js?v=14';
+import {techIllustration} from './tech-art.js?v=15';
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const factionLabel=(id,zh)=>esc(FACTIONS[id]?.short?.[zh?1:0]||id);
 const knowledgeLabel=(branch,id,zh)=>esc((branch==='material'?MATERIALS:IDEAS).find(item=>item.id===id)?.name[zh?1:0]||id);
@@ -15,6 +15,7 @@ function effectsText(e,zh){return Object.entries(e||{}).map(([key,value])=>{
  if(key==='localFoodCapacity')return `<span class="dev-effect positive">${zh?'当地粮仓储量':'Provincial grain reserve'} +${value}</span>`;
  if(key==='ideaResearchDiscount')return `<span class="dev-effect positive">${zh?'理念研究折扣':'National-idea research discount'} +${value}</span>`;
  if(key==='egyptianDecrees')return `<span class="dev-effect positive">${zh?'埃及文化领土行政融合度 / 月 +1':'Integration in Egyptian-culture territories / month +1'}</span>`;
+ if(key==='hellenicCouncil')return `<span class="dev-effect positive">${zh?'希腊文化领土且融合度≥45：当地满意度 / 季 +1':'Hellenic-culture territory with integration ≥45: local satisfaction / quarter +1'}</span>`;
  if(key==='ancestralRites')return `<span class="dev-effect positive">${zh?'本国祭仪满意度 / 季 +1':'Own rites satisfaction / quarter +1'}</span><span class="dev-effect negative">${zh?'异地祭仪满意度 / 季 −1':'Other rites satisfaction / quarter −1'}</span>`;
  if(key==='provincialRitesCharter')return `<span class="dev-effect positive">${zh?'承认地方祭仪时：异地传统且少数信仰≥25%的行省满意度 / 季 +1':'With local rites recognized: satisfaction / quarter +1 in provinces with a different dominant tradition and minority faith ≥25%'}</span>`;
  if(key==='estateLabor')return `<span class="dev-effect positive">${zh?'有产出乡村领土每处粮食 / 月 +1（上限4）':'Food / month +1 per productive rural territory (max 4)'}</span><span class="dev-effect negative">${zh?'这些领土满意度与忠诚 / 季 −1；不满人口迁出减半':'Satisfaction and loyalty / quarter −1 there; distressed outmigration halved'}</span>`;

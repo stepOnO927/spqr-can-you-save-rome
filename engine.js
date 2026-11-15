@@ -5,7 +5,7 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=63';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
-import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,settleGranaryReserves,migrateGranaryReserves,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,scholarVisitCheck,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,researchTerms,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=42';
+import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,settleGranaryReserves,migrateGranaryReserves,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,scholarVisitCheck,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,researchTerms,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=43';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=8';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=10';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
@@ -455,7 +455,18 @@ function economy(s){
     f.treasury=Math.max(-100,Math.round(f.treasury));
     f.foodCapacity=budget.foodCapacity;
     f.food=Math.max(-100,Math.min(f.foodCapacity,Math.round(f.food)));
-    owned.forEach(r=>{const governor=governorLoyaltyEffect(s,r.id),works=localBuildingEffects(r),rural=productiveEstateRegion(r)&&s.month%3===0,estateStrain=effects.estateLabor&&rural?1:0,tenantSupport=effects.tenantShares&&rural?1:0,taxReview=s.grandMap&&f.tax==='high'&&effects.taxReview&&(r.integration??60)>=65?1:0,taxPressure=({low:2,normal:0,high:-2}[f.tax])+taxReview;if(s.grandMap){r.civicSatisfaction=Math.max(0,Math.min(100,(r.civicSatisfaction??r.loyalty)+taxPressure-shortage+(works.loyalty||0)+faithSatisfaction(s,r)-estateStrain+tenantSupport));r.integration=Math.max(0,Math.min(100,(r.integration??60)+(governor>0?1:0)+(works.stability>0?1:0)+(effects.egyptianDecrees&&r.culture==='egypt'?1:0)));}r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+taxReview-Math.max(0,shortage-1)+governor+(effects.loyalty||0)+(works.loyalty||0)+(s.grandMap?(r.civicSatisfaction<30?-1:r.civicSatisfaction>75?1:0)+(r.integration<35?-1:0):0)-estateStrain+tenantSupport))});
+    owned.forEach(r=>{
+      const governor=governorLoyaltyEffect(s,r.id),works=localBuildingEffects(r),rural=productiveEstateRegion(r)&&s.month%3===0;
+      const estateStrain=effects.estateLabor&&rural?1:0,tenantSupport=effects.tenantShares&&rural?1:0;
+      const taxReview=s.grandMap&&f.tax==='high'&&effects.taxReview&&(r.integration??60)>=65?1:0;
+      const taxPressure=({low:2,normal:0,high:-2}[f.tax])+taxReview;
+      if(s.grandMap){
+        const council=effects.hellenicCouncil&&s.month%3===0&&r.culture==='hellenic'&&(r.integration??60)>=45?1:0;
+        r.civicSatisfaction=Math.max(0,Math.min(100,(r.civicSatisfaction??r.loyalty)+taxPressure-shortage+(works.loyalty||0)+faithSatisfaction(s,r)-estateStrain+tenantSupport+council));
+        r.integration=Math.max(0,Math.min(100,(r.integration??60)+(governor>0?1:0)+(works.stability>0?1:0)+(effects.egyptianDecrees&&r.culture==='egypt'?1:0)));
+      }
+      r.loyalty=Math.max(0,Math.min(100,r.loyalty+({low:1,normal:0,high:-2}[f.tax])+taxReview-Math.max(0,shortage-1)+governor+(effects.loyalty||0)+(works.loyalty||0)+(s.grandMap?(r.civicSatisfaction<30?-1:r.civicSatisfaction>75?1:0)+(r.integration<35?-1:0):0)-estateStrain+tenantSupport));
+    });
   }
   for(const site of s.regions)if(site.foodRequisitionRemaining>0){site.foodRequisitionRemaining--;if(!site.foodRequisitionRemaining)delete site.foodRequisitionLoss}
   advanceDemography(s);
@@ -645,7 +656,7 @@ export function aiTurn(s,owner){
         const slots=d.slots[i.category],empty=slots.indexOf(null);
         if(d.knownIdeas.includes(i.id)||i.id==='senatorial-consultation'&&!['senate','caesar'].includes(owner))return false;
         if(!i.prerequisites.every(id=>d.knownIdeas.includes(id))||!categoryHasRoom(i.category))return false;
-        if(i.origin&&owner!==i.origin&&!s.regions.some(r=>r.owner===owner&&(r.culture===i.origin||!s.grandMap&&r.id===i.origin)))return false;
+        if(i.origin&&owner!==i.origin&&!s.regions.some(r=>r.owner===owner&&(r.culture===i.origin||!s.grandMap&&r.id===i.origin)&&(r.civicSatisfaction??r.loyalty??0)>=45))return false;
         if(i.requiresBuilding&&!s.regions.some(r=>r.owner===owner&&r.buildings.includes(i.requiresBuilding)))return false;
         if(empty<0&&f.treasury<=100+civilianReserve+i.cost+(slots.length===1?35:60))return false;
         return f.treasury>=i.cost&&ideaCompatibility(s,owner,i.id,empty>=0?empty:undefined).ok;
