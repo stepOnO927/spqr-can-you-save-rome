@@ -7,6 +7,10 @@ permissions:
   contents: read
 jobs:
   browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [1, 2, 3]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -15,6 +19,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm test
+        if: matrix.part == 1
       - run: npm install --no-save playwright@1.64.1
       # GitHub's Ubuntu image already contains Chromium's runtime libraries.
       # Avoid apt mirror failures while still letting Chromium itself fail the
@@ -23,75 +28,83 @@ jobs:
       - run: |
           node server.mjs > server.log 2>&1 &
           for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
-          node tools/hundred-days-smoke.mjs
-          node tools/roman-hundred-days-smoke.mjs
-          node tools/save-transfer-controls-smoke.mjs
-          node tools/storage-denied-smoke.mjs
-          node tools/short-screen-smoke.mjs
-          node tools/han-touch-hit-smoke.mjs
-          node tools/travel-smoke.mjs
-          node tools/cursus-smoke.mjs
-          node tools/cursus-deep-smoke.mjs
-          node tools/foreign-contact-courier-smoke.mjs
-          node tools/coalition-courier-smoke.mjs
-          node tools/diplomatic-chronicle-smoke.mjs
-          node tools/ai-wartime-aid-smoke.mjs
-          node tools/frontier-response-smoke.mjs
-          node tools/player-aid-letter-smoke.mjs
-          node tools/player-request-aid-smoke.mjs
-          node tools/official-name-snapshots-smoke.mjs
-          node tools/cursus-applicant-smoke.mjs
-          node tools/han-court-smoke.mjs
-          node scripts/multipolar-sim.mjs > multipolar-simulation.json
-          node tools/multipolar-smoke.mjs
-          node tools/player-strategic-offer-smoke.mjs
-          node tools/peace-mail-courier-smoke.mjs
-          node tools/imperium-smoke.mjs
-          node tools/fort-intelligence-smoke.mjs
-          node tools/warning-ledger-smoke.mjs
-          node tools/chronicle-person-smoke.mjs
-          node tools/unknown-person-smoke.mjs
-          node tools/separate-kingdom-succession-smoke.mjs
-          node tools/regional-court-vacancy-smoke.mjs
-          node tools/court-portrait-smoke.mjs
-          node tools/senator-portraits-smoke.mjs
-          node tools/senate-record-privacy-smoke.mjs
-          node tools/mail-privacy-smoke.mjs
-          node tools/gathering-presence-smoke.mjs
-          node tools/gathering-delegate-smoke.mjs
-          node tools/atlas-mail-alert-smoke.mjs
-          node scripts/imperium-sim.mjs > imperium-simulation.json
-          node tools/onboarding-smoke.mjs
-          node tools/systems-smoke.mjs
-          node tools/intelligence-partners-smoke.mjs
-          node tools/trade-intelligence-smoke.mjs
-          node tools/portrait-institutions-smoke.mjs
-          node tools/legacy-identity-smoke.mjs
-          node tools/safe-save-smoke.mjs
-          node tools/health-succession-smoke.mjs
-          node tools/succession-ui-recovery-smoke.mjs
-          node tools/newborn-age-smoke.mjs
-          node tools/born-portraits-smoke.mjs
-          node tools/inheritance-settlement-smoke.mjs
-          node tools/satisfaction-map-smoke.mjs
-          node tools/campaign-date-smoke.mjs
-          node tools/scenario-general-portrait-smoke.mjs
-          node tools/civic-portrait-smoke.mjs
-          node tools/dossier-rumor-smoke.mjs
-          node tools/captive-release-smoke.mjs
-          node tools/inquiry-price-smoke.mjs
-          node tools/mission-discount-smoke.mjs
-          node tools/merge-map-switch-smoke.mjs
-          node tools/scenario-systems-smoke.mjs
-          node tools/construction-smoke.mjs
-          node tools/browser-smoke.mjs
-          node tools/phase-v-smoke.mjs
-          node tools/capture-check.mjs
-          node tools/map-benchmark.mjs
+          case "${{ matrix.part }}" in
+            1)
+              node tools/hundred-days-smoke.mjs
+              node tools/roman-hundred-days-smoke.mjs
+              node tools/save-transfer-controls-smoke.mjs
+              node tools/storage-denied-smoke.mjs
+              node tools/short-screen-smoke.mjs
+              node tools/han-touch-hit-smoke.mjs
+              node tools/travel-smoke.mjs
+              node tools/cursus-smoke.mjs
+              node tools/cursus-deep-smoke.mjs
+              node tools/foreign-contact-courier-smoke.mjs
+              node tools/coalition-courier-smoke.mjs
+              node tools/diplomatic-chronicle-smoke.mjs
+              node tools/ai-wartime-aid-smoke.mjs
+              node tools/frontier-response-smoke.mjs
+              node tools/player-aid-letter-smoke.mjs
+              node tools/player-request-aid-smoke.mjs
+              node tools/official-name-snapshots-smoke.mjs
+              node tools/cursus-applicant-smoke.mjs
+              node tools/han-court-smoke.mjs
+              node scripts/multipolar-sim.mjs > multipolar-simulation.json
+              node tools/multipolar-smoke.mjs
+              ;;
+            2)
+              node tools/player-strategic-offer-smoke.mjs
+              node tools/peace-mail-courier-smoke.mjs
+              node tools/imperium-smoke.mjs
+              node tools/fort-intelligence-smoke.mjs
+              node tools/warning-ledger-smoke.mjs
+              node tools/chronicle-person-smoke.mjs
+              node tools/unknown-person-smoke.mjs
+              node tools/separate-kingdom-succession-smoke.mjs
+              node tools/regional-court-vacancy-smoke.mjs
+              node tools/court-portrait-smoke.mjs
+              node tools/senator-portraits-smoke.mjs
+              node tools/senate-record-privacy-smoke.mjs
+              node tools/mail-privacy-smoke.mjs
+              node tools/gathering-presence-smoke.mjs
+              node tools/gathering-delegate-smoke.mjs
+              node tools/atlas-mail-alert-smoke.mjs
+              node scripts/imperium-sim.mjs > imperium-simulation.json
+              node tools/onboarding-smoke.mjs
+              node tools/systems-smoke.mjs
+              node tools/intelligence-partners-smoke.mjs
+              ;;
+            3)
+              node tools/trade-intelligence-smoke.mjs
+              node tools/portrait-institutions-smoke.mjs
+              node tools/legacy-identity-smoke.mjs
+              node tools/safe-save-smoke.mjs
+              node tools/health-succession-smoke.mjs
+              node tools/succession-ui-recovery-smoke.mjs
+              node tools/newborn-age-smoke.mjs
+              node tools/born-portraits-smoke.mjs
+              node tools/inheritance-settlement-smoke.mjs
+              node tools/satisfaction-map-smoke.mjs
+              node tools/campaign-date-smoke.mjs
+              node tools/scenario-general-portrait-smoke.mjs
+              node tools/civic-portrait-smoke.mjs
+              node tools/dossier-rumor-smoke.mjs
+              node tools/captive-release-smoke.mjs
+              node tools/inquiry-price-smoke.mjs
+              node tools/mission-discount-smoke.mjs
+              node tools/merge-map-switch-smoke.mjs
+              node tools/scenario-systems-smoke.mjs
+              node tools/construction-smoke.mjs
+              node tools/browser-smoke.mjs
+              node tools/phase-v-smoke.mjs
+              node tools/capture-check.mjs
+              node tools/map-benchmark.mjs
+              ;;
+          esac
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: browser-smoke-evidence
+          name: browser-smoke-evidence-${{ matrix.part }}
           path: |
             browser-smoke-1920x1080.png
             capture-control-1920x1080.png
