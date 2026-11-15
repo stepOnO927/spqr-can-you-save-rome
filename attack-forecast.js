@@ -1,6 +1,7 @@
 // A planning range based only on dated sightings, never the hidden enemy roster.
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=sighting-consumers-1';
 export function estimateAttackLosses({attacker,food,originSupply,destination,fortBand,sightings,year,month}){
- const usable=(sightings||[]).filter(x=>Array.isArray(x.strengthBand)&&x.strengthBand.length===2&&Number.isFinite(x.year)&&Number.isFinite(x.month)).map(x=>({...x,age:(year-x.year)*12+month-x.month})).filter(x=>x.age>=0&&x.age<=6);
+ const date={year,month},usable=(sightings||[]).filter(x=>isDeliveredReport(date,x)&&Array.isArray(x.strengthBand)&&x.strengthBand.length===2&&x.strengthBand.every(Number.isFinite)).map(x=>({...x,age:sightingAge(date,x)})).filter(x=>x.age>=0&&x.age<=6);
  if(!attacker?.men||!usable.length)return {available:false};
  const enemyLow=usable.reduce((n,x)=>n+Math.max(0,x.strengthBand[0]),0),enemyHigh=usable.reduce((n,x)=>n+Math.max(0,x.strengthBand[1]),0);
  // Unknown or stale fortifications are a broad scenario, never a read of the

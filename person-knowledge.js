@@ -9,6 +9,8 @@ export function isDeliveredReport(s,r){
  const now=s.year*12+s.month,check=(year,month)=>year==null&&month==null?true:Number.isFinite(year)&&Number.isInteger(month)&&month>=1&&month<=12&&year*12+month<=now;
  return !!r&&check(r.year,r.month)&&check(r.observationYear??r.year,r.observationMonth??r.month)&&check(r.receivedYear,r.receivedMonth);
 }
+// Sightings retain when a force was observed, even when a report arrives later.
+export function sightingAge(s,r){return s.year*12+s.month-((r.observationYear??r.year)*12+(r.observationMonth??r.month))}
 export function reportedPersonName(s,actor,target,id){
  const reports=s.knowledge?.[actor]?.[target]?.reports||[];
  const found=reports.filter(r=>isDeliveredReport(s,r)&&reportAge(s,r)>=0&&namedReportSubjects(r).includes(id)&&validName(r.peopleNames?.[id])).sort((a,b)=>reportAge(s,a)-reportAge(s,b))[0];
