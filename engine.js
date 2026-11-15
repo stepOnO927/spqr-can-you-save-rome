@@ -1,42 +1,42 @@
 import {advanceAgreementProposals} from './agreement-negotiations.js?v=agreement-courier-1';
-import {isDeliveredReport} from './person-knowledge.js?v=future-dated-reports-1';
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=agreement-courier-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncAgreementLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=agreement-courier-1';
-import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=born-portraits-six-1';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=agreement-courier-1';
-import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=born-portraits-six-1';
+import {isDeliveredReport} from './person-knowledge.js?v=sighting-delivery-1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=sighting-delivery-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncAgreementLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=sighting-delivery-1';
+import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=sighting-delivery-1';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=sighting-delivery-1';
+import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=sighting-delivery-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=succession-ui-recovery-1';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,snapshotReportedPeople,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=agreement-courier-1';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=born-portraits-six-1';
-import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=born-portraits-six-1';
-import {advanceConspiracies} from './conspiracies.js?v=future-dated-reports-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,snapshotReportedPeople,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=sighting-delivery-1';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=sighting-delivery-1';
+import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=sighting-delivery-1';
+import {advanceConspiracies} from './conspiracies.js?v=sighting-delivery-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=fort-intel-1';
-import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=future-dated-reports-1';
-import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=born-portraits-six-1';
+import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=sighting-delivery-1';
+import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=sighting-delivery-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=agreement-courier-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=sighting-delivery-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
-import {advanceFocuses,focusModifiers} from './national-focus.js?v=agreement-courier-1';
-import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=agreement-courier-1';
-import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=agreement-courier-1';
+import {advanceFocuses,focusModifiers} from './national-focus.js?v=sighting-delivery-1';
+import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=sighting-delivery-1';
+import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=sighting-delivery-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=agreement-courier-1';
-import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=agreement-courier-1';
+import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=sighting-delivery-1';
 import {respondToFrontierReports} from './frontier-response.js?v=frontier-response-1';
-import {advanceStrategicWarnings} from './strategic-warnings.js?v=agreement-courier-1';
+import {advanceStrategicWarnings} from './strategic-warnings.js?v=sighting-delivery-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
-import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=agreement-courier-1';
-import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=agreement-courier-1';
-import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=future-dated-reports-1';
-import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=born-portraits-six-1';
-import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=agreement-courier-1';
+import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=sighting-delivery-1';
+import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=sighting-delivery-1';
+import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=sighting-delivery-1';
+import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=sighting-delivery-1';
+import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=sighting-delivery-1';
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 export {queueMission};
 export {personalDiplomaticCredit};
@@ -570,7 +570,7 @@ function shortestStep(s,start,goal,owner){
 // After two years, a numerical report fades gradually toward an uncertain prior.
 export function estimatedStrength(s,observer,target){
  const k=s.knowledge?.[observer]?.[target],now=s.year*12+s.month,age=x=>now-((x.observationYear??x.year)*12+(x.observationMonth??x.month));
- const sightings=Object.values(k?.sightings||{}).filter(x=>age(x)>=0&&age(x)<=24).length,prior=4000+Math.min(5,sightings)*1000;
+ const sightings=Object.values(k?.sightings||{}).filter(x=>isDeliveredReport(s,x)&&age(x)>=0&&age(x)<=24).length,prior=4000+Math.min(5,sightings)*1000;
  const reports=(k?.reports||[]).filter(x=>isDeliveredReport(s,x)&&x.kind==='strength'&&Number.isFinite(x.value)&&x.value>=0&&age(x)>=0).sort((a,b)=>age(a)-age(b));
  if(!reports.length)return prior;
  // Compare only observations from the newest month. Forwarded copies from the
@@ -691,7 +691,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
       if(strongPlanning&&strategy&&!hostile&&next.owner===owner&&nextThreatened&&next.supply*1000<a.men*.75&&here.supply>next.supply)continue;
       if(defenders>a.men*(internalOpponent(defenderOwner)?2:({hard:1.15,expert:1.05}[s.difficulty]||1.35))||f.food<0){if(hostile&&strongPlanning){heldForPreparation=true;if(here.owner===owner)break}continue}
       if(hostile&&strongPlanning&&strategy&&!internalOpponent(defenderOwner)){
-       const dest=region(s,step),now=s.year*12+s.month,sightings=Object.values(s.knowledge?.[owner]?.[defenderOwner]?.sightings||{}).filter(x=>x.region===step&&now-(x.year*12+x.month)>=0&&now-(x.year*12+x.month)<=12).length;
+       const dest=region(s,step),now=s.year*12+s.month,sightings=Object.values(s.knowledge?.[owner]?.[defenderOwner]?.sightings||{}).filter(x=>{const age=now-((x.observationYear??x.year)*12+(x.observationMonth??x.month));return x.region===step&&isDeliveredReport(s,x)&&age>=0&&age<=12}).length;
        const fortReport=reportedFortification(s,owner,step),estimatedFort=fortReport&&!fortReport.stale?fortReport.band[0]:1;
        const assessment=(unit)=>assessAttack({ownMen:unit.men,morale:unit.morale,skill:unit.skill,experience:unit.experience,food:f.food,estimatedTotal:estimate,reportedTheaters:theaters,sightings,terrain:dest.terrain,fort:estimatedFort,difficulty:s.difficulty});
        if(!assessment(a).favorable&&here.owner===owner){

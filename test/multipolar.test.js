@@ -1,19 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=agreement-courier-1';
-import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=agreement-courier-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=sighting-delivery-1';
+import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=sighting-delivery-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
-import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=agreement-courier-1';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=sighting-delivery-1';
 import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=agreement-courier-1';
-import {renderChessboard} from '../chessboard-ui.js?v=agreement-courier-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=agreement-courier-1';
+import {buildChessboard} from '../chessboard.js?v=sighting-delivery-1';
+import {renderChessboard} from '../chessboard-ui.js?v=sighting-delivery-1';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=sighting-delivery-1';
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=agreement-courier-1';
-import {advanceGovernments} from '../governance.js?v=born-portraits-six-1';
-import {advanceMovements} from '../movements.js?v=agreement-courier-1';
-import {newRevolutionScenario} from '../scenarios.js?v=agreement-courier-1';
+import {advanceGovernments} from '../governance.js?v=sighting-delivery-1';
+import {advanceMovements} from '../movements.js?v=sighting-delivery-1';
+import {newRevolutionScenario} from '../scenarios.js?v=sighting-delivery-1';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
@@ -29,6 +29,20 @@ test('new reports trigger reassessment without revealing hidden foreign changes'
  assert.equal(opportunityEvidenceSignature(copy,'parthia'),signature);
  addReport(copy,'parthia','armenia',{kind:'stability',value:'fragile',source:'spy',confidence:'rumor'});
  assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),signature);
+});
+
+test('AI cannot use sightings before delivery or treat old observations as fresh',()=>{
+ const s=newGame('caesar');s.knowledge.parthia.armenia.sightings={};
+ const assessment=x=>assessOpportunities(x,'parthia',estimatedStrength).find(a=>a.target==='armenia');
+ const base=assessment(s),strength=estimatedStrength(s,'parthia','armenia'),signature=opportunityEvidenceSignature(s,'parthia');
+ const x={id:'delayed',owner:'armenia',region:'armenia',year:s.year,month:s.month,receivedYear:s.year+1,receivedMonth:s.month};
+ s.knowledge.parthia.armenia.sightings.delayed=x;
+ assert.deepEqual(assessment(s),base);assert.equal(estimatedStrength(s,'parthia','armenia'),strength);assert.equal(opportunityEvidenceSignature(s,'parthia'),signature);
+ x.receivedYear=s.year;x.observationYear=s.year+1;x.observationMonth=s.month;
+ assert.deepEqual(assessment(s),base);assert.equal(estimatedStrength(s,'parthia','armenia'),strength);
+ x.observationYear=s.year-3;
+ assert.deepEqual(assessment(s),base);assert.equal(estimatedStrength(s,'parthia','armenia'),strength);const staleSignature=opportunityEvidenceSignature(s,'parthia');
+ x.observationYear=s.year;assert.notEqual(opportunityEvidenceSignature(s,'parthia'),staleSignature);assert.notEqual(opportunityEvidenceSignature(s,'parthia'),signature);assert.notEqual(assessment(s).frontierSightings,base.frontierSightings);
 });
 
 test('AI weighs instability by evidence confidence and ignores stale or disputed claims',()=>{
@@ -201,6 +215,14 @@ test('no scout report means no warning and no inferred empty garrison',()=>{
  const stale=warningSetup();stale.knowledge.senate.caesar.sightings.xiii.month-=3;assert.equal(warningCandidates(stale,'senate').length,0);
 });
 
+test('warnings cannot forward a future delivery or refresh an old sighting',()=>{
+ const s=warningSetup(),x=s.knowledge.senate.caesar.sightings.xiii;
+ x.receivedYear=s.year+1;x.receivedMonth=s.month;assert.equal(warningCandidates(s,'senate').length,0);
+ x.receivedYear=s.year;x.observationYear=s.year+1;x.observationMonth=s.month;assert.equal(warningCandidates(s,'senate').length,0);
+ x.observationYear=s.year-1;assert.equal(warningCandidates(s,'senate').length,0);
+ x.observationYear=s.year;const candidate=warningCandidates(s,'senate')[0];assert.ok(candidate);assert.equal(candidate.sighting.year,s.year);assert.equal(candidate.sighting.month,s.month);
+});
+
 test('warning letters travel with the existing one-way courier delay and may be delayed, lost or expire',()=>{
  const s=sendFirst(),l=s.warningLetters[0];assert.equal(l.duration,2);assert.equal(l.status,'sent');assert.equal(l.from,'senate');assert.equal(l.to,'numidia');
  const statuses=new Set();
@@ -279,6 +301,6 @@ test('old saves without a warning queue keep working and do not duplicate existi
  for(let i=0;i<3;i++)tick(save,{autoplayPlayer:true});assert.ok(Array.isArray(save.warningLetters));
  // The warning layer reuses courier, report and memory helpers; it does not call
  // the existing war, breach, aid or claimant-support decision paths.
- const source=fs.readFileSync(new URL('../strategic-warnings.js?v=agreement-courier-1',import.meta.url),'utf8');
+ const source=fs.readFileSync(new URL('../strategic-warnings.js?v=sighting-delivery-1',import.meta.url),'utf8');
  assert.doesNotMatch(source,/diplomacy\(|proposeAgreement|terminateAgreement|supportClaimant|wars\.push|alliances\.push|opportunistic_war|treaty_breach/);
 });

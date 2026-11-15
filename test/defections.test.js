@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=agreement-courier-1';
-import {considerDefection,advanceCharacters} from '../character-system.js?v=agreement-courier-1';
+import {newGame,upgradeSave} from '../engine.js?v=sighting-delivery-1';
+import {considerDefection,advanceCharacters} from '../character-system.js?v=sighting-delivery-1';
 import {assignSuccession,knownLeaders} from '../characters.js?v=succession-ui-recovery-1';
 
 test('a disloyal unattached officer may defect and is no longer an eligible successor',()=>{
