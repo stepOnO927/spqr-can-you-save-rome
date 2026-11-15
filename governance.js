@@ -1,6 +1,6 @@
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=meeting-name-1';
 import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=succession-ui-recovery-1';
-import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=meeting-name-1';
+import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=born-portraits-nine-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {startDynasticWar} from './civil-war.js?v=meeting-name-1';
 

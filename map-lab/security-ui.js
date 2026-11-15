@@ -1,6 +1,6 @@
 import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=meeting-name-1';
 import {campaignDate} from '../campaign-date.js?v=calendar-1';
-import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=meeting-name-1';
+import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=born-portraits-nine-1';
 import {reassurePerson} from '../conspiracies.js?v=meeting-name-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';

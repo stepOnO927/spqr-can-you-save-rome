@@ -1,7 +1,7 @@
 import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from './dynasties.js?v=meeting-name-1';
-import {initializeOffices,appointOffice} from './office-system.js?v=meeting-name-1';
-import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=born-portraits-eight-1';
+import {createFictionalPerson} from './dynasties.js?v=born-portraits-nine-1';
+import {initializeOffices,appointOffice} from './office-system.js?v=born-portraits-nine-1';
+import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=born-portraits-nine-1';
 
 const ROMAN=new Set(['caesar','senate']);
 const clamp=n=>Math.max(0,Math.min(100,Math.round(n)));
