@@ -43,13 +43,13 @@ test('an old pending family agreement without a courier seed resolves consistent
   const result=offerForeignMarriage(s,own,foreign,'egypt');assert.equal(result.ok,true);assert.deepEqual(result.offer.reportedName,['Reported name','报告姓名']);assert.match(JSON.stringify(s.world.dynasties.lives[own]),/报告姓名/);assert.doesNotMatch(JSON.stringify(s.world.dynasties.lives[own]),/秘密姓名/);
   s=upgradeSave(structuredClone(s));const offer=s.world.dynasties.marriageOffers[0];offer.courierSeed=(seed*1000003)>>>0;s.month++;addReport(s,'caesar','egypt',{kind:'leaders',leaders:[foreign],source:'envoy',peopleNames:{[foreign]:['Later name','后续姓名']},observationYear:s.year,observationMonth:s.month});
   for(let i=0;i<3;i++){s.month++;s.world.dynasties.seed=(seed*1000003)>>>0;advanceDynasties(s)}
-  const text=JSON.stringify([s.world.dynasties.lives[own],s.log]);assert.doesNotMatch(text,/秘密姓名|后续姓名/);if(offer.status==='accepted'){accepted=true;assert.match(text,/报告姓名/);const {finalizeCampaign}=await import('../legacy.js?v=sighting-delivery-1');s.victory=true;const archive=finalizeCampaign(s).archive;assert.deepEqual(archive.marriages[0].names[1],['Reported name','报告姓名']);assert.deepEqual(archive.marriageOffers[0].foreignName,['Reported name','报告姓名'])}if(offer.status==='declined'){declined=true;assert.match(text,/报告姓名/)}
+  const text=JSON.stringify([s.world.dynasties.lives[own],s.log]);assert.doesNotMatch(text,/秘密姓名|后续姓名/);if(offer.status==='accepted'){accepted=true;assert.match(text,/报告姓名/);const {finalizeCampaign}=await import('../legacy.js?v=faces-reported-names-1');s.victory=true;const archive=finalizeCampaign(s).archive;assert.deepEqual(archive.marriages[0].names[1],['Reported name','报告姓名']);assert.deepEqual(archive.marriageOffers[0].foreignName,['Reported name','报告姓名'])}if(offer.status==='declined'){declined=true;assert.match(text,/报告姓名/)}
  }
  assert.ok(accepted,'some letters must be accepted');assert.ok(declined,'some letters must be declined');
 });
 
 test('old family letters never reconstruct a missing fictional correspondent name',async()=>{
- const {storedCorrespondentName}=await import('../person-knowledge.js?v=sighting-delivery-1');const s=newGame('caesar'),id=createFictionalPerson(s,{name:['Hidden','隐藏姓名'],faction:'egypt',birthYear:-75});
+ const {storedCorrespondentName}=await import('../person-knowledge.js?v=faces-reported-names-1');const s=newGame('caesar'),id=createFictionalPerson(s,{name:['Hidden','隐藏姓名'],faction:'egypt',birthYear:-75});
  assert.deepEqual(storedCorrespondentName(id,undefined),['Unrecorded name','姓名未记录']);assert.deepEqual(storedCorrespondentName('cleopatra',undefined),['Cleopatra VII','克娄巴特拉七世']);
 });
 
