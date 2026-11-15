@@ -6,7 +6,7 @@ try{
  for(const view of ['campaign','atlas','han']){
   const page=await browser.newPage({viewport:{width:1366,height:768}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/'+(view==='campaign'?'':view==='atlas'?'map-lab/':'han/'),{waitUntil:'domcontentloaded'});
-  if(view==='campaign'){await page.locator('#campaign-guide').uncheck();await page.locator('#start-campaign').click();await page.locator('#step').click()}
+  if(view==='campaign'){await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#campaign-guide').uncheck();await page.locator('#start-campaign').click();await page.locator('#step').click()}
   if(view==='atlas'){await page.locator('#start-free').click();await page.locator('#advance').click()}
   if(view==='han'){await page.locator('#begin').click();await page.locator('#advance').click()}
   const trigger=page.locator('#save-transfer-open');await trigger.click();assert.equal(await page.locator('#save-transfer-dialog').evaluate(d=>d.open),true);await page.locator('.transfer-close').click();

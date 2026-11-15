@@ -1,7 +1,7 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 
-const base=process.env.SPQR_URL||'http://127.0.0.1:5173';
+const base=process.env.SPQR_TEST_URL||process.env.SPQR_URL||'http://127.0.0.1:5173';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1600,height:900}});
 const errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -16,6 +16,7 @@ async function selectCapitalGuard(){
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
+ await page.locator('.setup-advanced').evaluate(el=>el.open=true);
  await page.locator('#faction-choice').selectOption('han');
  assert.equal(await page.locator('#faction-choice').inputValue(),'han');
  await page.locator('#start-campaign').click();

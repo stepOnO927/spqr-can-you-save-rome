@@ -7,7 +7,9 @@ const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
+ await page.locator('.setup-advanced').evaluate(el=>el.open=true);
  await page.locator('#faction-choice').selectOption('caesar');
+ await page.locator('.setup-advanced').evaluate(el=>el.open=true);
  await page.locator('#campaign-guide').uncheck();
  await page.locator('#start-campaign').click();
  await page.locator('#new').click();

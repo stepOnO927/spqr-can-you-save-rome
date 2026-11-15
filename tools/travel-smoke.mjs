@@ -5,7 +5,7 @@ const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-g
 const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.addInitScript(()=>{if(!localStorage.getItem('spqr-lang'))localStorage.setItem('spqr-lang','zh')});await page.goto(base+'/',{waitUntil:'domcontentloaded'});
- await page.locator('.setup-panel').waitFor();await page.locator('#campaign-difficulty').selectOption('travel');await page.locator('#start-campaign').click();
+ await page.locator('.setup-panel').waitFor();await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#campaign-difficulty').selectOption('travel');await page.locator('#start-campaign').click();
  await page.waitForURL('**/map-lab/');await page.locator('#return-campaign').click();await page.waitForURL(base+'/');
  await page.locator('.experience-strip').waitFor();assert.match(await page.locator('.feather-panel').innerText(),/羽毛/);
  await page.locator('#what-now').click();assert.ok(await page.locator('.experience-cards article').count()>=2);await page.locator('#experience-close').click();
