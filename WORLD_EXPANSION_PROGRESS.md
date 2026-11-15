@@ -15,6 +15,7 @@ This file tracks the four supplied specifications as one development goal. The e
 - A player involved in an incident can resolve it from a Map Lab panel. The crossing side can withdraw, pay compensation and withdraw, or seek one-way local passage. The defending side can protest, tolerate, or explicitly escalate through the normal war declaration system. The Inspector checks incident identities, geography and losses; the panel does not reveal exact foreign casualties.
 - AI defenders protest an actual crossing after observation, while AI attackers respond to a protest with compensation or withdrawal according to resources and relations. The player is not auto-committed to a response. Both sides use the same incident-resolution functions.
 - Map Lab now compares up to three long-distance paths on the existing theater graph. The planner uses only the faction's dated control reports, labels treaty passage, missing permission, sea cost, uncertain control and supply risk, and lets the player inspect the next adjacent step. It never declares an unknown route legally open or creates map geography. March orders still validate each step and recheck actual control on arrival.
+- A controlled or access-granted Massilia can host a forward foothold. Its level-one camp needs money, food, a local garrison and a safe connection; higher levels require city and host-theater control, stronger garrisons, time and eventually local administration. Construction pauses if the safe route or garrison is lost. Food stock is transferred from faction reserves into a capped local store and consumed by a local army's rest; an isolated base does not grant a global range bonus. Loss of local rights records the former base before removing it.
 
 ## Verification
 
@@ -28,6 +29,8 @@ This file tracks the four supplied specifications as one development goal. The e
 - AI response tests cover protest and compensation without automatic full war.
 - The complete serial test suite passed after incident responses and AI handling were added.
 - Route tests cover treaty versus trade access, unknown foreign control and distinct long-distance alternatives. Chrome compared Italian-to-African routes and selected a first step without page errors. The public build contains 231 files, 4.11 MiB total, largest 1.06 MiB.
+- Foothold tests cover negotiated access, real construction costs, finite stored food, army rest, occupation prerequisites, severed supply lines, save persistence and Inspector warnings. Chrome completed Massilia camp construction, stocked food and rested an army. The public build contains 233 files, 4.12 MiB total, largest 1.06 MiB.
+- The complete serial test suite passed after foothold construction and monthly progression were integrated.
 - The complete serial test suite passed after the unauthorized-crossing engine and UI changes.
 
 ## Remaining work from the four specifications
@@ -35,7 +38,7 @@ This file tracks the four supplied specifications as one development goal. The e
 1. Complete the Italian slice with several settlement-level targets, treaty-based legal transfers, resistance, connected supply and a visible route planner.
 2. Add sourced tribes, microstates, strongmen, villages, nomadic groups and classified wilderness in regionally appropriate density. Keep all unsourced or approximate boundaries clearly labeled.
 3. Add dated diplomatic letters, automatic expedition routing and actual supply effects; extend border access to emissaries and trade across the route graph, and let AI consider deliberate illegal crossings when strategically justified.
-4. Add persistent footholds, outposts, village development, administrative capacity and long-distance expedition logistics, with player and AI actions.
+4. Extend the foothold framework beyond Massilia to sourced villages and frontier settlements; add shipment time/cost, AI base planning, local administrators, village development and sustained long-distance expedition logistics.
 5. Add layered suzerainty and organizations with independent membership and map modes; expand discovery, diplomatic mail and social meetings without exposing hidden state.
 6. Extend the model and browser playtests across the Mediterranean, Iran, Central Asia and Han map; retain the Liu-lineage and hidden-achievement constraints.
 

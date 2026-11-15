@@ -39,6 +39,7 @@ import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from '
 import {initializeTerritories,transferTerritory,territoryTaxFactor,administrationQuote,startAdministration,advanceTerritories} from './territory.js';
 import {initializeLocalEntities,advanceLocalEntities,localEntity,localEntityRevenue,localContactQuote,offerLocalContact,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from './local-polities.js';
 import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing,respondBorderIncident} from './border-access.js';
+import {advanceFootholds} from './foothold.js';
 export {queueMission};
 export {personalDiplomaticCredit};
 export {replyToLetter};
@@ -873,6 +874,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   }
   advanceTerritories(s);
   advanceLocalEntities(s);
+  advanceFootholds(s);
   advanceBorderIncidentAI(s,{autoplayPlayer});
   advanceMovements(s,{autoplayPlayer});
   resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});if(s.world?.cursus)advanceCursus(s);linkCommanders(s);advancePersonalDiplomacy(s);

@@ -40,6 +40,7 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
    if(entity?.controller!==entity?.id&&!factionIds.has(entity?.controller))add('fatal','invalid-local-controller',`${base}.controller`,String(entity?.controller));
    if(!Number.isFinite(entity?.militia)||entity.militia<0)add('fatal','invalid-local-militia',`${base}.militia`,String(entity?.militia));
    if(entity?.siege&&(!armyIds.has(entity.siege.armyId)||!factionIds.has(entity.siege.actor)))add('warning','invalid-local-siege',`${base}.siege`,String(entity.siege.armyId));
+   if(entity?.foothold){const foothold=entity.foothold;if(!factionIds.has(foothold.owner)||!Number.isInteger(foothold.level)||foothold.level<0||foothold.level>4||!Number.isFinite(foothold.stockFood)||foothold.stockFood<0||foothold.stockFood>foothold.level*12)add('warning','invalid-foothold',`${base}.foothold`,String(foothold.level));if(foothold.project&&(foothold.project.actor!==foothold.owner||!Number.isInteger(foothold.project.targetLevel)||foothold.project.targetLevel<=foothold.level||!Number.isFinite(foothold.project.remaining)||foothold.project.remaining<1))add('warning','invalid-foothold-project',`${base}.foothold.project`,String(foothold.project.targetLevel))}
   }
   if(!s.world?.characters)add('fatal','missing-characters','world.characters','Roman character registry is missing');
   else{

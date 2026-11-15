@@ -31,6 +31,7 @@ import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
 import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, answerBorderIncident, queueMission, setTax, personalDiplomaticCredit, administrationQuote, startAdministration} from '../engine.js?v=world-kings-1';
 import {renderRoutePlanner} from './route-ui.js';
+import {renderFootholdPanel} from './foothold-ui.js';
 import {localEntity,localContactQuote,offerLocalContact,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from '../local-polities.js';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
@@ -357,4 +358,5 @@ function renderLocalEntity(city){
  section.querySelector('#local-access')?.addEventListener('click',()=>{offerLocalContact(state,entity.id,actor,'access');renderHud();showCity(city)});
  section.querySelector('#local-protectorate')?.addEventListener('click',()=>{offerLocalContact(state,entity.id,actor,'protectorate');renderHud();showCity(city)});
  section.querySelector('#local-siege')?.addEventListener('click',()=>{besiegeLocalEntity(state,entity.id,army.id,actor);renderHud();showCity(city)});
+ if(visible)renderFootholdPanel({state,entity,actor,language:lang,panel:section,refresh:()=>{renderHud();showCity(city)}});
 }
