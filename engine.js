@@ -1,13 +1,13 @@
 import {advanceAgreementProposals} from './agreement-negotiations.js?v=agreement-courier-1';
 import {isDeliveredReport} from './person-knowledge.js?v=conspiracy-name-1';
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=conspiracy-name-1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=regency-tenure-1';
 import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=conspiracy-name-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=conspiracy-name-1';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=conspiracy-name-1';
-import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=conspiracy-name-1';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=regency-tenure-1';
+import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=regency-tenure-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=succession-ui-recovery-1';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,snapshotReportedPeople,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=conspiracy-name-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,snapshotReportedPeople,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=regency-tenure-1';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=conspiracy-name-1';
 import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=conspiracy-name-1';
 import {advanceConspiracies} from './conspiracies.js?v=conspiracy-name-1';
@@ -15,13 +15,13 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=conspiracy-name-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=conspiracy-name-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=conspiracy-name-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=regency-tenure-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
-import {advanceFocuses,focusModifiers} from './national-focus.js?v=conspiracy-name-1';
-import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=conspiracy-name-1';
-import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=conspiracy-name-1';
+import {advanceFocuses,focusModifiers} from './national-focus.js?v=regency-tenure-1';
+import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=regency-tenure-1';
+import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=regency-tenure-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;

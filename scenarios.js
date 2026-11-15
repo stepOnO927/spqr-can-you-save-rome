@@ -1,4 +1,4 @@
-import {newGame,estimatedStrength} from './engine.js?v=conspiracy-name-1';
+import {newGame,estimatedStrength} from './engine.js?v=regency-tenure-1';
 import {createFictionalPerson} from './dynasties.js?v=conspiracy-name-1';
 import {formCoalition} from './coalitions.js?v=conspiracy-name-1';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';

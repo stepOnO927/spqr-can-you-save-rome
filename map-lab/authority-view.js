@@ -1,5 +1,5 @@
 import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
-import {deriveGovernment} from '../governance.js?v=conspiracy-name-1';
+import {deriveGovernment} from '../governance.js?v=regency-tenure-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 
 // Project government authority from the viewer's own state or dated reports.
