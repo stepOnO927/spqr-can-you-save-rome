@@ -9,6 +9,7 @@ export const IDEA_CATEGORIES = [
   {id:'culture',name:['Education, Culture & Belief','教育、文化与信仰']}
 ];
 const appianSource='https://whc.unesco.org/en/list/1708';
+const gracchusMilestonesSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Plutarch/Lives/Caius_Gracchus%2A.html';
 const miningSource='https://oxrep.web.ox.ac.uk/mines-database';
 const quarrySource='https://oxrep.web.ox.ac.uk/stone-quarries-database';
 const alesiaSource='https://musee-archeologienationale.fr/en/node/1592';
@@ -120,7 +121,7 @@ const additionalMaterials=[
  ['craft-workshops',['Craft Workshops','手工业作坊'],'workshop',catoCraftSource,['Cato names markets for tools, pottery, rope, and mills; this card models local craft organization rather than a single ancient factory.','加图记载工具、陶器、绳索和磨坊器具的产地；此卡模拟地方手工业组织，并非某座古代工厂。'],18,3,[]],
  ['grain-processing',['Grain Processing','谷物加工'],'grain-mill',catoEstateSource,['Cato lists donkey-driven and hand mills among estate equipment; milling was not new in 49 BCE.','加图把驴力磨和手磨列为庄园设备；碾磨并非前49年的新发明。'],19,3,['grain-storage']],
  ['stone-inscription',['Stone Inscription','石刻铭文'],'monument',scipioInscriptionSource,['The Scipio Barbatus sarcophagus bears Republican inscriptions; the monument’s legitimacy effect is a game interpretation.','西庇阿·巴尔巴图斯石棺留有共和国时期铭文；纪念碑的合法性效果是游戏诠释。'],18,2,['quarrying']],
- ['road-milestones',['Road Milestones','道路里程碑'],'milestone',appianSource,['Milestones marked Roman roads; surviving examples span several periods.','里程碑标示罗马道路；留存实例横跨多个时期。'],16,2,['roadmaking']],
+ ['road-milestones',['Road Milestones','道路里程碑'],'milestone',gracchusMilestonesSource,['Plutarch, writing later, credits Gaius Gracchus with measuring roads by miles and setting stone markers. This card organizes an existing practice, not a new invention in 49 BCE.','后世普鲁塔克记述盖乌斯·格拉古按里程丈量道路并立石柱。本卡组织已有做法，并非前49年的新发明。'],16,2,['roadmaking']],
  ['public-square-planning',['Public Square Planning','公共广场规划'],'square',pompeiiForumSource,['Pompeii’s second-century BCE Comitium adjoined its Forum; public-space planning varied across cities.','庞贝前2世纪的民会场毗邻广场；各城公共空间规划并不相同。'],21,3,['roadmaking']],
  ['library-organization',['Private Collection Organization','私人藏书整理'],'library',librarySource,['Private book collections existed in Republican Rome; the first Roman public libraries came later.','共和国时期罗马已有私人藏书；罗马公共图书馆出现得更晚。'],24,4,['craft-workshops']],
  ['bath-construction',['Bath Construction','浴场建造'],'bath',pompeiiBathSource,['Pompeii’s Stabian and Republican baths were built in the second century BCE; their water and heating systems changed over time.','庞贝的斯塔比亚浴场与共和国浴场建于前2世纪；供水和加热设施后来多次改造。'],24,4,['aqueduct-refinement']],
@@ -196,7 +197,7 @@ const buildingEntries={
  workshop:['Cato lists tools, pottery, rope and milling equipment sold in different places. A paid local workshop adds treasury income with upkeep; this is a model of organized craft activity, not a measured ancient profit.','加图列出各地出售的工具、陶器、绳索与磨具。付费建成的地方作坊增加国库收入并产生维护费；这是手工业组织的模型，不是古代实测利润。'],
  'grain-mill':['Cato includes hand and donkey mills in estate equipment. A completed grain-processing facility adds game food output rather than creating grain without crops; its rate is an abstraction of processing capacity.','加图把手磨和驴力磨列入庄园器具。建成的谷物加工场增加游戏粮食产出，并不意味着没有作物也能凭空生粮；其速率是加工能力的抽象。'],
  monument:['The Scipio Barbatus tomb preserves a Republican inscription, not a template for every province. A player-written dedication adds political prestige but can lower local loyalty; the wording and effects are campaign choices.','西庇阿·巴尔巴图斯墓留有共和国铭文，却不是各行省通用范本。玩家撰写的铭文增加政治声望，也可能降低地方忠诚；文字及效果都取决于战役选择。'],
- milestone:['Surviving markers show that roads could be measured and marked, although individual dates differ. A local milestone adds a small treasury benefit in the game; the stone marker does not itself grant a movement bonus.','留存的界碑表明道路可以测量并标记，但各碑年代不同。地方里程碑在游戏中提供少量国库收益；石碑本身不直接增加行军速度。'],
+ milestone:['Plutarch describes stone distance markers along roads in Gaius Gracchus’s time. Build a local road first; the small treasury benefit models trade administration, not income produced by the stone itself.','普鲁塔克记述盖乌斯·格拉古时期沿道路设置石制里程标记。须先修建当地道路；少量国库收益模拟沿路商贸管理，并非石柱本身生财。'],
  square:['Pompeii’s Republican public spaces included a Forum and Comitium. A local square needs an urban site, materials and upkeep, then helps loyalty; the political gain is a game estimate.','庞贝共和国时期的公共空间包括广场和民会场。地方广场须位于城市，投入材料并持续维护，随后改善忠诚；政治增益属于游戏估算。'],
  library:['Private book collections existed before Roman public libraries. This urban private collection costs money and upkeep and helps future research; it is not a public institution or an automatic invention unlock.','罗马公共图书馆出现之前已有私人藏书。此处城市私人藏书室花费国库并需维护，可帮助未来研究；它不是公共机构，也不会自动解锁发明。'],
  bath:['Pompeii’s Republican baths existed before 49 BCE but changed later. A bath at a suitable water site modestly improves local loyalty and character-health risk, with upkeep; no modern medical claim follows.','庞贝的共和国浴场早于前49年，但后来又经历改造。建于适宜水域的浴场有限改善地方忠诚和人物患病风险，并需维护；这不构成现代医学主张。'],
@@ -386,6 +387,7 @@ export function constructionCheck(s,owner,regionId,buildingId){
   if(b.site==='water'&&!(s.grandMap?r.river:waterSites.has(r.id)))return {ok:false,reason:'water'};
   if(b.site==='urban'&&!(s.grandMap?r.terrain==='urban':urbanSites.has(r.id)))return {ok:false,reason:'settlement'};
   if(b.id==='shipyard'&&!r.buildings.includes('port'))return {ok:false,reason:'port'};
+  if(b.id==='milestone'&&!r.buildings.includes('road'))return {ok:false,reason:'road'};
   if(r.buildings.includes(buildingId)||r.construction)return {ok:false,reason:'queue'};
   const cost=Math.max(5,b.cost-(activeEffects(s,owner).constructionDiscount||0)-(figureActive(s,owner,'engineer')?3:0));
   if(f.treasury<cost)return {ok:false,reason:'treasury'};

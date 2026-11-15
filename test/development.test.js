@@ -13,6 +13,38 @@ import {afterActionHtml} from '../recon-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
+test('road milestones need a built road and yield their stated income after construction',()=>{
+ const s=newGrandGame('senate'),r=s.regions.find(site=>site.id==='roma'),d=development(s,'senate');
+ s.wars=[];s.factions.senate.treasury=500;d.materials.stone=30;d.materials.timber=30;
+ const invention=MATERIALS.find(item=>item.id==='road-milestones');
+ assert.match(invention.source.url,/Plutarch\/Lives\/Caius_Gracchus/);
+ assert.equal(researchInnovation(s,'senate','material',invention.id).ok,true);
+ months(s,invention.months);
+ assert.equal(constructionCheck(s,'senate',r.id,'milestone').reason,'road');
+ assert.match(constructionPanel(s,'en',r),/Unavailable: build a local road first/);
+ assert.match(constructionPanel(s,'zh',r),/需要当地已建道路/);
+ assert.match(developmentPanel(s,'en','material'),/existing local road/);
+ assert.match(developmentPanel(s,'zh','material'),/当地已建道路/);
+ assert.equal(startConstruction(s,'senate',r.id,'road').ok,true);
+ assert.equal(constructionCheck(s,'senate',r.id,'milestone').reason,'road','a road in the queue is not a built road');
+ months(s,BUILDINGS.find(item=>item.id==='road').months);
+ assert.ok(r.buildings.includes('road'));
+ assert.equal(startConstruction(s,'senate',r.id,'milestone').ok,true);
+ const during=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(during.regions.find(site=>site.id===r.id).construction.buildingId,'milestone');
+ months(during,BUILDINGS.find(item=>item.id==='milestone').months);
+ const built=during.regions.find(site=>site.id===r.id);
+ assert.ok(built.buildings.includes('milestone'));
+ const without=upgradeSave(JSON.parse(JSON.stringify(during)));
+ without.regions.find(site=>site.id===r.id).buildings=without.regions.find(site=>site.id===r.id).buildings.filter(id=>id!=='milestone');
+ assert.equal(nationalBudget(during,'senate').projectedNet,nationalBudget(without,'senate').projectedNet+1);
+ // Old saves may contain a milestone without an explicit local road. Preserve
+ // that paid construction while applying the new prerequisite to future work.
+ built.buildings=built.buildings.filter(id=>id!=='road');
+ const oldSave=upgradeSave(JSON.parse(JSON.stringify(during)));
+ assert.ok(oldSave.regions.find(site=>site.id===r.id).buildings.includes('milestone'));
+});
+
 test('cultural accommodation aids administered foreign provinces only after adoption',()=>{
  const idea=IDEAS.find(item=>item.id==='cultural-accommodation'),s=newGrandGame('senate');
  s.wars=[];s.factions.senate.treasury=500;
