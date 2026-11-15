@@ -27,7 +27,7 @@ This matrix is deliberately conservative. `PASS` requires the declared complete 
 
 ## Coverage rules
 
-- The baseline fast suite passed 871/871 assertions ([cloud run](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43662622032)); this does not promote a whole feature to PASS.
+- The baseline fast suite passed 892/892 assertions ([cloud run](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43667759422)); this does not promote a whole feature to PASS.
 - The dedicated [Poki package smoke](../tools/poki-build-smoke.mjs) proved entry, touch and mock SDK order on three entry points, not live platform acceptance.
 - [The Inspector](../inspector.html) reports its own selected checks. Its registry badges remain PARTIAL or NOT TESTED until full UI and save/load evidence is available.
 - A static import graph can flag candidates but cannot establish UNREACHABLE on its own. No feature was labeled UNREACHABLE without a demonstrated failed player path.

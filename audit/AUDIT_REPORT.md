@@ -4,13 +4,13 @@ Audit date: 2026-11-15 UTC. Scope: Roman campaign, terrain atlas, Han campaign, 
 
 ## Executive assessment
 
-The game has three working entry points and a large, connected simulation. The baseline cloud fast suite passed **871/871** tests ([run 43662622032](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43662622032)). The latest dedicated Poki package passed real touch interactions in all three entry points and the required Roman frame sizes with **zero unapproved runtime external requests** ([run 43664677048](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43664677048)). These results establish tested behavior only; they do not certify every campaign feature.
+The game has three working entry points and a large, connected simulation. The latest cloud fast suite passed **892/892** tests ([run 43667759422](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43667759422)). The latest dedicated Poki package passed real touch interactions in all three entry points and the required Roman frame sizes with **zero unapproved runtime external requests** ([run 43667759424](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43667759424)). These results establish tested behavior only; they do not certify every campaign feature.
 
-The audit found and repaired blocked-storage startup failures, short landscape controls, Han territory taps intercepted by decorative SVG layers, a floating save-transfer control obscuring Advance, inconsistent module cache versions, and a stale terrain-map campaign date. See [BUG_REPORT.md](BUG_REPORT.md). The Inspector now runs read-only state checks and isolated diagnostics; browser and cloud evidence is recorded separately.
+The audit found and repaired blocked-storage startup failures, short landscape controls, Han territory taps intercepted by decorative SVG layers, a floating save-transfer control obscuring Advance, inconsistent module cache versions, and a stale terrain-map campaign date. Mainline's early storage guard was integrated with the session-only save adapter; prohibited browser storage now remains playable without claiming that a volatile save will survive reload. See [BUG_REPORT.md](BUG_REPORT.md). The Inspector now runs read-only state checks and isolated diagnostics. The pre-guard full [browser regression](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43666565048) passed; the merged guard has a new [browser regression](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43668184397) still pending.
 
 ## Source and architecture inventory
 
-The last measured source inventory before adding these ten reports recorded **562 files, 10,113,196 bytes, 121 runtime source files**. The report files themselves add ten tracked files. It identified three public entry points and generated a file-by-file dependency graph in the fast workflow artifact. The inventory was refined to include the developer Inspector and Poki-only roots and to avoid treating build-script string literals as imports. Static reachability is a candidate signal, never proof that a feature is dead.
+The merged branch inventory recorded **622 files, 10,915,008 bytes, 123 runtime source files**. It includes these ten report files and the latest main-branch additions. It identified three public entry points and generated a file-by-file dependency graph in the fast workflow artifact. The inventory was refined to include the developer Inspector and Poki-only roots and to avoid treating build-script string literals as imports. Static reachability is a candidate signal, never proof that a feature is dead.
 
 - [Inventory generator](../scripts/audit-inventory.mjs)
 - [Feature registry](../feature-registry.js)
@@ -20,7 +20,7 @@ The last measured source inventory before adding these ten reports recorded **56
 
 | Area | Evidence | Assessment |
 |---|---|---|
-| Core simulation and invariants | 871/871 baseline fast tests | Passed tested assertions |
+| Core simulation and invariants | 892/892 baseline fast tests | Passed tested assertions |
 | Touch at 640×360 and 836×470 | Roman, Han and atlas interactions in cloud Chromium | Passed targeted interactions |
 | Storage denied | Cloud browser flow across all three entries | Latest full regression status in [TEST_RESULTS.md](TEST_RESULTS.md) |
 | Poki SDK and offline assets | Three-entry package smoke with SDK event assertions | Passed mock-SDK and network checks; real platform Inspector pending |
@@ -35,8 +35,8 @@ The last measured source inventory before adding these ten reports recorded **56
 
 | Measure | Count / status | Basis |
 |---|---:|---|
-| Tracked files classified before report commit | 562 | [Generated inventory](../scripts/audit-inventory.mjs), [fast run 43664677062](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43664677062) |
-| Runtime source files identified / statically reachable | 121 / 121 | Same inventory; static reachability is not runtime proof |
+| Tracked files classified | 622 | [Generated inventory](../scripts/audit-inventory.mjs), [fast run 43667759422](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43667759422) |
+| Runtime source files identified / statically reachable | 123 / 123 | Same inventory; static reachability is not runtime proof |
 | Runtime source texts inspected for stubs and unsafe dynamic execution | 114 initial files | Original source scan; later additions reviewed when authored |
 | Major feature groups | 20 | [Registry](../feature-registry.js) |
 | Groups certified PASS end to end | 0 | Strict UI → state → consequence → save/load standard |
@@ -44,8 +44,8 @@ The last measured source inventory before adding these ten reports recorded **56
 | Confirmed product defects / test-harness defects | 10 / 3 | [Bug report](BUG_REPORT.md) |
 | Confirmed module identity duplication / redundant implementations deleted | 1 / 0 | [Duplication report](DUPLICATION_REPORT.md) |
 | Confirmed code-only or UI-only feature claims | 0 / 0 | No such finding established by the available action traces |
-| Unit tests in latest fast run | 871 pass, 0 fail | [Run 43664677062](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43664677062) |
-| Poki package test | 3 entries, 0 unauthorized external requests | [Run 43664677048](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43664677048) |
+| Unit tests in latest fast run | 892 pass, 0 fail | [Run 43667759422](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43667759422) |
+| Poki package test | 3 entries, 0 unauthorized external requests | [Run 43667759424](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43667759424) |
 | Remaining external submission gates | 5 | Official Inspector, store art, privacy/link review, device play, final platform review |
 | Tests unavailable to this audit | Official Poki Inspector, physical devices, human strategy review | [Release blockers](RELEASE_BLOCKERS.md) |
 
