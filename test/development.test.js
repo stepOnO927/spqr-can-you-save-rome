@@ -12,6 +12,64 @@ import {budgetHtml} from '../budget-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
+test('paid research and incoming knowledge cannot charge twice for the same invention',()=>{
+ const researching=newGrandGame('caesar');researching.relations['caesar:egypt']=60;
+ researching.factions.caesar.treasury=300;
+ assert.equal(researchInnovation(researching,'caesar','material','water-control').ok,true);
+ const treasury=researching.factions.caesar.treasury;
+ assert.equal(knowledgeTrade(researching,'caesar','egypt','material','water-control').reason,'knowledge');
+ assert.equal(sellKnowledge(researching,'egypt','caesar','material','water-control').reason,'knowledge');
+ assert.equal(researching.factions.caesar.treasury,treasury);
+ assert.match(developmentPanel(researching,'en','material'),/data-trade-id="water-control"[^>]*disabled/);
+ const bought=newGrandGame('caesar');bought.relations['caesar:egypt']=60;
+ bought.factions.caesar.treasury=300;
+ assert.equal(knowledgeTrade(bought,'caesar','egypt','material','water-control').ok,true);
+ const remaining=bought.factions.caesar.treasury;
+ assert.equal(researchInnovation(bought,'caesar','material','water-control').reason,'unavailable');
+ assert.equal(bought.factions.caesar.treasury,remaining);
+ assert.match(developmentPanel(bought,'en','material'),/data-research="water-control"[^>]*disabled[^>]*>In transit/);
+ assert.match(developmentPanel(bought,'zh','material'),/data-research="water-control"[^>]*disabled[^>]*>传输中/);
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(bought)));
+ advanceDevelopment(loaded);advanceDevelopment(loaded);
+ assert.equal(loaded.development.caesar.knownMaterial.filter(id=>id==='water-control').length,1);
+});
+
+test('knowledge agreements skip an invention already under research',()=>{
+ const s=newGrandGame('caesar');s.relations['caesar:egypt']=60;
+ s.factions.caesar.treasury=300;s.factions.egypt.treasury=300;
+ assert.equal(negotiateKnowledgeAgreement(s,'caesar','egypt').ok,true);
+ assert.equal(researchInnovation(s,'caesar','material','water-control').ok,true);
+ for(let i=0;i<3;i++)advanceDevelopment(s);
+ assert.ok(!s.development.caesar.trade.some(t=>t.id==='water-control'));
+ assert.ok(s.development.egypt.trade.some(t=>t.id==='roadmaking'));
+ advanceDevelopment(s);
+ assert.equal(s.development.caesar.knownMaterial.filter(id=>id==='water-control').length,1);
+});
+
+test('AI seeks a different invention when its first foreign option is already in progress',()=>{
+ const s=newGrandGame('senate');s.month=12;s.relations['caesar:egypt']=60;
+ s.factions.caesar.treasury=500;s.factions.caesar.food=200;
+ const buyer=development(s,'caesar'),seller=development(s,'egypt');
+ buyer.research={branch:'material',id:'water-control',remaining:3};
+ seller.knownMaterial.push('quarrying');
+ aiTurn(s,'caesar');
+ assert.ok(buyer.trade.some(t=>t.seller==='egypt'&&t.id==='quarrying'));
+ assert.ok(!buyer.trade.some(t=>t.id==='water-control'));
+});
+
+test('old saves with overlapping research and transfer retain one earned knowledge item',()=>{
+ const s=newGrandGame('caesar'),d=development(s,'caesar');
+ d.knownMaterial.push('grain-storage');
+ d.research={branch:'idea',id:'cultural-accommodation',remaining:1,scholarPartner:null};
+ d.trade.push({seller:'egypt',branch:'idea',id:'cultural-accommodation',remaining:1});
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(loaded.development.caesar.knownMaterial.filter(id=>id==='grain-storage').length,1);
+ const reports=[];advanceDevelopment(loaded,(en,zh)=>reports.push([en,zh]));
+ assert.equal(loaded.development.caesar.knownIdeas.filter(id=>id==='cultural-accommodation').length,1);
+ assert.equal(loaded.development.caesar.foreignOrigins['cultural-accommodation'],undefined);
+ assert.equal(reports.filter(([en])=>en.includes('cultural-accommodation')||en.includes('Cultural Accommodation')).length,1);
+});
+
 test('a mine needs local labor and produces less metal when its population falls',()=>{
  const s=newGrandGame('senate'),r=s.regions.find(site=>site.id==='t057'),d=development(s,'senate');
  s.factions.senate.treasury=1000;d.knownMaterial.push('metal-extraction');d.materials.stone=20;d.materials.timber=20;
@@ -1102,7 +1160,9 @@ test('AI knowledge buyers keep a levy reserve while human buyers may choose to s
  ai.factions.egypt.treasury=45;
  assert.equal(sellKnowledge(ai,'caesar','egypt','idea','legion-training').reason,'buyer treasury');
  assert.equal(ai.factions.egypt.treasury,45);
+ assert.match(developmentPanel(ai,'en','idea'),/data-sell-buyer="egypt"[^>]*data-sell-id="legion-training"[^>]*disabled/);
  ai.factions.egypt.treasury=46;
+ assert.doesNotMatch(developmentPanel(ai,'en','idea'),/data-sell-buyer="egypt"[^>]*data-sell-id="legion-training"[^>]*disabled/);
  assert.equal(sellKnowledge(ai,'caesar','egypt','idea','legion-training').ok,true);
  assert.equal(ai.factions.egypt.treasury,24);
  const human=newGame('egypt');human.relations['caesar:egypt']=30;

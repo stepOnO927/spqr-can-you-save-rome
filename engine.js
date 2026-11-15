@@ -5,7 +5,7 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG} from './characters.js
 import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,reportedClaimants,supportClaimant,refreshReportConfidence} from './character-system.js?v=63';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
-import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,settleGranaryReserves,migrateGranaryReserves,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,scholarVisitCheck,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,researchTerms,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=40';
+import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,settleGranaryReserves,migrateGranaryReserves,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,scholarVisitCheck,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,researchTerms,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=42';
 import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=8';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=10';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
@@ -613,6 +613,7 @@ export function aiTurn(s,owner){
   }
   if(owner!=='rebels'){
     const d=s.development[owner];
+    const learningKnowledge=(recipient,branch,id)=>recipient.research?.branch===branch&&recipient.research.id===id||recipient.trade.some(t=>t.branch===branch&&t.id===id);
     const budget=nationalBudget(s,owner),atWar=s.wars.some(w=>w.includes(owner));
     const unsettled=f.stability<60||owned.some(r=>(r.loyalty??70)<55);
     const categoryNeed={military:atWar?9:3,government:unsettled?9:5,diplomacy:atWar?5:7,economy:budget.projectedNet<0?11:6,culture:unsettled?6:5};
@@ -690,7 +691,7 @@ export function aiTurn(s,owner){
     else if(!foodProjects.length&&f.treasury>120+infrastructureReserve){for(const kind of ['stone','timber','metal'])if(d.materials[kind]<5)purchaseMaterials(s,owner,kind,5);const project=owned.flatMap(site=>BUILDINGS.map(b=>({site,b}))).find(({site,b})=>constructionCheck(s,owner,site.id,b.id).ok);if(project)startConstruction(s,owner,project.site.id,project.b.id)}
     if(s.month%12===0&&f.treasury>75+civilianReserve){for(const seller of Object.keys(s.development)){
       if(seller===owner||isWar(s,owner,seller)||relation(s,owner,seller)<0)continue;
-      const item=s.development[seller].knownMaterial.find(k=>!d.knownMaterial.includes(k));if(!item)continue;
+      const item=s.development[seller].knownMaterial.find(k=>!d.knownMaterial.includes(k)&&!learningKnowledge(d,'material',k));if(!item)continue;
       const result=seller===s.player?proposeKnowledgePurchase(s,owner,seller,'material',item):knowledgeTrade(s,owner,seller,'material',item);
       if(result.ok){if(seller===s.player){const title=MATERIALS.find(x=>x.id===item)?.name||[item,item];log(s,`${FACTIONS[owner].short[0]} requests ${title[0]} knowledge for ${result.price} treasury. Open Development to accept or decline.`,`${FACTIONS[owner].short[1]}请求以${result.price}国库购买${title[1]}知识。请在“发展”界面接受或拒绝。`)}break}
     }}
@@ -699,7 +700,7 @@ export function aiTurn(s,owner){
       for(const buyer of Object.keys(s.development)){
         if(buyer===owner||buyer===s.player||buyer==='rebels'||isWar(s,owner,buyer)||relation(s,owner,buyer)<15||s.factions[buyer].treasury<12)continue;
         const recipient=s.development[buyer];
-        const offers=[...d.knownMaterial.filter(id=>!recipient.knownMaterial.includes(id)&&!recipient.trade.some(t=>t.branch==='material'&&t.id===id)).map(id=>['material',id]),...d.knownIdeas.filter(id=>!recipient.knownIdeas.includes(id)&&!recipient.trade.some(t=>t.branch==='idea'&&t.id===id)).map(id=>['idea',id])];
+        const offers=[...d.knownMaterial.filter(id=>!recipient.knownMaterial.includes(id)&&!learningKnowledge(recipient,'material',id)).map(id=>['material',id]),...d.knownIdeas.filter(id=>!recipient.knownIdeas.includes(id)&&!learningKnowledge(recipient,'idea',id)).map(id=>['idea',id])];
         for(const [branch,id] of offers)if(sellKnowledge(s,owner,buyer,branch,id).ok){sold=true;break}
         if(sold)break;
       }
@@ -714,8 +715,8 @@ export function aiTurn(s,owner){
     if(s.year>=-48&&s.month===6&&f.treasury>30){for(const partner of [s.player,...Object.keys(s.development)].filter((id,index,ids)=>ids.indexOf(id)===index&&id!==owner)){
       if(isWar(s,owner,partner)||relation(s,owner,partner)<20)continue;
       const other=s.development[partner];if(!other)continue;
-      const offer=d.knownIdeas.find(k=>!other.knownIdeas.includes(k)&&!other.trade.some(t=>t.branch==='idea'&&t.id===k));
-      const want=other.knownIdeas.find(k=>!d.knownIdeas.includes(k)&&!d.trade.some(t=>t.branch==='idea'&&t.id===k));if(!offer||!want)continue;
+      const offer=d.knownIdeas.find(k=>!other.knownIdeas.includes(k)&&!learningKnowledge(other,'idea',k));
+      const want=other.knownIdeas.find(k=>!d.knownIdeas.includes(k)&&!learningKnowledge(d,'idea',k));if(!offer||!want)continue;
       const result=partner===s.player?proposeKnowledgeExchange(s,owner,partner,'idea',offer,'idea',want):exchangeKnowledge(s,owner,partner,'idea',offer,'idea',want);
       if(result.ok){if(partner===s.player){const give=IDEAS.find(x=>x.id===want)?.name||[want,want],receive=IDEAS.find(x=>x.id===offer)?.name||[offer,offer];log(s,`${FACTIONS[owner].short[0]} proposes an exchange: ${receive[0]} for ${give[0]}. Open Development to accept or decline.`,`${FACTIONS[owner].short[1]}提议用${receive[1]}交换${give[1]}。请在“发展”界面接受或拒绝。`)}break}
     }}

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {newGrandGame,proposeKnowledgeSale,proposeKnowledgePurchase,proposeKnowledgeExchange,proposeKnowledgeAgreement,inviteForeignScholars} from '../engine.js';
+import {newGrandGame,knowledgeTrade,researchInnovation,proposeKnowledgeSale,proposeKnowledgePurchase,proposeKnowledgeExchange,proposeKnowledgeAgreement,inviteForeignScholars} from '../engine.js';
 import {scholarVisitCheck} from '../development.js';
 import {advanceNaval} from '../naval.js';
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
@@ -374,6 +374,29 @@ try{
   await page.locator('#development').click();
   await page.locator('[data-trade-seller="egypt"][data-trade-id="water-control"]').click();
   assert.match(await page.locator('#command-detail').innerText(),/没有可通行的知识传递路线/);
+  const incomingKnowledge=newGrandGame('caesar');incomingKnowledge.relations['caesar:egypt']=60;incomingKnowledge.factions.caesar.treasury=300;
+  assert.equal(knowledgeTrade(incomingKnowledge,'caesar','egypt','material','water-control').ok,true);
+  for(const language of ['en','zh']){
+    await page.evaluate(value=>localStorage.setItem('spqr-lang',value),language);
+    await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+    await page.locator('#entry-file').setInputFiles({name:`incoming-${language}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(incomingKnowledge))});
+    await page.locator('[data-tab="development"]').click();
+    const research=page.locator('[data-research="water-control"]');
+    assert.equal(await research.isDisabled(),true);
+    assert.match(await research.innerText(),language==='zh'?/传输中/:/In transit/);
+    assert.equal(await page.locator('[data-trade-seller="egypt"][data-trade-id="water-control"]').isDisabled(),true);
+    await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),incomingKnowledge);
+    await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+    await page.locator('#development').click();
+    assert.equal(await page.locator('[data-research="water-control"]').isDisabled(),true);
+    assert.match(await page.locator('[data-research="water-control"]').innerText(),language==='zh'?/传输中/:/In transit/);
+  }
+  const underway=newGrandGame('caesar');underway.relations['caesar:egypt']=60;underway.factions.caesar.treasury=300;
+  assert.equal(researchInnovation(underway,'caesar','material','water-control').ok,true);
+  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),underway);
+  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+  await page.locator('#development').click();
+  assert.equal(await page.locator('[data-trade-seller="egypt"][data-trade-id="water-control"]').isDisabled(),true);
   assert.deepEqual(errors,[]);
   console.log('Phase XIV browser smoke passed: research, adoption, construction, knowledge agreements and consent-based trades in both languages.');
 }finally{await browser.close()}

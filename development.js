@@ -231,12 +231,14 @@ const coastalSites=new Set(['narbo','hispaniaN','hispaniaS','italiaS','sicilia',
 const waterSites=new Set(['gaul','cisalpine','narbo','hispaniaN','hispaniaS','italiaN','roma','italiaS','anatolia','syria','egypt','armenia']);
 const urbanSites=new Set(['roma','egypt','anatolia','syria','achaia','sicilia']);
 const fresh = faction => ({knownMaterial:faction==='egypt'?['water-control','grain-storage']:['roadmaking','grain-storage'],knownIdeas:[],foreignOrigins:{},slots:Object.fromEntries(IDEA_CATEGORIES.map(c=>[c.id,[null]])),research:null,adoption:null,expansion:null,trade:[],offers:[],purchaseRequests:[],exchangeRequests:[],agreementRequests:[],materials:{stone:6,timber:7,metal:3}});
+const normalizedDevelopments=new WeakSet();
 export function initializeDevelopment(s){
   s.development ||= {};
   s.knowledgeAgreements=Array.isArray(s.knowledgeAgreements)?s.knowledgeAgreements.filter(a=>a&&typeof a.a==='string'&&typeof a.b==='string'&&a.a!==a.b&&s.factions[a.a]&&s.factions[a.b]&&Number.isInteger(a.remaining)&&a.remaining>0&&a.remaining<=12&&Number.isInteger(a.next)&&a.next>0&&a.next<=3):[];
   for(const id of Object.keys(s.factions).filter(id=>id!=='rebels')){
     const d=s.development[id] ||= fresh(id);
     d.knownMaterial ||= fresh(id).knownMaterial;d.knownIdeas ||= [];
+    if(!normalizedDevelopments.has(d)){d.knownMaterial=[...new Set(d.knownMaterial)];d.knownIdeas=[...new Set(d.knownIdeas)];normalizedDevelopments.add(d)}
     d.slots ||= fresh(id).slots;for(const c of IDEA_CATEGORIES)d.slots[c.id] ||= [null];
     d.materials ||= {stone:6,timber:7,metal:3};d.trade ||= [];d.offers=Array.isArray(d.offers)?d.offers.filter(o=>o&&typeof o.seller==='string'&&s.factions[o.seller]&&['material','idea'].includes(o.branch)&&typeof o.id==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];d.purchaseRequests=Array.isArray(d.purchaseRequests)?d.purchaseRequests.filter(o=>o&&typeof o.buyer==='string'&&o.buyer!=='rebels'&&s.factions[o.buyer]&&['material','idea'].includes(o.branch)&&typeof o.id==='string'&&Number.isFinite(o.remaining)&&o.remaining>0&&o.remaining<=12):[];d.foreignOrigins ||= {};d.visitingScholars=Array.isArray(d.visitingScholars)?d.visitingScholars.filter(v=>v&&s.factions[v.partner]&&Number.isFinite(v.remaining)&&v.remaining>0):[];
     d.scholarRequests=Array.isArray(d.scholarRequests)?d.scholarRequests.filter(v=>v&&s.factions[v.host]&&['material','idea'].includes(v.branch)&&typeof v.id==='string'&&Number.isInteger(v.remaining)&&v.remaining>0&&v.remaining<=12):[];
@@ -249,6 +251,7 @@ export function initializeDevelopment(s){
   return s;
 }
 export const development = (s,id) => (initializeDevelopment(s),s.development[id]);
+const knowledgeInProgress=(d,branch,id)=>d.research?.branch===branch&&d.research.id===id||d.trade.some(t=>t.branch===branch&&t.id===id);
 const visitingScholarFor=(s,owner,branch,id)=>development(s,owner)?.visitingScholars.find(visit=>visit.remaining>0&&!visit.travelRemaining&&(!visit.route||visit.currentRegion===visit.destination)&&(!visit.id||visit.branch===branch&&visit.id===id));
 export function scholarResearchBonus(s,owner,branch,id){return !!visitingScholarFor(s,owner,branch,id)}
 export function merchantResearchLead(s,owner,branch,id){
@@ -289,7 +292,7 @@ export function taxReviewExpense(s,owner){
 }
 export function researchInnovation(s,owner,branch,id){
   const d=development(s,owner),item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id),f=s.factions[owner];
-  if(!item||d.research||d[branch==='material'?'knownMaterial':'knownIdeas'].includes(id))return {ok:false,reason:'unavailable'};
+  if(!item||d.research||d[branch==='material'?'knownMaterial':'knownIdeas'].includes(id)||knowledgeInProgress(d,branch,id))return {ok:false,reason:'unavailable'};
   if(item.prerequisites.some(pre=>!d[branch==='material'?'knownMaterial':'knownIdeas'].includes(pre)))return {ok:false,reason:'prerequisite'};
   const terms=researchTerms(s,owner,branch,id),visitingScholar=visitingScholarFor(s,owner,branch,id);
   if(f.treasury<terms.cost)return {ok:false,reason:'treasury'};
@@ -415,7 +418,7 @@ export function knowledgeTrade(s,buyer,seller,branch,id){
   const bd=s.development[buyer],sd=s.development[seller],buyerFaction=s.factions[buyer],sellerFaction=s.factions[seller];
   const key=branch==='material'?'knownMaterial':branch==='idea'?'knownIdeas':null;
   const item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id);
-  if(!key||!item||!bd||!sd||!sd[key].includes(id)||bd[key].includes(id)||bd.trade.some(t=>t.id===id&&t.branch===branch))return {ok:false,reason:'knowledge'};
+  if(!key||!item||!bd||!sd||!sd[key].includes(id)||bd[key].includes(id)||knowledgeInProgress(bd,branch,id))return {ok:false,reason:'knowledge'};
   if(s.wars.some(w=>w.includes(buyer)&&w.includes(seller)))return {ok:false,reason:'war'};
   if(!knowledgeCorridor(s,seller,buyer))return {ok:false,reason:'access'};
   const relation=s.relations[[buyer,seller].sort().join(':')]||0;
@@ -428,7 +431,7 @@ export function knowledgeTrade(s,buyer,seller,branch,id){
 }
 export function sellKnowledge(s,seller,buyer,branch,id){
  initializeDevelopment(s);const source=s.development[seller],recipient=s.development[buyer],key=branch==='material'?'knownMaterial':branch==='idea'?'knownIdeas':null,item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id);
- if(!source||!recipient||!key||!item||!source[key].includes(id)||recipient[key].includes(id)||recipient.trade.some(t=>t.id===id&&t.branch===branch))return {ok:false,reason:'knowledge'};
+ if(!source||!recipient||!key||!item||!source[key].includes(id)||recipient[key].includes(id)||knowledgeInProgress(recipient,branch,id))return {ok:false,reason:'knowledge'};
  if(s.wars.some(w=>w.includes(seller)&&w.includes(buyer)))return {ok:false,reason:'war'};
  if(!knowledgeCorridor(s,seller,buyer))return {ok:false,reason:'access'};
  const relation=s.relations[[seller,buyer].sort().join(':')]??0,price=Math.max(12,Math.round(item.cost*.9));
@@ -445,7 +448,7 @@ export function proposeKnowledgeSale(s,seller,buyer,branch,id){
  if(seller===buyer||buyer!==s.player||seller===s.player)return {ok:false,reason:'recipient'};
  const source=s.development[seller],recipient=s.development[buyer],key=branch==='material'?'knownMaterial':branch==='idea'?'knownIdeas':null;
  const item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id);
- if(!source||!recipient||!key||!item||!source[key].includes(id)||recipient[key].includes(id)||recipient.trade.some(t=>t.branch===branch&&t.id===id)||recipient.offers.some(o=>o.seller===seller&&o.branch===branch&&o.id===id)||recipient.offers.length>=3)return {ok:false,reason:'knowledge'};
+ if(!source||!recipient||!key||!item||!source[key].includes(id)||recipient[key].includes(id)||knowledgeInProgress(recipient,branch,id)||recipient.offers.some(o=>o.seller===seller&&o.branch===branch&&o.id===id)||recipient.offers.length>=3)return {ok:false,reason:'knowledge'};
  if(s.wars.some(w=>w.includes(seller)&&w.includes(buyer)))return {ok:false,reason:'war'};
  if(!knowledgeCorridor(s,seller,buyer))return {ok:false,reason:'access'};
  const relation=s.relations[[seller,buyer].sort().join(':')]??0;
@@ -459,7 +462,7 @@ export function proposeKnowledgePurchase(s,buyer,seller,branch,id){
  if(seller!==s.player||buyer===s.player||buyer===seller)return {ok:false,reason:'recipient'};
  const source=s.development[seller],recipient=s.development[buyer],key=branch==='material'?'knownMaterial':branch==='idea'?'knownIdeas':null;
  const item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id);
- if(!source||!recipient||!key||!item||!source[key].includes(id)||recipient[key].includes(id)||recipient.trade.some(t=>t.branch===branch&&t.id===id)||source.purchaseRequests.some(o=>o.buyer===buyer&&o.branch===branch&&o.id===id)||source.purchaseRequests.length>=3)return {ok:false,reason:'knowledge'};
+ if(!source||!recipient||!key||!item||!source[key].includes(id)||recipient[key].includes(id)||knowledgeInProgress(recipient,branch,id)||source.purchaseRequests.some(o=>o.buyer===buyer&&o.branch===branch&&o.id===id)||source.purchaseRequests.length>=3)return {ok:false,reason:'knowledge'};
  if(s.wars.some(w=>w.includes(seller)&&w.includes(buyer)))return {ok:false,reason:'war'};
  if(!knowledgeCorridor(s,seller,buyer))return {ok:false,reason:'access'};
  const relation=s.relations[[seller,buyer].sort().join(':')]??0;
@@ -497,7 +500,7 @@ export function exchangeKnowledge(s,a,b,offerBranch,offerId,wantBranch,wantId){
  initializeDevelopment(s);const ad=s.development[a],bd=s.development[b],ak=offerBranch==='material'?'knownMaterial':offerBranch==='idea'?'knownIdeas':null,bk=wantBranch==='material'?'knownMaterial':wantBranch==='idea'?'knownIdeas':null;
  if(b===s.player&&a!==s.player)return {ok:false,reason:'consent'};
  if(!ad||!bd||!ak||!bk||!ad[ak].includes(offerId)||!bd[bk].includes(wantId)||ad[bk].includes(wantId)||bd[ak].includes(offerId))return {ok:false,reason:'knowledge'};
- if(ad.trade.some(t=>t.id===wantId&&t.branch===wantBranch)||bd.trade.some(t=>t.id===offerId&&t.branch===offerBranch))return {ok:false,reason:'pending'};
+ if(knowledgeInProgress(ad,wantBranch,wantId)||knowledgeInProgress(bd,offerBranch,offerId))return {ok:false,reason:'pending'};
  if(s.wars.some(w=>w.includes(a)&&w.includes(b)))return {ok:false,reason:'war'};
  if(!knowledgeCorridor(s,a,b))return {ok:false,reason:'access'};
  if((s.relations[[a,b].sort().join(':')]??0)<20)return {ok:false,reason:'relations'};
@@ -512,7 +515,7 @@ export function proposeKnowledgeExchange(s,partner,player,offerBranch,offerId,wa
  initializeDevelopment(s);
  if(player!==s.player||partner===player)return {ok:false,reason:'recipient'};
  const pd=s.development[partner],recipient=s.development[player],offerKey=offerBranch==='material'?'knownMaterial':offerBranch==='idea'?'knownIdeas':null,wantKey=wantBranch==='material'?'knownMaterial':wantBranch==='idea'?'knownIdeas':null;
- if(!pd||!recipient||!offerKey||!wantKey||!(offerBranch==='material'?MATERIALS:IDEAS).some(x=>x.id===offerId)||!(wantBranch==='material'?MATERIALS:IDEAS).some(x=>x.id===wantId)||!pd[offerKey].includes(offerId)||!recipient[wantKey].includes(wantId)||pd[wantKey].includes(wantId)||recipient[offerKey].includes(offerId)||pd.trade.some(t=>t.branch===wantBranch&&t.id===wantId)||recipient.trade.some(t=>t.branch===offerBranch&&t.id===offerId)||recipient.exchangeRequests.some(x=>x.partner===partner)||recipient.exchangeRequests.length>=3)return {ok:false,reason:'knowledge'};
+ if(!pd||!recipient||!offerKey||!wantKey||!(offerBranch==='material'?MATERIALS:IDEAS).some(x=>x.id===offerId)||!(wantBranch==='material'?MATERIALS:IDEAS).some(x=>x.id===wantId)||!pd[offerKey].includes(offerId)||!recipient[wantKey].includes(wantId)||pd[wantKey].includes(wantId)||recipient[offerKey].includes(offerId)||knowledgeInProgress(pd,wantBranch,wantId)||knowledgeInProgress(recipient,offerBranch,offerId)||recipient.exchangeRequests.some(x=>x.partner===partner)||recipient.exchangeRequests.length>=3)return {ok:false,reason:'knowledge'};
  if(s.wars.some(w=>w.includes(partner)&&w.includes(player)))return {ok:false,reason:'war'};
  if(!knowledgeCorridor(s,partner,player))return {ok:false,reason:'access'};
  const relation=s.relations[[partner,player].sort().join(':')]??0;
@@ -602,7 +605,7 @@ function agreementCandidate(s,seller,buyer,cycle=0){
  const source=s.development[seller],recipient=s.development[buyer];if(!source||!recipient)return null;
  for(const branch of cycle%2?['idea','material']:['material','idea']){
   const key=branch==='material'?'knownMaterial':'knownIdeas';
-  const id=source[key].find(id=>!strategicKnowledge.has(id)&&!recipient[key].includes(id)&&!recipient.trade.some(t=>t.branch===branch&&t.id===id));
+  const id=source[key].find(id=>!strategicKnowledge.has(id)&&!recipient[key].includes(id)&&!knowledgeInProgress(recipient,branch,id));
   if(id)return {branch,id};
  }
  return null;
@@ -656,15 +659,15 @@ export function advanceDevelopment(s,log=()=>{}){
   initializeDevelopment(s);
   for(const [owner,d] of Object.entries(s.development)){
     const f=s.factions[owner];if(!f)continue;
-    if(d.research&&--d.research.remaining<=0){const {branch,id,scholarPartner}=d.research;d[branch==='material'?'knownMaterial':'knownIdeas'].push(id);if(branch==='idea'&&scholarPartner)d.foreignOrigins[id]=scholarPartner;d.research=null;if(owner===s.player){const name=(branch==='material'?MATERIALS:IDEAS).find(item=>item.id===id)?.name||[id,id];log(`Research completed: ${name[0]}.`,`研究完成：${name[1]}。`)}}
+    if(d.research&&--d.research.remaining<=0){const {branch,id,scholarPartner}=d.research,key=branch==='material'?'knownMaterial':'knownIdeas',newKnowledge=!d[key].includes(id);if(newKnowledge)d[key].push(id);if(newKnowledge&&branch==='idea'&&scholarPartner)d.foreignOrigins[id]=scholarPartner;d.research=null;if(newKnowledge&&owner===s.player){const name=(branch==='material'?MATERIALS:IDEAS).find(item=>item.id===id)?.name||[id,id];log(`Research completed: ${name[0]}.`,`研究完成：${name[1]}。`)}}
     if(d.adoption&&--d.adoption.remaining<=0){const {category,slot,ideaId}=d.adoption;d.slots[category][slot]=ideaId;d.adoption=null;if(owner===s.player){const name=IDEAS.find(item=>item.id===ideaId)?.name||[ideaId||'removed',ideaId||'已移除'];log(`National idea ${name[0]} is now in effect.`,`国家理念${name[1]}现已生效。`)}}
     if(d.expansion&&--d.expansion.remaining<=0){d.slots[d.expansion.category].push(null);d.expansion=null}
-    d.offers=d.offers.filter(offer=>--offer.remaining>0&&!d[offer.branch==='material'?'knownMaterial':'knownIdeas'].includes(offer.id)&&!d.trade.some(t=>t.branch===offer.branch&&t.id===offer.id));
-    d.purchaseRequests=d.purchaseRequests.filter(request=>--request.remaining>0&&!s.wars.some(w=>w.includes(owner)&&w.includes(request.buyer))&&d[request.branch==='material'?'knownMaterial':'knownIdeas'].includes(request.id)&&!s.development[request.buyer]?.[request.branch==='material'?'knownMaterial':'knownIdeas'].includes(request.id)&&!s.development[request.buyer]?.trade.some(t=>t.branch===request.branch&&t.id===request.id));
-    d.exchangeRequests=d.exchangeRequests.filter(request=>--request.remaining>0&&!s.wars.some(w=>w.includes(owner)&&w.includes(request.partner))&&d[request.wantBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.wantId)&&!d[request.offerBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.offerId)&&s.development[request.partner]?.[request.offerBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.offerId)&&!s.development[request.partner]?.[request.wantBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.wantId)&&!d.trade.some(t=>t.branch===request.offerBranch&&t.id===request.offerId)&&!s.development[request.partner]?.trade.some(t=>t.branch===request.wantBranch&&t.id===request.wantId));
+    d.offers=d.offers.filter(offer=>--offer.remaining>0&&!d[offer.branch==='material'?'knownMaterial':'knownIdeas'].includes(offer.id)&&!knowledgeInProgress(d,offer.branch,offer.id));
+    d.purchaseRequests=d.purchaseRequests.filter(request=>--request.remaining>0&&!s.wars.some(w=>w.includes(owner)&&w.includes(request.buyer))&&d[request.branch==='material'?'knownMaterial':'knownIdeas'].includes(request.id)&&!s.development[request.buyer]?.[request.branch==='material'?'knownMaterial':'knownIdeas'].includes(request.id)&&!knowledgeInProgress(s.development[request.buyer],request.branch,request.id));
+    d.exchangeRequests=d.exchangeRequests.filter(request=>--request.remaining>0&&!s.wars.some(w=>w.includes(owner)&&w.includes(request.partner))&&d[request.wantBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.wantId)&&!d[request.offerBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.offerId)&&s.development[request.partner]?.[request.offerBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.offerId)&&!s.development[request.partner]?.[request.wantBranch==='material'?'knownMaterial':'knownIdeas'].includes(request.wantId)&&!knowledgeInProgress(d,request.offerBranch,request.offerId)&&!knowledgeInProgress(s.development[request.partner],request.wantBranch,request.wantId));
     d.agreementRequests=d.agreementRequests.filter(request=>--request.remaining>0&&!s.wars.some(w=>w.includes(owner)&&w.includes(request.partner))&&(s.relations[[owner,request.partner].sort().join(':')]??0)>=20&&s.regions.some(r=>r.owner===owner)&&s.regions.some(r=>r.owner===request.partner)&&!s.knowledgeAgreements.some(a=>a.a===owner&&a.b===request.partner||a.a===request.partner&&a.b===owner));
     d.scholarRequests=d.scholarRequests.filter(request=>--request.remaining>0&&!atWarWith(s,owner,request.host)&&s.regions.some(r=>r.owner===owner)&&s.regions.some(r=>r.owner===request.host));
-    for(const trade of [...d.trade])if(--trade.remaining<=0){const key=trade.branch==='material'?'knownMaterial':'knownIdeas';if(!d[key].includes(trade.id))d[key].push(trade.id);if(trade.branch==='idea')d.foreignOrigins[trade.id]=trade.seller;d.trade.splice(d.trade.indexOf(trade),1);if(owner===s.player){const name=(trade.branch==='material'?MATERIALS:IDEAS).find(item=>item.id===trade.id)?.name||[trade.id,trade.id],seller=FACTIONS[trade.seller]?.short||[trade.seller,trade.seller];log(`Knowledge arrived from ${seller[0]}: ${name[0]}.`,`来自${seller[1]}的知识已传入：${name[1]}。`)}}
+    for(const trade of [...d.trade])if(--trade.remaining<=0){const key=trade.branch==='material'?'knownMaterial':'knownIdeas',newKnowledge=!d[key].includes(trade.id);if(newKnowledge)d[key].push(trade.id);if(newKnowledge&&trade.branch==='idea')d.foreignOrigins[trade.id]=trade.seller;d.trade.splice(d.trade.indexOf(trade),1);if(newKnowledge&&owner===s.player){const name=(trade.branch==='material'?MATERIALS:IDEAS).find(item=>item.id===trade.id)?.name||[trade.id,trade.id],seller=FACTIONS[trade.seller]?.short||[trade.seller,trade.seller];log(`Knowledge arrived from ${seller[0]}: ${name[0]}.`,`来自${seller[1]}的知识已传入：${name[1]}。`)}}
     for(const visit of [...d.visitingScholars]){
       if(atWarWith(s,owner,visit.partner)||!s.regions.some(r=>r.owner===owner)||!s.regions.some(r=>r.owner===visit.partner)||visit.destination&&s.regions.find(r=>r.id===visit.destination)?.owner!==owner){d.visitingScholars.splice(d.visitingScholars.indexOf(visit),1);continue}
       if(visit.travelRemaining>0){
