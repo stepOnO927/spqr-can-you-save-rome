@@ -5,6 +5,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Feature | Player entry | Browser coverage |
 | --- | --- | --- |
 | New campaign, difficulty, tutorial and save/load | Opening setup | `tools/onboarding-smoke.mjs` |
+| Roman elections and change of office | Terrain map → Factions → Roman faction → Government tree | `tools/election-results-smoke.mjs` supports a candidate, advances the consul, praetor and quaestor elections, checks selected-office results and the quaestor's next term, and saves/reloads; other offices and outcomes remain to be checked |
 | Short landscape Roman campaign | Opening setup and campaign controls at 640×360, 836×470 and 1031×580 | `tools/short-screen-smoke.mjs` checks visible faction and difficulty, touch start, advance, government access and save |
 | Army inspection, marches, battles and AI turns | Terrain map → army | `tools/phase-v-smoke.mjs`, `tools/browser-smoke.mjs` |
 | Recruitment | Terrain map → owned city → manage theater | `tools/systems-smoke.mjs` |
