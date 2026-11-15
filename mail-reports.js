@@ -1,8 +1,8 @@
-import {sendLetter,initializeMail} from './epistulae.js?v=family-correspondent-names-1';
-import {reportedArmies} from './character-system.js?v=family-correspondent-names-1';
-import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {MATERIALS} from './inventions.js?v=mission-discount-1';
-import {ROUTES} from './data.js?v=phase-x-1';
+import {sendLetter,initializeMail} from './epistulae.js?v=world-kings-trade-1';
+import {reportedArmies} from './character-system.js?v=world-kings-trade-1';
+import {CHARACTER_CATALOG} from './characters.js?v=world-kings-trade-1';
+import {MATERIALS} from './inventions.js?v=world-kings-trade-1';
+import {ROUTES} from './data.js?v=world-kings-trade-1';
 
 const month=s=>s.year*12+s.month;
 const owned=s=>s.regions.filter(r=>r.owner===s.player);

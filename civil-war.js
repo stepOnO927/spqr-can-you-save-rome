@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=succession-ui-recovery-1';
-import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=world-kings-trade-1';
+import {reportedControl} from './control-intelligence.js?v=world-kings-trade-1';
 import {transferTerritory} from './territory.js';
 
 // Alternate-history claimant commands use real game theaters and armies.

@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=phase-x-1';
-import {militaryAccessStatus} from './border-access.js';
+import {ROUTES} from './data.js?v=world-kings-trade-1';
+import {militaryAccessStatus} from './border-access.js?v=world-kings-trade-1';
 import {footholdConnected} from './foothold.js';
 
 const neighbors = new Map();

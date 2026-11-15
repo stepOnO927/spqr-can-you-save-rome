@@ -1,5 +1,7 @@
-import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
-import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
+import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=world-kings-trade-1';
+import {hasNationalIdea} from './national-ideas.js?v=world-kings-trade-1';
+import {ROUTES} from './data.js?v=world-kings-trade-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-trade-1';
 // Agreements supplement the existing full-alliance pairs; they do not copy them.
 // All effects are derived from the active agreement itself, so expiration or a
 // breach immediately removes its privileges.
@@ -23,6 +25,21 @@ export function activeAgreement(s,a,b,type){
  return (s.agreements||[]).find(t=>t.status==='active'&&t.type===type&&t.parties.includes(a)&&t.parties.includes(b)&&date(s)<t.expiresAt&&!atWar(s,a,b));
 }
 export function visibleAgreements(s,viewer){return (s.agreements||[]).filter(t=>!t.secret||t.parties.includes(viewer))}
+// Monthly treaty revenue requires a real connected corridor. This is an
+// internal settlement check over actual control, not a player intelligence view.
+export function commercialCorridor(s,actor,target){
+ const owned=s.regions.filter(r=>r.owner===actor).map(r=>r.id),destinations=new Set(s.regions.filter(r=>r.owner===target).map(r=>r.id));
+ if(!owned.length||!destinations.size)return {ok:false,reason:'no_territory'};
+ const regions=new Map(s.regions.map(r=>[r.id,r])),queue=owned.map(id=>({id,path:[id],seaLegs:0})),seen=new Set(owned);
+ for(let i=0;i<queue.length;i++){
+  const current=queue[i];if(destinations.has(current.id))return {ok:true,path:current.path,seaLegs:current.seaLegs};
+  for(const edge of ROUTES){const next=edge[0]===current.id?edge[1]:edge[1]===current.id?edge[0]:null;if(!next||seen.has(next)||!regions.has(next))continue;
+   if(!nonMilitaryAccessStatus(s,actor,next,regions.get(next).owner,'commercial').allowed)continue;
+   seen.add(next);queue.push({id:next,path:[...current.path,next],seaLegs:current.seaLegs+(edge[2]==='sea'?1:0)});
+  }
+ }
+ return {ok:false,reason:'blocked'};
+}
 export function proposeAgreement(s,actor,target,type,{secret=false,access=null}={}){
  initializeAgreements(s);const def=AGREEMENT_TYPES[type];
  if(!def||actor===target||actor==='rebels'||target==='rebels'||!s.factions[actor]||!s.factions[target])return {ok:false,reason:'invalid'};
@@ -55,7 +72,7 @@ export function advanceAgreements(s){
   if(t.status!=='active')continue;
   if(date(s)>=t.expiresAt||t.parties.some(p=>!s.factions[p])){t.status='expired';t.ended={year:s.year,month:s.month};continue}
   if(atWar(s,t.parties[0],t.parties[1])){t.status='ended_by_war';t.ended={year:s.year,month:s.month};continue}
-  if(t.type==='trade'&&t.parties.every(p=>s.regions.some(r=>r.owner===p)))for(const p of t.parties)s.factions[p].treasury+=1;
+  if(t.type==='trade'&&commercialCorridor(s,t.parties[0],t.parties[1]).ok)for(const p of t.parties)s.factions[p].treasury+=1;
   if(t.type==='military_support'&&s.month%3===0){const source=t.terms?.provider||t.parties[0],destination=t.terms?.recipient||t.parties[1],provider=s.factions[source],recipient=s.factions[destination];if(provider&&recipient&&s.wars.some(w=>w.includes(destination))&&provider.treasury>=12&&provider.food>=12){provider.treasury-=2;provider.food-=2;recipient.treasury+=2;recipient.food+=2;rememberPoliticalEvent(s,destination,source,'military_aid',1)}}
   if(t.type==='political'&&s.month%6===0&&t.parties.every(p=>s.factions[p].treasury>=10)){for(const p of t.parties){s.factions[p].treasury--;s.factions[p].stability=Math.min(100,s.factions[p].stability+1)}}
  }

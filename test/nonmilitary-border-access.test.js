@@ -12,6 +12,7 @@ test('old policy placeholders preserve previously permitted civilian journeys',(
   assert.equal(restored.borderPolicyVersion,2);
   assert.equal(restored.borderPolicies.egypt.civilian,'open');
   assert.equal(restored.borderPolicies.egypt.diplomatic,'open');
+  assert.equal(restored.borderPolicies.egypt.commercial,'open');
   assert.equal(restored.borderPolicies.egypt.military,'closed');
 });
 
@@ -54,6 +55,7 @@ test('trade allows merchants but grants neither civilian nor military passage',(
   const state=newGame('senate');
   state.relations['egypt:senate']=30;
   assert.equal(setBorderPolicy(state,'egypt','civilian','closed').ok,true);
+  assert.equal(setBorderPolicy(state,'egypt','commercial','closed').ok,true);
   assert.equal(proposeAgreement(state,'senate','egypt','trade').ok,true);
   assert.equal(nonMilitaryAccessStatus(state,'senate','egypt','egypt','commercial').basis,'trade_treaty');
   assert.equal(nonMilitaryAccessStatus(state,'senate','egypt','egypt','civilian').allowed,false);

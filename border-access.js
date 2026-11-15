@@ -1,4 +1,4 @@
-import {activeAgreement,proposeAgreement} from './agreements.js?v=world-kings-family-1';
+import {activeAgreement,proposeAgreement} from './agreements.js?v=world-kings-trade-1';
 
 export const BORDER_ACCESS_CATEGORIES = Object.freeze([
   'closed', 'civilian', 'commercial', 'diplomatic',
@@ -13,12 +13,13 @@ export function initializeBorderPolicies(state) {
   state.nextBorderIncidentId ||= 1;
   for (const owner of Object.keys(state.factions || {})) {
     state.borderPolicies[owner] ||= {
-      civilian: 'open', commercial: 'closed', diplomatic: 'open', military: 'closed'
+      civilian: 'open', commercial: 'open', diplomatic: 'open', military: 'closed'
     };
     // Earlier saves stored closed civilian/diplomatic placeholders without
     // enforcing them. Preserve their actual travel rules during migration.
     if ((state.borderPolicyVersion || 0) < 2) {
       state.borderPolicies[owner].civilian = 'open';
+      state.borderPolicies[owner].commercial = 'open';
       state.borderPolicies[owner].diplomatic = 'open';
     }
   }
@@ -42,7 +43,7 @@ export function nonMilitaryAccessStatus(state, actor, theaterId, reportedOwner, 
   if (!owner) return {allowed: true, basis: 'unconfirmed', owner: null};
   if (owner === actor) return {allowed: true, basis: 'own', owner};
   if (atWar(state, actor, owner)) return {allowed: false, reason: 'war', owner};
-  const policy = state.borderPolicies?.[owner]?.[kind] || (kind === 'commercial' ? 'closed' : 'open');
+  const policy = state.borderPolicies?.[owner]?.[kind] || 'open';
   if (policy === 'open') return {allowed: true, basis: 'open_policy', owner};
   if (kind === 'commercial' && activeAgreement(state, actor, owner, 'trade')) return {allowed: true, basis: 'trade_treaty', owner};
   return {allowed: false, reason: 'closed', owner};

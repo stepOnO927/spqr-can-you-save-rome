@@ -1,4 +1,4 @@
-import {ROUTES} from './data.js?v=phase-x-1';
+import {ROUTES} from './data.js?v=world-kings-trade-1';
 
 // Settlement control is stored inside its host theater. An autonomous city
 // does not transfer the whole theater, and its point is not a border polygon.
