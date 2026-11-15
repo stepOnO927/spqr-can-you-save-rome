@@ -1,5 +1,5 @@
 import {ROUTES} from './data.js?v=world-kings-trade-1';
-import {generatedLocalPolities,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js';
+import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js';
 import {sendLetter} from './epistulae.js?v=world-kings-trade-1';
 
 // Settlement control is stored inside its host theater. An autonomous city
@@ -169,6 +169,14 @@ export function generateOpeningLocalPolities(state,difficulty,seed){
    if(!region.localEntities.some(entity=>entity.id===`generated-village:${template.theater}`))region.localEntities.push(dependentStrongmanVillage(template,region));
   }
  }
+ const independentVillages=generatedIndependentVillages(number,difficulty,new Set(state.regions.map(region=>region.id)));
+ for(const template of independentVillages){
+  const region=host(state,template);if(!region)continue;
+  region.localEntities||=[];
+  if(region.localEntities.some(entity=>entity.id===template.id))continue;
+  region.localEntities.push({...template,controller:region.owner,legalSovereign:region.owner,militaryOccupier:null,administrativeStatus:'integrated',
+   overlord:null,access:{},pending:null,siege:null,administrationProject:null,resistance:0,lastOfferAt:{}});
+ }
  const nomads=generatedNomadicCommunities(number,difficulty,new Set(state.regions.map(region=>region.id)),state.year);
  for(const template of nomads){
   const region=host(state,template);if(!region)continue;
@@ -183,7 +191,7 @@ export function generateOpeningLocalPolities(state,difficulty,seed){
   if(region.localEntities.some(entity=>entity.id===template.id))continue;
   region.localEntities.push({...template,controller:null,legalSovereign:region.owner,militaryOccupier:null,administrativeStatus:'unadministered_land',overlord:null,access:{},pending:null,siege:null,administrationProject:null,resistance:0,militia:0,fort:0,treasury:0,food:0,lastOfferAt:{}});
  }
- state.world.localGeneration={version:3,seed:number,difficulty,count:candidates.length,nomadCount:nomads.length,wildernessCount:wilds.length};
+ state.world.localGeneration={version:4,seed:number,difficulty,count:candidates.length,independentVillageCount:independentVillages.length,nomadCount:nomads.length,wildernessCount:wilds.length};
  return initializeLocalRulers(state);
 }
 

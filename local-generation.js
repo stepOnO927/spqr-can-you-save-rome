@@ -9,6 +9,15 @@ export const LOCAL_GENERATION_BANDS=Object.freeze({
 });
 
 export const NOMADIC_GENERATION_BANDS=Object.freeze({travel:[0,0],beginner:[0,1],standard:[1,1],hard:[1,2],expert:[2,2]});
+export const VILLAGE_GENERATION_BANDS=Object.freeze({travel:[0,1],beginner:[1,2],standard:[2,3],hard:[3,4],expert:[4,5]});
+export const INDEPENDENT_VILLAGE_SITES=Object.freeze([
+ {theater:'hispaniaN',coordinates:[-3.7,42.3]},{theater:'hispaniaS',coordinates:[-4.7,37.2]},
+ {theater:'gaul',coordinates:[1.4,47.1]},{theater:'illyricum',coordinates:[17.8,44.2]},
+ {theater:'epirus',coordinates:[20.5,39.6]},{theater:'achaia',coordinates:[22.5,38.0]},
+ {theater:'anatolia',coordinates:[30.0,38.0]},{theater:'galatia',coordinates:[31.4,39.1]},
+ {theater:'syria',coordinates:[36.0,34.5]},{theater:'numidia',coordinates:[6.4,35.0]},
+ {theater:'egyptUpper',coordinates:[31.5,26.0]},{theater:'media',coordinates:[48.5,35.0]}
+]);
 export const NOMADIC_RANGES=Object.freeze([
  {id:'western-pasture',camps:[{theater:'numidia',coordinates:[6.5,34.2]},{theater:'mauretania',coordinates:[2.1,35.0]}]},
  {id:'nile-fringe',camps:[{theater:'egypt',coordinates:[29.5,28.5]},{theater:'egyptUpper',coordinates:[32.4,25.1]}]},
@@ -69,6 +78,7 @@ const RULER_NAMES=Object.freeze([
  ['Velira','维莉拉'],['Xeron','泽隆'],['Ylena','伊蕾娜'],['Zareon','扎雷翁'],['Mirena','米蕾娜']
 ]);
 const NOMAD_TITLES=Object.freeze([['Pastoral Camp','牧营'],['Seasonal Encampment','季节营地'],['Herding Band','游牧群体'],['Range Council','牧地议事群']]);
+const VILLAGE_TITLES=Object.freeze([['Village','村'],['Hamlet','小村'],['Farmstead','农庄']]);
 const WILDERNESS_NAMES=Object.freeze([['Remote Tract','偏远地带'],['Interior Reach','内陆荒地'],['Outer Range','边缘地带'],['Sparse Corridor','稀疏走廊'],['Wild Margin','荒野边缘'],['High Frontier','高地边疆']]);
 const WILDERNESS_KINDS=Object.freeze({forest_interior:['Forest Interior','森林腹地'],highland_valley:['Highland Valley','高地山谷'],remote_hills:['Remote Hills','偏远丘陵'],dry_frontier:['Dry Frontier','干旱边疆'],desert_margin:['Desert Margin','沙漠边缘'],mountain_barrier:['Mountain Barrier','山地屏障']});
 const RULER_TITLES=Object.freeze({city_state:['Archon','执政官'],microstate:['Ruler','地方君主'],tribe:['Elder','长老'],strongman:['Chief','地方首领']});
@@ -114,6 +124,32 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters,startYe
    maxFootholdLevel:site.type==='strongman'?2:site.type==='tribe'?2:3,...profile(rng,site.type,site.scale,band),seed:integer(rng,0,0xffffffff)});
  }
  return result;
+}
+
+export function generatedIndependentVillages(seed,difficulty,availableTheaters){
+ const band=LOCAL_GENERATION_BANDS[difficulty]||LOCAL_GENERATION_BANDS.standard;
+ const countBand=VILLAGE_GENERATION_BANDS[difficulty]||VILLAGE_GENERATION_BANDS.standard;
+ const rng={value:(seed^0x27d4eb2d)>>>0};
+ const sites=INDEPENDENT_VILLAGE_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site}));
+ for(let i=sites.length-1;i>0;i--){const j=integer(rng,0,i);[sites[i],sites[j]]=[sites[j],sites[i]]}
+ const count=Math.min(sites.length,integer(rng,...countBand));
+ const used=new Set();
+ return sites.slice(0,count).map(site=>{
+  let name;
+  do{const stem=STEMS[integer(rng,0,STEMS.length-1)],title=VILLAGE_TITLES[integer(rng,0,VILLAGE_TITLES.length-1)];name=[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`]}while(used.has(name[0]));
+  used.add(name[0]);
+  const head=RULER_NAMES[integer(rng,0,RULER_NAMES.length-1)];
+  const population=Math.round(integer(rng,350,850)*band.population/50)*50;
+  const foodNeed=Math.max(2,Math.ceil(population/350));
+  const storedFood=Math.min(12,foodNeed*3);
+  return {id:`generated-independent-village:${site.theater}`,type:'village',theater:site.theater,coordinates:[...site.coordinates],
+   name,historical:false,procedural:true,proceduralVillage:true,proceduralIndependentVillage:true,spatialAccuracy:'fictional_approximate_point',
+   description:['Fictional village generated for this campaign. Its approximate point, people and production do not assert a historical settlement or independent territory.','本局生成的架空村落。地点、人口与生产均为模拟，不表示真实历史聚落或独立领土。'],
+   militia:0,fort:0,treasury:integer(rng,2,6),food:storedFood,seed:integer(rng,0,0xffffffff),
+   village:{population,leader:[`Elder ${head[0]}`,`${head[1]}村长`],specialty:site.theater==='numidia'||site.theater==='media'?['pastoral food','畜牧食物']:['grain','谷物'],storedFood,
+    foodProduction:foodNeed+1,foodNeed,granary:0,irrigation:0,market:0,well:0,road:0,wall:0,shrine:0,agriculture:0,
+    satisfaction:integer(rng,55,75),security:integer(rng,50,70),marketAccess:integer(rng,35,65),project:null,localIssue:null}};
+ });
 }
 
 export function generatedNomadicCommunities(seed,difficulty,availableTheaters,startYear=-49){

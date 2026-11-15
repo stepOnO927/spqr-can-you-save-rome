@@ -57,6 +57,22 @@ try{
  assert.ok((await page.locator('#command-detail').innerText()).includes(generated.ruler));
  await chiefMarker.click();assert.match(await page.locator('#command-detail').innerText(),/Offer takes 2 more months/);
  await villageMarker.click();assert.match(await page.locator('#command-detail').innerText(),/Personal service does not transfer the village/);assert.match(await page.locator('#command-detail').innerText(),/Harvest gathering used one local food/);
+ const independent=await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=world-kings-trade-1');
+  const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-trade-1');
+  const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:2});
+  const village=s.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.proceduralIndependentVillage&&entity.controller===s.player);
+  if(!village)throw Error('no owned independent village');
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
+  return village.name[0].toUpperCase();
+ });
+ await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});
+ const independentMarker=page.locator(`.city-marker[data-city="${independent}"]`);
+ await independentMarker.waitFor({state:'visible'});await independentMarker.click();
+ assert.match(await page.locator('#command-detail').innerText(),/Fictional village generated for this campaign/);
+ assert.equal(await page.locator('#village-granary').isDisabled(),false);
+ await page.locator('#village-granary').click();
+ assert.match(await page.locator('#command-detail').innerText(),/granary project: 2 months remaining/i);
  assert.deepEqual(errors,[]);
- console.log('Built Map Lab displays a generated city, strongman and dependent village; service stays pending across save/load without annexation.');
+ console.log('Built Map Lab displays a generated city, strongman, dependent and independent villages; service persists and a village can start a funded project.');
 }finally{await browser.close()}

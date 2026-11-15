@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-trade-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-trade-1';
-import {LOCAL_GENERATION_BANDS} from '../local-generation.js';
+import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS} from '../local-generation.js';
 import {localOfferChance,advanceLocalEntities,localEntity,offerLocalContact,localSiegeQuote,besiegeLocalEntity} from '../local-polities.js';
 import {advanceVillages} from '../local-villages.js';
 import {advanceLocalResistance} from '../local-resistance.js';
@@ -11,7 +11,8 @@ import {inspectState} from '../inspector-diagnostics.js?v=world-kings-trade-1';
 
 const start=(mode,seed)=>configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:seed});
 const generated=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&!entity.proceduralVillage&&!entity.proceduralNomad&&!entity.proceduralWilderness);
-const villages=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.proceduralVillage);
+const villages=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.proceduralVillage&&!entity.proceduralIndependentVillage);
+const independentVillages=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.proceduralIndependentVillage);
 
 test('difficulty raises generated polity counts and coherent population, militia and resource bands',()=>{
  const modes=['travel','beginner','standard','hard','expert'];
@@ -27,10 +28,15 @@ test('difficulty raises generated polity counts and coherent population, militia
    assert.equal(new Set(entities.map(e=>e.ruler.name[0])).size,entities.length);
    for(const e of entities){assert.equal(e.historical,false);assert.equal(e.spatialAccuracy,'fictional_approximate_point');assert.equal(e.controller,e.id);assert.ok(e.population>=e.militia*4);assert.ok(e.food>0&&e.treasury>0);assert.ok(e.strategy>=band.skill[0]&&e.strategy<=band.skill[1]);assert.ok(s.regions.some(r=>r.id===e.theater&&r.localEntities.includes(e)));assert.equal(s.world.localRulers[e.ruler.id].polityId,e.id);assert.deepEqual(s.world.localRulers[e.ruler.id].name,e.ruler.name);assert.ok(s.year-s.world.localRulers[e.ruler.id].birthYear>=28)}
    assert.equal(villages(s).length,entities.filter(e=>e.type==='strongman').length);
+   const independents=independentVillages(s),villageBand=VILLAGE_GENERATION_BANDS[mode];
+   assert.ok(independents.length>=villageBand[0]&&independents.length<=villageBand[1]);
+   assert.equal(s.world.localGeneration.independentVillageCount,independents.length);
+   assert.equal(new Set(independents.map(v=>v.name[0])).size,independents.length);
+   for(const v of independents){const host=s.regions.find(r=>r.id===v.theater);assert.equal(v.controller,host.owner);assert.equal(v.legalSovereign,host.owner);assert.equal(v.historical,false);assert.equal(v.spatialAccuracy,'fictional_approximate_point');assert.ok(v.village.population>=100);assert.ok(v.village.storedFood>=v.village.foodNeed*2);assert.ok(v.village.foodProduction>v.village.foodNeed)}
    for(const v of villages(s)){const chief=localEntity(s,v.sponsor),host=s.regions.find(r=>r.id===v.theater);assert.equal(v.controller,chief.id);assert.equal(v.legalSovereign,host.owner);assert.equal(chief.legalSovereign,host.owner);assert.equal(chief.claimedSovereignty,false);assert.ok(v.village.population<=chief.population);assert.ok(v.village.storedFood>=v.village.foodNeed*2);assert.deepEqual(v.village.leader,chief.ruler.name)}
    if(previousAnchor){assert.ok(anchor.population>previousAnchor.population);assert.ok(anchor.militia>previousAnchor.militia);assert.ok(anchor.treasury>previousAnchor.treasury);assert.ok(anchor.food>previousAnchor.food)}
    previousAnchor=anchor;
-   assert.equal(inspectState(s).filter(f=>['invalid-generated-polity','invalid-generated-village','invalid-generated-village-count','invalid-local-controller','invalid-local-generation','invalid-local-ruler-registry'].includes(f.code)).length,0);
+   assert.equal(inspectState(s).filter(f=>['invalid-generated-polity','invalid-generated-village','invalid-generated-village-count','invalid-independent-village-count','invalid-local-controller','invalid-local-generation','invalid-local-ruler-registry'].includes(f.code)).length,0);
   }
  }
 });
@@ -39,13 +45,29 @@ test('campaigns vary by seed, replay the same seed, and keep all generated value
  const first=start('standard',71),again=start('standard',71),other=start('standard',72);
  assert.deepEqual(generated(first),generated(again));
  assert.notDeepEqual(generated(first).map(e=>e.name),generated(other).map(e=>e.name));
+ assert.deepEqual(independentVillages(first),independentVillages(again));
+ assert.notDeepEqual(independentVillages(first).map(e=>e.name),independentVillages(other).map(e=>e.name));
  const saved=upgradeSave(JSON.parse(JSON.stringify(first)));
  assert.deepEqual(generated(saved),generated(first));assert.deepEqual(saved.world.localGeneration,first.world.localGeneration);
  assert.deepEqual(villages(saved),villages(first));
+ assert.deepEqual(independentVillages(saved),independentVillages(first));
  assert.deepEqual(saved.world.localRulers,first.world.localRulers);
  const legacy=newGame('caesar');const upgraded=upgradeSave(JSON.parse(JSON.stringify(legacy)));
  assert.equal(generated(upgraded).length,0);assert.equal(upgraded.world.localGeneration,undefined);
+ assert.equal(independentVillages(upgraded).length,0);
  assert.equal(upgraded.world.localRulers['commagene-antiochus-i'].polityId,'commagene');
+});
+
+test('a generated independent village follows host control while retaining its legal title',()=>{
+ const s=start('hard',2),village=independentVillages(s)[0],host=s.regions.find(region=>region.id===village.theater);
+ const original=host.owner,conqueror=Object.keys(s.factions).find(id=>id!==original&&id!=='rebels');
+ assert.equal(village.controller,original);
+ host.owner=conqueror;
+ advanceVillages(s);
+ assert.equal(village.controller,conqueror);
+ assert.equal(village.legalSovereign,original);
+ assert.equal(village.administrativeStatus,'occupied');
+ assert.equal(inspectState(s).filter(item=>['invalid-generated-village','invalid-local-controller','invalid-independent-village-count'].includes(item.code)).length,0);
 });
 
 test('higher council skill weighs local strength and nearby military pressure in negotiations',()=>{
