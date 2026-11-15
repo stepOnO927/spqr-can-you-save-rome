@@ -68,3 +68,18 @@ body{min-width:0;background:#292d29}.top{height:54px;padding:0 12px;gap:15px;bac
 /* Feather reads like a campaign dispatch, not a dashboard card. */
 .feather-panel{margin:0 18px 10px;padding:9px 15px;border-left:3px solid #b89b63;background:linear-gradient(90deg,rgba(171,139,80,.13),transparent);color:#d8d1c0;font:12px/1.5 Manrope,'Microsoft YaHei',sans-serif}
 .feather-panel strong{display:block;color:#e0c48d;font-size:10px;letter-spacing:.12em}.feather-panel ol{margin:5px 0 0;padding-left:20px}.feather-panel li{margin:2px 0}
+/* Keep the campaign controls reachable in short landscape windows. */
+@media (max-height:650px){
+ .top{height:54px;min-height:0}
+ .shell{height:calc(100vh - 54px);min-height:0;grid-template-rows:minmax(0,1fr)}
+ .rail,.shell main{min-height:0}
+ .rail{overflow-y:auto;overscroll-behavior:contain}
+ .setup-panel{padding:12px 18px;max-height:94vh}
+ .setup-panel h2{font-size:18px;margin:5px 0}
+ .setup-panel p{font-size:11px;line-height:1.25;margin:4px 0}
+ .setup-panel>p:first-of-type{display:none}
+ .setup-panel label{font-size:11px;line-height:1.1}
+ .setup-panel select{margin:3px 0;padding:4px}
+ .setup-panel label:has(input[type=checkbox]){margin:5px 0}
+ .setup-panel #start-campaign{position:sticky;bottom:0;z-index:2;box-shadow:0 -3px 8px #594a3655}
+}
