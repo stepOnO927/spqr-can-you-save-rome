@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=infant-portraits-1';
 import {createFictionalPerson} from '../dynasties.js?v=infant-portraits-1';
-import {renderGenealogy,renderGenealogyDossier} from '../genealogy-ui.js?v=genealogy-dossier-1';
+import {renderGenealogy,renderGenealogyDossier} from '../genealogy-ui.js?v=genealogy-personal-actions-1';
 
 test('own historical character separates simulated health and commands from historical reference',()=>{
  let s=newGame('caesar'),c=s.world.characters.caesar;c.health='seriously_ill';c.loyalty=23;c.location='cisalpine';
