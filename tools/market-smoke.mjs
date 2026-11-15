@@ -107,6 +107,18 @@ try{
  await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('[data-army="levy1"]').evaluate(element=>element.click());
  assert.match(await page.locator('#command-detail').innerText(),/Mounted scouts|骑乘侦察兵/);
+ await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=faces-reported-names-1');
+  const {advanceMarkets}=await import('/trade-markets.js?v=faces-reported-names-1');
+  const state=newGame('caesar');state.armies.find(a=>a.owner==='senate').siege={region:'cisalpine',remaining:100};
+  advanceMarkets(state);
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
+ });
+ await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.locator('#markets').click();
+ assert.match(await page.locator('.market-panel').innerText(),/本月围城减产.*谷物产量减半/s);
+ await page.locator('#language').click();
+ assert.match(await page.locator('.market-panel').innerText(),/Sieged markets this month.*grain output halved/s);
  assert.deepEqual(errors,[]);
  console.log('Market orders, merchant dossiers, Han horse recruitment, bilingual panel and save/load passed in Chromium.');
 }catch(error){console.error('Browser page errors:',errors);throw error}finally{await browser.close()}

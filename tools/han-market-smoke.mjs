@@ -86,6 +86,18 @@ try{
  assert.match(await page.locator('.market-receipts').innerText(),/封路后退回.*货物退回.*退款.*运费支出/s);
  await page.locator('#lang').click();
  assert.match(await page.locator('.market-receipts').innerText(),/Returned after blockade.*Goods returned to.*Refund.*Transport spent/s);
+ await page.evaluate(async()=>{
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js');
+  const {advanceEasternMarkets}=await import('/han/markets.js?v=faces-reported-names-1');
+  const state=newHanGame('han',{seed:79});state.wars.push(['han','zhizhi']);
+  const invader=state.armies.find(a=>a.owner==='zhizhi');invader.region='changan';invader.move=null;
+  advanceEasternMarkets(state);
+  localStorage.setItem(SAVE_KEY('browser'),serialize(state));
+ });
+ await page.locator('#load').click();await page.locator('.territory[data-region="changan"]').click({force:true});await page.locator('#trade-panel').click();
+ assert.match(await page.locator('#inspector').innerText(),/Enemy occupation halved this market’s grain output this month/);
+ await page.locator('#lang').click();
+ assert.match(await page.locator('#inspector').innerText(),/敌军围困使本地本月谷物产量减半/);
  assert.deepEqual(errors,[]);
  console.log('Han market browser smoke passed: listings, customs, treaty, horse delivery, army remounts, save/load and bilingual panel.');
 }finally{await browser.close()}
