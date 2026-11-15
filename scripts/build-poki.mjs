@@ -1,11 +1,12 @@
 import {execFileSync} from 'node:child_process';
 import {cp,copyFile,readFile,writeFile,mkdir,rm,stat} from 'node:fs/promises';
 import {join,dirname,extname} from 'node:path';
+import {transform} from 'esbuild';
 
 const root=process.cwd(),out=join(root,'dist','poki');
 const tracked=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(Boolean);
-const runtime=tracked.filter(p=>!p.startsWith('test/')&&!p.startsWith('tests/')&&!p.startsWith('tools/')&&!p.startsWith('scripts/')&&!p.startsWith('.github/')&&!p.startsWith('inspector.')&&!p.startsWith('inspector-ui.')&&!p.startsWith('inspector-diagnostics.test.')&&!p.includes('-master.')&&!/\\.(test|spec)\\.[cm]?js$/.test(p)&&
-  (['.js','.css','.html','.json','.geojson','.png','.jpg','.jpeg','.webp','.svg','.woff','.woff2'].includes(extname(p))||p==='map-lab/SOURCES.md'));
+const runtime=tracked.filter(p=>!p.startsWith('test/')&&!p.startsWith('tests/')&&!p.startsWith('tools/')&&!p.startsWith('scripts/')&&!p.startsWith('.github/')&&!p.startsWith('inspector.')&&!p.startsWith('inspector-ui.')&&!p.startsWith('inspector-diagnostics.test.')&&!p.includes('-master.')&&!/-512\.(?:jpg|png|webp)$/i.test(p)&&!/\.(test|spec)\.[cm]?js$/.test(p)&&
+  (['.js','.css','.html','.json','.geojson','.png','.jpg','.jpeg','.webp','.svg','.woff','.woff2'].includes(extname(p))||['map-lab/SOURCES.md','MAP_SOURCES.md','assets/portraits/SOURCES.md'].includes(p)));
 await rm(out,{recursive:true,force:true});
 for(const p of runtime){const dest=join(out,p);await mkdir(dirname(dest),{recursive:true});await copyFile(join(root,p),dest)}
 for(const p of ['poki-bridge.js','map-lab/poki-style.js']){const dest=join(out,p);await mkdir(dirname(dest),{recursive:true});await copyFile(join(root,p),dest)}
@@ -48,10 +49,13 @@ for(const p of ['index.html','map-lab/index.html','han/index.html','map-lab/lab.
  const body=await readFile(join(out,p),'utf8');
  for(const u of body.matchAll(/https?:\/\/[^'"\s)<>]+/g))if(!u[0].startsWith('https://game-cdn.poki.com/')&&!/historical|source|Via |source:|source=/.test(body.slice(Math.max(0,u.index-70),u.index)))external.push({file:p,url:u[0]});
 }
+const minifyPaths=[...runtime.filter(p=>['.js','.css'].includes(extname(p))),'poki-bridge.js','map-lab/poki-style.js'];
+const beforeMinify=(await Promise.all(minifyPaths.map(async p=>(await stat(join(out,p))).size))).reduce((a,b)=>a+b,0);
+for(const p of minifyPaths){const file=join(out,p),source=await readFile(file,'utf8'),loader=extname(p)==='.css'?'css':'js';const output=await transform(source,{loader,target:'es2022',charset:'utf8',minifyWhitespace:true,minifySyntax:true,minifyIdentifiers:false,legalComments:'inline'});await writeFile(file,output.code)}
 const sizes=await Promise.all(runtime.map(async p=>({path:p,bytes:(await stat(join(out,p))).size})));
 const vendorFiles=['maplibre-gl.js','maplibre-gl.css','html2canvas.min.js'];
 const vendorBytes=(await Promise.all(vendorFiles.map(async p=>(await stat(join(vendor,p))).size))).reduce((a,b)=>a+b,0);
 const addedBytes=(await Promise.all(['poki-bridge.js','map-lab/poki-style.js'].map(async p=>(await stat(join(out,p))).size))).reduce((a,b)=>a+b,0);
-const manifest={entrypoints:['index.html','map-lab/index.html','han/index.html'],files:runtime.length+5,bytes:sizes.reduce((n,x)=>n+x.bytes,0)+vendorBytes+addedBytes,externalCandidates:external};
+const manifest={entrypoints:['index.html','map-lab/index.html','han/index.html'],files:runtime.length+5,bytes:sizes.reduce((n,x)=>n+x.bytes,0)+vendorBytes+addedBytes,beforeMinify,externalCandidates:external};
 await writeFile(join(out,'poki-build-report.json'),JSON.stringify(manifest,null,2));
 console.log(JSON.stringify({out,files:manifest.files,bytes:manifest.bytes,externalCandidates:external.length}));
