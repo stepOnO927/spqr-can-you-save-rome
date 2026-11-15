@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=inquiry-inbox-1';
-import {contestLeadership,advanceDisputes,queueMission,advanceOperations,addReport,supportClaimant} from '../character-system.js?v=regency-tenure-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=meeting-name-1';
+import {contestLeadership,advanceDisputes,queueMission,advanceOperations,addReport,supportClaimant} from '../character-system.js?v=meeting-name-1';
 import {knownLeaders,assignSuccession} from '../characters.js?v=succession-ui-recovery-1';
-import {deriveGovernment} from '../governance.js?v=regency-tenure-1';
+import {deriveGovernment} from '../governance.js?v=meeting-name-1';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 

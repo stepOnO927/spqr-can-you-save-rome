@@ -1,5 +1,5 @@
-import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=inquiry-inbox-1';
-import {wartimePolicy} from './epistulae-personnel.js?v=conspiracy-name-1';
+import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=meeting-name-1';
+import {wartimePolicy} from './epistulae-personnel.js?v=meeting-name-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
 
