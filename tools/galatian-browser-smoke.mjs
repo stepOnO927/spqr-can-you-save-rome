@@ -21,12 +21,16 @@ try{
  await page.locator('[data-tab="development"]').click();
  await page.locator('[data-dev-branch="idea"]').click();
  const card=page.locator('#tech-galatian-auxiliary-muster');
+ const parthian=page.locator('#tech-parthian-arrow-trains');
  assert.match(await card.innerText(),/Galatian Auxiliary Muster[\s\S]*integration and satisfaction ≥45 \+6/);
  assert.match(await card.locator('a[target="_blank"]').getAttribute('href'),/Civil_Wars\/3A/);
+ assert.match(await parthian.innerText(),/Parthian Arrow Supply Trains[\s\S]*Parthian plain \+6%/);
+ assert.match(await parthian.locator('a[target="_blank"]').getAttribute('href'),/Crassus/);
  await page.locator('#lang').click();
  await page.locator('[data-tab="development"]').click();
  await page.locator('[data-dev-branch="idea"]').click();
  assert.match(await card.innerText(),/加拉太辅助兵征募[\s\S]*融合度与满意度均≥45的新兵士气 \+6/);
+ assert.match(await parthian.innerText(),/帕提亚箭矢补给队[\s\S]*帕提亚平原防御 \+6%/);
  assert.deepEqual(errors,[]);
- console.log('Galatian idea card renders in English and Chinese without page errors.');
+ console.log('Galatian and Parthian idea cards render in English and Chinese without page errors.');
 }finally{await browser.close()}

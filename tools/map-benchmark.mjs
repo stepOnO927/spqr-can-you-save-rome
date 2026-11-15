@@ -58,6 +58,8 @@ try{
  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-overlay:not([hidden])').waitFor({timeout:30000});await page.locator('#start-free').click();
  await page.locator('[data-site="roma"]').waitFor();await page.waitForTimeout(8000);
+ if(await page.locator('#relief-toggle').getAttribute('aria-pressed')==='false')await page.locator('#relief-toggle').click();
+ assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'true');
  const renderer=await page.evaluate(()=>{const canvas=document.querySelector('.maplibregl-canvas'),gl=canvas?.getContext('webgl2')||canvas?.getContext('webgl');const ext=gl?.getExtension('WEBGL_debug_renderer_info');return ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):'unavailable'});
  await page.screenshot({path:'outputs/map-benchmark-1920x1080.png'});
  const idle=summarize(await sample(6000));

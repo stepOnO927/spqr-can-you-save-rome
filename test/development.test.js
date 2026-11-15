@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials} from '../engine.js';
+import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials,resolveBattle} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves,advanceDevelopment,mineMetalOutput,localBuildingEffects,templeGuaranteeExpense} from '../development.js';
 import {advanceNaval} from '../naval.js';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js';
@@ -9,8 +9,50 @@ import {techIllustration} from '../tech-art.js';
 import {faithSatisfaction,advanceDemography,advanceReligion} from '../local-society.js';
 import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js';
+import {afterActionHtml} from '../recon-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
+
+test('Parthian arrow trains need adoption and supplied local plains to affect real combat',()=>{
+ const id='parthian-arrow-trains',idea=IDEAS.find(item=>item.id===id);
+ assert.match(idea.source.url,/Crassus/);
+ assert.match(techIllustration(idea),/<svg/);
+ const s=newGrandGame('parthia');s.wars=[];s.factions.parthia.treasury=500;
+ assert.match(ideasPanel(s,'en'),/Parthian Arrow Supply Trains/);
+ assert.match(ideasPanel(s,'zh'),/帕提亚箭矢补给队/);
+ assert.equal(researchInnovation(s,'parthia','idea',id).ok,true);
+ assert.equal(activeEffects(s,'parthia').parthianArrowTrains,undefined);
+ months(s,idea.months);
+ assert.equal(adoptIdea(s,'parthia',id).ok,true);
+ assert.equal(activeEffects(s,'parthia').parthianArrowTrains,undefined);
+ months(s,development(s,'parthia').adoption.remaining);
+ assert.equal(activeEffects(s,'parthia').parthianArrowTrains,.06);
+ assert.equal(nationalBudget(s,'parthia').ideaUpkeep,3);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ const fight=(state,food=100)=>{
+  state.factions.parthia.food=food;
+  const defender=state.armies.find(a=>a.owner==='parthia'),attacker=state.armies.find(a=>a.owner==='caesar'),home=state.regions.find(r=>r.id==='parthia');
+  defender.region=home.id;defender.men=4200;attacker.men=4200;
+  resolveBattle(state,attacker,defender,home);
+  return state.battles[0];
+ };
+ const active=fight(upgradeSave(JSON.parse(JSON.stringify(restored))));
+ const inactive=upgradeSave(JSON.parse(JSON.stringify(restored)));development(inactive,'parthia').slots.military[0]=null;
+ const baseline=fight(inactive);
+ assert.equal(active.arrowTrainFactor,.06);
+ assert.ok(active.defender.power>baseline.defender.power);
+ assert.match(afterActionHtml(active,'parthia','en'),/arrow supply trains/i);
+ assert.match(afterActionHtml(active,'parthia','zh'),/箭矢补给队/);
+ const hills=upgradeSave(JSON.parse(JSON.stringify(restored)));hills.regions.find(r=>r.id==='parthia').terrain='hills';
+ assert.equal(fight(hills).arrowTrainFactor,0);
+ assert.equal(fight(upgradeSave(JSON.parse(JSON.stringify(restored))),0).arrowTrainFactor,0);
+ const foreign=newGrandGame('senate');foreign.wars=[];foreign.factions.senate.treasury=500;development(foreign,'senate').knownIdeas.push(id);
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).reason,'cultural-base');
+ const enclave=foreign.regions.find(r=>r.id==='parthia');enclave.owner='senate';enclave.civicSatisfaction=44;
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).reason,'local-support');
+ enclave.civicSatisfaction=45;
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).months,4);
+});
 
 test('Galatian auxiliaries require research and adoption and affect only supported local recruits',()=>{
  const id='galatian-auxiliary-muster',idea=IDEAS.find(item=>item.id===id);
@@ -725,7 +767,7 @@ test('local rites affect a neighboring court only through an influential shared 
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,44);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,45);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
