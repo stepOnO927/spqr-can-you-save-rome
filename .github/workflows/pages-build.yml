@@ -1,0 +1,32 @@
+name: Cloudflare Pages package
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev
+      - run: npm run build:pages
+      - run: npm install --no-save playwright@1.64.1
+      - run: npx playwright install chromium
+      - run: |
+          SPQR_STATIC_ROOT="$PWD/dist" PORT=5174 node server.mjs > pages-server.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:5174/ >/dev/null && break; sleep 1; done
+          node tools/pages-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cloudflare-pages-package-evidence
+          path: |
+            pages-server.log
