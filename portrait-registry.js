@@ -136,6 +136,15 @@ export function portraitSeedFor(id,person,entry){
 }
 
 const generatedPortraits=new Map();
+export function portraitStation(state,id,person,snapshot=null){
+ if(snapshot)return ['ruler','commander','official'].includes(snapshot.portraitStation)?snapshot.portraitStation:'civilian';
+ if((state.world.leadership?.[person.faction]||[]).includes(id))return 'ruler';
+ if((state.armies||[]).some(army=>army.characterId===id&&army.owner===person.faction))return 'commander';
+ if(Object.values(state.world.offices?.[person.faction]||{}).includes(id)
+  ||Object.values(state.world.localGovernors||{}).some(post=>post?.faction===person.faction&&post.person===id)
+  ||Object.values(state.world.cursus?.magistrates||{}).some(holders=>Array.isArray(holders)&&holders.some(term=>term.id===id&&term.faction===person.faction)))return 'official';
+ return 'civilian';
+}
 export function proceduralPortraitSvg(state,id,snapshot=null){
  const person=state.world?.characters?.[id],saved=state.world?.dynasties?.catalog?.[id];
  if(!person||!saved?.fictional||!Array.isArray(saved.name)||!saved.name[0]||!saved.name[1])return null;
@@ -144,7 +153,8 @@ export function proceduralPortraitSvg(state,id,snapshot=null){
  // Do not change it using a later hidden death or unobserved appointment.
  const visibleYear=snapshot?(snapshot.resolvedYear??snapshot.year??state.year):person.deathYear??state.year;
  const age=Math.max(0,visibleYear-(person.birthYear??visibleYear)),ageBand=age>=65?3:age>=50?2:age>=35?1:0;
- const cacheKey=`${id}|${saved.name[0]}|${person.birthYear}|${faction}|${seed}|${ageBand}`;
+ const station=portraitStation(state,id,person,snapshot);
+ const cacheKey=`${id}|${saved.name[0]}|${person.birthYear}|${faction}|${seed}|${ageBand}|${station}`;
  if(generatedPortraits.has(cacheKey))return generatedPortraits.get(cacheKey);
  const skin=['#bd9270','#a87958','#d0a77f','#976b51','#c59c76'][seed%5];
  const hair=ageBand>=3?'#938979':ageBand>=2&&((seed>>>3)&1)?'#80776b':['#241e1b','#473225','#5c4936','#302d2a','#6b5239'][(seed>>>3)%5];
@@ -157,7 +167,8 @@ export function proceduralPortraitSvg(state,id,snapshot=null){
  const cheek=ageBand>=2?`<path d="M${leftEye-4} 45 q4 2 7 0 M${rightEye-3} 45 q4 2 7 0" fill="none" stroke="#765844" stroke-width=".7" opacity=".6"/>`:'';
  const eyebrows=(seed>>>26)%3===0?`<path d="M${leftEye-4} ${eyeY-4} q5 -2 9 0 M${rightEye-4} ${eyeY-4} q5 -2 9 0" fill="none" stroke="${hair}" stroke-width="1"/>`:'';
  const collar=(seed>>>28)%3===0?`<path d="M28 58 L40 66 L52 58" fill="none" stroke="#d4c4a0" stroke-width="3"/>`:`<path d="M28 57 L40 69 L52 57" fill="none" stroke="#b8a179" stroke-width="2"/>`;
- const svg=`<svg class="portrait-procedural" viewBox="0 0 80 80" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#253631"/><path d="M6 80 Q9 57 28 57 L52 57 Q71 57 74 80" fill="${robe}"/><path d="M32 53 L33 63 Q40 69 47 63 L48 53" fill="${skin}"/><ellipse cx="40" cy="37" rx="${faceWidth}" ry="${faceHeight}" fill="${skin}"/><path d="${hairline}" fill="${hair}"/>${headwear}${eyebrows}<path d="M${leftEye-3} ${eyeY} h6 M${rightEye-3} ${eyeY} h6" stroke="${hair}" stroke-width="1.5" stroke-linecap="round"/><path d="M40 ${eyeY+2} l-2 9 h4" fill="none" stroke="#6f4e3b" stroke-width="1"/><path d="M35 54 Q40 56 45 54" fill="none" stroke="#754e42" stroke-width="1"/>${cheek}${beard}${collar}<path d="M6 79 H74" stroke="#9f8962" stroke-width="2"/></svg>`;
+ const stationDetail=station==='ruler'?'<path d="M24 60 L40 74 L56 60" fill="none" stroke="#c5a96b" stroke-width="3"/><path d="M21 65 L13 72 M59 65 L67 72" fill="none" stroke="#c5a96b" stroke-width="2"/>':station==='commander'?'<path d="M10 78 Q14 61 29 57 L39 68" fill="none" stroke="#b9a17b" stroke-width="4"/><circle cx="26" cy="59" r="3" fill="#c7ab70"/>':station==='official'?'<path d="M30 61 L40 72 L50 61" fill="none" stroke="#b9a984" stroke-width="2"/><path d="M35 62 L40 68 L45 62" fill="none" stroke="#8f7959" stroke-width="1"/>':'';
+ const svg=`<svg class="portrait-procedural" data-station="${station}" viewBox="0 0 80 80" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><rect width="80" height="80" fill="#253631"/><path d="M6 80 Q9 57 28 57 L52 57 Q71 57 74 80" fill="${robe}"/><path d="M32 53 L33 63 Q40 69 47 63 L48 53" fill="${skin}"/><ellipse cx="40" cy="37" rx="${faceWidth}" ry="${faceHeight}" fill="${skin}"/><path d="${hairline}" fill="${hair}"/>${headwear}${eyebrows}<path d="M${leftEye-3} ${eyeY} h6 M${rightEye-3} ${eyeY} h6" stroke="${hair}" stroke-width="1.5" stroke-linecap="round"/><path d="M40 ${eyeY+2} l-2 9 h4" fill="none" stroke="#6f4e3b" stroke-width="1"/><path d="M35 54 Q40 56 45 54" fill="none" stroke="#754e42" stroke-width="1"/>${cheek}${beard}${collar}${stationDetail}<path d="M6 79 H74" stroke="#9f8962" stroke-width="2"/></svg>`;
  if(generatedPortraits.size>=512)generatedPortraits.delete(generatedPortraits.keys().next().value);
  generatedPortraits.set(cacheKey,svg);return svg;
 }

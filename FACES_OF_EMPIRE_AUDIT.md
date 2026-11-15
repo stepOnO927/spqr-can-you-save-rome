@@ -251,6 +251,11 @@ dismissal remain visible after Chronicle trimming and save restoration, and
 older generated people acquire the same portrait on load. A Chromium test
 selects an appointed original official, renders the portrait, changes language
 and reloads the save. Broader generated-character art remains unfinished.
+Procedural portraits now retain one face while changing modest garment details
+for a current office, army command or leadership role. A successful foreign
+meeting records the observed attire at that date; a later hidden promotion,
+loss of office or aging cannot revise that saved observation. The details are
+game artwork, not claims about a documented ancient garment.
 Newly generated Han officials now save their culture, recorded origin, current
 court location, profession and first service event alongside that portrait.
 Their dossier shows those fields in both languages after save restoration.
