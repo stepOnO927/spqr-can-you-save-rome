@@ -65,6 +65,9 @@ test('a delivered Han silk batch crosses into a Roman market with a payer and no
  advanceDate(s);advanceHanWorld(s);
  assert.equal(gate.stock,gateBefore,'a funded player port does not buy without an order');
  assert.equal(romanView(s).availableImports.some(x=>x.id===placed.shipment.id),true);
+ const offer=romanView(s).availableImports.find(x=>x.id===placed.shipment.id);
+ assert.equal(offer.merchantId,placed.shipment.merchantId);
+ assert.deepEqual(offer.merchantName,h.persons[placed.shipment.merchantId].name);
  assert.equal(buyEasternImport(s,placed.shipment.id,'roma').reason,'port');
  const bought=buyEasternImport(s,placed.shipment.id,'syria');assert.equal(bought.ok,true,bought.reason);
  assert.equal(gate.stock,gateBefore-1);assert.equal(roman.stock,romanBefore+1);
@@ -72,6 +75,7 @@ test('a delivered Han silk batch crosses into a Roman market with a payer and no
  assert.equal(s.factions.caesar.treasury,100-placed.shipment.price);
  const receipt=romanView(s).imports[0];assert.equal(receipt.hanShipment,placed.shipment.id);
  assert.equal(receipt.port,'syria');assert.equal(receipt.price,placed.shipment.price);
+ assert.equal(receipt.merchantId,placed.shipment.merchantId);
  assert.equal(s.markets.transactions.filter(x=>x.linkedHanShipment===placed.shipment.id).length,1);
  assert.equal(buyEasternImport(s,placed.shipment.id,'syria').ok,false,'a purchased batch cannot be bought twice');
  assert.match(eastPanel(s,{lang:0}),/Purchases at your ports/);
@@ -152,4 +156,27 @@ test('a rival Roman port purchase does not expose its import to the player',()=>
  assert.equal(s.factions.senate.treasury,before-7);
  assert.equal(romanView(s).silkCargoes,0);assert.deepEqual(romanView(s).imports,[]);assert.deepEqual(romanView(s).availableImports,[]);
  assert.equal(s.log.some(x=>x.en?.includes('Seric silk reached')),false);
+});
+
+test('a rival court can buy an observed cargo after the player priority window, including after save/load',()=>{
+ let s=newGame('caesar');attachHanWorld(s,{seed:18});
+ s.regions.find(r=>r.id==='syria').owner='caesar';s.regions.find(r=>r.id==='egypt').owner='senate';
+ let h=hanWorld(s).state;h.tradeMarkets.autonomousEnabled=false;
+ const id='eastern-shipment:contested-horses',gate=h.tradeMarkets.regions.mediterranean_gate.goods.horses;
+ gate.stock++;gate.consumption=0;
+ h.tradeMarkets.shipments.push({id,buyer:'external',seller:'han',destination:'mediterranean_gate',commodity:'horses',quantity:1,price:7,status:'delivered',deliveredAt:s.year*12+s.month});
+ s.factions.senate.treasury=100;
+ assert.equal(romanView(s).availableImports.find(x=>x.id===id).rivalBidIn,3);
+ for(let i=0;i<2;i++){advanceDate(s);advanceHanWorld(s);assert.equal(hanWorld(s).bridge.settled[id],undefined)}
+ s=upgradeSave(structuredClone(s));h=hanWorld(s).state;
+ assert.equal(romanView(s).availableImports.find(x=>x.id===id).rivalBidIn,1);
+ advanceDate(s);advanceHanWorld(s);
+ assert.equal(hanWorld(s).bridge.settled[id].owner,'senate');
+ assert.equal(s.factions.senate.treasury,93);
+ assert.equal(romanView(s).availableImports.some(x=>x.id===id),false);
+ assert.equal(romanView(s).imports.some(x=>x.hanShipment===id),false);
+ assert.equal(s.markets.transactions.filter(x=>x.linkedHanShipment===id).length,1);
+ assert.match(s.log[0].en,/rival court/);
+ advanceDate(s);advanceHanWorld(s);
+ assert.equal(s.markets.transactions.filter(x=>x.linkedHanShipment===id).length,1);
 });

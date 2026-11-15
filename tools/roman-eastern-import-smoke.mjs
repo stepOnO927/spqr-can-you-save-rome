@@ -12,14 +12,15 @@ try{
   const {newGame}=await import('/engine.js?v=roman-imports-1');
   const {attachHanWorld}=await import('/han/world.js?v=roman-imports-1');
   const s=newGame('caesar'),w=attachHanWorld(s,{seed:43}),id='eastern-shipment:browser-import';
-  s.regions.find(r=>r.id==='syria').owner='caesar';s.factions.caesar.treasury=100;
-  w.state.tradeMarkets.shipments.push({id,buyer:'external',seller:'han',destination:'mediterranean_gate',commodity:'silk',quantity:1,price:7,status:'delivered'});
+  s.regions.find(r=>r.id==='syria').owner='caesar';s.regions.find(r=>r.id==='egypt').owner='senate';s.factions.caesar.treasury=100;
+  w.state.tradeMarkets.shipments.push({id,buyer:'external',seller:'han',destination:'mediterranean_gate',commodity:'silk',quantity:1,price:7,status:'delivered',deliveredAt:s.year*12+s.month});
   w.state.tradeMarkets.regions.mediterranean_gate.goods.silk.stock++;
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
  });
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('[data-tab="east"]').click();
  assert.match(await page.locator('.inspector').innerText(),/Merchant cargo at port/);
+ assert.match(await page.locator('.inspector').innerText(),/Rival court may buy in 3 months/);
  assert.equal(await page.locator('[data-east-buy="eastern-shipment:browser-import"]').count(),1);
  assert.equal(await page.locator('.top-stats').innerText().then(x=>x.includes('100')),true);
  await page.locator('[data-east-import-port]').selectOption('syria');

@@ -37,9 +37,13 @@ across seller quotes to keep monthly turns responsive.
 At a player-owned eastern Mediterranean port, arrived eastern merchant cargo
 now waits for an explicit purchase. The panel shows the finite batch and price;
 the action transfers that batch into the selected Roman market and charges the
-Roman treasury once. Rival Roman courts may still purchase automatically when
-the player has no eastern port. Unit and browser tests cover payment, stock,
-save/load, duplicate prevention, and bilingual receipts. This is a port
+Roman treasury once. Rival Roman courts purchase automatically when the player
+has no eastern port. If both courts have eastern ports, a newly arrived cargo
+waits three months for the player before a funded rival can buy it. The offer
+names its saved merchant and shows the remaining priority period. Older saves
+without an arrival timestamp remain available rather than being silently
+lost. Unit and browser tests cover payment, stock, save/load, competition,
+duplicate prevention, and bilingual receipts. This is a port
 purchase from intermediaries, not a direct Roman–Han trade treaty.
 The subsequent main updates add coalition invitations by courier, reported
 foreign treaty changes to the Chronicle, and autonomous wartime aid requests.
