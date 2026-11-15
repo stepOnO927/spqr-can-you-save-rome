@@ -41,6 +41,7 @@ function profile(r,good){
   horses:r.horses?3:r.terrain==='steppe'?2:0,
   iron:r.iron||r.arsenal?2:r.terrain==='mountain'?1:0,
   copper:r.iron||r.arsenal?2:['hills','mountain'].includes(r.terrain)?1:0,
+  stone:['hills','mountain'].includes(r.terrain)?2:0,
   timber:r.terrain==='forest'?4:['hills','mountain'].includes(r.terrain)?2:1,
   silk:r.silk?3:r.owner==='han'&&r.kind==='capital'?1:0,
   wool:r.terrain==='steppe'?3:r.kind==='oasis'?1:0,
@@ -49,7 +50,7 @@ function profile(r,good){
  }[good];
  // Elite demand consumes luxury cargo in populous courts. Smaller caravan
  // towns can still hold imported silk for onward exchange.
- const consumption={grain:Math.max(1,Math.ceil((r.pop||4)/12)),livestock:1,horses:1,iron:1,copper:1,timber:1,silk:(r.pop||0)>=12?1:0,wool:(r.pop||0)>=12?1:0,jade:r.kind==='capital'?1:0,papyrus:0}[good];
+ const consumption={grain:Math.max(1,Math.ceil((r.pop||4)/12)),livestock:1,horses:1,iron:1,copper:1,stone:0,timber:1,silk:(r.pop||0)>=12?1:0,wool:(r.pop||0)>=12?1:0,jade:r.kind==='capital'?1:0,papyrus:0}[good];
  return {production,consumption,stock:production===0&&['wool','jade'].includes(good)?0:Math.max(0,production*4+2-consumption),price:COMMODITIES[good].basePrice};
 }
 

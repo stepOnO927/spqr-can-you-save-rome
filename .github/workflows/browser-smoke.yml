@@ -87,6 +87,7 @@ jobs:
               node tools/roman-supply-contract-smoke.mjs
               node tools/roman-economy-forecast-smoke.mjs
               node tools/market-smoke.mjs
+              node tools/stone-construction-smoke.mjs
               node tools/han-smoke.mjs
               node tools/han-market-smoke.mjs
               node tools/roman-eastern-import-smoke.mjs

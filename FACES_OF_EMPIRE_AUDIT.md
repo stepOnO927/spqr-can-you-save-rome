@@ -40,7 +40,7 @@ informed by [Chorasmia](https://www.iranicaonline.org/articles/chorasmia/),
 and [early Albanian accounts](https://api.pageplace.de/preview/DT0400.9781463239893_A43599321/preview-9781463239893_A43599321.pdf).
 The generated people and their exact names remain original game reconstructions.
 The measured market catalog now also includes herd animals, copper, woollen
-textiles, and jade, with bilingual batch units and separate regional output,
+textiles, jade, and building stone, with bilingual batch units and separate regional output,
 use, stock and prices in both simulations. Jade has a modeled Yutian source;
 a paid Han purchase travels through Shanshan to Dunhuang and transfers the
 actual stock and customs only on delivery. Older saves gain the four goods
@@ -50,6 +50,16 @@ completes within four years while AI also considers the additional goods.
 The Yutian jade and Central Asian textile placements are game abstractions
 informed by [Encyclopaedia Iranica's account of Parthian commerce](https://www.iranicaonline.org/articles/commerce-iii/);
 the prices and quantities are balance values rather than historical records.
+Stone is quarried in modeled hill and mountain markets. Several stone-using
+buildings now require one or two local batches at the start of construction;
+roads, bridges, waterworks and port improvements cannot begin from an empty
+store. A paid caravan can deliver the missing batch through an existing route.
+The local stock and a saved construction-use ledger decrease once at the start;
+old projects continue with their existing terms. Both market simulations gain
+stone without changing old treasury balances. A browser flow exercises the
+bilingual price, shortage, paid delivery, construction and reload. The wider
+conversion of metals, timber and other inputs into military and civic projects
+remains open.
 
 Roman players can now list stock at an owned eastern port for a Parthian buyer.
 The existing treaty, AI purchase, prepaid caravan and timed delivery must all

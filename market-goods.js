@@ -5,6 +5,7 @@ export const COMMODITIES={
  horses:{name:['Horses','马匹'],unit:['100 head','百匹'],basePrice:5},
  iron:{name:['Iron','铁'],unit:['20 tons','二十吨'],basePrice:4},
  copper:{name:['Copper','铜'],unit:['20 tons','二十吨'],basePrice:4},
+ stone:{name:['Building stone','建筑石材'],unit:['20 tons','二十吨'],basePrice:3},
  timber:{name:['Timber','木材'],unit:['100 logs','百根'],basePrice:3},
  silk:{name:['Silk','丝绸'],unit:['50 bolts','五十匹'],basePrice:8},
  wool:{name:['Woollen textiles','毛织物'],unit:['50 bolts','五十匹'],basePrice:4},
