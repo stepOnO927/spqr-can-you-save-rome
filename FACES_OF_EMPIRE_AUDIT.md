@@ -443,6 +443,18 @@ general Roman–Han settlement, autonomous intermediary resale at scale,
 broader player and merchant competition, and the full acceptance
 scenarios are still outstanding. New names
 and emblems are game reconstructions, not documented personal identities.
+All 52 playable non-Han courts in the eastern campaign now have a simultaneous
+succession regression covering saved identity, title, portrait and governing
+effect. A woman who rules a kingdom receives a corresponding queen title;
+an original Parthian sovereign is described as a ruling queen rather than
+borrowing the male King of Kings title or projecting a later Queen of Queens
+title back into 49 BCE. This is an alternate-history game description, not an
+attested Arsacid style. Older saved female rulers with the generic male title
+are corrected without changing their identity or artwork.
+The distinction follows [Encyclopaedia Iranica's discussion of Parthian
+kingship](https://www.iranicaonline.org/articles/kingship/kingship-iii-in-the-parthian-period/)
+and its account of the [later Sasanian Queen of Queens
+title](https://www.iranicaonline.org/articles/women-i/).
 
 ## Existing foundations
 

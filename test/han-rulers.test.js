@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize,tick,elevateEmpress} from '../han/engine.js';
-import {advanceForeignRulers,rulerPortrait,regentPortrait,rulerMilitaryJudgment,rulerGovernanceFactor} from '../han/rulers.js';
+import {PLAYABLE} from '../han/data.js';
+import {advanceForeignRulers,rulerPortrait,rulerTitle,regentPortrait,rulerMilitaryJudgment,rulerGovernanceFactor} from '../han/rulers.js';
 import {ownRulerHtml} from '../han/ruler-ui.js';
 import {birthRecordValid,recordBirth,eligibility,crown,seizeThrone} from '../han/dynasty.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';
@@ -162,6 +163,40 @@ test('Parthia, Armenia, Wusun, Kangju and an oasis kingdom gain persistent succe
   assert.equal(rulerPortrait(restored,f),rulerPortrait(s,f),f);
   const id=restored.rulers[f].id;tick(restored);assert.equal(restored.rulers[f].id,id,f);
  }
+});
+
+test('every playable eastern court retains a named, titled and governing successor',()=>{
+ const s=newHanGame('han',{seed:810}),factions=PLAYABLE.filter(f=>f!=='han');
+ const former=Object.fromEntries(factions.map(f=>[f,s.rulers[f]?.personId]));
+ for(const f of factions){assert.ok(former[f],f);s.persons[former[f]].alive=false}
+ advanceForeignRulers(s);
+ const names=new Set();let female=0;
+ for(const f of factions){
+  const ruler=s.rulers[f],person=s.persons[ruler.personId];
+  assert.ok(person.alive&&person.record==='fictional'&&birthRecordValid(s,person.id),f);
+  assert.equal(person.politicalPredecessor,former[f],f);
+  assert.deepEqual(ruler.title,rulerTitle(f,person),f);
+  assert.deepEqual(person.title,ruler.title,f);
+  assert.match(rulerPortrait(s,f),/^data:image\/svg\+xml/,f);
+  assert.ok(rulerGovernanceFactor(s,f)>0,f);
+  assert.ok(!names.has(person.name[0]),`duplicate living ruler: ${person.name[0]}`);names.add(person.name[0]);
+  if(person.sex==='f'){female++;assert.doesNotMatch(ruler.title[0],/^King(?: of|$)/,f)}
+ }
+ assert.ok(female>0);
+ const restored=loadHanSave(serialize(s));
+ for(const f of factions)assert.deepEqual(restored.rulers[f],s.rulers[f],f);
+});
+
+test('a legacy female sovereign loses an inherited male title without changing her identity',()=>{
+ const s=newHanGame('parthia',{seed:810}),old=s.rulers.parthia;
+ s.persons[old.personId].alive=false;advanceForeignRulers(s);
+ const ruler=s.rulers.parthia,person=s.persons[ruler.personId],id=person.id,portrait=rulerPortrait(s,'parthia');
+ person.sex='f';person.title=[...rulerTitle('parthia')];ruler.title=[...rulerTitle('parthia')];
+ const restored=loadHanSave(serialize(s));
+ assert.equal(restored.rulers.parthia.personId,id);
+ assert.deepEqual(restored.rulers.parthia.title,['Ruling queen of Parthia','安息女王']);
+ assert.deepEqual(restored.persons[id].title,restored.rulers.parthia.title);
+ assert.equal(rulerPortrait(restored,'parthia'),portrait);
 });
 
 test('a minor foreign heir keeps the throne while a named regent actually governs',()=>{
