@@ -11,7 +11,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Family adoption and marriage | Campaign map → government → family tree | `tools/scenario-systems-smoke.mjs` |
 | Family tree and private wills | Terrain map → Government, Families & Policies → family tree | `tools/systems-smoke.mjs` |
 | Own character condition and historical reference | Campaign map → government → select an own person in the family tree | `tools/genealogy-dossier-smoke.mjs` checks simulated health, loyalty and location, separately labeled historical reference, save/load and protection of a missing person's hidden state |
-| Personal travel and audiences | Campaign map → government → select an own person in the family tree | `tools/genealogy-personal-actions-smoke.mjs` previews and starts a journey, saves and orders a stop, then sends a delayed audience request to a reported person whose hidden situation has changed |
+| Personal travel and audiences | Campaign map → government → select an own person in the family tree | `tools/genealogy-personal-actions-smoke.mjs` previews and starts a journey, saves and orders a stop, and sends delayed audience requests; it also checks a fictional recipient's dated reported name after a hidden rename |
 | Foreign family correspondence | Campaign map → government → family guarantees | `tools/family-courier-smoke.mjs` sends and saves a real proposal, advances four months, and observes a lost reply; `test/family-couriers.test.js` also covers marriage, asylum, wardship, both journeys and old saves |
 | Contested and unclaimed private estates | Campaign map → government → family tree | `tools/inheritance-settlement-smoke.mjs` uses explicit contested-estate fixtures, checks a paid division and an unclaimed family settlement, then saves and reloads |
 | Fixed opening institution portraits | Campaign map → government → family tree | `tools/portrait-institutions-smoke.mjs` checks individual images and save/load; unit tests cover old IDs and foreign meeting snapshots |
@@ -35,7 +35,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Terrain-map pan, zoom and relief | Map drag, wheel and relief control | `tools/map-benchmark.mjs` |
 | Screenshot | Terrain map → Screenshot | `tools/capture-check.mjs` |
 
-The remaining family actions, other treaty types, and other political movement stages have engine or component tests, but are not yet all verified through a complete player journey. Continue the audit before treating every system as fully playable. Foreign political information remains limited to the player's reports; letter outcomes remain delayed and can be lost or refused.
+The remaining family actions, other treaty types, and other political movement stages have engine or component tests, but are not yet all verified through a complete player journey. Continue the audit before treating every system as fully playable. Letter outcomes remain delayed and can be lost or refused. The family audience selector uses dated reported names for fictional foreign people; legacy reports without a saved name remain anonymous. The terrain-map character and intelligence screens still have separate live-catalog name lookups and need the same privacy audit before foreign identity display can be considered fully protected.
 
 The health and succession browser scenario starts from an explicitly simulated dying-leader fixture; it does not imply that an ordinary new campaign starts with an imminent death.
 

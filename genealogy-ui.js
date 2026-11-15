@@ -3,7 +3,7 @@ import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,n
 import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=infant-portraits-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=infant-portraits-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=genealogy-personal-actions-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=reported-person-names-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);

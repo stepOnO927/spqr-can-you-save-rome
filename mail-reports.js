@@ -1,5 +1,5 @@
 import {sendLetter,initializeMail} from './epistulae.js?v=infant-portraits-1';
-import {reportedArmies} from './character-system.js?v=infant-portraits-1';
+import {reportedArmies} from './character-system.js?v=reported-person-names-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {MATERIALS} from './inventions.js?v=mission-discount-1';
 import {ROUTES} from './data.js?v=phase-x-1';

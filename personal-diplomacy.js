@@ -1,7 +1,7 @@
 import {reportedControl,observeArrival} from './control-intelligence.js?v=fort-intel-1';
 import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {addReport,reportedHealthSubjects,apparentAgeRange} from './character-system.js?v=infant-portraits-1';
+import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=reported-person-names-1';
 import {officeOf} from './office-system.js?v=infant-portraits-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=infant-portraits-1';
 
@@ -56,7 +56,8 @@ export function requestPersonalMeeting(s,id,target,targetFaction){
  const court=targetFaction??(reported.length===1?reported[0]:null);
  if(!c||c.faction!==s.player||!c.alive||c.missing||!c.location||c.travel||commandingMarch(s,id)||['seriously_ill','dying','deceased'].includes(c.health)||!CHARACTER_CATALOG[target]||!court||!reported.includes(court))return {ok:false,reason:'unavailable'};
  if(s.meetings.some(m=>m.person===id&&m.status==='pending'))return {ok:false,reason:'pending'};if(s.factions[s.player].treasury<3)return {ok:false,reason:'treasury'};
- s.factions[s.player].treasury-=3;s.meetings.unshift({actor:s.player,person:id,target,targetFaction:court,location:c.location,status:'pending',remaining:2,year:s.year,month:s.month});return {ok:true};
+ const reportedName=reportedPersonName(s,s.player,court,target)?.name;
+ s.factions[s.player].treasury-=3;s.meetings.unshift({actor:s.player,person:id,target,targetFaction:court,reportedName,location:c.location,status:'pending',remaining:2,year:s.year,month:s.month});return {ok:true};
 }
 function interruptJourney(s,c){
  delete c.travel;

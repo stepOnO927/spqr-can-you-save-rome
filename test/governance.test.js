@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=infant-portraits-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=reported-person-names-1';
 import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js?v=infant-portraits-1';
 import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js?v=succession-ui-recovery-1';
-import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=infant-portraits-1';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=infant-portraits-1';
+import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=reported-person-names-1';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=reported-person-names-1';
 import {createFictionalPerson} from '../dynasties.js?v=infant-portraits-1';
 
 test('a sick Roman commander retains nominal office while an available officer acts temporarily',()=>{
