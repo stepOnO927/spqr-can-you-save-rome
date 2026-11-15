@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-reported-names-1';
+import {newGame,upgradeSave,tick,provisionRomanArmy} from '../engine.js?v=faces-reported-names-1';
 import {templatesFor,recruitFormation,recruitmentQuote} from '../legion-designer.js?v=faces-reported-names-1';
 import {advanceMarkets,placeTradeOrder} from '../trade-markets.js?v=faces-reported-names-1';
 import {COMMODITIES} from '../market-goods.js?v=faces-reported-names-1';
@@ -54,4 +54,39 @@ test('completed metalworking enables local weapon production from finite iron',(
  advanceMarkets(s);
  assert.equal(goods.iron.usedForManufacture,1);
  assert.equal(goods.weapons.produced,1);
+});
+
+test('Roman field rations move from a local depot into a saved army and reduce real famine losses',()=>{
+ const s=newGame('caesar');s.wars=[];
+ const army=s.armies.find(a=>a.id==='xiii'),goods=s.markets.regions.cisalpine.goods.provisions;
+ goods.stock=2;goods.production=0;
+ assert.equal(provisionRomanArmy(s,'senate',army.id).reason,'invalid','a rival cannot load this army');
+ assert.equal(provisionRomanArmy(s,'caesar',army.id,3).reason,'provisions','empty stock cannot be borrowed');
+ assert.equal(provisionRomanArmy(s,'caesar',army.id,2).ok,true);
+ assert.equal(goods.stock,0);assert.equal(goods.usedForMilitary,2);
+ assert.equal(army.fieldRations,12000);
+ const dry=upgradeSave(structuredClone(s));dry.armies.find(a=>a.id==='xiii').fieldRations=0;
+ const saved=upgradeSave(structuredClone(s));
+ assert.equal(saved.armies.find(a=>a.id==='xiii').fieldRations,12000);
+ for(const game of [saved,dry])game.factions.caesar.food=-100;
+ tick(saved);tick(dry);
+ const fed=saved.armies.find(a=>a.id==='xiii'),unfed=dry.armies.find(a=>a.id==='xiii');
+ assert.ok(fed.men>unfed.men,'finite rations prevent actual starvation deaths');
+ assert.equal(fed.provisionsUsed,7200);assert.equal(fed.fieldRations,4800);
+ assert.ok(saved.log.some(entry=>entry.zh?.includes('避免了')&&entry.zh.includes('缺粮减员')),'the turn report explains the real effect');
+ assert.equal(unfed.fieldRations,0);
+});
+
+test('Roman rations cannot be loaded while marching or from a lost depot',()=>{
+ const s=newGame('caesar'),army=s.armies.find(a=>a.id==='xiii'),item=s.markets.regions.cisalpine.goods.provisions;
+ const before=item.stock;army.move={to:'italiaN',remaining:2};
+ assert.equal(provisionRomanArmy(s,'caesar',army.id).reason,'invalid');
+ assert.equal(item.stock,before);army.move=null;
+ s.regions.find(r=>r.id==='cisalpine').owner='senate';
+ assert.equal(provisionRomanArmy(s,'caesar',army.id).reason,'invalid');
+ assert.equal(item.stock,before);
+ s.regions.find(r=>r.id==='cisalpine').owner='caesar';
+ army.fieldRations=army.men*6+6000;
+ assert.equal(provisionRomanArmy(s,'caesar',army.id).reason,'capacity');
+ assert.equal(item.stock,before);
 });

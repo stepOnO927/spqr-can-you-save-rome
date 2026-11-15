@@ -30,6 +30,7 @@ const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=faces-reported-names-1';
 import {initializeMarkets,advanceMarkets,advanceMarketAI,advanceMarketDiplomacy} from './trade-markets.js?v=faces-reported-names-1';
+import {RATION_SOLDIER_MONTHS} from './market-goods.js?v=faces-reported-names-1';
 import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=faces-reported-names-1';
 import {respondToFrontierReports} from './frontier-response.js?v=faces-reported-names-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=faces-reported-names-1';
@@ -234,6 +235,19 @@ export function recruit(s,regionId,owner=s.player){
   r.loyalty=Math.max(0,r.loyalty-3);
   if(owner===s.player)log(s,`New forces were raised in ${r.name[0]}.${army.mounted?' A horse batch equipped 100 mounted scouts.':''}`,`在${r.name[1]}征召了新军队。${army.mounted?'一批马匹装备了100名骑乘侦察兵。':''}`);
   return true;
+}
+
+// A physical ration batch feeds 6,000 soldiers for one month. The stock is
+// removed from the local market when loaded and remains with the saved army.
+export function provisionRomanArmy(s,owner,armyId,quantity=1){
+ const unit=s.armies.find(a=>a.id===armyId),site=region(s,unit?.region);
+ if(s.defeat||!unit||unit.owner!==owner||unit.men<=0||unit.move||site?.owner!==owner||!Number.isSafeInteger(quantity)||quantity<1||quantity>20)return {ok:false,reason:'invalid'};
+ const item=initializeMarkets(s).regions[unit.region]?.goods?.provisions;
+ if(!item||item.stock<quantity)return {ok:false,reason:'provisions'};
+ if((unit.fieldRations||0)+quantity*RATION_SOLDIER_MONTHS>unit.men*6+RATION_SOLDIER_MONTHS)return {ok:false,reason:'capacity'};
+ item.stock-=quantity;item.usedForMilitary=(item.usedForMilitary||0)+quantity;
+ unit.fieldRations=(unit.fieldRations||0)+quantity*RATION_SOLDIER_MONTHS;
+ return {ok:true,quantity,fieldRations:unit.fieldRations};
 }
 
 export function setTax(s,owner,level){
@@ -574,7 +588,20 @@ function economy(s){
     if(f.food<0)f.manpower=Math.max(0,f.manpower-Math.max(170,Math.ceil(Math.abs(f.food)*3)));
     else f.manpower+=f.treasury<=-50?Math.floor(manpowerGain*.25):manpowerGain;
     if(f.treasury<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.morale=Math.max(20,a.morale-4))}
-    if(f.food<0){f.stability=Math.max(0,f.stability-3);s.armies.filter(a=>a.owner===id).forEach(a=>a.men=Math.max(1,Math.round(a.men*(f.food<=-50?.92:.96))))}
+    if(f.food<0){
+      f.stability=Math.max(0,f.stability-3);
+      for(const a of s.armies.filter(a=>a.owner===id&&a.men>0)){
+        const losses=a.men-Math.max(1,Math.round(a.men*(f.food<=-50?.92:.96)));
+        const carried=Number.isFinite(a.fieldRations)?Math.max(0,Math.floor(a.fieldRations)):0;
+        const used=Math.min(carried,a.men);
+        const protectedMen=Math.min(losses,Math.round(losses*used/a.men));
+        a.men-=losses-protectedMen;
+        if(used){
+          a.fieldRations=carried-used;a.provisionsUsed=(a.provisionsUsed||0)+used;
+          if(id===s.player&&protectedMen>0)log(s,`${a.name[0]} used carried rations to feed ${used.toLocaleString()} soldiers and avoided ${protectedMen.toLocaleString()} starvation losses.`,`${a.name[1]}消耗随军口粮供养${used.toLocaleString()}名士兵，避免了${protectedMen.toLocaleString()}人的缺粮减员。`);
+        }
+      }
+    }
     if(id===s.player&&f.treasury<=-50&&!s.world.debtCrisisNotified){log(s,'Deep debt has stalled recruitment and weakened the army.','严重债务已拖慢兵源补充，并削弱军队。');s.world.debtCrisisNotified=true}
     if(id===s.player&&f.food<=-50&&!s.world.famineNotified){log(s,'Food shortages are draining manpower and increasing army losses.','粮食短缺正在消耗兵源并增加军队减员。');s.world.famineNotified=true}
     if(f.treasury>-50&&id===s.player)delete s.world.debtCrisisNotified;

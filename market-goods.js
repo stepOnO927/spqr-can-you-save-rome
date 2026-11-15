@@ -14,6 +14,7 @@ export const COMMODITIES={
  jade:{name:['Jade','玉石'],unit:['20 pieces','二十件'],basePrice:7},
  papyrus:{name:['Papyrus','纸草'],unit:['100 rolls','百卷'],basePrice:5}
 };
+export const RATION_SOLDIER_MONTHS=6000;
 const clamp=(n,low,high)=>Math.min(high,Math.max(low,n));
 export function marketPrice(market,good){
  const item=market?.goods?.[good],base=COMMODITIES[good]?.basePrice;

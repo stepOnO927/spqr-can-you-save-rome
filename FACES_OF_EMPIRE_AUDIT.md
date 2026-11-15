@@ -110,8 +110,17 @@ depots and seek paid iron or weapons shipments for a threatened recruitment
 depot. Peace-time market buyers do not divert scarce funds to military goods.
 The 120-month conservation test includes the new manufacturing ledger, and
 bilingual browser coverage checks loading, recruitment and save/reload.
-Roman field-ration use, generic non-formation recruitment, and fuller
-military maintenance integration remain open.
+Roman armies now load the same finite 6,000-soldier-month ration batch only
+from an owned local depot. Carried stock survives save/load and is consumed
+when the faction faces a food deficit, reducing that army's actual losses in
+proportion to the soldiers fed; the faction's civilian shortages and costs
+remain real. The monthly log names the army, soldiers fed and losses avoided
+from actual simulation values. Both Roman campaign views expose the carried reserve and local
+stock in English and Chinese. Unit tests cover stock deduction, enemy/route
+rejection, starvation mitigation and persistence; Chromium checks both views.
+The complete 1,156-test suite and 120-month Roman/Han market simulation pass
+locally. Generic non-formation recruitment and fuller military maintenance
+integration remain open.
 After integrating main through `b4a01eba`, the complete serial simulation
 suite passed 1,149/1,149. Main's subsequent family-reply change through
 `696bf8b7` passed 18 focused family, inheritance and module-version tests.
