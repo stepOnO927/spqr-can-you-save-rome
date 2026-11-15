@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame, upgradeSave, previewMarch, issueMilitaryOrder, tick} from '../engine.js';
+import {newGame, upgradeSave, previewMarch, issueMilitaryOrder, answerBorderIncident, tick} from '../engine.js';
 import {proposeAgreement, terminateAgreement} from '../agreements.js';
 import {militaryAccessStatus, recordUnauthorizedCrossing} from '../border-access.js';
+import {startupDiagnostics} from '../inspector-diagnostics.js';
 
 const friendly = (state, a, b) => { state.relations[[a, b].sort().join(':')] = 60; };
 
@@ -64,6 +65,11 @@ test('explicit unauthorized order creates an unopposed incident without declarin
   assert.equal(state.regions.find(region => region.id === 'mauretania').owner, 'mauretania');
   assert.equal(state.wars.some(pair => pair.includes('numidia') && pair.includes('mauretania')), false);
   assert.equal(upgradeSave(JSON.parse(JSON.stringify(state))).borderIncidents.at(-1).id, incident.id);
+  assert.equal(answerBorderIncident(state, incident.id, 'numidia', 'withdraw').ok, true);
+  assert.equal(incident.resolution, 'withdrawal');
+  assert.equal(unit.move.to, 'numidia');
+  tick(state);
+  assert.equal(unit.region, 'numidia');
 });
 
 test('a real defending army can repel an unauthorized crossing with limited losses', () => {
@@ -80,4 +86,63 @@ test('a real defending army can repel an unauthorized crossing with limited loss
   assert.ok(incident.attackerLoss < before.attacker / 4);
   assert.ok(incident.defenderLoss < before.defender / 4);
   assert.equal(state.wars.some(pair => pair.includes('numidia') && pair.includes('mauretania')), false);
+});
+
+test('a border incident can end in compensation or negotiated local access', () => {
+  const state = newGame('numidia'); friendly(state, 'numidia', 'mauretania');
+  const unit = state.armies.find(army => army.owner === 'numidia');
+  state.armies = state.armies.filter(army => army.owner !== 'mauretania');
+  const first = recordUnauthorizedCrossing(state, unit, state.regions.find(region => region.id === 'mauretania'));
+  const cash = state.factions.numidia.treasury, received = state.factions.mauretania.treasury;
+  assert.equal(answerBorderIncident(state, first.id, 'numidia', 'compensate').ok, true);
+  assert.equal(state.factions.numidia.treasury, cash - 10);
+  assert.equal(state.factions.mauretania.treasury, received + 10);
+  assert.equal(unit.move.to, 'numidia');
+  unit.move = null; unit.region = 'numidia';
+  const second = recordUnauthorizedCrossing(state, unit, state.regions.find(region => region.id === 'mauretania'));
+  assert.equal(answerBorderIncident(state, second.id, 'numidia', 'request_access').ok, true);
+  assert.equal(second.resolution, 'negotiated_access');
+  assert.equal(militaryAccessStatus(state, 'numidia', 'mauretania').allowed, true);
+  assert.equal(militaryAccessStatus(state, 'mauretania', 'numidia').allowed, false);
+});
+
+test('defender may protest or explicitly escalate a local incident to war', () => {
+  const state = newGame('mauretania');
+  const unit = state.armies.find(army => army.owner === 'numidia');
+  const incident = recordUnauthorizedCrossing(state, unit, state.regions.find(region => region.id === 'mauretania'));
+  const before = state.relations['mauretania:numidia'] || 0;
+  assert.equal(answerBorderIncident(state, incident.id, 'mauretania', 'protest').ok, true);
+  assert.equal(incident.status, 'protested');
+  assert.equal(state.relations['mauretania:numidia'], before - 5);
+  assert.equal(answerBorderIncident(state, incident.id, 'mauretania', 'escalate').ok, true);
+  assert.equal(incident.resolution, 'war');
+  assert.equal(state.wars.some(pair => pair.includes('numidia') && pair.includes('mauretania')), true);
+});
+
+test('startup inspection reports corrupt border incident references', () => {
+  const state = newGame('numidia');
+  const unit = state.armies.find(army => army.owner === 'numidia');
+  const incident = recordUnauthorizedCrossing(state, unit, state.regions.find(region => region.id === 'mauretania'));
+  assert.equal(startupDiagnostics(state).fatal.length, 0);
+  incident.territory = 'missing';
+  assert.ok(startupDiagnostics(state).warnings.some(item => item.code === 'invalid-border-incident'));
+});
+
+test('AI defender protests a crossing and AI attacker uses the same settlement action', () => {
+  const defenderAI = newGame('numidia'); friendly(defenderAI, 'numidia', 'mauretania');
+  const army = defenderAI.armies.find(unit => unit.owner === 'numidia');
+  defenderAI.armies = defenderAI.armies.filter(unit => unit.owner !== 'mauretania');
+  const crossing = recordUnauthorizedCrossing(defenderAI, army, defenderAI.regions.find(region => region.id === 'mauretania'));
+  tick(defenderAI);
+  assert.equal(crossing.status, 'protested');
+  assert.equal(defenderAI.wars.some(pair => pair.includes('numidia') && pair.includes('mauretania')), false);
+
+  const attackerAI = newGame('mauretania'); friendly(attackerAI, 'numidia', 'mauretania');
+  const intruder = attackerAI.armies.find(unit => unit.owner === 'numidia');
+  attackerAI.armies = attackerAI.armies.filter(unit => unit.owner !== 'mauretania');
+  const incident = recordUnauthorizedCrossing(attackerAI, intruder, attackerAI.regions.find(region => region.id === 'mauretania'));
+  assert.equal(answerBorderIncident(attackerAI, incident.id, 'mauretania', 'protest').ok, true);
+  tick(attackerAI);
+  assert.equal(incident.resolution, 'compensation_and_withdrawal');
+  assert.equal(attackerAI.wars.some(pair => pair.includes('numidia') && pair.includes('mauretania')), false);
 });

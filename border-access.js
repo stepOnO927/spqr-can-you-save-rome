@@ -1,4 +1,4 @@
-import {activeAgreement} from './agreements.js?v=world-kings-1';
+import {activeAgreement,proposeAgreement} from './agreements.js?v=world-kings-1';
 
 export const BORDER_ACCESS_CATEGORIES = Object.freeze([
   'closed', 'civilian', 'commercial', 'diplomatic',
@@ -30,6 +30,7 @@ export function recordUnauthorizedCrossing(state, army, target) {
   const defenderLoss = defender ? Math.min(defender.men - 1, Math.max(20, Math.round(defender.men * (ratio >= 1 ? 0.09 : 0.04)))) : 0;
   army.men -= attackerLoss;
   if (defender) defender.men -= defenderLoss;
+  const origin = army.region;
   const crossed = !defender || army.men > defender.men * 1.2;
   if (crossed) army.region = target.id;
   const key = [army.owner, target.owner].sort().join(':');
@@ -38,7 +39,7 @@ export function recordUnauthorizedCrossing(state, army, target) {
   state.diplomaticCredibility[army.owner] = Math.max(0, (state.diplomaticCredibility[army.owner] ?? 100) - 3);
   const incident = {
     id: `border:${state.nextBorderIncidentId++}`,
-    attacker: army.owner, defender: target.owner, territory: target.id,
+    attacker: army.owner, defender: target.owner, territory: target.id, origin,
     armyId: army.id, defenderArmyId: defender?.id || null,
     start: {year: state.year, month: state.month},
     scope: 'local', status: 'open', escalation: defender ? 'skirmish' : 'protest',
@@ -47,6 +48,57 @@ export function recordUnauthorizedCrossing(state, army, target) {
   };
   state.borderIncidents.push(incident);
   return incident;
+}
+
+export function respondBorderIncident(state, id, actor, choice) {
+  const incident = (state.borderIncidents || []).find(item => item.id === id);
+  if (!incident || !['open', 'protested'].includes(incident.status) || ![incident.attacker, incident.defender].includes(actor)) return {ok: false, reason: 'unavailable'};
+  const attacker = actor === incident.attacker;
+  const unit = state.armies.find(army => army.id === incident.armyId && army.owner === incident.attacker);
+  const inForeignTheater = unit?.region === incident.territory && !unit.move;
+  const mayWithdraw = !unit || (!unit.move && (unit.region === incident.origin || inForeignTheater) && (!inForeignTheater || !!incident.origin && state.regions.some(region => region.id === incident.origin)));
+  const withdraw = () => {
+    if (inForeignTheater) {
+      unit.move = {to: incident.origin, remaining: 1, sea: false, intent: 'withdraw_border'};
+      unit.order = {kind: 'retreat', target: incident.origin};
+    }
+  };
+  const finish = resolution => {
+    incident.status = 'resolved'; incident.resolution = resolution;
+    incident.resolved = {year: state.year, month: state.month, actor};
+    return {ok: true, incident};
+  };
+  if (attacker && choice === 'withdraw') {
+    if (!mayWithdraw) return {ok: false, reason: 'no_route'};
+    withdraw(); return finish('withdrawal');
+  }
+  if (attacker && choice === 'compensate') {
+    if (!mayWithdraw) return {ok: false, reason: 'no_route'};
+    if (state.factions[actor]?.treasury < 10) return {ok: false, reason: 'resources'};
+    state.factions[actor].treasury -= 10;
+    state.factions[incident.defender].treasury += 10;
+    const key = [actor, incident.defender].sort().join(':');
+    state.relations[key] = Math.min(100, (state.relations[key] || 0) + 6);
+    state.diplomaticCredibility[actor] = Math.min(100, (state.diplomaticCredibility[actor] ?? 100) + 2);
+    withdraw(); return finish('compensation_and_withdrawal');
+  }
+  if (attacker && choice === 'request_access') {
+    const result = proposeAgreement(state, actor, incident.defender, 'military_access', {
+      access: {permittedParty: actor, permittedTerritories: [incident.territory]}
+    });
+    if (!result.ok) return result;
+    return finish('negotiated_access');
+  }
+  if (!attacker && choice === 'protest') {
+    if (incident.status === 'protested') return {ok: false, reason: 'already_protested'};
+    incident.status = 'protested';
+    incident.protested = {year: state.year, month: state.month, actor};
+    const key = [actor, incident.attacker].sort().join(':');
+    state.relations[key] = Math.max(-100, (state.relations[key] || 0) - 5);
+    return {ok: true, incident};
+  }
+  if (!attacker && choice === 'tolerate') return finish('tolerated');
+  return {ok: false, reason: 'invalid_choice'};
 }
 
 const atWar = (state, a, b) => (state.wars || []).some(pair => pair.includes(a) && pair.includes(b));

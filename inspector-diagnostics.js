@@ -24,6 +24,13 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
  }
  for(const [i,war] of (s.wars||[]).entries())if(!Array.isArray(war)||war.some(id=>!factionIds.has(id)))add('warning','invalid-war',`wars[${i}]`,JSON.stringify(war));
  if(mode==='roman'){
+  const borderIds=new Set();
+  for(const [i,incident] of (s.borderIncidents||[]).entries()){
+   const base=`borderIncidents[${i}]`;
+   if(!incident?.id||borderIds.has(incident.id))add('fatal','duplicate-border-incident',base,String(incident?.id));else borderIds.add(incident.id);
+   if(!factionIds.has(incident?.attacker)||!factionIds.has(incident?.defender)||!regionIds.has(incident?.territory)||incident?.origin&&!regionIds.has(incident.origin))add('warning','invalid-border-incident',base,String(incident?.territory));
+   if(!Number.isFinite(incident?.attackerLoss)||incident.attackerLoss<0||!Number.isFinite(incident?.defenderLoss)||incident.defenderLoss<0)add('warning','invalid-border-loss',base,String(incident?.attackerLoss));
+  }
   const localIds=new Set();
   for(const [i,r] of s.regions.entries())for(const [j,entity] of (r.localEntities||[]).entries()){
    const base=`regions[${i}].localEntities[${j}]`;

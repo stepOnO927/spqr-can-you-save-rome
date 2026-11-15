@@ -38,11 +38,33 @@ import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupp
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {initializeTerritories,transferTerritory,territoryTaxFactor,administrationQuote,startAdministration,advanceTerritories} from './territory.js';
 import {initializeLocalEntities,advanceLocalEntities,localEntity,localEntityRevenue,localContactQuote,offerLocalContact,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from './local-polities.js';
-import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing} from './border-access.js';
+import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing,respondBorderIncident} from './border-access.js';
 export {queueMission};
 export {personalDiplomaticCredit};
 export {replyToLetter};
 export {administrationQuote,startAdministration};
+export function answerBorderIncident(state,id,actor,choice){
+  if(choice!=='escalate')return respondBorderIncident(state,id,actor,choice);
+  const incident=(state.borderIncidents||[]).find(item=>item.id===id);
+  if(!incident||!['open','protested'].includes(incident.status)||actor!==incident.defender)return {ok:false,reason:'unavailable'};
+  if(!diplomacy(state,actor,incident.attacker,'war'))return {ok:false,reason:'diplomacy'};
+  incident.status='resolved';incident.resolution='war';incident.resolved={year:state.year,month:state.month,actor};
+  return {ok:true,incident};
+}
+function advanceBorderIncidentAI(state,{autoplayPlayer=false}={}){
+  for(const incident of state.borderIncidents||[]){
+    if(!['open','protested'].includes(incident.status))continue;
+    const age=(state.year-incident.start.year)*12+state.month-incident.start.month;
+    if(age<1)continue;
+    if(incident.status==='open'&&(autoplayPlayer||incident.defender!==state.player)){
+      answerBorderIncident(state,incident.id,incident.defender,incident.outcome==='repelled'&&relation(state,incident.defender,incident.attacker)>20?'tolerate':'protest');
+    }
+    if(incident.status==='protested'&&(autoplayPlayer||incident.attacker!==state.player)){
+      const choice=state.factions[incident.attacker]?.treasury>=20&&relation(state,incident.attacker,incident.defender)>-40?'compensate':'withdraw';
+      answerBorderIncident(state,incident.id,incident.attacker,choice);
+    }
+  }
+}
 
 const clone = value => JSON.parse(JSON.stringify(value));
 export const region = (s,id) => s.regions.find(r=>r.id===id);
@@ -851,6 +873,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   }
   advanceTerritories(s);
   advanceLocalEntities(s);
+  advanceBorderIncidentAI(s,{autoplayPlayer});
   advanceMovements(s,{autoplayPlayer});
   resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});if(s.world?.cursus)advanceCursus(s);linkCommanders(s);advancePersonalDiplomacy(s);
   advanceControlScouts(s);observeArmies(s);observeFormationRecon(s);observeControl(s);if(s.month%6===0)observeBalanceOfPower(s);
