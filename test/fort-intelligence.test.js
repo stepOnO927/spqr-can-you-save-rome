@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=ai-wartime-aid-1';
+import {newGame,upgradeSave} from '../engine.js?v=frontier-response-1';
 import {observeControl,reportedFortification} from '../control-intelligence.js?v=fort-intel-1';
 import {createPlan,assignRole,assessPlan} from '../battle-plans.js?v=portraits-hundred-days-1';
 

@@ -13,7 +13,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=succession-ui-recovery-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=portraits-hundred-days-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=ai-wartime-aid-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=frontier-response-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -27,6 +27,7 @@ const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
 import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
 import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=diplomatic-chronicle-1';
+import {respondToFrontierReports} from './frontier-response.js?v=frontier-response-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=diplomatic-chronicle-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=diplomatic-chronicle-1';
@@ -636,11 +637,13 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     }
   }
   const enemies=s.regions.filter(r=>isWar(s,owner,reportedControl(s,owner,r.id)?.owner));
+  if(owner!=='rebels'&&!['caesar','senate'].includes(owner))respondToFrontierReports(s,owner,{issueOrder:issueMilitaryOrder,canCommand:a=>!planControlled(s,a.id)});
   // IMPERIUM: armies under an automatic operational plan or reorganizing follow that plan.
   const available=s.armies.filter(a=>a.owner===owner&&!a.move&&!a.siege&&!a.reorg&&a.men>1200&&!planControlled(s,a.id));
   const observedPressure=strongPlanning?observeAttackPattern(s,owner):null;
   for(const a of available){
     if(!s.armies.includes(a))continue;
+    if(a.order?.source==='frontier_ai')continue;
     const here=region(s,a.region),neighbors=adjacent(a.region).map(e=>region(s,e.to)).filter(Boolean);
     const now=s.year*12+s.month,feint=s.world.aiFeints?.[owner];
     if(feint?.army===a.id){

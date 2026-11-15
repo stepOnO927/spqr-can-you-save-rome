@@ -32,6 +32,7 @@ jobs:
           node tools/coalition-courier-smoke.mjs
           node tools/diplomatic-chronicle-smoke.mjs
           node tools/ai-wartime-aid-smoke.mjs
+          node tools/frontier-response-smoke.mjs
           node tools/cursus-applicant-smoke.mjs
           node tools/han-court-smoke.mjs
           node scripts/multipolar-sim.mjs > multipolar-simulation.json
