@@ -4,9 +4,9 @@ import {join,resolve,extname} from 'node:path';
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 
-const root=resolve('dist/poki'),external=[],bytes=[];
+const root=resolve('dist/poki'),external=[],bytes=[];let collectBytes=true;
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.woff':'font/woff','.woff2':'font/woff2'};
-const server=createServer(async(req,res)=>{try{const url=new URL(req.url,'http://localhost'),path=resolve(root,'.'+decodeURIComponent(url.pathname.endsWith('/')?url.pathname+'index.html':url.pathname));if(!path.startsWith(root)){res.writeHead(403).end();return}const body=await readFile(path);bytes.push(body.length);res.writeHead(200,{'content-type':mime[extname(path)]||'application/octet-stream'}).end(body)}catch{res.writeHead(404).end()}});
+const server=createServer(async(req,res)=>{try{const url=new URL(req.url,'http://localhost'),path=resolve(root,'.'+decodeURIComponent(url.pathname.endsWith('/')?url.pathname+'index.html':url.pathname));if(!path.startsWith(root)){res.writeHead(403).end();return}const body=await readFile(path);if(collectBytes)bytes.push(body.length);res.writeHead(200,{'content-type':mime[extname(path)]||'application/octet-stream'}).end(body)}catch{res.writeHead(404).end()}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin='http://127.0.0.1:'+server.address().port,browser=await chromium.launch({headless:true}),entryBytes={};
 const fakeSDK=`window._pokiEvents=[];window.PokiSDK={init:()=>Promise.resolve(),gameLoadingFinished:()=>_pokiEvents.push('load'),gameplayStart:()=>_pokiEvents.push('start'),gameplayStop:()=>_pokiEvents.push('stop'),commercialBreak:()=>{_pokiEvents.push('break');return Promise.resolve()},openExternalLink:()=>_pokiEvents.push('link')}`;
@@ -46,6 +46,7 @@ try{
  assert.ok((await p.locator('#inspector').textContent()).trim().length>20);
  assert.deepEqual(errors,[]);
  entryBytes.han=bytes.reduce((a,b)=>a+b,0)-entryBytes.roman-entryBytes.atlas;
+ collectBytes=false;await p.locator('header a[href="../"]').tap();await p.waitForURL(origin+'/');
  await c.close();
  assert.deepEqual(external,[],'Poki build made blocked external requests');
  console.log(JSON.stringify({entries:3,externalRequests:external.length,localBytes:bytes.reduce((a,b)=>a+b,0),entryBytes}));

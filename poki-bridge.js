@@ -29,7 +29,7 @@ if(sdk){
       if(!document.querySelector('.setup-backdrop,#start-overlay:not([hidden])'))void resume();
       return;
     }
-    if(target instanceof HTMLAnchorElement&&/^https?:/.test(target.href)){
+    if(target instanceof HTMLAnchorElement&&/^https?:/.test(target.href)&&new URL(target.href,location.href).origin!==location.origin){
       event.preventDefault();sdk.openExternalLink?.(target.href);return;
     }
     if(!document.querySelector('.setup-backdrop,#start-overlay:not([hidden])'))void resume();
