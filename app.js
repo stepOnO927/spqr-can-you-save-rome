@@ -1,3 +1,4 @@
+import './version-ui.js';
 import {sendAgreementProposal} from './agreement-negotiations.js?v=agreement-courier-1';
 import {localStore as localStorage,sessionStore as sessionStorage} from './safe-storage.js';
 import {startupDiagnostics} from './inspector-diagnostics.js';

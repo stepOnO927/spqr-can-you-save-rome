@@ -1,3 +1,4 @@
+import '../version-ui.js';
 import {localStore as localStorage} from '../safe-storage.js';
 import {startupDiagnostics} from '../inspector-diagnostics.js';
 import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=regency-tenure-1';
