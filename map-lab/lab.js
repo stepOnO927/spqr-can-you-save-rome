@@ -51,6 +51,7 @@ import {showIncomingTitleTerms,showOutgoingTitleTerms,bindPeaceTitleChoice} from
 import {localSecurity} from '../local-resistance.js';
 import {renderTribalEntity} from './tribal-ui.js';
 import {renderVillage} from './village-ui.js';
+import '../version-ui.js';
 import {renderWildernessEntity} from './wilderness-ui.js';
 import {localEntity,localContactQuote,offerLocalContact,localSubmissionQuote,offerLocalSubmission,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from '../local-polities.js';
 import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-trade-1';

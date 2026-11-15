@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm test
+      - run: node --test --test-concurrency=1
         if: matrix.part == 1
       - run: npm install --no-save playwright@1.64.1
       # GitHub's Ubuntu image already contains Chromium's runtime libraries.
@@ -65,11 +65,14 @@ jobs:
               node tools/conspiracy-name-smoke.mjs
               node tools/regency-tenure-smoke.mjs
               node tools/inquiry-inbox-smoke.mjs
+              node tools/meeting-observed-name-smoke.mjs
               node tools/player-request-aid-smoke.mjs
               node tools/official-name-snapshots-smoke.mjs
               ;;
             2)
               node tools/generated-local-polities-smoke.mjs
+              node tools/nomadic-camp-smoke.mjs
+              node tools/wilderness-smoke.mjs
               node tools/expedition-brief-smoke.mjs
               node tools/cursus-applicant-smoke.mjs
               node tools/han-court-smoke.mjs
