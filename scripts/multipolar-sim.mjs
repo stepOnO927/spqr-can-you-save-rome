@@ -1,4 +1,4 @@
-import {newGame,tick} from '../engine.js?v=player-coalition-letters-1';
+import {newGame,tick} from '../engine.js?v=family-couriers-1';
 import assert from 'node:assert/strict';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';

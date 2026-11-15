@@ -13,6 +13,14 @@ export const personAge=(s,id)=>{const year=born(s,id);return year==null?null:s.y
 const eligibleAdult=(s,id)=>{const c=s.world.characters[id],age=personAge(s,id);return !!c?.alive&&!c.missing&&age!==null&&age>=18};
 const familyOf=(s,id)=>s.world.dynasties.families[s.world.characters[id]?.familyId];
 const pair=(a,b)=>[a,b].sort().join(':');
+// A diplomatic proposal and its answer each have a separate journey.  The
+// outcome is sealed until the expected reply date, and does not draw from the
+// dynasty-event RNG.  Old pending saves without a seed get a stable fallback.
+function familyCourierArrives(s,request){
+ const seed=(request.courierSeed??s.seed??0)>>>0,identity=`${request.id||''}:${request.year??0}:${request.month??0}`;
+ function journey(salt){let h=(seed^salt)>>>0;for(const c of identity)h=Math.imul(h^c.charCodeAt(0),16777619)>>>0;h^=h>>>16;h=Math.imul(h,0x7feb352d)>>>0;h^=h>>>15;h=Math.imul(h,0x846ca68b)>>>0;h^=h>>>16;return (h>>>0)/4294967296}
+ return journey(0x349a61f3)>=.1&&journey(0x8de729b5)>=.1;
+}
 const record=(s,id,en,zh)=>{(s.world.dynasties.lives[id]||=[]).push({year:s.year,month:s.month,en,zh,simulated:true})};
 export function recordLifeEvent(s,id,en,zh){initializeDynasties(s);if(s.world.characters[id])record(s,id,en,zh)}
 // The shared catalog also contains historical reference data. Fictional IDs,
@@ -120,7 +128,7 @@ export function offerForeignMarriage(s,ownId,foreignId,reportedFaction){
  if(d.marriageOffers.some(x=>x.status==='pending'&&(x.own===ownId||x.foreign===foreignId)))return {ok:false,reason:'pending'};
  if(s.factions[s.player].treasury<4)return {ok:false,reason:'treasury'};
  s.factions[s.player].treasury-=4;
- const offer={id:`marriage:${d.marriageOffers.length+1}`,own:ownId,foreign:foreignId,reportedFaction,status:'pending',months:3,year:s.year,month:s.month};d.marriageOffers.push(offer);
+ const offer={id:`marriage:${d.marriageOffers.length+1}`,own:ownId,foreign:foreignId,reportedFaction,status:'pending',months:3,year:s.year,month:s.month,courierSeed:d.seed>>>0};d.marriageOffers.push(offer);
  record(s,ownId,`A marriage envoy was sent concerning ${CHARACTER_CATALOG[foreignId].name[0]}; the report may be outdated.`,`已派使者商议与${CHARACTER_CATALOG[foreignId].name[1]}的婚事；情报可能过时。`);
  return {ok:true,cost:4,offer};
 }
@@ -129,10 +137,10 @@ function advanceMarriageOffers(s){
  const d=s.world.dynasties;for(const offer of d.marriageOffers.filter(x=>x.status==='pending')){
   if(--offer.months>0)continue;
   const own=s.world.characters[offer.own],foreign=s.world.characters[offer.foreign];
-  const valid=own?.alive&&foreign?.alive&&!own.spouse&&!foreign.spouse&&foreign.faction===offer.reportedFaction&&!s.wars.some(w=>w.includes(s.player)&&w.includes(foreign.faction));
+  const valid=familyCourierArrives(s,offer)&&own?.alive&&foreign?.alive&&!own.spouse&&!foreign.spouse&&foreign.faction===offer.reportedFaction&&!s.wars.some(w=>w.includes(s.player)&&w.includes(foreign.faction));
   const result=valid?proposeMarriage(s,offer.own,offer.foreign):{ok:false,reason:'no_reply'};
   offer.status=result.ok?'accepted':result.reason==='declined'?'declined':'no_reply';offer.resolvedYear=s.year;offer.resolvedMonth=s.month;
-  if(offer.status!=='accepted')note(s,offer.status==='declined'?'The foreign court declined the marriage proposal.':'No marriage agreement was reached; the original report may have been outdated.',offer.status==='declined'?'外国宫廷拒绝了婚事。':'未达成婚姻协议；原情报可能已经过时。');
+  if(offer.status!=='accepted')note(s,offer.status==='declined'?'The foreign court declined the marriage proposal.':'No marriage reply arrived; the letter may have been lost or the original report may have been outdated.',offer.status==='declined'?'外国宫廷拒绝了婚事。':'未收到婚事回信；书信可能遗失，原情报也可能过时。');
  }
 }
 
@@ -148,7 +156,7 @@ export function requestClaimantAsylum(s,claimantId,reportedFaction){
  if(d.asylumRequests.some(x=>x.claimant===claimantId&&x.status==='accepted'))return {ok:false,reason:'already'};
  if(s.factions[actor].treasury<6)return {ok:false,reason:'treasury'};
  s.factions[actor].treasury-=6;
- const request={id:`asylum:${d.asylumRequests.length+1}`,claimant:claimantId,reportedFaction,host:actor,months:3,status:'pending',year:s.year,month:s.month};d.asylumRequests.push(request);
+ const request={id:`asylum:${d.asylumRequests.length+1}`,claimant:claimantId,reportedFaction,host:actor,months:3,status:'pending',year:s.year,month:s.month,courierSeed:d.seed>>>0};d.asylumRequests.push(request);
  note(s,'A claimant was offered refuge. A reply may take three months; the report may be outdated.','已向一位竞争者提出庇护。回信可能需要三个月；原情报可能过时。');
  return {ok:true,cost:6,request};
 }
@@ -159,13 +167,13 @@ function advanceAsylumRequests(s){
   const person=s.world.characters[request.claimant],home=request.reportedFaction,host=request.host;
   const eligible=person?.alive&&!person.missing&&!person.travel&&person.faction===home&&(s.world.claimants?.[home]||[]).includes(request.claimant)&&!s.armies.some(a=>a.characterId===request.claimant)&&!s.wars.some(w=>w.includes(host)&&w.includes(home));
   const refuge=s.regions.find(r=>r.owner===host);
-  if(eligible&&refuge&&roll(s)<.75){
+  if(familyCourierArrives(s,request)&&eligible&&refuge&&roll(s)<.75){
    person.asylumHost=host;person.location=refuge.id;person.travel=null;request.status='accepted';
    const key=pair(host,home);s.relations[key]=Math.max(-100,(s.relations[key]||0)-6);
    if(s.factions[home])s.factions[home].stability=Math.max(0,s.factions[home].stability-2);
    record(s,person.id,`Received asylum in ${host}; this granted no throne or army.`,`获得${host}庇护；未获王位或军队。`);
    if(host===s.player)note(s,'The claimant arrived under protection. The foreign court protested; no throne or alliance was granted.','竞争者抵达并获得保护。外国宫廷提出抗议；此举不授予王位或同盟。');
-  }else{request.status='no_reply';if(host===s.player)note(s,'No asylum agreement was reached; the original report may have been outdated.','未达成庇护协议；原情报可能已经过时。')}
+  }else{request.status='no_reply';if(host===s.player)note(s,'No asylum reply arrived; the letter may have been lost or declined, or the report may have been outdated.','未收到庇护回信；书信可能遗失、被拒绝，或原情报已经过时。')}
   request.resolvedYear=s.year;request.resolvedMonth=s.month;
  }
 }
@@ -189,7 +197,7 @@ export function offerFamilyAccord(s,kind,contactId,reportedFaction,childId=null)
  if(d.familyAccords.some(x=>x.host===host&&x.target===reportedFaction&&x.kind===kind&&['pending','active'].includes(x.status)))return {ok:false,reason:'commitment'};
  if(kind==='wardship'&&d.familyAccords.some(x=>x.child===childId&&['pending','active'].includes(x.status)))return {ok:false,reason:'commitment'};
  if(s.factions[host].treasury<cost)return {ok:false,reason:'treasury'};
- s.factions[host].treasury-=cost;const accord={id:`accord:${d.familyAccords.length+1}`,kind,host,target:reportedFaction,contact:contactId,child:childId,status:'pending',months:4,year:s.year,month:s.month};d.familyAccords.push(accord);
+ s.factions[host].treasury-=cost;const accord={id:`accord:${d.familyAccords.length+1}`,kind,host,target:reportedFaction,contact:contactId,child:childId,status:'pending',months:4,year:s.year,month:s.month,courierSeed:d.seed>>>0};d.familyAccords.push(accord);
  note(s,kind==='pledge'?'An envoy proposed mutual family guarantees; a reply may take four months.':'An envoy proposed diplomatic wardship; a reply may take four months.',kind==='pledge'?'使者提议互保家族保证；回信可能需要四个月。':'使者提议外交监护；回信可能需要四个月。');return {ok:true,cost,accord};
 }
 
@@ -200,7 +208,7 @@ function advanceFamilyAccords(s){
   if(a.status==='pending'){
    if(--a.months>0)continue;
    const contact=s.world.characters[a.contact],child=s.world.characters[a.child],valid=contact?.alive&&!contact.missing&&contact.faction===a.target&&s.factions[a.target]&&!war&&(!a.child||child?.alive&&child.faction===a.host&&personAge(s,a.child)<16)&&(!a.child||personAge(s,a.contact)>=18);
-   if(!valid){a.status='no_reply';if(a.host===s.player)note(s,'No family accord was reached; the original contact report may have been outdated.','未达成家族协定；原联系人情报可能已经过时。')}
+   if(!familyCourierArrives(s,a)||!valid){a.status='no_reply';if(a.host===s.player)note(s,'No family accord reply arrived; the letter may have been lost or the contact report outdated.','未收到家族协定回信；书信可能遗失，联系人情报也可能过时。')}
    else{
     const relation=s.relations[pair(a.host,a.target)]??0,distance=courtDistance(a.host,a.target),[culture,faith]=courtProfile[a.host]||[],[otherCulture,otherFaith]=courtProfile[a.target]||[];
     const chance=Math.max(.12,Math.min(.82,.55+relation/250-distance*.025+(s.factions[a.target].stability<35?-.12:0)+(s.factions[a.host].legitimacy<40?-.08:0)+(culture!==otherCulture?-.05:0)+(faith!==otherFaith?-.03:0)));
