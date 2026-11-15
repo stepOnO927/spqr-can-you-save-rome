@@ -130,7 +130,7 @@ export function offerForeignMarriage(s,ownId,foreignId,reportedFaction){
  if(d.marriageOffers.some(x=>x.status==='pending'&&(x.own===ownId||x.foreign===foreignId)))return {ok:false,reason:'pending'};
  if(s.factions[s.player].treasury<4)return {ok:false,reason:'treasury'};
  s.factions[s.player].treasury-=4;
- const offer={id:`marriage:${d.marriageOffers.length+1}`,own:ownId,foreign:foreignId,reportedFaction,reportedName:[...(visiblePersonName(s,s.player,foreignId)||['Unrecorded name','姓名未记录'])],status:'pending',months:3,year:s.year,month:s.month,courierSeed:d.seed>>>0};d.marriageOffers.push(offer);
+ const offer={id:`marriage:${d.marriageOffers.length+1}`,host:s.player,own:ownId,foreign:foreignId,reportedFaction,reportedName:[...(visiblePersonName(s,s.player,foreignId)||['Unrecorded name','姓名未记录'])],status:'pending',months:3,year:s.year,month:s.month,courierSeed:d.seed>>>0};d.marriageOffers.push(offer);
  record(s,ownId,`A marriage envoy was sent concerning ${offer.reportedName[0]}; the report may be outdated.`,`已派使者商议与${offer.reportedName[1]}的婚事；情报可能过时。`);
  return {ok:true,cost:4,offer};
 }
@@ -139,10 +139,10 @@ function advanceMarriageOffers(s){
  const d=s.world.dynasties;for(const offer of d.marriageOffers.filter(x=>x.status==='pending')){
   if(--offer.months>0)continue;
   const own=s.world.characters[offer.own],foreign=s.world.characters[offer.foreign];
-  const valid=familyCourierArrives(s,offer)&&own?.alive&&foreign?.alive&&!own.spouse&&!foreign.spouse&&foreign.faction===offer.reportedFaction&&!s.wars.some(w=>w.includes(s.player)&&w.includes(foreign.faction));
+  const host=offer.host??s.player,valid=familyCourierArrives(s,offer)&&own?.alive&&own.faction===host&&foreign?.alive&&!own.spouse&&!foreign.spouse&&foreign.faction===offer.reportedFaction&&!s.wars.some(w=>w.includes(host)&&w.includes(foreign.faction));
   const result=valid?proposeMarriage(s,offer.own,offer.foreign,{knownNames:{[offer.foreign]:storedCorrespondentName(offer.foreign,offer.reportedName)}}):{ok:false,reason:'no_reply'};
   offer.status=result.ok?'accepted':result.reason==='declined'?'declined':'no_reply';offer.resolvedYear=s.year;offer.resolvedMonth=s.month;
-  if(offer.status!=='accepted')note(s,offer.status==='declined'?'The foreign court declined the marriage proposal.':'No marriage reply arrived; the letter may have been lost or the original report may have been outdated.',offer.status==='declined'?'外国宫廷拒绝了婚事。':'未收到婚事回信；书信可能遗失，原情报也可能过时。');
+  if(host===s.player&&offer.status!=='accepted')note(s,offer.status==='declined'?'The foreign court declined the marriage proposal.':'No marriage reply arrived; the letter may have been lost or the original report may have been outdated.',offer.status==='declined'?'外国宫廷拒绝了婚事。':'未收到婚事回信；书信可能遗失，原情报也可能过时。');
  }
 }
 

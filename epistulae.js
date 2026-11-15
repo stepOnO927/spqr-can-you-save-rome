@@ -88,7 +88,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A sealed aid reply can outlive the court that dispatched it; its arrival
   // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result','asylum_result','coalition_aid_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result','asylum_result','coalition_aid_result','family_marriage_result','family_accord_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -387,6 +387,27 @@ export function syncAsylumReplies(s){
   const person=storedCorrespondentName(x.claimant,x.reportedName),accepted=x.status==='accepted';
   const result=sendLetter(s,{senderId:null,senderInstitution:x.reportedFaction,senderFaction:x.reportedFaction,recipient:x.host,category:'diplomatic',priority:'important',subject:accepted?['Asylum offer accepted','庇护提议获接受']:['Asylum offer declined','庇护提议遭拒'],body:accepted?[`${person[0]} accepted the offer and arrived under protection.`,`${person[1]}接受庇护提议，已抵达并受到保护。`]:[`${person[0]} declined the asylum offer.`,`${person[1]}回信拒绝了庇护提议。`],options:[],context:{kind:'asylum_result',requestId:x.id}});
   if(result.ok){x.replyMailId=result.letter.id;result.letter.sentDateKnown=false;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['asylum-result:'+x.id]=true}
+ }
+}
+
+// Family envoys already completed their journeys when these results were set.
+// Old completed records do not gain newly invented letters on save upgrade.
+export function syncFamilyReplies(s){
+ syncAsylumReplies(s);const mail=initializeMail(s),d=s.world?.dynasties;
+ for(const x of d?.marriageOffers||[]){
+  const host=x.host??s.world.characters[x.own]?.faction;
+  if(host!==s.player||!['accepted','declined'].includes(x.status)||x.resolvedYear!==s.year||x.resolvedMonth!==s.month||x.replyMailId||mail.generated['marriage-result:'+x.id])continue;
+  const person=storedCorrespondentName(x.foreign,x.reportedName),accepted=x.status==='accepted';
+  const result=sendLetter(s,{senderId:null,senderInstitution:x.reportedFaction,senderFaction:x.reportedFaction,recipient:host,category:'diplomatic',priority:'important',subject:accepted?['Marriage proposal accepted','婚姻提议获接受']:['Marriage proposal declined','婚姻提议遭拒'],body:accepted?[`The proposal concerning ${person[0]} was accepted; the marriage is recorded.`,`与${person[1]}有关的提议获接受，婚姻已登记。`]:[`The proposal concerning ${person[0]} was declined.`,`与${person[1]}有关的婚姻提议遭到拒绝。`],options:[],context:{kind:'family_marriage_result',offerId:x.id}});
+  if(result.ok){x.replyMailId=result.letter.id;result.letter.sentDateKnown=false;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['marriage-result:'+x.id]=true}
+ }
+ for(const x of d?.familyAccords||[]){
+  if(x.host!==s.player||!['active','declined'].includes(x.status)||x.resolvedYear!==s.year||x.resolvedMonth!==s.month||x.replyMailId||mail.generated['family-accord-result:'+x.id])continue;
+  const person=storedCorrespondentName(x.contact,x.reportedName),accepted=x.status==='active',ward=x.kind==='wardship';
+  const subject=accepted?(ward?['Wardship proposal accepted','外交监护提议获接受']:['Family guarantee accepted','家族互保获接受']):(ward?['Wardship proposal declined','外交监护提议遭拒']:['Family guarantee declined','家族互保遭拒']);
+  const body=accepted?(ward?[`The proposal concerning ${person[0]} was accepted. Education improves; legal custody stays local.`,`与${person[1]}有关的提议获接受。子女教育提高，法定监护仍留在本地。`]:[`The guarantee concerning ${person[0]} was accepted for two years; it creates no alliance.`,`与${person[1]}有关的互保获接受，期限两年；没有建立同盟。`]):[`The proposal concerning ${person[0]} was declined.`,`与${person[1]}有关的家族提议遭到拒绝。`];
+  const result=sendLetter(s,{senderId:null,senderInstitution:x.target,senderFaction:x.target,recipient:x.host,category:'diplomatic',priority:'important',subject,body,options:[],context:{kind:'family_accord_result',accordId:x.id}});
+  if(result.ok){x.replyMailId=result.letter.id;result.letter.sentDateKnown=false;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['family-accord-result:'+x.id]=true}
  }
 }
 

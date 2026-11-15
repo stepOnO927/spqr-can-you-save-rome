@@ -1,6 +1,6 @@
 import {isDeliveredReport} from './person-knowledge.js?v=world-kings-trade-1';
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=world-kings-trade-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncCoalitionAdmissionLetters,syncCoalitionMotionLetters,syncCoalitionAidLetters,syncAgreementLetters,syncAsylumReplies,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=world-kings-trade-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncCoalitionAdmissionLetters,syncCoalitionMotionLetters,syncCoalitionAidLetters,syncAgreementLetters,syncFamilyReplies,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=world-kings-trade-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=world-kings-trade-1';
 import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=world-kings-trade-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=world-kings-trade-1';
@@ -997,7 +997,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   advanceExpeditionOrders(s);
   advanceBorderIncidentAI(s,{autoplayPlayer});
   advanceMovements(s,{autoplayPlayer});
-  resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);syncAsylumReplies(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});if(s.world?.cursus)advanceCursus(s);linkCommanders(s);advancePersonalDiplomacy(s);
+  resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);syncFamilyReplies(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});if(s.world?.cursus)advanceCursus(s);linkCommanders(s);advancePersonalDiplomacy(s);
   advanceControlScouts(s);observeArmies(s);observeFormationRecon(s);observeControl(s);if(s.month%6===0)observeBalanceOfPower(s);
   if(imperiumOn(s)){advanceBattlePlans(s,{autoplayPlayer,issueOrder:issueMilitaryOrder,estimatedStrength,log});advanceCommandInfluence(s,{log})}
   // Friendly courts may forward fresh scout sightings; recipients judge them on their own.

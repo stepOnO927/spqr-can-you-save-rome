@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=world-kings-trade-1';
 import {createFictionalPerson,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,advanceDynasties} from '../dynasties.js?v=world-kings-trade-1';
-import {syncAsylumReplies,receivedMail} from '../epistulae.js?v=world-kings-trade-1';
+import {syncAsylumReplies,syncFamilyReplies,receivedMail} from '../epistulae.js?v=world-kings-trade-1';
 import {mailboxHtml} from '../mail-ui.js?v=world-kings-trade-1';
 
 function scenario(kind,seed){
@@ -48,6 +48,21 @@ test('asylum replies distinguish acceptance, delivered refusal and no reply afte
  for(const status of ['accepted','declined','no_reply'])assert.ok(outcomes.has(status),`missing ${status}`);
  for(const status of ['declined','no_reply']){const {s,person,before}=outcomes.get(status);assert.equal(s.world.characters[person].asylumHost,undefined);assert.equal(s.relations['caesar:egypt']||0,before);assert.match(s.log[0].en,status==='declined'?/declined/:/No asylum reply/)}
  const accepted=outcomes.get('accepted');assert.equal(accepted.s.world.characters[accepted.person].asylumHost,'caesar');assert.equal(accepted.s.relations['caesar:egypt'],accepted.before-6);
+});
+
+for(const kind of ['marriage','pledge','wardship'])test(`${kind} delivers one inbox reply only when an answer arrives`,()=>{
+ const outcomes=new Set(),duration=kind==='marriage'?3:4;
+ for(let seed=1;seed<=150&&outcomes.size<3;seed++){
+  let {s,request}=scenario(kind,(seed*1000003)>>>0);
+  for(let i=0;i<duration-1;i++){s.month++;s.world.dynasties.seed=(seed*7000013)>>>0;advanceDynasties(s);syncFamilyReplies(s);assert.equal(request.status,'pending');assert.equal(receivedMail(s).filter(m=>m.context?.kind?.startsWith('family_')).length,0)}
+  s=upgradeSave(structuredClone(s));s.month++;s.world.dynasties.seed=(seed*7000013)>>>0;advanceDynasties(s);request=kind==='marriage'?s.world.dynasties.marriageOffers[0]:s.world.dynasties.familyAccords[0];syncFamilyReplies(s);syncFamilyReplies(s);outcomes.add(request.status);
+  const replies=receivedMail(s).filter(m=>m.context?.kind===(kind==='marriage'?'family_marriage_result':'family_accord_result'));assert.equal(replies.length,request.status==='no_reply'?0:1);if(replies.length){assert.equal(replies[0].sentDateKnown,false);assert.match(JSON.stringify(replies[0].body),/Cleopatra/);const saved=upgradeSave(structuredClone(s));syncFamilyReplies(saved);assert.equal(receivedMail(saved).filter(m=>m.context?.kind===replies[0].context.kind).length,1)}
+ }
+ assert.deepEqual(outcomes,new Set([kind==='marriage'?'accepted':'active','declined','no_reply']));
+});
+
+test('a marriage envoy cannot bind a person who has left the sending faction',()=>{
+ const {s,request,person}=scenario('marriage',1);s.world.characters[person].faction='senate';for(let i=0;i<3;i++){s.month++;advanceDynasties(s);syncFamilyReplies(s)}assert.equal(request.status,'no_reply');assert.equal(s.world.characters[person].spouse,null);assert.equal(receivedMail(s).some(m=>m.context?.kind==='family_marriage_result'),false);
 });
 
  test('family correspondence and life events retain reported names despite hidden changes and later reports',async()=>{
