@@ -151,7 +151,7 @@ export function power(s,army,terrain,{defending=false,fort=0,commanderSkill=50}=
 }
 // Resolve a battle between attacker and defender armies (arrays of one side each).
 // Steppe hosts that judge the odds poor withdraw instead of standing.
-export function resolveBattle(s,attackers,defenders,regionId,{skill=()=>50,rand=Math.random}={}){
+export function resolveBattle(s,attackers,defenders,regionId,{skill=()=>50,rand=Math.random,canRetreat=()=>true}={}){
  const r=s.regions.find(x=>x.id===regionId);
  const side=(list,def)=>list.reduce((a,x)=>a+power(s,x,r.terrain,{defending:def,fort:def&&r.owner===x.owner?r.fort:0,commanderSkill:skill(x)}),0);
  let A=side(attackers,false),D=side(defenders,true);
@@ -160,9 +160,10 @@ export function resolveBattle(s,attackers,defenders,regionId,{skill=()=>50,rand=
  const anti=list=>list.reduce((a,x)=>a+templateStats(x.template).antiCavalry*x.men,0)/Math.max(1,list.reduce((a,x)=>a+x.men,0));
  A*=1-anti(defenders)*cav(attackers);D*=1-anti(attackers)*cav(defenders);
  const withdrawn=[];
- const wantsOut=(list,mine,theirs)=>list.length&&list.every(x=>templateStats(x.template).withdraw>0.6)&&mine/theirs<0.85;
- if(wantsOut(defenders,D,A)){for(const x of defenders){x.withdrawing=true;withdrawn.push(x.id)}return {outcome:'defender_withdrew',withdrawn,A,D,losses:{attacker:0,defender:defenders.reduce((a,x)=>a+Math.round(x.men*0.03),0)}}}
- if(wantsOut(attackers,A,D)){for(const x of attackers){x.withdrawing=true;withdrawn.push(x.id)}return {outcome:'attacker_withdrew',withdrawn,A,D,losses:{attacker:attackers.reduce((a,x)=>a+Math.round(x.men*0.03),0),defender:0}}}
+ const wantsOut=(list,mine,theirs)=>list.length&&list.every(x=>templateStats(x.template).withdraw>0.6&&canRetreat(x))&&mine/theirs<0.85;
+ const retreat=list=>{let losses=0;for(const x of list){const lost=Math.round(x.men*0.03);x.men-=lost;losses+=lost;x.withdrawing=true;withdrawn.push(x.id)}return losses};
+ if(wantsOut(defenders,D,A))return {outcome:'defender_withdrew',withdrawn,A,D,losses:{attacker:0,defender:retreat(defenders)}};
+ if(wantsOut(attackers,A,D))return {outcome:'attacker_withdrew',withdrawn,A,D,losses:{attacker:retreat(attackers),defender:0}};
  const luck=0.85+rand()*0.3,ratio=A*luck/Math.max(1,D),attackerWins=ratio>1;
  const loserRate=Math.min(0.45,0.12+Math.abs(ratio-1)*0.15),winnerRate=Math.max(0.04,0.1-Math.abs(ratio-1)*0.03);
  const winners=attackerWins?attackers:defenders,losers=attackerWins?defenders:attackers;

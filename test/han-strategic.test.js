@@ -75,7 +75,11 @@ test('14. Xiongnu forces fight differently: mounted archery, withdrawal and purs
  const horde=templateStats(PRESETS.chanyu);assert.ok(horde.speed>1.5&&horde.herd>0.9&&horde.withdraw>0.9);
  // outmatched, the steppe host withdraws instead of being destroyed
  const han=army(s,'han','monan','field',40000),hu=army(s,'zhizhi','monan','raiders',8000);
- const r=resolveBattle(s,[han],[hu],'monan',{rand:()=>0.5});assert.equal(r.outcome,'defender_withdrew');assert.ok(hu.men>=7700);
+ const r=resolveBattle(s,[han],[hu],'monan',{rand:()=>0.5});assert.equal(r.outcome,'defender_withdrew');assert.equal(hu.men,8000-r.losses.defender);
+ const trapped=army(s,'zhizhi','monan','raiders',8000);
+ const trappedResult=resolveBattle(s,[han],[trapped],'monan',{rand:()=>0.5,canRetreat:()=>false});
+ assert.equal(trappedResult.outcome,'attacker_won','an army without a legal retreat must fight');
+ assert.ok(trappedResult.losses.defender>0);
  // victorious horsemen pursue: losses to a beaten infantry army exceed normal
  const s2=game();const inf=army(s2,'han','monan','field',8000),big=army(s2,'zhizhi','monan','chanyu',30000);
  const r2=resolveBattle(s2,[inf],[big],'monan',{rand:()=>0.5});assert.equal(r2.outcome,'defender_won');assert.ok(r2.losses.attacker>8000*0.25);

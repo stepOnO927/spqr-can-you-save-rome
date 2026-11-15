@@ -199,6 +199,14 @@ in friendly steppe territory; campaigning elsewhere resumes normal treasury
 and grain upkeep. A separate test compares those two cases, while the
 120-month Parthian run confirms the home hosts no longer bankrupt their courts
 merely by remaining in place. Campaign losses can still strain a treasury.
+The full 120-month campaign also uncovered a retreat deadlock: Wujie's host
+repeatedly "withdrew" without a legal exit, stayed in the besieged territory,
+and kept Zhizhi's campaigning force abroad indefinitely. Battle resolution
+now permits withdrawal only when every withdrawing army has a legal route,
+actually deducts the reported retreat losses, and lets a trapped host fight.
+The long run verifies Wujie can change hands and that Zhizhi's treasury and
+grain stay nonnegative. Qiang highland bands are locally supported while at
+home, like oasis town levies; deployment still incurs upkeep.
 Roman-campaign caravans blocked for twelve consecutive months now settle
 against their escrow: cargo returns to the last actual campaign market,
 the buyer recovers goods payment and customs, and transport spending plus the

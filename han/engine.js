@@ -137,12 +137,12 @@ function economy(s){
   const income=own.reduce((a,r)=>a+r.tax*loyaltyF(r),0)*0.12*(id==='han'?0.5+capacity:rulerGovernanceFactor(s,id))*taxRate*(s.throne.paralysis>0&&id==='han'?0.6:1);
   const grain=own.reduce((a,r)=>a+(r.grain+(r.irrigation||0))*loyaltyF(r),0)*0.27;
   const armies=s.armies.filter(a=>a.owner===id&&a.men>0);
-  // Town militias and pastoral hosts serve from their own households or
+  // Local militias and pastoral hosts serve from their own households or
   // herds at home. Campaigning outside their polity draws normal supplies.
   const home=x=>own.find(r=>r.id===x.region);
-  const pasture=x=>home(x)?.terrain==='steppe'&&templateStats(x.template).herd>=0.8;
-  const upkeep=armies.reduce((a,x)=>a+((x.template?.id==='town'&&home(x))||pasture(x)?0:x.men/1000*templateStats(x.template).cost*0.22),0);
-  const eat=armies.reduce((a,x)=>a+(pasture(x)?0:x.men/1000*templateStats(x.template).grain*0.3),0);
+  const locallySupported=x=>home(x)&&(['town','qiang_band'].includes(x.template?.id)||(home(x).terrain==='steppe'&&templateStats(x.template).herd>=0.8));
+  const upkeep=armies.reduce((a,x)=>a+(locallySupported(x)?0:x.men/1000*templateStats(x.template).cost*0.22),0);
+  const eat=armies.reduce((a,x)=>a+(locallySupported(x)?0:x.men/1000*templateStats(x.template).grain*0.3),0);
   f.treasury=Math.round(f.treasury+income-upkeep);f.grain=Math.round(f.grain+grain-eat-own.reduce((a,r)=>a+r.pop*0.02,0));
   f.manpower=Math.round(Math.min(own.reduce((a,r)=>a+r.pop*1500,0),f.manpower+own.reduce((a,r)=>a+r.pop*4,0)));f.horses=Math.round((f.horses||0)+own.filter(r=>r.horses).length*150);
   if(id==='han'&&s.taxLevel==='high')for(const r of own)r.loyalty=clamp(r.loyalty-0.6);
@@ -178,13 +178,14 @@ function battles(s){
    const region=s.regions.find(r=>r.id===rid);
    const defender=region.owner===B?B:region.owner===A?A:B,attacker=defender===A?B:A;
    const att=here.filter(a=>a.owner===attacker&&a.men>0),def=here.filter(a=>a.owner===defender&&a.men>0);if(!att.length||!def.length)continue;
-   const result=resolveBattle(s,att,def,rid,{skill:skill(s),rand:()=>roll(s,'battle'+rid+A+B)});
+   const retreats=new Map([...att,...def].map(x=>[x.id,neighbourFor(s,x)]));
+   const result=resolveBattle(s,att,def,rid,{skill:skill(s),rand:()=>roll(s,'battle'+rid+A+B),canRetreat:x=>!!retreats.get(x.id)});
    const winner=result.outcome==='attacker_won'||result.outcome==='defender_withdrew'?attacker:defender;
    if(winner===s.player)s.stats.battlesWon++;
    if(winner==='han')s.militaryRecord=clamp((s.militaryRecord||0)+1,-10,10);else if(attacker==='han'||defender==='han')s.militaryRecord=clamp((s.militaryRecord||0)-1,-10,10);
-   if(result.outcome.endsWith('withdrew'))for(const x of (result.outcome==='defender_withdrew'?def:att)){const back=neighbourFor(s,x);if(back)x.region=back}
-   else if(result.outcome==='attacker_won')for(const x of def){const back=neighbourFor(s,x);if(back)x.region=back;else x.men=Math.round(x.men*0.5)}
-   else for(const x of att){const back=neighbourFor(s,x);if(back)x.region=back}
+   if(result.outcome.endsWith('withdrew'))for(const x of (result.outcome==='defender_withdrew'?def:att))x.region=retreats.get(x.id);
+   else if(result.outcome==='attacker_won')for(const x of def){const back=retreats.get(x.id);if(back)x.region=back;else x.men=Math.round(x.men*0.5)}
+   else for(const x of att){const back=retreats.get(x.id);if(back)x.region=back}
    s.lastBattle={region:rid,attacker,defender,outcome:result.outcome,losses:result.losses,month:monthIndex(s)};
    log(s,['Battle at %REGION%: '+result.outcome.replace(/_/g,' ')+'.','%REGION%之战：'+({attacker_won:'攻方胜',defender_won:'守方胜',defender_withdrew:'守方撤走',attacker_withdrew:'攻方撤走'}[result.outcome])+'。'],{region:rid,kind:'war',parties:[attacker,defender]});
   }
