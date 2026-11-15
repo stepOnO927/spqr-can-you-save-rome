@@ -2,7 +2,7 @@
 
 ## Repository gates
 
-A release package is acceptable for **platform inspection** only after the fast, browser and Poki package workflows all pass on the same branch head. A failed later run supersedes an earlier success. The latest run IDs and precise scope are in [TEST_RESULTS.md](TEST_RESULTS.md).
+A release package is acceptable for **platform inspection** only after the fast, browser and Poki package workflows pass on the same runtime source tree. Report-only commits do not change the tested package; a later failing runtime run supersedes earlier success. The latest run IDs and precise scope are in [TEST_RESULTS.md](TEST_RESULTS.md).
 
 ## External Poki submission gates
 

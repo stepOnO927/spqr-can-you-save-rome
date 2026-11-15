@@ -6,7 +6,7 @@ Audit date: 2026-11-15 UTC. Scope: Roman campaign, terrain atlas, Han campaign, 
 
 The game has three working entry points and a large, connected simulation. The latest cloud fast suite passed **892/892** tests ([run 43668500427](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43668500427)). The latest dedicated Poki package passed real touch interactions in all three entry points and the required Roman frame sizes with **zero unapproved runtime external requests** ([run 43668500422](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43668500422)). These results establish tested behavior only; they do not certify every campaign feature.
 
-The audit found and repaired blocked-storage startup failures, short landscape controls, Han territory taps intercepted by decorative SVG layers, a floating save-transfer control obscuring Advance, inconsistent module cache versions, and a stale terrain-map campaign date. Mainline's early storage guard was integrated with the session-only save adapter; prohibited browser storage now remains playable without claiming that a volatile save will survive reload. See [BUG_REPORT.md](BUG_REPORT.md). The Inspector now runs read-only state checks and isolated diagnostics. The pre-guard full [browser regression](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43666565048) passed; the merged guard has a new [browser regression](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43668500474) still pending.
+The audit found and repaired blocked-storage startup failures, short landscape controls, Han territory taps intercepted by decorative SVG layers, a floating save-transfer control obscuring Advance, inconsistent module cache versions, and a stale terrain-map campaign date. Mainline's early storage guard was integrated with the session-only save adapter; prohibited browser storage now remains playable without claiming that a volatile save will survive reload. See [BUG_REPORT.md](BUG_REPORT.md). The Inspector now runs read-only state checks and isolated diagnostics. The merged-main full [browser regression](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43668500474) passed, including storage denial, both Roman openings, Han interactions and long-run simulation.
 
 ## Source and architecture inventory
 
@@ -24,7 +24,7 @@ The source atlas benchmark on a cloud software renderer measured slow full-relie
 |---|---|---|
 | Core simulation and invariants | 892/892 baseline fast tests | Passed tested assertions |
 | Touch at 640×360 and 836×470 | Roman, Han and atlas interactions in cloud Chromium | Passed targeted interactions |
-| Storage denied | Cloud browser flow across all three entries | Latest full regression status in [TEST_RESULTS.md](TEST_RESULTS.md) |
+| Storage denied | Cloud browser flow across all three entries | Passed merged-main regression; see [TEST_RESULTS.md](TEST_RESULTS.md) |
 | Poki SDK and offline assets | Three-entry package smoke with SDK event assertions | Passed mock-SDK and network checks; real platform Inspector pending |
 | 36-month Roman and Han simulations | Inspector browser diagnostic | Latest result in [TEST_RESULTS.md](TEST_RESULTS.md) |
 | Full feature completeness | 20-feature manifest and targeted suites | Partial; no blanket certification |
@@ -60,7 +60,7 @@ The classification is broad for all tracked files; it is **not** a line-by-line 
 - **Mobile:** Real touch works in tested game frames. Physical devices and all menu branches are still unverified.
 - **Code-only, UI-only, placeholder and unused modules:** None confirmed. A conservative static graph found no unreached runtime candidates after adding the developer and package roots. This is not proof that every feature is complete.
 - **Architecture:** One versioned-module identity defect was fixed; large controller files and overlapping CSS remain maintainability risks. No broad rewrite was made.
-- **Poki verdict:** **CLOSE TO READY** pending the complete browser gate and official Poki Inspector, store assets and owner-controlled policy review. This is a technical assessment of the inspected branch, not a prediction of acceptance.
+- **Poki verdict:** **CLOSE TO READY** pending the official Poki Inspector, store assets and owner-controlled policy review. This is a technical assessment of the inspected branch, not a prediction of acceptance.
 
 ## Security and save integrity limits
 
