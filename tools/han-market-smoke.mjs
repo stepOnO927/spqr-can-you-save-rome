@@ -13,6 +13,7 @@ try{
  assert.match(await page.locator('#overview').innerText(),/Foreign inventory is unknown/);
  assert.ok(await page.locator('.trade-market.own').count()>0);
  assert.ok(await page.locator('.trade-market.foreign').count()>0);
+  assert.match(await page.locator('[data-market="changan"] title').textContent(),/Grain \d+ @\d+ \(output \d+, use \d+/);
  await page.locator('[data-market="changan"]').click();
  assert.match(await page.locator('#inspector').innerText(),/Own stock/);
  assert.match(await page.locator('#east-route-security').innerText(),/0\/5/);
@@ -44,6 +45,7 @@ try{
  await page.locator('#east-market-order').click();
  assert.match(await page.locator('#message').innerText(),/Merchant dispatched/);
  assert.equal(await page.locator('.trade-caravan').count(),1);
+  assert.match(await page.locator('.route.trade-active title').first().textContent(),/Known cargo: Horses × 1/);
  await page.locator('.trade-caravan').click();
  assert.match(await page.locator('#inspector').innerText(),/Your shipments/);
  assert.match(await page.locator('.market-intelligence').innerText(),/Paid unit price.*Observed supply/);
@@ -87,6 +89,7 @@ try{
   await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
   await page.locator('#mode').selectOption('trade');
  assert.match(await page.locator('#overview').innerText(),/外国库存未知/);
+  assert.match(await page.locator('[data-market="changan"] title').textContent(),/谷物 \d+ @\d+ \(产出 \d+, 消耗 \d+/);
  assert.match(await page.locator('#inspector').innerText(),/信誉 1.*熟悉线路 1/s);
  assert.match(await page.locator('#inspector').innerText(),/保护商路/);
  assert.match(await page.locator('#inspector').innerText(),/牲畜.*铜.*毛织物.*玉石/s);

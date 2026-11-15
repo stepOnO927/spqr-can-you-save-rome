@@ -10,8 +10,11 @@ The draft now includes main through `0e6a2413`. Its Han trade-map mode shows
 owned market stock and prices, known corridors, player-involved caravans,
 blocked legs and dated broad foreign reports without exposing hidden foreign
 warehouses or unrelated AI shipments. Market and caravan markers open the
-existing market panel. A unit regression covers visibility and save/load;
-the cloud browser smoke also exercises the mode. The merged personal-meeting
+existing market panel. Own-market tooltips also show measured monthly output,
+use and shortages for staple examples; active known routes name their actual
+in-transit cargo. Foreign route traffic remains hidden. A unit regression
+covers visibility and save/load; the cloud browser smoke also exercises the
+mode. The merged personal-meeting
 update records the name in the campaign's saved catalog at the time of a
 completed audience, so a stale shared catalog cannot overwrite that
 observation. The full 1,178-test local simulation suite passes. Head

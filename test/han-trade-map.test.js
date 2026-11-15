@@ -16,6 +16,7 @@ test('the eastern trade map shows own markets and known routes without leaking f
  assert.match(initial,/trade-market foreign port/);
  assert.match(initial,/Foreign stock unknown/);
  assert.match(initial,/Grain \d+ @\d+/);
+ assert.match(initial,/Grain \d+ @\d+ \(output \d+, use \d+/);
  assert.doesNotMatch(initial,/987654/);
  setRelation(s,'han','kangju',70);assert.equal(propose(s,'han','kangju','market').proposal.status,'accepted');
  const placed=placeEasternTrade(s,{seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1});
@@ -23,10 +24,13 @@ test('the eastern trade map shows own markets and known routes without leaking f
  const visible=tradeMap(s);
  assert.match(visible,new RegExp(`data-shipment="${placed.shipment.id}"`));
  assert.match(visible,/trade-active/);
+ assert.match(visible,/Known cargo: Horses × 1/);
  assert.match(visible,/Horses \d+ · (adequate|surplus|scarce)/);
  assert.doesNotMatch(visible,/987654/);
  s.tradeMarkets.shipments.push({...placed.shipment,id:'foreign-secret-caravan',buyer:'parthia',seller:'kangju'});
  assert.doesNotMatch(tradeMap(s),/foreign-secret-caravan/);
+ assert.doesNotMatch(tradeMap(s),/Known cargo: Horses × 1, Horses × 1/);
+ assert.match(drawMap(s,{mode:'trade',lang:1}),/谷物 \d+ @\d+ \(产出 \d+, 消耗 \d+/);
  placed.shipment.status='blocked';
  const restored=loadHanSave(serialize(s));
  assert.match(tradeMap(restored),/trade-blocked/);
