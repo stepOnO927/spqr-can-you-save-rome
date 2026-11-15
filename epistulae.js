@@ -85,7 +85,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A sealed aid reply can outlive the court that dispatched it; its arrival
   // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result','asylum_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -307,6 +307,18 @@ export function syncCoalitionLetters(s){
     options:[],context:{kind:'coalition_result',invitationId:x.id}});
    if(result.ok){x.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-result:'+x.id]=true}
   }
+ }
+}
+
+// The family courier already made both journeys. Only an actual reply creates
+// inbox mail; its unrecorded composition date must not be invented.
+export function syncAsylumReplies(s){
+ const mail=initializeMail(s);
+ for(const x of s.world?.dynasties?.asylumRequests||[]){
+  if(x.host!==s.player||!['accepted','declined'].includes(x.status)||x.resolvedYear!==s.year||x.resolvedMonth!==s.month||x.replyMailId||mail.generated['asylum-result:'+x.id])continue;
+  const person=storedCorrespondentName(x.claimant,x.reportedName),accepted=x.status==='accepted';
+  const result=sendLetter(s,{senderId:null,senderInstitution:x.reportedFaction,senderFaction:x.reportedFaction,recipient:x.host,category:'diplomatic',priority:'important',subject:accepted?['Asylum offer accepted','庇护提议获接受']:['Asylum offer declined','庇护提议遭拒'],body:accepted?[`${person[0]} accepted the offer and arrived under protection.`,`${person[1]}接受庇护提议，已抵达并受到保护。`]:[`${person[0]} declined the asylum offer.`,`${person[1]}回信拒绝了庇护提议。`],options:[],context:{kind:'asylum_result',requestId:x.id}});
+  if(result.ok){x.replyMailId=result.letter.id;result.letter.sentDateKnown=false;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['asylum-result:'+x.id]=true}
  }
 }
 

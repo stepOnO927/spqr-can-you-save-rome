@@ -248,13 +248,15 @@ function advanceAsylumRequests(s){
   const person=s.world.characters[request.claimant],home=request.reportedFaction,host=request.host;
   const eligible=person?.alive&&!person.missing&&!person.travel&&person.faction===home&&(s.world.claimants?.[home]||[]).includes(request.claimant)&&!s.armies.some(a=>a.characterId===request.claimant)&&!s.wars.some(w=>w.includes(host)&&w.includes(home));
   const refuge=s.regions.find(r=>r.owner===host);
-  if(familyCourierArrives(s,request)&&eligible&&refuge&&roll(s)<.75){
+  const arrived=familyCourierArrives(s,request);
+  if(arrived&&eligible&&refuge&&roll(s)<.75){
    person.asylumHost=host;person.location=refuge.id;person.travel=null;request.status='accepted';
    const key=pair(host,home);s.relations[key]=Math.max(-100,(s.relations[key]||0)-6);
    if(s.factions[home])s.factions[home].stability=Math.max(0,s.factions[home].stability-2);
    record(s,person.id,`Received asylum in ${host}; this granted no throne or army.`,`获得${host}庇护；未获王位或军队。`);
    if(host===s.player)note(s,'The claimant arrived under protection. The foreign court protested; no throne or alliance was granted.','竞争者抵达并获得保护。外国宫廷提出抗议；此举不授予王位或同盟。');
-  }else{request.status='no_reply';if(host===s.player)note(s,'No asylum reply arrived; the letter may have been lost or declined, or the report may have been outdated.','未收到庇护回信；书信可能遗失、被拒绝，或原情报已经过时。')}
+  }else if(arrived&&eligible&&refuge){request.status='declined';if(host===s.player)note(s,'The claimant declined the asylum offer.','竞争者回信拒绝了庇护提议。')}
+  else{request.status='no_reply';if(host===s.player)note(s,'No asylum reply arrived; the letter may have been lost or the report may have been outdated.','未收到庇护回信；书信可能遗失，或原情报已经过时。')}
   request.resolvedYear=s.year;request.resolvedMonth=s.month;
  }
 }
