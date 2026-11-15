@@ -285,6 +285,14 @@ export function replyToLetter(s, id, choice, actions, details={}) {
 export function syncStrategicOfferLetters(s){
  const mail=initializeMail(s);
  for(const offer of s.world?.strategicOffers||[]){
+  if(offer.actor===s.player&&offer.kind==='request_aid'&&offer.phase==='delivered'&&['accepted','refused'].includes(offer.status)&&!offer.resultMailId&&!mail.generated['aid-result:'+offer.id]){
+   const donor=name(offer.recipient),enemy=name(offer.target),accepted=offer.status==='accepted';
+   const result=sendLetter(s,{senderId:null,senderInstitution:offer.recipient,senderFaction:offer.recipient,recipient:s.player,category:'diplomatic',priority:'important',
+    subject:accepted?['Wartime aid delivered','战时物资已送达']:['Wartime aid declined','战时物资请求遭拒'],
+    body:accepted?[`${donor[0]} sent 12 treasury and 8 food for the war against ${enemy[0]}. The shipment has arrived.`,`${donor[1]}为对${enemy[1]}的战争运来12国库和8粮食，物资已经送达。`]:[`${donor[0]} declined the request for supplies for the war against ${enemy[0]}.`,`${donor[1]}拒绝了为对${enemy[1]}的战争提供物资的请求。`],
+    options:[],context:{kind:'aid_result',offerId:offer.id}});
+   if(result.ok){offer.resultMailId=result.letter.id;result.letter.created={year:offer.answeredYear??s.year,month:offer.answeredMonth??s.month};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['aid-result:'+offer.id]=true}
+  }
   const previous=offer.mailId&&mail.messages.find(m=>m.id===offer.mailId);
   if(previous&&Number.isInteger(offer.year)&&Number.isInteger(offer.month)&&offer.month>=1&&offer.month<=12)previous.created={year:offer.year,month:offer.month};
   if(offer.recipient!==s.player||offer.status!=='awaiting_decision'||offer.mailId)continue;

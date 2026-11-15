@@ -28,18 +28,19 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=senator-portraits-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=player-request-aid-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=succession-ui-recovery-1';
-import {createCharacterUI} from './character-ui.js?v=senator-portraits-1';
+import {createCharacterUI} from './character-ui.js?v=player-request-aid-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=senator-portraits-1';
+import {renderAidRequest} from '../strategic-aid-ui.js?v=player-request-aid-1';
 import {reportedArmies} from '../character-system.js?v=senator-portraits-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=travel-2';
 import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';
 import {leadershipIntelligence} from './intelligence-summary.js?v=phase-x-1';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=senator-portraits-1';
-import {receivedMail,unreadCount} from '../epistulae.js?v=senator-portraits-1';
+import {receivedMail,unreadCount} from '../epistulae.js?v=player-request-aid-1';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGame();
@@ -150,6 +151,7 @@ function showFaction(id,section='diplomacy'){
  const contactCredit=personalDiplomaticCredit(state,me,id);
  const buttons=war?[['peace',zh?'寄出议和书信 · '+letterCost+'国库':'Send peace offer · '+letterCost+' treasury']]:[['improve',zh?'改善关系 · 10国库':'Improve relations · 10 treasury'],[allied?'break':'alliance',allied?(zh?'解除同盟 · 信誉 −20':'Break alliance · −20 credibility'):(zh?'结盟':'Form alliance')],['war',zh?'宣战':'Declare war']];
  content.innerHTML=`<p class="battle-note">${zh?'议和书信需'+letterCost+'国库，往返约2至5个月；信件可能丢失，对方可能拒绝，收到有效答复前战争继续。其他外交行动立即结算。结盟需关系与近期个人联系加成之和至少30，也可能因冲突的同盟关系而不可用。个人联系加成：':'A peace offer costs '+letterCost+' treasury and takes about 2–5 months. Letters may be lost or rejected; the war continues until a valid reply arrives. Other diplomatic actions resolve immediately. Alliance requires relations plus a recent personal-contact bonus of at least 30, and conflicting alliances can still prevent it. Contact bonus: '}${contactCredit}${zh?'（最多10；会面后36个月内有效，联系可能过时，不代表此人当前有权代表政府）。直接询问请使用书信与情报。':' (maximum 10; meetings count for 36 months and may be outdated; this does not establish the contact’s current authority). Use Letters & Intelligence for delayed inquiries.'}</p><div class="diplomacy-actions">${buttons.map(([act,label])=>`<button data-diplomacy="${act}">${label}</button>`).join('')}</div><p id="diplomacy-feedback" role="status"></p>`;
+ renderAidRequest({panel:content,state,language:lang,recipient:id,refresh:()=>{renderHud();showFaction(id,section)}});
  content.querySelectorAll('[data-diplomacy]').forEach(b=>{const action=b.dataset.diplomacy;let reason='';if(action==='peace'&&(f.treasury<letterCost||(state.inquiries||[]).some(x=>x.actor===me&&x.target===id&&['pending','awaiting_decision'].includes(x.status))))reason=zh?'国库不足'+letterCost+'，或已有待回复信件。':'Requires '+letterCost+' treasury and no pending letter to this court.';else if(action!=='peace'&&!own.length)reason=zh?'该势力没有已知控制战区。':'This faction controls no known theater.';else if(action==='improve'&&f.treasury<10)reason=zh?'需要10国库。':'Requires 10 treasury.';else if(action==='alliance'&&rel+contactCredit<30)reason=zh?'关系与近期个人联系加成之和至少需要30。':'Relations plus recent personal-contact bonus must total at least 30.';else if(action==='war'&&allied)reason=zh?'先解除同盟。':'Break the alliance first.';b.disabled=!!reason;b.title=reason;b.onclick=()=>{if(action==='peace'){if(sendInquiry(state,me,id,'peace').ok){renderHud();showFaction(id,'intelligence')}else content.querySelector('#diplomacy-feedback').textContent=zh?'无法寄信，请检查国库及待回复信件。':'Cannot send; check treasury and pending letters.'}else if(diplomacy(state,me,id,action)){renderHud();showFaction(id)}else content.querySelector('#diplomacy-feedback').textContent=zh?'对方拒绝或当前关系不允许此行动。':'Rejected or current conditions do not permit this action.'}});
 }
 function factionDirectory(){activeInfo=null;activeArmy=null;activeBattle=null;activeFaction=null;previewDestination='';clearReach();inspect(lang==='zh'?'势力与外交':'FACTIONS & DIPLOMACY',lang==='zh'?`这里只能查看势力，不能切换玩家。当前指挥：${n(FACTIONS[state.player].short)}。`:`View factions here; player control cannot be switched. Current command: ${n(FACTIONS[state.player].short)}.`);const panel=document.querySelector('#command-detail');panel.innerHTML=`<div class="faction-directory">${['caesar','senate','egypt','parthia','armenia','numidia','mauretania','galatia','bosporus',...knownDynasticFactions(state,state.player)].map(id=>`<button data-faction="${id}" style="--identity-accent:${identity(id).accent}">${factionMark(id,'insignia')}<span>${esc(n(FACTIONS[id].short))}</span><small>${identity(id).abbr}</small></button>`).join('')}</div>`;panel.querySelectorAll('[data-faction]').forEach(el=>el.onclick=()=>showFaction(el.dataset.faction))}
