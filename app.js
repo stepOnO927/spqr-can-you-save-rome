@@ -33,8 +33,8 @@ import {renderChessboard} from './chessboard-ui.js?v=faces-main-20261115-1';
 import {configureStartingDifficulty} from './difficulty.js?v=faces-main-20261115-1';
 import {featherAdvice} from './feather.js?v=faces-main-20261115-1';
 import {IDEAS,startResearch,equipIdea} from './inventions.js?v=faces-main-20261115-1';
-import {attachHanWorld,hanWorld,sendEmbassyToSeres} from './han/world.js?v=faces-main-20261115-1';
-import {eastMap,eastPanel,eastToolbar} from './han/east-ui.js?v=faces-main-20261115-1';
+import {attachHanWorld,hanWorld,sendEmbassyToSeres,buyEasternImport} from './han/world.js?v=roman-imports-1';
+import {eastMap,eastPanel,eastToolbar} from './han/east-ui.js?v=roman-imports-1';
 import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium} from './imperium-ui.js?v=faces-main-20261115-1';
 import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=faces-main-20261115-1';
 import {renderExperienceUi,closeExperience} from './experience-ui.js?v=faces-main-20261115-1';
@@ -248,6 +248,7 @@ function bind(){
   document.querySelectorAll('[data-east-mode]').forEach(el=>el.onclick=()=>{eastMode=el.dataset.eastMode;render()});
   document.querySelectorAll('[data-east-camera]').forEach(el=>el.onclick=()=>{eastCamera=el.dataset.eastCamera;render()});
   const eastEmbassy=document.querySelector('#east-embassy');if(eastEmbassy)eastEmbassy.onclick=()=>{const r=sendEmbassyToSeres(state);flash(r.ok?(lang==='zh'?'使者已启程':'Envoys have set out'):(lang==='zh'?'条件不足':'Conditions not met'));render()};
+  document.querySelectorAll('[data-east-buy]').forEach(button=>button.onclick=()=>{const port=button.parentElement.querySelector('[data-east-import-port]')?.value,r=buyEasternImport(state,button.dataset.eastBuy,port);flash(r.ok?(lang==='zh'?'商货已购入港口':'Merchant cargo bought at port'):(lang==='zh'?'购买未成功，请检查港口与国库':'Purchase unavailable; check port and treasury'));render()});
   
   document.querySelectorAll('[data-board-view]').forEach(el=>el.onclick=()=>{boardView=el.dataset.boardView;boardSelected=null;render()});
   document.querySelectorAll('[data-board-node]').forEach(el=>{const select=()=>{boardSelected=el.dataset.boardNode;render();[...document.querySelectorAll('g[data-board-node]')].find(node=>node.dataset.boardNode===boardSelected)?.focus()};el.onclick=select;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select()}}});

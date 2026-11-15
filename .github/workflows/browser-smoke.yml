@@ -80,6 +80,7 @@ jobs:
               node tools/market-smoke.mjs
               node tools/han-smoke.mjs
               node tools/han-market-smoke.mjs
+              node tools/roman-eastern-import-smoke.mjs
               node tools/han-supply-contract-smoke.mjs
               node tools/han-ruler-smoke.mjs
               node tools/han-defeat-smoke.mjs

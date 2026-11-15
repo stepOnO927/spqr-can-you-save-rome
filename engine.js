@@ -13,7 +13,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=faces-main-20261115-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,assignFictionalFieldCommander,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=faces-main-20261115-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=faces-main-20261115-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=faces-main-20261115-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=roman-imports-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=faces-main-20261115-1';
 import {advancePersonalPlans} from './personal-plans.js?v=faces-main-20261115-1';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=faces-main-20261115-1';

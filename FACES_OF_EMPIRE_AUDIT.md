@@ -34,6 +34,13 @@ Rome still receives only delayed public reports and its own paid imports.
 A ten-year cross-world save-migration test checks the eastern ledgers and
 merchant identities. The eastern route estimator shares one destination tree
 across seller quotes to keep monthly turns responsive.
+At a player-owned eastern Mediterranean port, arrived eastern merchant cargo
+now waits for an explicit purchase. The panel shows the finite batch and price;
+the action transfers that batch into the selected Roman market and charges the
+Roman treasury once. Rival Roman courts may still purchase automatically when
+the player has no eastern port. Unit and browser tests cover payment, stock,
+save/load, duplicate prevention, and bilingual receipts. This is a port
+purchase from intermediaries, not a direct Roman–Han trade treaty.
 The subsequent main updates add coalition invitations by courier, reported
 foreign treaty changes to the Chronicle, and autonomous wartime aid requests.
 The merged branch now advances those invitations and aid letters through the

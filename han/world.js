@@ -48,23 +48,37 @@ function ensureBridge(w){
  const settled={};for(const x of w.state.tradeMarkets?.shipments||[])if(x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.commodity==='silk'&&x.status==='delivered')settled[x.id]={status:'legacy'};
  w.bridge={settled};return w.bridge;
 }
+function importAtPort(s,w,cargo,port){
+ const h=w.state,bridge=ensureBridge(w),roman=initializeMarkets(s),gate=h.tradeMarkets?.regions?.mediterranean_gate?.goods?.[cargo.commodity];
+ const price=cargo.price,quantity=cargo.quantity;
+ if(cargo.buyer!=='external'||cargo.destination!=='mediterranean_gate'||cargo.status!=='delivered'||bridge.settled[cargo.id]||!EAST_PORTS.includes(port?.id)||!['caesar','senate'].includes(port.owner)||!COMMODITIES[cargo.commodity]||!gate||!roman.regions[port.id]?.goods?.[cargo.commodity]||!Number.isSafeInteger(quantity)||quantity<1||!Number.isSafeInteger(price)||price<0||gate.stock<quantity)return {ok:false,reason:'unavailable'};
+ if(s.factions[port.owner]?.treasury<price)return {ok:false,reason:'treasury'};
+ // The external buyer paid Han at the gate. This court buys the same finite
+ // cargo from that buyer; no customs money or stock appears for free.
+ gate.stock-=quantity;roman.regions[port.id].goods[cargo.commodity].stock+=quantity;
+ s.factions[port.owner].treasury-=price;h.tradeMarkets.externalTreasury+=price;
+ const receipt={status:'delivered',hanShipment:cargo.id,port:port.id,owner:port.owner,commodity:cargo.commodity,quantity,price,year:s.year,month:s.month};
+ bridge.settled[cargo.id]=receipt;if(port.owner===s.player&&cargo.commodity==='silk')w.known.silkCargoes=(w.known.silkCargoes||0)+quantity;
+ roman.transactions.push({shipment:`han-import:${cargo.id}`,linkedHanShipment:cargo.id,seller:'external',buyer:port.owner,origin:'mediterranean_gate',destination:port.id,commodity:cargo.commodity,quantity,price,transport:0,tariffs:[],status:'imported',year:s.year,month:s.month});
+ if(roman.transactions.length>200)roman.transactions.shift();
+ if(port.owner===s.player){const name=COMMODITIES[cargo.commodity].name;romanLog(s,`${name[0]} reached ${port.name[0]} through eastern merchants. The court bought ${quantity} batch${quantity===1?'':'es'} for ${price} treasury.`,`东方商人将${name[1]}运抵${port.name[1]}。朝廷花费${price}国库购入${quantity}批。`)}
+ return {ok:true,receipt};
+}
+export function buyEasternImport(s,shipmentId,portId){
+ const w=hanWorld(s),port=s.regions.find(r=>r.id===portId);
+ if(!w||s.defeat||!port||port.owner!==s.player)return {ok:false,reason:'port'};
+ const cargo=w.state.tradeMarkets?.shipments?.find(x=>x.id===shipmentId);
+ if(!cargo)return {ok:false,reason:'unavailable'};
+ return importAtPort(s,w,cargo,port);
+}
 function settleRomanImports(s,w){
- const h=w.state,bridge=ensureBridge(w),roman=initializeMarkets(s),goods=h.tradeMarkets?.regions?.mediterranean_gate?.goods;
- if(!goods)return;
- for(const cargo of h.tradeMarkets.shipments.filter(x=>x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.status==='delivered'&&!bridge.settled[x.id])){
-  const gate=goods[cargo.commodity];if(!COMMODITIES[cargo.commodity]||!gate)continue;
-  const price=cargo.price,quantity=cargo.quantity;
-  const port=EAST_PORTS.map(id=>s.regions.find(r=>r.id===id)).find(r=>r&&['caesar','senate'].includes(r.owner)&&s.factions[r.owner]?.treasury>=price);
-  if(!port||!Number.isSafeInteger(quantity)||quantity<1||!Number.isSafeInteger(price)||price<0||gate.stock<quantity||!roman.regions[port.id]?.goods?.[cargo.commodity])continue;
-  // The external buyer already paid Han at the gate. The Roman court now
-  // buys that same cargo from that buyer; no customs money appears for free.
-  gate.stock-=quantity;roman.regions[port.id].goods[cargo.commodity].stock+=quantity;
-  s.factions[port.owner].treasury-=price;h.tradeMarkets.externalTreasury+=price;
-  const receipt={status:'delivered',hanShipment:cargo.id,port:port.id,owner:port.owner,commodity:cargo.commodity,quantity,price,year:s.year,month:s.month};
-  bridge.settled[cargo.id]=receipt;if(port.owner===s.player&&cargo.commodity==='silk')w.known.silkCargoes=(w.known.silkCargoes||0)+quantity;
-  roman.transactions.push({shipment:`han-import:${cargo.id}`,linkedHanShipment:cargo.id,seller:'external',buyer:port.owner,origin:'mediterranean_gate',destination:port.id,commodity:cargo.commodity,quantity,price,transport:0,tariffs:[],status:'imported',year:s.year,month:s.month});
-  if(roman.transactions.length>200)roman.transactions.shift();
-  if(port.owner===s.player){const name=COMMODITIES[cargo.commodity].name;romanLog(s,`${name[0]} reached ${port.name[0]} through eastern merchants. The court bought ${quantity} batch${quantity===1?'':'es'} for ${price} treasury.`,`东方商人将${name[1]}运抵${port.name[1]}。朝廷花费${price}国库购入${quantity}批。`)}
+ // The player's treasury is spent only on an explicit purchase. A rival Roman
+ // court may still buy cargo automatically when the player has no eastern port.
+ if(EAST_PORTS.some(id=>s.regions.find(r=>r.id===id)?.owner===s.player))return;
+ for(const cargo of w.state.tradeMarkets?.shipments||[]){
+  if(cargo.buyer!=='external'||cargo.destination!=='mediterranean_gate'||cargo.status!=='delivered'||ensureBridge(w).settled[cargo.id])continue;
+  const port=EAST_PORTS.map(id=>s.regions.find(r=>r.id===id)).find(r=>r&&['caesar','senate'].includes(r.owner)&&s.factions[r.owner]?.treasury>=cargo.price);
+  if(port)importAtPort(s,w,cargo,port);
  }
 }
 
@@ -120,4 +134,8 @@ export function sendEmbassyToSeres(s){
 }
 export function upgradeHanWorld(s){const w=hanWorld(s);if(!w)return;w.state=loadHanSave(w.state);w.state.tradeMarkets.autonomousEnabled=true;w.queue||=[];w.known||={snapshot:null,dispatches:[]};w.known.silkCargoes??=0;ensureBridge(w)}
 // What the Roman player knows, never the live Han state.
-export function romanView(s){const w=hanWorld(s);if(!w)return null;return {snapshot:w.known.snapshot,dispatches:w.known.dispatches,silkCargoes:w.known.silkCargoes,imports:Object.values(w.bridge?.settled||{}).filter(x=>x.status==='delivered'&&x.owner===s.player).slice(-8).reverse(),embassy:w.embassy?{...w.embassy}:null,conditions:embassyConditions(s)}}
+export function romanView(s){const w=hanWorld(s);if(!w)return null;
+ const ports=EAST_PORTS.filter(id=>s.regions.find(r=>r.id===id)?.owner===s.player),goods=w.state.tradeMarkets?.regions?.mediterranean_gate?.goods||{};
+ const availableImports=ports.length?(w.state.tradeMarkets?.shipments||[]).filter(x=>x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.status==='delivered'&&!ensureBridge(w).settled[x.id]&&COMMODITIES[x.commodity]&&Number.isSafeInteger(x.quantity)&&x.quantity>0&&Number.isSafeInteger(x.price)&&x.price>=0&&goods[x.commodity]?.stock>=x.quantity).map(x=>({id:x.id,commodity:x.commodity,quantity:x.quantity,price:x.price,ports})):[];
+ return {snapshot:w.known.snapshot,dispatches:w.known.dispatches,silkCargoes:w.known.silkCargoes,imports:Object.values(w.bridge?.settled||{}).filter(x=>x.status==='delivered'&&x.owner===s.player).slice(-8).reverse(),availableImports,embassy:w.embassy?{...w.embassy}:null,conditions:embassyConditions(s)};
+}

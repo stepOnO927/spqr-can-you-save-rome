@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-main-20261115-1';
-import {attachHanWorld,hanWorld,advanceHanWorld,romanView} from '../han/world.js?v=faces-main-20261115-1';
+import {attachHanWorld,hanWorld,advanceHanWorld,romanView,buyEasternImport} from '../han/world.js?v=roman-imports-1';
 import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-main-20261115-1';
 import {advanceDate} from '../han/util.js?v=faces-main-20261115-1';
 import {eastPanel} from '../han/east-ui.js?v=faces-main-20261115-1';
@@ -60,14 +60,20 @@ test('a delivered Han silk batch crosses into a Roman market with a payer and no
  assert.equal(gate.stock,gateBefore,'cargo waits for an actual buyer');
  assert.equal(roman.stock,romanBefore);
  assert.equal(romanView(s).imports.length,0);
+ assert.equal(buyEasternImport(s,placed.shipment.id,'syria').reason,'treasury');
  s.factions.caesar.treasury=100;const cash=s.factions.caesar.treasury+h.tradeMarkets.externalTreasury;
  advanceDate(s);advanceHanWorld(s);
+ assert.equal(gate.stock,gateBefore,'a funded player port does not buy without an order');
+ assert.equal(romanView(s).availableImports.some(x=>x.id===placed.shipment.id),true);
+ assert.equal(buyEasternImport(s,placed.shipment.id,'roma').reason,'port');
+ const bought=buyEasternImport(s,placed.shipment.id,'syria');assert.equal(bought.ok,true,bought.reason);
  assert.equal(gate.stock,gateBefore-1);assert.equal(roman.stock,romanBefore+1);
  assert.equal(s.factions.caesar.treasury+h.tradeMarkets.externalTreasury,cash);
  assert.equal(s.factions.caesar.treasury,100-placed.shipment.price);
  const receipt=romanView(s).imports[0];assert.equal(receipt.hanShipment,placed.shipment.id);
  assert.equal(receipt.port,'syria');assert.equal(receipt.price,placed.shipment.price);
  assert.equal(s.markets.transactions.filter(x=>x.linkedHanShipment===placed.shipment.id).length,1);
+ assert.equal(buyEasternImport(s,placed.shipment.id,'syria').ok,false,'a purchased batch cannot be bought twice');
  assert.match(eastPanel(s,{lang:0}),/Purchases at your ports/);
  assert.match(eastPanel(s,{lang:1}),/本方港口购入/);
  advanceHanWorld(s);assert.equal(s.markets.transactions.filter(x=>x.linkedHanShipment===placed.shipment.id).length,1);
@@ -93,6 +99,8 @@ test('a paid horse caravan reaches a Roman port once and keeps silk reports sepa
  s.year=h.year;s.month=h.month;advanceDate(s);s.factions.caesar.treasury=100;
  const cash=s.factions.caesar.treasury+h.tradeMarkets.externalTreasury;
  advanceHanWorld(s);
+ assert.equal(gate.stock,gateBefore);
+ assert.equal(buyEasternImport(s,placed.shipment.id,'syria').ok,true);
  assert.equal(gate.stock,gateBefore-1);assert.equal(port.stock,portBefore+1);
  assert.equal(s.factions.caesar.treasury,100-price);
  assert.equal(s.factions.caesar.treasury+h.tradeMarkets.externalTreasury,cash);
@@ -129,6 +137,8 @@ test('an older save with non-silk cargo at the gate can finish its first Roman p
  assert.equal(hanWorld(restored).bridge.settled[id],undefined);
  const before=restored.markets.regions.syria.goods.horses.stock;
  advanceDate(restored);advanceHanWorld(restored);
+ assert.equal(restored.markets.regions.syria.goods.horses.stock,before);
+ assert.equal(buyEasternImport(restored,id,'syria').ok,true);
  assert.equal(restored.markets.regions.syria.goods.horses.stock,before+1);
  assert.equal(restored.markets.transactions.filter(x=>x.linkedHanShipment===id).length,1);
 });
@@ -140,6 +150,6 @@ test('a rival Roman port purchase does not expose its import to the player',()=>
  h.tradeMarkets.shipments.push({id:'eastern-shipment:rival',buyer:'external',seller:'han',destination:'mediterranean_gate',commodity:'silk',quantity:1,price:7,status:'delivered'});gate.stock++;
  const before=s.factions.senate.treasury;advanceDate(s);advanceHanWorld(s);
  assert.equal(s.factions.senate.treasury,before-7);
- assert.equal(romanView(s).silkCargoes,0);assert.deepEqual(romanView(s).imports,[]);
+ assert.equal(romanView(s).silkCargoes,0);assert.deepEqual(romanView(s).imports,[]);assert.deepEqual(romanView(s).availableImports,[]);
  assert.equal(s.log.some(x=>x.en?.includes('Seric silk reached')),false);
 });
