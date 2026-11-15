@@ -50,6 +50,27 @@ test('a licensed Roman-network merchant lowers a long Silk Road transport quote'
  assert.equal(s.markets.merchantPrivileges[id].status,'active');
 });
 
+test('a Roman-network merchant keeps delivered route experience and lowers a later quote',()=>{
+ let s=newGame('han');s.relations['han:parthia']=45;
+ assert.equal(proposeAgreement(s,'han','parthia','trade').ok,true);
+ const request={seller:'parthia',buyer:'han',origin:'parthia',destination:'hanHexi',commodity:'horses',quantity:5};
+ const first=placeTradeOrder(s,{...request,quantity:1});assert.equal(first.ok,true,first.reason);
+ const id=first.shipment.merchantId;
+ for(let i=0;i<first.quote.months*2;i++){if(++s.month>12){s.month=1;s.year++}advanceMarkets(s)}
+ assert.equal(first.shipment.status,'delivered');
+ assert.equal(s.world.characters[id].marketRoutes['parthia:hanHexi'],1);
+ assert.equal(s.world.characters[id].marketReputation,1);
+ s=upgradeSave(structuredClone(s));
+ if(quoteTrade(s,request).reason==='access')assert.equal(proposeAgreement(s,'han','parthia','trade').ok,true);
+ const quote=quoteTrade(s,request);assert.equal(quote.ok,true,quote.reason);
+ assert.equal(quote.merchantId,id);assert.equal(quote.merchantExperience,1);
+ assert.equal(quote.transport,Math.max(1,Math.ceil(Math.ceil(quote.months*request.quantity/5)*.95)));
+ const second=placeTradeOrder(s,request);assert.equal(second.ok,true,second.reason);
+ assert.equal(second.shipment.merchantExperience,1);assert.equal(second.shipment.transport,quote.transport);
+ const older=structuredClone(s);delete older.world.characters[id].marketRoutes;delete older.world.characters[id].marketReputation;
+ assert.equal(upgradeSave(older).world.characters[id].marketRoutes,undefined);
+});
+
 test('markets have measured units, local output and bounded shortage prices',()=>{
  const s=newGame('armenia'),parthia=s.markets.regions.parthia,egypt=s.markets.regions.egypt;
  assert.deepEqual(COMMODITIES.horses.unit,['100 head','百匹']);

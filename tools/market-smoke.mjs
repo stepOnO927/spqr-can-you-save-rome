@@ -37,6 +37,7 @@ try{
  const merchant=await page.locator('[data-market-merchant]').first().getAttribute('data-market-merchant');
  assert.ok(merchant);
  assert.match(await page.locator('.market-panel').innerText(),/商人特权/);
+ assert.match(await page.locator('.market-panel').innerText(),/信誉 0.*熟悉线路 0/s);
  await page.locator(`[data-grant-merchant="${merchant}"][data-duration="12"]`).click();
  assert.match(await page.locator('.market-panel').innerText(),/待下次承运时生效/);
  await page.locator('[data-market-merchant]').first().click();
@@ -51,12 +52,14 @@ try{
  await page.locator('#language').click();
  assert.match(await page.locator('.market-panel').innerText(),/SHIPMENTS IN TRANSIT/);
  assert.match(await page.locator('.market-panel').innerText(),/MERCHANT PRIVILEGES/);
+ assert.match(await page.locator('.market-panel').innerText(),/Reputation 0.*Known routes 0/s);
  await page.locator('#load').click();await page.locator('#markets').click();
  assert.match(await page.locator('.market-panel').innerText(),/Grain ×2/);
  assert.equal(await page.locator('[data-market-merchant]').first().getAttribute('data-market-merchant'),merchant);
  await page.locator('#advance').click();
  await page.locator('#markets').click();
  assert.match(await page.locator('.market-panel').innerText(),/RECENT TRADE RESULTS/);
+ assert.match(await page.locator('.market-panel').innerText(),/Reputation 1.*Known routes 1/s);
  assert.match(await page.locator('.market-panel').innerText(),/49 BCE/);
  assert.match(await page.locator('.market-panel').innerText(),/Cisalpine.*Narbo|Northern Italy.*Narbo/);
  assert.match(await page.locator('.market-panel').innerText(),/Goods.*Transport.*Customs.*Total/);
@@ -69,6 +72,7 @@ try{
  assert.equal(delivered.markets.transactions[0].origin,'cisalpine');
  assert.equal(delivered.markets.transactions[0].destination,'narbo');
  await page.locator('#language').click();
+ assert.match(await page.locator('.market-panel').innerText(),/信誉 1.*熟悉线路 1/s);
  assert.match(await page.locator('.market-panel').innerText(),/目的地库存 \d+ → \d+.*当地市价 \d+ → \d+/s);
  // A long border closure must leave a readable refund rather than a ghost
  // shipment that remains in the transit list indefinitely.

@@ -654,7 +654,9 @@ experience on the requested route takes priority after any privileged carrier;
 repeat voyages receive a bounded transport discount and a one or two point
 reduction in simulated raider risk. A lost shipment lowers that merchant's
 reputation. These records persist in saves and appear in both languages in the
-market panel. This is an initial consequence of merchant experience, while
+market panel. The Roman-facing market also saves delivered route experience,
+uses it for carrier selection and bounded transport discounts, and shows it
+alongside reputation in its bilingual panel. This is an initial consequence of merchant experience, while
 individual merchant negotiation, independent investment and competing private
 commercial networks remain open.
 Small oasis courts now participate in the autonomous market even below the
