@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,diplomacy} from '../engine.js?v=faces-reported-names-1';
-import {proposeAgreement,terminateAgreement,advanceAgreements} from '../agreements.js?v=faces-reported-names-1';
-import {politicalMemoryAdjustment,personalMemoryAdjustment} from '../political-memory.js?v=faces-reported-names-1';
-import {appointOffice,dismissOffice} from '../office-system.js?v=faces-reported-names-1';
-import {plotFormationChance} from '../conspiracies.js?v=faces-reported-names-1';
+import {newGame,upgradeSave,diplomacy} from '../engine.js?v=born-portraits-nine-1';
+import {proposeAgreement,terminateAgreement,advanceAgreements} from '../agreements.js?v=born-portraits-nine-1';
+import {politicalMemoryAdjustment,personalMemoryAdjustment} from '../political-memory.js?v=born-portraits-nine-1';
+import {appointOffice,dismissOffice} from '../office-system.js?v=born-portraits-nine-1';
+import {plotFormationChance} from '../conspiracies.js?v=born-portraits-nine-1';
 
 test('a leader remembers a broken treaty, affecting negotiations but fading over time',()=>{
  let s=newGame('egypt');s.relations['armenia:egypt']=60;const t=proposeAgreement(s,'egypt','armenia','trade').agreement;terminateAgreement(s,t.id,'egypt');

@@ -1,12 +1,12 @@
-import {ROUTES, FACTIONS} from './data.js?v=faces-reported-names-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-reported-names-1';
-import {AGREEMENT_TYPES} from './agreements.js?v=faces-reported-names-1';
-import {formatChronicleEntry} from './chronicle.js?v=faces-reported-names-1';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=faces-reported-names-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=faces-reported-names-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=faces-reported-names-1';
-import {canMediate,requestMediation} from './civil-war.js?v=faces-reported-names-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=faces-reported-names-1';
+import {ROUTES, FACTIONS} from './data.js?v=born-portraits-nine-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=born-portraits-nine-1';
+import {AGREEMENT_TYPES} from './agreements.js?v=born-portraits-nine-1';
+import {formatChronicleEntry} from './chronicle.js?v=born-portraits-nine-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=born-portraits-nine-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=born-portraits-nine-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=born-portraits-nine-1';
+import {canMediate,requestMediation} from './civil-war.js?v=born-portraits-nine-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=born-portraits-nine-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');

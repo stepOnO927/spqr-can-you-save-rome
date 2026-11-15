@@ -1,9 +1,9 @@
-import {FACTIONS,ROUTES} from './data.js?v=faces-reported-names-1';
-import {CHARACTER_CATALOG} from './characters.js?v=faces-reported-names-1';
-import {createFictionalPerson} from './dynasties.js?v=faces-reported-names-1';
-import {generateFictionalName} from './fictional-names.js?v=faces-reported-names-1';
-import {hasNationalIdea} from './national-ideas.js?v=faces-reported-names-1';
-import {activeAgreement,terminateAgreement} from './agreements.js?v=faces-reported-names-1';
+import {FACTIONS,ROUTES} from './data.js?v=born-portraits-nine-1';
+import {CHARACTER_CATALOG} from './characters.js?v=born-portraits-nine-1';
+import {createFictionalPerson} from './dynasties.js?v=born-portraits-nine-1';
+import {generateFictionalName} from './fictional-names.js?v=born-portraits-nine-1';
+import {hasNationalIdea} from './national-ideas.js?v=born-portraits-nine-1';
+import {activeAgreement,terminateAgreement} from './agreements.js?v=born-portraits-nine-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};

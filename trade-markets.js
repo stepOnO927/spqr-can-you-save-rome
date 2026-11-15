@@ -1,12 +1,12 @@
-import {REGIONS,ROUTES} from './data.js?v=faces-reported-names-1';
-import {activeAgreement,proposeAgreement} from './agreements.js?v=faces-reported-names-1';
-import {ROUTES as EURASIAN_ROUTES,REGIONS as EURASIAN_REGIONS} from './han/data.js?v=faces-reported-names-1';
-import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=faces-reported-names-1';
-import {generateFictionalName} from './fictional-names.js?v=faces-reported-names-1';
-import {reportedControl} from './control-intelligence.js?v=faces-reported-names-1';
-import {COMMODITIES,marketPrice,produceMarketGood} from './market-goods.js?v=faces-reported-names-1';
-import {agriculturalDisruption,agriculturalProduction} from './war-economy.js?v=faces-reported-names-1';
-import {merchantMarketObservation} from './trade-intelligence.js?v=faces-reported-names-1';
+import {REGIONS,ROUTES} from './data.js?v=born-portraits-nine-1';
+import {activeAgreement,proposeAgreement} from './agreements.js?v=born-portraits-nine-1';
+import {ROUTES as EURASIAN_ROUTES,REGIONS as EURASIAN_REGIONS} from './han/data.js?v=born-portraits-nine-1';
+import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=born-portraits-nine-1';
+import {generateFictionalName} from './fictional-names.js?v=born-portraits-nine-1';
+import {reportedControl} from './control-intelligence.js?v=born-portraits-nine-1';
+import {COMMODITIES,marketPrice,produceMarketGood} from './market-goods.js?v=born-portraits-nine-1';
+import {agriculturalDisruption,agriculturalProduction} from './war-economy.js?v=born-portraits-nine-1';
+import {merchantMarketObservation} from './trade-intelligence.js?v=born-portraits-nine-1';
 export {COMMODITIES,marketPrice};
 export const TARIFF_POLICIES=Object.freeze({low:.02,standard:.05,high:.15});
 

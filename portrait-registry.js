@@ -29,7 +29,7 @@ const INSTITUTION_PORTRAITS=[
 ];
 // Limited individual artwork for campaign-born Roman people. A saved claim
 // binds each pair of childhood/adult assets to one person and their parentage.
-const BORN_PORTRAITS={male:['born-m1','born-m2','born-m3','born-m4','born-m5','born-m6','born-m7','born-m8'],female:['born-f1','born-f2','born-f3','born-f4','born-f5','born-f6','born-f7','born-f8']};
+const BORN_PORTRAITS={male:['born-m1','born-m2','born-m3','born-m4','born-m5','born-m6','born-m7','born-m8','born-m9'],female:['born-f1','born-f2','born-f3','born-f4','born-f5','born-f6','born-f7','born-f8','born-f9']};
 // Each portrait is reserved permanently for the first documented fictional
 // nominee of that court in a save; names alone never establish identity.
 const COURT_PORTRAITS={

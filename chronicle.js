@@ -1,7 +1,7 @@
-import {campaignYear,campaignDate} from './campaign-date.js?v=faces-reported-names-1';
-import {ROUTES,FACTIONS} from './data.js?v=faces-reported-names-1';
-import {CHARACTER_CATALOG} from './characters.js?v=faces-reported-names-1';
-import {reportedControl} from './control-intelligence.js?v=faces-reported-names-1';
+import {campaignYear,campaignDate} from './campaign-date.js?v=born-portraits-nine-1';
+import {ROUTES,FACTIONS} from './data.js?v=born-portraits-nine-1';
+import {CHARACTER_CATALOG} from './characters.js?v=born-portraits-nine-1';
+import {reportedControl} from './control-intelligence.js?v=born-portraits-nine-1';
 
 const copy=x=>JSON.parse(JSON.stringify(x));
 const name=(id,lang)=>FACTIONS[id]?.short?.[lang==='zh'?1:0]||id;

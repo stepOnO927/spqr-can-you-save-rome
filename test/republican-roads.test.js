@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import roads from '../republican-roads.js?v=faces-reported-names-1';
+import roads from '../republican-roads.js?v=born-portraits-nine-1';
 
 test('the sourced subset contains only the documented Republican-era road selections',()=>{
  assert.equal(roads.type,'FeatureCollection');

@@ -3,16 +3,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick as romanTick,upgradeSave,PLAYABLE as ROMAN_PLAYABLE} from '../engine.js?v=faces-reported-names-1';
-import {REGIONS as ROMAN_REGIONS} from '../data.js?v=faces-reported-names-1';
-import {finalizeCampaign} from '../legacy.js?v=faces-reported-names-1';
-import {REGIONS} from '../han/data.js?v=faces-reported-names-1';
-import {drawMap} from '../han/map.js?v=faces-reported-names-1';
-import {validateTrees} from '../han/focus.js?v=faces-reported-names-1';
-import {EDICTS} from '../han/court.js?v=faces-reported-names-1';
-import {isLiuClan} from '../han/dynasty.js?v=faces-reported-names-1';
-import {attachHanWorld,advanceHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=faces-reported-names-1';
-import {eastPanel,eastMap} from '../han/east-ui.js?v=faces-reported-names-1';
+import {newGame,tick as romanTick,upgradeSave,PLAYABLE as ROMAN_PLAYABLE} from '../engine.js?v=born-portraits-nine-1';
+import {REGIONS as ROMAN_REGIONS} from '../data.js?v=born-portraits-nine-1';
+import {finalizeCampaign} from '../legacy.js?v=born-portraits-nine-1';
+import {REGIONS} from '../han/data.js?v=born-portraits-nine-1';
+import {drawMap} from '../han/map.js?v=born-portraits-nine-1';
+import {validateTrees} from '../han/focus.js?v=born-portraits-nine-1';
+import {EDICTS} from '../han/court.js?v=born-portraits-nine-1';
+import {isLiuClan} from '../han/dynasty.js?v=born-portraits-nine-1';
+import {attachHanWorld,advanceHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=born-portraits-nine-1';
+import {eastPanel,eastMap} from '../han/east-ui.js?v=born-portraits-nine-1';
 
 const roman=(o={})=>{const s=newGame(o.player||'caesar');if(o.dlc!==false)attachHanWorld(s,{seed:7});return s};
 

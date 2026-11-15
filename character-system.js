@@ -1,18 +1,18 @@
-import {isDeliveredReport} from './person-knowledge.js?v=faces-reported-names-1';
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=faces-reported-names-1';
-import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=faces-reported-names-1';
-import {generateFictionalName} from './fictional-names.js?v=faces-reported-names-1';
-import {FACTIONS,ROUTES} from './data.js?v=faces-reported-names-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=faces-reported-names-1';
-import {potentialConspirators} from './conspiracies.js?v=faces-reported-names-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=faces-reported-names-1';
-import {reportedControl} from './control-intelligence.js?v=faces-reported-names-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=faces-reported-names-1';
-import {activeAgreement} from './agreements.js?v=faces-reported-names-1';
-import {activeModifiers} from './inventions.js?v=faces-reported-names-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=faces-reported-names-1';
-import {namedReportSubjects} from './person-knowledge.js?v=faces-reported-names-1';
-export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=faces-reported-names-1';
+import {isDeliveredReport} from './person-knowledge.js?v=born-portraits-nine-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=born-portraits-nine-1';
+import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=born-portraits-nine-1';
+import {generateFictionalName} from './fictional-names.js?v=born-portraits-nine-1';
+import {FACTIONS,ROUTES} from './data.js?v=born-portraits-nine-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=born-portraits-nine-1';
+import {potentialConspirators} from './conspiracies.js?v=born-portraits-nine-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=born-portraits-nine-1';
+import {reportedControl} from './control-intelligence.js?v=born-portraits-nine-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=born-portraits-nine-1';
+import {activeAgreement} from './agreements.js?v=born-portraits-nine-1';
+import {activeModifiers} from './inventions.js?v=born-portraits-nine-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=born-portraits-nine-1';
+import {namedReportSubjects} from './person-knowledge.js?v=born-portraits-nine-1';
+export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=born-portraits-nine-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.

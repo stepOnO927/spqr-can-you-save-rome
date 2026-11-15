@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-reported-names-1';
-import {assignSuccession,eligibleLiuImperial,leadershipTitle,successorFor,CHARACTER_CATALOG} from '../characters.js?v=faces-reported-names-1';
-import {createFictionalPerson} from '../dynasties.js?v=faces-reported-names-1';
-import {renderGenealogy} from '../genealogy-ui.js?v=faces-reported-names-1';
-import {deriveGovernment} from '../governance.js?v=faces-reported-names-1';
-import {proceduralPortraitSvg} from '../portrait-registry.js?v=faces-reported-names-1';
+import {newGame,upgradeSave} from '../engine.js?v=born-portraits-nine-1';
+import {assignSuccession,eligibleLiuImperial,leadershipTitle,successorFor,CHARACTER_CATALOG} from '../characters.js?v=born-portraits-nine-1';
+import {createFictionalPerson} from '../dynasties.js?v=born-portraits-nine-1';
+import {renderGenealogy} from '../genealogy-ui.js?v=born-portraits-nine-1';
+import {deriveGovernment} from '../governance.js?v=born-portraits-nine-1';
+import {proceduralPortraitSvg} from '../portrait-registry.js?v=born-portraits-nine-1';
 
 test('each Republican command can elevate an original adult political leader after historical successors are lost',()=>{
  for(const [faction,historical] of [['caesar',['caesar','antony','lepidus']],['senate',['pompey','cato','scipio','labienus','cicero']]]){

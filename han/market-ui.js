@@ -1,10 +1,10 @@
-import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-reported-names-1';
-import {activeEasternMerchantPrivilege,cancelEasternSale,cancelEasternSupplyContract,easternMarketOffers,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,proposeEasternSupplyContract,quoteEasternTrade,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy,TARIFF_POLICIES} from './markets.js?v=faces-reported-names-1';
-import {atWar,propose,treaty} from './frontier.js?v=faces-reported-names-1';
-import {FACTIONS} from './data.js?v=faces-reported-names-1';
-import {campaignDate} from '../campaign-date.js?v=faces-reported-names-1';
-import {ownMarketIntelligence} from '../trade-intelligence.js?v=faces-reported-names-1';
-import {protectRoute,ROUTE_PROTECTION_COST} from './silk-road.js?v=faces-reported-names-1';
+import {COMMODITIES,marketPrice} from '../market-goods.js?v=born-portraits-nine-1';
+import {activeEasternMerchantPrivilege,cancelEasternSale,cancelEasternSupplyContract,easternMarketOffers,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,proposeEasternSupplyContract,quoteEasternTrade,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy,TARIFF_POLICIES} from './markets.js?v=born-portraits-nine-1';
+import {atWar,propose,treaty} from './frontier.js?v=born-portraits-nine-1';
+import {FACTIONS} from './data.js?v=born-portraits-nine-1';
+import {campaignDate} from '../campaign-date.js?v=born-portraits-nine-1';
+import {ownMarketIntelligence} from '../trade-intelligence.js?v=born-portraits-nine-1';
+import {protectRoute,ROUTE_PROTECTION_COST} from './silk-road.js?v=born-portraits-nine-1';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(entry,lang)=>esc(Array.isArray(entry)?entry[lang]||entry[0]:entry);
