@@ -2,6 +2,7 @@
 // The in-memory copy keeps the current session playable without claiming persistence.
 export function createStore(name, host = globalThis) {
   const memory = new Map();
+  const pending = new Set();
   let backing;
   let persistent = false;
   try {
@@ -17,6 +18,7 @@ export function createStore(name, host = globalThis) {
     get persistent() { return persistent; },
     getItem(key) {
       const id = String(key);
+      if (pending.has(id)) return memory.has(id) ? memory.get(id) : null;
       if (backing) {
         try {
           const value = backing.getItem(id);
@@ -29,15 +31,16 @@ export function createStore(name, host = globalThis) {
       const id = String(key), text = String(value);
       memory.set(id, text);
       if (persistent) {
-        try { backing.setItem(id, text); }
-        catch { persistent = false; }
-      }
+        try { backing.setItem(id, text); pending.delete(id); }
+        catch { persistent = false; pending.add(id); }
+      } else pending.add(id);
     },
     removeItem(key) {
       const id = String(key);
       memory.delete(id);
+      pending.add(id);
       if (backing) {
-        try { backing.removeItem(id); }
+        try { backing.removeItem(id); pending.delete(id); }
         catch { persistent = false; }
       }
     }

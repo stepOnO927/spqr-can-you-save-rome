@@ -41,4 +41,7 @@ test('quota failures degrade to session memory while retaining readable old save
   assert.equal(store.persistent, false);
   assert.equal(store.getItem('new'), 'temporary');
   assert.equal(store.getItem('old'), 'existing');
+  store.setItem('old', 'updated in session');
+  assert.equal(store.getItem('old'), 'updated in session');
+  assert.equal(items.get('old'), 'existing');
 });
