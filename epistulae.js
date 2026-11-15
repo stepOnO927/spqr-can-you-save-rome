@@ -85,7 +85,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A sealed aid reply can outlive the court that dispatched it; its arrival
   // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -307,6 +307,15 @@ export function syncCoalitionLetters(s){
     options:[],context:{kind:'coalition_result',invitationId:x.id}});
    if(result.ok){x.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-result:'+x.id]=true}
   }
+ }
+}
+
+// A proposal's two journeys have already completed; do not roll a second delivery.
+export function syncAgreementLetters(s){
+ const mail=initializeMail(s),types={full_alliance:['Full alliance','全面同盟'],non_aggression:['Non-aggression pact','互不侵犯条约'],military_access:['Military access','军事通行权'],trade:['Trade agreement','贸易协定'],intelligence:['Intelligence sharing','情报共享'],defensive:['Defensive alliance','防御同盟'],offensive:['Offensive alliance','进攻同盟'],military_support:['Wartime aid agreement','战时援助协定'],political:['Political cooperation','政治合作'],guarantee:['Independence guarantee','独立保障']};
+ for(const x of s.world?.agreementLetters||[]){if(x.actor!==s.player||x.phase!=='delivered'||!['accepted','refused'].includes(x.status)||x.mailId||mail.generated['agreement-result:'+x.id])continue;
+  const terms=types[x.type]||['Diplomatic agreement','外交条约'],accepted=x.status==='accepted',result=sendLetter(s,{senderId:null,senderInstitution:x.target,senderFaction:x.target,recipient:s.player,category:'diplomatic',priority:'important',subject:accepted?['Agreement concluded','条约已达成']:['Agreement declined','条约遭拒'],body:accepted?[`The proposed ${terms[0]} has been concluded; its treaty cost has been paid.`,`提出的${terms[1]}已经达成，条约费用已支付。`]:[`The proposed ${terms[0]} was declined; no treaty cost was paid.`,`提出的${terms[1]}遭到拒绝，未支付条约费用。`],options:[],confidentiality:x.secret?'secret':'ordinary',context:{kind:'agreement_result',proposalId:x.id}});
+  if(result.ok){x.mailId=result.letter.id;result.letter.created=x.answered||{...x.delivered};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['agreement-result:'+x.id]=true}
  }
 }
 
