@@ -424,7 +424,7 @@ test('oasis AI can finance and resell physical silk when the direct Han offer cl
 });
 
 test('a normal four-year campaign produces an autonomous two-court silk chain alongside other goods',()=>{
- let s=newHanGame('parthia',{seed:49});
+ let s=newHanGame('parthia',{seed:1});
  for(let i=0;i<48;i++){
   tick(s);
   if(i===19)s=loadHanSave(serialize(s));
@@ -452,6 +452,26 @@ test('Han, Kangju, Yuezhi and Parthia can negotiate and trade without player ord
  for(const id of powers)assert.ok(s.treaties.some(x=>x.type==='market'&&x.parties.includes(id)),`${id} has no market agreement`);
  assert.ok(s.tradeMarkets.diplomacy.attempts.some(x=>x.status==='accepted'));
  assert.ok(s.tradeMarkets.shipments.every(x=>s.persons[x.merchantId]?.profession==='merchant'));
+});
+
+test('a small non-oasis kingdom autonomously buys and receives a paid lot across a save',()=>{
+ let s=newHanGame('han',{seed:49});s.month=3;
+ s.treaties.push({type:'market',parties:['armenia','atropatene']});
+ for(const [id,faction] of Object.entries(s.factions))faction.treasury=['armenia','atropatene'].includes(id)?300:0;
+ for(const market of Object.values(s.tradeMarkets.regions))for(const item of Object.values(market.goods))item.stock=100;
+ s.tradeMarkets.regions.armenia.goods.grain.stock=0;
+ s.regions.find(r=>r.id==='armenia').fort=5;
+ advanceEasternMarkets(s);
+ for(let i=0;i<3&&!s.tradeMarkets.shipments.some(x=>x.buyer==='armenia');i++)next(s);
+ const shipment=s.tradeMarkets.shipments.find(x=>x.buyer==='armenia'&&x.seller==='atropatene'&&x.commodity==='grain');
+ assert.ok(shipment,'population-four Armenia must be able to place its own real order');
+ assert.equal(s.factions.armenia.treasury,300-shipment.escrow);
+ assert.equal(s.factions.atropatene.treasury,300,'seller is paid only on arrival');
+ s=loadHanSave(serialize(s));for(let i=0;i<3;i++)next(s);
+ assert.equal(s.tradeMarkets.shipments.find(x=>x.id===shipment.id).status,'delivered');
+ assert.equal(s.tradeMarkets.regions.armenia.goods.grain.stock,shipment.quantity);
+ assert.equal(s.factions.atropatene.treasury,300+shipment.price);
+ assert.equal(s.tradeMarkets.transactions.filter(x=>x.shipment===shipment.id).length,1);
 });
 
 test('independent Han markets award a scarce horse lot to the stronger funded bid',()=>{

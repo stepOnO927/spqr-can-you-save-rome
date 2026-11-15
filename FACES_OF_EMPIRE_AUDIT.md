@@ -10,7 +10,7 @@ The draft now includes main through `a0209c73`, including its production GA4
 stream setting and foreign-heir will privacy fix. Main's optional analytics
 is connected across the campaign, atlas and standalone Han views after
 reconciling their differing controls. Its privacy choice remains opt-in;
-the six new analytics unit cases and the full 1,198-test local suite pass. A
+the six new analytics unit cases and the full 1,199-test local suite pass. A
 120-month Roman/Han market simulation also passes after this main integration.
 Main's ninth
 campaign-born portrait pair is also available to new births and compatible
@@ -738,8 +738,18 @@ Small oasis courts now participate in the autonomous market even below the
 former population threshold. They can buy an affordable one-unit lot instead
 of being excluded when a three-unit quote exceeds their cash. Local town
 levies use household service at home but still draw treasury upkeep when sent
-away; AI oasis focus spending keeps an operating reserve. In a normal
-40-month Parthian-observed campaign, Han silk reaches Qiuci and a subsequent
+away; AI oasis focus spending keeps an operating reserve. Small populated
+non-oasis kingdoms now also enter the same market search twice yearly: the
+former threshold excluded 26 courts, including Armenia. The staggered search
+keeps the NPC East timing check below its established ceiling. A small non-oasis
+court also retains at least three quarters of its current treasury when quoting
+an order, so Zhizhi's frontier host is not bankrupted by a discretionary luxury
+purchase. A regression follows an autonomous
+Armenian grain purchase through escrow, save/load, delivery and one-time seller
+payment. The broader buyer pool changes deterministic competition, so the
+existing ordinary two-court silk resale test uses a seed that still exercises
+both paid legs without suppressing the new buyers. In a normal 40-month
+Parthian-observed campaign, Han silk reaches Qiuci and a subsequent
 Qiuci-to-Shule resale settles without player orders, including across a save
 reload. A separate embargo scenario confirms Shanshan-to-Qiemo resale after
 the direct Han offer closes. Both legs use stock, treaties, routes, escrow,

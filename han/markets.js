@@ -414,14 +414,19 @@ function advanceEasternMarketAI(s){
   const path=[];for(let id=origin;id;id=toward.get(id))path.push(id);
   return path;
  };
- const reserve=(id,good)=>id==='han'?100:oasisOwners.has(id)?good==='silk'?2:12:12;
- const buyers=Object.keys(s.factions).filter(id=>id!==s.player&&(regionsByOwner.get(id)||[]).some(r=>(r.pop||0)>=8||r.kind?.startsWith('oasis')));
+ const reserve=(id,good)=>id==='han'?100:oasisOwners.has(id)?good==='silk'?2:12:
+  (regionsByOwner.get(id)||[]).some(r=>(r.pop||0)>=8)?12:Math.max(12,Math.ceil((s.factions[id]?.treasury||0)*.75));
+ // Small populated courts take turns checking the market twice a year. This
+ // includes them without making every quarterly decision search 94 markets.
+ const quarter=Math.floor((s.month-1)/3);
+ const smallCourtTurn=id=>{let hash=0;for(const char of id)hash=(Math.imul(hash,31)+char.charCodeAt(0))>>>0;return (hash&1)===(quarter&1)};
+ const buyers=Object.keys(s.factions).filter(id=>{if(id===s.player)return false;const owned=regionsByOwner.get(id)||[];return owned.some(r=>(r.pop||0)>=8||r.kind?.startsWith('oasis'))||owned.some(r=>(r.pop||0)>0)&&smallCourtTurn(id)});
  for(const buyer of buyers){
   if(s.factions[buyer].treasury<2+COMMODITIES.grain.basePrice)continue;
   const active=activeByBuyer.get(buyer)||[],activeSellerGood=new Set(active.map(x=>`${x.seller}:${x.commodity}`));
   if(active.some(x=>x.status==='traveling')||active.some(x=>x.status==='blocked'&&now-(x.blockedAt??now)<3))continue;
   const candidates=[];
-  for(const destination of (regionsByOwner.get(buyer)||[]).filter(r=>(r.pop||0)>=8||r.kind?.startsWith('oasis')))for(const [good,item] of Object.entries(markets.regions[destination.id].goods)){
+  for(const destination of (regionsByOwner.get(buyer)||[]).filter(r=>(r.pop||0)>0))for(const [good,item] of Object.entries(markets.regions[destination.id].goods)){
    if(['weapons','provisions'].includes(good)&&!s.wars.some(w=>w.includes(buyer)))continue;
    const target=Math.max(4,item.consumption*3+item.production),deficit=target-item.stock;if(deficit<=0)continue;
    const nearby=(offersByGood.get(good)||[]).filter(x=>x.seller!==buyer&&(x.seller!==s.player||x.saleOrderId)&&!atWar(s,buyer,x.seller)&&!activeSellerGood.has(`${x.seller}:${good}`)&&towardFor(destination.id,buyer).has(x.origin))
