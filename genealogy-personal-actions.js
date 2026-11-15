@@ -6,15 +6,15 @@ import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeet
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=(pair,zh)=>Array.isArray(pair)?pair[zh?1:0]:'';
 
-// A foreign fictional person's live catalog name is not a dated report.  Use
-// an anonymous numbered lead until the intelligence model stores that name.
+// Foreign fictional names are taken only from delivered, dated reports.
 export function genealogyMeetingContacts(s,zh=false){
  const result=[];
  for(const faction of Object.keys(s.knowledge?.[s.player]||{})){
   if(faction===s.player||faction==='rebels'||!FACTIONS[faction])continue;
   const ids=reportedHealthSubjects(s,s.player,faction);let unknown=0;
   for(const id of ids){const person=CHARACTER_CATALOG[id];if(!person)continue;
-   const personName=person.fictional?(zh?`未核实人物 ${++unknown}`:`Unverified person ${++unknown}`):label(person.name,zh);
+   const reported=person.fictional?reportedPersonName(s,s.player,faction,id):null;
+   const personName=person.fictional?(reported?`${label(reported.name,zh)} (${zh?'报告于':'reported'} ${campaignDate(reported.month,reported.year,zh?'zh':'en')})`:(zh?`未核实人物 ${++unknown}`:`Unverified person ${++unknown}`)):label(person.name,zh);
    result.push({id,faction,label:`${personName} · ${label(FACTIONS[faction].short,zh)}`});
   }
  }
@@ -29,7 +29,7 @@ export function bindGenealogyPersonalActions(panel,s,id,zh=false,onChange=()=>{}
  const area=document.createElement('section');area.className='rule-block gene-personal-actions';
  const journey=person.travel,contacts=genealogyMeetingContacts(s,zh),statuses={pending:['Awaiting reply','等待答复'],no_contact:['Could not meet','未能见面'],no_reply:['No reply','没有答复'],declined:['Declined','被拒绝'],met:['Met personally','已亲自会面']};
  const ownMeetings=(s.meetings||[]).filter(m=>m.actor===s.player&&m.person===id).slice(0,10);
- const targetName=m=>{const record=CHARACTER_CATALOG[m.target];return record&&!record.fictional?label(record.name,zh):(zh?'未核实人物':'Unverified person')};
+ const targetName=m=>{const record=CHARACTER_CATALOG[m.target];return record&&!record.fictional?label(record.name,zh):label(m.reportedName,zh)||(zh?'未核实人物':'Unverified person')};
  const next=journey?.legs?.[0]?.to,regionName=region=>label(s.regions.find(r=>r.id===region)?.name,zh)||(zh?'未知':'Unknown');
  const travel=journey?`<p>${zh?'正在旅行；当前路段剩余':'Travelling; current leg remaining'} ${escape(journey.remaining)} ${zh?'个月':'months'} · ${zh?'下一战区':'Next theater'}: ${escape(regionName(next))} · ${zh?'目的地':'Destination'}: ${escape(regionName(journey.destination))}</p><p>${journey.haltAfterLeg?(zh?'已下令抵达下一战区后停下。':'Ordered to stop after the current leg.'):(zh?'行程按原计划继续。':'Journey continues as planned.')}</p>${journey.legs?.length>1?`<button type="button" data-gene-halt>${journey.haltAfterLeg?(zh?'撤回停下命令':'Withdraw stop order'):(zh?'在下一战区停下':'Stop at next theater')}</button><p class="hint">${zh?'完成当前路段后停下，已付旅费不退还。':'Stops after the current leg; travel costs are not refunded.'}</p>`:''}`:`<p class="hint">${zh?'人物位置按战区模拟。任职者、随军统帅和重病人物不能单独出行；路线依据已有控制报告，抵达时才核实。':'Locations are simulated by theater. Officeholders, army commanders and seriously ill people cannot travel independently. Routes use possibly outdated control reports and are checked on arrival.'}</p><label>${zh?'旅行目的地':'Travel destination'} <select data-gene-destination>${s.regions.map(r=>`<option value="${escape(r.id)}">${escape(label(r.name,zh))}</option>`).join('')}</select></label><button type="button" data-gene-preview>${zh?'查看行程':'Preview journey'}</button>`;
  const choices=contacts.map((c,i)=>`<option value="${i}">${escape(c.label)}</option>`).join('');
