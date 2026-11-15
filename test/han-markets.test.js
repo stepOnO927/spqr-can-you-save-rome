@@ -462,6 +462,25 @@ test('autonomous Han buyers seek another horse supplier after a wartime blockade
  assert.ok(['blocked','stranded'].includes(first.status));
 });
 
+test('Han AI considers a reachable supplier beyond four closer wartime offers',()=>{
+ const s=newHanGame(null,{seed:48});s.month=3;
+ for(const r of s.regions)if(r.owner==='han')r.pop=r.id==='dunhuang'?20:0;
+ for(const market of Object.values(s.tradeMarkets.regions))for(const item of Object.values(market.goods)){item.stock=0;item.production=0;item.consumption=0}
+ for(const id of ['shanshan','jushi','yanqi','qiang','monan']){
+  const horses=s.tradeMarkets.regions[id].goods.horses;horses.stock=60;horses.production=3;
+ }
+ for(const faction of Object.values(s.factions))faction.treasury=0;
+ s.factions.han.treasury=600;setRelation(s,'han','huhanye',85);
+ for(const seller of ['shanshan','jushi','yanqi','qiang'])assert.equal(declareWar(s,'han',seller).ok,true);
+ const source=s.tradeMarkets.regions.monan.goods.horses.stock,cash=s.factions.han.treasury;
+ advanceEasternMarkets(s);
+ const shipment=s.tradeMarkets.shipments.find(x=>x.buyer==='han'&&x.commodity==='horses');
+ assert.ok(shipment,'Han should find a reachable fifth supplier');
+ assert.equal(shipment.seller,'huhanye');assert.equal(shipment.destination,'dunhuang');
+ assert.equal(s.tradeMarkets.regions.monan.goods.horses.stock,source+3-shipment.quantity);
+ assert.equal(s.factions.han.treasury,cash-shipment.escrow);
+});
+
 test('local eastern prices react to actual scarcity and surplus',()=>{
  const s=newHanGame('han',{seed:12}),horses=s.tradeMarkets.regions.dunhuang.goods.horses;
  horses.stock=0;horses.production=0;horses.consumption=0;advanceEasternMarkets(s);

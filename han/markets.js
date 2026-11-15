@@ -325,14 +325,14 @@ function advanceEasternMarketAI(s){
   const candidates=[];
   for(const destination of s.regions.filter(r=>r.owner===buyer&&((r.pop||0)>=8||r.kind?.startsWith('oasis'))))for(const [good,item] of Object.entries(markets.regions[destination.id].goods)){
    const target=Math.max(4,item.consumption*3+item.production),deficit=target-item.stock;if(deficit<=0)continue;
-   const nearby=markets.offers.filter(x=>x.commodity===good&&x.seller!==buyer&&(x.seller!==s.player||x.saleOrderId))
+   const nearby=markets.offers.filter(x=>x.commodity===good&&x.seller!==buyer&&(x.seller!==s.player||x.saleOrderId)&&!atWar(s,buyer,x.seller)&&!active.some(shipment=>shipment.seller===x.seller&&shipment.commodity===good))
+    .map(offer=>({...offer,path:pathFor(offer.origin,destination.id,buyer)})).filter(offer=>offer.path)
     .sort((a,b)=>{const sourceA=region(s,a.origin),sourceB=region(s,b.origin);
      const costA=a.price+Math.abs(sourceA.lon-destination.lon)*.15+Math.abs(sourceA.lat-destination.lat)*.15;
      const costB=b.price+Math.abs(sourceB.lon-destination.lon)*.15+Math.abs(sourceB.lat-destination.lat)*.15;
      return costA-costB}).slice(0,4);
    for(const offer of nearby){
-    if(atWar(s,buyer,offer.seller)||active.some(x=>x.seller===offer.seller&&x.commodity===good))continue;
-    const path=pathFor(offer.origin,destination.id,buyer);if(!path)continue;
+    const path=offer.path;
     // Small intermediary courts can fund one batch when a larger lot would
     // exceed their treasury reserve. Every size still uses the real route.
     for(let quantity=Math.min(3,deficit,offer.available);quantity>=1;quantity--){
