@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=meeting-name-1';
+import {newGame,upgradeSave} from '../engine.js?v=audience-mail-1';
 import {createFictionalPerson} from '../dynasties.js?v=meeting-name-1';
 import {buildChessboard} from '../chessboard.js?v=meeting-name-1';
 import {addReport} from '../character-system.js?v=meeting-name-1';
