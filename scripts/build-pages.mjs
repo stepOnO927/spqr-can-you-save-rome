@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const out=path.join(root,'dist');
-const entries=['index.html','map-lab/index.html','han/index.html'];
+const entries=['index.html','map-lab/index.html','han/index.html','release.json'];
 const publicDocs=['map-lab/SOURCES.md','MAP_SOURCES.md','assets/portraits/SOURCES.md'];
 const selected=new Set();
 const limit=25*1024*1024;
