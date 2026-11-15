@@ -18,25 +18,52 @@ const supplyPassable = (state, actor, region) => {
   return access.allowed && !['war', 'unconfirmed'].includes(access.basis);
 };
 
-export function footholdConnected(state, entityId, actor) {
+export function footholdSupplyRoute(state, entityId, actor) {
   const entity = localEntity(state, entityId), start = entity && host(state, entity);
-  if (!start || !hasLocalRight(state, entity, actor)) return false;
-  if (!supplyPassable(state, actor, start)) return false;
-  if (start.owner === actor && start.administrativeStatus === 'integrated') return true;
-  const homes = new Set(state.regions.filter(region => region.id !== start.id && region.owner === actor && region.administrativeStatus === 'integrated').map(region => region.id));
-  const queue = [start.id], seen = new Set(queue);
+  if (!start || !hasLocalRight(state, entity, actor) || !supplyPassable(state, actor, start)) return null;
+  const homes = new Set(state.regions.filter(region => region.owner === actor && region.administrativeStatus === 'integrated').map(region => region.id));
+  if (homes.has(start.id)) return {nodes: [start.id], months: 1, treasury: 2, seaLegs: 0};
+  const queue = [{id: start.id, nodes: [start.id], months: 0, seaLegs: 0}], seen = new Set();
   while (queue.length) {
+    queue.sort((a, b) => a.months - b.months || a.nodes.length - b.nodes.length || a.id.localeCompare(b.id));
     const current = queue.shift();
+    if (seen.has(current.id)) continue;
+    seen.add(current.id);
+    if (homes.has(current.id)) return {nodes: [...current.nodes].reverse(), months: Math.max(1, current.months), treasury: 2 + (current.nodes.length - 1) * 2 + current.seaLegs * 6, seaLegs: current.seaLegs};
     for (const [from, to, kind] of ROUTES) {
-      const next = from === current ? to : to === current ? from : null;
-      if (!next || seen.has(next) || kind === 'sea' && state.factions[actor]?.treasury < 8) continue;
+      const next = from === current.id ? to : to === current.id ? from : null;
+      if (!next || seen.has(next)) continue;
       const region = state.regions.find(item => item.id === next);
       if (!region || !supplyPassable(state, actor, region)) continue;
-      if (homes.has(next)) return true;
-      seen.add(next); queue.push(next);
+      queue.push({id: next, nodes: [...current.nodes, next], months: current.months + (kind === 'sea' ? 3 : 1) + (['hills', 'desert'].includes(region.terrain) ? 1 : 0), seaLegs: current.seaLegs + Number(kind === 'sea')});
     }
   }
-  return false;
+  return null;
+}
+export const footholdConnected = (state, entityId, actor) => !!footholdSupplyRoute(state, entityId, actor);
+
+export function footholdShipmentQuote(state, entityId, actor = state.player, food = 4) {
+  const entity = localEntity(state, entityId), foothold = entity?.foothold, faction = state.factions[actor];
+  if (!foothold || foothold.owner !== actor || foothold.level < 1 || !faction || !Number.isInteger(food) || food < 1) return {ok: false, reason: 'unavailable'};
+  const route = footholdSupplyRoute(state, entityId, actor);
+  if (!route) return {ok: false, reason: 'route_cut'};
+  const committed = (Array.isArray(foothold.shipments) ? foothold.shipments : []).reduce((total, shipment) => total + shipment.food, 0);
+  if (foothold.stockFood + committed + food > foothold.level * 12) return {ok: false, reason: 'capacity'};
+  if (faction.food < food || faction.treasury < route.treasury) return {ok: false, reason: 'resources'};
+  return {ok: true, food, route};
+}
+
+export function footholdShipmentRouteOpen(state, entityId, shipment) {
+  const entity = localEntity(state, entityId), route = shipment?.route;
+  if (!entity || !Array.isArray(route) || !route.length || route.at(-1) !== entity.theater || !hasLocalRight(state, entity, shipment.owner)) return false;
+  const first = state.regions.find(region => region.id === route[0]);
+  if (!first || first.owner !== shipment.owner || first.administrativeStatus !== 'integrated') return false;
+  for (let i = 0; i < route.length; i++) {
+    const region = state.regions.find(place => place.id === route[i]);
+    if (!region || !supplyPassable(state, shipment.owner, region)) return false;
+    if (i && !ROUTES.some(([a, b]) => a === route[i - 1] && b === route[i] || b === route[i - 1] && a === route[i])) return false;
+  }
+  return true;
 }
 
 export function footholdQuote(state, entityId, actor = state.player) {
@@ -68,12 +95,16 @@ export function startFoothold(state, entityId, actor = state.player) {
 }
 
 export function stockFoothold(state, entityId, actor = state.player, food = 1) {
-  const entity = localEntity(state, entityId), foothold = entity?.foothold;
-  if (!foothold || foothold.owner !== actor || foothold.level < 1 || !Number.isInteger(food) || food < 1) return {ok: false, reason: 'unavailable'};
-  if (!footholdConnected(state, entityId, actor)) return {ok: false, reason: 'route_cut'};
-  if (state.factions[actor]?.food < food || foothold.stockFood + food > foothold.level * 12) return {ok: false, reason: 'capacity_or_food'};
-  state.factions[actor].food -= food; foothold.stockFood += food;
-  return {ok: true, stockFood: foothold.stockFood};
+  const quote = footholdShipmentQuote(state, entityId, actor, food);
+  if (!quote.ok) return quote;
+  const foothold = localEntity(state, entityId).foothold;
+  state.factions[actor].food -= food;
+  state.factions[actor].treasury -= quote.route.treasury;
+  if (!Array.isArray(foothold.shipments)) foothold.shipments = [];
+  const shipment = {id: `foothold-shipment:${state.nextFootholdShipmentId || 1}`, owner: actor, food, route: [...quote.route.nodes], remaining: quote.route.months, transportCost: quote.route.treasury, blockedMonths: 0, sent: {year: state.year, month: state.month}};
+  state.nextFootholdShipmentId = (state.nextFootholdShipmentId || 1) + 1;
+  foothold.shipments.push(shipment);
+  return {ok: true, shipment};
 }
 
 export function resupplyAtFoothold(state, entityId, armyId, actor = state.player) {
@@ -89,7 +120,20 @@ export function advanceFootholds(state) {
     const foothold = entity.foothold;
     if (!foothold) continue;
     const actor = foothold.owner;
-    if (!hasLocalRight(state, entity, actor)) { entity.lastFootholdLoss = {owner: actor, level: foothold.level, year: state.year, month: state.month}; entity.foothold = null; continue; }
+    if (!hasLocalRight(state, entity, actor)) { entity.lastFootholdLoss = {owner: actor, level: foothold.level, stockFood: foothold.stockFood, shipmentFood: (Array.isArray(foothold.shipments) ? foothold.shipments : []).reduce((sum, item) => sum + item.food, 0), year: state.year, month: state.month}; entity.foothold = null; continue; }
+    if (!Array.isArray(foothold.shipments)) foothold.shipments = [];
+    for (const shipment of [...(foothold.shipments || [])]) {
+      if (!footholdShipmentRouteOpen(state, entity.id, shipment)) {
+        shipment.blockedMonths = (shipment.blockedMonths || 0) + 1;
+        if (shipment.blockedMonths < 3) continue;
+        entity.lastShipmentLoss = {id: shipment.id, owner: actor, food: shipment.food, year: state.year, month: state.month, reason: 'route_cut'};
+      } else {
+        shipment.blockedMonths = 0;
+        if (--shipment.remaining > 0) continue;
+        foothold.stockFood += shipment.food;
+      }
+      foothold.shipments.splice(foothold.shipments.indexOf(shipment), 1);
+    }
     const project = foothold.project;
     if (!project) continue;
     const cost = costs[project.targetLevel];

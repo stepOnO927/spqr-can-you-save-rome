@@ -39,7 +39,7 @@ import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from '
 import {initializeTerritories,transferTerritory,territoryTaxFactor,administrationQuote,startAdministration,advanceTerritories} from './territory.js';
 import {initializeLocalEntities,advanceLocalEntities,localEntity,localEntityRevenue,localContactQuote,offerLocalContact,localSubmissionQuote,offerLocalSubmission,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from './local-polities.js';
 import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing,respondBorderIncident} from './border-access.js';
-import {advanceFootholds,footholdQuote,startFoothold} from './foothold.js';
+import {advanceFootholds,footholdQuote,footholdShipmentQuote,startFoothold,stockFoothold} from './foothold.js';
 import {titleAssetQuote,settleTitleByTreaty} from './peace-titles.js';
 import {advanceLocalResistance} from './local-resistance.js';
 export {queueMission};
@@ -644,6 +644,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   if(owner!=='rebels'&&s.month%6===3&&s.factions[owner]?.treasury>=35){const town=s.regions.flatMap(r=>r.localEntities||[]).find(entity=>entity.type==='roman_town'&&localSubmissionQuote(s,entity.id,owner).ok);if(town)offerLocalSubmission(s,town.id,owner)}
   if(owner!=='rebels'&&s.month%6===5){const town=s.regions.flatMap(r=>r.localEntities||[]).find(entity=>entity.type==='roman_town'&&entity.lastOutcome?.actor===owner&&entity.lastOutcome.proposal==='submission'&&!entity.lastOutcome.accepted&&s.armies.some(a=>a.owner===owner&&a.region===entity.theater&&localSiegeQuote(s,entity.id,a.id,owner).ok));if(town){const unit=s.armies.find(a=>a.owner===owner&&a.region===town.theater&&localSiegeQuote(s,town.id,a.id,owner).ok);besiegeLocalEntity(s,town.id,unit.id,owner)}}
   if(owner!=='rebels'&&s.month%6===4&&s.factions[owner]?.treasury>=70){const base=s.regions.flatMap(r=>r.localEntities||[]).find(entity=>footholdQuote(s,entity.id,owner).ok);if(base)startFoothold(s,base.id,owner)}
+  if(owner!=='rebels'&&s.month%3===2&&s.factions[owner]?.food>=12&&s.factions[owner]?.treasury>=20){const base=s.regions.flatMap(r=>r.localEntities||[]).find(entity=>entity.foothold?.owner===owner&&entity.foothold.level>=1&&entity.foothold.stockFood+(Array.isArray(entity.foothold.shipments)?entity.foothold.shipments:[]).reduce((sum,item)=>sum+item.food,0)<4&&footholdShipmentQuote(s,entity.id,owner,4).ok);if(base)stockFoothold(s,base.id,owner,4)}
   const f=s.factions[owner],owned=s.regions.filter(r=>r.owner===owner);
   const existingFeint=s.world.aiFeints?.[owner];if(existingFeint&&!s.armies.some(a=>a.id===existingFeint.army&&a.owner===owner&&a.men>0))delete s.world.aiFeints[owner];
   const internalOpponent=other=>Object.entries(s.world.disputes||{}).some(([parent,d])=>d.war&&[parent,d.war.rival].includes(owner)&&[parent,d.war.rival].includes(other));
