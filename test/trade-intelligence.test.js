@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=guardian-age-1';
+import {newGame,upgradeSave} from '../engine.js?v=audience-silence-1';
 import {proposeAgreement,terminateAgreement} from '../agreements.js?v=agreement-courier-1';
 import {addReport,queueMission,advanceOperations,intelligencePartners,intelligencePartnerAccess,reportEvidence,refreshReportConfidence} from '../character-system.js?v=guardian-age-1';
 
