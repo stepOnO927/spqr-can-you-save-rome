@@ -1,4 +1,4 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=family-correspondent-names-1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=world-kings-border-1';
 import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=family-correspondent-names-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=family-correspondent-names-1';
 import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=family-correspondent-names-1';

@@ -5,7 +5,7 @@ import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,su
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=infant-portraits-1';
 import {visiblePersonName} from './character-system.js?v=family-correspondent-names-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=family-correspondent-names-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=world-kings-border-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);

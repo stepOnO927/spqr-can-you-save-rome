@@ -30,8 +30,9 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, startExpedition, cancelExpedition, resumeExpedition, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, answerBorderIncident, queueMission, setTax, personalDiplomaticCredit, administrationQuote, startAdministration} from '../engine.js?v=world-kings-family-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, startExpedition, cancelExpedition, resumeExpedition, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, answerBorderIncident, queueMission, setTax, personalDiplomaticCredit, administrationQuote, startAdministration} from '../engine.js?v=world-kings-border-1';
 import {renderRoutePlanner} from './route-ui.js?v=world-kings-family-1';
+import {setBorderPolicy} from '../border-access.js';
 import {renderFootholdPanel} from './foothold-ui.js';
 import {armyExpeditionSupply} from '../expedition-supply.js';
 import {showIncomingTitleTerms,showOutgoingTitleTerms,bindPeaceTitleChoice} from './peace-title-ui.js';
@@ -41,7 +42,7 @@ import {localEntity,localContactQuote,offerLocalContact,localSubmissionQuote,off
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=succession-ui-recovery-1';
-import {createCharacterUI} from './character-ui.js?v=world-kings-family-1';
+import {createCharacterUI} from './character-ui.js?v=world-kings-border-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=infant-portraits-1';
 import {renderAidRequest} from '../strategic-aid-ui.js?v=world-kings-family-1';
 import {reportedArmies,visiblePersonName} from '../character-system.js?v=family-correspondent-names-1';
@@ -74,8 +75,9 @@ const marchReason=reason=>sharedMarchReason(reason,lang);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function inspect(title,description){if(window.matchMedia('(max-width:700px)').matches&&!['Select a command','选择军队'].includes(title)){document.querySelector('.selection').classList.remove('collapsed');document.querySelector('#selection-toggle').setAttribute('aria-expanded','true')}document.querySelector('#selection-title').textContent=title;document.querySelector('#selection-detail').textContent=description;document.querySelector('#lab-orders').replaceChildren();document.querySelector('#command-detail').replaceChildren();scheduleLeaderLayout()}
 const borderButton=document.createElement('button');borderButton.id='border-incidents';borderButton.className='hud-button';borderButton.type='button';document.querySelector('#chronicle')?.after(borderButton);
+const policyButton=document.createElement('button');policyButton.id='border-policy';policyButton.className='hud-button';policyButton.type='button';borderButton.after(policyButton);
 const ownBorderIncidents=()=>state.borderIncidents?.filter(item=>[item.attacker,item.defender].includes(state.player)&&['open','protested'].includes(item.status))||[];
-function refreshBorderButton(){const count=ownBorderIncidents().length;borderButton.hidden=!count;borderButton.textContent=lang==='zh'?`边境事件 ${count}`:`BORDER INCIDENTS ${count}`}
+function refreshBorderButton(){const count=ownBorderIncidents().length;borderButton.hidden=!count;borderButton.textContent=lang==='zh'?`边境事件 ${count}`:`BORDER INCIDENTS ${count}`;policyButton.textContent=lang==='zh'?'边境政策':'BORDER POLICY'}
 function showBorderIncidents(){
  activeArmy=null;activeFaction=null;activeBattle=null;clearReach();
  inspect(lang==='zh'?'边境事件':'BORDER INCIDENTS',lang==='zh'?'这些事件只显示本方亲历或收到的越境情况。':'Only incidents involving your faction appear here.');
@@ -86,6 +88,18 @@ function showBorderIncidents(){
   for(const [choice,zh,en] of actions){if(choice==='protest'&&item.status==='protested')continue;const button=document.createElement('button');button.dataset.borderResponse=choice;button.textContent=lang==='zh'?zh:en;button.onclick=()=>{const result=answerBorderIncident(state,item.id,state.player,choice);if(!result.ok){note.textContent=lang==='zh'?`此项行动暂不可用：${result.reason}`:`Action unavailable: ${result.reason}`;return}renderHud();renderArmies();showBorderIncidents();emit('border',item.territory)};card.append(button)}panel.append(card)}
 }
 borderButton.onclick=showBorderIncidents;refreshBorderButton();
+function showBorderPolicies(){
+ activeArmy=null;activeFaction=null;activeBattle=null;clearReach();
+ inspect(lang==='zh'?'边境政策':'BORDER POLICY',lang==='zh'?'公开的本方通行规则；只影响跨境人物和商旅，不授予军队通行权。':'Your declared access rules for foreign travelers and merchants. They do not grant army passage.');
+ const panel=document.querySelector('#command-detail'),policy=state.borderPolicies[state.player];
+ for(const [kind,zh,en] of [['civilian','民用旅行','CIVILIAN TRAVEL'],['commercial','商业通行','COMMERCIAL ACCESS'],['diplomatic','外交使团','DIPLOMATIC ACCESS']]){
+  const label=document.createElement('label');label.textContent=lang==='zh'?zh:en;const select=document.createElement('select');select.setAttribute('aria-label',lang==='zh'?zh:en);
+  for(const [value,cn,english] of [['open','允许','Open'],['closed','关闭','Closed']]){const option=document.createElement('option');option.value=value;option.textContent=lang==='zh'?cn:english;select.append(option)}
+  select.value=policy[kind];select.onchange=()=>{const result=setBorderPolicy(state,state.player,kind,select.value);if(!result.ok)select.value=policy[kind]};label.append(select);panel.append(label);
+ }
+ const note=document.createElement('p');note.className='battle-note';note.textContent=lang==='zh'?'已生效的贸易条约仍可单独允许缔约方商人进入；民用与外交许可不会放行军队。正在旅行的人物在抵达每个战区时重新核实控制方和政策。':'An active trade treaty may separately admit the partner’s merchants. Civilian and diplomatic rules never authorize armies. Travelers recheck control and policy at each theater on arrival.';panel.append(note);
+}
+policyButton.onclick=showBorderPolicies;
 const characterUI=createCharacterUI({getState:()=>state,getLanguage:()=>lang,inspect,onShowCharacter:(id,context={})=>{activeInfo={type:"character",id,reportedName:context.reportedName||null};activeArmy=null;activeBattle=null;activeFaction=null;clearReach()},onFocusTheater:id=>{if(!namedPoints[id])return;map.flyTo({center:namedPoints[id],zoom:5.3});status.textContent=lang==='zh'?'地图显示的是报告中的战区，不代表人物当前所在地。':'Showing the reported theater, not the person’s current location.';status.style.display='block'},onGovernmentChanged:()=>{renderHud();showFaction(state.player)},onStateChanged:()=>renderHud()});
 function marker(element,coordinates,anchor='center',offset=[0,0]){if(!element.getAttribute('aria-label'))element.setAttribute('aria-label',lang==='zh'?'地图标记':'Map marker');return new maplibregl.Marker({element,anchor,offset}).setLngLat(coordinates).addTo(map)}
 const cityMarkers=[];

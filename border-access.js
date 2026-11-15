@@ -13,10 +13,39 @@ export function initializeBorderPolicies(state) {
   state.nextBorderIncidentId ||= 1;
   for (const owner of Object.keys(state.factions || {})) {
     state.borderPolicies[owner] ||= {
-      civilian: 'closed', commercial: 'closed', diplomatic: 'closed', military: 'closed'
+      civilian: 'open', commercial: 'closed', diplomatic: 'open', military: 'closed'
     };
+    // Earlier saves stored closed civilian/diplomatic placeholders without
+    // enforcing them. Preserve their actual travel rules during migration.
+    if ((state.borderPolicyVersion || 0) < 2) {
+      state.borderPolicies[owner].civilian = 'open';
+      state.borderPolicies[owner].diplomatic = 'open';
+    }
   }
+  state.borderPolicyVersion = 2;
   return state;
+}
+
+export function setBorderPolicy(state, owner, kind, mode) {
+  if (!state.factions?.[owner] || !['civilian', 'commercial', 'diplomatic'].includes(kind) || !['open', 'closed'].includes(mode)) return {ok: false, reason: 'invalid'};
+  initializeBorderPolicies(state);
+  state.borderPolicies[owner][kind] = mode;
+  return {ok: true, policy: state.borderPolicies[owner]};
+}
+
+// Declared border policies are public. A route preview supplies its dated
+// control report; arrival supplies actual control after observing the border.
+export function nonMilitaryAccessStatus(state, actor, theaterId, reportedOwner, kind = 'civilian') {
+  const target = state.regions.find(region => region.id === theaterId);
+  if (!target || !['civilian', 'commercial', 'diplomatic'].includes(kind)) return {allowed: false, reason: 'invalid'};
+  const owner = reportedOwner === undefined ? target.owner : reportedOwner;
+  if (!owner) return {allowed: true, basis: 'unconfirmed', owner: null};
+  if (owner === actor) return {allowed: true, basis: 'own', owner};
+  if (atWar(state, actor, owner)) return {allowed: false, reason: 'war', owner};
+  const policy = state.borderPolicies?.[owner]?.[kind] || (kind === 'commercial' ? 'closed' : 'open');
+  if (policy === 'open') return {allowed: true, basis: 'open_policy', owner};
+  if (kind === 'commercial' && activeAgreement(state, actor, owner, 'trade')) return {allowed: true, basis: 'trade_treaty', owner};
+  return {allowed: false, reason: 'closed', owner};
 }
 
 export function recordUnauthorizedCrossing(state, army, target) {
