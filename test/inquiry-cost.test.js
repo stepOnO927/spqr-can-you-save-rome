@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {newGame,inquiryCost,sendInquiry,upgradeSave,tick} from '../engine.js?v=frontier-response-1';
+import test from 'node:test';import assert from 'node:assert/strict';import {newGame,inquiryCost,sendInquiry,upgradeSave,tick} from '../engine.js?v=player-aid-letter-1';
 test('the displayed inquiry price matches the amount actually paid with or without the idea',()=>{
  const base=newGame('caesar');assert.equal(inquiryCost(base,'caesar'),3);base.factions.caesar.treasury=2;assert.equal(sendInquiry(base,'caesar','egypt').reason,'treasury');assert.equal((base.inquiries||[]).length,0);
  let s=newGame('caesar');s.inventions.caesar.active.diplomacy.push('intelligence_networks');s.factions.caesar.treasury=2;assert.equal(inquiryCost(s,'caesar'),2);assert.equal(sendInquiry(s,'caesar','egypt').ok,true);assert.equal(s.factions.caesar.treasury,0);assert.equal(s.inquiries[0].status,'pending');assert.equal(s.inquiries[0].remaining,4);assert.equal(s.knowledge.caesar.egypt.reports.length,0);s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);assert.equal(s.inquiries[0].remaining,3);

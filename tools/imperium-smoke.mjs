@@ -3,7 +3,7 @@ import {chromium} from 'playwright';import assert from 'node:assert/strict';
 const b=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),p=await b.newPage({viewport:{width:1600,height:1000}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
 try{
  await p.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await p.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
- await p.evaluate(async()=>{const e=await import('/engine.js?v=frontier-response-1'),s=e.newGame('caesar');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}))});await p.reload();
+ await p.evaluate(async()=>{const e=await import('/engine.js?v=player-aid-letter-1'),s=e.newGame('caesar');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}))});await p.reload();
  await p.locator('[data-tab="focus"]').click();await p.locator('[data-imp-open-focus]').click();
  await p.locator('g[data-imp-focus="cae_fate_republic"]').click();await p.locator('[data-imp-start-focus="cae_fate_republic"]').click();
  assert.match(await p.locator('g[data-imp-focus="cae_fate_republic"]').innerHTML(),/进行中/);
