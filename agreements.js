@@ -23,7 +23,7 @@ export function activeAgreement(s,a,b,type){
  return (s.agreements||[]).find(t=>t.status==='active'&&t.type===type&&t.parties.includes(a)&&t.parties.includes(b)&&date(s)<t.expiresAt&&!atWar(s,a,b));
 }
 export function visibleAgreements(s,viewer){return (s.agreements||[]).filter(t=>!t.secret||t.parties.includes(viewer))}
-export function proposeAgreement(s,actor,target,type,{secret=false}={}){
+export function checkAgreement(s,actor,target,type,{evaluateRecipient=true}={}){
  initializeAgreements(s);const def=AGREEMENT_TYPES[type];
  if(!def||actor===target||actor==='rebels'||target==='rebels'||!s.factions[actor]||!s.factions[target])return {ok:false,reason:'invalid'};
  if(!s.regions.some(r=>r.owner===actor)||!s.regions.some(r=>r.owner===target)||atWar(s,actor,target))return {ok:false,reason:'unavailable'};
@@ -32,7 +32,11 @@ export function proposeAgreement(s,actor,target,type,{secret=false}={}){
  const relation=s.relations[key(actor,target)]??0,credibility=s.diplomaticCredibility[actor]??100;
  // The recipient weighs the proposer's public reliability. No foreign hidden
  // attributes are read and declining an offer reveals no private information.
- if(relation-(100-credibility)*.4+politicalMemoryAdjustment(s,target,actor)+(hasNationalIdea(s,actor,'diplomacy')?4:0)<def.threshold)return {ok:false,reason:'declined'};
+ if(evaluateRecipient&&relation-(100-credibility)*.4+politicalMemoryAdjustment(s,target,actor)+(hasNationalIdea(s,actor,'diplomacy')?4:0)<def.threshold)return {ok:false,reason:'declined'};
+ return {ok:true};
+}
+export function proposeAgreement(s,actor,target,type,{secret=false,priorConsent=false}={}){
+ const check=checkAgreement(s,actor,target,type,{evaluateRecipient:!priorConsent});if(!check.ok)return check;const def=AGREEMENT_TYPES[type];
  s.factions[actor].treasury-=def.cost;
  const t={id:`agreement:${s.nextAgreementId||1}`,type,parties:[actor,target],start:{year:s.year,month:s.month},duration:def.duration,expiresAt:date(s)+def.duration,obligations:[...def.obligations],benefits:[...def.benefits],terms:['military_support','guarantee'].includes(type)?{provider:actor,recipient:target}:{kind:type,obligations:[...def.obligations],benefits:[...def.benefits],...(type==='trade'?{marketAccess:true}:{})},termination:'expiry, mutual consent, or breach',diplomaticCost:def.cost,breachPenalty:20,secret:!!secret,status:'active'};
  s.nextAgreementId=(s.nextAgreementId||1)+1;s.agreements.push(t);rememberPoliticalEvent(s,target,actor,'negotiated_agreement',2);return {ok:true,agreement:t};
