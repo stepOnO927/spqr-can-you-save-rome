@@ -5,15 +5,18 @@ const browser=await chromium.launch({headless:true,...(process.env.SPQR_BROWSER_
 const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 const base=`http://127.0.0.1:${process.env.SPQR_SMOKE_PORT||5173}`;
+// Seed 14 places both a city and a chief in Caesar's opening discoveries,
+// while Senate also controls a generated independent village.
+const fixtureSeed=14;
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
- const generated=await page.evaluate(async()=>{
+ const generated=await page.evaluate(async(seed)=>{
   const {newGame}=await import('/engine.js?v=world-kings-trade-1');
   const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-trade-1');
   const {localDiscoveryLevel}=await import('/local-discovery.js?v=world-kings-trade-1');
   const {advanceVillages}=await import('/local-villages.js');
-  const s=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:2});
+  const s=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:seed});
   const entities=s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&!entity.proceduralVillage&&!entity.proceduralNomad&&!entity.proceduralWilderness);
   const known=entities.find(entity=>entity.type==='city_state'&&localDiscoveryLevel(s,s.player,entity.id)>=3);
   const chief=entities.find(entity=>entity.type==='strongman'&&localDiscoveryLevel(s,s.player,entity.id)>=3);
@@ -23,7 +26,7 @@ try{
   if(village.village.lastEvent?.kind!=='harvest')throw Error('no seeded village harvest event');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
   return {count:entities.length,name:known.name[0].toUpperCase(),population:known.population,ruler:known.ruler.name[0],chief:chief.name[0].toUpperCase(),village:village.name[0].toUpperCase(),chiefPopulation:chief.population,villagePopulation:village.village.population};
- });
+ },fixtureSeed);
  assert.ok(generated.count>=6&&generated.count<=7);
  await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});
  const marker=page.locator(`.city-marker[data-city="${generated.name}"]`);
@@ -57,15 +60,15 @@ try{
  assert.ok((await page.locator('#command-detail').innerText()).includes(generated.ruler));
  await chiefMarker.click();assert.match(await page.locator('#command-detail').innerText(),/Offer takes 2 more months/);
  await villageMarker.click();assert.match(await page.locator('#command-detail').innerText(),/Personal service does not transfer the village/);assert.match(await page.locator('#command-detail').innerText(),/Harvest gathering used one local food/);
- const independent=await page.evaluate(async()=>{
+ const independent=await page.evaluate(async(seed)=>{
   const {newGame}=await import('/engine.js?v=world-kings-trade-1');
   const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-trade-1');
-  const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:2});
+  const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:seed});
   const village=s.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.proceduralIndependentVillage&&entity.controller===s.player);
   if(!village)throw Error('no owned independent village');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
   return village.name[0].toUpperCase();
- });
+ },fixtureSeed);
  await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});
  const independentMarker=page.locator(`.city-marker[data-city="${independent}"]`);
  await independentMarker.waitFor({state:'visible'});await independentMarker.click();
