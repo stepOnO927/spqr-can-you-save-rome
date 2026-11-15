@@ -2,6 +2,7 @@ import land from '../mediterranean-land.js';
 import ocean from '../mediterranean-ocean.js?v=2';
 import bathymetry from '../mediterranean-bathymetry.js?v=2';
 import rivers from '../mediterranean-rivers.js';
+import poRiverDetail from '../po-river-detail.js';
 import lakes from '../mediterranean-lakes.js';
 import historical from '../historical-territories.js';
 import egyptContours from './egypt-contours.js?v=1';
@@ -45,6 +46,7 @@ export const physicalStyle={
   'elevation-egypt-higher':{type:'raster-dem',tiles:['./terrain/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,minzoom:9,maxzoom:9,bounds:[24,28,36,34],attribution:terrainAttribution},
   historical:{type:'geojson',data:historical},
   rivers:{type:'geojson',data:rivers,attribution:'Hydrography: Natural Earth 1:10m, public domain'},
+  'po-river-detail':{type:'geojson',data:poRiverDetail,attribution:"Modern Po: European Union's Copernicus Land Monitoring Service information, EU-Hydro v1.3, DOI 10.2909/393359a7-7ebd-4a52-80ac-1a18d5f3db9c; adapted river crop"},
   'nile-delta':{type:'geojson',data:nileDelta,attribution:'Approximate Nile Delta between Natural Earth river branches'},
   lakes:{type:'geojson',data:lakes},
   'egypt-contours':{type:'geojson',data:egyptContours,attribution:terrainAttribution},
@@ -95,7 +97,9 @@ export const physicalStyle={
   {id:'coastline',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,.9,8,1.7],'line-opacity':.87}},
   {id:'natural-lakes',type:'fill',source:'lakes',paint:{'fill-color':'#5b9093','fill-opacity':.88}},
   {id:'lake-shores',type:'line',source:'lakes',paint:{'line-color':'#c6d2ba','line-opacity':.65,'line-width':.65}},
-  {id:'waterways-major',type:'line',source:'rivers',filter:['<=',['get','rank'],6],paint:{'line-color':'#5c9293','line-opacity':.88,'line-width':['interpolate',['linear'],['zoom'],4,.65,7,1.15,9,2]}},
+  {id:'waterways-major',type:'line',source:'rivers',filter:['all',['<=',['get','rank'],6],['!=',['get','name'],'Po']],paint:{'line-color':'#5c9293','line-opacity':.88,'line-width':['interpolate',['linear'],['zoom'],4,.65,7,1.15,9,2]}},
+  {id:'waterways-po-overview',type:'line',source:'rivers',maxzoom:8.1,filter:['==',['get','name'],'Po'],paint:{'line-color':'#5c9293','line-opacity':.88,'line-width':['interpolate',['linear'],['zoom'],4,.65,7,1.15,8.1,1.4]}},
+  {id:'waterways-po-close',type:'line',source:'po-river-detail',minzoom:8.1,paint:{'line-color':'#5c9293','line-opacity':.78,'line-width':['interpolate',['linear'],['zoom'],8.1,1,8.6,1.2,9.2,1.55]}},
   {id:'waterways-minor',type:'line',source:'rivers',minzoom:7,filter:['>',['get','rank'],6],paint:{'line-color':'#67999a','line-opacity':.72,'line-width':['interpolate',['linear'],['zoom'],7,.55,9,1.05]}},
   // These broad historical polygons orient the overview, but their straight
   // source edges should not masquerade as surveyed provincial borders locally.

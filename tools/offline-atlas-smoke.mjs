@@ -13,6 +13,9 @@ assert.deepEqual([...new Set(bathymetry.features.map(feature=>feature.properties
 assert.ok(physicalStyle.layers.some(layer=>layer.id==='depth-200'&&layer.source==='bathymetry'));
 assert.ok(physicalStyle.sources.rivers.data.features.some(feature=>feature.properties.name==='Tevere'));
 assert.ok(physicalStyle.sources.rivers.data.features.some(feature=>feature.properties.name==='Po'));
+assert.ok(physicalStyle.sources['po-river-detail'].data.features.length>=900,'Local Po geometry must be bundled for offline play');
+assert.ok(physicalStyle.layers.some(layer=>layer.id==='waterways-po-overview'&&layer.maxzoom===8.1));
+assert.ok(physicalStyle.layers.some(layer=>layer.id==='waterways-po-close'&&layer.minzoom===8.1));
 assert.ok(physicalStyle.sources.rivers.data.features.every(feature=>feature.properties.kind!=='Canal'));
 assert.ok(physicalStyle.sources.lakes.data.features.every(feature=>feature.properties.kind!=='Reservoir'));
 assert.deepEqual(physicalStyle.sources['elevation-fine'].bounds,[-20,18,60,58]);

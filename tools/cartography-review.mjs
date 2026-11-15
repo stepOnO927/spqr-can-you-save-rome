@@ -110,10 +110,16 @@ try{
  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
  const plain=page.locator('[data-physical-label="po-plain"]'),plainBox=await plain.boundingBox();
  if(await plain.isHidden()||await plain.textContent()!=='Po Plain'||!plainBox||plainBox.x<380||plainBox.y<110||plainBox.x+plainBox.width>1080||plainBox.y+plainBox.height>740)throw Error(`Po Plain label is obscured or off-map: ${JSON.stringify(plainBox)}`);
+ const poLayer=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {close:map.getLayer('waterways-po-close')?.minzoom,overview:map.getLayer('waterways-po-overview')?.maxzoom,loaded:map.isSourceLoaded('po-river-detail')}});
+ if(poLayer.close!==8.1||poLayer.overview!==8.1||!poLayer.loaded)throw Error(`Po detail did not replace the overview river at local zoom: ${JSON.stringify(poLayer)}`);
  await page.screenshot({path:resolve(output,'po-plain-close.png')});
  await page.locator('#language').click();
  if(await plain.textContent()!=='波河平原')throw Error('Po Plain terrain label must translate to Chinese');
  await page.locator('#language').click();
+ await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[12.48,44.96],zoom:9.05})});
+ await page.waitForTimeout(3500);
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden},null,{timeout:30000});
+ await page.screenshot({path:resolve(output,'po-delta-close.png')});
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[12.4,43.2],zoom:5.45})});
  await page.waitForFunction(()=>document.querySelector('#map-charting').hidden,null,{timeout:12000});
  if(!(await page.locator('[data-physical-label="northern-adriatic"]').isHidden()))throw Error('Close-sea label must hide on the overview');
