@@ -9,9 +9,9 @@ import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatal
 import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,snapshotReportedPeople,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=future-dated-reports-1';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=future-dated-reports-1';
 import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=future-dated-reports-1';
-import {advanceConspiracies} from './conspiracies.js?v=succession-ui-recovery-1';
+import {advanceConspiracies} from './conspiracies.js?v=future-dated-reports-1';
 import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=fort-intel-1';
-import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=succession-ui-recovery-1';
+import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=future-dated-reports-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=future-dated-reports-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
 import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=future-dated-reports-1';
@@ -31,9 +31,9 @@ import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?
 import {respondToFrontierReports} from './frontier-response.js?v=frontier-response-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=diplomatic-chronicle-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
-import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=player-coalition-letters-1';
-import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=player-coalition-letters-1';
-import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=succession-ui-recovery-1';
+import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=future-dated-reports-1';
+import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=future-dated-reports-1';
+import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=future-dated-reports-1';
 import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=future-dated-reports-1';
 import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=future-dated-reports-1';
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';

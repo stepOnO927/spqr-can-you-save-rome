@@ -1,6 +1,6 @@
 import {isDeliveredReport} from '../person-knowledge.js?v=future-dated-reports-1';
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
-import {identityKnowledge} from './identity-knowledge.js?v=phase-x-1';
+import {identityKnowledge} from './identity-knowledge.js?v=future-dated-reports-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=infant-portraits-1';
 import {HISTORICAL_DEATHS,HISTORICAL_BIRTH_ESTIMATES,HISTORICAL_NAME_FORMS,HISTORICAL_RELATIONSHIPS} from '../historical-reference.js?v=phase-x-1';
 import {officeOf} from '../office-system.js?v=future-dated-reports-1';

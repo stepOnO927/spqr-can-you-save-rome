@@ -8,7 +8,7 @@ import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynast
 import {canHoldOffice} from '../office-system.js?v=future-dated-reports-1';
 import {renderGenealogy} from '../genealogy-ui.js?v=future-dated-reports-1';
 import {finalizeCampaign} from '../legacy.js?v=future-dated-reports-1';
-import {startDynasticWar} from '../civil-war.js?v=succession-ui-recovery-1';
+import {startDynasticWar} from '../civil-war.js?v=future-dated-reports-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=infant-portraits-1';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';

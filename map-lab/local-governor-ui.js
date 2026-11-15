@@ -1,3 +1,4 @@
+import {isDeliveredReport} from '../person-knowledge.js?v=future-dated-reports-1';
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
 import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
@@ -10,7 +11,7 @@ const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>'
 export function reportedTheaterAdministrators(state,theater){
  const control=reportedControl(state,state.player,theater),owner=control?.owner;
  if(!owner||owner===state.player||owner==='shared'||owner==='rebels')return [];
- return (state.knowledge?.[state.player]?.[owner]?.reports||[]).filter(r=>r.kind==='office_theater:'+theater).map((r,index)=>({report:r,index,date:(r.observationYear??r.year)*12+(r.observationMonth??r.month)})).filter(x=>Number.isFinite(x.date)).sort((a,b)=>b.date-a.date||a.index-b.index).slice(0,4).map(({report:r})=>({person:CHARACTER_CATALOG[r.value]?r.value:null,personName:Array.isArray(r.peopleNames?.[r.value])&&r.peopleNames[r.value].length===2&&r.peopleNames[r.value].every(x=>typeof x==='string'&&x.length>0)?[...r.peopleNames[r.value]]:CHARACTER_CATALOG[r.value]&&!CHARACTER_CATALOG[r.value].fictional?CHARACTER_CATALOG[r.value].name:['Unrecorded name','姓名未记录'],year:r.observationYear??r.year,month:r.observationMonth??r.month,receivedYear:r.year,receivedMonth:r.month,source:r.source,originSource:r.originSource||null,fromFaction:r.fromFaction||null,confidence:r.confidence||'unverified',outdated:(state.year-(r.observationYear??r.year))*12+state.month-(r.observationMonth??r.month)>24}));
+ return (state.knowledge?.[state.player]?.[owner]?.reports||[]).filter(r=>isDeliveredReport(state,r)&&r.kind==='office_theater:'+theater).map((r,index)=>({report:r,index,date:(r.observationYear??r.year)*12+(r.observationMonth??r.month)})).filter(x=>Number.isFinite(x.date)).sort((a,b)=>b.date-a.date||a.index-b.index).slice(0,4).map(({report:r})=>({person:CHARACTER_CATALOG[r.value]?r.value:null,personName:Array.isArray(r.peopleNames?.[r.value])&&r.peopleNames[r.value].length===2&&r.peopleNames[r.value].every(x=>typeof x==='string'&&x.length>0)?[...r.peopleNames[r.value]]:CHARACTER_CATALOG[r.value]&&!CHARACTER_CATALOG[r.value].fictional?CHARACTER_CATALOG[r.value].name:['Unrecorded name','姓名未记录'],year:r.observationYear??r.year,month:r.observationMonth??r.month,receivedYear:r.year,receivedMonth:r.month,source:r.source,originSource:r.originSource||null,fromFaction:r.fromFaction||null,confidence:r.confidence||'unverified',outdated:(state.year-(r.observationYear??r.year))*12+state.month-(r.observationMonth??r.month)>24}));
 }
 
 // These are theater-level game assignments, not historical city governors.

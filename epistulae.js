@@ -5,7 +5,7 @@ import {formatChronicleEntry} from './chronicle.js?v=succession-ui-recovery-1';
 import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=future-dated-reports-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=infant-portraits-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {canMediate,requestMediation} from './civil-war.js?v=succession-ui-recovery-1';
+import {canMediate,requestMediation} from './civil-war.js?v=future-dated-reports-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');

@@ -1,6 +1,6 @@
 import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=future-dated-reports-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {startDynasticWar} from './civil-war.js?v=succession-ui-recovery-1';
+import {startDynasticWar} from './civil-war.js?v=future-dated-reports-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=infant-portraits-1';
 

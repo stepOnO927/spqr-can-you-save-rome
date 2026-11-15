@@ -1,3 +1,4 @@
+import {isDeliveredReport} from './person-knowledge.js?v=future-dated-reports-1';
 import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=succession-ui-recovery-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 
@@ -31,7 +32,7 @@ export function startPoliticalWar(s,parent,plot){
 // A remembered control report or unit sighting is a lead, not proof the
 // government still exists. Do not inspect the live faction list here.
 export function knownDynasticFactions(s,viewer){
- return Object.values(CONFIG).map(x=>x.rival).filter(id=>s.regions.some(r=>reportedControl(s,viewer,r.id)?.owner===id)||Object.keys(s.knowledge[viewer]?.[id]?.sightings||{}).length>0||s.knowledge[viewer]?.[id]?.reportedLeaders?.length>0);
+ return Object.values(CONFIG).map(x=>x.rival).filter(id=>s.regions.some(r=>reportedControl(s,viewer,r.id)?.owner===id)||Object.values(s.knowledge[viewer]?.[id]?.sightings||{}).some(r=>isDeliveredReport(s,r))||s.knowledge[viewer]?.[id]?.reportedLeaders?.length>0);
 }
 
 export function startDynasticWar(s,parent,claimant){
@@ -134,7 +135,7 @@ const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.l
 // on the sender's own leads, never on whether the hidden war is still active.
 export function canMediate(s,actor,parent){
  const cfg=CONFIG[parent];if(!cfg||!['caesar','senate'].includes(actor)||!s.factions[actor]||!s.regions.some(r=>r.owner===actor))return false;
- return knownDynasticFactions(s,actor).includes(cfg.rival)||(s.knowledge?.[actor]?.[parent]?.reports||[]).some(r=>r.kind==='clashes'&&r.value==='reported');
+ return knownDynasticFactions(s,actor).includes(cfg.rival)||(s.knowledge?.[actor]?.[parent]?.reports||[]).some(r=>isDeliveredReport(s,r)&&r.kind==='clashes'&&r.value==='reported');
 }
 export function requestMediation(s,actor,parent){
  if(!canMediate(s,actor,parent))return {ok:false,reason:'unavailable'};

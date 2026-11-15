@@ -1,6 +1,7 @@
+import {isDeliveredReport} from '../person-knowledge.js?v=future-dated-reports-1';
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
 import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=future-dated-reports-1';
-import {reassurePerson} from '../conspiracies.js?v=succession-ui-recovery-1';
+import {reassurePerson} from '../conspiracies.js?v=future-dated-reports-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 
@@ -8,7 +9,7 @@ const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>'
 export function renderSecurity({panel,state,language,refresh}){
  const zh=language==='zh',i=zh?1:0,faction=state.player,box=document.createElement('section');box.className='mission-box';const counterCost=missionCost(state,faction,'counter');
  const officers=Object.values(state.world.characters).filter(c=>c.faction===faction&&CHARACTER_CATALOG[c.id]&&c.alive&&!c.missing&&!c.travel&&!['seriously_ill','dying','deceased'].includes(c.health)&&!(state.world.leadership[faction]||[]).includes(c.id));
- const ops=state.operations.filter(o=>o.actor===faction&&o.target===faction&&o.type==='counter').slice(0,6),reports=(state.knowledge[faction]?.[faction]?.reports||[]).filter(r=>r.kind==='conspiracy').slice(0,6);
+ const ops=state.operations.filter(o=>o.actor===faction&&o.target===faction&&o.type==='counter').slice(0,6),reports=(state.knowledge[faction]?.[faction]?.reports||[]).filter(r=>isDeliveredReport(state,r)&&r.kind==='conspiracy').slice(0,6);
  const held=state.world.captives.filter(c=>c.holder===faction&&c.state==='held');
  const incoming=state.releaseRequests.filter(r=>r.holder===faction&&(r.status==='awaiting_decision'||r.answeredYear!=null)).slice(0,8);
  const statuses={pending:['In progress','进行中'],failed:['Failed','调查失败'],complete:['Report received','报告已收到']};

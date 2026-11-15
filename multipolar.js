@@ -12,7 +12,7 @@ export function opportunityEvidenceSignature(s,actor){
  const f=s.factions[actor];if(!f)return '';
  const evidence=Object.entries(s.knowledge?.[actor]||{}).sort(([a],[b])=>a.localeCompare(b)).map(([target,k])=>{
   const reports=(k.reports||[]).filter(r=>isDeliveredReport(s,r)&&r.kind==='stability').slice(-32).map(r=>[r.value,r.confidence,r.observationYear??r.year,r.observationMonth??r.month]).sort();
-  const sightings=Object.values(k.sightings||{}).sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month)).slice(0,32).map(x=>[x.id,x.region,x.year,x.month]).sort();
+  const sightings=Object.values(k.sightings||{}).filter(x=>isDeliveredReport(s,x)).sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month)).slice(0,32).map(x=>[x.id,x.region,x.year,x.month]).sort();
   return [target,reports,sightings];
  });
  const wars=reportedDiplomacy(s,actor).filter(x=>x.kind==='war'&&x.status==='active').map(x=>x.id).sort();

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=future-dated-reports-1';
 import {startResearch,equipIdea,advanceInventions} from '../inventions.js?v=mission-discount-1';
 import {hasNationalIdea} from '../national-ideas.js?v=grand-chessboard-2';
-import {plotFormationChance} from '../conspiracies.js?v=succession-ui-recovery-1';
+import {plotFormationChance} from '../conspiracies.js?v=future-dated-reports-1';
 import {religiousPolicy} from '../religion.js?v=future-dated-reports-1';
 import {newRevolutionScenario} from '../scenarios.js?v=future-dated-reports-1';
 import {advanceMovements} from '../movements.js?v=future-dated-reports-1';

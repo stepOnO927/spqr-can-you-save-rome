@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=future-dated-reports-1';
-import {sendCoalitionInvitation,advanceCoalitionInvitations,answerCoalitionInvitation} from '../coalition-negotiations.js?v=player-coalition-letters-1';
+import {sendCoalitionInvitation,advanceCoalitionInvitations,answerCoalitionInvitation} from '../coalition-negotiations.js?v=future-dated-reports-1';
 import {receivedMail,replyToLetter,syncCoalitionLetters} from '../epistulae.js?v=future-dated-reports-1';
 
 function setup(){
