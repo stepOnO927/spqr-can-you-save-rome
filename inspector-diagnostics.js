@@ -1,5 +1,6 @@
 import {ROUTES} from './data.js?v=world-kings-trade-1';
 import {SUBJECT_TYPES} from './suzerainty.js?v=world-kings-trade-1';
+import {LOCAL_GENERATION_BANDS} from './local-generation.js';
 // Read-only startup and deep state checks. Never migrates or mutates a save.
 export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
  const findings=[],add=(severity,code,path,detail)=>findings.push({severity,code,path,detail});
@@ -78,7 +79,7 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
    if(!factionIds.has(incident?.attacker)||!factionIds.has(incident?.defender)||!regionIds.has(incident?.territory)||incident?.origin&&!regionIds.has(incident.origin))add('warning','invalid-border-incident',base,String(incident?.territory));
    if(!Number.isFinite(incident?.attackerLoss)||incident.attackerLoss<0||!Number.isFinite(incident?.defenderLoss)||incident.defenderLoss<0)add('warning','invalid-border-loss',base,String(incident?.attackerLoss));
   }
-  const localIds=new Set();
+  const localIds=new Set();let generatedCount=0;
   for(const [i,r] of s.regions.entries())for(const [j,entity] of (r.localEntities||[]).entries()){
    const base=`regions[${i}].localEntities[${j}]`;
    if(!entity?.id||localIds.has(entity.id))add('fatal','duplicate-local-entity',base,String(entity?.id));else localIds.add(entity.id);
@@ -87,6 +88,7 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
    if(entity?.ruler&&(!entity.ruler.id||!Array.isArray(entity.ruler.name)||entity.ruler.name.length!==2||entity.ruler.name.some(name=>typeof name!=='string'||!name)))add('warning','invalid-local-ruler',`${base}.ruler`,String(entity.ruler?.id));
    if(entity?.controller!==entity?.id&&!factionIds.has(entity?.controller))add('fatal','invalid-local-controller',`${base}.controller`,String(entity?.controller));
    if(!Number.isFinite(entity?.militia)||entity.militia<0)add('fatal','invalid-local-militia',`${base}.militia`,String(entity?.militia));
+   if(entity?.procedural){generatedCount++;if(entity.historical!==false||entity.spatialAccuracy!=='fictional_approximate_point'||!Array.isArray(entity.name)||entity.name.length!==2||entity.name.some(name=>typeof name!=='string'||!name)||!Number.isInteger(entity.population)||entity.population<100||entity.militia>entity.population/4||!Number.isFinite(entity.treasury)||entity.treasury<0||!Number.isFinite(entity.food)||entity.food<0||!Number.isInteger(entity.strategy)||entity.strategy<1||entity.strategy>5)add('warning','invalid-generated-polity',base,String(entity.id))}
    if(entity.resistance!=null&&(!Number.isFinite(entity.resistance)||entity.resistance<0||entity.resistance>100))add('fatal','invalid-local-resistance',`${base}.resistance`,String(entity.resistance));
    if(entity.type==='village'){
     const v=entity.village,level=(key,max)=>Number.isInteger(v?.[key])&&v[key]>=0&&v[key]<=max;
@@ -97,6 +99,8 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
    if(entity?.foothold){const foothold=entity.foothold;if(!factionIds.has(foothold.owner)||!Number.isInteger(foothold.level)||foothold.level<0||foothold.level>4||!Number.isFinite(foothold.stockFood)||foothold.stockFood<0||foothold.stockFood>foothold.level*12)add('warning','invalid-foothold',`${base}.foothold`,String(foothold.level));if(foothold.project&&(foothold.project.actor!==foothold.owner||!Number.isInteger(foothold.project.targetLevel)||foothold.project.targetLevel<=foothold.level||!Number.isFinite(foothold.project.remaining)||foothold.project.remaining<1))add('warning','invalid-foothold-project',`${base}.foothold.project`,String(foothold.project.targetLevel))}
    if(entity?.foothold?.shipments){const shipments=entity.foothold.shipments;if(!Array.isArray(shipments))add('warning','invalid-foothold-shipments',`${base}.foothold.shipments`,'Not a shipment list');else{let committed=0;for(const [k,shipment] of shipments.entries()){const path=`${base}.foothold.shipments[${k}]`;if(shipment?.owner!==entity.foothold.owner||!Number.isInteger(shipment.food)||shipment.food<1||!Number.isInteger(shipment.remaining)||shipment.remaining<1||!Array.isArray(shipment.route)||!shipment.route.length||shipment.route.at(-1)!==entity.theater||shipment.route.some(id=>!regionIds.has(id))||!Number.isInteger(shipment.blockedMonths)||shipment.blockedMonths<0||shipment.blockedMonths>2)add('warning','invalid-foothold-shipment',path,String(shipment?.id));committed+=Number.isFinite(shipment?.food)?shipment.food:0}if(entity.foothold.stockFood+committed>entity.foothold.level*12)add('warning','foothold-overcommitted',`${base}.foothold.shipments`,String(committed))}}
   }
+  const generation=s.world?.localGeneration;
+  if(generation&&(!Number.isInteger(generation.seed)||generation.seed<0||generation.seed>0xffffffff||!LOCAL_GENERATION_BANDS[generation.difficulty]||!Number.isInteger(generation.count)||generation.count!==generatedCount))add('warning','invalid-local-generation','world.localGeneration',String(generation?.count));
   for(const [viewer,records] of Object.entries(s.localDiscovery||{})){
    if(!factionIds.has(viewer)||!records||typeof records!=='object'||Array.isArray(records)){add('warning','invalid-local-discovery',`localDiscovery.${viewer}`,'Invalid viewer or record list');continue}
    for(const [id,record] of Object.entries(records))if(!localIds.has(id)||!Number.isInteger(record?.level)||record.level<1||record.level>5||!Number.isInteger(record?.year)||!Number.isInteger(record?.month)||record.month<1||record.month>12||typeof record.source!=='string')add('warning','invalid-local-discovery',`localDiscovery.${viewer}.${id}`,String(record?.level));

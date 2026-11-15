@@ -1,4 +1,5 @@
 import {ROUTES} from './data.js?v=world-kings-trade-1';
+import {generatedLocalPolities,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js';
 
 // Settlement control is stored inside its host theater. An autonomous city
 // does not transfer the whole theater, and its point is not a border polygon.
@@ -77,15 +78,13 @@ export function villageDevelopment(village) {
   };
 }
 export function localEntityRevenue(state, actor) {
-  const city = localEntity(state, 'massilia');
   let revenue = 0;
-  if (city && host(state, city)?.owner === actor) {
-    if (city.controller === actor) revenue += city.resistance >= 60 ? 0 : city.administrativeStatus === 'administered' ? 3 : 2;
-    else if (city.controller === city.id && (city.access[actor] > now(state) || city.overlord === actor)) revenue++;
-  }
   for (const region of state.regions.filter(item => item.owner === actor)) for (const entity of region.localEntities || []) {
     if (entity.type === 'roman_town') revenue += entity.controller === actor ? entity.resistance >= 60 ? 0 : 1 : -1;
-    if (entity.type === 'microstate' && entity.controller === actor && entity.resistance < 60) revenue += entity.administrativeStatus === 'administered' ? 2 : 1;
+    if (['city_state','microstate','tribe'].includes(entity.type)) {
+      if (entity.controller === actor && entity.resistance < 60) revenue += entity.administrativeStatus === 'administered' ? entity.type === 'city_state' ? 3 : 2 : entity.type === 'city_state' ? 2 : 1;
+      else if (entity.controller === entity.id && (entity.access[actor] > now(state) || entity.overlord === actor)) revenue++;
+    }
     if (entity.type === 'village' && entity.controller === actor && entity.village?.market > 0 && entity.village.satisfaction >= 40) revenue += 1 + (villageDevelopment(entity.village).marketTown ? 1 : 0);
   }
   return revenue;
@@ -115,6 +114,31 @@ export function initializeLocalEntities(state, {opening = false} = {}) {
     });
   }
   return state;
+}
+
+// Difficulty is selected after the opening state is assembled. Only new
+// campaigns call this; loaded campaigns retain every local polity and value.
+export function generateOpeningLocalPolities(state,difficulty,seed){
+ if(state.world?.localGeneration)return state;
+ if(!LOCAL_GENERATION_BANDS[difficulty])throw new Error('Invalid local generation difficulty');
+ const number=seed>>>0;
+ const hash=id=>[...id].reduce((value,char)=>Math.imul(value^char.charCodeAt(0),16777619)>>>0,number);
+ for(const id of ['massilia','bibracte','commagene']){
+  const entity=localEntity(state,id);if(!entity)continue;
+  const profile=historicalLocalProfile(hash(id),difficulty,entity.type,id==='massilia'?1.15:1);
+  Object.assign(entity,profile,{seed:hash(`${id}:decisions`)});
+ }
+ const candidates=generatedLocalPolities(number,difficulty,new Set(state.regions.map(region=>region.id)));
+ for(const template of candidates){
+  const region=host(state,template);if(!region)continue;
+  region.localEntities||=[];
+  if(region.localEntities.some(entity=>entity.id===template.id))continue;
+  region.localEntities.push({...template,controller:template.id,legalSovereign:template.id,militaryOccupier:null,
+   administrativeStatus:'self_governing',overlord:null,access:{},pending:null,siege:null,administrationProject:null,
+   resistance:0,lastOfferAt:{}});
+ }
+ state.world.localGeneration={version:1,seed:number,difficulty,count:candidates.length};
+ return state;
 }
 
 export function localContactQuote(state, id, actor = state.player, proposal = 'access') {
@@ -209,12 +233,28 @@ export function startLocalAdministration(state, id, actor = state.player) {
   return {ok: true, months: quote.months};
 }
 
+export function localOfferChance(state,entity,actor,proposal){
+ const skill=entity.strategy||2,army=state.armies.filter(unit=>unit.owner===actor&&unit.region===entity.theater&&!unit.move).reduce((total,unit)=>total+unit.men,0);
+ const pressure=army/Math.max(500,entity.militia);
+ if(proposal==='access')return Math.max(.08,Math.min(.9,(actor==='senate'?.7:.45)+(pressure>=2?.025*skill:entity.treasury>=25?-.018*skill:0)));
+ return Math.max(.04,Math.min(.75,.22+(pressure>=2?.045*skill:-.028*skill)+(entity.food<8?.06:0)));
+}
+
 export function advanceLocalEntities(state) {
   for (const region of state.regions) for (const entity of region.localEntities || []) {
+    if(entity.procedural&&entity.controller===entity.id&&!entity.siege){
+      const threat=state.armies.filter(army=>army.region===entity.theater&&army.owner!==entity.overlord&&army.men>0).reduce((total,army)=>Math.max(total,army.men),0);
+      if(state.month%3===0&&entity.strategy>=3&&threat>entity.militia&&entity.treasury>=4&&entity.food>=2&&(entity.lastMobilized?.year!==state.year||entity.lastMobilized?.month!==state.month)){
+        const recruits=Math.min(Math.max(0,Math.floor(entity.population*.22)-entity.militia),entity.strategy*60);
+        if(recruits>0){entity.treasury-=4;entity.food-=2;entity.militia+=recruits;entity.lastMobilized={year:state.year,month:state.month}}
+      }else if(state.month===12&&entity.strategy>=4&&threat===0&&entity.fort<3&&entity.treasury>=16&&entity.food>=6&&(entity.lastFortified?.year!==state.year||entity.lastFortified?.month!==state.month)){
+        entity.treasury-=12;entity.food-=2;entity.fort++;entity.lastFortified={year:state.year,month:state.month};
+      }
+    }
     if (entity.pending && --entity.pending.remaining <= 0) {
       const {actor, proposal, expectedController} = entity.pending;
       const submission = proposal === 'submission';
-      const accepted = submission ? entity.type === 'roman_town' && entity.controller === expectedController && state.wars.some(pair => pair.includes(actor) && pair.includes(expectedController)) && host(state, entity)?.owner === actor && !entity.siege && state.armies.some(army => army.owner === actor && army.region === entity.theater && !army.move && army.men >= Math.max(1000, entity.militia)) && roll(entity) < 0.6 : entity.controller === entity.id && !entity.siege && roll(entity) < (proposal === 'access' ? actor === 'senate' ? 0.7 : 0.45 : 0.22);
+      const accepted = submission ? entity.type === 'roman_town' && entity.controller === expectedController && state.wars.some(pair => pair.includes(actor) && pair.includes(expectedController)) && host(state, entity)?.owner === actor && !entity.siege && state.armies.some(army => army.owner === actor && army.region === entity.theater && !army.move && army.men >= Math.max(1000, entity.militia)) && roll(entity) < 0.6 : entity.controller === entity.id && !entity.siege && roll(entity) < localOfferChance(state,entity,actor,proposal);
       entity.lastOutcome = {actor, proposal, accepted, year: state.year, month: state.month};
       entity.pending = null;
       if (accepted && proposal === 'access') entity.access[actor] = now(state) + 24;
@@ -224,7 +264,7 @@ export function advanceLocalEntities(state) {
     if (entity.siege) {
       const {actor, armyId} = entity.siege, army = state.armies.find(unit => unit.id === armyId && unit.owner === actor && unit.region === entity.theater && !unit.move && unit.men > 0);
       if (!army) { entity.siege = null; continue; }
-      army.men = Math.max(1, army.men - Math.max(20, Math.round(entity.militia * 0.012)));
+      army.men = Math.max(1, army.men - Math.max(20, Math.round(entity.militia * 0.012 * (1+(entity.strategy||0)*.08))));
       entity.militia = Math.max(0, Math.round(entity.militia * 0.9));
       if (--entity.siege.remaining > 0 || army.men <= entity.militia) continue;
       entity.controller = actor;

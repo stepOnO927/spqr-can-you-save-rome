@@ -3,6 +3,7 @@ import historical from '../historical-territories.js';
 import {REGIONS as HAN_REGIONS, ROUTES as HAN_ROUTES} from '../han/data.js';
 import {REGION_GEO} from '../han/geography.js';
 import {LOCAL_ENTITY_TEMPLATES} from '../local-polities.js';
+import {LOCAL_GENERATION_SITES} from '../local-generation.js';
 
 const mainIds = new Set(REGIONS.map(region => region.id));
 const mapped = new Set(historical.features.flatMap(feature => feature.properties.regions || []));
@@ -24,7 +25,10 @@ const audit = {
     invalidRoutes: ROUTES.filter(([a, b]) => !mainIds.has(a) || !mainIds.has(b)),
     isolatedTerritories: [...neighbors].filter(([, links]) => !links.size).map(([id]) => id),
     localEntities: LOCAL_ENTITY_TEMPLATES.length,
-    invalidLocalEntities: LOCAL_ENTITY_TEMPLATES.filter(entity => !mainIds.has(entity.theater) || !Array.isArray(entity.coordinates) || entity.coordinates.length !== 2 || entity.coordinates.some(value => !Number.isFinite(value)) || (entity.historical && !entity.source) || (!entity.historical && entity.spatialAccuracy !== 'fictional_approximate_point')).map(entity => entity.id)
+    invalidLocalEntities: LOCAL_ENTITY_TEMPLATES.filter(entity => !mainIds.has(entity.theater) || !Array.isArray(entity.coordinates) || entity.coordinates.length !== 2 || entity.coordinates.some(value => !Number.isFinite(value)) || (entity.historical && !entity.source) || (!entity.historical && entity.spatialAccuracy !== 'fictional_approximate_point')).map(entity => entity.id),
+    generatedSites: LOCAL_GENERATION_SITES.length,
+    invalidGeneratedSites: LOCAL_GENERATION_SITES.filter(site => !mainIds.has(site.theater) || !['city_state','microstate','tribe'].includes(site.type) || !Array.isArray(site.coordinates) || site.coordinates.length !== 2 || site.coordinates.some(value => !Number.isFinite(value)) || !Number.isFinite(site.scale) || site.scale <= 0).map(site => site.theater),
+    duplicateGeneratedTheaters: LOCAL_GENERATION_SITES.filter((site,index) => LOCAL_GENERATION_SITES.findIndex(item => item.theater === site.theater) !== index).map(site => site.theater)
   },
   han: {
     playableTerritories: HAN_REGIONS.length,
@@ -36,4 +40,4 @@ const audit = {
 };
 
 console.log(JSON.stringify(audit, null, 2));
-if (audit.main.invalidPolygonReferences.length || audit.main.invalidRoutes.length || audit.main.isolatedTerritories.length || audit.main.invalidLocalEntities.length || audit.han.invalidRoutes.length) process.exitCode = 1;
+if (audit.main.invalidPolygonReferences.length || audit.main.invalidRoutes.length || audit.main.isolatedTerritories.length || audit.main.invalidLocalEntities.length || audit.main.invalidGeneratedSites.length || audit.main.duplicateGeneratedTheaters.length || audit.han.invalidRoutes.length) process.exitCode = 1;

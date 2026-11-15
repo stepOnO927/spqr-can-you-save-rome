@@ -5,23 +5,24 @@ import {FACTIONS} from '../data.js?v=world-kings-trade-1';
 
 export function renderTribalEntity({state, id, actor, language, panel, refresh}) {
   const entity = localEntity(state, id), zh = language === 'zh';
-  if (!entity || !['tribe', 'microstate'].includes(entity.type)) return;
+  if (!entity || !['tribe', 'microstate', 'city_state'].includes(entity.type)) return;
   const host = state.regions.find(region => region.id === entity.theater);
   const visible = host?.owner === actor || entity.controller === actor || entity.overlord === actor || entity.access?.[actor] > state.year * 12 + state.month || state.armies.some(army => army.owner === actor && army.region === entity.theater && army.men > 0);
   const section = document.createElement('section');
   section.className = 'theater-facts';
-  const title = document.createElement('h3'); title.textContent = `${entity.type === 'microstate' ? (zh ? '独立小国' : 'MICROSTATE') : (zh ? '地方部族' : 'LOCAL POLITY')} · ${entity.name[zh ? 1 : 0]}`; section.append(title);
+  const title = document.createElement('h3'); title.textContent = `${entity.type === 'microstate' ? (zh ? '独立小国' : 'MICROSTATE') : entity.type === 'city_state' ? (zh ? '自治城邦' : 'CITY-STATE') : (zh ? '地方部族' : 'LOCAL POLITY')} · ${entity.name[zh ? 1 : 0]}`; section.append(title);
   const history = document.createElement('p');
   history.textContent = `${entity.description[zh ? 1 : 0]} ${zh ? '地点为近似点；守军、资源和谈判概率为游戏模拟。' : 'The point is approximate; militia, resources and negotiation chances are gameplay estimates.'}`;
   section.append(history);
-  const source = document.createElement('a'); source.href = entity.source; source.target = '_blank'; source.rel = 'noopener noreferrer'; source.textContent = entity.type === 'microstate' ? (zh ? '史料：伊朗百科全书 · 科马吉尼' : 'Source: Encyclopaedia Iranica · Commagene') : (zh ? '史料：凯撒《高卢战记》第七卷' : 'Source: Caesar, Gallic War VII'); section.append(source);
+  if(entity.source){const source = document.createElement('a'); source.href = entity.source; source.target = '_blank'; source.rel = 'noopener noreferrer'; source.textContent = entity.type === 'microstate' ? (zh ? '史料：伊朗百科全书 · 科马吉尼' : 'Source: Encyclopaedia Iranica · Commagene') : (zh ? '史料：凯撒《高卢战记》第七卷' : 'Source: Caesar, Gallic War VII'); section.append(source)}
   if(entity.coordinateSource){const point=document.createElement('a');point.href=entity.coordinateSource;point.target='_blank';point.rel='noopener noreferrer';point.textContent=zh?' · 地点依据：Pleiades':' · Site: Pleiades';section.append(point)}
   if (!visible) { const unknown = document.createElement('p'); unknown.textContent = zh ? '目前没有可靠的地方控制报告。' : 'No reliable local control report yet.'; section.append(unknown); panel.append(section); return; }
   const status = document.createElement('p');
   const factionName = id => FACTIONS[id]?.short?.[zh ? 1 : 0] || id;
-  const localAuthority=entity.ruler?.name?.[zh?1:0]||(zh?'埃杜伊人议事机构':'Aeduan council');
+  const localAuthority=entity.ruler?.name?.[zh?1:0]||(entity.procedural?(zh?'本地议事机构':'Local council'):(zh?'埃杜伊人议事机构':'Aeduan council'));
   status.textContent = zh ? `地方控制：${entity.controller === entity.id ? localAuthority : factionName(entity.controller)} · 法理归属：${entity.legalSovereign === entity.id ? '地方自治' : factionName(entity.legalSovereign)} · 守军约 ${entity.militia.toLocaleString()} 人` : `Local control: ${entity.controller === entity.id ? localAuthority : factionName(entity.controller)} · legal title: ${entity.legalSovereign === entity.id ? 'local self-rule' : factionName(entity.legalSovereign)} · militia about ${entity.militia.toLocaleString()}`;
   section.append(status);
+  if(Number.isInteger(entity.population)){const resources=document.createElement('p');resources.textContent=zh?`本局模拟人口约 ${entity.population.toLocaleString()} 人 · 地方国库 ${entity.treasury} · 存粮 ${entity.food} · 防务 ${entity.fort} · 地方决策能力 ${entity.strategy}/5`:`Campaign population about ${entity.population.toLocaleString()} · local treasury ${entity.treasury} · food ${entity.food} · fort ${entity.fort} · council skill ${entity.strategy}/5`;section.append(resources)}
   const remaining=entity.access?.[actor]==null?0:Math.max(0,entity.access[actor]-(state.year*12+state.month));
   if(remaining){const right=document.createElement('p');right.textContent=zh?`地方通行已获准 · 剩余 ${remaining} 个月。`:`Local access granted · ${remaining} months remaining.`;section.append(right)}
   if(entity.overlord===actor){const relation=document.createElement('p');relation.textContent=zh?'本方为自治宗主；地方仍保有自己的法理归属。':'We are the autonomous overlord; local legal title remains separate.';section.append(relation)}
