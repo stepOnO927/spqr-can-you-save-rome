@@ -184,7 +184,7 @@ try{
  const site=await page.locator('[data-site="italiaN"]').boundingBox();
  assert.ok(Math.abs(site.x-page.viewportSize().width/2)<15,'Ariminum must stay at the map focus');
  await selectMapMode('terrain');
- await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded('italy-contours')},null,{timeout:20000});
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.isSourceLoaded('italy-contours')&&map.queryRenderedFeatures({layers:['italy-contours-minor','italy-contours-major']}).length>0},null,{timeout:20000});
  const visibleContours=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.queryRenderedFeatures({layers:['italy-contours-minor','italy-contours-major']}).length});
  assert.ok(visibleContours>0,'Modern Italy contour lines should render around Ariminum');
  const italyLegendLanguage=await page.locator('html').getAttribute('lang');

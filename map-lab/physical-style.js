@@ -52,6 +52,7 @@ export const physicalStyle={
   'po-river-detail':{type:'geojson',data:poRiverDetail,attribution:euHydroAttribution},
   'po-historic-coast':{type:'geojson',data:poHistoricCoast,attribution:'Approximate undated historical shoreline: Ancient World Mapping Center and OpenStreetMap contributors, ODbL 1.0; adapted Po crop'},
   'nile-delta':{type:'geojson',data:nileDelta,attribution:'Approximate Nile Delta between Natural Earth river branches'},
+  'nile-delta-wash':{type:'image',url:'./nile-delta-wash.png',coordinates:[[29.8,31.7],[32,31.7],[32,30],[29.8,30]]},
   lakes:{type:'geojson',data:lakes},
   'garda-lake-detail':{type:'geojson',data:gardaLakeDetail,attribution:euHydroAttribution},
   'egypt-contours':{type:'geojson',data:egyptContours,attribution:terrainAttribution},
@@ -90,7 +91,8 @@ export const physicalStyle={
   {id:'land-elevation-egypt-higher',type:'color-relief',source:'elevation-egypt-higher',minzoom:9,paint:{'color-relief-opacity':.94,'color-relief-color':egyptElevationPalette}},
   {id:'relief-egypt-higher',type:'hillshade',source:'elevation-egypt-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'idealized-landcover',type:'raster',source:'landcover',paint:{'raster-opacity':['interpolate',['linear'],['zoom'],4,.86,6,.74,7.2,0],'raster-fade-duration':0}},
-  {id:'nile-delta-alluvium',type:'fill',source:'nile-delta',paint:{'fill-color':'#829a72','fill-opacity':['interpolate',['linear'],['zoom'],4,.16,7,.26,8.2,.25,9,.32,10,.3]}},
+  {id:'nile-delta-alluvium',type:'fill',source:'nile-delta',paint:{'fill-color':'#829a72','fill-opacity':['interpolate',['linear'],['zoom'],4,.16,7,.26,8.2,.25,8.7,.08,9,0]}},
+  {id:'nile-delta-close-wash',type:'raster',source:'nile-delta-wash',minzoom:8.2,paint:{'raster-opacity':['interpolate',['linear'],['zoom'],8.2,0,8.7,.45,9,.65],'raster-fade-duration':0}},
   {id:'egypt-contours-minor',type:'line',source:'egypt-contours',minzoom:8.25,filter:['<',['get','height'],50],paint:{'line-color':'#8a7255','line-width':['interpolate',['linear'],['zoom'],8.25,.5,9.2,.8],'line-opacity':.16}},
   {id:'egypt-contours-major',type:'line',source:'egypt-contours',minzoom:8.25,filter:['>=',['get','height'],50],paint:{'line-color':'#785f49','line-width':['interpolate',['linear'],['zoom'],8.25,.7,9.2,1.05],'line-opacity':.2}},
   // Modern DEM elevation creates the contour shapes; the sparse source

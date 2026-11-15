@@ -127,6 +127,7 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
 #map.charting{opacity:.18}
 #map-charting{position:fixed;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;padding:17px 25px;border:1px solid #bfa671;background:#1b2d2ddc;box-shadow:0 12px 32px #081719a6;color:#e9d7ac;font:700 11px Manrope,'Microsoft YaHei',sans-serif;letter-spacing:.14em;text-align:center;text-shadow:0 1px 2px #0d2022}
 #map-charting:before{content:'◇';display:block;margin-bottom:8px;color:#dac48f;font:28px Georgia,serif;line-height:1}
+#map-charting[hidden]{display:none}
 .mast{background:linear-gradient(#101b1d,#17211f)}
 .maplibregl-ctrl-attrib{background:#172826e8!important;color:#e3d4ae!important;border-top:1px solid #b9a36b66;border-radius:3px 3px 0 0}
 .maplibregl-ctrl-attrib a{color:#e8cd8a!important}
