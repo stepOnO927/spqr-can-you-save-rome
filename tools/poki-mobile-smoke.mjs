@@ -16,6 +16,7 @@ try{
     await page.locator('#start-campaign').waitFor();
     assert.equal(await visibleInFrame(page.locator('#start-campaign')),true,'Roman Start outside '+width+'x'+height);
     await page.locator('#start-campaign').tap();
+    console.log('Roman viewport',width,height,await page.evaluate(()=>{const ids=['.top','.shell','.shell main','.map-toolbar','#step','#map-svg'];return {portrait:matchMedia('(orientation:portrait)').matches,landscapeRule:matchMedia('(max-height:600px) and (orientation:landscape)').matches,inner:[innerWidth,innerHeight],scroll:document.documentElement.scrollHeight,rects:Object.fromEntries(ids.map(id=>{const e=document.querySelector(id),r=e?.getBoundingClientRect();return [id,r?{y:r.y,height:r.height,bottom:r.bottom}:null]}))}}));
     assert.equal(await visibleInFrame(page.locator('#step')),true,'Roman Advance outside '+width+'x'+height);
     await page.locator('#map-svg [data-army]').first().tap();
     assert.equal(await page.locator('.inspector:not(.closed)').count(),1,'Roman touch did not inspect an army');
