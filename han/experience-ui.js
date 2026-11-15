@@ -23,7 +23,7 @@ export function renderExperience(s,lang,{navigate,render,message}){
  root.querySelector('#han-experience-close')?.addEventListener('click',()=>{panel='';render()});root.querySelector('#han-experience-done')?.addEventListener('click',()=>{panel='';render()});root.querySelector('.han-experience-backdrop')?.addEventListener('keydown',ev=>{if(ev.key==='Escape'){panel='';render()}});
  root.querySelectorAll('[data-han-panel]').forEach(b=>b.onclick=()=>open(b.dataset.hanPanel));
  root.querySelectorAll('[data-han-direction]').forEach(b=>b.onclick=()=>{e.direction=b.dataset.hanDirection;act(s,'direction',e.direction);render()});
- root.querySelectorAll('[data-han-guide]').forEach(b=>b.onclick=()=>{control(s,b.dataset.hanGuide);render()});
+ root.querySelectorAll('[data-han-guide]').forEach(b=>b.onclick=()=>{if(b.dataset.hanGuide==='skip'&&!e.skipped)analytics.track('tutorial_skipped',{}, {humanAction:false});control(s,b.dataset.hanGuide);render()});
  root.querySelectorAll('[data-han-lesson]').forEach(b=>b.onclick=()=>{replay(s,Number(b.dataset.hanLesson));panel='';render()});
  root.querySelector('[data-han-presentation]')?.addEventListener('click',b=>{control(s,'presentation',b.currentTarget.dataset.hanPresentation);render()});
  root.querySelectorAll('[data-han-focus]').forEach(b=>b.onclick=()=>{const id=b.dataset.hanFocus,cost=treeFor(s.player).find(x=>x.id===id)?.cost.treasury||0,before=s.factions[s.player].treasury,result=startFocus(s,s.player,id);if(result.ok){act(s,'focus',id);lastResult=D(`Focus started: treasury ${before} → ${s.factions[s.player].treasury}; ${cost} spent.`,`方针已启动：国库 ${before} → ${s.factions[s.player].treasury}；花费 ${cost}。`)}else lastResult=D(`Unavailable: ${result.reason}`,`当前不可用：${result.reason}`);render()});
