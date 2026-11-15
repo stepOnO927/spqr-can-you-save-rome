@@ -50,6 +50,7 @@ jobs:
               node tools/frontier-response-smoke.mjs
               node tools/player-aid-letter-smoke.mjs
               node tools/player-coalition-mail-smoke.mjs
+              node tools/family-courier-smoke.mjs
               node tools/player-request-aid-smoke.mjs
               node tools/official-name-snapshots-smoke.mjs
               ;;

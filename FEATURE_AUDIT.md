@@ -10,6 +10,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Recruitment | Terrain map → owned city → manage theater | `tools/systems-smoke.mjs` |
 | Family adoption and marriage | Campaign map → government → family tree | `tools/scenario-systems-smoke.mjs` |
 | Family tree and private wills | Terrain map → Government, Families & Policies → family tree | `tools/systems-smoke.mjs` |
+| Foreign family correspondence | Campaign map → government → family guarantees | `tools/family-courier-smoke.mjs` sends and saves a real proposal, advances four months, and observes a lost reply; `test/family-couriers.test.js` also covers marriage, asylum, wardship, both journeys and old saves |
 | Contested and unclaimed private estates | Campaign map → government → family tree | `tools/inheritance-settlement-smoke.mjs` uses explicit contested-estate fixtures, checks a paid division and an unclaimed family settlement, then saves and reloads |
 | Fixed opening institution portraits | Campaign map → government → family tree | `tools/portrait-institutions-smoke.mjs` checks individual images and save/load; unit tests cover old IDs and foreign meeting snapshots |
 | Legacy fictional identity across save slots | Campaign map → load slot → government → family tree | `tools/legacy-identity-smoke.mjs` checks that a missing old identity is unknown rather than another save's person, and that both saves remain playable |
