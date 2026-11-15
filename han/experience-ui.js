@@ -1,9 +1,9 @@
-import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=undated-name-1';
-import {treeFor,focusState,focusStatus,startFocus} from './focus.js?v=undated-name-1';
-import {OFFICES,FACTIONS} from './data.js?v=undated-name-1';
-import {appoint} from './court.js?v=undated-name-1';
-import {answerProposal,atWar,propose,treaty,relation,TREATY_TYPES} from './frontier.js?v=undated-name-1';
-import {neighbours} from './military.js?v=undated-name-1';
+import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=foreign-heir-knowledge-1';
+import {treeFor,focusState,focusStatus,startFocus} from './focus.js?v=foreign-heir-knowledge-1';
+import {OFFICES,FACTIONS} from './data.js?v=foreign-heir-knowledge-1';
+import {appoint} from './court.js?v=foreign-heir-knowledge-1';
+import {answerProposal,atWar,propose,treaty,relation,TREATY_TYPES} from './frontier.js?v=foreign-heir-knowledge-1';
+import {neighbours} from './military.js?v=foreign-heir-knowledge-1';
 
 let panel='',lastResult='',preferredTarget='';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

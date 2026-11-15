@@ -1,5 +1,5 @@
-import {campaignYear,campaignDate} from '../campaign-date.js?v=undated-name-1';
-import {MATERIALS} from '../inventions.js?v=undated-name-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=foreign-heir-knowledge-1';
+import {MATERIALS} from '../inventions.js?v=foreign-heir-knowledge-1';
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 export function renderTerritoryFacts({state, territory, language = 'en', sightings = []}) {

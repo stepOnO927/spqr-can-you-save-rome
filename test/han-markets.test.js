@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js?v=undated-name-1';
-import {declareWar,propose,setRelation} from '../han/frontier.js?v=undated-name-1';
-import {activeEasternMerchantPrivilege,advanceEasternMarkets,advanceHanMilitarySupply,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=undated-name-1';
-import {recruit,recruitQuote,provisionArmy} from '../han/military.js?v=undated-name-1';
-import {advanceSilk,protectRoute,ROUTE_PROTECTION_COST} from '../han/silk-road.js?v=undated-name-1';
-import {roll} from '../han/util.js?v=undated-name-1';
+import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js?v=foreign-heir-knowledge-1';
+import {declareWar,propose,setRelation} from '../han/frontier.js?v=foreign-heir-knowledge-1';
+import {activeEasternMerchantPrivilege,advanceEasternMarkets,advanceHanMilitarySupply,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=foreign-heir-knowledge-1';
+import {recruit,recruitQuote,provisionArmy} from '../han/military.js?v=foreign-heir-knowledge-1';
+import {advanceSilk,protectRoute,ROUTE_PROTECTION_COST} from '../han/silk-road.js?v=foreign-heir-knowledge-1';
+import {roll} from '../han/util.js?v=foreign-heir-knowledge-1';
 
 const next=s=>{if(++s.month>12){s.month=1;s.year++}advanceEasternMarkets(s)};
 

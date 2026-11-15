@@ -1,4 +1,4 @@
-import {isDeliveredReport} from '../person-knowledge.js?v=undated-name-1';
+import {isDeliveredReport} from '../person-knowledge.js?v=foreign-heir-knowledge-1';
 // Project identity presentation only from the viewer's own records. Historical
 // artwork is interpretive even when several reports agree on a name.
 export function identityKnowledge(s,id){

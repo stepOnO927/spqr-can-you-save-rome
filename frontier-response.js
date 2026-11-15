@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=undated-name-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=undated-name-1';
+import {ROUTES} from './data.js?v=foreign-heir-knowledge-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=foreign-heir-knowledge-1';
 
 const now=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');

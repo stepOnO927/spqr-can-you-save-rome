@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,recruit,resolveBattle} from '../engine.js?v=undated-name-1';
-import {proposeAgreement} from '../agreements.js?v=undated-name-1';
-import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,advanceMarkets,proposeSupplyContract,cancelSupplyContract,grantMerchantPrivilege,activeMerchantPrivilege} from '../trade-markets.js?v=undated-name-1';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=undated-name-1';
+import {newGame,upgradeSave,recruit,resolveBattle} from '../engine.js?v=foreign-heir-knowledge-1';
+import {proposeAgreement} from '../agreements.js?v=foreign-heir-knowledge-1';
+import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,advanceMarkets,proposeSupplyContract,cancelSupplyContract,grantMerchantPrivilege,activeMerchantPrivilege} from '../trade-markets.js?v=foreign-heir-knowledge-1';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=foreign-heir-knowledge-1';
 
 const deal=()=>{
  const s=newGame('armenia');s.relations['armenia:parthia']=45;

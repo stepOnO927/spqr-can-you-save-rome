@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=undated-name-1';
-import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=undated-name-1';
-import {templatesFor,recruitFormation} from '../legion-designer.js?v=undated-name-1';
-import {ROUTES} from '../data.js?v=undated-name-1';
+import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=foreign-heir-knowledge-1';
+import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=foreign-heir-knowledge-1';
+import {templatesFor,recruitFormation} from '../legion-designer.js?v=foreign-heir-knowledge-1';
+import {ROUTES} from '../data.js?v=foreign-heir-knowledge-1';
 
 const roundTrip=s=>upgradeSave(JSON.parse(JSON.stringify(s)));
 const adjacent=(a,b)=>ROUTES.some(r=>(r[0]===a&&r[1]===b)||(r[0]===b&&r[1]===a));
@@ -120,7 +120,7 @@ test('with spare forces and stale intelligence, expert AI adds reconnaissance an
 });
 
 test('an AI ally coordinates with a live allied operation against the same objective',async()=>{
- const {observeControl}=await import('../control-intelligence.js?v=undated-name-1');
+ const {observeControl}=await import('../control-intelligence.js?v=foreign-heir-knowledge-1');
  const s=newGame('senate');s.difficulty='expert';
  s.regions.find(r=>r.id==='africa').owner='caesar';s.wars.push(['caesar','numidia']);s.alliances.push(['numidia','senate']);observeControl(s);
  for(const a of s.armies.filter(a=>a.owner==='numidia'))a.men=15000;

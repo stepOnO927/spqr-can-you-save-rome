@@ -1,4 +1,4 @@
-import {REGIONS,ROUTES} from './data.js?v=undated-name-1';
+import {REGIONS,ROUTES} from './data.js?v=foreign-heir-knowledge-1';
 
 // Opening control is common campaign knowledge, not a reconstruction of the
 // current world in an old save. Later observations belong to each faction.

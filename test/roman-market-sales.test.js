@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=undated-name-1';
-import {proposeAgreement} from '../agreements.js?v=undated-name-1';
-import {advanceMarketAI,advanceMarkets,cancelTradeSale,placeTradeOrder,postTradeSale,quoteTrade} from '../trade-markets.js?v=undated-name-1';
+import {newGame,upgradeSave} from '../engine.js?v=foreign-heir-knowledge-1';
+import {proposeAgreement} from '../agreements.js?v=foreign-heir-knowledge-1';
+import {advanceMarketAI,advanceMarkets,cancelTradeSale,placeTradeOrder,postTradeSale,quoteTrade} from '../trade-markets.js?v=foreign-heir-knowledge-1';
 
 function setup(){
  const s=newGame('armenia');s.relations['armenia:parthia']=45;

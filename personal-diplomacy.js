@@ -1,9 +1,9 @@
-import {reportedControl,observeArrival} from './control-intelligence.js?v=undated-name-1';
-import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=undated-name-1';
-import {ROUTES} from './data.js?v=undated-name-1';
-import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=undated-name-1';
-import {officeOf} from './office-system.js?v=undated-name-1';
-import {fictionalPortraitKey,portraitSeedFor,portraitStation} from './portrait-registry.js?v=undated-name-1';
+import {reportedControl,observeArrival} from './control-intelligence.js?v=foreign-heir-knowledge-1';
+import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=foreign-heir-knowledge-1';
+import {ROUTES} from './data.js?v=foreign-heir-knowledge-1';
+import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=foreign-heir-knowledge-1';
+import {officeOf} from './office-system.js?v=foreign-heir-knowledge-1';
+import {fictionalPortraitKey,portraitSeedFor,portraitStation} from './portrait-registry.js?v=foreign-heir-knowledge-1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 // A commander in transit has not arrived in a theater where an audience can occur.

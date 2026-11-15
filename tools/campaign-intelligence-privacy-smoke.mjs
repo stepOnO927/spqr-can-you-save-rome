@@ -6,7 +6,7 @@ page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  const id=await page.evaluate(async()=>{
-  const {newGame,upgradeSave}=await import('/engine.js?v=undated-name-1'),{createFictionalPerson}=await import('/dynasties.js?v=undated-name-1'),{addReport}=await import('/character-system.js?v=undated-name-1');let s=newGame('caesar');
+  const {newGame,upgradeSave}=await import('/engine.js?v=foreign-heir-knowledge-1'),{createFictionalPerson}=await import('/dynasties.js?v=foreign-heir-knowledge-1'),{addReport}=await import('/character-system.js?v=foreign-heir-knowledge-1');let s=newGame('caesar');
   const id=createFictionalPerson(s,{name:['Recorded name','报告姓名'],faction:'egypt',birthYear:-75,location:'egypt'});addReport(s,'caesar','egypt',{kind:'claimants',leaders:[id],source:'spy'});
   s.world.personalRelations[[id,'antony'].sort().join(':')]={trust:30,meetings:1};s.world.movementKnowledge.caesar={'movement:test':{id:'movement:test',parent:'egypt',region:'egypt',stage:'organized',leader:id,leaderName:['Movement report','运动报告姓名'],supportApprox:1000,year:s.year,month:s.month}};
   const foreign=s.regions.find(r=>r.id==='italiaN');foreign.fort=5;foreign.supply=999;s.fortKnowledge||={};s.fortKnowledge.caesar||={};s.fortKnowledge.caesar.italiaN={band:[1,2],year:s.year,month:s.month,source:'frontier'};

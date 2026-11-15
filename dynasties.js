@@ -1,10 +1,10 @@
-import {isDeliveredReport} from './person-knowledge.js?v=undated-name-1';
-import {CHARACTER_CATALOG} from './characters.js?v=undated-name-1';
-import {startDynasticWar} from './civil-war.js?v=undated-name-1';
-import {ROUTES} from './data.js?v=undated-name-1';
-import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=undated-name-1';
-import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=undated-name-1';
-import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=undated-name-1';
+import {isDeliveredReport} from './person-knowledge.js?v=foreign-heir-knowledge-1';
+import {CHARACTER_CATALOG} from './characters.js?v=foreign-heir-knowledge-1';
+import {startDynasticWar} from './civil-war.js?v=foreign-heir-knowledge-1';
+import {ROUTES} from './data.js?v=foreign-heir-knowledge-1';
+import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=foreign-heir-knowledge-1';
+import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=foreign-heir-knowledge-1';
+import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=foreign-heir-knowledge-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
