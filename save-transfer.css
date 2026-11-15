@@ -1,5 +1,4 @@
-#save-transfer-open{position:fixed;right:14px;bottom:14px;z-index:100000;padding:9px 13px;border:1px solid #d9bd78;border-radius:4px;background:#26352f;color:#f4e7c8;font:600 13px system-ui;cursor:pointer;box-shadow:0 3px 12px #0008}
-#app #save-transfer-open{position:static;right:auto;bottom:auto;z-index:auto;box-shadow:none;white-space:nowrap}
+#save-transfer-open{position:static;pointer-events:auto;flex:none;padding:7px 10px;border:1px solid #d9bd78;border-radius:4px;background:#26352f;color:#f4e7c8;font:600 12px system-ui;cursor:pointer}
 #save-transfer-dialog{z-index:100001;max-width:min(440px,calc(100vw - 30px));padding:23px;border:1px solid #b99b61;border-radius:8px;background:#24312d;color:#f4e7c8;font:14px/1.5 system-ui;box-shadow:0 12px 40px #000a}
 #save-transfer-dialog::backdrop{background:#0009}
 #save-transfer-dialog h2{margin:0 28px 8px 0;font:600 20px system-ui;color:#f4e7c8}

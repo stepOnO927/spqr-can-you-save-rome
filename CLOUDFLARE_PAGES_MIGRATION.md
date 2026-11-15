@@ -33,7 +33,7 @@ Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/c
 ## 准备阶段验证记录（2026-11-14）
 
 - 最终分支 `node --test --test-reporter=dot`：退出码 0，全部本地 Node 测试通过；PR 的 CI 仍需再次确认。
-- `npm run build:pages`：197 个文件，总计约 3.88 MiB，最大文件约 1.06 MiB；无超限静态文件。
+- `npm run build:pages`：211 个文件，总计约 3.96 MiB，最大文件约 1.06 MiB；无超限静态文件。新增的参议员肖像缩略图已包含。
 - `dist/` 清单检查：无 `test/`、`tools/`、`scripts/`、`.github/`、环境变量文件、内部 README/审计文档；只保留三份公开来源说明和 MapLibre 许可证。
 - 最终分支的本地实际 Chromium：三个入口返回 200，主战役、Map Lab、Han 的推进与存读档、跨域导出导入及未知键拒绝均通过；页面脚本错误和站内资源 404 均为零。
 - 仓库原有浏览器长流程测试：最终本地 `dist/` 运行通过，覆盖地图、行军、外交信件、情报、回合及视图切换；CI 和 Cloudflare 真实地址仍需复测。

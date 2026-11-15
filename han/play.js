@@ -1,4 +1,4 @@
-import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=player-aid-letter-1';
+import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=senate-record-privacy-1';
 import {FACTIONS,PLAYABLE,ROUTES,OFFICES} from './data.js';
 import {appoint,knownAttributes,emperorAuthority} from './court.js';
 import {isLiuClan} from './dynasty.js';
@@ -6,13 +6,13 @@ import {drawMap} from './map.js';
 import {templatesFor,recruitQuote,recruit,neighbours} from './military.js';
 import {changeDependency,dependencyOf} from './dependencies.js';
 import {declareWar,propose,atWar} from './frontier.js';
-import {init as initExperience,act as experienceAction} from './experience.js?v=player-aid-letter-1';
-import {renderExperience} from './experience-ui.js?v=player-aid-letter-1';
+import {init as initExperience,act as experienceAction} from './experience.js?v=player-request-aid-1';
+import {renderExperience} from './experience-ui.js?v=player-request-aid-1';
 const $=id=>document.getElementById(id),D=(en,zh)=>lang?zh:en,L=a=>Array.isArray(a)?a[lang]||a[0]:a;
 let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,camera='all',mode='political',courtOpen=false,courtOffice='dasinong',courtCandidate=null;
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function message(en,zh){$('message').textContent=D(en,zh)}
-function save(){if(!s)return;localStorage.setItem(SAVE_KEY('browser'),serialize(s));message('Campaign saved.','战役已保存。')}
+function save(){if(!s)return;localStorage.setItem(SAVE_KEY('browser'),serialize(s));window.spqrVolatileStorage?.some(x=>x.startsWith('localStorage'))?message('Temporarily saved; export before reloading.','已暂存；刷新前请导出存档。'):message('Campaign saved.','战役已保存。')}
 function load(){const raw=localStorage.getItem(SAVE_KEY('browser'));if(!raw){message('No saved campaign.','尚无存档。');return}try{s=loadHanSave(raw);initExperience(s);selected=null;army=null;render();message('Campaign loaded.','战役已读取。')}catch(e){message('Save could not be loaded: '+e.message,'无法读取存档：'+e.message)}}
 function begin(f){s=newHanGame(f,{start:f==='han'?'han':'roman'});initExperience(s,{guided:true});selected=s.regions.find(r=>r.owner===f)?.id||null;army=null;render();message('Choose an objective, inspect your realm, then act.','先查看目标与国势，再作出选择。')}
 function navigateExperience(kind,id){if(kind==='army'){const a=s.armies.find(a=>a.id===id&&a.owner===s.player)||s.armies.find(a=>a.owner===s.player&&a.men>0);if(a){army=a.id;selected=a.region;experienceAction(s,'army',a.id)}}else if(kind==='region'){const r=s.regions.find(r=>r.id===id)||s.regions.find(r=>r.owner===s.player&&r.frontier)||s.regions.find(r=>r.owner===s.player);if(r){selected=r.id;if(r.owner===s.player)experienceAction(s,'frontier',r.id);else experienceAction(s,'route',r.id)}}render()}

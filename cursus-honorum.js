@@ -1,7 +1,7 @@
 import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from './dynasties.js?v=portraits-hundred-days-1';
-import {initializeOffices,appointOffice} from './office-system.js?v=portraits-hundred-days-1';
-import {assignCursusPortraits} from './portrait-registry.js?v=portraits-hundred-days-1';
+import {createFictionalPerson} from './dynasties.js?v=senator-portraits-1';
+import {initializeOffices,appointOffice} from './office-system.js?v=senator-portraits-1';
+import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=senator-portraits-1';
 
 const ROMAN=new Set(['caesar','senate']);
 const clamp=n=>Math.max(0,Math.min(100,Math.round(n)));
@@ -21,6 +21,8 @@ export const MAGISTRACIES={
 export const ASSEMBLIES={centuriate:['Comitia Centuriata','百人队大会'],tribal:['Comitia Tributa','部族大会'],plebeian:['Concilium Plebis','平民会议'],curiate:['Comitia Curiata','库里亚大会']};
 const person=(s,id)=>s.world.characters[id];
 const name=(id,i=0)=>CHARACTER_CATALOG[id]?.name?.[i]||id;
+const snapshotName=(s,id)=>{const value=s.world?.dynasties?.catalog?.[id]?.name||CHARACTER_CATALOG[id]?.name;return Array.isArray(value)&&value.length>=2&&value.every(x=>typeof x==='string')?[...value.slice(0,2)]:null};
+const usableName=value=>Array.isArray(value)&&value.length>=2&&value.slice(0,2).every(x=>typeof x==='string')?[...value.slice(0,2)]:null;
 const age=(s,id)=>Number.isFinite(person(s,id)?.birthYear)?s.year-person(s,id).birthYear:null;
 const present=(s,id)=>{const p=person(s,id);return !!(p?.alive&&!p.missing&&!p.travel&&!['seriously_ill','dying','deceased'].includes(p.health))};
 const factionOfRome=s=>s.regions.find(r=>r.id==='roma')?.owner;
@@ -57,7 +59,7 @@ function seedSenators(s,c){
   const faction=i<6?'senate':'caesar',[names,network,interest]=houses[i];
   const id=createFictionalPerson(s,{name:names,faction,birthYear:s.year-49-(i%9),location:s.regions.find(r=>r.owner===faction)?.id||null,sex:'male',role:['Simulated senator','模拟元老']});
   const p=person(s,id);p.education=62+(i*7)%28;p.influence=50+(i*9)%38;p.wealth=20+(i*5)%24;p.loyalty=45+(i*7)%35;
-  c.senators.push({id,faction,network,interest,influence:p.influence,publicPosition:faction,joined:{year:s.year,month:s.month}});
+  c.senators.push({id,faction,network,interest,influence:p.influence,publicPosition:faction,publicName:[...names],joined:{year:s.year,month:s.month}});
   c.careers[id]=[{office:'quaestor',year:s.year-17-i%5,simulated:true}];
   c.obedience[id]={value:clamp(38+p.loyalty/3),history:[{year:s.year,month:s.month,cause:'initial',delta:0}]};
  }
@@ -71,7 +73,9 @@ export function initializeCursus(s){
  for(const key of ['pendingTerms','applicants','elections','endorsements','contacts','offers','advisers','investigations','reforms','proposals','senators','campaignActions','politicalReviews','retirements','termHistory','talentSearches','talents','cooperations','institutionalResponses','recommendations','appointmentHistory','applicationHistory','applicationReviews','curiateFormalities'])c[key]||=[];
  if(!Object.keys(c.officeLastSeen).length)c.officeLastSeen=Object.fromEntries(Object.entries(s.world.offices||{}).map(([faction,posts])=>[faction,{...posts}]));
  for(const [actor,ids] of Object.entries(c.referrals)){c.referralSources[actor]||=[];for(const id of ids){if(c.referralSources[actor].some(x=>x.id===id))continue;const offer=c.offers.findLast(x=>x.actor===actor&&x.status==='accepted');if(offer)c.referralSources[actor].push({id,target:offer.target,from:offer.id,observed:{year:offer.year,month:offer.month},confidence:'legacy'})}}
- for(const contact of c.contacts){if(contact.status==='open'){contact.relationship||={familiarity:clamp((contact.trust||20)+10),trust:contact.trust||20,respect:clamp(30+(person(s,contact.id)?.education||50)/5),professional:20,alignment:30,obligation:0,rivalry:0,willingness:25};contact.trust=contact.relationship.trust}}
+ // Old saves did not record these relationship dimensions. A neutral
+ // migration must not infer them from a foreign person's current secret traits.
+ for(const contact of c.contacts){if(contact.status==='open'){contact.relationship||={familiarity:clamp((contact.trust||20)+10),trust:contact.trust||20,respect:40,professional:20,alignment:30,obligation:0,rivalry:0,willingness:25};contact.trust=contact.relationship.trust}}
  for(const offer of c.offers.filter(x=>x.status==='accepted'&&person(s,x.id)?.faction===x.actor))if(!c.advisers.some(a=>a.id===offer.id))c.advisers.push({id:offer.id,actor:offer.actor,formerFaction:offer.target,year:offer.year,month:offer.month});
  c.assemblies.curiate??=50;
  for(const key of Object.keys(MAGISTRACIES))c.magistrates[key]||=[];
@@ -100,6 +104,10 @@ export function initializeCursus(s){
  seedSenators(s,c);
  for(const applicant of c.applicants)if(!Number.isFinite(applicant.senatorialSupport))applicant.senatorialSupport=applicant.id===c.varroId?80:clamp(38+(person(s,applicant.id)?.influence||40)/3);
  assignCursusPortraits(s);
+ assignSenatorPortraits(s);
+ // Only migrate an old public name when an unambiguous opening claim exists;
+ // never reconstruct it from a rival's current, potentially secret identity.
+ for(const senator of c.senators)if(!usableName(senator.publicName)){const claim=s.world.dynasties?.senatorPortraitClaims?.[senator.id];if(claim?.faction===senator.faction&&usableName(claim.name))senator.publicName=[...claim.name]}
  return c;
 }
 export function officeEligibility(s,id,office){
@@ -134,13 +142,13 @@ export function senateAssessment(s,actor=s.player,issue='general'){
 }
 export function seekSenatorEndorsement(s,senatorId,candidateId,actor=s.player){
  const c=initializeCursus(s),senator=c.senators.find(x=>x.id===senatorId),candidate=campaignFor(s,candidateId),p=person(s,candidateId);
- if(!senator||!present(s,senatorId)||!candidate||!p||!present(s,candidateId)||candidate.status!=='eligible'||!officeEligibility(s,candidateId,candidate.office).ok)return {ok:false,reason:'candidate'};
+ if(!senator||(senator.faction===actor&&!present(s,senatorId))||!candidate||!p||!present(s,candidateId)||candidate.status!=='eligible'||!officeEligibility(s,candidateId,candidate.office).ok)return {ok:false,reason:'candidate'};
  if(factionOfRome(s)!==actor||!ROMAN.has(actor))return {ok:false,reason:'rome'};
  if(s.month>=MAGISTRACIES[candidate.office].month)return {ok:false,reason:'closed'};
  if(c.endorsements.some(x=>x.senatorId===senatorId&&x.candidateId===candidateId&&x.year===s.year&&['pending','accepted'].includes(x.status)))return {ok:false,reason:'pending'};
  const cost=5;if(s.factions[actor].treasury<cost)return {ok:false,reason:'treasury',cost};
  s.factions[actor].treasury-=cost;
- const item={senatorId,candidateId,actor,year:s.year,month:s.month,remaining:2,status:'pending',cost};
+ const item={senatorId,candidateId,actor,year:s.year,month:s.month,remaining:2,status:'pending',cost,senatorName:usableName(senator.publicName)};
  c.endorsements.push(item);return {ok:true,cost,months:2};
 }
 function advanceEndorsements(s,c){
@@ -321,12 +329,23 @@ export function governmentReport(s,target,actor=s.player){
  // intelligence report the sender can read before delivery.
  if(!report.pending)return report;const {sealed,...pending}=report.pending;return {...report,pending};
 }
+// Names in a delivered report are snapshots, not live links to the simulated
+// person. Old fictional reports without a saved name stay explicitly unknown.
+export function reportedOfficialName(s,target,id,actor=s.player,record=undefined){
+ const fallback=()=>!String(id).startsWith('fictional:')&&!CHARACTER_CATALOG[id]?.fictional?usableName(CHARACTER_CATALOG[id]?.name)||['Unknown person','身份未知的人物']:['Unrecorded name','姓名未记录'];
+ if(record!==undefined){const d=record?.observed;if(!Number.isFinite(d?.year)||!Number.isFinite(d?.month)||d.year*12+d.month>date(s))return fallback();return usableName(record?.peopleNames?.[id])||fallback()}
+ const c=initializeCursus(s),candidates=[];
+ for(const r of c.intel[actor]?.[target]?.reports||[]){const value=usableName(r.peopleNames?.[id]),d=r.observed;if(r.people?.includes(id)&&value&&Number.isFinite(d?.year)&&Number.isFinite(d?.month)&&d.year*12+d.month<=date(s))candidates.push({value,at:d.year*12+d.month})}
+ for(const r of c.referralSources[actor]||[]){const value=usableName(r.nameSnapshot),d=r.observed;if(r.id===id&&r.target===target&&value&&Number.isFinite(d?.year)&&Number.isFinite(d?.month)&&d.year*12+d.month<=date(s))candidates.push({value,at:d.year*12+d.month})}
+ for(const r of c.contacts||[]){const value=usableName(r.nameSnapshot),d=r.sent;if(r.actor===actor&&r.target===target&&r.id===id&&value&&Number.isFinite(d?.year)&&Number.isFinite(d?.month)&&d.year*12+d.month<=date(s))candidates.push({value,at:d.year*12+d.month})}
+ candidates.sort((a,b)=>b.at-a.at);return candidates[0]?.value||fallback();
+}
 export function knownForeignOfficial(s,target,id,actor=s.player){
  const r=governmentReport(s,target,actor);
  return !!(r?.reports?.some(x=>x.people?.includes(id))||s.knowledge?.[actor]?.[target]?.reportedLeaders?.includes(id)||initializeCursus(s).referralSources[actor]?.some(x=>x.id===id&&x.target===target));
 }
 export function officialKnowledge(s,target,id,actor=s.player){
- const c=initializeCursus(s),report=c.intel[actor]?.[target],named=(report?.reports||[]).filter(x=>x.people?.includes(id)),latest=named.at(-1),contact=c.contacts.findLast(x=>x.actor===actor&&x.id===id&&x.status==='open');
+ const c=initializeCursus(s),report=c.intel[actor]?.[target],named=(report?.reports||[]).filter(x=>x.people?.includes(id)),latest=named.at(-1),contact=c.contacts.findLast(x=>x.actor===actor&&x.target===target&&x.id===id&&x.status==='open');
  if(!latest&&!contact&&!c.referralSources[actor]?.some(x=>x.id===id&&x.target===target)&&!s.knowledge?.[actor]?.[target]?.reportedLeaders?.includes(id))return {level:'unknown',observed:null,confidence:null};
  const trust=contact?.relationship?.trust??contact?.trust??0,familiarity=contact?.relationship?.familiarity??0,bestStage=Math.max(0,...named.map(x=>x.stage||0));
  const level=trust>=60&&familiarity>=60?'trusted_contact':bestStage>=5?'well_known':contact?'connected':bestStage>=4?'profiled':'identified';
@@ -348,7 +367,7 @@ export function contactOfficial(s,target,id,route='formal',actor=s.player){
  if(route==='professional'&&!Object.values(s.world.offices?.[actor]||{}).some(holder=>person(s,holder)?.education>=70&&present(s,holder)))return {ok:false,reason:'representative'};
  if(c.contacts.some(x=>x.actor===actor&&x.id===id&&x.status==='pending'))return {ok:false,reason:'pending'};
  if(s.factions[actor].treasury<spec.cost)return {ok:false,reason:'treasury',cost:spec.cost};
- s.factions[actor].treasury-=spec.cost;c.contacts.push({actor,target,id,route,chance:spec.chance,cost:spec.cost,remaining:spec.months,status:'pending',sent:{year:s.year,month:s.month}});
+ s.factions[actor].treasury-=spec.cost;c.contacts.push({actor,target,id,route,chance:spec.chance,cost:spec.cost,remaining:spec.months,status:'pending',sent:{year:s.year,month:s.month},nameSnapshot:reportedOfficialName(s,target,id,actor)});
  return {ok:true,cost:spec.cost,months:spec.months};
 }
 export function cultivateOfficial(s,target,id,actor=s.player,approach='professional'){
@@ -441,7 +460,7 @@ function advanceTalentSearches(s,c){
  for(const q of c.recommendations.filter(x=>x.status==='pending')){
   if(--q.remaining>0)continue;
   if(!present(s,q.sourceId)||!person(s,q.targetId)?.alive){q.status='lapsed';continue}
-  c.referrals[q.actor]||=[];if(!c.referrals[q.actor].includes(q.targetId))c.referrals[q.actor].push(q.targetId);c.referralSources[q.actor]||=[];if(!c.referralSources[q.actor].some(x=>x.id===q.targetId))c.referralSources[q.actor].push({id:q.targetId,target:person(s,q.targetId).faction,from:q.sourceId,observed:{year:s.year,month:s.month},confidence:'reported'});
+  c.referrals[q.actor]||=[];if(!c.referrals[q.actor].includes(q.targetId))c.referrals[q.actor].push(q.targetId);c.referralSources[q.actor]||=[];if(!c.referralSources[q.actor].some(x=>x.id===q.targetId))c.referralSources[q.actor].push({id:q.targetId,target:person(s,q.targetId).faction,from:q.sourceId,observed:{year:s.year,month:s.month},confidence:'reported',nameSnapshot:snapshotName(s,q.targetId)});
   q.status='delivered';q.resolved={year:s.year,month:s.month};
   if(q.actor===s.player)note(s,'An official introduced a named professional contact; no employment was promised.','一位官员引荐了具名的专业联系人；任职尚未获保证。');
  }
@@ -463,7 +482,7 @@ function advanceCooperations(s,c){
   if(!x.sealed&&x.remaining<=Math.floor((x.duration||({professional:2,diplomatic:3,information:3,political:3}[x.kind]||3))/2)){
    const p=person(s,x.id),contact=c.contacts.findLast(y=>y.actor===x.actor&&y.target===x.target&&y.id===x.id&&y.status==='open'),q=roll(s);
    if(!p||p.faction!==x.target||!present(s,x.id)||!contact||q<.12)x.sealed={outcome:'no_reply'};
-   else{const r=contact.relationship||{},basis=x.kind==='professional'?r.professional:x.kind==='political'?r.alignment:x.kind==='information'?r.trust:r.respect,chance=Math.max(.12,Math.min(.82,.32+(basis||30)/180-(p.loyalty||50)/500));x.sealed={outcome:q<.12+.88*chance?'active':'refused',observed:{year:s.year,month:s.month}}}
+   else{const r=contact.relationship||{},basis=x.kind==='professional'?r.professional:x.kind==='political'?r.alignment:x.kind==='information'?r.trust:r.respect,chance=Math.max(.12,Math.min(.82,.32+(basis||30)/180-(p.loyalty||50)/500));x.sealed={outcome:q<.12+.88*chance?'active':'refused',observed:{year:s.year,month:s.month},nameSnapshot:snapshotName(s,x.id)}}
   }
   if(x.remaining>0)continue;
   const sealed=x.sealed||{outcome:'no_reply'};x.status=sealed.outcome==='no_reply'||roll(s)<.08?'no_reply':sealed.outcome;x.resolved={year:s.year,month:s.month};delete x.sealed;
@@ -474,7 +493,7 @@ function advanceCooperations(s,c){
    if(x.kind==='political')c.senate[x.actor]=clamp((c.senate[x.actor]||50)+2);
    if(x.kind==='information'){
     c.intel[x.actor]||={};c.intel[x.actor][x.target]||={stage:0,reports:[]};
-    c.intel[x.actor][x.target].reports.push({stage:0,source:'public professional exchange',observed:sealed.observed,delivered:{year:s.year,month:s.month},confidence:'public',people:[x.id],offices:[],links:[],possibleContradictions:[]});
+    c.intel[x.actor][x.target].reports.push({stage:0,source:'public professional exchange',observed:sealed.observed,delivered:{year:s.year,month:s.month},confidence:'public',people:[x.id],peopleNames:sealed.nameSnapshot?{[x.id]:sealed.nameSnapshot}:{},offices:[],links:[],possibleContradictions:[]});
    }
   }
   if(x.actor===s.player)note(s,x.status==='active'?'A named official agreed to limited cooperation without changing allegiance.':x.status==='refused'?'A named official declined a cooperation proposal.':'No cooperation reply arrived; the request or answer may have been lost.',x.status==='active'?'一位具名官员同意有限合作，政治归属未变。':x.status==='refused'?'一位具名官员拒绝合作提议。':'未收到合作回信；请求或答复可能遗失。');
@@ -482,8 +501,10 @@ function advanceCooperations(s,c){
  c.cooperations=c.cooperations.filter(x=>x.status==='pending'||x.status==='active'||date(s)-(x.resolved?.year*12+x.resolved?.month||date(s))<60);
 }
 export function offerEmployment(s,target,id,actor=s.player,mode='administrative'){
- const c=initializeCursus(s),p=person(s,id),contact=c.contacts.find(x=>x.actor===actor&&x.id===id&&x.status==='open');
- if(!contact||!p||p.faction===actor||!['administrative','military'].includes(mode)||!s.factions[actor]||!s.factions[target])return {ok:false,reason:'eligibility'};
+ const c=initializeCursus(s),contact=c.contacts.findLast(x=>x.actor===actor&&x.target===target&&x.id===id&&x.status==='open');
+ // A contact and a dated destination are known; the person's current fate is
+ // resolved by the later correspondence, not exposed on dispatch.
+ if(!contact||actor===target||!['administrative','military'].includes(mode)||!s.factions[actor]||!s.factions[target])return {ok:false,reason:'eligibility'};
  if(mode==='military'&&!c.intel[actor]?.[target]?.reports?.some(r=>r.commanders?.includes(id)))return {ok:false,reason:'intelligence'};
  if(c.offers.some(x=>x.id===id&&x.actor===actor&&['pending','accepted'].includes(x.status)))return {ok:false,reason:'pending'};
  if(s.factions[actor].treasury<18)return {ok:false,reason:'treasury',cost:18};
@@ -514,7 +535,8 @@ function advanceIntel(s,c){
   const people=stage>=3?[...new Set([...(s.world.leadership[target]||[]),...Object.values(officeholders),...commanders,...senators])]:stage>=1?(s.world.leadership[target]||[]):[];
   const offices=stage>=2?(ROMAN.has(target)?['administration','finance','supply','senate']:Object.keys(posts)) : [];
   const links=stage>=4?people.flatMap(id=>(c.networks[id]||[]).filter(other=>people.includes(other)).map(other=>({from:id,to:other,confidence:'low'}))):[];
-   pending.sealed={outcome:'report',record:{stage,source:'investigation',observed:{year:s.year,month:s.month},confidence:stage>=4?'unverified':stage>=3?'estimate':'public',reliability:'unknown',verified:false,people,offices,officeholders,commanders,senators,links,possibleContradictions:[],access:stage>=5?['formal','merchant','introduction']:[]}};
+   const peopleNames=Object.fromEntries(people.map(id=>[id,snapshotName(s,id)]).filter(([,value])=>value));
+   pending.sealed={outcome:'report',record:{stage,source:'investigation',observed:{year:s.year,month:s.month},confidence:stage>=4?'unverified':stage>=3?'estimate':'public',reliability:'unknown',verified:false,people,peopleNames,offices,officeholders,commanders,senators,links,possibleContradictions:[],access:stage>=5?['formal','merchant','introduction']:[]}};
    }
   }
   if(pending.remaining>0)continue;
@@ -568,7 +590,7 @@ function advanceContacts(s,c){
   for(const x of offers.filter(x=>!eligible.includes(x))){x.status='lapsed';x.resolved={year:s.year,month:s.month}}
   const interested=[];
   for(const x of eligible){
-   const contact=c.contacts.findLast(y=>y.actor===x.actor&&y.id===id&&y.status==='open'),r=contact?.relationship||{};
+   const contact=c.contacts.findLast(y=>y.actor===x.actor&&y.target===x.target&&y.id===id&&y.status==='open'),r=contact?.relationship||{};
    if(!contact){x.status='lapsed';continue}
    const retain=c.institutionalResponses.findLast(y=>y.kind==='retention'&&y.faction===x.target&&y.id===id&&y.until>=date(s));
    const chance=Math.max(.05,Math.min(.72,.25+(p.ambition||40)/300-(p.loyalty||60)/250+(p.education||50)/500+(r.willingness||25)/350+(r.trust||contact.trust||0)/500-(retain?.strength||0)/200));
@@ -588,7 +610,7 @@ function advanceContacts(s,c){
   if(winner.mode!=='military'&&!c.advisers.some(a=>a.id===id))c.advisers.push({id,actor:winner.actor,formerFaction,year:s.year,month:s.month});
   const relationKey=[winner.actor,formerFaction].sort().join(':');s.relations[relationKey]=Math.max(-100,(s.relations[relationKey]||0)-6);
   c.institutionalResponses.push({kind:'defection',faction:formerFaction,id,to:winner.actor,formerPosts,year:s.year,month:s.month});
-  c.networks[id]=formerColleagues.filter(other=>person(s,other)?.alive);c.referrals[winner.actor]||=[];for(const other of c.networks[id]){if(!c.referrals[winner.actor].includes(other))c.referrals[winner.actor].push(other);c.referralSources[winner.actor]||=[];if(!c.referralSources[winner.actor].some(x=>x.id===other))c.referralSources[winner.actor].push({id:other,target:person(s,other).faction,from:id,observed:{year:s.year,month:s.month},confidence:'reported'})}
+  c.networks[id]=formerColleagues.filter(other=>person(s,other)?.alive);c.referrals[winner.actor]||=[];for(const other of c.networks[id]){if(!c.referrals[winner.actor].includes(other))c.referrals[winner.actor].push(other);c.referralSources[winner.actor]||=[];if(!c.referralSources[winner.actor].some(x=>x.id===other))c.referralSources[winner.actor].push({id:other,target:person(s,other).faction,from:id,observed:{year:s.year,month:s.month},confidence:'reported',nameSnapshot:snapshotName(s,other)})}
   if(formerFaction===s.player)note(s,'A named official accepted foreign employment; government posts may be vacant and relations worsened.','一位具名官员接受外国任职；政府职位可能空缺，外交关系恶化。');
   if(winner.actor===s.player)note(s,name(id)+' accepted a negotiated offer; no troops or territory changed hands.',name(id,1)+'接受谈判任职；军队和领土均未转移。');
  }
