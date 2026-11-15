@@ -6,7 +6,7 @@ This plan distinguishes completed repairs from additional evidence needed to rai
 |---|---|---|---|
 | 1 | Keep campaigns playable when browser storage is denied, preserve old saves and warn about session-only data | Roman, Han, atlas blocked-storage browser flow and adapter tests | Implemented; cloud gate in [TEST_RESULTS.md](TEST_RESULTS.md) |
 | 2 | Fit touch controls within Poki mobile frames | Real tap and bounding-box checks at 640×360, 836×470, 1031×580 | Implemented; latest full gate pending |
-| 3 | Package local dependencies, remove external map/analytics/font traffic, use honest offline map labels | Build artifact, zero unauthorized network calls, three entrypoints | Implemented; minified package gate passed [run 43667759424](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43667759424) |
+| 3 | Package local dependencies, remove external map/analytics/font traffic, use honest offline map labels | Build artifact, zero unauthorized network calls, three entrypoints | Implemented; minified package gate passed [run 43668500422](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/43668500422) |
 | 4 | Send correct Poki lifecycle events and external-link handling | Mock SDK event-order test, then real Poki Inspector | Mock automated check implemented; platform check outstanding |
 | 5 | Detect corrupt initial state without mutating player saves | Read-only Roman/Han invariant tests and controlled negative fixture | Implemented |
 | 6 | Keep a complete source inventory and feature ownership register | Generated inventory JSON/Markdown and conservative 20-feature registry | Implemented |
