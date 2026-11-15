@@ -235,6 +235,22 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     else {f.treasury-=cost;place.loyalty=Math.max(0,Math.min(100,place.loyalty+(choice==='full_relief'?7:choice==='limited_relief'?3:-1)));officer.loyalty=Math.max(0,Math.min(100,(officer.loyalty||50)+(cost?2:-1)))}
     s.log.unshift({year:s.year,month:s.month,en:`${place.name[0]} relief decision: treasury ${before.treasury} → ${f.treasury}, loyalty ${before.loyalty} → ${place.loyalty}.`,zh:`${place.name[1]}赈济决策：国库 ${before.treasury} → ${f.treasury}，忠诚度 ${before.loyalty} → ${place.loyalty}。`,region:place.id});
     s.log=s.log.slice(0,80);
+  } else if (m.context?.kind === 'village_petition') {
+    const place=s.regions.find(r=>r.id===m.context.region&&r.owner===s.player);
+    const entity=place?.localEntities?.find(e=>e.id===m.context.villageId&&e.type==='village'&&e.controller===s.player);
+    const village=entity?.village;
+    if(!village || village.localIssue!==m.context.issue)return {ok:false,reason:'changed_state'};
+    if(choice==='fund_village_road') {
+      if(m.context.issue!=='road_request')return {ok:false,reason:'unavailable'};
+      const project=actions.startVillageProject?.(s,entity.id,'road',s.player);
+      if(!project?.ok)return {ok:false,reason:project?.reason||'conditions'};
+    } else if(choice==='relieve_village_tax') {
+      if(m.context.issue!=='tax_complaint')return {ok:false,reason:'unavailable'};
+      if(s.factions[s.player].treasury<5)return {ok:false,reason:'treasury'};
+      s.factions[s.player].treasury-=5;
+      village.satisfaction=Math.min(100,village.satisfaction+8);
+      village.localIssue=null;
+    } else if(choice==='decline') village.satisfaction=Math.max(0,village.satisfaction-2);
   } else if(m.context?.kind==='aid_request'){
     if(choice==='send_aid'){
       if(s.factions[s.player].treasury<5)return {ok:false,reason:'treasury'};

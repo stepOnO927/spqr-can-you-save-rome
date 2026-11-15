@@ -1,4 +1,5 @@
 import {localEntity, villageDevelopment} from './local-polities.js';
+import {sendLetter} from './epistulae.js?v=world-kings-trade-1';
 
 const clamp = value => Math.max(0, Math.min(100, value));
 function villageEvent(state, region, entity) {
@@ -20,6 +21,20 @@ function villageEvent(state, region, entity) {
   if (kind === 'merchants') {entity.treasury++; village.marketAccess = clamp(village.marketAccess + 1);}
   if (kind === 'road_request') village.localIssue = 'road_request';
   village.lastEvent = {kind, year: state.year, month: state.month};
+  if (['road_request', 'tax_complaint'].includes(kind) && entity.controller === state.player && region.owner === state.player) {
+    const previous = village.lastPetitionAt;
+    const now = state.year * 12 + state.month;
+    if (!previous || now - (previous.year * 12 + previous.month) >= 12) {
+      const road = kind === 'road_request';
+      const sent = sendLetter(state, {senderInstitution:state.player,senderFaction:state.player,recipient:state.player,
+        source:region.id,category:'government',priority:'important',
+        subject:road?[`Road petition from ${entity.name[0]}`,`${entity.name[1]}修路请愿`]:[`Tax petition from ${entity.name[0]}`,`${entity.name[1]}税负请愿`],
+        body:road?[`The residents ask for a road. Funding a three-month project costs 14 treasury and 2 food; it improves market access and regional supply.`,`村民请求修路。三个月工程需14国库、2粮食；完工后改善市场通达与战区补给。`]:[`The village asks for relief from high taxes. A local grant costs 5 treasury and improves satisfaction; it does not change the realm-wide tax policy.`,`村民请求缓解高税负。地方补助需5国库并提高满意度；不会改变全国税率。`],
+        options:road?['fund_village_road','decline']:['relieve_village_tax','decline'],
+        context:{kind:'village_petition',villageId:entity.id,issue:kind,region:region.id}});
+      if (sent.ok) {sent.letter.senderName=[...village.leader]; village.lastPetitionAt={year:state.year,month:state.month};}
+    }
+  }
 }
 const projects = Object.freeze({
   granary: {treasury: 8, food: 2, months: 2},
