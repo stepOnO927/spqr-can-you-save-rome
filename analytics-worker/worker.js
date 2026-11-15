@@ -7,14 +7,15 @@ const clean=value=>typeof value==='string'&&token.test(value)?value:'';
 const json=(data,status=200,headers={})=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...headers}});
 const allowedOrigin=new Set(['https://stepono927.github.io']);
 function cors(request){const origin=request.headers.get('Origin');return allowedOrigin.has(origin)?{'Access-Control-Allow-Origin':origin,'Vary':'Origin'}:{}}
-function classify(record){
+function classify(record,clientSignals){
   const elapsed=Math.max(1,record.last_seen-record.first_seen);
   const signals=[];
-  if(record.actions>0&&record.actions/elapsed>3)signals.push('impossible_action_rate');
-  if(record.turns>=30&&elapsed<10000)signals.push('rapid_turns');
-  if(signals.length>=2)return {category:'likely_automation',reasons:signals};
-  if(record.active_ms>=120000&&record.actions>=3)return {category:'engaged_gameplay_session',reasons:['active_time_and_game_actions']};
-  return {category:'unknown',reasons:signals};
+  // A claimed browser flag is weak evidence; require independent server-observed behavior.
+  if(Array.isArray(clientSignals)&&clientSignals.includes('webdriver'))signals.push('webdriver_claim');
+  if(elapsed>=3000&&record.actions>=20&&record.actions/elapsed>0.003)signals.push('impossible_action_rate');
+  if(signals.length>=2)return {category:'likely_automation',confidence:.7,reasons:signals};
+  if(record.active_ms>=120000&&record.actions>=3)return {category:'engaged_gameplay_session',confidence:.7,reasons:['active_time_and_game_actions']};
+  return {category:'unknown',confidence:0,reasons:signals};
 }
 async function collect(request,env){
   const headers=cors(request),origin=request.headers.get('Origin');
@@ -35,10 +36,10 @@ async function collect(request,env){
   const foreground=Math.max(current?.foreground_ms||0,Math.min(t.foregroundMs,page));
   const active=Math.max(current?.active_ms||0,Math.min(t.activeMs,foreground));
   const record={first_seen:first,last_seen:now,page_ms:page,foreground_ms:foreground,active_ms:active,actions:Math.max(current?.actions||0,t.actions),turns:Math.max(current?.turns||0,body.turns)};
-  const classification=classify(record);
+  const classification=classify(record,body.clientSignals);
   const context=body.context;
-  const binds=[body.sessionId,body.channel,clean(body.releaseVersion),first,now,body.sequence,page,foreground,active,record.actions,record.turns,body.gameStarted?1:0,body.tutorialCompleted?1:0,body.ended?1:0,clean(context.campaign),clean(context.civilization),clean(context.difficulty),classification.category,JSON.stringify(classification.reasons)];
-  await env.DB.prepare('INSERT INTO sessions(id,channel,version,first_seen,last_seen,last_sequence,page_ms,foreground_ms,active_ms,actions,turns,game_started,tutorial_completed,ended,campaign,civilization,difficulty,classification,reasons) VALUES('+Array(19).fill('?').join(',')+') ON CONFLICT(id) DO UPDATE SET last_seen=excluded.last_seen,last_sequence=excluded.last_sequence,page_ms=excluded.page_ms,foreground_ms=excluded.foreground_ms,active_ms=excluded.active_ms,actions=excluded.actions,turns=excluded.turns,game_started=MAX(sessions.game_started,excluded.game_started),tutorial_completed=MAX(sessions.tutorial_completed,excluded.tutorial_completed),ended=MAX(sessions.ended,excluded.ended),classification=excluded.classification,reasons=excluded.reasons').bind(...binds).run();
+  const binds=[body.sessionId,body.channel,clean(body.releaseVersion),first,now,body.sequence,page,foreground,active,record.actions,record.turns,body.gameStarted?1:0,body.tutorialCompleted?1:0,body.ended?1:0,clean(context.campaign),clean(context.civilization),clean(context.difficulty),classification.category,classification.confidence,JSON.stringify(classification.reasons)];
+  await env.DB.prepare('INSERT INTO sessions(id,channel,version,first_seen,last_seen,last_sequence,page_ms,foreground_ms,active_ms,actions,turns,game_started,tutorial_completed,ended,campaign,civilization,difficulty,classification,confidence,reasons) VALUES('+Array(20).fill('?').join(',')+') ON CONFLICT(id) DO UPDATE SET last_seen=excluded.last_seen,last_sequence=excluded.last_sequence,page_ms=excluded.page_ms,foreground_ms=excluded.foreground_ms,active_ms=excluded.active_ms,actions=excluded.actions,turns=excluded.turns,game_started=MAX(sessions.game_started,excluded.game_started),tutorial_completed=MAX(sessions.tutorial_completed,excluded.tutorial_completed),ended=MAX(sessions.ended,excluded.ended),classification=excluded.classification,confidence=excluded.confidence,reasons=excluded.reasons').bind(...binds).run();
   if(sanitized.length)await env.DB.batch(sanitized.map(e=>env.DB.prepare('INSERT INTO events(session_id,received_at,name,campaign,civilization,difficulty) VALUES(?,?,?,?,?,?)').bind(body.sessionId,now,e.name,e.campaign,e.civilization,e.difficulty)));
   return json({ok:true},200,headers);
 }
@@ -52,7 +53,7 @@ async function dashboard(request,env,html=false){
     env.DB.prepare('SELECT channel,COUNT(*) sessions FROM sessions WHERE last_seen>=? GROUP BY channel').bind(since).all(),
     env.DB.prepare('SELECT classification,COUNT(*) sessions FROM sessions WHERE last_seen>=? GROUP BY classification').bind(since).all(),
     env.DB.prepare('SELECT name,COUNT(*) count FROM events WHERE received_at>=? GROUP BY name').bind(since).all(),
-    env.DB.prepare('SELECT id,channel,version,first_seen,last_seen,page_ms,foreground_ms,active_ms,actions,turns,game_started,tutorial_completed,classification,reasons FROM sessions WHERE last_seen>=? ORDER BY last_seen DESC LIMIT 100').bind(since).all(),
+    env.DB.prepare('SELECT id,channel,version,first_seen,last_seen,page_ms,foreground_ms,active_ms,actions,turns,game_started,tutorial_completed,classification,confidence,reasons FROM sessions WHERE last_seen>=? ORDER BY last_seen DESC LIMIT 100').bind(since).all(),
     env.DB.prepare('SELECT civilization,COUNT(*) count FROM sessions WHERE last_seen>=? AND game_started=1 AND civilization<>? GROUP BY civilization ORDER BY count DESC').bind(since,'').all(),
     env.DB.prepare('SELECT difficulty,COUNT(*) count FROM sessions WHERE last_seen>=? AND game_started=1 AND difficulty<>? GROUP BY difficulty ORDER BY count DESC').bind(since,'').all(),
     env.DB.prepare('SELECT channel,version,COUNT(*) count FROM sessions WHERE last_seen>=? GROUP BY channel,version ORDER BY count DESC').bind(since).all(),

@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   civilization TEXT NOT NULL DEFAULT '',
   difficulty TEXT NOT NULL DEFAULT '',
   classification TEXT NOT NULL DEFAULT 'unknown',
+  confidence REAL NOT NULL DEFAULT 0,
   reasons TEXT NOT NULL DEFAULT '[]'
 );
 CREATE INDEX IF NOT EXISTS idx_sessions_seen ON sessions(last_seen);
