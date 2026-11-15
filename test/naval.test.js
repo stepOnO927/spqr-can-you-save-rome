@@ -50,8 +50,39 @@ test('battle sinking follows ship roles rather than save-object key order',()=>{
 });
 
 test('warship screen and attacker tactic determine which hull is exposed',()=>{
- const run=order=>{const s=newGrandGame('senate'),attacker=s.naval.fleets.find(f=>f.id==='senate-adriatic'),defender=s.naval.fleets.find(f=>f.id==='caesar-adriatic');s.factions.caesar.treasury=500;attacker.port=null;attacker.ships={trireme:4};attacker.sailors=720;attacker.tactic='boarding';defender.port=null;defender.zone=attacker.zone;defender.ships={transport:4,trireme:2,light:1};defender.sailors=705;defender.hull=50;defender.order={kind:order?'patrol':'intercept',target:defender.zone,path:[]};s.seed=83;resolveBattle(s,attacker,defender,attacker.zone,()=>{});const report=s.naval.reports.find(r=>r.kind==='battle');return {loss:report?.losses[defender.id],tactic:report?.tactics[defender.id]}};
- const screened=run(true),exposed=run(false);assert.equal(screened.tactic,'formation');assert.equal(screened.loss.type,'light');assert.equal(exposed.tactic,'ramming');assert.equal(exposed.loss.type,'transport');
+ const run=order=>{const s=newGrandGame('senate'),attacker=s.naval.fleets.find(f=>f.id==='senate-adriatic'),defender=s.naval.fleets.find(f=>f.id==='caesar-adriatic');s.factions.caesar.treasury=500;attacker.port=null;attacker.ships={trireme:4};attacker.sailors=720;attacker.tactic='boarding';defender.port=null;defender.zone=attacker.zone;defender.ships={transport:4,trireme:2,light:1};defender.sailors=705;defender.hull=50;defender.order={kind:order?'patrol':'intercept',target:defender.zone,path:[]};s.seed=83;resolveBattle(s,attacker,defender,attacker.zone,()=>{});const report=s.naval.reports.find(r=>r.kind==='battle');return {loss:report?.losses[defender.id],tactic:report?.tactics[defender.id],captured:report?.captured,prize:attacker.ships.transport||0}};
+ const screened=run(true),exposed=run(false);assert.equal(screened.tactic,'formation');assert.equal(screened.loss.type,'light');assert.equal(exposed.tactic,'ramming');assert.equal(exposed.loss.type,'transport');assert.equal(exposed.captured,1);assert.equal(exposed.prize,1);assert.equal(exposed.loss.sunk,0);assert.deepEqual(exposed.loss.byType,{});
+});
+
+test('a lost mixed fleet records each sunk ship class without exposing enemy classes in the report',()=>{
+ let s=newGrandGame('senate');
+ const own=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ own.port=null;own.ships={trireme:4};own.sailors=720;
+ enemy.port=null;enemy.zone=own.zone;enemy.ships={light:1,trireme:2,transport:1};enemy.sailors=495;enemy.hull=1;
+ resolveBattle(s,own,enemy,own.zone,()=>{});
+ const report=s.naval.reports.find(r=>r.kind==='battle');
+ assert.deepEqual(report.losses[enemy.id].byType,{light:1,trireme:2,transport:1});
+ assert.equal(report.losses[enemy.id].sunk,4);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(s.naval.reports.find(r=>r.id===report.id).losses[enemy.id].byType,{light:1,trireme:2,transport:1});
+ for(const [lang,known,secret] of [['en','Ships sunk by class','Light warship'],['zh','沉没船型','轻型战船']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:s,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+  assert.ok(!content.innerHTML.includes(known),'enemy ship classes remain concealed in the player report');
+  assert.ok(!content.innerHTML.includes(secret),'enemy type names remain concealed in the player report');
+ }
+ s=newGrandGame('senate');
+ const friendly=s.naval.fleets.find(f=>f.id==='senate-adriatic'),hostile=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ friendly.port=null;friendly.ships={light:1,trireme:1};friendly.sailors=245;friendly.hull=1;
+ hostile.port=null;hostile.zone=friendly.zone;hostile.ships={trireme:4};hostile.sailors=720;
+ resolveBattle(s,friendly,hostile,friendly.zone,()=>{});
+ const ownReport=s.naval.reports.find(r=>r.kind==='battle');
+ assert.deepEqual(ownReport.losses[friendly.id].byType,{light:1,trireme:1});
+ for(const [lang,heading,light] of [['en','Ships sunk by class','Light warship ×1'],['zh','沉没船型','轻型战船 ×1']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:s,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+  assert.ok(content.innerHTML.includes(heading));assert.ok(content.innerHTML.includes(light));
+ }
 });
 
 test('warship speed gives bounded maneuver factors recorded in battle reports',()=>{

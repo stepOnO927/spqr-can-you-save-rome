@@ -415,7 +415,7 @@ function exposedShipType(target,attackerTactic='formation',defenderTactic='forma
  if(attackerTactic==='boarding'&&defenderTactic!=='formation'&&slowCount>warshipCount)return slow[0];
  return warships[0]||slow[0]||null;
 }
-function damageFleet(s,target,amount,attackerTactic='formation',defenderTactic='formation'){if(amount<=0)return {sunk:0,type:null,sailors:0};const before=ships(target),crew=target.sailors;target.hull=Math.max(0,target.hull-amount);target.sailors=Math.max(0,target.sailors-Math.round(amount*6));target.morale=Math.max(5,target.morale-Math.ceil(amount/3));let type=null,sunk=0;if(target.hull<45&&before>0){type=exposedShipType(target,attackerTactic,defenderTactic);if(type)target.ships[type]--;sunk=type?1:0}if(target.hull===0||ships(target)===0){sunk=before;type=null;target.hull=0;target.ships={};if(target.order?.kind==='supply')report(s,{kind:'supply-loss',owner:target.owner,port:target.order.targetPort,cargo:target.order.cargo||0,reason:'fleet sunk'});target.order=null}return {sunk,type,sailors:crew-target.sailors}}
+function damageFleet(s,target,amount,attackerTactic='formation',defenderTactic='formation'){if(amount<=0)return {sunk:0,type:null,sailors:0};const before=ships(target),beforeTypes={...target.ships},crew=target.sailors;target.hull=Math.max(0,target.hull-amount);target.sailors=Math.max(0,target.sailors-Math.round(amount*6));target.morale=Math.max(5,target.morale-Math.ceil(amount/3));let type=null,sunk=0;if(target.hull<45&&before>0){type=exposedShipType(target,attackerTactic,defenderTactic);if(type)target.ships[type]--;sunk=type?1:0}if(target.hull===0||ships(target)===0){sunk=before;type=null;target.hull=0;target.ships={};if(target.order?.kind==='supply')report(s,{kind:'supply-loss',owner:target.owner,port:target.order.targetPort,cargo:target.order.cargo||0,reason:'fleet sunk'});target.order=null}const byType={};for(const [ship,count] of Object.entries(beforeTypes)){const lost=count-(target.ships[ship]||0);if(lost>0)byType[ship]=lost}return {sunk,type,sailors:crew-target.sailors,...(sunk?{byType}:{})}}
 function disruptTransport(s,f,armyId){const army=s.armies.find(x=>x.id===armyId);if(army&&fleetCapacity(f,s)<army.men){army.men=Math.max(0,Math.round(army.men*(f.hull===0?.45:.72)));army.morale=Math.max(10,army.morale-20);army.move=null;f.order=null}}
 function maritimeHazards(s,f,log){if(f.port||!ships(f))return;const elapsed=(s.year-(s.startYear??-49))*12+s.month-(s.startMonth??1);if(elapsed<12)return;if(rng(s)<.025){const armyId=f.order?.armyId,loss=5+Math.floor(rng(s)*9),damage=damageFleet(s,f,loss);disruptTransport(s,f,armyId);report(s,{kind:'storm',zone:f.zone,owner:f.owner,damage:loss,sailors:damage.sailors});if(f.owner===s.player)log(s,'A storm damaged the fleet and cost sailors.','风暴损伤了舰队并造成水手伤亡。')}if(f.morale<22&&rng(s)<.12){const army=s.armies.find(x=>x.id===f.order?.armyId);if(army)army.move=null;f.order=null;f.morale=Math.max(5,f.morale-4);report(s,{kind:'mutiny',zone:f.zone,owner:f.owner});if(f.owner===s.player)log(s,'A naval mutiny interrupted fleet orders.','海军哗变中断了舰队命令。')}}
 function battleTactic(s,f){
@@ -469,7 +469,7 @@ export function resolveBattle(s,a,b,zone,log){
  const bLoss=damageFleet(s,b,battleDamage(pa,pb,!attackerWins,tactics[a.id],tactics[b.id]),tactics[a.id],tactics[b.id]);
  adjustBattleSailors(a,aLoss,tactics[a.id],tactics[b.id]);adjustBattleSailors(b,bLoss,tactics[b.id],tactics[a.id]);
  const victor=attackerWins?a:b,defeated=attackerWins?b:a,defeatedLoss=attackerWins?bLoss:aLoss;
- let captured=0;if(tactics[victor.id]==='boarding'&&victor.hull>0&&defeatedLoss.sunk>0&&defeatedLoss.type){victor.ships[defeatedLoss.type]=(victor.ships[defeatedLoss.type]||0)+1;defeatedLoss.sunk--;captured=1}
+ let captured=0;if(tactics[victor.id]==='boarding'&&victor.hull>0&&defeatedLoss.sunk>0&&defeatedLoss.type){victor.ships[defeatedLoss.type]=(victor.ships[defeatedLoss.type]||0)+1;defeatedLoss.byType[defeatedLoss.type]--;if(!defeatedLoss.byType[defeatedLoss.type])delete defeatedLoss.byType[defeatedLoss.type];defeatedLoss.sunk--;captured=1}
  const capturedCommander=tactics[victor.id]==='boarding'?captureNavalCommander(s,defeated,victor):null;
  if(capturedCommander&&(capturedCommander.owner===s.player||capturedCommander.holder===s.player))log(s,'A fleet commander was taken prisoner in a boarding action.','接舷战中一名舰长被俘。');
  a.experience=Math.min(100,a.experience+3);b.experience=Math.min(100,b.experience+3);
@@ -504,7 +504,7 @@ function resolveCoordinatedBattle(s,sideA,sideB,zone,log){
  let captured=0,capturedCommander=null;
  if(boarding){
   const prize=defeated.find(f=>losses[f.id].sunk>0&&losses[f.id].type);
-  if(prize){boarding.ships[losses[prize.id].type]=(boarding.ships[losses[prize.id].type]||0)+1;losses[prize.id].sunk--;captured=1}
+  if(prize){const loss=losses[prize.id];boarding.ships[loss.type]=(boarding.ships[loss.type]||0)+1;loss.byType[loss.type]--;if(!loss.byType[loss.type])delete loss.byType[loss.type];loss.sunk--;captured=1}
   for(const loser of defeated){capturedCommander=captureNavalCommander(s,loser,boarding);if(capturedCommander)break}
  }
  if(capturedCommander&&(capturedCommander.owner===s.player||capturedCommander.holder===s.player))log(s,'A fleet commander was taken prisoner in a boarding action.','接舷战中一名舰长被俘。');

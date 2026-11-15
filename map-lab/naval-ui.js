@@ -1,5 +1,5 @@
-import {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,reportedHostileFleets,reportedNonHostileFleets,portZone,fleetSpeed,fleetCargoCapacity,fleetUpkeepDue,wagonSupplyPlan} from '../naval.js?v=47';
-import {adjacent,previewMarch} from '../engine.js?v=203';
+import {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,reportedHostileFleets,reportedNonHostileFleets,portZone,fleetSpeed,fleetCargoCapacity,fleetUpkeepDue,wagonSupplyPlan} from '../naval.js?v=48';
+import {adjacent,previewMarch} from '../engine.js?v=204';
 import {CHARACTER_CATALOG} from '../characters.js';
 import {FACTIONS} from '../data.js?v=9';
 
@@ -22,7 +22,9 @@ function battleFactorsHtml(report,ownIds,zh){
  for(const id of ownIds){
   const maneuver=Number(report.maneuver?.[id]),loss=report.losses?.[id],fleet=report.snapshots?.[id],label=ownIds.length>1?`${esc(n(fleet?.name,zh))}: `:'';
   if(Number.isFinite(maneuver)&&maneuver>0){const position=maneuver>102?(zh?'有利':'favorable'):maneuver<98?(zh?'不利':'strained'):(zh?'相持':'even');parts.push(`${label}${ownIds.length>1?(zh?'战船机动形势':'Warship maneuver'):(zh?'己方战船机动形势':'Friendly warship maneuver')}: ${position} (${maneuver}%)`)}
-  if(loss?.sunk===1&&loss.type&&SHIPS[loss.type])parts.push(`${label}${zh?'沉没船型':'Ship lost'}: ${esc(n(SHIPS[loss.type].name,zh))}`);
+  const classes=loss?.byType&&typeof loss.byType==='object'?Object.entries(loss.byType).filter(([type,count])=>SHIPS[type]&&Number.isInteger(count)&&count>0):[];
+  if(classes.length)parts.push(`${label}${zh?'沉没船型':'Ships sunk by class'}: ${classes.map(([type,count])=>`${esc(n(SHIPS[type].name,zh))} ×${count}`).join(' · ')}`);
+  else if(loss?.sunk===1&&loss.type&&SHIPS[loss.type])parts.push(`${label}${zh?'沉没船型':'Ship lost'}: ${esc(n(SHIPS[loss.type].name,zh))}`);
  }
  return parts.length?`<p>${parts.join(' · ')}. ${zh?'船型与阵型影响机动；天气和战斗偶然性仍可能改变结局。':'Ship classes and formation affect maneuver; weather and combat chance can still change the outcome.'}</p>`:'';
 }
