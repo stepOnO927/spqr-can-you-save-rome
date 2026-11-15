@@ -65,3 +65,23 @@ test('an AI court funds a valuable raided route only while keeping its treasury 
  shipment.remaining=1;poor.month++;const seed=Array.from({length:10000},(_,i)=>i+1).find(value=>roll({...poor,seed:value},`market-bandit:${shipment.id}:${site.id}`)<.08);assert.ok(seed);poor.seed=seed;
  advanceEasternMarkets(poor);assert.equal(shipment.status,'lost');assert.equal(poor.tradeMarkets.merchantProtectionRequests[0].status,'declined');assert.equal(poor.tradeMarkets.courtEscortSpent,0);
 });
+
+test('a merchant who changes allegiance neither returns for the old court nor carries its next caravan',()=>{
+ let s=newHanGame('han',{seed:91});s.tradeMarkets.embeddedRoman=true;
+ const request={seller:'han',buyer:'han',origin:'hongnong',destination:'changan',commodity:'provisions',quantity:1};
+ const first=placeEasternTrade(s,request);assert.equal(first.ok,true,first.reason);
+ const id=first.shipment.merchantId,site=s.regions.find(r=>r.id===first.shipment.legs[0].to);
+ site.unrest=0;site.fort=5;for(const army of s.armies.filter(a=>a.region===site.id))army.men=0;
+ first.shipment.remaining=1;s.month++;
+ s.seed=Array.from({length:10000},(_,i)=>i+1).find(value=>roll({...s,seed:value},`market-bandit:${first.shipment.id}:${site.id}`)>.9);
+ advanceEasternMarkets(s);assert.equal(first.shipment.status,'delivered');
+ assert.ok(s.persons[id].marketReturn);assert.equal(s.persons[id].location,request.destination);
+ s.persons[id].faction='shanshan';s=loadHanSave(serialize(s));
+ s.month++;advanceEasternMarkets(s);
+ assert.equal(s.persons[id].location,request.destination,'the former court cannot move a defector home');
+ assert.equal(s.persons[id].marketReturn,undefined);
+ s.persons[id].location=request.origin;
+ const next=placeEasternTrade(s,request);assert.equal(next.ok,true,next.reason);
+ assert.notEqual(next.shipment.merchantId,id,'a stale roster entry cannot assign a defector');
+ assert.equal(s.persons[next.shipment.merchantId].faction,'han');
+});

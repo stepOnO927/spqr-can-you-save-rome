@@ -10,7 +10,7 @@ The draft now includes main through `0f664ae9`, including its production GA4
 stream setting. Main's optional analytics
 is connected across the campaign, atlas and standalone Han views after
 reconciling their differing controls. Its privacy choice remains opt-in;
-the six new analytics unit cases and the full 1,195-test local suite pass. Main's ninth
+the six new analytics unit cases and the full 1,196-test local suite pass. Main's ninth
 campaign-born portrait pair is also available to new births and compatible
 old saves. Han trade arrivals and completed tutorial steps use the same
 optional analytics events as the rest of the campaign.
@@ -728,6 +728,10 @@ response rather than paying twice. Requests, decisions, merchant identity,
 spent treasury and one-trip protection survive saves. The bilingual eastern
 market panel shows only the player's requests. Tests compare the same
 deterministic raid with and without the funded escort, not just its label.
+An allegiance change now removes a carrier from the old court's usable roster
+and cancels its old return itinerary. Otherwise a stale roster could assign
+the defector to a later caravan. A saved delivery, defection and subsequent
+order are covered by a focused regression.
 Small oasis courts now participate in the autonomous market even below the
 former population threshold. They can buy an affordable one-unit lot instead
 of being excluded when a three-unit quote exceeds their cash. Local town

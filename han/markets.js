@@ -160,7 +160,7 @@ const merchantRouteKey=(origin,destination)=>`${origin}:${destination}`;
 function merchantRouteExperience(person,origin,destination){return Math.max(0,Math.min(3,Number(person?.marketRoutes?.[merchantRouteKey(origin,destination)])||0))}
 
 function availableMerchant(s,buyer,location,destination){
- const markets=s.tradeMarkets,ids=markets.merchants[buyer]||[],free=ids.filter(id=>{const person=s.persons[id];return person?.alive&&person.location===location&&!person.marketReturn&&!markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status))});
+ const markets=s.tradeMarkets,ids=markets.merchants[buyer]||[],free=ids.filter(id=>{const person=s.persons[id];return person?.alive&&person.faction===buyer&&person.location===location&&!person.marketReturn&&!markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status))});
  free.sort((a,b)=>Number(activeEasternMerchantPrivilege(s,b,buyer))-Number(activeEasternMerchantPrivilege(s,a,buyer))||merchantRouteExperience(s.persons[b],location,destination)-merchantRouteExperience(s.persons[a],location,destination)||(s.persons[b].marketReputation||0)-(s.persons[a].marketReputation||0));
  return free[0]||null;
 }
@@ -217,7 +217,9 @@ function releaseMerchant(s,shipment,location){
 function advanceMerchantReturns(s,now){
  for(const [faction,ids] of Object.entries(s.tradeMarkets.merchants))for(const id of ids){
   const person=s.persons[id],trip=person?.marketReturn;
-  if(!person?.alive||!trip||now<trip.arrive)continue;
+  if(!person?.alive||!trip)continue;
+  if(person.faction!==faction){delete person.marketReturn;continue}
+  if(now<trip.arrive)continue;
   if(!tradePath(s,person.location,trip.to,faction)){trip.arrive=now+Math.max(1,trip.months||1);continue}
   person.location=trip.to;delete person.marketReturn;
  }
