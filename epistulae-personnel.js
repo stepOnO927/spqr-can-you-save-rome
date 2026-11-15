@@ -1,5 +1,5 @@
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=born-portraits-six-1';
+import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=sighting-delivery-1';
 
 const date=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');

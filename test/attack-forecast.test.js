@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region} from '../engine.js?v=agreement-courier-1';
-import {reportedArmies} from '../character-system.js?v=agreement-courier-1';
+import {newGame,region} from '../engine.js?v=sighting-delivery-1';
+import {reportedArmies} from '../character-system.js?v=sighting-delivery-1';
 import {estimateAttackLosses} from '../attack-forecast.js?v=attack-preview-intelligence-1';
 
 test('dated observations reveal a broad strength band but no exact enemy count',()=>{

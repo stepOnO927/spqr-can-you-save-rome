@@ -3,6 +3,7 @@ import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {activeAgreement} from './agreements.js?v=agreement-courier-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
+import {isDeliveredReport} from './person-knowledge.js?v=sighting-delivery-1';
 
 // Scout-based strategic warnings between friendly courts.
 // A sender may only forward a dated sighting from its own knowledge. The letter
@@ -41,11 +42,11 @@ export function warningCandidates(s,actor){
    const hostile=isWar(s,actor,threat)||wars.some(d=>d.parties.includes(threat)&&d.parties.includes(partner));
    if(!hostile)continue;
    for(const x of Object.values(knowledge.sightings||{})){
-    const age=date(s)-(x.year*12+x.month);
-    if(x.source==='ally_warning'||age<0||age>FRESH_SIGHTING||!Array.isArray(x.strengthBand)||x.strengthBand[1]<3000)continue;
+    const year=x.observationYear??x.year,month=x.observationMonth??x.month,age=date(s)-(year*12+month);
+    if(!isDeliveredReport(s,x)||!Number.isFinite(age)||x.source==='ally_warning'||age<0||age>FRESH_SIGHTING||!Array.isArray(x.strengthBand)||x.strengthBand[1]<3000)continue;
     const near=partnerRegions.has(x.region)?x.region:neighbours(x.region).find(id=>partnerRegions.has(id));
     if(!near)continue;
-    out.push({partner,threat,near,sighting:{armyId:x.id,name:x.name?[...x.name]:null,region:x.region,strengthBand:[...x.strengthBand],year:x.year,month:x.month}});
+    out.push({partner,threat,near,sighting:{armyId:x.id,name:x.name?[...x.name]:null,region:x.region,strengthBand:[...x.strengthBand],year,month}});
    }
   }
  }
