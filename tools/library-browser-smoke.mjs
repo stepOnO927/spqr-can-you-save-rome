@@ -29,7 +29,8 @@ await page.locator('[data-library-branch="idea"]').click();assert.equal(await pa
 await page.locator('[data-library-entry="egyptian-multiscript-decrees"]').click();assert.match(await page.locator('#library-detail').innerText(),/埃及/);
 await page.locator('#nav-lang').click();assert.equal(await page.locator('[data-library-entry]').count(),40);assert.match(await page.locator('#library-detail h3').innerText(),/Egyptian Multiscript Decrees/);
 assert.equal(await page.locator('.library-scholars article').count(),3);
-const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins);await page.reload();await page.locator('[data-building="library"]').click();assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins),before);
+await page.locator('[data-activity="library-roads"][data-activity-choice="0"]').click();assert.match(await page.locator('.civic-activity').innerText(),/Map labels/);
+const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins);await page.reload();await page.locator('[data-building="library"]').click();assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-legacy-profile-v1')).coins),before);assert.equal(await page.locator('[data-activity="library-roads"]').count(),0);
 await mkdir(path.join(root,'outputs'),{recursive:true});await page.screenshot({path:path.join(root,'outputs','legacy-library-desktop.png'),fullPage:true});
 await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.screenshot({path:path.join(root,'outputs','legacy-library-mobile.png'),fullPage:true});
 assert.deepEqual(errors,[]);await browser.close();console.log('Library browser smoke passed: purchase, 74 entries, search, sources, bilingual, reload, mobile.');
