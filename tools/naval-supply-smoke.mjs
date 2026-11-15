@@ -38,9 +38,9 @@ try{
  await page.locator('[data-toggle-trade="egypt-italy"]').click();
  assert.match(await page.locator('[data-toggle-trade="egypt-italy"]').innerText(),/PAUSE IMPORTS/);
  const reports=await page.evaluate(async()=>{
-  const {newGrandGame}=await import('../engine.js?v=183');
-  const {advanceNaval,reserveFleet,mobilizeFleet}=await import('../naval.js?v=37');
-  const {renderNavalPanel}=await import('./naval-ui.js?v=53');
+  const {newGrandGame}=await import('../engine.js?v=184');
+  const {advanceNaval,reserveFleet,mobilizeFleet}=await import('../naval.js?v=38');
+  const {renderNavalPanel}=await import('./naval-ui.js?v=54');
   const state=newGrandGame('senate');state.naval.reports.unshift({id:'supply-test',kind:'supply-delivery',owner:'senate',port:'t016',cargo:6,year:-49,month:4});
   const root=document.createElement('div');
   const render=lang=>{renderNavalPanel({state,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};
@@ -69,6 +69,11 @@ try{
   const readiness=newGrandGame('senate'),fleetText=lang=>{renderNavalPanel({state:readiness,lang,root,section:'fleets',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent};
   reserveFleet(readiness,'senate','senate-adriatic');result.fleetReserveEn=fleetText('en');result.fleetReserveZh=fleetText('zh');
   mobilizeFleet(readiness,'senate','senate-adriatic');result.fleetMobilizingEn=fleetText('en');result.fleetMobilizingZh=fleetText('zh');
+  const civilian=newGrandGame('egypt');civilian.factions.senate.food=0;
+  const detached=reserveFleet(civilian,'egypt','egypt-grain');
+  result.civilianEn=(()=>{renderNavalPanel({state:civilian,lang:'en',root,section:'fleets',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent})();
+  result.civilianZh=(()=>{renderNavalPanel({state:civilian,lang:'zh',root,section:'fleets',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return root.textContent})();
+  result.detached=detached.detached;advanceNaval(civilian);result.civilianGrain=civilian.naval.routes.find(route=>route.id==='egypt-italy').last.reason;
   return result;
  });
  assert.match(reports.en,/Army supplies delivered/);assert.match(reports.en,/Food 6/);
@@ -87,8 +92,11 @@ try{
  assert.match(reports.fleetReserveEn,/base upkeep to 15%/);assert.match(reports.fleetReserveEn,/2 months/);
  assert.match(reports.fleetReserveZh,/基础维护费降至15%/);assert.match(reports.fleetReserveZh,/2个月/);
  assert.match(reports.fleetMobilizingEn,/MOBILIZING/);assert.match(reports.fleetMobilizingZh,/整备中/);
+ assert.match(reports.civilianEn,/Merchant vessels at/);assert.match(reports.civilianEn,/separate flotilla/);
+ assert.match(reports.civilianZh,/商船队/);assert.match(reports.civilianZh,/独立船队/);
+ assert.ok(reports.detached);assert.equal(reports.civilianGrain,'enroute');
  await page.evaluate(async()=>{
-  const {newGrandGame}=await import('../engine.js?v=183');
+  const {newGrandGame}=await import('../engine.js?v=184');
   const state=newGrandGame('senate'),army=state.armies.find(a=>a.id==='italy');
   state.wars=[];state.factions.senate.treasury=200;army.region='t023';army.operationalSupply=.3;
   state.naval.provisions.t016={owner:'senate',food:10};

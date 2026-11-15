@@ -122,11 +122,14 @@ test('reserve cuts real upkeep but suspends orders and troop transports until mo
  restored.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';advanceNaval(restored);assert.equal(saved.reserve,true);assert.equal(saved.mobilizing,1);assert.equal(orderFleet(restored,'senate',saved.id,'patrol','adriatic').ok,false);
  advanceNaval(restored);assert.equal(saved.reserve,false);assert.equal(saved.mobilizing,0);assert.equal(fleetUpkeepDue(saved),full);assert.equal(orderFleet(restored,'senate',saved.id,'patrol','adriatic').ok,true);
 });
-test('reserve ships cannot carry merchant cargo, and loss of their harbor ends reserve',()=>{
+test('reserved warships release their existing merchant hulls, and lost harbors end reserve',()=>{
  const s=newGrandGame('senate'),egypt=s.naval.fleets.find(x=>x.owner==='egypt'),senate=s.naval.fleets.find(x=>x.owner==='senate');
  s.factions.senate.food=0;
- assert.equal(reserveFleet(s,'egypt',egypt.id).ok,true);advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
- assert.equal(mobilizeFleet(s,'egypt',egypt.id).ok,true);advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');assert.equal(egypt.reserve,true);advanceNaval(s);assert.equal(egypt.reserve,false);advanceNaval(s);assert.notEqual(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'merchant');
+ const laidUp=reserveFleet(s,'egypt',egypt.id),merchant=s.naval.fleets.find(f=>f.id===laidUp.detached);
+ assert.equal(laidUp.ok,true);assert.equal(egypt.ships.merchant,0);assert.equal(egypt.sailors,180);assert.equal(merchant.ships.merchant,3);assert.equal(merchant.sailors,135);assert.equal(merchant.reserve,undefined);
+ advanceNaval(s);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'enroute');assert.equal(egypt.reserve,true);
+ assert.equal(s.naval.fleets.filter(f=>f.owner==='egypt').reduce((sum,f)=>sum+(f.ships.merchant||0),0)+s.naval.voyages.filter(v=>v.vesselOwner==='egypt').length,3);
+ assert.equal(mobilizeFleet(s,'egypt',egypt.id).ok,true);advanceNaval(s);assert.equal(egypt.reserve,true);advanceNaval(s);assert.equal(egypt.reserve,false);
  assert.equal(reserveFleet(s,'senate',senate.id).ok,true);s.regions.find(r=>r.id===senate.port).owner='caesar';s.naval.fleets.find(x=>x.owner==='caesar').zone='ligurian';advanceNaval(s);assert.equal(senate.reserve,false);assert.equal(senate.port,null);assert.ok(senate.hull<100);
 });
 test('a fleet mobilizing in harbor stays sheltered until it sorties',()=>{
@@ -308,8 +311,20 @@ test('a delivery remains in the monthly trade report when the city reaches its d
 test('older saves receive missing market vessels once without duplicating existing hulls',()=>{
  let s=newGrandGame('senate');s.naval.version=2;s.naval.fleets=s.naval.fleets.filter(f=>!f.id.startsWith('market-'));
  s=upgradeSave(structuredClone(s));const ids=s.naval.fleets.filter(f=>f.id.startsWith('market-')).map(f=>f.id);
- assert.equal(s.naval.version,3);assert.deepEqual(ids.sort(),['market-africa','market-mauretania','market-narbo','market-t114']);
+ assert.equal(s.naval.version,4);assert.deepEqual(ids.sort(),['market-africa','market-mauretania','market-narbo','market-t114']);
  s=upgradeSave(structuredClone(s));assert.deepEqual(s.naval.fleets.filter(f=>f.id.startsWith('market-')).map(f=>f.id).sort(),ids);
+});
+test('a saved Egyptian reserve separates civilian hulls once and delivers real grain',()=>{
+ let s=newGrandGame('senate');s.naval.version=3;s.naval.routes=s.naval.routes.filter(r=>r.id==='egypt-italy');s.naval.pirates=[];
+ const warship=s.naval.fleets.find(f=>f.id==='egypt-grain');warship.reserve=true;s.factions.senate.food=0;s.factions.egypt.food=60;
+ s=upgradeSave(structuredClone(s));assert.equal(s.naval.version,4);
+ const civilian=s.naval.fleets.find(f=>f.owner==='egypt'&&f.id!=='egypt-grain'&&(f.ships.merchant||0)>0);
+ assert.ok(civilian);assert.equal(civilian.ships.merchant,3);assert.equal(s.naval.fleets.find(f=>f.id==='egypt-grain').ships.merchant,0);
+ s=upgradeSave(structuredClone(s));assert.equal(s.naval.fleets.filter(f=>f.owner==='egypt'&&(f.ships.merchant||0)>0).length,1);
+ advanceNaval(s);assert.equal(s.naval.routes[0].last.reason,'enroute');assert.equal(s.naval.voyages[0].fleetId,civilian.id);
+ s=upgradeSave(structuredClone(s));const delivered=tradeArrival(s,'egypt-italy');
+ assert.equal(delivered.amount,4);assert.equal(s.factions.senate.food,4);assert.equal(s.factions.egypt.food,56);
+ assert.equal(s.naval.fleets.filter(f=>f.owner==='egypt').reduce((sum,f)=>sum+(f.ships.merchant||0),0)+s.naval.voyages.filter(v=>v.vesselOwner==='egypt').length,3);
 });
 test('an uncrewed merchant hull cannot create sailors when trade departs',()=>{
  const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.id==='egypt-grain');s.factions.senate.food=0;fleet.sailors=0;
@@ -320,7 +335,7 @@ test('merchant cargo and its hull survive reload, arrive by sea, and return with
  const route=s.naval.routes[0],fleet=s.naval.fleets.find(f=>f.id==='egypt-grain');fleet.ships.merchant=1;
  advanceNaval(s);assert.equal(route.last.reason,'enroute');assert.equal(fleet.ships.merchant,0);assert.equal(s.factions.egypt.food,56);assert.equal(s.factions.senate.food,0);
  assert.match(tradeCard(s,route,false),/Cargo at sea 4/);assert.match(tradeCard(s,route,true),/在途货物 4/);
- s=upgradeSave(structuredClone(s));assert.equal(s.naval.version,3);assert.equal(s.naval.voyages[0].cargo,4);assert.equal(s.naval.voyages[0].zone,'alexandrian');
+ s=upgradeSave(structuredClone(s));assert.equal(s.naval.version,4);assert.equal(s.naval.voyages[0].cargo,4);assert.equal(s.naval.voyages[0].zone,'alexandrian');
  const delivered=tradeArrival(s,route.id);assert.equal(delivered.amount,4);assert.equal(delivered.paid,4*delivered.unitPrice);assert.equal(s.factions.senate.food,4);assert.equal(s.factions.egypt.food,56);
  assert.equal(toggleTradeRoute(s,'senate',route.id).paused,true);
  for(let i=0;i<3;i++){s.month++;advanceNaval(s)}
@@ -833,5 +848,5 @@ test('older naval saves acquire an empty maritime supply inventory',()=>{
  assert.deepEqual(upgradeSave(old).naval.provisions,{});
  assert.deepEqual(upgradeSave(old).naval.inlandProvisions,{});
  assert.deepEqual(upgradeSave(old).naval.wagons,[]);
- assert.equal(upgradeSave(old).naval.version,3);assert.deepEqual(upgradeSave(old).naval.voyages,[]);assert.equal(upgradeSave(old).naval.nextVoyage,1);
+ assert.equal(upgradeSave(old).naval.version,4);assert.deepEqual(upgradeSave(old).naval.voyages,[]);assert.equal(upgradeSave(old).naval.nextVoyage,1);
 });

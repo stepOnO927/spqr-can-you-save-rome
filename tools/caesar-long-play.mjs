@@ -8,7 +8,7 @@ import {revealedAchievements} from '../achievement-system.js';
 // advance through Italy when the available evidence justifies the risk, and
 // keep Rome supplied if it falls. Decisions never inspect concealed armies.
 let s=newGrandGame('caesar');
-const journal=[],snapshots=[],seen=new Set(),corridor=['cisalpine','italiaN','t013','t012','t014','roma'];
+const journal=[],snapshots=[],seen=new Set(),grainDeliveries=[],corridor=['cisalpine','italiaN','t013','t012','t014','roma',...(process.env.SPQR_CAESAR_OSTIA?['t016']:[])];
 const record=(label,result)=>{if(result?.ok)journal.push(`${s.year}/${s.month} ${label}`);return !!result?.ok};
 assert.equal(record('reserve Adriatic fleet',reserveFleet(s,'caesar','caesar-adriatic')),true);
 for(const unit of s.armies.filter(a=>a.owner==='caesar'&&a.id!=='xiii'))record(`hold ${unit.id}`,holdPosition(s,unit.id));
@@ -49,6 +49,8 @@ for(let month=1;month<48&&!s.achievementState.finalized;month++){
   if(legion.region==='roma'&&region(s,'roma').owner==='caesar'&&!s.armies.some(a=>a.owner==='caesar'&&a.id!==legion.id&&a.region==='roma')&&f.treasury>=24&&f.food>=9&&f.manpower>=3000)record('raise Roman garrison',recruit(s,'roma','caesar')?{ok:true}:{ok:false});
  }
  tick(s);
+ const grain=s.naval.routes.find(r=>r.id==='egypt-italy')?.last;
+ if(grain?.reason==='delivered'&&grain.buyer==='caesar'&&grain.year===s.year&&grain.month===s.month)grainDeliveries.push({date:`${s.year}/${s.month}`,amount:grain.amount,paid:grain.paid});
  if(month%6===5)snapshots.push({date:`${s.year}/${s.month}`,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,budget:nationalBudget(s,'caesar'),fleet:{port:adriatic?.port,reserve:adriatic?.reserve,order:adriatic?.order?.kind},territories:s.regions.filter(r=>r.owner==='caesar').length,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0)});
  for(const b of s.battles||[])if(!seen.has(b.id)){
   seen.add(b.id);
@@ -69,8 +71,12 @@ for(let month=1;month<48&&!s.achievementState.finalized;month++){
  if(!s.achievementState.finalized)assert.deepEqual(revealedAchievements(s),[]);
 }
 assert.ok(journal.some(x=>x.includes('scout')));
-assert.ok(journal.some(x=>x.includes('collect wartime contributions')));
-assert.ok(journal.some(x=>x.includes('return fleet')));
-assert.ok(journal.some(x=>x.includes('reserve fleet in safe harbor')));
-console.log(JSON.stringify({date:`${s.year}/${s.month}`,result:s.achievementState.result||s.campaignOutcome?.winner||'ongoing',rome:region(s,'roma').owner,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),armies:s.armies.filter(a=>a.owner==='caesar').map(a=>({id:a.id,men:a.men,region:a.region,morale:a.morale})),fleets:s.naval.fleets.filter(f=>f.owner==='caesar').map(f=>({id:f.id,port:f.port,reserve:f.reserve,ships:f.ships,order:f.order?.kind})),battles:seen.size,snapshots,journal},null,2));
+if(!process.env.SPQR_CAESAR_OSTIA){
+ assert.ok(journal.some(x=>x.includes('collect wartime contributions')));
+ assert.ok(journal.some(x=>x.includes('return fleet')));
+ assert.ok(journal.some(x=>x.includes('reserve fleet in safe harbor')));
+}
+else{assert.equal(region(s,'t016').owner,'caesar');assert.ok(grainDeliveries.some(x=>x.amount>0&&x.paid>0))}
+console.log(JSON.stringify({date:`${s.year}/${s.month}`,result:s.achievementState.result||s.campaignOutcome?.winner||'ongoing',rome:region(s,'roma').owner,ostia:region(s,'t016').owner,egyptGrain:s.naval.routes.find(r=>r.id==='egypt-italy')?.last,grainDeliveries,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),armies:s.armies.filter(a=>a.owner==='caesar').map(a=>({id:a.id,men:a.men,region:a.region,morale:a.morale})),fleets:s.naval.fleets.filter(f=>f.owner==='caesar').map(f=>({id:f.id,port:f.port,reserve:f.reserve,ships:f.ships,order:f.order?.kind})),battles:seen.size,snapshots,journal},null,2));
 if(process.env.SPQR_ECONOMY_AUDIT)console.log(JSON.stringify(s.regions.filter(r=>r.owner==='caesar').map(r=>({id:r.id,macro:r.macro,tax:r.tax,loyalty:r.loyalty,civic:r.civicSatisfaction,food:r.food,population:r.population,initialPopulation:r.initialPopulation,buildings:r.buildings}))));
+if(process.env.SPQR_NAVAL_AUDIT)console.log(JSON.stringify({fleets:s.naval.fleets.filter(f=>f.owner==='egypt'),voyages:s.naval.voyages.filter(v=>v.vesselOwner==='egypt'),route:s.naval.routes.find(r=>r.id==='egypt-italy')}));
