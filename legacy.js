@@ -1,6 +1,7 @@
+import {storedCorrespondentName} from './person-knowledge.js?v=family-correspondent-names-1';
 import {syncChronicleDispatches} from './chronicle.js?v=succession-ui-recovery-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {initializeDynasties} from './dynasties.js?v=infant-portraits-1';
+import {initializeDynasties} from './dynasties.js?v=family-correspondent-names-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 
@@ -21,16 +22,16 @@ export function finalizeCampaign(s){
  const archive={id:`${s.player}-${Math.abs(s.year)}-${s.month}-${s.seed}`,faction:s.player,year:s.year,month:s.month,simulated:true,
   rulers:d.rulers.filter(r=>r.faction===s.player).map(r=>({...r,names:rulerIds(r.current).map(id=>CHARACTER_CATALOG[id]?.name||[id,id])})),
   families:familyIds.map(id=>({id,name:d.families[id]?.name||[id,id],members:[...own].filter(person=>s.world.characters[person]?.familyId===id).map(person=>({id:person,name:CHARACTER_CATALOG[person]?.name||[person,person],alive:s.world.characters[person].alive}))})),
-  marriages:d.marriages.filter(m=>own.has(m.a)||own.has(m.b)).map(m=>({...m,names:[CHARACTER_CATALOG[m.a]?.name,CHARACTER_CATALOG[m.b]?.name]})),
+  marriages:d.marriages.filter(m=>own.has(m.a)||own.has(m.b)).map(m=>({...m,names:[m.a,m.b].map((id,index)=>own.has(id)?CHARACTER_CATALOG[id]?.name||[id,id]:storedCorrespondentName(id,m.reportedNames?.[index]))})),
   crises:(s.world.disputeHistory||[]).filter(e=>e.faction===s.player||e.faction==='egypt'&&d.scenario).map(e=>({...e})),
   lifeEvents:Object.fromEntries([...own].map(id=>[id,(d.lives[id]||[]).map(e=>({...e}))])),
   generals:[...own].filter(id=>(s.world.characters[id]?.battlesCommanded||0)>0).map(id=>({name:CHARACTER_CATALOG[id]?.name||[id,id],battles:s.world.characters[id].battlesCommanded})),
   betrayals:(s.world.defections||[]).filter(e=>e.from===s.player||e.to===s.player).map(e=>({...e,name:CHARACTER_CATALOG[e.id]?.name||[e.id,e.id]})),
   heirs:[...own].filter(id=>(s.world.characters[id]?.adoptiveParents||[]).length>0).map(id=>({name:CHARACTER_CATALOG[id]?.name||[id,id],adoptiveParents:[...s.world.characters[id].adoptiveParents]})),
   inheritanceCases:(d.inheritanceDisputes||[]).filter(x=>x.faction===s.player).map(x=>({...x,deceasedName:CHARACTER_CATALOG[x.deceased]?.name||[x.deceased,x.deceased],beneficiaryName:CHARACTER_CATALOG[x.beneficiary]?.name||[x.beneficiary,x.beneficiary]})),
-  marriageOffers:(d.marriageOffers||[]).filter(x=>own.has(x.own)).map(x=>({...x,ownName:CHARACTER_CATALOG[x.own]?.name||[x.own,x.own],foreignName:CHARACTER_CATALOG[x.foreign]?.name||[x.foreign,x.foreign]})),
-  asylumRequests:(d.asylumRequests||[]).filter(x=>x.host===s.player).map(x=>({...x,claimantName:CHARACTER_CATALOG[x.claimant]?.name||[x.claimant,x.claimant]})),
-  familyAccords:(d.familyAccords||[]).filter(x=>x.host===s.player).map(x=>({...x,contactName:CHARACTER_CATALOG[x.contact]?.name||[x.contact,x.contact],childName:x.child?CHARACTER_CATALOG[x.child]?.name||[x.child,x.child]:null})),
+  marriageOffers:(d.marriageOffers||[]).filter(x=>own.has(x.own)).map(x=>({...x,ownName:CHARACTER_CATALOG[x.own]?.name||[x.own,x.own],foreignName:storedCorrespondentName(x.foreign,x.reportedName)})),
+  asylumRequests:(d.asylumRequests||[]).filter(x=>x.host===s.player).map(x=>({...x,claimantName:storedCorrespondentName(x.claimant,x.reportedName)})),
+  familyAccords:(d.familyAccords||[]).filter(x=>x.host===s.player).map(x=>({...x,contactName:storedCorrespondentName(x.contact,x.reportedName),childName:x.child?CHARACTER_CATALOG[x.child]?.name||[x.child,x.child]:null})),
   constitutionalReforms:(s.world.romanReforms||[]).filter(x=>x.faction===s.player).map(x=>({...x})),
   familyLoans:(d.familyLoans||[]).filter(x=>x.faction===s.player).map(x=>({...x,familyName:d.families[x.familyId]?.name||[x.familyId,x.familyId]})),
   regency:s.world.regencies?.[s.player]?{...s.world.regencies[s.player],regentName:CHARACTER_CATALOG[s.world.regencies[s.player].regent]?.name||null,wardName:CHARACTER_CATALOG[s.world.regencies[s.player].ward]?.name||null}:null,

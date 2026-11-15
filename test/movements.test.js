@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=attack-preview-intelligence-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=family-correspondent-names-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {advanceMovements,respondToMovement,reportedMovements,movementReportLeaderName,offerMovementSupport,recognizeMovement} from '../movements.js?v=campaign-intelligence-privacy-1';
-import {newRevolutionScenario} from '../scenarios.js?v=attack-preview-intelligence-1';
+import {advanceMovements,respondToMovement,reportedMovements,movementReportLeaderName,offerMovementSupport,recognizeMovement} from '../movements.js?v=family-correspondent-names-1';
+import {newRevolutionScenario} from '../scenarios.js?v=family-correspondent-names-1';
 import {plotFormationChance} from '../conspiracies.js?v=succession-ui-recovery-1';
 
 function crisis(){const s=newGame('caesar'),r=s.regions.find(x=>x.id==='gaul'),f=s.factions.caesar;r.loyalty=5;r.population.satisfaction=10;f.stability=20;f.legitimacy=25;f.tax='high';return {s,r,f}}
