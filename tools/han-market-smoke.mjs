@@ -11,6 +11,7 @@ try{
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
  await page.locator('#trade-panel').click();
  assert.match(await page.locator('#inspector').innerText(),/Own stock/);
+ assert.match(await page.locator('#inspector').innerText(),/current price per batch/);
  await page.locator('[data-export-good="silk"]').click();
  assert.match(await page.locator('#message').innerText(),/Export policy updated/);
  assert.equal(await page.locator('[data-export-good="silk"]').getAttribute('aria-pressed'),'true');

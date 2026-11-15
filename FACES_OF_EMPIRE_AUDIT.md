@@ -42,6 +42,13 @@ completed official referrals name both saved participants, and regional talent
 searches draw names and cultural identity from the same faction-specific pools
 as other generated characters.
 
+Grain scarcity now raises actual monthly army provisioning costs in the Roman
+and standalone Han economies. Local forces use their own market price; forces
+abroad use an average of owned markets rather than reading a foreign warehouse.
+The Roman treasury forecast and tax projection use the same premium as the
+monthly settlement. Owned-market prices and the supply-cost consequence are
+explained in both languages. The 120-month integrated simulation still passes.
+
 The baseline table is a historical snapshot. Later commits added an eastern
 Han theater, a separate Shanshan polity, Han court personnel and succession
 rules, and a browser exercised Han start and save restoration. The current

@@ -15,6 +15,7 @@ try{
  });
  await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#markets').click();
+ assert.match(await page.locator('.market-stock').first().innerText(),/谷物 \d+ @\d+¤/);
  assert.equal(await page.locator('#map-mode').inputValue(),'trade');
  await page.locator('.trade-market-marker').first().waitFor();
  assert.ok(await page.locator('.trade-market-marker').count()>=2);

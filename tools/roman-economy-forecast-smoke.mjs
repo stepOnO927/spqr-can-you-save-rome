@@ -10,7 +10,8 @@ try{
  const expected=await page.evaluate(async()=>{
   const {newGame,forecastEconomy}=await import('/engine.js?v=faces-reported-names-1');
   const {proposeAgreement}=await import('/agreements.js?v=faces-reported-names-1');
-  const s=newGame('caesar'),before=forecastEconomy(s).treasury;
+  const s=newGame('caesar');for(const r of s.regions.filter(r=>r.owner==='caesar'))s.markets.regions[r.id].goods.grain.stock=0;
+  const before=forecastEconomy(s).treasury;
   s.relations['caesar:egypt']=80;
   if(!proposeAgreement(s,'caesar','egypt','trade').ok)throw Error('Trade treaty was not accepted');
   if(forecastEconomy(s).treasury!==before)throw Error('Treaty minted forecast income');

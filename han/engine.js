@@ -10,7 +10,7 @@ import {initCourt,ensureCourtCareers,advanceCourt,resolveSuccession,computeManda
 import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=faces-reported-names-1';
 import {initSilk,advanceSilk} from './silk-road.js?v=faces-reported-names-1';
 import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=faces-reported-names-1';
-import {agriculturalProduction} from '../war-economy.js?v=faces-reported-names-1';
+import {agriculturalProduction,grainProvisionFactor} from '../war-economy.js?v=faces-reported-names-1';
 import {advanceFocus,focusState} from './focus.js?v=faces-reported-names-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=faces-reported-names-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=faces-reported-names-1';
@@ -142,7 +142,7 @@ function economy(s){
   // herds at home. Campaigning outside their polity draws normal supplies.
   const home=x=>own.find(r=>r.id===x.region);
   const locallySupported=x=>home(x)&&(['town','qiang_band'].includes(x.template?.id)||(home(x).terrain==='steppe'&&templateStats(x.template).herd>=0.8));
-  const upkeep=armies.reduce((a,x)=>a+(locallySupported(x)?0:x.men/1000*templateStats(x.template).cost*0.22),0);
+  const upkeep=armies.reduce((a,x)=>a+(locallySupported(x)?0:x.men/1000*templateStats(x.template).cost*0.22*grainProvisionFactor(s,id,x.region,s.tradeMarkets)),0);
   const eat=armies.reduce((a,x)=>a+(locallySupported(x)?0:x.men/1000*templateStats(x.template).grain*0.3),0);
   f.treasury=Math.round(f.treasury+income-upkeep);f.grain=Math.round(f.grain+grain-eat-own.reduce((a,r)=>a+r.pop*0.02,0));
   f.manpower=Math.round(Math.min(own.reduce((a,r)=>a+r.pop*1500,0),f.manpower+own.reduce((a,r)=>a+r.pop*4,0)));f.horses=Math.round((f.horses||0)+own.filter(r=>r.horses).length*150);

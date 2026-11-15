@@ -1,10 +1,33 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=faces-reported-names-1';
+import {newGame,forecastEconomy,projectTaxPath,upgradeSave} from '../engine.js?v=faces-reported-names-1';
 import {advanceMarkets} from '../trade-markets.js?v=faces-reported-names-1';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-reported-names-1';
+import {newHanGame,tick as tickHan,loadHanSave,serialize} from '../han/engine.js?v=faces-reported-names-1';
 import {advanceEasternMarkets} from '../han/markets.js?v=faces-reported-names-1';
-import {agriculturalDisruption,agriculturalProduction} from '../war-economy.js?v=faces-reported-names-1';
+import {agriculturalDisruption,agriculturalProduction,grainProvisionFactor} from '../war-economy.js?v=faces-reported-names-1';
+
+test('scarce owned grain raises Roman army costs in both forecast and actual budget',()=>{
+ const ample=newGame('caesar'),scarce=upgradeSave(structuredClone(ample));
+ for(const r of ample.regions.filter(r=>r.owner==='caesar'))ample.markets.regions[r.id].goods.grain.stock=80;
+ for(const r of scarce.regions.filter(r=>r.owner==='caesar'))scarce.markets.regions[r.id].goods.grain.stock=0;
+ assert.ok(grainProvisionFactor(scarce,'caesar','gaul',scarce.markets)>grainProvisionFactor(ample,'caesar','gaul',ample.markets));
+ assert.ok(forecastEconomy(scarce).treasury<forecastEconomy(ample).treasury);
+ assert.equal(projectTaxPath(scarce,'caesar','normal',1)[0].treasury,forecastEconomy(scarce).treasury);
+ assert.ok(projectTaxPath(scarce,'caesar','normal',1)[0].treasury<projectTaxPath(ample,'caesar','normal',1)[0].treasury);
+});
+
+test('Han military provisioning responds to its own grain price without reading a foreign warehouse',()=>{
+ const ample=newHanGame('han',{seed:49}),scarce=loadHanSave(serialize(ample));
+ for(const r of ample.regions.filter(r=>r.owner==='han'))ample.tradeMarkets.regions[r.id].goods.grain.stock=80;
+ for(const r of scarce.regions.filter(r=>r.owner==='han'))scarce.tradeMarkets.regions[r.id].goods.grain.stock=0;
+ assert.ok(grainProvisionFactor(scarce,'han','changan',scarce.tradeMarkets)>grainProvisionFactor(ample,'han','changan',ample.tradeMarkets));
+ const abroad=grainProvisionFactor(scarce,'han','kangju',scarce.tradeMarkets);
+ scarce.tradeMarkets.regions.kangju.goods.grain.stock=999999;
+ assert.equal(grainProvisionFactor(scarce,'han','kangju',scarce.tradeMarkets),abroad);
+ tickHan(ample);tickHan(scarce);
+ assert.ok(scarce.factions.han.treasury<ample.factions.han.treasury);
+ assert.equal(loadHanSave(serialize(scarce)).factions.han.treasury,scarce.factions.han.treasury);
+});
 
 test('Roman siege reduces only the besieged province harvest, market stock, and faction food',()=>{
  const peaceful=newGame('caesar'),sieged=upgradeSave(structuredClone(peaceful));
