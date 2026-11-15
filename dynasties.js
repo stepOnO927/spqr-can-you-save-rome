@@ -418,7 +418,7 @@ export function advanceDynasties(s){
  const d=initializeDynasties(s);
  // Claim saved artwork only for identifiable campaign-born children with a
  // recorded birth and parents; old identities are never replaced.
- if((d.bornPortraitPoolVersion||0)<3){d.bornPortraitClaims||={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id);d.bornPortraitPoolVersion=3}
+ if((d.bornPortraitPoolVersion||0)<4){d.bornPortraitClaims||={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id);d.bornPortraitPoolVersion=4}
  if(!d.courtPortraitPoolVersion){for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))assignCourtPortrait(s,id);d.courtPortraitPoolVersion=1}
  advanceMarriageOffers(s);
  advanceAsylumRequests(s);
@@ -460,8 +460,17 @@ export function advanceDynasties(s){
  // Family memory has a small, fading effect. Personal choices can override it.
  if(s.month===6)for(const memory of d.memories){const age=s.year-memory.year;if(age>60)continue;const members=Object.values(s.world.characters).filter(c=>c.alive&&c.familyId===memory.familyId&&personAge(s,c.id)>=18);for(const c of members)if(roll(s)<.08)c.loyalty=Math.max(0,Math.min(100,c.loyalty+Math.sign(memory.weight)))}
  if(s.month===1)for(const faction of Object.keys(s.factions).filter(id=>id!==s.player&&id!=='rebels')){
-  if(roll(s)>=.12)continue;const candidates=Object.values(s.world.characters).filter(c=>c.faction===faction&&CHARACTER_CATALOG[c.id]?.fictional&&!c.institutionalOnly&&eligibleAdult(s,c.id)&&!c.spouse).sort((a,b)=>b.influence-a.influence);
-  const first=candidates[0],second=candidates.find(c=>c.id!==first?.id&&c.familyId!==first?.familyId);if(first&&second)proposeMarriage(s,first.id,second.id);
+  const candidates=Object.values(s.world.characters).filter(c=>c.faction===faction&&CHARACTER_CATALOG[c.id]?.fictional&&!c.institutionalOnly&&eligibleAdult(s,c.id)&&!c.spouse).sort((a,b)=>b.influence-a.influence);
+  const fertile=candidates.filter(c=>c.sex==='female'&&personAge(s,c.id)<=40);
+  // Young, available households keep seeking a partner while they can still
+  // have children; other court marriages remain occasional.
+  if(!fertile.length&&roll(s)>=.12)continue;
+  // Search for a legal partner before sending a proposal. Selecting the two
+  // highest-influence adults could repeatedly pick two men and stall births.
+  for(const first of fertile.length?fertile:candidates){
+   const second=candidates.find(c=>c.id!==first.id&&c.familyId!==first.familyId&&(first.sex==='unknown'||c.sex==='unknown'||first.sex!==c.sex)&&!first.parents.includes(c.id)&&!c.parents.includes(first.id)&&!first.parents.some(id=>c.parents.includes(id)));
+   if(second){proposeMarriage(s,first.id,second.id);break}
+  }
  }
  // NPC households pursue modest, state-dependent interests without spending
  // the player's treasury or granting an office through kinship alone.

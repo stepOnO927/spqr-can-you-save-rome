@@ -6,7 +6,7 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `a22a8b77`. Its overview layout and
+The draft now includes main through `587b9aa9`. Its overview layout and
 attack-preview privacy changes are connected to the expanded faction atlas:
 crowded cities and armies remain selectable through faction directories, and
 attack scenarios use reported fortification bands without reading foreign
@@ -24,6 +24,14 @@ name as reported when the message was sent. Old unnamed letters remain
 anonymous in the family panel and final archive. The merged family-letter
 unit cases and the Chromium privacy flow pass alongside the earlier authority
 report regression.
+The newer campaign-born portrait expansion is also reconciled. The fifth and
+sixth image sets remain available for each sex, and a versioned old-save
+migration assigns unused images to recorded births without changing earlier
+claims. Its portrait assets, save migration, and Chromium age/reload flow pass.
+The 30-year AI family regression caught a court that kept selecting unsuitable
+marriage pairs until its remaining partner was past childbearing age. Courts
+now search for a valid partner and keep pursuing available young households;
+the seeded long-campaign marriage and birth case passes.
 The subsequent future-dated report fix is also integrated, including its
 delivery checks in character, military and political views. Its eight new
 unit cases and bilingual browser privacy scenario pass after reconciling the
@@ -43,7 +51,7 @@ The measured market catalog now also includes herd animals, copper, woollen
 textiles, jade, and building stone, with bilingual batch units and separate regional output,
 use, stock and prices in both simulations. Jade has a modeled Yutian source;
 a paid Han purchase travels through Shanshan to Dunhuang and transfers the
-actual stock and customs only on delivery. Older saves gain the four goods
+actual stock and customs only on delivery. Older saves gain the five goods
 without changing existing treasuries. Roman and Han market screens show the
 new labels in both languages. An autonomous Han–Qiuci–Shule silk resale still
 completes within four years while AI also considers the additional goods.
