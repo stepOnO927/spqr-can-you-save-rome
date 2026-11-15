@@ -141,6 +141,11 @@ export function leadershipTitle(faction,reported,state=null){
  if(faction==='caesar'||faction==='senate')return state?.world?.romanRegimes?.[faction]==='roman_principate'?['Roman princeps','罗马元首']:state?.world?.romanRegimes?.[faction]==='later_empire'?['Roman emperor','罗马皇帝']:['Roman faction leadership','罗马派系领袖'];
  if(faction==='egypt_claimant'||faction==='parthia_claimant')return ['Reported claimant leadership','报告的竞争者领袖'];
  if(faction==='egypt'&&reported.length>1)return ['Joint rulers','共同统治者'];
+ if(faction==='egypt'&&reported.some(id=>CHARACTER_CATALOG[id]?.fictional)){
+  const house=state?.world?.dynasties?.rulingHouses?.egypt;
+  return house&&state.world.dynasties.houseTransitions?.some(change=>change.faction==='egypt'&&change.to===house)
+   ?['Egyptian ruler of a new house','埃及新王朝统治者']:['Egyptian ruler','埃及统治者'];
+ }
  if(faction==='mauretania')return ['Rulers of separate kingdoms','各王国统治者'];
  return {han:['Han emperor','汉皇帝'],egypt:['Ptolemaic ruler','托勒密王朝统治者'],parthia:['Parthian king','安息国王'],armenia:['Armenian king','亚美尼亚国王'],numidia:['Numidian king','努米底亚国王'],galatia:['Galatian ruler','加拉太统治者'],bosporus:['Bosporan ruler','博斯普鲁斯统治者'],shanshan:['Oasis king','绿洲国王']}[faction]||['Ruler','统治者'];
 }

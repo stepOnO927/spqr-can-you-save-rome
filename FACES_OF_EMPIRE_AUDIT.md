@@ -67,6 +67,13 @@ career and save, while a foreign player receives no immediate court notice.
 Unanswered advice expires and older saves initialize the new advice fields.
 Broader autonomous investigations, minister alliances and diplomatic
 negotiations remain open.
+Egyptian and Parthian courts with no surviving recorded successor can now
+consider an original, culturally named nominee after a six-month vacancy.
+The court pays for the choice and uses ordinary succession so a new ruling
+house, political cost, portrait and genealogy survive a save. An active
+claimant or civil war blocks the appointment, while an obsolete dispute
+record alone does not. Foreign observers need a later report to learn the
+new name. A court controlled by the player still awaits the player's choice.
 Its opening armies and newly recruited formations now receive saved, named
 field commanders from distinct Han, steppe, oasis and western cultural pools;
 the independent campaign displays those names instead of raw IDs. Historical
