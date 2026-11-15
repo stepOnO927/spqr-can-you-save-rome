@@ -1,4 +1,4 @@
-import {isDeliveredReport} from '../person-knowledge.js?v=faces-reported-names-1';
+import {isDeliveredReport,isCompletedMeeting} from '../person-knowledge.js?v=faces-reported-names-1';
 import {campaignYear,campaignDate} from '../campaign-date.js?v=faces-reported-names-1';
 import {identityKnowledge} from './identity-knowledge.js?v=faces-reported-names-1';
 import {fictionalPortraitKey,observedFictionalPortrait,observedProceduralPortrait,proceduralPortraitSvg} from '../portrait-registry.js?v=faces-reported-names-1';

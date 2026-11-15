@@ -6,7 +6,7 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `696bf8b7`. The newer report-delivery
+The draft now includes main through `3e683f6f`. The newer report-delivery
 checks are reconciled in planning, battle estimates, faction views, national
 focus and legion design; the added unit and browser regressions pass. Its
 overview layout and
@@ -101,6 +101,11 @@ Chromium regressions passed for Han field
 recruitment and rations, Roman legion design, the expanded born-portrait
 pool, inherited foreign-name privacy, saved asylum reply outcomes, and the
 new marriage/guarantee/wardship reply outcomes.
+The quality, browser-matrix, Pages-package and Poki checks all passed at
+`bf4d1a33`. Main's later foreign-dossier delivery fix through `3e683f6f`
+is now integrated. Its 76 focused character, inheritance and module-version
+tests, the future-dossier Chromium scenario and three isolated performance
+runs passed locally; a new full CI run is pending for that integration.
 The first combined CI run exposed a 36-month all-AI performance regression:
 the half-year market-access planner searched every foreign route for the new
 military goods even though their public export output cannot meet its existing
