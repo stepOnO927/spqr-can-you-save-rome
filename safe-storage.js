@@ -10,7 +10,7 @@ export function createStore(name, host = globalThis) {
     const probe = '__spqr_storage_probe__';
     backing.setItem(probe, '1');
     backing.removeItem(probe);
-    persistent = true;
+    persistent = !host.spqrVolatileStorage?.some?.(item => String(item).startsWith(name));
   } catch {
     backing = null;
   }
@@ -30,8 +30,8 @@ export function createStore(name, host = globalThis) {
     setItem(key, value) {
       const id = String(key), text = String(value);
       memory.set(id, text);
-      if (persistent) {
-        try { backing.setItem(id, text); pending.delete(id); }
+      if (backing) {
+        try { backing.setItem(id, text); if (persistent) pending.delete(id); else pending.add(id); }
         catch { persistent = false; pending.add(id); }
       } else pending.add(id);
     },

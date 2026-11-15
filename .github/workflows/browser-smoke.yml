@@ -29,6 +29,7 @@ jobs:
           node tools/hundred-days-smoke.mjs
           node tools/roman-hundred-days-smoke.mjs
           node tools/save-transfer-controls-smoke.mjs
+          node tools/storage-denied-smoke.mjs
           node tools/travel-smoke.mjs
           node tools/cursus-smoke.mjs
           node tools/cursus-deep-smoke.mjs
@@ -55,6 +56,7 @@ jobs:
           node tools/regional-court-vacancy-smoke.mjs
           node tools/court-portrait-smoke.mjs
           node tools/senator-portraits-smoke.mjs
+          node tools/senate-record-privacy-smoke.mjs
           node tools/mail-privacy-smoke.mjs
           node tools/gathering-presence-smoke.mjs
           node tools/gathering-delegate-smoke.mjs

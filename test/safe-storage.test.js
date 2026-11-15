@@ -45,3 +45,14 @@ test('quota failures degrade to session memory while retaining readable old save
   assert.equal(store.getItem('old'), 'updated in session');
   assert.equal(items.get('old'), 'existing');
 });
+
+test('global storage guard stays explicitly volatile while sharing current-page writes', () => {
+  const items=new Map();
+  const backing={getItem:key=>items.get(key)??null,setItem:(key,value)=>items.set(key,value),removeItem:key=>items.delete(key)};
+  const host={localStorage:backing,spqrVolatileStorage:['localStorage']};
+  const store=createStore('localStorage',host);
+  assert.equal(store.persistent,false);
+  store.setItem('campaign','temporary');
+  assert.equal(backing.getItem('campaign'),'temporary');
+  assert.equal(store.getItem('campaign'),'temporary');
+});
