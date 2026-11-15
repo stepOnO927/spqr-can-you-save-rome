@@ -1093,3 +1093,29 @@ test('older naval saves acquire an empty maritime supply inventory',()=>{
  assert.deepEqual(upgradeSave(old).naval.wagons,[]);
  assert.equal(upgradeSave(old).naval.version,4);assert.deepEqual(upgradeSave(old).naval.voyages,[]);assert.equal(upgradeSave(old).naval.nextVoyage,1);
 });
+
+test('naval report IDs stay unique after the 80-report cap and across save reloads',()=>{
+ const old=structuredClone(newGrandGame('senate'));
+ delete old.naval.nextReport;
+ old.naval.reports=Array.from({length:80},(_,i)=>({id:`legacy-${i}`,kind:'storm',year:-49,month:1,zone:'adriatic'}));
+ const s=upgradeSave(old),a=s.naval.fleets.find(f=>f.owner==='senate'),b=s.naval.fleets.find(f=>f.owner==='caesar');
+ for(let i=0;i<2;i++){
+  a.hull=100;b.hull=100;a.ships={trireme:3};b.ships={trireme:3};a.sailors=500;b.sailors=500;
+  resolveBattle(s,a,b,'adriatic',()=>{});
+ }
+ const first=s.naval.reports.slice(0,2).map(r=>r.id);
+ assert.equal(new Set(first).size,2);
+ assert.equal(new Set(s.naval.reports.map(r=>r.id)).size,80);
+ const loaded=upgradeSave(structuredClone(s));
+ assert.deepEqual(loaded.naval.reports.slice(0,2).map(r=>r.id),first);
+ a.hull=100;b.hull=100;a.ships={trireme:3};b.ships={trireme:3};a.sailors=500;b.sailors=500;
+ resolveBattle(loaded,loaded.naval.fleets.find(f=>f.id===a.id),loaded.naval.fleets.find(f=>f.id===b.id),'adriatic',()=>{});
+ assert.equal(new Set(loaded.naval.reports.map(r=>r.id)).size,80);
+ const legacy=structuredClone(loaded);delete legacy.naval.nextReport;
+ const retainedId=legacy.naval.reports[0].id;
+ legacy.naval.reports[1].id=retainedId;
+ const repaired=upgradeSave(legacy);
+ assert.equal(new Set(repaired.naval.reports.map(r=>r.id)).size,80);
+ assert.equal(repaired.naval.reports[0].id,retainedId);
+ assert.notEqual(repaired.naval.reports[1].id,retainedId);
+});
