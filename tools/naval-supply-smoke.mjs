@@ -39,7 +39,7 @@ try{
  await page.locator('[data-toggle-trade="egypt-italy"]').click();
  assert.match(await page.locator('[data-toggle-trade="egypt-italy"]').innerText(),/PAUSE IMPORTS/);
  const reports=await page.evaluate(async()=>{
-  const {newGrandGame}=await import('../engine.js?v=195');
+  const {newGrandGame}=await import('../engine.js?v=196');
   const {advanceNaval,reserveFleet,mobilizeFleet}=await import('../naval.js?v=44');
   const {renderNavalPanel}=await import('./naval-ui.js?v=62');
   const state=newGrandGame('senate');state.naval.reports.unshift({id:'supply-test',kind:'supply-delivery',owner:'senate',port:'t016',cargo:6,year:-49,month:4});
@@ -97,7 +97,7 @@ try{
  assert.match(reports.civilianZh,/商船队/);assert.match(reports.civilianZh,/独立船队/);
  assert.ok(reports.detached);assert.equal(reports.civilianGrain,'enroute');
  await page.evaluate(async()=>{
-  const {newGrandGame}=await import('../engine.js?v=195');
+  const {newGrandGame}=await import('../engine.js?v=196');
   const state=newGrandGame('senate'),army=state.armies.find(a=>a.id==='italy');
   state.wars=[];state.factions.senate.treasury=200;army.region='t023';army.operationalSupply=.3;
   state.naval.provisions.t016={owner:'senate',food:10};

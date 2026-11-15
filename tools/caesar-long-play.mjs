@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
-import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,orderFleet,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions,researchInnovation,startConstruction,constructionCheck,setTax} from '../engine.js';
+import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,orderFleet,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions,seizeAerarium,researchInnovation,startConstruction,constructionCheck,setTax} from '../engine.js';
 import {assessment,sendScouts,probePositions,delayAttack,latestRecon,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {revealedAchievements} from '../achievement-system.js';
@@ -19,6 +19,7 @@ const investCash=combinedInvestment||process.env.SPQR_CAESAR_INVEST_CASH==='1';
 if(investCash&&investFood&&!combinedInvestment)throw new Error('Choose one economic investment strategy per comparison run.');
 const warTax=process.env.SPQR_CAESAR_WAR_TAX==='1';
 const seekOstia=process.env.SPQR_CAESAR_OSTIA==='1';
+const useAerarium=process.env.SPQR_CAESAR_AERARIUM==='1';
 const journal=[],snapshots=[],seen=new Set(),grainDeliveries=[],corridor=['cisalpine','italiaN','t013','t012','t014','roma',...(seekOstia?['t016']:[])];
 let peakIrrigation=0,everHeldOstia=region(s,'t016').owner==='caesar';
 const record=(label,result)=>{if(result?.ok)journal.push(`${s.year}/${s.month} ${label}`);return !!result?.ok};
@@ -64,6 +65,7 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
   }
  }
  if(f.treasury<30&&nationalBudget(s,'caesar').projectedNet<0)record('collect wartime contributions',collectWarContributions(s,'caesar'));
+ if(useAerarium&&f.treasury<40&&region(s,'roma').owner==='caesar'&&!s.aerariumSeizure)record('take Rome public reserve',seizeAerarium(s,'caesar'));
  if(f.food<24&&nationalBudget(s,'caesar').foodNet<0)record('gather emergency provisions',collectEmergencyProvisions(s,'caesar'));
  const adriatic=s.naval.fleets.find(v=>v.id==='caesar-adriatic');
  if(adriatic&&!adriatic.reserve&&!adriatic.order){

@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
-import {newGrandGame} from '../engine.js';
+import {newGrandGame,region} from '../engine.js';
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
@@ -38,6 +38,18 @@ try{
  await campaign.locator('#war-contribution').click();assert.equal(await campaign.locator('#war-contribution').isDisabled(),true);
  await campaign.locator('#lang').click();assert.match(await campaign.locator('.national-budget').last().innerText(),/WARTIME MUNICIPAL CONTRIBUTIONS|战时城镇筹款/);
  assert.match(await campaign.locator('.national-budget').last().innerText(),/EMERGENCY PROVISIONS|紧急征集粮食/);
+ const reserve=newGrandGame('caesar');region(reserve,'roma').owner='caesar';
+ await atlas.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),reserve);await atlas.reload();
+ await atlas.locator('#language').click();await atlas.locator('#resources-help').click();assert.equal(await atlas.locator('#seize-aerarium').isEnabled(),true);
+ assert.match(await atlas.locator('.national-budget').last().innerText(),/罗马公共金库/);
+ await atlas.locator('#seize-aerarium').click();assert.equal(await atlas.locator('#seize-aerarium').isDisabled(),true);
+ await atlas.locator('#save').click();await atlas.reload();await atlas.locator('#load').click();await atlas.locator('#resources-help').click();
+ assert.equal(await atlas.locator('#seize-aerarium').isDisabled(),true);
+ await campaign.evaluate(state=>{localStorage.setItem('spqr-lang','en');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state}))},reserve);await campaign.reload();
+ await campaign.locator('[data-tab="government"]').click();assert.equal(await campaign.locator('#seize-aerarium').isEnabled(),true);
+ assert.match(await campaign.locator('.national-budget').last().innerText(),/ROME PUBLIC RESERVE/);
+ await campaign.locator('#seize-aerarium').click();assert.equal(await campaign.locator('#seize-aerarium').isDisabled(),true);
+ await campaign.locator('#lang').click();assert.match(await campaign.locator('.national-budget').last().innerText(),/罗马公共金库/);
  assert.deepEqual(errors,[]);
- console.log('Wartime contributions and emergency provisions work in both campaign views, both languages and saved campaigns.');
+ console.log('Wartime contributions, emergency provisions and the Roman public reserve work in both campaign views, both languages and saved campaigns.');
 }finally{await browser.close()}

@@ -6,7 +6,7 @@ import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,ad
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
 import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,settleGranaryReserves,migrateGranaryReserves,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,scholarVisitCheck,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,researchTerms,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=46';
-import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=10';
+import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=11';
 import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=12';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=33';
@@ -203,6 +203,31 @@ export function collectEmergencyProvisions(s,owner){
  (s.emergencyProvisions||=[]).push({owner,year:s.year,month:s.month,food:plan.food,regionIds:[...plan.regionIds],loyaltyLoss:plan.loyaltyLoss,satisfactionLoss:plan.satisfactionLoss,stabilityLoss:plan.stabilityLoss,harvestMonths:plan.harvestMonths});
  if(owner===s.player){log(s,`Emergency provisions gathered ${plan.food} food from ${plan.regions} friendly communities; their next three harvests and local support will suffer.`,`紧急征集粮食：从${plan.regions}处己方城镇取得${plan.food}粮食；当地接下来三个月的产量与民心将受损。`);recordEvent(s,{type:'emergencyProvisions',category:'economy',severity:'significant',factionId:owner,food:plan.food,regions:plan.regions})}
  return {ok:true,food:plan.food,regions:plan.regions};
+}
+
+// Appian, Civil Wars 2.41, describes Caesar taking Rome's public reserve after
+// opposition from the tribune Metellus. The treasury amount and civic costs
+// below are bounded campaign values, not quantities asserted by Appian.
+export function aerariumPlan(s,owner){
+ if(s.achievementState?.finalized)return {ok:false,reason:'campaign'};
+ if(owner!=='caesar'||!s.grandMap||!s.factions?.[owner])return {ok:false,reason:'faction'};
+ if(s.aerariumSeizure)return {ok:false,reason:'claimed'};
+ if(region(s,'roma')?.owner!==owner)return {ok:false,reason:'rome'};
+ if(!isWar(s,owner,'senate'))return {ok:false,reason:'war'};
+ return {ok:true,income:85,legitimacyLoss:8,loyaltyLoss:6,satisfactionLoss:6};
+}
+export function seizeAerarium(s,owner){
+ const plan=aerariumPlan(s,owner);if(!plan.ok)return plan;
+ const f=s.factions[owner],rome=region(s,'roma'),satisfaction=rome.civicSatisfaction??rome.loyalty;
+ f.treasury+=plan.income;f.legitimacy=Math.max(0,f.legitimacy-plan.legitimacyLoss);
+ rome.loyalty=Math.max(0,rome.loyalty-plan.loyaltyLoss);
+ rome.civicSatisfaction=Math.max(0,satisfaction-plan.satisfactionLoss);
+ s.aerariumSeizure={owner,year:s.year,month:s.month,income:plan.income,legitimacyLoss:plan.legitimacyLoss,loyaltyLoss:plan.loyaltyLoss,satisfactionLoss:plan.satisfactionLoss};
+ if(owner===s.player){
+  log(s,`Rome's public reserve supplied ${plan.income} treasury; legitimacy and support in Rome fell.`,`罗马公共金库提供${plan.income}国库；合法性与罗马民心下降。`);
+  recordEvent(s,{type:'aerariumSeizure',category:'economy',severity:'significant',factionId:owner,regionId:'roma',income:plan.income});
+ }
+ return {ok:true,income:plan.income};
 }
 
 function concludePeace(s,actor,target){
@@ -604,6 +629,7 @@ export function aiTurn(s,owner){
   };
   if(alert&&f.treasury>=40&&f.food>=6&&f.manpower>=3000)raiseAt(alert.regionId);
   const outnumbered=s.wars.some(w=>w.includes(owner)&&s.regions.filter(r=>r.owner===w.find(id=>id!==owner)).length>owned.length*1.5);
+  if(owner==='caesar'&&f.treasury< -40&&nationalBudget(s,owner).projectedNet<0)seizeAerarium(s,owner);
   if(owner!=='rebels'&&f.treasury<30&&nationalBudget(s,owner).projectedNet<0)collectWarContributions(s,owner);
   const emergencyProvisionsUsed=owner!=='rebels'&&f.food<24&&nationalBudget(s,owner).foodNet<0&&collectEmergencyProvisions(s,owner).ok;
   const civilianReserve=outnumbered?24+3*Math.max(0,-nationalBudget(s,owner).projectedNet):0;
