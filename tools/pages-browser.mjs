@@ -57,6 +57,7 @@ try{
   const migrated=await open(other+'/');
   await migrated.locator('#save-transfer-open').click();
   await migrated.locator('#save-transfer-file').setInputFiles({name:'spqr-saves.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exported))});
+  await migrated.waitForFunction(()=>localStorage.getItem('spqr-save-1')!==null,undefined,{timeout:10000});
   assert.equal(await migrated.evaluate(()=>localStorage.getItem('spqr-save-1')),campaign);
   assert.match(await migrated.locator('#save-transfer-status').innerText(),/Imported 1/);
   const bad={format:'spqr-save-transfer',version:1,saves:{'evil-key':'value'}};
