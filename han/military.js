@@ -5,7 +5,7 @@
 // and fodder, horse requirements, scouting, siege, and recruitment cost. The
 // numbers are gameplay abstractions: they do not claim the precision of a
 // modern division table.
-import {ROUTES,REGIONS} from './data.js?v=foreign-heir-knowledge-1';
+import {ROUTES,REGIONS} from './data.js?v=guardian-age-1';
 import {EURASIAN_FACTIONS} from './eurasia-data.js';
 import {assignFieldCommander} from './field-identities.js';
 

@@ -1,7 +1,7 @@
-import {syncChronicleDispatches} from './chronicle.js?v=foreign-heir-knowledge-1';
-import {CHARACTER_CATALOG} from './characters.js?v=foreign-heir-knowledge-1';
-import {initializeDynasties} from './dynasties.js?v=foreign-heir-knowledge-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=foreign-heir-knowledge-1';
+import {syncChronicleDispatches} from './chronicle.js?v=guardian-age-1';
+import {CHARACTER_CATALOG} from './characters.js?v=guardian-age-1';
+import {initializeDynasties} from './dynasties.js?v=guardian-age-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=guardian-age-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 

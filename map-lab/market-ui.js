@@ -1,8 +1,8 @@
-import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,postTradeSale,cancelTradeSale,proposeSupplyContract,cancelSupplyContract,setTradeTariffPolicy,setTradeExportRestriction,TARIFF_POLICIES,marketPrice,tradeRouteName,activeMerchantPrivilege,grantMerchantPrivilege} from '../trade-markets.js?v=foreign-heir-knowledge-1';
-import {activeAgreement} from '../agreements.js?v=foreign-heir-knowledge-1';
-import {REGIONS,FACTIONS} from '../data.js?v=foreign-heir-knowledge-1';
-import {campaignDate} from '../campaign-date.js?v=foreign-heir-knowledge-1';
-import {ownMarketIntelligence} from '../trade-intelligence.js?v=foreign-heir-knowledge-1';
+import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,postTradeSale,cancelTradeSale,proposeSupplyContract,cancelSupplyContract,setTradeTariffPolicy,setTradeExportRestriction,TARIFF_POLICIES,marketPrice,tradeRouteName,activeMerchantPrivilege,grantMerchantPrivilege} from '../trade-markets.js?v=guardian-age-1';
+import {activeAgreement} from '../agreements.js?v=guardian-age-1';
+import {REGIONS,FACTIONS} from '../data.js?v=guardian-age-1';
+import {campaignDate} from '../campaign-date.js?v=guardian-age-1';
+import {ownMarketIntelligence} from '../trade-intelligence.js?v=guardian-age-1';
 
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const name=(value,zh)=>value?.[zh?1:0]||'';

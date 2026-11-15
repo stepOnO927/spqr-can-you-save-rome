@@ -1,9 +1,9 @@
-import {ROUTES} from './data.js?v=foreign-heir-knowledge-1';
-import {unlockedComponents,focusModifiers} from './national-focus.js?v=foreign-heir-knowledge-1';
-import {politicalAmbition} from './conspiracies.js?v=foreign-heir-knowledge-1';
-import {reportedControl} from './control-intelligence.js?v=foreign-heir-knowledge-1';
-import {assignFictionalFieldCommander} from './dynasties.js?v=foreign-heir-knowledge-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=foreign-heir-knowledge-1';
+import {ROUTES} from './data.js?v=guardian-age-1';
+import {unlockedComponents,focusModifiers} from './national-focus.js?v=guardian-age-1';
+import {politicalAmbition} from './conspiracies.js?v=guardian-age-1';
+import {reportedControl} from './control-intelligence.js?v=guardian-age-1';
+import {assignFictionalFieldCommander} from './dynasties.js?v=guardian-age-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=guardian-age-1';
 
 // LEGION DESIGNER. Templates are data; an army carries a snapshot of the
 // composition it was actually organized into, so editing a template never
