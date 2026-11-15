@@ -28,6 +28,7 @@ jobs:
           node tools/save-transfer-controls-smoke.mjs
           node tools/storage-denied-smoke.mjs
           node tools/short-screen-smoke.mjs
+          node tools/han-touch-hit-smoke.mjs
           node tools/travel-smoke.mjs
           node tools/cursus-smoke.mjs
           node tools/cursus-deep-smoke.mjs

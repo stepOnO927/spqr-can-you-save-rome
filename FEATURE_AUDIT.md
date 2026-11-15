@@ -6,6 +6,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | --- | --- | --- |
 | New campaign, difficulty, tutorial and save/load | Opening setup | `tools/onboarding-smoke.mjs` |
 | Short landscape Roman campaign | Opening setup and campaign controls at 640×360, 836×470 and 1031×580 | `tools/short-screen-smoke.mjs` checks visible scenario controls, real touch start, advance, government access and save |
+| Eastern map touch targets | Han map → Chang’an territory | `tools/han-touch-hit-smoke.mjs` verifies touch selection beneath roads at 640×360 and 836×470; desktop road hover remains available |
 | Army inspection, marches, battles and AI turns | Terrain map → army | `tools/phase-v-smoke.mjs`, `tools/browser-smoke.mjs` |
 | Recruitment | Terrain map → owned city → manage theater | `tools/systems-smoke.mjs` |
 | Family adoption and marriage | Campaign map → government → family tree | `tools/scenario-systems-smoke.mjs` |
