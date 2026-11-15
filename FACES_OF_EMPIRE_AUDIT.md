@@ -6,11 +6,13 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `0f664ae9`, including its production GA4
-stream setting. Main's optional analytics
+The draft now includes main through `a0209c73`, including its production GA4
+stream setting and foreign-heir will privacy fix. Main's optional analytics
 is connected across the campaign, atlas and standalone Han views after
 reconciling their differing controls. Its privacy choice remains opt-in;
-the six new analytics unit cases and the full 1,196-test local suite pass. Main's ninth
+the six new analytics unit cases and the full 1,198-test local suite pass. A
+120-month Roman/Han market simulation also passes after this main integration.
+Main's ninth
 campaign-born portrait pair is also available to new births and compatible
 old saves. Han trade arrivals and completed tutorial steps use the same
 optional analytics events as the rest of the campaign.
