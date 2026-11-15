@@ -18,7 +18,7 @@ export const TRADE_HEAD='changan',TRADE_END='mediterranean_gate';
 export function initSilk(s){
  s.silk={caravans:[],relays:[],nextId:1,income:{},functionalMonths:0,lastPath:null,blocked:null,
   contact:{lijian:{level:'unknown',heardAt:null},anxi:{level:'hearsay',heardAt:null}},
-  farWestKnows:{seres:false,at:null},embassy:null,security:0,tolls:{}};
+  farWestKnows:{seres:false,at:null},embassy:null,security:0,protectionSpent:0,tolls:{}};
 }
 // Can a caravan sponsored by `sponsor` use the leg a→b?
 export function legOpen(s,a,b,sponsor='han'){
@@ -131,12 +131,26 @@ export function protectRoute(s,amount=ROUTE_PROTECTION_COST){
  if((s.silk.security||0)>=5)return {ok:false,reason:'maximum'};
  if(s.factions.han.treasury<ROUTE_PROTECTION_COST)return {ok:false,reason:'treasury'};
  s.factions.han.treasury-=ROUTE_PROTECTION_COST;
+ s.silk.protectionSpent=(s.silk.protectionSpent||0)+ROUTE_PROTECTION_COST;
  s.silk.security=clamp((s.silk.security||0)+1,0,5);
  return {ok:true,cost:ROUTE_PROTECTION_COST,security:s.silk.security};
+}
+function aiProtectAfterRaid(s){
+ if(s.player==='han'||s.finalized||!s.factions?.han||!s.regions.some(r=>r.owner==='han')||s.factions.han.treasury<ROUTE_PROTECTION_COST+120||(s.silk.security||0)>=5)return;
+ const now=monthIndex(s);if(s.silk.aiProtectionMonth===now)return;
+ const covered=s.silk.aiProtectedLossIds||=[];
+ const raid=s.silk.caravans.find(c=>c.status==='lost'&&c.shipmentId&&Number.isInteger(c.settledAt)&&now-c.settledAt>=0&&now-c.settledAt<=6&&!covered.includes(c.id)&&s.tradeMarkets?.shipments.some(x=>x.id===c.shipmentId&&x.sponsor==='han'&&x.status==='lost'));
+ if(!raid)return;
+ s.factions.han.treasury-=ROUTE_PROTECTION_COST;
+ s.silk.protectionSpent=(s.silk.protectionSpent||0)+ROUTE_PROTECTION_COST;
+ s.silk.security=clamp((s.silk.security||0)+1,0,5);
+ s.silk.aiProtectedLossIds=[...covered.slice(-23),raid.id];
+ s.silk.aiProtectionMonth=now;
 }
 export function advanceSilk(s){
  if(s.month%2===0)spawnCaravan(s);else{const p=tradePath(s);s.silk.lastPath=p;if(p)s.silk.functionalMonths++;else{s.silk.functionalMonths=0;s.silk.blocked=firstBlock(s)}}
  moveCaravans(s);advanceRelays(s);
  if(s.month===1)s.silk.security=Math.max(0,(s.silk.security||0)-1);
+ aiProtectAfterRaid(s);
 }
 export {OASIS};

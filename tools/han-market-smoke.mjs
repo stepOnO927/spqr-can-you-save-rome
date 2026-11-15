@@ -157,6 +157,23 @@ try{
  assert.match(await page.locator('#inspector').innerText(),/商人自费护卫 2¤.*亲历劫掠线路 1/s);
  await page.locator('#lang').click();
  assert.match(await page.locator('#inspector').innerText(),/Merchant-funded escort 2¤.*Raided routes 1/s);
+  await page.evaluate(async()=>{
+   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=faces-reported-names-1');
+   const {advanceSilk}=await import('/han/silk-road.js?v=faces-reported-names-1');
+   const {advanceEasternMarkets}=await import('/han/markets.js?v=faces-reported-names-1');
+   const {roll}=await import('/han/util.js?v=faces-reported-names-1');
+   const state=newHanGame('shanshan',{seed:38});state.tradeMarkets.embeddedRoman=true;state.month=2;advanceSilk(state);
+   const caravan=state.silk.caravans.find(c=>c.shipmentId),shipment=state.tradeMarkets.shipments.find(x=>x.id===caravan?.shipmentId),hazard=state.regions.find(r=>r.id===shipment?.legs[0].to);
+   if(!hazard)throw Error('AI caravan missing');hazard.unrest=1;hazard.fort=0;for(const army of state.armies.filter(a=>a.region===hazard.id))army.men=0;
+   state.month=3;shipment.remaining=1;let selected=null;for(let seed=1;seed<10000;seed++){if(roll({...state,seed},`market-bandit:${shipment.id}:${hazard.id}`)<.08){selected=seed;break}}if(!selected)throw Error('Raid seed missing');state.seed=selected;
+   advanceEasternMarkets(state);if(shipment.status!=='lost')throw Error('Paid caravan was not raided');localStorage.setItem(SAVE_KEY('browser'),serialize(state));
+  });
+  await page.locator('#load').click();await page.locator('#advance').click();await page.locator('#save').click();
+  const guarded=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+  assert.equal(guarded.silk.security,1);assert.equal(guarded.silk.protectionSpent,20);
+  assert.equal(guarded.silk.aiProtectedLossIds.length,1);
+  await page.locator('#load').click();await page.locator('#advance').click();await page.locator('#save').click();
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')).silk.protectionSpent),20);
  assert.deepEqual(errors,[]);
  console.log('Han market browser smoke passed: listings, customs, treaty, horse delivery, army remounts, save/load and bilingual panel.');
 }finally{await browser.close()}

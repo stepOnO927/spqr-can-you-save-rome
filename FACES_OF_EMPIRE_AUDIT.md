@@ -21,8 +21,9 @@ covers visibility and save/load; the cloud browser smoke also exercises the
 mode. The merged personal-meeting
 update records the name in the campaign's saved catalog at the time of a
 completed audience, so a stale shared catalog cannot overwrite that
-observation. Two full 1,180-test local simulation runs pass after integration;
-the first run had one intermittent failure that did not recur. Earlier head
+observation. The latest 1,181-test local simulation suite and the full
+120-month market script pass. Two earlier 1,180-test runs passed after the
+main integration; an initial intermittent failure did not recur. Earlier head
 `cc3e6835` passed all three GitHub browser jobs, quality, Pages packaging,
 and Poki release validation.
 
@@ -746,6 +747,12 @@ each January. The action, risk difference, bilingual panel and save reload
 have unit and Chromium coverage. The old route-protection API accepted a
 negative charge and could add money; it now rejects nonstandard amounts,
 unfunded orders, non-Han players and purchases above the cap.
+When AI Han loses one of its own paid Silk Road caravans to a real raid, it
+now funds one measured guard increment if its treasury can retain an
+operating reserve. The cost enters a saved protection ledger, the increment
+uses the same raider-risk reduction as the player action, and a recorded raid
+cannot be charged twice across turns or reloads. The AI does not inspect
+foreign shipments or disclose this private choice in the player's log.
 Main's later conspiracy report fix now keeps the name actually recorded at
 the report date in the security panel, including after save/load; future and
 unnamed reports cannot borrow a hidden later identity. The regency tenure
