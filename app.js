@@ -105,7 +105,7 @@ function tradeCargoPanel(){
  if(!own.length)return '';
  const active=own.filter(cargo=>cargo.status==='transit'),recent=own.filter(cargo=>cargo.status!=='transit').slice(-3).reverse();
  const zh=lang==='zh';
- return `<p>${zh?'本方在途商货':'Own goods in transit'}: ${active.length} ${zh?'批；收入在抵达后入账，边境受阻或冬季险路可能导致损失。':'shipments; revenue arrives with the goods, and blocked borders and winter hazards may cause a loss.'}</p>${recent.map(cargo=>`<p>${esc(labelFaction(cargo.to))} · ${cargo.status==='delivered'?(zh?'商货已抵达':'goods arrived'):(zh?'商货损失':'goods lost')} · ${esc(cargo.dispatched?.year??'?')} / ${esc(cargo.dispatched?.month??'?')}</p>`).join('')}`;
+ return `<p>${zh?'本方在途商货':'Own goods in transit'}: ${active.length} ${zh?'批；收入在抵达后入账，边境受阻或冬季险路可能导致损失。':`${active.length===1?'shipment':'shipments'}; revenue arrives with the goods, and blocked borders and winter hazards may cause a loss.`}</p>${recent.map(cargo=>{const when=cargo.delivered||cargo.ended||cargo.dispatched;return `<p>${esc(labelFaction(cargo.to))} · ${cargo.status==='delivered'?(zh?'商货已抵达':'goods arrived'):(zh?'商货损失':'goods lost')} · ${esc(campaignDate(when?.month,when?.year,lang))}</p>`}).join('')}`;
 }
 function agreementsPanel(){
  const zh=lang==='zh',own=(state.agreements||[]).filter(x=>x.parties.includes(state.player)&&activeAgreement(state,x.parties[0],x.parties[1],x.type));

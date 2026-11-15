@@ -60,15 +60,15 @@ function advanceTradeCargo(s){
   if(cargo.status!=='transit')continue;
   const treaty=s.agreements.find(item=>item.id===cargo.agreementId);
   if(!treaty||!s.factions[cargo.from]||!s.factions[cargo.to]||!activeAgreement(s,cargo.from,cargo.to,'trade')||treaty.status!=='active'){
-   cargo.status='lost';cargo.reason='treaty_ended';continue;
+   cargo.status='lost';cargo.reason='treaty_ended';cargo.ended={year:s.year,month:s.month};continue;
   }
   if(cargo.remaining>0){cargo.remaining--;if(cargo.remaining>0)continue}
   const next=cargo.path[cargo.leg+1];
   if(!next){cargo.status='delivered';cargo.delivered={year:s.year,month:s.month};s.factions[cargo.to].treasury+=cargo.value;continue}
-  if(winterTradeHazard(s,cargo,cargo.path[cargo.leg],next)){cargo.status='lost';cargo.reason='winter_hazard';continue}
+  if(winterTradeHazard(s,cargo,cargo.path[cargo.leg],next)){cargo.status='lost';cargo.reason='winter_hazard';cargo.ended={year:s.year,month:s.month};continue}
   const owner=s.regions.find(region=>region.id===next)?.owner;
   if(next===cargo.path.at(-1)&&owner!==cargo.to||!nonMilitaryAccessStatus(s,cargo.from,next,owner,'commercial').allowed){
-   cargo.blockedMonths++;if(cargo.blockedMonths>=3){cargo.status='lost';cargo.reason='blocked'}continue;
+   cargo.blockedMonths++;if(cargo.blockedMonths>=3){cargo.status='lost';cargo.reason='blocked';cargo.ended={year:s.year,month:s.month}}continue;
   }
   cargo.blockedMonths=0;cargo.leg++;
   if(cargo.leg===cargo.path.length-1){cargo.status='delivered';cargo.delivered={year:s.year,month:s.month};s.factions[cargo.to].treasury+=cargo.value}
