@@ -46,9 +46,16 @@ const host = (state, entity) => state.regions.find(region => region.id === entit
 export const localEntity = (state, id) => state.regions.flatMap(region => region.localEntities || []).find(entity => entity.id === id) || null;
 export function localEntityRevenue(state, actor) {
   const city = localEntity(state, 'massilia');
-  if (!city || host(state, city)?.owner !== actor) return 0;
-  if (city.controller === actor) return city.administrativeStatus === 'administered' ? 3 : 2;
-  return city.controller === city.id && (city.access[actor] > now(state) || city.overlord === actor) ? 1 : 0;
+  let revenue = 0;
+  if (city && host(state, city)?.owner === actor) {
+    if (city.controller === actor) revenue += city.resistance >= 60 ? 0 : city.administrativeStatus === 'administered' ? 3 : 2;
+    else if (city.controller === city.id && (city.access[actor] > now(state) || city.overlord === actor)) revenue++;
+  }
+  for (const region of state.regions.filter(item => item.owner === actor)) for (const entity of region.localEntities || []) {
+    if (entity.type !== 'roman_town') continue;
+    revenue += entity.controller === actor ? entity.resistance >= 60 ? 0 : 1 : -1;
+  }
+  return revenue;
 }
 
 export function initializeLocalEntities(state, {opening = false} = {}) {
@@ -69,6 +76,7 @@ export function initializeLocalEntities(state, {opening = false} = {}) {
       pending: null,
       siege: null,
       administrationProject: null,
+      resistance: 0,
       lastOfferAt: {},
       seed: 49149
     });
@@ -178,7 +186,7 @@ export function advanceLocalEntities(state) {
       entity.pending = null;
       if (accepted && proposal === 'access') entity.access[actor] = now(state) + 24;
       if (accepted && proposal === 'protectorate') entity.overlord = actor;
-      if (accepted && submission) { entity.controller = actor; entity.militaryOccupier = actor; entity.administrativeStatus = 'occupied'; }
+      if (accepted && submission) { entity.controller = actor; entity.militaryOccupier = actor; entity.administrativeStatus = 'occupied'; entity.resistance = 18; }
     }
     if (entity.siege) {
       const {actor, armyId} = entity.siege, army = state.armies.find(unit => unit.id === armyId && unit.owner === actor && unit.region === entity.theater && !unit.move && unit.men > 0);
@@ -189,6 +197,7 @@ export function advanceLocalEntities(state) {
       entity.controller = actor;
       entity.militaryOccupier = actor;
       entity.administrativeStatus = 'occupied';
+      entity.resistance = 30;
       entity.overlord = null;
       entity.siege = null;
       entity.lastOutcome = {actor, proposal: 'siege', accepted: true, year: state.year, month: state.month};

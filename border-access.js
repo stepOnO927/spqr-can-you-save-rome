@@ -1,4 +1,4 @@
-import {activeAgreement,proposeAgreement} from './agreements.js?v=world-kings-1';
+import {activeAgreement,proposeAgreement} from './agreements.js?v=world-kings-2';
 
 export const BORDER_ACCESS_CATEGORIES = Object.freeze([
   'closed', 'civilian', 'commercial', 'diplomatic',

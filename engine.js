@@ -13,7 +13,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=succession-ui-recovery-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=infant-portraits-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=campaign-intelligence-privacy-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=attack-preview-intelligence-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -25,7 +25,7 @@ import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
-import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=world-kings-1';
+import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=world-kings-2';
 import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=diplomatic-chronicle-1';
 import {respondToFrontierReports} from './frontier-response.js?v=frontier-response-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=diplomatic-chronicle-1';
@@ -41,6 +41,7 @@ import {initializeLocalEntities,advanceLocalEntities,localEntity,localEntityReve
 import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing,respondBorderIncident} from './border-access.js';
 import {advanceFootholds,footholdQuote,startFoothold} from './foothold.js';
 import {titleAssetQuote,settleTitleByTreaty} from './peace-titles.js';
+import {advanceLocalResistance} from './local-resistance.js';
 export {queueMission};
 export {personalDiplomaticCredit};
 export {replyToLetter};
@@ -160,7 +161,7 @@ export function previewMarch(s,armyId,destination,{unauthorized=false}={}){
   if(link.sea&&faction.treasury<seaCost)return {ok:false,reason:'transport'};
   const routeWorks=buildingModifiers(region(s,a.region)).march||0,doctrine=activeModifiers(s,a.owner).march||0;
   const months=Math.max(1,(link.sea?3:1)+(target.terrain==='hills'?1:0)+(target.terrain==='desert'?1:0)-routeWorks-doctrine+formationMarchDelta(s,a,link,target.terrain));
-  return {ok:true,months,seaCost,sea:!!link.sea,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),unauthorized:!access.allowed,reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:target.supply};
+  return {ok:true,months,seaCost,sea:!!link.sea,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),unauthorized:!access.allowed,reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:report?.own?target.supply:null};
 }
 
 export function moveArmy(s,armyId,destination,{unauthorized=false}={}){
@@ -881,6 +882,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   }
   advanceTerritories(s);
   advanceLocalEntities(s);
+  for(const event of advanceLocalResistance(s))if([event.prior,event.claimant].includes(s.player)){const place=localEntity(s,event.id);log(s,`${place.name[0]} returned to its former legal authority after losing local security.`,`${place.name[1]}失去驻军与联络后回归原法理归属方。`)}
   advanceFootholds(s);
   advanceBorderIncidentAI(s,{autoplayPlayer});
   advanceMovements(s,{autoplayPlayer});

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=campaign-intelligence-privacy-1';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=attack-preview-intelligence-1';
 import {observeArmies,reportedArmies,reportedHealthSubjects} from '../character-system.js?v=foreign-name-privacy-1';
 import {requestPersonalMeeting} from '../personal-diplomacy.js?v=foreign-name-privacy-1';
 

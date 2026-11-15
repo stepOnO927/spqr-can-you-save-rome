@@ -1,0 +1,42 @@
+import {footholdConnected} from './foothold.js';
+
+const garrisoned = (state, entity, actor) => state.armies.some(army => army.owner === actor && army.region === entity.theater && army.men >= 1000 && !army.move);
+
+export function localSecurity(state, entity) {
+  const actor = entity?.controller;
+  if (!actor || !state.factions[actor]) return {garrison: false, connected: false};
+  return {garrison: garrisoned(state, entity, actor), connected: footholdConnected(state, entity.id, actor)};
+}
+
+// A controlled town can resist taxation and administration for months. It
+// reverts only after severe unrest, loss of its garrison and an unresolved
+// competing legal title. Garrisoned cities never flip by a random roll.
+export function advanceLocalResistance(state) {
+  const reverted = [];
+  for (const region of state.regions) for (const entity of region.localEntities || []) {
+    if (!state.factions[entity.controller]) continue;
+    entity.resistance ??= entity.administrativeStatus === 'occupied' ? 20 : 0;
+    const actor = entity.controller;
+    if (entity.legalSovereign === actor && entity.administrativeStatus === 'integrated') {
+      entity.resistance = Math.max(0, entity.resistance - 3);
+      continue;
+    }
+    const security = localSecurity(state, entity);
+    const taxPressure = state.factions[actor].tax === 'high' ? 1 : 0;
+    const unrest = (security.garrison ? -2 : 5) + (security.connected ? -2 : 3) + taxPressure + (entity.administrativeStatus === 'administered' ? -1 : 0);
+    entity.resistance = Math.max(0, Math.min(100, entity.resistance + unrest));
+    if (entity.resistance < 100 || security.garrison) continue;
+    const prior = actor, claimant = entity.legalSovereign;
+    if (claimant !== entity.id && !state.factions[claimant]) continue;
+    entity.controller = claimant;
+    entity.militaryOccupier = null;
+    entity.administrativeStatus = claimant === entity.id ? 'self_governing' : 'integrated';
+    entity.administrationProject = null;
+    entity.pending = null;
+    entity.siege = null;
+    entity.resistance = 35;
+    entity.lastOutcome = {actor: claimant, proposal: 'local_reversion', accepted: true, year: state.year, month: state.month};
+    reverted.push({id: entity.id, prior, claimant, theater: entity.theater});
+  }
+  return reverted;
+}

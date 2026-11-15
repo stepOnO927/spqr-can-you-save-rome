@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=campaign-intelligence-privacy-1';
+import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=attack-preview-intelligence-1';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=infant-portraits-1';
 import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=foreign-name-privacy-1';
 import {deriveGovernment} from '../governance.js?v=infant-portraits-1';
