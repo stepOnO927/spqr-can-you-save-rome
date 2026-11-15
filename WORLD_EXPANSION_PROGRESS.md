@@ -16,6 +16,7 @@ This file tracks the four supplied specifications as one development goal. The e
 - AI defenders protest an actual crossing after observation, while AI attackers respond to a protest with compensation or withdrawal according to resources and relations. The player is not auto-committed to a response. Both sides use the same incident-resolution functions.
 - Map Lab now compares up to three long-distance paths on the existing theater graph. The planner uses only the faction's dated control reports, labels treaty passage, missing permission, sea cost, uncertain control and supply risk, and lets the player inspect the next adjacent step. It never declares an unknown route legally open or creates map geography. March orders still validate each step and recheck actual control on arrival.
 - A controlled or access-granted Massilia can host a forward foothold. Its level-one camp needs money, food, a local garrison and a safe connection; higher levels require city and host-theater control, stronger garrisons, time and eventually local administration. Construction pauses if the safe route or garrison is lost. Food stock is transferred from faction reserves into a capped local store and consumed by a local army's rest; an isolated base does not grant a global range bonus. Loss of local rights records the former base before removing it.
+- The Italian slice now has Ariminum, Capua and Brundisium as separate Roman towns within existing theaters, grounded in [Caesar, *Civil Wars* I.1–29](https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html). Their opening local controller and legal sovereign are the Senate; troop and resource figures are gameplay estimates. A city can submit after its host theater is taken and a real garrison is present, or fall after an army-backed siege. Either result leaves the theater and local legal title distinct. AI uses the same delayed submission and siege path and can fund a connected foothold.
 
 ## Verification
 
@@ -31,11 +32,12 @@ This file tracks the four supplied specifications as one development goal. The e
 - Route tests cover treaty versus trade access, unknown foreign control and distinct long-distance alternatives. Chrome compared Italian-to-African routes and selected a first step without page errors. The public build contains 231 files, 4.11 MiB total, largest 1.06 MiB.
 - Foothold tests cover negotiated access, real construction costs, finite stored food, army rest, occupation prerequisites, severed supply lines, save persistence and Inspector warnings. Chrome completed Massilia camp construction, stocked food and rested an army. The public build contains 233 files, 4.12 MiB total, largest 1.06 MiB.
 - The complete serial test suite passed after foothold construction and monthly progression were integrated.
+- Italian settlement tests cover provenance, opening ownership, negotiated submission, siege without theater annexation and AI offers; Chrome used the Ariminum submission panel. The public build remains 233 files, 4.13 MiB total, largest 1.06 MiB.
 - The complete serial test suite passed after the unauthorized-crossing engine and UI changes.
 
 ## Remaining work from the four specifications
 
-1. Complete the Italian slice with several settlement-level targets, treaty-based legal transfers, resistance, connected supply and a visible route planner.
+1. Complete the Italian slice with treaty-based legal-title transfers, sustained local resistance and supply effects beyond the new town targets, footholds and visible route planner.
 2. Add sourced tribes, microstates, strongmen, villages, nomadic groups and classified wilderness in regionally appropriate density. Keep all unsourced or approximate boundaries clearly labeled.
 3. Add dated diplomatic letters, automatic expedition routing and actual supply effects; extend border access to emissaries and trade across the route graph, and let AI consider deliberate illegal crossings when strategically justified.
 4. Extend the foothold framework beyond Massilia to sourced villages and frontier settlements; add shipment time/cost, AI base planning, local administrators, village development and sustained long-distance expedition logistics.

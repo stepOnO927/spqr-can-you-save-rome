@@ -36,7 +36,7 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
    const base=`regions[${i}].localEntities[${j}]`;
    if(!entity?.id||localIds.has(entity.id))add('fatal','duplicate-local-entity',base,String(entity?.id));else localIds.add(entity.id);
    if(entity?.theater!==r.id||!Array.isArray(entity.coordinates)||entity.coordinates.length!==2||entity.coordinates.some(value=>!Number.isFinite(value)))add('fatal','invalid-local-geography',base,String(entity?.theater));
-   if(!['city_state','microstate','tribe','strongman','village','wilderness','nomadic'].includes(entity?.type))add('fatal','invalid-local-type',base,String(entity?.type));
+   if(!['city_state','roman_town','microstate','tribe','strongman','village','wilderness','nomadic'].includes(entity?.type))add('fatal','invalid-local-type',base,String(entity?.type));
    if(entity?.controller!==entity?.id&&!factionIds.has(entity?.controller))add('fatal','invalid-local-controller',`${base}.controller`,String(entity?.controller));
    if(!Number.isFinite(entity?.militia)||entity.militia<0)add('fatal','invalid-local-militia',`${base}.militia`,String(entity?.militia));
    if(entity?.siege&&(!armyIds.has(entity.siege.armyId)||!factionIds.has(entity.siege.actor)))add('warning','invalid-local-siege',`${base}.siege`,String(entity.siege.armyId));

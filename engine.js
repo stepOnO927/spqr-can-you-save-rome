@@ -37,9 +37,9 @@ import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,rel
 import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=campaign-intelligence-privacy-1';
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {initializeTerritories,transferTerritory,territoryTaxFactor,administrationQuote,startAdministration,advanceTerritories} from './territory.js';
-import {initializeLocalEntities,advanceLocalEntities,localEntity,localEntityRevenue,localContactQuote,offerLocalContact,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from './local-polities.js';
+import {initializeLocalEntities,advanceLocalEntities,localEntity,localEntityRevenue,localContactQuote,offerLocalContact,localSubmissionQuote,offerLocalSubmission,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from './local-polities.js';
 import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing,respondBorderIncident} from './border-access.js';
-import {advanceFootholds} from './foothold.js';
+import {advanceFootholds,footholdQuote,startFoothold} from './foothold.js';
 export {queueMission};
 export {personalDiplomaticCredit};
 export {replyToLetter};
@@ -636,6 +636,9 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   const city=localEntity(s,'massilia'),localArmy=s.armies.find(a=>a.owner===owner&&a.region==='narbo'&&!a.move&&a.men>0);
   if(city?.lastOutcome?.actor===owner&&city.lastOutcome.proposal==='access'&&!city.lastOutcome.accepted&&!city.pending&&!city.siege&&localArmy&&s.month%6===5&&localSiegeQuote(s,'massilia',localArmy.id,owner).ok)besiegeLocalEntity(s,'massilia',localArmy.id,owner);
   if(city?.controller===owner&&s.factions[owner]?.treasury>=35&&localAdministrationQuote(s,'massilia',owner).ok)startLocalAdministration(s,'massilia',owner);
+  if(owner!=='rebels'&&s.month%6===3&&s.factions[owner]?.treasury>=35){const town=s.regions.flatMap(r=>r.localEntities||[]).find(entity=>entity.type==='roman_town'&&localSubmissionQuote(s,entity.id,owner).ok);if(town)offerLocalSubmission(s,town.id,owner)}
+  if(owner!=='rebels'&&s.month%6===5){const town=s.regions.flatMap(r=>r.localEntities||[]).find(entity=>entity.type==='roman_town'&&entity.lastOutcome?.actor===owner&&entity.lastOutcome.proposal==='submission'&&!entity.lastOutcome.accepted&&s.armies.some(a=>a.owner===owner&&a.region===entity.theater&&localSiegeQuote(s,entity.id,a.id,owner).ok));if(town){const unit=s.armies.find(a=>a.owner===owner&&a.region===town.theater&&localSiegeQuote(s,town.id,a.id,owner).ok);besiegeLocalEntity(s,town.id,unit.id,owner)}}
+  if(owner!=='rebels'&&s.month%6===4&&s.factions[owner]?.treasury>=70){const base=s.regions.flatMap(r=>r.localEntities||[]).find(entity=>footholdQuote(s,entity.id,owner).ok);if(base)startFoothold(s,base.id,owner)}
   const f=s.factions[owner],owned=s.regions.filter(r=>r.owner===owner);
   const existingFeint=s.world.aiFeints?.[owner];if(existingFeint&&!s.armies.some(a=>a.id===existingFeint.army&&a.owner===owner&&a.men>0))delete s.world.aiFeints[owner];
   const internalOpponent=other=>Object.entries(s.world.disputes||{}).some(([parent,d])=>d.war&&[parent,d.war.rival].includes(owner)&&[parent,d.war.rival].includes(other));

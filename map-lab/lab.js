@@ -32,7 +32,7 @@ import rivers from '../rivers.js?v=phase-x-1';
 import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, answerBorderIncident, queueMission, setTax, personalDiplomaticCredit, administrationQuote, startAdministration} from '../engine.js?v=world-kings-1';
 import {renderRoutePlanner} from './route-ui.js';
 import {renderFootholdPanel} from './foothold-ui.js';
-import {localEntity,localContactQuote,offerLocalContact,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from '../local-polities.js';
+import {localEntity,localContactQuote,offerLocalContact,localSubmissionQuote,offerLocalSubmission,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from '../local-polities.js';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=succession-ui-recovery-1';
@@ -337,6 +337,8 @@ function renderAdministrationAction(territory){
 }
 
 function renderLocalEntity(city){
+ const romanTown={ARIMINUM:'ariminum',CAPUA:'capua',BRUNDISIUM:'brundisium'}[city.name];
+ if(romanTown){renderRomanTown(city,romanTown);return}
  if(city.name!=='MASSILIA')return;
  const entity=localEntity(state,'massilia');
  if(!entity)return;
@@ -358,5 +360,21 @@ function renderLocalEntity(city){
  section.querySelector('#local-access')?.addEventListener('click',()=>{offerLocalContact(state,entity.id,actor,'access');renderHud();showCity(city)});
  section.querySelector('#local-protectorate')?.addEventListener('click',()=>{offerLocalContact(state,entity.id,actor,'protectorate');renderHud();showCity(city)});
  section.querySelector('#local-siege')?.addEventListener('click',()=>{besiegeLocalEntity(state,entity.id,army.id,actor);renderHud();showCity(city)});
+ if(visible)renderFootholdPanel({state,entity,actor,language:lang,panel:section,refresh:()=>{renderHud();showCity(city)}});
+}
+function renderRomanTown(city,id){
+ const entity=localEntity(state,id);if(!entity)return;
+ const zh=lang==='zh',actor=state.player,host=region(state,entity.theater),visible=host?.owner===actor||entity.controller===actor||state.armies.some(a=>a.owner===actor&&a.region===entity.theater&&a.men>0);
+ const section=document.createElement('section');section.className='theater-facts';
+ const heading=document.createElement('h3');heading.textContent=zh?`罗马城镇 · ${entity.name[1]}`:`ROMAN TOWN · ${entity.name[0]}`;section.append(heading);
+ const history=document.createElement('p');history.textContent=zh?`${entity.description[1]}。地方兵力与资源数值为游戏模拟；城镇控制不等于整个战区的法理归属。`:`${entity.description[0]}. Militia and resources are gameplay estimates; town control does not transfer title to the whole theater.`;section.append(history);
+ const record=document.createElement('p');record.textContent=visible?(zh?`地方控制：${n(FACTIONS[entity.controller]?.short)||entity.controller} · 法理归属：${n(FACTIONS[entity.legalSovereign]?.short)||entity.legalSovereign} · 守军约 ${entity.militia.toLocaleString()} 人`:`Local control: ${n(FACTIONS[entity.controller]?.short)||entity.controller} · legal title: ${n(FACTIONS[entity.legalSovereign]?.short)||entity.legalSovereign} · militia about ${entity.militia.toLocaleString()}`):(zh?'地方控制与守军尚未核实。':'Local control and militia are not yet verified.');section.append(record);
+ const source=document.createElement('a');source.href=entity.source;source.target='_blank';source.rel='noopener noreferrer';source.textContent=zh?'史料：凯撒《内战记》第一卷':'Source: Caesar, Civil Wars I';section.append(source);
+ const submission=localSubmissionQuote(state,id,actor),army=state.armies.find(a=>a.owner===actor&&a.region===entity.theater&&!a.move&&a.men>0),siege=localSiegeQuote(state,id,army?.id,actor);
+ if(visible&&entity.controller!==actor){const offer=document.createElement('button');offer.id='town-submission';offer.disabled=!submission.ok;offer.textContent=zh?'提出地方归附 · 6国库 / 2个月':'OFFER LOCAL SUBMISSION · 6 TREASURY / 2 MONTHS';offer.onclick=()=>{if(offerLocalSubmission(state,id,actor).ok){renderHud();showCity(city)}};section.append(offer);const attack=document.createElement('button');attack.id='town-siege';attack.disabled=!siege.ok;attack.textContent=zh?'围攻地方城镇 · 8粮食':'BESIEGE TOWN · 8 FOOD';attack.onclick=()=>{if(besiegeLocalEntity(state,id,army.id,actor).ok){renderHud();showCity(city)}};section.append(attack)}
+ if(visible&&entity.pending?.actor===actor){const pending=document.createElement('p');pending.textContent=zh?`地方提议还需 ${entity.pending.remaining} 个月；城镇议事机构可以拒绝。`:`Local offer takes ${entity.pending.remaining} more months; the town council may refuse.`;section.append(pending)}
+ if(visible&&entity.siege?.actor===actor){const pending=document.createElement('p');pending.textContent=zh?`围城还需 ${entity.siege.remaining} 个月；真实驻军会承受损失。`:`Siege takes ${entity.siege.remaining} more months; the army suffers actual losses.`;section.append(pending)}
+ if(visible&&entity.controller===actor&&entity.administrativeStatus==='occupied'){const quote=localAdministrationQuote(state,id,actor),button=document.createElement('button');button.id='town-administer';button.disabled=!quote.ok;button.textContent=zh?'整顿地方行政 · 12国库 / 3粮食':'ADMINISTER TOWN · 12 TREASURY / 3 FOOD';button.onclick=()=>{if(startLocalAdministration(state,id,actor).ok){renderHud();showCity(city)}};section.append(button)}
+ document.querySelector('#command-detail').append(section);
  if(visible)renderFootholdPanel({state,entity,actor,language:lang,panel:section,refresh:()=>{renderHud();showCity(city)}});
 }

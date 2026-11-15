@@ -16,6 +16,24 @@ export const LOCAL_ENTITY_TEMPLATES = Object.freeze([
     fort: 1,
     treasury: 20,
     food: 12
+  },
+  {
+    id: 'ariminum', type: 'roman_town', name: ['Ariminum', '阿里米努姆'], theater: 'italiaN',
+    coordinates: [12.5683, 44.0678], source: 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html', historical: true,
+    description: ['Roman town entered by Caesar at the start of the civil war', '内战初期凯撒进入的罗马城镇'],
+    initialController: 'senate', maxFootholdLevel: 3, militia: 450, fort: 0, treasury: 6, food: 8
+  },
+  {
+    id: 'capua', type: 'roman_town', name: ['Capua', '卡普亚'], theater: 'italiaS',
+    coordinates: [14.251, 41.107], source: 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html', historical: true,
+    description: ['Roman colony used for Pompeian recruitment', '庞培派曾征募兵员的罗马殖民城市'],
+    initialController: 'senate', maxFootholdLevel: 3, militia: 700, fort: 0, treasury: 8, food: 10
+  },
+  {
+    id: 'brundisium', type: 'roman_town', name: ['Brundisium', '布伦迪西姆'], theater: 'italiaS',
+    coordinates: [17.944, 40.637], source: 'https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Caesar/Civil_Wars/1A%2A.html', historical: true,
+    description: ['Adriatic port held by Pompey before his departure', '庞培离境前据守的亚得里亚海港口'],
+    initialController: 'senate', maxFootholdLevel: 4, militia: 1200, fort: 1, treasury: 10, food: 12
   }
 ]);
 
@@ -42,10 +60,10 @@ export function initializeLocalEntities(state, {opening = false} = {}) {
     if (region.localEntities.some(entity => entity.id === template.id)) continue;
     region.localEntities.push({
       ...structuredClone(template),
-      controller: template.id,
-      legalSovereign: template.id,
+      controller: template.initialController || template.id,
+      legalSovereign: template.initialController || template.id,
       militaryOccupier: null,
-      administrativeStatus: 'self_governing',
+      administrativeStatus: template.initialController ? 'integrated' : 'self_governing',
       overlord: null,
       access: {},
       pending: null,
@@ -84,10 +102,33 @@ export function offerLocalContact(state, id, actor = state.player, proposal = 'a
   return {ok: true, months: quote.months};
 }
 
+export function localSubmissionQuote(state, id, actor = state.player) {
+  const entity = localEntity(state, id), faction = state.factions[actor];
+  if (!entity || entity.type !== 'roman_town' || !faction || entity.controller === actor || !state.factions[entity.controller]) return {ok: false, reason: 'unavailable'};
+  if (!state.wars.some(pair => pair.includes(actor) && pair.includes(entity.controller))) return {ok: false, reason: 'not_at_war'};
+  if (host(state, entity)?.owner !== actor) return {ok: false, reason: 'host_control'};
+  if (entity.pending || entity.siege) return {ok: false, reason: 'busy'};
+  if (entity.lastOfferAt[actor] != null && now(state) - entity.lastOfferAt[actor] < 6) return {ok: false, reason: 'cooldown'};
+  if (!state.armies.some(army => army.owner === actor && army.region === entity.theater && !army.move && army.men >= Math.max(1000, entity.militia))) return {ok: false, reason: 'garrison'};
+  if (faction.treasury < 6) return {ok: false, reason: 'resources'};
+  return {ok: true, treasury: 6, months: 2};
+}
+
+export function offerLocalSubmission(state, id, actor = state.player) {
+  const quote = localSubmissionQuote(state, id, actor);
+  if (!quote.ok) return quote;
+  const entity = localEntity(state, id);
+  state.factions[actor].treasury -= quote.treasury;
+  entity.lastOfferAt[actor] = now(state);
+  entity.pending = {actor, proposal: 'submission', expectedController: entity.controller, remaining: quote.months, sentYear: state.year, sentMonth: state.month};
+  return {ok: true, months: quote.months};
+}
+
 export function localSiegeQuote(state, id, armyId, actor = state.player) {
   const entity = localEntity(state, id), army = state.armies.find(unit => unit.id === armyId);
   if (entity?.overlord === actor) return {ok: false, reason: 'own_subject'};
-  if (!entity || entity.controller !== entity.id || entity.siege || !army || army.owner !== actor || army.region !== entity.theater || army.move || army.siege || army.men < entity.militia * 1.5) return {ok: false, reason: 'army_or_resistance'};
+  const eligible = entity?.controller === entity?.id || entity?.type === 'roman_town' && state.wars.some(pair => pair.includes(actor) && pair.includes(entity.controller));
+  if (!entity || !eligible || entity.controller === actor || entity.siege || !army || army.owner !== actor || army.region !== entity.theater || army.move || army.siege || army.men < entity.militia * 1.5) return {ok: false, reason: 'army_or_resistance'};
   if (!state.factions[actor] || state.factions[actor].food < 8) return {ok: false, reason: 'supplies'};
   return {ok: true, food: 8, months: Math.max(2, entity.fort * 3)};
 }
@@ -99,7 +140,7 @@ export function besiegeLocalEntity(state, id, armyId, actor = state.player) {
   state.factions[actor].food -= quote.food;
   entity.pending = null;
   entity.siege = {actor, armyId, remaining: quote.months};
-  const protectedBy = entity.overlord || 'senate';
+  const protectedBy = entity.overlord || (state.factions[entity.controller] ? entity.controller : 'senate');
   if (actor !== protectedBy && state.factions[protectedBy]) {
     const key = [actor, protectedBy].sort().join(':');
     state.relations[key] = Math.max(-100, (state.relations[key] || 0) - 10);
@@ -130,12 +171,14 @@ export function startLocalAdministration(state, id, actor = state.player) {
 export function advanceLocalEntities(state) {
   for (const region of state.regions) for (const entity of region.localEntities || []) {
     if (entity.pending && --entity.pending.remaining <= 0) {
-      const {actor, proposal} = entity.pending;
-      const accepted = entity.controller === entity.id && !entity.siege && roll(entity) < (proposal === 'access' ? actor === 'senate' ? 0.7 : 0.45 : 0.22);
+      const {actor, proposal, expectedController} = entity.pending;
+      const submission = proposal === 'submission';
+      const accepted = submission ? entity.type === 'roman_town' && entity.controller === expectedController && state.wars.some(pair => pair.includes(actor) && pair.includes(expectedController)) && host(state, entity)?.owner === actor && !entity.siege && state.armies.some(army => army.owner === actor && army.region === entity.theater && !army.move && army.men >= Math.max(1000, entity.militia)) && roll(entity) < 0.6 : entity.controller === entity.id && !entity.siege && roll(entity) < (proposal === 'access' ? actor === 'senate' ? 0.7 : 0.45 : 0.22);
       entity.lastOutcome = {actor, proposal, accepted, year: state.year, month: state.month};
       entity.pending = null;
       if (accepted && proposal === 'access') entity.access[actor] = now(state) + 24;
       if (accepted && proposal === 'protectorate') entity.overlord = actor;
+      if (accepted && submission) { entity.controller = actor; entity.militaryOccupier = actor; entity.administrativeStatus = 'occupied'; }
     }
     if (entity.siege) {
       const {actor, armyId} = entity.siege, army = state.armies.find(unit => unit.id === armyId && unit.owner === actor && unit.region === entity.theater && !unit.move && unit.men > 0);
