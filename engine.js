@@ -38,7 +38,7 @@ import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupp
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {initializeTerritories,transferTerritory,territoryTaxFactor,administrationQuote,startAdministration,advanceTerritories} from './territory.js';
 import {initializeLocalEntities,advanceLocalEntities,localEntity,localEntityRevenue,localContactQuote,offerLocalContact,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from './local-polities.js';
-import {initializeBorderPolicies,militaryAccessStatus} from './border-access.js';
+import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing} from './border-access.js';
 export {queueMission};
 export {personalDiplomaticCredit};
 export {replyToLetter};
@@ -121,31 +121,33 @@ export function upgradeSave(s){
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
-export function previewMarch(s,armyId,destination){
+export function previewMarch(s,armyId,destination,{unauthorized=false}={}){
   const a=army(s,armyId); const target=region(s,destination);
   if(!a||!target||a.men<=0||a.move||a.siege)return {ok:false,reason:'unavailable'};
   if(a.reorg)return {ok:false,reason:'reorganizing'};
   const link=adjacent(a.region).find(e=>e.to===destination);
   if(!link)return {ok:false,reason:'adjacent'};
   const report=reportedControl(s,a.owner,destination),reportedOwner=report?.owner;
-  if(!militaryAccessStatus(s,a.owner,destination,reportedOwner??null).allowed)return {ok:false,reason:'peace'};
+  const access=militaryAccessStatus(s,a.owner,destination,reportedOwner??null);
+  if(!access.allowed&&!unauthorized)return {ok:false,reason:'peace'};
+  if(unauthorized&&(access.allowed||!reportedOwner))return {ok:false,reason:'target'};
   const faction=s.factions[a.owner];
   const seaCost=Math.max(2,8+(activeModifiers(s,a.owner).seaCost||0));
   if(link.sea&&faction.treasury<seaCost)return {ok:false,reason:'transport'};
   const routeWorks=buildingModifiers(region(s,a.region)).march||0,doctrine=activeModifiers(s,a.owner).march||0;
   const months=Math.max(1,(link.sea?3:1)+(target.terrain==='hills'?1:0)+(target.terrain==='desert'?1:0)-routeWorks-doctrine+formationMarchDelta(s,a,link,target.terrain));
-  return {ok:true,months,seaCost,sea:!!link.sea,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:target.supply};
+  return {ok:true,months,seaCost,sea:!!link.sea,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),unauthorized:!access.allowed,reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:target.supply};
 }
 
-export function moveArmy(s,armyId,destination){
-  const estimate=previewMarch(s,armyId,destination);
+export function moveArmy(s,armyId,destination,{unauthorized=false}={}){
+  const estimate=previewMarch(s,armyId,destination,{unauthorized});
   if(!estimate.ok)return estimate;
   const a=army(s,armyId),target=region(s,destination),link=adjacent(a.region).find(e=>e.to===destination);
   if(link.sea)s.factions[a.owner].treasury-=estimate.seaCost;
   const months=estimate.months;
-  a.move={to:destination,remaining:months,sea:link.sea};
-  a.order={kind:'move',target:destination};
-  if(a.owner===s.player)log(s,`${a.name[0]} marched toward ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}向${target.name[1]}行军（${months}个月）。`);
+  a.move={to:destination,remaining:months,sea:link.sea,...(estimate.unauthorized?{intent:'unauthorized_entry'}:{})};
+  a.order={kind:estimate.unauthorized?'unauthorized_entry':'move',target:destination};
+  if(a.owner===s.player)log(s,`${a.name[0]} ${estimate.unauthorized?'was ordered to cross the border into':'marched toward'} ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}${estimate.unauthorized?'接到非法越境命令，前往':'向'}${target.name[1]}${estimate.unauthorized?'':'行军'}（${months}个月）。`);
   return {ok:true};
 }
 
@@ -161,12 +163,13 @@ export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player){
     if(owner===s.player)log(s,`${a.name[0]} cancelled its field order.`,`${a.name[1]}取消了野战命令。`);
     return {ok:true};
   }
-  if(kind==='move'||kind==='attack'){
+  if(kind==='move'||kind==='attack'||kind==='unauthorized_entry'){
     if(a.move||a.siege)return {ok:false,reason:'unavailable'};
-    const plan=previewMarch(s,armyId,targetId);
+    const plan=previewMarch(s,armyId,targetId,{unauthorized:kind==='unauthorized_entry'});
     if(!plan.ok)return plan;
     if(kind==='attack'&&!plan.hostile)return {ok:false,reason:'target'};
-    const result=moveArmy(s,armyId,targetId);
+    if(kind==='unauthorized_entry'&&!plan.unauthorized)return {ok:false,reason:'target'};
+    const result=moveArmy(s,armyId,targetId,{unauthorized:kind==='unauthorized_entry'});
     if(result.ok){a.move.intent=kind;a.order={kind,target:targetId}}
     return result;
   }
@@ -507,7 +510,12 @@ export function resolveBattle(s,attacker,defender,target){
 function arrive(s,a){
   const target=region(s,a.move.to);
   observeArrival(s,a.owner,target.id);
-  if(!militaryAccessStatus(s,a.owner,target.id,target.owner).allowed){a.move=null;a.order=null;if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`);return}
+  if(!militaryAccessStatus(s,a.owner,target.id,target.owner).allowed){
+    const incident=a.move.intent==='unauthorized_entry'?recordUnauthorizedCrossing(s,a,target):null;
+    a.move=null;a.order=null;
+    if(incident){if(a.owner===s.player||target.owner===s.player){const ownLoss=a.owner===s.player?incident.attackerLoss:incident.defenderLoss;log(s,`${FACTIONS[a.owner]?.short?.[0]||a.owner} ${incident.outcome==='crossed'?'crossed into':'was repelled at'} ${target.name[0]} without military access.${incident.defenderArmyId?` A local border skirmish caused ${ownLoss.toLocaleString()} casualties on our side; foreign losses are unconfirmed.`:' No defending army was present.'}`,`${FACTIONS[a.owner]?.short?.[1]||a.owner}未经许可${incident.outcome==='crossed'?'进入':'试图进入'}${target.name[1]}${incident.outcome==='repelled'?'，被击退':''}。${incident.defenderArmyId?`边境冲突使我方损失${ownLoss.toLocaleString()}人；对方损失尚未核实。`:'当地没有守军。'}`)}return}
+    if(a.owner===s.player)log(s,`${a.name[0]} stopped: entry into ${target.name[0]} is no longer permitted.`,`${a.name[1]}停止行军：当前不能进入${target.name[1]}。`);return
+  }
   const enemy=s.armies.find(other=>other.id!==a.id&&other.region===target.id&&other.owner!==a.owner&&isWar(s,a.owner,other.owner)&&!other.move);
   if(enemy){resolveBattle(s,a,enemy,target);return}
   const siegeWorks=(buildingModifiers(region(s,a.region)).siege||0)+formationSiegeReduction(s,a)+(a.planSiegeWorks||0);

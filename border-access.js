@@ -9,12 +9,44 @@ export const BORDER_ACCESS_CATEGORIES = Object.freeze([
 // particular treaty are checked separately, so trade never moves an army.
 export function initializeBorderPolicies(state) {
   state.borderPolicies ||= {};
+  state.borderIncidents ||= [];
+  state.nextBorderIncidentId ||= 1;
   for (const owner of Object.keys(state.factions || {})) {
     state.borderPolicies[owner] ||= {
       civilian: 'closed', commercial: 'closed', diplomatic: 'closed', military: 'closed'
     };
   }
   return state;
+}
+
+export function recordUnauthorizedCrossing(state, army, target) {
+  initializeBorderPolicies(state);
+  if (militaryAccessStatus(state, army.owner, target.id, target.owner).allowed) return null;
+  const defender = state.armies
+    .filter(unit => unit.id !== army.id && unit.owner === target.owner && unit.region === target.id && unit.men > 0 && !unit.move)
+    .sort((a, b) => b.men - a.men || a.id.localeCompare(b.id))[0] || null;
+  const ratio = defender ? army.men / Math.max(1, defender.men) : Infinity;
+  const attackerLoss = defender ? Math.min(army.men - 1, Math.max(20, Math.round(army.men * (ratio >= 1 ? 0.04 : 0.09)))) : 0;
+  const defenderLoss = defender ? Math.min(defender.men - 1, Math.max(20, Math.round(defender.men * (ratio >= 1 ? 0.09 : 0.04)))) : 0;
+  army.men -= attackerLoss;
+  if (defender) defender.men -= defenderLoss;
+  const crossed = !defender || army.men > defender.men * 1.2;
+  if (crossed) army.region = target.id;
+  const key = [army.owner, target.owner].sort().join(':');
+  state.relations[key] = Math.max(-100, (state.relations[key] || 0) - (defender ? 15 : 8));
+  state.diplomaticCredibility ||= {};
+  state.diplomaticCredibility[army.owner] = Math.max(0, (state.diplomaticCredibility[army.owner] ?? 100) - 3);
+  const incident = {
+    id: `border:${state.nextBorderIncidentId++}`,
+    attacker: army.owner, defender: target.owner, territory: target.id,
+    armyId: army.id, defenderArmyId: defender?.id || null,
+    start: {year: state.year, month: state.month},
+    scope: 'local', status: 'open', escalation: defender ? 'skirmish' : 'protest',
+    outcome: crossed ? 'crossed' : 'repelled',
+    attackerLoss, defenderLoss
+  };
+  state.borderIncidents.push(incident);
+  return incident;
 }
 
 const atWar = (state, a, b) => (state.wars || []).some(pair => pair.includes(a) && pair.includes(b));
