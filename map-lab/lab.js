@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../
 import {nationalBudget} from '../national-budget.js?v=23';
 import {budgetHtml} from '../budget-ui.js?v=28';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=36';
+import {physicalStyle} from './physical-style.js?v=37';
 import {physicalLabels} from './physical-labels.js?v=4';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=196';
@@ -42,7 +42,7 @@ import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNava
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
-let objectivesOpen=true;let currentMapMode='political';let focusPreviousMode=null;const savedRelief=localStorage.getItem('spqr-relief-v2');let reliefEnabled=savedRelief==='on'||savedRelief===null&&window.matchMedia('(min-width: 901px)').matches;
+let objectivesOpen=true;let currentMapMode='political';let focusPreviousMode=null;const savedRelief=localStorage.getItem('spqr-relief-v2');let reliefEnabled=savedRelief==='on';
 let lang=localStorage.getItem('spqr-lang')==='en'?'en':'zh';
 let devBranch='material';
 let treeZoom=1;

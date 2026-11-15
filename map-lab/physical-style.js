@@ -82,9 +82,9 @@ export const physicalStyle={
   {id:'relief-gaul-higher',type:'hillshade',source:'elevation-gaul-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   // The central Mediterranean detail source covers Italian close views. Keep
   // its color texture light; other ranges need stronger altitude contrast.
-  {id:'land-elevation-ultra',type:'color-relief',source:'elevation-ultra',minzoom:8,paint:{'color-relief-opacity':.78,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-ultra',type:'color-relief',source:'elevation-ultra',minzoom:8,paint:{'color-relief-opacity':.24,'color-relief-color':localElevationPalette}},
   {id:'relief-ultra',type:'hillshade',source:'elevation-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':.78,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':.24,'color-relief-color':localElevationPalette}},
   {id:'relief-higher',type:'hillshade',source:'elevation-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'land-elevation-egypt-ultra',type:'color-relief',source:'elevation-egypt-ultra',minzoom:8,paint:{'color-relief-opacity':.94,'color-relief-color':egyptElevationPalette}},
   {id:'relief-egypt-ultra',type:'hillshade',source:'elevation-egypt-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
@@ -129,7 +129,7 @@ export const physicalStyle={
   // Draw the coastal glow above the final ocean fill; otherwise the sea mask
   // erases its seaward half. It follows shoreline geometry, not a depth claim.
   {id:'coastal-halo',type:'line',source:'land',paint:{'line-color':'#92beb8','line-width':['interpolate',['linear'],['zoom'],4,2,8,3,9,4],'line-blur':['interpolate',['linear'],['zoom'],4,1,9,1],'line-opacity':['interpolate',['linear'],['zoom'],4,.04,7,.1,9,.07]}},
-  {id:'coastline-finish',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,1,8,1.8],'line-opacity':['interpolate',['linear'],['zoom'],4,.9,8,.65,9,.35]}},
+  {id:'coastline-finish',type:'line',source:'land',paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,1,8,1.8],'line-opacity':['interpolate',['linear'],['zoom'],4,.9,8,.65,9,.75]}},
   // This visual band follows an undated reference line, not an ancient land mask.
   {id:'po-historic-band',type:'line',source:'po-historic-coast',filter:['==',['get','kind'],'historical-shore'],minzoom:8.2,layout:{visibility:'none','line-join':'round','line-cap':'round'},paint:{'line-color':'#a5b599','line-width':['interpolate',['linear'],['zoom'],8.2,9,9,22],'line-blur':['interpolate',['linear'],['zoom'],8.2,3,9,6],'line-opacity':.26}},
   {id:'po-historic-shore',type:'line',source:'po-historic-coast',filter:['==',['get','kind'],'historical-shore'],minzoom:8.2,layout:{visibility:'none'},paint:{'line-color':'#84694d','line-width':['interpolate',['linear'],['zoom'],8.2,1,9,1.6],'line-opacity':.78,'line-dasharray':[3,2]}}

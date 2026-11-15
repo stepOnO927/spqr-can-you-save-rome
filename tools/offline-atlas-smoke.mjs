@@ -105,10 +105,9 @@ try{
   await page.locator('#brief-toggle').click();assert.equal(await page.locator('.brief').isVisible(),false);
  }
  await page.waitForTimeout(1200);
- const initialRelief=page.viewportSize().width>900;
- assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),String(initialRelief),'Hill shading should default on at desktop size and off on small screens');
+ const initialRelief=false;
+ assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),String(initialRelief),'Hill shading should default off on all screen sizes');
  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.loaded()&&map.isStyleLoaded()&&map.areTilesLoaded()},null,{timeout:30000});
- if(initialRelief)await page.waitForFunction(async()=>{const {activeReliefLayer}=await import(document.querySelector('script[type="module"]').src);return activeReliefLayer==='relief'},null,{timeout:5000});
  const overviewTerrainRequests=terrainRequests.length;
  assert.equal(await activeRelief(),initialRelief?'relief':'');
  assert.equal(await page.locator('#locator').isVisible(),false,'Locator should not cover the overview');
