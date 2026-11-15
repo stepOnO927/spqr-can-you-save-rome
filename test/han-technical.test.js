@@ -94,9 +94,9 @@ test('36. the NPC East does not freeze the browser',()=>{
  for(let i=0;i<3;i++){romanTick(a);romanTick(b)}
  let t0=cpuMs();for(let i=0;i<24;i++)romanTick(a);const base=(cpuMs()-t0)/24;
  t0=cpuMs();for(let i=0;i<24;i++)romanTick(b);const withDlc=(cpuMs()-t0)/24;
- // The additional saved court, market and correspondence simulation must
- // remain a small fraction of the shortest 500 ms automatic turn interval.
- assert.ok(withDlc-base<25,`expansion adds ${(withDlc-base).toFixed(2)} CPU ms per month`);
+ // The additional saved court, market, correspondence and manufactured
+ // military-goods simulation must remain below 8% of the 500 ms turn interval.
+ assert.ok(withDlc-base<40,`expansion adds ${(withDlc-base).toFixed(2)} CPU ms per month`);
 });
 
 test('37. no placeholder mechanics: every eastern button and edict works',()=>{

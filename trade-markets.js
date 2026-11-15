@@ -25,6 +25,13 @@ const HAN_MARKETS={changan:'hanGuanzhong',henan:'hanHenan',shu:'hanShu',dunhuang
 const silkId=id=>HAN_MARKETS[id]||`silk:${id}`;
 const silkNodes=new Map(EURASIAN_REGIONS.filter(r=>!HAN_MARKETS[r.id]).map(r=>[silkId(r.id),r]));
 const tradeLinks=[...ROUTES.map(([a,b,kind])=>({a,b,kind:kind||'land',months:kind==='sea'||kind==='frontier'?3:null,network:'campaign'})),...EURASIAN_ROUTES.map(r=>({a:silkId(r.a),b:silkId(r.b),kind:r.kind,months:r.months,network:'silk'})).filter(r=>r.a!==r.b)];
+const tradeNeighbors=new Map();
+for(const link of tradeLinks){
+ for(const [from,to] of [[link.a,link.b],[link.b,link.a]]){
+  if(!tradeNeighbors.has(from))tradeNeighbors.set(from,[]);
+  tradeNeighbors.get(from).push({link,to});
+ }
+}
 const node=(s,id)=>region(s,id)||silkNodes.get(id);
 export const tradeRouteName=(s,id)=>node(s,id)?.name||[id,id];
 const relationValue=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;
@@ -159,12 +166,13 @@ function advanceMerchantReturns(s,current){
 
 function routeFor(s,origin,destination,buyer,seller,{planFor=null}={}){
  const queue=[{id:origin,cost:0,path:[origin],legs:[]}],seen=new Map();
+ const campaignNodes=new Map(s.regions.map(r=>[r.id,r]));
  while(queue.length){
   queue.sort((a,b)=>a.cost-b.cost);const current=queue.shift();
   if(current.id===destination)return current;
   if(seen.has(current.id)&&seen.get(current.id)<=current.cost)continue;seen.set(current.id,current.cost);
-  for(const link of tradeLinks){
-   const next=link.a===current.id?link.b:link.b===current.id?link.a:null,r=next&&node(s,next);
+  for(const {link,to:next} of tradeNeighbors.get(current.id)||[]){
+   const r=campaignNodes.get(next)||silkNodes.get(next);
    const owner=planFor&&link.network!=='eurasia'?reportedControl(s,planFor,next)?.owner??openingOwner.get(next):r?.owner;
    if(!r||!permitted(s,owner,buyer,seller,link.network)||atWar(s,owner,buyer)||atWar(s,owner,seller)||current.path.includes(next))continue;
    const duration=link.months??(r.terrain==='desert'?2:1);
@@ -323,7 +331,6 @@ export function advanceMarkets(s){
   item.shortage=item.consumption-used;
   const warehouseLimit=Math.max(80,item.production*24);
   if(item.stock>warehouseLimit){item.surplusDiscarded=(item.surplusDiscarded||0)+item.stock-warehouseLimit;item.stock=warehouseLimit}
-  item.price=marketPrice(markets.regions[r.id],good);
  }
  for(const market of Object.values(markets.regions))for(const [good,item] of Object.entries(market.goods))item.price=marketPrice(market,good);
  for(const shipment of markets.shipments.filter(x=>x.status==='traveling'||x.status==='blocked')){

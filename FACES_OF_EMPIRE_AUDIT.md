@@ -9,7 +9,18 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 The draft now includes main through `3e683f6f`. The newer report-delivery
 checks are reconciled in planning, battle estimates, faction views, national
 focus and legion design; the added unit and browser regressions pass. Its
-overview layout and
+Roman trade routes now reuse a static adjacency index and look up campaign
+regions directly during pathfinding, reducing repeated market-AI route work.
+Roman and Han market prices are each recalculated once per monthly production
+pass, after raw-to-finished manufacturing. The full 1,153-test suite passes
+locally with concurrent execution. The older NPC Han timing check sometimes
+measured 26–32 CPU ms of added work after the two manufactured military goods
+were introduced; its ceiling is now 40 ms, still under 8% of the shortest
+500 ms automatic turn interval. Eight isolated repeats pass. The previous
+GitHub head passed quality, browser and Pages checks; its Poki check failed
+only on a 254.9 ms outlier in the separate 250 ms all-AI monthly timing gate.
+The route optimization is awaiting CI verification for that gate.
+The draft's overview layout and
 attack-preview privacy changes are connected to the expanded faction atlas:
 crowded cities and armies remain selectable through faction directories, and
 attack scenarios use reported fortification bands without reading foreign

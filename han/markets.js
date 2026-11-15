@@ -475,7 +475,6 @@ export function advanceEasternMarkets(s){
   item.stock+=produced;item.produced+=produced;item.warDisrupted=good==='grain'&&agriculturalDisruption(s,r);
   const used=Math.min(item.stock,item.consumption);item.stock-=used;item.consumed+=used;item.shortage=item.consumption-used;
   const limit=Math.max(80,item.production*24);if(item.stock>limit){item.surplusDiscarded=(item.surplusDiscarded||0)+item.stock-limit;item.stock=limit}
-  item.price=marketPrice(markets.regions[r.id],good);
  }
  for(const market of Object.values(markets.regions))for(const [good,item] of Object.entries(market.goods))item.price=marketPrice(market,good);
  advanceShipments(s);publishOffers(s);advanceEasternSupplyContracts(s,now);
