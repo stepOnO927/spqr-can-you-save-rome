@@ -12,7 +12,7 @@ focus and legion design; the added unit and browser regressions pass. Its
 Roman trade routes now reuse a static adjacency index and look up campaign
 regions directly during pathfinding, reducing repeated market-AI route work.
 Roman and Han market prices are each recalculated once per monthly production
-pass, after raw-to-finished manufacturing. The full 1,153-test suite passes
+pass, after raw-to-finished manufacturing. The full 1,162-test suite passes
 locally with concurrent execution. The older NPC Han timing check sometimes
 measured 26–32 CPU ms of added work after the two manufactured military goods
 were introduced; its ceiling is now 40 ms, still under 8% of the shortest
@@ -680,6 +680,15 @@ the acquired horses. In-flight cargo and a second assignment from exhausted
 stock are rejected. A save/reload test follows a Kangju-to-Dunhuang shipment
 through cavalry recruitment; the bilingual market browser test uses the
 actual button and verifies both ledgers change exactly once.
+
+Ordinary 3,000-person Roman levies now use one measured weapons batch from
+their own theater, as custom formations already do. A shortage blocks the
+recruitment before spending treasury, food or manpower. Delivered stock may
+equip the levy after arrival; the local stock, recruitment-use ledger and
+new army's equipment record survive saving. The two campaign maps explain
+the missing stock in English and Chinese. Focused tests check failed orders,
+in-flight cargo, delivery, one-time debit, old-save restoration and the
+non-Roman recruitment rule; a Chromium flow uses both interfaces.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,

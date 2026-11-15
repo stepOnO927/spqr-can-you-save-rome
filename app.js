@@ -8,7 +8,7 @@ import {identity,factionMark} from './identity.js?v=faces-reported-names-1';
 import {reportedControl,reportedFortification} from './control-intelligence.js?v=faces-reported-names-1';
 import {CHARACTER_CATALOG} from './characters.js?v=faces-reported-names-1';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=faces-reported-names-1';
-import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,provisionRomanArmy,setTax,diplomacy,sendInquiry, inquiryCost, answerPeaceOffer,answerStrategicOffer,replyToLetter,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=faces-reported-names-1';
+import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,recruitEquipmentStock,provisionRomanArmy,setTax,diplomacy,sendInquiry, inquiryCost, answerPeaceOffer,answerStrategicOffer,replyToLetter,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=faces-reported-names-1';
 import {RATION_SOLDIER_MONTHS} from './market-goods.js?v=faces-reported-names-1';
 import {receivedMail,unreadCount,markRead,archiveLetter,markAllRead} from './epistulae.js?v=faces-reported-names-1';
 import {mailboxHtml} from './mail-ui.js?v=faces-reported-names-1';
@@ -84,7 +84,7 @@ let toastTimer;
 function flash(message,sticky=false){clearTimeout(toastTimer);toast=message;render();if(!sticky)toastTimer=setTimeout(()=>{toast='';render()},3200)}
 function date(){const era=state.year<0?(lang==='zh'?`${campaignYear(state.year,'zh')}`:`${campaignYear(state.year)}`):(lang==='zh'?`公元${state.year+1}年`:`${state.year+1} CE`);return lang==='zh'?`${era} ${state.month}月`:`${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][state.month-1]} ${era}`}
 function recordDate(e){return lang==='zh'?`${e.year<0?'公元前'+Math.abs(e.year):'公元'+(e.year+1)}年${e.month}月`:`${e.month}/${e.year<0?campaignYear(e.year):(e.year+1)+' CE'}`}
-function recruitProblem(r){if(!r||r.owner!==state.player)return lang==='zh'?'无法征召：该战区不属于你。':'Cannot recruit: this theater is not yours.';const f=state.factions[state.player];const missing=[];if(f.treasury<24)missing.push(lang==='zh'?'国库至少需要24':'24 treasury required');if(f.manpower<3000)missing.push(lang==='zh'?'人力至少需要3,000':'3,000 manpower required');if(f.food<6)missing.push(lang==='zh'?'粮食至少需要6':'6 food required');return missing.length?(lang==='zh'?'无法征召：':'Cannot recruit: ')+missing.join(lang==='zh'?'；':'; '):''}
+function recruitProblem(r){if(!r||r.owner!==state.player)return lang==='zh'?'无法征召：该战区不属于你。':'Cannot recruit: this theater is not yours.';const f=state.factions[state.player],equipment=recruitEquipmentStock(state,r.id,state.player),missing=[];if(f.treasury<24)missing.push(lang==='zh'?'国库至少需要24':'24 treasury required');if(f.manpower<3000)missing.push(lang==='zh'?'人力至少需要3,000':'3,000 manpower required');if(f.food<6)missing.push(lang==='zh'?'粮食至少需要6':'6 food required');if(equipment!==null&&equipment<1)missing.push(lang==='zh'?'本地至少需要1批兵器':'1 local weapons batch required');return missing.length?(lang==='zh'?'无法征召：':'Cannot recruit: ')+missing.join(lang==='zh'?'；':'; '):''}
 function ownArmies(){return state.armies.filter(a=>a.owner===state.player)}
 function status(a){return a.move?`${t('marching')} → ${n(region(state,a.move.to).name)} (${a.move.remaining})`:a.siege?`${t('siege')} (${a.siege.remaining})`:t('available')}
 

@@ -220,20 +220,30 @@ export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player){
   return {ok:false,reason:'unavailable'};
 }
 
+// A levy is equipped from its own depot. A batch contains 6,000 sets, so the
+// unused half remains with the new 3,000-person force as replacement gear.
+export function recruitEquipmentStock(s,regionId,owner=s.player){
+ if(owner!=='caesar'&&owner!=='senate')return null;
+ return initializeMarkets(s).regions[regionId]?.goods?.weapons?.stock??0;
+}
+
 export function recruit(s,regionId,owner=s.player){
   const r=region(s,regionId),f=s.factions[owner];
   if(!r||r.owner!==owner||f.treasury<24||f.manpower<3000||f.food<6)return false;
-  f.treasury-=24;f.manpower-=3000;f.food-=6;
-  const id=`levy${s.nextArmy++}`;
   const roman=owner==='caesar'||owner==='senate';
+  if(roman&&recruitEquipmentStock(s,regionId,owner)<1)return false;
+  f.treasury-=24;f.manpower-=3000;f.food-=6;
+  if(roman){const weapons=s.markets.regions[regionId].goods.weapons;weapons.stock--;weapons.usedForRecruitment=(weapons.usedForRecruitment||0)+1}
+  const id=`levy${s.nextArmy++}`;
   const army={id,name:roman?['Newly raised legion','新编军团']:['Newly raised forces','新征召军队'],owner,region:regionId,men:3000,morale:58+(buildingModifiers(r).recruit||0)*4,skill:1,experience:0,commander:['Unnamed officer','未具名军官'],move:null,siege:null};
+  if(roman)army.equipmentMaterials={weapons:1};
   // A delivered horse batch can equip one hundred mounted scouts in a new
   // Han force. Infantry recruitment remains available without horse stock.
   const horses=owner==='han'?s.markets?.regions?.[regionId]?.goods?.horses:null;
   if(horses?.stock>=1){horses.stock--;army.mounted=100}
   assignFictionalFieldCommander(s,army);s.armies.push(army);
   r.loyalty=Math.max(0,r.loyalty-3);
-  if(owner===s.player)log(s,`New forces were raised in ${r.name[0]}.${army.mounted?' A horse batch equipped 100 mounted scouts.':''}`,`在${r.name[1]}征召了新军队。${army.mounted?'一批马匹装备了100名骑乘侦察兵。':''}`);
+  if(owner===s.player)log(s,`New forces were raised in ${r.name[0]}.${roman?' One local weapons batch equipped the levy.':''}${army.mounted?' A horse batch equipped 100 mounted scouts.':''}`,`在${r.name[1]}征召了新军队。${roman?'已消耗本地一批兵器。':''}${army.mounted?'一批马匹装备了100名骑乘侦察兵。':''}`);
   return true;
 }
 

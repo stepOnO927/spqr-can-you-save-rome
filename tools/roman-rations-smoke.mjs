@@ -40,6 +40,49 @@ try{
  assert.match(await page.locator('#command-detail').innerText(),/FIELD RATIONS/);
  await page.locator('#load').click();await page.locator('[data-army="xiii"]').first().click();
  assert.match(await page.locator('#command-detail').innerText(),/6,000 soldier-months/);
+
+ await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=faces-reported-names-1'),s=newGame('caesar');
+  s.markets.regions.cisalpine.goods.weapons.stock=0;s.markets.regions.cisalpine.goods.weapons.production=0;
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
+ });
+ await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
+ await page.locator('[data-army="xiii"]').first().click();
+ assert.equal(await page.locator('#recruit').isDisabled(),true);
+ assert.match(await page.locator('.recruit-reason').innerText(),/本地至少需要1批兵器/);
+ await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=faces-reported-names-1'),s=newGame('caesar');
+  s.markets.regions.cisalpine.goods.weapons.stock=1;s.markets.regions.cisalpine.goods.weapons.production=0;
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
+ });
+ await page.reload();await page.locator('[data-army="xiii"]').first().click();await page.locator('#recruit').click();
+ await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
+ saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
+ assert.equal(saved.markets.regions.cisalpine.goods.weapons.stock,0);
+ assert.equal(saved.armies.find(a=>a.id==='levy1').equipmentMaterials.weapons,1);
+
+ await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=faces-reported-names-1'),s=newGame('caesar');
+  s.markets.regions.cisalpine.goods.weapons.stock=0;s.markets.regions.cisalpine.goods.weapons.production=0;
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
+ });
+ await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});
+ await page.locator('[data-city="MEDIOLANUM"]').first().dispatchEvent('click');await page.locator('#city-region').click();
+ assert.equal(await page.locator('#recruit-region').isDisabled(),true);
+ assert.match(await page.locator('#recruit-feedback').innerText(),/本地缺少兵器/);
+ await page.locator('#language').click();
+ await page.locator('[data-city="MEDIOLANUM"]').first().dispatchEvent('click');await page.locator('#city-region').click();
+ assert.match(await page.locator('#recruit-feedback').innerText(),/Requires 1 local weapons batch/);
+ await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=faces-reported-names-1'),s=newGame('caesar');
+  s.markets.regions.cisalpine.goods.weapons.stock=1;s.markets.regions.cisalpine.goods.weapons.production=0;
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
+ });
+ await page.reload();await page.locator('[data-city="MEDIOLANUM"]').first().dispatchEvent('click');await page.locator('#city-region').click();
+ await page.locator('#recruit-region').click();await page.locator('#save').click();
+ saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
+ assert.equal(saved.markets.regions.cisalpine.goods.weapons.stock,0);
+ assert.equal(saved.armies.find(a=>a.id==='levy1').equipmentMaterials.weapons,1);
  assert.deepEqual(errors,[]);
- console.log('Roman rations load from finite stock, reduce famine losses, and persist in both campaign views.');
+ console.log('Roman rations and levy weapons use finite local stock and persist in both campaign views.');
 }finally{await browser.close()}
