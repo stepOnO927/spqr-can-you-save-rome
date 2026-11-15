@@ -223,6 +223,21 @@ test('light-only fleets use ship speed and merchant hulls set cargo capacity',()
 test('shipbuilding spends treasury, materials, crew and time at a real shipyard',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),before={treasury:s.factions.senate.treasury,timber:s.development.senate.materials.timber,crew:s.factions.senate.manpower};const result=queueShip(s,'senate','italiaS','merchant');assert.equal(result.ok,true);assert.equal(s.factions.senate.treasury,before.treasury-17);assert.equal(s.development.senate.materials.timber,before.timber-2);assert.equal(s.factions.senate.manpower,before.crew-45);assert.equal(queueShip(s,'senate','italiaS','trireme').ok,false);for(let i=0;i<result.months-1;i++)advanceNaval(s);assert.equal(f.ships.merchant||0,0);advanceNaval(s);assert.equal(f.ships.merchant,1)
 });
+test('a newly built ship joins a damaged fleet at full condition after launch',()=>{
+ const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.id==='senate-adriatic');
+ f.hull=40;
+ const build=queueShip(s,'senate','italiaS','light');assert.equal(build.ok,true);
+ s.development.senate.materials.timber=0;
+ for(let month=1;month<build.months;month++){advanceNaval(s);assert.equal(f.hull,40);assert.equal(f.ships.light||0,0)}
+ advanceNaval(s);
+ assert.equal(f.ships.light,1);
+ assert.equal(f.hull,52,'four existing ships at 40% and one new ship at 100% average 52%');
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s))),saved=loaded.naval.fleets.find(x=>x.id===f.id);
+ assert.equal(saved.hull,52);
+ loaded.development.senate.materials.timber=1;loaded.factions.senate.treasury=100;
+ advanceNaval(loaded);
+ assert.equal(saved.hull,60,'the joined fleet can still receive ordinary shipyard repairs');
+});
 test('a captured shipyard cancels unfinished ships before launch',()=>{
  const s=newGrandGame('senate'),messages=[];s.month=2;
  assert.equal(queueShip(s,'senate','italiaS','merchant').ok,true);
