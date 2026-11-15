@@ -162,6 +162,8 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     ok = actions.answerStrategicOffer?.(s,m.context.offerId,choice).ok === true;
   } else if (m.context?.kind === 'coalition_offer') {
     ok = actions.answerCoalitionInvitation?.(s,m.context.invitationId,choice).ok === true;
+  } else if (m.context?.kind === 'coalition_admission') {
+    ok = actions.answerCoalitionAdmission?.(s,m.context.admissionId,choice).ok === true;
   } else if (m.context?.kind === 'peace') {
     ok = actions.answerPeaceOffer?.(s,m.senderFaction,choice).ok === true;
   } else if (m.context?.kind === 'war' && choice === 'negotiate') {
@@ -306,6 +308,22 @@ export function syncCoalitionLetters(s){
     body:accepted?[`The defensive coalition against ${target[0]} has been concluded. The agreed 5-treasury membership cost has been paid.`, `针对${target[1]}的防御联盟已经成立，约定的5国库会费已支付。`]:['The proposed coalition could not be concluded; no membership cost was paid.','拟议联盟未能成立；没有支付会费。'],
     options:[],context:{kind:'coalition_result',invitationId:x.id}});
    if(result.ok){x.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-result:'+x.id]=true}
+  }
+ }
+}
+
+export function syncCoalitionAdmissionLetters(s){
+ const mail=initializeMail(s);
+ for(const x of s.world?.coalitionAdmissions||[]){
+  if(x.humanRecipient!==s.player)continue;
+  const coalition=(s.coalitions||[]).find(c=>c.id===x.coalitionId),label=coalition?.name||x.coalitionId,leader=name(x.leader),threat=name(coalition?.target||'unknown threat');
+  if(x.status==='pending'&&x.phase==='awaiting_player'&&!x.mailId){
+   const result=sendLetter(s,{senderId:null,senderInstitution:x.leader,senderFaction:x.leader,recipient:s.player,category:'diplomatic',priority:'important',subject:['Coalition membership invitation','联盟成员邀请'],body:[`${leader[0]} invites us to join ${label} against ${threat[0]}. Accepting sends a reply; membership requires a later confirmation and costs 5 treasury only if concluded. Our government and armies remain independent.`,`${leader[1]}邀请本方加入${label}，共同防范${threat[1]}。接受只是寄出回信；成员资格须经后续确认，最终成立时才支付5国库。本方政府与军队继续独立。`],options:['accept_admission','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,x.remaining-1),context:{kind:'coalition_admission',admissionId:x.id}});
+   if(result.ok){x.mailId=result.letter.id;result.letter.created={...x.sent};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-admission:'+x.id]=true}
+  }
+  if(x.phase==='delivered'&&x.playerDecision==='accepted'&&!x.resultMailId&&!mail.generated['coalition-admission-result:'+x.id]){
+   const accepted=x.status==='accepted',result=sendLetter(s,{senderId:null,senderInstitution:x.leader,senderFaction:x.leader,recipient:s.player,category:'diplomatic',priority:'important',subject:accepted?['Coalition membership confirmed','联盟成员资格已确认']:['Coalition membership not concluded','未能加入联盟'],body:accepted?[`Our membership in ${label} is confirmed. Five treasury was paid.`,`本方加入${label}已获确认，支付了5国库。`]:['The membership invitation did not conclude; no membership cost was paid.','成员邀请未能达成协议；没有支付会费。'],options:[],context:{kind:'coalition_admission_result',admissionId:x.id}});
+   if(result.ok){x.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-admission-result:'+x.id]=true}
   }
  }
 }

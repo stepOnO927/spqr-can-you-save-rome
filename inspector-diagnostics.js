@@ -28,6 +28,12 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
  }
  for(const [i,war] of (s.wars||[]).entries())if(!Array.isArray(war)||war.some(id=>!factionIds.has(id)))add('warning','invalid-war',`wars[${i}]`,JSON.stringify(war));
  if(mode==='roman'){
+  const admissionIds=new Set();
+  for(const [i,invitation] of (s.world?.coalitionAdmissions||[]).entries()){
+   const base=`world.coalitionAdmissions[${i}]`,coalition=(s.coalitions||[]).find(c=>c.id===invitation?.coalitionId);
+   if(!Number.isInteger(invitation?.id)||admissionIds.has(invitation.id))add('warning','invalid-coalition-admission',base,String(invitation?.id));else admissionIds.add(invitation.id);
+   if(!coalition||!factionIds.has(invitation?.leader)||!factionIds.has(invitation?.target)||invitation?.leader===invitation?.target||!['pending','accepted','refused','no_reply','lapsed'].includes(invitation?.status)||!['outbound','awaiting_player','return','confirmation','delivered'].includes(invitation?.phase)||!Number.isInteger(invitation?.remaining)||invitation.remaining<0||!Number.isInteger(invitation?.sent?.year)||!Number.isInteger(invitation?.sent?.month)||invitation.sent.month<1||invitation.sent.month>12)add('warning','invalid-coalition-admission',base,String(invitation?.coalitionId));
+  }
   const subjects=new Map();
   for(const [i,treaty] of (s.agreements||[]).entries()){
    if(!SUBJECT_TYPES.includes(treaty?.type)||treaty.status!=='active')continue;

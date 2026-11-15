@@ -29,6 +29,7 @@ import {knownOrganizations,organizationMapColor,organizationsForOwner} from './o
 import {frontierEntries,frontierOutlineColor} from './frontier-map.js?v=world-kings-trade-1';
 import {explorationEntries,explorationOutlineColor} from './exploration-map.js?v=world-kings-trade-1';
 import {renameCoalition,leaveCoalition} from '../coalitions.js?v=world-kings-trade-1';
+import {eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from '../coalition-admissions.js?v=world-kings-trade-1';
 import {activeAgreement} from '../agreements.js?v=world-kings-trade-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-trade-1';
 import {featherAdvice} from '../feather.js?v=world-kings-trade-1';
@@ -177,6 +178,13 @@ function renderOrganizationMapDetails(host){
  chooser.onchange=()=>{currentOrganizationId=chooser.value;updateControl();renderHud()};box.append(chooser);
  const info=document.createElement('div');info.innerHTML=`<strong>${esc(selected.name||selected.id)}</strong><p>${zh?'成员':'Members'}: ${selected.parties.map(id=>esc(n(FACTIONS[id]?.short)||id)).join(zh?'、':', ')}</p><p>${zh?'盟主':'Leader'}: ${esc(n(FACTIONS[selected.leader]?.short)||selected.leader)} · ${zh?'共同目标':'Shared threat'}: ${esc(n(FACTIONS[selected.target]?.short)||selected.target)}</p><p>${zh?'报告':'Report'}: ${esc(campaignDate(selected.month,selected.year,lang))}${selected.own?' · '+(zh?'本方成员':'member'):''}</p>${selected.own?`<p>${zh?'凝聚度':'Cohesion'}: ${selected.cohesion}/100 · ${zh?'各成员仍独立统治与调动军队':'Members retain independent government and armies'}</p>`:''}`;box.append(info);
  if(selected.own&&selected.leader===state.player){const name=document.createElement('input'),rename=document.createElement('button'),status=document.createElement('span');name.value=selected.name||'';name.maxLength=48;name.setAttribute('aria-label',zh?'组织名称':'Organization name');rename.textContent=zh?'命名组织':'RENAME ORGANIZATION';rename.onclick=()=>{const result=renameCoalition(state,selected.id,state.player,name.value);if(result.ok){renderHud();updateControl()}else status.textContent=zh?'名称需为3至48个字符，且不能包含控制字符或尖括号。':'Use 3–48 characters without control characters or angle brackets.'};box.append(name,rename,status)}
+  if(selected.own&&selected.leader===state.player&&selected.parties.length<5){
+   const targets=eligibleCoalitionAdmissionTargets(state,selected,state.player),target=document.createElement('select'),invite=document.createElement('button'),status=document.createElement('span');
+   target.setAttribute('aria-label',zh?'邀请新成员':'Invite a new member');for(const id of targets){const option=document.createElement('option');option.value=id;option.textContent=n(FACTIONS[id]?.short)||id;target.append(option)}
+   invite.textContent=zh?'邀请加入 · 3国库':'INVITE MEMBER · 3 TREASURY';invite.disabled=!targets.length;
+   invite.onclick=()=>{const result=sendCoalitionAdmission(state,selected.id,state.player,target.value);if(result.ok){renderHud();updateControl()}else status.textContent=zh?'邀请未能寄出；检查国库、外交接触和待处理信件。':'Could not send: check treasury, contact and pending letters.'};box.append(target,invite,status);
+   const pending=(state.world.coalitionAdmissions||[]).filter(x=>x.coalitionId===selected.id&&x.leader===state.player&&x.status==='pending');for(const item of pending){const p=document.createElement('p');p.textContent=`${n(FACTIONS[item.target]?.short)||item.target} · ${zh?'等待回信':'Awaiting reply'}`;box.append(p)}
+  }
  if(selected.own){const leave=document.createElement('button');leave.textContent=zh?'退出联盟':'LEAVE COALITION';leave.onclick=()=>{if(!window.confirm(zh?'退出会损害外交信誉与成员关系。确认退出？':'Leaving harms credibility and member relations. Leave?'))return;if(leaveCoalition(state,selected.id,state.player).ok){renderHud();updateControl()}};box.append(leave)}
  host.append(box);
 }
