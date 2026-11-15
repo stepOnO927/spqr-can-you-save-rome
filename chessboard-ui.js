@@ -1,5 +1,5 @@
-import {buildChessboard} from './chessboard.js?v=future-dated-reports-1';
-import {focusReportsFor,focusById} from './national-focus.js?v=future-dated-reports-1';
+import {buildChessboard} from './chessboard.js?v=born-portraits-six-1';
+import {focusReportsFor,focusById} from './national-focus.js?v=born-portraits-six-1';
 import {warningLedger} from './warning-ledger.js?v=warning-privacy-1';
 import {FACTIONS,REGIONS} from './data.js?v=phase-x-1';
 
