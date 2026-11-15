@@ -150,12 +150,16 @@ caravans through its measured stock and finite external buyer budget, with
 actual tariff, merchant-fee and transport entries. Road closures and bandits
 settle cargo and escrow without inventing revenue. Older saved caravans
 continue carrying reports but cannot mint new treasury or horses. Delivered
-silk can now leave the Han Mediterranean gate and enter an actual Roman
-eastern port market when a Roman court can pay for it. The Roman treasury
+silk and other defined commodities can now leave the Han Mediterranean gate
+and enter an actual Roman eastern port market when a Roman court can pay for
+them. The gate acts as a transit warehouse, without consuming cargo or
+producing phantom local goods. The Roman treasury
 pays the external buyer, whose finite Han-side budget is replenished by the
 same amount; both ledgers retain a linked shipment receipt. Unaffordable
-cargo waits at the gate, and older delivered cargo is marked as historical
-instead of imported twice. The Roman player sees only their own purchases.
+cargo waits at the gate. Older delivered silk is marked as historical instead
+of imported twice; older non-silk cargo can finish its first Roman purchase.
+The Roman player sees only their own purchases, with the actual commodity
+shown in English and Chinese.
 This is a first cross-campaign settlement bridge; the two simulations do
 not yet share a general interstate market.
 Completed Roman and standalone Han market deliveries now retain their origin

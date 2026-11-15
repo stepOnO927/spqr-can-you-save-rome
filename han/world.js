@@ -10,6 +10,7 @@ import {newHanGame,tick as hanTick,loadHanSave} from './engine.js?v=faces-main-2
 import {REGIONS,FACTIONS} from './data.js?v=faces-main-20261114-1';
 import {isLiuClan} from './dynasty.js?v=faces-main-20261114-1';
 import {initializeMarkets} from '../trade-markets.js?v=faces-main-20261114-1';
+import {COMMODITIES} from '../market-goods.js?v=faces-main-20261114-1';
 
 export const DLC_KEY='hanWorld';
 const mi=(y,m)=>y*12+m;
@@ -42,26 +43,28 @@ function snapshotOf(h){const e=h.throne.orthodox||h.throne.occupant;return {year
 function ensureBridge(w){
  if(w.bridge?.settled)return w.bridge;
  // Older saves already counted deliveries under the former customs rule.
- // Mark those historical shipments without importing a second copy of silk.
- const settled={};for(const x of w.state.tradeMarkets?.shipments||[])if(x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.status==='delivered')settled[x.id]={status:'legacy'};
+ // Silk alone could have been counted by the former customs rule. Other
+ // delivered goods were never imported and may still be bought from the gate.
+ const settled={};for(const x of w.state.tradeMarkets?.shipments||[])if(x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.commodity==='silk'&&x.status==='delivered')settled[x.id]={status:'legacy'};
  w.bridge={settled};return w.bridge;
 }
-function settleRomanSilkImports(s,w){
- const h=w.state,bridge=ensureBridge(w),roman=initializeMarkets(s),gate=h.tradeMarkets?.regions?.mediterranean_gate?.goods?.silk;
- if(!gate)return;
- for(const cargo of h.tradeMarkets.shipments.filter(x=>x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.commodity==='silk'&&x.status==='delivered'&&!bridge.settled[x.id])){
+function settleRomanImports(s,w){
+ const h=w.state,bridge=ensureBridge(w),roman=initializeMarkets(s),goods=h.tradeMarkets?.regions?.mediterranean_gate?.goods;
+ if(!goods)return;
+ for(const cargo of h.tradeMarkets.shipments.filter(x=>x.buyer==='external'&&x.destination==='mediterranean_gate'&&x.status==='delivered'&&!bridge.settled[x.id])){
+  const gate=goods[cargo.commodity];if(!COMMODITIES[cargo.commodity]||!gate)continue;
   const price=cargo.price,quantity=cargo.quantity;
   const port=EAST_PORTS.map(id=>s.regions.find(r=>r.id===id)).find(r=>r&&['caesar','senate'].includes(r.owner)&&s.factions[r.owner]?.treasury>=price);
-  if(!port||gate.stock<quantity)continue;
+  if(!port||!Number.isSafeInteger(quantity)||quantity<1||!Number.isSafeInteger(price)||price<0||gate.stock<quantity||!roman.regions[port.id]?.goods?.[cargo.commodity])continue;
   // The external buyer already paid Han at the gate. The Roman court now
   // buys that same cargo from that buyer; no customs money appears for free.
-  gate.stock-=quantity;roman.regions[port.id].goods.silk.stock+=quantity;
+  gate.stock-=quantity;roman.regions[port.id].goods[cargo.commodity].stock+=quantity;
   s.factions[port.owner].treasury-=price;h.tradeMarkets.externalTreasury+=price;
-  const receipt={status:'delivered',hanShipment:cargo.id,port:port.id,owner:port.owner,quantity,price,year:s.year,month:s.month};
-  bridge.settled[cargo.id]=receipt;if(port.owner===s.player)w.known.silkCargoes=(w.known.silkCargoes||0)+quantity;
-  roman.transactions.push({shipment:`han-import:${cargo.id}`,linkedHanShipment:cargo.id,seller:'external',buyer:port.owner,origin:'mediterranean_gate',destination:port.id,commodity:'silk',quantity,price,transport:0,tariffs:[],status:'imported',year:s.year,month:s.month});
+  const receipt={status:'delivered',hanShipment:cargo.id,port:port.id,owner:port.owner,commodity:cargo.commodity,quantity,price,year:s.year,month:s.month};
+  bridge.settled[cargo.id]=receipt;if(port.owner===s.player&&cargo.commodity==='silk')w.known.silkCargoes=(w.known.silkCargoes||0)+quantity;
+  roman.transactions.push({shipment:`han-import:${cargo.id}`,linkedHanShipment:cargo.id,seller:'external',buyer:port.owner,origin:'mediterranean_gate',destination:port.id,commodity:cargo.commodity,quantity,price,transport:0,tariffs:[],status:'imported',year:s.year,month:s.month});
   if(roman.transactions.length>200)roman.transactions.shift();
-  if(port.owner===s.player)romanLog(s,`Seric silk reached ${port.name[0]} through Parthian merchants. The court bought ${quantity} batch${quantity===1?'':'es'} for ${price} treasury.`,`赛里斯丝绸经安息商人运抵${port.name[1]}。朝廷花费${price}国库购入${quantity}批。`);
+  if(port.owner===s.player){const name=COMMODITIES[cargo.commodity].name;romanLog(s,`${name[0]} reached ${port.name[0]} through eastern merchants. The court bought ${quantity} batch${quantity===1?'':'es'} for ${price} treasury.`,`东方商人将${name[1]}运抵${port.name[1]}。朝廷花费${price}国库购入${quantity}批。`)}
  }
 }
 
@@ -80,7 +83,7 @@ export function advanceHanWorld(s){
  if(s.month===7)w.queue.push({arrive:now+delay,kind:'snapshot',snapshot:snapshotOf(h)});
  // Physically transfer paid cargo from the Han gate to a Roman market.
  w.lastDeliveries=h.silk.farWestDeliveries||w.lastDeliveries;
- settleRomanSilkImports(s,w);
+ settleRomanImports(s,w);
  // the Roman embassy, if any
  if(w.embassy?.status==='travelling'&&now>=w.embassy.arrive){w.embassy.status='arrived';h.silk.contact.lijian={level:'embassy',heardAt:mi(h.year,h.month)};
   const e=h.throne.orthodox;const welcome=h.relations&&e;w.embassy.reception=welcome?'received':'unclear';

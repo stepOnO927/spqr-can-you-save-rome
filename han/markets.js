@@ -59,7 +59,7 @@ export function initializeEasternMarkets(s){
  for(const [owner,rate] of Object.entries(markets.tariffs))markets.tariffs[owner]=Number.isFinite(rate)?clamp(rate,0,.3):TARIFF_POLICIES.standard;
  for(const [owner,goods] of Object.entries(markets.exportRestrictions))markets.exportRestrictions[owner]=Array.isArray(goods)?[...new Set(goods.filter(good=>Object.hasOwn(COMMODITIES,good)))]:[];
  for(const [faction,ids] of Object.entries(markets.merchants))if(!Array.isArray(ids))markets.merchants[faction]=ids?[ids]:[];
- for(const r of s.regions){const market=markets.regions[r.id]||={id:r.id,goods:{}};market.goods||={};for(const good of Object.keys(COMMODITIES)){const item=market.goods[good]||=profile(r,good);item.consumed??=0;item.surplusDiscarded??=0}markets.regions[r.id]=market}
+ for(const r of s.regions){const market=markets.regions[r.id]||={id:r.id,goods:{}};market.goods||={};for(const good of Object.keys(COMMODITIES)){const item=market.goods[good]||=profile(r,good);if(r.id==='mediterranean_gate'){item.production=0;item.consumption=0}item.consumed??=0;item.surplusDiscarded??=0}markets.regions[r.id]=market}
  return markets;
 }
 

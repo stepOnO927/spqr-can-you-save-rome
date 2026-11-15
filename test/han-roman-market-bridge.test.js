@@ -79,6 +79,32 @@ test('a delivered Han silk batch crosses into a Roman market with a payer and no
  assert.equal(loaded.markets.transactions.filter(x=>x.linkedHanShipment===placed.shipment.id).length,1);
 });
 
+test('a paid horse caravan reaches a Roman port once and keeps silk reports separate',()=>{
+ const s=newGame('caesar');attachHanWorld(s,{seed:29});const h=hanWorld(s).state;
+ s.regions.find(r=>r.id==='syria').owner='caesar';
+ h.tradeMarkets.regions.changan.goods.horses.stock=10;
+ const placed=placeEasternTrade(h,{seller:'han',buyer:'external',origin:'changan',destination:'mediterranean_gate',commodity:'horses',quantity:1});
+ assert.equal(placed.ok,true,placed.reason);
+ const source=h.tradeMarkets.regions.changan.goods.horses;source.stock=0;source.production=0;source.consumption=0;
+ for(let i=0;i<placed.quote.months;i++){advanceDate(h);advanceEasternMarkets(h)}
+ assert.equal(placed.shipment.status,'delivered');
+ const gate=h.tradeMarkets.regions.mediterranean_gate.goods.horses,port=s.markets.regions.syria.goods.horses;
+ const gateBefore=gate.stock,portBefore=port.stock,price=placed.shipment.price;
+ s.year=h.year;s.month=h.month;advanceDate(s);s.factions.caesar.treasury=100;
+ const cash=s.factions.caesar.treasury+h.tradeMarkets.externalTreasury;
+ advanceHanWorld(s);
+ assert.equal(gate.stock,gateBefore-1);assert.equal(port.stock,portBefore+1);
+ assert.equal(s.factions.caesar.treasury,100-price);
+ assert.equal(s.factions.caesar.treasury+h.tradeMarkets.externalTreasury,cash);
+ assert.equal(romanView(s).imports[0].commodity,'horses');
+ assert.equal(romanView(s).silkCargoes,0);
+ assert.match(eastPanel(s,{lang:0}),/Horses/);assert.match(eastPanel(s,{lang:1}),/马匹/);
+ const restored=upgradeSave(structuredClone(s)),before=restored.markets.regions.syria.goods.horses.stock;
+ advanceDate(restored);advanceHanWorld(restored);
+ assert.equal(restored.markets.regions.syria.goods.horses.stock,before);
+ assert.equal(restored.markets.transactions.filter(x=>x.linkedHanShipment===placed.shipment.id).length,1);
+});
+
 test('upgrading an older delivered cargo does not import it or mint customs a second time',()=>{
  const s=newGame('caesar');attachHanWorld(s,{seed:7});const w=hanWorld(s),h=w.state;
  s.regions.find(r=>r.id==='syria').owner='caesar';
@@ -92,6 +118,19 @@ test('upgrading an older delivered cargo does not import it or mint customs a se
  assert.equal(restored.factions.caesar.treasury,cash);
  assert.equal(restored.markets.regions.syria.goods.silk.stock,stock);
  assert.equal(romanView(restored).silkCargoes,1);
+});
+
+test('an older save with non-silk cargo at the gate can finish its first Roman purchase',()=>{
+ const s=newGame('caesar');attachHanWorld(s,{seed:31});s.regions.find(r=>r.id==='syria').owner='caesar';
+ const w=hanWorld(s),h=w.state,id='eastern-shipment:old-horses';
+ h.tradeMarkets.shipments.push({id,buyer:'external',seller:'han',destination:'mediterranean_gate',commodity:'horses',quantity:1,price:5,status:'delivered'});
+ h.tradeMarkets.regions.mediterranean_gate.goods.horses.stock++;
+ delete w.bridge;const restored=upgradeSave(structuredClone(s));
+ assert.equal(hanWorld(restored).bridge.settled[id],undefined);
+ const before=restored.markets.regions.syria.goods.horses.stock;
+ advanceDate(restored);advanceHanWorld(restored);
+ assert.equal(restored.markets.regions.syria.goods.horses.stock,before+1);
+ assert.equal(restored.markets.transactions.filter(x=>x.linkedHanShipment===id).length,1);
 });
 
 test('a rival Roman port purchase does not expose its import to the player',()=>{
