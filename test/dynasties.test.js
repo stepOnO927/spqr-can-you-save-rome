@@ -410,3 +410,16 @@ test('AI families can marry and have children in an extended seeded campaign',()
  assert.equal(s.year,-19);assert.ok(s.world.dynasties.marriages.some(m=>s.world.characters[m.a].faction==='senate'));
  assert.ok(Object.values(s.world.characters).some(c=>c.parents.length>0));
 });
+
+test('family leadership keeps stable ties and follows deaths and family changes on reinitialization',()=>{
+ const s=newGame('caesar');initializeDynasties(s);
+ const a=s.world.characters.caesar,b=s.world.characters.antony,c=s.world.characters.lepidus;
+ const family=s.world.dynasties.families[a.familyId];
+ b.familyId=a.familyId;c.familyId=a.familyId;a.influence=50;b.influence=50;c.influence=90;
+ c.alive=false;initializeDynasties(s);assert.equal(family.leader,a.id,'first living member wins a tie');
+ b.influence=80;initializeDynasties(s);assert.equal(family.leader,b.id,'changed influence is observed');
+ b.familyId='family:departed';initializeDynasties(s);assert.equal(family.leader,a.id);
+ assert.equal(s.world.dynasties.families[b.familyId].leader,b.id);
+ a.alive=false;initializeDynasties(s);assert.equal(family.leader,null,'no living member leaves no leader');
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(loaded.world.dynasties.families[family.id].leader,null);
+});
