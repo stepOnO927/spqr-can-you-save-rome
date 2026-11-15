@@ -41,6 +41,7 @@ import {initializeLocalEntities,advanceLocalEntities,localEntity,localEntityReve
 import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing,respondBorderIncident} from './border-access.js';
 import {advanceFootholds,footholdQuote,footholdShipmentQuote,startFoothold,stockFoothold} from './foothold.js';
 import {advanceExpeditionSupply} from './expedition-supply.js';
+import {planRoutes} from './route-planner.js';
 import {titleAssetQuote,settleTitleByTreaty} from './peace-titles.js';
 import {advanceLocalResistance} from './local-resistance.js';
 export {queueMission};
@@ -165,10 +166,11 @@ export function previewMarch(s,armyId,destination,{unauthorized=false}={}){
   return {ok:true,months,seaCost,sea:!!link.sea,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),unauthorized:!access.allowed,reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:report?.own?target.supply:null};
 }
 
-export function moveArmy(s,armyId,destination,{unauthorized=false}={}){
+export function moveArmy(s,armyId,destination,{unauthorized=false,expedition=false}={}){
   const estimate=previewMarch(s,armyId,destination,{unauthorized});
   if(!estimate.ok)return estimate;
   const a=army(s,armyId),target=region(s,destination),link=adjacent(a.region).find(e=>e.to===destination);
+  if(!expedition&&['active','paused'].includes(a.expedition?.status))cancelExpedition(s,armyId,a.owner);
   if(link.sea)s.factions[a.owner].treasury-=estimate.seaCost;
   const months=estimate.months;
   a.move={to:destination,remaining:months,sea:link.sea,...(estimate.unauthorized?{intent:'unauthorized_entry'}:{})};
@@ -180,12 +182,13 @@ export function moveArmy(s,armyId,destination,{unauthorized=false}={}){
 // All player and AI field orders use the same state transition. Persistent
 // stances are resolved during combat and monthly upkeep, including old saves
 // whose armies have no order field.
-export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player){
+export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player,{expedition=false}={}){
   const a=army(s,armyId),f=s.factions[owner],place=a&&region(s,a.region);
   if(!a||a.owner!==owner||a.men<=0||!f||!place)return {ok:false,reason:'unavailable'};
   if(kind==='cancel'){
     if(!a.move&&!a.siege&&!a.order)return {ok:false,reason:'unavailable'};
     a.move=null;a.siege=null;a.order=null;
+    if(!expedition&&['active','paused'].includes(a.expedition?.status))cancelExpedition(s,armyId,owner);
     if(owner===s.player)log(s,`${a.name[0]} cancelled its field order.`,`${a.name[1]}取消了野战命令。`);
     return {ok:true};
   }
@@ -195,7 +198,7 @@ export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player){
     if(!plan.ok)return plan;
     if(kind==='attack'&&!plan.hostile)return {ok:false,reason:'target'};
     if(kind==='unauthorized_entry'&&!plan.unauthorized)return {ok:false,reason:'target'};
-    const result=moveArmy(s,armyId,targetId,{unauthorized:kind==='unauthorized_entry'});
+    const result=moveArmy(s,armyId,targetId,{unauthorized:kind==='unauthorized_entry',expedition});
     if(result.ok){a.move.intent=kind;a.order={kind,target:targetId}}
     return result;
   }
@@ -204,6 +207,7 @@ export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player){
     if(!link||!dest||dest.owner!==owner||a.move)return {ok:false,reason:'target'};
     if(link.sea&&f.treasury<8)return {ok:false,reason:'transport'};
     if(link.sea)f.treasury-=8;
+    if(!expedition&&['active','paused'].includes(a.expedition?.status))cancelExpedition(s,armyId,owner);
     a.siege=null;a.order={kind,target:targetId};a.move={to:targetId,remaining:link.sea?3:1,sea:link.sea,intent:'retreat'};
     a.morale=Math.max(20,a.morale-3);
     if(owner===s.player)log(s,`${a.name[0]} withdrew toward ${dest.name[0]}.`,`${a.name[1]}向${dest.name[1]}撤退。`);
@@ -212,6 +216,7 @@ export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player){
   if(a.move||a.siege)return {ok:false,reason:'unavailable'};
   if(['defend','hold','guard'].includes(kind)){
     if(kind==='guard'&&place.owner!==owner)return {ok:false,reason:'target'};
+    if(!expedition&&['active','paused'].includes(a.expedition?.status))cancelExpedition(s,armyId,owner);
     a.order={kind,target:a.region};
     if(owner===s.player)log(s,`${a.name[0]} received a ${kind} order at ${place.name[0]}.`,`${a.name[1]}在${place.name[1]}接受了${{defend:'防御',hold:'坚守',guard:'守卫要地'}[kind]}命令。`);
     return {ok:true};
@@ -230,6 +235,61 @@ export function issueMilitaryOrder(s,armyId,kind,targetId=null,owner=s.player){
   }
   if(kind==='recruit')return recruit(s,a.region,owner)?{ok:true}:{ok:false,reason:'resources'};
   return {ok:false,reason:'unavailable'};
+}
+
+export function startExpedition(s,armyId,nodes,owner=s.player){
+  const unit=army(s,armyId),destination=Array.isArray(nodes)?nodes.at(-1):null;
+  if(!unit||unit.owner!==owner||unit.men<=0||unit.move||unit.siege||unit.reorg||planControlled(s,armyId)||!Array.isArray(nodes)||nodes.length<2||nodes[0]!==unit.region)return {ok:false,reason:'unavailable'};
+  const plan=planRoutes(s,armyId,destination);
+  const chosen=plan.routes?.find(route=>route.nodes.length===nodes.length&&route.nodes.every((id,index)=>id===nodes[index]));
+  if(!chosen||!['legal','treaty','supply_risk'].includes(chosen.status)||chosen.legs.some(leg=>!['legal','treaty'].includes(leg.status)))return {ok:false,reason:'route_unconfirmed'};
+  const next=nodes[1],march=previewMarch(s,armyId,next);
+  if(!march.ok||march.unauthorized||!march.reportedOwner)return {ok:false,reason:march.reason||'route_unconfirmed'};
+  const order=issueMilitaryOrder(s,armyId,march.hostile?'attack':'move',next,owner);
+  if(!order.ok)return order;
+  unit.expedition={destination,nodes:[...nodes],nextIndex:1,status:'active',reason:null,started:{year:s.year,month:s.month}};
+  return {ok:true,expedition:unit.expedition};
+}
+
+export function cancelExpedition(s,armyId,owner=s.player){
+  const unit=army(s,armyId),expedition=unit?.expedition;
+  if(!unit||unit.owner!==owner||!expedition||!['active','paused'].includes(expedition.status))return {ok:false,reason:'unavailable'};
+  expedition.status='cancelled';expedition.reason='manual';expedition.finished={year:s.year,month:s.month};
+  return {ok:true,expedition};
+}
+
+export function resumeExpedition(s,armyId,owner=s.player){
+  const unit=army(s,armyId),expedition=unit?.expedition;
+  if(!unit||unit.owner!==owner||expedition?.status!=='paused'||unit.move||unit.siege)return {ok:false,reason:'unavailable'};
+  expedition.status='active';expedition.reason=null;
+  advanceExpeditionOrders(s,[unit],{ignoreRecentBattle:true});
+  return {ok:expedition.status==='active'||expedition.status==='completed',expedition};
+}
+
+function advanceExpeditionOrders(s,units=s.armies,{ignoreRecentBattle=false}={}){
+  for(const unit of units){
+    const order=unit.expedition;
+    if(!order||!['active','paused'].includes(order.status)||unit.move||unit.men<=0||!s.armies.includes(unit)||!Array.isArray(order.nodes)||!Number.isInteger(order.nextIndex)||order.nextIndex<1||order.nextIndex>=order.nodes.length)continue;
+    const stop=reason=>{order.status='paused';order.reason=reason};
+    if(unit.siege){stop('siege');continue}
+    if(planControlled(s,unit.id)){stop('battle_plan');continue}
+    if(order.reason==='battle'||order.reason==='diverted')continue;
+    const expected=order.nodes[order.nextIndex],previous=order.nodes[order.nextIndex-1];
+    if(unit.region!==expected&&unit.region!==previous){stop('diverted');continue}
+    if(!ignoreRecentBattle&&(s.battles||[]).some(battle=>battle.year===s.year&&battle.month===s.month&&battle.attacker?.id===unit.id&&battle.region===expected)){stop('battle');continue}
+    if(unit.region===expected){
+      if(expected===order.destination){order.status='completed';order.reason=null;order.finished={year:s.year,month:s.month};continue}
+      order.nextIndex++;
+    }
+    const next=order.nodes[order.nextIndex],report=reportedControl(s,unit.owner,next),access=militaryAccessStatus(s,unit.owner,next,report?.owner??null);
+    if(!report?.owner||!access.allowed||access.basis==='unconfirmed'){stop('permission');continue}
+    if(unit.expeditionSupply?.status==='cut_off'){stop('supply');continue}
+    const march=previewMarch(s,unit.id,next);
+    if(!march.ok||march.unauthorized){stop(march.reason||'permission');continue}
+    const result=issueMilitaryOrder(s,unit.id,march.hostile?'attack':'move',next,unit.owner,{expedition:true});
+    if(!result.ok){stop(result.reason||'unavailable');continue}
+    order.status='active';order.reason=null;
+  }
 }
 
 export function recruit(s,regionId,owner=s.player){
@@ -910,6 +970,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   for(const event of advanceLocalResistance(s))if([event.prior,event.claimant].includes(s.player)){const place=localEntity(s,event.id);log(s,`${place.name[0]} returned to its former legal authority after losing local security.`,`${place.name[1]}失去驻军与联络后回归原法理归属方。`)}
   advanceFootholds(s);
   for(const event of advanceExpeditionSupply(s))if(event.owner===s.player&&['partial','cut_off'].includes(event.status)){const army=s.armies.find(unit=>unit.id===event.armyId);if(army)log(s,`${army.name[0]} has strained or severed expedition supply.`,`${army.name[1]}的远征补给不足或中断。`)}
+  advanceExpeditionOrders(s);
   advanceBorderIncidentAI(s,{autoplayPlayer});
   advanceMovements(s,{autoplayPlayer});
   resolveInquiries(s,{autoplayPlayer});syncPeaceLetters(s);reconcilePeacePersonnel(s);advancePersonnel(s);advanceOperations(s);advanceAgentRequests(s,{autoplayPlayer});advanceCharacters(s);advanceDynasties(s);relieveIncapacitatedCommanders(s);advanceMissingCommanders(s);resolveDynasticWars(s);advanceMediations(s);advanceDisputes(s);advancePersonalPlans(s);advanceConspiracies(s);advancePoliticalContacts(s,addReport);advanceGovernments(s,{autoplayPlayer});if(s.world?.cursus)advanceCursus(s);linkCommanders(s);advancePersonalDiplomacy(s);

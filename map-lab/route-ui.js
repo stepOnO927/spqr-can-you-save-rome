@@ -1,11 +1,11 @@
 import {planRoutes} from '../route-planner.js';
 
-export function renderRoutePlanner({state, army, language, panel, onFirstStep}) {
+export function renderRoutePlanner({state, army, language, panel, onFirstStep, onStartExpedition}) {
   const zh = language === 'zh';
   const name = id => state.regions.find(region => region.id === id)?.name?.[zh ? 1 : 0] || id;
   const section = document.createElement('section'); section.className = 'help-list route-planner';
   const title = document.createElement('strong'); title.textContent = zh ? '远程路线预览' : 'LONG-DISTANCE ROUTES'; section.append(title);
-  const help = document.createElement('p'); help.textContent = zh ? '使用现有战区连接和本方控制报告估算路线；每一步仍须单独下令，抵达时重新核实通行权。' : 'Routes use the existing theater graph and your control reports. Order each step separately; passage is checked again on arrival.'; section.append(help);
+  const help = document.createElement('p'); help.textContent = zh ? '使用现有战区连接和本方控制报告估算路线。可为已知合法路线下达逐段远征令；战斗、围城或线路变化会使远征暂停。' : 'Routes use the existing theater graph and your control reports. A confirmed route can be ordered leg by leg; combat, sieges or changed access pause the expedition.'; section.append(help);
   const select = document.createElement('select'); select.setAttribute('aria-label', zh ? '路线目的地' : 'Route destination');
   const prompt = document.createElement('option'); prompt.value = ''; prompt.textContent = zh ? '选择远方战区' : 'Choose destination'; select.append(prompt);
   for (const theater of state.regions.filter(region => region.id !== army.region)) { const option = document.createElement('option'); option.value = theater.id; option.textContent = name(theater.id); select.append(option); }
@@ -30,6 +30,7 @@ export function renderRoutePlanner({state, army, language, panel, onFirstStep}) 
       const label = document.createElement('strong'); label.textContent = `${recommended ? (zh ? '推荐 · ' : 'RECOMMENDED · ') : ''}${route.nodes.map(name).join(' → ')}`; row.append(label);
       const detail = document.createElement('p'); detail.textContent = `${statusText[route.status]} · ${zh ? '约' : 'about '}${route.months}${zh ? '个月' : ' months'}${route.seaCost ? ` · ${zh ? '预计海运' : 'estimated sea transport'} ${route.seaCost}` : ''}`; row.append(detail);
       const first = document.createElement('button'); first.textContent = zh ? `查看第一步：${name(route.firstStep)}` : `Inspect first step: ${name(route.firstStep)}`; first.onclick = () => onFirstStep(route.firstStep); row.append(first);
+      const start = document.createElement('button'); start.textContent = zh ? '按此路线远征' : 'START EXPEDITION'; start.disabled = !['legal', 'treaty', 'supply_risk'].includes(route.status) || route.legs.some(leg => !['legal', 'treaty'].includes(leg.status)); start.onclick = () => { const outcome = onStartExpedition(route.nodes); if (!outcome.ok) { const error = document.createElement('p'); error.textContent = zh ? '路线或军队状态已经变化，请重新比较路线。' : 'Route or army status changed; compare routes again.'; row.append(error); } }; row.append(start);
       results.append(row);
     }
   };

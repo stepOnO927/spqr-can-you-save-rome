@@ -18,6 +18,7 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
   if(!regionIds.has(a.region))add('warning','invalid-army-location',`armies[${i}].region`,String(a.region));
   if(!Number.isFinite(a.men)||a.men<0)add('fatal','invalid-troops',`armies[${i}].men`,String(a.men));
   if(a.expeditionSupply&&(!['full','partial','depot','local_purchase','cut_off'].includes(a.expeditionSupply.status)||!Number.isInteger(a.expeditionSupply.strainMonths)||a.expeditionSupply.strainMonths<0))add('warning','invalid-expedition-supply',`armies[${i}].expeditionSupply`,String(a.expeditionSupply.status));
+  if(a.expedition){const order=a.expedition;if(!Array.isArray(order.nodes)||order.nodes.length<2||order.nodes.some(id=>!regionIds.has(id))||order.nodes.at(-1)!==order.destination||!Number.isInteger(order.nextIndex)||order.nextIndex<1||order.nextIndex>=order.nodes.length||!['active','paused','cancelled','completed'].includes(order.status))add('warning','invalid-expedition-order',`armies[${i}].expedition`,String(order.destination))}
  }
  for(const [id,f] of Object.entries(s.factions))for(const key of ['treasury',mode==='han'?'grain':'food','manpower']){
   if(f[key]!==undefined&&!Number.isFinite(f[key]))add('fatal','invalid-resource',`factions.${id}.${key}`,String(f[key]));

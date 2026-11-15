@@ -1,4 +1,4 @@
-import {newGame,upgradeSave,tick,recruit,moveArmy,previewMarch,setTax,projectTaxPath} from './engine.js?v=world-kings-4';
+import {newGame,upgradeSave,tick,recruit,moveArmy,previewMarch,setTax,projectTaxPath} from './engine.js?v=world-kings-5';
 import {newHanGame,tick as hanTick,serialize as hanSerialize,loadHanSave} from './han/engine.js';
 import {isLiuClan} from './han/dynasty.js';
 import {REGIONS,ROUTES,FACTIONS} from './data.js?v=phase-x-1';
