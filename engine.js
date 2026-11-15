@@ -40,6 +40,7 @@ import {initializeTerritories,transferTerritory,territoryTaxFactor,administratio
 import {initializeLocalEntities,advanceLocalEntities,localEntity,localEntityRevenue,localContactQuote,offerLocalContact,localSubmissionQuote,offerLocalSubmission,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from './local-polities.js';
 import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing,respondBorderIncident} from './border-access.js';
 import {advanceFootholds,footholdQuote,startFoothold} from './foothold.js';
+import {titleAssetQuote,settleTitleByTreaty} from './peace-titles.js';
 export {queueMission};
 export {personalDiplomaticCredit};
 export {replyToLetter};
@@ -281,8 +282,10 @@ export function diplomacy(s, actor, target, action, options={}){
     return true;
   }
   if(action==='peace' && isWar(s,actor,target)){
+    if(options.titleAsset&&!titleAssetQuote(s,actor,target,options.titleAsset).ok)return false;
     // The responding government knows its own forces, but judges the sender by its reports.
     if(!options.acceptedByPlayer && estimatedStrength(s,target,actor)<strength(s,target)*Math.max(.35,.6-(activeModifiers(s,actor).pressure||0)/100) && s.factions[target].stability>35)return false;
+    if(options.titleAsset&&!settleTitleByTreaty(s,actor,target,options.titleAsset).ok)return false;
     s.wars=s.wars.filter(w=>!(w.includes(actor)&&w.includes(target)));
     reconcilePeacePersonnel(s);
     s.relations[key]=-20;
@@ -378,16 +381,17 @@ const courtReports={
 };
 const letterMonths={senate:2,caesar:2,egypt:4,egypt_claimant:4,numidia:3,mauretania:4,armenia:5,parthia:5,parthia_claimant:5,galatia:4,bosporus:5};
 export function inquiryCost(s,actor){return Math.max(1,3-(activeModifiers(s,actor).intelligence||0))}
-export function sendInquiry(s,actor,target,subject='leaders'){
+export function sendInquiry(s,actor,target,subject='leaders',options={}){
  if(!['leaders','successor','availability','representative','clashes','peace'].includes(subject)||subject==='clashes'&&!['egypt','parthia'].includes(target))return {ok:false,reason:'subject'};
  if(actor===target||!s.factions[actor]||!courtReports[target]||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(subject==='peace'&&!isWar(s,actor,target))return {ok:false,reason:'unavailable'};
+ if(options.titleAsset&&(subject!=='peace'||!titleAssetQuote(s,actor,target,options.titleAsset).ok))return {ok:false,reason:'title_asset'};
  if(target.endsWith('_claimant')&&!s.regions.some(r=>reportedControl(s,actor,r.id)?.owner===target)&&!Object.keys(s.knowledge[actor]?.[target]?.sightings||{}).length&&!s.knowledge[actor]?.[target]?.reportedLeaders?.length)return {ok:false,reason:'unavailable'};
  const cost=inquiryCost(s,actor);
  if(s.factions[actor].treasury<cost)return {ok:false,reason:'treasury'};
  if((s.inquiries||[]).some(x=>x.actor===actor&&x.target===target&&['pending','awaiting_decision'].includes(x.status)))return {ok:false,reason:'pending'};
  const duration=letterMonths[target]||4;s.factions[actor].treasury-=cost;
- (s.inquiries||=[]).unshift({actor,target,sentYear:s.year,sentMonth:s.month,remaining:duration,duration,subject,status:'pending',source:'official court',confidence:'unverified',...(target.endsWith('_claimant')?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{})});
+ (s.inquiries||=[]).unshift({actor,target,sentYear:s.year,sentMonth:s.month,remaining:duration,duration,subject,status:'pending',source:'official court',confidence:'unverified',...(options.titleAsset?{titleAsset:{kind:options.titleAsset.kind,id:options.titleAsset.id}}:{}),...(target.endsWith('_claimant')?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{})});
  if(actor===s.player)log(s,`A letter was sent to ${FACTIONS[target].short[0]}; a reply may take ${duration} months.`,`已向${FACTIONS[target].short[1]}寄信；等待回信约需${duration}个月。`);
  return {ok:true,duration};
 }
@@ -477,7 +481,7 @@ function resolveInquiries(s,{autoplayPlayer=false}={}){
   if(replyMail)replyMail.delivery=reply.status==='no_reply'?'lost':'received';
   // A provisional acceptance only takes effect when it reaches the sender.
   // Circumstances may change during the return journey.
-  if(letter.subject==='peace'&&reply.status==='answered'&&!diplomacy(s,letter.actor,letter.target,'peace',{acceptedByPlayer:!!reply.acceptedByPlayer&&letter.target===s.player}))reply={status:'no_reply'};
+  if(letter.subject==='peace'&&reply.status==='answered'&&!diplomacy(s,letter.actor,letter.target,'peace',{acceptedByPlayer:!!reply.acceptedByPlayer&&letter.target===s.player,titleAsset:letter.titleAsset}))reply={status:'no_reply'};
   letter.status=reply.status;delete letter.sealed;
   if(reply.status==='no_reply'){if(letter.actor===s.player)log(s,`No reply has arrived from ${FACTIONS[letter.target].short[0]}; the letter or answer may have been lost.`,`来自${FACTIONS[letter.target].short[1]}的回信尚未到达；书信或回信可能遗失。`)}
   else if(reply.status==='refused'){if(letter.actor===s.player)log(s,letter.subject==='peace'?`A reply from ${FACTIONS[letter.target].short[0]} rejected the peace offer.`:`A reply from ${FACTIONS[letter.target].short[0]} declined to answer.`,letter.subject==='peace'?`${FACTIONS[letter.target].short[1]}回信拒绝议和。`:`${FACTIONS[letter.target].short[1]}回信表示不愿回答。`)}
