@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
-import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=newborn-age-1';
+import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=regional-transfer-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=faces-empire-2';
 
 function memoryStorage() {
@@ -36,6 +36,18 @@ test('Han campaigns transfer between campaign and atlas with their named command
  const campaign=receiveHandoff(storage,'campaign',upgradeSave);
  assert.equal(campaign.player,'han');
  assert.equal(campaign.world.dynasties.catalog[commander].fictional,true);
+});
+
+test('regional playable campaigns survive both view changes with their allegiance intact',()=>{
+ for(const faction of ['egypt','parthia']){
+  const storage=memoryStorage(),state=newGame(faction),opening=state.regions.find(r=>r.owner===faction)?.id;
+  stageHandoff(storage,state,'atlas');
+  const atlas=receiveHandoff(storage,'atlas',upgradeSave);
+  assert.equal(atlas.player,faction);
+  assert.equal(atlas.regions.find(r=>r.owner===faction)?.id,opening);
+  stageHandoff(storage,atlas,'campaign');
+  assert.equal(receiveHandoff(storage,'campaign',upgradeSave).player,faction);
+ }
 });
 
 test('invalid transfers are not consumed and storage failures do not appear successful',()=>{
