@@ -1,0 +1,11 @@
+#save-transfer-open{position:fixed;right:14px;bottom:14px;z-index:100000;padding:9px 13px;border:1px solid #d9bd78;border-radius:4px;background:#26352f;color:#f4e7c8;font:600 13px system-ui;cursor:pointer;box-shadow:0 3px 12px #0008}
+#save-transfer-dialog{z-index:100001;max-width:min(440px,calc(100vw - 30px));padding:23px;border:1px solid #b99b61;border-radius:8px;background:#24312d;color:#f4e7c8;font:14px/1.5 system-ui;box-shadow:0 12px 40px #000a}
+#save-transfer-dialog::backdrop{background:#0009}
+#save-transfer-dialog h2{margin:0 28px 8px 0;font:600 20px system-ui;color:#f4e7c8}
+#save-transfer-dialog p{margin:8px 0 16px}
+#save-transfer-dialog .transfer-close{position:absolute;right:11px;top:9px;border:0;background:transparent;color:#f4e7c8;font-size:24px;cursor:pointer}
+#save-transfer-dialog .transfer-actions{display:flex;gap:9px;flex-wrap:wrap}
+#save-transfer-dialog .transfer-actions button,#save-transfer-import-label{padding:8px 11px;border:1px solid #cbb174;border-radius:4px;background:#3b4b40;color:#f4e7c8;font:600 13px system-ui;cursor:pointer}
+#save-transfer-file{position:absolute;width:1px;height:1px;opacity:0}
+#save-transfer-file:focus-visible+#save-transfer-import-label{outline:2px solid white}
+#save-transfer-status{white-space:pre-wrap;overflow-wrap:anywhere}
