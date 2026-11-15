@@ -1,5 +1,6 @@
 name: Poki readiness audit
 on:
+  workflow_dispatch:
   push:
     branches:
       - audit/poki-readiness-20261114
