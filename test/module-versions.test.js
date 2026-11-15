@@ -16,4 +16,13 @@ test('campaign and atlas use one cache version for each shared JavaScript module
  }
  const conflicts=[...versions].filter(([,uses])=>uses.size>1).map(([module,uses])=>`${module}: ${JSON.stringify(Object.fromEntries(uses))}`);
  assert.deepEqual(conflicts,[],`A browser can cache different copies of the same game logic:\n${conflicts.join('\n')}`);
+ const sharedVersion=[...versions.get('data.js')?.keys()||[]][0];
+ assert.ok(sharedVersion&&sharedVersion!=='<unversioned>');
+ const stale=[];
+ for(const dir of ['scripts','tools'])for(const name of fs.readdirSync(dir)){
+  if(!name.endsWith('.mjs'))continue;
+  const file=path.join(dir,name),source=fs.readFileSync(file,'utf8');
+  for(const match of source.matchAll(/\.js\?v=([A-Za-z0-9_-]+)/g))if(match[1]!==sharedVersion)stale.push(`${file}: ${match[1]}`);
+ }
+ assert.deepEqual(stale,[],`Browser and simulation scripts must import the same game modules: ${stale.join(', ')}`);
 });

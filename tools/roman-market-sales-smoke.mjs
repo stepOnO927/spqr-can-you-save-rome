@@ -7,7 +7,7 @@ page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
- const origin=await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=faces-main-20261115-1'),s=newGame('caesar'),r=s.regions.find(x=>x.owner==='caesar');s.markets.regions[r.id].goods.iron.stock=5;sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));return r.id});
+ const origin=await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=faces-reported-names-1'),s=newGame('caesar'),r=s.regions.find(x=>x.owner==='caesar');s.markets.regions[r.id].goods.iron.stock=5;sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));return r.id});
  await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});await page.locator('#markets').click();
  await page.locator('#market-tariff').selectOption('high');await page.locator('[data-market-export="iron"]').click();
  assert.equal(await page.locator('[data-market-export="iron"]').getAttribute('aria-pressed'),'true');

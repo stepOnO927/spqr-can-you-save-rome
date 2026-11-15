@@ -134,9 +134,9 @@ export function secureRegency(s){
 // Once every eligible recorded successor is gone, a surviving court may
 // nominate an explicitly fictional adult. This never asserts an unknown
 // historical identity or invents a family tie to the previous dynasty.
-const regionalCourts={egypt:['Egyptian','埃及'],parthia:['Parthian','帕提亚'],armenia:['Armenian','亚美尼亚'],numidia:['Numidian','努米底亚'],galatia:['Galatian','加拉太'],bosporus:['Bosporan','博斯普鲁斯']};
+const regionalCourts=new Set(['egypt','parthia','armenia','numidia','galatia','bosporus','shanshan']);
 function advanceRegionalVacancy(s,faction,autoplayPlayer){
- if(!regionalCourts[faction]||faction===s.player&&!autoplayPlayer)return;
+ if(!regionalCourts.has(faction)||faction===s.player&&!autoplayPlayer)return;
  const vacancies=s.world.courtVacancies||={},now=s.year*12+s.month;
  if((s.world.leadership[faction]||[]).some(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction)){delete vacancies[faction];return}
  // An unresolved claimant must retain autonomy; do not appoint over them.
@@ -151,9 +151,9 @@ function advanceRegionalVacancy(s,faction,autoplayPlayer){
  const atWar=s.wars.some(w=>w.includes(faction)),chance=Math.max(.15,Math.min(.75,.35+(f.stability||0)/250-(atWar?.15:0)));
  if(dynastyRoll(s)>=chance)return;
  const serials=s.world.courtNomineeSerials||={},serial=(serials[faction]||0)+1;serials[faction]=serial;
- const [en,zh]=regionalCourts[faction],place=s.regions.find(r=>r.owner===faction)?.id;
+ const place=s.regions.find(r=>r.owner===faction)?.id;
  const sex=serial===1?(faction==='bosporus'?'female':'male'):'unknown';
- const name=['egypt','parthia'].includes(faction)?generateFictionalName(s,{originFaction:faction,location:place}):{name:[`Fictional ${en} court nominee ${serial}`,`虚构${zh}宫廷人选${serial}`]};
+ const name=generateFictionalName(s,{originFaction:faction,location:place});
  const id=createFictionalPerson(s,{...name,faction,birthYear:s.year-35,location:place,sex,role:['Fictional court nominee in this campaign','本战役虚构宫廷人选'],origin:'court_nominee'});
  f.treasury-=5;assignSuccession(s,faction);delete vacancies[faction];
 }

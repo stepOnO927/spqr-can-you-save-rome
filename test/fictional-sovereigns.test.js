@@ -47,6 +47,33 @@ test('a fictional Parthian court outsider founds a saved house with political co
  assert.equal(loaded.world.dynasties.rulingHouses.parthia,s.world.dynasties.rulingHouses.parthia);
 });
 
+test('an established frontier kingdom can elevate a saved local successor',()=>{
+ let s=newGame('han'),faction='shanshan',former=s.world.leadership[faction][0];
+ const successor=createFictionalPerson(s,{name:['Suli of Shanshan','鄯善的苏利'],faction,birthYear:-80,location:'shanshanOasis',sex:'male',culture:['Shanshan oasis (game reconstruction)','鄯善绿洲（游戏复原）']});
+ assert.ok(successorFor(s,faction).includes(successor));
+ s.world.characters[former].alive=false;
+ for(const army of s.armies.filter(a=>a.owner===faction&&a.characterId))s.world.characters[army.characterId].alive=false;
+ assert.deepEqual(assignSuccession(s,faction),[successor]);
+ assert.equal(deriveGovernment(s,faction).kind,'normal');
+ assert.match(proceduralPortraitSvg(s,successor),/<svg/);
+ s=upgradeSave(structuredClone(s));
+ assert.deepEqual(s.world.leadership[faction],[successor]);
+ assert.deepEqual(s.world.dynasties.catalog[successor].name,['Suli of Shanshan','鄯善的苏利']);
+});
+
+test('a newly formed court can elevate its own recorded adult',()=>{
+ let s=newGame('caesar'),faction='movement_force:99';
+ s.factions[faction]={treasury:20,food:20,manpower:100,stability:50,legitimacy:50};
+ s.world.leadership[faction]=[];
+ const candidate=createFictionalPerson(s,{name:['Dara of the frontier','边地的达拉'],faction,birthYear:-80,location:'cisalpine',sex:'female'});
+ assert.deepEqual(successorFor(s,faction),[candidate]);
+ assert.deepEqual(assignSuccession(s,faction),[candidate]);
+ assert.equal(deriveGovernment(s,faction).kind,'normal');
+ s=upgradeSave(structuredClone(s));
+ assert.deepEqual(s.world.leadership[faction],[candidate]);
+ assert.equal(s.world.characters[candidate].faction,faction);
+});
+
 test('a documented Liu descendant may inherit Han while an unrelated minister remains excluded',()=>{
  const s=newGame('han');
  const prince=createFictionalPerson(s,{name:['Liu Jin','刘进'],faction:'han',birthYear:-77,sex:'male',parents:['han_yuan'],location:'hanGuanzhong'});

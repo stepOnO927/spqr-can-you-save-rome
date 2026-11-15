@@ -13,7 +13,7 @@ function step(s,n=1){for(let i=0;i<n;i++){s.month++;if(s.month>12){s.month=1;s.y
 test('regional courts may recover after a delay using explicitly fictional nominees and real funds',()=>{
  for(const [faction,original] of Object.entries(states)){
   const s=setup(faction);assert.equal(deriveGovernment(s,faction).kind,'vacant');const balance=s.factions[faction].treasury;step(s,6);assert.deepEqual(s.world.leadership[faction],[]);assert.equal(s.factions[faction].treasury,balance);
-  step(s);const id=s.world.leadership[faction][0],person=s.world.characters[id];assert.match(id,/^fictional:/);assert.equal(CHARACTER_CATALOG[id].fictional,true);assert.match(CHARACTER_CATALOG[id].name[0],/^Fictional /);assert.deepEqual(person.parents,[]);assert.deepEqual(person.adoptiveParents,[]);assert.equal(s.factions[faction].treasury,balance-5);assert.equal(deriveGovernment(s,faction).kind,'normal');
+  step(s);const id=s.world.leadership[faction][0],person=s.world.characters[id];assert.match(id,/^fictional:/);assert.equal(CHARACTER_CATALOG[id].fictional,true);assert.match(CHARACTER_CATALOG[id].name[0],/ of /);assert.notDeepEqual(CHARACTER_CATALOG[id].culture,['Simulated','模拟']);assert.deepEqual(person.parents,[]);assert.deepEqual(person.adoptiveParents,[]);assert.equal(s.factions[faction].treasury,balance-5);assert.equal(deriveGovernment(s,faction).kind,'normal');
   const life=s.world.dynasties.lives[id];assert.ok(life.some(x=>/fictional court nominee/.test(x.en)));assert.ok(!life.some(x=>x.en==='Born in the simulated campaign.'));
   assert.deepEqual(knownLeaders(s,'caesar',faction),[original]);assert.ok(!reportedHealthSubjects(s,'caesar',faction).includes(id));assert.ok(!s.log.some(x=>x.en.includes(CHARACTER_CATALOG[id].name[0])));
  }
@@ -63,4 +63,24 @@ test('existing legitimate candidates are preferred and lost territory cancels th
 test('a human-controlled court is never assigned an unrequested nominee',()=>{
  const s=newGame('armenia');s.world.characters.artavasdes.alive=false;s.world.characters.artavasdes.health='deceased';assignSuccession(s,'armenia');s.factions.armenia.treasury=100;s.world.dynasties.seed=1;
  step(s,18);assert.deepEqual(s.world.leadership.armenia,[]);assert.equal(s.factions.armenia.treasury,100);assert.equal(s.world.courtVacancies?.armenia,undefined);
+});
+
+test('an empty Shanshan court can restore a distinct local ruler without notifying Han immediately',()=>{
+ let s=newGame('han'),former=s.world.leadership.shanshan[0];
+ for(const person of Object.values(s.world.characters))if(person.faction==='shanshan'){person.alive=false;person.health='deceased'}
+ assignSuccession(s,'shanshan');
+ s.factions.shanshan.treasury=100;s.world.dynasties.seed=1;
+ const known=[...knownLeaders(s,'han','shanshan')];
+ step(s,7);
+ const id=s.world.leadership.shanshan[0];
+ assert.ok(id?.startsWith('fictional:'));
+ assert.notEqual(id,former);
+ assert.match(CHARACTER_CATALOG[id].name[0],/ of Shanshan/);
+ assert.deepEqual(CHARACTER_CATALOG[id].culture,['Shanshan oasis (game reconstruction)','鄯善绿洲（游戏复原）']);
+ assert.match(proceduralPortraitSvg(s,id),/<svg/);
+ assert.equal(s.factions.shanshan.treasury,95);
+ assert.deepEqual(knownLeaders(s,'han','shanshan'),known);
+ s=upgradeSave(structuredClone(s));
+ assert.deepEqual(s.world.leadership.shanshan,[id]);
+ assert.equal(deriveGovernment(s,'shanshan').kind,'normal');
 });
