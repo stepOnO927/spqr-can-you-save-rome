@@ -323,6 +323,7 @@ export function constructionCheck(s,owner,regionId,buildingId){
   if(!d.knownMaterial.includes(b.tech))return {ok:false,reason:'technology'};
   if(!b.terrain.includes(r.terrain))return {ok:false,reason:'terrain'};
   if(b.id==='mine'&&!(s.grandMap?r.resource==='metal':metalDeposits.has(r.id)))return {ok:false,reason:'deposit'};
+  if(b.id==='mine'&&s.grandMap&&Number.isFinite(r.population)&&r.population<6000)return {ok:false,reason:'labor'};
   if(b.site==='coast'&&!(s.grandMap?r.port:coastalSites.has(r.id)))return {ok:false,reason:'coast'};
   if(b.site==='water'&&!(s.grandMap?r.river:waterSites.has(r.id)))return {ok:false,reason:'water'};
   if(b.site==='urban'&&!(s.grandMap?r.terrain==='urban':urbanSites.has(r.id)))return {ok:false,reason:'settlement'};
@@ -644,7 +645,7 @@ export function advanceDevelopment(s,log=()=>{}){
     for(const r of s.regions.filter(x=>x.owner===owner)){
       if(r.terrain==='forest')added.timber+=2;
       if(r.terrain==='hills')added.stone++;
-      for(const id of r.buildings){const b=BUILDINGS.find(x=>x.id===id);for(const k of ['stone','timber','metal'])added[k]+=b?.effects[k]||0}
+      const local=localBuildingEffects(r);for(const k of ['stone','timber','metal'])added[k]+=local[k]||0;
     }
     for(const k of Object.keys(added))d.materials[k]=Math.min(100,d.materials[k]+added[k]);
     f.treasury-=Object.values(d.slots).reduce((n,slots)=>n+Math.max(0,slots.length-1),0)+taxReviewExpense(s,owner);
@@ -672,7 +673,8 @@ export function advanceDevelopment(s,log=()=>{}){
     if(--agreement.remaining<=0)s.knowledgeAgreements.splice(s.knowledgeAgreements.indexOf(agreement),1);
   }
 }
-export function localBuildingEffects(r){const out={};for(const id of r.buildings||[]){const b=BUILDINGS.find(x=>x.id===id);if(!b)continue;for(const [k,v] of Object.entries(b.effects))out[k]=(out[k]||0)+v;out.upkeep=(out.upkeep||0)+b.upkeep}return out}
+export function mineMetalOutput(r){const population=r.population;return !Number.isFinite(population)?2:population>=6000?2:population>=3000?1:0}
+export function localBuildingEffects(r){const out={};for(const id of r.buildings||[]){const b=BUILDINGS.find(x=>x.id===id);if(!b)continue;for(const [k,v] of Object.entries(b.effects))out[k]=(out[k]||0)+(id==='mine'&&k==='metal'?mineMetalOutput(r):v);out.upkeep=(out.upkeep||0)+b.upkeep}return out}
 
 export const GRANARY_RESERVE_CAPACITY=24;
 const storedGrain=site=>Math.max(0,Math.min(GRANARY_RESERVE_CAPACITY,Math.floor(Number(site.grainReserve)||0)));

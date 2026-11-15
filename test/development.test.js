@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials} from '../engine.js';
-import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves,advanceDevelopment} from '../development.js';
+import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves,advanceDevelopment,mineMetalOutput,localBuildingEffects} from '../development.js';
 import {advanceNaval} from '../naval.js';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js';
 import {edgeMonths,grandRoute} from '../grand-operations.js';
@@ -11,6 +11,26 @@ import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
+
+test('a mine needs local labor and produces less metal when its population falls',()=>{
+ const s=newGrandGame('senate'),r=s.regions.find(site=>site.id==='t057'),d=development(s,'senate');
+ s.factions.senate.treasury=1000;d.knownMaterial.push('metal-extraction');d.materials.stone=20;d.materials.timber=20;
+ r.population=5999;assert.equal(constructionCheck(s,'senate',r.id,'mine').reason,'labor');
+ r.population=6000;assert.equal(startConstruction(s,'senate',r.id,'mine').ok,true);
+ for(let month=0;month<5;month++)advanceDevelopment(s);
+ assert.ok(r.buildings.includes('mine'));
+ for(const [population,metal] of [[6000,2],[4500,1],[2500,0],[6200,2]]){
+  r.population=population;d.materials.metal=0;advanceDevelopment(s);
+  assert.equal(d.materials.metal,metal,`population ${population}`);
+  assert.equal(localBuildingEffects(r).upkeep,2);
+  assert.equal(mineMetalOutput(r),metal);
+ }
+ r.population=4500;
+ assert.match(constructionPanel(s,'en',r),/current metal output 1\/month/);
+ assert.match(constructionPanel(s,'zh',r),/当前金属产量 1\/月/);
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(mineMetalOutput(loaded.regions.find(site=>site.id===r.id)),1);
+});
 
 test('policy adoption uses the figure whose expertise matches the actual policy',()=>{
  const s=newGrandGame('senate'),d=development(s,'senate');s.factions.senate.treasury=500;
