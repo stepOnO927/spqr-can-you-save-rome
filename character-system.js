@@ -202,7 +202,11 @@ export function queueMission(s,actor,target,type,subject='health',partnerId=null
 // response stays out of the recipient's knowledge until the return journey.
 function prepareExchange(s,op){
  const partner=op.partner,access=intelligencePartnerAccess(s,op.actor,partner);
- const prior=s.knowledge[partner]?.[op.target]?.reports.find(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter));
+ // Arrival order is not observation order: a recently forwarded old message
+ // must not displace a fresher observation already held by the partner.
+ // Undated legacy reports remain usable, but cannot outrank dated evidence.
+ const observedAt=r=>{const year=r.observationYear??r.year,month=r.observationMonth??r.month;return Number.isFinite(year)&&Number.isInteger(month)?year*12+month:-Infinity};
+ const prior=(s.knowledge[partner]?.[op.target]?.reports||[]).filter(r=>isDeliveredReport(s,r)&&r.kind===op.subject&&(!op.subjectCharacter||r.character===op.subjectCharacter)).reduce((best,r)=>!best||observedAt(r)>observedAt(best)?r:best,null);
  if(!access)return {available:false};
  // Trade is contact, not an obligation to share secrets. The recipient's own
  // relations influence its independent response; the sender learns only the
