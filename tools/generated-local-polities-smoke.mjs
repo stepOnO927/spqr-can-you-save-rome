@@ -71,7 +71,9 @@ try{
  },fixtureSeed);
  await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});
  const independentMarker=page.locator(`.city-marker[data-city="${independent}"]`);
- await independentMarker.waitFor({state:'visible'});await independentMarker.click();
+ // The second fixture can place its village beyond the initial map viewport.
+ // Dispatch the marker's real DOM click handler after confirming it exists.
+ await independentMarker.waitFor({state:'visible'});await independentMarker.evaluate(marker=>marker.click());
  assert.match(await page.locator('#command-detail').innerText(),/Fictional village generated for this campaign/);
  assert.equal(await page.locator('#village-granary').isDisabled(),false);
  await page.locator('#village-granary').click();
