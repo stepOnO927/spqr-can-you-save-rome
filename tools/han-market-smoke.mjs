@@ -11,6 +11,10 @@ try{
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
  await page.locator('#trade-panel').click();
  assert.match(await page.locator('#inspector').innerText(),/Own stock/);
+ assert.match(await page.locator('#east-route-security').innerText(),/0\/5/);
+ await page.locator('#east-protect-route').click();
+ assert.match(await page.locator('#message').innerText(),/20 treasury, security 1\/5/);
+ assert.match(await page.locator('#east-route-security').innerText(),/1\/5/);
  assert.match(await page.locator('#inspector').innerText(),/Herd animals.*Copper.*Woollen textiles.*Jade/s);
  assert.match(await page.locator('#inspector').innerText(),/current price per batch/);
  await page.locator('[data-export-good="silk"]').click();
@@ -43,6 +47,7 @@ try{
  assert.match(await page.locator('#inspector').innerText(),/Begins with the next caravan/);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#trade-panel').click();
  assert.match(await page.locator('#inspector').innerText(),/Begins with the next caravan/);
+ assert.match(await page.locator('#east-route-security').innerText(),/1\/5/);
  assert.equal(await page.locator('[data-cancel-sale]').count(),1);
  await page.locator('[data-cancel-sale]').click();
  assert.match(await page.locator('#message').innerText(),/stock returned/);
@@ -69,6 +74,7 @@ try{
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('.territory[data-region="dunhuang"]').click({force:true});await page.locator('#trade-panel').click();
  assert.equal(await page.locator('#east-remount-assign').isDisabled(),true);
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
+ assert.match(await page.locator('#inspector').innerText(),/保护商路/);
  assert.match(await page.locator('#inspector').innerText(),/牲畜.*铜.*毛织物.*玉石/s);
  assert.match(await page.locator('.market-intelligence').innerText(),/成交单价.*所见供给/);
  assert.match(await page.locator('#inspector').innerText(),/拨付军马/);

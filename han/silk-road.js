@@ -125,7 +125,15 @@ export function sendTradeEmbassy(s){
  s.silk.relays.push({kind:'embassy',node:'lijian',arrive:monthIndex(s)+FAR_WEST[0].months+FAR_WEST[1].months+6});
  log(s,['A trade embassy sets out for the far west.','通商使团启程前往极西之地。'],{kind:'silk'});return {ok:true};
 }
-export function protectRoute(s,amount=20){if(s.factions.han.treasury<amount)return {ok:false};s.factions.han.treasury-=amount;s.silk.security=clamp((s.silk.security||0)+1,0,5);return {ok:true}}
+export const ROUTE_PROTECTION_COST=20;
+export function protectRoute(s,amount=ROUTE_PROTECTION_COST){
+ if(amount!==ROUTE_PROTECTION_COST||s.player!=='han'||s.finalized||!s.silk||!s.factions?.han)return {ok:false,reason:'invalid'};
+ if((s.silk.security||0)>=5)return {ok:false,reason:'maximum'};
+ if(s.factions.han.treasury<ROUTE_PROTECTION_COST)return {ok:false,reason:'treasury'};
+ s.factions.han.treasury-=ROUTE_PROTECTION_COST;
+ s.silk.security=clamp((s.silk.security||0)+1,0,5);
+ return {ok:true,cost:ROUTE_PROTECTION_COST,security:s.silk.security};
+}
 export function advanceSilk(s){
  if(s.month%2===0)spawnCaravan(s);else{const p=tradePath(s);s.silk.lastPath=p;if(p)s.silk.functionalMonths++;else{s.silk.functionalMonths=0;s.silk.blocked=firstBlock(s)}}
  moveCaravans(s);advanceRelays(s);

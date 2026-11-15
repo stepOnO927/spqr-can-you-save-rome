@@ -4,7 +4,7 @@ import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js?v=faces-re
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=faces-reported-names-1';
 import {activeEasternMerchantPrivilege,advanceEasternMarkets,advanceHanMilitarySupply,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-reported-names-1';
 import {recruit,recruitQuote,provisionArmy} from '../han/military.js?v=faces-reported-names-1';
-import {advanceSilk} from '../han/silk-road.js?v=faces-reported-names-1';
+import {advanceSilk,protectRoute,ROUTE_PROTECTION_COST} from '../han/silk-road.js?v=faces-reported-names-1';
 import {roll} from '../han/util.js?v=faces-reported-names-1';
 
 const next=s=>{if(++s.month>12){s.month=1;s.year++}advanceEasternMarkets(s)};
@@ -567,6 +567,30 @@ test('bandit risk consumes real cargo while route security can protect it',()=>{
  const receipt=s.tradeMarkets.transactions.find(x=>x.shipment===shipment.id);
  assert.equal(receipt.status,'lost');assert.equal(receipt.destination,nextRegion.id);
  assert.equal(receipt.refund,shipment.price+shipment.tariffs.reduce((sum,t)=>sum+t.amount,0));
+});
+
+test('paid Han route guards reduce real caravan risk without a negative-cost exploit',()=>{
+ const s=newHanGame('han',{seed:1});s.tradeMarkets.embeddedRoman=true;
+ const order=placeEasternTrade(s,{seller:'han',buyer:'external',origin:'changan',destination:'mediterranean_gate',commodity:'silk',quantity:1});
+ assert.equal(order.ok,true,order.reason);
+ const shipment=order.shipment,nextRegion=s.regions.find(r=>r.id===shipment.legs[0].to);
+ nextRegion.unrest=1;nextRegion.fort=0;for(const army of s.armies.filter(a=>a.region===nextRegion.id))army.men=0;
+ s.month++;shipment.remaining=1;
+ let selected=null;for(let seed=1;seed<10000;seed++){s.seed=seed;const chance=roll(s,`market-bandit:${shipment.id}:${nextRegion.id}`);if(chance>=.03&&chance<.08){selected=seed;break}}
+ assert.ok(selected,'a measurable risk difference must exist');
+ const baseline=loadHanSave(serialize(s)),guarded=loadHanSave(serialize(s)),cash=guarded.factions.han.treasury;
+ assert.equal(protectRoute(guarded,-100).reason,'invalid');assert.equal(guarded.factions.han.treasury,cash);
+ const poor=loadHanSave(serialize(s));poor.factions.han.treasury=ROUTE_PROTECTION_COST-1;
+ assert.equal(protectRoute(poor).reason,'treasury');assert.equal(poor.silk.security,0);
+ const foreignPlayer=newHanGame('kangju');const foreignCash=foreignPlayer.factions.han.treasury;
+ assert.equal(protectRoute(foreignPlayer).reason,'invalid');assert.equal(foreignPlayer.factions.han.treasury,foreignCash);
+ for(let i=1;i<=5;i++)assert.equal(protectRoute(guarded).security,i);
+ assert.equal(guarded.factions.han.treasury,cash-5*ROUTE_PROTECTION_COST);
+ assert.equal(protectRoute(guarded).reason,'maximum');
+ assert.equal(loadHanSave(serialize(guarded)).silk.security,5);
+ advanceEasternMarkets(baseline);advanceEasternMarkets(guarded);
+ assert.equal(baseline.tradeMarkets.shipments[0].status,'lost');
+ assert.equal(guarded.tradeMarkets.shipments[0].status,'traveling');
 });
 
 test('a legacy caravan without prepaid goods carries reports without minting money or horses',()=>{
