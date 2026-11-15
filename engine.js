@@ -596,7 +596,7 @@ function shortestStep(s,start,goal,owner){
 // After two years, a numerical report fades gradually toward an uncertain prior.
 export function estimatedStrength(s,observer,target){
  const k=s.knowledge?.[observer]?.[target],now=s.year*12+s.month,age=x=>now-((x.observationYear??x.year)*12+(x.observationMonth??x.month));
- const sightings=Object.values(k?.sightings||{}).filter(x=>age(x)>=0&&age(x)<=24).length,prior=4000+Math.min(5,sightings)*1000;
+ const sightings=Object.values(k?.sightings||{}).filter(x=>isDeliveredReport(s,x)&&age(x)>=0&&age(x)<=24).length,prior=4000+Math.min(5,sightings)*1000;
  const reports=(k?.reports||[]).filter(x=>isDeliveredReport(s,x)&&x.kind==='strength'&&Number.isFinite(x.value)&&x.value>=0&&age(x)>=0).sort((a,b)=>age(a)-age(b));
  if(!reports.length)return prior;
  // Compare only observations from the newest month. Forwarded copies from the
@@ -728,7 +728,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
       if(strongPlanning&&strategy&&!hostile&&next.owner===owner&&nextThreatened&&next.supply*1000<a.men*.75&&here.supply>next.supply)continue;
       if(defenders>a.men*(internalOpponent(defenderOwner)?2:({hard:1.15,expert:1.05}[s.difficulty]||1.35))||f.food<0){if(hostile&&strongPlanning){heldForPreparation=true;if(here.owner===owner)break}continue}
       if(hostile&&strongPlanning&&strategy&&!internalOpponent(defenderOwner)){
-       const dest=region(s,step),now=s.year*12+s.month,sightings=Object.values(s.knowledge?.[owner]?.[defenderOwner]?.sightings||{}).filter(x=>x.region===step&&now-(x.year*12+x.month)>=0&&now-(x.year*12+x.month)<=12).length;
+       const dest=region(s,step),now=s.year*12+s.month,sightings=Object.values(s.knowledge?.[owner]?.[defenderOwner]?.sightings||{}).filter(x=>{const age=now-((x.observationYear??x.year)*12+(x.observationMonth??x.month));return x.region===step&&isDeliveredReport(s,x)&&age>=0&&age<=12}).length;
        const fortReport=reportedFortification(s,owner,step),estimatedFort=fortReport&&!fortReport.stale?fortReport.band[0]:1;
        const assessment=(unit)=>assessAttack({ownMen:unit.men,morale:unit.morale,skill:unit.skill,experience:unit.experience,food:f.food,estimatedTotal:estimate,reportedTheaters:theaters,sightings,terrain:dest.terrain,fort:estimatedFort,difficulty:s.difficulty});
        if(!assessment(a).favorable&&here.owner===owner){

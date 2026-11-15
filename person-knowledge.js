@@ -7,7 +7,7 @@ const validName=name=>Array.isArray(name)&&name.length===2&&name.every(x=>typeof
 // dated entry, however, cannot be delivered or observed in the future.
 export function isDeliveredReport(s,r){
  const now=s.year*12+s.month,check=(year,month)=>year==null&&month==null?true:Number.isFinite(year)&&Number.isInteger(month)&&month>=1&&month<=12&&year*12+month<=now;
- return !!r&&check(r.year,r.month)&&check(r.observationYear??r.year,r.observationMonth??r.month);
+ return !!r&&check(r.year,r.month)&&check(r.observationYear??r.year,r.observationMonth??r.month)&&check(r.receivedYear,r.receivedMonth);
 }
 export function reportedPersonName(s,actor,target,id){
  const reports=s.knowledge?.[actor]?.[target]?.reports||[];
