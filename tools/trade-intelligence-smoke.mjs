@@ -6,9 +6,11 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const e=await import('/engine.js?v=born-portraits-nine-1'),c=await import('/character-system.js?v=born-portraits-nine-1');
+  const e=await import('/engine.js?v=exchange-observation-1'),c=await import('/character-system.js?v=exchange-observation-1');
   const s=e.newGame('caesar');s.alliances.push(['caesar','numidia']);s.agreements.push({id:'test-trade',type:'trade',status:'active',parties:['caesar','parthia'],expiresAt:s.year*12+s.month+12});
   c.addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'ill',source:'spy',confidence:'unverified'});
+  // Later arrival of an older forwarded claim must not replace the fresh observation.
+  c.addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'healthy',source:'exchange',originSource:'court',observationYear:-50,observationMonth:12,confidence:'unverified'});
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
  });
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
@@ -20,7 +22,7 @@ try{
  await page.locator('#advance').click();await page.locator('#save').click();s=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));op=s.operations.find(x=>x.type==='exchange');assert.equal(op.status,'pending');assert.equal(op.remaining,2);assert.ok(!s.knowledge.caesar.egypt.reports.some(r=>r.source==='exchange'));
  await page.locator('#load').click();await page.locator('#save').click();s=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));assert.equal(s.operations.find(x=>x.type==='exchange').remaining,2);
  await page.locator('#advance').click();await page.locator('#advance').click();await page.locator('#save').click();s=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));op=s.operations.find(x=>x.type==='exchange');assert.ok(['complete','failed','declined'].includes(op.status));
- if(op.status==='complete'){const report=s.knowledge.caesar.egypt.reports.find(r=>r.source==='exchange');assert.equal(report.fromFaction,'parthia');assert.equal(report.character,'ptolemy');assert.equal(report.value,'ill');await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click();assert.match(await page.locator('#mission-records').innerText(),/帕提亚/);assert.match(await page.locator('#mission-records').innerText(),/托勒密十三世/)}
+ if(op.status==='complete'){const report=s.knowledge.caesar.egypt.reports.find(r=>r.source==='exchange');assert.equal(report.fromFaction,'parthia');assert.equal(report.character,'ptolemy');assert.equal(report.value,'ill');assert.equal(report.observationMonth,1);await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click();assert.match(await page.locator('#mission-records').innerText(),/帕提亚/);assert.match(await page.locator('#mission-records').innerText(),/托勒密十三世/)}
  if(op.status==='declined'){await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click();assert.match(await page.locator('#mission-records').innerText(),/被拒绝/)}
  assert.deepEqual(errors,[]);console.log(`Selected a trade partner, preserved the delayed request across save/load, and resolved it: ${op.status}.`);
 }finally{await browser.close()}

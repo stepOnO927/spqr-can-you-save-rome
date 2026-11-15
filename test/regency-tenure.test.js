@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-nine-1';
+import {newGame,upgradeSave} from '../engine.js?v=exchange-observation-1';
 import {advanceGovernments,deriveGovernment} from '../governance.js?v=born-portraits-nine-1';
 import {createFictionalPerson} from '../dynasties.js?v=born-portraits-nine-1';
 
