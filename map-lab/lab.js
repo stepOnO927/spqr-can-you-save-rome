@@ -19,8 +19,8 @@ import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=39';
 import {physicalLabels} from './physical-labels.js?v=4';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
-import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=207';
-import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from '../development-ui.js?v=57';
+import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=208';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from '../development-ui.js?v=58';
 import {FACTIONS} from '../data.js?v=9';
 import {cultureLabel} from '../culture-labels.js?v=1';
 import {identity,factionMark} from '../identity.js?v=2';
@@ -38,7 +38,7 @@ import {intelligenceHtml,afterActionHtml,fortificationText,reconSummaryHtml,reco
 import {renderNavalPanel} from './naval-ui.js?v=65';
 import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=48';
 import {maritimeMapIntel} from './maritime-map-intel.js?v=1';
-import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates,dispatchWagonSupply} from '../engine.js?v=207';
+import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates,dispatchWagonSupply} from '../engine.js?v=208';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
@@ -79,6 +79,7 @@ function showDevelopment(page='research'){
   act('[data-recruit-figure]',b=>recruitFigure(state,state.player,b.dataset.recruitFigure));
   act('[data-adopt-idea]',b=>adoptIdea(state,state.player,b.dataset.adoptIdea,Number(b.dataset.slot)));
   act('[data-remove-idea]',b=>removeIdea(state,state.player,b.dataset.removeIdea,Number(b.dataset.slot)));
+  act('[data-cancel-idea-adoption]',()=>cancelIdeaAdoption(state,state.player));
   act('[data-expand-idea]',b=>expandIdeaSlot(state,state.player,b.dataset.expandIdea));
   act('[data-trade-id]',b=>knowledgeTrade(state,state.player,b.dataset.tradeSeller,b.dataset.tradeBranch,b.dataset.tradeId));
   act('[data-accept-offer-seller]',b=>acceptKnowledgeOffer(state,state.player,b.dataset.acceptOfferSeller,b.dataset.offerBranch,b.dataset.offerId));

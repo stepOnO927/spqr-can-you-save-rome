@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials,resolveBattle} from '../engine.js';
+import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials,resolveBattle} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves,advanceDevelopment,mineMetalOutput,localBuildingEffects,templeGuaranteeExpense} from '../development.js';
 import {advanceNaval} from '../naval.js';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js';
@@ -622,7 +622,7 @@ test('foreign multiscript policy needs an Egyptian community willing to receive 
  assert.equal(ideaAdoptionPlan(s,'senate',id).reason,'local-support');
  assert.match(ideasPanel(s,'en'),/Local satisfaction must reach 45/);
  assert.match(ideasPanel(s,'zh'),/当地满意度须达到45/);
- nile.civicSatisfaction=45;
+ nile.civicSatisfaction=80;
  const plan=ideaAdoptionPlan(s,'senate',id);assert.equal(plan.ok,true);assert.equal(plan.months,4);
  assert.equal(adoptIdea(s,'senate',id).ok,true);assert.equal(s.factions.senate.treasury,treasury-plan.cost);
  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
@@ -1733,4 +1733,41 @@ test('AI can initiate mutual agreements with a player or another AI',()=>{
  assert.equal(others.factions.senate.treasury,80);
  aiTurn(others,'caesar');
  assert.equal(others.knowledgeAgreements.length,1);
+});
+
+test('foreign idea adoption pauses when its local base is lost and resumes after a saved recovery',()=>{
+ const s=newGrandGame('senate');s.wars=[];s.factions.senate.treasury=500;
+ const id='egyptian-multiscript-decrees',region=s.regions.find(r=>r.id==='egypt'),d=development(s,'senate');
+ d.knownIdeas.push(id);region.owner='senate';region.civicSatisfaction=50;
+ assert.equal(adoptIdea(s,'senate',id).ok,true);
+ const duration=d.adoption.remaining,cash=s.factions.senate.treasury;
+ region.owner='egypt';
+ const notices=[];for(let month=0;month<duration;month++)advanceDevelopment(s,(en,zh)=>notices.push([en,zh]));
+ assert.equal(d.adoption.pausedReason,'cultural-base');
+ assert.equal(d.adoption.remaining,1);
+ assert.equal(d.slots.government[0],null);
+ assert.equal(activeEffects(s,'senate').egyptianDecrees,undefined);
+ assert.equal(s.factions.senate.treasury,cash,'a pause must not charge another adoption fee');
+ assert.match(notices[0][0],/paused/);assert.match(notices[0][1],/暂停/);
+ assert.match(ideasPanel(s,'en'),/originating culture territory/);
+ assert.match(ideasPanel(s,'zh'),/起源文化领土/);
+ assert.match(ideasPanel(s,'en'),/Cancel transition/);
+ assert.match(ideasPanel(s,'zh'),/取消过渡/);
+ const cancelled=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(cancelIdeaAdoption(cancelled,'senate').ok,true);
+ assert.equal(development(cancelled,'senate').adoption,null);
+ assert.equal(development(cancelled,'senate').slots.government[0],null);
+ assert.equal(cancelIdeaAdoption(cancelled,'senate').reason,'unavailable');
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s))),restored=loaded.regions.find(r=>r.id==='egypt');
+ assert.equal(development(loaded,'senate').adoption.pausedReason,'cultural-base');
+ restored.owner='senate';restored.civicSatisfaction=44;
+ advanceDevelopment(loaded);
+ assert.equal(development(loaded,'senate').adoption.pausedReason,'local-support');
+ assert.equal(development(loaded,'senate').slots.government[0],null);
+ assert.match(ideasPanel(loaded,'zh'),/当地满意度至少45/);
+ restored.civicSatisfaction=45;
+ advanceDevelopment(loaded);
+ assert.equal(development(loaded,'senate').adoption,null);
+ assert.equal(development(loaded,'senate').slots.government[0],id);
+ assert.equal(activeEffects(loaded,'senate').egyptianDecrees,1);
 });

@@ -338,15 +338,20 @@ export function ideaAdoptionPlan(s,owner,ideaId,slot=0){
   if(!d.knownIdeas.includes(ideaId)||d.adoption)return {...plan,ok:false,reason:'unavailable'};
   const compatible=ideaCompatibility(s,owner,ideaId,slot);if(!compatible.ok)return {...plan,...compatible};
   if(old===ideaId)return {...plan,ok:false,reason:'active'};
-  if(idea.origin&&owner!==idea.origin){
-    const culturalBase=s.regions.filter(r=>r.owner===owner&&(r.culture===(idea.originCulture||idea.origin)||!s.grandMap&&r.id===idea.origin));
-    if(!culturalBase.length)return {...plan,ok:false,reason:'cultural-base'};
-    if(!culturalBase.some(r=>(r.civicSatisfaction??r.loyalty??0)>=45))return {...plan,ok:false,reason:'local-support'};
-  }
-  if(idea.id==='egyptian-temple-revenues'&&!s.regions.some(r=>r.owner===owner&&r.culture==='egypt'&&r.faiths?.[0]?.id==='egyptian-cults'&&r.priesthood?.tradition==='egyptian-cults'&&r.priesthood.influence>=35&&(r.civicSatisfaction??r.loyalty??0)>=45))return {...plan,ok:false,reason:'priesthood'};
-  if(idea.requiresBuilding&&!s.regions.some(r=>r.owner===owner&&r.buildings.includes(idea.requiresBuilding)))return {...plan,ok:false,reason:'building'};
+  const localGate=ideaLocalAdoptionGate(s,owner,idea);
+  if(localGate)return {...plan,ok:false,reason:localGate};
   if(f.treasury<plan.cost)return {...plan,ok:false,reason:'treasury'};
   return {...plan,ok:true};
+}
+function ideaLocalAdoptionGate(s,owner,idea){
+  if(idea.origin&&owner!==idea.origin){
+    const culturalBase=s.regions.filter(r=>r.owner===owner&&(r.culture===(idea.originCulture||idea.origin)||!s.grandMap&&r.id===idea.origin));
+    if(!culturalBase.length)return 'cultural-base';
+    if(!culturalBase.some(r=>(r.civicSatisfaction??r.loyalty??0)>=45))return 'local-support';
+  }
+  if(idea.id==='egyptian-temple-revenues'&&!s.regions.some(r=>r.owner===owner&&r.culture==='egypt'&&r.faiths?.[0]?.id==='egyptian-cults'&&r.priesthood?.tradition==='egyptian-cults'&&r.priesthood.influence>=35&&(r.civicSatisfaction??r.loyalty??0)>=45))return 'priesthood';
+  if(idea.requiresBuilding&&!s.regions.some(r=>r.owner===owner&&r.buildings.includes(idea.requiresBuilding)))return 'building';
+  return null;
 }
 export function adoptIdea(s,owner,ideaId,slot=0){
   const plan=ideaAdoptionPlan(s,owner,ideaId,slot);if(!plan.ok)return {ok:false,reason:plan.reason,...(plan.with?{with:plan.with}:{})};
@@ -359,6 +364,12 @@ export function removeIdea(s,owner,category,slot=0){
   const d=development(s,owner),current=d.slots[category]?.[slot],f=s.factions[owner];
   if(!current||d.adoption||f.treasury<5)return {ok:false,reason:'unavailable'};
   f.treasury-=5;d.adoption={ideaId:null,category,slot,remaining:2,old:current};return {ok:true};
+}
+export function cancelIdeaAdoption(s,owner){
+  const d=development(s,owner);
+  if(!d?.adoption)return {ok:false,reason:'unavailable'};
+  d.adoption=null;
+  return {ok:true};
 }
 export function ideaSlotExpansionCheck(s,owner,category){
   const d=development(s,owner),slots=d.slots[category],f=s.factions[owner];
@@ -679,7 +690,17 @@ export function advanceDevelopment(s,log=()=>{}){
   for(const [owner,d] of Object.entries(s.development)){
     const f=s.factions[owner];if(!f)continue;
     if(d.research&&--d.research.remaining<=0){const {branch,id,scholarPartner}=d.research,key=branch==='material'?'knownMaterial':'knownIdeas',newKnowledge=!d[key].includes(id);if(newKnowledge)d[key].push(id);if(newKnowledge&&branch==='idea'&&scholarPartner)d.foreignOrigins[id]=scholarPartner;d.research=null;if(newKnowledge&&owner===s.player){const name=(branch==='material'?MATERIALS:IDEAS).find(item=>item.id===id)?.name||[id,id];log(`Research completed: ${name[0]}.`,`研究完成：${name[1]}。`)}}
-    if(d.adoption&&--d.adoption.remaining<=0){const {category,slot,ideaId}=d.adoption;d.slots[category][slot]=ideaId;d.adoption=null;if(owner===s.player){const name=IDEAS.find(item=>item.id===ideaId)?.name||[ideaId||'removed',ideaId||'已移除'];log(`National idea ${name[0]} is now in effect.`,`国家理念${name[1]}现已生效。`)}}
+    if(d.adoption&&--d.adoption.remaining<=0){
+      const {category,slot,ideaId}=d.adoption,idea=IDEAS.find(item=>item.id===ideaId),gate=idea?ideaLocalAdoptionGate(s,owner,idea):null;
+      if(gate){
+        d.adoption.remaining=1;
+        if(d.adoption.pausedReason!==gate&&owner===s.player)log('National idea transition paused: local adoption requirements are no longer met.','国家理念过渡暂停：当地装配条件已不再满足。');
+        d.adoption.pausedReason=gate;
+      }else{
+        d.slots[category][slot]=ideaId;d.adoption=null;
+        if(owner===s.player){const name=idea?.name||[ideaId||'removed',ideaId||'已移除'];log(`National idea ${name[0]} is now in effect.`,`国家理念${name[1]}现已生效。`)}
+      }
+    }
     if(d.expansion&&--d.expansion.remaining<=0){d.slots[d.expansion.category].push(null);d.expansion=null}
     d.offers=d.offers.filter(offer=>--offer.remaining>0&&!d[offer.branch==='material'?'knownMaterial':'knownIdeas'].includes(offer.id)&&!knowledgeInProgress(d,offer.branch,offer.id));
     d.purchaseRequests=d.purchaseRequests.filter(request=>--request.remaining>0&&!s.wars.some(w=>w.includes(owner)&&w.includes(request.buyer))&&d[request.branch==='material'?'knownMaterial':'knownIdeas'].includes(request.id)&&!s.development[request.buyer]?.[request.branch==='material'?'knownMaterial':'knownIdeas'].includes(request.id)&&!knowledgeInProgress(s.development[request.buyer],request.branch,request.id));
