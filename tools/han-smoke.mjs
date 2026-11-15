@@ -5,6 +5,14 @@ const base=process.env.SPQR_URL||'http://127.0.0.1:5173';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1600,height:900}});
 const errors=[];page.on('pageerror',error=>errors.push(error.message));
+async function selectCapitalGuard(){
+ // MapLibre keeps an off-camera marker in the DOM, but it cannot be clicked.
+ // Use the player's map control to return to the Han theater before selecting it.
+ await page.locator('#reset').click();
+ const guard=page.locator('[data-army="hanCapitalGuard"]');
+ await guard.waitFor({state:'visible'});
+ await guard.click();
+}
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
@@ -28,7 +36,7 @@ try{
  await page.locator('#office-feedback button').click();
  assert.match(await page.locator('.office-row').first().innerText(),/王桓/);
  assert.equal(await page.locator('[data-army="hanCapitalGuard"]').count(),1);
- await page.locator('[data-army="hanCapitalGuard"]').click({force:true});
+ await selectCapitalGuard();
  assert.match(await page.locator('#selection-detail').innerText(),/张守/);
  assert.match(await page.locator('#command-detail').innerText(),/8,500/);
  await page.locator('#lab-orders select').selectOption('hanHexi');
@@ -36,7 +44,7 @@ try{
  await page.locator('#lab-orders button').click();
  await page.locator('#advance').click();
  await page.locator('#advance').click();
- await page.locator('[data-army="hanCapitalGuard"]').click({force:true});
+ await selectCapitalGuard();
  assert.match(await page.locator('#command-detail').innerText(),/河西走廊/);
  await page.locator('#command-detail .identity-focus-map').first().click();
  assert.match(await page.locator('#selection-title').innerText(),/张守/);
@@ -47,7 +55,7 @@ try{
  await page.locator('[data-slot="load"]').click();
  await page.locator('#open-atlas').click();
  await page.waitForFunction(()=>document.querySelector('[data-theater="hanGuanzhong"]')&&document.querySelector('.brief h1')?.textContent.includes('关中'));
- await page.locator('[data-army="hanCapitalGuard"]').click({force:true});
+ await selectCapitalGuard();
  assert.match(await page.locator('#selection-detail').innerText(),/张守/);
  await page.locator('#factions').click();
  await page.locator('[data-faction="han"]').click();
