@@ -1,3 +1,4 @@
+import '../version-ui.js';
 import {isDeliveredReport} from '../person-knowledge.js?v=faces-reported-names-1';
 import {sendAgreementProposal} from '../agreement-negotiations.js?v=faces-reported-names-1';
 import {localStore as localStorage,sessionStore as sessionStorage} from '../safe-storage.js';

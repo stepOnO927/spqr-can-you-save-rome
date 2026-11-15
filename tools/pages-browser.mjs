@@ -12,6 +12,9 @@ async function open(url){
   const response=await page.goto(url,{waitUntil:'domcontentloaded'});
   assert.equal(response.status(),200,url);
   await page.locator('#save-transfer-open').waitFor();
+  await page.locator('.spqr-version').click();
+  assert.match(await page.locator('.spqr-release-dialog').innerText(),/0\.1\.0/);
+  await page.locator('.spqr-release-close').click();
   return page;
 }
 try{

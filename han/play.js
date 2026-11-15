@@ -1,3 +1,4 @@
+import '../version-ui.js';
 import {localStore as localStorage} from '../safe-storage.js';
 import {startupDiagnostics} from '../inspector-diagnostics.js';
 import {isLiuClan} from './dynasty.js';
