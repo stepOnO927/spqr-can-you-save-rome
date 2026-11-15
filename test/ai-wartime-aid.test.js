@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,upgradeSave} from '../engine.js?v=campaign-intelligence-privacy-1';
 import {proposeAgreement} from '../agreements.js?v=grand-chessboard-2';
 import {observeDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
-import {buildChessboard} from '../chessboard.js?v=campaign-intelligence-privacy-1';
+import {buildChessboard} from '../chessboard.js?v=strategy-board-name-privacy-1';
 import {receivedMail} from '../epistulae.js?v=infant-portraits-1';
 import {mailboxHtml} from '../mail-ui.js?v=infant-portraits-1';
 function setup(seed){const s=newGame('caesar');s.seed=seed;s.wars.push(['egypt','senate']);s.relations['egypt:parthia']=40;assert.ok(proposeAgreement(s,'egypt','parthia','trade').ok);observeDiplomacy(s);s.factions.parthia.treasury=100;s.factions.parthia.food=100;return s}
