@@ -1,9 +1,9 @@
 // The East as Rome knows it: a map coloured from the latest merchant report
 // and a panel of dispatches. Nothing here reads the live Han simulation.
-import {REGIONS,FACTIONS,ZHOU,THEATERS} from './data.js?v=faces-main-20261114-1';
-import {drawMap,CAMERAS,MODES} from './map.js?v=faces-main-20261114-1';
-import {romanView,EMBASSY_COST,EMBASSY_MONTHS} from './world.js?v=faces-main-20261114-1';
-import {COMMODITIES} from '../market-goods.js?v=faces-main-20261114-1';
+import {REGIONS,FACTIONS,ZHOU,THEATERS} from './data.js?v=faces-main-20261115-1';
+import {drawMap,CAMERAS,MODES} from './map.js?v=faces-main-20261115-1';
+import {romanView,EMBASSY_COST,EMBASSY_MONTHS} from './world.js?v=faces-main-20261115-1';
+import {COMMODITIES} from '../market-goods.js?v=faces-main-20261115-1';
 
 const esc=x=>String(x??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const colors=Object.fromEntries(Object.entries(FACTIONS).map(([k,v])=>[k,v.color]));colors.rebels='#3c3c3c';colors.rival_court='#d07a3a';

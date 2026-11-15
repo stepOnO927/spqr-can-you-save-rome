@@ -72,8 +72,8 @@ try{
  assert.match(await page.locator('.market-receipts').innerText(),/货价.*运费.*过境税.*总计/);
  await page.evaluate(async()=>{
   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js');
-  const {propose,declareWar}=await import('/han/frontier.js?v=faces-main-20261114-1');
-  const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=faces-main-20261114-1');
+  const {propose,declareWar}=await import('/han/frontier.js?v=faces-main-20261115-1');
+  const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=faces-main-20261115-1');
   const state=newHanGame('han',{seed:77});
   if(propose(state,'han','kangju','market').proposal.status!=='accepted')throw Error('Market treaty unavailable');
   const placed=placeEasternTrade(state,{seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1});

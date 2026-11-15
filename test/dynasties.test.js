@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=faces-main-20261114-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=faces-main-20261114-1';
-import {assignSuccession,successionModel} from '../characters.js?v=faces-main-20261114-1';
-import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=faces-main-20261114-1';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=faces-main-20261114-1';
-import {canHoldOffice} from '../office-system.js?v=faces-main-20261114-1';
-import {renderGenealogy} from '../genealogy-ui.js?v=faces-main-20261114-1';
-import {finalizeCampaign} from '../legacy.js?v=faces-main-20261114-1';
-import {startDynasticWar} from '../civil-war.js?v=faces-main-20261114-1';
-import {fictionalPortraitKey} from '../portrait-registry.js?v=faces-main-20261114-1';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=faces-main-20261115-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=faces-main-20261115-1';
+import {assignSuccession,successionModel} from '../characters.js?v=faces-main-20261115-1';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=faces-main-20261115-1';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=faces-main-20261115-1';
+import {canHoldOffice} from '../office-system.js?v=faces-main-20261115-1';
+import {renderGenealogy} from '../genealogy-ui.js?v=faces-main-20261115-1';
+import {finalizeCampaign} from '../legacy.js?v=faces-main-20261115-1';
+import {startDynasticWar} from '../civil-war.js?v=faces-main-20261115-1';
+import {fictionalPortraitKey} from '../portrait-registry.js?v=faces-main-20261115-1';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 
@@ -108,6 +108,7 @@ test('stale asylum lead gives a generic reply',()=>{
 test('a family guarantee costs treasury, waits for reply, and breaks on war',()=>{
  const s=newGame('caesar'),treasury=s.factions.caesar.treasury;
  assert.equal(offerFamilyAccord(s,'pledge','cleopatra','egypt').ok,true);
+ s.world.dynasties.familyAccords[0].courierSeed=1; // This scenario exercises a delivered answer.
  assert.equal(s.factions.caesar.treasury,treasury-6);
  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
  for(const month of [2,3,4,5]){restored.month=month;if(month===5)restored.world.dynasties.seed=0;advanceDynasties(restored)}
@@ -124,6 +125,7 @@ test('a family guarantee costs treasury, waits for reply, and breaks on war',()=
 test('diplomatic wardship educates a minor without transferring custody or office',()=>{
  const s=newGame('caesar'),child=createFictionalPerson(s,{name:['Ward','受监护者'],faction:'caesar',birthYear:-57,location:'cisalpine'});
  assert.equal(offerFamilyAccord(s,'wardship','cleopatra','egypt',child).ok,true);
+ s.world.dynasties.familyAccords[0].courierSeed=1; // Keep courier failure separate from the acceptance test.
  for(const month of [2,3,4,5]){s.month=month;if(month===5)s.world.dynasties.seed=0;advanceDynasties(s)}
  assert.equal(s.world.dynasties.familyAccords[0].status,'active');
  assert.equal(s.world.characters[child].diplomaticGuardian,'cleopatra');

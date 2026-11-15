@@ -8,8 +8,8 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  const expected=await page.evaluate(async()=>{
-  const {newGame,forecastEconomy}=await import('/engine.js?v=faces-main-20261114-1');
-  const {proposeAgreement}=await import('/agreements.js?v=faces-main-20261114-1');
+  const {newGame,forecastEconomy}=await import('/engine.js?v=faces-main-20261115-1');
+  const {proposeAgreement}=await import('/agreements.js?v=faces-main-20261115-1');
   const s=newGame('caesar'),before=forecastEconomy(s).treasury;
   s.relations['caesar:egypt']=80;
   if(!proposeAgreement(s,'caesar','egypt','trade').ok)throw Error('Trade treaty was not accepted');

@@ -10,7 +10,7 @@
 // and adoption never create lineage. Every write to s.throne.orthodox goes
 // through crown(), and enforceDynasticInvariants() re-validates the throne on
 // every tick and on every load, so a save edit cannot smuggle a non-Liu in.
-import {PERSON} from './people.js?v=faces-main-20261114-1';
+import {PERSON} from './people.js?v=faces-main-20261115-1';
 
 export const STATUSES=['orthodox_han_emperor','disputed_liu_claimant','regent','de_facto_ruler','non_liu_usurper','new_dynasty_founder'];
 export const STATUS_NAMES={

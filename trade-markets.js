@@ -1,10 +1,10 @@
-import {REGIONS,ROUTES} from './data.js?v=faces-main-20261114-1';
-import {activeAgreement,proposeAgreement} from './agreements.js?v=faces-main-20261114-1';
-import {ROUTES as EURASIAN_ROUTES,REGIONS as EURASIAN_REGIONS} from './han/data.js?v=faces-main-20261114-1';
-import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=faces-main-20261114-1';
-import {generateFictionalName} from './fictional-names.js?v=faces-main-20261114-1';
-import {reportedControl} from './control-intelligence.js?v=faces-main-20261114-1';
-import {COMMODITIES,marketPrice} from './market-goods.js?v=faces-main-20261114-1';
+import {REGIONS,ROUTES} from './data.js?v=faces-main-20261115-1';
+import {activeAgreement,proposeAgreement} from './agreements.js?v=faces-main-20261115-1';
+import {ROUTES as EURASIAN_ROUTES,REGIONS as EURASIAN_REGIONS} from './han/data.js?v=faces-main-20261115-1';
+import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=faces-main-20261115-1';
+import {generateFictionalName} from './fictional-names.js?v=faces-main-20261115-1';
+import {reportedControl} from './control-intelligence.js?v=faces-main-20261115-1';
+import {COMMODITIES,marketPrice} from './market-goods.js?v=faces-main-20261115-1';
 export {COMMODITIES,marketPrice};
 export const TARIFF_POLICIES=Object.freeze({low:.02,standard:.05,high:.15});
 

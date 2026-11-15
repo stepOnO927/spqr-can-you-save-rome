@@ -1,8 +1,8 @@
-import {ROUTES} from './data.js?v=faces-main-20261114-1';
-import {reportedControl} from './control-intelligence.js?v=faces-main-20261114-1';
-import {activeAgreement} from './agreements.js?v=faces-main-20261114-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=faces-main-20261114-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=faces-main-20261114-1';
+import {ROUTES} from './data.js?v=faces-main-20261115-1';
+import {reportedControl} from './control-intelligence.js?v=faces-main-20261115-1';
+import {activeAgreement} from './agreements.js?v=faces-main-20261115-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=faces-main-20261115-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=faces-main-20261115-1';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const rel=(s,a,b)=>s.relations[pair(a,b)]??0;

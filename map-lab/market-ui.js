@@ -1,6 +1,6 @@
-import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,postTradeSale,cancelTradeSale,proposeSupplyContract,cancelSupplyContract,setTradeTariffPolicy,setTradeExportRestriction,TARIFF_POLICIES,marketPrice,tradeRouteName,activeMerchantPrivilege,grantMerchantPrivilege} from '../trade-markets.js?v=faces-main-20261114-1';
-import {activeAgreement} from '../agreements.js?v=faces-main-20261114-1';
-import {REGIONS,FACTIONS} from '../data.js?v=faces-main-20261114-1';
+import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,postTradeSale,cancelTradeSale,proposeSupplyContract,cancelSupplyContract,setTradeTariffPolicy,setTradeExportRestriction,TARIFF_POLICIES,marketPrice,tradeRouteName,activeMerchantPrivilege,grantMerchantPrivilege} from '../trade-markets.js?v=faces-main-20261115-1';
+import {activeAgreement} from '../agreements.js?v=faces-main-20261115-1';
+import {REGIONS,FACTIONS} from '../data.js?v=faces-main-20261115-1';
 
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const name=(value,zh)=>value?.[zh?1:0]||'';

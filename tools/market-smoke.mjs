@@ -9,7 +9,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=faces-main-20261114-1');
+  const {newGame}=await import('/engine.js?v=faces-main-20261115-1');
   const state=newGame('caesar');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
  });
@@ -57,9 +57,9 @@ try{
  // A long border closure must leave a readable refund rather than a ghost
  // shipment that remains in the transit list indefinitely.
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=faces-main-20261114-1');
-  const {proposeAgreement}=await import('/agreements.js?v=faces-main-20261114-1');
-  const {placeTradeOrder,advanceMarkets}=await import('/trade-markets.js?v=faces-main-20261114-1');
+  const {newGame}=await import('/engine.js?v=faces-main-20261115-1');
+  const {proposeAgreement}=await import('/agreements.js?v=faces-main-20261115-1');
+  const {placeTradeOrder,advanceMarkets}=await import('/trade-markets.js?v=faces-main-20261115-1');
   const state=newGame('han');state.relations['han:parthia']=45;
   if(!proposeAgreement(state,'han','parthia','trade').ok)throw Error('Trade treaty unavailable');
   const placed=placeTradeOrder(state,{seller:'han',buyer:'parthia',origin:'hanGuanzhong',destination:'parthia',commodity:'silk',quantity:1});
@@ -79,7 +79,7 @@ try{
  // A direct Han player can buy from Parthia through the existing oasis and
  // Central Asian network without receiving a fictitious direct border.
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=faces-main-20261114-1'),{proposeAgreement}=await import('/agreements.js?v=faces-main-20261114-1');
+  const {newGame}=await import('/engine.js?v=faces-main-20261115-1'),{proposeAgreement}=await import('/agreements.js?v=faces-main-20261115-1');
   const state=newGame('han');state.relations['han:parthia']=45;
   if(!proposeAgreement(state,'han','parthia','trade').ok)throw Error('Han-Parthia treaty unavailable');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
@@ -99,7 +99,7 @@ try{
  // A delivered horse batch becomes visible mounted scouts when Han raises
  // a force in the receiving theater.
  await page.evaluate(async()=>{
-  const {newGame,recruit}=await import('/engine.js?v=faces-main-20261114-1');
+  const {newGame,recruit}=await import('/engine.js?v=faces-main-20261115-1');
   const state=newGame('han');state.markets.regions.hanHexi.goods.horses.stock=1;
   if(!recruit(state,'hanHexi'))throw Error('Han recruitment failed');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));

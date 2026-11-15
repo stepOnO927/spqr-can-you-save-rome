@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry,answerPeaceOffer} from './engine.js?v=faces-main-20261114-1';
-import historical from './historical-territories.js?v=faces-main-20261114-1';
-import {REGIONS} from './data.js?v=faces-main-20261114-1';
-import {identity,factionMark} from './identity.js?v=faces-main-20261114-1';
+import {newGame,upgradeSave,tick,moveArmy,previewMarch,recruit,setTax,diplomacy,resolveBattle,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,sendInquiry,answerPeaceOffer} from './engine.js?v=faces-main-20261115-1';
+import historical from './historical-territories.js?v=faces-main-20261115-1';
+import {REGIONS} from './data.js?v=faces-main-20261115-1';
+import {identity,factionMark} from './identity.js?v=faces-main-20261115-1';
 // These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
 // they run with the expansion's AI layer switched off (world.imperium.enabled=false).
 const legacyIsolated=g=>{g.world.imperium={enabled:false};return g};

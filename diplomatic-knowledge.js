@@ -1,4 +1,4 @@
-import {ROUTES,FACTIONS} from './data.js?v=faces-main-20261114-1';
+import {ROUTES,FACTIONS} from './data.js?v=faces-main-20261115-1';
 
 // Public announcements are learned by participants and adjacent observers.
 // Snapshots are not live links: an observer who loses contact keeps old news.

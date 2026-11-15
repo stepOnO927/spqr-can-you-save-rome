@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-main-20261114-1';
-import {proposeAgreement} from '../agreements.js?v=faces-main-20261114-1';
-import {advanceMarketAI,advanceMarketDiplomacy,advanceMarkets,quoteTrade} from '../trade-markets.js?v=faces-main-20261114-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-main-20261115-1';
+import {proposeAgreement} from '../agreements.js?v=faces-main-20261115-1';
+import {advanceMarketAI,advanceMarketDiplomacy,advanceMarkets,quoteTrade} from '../trade-markets.js?v=faces-main-20261115-1';
 
 const tradeState=player=>{
  const s=newGame(player);s.relations['egypt:senate']=55;
