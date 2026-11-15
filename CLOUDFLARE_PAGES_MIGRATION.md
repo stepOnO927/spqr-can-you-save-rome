@@ -26,6 +26,7 @@
 2. 在 Cloudflare Pages 新建 **Git 集成**项目，授权该仓库。配置：生产分支 `main`、根目录仓库根目录、框架 `None`、构建命令 `npm run build:pages`、输出目录 `dist`、Node.js 22。Cloudflare 账号中的项目名及将来的正式域名尚待确定，不写入源码。
 3. 开启预览分支部署；先在 Cloudflare 提供的 `*.pages.dev` 地址测试 `/`、`/map-lab/`、`/han/`。检查 Network 面板无本地 404、地图 worker 正常加载、肖像显示、主战役与地图之间切换、行军/回合/外交/情报/Han/存读档及跨域导入。
 4. 在 Cloudflare Pages 项目设置中启用 **Web Analytics 一次**。Pages 会自动注入 beacon；`dist/` 已移除源 HTML 里用于旧站点的手动 beacon。检查新域名页面中恰好一个 beacon，并在 Analytics 面板确认新主机名收到流量。将来自新域名的数据与旧域名分开核对。
+   游戏内的公开分析渠道已识别 `<project>.pages.dev` 为 production、`<preview>.<project>.pages.dev` 为 staging。确定正式自定义域名后，把它准确填入 `analytics-settings.js` 的 `hostnames.production`，再通过测试与构建；未知域名默认仍属于 development preview。GA4 ID 与自建会话端点目前为空，不会凭空向第三方发送游戏会话数据。
 5. 在正式域名上再次测试、确认原 GitHub Pages 可访问，并获得**明确切换批准**后，才切换 DNS/入口。确认公开 Cloudflare 站点稳定，再单独申请更改仓库为 private 的批准。不要重命名仓库或删除旧部署。
 
 Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/configuration/git-integration/github-integration/)、[构建配置](https://developers.cloudflare.com/pages/configuration/build-configuration/)、[静态 HTML 设置](https://developers.cloudflare.com/pages/framework-guides/deploy-anything/)、[平台限制](https://developers.cloudflare.com/pages/platform/limits/)、[Web Analytics](https://developers.cloudflare.com/pages/how-to/web-analytics/)。当前官方限制包括单个静态文件最多 25 MiB、Free 项目最多 20,000 文件、构建最多 20 分钟；每次部署前应复核。

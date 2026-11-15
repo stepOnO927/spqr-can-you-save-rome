@@ -11,7 +11,7 @@ const noop={track(){},setContext(){},setGameRunning(){},snapshot(){return null},
 
 function createBrowserAnalytics(){
  const poki=!!window.PokiSDK||/(^|\.)poki\.(com|net)$/i.test(location.hostname);
- const channel=releaseChannel(location.hostname,location.pathname,poki);
+ const channel=releaseChannel(location.hostname,location.pathname,poki,analyticsSettings.hostnames);
  const testMode=!!window.__SPQR_TEST_MODE||channel==='local_preview';
  const measurementId=analyticsSettings.ga4?.[channel]||'';
  const endpoint=typeof analyticsSettings.sessionEndpoint==='string'&&/^https:\/\//.test(analyticsSettings.sessionEndpoint)?analyticsSettings.sessionEndpoint:'';
