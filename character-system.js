@@ -10,6 +10,8 @@ import {canHoldOffice,localGovernor} from './office-system.js?v=faces-reported-n
 import {activeAgreement} from './agreements.js?v=faces-reported-names-1';
 import {activeModifiers} from './inventions.js?v=faces-reported-names-1';
 import {registerMissionPersonnel} from './epistulae-personnel.js?v=faces-reported-names-1';
+import {namedReportSubjects} from './person-knowledge.js?v=faces-reported-names-1';
+export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=faces-reported-names-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -110,19 +112,7 @@ const sourceFamily=r=>{const source=r.originSource||r.source;return ({official:'
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
 // Preserve only names present when a report was made. Forwarded and legacy
 // reports never acquire a new name from the foreign court's current state.
-const namedReportSubjects=r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:r.kind?.startsWith('office_')||r.kind==='succession'?[r.value]:[];
 export function snapshotReportedPeople(report,s=null){const result={};for(const id of namedReportSubjects(report)){const name=s?.world?.dynasties?.catalog?.[id]?.name||CHARACTER_CATALOG[id]?.name;if(Array.isArray(name)&&name.length===2&&name.every(x=>typeof x==='string'&&x.length>0))result[id]=[...name]}return result}
-export function reportedPersonName(s,actor,target,id){
- const reports=s.knowledge?.[actor]?.[target]?.reports||[];
- const found=reports.filter(r=>reportAge(s,r)>=0&&namedReportSubjects(r).includes(id)&&Array.isArray(r.peopleNames?.[id])&&r.peopleNames[id].length===2&&r.peopleNames[id].every(x=>typeof x==='string'&&x.length>0)).sort((a,b)=>reportAge(s,a)-reportAge(s,b))[0];
- return found?{name:[...found.peopleNames[id]],year:found.observationYear??found.year,month:found.observationMonth??found.month}:null;
-}
-export function visiblePersonName(s,actor,id){
- const person=CHARACTER_CATALOG[id];if(!person)return null;
- if(!person.fictional||s.world.characters[id]?.faction===actor)return person.name;
- const records=Object.keys(s.knowledge?.[actor]||{}).map(target=>reportedPersonName(s,actor,target,id)).filter(Boolean).sort((a,b)=>(b.year-a.year)*12+b.month-a.month);
- return records[0]?.name||s.meetings?.find(m=>m.actor===actor&&m.target===id&&Array.isArray(m.reportedName))?.reportedName||['Unrecorded name','姓名未记录'];
-}
 const knownReport=x=>['leaders','claimants'].includes(x.kind)?Array.isArray(x.leaders)&&x.leaders.length>0:x.value!=='unknown'&&x.value!=null;
 const validStrengthRange=r=>r.kind==='strength'&&Array.isArray(r.range)&&r.range.length===2&&r.range.every(Number.isFinite)&&r.range[0]>=0&&r.range[0]<=r.range[1];
 const strengthRange=r=>validStrengthRange(r)?r.range:Number.isFinite(r.value)?[r.value,r.value]:null;
