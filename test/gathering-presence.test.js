@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=senate-record-privacy-1';
-import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=player-request-aid-1';
-import {mailboxHtml} from '../mail-ui.js?v=player-request-aid-1';
+import {newGame,upgradeSave} from '../engine.js?v=player-coalition-letters-1';
+import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=player-coalition-letters-1';
+import {mailboxHtml} from '../mail-ui.js?v=player-coalition-letters-1';
 import {createFictionalPerson} from '../dynasties.js?v=senator-portraits-1';
 
 function invitation(){

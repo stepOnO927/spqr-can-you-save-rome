@@ -18,7 +18,7 @@ Between quarterly reviews, a court also reevaluates when its own reported stabil
 
 ## Coalition invitations
 
-Courts select prospective partners from their own known contacts rather than reading the candidates' private threat assessments. An invitation costs 3 treasury, takes approximately four months round trip and can be lost or declined. Recipients decide from their own resources, relations and perceived danger; a successful coalition costs each member 5 treasury. The player can send invitations from the government panel. AI invitations currently exclude a human recipient rather than committing that player without consent. The existing coalition system remains responsible for membership and obligations, and invitation history is saved with a twelve-month repeat limit.
+Courts select prospective partners from their own known contacts rather than reading the candidates' private threat assessments. An invitation costs the sender 3 treasury, travels for two months and can be lost or declined. AI recipients decide from their own resources, relations and perceived danger. The player can send invitations from the government panel, or receive and answer AI invitations in the mailbox. A human answer travels back for two months; if the player accepted, a separate confirmation then takes another two months and may be lost. Only a delivered, successful confirmation forms the coalition and charges each member 5 treasury; acceptance itself does not declare war. The existing coalition system handles membership and defense obligations, and invitation history is saved with a twelve-month repeat limit.
 
 ## Wartime aid between AI courts
 
