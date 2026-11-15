@@ -132,6 +132,11 @@ function senderFor(s, faction) {
   const ids = s.world?.leadership?.[faction] || [];
   return ids.find(id => s.world.characters[id]?.alive && CHARACTER_CATALOG[id]) || null;
 }
+// Preserve the author as known when the letter is written. An old pending
+// offer without a snapshot safely falls back to the sending institution.
+export function strategicLetterSenderSnapshot(s,faction){
+  const id=senderFor(s,faction);return id?{id,name:[...name(id)],portrait:portrait(s,id)}:null;
+}
 function replyNotice(s, original, subject, body, priority = 'routine') {
   const senderId=original.senderFaction===original.recipient&&s.world.characters[original.senderId]?.alive?original.senderId:senderFor(s,original.senderFaction);
   return sendLetter(s, {
@@ -283,12 +288,14 @@ export function syncStrategicOfferLetters(s){
   const previous=offer.mailId&&mail.messages.find(m=>m.id===offer.mailId);
   if(previous&&Number.isInteger(offer.year)&&Number.isInteger(offer.month)&&offer.month>=1&&offer.month<=12)previous.created={year:offer.year,month:offer.month};
   if(offer.recipient!==s.player||offer.status!=='awaiting_decision'||offer.mailId)continue;
-  const target=name(offer.target),senderId=senderFor(s,offer.actor),aid=offer.kind==='request_aid';
-  const result=sendLetter(s,{senderId,senderInstitution:senderId?null:offer.actor,senderFaction:offer.actor,recipient:s.player,category:'diplomatic',priority:'critical',
+  // Create the letter through the institution, then use its dated author
+  // snapshot; a change of leadership in transit must not rewrite the sender.
+  const target=name(offer.target),aid=offer.kind==='request_aid';
+  const result=sendLetter(s,{senderId:null,senderInstitution:offer.actor,senderFaction:offer.actor,recipient:s.player,category:'diplomatic',priority:'critical',
    subject:aid?['Request for wartime supplies','请求战时物资']:['Request for military cooperation','请求军事协作'],
    body:aid?[`${name(offer.actor)[0]} requests 12 treasury and 8 food for its war against ${target[0]}. Sending aid does not declare war. The shipment takes time and may be lost.`,`${name(offer.actor)[1]}请求12国库和8粮食，以支援其对${target[1]}的战争。提供物资不会宣战；运输需要时间且可能遗失。`]:[`${name(offer.actor)[0]} asks us to join its war against ${target[0]}. Accepting declares war immediately unless we are already at war; alliances may involve other states. A reply takes time and may be lost.`,` ${name(offer.actor)[1]}请求本方加入其对${target[1]}的战争。接受将立即宣战（若尚未交战），同盟可能使其他国家卷入。回信需要时间且可能遗失。`],
    options:aid?['send_war_aid','refuse','ignore']:['join_war','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,offer.remaining-1),context:{kind:'strategic_offer',offerId:offer.id}});
-  if(result.ok){offer.mailId=result.letter.id;if(Number.isInteger(offer.year)&&Number.isInteger(offer.month)&&offer.month>=1&&offer.month<=12)result.letter.created={year:offer.year,month:offer.month};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['strategic:'+offer.id]=true}
+  if(result.ok){if(typeof offer.senderSnapshot?.id==='string'&&Array.isArray(offer.senderSnapshot.name)){result.letter.senderId=offer.senderSnapshot.id;result.letter.senderInstitution=null;result.letter.senderName=[...offer.senderSnapshot.name];result.letter.senderPortrait=offer.senderSnapshot.portrait||null}offer.mailId=result.letter.id;if(Number.isInteger(offer.year)&&Number.isInteger(offer.month)&&offer.month>=1&&offer.month<=12)result.letter.created={year:offer.year,month:offer.month};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['strategic:'+offer.id]=true}
  }
 }
 

@@ -1,5 +1,5 @@
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=portraits-hundred-days-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,chronicleLetters} from './epistulae.js?v=player-aid-letter-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=player-aid-letter-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=portraits-hundred-days-1';
 import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=player-aid-letter-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=portraits-hundred-days-1';
@@ -280,7 +280,8 @@ export function sendStrategicOffer(s,actor,recipient,target,{autoplayPlayer=fals
  const date=s.year*12+s.month,offers=s.world.strategicOffers||=[];
  if(offers.some(o=>o.actor===actor&&o.recipient===recipient&&o.target===target&&(o.kind||'join_war')===kind&&date-(o.year*12+o.month)<18)||offers.filter(o=>o.actor===actor&&o.status==='pending').length>=3)return {ok:false,reason:'pending'};
  s.factions[actor].treasury-=5;const id=s.world.nextStrategicOffer||1;s.world.nextStrategicOffer=id+1;
- offers.unshift({id,actor,recipient,target,kind,year:s.year,month:s.month,status:'pending',phase:'outbound',remaining:2});if(offers.length>100)offers.length=100;
+ const senderSnapshot=strategicLetterSenderSnapshot(s,actor);
+ offers.unshift({id,actor,recipient,target,kind,year:s.year,month:s.month,status:'pending',phase:'outbound',remaining:2,...(senderSnapshot?{senderSnapshot}:{})});if(offers.length>100)offers.length=100;
  return {ok:true,id};
 }
 

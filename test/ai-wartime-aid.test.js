@@ -14,6 +14,11 @@ test('aid requests hide foreign reserves, take time and do not bind a human reci
  advance(a,1);advance(b,1);assert.equal(a.world.strategicOffers[0].status,'pending');assert.equal(b.world.strategicOffers[0].status,'pending');
 });
 function playerRequest(){for(let seed=1;seed<100;seed++){const s=setup(seed*100000+17);s.world.diplomaticKnowledge.egypt.contact={id:'contact',kind:'agreement',status:'active',parties:['egypt','caesar'],year:s.year,month:s.month};assert.ok(sendStrategicOffer(s,'egypt','caesar','senate',{kind:'request_aid'}).ok);advance(s,2);if(s.world.strategicOffers[0].status==='awaiting_decision')return s}throw Error('no request arrived')}
+test('a hidden change of leadership during transit does not rewrite the arriving court letter',()=>{
+ let compared=false;for(let seed=1;seed<100&&!compared;seed++){const s=setup(seed*100000+17);s.world.diplomaticKnowledge.egypt.contact={id:'contact',kind:'agreement',status:'active',parties:['egypt','caesar'],year:s.year,month:s.month};assert.ok(sendStrategicOffer(s,'egypt','caesar','senate',{kind:'request_aid'}).ok);const other=structuredClone(s);other.world.characters[other.world.strategicOffers[0].senderSnapshot.id].alive=false;other.world.leadership.egypt=['arsinoe'];advance(s,2);advance(other,2);if(s.world.strategicOffers[0].status!=='awaiting_decision')continue;
+  const a=receivedMail(s).find(x=>x.context?.kind==='strategic_offer'),b=receivedMail(other).find(x=>x.context?.kind==='strategic_offer');assert.ok(a&&b);assert.deepEqual([a.senderId,a.senderName,a.senderPortrait],[b.senderId,b.senderName,b.senderPortrait]);assert.equal(a.senderId,s.world.strategicOffers[0].senderSnapshot.id);compared=true;
+ }assert.ok(compared);
+});
 test('a player receives a distinct aid letter and decides before any resources are spent',()=>{
  let s=playerRequest(),offer=s.world.strategicOffers[0],m=receivedMail(s).find(x=>x.context?.offerId===offer.id),treasury=s.factions.caesar.treasury,food=s.factions.caesar.food;
  assert.ok(m);assert.ok(m.options.includes('send_war_aid'));assert.ok(!m.options.includes('join_war'));assert.match(mailboxHtml(s,{lang:'zh',selected:m.id}),/12国库.*8粮食/);
