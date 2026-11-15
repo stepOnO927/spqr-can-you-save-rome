@@ -13,7 +13,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=succession-ui-recovery-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=infant-portraits-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=foreign-name-privacy-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=campaign-intelligence-privacy-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -34,7 +34,7 @@ import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBa
 import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=player-coalition-letters-1';
 import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=succession-ui-recovery-1';
 import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=infant-portraits-1';
-import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=infant-portraits-1';
+import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=campaign-intelligence-privacy-1';
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 export {queueMission};
 export {personalDiplomaticCredit};

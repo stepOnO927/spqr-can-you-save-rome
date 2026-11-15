@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=foreign-name-privacy-1';
+import {newGame,upgradeSave} from '../engine.js?v=campaign-intelligence-privacy-1';
 import {initializeCursus,cultivateOfficial,proposeCooperation,advanceCursus} from '../cursus-honorum.js?v=infant-portraits-1';
 
 function setup(){

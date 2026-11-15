@@ -3,6 +3,7 @@ import {personAge,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,n
 import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=infant-portraits-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=infant-portraits-1';
+import {visiblePersonName} from './character-system.js?v=foreign-name-privacy-1';
 import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=foreign-name-privacy-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -53,6 +54,7 @@ export function renderGenealogyDossier(s,id,zh=false){
 // Only one's own court is shown. Foreign genealogies need a separate dated
 // intelligence model; the live world state must never leak through this view.
 export function renderGenealogy(s,zh=false){
+ const name=(id,zh)=>visiblePersonName(s,s.player,id)?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);
  const allPeople=Object.values(s.world.characters).filter(c=>c.faction===s.player&&CHARACTER_CATALOG[c.id]),page=Math.max(0,Math.min(s.world.dynasties?.treePage||0,Math.max(0,Math.ceil(allPeople.length/100)-1))),people=allPeople.slice(page*100,(page+1)*100),lookup=new Map(people.map(c=>[c.id,c])),families=[...new Set(people.map(c=>c.familyId))],positions=new Map();let x=28;
  for(const familyId of families){const members=people.filter(c=>c.familyId===familyId),base=x;for(const c of members){let generation=0,queue=[c],seen=new Set();while(queue.length){const current=queue.shift();if(seen.has(current.id))continue;seen.add(current.id);const parent=[...current.parents,...current.adoptiveParents].find(id=>lookup.has(id));if(parent){generation++;queue.push(lookup.get(parent))}}positions.set(c.id,{x:x,y:42+Math.min(generation,3)*158});x+=146}x=Math.max(x,base+146)+28}
  const width=Math.max(560,x),height=560,lines=[];
@@ -76,6 +78,7 @@ const WAR_DECISION_GUIDE=[
 ];
 function annotateWarDecisions(root,zh){for(const [selector,chinese,english] of WAR_DECISION_GUIDE)for(const button of root.querySelectorAll(selector)){const message=zh?chinese:english;button.title=message;if(button.nextElementSibling?.classList.contains('war-decision-note')){if(button.nextElementSibling.textContent!==message)button.nextElementSibling.textContent=message;continue}const note=document.createElement('small');note.className='war-decision-note';note.textContent=message;button.insertAdjacentElement('afterend',note)}}
 export function bindGenealogy(root,s,zh=false,onChange=()=>{}){
+ const name=(id,zh)=>visiblePersonName(s,s.player,id)?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);
  const viewport=root.querySelector('.gene-viewport'),canvas=root.querySelector('.gene-canvas'),label=root.querySelector('.gene-zoom-label'),out=root.querySelector('.gene-detail');if(!viewport)return;annotateWarDecisions(root,zh);if(typeof MutationObserver!=='undefined'){const observer=new MutationObserver(()=>annotateWarDecisions(root,zh));observer.observe(root,{childList:true,subtree:true})}
  const successionHelp={republican_command:['Roman political command is filled through institutions and appointments; children do not inherit it.','罗马政治指挥权由制度与任命决定，子女不会自动继承。'],roman_principate:['In this postwar alternate history, adoption and family ties matter, but military support, appointments and political recognition may produce rival claimants.','在这段战后架空历史中，收养和亲属关系会影响继任，但军队支持、任命与政治承认也可能产生竞争者。'],later_empire:['In this later alternate empire, co-emperors, palace appointments, military backing and regencies shape succession. Rival courts can seize land and raise real armies.','在这段架空后期帝国中，共治皇帝、宫廷任命、军队支持与摄政影响继位；竞争宫廷可能夺地并组建真正的军队。'],ptolemaic_court:['Egyptian co-rulers remain distinct; a child may succeed but court rivals can contest the choice.','埃及共同统治者各自独立；子女可能继位，但宫廷对手可以争夺。'],arsacid_nobility:['Parthian nobles may favor an adult candidate over a ruler’s child; bypassed heirs retain claims.','帕提亚贵族可能推举成年候选人而越过君主子女；被越过的继承人保留主张。'],separate_kingdoms:['The Mauretanian kingdoms remain separate; one ruler does not inherit the other’s throne automatically.','毛里塔尼亚各王国仍然分立；一位君主不会自动继承另一位的王位。'],regional_dynasty:['Dynastic candidates are considered alongside appointments and political support.','王朝候选人与任命及政治支持共同影响继位。']};
  const model=successionModel(s.player,s);
