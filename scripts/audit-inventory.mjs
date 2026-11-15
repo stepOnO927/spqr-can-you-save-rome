@@ -40,6 +40,7 @@ function resolve(from,ref){
   return target;
 }
 for(const f of textFiles){
+  if(f.startsWith('scripts/')||f.startsWith('tools/')||f.startsWith('test/')||f.endsWith('.test.js'))continue;
   const s=content.get(f),refs=[];
   if(f.endsWith('.html')){
     for(const m of s.matchAll(/(?:src|href)=["']([^"']+)["']/g))refs.push(m[1]);

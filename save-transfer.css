@@ -9,3 +9,7 @@
 #save-transfer-file{position:absolute;width:1px;height:1px;opacity:0}
 #save-transfer-file:focus-visible+#save-transfer-import-label{outline:2px solid white}
 #save-transfer-status{white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* Keep the transfer shortcut outside campaign time controls on every entry. */
+#save-transfer-open{right:auto;left:5px;bottom:5px;width:42px;height:42px;padding:0;font-size:0}
+#save-transfer-open::before{content:'⇄';font:700 22px Georgia,serif}
