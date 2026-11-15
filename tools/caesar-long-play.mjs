@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
 import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,orderFleet,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions,researchInnovation,startConstruction,constructionCheck} from '../engine.js';
-import {assessment,sendScouts,delayAttack,latestRecon,requestReinforcements} from '../reconnaissance.js';
+import {assessment,sendScouts,probePositions,delayAttack,latestRecon,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {revealedAchievements} from '../achievement-system.js';
 
@@ -14,8 +14,9 @@ const months=Math.max(48,Math.min(120,Number(process.env.SPQR_LONG_PLAY_MONTHS)|
 const secondFront=process.env.SPQR_CAESAR_SECOND_FRONT==='1';
 const supportItaly=process.env.SPQR_CAESAR_SUPPORT_ITALY==='1';
 const investFood=process.env.SPQR_CAESAR_INVEST_FOOD==='1';
-const journal=[],snapshots=[],seen=new Set(),grainDeliveries=[],corridor=['cisalpine','italiaN','t013','t012','t014','roma',...(process.env.SPQR_CAESAR_OSTIA?['t016']:[])];
-let peakIrrigation=0;
+const seekOstia=process.env.SPQR_CAESAR_OSTIA==='1';
+const journal=[],snapshots=[],seen=new Set(),grainDeliveries=[],corridor=['cisalpine','italiaN','t013','t012','t014','roma',...(seekOstia?['t016']:[])];
+let peakIrrigation=0,everHeldOstia=region(s,'t016').owner==='caesar';
 const record=(label,result)=>{if(result?.ok)journal.push(`${s.year}/${s.month} ${label}`);return !!result?.ok};
 assert.equal(record('reserve Adriatic fleet',reserveFleet(s,'caesar','caesar-adriatic')),true);
 for(const unit of s.armies.filter(a=>a.owner==='caesar'&&a.id!=='xiii'&&!(a.id==='viii'&&(secondFront||supportItaly))))record(`hold ${unit.id}`,holdPosition(s,unit.id));
@@ -57,7 +58,7 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
  if(supportItaly){
   const supporting=army(s,'viii'),available=supporting&&supporting.men>=600&&!supporting.move&&!supporting.siege&&!supporting.reconPending&&!supporting.trainingRemaining;
   if(available&&region(s,supporting.region)?.owner==='caesar'){
-   const destination=supporting.region==='narbo'?'t049':supporting.region==='t049'?'cisalpine':supporting.region==='cisalpine'&&region(s,'italiaN').owner==='caesar'?'italiaN':supporting.region==='italiaN'&&region(s,'roma').owner==='caesar'?'roma':null;
+   const destination=supporting.region==='narbo'?'t049':supporting.region==='t049'?'cisalpine':supporting.region==='cisalpine'&&region(s,'italiaN').owner==='caesar'?'italiaN':supporting.region==='italiaN'&&region(s,'roma').owner==='caesar'?'roma':supporting.region==='t011'&&region(s,'roma').owner==='caesar'?'roma':null;
    if(destination&&previewMarch(s,supporting.id,destination).ok)record(`VIII supports Italy at ${destination}`,moveArmy(s,supporting.id,destination));
    else if(supporting.region==='roma')record('VIII holds Rome',holdPosition(s,supporting.id));
   }
@@ -76,11 +77,22 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
   }
  }
  if(ready&&region(s,legion.region)?.owner==='caesar'){
-  const index=corridor.indexOf(legion.region),next=index>=0&&index<corridor.length-1?corridor[index+1]:null;
+  const index=corridor.indexOf(legion.region),routeNext=index>=0&&index<corridor.length-1?corridor[index+1]:null;
+  const romeNeedsGarrison=region(s,'roma').owner!=='caesar'||!s.armies.some(a=>a.owner==='caesar'&&a.id!==legion.id&&a.region==='roma');
+  const next=legion.region==='t016'&&romeNeedsGarrison?'roma':legion.region==='roma'&&region(s,'t016').owner==='caesar'?null:routeNext;
   if(next&&previewMarch(s,legion.id,next).ok){
    const target=region(s,next),intel=target.owner!=='caesar'?assessment(s,legion.id,next):null,report=intel?.report;
    if(!intel)record(`march ${next}`,moveArmy(s,legion.id,next));
-   else if(!report||report.age>3)record(`scout ${next}`,sendScouts(s,legion.id,next));
+   else if(!report||report.age>3){
+    const scouts=sendScouts(s,legion.id,next);
+    if(!record(`scout ${next}`,scouts)){
+     const probe=f.food>=12?probePositions(s,legion.id,next):{ok:false,reason:'resources'};
+     if(!record(`probe ${next} after scouts unavailable`,probe)){
+      if(legion.men>=4500&&legion.morale>=45)record(`attack ${next} without fresh reconnaissance`,moveArmy(s,legion.id,next));
+      else record(`delay ${next} until scouts can be supplied`,delayAttack(s,legion.id,next));
+     }
+    }
+   }
    else if(report.max!=null&&report.max<=legion.men*1.2&&legion.morale>=45)record(`attack ${next} (${intel.risk})`,moveArmy(s,legion.id,next));
    else if(legion.men<7200&&canFeedReinforcements())record('reinforce XIII',requestReinforcements(s,legion.id));
    else if(month%3===0&&legion.men>=4500)record(`accept uncertain risk at ${next}`,moveArmy(s,legion.id,next));
@@ -89,10 +101,11 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
   if(legion.region==='roma'&&region(s,'roma').owner==='caesar'&&!s.armies.some(a=>a.owner==='caesar'&&a.id!==legion.id&&a.region==='roma')&&f.treasury>=24&&f.food>=9&&f.manpower>=3000)record('raise Roman garrison',recruit(s,'roma','caesar')?{ok:true}:{ok:false});
  }
  tick(s);
+ everHeldOstia ||= region(s,'t016').owner==='caesar';
  peakIrrigation=Math.max(peakIrrigation,s.regions.filter(r=>r.owner==='caesar'&&r.buildings.includes('irrigation')).length);
  const grain=s.naval.routes.find(r=>r.id==='egypt-italy')?.last;
  if(grain?.reason==='delivered'&&grain.buyer==='caesar'&&grain.year===s.year&&grain.month===s.month)grainDeliveries.push({date:`${s.year}/${s.month}`,amount:grain.amount,paid:grain.paid});
- if(month%6===5)snapshots.push({date:`${s.year}/${s.month}`,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,budget:nationalBudget(s,'caesar'),fleet:{port:adriatic?.port,reserve:adriatic?.reserve,order:adriatic?.order?.kind},territories:s.regions.filter(r=>r.owner==='caesar').length,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0)});
+ if(month%6===5)snapshots.push({date:`${s.year}/${s.month}`,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,budget:nationalBudget(s,'caesar'),fleet:{port:adriatic?.port,reserve:adriatic?.reserve,order:adriatic?.order?.kind},territories:s.regions.filter(r=>r.owner==='caesar').length,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),legions:['xiii','viii'].map(id=>{const unit=army(s,id);return unit?{id,region:unit.region,men:unit.men,morale:unit.morale,move:unit.move,siege:unit.siege,reconPending:unit.reconPending,trainingRemaining:unit.trainingRemaining}:null}),rome:{owner:region(s,'roma').owner,fort:region(s,'roma').fort},ostiaOrder:army(s,'xiii')?.region==='roma'?previewMarch(s,'xiii','t016'):null});
  for(const b of s.battles||[])if(!seen.has(b.id)){
   seen.add(b.id);
   if(b.attacker.owner==='caesar'||b.defender.owner==='caesar'){
@@ -112,14 +125,15 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
  if(!s.achievementState.finalized)assert.deepEqual(revealedAchievements(s),[]);
 }
 assert.ok(journal.some(x=>x.includes('scout')));
-if(!process.env.SPQR_CAESAR_OSTIA){
+if(!seekOstia){
  assert.ok(journal.some(x=>x.includes('collect wartime contributions')));
  assert.ok(journal.some(x=>x.includes('return fleet')));
  assert.ok(journal.some(x=>x.includes('reserve fleet in safe harbor')));
 }
-else if(months===48){assert.equal(region(s,'t016').owner,'caesar');if(!investFood)assert.ok(grainDeliveries.some(x=>x.amount>0&&x.paid>0))}
+else if(months===48)assert.equal(everHeldOstia,true);
 if(investFood){assert.ok(journal.some(x=>x.includes('study water management')));assert.ok(journal.some(x=>x.includes('irrigate ')))}
+assert.ok(grainDeliveries.every(x=>x.amount>0&&x.paid>0));
 if(process.env.SPQR_STATE_OUTPUT)writeFileSync(process.env.SPQR_STATE_OUTPUT,JSON.stringify(s));
-console.log(JSON.stringify({date:`${s.year}/${s.month}`,result:s.achievementState.result||s.campaignOutcome?.winner||'ongoing',rome:region(s,'roma').owner,ostia:region(s,'t016').owner,egyptGrain:s.naval.routes.find(r=>r.id==='egypt-italy')?.last,grainDeliveries,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),irrigationPeak:peakIrrigation,irrigationHeld:s.regions.filter(r=>r.owner==='caesar'&&r.buildings.includes('irrigation')).length,armies:s.armies.filter(a=>a.owner==='caesar').map(a=>({id:a.id,men:a.men,region:a.region,morale:a.morale})),fleets:s.naval.fleets.filter(f=>f.owner==='caesar').map(f=>({id:f.id,port:f.port,reserve:f.reserve,ships:f.ships,order:f.order?.kind})),battles:seen.size,snapshots,journal},null,2));
+console.log(JSON.stringify({date:`${s.year}/${s.month}`,result:s.achievementState.result||s.campaignOutcome?.winner||'ongoing',rome:region(s,'roma').owner,ostia:region(s,'t016').owner,everHeldOstia,egyptGrain:s.naval.routes.find(r=>r.id==='egypt-italy')?.last,grainDeliveries,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),irrigationPeak:peakIrrigation,irrigationHeld:s.regions.filter(r=>r.owner==='caesar'&&r.buildings.includes('irrigation')).length,armies:s.armies.filter(a=>a.owner==='caesar').map(a=>({id:a.id,men:a.men,region:a.region,morale:a.morale})),fleets:s.naval.fleets.filter(f=>f.owner==='caesar').map(f=>({id:f.id,port:f.port,reserve:f.reserve,ships:f.ships,order:f.order?.kind})),battles:seen.size,snapshots,journal},null,2));
 if(process.env.SPQR_ECONOMY_AUDIT)console.log(JSON.stringify(s.regions.filter(r=>r.owner==='caesar').map(r=>({id:r.id,macro:r.macro,tax:r.tax,loyalty:r.loyalty,civic:r.civicSatisfaction,food:r.food,population:r.population,initialPopulation:r.initialPopulation,buildings:r.buildings}))));
 if(process.env.SPQR_NAVAL_AUDIT)console.log(JSON.stringify({fleets:s.naval.fleets.filter(f=>f.owner==='egypt'),voyages:s.naval.voyages.filter(v=>v.vesselOwner==='egypt'),route:s.naval.routes.find(r=>r.id==='egypt-italy')}));
