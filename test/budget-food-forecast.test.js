@@ -1,8 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGrandGame} from '../engine.js';
+import {newGrandGame,setTax,upgradeSave} from '../engine.js';
 import {nationalBudget} from '../national-budget.js';
 import {budgetHtml} from '../budget-ui.js';
+
+test('tax preview uses the real next-month budget and discloses local costs in both languages',()=>{
+ for(const current of ['low','normal','high']){
+  const state=newGrandGame('caesar');assert.equal(setTax(state,'caesar',current),true);
+  const en=budgetHtml(state,'en'),zh=budgetHtml(state,'zh');
+  for(const [level,labelEn,labelZh,pressureEn,pressureZh] of [
+   ['low','Low tax','低税','loyalty +1, satisfaction +2','忠诚＋1、满意度＋2'],
+   ['normal','Normal tax','标准税','no base loyalty or satisfaction change','忠诚与满意度无基础变化'],
+   ['high','High tax','高税','loyalty −2, satisfaction −2','忠诚−2、满意度−2']
+  ]){
+   const hypothetical=upgradeSave(JSON.parse(JSON.stringify(state)));
+   assert.equal(setTax(hypothetical,'caesar',level),true);
+   const projected=nationalBudget(hypothetical,'caesar').projectedNet;
+   const signed=`${projected>=0?'+':''}${projected}`;
+   assert.ok(en.includes(`${labelEn}${level===current?' (current)':''}: projected treasury ${signed}; ${pressureEn}`));
+   assert.ok(zh.includes(`${labelZh}${level===current?'（当前）':''}: 预计国库 ${signed}; ${pressureZh}`));
+  }
+ }
+});
 
 test('the food budget explains its deficit and dates the current-rate shortage in both languages',()=>{
  const state=newGrandGame('caesar');state.factions.caesar.food=5;

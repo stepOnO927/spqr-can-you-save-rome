@@ -149,7 +149,7 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
 }
 assert.ok(journal.some(x=>x.includes('scout')));
 if(!seekOstia){
- assert.ok(journal.some(x=>x.includes('collect wartime contributions')));
+ assert.ok(journal.some(x=>x.includes('collect wartime contributions'))||warTax&&journal.some(x=>x.includes('raise wartime tax')),'the route must exercise a funded wartime revenue choice');
  assert.ok(journal.some(x=>x.includes('return fleet')));
  assert.ok(journal.some(x=>x.includes('reserve fleet in safe harbor')));
 }
