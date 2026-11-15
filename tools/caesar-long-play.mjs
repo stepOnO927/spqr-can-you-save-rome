@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
-import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,orderFleet,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions,researchInnovation,startConstruction,constructionCheck} from '../engine.js';
+import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,orderFleet,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions,researchInnovation,startConstruction,constructionCheck,setTax} from '../engine.js';
 import {assessment,sendScouts,probePositions,delayAttack,latestRecon,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {revealedAchievements} from '../achievement-system.js';
@@ -13,9 +13,11 @@ if(process.env.SPQR_LONG_PLAY_SEED){const seed=Number(process.env.SPQR_LONG_PLAY
 const months=Math.max(48,Math.min(120,Number(process.env.SPQR_LONG_PLAY_MONTHS)||48));
 const secondFront=process.env.SPQR_CAESAR_SECOND_FRONT==='1';
 const supportItaly=process.env.SPQR_CAESAR_SUPPORT_ITALY==='1';
-const investFood=process.env.SPQR_CAESAR_INVEST_FOOD==='1';
-const investCash=process.env.SPQR_CAESAR_INVEST_CASH==='1';
-if(investCash&&investFood)throw new Error('Choose one economic investment strategy per comparison run.');
+const combinedInvestment=process.env.SPQR_CAESAR_COMBINED_INVEST==='1';
+const investFood=combinedInvestment||process.env.SPQR_CAESAR_INVEST_FOOD==='1';
+const investCash=combinedInvestment||process.env.SPQR_CAESAR_INVEST_CASH==='1';
+if(investCash&&investFood&&!combinedInvestment)throw new Error('Choose one economic investment strategy per comparison run.');
+const warTax=process.env.SPQR_CAESAR_WAR_TAX==='1';
 const seekOstia=process.env.SPQR_CAESAR_OSTIA==='1';
 const journal=[],snapshots=[],seen=new Set(),grainDeliveries=[],corridor=['cisalpine','italiaN','t013','t012','t014','roma',...(seekOstia?['t016']:[])];
 let peakIrrigation=0,everHeldOstia=region(s,'t016').owner==='caesar';
@@ -33,10 +35,16 @@ assert.deepEqual(revealedAchievements(s),[]);
 
 for(let month=1;month<months&&!s.achievementState.finalized;month++){
  const legion=army(s,'xiii'),f=s.factions.caesar;
+ if(warTax){
+  const owned=s.regions.filter(r=>r.owner==='caesar'),meanLoyalty=owned.reduce((total,r)=>total+r.loyalty,0)/Math.max(1,owned.length),budget=nationalBudget(s,'caesar');
+  if(f.tax==='normal'&&f.treasury<85&&budget.projectedNet<0&&meanLoyalty>=65)record('raise wartime tax',setTax(s,'caesar','high')?{ok:true}:{ok:false});
+  else if(f.tax==='high'&&(meanLoyalty<57||f.treasury>115))record('restore normal tax',setTax(s,'caesar','normal')?{ok:true}:{ok:false});
+ }
  if(investCash){
   const budget=nationalBudget(s,'caesar'),knowledge=s.development.caesar;
-  if(budget.projectedNet<0&&!knowledge.knownMaterial.includes('craft-workshops')&&!knowledge.research&&f.treasury>=50)record('study craft workshops',researchInnovation(s,'caesar','material','craft-workshops'));
-  if(budget.projectedNet<0&&knowledge.knownMaterial.includes('craft-workshops')&&f.treasury>=45){
+  const foodPriority=combinedInvestment&&budget.foodNet<2&&s.regions.filter(r=>r.owner==='caesar'&&(r.buildings.includes('irrigation')||r.construction?.buildingId==='irrigation')).length<2;
+  if(!foodPriority&&budget.projectedNet<0&&!knowledge.knownMaterial.includes('craft-workshops')&&!knowledge.research&&f.treasury>=50)record('study craft workshops',researchInnovation(s,'caesar','material','craft-workshops'));
+  if(!foodPriority&&budget.projectedNet<0&&knowledge.knownMaterial.includes('craft-workshops')&&f.treasury>=45){
    const invested=s.regions.filter(r=>r.owner==='caesar'&&(r.buildings.includes('workshop')||r.construction?.buildingId==='workshop')).length;
    if(invested<6){
     const site=s.regions.filter(r=>r.owner==='caesar').sort((a,b)=>b.loyalty-a.loyalty||b.tax-a.tax).find(r=>constructionCheck(s,'caesar',r.id,'workshop').ok);
@@ -144,8 +152,8 @@ if(!seekOstia){
  assert.ok(journal.some(x=>x.includes('reserve fleet in safe harbor')));
 }
 else if(months===48)assert.equal(everHeldOstia,true);
-if(investFood){assert.ok(journal.some(x=>x.includes('study water management')));assert.ok(journal.some(x=>x.includes('irrigate ')))}
-if(investCash){assert.ok(journal.some(x=>x.includes('study craft workshops')));assert.ok(journal.some(x=>x.includes('workshop ')))}
+if(investFood&&!combinedInvestment){assert.ok(journal.some(x=>x.includes('study water management')));assert.ok(journal.some(x=>x.includes('irrigate ')))}
+if(investCash&&!combinedInvestment){assert.ok(journal.some(x=>x.includes('study craft workshops')));assert.ok(journal.some(x=>x.includes('workshop ')))}
 assert.ok(grainDeliveries.every(x=>x.amount>0&&x.paid>0));
 if(process.env.SPQR_STATE_OUTPUT)writeFileSync(process.env.SPQR_STATE_OUTPUT,JSON.stringify(s));
 console.log(JSON.stringify({date:`${s.year}/${s.month}`,result:s.achievementState.result||s.campaignOutcome?.winner||'ongoing',rome:region(s,'roma').owner,ostia:region(s,'t016').owner,everHeldOstia,egyptGrain:s.naval.routes.find(r=>r.id==='egypt-italy')?.last,grainDeliveries,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),irrigationPeak:peakIrrigation,irrigationHeld:s.regions.filter(r=>r.owner==='caesar'&&r.buildings.includes('irrigation')).length,armies:s.armies.filter(a=>a.owner==='caesar').map(a=>({id:a.id,men:a.men,region:a.region,morale:a.morale})),fleets:s.naval.fleets.filter(f=>f.owner==='caesar').map(f=>({id:f.id,port:f.port,reserve:f.reserve,ships:f.ships,order:f.order?.kind})),battles:seen.size,snapshots,journal},null,2));

@@ -1,4 +1,4 @@
-import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=12';
+import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=13';
 import {PETITIONS,decidePetition,availablePetitions} from './civic.js?v=9';
 import {ARTIFACTS} from './museum.js?v=7';
 import {DRIVERS,startRace,settleRace} from './race.js?v=7';
@@ -9,6 +9,7 @@ import {newGrandGame} from '../engine.js?v=192';
 import {stageHandoff} from '../view-handoff.js';
 import {achievementDefinition} from '../achievement-system.js?v=5';
 import {archivePanelHtml} from './archive-ui.js?v=2';
+import {triumphalArchHtml} from './arch-ui.js?v=1';
 import {libraryCodexHtml,bindLibraryCodex} from './library-codex.js?v=2';
 import {harborOfficeHtml} from './harbor-ui.js?v=1';
 import {commissionMerchantReport,acquireTyrianCloth,settleHarborExchange} from './harbor-trade.js?v=1';
@@ -25,7 +26,7 @@ const politicsNames={people:['Popular support','民众支持'],senate:['Senatori
 const owned=id=>profile.buildings.includes(id);
 const persist=()=>saveProfile(profile);
 function notify(message){notice=message;render()}
-function openBuilding(id){selected=id;panel='building';render()}
+function openBuilding(id){selected=id;panel='building';render();window.scrollTo(0,0)}
 function beginScenario(id){const state=id?createScenario(id,newGrandGame):newGrandGame('caesar');if(!state)return;state.legacyScoutNote=profile.purchases.includes('advisor-note');stageHandoff(sessionStorage,state,'atlas');location.assign('../map-lab/')}
 function cosmeticHtml(){const items=Object.entries(GOODS).filter(([id,item])=>item.category==='cosmetic'&&profile.purchases.includes(id));return `<section class="feature-card cosmetic-wardrobe"><h3>${t('Owned appearances','已拥有的外观')}</h3><p>${t('Choose an owned look for the city or games. Applying it does not charge Laurel Coins again.','选择已购入的城邦或赛会外观；重新应用不会再次扣除桂冠金币。')}</p><div class="petition-choices"><button data-apply-theme="default" ${profile.theme==='default'?'disabled':''}>${t('Classic city','经典城邦')}</button>${items.map(([id,item])=>`<button data-apply="${id}" ${(['theme-senate','theme-harbor'].includes(id)&&profile.theme===id.replace('theme-',''))?'disabled':''}>${esc(n(item.name))}</button>`).join('')}</div></section>`}
 function shopHtml(){const products=[...Object.entries(BUILDINGS).map(([id,item])=>[id,item,'building']),...Object.entries(GOODS).map(([id,item])=>[id,item,item.category])];return `<div class="panel-head"><span>FORUM MERCATORVM</span><h2>${t('Out-of-run shop','遗产商店')}</h2><p>${t('Laurel Coins are permanent and cannot be spent during campaign turns.','桂冠金币永久保存，不能用于战役回合。')}</p></div><div class="shop-grid">${products.map(([id,item,type])=>{const have=BUILDINGS[id]?owned(id):profile.purchases.includes(id),blocked=item.requires&&!owned(item.requires);return `<article class="shop-card ${have?'owned':''}"><div class="shop-icon">${BUILDINGS[id]?.icon||({cosmetic:'✦',scenario:'◈',perk:'☉',collection:'▤',minigame:'◎',utility:'⌘'}[type]||'✧')}</div><div><small>${esc(n(shopTypeNames[type]||[type,type]))}</small><h3>${esc(n(item.name))}</h3><p>${blocked?t('Requires ','需要 ')+n(BUILDINGS[item.requires].name):t('Permanent unlock','永久解锁')}</p><button data-buy="${id}" ${have||blocked||profile.coins<item.price?'disabled':''}>${have?t('OWNED','已拥有'):`${item.price} ◉`}</button></div></article>`}).join('')}</div>`}
@@ -42,7 +43,7 @@ function museumHtml(){
 }
 function curiaHtml(){const available=availablePetitions(profile),pending=available.filter(p=>!profile.decisions.some(d=>d.id===p.id)),petition=pending[0];return `<div class="panel-head"><span>CVRIA IVLIA</span><h2>${t('The Senate sits','元老院开议')}</h2><p>${t('Your rulings change support and may return as a legacy of their own.','你的裁决影响支持率，并可能在未来留下后果。')}</p></div><div class="politics">${Object.entries(profile.politics).map(([key,value])=>`<div><span>${esc(n(politicsNames[key]||[key,key]))}</span><b>${value}</b><i style="--amount:${value}%"></i></div>`).join('')}</div>${petition?`<article class="petition"><span>${t('PETITION','呈请')} ${profile.decisions.length+1} / ${available.length}</span><h3>${esc(n(petition.title))}</h3><p>${esc(n(petition.text))}</p><div class="petition-choices">${petition.choices.map((choice,i)=>`<button data-petition="${petition.id}" data-choice="${i}">${esc(n(choice))}</button>`).join('')}</div></article>`:`<article class="petition"><h3>${t('The docket is closed','案卷已结')}</h3><p>${t('All current petitions have been heard. Their decisions remain in the archive.','目前诉状均已审理，裁决永久保存于档案。')}</p></article>`}<div class="decision-log">${profile.decisions.slice().reverse().map(d=>{const p=PETITIONS.find(x=>x.id===d.id);return `<p>§ ${esc(n(p?.title))} — ${esc(n(p?.choices[d.choice]))}</p>`}).join('')}</div>`}
 function archiveHtml(){return archivePanelHtml(profile,lang)}
-function archHtml(){return `<div class="panel-head"><span>ARCUS TRIVMPHALIS</span><h2>${t('Triumphal Arch','凯旋门')}</h2><p>${t('Every title is carved only once.','每项称号仅刻录一次。')}</p></div><div class="arch-stone"><span>SPQR</span><h3>${profile.titles.length?profile.titles.map(esc).join('<br>'):t('No triumph yet','尚无凯旋')}</h3><p>${t('Campaign victories','战役胜利')} ${profile.archive.length} · ${t('Race wins','战车胜利')} ${profile.race.wins}</p></div>`}
+function archHtml(){return triumphalArchHtml(profile,lang)}
 function campDrillHtml(){
  const drill=profile.campDrill,scene=drill?.status==='active'?CAMP_DRILL_STAGES[drill.stage]:null;
  const record=drill?.answers?.length?`<ol class="camp-drill-record">${drill.answers.map((answer,index)=>{const part=CAMP_DRILL_STAGES[index],choice=part.choices[answer];return `<li><strong>${esc(n(part.title))}</strong><span>${esc(n(choice.label))}</span><small>${esc(n(choice.result))}</small></li>`}).join('')}</ol>`:'';

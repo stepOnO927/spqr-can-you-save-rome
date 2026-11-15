@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {loadProfile,saveProfile,exportProfile,importProfile,purchase,recordCampaign,createScenario} from './legacy-core.js';
 import {archivePanelHtml} from './archive-ui.js';
+import {triumphalArchHtml} from './arch-ui.js';
 import {decidePetition,availablePetitions} from './civic.js';
 import {settleRace} from './race.js';
 import {ACTIVITIES,availableActivities,resolveActivity} from './activities.js';
@@ -16,6 +17,30 @@ import {objectiveDefinitions} from '../campaign-reports.js';
 import {evaluateAchievements,endCampaign} from '../achievement-system.js';
 
 const memory=()=>{let value=null;return {getItem:()=>value,setItem:(key,v)=>{value=v}}};
+test('Triumphal Arch counts victories only and retains older wins beyond the archive cap',()=>{
+ const profile=loadProfile(memory());
+ profile.archive=[{id:'lost',result:'defeat',faction:'caesar',year:-48},{id:'retired',result:'retired',faction:'senate',year:-47},{id:'won',result:'victory',faction:'senate',year:-46,month:7,territories:45,summary:{method:'settlement'}}];
+ profile.achievements=[{id:'victory',runId:'older-win',claimed:true,year:-49,month:3}];
+ const restored=importProfile(exportProfile(profile));
+ assert.equal(restored.triumphs.length,2);
+ assert.equal(restored.triumphs.find(record=>record.id==='older-win').year,null);
+ const repaired=importProfile(exportProfile({...restored,archive:[...restored.archive,{id:'older-win',result:'victory',faction:'caesar',year:-44,month:2,territories:28}]}));
+ assert.equal(repaired.triumphs.find(record=>record.id==='older-win').faction,'caesar');
+ assert.equal(repaired.triumphs.find(record=>record.id==='older-win').year,-44);
+ assert.match(triumphalArchHtml(restored,'en'),/<strong>2<\/strong><small>Campaign victories<\/small>/);
+ assert.match(triumphalArchHtml(restored,'en'),/Senate[\s\S]*Earlier unclassified records/);
+ assert.match(triumphalArchHtml(restored,'zh'),/战役胜利[\s\S]*元老院/);
+ assert.doesNotMatch(triumphalArchHtml(restored,'en'),/Caesar[\s\S]*<b>1<\/b><\/span>/);
+ const state=newGrandGame('caesar');state.victory=true;endCampaign(state,'victory');
+ recordCampaign(restored,state);recordCampaign(restored,state);
+ assert.equal(restored.triumphs.length,3);
+ restored.archive=Array.from({length:50},(_,i)=>({id:`other-${i}`,result:'defeat',faction:'senate'}));
+ const loaded=importProfile(exportProfile(restored));
+ assert.equal(loaded.triumphs.length,3);
+ assert.equal((loaded.triumphs||[]).filter(x=>x.faction==='caesar').length,1);
+ assert.match(triumphalArchHtml(loaded,'en'),/<strong>3<\/strong><small>Campaign victories<\/small>/);
+ assert.match(triumphalArchHtml(loaded,'en'),/Largest victorious realm/);
+});
 test('Seven museum halls curate only owned objects and preserve a three-object display',()=>{
  const profile=loadProfile(memory());
  assert.equal(MUSEUM_HALLS.length,7);
