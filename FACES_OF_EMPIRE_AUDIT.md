@@ -6,7 +6,10 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `6f0cd7d8`. Its overview layout and
+The draft now includes main through `5c1b05ad`. The newer report-delivery
+checks are reconciled in planning, battle estimates, faction views, national
+focus and legion design; the added unit and browser regressions pass. Its
+overview layout and
 attack-preview privacy changes are connected to the expanded faction atlas:
 crowded cities and armies remain selectable through faction directories, and
 attack scenarios use reported fortification bands without reading foreign
@@ -69,8 +72,17 @@ bilingual price, shortage, paid delivery, construction and reload. Bridges,
 ports, shipyards and military works now consume locally delivered timber;
 metalworking, shipyards and siege workshops consume local iron. The invention
 screen lists all material costs in both languages, and save-safe tests follow
-paid timber and iron shipments into actual buildings. Wider use of measured
-weapons and provisions in recruitment and military upkeep remains open.
+paid timber and iron shipments into actual buildings. Han crossbow formation
+now requires one locally held iron batch per 5,000 recruits (minimum one),
+deducts it at recruitment, and saves the consumed equipment material on the
+army. A threatened NPC Han depot can order a finite paid iron caravan from
+its own productive market; cargo cannot equip troops before arrival. Unit
+tests cover shortage, transport, consumption and reload, and a bilingual
+browser regression checks the recruit control. The 1,135-test full local
+simulation suite passed before the latest main merge; the merged report-
+delivery suite and both affected browser flows passed afterward. Separate
+measured weapons and military provisions in recruitment and upkeep remain
+open.
 Eastern market AI now indexes offers, owned regions and active caravans once
 per planning turn and only builds full paths for shortlisted bids. The
 120-month trade simulation retained its results before the subsequent main
