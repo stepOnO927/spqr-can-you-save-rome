@@ -5,6 +5,7 @@ import {proposeAgreement} from './agreements.js?v=world-kings-trade-1';
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=world-kings-trade-1';
 import {successionCandidates} from './governance.js?v=world-kings-trade-1';
 import {reportedControl} from './control-intelligence.js?v=world-kings-trade-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=world-kings-trade-1';
 
 // IMPERIUM national focus engine. One primary focus per state progresses with
 // the monthly tick. Costs are paid when a focus starts and shown beforehand;
@@ -193,7 +194,7 @@ export function observeFocus(s,actor,f){
  s.world.focusReports||={};
  for(const o of contacts(s,actor)){const list=s.world.focusReports[o]||=[];list.unshift({actor,focus:f.id,branch:f.branch,year:s.year,month:s.month,threat:f.effects.some(e=>e.perceive)||f.branch==='military'});s.world.focusReports[o]=list.slice(0,40)}
 }
-export function focusReportsFor(s,viewer){return (s.world.focusReports?.[viewer]||[]).map(x=>({...x}))}
+export function focusReportsFor(s,viewer){return (s.world.focusReports?.[viewer]||[]).filter(x=>isDeliveredReport(s,x)).map(x=>({...x}))}
 
 // ---------- AI ----------
 // Scores use only the actor's own state, its leader's personality, its known
@@ -202,10 +203,10 @@ export function focusReportsFor(s,viewer){return (s.world.focusReports?.[viewer]
 export function scoreFocus(s,actor,f){
  const fac=s.factions[actor],ai=f.ai||{},level=s.difficulty||'standard',personality=s.world.strategicPersonalities?.[actor]?.personality||'survivor';
  const atWar=s.wars.some(w=>w.includes(actor)),now=date(s);
- const sightings=Object.values(s.knowledge?.[actor]||{}).flatMap(k=>Object.values(k.sightings||{})).filter(x=>now-(x.year*12+x.month)<=6&&x.owner!==actor);
+ const sightings=Object.values(s.knowledge?.[actor]||{}).flatMap(k=>Object.values(k.sightings||{})).filter(x=>isDeliveredReport(s,x)&&sightingAge(s,x)>=0&&sightingAge(s,x)<=6&&x.owner!==actor);
  const ownRegions=new Set(s.regions.filter(r=>r.owner===actor).map(r=>r.id));
  const near=sightings.filter(x=>ownRegions.has(x.region)||ROUTES.some(([a,b])=>(a===x.region&&ownRegions.has(b))||(b===x.region&&ownRegions.has(a)))).filter(x=>isWar(s,actor,x.owner)||(s.relations[pair(actor,x.owner)]??0)<0).length;
- const reports=(s.world.focusReports?.[actor]||[]).filter(r=>r.threat&&now-(r.year*12+r.month)<=12).length;
+ const reports=(s.world.focusReports?.[actor]||[]).filter(r=>r.threat&&isDeliveredReport(s,r)&&sightingAge(s,r)>=0&&sightingAge(s,r)<=12).length;
  let score=ai.base||10;
  if(atWar)score+=ai.war||0;else score+=ai.peace||0;
  if(fac.treasury<30)score+=ai.lowTreasury||0;
@@ -246,7 +247,7 @@ function canStartFocusIgnoringBusy(s,actor,id){if(focusStatus(s,actor,id)!=='ava
 export function legitimateFocusView(s,viewer,actor){
  // The player sees its own tree fully; a foreign tree shows only reported completions.
  if(viewer===actor)return {completed:[...focusState(s,actor).completed],active:focusState(s,actor).active?{...focusState(s,actor).active}:null};
- return {completed:(s.world.focusReports?.[viewer]||[]).filter(r=>r.actor===actor).map(r=>r.focus),active:null};
+ return {completed:(s.world.focusReports?.[viewer]||[]).filter(r=>r.actor===actor&&isDeliveredReport(s,r)).map(r=>r.focus),active:null};
 }
 
 // National vs personal strategy: when the government chooses negotiation, an

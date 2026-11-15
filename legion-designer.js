@@ -2,6 +2,7 @@ import {ROUTES} from './data.js?v=world-kings-trade-1';
 import {unlockedComponents,focusModifiers} from './national-focus.js?v=world-kings-trade-1';
 import {politicalAmbition} from './conspiracies.js?v=world-kings-trade-1';
 import {reportedControl} from './control-intelligence.js?v=world-kings-trade-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=world-kings-trade-1';
 
 // LEGION DESIGNER. Templates are data; an army carries a snapshot of the
 // composition it was actually organized into, so editing a template never
@@ -263,7 +264,7 @@ function frontierTerrain(s,owner){
  const total=Object.values(mix).reduce((v,n)=>v+n,0);if(!total)for(const r of s.regions.filter(r=>r.owner===owner))mix[r.terrain]++;
  const sum=Object.values(mix).reduce((v,n)=>v+n,0)||1;return Object.fromEntries(Object.entries(mix).map(([k,v])=>[k,v/sum]));
 }
-function enemyProfiles(s,owner){const now=s.year*12+s.month;const list=Object.values(s.knowledge?.[owner]||{}).flatMap(k=>Object.values(k.sightings||{})).filter(x=>x.profile&&now-(x.year*12+x.month)<=12);return {cavalry:list.filter(x=>x.profile==='cavalry').length,infantry:list.filter(x=>x.profile==='infantry').length,total:list.length}}
+function enemyProfiles(s,owner){const list=Object.values(s.knowledge?.[owner]||{}).flatMap(k=>Object.values(k.sightings||{})).filter(x=>x.profile&&isDeliveredReport(s,x)&&sightingAge(s,x)>=0&&sightingAge(s,x)<=12);return {cavalry:list.filter(x=>x.profile==='cavalry').length,infantry:list.filter(x=>x.profile==='infantry').length,total:list.length}}
 export function evaluateTemplate(s,owner,t,context=null){
  const st=templateStats(t),ctx=context||{terrain:frontierTerrain(s,owner),enemy:enemyProfiles(s,owner)};
  const terrainFit=Object.entries(ctx.terrain).reduce((v,[k,w])=>v+w*(st.terrain[k]??1),0);

@@ -31,6 +31,20 @@ test('new reports trigger reassessment without revealing hidden foreign changes'
  assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),signature);
 });
 
+test('AI cannot use sightings before delivery or treat old observations as fresh',()=>{
+ const s=newGame('caesar');s.knowledge.parthia.armenia.sightings={};
+ const assessment=x=>assessOpportunities(x,'parthia',estimatedStrength).find(a=>a.target==='armenia');
+ const base=assessment(s),strength=estimatedStrength(s,'parthia','armenia'),signature=opportunityEvidenceSignature(s,'parthia');
+ const x={id:'delayed',owner:'armenia',region:'armenia',year:s.year,month:s.month,receivedYear:s.year+1,receivedMonth:s.month};
+ s.knowledge.parthia.armenia.sightings.delayed=x;
+ assert.deepEqual(assessment(s),base);assert.equal(estimatedStrength(s,'parthia','armenia'),strength);assert.equal(opportunityEvidenceSignature(s,'parthia'),signature);
+ x.receivedYear=s.year;x.observationYear=s.year+1;x.observationMonth=s.month;
+ assert.deepEqual(assessment(s),base);assert.equal(estimatedStrength(s,'parthia','armenia'),strength);
+ x.observationYear=s.year-3;
+ assert.deepEqual(assessment(s),base);assert.equal(estimatedStrength(s,'parthia','armenia'),strength);const staleSignature=opportunityEvidenceSignature(s,'parthia');
+ x.observationYear=s.year;assert.notEqual(opportunityEvidenceSignature(s,'parthia'),staleSignature);assert.notEqual(opportunityEvidenceSignature(s,'parthia'),signature);assert.notEqual(assessment(s).frontierSightings,base.frontierSightings);
+});
+
 test('AI weighs instability by evidence confidence and ignores stale or disputed claims',()=>{
  const base=newGame('caesar'),score=s=>assessOpportunities(s,'parthia',estimatedStrength).find(x=>x.target==='armenia');
  const before=score(base).score;
@@ -199,6 +213,14 @@ test('no scout report means no warning and no inferred empty garrison',()=>{
  for(let i=0;i<6;i++){advanceStrategicWarnings(s,warnOptions());s.month++}
  assert.equal(s.warningLetters.length,0);assert.deepEqual(s.knowledge.numidia,before);
  const stale=warningSetup();stale.knowledge.senate.caesar.sightings.xiii.month-=3;assert.equal(warningCandidates(stale,'senate').length,0);
+});
+
+test('warnings cannot forward a future delivery or refresh an old sighting',()=>{
+ const s=warningSetup(),x=s.knowledge.senate.caesar.sightings.xiii;
+ x.receivedYear=s.year+1;x.receivedMonth=s.month;assert.equal(warningCandidates(s,'senate').length,0);
+ x.receivedYear=s.year;x.observationYear=s.year+1;x.observationMonth=s.month;assert.equal(warningCandidates(s,'senate').length,0);
+ x.observationYear=s.year-1;assert.equal(warningCandidates(s,'senate').length,0);
+ x.observationYear=s.year;const candidate=warningCandidates(s,'senate')[0];assert.ok(candidate);assert.equal(candidate.sighting.year,s.year);assert.equal(candidate.sighting.month,s.month);
 });
 
 test('warning letters travel with the existing one-way courier delay and may be delayed, lost or expire',()=>{

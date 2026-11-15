@@ -1,4 +1,5 @@
 import {ROUTES} from './data.js?v=world-kings-trade-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=world-kings-trade-1';
 
 const now=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');
@@ -13,9 +14,9 @@ export function reportedFrontierThreats(s,actor){
   const hostile=s.wars.some(w=>w.includes(actor)&&w.includes(target))||(s.relations[pair(actor,target)]??0)<=-20;
   if(!hostile)continue;
   for(const sighting of Object.values(k?.sightings||{})){
-   const age=now(s)-(sighting.year*12+sighting.month);
-   if(!Number.isFinite(age)||age<0||age>2||!Array.isArray(sighting.strengthBand)||!Number.isFinite(sighting.strengthBand[1])||sighting.strengthBand[1]<3000)continue;
-   for(const region of owned)if(adjacent(region.id,sighting.region))out.push({target,region:region.id,sighting:sighting.id,observed:{year:sighting.year,month:sighting.month},upper:sighting.strengthBand[1]});
+   const age=sightingAge(s,sighting);
+   if(!isDeliveredReport(s,sighting)||!Number.isFinite(age)||age<0||age>2||!Array.isArray(sighting.strengthBand)||!Number.isFinite(sighting.strengthBand[1])||sighting.strengthBand[1]<3000)continue;
+   for(const region of owned)if(adjacent(region.id,sighting.region))out.push({target,region:region.id,sighting:sighting.id,observed:{year:sighting.observationYear??sighting.year,month:sighting.observationMonth??sighting.month},upper:sighting.strengthBand[1]});
   }
  }
  return out.sort((a,b)=>b.upper-a.upper||a.target.localeCompare(b.target)||a.region.localeCompare(b.region)).slice(0,8);
