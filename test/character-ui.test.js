@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=reported-person-names-1';
-import {createCharacterUI} from '../map-lab/character-ui.js?v=reported-person-names-1';
-import {addReport} from '../character-system.js?v=reported-person-names-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=reported-person-names-1';
+import {newGame,upgradeSave} from '../engine.js?v=foreign-name-privacy-1';
+import {createCharacterUI} from '../map-lab/character-ui.js?v=foreign-name-privacy-1';
+import {addReport} from '../character-system.js?v=foreign-name-privacy-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=foreign-name-privacy-1';
 import {createFictionalPerson} from '../dynasties.js?v=infant-portraits-1';
 
 // A small DOM stub exercises the real handler without requiring a network listener.
@@ -319,8 +319,20 @@ test('personal trust displays complete fictional IDs and hides foreign-only rela
  const prior=globalThis.document,panel=new Element();let s=newGame('caesar');
  s.world.personalRelations={'fictional:1:fictional:2':{trust:41,meetings:2},'fictional:1:fictional:3':{trust:23,meetings:1},'fictional:3:fictional:4':{trust:88,meetings:3}};
  s=upgradeSave(JSON.parse(JSON.stringify(s)));globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
- try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('fictional:1');let html=panel.children.map(x=>x.innerHTML).join('');assert.match(html,/莉维娅·玛尔基娅: 41/);assert.match(html,/奥卢斯·卡西亚努斯: 23/);
+ try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('fictional:1');let html=panel.children.map(x=>x.innerHTML).join('');assert.match(html,/莉维娅·玛尔基娅: 41/);assert.match(html,/姓名未记录: 23/);
   panel.children=[];ui.show('fictional:3');html=panel.children.map(x=>x.innerHTML).join('');assert.match(html,/普布利乌斯·瓦雷努斯: 23/);assert.doesNotMatch(html,/: 88/);
+ }finally{globalThis.document=prior}
+});
+
+test('foreign fictional names in map dossiers and intelligence come from delivered records',()=>{
+ const prior=globalThis.document,panel=new Element();let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Reported name','报告姓名'],faction:'egypt',birthYear:-75,location:'egypt'});
+ addReport(s,'caesar','egypt',{kind:'leaders',leaders:[id],source:'spy'});s.world.dynasties.catalog[id].name=['Secret renamed','秘密改名'];s=upgradeSave(structuredClone(s));
+ let heading='';globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
+ try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:title=>{heading=title}});ui.show(id);assert.equal(heading,'报告姓名');assert.match(panel.innerHTML,/报告姓名/);assert.doesNotMatch(panel.innerHTML,/秘密改名/);
+  const content=new Element();ui.addMissions(content,'egypt');const box=content.children[0],html=box.innerHTML+box.querySelector('#mission-records').innerHTML;assert.match(html,/报告姓名/);assert.doesNotMatch(html,/秘密改名/);
+  s.month++;addReport(s,'caesar','egypt',{kind:'leaders',leaders:[id],source:'exchange',peopleNames:{[id]:['Later name','后来报告的姓名']},observationYear:s.year,observationMonth:s.month});
+  const later=new Element();ui.addMissions(later,'egypt');const oldAndNew=later.children[0].querySelector('#mission-records').innerHTML;assert.match(oldAndNew,/报告姓名/);assert.match(oldAndNew,/后来报告的姓名/);assert.doesNotMatch(oldAndNew,/秘密改名/);
+  for(const report of s.knowledge.caesar.egypt.reports)delete report.peopleNames;ui.show(id);assert.equal(heading,'姓名未记录');assert.doesNotMatch(panel.innerHTML,/秘密改名/);
  }finally{globalThis.document=prior}
 });
 
