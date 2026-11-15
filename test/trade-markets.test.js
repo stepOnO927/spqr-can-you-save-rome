@@ -77,6 +77,8 @@ test('a horse order escrows goods and money, travels, then pays and delivers exa
  loaded.month++;advanceMarkets(loaded);
  assert.equal(loaded.markets.shipments[0].status,'delivered');
  assert.equal(loaded.markets.shipments[0].escrow,0);
+ assert.equal(loaded.markets.transactions[0].marketEffect.stockAfter-loaded.markets.transactions[0].marketEffect.stockBefore,request.quantity);
+ assert.equal(loaded.markets.regions.armenia.goods.horses.price,loaded.markets.transactions[0].marketEffect.priceAfter);
  assert.equal(loaded.factions.parthia.treasury,sellerMoney+quote.price);
  assert.equal(loaded.markets.transportSpent+loaded.markets.merchantFees,quote.transport);
  assert.equal(loaded.world.characters[result.shipment.merchantId].wealth,loaded.markets.merchantFees);

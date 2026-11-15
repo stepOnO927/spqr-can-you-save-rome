@@ -303,13 +303,16 @@ function advanceShipments(s){
   if(roll(s,`market-bandit:${shipment.id}:${leg.to}`)<risk){settleLostShipment(s,shipment,leg.to);continue}
   shipment.leg++;if(shipment.leg<shipment.legs.length){shipment.remaining=shipment.legs[shipment.leg].months;continue}
   const dest=region(s,shipment.destination);if(shipment.buyer==='external'?dest?.owner!=null:dest?.owner!==shipment.buyer){shipment.status='blocked';shipment.leg--;shipment.remaining=1;shipment.blockedAt??=month(s);continue}
-  markets.regions[shipment.destination].goods[shipment.commodity].stock+=shipment.quantity;
+  const destinationMarket=markets.regions[shipment.destination],destinationGood=destinationMarket.goods[shipment.commodity];
+  const marketEffect={stockBefore:destinationGood.stock,priceBefore:marketPrice(destinationMarket,shipment.commodity)};
+  destinationGood.stock+=shipment.quantity;destinationGood.price=marketPrice(destinationMarket,shipment.commodity);
+  marketEffect.stockAfter=destinationGood.stock;marketEffect.priceAfter=destinationGood.price;
   s.factions[shipment.seller].treasury+=shipment.price;
   for(const tariff of shipment.tariffs){if(s.factions[tariff.owner])s.factions[tariff.owner].treasury+=tariff.amount;else markets.transitTreasury[tariff.owner]=(markets.transitTreasury[tariff.owner]||0)+tariff.amount}
   const merchant=s.persons[shipment.merchantId],fee=merchant?.alive?Math.min(shipment.transport,Math.ceil(shipment.transport/4)):0;
   if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;releaseMerchant(s,shipment,shipment.destination);(merchant.history||=[]).push({year:s.year,month:s.month,kind:'trade_delivery',shipment:shipment.id})}
   markets.transportSpent+=shipment.transport-fee;markets.merchantFees+=fee;shipment.escrow=0;shipment.status='delivered';shipment.deliveredAt=month(s);
-  markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,origin:shipment.origin,destination:shipment.destination,merchantId:shipment.merchantId,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:shipment.price,transport:shipment.transport,tariffs:shipment.tariffs,year:s.year,month:s.month});
+  markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,origin:shipment.origin,destination:shipment.destination,merchantId:shipment.merchantId,merchantFee:fee,commodity:shipment.commodity,quantity:shipment.quantity,price:shipment.price,transport:shipment.transport,tariffs:shipment.tariffs,marketEffect,year:s.year,month:s.month});
   if(markets.transactions.length>300)markets.transactions.shift();
  }
 }

@@ -25,12 +25,13 @@ export function renderEasternMarketPanel({root,state:s,lang=0,selected=null,onOr
   const place=id=>name(s.regions.find(r=>r.id===id)?.name||id||'?',lang);
   const party=id=>id==='external'?(lang?'境外商人':'Outside merchants'):name(FACTIONS[id]?.name||id||'?',lang);
   const customs=(x.tariffs||[]).reduce((sum,t)=>sum+t.amount,0),total=(x.price||0)+(x.transport||0)+customs;
+  const effect=x.marketEffect?`<br><small>${lang?'目的地库存':'Destination stock'} ${x.marketEffect.stockBefore} → ${x.marketEffect.stockAfter} · ${lang?'当地市价':'Local price'} ${x.marketEffect.priceBefore} → ${x.marketEffect.priceAfter}</small>`:'';
   if(x.status==='stranded'||x.status==='lost'){
    const outcome=x.status==='stranded'?(lang?'货物退回':'Goods returned to'):(lang?'货物损失于':'Goods lost near');
    const refund=x.refund??(shipment?(shipment.price||0)+(shipment.tariffs||[]).reduce((sum,t)=>sum+t.amount,0):0);
    return `<p><strong>${campaignDate(x.month,x.year,lang?'zh':'en')} · ${name(COMMODITIES[x.commodity]?.name||x.commodity,lang)} × ${x.quantity}</strong> · ${esc(statusName(x.status,lang))}<br><small>${party(x.seller)} → ${party(x.buyer)} · ${outcome} ${place(destination)} · ${lang?'退款':'Refund'} ${refund} · ${lang?'运费支出':'Transport spent'} ${x.transport}</small></p>`;
   }
-  return `<p><strong>${campaignDate(x.month,x.year,lang?'zh':'en')} · ${name(COMMODITIES[x.commodity]?.name||x.commodity,lang)} × ${x.quantity}</strong> · ${place(origin)} → ${place(destination)}<br><small>${party(x.seller)} → ${party(x.buyer)} · ${lang?'货价':'Goods'} ${x.price} · ${lang?'运费':'Transport'} ${x.transport} · ${lang?'过境税':'Tariffs'} ${customs} · ${lang?'总计':'Total'} ${total} · ${lang?'已入库':'Delivered into'} ${place(destination)}</small></p>`;
+  return `<p><strong>${campaignDate(x.month,x.year,lang?'zh':'en')} · ${name(COMMODITIES[x.commodity]?.name||x.commodity,lang)} × ${x.quantity}</strong> · ${place(origin)} → ${place(destination)}<br><small>${party(x.seller)} → ${party(x.buyer)} · ${lang?'货价':'Goods'} ${x.price} · ${lang?'运费':'Transport'} ${x.transport} · ${lang?'过境税':'Tariffs'} ${customs} · ${lang?'总计':'Total'} ${total} · ${lang?'已入库':'Delivered into'} ${place(destination)}</small>${effect}</p>`;
  };
  root.innerHTML=`<h2>${lang?'关市与商队':'Markets & caravans'}</h2><p class="muted">${lang?'库存按月生产与消耗；报价以批次计，货物到站后才入库。':'Stock is produced and consumed monthly. Quotes are per batch; cargo enters storage only on arrival.'}</p>
  <h3>${lang?'己方库存':'Own stock'}${location?` · ${name(location.name,lang)}`:''}</h3><div class="market-stock">${stocks||`<p>${lang?'暂无领地。':'No owned region.'}</p>`}</div>${location&&s.tradeMarkets.regions[location.id].goods.grain.warDisrupted?`<p class="battle-note">${lang?'敌军围困使本地本月谷物产量减半。':'Enemy occupation halved this market’s grain output this month.'}</p>`:''}

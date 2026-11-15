@@ -58,6 +58,7 @@ try{
  assert.match(await page.locator('.market-panel').innerText(),/49 BCE/);
  assert.match(await page.locator('.market-panel').innerText(),/Cisalpine.*Narbo|Northern Italy.*Narbo/);
  assert.match(await page.locator('.market-panel').innerText(),/Goods.*Transport.*Customs.*Total/);
+ assert.match(await page.locator('.market-panel').innerText(),/Destination stock \d+ → \d+.*Local price \d+ → \d+/s);
  await page.locator('#save').click();
  const delivered=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(delivered.markets.shipments[0].status,'delivered');
@@ -65,6 +66,8 @@ try{
  assert.equal(delivered.markets.transactions[0].merchantId,merchant);
  assert.equal(delivered.markets.transactions[0].origin,'cisalpine');
  assert.equal(delivered.markets.transactions[0].destination,'narbo');
+ await page.locator('#language').click();
+ assert.match(await page.locator('.market-panel').innerText(),/目的地库存 \d+ → \d+.*当地市价 \d+ → \d+/s);
  // A long border closure must leave a readable refund rather than a ghost
  // shipment that remains in the transit list indefinitely.
  await page.evaluate(async()=>{

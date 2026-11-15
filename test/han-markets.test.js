@@ -48,6 +48,9 @@ test('Eastern markets use measured stock and a real Kangju–Han horse route',()
  for(let i=0;i<quote.months;i++)next(loaded);
  assert.equal(loaded.tradeMarkets.shipments[0].status,'delivered');
  assert.equal(loaded.tradeMarkets.transactions.filter(x=>x.shipment===result.shipment.id).length,1);
+ const effect=loaded.tradeMarkets.transactions.find(x=>x.shipment===result.shipment.id).marketEffect;
+ assert.equal(effect.stockAfter-effect.stockBefore,request.quantity);
+ assert.ok(effect.priceAfter>0&&effect.priceAfter<=effect.priceBefore);
  assert.equal(loaded.tradeMarkets.transportSpent+loaded.tradeMarkets.merchantFees,loaded.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
 });
 
