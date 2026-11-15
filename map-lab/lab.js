@@ -19,7 +19,7 @@ import {reportedControl,reportedFortification,requestControlReport} from '../con
 import {renderLocalGovernor} from './local-governor-ui.js?v=dossier-delivery-1';
 import {renderSecurity} from './security-ui.js?v=dossier-delivery-1';
 import {renderOffices} from './offices-ui.js?v=dossier-delivery-1';
-import {renderCursus} from './cursus-ui.js?v=dossier-delivery-1';
+import {renderCursus} from './cursus-ui.js?v=election-result-1';
 import {officeEffects} from '../office-system.js?v=dossier-delivery-1';
 import {populationFactor,religiousTaxCost} from '../religion.js?v=dossier-delivery-1';
 import {satisfactionForOutline} from './satisfaction-map.js?v=dossier-delivery-1';
