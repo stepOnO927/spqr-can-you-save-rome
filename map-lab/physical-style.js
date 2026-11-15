@@ -136,6 +136,31 @@ export const physicalStyle={
  ]
 };
 
+// A small coast image is cheaper to draw at campaign scale; the exact GSHHG
+// polygons return before local inspection. Tiles stay at 2048 px per side so
+// the overview does not depend on one unusually large browser texture.
+const overviewCutoff=5.85;
+const coastMerc=lat=>Math.log(Math.tan(Math.PI/4+lat*Math.PI/360));
+const coastLat=value=>(2*Math.atan(Math.exp(value))-Math.PI/2)*180/Math.PI;
+const coastTop=coastMerc(58),coastBottom=coastMerc(18);
+for(const layer of physicalStyle.layers){
+ if(layer.source==='land'||layer.source==='ocean')layer.minzoom=Math.max(layer.minzoom||0,overviewCutoff);
+}
+function insertOverviewLayer(before,id,source){
+ const index=physicalStyle.layers.findIndex(layer=>layer.id===before);
+ // Retain the image beneath incoming vectors for a short overlap; otherwise
+ // a fast zoom can expose an empty land/ocean tile while GeoJSON prepares.
+ physicalStyle.layers.splice(index,0,{id,type:'raster',source,maxzoom:6.5,paint:{'raster-opacity':1,'raster-fade-duration':0}});
+}
+for(let row=0;row<2;row++)for(let col=0;col<4;col++){
+ const west=-20+col*20,east=west+20,north=coastLat(coastTop+(coastBottom-coastTop)*row/2),south=coastLat(coastTop+(coastBottom-coastTop)*(row+1)/2);
+ const coordinates=[[west,north],[east,north],[east,south],[west,south]];
+ for(const kind of ['land','sea'])physicalStyle.sources[`overview-${kind}-${row}-${col}`]={type:'image',url:`./overview-coast/${kind}-${row}-${col}.png`,coordinates};
+ insertOverviewLayer('land-base',`overview-land-raster-${row}-${col}`,`overview-land-${row}-${col}`);
+ insertOverviewLayer('sea-mask',`overview-sea-mask-${row}-${col}`,`overview-sea-${row}-${col}`);
+ insertOverviewLayer('sea-final',`overview-sea-final-${row}-${col}`,`overview-sea-${row}-${col}`);
+}
+
 // These separate source bounds avoid requesting empty sea or land tiles across
 // the large gaps between the remaining eastern and North African theaters.
 const regionalDetail=[

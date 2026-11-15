@@ -8,7 +8,7 @@ npm start
 
 Open `http://localhost:5173` for the campaign, `/map-lab/` for the zoomable atlas, or `/legacy/` for the out-of-run city. New campaigns and city scenarios open in the zoomable atlas; its Return button reaches the older campaign view. The campaign, hub, atlas map engine, and current high-zoom terrain tiles work without network access; optional web fonts can use the network. No account is needed. Run `npm test` for simulation tests.
 
-The [public independent-branch preview](https://spqr-independent-preview-git-codex-phase-xv-c0fbd4-stephen-5974.vercel.app/) includes the campaign, atlas and Legacy city. Its separate Vercel project was made public with the owner's approval. The existing [GitHub Pages site](https://stepOnO927.github.io/spqr-can-you-save-rome/) still serves `main`, which contains older code; using that address does not preview this branch.
+The [public independent-branch preview](https://spqr-independent-preview-git-codex-phase-xv-c0fbd4-stephen-5974.vercel.app/) includes the campaign, atlas and Legacy city. Its separate Vercel project was made public with the owner's approval. The preview may lag the latest branch commit when deployment is unavailable. The existing [GitHub Pages site](https://stepOnO927.github.io/spqr-can-you-save-rome/) still serves `main`, which contains older code; using that address does not preview this branch.
 
 ## Phase XV and XVI
 
@@ -69,4 +69,4 @@ New campaigns begin with foreign army sightings only in a faction's own theaters
 - `style.css` — historical atlas style
 - `engine.test.js` — gameplay checks
 
-No commercial game art or maps are copied. The coast is from the public-domain Natural Earth dataset; the interface artwork is original.
+No commercial game art or maps are copied. The atlas shoreline and its overview images derive from GSHHG 2.3.7 under LGPL; some other map layers use public-domain Natural Earth data. The interface artwork is original.
