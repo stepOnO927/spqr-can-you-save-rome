@@ -1,6 +1,6 @@
 import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=succession-ui-recovery-1';
-import {officeOf} from './office-system.js?v=asylum-reply-1';
-import {recordLifeEvent} from './dynasties.js?v=asylum-reply-1';
+import {officeOf} from './office-system.js?v=family-reply-1';
+import {recordLifeEvent} from './dynasties.js?v=family-reply-1';
 
 // Theater-level appointments are simulated, not claims about historical commands.
 export function availableCommanders(s,armyId){

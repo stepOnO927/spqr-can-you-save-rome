@@ -1,5 +1,5 @@
-import {newGame,estimatedStrength} from './engine.js?v=asylum-reply-1';
-import {createFictionalPerson} from './dynasties.js?v=asylum-reply-1';
+import {newGame,estimatedStrength} from './engine.js?v=family-reply-1';
+import {createFictionalPerson} from './dynasties.js?v=family-reply-1';
 import {formCoalition} from './coalitions.js?v=sighting-consumers-1';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 
