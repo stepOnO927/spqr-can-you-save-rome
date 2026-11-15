@@ -4,6 +4,7 @@ import {atWar,propose,relation,shiftRelation,treaty} from './frontier.js?v=faces
 import {legOpen,tradePath} from './silk-road.js?v=faces-reported-names-1';
 import {createMarketMerchant} from './field-identities.js';
 import {roll} from './util.js?v=faces-reported-names-1';
+import {agriculturalDisruption,agriculturalProduction} from '../war-economy.js?v=faces-reported-names-1';
 
 const month=s=>s.year*12+s.month;
 const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
@@ -61,7 +62,7 @@ export function initializeEasternMarkets(s){
  for(const [owner,rate] of Object.entries(markets.tariffs))markets.tariffs[owner]=Number.isFinite(rate)?clamp(rate,0,.3):TARIFF_POLICIES.standard;
  for(const [owner,goods] of Object.entries(markets.exportRestrictions))markets.exportRestrictions[owner]=Array.isArray(goods)?[...new Set(goods.filter(good=>Object.hasOwn(COMMODITIES,good)))]:[];
  for(const [faction,ids] of Object.entries(markets.merchants))if(!Array.isArray(ids))markets.merchants[faction]=ids?[ids]:[];
- for(const r of s.regions){const market=markets.regions[r.id]||={id:r.id,goods:{}};market.goods||={};for(const good of Object.keys(COMMODITIES)){const item=market.goods[good]||=profile(r,good);if(r.id==='mediterranean_gate'){item.production=0;item.consumption=0}item.consumed??=0;item.surplusDiscarded??=0}markets.regions[r.id]=market}
+ for(const r of s.regions){const market=markets.regions[r.id]||={id:r.id,goods:{}};market.goods||={};for(const good of Object.keys(COMMODITIES)){const item=market.goods[good]||=profile(r,good);if(r.id==='mediterranean_gate'){item.production=0;item.consumption=0}item.produced??=0;item.consumed??=0;item.surplusDiscarded??=0}markets.regions[r.id]=market}
  return markets;
 }
 
@@ -401,7 +402,9 @@ export function advanceEasternMarkets(s){
  for(const sale of markets.saleOrders)if(sale.status==='open'&&region(s,sale.origin)?.owner!==sale.seller){markets.regions[sale.origin].goods[sale.commodity].stock+=sale.available;sale.available=0;sale.status='seized'}
  advanceMerchantReturns(s,now);
  for(const r of s.regions)for(const [good,item] of Object.entries(markets.regions[r.id].goods)){
-  item.stock+=item.production;const used=Math.min(item.stock,item.consumption);item.stock-=used;item.consumed+=used;item.shortage=item.consumption-used;
+  const produced=good==='grain'?agriculturalProduction(s,r,item.production):item.production;
+  item.stock+=produced;item.produced+=produced;item.warDisrupted=good==='grain'&&agriculturalDisruption(s,r);
+  const used=Math.min(item.stock,item.consumption);item.stock-=used;item.consumed+=used;item.shortage=item.consumption-used;
   const limit=Math.max(80,item.production*24);if(item.stock>limit){item.surplusDiscarded=(item.surplusDiscarded||0)+item.stock-limit;item.stock=limit}
   item.price=marketPrice(markets.regions[r.id],good);
  }

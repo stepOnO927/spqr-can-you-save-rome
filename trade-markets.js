@@ -5,6 +5,7 @@ import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=faces-repo
 import {generateFictionalName} from './fictional-names.js?v=faces-reported-names-1';
 import {reportedControl} from './control-intelligence.js?v=faces-reported-names-1';
 import {COMMODITIES,marketPrice} from './market-goods.js?v=faces-reported-names-1';
+import {agriculturalDisruption,agriculturalProduction} from './war-economy.js?v=faces-reported-names-1';
 export {COMMODITIES,marketPrice};
 export const TARIFF_POLICIES=Object.freeze({low:.02,standard:.05,high:.15});
 
@@ -59,7 +60,7 @@ export function initializeMarkets(s){
  for(const [buyer,ids] of Object.entries(markets.merchants))if(!Array.isArray(ids))markets.merchants[buyer]=ids?[ids]:[];
  for(const r of s.regions){
   const market=markets.regions[r.id]||={id:r.id,goods:{},disruption:0};market.goods||={};
-  for(const good of Object.keys(COMMODITIES))market.goods[good]||=profile(r,good);
+  for(const good of Object.keys(COMMODITIES)){const item=market.goods[good]||=profile(r,good);item.produced??=0;item.consumed??=0;item.surplusDiscarded??=0}
   markets.regions[r.id]=market;
  }
  // Earlier in-flight orders had no named carrier. Assign one once, while
@@ -280,8 +281,9 @@ export function advanceMarkets(s){
  for(const sale of markets.saleOrders)if(sale.status==='open'&&region(s,sale.origin)?.owner!==sale.seller){markets.regions[sale.origin].goods[sale.commodity].stock+=sale.available;sale.available=0;sale.status='seized'}
  advanceMerchantReturns(s,current);
  for(const r of s.regions)for(const [good,item] of Object.entries(markets.regions[r.id].goods)){
-  item.stock+=item.production;
-  const used=Math.min(item.stock,item.consumption);item.stock-=used;
+  const produced=good==='grain'?agriculturalProduction(s,r,item.production):item.production;
+  item.stock+=produced;item.produced+=produced;item.warDisrupted=good==='grain'&&agriculturalDisruption(s,r);
+  const used=Math.min(item.stock,item.consumption);item.stock-=used;item.consumed+=used;
   item.shortage=item.consumption-used;
   const warehouseLimit=Math.max(80,item.production*24);
   if(item.stock>warehouseLimit){item.surplusDiscarded=(item.surplusDiscarded||0)+item.stock-warehouseLimit;item.stock=warehouseLimit}

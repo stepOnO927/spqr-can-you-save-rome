@@ -10,6 +10,7 @@ import {initCourt,ensureCourtCareers,advanceCourt,resolveSuccession,computeManda
 import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=faces-reported-names-1';
 import {initSilk,advanceSilk} from './silk-road.js?v=faces-reported-names-1';
 import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=faces-reported-names-1';
+import {agriculturalProduction} from '../war-economy.js?v=faces-reported-names-1';
 import {advanceFocus,focusState} from './focus.js?v=faces-reported-names-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=faces-reported-names-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=faces-reported-names-1';
@@ -135,7 +136,7 @@ function economy(s){
   const taxRate=id==='han'||id==='han_loyalist'||id==='rival_court'?{low:0.7,normal:1,high:1.3}[s.taxLevel]*(s.taxRelief>0?0.6:1)+(focusState(s,id).mod.tax||0):1;
   const loyaltyF=r=>0.4+r.loyalty/150;
   const income=own.reduce((a,r)=>a+r.tax*loyaltyF(r),0)*0.12*(id==='han'?0.5+capacity:rulerGovernanceFactor(s,id))*taxRate*(s.throne.paralysis>0&&id==='han'?0.6:1);
-  const grain=own.reduce((a,r)=>a+(r.grain+(r.irrigation||0))*loyaltyF(r),0)*0.27;
+  const grain=own.reduce((a,r)=>a+agriculturalProduction(s,r,r.grain+(r.irrigation||0))*loyaltyF(r),0)*0.27;
   const armies=s.armies.filter(a=>a.owner===id&&a.men>0);
   // Local militias and pastoral hosts serve from their own households or
   // herds at home. Campaigning outside their polity draws normal supplies.
