@@ -115,7 +115,9 @@ const initialStyle={...physicalStyle,state:{...physicalStyle.state,activeRelief:
  if(layer.type!=='hillshade')return layer;
  const detailed=layer.id!=='relief'&&layer.id!=='relief-detail';
  const italianDetail=layer.id==='relief-ultra'||layer.id==='relief-higher';
- const strength=italianDetail ? .23 : detailed ? .1 : layer.paint['hillshade-exaggeration'];
+ // Matched coastal and Apennine views keep the ridges legible at .14 without
+ // the crumpled-metal texture created by the former .23 Italian close shade.
+ const strength=italianDetail ? .14 : detailed ? .1 : layer.paint['hillshade-exaggeration'];
  return {...layer,paint:{...layer.paint,
   'hillshade-exaggeration':['case',['==',['global-state','activeRelief'],layer.id],strength,0],
   ...(italianDetail?{'hillshade-shadow-color':'#85715e','hillshade-highlight-color':'#f5e9d0','hillshade-accent-color':'#ab9a7c'}:detailed?{'hillshade-shadow-color':'#a49b82','hillshade-highlight-color':'#efe5cf','hillshade-accent-color':'#c3b99c'}:{})

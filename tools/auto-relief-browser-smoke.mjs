@@ -25,6 +25,7 @@ try{
  assert.equal(await layer(),'');assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'false');
  await jump([12.6,44.1],9.05);await page.locator('#map-charting').waitFor({state:'visible',timeout:3000});await ready();
  await page.waitForFunction(async()=>{const app=await import(document.querySelector('script[type="module"]').src);return app.activeReliefLayer==='relief-higher'},null,{timeout:15000});
+ assert.equal(await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.getPaintProperty('relief-higher','hillshade-exaggeration')[2]}),.14,'Italian close relief should use the reviewed moderate intensity');
  assert.equal(await page.locator('#relief-toggle').getAttribute('aria-pressed'),'true');
  await page.locator('#atlas-focus').click();await settled();
  const visibleFrame=await page.evaluate(()=>({chartHidden:document.querySelector('#map-charting').hidden,opacity:Number(getComputedStyle(document.querySelector('#map')).opacity)}));
