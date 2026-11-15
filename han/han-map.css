@@ -57,3 +57,6 @@
 .east-wrap{display:flex;flex-direction:column}.east-wrap .han-map{flex:1;min-height:0}
 .east-tools{position:absolute;z-index:3;top:62px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;gap:4px;padding:5px 8px;background:#1b211fd9;border-radius:3px}.east-tools .map-mode{font-size:11px;padding:3px 8px;cursor:pointer}.east-tools .map-mode.active{outline:2px solid #a2311f}.east-sep{width:12px}
 .east-dispatches{padding-left:18px}.east-dispatches li{margin:6px 0}.east-dispatches small{display:block;opacity:.7}
+
+/* Routes explain geography but do not consume territory touch input. */
+#map .routes,#map .routes *{pointer-events:none}
