@@ -6,6 +6,7 @@ import {generateFictionalName} from './fictional-names.js?v=faces-reported-names
 import {reportedControl} from './control-intelligence.js?v=faces-reported-names-1';
 import {COMMODITIES,marketPrice} from './market-goods.js?v=faces-reported-names-1';
 import {agriculturalDisruption,agriculturalProduction} from './war-economy.js?v=faces-reported-names-1';
+import {merchantMarketObservation} from './trade-intelligence.js?v=faces-reported-names-1';
 export {COMMODITIES,marketPrice};
 export const TARIFF_POLICIES=Object.freeze({low:.02,standard:.05,high:.15});
 
@@ -190,13 +191,15 @@ export function placeTradeOrder(s,request){
  const quote=quoteTrade(s,request);if(!quote.ok)return quote;
  if(request.maxTotal!=null&&(!Number.isFinite(request.maxTotal)||quote.total>request.maxTotal))return {ok:false,reason:'price'};
  const markets=s.markets,source=markets.regions[request.origin].goods[request.commodity];
+ const sale=request.saleOrderId?markets.saleOrders.find(x=>x.id===request.saleOrderId):null;
+ const observation=request.buyer===s.player&&request.seller!==s.player?merchantMarketObservation(markets.regions[request.origin],request.commodity,{reserved:sale?.available||0,unitPrice:quote.unitPrice,year:s.year,month:s.month}):null;
  const merchantId=merchantFor(s,request.buyer,request.origin);
  const privilege=markets.merchantPrivileges[merchantId];
  if(privilege?.status==='pending'&&activeMerchantPrivilege(s,merchantId,request.buyer)){privilege.status='active';privilege.startsAt=month(s);privilege.expiresAt=month(s)+privilege.duration}
  if(request.saleOrderId){const sale=markets.saleOrders.find(x=>x.id===request.saleOrderId);sale.available-=request.quantity;if(sale.available===0)sale.status='filled'}
  else source.stock-=request.quantity;
  s.factions[request.buyer].treasury-=quote.total;
- const shipment={id:`shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,merchantId,saleOrderId:request.saleOrderId||null,contractId:request.contractId||null,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,route:quote.route,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month};
+ const shipment={id:`shipment:${markets.nextShipment++}`,seller:request.seller,buyer:request.buyer,merchantId,saleOrderId:request.saleOrderId||null,contractId:request.contractId||null,origin:request.origin,destination:request.destination,commodity:request.commodity,quantity:request.quantity,price:quote.price,transport:quote.transport,tariffs:quote.tariffs,escrow:quote.total,route:quote.route,legs:quote.legs,leg:0,remaining:quote.legs[0].months,status:'traveling',year:s.year,month:s.month,...(observation?{marketObservation:observation}:{})};
  markets.shipments.push(shipment);
  if(request.contractId){const contract=markets.supplyContracts.find(x=>x.id===request.contractId);contract.shipments.push(shipment.id);contract.dispatched++;contract.consecutiveMisses=0;contract.nextDueAt=month(s)+contract.interval;contract.lastOutcome='dispatched'}
  return {ok:true,shipment,quote};
@@ -316,9 +319,10 @@ export function advanceMarkets(s){
  }
  for(const shipment of markets.shipments.filter(x=>x.status==='traveling'||x.status==='blocked')){
   let leg=shipment.legs[shipment.leg],next=node(s,leg?.to);
-  if(!leg||!next||!permitted(s,next.owner,shipment.buyer,shipment.seller,leg.network)||atWar(s,next.owner,shipment.buyer)||atWar(s,next.owner,shipment.seller)){
+  if(!leg||!next||!permitted(s,next.owner,shipment.buyer,shipment.seller,leg.network)||atWar(s,next.owner,shipment.buyer)||atWar(s,next.owner,shipment.seller)||shipment.leg===shipment.legs.length-1&&region(s,shipment.destination)?.owner!==shipment.buyer){
    if(rerouteBlockedShipment(s,shipment)){leg=shipment.legs[shipment.leg];next=node(s,leg.to)}
    else {
+   if(shipment.status!=='blocked')(shipment.routeDisruptions||=[]).push({at:current,location:leg?.from||shipment.origin});
    shipment.status='blocked';shipment.blockedAt??=current;
    if(current-shipment.blockedAt>=12)settleBlockedShipment(s,shipment);
    continue;
@@ -328,7 +332,7 @@ export function advanceMarkets(s){
   shipment.leg++;
   if(shipment.leg<shipment.legs.length){shipment.remaining=shipment.legs[shipment.leg].months;continue}
   const destination=region(s,shipment.destination);
-  if(destination?.owner!==shipment.buyer){shipment.status='blocked';shipment.leg--;shipment.remaining=1;shipment.blockedAt??=current;continue}
+  if(destination?.owner!==shipment.buyer){(shipment.routeDisruptions||=[]).push({at:current,location:shipment.legs[shipment.leg-1]?.from||shipment.origin});shipment.status='blocked';shipment.leg--;shipment.remaining=1;shipment.blockedAt??=current;continue}
   const destinationMarket=markets.regions[shipment.destination],destinationGood=destinationMarket.goods[shipment.commodity];
   const marketEffect={stockBefore:destinationGood.stock,priceBefore:marketPrice(destinationMarket,shipment.commodity)};
   destinationGood.stock+=shipment.quantity;destinationGood.price=marketPrice(destinationMarket,shipment.commodity);

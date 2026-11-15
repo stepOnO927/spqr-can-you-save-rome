@@ -14,8 +14,12 @@ status. The Han atlas exposes the same mode. The projection excludes foreign
 live inventories and foreign caravans. A unit test checks that boundary, and
 the Roman/Han market browser flow checks that an actual order creates a map
 marker immediately and that changing modes removes it. It remains an atlas
-view of the modeled markets, not a second trade engine. Wider foreign market
-intelligence remains open.
+view of the modeled markets, not a second trade engine. The market panels now
+show dated prices and broad supply bands observed by the player's paid
+foreign-buying caravans, own market shortages, and actual blocked or rerouted
+caravan events. The reports survive save/load and settlement, while foreign
+warehouse totals remain private. Wider intelligence about foreign markets
+without the player's merchants remains open.
 
 Both the Roman-linked and standalone Han market systems now try an open
 alternate route when a paid caravan encounters a closed leg. The merchant

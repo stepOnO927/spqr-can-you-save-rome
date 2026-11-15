@@ -89,8 +89,10 @@ try{
  assert.match(await page.locator('.market-panel').innerText(),/商队中止.*货物退回.*退款.*运费支出/s);
  assert.match(await page.locator('.market-panel').innerText(),/公元前\d+年/);
  assert.match(await page.locator('.market-panel').innerText(),/西汉帝国.*帕提亚/);
+ assert.match(await page.locator('.market-intelligence').innerText(),/己方商队受阻/);
  await page.locator('#language').click();
  assert.match(await page.locator('.market-panel').innerText(),/Caravan stranded.*Goods returned to.*Refund.*Transport spent/s);
+ assert.match(await page.locator('.market-intelligence').innerText(),/Own caravan blocked/);
  assert.doesNotMatch(await page.locator('.market-panel').innerText(),/Silk ×1.*TRAVELING/s);
  // A direct Han player can buy from Parthia through the existing oasis and
  // Central Asian network without receiving a fictitious direct border.
@@ -111,6 +113,7 @@ try{
  assert.match(await page.locator('#market-quote').innerText(),/个月|months/);
  await page.locator('#market-order').click();
  await page.locator('.trade-cargo-marker').first().waitFor();
+ assert.match(await page.locator('.market-intelligence').innerText(),/成交单价.*所见供给/);
  await page.locator('#save-slot').selectOption('2');await page.locator('#save').click();
  const silkRoadOrder=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-2')).markets.shipments[0]);
  assert.ok(silkRoadOrder.route.includes('silk:parthia'));

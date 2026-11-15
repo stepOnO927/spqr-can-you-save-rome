@@ -34,6 +34,7 @@ try{
  assert.equal(await page.locator('#east-market-order').isDisabled(),false);
  await page.locator('#east-market-order').click();
  assert.match(await page.locator('#message').innerText(),/Merchant dispatched/);
+ assert.match(await page.locator('.market-intelligence').innerText(),/Paid unit price.*Observed supply/);
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Horses/);
  assert.match(await page.locator('#inspector').innerText(),/Merchant privileges/);
  await page.locator('[data-east-grant-merchant][data-duration="24"]').first().click();
@@ -67,6 +68,7 @@ try{
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('.territory[data-region="dunhuang"]').click({force:true});await page.locator('#trade-panel').click();
  assert.equal(await page.locator('#east-remount-assign').isDisabled(),true);
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
+ assert.match(await page.locator('.market-intelligence').innerText(),/成交单价.*所见供给/);
  assert.match(await page.locator('#inspector').innerText(),/拨付军马/);
  assert.match(await page.locator('#inspector').innerText(),/商人特权/);
  assert.match(await page.locator('#inspector').innerText(),/过境关税/);
@@ -89,8 +91,10 @@ try{
  });
  await page.locator('#load').click();await page.locator('#trade-panel').click();
  assert.match(await page.locator('.market-receipts').innerText(),/封路后退回.*货物退回.*退款.*运费支出/s);
+ assert.match(await page.locator('.market-intelligence').innerText(),/己方商队受阻/);
  await page.locator('#lang').click();
  assert.match(await page.locator('.market-receipts').innerText(),/Returned after blockade.*Goods returned to.*Refund.*Transport spent/s);
+ assert.match(await page.locator('.market-intelligence').innerText(),/Own caravan blocked/);
  await page.evaluate(async()=>{
   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js');
   const {advanceEasternMarkets}=await import('/han/markets.js?v=faces-reported-names-1');

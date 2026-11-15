@@ -3,6 +3,7 @@ import {activeEasternMerchantPrivilege,cancelEasternSale,cancelEasternSupplyCont
 import {atWar,propose,treaty} from './frontier.js?v=faces-reported-names-1';
 import {FACTIONS} from './data.js?v=faces-reported-names-1';
 import {campaignDate} from '../campaign-date.js?v=faces-reported-names-1';
+import {ownMarketIntelligence} from '../trade-intelligence.js?v=faces-reported-names-1';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(entry,lang)=>esc(Array.isArray(entry)?entry[lang]||entry[0]:entry);
@@ -65,6 +66,9 @@ export function renderEasternMarketPanel({root,state:s,lang=0,selected=null,onOr
   for(const button of root.querySelectorAll('[data-export-good]'))button.onclick=()=>onRestriction(setEasternExportRestriction(s,s.player,button.dataset.exportGood,button.getAttribute('aria-pressed')!=='true'));
  }
  root.insertAdjacentHTML('beforeend',`<h3>${lang?'最近贸易结果':'Recent trade results'}</h3><div class="market-receipts">${transactions.length?transactions.map(receipt).join(''):`<p class="muted">${lang?'尚无贸易结果。':'No trade results yet.'}</p>`}</div>`);
+ const intel=ownMarketIntelligence(s.tradeMarkets,s.player),supply={scarce:['Scarce','偏紧'],adequate:['Adequate','尚可'],surplus:['Surplus','充裕']};
+ const shortfalls=own.flatMap(r=>Object.entries(s.tradeMarkets.regions[r.id].goods).filter(([,item])=>item.shortage>0).map(([good,item])=>`${name(r.name,lang)} · ${name(COMMODITIES[good]?.name||good,lang)} ${lang?'缺口':'shortfall'} ${item.shortage}`));
+ root.insertAdjacentHTML('beforeend',`<h3>${lang?'经济情报':'Economic intelligence'}</h3><p class="muted">${lang?'仅含己方缺口、商队亲历的通路变化，以及已付款商队在出发市场获得的报价和概略供给；旧报告可能过时。':'Owned shortfalls, route changes experienced by your caravans, and dated paid quotes with broad supply reports from their origin markets. Older reports may be stale.'}</p><div class="market-intelligence">${shortfalls.map(line=>`<p>${line}</p>`).join('')}${intel.observations.map(x=>`<p>${campaignDate(x.month,x.year,lang?'zh':'en')} · ${name(s.regions.find(r=>r.id===x.origin)?.name||x.origin,lang)} · ${name(COMMODITIES[x.commodity]?.name||x.commodity,lang)} · ${lang?'成交单价':'Paid unit price'} ${x.unitPrice} · ${lang?'所见供给':'Observed supply'} ${name(supply[x.supply]||['Unknown','未知'],lang)}</p>`).join('')}${intel.disruptions.map(x=>`<p>${campaignDate(x.month,x.year,lang?'zh':'en')} · ${name(s.regions.find(r=>r.id===x.location)?.name||x.location,lang)} · ${x.kind==='blocked'?(lang?'己方商队受阻':'Own caravan blocked'):(lang?'己方商队改道':'Own caravan rerouted')}</p>`).join('')||(!shortfalls.length&&!intel.observations.length?`<p>${lang?'暂无新报告。':'No new reports.'}</p>`:'')}</div>`);
  root.querySelector('#east-market-tariff').onchange=event=>onTariff(setEasternTariffPolicy(s,s.player,event.target.value));
  const partner=root.querySelector('#east-market-partner'),proposeButton=root.querySelector('#east-market-propose');
  if(proposeButton)proposeButton.onclick=()=>onProposal(propose(s,s.player,partner.value,'market'));
