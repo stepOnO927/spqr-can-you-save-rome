@@ -38,14 +38,18 @@ function profile(r,good){
  const east=r.id.startsWith('han'),egypt=r.id.startsWith('egypt');
  const production={
   grain:Math.max(1,Math.floor((r.food||0)/2)),
+  livestock:['numidia','mauretania','galatia'].includes(r.id)?3:r.terrain==='plain'?2:1,
   horses:['parthia','media','armenia','numidia','mauretania','shanshanOasis','hanHexi'].includes(r.id)?3:0,
   iron:['media','armenia','galatia','hanShu','hanHenan','cisalpine'].includes(r.id)?2:r.terrain==='hills'?1:0,
+  copper:['media','armenia','galatia','hanShu','hanHenan','cisalpine'].includes(r.id)?2:r.terrain==='hills'||r.terrain==='mountain'?1:0,
   timber:r.terrain==='forest'?4:r.terrain==='hills'?2:1,
   silk:east?2:0,
+  wool:['numidia','mauretania','galatia','shanshanOasis'].includes(r.id)?3:r.terrain==='hills'?1:0,
+  jade:0,
   papyrus:egypt?3:0
  }[good];
- const consumption={grain:Math.max(1,Math.floor((r.supply||8)/6)),horses:1,iron:1,timber:1,silk:0,papyrus:0}[good];
- return {production,consumption,stock:Math.max(0,production*4+2-consumption),price:COMMODITIES[good].basePrice};
+ const consumption={grain:Math.max(1,Math.floor((r.supply||8)/6)),livestock:1,horses:1,iron:1,copper:1,timber:1,silk:0,wool:r.supply>=8?1:0,jade:r.tax>=6?1:0,papyrus:0}[good];
+ return {production,consumption,stock:production===0&&['wool','jade'].includes(good)?0:Math.max(0,production*4+2-consumption),price:COMMODITIES[good].basePrice};
 }
 export function initializeMarkets(s){
  const markets=s.markets||={regions:{},saleOrders:[],nextSaleOrder:1,shipments:[],transactions:[],nextShipment:1,supplyContracts:[],nextSupplyContract:1,tariffs:{},exportRestrictions:{},lastTick:null,transportSpent:0,transitTreasury:{},merchants:{},merchantFees:0};

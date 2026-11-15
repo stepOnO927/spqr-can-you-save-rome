@@ -272,9 +272,9 @@ test('oasis AI can finance and resell physical silk when the direct Han offer cl
  assert.ok(s.factions.qiemo.treasury>=0);
 });
 
-test('a normal forty-month campaign produces an autonomous two-court silk chain',()=>{
+test('a normal four-year campaign produces an autonomous two-court silk chain alongside other goods',()=>{
  let s=newHanGame('parthia',{seed:49});
- for(let i=0;i<40;i++){
+ for(let i=0;i<48;i++){
   tick(s);
   if(i===19)s=loadHanSave(serialize(s));
  }

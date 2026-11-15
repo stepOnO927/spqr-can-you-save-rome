@@ -29,6 +29,17 @@ informed by [Chorasmia](https://www.iranicaonline.org/articles/chorasmia/),
 [ancient Iberian royal history](https://journals.ur.edu.pl/anabasis/article/download/10178/9226/19212),
 and [early Albanian accounts](https://api.pageplace.de/preview/DT0400.9781463239893_A43599321/preview-9781463239893_A43599321.pdf).
 The generated people and their exact names remain original game reconstructions.
+The measured market catalog now also includes herd animals, copper, woollen
+textiles, and jade, with bilingual batch units and separate regional output,
+use, stock and prices in both simulations. Jade has a modeled Yutian source;
+a paid Han purchase travels through Shanshan to Dunhuang and transfers the
+actual stock and customs only on delivery. Older saves gain the four goods
+without changing existing treasuries. Roman and Han market screens show the
+new labels in both languages. An autonomous Han–Qiuci–Shule silk resale still
+completes within four years while AI also considers the additional goods.
+The Yutian jade and Central Asian textile placements are game abstractions
+informed by [Encyclopaedia Iranica's account of Parthian commerce](https://www.iranicaonline.org/articles/commerce-iii/);
+the prices and quantities are balance values rather than historical records.
 
 The atlas now has a trade map mode tied to the existing market and route
 simulation. It shows owned market grain stocks, prices, production and demand;

@@ -11,6 +11,7 @@ try{
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
  await page.locator('#trade-panel').click();
  assert.match(await page.locator('#inspector').innerText(),/Own stock/);
+ assert.match(await page.locator('#inspector').innerText(),/Herd animals.*Copper.*Woollen textiles.*Jade/s);
  assert.match(await page.locator('#inspector').innerText(),/current price per batch/);
  await page.locator('[data-export-good="silk"]').click();
  assert.match(await page.locator('#message').innerText(),/Export policy updated/);
@@ -68,6 +69,7 @@ try{
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('.territory[data-region="dunhuang"]').click({force:true});await page.locator('#trade-panel').click();
  assert.equal(await page.locator('#east-remount-assign').isDisabled(),true);
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
+ assert.match(await page.locator('#inspector').innerText(),/牲畜.*铜.*毛织物.*玉石/s);
  assert.match(await page.locator('.market-intelligence').innerText(),/成交单价.*所见供给/);
  assert.match(await page.locator('#inspector').innerText(),/拨付军马/);
  assert.match(await page.locator('#inspector').innerText(),/商人特权/);
