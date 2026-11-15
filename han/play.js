@@ -10,7 +10,7 @@ import {drawMap} from './map.js';
 import {templatesFor,recruitQuote,recruit,neighbours} from './military.js';
 import {changeDependency,dependencyOf} from './dependencies.js';
 import {declareWar,propose,atWar} from './frontier.js';
-import {init as initExperience,act as experienceAction} from './experience.js?v=world-kings-trade-1';
+import {init as initExperience,act as experienceAction,lesson as experienceLesson} from './experience.js?v=world-kings-trade-1';
 import {renderExperience} from './experience-ui.js?v=world-kings-trade-1';
 const $=id=>document.getElementById(id),D=(en,zh)=>lang?zh:en,L=a=>Array.isArray(a)?a[lang]||a[0]:a;
 let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,camera='all',mode='political',courtOpen=false,courtOffice='dasinong',courtCandidate=null,hanTutorialStarted=false,hanTutorialCompleted=false;
