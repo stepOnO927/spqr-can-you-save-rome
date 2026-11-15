@@ -62,6 +62,7 @@ jobs:
               node tools/foreign-name-privacy-smoke.mjs
               node tools/campaign-intelligence-privacy-smoke.mjs
               node tools/strategy-board-name-privacy-smoke.mjs
+              node tools/leader-layout-smoke.mjs
               node scripts/multipolar-sim.mjs > multipolar-simulation.json
               node tools/multipolar-smoke.mjs
               node tools/player-strategic-offer-smoke.mjs
@@ -120,6 +121,7 @@ jobs:
             browser-smoke-1920x1080.png
             capture-control-1920x1080.png
             map-benchmark-1920x1080.png
+            leader-overview-1920x1080.png
             map-benchmark.json
             multipolar-simulation.json
             server.log

@@ -36,6 +36,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Population satisfaction map | Terrain map → map mode → population satisfaction | `tools/satisfaction-map-smoke.mjs` checks owned values, a real policy change, privacy, visible map redraw and save/load; shared outlines summarize owned theaters only |
 | Chronicle and map handoff | Chronicle / return to campaign | `tools/browser-smoke.mjs` |
 | Terrain-map pan, zoom and relief | Map drag, wheel and relief control | `tools/map-benchmark.mjs` |
+| Overview labels and army access | Terrain map → zoom out → pan, inspect armies or open a faction | `tools/leader-layout-smoke.mjs` checks 1920×1080, 900×650 and 640×360 layouts, army selection, accessible labels and the faction army directory; crowded labels can shorten or yield to the directory, and foreign strength remains unknown |
 | Screenshot | Terrain map → Screenshot | `tools/capture-check.mjs` |
 
 The remaining family actions, other treaty types, and other political movement stages have engine or component tests, but are not yet all verified through a complete player journey. Continue the audit before treating every system as fully playable. Letter outcomes remain delayed and can be lost or refused. The family audience selector and terrain-map intelligence views use delivered reported names for fictional foreign people; legacy reports without a saved name remain anonymous. Other views still require individual privacy and player-flow audits.
