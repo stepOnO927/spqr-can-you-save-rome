@@ -246,7 +246,7 @@ export function respondCivilSettlement(s,accept){
 }
 
 export function diplomacy(s, actor, target, action){
-  if(actor===target || !s.factions[actor] || !s.factions[target] || target==='rebels'||actor==='rebels' || !s.regions.some(r=>r.owner===actor) || !s.regions.some(r=>r.owner===target))return false;
+  if(actor===target || !s.factions[actor] || !s.factions[target] || actor==='rebels' || target==='rebels'&&action!=='war' || !s.regions.some(r=>r.owner===actor) || !s.regions.some(r=>r.owner===target))return false;
   const key=pair(actor,target);
   if(action==='settlement'&&['caesar','senate'].includes(actor)&&target===(actor==='caesar'?'senate':'caesar')&&isWar(s,actor,target)){
     if(s.pendingCivilSettlement)return false;
@@ -267,10 +267,12 @@ export function diplomacy(s, actor, target, action){
   if(action==='war' && !isWar(s,actor,target)){
     if(isAllied(s,actor,target))return false;
     s.wars.push([actor,target]);const firstNewWar=s.wars.length;
-    for(const p of s.alliances.filter(p=>p.includes(target))){const ally=p.find(x=>x!==target);if(ally!==actor&&!isWar(s,ally,actor)&&!isAllied(s,ally,actor))s.wars.push([ally,actor])}
-    for(const p of s.alliances.filter(p=>p.includes(actor))){const ally=p.find(x=>x!==actor);if(ally!==target&&!isWar(s,ally,target)&&!isAllied(s,ally,target))s.wars.push([ally,target])}
+    if(target!=='rebels'){
+      for(const p of s.alliances.filter(p=>p.includes(target))){const ally=p.find(x=>x!==target);if(ally!==actor&&!isWar(s,ally,actor)&&!isAllied(s,ally,actor))s.wars.push([ally,actor])}
+      for(const p of s.alliances.filter(p=>p.includes(actor))){const ally=p.find(x=>x!==actor);if(ally!==target&&!isWar(s,ally,target)&&!isAllied(s,ally,target))s.wars.push([ally,target])}
+    }
     s.relations[key]=-60;
-    s.factions[actor].legitimacy=Math.max(0,s.factions[actor].legitimacy-5);
+    if(target!=='rebels')s.factions[actor].legitimacy=Math.max(0,s.factions[actor].legitimacy-5);
     log(s,`${FACTIONS[actor].short[0]} declared war on ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}向${FACTIONS[target].short[1]}宣战。`);
     recordDiplomacy(s,actor,target,action);
     for(const [ally,enemy] of s.wars.slice(firstNewWar))if([ally,enemy].includes(s.player)&&![actor,target].includes(s.player)){recordDiplomacy(s,ally,enemy,'war');log(s,`An alliance drew ${FACTIONS[s.player].short[0]} into war with ${FACTIONS[enemy===s.player?ally:enemy].short[0]}.`,`同盟使${FACTIONS[s.player].short[1]}与${FACTIONS[enemy===s.player?ally:enemy].short[1]}交战。`)}
@@ -510,6 +512,26 @@ function shortestStep(s,start,goal,owner,unit){
   return null;
 }
 
+// A rebellion can sever a land route in an existing war. Only a command with
+// a real field army and an otherwise unreachable enemy may open that front.
+function rebelsBlockWarFront(s,owner,unit){
+  const reachesEnemy=allowRebels=>{
+    const queue=[unit.region],seen=new Set(queue);
+    for(let i=0;i<queue.length;i++){
+      const id=queue[i];
+      for(const edge of adjacent(id,s)){
+        if(edge.sea||seen.has(edge.to))continue;
+        const next=region(s,edge.to),enemy=next.owner!==owner&&next.owner!=='rebels'&&isWar(s,owner,next.owner);
+        if(enemy)return true;
+        if(next.owner!==owner&&!isWar(s,owner,next.owner)&&!(allowRebels&&next.owner==='rebels'))continue;
+        seen.add(edge.to);queue.push(edge.to);
+      }
+    }
+    return false;
+  };
+  return !reachesEnemy(false)&&reachesEnemy(true);
+}
+
 // AI uses its own reports and approximate sightings, never the real enemy roster.
 // After two years, a numerical report fades gradually toward an uncertain prior.
 export function estimatedStrength(s,observer,target){
@@ -700,6 +722,7 @@ export function aiTurn(s,owner){
       }
     }
   }
+  if(owner!=='rebels'&&!isWar(s,owner,'rebels')&&f.food>=5&&strength(s,owner)>=2000&&s.armies.some(a=>a.owner===owner&&a.men>=1500&&!a.move&&!a.siege&&rebelsBlockWarFront(s,owner,a)))diplomacy(s,owner,'rebels','war');
   const enemies=s.regions.filter(r=>isWar(s,owner,r.owner));
   const fieldStrength=strength(s,owner),emergency=fieldStrength<1500&&enemies.length>0;
   // A smaller command can lose its field army while remaining below the

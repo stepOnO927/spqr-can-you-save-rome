@@ -214,4 +214,16 @@ await page.locator('#naval').click();await page.locator('[data-order-kind="caesa
 assert.equal(await page.locator('[data-order-target="caesar-adriatic"] option').count(),0);
 assert.equal(await page.locator('[data-order="caesar-adriatic"]').isDisabled(),true);
 assert.match(await page.locator('#naval-feedback').innerText(),/没有涉及交战敌方的商路/);
+const rebelCampaign=newGrandGame('senate');rebelCampaign.regions.find(r=>r.id==='t011').owner='rebels';
+await page.locator('#upload-save-file').setInputFiles({name:'rebel-corridor.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(rebelCampaign))});
+await page.locator('#factions').click();await page.locator('[data-faction="rebels"]').click();
+assert.match(await page.locator('#command-detail').innerText(),/清剿叛军/);
+await page.locator('#language').click();assert.match(await page.locator('#command-detail').innerText(),/Suppress rebellion/);
+await page.locator('#suppress-rebels').click();assert.match(await page.locator('#command-detail').innerText(),/Currently at war/);
+assert.equal(await page.locator('#suppress-rebels').count(),0);
+await page.locator('#upload-save-file').setInputFiles({name:'rebel-corridor-fresh.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(rebelCampaign))});
+await page.locator('#return-campaign').click();await page.waitForURL('http://spqr.test/');
+await page.locator('[data-tab="government"]').click();assert.equal(await page.locator('[data-dip="rebels"][data-act="war"]').count(),1);
+await page.locator('#lang').click();assert.match(await page.locator('.inspector').innerText(),/清剿叛军/);
+await page.locator('[data-dip="rebels"][data-act="war"]').click();assert.equal(await page.locator('[data-dip="rebels"][data-act="war"]').count(),0);
 assert.deepEqual(errors,[]);console.log('Grand browser smoke passed');await browser.close();
