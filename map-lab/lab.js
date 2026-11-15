@@ -33,7 +33,7 @@ import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, pr
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=succession-ui-recovery-1';
-import {createCharacterUI} from './character-ui.js?v=campaign-intelligence-privacy-1';
+import {createCharacterUI} from './character-ui.js?v=reported-dossier-health-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=infant-portraits-1';
 import {renderAidRequest} from '../strategic-aid-ui.js?v=campaign-intelligence-privacy-1';
 import {reportedArmies,visiblePersonName} from '../character-system.js?v=foreign-name-privacy-1';
