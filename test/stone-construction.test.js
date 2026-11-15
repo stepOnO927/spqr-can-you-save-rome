@@ -7,6 +7,7 @@ import {placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=faces-report
 import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-reported-names-1';
 import {advanceDate} from '../han/util.js?v=faces-reported-names-1';
 import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-reported-names-1';
+import {constructionMaterialText,inventionReason} from '../map-lab/invention-ui.js?v=faces-reported-names-1';
 
 test('quarried stone is a measured good in both campaigns and old saves',()=>{
  assert.deepEqual(COMMODITIES.stone.unit,['20 tons','二十吨']);
@@ -59,4 +60,37 @@ test('Han quarry stone takes an actual route to the capital',()=>{
  assert.equal(s.tradeMarkets.shipments.find(x=>x.id===order.shipment.id).status,'delivered');
  assert.equal(s.tradeMarkets.regions.changan.goods.stone.stock,2);
  assert.equal(s.tradeMarkets.transactions.filter(x=>x.shipment===order.shipment.id).length,1);
+});
+
+test('delivered timber and iron enter construction once and survive save reload',()=>{
+ let bridge=newGame('senate');bridge.inventions.senate.knownMaterial.push('bridges');
+ Object.assign(bridge.markets.regions.roma.goods.stone,{stock:2,production:0,consumption:0});
+ Object.assign(bridge.markets.regions.roma.goods.timber,{stock:0,production:0,consumption:0});
+ Object.assign(bridge.markets.regions.italiaS.goods.timber,{stock:4,production:0,consumption:0});
+ assert.equal(canConstruct(bridge,'senate','roma','bridges'),'timber');
+ const wood=placeTradeOrder(bridge,{seller:'senate',buyer:'senate',origin:'italiaS',destination:'roma',commodity:'timber',quantity:2});
+ assert.equal(wood.ok,true,wood.reason);bridge=upgradeSave(structuredClone(bridge));advanceDate(bridge);advanceMarkets(bridge);
+ assert.equal(bridge.markets.shipments.find(x=>x.id===wood.shipment.id).status,'delivered');
+ assert.equal(startConstruction(bridge,'senate','roma','bridges').ok,true);
+ assert.deepEqual(bridge.regions.find(r=>r.id==='roma').construction.materials,{stone:2,timber:2});
+ assert.equal(bridge.markets.regions.roma.goods.timber.stock,0);
+ bridge=upgradeSave(structuredClone(bridge));assert.equal(bridge.markets.regions.roma.goods.timber.usedForConstruction,2);
+
+ let forge=newGame('senate');forge.inventions.senate.knownMaterial.push('metalworking');
+ Object.assign(forge.markets.regions.roma.goods.iron,{stock:0,production:0,consumption:0});
+ Object.assign(forge.markets.regions.italiaS.goods.iron,{stock:4,production:0,consumption:0});
+ assert.equal(canConstruct(forge,'senate','roma','metalworking'),'iron');
+ const metal=placeTradeOrder(forge,{seller:'senate',buyer:'senate',origin:'italiaS',destination:'roma',commodity:'iron',quantity:1});
+ assert.equal(metal.ok,true,metal.reason);forge=upgradeSave(structuredClone(forge));advanceDate(forge);advanceMarkets(forge);
+ assert.equal(startConstruction(forge,'senate','roma','metalworking').ok,true);
+ assert.deepEqual(forge.regions.find(r=>r.id==='roma').construction.materials,{iron:1});
+ forge=upgradeSave(structuredClone(forge));assert.equal(forge.markets.regions.roma.goods.iron.usedForConstruction,1);
+ assert.equal(forge.markets.regions.roma.goods.iron.stock,0);
+
+ const bridgeWork=MATERIALS.find(x=>x.id==='bridges'),forgeWork=MATERIALS.find(x=>x.id==='metalworking');
+ assert.match(constructionMaterialText(bridgeWork,'en'),/2 batches of timber/);
+ assert.match(constructionMaterialText(bridgeWork,'zh'),/2批木材/);
+ assert.match(constructionMaterialText(forgeWork,'en'),/1 batch of iron/);
+ assert.equal(inventionReason('timber','zh'),'当地木材不足');
+ assert.equal(inventionReason('iron','en'),'Insufficient local iron');
 });

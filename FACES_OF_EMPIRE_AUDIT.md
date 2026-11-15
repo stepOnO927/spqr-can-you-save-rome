@@ -65,9 +65,15 @@ store. A paid caravan can deliver the missing batch through an existing route.
 The local stock and a saved construction-use ledger decrease once at the start;
 old projects continue with their existing terms. Both market simulations gain
 stone without changing old treasury balances. A browser flow exercises the
-bilingual price, shortage, paid delivery, construction and reload. The wider
-conversion of metals, timber and other inputs into military and civic projects
-remains open.
+bilingual price, shortage, paid delivery, construction and reload. Bridges,
+ports, shipyards and military works now consume locally delivered timber;
+metalworking, shipyards and siege workshops consume local iron. The invention
+screen lists all material costs in both languages, and save-safe tests follow
+paid timber and iron shipments into actual buildings. Wider use of measured
+weapons and provisions in recruitment and military upkeep remains open.
+Eastern market AI now indexes offers, owned regions and active caravans once
+per planning turn and only builds full paths for shortlisted bids. The
+120-month trade simulation retained the same shipment and treasury results.
 
 Roman players can now list stock at an owned eastern port for a Parthian buyer.
 The existing treaty, AI purchase, prepaid caravan and timed delivery must all

@@ -29,7 +29,10 @@ try{
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
  });
  await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});
- await page.locator('#inventions').click();await page.locator('[data-node="water"]').click();
+ await page.locator('#inventions').click();
+ await page.locator('[data-node="bridges"]').click();assert.match(await page.locator('.invention-detail').innerText(),/2批石材、2批木材/);
+ await page.locator('[data-node="metalworking"]').click();assert.match(await page.locator('.invention-detail').innerText(),/1批铁料/);
+ await page.locator('[data-node="water"]').click();
  assert.match(await page.locator('.invention-detail').innerText(),/1批石材/);
  await page.locator('#invention-close').click();
  await selectNarbo();
@@ -52,7 +55,10 @@ try{
  assert.equal(saved.markets.regions.narbo.goods.stone.usedForConstruction,1);
  assert.equal(saved.regions.find(r=>r.id==='narbo').construction.materials.stone,1);
  assert.equal(saved.markets.transactions.filter(x=>x.commodity==='stone'&&x.destination==='narbo').length,1);
- await page.locator('#language').click();await page.locator('#inventions').click();await page.locator('[data-node="water"]').click();
+ await page.locator('#language').click();await page.locator('#inventions').click();
+ await page.locator('[data-node="bridges"]').click();assert.match(await page.locator('.invention-detail').innerText(),/2 batches of building stone, 2 batches of timber/);
+ await page.locator('[data-node="metalworking"]').click();assert.match(await page.locator('.invention-detail').innerText(),/1 batch of iron/);
+ await page.locator('[data-node="water"]').click();
  assert.match(await page.locator('.invention-detail').innerText(),/1 batch of building stone/);
  await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('spqr-save-1'));sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}))});
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#save').click();
