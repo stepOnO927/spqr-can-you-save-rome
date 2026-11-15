@@ -4,7 +4,7 @@ import {newGame,army,moveArmy,tick,upgradeSave,aiTurn,resolveBattle} from '../en
 import {assessment,sendScouts,probePositions,latestRecon,reconReports,delayAttack,markReconRegion,advanceRecon} from '../reconnaissance.js';
 import {development,activeEffects,IDEAS} from '../development.js';
 import {developmentPanel} from '../development-ui.js';
-import {intelligenceHtml,afterActionHtml,fortificationText} from '../recon-ui.js';
+import {intelligenceHtml,afterActionHtml,fortificationText,reconSummaryHtml} from '../recon-ui.js';
 
 test('enemy fortification remains hidden until a dated military report is available',()=>{
  const s=newGame('senate'),target=s.regions.find(r=>r.id==='cisalpine');target.fort=3;
@@ -18,7 +18,7 @@ test('enemy fortification remains hidden until a dated military report is availa
  assert.equal(assessment(s,'italy',target.id).fort,2,'a newer strength report must not erase an older fort observation');
  assert.match(intelligenceHtml(assessment(s,'italy',target.id),target,'en'),/≈2 \(1\/49 BCE\)/);
  assert.equal(fortificationText(s,'senate',target.id,'en'),'≈2 · 1/49 BCE');
- assert.equal(fortificationText(s,'senate',target.id,'zh'),'≈2 · 1/49 公元前');
+ assert.equal(fortificationText(s,'senate',target.id,'zh'),'≈2 · 公元前49年1月');
  target.fort=7;
  assert.equal(fortificationText(upgradeSave(JSON.parse(JSON.stringify(s))),'senate',target.id,'en'),'≈2 · 1/49 BCE','the interface must show the observed estimate, never the new hidden value');
  s.month=5;
@@ -92,6 +92,13 @@ test('reports preserve observation and arrival, age without leaking fortificatio
  const scout=latestRecon(s,'senate','cisalpine');
  assert.equal(scout.observationMonth,1);assert.equal(scout.arrivalMonth,2);assert.equal(scout.age,1);
  assert.equal(scout.reliability,'low');assert.equal(assessment(s,'italy','cisalpine').fort,null);
+ const chineseSummary=reconSummaryHtml(scout,'zh');
+ assert.match(chineseSummary,/观察 公元前49年1月/);assert.match(chineseSummary,/送达 公元前49年2月/);
+ assert.match(chineseSummary,/斥候/);assert.match(chineseSummary,/误报风险 高/);
+ assert.doesNotMatch(chineseSummary,/\b(?:scouts|rumor|unverified|confirmed)\b/);
+ const englishSummary=reconSummaryHtml(scout,'en');
+ assert.match(englishSummary,/Observed 1\/49 BCE/);assert.match(englishSummary,/Arrived 2\/49 BCE/);
+ assert.match(englishSummary,/Misinformation risk High/);
  s.armies.find(a=>a.id==='italy').reconPending=null;
  assert.equal(probePositions(s,'italy','cisalpine').ok,true);
  const reports=reconReports(s,'senate','cisalpine');assert.equal(reports.length,2);

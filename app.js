@@ -15,7 +15,7 @@ import {drawMap,mapPoint} from './map.js?v=62';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=7';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=9';
 import {assessment,sendScouts,probePositions,delayAttack,requestReinforcements} from './reconnaissance.js?v=11';
-import {intelligenceHtml,fortificationText} from './recon-ui.js?v=7';
+import {intelligenceHtml,fortificationText} from './recon-ui.js?v=8';
 import {cultureLabel} from './culture-labels.js?v=1';
 
 const ui={

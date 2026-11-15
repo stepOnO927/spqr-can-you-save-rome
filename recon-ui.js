@@ -1,7 +1,7 @@
 import {reconReports} from './reconnaissance.js?v=11';
 
 const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const date=(y,m,z)=>y==null?'—':m+'/'+Math.abs(y)+' '+(z?'公元前':'BCE');
+const date=(y,m,z)=>y==null?'—':z?`${y<0?'公元前':'公元'}${Math.abs(y)}年${m}月`:`${m}/${Math.abs(y)} ${y<0?'BCE':'CE'}`;
 const labels={
  'highly credible':['Highly Credible','高度可信'],confirmed:['Confirmed','已确认'],unverified:['Unverified','未经核实'],rumor:['Rumor','传闻'],disputed:['Disputed','存在争议'],outdated:['Outdated','已过时'],unknown:['Unknown','未知'],
  scouts:['Scouts','斥候'],probe:['Military probe','接敌试探'],battle:['Battle contact','战场接触'],low:['Low','低'],medium:['Medium','中'],high:['High','高'],moderate:['Moderate','中'],possible:['Possible','可能'],
@@ -13,7 +13,18 @@ const labels={
  ,'battlefield contact':['Battlefield contact','战场接触']
 };
 const local=(x,z)=>labels[x]?.[z?1:0]??x;
-const range=(r,z)=>r?.min!=null?r.min.toLocaleString()+'–'+r.max.toLocaleString():(z?'未知':'Unknown');
+export const reconLabel=(x,lang)=>local(x,lang==='zh');
+export const reconDate=(year,month,lang)=>date(year,month,lang==='zh');
+const range=(r,z)=>Number.isFinite(r?.min)&&Number.isFinite(r?.max)&&r.max>=r.min?r.min.toLocaleString()+'–'+r.max.toLocaleString():(z?'未知':'Unknown');
+export function reconSummaryHtml(report,lang){
+ const z=lang==='zh';
+ if(!report)return `<p>${z?'没有该战区的军事侦察报告。':'No military reconnaissance report for this theater.'}</p>`;
+ const observed=date(report.observationYear??report.year,report.observationMonth??report.month,z);
+ const arrived=date(report.arrivalYear??report.year,report.arrivalMonth??report.month,z);
+ return `<p>${z?'观察':'Observed'} ${safe(observed)} · ${z?'送达':'Arrived'} ${safe(arrived)} · ${safe(local(report.source,z))}</p>`+
+  `<p>${z?'敌军估计':'Enemy estimate'} ${range(report,z)} · ${z?'可信度':'Confidence'} ${safe(local(report.confidence,z))} · ${z?'时效':'Age'} ${Math.max(0,Number(report.age)||0)} ${z?'个月':'month(s)'}</p>`+
+  `<p>${z?'部署':'Positions'} ${safe(local(report.positions??'positions unconfirmed',z))} · ${z?'误报风险':'Misinformation risk'} ${safe(local(report.misinformationRisk??'high',z))}</p>`;
+}
 export function fortificationText(s,observer,regionId,lang){
  const site=s.regions.find(r=>r.id===regionId),z=lang==='zh';
  if(!site)return z?'未知':'Unknown';
