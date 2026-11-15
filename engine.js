@@ -34,7 +34,7 @@ import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?
 import {respondToFrontierReports} from './frontier-response.js?v=world-kings-trade-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=world-kings-trade-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=world-kings-trade-1';
-import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=world-kings-trade-1';
+import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,initializeCoalitionCharters} from './coalitions.js?v=world-kings-trade-1';
 import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=world-kings-trade-1';
 import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=world-kings-trade-1';
 import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=world-kings-trade-1';
@@ -149,7 +149,7 @@ export function upgradeSave(s){
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeTerritories(s);migrateVillageRecords(s);initializeBorderPolicies(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeLocalDiscovery(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);initializeTerritories(s);migrateVillageRecords(s);initializeBorderPolicies(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeLocalDiscovery(s);initializeCoalitionCharters(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 

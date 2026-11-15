@@ -12,6 +12,16 @@ const now=s=>s.year*12+s.month;
 const ownStrength=(s,a)=>s.armies.filter(x=>x.owner===a).reduce((n,x)=>n+x.men,0);
 const near=(s,actor,target)=>s.regions.filter(r=>r.owner===actor).some(r=>ROUTES.some(([a,b])=>{const other=a===r.id?b:b===r.id?a:null;return other&&reportedControl(s,actor,other)?.owner===target}));
 
+export function initializeCoalitionCharters(s){
+ for(const c of s.coalitions||[]){
+  c.name||=`Defensive Coalition ${c.id.split(':').pop()}`;
+  c.kind||='defensive';
+  c.foundingMembers||=[...c.parties];
+  c.charter||={purpose:'defend_against_threat',admission:'invitation_and_consent',decision:'independent_members',dues:'contribution_policy'};
+ }
+ return s;
+}
+
 // Every six months, preserve only what each observer's own dated control
 // reports indicate. A newly received old report is evidence, not omniscience.
 export function observeBalanceOfPower(s){
@@ -55,8 +65,17 @@ export function formCoalition(s,leader,members,target,estimateStrength,{allowPla
  let fundingAssigned=false;const contributions=Object.fromEntries(parties.map(id=>{const f=s.factions[id];let policy;if(f.food<10)policy='diplomacy';else if(id===leader)policy='military';else if(!fundingAssigned&&f.treasury>50){policy='funding';fundingAssigned=true}else policy=f.food>40?'supplies':f.treasury>50?'funding':'military';return [id,{policy,paid:0,supplies:0}]}));
  if(consentingPlayer&&contributions[s.player])contributions[s.player].policy='diplomacy';
  const trust=Object.fromEntries(parties.flatMap((a,i)=>parties.slice(i+1).map(b=>[pair(a,b),Math.round((rel(s,a,b)+100)/2)])));
- const c={id:`coalition:${s.nextCoalitionId||1}`,leader,parties,target,objective:'defend_against_threat',start:{year:s.year,month:s.month},expiresAt:now(s)+36,status:'active',cohesion:70,trust,contributions,departures:[],obligations:['defend_members'],jointPlan:{target,kind:'coordinate_defense'},disagreements:[]};
+ const id=s.nextCoalitionId||1;
+ const c={id:`coalition:${id}`,name:`Defensive Coalition ${id}`,kind:'defensive',foundingMembers:[...parties],charter:{purpose:'defend_against_threat',admission:'invitation_and_consent',decision:'independent_members',dues:'contribution_policy'},leader,parties,target,objective:'defend_against_threat',start:{year:s.year,month:s.month},expiresAt:now(s)+36,status:'active',cohesion:70,trust,contributions,departures:[],obligations:['defend_members'],jointPlan:{target,kind:'coordinate_defense'},disagreements:[]};
  s.nextCoalitionId=(s.nextCoalitionId||1)+1;s.coalitions.push(c);return {ok:true,coalition:c};
+}
+export function renameCoalition(s,id,actor,name){
+ const c=(s.coalitions||[]).find(x=>x.id===id&&x.status==='active');
+ if(!c||c.leader!==actor)return {ok:false,reason:'authority'};
+ if(typeof name!=='string')return {ok:false,reason:'name'};
+ const clean=name.trim().replace(/\s+/g,' ');
+ if(clean.length<3||clean.length>48||/[<>\u0000-\u001f]/u.test(clean))return {ok:false,reason:'name'};
+ c.name=clean;return {ok:true,name:clean};
 }
 export function leaveCoalition(s,id,actor){
  const c=(s.coalitions||[]).find(x=>x.id===id&&x.status==='active');if(!c||!c.parties.includes(actor))return {ok:false,reason:'unavailable'};

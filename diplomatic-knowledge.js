@@ -13,7 +13,7 @@ function currentDocuments(s,viewer){
  for(const war of s.wars||[]){const parties=war.slice(0,2);if(parties.length===2)result.push({id:'war:'+parties.slice().sort().join('|'),kind:'war',type:'war',parties})}
  for(const pair of s.alliances||[]){const parties=pair.slice(0,2),id='alliance:'+parties.slice().sort().join('|');result.push({id,kind:'alliance',type:'full',parties})}
  for(const t of s.agreements||[])if(t.status==='active'&&s.year*12+s.month<t.expiresAt&&!s.wars.some(w=>t.parties.every(p=>w.includes(p)))&&(!t.secret||t.parties.includes(viewer)))result.push({id:t.id,kind:'agreement',type:t.type,parties:[...t.parties],secret:!!t.secret});
- for(const c of s.coalitions||[])if(c.status==='active'&&s.year*12+s.month<c.expiresAt)result.push({id:c.id,kind:'coalition',type:'defensive',parties:[...c.parties],leader:c.leader,target:c.target});
+ for(const c of s.coalitions||[])if(c.status==='active'&&s.year*12+s.month<c.expiresAt)result.push({id:c.id,kind:'coalition',type:'defensive',name:c.name||`Defensive Coalition ${c.id.split(':').pop()}`,parties:[...c.parties],leader:c.leader,target:c.target});
  return result;
 }
 function reportAgreementChange(s,doc,ended=false){
