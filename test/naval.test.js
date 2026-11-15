@@ -854,6 +854,7 @@ test('AI divides escorts between two raided trade routes and uses current route 
  s.factions.senate.treasury=500;s.factions.senate.food=100;
  s.naval.routes=s.naval.routes.filter(r=>['african-oil','levant-luxury'].includes(r.id));
  for(const pirate of s.naval.pirates)pirate.pressure=0;
+ s.naval.pirates[0].zone='tyrrhenian';s.naval.pirates[0].pressure=30;
  first.ships={trireme:2};first.port=null;first.zone='tyrrhenian';
  second.id='senate-east';second.ships={trireme:2};second.port=null;second.zone='ionian';
  merchant.id='senate-merchants';merchant.ships={merchant:2};merchant.port='africa';merchant.zone='african';
@@ -866,6 +867,7 @@ test('AI divides escorts between two raided trade routes and uses current route 
  advanceNaval(s);
  assert.equal(s.naval.routes.find(r=>r.id==='african-oil').last.reason,'raid');
  assert.equal(s.naval.routes.find(r=>r.id==='levant-luxury').last.reason,'raid');
+ assert.ok(s.naval.pirates.some(p=>p.zone==='tyrrhenian'&&p.pressure>18));
  assert.equal(first.order?.kind,'escort');assert.equal(second.order?.kind,'escort');
  assert.deepEqual(new Set([first.order.target,second.order.target]),new Set(['african-oil','levant-luxury']));
  const restored=upgradeSave(structuredClone(s));
