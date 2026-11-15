@@ -6,7 +6,7 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
-The draft now includes main through `9711ddeb`. The newer report-delivery
+The draft now includes main through `c0a17c33`. The newer report-delivery
 checks are reconciled in planning, battle estimates, faction views, national
 focus and legion design; the added unit and browser regressions pass. Its
 Roman trade routes now reuse a static adjacency index and look up campaign
@@ -28,6 +28,11 @@ Main's office-specific election results now render from the selected office;
 invalid old selections fall back to consul. The 45 focused Cursus and mission
 tests pass, and Chromium confirms election results, taking office, language,
 and save/load in the atlas.
+The later agent-release mail update is reconciled with the Roman supply work.
+Only a delivered release request enters the player's inbox; a response starts
+the saved delayed handover, and a lost reply does not free the captive. Four
+focused unit cases and its Chromium reply/save flow pass after reusing the
+expansion branch's shared imports.
 The draft's overview layout and
 attack-preview privacy changes are connected to the expanded faction atlas:
 crowded cities and armies remain selectable through faction directories, and
@@ -118,7 +123,7 @@ remain real. The monthly log names the army, soldiers fed and losses avoided
 from actual simulation values. Both Roman campaign views expose the carried reserve and local
 stock in English and Chinese. Unit tests cover stock deduction, enemy/route
 rejection, starvation mitigation and persistence; Chromium checks both views.
-The complete 1,156-test suite and 120-month Roman/Han market simulation pass
+The complete 1,160-test suite and 120-month Roman/Han market simulation pass
 locally. Generic non-formation recruitment and fuller military maintenance
 integration remain open.
 After integrating main through `b4a01eba`, the complete serial simulation
