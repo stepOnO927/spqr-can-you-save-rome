@@ -17,17 +17,19 @@ for(const link of ROUTES){network.get(link.a)?.push({next:link.b,months:link.mon
 
 // AI route estimates use its dated control reports and the opening map where
 // no report exists. Hidden enemy armies can still stop the actual shipment.
-function projectedPath(s,from,to,buyer){
- const distances=new Map([[from,0]]),previous=new Map([[from,null]]),open=new Set([from]),done=new Set();
- while(open.size){let current=null;for(const id of open)if(current===null||distances.get(id)<distances.get(current))current=id;open.delete(current);done.add(current);if(current===to)break;
+function projectedPathsTo(s,to,buyer){
+ // One destination tree answers every seller quote for this buyer and market.
+ // Reverse an edge only when its destination was reachable to the buyer.
+ const distances=new Map([[to,0]]),toward=new Map([[to,null]]),open=new Set([to]),done=new Set();
+ while(open.size){let current=null;for(const id of open)if(current===null||distances.get(id)<distances.get(current))current=id;open.delete(current);done.add(current);
+  const owner=s.intel?.[buyer]?.[current]?.owner??initialOwner.get(current);
+  if(owner&&owner!==buyer&&(atWar(s,buyer,owner)||relation(s,buyer,owner)<-35&&!tradeTreaty(s,buyer,owner)))continue;
   for(const link of network.get(current)||[]){const {next}=link;if(done.has(next))continue;
-   const owner=s.intel?.[buyer]?.[next]?.owner??initialOwner.get(next);
-   if(owner&&owner!==buyer&&(atWar(s,buyer,owner)||relation(s,buyer,owner)<-35&&!tradeTreaty(s,buyer,owner)))continue;
    const distance=distances.get(current)+Math.max(1,link.months);
-   if(distance<(distances.get(next)??Infinity)){distances.set(next,distance);previous.set(next,current);open.add(next)}
+   if(distance<(distances.get(next)??Infinity)){distances.set(next,distance);toward.set(next,current);open.add(next)}
   }
  }
- if(!previous.has(to))return null;const path=[];for(let id=to;id;id=previous.get(id))path.unshift(id);return path;
+ return toward;
 }
 
 function profile(r,good){
@@ -307,9 +309,11 @@ function settleStrandedShipment(s,shipment){
 function advanceEasternMarketAI(s){
  const markets=s.tradeMarkets,now=month(s),orders=[],plans=new Map(),pathCache=new Map();
  const pathFor=(origin,destination,buyer)=>{
-  const key=`${buyer}:${origin}:${destination}`;
-  if(!pathCache.has(key))pathCache.set(key,projectedPath(s,origin,destination,buyer));
-  return pathCache.get(key);
+  const key=`${buyer}:${destination}`;
+  if(!pathCache.has(key))pathCache.set(key,projectedPathsTo(s,destination,buyer));
+  const toward=pathCache.get(key);if(!toward.has(origin))return null;
+  const path=[];for(let id=origin;id;id=toward.get(id))path.push(id);
+  return path;
  };
  const oasis=id=>s.regions.some(r=>r.owner===id&&r.kind?.startsWith('oasis'));
  const reserve=(id,good)=>id==='han'?100:oasis(id)?good==='silk'?2:12:12;
@@ -400,6 +404,6 @@ export function advanceEasternMarkets(s){
   item.price=marketPrice(markets.regions[r.id],good);
  }
  advanceShipments(s);publishOffers(s);advanceEasternSupplyContracts(s,now);
- if(!markets.embeddedRoman&&s.month%3===0){advanceEasternMarketAI(s);publishOffers(s)}
+ if((!markets.embeddedRoman||markets.autonomousEnabled)&&s.month%3===0){advanceEasternMarketAI(s);publishOffers(s)}
  return markets;
 }

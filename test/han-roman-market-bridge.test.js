@@ -5,6 +5,44 @@ import {attachHanWorld,hanWorld,advanceHanWorld,romanView} from '../han/world.js
 import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-main-20261114-1';
 import {advanceDate} from '../han/util.js?v=faces-main-20261114-1';
 import {eastPanel} from '../han/east-ui.js?v=faces-main-20261114-1';
+import {setRelation} from '../han/frontier.js?v=faces-main-20261114-1';
+
+test('the attached eastern world trades autonomously without publishing private orders to Rome',()=>{
+ const s=newGame('caesar');attachHanWorld(s,{seed:82});const h=hanWorld(s).state;
+ const powers=['han','kangju','yuezhi','parthia'];
+ for(const a of powers)for(const b of powers)if(a!==b)setRelation(h,a,b,65);
+ for(const market of Object.values(h.tradeMarkets.regions))for(const item of Object.values(market.goods)){item.stock=0;item.production=0;item.consumption=0}
+ for(const [id,good] of [['kangju','horses'],['qi','silk'],['hyrcania','timber'],['changan','grain']]){
+  const item=h.tradeMarkets.regions[id].goods[good];item.stock=80;item.production=3;
+ }
+ for(const id of powers)h.factions[id].treasury=250;
+ s.month=3;advanceHanWorld(s);
+ const buyers=new Set(h.tradeMarkets.shipments.map(x=>x.buyer));
+ for(const id of powers)assert.ok(buyers.has(id),`${id} placed no autonomous order`);
+ assert.ok(h.tradeMarkets.diplomacy.attempts.some(x=>x.status==='accepted'));
+ assert.deepEqual(romanView(s).imports,[]);
+ assert.equal(s.log.some(x=>x.eastern&&/shipment|caravan|商队|货批/i.test(x.en||'')),false);
+ const restored=upgradeSave(structuredClone(s));
+ assert.equal(hanWorld(restored).state.tradeMarkets.autonomousEnabled,true);
+ assert.deepEqual(hanWorld(restored).state.tradeMarkets.shipments,h.tradeMarkets.shipments);
+});
+
+test('ten years of attached eastern trade survive a Roman save migration',()=>{
+ let s=newGame('caesar');attachHanWorld(s,{seed:49});
+ for(let i=0;i<120;i++){
+  advanceDate(s);advanceHanWorld(s);
+  if(i===59)s=upgradeSave(structuredClone(s));
+  const h=hanWorld(s).state;
+  for(const f of Object.values(h.factions))assert.ok(Number.isFinite(f.treasury)&&Math.abs(f.treasury)<1_000_000);
+  for(const market of Object.values(h.tradeMarkets.regions))for(const item of Object.values(market.goods))assert.ok(Number.isSafeInteger(item.stock)&&item.stock>=0&&item.stock<=Math.max(80,item.production*24));
+ }
+ const h=hanWorld(s).state,ships=h.tradeMarkets.shipments;
+ assert.ok(ships.length>0,'Eastern NPCs never initiated trade');
+ assert.ok(ships.some(x=>x.status==='delivered'),'No eastern cargo was delivered');
+ assert.ok(ships.every(x=>h.persons[x.merchantId]?.profession==='merchant'));
+ assert.equal(h.tradeMarkets.transportSpent+h.tradeMarkets.merchantFees,h.tradeMarkets.transactions.reduce((n,x)=>n+x.transport,0));
+ assert.equal(romanView(s).imports.some(x=>x.owner!==s.player),false);
+});
 
 test('a delivered Han silk batch crosses into a Roman market with a payer and no duplicate stock',()=>{
  const s=newGame('caesar');attachHanWorld(s,{seed:21});

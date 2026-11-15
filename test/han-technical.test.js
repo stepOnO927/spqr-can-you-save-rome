@@ -72,6 +72,9 @@ test('35. the eastern map stays responsive and draws only reported control',()=>
 test('36. the NPC East does not freeze the browser',()=>{
  const a=newGame('caesar'),b=roman();
  const cpuMs=()=>{const {user,system}=process.cpuUsage();return (user+system)/1000};
+ // Compile both turn paths before timing so the comparison measures monthly
+ // simulation work rather than whichever module the runtime compiles first.
+ for(let i=0;i<3;i++){romanTick(a);romanTick(b)}
  let t0=cpuMs();for(let i=0;i<24;i++)romanTick(a);const base=(cpuMs()-t0)/24;
  t0=cpuMs();for(let i=0;i<24;i++)romanTick(b);const withDlc=(cpuMs()-t0)/24;
  // The additional saved court, market and correspondence simulation must

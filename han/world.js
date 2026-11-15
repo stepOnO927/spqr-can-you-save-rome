@@ -24,9 +24,10 @@ export const hanWorld=s=>s.world?.[DLC_KEY]||null;
 export function attachHanWorld(s,{seed=null}={}){
  if(hanWorld(s))return hanWorld(s);
  const state=newHanGame(null,{start:'roman',seed:seed??((s.seed||Date.now())%2147483647)});
- // Roman campaigns run autonomous trade at campaign level. The attached Han
- // market only settles its narrative westward caravans and local production.
+ // The attached eastern simulation has its own buyers and finite markets.
+ // Roman courts do not control their orders or see them without a report.
  state.tradeMarkets.embeddedRoman=true;
+ state.tradeMarkets.autonomousEnabled=true;
  state.year=s.year;state.month=s.month;
  // An old merchant account already circulating in the eastern ports (51 BCE).
  const snapshot={year:-51,month:6,via:'old',owners:Object.fromEntries(state.regions.map(r=>[r.id,r.owner])),emperor:'liu-xun',emperorName:state.persons['liu-xun'].name,dynasty:['Han','汉'],dynastyOrthodox:true};
@@ -111,6 +112,6 @@ export function sendEmbassyToSeres(s){
  s.factions[s.player].treasury-=EMBASSY_COST;hanWorld(s).embassy={status:'travelling',sent:{year:s.year,month:s.month},arrive:mi(s.year,s.month)+EMBASSY_MONTHS,by:s.player};
  romanLog(s,'Envoys leave for the land of the Seres by way of Parthia. The journey will take years.','使者经安息启程前往赛里斯之国，此行将历时数年。');return {ok:true};
 }
-export function upgradeHanWorld(s){const w=hanWorld(s);if(!w)return;w.state=loadHanSave(w.state);w.queue||=[];w.known||={snapshot:null,dispatches:[]};w.known.silkCargoes??=0;ensureBridge(w)}
+export function upgradeHanWorld(s){const w=hanWorld(s);if(!w)return;w.state=loadHanSave(w.state);w.state.tradeMarkets.autonomousEnabled=true;w.queue||=[];w.known||={snapshot:null,dispatches:[]};w.known.silkCargoes??=0;ensureBridge(w)}
 // What the Roman player knows, never the live Han state.
 export function romanView(s){const w=hanWorld(s);if(!w)return null;return {snapshot:w.known.snapshot,dispatches:w.known.dispatches,silkCargoes:w.known.silkCargoes,imports:Object.values(w.bridge?.settled||{}).filter(x=>x.status==='delivered'&&x.owner===s.player).slice(-8).reverse(),embassy:w.embassy?{...w.embassy}:null,conditions:embassyConditions(s)}}

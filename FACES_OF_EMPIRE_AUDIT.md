@@ -27,6 +27,13 @@ cooperation travel as letters, and wakes multipolar AI planning when new
 reported evidence arrives. These changes are integrated with the expansion's
 saved characters and separate Han theater; hidden foreign state alone does
 not trigger the AI review.
+In Roman campaigns with Mandate of Heaven enabled, the attached eastern world
+now also runs the existing autonomous market rules. Han and Central Asian
+courts can negotiate, bid, dispatch finite cargo and settle deliveries while
+Rome still receives only delayed public reports and its own paid imports.
+A ten-year cross-world save-migration test checks the eastern ledgers and
+merchant identities. The eastern route estimator shares one destination tree
+across seller quotes to keep monthly turns responsive.
 The subsequent main updates add coalition invitations by courier, reported
 foreign treaty changes to the Chronicle, and autonomous wartime aid requests.
 The merged branch now advances those invitations and aid letters through the
