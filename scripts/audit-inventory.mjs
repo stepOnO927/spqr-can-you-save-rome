@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const root=process.cwd(),entries=['index.html','map-lab/index.html','han/index.html'];
+const root=process.cwd(),entries=['index.html','map-lab/index.html','han/index.html','inspector.html','poki-bridge.js','map-lab/poki-style.js'];
 const excluded=new Set(['.git','node_modules','diagnostics','dist']);
 async function walk(dir=''){
   const out=[];
@@ -17,6 +17,7 @@ const files=await walk(),set=new Set(files),textFiles=files.filter(f=>/\.(?:js|m
 const content=new Map(await Promise.all(textFiles.map(async f=>[f,await fs.readFile(path.join(root,f),'utf8')])));
 function role(f){
   if(f.startsWith('assets/'))return 'Assets';
+  if(f.startsWith('inspector')||f==='feature-registry.js'||f==='poki-bridge.js'||f==='map-lab/poki-style.js')return 'Diagnostics/Platform';
   if(f.startsWith('test/')||f.endsWith('.test.js'))return 'Testing';
   if(f.startsWith('tools/')||f.startsWith('scripts/')||f.startsWith('.github/')||f==='server.mjs')return 'Development Tools';
   if(f.startsWith('han/'))return f.endsWith('.css')||f.endsWith('.html')||/\/(?:play|map|east-ui|experience-ui)\.js$/.test(f)?'DLC UI':'DLC Simulation';
