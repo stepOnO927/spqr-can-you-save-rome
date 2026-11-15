@@ -1,4 +1,4 @@
-import {buildChessboard} from './chessboard.js?v=infant-portraits-1';
+import {buildChessboard} from './chessboard.js?v=campaign-intelligence-privacy-1';
 import {focusReportsFor,focusById} from './national-focus.js?v=infant-portraits-1';
 import {warningLedger} from './warning-ledger.js?v=warning-privacy-1';
 import {FACTIONS,REGIONS} from './data.js?v=phase-x-1';

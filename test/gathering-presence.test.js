@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=foreign-name-privacy-1';
+import {newGame,upgradeSave} from '../engine.js?v=campaign-intelligence-privacy-1';
 import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=infant-portraits-1';
 import {mailboxHtml} from '../mail-ui.js?v=infant-portraits-1';
 import {createFictionalPerson} from '../dynasties.js?v=infant-portraits-1';
