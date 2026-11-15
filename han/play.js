@@ -1,6 +1,6 @@
 import {localStore as localStorage} from '../safe-storage.js';
 import {startupDiagnostics} from '../inspector-diagnostics.js';
-import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=campaign-intelligence-privacy-1';
+import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=attack-preview-intelligence-1';
 import {FACTIONS,PLAYABLE,ROUTES,OFFICES} from './data.js';
 import {appoint,knownAttributes,emperorAuthority} from './court.js';
 import {isLiuClan} from './dynasty.js';

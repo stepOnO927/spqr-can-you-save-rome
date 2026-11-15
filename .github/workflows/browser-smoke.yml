@@ -63,6 +63,7 @@ jobs:
               node tools/campaign-intelligence-privacy-smoke.mjs
               node tools/strategy-board-name-privacy-smoke.mjs
               node tools/leader-layout-smoke.mjs
+              node tools/attack-preview-privacy-smoke.mjs
               node scripts/multipolar-sim.mjs > multipolar-simulation.json
               node tools/multipolar-smoke.mjs
               node tools/player-strategic-offer-smoke.mjs
