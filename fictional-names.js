@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-main-20261114-1';
 
 // Original game people and naming pools, not transcriptions of documented
 // individuals. The pools reflect each implemented court's naming tradition.

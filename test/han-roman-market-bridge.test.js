@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-empire-2';
-import {attachHanWorld,hanWorld,advanceHanWorld,romanView} from '../han/world.js?v=han-1';
-import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-horse-remounts-1';
-import {advanceDate} from '../han/util.js?v=han-1';
-import {eastPanel} from '../han/east-ui.js?v=han-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-main-20261114-1';
+import {attachHanWorld,hanWorld,advanceHanWorld,romanView} from '../han/world.js?v=faces-main-20261114-1';
+import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-main-20261114-1';
+import {advanceDate} from '../han/util.js?v=faces-main-20261114-1';
+import {eastPanel} from '../han/east-ui.js?v=faces-main-20261114-1';
 
 test('a delivered Han silk batch crosses into a Roman market with a payer and no duplicate stock',()=>{
  const s=newGame('caesar');attachHanWorld(s,{seed:21});

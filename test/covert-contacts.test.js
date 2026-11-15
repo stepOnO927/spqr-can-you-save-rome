@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,queueMission} from '../engine.js?v=faces-empire-2';
-import {addReport,advanceOperations,contestLeadership,supportClaimant} from '../character-system.js?v=faces-empire-2';
+import {newGame,upgradeSave,tick,queueMission} from '../engine.js?v=faces-main-20261114-1';
+import {addReport,advanceOperations,contestLeadership,supportClaimant} from '../character-system.js?v=faces-main-20261114-1';
 // These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
 // they run with the expansion's AI layer switched off (world.imperium.enabled=false).
 const legacyIsolated=g=>{g.world.imperium={enabled:false};return g};

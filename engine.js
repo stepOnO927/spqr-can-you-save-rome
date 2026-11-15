@@ -1,42 +1,42 @@
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=newborn-age-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=player-aid-letter-1';
-import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=epistulae-2';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=strategic-player-offer-1';
-import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=faces-empire-2';
-import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=faces-empire-2';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives,upgradeMissionIdentities} from './character-system.js?v=faces-empire-2';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=faces-empire-2';
-import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=faces-government-courier-1';
-import {advanceConspiracies} from './conspiracies.js?v=newborn-age-1';
-import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=faces-empire-3';
-import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=faces-empire-3';
-import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,assignFictionalFieldCommander,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=faces-empire-2';
-import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=faces-empire-3';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=faces-government-courier-1';
-import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
-import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
-import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
-import {advanceFocuses,focusModifiers} from './national-focus.js?v=faces-empire-2';
-import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=faces-empire-2';
-import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=faces-empire-2';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=faces-main-20261114-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=faces-main-20261114-1';
+import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=faces-main-20261114-1';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=faces-main-20261114-1';
+import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=faces-main-20261114-1';
+import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=faces-main-20261114-1';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=faces-main-20261114-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives,upgradeMissionIdentities} from './character-system.js?v=faces-main-20261114-1';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=faces-main-20261114-1';
+import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=faces-main-20261114-1';
+import {advanceConspiracies} from './conspiracies.js?v=faces-main-20261114-1';
+import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=faces-main-20261114-1';
+import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=faces-main-20261114-1';
+import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,assignFictionalFieldCommander,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=faces-main-20261114-1';
+import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=faces-main-20261114-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=faces-main-20261114-1';
+import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=faces-main-20261114-1';
+import {advancePersonalPlans} from './personal-plans.js?v=faces-main-20261114-1';
+import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=faces-main-20261114-1';
+import {advanceFocuses,focusModifiers} from './national-focus.js?v=faces-main-20261114-1';
+import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=faces-main-20261114-1';
+import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=faces-main-20261114-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
-import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=grand-chessboard-2';
-import {initializeMarkets,advanceMarkets,advanceMarketAI,advanceMarketDiplomacy} from './trade-markets.js?v=faces-empire-2';
-import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=multipolar-courier-review-1';
-import {respondToFrontierReports} from './frontier-response.js?v=frontier-response-1';
-import {advanceStrategicWarnings} from './strategic-warnings.js?v=multipolar-2';
-import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
-import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=multipolar-2';
-import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=diplomatic-chronicle-1';
-import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=newborn-age-1';
-import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=newborn-age-1';
-import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=faces-empire-2';
-import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
+import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=faces-main-20261114-1';
+import {initializeMarkets,advanceMarkets,advanceMarketAI,advanceMarketDiplomacy} from './trade-markets.js?v=faces-main-20261114-1';
+import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=faces-main-20261114-1';
+import {respondToFrontierReports} from './frontier-response.js?v=faces-main-20261114-1';
+import {advanceStrategicWarnings} from './strategic-warnings.js?v=faces-main-20261114-1';
+import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=faces-main-20261114-1';
+import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=faces-main-20261114-1';
+import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=faces-main-20261114-1';
+import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=faces-main-20261114-1';
+import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=faces-main-20261114-1';
+import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=faces-main-20261114-1';
+import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=faces-main-20261114-1';
 export {queueMission};
 export {personalDiplomaticCredit};
 export {replyToLetter};
@@ -295,7 +295,7 @@ export function diplomacy(s, actor, target, action, options={}){
 export function sendStrategicOffer(s,actor,recipient,target,{autoplayPlayer=false,kind='join_war'}={}){
  if(!s.factions[actor]||!s.factions[recipient]||!s.factions[target]||new Set([actor,recipient,target]).size!==3||[actor,recipient,target].includes('rebels')||!isWar(s,actor,target))return {ok:false,reason:'unavailable'};
  if(!['join_war','request_aid'].includes(kind))return {ok:false,reason:'unavailable'};
- if(!autoplayPlayer&&actor===s.player)return {ok:false,reason:'player_decision'};
+ if(!autoplayPlayer&&actor===s.player&&kind!=='request_aid')return {ok:false,reason:'player_decision'};
  const owned=s.regions.filter(r=>r.owner===actor),frontier=owned.some(r=>adjacent(r.id).some(e=>reportedControl(s,actor,e.to)?.owner===recipient)),docs=reportedDiplomacy(s,actor),contact=docs.some(x=>x.status==='active'&&x.parties.includes(actor)&&x.parties.includes(recipient));
  if(!frontier&&!contact)return {ok:false,reason:'contact'};
  if(s.factions[actor].treasury<5)return {ok:false,reason:'treasury'};
@@ -315,8 +315,11 @@ export function advanceStrategicOffers(s,{autoplayPlayer=false}={}){
   }
   if(offer.status!=='pending'||--offer.remaining>0)continue;
   const date=s.year*12+s.month;
+  // A sender cannot know its outbound letter was lost until an answer fails
+  // to arrive. Keep that failure sealed for the expected return journey.
+  if(offer.phase==='timeout'){offer.status='no_reply';offer.phase='lost';continue}
   if(offer.phase==='outbound'){
-   if(strategicRoll(s,offer.actor,offer.id+30)<.1||!s.factions[offer.recipient]||!s.factions[offer.target]){offer.status='no_reply';offer.phase='lost';continue}
+   if(strategicRoll(s,offer.actor,offer.id+30)<.1||!s.factions[offer.recipient]||!s.factions[offer.target]){if(offer.actor===s.player&&!autoplayPlayer){offer.phase='timeout';offer.remaining=2}else{offer.status='no_reply';offer.phase='lost'}continue}
    if(!autoplayPlayer&&offer.recipient===s.player){offer.status='awaiting_decision';offer.phase='at_court';offer.remaining=6;syncStrategicOfferLetters(s);continue}
    const recipient=s.factions[offer.recipient],view=assessOpportunities(s,offer.recipient,estimatedStrength).find(x=>x.target===offer.target),trust=relation(s,offer.recipient,offer.actor),ownWars=s.wars.filter(w=>w.includes(offer.recipient)).length;
    if(offer.kind==='request_aid'){
@@ -338,6 +341,7 @@ export function advanceStrategicOffers(s,{autoplayPlayer=false}={}){
    offer.status=offer.sealed?.decision||'no_reply';offer.answeredYear=offer.sealed?.year;offer.answeredMonth=offer.sealed?.month;offer.deliveredYear=s.year;offer.deliveredMonth=s.month;
    if(offer.kind==='request_aid'&&offer.status==='accepted'&&offer.sealed?.aid&&s.factions[offer.actor]){s.factions[offer.actor].treasury+=offer.sealed.aid.treasury;s.factions[offer.actor].food+=offer.sealed.aid.food;offer.deliveredAid={...offer.sealed.aid}}
    delete offer.sealed;offer.phase='delivered';
+   if(offer.actor===s.player&&offer.kind==='request_aid')syncStrategicOfferLetters(s);
    const reply=s.mail?.messages?.find(m=>m.id===offer.replyMailId);if(reply)reply.delivery='received';
    if(offer.status==='accepted'||offer.status==='refused')rememberPoliticalEvent(s,offer.actor,offer.recipient,offer.status==='accepted'?'cooperation_accepted':'cooperation_refused',offer.status==='accepted'?2:-2);
   }

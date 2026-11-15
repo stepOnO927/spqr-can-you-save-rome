@@ -1,21 +1,21 @@
-import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=faces-government-courier-1';
+import {newHanGame,tick,moveArmy,serialize,loadHanSave,SAVE_KEY,recommendOfficial} from './engine.js?v=faces-main-20261114-1';
 import {FACTIONS,PLAYABLE,ROUTES} from './data.js';
 import {drawMap} from './map.js';
 import {templatesFor,recruitQuote,recruit,neighbours} from './military.js';
 import {changeDependency,dependencyOf} from './dependencies.js';
 import {declareWar,propose,atWar} from './frontier.js';
-import {marketReasonName,renderEasternMarketPanel} from './market-ui.js?v=faces-horse-remounts-1';
-import {renderHanCourtPanel} from './court-ui.js?v=faces-of-empire-4';
+import {marketReasonName,renderEasternMarketPanel} from './market-ui.js?v=faces-main-20261114-1';
+import {renderHanCourtPanel} from './court-ui.js?v=faces-main-20261114-1';
 import {ownRulerHtml} from './ruler-ui.js';
-import {appoint,startAudit,respondToDisaster,answerPolicyAdvice} from './court.js?v=han-1';
-import {init as initExperience,act as experienceAction} from './experience.js?v=government-courier-guidance-1';
-import {renderExperience} from './experience-ui.js?v=government-courier-guidance-1';
+import {appoint,startAudit,respondToDisaster,answerPolicyAdvice} from './court.js?v=faces-main-20261114-1';
+import {init as initExperience,act as experienceAction} from './experience.js?v=faces-main-20261114-1';
+import {renderExperience} from './experience-ui.js?v=faces-main-20261114-1';
 const $=id=>document.getElementById(id),D=(en,zh)=>lang?zh:en,L=a=>Array.isArray(a)?a[lang]||a[0]:a;
 let lang=localStorage.getItem('spqr-han-lang')==='zh'?1:0,s=null,selected=null,army=null,camera='all',mode='political',marketOpen=false,courtOpen=false,selectedCourt='shi-gao';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function message(en,zh){$('message').textContent=D(en,zh)}
 function armyLabel(a){const formation=L(a.template?.name)||D('Field army','野战军'),commander=L(s.persons[a.commander]?.name);return commander?`${formation} · ${commander}`:formation}
-function save(){if(!s)return;localStorage.setItem(SAVE_KEY('browser'),serialize(s));message('Campaign saved.','战役已保存。')}
+function save(){if(!s)return;localStorage.setItem(SAVE_KEY('browser'),serialize(s));window.spqrVolatileStorage?.some(x=>x.startsWith('localStorage'))?message('Temporarily saved; export before reloading.','已暂存；刷新前请导出存档。'):message('Campaign saved.','战役已保存。')}
 function load(){const raw=localStorage.getItem(SAVE_KEY('browser'));if(!raw){message('No saved campaign.','尚无存档。');return}try{s=loadHanSave(raw);initExperience(s);selected=null;army=null;marketOpen=false;courtOpen=false;render();message('Campaign loaded.','战役已读取。')}catch(e){message('Save could not be loaded: '+e.message,'无法读取存档：'+e.message)}}
 function begin(f){s=newHanGame(f);initExperience(s,{guided:true});selected=s.regions.find(r=>r.owner===f)?.id||null;army=null;marketOpen=false;courtOpen=false;render();message('Choose an objective, inspect your realm, then act.','先查看目标与国势，再作出选择。')}
 function navigateExperience(kind,id){

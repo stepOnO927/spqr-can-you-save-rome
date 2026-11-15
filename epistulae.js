@@ -1,11 +1,11 @@
-import {ROUTES, FACTIONS} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-empire-2';
-import {AGREEMENT_TYPES} from './agreements.js?v=grand-chessboard-2';
-import {formatChronicleEntry} from './chronicle.js?v=faces-empire-3';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=epistulae-2';
-import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=faces-empire-2';
-import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {canMediate,requestMediation} from './civil-war.js?v=faces-empire-3';
+import {ROUTES, FACTIONS} from './data.js?v=faces-main-20261114-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-main-20261114-1';
+import {AGREEMENT_TYPES} from './agreements.js?v=faces-main-20261114-1';
+import {formatChronicleEntry} from './chronicle.js?v=faces-main-20261114-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=faces-main-20261114-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=faces-main-20261114-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=faces-main-20261114-1';
+import {canMediate,requestMediation} from './civil-war.js?v=faces-main-20261114-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
@@ -83,7 +83,10 @@ export function gatheringPlan(s,m){
 export function sendLetter(s, spec) {
   const mail = initializeMail(s);
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
-  if (!s.factions?.[senderFaction] || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
+  // A sealed aid reply can outlive the court that dispatched it; its arrival
+  // must not disclose that court's subsequent hidden disappearance.
+  const formerAidSender=spec.context?.kind==='aid_result'&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
   const source = spec.source || (senderId ? s.world.characters[senderId].location : null) || home(s, senderFaction);
@@ -285,6 +288,14 @@ export function replyToLetter(s, id, choice, actions, details={}) {
 export function syncStrategicOfferLetters(s){
  const mail=initializeMail(s);
  for(const offer of s.world?.strategicOffers||[]){
+  if(offer.actor===s.player&&offer.kind==='request_aid'&&offer.phase==='delivered'&&['accepted','refused'].includes(offer.status)&&!offer.resultMailId&&!mail.generated['aid-result:'+offer.id]){
+   const donor=name(offer.recipient),enemy=name(offer.target),accepted=offer.status==='accepted';
+   const result=sendLetter(s,{senderId:null,senderInstitution:offer.recipient,senderFaction:offer.recipient,recipient:s.player,category:'diplomatic',priority:'important',
+    subject:accepted?['Wartime aid delivered','战时物资已送达']:['Wartime aid declined','战时物资请求遭拒'],
+    body:accepted?[`${donor[0]} sent 12 treasury and 8 food for the war against ${enemy[0]}. The shipment has arrived.`,`${donor[1]}为对${enemy[1]}的战争运来12国库和8粮食，物资已经送达。`]:[`${donor[0]} declined the request for supplies for the war against ${enemy[0]}.`,`${donor[1]}拒绝了为对${enemy[1]}的战争提供物资的请求。`],
+    options:[],context:{kind:'aid_result',offerId:offer.id}});
+   if(result.ok){offer.resultMailId=result.letter.id;result.letter.created={year:offer.answeredYear??s.year,month:offer.answeredMonth??s.month};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['aid-result:'+offer.id]=true}
+  }
   const previous=offer.mailId&&mail.messages.find(m=>m.id===offer.mailId);
   if(previous&&Number.isInteger(offer.year)&&Number.isInteger(offer.month)&&offer.month>=1&&offer.month<=12)previous.created={year:offer.year,month:offer.month};
   if(offer.recipient!==s.player||offer.status!=='awaiting_decision'||offer.mailId)continue;

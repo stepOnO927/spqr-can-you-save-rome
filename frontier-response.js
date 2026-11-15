@@ -1,4 +1,4 @@
-import {ROUTES} from './data.js?v=phase-x-1';
+import {ROUTES} from './data.js?v=faces-main-20261114-1';
 
 const now=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');

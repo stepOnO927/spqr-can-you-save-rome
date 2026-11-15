@@ -1,6 +1,6 @@
 // Campaign abstractions of documented ancient practices, not claims of first invention in 49 BCE.
 // Research unlocks a local project; only completed buildings affect the simulation.
-import {ROUTES} from './data.js?v=phase-x-1';
+import {ROUTES} from './data.js?v=faces-main-20261114-1';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const sum=(items,key)=>items.reduce((n,x)=>n+(x[key]||0),0);

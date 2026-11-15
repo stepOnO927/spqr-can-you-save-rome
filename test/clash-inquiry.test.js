@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,sendInquiry,tick,upgradeSave} from '../engine.js?v=faces-empire-2';
+import {newGame,sendInquiry,tick,upgradeSave} from '../engine.js?v=faces-main-20261114-1';
 
 function prepared(relation,withClashes,wanted){
  const start=newGame('caesar');start.relations['caesar:egypt']=relation;

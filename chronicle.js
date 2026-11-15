@@ -1,7 +1,7 @@
-import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
-import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
-import {reportedControl} from './control-intelligence.js?v=faces-empire-3';
+import {campaignYear,campaignDate} from './campaign-date.js?v=faces-main-20261114-1';
+import {ROUTES,FACTIONS} from './data.js?v=faces-main-20261114-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-main-20261114-1';
+import {reportedControl} from './control-intelligence.js?v=faces-main-20261114-1';
 
 const copy=x=>JSON.parse(JSON.stringify(x));
 const name=(id,lang)=>FACTIONS[id]?.short?.[lang==='zh'?1:0]||id;

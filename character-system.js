@@ -1,15 +1,15 @@
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=faces-empire-2';
-import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=faces-empire-2';
-import {generateFictionalName} from './fictional-names.js?v=faces-of-empire-1';
-import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=faces-empire-2';
-import {potentialConspirators} from './conspiracies.js?v=newborn-age-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=faces-empire-3';
-import {reportedControl} from './control-intelligence.js?v=faces-empire-3';
-import {canHoldOffice,localGovernor} from './office-system.js?v=faces-empire-2';
-import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
-import {activeModifiers} from './inventions.js?v=mission-discount-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=epistulae-2';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=faces-main-20261114-1';
+import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=faces-main-20261114-1';
+import {generateFictionalName} from './fictional-names.js?v=faces-main-20261114-1';
+import {FACTIONS,ROUTES} from './data.js?v=faces-main-20261114-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=faces-main-20261114-1';
+import {potentialConspirators} from './conspiracies.js?v=faces-main-20261114-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=faces-main-20261114-1';
+import {reportedControl} from './control-intelligence.js?v=faces-main-20261114-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=faces-main-20261114-1';
+import {activeAgreement} from './agreements.js?v=faces-main-20261114-1';
+import {activeModifiers} from './inventions.js?v=faces-main-20261114-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=faces-main-20261114-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.

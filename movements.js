@@ -1,9 +1,9 @@
-import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
-import {createFictionalPerson} from './dynasties.js?v=faces-empire-2';
-import {generateFictionalName} from './fictional-names.js?v=faces-of-empire-1';
-import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
-import {activeAgreement,terminateAgreement} from './agreements.js?v=grand-chessboard-2';
+import {FACTIONS,ROUTES} from './data.js?v=faces-main-20261114-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-main-20261114-1';
+import {createFictionalPerson} from './dynasties.js?v=faces-main-20261114-1';
+import {generateFictionalName} from './fictional-names.js?v=faces-main-20261114-1';
+import {hasNationalIdea} from './national-ideas.js?v=faces-main-20261114-1';
+import {activeAgreement,terminateAgreement} from './agreements.js?v=faces-main-20261114-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};

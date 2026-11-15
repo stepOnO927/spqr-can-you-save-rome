@@ -1,7 +1,7 @@
-import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-of-empire-1';
-import {activeEasternMerchantPrivilege,cancelEasternSale,cancelEasternSupplyContract,easternMarketOffers,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,proposeEasternSupplyContract,quoteEasternTrade,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy,TARIFF_POLICIES} from './markets.js?v=faces-horse-remounts-1';
-import {atWar,propose,treaty} from './frontier.js?v=han-1';
-import {FACTIONS} from './data.js?v=han-1';
+import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-main-20261114-1';
+import {activeEasternMerchantPrivilege,cancelEasternSale,cancelEasternSupplyContract,easternMarketOffers,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,proposeEasternSupplyContract,quoteEasternTrade,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy,TARIFF_POLICIES} from './markets.js?v=faces-main-20261114-1';
+import {atWar,propose,treaty} from './frontier.js?v=faces-main-20261114-1';
+import {FACTIONS} from './data.js?v=faces-main-20261114-1';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(entry,lang)=>esc(Array.isArray(entry)?entry[lang]||entry[0]:entry);

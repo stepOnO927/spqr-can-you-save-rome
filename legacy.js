@@ -1,6 +1,6 @@
-import {syncChronicleDispatches} from './chronicle.js?v=faces-empire-3';
-import {CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
-import {initializeDynasties} from './dynasties.js?v=faces-empire-2';
+import {syncChronicleDispatches} from './chronicle.js?v=faces-main-20261114-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-main-20261114-1';
+import {initializeDynasties} from './dynasties.js?v=faces-main-20261114-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=fort-intel-1';
-import {observeControl,reportedFortification} from '../control-intelligence.js?v=faces-empire-3';
-import {createPlan,assignRole,assessPlan} from '../battle-plans.js?v=fort-intel-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-main-20261114-1';
+import {observeControl,reportedFortification} from '../control-intelligence.js?v=faces-main-20261114-1';
+import {createPlan,assignRole,assessPlan} from '../battle-plans.js?v=faces-main-20261114-1';
 
 test('planning cannot reveal an unobserved change in enemy fortifications',()=>{
  const a=newGame('caesar'),b=upgradeSave(JSON.parse(JSON.stringify(a)));delete a.fortKnowledge.caesar.italiaN;delete b.fortKnowledge.caesar.italiaN;b.regions.find(r=>r.id==='italiaN').fort=5;

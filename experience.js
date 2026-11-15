@@ -1,8 +1,8 @@
 // The First Hundred Days: guidance reads observable campaign state. It never
 // issues orders or uses unreported foreign strength, locations or intentions.
-import {receivedMail,sendLetter} from './epistulae.js?v=player-aid-letter-1';
-import {CHARACTER_CATALOG} from './characters.js?v=faces-empire-2';
-import {treeFor,canStartFocus,focusCost} from './national-focus.js?v=faces-empire-2';
+import {receivedMail,sendLetter} from './epistulae.js?v=faces-main-20261114-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-main-20261114-1';
+import {treeFor,canStartFocus,focusCost} from './national-focus.js?v=faces-main-20261114-1';
 
 const label=(en,zh)=>[en,zh];
 const month=s=>s.year*12+s.month;

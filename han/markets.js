@@ -1,9 +1,9 @@
-import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-of-empire-1';
-import {REGIONS,ROUTES} from './data.js?v=han-1';
-import {atWar,propose,relation,shiftRelation,treaty} from './frontier.js?v=han-1';
-import {legOpen,tradePath} from './silk-road.js?v=han-1';
+import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-main-20261114-1';
+import {REGIONS,ROUTES} from './data.js?v=faces-main-20261114-1';
+import {atWar,propose,relation,shiftRelation,treaty} from './frontier.js?v=faces-main-20261114-1';
+import {legOpen,tradePath} from './silk-road.js?v=faces-main-20261114-1';
 import {createMarketMerchant} from './field-identities.js';
-import {roll} from './util.js?v=han-1';
+import {roll} from './util.js?v=faces-main-20261114-1';
 
 const month=s=>s.year*12+s.month;
 const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));

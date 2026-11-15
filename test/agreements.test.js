@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,diplomacy,isWar,moveArmy,previewMarch,tick} from '../engine.js?v=faces-empire-2';
-import {proposeAgreement,terminateAgreement,activeAgreement,advanceAgreements,visibleAgreements} from '../agreements.js?v=grand-chessboard-2';
-import {addReport,queueMission,advanceOperations} from '../character-system.js?v=faces-empire-2';
+import {newGame,upgradeSave,diplomacy,isWar,moveArmy,previewMarch,tick} from '../engine.js?v=faces-main-20261114-1';
+import {proposeAgreement,terminateAgreement,activeAgreement,advanceAgreements,visibleAgreements} from '../agreements.js?v=faces-main-20261114-1';
+import {addReport,queueMission,advanceOperations} from '../character-system.js?v=faces-main-20261114-1';
 
 function friendly(s,a,b){s.relations[[a,b].sort().join(':')]=60}
 test('treaties cost resources, expire, survive saves and breaches affect credibility',()=>{

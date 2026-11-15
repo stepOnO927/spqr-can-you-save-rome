@@ -1,8 +1,8 @@
-import {ROUTES} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=faces-empire-3';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=multipolar-2';
-import {activeAgreement} from './agreements.js?v=grand-chessboard-2';
-import {politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
+import {ROUTES} from './data.js?v=faces-main-20261114-1';
+import {reportedControl} from './control-intelligence.js?v=faces-main-20261114-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=faces-main-20261114-1';
+import {activeAgreement} from './agreements.js?v=faces-main-20261114-1';
+import {politicalMemoryAdjustment} from './political-memory.js?v=faces-main-20261114-1';
 
 const pair=(a,b)=>[a,b].sort().join(':'),now=s=>s.year*12+s.month;
 // Only an actor's own condition and delivered intelligence can trigger an

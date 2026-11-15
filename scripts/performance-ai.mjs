@@ -1,6 +1,6 @@
 import {performance} from 'node:perf_hooks';
-import {newScenario} from '../scenarios.js?v=faces-empire-2';
-import {tick} from '../engine.js?v=faces-empire-2';
+import {newScenario} from '../scenarios.js?v=faces-main-20261114-1';
+import {tick} from '../engine.js?v=faces-main-20261114-1';
 
 const months=Number(process.env.SPQR_MONTHS||120);
 if(!Number.isInteger(months)||months<1||months>1200)throw Error('Invalid month count');

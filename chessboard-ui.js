@@ -1,7 +1,7 @@
-import {buildChessboard} from './chessboard.js?v=faces-empire-2';
-import {focusReportsFor,focusById} from './national-focus.js?v=faces-empire-2';
-import {warningLedger} from './warning-ledger.js?v=warning-privacy-1';
-import {FACTIONS,REGIONS} from './data.js?v=phase-x-1';
+import {buildChessboard} from './chessboard.js?v=faces-main-20261114-1';
+import {focusReportsFor,focusById} from './national-focus.js?v=faces-main-20261114-1';
+import {warningLedger} from './warning-ledger.js?v=faces-main-20261114-1';
+import {FACTIONS,REGIONS} from './data.js?v=faces-main-20261114-1';
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=(x,zh)=>Array.isArray(x)?x[zh?1:0]||x[0]:x||'';
