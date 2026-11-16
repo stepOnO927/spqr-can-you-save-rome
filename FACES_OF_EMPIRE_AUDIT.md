@@ -876,6 +876,11 @@ general Roman–Han settlement, autonomous intermediary resale at scale,
 broader player and merchant competition, and the full acceptance
 scenarios are still outstanding. New names
 and emblems are game reconstructions, not documented personal identities.
+Han civil-war and peasant-uprising field commanders now use the Han cultural
+pool instead of the default Tarim oasis pool. A temporary uprising no longer
+acquires a fictitious foreign monarch. Old saves drop that erroneous ruler
+office while retaining the saved person and the uprising's army; regression
+checks cover commander identity and reload stability.
 All 52 playable non-Han courts in the eastern campaign now have a simultaneous
 succession regression covering saved identity, title, portrait and governing
 effect. A woman who rules a kingdom receives a corresponding queen title;

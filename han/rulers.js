@@ -67,8 +67,12 @@ function seat(s,f,p,old=null){
 }
 export function ensureForeignRulers(s){
  s.rulers||={};s.nextRuler||=0;
+ // Older saves may contain a generated monarch for the temporary rebel army.
+ // Keep the person for recorded history, but stop presenting a rebel kingdom.
+ delete s.rulers.rebels;
  for(const [f,realm] of Object.entries(s.factions)){
-  if(f==='han'||f==='han_loyalist'||f==='rival_court'||realm.defeated)continue;
+  // A peasant rising is an armed faction, not a new foreign monarchy.
+  if(f==='han'||f==='han_loyalist'||f==='rival_court'||f==='rebels'||realm.defeated)continue;
   const saved=s.rulers[f];
   if(saved){
    const id=saved.personId||saved.id;

@@ -25,6 +25,9 @@ const POOLS={
 export const CULTURAL_NAME_POOLS=Object.freeze(POOLS);
 
 export function fieldCulture(faction){
+ // These courts and uprisings split from Han territory. Their newly raised
+ // commanders should keep that origin even though they are not static states.
+ if(['rival_court','rebels'].includes(faction))return 'han';
  if(faction==='kangju')return 'kangju';
  if(faction==='chorasmia')return 'chorasmian';
  if(faction==='caucasian_iberia')return 'caucasian_iberian';

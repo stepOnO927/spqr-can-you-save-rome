@@ -4,6 +4,7 @@ import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=guardian-age-
 import {recruit,templatesFor} from '../han/military.js?v=guardian-age-1';
 import {fieldCulture,ensureFieldCommanders,createMarketMerchant} from '../han/field-identities.js';
 import {birthRecordValid} from '../han/dynasty.js?v=guardian-age-1';
+import {ensureForeignRulers} from '../han/rulers.js';
 
 test('every opening eastern army has a saved person and distinct cultural identity',()=>{
  let s=newHanGame('han',{seed:17});
@@ -51,4 +52,31 @@ test('Chorasmian and Caucasian originals retain distinct reconstructed cultures 
  assert.equal(new Set(people.map(([, ,culture])=>culture[0])).size,people.length);
  s=loadHanSave(serialize(s));
  assert.deepEqual(people.map(([id])=>[id,s.persons[id].name,s.persons[id].culture,s.persons[id].appearanceSeed]),people);
+});
+
+test('Han civil war and uprising commanders retain Han identity without inventing a rebel king',()=>{
+ let s=newHanGame('han',{seed:41});
+ s.factions.rival_court={id:'rival_court',treasury:60,grain:100,manpower:1000,horses:0,stability:50};
+ s.factions.rebels={id:'rebels',treasury:0,grain:20,manpower:0,horses:0,stability:30};
+ const armies=['rival_court','rebels'].map((owner,i)=>({id:`civil-${i}`,owner,region:'changan',men:600,morale:50,supply:70,commander:null}));
+ s.armies.push(...armies);
+ s.rulers.rebels={id:'old-rebel-king',personId:'old-rebel-king',name:['Old rebel king','旧叛王']};
+ s.persons['old-rebel-king']={id:'old-rebel-king',name:['Old rebel king','旧叛王'],faction:'rebels',record:'fictional',alive:true};
+ const legacy=loadHanSave(serialize(s));
+ assert.equal(legacy.rulers.rebels,undefined);
+ assert.ok(legacy.persons['old-rebel-king']);
+ ensureForeignRulers(s);ensureFieldCommanders(s);
+ assert.equal(s.rulers.rebels,undefined);
+ assert.ok(s.persons['old-rebel-king']);
+ for(const army of armies){
+  const person=s.persons[army.commander];
+  assert.equal(fieldCulture(army.owner),'han');
+  assert.deepEqual(person.culture,['Han Chinese','汉']);
+  assert.equal(person.faction,army.owner);
+  assert.equal(birthRecordValid(s,person.id),true);
+ }
+ const saved=armies.map(army=>[army.commander,s.persons[army.commander].name]);
+ s=loadHanSave(serialize(s));
+ assert.equal(s.rulers.rebels,undefined);
+ assert.deepEqual(armies.map(army=>[s.armies.find(a=>a.id===army.id).commander,s.persons[army.commander].name]),saved);
 });
