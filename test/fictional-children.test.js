@@ -33,6 +33,31 @@ test('female Ptolemaic and other court children use faction naming pools',()=>{
  assert.notEqual(greek.name[0],parthian.name[0]);
 });
 
+test('children of breakaway courts keep their political origin in names and saves',()=>{
+ let s=newGame('caesar');const romanForce='movement_force:99',egyptianForce='movement_force:100';
+ s.world.movements.push({id:'movement:99',force:romanForce,parent:'caesar'},{id:'movement:100',force:egyptianForce,parent:'egypt'});
+ s.factions[romanForce]={treasury:20,food:20,manpower:100,stability:50,legitimacy:50};
+ const father=createFictionalPerson(s,{name:['Marcus Valerius','马库斯·瓦勒里乌斯'],faction:romanForce,birthYear:-80,sex:'male',location:'cisalpine',culture:['Roman','罗马']});
+ const mother=createFictionalPerson(s,{name:['Livia Aemilia','莉维娅·埃米利娅'],faction:romanForce,birthYear:-75,sex:'female',location:'cisalpine',culture:['Roman','罗马']});
+ s.world.characters[father].spouse=mother;s.world.characters[mother].spouse=father;
+ for(let i=0;i<15&&!s.world.characters[mother].children.length;i++){s.year=-49+i;s.month=1;advanceDynasties(s)}
+ const child=s.world.characters[mother].children[0];assert.ok(child,'the breakaway household should have an actual child');
+ assert.equal(s.world.characters[child].faction,romanForce);assert.equal(s.world.characters[child].familyId,s.world.characters[father].familyId);
+ const childName=s.world.dynasties.catalog[child].name;
+ if(s.world.characters[child].sex==='female'){
+  assert.match(childName[0],/^Valeria (Marcia|Livia)$/);
+  assert.match(childName[1],/^瓦勒里娅·(玛尔基娅|莉维娅)$/);
+ }else{
+  assert.match(childName[0],/^(Aulus|Lucius) Valerius$/);
+  assert.match(childName[1],/^(奥卢斯|卢基乌斯)·瓦勒里乌斯$/);
+ }
+ assert.deepEqual(s.world.dynasties.catalog[child].culture,['Roman','罗马']);
+ const greek=generateFictionalChildName(s,{faction:egyptianForce,fatherId:father,sex:'female',location:'egypt'});
+ assert.match(greek.name[0],/^(Kleio|Thaleia|Dione) of Alexandria/);assert.equal(greek.culture[0],'Ptolemaic Egyptian court (Greek-speaking)');
+ s=upgradeSave(structuredClone(s));assert.equal(s.world.characters[child].faction,romanForce);
+ assert.deepEqual(s.world.dynasties.catalog[child].culture,['Roman','罗马']);
+});
+
 test('a fictional face retains its identity while age changes its visible details',()=>{
  const s=newGame('caesar');
  const id=createFictionalPerson(s,{name:['Lucius Testus','卢修斯·泰斯图斯'],faction:'caesar',birthYear:-80,sex:'male',location:'cisalpine'});

@@ -30,9 +30,13 @@ export const STARTING_COMMANDERS=Object.freeze([
  {army:'bosporusarmy',faction:'bosporus',name:['Philostratos of Panticapaeum','潘提卡派翁的菲洛斯特拉托斯'],birthYear:-78}
 ]);
 
+export function factionNameStyle(s,faction){
+ const parent=s.world?.movements?.find(m=>m.force===faction)?.parent;
+ return FACTION_NAME_CULTURE[faction]||FACTION_NAME_CULTURE[parent]||'regional';
+}
+
 export function generateFictionalName(s,{originFaction,location=null}={}){
- const parent=s.world?.movements?.find(m=>m.force===originFaction)?.parent;
- const style=FACTION_NAME_CULTURE[originFaction]||FACTION_NAME_CULTURE[parent]||'regional',pool=NAME_POOLS[style],used=new Set(Object.keys(s.world?.characters||{}).filter(id=>s.world.characters[id]?.alive).map(id=>(s.world?.dynasties?.catalog?.[id]||CHARACTER_CATALOG[id])?.name?.[0]).filter(Boolean));
+ const style=factionNameStyle(s,originFaction),pool=NAME_POOLS[style],used=new Set(Object.keys(s.world?.characters||{}).filter(id=>s.world.characters[id]?.alive).map(id=>(s.world?.dynasties?.catalog?.[id]||CHARACTER_CATALOG[id])?.name?.[0]).filter(Boolean));
  const serial=s.world?.dynasties?.nextPerson||1,candidates=[];
  if(style==='roman')for(const given of pool.given)for(const family of pool.family)for(const epithet of pool.epithet)candidates.push([`${given[0]} ${family[0]} ${epithet[0]}`,`${given[1]}·${family[1]}·${epithet[1]}`]);
  else if(style==='han')for(const family of pool.family)for(const given of pool.given)candidates.push([`${family[0]} ${given[0]}`,`${family[1]}${given[1]}`]);
@@ -48,7 +52,7 @@ export function generateFictionalName(s,{originFaction,location=null}={}){
 // establish ancestry. Han given names can share a recorded father's surname,
 // while other simulated courts use their own cultural naming pool.
 export function generateFictionalChildName(s,{faction,fatherId,sex='unknown',location=null}={}){
- const style=FACTION_NAME_CULTURE[faction]||'regional',pool=NAME_POOLS[style];
+ const style=factionNameStyle(s,faction),pool=NAME_POOLS[style];
  if(style==='roman')return generateFictionalName(s,{originFaction:faction,location});
  const serial=s.world?.dynasties?.nextPerson||1,used=new Set(Object.keys(s.world?.characters||{}).map(id=>(s.world?.dynasties?.catalog?.[id]||CHARACTER_CATALOG[id])?.name?.[0]).filter(Boolean));
  const given=sex==='female'&&pool.female||pool.given;

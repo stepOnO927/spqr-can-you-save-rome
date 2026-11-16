@@ -6,6 +6,19 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Breakaway courts now pass their recorded parent faction's naming tradition to
+children. In particular, a Roman civil-war household keeps its paternal family
+name, uses a feminine family form for a daughter, and saves the child's Roman
+culture rather than the generic simulated-culture placeholder. The child,
+family relationship, name and culture survive reload. A Greek-speaking
+Egyptian breakaway court likewise uses its parent court's naming pool. The
+focused dynasty, foreign-sovereign and Han-ruler checks pass (31 cases); the
+120-month Roman and Han market simulation passes. On this Windows host the
+full 1,226-case suite passed 1,225 cases; the only failure is the existing
+40 ms monthly CPU benchmark (48.17 ms in this run), for which the GitHub
+quality job remains the cloud gate. The branch's browser checks for this
+increment are pending.
+
 The eastern market now supports a merchant-financed market house at a controlled
 market. A resident merchant with at least two reputation and six personal
 wealth funds a 24-month house; new incoming caravans receive a real transport

@@ -2,7 +2,7 @@ import {isDeliveredReport} from './person-knowledge.js?v=guardian-age-1';
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=guardian-age-1';
 import {startDynasticWar} from './civil-war.js?v=guardian-age-1';
 import {ROUTES} from './data.js?v=guardian-age-1';
-import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=guardian-age-1';
+import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,factionNameStyle,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=guardian-age-1';
 import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=guardian-age-1';
 import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=guardian-age-1';
 
@@ -462,8 +462,12 @@ export function advanceDynasties(s){
   if(c.sex!=='female'||age<18||age>42||!c.spouse||!s.world.characters[c.spouse]?.alive||s.world.characters[c.spouse].sex!=='male')continue;
   if(roll(s)<.24){
    const names=[['Aulus','奥卢斯','male'],['Lucius','卢基乌斯','male'],['Marcia','玛尔基娅','female'],['Livia','莉维娅','female']],given=names[Math.floor(roll(s)*names.length)];
-   const roman=['caesar','senate'].includes(c.faction),familyId=roman?s.world.characters[c.spouse].familyId:c.familyId,family=d.families[familyId].name;
-   const identity=roman?{name:[`${given[0]} ${family[0]}`,`${family[1]}·${given[1]}`]}:generateFictionalChildName(s,{faction:c.faction,fatherId:c.spouse,sex:given[2],location:c.location});
+   const roman=factionNameStyle(s,c.faction)==='roman',familyId=roman?s.world.characters[c.spouse].familyId:c.familyId,family=d.families[familyId].name;
+   const english=family[0].trim().split(/\s+/),chinese=family[1].split('·'),praenomina=new Set([...NAME_POOLS.roman.given.map(pair=>pair[0]),'Titus','Quintus','Sextus','Decimus','Gnaeus']);
+   const nomen=praenomina.has(english[0])&&english.length>1?english[1]:english[0],nomenZh=praenomina.has(english[0])&&chinese.length>1?chinese[1]:chinese[0];
+   const femaleNomen=nomen.replace(/us$/,'a'),femaleNomenZh=nomenZh.replace(/乌斯$/,'娅').replace(/努斯$/,'娜');
+   const romanName=given[2]==='female'?[`${femaleNomen} ${given[0]}`,`${femaleNomenZh}·${given[1]}`]:[`${given[0]} ${nomen}`,`${given[1]}·${nomenZh}`];
+   const identity=roman?{name:romanName,culture:NAME_POOLS.roman.culture,homeland:c.location}:generateFictionalChildName(s,{faction:c.faction,fatherId:c.spouse,sex:given[2],location:c.location});
    const child=createFictionalPerson(s,{...identity,faction:c.faction,birthYear:s.year,familyId,parents:[id,c.spouse],location:c.location,sex:given[2]});
    record(s,id,`Child ${CHARACTER_CATALOG[child].name[0]} was born.`,`子女${CHARACTER_CATALOG[child].name[1]}出生。`);
   }
