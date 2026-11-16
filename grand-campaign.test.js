@@ -49,6 +49,12 @@ test('land marches detour around gulfs while the Kerch Strait needs real transpo
  const migrated=upgradeSave(old);assert.equal(migrated.naval.fleets.filter(fleet=>fleet.id==='bosporan-strait').length,1);
  assert.equal(upgradeSave(migrated).naval.fleets.filter(fleet=>fleet.id==='bosporan-strait').length,1);
 });
+test('long sea crossings round peninsulas and islands instead of cutting through land',()=>{
+ const africa=GRAND_ROUTES.find(([a,b])=>[a,b].includes('africa')&&[a,b].includes('t066'));
+ assert.equal(africa[2],'sea');assert.ok(africa[3].distance>1350);assert.ok(grandRouteCoordinates('africa','t066').length>2);
+ const aegean=GRAND_ROUTES.find(([a,b])=>[a,b].includes('t082')&&[a,b].includes('t087'));
+ assert.equal(aegean[2],'sea');assert.ok(aegean[3].distance>800);assert.ok(grandRouteCoordinates('t082','t087').length>2);
+});
 test('small inland kingdoms can feed their home army and lose home-domain income if conquered',()=>{
  const s=newGrandGame('egypt');
  for(const id of ['numidia','mauretania','armenia','parthia','galatia','bosporus']){

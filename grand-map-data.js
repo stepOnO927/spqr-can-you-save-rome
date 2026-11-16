@@ -1,5 +1,6 @@
 import {REGIONS as LEGACY_REGIONS,ROUTES as LEGACY_ROUTES} from './data.js';
 import LAND_CORRIDORS from './land-corridors.js';
+import SEA_CORRIDORS from './sea-corridors.js';
 
 // Settlement anchors define operational territories, not asserted ancient
 // administrative boundaries. Coordinates were manually curated as approximate
@@ -148,7 +149,7 @@ export function grandRegionsFrom(legacyRegions){
 const km=(a,b)=>Math.hypot((a.lon-b.lon)*Math.cos((a.lat+b.lat)/2*Math.PI/180),a.lat-b.lat);
 const edgeKey=(a,b)=>[a,b].sort().join(':');
 export function grandRoutes(){
- const links=new Map(),add=(a,b,kind='land')=>{if(a===b)return;const key=edgeKey(a.id,b.id);if(links.has(key))return;const source=LAND_CORRIDORS[key],waypoints=source?.waypoints?(a.id===key.split(':')[0]?source.waypoints:[...source.waypoints].reverse()):[],points=[a,...waypoints.map(([lon,lat])=>({lon,lat})),b],sea=kind==='sea'||key===edgeKey('bosporus','t097');links.set(key,[a.id,b.id,sea?'sea':undefined,{distance:source?.distance??Math.round(points.slice(1).reduce((sum,p,i)=>sum+km(points[i],p),0)*111),river:a.tags.includes('river')&&b.tags.includes('river'),road:!sea&&a.tags.includes('road')&&b.tags.includes('road'),mountain:a.terrain==='hills'&&b.terrain==='hills',...(waypoints.length?{waypoints}:{})}])};
+ const links=new Map(),add=(a,b,kind='land')=>{if(a===b)return;const key=edgeKey(a.id,b.id);if(links.has(key))return;const sea=kind==='sea'||key===edgeKey('bosporus','t097'),source=(sea?SEA_CORRIDORS:LAND_CORRIDORS)[key],waypoints=source?.waypoints?(a.id===key.split(':')[0]?source.waypoints:[...source.waypoints].reverse()):[],points=[a,...waypoints.map(([lon,lat])=>({lon,lat})),b];links.set(key,[a.id,b.id,sea?'sea':undefined,{distance:source?.distance??Math.round(points.slice(1).reduce((sum,p,i)=>sum+km(points[i],p),0)*111),river:a.tags.includes('river')&&b.tags.includes('river'),road:!sea&&a.tags.includes('road')&&b.tags.includes('road'),mountain:a.terrain==='hills'&&b.terrain==='hills',...(waypoints.length?{waypoints}:{})}])};
  for(const sites of Object.values(GRAND_GROUPS)){
   const reached=[sites[0]],remaining=new Set(sites.slice(1));while(remaining.size){let best;for(const a of reached)for(const b of remaining)if(!best||km(a,b)<best.d)best={a,b,d:km(a,b)};add(best.a,best.b);reached.push(best.b);remaining.delete(best.b)}
   for(const a of sites)for(const b of sites.filter(x=>x!==a).sort((x,y)=>km(a,x)-km(a,y)).slice(0,2)){
