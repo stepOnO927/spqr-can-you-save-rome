@@ -71,6 +71,10 @@ export function initializeEasternMarkets(s){
  while(markets.merchantProtectionRequests.some(request=>request.id===`eastern-protection:${markets.nextProtectionRequest}`))markets.nextProtectionRequest++;
  markets.courtEscortSpent??=0;
  markets.marketHouses||={};markets.marketHouseSpent??=0;markets.marketHouseRent??=0;
+ if(!Array.isArray(markets.merchantProposals))markets.merchantProposals=[];
+ if(!Number.isSafeInteger(markets.nextMerchantProposal)||markets.nextMerchantProposal<1)markets.nextMerchantProposal=1;
+ while(markets.merchantProposals.some(proposal=>proposal.id===`eastern-merchant-proposal:${markets.nextMerchantProposal}`))markets.nextMerchantProposal++;
+ markets.merchantProposalFees??=0;
  if(!Array.isArray(markets.supplyContracts))markets.supplyContracts=[];
  if(!Number.isSafeInteger(markets.nextSupplyContract)||markets.nextSupplyContract<1)markets.nextSupplyContract=1;
  while(markets.supplyContracts.some(contract=>contract.id===`eastern-supply:${markets.nextSupplyContract}`))markets.nextSupplyContract++;
@@ -296,6 +300,31 @@ export function cancelEasternSupplyContract(s,id,actor=s.player){
  return {ok:true,contract};
 }
 
+function offerEasternMerchantContract(s,shipment,merchant){
+ const markets=s.tradeMarkets,source=markets.regions[shipment.origin]?.goods?.[shipment.commodity];
+ if(!merchant?.alive||merchant.faction!==s.player||shipment.buyer!==s.player||shipment.seller===s.player||(merchant.marketReputation||0)<2||!source?.production||relation(s,s.player,shipment.seller)<20||!tradeTreaty(s,s.player,shipment.seller)||atWar(s,s.player,shipment.seller)||markets.merchantProposals.some(proposal=>proposal.status==='pending'&&proposal.merchantId===merchant.id&&proposal.origin===shipment.origin&&proposal.destination===shipment.destination&&proposal.commodity===shipment.commodity)||markets.supplyContracts.some(contract=>contract.status==='active'&&contract.seller===shipment.seller&&contract.buyer===s.player&&contract.origin===shipment.origin&&contract.destination===shipment.destination&&contract.commodity===shipment.commodity))return;
+ const id=`eastern-merchant-proposal:${markets.nextMerchantProposal++}`;
+ const proposal={id,merchantId:merchant.id,faction:s.player,seller:shipment.seller,buyer:s.player,origin:shipment.origin,destination:shipment.destination,commodity:shipment.commodity,quantity:1,interval:6,duration:12,createdAt:month(s),expiresAt:month(s)+12,sourceShipment:shipment.id,status:'pending'};
+ markets.merchantProposals.push(proposal);
+ (merchant.history||=[]).push({year:s.year,month:s.month,kind:'supply_proposal',proposal:id,route:[shipment.origin,shipment.destination]});
+}
+
+export function answerEasternMerchantProposal(s,id,decision){
+ const markets=initializeEasternMarkets(s),proposal=markets.merchantProposals.find(x=>x.id===id&&x.status==='pending'),merchant=s.persons?.[proposal?.merchantId];
+ if(s.finalized||!proposal||proposal.faction!==s.player||!merchant?.alive||merchant.faction!==s.player||!['accept','decline'].includes(decision)||month(s)>=proposal.expiresAt)return {ok:false,reason:'invalid'};
+ if(decision==='accept'){
+  const result=proposeEasternSupplyContract(s,proposal);
+  if(!result.ok)return result;
+  result.contract.brokerId=merchant.id;
+  merchant.wealth=(merchant.wealth||0)+result.contract.negotiationCost;
+  markets.merchantProposalFees+=result.contract.negotiationCost;
+  proposal.contractId=result.contract.id;
+ }
+ proposal.status=decision==='accept'?'accepted':'declined';proposal.answeredAt=month(s);
+ (merchant.history||=[]).push({year:s.year,month:s.month,kind:'supply_proposal_answer',proposal:id,decision});
+ return {ok:true,proposal};
+}
+
 function advanceEasternSupplyContracts(s,now){
  for(const contract of s.tradeMarkets.supplyContracts){
   if(contract.status!=='active')continue;
@@ -386,7 +415,7 @@ function advanceShipments(s){
   s.factions[shipment.seller].treasury+=shipment.price;
   for(const tariff of shipment.tariffs){if(s.factions[tariff.owner])s.factions[tariff.owner].treasury+=tariff.amount;else markets.transitTreasury[tariff.owner]=(markets.transitTreasury[tariff.owner]||0)+tariff.amount}
   const merchant=s.persons[shipment.merchantId],fee=merchant?.alive?Math.min(shipment.transport,Math.ceil(shipment.transport/4)):0;
-  if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.marketRoutes||={};const key=merchantRouteKey(shipment.origin,shipment.destination);merchant.marketRoutes[key]=Math.min(3,merchantRouteExperience(merchant,shipment.origin,shipment.destination)+1);merchant.marketReputation=Math.min(100,(merchant.marketReputation||0)+1);releaseMerchant(s,shipment,shipment.destination);(merchant.history||=[]).push({year:s.year,month:s.month,kind:'trade_delivery',shipment:shipment.id});if(merchant.faction!==s.player&&merchant.faction===shipment.buyer)investEasternMarketHouse(s,merchant.id,shipment.destination,merchant.faction)}
+  if(merchant?.alive){merchant.wealth=(merchant.wealth||0)+fee;merchant.marketRoutes||={};const key=merchantRouteKey(shipment.origin,shipment.destination);merchant.marketRoutes[key]=Math.min(3,merchantRouteExperience(merchant,shipment.origin,shipment.destination)+1);merchant.marketReputation=Math.min(100,(merchant.marketReputation||0)+1);releaseMerchant(s,shipment,shipment.destination);(merchant.history||=[]).push({year:s.year,month:s.month,kind:'trade_delivery',shipment:shipment.id});if(merchant.faction!==s.player&&merchant.faction===shipment.buyer)investEasternMarketHouse(s,merchant.id,shipment.destination,merchant.faction);else offerEasternMerchantContract(s,shipment,merchant)}
   const house=activeEasternMarketHouse(s,shipment.destination,shipment.buyer),landlord=house?.merchantId===shipment.marketHouseId?s.persons[house.merchantId]:null,rent=landlord?Math.min(1,shipment.transport-fee):0;
   if(rent){landlord.wealth=(landlord.wealth||0)+rent;house.rentEarned+=rent}
   markets.transportSpent+=shipment.transport-fee-rent;markets.merchantFees+=fee;markets.marketHouseRent+=rent;shipment.marketHouseRent=rent;shipment.escrow=0;shipment.status='delivered';shipment.deliveredAt=month(s);
@@ -547,6 +576,8 @@ export function advanceEasternMarkets(s){
  markets.lastTick=now;
  for(const request of markets.merchantProtectionRequests)if(request.status==='pending'&&(now-request.createdAt>=12||!s.persons[request.merchantId]?.alive||s.persons[request.merchantId].faction!==request.faction)){request.status='expired';request.answeredAt=now}
  markets.merchantProtectionRequests=markets.merchantProtectionRequests.filter(request=>request.status==='pending'||now-(request.answeredAt??request.createdAt)<24);
+ for(const proposal of markets.merchantProposals)if(proposal.status==='pending'&&(now>=proposal.expiresAt||!s.persons[proposal.merchantId]?.alive||s.persons[proposal.merchantId].faction!==proposal.faction||region(s,proposal.origin)?.owner!==proposal.seller||region(s,proposal.destination)?.owner!==proposal.buyer||!tradeTreaty(s,proposal.seller,proposal.buyer)||atWar(s,proposal.seller,proposal.buyer))){proposal.status='expired';proposal.answeredAt=now}
+ markets.merchantProposals=markets.merchantProposals.filter(proposal=>proposal.status==='pending'||now-(proposal.answeredAt??proposal.createdAt)<24);
  for(const sale of markets.saleOrders)if(sale.status==='open'&&region(s,sale.origin)?.owner!==sale.seller){markets.regions[sale.origin].goods[sale.commodity].stock+=sale.available;sale.available=0;sale.status='seized'}
  advanceMerchantReturns(s,now);
  for(const r of s.regions)for(const [good,item] of Object.entries(markets.regions[r.id].goods)){

@@ -19,14 +19,28 @@ longer exposes a privilege button. Unit cases cover wealth, cost, quote,
 delivery, rent, save/load, expiry, changed control and allegiance, and a
 deterministic raid threshold; the browser smoke includes the bilingual action.
 The 120-month Han and Roman trade conservation checks account for this third
-destination of paid transport. The standalone 120-month simulation passes;
-the browser extension awaits the next GitHub-hosted run. Two default local
+destination of paid transport. The standalone 120-month simulation passes.
+Head `1e234c72` passed all 1,207 GitHub unit tests, three browser jobs,
+quality, Pages packaging and Poki validation. Two default local
 1,207-test runs passed 1,205 and 1,206 cases respectively: the first also
 exposed the now-corrected transport-rent assertion, while both hit the
 existing 40 ms NPC-East CPU benchmark. Its focused run passed once and failed
 on other runs; the unchanged base branch also failed this benchmark three of
 four isolated runs on this Windows host. GitHub's independent quality run is
 the release gate for this host-sensitive timing test.
+
+Carriers who have completed a real foreign-to-player delivery and earned two
+reputation can now propose a saved, expiring recurring supply contract for the
+route they personally served. The player may decline freely or accept after
+the existing treaty, ownership, stock, relation, treasury and transport checks
+run again. Acceptance prepays a real first caravan and transfers the existing
+two-unit negotiation fee to the named merchant; the contract retains that
+broker's ID. A death, defection, lost market or access, war, or the offer's
+deadline expires it. The bilingual market panel displays actionable offers
+and the accepted broker. Focused cases cover delivery provenance, payment,
+decline, insufficient cash, invalidation and old-save migration; the cloud
+browser scenario additionally exercises acceptance and save/reload. The next
+GitHub run remains the browser and complete-test gate for this increment.
 
 The draft now includes main through `ad107bb6`, including its production GA4
 stream setting, foreign-heir will privacy fix and uncertain-age guardianship
