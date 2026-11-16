@@ -19,7 +19,7 @@ for(const id of commands.filter(id=>!selected||id===selected)){
  for(let month=0;month<months;month++){
   if([18,60,96].includes(month))state=upgradeSave(JSON.parse(JSON.stringify(state)));
   tick(state);
-  assert.equal(state.regions.length,120);
+  assert.equal(state.regions.length,121);
   assert.ok(state.armies.every(army=>Number.isFinite(army.men)&&army.men>=0));
   assert.ok(Object.values(state.factions).every(faction=>Number.isFinite(faction.treasury)&&Number.isFinite(faction.food)));
  }

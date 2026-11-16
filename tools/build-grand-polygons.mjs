@@ -9,10 +9,28 @@ const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const xScale=Math.cos(42*Math.PI/180);
 function signedDistance(p,a,b){const x=p[0]*xScale,y=p[1],ax=a.lon*xScale,ay=a.lat,bx=b.lon*xScale,by=b.lat;return (x-ax)**2+(y-ay)**2-(x-bx)**2-(y-by)**2}
 function clip(ring,a,b){let output=[];for(let i=0;i<ring.length;i++){const p=ring[i],q=ring[(i+1)%ring.length],fp=signedDistance(p,a,b),fq=signedDistance(q,a,b),insideP=fp<=1e-10,insideQ=fq<=1e-10;if(insideP)output.push(p);if(insideP!==insideQ){const t=fp/(fp-fq);output.push([Number((p[0]+(q[0]-p[0])*t).toFixed(5)),Number((p[1]+(q[1]-p[1])*t).toFixed(5))])}}return output}
+function insideRing([x,y],ring){let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+ const [xi,yi]=ring[i],[xj,yj]=ring[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)inside=!inside;
+}return inside}
+function nearOutline(site,polygons){
+ const point=[site.lon,site.lat],scale=Math.cos(site.lat*Math.PI/180),x=site.lon*scale,y=site.lat;
+ let distance=Infinity;
+ for(const rings of polygons){
+  if(insideRing(point,rings[0])&&!rings.slice(1).some(ring=>insideRing(point,ring)))return true;
+  for(const ring of rings){for(let i=0;i<ring.length-1;i++){
+   const [ax,ay]=ring[i],[bx,by]=ring[i+1],dx=(bx-ax)*scale,dy=by-ay,t=Math.max(0,Math.min(1,((x-ax*scale)*dx+(y-ay)*dy)/(dx*dx+dy*dy||1)));
+   distance=Math.min(distance,Math.hypot(x-(ax*scale+t*dx),y-(ay+t*dy))*111);
+  }}
+ }
+ return distance<=100;
+}
 const features=[];
 for(const feature of historical.features){if(!feature.properties.regions?.length)continue;
- const sites=GRAND_SITES.filter(x=>feature.properties.regions.includes(x.macro));
  const polygons=feature.geometry.type==='Polygon'?[feature.geometry.coordinates]:feature.geometry.coordinates;
+ // A disconnected historical outline can span several provinces. Do not
+ // assign a remote lobe to the nearest city from another lobe: Leptis Magna
+ // was previously drawn over Cyrenaica, more than 500 km from its anchor.
+ const sites=GRAND_SITES.filter(x=>feature.properties.regions.includes(x.macro)&&nearOutline(x,polygons));
  for(const site of sites){const parts=[];for(const polygon of polygons){let ring=polygon[0].slice(0,-1);for(const other of sites){if(other===site||ring.length<3)continue;ring=clip(ring,site,other)}if(ring.length<3)continue;ring.push(ring[0]);parts.push([ring])}
   if(parts.length)features.push({type:'Feature',properties:{id:site.id,macro:site.macro,site:site.site[0],source:feature.properties.source,boundary:'approximate gameplay partition from settlement anchors; not an ancient administrative border'},geometry:{type:'MultiPolygon',coordinates:parts}})
  }

@@ -67,7 +67,7 @@ export function convertToGrandMap(s){
 }
 export function newGrandGame(player='caesar'){
  const state=convertToGrandMap(newGame(player));initializeNaval(state);
- // The 120-theater opening gives Caesar a six-month operating deficit and an
+ // The grand-campaign opening gives Caesar a six-month operating deficit and an
  // immediate two-front war. This is a game reserve for that scenario only.
  state.factions.caesar.treasury=180;
  state.startYear=state.year;state.startMonth=state.month;return state;
@@ -79,6 +79,24 @@ function importedRunId(s){const source=JSON.stringify(s);let a=2166136261,b=0x9e
 function migrateRegionalPowers(s){
  initializeWorld(s);const added=[];for(const id of ['galatia','bosporus']){if(s.factions[id])continue;added.push(id);s.factions[id]={treasury:60,food:60,manpower:9000,stability:65,legitimacy:60,tax:'normal',research:0};if(!s.regions.some(r=>r.id===id))s.regions.push(clone(REGIONS.find(r=>r.id===id)));if(!s.armies.some(a=>a.id===id+'army'))s.armies.push({...clone(INITIAL_ARMIES.find(a=>a.id===id+'army')),move:null,siege:null});const leader=OPENING_LEADERS[id][0],person=s.world.characters[leader];s.world.leadership[id]=person?.alive?[leader]:[];if(person&&person.faction==null){person.faction=id;if(person.location==null&&!person.missing)person.location=id}}
  if(added.length){for(const actor of Object.keys(s.factions)){s.knowledge[actor]||={};for(const target of Object.keys(s.factions)){if(!s.knowledge[actor][target])s.knowledge[actor][target]={reportedLeaders:clone(OPENING_LEADERS[target]||[]),reports:[],sightings:{}}}}if(added.includes('galatia')&&s.relations['galatia:senate']===undefined)s.relations['galatia:senate']=25}
+}
+// Earlier grand-campaign saves assigned the Cyrenaica outline to Leptis Magna.
+// Keep their current ownership and economy while adding the newly mapped city.
+function migrateCyrene(s){
+ if(!s.grandMap||s.regions.some(r=>r.id==='t121'))return;
+ const leptis=s.regions.find(r=>r.id==='t104');
+ if(!leptis)return;
+ const cyrene=grandRegionsFrom(REGIONS).find(r=>r.id==='t121');
+ for(const key of ['tax','food']){
+  const share=leptis[key]*.35;
+  leptis[key]-=share;cyrene[key]=share;
+ }
+ const people=Math.floor(leptis.population*.35);
+ leptis.population-=people;cyrene.population=people;
+ cyrene.owner=leptis.owner;cyrene.loyalty=leptis.loyalty;
+ cyrene.civicSatisfaction=leptis.civicSatisfaction;
+ cyrene.integration=leptis.integration;
+ s.regions.push(cyrene);
 }
 export function upgradeSave(s){
  if(!s.legacyRunId)s.legacyRunId=importedRunId(s);
@@ -93,7 +111,7 @@ export function upgradeSave(s){
  if(s.victory&&!s.campaignOutcome)s.campaignOutcome={kind:'military',winner:s.player,loser:s.player==='caesar'?'senate':'caesar',year:s.year,month:s.month,legacy:true};
  const civilResult=s.civilWarOutcome||s.campaignOutcome;
  if(civilResult?.kind==='military'&&['caesar','senate'].includes(civilResult.winner)&&['caesar','senate'].includes(civilResult.loser)&&isWar(s,'caesar','senate'))concludePeace(s,'caesar','senate');
- migrateRegionalPowers(s);initializeReports(s);updateObjectives(s,true);initializeFigures(initializeDevelopment(refreshReportConfidence(initializeGovernments(s))));initializeLocalSociety(s);initializeNaval(s);migrateGranaryReserves(s,(state,owner)=>nationalBudget(state,owner).foodCapacity);initializeAchievements(s);s.briefingBaseline ||= beginBriefing(s);return s;
+ migrateRegionalPowers(s);migrateCyrene(s);initializeReports(s);updateObjectives(s,true);initializeFigures(initializeDevelopment(refreshReportConfidence(initializeGovernments(s))));initializeLocalSociety(s);initializeNaval(s);migrateGranaryReserves(s,(state,owner)=>nationalBudget(state,owner).foodCapacity);initializeAchievements(s);s.briefingBaseline ||= beginBriefing(s);return s;
 }
 
 export function previewMarch(s,armyId,destination){

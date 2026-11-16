@@ -165,7 +165,8 @@ const regionalDetail=[
  ['armenia',[39,36,46,42]],
  ['syria',[34,32,40,38]],
  ['parthia',[42,30,51,38]],
- ['leptis',[12,31,16,34]]
+ ['leptis',[12,31,16,34]],
+ ['cyrene',[21.4,32.4,22.3,33.2]]
 ];
 const localLayers=[];
 for(const [region,bounds] of regionalDetail)for(const [level,zoom] of [['ultra',8],['higher',9]]){

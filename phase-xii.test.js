@@ -144,7 +144,7 @@ test('paid army training consumes resources and a month of marching readiness',(
 test('36 months of defensive and low recruitment play remain serializable',()=>{
  for(const id of ['caesar','senate']){
   const s=newGrandGame(id);for(let i=0;i<36&&!s.achievementState.finalized;i++)tick(s);
-  const restored=JSON.parse(JSON.stringify(s));assert.equal(restored.regions.length,120);
+  const restored=JSON.parse(JSON.stringify(s));assert.equal(restored.regions.length,121);
   assert.ok(restored.factions[id].treasury>=-100);assert.ok(restored.factions[id].food>=-100);
   assert.ok(restored.achievementState.finalized||restored.year*12+restored.month>=-46*12+1);
  }

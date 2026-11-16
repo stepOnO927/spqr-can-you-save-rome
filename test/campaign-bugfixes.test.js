@@ -288,7 +288,7 @@ test('a broken core field army can end either Roman war without conquering most 
  region(caesar,'roma').owner='caesar';
  caesar.armies=caesar.armies.filter(a=>a.owner!=='senate'||a.id==='pompey');army(caesar,'pompey').men=400;
  caesar.battles=[{attacker:{owner:'caesar'},defender:{owner:'senate'},attackerWins:true}];
- assert.equal(caesar.regions.filter(r=>r.owner==='senate').length,71);
+ assert.equal(caesar.regions.filter(r=>r.owner==='senate').length,72);
  assert.equal(militaryResult(caesar,'caesar')?.basis,'field-collapse');
  const s=newGrandGame('egypt');
  region(s,'t006').owner='senate';

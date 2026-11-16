@@ -18,7 +18,7 @@ for(const faction of ['caesar','senate'])for(const strategy of [...['aggressive'
   }
   if((strategy==='aggressive'&&turn%6===0||strategy==='low-recruitment'&&turn%12===0)&&s.factions[faction].treasury>=24){const home=s.regions.find(r=>r.owner===faction);if(home&&recruit(s,home.id,faction))recruits++}
   tick(s);
-  assert.equal(s.regions.length,120);assert.ok(s.armies.every(a=>Number.isFinite(a.men)&&a.men>=0));
+  assert.equal(s.regions.length,121);assert.ok(s.armies.every(a=>Number.isFinite(a.men)&&a.men>=0));
   assert.ok(Object.values(s.factions).every(f=>Number.isFinite(f.treasury)&&Number.isFinite(f.food)&&Number.isFinite(f.manpower)));
   assert.ok(s.factions[faction].stability>=0&&s.factions[faction].stability<=100);
  }
@@ -27,5 +27,5 @@ for(const faction of ['caesar','senate'])for(const strategy of [...['aggressive'
 }
 const spectator=newGrandGame('egypt');
 for(let month=0;month<36&&!spectator.achievementState.finalized;month++)tick(spectator);
-assert.equal(spectator.regions.length,120);
+assert.equal(spectator.regions.length,121);
 console.log(`egypt spectator: Caesar ${spectator.regions.filter(r=>r.owner==='caesar').length} territories, Senate ${spectator.regions.filter(r=>r.owner==='senate').length}, Rome ${region(spectator,'roma').owner}, outcome ${spectator.achievementState.result||spectator.campaignOutcome?.kind||'ongoing'}`);

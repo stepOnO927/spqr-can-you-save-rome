@@ -141,7 +141,7 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
    journal.push(`${b.year}/${b.month} battle ${b.region}: ${b.attackerWins?b.attacker.owner:b.defender.owner} won`);
   }
  }
- assert.equal(s.regions.length,120);
+ assert.equal(s.regions.length,121);
  assert.ok(s.armies.every(a=>Number.isFinite(a.men)&&a.men>=0));
  assert.ok(Object.values(s.factions).every(x=>[x.treasury,x.food,x.manpower].every(Number.isFinite)));
  if([11,23,35].includes(month)&&!s.achievementState.finalized){

@@ -47,7 +47,7 @@ for(let month=2;month<48&&!s.achievementState.finalized&&!s.pendingCivilSettleme
  }
  tick(s);
  for(const battle of s.battles||[])if(!seenBattles.has(battle.id)){seenBattles.add(battle.id);if(['senate','caesar'].includes(battle.attacker.owner)&&['senate','caesar'].includes(battle.defender.owner))journal.push(`${battle.year}/${battle.month} battle ${battle.region}: ${battle.attackerWins?battle.attacker.owner:battle.defender.owner} won, losses ${battle.lossA}/${battle.lossD}`)}
- assert.equal(s.regions.length,120);
+ assert.equal(s.regions.length,121);
  assert.ok(s.armies.every(a=>Number.isFinite(a.men)&&a.men>=0));
  assert.ok(Object.values(s.factions).every(f=>[f.treasury,f.food,f.manpower].every(Number.isFinite)));
  if([11,23,35].includes(month)){

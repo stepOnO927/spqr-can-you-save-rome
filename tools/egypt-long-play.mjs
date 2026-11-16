@@ -35,7 +35,7 @@ for(let turn=0;turn<36&&!state.achievementState.finalized;turn++){
  tick(state);
  for(const agreement of state.knowledgeAgreements||[])knowledgeAgreementsSeen.add([agreement.a,agreement.b].sort().join(':'));
  for(const request of state.development?.egypt?.agreementRequests||[])knowledgeOffersSeen.add(request.partner);
- assert.equal(state.regions.length,120);
+ assert.equal(state.regions.length,121);
  assert.ok(state.armies.every(a=>Number.isFinite(a.men)&&a.men>=0));
  assert.ok(Object.values(state.factions).every(f=>[f.treasury,f.food,f.manpower].every(Number.isFinite)));
  if(turn===11||turn===23){

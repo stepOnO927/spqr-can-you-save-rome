@@ -70,9 +70,9 @@ try{
  try{await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none',null,{timeout:Number(process.env.SPQR_ATLAS_LOAD_TIMEOUT_MS||60000)})}
  catch(error){console.error('Atlas startup diagnostics',JSON.stringify({pageErrors:errors,consoleErrors:consoleErrors.slice(-12),status:await page.locator('#status').textContent()}));throw error}
  await page.waitForTimeout(1200);
- assert.equal(newGrandGame('caesar').regions.length,120);
+ assert.equal(newGrandGame('caesar').regions.length,121);
  const visibleSites=await page.locator('.grand-site').count();
- assert.ok(visibleSites>0&&visibleSites<120,'Only settlements near the current view should keep live map markers');
+ assert.ok(visibleSites>0&&visibleSites<121,'Only settlements near the current view should keep live map markers');
  assert.equal(await page.locator('.maplibregl-canvas').isVisible(),true);
  assert.deepEqual(await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return ['land-grain','sea-grain'].map(id=>map.hasImage(id))}),[true,true],'Local cartographic patterns must register with the real map renderer');
  assert.deepEqual(errors,[]);
@@ -309,7 +309,7 @@ try{
  if(process.env.SPQR_ATLAS_GAUL_Z9_SCREENSHOT){await page.waitForTimeout(4000);await page.screenshot({path:process.env.SPQR_ATLAS_GAUL_Z9_SCREENSHOT})}
  for(const [region,lon,lat,tileX] of [
   ['pontic',35.154,42.026,305],['armenia',44.58,39.885,319],['syria',36.16,36.2,307],
-  ['parthia',48.51,34.8,324],['leptis',14.293,32.638,276]
+  ['parthia',48.51,34.8,324],['leptis',14.293,32.638,276],['cyrene',21.8583,32.825,287]
  ]){
   terrainRequests.length=0;
   const center=await page.evaluate(async({lon,lat})=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[lon,lat],zoom:9.1});return map.getCenter().toArray()},{lon,lat});
@@ -350,5 +350,5 @@ try{
  await page.waitForTimeout(1000);
  await page.waitForFunction(async()=>{const {map,activeReliefLayer}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&activeReliefLayer==='relief-fine'},null,{timeout:5000});
  assert.equal(await activeRelief(),'relief-fine','Hill shading should return after the map settles');
- console.log('Offline atlas loaded MapLibre, 120 settlements, Mediterranean terrain through zoom 7 and native zoom 8-9 relief at every settlement anchor.');
+ console.log('Offline atlas loaded MapLibre, 121 settlements, Mediterranean terrain through zoom 7 and native zoom 8-9 relief at every settlement anchor.');
 }finally{await browser.close()}

@@ -122,7 +122,8 @@ syria|Damascus|大马士革|36.2900|33.5100|plain|road,grain
 parthia|Seleucia|塞琉西亚|44.5200|33.1000|plain|river,road,grain
 parthia|Ecbatana|埃克巴坦那|48.5100|34.8000|hills|road,metal
 parthia|Arbela|阿尔贝拉|44.0100|36.1900|plain|road,grain
-parthia|Susa|苏萨|48.2500|32.1900|plain|river,road,grain`;
+parthia|Susa|苏萨|48.2500|32.1900|plain|river,road,grain
+africa|Cyrene|昔兰尼|21.8583|32.8250|hills|road,grain,hellenic`;
 
 const parsed=rows.split('\n').map((line,index)=>{const [macro,en,zh,lon,lat,terrain,tags]=line.split('|');return {id:index===0?macro:`t${String(index+1).padStart(3,'0')}`,macro,site:[en,zh],lon:Number(lon),lat:Number(lat),terrain,tags:tags.split(',')}});
 // The first item in each group keeps the legacy identifier so characters,
@@ -138,22 +139,35 @@ export function grandRegionsFrom(legacyRegions){
    food:Math.max(.15,base.food/count*(tags.includes('grain')?1.25:.7)),tax:Math.max(.15,base.tax/count*(urban?1.6:tags.includes('port')?1.18:.88)),
    population:Math.round((urban?85000:tags.includes('grain')?43000:24000)*(index%4===0?1.13:1)),resource:tags.includes('metal')?'metal':tags.includes('stone')?'stone':tags.includes('timber')?'timber':'grain',
    port:tags.includes('port'),river:tags.includes('river'),road:tags.includes('road'),mountainPass:site.terrain==='hills'&&index%5===0,
-   culture:['egypt','parthia','armenia','bosporus','galatia'].includes(site.macro)?site.macro:['africa','numidia','mauretania'].includes(site.macro)?'north-african':['achaia','epirus','anatolia'].includes(site.macro)?'hellenic':'roman-local',
+   culture:tags.includes('hellenic')?'hellenic':['egypt','parthia','armenia','bosporus','galatia'].includes(site.macro)?site.macro:['africa','numidia','mauretania'].includes(site.macro)?'north-african':['achaia','epirus','anatolia'].includes(site.macro)?'hellenic':'roman-local',
    religion:['egypt','parthia','armenia','bosporus','galatia'].includes(site.macro)?site.macro:'local-cults',integration:['caesar','senate'].includes(base.owner)&&!['egypt','parthia','armenia','bosporus','galatia'].includes(site.macro)?65:55,civicSatisfaction:base.loyalty,city:site.site[0],fort:site.id===site.macro?base.fort:urban?1:0,
    supply:Math.max(4,Math.round(base.supply/count*3)+(urban?3:0)+(tags.includes('port')?2:0)),loyalty:base.loyalty,owner:base.owner,buildings:site.id===site.macro?[...(base.buildings||[])]:[]};
  });
 }
 const km=(a,b)=>Math.hypot((a.lon-b.lon)*Math.cos((a.lat+b.lat)/2*Math.PI/180),a.lat-b.lat);
 const edgeKey=(a,b)=>[a,b].sort().join(':');
+// The Gulf of Sidra is water. This land corridor bends inland around it.
+const CYRENE_LAND_WAYPOINTS=[[15,31.7],[16,30.9],[17,30.6],[18,30.2],[19,29.8],[20,30.3],[21,31.5]];
 export function grandRoutes(){
- const links=new Map(),add=(a,b,kind='land')=>{if(a===b)return;const key=edgeKey(a.id,b.id);if(!links.has(key))links.set(key,[a.id,b.id,kind==='sea'?'sea':undefined,{distance:Math.round(km(a,b)*111),river:a.tags.includes('river')&&b.tags.includes('river'),road:a.tags.includes('road')&&b.tags.includes('road'),mountain:a.terrain==='hills'&&b.terrain==='hills'}])};
+ const links=new Map(),add=(a,b,kind='land')=>{if(a===b)return;const key=edgeKey(a.id,b.id);if(links.has(key))return;const corridor=key===edgeKey('t104','t121')?a.id==='t104'?CYRENE_LAND_WAYPOINTS:[...CYRENE_LAND_WAYPOINTS].reverse():[];const points=[a,...corridor.map(([lon,lat])=>({lon,lat})),b];links.set(key,[a.id,b.id,kind==='sea'?'sea':undefined,{distance:Math.round(points.slice(1).reduce((sum,p,i)=>sum+km(points[i],p),0)*111),river:a.tags.includes('river')&&b.tags.includes('river'),road:a.tags.includes('road')&&b.tags.includes('road'),mountain:a.terrain==='hills'&&b.terrain==='hills',...(corridor.length?{waypoints:corridor}:{})}])};
  for(const sites of Object.values(GRAND_GROUPS)){
   const reached=[sites[0]],remaining=new Set(sites.slice(1));while(remaining.size){let best;for(const a of reached)for(const b of remaining)if(!best||km(a,b)<best.d)best={a,b,d:km(a,b)};add(best.a,best.b);reached.push(best.b);remaining.delete(best.b)}
-  for(const a of sites)for(const b of sites.filter(x=>x!==a).sort((x,y)=>km(a,x)-km(a,y)).slice(0,2))add(a,b);
+  for(const a of sites)for(const b of sites.filter(x=>x!==a).sort((x,y)=>km(a,x)-km(a,y)).slice(0,2)){
+   // Cyrene joins the long coastal corridor through Leptis, not a second
+   // straight-line shortcut across the Gulf of Sidra to western Africa.
+   if((a.id==='t121'||b.id==='t121')&&a.id!=='t104'&&b.id!=='t104')continue;
+   add(a,b);
+  }
  }
  for(const [from,to,kind] of LEGACY_ROUTES){const left=GRAND_GROUPS[from],right=GRAND_GROUPS[to];if(!left||!right)continue;let candidates=left.flatMap(a=>right.filter(b=>kind!=='sea'||a.tags.includes('port')&&b.tags.includes('port')).map(b=>({a,b,d:km(a,b)})));if(!candidates.length)continue;candidates.sort((x,y)=>x.d-y.d);for(const {a,b} of candidates.slice(0,kind==='sea'?1:2))add(a,b,kind)}
  return [...links.values()];
 }
 export const GRAND_ROUTES=grandRoutes();
+export function grandRouteCoordinates(from,to){
+ const a=GRAND_SITES.find(site=>site.id===from),b=GRAND_SITES.find(site=>site.id===to),edge=GRAND_ROUTES.find(route=>route[0]===from&&route[1]===to||route[0]===to&&route[1]===from);
+ if(!a||!b)return [];
+ const waypoints=edge?.[3].waypoints||[];
+ return [[a.lon,a.lat],...(edge?.[0]===from?waypoints:[...waypoints].reverse()),[b.lon,b.lat]];
+}
 export const GRAND_COUNT=GRAND_SITES.length;
 export const LEGACY_COUNT=LEGACY_REGIONS.length;

@@ -21,7 +21,7 @@ for(let seed=1;seed<=seeds;seed++){
   for(const site of state.regions)if(['caesar','senate'].includes(site.owner)&&['irrigation','grain-mill','granary'].includes(site.construction?.buildingId))foodProjects.add(`${site.owner}:${site.id}:${site.construction.buildingId}`);
   assert.ok(isWar(state,'caesar','senate')||state.civilWarOutcome?.winner,'the civil war cannot disappear without a formal result');
   if(state.civilWarOutcome)assert.equal(isWar(state,'caesar','senate'),false,'a concluded civil war must no longer be an active war');
-  assert.equal(state.regions.length,120);
+  assert.equal(state.regions.length,121);
   assert.ok(state.armies.every(army=>Number.isFinite(army.men)&&army.men>=0));
   assert.ok(Object.values(state.factions).every(faction=>Number.isFinite(faction.treasury)));
  }

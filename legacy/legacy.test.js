@@ -318,7 +318,7 @@ test('race places, trophy, last place punishment and reward guard persist',()=>{
 });
 test('unlocked scenario creates a distinct playable alternate history state',()=>{
  const normal=newGrandGame('senate'),s=createScenario('scenario-rubicon',newGrandGame);
- assert.equal(s.grandMap,true);assert.equal(s.regions.length,120);assert.equal(s.player,'senate');assert.equal(s.legacyScenario,'scenario-rubicon');assert.equal(s.difficulty,'standard');
+ assert.equal(s.grandMap,true);assert.equal(s.regions.length,121);assert.equal(s.player,'senate');assert.equal(s.legacyScenario,'scenario-rubicon');assert.equal(s.difficulty,'standard');
  assert.equal(normal.regions.find(r=>r.id==='italiaN').owner,'senate');
  assert.equal(s.regions.find(r=>r.id==='italiaN').owner,'caesar');
  assert.equal(s.armies.find(a=>a.id==='xiii').region,'italiaN');

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {GRAND_SITES,GRAND_ROUTES,GRAND_GROUPS} from './grand-map-data.js';
+import {GRAND_SITES,GRAND_ROUTES,GRAND_GROUPS,grandRouteCoordinates} from './grand-map-data.js';
 import {newGame,newGrandGame,convertToGrandMap,upgradeSave,previewMarch,moveArmy,tick,aiTurn,recruitFigure,researchInnovation,setReligiousPolicy,portZone,nationalBudget} from './engine.js';
 import {budgetHtml} from './budget-ui.js';
 import {grandAdjacent,armySupply,encircled,holdPosition,strategicRetreat,flankFactor,navalCapacity,availableNavalLift,canEmbark,supplyBottlenecks} from './grand-operations.js';
@@ -11,11 +11,28 @@ import {advanceRecon} from './reconnaissance.js';
 import grandPolygons from './grand-territory-polygons.js';
 import {addReport,advanceOperations} from './character-system.js';
 
-test('120 actual territories, 30 in Italy and Sicily, each with a bounded map polygon and graph entry',()=>{
- const s=newGrandGame('senate'),italian=['cisalpine','italiaN','roma','italiaS','sicilia'];assert.equal(s.regions.length,120);assert.equal(italian.reduce((n,id)=>n+GRAND_GROUPS[id].length,0),30);assert.equal(grandPolygons.features.length,120);const ids=new Set(s.regions.map(r=>r.id));
+test('121 actual territories, 30 in Italy and Sicily, each with a bounded map polygon and graph entry',()=>{
+ const s=newGrandGame('senate'),italian=['cisalpine','italiaN','roma','italiaS','sicilia'];assert.equal(s.regions.length,121);assert.equal(italian.reduce((n,id)=>n+GRAND_GROUPS[id].length,0),30);assert.equal(grandPolygons.features.length,121);const ids=new Set(s.regions.map(r=>r.id));
  for(const r of s.regions){assert.ok(Number.isFinite(r.lon)&&Number.isFinite(r.lat));assert.ok(ids.has(r.macro));assert.ok(r.population>0);assert.ok(grandAdjacent(r.id).length>0);assert.ok(grandPolygons.features.some(f=>f.properties.id===r.id&&f.geometry.coordinates.length))}
  for(const [a,b,kind] of GRAND_ROUTES){assert.ok(ids.has(a)&&ids.has(b));if(kind==='sea'){assert.equal(s.regions.find(r=>r.id===a).port,true);assert.equal(s.regions.find(r=>r.id===b).port,true)}}
- const seen=new Set([s.regions[0].id]),queue=[s.regions[0].id];while(queue.length)for(const e of grandAdjacent(queue.shift()))if(!seen.has(e.to)){seen.add(e.to);queue.push(e.to)}assert.equal(seen.size,120);
+ const seen=new Set([s.regions[0].id]),queue=[s.regions[0].id];while(queue.length)for(const e of grandAdjacent(queue.shift()))if(!seen.has(e.to)){seen.add(e.to);queue.push(e.to)}assert.equal(seen.size,121);
+ const corridor=GRAND_ROUTES.find(([a,b])=>[a,b].includes('t104')&&[a,b].includes('t121'));
+ assert.ok(corridor);assert.notEqual(corridor[2],'sea');assert.ok(corridor[3].distance>900);
+ assert.ok(grandRouteCoordinates('t104','t121').length>2);
+});
+test('older grand saves add Cyrene once without changing existing ownership or total income',()=>{
+ const source=newGrandGame('senate');source.regions=source.regions.filter(r=>r.id!=='t121');
+ const leptis=source.regions.find(r=>r.id==='t104');leptis.owner='caesar';leptis.loyalty=37;
+ const before={tax:leptis.tax,food:leptis.food,population:leptis.population};
+ const restored=upgradeSave(JSON.parse(JSON.stringify(source))),cyrene=restored.regions.find(r=>r.id==='t121');
+ assert.equal(restored.regions.length,121);assert.equal(cyrene.owner,'caesar');assert.equal(cyrene.loyalty,37);assert.equal(cyrene.culture,'hellenic');
+ const parent=restored.regions.find(r=>r.id==='t104');
+ assert.ok(Math.abs(parent.tax+cyrene.tax-before.tax)<1e-9);
+ assert.ok(Math.abs(parent.food+cyrene.food-before.food)<1e-9);
+ assert.equal(parent.population+cyrene.population,before.population);
+ const twice=upgradeSave(JSON.parse(JSON.stringify(restored)));
+ assert.equal(twice.regions.length,121);assert.equal(twice.regions.filter(r=>r.id==='t121').length,1);
+ assert.equal(twice.regions.find(r=>r.id==='t104').tax,parent.tax);
 });
 test('small inland kingdoms can feed their home army and lose home-domain income if conquered',()=>{
  const s=newGrandGame('egypt');
@@ -204,8 +221,8 @@ test('regional rites change satisfaction after a political transition and migrat
  assert.equal(upgradeSave(JSON.parse(JSON.stringify(s))).religion.caesar.policy,'civic-patronage');
 });
 test('legacy save migration preserves political state, characters, intelligence and armies',()=>{
- const old=newGame('senate');old.regions.find(r=>r.id==='roma').loyalty=31;old.factions.senate.treasury=77;old.log.push({year:-49,month:1,en:'test',zh:'测试'});const name=old.world.characters.cicero.name;old.armies.find(a=>a.id==='xiii').move={to:'roma',remaining:1,sea:false};const converted=convertToGrandMap(structuredClone(old));assert.equal(converted.regions.length,120);assert.equal(converted.regions.find(r=>r.id==='roma').loyalty,31);assert.equal(converted.factions.senate.treasury,77);assert.equal(converted.world.characters.cicero.name,name);assert.equal(converted.log.at(-1).en,'test');assert.notEqual(converted.armies.find(a=>a.id==='xiii').move.to,'roma');assert.equal(upgradeSave(structuredClone(converted)).regions.length,120);assert.equal(old.regions.length,22);
+ const old=newGame('senate');old.regions.find(r=>r.id==='roma').loyalty=31;old.factions.senate.treasury=77;old.log.push({year:-49,month:1,en:'test',zh:'测试'});const name=old.world.characters.cicero.name;old.armies.find(a=>a.id==='xiii').move={to:'roma',remaining:1,sea:false};const converted=convertToGrandMap(structuredClone(old));assert.equal(converted.regions.length,121);assert.equal(converted.regions.find(r=>r.id==='roma').loyalty,31);assert.equal(converted.factions.senate.treasury,77);assert.equal(converted.world.characters.cicero.name,name);assert.equal(converted.log.at(-1).en,'test');assert.notEqual(converted.armies.find(a=>a.id==='xiii').move.to,'roma');assert.equal(upgradeSave(structuredClone(converted)).regions.length,121);assert.equal(old.regions.length,22);
 });
 test('both Roman commands resolve 36 months or a terminal defeat with combat and AI movement',()=>{
- for(const faction of ['caesar','senate']){const s=newGrandGame(faction);for(let i=0;i<36;i++)tick(s);assert.ok(s.year===-46&&s.month===1||s.terminalResult==='defeat');assert.equal(s.regions.length,120);assert.ok(s.battles.length>0);assert.ok(s.log.length>10)}
+ for(const faction of ['caesar','senate']){const s=newGrandGame(faction);for(let i=0;i<36;i++)tick(s);assert.ok(s.year===-46&&s.month===1||s.terminalResult==='defeat');assert.equal(s.regions.length,121);assert.ok(s.battles.length>0);assert.ok(s.log.length>10)}
 });

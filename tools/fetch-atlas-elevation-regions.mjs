@@ -10,7 +10,8 @@ export const extents={
  armenia:{west:39,east:46,south:36,north:42},
  syria:{west:34,east:40,south:32,north:38},
  parthia:{west:42,east:51,south:30,north:38},
- leptis:{west:12,east:16,south:31,north:34}
+ leptis:{west:12,east:16,south:31,north:34},
+ cyrene:{west:21.4,east:22.3,south:32.4,north:33.2}
 };
 const region=process.argv[2];
 if(!region||region!=='all'&&!extents[region])throw new Error(`Choose ${Object.keys(extents).join(', ')} or all`);
