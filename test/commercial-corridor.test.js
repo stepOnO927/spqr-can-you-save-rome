@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-trade-1';
-import {setBorderPolicy,militaryAccessStatus} from '../border-access.js?v=world-kings-trade-1';
-import {proposeAgreement,terminateAgreement,advanceAgreements,commercialCorridor} from '../agreements.js?v=world-kings-trade-1';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-trade-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-contact-1';
+import {setBorderPolicy,militaryAccessStatus} from '../border-access.js?v=world-kings-contact-1';
+import {proposeAgreement,terminateAgreement,advanceAgreements,commercialCorridor} from '../agreements.js?v=world-kings-contact-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-contact-1';
 
 test('trade revenue requires an actual connected commercial corridor',()=>{
   const state=newGame('egypt');state.relations['egypt:parthia']=30;
