@@ -32,7 +32,7 @@ try{
  await p.locator('#start-game').tap();
  await p.waitForFunction(()=>window._pokiEvents?.includes('start'));
  assert.deepEqual(await p.evaluate(()=>_pokiEvents.slice(0,2)),['load','start'],'Atlas SDK lifecycle');
- await p.locator('.maplibregl-marker').first().tap({timeout:10000});
+ await p.locator('[data-city="RAVENNA"]').tap({timeout:10000});
  assert.equal(await p.locator('.selection:not(.collapsed)').count(),1);
  assert.deepEqual(errors,[]);
  entryBytes.atlas=bytes.reduce((a,b)=>a+b,0)-entryBytes.roman;
