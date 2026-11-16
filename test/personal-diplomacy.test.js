@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=world-kings-first-command-1';
-import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,advancePersonalDiplomacy,personalDiplomaticCredit} from '../personal-diplomacy.js?v=world-kings-first-command-1';
-import {addReport,contestLeadership} from '../character-system.js?v=world-kings-first-command-1';
+import {newGame,upgradeSave,tick,diplomacy} from '../engine.js?v=world-kings-reported-contact-1';
+import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,advancePersonalDiplomacy,personalDiplomaticCredit} from '../personal-diplomacy.js?v=world-kings-reported-contact-1';
+import {addReport,contestLeadership} from '../character-system.js?v=world-kings-reported-contact-1';
 
 test('a claimant can be contacted only after a report, and the request does not reveal hidden court status',()=>{
  const s=newGame('senate');s.knowledge.senate.egypt.reportedLeaders=['ptolemy'];contestLeadership(s,'egypt','cleopatra');s.world.characters.cicero.location='egypt';
@@ -110,7 +110,7 @@ test('contact credit uses only recorded meetings and expires without revealing h
 
 test('personal diplomatic credit uses the latest meeting snapshot, not hidden subsequent trust',()=>{
  let s=newGame('senate');s.world.characters.cicero.location='egypt';s.world.intelSeed=1000;assert.ok(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok);
- advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');assert.equal(s.meetings[0].contactCredit,1);
+ advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');assert.equal(s.meetings[0].contactCredit,1);assert.equal(personalDiplomaticCredit(s,'egypt','senate'),1);
  for(const trust of [-100,0,100]){s.world.personalRelations['cicero:cleopatra'].trust=trust;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1)}
  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1);
  // A new actual meeting may create a new observation, including a lower one.

@@ -1,6 +1,6 @@
 import {localEntity, villageDevelopment} from '../local-polities.js';
 import {villageProjectQuote, startVillageProject, villageFoodQuote, takeVillageFood} from '../local-villages.js';
-import {FACTIONS} from '../data.js?v=world-kings-first-command-1';
+import {FACTIONS} from '../data.js?v=world-kings-reported-contact-1';
 
 export function renderVillage({state, id, actor, language, panel, refresh}) {
   const entity = localEntity(state, id), zh = language === 'zh';

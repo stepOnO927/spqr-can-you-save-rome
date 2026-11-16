@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-first-command-1';
-import {createCharacterUI} from '../map-lab/character-ui.js?v=world-kings-first-command-1';
-import {addReport} from '../character-system.js?v=world-kings-first-command-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=world-kings-first-command-1';
-import {createFictionalPerson} from '../dynasties.js?v=world-kings-first-command-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-reported-contact-1';
+import {createCharacterUI} from '../map-lab/character-ui.js?v=world-kings-reported-contact-1';
+import {addReport} from '../character-system.js?v=world-kings-reported-contact-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=world-kings-reported-contact-1';
+import {createFictionalPerson} from '../dynasties.js?v=world-kings-reported-contact-1';
 
 // A small DOM stub exercises the real handler without requiring a network listener.
 // It does not replace a browser or layout test.
@@ -165,8 +165,8 @@ test('a reported claimant can be contacted through the diplomacy panel',()=>{
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{},onStateChanged:()=>refreshed++});ui.addMissions(content,'egypt');const box=content.children[2],cash=s.factions.senate.treasury;assert.match(box.innerHTML,/报告可能过时或错误/);box.querySelector('#claimant-support').onclick();box.querySelector('#claimant-feedback').children[0].onclick();assert.equal(s.factions.senate.treasury,cash-10);assert.equal(s.operations[0].type,'support');assert.equal(s.operations[0].remaining,4);assert.equal(refreshed,1)}finally{globalThis.document=prior}
 });
 test('claimant support exposes only the player’s established personal contacts',()=>{
- const prior=globalThis.document,s=newGame('senate'),content=new Element();addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra','ptolemy'],source:'spy',confidence:'unverified'});s.world.personalRelations['cicero:cleopatra']={trust:15,meetings:3};s.world.personalRelations['antony:cleopatra']={trust:50,meetings:1};globalThis.document={createElement:tag=>new Element(tag)};
- try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[2],choice=box.querySelector('#claimant-choice'),representative=box.querySelector('#claimant-representative');assert.match(representative.innerHTML,/西塞罗 · 信任 15/);assert.doesNotMatch(representative.innerHTML,/安东尼/);choice.value='ptolemy';choice.onchange();assert.doesNotMatch(representative.innerHTML,/西塞罗/);choice.value='cleopatra';choice.onchange();representative.value='cicero';box.querySelector('#claimant-support').onclick();box.querySelector('#claimant-feedback').children[0].onclick();assert.equal(s.operations[0].representative,'cicero');assert.equal(s.operations[0].remaining,4)}finally{globalThis.document=prior}
+ const prior=globalThis.document,s=newGame('senate'),content=new Element();addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra','ptolemy'],source:'spy',confidence:'unverified'});s.world.personalRelations['cicero:cleopatra']={trust:15,meetings:3};s.world.personalRelations['antony:cleopatra']={trust:50,meetings:1};s.meetings.push({actor:'senate',targetFaction:'egypt',person:'cicero',target:'cleopatra',status:'met',year:s.year,month:s.month,contactCredit:3});globalThis.document={createElement:tag=>new Element(tag)};
+ try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[2],choice=box.querySelector('#claimant-choice'),representative=box.querySelector('#claimant-representative');assert.match(representative.innerHTML,/西塞罗 · 已记录联系 3\/10/);assert.doesNotMatch(representative.innerHTML,/安东尼/);choice.value='ptolemy';choice.onchange();assert.doesNotMatch(representative.innerHTML,/西塞罗/);choice.value='cleopatra';choice.onchange();representative.value='cicero';box.querySelector('#claimant-support').onclick();box.querySelector('#claimant-feedback').children[0].onclick();assert.equal(s.operations[0].representative,'cicero');assert.equal(s.operations[0].remaining,4)}finally{globalThis.document=prior}
 });
 test('a held agent can be sent a release request from the diplomacy panel',()=>{
  const prior=globalThis.document,s=newGame('senate'),content=new Element();s.world.captives.push({id:'p1',owner:'senate',holder:'egypt',state:'held'});let refreshed=0;globalThis.document={createElement:tag=>new Element(tag)};

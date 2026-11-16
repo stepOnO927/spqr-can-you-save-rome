@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-first-command-1';
-import {createFictionalPerson} from '../dynasties.js?v=world-kings-first-command-1';
-import {buildChessboard} from '../chessboard.js?v=world-kings-first-command-1';
-import {addReport} from '../character-system.js?v=world-kings-first-command-1';
-import {proposeAgreement} from '../agreements.js?v=world-kings-first-command-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=world-kings-first-command-1';
-import {renderChessboard} from '../chessboard-ui.js?v=world-kings-first-command-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-reported-contact-1';
+import {createFictionalPerson} from '../dynasties.js?v=world-kings-reported-contact-1';
+import {buildChessboard} from '../chessboard.js?v=world-kings-reported-contact-1';
+import {addReport} from '../character-system.js?v=world-kings-reported-contact-1';
+import {proposeAgreement} from '../agreements.js?v=world-kings-reported-contact-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=world-kings-reported-contact-1';
+import {renderChessboard} from '../chessboard-ui.js?v=world-kings-reported-contact-1';
 
 test('the board does not read hidden foreign plans, plots, armies, personal loyalties or secret treaties',()=>{
  const s=newGame('caesar'),before=buildChessboard(s);s.world.conspiracies={senate:{person:'cato',participants:['cato']}};s.world.strategicPlans={senate:{goal:'secret'}};s.world.doubleAgents=[{person:'antony',allegiance:'senate'}];
@@ -14,6 +14,13 @@ test('the board does not read hidden foreign plans, plots, armies, personal loya
  for(const a of s.armies.filter(a=>a.owner==='senate'))a.men=999999;
  s.relations['armenia:parthia']=60;assert.ok(proposeAgreement(s,'armenia','parthia','intelligence',{secret:true}).ok);s.coalitions=[{id:'hidden',status:'active',parties:['egypt','parthia','armenia'],target:'caesar',cohesion:1}];
  assert.deepEqual(buildChessboard(s),before);
+});
+test('foreign personal ties reflect recorded meetings rather than live hidden trust',()=>{
+ let s=newGame('caesar');const links=()=>buildChessboard(s).links.filter(x=>x.kind==='personal'&&[x.from,x.to].includes('p:caesar')&&[x.from,x.to].includes('p:cleopatra'));
+ s.world.personalRelations['caesar:cleopatra']={trust:80,meetings:1};assert.deepEqual(links(),[]);
+ s.meetings.push({actor:'caesar',targetFaction:'egypt',person:'caesar',target:'cleopatra',status:'met',year:s.year,month:s.month,contactCredit:2});
+ const before=links();assert.equal(before.length,1);assert.deepEqual(before[0].observed,{year:s.year,month:s.month});
+ s.world.personalRelations['caesar:cleopatra'].trust=-80;s=upgradeSave(structuredClone(s));assert.deepEqual(links(),before);
 });
 test('foreign leaders and movements on the board use reported names rather than current hidden names',()=>{
  let s=newGame('caesar');const leader=createFictionalPerson(s,{name:['Reported leader','报告领袖'],faction:'egypt',birthYear:-75}),organizer=createFictionalPerson(s,{name:['Organizer','组织者'],faction:'parthia',birthYear:-75});
