@@ -1,9 +1,9 @@
-import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,knowledgeTransitStatus,KNOWLEDGE_BLOCKED_LIMIT,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=52';
+import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,knowledgeTransitStatus,KNOWLEDGE_BLOCKED_LIMIT,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=53';
 import {FIGURE_ROLES,initializeFigures,figureStatus,figureActive} from './great-figures.js';
 import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';
-import {religionPanel} from './local-society.js?v=8';
-import {techIllustration} from './tech-art.js?v=20';
+import {religionPanel} from './local-society.js?v=9';
+import {techIllustration} from './tech-art.js?v=21';
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const factionLabel=(id,zh)=>esc(FACTIONS[id]?.short?.[zh?1:0]||id);
 const knowledgeLabel=(branch,id,zh)=>esc((branch==='material'?MATERIALS:IDEAS).find(item=>item.id===id)?.name[zh?1:0]||id);
@@ -28,6 +28,7 @@ function effectsText(e,zh){return Object.entries(e||{}).map(([key,value])=>{
  if(key==='templeGuarantees')return `<span class="dev-effect positive">${zh?'埃及文化且埃及祭仪占主导、祭司团有效时：当地满意度 / 季 +1；祭司影响 / 季 +1':'In Egyptian-culture provinces with dominant Egyptian rites: local satisfaction / quarter +1 with an influential priesthood; priestly influence / quarter +1'}</span><span class="dev-effect negative">${zh?'每4处符合条件的领土另付1国库／月（最多6）':'Additional 1 treasury / month per 4 eligible provinces (maximum 6)'}</span>`;
  if(key==='estateLabor')return `<span class="dev-effect positive">${zh?'有产出乡村领土每处粮食 / 月 +1（上限4）':'Food / month +1 per productive rural territory (max 4)'}</span><span class="dev-effect negative">${zh?'这些领土满意度与忠诚 / 季 −1；不满人口迁出减半':'Satisfaction and loyalty / quarter −1 there; distressed outmigration halved'}</span>`;
  if(key==='tenantShares')return `<span class="dev-effect positive">${zh?'有产出乡村领土满意度与忠诚 / 季 +1；不满人口迁出上限 225':'Productive rural satisfaction and loyalty / quarter +1; distressed outmigration cap 225'}</span><span class="dev-effect negative">${zh?'国库可用粮食 / 月 −1 每处（上限3）':'State-available food / month −1 per territory (max 3)'}</span>`;
+ if(key==='seasonalLabor')return `<span class="dev-effect positive">${zh?'有产出乡村领土粮食 / 月 +1 每处（上限3）；不满人口迁出上限 300':'Food / month +1 per productive rural territory (max 3); distressed outmigration cap 300'}</span>`;
  if(key==='bosporanGrainStewardship')return `<span class="dev-effect positive">${zh?'己方有产出的博斯普鲁斯文化港口：国库粮食 / 月 +1 每处（上限2）':'Owned, productive Bosporan-culture ports: state food / month +1 each (max 2)'}</span>`;
  if(key==='taxReview')return `<span class="dev-effect positive">${zh?'行政融合度≥65且实行高税时，当地满意度与忠诚的月度损失各减少1':'With high taxes and integration ≥65, monthly satisfaction and loyalty losses each fall by 1'}</span><span class="dev-effect negative">${zh?'高税期间，每12处受益领土另需1国库／月的复核费用':'While taxes are high, review costs 1 treasury / month per 12 eligible territories'}</span>`;
  return `<span class="dev-effect ${(key==='upkeep'||key==='decisionDelay'||key==='healthRisk'?value>0:value<0)?'negative':'positive'}">${esc(effectNames[key]?.[zh?1:0]||key)} ${value>0?'+':value<0?'−':''}${Math.abs(value)<1?(Math.abs(value)*100).toFixed(Math.abs(value)<.01?1:0)+'%':Math.abs(value)}</span>`;

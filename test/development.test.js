@@ -959,7 +959,7 @@ test('local rites affect a neighboring court only through an influential shared 
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,47);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,48);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);
@@ -1171,6 +1171,50 @@ test('restrictive estate labor trades rural food for unrest and slower distresse
  assert.equal(fleeing.regions.find(r=>r.id==='t111').population,99925);
  assert.equal(free.regions.find(r=>r.id==='t111').population,99850);
  assert.equal(upgradeSave(JSON.parse(JSON.stringify(fleeing))).development.egypt.slots.economy[0],idea.id);
+});
+
+test('seasonal free labor has paid adoption, rural output, migration and an estate conflict',()=>{
+ const idea=IDEAS.find(x=>x.id==='seasonal-labor-contracts');
+ assert.deepEqual(idea.prerequisites,['estate-organization']);
+ assert.ok(idea.conflicts.includes('estate-labor-control'));
+ assert.match(idea.source.url,/Varro\/de_Re_Rustica/);
+ assert.ok(techIllustration(idea).includes('<svg'));
+ for(const [lang,name,migration] of [['en','Seasonal Free-Labor Contracts','distressed outmigration cap 300'],['zh','季节性自由劳工契约','不满人口迁出上限 300']]){
+  const html=developmentPanel(newGrandGame('egypt'),lang,'idea');
+  assert.ok(html.includes(name)&&html.includes(migration));
+ }
+ const researching=newGrandGame('egypt');researching.wars=[];researching.factions.egypt.treasury=500;
+ assert.equal(researchInnovation(researching,'egypt','idea',idea.id).reason,'prerequisite');
+ development(researching,'egypt').knownIdeas.push('estate-organization');
+ assert.equal(researchInnovation(researching,'egypt','idea',idea.id).ok,true);
+ assert.equal(activeEffects(researching,'egypt').seasonalLabor,undefined);
+ months(researching,3);
+ assert.equal(adoptIdea(researching,'egypt',idea.id,0).ok,true);
+ assert.equal(activeEffects(researching,'egypt').seasonalLabor,undefined);
+ months(researching,2);
+ assert.equal(activeEffects(researching,'egypt').seasonalLabor,1);
+ const base=newGrandGame('egypt');base.wars=[];base.month=2;
+ const ordinary=upgradeSave(JSON.parse(JSON.stringify(base))),hired=upgradeSave(JSON.parse(JSON.stringify(base)));
+ development(hired,'egypt').slots.economy[0]=idea.id;
+ const before=nationalBudget(ordinary,'egypt'),after=nationalBudget(hired,'egypt');
+ assert.equal(after.seasonalFood,2);
+ assert.equal(after.foodNet,before.foodNet+2);
+ assert.equal(after.ideaUpkeep,before.ideaUpkeep+3);
+ assert.match(budgetHtml(hired,'en'),/seasonal labor/);
+ assert.match(budgetHtml(hired,'zh'),/季节雇工/);
+ for(const state of [ordinary,hired]){
+  const from=state.regions.find(r=>r.id==='t111'),to=state.regions.find(r=>r.id==='t112');
+  from.population=100000;from.civicSatisfaction=20;to.civicSatisfaction=80;
+ }
+ advanceDemography(ordinary);advanceDemography(hired);
+ assert.equal(ordinary.regions.find(r=>r.id==='t111').population,99850);
+ assert.equal(hired.regions.find(r=>r.id==='t111').population,99700);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(hired)));
+ assert.equal(activeEffects(restored,'egypt').seasonalLabor,1);
+ assert.equal(nationalBudget(restored,'egypt').seasonalFood,2);
+ development(restored,'egypt').knownIdeas.push('estate-labor-control');
+ development(restored,'egypt').slots.economy.push(null);
+ assert.equal(ideaCompatibility(restored,'egypt','estate-labor-control',1).reason,'conflict');
 });
 
 test('negotiated crop shares trade state grain for rural consent and greater mobility',()=>{

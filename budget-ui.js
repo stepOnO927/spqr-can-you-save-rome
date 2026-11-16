@@ -1,4 +1,4 @@
-import {nationalBudget} from './national-budget.js?v=26';
+import {nationalBudget} from './national-budget.js?v=27';
 import {expensesThisMonth} from './expense-ledger.js?v=1';
 const number=x=>(Object.is(x,-0)?0:Number(x)).toLocaleString(undefined,{maximumFractionDigits:1});
 export function budgetHtml(s,lang,contribution=null,provisions=null,aerarium=null){
@@ -16,6 +16,7 @@ export function budgetHtml(s,lang,contribution=null,provisions=null,aerarium=nul
   b.tradeImportPaid?row('Maritime imports paid this month','本月已付海运进口费',-b.tradeImportPaid):'',
   s.aerariumSeizure?.year===s.year&&s.aerariumSeizure.month===s.month&&s.aerariumSeizure.owner===s.player?row('Roman public reserve taken this month','本月动用罗马公共金库',s.aerariumSeizure.income):'',
   row('Local food production','地方粮食产出',b.foodProduction),
+  b.seasonalFood?row('  of which seasonal labor','  其中季节雇工',b.seasonalFood):'',
   b.granaryFood?row('Food held in provincial granaries','行省粮仓储粮',b.granaryFood):'',
   row('Army rations','军队口粮',-b.troopFood),
   row('Regional consumption','地方消耗',-b.regionalFood),

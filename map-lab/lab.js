@@ -13,14 +13,14 @@ import {importCampaign,downloadCampaign} from '../save-files.js?v=24';
 import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js?v=14';
 import {endCampaign} from '../achievement-system.js?v=5';
 import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../achievement-ui.js?v=12';
-import {nationalBudget} from '../national-budget.js?v=26';
-import {budgetHtml} from '../budget-ui.js?v=31';
+import {nationalBudget} from '../national-budget.js?v=27';
+import {budgetHtml} from '../budget-ui.js?v=32';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=41';
 import {physicalLabels} from './physical-labels.js?v=5';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
-import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=210';
-import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from '../development-ui.js?v=58';
+import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=211';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from '../development-ui.js?v=59';
 import {FACTIONS} from '../data.js?v=9';
 import {cultureLabel} from '../culture-labels.js?v=1';
 import {identity,factionMark} from '../identity.js?v=2';
@@ -38,7 +38,7 @@ import {intelligenceHtml,afterActionHtml,fortificationText,reconSummaryHtml,reco
 import {renderNavalPanel} from './naval-ui.js?v=67';
 import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=50';
 import {maritimeMapIntel} from './maritime-map-intel.js?v=1';
-import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates,dispatchWagonSupply} from '../engine.js?v=210';
+import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates,dispatchWagonSupply} from '../engine.js?v=211';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();

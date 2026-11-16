@@ -50,8 +50,10 @@ try{
   console.log('Phase XIV: panning tree');
   await page.waitForFunction(()=>document.querySelector('.dev-tree')?.scrollLeft>100);
   await page.screenshot({path:'outputs/phase-xiv-later-stage.png'});
+  console.log('Phase XIV: later-stage screenshot saved');
   await page.locator('[data-tree-pan="left"]').click();
-  await page.waitForFunction(()=>document.querySelector('.dev-tree')?.scrollLeft<2);
+  console.log('Phase XIV: returned to earlier stage');
+  await page.waitForFunction(()=>document.querySelector('.dev-tree')?.scrollLeft<2,undefined,{timeout:15000});
   assert.match(await page.locator('#tech-sanctuary-protection').innerText(),/Provincial Sanctuary Protection/);
   assert.match(await page.locator('#tech-ancestral-rites').innerText(),/Own rites satisfaction \/ quarter \+1/);
   assert.match(await page.locator('#tech-ancestral-rites').innerText(),/Other rites satisfaction \/ quarter −1/);
@@ -63,6 +65,8 @@ try{
   assert.match(await page.locator('#tech-civic-exercise').innerText(),/Recruit morale in urban territory with integration ≥65/);
   assert.match(await page.locator('#tech-estate-labor-control').innerText(),/distressed outmigration halved/);
   assert.match(await page.locator('#tech-negotiated-crop-shares').innerText(),/State-available food \/ month −1/);
+  assert.match(await page.locator('#tech-seasonal-labor-contracts').innerText(),/distressed outmigration cap 300/);
+  assert.match(await page.locator('#tech-seasonal-labor-contracts a[target="_blank"]').getAttribute('href'),/Varro\/de_Re_Rustica/);
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/Treasury \/ month −2/);
   assert.match(await page.locator('#tech-provincial-tax-review').innerText(),/integration ≥65, monthly satisfaction and loyalty losses each fall by 1/);
   assert.match(await page.locator('#tech-field-march-coordination').innerText(),/Coordinated Field Marches[\s\S]*Land march reduction \+1/);
