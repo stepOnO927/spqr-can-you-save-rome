@@ -1,11 +1,11 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const browser=await chromium.launch({headless:true,...(process.env.SPQR_BROWSER_EXECUTABLE?{executablePath:process.env.SPQR_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
- await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
- await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=contact-snapshot-1'),{initializeCursus}=await import('/cursus-honorum.js?v=guardian-age-1');const s=newGame('senate');s.month=9;s.wars=[];s.difficulty='travel';s.factions.senate.treasury=300;initializeCursus(s).selectedOffice={senate:'dictator'};sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}))});
- await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();
+ await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto(`http://127.0.0.1:${process.env.SPQR_SMOKE_PORT||5173}/`,{waitUntil:'domcontentloaded'});
+ await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=world-kings-contact-1'),{initializeCursus}=await import('/cursus-honorum.js?v=world-kings-contact-1');const s=newGame('senate');s.month=9;s.wars=[];s.difficulty='travel';s.factions.senate.treasury=300;initializeCursus(s).selectedOffice={senate:'dictator'};sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}))});
+ await page.goto(`http://127.0.0.1:${process.env.SPQR_SMOKE_PORT||5173}/map-lab/`,{waitUntil:'domcontentloaded'});await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();
  assert.equal(await page.locator('[data-cursus-office] option[value="dictator"]').count(),0);
  assert.equal(await page.locator('[data-cursus-office]').inputValue(),'consul','old saves with an invalid office fall back safely');
  await page.locator('.cursus-candidate').first().locator('[data-cursus-action="support"]').click();
