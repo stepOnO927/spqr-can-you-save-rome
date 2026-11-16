@@ -17,7 +17,7 @@ import {nationalBudget} from '../national-budget.js?v=26';
 import {budgetHtml} from '../budget-ui.js?v=31';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=41';
-import {physicalLabels} from './physical-labels.js?v=4';
+import {physicalLabels} from './physical-labels.js?v=5';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=210';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from '../development-ui.js?v=58';
@@ -204,7 +204,8 @@ const ancientPlaceMarkers=ancientPlaceLabels.map(label=>{
 });
 function refreshPhysicalLabels(){
  const zoom=map.getZoom?.()||0;
- for(const {label,element} of physicalLabelMarkers){element.textContent=label[lang];element.hidden=zoom<(label.minZoom??7.4)||zoom>=(label.maxZoom??Infinity)}
+ for(const {label,element} of physicalLabelMarkers){element.textContent=lang==='en'&&zoom<7.4&&label.overviewEn?label.overviewEn:label[lang];element.hidden=zoom<(label.minZoom??7.4)||zoom>=(label.maxZoom??Infinity)}
+ const rubicon=document.querySelector('.rubicon-label');if(rubicon){rubicon.textContent=lang==='zh'?'卢比孔河 · 约':'RVBICO · ~';rubicon.title=lang==='zh'?'古河道位置有争议；此处为约略区域。':'Approximate area; ancient course disputed'}
  for(const {label,element} of ancientPlaceMarkers){element.textContent=label[lang];element.hidden=zoom<label.minZoom}
 }
 function clipPhysicalLabels(){
@@ -654,8 +655,7 @@ function renderHud(){
 function showBattle(b){showBattleBase(b);if(b)document.querySelector('#command-detail').innerHTML=battleReportHtml(state,b,lang)}
 
 renderArmies();
-{const rub=document.createElement('div');rub.className='rubicon-label';rub.textContent='RVBICO · ~';rub.title='Approximate area; ancient course disputed';marker(rub,[12.405,44.09],'right')}
-for(const label of [{text:'A L P E S',p:[9.3,46.2]},{text:'APENNINVS',p:[13.6,42.75]},{text:'MARE ADRIATICVM',p:[15.5,42.15],sea:true},{text:'MARE TYRRHENVM',p:[10.0,40.2],sea:true}]){const el=document.createElement('div');el.className=`geo-label ${label.sea?'sea-label':''}`;el.textContent=label.text;marker(el,label.p)}
+{const rub=document.createElement('div');rub.className='rubicon-label';rub.textContent=lang==='zh'?'卢比孔河 · 约':'RVBICO · ~';rub.title=lang==='zh'?'古河道位置有争议；此处为约略区域。':'Approximate area; ancient course disputed';marker(rub,[12.405,44.09],'right')}
 map.on('load',()=>{
  map.addSource('grand-territories',{type:'geojson',data:grandTerritories});
  map.addLayer({id:'grand-control',type:'fill',source:'grand-territories',paint:{'fill-color':'#baaa8d','fill-opacity':.55,'fill-antialias':false}},'control');

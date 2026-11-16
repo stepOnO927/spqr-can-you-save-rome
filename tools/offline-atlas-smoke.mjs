@@ -7,6 +7,11 @@ import bathymetry from '../mediterranean-bathymetry.js';
 import {physicalStyle} from '../map-lab/physical-style.js';
 import {identity} from '../identity.js';
 import {newGrandGame} from '../engine.js';
+import ocean from '../mediterranean-ocean.js';
+import {physicalLabels} from '../map-lab/physical-labels.js';
+
+const inRing=(point,ring)=>{let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[1]>point[1])!==(b[1]>point[1])&&point[0]<(b[0]-a[0])*(point[1]-a[1])/(b[1]-a[1])+a[0])inside=!inside}return inside};
+const inSea=point=>ocean.features.some(feature=>{const geometry=feature.geometry,polygons=geometry.type==='Polygon'?[geometry.coordinates]:geometry.coordinates;return polygons.some(rings=>inRing(point,rings[0])&&!rings.slice(1).some(ring=>inRing(point,ring)))});
 
 assert.equal(physicalStyle.version,8,'MapLibre style specification version must remain 8');
 assert.deepEqual([...new Set(bathymetry.features.map(feature=>feature.properties.depth))].sort((a,b)=>a-b),[200,1000,2000,3000]);
@@ -84,6 +89,12 @@ try{
  assert.ok(external.every(host=>host==='s3.amazonaws.com'||host.endsWith('googleapis.com')||host.endsWith('gstatic.com')),`Unexpected external dependency: ${external.join(', ')}`);
  await page.locator('#start-free').click();
  const firstLanguage=await page.locator('html').getAttribute('lang');
+ assert.equal(await page.locator('.geo-label').count(),0,'The old Latin overlay must not duplicate physical labels');
+ const overviewNames=async()=>Promise.all(['alps','apennines','adriatic','tyrrhenian'].map(id=>page.locator(`[data-physical-label="${id}"]`).textContent()));
+ assert.deepEqual(await overviewNames(),firstLanguage==='zh-CN'?['阿尔卑斯山','亚平宁山脉','亚得里亚海','第勒尼安海']:['A L P E S','APENNINVS','MARE ADRIATICVM','MARE TYRRHENVM']);
+ assert.equal(await page.locator('.rubicon-label').textContent(),firstLanguage==='zh-CN'?'卢比孔河 · 约':'RVBICO · ~');
+ assert.deepEqual(['alps','apennines','adriatic','tyrrhenian'].map(id=>inSea(physicalLabels.find(item=>item.id===id).point)),[false,false,true,true],'Overview labels must align with the coastline source used to make the rendered masks');
+ if(process.env.SPQR_ATLAS_ZH_OVERVIEW_SCREENSHOT&&firstLanguage==='zh-CN')await page.screenshot({path:process.env.SPQR_ATLAS_ZH_OVERVIEW_SCREENSHOT});
  assert.match(await page.locator('.map-key').innerText(),firstLanguage==='zh-CN'?/城市 · 颜色表示控制阵营/:/City · color shows controller/);
  for(const [site,owner] of [['cisalpine','caesar'],['italiaN','senate']]){
   const accent=await page.locator(`[data-site="${site}"]`).evaluate(el=>el.style.getPropertyValue('--site-accent'));
@@ -124,6 +135,8 @@ try{
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/近岸浅海（约0–200米）/:/Coastal shelf \(about 0–200 m\)/);
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/河流与天然湖泊/:/Rivers & natural lakes/);
  await page.locator('#language').click();
+ assert.deepEqual(await overviewNames(),firstLanguage==='zh-CN'?['A L P E S','APENNINVS','MARE ADRIATICVM','MARE TYRRHENVM']:['阿尔卑斯山','亚平宁山脉','亚得里亚海','第勒尼安海']);
+ assert.equal(await page.locator('.rubicon-label').textContent(),firstLanguage==='zh-CN'?'RVBICO · ~':'卢比孔河 · 约');
  assert.match(await page.locator('.map-key').innerText(),firstLanguage==='zh-CN'?/City · color shows controller/:/城市 · 颜色表示控制阵营/);
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Coastal shelf \(about 0–200 m\)/:/近岸浅海（约0–200米）/);
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Rivers & natural lakes/:/河流与天然湖泊/);
