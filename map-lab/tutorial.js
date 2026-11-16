@@ -1,102 +1,192 @@
 import {localStore as localStorage} from '../safe-storage.js';
 import {analytics} from '../analytics.js';
-// The tutorial follows only the selected friendly army, not an unrelated battle.
-export function tutorialTurnProgress(state,side){
- const armyId=side==='senate'?'italy':'xiii',destination=side==='senate'?'cisalpine':'italiaN';
- const battle=(state.battles||[]).find(b=>b.year===state.year&&b.month===state.month&&((b.attacker?.owner===side&&b.attacker.id===armyId)||(b.defender?.owner===side&&b.defender.id===armyId)));
- if(battle)return {kind:'battle',armyId};
- const unit=state.armies.find(a=>a.id===armyId&&a.owner===side);if(!unit)return {kind:'unavailable',armyId};
- if(unit.move)return {kind:'marching',armyId,remaining:unit.move.remaining};
- if(unit.siege)return {kind:'siege',armyId};
- return {kind:unit.region===destination?'arrived':'stopped',armyId};
+
+const text=(language,en,zh)=>language()==='zh'?zh:en;
+const month=state=>state.year*12+state.month;
+const liveArmy=(state,id,side)=>state.armies.find(army=>army.id===id&&army.owner===side&&army.men>0);
+
+export function tutorialTurnProgress(state,side,selectedId){
+ const id=selectedId||state.tutorial?.armyId||(side==='senate'?'italy':'xiii');
+ const battle=(state.battles||[]).find(entry=>entry.year===state.year&&entry.month===state.month&&[entry.attacker,entry.defender].some(army=>army?.id===id&&army.owner===side));
+ if(battle)return {kind:'battle',armyId:id};
+ const unit=liveArmy(state,id,side);
+ if(!unit)return {kind:'unavailable',armyId:id};
+ if(unit.move)return {kind:'marching',armyId:id,remaining:unit.move.remaining};
+ if(unit.siege)return {kind:'siege',armyId:id};
+ return {kind:'stopped',armyId:id};
 }
 
-// The tutorial advances only when actual campaign actions are reported by the UI.
-export function createTutorial({language,onReset,onMode,getState,skipInitial=false}){
- let step=-1, running=false, previous=null, pulseTimer=null, faction='caesar', ordered=false, battlePending=false;
- const $=s=>document.querySelector(s), box=$('#guide'), arrow=$('#guide-pointer');
- const copy={en:{skip:'Skip',continue:'Continue',finish:'Begin independent play',step:'GUIDED CAMPAIGN',invalid:'That action is unavailable. Choose the highlighted option.',wrong:'That is not the current tutorial step. Choose the highlighted option.',steps:[
-  ['Who are you?','You command Caesar. Pompey and the Senate oppose you. Your first objective is to secure northern Italy.'],
-  ['Identify your command','You control Caesar’s red standards and territory. The Senate is blue-gray; other powers are neutral unless at war. Select Legio XIII. Shared outlines do not imply a precise border.'],
-  ['Inspect your legion','Caesar commands 7,200 soldiers. Morale and experience affect battle. The local supply limit is informational. Continue to choose an adjacent destination.'],
-  ['Preview a route','Choose any highlighted adjacent destination. Red means hostile. You can inspect the route without committing to an attack.'],
-  ['Choose your plan','Review travel time, food and enemy uncertainty. Confirm a safe or hostile march, or advance the month to postpone this attack.'],
-  ['Orders and time','A march can be cancelled before arrival. Advance a month to resolve orders, sieges, economy and enemy moves.'],
-  ['Review the outcome','If a battle occurred, open its report to see your losses. Otherwise continue; a siege or quiet month is also a real outcome.'],
-  ['Territory and cities','Select Ariminum. Cities are historical locations; control belongs to strategic regions. A fort may require a siege before control changes.'],
-  ['Manage the republic','Open the resource explanation. Treasury, food and stability influence the real simulation.'],
-  ['Your campaign','You are in command. Secure Latium, watch food and loyalty, and use the Chronicle for developments.']
- ]},zh:{skip:'跳过',continue:'继续',finish:'开始自由战役',step:'战役教学',invalid:'这个操作暂时不可用，请选择高亮的选项。',wrong:'这不是当前教学步骤，请选择高亮的选项。',steps:[
-  ['你是谁？','你指挥凯撒。庞培与元老院是你的对手。第一个目标是控制意大利北部。'],
-  ['辨认你的军队','你指挥红色的凯撒派；元老院为蓝灰色，其他势力是否敌对取决于战争状态。点击第十三军团。共用轮廓不代表精确边界。'],
-  ['查看你的军团','凯撒指挥7200名将士。士气与经验影响战斗；当地补给上限目前仅供参考。点击继续，选择相邻目的地。'],
-  ['预览路线','选择任意高亮的相邻战区。红色表示敌对；预览路线不会强迫你进攻。'],
-  ['决定行动','检查行程、粮食和敌情风险。可以确认安全或敌对路线，也可以推进月份，暂缓进攻。'],
-  ['命令与时间','抵达前可取消行军。推进一个月将结算命令、围攻、经济和敌军行动。'],
-  ['查看结果','若发生战斗，打开报告查看伤亡；否则继续教学。围攻或平静的一月也是实际结果。'],
-  ['战区与城市','点击阿里米努姆。城市是历史地点，控制权属于战区；有工事时可能需要围攻才能占领。'],
-  ['管理共和国','打开资源说明。国库、粮食和稳定度会影响实际模拟。'],
-  ['独立指挥','现在由你决定。争取拉丁姆，留意粮食和忠诚度，并用战报查看局势。']
- ]}};
- const senateSteps={en:[
-  ['Who are you?','You command the Senate and Pompey against Caesar. Your first goal is to challenge Caesar in Cisalpine Gaul.'],
-  ['Identify your command','Your standards are blue-gray; Caesar’s are red. Other powers are neutral unless at war. Select the Italian levies. Shared outlines do not imply a precise border.'],
-  ['Inspect your forces','The Italian levies begin with 5,200 soldiers under a named fictional officer. Morale and experience affect battle; the local supply limit is informational.'],
-  ['Preview a route','Choose any highlighted adjacent destination. Cisalpine Gaul is hostile and may hold Caesar’s forces; you may inspect a safer route.'],
-  ['Choose your plan','Review travel time and food. Confirm a march or advance the month to defend and postpone the attack.'],
-  ['Orders and time','A march can be cancelled before arrival. Advance a month to resolve orders, sieges, economy and enemy moves.'],
-  ['Review the outcome','If a battle occurred, open its report to see your losses. Otherwise continue; a siege or quiet month is also a real outcome.'],
-  ['Territory and cities','Select Ravenna. Cities are historical locations; control belongs to strategic regions. A fort may require a siege before control changes.'],
-  ['Manage the republic','Open the resource explanation. Treasury, food and stability influence the real simulation.'],
-  ['Your campaign','You are in command. Protect Rome, watch food and loyalty, and use the Chronicle for developments.']
- ],zh:[
-  ['你是谁？','你指挥元老院与庞培派，对抗凯撒。第一个目标是争夺山南高卢。'],
-  ['辨认你的军队','你指挥蓝灰色的元老院派；凯撒派为红色，其他势力是否敌对取决于战争状态。点击意大利征召军。共用轮廓不代表精确边界。'],
-  ['查看你的部队','意大利征召军最初有5200人，由有独立档案的虚构军官指挥。士气与经验影响战斗；当地补给上限目前仅供参考。'],
-  ['预览路线','选择任意高亮的相邻战区。山南高卢属于敌方，可能有凯撒军队；也可先看更安全的路线。'],
-  ['决定行动','检查行程和粮食。可以确认行军，也可以推进月份防守，暂缓进攻。'],
-  ['命令与时间','抵达前可取消行军。推进一个月将结算命令、围攻、经济和敌军行动。'],
-  ['查看结果','若发生战斗，打开报告查看伤亡；否则继续教学。围攻或平静的一月也是实际结果。'],
-  ['战区与城市','点击拉文纳。城市是历史地点，控制权属于战区；有工事时可能需要围攻才能占领。'],
-  ['管理共和国','打开资源说明。国库、粮食和稳定度会影响实际模拟。'],
-  ['独立指挥','现在由你决定。保卫罗马，留意粮食和忠诚度，并用战报查看局势。']
- ]};
- const data=()=>({...copy[language()],steps:faction==='senate'?senateSteps[language()]:copy[language()].steps});
- const scenario=()=>faction==='senate'?{army:'italy',destination:'cisalpine',city:'RAVENNA'}:{army:'xiii',destination:'italiaN',city:'ARIMINUM'};
- const targets=()=>['',`#map [data-army="${scenario().army}"]`,'#command-detail','#lab-orders select','#lab-orders button','#advance','#recent-battle',`#map [data-city="${scenario().city}"]`,'#resources-help','#factions','#objectives',''];
- const extra={en:[['Intelligence and uncertainty','Open Factions and inspect a foreign power. Reports are dated and may be incomplete or wrong; investigating costs treasury and time.'],['Objectives and victory','Select an objective. These are strategic milestones, not final victory. Final victory requires the opposing Roman command to lose every theater and field army; a courier then needs three months. Play may continue afterward.'],['Independent command','You may attack, defend, recruit or negotiate. Keep an eye on your resources and the Chronicle.']],zh:[['情报与不确定性','打开势力并查看外国势力。报告有观察日期，可能不完整或有误；调查要花国库和时间。'],['目标与胜利','点击一项目标。它们是战略里程碑，不等于最终胜利。敌对罗马阵营失去全部战区和野战军后，还需等待三个月的信使消息；胜利后可以继续玩。'],['独立指挥','你可以进攻、防守、征召或议和。留意资源和战报。']]};
- const allSteps=()=>[...data().steps.slice(0,9),...extra[language()]];
- function persist(){const s=getState?.();if(s)s.tutorial={running,step,faction,ordered,battlePending}}
- function unmark(){if(previous){previous.classList.remove('guide-highlight');previous=null}arrow.hidden=true}
- function place(){if(!running)return;const selector=targets()[step],target=selector?$(selector):null;if(target!==previous){unmark();previous=target;if(target){target.classList.add('guide-highlight');target.scrollIntoView({block:'nearest',inline:'nearest'})}}if(target){const r=target.getBoundingClientRect();if(r.width&&r.height&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth){arrow.hidden=false;arrow.style.left=Math.max(12,Math.min(innerWidth-32,r.left+r.width/2-10))+'px';arrow.style.top=Math.max(72,r.top-31)+'px'}else arrow.hidden=true}}
- function render(){if(!running)return;const c=data(),steps=allSteps();box.hidden=false;$('#guide-label').textContent=`${c.step} · ${step+1}/${steps.length}`;$('#guide-title').textContent=steps[step][0];$('#guide-body').textContent=steps[step][1];$('#guide-skip').textContent=c.skip;const next=$('#guide-next');next.hidden=![0,2,6,11].includes(step)||(step===6&&battlePending);next.textContent=step===11?c.finish:c.continue;$('#guide-feedback').textContent='';place()}
- function setStep(next){step=next;persist();unmark();render()}
- function stop(reason='skip'){if(running)analytics.track(reason==='complete'?'tutorial_completed':'tutorial_skipped',{}, {humanAction:false});running=false;persist();box.hidden=true;unmark();if(pulseTimer){clearInterval(pulseTimer);pulseTimer=null}}
- function begin(side){faction=side;running=true;analytics.track('tutorial_started',{}, {humanAction:false});ordered=false;battlePending=false;step=0;persist();box.hidden=false;if(pulseTimer)clearInterval(pulseTimer);pulseTimer=setInterval(place,250);render()}
- $('#guide-next').onclick=()=>{if(step===0)setStep(1);else if(step===2)setStep(3);else if(step===6)setStep(7);else if(step===11)stop('complete')};$('#guide-skip').onclick=stop;
- document.addEventListener('spqr:action',e=>{if(!running)return;const d=e.detail||{};if(d.type==='invalid'){$('#guide-feedback').textContent=data().invalid;return}
-  if(step===1&&d.type==='army'&&d.own)setStep(2);
-  else if(step===3&&d.type==='preview')setStep(4);
-  else if(step===4&&d.type==='order'){ordered=true;persist();setStep(5)}
-  else if(step===4&&d.type==='advance'){ordered=false;battlePending=!!d.battle;persist();setStep(6)}
-  else if(step===5&&d.type==='cancel'){ordered=false;persist();setStep(4)}
-  else if(step===5&&d.type==='advance'){battlePending=!!d.battle;persist();setStep(6)}
-  else if(step===6&&d.type==='battle'){battlePending=false;persist();setStep(7)}
-  else if(step===7&&d.type==='city')setStep(8);
-  else if(step===8&&d.type==='resources')setStep(9);
-  else if(step===9&&d.type==='intelligence')setStep(10);
-  else if(step===10&&d.type==='objective')setStep(11);
+// Each transition below checks a real campaign action and the resulting state.
+// Locating a control never submits an order or completes a lesson.
+export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[],onFocus=()=>{},onCombatPractice=()=>{},skipInitial=false}){
+ const $=selector=>document.querySelector(selector);
+ const box=$('#guide'),pointer=$('#guide-pointer');
+ let running=false,paused=false,step=0,phase='preview',faction='caesar',armyId='',turnBefore=null,direction='',result='',highlight=null,timer=null;
+ const ownCity=()=>faction==='senate'?'ARIMINUM':'RAVENNA';
+ const pickArmy=()=>{
+  const state=getState();
+  return liveArmy(state,armyId,faction)||state.armies.find(army=>army.owner===faction&&army.men>0&&getRoutes(army.id).some(route=>route.ok))||state.armies.find(army=>army.owner===faction&&army.men>0);
+ };
+ const routes=()=>pickArmy()?getRoutes(pickArmy().id).filter(route=>route.ok):[];
+ const safeRoute=()=>routes().find(route=>route.owner===faction);
+ const labels=()=>language()==='zh'?[
+  ['认清你的战区','点击地图上属于你的城市，查看战区归属。','城市点不到？按“指给我看”，地图会移动到它。'],
+  ['选择军队','点击地图上的己方军旗，查看人数、指挥官和位置。','军旗被遮挡？按“指给我看”。'],
+  ['查看补给','在军队详情中点“查看补给”，了解粮食和当地承载上限。','详情不见了？按“指给我看”重新打开军队。'],
+  ['下第一道命令',phase==='defend'?'当前没有安全的己方行军路线。点“防御”先守住阵地。':phase==='preview'?'先选一个可到达的目的地，只看行程和风险；预览免费。':'看过路线后，点“确认命令”。也可以选别的路线。','不必攻击强敌；可选己方战区。若路线变了，重新选择。'],
+  ['推进一个月','命令需要时间。点击“推进一月”，观察真实结算。','若命令已取消，请重新下令；也可以先防守再推进。'],
+  ['阅读结果','打开“编年史”，查看刚才这一月真正发生了什么。','没有战斗也正常；编年史仍会记录本月变化。'],
+  ['做一个政策决定','查看资源后，选择与当前不同的税率；它会改变今后的收支和忠诚。','资源入口在窄屏菜单里。按“指给我看”可定位。'],
+  ['选择下一步目标','从军事、外交或发展中选一个方向。选择后可随时改变。','这里仅设定建议方向，不会自动花费资源。']
+ ]:[
+  ['Find your territory','Select a city under your control to inspect its theater.','Cannot see the city? Show me will move the map to it.'],
+  ['Select an army','Select one of your standards to see its soldiers, commander and location.','If a marker is obscured, use Show me.'],
+  ['Inspect supply','In the army details, open Supply to check food and local capacity.','If the panel is closed, Show me will reopen the army.'],
+  ['Give your first order',phase==='defend'?'No safe friendly march is available. Choose Defend to hold your position.':phase==='preview'?'Choose a reachable destination to preview its time and risk. Previewing is free.':'After reading the route, select Confirm order. You may choose a different route.','You need not attack a stronger enemy. Choose a friendly route when available.'],
+  ['Advance one month','Orders take time. Advance one month to resolve real events.','If the order was cancelled, issue another; defense is also possible.'],
+  ['Read the outcome','Open the Chronicle to see what actually happened this month.','A quiet month still has a real report.'],
+  ['Make a policy choice','Open Resources and choose a different tax rate. It changes future income and loyalty.','On narrow screens Resources is in the menu. Show me will locate it.'],
+  ['Choose your next goal','Pick military, diplomacy or development. You can change this later.','This sets guidance only and spends no resources.']
+ ];
+ function state(){return getState()}
+ function persist(){if(state())state().tutorial={version:2,running,paused,step,phase,faction,armyId,turnBefore,direction,result}}
+ function removeHighlight(){if(highlight)highlight.classList.remove('guide-highlight');highlight=null;pointer.hidden=true}
+ function target(){
+  if(step===0)return '#map [data-city="'+ownCity()+'"]';
+  if(step===1)return pickArmy()?'#map [data-army="'+pickArmy().id+'"]':null;
+  if(step===2)return '#inspect-army-supply';
+  if(step===3)return phase==='preview'?'#lab-orders select':phase==='defend'?'[data-order="defend"]':'#lab-orders button';
+  if(step===4)return '#advance';
+  if(step===5)return '#chronicle';
+  if(step===6)return $('#command-detail [data-tax]')?'#command-detail [data-tax]:not([disabled])':'#resources-help';
+  return null;
+ }
+ function reveal(element){
+  if(!element)return;
+  if(window.getComputedStyle(element).display==='none'||!element.getClientRects().length){
+   const menu=$('#compact-menu-toggle');
+   if(menu&&element.closest('#compact-menu')&&$('#compact-menu').hidden)menu.click();
+  }
+  if(element.closest('.selection')){$('.selection')?.classList.remove('collapsed');$('#selection-toggle')?.setAttribute('aria-expanded','true')}
+  if(element.closest('.brief')){$('.brief')?.classList.remove('collapsed');$('#brief-toggle')?.setAttribute('aria-expanded','true')}
+ }
+ function place(){
+  if(!running||paused)return;
+  const selector=target(),element=selector?$(selector):null;
+  if(element!==highlight){removeHighlight();highlight=element;if(element){element.classList.add('guide-highlight');if(!element.closest('#map'))element.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'})}}
+  if(!element){pointer.hidden=true;return}
+  reveal(element);
+  const bounds=element.getBoundingClientRect();
+  if(bounds.width&&bounds.height&&bounds.left<innerWidth&&bounds.right>0&&bounds.top<innerHeight&&bounds.bottom>0){
+   pointer.hidden=false;pointer.style.left=Math.max(12,Math.min(innerWidth-34,bounds.left+bounds.width/2-10))+'px';pointer.style.top=Math.max(60,bounds.top-32)+'px';
+   box.classList.toggle('guide-at-top',bounds.top>innerHeight*.48);
+   box.classList.toggle('guide-on-right',innerWidth<=700&&innerHeight<=500&&bounds.left<innerWidth*.4);
+  }else pointer.hidden=true;
+ }
+ function feedback(message){$('#guide-feedback').textContent=message}
+ function resultForStep(){
+  const s=state();
+  if(step===1)return text(language,'This theater belongs to '+(faction==='senate'?'the Senate':'Caesar')+'.','这个战区属于'+(faction==='senate'?'元老院派':'凯撒派')+'。');
+  if(step===2){const army=pickArmy();return army?text(language,army.name[0]+' · '+army.men.toLocaleString()+' soldiers · '+army.commander[0],army.name[1]+' · '+army.men.toLocaleString()+'人 · '+army.commander[1]):''}
+  if(step===5){const army=pickArmy();return army?.move?text(language,'Your army is still marching.','军队仍在行军。'):result}
+  if(step===6){const summary=s.turnSummaries?.[0];return summary?text(language,'Latest turn: '+summary.movements.length+' arrival(s), '+summary.changes.length+' control update(s).','本月：'+summary.movements.length+'支军队抵达，'+summary.changes.length+'份控制报告更新。'):result}
+  return result;
+ }
+ function render(){
+  if(!running)return;
+  box.hidden=false;
+  if(paused){removeHighlight();$('#guide-label').textContent=text(language,'GUIDE PAUSED','教学已暂停');$('#guide-title').textContent=text(language,'Resume when ready','准备好后继续');$('#guide-body').textContent='';$('#guide-recovery').textContent='';$('#guide-show').hidden=true;$('#guide-pause').textContent=text(language,'Resume','继续');return}
+  const rows=labels(),row=rows[Math.min(step,7)];
+  $('#guide-label').textContent=text(language,'FIRST COMMAND','第一道命令')+' · '+Math.min(step+1,8)+'/8';
+  $('#guide-title').textContent=step===8?text(language,'You are in command','现在由你指挥'):row[0];
+  $('#guide-body').textContent=step===8?text(language,'Your chosen direction is saved. Use What now? or Objectives whenever you need help.','已保存你的方向。迷惑时可查看“下一步”或“目标”。'):row[1];
+  $('#guide-recovery').textContent=step===8?'':row[2];
+  $('#guide-result').textContent=resultForStep();
+  $('#guide-show').hidden=step>=7;
+  $('#guide-pause').textContent=text(language,'Pause','暂停');
+  $('#guide-skip').textContent=text(language,'Skip','跳过');
+  $('#guide-show').textContent=text(language,'SHOW ME','指给我看');
+  $('#guide-retry').setAttribute('aria-label',text(language,'Restart this lesson','重试本课'));
+  $('#guide-next').hidden=step!==8;$('#guide-next').textContent=text(language,'Begin independent play','开始自由战役');
+  const choices=$('#guide-choices');choices.replaceChildren();
+  if(step===7)for(const [id,en,zh] of [['military','Military','军事'],['diplomacy','Diplomacy','外交'],['development','Development','发展']]){
+   const button=document.createElement('button');button.type='button';button.dataset.direction=id;button.textContent=text(language,en,zh);button.onclick=()=>{direction=id;result=text(language,'Direction saved: '+en+'.','已选择：'+zh+'。');step=8;persist();render()};choices.append(button)
+  }
+  if(step===8&&state()?.training){const button=document.createElement('button');button.type='button';button.id='training-combat-practice';button.textContent=text(language,'Preview a practice battle','预览训练战斗');button.onclick=()=>{stop('complete');onCombatPractice()};choices.append(button)}
+  if(step===3&&phase==='preview'&&!safeRoute()){
+   phase='defend';persist();render();feedback(text(language,'No safe friendly march is available. A defensive order is a valid alternative.','目前没有安全的己方行军路线；可先下防御命令。'));return
+  }
+  place()
+ }
+ function setStep(next,message=''){step=next;result=message;persist();removeHighlight();render();if([1,2,3].includes(step)){const home=pickArmy()?.region;if(home)onFocus(home)}}
+ function stop(reason='skip'){
+  if(running&&reason!=='load')analytics.track(reason==='complete'?'tutorial_completed':'tutorial_skipped',{}, {humanAction:false});
+  running=false;paused=false;persist();box.hidden=true;removeHighlight();if(timer){clearInterval(timer);timer=null}
+ }
+ function begin(side){faction=side;running=true;paused=false;step=0;phase='preview';armyId='';turnBefore=null;direction='';result='';analytics.track('tutorial_started',{}, {humanAction:false});persist();if(timer)clearInterval(timer);timer=setInterval(place,450);render();const home=state().regions.find(r=>r.owner===side&&r.city?.toUpperCase()===ownCity());if(home)onFocus(home.id)}
+ function showMe(){
+  if(step<=1&&window.matchMedia('(max-width:700px)').matches){$('.brief')?.classList.add('collapsed');$('.selection')?.classList.add('collapsed');$('#brief-toggle')?.setAttribute('aria-expanded','false');$('#selection-toggle')?.setAttribute('aria-expanded','false')}
+  if(step===2&&!$('#inspect-army-supply'))$('#map [data-army="'+(pickArmy()?.id||'')+'"]')?.click();
+  if(step===3&&!$('#lab-orders select')){phase='preview';persist();$('#map [data-army="'+(pickArmy()?.id||'')+'"]')?.click()}
+  if(step===6&&!$('#command-detail [data-tax]'))$('#resources-help')?.click();
+  const selected=step===0?state().regions.find(r=>r.owner===faction&&r.city?.toUpperCase()===ownCity()):step<=3?state().regions.find(r=>r.id===pickArmy()?.region):null;
+  if(selected)onFocus(selected.id);
+  place();target()&&$(target())?.focus({preventScroll:true});
+  if(!$(target()))feedback(text(language,'That control is unavailable now. Select another friendly army or restart this lesson.','当前控件不可用。请换一支己方军队，或重新开始本课。'))
+ }
+ $('#guide-show').onclick=showMe;$('#guide-pause').onclick=()=>{paused=!paused;persist();render()};
+ $('#guide-skip').onclick=()=>stop();$('#guide-next').onclick=()=>{if(step===8)stop('complete')};
+ $('#guide-retry').onclick=()=>{if(step===3){phase='preview';armyId=pickArmy()?.id||armyId}if(step===4&&!liveArmy(state(),armyId,faction))step=1;result='';persist();render();showMe()};
+ document.addEventListener('spqr:action',event=>{
+  if(!running||paused)return;
+  const action=event.detail||{},s=state(),unit=liveArmy(s,armyId,faction);
+  if(action.type==='invalid'){feedback(action.reason||text(language,'That route is unavailable. Choose a highlighted legal route.','这条路线不可用，请选择高亮的合法路线。'));return}
+  if(step===0&&action.type==='territory'&&s.regions.some(r=>r.id===action.id&&r.owner===faction)){setStep(1);return}
+  if(step===1&&action.type==='army'&&action.own&&liveArmy(s,action.id,faction)){armyId=action.id;setStep(2);return}
+  if(step===2&&action.type==='supply'&&action.id===armyId&&unit){setStep(3);return}
+  if(step===3&&phase==='preview'&&action.type==='preview'&&routes().some(route=>route.to===action.id)){
+   phase='confirm';persist();render();return
+  }
+  if(step===3&&action.type==='order'&&action.id===armyId&&unit&&(unit.move||unit.order?.kind==='defend')){
+   turnBefore=month(s);setStep(4,text(language,'Order recorded in the real campaign.','命令已记入实际战役。'));return
+  }
+  if(step===4&&action.type==='cancel'&&action.id===armyId){phase='preview';setStep(3);return}
+  if(step===4&&action.type==='advance'&&month(s)>turnBefore){
+   const progress=tutorialTurnProgress(s,faction,armyId);
+   setStep(5,text(language,'Turn resolved: '+progress.kind+'. Open the report for details.','本月结算：'+({battle:'发生战斗',marching:'仍在行军',siege:'正在围攻',stopped:'军队停驻',unavailable:'军队已失去'}[progress.kind]||progress.kind)+'。打开战报查看详情。'));return
+  }
+  if(step===5&&action.type==='report'){setStep(6);return}
+  if(step===6&&action.type==='policy'&&action.changed){setStep(7,text(language,'Tax policy changed; future months will reflect it.','税率已改变，未来月份将反映后果。'));return}
  });
- const start=$('#start-overlay');let initialStart=!skipInitial;$('#start-language').onclick=()=>$('#language').click();
- function renderStart(){const zh=language()==='zh',senate=$('#roman-faction').value==='senate',touring=$('#difficulty').value==='travel';$('#roman-faction-label').textContent=zh?'罗马阵营':'Roman faction';$('#roman-faction').options[0].textContent=zh?'凯撒派':'Caesarian command';$('#roman-faction').options[1].textContent=zh?'元老院与庞培派':'Senate and Pompeian command';$('#roman-faction-note').textContent=zh?'双方都是罗马阵营，各有互动教学。':'Both Roman commands have guided tutorials.';$('#start-game').disabled=false;document.querySelector('.intro-leader img').src=senate?'../assets/portraits/pompey-128.jpg':'../assets/portraits/caesar-128.jpg';document.querySelector('.intro-leader img').alt=senate?(zh?'庞培，艺术复原':'Pompey, artistic reconstruction'):(zh?'凯撒，艺术复原':'Caesar, artistic reconstruction');$('#start-title').textContent=zh?'开始公元前49年战役':'Begin the 49 BCE campaign';$('#start-description').textContent=senate?(zh?'公元前49年，共和国陷入内战。你指挥元老院与庞培派，保卫意大利并应对凯撒的军队。肖像为艺术复原。':'49 BCE: Rome is divided by civil war. Command the Senate and Pompey against Caesar. Defend Italy and manage the Republic. Portrait is an artistic reconstruction.'):(zh?'公元前49年，共和国陷入内战。你指挥凯撒与12,600名将士，对抗庞培及元老院。先向意大利推进，同时管理粮食、国库与政治稳定。插画为原创示意。':'49 BCE: Rome is divided by civil war. Command Caesar and 12,600 soldiers against Pompey and the Senate. Advance into Italy while managing food, treasury and political stability. Original interpretive portrait.');if(touring)$('#start-description').textContent=zh?'旅行模式：你将拥有丰厚资源、完整的模拟官员班子和额外军团。羽毛会在整局提供建议；敌方情报仍可能过时。':'Travel mode: begin with abundant resources, a full simulated staff, and extra legions. Feather advises throughout the campaign; enemy reports may still be outdated.';$('#difficulty-label').textContent=zh?'难度':'Difficulty';const opts=$('#difficulty').options;opts[0].textContent=zh?'旅行：充足资源、完整官员与羽毛全程指导':'Travel: abundant resources, full staff and Feather guidance';opts[1].textContent=zh?'新手：有限资源补助与更多提示':'Beginner: limited bonus and more guidance';opts[2].textContent=zh?'标准：正常规则':'Standard: normal rules';opts[3].textContent=zh?'困难：更有计划的对手':'Hard: more deliberate opponents';opts[4].textContent=zh?'棋手：审慎的战略规划':'Grandmaster: careful strategic planning';$('#economic-handicap-label').textContent=zh?'可选经济惩罚：困难收入与粮食 −10%；棋手 −20%':'Optional economic handicap: −10% income and food on Hard; −20% on Grandmaster';$('#start-guide-label').textContent=zh?'启用互动教学':'Interactive tutorial';$('#start-guide').parentElement.hidden=false;$('#start-note').textContent=zh?'开始新战役会替换当前未保存的原型进度；已保存的存档不受影响。':'Starting a new campaign replaces unsaved prototype progress; saved games remain available.';$('#start-game').textContent=zh?'开始战役':'Start campaign';$('#start-free').textContent=zh?'自由开始':'Play freely';$('#start-cancel').textContent=initialStart?(zh?'返回主菜单':'Return to main menu'):(zh?'返回当前战役':'Return to current campaign')}
- $('#roman-faction').onchange=renderStart;
- $('#difficulty').onchange=()=>{$('#start-guide').checked=!['hard','expert'].includes($('#difficulty').value);renderStart()};
+ const start=$('#start-overlay');let initialStart=!skipInitial;
+ $('#start-language').onclick=()=>$('#language').click();
+ function renderStart(){
+  const zh=language()==='zh',senate=$('#roman-faction').value==='senate',touring=$('#difficulty').value==='travel';
+  $('#roman-faction-label').textContent=zh?'罗马阵营':'Roman faction';
+  $('#roman-faction').options[0].textContent=zh?'凯撒派':'Caesarian command';
+  $('#roman-faction').options[1].textContent=zh?'元老院与庞培派':'Senate and Pompeian command';
+  $('#roman-faction-note').textContent=zh?'双方均有可操作的互动教学。':'Both sides have playable lessons.';
+  $('.intro-leader img').src=senate?'../assets/portraits/pompey-128.jpg':'../assets/portraits/caesar-128.jpg';
+  $('#start-title').textContent=zh?'从第一道命令开始':'Start with your first command';
+  $('#start-description').textContent=senate?(zh?'你指挥元老院。先认清自己的战区和军队，再决定如何保卫意大利。':'Command the Senate. Find your territory and army before deciding how to defend Italy.'):(zh?'你指挥凯撒。先学会查看军队和下令，再决定是否进攻。':'Command Caesar. Learn to inspect and order an army before deciding whether to attack.');
+  if(touring)$('#start-description').textContent=zh?'旅行模式：资源丰厚，羽毛会全程提供建议。':'Travel mode: abundant resources and continuing Feather advice.';
+  $('#difficulty-label').textContent=zh?'难度':'Difficulty';
+  [['旅行：羽毛全程指导','Travel: Feather advises throughout'],['新手：更多提示','Beginner: more guidance'],['标准','Standard'],['困难','Hard'],['棋手','Grandmaster']].forEach((v,i)=>$('#difficulty').options[i].textContent=zh?v[0]:v[1]);
+  $('#economic-handicap-label').textContent=zh?'可选经济惩罚：困难 −10%，棋手 −20%':'Optional economic handicap: Hard −10%, Grandmaster −20%';
+  $('#start-guide-label').textContent=zh?'开启八步互动教学':'Start eight hands-on lessons';
+  $('#start-note').textContent=zh?'教学使用真实战役规则。可暂停、跳过或重新开始。':'The guide uses real campaign rules. You can pause, skip or restart.';
+  $('#start-game').textContent=zh?'开始战役':'Start campaign';
+  $('#start-training').textContent=zh?'独立训练战役（不覆盖正式存档）':'Training campaign (separate saves)';
+  $('#start-free').textContent=zh?'自由开始':'Play freely';
+  $('#start-cancel').textContent=initialStart?(zh?'返回主菜单':'Return to main menu'):(zh?'返回当前战役':'Return to current campaign')
+ }
+ $('#roman-faction').onchange=renderStart;$('#difficulty').onchange=()=>{$('#start-guide').checked=!['hard','expert'].includes($('#difficulty').value);renderStart()};
  function openStart(){renderStart();start.hidden=false}
  $('#start-cancel').onclick=()=>{if(initialStart){location.assign('../');return}start.hidden=true};
  $('#start-game').onclick=()=>{const mode=$('#difficulty').value,side=$('#roman-faction').value;onReset(mode,side,$('#economic-handicap').checked);onMode(mode);initialStart=false;start.hidden=true;localStorage.setItem('spqr-onboarded','1');if($('#start-guide').checked)begin(side);else stop()};
+ $('#start-training').onclick=()=>{const side=$('#roman-faction').value;onReset('beginner',side,false,true);onMode('beginner');initialStart=false;start.hidden=true;begin(side)};
  $('#start-free').onclick=()=>{const mode=$('#difficulty').value;onReset(mode,$('#roman-faction').value,$('#economic-handicap').checked);onMode(mode);start.hidden=true;localStorage.setItem('spqr-onboarded','1');stop()};
- $('#guide-restart').onclick=openStart;
- if(!skipInitial)openStart();
- function restore(saved){stop();if(!saved?.running)return;faction=saved.faction==='senate'?'senate':'caesar';step=Math.max(0,Math.min(11,saved.step|0));ordered=!!saved.ordered;battlePending=!!saved.battlePending;running=true;persist();box.hidden=false;pulseTimer=setInterval(place,250);render()}
- return {refresh(){renderStart();if(running)render()},stop,restore,isRunning:()=>running};
+ $('#guide-restart').onclick=openStart;if(!skipInitial)openStart();
+ function restore(saved){stop('load');if(!saved?.running)return;faction=saved.faction==='senate'?'senate':'caesar';running=true;paused=!!saved.paused;step=saved.version===2?Math.max(0,Math.min(8,saved.step|0)):0;phase=saved.version===2?saved.phase||'preview':'preview';armyId=saved.armyId||'';turnBefore=Number.isFinite(saved.turnBefore)?saved.turnBefore:null;direction=saved.direction||'';result=saved.result||'';persist();timer=setInterval(place,450);render()}
+ return {refresh(){renderStart();if(running)render()},stop,restore,isRunning:()=>running,focus:showMe};
 }

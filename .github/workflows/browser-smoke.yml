@@ -38,6 +38,7 @@ jobs:
               node tools/inspector-smoke.mjs
               node tools/hundred-days-smoke.mjs
               node tools/roman-hundred-days-smoke.mjs
+              node tools/training-combat-smoke.mjs
               node tools/save-transfer-controls-smoke.mjs
               node tools/storage-denied-smoke.mjs
               node tools/travel-smoke.mjs
@@ -118,8 +119,8 @@ jobs:
               node tools/atlas-mail-alert-smoke.mjs
               ;;
             3)
-              node scripts/imperium-sim.mjs > imperium-simulation.json
               node tools/onboarding-smoke.mjs
+              node scripts/imperium-sim.mjs > imperium-simulation.json
               node tools/systems-smoke.mjs
               node tools/intelligence-partners-smoke.mjs
               node tools/trade-intelligence-smoke.mjs
@@ -160,6 +161,7 @@ jobs:
           name: browser-smoke-evidence-${{ matrix.part }}
           path: |
             browser-smoke-1920x1080.png
+            first-command-*.png
             capture-control-1920x1080.png
             map-benchmark-1920x1080.png
             leader-overview-1920x1080.png

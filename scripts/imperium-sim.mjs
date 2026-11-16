@@ -12,7 +12,7 @@ function opening(seed,allied){const s=newGame('caesar');s.difficulty='expert';s.
  return s}
 for(const allied of [false,true])for(let i=1;i<=seeds;i++){
  const seed=(Math.imul(i,2654435761)^0x1a2b)>>>0,s=opening(seed,allied);
- const times=[],cpuTimes=[],defeats={},recovered=new Set();
+ const times=[],defeats={},recovered=new Set();
  for(let m=0;m<months;m++){
   const start=performance.now(),cpuStart=process.cpuUsage();tick(s,{autoplayPlayer:true});times.push(performance.now()-start);
   const cpu=process.cpuUsage(cpuStart);cpuTimes.push((cpu.user+cpu.system)/1000);
@@ -38,4 +38,3 @@ for(const allied of [false,true])for(let i=1;i<=seeds;i++){
 assert.ok(report.runs.every(r=>r.msPerMonth.mean<100&&r.msPerMonth.p95<300&&r.msPerMonth.max<2000&&r.maxCpuMsPerMonth<300),'monthly simulation must stay bounded: '+JSON.stringify(report.runs.map(r=>({seed:r.seed,wallMs:r.msPerMonth,cpuMax:r.maxCpuMsPerMonth}))));
 assert.ok(report.runs.every(r=>Object.values(r.focuses).filter(f=>f.completed>0).length>=6),'AI courts complete focuses');
 assert.ok(report.runs.some(r=>r.plans.total>0),'AI courts plan operations');
-console.log(JSON.stringify(report,null,1));
