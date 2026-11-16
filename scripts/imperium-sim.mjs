@@ -12,7 +12,7 @@ function opening(seed,allied){const s=newGame('caesar');s.difficulty='expert';s.
  return s}
 for(const allied of [false,true])for(let i=1;i<=seeds;i++){
  const seed=(Math.imul(i,2654435761)^0x1a2b)>>>0,s=opening(seed,allied);
- const times=[],defeats={},recovered=new Set();
+ const times=[],cpuTimes=[],defeats={},recovered=new Set();
  for(let m=0;m<months;m++){
   const start=performance.now(),cpuStart=process.cpuUsage();tick(s,{autoplayPlayer:true});times.push(performance.now()-start);
   const cpu=process.cpuUsage(cpuStart);cpuTimes.push((cpu.user+cpu.system)/1000);
