@@ -519,6 +519,23 @@ test('an AI seller can reject market access before accepting a later improved re
  assert.ok(s.tradeMarkets.shipments.some(x=>x.buyer==='han'&&x.seller==='kangju'&&x.commodity==='horses'));
 });
 
+test('AI avoids buying back its recent export without permanently banning later trade',()=>{
+ const s=newHanGame(null,{seed:85});s.month=3;
+ for(const [id,faction] of Object.entries(s.factions))faction.treasury=id==='parthia'?500:0;
+ for(const market of Object.values(s.tradeMarkets.regions))for(const item of Object.values(market.goods)){item.stock=100;item.production=0;item.consumption=0}
+ for(const market of Object.values(s.tradeMarkets.regions))market.goods.copper.stock=0;
+ s.tradeMarkets.regions.bactra.goods.copper.stock=6;
+ s.treaties.push({type:'market',parties:['parthia','yuezhi']});
+ s.tradeMarkets.transactions.push({seller:'parthia',buyer:'yuezhi',destination:'bactra',commodity:'copper',quantity:3,price:12,year:s.year,month:s.month});
+ const future=loadHanSave(serialize(s));future.tradeMarkets.transactions[0].year++;
+ advanceEasternMarkets(future);
+ assert.ok(future.tradeMarkets.shipments.some(x=>x.buyer==='parthia'&&x.seller==='yuezhi'&&x.commodity==='copper'),'a future-dated record cannot inform current AI decisions');
+ advanceEasternMarkets(s);
+ assert.equal(s.tradeMarkets.shipments.some(x=>x.buyer==='parthia'&&x.seller==='yuezhi'&&x.commodity==='copper'),false);
+ s.year+=2;advanceEasternMarkets(s);
+ assert.ok(s.tradeMarkets.shipments.some(x=>x.buyer==='parthia'&&x.seller==='yuezhi'&&x.commodity==='copper'),'a new need can be funded after the recent-sale window expires');
+});
+
 test('a small non-oasis kingdom autonomously buys and receives a paid lot across a save',()=>{
  let s=newHanGame('han',{seed:49});s.month=3;
  s.treaties.push({type:'market',parties:['armenia','atropatene']});

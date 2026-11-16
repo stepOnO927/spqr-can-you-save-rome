@@ -64,6 +64,84 @@ test('a Roman listing reaches Han through two paid Parthian intermediary shipmen
  assert.equal(s.markets.transactions.filter(x=>x.shipment===romanShipment.id).length,1);
 });
 
+test('Parthian brokers autonomously resell delivered Roman copper into a Central Asian market',()=>{
+ let s=newGame('caesar');attachHanWorld(s,{seed:61});
+ s.regions.find(r=>r.id==='syria').owner='caesar';s.relations['caesar:parthia']=70;
+ assert.equal(proposeAgreement(s,'caesar','parthia','trade').ok,true);
+ const h=hanWorld(s).state;h.tradeMarkets.autonomousEnabled=true;
+ const source=s.markets.regions.syria.goods.copper,romanRelay=s.markets.regions.parthia.goods.copper,eastRelay=h.tradeMarkets.regions.ctesiphon.goods.copper;
+ Object.assign(source,{stock:20,production:0,consumption:0});Object.assign(romanRelay,{stock:0,production:0,consumption:0});Object.assign(eastRelay,{stock:0,production:0,consumption:0});
+ for(const market of Object.values(h.tradeMarkets.regions))for(const item of Object.values(market.goods)){item.stock=100;item.production=0;item.consumption=0}
+ for(const market of Object.values(h.tradeMarkets.regions))market.goods.copper.stock=0;
+ eastRelay.stock=0;
+ for(const [id,faction] of Object.entries(h.factions))faction.treasury=id==='yuezhi'?1000:0;
+ s.factions.parthia.treasury=200;
+ const posted=postTradeSale(s,{origin:'syria',commodity:'copper',quantity:5,unitPrice:1});assert.equal(posted.ok,true);
+ s.month=3;const first=advanceMarketAI(s).find(x=>x.seller==='caesar'&&x.buyer==='parthia'&&x.commodity==='copper'&&x.saleOrderId===posted.order.id);
+ assert.ok(first,'the Roman lot must be bought and delivered through the existing physical market');
+ for(let i=0;i<first.legs[0].months;i++){advanceDate(s);advanceMarkets(s);advanceHanWorld(s)}
+ assert.equal(first.status,'delivered');assert.equal(eastRelay.stock,first.quantity);
+ setRelation(h,'yuezhi','parthia',70);assert.equal(propose(h,'yuezhi','parthia','market').proposal.status,'accepted');
+ for(let i=0;i<12&&!h.tradeMarkets.shipments.some(x=>x.seller==='parthia'&&x.buyer==='yuezhi'&&x.commodity==='copper'&&x.origin==='ctesiphon');i++){advanceDate(s);advanceHanWorld(s)}
+ const onward=h.tradeMarkets.shipments.find(x=>x.seller==='parthia'&&x.buyer==='yuezhi'&&x.commodity==='copper'&&x.origin==='ctesiphon');
+ assert.ok(onward,'Yuezhi AI should buy a viable Roman-origin lot from the Parthian market');
+ assert.ok(onward.escrow>0&&onward.legs.reduce((n,leg)=>n+leg.months,0)>0&&onward.path.includes('margiana'));
+ assert.equal(eastRelay.stock+onward.quantity,first.quantity,'the second leg reserves the same finite imported stock');
+ assert.equal(romanRelay.stock,0,'the Roman projection cannot keep a second copy');
+ assert.equal(h.factions.yuezhi.treasury,1000-onward.escrow);
+ const saved=upgradeSave(structuredClone(s)),world=hanWorld(saved).state,shipment=world.tradeMarkets.shipments.find(x=>x.id===onward.id);
+ const stockBefore=world.tradeMarkets.regions[onward.destination].goods.copper.stock,sellerCash=world.factions.parthia.treasury;
+ for(let i=0;i<onward.legs.reduce((n,leg)=>n+leg.months,0);i++){advanceDate(world);advanceEasternMarkets(world)}
+ assert.equal(shipment.status,'delivered');
+ assert.equal(world.tradeMarkets.regions[onward.destination].goods.copper.stock,stockBefore+onward.quantity);
+ assert.equal(world.factions.parthia.treasury,sellerCash+onward.price);
+ assert.equal(world.tradeMarkets.transactions.filter(x=>x.shipment===onward.id).length,1);
+});
+
+test('successive paid Roman lots can pass through Parthia and Yuezhi to an AI Han buyer',()=>{
+ const s=newGame('caesar');attachHanWorld(s,{seed:62});
+ s.regions.find(r=>r.id==='syria').owner='caesar';s.relations['caesar:parthia']=70;
+ assert.equal(proposeAgreement(s,'caesar','parthia','trade').ok,true);
+ const h=hanWorld(s).state;h.tradeMarkets.autonomousEnabled=true;
+ for(const market of Object.values(h.tradeMarkets.regions))for(const item of Object.values(market.goods)){item.stock=100;item.production=0;item.consumption=0}
+ for(const market of Object.values(h.tradeMarkets.regions))market.goods.copper.stock=0;
+ for(const faction of Object.values(h.factions))faction.treasury=0;
+ Object.assign(s.markets.regions.syria.goods.copper,{stock:20,production:0,consumption:0});
+ Object.assign(s.markets.regions.parthia.goods.copper,{stock:0,production:0,consumption:0});
+ s.factions.parthia.treasury=500;
+ const posted=postTradeSale(s,{origin:'syria',commodity:'copper',quantity:9,unitPrice:1});assert.equal(posted.ok,true);
+ s.month=3;assert.ok(advanceMarketAI(s).some(x=>x.seller==='caesar'&&x.buyer==='parthia'&&x.commodity==='copper'));
+ const transferred=()=>Object.values(hanWorld(s).bridge.romanExports).filter(x=>x.status==='transferred'&&x.commodity==='copper');
+ for(let i=0;i<36&&transferred().reduce((n,x)=>n+x.quantity,0)<6;i++){
+  advanceDate(s);advanceMarkets(s);advanceHanWorld(s);if(s.month%3===0)advanceMarketAI(s);
+ }
+ const imported=transferred().reduce((n,x)=>n+x.quantity,0);
+ assert.ok(imported>=6,'two paid Roman caravans should reach Parthia before resale');
+ assert.equal(h.tradeMarkets.regions.ctesiphon.goods.copper.stock,imported);
+ h.factions.yuezhi.treasury=1000;setRelation(h,'yuezhi','parthia',70);
+ assert.equal(propose(h,'yuezhi','parthia','market').proposal.status,'accepted');
+ for(let i=0;i<12&&!h.tradeMarkets.shipments.some(x=>x.seller==='parthia'&&x.buyer==='yuezhi'&&x.commodity==='copper');i++){advanceDate(s);advanceHanWorld(s)}
+ const second=h.tradeMarkets.shipments.find(x=>x.seller==='parthia'&&x.buyer==='yuezhi'&&x.commodity==='copper');
+ assert.ok(second&&second.quantity>=2,'Yuezhi must fund a multi-batch intermediary purchase');
+ for(let i=0;i<second.legs.reduce((n,leg)=>n+leg.months,0);i++){advanceDate(h);advanceEasternMarkets(h)}
+ assert.equal(second.status,'delivered');
+ h.factions.han.treasury=1000;setRelation(h,'han','yuezhi',70);
+ assert.equal(propose(h,'han','yuezhi','market').proposal.status,'accepted');
+ for(let i=0;i<12&&!h.tradeMarkets.shipments.some(x=>x.seller==='yuezhi'&&x.buyer==='han'&&x.commodity==='copper');i++){advanceDate(h);advanceEasternMarkets(h)}
+ const third=h.tradeMarkets.shipments.find(x=>x.seller==='yuezhi'&&x.buyer==='han'&&x.commodity==='copper');
+ assert.ok(third,'Han AI should buy the same Roman-origin stock from the closer Yuezhi market');
+ assert.equal(h.tradeMarkets.shipments.some(x=>x.seller==='yuezhi'&&x.buyer==='parthia'&&x.commodity==='copper'),false,'the first broker cannot immediately buy back its own sale');
+ assert.ok(third.escrow>0&&third.path.includes('bactra')&&third.legs.reduce((n,leg)=>n+leg.months,0)>0);
+ const restored=upgradeSave(structuredClone(s)),world=hanWorld(restored).state,paid=world.tradeMarkets.shipments.find(x=>x.id===third.id);
+ const hanStock=world.tradeMarkets.regions[third.destination].goods.copper.stock,yuezhiCash=world.factions.yuezhi.treasury;
+ world.tradeMarkets.autonomousEnabled=false;
+ for(let i=0;i<third.legs.reduce((n,leg)=>n+leg.months,0);i++){advanceDate(world);advanceEasternMarkets(world)}
+ assert.equal(paid.status,'delivered');
+ assert.equal(world.tradeMarkets.regions[third.destination].goods.copper.stock,hanStock+third.quantity);
+ assert.equal(world.factions.yuezhi.treasury,yuezhiCash+third.price);
+ assert.equal(world.tradeMarkets.transactions.filter(x=>x.shipment===third.id).length,1);
+});
+
 test('old Roman deliveries remain in their saved market instead of entering the East on upgrade',()=>{
  const s=newGame('caesar');attachHanWorld(s,{seed:16});
  s.markets.regions.parthia.goods.copper.stock=3;

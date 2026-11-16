@@ -275,6 +275,17 @@ inventory cannot enter the eastern network a second time. Unit tests exercise
 both paid legs, onward customs, stock conservation, privacy and migrations;
 the browser flow checks the receipt and reload. Autonomous resale volume and
 the broader Roman–Han settlement model remain open.
+An integrated Roman–Parthian–Yuezhi–Han scenario now exercises multiple paid
+Roman exports, their single transfer into the eastern market, autonomous
+Parthian resale to Yuezhi, then an autonomous Yuezhi resale to Han with
+save/load and destination-stock settlement. It exposed a circular-bidding
+error: Parthia immediately bought back the same copper it had just delivered
+to Bactra. AI now avoids reversing a recently delivered resale at that
+specific market for 24 months, while other origins remain eligible and a
+later genuine purchase is still possible. Long direct Ctesiphon–Han copper
+orders remain uneconomic at current prices; the simulation uses intermediate
+markets rather than silently subsidizing that route. General treaty and
+settlement mechanics across the two campaigns remain open.
 
 The atlas now has a trade map mode tied to the existing market and route
 simulation. It shows owned market grain stocks, prices, production and demand;

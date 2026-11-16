@@ -463,6 +463,10 @@ function advanceEasternMarketAI(s){
  for(const r of s.regions){regionsById.set(r.id,r);if(!regionsByOwner.has(r.owner))regionsByOwner.set(r.owner,[]);regionsByOwner.get(r.owner).push(r);if(r.kind?.startsWith('oasis'))oasisOwners.add(r.owner)}
  for(const offer of markets.offers){if(!offersByGood.has(offer.commodity))offersByGood.set(offer.commodity,[]);offersByGood.get(offer.commodity).push(offer)}
  for(const shipment of markets.shipments)if(['traveling','blocked'].includes(shipment.status)){if(!activeByBuyer.has(shipment.buyer))activeByBuyer.set(shipment.buyer,[]);activeByBuyer.get(shipment.buyer).push(shipment)}
+ // A court should not immediately bid back the same good it just sold to a
+ // neighbor. This avoids circular one-batch caravans while still allowing a
+ // later purchase if genuine demand develops after the trade window expires.
+ const recentSales=new Set(markets.transactions.filter(tx=>{const elapsed=now-(tx.year*12+tx.month);return tx.price>0&&tx.destination&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<24}).map(tx=>`${tx.seller}:${tx.buyer}:${tx.commodity}:${tx.destination}`));
  const towardFor=(destination,buyer)=>{
   const key=`${buyer}:${destination}`;
   if(!pathCache.has(key))pathCache.set(key,projectedPathsTo(s,destination,buyer));
@@ -488,7 +492,7 @@ function advanceEasternMarketAI(s){
   for(const destination of (regionsByOwner.get(buyer)||[]).filter(r=>(r.pop||0)>0))for(const [good,item] of Object.entries(markets.regions[destination.id].goods)){
    if(['weapons','provisions'].includes(good)&&!s.wars.some(w=>w.includes(buyer)))continue;
    const target=Math.max(4,item.consumption*3+item.production),deficit=target-item.stock;if(deficit<=0)continue;
-   const nearby=(offersByGood.get(good)||[]).filter(x=>x.seller!==buyer&&(x.seller!==s.player||x.saleOrderId)&&!atWar(s,buyer,x.seller)&&!activeSellerGood.has(`${x.seller}:${good}`)&&towardFor(destination.id,buyer).has(x.origin))
+   const nearby=(offersByGood.get(good)||[]).filter(x=>x.seller!==buyer&&(x.seller!==s.player||x.saleOrderId)&&!atWar(s,buyer,x.seller)&&!activeSellerGood.has(`${x.seller}:${good}`)&&!(x.resale&&recentSales.has(`${buyer}:${x.seller}:${good}:${x.origin}`))&&towardFor(destination.id,buyer).has(x.origin))
     .sort((a,b)=>{const sourceA=regionsById.get(a.origin),sourceB=regionsById.get(b.origin);
      const costA=a.price+Math.abs(sourceA.lon-destination.lon)*.15+Math.abs(sourceA.lat-destination.lat)*.15;
      const costB=b.price+Math.abs(sourceB.lon-destination.lon)*.15+Math.abs(sourceB.lat-destination.lat)*.15;
