@@ -23,7 +23,7 @@ test('trust earned in an actual meeting can improve a later offer without guaran
  assert.equal(trial(null,seed).operations[0].status,'declined');const trusted=trial('cicero',seed);assert.equal(trusted.operations[0].status,'complete');assert.equal(trusted.world.disputes.egypt.support.cleopatra,15);assert.equal(trusted.knowledge.caesar.egypt.reports.length,0);assert.equal(trial('cicero',1972).operations[0].status,'no_reply');
 });
 test('representatives must be known friendly contacts and can lose their influence while a letter travels',()=>{
- const s=newGame('senate');contestLeadership(s,'egypt','cleopatra');addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified'});s.world.personalRelations['cicero:cleopatra']={trust:50,meetings:1};
+ const s=newGame('senate');contestLeadership(s,'egypt','cleopatra');addReport(s,'senate','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified'});s.world.personalRelations['cicero:cleopatra']={trust:50,meetings:1};s.meetings.push({actor:'senate',targetFaction:'egypt',person:'cicero',target:'cleopatra',status:'met',year:s.year,month:s.month,contactCredit:10});
  assert.equal(supportClaimant(s,'senate','egypt','cleopatra','caesar').reason,'representative');assert.equal(supportClaimant(s,'senate','egypt','cleopatra','cicero').ok,true);s.world.characters.cicero.faction='caesar';
  const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=.34&&q<.36});s.world.intelSeed=seed;for(let i=0;i<4;i++)advanceOperations(s);assert.equal(s.operations[0].status,'declined');assert.equal(s.world.disputes.egypt.support,undefined);
 });

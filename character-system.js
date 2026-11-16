@@ -11,7 +11,7 @@ import {canHoldOffice,localGovernor} from './office-system.js?v=reported-contact
 import {activeAgreement} from './agreements.js?v=reported-contact-1';
 import {activeModifiers} from './inventions.js?v=reported-contact-1';
 import {registerMissionPersonnel} from './epistulae-personnel.js?v=reported-contact-1';
-import {namedReportSubjects} from './person-knowledge.js?v=reported-contact-1';
+import {namedReportSubjects,reportedPersonalContacts} from './person-knowledge.js?v=reported-contact-1';
 export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=reported-contact-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
@@ -163,7 +163,7 @@ export function reportedHealthSubjects(s,actor,target){
  return [...new Set([...(knowledge?.reportedLeaders||[]),...reportedClaimants(s,actor,target),...Object.values(knowledge?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...leads].filter(id=>CHARACTER_CATALOG[id]))];
 }
 export function claimantRepresentatives(s,actor,claimant){
- initializeWorld(s);return Object.values(s.world.characters).filter(c=>c.faction===actor&&c.alive&&!c.missing&&!['seriously_ill','dying','deceased'].includes(c.health)&&CHARACTER_CATALOG[c.id]&&(s.world.personalRelations[[c.id,claimant].sort().join(':')]?.trust||0)>0).map(c=>c.id);
+ initializeWorld(s);const contacts=reportedPersonalContacts(s,actor,claimant);return Object.values(s.world.characters).filter(c=>c.faction===actor&&c.alive&&!c.missing&&!['seriously_ill','dying','deceased'].includes(c.health)&&CHARACTER_CATALOG[c.id]&&(contacts.get(c.id)?.credit||0)>0).map(c=>c.id);
 }
 // A public policy records the player's choice, not the target court's true ruler.
 export function recognizeClaimant(s,target,claimant){

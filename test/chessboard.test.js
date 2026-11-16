@@ -15,6 +15,13 @@ test('the board does not read hidden foreign plans, plots, armies, personal loya
  s.relations['armenia:parthia']=60;assert.ok(proposeAgreement(s,'armenia','parthia','intelligence',{secret:true}).ok);s.coalitions=[{id:'hidden',status:'active',parties:['egypt','parthia','armenia'],target:'caesar',cohesion:1}];
  assert.deepEqual(buildChessboard(s),before);
 });
+test('foreign personal ties reflect recorded meetings rather than live hidden trust',()=>{
+ let s=newGame('caesar');const links=()=>buildChessboard(s).links.filter(x=>x.kind==='personal'&&[x.from,x.to].includes('p:caesar')&&[x.from,x.to].includes('p:cleopatra'));
+ s.world.personalRelations['caesar:cleopatra']={trust:80,meetings:1};assert.deepEqual(links(),[]);
+ s.meetings.push({actor:'caesar',targetFaction:'egypt',person:'caesar',target:'cleopatra',status:'met',year:s.year,month:s.month,contactCredit:2});
+ const before=links();assert.equal(before.length,1);assert.deepEqual(before[0].observed,{year:s.year,month:s.month});
+ s.world.personalRelations['caesar:cleopatra'].trust=-80;s=upgradeSave(structuredClone(s));assert.deepEqual(links(),before);
+});
 test('foreign leaders and movements on the board use reported names rather than current hidden names',()=>{
  let s=newGame('caesar');const leader=createFictionalPerson(s,{name:['Reported leader','报告领袖'],faction:'egypt',birthYear:-75}),organizer=createFictionalPerson(s,{name:['Organizer','组织者'],faction:'parthia',birthYear:-75});
  addReport(s,'caesar','egypt',{kind:'leaders',leaders:[leader],source:'spy'});s.world.movementKnowledge.caesar={'movement:test':{id:'movement:test',parent:'parthia',region:'syria',stage:'organized',leader:organizer,leaderName:['Old organizer','旧报告组织者'],supportApprox:1000,year:s.year,month:s.month}};

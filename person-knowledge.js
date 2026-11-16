@@ -16,6 +16,20 @@ export function isDeliveredReport(s,r){
 // Sightings retain when a force was observed, even when a report arrives later.
 export function sightingAge(s,r){return s.year*12+s.month-((r.observationYear??r.year)*12+(r.observationMonth??r.month))}
 export function isCompletedMeeting(s,m){const year=m?.resolvedYear??m?.year,month=m?.resolvedMonth??m?.month;return m?.status==='met'&&Number.isFinite(year)&&Number.isInteger(month)&&month>=1&&month<=12&&year*12+month<=s.year*12+s.month}
+// A contact can be used by either participant's faction. Never reconstruct
+// a foreign relationship from its live trust value: older meetings without a
+// saved estimate retain one conservative contact point.
+export function reportedPersonalContacts(s,actor,other){
+ const latest=new Map();
+ for(const m of s.meetings||[]){
+  const sender=m.actor===actor&&m.target===other,recipient=m.targetFaction===actor&&m.person===other,own=sender?m.person:recipient?m.target:null;
+  if(!own||!isCompletedMeeting(s,m))continue;
+  const year=m.resolvedYear??m.year,month=m.resolvedMonth??m.month,date=year*12+month,credit=Number.isFinite(m.contactCredit)?Math.max(0,Math.min(10,Math.floor(m.contactCredit))):1,previous=latest.get(own);
+  if(!previous||date>previous.date)latest.set(own,{year,month,date,credit});
+ }
+ return latest;
+}
+export const reportedPersonalContact=(s,actor,own,other)=>reportedPersonalContacts(s,actor,other).get(own)||null;
 function personNameRecords(s,actor,target,id){
  const reports=s.knowledge?.[actor]?.[target]?.reports||[];
  const records=reports.filter(r=>isDeliveredReport(s,r)&&(!Number.isFinite(reportAge(s,r))||reportAge(s,r)>=0)&&namedReportSubjects(r).includes(id)&&validName(r.peopleNames?.[id])).map(r=>({name:r.peopleNames[id],year:r.observationYear??r.year,month:r.observationMonth??r.month}));

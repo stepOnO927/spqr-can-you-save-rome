@@ -1,4 +1,4 @@
-import {isDeliveredReport} from './person-knowledge.js?v=reported-contact-1';
+import {isDeliveredReport,reportedPersonalContact} from './person-knowledge.js?v=reported-contact-1';
 import {FACTIONS,ROUTES} from './data.js?v=reported-contact-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=reported-contact-1';
 import {reportedMovements,movementReportLeaderName} from './movements.js?v=reported-contact-1';
@@ -70,7 +70,8 @@ export function buildChessboard(s,viewer=s.player){
  const knownPeople=nodes.filter(n=>n.type==='person');const ownIds=new Set(ownPeople.map(c=>c.id));
  for(let i=0;i<knownPeople.length;i++)for(let j=i+1;j<knownPeople.length;j++){
   const a=knownPeople[i].id.slice(2),b=knownPeople[j].id.slice(2);if(!ownIds.has(a)&&!ownIds.has(b))continue;
-  const rel=s.world.personalRelations?.[pair(a,b)];if(rel&&(rel.meetings>0||ownIds.has(a)&&ownIds.has(b))&&rel.trust){const good=rel.trust>0;link('p:'+a,'p:'+b,'personal','reported',good?['Recorded contact suggests cooperation; intentions may change.','已有接触显示可能合作；意图可能改变。']:['Recorded contact suggests tension; intentions may change.','已有接触显示可能存在紧张；意图可能改变。'])}
+  if(ownIds.has(a)&&ownIds.has(b)){const rel=s.world.personalRelations?.[pair(a,b)];if(rel?.trust){const good=rel.trust>0;link('p:'+a,'p:'+b,'personal','reported',good?['Known relations suggest cooperation.','本方已知关系显示可能合作。']:['Known relations suggest tension.','本方已知关系显示可能紧张。'])}}
+  else{const own=ownIds.has(a)?a:b,other=own===a?b:a,contact=reportedPersonalContact(s,viewer,own,other);if(contact)link('p:'+a,'p:'+b,'personal','reported',['A meeting was recorded; the relationship may have changed.','曾记录一次会面；关系可能已经改变。'],{year:contact.year,month:contact.month})}
   if(ownIds.has(a)&&ownIds.has(b)){const ca=s.world.characters[a],cb=s.world.characters[b];if(ca.spouse===b||cb.spouse===a||ca.parents?.includes(b)||cb.parents?.includes(a)||ca.adoptiveParents?.includes(b)||cb.adoptiveParents?.includes(a))link('p:'+a,'p:'+b,'family','confirmed',['Recorded family relationship.','已记录的家族关系。'])}
  }
  for(const [target,k] of Object.entries(s.knowledge?.[viewer]||{}))for(const r of (k.reports||[]).filter(x=>isDeliveredReport(s,x)&&x.kind==='conspiracy'&&x.character&&age(s,x)>=0&&age(s,x)<=24).slice(0,2)){

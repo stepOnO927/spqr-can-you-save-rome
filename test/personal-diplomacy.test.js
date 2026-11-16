@@ -109,7 +109,7 @@ test('contact credit uses only recorded meetings and expires without revealing h
 });
 test('personal diplomatic credit uses the latest meeting snapshot, not hidden subsequent trust',()=>{
  let s=newGame('senate');s.world.characters.cicero.location='egypt';s.world.intelSeed=1000;assert.ok(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok);
- advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');assert.equal(s.meetings[0].contactCredit,1);
+ advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');assert.equal(s.meetings[0].contactCredit,1);assert.equal(personalDiplomaticCredit(s,'egypt','senate'),1);
  for(const trust of [-100,0,100]){s.world.personalRelations['cicero:cleopatra'].trust=trust;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1)}
  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1);
  s.month++;s.world.personalRelations['cicero:cleopatra'].trust=-30;s.world.intelSeed=1000;assert.ok(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);
