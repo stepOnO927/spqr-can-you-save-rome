@@ -1,6 +1,6 @@
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=undated-name-1';
 import {initializeWorld,successorFor,CHARACTER_CATALOG,ageRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=succession-ui-recovery-1';
-import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=undated-name-1';
+import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=guardian-age-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {startDynasticWar} from './civil-war.js?v=undated-name-1';
 
@@ -57,7 +57,7 @@ export function reformRomanGovernment(s,target){
 
 export function appointCoEmperor(s,id){
  initializeGovernments(s);const faction=s.player,person=s.world.characters[id],model=successionModel(faction,s);
- if(model!=='later_empire'||!successorFor(s,faction).includes(id)||!person?.alive||personAge(s,id)<18)return {ok:false,reason:'eligibility'};
+ if(model!=='later_empire'||!successorFor(s,faction).includes(id)||!person?.alive||!isKnownAdult(s,id))return {ok:false,reason:'eligibility'};
  if(s.world.coEmperors?.[faction]===id)return {ok:false,reason:'already'};
  if(s.factions[faction].treasury<12)return {ok:false,reason:'treasury'};
  s.factions[faction].treasury-=12;s.world.coEmperors||={};s.world.coEmperors[faction]=id;
