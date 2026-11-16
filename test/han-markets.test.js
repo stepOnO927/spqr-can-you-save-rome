@@ -536,6 +536,24 @@ test('AI avoids buying back its recent export without permanently banning later 
  assert.ok(s.tradeMarkets.shipments.some(x=>x.buyer==='parthia'&&x.seller==='yuezhi'&&x.commodity==='copper'),'a new need can be funded after the recent-sale window expires');
 });
 
+test('AI remembers a real delivered export after the visible receipt ledger is full',()=>{
+ let s=newHanGame(null,{seed:85});s.treaties.push({type:'market',parties:['parthia','yuezhi']});for(const r of s.regions){r.fort=5;r.unrest=0}
+ for(const market of Object.values(s.tradeMarkets.regions))for(const item of Object.values(market.goods)){item.stock=100;item.production=0;item.consumption=0}
+ for(const [id,faction] of Object.entries(s.factions))faction.treasury=['parthia','yuezhi'].includes(id)?500:0;
+ const sale=placeEasternTrade(s,{seller:'parthia',buyer:'yuezhi',origin:'ctesiphon',destination:'bactra',commodity:'copper',quantity:3});
+ assert.equal(sale.ok,true,sale.reason);for(let i=0;i<sale.quote.months;i++)next(s);
+ assert.equal(s.tradeMarkets.shipments.find(x=>x.id===sale.shipment.id).status,'delivered');
+ for(const market of Object.values(s.tradeMarkets.regions))market.goods.copper.stock=0;
+ s.tradeMarkets.regions.bactra.goods.copper.stock=6;s.factions.yuezhi.treasury=0;
+ for(let i=0;i<300;i++)s.tradeMarkets.transactions.push({seller:'han',buyer:'qiemo',destination:'qiemo',commodity:'grain',price:1,year:s.year,month:s.month});
+ s.tradeMarkets.transactions=s.tradeMarkets.transactions.slice(-300);
+ assert.equal(s.tradeMarkets.transactions.some(x=>x.shipment===sale.shipment.id),false,'the older receipt was truncated');
+ s=loadHanSave(serialize(s));while(s.month%3!==2)next(s);next(s);
+ assert.equal(s.tradeMarkets.shipments.some(x=>x.buyer==='parthia'&&x.seller==='yuezhi'&&x.commodity==='copper'),false);
+ s.year+=2;s.month=2;next(s);
+ assert.ok(s.tradeMarkets.shipments.some(x=>x.buyer==='parthia'&&x.seller==='yuezhi'&&x.commodity==='copper'),'the 24-month memory expires');
+});
+
 test('a small non-oasis kingdom autonomously buys and receives a paid lot across a save',()=>{
  let s=newHanGame('han',{seed:49});s.month=3;
  s.treaties.push({type:'market',parties:['armenia','atropatene']});

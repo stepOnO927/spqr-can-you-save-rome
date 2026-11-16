@@ -466,7 +466,12 @@ function advanceEasternMarketAI(s){
  // A court should not immediately bid back the same good it just sold to a
  // neighbor. This avoids circular one-batch caravans while still allowing a
  // later purchase if genuine demand develops after the trade window expires.
- const recentSales=new Set(markets.transactions.filter(tx=>{const elapsed=now-(tx.year*12+tx.month);return tx.price>0&&tx.destination&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<24}).map(tx=>`${tx.seller}:${tx.buyer}:${tx.commodity}:${tx.destination}`));
+ const recentSales=new Set();
+ const rememberSale=(sale,deliveredAt)=>{const elapsed=now-deliveredAt;if(sale.price>0&&sale.destination&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<24)recentSales.add(`${sale.seller}:${sale.buyer}:${sale.commodity}:${sale.destination}`)};
+ for(const tx of markets.transactions)rememberSale(tx,tx.year*12+tx.month);
+ // Receipts are capped for the UI, but a delivered shipment persists in the
+ // campaign save. Its provenance must survive a crowded transaction ledger.
+ for(const shipment of markets.shipments)if(shipment.status==='delivered')rememberSale(shipment,shipment.deliveredAt);
  const towardFor=(destination,buyer)=>{
   const key=`${buyer}:${destination}`;
   if(!pathCache.has(key))pathCache.set(key,projectedPathsTo(s,destination,buyer));
