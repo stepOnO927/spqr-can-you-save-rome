@@ -277,6 +277,16 @@ body.atlas .selection .dossier-tile span{font:14px/1.5 var(--iv-ui);color:var(--
 }
 /* Phone: the atlas keeps its compact menu; a workspace is a full-screen sheet. */
 @media(max-width:700px){
+  /* The shell class is removed by script a moment after the viewport narrows. Until then,
+     nothing from the desktop arrangement may widen the page. */
+  body.atlas-shell .atlas-rail,body.atlas-shell .atlas-commandbar,body.atlas-shell .workspace-shade,body.atlas-shell .hud-resources{display:none}
+  body.atlas-shell .mast{height:58px;padding:0 10px;gap:8px}
+  body.atlas-shell .mast .hud-button,body.atlas-shell .mast #save-transfer-open{padding:7px 8px;min-height:0}
+  body.atlas-shell #command-detail{padding-left:0!important}
+  body.atlas[data-workspace="diplomacy"] .selection>.kicker,body.atlas[data-workspace="diplomacy"] .selection h2,body.atlas[data-workspace="diplomacy"] .selection #selection-detail{margin-left:-14px;margin-right:-14px;padding-left:14px}
+  body.atlas[data-workspace="diplomacy"] .selection h2{font-size:26px;padding-right:60px}
+  body.atlas .selection{max-width:100vw}
+  body.atlas #command-detail>*{max-width:100%}
   body.atlas[data-workspace="diplomacy"] .selection,body.atlas[data-workspace="dossier"] .selection{left:0;right:0;top:56px;bottom:0;width:auto;max-height:none;z-index:12;padding:0 14px 16px;overflow:auto}
   body.atlas[data-workspace="dossier"] .selection{padding:0;display:block}
   body.atlas[data-workspace="dossier"] #command-detail{display:block}

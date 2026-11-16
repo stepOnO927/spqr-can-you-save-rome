@@ -81,3 +81,67 @@ No simulation, AI, save, localisation or analytics module was touched.
    shared components; none has had its own pass.
 8. **Reference study** used published write-ups, not screenshot measurement (see
    `REFERENCE_ANALYSIS.md`).
+
+
+---
+
+# Round 2 — Campaign Atlas architecture and the character dossier
+
+Scope of this round: verify round 1, then the terrain map's main interface and one complete
+character dossier. Government chart, research tree, trade, War Council and victory screens are
+**not** in this round.
+
+## Verification of round 1
+
+- Pull-request checks on the merged draft (`40bc0d5`): fast, browser (1), browser (2), package
+  and poki-package pass. browser (3) fails in `scripts/imperium-sim.mjs` on a monthly-simulation
+  *timing* bound (one seed spiked to 389 ms on the runner); no UI file is involved.
+- Two failures on the first run were caused by round 1 and are fixed: the release-notes heading
+  covered its close button, and the Han campaign's territory could not be tapped at 640×360.
+  The repository owner fixed both while merging main (`version-ui.js`, two smoke selectors).
+- **Real MapLibre:** the atlas was opened on the Vercel preview of this branch in a real
+  browser at 1440×810 with live terrain tiles. `test/visual/atlas-real-map/` holds those
+  captures. The two stand-in-map sheets from round 1 (13, 14) are deleted; no stand-in image is
+  offered as evidence any more. The stand-in is still used locally for fast layout checks only.
+- Limit of the real captures: the browser pane returns 800×450 images of the 1440×810 layout,
+  so small text is soft. They prove overlay, placement and composition, not pixel sharpness.
+
+## What changed
+
+| Before | After |
+|---|---|
+| Diplomacy, people, offices, research links and time controls in one 300px panel | Rail (systems), command bar (time), inspector (territory, city, army), workspace (court file, dossier) |
+| Twelve 9px buttons in the top bar | Systems moved to an icon-and-label rail; top bar keeps resources and utilities at 12–15px |
+| Brief panel with title copy, permanently tall | Campaign ledger: map mode first, objectives, situation; collapsible |
+| A person = thumbnail + five label/value rows + paragraphs | Dossier: framed 4:5 portrait, name and standing, court banner, summary tiles, dated timeline, family, offices, relations, intelligence, actions, historical record |
+| Court file scrolled in the side panel | Docked wide workspace: standing facts left, people as portraits and negotiation tabs right; map stays live |
+
+How the dossier stays honest: `map-lab/atlas-shell.js` reads no campaign state. It rearranges
+the nodes `character-ui.js` already rendered under its own visibility rules (the timeline copies
+their text). Foreign people still show *Unknown* for age, health, loyalty and location. Ambition
+is not shown anywhere, as before.
+
+## Checks run
+
+- `npm test`: 997 of 997.
+- Local browser (stand-in map) at 1280×720, 1366×768, 1920×1080, 1024×768: every rail, top-bar
+  and command-bar control visible and unobstructed; language switch; advance month; court →
+  dossier → back; Esc closes; inventions and chronicle open. 640×360 and 390×844: the compact
+  menu path is unchanged, a workspace opens as a full-screen sheet and closes.
+- Real map (preview, 1440×810): idle map, army inspector, court file, foreign dossier (overview,
+  career), own dossier (offices). No console errors.
+
+## Known gaps in what was delivered
+
+1. **Timeline is thin at campaign start.** The catalogue holds one biography sentence and
+   birth/death references per person, not dated career events. The timeline fills with reports
+   as they arrive. A real career record needs new sourced data, not layout.
+2. **Per-person actions are routes, not forms.** Travel is in the dossier. Audience, envoy,
+   appointment and succession open the court file where those forms already live; they are not
+   yet embedded per person.
+3. **Own-faction loyalty is still a number** (for example 75%), because the game already shows
+   it for your own people. Decide whether that should become a band (steadfast / wavering).
+4. **Military command** is the compact inspector, restyled. It is not yet a map-integrated
+   command panel.
+5. **Phone atlas** keeps the old compact menu; only workspaces were adapted.
+6. Not started: government chart (Roman and Han), research tree, trade, War Council, victory.
