@@ -684,6 +684,17 @@ export function aiTurn(s,owner){
       if((i.effects.navalPower||i.effects.navalTrade||i.effects.navalIntel||i.effects.navalRepair)&&!s.naval?.fleets.some(fleet=>fleet.owner===owner))score-=8;
       return score;
     };
+    const canFundIdea=(idea,slot,plan)=>{
+      if(atWar)return true;
+      const slots=d.slots[idea.category],previous=slots[slot];
+      slots[slot]=idea.id;
+      let monthlyNet;
+      try{monthlyNet=nationalBudget(s,owner).projectedNet}
+      finally{slots[slot]=previous}
+      // A peacetime court may accept upkeep above current income only when
+      // the treasury left after adoption can carry it for a ten-year campaign.
+      return monthlyNet>=0||f.treasury-plan.cost>=20-120*monthlyNet;
+    };
     if(!d.research&&f.treasury>55+civilianReserve&&s.month%4===0){
       const ideaTurn=s.month%8===4;
       const ideas=IDEAS.filter(i=>{
@@ -710,7 +721,11 @@ export function aiTurn(s,owner){
     }
     if(!d.adoption&&f.treasury>30+civilianReserve){
       const available=IDEAS.filter(i=>d.knownIdeas.includes(i.id)&&!d.slots[i.category].includes(i.id))
-        .map(i=>({idea:i,slot:d.slots[i.category].indexOf(null)})).filter(x=>x.slot>=0&&ideaAdoptionPlan(s,owner,x.idea.id,x.slot).ok)
+        .map(i=>({idea:i,slot:d.slots[i.category].indexOf(null)})).filter(x=>{
+          if(x.slot<0)return false;
+          const plan=ideaAdoptionPlan(s,owner,x.idea.id,x.slot);
+          return plan.ok&&canFundIdea(x.idea,x.slot,plan);
+        })
         .sort((a,b)=>ideaScore(b.idea)-ideaScore(a.idea));
       if(available.length)adoptIdea(s,owner,available[0].idea.id,available[0].slot);
     }

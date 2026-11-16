@@ -8,6 +8,22 @@ import {edgeMonths,grandRoute,armySupply} from '../grand-operations.js';
 import {techIllustration} from '../tech-art.js';
 import {faithSatisfaction,advanceDemography,advanceReligion} from '../local-society.js';
 import {nationalBudget} from '../national-budget.js';
+
+test('peaceful AI courts do not adopt an unfunded idea and bankrupt themselves over six years',()=>{
+ let state=newGrandGame('egypt');
+ for(let month=0;month<72;month++){
+  if(month===36)state=upgradeSave(JSON.parse(JSON.stringify(state)));
+  tick(state);
+ }
+ for(const id of ['mauretania','bosporus']){
+  assert.equal(state.wars.some(war=>war.includes(id)),false,`${id} must remain at peace in this fixed comparison`);
+  assert.ok(state.factions[id].treasury>=0,`${id} must preserve a solvent treasury`);
+  assert.ok(state.factions[id].stability>=35,`${id} must not collapse from peaceful idea upkeep`);
+  assert.ok(nationalBudget(state,id).projectedNet>=0,`${id} must fund its active commitments`);
+ }
+ assert.ok(state.factions.galatia.treasury>=0,'a small neighboring command must not spend itself into insolvency before its war');
+ assert.ok(Object.values(state.development.bosporus.slots).flat().some(Boolean),'the guard must still allow affordable ideas');
+});
 import {budgetHtml} from '../budget-ui.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
