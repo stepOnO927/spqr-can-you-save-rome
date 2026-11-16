@@ -1,9 +1,10 @@
 import {reportedControl,observeArrival} from './control-intelligence.js?v=fort-intel-1';
 import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=guardian-age-1';
-import {officeOf} from './office-system.js?v=guardian-age-1';
+import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=reported-contact-1';
+import {officeOf} from './office-system.js?v=reported-contact-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=born-portraits-nine-1';
+import {isCompletedMeeting} from './person-knowledge.js?v=reported-contact-1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 // A commander in transit has not arrived in a theater where an audience can occur.
@@ -16,12 +17,14 @@ const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.l
 export function personalDiplomaticCredit(s,actor,target){
  initializeWorld(s);const now=s.year*12+s.month,latest=new Map();
  for(const meeting of s.meetings){
-  if(meeting.actor!==actor||meeting.targetFaction!==target||meeting.status!=='met')continue;
-  const year=meeting.resolvedYear??meeting.year,month=meeting.resolvedMonth??meeting.month,age=now-(year*12+month),own=s.world.characters[meeting.person];
+  const sender=meeting.actor===actor&&meeting.targetFaction===target,recipient=meeting.targetFaction===actor&&meeting.actor===target;
+  if((!sender&&!recipient)||!isCompletedMeeting(s,meeting))continue;
+  const ownId=sender?meeting.person:meeting.target,otherId=sender?meeting.target:meeting.person;
+  const year=meeting.resolvedYear??meeting.year,month=meeting.resolvedMonth??meeting.month,age=now-(year*12+month),own=s.world.characters[ownId];
   if(!Number.isFinite(age)||age<0||age>36||!own?.alive||own.missing||own.faction!==actor)continue;
   // Older saves did not record a bonus. A completed contact gives one point
   // of historical credit rather than reading a foreign person's live trust.
-  const key=JSON.stringify([meeting.person,meeting.target]),credit=Number.isFinite(meeting.contactCredit)?Math.max(0,Math.min(10,Math.floor(meeting.contactCredit))):1,date=year*12+month,previous=latest.get(key);
+  const key=JSON.stringify([ownId,otherId]),credit=Number.isFinite(meeting.contactCredit)?Math.max(0,Math.min(10,Math.floor(meeting.contactCredit))):1,date=year*12+month,previous=latest.get(key);
   if(!previous||date>previous.date)latest.set(key,{date,credit});
  }
  return Math.max(0,...[...latest.values()].map(x=>x.credit));
