@@ -145,11 +145,11 @@ function profile(rng,type,scale,band){
  return {population,militia,treasury,food,fort,strategy:integer(rng,...band.skill)};
 }
 
-function civicOfficers(seed,theater,band){
+function civicOfficers(seed,theater,band,rulerName){
  const rng={value:siteSeed(seed,`${theater}:council`)},names=rulersFor(theater),chosen=new Set();
  const appoint=role=>{
   let index=integer(rng,0,names.length-1);
-  while(chosen.has(index))index=(index+1)%names.length;
+  while(chosen.has(index)||rulerName[0].endsWith(` ${names[index][0]}`))index=(index+1)%names.length;
   chosen.add(index);
   return {id:`local-officer:${theater}:${role}`,name:[...names[index]],skill:integer(rng,...band.skill),fictional:true};
  };
@@ -185,7 +185,7 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters,startYe
    ruler:{id:`local-ruler:${site.theater}`,name:rulerName,birthYear:startYear-age,personality:PERSONALITIES[integer(rng,0,PERSONALITIES.length-1)],fictional:true},
    government:site.type==='strongman'?'personal_following':site.type==='city_state'?'civic_council':site.type==='tribe'?'tribal_assembly':'local_dynasty',
    maxFootholdLevel:site.type==='strongman'?2:site.type==='tribe'?2:3,...profile({value:siteSeed(seed,site.theater)},site.type,site.scale,band),
-   ...(site.type==='strongman'?{}:{civicOfficers:civicOfficers(seed,site.theater,band)}),seed:integer(rng,0,0xffffffff)});
+   ...(site.type==='strongman'?{}:{civicOfficers:civicOfficers(seed,site.theater,band,rulerName)}),seed:integer(rng,0,0xffffffff)});
  }
  return result;
 }

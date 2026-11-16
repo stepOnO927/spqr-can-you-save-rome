@@ -44,6 +44,8 @@ test('generated civic officers have stable names and pay for their real fiscal b
  const city=localEntity(state,'generated:sicilia'),officers=city.civicOfficers;
  assert.ok(officers?.steward&&officers?.captain);
  assert.notEqual(officers.steward.name[0],officers.captain.name[0]);
+ assert.equal(city.ruler.name[0].endsWith(` ${officers.steward.name[0]}`),false);
+ assert.equal(city.ruler.name[0].endsWith(` ${officers.captain.name[0]}`),false);
  assert.deepEqual(officers,localEntity(configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:273}),'generated:sicilia').civicOfficers);
  const withoutOfficers=structuredClone(state);delete localEntity(withoutOfficers,city.id).civicOfficers;
  state.month=2;withoutOfficers.month=2;
