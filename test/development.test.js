@@ -24,6 +24,29 @@ test('peaceful AI courts do not adopt an unfunded idea and bankrupt themselves o
  assert.ok(state.factions.galatia.treasury>=0,'a small neighboring command must not spend itself into insolvency before its war');
  assert.ok(Object.values(state.development.bosporus.slots).flat().some(Boolean),'the guard must still allow affordable ideas');
 });
+
+test('Mauretanian AI can learn and adopt a shared North African scout practice only with local support',()=>{
+ const makeState=support=>{
+  const s=newGrandGame('egypt');s.month=4;s.wars.push(['mauretania','numidia']);s.factions.mauretania.treasury=500;
+  for(const r of s.regions.filter(r=>r.owner==='mauretania'))r.civicSatisfaction=support;
+  return s;
+ };
+ const unsupported=makeState(44);aiTurn(unsupported,'mauretania');
+ assert.notEqual(unsupported.development.mauretania.research?.id,'numidian-mounted-scouts');
+ const s=makeState(70);aiTurn(s,'mauretania');
+ assert.equal(s.development.mauretania.research?.id,'numidian-mounted-scouts');
+ assert.equal(activeEffects(s,'mauretania').scoutReliability,undefined);
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ for(let month=0;month<4;month++)advanceDevelopment(loaded,()=>{});
+ assert.ok(loaded.development.mauretania.knownIdeas.includes('numidian-mounted-scouts'));
+ assert.equal(activeEffects(loaded,'mauretania').scoutReliability,undefined);
+ loaded.month=5;aiTurn(loaded,'mauretania');
+ assert.equal(loaded.development.mauretania.adoption?.ideaId,'numidian-mounted-scouts');
+ assert.equal(loaded.development.mauretania.adoption?.remaining,4,'foreign adoption still takes extra time');
+ for(let month=0;month<4;month++)advanceDevelopment(loaded,()=>{});
+ assert.equal(loaded.development.mauretania.slots.military[0],'numidian-mounted-scouts');
+ assert.equal(activeEffects(loaded,'mauretania').scoutReliability,.08);
+});
 import {budgetHtml} from '../budget-ui.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';

@@ -699,6 +699,7 @@ export function aiTurn(s,owner){
       if(i.id==='tax-farming'&&budget.projectedNet<0&&!unsettled||i.id==='public-works'&&unsettled)score+=3;
       if(i.id==='cultural-accommodation'&&unsettled||i.id==='rhetorical-education'&&!unsettled)score+=3;
       if(i.id==='provincial-rites-charter'&&s.religion?.[owner]?.policy==='local-rites')score+=3;
+      if(i.originCulture&&owner!==i.origin&&HOME_CULTURE[owner]===i.originCulture&&atWar&&owned.some(r=>r.culture===i.originCulture&&(r.civicSatisfaction??r.loyalty??0)>=45))score+=6;
       if((i.effects.navalPower||i.effects.navalTrade||i.effects.navalIntel||i.effects.navalRepair)&&!s.naval?.fleets.some(fleet=>fleet.owner===owner))score-=8;
       return score;
     };
@@ -719,7 +720,7 @@ export function aiTurn(s,owner){
         const slots=d.slots[i.category],empty=slots.indexOf(null);
         if(d.knownIdeas.includes(i.id)||i.id==='senatorial-consultation'&&!['senate','caesar'].includes(owner))return false;
         if(!i.prerequisites.every(id=>d.knownIdeas.includes(id))||!categoryHasRoom(i.category))return false;
-        if(i.origin&&owner!==i.origin&&!s.regions.some(r=>r.owner===owner&&(r.culture===i.origin||!s.grandMap&&r.id===i.origin)&&(r.civicSatisfaction??r.loyalty??0)>=45))return false;
+        if(i.origin&&owner!==i.origin&&!s.regions.some(r=>r.owner===owner&&(r.culture===(i.originCulture||i.origin)||!s.grandMap&&r.id===i.origin)&&(r.civicSatisfaction??r.loyalty??0)>=45))return false;
         if(i.requiresBuilding&&!s.regions.some(r=>r.owner===owner&&r.buildings.includes(i.requiresBuilding)))return false;
         if(empty<0&&f.treasury<=100+civilianReserve+i.cost+(slots.length===1?35:60))return false;
         return f.treasury>=i.cost&&ideaCompatibility(s,owner,i.id,empty>=0?empty:undefined).ok;
