@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-reported-contact-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-reported-contact-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-expedition-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-expedition-1';
 import {generatedWildernessSites} from '../local-generation.js';
 import {localEntity} from '../local-polities.js';
 import {wildernessSurveyQuote,startWildernessSurvey,advanceWildernessSurveys} from '../frontier-wilderness.js';
 import {footholdQuote,startFoothold} from '../foothold.js';
-import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-reported-contact-1';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-reported-contact-1';
+import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-expedition-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-expedition-1';
 
 const start=(seed=1)=>configureStartingDifficulty(newGame('senate'),'expert',false,{localSeed:seed});
 const wilds=state=>state.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.proceduralWilderness);

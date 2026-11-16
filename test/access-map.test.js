@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-reported-contact-1';
-import {proposeAgreement} from '../agreements.js?v=world-kings-reported-contact-1';
-import {setBorderPolicy} from '../border-access.js?v=world-kings-reported-contact-1';
-import {accessMapStatus,accessMapEntries,accessMapColor,ACCESS_MAP_COLORS} from '../map-lab/access-map.js?v=world-kings-reported-contact-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-expedition-1';
+import {proposeAgreement} from '../agreements.js?v=world-kings-expedition-1';
+import {setBorderPolicy} from '../border-access.js?v=world-kings-expedition-1';
+import {accessMapStatus,accessMapEntries,accessMapColor,ACCESS_MAP_COLORS} from '../map-lab/access-map.js?v=world-kings-expedition-1';
 
 test('access map distinguishes war, own control, commerce and closed borders',()=>{
  const s=newGame('caesar');

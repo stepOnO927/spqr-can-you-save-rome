@@ -1,53 +1,53 @@
-import {isDeliveredReport} from './person-knowledge.js?v=world-kings-reported-contact-1';
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=world-kings-reported-contact-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncCoalitionAdmissionLetters,syncCoalitionMotionLetters,syncCoalitionAidLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=world-kings-reported-contact-1';
-import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=world-kings-reported-contact-1';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=world-kings-reported-contact-1';
-import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=world-kings-reported-contact-1';
-import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=world-kings-reported-contact-1';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=world-kings-reported-contact-1';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,snapshotReportedPeople,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=world-kings-reported-contact-1';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=world-kings-reported-contact-1';
-import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=world-kings-reported-contact-1';
-import {advanceConspiracies} from './conspiracies.js?v=world-kings-reported-contact-1';
-import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=world-kings-reported-contact-1';
-import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=world-kings-reported-contact-1';
-import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=world-kings-reported-contact-1';
-import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=world-kings-reported-contact-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=world-kings-reported-contact-1';
-import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=world-kings-reported-contact-1';
-import {advancePersonalPlans} from './personal-plans.js?v=world-kings-reported-contact-1';
-import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=world-kings-reported-contact-1';
-import {advanceFocuses,focusModifiers} from './national-focus.js?v=world-kings-reported-contact-1';
-import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=world-kings-reported-contact-1';
-import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=world-kings-reported-contact-1';
+import {isDeliveredReport} from './person-knowledge.js?v=world-kings-expedition-1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=world-kings-expedition-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncCoalitionAdmissionLetters,syncCoalitionMotionLetters,syncCoalitionAidLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=world-kings-expedition-1';
+import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=world-kings-expedition-1';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=world-kings-expedition-1';
+import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=world-kings-expedition-1';
+import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=world-kings-expedition-1';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=world-kings-expedition-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,snapshotReportedPeople,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=world-kings-expedition-1';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=world-kings-expedition-1';
+import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=world-kings-expedition-1';
+import {advanceConspiracies} from './conspiracies.js?v=world-kings-expedition-1';
+import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=world-kings-expedition-1';
+import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=world-kings-expedition-1';
+import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=world-kings-expedition-1';
+import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=world-kings-expedition-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=world-kings-expedition-1';
+import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=world-kings-expedition-1';
+import {advancePersonalPlans} from './personal-plans.js?v=world-kings-expedition-1';
+import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=world-kings-expedition-1';
+import {advanceFocuses,focusModifiers} from './national-focus.js?v=world-kings-expedition-1';
+import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=world-kings-expedition-1';
+import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=world-kings-expedition-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
-import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=world-kings-reported-contact-1';
-import {initializeLocalDiscovery} from './local-discovery.js?v=world-kings-reported-contact-1';
-import {subjectRelation} from './suzerainty.js?v=world-kings-reported-contact-1';
-import {advanceAgreementProposals,sendAgreementProposal} from './agreement-negotiations.js?v=world-kings-reported-contact-1';
-import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=world-kings-reported-contact-1';
-import {respondToFrontierReports} from './frontier-response.js?v=world-kings-reported-contact-1';
-import {advanceStrategicWarnings} from './strategic-warnings.js?v=world-kings-reported-contact-1';
-import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=world-kings-reported-contact-1';
-import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,initializeCoalitionCharters,recordCoalitionSeparatePeace,coalitionPeaceExemption} from './coalitions.js?v=world-kings-reported-contact-1';
-import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=world-kings-reported-contact-1';
-import {initializeCoalitionAdmissions,advanceCoalitionAdmissions,proposeCoalitionAdmissionsAI} from './coalition-admissions.js?v=world-kings-reported-contact-1';
-import {initializeCoalitionMotions,advanceCoalitionMotions,proposeCoalitionMotionsAI} from './coalition-motions.js?v=world-kings-reported-contact-1';
-import {initializeCoalitionAssistance,advanceCoalitionAidRequests,proposeCoalitionAidAI} from './coalition-assistance.js?v=world-kings-reported-contact-1';
-import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=world-kings-reported-contact-1';
-import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=world-kings-reported-contact-1';
-import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=world-kings-reported-contact-1';
-import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=world-kings-reported-contact-1';
+import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=world-kings-expedition-1';
+import {initializeLocalDiscovery} from './local-discovery.js?v=world-kings-expedition-1';
+import {subjectRelation} from './suzerainty.js?v=world-kings-expedition-1';
+import {advanceAgreementProposals,sendAgreementProposal} from './agreement-negotiations.js?v=world-kings-expedition-1';
+import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=world-kings-expedition-1';
+import {respondToFrontierReports} from './frontier-response.js?v=world-kings-expedition-1';
+import {advanceStrategicWarnings} from './strategic-warnings.js?v=world-kings-expedition-1';
+import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=world-kings-expedition-1';
+import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,initializeCoalitionCharters,recordCoalitionSeparatePeace,coalitionPeaceExemption} from './coalitions.js?v=world-kings-expedition-1';
+import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=world-kings-expedition-1';
+import {initializeCoalitionAdmissions,advanceCoalitionAdmissions,proposeCoalitionAdmissionsAI} from './coalition-admissions.js?v=world-kings-expedition-1';
+import {initializeCoalitionMotions,advanceCoalitionMotions,proposeCoalitionMotionsAI} from './coalition-motions.js?v=world-kings-expedition-1';
+import {initializeCoalitionAssistance,advanceCoalitionAidRequests,proposeCoalitionAidAI} from './coalition-assistance.js?v=world-kings-expedition-1';
+import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=world-kings-expedition-1';
+import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=world-kings-expedition-1';
+import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=world-kings-expedition-1';
+import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=world-kings-expedition-1';
 import {initializeTerritories,transferTerritory,territoryTaxFactor,administrationQuote,startAdministration,advanceTerritories} from './territory.js';
 import {initializeLocalEntities,initializeLocalRulers,advanceLocalCivicEconomy,advanceLocalEntities,localEntity,localEntityRevenue,localContactQuote,offerLocalContact,localSubmissionQuote,offerLocalSubmission,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from './local-polities.js';
-import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing,respondBorderIncident} from './border-access.js?v=world-kings-reported-contact-1';
+import {initializeBorderPolicies,militaryAccessStatus,recordUnauthorizedCrossing,respondBorderIncident} from './border-access.js?v=world-kings-expedition-1';
 import {advanceFootholds,chooseAiFoothold,footholdShipmentQuote,startFoothold,stockFoothold} from './foothold.js';
-import {advanceExpeditionSupply} from './expedition-supply.js';
+import {advanceExpeditionSupply,armyExpeditionSupply} from './expedition-supply.js';
 import {advanceVillages,migrateVillageRecords,villageProjectQuote,startVillageProject} from './local-villages.js';
 import {planRoutes} from './route-planner.js';
 import {titleAssetQuote,settleTitleByTreaty} from './peace-titles.js';
@@ -172,8 +172,10 @@ export function previewMarch(s,armyId,destination,{unauthorized=false}={}){
   const seaCost=Math.max(2,8+(activeModifiers(s,a.owner).seaCost||0));
   if(link.sea&&faction.treasury<seaCost)return {ok:false,reason:'transport'};
   const routeWorks=buildingModifiers(region(s,a.region)).march||0,doctrine=activeModifiers(s,a.owner).march||0;
-  const months=Math.max(1,(link.sea?3:1)+(target.terrain==='hills'?1:0)+(target.terrain==='desert'?1:0)-routeWorks-doctrine+formationMarchDelta(s,a,link,target.terrain));
-  return {ok:true,months,seaCost,sea:!!link.sea,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),unauthorized:!access.allowed,reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:report?.own?target.supply:null};
+  const supplyStatus=armyExpeditionSupply(s,a).status;
+  const supplyDelay=supplyStatus==='cut_off'?2:supplyStatus==='partial'?1:0;
+  const months=Math.max(1,(link.sea?3:1)+(target.terrain==='hills'?1:0)+(target.terrain==='desert'?1:0)-routeWorks-doctrine+formationMarchDelta(s,a,link,target.terrain)+supplyDelay);
+  return {ok:true,months,supplyDelay,seaCost,sea:!!link.sea,terrain:target.terrain,hostile:!!reportedOwner&&isWar(s,a.owner,reportedOwner),unauthorized:!access.allowed,reportedOwner:reportedOwner||null,controlReport:report,food:faction.food,supply:report?.own?target.supply:null};
 }
 
 export function moveArmy(s,armyId,destination,{unauthorized=false,expedition=false}={}){
@@ -812,6 +814,11 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     if(a.order?.source==='frontier_ai')continue;
     const here=region(s,a.region),neighbors=adjacent(a.region).map(e=>region(s,e.to)).filter(Boolean);
     const now=s.year*12+s.month,feint=s.world.aiFeints?.[owner];
+    const strained=['partial','cut_off'].includes(a.expeditionSupply?.status)&&a.expeditionSupply?.strainMonths>=(a.expeditionSupply.status==='cut_off'?1:2);
+    if(strained&&(s.world.lastSupplyRecovery?.[a.id]??-Infinity)+3<=now){
+      const relief=neighbors.filter(r=>r.owner===owner&&r.administrativeStatus==='integrated'&&s.armies.filter(unit=>unit.owner===owner&&unit.region===r.id&&unit.men>0).reduce((sum,unit)=>sum+unit.men,a.men)<=r.supply*1000&&armyExpeditionSupply(s,{...a,region:r.id}).status==='full').sort((x,y)=>y.supply-x.supply)[0];
+      if(relief&&issueMilitaryOrder(s,a.id,'move',relief.id,owner).ok){s.world.lastSupplyRecovery||={};s.world.lastSupplyRecovery[a.id]=now;continue}
+    }
     if(feint?.army===a.id){
       if(a.region===feint.destination&&now>=feint.returnAt&&region(s,feint.origin)?.owner===owner){delete s.world.aiFeints[owner];if(issueMilitaryOrder(s,a.id,'move',feint.origin,owner).ok)continue}
       else if(a.region!==feint.origin&&a.region!==feint.destination||now>feint.returnAt+3)delete s.world.aiFeints[owner];

@@ -19,7 +19,9 @@ test('a confirmed multi-theater expedition advances one validated leg at a time 
   assert.equal(legion.move.to, 'gaul');
   assert.equal(legion.expedition.nextIndex, 2);
   assert.equal(upgradeSave(JSON.parse(JSON.stringify(state))).armies.find(unit => unit.id === legion.id).expedition.destination, 'gaul');
-  tick(state);
+  const secondLegMonths = legion.move.remaining;
+  assert.ok(secondLegMonths >= 1);
+  for (let month = 0; month < secondLegMonths; month++) tick(state);
   assert.equal(legion.region, 'gaul');
   assert.equal(legion.expedition.status, 'completed');
   assert.equal(startupDiagnostics(state).warnings.length, 0);

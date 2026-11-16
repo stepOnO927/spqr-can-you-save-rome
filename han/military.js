@@ -5,7 +5,7 @@
 // and fodder, horse requirements, scouting, siege, and recruitment cost. The
 // numbers are gameplay abstractions: they do not claim the precision of a
 // modern division table.
-import {ROUTES,REGIONS} from './data.js?v=world-kings-reported-contact-1';
+import {ROUTES,REGIONS} from './data.js?v=world-kings-expedition-1';
 import {EURASIAN_FACTIONS} from './eurasia-data.js';
 
 const T=(plain,hills,mountain,river,desert,steppe,oasis,urban)=>({plain,hills,mountain,river,desert,steppe,oasis,urban});

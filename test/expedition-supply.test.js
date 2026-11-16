@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame, upgradeSave} from '../engine.js';
+import {newGame, upgradeSave, previewMarch, moveArmy, tick} from '../engine.js';
 import {armyExpeditionSupply, advanceExpeditionSupply} from '../expedition-supply.js';
 import {localEntity} from '../local-polities.js';
 import {startupDiagnostics} from '../inspector-diagnostics.js';
@@ -41,4 +41,35 @@ test('a connected forward depot spends finite food on an oversized field army', 
   assert.equal(armyExpeditionSupply(state, army).status, 'partial');
   state.regions.find(region => region.id === 'narbo').owner = 'senate';
   assert.equal(armyExpeditionSupply(state, army).status, 'cut_off');
+});
+
+test('a strained field army takes longer to march and the preview matches its order', () => {
+  const state = newGame('caesar'), army = state.armies.find(unit => unit.id === 'xiii');
+  assert.equal(previewMarch(state, army.id, 'italiaN').months, 1);
+  army.region = 'roma';
+  const cutOff = previewMarch(state, army.id, 'italiaN');
+  assert.equal(cutOff.supplyDelay, 2);
+  assert.equal(cutOff.months, 3);
+  assert.equal(moveArmy(state, army.id, 'italiaN').ok, true);
+  assert.equal(army.move.remaining, cutOff.months);
+  army.move = null;
+  army.region = 'gaul'; army.men = 12000;
+  state.regions.find(region => region.id === 'gaul').administrativeStatus = 'occupied';
+  state.regions.find(region => region.id === 'narbo').administrativeStatus = 'occupied';
+  assert.equal(armyExpeditionSupply(state, army).status, 'partial');
+  assert.equal(previewMarch(state, army.id, 'narbo').supplyDelay, 1);
+});
+
+test('AI seeks an actual integrated relief point after prolonged supply strain', () => {
+  const state = newGame('senate'), army = state.armies.find(unit => unit.id === 'xiii');
+  army.region = 'italiaN';
+  army.expeditionSupply = {status: 'partial', strainMonths: 1, year: -49, month: 1};
+  const forward = state.regions.find(region => region.id === 'italiaN');
+  forward.owner = 'caesar'; forward.administrativeStatus = 'occupied'; forward.supply = 2;
+  state.world.imperium = {enabled: false};
+  tick(state);
+  assert.equal(army.expeditionSupply.status, 'partial');
+  assert.equal(army.expeditionSupply.strainMonths, 2);
+  assert.equal(army.move?.to, 'cisalpine');
+  assert.equal(state.world.lastSupplyRecovery[army.id], state.year * 12 + state.month);
 });
