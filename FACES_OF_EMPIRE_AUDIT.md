@@ -46,6 +46,20 @@ for a one-time purchase. Changing it recalculates the real payment quote and
 prevents an accidental premium from being treated as a recurring-contract
 term. A delivered-horse regression checks the higher buyer debit, seller
 receipt, reserved stock and save/load; the browser flow checks quote feedback.
+During war, AI courts now evaluate their own capital or field depots after
+monthly production and consumption. A short local grain, provisions, horse,
+iron or weapons reserve triggers a saved, temporary export restriction for
+that strategic good; the restriction lifts when the shortage or war ends.
+Player-set restrictions remain separate. New foreign orders and listings obey
+the current policy, while already prepaid caravans keep their terms and
+recurring contracts incur their existing miss and breach consequences. Known
+market partners can inspect announced restricted goods without receiving
+foreign stock totals; unrelated foreign policies stay out of the panel.
+Focused tests cover the short depot, domestic supply, in-flight delivery,
+contract breach, peace, player policy, and older saves. A browser scenario
+checks bilateral policy visibility in both languages. Cloud gates remain
+pending for this increment. The full 1,213-test local suite and 120-month
+Roman/Han simulation pass with the new policy enabled.
 
 The draft now includes main through `ad107bb6`, including its production GA4
 stream setting, foreign-heir will privacy fix and uncertain-age guardianship

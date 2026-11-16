@@ -257,6 +257,25 @@ try{
  const chineseMarket=await page.locator('#inspector').innerText();
  assert.match(chineseMarket,/商人供货提议.*暂无商人提议/s);
  assert.match(chineseMarket,/定期供货约定.*履行中.*承揽商人/s);
+ await page.locator('#lang').click();
+ await page.evaluate(async()=>{
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=guardian-age-1');
+  const {advanceEasternMarkets}=await import('/han/markets.js?v=guardian-age-1');
+  const state=newHanGame('han',{seed:117});state.tradeMarkets.embeddedRoman=true;
+  state.treaties.push({type:'market',parties:['han','parthia']});state.wars.push(['parthia','armenia'],['yuezhi','kangju']);
+  Object.assign(state.tradeMarkets.regions.ctesiphon.goods.grain,{stock:0,production:0,consumption:1});
+  Object.assign(state.tradeMarkets.regions.yuezhi.goods.iron,{stock:0,production:0,consumption:0});
+  state.armies.find(army=>army.owner==='parthia').region='ctesiphon';
+  state.month++;advanceEasternMarkets(state);
+  if(!state.tradeMarkets.emergencyExportRestrictions.parthia?.includes('grain')||!state.tradeMarkets.emergencyExportRestrictions.yuezhi?.includes('iron'))throw Error('AI emergency export control missing');
+  localStorage.setItem(SAVE_KEY('browser'),serialize(state));
+ });
+ await page.locator('#load').click();await page.locator('#trade-panel').click();
+ const policyText=await page.locator('#inspector h3').filter({hasText:'Known partner export controls'}).evaluate(el=>el.nextElementSibling.nextElementSibling.innerText);
+ assert.match(policyText,/Arsacid Parthia.*Grain/s);
+ assert.doesNotMatch(policyText,/Yuezhi|Iron|stock|inventory|\d{3,}/i,'uncontacted policy and warehouse totals remain private');
+ await page.locator('#lang').click();
+ assert.match(await page.locator('#inspector').innerText(),/贸易伙伴临时出口限制.*安息帝国.*谷物/s);
  assert.deepEqual(errors,[]);
- console.log('Han market browser smoke passed: listings, customs, paid player bid, horse delivery, remounts, merchant market house and supply proposal, save/load and bilingual panel.');
+ console.log('Han market browser smoke passed: listings, customs, paid player bid, horse delivery, remounts, merchant house and proposals, wartime partner controls, save/load and bilingual panel.');
 }finally{await browser.close()}

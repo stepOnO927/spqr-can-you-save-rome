@@ -12,6 +12,7 @@ const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
 const region=(s,id)=>s.regions.find(r=>r.id===id);
 const route=(a,b)=>ROUTES.find(r=>r.a===a&&r.b===b||r.a===b&&r.b===a);
 const tradeTreaty=(s,a,b)=>a===b||!!(treaty(s,'market',a,b)||treaty(s,'caravan',a,b));
+const exportBlocked=(markets,faction,good)=>markets.exportRestrictions[faction]?.includes(good)||markets.emergencyExportRestrictions[faction]?.includes(good);
 export const TARIFF_POLICIES=Object.freeze({low:.02,standard:.05,high:.15});
 export const MERCHANT_PROTECTION_COST=8;
 export const MARKET_HOUSE_COST=6;
@@ -62,7 +63,7 @@ function profile(r,good){
 
 export function initializeEasternMarkets(s){
  const markets=s.tradeMarkets||={regions:{},offers:[],saleOrders:[],shipments:[],transactions:[],supplyContracts:[],nextSupplyContract:1,nextSaleOrder:1,nextShipment:1,merchants:{},tariffs:{},exportRestrictions:{},transitTreasury:{},transportSpent:0,merchantFees:0,diplomacy:{attempts:[],nextAt:{}},lastTick:null};
- markets.regions||={};markets.offers||=[];if(!Array.isArray(markets.saleOrders))markets.saleOrders=[];markets.shipments||=[];markets.transactions||=[];markets.merchants||={};markets.tariffs||={};markets.exportRestrictions||={};markets.transitTreasury||={};markets.diplomacy||={attempts:[],nextAt:{}};
+ markets.regions||={};markets.offers||=[];if(!Array.isArray(markets.saleOrders))markets.saleOrders=[];markets.shipments||=[];markets.transactions||=[];markets.merchants||={};markets.tariffs||={};markets.exportRestrictions||={};markets.emergencyExportRestrictions||={};markets.transitTreasury||={};markets.diplomacy||={attempts:[],nextAt:{}};
  if(!Array.isArray(markets.militaryHorseTransfers))markets.militaryHorseTransfers=[];
  if(!Number.isSafeInteger(markets.requisitionedHorses)||markets.requisitionedHorses<0)markets.requisitionedHorses=0;
  markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};if(!Number.isSafeInteger(markets.nextSaleOrder)||markets.nextSaleOrder<1)markets.nextSaleOrder=1;markets.nextShipment||=1;markets.transportSpent??=0;markets.merchantFees??=0;markets.merchantEscortSpent??=0;markets.merchantPrivileges||={};markets.merchantPrivilegeFees??=0;
@@ -82,6 +83,7 @@ export function initializeEasternMarkets(s){
  markets.lostGoods||={};
  for(const [owner,rate] of Object.entries(markets.tariffs))markets.tariffs[owner]=Number.isFinite(rate)?clamp(rate,0,.3):TARIFF_POLICIES.standard;
  for(const [owner,goods] of Object.entries(markets.exportRestrictions))markets.exportRestrictions[owner]=Array.isArray(goods)?[...new Set(goods.filter(good=>Object.hasOwn(COMMODITIES,good)))]:[];
+ for(const [owner,goods] of Object.entries(markets.emergencyExportRestrictions))markets.emergencyExportRestrictions[owner]=Array.isArray(goods)?[...new Set(goods.filter(good=>Object.hasOwn(COMMODITIES,good)))]:[];
  for(const [faction,ids] of Object.entries(markets.merchants))if(!Array.isArray(ids))markets.merchants[faction]=ids?[ids]:[];
  for(const r of s.regions){const market=markets.regions[r.id]||={id:r.id,goods:{}};market.goods||={};for(const good of Object.keys(COMMODITIES)){const item=market.goods[good]||=profile(r,good);if(r.id==='mediterranean_gate'){item.production=0;item.consumption=0}item.produced??=0;item.consumed??=0;item.surplusDiscarded??=0}markets.regions[r.id]=market}
  return markets;
@@ -150,7 +152,7 @@ export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,q
  const contract=contractId?markets.supplyContracts.find(x=>x.id===contractId):null;
  if(contractId&&(!contract||contract.status!=='active'||month(s)<contract.nextDueAt||month(s)>=contract.expiresAt||saleOrderId||bidPremium||['seller','buyer','origin','destination','commodity','quantity'].some(key=>contract[key]!==({seller,buyer,origin,destination,commodity,quantity})[key])))return {ok:false,reason:'contract'};
  if(saleOrderId&&(!sale||sale.status!=='open'||sale.seller!==seller||sale.origin!==origin||sale.commodity!==commodity||sale.available<quantity))return {ok:false,reason:'unavailable'};
- if(buyer!==seller&&markets.exportRestrictions[seller]?.includes(commodity))return {ok:false,reason:'export_restricted'};
+ if(buyer!==seller&&exportBlocked(markets,seller,commodity))return {ok:false,reason:'export_restricted'};
  if(!external&&(atWar(s,buyer,seller)||!tradeTreaty(s,buyer,seller)))return {ok:false,reason:'access'};
  if(!sale&&stock.stock<quantity)return {ok:false,reason:'unavailable'};
  const path=tradePath(s,origin,destination,external?seller:buyer);if(!path)return {ok:false,reason:'route'};
@@ -347,14 +349,14 @@ function publishOffers(s){
  const markets=s.tradeMarkets,offers=[];
  for(const r of s.regions){if(!r.owner||!s.factions[r.owner]||r.owner===s.player)continue;const market=markets.regions[r.id];
   for(const [good,item] of Object.entries(market.goods)){
-   if(markets.exportRestrictions[r.owner]?.includes(good))continue;
+   if(exportBlocked(markets,r.owner,good))continue;
    // A non-producing market can resell a physically imported surplus. Its
    // opening buffer is two units; local consumption keeps priority over export.
    const reserve=item.production>0?Math.max(4,item.production*2):Math.max(2,item.consumption*3);
    const available=Math.max(0,item.stock-reserve);
    if(available>0)offers.push({seller:r.owner,origin:r.id,commodity:good,available,price:marketPrice(market,good),resale:item.production===0});
   }}
- for(const sale of markets.saleOrders)if(sale.status==='open'&&sale.available>0&&region(s,sale.origin)?.owner===sale.seller&&!markets.exportRestrictions[sale.seller]?.includes(sale.commodity))offers.push({seller:sale.seller,origin:sale.origin,commodity:sale.commodity,available:sale.available,price:sale.unitPrice,saleOrderId:sale.id});
+ for(const sale of markets.saleOrders)if(sale.status==='open'&&sale.available>0&&region(s,sale.origin)?.owner===sale.seller&&!exportBlocked(markets,sale.seller,sale.commodity))offers.push({seller:sale.seller,origin:sale.origin,commodity:sale.commodity,available:sale.available,price:sale.unitPrice,saleOrderId:sale.id});
  markets.offers=offers;return offers;
 }
 
@@ -571,6 +573,29 @@ export function advanceHanMilitarySupply(s){
  return null;
 }
 
+// Courts use only their own depots and known war state. This policy never
+// rewrites a player's manual controls or the price of cargo already in transit.
+function updateEmergencyExportRestrictions(s){
+ const markets=s.tradeMarkets;if(!s.wars?.length&&!Object.keys(markets.emergencyExportRestrictions).length)return;
+ const atWarOwners=new Set((s.wars||[]).flat()),byOwner=new Map(),armySites=new Map();
+ for(const site of s.regions){if(!site.owner)continue;if(!byOwner.has(site.owner))byOwner.set(site.owner,[]);byOwner.get(site.owner).push(site)}
+ for(const army of s.armies)if(army.men>0){if(!armySites.has(army.owner))armySites.set(army.owner,new Set());armySites.get(army.owner).add(army.region)}
+ for(const faction of new Set([...Object.keys(markets.emergencyExportRestrictions),...atWarOwners])){
+  if(faction===s.player)continue;
+  const owned=byOwner.get(faction)||[];
+  if(!atWarOwners.has(faction)||!owned.length){delete markets.emergencyExportRestrictions[faction];continue}
+  const depots=owned.filter(site=>site.kind==='capital'||site.id===faction||armySites.get(faction)?.has(site.id));
+  if(!depots.length)depots.push(owned[0]);
+  const goods=['grain','provisions','horses','iron','weapons'].filter(good=>depots.some(site=>{
+   const item=markets.regions[site.id]?.goods?.[good];if(!item)return false;
+   const reserve=good==='grain'?Math.max(2,item.consumption*3):good==='provisions'?1:2;
+   return item.stock<reserve;
+  }));
+  if(goods.length)markets.emergencyExportRestrictions[faction]=goods;
+  else delete markets.emergencyExportRestrictions[faction];
+ }
+}
+
 export function advanceEasternMarkets(s){
  const markets=initializeEasternMarkets(s),now=month(s);if(markets.lastTick===now)return markets;
  markets.lastTick=now;
@@ -587,6 +612,7 @@ export function advanceEasternMarkets(s){
   const limit=Math.max(80,item.production*24);if(item.stock>limit){item.surplusDiscarded=(item.surplusDiscarded||0)+item.stock-limit;item.stock=limit}
  }
  for(const market of Object.values(markets.regions))for(const [good,item] of Object.entries(market.goods))item.price=marketPrice(market,good);
+ updateEmergencyExportRestrictions(s);
  advanceShipments(s);publishOffers(s);advanceEasternSupplyContracts(s,now);
  if(s.month%3===0)advanceHanMilitarySupply(s);
  if((!markets.embeddedRoman||markets.autonomousEnabled)&&s.month%3===0){advanceEasternMarketAI(s);publishOffers(s)}
