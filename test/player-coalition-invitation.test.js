@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=reported-contact-1';
+import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=audience-silence-1';
 import {sendCoalitionInvitation,advanceCoalitionInvitations,answerCoalitionInvitation} from '../coalition-negotiations.js?v=reported-contact-1';
 import {receivedMail,replyToLetter,syncCoalitionLetters} from '../epistulae.js?v=reported-contact-1';
 

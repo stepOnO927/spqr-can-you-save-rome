@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=reported-contact-1';
+import {newGame,upgradeSave} from '../engine.js?v=audience-silence-1';
 import {sendLetter,replyToLetter,advanceMail,receivedMail,gatheringPlan} from '../epistulae.js?v=reported-contact-1';
 import {mailboxHtml} from '../mail-ui.js?v=reported-contact-1';
 import {createFictionalPerson} from '../dynasties.js?v=reported-contact-1';

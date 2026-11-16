@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=reported-contact-1';
+import {newGame,upgradeSave} from '../engine.js?v=audience-silence-1';
 import {createFictionalPerson} from '../dynasties.js?v=reported-contact-1';
 import {addReport} from '../character-system.js?v=reported-contact-1';
 import {reportedPersonName,storedCorrespondentName} from '../person-knowledge.js?v=reported-contact-1';

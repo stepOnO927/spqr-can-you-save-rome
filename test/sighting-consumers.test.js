@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,sendInquiry} from '../engine.js?v=reported-contact-1';
+import {newGame,upgradeSave,sendInquiry} from '../engine.js?v=audience-silence-1';
 import {buildChessboard} from '../chessboard.js?v=reported-contact-1';
 import {createPlan,assignRole,assessPlan} from '../battle-plans.js?v=reported-contact-1';
 import {reportedFrontierThreats} from '../frontier-response.js?v=reported-contact-1';
