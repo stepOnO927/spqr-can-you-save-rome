@@ -14,9 +14,11 @@ try{
  const button=page.locator('#local-trade');assert.equal(await button.isDisabled(),false);await button.click();
  await page.locator('#advance').click();await page.locator('#advance').click();
  await marker.evaluate(element=>element.click());assert.match(await page.locator('#command-detail').innerText(),/Local trade compact: 24 months remain/);
+ assert.match(await page.locator('#command-detail').innerText(),/Simulated local accounts 3\/-49/);
  await page.locator('#save').click();
  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1'))),city=saved.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='massilia');
  assert.equal(city.lastOutcome.proposal,'trade');assert.equal(city.lastOutcome.accepted,true);
+ assert.equal(city.lastCivicBudget.month,3);assert.equal(city.lastCivicBudget.production,2);
  assert.deepEqual({food:city.food,treasury:city.treasury,trade:city.lastTrade?.food}, {food:10,treasury:23,trade:2});
  assert.equal(city.controller,'massilia');assert.equal(city.access.caesar,undefined);
  await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=world-kings-trade-1');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:newGame('caesar')}))});
