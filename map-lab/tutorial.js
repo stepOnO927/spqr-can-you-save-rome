@@ -18,7 +18,7 @@ export function tutorialTurnProgress(state,side,selectedId){
 
 // Each transition below checks a real campaign action and the resulting state.
 // Locating a control never submits an order or completes a lesson.
-export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[],onFocus=()=>{},skipInitial=false}){
+export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[],onFocus=()=>{},onCombatPractice=()=>{},skipInitial=false}){
  const $=selector=>document.querySelector(selector);
  const box=$('#guide'),pointer=$('#guide-pointer');
  let running=false,paused=false,step=0,phase='preview',faction='caesar',armyId='',turnBefore=null,direction='',result='',highlight=null,timer=null;
@@ -28,12 +28,12 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
   return liveArmy(state,armyId,faction)||state.armies.find(army=>army.owner===faction&&army.men>0&&getRoutes(army.id).some(route=>route.ok))||state.armies.find(army=>army.owner===faction&&army.men>0);
  };
  const routes=()=>pickArmy()?getRoutes(pickArmy().id).filter(route=>route.ok):[];
- const safeRoute=()=>routes().find(route=>route.owner===faction)||routes()[0];
+ const safeRoute=()=>routes().find(route=>route.owner===faction);
  const labels=()=>language()==='zh'?[
   ['认清你的战区','点击地图上属于你的城市，查看战区归属。','城市点不到？按“指给我看”，地图会移动到它。'],
   ['选择军队','点击地图上的己方军旗，查看人数、指挥官和位置。','军旗被遮挡？按“指给我看”。'],
   ['查看补给','在军队详情中点“查看补给”，了解粮食和当地承载上限。','详情不见了？按“指给我看”重新打开军队。'],
-  ['下第一道命令',phase==='defend'?'当前没有合法行军路线。点“防御”先守住阵地。':phase==='preview'?'先选一个可到达的目的地，只看行程和风险；预览免费。':'看过路线后，点“确认命令”。也可以选别的路线。','不必攻击强敌；可选己方战区。若路线变了，重新选择。'],
+  ['下第一道命令',phase==='defend'?'当前没有安全的己方行军路线。点“防御”先守住阵地。':phase==='preview'?'先选一个可到达的目的地，只看行程和风险；预览免费。':'看过路线后，点“确认命令”。也可以选别的路线。','不必攻击强敌；可选己方战区。若路线变了，重新选择。'],
   ['推进一个月','命令需要时间。点击“推进一月”，观察真实结算。','若命令已取消，请重新下令；也可以先防守再推进。'],
   ['阅读结果','打开“编年史”，查看刚才这一月真正发生了什么。','没有战斗也正常；编年史仍会记录本月变化。'],
   ['做一个政策决定','查看资源后，选择与当前不同的税率；它会改变今后的收支和忠诚。','资源入口在窄屏菜单里。按“指给我看”可定位。'],
@@ -42,7 +42,7 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
   ['Find your territory','Select a city under your control to inspect its theater.','Cannot see the city? Show me will move the map to it.'],
   ['Select an army','Select one of your standards to see its soldiers, commander and location.','If a marker is obscured, use Show me.'],
   ['Inspect supply','In the army details, open Supply to check food and local capacity.','If the panel is closed, Show me will reopen the army.'],
-  ['Give your first order',phase==='defend'?'No legal march is available. Choose Defend to hold your position.':phase==='preview'?'Choose a reachable destination to preview its time and risk. Previewing is free.':'After reading the route, select Confirm order. You may choose a different route.','You need not attack a stronger enemy. Choose a friendly route when available.'],
+  ['Give your first order',phase==='defend'?'No safe friendly march is available. Choose Defend to hold your position.':phase==='preview'?'Choose a reachable destination to preview its time and risk. Previewing is free.':'After reading the route, select Confirm order. You may choose a different route.','You need not attack a stronger enemy. Choose a friendly route when available.'],
   ['Advance one month','Orders take time. Advance one month to resolve real events.','If the order was cancelled, issue another; defense is also possible.'],
   ['Read the outcome','Open the Chronicle to see what actually happened this month.','A quiet month still has a real report.'],
   ['Make a policy choice','Open Resources and choose a different tax rate. It changes future income and loyalty.','On narrow screens Resources is in the menu. Show me will locate it.'],
@@ -112,8 +112,9 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
   if(step===7)for(const [id,en,zh] of [['military','Military','军事'],['diplomacy','Diplomacy','外交'],['development','Development','发展']]){
    const button=document.createElement('button');button.type='button';button.dataset.direction=id;button.textContent=text(language,en,zh);button.onclick=()=>{direction=id;result=text(language,'Direction saved: '+en+'.','已选择：'+zh+'。');step=8;persist();render()};choices.append(button)
   }
-  if(step===3&&phase==='preview'&&!routes().length){
-   phase='defend';persist();render();feedback(text(language,'No legal march is available. A defensive order is a valid alternative.','目前没有合法行军路线；可先下防御命令。'));return
+  if(step===8&&state()?.training){const button=document.createElement('button');button.type='button';button.id='training-combat-practice';button.textContent=text(language,'Preview a practice battle','预览训练战斗');button.onclick=()=>{stop('complete');onCombatPractice()};choices.append(button)}
+  if(step===3&&phase==='preview'&&!safeRoute()){
+   phase='defend';persist();render();feedback(text(language,'No safe friendly march is available. A defensive order is a valid alternative.','目前没有安全的己方行军路线；可先下防御命令。'));return
   }
   place()
  }

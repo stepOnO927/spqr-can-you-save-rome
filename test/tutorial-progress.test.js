@@ -69,3 +69,34 @@ test('campaign start options preserve faction and economic handicap',()=>{
  browser.get('#roman-faction').value='senate';browser.get('#difficulty').value='expert';browser.get('#economic-handicap').checked=true;
  try{createTutorial({language:()=> 'en',getState:()=>newGame('senate'),onReset:(...args)=>calls.push(args),onMode(){},skipInitial:true});browser.get('#start-game').onclick();browser.get('#start-free').onclick();assert.deepEqual(calls,[['expert','senate',true],['expert','senate',true]])}finally{browser.restore()}
 });
+
+test('tutorial offers defense when only hostile routes are legal',()=>{
+ const browser=fakeBrowser(),s=newGame('caesar');
+ browser.get('#roman-faction').value='caesar';browser.get('#difficulty').value='beginner';
+ try{
+  createTutorial({language:()=> 'en',getState:()=>s,getRoutes:()=>[{to:'roma',ok:true,owner:'senate'}],onReset(){},onMode(){},skipInitial:true});
+  browser.get('#start-game').onclick();
+  browser.send({type:'territory',id:'cisalpine'});
+  browser.send({type:'army',id:'xiii',own:true});
+  browser.send({type:'supply',id:'xiii'});
+  assert.equal(s.tutorial.step,3);
+  assert.equal(s.tutorial.phase,'defend');
+  assert.match(browser.get('#guide-body').textContent,/safe friendly march/);
+  browser.get('#guide-skip').onclick();
+ }finally{browser.restore()}
+});
+
+test('training combat option previews without issuing an order',()=>{
+ const browser=fakeBrowser(),state=newGame('caesar'),calls=[];state.training=true;
+ try{
+  const ui=createTutorial({language:()=> 'en',getState:()=>state,onReset(){},onMode(){},onCombatPractice:()=>calls.push('preview'),skipInitial:true});
+  ui.restore({version:2,running:true,step:8,faction:'caesar'});
+  const ordersBefore=JSON.stringify(state.armies.map(army=>army.move));
+  const practice=browser.get('#guide-choices').children.find(button=>button.id==='training-combat-practice');
+  assert.ok(practice);
+  practice.onclick();
+  assert.deepEqual(calls,['preview']);
+  assert.equal(state.tutorial.running,false);
+  assert.equal(JSON.stringify(state.armies.map(army=>army.move)),ordersBefore);
+ }finally{browser.restore()}
+});

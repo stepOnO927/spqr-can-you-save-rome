@@ -38,6 +38,7 @@ jobs:
               node tools/inspector-smoke.mjs
               node tools/hundred-days-smoke.mjs
               node tools/roman-hundred-days-smoke.mjs
+              node tools/training-combat-smoke.mjs
               node tools/save-transfer-controls-smoke.mjs
               node tools/storage-denied-smoke.mjs
               node tools/travel-smoke.mjs
