@@ -888,6 +888,11 @@ opening the profile does not create or revise a person. Homeland, approximate
 age, allegiance, reputation, risk tolerance, actual delivered and lost
 caravans, and the existing working privilege actions remain together. The
 portrait is labeled original game artwork rather than an attested likeness.
+The first cloud browser pass exposed a false Chinese text expectation and a
+real merchant-origin error: recruitment at a foreign seller market set that
+place as a buyer-side merchant's homeland. New merchants now take a home in
+their own realm and keep the foreign hiring market as a dated entry event;
+existing save identities are not rewritten.
 All 52 playable non-Han courts in the eastern campaign now have a simultaneous
 succession regression covering saved identity, title, portrait and governing
 effect. A woman who rules a kingdom receives a corresponding queen title;

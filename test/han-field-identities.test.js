@@ -80,3 +80,14 @@ test('Han civil war and uprising commanders retain Han identity without inventin
  assert.equal(s.rulers.rebels,undefined);
  assert.deepEqual(armies.map(army=>[s.armies.find(a=>a.id===army.id).commander,s.persons[army.commander].name]),saved);
 });
+
+test('a merchant hired abroad keeps an owned homeland distinct from the hiring market',()=>{
+ let s=newHanGame('han',{seed:42});
+ const id=createMarketMerchant(s,'han','kangju'),person=s.persons[id];
+ assert.equal(person.location,'kangju');
+ assert.equal(s.regions.find(r=>r.id===person.homeland)?.owner,'han');
+ assert.equal(person.history[0].region,'kangju');
+ s=loadHanSave(serialize(s));
+ assert.equal(s.persons[id].homeland,person.homeland);
+ assert.equal(s.persons[id].location,'kangju');
+});

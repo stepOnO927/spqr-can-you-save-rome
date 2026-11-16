@@ -61,6 +61,7 @@ try{
  assert.match(await merchantCard.locator('img').getAttribute('src'),/^data:image\/svg\+xml,/);
  await merchantCard.locator('summary').click();
  assert.match(await merchantCard.innerText(),/Cultural origin.*Homeland.*Approximate age.*Delivered caravans 0.*original game artwork/s);
+ assert.match(await merchantCard.innerText(),/Homeland: Chang’an/);
  await page.locator('[data-east-grant-merchant][data-duration="24"]').first().click();
  assert.match(await page.locator('#message').innerText(),/Merchant privilege granted/);
  assert.match(await page.locator('#inspector').innerText(),/Begins with the next caravan/);
@@ -108,7 +109,8 @@ try{
  assert.match(await page.locator('#inspector').innerText(),/拨付军马/);
  assert.match(await page.locator('#inspector').innerText(),/商人特权/);
  await page.locator('[data-merchant-person] summary').first().click();
- assert.match(await page.locator('[data-merchant-person]').first().innerText(),/文化来源.*故乡.*约龄.*运抵批次 1.*游戏创作/s);
+ assert.match(await page.locator('[data-merchant-person]').first().innerText(),/文化来源.*故乡.*约龄.*运抵批次 1.*本战役原创/s);
+ assert.match(await page.locator('[data-merchant-person]').first().innerText(),/故乡: 长安/);
  assert.match(await page.locator('#inspector').innerText(),/过境关税/);
  assert.match(await page.locator('#inspector').innerText(),/出口管制/);
  assert.match(await page.locator('#inspector').innerText(),/挂牌出售/);

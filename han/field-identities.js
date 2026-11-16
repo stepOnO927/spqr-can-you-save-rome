@@ -66,6 +66,9 @@ export function createMarketMerchant(s,faction,location){
  const serial=s.nextMerchantPerson-1,start=serial%pool.names.length;
  let name=null;for(let i=0;i<pool.names.length;i++){const candidate=pool.names[(start+i)%pool.names.length];if(!used.has(candidate[0])){name=candidate;break}}
  if(!name){const candidate=pool.names[start];name=[`${candidate[0]} (${serial})`,`${candidate[1]}（${serial}）`]}
- const birth=s.year-35,person={id,name:[...name],record:'fictional',culture:[...pool.culture],faction,role:'merchant',profession:'merchant',title:['Caravan merchant','商队商人'],homeland:location,location,sex:'unknown',birth,death:null,alive:true,ambition:40,competence:55,loyalty:60,wealth:0,riskTolerance:[35,50,65,80][serial%4],spouse:[],history:[{year:s.year,month:s.month,kind:'entered_market'}],appearanceSeed:serial*2654435761>>>0};
+ // A foreign market is the place of hiring, not evidence that the merchant
+ // was born there. Generate a home in the merchant's own realm when possible.
+ const homeland=s.regions.find(r=>r.owner===faction)?.id||location;
+ const birth=s.year-35,person={id,name:[...name],record:'fictional',culture:[...pool.culture],faction,role:'merchant',profession:'merchant',title:['Caravan merchant','商队商人'],homeland,location,sex:'unknown',birth,death:null,alive:true,ambition:40,competence:55,loyalty:60,wealth:0,riskTolerance:[35,50,65,80][serial%4],spouse:[],history:[{year:s.year,month:s.month,kind:'entered_market',region:location}],appearanceSeed:serial*2654435761>>>0};
  s.persons[id]=person;recordBirth(s,{id,birthSurname:null,birth,sex:'unknown'});return id;
 }
