@@ -103,9 +103,17 @@ test('a recent personal meeting can help meet the alliance threshold without gua
 });
 test('contact credit uses only recorded meetings and expires without revealing hidden foreign state',()=>{
  const s=newGame('senate');s.world.personalRelations['cicero:cleopatra']={trust:100,meetings:1};assert.equal(personalDiplomaticCredit(s,'senate','egypt'),0);
- s.meetings.push({actor:'senate',targetFaction:'egypt',person:'cicero',target:'cleopatra',status:'met',year:s.year,month:s.month});assert.equal(personalDiplomaticCredit(s,'senate','egypt'),10);
- s.world.characters.cleopatra.faction='parthia';s.world.characters.cleopatra.health='dying';s.world.characters.cleopatra.location='parthia';assert.equal(personalDiplomaticCredit(s,'senate','egypt'),10);
- s.year+=3;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),10);s.month++;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),0);
+ s.meetings.push({actor:'senate',targetFaction:'egypt',person:'cicero',target:'cleopatra',status:'met',year:s.year,month:s.month});assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1);
+ s.world.characters.cleopatra.faction='parthia';s.world.characters.cleopatra.health='dying';s.world.characters.cleopatra.location='parthia';s.world.personalRelations['cicero:cleopatra'].trust=-100;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1);
+ s.year+=3;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1);s.month++;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),0);
+});
+test('personal diplomatic credit uses the latest meeting snapshot, not hidden subsequent trust',()=>{
+ let s=newGame('senate');s.world.characters.cicero.location='egypt';s.world.intelSeed=1000;assert.ok(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok);
+ advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'met');assert.equal(s.meetings[0].contactCredit,1);
+ for(const trust of [-100,0,100]){s.world.personalRelations['cicero:cleopatra'].trust=trust;assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1)}
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(personalDiplomaticCredit(s,'senate','egypt'),1);
+ s.month++;s.world.personalRelations['cicero:cleopatra'].trust=-30;s.world.intelSeed=1000;assert.ok(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);
+ assert.equal(s.meetings[0].status,'met');assert.equal(s.meetings[0].contactCredit,0);assert.equal(personalDiplomaticCredit(s,'senate','egypt'),0);
 });
 
 test('missing participants cannot travel or complete a personal audience, even with a stale location',()=>{
