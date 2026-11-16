@@ -12,15 +12,15 @@ function opening(seed,allied){const s=newGame('caesar');s.difficulty='expert';s.
  return s}
 for(const allied of [false,true])for(let i=1;i<=seeds;i++){
  const seed=(Math.imul(i,2654435761)^0x1a2b)>>>0,s=opening(seed,allied);
- const times=[],defeats={},recovered=new Set();
+ const times=[],cpuTimes=[],defeats={},recovered=new Set();
  for(let m=0;m<months;m++){
-  const before=Object.fromEntries(s.armies.map(a=>[a.id,a.men]));const t=performance.now();tick(s,{autoplayPlayer:true});times.push(performance.now()-t);
+  const before=Object.fromEntries(s.armies.map(a=>[a.id,a.men]));const usage=process.cpuUsage(),t=performance.now();tick(s,{autoplayPlayer:true});times.push(performance.now()-t);const cpu=process.cpuUsage(usage);cpuTimes.push((cpu.user+cpu.system)/1000);
   for(const b of (s.battles||[]).filter(b=>b.year===s.year&&b.month===s.month)){const loser=b.attackerWins?b.defender.owner:b.attacker.owner;defeats[loser]=(defeats[loser]||0)+1}
   for(const a of s.armies)if(a.reorg&&defeats[a.owner])recovered.add(a.owner);
  }
  const plans=s.world.battlePlans,focus=s.world.nationalFocus;
  const run={seed,
-  msPerMonth:{mean:Math.round(times.reduce((a,b)=>a+b,0)/times.length*10)/10,max:Math.round(Math.max(...times)*10)/10},
+  msPerMonth:{mean:Math.round(times.reduce((a,b)=>a+b,0)/times.length*10)/10,max:Math.round(Math.max(...times)*10)/10,slowestMonth:times.indexOf(Math.max(...times))+1,cpuAtSlowest:Math.round(cpuTimes[times.indexOf(Math.max(...times))]*10)/10},
   saveBytes:JSON.stringify(s).length,
   focuses:Object.fromEntries(Object.entries(focus).map(([k,v])=>[k,{completed:v.completed.length,abandoned:v.history.filter(h=>h.event==='abandoned').length,invalidated:v.history.filter(h=>h.event==='invalidated').length}])),
   formations:{templates:Object.keys(s.world.formations.templates).length,organizedArmies:s.armies.filter(a=>a.formation).map(a=>`${a.owner}:${a.formation.name}`),reorganizing:s.armies.filter(a=>a.reorg).length},
@@ -32,6 +32,7 @@ for(const allied of [false,true])for(let i=1;i<=seeds;i++){
  (allied?report.alliedFront:report.runs).push(run);
 }
 const slowestMonth=Math.max(...report.runs.map(r=>r.msPerMonth.max));
+if(slowestMonth>=300)console.error('Simulation timing details:',JSON.stringify(report.runs.map(({seed,msPerMonth})=>({seed,...msPerMonth}))));
 assert.ok(slowestMonth<300,`monthly simulation must stay below 300 ms; observed ${slowestMonth} ms`);
 assert.ok(report.runs.every(r=>Object.values(r.focuses).filter(f=>f.completed>0).length>=6),'AI courts complete focuses');
 assert.ok(report.runs.some(r=>r.plans.total>0),'AI courts plan operations');
