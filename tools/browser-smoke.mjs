@@ -133,7 +133,10 @@ try{
  const foreignSave=await page.evaluate(()=>localStorage.getItem('spqr-save-3'));
  await page.locator('#new').click();assert.deepEqual(await page.locator('#faction-choice option').evaluateAll(options=>options.map(o=>o.value)),['caesar','senate','han']);assert.equal(await page.locator('#dynasty-scenario, #start-dynasty').count(),0);
  await page.locator('#slot-choice').selectOption('3');await page.locator('[data-slot="load"]').click();assert.match(await page.locator('.toast').innerText(),/已从栏位读取战役 3/);assert.equal(await page.locator('[data-army="egyptguard"]').count(),1);assert.equal(await page.evaluate(()=>localStorage.getItem('spqr-save-3')),foreignSave);
- await page.locator('#new').click();await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#faction-choice').selectOption('caesar');await page.locator('.setup-advanced summary').click();await page.locator('#campaign-guide').waitFor({state:'visible'});await page.locator('#campaign-guide').uncheck();await page.locator('#start-campaign').click();
+ await page.locator('#new').click();await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#faction-choice').selectOption('caesar');
+ // Selecting a faction can rerender the setup panel. Keep its details open
+ // before interacting with the guide checkbox rather than toggling them.
+ await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#campaign-guide').uncheck();assert.equal(await page.locator('#campaign-guide').isChecked(),false);await page.locator('#start-campaign').click();
  assert.equal(await page.locator('[data-army="italy"]').count(),1,'frontier armies can be reported');
  assert.equal(await page.locator('[data-army="egyptguard"]').count(),0,'distant armies are not automatically revealed');
  await page.locator('#open-atlas').click();await page.waitForFunction(()=>document.querySelector('[data-army="italy"]'));
