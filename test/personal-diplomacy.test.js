@@ -69,6 +69,14 @@ test('a meeting needs co-location and creates only the observer’s dated report
 test('personal audience may be refused or unanswered and records persist',()=>{
  for(const [seed,expected] of [[0,'declined'],[1972,'no_reply']]){const s=newGame('senate');s.world.characters.cicero.location='egypt';s.world.intelSeed=seed;requestPersonalMeeting(s,'cicero','cleopatra');advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,expected);assert.deepEqual(s.world.personalRelations,{});assert.equal(upgradeSave(JSON.parse(JSON.stringify(s))).meetings[0].status,expected)}
 });
+test('an unanswered request does not reveal the recipient’s hidden condition or location',()=>{
+ const changes=[()=>{},c=>{c.location='parthia'},c=>{c.alive=false;c.health='deceased'},c=>{c.missing={origin:'egypt',remaining:2}},c=>{c.faction='parthia'},c=>{c.health='dying'}];
+ for(const change of changes){
+  let s=newGame('senate');s.world.characters.cicero.location='egypt';assert.ok(requestPersonalMeeting(s,'cicero','cleopatra','egypt').ok);change(s.world.characters.cleopatra);
+  advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'pending');s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.intelSeed=1972;advancePersonalDiplomacy(s);
+  assert.equal(s.meetings[0].status,'no_reply');assert.equal(s.log[0].zh,'个人会面请求没有收到答复。');assert.equal(s.knowledge.senate.egypt.reports.length,0);assert.deepEqual(s.world.personalRelations,{});
+ }
+});
 test('ordinary campaign month advancement progresses personal requests',()=>{
  const s=newGame('senate');s.world.characters.cicero.location='egypt';assert.equal(requestPersonalMeeting(s,'cicero','cleopatra').ok,true);tick(s);assert.equal(s.meetings[0].remaining,1);tick(s);assert.notEqual(s.meetings[0].status,'pending');
 });
