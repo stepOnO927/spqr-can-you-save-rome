@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,upgradeSave} from '../engine.js?v=reported-contact-1';
+import {newGame,upgradeSave} from '../engine.js?v=audience-silence-1';
 import {assignSuccession} from '../characters.js?v=succession-ui-recovery-1';
 import {advanceGovernments} from '../governance.js?v=reported-contact-1';
 import {advanceDynasties,createFictionalPerson} from '../dynasties.js?v=reported-contact-1';
 import {fictionalPortraitKey,observedFictionalPortrait,assignCourtPortrait} from '../portrait-registry.js?v=born-portraits-nine-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=reported-contact-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=audience-silence-1';
 import {addReport} from '../character-system.js?v=reported-contact-1';
 
 const rulers={armenia:'artavasdes',numidia:'juba',galatia:'deiotarus',bosporus:'pharnaces'};
