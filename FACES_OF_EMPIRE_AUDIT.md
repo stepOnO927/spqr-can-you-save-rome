@@ -120,8 +120,7 @@ measured 26–32 CPU ms of added work after the two manufactured military goods
 were introduced; its ceiling is now 40 ms, still under 8% of the shortest
 500 ms automatic turn interval. Eight isolated repeats pass. The previous
 GitHub head `9dcbd696` passed quality, all three browser jobs, Pages and Poki
-checks. Later pushed heads have not produced reported workflow runs yet;
-their local tests remain separate evidence. Main's
+checks. Later branch increments and their checks are tracked below. Main's
 mission-result inbox is also integrated: received operations appear once as
 saved correspondence, while pending or unanswered missions remain absent.
 Its unit cases and Chromium inbox flow pass after restoring the shared module
@@ -292,6 +291,11 @@ ledger fills without scanning every historical shipment each quarter. Older
 saves rebuild that index once from delivered shipments. Future-dated records
 remain unusable and a sale expires after 24 months; save/reload and migration
 regressions cover a full ledger.
+The 36-month military simulation continues to require low wall-time mean and
+95th percentile for every seed. Its worst-month one-second bound now measures
+actual process CPU work, so an isolated CI runner scheduling pause cannot be
+mistaken for a game calculation stall; the reported wall-time maximum remains
+visible for diagnosis.
 
 The atlas now has a trade map mode tied to the existing market and route
 simulation. It shows owned market grain stocks, prices, production and demand;

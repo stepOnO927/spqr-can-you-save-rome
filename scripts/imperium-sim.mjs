@@ -12,15 +12,17 @@ function opening(seed,allied){const s=newGame('caesar');s.difficulty='expert';s.
  return s}
 for(const allied of [false,true])for(let i=1;i<=seeds;i++){
  const seed=(Math.imul(i,2654435761)^0x1a2b)>>>0,s=opening(seed,allied);
- const times=[],defeats={},recovered=new Set();
+ const times=[],cpuTimes=[],defeats={},recovered=new Set();
  for(let m=0;m<months;m++){
-  const start=performance.now();tick(s,{autoplayPlayer:true});times.push(performance.now()-start);
+  const start=performance.now(),cpuStart=process.cpuUsage();tick(s,{autoplayPlayer:true});times.push(performance.now()-start);
+  const cpu=process.cpuUsage(cpuStart);cpuTimes.push((cpu.user+cpu.system)/1000);
   for(const b of (s.battles||[]).filter(b=>b.year===s.year&&b.month===s.month)){const loser=b.attackerWins?b.defender.owner:b.attacker.owner;defeats[loser]=(defeats[loser]||0)+1}
   for(const a of s.armies)if(a.reorg&&defeats[a.owner])recovered.add(a.owner);
  }
- const plans=s.world.battlePlans,focus=s.world.nationalFocus,ordered=[...times].sort((a,b)=>a-b);
+ const plans=s.world.battlePlans,focus=s.world.nationalFocus,ordered=[...times].sort((a,b)=>a-b),cpuMax=Math.max(...cpuTimes);
  const run={seed,
   msPerMonth:{mean:Math.round(times.reduce((a,b)=>a+b,0)/times.length*10)/10,p95:Math.round(ordered[Math.ceil(ordered.length*.95)-1]*10)/10,max:Math.round(ordered.at(-1)*10)/10},
+  maxCpuMsPerMonth:Math.round(cpuMax*10)/10,
   saveBytes:JSON.stringify(s).length,
   focuses:Object.fromEntries(Object.entries(focus).map(([k,v])=>[k,{completed:v.completed.length,abandoned:v.history.filter(h=>h.event==='abandoned').length,invalidated:v.history.filter(h=>h.event==='invalidated').length}])),
   formations:{templates:Object.keys(s.world.formations.templates).length,organizedArmies:s.armies.filter(a=>a.formation).map(a=>`${a.owner}:${a.formation.name}`),reorganizing:s.armies.filter(a=>a.reorg).length},
@@ -31,10 +33,9 @@ for(const allied of [false,true])for(let i=1;i<=seeds;i++){
  upgradeSave(JSON.parse(JSON.stringify(s)));
  (allied?report.alliedFront:report.runs).push(run);
 }
-// A single runner scheduling pause is not a sustained simulation regression.
-// Keep a hard bound on the worst month and require typical and tail turns to
-// remain responsive across every independent seed.
-assert.ok(report.runs.every(r=>r.msPerMonth.mean<100&&r.msPerMonth.p95<300&&r.msPerMonth.max<1000),'monthly simulation must stay bounded: '+JSON.stringify(report.runs.map(r=>({seed:r.seed,ms:r.msPerMonth}))));
+// Wall-time mean and tail catch sustained pauses. The hard single-month bound
+// uses process CPU time so an unrelated runner scheduling pause cannot fail it.
+assert.ok(report.runs.every(r=>r.msPerMonth.mean<100&&r.msPerMonth.p95<300&&r.maxCpuMsPerMonth<1000),'monthly simulation must stay bounded: '+JSON.stringify(report.runs.map(r=>({seed:r.seed,wallMs:r.msPerMonth,cpuMax:r.maxCpuMsPerMonth}))));
 assert.ok(report.runs.every(r=>Object.values(r.focuses).filter(f=>f.completed>0).length>=6),'AI courts complete focuses');
 assert.ok(report.runs.some(r=>r.plans.total>0),'AI courts plan operations');
 console.log(JSON.stringify(report,null,1));
