@@ -34,13 +34,13 @@ import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visi
 import historical from '../historical-territories.js?v=phase-x-1';
 import republicanRoads from '../republican-roads.js?v=phase-x-1';
 import rivers from '../rivers.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=audience-silence-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, queueMission, setTax, personalDiplomaticCredit} from '../engine.js?v=contact-snapshot-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {identity,factionMark} from '../identity.js?v=phase-x-1';
 import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=succession-ui-recovery-1';
-import {createCharacterUI} from './character-ui.js?v=audience-silence-1';
+import {createCharacterUI} from './character-ui.js?v=contact-snapshot-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=born-portraits-nine-1';
-import {renderAidRequest} from '../strategic-aid-ui.js?v=audience-silence-1';
+import {renderAidRequest} from '../strategic-aid-ui.js?v=contact-snapshot-1';
 import {reportedArmies,visiblePersonName} from '../character-system.js?v=guardian-age-1';
 import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=first-command-1';
 import {friendlyPersonnelInTheater} from './personnel.js?v=phase-x-1';

@@ -14,15 +14,17 @@ const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.l
 // Credit reflects the sender's own recent contacts, not the foreign person's
 // hidden current allegiance, health, location, or negotiating authority.
 export function personalDiplomaticCredit(s,actor,target){
- initializeWorld(s);const now=s.year*12+s.month;let best=0;
+ initializeWorld(s);const now=s.year*12+s.month,latest=new Map();
  for(const meeting of s.meetings){
   if(meeting.actor!==actor||meeting.targetFaction!==target||meeting.status!=='met')continue;
   const year=meeting.resolvedYear??meeting.year,month=meeting.resolvedMonth??meeting.month,age=now-(year*12+month),own=s.world.characters[meeting.person];
   if(!Number.isFinite(age)||age<0||age>36||!own?.alive||own.missing||own.faction!==actor)continue;
-  const trust=s.world.personalRelations[[meeting.person,meeting.target].sort().join(':')]?.trust||0;
-  best=Math.max(best,Math.min(10,Math.max(0,Math.floor(trust/5))));
+  // Older saves did not record a bonus. A completed contact gives one point
+  // of historical credit rather than reading a foreign person's live trust.
+  const key=JSON.stringify([meeting.person,meeting.target]),credit=Number.isFinite(meeting.contactCredit)?Math.max(0,Math.min(10,Math.floor(meeting.contactCredit))):1,date=year*12+month,previous=latest.get(key);
+  if(!previous||date>previous.date)latest.set(key,{date,credit});
  }
- return best;
+ return Math.max(0,...[...latest.values()].map(x=>x.credit));
 }
 
 // Civilian journeys use the campaign theater graph, not precise historical roads.
@@ -77,7 +79,7 @@ export function advancePersonalDiplomacy(s){
   if(q<.2)m.status='no_reply';
   else if(!a?.alive||a.missing||a.faction!==m.actor||a.travel||commandingMarch(s,m.person)||a.location!==m.location||['seriously_ill','dying','deceased'].includes(a.health)||!b?.alive||b.missing||b.faction!==m.targetFaction||b.travel||commandingMarch(s,m.target)||b.location!==m.location||atWar(s,m.actor,m.targetFaction))m.status='no_contact';
   else if(q<declineLimit||['seriously_ill','dying','deceased'].includes(b.health))m.status='declined';
-  else{m.status='met';const ownName=CHARACTER_CATALOG[m.person]?.name;if(Array.isArray(ownName)&&ownName.length===2&&ownName.every(x=>typeof x==='string'&&x.trim()))m.observedPersonName=[...ownName];const observed=CHARACTER_CATALOG[m.target]?.name;if(Array.isArray(observed)&&observed.length===2&&observed.every(x=>typeof x==='string'&&x.trim()))m.observedName=[...observed];const portrait=fictionalPortraitKey(s,m.target);if(portrait)m.portraitKey=portrait;const rel=s.world.personalRelations[personKey]||{trust:0,meetings:0};rel.trust=Math.min(100,rel.trust+5);rel.meetings++;rel.lastYear=s.year;rel.lastMonth=s.month;s.world.personalRelations[personKey]=rel;s.relations[factionKey]=Math.min(100,relations+3);addReport(s,m.actor,m.targetFaction,{kind:'location',character:m.target,value:m.location,source:'meeting',confidence:'unverified',reliability:'moderate'});const stance=relations<0&&trust<15?'guarded':relations>=30||trust>=15?'receptive':'noncommittal';addReport(s,m.actor,m.targetFaction,{kind:'stance',character:m.target,value:stance,source:'meeting',confidence:'unverified',reliability:'low'});const age=apparentAgeRange(m.target,s.year);if(age)addReport(s,m.actor,m.targetFaction,{kind:'age',character:m.target,value:age,source:'meeting',confidence:'unverified',reliability:'low'});addReport(s,m.actor,m.targetFaction,{kind:'health',character:m.target,value:b.health==='wounded'?'wounded':'unknown',source:'meeting',confidence:'unverified',reliability:'low'})}
+  else{m.status='met';const ownName=CHARACTER_CATALOG[m.person]?.name;if(Array.isArray(ownName)&&ownName.length===2&&ownName.every(x=>typeof x==='string'&&x.trim()))m.observedPersonName=[...ownName];const observed=CHARACTER_CATALOG[m.target]?.name;if(Array.isArray(observed)&&observed.length===2&&observed.every(x=>typeof x==='string'&&x.trim()))m.observedName=[...observed];const portrait=fictionalPortraitKey(s,m.target);if(portrait)m.portraitKey=portrait;const rel=s.world.personalRelations[personKey]||{trust:0,meetings:0};rel.trust=Math.min(100,rel.trust+5);rel.meetings++;rel.lastYear=s.year;rel.lastMonth=s.month;s.world.personalRelations[personKey]=rel;m.contactCredit=Math.max(0,Math.min(10,Math.floor(rel.trust/5)));s.relations[factionKey]=Math.min(100,relations+3);addReport(s,m.actor,m.targetFaction,{kind:'location',character:m.target,value:m.location,source:'meeting',confidence:'unverified',reliability:'moderate'});const stance=relations<0&&trust<15?'guarded':relations>=30||trust>=15?'receptive':'noncommittal';addReport(s,m.actor,m.targetFaction,{kind:'stance',character:m.target,value:stance,source:'meeting',confidence:'unverified',reliability:'low'});const age=apparentAgeRange(m.target,s.year);if(age)addReport(s,m.actor,m.targetFaction,{kind:'age',character:m.target,value:age,source:'meeting',confidence:'unverified',reliability:'low'});addReport(s,m.actor,m.targetFaction,{kind:'health',character:m.target,value:b.health==='wounded'?'wounded':'unknown',source:'meeting',confidence:'unverified',reliability:'low'})}
   m.resolvedYear=s.year;m.resolvedMonth=s.month;if(m.actor===s.player)log(s,`Personal audience: ${m.status.replace('_',' ')}.`,({no_contact:'未能见到对方；对方可能不在、无法会面或局势有变。',no_reply:'个人会面请求没有收到答复。',declined:'个人会面请求被拒绝。',met:'双方在同一战区举行了个人会面，关系有所改善。'})[m.status]);
  }
 }
