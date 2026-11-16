@@ -22,6 +22,7 @@ test('a paid settlement appointment survives saves and reduces real local resist
  assert.equal(localAdministrator(state,town.id),'cicero');
  assert.equal(officeOf(state,'senate','cicero'),'settlement:capua');
  assert.ok(!officeCandidates(state,'senate','finance').includes('cicero'));
+ assert.ok(!localAdministratorCandidates(state,'brundisium').includes('cicero'));
  advanceLocalResistance(state);advanceLocalResistance(control);
  assert.equal(localEntity(state,town.id).resistance,localEntity(control,town.id).resistance-2);
  const loaded=upgradeSave(structuredClone(state));

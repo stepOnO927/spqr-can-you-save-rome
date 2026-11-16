@@ -6,6 +6,7 @@ import {FACTIONS} from './data.js?v=world-kings-trade-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=world-kings-trade-1';
 import {visiblePersonName} from './character-system.js?v=world-kings-trade-1';
 import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=world-kings-trade-1';
+import {localAdministrator} from './office-system.js?v=world-kings-trade-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);
@@ -17,6 +18,7 @@ const officeLabel=(s,c,zh)=>{
  const office=Object.entries(s.world.offices?.[faction]||{}).find(([,person])=>person===c.id)?.[0];
  if(office)parts.push(({finance:["Finance officer","财务专员"],supply:["Supply officer","粮秣专员"],administration:["Administrator","政务专员"]}[office]||[office,office])[zh?1:0]);
  if(Object.values(s.world.localGovernors||{}).some(post=>post.person===c.id&&post.faction===faction))parts.push(zh?'地方行政官':'Local governor');
+ if(Object.entries(s.world.localAdministrators||{}).some(([entityId,post])=>post.person===c.id&&post.faction===faction&&localAdministrator(s,entityId)===c.id))parts.push(zh?'城镇行政官':'Settlement administrator');
  if(s.armies.some(a=>a.owner===faction&&a.characterId===c.id&&a.men>0))parts.push(zh?'军队统帅':'Army commander');
  return parts.join(zh?'、':', ');
 };

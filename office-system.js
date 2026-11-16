@@ -62,7 +62,8 @@ function eligibleSettlementOfficial(s,entity,actor,id){
  return !!(administrativeSite(entity)&&entity.controller===actor&&s.factions[actor]&&CHARACTER_CATALOG[id]&&c?.faction===actor&&c.location===entity.theater&&c.alive&&!c.missing&&!c.travel&&c.loyalty>=40&&!['seriously_ill','dying','deceased'].includes(c.health)&&isKnownAdult(s,id)&&!(s.world.leadership[actor]||[]).includes(id)&&!s.armies.some(army=>army.characterId===id));
 }
 export function localAdministrator(s,entityId){
- initializeOffices(s);const post=s.world.localAdministrators[entityId],entity=localSite(s,entityId);
+ const post=s.world?.localAdministrators?.[entityId];if(!post)return null;
+ const entity=localSite(s,entityId);
  return post&&eligibleSettlementOfficial(s,entity,post.faction,post.person)?post.person:null;
 }
 export function localAdministratorCandidates(s,entityId,actor=s.player){
