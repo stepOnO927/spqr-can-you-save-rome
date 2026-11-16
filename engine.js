@@ -684,6 +684,8 @@ export function aiTurn(s,owner){
     const institutions=Object.values(d.slots).flat().filter(Boolean);
     const administration=institutions.some(id=>['senatorial-consultation','central-administration','maritime-administration'].includes(id))||owned.some(r=>r.buildings?.includes('administration'));
     const education=institutions.some(id=>['rhetorical-education','civic-education','naval-engineering-education'].includes(id))||owned.some(r=>r.buildings?.includes('library'));
+    const hasProductiveEstate=owned.some(productiveEstateRegion);
+    const locallyUseful=i=>hasProductiveEstate||!['estate-labor-control','negotiated-crop-shares','seasonal-labor-contracts'].includes(i.id);
     const categoryHasRoom=category=>{
       const slots=d.slots[category],known=d.knownIdeas.filter(id=>IDEAS.find(i=>i.id===id)?.category===category).length;
       if(slots.some(v=>!v))return !d.knownIdeas.some(id=>IDEAS.find(i=>i.id===id)?.category===category&&!slots.includes(id));
@@ -718,7 +720,7 @@ export function aiTurn(s,owner){
       const ideaTurn=s.month%8===4;
       const ideas=IDEAS.filter(i=>{
         const slots=d.slots[i.category],empty=slots.indexOf(null);
-        if(d.knownIdeas.includes(i.id)||i.id==='senatorial-consultation'&&!['senate','caesar'].includes(owner))return false;
+        if(d.knownIdeas.includes(i.id)||!locallyUseful(i)||i.id==='senatorial-consultation'&&!['senate','caesar'].includes(owner))return false;
         if(!i.prerequisites.every(id=>d.knownIdeas.includes(id))||!categoryHasRoom(i.category))return false;
         if(i.origin&&owner!==i.origin&&!s.regions.some(r=>r.owner===owner&&(r.culture===(i.originCulture||i.origin)||!s.grandMap&&r.id===i.origin)&&(r.civicSatisfaction??r.loyalty??0)>=45))return false;
         if(i.requiresBuilding&&!s.regions.some(r=>r.owner===owner&&r.buildings.includes(i.requiresBuilding)))return false;
@@ -739,7 +741,7 @@ export function aiTurn(s,owner){
       if(expandable.length)expandIdeaSlot(s,owner,expandable[0]);
     }
     if(!d.adoption&&f.treasury>30+civilianReserve){
-      const available=IDEAS.filter(i=>d.knownIdeas.includes(i.id)&&!d.slots[i.category].includes(i.id))
+      const available=IDEAS.filter(i=>d.knownIdeas.includes(i.id)&&locallyUseful(i)&&!d.slots[i.category].includes(i.id))
         .map(i=>({idea:i,slot:d.slots[i.category].indexOf(null)})).filter(x=>{
           if(x.slot<0)return false;
           const plan=ideaAdoptionPlan(s,owner,x.idea.id,x.slot);

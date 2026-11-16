@@ -1217,6 +1217,19 @@ test('seasonal free labor has paid adoption, rural output, migration and an esta
  assert.equal(ideaCompatibility(restored,'egypt','estate-labor-control',1).reason,'conflict');
 });
 
+test('AI waits for a productive rural province before funding estate-only labor ideas',()=>{
+ const opening=newGrandGame('egypt');
+ for(const productive of [false,true]){
+  const state=upgradeSave(JSON.parse(JSON.stringify(opening))),d=development(state,'galatia');
+  d.knownIdeas.push('estate-organization','seasonal-labor-contracts');
+  d.slots.economy=['estate-organization',null];
+  state.factions.galatia.treasury=700;state.month=1;
+  if(productive){const site=state.regions.find(r=>r.owner==='galatia');site.terrain='plain';site.food=2}
+  aiTurn(state,'galatia');
+  assert.equal(d.adoption?.ideaId,productive?'seasonal-labor-contracts':undefined);
+ }
+});
+
 test('negotiated crop shares trade state grain for rural consent and greater mobility',()=>{
  const idea=IDEAS.find(x=>x.id==='negotiated-crop-shares');
  assert.deepEqual(idea.prerequisites,['estate-organization']);

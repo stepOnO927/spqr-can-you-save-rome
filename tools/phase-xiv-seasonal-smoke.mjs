@@ -22,6 +22,7 @@ try{
   await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('#entry-continue').click();
   await page.locator('[data-tab="development"]').click();
+  await page.locator('.dev-reference summary').click();
   await page.locator('[data-dev-branch="idea"]').click();
   const card=page.locator('#tech-seasonal-labor-contracts');
   assert.match(await card.innerText(),new RegExp(name));
@@ -30,8 +31,19 @@ try{
   assert.equal(await card.locator('[data-research="seasonal-labor-contracts"]').isDisabled(),true);
   await page.locator('[data-tree-pan="right"]').click({timeout:10000});
   assert.ok(await page.locator('.dev-tree').evaluate(element=>element.scrollLeft)>100);
+  await page.screenshot({path:`outputs/phase-xiv-seasonal-${language}.png`});
   await page.locator('[data-tree-pan="left"]').click({timeout:10000});
-  assert.ok(await page.locator('.dev-tree').evaluate(element=>element.scrollLeft)<2);
+  const back=await page.locator('.dev-tree').evaluate(element=>element.scrollLeft);
+  console.log(`${language}: tree returned to ${back}px`);
+  assert.ok(back<2);
+  await page.screenshot({path:`outputs/phase-xiv-returned-${language}.png`});
+  assert.match(await page.locator('#tech-sanctuary-protection').innerText(),language==='en'?/Provincial Sanctuary Protection/:/行省圣所保护/);
+  if(language==='en'){
+   const research=page.locator('[data-research="legion-training"]');
+   assert.equal(await research.isDisabled(),false);
+   await research.click({timeout:10000});
+   assert.match(await page.locator('.dev-status').first().innerText(),/Researching/);
+  }
   console.log(`${language}: seasonal labor card and prerequisite visible`);
  }
  assert.deepEqual(errors,[]);
