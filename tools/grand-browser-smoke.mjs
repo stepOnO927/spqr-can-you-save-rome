@@ -41,14 +41,17 @@ assert.equal(await page.locator('.grand-site[data-site="roma"]').isVisible(),tru
 assert.equal(await page.locator('.grand-site[data-site="roma"]').evaluate(el=>getComputedStyle(el).pointerEvents),'none');
 assert.equal(await page.locator('.grand-site[data-site="roma"]').getAttribute('tabindex'),'-1');
 const focusCityName=await page.locator('.grand-site[data-site="roma"]').innerText();
+assert.equal(await page.locator('.grand-site[data-site="roma"]').getAttribute('aria-label'),focusCityName);
 assert.equal(await page.locator('#atlas-caption').isVisible(),true);
 assert.match(await page.locator('#atlas-caption').innerText(),/Modern terrain|现代地形/);
 await page.keyboard.press('Escape');assert.equal(await page.locator('body.atlas-focus').count(),0);
 assert.equal(await page.locator('.grand-site').first().isVisible(),true);
 assert.equal(await page.locator('.grand-site[data-site="roma"]').getAttribute('tabindex'),'0');
+assert.match(await page.locator('.grand-site[data-site="roma"]').getAttribute('aria-label'),/ · /);
 await page.locator('#language').click();await page.locator('#atlas-focus').click();
 const switchedCaption=await page.locator('#atlas-caption').innerText();
 const switchedCityName=await page.locator('.grand-site[data-site="roma"]').innerText();
+assert.equal(await page.locator('.grand-site[data-site="roma"]').getAttribute('aria-label'),switchedCityName);
 assert.notEqual(switchedCityName,focusCityName);
 assert.match(focusCityName+' '+switchedCityName,/Roma/);
 assert.match(focusCityName+' '+switchedCityName,/罗马/);
