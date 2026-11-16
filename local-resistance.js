@@ -1,5 +1,5 @@
 import {footholdConnected} from './foothold.js';
-import {localAdministrator} from './office-system.js?v=world-kings-contact-1';
+import {localAdministrator} from './office-system.js?v=world-kings-first-command-1';
 
 const garrisoned = (state, entity, actor) => state.armies.some(army => army.owner === actor && army.region === entity.theater && army.men >= 1000 && !army.move);
 

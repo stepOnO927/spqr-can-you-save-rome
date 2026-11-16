@@ -1,8 +1,8 @@
-import {FACTIONS,ROUTES} from './data.js?v=world-kings-contact-1';
-import {CHARACTER_CATALOG} from './characters.js?v=world-kings-contact-1';
-import {createFictionalPerson} from './dynasties.js?v=world-kings-contact-1';
-import {hasNationalIdea} from './national-ideas.js?v=world-kings-contact-1';
-import {activeAgreement,terminateAgreement} from './agreements.js?v=world-kings-contact-1';
+import {FACTIONS,ROUTES} from './data.js?v=world-kings-first-command-1';
+import {CHARACTER_CATALOG} from './characters.js?v=world-kings-first-command-1';
+import {createFictionalPerson} from './dynasties.js?v=world-kings-first-command-1';
+import {hasNationalIdea} from './national-ideas.js?v=world-kings-first-command-1';
+import {activeAgreement,terminateAgreement} from './agreements.js?v=world-kings-first-command-1';
 import {transferTerritory} from './territory.js';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));

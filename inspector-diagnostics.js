@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=world-kings-contact-1';
-import {SUBJECT_TYPES} from './suzerainty.js?v=world-kings-contact-1';
+import {ROUTES} from './data.js?v=world-kings-first-command-1';
+import {SUBJECT_TYPES} from './suzerainty.js?v=world-kings-first-command-1';
 import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS} from './local-generation.js';
 // Read-only startup and deep state checks. Never migrates or mutates a save.
 export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
@@ -28,6 +28,13 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
   if(key==='manpower'&&f[key]<0)add('warning','negative-manpower',`factions.${id}.manpower`,String(f[key]));
  }
  for(const [i,war] of (s.wars||[]).entries())if(!Array.isArray(war)||war.some(id=>!factionIds.has(id)))add('warning','invalid-war',`wars[${i}]`,JSON.stringify(war));
+ const guide=mode==='han'?s.experience:s.experience?.guide,lessonCount=mode==='han'?(s.player==='han'?8:7):8;
+ if(guide?.running||guide?.guided){
+  if(!Number.isInteger(guide.step)||guide.step<0||guide.step>lessonCount)add('warning','invalid-tutorial-step','experience',String(guide.step));
+  if(!s.regions.some(r=>r.owner===s.player))add('warning','tutorial-no-territory','regions','No owned territory is available for the first lesson');
+  if(!s.armies.some(a=>a.owner===s.player&&a.men>0)&&guide.step<4)add('warning','tutorial-no-army','armies','A friendly army is unavailable for an early lesson');
+  if(!s.experience?.actions||typeof s.experience.actions!=='object')add('warning','tutorial-actions-missing','experience.actions','Tutorial progress cannot be verified');
+ }
  if(mode==='roman'){
   for(const [i,c] of (s.coalitions||[]).entries())for(const [j,peace] of (c.separatePeaces||[]).entries()){
    const base=`coalitions[${i}].separatePeaces[${j}]`;
@@ -157,4 +164,27 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
 export function startupDiagnostics(s,configuration){
  const findings=inspectState(s,configuration);
  return {fatal:findings.filter(x=>x.severity==='fatal'),warnings:findings.filter(x=>x.severity==='warning'),findings};
+}
+
+
+// A read-only check for the active lesson. UI callers can pass the real DOM
+// after rendering; cloud browser tests can then catch missing or hidden targets.
+export function inspectTutorial({steps=[],index=0,document:doc=null,available=()=>true}={}){
+ const findings=[],add=(code,path,detail)=>findings.push({severity:'warning',code,path,detail}),keys=new Set();
+ if(!Array.isArray(steps)||!steps.length){add('tutorial-no-lessons','steps','No lessons defined');return findings}
+ if(!Number.isInteger(index)||index<0||index>steps.length)add('tutorial-invalid-index','index',String(index));
+ for(const [i,step] of steps.entries()){
+  const key=step?.key??step?.[0],title=step?.title??[step?.[1],step?.[2]],target=step?.target??step?.[3];
+  if(!key||keys.has(key))add('tutorial-duplicate-action',`steps[${i}]`,String(key));keys.add(key);
+  if(!Array.isArray(title)||title.some(value=>typeof value!=='string'||!value.trim()))add('tutorial-missing-translation',`steps[${i}].title`,String(key));
+  if(!target||typeof target!=='string')add('tutorial-missing-target',`steps[${i}].target`,String(key));
+ }
+ if(index<steps.length){const step=steps[index],target=step?.target??step?.[3],key=step?.key??step?.[0];
+  if(!available(key))add('tutorial-action-unavailable',`steps[${index}]`,String(key));
+  if(doc&&target?.startsWith('#')){let element;try{element=doc.querySelector(target)}catch{add('tutorial-invalid-selector',`steps[${index}].target`,target)}
+   if(!element)add('tutorial-target-missing',`steps[${index}].target`,target);
+   else if(element.hidden||element.closest?.('[hidden]')||element.getClientRects?.().length===0)add('tutorial-target-hidden',`steps[${index}].target`,target);
+  }
+ }
+ return findings;
 }

@@ -1,52 +1,52 @@
 import './version-ui.js';
 import {analytics} from './analytics.js';
-import {sendAgreementProposal} from './agreement-negotiations.js?v=world-kings-contact-1';
-import {SUBJECT_TYPES,subjectAidQuote,requestSubjectAid} from './suzerainty.js?v=world-kings-contact-1';
+import {sendAgreementProposal} from './agreement-negotiations.js?v=world-kings-first-command-1';
+import {SUBJECT_TYPES,subjectAidQuote,requestSubjectAid} from './suzerainty.js?v=world-kings-first-command-1';
 import {localStore as localStorage,sessionStore as sessionStorage} from './safe-storage.js';
 import {startupDiagnostics} from './inspector-diagnostics.js';
-import {campaignYear,campaignDate} from './campaign-date.js?v=world-kings-contact-1';
-import {stageHandoff,receiveHandoff} from './view-handoff.js?v=world-kings-contact-1';
-import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=world-kings-contact-1';
-import {identity,factionMark} from './identity.js?v=world-kings-contact-1';
-import {reportedControl,reportedFortification} from './control-intelligence.js?v=world-kings-contact-1';
-import {CHARACTER_CATALOG} from './characters.js?v=world-kings-contact-1';
-import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=world-kings-contact-1';
-import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, inquiryCost, answerPeaceOffer,answerStrategicOffer,replyToLetter,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength,administrationQuote,startAdministration} from './engine.js?v=world-kings-contact-1';
+import {campaignYear,campaignDate} from './campaign-date.js?v=world-kings-first-command-1';
+import {stageHandoff,receiveHandoff} from './view-handoff.js?v=world-kings-first-command-1';
+import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=world-kings-first-command-1';
+import {identity,factionMark} from './identity.js?v=world-kings-first-command-1';
+import {reportedControl,reportedFortification} from './control-intelligence.js?v=world-kings-first-command-1';
+import {CHARACTER_CATALOG} from './characters.js?v=world-kings-first-command-1';
+import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=world-kings-first-command-1';
+import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, inquiryCost, answerPeaceOffer,answerStrategicOffer,replyToLetter,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength,administrationQuote,startAdministration} from './engine.js?v=world-kings-first-command-1';
 import {startVillageProject} from './local-villages.js';
-import {receivedMail,unreadCount,markRead,archiveLetter,markAllRead} from './epistulae.js?v=world-kings-contact-1';
-import {mailboxHtml} from './mail-ui.js?v=world-kings-contact-1';
-import {setWartimePolicy} from './epistulae-personnel.js?v=world-kings-contact-1';
-import {decideDisputedHeir,personAge} from './dynasties.js?v=world-kings-contact-1';
-import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=world-kings-contact-1';
-import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=world-kings-contact-1';
-import {marchReason} from './movement-help.js?v=world-kings-contact-1';
-import {syncChronicleDispatches} from './chronicle.js?v=world-kings-contact-1';
-import {renderChronicle} from './map-lab/chronicle-ui.js?v=world-kings-contact-1';
-import {formatChronicleEntry,chronicleDate} from './chronicle.js?v=world-kings-contact-1';
-import {drawMap,mapPoint} from './map.js?v=world-kings-contact-1';
-import {AGREEMENT_TYPES,activeAgreement,proposeAgreement,terminateAgreement} from './agreements.js?v=world-kings-contact-1';
-import {leaveCoalition} from './coalitions.js?v=world-kings-contact-1';
-import {renderAidRequest} from './strategic-aid-ui.js?v=world-kings-contact-1';
-import {sendCoalitionInvitation,answerCoalitionInvitation} from './coalition-negotiations.js?v=world-kings-contact-1';
-import {answerCoalitionAdmission,eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from './coalition-admissions.js?v=world-kings-contact-1';
-import {proposeCoalitionMotion} from './coalition-motions.js?v=world-kings-contact-1';
-import {coalitionCouncilHtml} from './coalition-council-ui.js?v=world-kings-contact-1';
-import {sendCoalitionAidRequest} from './coalition-assistance.js?v=world-kings-contact-1';
-import {offerPoliticalContact} from './political-contacts.js?v=world-kings-contact-1';
-import {reportedHealthSubjects,claimantRepresentatives,visiblePersonName,answerAgentRelease} from './character-system.js?v=world-kings-contact-1';
-import {religiousPolicy} from './religion.js?v=world-kings-contact-1';
-import {respondToMovement,reportedMovements,movementReportLeaderName,offerMovementSupport,recognizeMovement} from './movements.js?v=world-kings-contact-1';
-import {newScenario} from './scenarios.js?v=world-kings-contact-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=world-kings-contact-1';
-import {renderChessboard} from './chessboard-ui.js?v=world-kings-contact-1';
-import {configureStartingDifficulty} from './difficulty.js?v=world-kings-contact-1';
-import {featherAdvice} from './feather.js?v=world-kings-contact-1';
-import {IDEAS,startResearch,equipIdea} from './inventions.js?v=world-kings-contact-1';
-import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium} from './imperium-ui.js?v=world-kings-contact-1';
-import {attachHanWorld,hanWorld,sendEmbassyToSeres} from './han/world.js?v=world-kings-contact-1';
-import {eastMap,eastPanel,eastToolbar} from './han/east-ui.js?v=world-kings-contact-1';
-import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=world-kings-contact-1';
-import {renderExperienceUi,closeExperience} from './experience-ui.js?v=world-kings-contact-1';
+import {receivedMail,unreadCount,markRead,archiveLetter,markAllRead} from './epistulae.js?v=world-kings-first-command-1';
+import {mailboxHtml} from './mail-ui.js?v=world-kings-first-command-1';
+import {setWartimePolicy} from './epistulae-personnel.js?v=world-kings-first-command-1';
+import {decideDisputedHeir,personAge} from './dynasties.js?v=world-kings-first-command-1';
+import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=world-kings-first-command-1';
+import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=world-kings-first-command-1';
+import {marchReason} from './movement-help.js?v=world-kings-first-command-1';
+import {syncChronicleDispatches} from './chronicle.js?v=world-kings-first-command-1';
+import {renderChronicle} from './map-lab/chronicle-ui.js?v=world-kings-first-command-1';
+import {formatChronicleEntry,chronicleDate} from './chronicle.js?v=world-kings-first-command-1';
+import {drawMap,mapPoint} from './map.js?v=world-kings-first-command-1';
+import {AGREEMENT_TYPES,activeAgreement,proposeAgreement,terminateAgreement} from './agreements.js?v=world-kings-first-command-1';
+import {leaveCoalition} from './coalitions.js?v=world-kings-first-command-1';
+import {renderAidRequest} from './strategic-aid-ui.js?v=world-kings-first-command-1';
+import {sendCoalitionInvitation,answerCoalitionInvitation} from './coalition-negotiations.js?v=world-kings-first-command-1';
+import {answerCoalitionAdmission,eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from './coalition-admissions.js?v=world-kings-first-command-1';
+import {proposeCoalitionMotion} from './coalition-motions.js?v=world-kings-first-command-1';
+import {coalitionCouncilHtml} from './coalition-council-ui.js?v=world-kings-first-command-1';
+import {sendCoalitionAidRequest} from './coalition-assistance.js?v=world-kings-first-command-1';
+import {offerPoliticalContact} from './political-contacts.js?v=world-kings-first-command-1';
+import {reportedHealthSubjects,claimantRepresentatives,visiblePersonName,answerAgentRelease} from './character-system.js?v=world-kings-first-command-1';
+import {religiousPolicy} from './religion.js?v=world-kings-first-command-1';
+import {respondToMovement,reportedMovements,movementReportLeaderName,offerMovementSupport,recognizeMovement} from './movements.js?v=world-kings-first-command-1';
+import {newScenario} from './scenarios.js?v=world-kings-first-command-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=world-kings-first-command-1';
+import {renderChessboard} from './chessboard-ui.js?v=world-kings-first-command-1';
+import {configureStartingDifficulty} from './difficulty.js?v=world-kings-first-command-1';
+import {featherAdvice} from './feather.js?v=world-kings-first-command-1';
+import {IDEAS,startResearch,equipIdea} from './inventions.js?v=world-kings-first-command-1';
+import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium} from './imperium-ui.js?v=world-kings-first-command-1';
+import {attachHanWorld,hanWorld,sendEmbassyToSeres} from './han/world.js?v=world-kings-first-command-1';
+import {eastMap,eastPanel,eastToolbar} from './han/east-ui.js?v=world-kings-first-command-1';
+import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=world-kings-first-command-1';
+import {renderExperienceUi,closeExperience} from './experience-ui.js?v=world-kings-first-command-1';
 
 const ui={
   en:{subtitle:'A republic at war with itself',campaign:'49 BCE · Caesar’s Civil War',historical:'Historical campaign',schematic:'Schematic operational map · theaters and routes are gameplay abstractions',new:'New campaign',save:'Save',load:'Load',pause:'Pause',play:'Play',speed:'Speed',month:'MONTH',treasury:'TREASURY',food:'FOOD',manpower:'MANPOWER',stability:'STABILITY',legitimacy:'LEGITIMACY',strength:'FIELD STRENGTH',map:'Campaign',military:'Military',government:'Government',chronicle:'Chronicle',sources:'Sources',select:'Select a theater or army',selected:'SELECTED THEATER',owner:'Command',terrain:'Terrain',city:'Principal city',supply:'Supply limit',loyalty:'Local loyalty',fort:'Fortification',recruit:'Raise legion · 24¤ / 3,000 men / 6 grain',recruitFail:'Insufficient resources or this theater is not yours.',army:'SELECTED ARMY',men:'Soldiers',morale:'Morale',commander:'Commander',order:'Order march',cancel:'Cancel order',target:'Select an adjacent theater on the map.',invalid:'No legal march route. War is required to enter another command’s theater.',marching:'Marching',siege:'Besieging',available:'Ready',armies:'Field armies',tax:'Tax policy',low:'Low',normal:'Normal',high:'High',taxText:'Higher taxes raise revenue but erode local loyalty. Low taxes recover loyalty.',revolt:'Rebellion',revoltText:'A disloyal, undefended theater can secede when stability is low. The rebels gain land and an army.',war:'Civil war',warText:'Caesar and Pompey command opposing Roman factions. Their colors show military control during the conflict, not separate sovereign states.',log:'Campaign dispatches',sourceNote:'Historical framework: Caesar crossed the Rubicon in January 49 BCE. Theater ownership, troop totals, income, travel times, and battle ratings are simplified gameplay estimates. The coast is hand-drawn and schematic; it does not encode ancient administrative borders.',instructions:'Choose an army, select Order march, then click a connected theater. Advance time to resolve travel and combat.',savePrompt:'Choose save slot 1–3',saved:'Campaign saved in slot',loaded:'Campaign loaded from slot',empty:'That slot is empty.',victory:'Opposing Roman command defeated · the campaign continues',noArmy:'No field army selected',atWar:'At war',neutral:'Independent',terrainNames:{plain:'Plain',hills:'Hills',forest:'Forest',urban:'Urban',desert:'Desert'},sourceTitle:'Research and accuracy notes',open:'Open source ↗',legend:'CAMPAIGN CONTROL',sea:'Sea crossing · 8¤',land:'Land route',clear:'Clear selection'},
@@ -192,11 +192,11 @@ function panel(){
 function resourceForecast(){const p=forecastEconomy(state),signed=n=>(n>=0?'+':'')+fmt(n);return `<details class="resource-forecast"><summary>${lang==='zh'?'预计下月收支':'NEXT MONTH BASELINE'} · ${lang==='zh'?'国库':'Treasury'} ${signed(p.treasury)} · ${lang==='zh'?'粮食':'Food'} ${signed(p.food)} · ${lang==='zh'?'兵源':'Manpower'} ${signed(p.manpower)}</summary><p>${lang==='zh'?'按当前战区、驻军、税率及政策计算；战斗、叛乱、建设和外交可能改变结果。':'Based on current theaters, troops, tax and policies. Battles, unrest, construction and diplomacy can change the result.'}</p></details>`}
 function victoryProgress(){if(!['caesar','senate'].includes(state.player))return '';if(state.defeat)return `<div class="victory-progress defeat" aria-live="assertive"><b>${lang==='zh'?'战役失败':'CAMPAIGN DEFEAT'}</b><span>${lang==='zh'?'最后的野战军未能重建。前往罗马遗产封存本局。':'The last field army was not rebuilt. Open Legacy of Rome to archive this run.'}</span></div>`;const notice=state.world?.romanDefeatNotice?.remaining;if(notice)return `<div class="victory-progress defeat-warning"><b>${lang==='zh'?'军队覆灭警告':'NO FIELD ARMY'}</b><span>${lang==='zh'?`需在 ${notice} 个月内重建军队。`:`Raise a new army within ${notice} month(s).`}</span></div>`;const enemy=state.player==='caesar'?'senate':'caesar',territories=state.regions.filter(r=>r.owner===enemy).length,armies=state.armies.filter(a=>a.owner===enemy&&a.men>0).length,courier=state.world?.romanVictoryNotice?.remaining;return `<div class="victory-progress" aria-live="polite"><b>${lang==='zh'?'最终胜利':'FINAL VICTORY'}</b><span>${lang==='zh'?`敌方战区 ${territories} · 野战军 ${armies}`:`Enemy theaters ${territories} · field armies ${armies}`}</span><small>${state.victory?(lang==='zh'?'信使已确认胜利；可以继续战役。':'Victory confirmed; campaign may continue.'):territories||armies?(lang==='zh'?'需消灭敌方全部战区和野战军。阶段目标不等于最终胜利。':'Eliminate all enemy theaters and field armies. Milestones are not final victory.'):courier?(lang==='zh'?`信使确认尚需 ${courier} 个月。`:`Courier confirmation in ${courier} month(s).`):(lang==='zh'?'等待信使确认，约三个月。':'Await courier confirmation, about three months.')}</small></div>`}
 function navigateExperience(kind,id){
- if(kind==='army'||kind==='supply'){const a=state.armies.find(x=>x.id===id&&x.owner===state.player)||state.armies.find(x=>x.owner===state.player&&x.men>0);if(a){selectedArmy=a.id;selectedRegion=a.region;tab='map';panelOpen=true;recordExperience(state,'army',a.id)}}
+ if(kind==='army'||kind==='supply'){const a=state.armies.find(x=>x.id===id&&x.owner===state.player)||state.armies.find(x=>x.owner===state.player&&x.men>0);if(a){selectedArmy=a.id;selectedRegion=a.region;tab='map';panelOpen=true}}
  else if(kind==='region'){if(state.regions.some(r=>r.id===id&&r.owner===state.player)){selectedRegion=id;tab='map';panelOpen=true}}
- else if(kind==='mail'||kind==='reply'){mailOpen=true;selectedMail=receivedMail(state).find(m=>m.id===id)?.id||receivedMail(state).find(m=>!m.archived)?.id||null;if(selectedMail){markRead(state,selectedMail);recordExperience(state,'mail',selectedMail)}}
- else if(['focus','government','military','chronicle'].includes(kind)){tab=kind;panelOpen=true;if(kind==='chronicle')recordExperience(state,'chronicle');if(kind==='government')recordExperience(state,'leadership')}
- else if(kind==='map'){tab='map';panelOpen=false}
+ else if(kind==='mail'||kind==='reply'){mailOpen=true;selectedMail=receivedMail(state).find(m=>m.id===id)?.id||receivedMail(state).find(m=>!m.archived)?.id||null;if(selectedMail)markRead(state,selectedMail)}
+ else if(['focus','government','military','chronicle'].includes(kind)){tab=kind;panelOpen=true;}
+ else if(kind==='map'){tab='map';panelOpen=true}
  else if(kind==='direction'){render();document.querySelector('#campaign-progress')?.click();return}
  else if(kind==='time'||kind==='advance'){render();document.querySelector('#step')?.focus();return}
  render();
@@ -358,7 +358,7 @@ function bind(){
   const closeSetup=document.querySelector('#close-setup');if(closeSetup)closeSetup.onclick=()=>{toast='';setupOpen=false;render()};
   document.querySelectorAll('[data-slot]').forEach(el=>el.onclick=()=>{const loaded=slot(el.dataset.slot);if(loaded){setupOpen=false;setupRequired=false}render()});
   const mandateChoice=document.querySelector('#campaign-mandate');if(mandateChoice)mandateChoice.onchange=e=>{chosenMandate=e.target.checked};
-  const start=document.querySelector('#start-campaign');if(start)start.onclick=()=>{state=configureStartingDifficulty(newScenario(chosenScenario,chosenFaction),chosenDifficulty,chosenHandicap);initializeExperience(state,{guided:chosenGuide,presentation:chosenGuide?'beginner':'veteran',openingLetter:true});if(chosenMandate)attachHanWorld(state);lastTutorialState=state.experience?.guide?.running?'running':state.experience?.guide?.skipped?'skipped':'completed';analytics.setContext({campaign:state.scenario||'roman',civilization:chosenFaction,difficulty:chosenDifficulty,tutorial_state:chosenGuide?'running':'skipped'});analytics.setGameRunning(true);analytics.track('campaign_selected');analytics.track('country_selected');analytics.track('difficulty_selected');analytics.track('game_start');if(chosenGuide)analytics.track('tutorial_started');eastSelected=null;selectedRegion=state.scenario==='revolution'?(chosenFaction==='senate'?'sicilia':'gaul'):state.regions.find(r=>r.owner===state.player).id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;ordering=false;tab='map';panelOpen=false;toast='';setupOpen=false;setupRequired=false;view=initialView();render()};
+  const start=document.querySelector('#start-campaign');if(start)start.onclick=()=>{state=configureStartingDifficulty(newScenario(chosenScenario,chosenFaction),chosenDifficulty,chosenHandicap);initializeExperience(state,{guided:chosenGuide,presentation:chosenGuide?'beginner':'veteran',openingLetter:true});if(chosenMandate)attachHanWorld(state);lastTutorialState=state.experience?.guide?.running?'running':state.experience?.guide?.skipped?'skipped':'completed';analytics.setContext({campaign:state.scenario||'roman',civilization:chosenFaction,difficulty:chosenDifficulty,tutorial_state:chosenGuide?'running':'skipped'});analytics.setGameRunning(true);analytics.track('campaign_selected');analytics.track('country_selected');analytics.track('difficulty_selected');analytics.track('game_start');if(chosenGuide)analytics.track('tutorial_started');eastSelected=null;selectedRegion=state.scenario==='revolution'?(chosenFaction==='senate'?'sicilia':'gaul'):state.regions.find(r=>r.owner===state.player).id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;ordering=false;tab='map';panelOpen=chosenGuide&&innerWidth>1100;toast='';setupOpen=false;setupRequired=false;view=initialView();render()};
   document.querySelectorAll('[data-dynasty-choice]').forEach(el=>el.onclick=()=>{const result=decideDisputedHeir(state,el.dataset.dynastyChoice);if(result.ok)render();else flash(result.reason==='treasury'?(lang==='zh'?'国库不足。':'Insufficient treasury.'):(lang==='zh'?'此决定目前不可用。':'This decision is unavailable.'))});
   document.querySelectorAll('[data-dynasty-person]').forEach(el=>el.onclick=()=>{const c=state.world.characters[el.dataset.dynastyPerson],family=state.world.dynasties.families[c.familyId],parents=[...c.parents,...c.adoptiveParents].map(id=>n(CHARACTER_CATALOG[id]?.name)).join(lang==='zh'?'、':', ')|| (lang==='zh'?'未知':'Unknown');flash(`${n(CHARACTER_CATALOG[c.id]?.name)} · ${lang==='zh'?'家族':'Family'} ${n(family?.name)} · ${lang==='zh'?'父母':'Parents'} ${parents}`)});
   document.querySelector('#save').onclick=()=>slot('save');document.querySelector('#load').onclick=()=>slot('load');
@@ -366,7 +366,7 @@ function bind(){
   document.querySelector('#step').onclick=advanceMonth;
   document.querySelector('#speed').onclick=()=>{speed=speed===1?2:speed===2?4:1;if(playing)setPlaying(true);else render()};
   document.querySelectorAll('[data-tab]').forEach(el=>el.onclick=()=>{tab=el.dataset.tab;panelOpen=true;if(tab==='chronicle')recordExperience(state,'chronicle');if(tab==='government')recordExperience(state,'leadership');render()});
-  const chooseRegion=id=>{if(ordering&&selectedArmy){const result=moveArmy(state,selectedArmy,id);if(!result.ok){flash(marchReason(result.reason,lang));return}recordExperience(state,'order',id);analytics.track('army_order_issued');ordering=false}else{const known=reportedControl(state,state.player,id);if(known?.owner&&known.owner!==state.player)recordExperience(state,'threat',id)}selectedRegion=id;tab='map';panelOpen=true;render()};
+  const chooseRegion=id=>{if(ordering&&selectedArmy){const result=moveArmy(state,selectedArmy,id);if(!result.ok){flash(marchReason(result.reason,lang));return}recordExperience(state,'order',id);analytics.track('army_order_issued');ordering=false}else{const known=reportedControl(state,state.player,id);if(known?.owner&&known.owner!==state.player)recordExperience(state,'threat',id);if(state.regions.some(r=>r.id===id&&r.owner===state.player))recordExperience(state,'territory',id)}selectedRegion=id;tab='map';panelOpen=true;render()};
   document.querySelectorAll('[data-map-group]').forEach(el=>el.onclick=e=>{const svg=document.querySelector('#map-svg'),point=svg.createSVGPoint();point.x=e.clientX;point.y=e.clientY;const p=point.matrixTransform(svg.getScreenCTM().inverse());let ids=el.dataset.mapGroup.split(',');if(ordering&&selectedArmy){const a=army(state,selectedArmy),links=adjacent(a.region).map(x=>x.to),valid=ids.filter(id=>links.includes(id));if(valid.length)ids=valid}const id=ids.sort((x,y)=>{const a=mapPoint(x),b=mapPoint(y);return Math.hypot(p.x-a[0],p.y-a[1])-Math.hypot(p.x-b[0],p.y-b[1])})[0];chooseRegion(id)});
   document.querySelectorAll('[data-map-category]').forEach(el=>el.onclick=()=>flash(el.dataset.mapCategory==='historical-reference'?(lang==='zh'?'罗马历史范围仅供参考，不代表独立可占领战区。':'The Roman historical extent is a reference, not a separate conquerable theater.'):(lang==='zh'?'此地不在当前战役建模范围；地图空白不代表无主。':'This land is outside the modeled campaign theaters; blank map space does not mean unowned land.')));
   document.querySelectorAll('.evidence-command').forEach(el=>el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click()}});
