@@ -18,5 +18,5 @@ test('an actual meeting creates one local record with names observed at the time
  advanceMailReports(s);s=upgradeSave(JSON.parse(JSON.stringify(s)));advanceMailReports(s);assert.equal(replies(s).length,1);
 });
 test('a delivered refusal is a letter, but silence or failed contact is not',()=>{
- for(const [seed,away,status,count] of [[0,false,'declined',1],[1972,false,'no_reply',0],[1000,true,'no_contact',0]]){const {s,id}=fixture(seed,away);assert.equal(s.meetings[0].status,status);s.world.dynasties.catalog[id].name=['Hidden name','秘密姓名'];if(status==='declined')delete s.factions.egypt;advanceMailReports(s);const mail=replies(s);assert.equal(mail.length,count);if(count){assert.match(mail[0].body[1],/旧报告姓名.*拒绝/);assert.doesNotMatch(mail[0].body[1],/秘密姓名/);assert.equal(mail[0].sentDateKnown,false)}}
+ for(const [seed,away,status,count] of [[0,false,'declined',1],[1972,false,'no_reply',0],[1972,true,'no_reply',0],[1000,true,'no_contact',0]]){const {s,id}=fixture(seed,away);assert.equal(s.meetings[0].status,status);s.world.dynasties.catalog[id].name=['Hidden name','秘密姓名'];if(status==='declined')delete s.factions.egypt;advanceMailReports(s);const mail=replies(s);assert.equal(mail.length,count);if(count){assert.match(mail[0].body[1],/旧报告姓名.*拒绝/);assert.doesNotMatch(mail[0].body[1],/秘密姓名/);assert.equal(mail[0].sentDateKnown,false)}}
 });
