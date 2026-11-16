@@ -23,6 +23,13 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
   if(key==='manpower'&&f[key]<0)add('warning','negative-manpower',`factions.${id}.manpower`,String(f[key]));
  }
  for(const [i,war] of (s.wars||[]).entries())if(!Array.isArray(war)||war.some(id=>!factionIds.has(id)))add('warning','invalid-war',`wars[${i}]`,JSON.stringify(war));
+ const guide=mode==='han'?s.experience:s.experience?.guide,lessonCount=mode==='han'?(s.player==='han'?8:7):8;
+ if(guide?.running||guide?.guided){
+  if(!Number.isInteger(guide.step)||guide.step<0||guide.step>lessonCount)add('warning','invalid-tutorial-step','experience',String(guide.step));
+  if(!s.regions.some(r=>r.owner===s.player))add('warning','tutorial-no-territory','regions','No owned territory is available for the first lesson');
+  if(!s.armies.some(a=>a.owner===s.player&&a.men>0)&&guide.step<4)add('warning','tutorial-no-army','armies','A friendly army is unavailable for an early lesson');
+  if(!s.experience?.actions||typeof s.experience.actions!=='object')add('warning','tutorial-actions-missing','experience.actions','Tutorial progress cannot be verified');
+ }
  if(mode==='roman'){
   if(!s.world?.characters)add('fatal','missing-characters','world.characters','Roman character registry is missing');
   else{
