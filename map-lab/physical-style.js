@@ -99,9 +99,7 @@ export const physicalStyle={
   // polygons can look angular at this scale, so keep their lines secondary.
   {id:'italy-contours-minor',type:'line',source:'italy-contours',minzoom:8.3,filter:['<',['get','height'],1000],paint:{'line-color':'#6d694c','line-width':['interpolate',['linear'],['zoom'],8.3,.35,9.2,.65],'line-opacity':['interpolate',['linear'],['zoom'],8.3,0,9.2,.11]}},
   {id:'italy-contours-major',type:'line',source:'italy-contours',minzoom:8.3,filter:['>=',['get','height'],1000],paint:{'line-color':'#565e4a','line-width':['interpolate',['linear'],['zoom'],8.3,.45,9.2,.85],'line-opacity':['interpolate',['linear'],['zoom'],8.3,0,9.2,.14]}},
-  {id:'sea-mask',type:'fill',source:'ocean',paint:{'fill-color':'#2b626d','fill-opacity':1}},
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},
-  {id:'coastline',type:'line',source:'land',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#efe1bb','line-width':['interpolate',['linear'],['zoom'],4,.9,8,1.7],'line-opacity':.87}},
   {id:'natural-lakes',type:'fill',source:'lakes',filter:['!=',['get','name'],'Lago di Garda'],paint:{'fill-color':'#5b9093','fill-opacity':.88}},
   {id:'garda-overview',type:'fill',source:'lakes',maxzoom:8,filter:['==',['get','name'],'Lago di Garda'],paint:{'fill-color':'#5b9093','fill-opacity':.88}},
   {id:'garda-close',type:'fill',source:'garda-lake-detail',minzoom:8,paint:{'fill-color':'#5b9093','fill-opacity':.88}},
@@ -157,7 +155,6 @@ for(let row=0;row<2;row++)for(let col=0;col<4;col++){
  const coordinates=[[west,north],[east,north],[east,south],[west,south]];
  for(const kind of ['land','sea'])physicalStyle.sources[`overview-${kind}-${row}-${col}`]={type:'image',url:`./overview-coast/${kind}-${row}-${col}.png`,coordinates};
  insertOverviewLayer('land-base',`overview-land-raster-${row}-${col}`,`overview-land-${row}-${col}`);
- insertOverviewLayer('sea-mask',`overview-sea-mask-${row}-${col}`,`overview-sea-${row}-${col}`);
  insertOverviewLayer('sea-final',`overview-sea-final-${row}-${col}`,`overview-sea-${row}-${col}`);
 }
 
