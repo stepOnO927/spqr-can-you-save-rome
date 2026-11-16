@@ -363,7 +363,9 @@ export function advanceLocalCivicEconomy(state){
   const population=Math.max(1000,entity.population||6000),militia=Math.max(0,entity.militia||0),strategy=Math.max(0,entity.strategy||0);
   const production=Math.ceil(population/4000)+(strategy>0?Math.max(1,strategy-1):0),civilianNeed=Math.ceil(population/6500),guardNeed=Math.ceil(militia/2400);
   const harvest=state.month===9?Math.ceil(population/4000):0;
-  const tax=Math.ceil(population/6000)+Math.max(0,strategy-1),upkeep=Math.ceil(militia/1800);
+  const stewardBenefit=Math.floor(Math.max(0,(entity.civicOfficers?.steward?.skill||1)-1)/2);
+  const captainBenefit=Math.floor(Math.max(0,(entity.civicOfficers?.captain?.skill||1)-1)/2);
+  const tax=Math.ceil(population/6000)+Math.max(0,strategy-1)+stewardBenefit,upkeep=Math.max(0,Math.ceil(militia/1800)-captainBenefit);
   const storageCap=Math.max(8,entity.food,Math.ceil(population/300)),grossFood=Math.max(0,entity.food+production+harvest-civilianNeed-guardNeed);
   const availableFood=Math.min(storageCap,grossFood),spoilage=grossFood-availableFood;
   const foodShortfall=Math.max(0,civilianNeed+guardNeed-entity.food-production-harvest);
@@ -372,7 +374,7 @@ export function advanceLocalCivicEconomy(state){
   entity.food=availableFood;entity.treasury=availableTreasury;
   if(foodShortfall){entity.population=Math.max(1000,population-Math.min(Math.floor(population*.01),foodShortfall*80));entity.militia=Math.max(0,militia-foodShortfall*45)}
   if(payShortfall)entity.militia=Math.max(0,entity.militia-payShortfall*35);
-  entity.lastCivicBudget={year:state.year,month:state.month,production,harvest,civilianNeed,guardNeed,tax,upkeep,storageCap,spoilage,foodShortfall,payShortfall};
+  entity.lastCivicBudget={year:state.year,month:state.month,production,harvest,civilianNeed,guardNeed,tax,upkeep,storageCap,spoilage,foodShortfall,payShortfall,...(entity.civicOfficers?{stewardBenefit,captainBenefit}:{})};
  }
  return state;
 }

@@ -26,4 +26,14 @@ try{
  assert.match(await page.locator('#command-detail').innerText(),/Local trade compact: 24 months remain/);
  assert.deepEqual(errors,[]);
  console.log('A city-state trade compact transfers finite food for real treasury without changing passage or title, and survives save/load.');
+ const generatedName=await page.evaluate(async()=>{const [{newGame},{configureStartingDifficulty}]=await Promise.all([import('/engine.js?v=world-kings-contact-1'),import('/difficulty.js?v=world-kings-contact-1')]);const state=configureStartingDifficulty(newGame('senate'),'expert',false,{localSeed:273}),city=state.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='generated:sicilia');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));return city.name[0]});
+ await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});
+ await page.locator(`[data-city="${generatedName.toUpperCase()}"]`).evaluate(element=>element.click());
+ assert.match(await page.locator('#command-detail').innerText(),/Fictional campaign officials: steward/);
+ await page.locator('#advance').click();await page.locator('#save').click();
+ const generated=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')).regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='generated:sicilia'));
+ assert.ok(generated.civicOfficers.steward.id&&generated.civicOfficers.captain.id);
+ assert.ok(generated.lastCivicBudget.stewardBenefit>=0&&generated.lastCivicBudget.captainBenefit>=0);
+ assert.deepEqual(errors,[]);
+ console.log('A generated city shows named fictional officers whose fiscal effects persist in a browser save.');
 }finally{await browser.close()}

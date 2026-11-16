@@ -145,6 +145,17 @@ function profile(rng,type,scale,band){
  return {population,militia,treasury,food,fort,strategy:integer(rng,...band.skill)};
 }
 
+function civicOfficers(seed,theater,band){
+ const rng={value:siteSeed(seed,`${theater}:council`)},names=rulersFor(theater),chosen=new Set();
+ const appoint=role=>{
+  let index=integer(rng,0,names.length-1);
+  while(chosen.has(index))index=(index+1)%names.length;
+  chosen.add(index);
+  return {id:`local-officer:${theater}:${role}`,name:[...names[index]],skill:integer(rng,...band.skill),fictional:true};
+ };
+ return {steward:appoint('steward'),captain:appoint('captain')};
+}
+
 export function generatedLocalPolities(seed,difficulty,availableTheaters,startYear=-49){
  const band=LOCAL_GENERATION_BANDS[difficulty]||LOCAL_GENERATION_BANDS.standard;
  const rng={value:seed>>>0},sites=LOCAL_GENERATION_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site}));
@@ -173,7 +184,8 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters,startYe
    description:site.type==='strongman'?['Fictional local strongman and armed household generated for this campaign; personal control is not a recognized sovereign border.','本局生成的架空地方豪强及其部曲；个人控制不等于获得承认的主权边界。']:['Fictional autonomous polity generated for this campaign; the point is approximate and does not define a border.','本局生成的架空自治政权；地点为近似点，不代表真实历史边界。'],
    ruler:{id:`local-ruler:${site.theater}`,name:rulerName,birthYear:startYear-age,personality:PERSONALITIES[integer(rng,0,PERSONALITIES.length-1)],fictional:true},
    government:site.type==='strongman'?'personal_following':site.type==='city_state'?'civic_council':site.type==='tribe'?'tribal_assembly':'local_dynasty',
-   maxFootholdLevel:site.type==='strongman'?2:site.type==='tribe'?2:3,...profile({value:siteSeed(seed,site.theater)},site.type,site.scale,band),seed:integer(rng,0,0xffffffff)});
+   maxFootholdLevel:site.type==='strongman'?2:site.type==='tribe'?2:3,...profile({value:siteSeed(seed,site.theater)},site.type,site.scale,band),
+   ...(site.type==='strongman'?{}:{civicOfficers:civicOfficers(seed,site.theater,band)}),seed:integer(rng,0,0xffffffff)});
  }
  return result;
 }

@@ -39,6 +39,25 @@ test('Inspector reports a forged local budget',()=>{
  assert.equal(inspectState(state).some(f=>f.code==='invalid-local-civic-budget'),true);
 });
 
+test('generated civic officers have stable names and pay for their real fiscal benefits',()=>{
+ const state=configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:273});
+ const city=localEntity(state,'generated:sicilia'),officers=city.civicOfficers;
+ assert.ok(officers?.steward&&officers?.captain);
+ assert.notEqual(officers.steward.name[0],officers.captain.name[0]);
+ assert.deepEqual(officers,localEntity(configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:273}),'generated:sicilia').civicOfficers);
+ const withoutOfficers=structuredClone(state);delete localEntity(withoutOfficers,city.id).civicOfficers;
+ state.month=2;withoutOfficers.month=2;
+ advanceLocalCivicEconomy(state);advanceLocalCivicEconomy(withoutOfficers);
+ const baseline=localEntity(withoutOfficers,city.id);
+ assert.equal(city.lastCivicBudget.tax-baseline.lastCivicBudget.tax,city.lastCivicBudget.stewardBenefit);
+ assert.equal(baseline.lastCivicBudget.upkeep-city.lastCivicBudget.upkeep,city.lastCivicBudget.captainBenefit);
+ assert.equal(city.treasury-baseline.treasury,city.lastCivicBudget.stewardBenefit+city.lastCivicBudget.captainBenefit);
+ assert.deepEqual(localEntity(upgradeSave(structuredClone(state)),city.id).civicOfficers,officers);
+ assert.equal(inspectState(state).some(f=>f.code==='invalid-local-civic-officers'),false);
+ officers.steward.skill=99;
+ assert.equal(inspectState(state).some(f=>f.code==='invalid-local-civic-officers'),true);
+});
+
 test('historical and seeded generated cities keep stronger reserves after two years at higher difficulty',()=>{
  for(const id of ['massilia','generated:sicilia']){
   let prior=null;
