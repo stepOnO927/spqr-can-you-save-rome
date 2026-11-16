@@ -6,6 +6,28 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The eastern market now supports a merchant-financed market house at a controlled
+market. A resident merchant with at least two reputation and six personal
+wealth funds a 24-month house; new incoming caravans receive a real transport
+discount and the final leg receives a one-point raider-risk reduction while
+the merchant remains alive and loyal and the court controls the market. The
+house earns at most one unit from transport already paid into escrow, recorded
+separately from the carrier's fee and transport expense. AI merchants use the
+same eligibility rules after deliveries. The player can inspect and fund the
+house in both languages. A stale roster entry for a merchant who defected no
+longer exposes a privilege button. Unit cases cover wealth, cost, quote,
+delivery, rent, save/load, expiry, changed control and allegiance, and a
+deterministic raid threshold; the browser smoke includes the bilingual action.
+The 120-month Han and Roman trade conservation checks account for this third
+destination of paid transport. The standalone 120-month simulation passes;
+the browser extension awaits the next GitHub-hosted run. Two default local
+1,207-test runs passed 1,205 and 1,206 cases respectively: the first also
+exposed the now-corrected transport-rent assertion, while both hit the
+existing 40 ms NPC-East CPU benchmark. Its focused run passed once and failed
+on other runs; the unchanged base branch also failed this benchmark three of
+four isolated runs on this Windows host. GitHub's independent quality run is
+the release gate for this host-sensitive timing test.
+
 The draft now includes main through `ad107bb6`, including its production GA4
 stream setting, foreign-heir will privacy fix and uncertain-age guardianship
 rules. Main's optional analytics is connected across the campaign, atlas and standalone Han views after

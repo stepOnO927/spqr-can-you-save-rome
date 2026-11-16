@@ -102,7 +102,7 @@ test('ten years of attached eastern trade survive a Roman save migration',()=>{
  assert.ok(ships.length>0,'Eastern NPCs never initiated trade');
  assert.ok(ships.some(x=>x.status==='delivered'),'No eastern cargo was delivered');
  assert.ok(ships.every(x=>h.persons[x.merchantId]?.profession==='merchant'));
- assert.equal(h.tradeMarkets.transportSpent+h.tradeMarkets.merchantFees,h.tradeMarkets.transactions.reduce((n,x)=>n+x.transport,0));
+ assert.equal(h.tradeMarkets.transportSpent+h.tradeMarkets.merchantFees+h.tradeMarkets.marketHouseRent,h.tradeMarkets.transactions.reduce((n,x)=>n+x.transport,0));
  assert.equal(romanView(s).imports.some(x=>x.owner!==s.player),false);
 });
 

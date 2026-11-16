@@ -202,7 +202,7 @@ test('Eastern markets use measured stock and a real Kangju–Han horse route',()
  const effect=loaded.tradeMarkets.transactions.find(x=>x.shipment===result.shipment.id).marketEffect;
  assert.equal(effect.stockAfter-effect.stockBefore,request.quantity);
  assert.ok(effect.priceAfter>0&&effect.priceAfter<=effect.priceBefore);
- assert.equal(loaded.tradeMarkets.transportSpent+loaded.tradeMarkets.merchantFees,loaded.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
+ assert.equal(loaded.tradeMarkets.transportSpent+loaded.tradeMarkets.merchantFees+loaded.tradeMarkets.marketHouseRent,loaded.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
 });
 
 test('arrived horse batches become cavalry remounts exactly once across saves',()=>{
@@ -509,7 +509,7 @@ test('a closed route settles its escrow and goods after twelve months',()=>{
  const receipt=s.tradeMarkets.transactions.find(x=>x.shipment===placed.shipment.id);
  assert.equal(receipt.destination,'kangju');assert.equal(receipt.refund,placed.shipment.price+placed.shipment.tariffs.reduce((sum,t)=>sum+t.amount,0));
  assert.deepEqual(loadHanSave(serialize(s)).tradeMarkets.transactions.find(x=>x.shipment===placed.shipment.id),receipt);
- assert.equal(s.tradeMarkets.transportSpent+s.tradeMarkets.merchantFees,s.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
+ assert.equal(s.tradeMarkets.transportSpent+s.tradeMarkets.merchantFees+s.tradeMarkets.marketHouseRent,s.tradeMarkets.transactions.reduce((sum,x)=>sum+x.transport,0));
 });
 
 test('an eastern caravan reroutes around a wartime transit state and pays the revised costs',()=>{
@@ -535,7 +535,7 @@ test('an eastern caravan reroutes around a wartime transit state and pays the re
  assert.equal(shipment.status,'delivered');assert.equal(shipment.escrow,0);
  assert.equal(s.tradeMarkets.transactions.filter(x=>x.shipment===shipment.id).length,1);
  assert.equal(s.tradeMarkets.transitTreasury.wusun||0,0);
- assert.equal(s.tradeMarkets.transportSpent+s.tradeMarkets.merchantFees,shipment.transport);
+ assert.equal(s.tradeMarkets.transportSpent+s.tradeMarkets.merchantFees+s.tradeMarkets.marketHouseRent,shipment.transport);
  assert.equal(s.tradeMarkets.regions.dunhuang.goods.horses.stock>0,true);
  assert.ok(duty>0);
 });
@@ -575,7 +575,7 @@ test('120 autonomous market months conserve goods and money through save reload'
  const goods=Object.keys(s.tradeMarkets.regions.changan.goods);
  const quantity=good=>Object.values(s.tradeMarkets.regions).reduce((n,m)=>n+m.goods[good].stock,0)+s.tradeMarkets.shipments.filter(x=>['traveling','blocked'].includes(x.status)&&x.commodity===good).reduce((n,x)=>n+x.quantity,0);
  const initial=Object.fromEntries(goods.map(good=>[good,quantity(good)]));
- const cash=()=>Object.values(s.factions).reduce((n,f)=>n+f.treasury,0)+Object.values(s.tradeMarkets.merchants).flat().reduce((n,id)=>n+(s.persons[id]?.wealth||0),0)+s.tradeMarkets.shipments.reduce((n,x)=>n+(x.escrow||0),0)+s.tradeMarkets.transportSpent+s.tradeMarkets.merchantEscortSpent+Object.values(s.tradeMarkets.transitTreasury).reduce((n,x)=>n+x,0);
+ const cash=()=>Object.values(s.factions).reduce((n,f)=>n+f.treasury,0)+Object.values(s.tradeMarkets.merchants).flat().reduce((n,id)=>n+(s.persons[id]?.wealth||0),0)+s.tradeMarkets.shipments.reduce((n,x)=>n+(x.escrow||0),0)+s.tradeMarkets.transportSpent+s.tradeMarkets.merchantEscortSpent+s.tradeMarkets.marketHouseSpent+Object.values(s.tradeMarkets.transitTreasury).reduce((n,x)=>n+x,0);
  const initialCash=cash();
  for(let i=0;i<120;i++){next(s);if(i===59)s=loadHanSave(serialize(s))}
  for(const good of goods){
@@ -645,7 +645,7 @@ test('bandit risk consumes real cargo while route security can protect it',()=>{
  assert.equal(shipment.status,'lost');assert.equal(shipment.escrow,0);
  assert.equal(s.tradeMarkets.lostGoods.silk,1);assert.equal(s.tradeMarkets.externalTreasury,externalBefore+shipment.price+shipment.tariffs.reduce((n,t)=>n+t.amount,0));
  assert.equal(s.factions.han.treasury,hanBefore);
- assert.equal(s.tradeMarkets.transportSpent+s.tradeMarkets.merchantFees,shipment.transport);
+ assert.equal(s.tradeMarkets.transportSpent+s.tradeMarkets.merchantFees+s.tradeMarkets.marketHouseRent,shipment.transport);
  const receipt=s.tradeMarkets.transactions.find(x=>x.shipment===shipment.id);
  assert.equal(receipt.status,'lost');assert.equal(receipt.destination,nextRegion.id);
  assert.equal(receipt.refund,shipment.price+shipment.tariffs.reduce((sum,t)=>sum+t.amount,0));

@@ -63,7 +63,7 @@ for(let i=0;i<120;i++){
 assert.notEqual(han.throne.occupant,openingHanRuler,'the scheduled Han succession did not resolve');
 assert.equal(han.throne.occupant,'liu-shi');
 assert.equal(han.rulers.parthia.personId,openingParthian,'the Parthian ruler changed without a succession event');
-assert.equal(han.tradeMarkets.transportSpent+han.tradeMarkets.merchantFees,han.tradeMarkets.transactions.reduce((sum,x)=>sum+(x.transport||0),0),'Han transport payments must have one destination');
+assert.equal(han.tradeMarkets.transportSpent+han.tradeMarkets.merchantFees+han.tradeMarkets.marketHouseRent,han.tradeMarkets.transactions.reduce((sum,x)=>sum+(x.transport||0),0),'Han transport payments must have one destination');
 const hanDelivered=han.tradeMarkets.transactions.filter(x=>!['lost','stranded'].includes(x.status)).length;
 assert.ok(hanDelivered>=4,'the direct Han market must complete physical deliveries');
 console.log(JSON.stringify({...summary,han:{months:120,year:han.year,month:han.month,emperor:han.throne.occupant,markets:Object.keys(han.tradeMarkets.regions).length,shipments:han.tradeMarkets.shipments.length,delivered:hanDelivered}}));

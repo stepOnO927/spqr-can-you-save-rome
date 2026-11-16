@@ -199,6 +199,25 @@ try{
  assert.equal(protectedState.tradeMarkets.merchantProtectionRequests[0].status,'funded');
  assert.equal(await page.locator('[data-east-protection]').count(),0);
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/商人护路请求.*暂无待答复请求/s);
+ await page.evaluate(async()=>{
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=guardian-age-1');
+  const {createMarketMerchant}=await import('/han/field-identities.js');
+  const state=newHanGame('han',{seed:113}),id=createMarketMerchant(state,'han','changan'),person=state.persons[id];
+  state.tradeMarkets.merchants.han=[id];person.wealth=6;person.marketReputation=2;
+  localStorage.setItem(SAVE_KEY('browser'),serialize(state));
+ });
+ await page.locator('#load').click();await page.locator('.territory[data-region="changan"]').click({force:true});await page.locator('#trade-panel').click();
+ assert.match(await page.locator('#inspector').innerText(),/商人自设商馆.*自费设馆/s);
+ await page.locator('[data-east-market-house]').click();
+ assert.match(await page.locator('#message').innerText(),/商人已自费设立商馆/);
+ await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#trade-panel').click();
+ assert.match(await page.locator('#inspector').innerText(),/商馆尚余 24 个月.*累计运费收入 0¤/s);
+ assert.equal(await page.locator('[data-east-market-house]').count(),0);
+ await page.locator('#lang').click();
+ assert.match(await page.locator('#inspector').innerText(),/Merchant market house.*House active for 24 months/s);
+ const houseSave=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ assert.equal(houseSave.tradeMarkets.marketHouseSpent,6);
+ assert.equal(houseSave.persons[houseSave.tradeMarkets.marketHouses.changan.merchantId].wealth,0);
  assert.deepEqual(errors,[]);
- console.log('Han market browser smoke passed: listings, customs, treaty, horse delivery, army remounts, save/load and bilingual panel.');
+ console.log('Han market browser smoke passed: listings, customs, treaty, horse delivery, remounts, merchant market house, save/load and bilingual panel.');
 }finally{await browser.close()}
