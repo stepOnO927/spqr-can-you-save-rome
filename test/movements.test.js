@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=contact-snapshot-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=reported-contact-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {advanceMovements,respondToMovement,reportedMovements,movementReportLeaderName,offerMovementSupport,recognizeMovement} from '../movements.js?v=guardian-age-1';
-import {newRevolutionScenario} from '../scenarios.js?v=contact-snapshot-1';
-import {plotFormationChance} from '../conspiracies.js?v=undated-name-1';
+import {advanceMovements,respondToMovement,reportedMovements,movementReportLeaderName,offerMovementSupport,recognizeMovement} from '../movements.js?v=reported-contact-1';
+import {newRevolutionScenario} from '../scenarios.js?v=reported-contact-1';
+import {plotFormationChance} from '../conspiracies.js?v=reported-contact-1';
 
 function crisis(){const s=newGame('caesar'),r=s.regions.find(x=>x.id==='gaul'),f=s.factions.caesar;r.loyalty=5;r.population.satisfaction=10;f.stability=20;f.legitimacy=25;f.tax='high';return {s,r,f}}
 function month(s){s.month++;if(s.month>12){s.month=1;s.year++}advanceMovements(s)}
@@ -73,13 +73,13 @@ test('a reported movement preserves the observed fictional name and legacy repor
 });
 test('foreign financing requires reported contact, takes time, spends actual treasury and never gives control',()=>{
  let s=newGame('caesar'),r=s.regions.find(x=>x.id==='italiaN'),f=s.factions.senate;r.loyalty=5;r.population.satisfaction=10;f.stability=20;f.legitimacy=25;f.tax='high';f.treasury=0;
- for(let i=0;i<12;i++)month(s);const m=s.world.movements.find(x=>x.region===r.id),report=reportedMovements(s,'caesar').find(x=>x.id===m.id);s.world.personalRelations[['antony',report.leader].sort().join(':')]={trust:30,meetings:1};
+ for(let i=0;i<12;i++)month(s);const m=s.world.movements.find(x=>x.region===r.id),report=reportedMovements(s,'caesar').find(x=>x.id===m.id);s.world.personalRelations[['antony',report.leader].sort().join(':')]={trust:30,meetings:1};s.meetings.push({actor:'caesar',targetFaction:'senate',person:'antony',target:report.leader,status:'met',year:s.year,month:s.month,contactCredit:6});
  const before=s.factions.caesar.treasury,funds=m.funds;assert.ok(offerMovementSupport(s,'caesar',m.id,'antony').ok);assert.equal(s.factions.caesar.treasury,before-10);assert.equal(m.funds,funds);
  s=upgradeSave(JSON.parse(JSON.stringify(s)));for(let i=0;i<4;i++)month(s);const restored=s.world.movements.find(x=>x.id===m.id);assert.equal(s.world.movementContacts[0].status,'accepted');assert.ok(restored.funds>=funds+8);assert.equal(restored.parent,'senate');assert.equal(restored.foreignSupport[0].actor,'caesar');
 });
 test('an outdated report permits an offer without disclosing that the movement has collapsed',()=>{
  const s=newGame('caesar'),r=s.regions.find(x=>x.id==='italiaN'),f=s.factions.senate;r.loyalty=5;r.population.satisfaction=10;f.stability=20;f.legitimacy=25;f.tax='high';f.treasury=0;
- for(let i=0;i<12;i++)month(s);const m=s.world.movements.find(x=>x.region===r.id),report=reportedMovements(s,'caesar').find(x=>x.id===m.id);s.world.personalRelations[['antony',report.leader].sort().join(':')]={trust:30,meetings:1};m.stage='collapsed';
+ for(let i=0;i<12;i++)month(s);const m=s.world.movements.find(x=>x.region===r.id),report=reportedMovements(s,'caesar').find(x=>x.id===m.id);s.world.personalRelations[['antony',report.leader].sort().join(':')]={trust:30,meetings:1};s.meetings.push({actor:'caesar',targetFaction:'senate',person:'antony',target:report.leader,status:'met',year:s.year,month:s.month,contactCredit:6});m.stage='collapsed';
  assert.ok(offerMovementSupport(s,'caesar',m.id,'antony').ok);assert.equal(s.world.movementContacts[0].status,'pending');for(let i=0;i<4;i++)month(s);assert.equal(s.world.movementContacts[0].status,'no_reply');
 });
 test('public recognition changes relations and movement support without giving control',()=>{

@@ -1,15 +1,15 @@
-import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport} from './person-knowledge.js?v=undated-name-1';
+import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,reportedPersonalContacts} from './person-knowledge.js?v=reported-contact-1';
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=succession-ui-recovery-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=guardian-age-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=reported-contact-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=guardian-age-1';
-import {potentialConspirators} from './conspiracies.js?v=undated-name-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=undated-name-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=reported-contact-1';
+import {potentialConspirators} from './conspiracies.js?v=reported-contact-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=reported-contact-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=guardian-age-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=reported-contact-1';
 import {activeAgreement} from './agreements.js?v=agreement-courier-1';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=guardian-age-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=reported-contact-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -130,7 +130,7 @@ export function reportedHealthSubjects(s,actor,target){
  return [...new Set([...(knowledge?.reportedLeaders||[]),...reportedClaimants(s,actor,target),...Object.values(knowledge?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...leads].filter(id=>CHARACTER_CATALOG[id]))];
 }
 export function claimantRepresentatives(s,actor,claimant){
- initializeWorld(s);return Object.values(s.world.characters).filter(c=>c.faction===actor&&c.alive&&!c.missing&&!['seriously_ill','dying','deceased'].includes(c.health)&&CHARACTER_CATALOG[c.id]&&(s.world.personalRelations[[c.id,claimant].sort().join(':')]?.trust||0)>0).map(c=>c.id);
+ initializeWorld(s);const contacts=reportedPersonalContacts(s,actor,claimant);return Object.values(s.world.characters).filter(c=>c.faction===actor&&c.alive&&!c.missing&&!['seriously_ill','dying','deceased'].includes(c.health)&&CHARACTER_CATALOG[c.id]&&(contacts.get(c.id)?.credit||0)>0).map(c=>c.id);
 }
 // A public policy records the player's choice, not the target court's true ruler.
 export function recognizeClaimant(s,target,claimant){
