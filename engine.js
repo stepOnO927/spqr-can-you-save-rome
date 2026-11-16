@@ -408,46 +408,75 @@ function resolveInquiries(s){
  }
 }
 
+function divideBattleLosses(units,total){
+ const strength=units.reduce((sum,unit)=>sum+unit.men,0);
+ const shares=units.map(unit=>total*unit.men/strength),losses=shares.map(Math.floor);
+ for(let left=total-losses.reduce((sum,n)=>sum+n,0);left>0;left--){
+  const index=shares.map((share,i)=>({i,fraction:share-losses[i]})).sort((a,b)=>b.fraction-a.fraction||a.i-b.i)[0].i;
+  losses[index]++;
+ }
+ return losses;
+}
+
 export function resolveBattle(s,attacker,defender,target,options={}){
-  const meeting=options.meeting===true,battleFort=meeting?0:target.fort;
+  const meeting=options.meeting===true,battleFort=meeting||target.owner!==defender.owner?0:target.fort;
+  const attackers=meeting||attacker.move?.to!==target.id?[attacker]:[attacker,...s.armies.filter(unit=>unit!==attacker&&unit.owner===attacker.owner&&unit.men>0&&unit.move?.to===target.id&&unit.move.remaining<=1&&(!unit.move.transportFleetId||unit.move.transportReady))];
+  const defenders=meeting?[defender]:[defender,...s.armies.filter(unit=>unit!==attacker&&unit!==defender&&unit.owner===defender.owner&&unit.region===target.id&&unit.men>0&&!unit.move)];
+  const attackingMen=attackers.reduce((sum,unit)=>sum+unit.men,0);
+  const defendingMen=defenders.reduce((sum,unit)=>sum+unit.men,0);
   const terrain=meeting?1:{plain:1,hills:1.2,forest:1.12,urban:1.25,desert:1.06}[target.terrain];
-  const supplyA=Math.min(1,Math.max(.65,s.factions[attacker.owner].food/20))*(s.grandMap?armySupply(s,attacker):1);
-  const supplyD=Math.min(1,Math.max(.65,s.factions[defender.owner].food/20))*(s.grandMap?armySupply(s,defender):1);
-  linkCommanders(s);relieveIncapacitatedCommanders(s);const commandA=commandFactor(s,attacker),commandD=commandFactor(s,defender),transport=s.naval?.fleets.find(f=>f.id===attacker.move?.transportFleetId),escort=transport&&Object.entries(transport.ships).some(([kind,count])=>['light','trireme','quadrireme','quinquereme'].includes(kind)&&count>0)?.05:0,landingFactor=attacker.move?.sea&&target.owner!==attacker.owner?Math.max(.65,.88-target.fort*.03+escort):1;const powerA=attacker.men*(.65+attacker.morale/200+attacker.skill*.055+attacker.experience*.025)*supplyA*commandA*flankFactor(s,attacker,target)*landingFactor*(1+(activeEffects(s,attacker.owner).combatAttack||0));
+  linkCommanders(s);relieveIncapacitatedCommanders(s);
+  const attackerStats=attackers.map(unit=>{
+   const supply=Math.min(1,Math.max(.65,s.factions[unit.owner].food/20))*(s.grandMap?armySupply(s,unit):1);
+   const command=commandFactor(s,unit),transport=s.naval?.fleets.find(f=>f.id===unit.move?.transportFleetId);
+   const escort=transport&&Object.entries(transport.ships).some(([kind,count])=>['light','trireme','quadrireme','quinquereme'].includes(kind)&&count>0)?.05:0;
+   const landing=unit.move?.sea&&target.owner!==unit.owner?Math.max(.65,.88-target.fort*.03+escort):1;
+   return {unit,supply,command,landing};
+  });
+  const defenderStats=defenders.map(unit=>({unit,supply:Math.min(1,Math.max(.65,s.factions[unit.owner].food/20))*(s.grandMap?armySupply(s,unit):1),command:commandFactor(s,unit)}));
+  const weighted=(stats,men,value)=>stats.reduce((sum,entry)=>sum+entry.unit.men*value(entry),0)/men;
+  const supplyA=weighted(attackerStats,attackingMen,entry=>entry.supply),commandA=weighted(attackerStats,attackingMen,entry=>entry.command),landingFactor=weighted(attackerStats,attackingMen,entry=>entry.landing);
+  const supplyD=weighted(defenderStats,defendingMen,entry=>entry.supply),commandD=weighted(defenderStats,defendingMen,entry=>entry.command);
+  const powerA=attackerStats.reduce((sum,{unit,supply,command,landing})=>sum+unit.men*(.65+unit.morale/200+unit.skill*.055+unit.experience*.025)*supply*command*flankFactor(s,unit,target)*landing*(1+(activeEffects(s,unit.owner).combatAttack||0)),0);
   const arrowTrainFactor=!meeting&&target.owner===defender.owner&&target.culture==='parthia'&&target.terrain==='plain'&&supplyD>=.8?activeEffects(s,defender.owner).parthianArrowTrains||0:0;
-  const powerD=defender.men*(.65+defender.morale/200+defender.skill*.055+defender.experience*.025)*terrain*(1+battleFort*.12)*supplyD*commandD*(1+(meeting?0:defender.prepared||0)*.06)*(1+(activeEffects(s,defender.owner).combatDefense||0))*(1+arrowTrainFactor);
+  const powerD=defenderStats.reduce((sum,{unit,supply,command})=>sum+unit.men*(.65+unit.morale/200+unit.skill*.055+unit.experience*.025)*terrain*(1+battleFort*.12)*supply*command*(1+(meeting?0:unit.prepared||0)*.06)*(1+(activeEffects(s,unit.owner).combatDefense||0))*(1+arrowTrainFactor),0);
   const roll=.85+rnd(s)*.3;
   const attackerWins=powerA*roll>powerD;
-  const lossA=Math.min(attacker.men,Math.round(defender.men*(attackerWins?.19:.31)*(powerD/powerA)**.25));
-  const lossD=Math.min(defender.men,Math.round(attacker.men*(attackerWins?.34:.19)*(powerA/powerD)**.25));
-  const report={year:s.year,month:s.month,region:target.id,meeting,meetingFrom:meeting?options.from:null,preBattleIntel:attacker.attackIntel||null,defenderPreBattleIntel:meeting?defender.attackIntel||null:null,landingFactor,arrowTrainFactor,attacker:{name:[...attacker.name],commander:[...attacker.commander],owner:attacker.owner,men:attacker.men,morale:attacker.morale,experience:attacker.experience,supply:supplyA,commandFactor:commandA,food:s.factions[attacker.owner].food,power:Math.round(powerA)},defender:{name:[...defender.name],commander:[...defender.commander],owner:defender.owner,men:defender.men,morale:defender.morale,experience:defender.experience,supply:supplyD,commandFactor:commandD,food:s.factions[defender.owner].food,power:Math.round(powerD)},terrain:meeting?'plain':target.terrain,fort:battleFort,roll,attackerWins,lossA,lossD};
-  report.combatEstimate={attacker:[Math.max(0,Math.floor(attacker.men*.7/500)*500),Math.ceil(attacker.men*1.3/500)*500],defender:[Math.max(0,Math.floor(defender.men*.7/500)*500),Math.ceil(defender.men*1.3/500)*500]};
-  report.attacker.remaining=Math.max(0,attacker.men-lossA);report.defender.remaining=Math.max(0,defender.men-lossD);
+  const defenderRetreat=attackerWins&&!meeting?adjacent(target.id,s).map(e=>region(s,e.to)).find(r=>r.owner===defender.owner)?.id:null;
+  const lossA=Math.min(attackingMen,Math.round(defendingMen*(attackerWins?.19:.31)*(powerD/powerA)**.25));
+  // Forces cut off from friendly land are lost in the rout, so reports must
+  // include those losses rather than showing survivors who vanish afterward.
+  const lossD=attackerWins&&!meeting&&!defenderRetreat?defendingMen:Math.min(defendingMen,Math.round(attackingMen*(attackerWins?.34:.19)*(powerA/powerD)**.25));
+  const attackerLosses=divideBattleLosses(attackers,lossA);
+  const defenderLosses=divideBattleLosses(defenders,lossD);
+  const snapshot=(units,losses)=>units.length>1?units.map((unit,i)=>({id:unit.id,name:[...unit.name],commander:[...unit.commander],men:unit.men,casualties:losses[i],remaining:unit.men-losses[i]})):undefined;
+  const attackFormations=snapshot(attackers,attackerLosses),defenseFormations=snapshot(defenders,defenderLosses);
+  const report={year:s.year,month:s.month,region:target.id,meeting,meetingFrom:meeting?options.from:null,preBattleIntel:attacker.attackIntel||null,defenderPreBattleIntel:meeting?defender.attackIntel||null:null,landingFactor,arrowTrainFactor,attacker:{name:attackFormations?[`Joint assault (${attackers.length} armies)`,`联合进攻（${attackers.length}支部队）`]:[...attacker.name],commander:attackFormations?['Joint command','联合指挥']:[...attacker.commander],owner:attacker.owner,men:attackingMen,morale:Math.round(weighted(attackerStats,attackingMen,entry=>entry.unit.morale)),experience:weighted(attackerStats,attackingMen,entry=>entry.unit.experience),supply:supplyA,commandFactor:commandA,food:s.factions[attacker.owner].food,power:Math.round(powerA),...(attackFormations?{formations:attackFormations}:{})},defender:{name:defenseFormations?[`Combined defense (${defenders.length} armies)`,`联合防御（${defenders.length}支部队）`]:[...defender.name],commander:defenseFormations?['Joint command','联合指挥']:[...defender.commander],owner:defender.owner,men:defendingMen,morale:Math.round(weighted(defenderStats,defendingMen,entry=>entry.unit.morale)),experience:weighted(defenderStats,defendingMen,entry=>entry.unit.experience),supply:supplyD,commandFactor:commandD,food:s.factions[defender.owner].food,power:Math.round(powerD),...(defenseFormations?{formations:defenseFormations}:{})},terrain:meeting?'plain':target.terrain,fort:battleFort,roll,attackerWins,lossA,lossD};
+  report.combatEstimate={attacker:[Math.max(0,Math.floor(attackingMen*.7/500)*500),Math.ceil(attackingMen*1.3/500)*500],defender:[Math.max(0,Math.floor(defendingMen*.7/500)*500),Math.ceil(defendingMen*1.3/500)*500]};
+  report.attacker.remaining=Math.max(0,attackingMen-lossA);report.defender.remaining=Math.max(0,defendingMen-lossD);
   report.id=`battle-${initializeReports(s).nextBattle++}`;
   (s.battles ||= []).unshift(report);
-  for(const observer of [attacker,defender]){const [min,max]=report.combatEstimate[observer===attacker?'defender':'attacker'];(s.militaryRecon||=[]).unshift({owner:observer.owner,armyId:observer.id,regionId:meeting&&observer===defender?options.from:target.id,year:s.year,month:s.month,observationYear:s.year,observationMonth:s.month,arrivalYear:s.year,arrivalMonth:s.month,source:'battle',min,max,confidence:'confirmed',reliability:'high',positions:meeting?'opposing march':'battlefield contact',defensive:{fort:battleFort},misinformationRisk:'low'});s.militaryRecon.length=Math.min(80,s.militaryRecon.length)}
+  for(const observer of [...attackers,...defenders]){const [min,max]=report.combatEstimate[observer.owner===attacker.owner?'defender':'attacker'];(s.militaryRecon||=[]).unshift({owner:observer.owner,armyId:observer.id,regionId:meeting&&observer===defender?options.from:target.id,year:s.year,month:s.month,observationYear:s.year,observationMonth:s.month,arrivalYear:s.year,arrivalMonth:s.month,source:'battle',min,max,confidence:'confirmed',reliability:'high',positions:meeting?'opposing march':'battlefield contact',defensive:{fort:battleFort},misinformationRisk:'low'});s.militaryRecon.length=Math.min(80,s.militaryRecon.length)}
   recordBattle(s,report,attacker,defender);
   const previousOwner=target.owner;
-  attacker.men-=lossA;defender.men-=lossD;for(const unit of [attacker,defender]){const person=s.world.characters[unit.characterId];if(person?.alive)person.battlesCommanded=(Number.isFinite(person.battlesCommanded)?person.battlesCommanded:0)+1}battlefieldWound(s,attacker);battlefieldWound(s,defender);
-  attacker.morale=Math.max(20,attacker.morale+(attackerWins?7:-16));
-  defender.morale=Math.max(20,defender.morale+(attackerWins?-16:7));
+  for(let i=0;i<attackers.length;i++)attackers[i].men-=attackerLosses[i];for(let i=0;i<defenders.length;i++)defenders[i].men-=defenderLosses[i];for(const unit of [...attackers,...defenders]){const person=s.world.characters[unit.characterId];if(person?.alive)person.battlesCommanded=(Number.isFinite(person.battlesCommanded)?person.battlesCommanded:0)+1;battlefieldWound(s,unit)}
+  for(const unit of attackers)unit.morale=Math.max(20,unit.morale+(attackerWins?7:-16));
+  for(const unit of defenders)unit.morale=Math.max(20,unit.morale+(attackerWins?-16:7));
   if(meeting){
     // The armies met while marching in opposite directions. Both return to
     // their starting theaters; neither receives a free occupation.
     attacker.move=null;defender.move=null;attacker.attackIntel=null;defender.attackIntel=null;
   } else if(attackerWins){
-    defender.siege=null;
-    defender.region=adjacent(target.id,s).map(e=>region(s,e.to)).find(r=>r.owner===defender.owner)?.id||target.id;
-    if(defender.region===target.id)defender.men=0;
-    const remaining=s.armies.some(other=>other.id!==attacker.id&&other.id!==defender.id&&other.men>0&&other.region===target.id&&!other.move&&isWar(s,attacker.owner,other.owner));
-    if(!remaining){attacker.region=target.id;target.owner=attacker.owner;target.loyalty=38;recordControl(s,target,previousOwner,'battle',{armyId:attacker.id,battleId:report.id,attacker:attacker.owner,defender:defender.owner})}
+    for(const unit of defenders){unit.siege=null;unit.region=defenderRetreat||target.id}
+    const defenderIds=new Set(defenders.map(unit=>unit.id));
+    const remaining=s.armies.some(other=>other.id!==attacker.id&&!defenderIds.has(other.id)&&other.men>0&&other.region===target.id&&!other.move&&isWar(s,attacker.owner,other.owner));
+    if(!remaining){for(const unit of attackers)unit.region=target.id;target.owner=attacker.owner;target.loyalty=38;recordControl(s,target,previousOwner,'battle',{armyId:attacker.id,battleId:report.id,attacker:attacker.owner,defender:defender.owner})}
   } else {
-    attacker.siege=null;
-    attacker.region=adjacent(target.id,s).map(e=>region(s,e.to)).find(r=>r.owner===attacker.owner)?.id||attacker.region;
+    const retreat=adjacent(target.id,s).map(e=>region(s,e.to)).find(r=>r.owner===attacker.owner)?.id;
+    for(const unit of attackers){unit.siege=null;unit.region=retreat||unit.region}
   }
-  attacker.move=null;attacker.experience=Math.min(5,attacker.experience+1);
-  attacker.attackIntel=null;
-  defender.experience=Math.min(5,defender.experience+1);
+  for(const unit of attackers){unit.move=null;unit.experience=Math.min(5,unit.experience+1);unit.attackIntel=null}
+  for(const unit of defenders)unit.experience=Math.min(5,unit.experience+1);
   if(attacker.owner===s.player||defender.owner===s.player){const playerAttacks=attacker.owner===s.player,ownLoss=playerAttacks?lossA:lossD,playerPrevailed=playerAttacks?attackerWins:!attackerWins,location=meeting?'opposing marches':target.name[0],locationZh=meeting?'反向行军途中':target.name[1];log(s,`${FACTIONS[s.player].short[0]} ${playerPrevailed?'prevailed':'was repulsed'} at ${location}. Casualties: own ${ownLoss.toLocaleString()}; enemy unknown.`,`${FACTIONS[s.player].short[1]}在${locationZh}${playerPrevailed?'占优':'失利'}。己方伤亡：${ownLoss.toLocaleString()}；敌方伤亡未知。`)}
   report.ownerAfter=target.owner;
   for(const lost of s.armies.filter(a=>a.men<=0&&a.characterId)){

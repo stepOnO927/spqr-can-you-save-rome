@@ -7,6 +7,97 @@ import {requestReinforcements,probePositions,latestRecon,advanceRecon} from '../
 import {militaryResult,settlementEligible} from '../campaign-outcome.js';
 import {campaignVictoryHtml} from '../achievement-ui.js';
 import {budgetHtml} from '../budget-ui.js';
+import {afterActionHtml} from '../recon-ui.js';
+import {battleSideForPlayer} from '../visibility.js';
+
+test('co-located armies defend together and preserve their separate losses',()=>{
+ const setup=reinforce=>{
+  const s=newGrandGame('caesar');s.seed=17;
+  region(s,'roma').owner='caesar';region(s,'t014').owner='senate';
+  const attacker=army(s,'pompey'),defender=army(s,'xiii');
+  attacker.region='t014';attacker.men=12000;defender.region='roma';defender.men=6000;
+  if(reinforce)assert.equal(recruit(s,'roma','caesar'),true);
+  s.factions.caesar.food=100;s.factions.senate.food=100;
+  const won=resolveBattle(s,attacker,defender,region(s,'roma'));
+  return {s,won,battle:s.battles[0]};
+ };
+ const alone=setup(false),combined=setup(true),{s,battle}=combined;
+ assert.equal(alone.won,true,'the unreinforced city falls in this fixed battle');
+ assert.equal(combined.won,false,'the same attack is repulsed by both defenders');
+ assert.equal(region(s,'roma').owner,'caesar');
+ assert.equal(battle.defender.men,9000);
+ assert.equal(battle.defender.formations.length,2);
+ assert.equal(battle.defender.formations.reduce((sum,unit)=>sum+unit.casualties,0),battle.lossD);
+ for(const formation of battle.defender.formations)assert.equal(army(s,formation.id).men,formation.remaining);
+ assert.match(afterActionHtml(battle,'caesar','en'),/Formations engaged together 2/);
+ assert.match(afterActionHtml(battle,'caesar','zh'),/共同参战部队 2/);
+ assert.match(battleReportHtml(s,battle,'en'),/Friendly participating formations/);
+ assert.match(battleReportHtml(s,battle,'zh'),/己方参战部队/);
+ assert.deepEqual(battleSideForPlayer(battle,'senate','defender'),{owner:'caesar',unknown:true});
+ s.player='senate';assert.doesNotMatch(battleReportHtml(s,battle,'en'),/Friendly participating formations/);
+ s.player='caesar';
+ const restored=upgradeSave(structuredClone(s));
+ assert.deepEqual(restored.battles[0].defender.formations,battle.defender.formations);
+});
+
+test('a besieger in enemy land cannot use the city fort as defensive cover',()=>{
+ const s=newGrandGame('senate'),site=region(s,'roma'),attacker=army(s,'pompey'),besieger=army(s,'xiii');
+ site.fort=3;attacker.region='t014';besieger.region='roma';besieger.siege={region:'roma',remaining:2};
+ resolveBattle(s,attacker,besieger,site);
+ assert.equal(s.battles[0].fort,0);
+});
+
+test('armies ordered into the same attack this month fight together',()=>{
+ const setup=combined=>{
+  const s=newGrandGame('caesar');s.seed=17;
+  const first=army(s,'xiii'),second=army(s,'viii'),defender=army(s,'italy');
+  first.region='cisalpine';first.men=5200;first.move={to:'italiaN',remaining:1};
+  second.region='cisalpine';second.men=4000;if(combined)second.move={to:'italiaN',remaining:1};
+  defender.region='italiaN';defender.men=6000;
+  s.factions.caesar.food=s.factions.senate.food=100;
+  const won=resolveBattle(s,first,defender,region(s,'italiaN'));
+  return {s,won,battle:s.battles[0],second};
+ };
+ const alone=setup(false),joint=setup(true);
+ assert.equal(alone.won,false);
+ assert.equal(joint.won,true);
+ assert.equal(joint.battle.attacker.men,9200);
+ assert.equal(joint.battle.attacker.formations.length,2);
+ assert.equal(joint.battle.attacker.formations.reduce((sum,unit)=>sum+unit.casualties,0),joint.battle.lossA);
+ assert.equal(joint.second.men,joint.battle.attacker.formations[1].remaining);
+ assert.equal(joint.second.move,null);
+ assert.equal(joint.second.region,'italiaN');
+ assert.match(battleReportHtml(joint.s,joint.battle,'en'),/Friendly participating formations/);
+ assert.match(battleReportHtml(joint.s,joint.battle,'zh'),/己方参战部队/);
+ assert.deepEqual(upgradeSave(structuredClone(joint.s)).battles[0].attacker.formations,joint.battle.attacker.formations);
+ joint.s.player='senate';assert.doesNotMatch(battleReportHtml(joint.s,joint.battle,'en'),/Friendly participating formations/);
+});
+
+test('two legal march orders arrive as one battle during a real month',()=>{
+ const s=newGrandGame('caesar'),support=army(s,'viii');
+ support.region='cisalpine';support.men=4000;
+ assert.equal(moveArmy(s,'xiii','italiaN').ok,true);
+ assert.equal(moveArmy(s,'viii','italiaN').ok,true);
+ tick(s);
+ const battles=s.battles.filter(b=>b.region==='italiaN'&&b.month===2);
+ assert.equal(battles.length,1);
+ assert.equal(battles[0].attacker.men,11200);
+ assert.equal(battles[0].attacker.formations.length,2);
+ assert.equal(support.move,null);
+});
+
+test('a surrounded defender has its rout losses recorded instead of vanishing after battle',()=>{
+ const s=newGame('caesar'),attacker=army(s,'xiii'),defender=army(s,'italy'),support=army(s,'pompey');
+ for(const site of s.regions)if(site.owner==='senate'&&site.id!=='italiaN')site.owner='caesar';
+ support.region='italiaN';attacker.men=30000;defender.men=1000;
+ const initial=defender.men+support.men;
+ assert.equal(resolveBattle(s,attacker,defender,region(s,'italiaN')),true);
+ const battle=s.battles[0];
+ assert.equal(battle.lossD,initial);
+ assert.equal(battle.defender.remaining,0);
+ assert.equal(battle.defender.formations.reduce((sum,unit)=>sum+unit.casualties,0),initial);
+ assert.ok(s.armies.every(unit=>unit.id!=='italy'&&unit.id!=='pompey'));
+});
 
 test('food shortage penalties scale with the actual national deficit',()=>{
  const run=target=>{

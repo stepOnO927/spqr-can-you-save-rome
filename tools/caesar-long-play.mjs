@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
-import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,orderFleet,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions,seizeAerarium,researchInnovation,startConstruction,constructionCheck,setTax} from '../engine.js';
+import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,orderFleet,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions,seizeAerarium,researchInnovation,startConstruction,constructionCheck,setTax,diplomacy} from '../engine.js';
 import {assessment,sendScouts,probePositions,delayAttack,latestRecon,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {revealedAchievements} from '../achievement-system.js';
@@ -20,7 +20,9 @@ if(investCash&&investFood&&!combinedInvestment)throw new Error('Choose one econo
 const warTax=process.env.SPQR_CAESAR_WAR_TAX==='1';
 const seekOstia=process.env.SPQR_CAESAR_OSTIA==='1';
 const useAerarium=process.env.SPQR_CAESAR_AERARIUM==='1';
+const seekSettlement=process.env.SPQR_CAESAR_SEEK_SETTLEMENT==='1';
 const journal=[],snapshots=[],seen=new Set(),grainDeliveries=[],corridor=['cisalpine','italiaN','t013','t012','t014','roma',...(seekOstia?['t016']:[])];
+const settlementAudit=[];
 let peakIrrigation=0,everHeldOstia=region(s,'t016').owner==='caesar';
 const record=(label,result)=>{if(result?.ok)journal.push(`${s.year}/${s.month} ${label}`);return !!result?.ok};
 assert.equal(record('reserve Adriatic fleet',reserveFleet(s,'caesar','caesar-adriatic')),true);
@@ -67,6 +69,14 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
  if(f.treasury<30&&nationalBudget(s,'caesar').projectedNet<0)record('collect wartime contributions',collectWarContributions(s,'caesar'));
  if(useAerarium&&f.treasury<40&&region(s,'roma').owner==='caesar'&&!s.aerariumSeizure)record('take Rome public reserve',seizeAerarium(s,'caesar'));
  if(f.food<24&&nationalBudget(s,'caesar').foodNet<0)record('gather emergency provisions',collectEmergencyProvisions(s,'caesar'));
+ // A player may propose an end to the war after visibly taking Rome. The
+ // offer costs treasury and can be refused; this route never inspects the
+ // opponent's concealed eligibility or troop counts before deciding.
+ if(seekSettlement&&month%3===0&&region(s,'roma').owner==='caesar'&&f.treasury>=4&&!s.campaignOutcome){
+  const accepted=diplomacy(s,'caesar','senate','settlement');
+  journal.push(`${s.year}/${s.month} propose civil settlement: ${accepted?'accepted':'refused'}`);
+  if(process.env.SPQR_CAESAR_SETTLEMENT_AUDIT==='1')settlementAudit.push({date:`${s.year}/${s.month}`,accepted,caesarTroops:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),senateTroops:s.armies.filter(a=>a.owner==='senate').reduce((n,a)=>n+a.men,0),senateTerritories:s.regions.filter(r=>r.owner==='senate').length,legitimacy:f.legitimacy,stability:f.stability});
+ }
  const adriatic=s.naval.fleets.find(v=>v.id==='caesar-adriatic');
  if(adriatic&&!adriatic.reserve&&!adriatic.order){
   if(adriatic.port&&region(s,adriatic.port)?.owner==='caesar')record('reserve fleet in safe harbor',reserveFleet(s,'caesar',adriatic.id));
@@ -153,7 +163,7 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
  if(!s.achievementState.finalized)assert.deepEqual(revealedAchievements(s),[]);
 }
 assert.ok(journal.some(x=>x.includes('scout')));
-if(!seekOstia){
+if(!seekOstia&&!s.campaignOutcome){
  assert.ok(journal.some(x=>x.includes('collect wartime contributions'))||warTax&&journal.some(x=>x.includes('raise wartime tax')),'the route must exercise a funded wartime revenue choice');
  assert.ok(journal.some(x=>x.includes('return fleet')));
  assert.ok(journal.some(x=>x.includes('reserve fleet in safe harbor')));
@@ -163,6 +173,7 @@ if(investFood&&!combinedInvestment){assert.ok(journal.some(x=>x.includes('study 
 if(investCash&&!combinedInvestment){assert.ok(journal.some(x=>x.includes('study craft workshops')));assert.ok(journal.some(x=>x.includes('workshop ')))}
 assert.ok(grainDeliveries.every(x=>x.amount>0&&x.paid>0));
 if(process.env.SPQR_STATE_OUTPUT)writeFileSync(process.env.SPQR_STATE_OUTPUT,JSON.stringify(s));
-console.log(JSON.stringify({date:`${s.year}/${s.month}`,result:s.achievementState.result||s.campaignOutcome?.winner||'ongoing',rome:region(s,'roma').owner,ostia:region(s,'t016').owner,everHeldOstia,egyptGrain:s.naval.routes.find(r=>r.id==='egypt-italy')?.last,grainDeliveries,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),irrigationPeak:peakIrrigation,irrigationHeld:s.regions.filter(r=>r.owner==='caesar'&&r.buildings.includes('irrigation')).length,armies:s.armies.filter(a=>a.owner==='caesar').map(a=>({id:a.id,men:a.men,region:a.region,morale:a.morale})),fleets:s.naval.fleets.filter(f=>f.owner==='caesar').map(f=>({id:f.id,port:f.port,reserve:f.reserve,ships:f.ships,order:f.order?.kind})),battles:seen.size,snapshots,journal},null,2));
+console.log(JSON.stringify({date:`${s.year}/${s.month}`,result:s.achievementState.result||s.campaignOutcome?.winner||'ongoing',rome:region(s,'roma').owner,ostia:region(s,'t016').owner,everHeldOstia,egyptGrain:s.naval.routes.find(r=>r.id==='egypt-italy')?.last,grainDeliveries,caesarTerritories:s.regions.filter(r=>r.owner==='caesar').length,treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),irrigationPeak:peakIrrigation,irrigationHeld:s.regions.filter(r=>r.owner==='caesar'&&r.buildings.includes('irrigation')).length,armies:s.armies.filter(a=>a.owner==='caesar').map(a=>({id:a.id,men:a.men,region:a.region,morale:a.morale})),fleets:s.naval.fleets.filter(f=>f.owner==='caesar').map(f=>({id:f.id,port:f.port,reserve:f.reserve,ships:f.ships,order:f.order?.kind})),battles:seen.size,jointAssaults:s.battles.filter(b=>b.attacker.owner==='caesar'&&b.attacker.formations?.length>1).length,snapshots,journal},null,2));
 if(process.env.SPQR_ECONOMY_AUDIT)console.log(JSON.stringify(s.regions.filter(r=>r.owner==='caesar').map(r=>({id:r.id,macro:r.macro,tax:r.tax,loyalty:r.loyalty,civic:r.civicSatisfaction,food:r.food,population:r.population,initialPopulation:r.initialPopulation,buildings:r.buildings}))));
 if(process.env.SPQR_NAVAL_AUDIT)console.log(JSON.stringify({fleets:s.naval.fleets.filter(f=>f.owner==='egypt'),voyages:s.naval.voyages.filter(v=>v.vesselOwner==='egypt'),route:s.naval.routes.find(r=>r.id==='egypt-italy')}));
+if(process.env.SPQR_CAESAR_SETTLEMENT_AUDIT)console.log(JSON.stringify({settlementAudit}));

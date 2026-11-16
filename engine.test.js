@@ -145,10 +145,15 @@ test('version 2 saves migrate relationships without resetting campaign',()=>{
   upgradeSave(s);assert.equal(s.version,3);assert.equal(s.month,8);assert.equal(relation(s,'caesar','egypt'),25);assert.ok(isAllied(s,'egypt','caesar'));
 });
 
-test('battle cannot capture a theater while another defender remains',()=>{
-  const s=newGame(),a=army(s,'xiii'),d=army(s,'italy');a.men=20000;d.men=1000;
-  army(s,'pompey').region='italiaN';resolveBattle(s,a,d,region(s,'italiaN'));
-  assert.equal(region(s,'italiaN').owner,'senate');assert.equal(a.region,'cisalpine');
+test('one battle includes every stationary defender before the theater can be captured',()=>{
+  const s=newGame(),a=army(s,'xiii'),d=army(s,'italy'),support=army(s,'pompey');a.men=20000;d.men=1000;
+  support.region='italiaN';const defendingMen=d.men+support.men;
+  resolveBattle(s,a,d,region(s,'italiaN'));
+  assert.equal(s.battles.length,1);
+  assert.equal(s.battles[0].defender.men,defendingMen);
+  assert.equal(s.battles[0].defender.formations.length,2);
+  assert.equal(region(s,'italiaN').owner,'caesar');assert.equal(a.region,'italiaN');
+  assert.ok(s.armies.every(unit=>unit.owner!=='senate'||unit.region!=='italiaN'));
 });
 
 test('neighboring alliances join declared wars and remain independent factions',()=>{
