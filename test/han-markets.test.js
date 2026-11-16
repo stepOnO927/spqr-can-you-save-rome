@@ -471,6 +471,54 @@ test('Han, Kangju, Yuezhi and Parthia can negotiate and trade without player ord
  assert.ok(s.tradeMarkets.shipments.every(x=>s.persons[x.merchantId]?.profession==='merchant'));
 });
 
+test('autonomous Han replaces a blocked Kangju horse route with a paid Yuezhi source',()=>{
+ const s=newHanGame(null,{seed:83});s.month=3;
+ for(const [id,faction] of Object.entries(s.factions))faction.treasury=id==='han'?1000:0;
+ for(const market of Object.values(s.tradeMarkets.regions))for(const item of Object.values(market.goods)){item.stock=100;item.production=0;item.consumption=0}
+ for(const market of Object.values(s.tradeMarkets.regions))market.goods.horses.stock=0;
+ s.tradeMarkets.regions.kangju.goods.horses.stock=20;
+ s.treaties.push({type:'market',parties:['han','kangju']},{type:'market',parties:['han','yuezhi']});
+ advanceEasternMarkets(s);
+ const first=s.tradeMarkets.shipments.find(x=>x.buyer==='han'&&x.commodity==='horses');
+ assert.ok(first&&first.seller==='kangju','Han should initially fund the available Kangju supply');
+ s.tradeMarkets.regions.yuezhi.goods.horses.stock=20;
+ assert.equal(declareWar(s,'han','kangju').ok,true);
+ const monthly=()=>{if(++s.month>12){s.month=1;s.year++}advanceEasternMarkets(s)};
+ for(let i=0;i<18&&!s.tradeMarkets.shipments.some(x=>x.buyer==='han'&&x.seller==='yuezhi'&&x.commodity==='horses');i++)monthly();
+ const alternative=s.tradeMarkets.shipments.find(x=>x.buyer==='han'&&x.seller==='yuezhi'&&x.commodity==='horses');
+ assert.ok(alternative,'Han should independently seek a reachable supplier after Kangju blocks trade');
+ assert.ok(['blocked','stranded'].includes(first.status),'the wartime route must actually be disrupted');
+ assert.ok(alternative.escrow>0&&alternative.path.includes('bactra'));
+ assert.equal(s.factions.yuezhi.treasury,0,'Yuezhi receives payment only after delivery');
+ const destinationStock=s.tradeMarkets.regions[alternative.destination].goods.horses.stock;
+ const saved=loadHanSave(serialize(s));
+ for(let i=0;i<24&&saved.tradeMarkets.shipments.find(x=>x.id===alternative.id).status==='traveling';i++){
+  if(++saved.month>12){saved.month=1;saved.year++}advanceEasternMarkets(saved);
+ }
+ const delivered=saved.tradeMarkets.shipments.find(x=>x.id===alternative.id);
+ assert.equal(delivered.status,'delivered');
+ assert.equal(saved.factions.yuezhi.treasury,alternative.price);
+ assert.equal(saved.tradeMarkets.regions[alternative.destination].goods.horses.stock,destinationStock+alternative.quantity);
+ assert.equal(saved.tradeMarkets.transactions.filter(x=>x.shipment===alternative.id).length,1);
+});
+
+test('an AI seller can reject market access before accepting a later improved relationship',()=>{
+ const s=newHanGame(null,{seed:84});s.month=3;
+ for(const [id,faction] of Object.entries(s.factions))faction.treasury=id==='han'?1000:0;
+ for(const market of Object.values(s.tradeMarkets.regions))for(const item of Object.values(market.goods)){item.stock=100;item.production=0;item.consumption=0}
+ for(const market of Object.values(s.tradeMarkets.regions))market.goods.horses.stock=0;
+ s.tradeMarkets.regions.kangju.goods.horses.stock=20;
+ setRelation(s,'han','kangju',-80);
+ advanceEasternMarkets(s);
+ assert.ok(s.tradeMarkets.diplomacy.attempts.some(x=>x.buyer==='han'&&x.seller==='kangju'&&x.status==='rejected'));
+ assert.equal(s.tradeMarkets.shipments.some(x=>x.buyer==='han'&&x.seller==='kangju'),false);
+ setRelation(s,'han','kangju',65);
+ for(let i=0;i<12;i++){if(++s.month>12){s.month=1;s.year++}advanceEasternMarkets(s)}
+ assert.ok(s.tradeMarkets.diplomacy.attempts.some(x=>x.buyer==='han'&&x.seller==='kangju'&&x.status==='accepted'));
+ assert.ok(s.treaties.some(x=>x.type==='market'&&x.parties.includes('han')&&x.parties.includes('kangju')));
+ assert.ok(s.tradeMarkets.shipments.some(x=>x.buyer==='han'&&x.seller==='kangju'&&x.commodity==='horses'));
+});
+
 test('a small non-oasis kingdom autonomously buys and receives a paid lot across a save',()=>{
  let s=newHanGame('han',{seed:49});s.month=3;
  s.treaties.push({type:'market',parties:['armenia','atropatene']});

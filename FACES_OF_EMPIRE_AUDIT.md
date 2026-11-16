@@ -893,6 +893,13 @@ real merchant-origin error: recruitment at a foreign seller market set that
 place as a buyer-side merchant's homeland. New merchants now take a home in
 their own realm and keep the foreign hiring market as a dated entry event;
 existing save identities are not rewritten.
+Four-market autonomy now has integrated acceptance coverage beyond initial
+orders: a poorly related seller rejects a market proposal, later accepts
+after relations improve, and an AI Han court can replace a wartime-blocked
+Kangju horse source with a paid Yuezhi caravan. The replacement travels on
+the connected Bactrian corridor, survives save/load, adds real stock at its
+destination, and pays the Yuezhi seller only on arrival. These scenarios do
+not establish that every AI court will always find a viable alternate route.
 All 52 playable non-Han courts in the eastern campaign now have a simultaneous
 succession regression covering saved identity, title, portrait and governing
 effect. A woman who rules a kingdom receives a corresponding queen title;
