@@ -608,6 +608,32 @@ test('same-zone Adriatic transport remains offshore for interception before dock
  assert.equal(fleet.port,null);assert.equal(fleet.order?.kind,'transport');assert.equal(loaded.armies.find(a=>a.id==='italy').move.transportReady,false);
  advanceNaval(loaded);assert.equal(fleet.port,'t075');assert.equal(fleet.order,null);assert.equal(loaded.armies.find(a=>a.id==='italy').move.transportReady,true);
 });
+test('a defeated convoy aborts the landing even while its transports still have capacity',()=>{
+ const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),convoy=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ unit.region='italiaS';unit.men=5200;s.regions.find(r=>r.id==='t075').owner='caesar';
+ assert.equal(moveArmy(s,unit.id,'t075').ok,true);
+ assert.equal(orderFleet(s,'caesar',enemy.id,'intercept','adriatic').ok,true);
+ enemy.ships={quinquereme:4,trireme:2};enemy.sailors=1500;enemy.hull=100;enemy.morale=80;enemy.supply=100;s.seed=83;
+ advanceNaval(s);
+ const battle=s.naval.reports.find(r=>r.kind==='battle'&&r.zone==='adriatic');
+ assert.equal(battle?.winner,'caesar');
+ assert.equal(convoy.ships.transport,2,'no transport sank in this encounter');
+ assert.equal(unit.region,'italiaS');assert.equal(unit.move,null);assert.ok(unit.men<5200&&unit.men>4000);
+ assert.equal(convoy.order?.kind,'return');assert.equal(convoy.order?.targetPort,'italiaS');
+ assert.equal(battle.transportDisruptions[convoy.id].casualties,5200-unit.men);
+ assert.equal(battle.transportDisruptions[convoy.id].reason,'defeat');
+ const restored=upgradeSave(structuredClone(s));
+ assert.deepEqual(restored.naval.reports.find(r=>r.id===battle.id).transportDisruptions,battle.transportDisruptions);
+ advanceNaval(restored);assert.equal(restored.naval.fleets.find(f=>f.id===convoy.id).port,'italiaS');
+ for(const [lang,label] of [['en','troop voyage was aborted'],['zh','运兵行动中止']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:restored,lang,root,section:'reports'});
+  assert.match(content.innerHTML,new RegExp(label));assert.match(content.innerHTML,lang==='en'?/Army casualties/:/陆军伤亡/);
+ }
+ restored.player='caesar';const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+ renderNavalPanel({state:restored,lang:'en',root,section:'reports'});
+ assert.doesNotMatch(content.innerHTML,/Army casualties/,'the opponent must not receive exact embarked-army losses');
+});
 test('AI stages a transport fleet at an isolated army port and waits for embarkation',()=>{
  const setup=()=>{
   const s=newGrandGame('caesar');for(const r of s.regions)r.owner='egypt';

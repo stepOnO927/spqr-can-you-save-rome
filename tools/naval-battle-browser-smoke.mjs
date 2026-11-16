@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {newGrandGame} from '../engine.js';
+import {newGrandGame,moveArmy} from '../engine.js';
 import {resolveBattle,orderFleet,advanceNaval} from '../naval.js';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
@@ -44,4 +44,15 @@ for(const [lang,label] of [['en',/Patrol repelled/],['zh',/巡逻舰被击退/]]
  await page.evaluate(async({state,language})=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js');renderNavalPanel({state,lang:language,root:document.querySelector('#root'),section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}})},{state:pirateState,language:lang});
  const text=await page.locator('.naval-content').innerText();assert.match(text,label);assert.match(text,lang==='en'?/Pirate ships lost 0/:/海盗船损失 0/);
 }
-assert.deepEqual(errors,[]);await browser.close();console.log('Naval battle, pirate defeat, and dated fleet pursuit passed in English and Chinese; older saves remain readable.');
+const convoyState=newGrandGame('senate'),soldiers=convoyState.armies.find(a=>a.id==='italy'),hostileFleet=convoyState.naval.fleets.find(f=>f.id==='caesar-adriatic');
+soldiers.region='italiaS';soldiers.men=5200;convoyState.regions.find(r=>r.id==='t075').owner='caesar';
+assert.equal(moveArmy(convoyState,soldiers.id,'t075').ok,true);
+assert.equal(orderFleet(convoyState,'caesar',hostileFleet.id,'intercept','adriatic').ok,true);
+hostileFleet.ships={quinquereme:4,trireme:2};hostileFleet.sailors=1500;hostileFleet.hull=100;hostileFleet.morale=80;hostileFleet.supply=100;convoyState.seed=83;
+advanceNaval(convoyState);const withdrawn=convoyState.naval.reports.find(r=>r.kind==='battle');
+assert.equal(withdrawn?.winner,'caesar');assert.equal(soldiers.move,null);
+for(const [lang,label] of [['en',/troop voyage was aborted/],['zh',/运兵行动中止/]]){
+ await page.evaluate(async({state,language})=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js');renderNavalPanel({state,lang:language,root:document.querySelector('#root'),section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}})},{state:convoyState,language:lang});
+ const text=await page.locator('.naval-content').innerText();assert.match(text,label);assert.match(text,lang==='en'?/Army casualties: 630/:/陆军伤亡: 630/);
+}
+assert.deepEqual(errors,[]);await browser.close();console.log('Naval battle, interrupted troop transport, pirate defeat, and dated fleet pursuit passed in English and Chinese; older saves remain readable.');

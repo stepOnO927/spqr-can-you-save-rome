@@ -1,7 +1,7 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js';
 import {activeEffects,localBuildingEffects,recordMerchantContact} from './development.js?v=52';
 import {officeOf} from './office-system.js';
-import {nationalBudget} from './national-budget.js?v=24';
+import {nationalBudget} from './national-budget.js?v=25';
 
 // Sea areas and costs are game-scale approximations of the 49 BCE Mediterranean.
 export const SEA_ZONES=[
@@ -430,7 +430,19 @@ function exposedShipType(target,attackerTactic='formation',defenderTactic='forma
  return warships[0]||slow[0]||null;
 }
 function damageFleet(s,target,amount,attackerTactic='formation',defenderTactic='formation'){if(amount<=0)return {sunk:0,type:null,sailors:0};const before=ships(target),beforeTypes={...target.ships},crew=target.sailors;target.hull=Math.max(0,target.hull-amount);target.sailors=Math.max(0,target.sailors-Math.round(amount*6));target.morale=Math.max(5,target.morale-Math.ceil(amount/3));let type=null,sunk=0;if(target.hull<45&&before>0){type=exposedShipType(target,attackerTactic,defenderTactic);if(type)target.ships[type]--;sunk=type?1:0}if(target.hull===0||ships(target)===0){sunk=before;type=null;target.hull=0;target.ships={};if(target.order?.kind==='supply')report(s,{kind:'supply-loss',owner:target.owner,port:target.order.targetPort,cargo:target.order.cargo||0,reason:'fleet sunk'});target.order=null}const byType={};for(const [ship,count] of Object.entries(beforeTypes)){const lost=count-(target.ships[ship]||0);if(lost>0)byType[ship]=lost}return {sunk,type,sailors:crew-target.sailors,...(sunk?{byType}:{})}}
-function disruptTransport(s,f,armyId){const army=s.armies.find(x=>x.id===armyId);if(army&&fleetCapacity(f,s)<army.men){army.men=Math.max(0,Math.round(army.men*(f.hull===0?.45:.72)));army.morale=Math.max(10,army.morale-20);army.move=null;f.order=null}}
+function disruptTransport(s,f,armyId,{defeated=false,hullDamage=0,sailorLoss=0,originalSailors=0}={}){
+ const army=s.armies.find(x=>x.id===armyId);if(!army||!army.move?.sea)return null;
+ const capacityLost=fleetCapacity(f,s)<army.men;
+ if(!capacityLost&&!defeated)return null;
+ const before=army.men,origin=s.regions.find(r=>r.id===army.region&&r.owner===f.owner&&r.port);
+ const lossRate=capacityLost?(f.hull===0?.55:.28):Math.min(.18,.03+hullDamage*.0015+sailorLoss/Math.max(1,originalSailors)*.04);
+ army.men=Math.max(0,Math.round(before*(1-lossRate)));
+ army.morale=Math.max(10,army.morale-(capacityLost?20:12));army.move=null;
+ // A defeated convoy withdraws instead of docking at its hostile target next month.
+ const returnPath=origin&&ships(f)>0?seaRoute(f.zone,portZone(origin.id)):null;
+ f.order=returnPath?{kind:'return',target:origin.id,targetPort:origin.id,path:returnPath}:null;
+ return {armyId:army.id,owner:army.owner,casualties:before-army.men,reason:capacityLost?'capacity':'defeat',origin:origin?.id||null};
+}
 function maritimeHazards(s,f,log){if(f.port||!ships(f))return;const elapsed=(s.year-(s.startYear??-49))*12+s.month-(s.startMonth??1);if(elapsed<12)return;if(rng(s)<.025){const armyId=f.order?.armyId,loss=5+Math.floor(rng(s)*9),damage=damageFleet(s,f,loss);disruptTransport(s,f,armyId);report(s,{kind:'storm',zone:f.zone,owner:f.owner,damage:loss,sailors:damage.sailors});if(f.owner===s.player)log(s,'A storm damaged the fleet and cost sailors.','风暴损伤了舰队并造成水手伤亡。')}if(f.morale<22&&rng(s)<.12){const army=s.armies.find(x=>x.id===f.order?.armyId);if(army)army.move=null;f.order=null;f.morale=Math.max(5,f.morale-4);report(s,{kind:'mutiny',zone:f.zone,owner:f.owner});if(f.owner===s.player)log(s,'A naval mutiny interrupted fleet orders.','海军哗变中断了舰队命令。')}}
 function battleTactic(s,f){
  if(f.owner===s.player)return NAVAL_TACTICS[f.tactic]?f.tactic:'formation';
@@ -487,8 +499,9 @@ export function resolveBattle(s,a,b,zone,log){
  const capturedCommander=tactics[victor.id]==='boarding'?captureNavalCommander(s,defeated,victor):null;
  if(capturedCommander&&(capturedCommander.owner===s.player||capturedCommander.holder===s.player))log(s,'A fleet commander was taken prisoner in a boarding action.','接舷战中一名舰长被俘。');
  a.experience=Math.min(100,a.experience+3);b.experience=Math.min(100,b.experience+3);
- for(const f of [a,b]){if(f.hull<12&&f.commanderId){const person=s.world?.characters?.[f.commanderId];if(person?.health==='healthy')person.health='wounded'}if(f.commanderId){const person=s.world?.characters?.[f.commanderId];if(person?.alive){const skill=navalSkill(person,'commander');person.navalSkills.commander=Math.min(100,skill+2)}}disruptTransport(s,f,transported[f.id])}
- report(s,{kind:'battle',zone,participants:[a.id,b.id],snapshots:{[a.id]:beforeA,[b.id]:beforeB},winner:victor.owner,losses:{[a.id]:aLoss,[b.id]:bLoss},observedLosses:{[a.owner]:observedBattleLosses(bLoss),[b.owner]:observedBattleLosses(aLoss)},captured,capturedCommander,tactics,maneuver:{[a.id]:Math.round(maneuver[a.id]*100),[b.id]:Math.round(maneuver[b.id]*100)},weather:Math.round(weather*100),damage:{[a.id]:beforeA.hull-a.hull,[b.id]:beforeB.hull-b.hull}});
+ const transportDisruptions={};
+ for(const f of [a,b]){if(f.hull<12&&f.commanderId){const person=s.world?.characters?.[f.commanderId];if(person?.health==='healthy')person.health='wounded'}if(f.commanderId){const person=s.world?.characters?.[f.commanderId];if(person?.alive){const skill=navalSkill(person,'commander');person.navalSkills.commander=Math.min(100,skill+2)}}const loss=f===a?aLoss:bLoss,before=f===a?beforeA:beforeB;const disruption=disruptTransport(s,f,transported[f.id],{defeated:f===defeated,hullDamage:before.hull-f.hull,sailorLoss:loss.sailors,originalSailors:before.sailors});if(disruption)transportDisruptions[f.id]=disruption}
+ report(s,{kind:'battle',zone,participants:[a.id,b.id],snapshots:{[a.id]:beforeA,[b.id]:beforeB},winner:victor.owner,losses:{[a.id]:aLoss,[b.id]:bLoss},observedLosses:{[a.owner]:observedBattleLosses(bLoss),[b.owner]:observedBattleLosses(aLoss)},captured,capturedCommander,tactics,maneuver:{[a.id]:Math.round(maneuver[a.id]*100),[b.id]:Math.round(maneuver[b.id]*100)},weather:Math.round(weather*100),damage:{[a.id]:beforeA.hull-a.hull,[b.id]:beforeB.hull-b.hull},transportDisruptions});
  for(const owner of [a.owner,b.owner])observe(s,owner,owner===a.owner?b:a,'battle');
 }
 function resolveCoordinatedBattle(s,sideA,sideB,zone,log){
@@ -522,14 +535,16 @@ function resolveCoordinatedBattle(s,sideA,sideB,zone,log){
   for(const loser of defeated){capturedCommander=captureNavalCommander(s,loser,boarding);if(capturedCommander)break}
  }
  if(capturedCommander&&(capturedCommander.owner===s.player||capturedCommander.holder===s.player))log(s,'A fleet commander was taken prisoner in a boarding action.','接舷战中一名舰长被俘。');
+ const transportDisruptions={};
  for(const f of all){
   f.experience=Math.min(100,f.experience+3);
   if(f.hull<12&&f.commanderId){const person=s.world?.characters?.[f.commanderId];if(person?.health==='healthy')person.health='wounded'}
   if(f.commanderId){const person=s.world?.characters?.[f.commanderId];if(person?.alive){const skill=navalSkill(person,'commander');person.navalSkills.commander=Math.min(100,skill+2)}}
-  disruptTransport(s,f,transported[f.id]);
+  const disruption=disruptTransport(s,f,transported[f.id],{defeated:defeated.includes(f),hullDamage:snapshots[f.id].hull-f.hull,sailorLoss:losses[f.id].sailors,originalSailors:snapshots[f.id].sailors});
+  if(disruption)transportDisruptions[f.id]=disruption;
  }
  const sumLoss=side=>side.reduce((sum,f)=>({sunk:sum.sunk+(losses[f.id].sunk||0),sailors:sum.sailors+(losses[f.id].sailors||0)}),{sunk:0,sailors:0});
- report(s,{kind:'battle',zone,participants:all.map(f=>f.id),snapshots,winner:winners[0].owner,losses,observedLosses:{[sideA[0].owner]:observedBattleLosses(sumLoss(sideB)),[sideB[0].owner]:observedBattleLosses(sumLoss(sideA))},captured,capturedCommander,tactics,maneuver:Object.fromEntries(all.map(f=>[f.id,Math.round(maneuvers[f.id]*100)])),weather:Math.round(weather*100),damage:Object.fromEntries(all.map(f=>[f.id,snapshots[f.id].hull-f.hull])),coordinated:true});
+ report(s,{kind:'battle',zone,participants:all.map(f=>f.id),snapshots,winner:winners[0].owner,losses,observedLosses:{[sideA[0].owner]:observedBattleLosses(sumLoss(sideB)),[sideB[0].owner]:observedBattleLosses(sumLoss(sideA))},captured,capturedCommander,tactics,maneuver:Object.fromEntries(all.map(f=>[f.id,Math.round(maneuvers[f.id]*100)])),weather:Math.round(weather*100),damage:Object.fromEntries(all.map(f=>[f.id,snapshots[f.id].hull-f.hull])),transportDisruptions,coordinated:true});
  for(const observer of sideA)for(const seen of sideB)observe(s,observer.owner,seen,'battle');
  for(const observer of sideB)for(const seen of sideA)observe(s,observer.owner,seen,'battle');
 }
