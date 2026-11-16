@@ -21,7 +21,7 @@ try{
     await page.locator('#start-campaign').tap();
     console.log('Roman viewport',width,height,await page.evaluate(()=>{const ids=['.top','.shell','.shell main','.map-toolbar','#step','#map-svg'];return {portrait:matchMedia('(orientation:portrait)').matches,landscapeRule:matchMedia('(max-height:600px) and (orientation:landscape)').matches,inner:[innerWidth,innerHeight],scroll:document.documentElement.scrollHeight,rects:Object.fromEntries(ids.map(id=>{const e=document.querySelector(id),r=e?.getBoundingClientRect();return [id,r?{y:r.y,height:r.height,bottom:r.bottom}:null]}))}}));
     assert.equal(await visibleInFrame(page.locator('#step')),true,'Roman Advance outside '+width+'x'+height);
-    if(width<=1100){await page.locator('#tutorial-own-region').tap();assert.match(await page.locator('.experience-lesson').innerText(),/2\/8/)}
+    assert.equal(await page.locator('.experience-lesson').count(),0,'The guide was disabled for this free-play viewport check');
     await page.locator('#map-svg [data-army]').first().tap();
     assert.equal(await page.locator('.inspector:not(.closed)').count(),1,'Roman touch did not inspect an army');
     assert.deepEqual(errors,[],'Roman browser errors');
