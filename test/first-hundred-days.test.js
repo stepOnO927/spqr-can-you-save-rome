@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,setTax} from '../engine.js';
+import {newGame,tick,upgradeSave,setTax,moveArmy} from '../engine.js';
 import {treeFor as romanFocuses,canStartFocus,startFocus as startRomanFocus} from '../national-focus.js';
 import {initializeExperience,recordExperience,setDirection,setGuide,tutorialStep,recommendations,objectives} from '../experience.js';
 import {advanceMail,receivedMail,replyToLetter} from '../epistulae.js';
@@ -9,27 +9,29 @@ import {init as initHan,act as hanAction,lesson as hanLesson,recommendations as 
 import {startFocus,treeFor,focusStatus} from '../han/focus.js';
 import {isLiuClan} from '../han/dynasty.js';
 
-test('Caesar and Senate tutorial follows real actions, correspondence and save state',()=>{
+test('Caesar and Senate first eight lessons follow real campaign actions and save state',()=>{
  for(const side of ['caesar','senate']){
   const s=newGame(side);initializeExperience(s,{guided:true,openingLetter:true});
-  assert.equal(tutorialStep(s).key,'army');
+  assert.equal(tutorialStep(s).key,'territory');
+  recordExperience(s,'chronicle');assert.equal(tutorialStep(s).key,'territory','an early report must not complete a later lesson');
   const opening=s.mail.messages.find(m=>m.id===s.experience.openingLetter);
   assert.ok(opening?.senderId&&s.world.characters[opening.senderId]?.alive);
-  const unit=s.armies.find(a=>a.owner===side&&a.men>0);
+  recordExperience(s,'territory',s.regions.find(r=>r.owner===side).id);
+  assert.equal(tutorialStep(s).key,'army');
+  const unit=s.armies.find(a=>a.id===(side==='senate'?'italy':'xiii'));
   recordExperience(s,'army',unit.id);assert.equal(tutorialStep(s).key,'supply');
-  recordExperience(s,'supply',unit.id);assert.equal(tutorialStep(s).key,'threat');
-  recordExperience(s,'threat',s.regions.find(r=>r.owner!==side).id);
-  if(side==='senate'){assert.equal(tutorialStep(s).key,'leadership');recordExperience(s,'leadership')}
-  setDirection(s,'political');assert.equal(tutorialStep(s).key,'course');
-  recordExperience(s,'tax','low');assert.equal(tutorialStep(s).key,'advance');
-  tick(s);assert.ok(receivedMail(s).some(m=>m.id===opening.id));recordExperience(s,'advance');recordExperience(s,'chronicle');
-  assert.equal(tutorialStep(s).key,'mail');
+  recordExperience(s,'supply',unit.id);assert.equal(tutorialStep(s).key,'order');
+  const safe=side==='senate'?'roma':'narbo';assert.equal(moveArmy(s,unit.id,safe).ok,true);
+  recordExperience(s,'order',safe);assert.equal(tutorialStep(s).key,'advance');
+  tick(s);recordExperience(s,'advance');assert.equal(tutorialStep(s).key,'chronicle');
+  recordExperience(s,'chronicle');assert.equal(tutorialStep(s).key,'tax');
+  assert.equal(setTax(s,side,'low'),true);recordExperience(s,'tax','low');
+  assert.equal(tutorialStep(s).key,'direction');
+  setDirection(s,'political');assert.equal(tutorialStep(s),null);
   for(let i=0;i<8&&!receivedMail(s).some(m=>m.id===opening.id);i++)tick(s);
   assert.ok(receivedMail(s).some(m=>m.id===opening.id));
   assert.equal(opening.courierRisk,0);assert.equal(opening.arrival,s.experience.started+1);
-  recordExperience(s,'mail',opening.id);assert.equal(tutorialStep(s).key,'reply');
-  assert.equal(replyToLetter(s,opening.id,'acknowledge',{}).ok,true);recordExperience(s,'reply','acknowledge');
-  assert.equal(tutorialStep(s),null);
+  assert.equal(replyToLetter(s,opening.id,'acknowledge',{}).ok,true);
   setGuide(s,'pause');assert.equal(s.experience.guide.paused,true);
   const saved=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(saved.experience.direction,'political');assert.equal(saved.experience.guide.paused,true);
   assert.equal(objectives(saved).long[0],'Build a durable political settlement');
@@ -50,11 +52,11 @@ test('state-backed provincial request has a real sender and exact visible costs'
 test('Han and a minor polity sustain distinct guidance through long campaigns',()=>{
  for(const side of ['han','shanshan']){
   const s=newHanGame(side,{seed:49});initHan(s,{guided:true});
-  assert.equal(hanLesson(s).key,side==='han'?'court':'realm');
+  assert.equal(hanLesson(s).key,side==='han'?'frontier':'realm');
   assert.ok(hanRecommendations(s).length>=2);
   assert.ok(hanObjectives(s).long[0]);assert.ok(hanObjectives(s).shortProgress[0]);assert.equal(typeof hanObjectives(s).longDone,'boolean');
   for(const rec of hanRecommendations(s))if(rec.target.kind==='diplomacy')assert.ok(s.factions[rec.target.id]);
-  if(side==='han'){hanAction(s,'court');hanAction(s,'official');hanAction(s,'finance');hanAction(s,'frontier');hanAction(s,'dynasty');hanAction(s,'proposal');hanAction(s,'appoint');assert.equal(hanLesson(s).key,'focus')}
+  if(side==='han'){hanAction(s,'report');assert.equal(hanLesson(s).key,'frontier');for(const key of ['frontier','army','supply','order','advance','report','official'])hanAction(s,key);assert.equal(hanLesson(s).key,'direction')}
   const available=treeFor(side).find(x=>focusStatus(s,side,x.id)==='available'&&(x.cost.treasury||0)<=s.factions[side].treasury);
   if(available){assert.equal(startFocus(s,side,available.id).ok,true);hanAction(s,'focus',available.id)}
   for(let i=0;i<60;i++)hanTick(s);
