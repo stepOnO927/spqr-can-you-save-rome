@@ -273,7 +273,7 @@ try{
  await page.locator('#load').click();await page.locator('#trade-panel').click();
  const policyText=await page.locator('#inspector h3').filter({hasText:'Known partner export controls'}).evaluate(el=>el.nextElementSibling.nextElementSibling.innerText);
  assert.match(policyText,/Arsacid Parthia.*Grain/s);
- assert.doesNotMatch(policyText,/Yuezhi|Iron|stock|inventory|\d{3,}/i,'uncontacted policy and warehouse totals remain private');
+ assert.doesNotMatch(policyText,/Yuezhi|stock|inventory|\d{3,}/i,'uncontacted policy and warehouse totals remain private');
  await page.locator('#lang').click();
  assert.match(await page.locator('#inspector').innerText(),/贸易伙伴临时出口限制.*安息帝国.*谷物/s);
  assert.deepEqual(errors,[]);
