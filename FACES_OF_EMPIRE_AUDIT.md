@@ -41,6 +41,11 @@ and the accepted broker. Focused cases cover delivery provenance, payment,
 decline, insufficient cash, invalidation and old-save migration; the cloud
 browser scenario additionally exercises acceptance and save/reload. The next
 GitHub run remains the browser and complete-test gate for this increment.
+The player market panel now exposes the existing bounded per-batch bid premium
+for a one-time purchase. Changing it recalculates the real payment quote and
+prevents an accidental premium from being treated as a recurring-contract
+term. A delivered-horse regression checks the higher buyer debit, seller
+receipt, reserved stock and save/load; the browser flow checks quote feedback.
 
 The draft now includes main through `ad107bb6`, including its production GA4
 stream setting, foreign-heir will privacy fix and uncertain-age guardianship

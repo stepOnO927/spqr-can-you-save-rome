@@ -243,6 +243,23 @@ test('eastern bids have a bounded premium and cannot alter a supply agreement',(
  assert.equal(quoteEasternTrade(s,{...request,contractId:contract.contract.id,bidPremium:1}).reason,'contract');
 });
 
+test('a player bid premium reaches the seller only after a paid caravan arrives',()=>{
+ let s=newHanGame('han',{seed:50});s.tradeMarkets.embeddedRoman=true;setRelation(s,'han','kangju',70);propose(s,'han','kangju','market');
+ const request={seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:2};
+ const base=quoteEasternTrade(s,request),bid=quoteEasternTrade(s,{...request,bidPremium:2});
+ assert.equal(bid.ok,true,bid.reason);assert.equal(bid.price,base.price+4);
+ const buyerCash=s.factions.han.treasury,sellerCash=s.factions.kangju.treasury,stock=s.tradeMarkets.regions.kangju.goods.horses.stock;
+ const placed=placeEasternTrade(s,{...request,bidPremium:2});assert.equal(placed.ok,true,placed.reason);
+ assert.equal(s.factions.han.treasury,buyerCash-bid.total);
+ assert.equal(s.factions.kangju.treasury,sellerCash,'seller is paid on delivery');
+ assert.equal(s.tradeMarkets.regions.kangju.goods.horses.stock,stock-2);
+ for(const leg of placed.shipment.legs){const region=s.regions.find(r=>r.id===leg.to);region.fort=5;region.unrest=0}
+ s=loadHanSave(serialize(s));for(let i=0;i<bid.months;i++)next(s);
+ assert.equal(s.tradeMarkets.shipments.find(x=>x.id===placed.shipment.id).status,'delivered');
+ assert.equal(s.factions.kangju.treasury,sellerCash+bid.price);
+ assert.equal(s.tradeMarkets.transactions.find(x=>x.shipment===placed.shipment.id).price,bid.price);
+});
+
 test('Han recurring horse agreement uses real caravans, locked goods price and saved obligations',()=>{
  let s=newHanGame('han',{seed:49});s.tradeMarkets.embeddedRoman=true;setRelation(s,'han','kangju',70);
  assert.equal(propose(s,'han','kangju','market').proposal.status,'accepted');

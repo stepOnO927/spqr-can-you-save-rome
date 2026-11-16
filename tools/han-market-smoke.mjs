@@ -41,6 +41,12 @@ try{
  await page.locator('#east-market-destination').selectOption('dunhuang');
  const quoteText=await page.locator('#east-market-quote').innerText(),months=Number(quoteText.match(/Travel (\d+) months/)?.[1]);
  assert.ok(months>0,quoteText);
+ const normalTotal=Number(quoteText.match(/Total (\d+)/)?.[1]);assert.ok(normalTotal>0);
+ await page.locator('#east-market-bid-premium').fill('1');
+ const bidQuote=await page.locator('#east-market-quote').innerText();
+ assert.match(bidQuote,/Bid premium per batch \+1¤/);
+ assert.ok(Number(bidQuote.match(/Total (\d+)/)?.[1])>normalTotal,'the player premium changes the real quote');
+ assert.equal(await page.locator('#east-contract-create').isDisabled(),true,'one-time bid does not silently change a supply agreement');
  assert.equal(await page.locator('#east-market-order').isDisabled(),false);
  await page.locator('#east-market-order').click();
  assert.match(await page.locator('#message').innerText(),/Merchant dispatched/);
@@ -252,5 +258,5 @@ try{
  assert.match(chineseMarket,/商人供货提议.*暂无商人提议/s);
  assert.match(chineseMarket,/定期供货约定.*履行中.*承揽商人/s);
  assert.deepEqual(errors,[]);
- console.log('Han market browser smoke passed: listings, customs, horse delivery, remounts, merchant market house and supply proposal, save/load and bilingual panel.');
+ console.log('Han market browser smoke passed: listings, customs, paid player bid, horse delivery, remounts, merchant market house and supply proposal, save/load and bilingual panel.');
 }finally{await browser.close()}
