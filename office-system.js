@@ -1,13 +1,13 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {recordLifeEvent} from './dynasties.js?v=guardian-age-1';
-import {rememberPersonalEvent} from './political-memory.js?v=grand-chessboard-2';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=world-kings-contact-1';
+import {recordLifeEvent,isKnownAdult} from './dynasties.js?v=world-kings-contact-1';
+import {rememberPersonalEvent} from './political-memory.js?v=world-kings-contact-1';
 
 // These are simulated administrative assignments, not historical magistracies.
 export const OFFICE_TYPES=['finance','supply','administration'];
 const officeZh={finance:'财务',supply:'粮秣',administration:'行政'};
 const roman=faction=>faction==='caesar'||faction==='senate';
-export function initializeOffices(s){initializeWorld(s);s.world.offices||={};s.world.localGovernors||={};for(const faction of ['caesar','senate'])s.world.offices[faction]||={};return s.world.offices}
-export function officeOf(s,faction,id){const national=Object.entries(initializeOffices(s)[faction]||{}).find(([,person])=>person===id)?.[0];if(national)return national;const local=Object.entries(s.world.localGovernors).find(([,post])=>post.faction===faction&&post.person===id);return local?'theater:'+local[0]:null}
+export function initializeOffices(s){initializeWorld(s);s.world.offices||={};s.world.localGovernors||={};s.world.localAdministrators||={};for(const faction of ['caesar','senate'])s.world.offices[faction]||={};return s.world.offices}
+export function officeOf(s,faction,id){const national=Object.entries(initializeOffices(s)[faction]||{}).find(([,person])=>person===id)?.[0];if(national)return national;const local=Object.entries(s.world.localGovernors).find(([,post])=>post.faction===faction&&post.person===id);if(local)return 'theater:'+local[0];const settlement=Object.entries(s.world.localAdministrators).find(([,post])=>post.faction===faction&&post.person===id);return settlement?'settlement:'+settlement[0]:null}
 export function canHoldOffice(s,faction,id){
  initializeOffices(s);const c=s.world.characters[id];
  return !!(roman(faction)&&CHARACTER_CATALOG[id]&&s.regions.some(r=>r.owner===faction)&&c?.faction===faction&&(c.birthYear==null||s.year-c.birthYear>=25)&&c.alive&&!c.missing&&!c.travel&&c.loyalty>=40&&!['seriously_ill','dying','deceased'].includes(c.health)&&!(s.world.leadership[faction]||[]).includes(id)&&!s.armies.some(a=>a.characterId===id));
@@ -55,20 +55,57 @@ export function dismissGovernor(s,theater){
  delete s.world.localGovernors[theater];rememberPersonalEvent(s,post.person,s.player,'dismissal',-8);record(s,`${CHARACTER_CATALOG[post.person]?.name[0]||'An official'} left a simulated theater assignment.`,`${CHARACTER_CATALOG[post.person]?.name[1]||'一名官员'}卸下游戏中的战区行政职务。`);return {ok:true};
 }
 export function governorLoyaltyEffect(s,theater){return s.month%3===0&&localGovernor(s,theater)?1:0}
+const localSite=(s,id)=>s.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id===id);
+const administrativeSite=entity=>!!entity&&!['village','nomadic','wilderness'].includes(entity.type);
+function eligibleSettlementOfficial(s,entity,actor,id){
+ const c=s.world.characters[id];
+ return !!(administrativeSite(entity)&&entity.controller===actor&&s.factions[actor]&&CHARACTER_CATALOG[id]&&c?.faction===actor&&c.location===entity.theater&&c.alive&&!c.missing&&!c.travel&&c.loyalty>=40&&!['seriously_ill','dying','deceased'].includes(c.health)&&isKnownAdult(s,id)&&!(s.world.leadership[actor]||[]).includes(id)&&!s.armies.some(army=>army.characterId===id));
+}
+export function localAdministrator(s,entityId){
+ const post=s.world?.localAdministrators?.[entityId];if(!post)return null;
+ const entity=localSite(s,entityId);
+ return post&&eligibleSettlementOfficial(s,entity,post.faction,post.person)?post.person:null;
+}
+export function localAdministratorCandidates(s,entityId,actor=s.player){
+ initializeOffices(s);const entity=localSite(s,entityId);
+ if(!administrativeSite(entity)||entity.controller!==actor)return [];
+ return Object.keys(s.world.characters).filter(id=>eligibleSettlementOfficial(s,entity,actor,id)&&(!officeOf(s,actor,id)||officeOf(s,actor,id)==='settlement:'+entityId));
+}
+export function appointLocalAdministrator(s,entityId,id,actor=s.player){
+ initializeOffices(s);const entity=localSite(s,entityId);
+ if(!localAdministratorCandidates(s,entityId,actor).includes(id))return {ok:false,reason:'unavailable'};
+ if(localAdministrator(s,entityId)===id)return {ok:false,reason:'already'};
+ if(s.factions[actor].treasury<5)return {ok:false,reason:'treasury'};
+ const previous=s.world.localAdministrators[entityId];
+ if(previous?.faction===actor&&previous.person!==id)rememberPersonalEvent(s,previous.person,actor,'dismissal',-8);
+ s.factions[actor].treasury-=5;s.world.localAdministrators[entityId]={faction:actor,person:id};rememberPersonalEvent(s,id,actor,'appointment',4);
+ recordLifeEvent(s,id,`Appointed to the simulated administration of ${entity.name[0]}.`,`获任${entity.name[1]}的模拟地方行政官。`);
+ if(actor===s.player)record(s,`${CHARACTER_CATALOG[id].name[0]} took a paid local administrative post in ${entity.name[0]}.`,`${CHARACTER_CATALOG[id].name[1]}在${entity.name[1]}担任有薪地方行政职务。`);
+ return {ok:true,cost:5};
+}
+export function dismissLocalAdministrator(s,entityId){
+ initializeOffices(s);const post=s.world.localAdministrators[entityId];if(!post||post.faction!==s.player)return {ok:false,reason:'unavailable'};
+ delete s.world.localAdministrators[entityId];rememberPersonalEvent(s,post.person,s.player,'dismissal',-8);
+ recordLifeEvent(s,post.person,`Left a simulated local administrative post.`,`卸下模拟的地方行政职务。`);
+ return {ok:true};
+}
 export function advanceOffices(s){
  const offices=initializeOffices(s);
  for(const [theater,post] of Object.entries(s.world.localGovernors)){if(!localGovernor(s,theater)){delete s.world.localGovernors[theater];if(post.faction===s.player)record(s,'A simulated theater assignment ended because its conditions changed.','因条件变化，一项游戏中的战区行政任命结束。')}}
+ for(const [entityId,post] of Object.entries(s.world.localAdministrators)){if(!localAdministrator(s,entityId)){delete s.world.localAdministrators[entityId];if(post.faction===s.player)record(s,'A local administrative post ended because its conditions changed.','因条件变化，一项地方行政任命结束。')}}
  for(const faction of ['caesar','senate']){
   for(const office of OFFICE_TYPES){const id=offices[faction][office];if(id&&!canHoldOffice(s,faction,id)){delete offices[faction][office];if(faction===s.player)record(s,`${CHARACTER_CATALOG[id]?.name[0]||'An official'} can no longer hold the assignment.`,`${CHARACTER_CATALOG[id]?.name[1]||'一名官员'}无法继续履行行政职务。`)}}
   // AI uses only its own personnel, and fills at most one vacancy per half-year.
   if(faction!==s.player&&(s.month===1||s.month===7)&&s.factions[faction]?.treasury>=5&&s.regions.some(r=>r.owner===faction)){
    const vacancy=OFFICE_TYPES.find(office=>!offices[faction][office]&&officeCandidates(s,faction,office).length);
+   const site=s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.controller===faction&&['occupied','administered'].includes(entity.administrativeStatus)&&(entity.resistance||0)>=45&&!localAdministrator(s,entity.id)&&localAdministratorCandidates(s,entity.id,faction).length).sort((a,b)=>(b.resistance||0)-(a.resistance||0)||a.id.localeCompare(b.id))[0];
    // Choose from the faction's own present people and theaters only. A weak
    // theater takes priority; otherwise establish a local post after one central
    // office. Both branches spend the same five treasury and fill at most one.
    const theater=s.regions.filter(r=>r.owner===faction&&!localGovernor(s,r.id)&&governorCandidates(s,r.id,faction).length).sort((a,b)=>a.loyalty-b.loyalty||a.id.localeCompare(b.id))[0];
    const centralCount=OFFICE_TYPES.filter(office=>offices[faction][office]).length,existingLocal=Object.values(s.world.localGovernors).some(post=>post.faction===faction);
-   if(theater&&(!vacancy||theater.loyalty<=60||centralCount>0&&!existingLocal)){
+   if(site){const id=localAdministratorCandidates(s,site.id,faction).sort((a,b)=>s.world.characters[b].loyalty-s.world.characters[a].loyalty||a.localeCompare(b))[0];appointLocalAdministrator(s,site.id,id,faction)}
+   else if(theater&&(!vacancy||theater.loyalty<=60||centralCount>0&&!existingLocal)){
     const id=governorCandidates(s,theater.id,faction).sort((a,b)=>s.world.characters[b].loyalty-s.world.characters[a].loyalty||a.localeCompare(b))[0];appointGovernorFor(s,theater.id,id,faction);
    }else if(vacancy){const id=officeCandidates(s,faction,vacancy).sort((a,b)=>s.world.characters[b].loyalty-s.world.characters[a].loyalty)[0];appointOffice(s,vacancy,id,faction)}
   }

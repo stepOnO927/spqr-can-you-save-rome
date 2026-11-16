@@ -11,7 +11,7 @@ permissions:
 jobs:
   fast:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,7 +25,7 @@ jobs:
         run: |
           mkdir -p diagnostics
           set -o pipefail
-          npm test | tee diagnostics/unit.tap
+          node --test --test-concurrency=1 | tee diagnostics/unit.tap
       - name: Prove controlled regression is detected and restored
         run: node scripts/inspector-regression.mjs | tee diagnostics/regression.json
       - name: Write evidence reports

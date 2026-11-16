@@ -6,12 +6,12 @@
 // intermediaries off-map. Nothing travels faster than the relay: goods and
 // rumours take years to reach the far west and as long to come back.
 // There is no state-to-state contact between Han and Rome at the start.
-import {ROUTES,FAR_WEST,GOODS,OASIS} from './data.js?v=han-1';
-import {access,atWar,relation,treaty} from './frontier.js?v=han-1';
+import {ROUTES,FAR_WEST,GOODS,OASIS} from './data.js?v=world-kings-contact-1';
+import {access,atWar,relation,treaty} from './frontier.js?v=world-kings-contact-1';
 // Merchants pass where armies may not: peace and a tolerable relationship
 // suffice, or a caravan/market agreement; oasis rulers must not be estranged.
 export function tradeAccess(s,sponsor,owner){if(!owner||owner===sponsor)return true;if(atWar(s,sponsor,owner))return false;if(treaty(s,'caravan',sponsor,owner)||treaty(s,'market',sponsor,owner)||access(s,sponsor,owner))return true;if(OASIS.includes(owner))return (s.protectorate.oasis[owner]?.han||0)>=35;return relation(s,sponsor,owner)>=-35}
-import {roll,clamp,log,monthIndex} from './util.js?v=han-1';
+import {roll,clamp,log,monthIndex} from './util.js?v=world-kings-contact-1';
 
 export const TRADE_HEAD='changan',TRADE_END='mediterranean_gate';
 export function initSilk(s){
