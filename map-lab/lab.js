@@ -239,7 +239,7 @@ map.on('move',updateLocator);map.on('load',updateLocator);document.querySelector
 if(maplibregl.ScaleControl&&map.addControl)map.addControl(new maplibregl.ScaleControl({maxWidth:110,unit:'metric'}),'bottom-left');
 const atlasFocus=document.createElement('button');atlasFocus.id='atlas-focus';atlasFocus.type='button';atlasFocus.setAttribute('aria-pressed','false');document.querySelector('.map-controls').append(atlasFocus);
 const atlasCaption=document.createElement('aside');atlasCaption.id='atlas-caption';document.body.append(atlasCaption);
-function toggleAtlasFocus(){const focused=document.body.classList.toggle('atlas-focus');if(focused){focusPreviousMode=currentMapMode;currentMapMode='terrain'}else if(focusPreviousMode){currentMapMode=focusPreviousMode;focusPreviousMode=null}atlasFocus.setAttribute('aria-pressed',String(focused));renderArmies();renderHud();map.resize?.()}
+function toggleAtlasFocus(){const focused=document.body.classList.toggle('atlas-focus');if(focused){focusPreviousMode=currentMapMode;currentMapMode='terrain'}else if(focusPreviousMode){currentMapMode=focusPreviousMode;focusPreviousMode=null}for(const marker of document.querySelectorAll('.grand-site'))marker.tabIndex=focused?-1:0;atlasFocus.setAttribute('aria-pressed',String(focused));renderArmies();renderHud();map.resize?.()}
 atlasFocus.onclick=toggleAtlasFocus;
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.body.classList.contains('atlas-focus'))toggleAtlasFocus()});
 const settingsButton=document.createElement('button');settingsButton.id='settings';settingsButton.className='hud-button';document.querySelector('.mast').insertBefore(settingsButton,document.querySelector('#guide-restart'));
