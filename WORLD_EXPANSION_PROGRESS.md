@@ -2,6 +2,10 @@
 
 This file tracks the four supplied specifications as one development goal. The expansion is **in progress**. A functioning slice is not a claim of world coverage.
 
+## 16 November checkpoint
+
+- A controlled local town or polity can now receive a named settlement administrator from its owner's adult, loyal, present and unassigned court personnel. Appointment or replacement spends five treasury, and the official reduces actual local resistance by two extra points per month without changing legal title. Travel, incapacity, faction change or loss of local control ends the post; save/load retains a valid assignment. The same official cannot simultaneously hold another office or command an army. Roman AI uses the same paid action for distressed occupied settlements without publishing private personnel to foreign courts. Map Lab exposes appointment and dismissal beside each controlled non-village local place; Inspector flags invalid records. The focused office, resistance, generation and module-version checks passed 19/19. GitHub-hosted browser verification is pending.
+
 ## 15 November checkpoint
 
 - Fictional autonomous city-states, microstates, tribes and local strongmen are generated from a 22-site candidate pool. The number per campaign rises from 1–2 on Travel to 8–9 on Expert. At two or more generated places, at least one city-state and one microstate appear; Hard has at least two of each, and Expert also has at least two tribes and two strongmen when the full map is available. Names, rulers, population, militia, treasury, food, fortification and strategy vary with the saved seed; harder settings raise the population, resource, force and strategy bands. Sites are approximate gameplay points, not historical border claims. Existing sourced polities remain separately identified.

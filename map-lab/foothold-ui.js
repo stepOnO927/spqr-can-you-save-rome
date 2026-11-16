@@ -1,4 +1,5 @@
 import {footholdConnected, footholdQuote, footholdShipmentQuote, footholdShipmentRouteOpen, startFoothold, stockFoothold, resupplyAtFoothold} from '../foothold.js';
+import {renderLocalAdministratorPanel} from './local-administrator-ui.js';
 
 export function renderFootholdPanel({state, entity, actor, language, panel, refresh}) {
   const zh = language === 'zh', own = entity.foothold?.owner === actor ? entity.foothold : null;
@@ -24,5 +25,6 @@ export function renderFootholdPanel({state, entity, actor, language, panel, refr
     if (armies.length) { const select = document.createElement('select'); select.setAttribute('aria-label', zh ? '据点补给军队' : 'Army to rest at foothold'); for (const army of armies) { const option = document.createElement('option'); option.value = army.id; option.textContent = army.name[zh ? 1 : 0]; select.append(option); } const rest = document.createElement('button'); rest.id = 'foothold-rest'; rest.textContent = zh ? '消耗2储粮休整军队' : 'Rest army using 2 stored food'; rest.disabled = own.stockFood < 2; rest.onclick = () => { if (resupplyAtFoothold(state, entity.id, select.value, actor).ok) refresh(); }; section.append(select, rest); }
   }
   panel.append(section);
+  renderLocalAdministratorPanel({state,entity,actor,language,panel,refresh});
   return section;
 }

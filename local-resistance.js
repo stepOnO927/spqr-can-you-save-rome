@@ -1,4 +1,5 @@
 import {footholdConnected} from './foothold.js';
+import {localAdministrator} from './office-system.js?v=world-kings-trade-1';
 
 const garrisoned = (state, entity, actor) => state.armies.some(army => army.owner === actor && army.region === entity.theater && army.men >= 1000 && !army.move);
 
@@ -24,7 +25,7 @@ export function advanceLocalResistance(state) {
     }
     const security = localSecurity(state, entity);
     const taxPressure = state.factions[actor].tax === 'high' ? 1 : 0;
-    const unrest = (security.garrison ? -2 : 5) + (security.connected ? -2 : 3) + taxPressure + (entity.administrativeStatus === 'administered' ? -1 : 0);
+    const unrest = (security.garrison ? -2 : 5) + (security.connected ? -2 : 3) + taxPressure + (entity.administrativeStatus === 'administered' ? -1 : 0) - (localAdministrator(state,entity.id) ? 2 : 0);
     entity.resistance = Math.max(0, Math.min(100, entity.resistance + unrest));
     if (entity.resistance < 100 || security.garrison) continue;
     const prior = actor, claimant = entity.type==='strongman'?entity.id:entity.legalSovereign;
@@ -36,6 +37,7 @@ export function advanceLocalResistance(state) {
     entity.administrationProject = null;
     entity.pending = null;
     entity.siege = null;
+    if(state.world?.localAdministrators)delete state.world.localAdministrators[entity.id];
     entity.resistance = 35;
     entity.lastOutcome = {actor: claimant, proposal: 'local_reversion', accepted: true, year: state.year, month: state.month};
     if(entity.type==='strongman')for(const village of region.localEntities||[])if(village.sponsor===entity.id){village.controller=entity.id;village.lastPatronController=entity.id;village.militaryOccupier=null;village.administrativeStatus='local_dependency';village.village.project=null;village.village.satisfaction=Math.max(0,village.village.satisfaction-8)}
