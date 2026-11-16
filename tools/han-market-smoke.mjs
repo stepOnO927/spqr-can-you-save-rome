@@ -211,10 +211,10 @@ try{
  await page.locator('[data-east-market-house]').click();
  assert.match(await page.locator('#message').innerText(),/商人已自费设立商馆/);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#trade-panel').click();
- assert.match(await page.locator('#inspector').innerText(),/商馆尚余 24 个月.*累计运费收入 0¤/s);
+ assert.match(await page.locator('#inspector').innerText(),/House active for 24 months.*Transport income 0¤/s);
  assert.equal(await page.locator('[data-east-market-house]').count(),0);
  await page.locator('#lang').click();
- assert.match(await page.locator('#inspector').innerText(),/Merchant market house.*House active for 24 months/s);
+ assert.match(await page.locator('#inspector').innerText(),/商人自设商馆.*商馆尚余 24 个月.*累计运费收入 0¤/s);
  const houseSave=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
  assert.equal(houseSave.tradeMarkets.marketHouseSpent,6);
  assert.equal(houseSave.persons[houseSave.tradeMarkets.marketHouses.changan.merchantId].wealth,0);
