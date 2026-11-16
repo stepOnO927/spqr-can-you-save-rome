@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=guardian-age-1';
-import {attachHanWorld,hanWorld,advanceHanWorld,romanView,buyEasternImport} from '../han/world.js?v=guardian-age-1';
-import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=guardian-age-1';
-import {advanceDate} from '../han/util.js?v=guardian-age-1';
-import {eastPanel} from '../han/east-ui.js?v=guardian-age-1';
-import {setRelation} from '../han/frontier.js?v=guardian-age-1';
-import {propose} from '../han/frontier.js?v=guardian-age-1';
-import {proposeAgreement} from '../agreements.js?v=guardian-age-1';
-import {postTradeSale,advanceMarketAI,advanceMarkets} from '../trade-markets.js?v=guardian-age-1';
+import {newGame,upgradeSave} from '../engine.js?v=reported-contact-1';
+import {attachHanWorld,hanWorld,advanceHanWorld,romanView,buyEasternImport} from '../han/world.js?v=reported-contact-1';
+import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=reported-contact-1';
+import {advanceDate} from '../han/util.js?v=reported-contact-1';
+import {eastPanel} from '../han/east-ui.js?v=reported-contact-1';
+import {setRelation} from '../han/frontier.js?v=reported-contact-1';
+import {propose} from '../han/frontier.js?v=reported-contact-1';
+import {proposeAgreement} from '../agreements.js?v=reported-contact-1';
+import {postTradeSale,advanceMarketAI,advanceMarkets} from '../trade-markets.js?v=reported-contact-1';
 
 test('the attached eastern world trades autonomously without publishing private orders to Rome',()=>{
  const s=newGame('caesar');attachHanWorld(s,{seed:82});const h=hanWorld(s).state;

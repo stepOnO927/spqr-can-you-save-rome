@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=guardian-age-1';
-import {advanceEasternMarkets,easternMarketOffers,placeEasternTrade,proposeEasternSupplyContract,quoteEasternTrade,setEasternExportRestriction} from '../han/markets.js?v=guardian-age-1';
-import {relation,setRelation} from '../han/frontier.js?v=guardian-age-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=reported-contact-1';
+import {advanceEasternMarkets,easternMarketOffers,placeEasternTrade,proposeEasternSupplyContract,quoteEasternTrade,setEasternExportRestriction} from '../han/markets.js?v=reported-contact-1';
+import {relation,setRelation} from '../han/frontier.js?v=reported-contact-1';
 
 const request={seller:'parthia',buyer:'han',origin:'parthia',destination:'changan',commodity:'grain',quantity:1};
 function setup(){

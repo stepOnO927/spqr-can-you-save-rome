@@ -1,12 +1,12 @@
-import {ROUTES, FACTIONS} from './data.js?v=guardian-age-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=guardian-age-1';
-import {AGREEMENT_TYPES} from './agreements.js?v=guardian-age-1';
-import {formatChronicleEntry} from './chronicle.js?v=guardian-age-1';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=guardian-age-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=guardian-age-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=guardian-age-1';
-import {canMediate,requestMediation} from './civil-war.js?v=guardian-age-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=guardian-age-1';
+import {ROUTES, FACTIONS} from './data.js?v=reported-contact-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=reported-contact-1';
+import {AGREEMENT_TYPES} from './agreements.js?v=reported-contact-1';
+import {formatChronicleEntry} from './chronicle.js?v=reported-contact-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=reported-contact-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=reported-contact-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=reported-contact-1';
+import {canMediate,requestMediation} from './civil-war.js?v=reported-contact-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=reported-contact-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');

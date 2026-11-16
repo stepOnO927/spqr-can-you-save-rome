@@ -1,7 +1,7 @@
-import {campaignYear,campaignDate} from './campaign-date.js?v=guardian-age-1';
-import {ROUTES,FACTIONS} from './data.js?v=guardian-age-1';
-import {CHARACTER_CATALOG} from './characters.js?v=guardian-age-1';
-import {reportedControl} from './control-intelligence.js?v=guardian-age-1';
+import {campaignYear,campaignDate} from './campaign-date.js?v=reported-contact-1';
+import {ROUTES,FACTIONS} from './data.js?v=reported-contact-1';
+import {CHARACTER_CATALOG} from './characters.js?v=reported-contact-1';
+import {reportedControl} from './control-intelligence.js?v=reported-contact-1';
 
 const copy=x=>JSON.parse(JSON.stringify(x));
 const name=(id,lang)=>FACTIONS[id]?.short?.[lang==='zh'?1:0]||id;

@@ -1,5 +1,5 @@
-import {FACTIONS} from './data.js?v=guardian-age-1';
-import {recordBirth} from './dynasty.js?v=guardian-age-1';
+import {FACTIONS} from './data.js?v=reported-contact-1';
+import {recordBirth} from './dynasty.js?v=reported-contact-1';
 import {ensureHanPortraitSeed} from './court-portrait.js';
 
 // Original game names. These are cultural reconstructions, never documented

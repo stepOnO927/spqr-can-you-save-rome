@@ -1,10 +1,10 @@
-import {isDeliveredReport} from './person-knowledge.js?v=guardian-age-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=guardian-age-1';
-import {startDynasticWar} from './civil-war.js?v=guardian-age-1';
-import {ROUTES} from './data.js?v=guardian-age-1';
-import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,factionNameStyle,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=guardian-age-1';
-import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=guardian-age-1';
-import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=guardian-age-1';
+import {isDeliveredReport} from './person-knowledge.js?v=reported-contact-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=reported-contact-1';
+import {startDynasticWar} from './civil-war.js?v=reported-contact-1';
+import {ROUTES} from './data.js?v=reported-contact-1';
+import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,factionNameStyle,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=reported-contact-1';
+import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=reported-contact-1';
+import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=reported-contact-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.

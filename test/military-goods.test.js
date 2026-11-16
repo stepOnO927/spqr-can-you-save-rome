@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,recruit,recruitEquipmentStock,provisionRomanArmy} from '../engine.js?v=guardian-age-1';
-import {templatesFor,recruitFormation,recruitmentQuote} from '../legion-designer.js?v=guardian-age-1';
-import {advanceMarkets,placeTradeOrder} from '../trade-markets.js?v=guardian-age-1';
-import {COMMODITIES} from '../market-goods.js?v=guardian-age-1';
-import {advanceInventions} from '../inventions.js?v=guardian-age-1';
+import {newGame,upgradeSave,tick,recruit,recruitEquipmentStock,provisionRomanArmy} from '../engine.js?v=reported-contact-1';
+import {templatesFor,recruitFormation,recruitmentQuote} from '../legion-designer.js?v=reported-contact-1';
+import {advanceMarkets,placeTradeOrder} from '../trade-markets.js?v=reported-contact-1';
+import {COMMODITIES} from '../market-goods.js?v=reported-contact-1';
+import {advanceInventions} from '../inventions.js?v=reported-contact-1';
 
 const next=s=>{if(++s.month>12){s.month=1;s.year++}advanceMarkets(s)};
 

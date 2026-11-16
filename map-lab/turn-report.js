@@ -1,5 +1,5 @@
-import {campaignYear,campaignDate} from '../campaign-date.js?v=guardian-age-1';
-import {reportedControl} from '../control-intelligence.js?v=guardian-age-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=reported-contact-1';
+import {reportedControl} from '../control-intelligence.js?v=reported-contact-1';
 
 // Preserve the observation date and provenance, not just the controller: a
 // traveler arriving now may describe an earlier and possibly mistaken sighting.
