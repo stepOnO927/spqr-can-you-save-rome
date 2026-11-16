@@ -45,7 +45,7 @@ try{
     await page.goto(origin+'/map-lab/',{waitUntil:'domcontentloaded',timeout:30000});
     assert.equal(await visibleInFrame(page.locator('#start-game')),true,'Atlas Start outside 640x360');
     await page.locator('#start-game').tap();
-    await page.locator('.maplibregl-marker').first().tap({timeout:5000});
+    await page.locator('[data-city="RAVENNA"]').tap({timeout:5000});
     assert.equal(await page.locator('.selection:not(.collapsed)').count(),1,'Atlas touch did not inspect marker');
     assert.deepEqual(errors,[],'Atlas browser errors');
     reports.push({entry:'atlas',touch:'marker'});

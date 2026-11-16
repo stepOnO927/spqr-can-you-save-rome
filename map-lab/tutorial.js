@@ -33,7 +33,7 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
   ['认清你的战区','点击地图上属于你的城市，查看战区归属。','城市点不到？按“指给我看”，地图会移动到它。'],
   ['选择军队','点击地图上的己方军旗，查看人数、指挥官和位置。','军旗被遮挡？按“指给我看”。'],
   ['查看补给','在军队详情中点“查看补给”，了解粮食和当地承载上限。','详情不见了？按“指给我看”重新打开军队。'],
-  ['下第一道命令',phase==='preview'?'先选一个可到达的目的地，只看行程和风险；预览免费。':'看过路线后，点“确认命令”。也可以选别的路线。','不必攻击强敌；可选己方战区。若路线变了，重新选择。'],
+  ['下第一道命令',phase==='defend'?'当前没有合法行军路线。点“防御”先守住阵地。':phase==='preview'?'先选一个可到达的目的地，只看行程和风险；预览免费。':'看过路线后，点“确认命令”。也可以选别的路线。','不必攻击强敌；可选己方战区。若路线变了，重新选择。'],
   ['推进一个月','命令需要时间。点击“推进一月”，观察真实结算。','若命令已取消，请重新下令；也可以先防守再推进。'],
   ['阅读结果','打开“编年史”，查看刚才这一月真正发生了什么。','没有战斗也正常；编年史仍会记录本月变化。'],
   ['做一个政策决定','查看资源后，选择与当前不同的税率；它会改变今后的收支和忠诚。','资源入口在窄屏菜单里。按“指给我看”可定位。'],
@@ -42,7 +42,7 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
   ['Find your territory','Select a city under your control to inspect its theater.','Cannot see the city? Show me will move the map to it.'],
   ['Select an army','Select one of your standards to see its soldiers, commander and location.','If a marker is obscured, use Show me.'],
   ['Inspect supply','In the army details, open Supply to check food and local capacity.','If the panel is closed, Show me will reopen the army.'],
-  ['Give your first order',phase==='preview'?'Choose a reachable destination to preview its time and risk. Previewing is free.':'After reading the route, select Confirm order. You may choose a different route.','You need not attack a stronger enemy. A friendly theater is available.'],
+  ['Give your first order',phase==='defend'?'No legal march is available. Choose Defend to hold your position.':phase==='preview'?'Choose a reachable destination to preview its time and risk. Previewing is free.':'After reading the route, select Confirm order. You may choose a different route.','You need not attack a stronger enemy. Choose a friendly route when available.'],
   ['Advance one month','Orders take time. Advance one month to resolve real events.','If the order was cancelled, issue another; defense is also possible.'],
   ['Read the outcome','Open the Chronicle to see what actually happened this month.','A quiet month still has a real report.'],
   ['Make a policy choice','Open Resources and choose a different tax rate. It changes future income and loyalty.','On narrow screens Resources is in the menu. Show me will locate it.'],
@@ -80,6 +80,7 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
   if(bounds.width&&bounds.height&&bounds.left<innerWidth&&bounds.right>0&&bounds.top<innerHeight&&bounds.bottom>0){
    pointer.hidden=false;pointer.style.left=Math.max(12,Math.min(innerWidth-34,bounds.left+bounds.width/2-10))+'px';pointer.style.top=Math.max(60,bounds.top-32)+'px';
    box.classList.toggle('guide-at-top',bounds.top>innerHeight*.48);
+   box.classList.toggle('guide-on-right',innerWidth<=700&&innerHeight<=500&&bounds.left<innerWidth*.4);
   }else pointer.hidden=true;
  }
  function feedback(message){$('#guide-feedback').textContent=message}
@@ -105,6 +106,7 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
   $('#guide-pause').textContent=text(language,'Pause','暂停');
   $('#guide-skip').textContent=text(language,'Skip','跳过');
   $('#guide-show').textContent=text(language,'SHOW ME','指给我看');
+  $('#guide-retry').setAttribute('aria-label',text(language,'Restart this lesson','重试本课'));
   $('#guide-next').hidden=step!==8;$('#guide-next').textContent=text(language,'Begin independent play','开始自由战役');
   const choices=$('#guide-choices');choices.replaceChildren();
   if(step===7)for(const [id,en,zh] of [['military','Military','军事'],['diplomacy','Diplomacy','外交'],['development','Development','发展']]){
@@ -115,7 +117,7 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
   }
   place()
  }
- function setStep(next,message=''){step=next;result=message;persist();removeHighlight();render()}
+ function setStep(next,message=''){step=next;result=message;persist();removeHighlight();render();if([1,2,3].includes(step)){const home=pickArmy()?.region;if(home)onFocus(home)}}
  function stop(reason='skip'){
   if(running&&reason!=='load')analytics.track(reason==='complete'?'tutorial_completed':'tutorial_skipped',{}, {humanAction:false});
   running=false;paused=false;persist();box.hidden=true;removeHighlight();if(timer){clearInterval(timer);timer=null}
@@ -124,7 +126,7 @@ export function createTutorial({language,onReset,onMode,getState,getRoutes=()=>[
  function showMe(){
   if(step<=1&&window.matchMedia('(max-width:700px)').matches){$('.brief')?.classList.add('collapsed');$('.selection')?.classList.add('collapsed');$('#brief-toggle')?.setAttribute('aria-expanded','false');$('#selection-toggle')?.setAttribute('aria-expanded','false')}
   if(step===2&&!$('#inspect-army-supply'))$('#map [data-army="'+(pickArmy()?.id||'')+'"]')?.click();
-  if(step===3&&!$('#lab-orders select'))$('#map [data-army="'+(pickArmy()?.id||'')+'"]')?.click();
+  if(step===3&&!$('#lab-orders select')){phase='preview';persist();$('#map [data-army="'+(pickArmy()?.id||'')+'"]')?.click()}
   if(step===6&&!$('#command-detail [data-tax]'))$('#resources-help')?.click();
   const selected=step===0?state().regions.find(r=>r.owner===faction&&r.city?.toUpperCase()===ownCity()):step<=3?state().regions.find(r=>r.id===pickArmy()?.region):null;
   if(selected)onFocus(selected.id);

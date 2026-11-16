@@ -27,7 +27,7 @@ test('battle identity survives save upgrade',()=>{
 function fakeBrowser(){
  const original={document:globalThis.document,window:globalThis.window,innerWidth:globalThis.innerWidth,innerHeight:globalThis.innerHeight};
  const elements=new Map(),listeners={};
- const make=()=>({hidden:false,textContent:'',value:'',checked:true,disabled:false,style:{},dataset:{},options:Array.from({length:5},()=>({})),children:[],classList:{add(){},remove(){},toggle(){}},replaceChildren(){this.children=[]},append(child){this.children.push(child)},scrollIntoView(){},getClientRects(){return [1]},getBoundingClientRect(){return {width:40,height:20,bottom:100,top:80,right:100,left:60}},closest(){return null},focus(){}});
+ const make=()=>({hidden:false,textContent:'',value:'',checked:true,disabled:false,style:{},dataset:{},options:Array.from({length:5},()=>({})),children:[],classList:{add(){},remove(){},toggle(){}},setAttribute(){},replaceChildren(){this.children=[]},append(child){this.children.push(child)},scrollIntoView(){},getClientRects(){return [1]},getBoundingClientRect(){return {width:40,height:20,bottom:100,top:80,right:100,left:60}},closest(){return null},focus(){}});
  const get=selector=>{if(!elements.has(selector))elements.set(selector,make());return elements.get(selector)};
  globalThis.document={querySelector:get,createElement:make,addEventListener:(name,listener)=>listeners[name]=listener};
  globalThis.window={getComputedStyle:()=>({display:'block'}),matchMedia:()=>({matches:false})};

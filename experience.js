@@ -38,20 +38,20 @@ export function setGuide(s,command){const g=initializeExperience(s).guide;
  if(command==='pause'&&g.running)g.paused=true;
  if(command==='resume'){g.running=true;g.paused=false;g.skipped=false}
  if(command==='skip'){g.running=false;g.paused=false;g.skipped=true}
- if(command==='restart'){g.running=true;g.paused=false;g.skipped=false;g.step=0;for(const key of ['army','supply','threat','leadership','direction','course','advance','chronicle','mail','reply'])delete s.experience.actions[key]}
+ if(command==='restart'){g.running=true;g.paused=false;g.skipped=false;g.step=0;for(const key of ['territory','army','supply','order','advance','chronicle','tax','direction'])delete s.experience.actions[key]}
  if(command==='hints')g.hints=!g.hints;
  return g;
 }
 
 const paths={
- caesar:[['army','Select one of your legions on the map.','在地图上选择一支己方军团。','army'],['supply','Inspect its supply and condition.','查看该军团的补给与状态。','army'],['threat','Inspect a known rival theater without ordering an attack.','查看一个已知的敌方战区，不必下令进攻。','map'],['direction','Choose your strategic direction.','选择战略方向。','direction'],['course','Take one real step: adjust tax, seek peace, recruit or issue a legal order.','实际采取一步：调整税率、寻求议和、征募或下达合法命令。','course'],['advance','Advance one month and observe the world.','推进一个月，观察局势。','advance'],['chronicle','Open the Chronicle and review the result.','打开编年史，检查本月结果。','chronicle'],['mail','Read the political letter in your mailbox.','阅读邮箱中的政治来信。','mail'],['reply','Reply to a political development.','回复一项政治事态。','mail']],
- senate:[['army','Select a Senate field army before judging a threat.','先选择元老院野战军，再判断威胁。','army'],['supply','Review its supply and readiness.','检查该军的补给与战备。','army'],['threat','Inspect a known Caesarian theater before deciding whether to defend.','决定是否防守前，先查看已知的凯撒派战区。','map'],['leadership','Inspect the Senate government and its political options.','检查元老院政府及政治选择。','government'],['direction','Choose defense, settlement or development as your emphasis.','选择防守、和解或发展作为重点。','direction'],['course','Take a defensible step: adjust tax, seek peace, recruit or issue a legal order.','采取可防守的一步：调整税率、寻求议和、征募或下达合法命令。','course'],['advance','Advance time; do not commit to an unknown battle.','推进时间；无须贸然投入未知战斗。','advance'],['chronicle','Review political and military developments.','检查政治与军事新动向。','chronicle'],['mail','Read the leadership message.','阅读领导层来信。','mail'],['reply','Respond to the message.','答复来信。','mail']]
+ caesar:[['territory','Select one of your theaters.','点击一处己方战区。','map'],['army','Select a friendly legion.','点击一支己方军团。','army'],['supply','Inspect its food and local supply limit.','查看粮食和当地补给上限。','supply'],['order','Preview a legal route, then order a safe march.','预览合法路线，再下达安全行军令。','military'],['advance','Advance one real month.','实际推进一个月。','advance'],['chronicle','Read the result in the Chronicle.','在编年史中查看真实结果。','chronicle'],['tax','Choose a different tax policy.','选择另一种税率。','government'],['direction','Choose your next strategic direction.','选择下一步战略方向。','direction']],
+ senate:[['territory','Select a Senate theater.','点击一处元老院战区。','map'],['army','Select a Senate field army.','点击一支元老院野战军。','army'],['supply','Inspect its food and local supply limit.','查看粮食和当地补给上限。','supply'],['order','Preview a legal defensive march, then order it.','预览合法的防御行军，再下令。','military'],['advance','Advance one real month.','实际推进一个月。','advance'],['chronicle','Read the result in the Chronicle.','在编年史中查看真实结果。','chronicle'],['tax','Choose a different tax policy.','选择另一种税率。','government'],['direction','Choose your next strategic direction.','选择下一步战略方向。','direction']]
 };
 export const tutorialLessons=s=>paths[s.player]||paths.caesar;
 export function tutorialStep(s){const x=initializeExperience(s),steps=tutorialLessons(s);let index=x.guide.step||0;
- while(index<steps.length){const [key]=steps[index];if((x.actions[key]||0)>0||key==='threat'&&!s.regions.some(r=>r.owner!==s.player)){index++;continue}break}x.guide.step=index;
+ while(index<steps.length){const [key]=steps[index];if((x.actions[key]||0)>0){index++;continue}break}x.guide.step=index;
  if(index>=steps.length)return null;
- const target=steps[index][3]==='course'?(x.direction==='military'?'military':'government'):steps[index][3];
+ const target=steps[index][0]==='order'?'army':steps[index][3];
  return {index,total:steps.length,key:steps[index][0],title:label(steps[index][1],steps[index][2]),target};
 }
 export function replayLesson(s,index){const x=initializeExperience(s),steps=tutorialLessons(s);if(index<0||index>=steps.length)return false;x.guide={...x.guide,running:true,paused:false,skipped:false,step:index};delete x.actions[steps[index][0]];return true}
