@@ -38,6 +38,6 @@ export function renderExperienceUi(s,{lang,date,factionName,leaderName,selectedA
  document.querySelector('#campaign-progress').onclick=()=>{open='progress';render()};
  document.querySelector('#guide-pause')?.addEventListener('click',()=>{setGuide(s,guide.paused?'resume':'pause');render()});
  document.querySelector('#guide-resume')?.addEventListener('click',()=>{setGuide(s,'resume');render()});
- document.querySelectorAll('[data-experience-go]').forEach(b=>b.onclick=()=>{navigate(b.dataset.experienceGo);requestAnimationFrame(()=>document.querySelector('.experience-highlight')?.scrollIntoView({block:'nearest',inline:'nearest'}))});
+ document.querySelectorAll('[data-experience-go]').forEach(b=>b.onclick=()=>{if(step?.key==='chronicle'){document.querySelector('[data-tab="chronicle"]')?.scrollIntoView({block:'nearest',inline:'nearest'});document.querySelector('[data-tab="chronicle"]')?.focus();return}navigate(b.dataset.experienceGo);requestAnimationFrame(()=>document.querySelector('.experience-highlight')?.scrollIntoView({block:'nearest',inline:'nearest'}))});
  document.querySelector('#inspect-supply')?.addEventListener('click',()=>{recordExperience(s,'supply',inspected.id);flash(inspected.supply===undefined?D(`Local supply limit ${place?.supply??'?'} thousand is informational.`,`当地补给上限 ${place?.supply??'?'} 千人，目前仅供参考。`):D(`Army supply ${inspected.supply}; local limit ${place?.supply??'?'}.`,`军队补给 ${inspected.supply}；当地上限 ${place?.supply??'?'}。`))});
 }

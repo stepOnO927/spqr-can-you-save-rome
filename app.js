@@ -162,7 +162,7 @@ function navigateExperience(kind,id){
  else if(kind==='region'){if(state.regions.some(r=>r.id===id&&r.owner===state.player)){selectedRegion=id;tab='map';panelOpen=true}}
  else if(kind==='mail'||kind==='reply'){mailOpen=true;selectedMail=receivedMail(state).find(m=>m.id===id)?.id||receivedMail(state).find(m=>!m.archived)?.id||null;if(selectedMail)markRead(state,selectedMail)}
  else if(['focus','government','military','chronicle'].includes(kind)){tab=kind;panelOpen=true;}
- else if(kind==='map'){tab='map';panelOpen=false}
+ else if(kind==='map'){tab='map';panelOpen=true}
  else if(kind==='direction'){render();document.querySelector('#campaign-progress')?.click();return}
  else if(kind==='time'||kind==='advance'){render();document.querySelector('#step')?.focus();return}
  render();

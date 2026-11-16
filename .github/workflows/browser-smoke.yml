@@ -100,8 +100,8 @@ jobs:
               node tools/atlas-mail-alert-smoke.mjs
               ;;
             3)
-              node scripts/imperium-sim.mjs > imperium-simulation.json
               node tools/onboarding-smoke.mjs
+              node scripts/imperium-sim.mjs > imperium-simulation.json
               node tools/systems-smoke.mjs
               node tools/intelligence-partners-smoke.mjs
               node tools/trade-intelligence-smoke.mjs
