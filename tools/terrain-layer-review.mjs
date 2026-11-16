@@ -16,7 +16,9 @@ try{
   const url=new URL(route.request().url());
   if(url.protocol==='blob:'){await route.continue();return}
   if(url.hostname!=='spqr.test'){await route.abort();return}
-  const file=resolve(root,'.'+(url.pathname.endsWith('/')?url.pathname+'index.html':url.pathname));
+  const pathname=url.pathname.endsWith('/')?url.pathname+'index.html':url.pathname;
+  const trial=process.env.SPQR_PO_SMOOTH_TRIAL==='1'&&['/mediterranean-land.js','/mediterranean-ocean.js'].includes(pathname);
+  const file=trial?resolve(root,'outputs','po-smoothing',pathname.slice(1)):resolve(root,'.'+pathname);
   if(!file.startsWith(root+sep)){await route.abort();return}
   const mime={'.js':'text/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.json':'application/json','.png':'image/png','.jpg':'image/jpeg'}[extname(file)]||'application/octet-stream';
   try{await route.fulfill({status:200,contentType:mime,body:await readFile(file)})}
@@ -26,9 +28,10 @@ try{
  await page.locator('#start-free').click();
  await page.locator('.maplibregl-canvas').waitFor();
  await page.locator('#map-mode').selectOption('terrain');
- for(const [name,center,detail] of [['ariminum',[12.6,44.1],'land-elevation-higher'],['alexandria',[29.91,31.2],'land-elevation-egypt-higher']]){
+ for(const [name,center,detail] of [['ariminum',[12.6,44.1],'land-elevation-higher'],['po-delta',[12.5,44.8],'land-elevation-higher'],['alexandria',[29.91,31.2],'land-elevation-egypt-higher']]){
   await page.evaluate(async center=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center,zoom:9.05})},center);
-  await page.locator('#map-charting').waitFor({state:'visible',timeout:3000});
+  // A local jump can finish before the temporary charting curtain appears.
+  await page.locator('#map-charting').waitFor({state:'visible',timeout:3000}).catch(()=>{});
   await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
   await page.locator('#map-charting').waitFor({state:'hidden',timeout:30000});
   await page.waitForTimeout(1000);

@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../
 import {nationalBudget} from '../national-budget.js?v=27';
 import {budgetHtml} from '../budget-ui.js?v=32';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=41';
+import {physicalStyle} from './physical-style.js?v=42';
 import {physicalLabels} from './physical-labels.js?v=5';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=212';
@@ -221,13 +221,13 @@ map.on('load',refreshPhysicalLabels);
 map.on('moveend',clipPhysicalLabels);
 map.on('load',clipPhysicalLabels);
 refreshPhysicalLabels();
-const locator=document.createElement('aside');locator.id='locator';locator.hidden=true;locator.innerHTML='<strong class="locator-title"></strong><div class="locator-map"><img src="./italy-locator.svg?v=1" alt=""><span id="locator-position"></span></div>';document.body.append(locator);
+const locator=document.createElement('aside');locator.id='locator';locator.hidden=true;locator.innerHTML='<strong class="locator-title"></strong><div class="locator-map"><img src="./italy-locator.svg?v=2" alt=""><span id="locator-position"></span></div>';document.body.append(locator);
 const locatorBounds={italy:{west:4,east:23,south:35,north:48},mediterranean:{west:-20,east:60,south:18,north:58}};
 function updateLocator(){
  const center=map.getCenter?.(),zoom=map.getZoom?.()||0,broad=locatorBounds.mediterranean;
  if(!center||zoom<7||center.lng<broad.west||center.lng>broad.east||center.lat<broad.south||center.lat>broad.north){locator.hidden=true;return}
  const italy=locatorBounds.italy,isItaly=center.lng>=italy.west&&center.lng<=italy.east&&center.lat>=italy.south&&center.lat<=italy.north;
- const bounds=isItaly?italy:broad,source=isItaly?'./italy-locator.svg?v=1':'./mediterranean-locator.svg?v=1';
+ const bounds=isItaly?italy:broad,source=isItaly?'./italy-locator.svg?v=2':'./mediterranean-locator.svg?v=2';
  locator.hidden=false;
  const image=locator.querySelector('img');if(image.getAttribute('src')!==source)image.setAttribute('src',source);
  locator.querySelector('.locator-title').textContent=isItaly?(lang==='zh'?'当前位置 · 意大利':'YOUR POSITION · ITALY'):(lang==='zh'?'地中海 · 当前位置':'MEDITERRANEAN · POSITION');
@@ -591,7 +591,7 @@ function renderTerrainLegend(){
  const center=map.getCenter(),poNearby=map.getZoom()>=8.2&&center.lng>=11.8&&center.lng<=13.1&&center.lat>=44.5&&center.lat<=45.4;
  const egyptNearby=map.getZoom()>=8.25&&center.lng>=28&&center.lng<=34&&center.lat>=29&&center.lat<=33;
  document.querySelector('.brief').classList.toggle('po-history',poNearby);
- document.querySelector('#map-mode-note').textContent=(close?(lang==='zh'?'近景采用现代高程、河湖与海岸；不显示粗略海深带，柔光仅作示意。':'Close view uses modern terrain and shoreline; depth bands are hidden and coastal glow is illustrative.'):(lang==='zh'?'总览显示海底深度分带；近景隐藏粗略深度边界。岸边柔光只标示海岸，不代表测得水深。可单独开启山体光影。':'Overview shows sea-depth bands; close zoom hides their coarse boundaries. The shoreline glow marks the coast, not measured depth. Hill shading can be toggled separately.'))+(poNearby?(lang==='zh'?' 波河口虚线与柔光仅标示年代未定的海岸参考位置；现代海岸仍决定海陆。':' Po: the dashed line and soft band mark an undated shore reference; the modern coast still determines land and sea.'):'');
+ document.querySelector('#map-mode-note').textContent=(close?(lang==='zh'?'近景采用现代高程、河湖与海岸；不显示粗略海深带，柔光仅作示意。':'Close view uses modern terrain and shoreline; depth bands are hidden and coastal glow is illustrative.'):(lang==='zh'?'总览显示海底深度分带；近景隐藏粗略深度边界。岸边柔光只标示海岸，不代表测得水深。可单独开启山体光影。':'Overview shows sea-depth bands; close zoom hides their coarse boundaries. The shoreline glow marks the coast, not measured depth. Hill shading can be toggled separately.'))+(poNearby?(lang==='zh'?' 波河口虚线与柔光仅标示年代未定的海岸参考位置；局部圆顺的现代海岸仍决定海陆，并非前49年海岸复原。':' Po: the dashed line and soft band mark an undated shore reference; the locally rounded modern coast still determines land and sea, not a reconstructed 49 BCE shoreline.'):'');
  if(egyptNearby)document.querySelector('#map-mode-note').textContent+=lang==='zh'?' 尼罗河三角洲浅绿色区域根据现代河道示意，不代表前49年的冲积土或耕地边界。':' The pale green Nile Delta follows modern mapped branches schematically, not a surveyed 49 BCE alluvial or farmland boundary.';
  const items=close?[['#c5c4a7',lang==='zh'?'陆地与高程':'Land & elevation'],['#5c9293',lang==='zh'?'河流与天然湖泊':'Rivers & natural lakes'],['#f0e4c4',lang==='zh'?'现代海岸线':'Modern shoreline'],['#2b626d',lang==='zh'?'海水':'Sea']]:[['#c5c4a7',lang==='zh'?'理想化地表与高程':'Land cover & elevation'],['#5c9293',lang==='zh'?'河流与天然湖泊':'Rivers & natural lakes'],['#2b626d',lang==='zh'?'近岸浅海（约0–200米）':'Coastal shelf (about 0–200 m)'],['#225565',lang==='zh'?'较深海域（超过200米）':'Deeper sea (over 200 m)']];
  if(poNearby)items.splice(1,0,['#a5b599',lang==='zh'?'古海岸参考带（示意）':'Historic shore band (schematic)'],['#84694d',lang==='zh'?'古海岸参考线（年代未定）':'Historic shore (undated)',true]);

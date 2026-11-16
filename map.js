@@ -1,5 +1,5 @@
 import {IDENTITIES,factionMark} from './identity.js?v=2';
-import land from './mediterranean-land.js';
+import land from './mediterranean-land.js?v=3';
 import rivers from './rivers.js?v=7';
 import detailedRivers from './mediterranean-rivers.js';
 import lakes from './mediterranean-lakes.js';
