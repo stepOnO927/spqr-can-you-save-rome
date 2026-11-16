@@ -9,3 +9,4 @@ main{position:relative}
 .experience-lesson-action{display:block;margin-top:5px;color:#fff1d2;font-size:13px;line-height:1.35}
 .experience-highlight{outline:3px solid #e6bd5c!important;outline-offset:3px;box-shadow:0 0 0 5px #e6bd5c55!important}
 @media(max-width:700px){.experience-strip .experience-lesson{display:block;font-size:12px;line-height:1.4}.experience-strip .experience-lesson button,.experience-actions button{min-height:34px;font-size:11px}.experience-strip{max-height:min(38dvh,210px);overflow:auto}}
+#tutorial-own-region{display:inline-block;min-height:38px;padding:7px 10px;margin-left:6px;background:#846b3f;color:#fff0cf;border:1px solid #dbc18b;font-size:13px}
