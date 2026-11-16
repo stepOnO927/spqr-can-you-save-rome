@@ -1,0 +1,108 @@
+/* IMPERIUM VISUAL — Han design language for the standalone Mandate of Heaven campaign.
+   Tokens come from ../imperium-visual.css. Lacquer black and cinnabar carry the frame; court
+   records are bamboo slips; the map sits on silk. Corners are square, rules are ink-thin, and
+   the only saturated colour is cinnabar. No dragons, no imperial yellow, no later-dynasty motifs.
+   Presentation only. */
+body.han-campaign{background:var(--han-lacquer-950);color:var(--han-text);font:14px/1.5 var(--han-serif);-webkit-font-smoothing:antialiased}
+body.han-campaign button,body.han-campaign select{
+  min-height:36px;padding:0 var(--iv-3);background:var(--han-lacquer-700);color:var(--han-text);
+  border:1px solid var(--han-line);border-radius:0;font:600 12px/1.2 var(--iv-ui);letter-spacing:.04em;
+  transition:background var(--iv-fast) var(--iv-ease),border-color var(--iv-fast) var(--iv-ease),color var(--iv-fast) var(--iv-ease);
+}
+body.han-campaign button:hover:not(:disabled),body.han-campaign select:hover{background:#3a2a27;border-color:var(--han-cinnabar);color:#fff6e0}
+body.han-campaign button:focus-visible,body.han-campaign select:focus-visible,body.han-campaign a:focus-visible,body.han-campaign summary:focus-visible{outline:2px solid var(--han-bamboo);outline-offset:2px}
+body.han-campaign button:disabled{opacity:.42}
+
+/* Frame */
+body.han-campaign>header{
+  height:58px;padding:0 var(--iv-4) 4px;gap:var(--iv-4);background:var(--han-lacquer-950);border-bottom:0;
+  box-shadow:inset 0 -1px 0 var(--han-bronze),inset 0 -4px 0 var(--han-cinnabar-deep),0 6px 18px #000a;position:relative;z-index:3;
+}
+body.han-campaign>header a{display:flex;align-items:center;gap:var(--iv-2);padding-right:var(--iv-4);border-right:1px solid var(--han-line);height:100%;color:var(--han-text-dim);font:700 13px/1 var(--iv-display);letter-spacing:.24em}
+body.han-campaign>header a::before{content:"‹";font:400 20px/1 var(--iv-ui);color:var(--han-bronze-hi)}
+body.han-campaign>header a:hover{color:var(--han-silk)}
+body.han-campaign #title{flex:1;display:flex;align-items:center;gap:var(--iv-3);font:600 19px/1.1 var(--han-display);letter-spacing:.2em;color:var(--han-silk)}
+/* A square cinnabar seal stands where a Roman screen would carry a laurel. */
+body.han-campaign #title::before{content:"漢";flex:none;display:grid;place-items:center;width:30px;height:30px;background:var(--han-cinnabar);color:#f6e7c9;font:700 18px/1 var(--han-serif);letter-spacing:0;box-shadow:inset 0 0 0 2px var(--han-cinnabar),inset 0 0 0 3px #f6e7c966}
+body.han-campaign>header div{gap:0;border:1px solid var(--han-line)}
+body.han-campaign>header div button,body.han-campaign>header #save-transfer-open{border:0;border-right:1px solid var(--han-line);border-radius:0;background:transparent;color:var(--han-text-dim);font:600 11px/1 var(--iv-ui);letter-spacing:.1em;text-transform:uppercase;padding:0 var(--iv-3);min-height:34px;box-shadow:none}
+body.han-campaign>header div button:last-child{border-right:0}
+body.han-campaign main{grid-template-columns:minmax(260px,320px) minmax(0,1fr) minmax(260px,320px);height:calc(100vh - 58px);height:calc(100dvh - 58px)}
+body.han-campaign aside{padding:0 var(--iv-4) var(--iv-5);background:var(--han-lacquer-900);border-right:1px solid var(--han-line);scrollbar-width:thin;scrollbar-color:var(--han-line) transparent}
+body.han-campaign aside:last-child{border-right:0;border-left:1px solid var(--han-line)}
+body.han-campaign h2{position:sticky;top:0;z-index:2;margin:0 calc(var(--iv-4) * -1) var(--iv-3);padding:var(--iv-3) var(--iv-4);background:var(--han-lacquer-950);border-bottom:1px solid var(--han-cinnabar-deep);font:600 17px/1.3 var(--han-display);letter-spacing:.1em;color:var(--han-silk)}
+body.han-campaign h3{margin:var(--iv-5) 0 var(--iv-2);padding-left:var(--iv-3);border-left:3px solid var(--han-cinnabar);font:600 15px/1.3 var(--han-serif);letter-spacing:.12em;color:var(--han-bamboo)}
+body.han-campaign p{margin:var(--iv-2) 0;font:13px/1.6 var(--han-serif);color:var(--han-text)}
+body.han-campaign small,body.han-campaign .muted{color:var(--han-text-dim);font:12px/1.5 var(--iv-ui)}
+
+/* Ledgers: label left, figure right, ink rule between */
+body.han-campaign dl{display:grid;grid-template-columns:1fr auto;gap:0;margin:var(--iv-2) 0}
+body.han-campaign dt{padding:7px 0;border-bottom:1px solid #3a2823;font:600 11px/1.4 var(--iv-ui);letter-spacing:.1em;text-transform:uppercase;color:var(--han-text-dim)}
+body.han-campaign dd{padding:7px 0;border-bottom:1px solid #3a2823;text-align:right;font:700 14px/1.4 var(--iv-ui);font-variant-numeric:tabular-nums;color:var(--han-silk)}
+
+/* Armies: lacquer tallies with a cinnabar notch */
+body.han-campaign .list{border-top:0;padding:0;margin:0 0 4px}
+body.han-campaign .list button{position:relative;width:100%;min-height:42px;padding:0 var(--iv-3) 0 var(--iv-4);text-align:left;background:var(--han-lacquer-800);border:1px solid var(--han-line);font:600 13px/1.3 var(--han-serif);letter-spacing:0;font-variant-numeric:tabular-nums}
+body.han-campaign .list button::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--han-cinnabar-deep)}
+body.han-campaign .list button:hover::before{background:var(--han-cinnabar-hi)}
+body.han-campaign #setup select,body.han-campaign #setup button,body.han-campaign .action{width:100%;margin:var(--iv-2) 0;min-height:42px}
+body.han-campaign #begin,body.han-campaign .action,body.han-campaign #advance{background:var(--han-cinnabar-deep);border-color:var(--han-cinnabar);color:#f8ead0;font:700 12px/1 var(--iv-ui);letter-spacing:.14em;text-transform:uppercase}
+body.han-campaign #begin:hover:not(:disabled),body.han-campaign .action:hover:not(:disabled),body.han-campaign #advance:hover:not(:disabled){background:var(--han-cinnabar);border-color:var(--han-bamboo);color:#fff}
+
+/* Guide */
+body.han-campaign .han-experience-summary{margin:var(--iv-3) 0;padding:var(--iv-3);background:var(--han-lacquer-950);border:1px solid var(--han-line);border-top:2px solid var(--han-bronze)}
+body.han-campaign .han-experience-summary strong{display:block;font:700 10px/1.3 var(--iv-ui);letter-spacing:.18em;text-transform:uppercase;color:var(--han-bronze-hi)}
+body.han-campaign .han-experience-summary span{display:block;margin:3px 0 var(--iv-2);font:14px/1.45 var(--han-serif);color:var(--han-silk)}
+body.han-campaign .han-experience-summary div{display:flex;gap:var(--iv-1)}
+body.han-campaign .han-experience-summary p{margin:var(--iv-2) 0 0;padding-top:var(--iv-2);border-top:1px solid #3a2823;font:12px/1.5 var(--iv-ui);color:var(--han-text-dim)}
+body.han-campaign .han-experience-summary button{min-height:30px;font-size:11px}
+
+/* The imperial court: appointments recorded on bamboo slips, bound by two cords. */
+body.han-campaign #han-court{margin-top:var(--iv-5);padding-top:var(--iv-3);border-top:1px solid var(--han-cinnabar-deep)}
+body.han-campaign #han-court summary{font:600 16px/1.3 var(--han-display);letter-spacing:.12em;color:var(--han-silk)}
+body.han-campaign #han-court summary::marker{color:var(--han-cinnabar-hi)}
+body.han-campaign .han-office-list{display:grid;gap:3px;margin:var(--iv-3) 0;padding:0;border:0}
+body.han-campaign .han-office-list>div{
+  display:grid;grid-template-columns:1fr;gap:1px;padding:7px var(--iv-3) 7px 26px;
+  background:var(--han-bamboo);color:var(--han-ink);
+  background-image:linear-gradient(90deg,transparent 0 11px,#5b482666 11px 13px,transparent 13px),linear-gradient(180deg,#ffffff26 0,transparent 30%,transparent 70%,#3a2a1026 100%);
+  border-left:1px solid var(--han-bamboo-line);border-right:1px solid var(--han-bamboo-line);font-size:12px;
+}
+body.han-campaign .han-office-list span{font:600 10.5px/1.35 var(--iv-ui);letter-spacing:.06em;text-transform:uppercase;color:#5b4826}
+body.han-campaign .han-office-list strong{text-align:left;font:700 14px/1.3 var(--han-serif);color:var(--han-ink)}
+body.han-campaign #han-court label{margin:var(--iv-3) 0 0;font:600 11px/1.4 var(--iv-ui);letter-spacing:.1em;text-transform:uppercase;color:var(--han-text-dim)}
+body.han-campaign #han-court label select,body.han-campaign #court-appoint{margin-top:5px}
+
+/* Map area */
+body.han-campaign .mapArea{background:var(--han-lacquer-950)}
+body.han-campaign .toolbar{gap:0;padding:0;background:var(--han-lacquer-900);border-bottom:1px solid var(--han-line)}
+body.han-campaign .toolbar select{min-height:42px;border:0;border-right:1px solid var(--han-line);background:transparent;padding:0 var(--iv-4)}
+body.han-campaign #advance{min-height:42px;min-width:150px;border:0;border-left:1px solid var(--han-cinnabar)}
+body.han-campaign #map{background:#33464d;box-shadow:inset 0 0 120px 20px #0b0908a0}
+body.han-campaign #message{min-height:38px;padding:var(--iv-2) var(--iv-4);background:var(--han-lacquer-900);border-top:1px solid var(--han-line);font:italic 13px/1.5 var(--han-serif);color:var(--han-text-dim)}
+body.han-campaign #chronicle{margin-top:var(--iv-5)}
+body.han-campaign #chronicle p{padding:var(--iv-2) 0 0 var(--iv-3);border-top:0;border-left:1px solid var(--han-line);font:13px/1.55 var(--han-serif);color:var(--han-text)}
+body.han-campaign #inspector h3{margin-top:0;padding:0;border:0;font:600 22px/1.2 var(--han-display);letter-spacing:.06em;color:var(--han-silk)}
+body.han-campaign .spqr-version{left:auto;right:8px;bottom:6px;background:transparent;border:0;color:var(--han-text-dim);opacity:.7;font:600 10px/1 var(--iv-ui);box-shadow:none}
+
+@media(max-width:1100px){body.han-campaign main{grid-template-columns:minmax(230px,270px) minmax(0,1fr) minmax(220px,260px)}}
+/* Touch layout: the map leads, records follow beneath it. */
+@media(max-width:850px){
+  body.han-campaign>header{height:auto;min-height:50px;flex-wrap:wrap;padding:6px var(--iv-2) 8px;gap:var(--iv-2)}
+  body.han-campaign>header a{border-right:0;padding-right:0;height:auto}
+  body.han-campaign #title{font-size:14px;letter-spacing:.1em}
+  body.han-campaign #title::before{width:24px;height:24px;font-size:14px}
+  body.han-campaign main{display:flex;flex-direction:column;height:auto}
+  body.han-campaign .mapArea{order:-1}
+  body.han-campaign #map{height:56vh}
+  body.han-campaign aside{max-height:none;padding-bottom:var(--iv-4)}
+  body.han-campaign button,body.han-campaign select{min-height:44px}
+  body.han-campaign .toolbar{flex-wrap:nowrap}
+  body.han-campaign .toolbar select{flex:1;min-width:0;padding:0 var(--iv-2)}
+  body.han-campaign #advance{min-width:110px}
+}
+@media(max-height:600px) and (orientation:landscape){
+  body.han-campaign>header{min-height:44px;height:44px;flex-wrap:nowrap;padding:0 var(--iv-2) 4px}
+  body.han-campaign>header div button{min-height:30px;padding:0 var(--iv-2)}
+  body.han-campaign h2{padding:var(--iv-2) var(--iv-3);font-size:14px}
+}

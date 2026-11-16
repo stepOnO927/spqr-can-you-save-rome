@@ -1,0 +1,304 @@
+/* =====================================================================================
+   IMPERIUM VISUAL — Campaign Atlas information architecture
+   Loaded after lab.css and ../imperium-visual.css (tokens). Presentation only.
+
+   The atlas used to put every system into one 300px inspector. It now has four surfaces,
+   each sized for what it holds:
+
+     rail          where you go: diplomacy, government, strategy, legions, operations,
+                   research, chronicle, mail
+     command bar   time: play, speed, advance — always in the same corner
+     inspector     a territory, city, army or battle: small, beside the map
+     workspace     a court file (docked wide, map still visible) or a person's dossier
+                   (full workspace); opened on demand, closed with × or Esc
+
+   body.atlas-shell is set on viewports wider than 700px. Narrower screens keep the atlas's
+   existing compact menu; there a workspace becomes a full-screen sheet.
+   Type: 14–15px for anything you read or press, 12–13px secondary, 11px only for overlines.
+   ===================================================================================== */
+body.atlas{--atlas-top:72px;--atlas-rail:92px;--atlas-gap:16px;--atlas-bar:60px;font-size:14px}
+
+/* ---------- Frame ---------- */
+body.atlas-shell .mast{height:var(--atlas-top);padding:0 var(--atlas-gap) 4px;gap:10px;z-index:6}
+body.atlas-shell .mast .identity{margin-right:6px;flex:none}
+body.atlas-shell .mast .identity strong{white-space:nowrap;font-size:19px;letter-spacing:.14em}
+body.atlas-shell .mast .identity small{white-space:nowrap}
+body.atlas-shell .mast .top-rule,body.atlas-shell .mast .era{display:none}
+body.atlas-shell .hud-resources{display:flex;align-items:center;gap:2px;margin-left:8px;margin-right:auto;font:600 13px/1 var(--iv-ui);letter-spacing:0;color:var(--iv-text-dim)}
+body.atlas-shell .hud-stat{padding:8px 10px;font:600 13px/1.1 var(--iv-ui);color:var(--iv-text-dim);border-right:1px solid var(--iv-line-soft)}
+body.atlas-shell .hud-stat b{font:700 15px/1.1 var(--iv-ui);font-variant-numeric:tabular-nums;color:var(--iv-text)}
+body.atlas-shell .hud-stat:hover{background:var(--iv-basalt-700)}
+body.atlas-shell .mast .hud-button,body.atlas-shell .mast #save-transfer-open{min-height:34px;padding:0 11px;font:600 12px/1 var(--iv-ui);letter-spacing:.04em;text-transform:none}
+body.atlas-shell .mast a#return-campaign{padding:0 4px 0 10px;font:600 12px/1 var(--iv-ui);letter-spacing:.04em}
+html[lang="zh-CN"] body.atlas-shell .mast .hud-button{font-size:13px}
+
+/* Rail: the campaign's systems, one press each. Icon above a readable label. */
+body.atlas-shell .atlas-rail{position:absolute;z-index:5;left:0;top:var(--atlas-top);bottom:0;width:var(--atlas-rail);display:flex;flex-direction:column;padding-top:6px;background:var(--iv-basalt-900);border-right:1px solid var(--iv-line);box-shadow:4px 0 16px #0006;overflow-y:auto;scrollbar-width:none}
+body:not(.atlas-shell) .atlas-rail,body:not(.atlas-shell) .atlas-commandbar,body:not(.atlas-shell) .workspace-shade{display:none}
+body.atlas-shell .atlas-rail>button{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:100%;min-height:66px;margin:0;padding:8px 5px;background:transparent;border:0;border-radius:0;color:var(--iv-text-dim);font:600 11.5px/1.2 var(--iv-ui);letter-spacing:.01em;text-align:center;text-transform:lowercase;white-space:normal;cursor:pointer;transition:background var(--iv-fast) var(--iv-ease),color var(--iv-fast) var(--iv-ease)}
+body.atlas-shell .atlas-rail>button::first-letter{text-transform:uppercase}
+html[lang="zh-CN"] body.atlas-shell .atlas-rail>button{font-size:13px;letter-spacing:.06em}
+body.atlas-shell .atlas-rail>button::before{content:"";width:26px;height:26px;flex:none;background:var(--iv-bronze-hi);-webkit-mask:center/contain no-repeat;mask:center/contain no-repeat;transition:background var(--iv-fast) var(--iv-ease)}
+body.atlas-shell .atlas-rail>button::after{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;background:var(--iv-gold);transform:scaleY(0);transition:transform var(--iv-med) var(--iv-ease)}
+body.atlas-shell .atlas-rail>button:hover{background:#ffffff0a;color:var(--iv-text)}
+body.atlas-shell .atlas-rail>button:hover::before{background:var(--iv-gold)}
+body.atlas-shell[data-workspace="diplomacy"] .atlas-rail #factions{background:linear-gradient(90deg,var(--iv-burgundy),var(--iv-burgundy-deep));color:#fff3da}
+body.atlas-shell[data-workspace="diplomacy"] .atlas-rail #factions::after{transform:scaleY(1)}
+body.atlas-shell[data-workspace="diplomacy"] .atlas-rail #factions::before{background:var(--iv-gold)}
+body.atlas-shell .atlas-rail #atlas-mail{margin-top:auto;border-top:1px solid var(--iv-line-soft)}
+body.atlas-shell .atlas-rail #atlas-mail.has-unread,body.atlas-shell .atlas-rail #atlas-mail[data-unread]{color:var(--iv-gold)}
+
+/* Campaign ledger (left): objectives, situation, map mode and its legend. The four system
+   buttons it used to hold are in the rail, and the title copy is gone, so it is short. */
+body.atlas-shell .brief{top:calc(var(--atlas-top) + var(--atlas-gap));left:calc(var(--atlas-rail) + var(--atlas-gap));width:308px;max-height:calc(100vh - var(--atlas-top) - 150px);padding:16px 18px 18px;z-index:3}
+body.atlas-shell .brief h1,body.atlas-shell .brief h1+p,body.atlas-shell .brief .imperium-links,body.atlas-shell .brief #campaign-government-note:empty,body.atlas-shell .brief h1~.divider:first-of-type{display:none}
+body.atlas-shell .brief:not(.collapsed){display:flex;flex-direction:column}
+body.atlas-shell .brief>.kicker{order:-3}
+body.atlas-shell .brief>.map-mode-label,body.atlas-shell .brief>#map-mode{order:-2}
+body.atlas-shell .brief>.map-mode-label{margin-top:12px}
+body.atlas-shell .brief>#map-mode{margin-bottom:8px;flex:none}
+body.atlas-shell .brief .kicker{display:flex;justify-content:space-between;font:700 11px/1.3 var(--iv-ui);letter-spacing:.16em}
+body.atlas-shell .brief p,body.atlas-shell .brief #objectives,body.atlas-shell .brief .situation{font:14px/1.55 var(--iv-ui);color:var(--iv-text)}
+body.atlas-shell .brief .objective-toggle{margin-top:12px;padding:0;font:700 12px/1.3 var(--iv-ui);letter-spacing:.14em;color:var(--iv-gold);background:none;border:0}
+body.atlas-shell .brief #map-mode-note,body.atlas-shell .brief .caveat{font:12px/1.5 var(--iv-ui);color:var(--iv-text-faint)}
+body.atlas-shell .brief .map-mode-label,body.atlas-shell .brief .legend-title{display:block;margin-top:14px;font:700 11px/1.3 var(--iv-ui);letter-spacing:.16em}
+body.atlas-shell .brief #map-mode{width:100%;min-height:36px;margin-top:6px;padding:0 10px;background:var(--iv-basalt-900);border:1px solid var(--iv-line);color:var(--iv-text);font:14px/1 var(--iv-ui)}
+body.atlas-shell .brief .legend{font:13px/1.7 var(--iv-ui);color:var(--iv-text-dim)}
+body.atlas-shell .brief-toggle{top:calc(var(--atlas-top) + var(--atlas-gap));left:calc(var(--atlas-rail) + var(--atlas-gap) + 308px);width:30px;height:36px;background:var(--iv-basalt-800);border:1px solid var(--iv-line);border-left:0;color:var(--iv-gold);font-size:16px;z-index:3}
+body.atlas-shell .brief-toggle:has(+ .brief.collapsed){left:calc(var(--atlas-rail) + var(--atlas-gap));border-left:1px solid var(--iv-line)}
+
+/* Map controls: bottom-left of the map, out of the way of every panel. */
+body.atlas-shell .map-controls{left:calc(var(--atlas-rail) + var(--atlas-gap));right:auto;top:auto;bottom:var(--atlas-gap);flex-direction:row;z-index:3}
+body.atlas-shell .map-controls button{width:40px;height:40px;border:1px solid var(--iv-line);border-right-width:0;font:18px/1 var(--iv-ui)}
+body.atlas-shell .map-controls button:last-child{border-right-width:1px}
+body.atlas-shell .map-controls #relief-toggle{width:auto;padding:0 12px;font:600 12px/1 var(--iv-ui);letter-spacing:.06em}
+body.atlas-shell .spqr-version{left:calc(var(--atlas-rail) + 206px);right:auto;bottom:24px}
+body.atlas-shell .map-key{left:calc(var(--atlas-rail) + 290px);transform:none;bottom:28px;gap:18px;font:600 11px/1 var(--iv-ui);letter-spacing:.08em}
+body.atlas-shell .credits{right:var(--atlas-gap);bottom:calc(var(--atlas-bar) + var(--atlas-gap) + 4px);max-width:380px;font:500 10px/1.5 var(--iv-ui);opacity:.75;pointer-events:none}
+body.atlas-shell .credits a{pointer-events:auto}
+body.atlas-shell #status{top:calc(var(--atlas-top) + var(--atlas-gap));right:calc(var(--atlas-gap) * 2 + clamp(340px,26vw,420px));z-index:4;padding:9px 12px;background:var(--iv-basalt-900);border:1px solid var(--iv-line);border-left:3px solid var(--iv-gold);font:13px/1.5 var(--iv-ui)}
+
+/* Command bar: time, always bottom-right. The date is the largest thing on it. */
+body.atlas-shell .atlas-commandbar{position:absolute;z-index:5;right:var(--atlas-gap);bottom:var(--atlas-gap);background:var(--iv-basalt-900);border:1px solid var(--iv-line);border-top:2px solid var(--iv-bronze);box-shadow:var(--iv-shadow-float)}
+body.atlas-shell .atlas-commandbar .time-controls{display:flex;align-items:stretch;gap:0;margin:0}
+body.atlas-shell .atlas-commandbar button{min-height:48px;padding:0 16px;margin:0;background:transparent;border:0;border-right:1px solid var(--iv-line-soft);border-radius:0;color:var(--iv-text);font:600 13px/1.2 var(--iv-ui);letter-spacing:.06em;cursor:pointer;transition:background var(--iv-fast) var(--iv-ease)}
+body.atlas-shell .atlas-commandbar button:hover{background:var(--iv-basalt-700)}
+body.atlas-shell .atlas-commandbar #time-speed{min-width:52px;font-variant-numeric:tabular-nums}
+body.atlas-shell .atlas-commandbar #advance{flex:none;width:auto;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;min-width:230px;padding:0 20px;border-right:0;background:var(--iv-burgundy);color:#f9ead0;font:700 12px/1 var(--iv-ui);letter-spacing:.14em;text-align:left}
+body.atlas-shell .atlas-commandbar #advance:hover{background:var(--iv-burgundy-hi)}
+body.atlas-shell .atlas-commandbar #turn-date{display:block;font:700 16px/1.1 'Cormorant Garamond',var(--iv-display);letter-spacing:.06em;color:var(--iv-gold);text-transform:none}
+
+/* ---------- Inspector (compact workspace) ---------- */
+body.atlas-shell .selection{left:auto;right:var(--atlas-gap);top:auto;bottom:calc(var(--atlas-bar) + var(--atlas-gap) * 2);width:clamp(340px,26vw,420px);min-height:0;max-height:calc(100vh - var(--atlas-top) - var(--atlas-bar) - var(--atlas-gap) * 4);padding:0 18px 18px;overflow:auto;z-index:4;border-top:2px solid var(--selection-accent,var(--iv-bronze))}
+body.atlas .selection>.kicker{display:block;position:sticky;top:0;z-index:2;margin:0 -18px;padding:12px 18px 0;background:var(--iv-basalt-800);font:700 11px/1.3 var(--iv-ui);letter-spacing:.18em}
+body.atlas .selection h2{margin:0 -18px;padding:4px 56px 4px 18px;background:var(--iv-basalt-800);font:600 26px/1.15 'Cormorant Garamond',var(--iv-display);letter-spacing:.01em}
+body.atlas .selection #selection-detail{margin:0 0 4px;font:14px/1.5 var(--iv-ui);color:var(--iv-text-dim)}
+body.atlas .selection p{font:14px/1.55 var(--iv-ui);color:var(--iv-text)}
+body.atlas .selection small{font-size:12px}
+body.atlas .selection .battle-note{font:13px/1.5 var(--iv-ui);color:var(--iv-text-dim)}
+body.atlas .selection .detail-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:0;margin-top:10px;padding-top:0;border-top:1px solid var(--iv-line);font:13px/1.4 var(--iv-ui)}
+body.atlas .selection .detail-grid>span{padding:8px 8px 8px 0;border-bottom:1px solid var(--iv-line-soft);font:600 12px/1.4 var(--iv-ui);letter-spacing:.03em;color:var(--iv-text-faint)}
+body.atlas .selection .detail-grid>b{padding:8px 0;border-bottom:1px solid var(--iv-line-soft);font:600 14px/1.4 var(--iv-ui);font-variant-numeric:tabular-nums;color:var(--iv-text);overflow-wrap:anywhere}
+body.atlas .selection button,body.atlas .selection select,body.atlas .selection input{font-family:var(--iv-ui)}
+body.atlas .selection .identity-focus-map,body.atlas .selection #send-inquiry,body.atlas .selection #city-region,body.atlas .selection #recruit-region,body.atlas .selection .help-list button,body.atlas .selection .diplomacy-actions button,body.atlas .selection .mission-box button{min-height:38px;margin:4px 6px 4px 0;padding:0 14px;background:var(--iv-basalt-700);border:1px solid var(--iv-line);border-radius:0;color:var(--iv-text);font:600 13px/1.2 var(--iv-ui);letter-spacing:.03em;cursor:pointer;transition:background var(--iv-fast) var(--iv-ease),border-color var(--iv-fast) var(--iv-ease)}
+body.atlas .selection .identity-focus-map:hover,body.atlas .selection .help-list button:hover,body.atlas .selection .diplomacy-actions button:hover:not(:disabled),body.atlas .selection .mission-box button:hover:not(:disabled){background:var(--iv-basalt-600);border-color:var(--iv-bronze)}
+body.atlas .selection .mission-box{margin-top:16px;padding-top:12px;border-top:1px solid var(--iv-line);font:14px/1.55 var(--iv-ui)}
+body.atlas .selection .mission-box>strong,body.atlas .selection .help-list>strong,body.atlas .selection .dossier-group>strong{display:block;margin:0 0 6px;font:700 12px/1.3 var(--iv-ui);letter-spacing:.14em;color:var(--iv-gold)}
+body.atlas .selection .mission-box select,body.atlas .selection .mission-box input{min-height:36px;padding:0 10px;background:var(--iv-basalt-900);border:1px solid var(--iv-line);color:var(--iv-text);font:14px/1.2 var(--iv-ui);max-width:100%}
+body.atlas .selection .mission-box label{font:600 12px/1.6 var(--iv-ui);color:var(--iv-text-dim)}
+body.atlas .selection .help-list{max-height:none;font:14px/1.55 var(--iv-ui);color:var(--iv-text)}
+body.atlas .selection #lab-orders:empty{display:none}
+body.atlas .selection #lab-orders{font:14px/1.5 var(--iv-ui)}
+body.atlas .selection a{color:var(--iv-gold)}
+.workspace-close{display:none}
+
+/* ---------- Workspaces ---------- */
+body.atlas[data-workspace="diplomacy"] .workspace-close,body.atlas[data-workspace="dossier"] .workspace-close{display:grid;place-items:center;position:sticky;float:right;top:10px;z-index:6;width:40px;height:40px;margin:10px -6px -50px 0;background:var(--iv-basalt-700);border:1px solid var(--iv-line);color:var(--iv-text);font:24px/1 var(--iv-ui);cursor:pointer;transition:background var(--iv-fast) var(--iv-ease),border-color var(--iv-fast) var(--iv-ease)}
+body.atlas .workspace-close:hover{background:var(--iv-burgundy);border-color:var(--iv-gold-dim)}
+body.atlas-shell[data-workspace="diplomacy"] .brief,body.atlas-shell[data-workspace="diplomacy"] .brief-toggle,body.atlas-shell[data-workspace="dossier"] .brief,body.atlas-shell[data-workspace="dossier"] .brief-toggle,body.atlas-shell[data-workspace="dossier"] .map-key{display:none}
+.selection.ws-enter{animation:atlas-ws var(--iv-med) var(--iv-ease) both}
+@keyframes atlas-ws{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+
+/* Court file: docked right and wide; the map stays live on the left. */
+body.atlas-shell[data-workspace="diplomacy"] .selection{top:calc(var(--atlas-top) + var(--atlas-gap));bottom:calc(var(--atlas-bar) + var(--atlas-gap) * 2);width:min(980px,calc(100vw - var(--atlas-rail) - 300px));max-height:none;padding:0 28px 28px}
+body.atlas[data-workspace="diplomacy"] .selection>.kicker{margin:0 -28px;padding:18px 28px 0;background:var(--iv-basalt-900)}
+body.atlas[data-workspace="diplomacy"] .selection h2{margin:0 -28px;padding:2px 80px 0 28px;background:var(--iv-basalt-900);font-size:38px;letter-spacing:.02em;color:#fff3da}
+body.atlas[data-workspace="diplomacy"] .selection #selection-detail{margin:0 -28px 22px;padding:6px 28px 16px;background:var(--iv-basalt-900);box-shadow:inset 0 -1px 0 var(--selection-accent,var(--iv-bronze)),inset 0 -4px 0 var(--iv-burgundy-deep);font-size:14px}
+/* Two columns without re-parenting anything: the standing facts float into a left gutter,
+   the working area (people, offices, negotiation) takes the rest. */
+body.atlas-shell[data-workspace="diplomacy"] #command-detail{position:relative;padding-left:336px;min-height:320px}
+body.atlas-shell[data-workspace="diplomacy"] #command-detail::after{content:"";display:block;clear:both}
+body.atlas-shell[data-workspace="diplomacy"] #command-detail>.identity-header,
+body.atlas-shell[data-workspace="diplomacy"] #command-detail>.detail-grid,
+body.atlas-shell[data-workspace="diplomacy"] #command-detail>#focus-faction,
+body.atlas-shell[data-workspace="diplomacy"] #command-detail>#leader-intelligence-summary,
+body.atlas-shell[data-workspace="diplomacy"] #command-detail>#faction-cities,
+body.atlas-shell[data-workspace="diplomacy"] #command-detail>#faction-armies{float:left;clear:left;width:300px;margin-left:-336px;box-sizing:border-box}
+body.atlas[data-workspace="diplomacy"] .identity-header.faction-focus{gap:16px;margin:0 0 4px;padding:14px;background:var(--iv-basalt-900);border:1px solid var(--iv-line);border-left:4px solid var(--selection-accent,var(--iv-bronze))}
+body.atlas[data-workspace="diplomacy"] .identity-header.faction-focus .faction-mark{width:64px;height:72px;flex:none}
+body.atlas[data-workspace="diplomacy"] .identity-header small{font:700 11px/1.3 var(--iv-ui);letter-spacing:.16em;color:var(--iv-gold-dim)}
+body.atlas[data-workspace="diplomacy"] .identity-header strong{font:600 24px/1.1 'Cormorant Garamond',var(--iv-display);color:#fff3da}
+body.atlas-shell[data-workspace="diplomacy"] .selection #command-detail>#focus-faction{margin:12px 0 0 -336px;width:300px}
+body.atlas-shell[data-workspace="diplomacy"] #command-detail>#leader-intelligence-summary{margin-top:12px!important;padding:10px 12px;border-left:3px solid var(--iv-line);background:var(--iv-basalt-900)}
+/* Working column: people first, as portraits. */
+body.atlas[data-workspace="diplomacy"] #command-detail>div:has(>.character-card){display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin:0 0 8px}
+body.atlas[data-workspace="diplomacy"] #command-detail>div:has(>.character-card)>.kicker{grid-column:1/-1;margin-top:10px;font:700 11px/1.3 var(--iv-ui);letter-spacing:.16em}
+body.atlas[data-workspace="diplomacy"] #command-detail>div:has(>.character-card)>:not(.character-card):not(.kicker){grid-column:1/-1}
+body.atlas[data-workspace="diplomacy"] .character-card{width:100%;margin:0;text-align:left}
+body.atlas[data-workspace="diplomacy"] .character-card img,body.atlas[data-workspace="diplomacy"] .character-card .portrait-unknown{width:104px;height:128px}
+body.atlas[data-workspace="diplomacy"] .character-card strong{font-size:20px}
+body.atlas[data-workspace="diplomacy"] .character-card small{font:13px/1.45 var(--iv-ui)}
+/* Negotiation: real tabs over a wide table, not a column of buttons. */
+body.atlas[data-workspace="diplomacy"] .diplomacy-tabs{gap:0;margin:22px 0 0;border-bottom:1px solid var(--iv-line)}
+body.atlas[data-workspace="diplomacy"] .diplomacy-tabs button{position:relative;min-height:44px;margin:0;padding:0 18px;background:transparent;border:0;color:var(--iv-text-dim);font:600 14px/1 var(--iv-ui);letter-spacing:.03em;cursor:pointer;transition:color var(--iv-fast) var(--iv-ease)}
+body.atlas[data-workspace="diplomacy"] .diplomacy-tabs button::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:2px;background:var(--iv-gold);transform:scaleX(0);transition:transform var(--iv-med) var(--iv-ease)}
+body.atlas[data-workspace="diplomacy"] .diplomacy-tabs button:hover{color:#fff6e2}
+body.atlas[data-workspace="diplomacy"] .diplomacy-tabs button.active,body.atlas[data-workspace="diplomacy"] .diplomacy-tabs button[aria-pressed="true"],body.atlas[data-workspace="diplomacy"] .diplomacy-tabs button[aria-selected="true"]{color:var(--iv-gold)}
+body.atlas[data-workspace="diplomacy"] .diplomacy-tabs button.active::after,body.atlas[data-workspace="diplomacy"] .diplomacy-tabs button[aria-pressed="true"]::after,body.atlas[data-workspace="diplomacy"] .diplomacy-tabs button[aria-selected="true"]::after{transform:scaleX(1)}
+body.atlas[data-workspace="diplomacy"] .diplomacy-content{padding-top:14px;font:14px/1.6 var(--iv-ui)}
+body.atlas[data-workspace="diplomacy"] .diplomacy-content .diplomacy-actions{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+body.atlas[data-workspace="diplomacy"] .diplomacy-content .diplomacy-actions button{margin:0;min-height:44px;text-align:left}
+body.atlas[data-workspace="diplomacy"] #command-detail>.mission-box{clear:none}
+
+/* Dossier: a person, full workspace. Portrait column, then the record in sections. */
+body.atlas-shell[data-workspace="dossier"] .workspace-shade{display:block;position:absolute;z-index:3;inset:var(--atlas-top) 0 0 var(--atlas-rail);background:#0b0908b0}
+body.atlas-shell[data-workspace="dossier"] .selection{left:calc(var(--atlas-rail) + max(24px,(100vw - var(--atlas-rail) - 1240px) / 2));right:max(24px,(100vw - var(--atlas-rail) - 1240px) / 2);top:calc(var(--atlas-top) + 20px);bottom:calc(var(--atlas-bar) + var(--atlas-gap) * 2);width:auto;max-height:none;padding:0;overflow:hidden;display:flex;flex-direction:column;background:var(--iv-basalt-800);border:1px solid var(--iv-bronze);border-top:2px solid var(--iv-bronze);box-shadow:0 30px 80px #000d}
+body.atlas[data-workspace="dossier"] .selection>.kicker,body.atlas[data-workspace="dossier"] .selection>h2,body.atlas[data-workspace="dossier"] .selection>#selection-detail,body.atlas[data-workspace="dossier"] .selection>#lab-orders{display:none}
+body.atlas[data-workspace="dossier"] .workspace-close{position:absolute;float:none;right:14px;top:14px;margin:0}
+body.atlas[data-workspace="dossier"] #command-detail{flex:1;min-height:0;display:flex}
+.dossier{flex:1;min-width:0;min-height:0;display:grid;grid-template-columns:clamp(260px,24vw,340px) minmax(0,1fr);color:var(--iv-text)}
+.dossier-side{min-height:0;overflow:auto;padding:24px 22px;background:var(--iv-basalt-900);border-right:1px solid var(--iv-line);scrollbar-width:thin;scrollbar-color:var(--iv-line) transparent}
+/* The portrait is the focal point: framed, tall, and never cropped to a circle. */
+body.atlas .dossier-portrait .character-card{display:block;width:100%;margin:0;padding:0;background:transparent;border:0;cursor:default;text-align:left}
+body.atlas .dossier-portrait .character-card:hover{background:transparent;border:0}
+body.atlas .dossier-portrait .character-card img,body.atlas .dossier-portrait .character-card .portrait-unknown{display:block;border-right:0;width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;object-position:50% 14%;border:1px solid var(--iv-basalt-950);outline:1px solid var(--iv-bronze);outline-offset:4px;box-shadow:0 14px 30px #000b;background:var(--iv-basalt-700)}
+body.atlas .dossier-portrait .character-card>span{display:block;padding:18px 0 0}
+body.atlas .dossier-portrait .character-card strong{display:none}
+body.atlas .dossier-portrait .character-card small{display:block;margin:0;font:13px/1.55 var(--iv-ui);color:var(--iv-text-dim)}
+body.atlas .selection .dossier-vitals{margin-top:16px}
+body.atlas .selection .dossier-vitals>span,body.atlas .selection .dossier-vitals>b{grid-column:1/-1;border:0;padding:0}
+body.atlas .selection .dossier-vitals>span{padding-top:10px;font:700 11px/1.3 var(--iv-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--iv-gold-dim)}
+body.atlas .selection .dossier-vitals>b{padding:2px 0 10px;border-bottom:1px solid var(--iv-line-soft);text-align:left;font:600 15px/1.4 var(--iv-ui)}
+.dossier-side .battle-note{margin-top:14px!important;font:12px/1.5 var(--iv-ui)!important;color:var(--iv-text-faint)!important}
+.dossier-main{min-width:0;min-height:0;display:flex;flex-direction:column}
+.dossier-head{flex:none;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:26px 76px 18px 32px;background:var(--iv-basalt-900)}
+.dossier-status{display:block;font:700 11px/1.3 var(--iv-ui);letter-spacing:.18em;text-transform:uppercase;color:var(--iv-gold-dim)}
+.dossier-title h3{margin:6px 0 6px;font:600 clamp(30px,3.2vw,46px)/1.05 'Cormorant Garamond',var(--iv-display);letter-spacing:.01em;color:#fff3da}
+body.atlas .selection .dossier-role{margin:0;max-width:60ch;font:15px/1.5 var(--iv-ui);color:var(--iv-text-dim)}
+.dossier-court{flex:none;display:flex;align-items:center;gap:12px;padding:8px 14px 8px 8px;background:var(--iv-basalt-800);border:1px solid var(--iv-line);color:var(--iv-text);cursor:pointer;text-align:left;transition:border-color var(--iv-fast) var(--iv-ease)}
+.dossier-court:hover{border-color:var(--iv-gold)}
+.dossier-court .faction-mark{width:40px;height:46px;flex:none}
+.dossier-court small{display:block;font:600 11px/1.3 var(--iv-ui);letter-spacing:.08em;color:var(--iv-text-faint)}
+.dossier-court strong{display:block;font:600 19px/1.2 'Cormorant Garamond',var(--iv-display);color:#fff3da}
+.dossier-tabs{flex:none;display:flex;flex-wrap:wrap;gap:0;padding:0 22px;background:var(--iv-basalt-900);box-shadow:inset 0 -1px 0 var(--iv-bronze),inset 0 -4px 0 var(--iv-burgundy-deep)}
+body.atlas .selection .dossier-tabs button{position:relative;min-height:46px;margin:0;padding:0 14px 4px;background:transparent;border:0;color:var(--iv-text-dim);font:600 14px/1 var(--iv-ui);letter-spacing:.02em;cursor:pointer;transition:color var(--iv-fast) var(--iv-ease)}
+body.atlas .selection .dossier-tabs button::after{content:"";position:absolute;left:8px;right:8px;bottom:4px;height:2px;background:var(--iv-gold);transform:scaleX(0);transition:transform var(--iv-med) var(--iv-ease)}
+body.atlas .selection .dossier-tabs button:hover{color:#fff6e2;background:transparent}
+body.atlas .selection .dossier-tabs button.active{color:var(--iv-gold)}
+body.atlas .selection .dossier-tabs button.active::after{transform:scaleX(1)}
+.dossier-body{flex:1;min-height:0;overflow:auto;padding:26px 32px 32px;scrollbar-width:thin;scrollbar-color:var(--iv-line) transparent}
+.dossier-section{max-width:860px}
+.dossier-section[hidden]{display:none}
+.dossier-section h4{margin:26px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--iv-line);font:700 12px/1.3 var(--iv-ui);letter-spacing:.16em;text-transform:uppercase;color:var(--iv-gold)}
+.dossier-section h4:first-child{margin-top:0}
+body.atlas .selection .dossier-lede{margin:0 0 14px;font:19px/1.55 'Cormorant Garamond',var(--iv-serif);color:var(--iv-text)}
+body.atlas .selection .dossier-culture{font:14px/1.5 var(--iv-ui);color:var(--iv-text-dim)}
+body.atlas .selection .dossier-caveat,body.atlas .selection .dossier-empty{margin:14px 0 0;padding-left:12px;border-left:2px solid var(--iv-line);font:13px/1.55 var(--iv-ui);color:var(--iv-text-faint)}
+.dossier-group{margin:0 0 22px}
+body.atlas .selection .dossier-group p{margin:0;padding:10px 0;border-bottom:1px solid var(--iv-line-soft);font:14px/1.55 var(--iv-ui)}
+body.atlas .selection .dossier-group p:last-child{border-bottom:0;color:var(--iv-text-faint);font-size:13px}
+body.atlas .selection .dossier-group[data-group="service"] p:last-child{color:var(--iv-text);font-size:14px}
+/* Timeline: a ruled spine, reference dates hollow, reports solid. */
+.dossier-timeline{list-style:none;margin:0;padding:0 0 0 8px}
+.dossier-timeline li{position:relative;display:grid;grid-template-columns:150px minmax(0,1fr);column-gap:18px;padding:0 0 18px 26px;border-left:1px solid var(--iv-line)}
+.dossier-timeline li:last-child{padding-bottom:0}
+.dossier-timeline li::before{content:"";position:absolute;left:-6px;top:4px;width:11px;height:11px;transform:rotate(45deg);background:var(--iv-gold);border:1px solid var(--iv-basalt-950)}
+.dossier-timeline li.is-reference::before{background:var(--iv-basalt-800);border-color:var(--iv-bronze-hi)}
+.dossier-timeline time{grid-row:1/3;font:700 13px/1.4 var(--iv-ui);font-variant-numeric:tabular-nums;letter-spacing:.03em;color:var(--iv-gold)}
+.dossier-timeline li.is-reference time{color:var(--iv-text-dim)}
+.dossier-kind{font:700 11px/1.5 var(--iv-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--iv-bronze-hi)}
+body.atlas .selection .dossier-timeline p{margin:0;font:14px/1.55 var(--iv-ui);color:var(--iv-text)}
+.dossier-kin{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.dossier-kin li{padding:12px 14px;background:var(--iv-basalt-900);border:1px solid var(--iv-line);border-left:3px solid var(--iv-bronze);font:15px/1.5 var(--iv-ui)}
+.dossier-kin a{font-size:12px}
+body.atlas .selection .dossier-action{display:inline-flex;align-items:center;min-height:42px;margin:8px 10px 0 0;padding:0 18px;background:var(--iv-basalt-700);border:1px solid var(--iv-line);color:var(--iv-text);font:600 14px/1 var(--iv-ui);letter-spacing:.02em;cursor:pointer;transition:background var(--iv-fast) var(--iv-ease),border-color var(--iv-fast) var(--iv-ease)}
+body.atlas .selection .dossier-action:hover{background:var(--iv-burgundy);border-color:var(--iv-gold-dim);color:#fff6e2}
+.dossier-section .mission-box{margin-top:0!important;padding-top:0!important;border-top:0!important}
+.dossier-section details.historical-entry summary{font:700 12px/1.3 var(--iv-ui);letter-spacing:.14em;color:var(--iv-gold);cursor:pointer}
+.dossier-section details.historical-entry p{font:14px/1.6 var(--iv-ui)}
+.dossier-extra{margin-top:22px;padding-top:16px;border-top:1px solid var(--iv-line)}
+
+.dossier-glance{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+body.atlas .selection .dossier-tile{display:flex;flex-direction:column;gap:8px;min-height:104px;margin:0;padding:14px 16px;background:var(--iv-basalt-900);border:1px solid var(--iv-line);border-top:2px solid var(--iv-bronze);color:var(--iv-text);text-align:left;cursor:pointer;transition:border-color var(--iv-fast) var(--iv-ease),background var(--iv-fast) var(--iv-ease),transform var(--iv-fast) var(--iv-ease)}
+body.atlas .selection .dossier-tile:hover{background:var(--iv-basalt-700);border-color:var(--iv-gold);transform:translateY(-1px)}
+body.atlas .selection .dossier-tile small{font:700 11px/1.3 var(--iv-ui);letter-spacing:.16em;text-transform:uppercase;color:var(--iv-gold)}
+body.atlas .selection .dossier-tile span{font:14px/1.5 var(--iv-ui);color:var(--iv-text-dim)}
+
+/* ---------- Tablet and short frames ---------- */
+@media(max-width:1400px){
+  body.atlas-shell .mast .identity>div{display:none}
+  body.atlas-shell .mast{gap:8px}
+}
+@media(max-width:1280px){
+  body.atlas{--atlas-rail:84px}
+  body.atlas-shell .hud-stat{padding:8px 7px;font-size:12px}
+  body.atlas-shell .hud-stat b{font-size:14px}
+  body.atlas-shell .mast .hud-button,body.atlas-shell .mast #save-transfer-open{padding:0 8px}
+  body.atlas-shell .brief{width:280px}
+  body.atlas-shell .brief-toggle{left:calc(var(--atlas-rail) + var(--atlas-gap) + 280px)}
+  body.atlas-shell[data-workspace="diplomacy"] .selection{width:calc(100vw - var(--atlas-rail) - 200px)}
+  body.atlas-shell[data-workspace="diplomacy"] #command-detail{padding-left:296px}
+  body.atlas-shell[data-workspace="diplomacy"] #command-detail>.identity-header,body.atlas-shell[data-workspace="diplomacy"] #command-detail>.detail-grid,body.atlas-shell[data-workspace="diplomacy"] #command-detail>#focus-faction,body.atlas-shell[data-workspace="diplomacy"] #command-detail>#leader-intelligence-summary,body.atlas-shell[data-workspace="diplomacy"] #command-detail>#faction-cities,body.atlas-shell[data-workspace="diplomacy"] #command-detail>#faction-armies{width:272px;margin-left:-296px}
+  body.atlas-shell[data-workspace="diplomacy"] .selection #command-detail>#focus-faction{width:272px;margin-left:-296px}
+}
+@media(max-width:1100px){
+  body.atlas-shell .hud-resources{display:flex;margin-left:0}
+  body.atlas-shell .mast .identity>div,body.atlas-shell .mast #capture,body.atlas-shell .mast #guide-restart,body.atlas-shell .mast #resources-help{display:none}
+  body.atlas-shell .hud-stat{padding:8px 5px}
+  body.atlas-shell .mast{gap:6px}
+  body.atlas-shell .map-key{display:none}
+  body.atlas-shell[data-workspace="diplomacy"] .selection{left:calc(var(--atlas-rail) + 12px);right:12px;width:auto}
+  body.atlas-shell[data-workspace="diplomacy"] #command-detail{padding-left:0}
+  body.atlas-shell[data-workspace="diplomacy"] #command-detail>.identity-header,body.atlas-shell[data-workspace="diplomacy"] #command-detail>.detail-grid,body.atlas-shell[data-workspace="diplomacy"] #command-detail>#focus-faction,body.atlas-shell[data-workspace="diplomacy"] #command-detail>#leader-intelligence-summary,body.atlas-shell[data-workspace="diplomacy"] #command-detail>#faction-cities,body.atlas-shell[data-workspace="diplomacy"] #command-detail>#faction-armies{float:none;width:auto;margin-left:0}
+  body.atlas-shell[data-workspace="diplomacy"] .selection #command-detail>#focus-faction{margin-left:0;float:none;width:auto}
+  .dossier{grid-template-columns:220px minmax(0,1fr)}
+  .dossier-head{padding:20px 64px 14px 22px;flex-wrap:wrap}
+  .dossier-body{padding:20px 22px 24px}
+}
+@media(max-height:620px){
+  body.atlas{--atlas-top:56px;--atlas-bar:48px;--atlas-gap:10px}
+  body.atlas-shell .atlas-rail>button{min-height:52px;gap:3px;padding:5px 4px}
+  body.atlas-shell .atlas-rail>button::before{width:20px;height:20px}
+  body.atlas-shell .atlas-commandbar button{min-height:40px}
+  body.atlas-shell .atlas-commandbar #advance{min-width:190px}
+  body.atlas-shell .brief{max-height:calc(100vh - var(--atlas-top) - 90px)}
+  .dossier-head{padding-top:14px;padding-bottom:10px}
+  .dossier-title h3{font-size:28px}
+}
+/* Phone: the atlas keeps its compact menu; a workspace is a full-screen sheet. */
+@media(max-width:700px){
+  body.atlas[data-workspace="diplomacy"] .selection,body.atlas[data-workspace="dossier"] .selection{left:0;right:0;top:56px;bottom:0;width:auto;max-height:none;z-index:12;padding:0 14px 16px;overflow:auto}
+  body.atlas[data-workspace="dossier"] .selection{padding:0;display:block}
+  body.atlas[data-workspace="dossier"] #command-detail{display:block}
+  .dossier{display:block}
+  .dossier-side{display:grid;grid-template-columns:120px minmax(0,1fr);gap:14px;padding:14px;border-right:0;border-bottom:1px solid var(--iv-line);overflow:visible}
+  .dossier-side .dossier-vitals{margin-top:0}
+  .dossier-side .battle-note{grid-column:1/-1}
+  .dossier-head{padding:14px 60px 12px 14px;flex-wrap:wrap}
+  .dossier-title h3{font-size:26px}
+  .dossier-tabs{flex-wrap:nowrap;overflow-x:auto;padding:0 6px;scrollbar-width:none}
+  body.atlas .selection .dossier-tabs button{flex:none;min-height:48px}
+  .dossier-body{padding:16px 14px 24px;overflow:visible}
+  .dossier-timeline li{grid-template-columns:1fr;padding-left:20px}
+  .dossier-timeline time{grid-row:auto}
+  body.atlas .selection .dossier-action,body.atlas .selection .identity-focus-map,body.atlas .selection .mission-box button{min-height:46px}
+}
+@media(prefers-reduced-motion:reduce){.selection.ws-enter{animation:none}}
+body.atlas-shell .atlas-rail #factions::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M5 4.5h11a2 2 0 012 2V15M5 4.5a2 2 0 00-2 2V8h2.5M5.5 8v9.5A2 2 0 007.5 19.5H12M8.5 9h6M8.5 12.5h4%22/%3E%3Ccircle cx=%2217%22 cy=%2217.5%22 r=%223%22/%3E%3Cpath d=%22M15.4 20l-.9 2.5 2.5-1.2 2.5 1.2-.9-2.5%22/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M5 4.5h11a2 2 0 012 2V15M5 4.5a2 2 0 00-2 2V8h2.5M5.5 8v9.5A2 2 0 007.5 19.5H12M8.5 9h6M8.5 12.5h4%22/%3E%3Ccircle cx=%2217%22 cy=%2217.5%22 r=%223%22/%3E%3Cpath d=%22M15.4 20l-.9 2.5 2.5-1.2 2.5 1.2-.9-2.5%22/%3E%3C/svg%3E")}
+body.atlas-shell .atlas-rail #campaign-government::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M3 9l9-5.5L21 9zM4.5 20.5h15M6 9v9M10 9v9M14 9v9M18 9v9M4.5 18h15%22/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M3 9l9-5.5L21 9zM4.5 20.5h15M6 9v9M10 9v9M14 9v9M18 9v9M4.5 18h15%22/%3E%3C/svg%3E")}
+body.atlas-shell .atlas-rail #campaign-focus::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M12 21c-5-1.5-8-5-8-10M12 21c5-1.5 8-5 8-10%22/%3E%3Cpath d=%22M4.5 8c1.8.3 3 1.5 3.2 3.2M5.5 13c1.8-.100 3.1.8 3.8 2.3M8 17.2c1.5-.500 2.9 0 3.9 1.2M19.5 8c-1.8.3-3 1.5-3.2 3.2M18.5 13c-1.8-.100-3.1.8-3.8 2.3M16 17.2c-1.5-.500-2.9 0-3.9 1.2%22/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M12 21c-5-1.5-8-5-8-10M12 21c5-1.5 8-5 8-10%22/%3E%3Cpath d=%22M4.5 8c1.8.3 3 1.5 3.2 3.2M5.5 13c1.8-.100 3.1.8 3.8 2.3M8 17.2c1.5-.500 2.9 0 3.9 1.2M19.5 8c-1.8.3-3 1.5-3.2 3.2M18.5 13c-1.8-.100-3.1.8-3.8 2.3M16 17.2c-1.5-.500-2.9 0-3.9 1.2%22/%3E%3C/svg%3E")}
+body.atlas-shell .atlas-rail #campaign-legions::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M7 2.5V22M7 5h11v9l-2.75-1.5L12.5 14 9.75 12.5 7 14%22/%3E%3Ccircle cx=%2212.5%22 cy=%228.6%22 r=%221.6%22/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M7 2.5V22M7 5h11v9l-2.75-1.5L12.5 14 9.75 12.5 7 14%22/%3E%3Ccircle cx=%2212.5%22 cy=%228.6%22 r=%221.6%22/%3E%3C/svg%3E")}
+body.atlas-shell .atlas-rail #campaign-plans::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M4 19c2-7 6-10 13-11%22/%3E%3Cpath d=%22M13.5 4.5L18 8l-4 3.5%22/%3E%3Ccircle cx=%224.5%22 cy=%2219%22 r=%221.5%22/%3E%3Cpath d=%22M11 17h3M17 17h3%22 stroke-dasharray=%221.5 2%22/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M4 19c2-7 6-10 13-11%22/%3E%3Cpath d=%22M13.5 4.5L18 8l-4 3.5%22/%3E%3Ccircle cx=%224.5%22 cy=%2219%22 r=%221.5%22/%3E%3Cpath d=%22M11 17h3M17 17h3%22 stroke-dasharray=%221.5 2%22/%3E%3C/svg%3E")}
+body.atlas-shell .atlas-rail #inventions::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2212%22 cy=%224.5%22 r=%221.7%22/%3E%3Cpath d=%22M11.3 6.1L6 20.5M12.7 6.1L18 20.5M8.3 14.5c2.4 1.6 5 1.6 7.4 0%22/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2212%22 cy=%224.5%22 r=%221.7%22/%3E%3Cpath d=%22M11.3 6.1L6 20.5M12.7 6.1L18 20.5M8.3 14.5c2.4 1.6 5 1.6 7.4 0%22/%3E%3C/svg%3E")}
+body.atlas-shell .atlas-rail #chronicle::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 4h11a2 2 0 012 2v12.5a1.5 1.5 0 01-3 0V6%22/%3E%3Cpath d=%22M6 4a2 2 0 00-2 2v2h2.5M6.5 8v10.5A1.5 1.5 0 008 20h9.5M9.5 9h4M9.5 12.5h4M9.5 16h3%22/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 4h11a2 2 0 012 2v12.5a1.5 1.5 0 01-3 0V6%22/%3E%3Cpath d=%22M6 4a2 2 0 00-2 2v2h2.5M6.5 8v10.5A1.5 1.5 0 008 20h9.5M9.5 9h4M9.5 12.5h4M9.5 16h3%22/%3E%3C/svg%3E")}
+body.atlas-shell .atlas-rail #atlas-mail::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M3.5 6.5h17v11h-17zM3.5 7l8.5 6.5L20.5 7%22/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M3.5 6.5h17v11h-17zM3.5 7l8.5 6.5L20.5 7%22/%3E%3C/svg%3E")}
