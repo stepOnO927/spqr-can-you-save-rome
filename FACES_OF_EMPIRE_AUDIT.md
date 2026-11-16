@@ -286,10 +286,12 @@ later genuine purchase is still possible. Long direct Ctesiphon–Han copper
 orders remain uneconomic at current prices; the simulation uses intermediate
 markets rather than silently subsidizing that route. General treaty and
 settlement mechanics across the two campaigns remain open.
-The recent-export check also reads saved delivered shipments, so the AI still
-remembers its own sale after the 300-entry visible transaction ledger fills.
-It continues to ignore future-dated records and forgets the sale after 24
-months; a save/reload regression covers the full-ledger case.
+The recent-export check now saves a compact, expiring provenance index, so
+the AI still remembers its own sale after the 300-entry visible transaction
+ledger fills without scanning every historical shipment each quarter. Older
+saves rebuild that index once from delivered shipments. Future-dated records
+remain unusable and a sale expires after 24 months; save/reload and migration
+regressions cover a full ledger.
 
 The atlas now has a trade map mode tied to the existing market and route
 simulation. It shows owned market grain stocks, prices, production and demand;

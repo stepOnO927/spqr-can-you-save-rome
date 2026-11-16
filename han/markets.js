@@ -9,6 +9,7 @@ import {merchantMarketObservation} from '../trade-intelligence.js?v=guardian-age
 
 const month=s=>s.year*12+s.month;
 const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
+const recentSaleKey=(seller,buyer,commodity,destination)=>JSON.stringify([seller,buyer,commodity,destination]);
 const region=(s,id)=>s.regions.find(r=>r.id===id);
 const route=(a,b)=>ROUTES.find(r=>r.a===a&&r.b===b||r.a===b&&r.b===a);
 const tradeTreaty=(s,a,b)=>a===b||!!(treaty(s,'market',a,b)||treaty(s,'caravan',a,b));
@@ -64,6 +65,15 @@ function profile(r,good){
 export function initializeEasternMarkets(s){
  const markets=s.tradeMarkets||={regions:{},offers:[],saleOrders:[],shipments:[],transactions:[],supplyContracts:[],nextSupplyContract:1,nextSaleOrder:1,nextShipment:1,merchants:{},tariffs:{},exportRestrictions:{},transitTreasury:{},transportSpent:0,merchantFees:0,diplomacy:{attempts:[],nextAt:{}},lastTick:null};
  markets.regions||={};markets.offers||=[];if(!Array.isArray(markets.saleOrders))markets.saleOrders=[];markets.shipments||=[];markets.transactions||=[];markets.merchants||={};markets.tariffs||={};markets.exportRestrictions||={};markets.emergencyExportRestrictions||={};markets.transitTreasury||={};markets.diplomacy||={attempts:[],nextAt:{}};
+ // Older saves have shipment history but no compact resale provenance index.
+ // Reconstruct it once, then keep only one recent timestamp per trade pair.
+ if(!markets.recentSales||typeof markets.recentSales!=='object'||Array.isArray(markets.recentSales)){
+  markets.recentSales={};for(const shipment of markets.shipments){const at=shipment.deliveredAt,age=month(s)-at;
+   if(shipment.status!=='delivered'||!(shipment.price>0)||!shipment.destination||!Number.isFinite(at)||age<0||age>=24)continue;
+   const key=recentSaleKey(shipment.seller,shipment.buyer,shipment.commodity,shipment.destination);
+   markets.recentSales[key]=Math.max(markets.recentSales[key]??-Infinity,at);
+  }
+ }
  if(!Array.isArray(markets.militaryHorseTransfers))markets.militaryHorseTransfers=[];
  if(!Number.isSafeInteger(markets.requisitionedHorses)||markets.requisitionedHorses<0)markets.requisitionedHorses=0;
  markets.diplomacy.attempts||=[];markets.diplomacy.nextAt||={};if(!Number.isSafeInteger(markets.nextSaleOrder)||markets.nextSaleOrder<1)markets.nextSaleOrder=1;markets.nextShipment||=1;markets.transportSpent??=0;markets.merchantFees??=0;markets.merchantEscortSpent??=0;markets.merchantPrivileges||={};markets.merchantPrivilegeFees??=0;
@@ -422,6 +432,7 @@ function advanceShipments(s){
   if(rent){landlord.wealth=(landlord.wealth||0)+rent;house.rentEarned+=rent}
   markets.transportSpent+=shipment.transport-fee-rent;markets.merchantFees+=fee;markets.marketHouseRent+=rent;shipment.marketHouseRent=rent;shipment.escrow=0;shipment.status='delivered';shipment.deliveredAt=month(s);
   markets.transactions.push({shipment:shipment.id,seller:shipment.seller,buyer:shipment.buyer,origin:shipment.origin,destination:shipment.destination,merchantId:shipment.merchantId,merchantFee:fee,marketHouseId:shipment.marketHouseId,marketHouseRent:rent,commodity:shipment.commodity,quantity:shipment.quantity,price:shipment.price,transport:shipment.transport,tariffs:shipment.tariffs,marketEffect,year:s.year,month:s.month});
+  markets.recentSales[recentSaleKey(shipment.seller,shipment.buyer,shipment.commodity,shipment.destination)]=month(s);
   if(markets.transactions.length>300)markets.transactions.shift();
  }
 }
@@ -466,12 +477,9 @@ function advanceEasternMarketAI(s){
  // A court should not immediately bid back the same good it just sold to a
  // neighbor. This avoids circular one-batch caravans while still allowing a
  // later purchase if genuine demand develops after the trade window expires.
- const recentSales=new Set();
- const rememberSale=(sale,deliveredAt)=>{const elapsed=now-deliveredAt;if(sale.price>0&&sale.destination&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<24)recentSales.add(`${sale.seller}:${sale.buyer}:${sale.commodity}:${sale.destination}`)};
- for(const tx of markets.transactions)rememberSale(tx,tx.year*12+tx.month);
- // Receipts are capped for the UI, but a delivered shipment persists in the
- // campaign save. Its provenance must survive a crowded transaction ledger.
- for(const shipment of markets.shipments)if(shipment.status==='delivered')rememberSale(shipment,shipment.deliveredAt);
+ const recentSales=new Set(Object.keys(markets.recentSales));
+ // Recent receipts also cover old saves and externally authored market state.
+ for(const tx of markets.transactions){const elapsed=now-(tx.year*12+tx.month);if(tx.price>0&&tx.destination&&Number.isFinite(elapsed)&&elapsed>=0&&elapsed<24)recentSales.add(recentSaleKey(tx.seller,tx.buyer,tx.commodity,tx.destination))}
  const towardFor=(destination,buyer)=>{
   const key=`${buyer}:${destination}`;
   if(!pathCache.has(key))pathCache.set(key,projectedPathsTo(s,destination,buyer));
@@ -497,7 +505,7 @@ function advanceEasternMarketAI(s){
   for(const destination of (regionsByOwner.get(buyer)||[]).filter(r=>(r.pop||0)>0))for(const [good,item] of Object.entries(markets.regions[destination.id].goods)){
    if(['weapons','provisions'].includes(good)&&!s.wars.some(w=>w.includes(buyer)))continue;
    const target=Math.max(4,item.consumption*3+item.production),deficit=target-item.stock;if(deficit<=0)continue;
-   const nearby=(offersByGood.get(good)||[]).filter(x=>x.seller!==buyer&&(x.seller!==s.player||x.saleOrderId)&&!atWar(s,buyer,x.seller)&&!activeSellerGood.has(`${x.seller}:${good}`)&&!(x.resale&&recentSales.has(`${buyer}:${x.seller}:${good}:${x.origin}`))&&towardFor(destination.id,buyer).has(x.origin))
+   const nearby=(offersByGood.get(good)||[]).filter(x=>x.seller!==buyer&&(x.seller!==s.player||x.saleOrderId)&&!atWar(s,buyer,x.seller)&&!activeSellerGood.has(`${x.seller}:${good}`)&&!(x.resale&&recentSales.has(recentSaleKey(buyer,x.seller,good,x.origin)))&&towardFor(destination.id,buyer).has(x.origin))
     .sort((a,b)=>{const sourceA=regionsById.get(a.origin),sourceB=regionsById.get(b.origin);
      const costA=a.price+Math.abs(sourceA.lon-destination.lon)*.15+Math.abs(sourceA.lat-destination.lat)*.15;
      const costB=b.price+Math.abs(sourceB.lon-destination.lon)*.15+Math.abs(sourceB.lat-destination.lat)*.15;
@@ -608,6 +616,7 @@ function updateEmergencyExportRestrictions(s){
 export function advanceEasternMarkets(s){
  const markets=initializeEasternMarkets(s),now=month(s);if(markets.lastTick===now)return markets;
  markets.lastTick=now;
+ for(const [key,at] of Object.entries(markets.recentSales))if(!Number.isFinite(at)||now-at<0||now-at>=24)delete markets.recentSales[key];
  for(const request of markets.merchantProtectionRequests)if(request.status==='pending'&&(now-request.createdAt>=12||!s.persons[request.merchantId]?.alive||s.persons[request.merchantId].faction!==request.faction)){request.status='expired';request.answeredAt=now}
  markets.merchantProtectionRequests=markets.merchantProtectionRequests.filter(request=>request.status==='pending'||now-(request.answeredAt??request.createdAt)<24);
  for(const proposal of markets.merchantProposals)if(proposal.status==='pending'&&(now>=proposal.expiresAt||!s.persons[proposal.merchantId]?.alive||s.persons[proposal.merchantId].faction!==proposal.faction||region(s,proposal.origin)?.owner!==proposal.seller||region(s,proposal.destination)?.owner!==proposal.buyer||!tradeTreaty(s,proposal.seller,proposal.buyer)||atWar(s,proposal.seller,proposal.buyer))){proposal.status='expired';proposal.answeredAt=now}

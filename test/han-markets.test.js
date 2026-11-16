@@ -548,9 +548,12 @@ test('AI remembers a real delivered export after the visible receipt ledger is f
  for(let i=0;i<300;i++)s.tradeMarkets.transactions.push({seller:'han',buyer:'qiemo',destination:'qiemo',commodity:'grain',price:1,year:s.year,month:s.month});
  s.tradeMarkets.transactions=s.tradeMarkets.transactions.slice(-300);
  assert.equal(s.tradeMarkets.transactions.some(x=>x.shipment===sale.shipment.id),false,'the older receipt was truncated');
+ assert.ok(Object.values(loadHanSave(serialize(s)).tradeMarkets.recentSales).includes(s.tradeMarkets.shipments.find(x=>x.id===sale.shipment.id).deliveredAt),'new saves keep compact provenance');
+ delete s.tradeMarkets.recentSales;
  s=loadHanSave(serialize(s));while(s.month%3!==2)next(s);next(s);
  assert.equal(s.tradeMarkets.shipments.some(x=>x.buyer==='parthia'&&x.seller==='yuezhi'&&x.commodity==='copper'),false);
  s.year+=2;s.month=2;next(s);
+ assert.equal(Object.keys(s.tradeMarkets.recentSales).length,0,'expired trade provenance is removed');
  assert.ok(s.tradeMarkets.shipments.some(x=>x.buyer==='parthia'&&x.seller==='yuezhi'&&x.commodity==='copper'),'the 24-month memory expires');
 });
 
