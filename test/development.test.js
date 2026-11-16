@@ -625,6 +625,48 @@ test('Egyptian multiscript decrees require adoption and affect only Egyptian-cul
  assert.equal(nile.integration,foreignControl.regions.find(r=>r.id===nile.id).integration+1);
 });
 
+test('Bosporan grain stewardship requires adoption, a productive local port, and monthly upkeep',()=>{
+ const id='bosporan-grain-stewardship',idea=IDEAS.find(x=>x.id===id),s=newGrandGame('bosporus');
+ assert.match(idea.source.url,/Strabo\/7D/);
+ assert.ok(techIllustration(idea).includes('<svg'));
+ assert.match(developmentPanel(s,'en','idea'),/Bosporan Grain Stewardship/);
+ assert.match(developmentPanel(s,'zh','idea'),/博斯普鲁斯谷物统筹/);
+ assert.match(ideasPanel(s,'en'),/productive Bosporan-culture ports/);
+ assert.match(ideasPanel(s,'zh'),/博斯普鲁斯文化港口/);
+ s.wars=[];s.factions.bosporus.treasury=500;
+ const d=development(s,'bosporus');
+ assert.equal(researchInnovation(s,'bosporus','idea',id).ok,true);
+ assert.equal(activeEffects(s,'bosporus').bosporanGrainStewardship,undefined);
+ months(s,idea.months);
+ assert.ok(d.knownIdeas.includes(id));
+ assert.equal(activeEffects(s,'bosporus').bosporanGrainStewardship,undefined);
+ assert.equal(adoptIdea(s,'bosporus',id).ok,true);
+ assert.equal(activeEffects(s,'bosporus').bosporanGrainStewardship,undefined);
+ months(s,2);
+ assert.equal(d.slots.economy[0],id);
+ const control=upgradeSave(JSON.parse(JSON.stringify(s)));
+ development(control,'bosporus').slots.economy[0]=null;
+ assert.equal(nationalBudget(s,'bosporus').ideaFood,nationalBudget(control,'bosporus').ideaFood+2);
+ assert.equal(nationalBudget(s,'bosporus').ideaUpkeep,nationalBudget(control,'bosporus').ideaUpkeep+2);
+ s.factions.bosporus.food=20;control.factions.bosporus.food=20;
+ tick(s);tick(control);
+ assert.equal(s.factions.bosporus.food,control.factions.bosporus.food+2);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(activeEffects(restored,'bosporus').bosporanGrainStewardship,1);
+ const ports=restored.regions.filter(r=>r.owner==='bosporus'&&r.culture==='bosporus'&&r.port&&r.food>=2);
+ ports[0].port=false;
+ assert.equal(nationalBudget(restored,'bosporus').ideaFood,nationalBudget(control,'bosporus').ideaFood+1);
+ ports[1].culture='hellenic';
+ assert.equal(nationalBudget(restored,'bosporus').ideaFood,nationalBudget(control,'bosporus').ideaFood);
+ const foreign=newGrandGame('senate');foreign.wars=[];foreign.factions.senate.treasury=500;
+ development(foreign,'senate').knownIdeas.push(id);
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).reason,'cultural-base');
+ const coast=foreign.regions.find(r=>r.culture==='bosporus');coast.owner='senate';coast.civicSatisfaction=44;
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).reason,'local-support');
+ coast.civicSatisfaction=50;
+ assert.equal(ideaAdoptionPlan(foreign,'senate',id).ok,true);
+});
+
 test('foreign multiscript policy needs an Egyptian community willing to receive it',()=>{
  const id='egyptian-multiscript-decrees',s=newGrandGame('senate');s.wars=[];s.factions.senate.treasury=500;
  const d=development(s,'senate');d.knownIdeas.push(id);
@@ -894,7 +936,7 @@ test('local rites affect a neighboring court only through an influential shared 
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,46);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,47);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);

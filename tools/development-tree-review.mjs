@@ -24,6 +24,11 @@ try{
  await page.screenshot({path:`outputs/development-tree-material-${width}.png`});
  await page.locator('[data-dev-branch="idea"]').click();
  await page.locator('.dev-tree-links path[data-from="legion-training"][data-to="reserve-mobilization"]').waitFor();
+ if(!/Bosporan Grain Stewardship[\s\S]*productive Bosporan-culture ports/.test(await page.locator('#tech-bosporan-grain-stewardship').textContent()))throw Error('English Bosporan policy is absent from the idea tree');
+ await page.locator('[data-tree-pan="right"]').click();
+ if(!await page.locator('.dev-tree').evaluate(tree=>tree.scrollLeft>100))throw Error('Later-stage button did not pan the tree');
+ await page.locator('[data-tree-pan="left"]').click();
+ if(!await page.locator('.dev-tree').evaluate(tree=>tree.scrollLeft<2))throw Error('Earlier-stage button did not return the tree');
  const ideas=await page.locator('.dev-tree-links path').count();
  await page.screenshot({path:`outputs/development-tree-ideas-${width}.png`});
  await page.locator('#tech-legion-training').hover();
@@ -31,6 +36,9 @@ try{
  await page.screenshot({path:`outputs/development-tree-focused-${width}.png`});
  await page.locator('[data-tree-zoom="out"]').click();
  const afterZoom=await page.locator('.dev-tree-links path[data-from="legion-training"][data-to="reserve-mobilization"]').getAttribute('d');
+ await page.locator('#lang').click();
+ await page.locator('[data-dev-branch="idea"]').click();
+ if(!/博斯普鲁斯谷物统筹[\s\S]*博斯普鲁斯文化港口/.test(await page.locator('#tech-bosporan-grain-stewardship').textContent()))throw Error('Chinese Bosporan policy is absent from the idea tree');
  if(material<20||ideas<8||!afterZoom||errors.length)throw Error(JSON.stringify({material,ideas,afterZoom,errors}));
  console.log(JSON.stringify({material,ideas,afterZoom,errors}));
 }finally{await browser.close()}
