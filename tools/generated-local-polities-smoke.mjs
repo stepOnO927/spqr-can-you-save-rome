@@ -36,6 +36,7 @@ try{
  assert.ok(panel.includes(generated.population.toLocaleString('en-US')));
  assert.ok(panel.includes(generated.ruler));
  assert.match(panel,/NEGOTIATE LOCAL ACCESS/);
+ assert.match(panel,/NEGOTIATE LOCAL TRADE/);
  const chiefMarker=page.locator(`.city-marker[data-city="${generated.chief}"]`);
  await chiefMarker.waitFor({state:'visible'});await chiefMarker.click();
  const chiefPanel=await page.locator('#command-detail').innerText();

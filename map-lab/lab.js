@@ -531,6 +531,11 @@ function renderLocalEntity(city){
    section.querySelector('#local-administer')?.addEventListener('click',()=>{startLocalAdministration(state,entity.id,actor);renderHud();showCity(city)});
  }
  section.querySelector('#local-access')?.addEventListener('click',()=>{offerLocalContact(state,entity.id,actor,'access');renderHud();showCity(city)});
+ if(visible){
+   const remaining=Math.max(0,(entity.tradeRights?.[actor]||0)-(state.year*12+state.month));
+   if(remaining){const status=document.createElement('p');status.textContent=zh?`地方贸易协定剩余 ${remaining} 个月；每季度有余粮且商路开放时，3国库换取2粮食。此协定不授予军队通行。`:`Local trade compact: ${remaining} months remain. Each quarter, 3 treasury buys 2 food when local reserves and the commercial route allow it. This grants no army passage.`;section.append(status)}
+   const quote=localContactQuote(state,entity.id,actor,'trade'),button=document.createElement('button');button.id='local-trade';button.disabled=!quote.ok;button.textContent=zh?'商谈地方贸易 · 10国库':'NEGOTIATE LOCAL TRADE · 10 TREASURY';button.onclick=()=>{if(offerLocalContact(state,entity.id,actor,'trade').ok){renderHud();showCity(city)}};section.append(button);
+ }
  section.querySelector('#local-protectorate')?.addEventListener('click',()=>{offerLocalContact(state,entity.id,actor,'protectorate');renderHud();showCity(city)});
  section.querySelector('#local-siege')?.addEventListener('click',()=>{besiegeLocalEntity(state,entity.id,army.id,actor);renderHud();showCity(city)});
  if(visible)renderFootholdPanel({state,entity,actor,language:lang,panel:section,refresh:()=>{renderHud();showCity(city)}});

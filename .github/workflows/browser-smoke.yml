@@ -71,6 +71,7 @@ jobs:
               node tools/official-name-snapshots-smoke.mjs
               ;;
             2)
+              node tools/local-trade-smoke.mjs
               node tools/local-administrator-smoke.mjs
               node tools/generated-local-polities-smoke.mjs
               node tools/village-petition-smoke.mjs

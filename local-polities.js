@@ -1,6 +1,7 @@
 import {ROUTES} from './data.js?v=world-kings-trade-1';
 import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js';
 import {sendLetter} from './epistulae.js?v=world-kings-trade-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-trade-1';
 
 // Settlement control is stored inside its host theater. An autonomous city
 // does not transfer the whole theater, and its point is not a border polygon.
@@ -68,6 +69,10 @@ const roll = entity => {
 };
 const host = (state, entity) => state.regions.find(region => region.id === entity.theater);
 export const localEntity = (state, id) => state.regions.flatMap(region => region.localEntities || []).find(entity => entity.id === id) || null;
+function localTradeOpen(state,entity,actor){
+ const theater=host(state,entity),neighbors=ROUTES.filter(([a,b])=>a===entity.theater||b===entity.theater).map(([a,b])=>a===entity.theater?b:a);
+ return !!(theater&&state.factions[actor]&&(theater.owner===actor||state.regions.some(region=>neighbors.includes(region.id)&&region.owner===actor))&&nonMilitaryAccessStatus(state,actor,entity.theater,theater.owner,'commercial').allowed);
+}
 export function initializeLocalRulers(state){
  state.world ||= {};
  state.world.localRulers ||= {};
@@ -200,11 +205,11 @@ function reportLocalOffer(state,entity,pending,accepted){
  const zhName=entity.name[1],enName=entity.name[0];
  const ruler=state.world?.localRulers?.[entity.ruler?.id];
  const officialEn=ruler?.name?.[0]||'the local council',officialZh=ruler?.name?.[1]||'当地议事机构';
- const kind=pending.proposal==='access'?'access':pending.proposal==='protectorate'?'protectorate':pending.proposal==='service'?'service':pending.proposal==='recognition'?'recognition':pending.proposal==='pasture'?'pasture':'submission';
- const subject={access:[`Access reply from ${enName}`,`${zhName}的通行答复`],protectorate:[`Protectorate reply from ${enName}`,`${zhName}的附属答复`],service:[`Service reply from ${enName}`,`${zhName}的效忠答复`],recognition:[`Title reply from ${enName}`,`${zhName}的称号答复`],pasture:[`Pasture reply from ${enName}`,`${zhName}的牧地答复`],submission:[`Submission reply from ${enName}`,`${zhName}的归降答复`]}[kind];
+ const kind=pending.proposal==='access'?'access':pending.proposal==='trade'?'trade':pending.proposal==='protectorate'?'protectorate':pending.proposal==='service'?'service':pending.proposal==='recognition'?'recognition':pending.proposal==='pasture'?'pasture':'submission';
+ const subject={access:[`Access reply from ${enName}`,`${zhName}的通行答复`],trade:[`Trade reply from ${enName}`,`${zhName}的贸易答复`],protectorate:[`Protectorate reply from ${enName}`,`${zhName}的附属答复`],service:[`Service reply from ${enName}`,`${zhName}的效忠答复`],recognition:[`Title reply from ${enName}`,`${zhName}的称号答复`],pasture:[`Pasture reply from ${enName}`,`${zhName}的牧地答复`],submission:[`Submission reply from ${enName}`,`${zhName}的归降答复`]}[kind];
  const outcome=accepted?['accepted','接受']:['refused','拒绝'];
  const body=[`Our envoy reports that ${officialEn} has ${outcome[0]} the ${kind} proposal at ${enName}.`,
-  `我方使者回报：${officialZh}已${outcome[1]}向${zhName}提出的${{access:'通行',protectorate:'自治附属',service:'个人效忠',recognition:'承认地方称号',pasture:'牧地协定',submission:'归降'}[kind]}提议。`];
+  `我方使者回报：${officialZh}已${outcome[1]}向${zhName}提出的${{access:'通行',trade:'地方贸易',protectorate:'自治附属',service:'个人效忠',recognition:'承认地方称号',pasture:'牧地协定',submission:'归降'}[kind]}提议。`];
  const sent=sendLetter(state,{senderFaction:pending.actor,senderInstitution:pending.actor,recipient:pending.actor,category:'government',
   subject,body,options:['acknowledge'],source:entity.theater,priority:'routine',
   eventId:`local:${entity.id}:${kind}:${pending.sentYear}:${pending.sentMonth}`,
@@ -217,21 +222,25 @@ function reportLocalOffer(state,entity,pending,accepted){
 
 export function localContactQuote(state, id, actor = state.player, proposal = 'access') {
   const entity = localEntity(state, id), faction = state.factions[actor];
-  if (!entity || !faction || !['access', 'protectorate','service','recognition','pasture'].includes(proposal)) return {ok: false, reason: 'unavailable'};
+  if (!entity || !faction || !['access', 'trade','protectorate','service','recognition','pasture'].includes(proposal)) return {ok: false, reason: 'unavailable'};
+  if(proposal==='trade'&&!['city_state','microstate','tribe'].includes(entity.type))return {ok:false,reason:'unavailable'};
   if((['service','recognition'].includes(proposal)&&entity.type!=='strongman')||(proposal==='pasture'&&entity.type!=='nomadic')||(entity.type==='nomadic'&&proposal!=='pasture')||(proposal==='protectorate'&&entity.type==='strongman'))return {ok:false,reason:'unavailable'};
   if (entity.controller !== entity.id) return {ok: false, reason: 'controlled'};
   if (entity.pending || entity.siege) return {ok: false, reason: 'busy'};
   const theater = host(state, entity), neighbors = ROUTES.filter(([a, b]) => a === entity.theater || b === entity.theater).map(([a, b]) => a === entity.theater ? b : a);
   if (theater.owner !== actor && !state.regions.some(region => neighbors.includes(region.id) && region.owner === actor)) return {ok: false, reason: 'no_contact'};
+  if(proposal==='trade'&&!localTradeOpen(state,entity,actor))return {ok:false,reason:'trade_route_closed'};
+  if(proposal==='trade'&&entity.food-2<Math.max(4,Math.ceil((entity.population||3000)/3000)))return {ok:false,reason:'no_surplus'};
   if (proposal === 'recognition' && (theater.owner !== actor || entity.allegiance && entity.allegiance !== actor)) return {ok: false, reason: 'no_authority'};
   if (entity.lastOfferAt[actor] != null && now(state) - entity.lastOfferAt[actor] < 6) return {ok: false, reason: 'cooldown'};
   if (proposal === 'access' && entity.overlord === actor) return {ok: false, reason: 'already_subject'};
   if (proposal === 'access' && entity.access[actor] > now(state)) return {ok: false, reason: 'already_granted'};
+  if (proposal === 'trade' && entity.tradeRights?.[actor] > now(state)) return {ok: false, reason: 'already_granted'};
   if (proposal === 'protectorate' && entity.overlord) return {ok: false, reason: 'already_subject'};
   if(proposal==='service'&&entity.allegiance)return {ok:false,reason:'already_affiliated'};
   if(proposal==='recognition'&&entity.recognizedBy===actor)return {ok:false,reason:'already_recognized'};
   if(proposal==='pasture'&&entity.pastureRights?.[actor]>now(state))return {ok:false,reason:'already_granted'};
-  const cost = proposal === 'access' ? 8 : proposal==='service'?12:proposal==='recognition'?8:proposal==='pasture'?6:16;
+  const cost = proposal === 'access' ? 8 : proposal==='trade'?10:proposal==='service'?12:proposal==='recognition'?8:proposal==='pasture'?6:16;
   if (faction.treasury < cost) return {ok: false, reason: 'resources'};
   return {ok: true, cost, months: proposal === 'protectorate' ? 3 : 2};
 }
@@ -320,7 +329,27 @@ export function localOfferChance(state,entity,actor,proposal){
  if(proposal==='service')return Math.max(.08,Math.min(.8,.4+(pressure>=2?.035*skill:-.02*skill)+(host(state,entity)?.owner===actor ? .1 : 0)+(entity.recognizedBy===actor ? .12 : 0)-(entity.treasury>=18 ? .05 : 0)));
  if(proposal==='recognition')return Math.max(.1,Math.min(.85,.58-.025*skill+(host(state,entity)?.owner===actor ? .12 : 0)+(entity.treasury<10 ? .06 : 0)));
  if(proposal==='pasture')return Math.max(.12,Math.min(.9,.65-.035*skill+(host(state,entity)?.owner===actor ? .1 : 0)+(entity.waterSecurity<60 ? .08 : 0)));
+ if(proposal==='trade')return Math.max(.1,Math.min(.85,.6-(skill-2)*.025+(entity.food<8?-.18:0)+(host(state,entity)?.owner===actor ? .08 : 0)));
  return Math.max(.04,Math.min(.75,.22+(pressure>=2?.045*skill:-.028*skill)+(entity.food<8?.06:0)));
+}
+
+// A compact transfers finite local food and actual treasury at a nearby
+// commercial border. It grants no army passage or political title.
+export function advanceLocalTrade(state){
+ if(state.localTradeLastAdvancedAt===now(state))return state;
+ state.localTradeLastAdvancedAt=now(state);
+ if(state.month%3!==0)return state;
+ for(const region of state.regions)for(const entity of region.localEntities||[]){
+  if(entity.controller!==entity.id||!['city_state','microstate','tribe'].includes(entity.type))continue;
+  for(const [actor,until] of Object.entries(entity.tradeRights||{})){
+   const reserve=Math.max(4,Math.ceil((entity.population||3000)/3000));
+   if(until<=now(state)||entity.food-2<reserve||state.factions[actor]?.treasury<3||!localTradeOpen(state,entity,actor))continue;
+   entity.food-=2;entity.treasury+=3;state.factions[actor].treasury-=3;state.factions[actor].food+=2;
+   entity.lastTrade={actor,year:state.year,month:state.month,food:2,price:3};
+   if(actor===state.player)state.log.unshift({year:state.year,month:state.month,en:`A commercial compact brought 2 food from ${entity.name[0]} for 3 treasury.`,zh:`地方贸易协定从${entity.name[1]}购得2粮食，支付3国库。`});
+  }
+ }
+ state.log=state.log.slice(0,80);return state;
 }
 
 export function advanceLocalEntities(state) {
@@ -366,6 +395,7 @@ export function advanceLocalEntities(state) {
       entity.lastOutcome = {actor, proposal, accepted, year: state.year, month: state.month};
       entity.pending = null;
       if (accepted && proposal === 'access') entity.access[actor] = now(state) + 24;
+      if (accepted && proposal === 'trade') {entity.tradeRights||={};entity.tradeRights[actor]=now(state)+24;}
       if (accepted && proposal === 'protectorate') entity.overlord = actor;
       if (accepted && proposal === 'service') {entity.allegiance=actor;entity.access[actor]=now(state)+24;}
       if (accepted && proposal === 'recognition') {entity.recognizedBy=actor;entity.titleRecognizedAt={year:state.year,month:state.month};const village=region.localEntities?.find(site=>site.sponsor===entity.id)?.village;if(village){village.satisfaction=Math.min(100,village.satisfaction+3);village.security=Math.min(100,village.security+2)}}
@@ -383,6 +413,7 @@ export function advanceLocalEntities(state) {
       entity.militaryOccupier = actor;
       entity.administrativeStatus = 'occupied';
       entity.resistance = 30;
+      entity.tradeRights = {};
       entity.overlord = null;
       entity.allegiance = null;
       entity.siege = null;
@@ -403,5 +434,6 @@ export function advanceLocalEntities(state) {
       state.factions[entity.overlord].treasury++;
     }
   }
+  advanceLocalTrade(state);
   return state;
 }

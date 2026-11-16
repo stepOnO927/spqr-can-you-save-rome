@@ -1,0 +1,27 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+
+const browser=await chromium.launch({headless:true,...(process.env.SPQR_BROWSER_EXECUTABLE?{executablePath:process.env.SPQR_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];
+page.on('pageerror',error=>errors.push(error.message));
+const base=`http://127.0.0.1:${process.env.SPQR_SMOKE_PORT||5173}`;
+try{
+ await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
+ await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
+ await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=world-kings-trade-1');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:newGame('caesar')}))});
+ await page.goto(`${base}/map-lab/`,{waitUntil:'domcontentloaded'});
+ const marker=page.locator('.city-marker[data-city="MASSILIA"]');await marker.waitFor({state:'visible'});await marker.evaluate(element=>element.click());
+ const button=page.locator('#local-trade');assert.equal(await button.isDisabled(),false);await button.click();
+ await page.locator('#advance').click();await page.locator('#advance').click();
+ await marker.evaluate(element=>element.click());assert.match(await page.locator('#command-detail').innerText(),/Local trade compact: 24 months remain/);
+ await page.locator('#save').click();
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1'))),city=saved.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='massilia');
+ assert.equal(city.lastOutcome.proposal,'trade');assert.equal(city.lastOutcome.accepted,true);
+ assert.deepEqual({food:city.food,treasury:city.treasury,trade:city.lastTrade?.food}, {food:10,treasury:23,trade:2});
+ assert.equal(city.controller,'massilia');assert.equal(city.access.caesar,undefined);
+ await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=world-kings-trade-1');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:newGame('caesar')}))});
+ await page.reload();await page.locator('#load').click();await marker.waitFor({state:'visible'});await marker.evaluate(element=>element.click());
+ assert.match(await page.locator('#command-detail').innerText(),/Local trade compact: 24 months remain/);
+ assert.deepEqual(errors,[]);
+ console.log('A city-state trade compact transfers finite food for real treasury without changing passage or title, and survives save/load.');
+}finally{await browser.close()}
