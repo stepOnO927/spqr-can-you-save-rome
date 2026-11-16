@@ -31,7 +31,8 @@ for(const allied of [false,true])for(let i=1;i<=seeds;i++){
  upgradeSave(JSON.parse(JSON.stringify(s)));
  (allied?report.alliedFront:report.runs).push(run);
 }
-assert.ok(report.runs.every(r=>r.msPerMonth.max<300),'monthly simulation must stay bounded');
+const slowestMonth=Math.max(...report.runs.map(r=>r.msPerMonth.max));
+assert.ok(slowestMonth<300,`monthly simulation must stay below 300 ms; observed ${slowestMonth} ms`);
 assert.ok(report.runs.every(r=>Object.values(r.focuses).filter(f=>f.completed>0).length>=6),'AI courts complete focuses');
 assert.ok(report.runs.some(r=>r.plans.total>0),'AI courts plan operations');
 console.log(JSON.stringify(report,null,1));
