@@ -11,7 +11,7 @@ stream setting, foreign-heir will privacy fix and uncertain-age guardianship
 rules. Main's optional analytics
 is connected across the campaign, atlas and standalone Han views after
 reconciling their differing controls. Its privacy choice remains opt-in;
-the six new analytics unit cases and a full 1,202-test local rerun pass. A
+the six new analytics unit cases and a full 1,203-test local suite pass. A
 first concurrent run had one uncategorized assertion failure; the focused
 52-test integration set and complete rerun passed. A 120-month Roman/Han market
 simulation also passes after this main integration.
@@ -360,6 +360,10 @@ envoys and couriers. Captives retain the same person ID through release, and
 the player's mission and captive lists display their names. Active missions
 and held captives in older saves acquire an identity once; completed older
 records remain as recorded.
+The player's received capture and detection letters now name the mission's
+saved agent in both languages. Legacy completed operations without a person
+record keep generic wording rather than inventing an actor; a unit case checks
+both outcomes and the archived letter after save restoration.
 Newborn fictional people now use their faction's naming tradition instead of
 receiving Roman given names in every court. Han children retain a recorded
 father's surname in the displayed name while legal lineage continues to rely
