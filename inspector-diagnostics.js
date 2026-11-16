@@ -52,3 +52,25 @@ export function startupDiagnostics(s,configuration){
  const findings=inspectState(s,configuration);
  return {fatal:findings.filter(x=>x.severity==='fatal'),warnings:findings.filter(x=>x.severity==='warning'),findings};
 }
+
+// A read-only check for the active lesson. UI callers can pass the real DOM
+// after rendering; cloud browser tests can then catch missing or hidden targets.
+export function inspectTutorial({steps=[],index=0,document:doc=null,available=()=>true}={}){
+ const findings=[],add=(code,path,detail)=>findings.push({severity:'warning',code,path,detail}),keys=new Set();
+ if(!Array.isArray(steps)||!steps.length){add('tutorial-no-lessons','steps','No lessons defined');return findings}
+ if(!Number.isInteger(index)||index<0||index>steps.length)add('tutorial-invalid-index','index',String(index));
+ for(const [i,step] of steps.entries()){
+  const key=step?.key??step?.[0],title=step?.title??[step?.[1],step?.[2]],target=step?.target??step?.[3];
+  if(!key||keys.has(key))add('tutorial-duplicate-action',`steps[${i}]`,String(key));keys.add(key);
+  if(!Array.isArray(title)||title.some(value=>typeof value!=='string'||!value.trim()))add('tutorial-missing-translation',`steps[${i}].title`,String(key));
+  if(!target||typeof target!=='string')add('tutorial-missing-target',`steps[${i}].target`,String(key));
+ }
+ if(index<steps.length){const step=steps[index],target=step?.target??step?.[3],key=step?.key??step?.[0];
+  if(!available(key))add('tutorial-action-unavailable',`steps[${index}]`,String(key));
+  if(doc&&target?.startsWith('#')){let element;try{element=doc.querySelector(target)}catch{add('tutorial-invalid-selector',`steps[${index}].target`,target)}
+   if(!element)add('tutorial-target-missing',`steps[${index}].target`,target);
+   else if(element.hidden||element.closest?.('[hidden]')||element.getClientRects?.().length===0)add('tutorial-target-hidden',`steps[${index}].target`,target);
+  }
+ }
+ return findings;
+}

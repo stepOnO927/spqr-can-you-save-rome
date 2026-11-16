@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame} from '../engine.js';
 import {newHanGame} from '../han/engine.js';
 import {isLiuClan} from '../han/dynasty.js';
-import {inspectState,startupDiagnostics} from '../inspector-diagnostics.js';
+import {inspectState,startupDiagnostics,inspectTutorial} from '../inspector-diagnostics.js';
 
 test('fresh Roman and Han campaigns pass fatal startup invariants',()=>{
  for(const player of ['caesar','senate']){
@@ -34,4 +34,9 @@ test('JSON save roundtrip preserves valid state for the diagnostic',()=>{
  const han=JSON.parse(JSON.stringify(newHanGame('han',{seed:49049})));
  assert.deepEqual(startupDiagnostics(roman).fatal,[]);
  assert.deepEqual(startupDiagnostics(han,{mode:'han',isLiuClan}).fatal,[]);
+});
+test('tutorial audit catches a missing action, translation, and real target',()=>{
+ const steps=[{key:'territory',title:['Select land','选择战区'],target:'#own-land'},{key:'territory',title:['Select army',''],target:'#army'}];
+ const findings=inspectTutorial({steps,index:0,document:{querySelector:()=>null},available:()=>false});
+ for(const code of ['tutorial-duplicate-action','tutorial-missing-translation','tutorial-action-unavailable','tutorial-target-missing'])assert.ok(findings.some(item=>item.code===code));
 });

@@ -16,7 +16,7 @@ try{
  await page.locator('#step').click();await page.locator('[data-tab="chronicle"]').click();
  await page.locator('[data-tab="government"]').click();await page.locator('[data-tax="low"]').click();
  await page.locator('#campaign-progress').click();await page.locator('[data-direction="political"]').click();
- assert.match(await page.locator('.experience-dialog').innerText(),/政治和解/);
+ assert.match(await page.locator('.experience-dialog').innerText(),/外交与政治/);
  await page.locator('#experience-close').click();
  await page.locator('#what-now').click();assert.ok(await page.locator('.experience-cards article').count()>0);await page.locator('#experience-close').click();
  await page.locator('#new').click();await page.locator('[data-slot="save"]').click();let saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));assert.equal(saved.player,'senate');assert.equal(saved.difficulty,'hard');assert.equal(saved.economicHandicap,true);assert.equal(saved.experience.direction,'political');

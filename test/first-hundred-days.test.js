@@ -13,6 +13,7 @@ test('Caesar and Senate first eight lessons follow real campaign actions and sav
  for(const side of ['caesar','senate']){
   const s=newGame(side);initializeExperience(s,{guided:true,openingLetter:true});
   assert.equal(tutorialStep(s).key,'territory');
+  recordExperience(s,'chronicle');assert.equal(tutorialStep(s).key,'territory','an early report must not complete a later lesson');
   const opening=s.mail.messages.find(m=>m.id===s.experience.openingLetter);
   assert.ok(opening?.senderId&&s.world.characters[opening.senderId]?.alive);
   recordExperience(s,'territory',s.regions.find(r=>r.owner===side).id);
@@ -55,7 +56,7 @@ test('Han and a minor polity sustain distinct guidance through long campaigns',(
   assert.ok(hanRecommendations(s).length>=2);
   assert.ok(hanObjectives(s).long[0]);assert.ok(hanObjectives(s).shortProgress[0]);assert.equal(typeof hanObjectives(s).longDone,'boolean');
   for(const rec of hanRecommendations(s))if(rec.target.kind==='diplomacy')assert.ok(s.factions[rec.target.id]);
-  if(side==='han'){for(const key of ['frontier','army','supply','order','advance','report','official'])hanAction(s,key);assert.equal(hanLesson(s).key,'direction')}
+  if(side==='han'){hanAction(s,'report');assert.equal(hanLesson(s).key,'frontier');for(const key of ['frontier','army','supply','order','advance','report','official'])hanAction(s,key);assert.equal(hanLesson(s).key,'direction')}
   const available=treeFor(side).find(x=>focusStatus(s,side,x.id)==='available'&&(x.cost.treasury||0)<=s.factions[side].treasury);
   if(available){assert.equal(startFocus(s,side,available.id).ok,true);hanAction(s,'focus',available.id)}
   for(let i=0;i<60;i++)hanTick(s);

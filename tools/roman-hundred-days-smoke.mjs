@@ -7,6 +7,7 @@ try{
   await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});await page.locator('.setup-panel').waitFor();
   await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#faction-choice').selectOption(side);await page.locator('#start-campaign').click();
   const guide=page.locator('.experience-lesson');assert.match(await guide.innerText(),/1\/8/);
+  assert.equal(await page.locator('#region-choice').isVisible(),true);await page.locator('[data-experience-go="map"]').click();assert.match(await guide.innerText(),/1\/8/);
   await page.screenshot({path:`first-command-${side}-territory.png`});
   await page.locator('#region-choice').selectOption(side==='caesar'?'narbo':'roma');assert.match(await guide.innerText(),/2\/8/);
   await page.locator('[data-army="'+(side==='caesar'?'xiii':'italy')+'"]').first().click();assert.match(await guide.innerText(),/3\/8/);
