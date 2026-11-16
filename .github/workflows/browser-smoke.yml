@@ -140,6 +140,7 @@ jobs:
           name: browser-smoke-evidence-${{ matrix.part }}
           path: |
             browser-smoke-1920x1080.png
+            first-command-*.png
             capture-control-1920x1080.png
             map-benchmark-1920x1080.png
             leader-overview-1920x1080.png
