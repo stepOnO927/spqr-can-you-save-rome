@@ -881,6 +881,13 @@ pool instead of the default Tarim oasis pool. A temporary uprising no longer
 acquires a fictitious foreign monarch. Old saves drop that erroneous ruler
 office while retaining the saved person and the uprising's army; regression
 checks cover commander identity and reload stability.
+The eastern market now gives each named player merchant a compact portrait and
+an inspectable bilingual identity record. Artwork uses the person's saved
+culture and appearance seed, with a deterministic fallback for older saves;
+opening the profile does not create or revise a person. Homeland, approximate
+age, allegiance, reputation, risk tolerance, actual delivered and lost
+caravans, and the existing working privilege actions remain together. The
+portrait is labeled original game artwork rather than an attested likeness.
 All 52 playable non-Han courts in the eastern campaign now have a simultaneous
 succession regression covering saved identity, title, portrait and governing
 effect. A woman who rules a kingdom receives a corresponding queen title;

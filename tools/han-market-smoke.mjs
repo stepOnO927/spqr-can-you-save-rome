@@ -57,9 +57,14 @@ try{
  assert.match(await page.locator('.market-intelligence').innerText(),/Paid unit price.*Observed supply/);
  assert.match(await page.locator('.market-shipment').filter({hasText:'Horses'}).first().innerText(),/Horses/);
  assert.match(await page.locator('#inspector').innerText(),/Merchant privileges/);
+ const merchantCard=page.locator('[data-merchant-person]').first();
+ assert.match(await merchantCard.locator('img').getAttribute('src'),/^data:image\/svg\+xml,/);
+ await merchantCard.locator('summary').click();
+ assert.match(await merchantCard.innerText(),/Cultural origin.*Homeland.*Approximate age.*Delivered caravans 0.*original game artwork/s);
  await page.locator('[data-east-grant-merchant][data-duration="24"]').first().click();
  assert.match(await page.locator('#message').innerText(),/Merchant privilege granted/);
  assert.match(await page.locator('#inspector').innerText(),/Begins with the next caravan/);
+ assert.match(await page.locator('[data-merchant-person] img').first().getAttribute('src'),/^data:image\/svg\+xml,/);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#trade-panel').click();
  await page.locator('#mode').selectOption('trade');
  assert.equal(await page.locator('.trade-caravan').count(),1);
@@ -102,6 +107,8 @@ try{
  assert.match(await page.locator('.market-intelligence').innerText(),/成交单价.*所见供给/);
  assert.match(await page.locator('#inspector').innerText(),/拨付军马/);
  assert.match(await page.locator('#inspector').innerText(),/商人特权/);
+ await page.locator('[data-merchant-person] summary').first().click();
+ assert.match(await page.locator('[data-merchant-person]').first().innerText(),/文化来源.*故乡.*约龄.*运抵批次 1.*游戏创作/s);
  assert.match(await page.locator('#inspector').innerText(),/过境关税/);
  assert.match(await page.locator('#inspector').innerText(),/出口管制/);
  assert.match(await page.locator('#inspector').innerText(),/挂牌出售/);
