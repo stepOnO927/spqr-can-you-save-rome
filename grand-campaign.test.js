@@ -34,6 +34,21 @@ test('older grand saves add Cyrene once without changing existing ownership or t
  assert.equal(twice.regions.length,121);assert.equal(twice.regions.filter(r=>r.id==='t121').length,1);
  assert.equal(twice.regions.find(r=>r.id==='t104').tax,parent.tax);
 });
+test('land marches detour around gulfs while the Kerch Strait needs real transports',()=>{
+ const coast=GRAND_ROUTES.find(([a,b])=>[a,b].includes('t103')&&[a,b].includes('t104'));
+ assert.ok(coast[3].distance>600);assert.ok(grandRouteCoordinates('t103','t104').length>2);
+ const levant=GRAND_ROUTES.find(([a,b])=>[a,b].includes('t112')&&[a,b].includes('t114'));
+ assert.ok(levant[3].distance>650);assert.ok(grandRouteCoordinates('t112','t114').length>2);
+ const s=newGrandGame('bosporus'),army=s.armies.find(unit=>unit.owner==='bosporus'),ferry=s.naval.fleets.find(fleet=>fleet.id==='bosporan-strait');
+ assert.ok(ferry?.reserve);assert.equal(ferry.ships.transport,2);
+ assert.ok(nationalBudget(s,'bosporus').projectedNet>=0);
+ assert.equal(previewMarch(s,army.id,'t097').ok,false);
+ ferry.reserve=false;
+ assert.equal(previewMarch(s,army.id,'t097').sea,true);
+ const old=structuredClone(s);old.naval.version=4;old.naval.fleets=old.naval.fleets.filter(fleet=>fleet.id!=='bosporan-strait');
+ const migrated=upgradeSave(old);assert.equal(migrated.naval.fleets.filter(fleet=>fleet.id==='bosporan-strait').length,1);
+ assert.equal(upgradeSave(migrated).naval.fleets.filter(fleet=>fleet.id==='bosporan-strait').length,1);
+});
 test('small inland kingdoms can feed their home army and lose home-domain income if conquered',()=>{
  const s=newGrandGame('egypt');
  for(const id of ['numidia','mauretania','armenia','parthia','galatia','bosporus']){
