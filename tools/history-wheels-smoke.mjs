@@ -10,6 +10,7 @@ try{
   await page.locator('.setup-panel').waitFor();
   await page.locator('.setup-advanced').evaluate(el=>el.open=true);
   await page.locator('#faction-choice').selectOption(side);
+  await page.locator('#campaign-guide').uncheck();
   await page.locator('#start-campaign').click();
   await page.locator('#campaign-progress').click();
   assert.equal(await page.locator('[data-ambition="economic"]').isVisible(),true);
