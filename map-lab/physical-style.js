@@ -1,5 +1,5 @@
-import land from '../mediterranean-land.js?v=3';
-import ocean from '../mediterranean-ocean.js?v=3';
+import land from '../mediterranean-land.js?v=4';
+import ocean from '../mediterranean-ocean.js?v=4';
 import bathymetry from '../mediterranean-bathymetry.js?v=2';
 import rivers from '../mediterranean-rivers.js';
 import poRiverDetail from '../po-river-detail.js';
@@ -153,7 +153,7 @@ function insertOverviewLayer(before,id,source){
 for(let row=0;row<2;row++)for(let col=0;col<4;col++){
  const west=-20+col*20,east=west+20,north=coastLat(coastTop+(coastBottom-coastTop)*row/2),south=coastLat(coastTop+(coastBottom-coastTop)*(row+1)/2);
  const coordinates=[[west,north],[east,north],[east,south],[west,south]];
- for(const kind of ['land','sea'])physicalStyle.sources[`overview-${kind}-${row}-${col}`]={type:'image',url:`./overview-coast/${kind}-${row}-${col}.png?v=2`,coordinates};
+ for(const kind of ['land','sea'])physicalStyle.sources[`overview-${kind}-${row}-${col}`]={type:'image',url:`./overview-coast/${kind}-${row}-${col}.png?v=3`,coordinates};
  insertOverviewLayer('land-base',`overview-land-raster-${row}-${col}`,`overview-land-${row}-${col}`);
  insertOverviewLayer('sea-final',`overview-sea-final-${row}-${col}`,`overview-sea-${row}-${col}`);
 }

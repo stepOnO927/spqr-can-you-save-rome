@@ -15,16 +15,18 @@ const input=process.env.SPQR_GSHHG_INPUT||path.join(root,'map-lab/source/gshhg-m
 const bytes=await readFile(input),source=JSON.parse(input.endsWith('.gz')?gunzipSync(bytes).toString('utf8'):bytes.toString('utf8'));
 if(source.type!=='FeatureCollection'||source.features.length!==1365)throw new Error('Unexpected GSHHG coastline source');
 const poSmoothingTrial=process.env.SPQR_PO_SMOOTH_TRIAL==='1';
+const nileSmoothingTrial=process.env.SPQR_NILE_SMOOTH_TRIAL==='1';
 const poWindow=point=>point[0]>=12.30&&point[0]<=12.85&&point[1]>=44.68&&point[1]<=45.13;
+const nileWindow=point=>point[0]>=29.0&&point[0]<=33.5&&point[1]>=30.5&&point[1]<=32.2;
 const samePoint=(a,b)=>a[0]===b[0]&&a[1]===b[1];
-function roundPoRing(ring){
+function roundCoastRing(ring){
  let points=samePoint(ring[0],ring.at(-1))?ring.slice(0,-1):ring.slice();
- if(!points.some(poWindow))return ring;
+ if(!points.some(point=>poWindow(point)||nileWindow(point)))return ring;
  for(let pass=0;pass<2;pass++){
   const rounded=[];
   for(let i=0;i<points.length;i++){
    const a=points[i],b=points[(i+1)%points.length];
-   if(poWindow(a)&&poWindow(b)){
+   if(poWindow(a)&&poWindow(b)||nileWindow(a)&&nileWindow(b)){
     rounded.push([.75*a[0]+.25*b[0],.75*a[1]+.25*b[1]],[.25*a[0]+.75*b[0],.25*a[1]+.75*b[1]]);
    }else rounded.push(a);
   }
@@ -32,12 +34,13 @@ function roundPoRing(ring){
  }
  return [...points,points[0]];
 }
-// Round only the present-day Po delta's angular GSHHG lobes at close drawing
-// scale. This cartographic generalization is not a reconstructed Roman coast.
+// Round only angular GSHHG lobes at the Po and Nile deltas at close drawing
+// scale. Both land and sea then use this same generalized modern shoreline;
+// this is not a reconstructed Roman coast.
 for(const feature of source.features){
  const geometry=feature.geometry;
  const polygons=geometry.type==='Polygon'?[geometry.coordinates]:geometry.coordinates;
- for(const polygon of polygons)for(let i=0;i<polygon.length;i++)polygon[i]=roundPoRing(polygon[i]);
+ for(const polygon of polygons)for(let i=0;i<polygon.length;i++)polygon[i]=roundCoastRing(polygon[i]);
 }
 const polygons=[];
 for(const feature of source.features){
@@ -66,8 +69,8 @@ for(let west=bounds[0];west<bounds[2];west+=cellSize)for(let south=bounds[1];sou
 }
 const collection=parts=>({type:'FeatureCollection',features:parts.map((coordinates,id)=>({type:'Feature',properties:{id},geometry:{type:'Polygon',coordinates}}))});
 for(const [name,parts] of [['land',polygons],['ocean',oceanCells]]){
- const output=poSmoothingTrial?path.join(root,'outputs','po-smoothing'):root;
- if(poSmoothingTrial)await mkdir(output,{recursive:true});
+ const output=poSmoothingTrial||nileSmoothingTrial?path.join(root,'outputs',nileSmoothingTrial?'nile-smoothing':'po-smoothing'):root;
+ if(poSmoothingTrial||nileSmoothingTrial)await mkdir(output,{recursive:true});
  const target=path.join(output,`mediterranean-${name}.js`);
  await writeFile(target,`// GSHHG 2.3.7 high-resolution L1 shorelines, LGPL; cropped to the campaign region.\nexport default ${JSON.stringify(collection(parts))};\n`);
  console.log(name,parts.length,Math.round((await readFile(target)).length/1024)+' KiB');
