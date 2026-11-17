@@ -9,6 +9,7 @@ import {finalizeCampaign} from '../legacy.js';
 import {planSuccession} from '../governance.js';
 import {startFocus} from '../national-focus.js';
 import {proposeAgreement} from '../agreements.js';
+import {recommendations} from '../experience.js';
 import {sendCoalitionInvitation,advanceCoalitionInvitations,answerCoalitionInvitation} from '../coalition-negotiations.js';
 
 test('national ambitions are selected, measurable and save compatible',()=>{
@@ -201,6 +202,7 @@ test('economic ambition requires a real investment after selection while older s
  const s=newGame('egypt');chooseAmbition(s,'economic');
  s.factions.egypt.treasury=120;for(const r of s.regions.filter(r=>r.owner==='egypt'))r.loyalty=65;
  assert.equal(ambitionStatus(s).done,false,'natural treasury growth alone is not a completed project');
+ assert.ok(recommendations(s).some(r=>r.id==='economic_project'&&r.target.kind==='focus'),'guidance should open a real prerequisite project');
  assert.equal(startFocus(s,'egypt','egy_house_ptolemy').ok,true);
  for(let i=0;i<2;i++)tick(s);
  assert.equal(startFocus(s,'egypt','egy_nile_administration').ok,true);

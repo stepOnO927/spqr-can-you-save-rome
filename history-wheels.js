@@ -43,6 +43,14 @@ export function chooseAmbition(s,id,options={}){
  s.log.unshift({year:s.year,month:s.month,en:`The court adopted ${AMBITIONS[id].name[0]} as its national ambition.`,zh:`朝廷将“${AMBITIONS[id].name[1]}”定为国家野心。`,kind:'government',topic:'ambition'});
  s.log=s.log.slice(0,80);return true;
 }
+export function economicProjectStatus(s){
+ const base=initializeWheels(s).economicBaseline;if(!base)return {required:false,done:true};
+ const own=s.regions.filter(r=>r.owner===s.player),focus=s.world?.nationalFocus?.[s.player];
+ const completed=(focus?.completed||[]).some(id=>focusById(s.player,id)?.branch==='economic'&&!(base.focusIds||[]).includes(id));
+ const trade=(s.agreements||[]).some(a=>a.status==='active'&&a.type==='trade'&&a.parties?.includes(s.player)&&!(base.agreementIds||[]).includes(a.id));
+ const built=own.filter(r=>(base.regions||[]).includes(r.id)).some(r=>(r.buildings||[]).some(id=>!(base.buildings||[]).includes(`${r.id}:${id}`)));
+ return {required:true,done:completed||trade||built};
+}
 export function ambitionStatus(s){
  const w=initializeWheels(s),f=s.factions[s.player],own=s.regions.filter(r=>r.owner===s.player),forces=s.armies.filter(a=>a.owner===s.player&&a.men>0);
  const agreements=(s.agreements||[]).filter(a=>a.status==='active'&&a.parties?.includes(s.player)).length;
@@ -50,10 +58,8 @@ export function ambitionStatus(s){
  const political=(focus?.completed||[]).filter(id=>focusById(s.player,id)?.branch==='political').length;
  const cultural=(focus?.completed||[]).filter(id=>focusById(s.player,id)?.branch==='cultural').length;
  const culturalGoal=Math.min(2,(treeFor(s.player)||[]).filter(f=>f.branch==='cultural').length);
- const econBase=w.economicBaseline,ecoFoci=(focus?.completed||[]).filter(id=>focusById(s.player,id)?.branch==='economic');
- const ecoTrade=(s.agreements||[]).filter(a=>a.status==='active'&&a.type==='trade'&&a.parties?.includes(s.player));
- const newProject=!econBase||ecoFoci.some(id=>!(econBase.focusIds||[]).includes(id))||ecoTrade.some(a=>!(econBase.agreementIds||[]).includes(a.id))||own.filter(r=>(econBase.regions||[]).includes(r.id)).some(r=>(r.buildings||[]).some(id=>!(econBase.buildings||[]).includes(`${r.id}:${id}`)));
- const projectProgress=econBase?`${newProject?1:0}/1 project`:'existing-save goal',projectProgressZh=econBase?`项目 ${newProject?1:0}/1`:'旧版存档目标';
+ const project=economicProjectStatus(s),newProject=project.done;
+ const projectProgress=project.required?`${newProject?1:0}/1 project`:'existing-save goal',projectProgressZh=project.required?`项目 ${newProject?1:0}/1`:'旧版存档目标';
  const successor=validSuccessionPlan(s,s.player),successorName=successor?CHARACTER_CATALOG[successor]?.name:null;
  const meanLoyalty=own.length?Math.round(own.reduce((n,r)=>n+r.loyalty,0)/own.length):0;
  const baseline=w.militaryBaseline||{regions:own.length,wins:0};
