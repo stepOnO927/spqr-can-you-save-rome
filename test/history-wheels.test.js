@@ -6,6 +6,7 @@ import {AMBITIONS,availableAmbitions,chooseAmbition,ambitionStatus,advanceWheels
 import {newHanGame,tick as hanTick,serialize,loadHanSave} from '../han/engine.js';
 import {available as hanAvailable,choose as hanChoose,status as hanStatus} from '../han/ambitions.js';
 import {finalizeCampaign} from '../legacy.js';
+import {planSuccession} from '../governance.js';
 
 test('national ambitions are selected, measurable and save compatible',()=>{
  for(const side of ['caesar','senate']){
@@ -29,6 +30,21 @@ test('national ambitions are selected, measurable and save compatible',()=>{
  const migrated=upgradeSave(JSON.parse(JSON.stringify(old)));
  assert.equal(migrated.factions.caesar.treasury,37);
  assert.deepEqual(migrated.historyWheels.chains,[]);
+});
+
+test('dynastic ambition requires a real eligible successor and a valid designation',()=>{
+ const egypt=newGame('egypt');
+ assert.equal(availableAmbitions(egypt).includes('dynastic'),true);
+ assert.equal(chooseAmbition(egypt,'dynastic'),true);
+ assert.equal(ambitionStatus(egypt).done,false);
+ const before=egypt.factions.egypt.treasury;
+ assert.equal(planSuccession(egypt,'arsinoe').ok,true);
+ assert.equal(egypt.factions.egypt.treasury,before-5);
+ egypt.factions.egypt.stability=65;
+ assert.equal(ambitionStatus(egypt).done,true);
+ assert.match(ambitionStatus(egypt).progress[0],/Arsino/);
+ const mauretania=newGame('mauretania');
+ assert.equal(availableAmbitions(mauretania).includes('dynastic'),false);
 });
 
 test('financial strain creates one causal chain with a real policy choice and persistent outcome',()=>{
