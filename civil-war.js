@@ -1,4 +1,4 @@
-import {isDeliveredReport} from './person-knowledge.js?v=reported-contact-1';
+import {isDeliveredReport} from './person-knowledge.js?v=mutual-audience-1';
 import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=succession-ui-recovery-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 
