@@ -88,6 +88,10 @@ test('a battle-tested commander petitions through the real loyalty and treasury 
  assert.equal(restored.historyWheels.chains.find(c=>c.id===chain.id).characterId,officer.id);
  restored.month++;advanceWheels(restored,{forecast:forecastEconomy});
  assert.ok(restored.historyWheels.chains.find(c=>c.id===chain.id).reviewedAt);
+ restored.victory=true;
+ const archive=finalizeCampaign(restored).archive;
+ assert.equal(archive.causalChains.find(c=>c.id===chain.id).characterName[1],'马尔库斯·安东尼');
+ assert.ok(archive.causalChains.find(c=>c.id===chain.id).territoryName);
 });
 
 test('Han and a small western state use distinct ambitions and preserve them through 36 months',()=>{
