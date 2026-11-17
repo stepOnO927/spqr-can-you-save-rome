@@ -9,7 +9,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=world-kings-audience-1');
+  const {newGame}=await import('/engine.js?v=world-kings-bilateral-1');
   const state=newGame('senate'),town=state.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='capua');
   town.controller='senate';town.legalSovereign='caesar';town.administrativeStatus='occupied';town.resistance=30;
   state.world.characters.cicero.location=town.theater;
@@ -24,7 +24,7 @@ try{
  await box.locator('#settlement-administrator-appoint').click();
  assert.match(await page.locator('.local-administrator-panel').innerText(),/Current: Marcus Tullius Cicero/);
  await page.locator('#save').click();
- await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=world-kings-audience-1');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:newGame('caesar')}))});
+ await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=world-kings-bilateral-1');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:newGame('caesar')}))});
  await page.reload();await page.locator('#load').click();await marker.waitFor({state:'visible'});await marker.evaluate(element=>element.click());
  assert.match(await page.locator('.local-administrator-panel').innerText(),/Current: Marcus Tullius Cicero/);
  assert.deepEqual(errors,[]);

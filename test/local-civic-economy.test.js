@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-audience-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-bilateral-1';
 import {configureStartingDifficulty} from '../difficulty.js';
 import {advanceLocalCivicEconomy,localEntity} from '../local-polities.js';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-audience-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-bilateral-1';
 
 test('an independent city pays its own civilians and guard without taking theater revenue',()=>{
  const state=newGame('caesar'),city=localEntity(state,'massilia');

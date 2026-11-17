@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG} from './characters.js?v=world-kings-audience-1';
+import {CHARACTER_CATALOG} from './characters.js?v=world-kings-bilateral-1';
 
 export const namedReportSubjects=r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:r.kind==='conspiracy'&&r.value==='suspected'&&typeof r.character==='string'?[r.character]:r.kind?.startsWith('office_')||r.kind==='succession'?[r.value]:[];
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
@@ -35,7 +35,7 @@ function personNameRecords(s,actor,target,id){
  const records=reports.filter(r=>isDeliveredReport(s,r)&&(!Number.isFinite(reportAge(s,r))||reportAge(s,r)>=0)&&namedReportSubjects(r).includes(id)&&validName(r.peopleNames?.[id])).map(r=>({name:r.peopleNames[id],year:r.observationYear??r.year,month:r.observationMonth??r.month}));
  // Only a completed meeting's own observation can supersede a dated report.
  // Legacy reportedName is the name used to address the request, not a new observation.
- for(const m of s.meetings||[])if(m.actor===actor&&m.targetFaction===target&&m.target===id&&isCompletedMeeting(s,m)&&validName(m.observedName))records.push({name:m.observedName,year:m.resolvedYear??m.year,month:m.resolvedMonth??m.month});
+ for(const m of s.meetings||[]){if(!isCompletedMeeting(s,m))continue;const name=m.actor===actor&&m.targetFaction===target&&m.target===id?m.observedName:m.targetFaction===actor&&m.actor===target&&m.person===id?m.observedPersonName:null;if(validName(name))records.push({name,year:m.resolvedYear??m.year,month:m.resolvedMonth??m.month})}
  return records;
 }
 export function reportedPersonName(s,actor,target,id){

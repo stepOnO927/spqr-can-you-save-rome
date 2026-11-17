@@ -1,4 +1,4 @@
-import {LOCAL_DISCOVERY_LEVELS} from '../local-discovery.js?v=world-kings-audience-1';
+import {LOCAL_DISCOVERY_LEVELS} from '../local-discovery.js?v=world-kings-bilateral-1';
 
 const COLORS=['#59666b','#b8a66f','#c7b46c','#7299a6','#78a88b','#a5bf88'];
 

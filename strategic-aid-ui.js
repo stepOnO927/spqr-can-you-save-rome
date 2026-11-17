@@ -1,5 +1,5 @@
-import {sendStrategicOffer,PLAYABLE} from './engine.js?v=world-kings-audience-1';
-import {FACTIONS} from './data.js?v=world-kings-audience-1';
+import {sendStrategicOffer,PLAYABLE} from './engine.js?v=world-kings-bilateral-1';
+import {FACTIONS} from './data.js?v=world-kings-bilateral-1';
 
 const escape=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function renderAidRequest({panel,state,language,recipient=null,refresh}){
