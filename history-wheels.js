@@ -31,6 +31,7 @@ export function chooseAmbition(s,id,options={}){
   w.custom={metric,target,baseline:metric==='regions'?s.regions.filter(r=>r.owner===s.player).length:0};
  }
  if(w.ambition===id&&id!=='custom')return true;
+ if(id==='military')w.militaryBaseline={regions:s.regions.filter(r=>r.owner===s.player).length,wins:(s.battles||[]).filter(b=>(b.attacker?.owner===s.player&&b.attackerWins)||(b.defender?.owner===s.player&&!b.attackerWins)).length};
  const old=w.ambition;w.ambition=id;w.chosenAt={year:s.year,month:s.month};
  w.changes.push({id:`ambition:${w.nextId++}`,from:old,to:id,year:s.year,month:s.month});
  // A change of plans is visible to the court, but does not invent a resource loss.
@@ -38,7 +39,7 @@ export function chooseAmbition(s,id,options={}){
  s.log=s.log.slice(0,80);return true;
 }
 export function ambitionStatus(s){
- const w=initializeWheels(s),f=s.factions[s.player],own=s.regions.filter(r=>r.owner===s.player),forces=s.armies.filter(a=>a.owner===s.player&&a.men>0),atWar=s.wars.some(war=>war.includes(s.player));
+ const w=initializeWheels(s),f=s.factions[s.player],own=s.regions.filter(r=>r.owner===s.player),forces=s.armies.filter(a=>a.owner===s.player&&a.men>0);
  const agreements=(s.agreements||[]).filter(a=>a.status==='active'&&a.parties?.includes(s.player)).length;
  const focus=s.world?.nationalFocus?.[s.player];
  const political=(focus?.completed||[]).filter(id=>focusById(s.player,id)?.branch==='political').length;
@@ -46,8 +47,10 @@ export function ambitionStatus(s){
  const culturalGoal=Math.min(2,(treeFor(s.player)||[]).filter(f=>f.branch==='cultural').length);
  const successor=validSuccessionPlan(s,s.player),successorName=successor?CHARACTER_CATALOG[successor]?.name:null;
  const meanLoyalty=own.length?Math.round(own.reduce((n,r)=>n+r.loyalty,0)/own.length):0;
+ const baseline=w.militaryBaseline||{regions:own.length,wins:0};
+ const gained=Math.max(0,own.length-baseline.regions),won=Math.max(0,(s.battles||[]).filter(b=>(b.attacker?.owner===s.player&&b.attackerWins)||(b.defender?.owner===s.player&&!b.attackerWins)).length-baseline.wins);
  const rows={
-  military:{title:L('Maintain a supplied field army and secure peace or victory','保持有补给的野战军，并争取和平或胜利'),progress:L(`${forces.length} armies · ${f.food} food · ${atWar?'war':'peace'}`,`${forces.length} 支军队 · 粮食 ${f.food} · ${atWar?'交战中':'和平'}`),done:forces.length>0&&f.food>=20&&(!atWar||s.victory)},
+  military:{title:L('Maintain a supplied army and win a battle, gain territory or secure a settlement','保持军队补给，并赢得战斗、取得战区或达成和解'),progress:L(`${forces.length} armies · ${f.food} food · ${won} wins · ${gained} territories gained`,`${forces.length} 支军队 · 粮食 ${f.food} · 胜仗 ${won} · 新增战区 ${gained}`),done:forces.length>0&&f.food>=20&&(won>0||gained>0||!!s.victory||!!s.peacefulVictory)},
   diplomatic:{title:L('Conclude two agreements or establish durable peace','达成两项协定，或建立持久和平'),progress:L(`${agreements}/2 agreements · ${s.world?.peacefulSettlementMonths||0}/12 peace months`,`${agreements}/2 项协定 · 和平 ${s.world?.peacefulSettlementMonths||0}/12 月`),done:agreements>=2||!!s.peacefulVictory},
   economic:{title:L('Hold 100 treasury with loyal provinces','国库达到100，同时维持行省忠诚'),progress:L(`${f.treasury}/100 treasury · ${meanLoyalty}/55 loyalty`,`国库 ${f.treasury}/100 · 忠诚度 ${meanLoyalty}/55`),done:f.treasury>=100&&meanLoyalty>=55},
   reform:{title:L('Complete a political focus and stabilize the government','完成政治方针并稳定政府'),progress:L(`${political}/1 political focus · ${f.stability}/65 stability · ${f.legitimacy}/55 legitimacy`,`政治方针 ${political}/1 · 稳定度 ${f.stability}/65 · 合法性 ${f.legitimacy}/55`),done:political>0&&f.stability>=65&&f.legitimacy>=55},

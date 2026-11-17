@@ -30,6 +30,10 @@ test('national ambitions are selected, measurable and save compatible',()=>{
  const migrated=upgradeSave(JSON.parse(JSON.stringify(old)));
  assert.equal(migrated.factions.caesar.treasury,37);
  assert.deepEqual(migrated.historyWheels.chains,[]);
+ const peaceful=newGame('egypt');
+ chooseAmbition(peaceful,'military');
+ assert.equal(ambitionStatus(peaceful).done,false,'starting at peace is not a military accomplishment');
+ assert.equal(peaceful.historyWheels.militaryBaseline.regions,peaceful.regions.filter(r=>r.owner==='egypt').length);
 });
 
 test('dynastic ambition requires a real eligible successor and a valid designation',()=>{
