@@ -118,7 +118,7 @@ const merchantRouteKey=(origin,destination)=>`${origin}:${destination}`;
 function merchantRouteExperience(person,origin,destination){return Math.max(0,Math.min(3,Number(person?.marketRoutes?.[merchantRouteKey(origin,destination)])||0))}
 
 function availableMerchant(s,buyer,location,destination){
- const markets=s.markets,previous=markets.merchants[buyer]||[],free=previous.filter(id=>{const person=s.world.characters[id];return person?.alive&&person.location===location&&!person.marketReturn&&!markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status))});
+ const markets=s.markets,previous=markets.merchants[buyer]||[],free=previous.filter(id=>{const person=s.world.characters[id];return person?.alive&&person.faction===buyer&&person.location===location&&!person.marketReturn&&!markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status))});
  free.sort((a,b)=>Number(activeMerchantPrivilege(s,b,buyer))-Number(activeMerchantPrivilege(s,a,buyer))||merchantRouteExperience(s.world.characters[b],location,destination)-merchantRouteExperience(s.world.characters[a],location,destination)||(s.world.characters[b].marketReputation||0)-(s.world.characters[a].marketReputation||0));
  return free[0]||null;
 }

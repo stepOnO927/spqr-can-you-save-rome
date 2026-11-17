@@ -12,6 +12,24 @@ const deal=()=>{
 };
 const request={seller:'parthia',buyer:'armenia',origin:'parthia',destination:'armenia',commodity:'horses',quantity:2};
 
+test('a merchant who changes allegiance cannot be dispatched by the old faction after loading',()=>{
+ let s=deal();
+ const first=placeTradeOrder(s,request);assert.equal(first.ok,true,first.reason);
+ const id=first.shipment.merchantId,person=s.world.characters[id];
+ for(let i=0;i<first.quote.months*2;i++){if(++s.month>12){s.month=1;s.year++}advanceMarkets(s)}
+ assert.equal(first.shipment.status,'delivered');
+ assert.equal(person.location,request.origin);
+ person.faction='parthia';
+ s=upgradeSave(structuredClone(s));
+ assert.ok(s.markets.merchants.armenia.includes(id),'the old roster can still reference a defector in a saved game');
+ const quote=quoteTrade(s,request);assert.equal(quote.ok,true,quote.reason);
+ assert.notEqual(quote.merchantId,id);
+ const second=placeTradeOrder(s,request);assert.equal(second.ok,true,second.reason);
+ assert.notEqual(second.shipment.merchantId,id);
+ assert.equal(s.world.characters[second.shipment.merchantId].faction,'armenia');
+ assert.equal(s.world.characters[id].faction,'parthia');
+});
+
 test('a Roman merchant privilege pays the named carrier, persists and expires without repricing cargo',()=>{
  const s=deal(),first=placeTradeOrder(s,request);assert.equal(first.ok,true);
  const id=first.shipment.merchantId,merchant=s.world.characters[id],cash=s.factions.armenia.treasury;

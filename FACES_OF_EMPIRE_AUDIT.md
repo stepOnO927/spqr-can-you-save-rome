@@ -6,6 +6,12 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Roman-network merchant selection now checks current allegiance as well as the
+saved roster. A merchant who changes faction after a completed caravan cannot
+be hired again by the old buyer, even when an older save still lists that ID.
+The regression places a real first and second order across save/load. The
+complete 1,240-test local suite and 120-month Roman/Han market simulation pass.
+
 Breakaway courts now pass their recorded parent faction's naming tradition to
 children. In particular, a Roman civil-war household keeps its paternal family
 name, uses a feminine family form for a daughter, and saves the child's Roman
