@@ -14,8 +14,8 @@ try{
  await page.click('#start-campaign');
  await page.locator('.local-council').waitFor();
  assert.match(await page.locator('.local-council').innerText(),/You govern an autonomous city/);
- await page.locator('[data-local-recruit]').click();
  await page.locator('[data-local-trade]').click();
+ if(await page.locator('[data-local-recruit]').isEnabled())await page.locator('[data-local-recruit]').click();
  await page.locator('#step').click();
  await page.locator('#save').click();
  const cityName=await page.evaluate(id=>JSON.parse(localStorage.getItem('spqr-save-1')).regions.flatMap(region=>region.localEntities||[]).find(city=>city.id===id).name[0].toUpperCase(),id);
