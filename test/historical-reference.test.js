@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {HISTORICAL_DEATHS} from '../historical-reference.js';
+import {HISTORICAL_DEATHS} from '../historical-reference.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 import {newGame} from '../engine.js?v=guardian-wheels-merge-2';
 import {advanceCharacters} from '../character-system.js?v=guardian-wheels-merge-1';

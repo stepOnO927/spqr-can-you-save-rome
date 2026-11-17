@@ -202,7 +202,7 @@ export function focusReportsFor(s,viewer){return (s.world.focusReports?.[viewer]
 // AIs weigh anticipated threats; nobody sees future random events.
 export function scoreFocus(s,actor,f){
  const fac=s.factions[actor],ai=f.ai||{},level=s.difficulty||'standard',personality=s.world.strategicPersonalities?.[actor]?.personality||'survivor';
- const atWar=s.wars.some(w=>w.includes(actor)),now=date(s);
+ const atWar=s.wars.some(w=>w.includes(actor));
  const sightings=Object.values(s.knowledge?.[actor]||{}).flatMap(k=>Object.values(k.sightings||{})).filter(x=>isDeliveredReport(s,x)&&sightingAge(s,x)>=0&&sightingAge(s,x)<=6&&x.owner!==actor);
  const ownRegions=new Set(s.regions.filter(r=>r.owner===actor).map(r=>r.id));
  const near=sightings.filter(x=>ownRegions.has(x.region)||ROUTES.some(([a,b])=>(a===x.region&&ownRegions.has(b))||(b===x.region&&ownRegions.has(a)))).filter(x=>isWar(s,actor,x.owner)||(s.relations[pair(actor,x.owner)]??0)<0).length;

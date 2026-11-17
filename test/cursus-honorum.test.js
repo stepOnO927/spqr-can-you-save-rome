@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=guardian-wheels-merge-2';
 import {appointOffice,officeEffects} from '../office-system.js?v=guardian-wheels-merge-1';
 import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=guardian-wheels-merge-1';
+import {FACTION_NAME_CULTURE,NAME_POOLS} from '../fictional-names.js?v=faces-wheels-1';
 
 // Later contact scenarios need a delivered report; a failed inquiry is retried.
 function reachGovernmentStage(s,target,level,actor=s.player){
@@ -71,6 +72,19 @@ test('dated Parthian office reports, two contact routes and negotiated employmen
  const referred=c.referrals.senate?.[0];assert.ok(referred);assert.equal(s.world.characters[referred].faction,'parthia');
  assert.equal(contactOfficial(s,target,referred,'introduction').ok,true);
  const restored=upgradeSave(structuredClone(s));assert.equal(restored.world.cursus.offers.at(-1).status,'accepted');
+});
+test('a completed recommendation names both persistent people and keeps its reported name after save/load',()=>{
+ let s=newGame('senate');const c=initializeCursus(s),source=c.varroId,target=c.foreignPosts.parthia.administration;
+ const sourceName=[...s.world.dynasties.catalog[source].name],targetName=[...s.world.dynasties.catalog[target].name];
+ c.networks[source]=[target];assert.equal(requestRecommendation(s,source).ok,true);
+ advanceCursus(s);assert.equal(c.recommendations.at(-1).status,'delivered');
+ const message=s.log.find(entry=>entry.en?.includes('professional contact'));
+ assert.ok(message);assert.match(message.en,new RegExp(sourceName[0]));assert.match(message.en,new RegExp(targetName[0]));
+ assert.match(message.zh,new RegExp(sourceName[1]));assert.match(message.zh,new RegExp(targetName[1]));
+ assert.deepEqual(c.referralSources.senate.at(-1).nameSnapshot,targetName);
+ s.world.dynasties.catalog[target].name=['Changed secretly','秘密改名'];s=upgradeSave(structuredClone(s));
+ assert.deepEqual(s.world.cursus.referralSources.senate.at(-1).nameSnapshot,targetName);
+ assert.equal(s.log.find(entry=>entry.en?.includes('professional contact')).en,message.en);
 });
 test('Senate consultation, assembly voting and administration remain separate',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.varroId;
@@ -257,6 +271,21 @@ test('regional talent search costs money, takes time and never repeats freely',(
  const id=c.talentSearches.at(-1).id;assert.equal(s.world.characters[id].faction,'senate');
  assert.equal(c.talents.at(-1).id,id);
  assert.equal(upgradeSave(structuredClone(s)).world.cursus.talents.at(-1).id,id);
+});
+test('regional searches generate persistent talent names from each court’s cultural pool',()=>{
+ for(const [faction,region] of [['senate','roma'],['egypt','egypt'],['parthia','parthia'],['han','hanGuanzhong']]){
+  let s=newGame(faction),c=initializeCursus(s);
+  assert.equal(searchTalent(s,region,'provincial').ok,true);
+  s.world.intelSeed=0;for(let i=0;i<3;i++)advanceCursus(s);
+  const id=c.talentSearches.at(-1).id,profile=s.world.dynasties.catalog[id];
+  assert.equal(c.talentSearches.at(-1).status,'found');
+  assert.deepEqual(profile.culture,NAME_POOLS[FACTION_NAME_CULTURE[faction]].culture);
+  assert.equal(s.world.characters[id].faction,faction);
+  assert.equal(s.world.characters[id].homeland,region);
+  s=upgradeSave(structuredClone(s));
+  assert.deepEqual(s.world.dynasties.catalog[id].name,profile.name);
+  assert.deepEqual(s.world.dynasties.catalog[id].culture,profile.culture);
+ }
 });
 test('limited cooperation and competing offers preserve the official agency',()=>{
  const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;

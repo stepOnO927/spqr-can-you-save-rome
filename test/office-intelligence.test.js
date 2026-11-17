@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
 import {appointOffice,advanceOffices,localGovernor} from '../office-system.js?v=guardian-wheels-merge-1';
 import {addReport,advanceOperations,previewMission,queueMission,reportedHealthSubjects,reportedOfficeTheaters} from '../character-system.js?v=guardian-wheels-merge-1';
-import {identityKnowledge} from '../map-lab/identity-knowledge.js';
+import {identityKnowledge} from '../map-lab/identity-knowledge.js?v=mutual-audience-1';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 function resolve(s){for(let i=0;i<4;i++)advanceOperations(s)}

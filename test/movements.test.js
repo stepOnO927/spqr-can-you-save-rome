@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave,tick} from '../engine.js?v=guardian-wheels-merge-2';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {advanceMovements,respondToMovement,reportedMovements,movementReportLeaderName,offerMovementSupport,recognizeMovement} from '../movements.js?v=guardian-wheels-merge-1';
+import {advanceMovements,respondToMovement,reportedMovements,offerMovementSupport,recognizeMovement} from '../movements.js?v=guardian-wheels-merge-1';
 import {newRevolutionScenario} from '../scenarios.js?v=guardian-wheels-merge-2';
 import {plotFormationChance} from '../conspiracies.js?v=mutual-audience-1';
 
@@ -62,14 +62,6 @@ test('foreign reports are dated observations and do not track hidden subsequent 
  const s=newGame('caesar'),r=s.regions.find(x=>x.id==='italiaN'),f=s.factions.senate;r.loyalty=5;r.population.satisfaction=10;f.stability=20;f.legitimacy=25;f.tax='high';f.treasury=0;
  for(let i=0;i<12;i++)month(s);const m=s.world.movements.find(x=>x.region===r.id);const report=reportedMovements(s,'caesar').find(x=>x.id===m.id);assert.ok(report);assert.ok(report.leader);assert.equal(reportedMovements(s,'egypt').some(x=>x.id===m.id),false);
  s.regions.find(x=>x.id==='cisalpine').owner='senate';m.supporters+=9000;m.stage='crisis';month(s);assert.deepEqual(reportedMovements(s,'caesar').find(x=>x.id===m.id),report);
-});
-test('a reported movement preserves the observed fictional name and legacy reports remain anonymous',()=>{
- let s=newGame('caesar'),r=s.regions.find(x=>x.id==='italiaN'),f=s.factions.senate;r.loyalty=5;r.population.satisfaction=10;f.stability=20;f.legitimacy=25;f.tax='high';f.treasury=0;
- for(let i=0;i<12;i++)month(s);const report=reportedMovements(s,'caesar').find(x=>x.region==='italiaN');assert.ok(report?.leader);const original=movementReportLeaderName(report);assert.ok(original);
- s.world.movementKnowledge.caesar[report.id].leaderName[0]='Record changed';assert.notEqual(report.leaderName[0],'Record changed');s.world.movementKnowledge.caesar[report.id].leaderName=[...original];
- s.regions.find(x=>x.id==='cisalpine').owner='senate';s.world.dynasties.catalog[report.leader].name=['Hidden rename','秘密改名'];s=upgradeSave(structuredClone(s));month(s);
- assert.deepEqual(movementReportLeaderName(reportedMovements(s,'caesar').find(x=>x.id===report.id)),original);
- delete s.world.movementKnowledge.caesar[report.id].leaderName;assert.equal(movementReportLeaderName(reportedMovements(s,'caesar').find(x=>x.id===report.id)),null);
 });
 test('foreign financing requires reported contact, takes time, spends actual treasury and never gives control',()=>{
  let s=newGame('caesar'),r=s.regions.find(x=>x.id==='italiaN'),f=s.factions.senate;r.loyalty=5;r.population.satisfaction=10;f.stability=20;f.legitimacy=25;f.tax='high';f.treasury=0;

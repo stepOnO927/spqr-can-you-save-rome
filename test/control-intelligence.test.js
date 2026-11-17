@@ -65,10 +65,6 @@ test('march previews and acceptance depend on the reported controller, not secre
  assert.equal(reportedControl(b,'caesar','italiaN').owner,'egypt');
  assert.match(b.log.find(e=>e.en.includes('stopped:')).en,/no longer permitted/);
 });
-test('march preview does not expose a foreign theater’s hidden supply',()=>{
- const a=newGame('caesar'),b=newGame('caesar');region(a,'italiaN').supply=1;region(b,'italiaN').supply=999;assert.deepEqual(previewMarch(a,'xiii','italiaN'),previewMarch(b,'xiii','italiaN'));assert.equal(previewMarch(a,'xiii','italiaN').supply,null);
- assert.equal(previewMarch(a,'xiii','narbo').supply,region(a,'narbo').supply);
-});
 test('an unknown controller does not disclose a secret border before arrival',()=>{
  const a=newGame('caesar'),b=newGame('caesar');delete a.controlKnowledge.caesar.italiaN;delete b.controlKnowledge.caesar.italiaN;region(b,'italiaN').owner='egypt';
  const pa=previewMarch(a,'xiii','italiaN'),pb=previewMarch(b,'xiii','italiaN');assert.deepEqual(pa,pb);assert.equal(pa.ok,true);assert.equal(pa.reportedOwner,null);

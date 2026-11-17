@@ -1,10 +1,11 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+const base=process.env.SPQR_TEST_URL||'http://127.0.0.1:5173';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
- await page.goto('http://127.0.0.1:5173/han/',{waitUntil:'domcontentloaded'});await page.locator('#begin').click();
- await page.locator('#han-whatnow').waitFor();assert.match(await page.locator('#campaignTitle').innerText(),/48 BCE/);
+ await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});await page.locator('#begin').click();
+ await page.locator('#han-whatnow').waitFor();assert.match(await page.locator('#campaignTitle').innerText(),/49 BCE/);
  assert.match(await page.locator('.han-experience-summary').innerText(),/1\/8/);
  await page.screenshot({path:'first-command-han-territory.png'});
  await page.locator('[data-han-open="region"]').click();assert.match(await page.locator('.han-experience-summary').innerText(),/1\/8/,'Show me must not complete a lesson');

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
 import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
-import historical from '../historical-territories.js';
+import historical from '../historical-territories.js?v=phase-x-1';
 
 test('eastern theaters share the sourced realm outline without asserting an internal border',()=>{
  const s=newGame();

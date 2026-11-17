@@ -1,11 +1,12 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+const base=process.env.SPQR_TEST_URL||'http://127.0.0.1:5173';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 try{
  for(const side of ['caesar','senate']){
   const page=await browser.newPage({viewport:{width:1366,height:768}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});await page.locator('.setup-panel').waitFor();
-  await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#faction-choice').selectOption(side);await page.locator('#start-campaign').click();
+  await page.goto(base+'/',{waitUntil:'domcontentloaded'});await page.locator('.setup-panel').waitFor();
+  await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#faction-choice').selectOption(side);await page.locator('#start-campaign').click();await page.waitForURL('**/map-lab/');await page.locator('#return-campaign').click();await page.waitForURL(base+'/');
   const guide=page.locator('.experience-lesson');assert.match(await guide.innerText(),/1\/8/);
   assert.equal(await page.locator('#region-choice').isVisible(),true);await page.locator('[data-experience-go="map"]').click();assert.match(await guide.innerText(),/1\/8/);
   await page.screenshot({path:`first-command-${side}-territory.png`});
@@ -27,7 +28,7 @@ try{
   await page.close();
  }
  const training=await browser.newPage({viewport:{width:1366,height:768}});
- await training.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});await training.locator('#start-training').click();
+ await training.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});await training.locator('#start-training').click();
  await training.locator('#training-badge').waitFor({state:'visible'});await training.locator('#save').click();
  assert.ok(await training.evaluate(()=>localStorage.getItem('spqr-training-save-1')));
  await training.locator('#guide-restart').click();await training.locator('#start-game').click();

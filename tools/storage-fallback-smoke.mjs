@@ -10,7 +10,7 @@ async function check(path,start,advance,save,confirmation){
   });
   const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173'+path,{waitUntil:'domcontentloaded',timeout:30000});
+  await page.goto((process.env.SPQR_TEST_URL||'http://127.0.0.1:5173')+path,{waitUntil:'domcontentloaded',timeout:30000});
   const storageNotice=page.locator('#storage-warning');if(await storageNotice.count())await storageNotice.locator('button').click();
   await page.locator(start).click({timeout:15000});
   assert.equal(await page.locator(start).count()===0||await page.locator(start).isHidden(),true,path+' did not start');

@@ -1,19 +1,20 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+const base=process.env.SPQR_TEST_URL||'http://127.0.0.1:5173';
 const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1366,height:768}});
 const errors=[];page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
- await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+ await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const engine=await import('/engine.js?v=guardian-wheels-merge-2');
-  const politics=await import('/cursus-honorum.js?v=guardian-wheels-merge-1');
+  const engine=await import('/engine.js?v=phase-x-1');
+  const politics=await import('/cursus-honorum.js?v=phase-x-1');
   const state=engine.newGame('senate'),c=politics.initializeCursus(state);
   c.talents.push({actor:'senate',id:c.varroId,field:'provincial',regionId:'roma',year:state.year,month:state.month});
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
  });
- await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#factions').click();
  await page.locator('[data-faction="senate"]').click();
  await page.locator('.cursus-talent > summary').click();

@@ -1,0 +1,50 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+
+const base=process.env.SPQR_URL||'http://127.0.0.1:5173';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
+page.on('pageerror',error=>errors.push(error.message));
+try{
+ await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
+ await page.goto(base+'/',{waitUntil:'domcontentloaded'});
+ await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=phase-x-1');
+  const {attachHanWorld}=await import('/han/world.js?v=phase-x-1');
+  const s=newGame('caesar'),w=attachHanWorld(s,{seed:43}),id='eastern-shipment:browser-import';
+  s.regions.find(r=>r.id==='syria').owner='caesar';s.regions.find(r=>r.id==='egypt').owner='senate';s.factions.caesar.treasury=100;
+  w.state.tradeMarkets.shipments.push({id,buyer:'external',seller:'han',destination:'mediterranean_gate',commodity:'silk',quantity:1,price:7,status:'delivered',deliveredAt:s.year*12+s.month});
+  w.state.tradeMarkets.regions.mediterranean_gate.goods.silk.stock++;
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
+ });
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('[data-tab="east"]').click();
+ assert.match(await page.locator('.inspector').innerText(),/Merchant cargo at port/);
+ assert.match(await page.locator('.inspector').innerText(),/Rival court may buy in 3 months/);
+ assert.equal(await page.locator('[data-east-buy="eastern-shipment:browser-import"]').count(),1);
+ assert.equal(await page.locator('.top-stats').innerText().then(x=>x.includes('100')),true);
+ await page.locator('[data-east-import-port]').selectOption('syria');
+ await page.locator('[data-east-buy="eastern-shipment:browser-import"]').click();
+ assert.equal(await page.locator('[data-east-buy="eastern-shipment:browser-import"]').count(),0);
+ assert.match(await page.locator('.inspector').innerText(),/Purchases at your ports/);
+ assert.match(await page.locator('.inspector').innerText(),/Silk.*paid 7 treasury/s);
+ await page.evaluate(()=>document.querySelector('#save').click());
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
+ assert.equal(saved.factions.caesar.treasury,93);
+ assert.equal(saved.world.hanWorld.bridge.settled['eastern-shipment:browser-import'].quantity,1);
+ assert.equal(saved.markets.transactions.filter(x=>x.linkedHanShipment==='eastern-shipment:browser-import').length,1);
+ const stock=saved.markets.regions.syria.goods.silk.stock;
+ await page.reload({waitUntil:'domcontentloaded'});await page.locator('[data-slot="load"]').click();
+ await page.locator('[data-tab="east"]').click();
+ assert.match(await page.locator('.inspector').innerText(),/Purchases at your ports/);
+ assert.equal(await page.locator('[data-east-buy="eastern-shipment:browser-import"]').count(),0);
+ await page.locator('#lang').click();
+ assert.match(await page.locator('.inspector').innerText(),/本方港口购入/);
+ await page.evaluate(()=>document.querySelector('#save').click());
+ const loaded=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
+ assert.equal(loaded.factions.caesar.treasury,93);
+ assert.equal(loaded.markets.regions.syria.goods.silk.stock,stock);
+ assert.equal(loaded.markets.transactions.filter(x=>x.linkedHanShipment==='eastern-shipment:browser-import').length,1);
+ assert.deepEqual(errors,[]);
+ console.log('Roman eastern import browser smoke passed: explicit purchase, receipt, bilingual panel and save/load without duplicate payment.');
+}finally{await browser.close()}

@@ -8,8 +8,9 @@ try{
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
   await page.locator('.setup-panel').waitFor();
-  await page.locator('.setup-advanced').evaluate(el=>el.open=true);
   await page.locator('#faction-choice').selectOption(side);
+  await page.locator('.setup-advanced summary').click();
+  await page.locator('#campaign-guide').uncheck();
   await page.locator('#start-campaign').click();
   await page.locator('#campaign-progress').click();
   assert.equal(await page.locator('[data-ambition="economic"]').isVisible(),true);
@@ -26,7 +27,7 @@ try{
     const unit=s.armies.find(a=>a.id==='viii'),officer=s.world.characters.antony;
     unit.characterId='antony';officer.location=unit.region;officer.battlesCommanded=2;officer.loyalty=35;
     s.month++;
-    const {advanceWheels}=await import('/history-wheels.js?v=guardian-wheels-merge-2');
+    const {advanceWheels}=await import('/history-wheels.js?v=phase-x-1');
     advanceWheels(s);
     const chain=s.historyWheels.chains.find(c=>c.type==='commander_petition');
     const letter=s.mail.messages.find(m=>m.id===chain.letterId);

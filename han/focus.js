@@ -158,7 +158,10 @@ const avgOasis=s=>OASIS.reduce((a,o)=>a+(s.protectorate.oasis[o]?.han||0),0)/OAS
 const emperorAuth=s=>s.throne.orthodox?50:0;
 export function aiChooseFocus(s,f){
  const st=focusState(s,f);if(st.current)return null;
- const avail=treeFor(f).filter(x=>focusStatus(s,f,x.id)==='available').sort((a,b)=>score(s,f,b)-score(s,f,a));
+ // A small court cannot spend its last caravan and garrison funds on a
+ // nonessential programme. Reconsider the focus when revenue recovers.
+ const reserve=OASIS.includes(f)?10:0;
+ const avail=treeFor(f).filter(x=>focusStatus(s,f,x.id)==='available'&&s.factions[f].treasury-(x.cost.treasury||0)>=reserve).sort((a,b)=>score(s,f,b)-score(s,f,a));
  const pick=avail[0];if(pick&&startFocus(s,f,pick.id).ok)return pick.id;return null;
 }
 export function advanceFocus(s){

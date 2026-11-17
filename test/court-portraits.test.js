@@ -34,6 +34,15 @@ test('legacy migration requires documented origin, and artwork is never reused',
  let [other,unknown]=nominee('numidia');delete other.world.dynasties.courtPortraitClaims;delete other.world.dynasties.courtPortraitPoolVersion;delete other.world.dynasties.lives[unknown];advanceDynasties(other);assert.equal(fictionalPortraitKey(other,unknown),null);
 });
 
+test('older saved court nominee names retain their assigned artwork',()=>{
+ let s=newGame('caesar');
+ const id=createFictionalPerson(s,{name:['Fictional Armenian court nominee 1','虚构亚美尼亚宫廷人选1'],faction:'armenia',birthYear:-84,location:'armenia',origin:'court_nominee'});
+ assert.equal(fictionalPortraitKey(s,id),'fictional-court-armenia');
+ s=upgradeSave(structuredClone(s));
+ assert.equal(fictionalPortraitKey(s,id),'fictional-court-armenia');
+ assert.deepEqual(s.world.dynasties.catalog[id].name,['Fictional Armenian court nominee 1','虚构亚美尼亚宫廷人选1']);
+});
+
 test('a real accepted personal meeting records the portrait only after resolution',()=>{
  const [s,id]=nominee('armenia');addReport(s,'caesar','armenia',{kind:'leaders',leaders:[id],source:'spy',confidence:'unverified'});
  s.world.characters.caesar.location='armenia';s.world.intelSeed=1000;

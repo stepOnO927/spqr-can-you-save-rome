@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,region} from '../engine.js?v=guardian-wheels-merge-2';
 import {reportedArmies} from '../character-system.js?v=guardian-wheels-merge-1';
-import {estimateAttackLosses} from '../attack-forecast.js?v=mutual-audience-1';
+import {estimateAttackLosses} from '../attack-forecast.js';
 
 test('dated observations reveal a broad strength band but no exact enemy count',()=>{
  const s=newGame('caesar'),report=reportedArmies(s,'caesar').find(x=>x.region==='italiaN'),actual=s.armies.find(x=>x.id===report.id);
