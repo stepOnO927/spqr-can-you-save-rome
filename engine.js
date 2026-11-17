@@ -38,7 +38,7 @@ import {offerPoliticalContact,advancePoliticalContacts} from './political-contac
 import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=missing-fate-privacy-1';
 import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=missing-fate-privacy-1';
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
-import {initializeWheels,advanceWheels} from './history-wheels.js?v=missing-fate-privacy-1';
+import {initializeWheels,advanceWheels} from './history-wheels.js?v=economic-project-1';
 export {queueMission};
 export {personalDiplomaticCredit};
 export {replyToLetter};
