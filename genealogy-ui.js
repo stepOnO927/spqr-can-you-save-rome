@@ -1,11 +1,11 @@
-import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=reported-contact-1';
+import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=mutual-audience-1';
 import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=succession-ui-recovery-1';
-import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=reported-contact-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=reported-contact-1';
+import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=mutual-audience-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=mutual-audience-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=born-portraits-nine-1';
-import {visiblePersonName} from './character-system.js?v=reported-contact-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=audience-silence-1';
+import {fictionalPortraitKey} from './portrait-registry.js?v=mutual-audience-1';
+import {visiblePersonName} from './character-system.js?v=mutual-audience-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=mutual-audience-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);
