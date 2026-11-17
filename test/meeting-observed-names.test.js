@@ -3,7 +3,7 @@ import {newGame,upgradeSave} from '../engine.js?v=mutual-audience-1';
 import {createFictionalPerson} from '../dynasties.js?v=mutual-audience-1';
 import {addReport,reportedHealthSubjects} from '../character-system.js?v=mutual-audience-1';
 import {identityKnowledge} from '../map-lab/identity-knowledge.js';
-import {observedFictionalPortrait} from '../portrait-registry.js?v=mutual-audience-1';
+import {observedFictionalPortrait,observedProceduralPortrait,proceduralPortraitSvg} from '../portrait-registry.js?v=mutual-audience-1';
 import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=mutual-audience-1';
 import {reportedPersonName,visiblePersonName} from '../person-knowledge.js?v=mutual-audience-1';
 test('an actual meeting observes a new name while preserving the earlier addressed name',()=>{
@@ -32,4 +32,19 @@ test('the receiving faction records its own dated encounter with the visitor',()
 test('receiving-side snapshots require a delivered meeting',()=>{
  const s=newGame('senate'),id='fictional:1';s.meetings.push({actor:'caesar',targetFaction:'senate',person:id,target:'cicero',status:'met',resolvedYear:s.year+1,resolvedMonth:s.month,observedPersonName:['Future','未来姓名'],personPortraitKey:'fictional-varenus'});
  assert.notDeepEqual(visiblePersonName(s,'senate',id),['Future','未来姓名']);assert.equal(observedFictionalPortrait(s,id),null);assert.notEqual(identityKnowledge(s,id).kind,'met');
+});
+test('receiving court keeps a generated visitor portrait from the meeting snapshot',()=>{
+ let s=newGame('caesar');s.wars=[];
+ const visitor=createFictionalPerson(s,{name:['Roman envoy','罗马使者'],faction:'caesar',birthYear:-80,location:'egypt'});
+ const host=createFictionalPerson(s,{name:['Egyptian host','埃及接待者'],faction:'egypt',birthYear:-75,location:'egypt'});
+ addReport(s,'caesar','egypt',{kind:'leaders',leaders:[host],source:'spy'});
+ assert.ok(requestPersonalMeeting(s,visitor,host,'egypt').ok);
+ s.world.intelSeed=1000;s.month=2;advancePersonalDiplomacy(s);s.month=3;advancePersonalDiplomacy(s);
+ const meeting=s.meetings[0];assert.equal(meeting.status,'met');assert.equal(meeting.personPortraitKey,undefined);assert.ok(Number.isInteger(meeting.personPortraitSeed));
+ s.player='egypt';s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ const snapshot=observedProceduralPortrait(s,visitor);assert.equal(snapshot.portraitSeed,meeting.personPortraitSeed);
+ const portrait=proceduralPortraitSvg(s,visitor,snapshot);assert.match(portrait,/portrait-procedural/);
+ s.world.characters[visitor].faction='parthia';s.world.dynasties.catalog[visitor].name=['Hidden rename','秘密改名'];
+ assert.equal(proceduralPortraitSvg(s,visitor,observedProceduralPortrait(s,visitor)),portrait);
+ s.player='senate';assert.equal(observedProceduralPortrait(s,visitor),null);
 });

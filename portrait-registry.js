@@ -175,7 +175,11 @@ export function proceduralPortraitSvg(state,id,snapshot=null){
 }
 export function observedProceduralPortrait(state,id){
  const now=state.year*12+state.month;
- return (state.meetings||[]).filter(m=>m.actor===state.player&&m.target===id&&m.status==='met'&&Number.isInteger(m.portraitSeed)&&typeof m.portraitFaction==='string'&&Number.isFinite(m.resolvedYear??m.year)&&Number.isFinite(m.resolvedMonth??m.month)&&(m.resolvedYear??m.year)*12+(m.resolvedMonth??m.month)<=now).sort((a,b)=>((b.resolvedYear??b.year)*12+(b.resolvedMonth??b.month))-((a.resolvedYear??a.year)*12+(a.resolvedMonth??a.month)))[0]||null;
+ return (state.meetings||[]).map(m=>{
+  if(m.actor===state.player&&m.target===id)return m;
+  if(m.targetFaction===state.player&&m.person===id)return {...m,portraitSeed:m.personPortraitSeed,portraitFaction:m.personPortraitFaction,portraitStation:m.personPortraitStation};
+  return null;
+ }).filter(m=>m?.status==='met'&&Number.isInteger(m.portraitSeed)&&typeof m.portraitFaction==='string'&&Number.isFinite(m.resolvedYear??m.year)&&Number.isInteger(m.resolvedMonth??m.month)&&(m.resolvedMonth??m.month)>=1&&(m.resolvedMonth??m.month)<=12&&(m.resolvedYear??m.year)*12+(m.resolvedMonth??m.month)<=now).sort((a,b)=>((b.resolvedYear??b.year)*12+(b.resolvedMonth??b.month))-((a.resolvedYear??a.year)*12+(a.resolvedMonth??a.month)))[0]||null;
 }
 export function fictionalPortraitKey(state,id){
  const entry=OPENING_PORTRAITS[id],person=state.world?.characters?.[id],saved=state.world?.dynasties?.catalog?.[id];
