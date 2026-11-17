@@ -31,3 +31,13 @@ test('a pending wardship cannot become active if its child’s age is no longer 
   assert.equal(s.world.dynasties.familyAccords[0].status,'no_reply');assert.equal(s.world.characters[child].diplomaticGuardian,undefined);
  }
 });
+
+test('guardianship ends at the age threshold or when its guardian becomes unavailable',()=>{
+ for(const change of [s=>s.year+=8,s=>s.world.characters.antony.alive=false,s=>s.world.characters.antony.missing=true,s=>s.world.characters.antony.faction='senate']){
+  let s=newGame('caesar'),child=createFictionalPerson(s,{name:['Ward','受监护子女'],faction:'caesar',birthYear:s.year-8,parents:['caesar']});assert.ok(nominateGuardian(s,'caesar',child,'antony').ok);s.world.characters.caesar.alive=false;settleInheritance(s,'caesar');assert.equal(s.world.characters[child].guardian,'antony');
+  s=upgradeSave(structuredClone(s));change(s);advanceDynasties(s);assert.equal(s.world.characters[child].guardian,undefined);const count=s.world.dynasties.lives[child].length;advanceDynasties(s);assert.equal(s.world.dynasties.lives[child].length,count);
+ }
+});
+test('an unknown ward age does not prove an existing guardianship has ended',()=>{
+ let s=newGame('caesar'),child=createFictionalPerson(s,{name:['Ward','子女'],faction:'caesar',birthYear:s.year-8,parents:['caesar']});assert.ok(nominateGuardian(s,'caesar',child,'antony').ok);s.world.characters.caesar.alive=false;settleInheritance(s,'caesar');s.world.characters[child].birthYear=null;s.world.dynasties.catalog[child].birth=null;s=upgradeSave(structuredClone(s));advanceDynasties(s);assert.equal(s.world.characters[child].guardian,'antony');
+});

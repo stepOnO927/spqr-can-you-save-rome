@@ -6,6 +6,17 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `ee5444dd` is integrated, including the guardianship lifecycle
+and updated standard Caesar AI risk handling. The genealogy controls now offer
+the guardian filter, status explanation, and nominee selection from main while
+retaining the expansion's character and dynasty views. Browser module imports
+in scripts and smoke tools use the same cache version as the campaign.
+The module-version check, 120-month Roman/Han market simulation, and long
+campaign scenario script pass locally. The full suite passes 1,249/1,250 on
+this Windows host; the sole failure is the existing 40 ms NPC-East monthly CPU
+benchmark (54.04 ms in this run); its isolated nine-case file passes 9/9.
+GitHub quality and browser jobs are the remaining gates for this integration.
+
 Main through `82bd70a9` is integrated, including player-known coalition
 history and the new national-ambition/causal-campaign system. The Roman and
 Han experience panels retain their expansion controls while exposing the new
