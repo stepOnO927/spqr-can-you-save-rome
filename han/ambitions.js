@@ -1,0 +1,46 @@
+// Han ambitions are goals over the existing court, frontier, silk and focus
+// systems. They do not alter the Liu succession rules or simulate new effects.
+import {isLiuClan} from './dynasty.js?v=han-1';
+
+const L=(en,zh)=>[en,zh];
+export const AMBITIONS={
+ frontier:L('Secure the frontier','巩固边疆'),
+ diplomacy:L('Western Regions diplomacy','西域外交'),
+ prosperity:L('Agriculture and prosperity','农桑富国'),
+ reform:L('Court reform','朝政改革'),
+ dynasty:L('Liu dynastic continuity','刘氏国祚'),
+ culture:L('Cultural golden age','文明盛世'),
+ independence:L('Preserve independence','维护独立'),
+ custom:L('Custom objective','自定义国家目标')
+};
+export function available(s){return s.player==='han'?['frontier','diplomacy','prosperity','reform','dynasty','culture','custom']:['independence','diplomacy','prosperity','frontier','custom']}
+export function initialize(s){s.nationalAmbition||={id:'',chosenAt:null,changes:[],custom:null};return s.nationalAmbition}
+export function choose(s,id,options={}){
+ if(!available(s).includes(id))return false;
+ const a=initialize(s),old=a.id;
+ if(id==='custom'){
+  const metric=options.metric||'treasury',target=Number(options.target)||100;
+  if(!({treasury:s.player==='han'?[700,900,1200]:[50,100,200],stability:[60,70,80],regions:[1,2,3]}[metric]||[]).includes(target))return false;
+  a.custom={metric,target,baseline:s.regions.filter(r=>r.owner===s.player).length};
+ }
+ if(old===id&&id!=='custom')return true;
+ a.id=id;a.chosenAt={year:s.year,month:s.month};a.changes.push({from:old,to:id,year:s.year,month:s.month});
+ return true;
+}
+export function status(s){
+ const a=initialize(s);if(!a.id)return null;
+ const f=s.factions[s.player],regions=s.regions.filter(r=>r.owner===s.player),forces=s.armies.filter(x=>x.owner===s.player&&x.men>0),focus=s.focus?.[s.player],done=focus?.done?.length||0;
+ const agreements=(s.treaties||[]).filter(t=>t.status!=='ended'&&t.parties?.includes(s.player)).length,wealth=s.player==='han'?800:100,grainGoal=s.player==='han'?600:100;
+ const orthodox=s.player==='han'&&!!s.throne?.orthodox&&isLiuClan(s,s.throne.orthodox);
+ const rows={
+  frontier:{title:L('Keep a supplied frontier force','保持有补给的边疆军队'),progress:L(`${forces.filter(x=>(x.supply??60)>=50).length}/${forces.length} supplied armies · ${f.grain} grain`,`补给合格军队 ${forces.filter(x=>(x.supply??60)>=50).length}/${forces.length} · 粮食 ${f.grain}`),done:forces.length>0&&forces.every(x=>(x.supply??60)>=50)&&f.grain>=20},
+  diplomacy:{title:L('Maintain two active agreements','维持两项有效协定'),progress:L(`${agreements}/2 agreements`,`协定 ${agreements}/2`),done:agreements>=2},
+  prosperity:{title:L('Build a funded and well-provisioned state','建立充裕的国库与粮储'),progress:L(`${f.treasury}/${wealth} treasury · ${f.grain}/${grainGoal} grain`,`国库 ${f.treasury}/${wealth} · 粮储 ${f.grain}/${grainGoal}`),done:f.treasury>=wealth&&f.grain>=grainGoal},
+  reform:{title:L('Complete a national focus and stabilize the court','完成国家方针并稳定朝廷'),progress:L(`${done}/1 focus · ${f.stability}/65 stability`,`方针 ${done}/1 · 稳定度 ${f.stability}/65`),done:done>=1&&f.stability>=65},
+  dynasty:{title:L('Preserve an orthodox Liu emperor and stable court','维护刘氏正统与稳定朝廷'),progress:L(`${orthodox?'Liu emperor':'orthodoxy disputed'} · ${f.stability}/65 stability`,`${orthodox?'刘氏皇帝在位':'正统存疑'} · 稳定度 ${f.stability}/65`),done:orthodox&&f.stability>=65},
+  culture:{title:L('Complete two national focuses','完成两项国家方针'),progress:L(`${done}/2 focuses`,`方针 ${done}/2`),done:done>=2},
+  independence:{title:L('Remain independent with a stable government','保持独立与稳定政府'),progress:L(`${regions.length} regions · ${f.stability}/60 stability`,`${regions.length} 个地区 · 稳定度 ${f.stability}/60`),done:regions.length>0&&f.stability>=60&&!(s.finalized?.defeat)},
+  custom:(()=>{const c=a.custom||{metric:'treasury',target:100,baseline:0},value=c.metric==='treasury'?f.treasury:c.metric==='stability'?f.stability:regions.length-c.baseline,unit=c.metric==='treasury'?L('treasury','国库'):c.metric==='stability'?L('stability','稳定度'):L('additional regions','新增地区');return {title:L(`Reach ${c.target} ${unit[0]}`,`达到 ${c.target} ${unit[1]}`),progress:L(`${value}/${c.target} ${unit[0]}`,`${value}/${c.target} ${unit[1]}`),done:value>=c.target}})()
+ };
+ return {id:a.id,...rows[a.id]};
+}

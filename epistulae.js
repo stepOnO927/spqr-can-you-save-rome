@@ -159,7 +159,19 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     return {ok:true,open:choice==='war_council'?'military':choice==='review_budget'?'government':m.context?.region};
   }
   let ok = true,selectedRepresentative=null;
-  if (m.context?.kind === 'strategic_offer') {
+  if (m.context?.kind === 'wheels_finance') {
+    const chain=s.historyWheels?.chains?.find(c=>c.id===m.context.chainId&&c.status==='active');
+    if(!chain)return {ok:false,reason:'changed_state'};
+    const beforeTax=s.factions[s.player].tax;
+    if(choice==='finance_high_tax'||choice==='finance_low_tax'){
+      const level=choice==='finance_high_tax'?'high':'low';
+      if(s.factions[s.player].tax===level)return {ok:false,reason:'already_policy'};
+      if(!actions.setTax?.(s,s.player,level))return {ok:false,reason:'conditions'};
+    }
+    ok=actions.financeDecision?.(s,chain.id,choice,beforeTax)===true;
+  } else if (m.context?.kind === 'wheels_commander') {
+    ok=actions.commanderDecision?.(s,m.context.chainId,choice)===true;
+  } else if (m.context?.kind === 'strategic_offer') {
     ok = actions.answerStrategicOffer?.(s,m.context.offerId,choice).ok === true;
   } else if (m.context?.kind === 'agent_release_request') {
     const request=(s.releaseRequests||[]).find(r=>r.mailId===m.id&&r.holder===s.player&&r.status==='awaiting_decision');
