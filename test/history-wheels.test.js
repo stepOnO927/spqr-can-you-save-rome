@@ -4,7 +4,7 @@ import {newGame,upgradeSave,forecastEconomy,setTax,tick,estimatedStrength} from 
 import {receivedMail,replyToLetter,syncCoalitionLetters} from '../epistulae.js';
 import {AMBITIONS,availableAmbitions,chooseAmbition,ambitionStatus,advanceWheels,financeDecision,commanderDecision} from '../history-wheels.js';
 import {newHanGame,tick as hanTick,serialize,loadHanSave} from '../han/engine.js';
-import {available as hanAvailable,choose as hanChoose,status as hanStatus} from '../han/ambitions.js';
+import {available as hanAvailable,choose as hanChoose,status as hanStatus,advance as advanceHanAmbition} from '../han/ambitions.js';
 import {finalizeCampaign} from '../legacy.js';
 import {planSuccession} from '../governance.js';
 import {sendCoalitionInvitation,advanceCoalitionInvitations,answerCoalitionInvitation} from '../coalition-negotiations.js';
@@ -165,4 +165,32 @@ test('diplomatic history follows the existing courier, independent replies and p
  assert.equal(restored.historyWheels.chains.find(c=>c.id===chain.id).coalitionId,chain.coalitionId);
  restored.victory=true;
  assert.ok(finalizeCampaign(restored).archive.causalChains.some(c=>c.id===chain.id&&c.factions.includes('egypt')));
+});
+
+test('Han continuity ambitions need an unbroken record and preserve older milestones',()=>{
+ const step=s=>{s.month++;if(s.month>12){s.month=1;s.year++}advanceHanAmbition(s)};
+ const han=newHanGame('han',{seed:91});
+ assert.equal(hanChoose(han,'dynasty'),true);han.factions.han.stability=80;
+ assert.equal(hanStatus(han).done,false);
+ const chosen={...han.nationalAmbition.chosenAt};
+ assert.equal(hanChoose(han,'dynasty'),true);
+ assert.deepEqual(han.nationalAmbition.chosenAt,chosen,'reselecting a goal must not restart its clock');
+ for(let i=0;i<5;i++)step(han);
+ han.factions.han.stability=20;step(han);
+ assert.match(hanStatus(han).progress[0],/0\/36 months/);
+ han.factions.han.stability=80;
+ for(let i=0;i<35;i++)step(han);
+ assert.equal(hanStatus(han).done,false);
+ step(han);assert.equal(hanStatus(han).done,true);
+ const restored=loadHanSave(serialize(han));
+ assert.equal(hanStatus(restored).done,true);
+ const oasis=newHanGame('shanshan',{seed:91});
+ hanChoose(oasis,'independence');oasis.factions.shanshan.stability=80;
+ assert.equal(hanStatus(oasis).done,false);
+ for(let i=0;i<24;i++)step(oasis);
+ assert.equal(hanStatus(oasis).done,true);
+ const legacy=newHanGame('shanshan',{seed:91});
+ hanChoose(legacy,'independence');delete legacy.nationalAmbition.version;
+ legacy.experience||={};legacy.experience.milestones=[{id:'ambition:independence'}];
+ assert.equal(hanStatus(legacy).done,true,'older earned milestones must remain earned');
 });

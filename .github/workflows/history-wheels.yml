@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - 'history-wheels.js'
+      - 'engine.js'
+      - 'strategic-planning.js'
+      - 'legion-designer.js'
       - 'han/ambitions.js'
       - 'experience-ui.js'
       - 'han/experience-ui.js'

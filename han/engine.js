@@ -12,7 +12,7 @@ import {initSilk,advanceSilk} from './silk-road.js?v=world-kings-guardian-1';
 import {advanceFocus,focusState} from './focus.js?v=world-kings-guardian-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf,recruit,recruitQuote,neighbours} from './military.js?v=world-kings-guardian-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=world-kings-guardian-1';
-import {initialize as initializeAmbition} from './ambitions.js?v=world-kings-guardian-1';
+import {initialize as initializeAmbition,advance as advanceAmbition} from './ambitions.js?v=world-kings-guardian-1';
 
 export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
 export const SCENARIOS={
@@ -303,6 +303,7 @@ export function tick(s){
  if(s.throne.dynasty&&!s.throne.dynasty.orthodox)s.usurperMonths=(s.usurperMonths||0)+1;
  if(s.throne.orthodox&&s.throne.dynasty?.orthodox)s.orthodoxMonths=(s.orthodoxMonths||0)+1;
  if(!s.wars.length)s.peaceMonths=(s.peaceMonths||0)+1;else s.peaceMonths=0;
+ advanceAmbition(s);
  return s;
 }
 
