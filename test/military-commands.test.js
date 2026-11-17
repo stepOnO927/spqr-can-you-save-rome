@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,issueMilitaryOrder,tick,region,resolveBattle} from '../engine.js?v=guardian-wheels-merge-2';
+import {newGame,issueMilitaryOrder,tick,region,resolveBattle} from '../engine.js?v=missing-fate-privacy-1';
 
 for(const side of ['caesar','senate'])test(`${side} commands survive a march, combat, and second order`,()=>{
  const s=newGame(side),unit=s.armies.find(a=>a.owner===side),enemy=side==='caesar'?'italiaN':'cisalpine';

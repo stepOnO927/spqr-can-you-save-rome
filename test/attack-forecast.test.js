@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region} from '../engine.js?v=guardian-wheels-merge-2';
-import {reportedArmies} from '../character-system.js?v=guardian-wheels-merge-1';
+import {newGame,region} from '../engine.js?v=missing-fate-privacy-1';
+import {reportedArmies} from '../character-system.js?v=missing-fate-privacy-1';
 import {estimateAttackLosses} from '../attack-forecast.js?v=mutual-audience-1';
 
 test('dated observations reveal a broad strength band but no exact enemy count',()=>{

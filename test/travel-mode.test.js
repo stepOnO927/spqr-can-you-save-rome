@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
-import {configureStartingDifficulty} from '../difficulty.js?v=guardian-wheels-merge-1';
-import {OFFICE_TYPES,canHoldOffice,localGovernor} from '../office-system.js?v=guardian-wheels-merge-1';
+import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=missing-fate-privacy-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=missing-fate-privacy-1';
+import {OFFICE_TYPES,canHoldOffice,localGovernor} from '../office-system.js?v=missing-fate-privacy-1';
 import {featherAdvice} from '../feather.js?v=travel-1';
 
 for(const faction of ['caesar','senate'])test(`Travel opens a staffed, well supplied ${faction} campaign and survives saving`,()=>{
