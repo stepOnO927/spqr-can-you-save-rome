@@ -1,4 +1,4 @@
-import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=guardian-wheels-merge-2';
+import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=guardian-wheels-merge-3';
 import {AMBITIONS,availableAmbitions,ambitionStatus,chooseAmbition,initializeWheels} from './history-wheels.js?v=guardian-wheels-merge-3';
 
 let open='';
