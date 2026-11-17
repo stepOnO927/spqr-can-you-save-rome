@@ -1,4 +1,4 @@
-import {isDeliveredReport} from './person-knowledge.js?v=mutual-audience-1';
+import {namedReportSubjects,reportedPersonalContacts,isDeliveredReport,isCompletedMeeting} from './person-knowledge.js?v=mutual-audience-1';
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=mutual-audience-1';
 import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=mutual-audience-1';
 import {generateFictionalName} from './fictional-names.js?v=mutual-audience-1';
@@ -11,7 +11,6 @@ import {canHoldOffice,localGovernor} from './office-system.js?v=mutual-audience-
 import {activeAgreement} from './agreements.js?v=mutual-audience-1';
 import {activeModifiers} from './inventions.js?v=mutual-audience-1';
 import {registerMissionPersonnel} from './epistulae-personnel.js?v=mutual-audience-1';
-import {namedReportSubjects,reportedPersonalContacts} from './person-knowledge.js?v=mutual-audience-1';
 export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=mutual-audience-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
@@ -159,8 +158,9 @@ export function reportedHealthSubjects(s,actor,target){
  initializeWorld(s);const knowledge=s.knowledge[actor]?.[target],reports=knowledge?.reports||[];
  // A later partial roster is not evidence that names in earlier reports vanished.
  // Preserve these as investigable leads only, not as current rulers or verified identities.
+ const meetings=(s.meetings||[]).filter(m=>isCompletedMeeting(s,m)&&((m.actor===actor&&m.targetFaction===target)||(m.targetFaction===actor&&m.actor===target))).map(m=>m.actor===actor?m.target:m.person);
  const leads=reports.filter(r=>isDeliveredReport(s,r)).flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['health','age','location','conspiracy'].includes(r.kind)?[r.character]:r.kind.startsWith('office_')?[r.value]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:[]);
- return [...new Set([...(knowledge?.reportedLeaders||[]),...reportedClaimants(s,actor,target),...Object.values(knowledge?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...leads].filter(id=>CHARACTER_CATALOG[id]))];
+ return [...new Set([...(knowledge?.reportedLeaders||[]),...reportedClaimants(s,actor,target),...Object.values(knowledge?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...leads,...meetings].filter(id=>CHARACTER_CATALOG[id]))];
 }
 export function claimantRepresentatives(s,actor,claimant){
  initializeWorld(s);const contacts=reportedPersonalContacts(s,actor,claimant);return Object.values(s.world.characters).filter(c=>c.faction===actor&&c.alive&&!c.missing&&!['seriously_ill','dying','deceased'].includes(c.health)&&CHARACTER_CATALOG[c.id]&&(contacts.get(c.id)?.credit||0)>0).map(c=>c.id);
