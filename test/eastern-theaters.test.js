@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=born-portraits-eleven-1';
+import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
 import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
 import historical from '../historical-territories.js';
 

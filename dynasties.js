@@ -272,7 +272,7 @@ export function nominateGuardian(s,parentId,childId,guardianId){
 function activateGuardianships(s,id){
  const parent=s.world.characters[id];for(const childId of parent.children){
   const child=s.world.characters[childId],guardian=s.world.characters[child?.guardianNominee];
-  if(!child?.alive||!isKnownMinor(s,childId)||!guardian?.alive||guardian.missing||guardian.faction!==child.faction)continue;
+  if(!child?.alive||!isKnownMinor(s,childId)||!eligibleAdult(s,guardian?.id)||guardian.faction!==child.faction)continue;
   if([...child.parents,...child.adoptiveParents].some(pid=>pid!==id&&eligibleAdult(s,pid)))continue;
   child.guardian=guardian.id;record(s,childId,`${CHARACTER_CATALOG[guardian.id].name[0]} became guardian; no political office was inherited.`,`${CHARACTER_CATALOG[guardian.id].name[1]}成为监护人；没有继承政治职务。`);
  }
@@ -346,8 +346,16 @@ export function requestFamilyResources(s,familyId,choice){
  return {ok:true,amount};
 }
 
+// Unknown ages do not prove an existing ward has aged out.
+function reconcileGuardianships(s){
+ for(const child of Object.values(s.world.characters)){
+  if(!child.guardian&&!child.guardianNominee)continue;const age=eligibilityAgeRange(s,child.id),agedOut=!!age&&age[0]>=16;
+  if(!child.alive||agedOut){if(child.guardian&&child.alive)record(s,child.id,'The simulated guardianship ended when the ward reached the age threshold.','达到模拟年龄门槛，监护安排已结束。');delete child.guardian;delete child.guardianNominee;continue}
+  const guardian=s.world.characters[child.guardian];if(child.guardian&&(!eligibleAdult(s,guardian?.id)||guardian.faction!==child.faction)){delete child.guardian;record(s,child.id,'The simulated guardianship ended or is no longer available.','模拟监护安排已结束或不再可用。')}
+ }
+}
 export function advanceDynasties(s){
- const d=initializeDynasties(s);
+ const d=initializeDynasties(s);reconcileGuardianships(s);
  // Old saves keep their existing identities. Allocate only to identifiable
  // campaign-born children with a recorded birth and known parents, once.
  if((d.bornPortraitPoolVersion||0)<7){d.bornPortraitClaims||={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id);d.bornPortraitPoolVersion=7}

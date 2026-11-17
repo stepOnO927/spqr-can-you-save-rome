@@ -12,7 +12,7 @@ import {initSilk,advanceSilk} from './silk-road.js?v=han-1';
 import {advanceFocus,focusState} from './focus.js?v=han-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf,recruit,recruitQuote,neighbours} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
-import {initialize as initializeAmbition} from './ambitions.js?v=wheels-1';
+import {initialize as initializeAmbition} from './ambitions.js?v=guardian-wheels-merge-1';
 
 export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
 export const SCENARIOS={

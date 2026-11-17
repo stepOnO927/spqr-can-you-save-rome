@@ -47,6 +47,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Discounted intelligence missions | Factions → Letters & Intelligence / own faction → Internal Security | `tools/mission-discount-smoke.mjs` checks displayed costs, actual payment, insufficient funds, pending time and save/load for spy and counterintelligence |
 | Spying and administrative appointments | Factions → foreign intelligence or own faction | `tools/systems-smoke.mjs` |
 | Character travel, health and succession information | Factions → character | `tools/browser-smoke.mjs` |
+| Family guardian nominations | Campaign → government → family tree → guardianship | `tools/guardianship-playability-smoke.mjs` checks selection, exclusion of a foreign child, visible nomination, save/load, a simulated parent death, activation and age-based expiry. Unit tests cover missing or deceased guardians and uncertain ages. |
 | Illness, acting authority and actual succession | Factions → own faction → succession and acting authority | `tools/health-succession-smoke.mjs` uses a dying-leader fixture, designates and appoints a deputy, saves/loads, then checks simulated death, successor and chronicle |
 | City authority and local administration | Terrain map → city → manage theater | `tools/browser-smoke.mjs` |
 | Population satisfaction map | Terrain map → map mode → population satisfaction | `tools/satisfaction-map-smoke.mjs` checks owned values, a real policy change, privacy, visible map redraw and save/load; shared outlines summarize owned theaters only |

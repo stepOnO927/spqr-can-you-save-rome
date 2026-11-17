@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-eleven-1';
-import {createFictionalPerson} from '../dynasties.js?v=born-portraits-eleven-1';
-import {chronicleCharacterName} from '../map-lab/chronicle-ui.js?v=born-portraits-eleven-1';
+import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
+import {createFictionalPerson} from '../dynasties.js?v=guardian-wheels-merge-1';
+import {chronicleCharacterName} from '../map-lab/chronicle-ui.js?v=guardian-wheels-merge-1';
 
 test('chronicle filters use the recorded name rather than a hidden live fictional name',()=>{
  let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Old name','旧姓名'],faction:'egypt',birthYear:-75});s.chronicle.entries.unshift({id:999,characterId:id,personName:['Known name','已知姓名']});

@@ -1,15 +1,15 @@
 import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts} from './person-knowledge.js?v=mutual-audience-1';
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=succession-ui-recovery-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=born-portraits-eleven-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=guardian-wheels-merge-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=born-portraits-eleven-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=guardian-wheels-merge-1';
 import {potentialConspirators} from './conspiracies.js?v=mutual-audience-1';
 import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=mutual-audience-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=born-portraits-eleven-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=guardian-wheels-merge-1';
 import {activeAgreement} from './agreements.js?v=agreement-courier-1';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=born-portraits-eleven-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=guardian-wheels-merge-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
