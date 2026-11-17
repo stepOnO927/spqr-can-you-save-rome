@@ -147,3 +147,17 @@ body.grand-campaign.atlas-focus .grand-site:before{content:'●';left:-5px;top:5
 body.grand-campaign.atlas-focus .grand-site:is(:hover,:focus-visible){width:auto;height:auto;padding:1px 4px 1px 8px;border-radius:2px;background:#e9dfc9c9;color:#493a2c;font-size:13px;outline:0}
 body.grand-campaign.atlas-focus .grand-site:is(:hover,:focus-visible):before{content:'●'}
 @media(max-width:700px){#atlas-caption{top:14px;left:12px;padding:10px 12px;max-width:calc(100vw - 90px)}#atlas-caption strong{font-size:18px}#atlas-caption small{font-size:9px}}
+
+#mobile-actions{display:contents}
+#mobile-menu{display:none}
+@media(max-width:600px){
+ .mast{z-index:12;gap:6px;padding:0 10px;justify-content:space-between}
+ .identity{min-width:0;gap:7px;margin-right:auto}
+ .monogram{width:43px;height:34px;flex:none;font-size:13px}
+ .identity strong{font-size:13px;letter-spacing:1px}
+ #mobile-menu{display:block;min-width:36px;font-size:17px;line-height:1}
+ #mobile-actions{display:none;position:absolute;top:100%;left:8px;right:8px;max-height:calc(100vh - 70px);overflow-y:auto;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:10px;background:#172826f5;border:1px solid #bba575;box-shadow:0 8px 20px #06191bb8;pointer-events:auto}
+ .mast.menu-open #mobile-actions{display:grid}
+ #mobile-actions .hud-button,#mobile-actions a{min-width:0;margin:0;text-align:center;white-space:normal;font-size:10px}
+ #mobile-actions #return-campaign{grid-column:1/-1;padding:8px}
+}

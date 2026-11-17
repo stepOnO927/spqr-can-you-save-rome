@@ -455,6 +455,8 @@ The atlas now draws sixteen 2048 px GSHHG image pieces at campaign zoom and retu
 
 Run `node tools/coast-mask-smoke.mjs` after changes to GSHHG masks or map styling; it checks actual rendered pixels at four Mediterranean coastlines, which geometry queries alone cannot verify.
 
+The 390 px mobile atlas now keeps the campaign title and language control inside the viewport and puts the remaining commands in a touch-accessible menu. Province tax values are displayed to two decimal places rather than exposing floating-point artifacts. A real MapLibre and touch-enabled Chrome regression, `node tools/mobile-map-touch-smoke.mjs`, taps an army, a nearby destination, a city, the menu, Help, Save and Load, then switches to English and the Military map mode. It passed alongside all 590 simulation tests and the desktop grand-campaign browser smoke. This covers one phone-size viewport in software-rendered Chrome; broader phone hardware and performance remain to be checked.
+
 Run `node tools/audit-po-coast.mjs` and `node tools/audit-nile-coast.mjs` after changing the delta generalization; they sample the complementary land and sea masks for gaps and overlaps.
 
 Run `node tools/overview-coast-smoke.mjs` after changes to the overview images or zoom thresholds; it catches blank map frames at the image/vector transition in both languages.
