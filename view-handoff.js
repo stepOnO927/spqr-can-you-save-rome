@@ -1,5 +1,5 @@
-import {snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=world-kings-local-play-1';
-import {validPlayableCampaign} from './local-campaign-save.js?v=world-kings-local-play-1';
+import {snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=world-kings-guardian-1';
+import {validPlayableCampaign} from './local-campaign-save.js?v=world-kings-guardian-1';
 // A one-use transfer between views in the same tab; saved game slots are untouched.
 export const HANDOFF_KEY = 'spqr-view-handoff-v1';
 

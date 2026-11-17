@@ -1,5 +1,5 @@
-import {localCampaignCity,localRecruit,localTradeOffer} from './local-campaign.js?v=world-kings-local-play-1';
-import {FACTIONS} from './data.js?v=world-kings-local-play-1';
+import {localCampaignCity,localRecruit,localTradeOffer} from './local-campaign.js?v=world-kings-guardian-1';
+import {FACTIONS} from './data.js?v=world-kings-guardian-1';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 

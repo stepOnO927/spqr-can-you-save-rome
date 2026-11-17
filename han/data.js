@@ -1,4 +1,4 @@
-import {POLITIES,EURASIAN_FACTIONS,EURASIAN_REGIONS,ADMINISTRATIVE_REGIONS,EURASIAN_ROUTES,DEPENDENCIES,EURASIAN_RULERS,SOURCES as EURASIAN_SOURCES} from './eurasia-data.js?v=world-kings-local-play-1';
+import {POLITIES,EURASIAN_FACTIONS,EURASIAN_REGIONS,ADMINISTRATIVE_REGIONS,EURASIAN_ROUTES,DEPENDENCIES,EURASIAN_RULERS,SOURCES as EURASIAN_SOURCES} from './eurasia-data.js?v=world-kings-guardian-1';
 // MANDATE OF HEAVEN — static data for the Western Han vertical slice.
 // Coordinates are modern longitude/latitude of the commandery or oasis seat.
 // Population, grain, tax and supply are gameplay abstractions in the same
@@ -9,7 +9,7 @@ import {POLITIES,EURASIAN_FACTIONS,EURASIAN_REGIONS,ADMINISTRATIVE_REGIONS,EURAS
 // "49 BCE"); Liu Shi took the throne on 29 January 48 BCE. The campaign opens
 // in February 48 BCE, after the accession.
 
-import {REGION_GEO,ZHOU,THEATERS} from './geography.js?v=world-kings-local-play-1';
+import {REGION_GEO,ZHOU,THEATERS} from './geography.js?v=world-kings-guardian-1';
 
 export const START={year:-48,month:2,label:['Huanglong 1, final month · February 48 BCE (Emperor Xuan d. 10 Jan 48 BCE; Liu Shi enthroned 29 Jan 48 BCE)','黄龙元年岁末 · 公元前48年2月（宣帝崩于公元前48年1月10日；刘奭于1月29日即位）']};
 

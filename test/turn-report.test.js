@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,moveArmy,tick,upgradeSave} from '../engine.js?v=world-kings-local-play-1';
-import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from '../map-lab/turn-report.js?v=world-kings-local-play-1';
-import {reportedControl} from '../control-intelligence.js?v=world-kings-local-play-1';
+import {newGame,moveArmy,tick,upgradeSave} from '../engine.js?v=world-kings-guardian-1';
+import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from '../map-lab/turn-report.js?v=world-kings-guardian-1';
+import {reportedControl} from '../control-intelligence.js?v=world-kings-guardian-1';
 import {FACTIONS} from '../data.js';
 
 test('a delayed control report retains its observation date and does not reveal later hidden changes',()=>{

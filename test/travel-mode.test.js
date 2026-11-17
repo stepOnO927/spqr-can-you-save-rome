@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=world-kings-local-play-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-local-play-1';
-import {OFFICE_TYPES,canHoldOffice,localGovernor} from '../office-system.js?v=world-kings-local-play-1';
-import {featherAdvice} from '../feather.js?v=world-kings-local-play-1';
+import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=world-kings-guardian-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-guardian-1';
+import {OFFICE_TYPES,canHoldOffice,localGovernor} from '../office-system.js?v=world-kings-guardian-1';
+import {featherAdvice} from '../feather.js?v=world-kings-guardian-1';
 
 for(const faction of ['caesar','senate'])test(`Travel opens a staffed, well supplied ${faction} campaign and survives saving`,()=>{
  const s=newGame(faction),before=s.armies.filter(a=>a.owner===faction).length;

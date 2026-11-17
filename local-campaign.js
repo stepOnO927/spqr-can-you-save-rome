@@ -1,7 +1,7 @@
-import {FACTIONS} from './data.js?v=world-kings-local-play-1';
+import {FACTIONS} from './data.js?v=world-kings-guardian-1';
 import {localEntity} from './local-polities.js';
-import {initializeControlKnowledge} from './control-intelligence.js?v=world-kings-local-play-1';
-import {initializeLocalDiscovery} from './local-discovery.js?v=world-kings-local-play-1';
+import {initializeControlKnowledge} from './control-intelligence.js?v=world-kings-guardian-1';
+import {initializeLocalDiscovery} from './local-discovery.js?v=world-kings-guardian-1';
 
 const date=state=>state.year*12+state.month;
 export const localCampaignCity=state=>state.localCampaign?.id===state.player?localEntity(state,state.player):null;

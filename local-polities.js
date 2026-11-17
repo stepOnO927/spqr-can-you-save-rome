@@ -1,7 +1,7 @@
-import {ROUTES} from './data.js?v=world-kings-local-play-1';
-import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-local-play-1';
-import {sendLetter} from './epistulae.js?v=world-kings-local-play-1';
-import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-local-play-1';
+import {ROUTES} from './data.js?v=world-kings-guardian-1';
+import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-guardian-1';
+import {sendLetter} from './epistulae.js?v=world-kings-guardian-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-guardian-1';
 
 // Settlement control is stored inside its host theater. An autonomous city
 // does not transfer the whole theater, and its point is not a border polygon.
