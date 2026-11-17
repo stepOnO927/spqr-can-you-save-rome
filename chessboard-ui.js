@@ -1,7 +1,7 @@
-import {buildChessboard} from './chessboard.js?v=guardian-wheels-merge-1';
-import {focusReportsFor,focusById} from './national-focus.js?v=guardian-wheels-merge-1';
-import {warningLedger} from './warning-ledger.js?v=warning-privacy-1';
-import {FACTIONS,REGIONS} from './data.js?v=phase-x-1';
+import {buildChessboard} from './chessboard.js?v=world-kings-guardian-1';
+import {focusReportsFor,focusById} from './national-focus.js?v=world-kings-guardian-1';
+import {warningLedger} from './warning-ledger.js?v=world-kings-guardian-1';
+import {FACTIONS,REGIONS} from './data.js?v=world-kings-guardian-1';
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=(x,zh)=>Array.isArray(x)?x[zh?1:0]||x[0]:x||'';

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=guardian-wheels-merge-2';
-import {appointOffice,officeEffects} from '../office-system.js?v=guardian-wheels-merge-1';
-import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=guardian-wheels-merge-1';
+import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=world-kings-guardian-1';
+import {appointOffice,officeEffects} from '../office-system.js?v=world-kings-guardian-1';
+import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=world-kings-guardian-1';
 
 // Later contact scenarios need a delivered report; a failed inquiry is retried.
 function reachGovernmentStage(s,target,level,actor=s.player){

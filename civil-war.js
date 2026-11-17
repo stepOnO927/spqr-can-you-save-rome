@@ -1,6 +1,7 @@
-import {isDeliveredReport} from './person-knowledge.js?v=mutual-audience-1';
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=succession-ui-recovery-1';
-import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
+import {isDeliveredReport} from './person-knowledge.js?v=world-kings-guardian-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=world-kings-guardian-1';
+import {reportedControl} from './control-intelligence.js?v=world-kings-guardian-1';
+import {transferTerritory} from './territory.js';
 
 // Alternate-history claimant commands use real game theaters and armies.
 // The setup is a simulation, not a reconstruction of a historical campaign.
@@ -18,7 +19,7 @@ export function startPoliticalWar(s,parent,plot){
  s.factions[cfg.rival]={treasury:plot.funds,food,manpower:0,stability:45,legitimacy:35,tax:'normal',research:0};plot.funds=0;
  for(const a of defectors){a.owner=cfg.rival;a.order=null}
  for(const id of plot.participants){const c=s.world.characters[id],command=s.armies.find(a=>a.characterId===id);if(c&&(!command||defectors.includes(command)))c.faction=cfg.rival}
- home.owner=cfg.rival;home.loyalty=45;s.world.leadership[cfg.rival]=[plot.person];
+ transferTerritory(s,home.id,cfg.rival,'secession');home.loyalty=45;s.world.leadership[cfg.rival]=[plot.person];
  s.world.claimants[parent]||=[];if(!s.world.claimants[parent].includes(plot.person))s.world.claimants[parent].push(plot.person);
  s.world.disputes[parent]={months:0,war:{rival:cfg.rival,claimant:plot.person,startedYear:s.year,startedMonth:s.month,origin:'political_network'}};
  s.wars.push([parent,cfg.rival]);
@@ -46,7 +47,7 @@ export function startDynasticWar(s,parent,claimant){
  // Pending messages sent to an earlier incarnation must not reach the new one.
  s.world.dynasticGenerations||={};s.world.dynasticGenerations[cfg.rival]=(s.world.dynasticGenerations[cfg.rival]||0)+1;
  s.factions[cfg.rival]={treasury,food,manpower:0,stability:45,legitimacy:35,tax:'normal',research:0};
- person.faction=cfg.rival;person.location=home.id;home.owner=cfg.rival;home.loyalty=45;
+ person.faction=cfg.rival;person.location=home.id;transferTerritory(s,home.id,cfg.rival,'secession');home.loyalty=45;
  s.world.leadership[cfg.rival]=[claimant];
  const aid=dispute.militaryAid?.[claimant]||0;
  const age=ageRange(claimant,s.year),minor=age!==null&&age[0]<16;
@@ -82,13 +83,13 @@ export function resolveDynasticWars(s){
   const rivalWins=rivalAlive&&!baseAlive,oldLeaders=[...(s.world.leadership[parent]||[])];
   if(person){person.faction=parent;if(!person.alive)person.location=null}
   if(rivalWins){
-   for(const r of s.regions)if(r.owner===cfg.rival)r.owner=parent;
+   for(const r of s.regions)if(r.owner===cfg.rival)transferTerritory(s,r.id,parent,'command_merger');
    for(const a of s.armies)if(a.owner===cfg.rival)a.owner=parent;
    s.world.leadership[parent]=person?.alive?[war.claimant]:[];
    s.world.claimants[parent]=[...new Set([...(s.world.claimants[parent]||[]).filter(id=>id!==war.claimant),...oldLeaders.filter(id=>s.world.characters[id]?.alive&&id!==war.claimant)])];
    if(s.factions[cfg.rival]){s.factions[parent].treasury+=s.factions[cfg.rival].treasury;s.factions[parent].food+=s.factions[cfg.rival].food;s.factions[parent].manpower+=s.factions[cfg.rival].manpower}
   }else{
-   for(const r of s.regions)if(r.owner===cfg.rival)r.owner=parent;
+   for(const r of s.regions)if(r.owner===cfg.rival)transferTerritory(s,r.id,parent,'restoration');
    s.armies=s.armies.filter(a=>a.owner!==cfg.rival);
    s.world.claimants[parent]=(s.world.claimants[parent]||[]).filter(id=>id!==war.claimant);
   }
@@ -117,7 +118,7 @@ export function settleDynasticWar(s,parent){
   if(a.siege&&[parent,cfg.rival].includes(s.regions.find(r=>r.id===a.siege.region)?.owner))a.siege=null;
   if(a.owner===cfg.rival)a.owner=parent;
  }
- for(const r of s.regions)if(r.owner===cfg.rival)r.owner=parent;
+ for(const r of s.regions)if(r.owner===cfg.rival)transferTerritory(s,r.id,parent,'command_merger');
  if(person){person.faction=parent;if(person.alive&&(parent==='egypt'||!leaders.length))leaders.push(war.claimant)}
  s.world.leadership[parent]=[...new Set(leaders)];s.world.claimants[parent]=(s.world.claimants[parent]||[]).filter(id=>id!==war.claimant);
  const base=s.factions[parent],rival=s.factions[cfg.rival];base.treasury+=rival.treasury;base.food+=rival.food;base.manpower+=rival.manpower;

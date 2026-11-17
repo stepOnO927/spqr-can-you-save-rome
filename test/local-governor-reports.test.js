@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
-import {addReport} from '../character-system.js?v=guardian-wheels-merge-1';
-import {reportedTheaterAdministrators,renderLocalGovernor} from '../map-lab/local-governor-ui.js?v=guardian-wheels-merge-1';
-import {createFictionalPerson} from '../dynasties.js?v=guardian-wheels-merge-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-guardian-1';
+import {addReport} from '../character-system.js?v=world-kings-guardian-1';
+import {reportedTheaterAdministrators,renderLocalGovernor} from '../map-lab/local-governor-ui.js?v=world-kings-guardian-1';
+import {createFictionalPerson} from '../dynasties.js?v=world-kings-guardian-1';
 
 test('foreign city administration uses dated reports and retains conflicting or unknown claims',()=>{
  let s=newGame('caesar');s.year=-46;s.month=6;s.world.localGovernors={roma:{faction:'senate',person:'cato'}};

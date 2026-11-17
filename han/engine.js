@@ -1,18 +1,18 @@
 // MANDATE OF HEAVEN — campaign engine. Independent of the Roman engine: the
 // Roman campaign, its saves and its modules are untouched. Han saves use
 // their own storage keys and carry dlc:'mandate-of-heaven'.
-import {START,REGIONS,FACTIONS,PLAYABLE,OASIS,OFFICES} from './data.js?v=han-1';
+import {START,REGIONS,FACTIONS,PLAYABLE,OASIS,OFFICES} from './data.js?v=world-kings-guardian-1';
 import {EURASIAN_FACTIONS,EURASIAN_RULERS} from './eurasia-data.js';
 import {initDependencies,advanceDependencies,changeDependency} from './dependencies.js';
-import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=han-1';
-import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,statusOf,yearsBetween,claimStrength} from './dynasty.js?v=han-1';
-import {initCourt,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,issueEdict,EDICTS,adminCapacity,emperorAuthority} from './court.js?v=han-1';
-import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=han-1';
-import {initSilk,advanceSilk} from './silk-road.js?v=han-1';
-import {advanceFocus,focusState} from './focus.js?v=han-1';
-import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf,recruit,recruitQuote,neighbours} from './military.js?v=han-1';
-import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
-import {initialize as initializeAmbition,advance as advanceAmbition} from './ambitions.js?v=guardian-wheels-merge-2';
+import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=world-kings-guardian-1';
+import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,statusOf,yearsBetween,claimStrength} from './dynasty.js?v=world-kings-guardian-1';
+import {initCourt,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,issueEdict,EDICTS,adminCapacity,emperorAuthority} from './court.js?v=world-kings-guardian-1';
+import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=world-kings-guardian-1';
+import {initSilk,advanceSilk} from './silk-road.js?v=world-kings-guardian-1';
+import {advanceFocus,focusState} from './focus.js?v=world-kings-guardian-1';
+import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf,recruit,recruitQuote,neighbours} from './military.js?v=world-kings-guardian-1';
+import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=world-kings-guardian-1';
+import {initialize as initializeAmbition,advance as advanceAmbition} from './ambitions.js?v=world-kings-guardian-1';
 
 export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
 export const SCENARIOS={

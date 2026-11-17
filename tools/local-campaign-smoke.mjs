@@ -1,0 +1,36 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+
+const browser=await chromium.launch({headless:true,...(process.env.SPQR_BROWSER_EXECUTABLE?{executablePath:process.env.SPQR_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];
+page.on('pageerror',error=>errors.push(error.message));
+const base=`http://127.0.0.1:${process.env.SPQR_SMOKE_PORT||5173}`;
+try{
+ await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
+ await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
+ const option=page.locator('#faction-choice option[value^="generated:"]').first();
+ await option.waitFor({state:'attached'});const id=await option.getAttribute('value');assert.ok(id);
+ await page.selectOption('#faction-choice',id);
+ await page.click('#start-campaign');
+ await page.locator('.local-council').waitFor();
+ assert.match(await page.locator('.local-council').innerText(),/You govern an autonomous city/);
+ await page.locator('[data-local-trade]').click();
+ if(await page.locator('[data-local-recruit]').isEnabled())await page.locator('[data-local-recruit]').click();
+ await page.locator('#step').click();
+ await page.locator('#new').click();
+ await page.locator('[data-slot="save"]').click();
+ const cityName=await page.evaluate(id=>JSON.parse(localStorage.getItem('spqr-save-1')).regions.flatMap(region=>region.localEntities||[]).find(city=>city.id===id).name[0].toUpperCase(),id);
+ await page.locator('#open-atlas').click();
+ await page.waitForURL('**/map-lab/');
+ const ownMarker=page.locator(`.city-marker[data-city="${cityName}"]`);
+ await ownMarker.waitFor({state:'visible'});
+ await ownMarker.click();
+ assert.match(await page.locator('#command-detail').innerText(),/City council|CITY COUNCIL|You govern an autonomous city/);
+ await page.locator('#save').click();
+ await page.locator('.mast a').click();
+ await page.waitForURL(base+'/');
+ await page.locator('.local-council').waitFor();
+ assert.ok((await page.locator('.local-council').innerText()).includes('Completed trades'));
+ assert.equal(errors.length,0,errors.join('\n'));
+ console.log('Local campaign start, council, save, Map Lab handoff and return passed');
+}finally{await browser.close()}

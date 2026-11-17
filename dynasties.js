@@ -1,8 +1,8 @@
-import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=mutual-audience-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=succession-ui-recovery-1';
-import {startDynasticWar} from './civil-war.js?v=mutual-audience-1';
-import {ROUTES} from './data.js?v=phase-x-1';
-import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=born-portraits-eleven-1';
+import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=world-kings-guardian-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=world-kings-guardian-1';
+import {startDynasticWar} from './civil-war.js?v=world-kings-guardian-1';
+import {ROUTES} from './data.js?v=world-kings-guardian-1';
+import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=world-kings-guardian-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -346,7 +346,7 @@ export function requestFamilyResources(s,familyId,choice){
  return {ok:true,amount};
 }
 
-// Unknown ages do not prove an existing ward has aged out.
+// An uncertain age does not by itself prove that a ward has grown up.
 function reconcileGuardianships(s){
  for(const child of Object.values(s.world.characters)){
   if(!child.guardian&&!child.guardianNominee)continue;const age=eligibilityAgeRange(s,child.id),agedOut=!!age&&age[0]>=16;

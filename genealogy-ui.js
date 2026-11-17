@@ -1,11 +1,12 @@
-import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=mutual-audience-1';
-import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=succession-ui-recovery-1';
-import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=guardian-wheels-merge-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=guardian-wheels-merge-1';
-import {FACTIONS} from './data.js?v=phase-x-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=born-portraits-eleven-1';
-import {visiblePersonName} from './character-system.js?v=guardian-wheels-merge-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=guardian-wheels-merge-1';
+import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=world-kings-guardian-1';
+import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=world-kings-guardian-1';
+import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=world-kings-guardian-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=world-kings-guardian-1';
+import {FACTIONS} from './data.js?v=world-kings-guardian-1';
+import {fictionalPortraitKey} from './portrait-registry.js?v=world-kings-guardian-1';
+import {visiblePersonName} from './character-system.js?v=world-kings-guardian-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=world-kings-guardian-1';
+import {localAdministrator} from './office-system.js?v=world-kings-guardian-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);
@@ -17,6 +18,7 @@ const officeLabel=(s,c,zh)=>{
  const office=Object.entries(s.world.offices?.[faction]||{}).find(([,person])=>person===c.id)?.[0];
  if(office)parts.push(({finance:["Finance officer","财务专员"],supply:["Supply officer","粮秣专员"],administration:["Administrator","政务专员"]}[office]||[office,office])[zh?1:0]);
  if(Object.values(s.world.localGovernors||{}).some(post=>post.person===c.id&&post.faction===faction))parts.push(zh?'地方行政官':'Local governor');
+ if(Object.entries(s.world.localAdministrators||{}).some(([entityId,post])=>post.person===c.id&&post.faction===faction&&localAdministrator(s,entityId)===c.id))parts.push(zh?'城镇行政官':'Settlement administrator');
  if(s.armies.some(a=>a.owner===faction&&a.characterId===c.id&&a.men>0))parts.push(zh?'军队统帅':'Army commander');
  return parts.join(zh?'、':', ');
 };
@@ -118,7 +120,7 @@ export function bindGenealogy(root,s,zh=false,onChange=()=>{}){
   root.querySelectorAll('[data-resource-action]').forEach(button=>button.onclick=()=>{const result=requestFamilyResources(s,root.querySelector('[data-resource-family]').value,button.dataset.resourceAction);if(result.ok)onChange();else{const reasons={cooldown:["This family was approached recently.","近期已向该家族提出过请求。"],wealth:["This family has less than 4 private wealth available.","该家族可用私人财产不足4。"],declined:["The family declined. Try again after six months.","家族拒绝了请求；六个月后可再试。"],terms:["This family has an unpaid loan or will not accept the terms.","该家族仍有未还借款或不接受条款。"]};root.querySelector('[data-resource-feedback]').textContent=(reasons[result.reason]||["Action unavailable.","行动不可用。"])[zh?1:0]}});
  }
  const guardians=Object.values(s.world.characters).filter(c=>c.faction===s.player&&c.alive&&!c.missing&&isKnownAdult(s,c.id));
- const families=guardians.flatMap(parent=>parent.children.filter(id=>s.world.characters[id]?.faction===s.player&&s.world.characters[id].alive&&!s.world.characters[id].missing&&isKnownMinor(s,id)).map(id=>({parent:parent.id,child:id}))); 
+ const families=guardians.flatMap(parent=>parent.children.filter(id=>s.world.characters[id]?.faction===s.player&&s.world.characters[id].alive&&!s.world.characters[id].missing&&isKnownMinor(s,id)).map(id=>({parent:parent.id,child:id})));
  if(families.length&&guardians.length>1){
   root.querySelector('.gene-tools').insertAdjacentHTML('beforebegin',`<div class="rule-block"><h4>${zh?'未成年子女监护':'GUARDIANSHIP FOR MINORS'}</h4><p class="hint">${zh?'提名不授予政治职务；父母去世且没有其他成年父母时才会生效。子女满16岁或监护人不再可用时，监护结束；提名可重新选择。':'A nomination grants no office. It takes effect after a parent dies only if no other adult parent can care for the child. Guardianship ends at age 16 or if the guardian becomes unavailable; a nominee can be replaced.'}</p><select data-guardian-child>${families.map(x=>`<option value="${escape(x.parent)}|${escape(x.child)}">${escape(name(x.parent,zh))} → ${escape(name(x.child,zh))}</option>`).join('')}</select><select data-guardian-person>${guardians.map(x=>`<option value="${escape(x.id)}">${escape(name(x.id,zh))}</option>`).join('')}</select><button data-guardian-action>${zh?'提名监护人':'Nominate guardian'}</button><p data-guardian-status></p><p data-guardian-feedback role="status"></p></div>`);
   const updateGuardianSelection=()=>{const [parent,child]=root.querySelector('[data-guardian-child]').value.split('|'),select=root.querySelector('[data-guardian-person]');for(const option of select.options)option.disabled=option.value===parent;if(select.selectedOptions[0]?.disabled)select.value=[...select.options].find(option=>!option.disabled)?.value||'';const ward=s.world.characters[child],nominee=ward?.guardianNominee,active=ward?.guardian;root.querySelector('[data-guardian-status]').textContent=(zh?'已提名：':'Nominated: ')+(nominee?name(nominee,zh):(zh?'无':'none'))+' · '+(zh?'现任监护人：':'Current guardian: ')+(active?name(active,zh):(zh?'无':'none'))};root.querySelector('[data-guardian-child]').onchange=updateGuardianSelection;updateGuardianSelection();

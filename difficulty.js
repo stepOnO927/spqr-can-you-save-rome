@@ -1,12 +1,16 @@
-import {createFictionalPerson} from './dynasties.js?v=guardian-wheels-merge-1';
-import {initializeOffices,OFFICE_TYPES,canHoldOffice,localGovernor} from './office-system.js?v=guardian-wheels-merge-1';
+import {createFictionalPerson} from './dynasties.js?v=world-kings-guardian-1';
+import {initializeOffices,OFFICE_TYPES,canHoldOffice,localGovernor} from './office-system.js?v=world-kings-guardian-1';
+import {generateOpeningLocalPolities} from './local-polities.js';
+import {initializeLocalDiscovery} from './local-discovery.js?v=world-kings-guardian-1';
 
 // Both campaign views use the same one-time setup. Difficulty affects AI
 // decisions; the separate economic handicap is explicitly opt-in.
-export function configureStartingDifficulty(s,mode='standard',economicHandicap=false){
+export function configureStartingDifficulty(s,mode='standard',economicHandicap=false,{localSeed}={}){
  if(!['travel','beginner','standard','hard','expert'].includes(mode)||!s.factions?.[s.player])throw new Error('Invalid difficulty');
  if(s.difficultySetupApplied)throw new Error('Difficulty already configured');
  s.difficulty=mode;s.economicHandicap=!!economicHandicap;s.difficultySetupApplied=true;
+ const seed=Number.isInteger(localSeed)&&localSeed>=0&&localSeed<=0xffffffff?localSeed:(globalThis.crypto?.getRandomValues?.(new Uint32Array(1))?.[0]??Math.floor(Math.random()*0x100000000));
+ generateOpeningLocalPolities(s,mode,seed);initializeLocalDiscovery(s);
  if(mode==='beginner'){const f=s.factions[s.player];f.treasury+=20;f.food+=15;f.manpower+=1500;f.stability=Math.min(100,f.stability+5)}
  if(mode==='travel')setupTravel(s);
  return s;
