@@ -1,0 +1,31 @@
+name: Wheels of History browser check
+on:
+  pull_request:
+    paths:
+      - 'history-wheels.js'
+      - 'han/ambitions.js'
+      - 'experience-ui.js'
+      - 'han/experience-ui.js'
+      - 'tools/history-wheels-smoke.mjs'
+      - 'tools/history-wheels-campaigns.mjs'
+      - '.github/workflows/history-wheels.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exercise long campaigns
+        run: node tools/history-wheels-campaigns.mjs
+      - run: npm install --no-save playwright@1.64.1
+      - run: npx playwright install chromium
+      - run: |
+          node server.mjs > server.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
+          node tools/history-wheels-smoke.mjs

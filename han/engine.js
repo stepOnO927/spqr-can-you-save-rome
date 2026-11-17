@@ -12,6 +12,7 @@ import {initSilk,advanceSilk} from './silk-road.js?v=han-1';
 import {advanceFocus,focusState} from './focus.js?v=han-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats,cultureOf,recruit,recruitQuote,neighbours} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
+import {initialize as initializeAmbition} from './ambitions.js?v=wheels-1';
 
 export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
 export const SCENARIOS={
@@ -88,6 +89,7 @@ export function newHanGame(player='han',{scenario='historical',difficulty='stand
  if(difficulty==='beginner'&&player)s.factions[player].treasury+=100;
  computeMandate(s);recomputeInfluence(s);observe(s);
  if(start!=='roman')log(s,['Liu Shi has taken the throne. The court looks to the regents named by Emperor Xuan.','刘奭已即位，朝廷仰赖宣帝遗诏所命辅政大臣。'],{kind:'throne'});
+ if(player)initializeAmbition(s);
  return s;
 }
 function applyUsurperScenario(s){
@@ -320,6 +322,6 @@ export function loadHanSave(raw){
  s.court.recommendations||=[];
  s.version=SAVE_VERSION;s.throne.claimants||=[];s.throne.support||={};s.throne.history||=[];
  const fixes=enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
- s.loadFixes=fixes;computeMandate(s);return s;
+ s.loadFixes=fixes;computeMandate(s);if(s.player)initializeAmbition(s);return s;
 }
 export {statusOf,eligibility,claimStrength,emperorAuthority,adminCapacity};
