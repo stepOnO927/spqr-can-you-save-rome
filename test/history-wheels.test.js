@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,forecastEconomy,setTax,tick} from '../engine.js';
-import {receivedMail,replyToLetter} from '../epistulae.js';
+import {newGame,upgradeSave,forecastEconomy,setTax,tick,estimatedStrength} from '../engine.js';
+import {receivedMail,replyToLetter,syncCoalitionLetters} from '../epistulae.js';
 import {AMBITIONS,availableAmbitions,chooseAmbition,ambitionStatus,advanceWheels,financeDecision,commanderDecision} from '../history-wheels.js';
 import {newHanGame,tick as hanTick,serialize,loadHanSave} from '../han/engine.js';
 import {available as hanAvailable,choose as hanChoose,status as hanStatus} from '../han/ambitions.js';
 import {finalizeCampaign} from '../legacy.js';
 import {planSuccession} from '../governance.js';
+import {sendCoalitionInvitation,advanceCoalitionInvitations,answerCoalitionInvitation} from '../coalition-negotiations.js';
 
 test('national ambitions are selected, measurable and save compatible',()=>{
  for(const side of ['caesar','senate']){
@@ -139,4 +140,29 @@ test('official Roman finalization archives ambition changes and observed causal 
  assert.equal(result.archive.nationalAmbition.id,'diplomatic');
  assert.equal(result.archive.nationalAmbition.changes.length,2);
  assert.deepEqual(result.archive.causalChains,[]);
+});
+
+test('diplomatic history follows the existing courier, independent replies and player knowledge',()=>{
+ const s=newGame('caesar');
+ s.relations['caesar:egypt']=40;s.relations['egypt:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;
+ s.world.diplomaticKnowledge.egypt={caesar:{id:'caesar',status:'active',parties:['egypt','caesar']},numidia:{id:'numidia',status:'active',parties:['egypt','numidia']}};
+ assert.equal(sendCoalitionInvitation(s,'egypt',['caesar','numidia'],'senate').ok,true);
+ advanceWheels(s,{forecast:forecastEconomy});
+ assert.equal(s.historyWheels.chains.length,0,'a sealed foreign invitation is not yet player knowledge');
+ const step=()=>{s.month++;advanceCoalitionInvitations(s,estimatedStrength,()=>.5);syncCoalitionLetters(s);advanceWheels(s,{forecast:forecastEconomy})};
+ step();assert.equal(s.historyWheels.chains.length,0);
+ step();
+ const chain=s.historyWheels.chains.find(c=>c.type==='coalition_history');
+ assert.ok(chain);assert.equal(chain.status,'active');assert.equal(chain.events.length,1);
+ const letter=receivedMail(s).find(m=>m.context?.kind==='coalition_offer');
+ assert.ok(letter);assert.equal(replyToLetter(s,letter.id,'accept_coalition',{answerCoalitionInvitation}).ok,true);
+ step();assert.equal(chain.response,'accepted');assert.equal(chain.status,'active');
+ step();assert.equal(chain.status,'active','a provisional foreign reply is still hidden');
+ step();step();
+ assert.equal(chain.status,'accepted');assert.ok(chain.coalitionId);assert.equal(chain.events.length,3);
+ assert.equal(chain.events[1].parentId,chain.events[0].id);
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(restored.historyWheels.chains.find(c=>c.id===chain.id).coalitionId,chain.coalitionId);
+ restored.victory=true;
+ assert.ok(finalizeCampaign(restored).archive.causalChains.some(c=>c.id===chain.id&&c.factions.includes('egypt')));
 });

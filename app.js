@@ -213,8 +213,8 @@ function render(){syncChronicleDispatches(state);
    if(tab==='legacy')document.querySelectorAll('.legacy-entry').forEach((entry,index)=>{
     const archive=archives()[index],aim=archive?.nationalAmbition;if(!aim)return;
     const name=AMBITIONS[aim.id]?.name?.[lang==='zh'?1:0]||aim.id;
-    const chainName=type=>({cost_of_expansion:['Campaign finances','战役财政'],commander_petition:['Commander petition','将领请愿']}[type]||[type,type])[lang==='zh'?1:0];
-    const chainStatus=status=>({active:['Ongoing','进行中'],resolved:['Recovered','已恢复'],unresolved:['Unresolved','未解决'],command_ended:['Command ended','指挥终止'],closed:['Concluded','已结束']}[status]||[status,status])[lang==='zh'?1:0];
+    const chainName=type=>({cost_of_expansion:['Campaign finances','战役财政'],commander_petition:['Commander petition','将领请愿'],coalition_history:['Defensive coalition','防御联盟']}[type]||[type,type])[lang==='zh'?1:0];
+    const chainStatus=status=>({active:['Ongoing','进行中'],resolved:['Recovered','已恢复'],unresolved:['Unresolved','未解决'],command_ended:['Command ended','指挥终止'],closed:['Concluded','已结束'],accepted:['Concluded','已成立'],refused:['Refused','遭拒'],lapsed:['Not concluded','未能成立'],no_reply:['No reply','未收到回信'],answered:['Answered','已答复'],unconfirmed:['Unconfirmed','未获确认']}[status]||[status,status])[lang==='zh'?1:0];
     entry.querySelector('details')?.insertAdjacentHTML('beforeend',`<p>${lang==='zh'?'国家野心':'National ambition'}: ${esc(name)} · ${lang==='zh'?'调整次数':'Changes'} ${(aim.changes||[]).length}</p><details><summary>${lang==='zh'?'因果事件链':'Causal event chains'} · ${(archive.causalChains||[]).length}</summary>${(archive.causalChains||[]).map(chain=>`<p><b>${esc(chainName(chain.type))}</b> · ${esc(chainStatus(chain.status))}${chain.characterName?` · ${esc(chain.characterName[lang==='zh'?1:0])}`:''}${chain.territoryName?` · ${esc(chain.territoryName[lang==='zh'?1:0])}`:''}<br>${(chain.events||[]).map(event=>`${esc(campaignDate(event.month,event.year,lang))} ${esc(lang==='zh'?event.zh:event.en)}`).join(' → ')}</p>`).join('')||'—'}</details>`);
    });
    document.querySelector('.map-toolbar .eyebrow').textContent=`${t('historical')} · ${labelFaction(state.player)}`;

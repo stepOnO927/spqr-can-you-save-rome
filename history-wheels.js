@@ -5,6 +5,7 @@ import {CHARACTER_CATALOG,successionModel} from './characters.js?v=succession-ui
 import {reassurePerson} from './conspiracies.js?v=mutual-audience-1';
 import {focusById,treeFor} from './national-focus.js?v=born-portraits-eleven-1';
 import {successionCandidates,validSuccessionPlan} from './governance.js?v=born-portraits-eleven-1';
+import {FACTIONS} from './data.js?v=phase-x-1';
 
 const L=(en,zh)=>[en,zh];
 const date=s=>s.year*12+s.month;
@@ -66,11 +67,43 @@ function financialSender(s){
  const ids=[offices.finance,...(s.world?.leadership?.[s.player]||[])];
  return ids.find(id=>people[id]?.alive&&people[id].faction===s.player&&CHARACTER_CATALOG[id]?.name)||null;
 }
-function note(s,chain,en,zh){
+function note(s,chain,en,zh,{record=true}={}){
  const id=`wheel:${chain.id}:${chain.events.length+1}`;
  chain.events.push({id,parentId:chain.events.at(-1)?.id||null,year:s.year,month:s.month,en,zh});
- s.log.unshift({year:s.year,month:s.month,en,zh,kind:chain.type==='commander_petition'?'character':'government',topic:chain.type==='commander_petition'?'commander':'economy',eventId:id,characterId:chain.characterId||chain.senderId||null});
- s.log=s.log.slice(0,80);
+ if(record){s.log.unshift({year:s.year,month:s.month,en,zh,kind:chain.type==='commander_petition'?'character':chain.type==='coalition_history'?'diplomacy':'government',topic:chain.type==='commander_petition'?'commander':chain.type==='coalition_history'?'diplomacy':'economy',eventId:id,characterId:chain.characterId||chain.senderId||null});s.log=s.log.slice(0,80)}
+}
+// The coalition courier and foreign courts already make the decisions. This
+// ledger only remembers what the player has legitimately learned from them.
+function advanceCoalitionHistory(s,w,now){
+ for(const invitation of s.world?.coalitionInvitations||[]){
+  const sent=invitation.sent?.year*12+invitation.sent?.month;
+  if(!Number.isFinite(sent)||now-sent>12)continue;
+  const leader=invitation.leader===s.player,recipient=invitation.humanRecipient===s.player;
+  const visible=leader||recipient&&(invitation.phase==='awaiting_player'||!!invitation.playerDecision);
+  if(!visible)continue;
+  let chain=w.chains.find(c=>c.type==='coalition_history'&&c.invitationId===invitation.id);
+  const name=id=>FACTIONS[id]?.short||[id,id];
+  if(!chain){
+   chain={id:`chain:${w.nextId++}`,type:'coalition_history',invitationId:invitation.id,status:'active',cause:{kind:'coalition_invitation',leader:invitation.leader,members:[...invitation.members],target:invitation.target,sent:{...invitation.sent}},factions:[invitation.leader,...invitation.members,invitation.target],events:[],response:null,openedAt:now};w.chains.push(chain);
+   note(s,chain,leader?`${name(invitation.leader)[0]} sent a defensive coalition invitation concerning ${name(invitation.target)[0]}.`:`A defensive coalition invitation from ${name(invitation.leader)[0]} concerning ${name(invitation.target)[0]} reached the court.`,leader?`${name(invitation.leader)[1]}就防范${name(invitation.target)[1]}发出防御联盟邀请。`:`${name(invitation.leader)[1]}就防范${name(invitation.target)[1]}发出的防御联盟邀请已送达。`,{record:leader});
+  }
+  if(chain.status!=='active')continue;
+  if(recipient&&invitation.playerDecision&&!chain.response){
+   chain.response=invitation.playerDecision;
+   note(s,chain,`The court replied ${invitation.playerDecision.replaceAll('_',' ')} to the coalition invitation.`,`朝廷对防御联盟邀请的答复：${({accepted:'同意',refused:'拒绝',no_reply:'未答复'})[invitation.playerDecision]||'未答复'}。`,{record:false});
+   if(invitation.playerDecision!=='accepted'){chain.status='answered';chain.closedAt=now;continue}
+  }
+  const outcomeKnown=invitation.phase==='delivered'&&(leader||recipient&&invitation.playerDecision==='accepted'&&!!invitation.resultMailId);
+  if(!outcomeKnown)continue;
+  chain.status=invitation.status;chain.closedAt=now;chain.coalitionId=invitation.coalition||null;
+  const labels={accepted:L('The coalition was concluded','联盟已成立'),refused:L('The invitation was refused','邀请遭拒'),lapsed:L('The proposed coalition did not conclude','拟议联盟未能成立'),no_reply:L('No confirmed reply arrived','未收到确认回信')};
+  const label=labels[invitation.status]||L('The invitation closed','邀请已结束');
+  note(s,chain,`${label[0]}; ${invitation.coalition?'coalition '+invitation.coalition+' exists':'no coalition was formed'}.`,`${label[1]}；${invitation.coalition?'联盟 '+invitation.coalition+' 已建立':'没有建立联盟'}。`,{record:false});
+ }
+ for(const chain of w.chains.filter(c=>c.type==='coalition_history'&&c.status==='active'&&now-c.openedAt>=12)){
+  chain.status='unconfirmed';chain.closedAt=now;
+  note(s,chain,'No confirmed coalition outcome reached the court within a year.','一年内朝廷没有收到联盟结果的确认消息。',{record:false});
+ }
 }
 function retireFinancialRequest(s,chain,treasury,forecast){
  const letter=s.mail?.messages?.find(m=>m.id===chain.letterId);
@@ -126,6 +159,7 @@ export function financeDecision(s,chainId,choice,beforeTax=null){
 }
 export function advanceWheels(s,{forecast,setTax}={}){
  const w=initializeWheels(s),now=date(s);if(w.lastMonth===now)return w;w.lastMonth=now;
+ advanceCoalitionHistory(s,w,now);
  advanceCommanderPetitions(s,w,now);
  const f=s.factions[s.player];if(!f||!forecast)return w;
  const outlook=forecast(s,s.player),strained=f.treasury<15&&outlook.treasury<0;
