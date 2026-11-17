@@ -2,7 +2,7 @@ import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './per
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=succession-ui-recovery-1';
 import {startDynasticWar} from './civil-war.js?v=mutual-audience-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=born-portraits-eleven-1';
+import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=missing-fate-privacy-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=guardian-wheels-merge-2';
-import {sendLetter,advanceMail,replyToLetter,receivedMail} from '../epistulae.js?v=guardian-wheels-merge-1';
-import {mailboxHtml} from '../mail-ui.js?v=guardian-wheels-merge-1';
+import {newGame} from '../engine.js?v=missing-fate-privacy-1';
+import {sendLetter,advanceMail,replyToLetter,receivedMail} from '../epistulae.js?v=missing-fate-privacy-1';
+import {mailboxHtml} from '../mail-ui.js?v=missing-fate-privacy-1';
 
 const send=(s,from,to,context,options=[])=>sendLetter(s,{senderInstitution:from,senderFaction:from,recipient:to,category:'diplomatic',subject:['Letter','信'],body:['A message','消息'],context,options}).letter;
 const advanceTo=(s,n,actions={})=>{s.year=Math.floor((n-1)/12);s.month=n-s.year*12;advanceMail(s,actions)};

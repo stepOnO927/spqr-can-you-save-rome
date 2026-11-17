@@ -1,10 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
-import {createFictionalPerson} from '../dynasties.js?v=guardian-wheels-merge-1';
-import {addReport} from '../character-system.js?v=guardian-wheels-merge-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=guardian-wheels-merge-1';
-import {advanceMailReports} from '../mail-reports.js?v=guardian-wheels-merge-1';
-import {receivedMail} from '../epistulae.js?v=guardian-wheels-merge-1';
+import {newGame,upgradeSave} from '../engine.js?v=missing-fate-privacy-1';
+import {createFictionalPerson} from '../dynasties.js?v=missing-fate-privacy-1';
+import {addReport} from '../character-system.js?v=missing-fate-privacy-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=missing-fate-privacy-1';
+import {advanceMailReports} from '../mail-reports.js?v=missing-fate-privacy-1';
+import {receivedMail} from '../epistulae.js?v=missing-fate-privacy-1';
 const replies=s=>receivedMail(s).filter(m=>m.context?.kind==='personal_audience_result');
 function fixture(seed,away=false){
  const s=newGame('caesar');s.wars=[];s.world.characters['fictional:1'].location='egypt';

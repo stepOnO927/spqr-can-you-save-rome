@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
-import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=guardian-wheels-merge-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=born-portraits-eleven-1';
+import {newGame,upgradeSave} from '../engine.js?v=missing-fate-privacy-1';
+import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=missing-fate-privacy-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=missing-fate-privacy-1';
 
 const child=(s,name,sex)=>createFictionalPerson(s,{name:[name,name],faction:'caesar',birthYear:s.year,parents:['caesar'],sex});
 test('a natural birth through the family simulation reserves a portrait',()=>{
@@ -60,3 +60,5 @@ test('foreign portraits remain the dated meeting snapshot, not live aging',()=>{
 test('a meeting portrait of an infant remains a dated snapshot after the child grows up',()=>{
  let s=newGame('caesar');const id=child(s,'Observed infant','female'),seen=fictionalPortraitKey(s,id);assert.match(seen,/-infant$/);s.world.characters[id].faction='senate';assert.equal(observedFictionalPortrait(s,id),null);s.meetings.push({actor:'caesar',target:id,status:'met',resolvedYear:s.year,resolvedMonth:s.month,portraitKey:seen});s=upgradeSave(structuredClone(s));s.year+=20;assert.equal(observedFictionalPortrait(s,id),seen);assert.equal(fictionalPortraitKey(s,id),seen.replace('-infant','-adult'));
 });
+
+test('a missing person portrait does not expose an undisclosed death',()=>{const s=newGame('caesar'),id=child(s,'Missing','female');s.year+=20;s.world.characters[id].missing={year:s.year,month:s.month};const before=fictionalPortraitKey(s,id);s.world.characters[id].alive=false;s.world.characters[id].deathYear=s.year-15;assert.equal(fictionalPortraitKey(s,id),before)});
