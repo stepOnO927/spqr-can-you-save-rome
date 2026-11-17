@@ -16,7 +16,7 @@ import {receivedMail,unreadCount,markRead,archiveLetter,markAllRead} from './epi
 import {mailboxHtml} from './mail-ui.js?v=guardian-wheels-merge-1';
 import {setWartimePolicy} from './epistulae-personnel.js?v=guardian-wheels-merge-1';
 import {decideDisputedHeir,personAge} from './dynasties.js?v=guardian-wheels-merge-1';
-import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=guardian-wheels-merge-1';
+import {renderGenealogy,bindGenealogy} from './genealogy-ui.js?v=family-loan-view-1';
 import {canFinalizeCampaign,finalizeCampaign} from './legacy.js?v=guardian-wheels-merge-2';
 import {marchReason} from './movement-help.js?v=defeat-1';
 import {syncChronicleDispatches} from './chronicle.js?v=succession-ui-recovery-1';

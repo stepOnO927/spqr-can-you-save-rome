@@ -6,6 +6,14 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `35e94d10` is integrated. The family-loan display and its browser
+scenario are preserved alongside the expansion's genealogy controls. Han and
+oasis national ambitions now advance through sustained monthly evidence before
+campaign settlement. The 50 focused dynasty, genealogy, ambition, and module
+version tests pass. The complete local suite passes 1,251/1,251. The 120-month
+Roman/Han market simulation and Wheels long-campaign scenarios also pass.
+GitHub browser and quality checks for this head remain pending.
+
 Main through `ee5444dd` is integrated, including the guardianship lifecycle
 and updated standard Caesar AI risk handling. The genealogy controls now offer
 the guardian filter, status explanation, and nominee selection from main while

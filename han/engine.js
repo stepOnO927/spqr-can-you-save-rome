@@ -17,7 +17,7 @@ import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
 import {CULTURAL_NAME_POOLS,ensureFieldCommanders} from './field-identities.js';
 import {ensureHanPortraitSeed,ensureHanPortraitSeeds} from './court-portrait.js';
 import {ensureForeignRulers,advanceForeignRulers,rulerGovernanceFactor} from './rulers.js';
-import {initialize as initializeAmbition} from './ambitions.js?v=guardian-wheels-merge-1';
+import {initialize as initializeAmbition,advance as advanceAmbition} from './ambitions.js?v=guardian-wheels-merge-2';
 
 export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
 export const SCENARIOS={
@@ -321,7 +321,7 @@ export function tick(s){
  if(s.throne.dynasty&&!s.throne.dynasty.orthodox)s.usurperMonths=(s.usurperMonths||0)+1;
  if(s.throne.orthodox&&s.throne.dynasty?.orthodox)s.orthodoxMonths=(s.orthodoxMonths||0)+1;
  if(!s.wars.length)s.peaceMonths=(s.peaceMonths||0)+1;else s.peaceMonths=0;
- settleCampaign(s);
+ advanceAmbition(s);settleCampaign(s);
  return s;
 }
 
