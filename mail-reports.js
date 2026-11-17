@@ -1,10 +1,10 @@
-import {sendLetter,initializeMail} from './epistulae.js?v=reported-contact-1';
-import {reportedArmies} from './character-system.js?v=reported-contact-1';
-import {CHARACTER_CATALOG} from './characters.js?v=reported-contact-1';
-import {MATERIALS} from './inventions.js?v=reported-contact-1';
-import {ROUTES,FACTIONS} from './data.js?v=reported-contact-1';
-import {campaignDate} from './campaign-date.js?v=reported-contact-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=reported-contact-1';
+import {sendLetter,initializeMail} from './epistulae.js?v=audience-silence-1';
+import {reportedArmies} from './character-system.js?v=audience-silence-1';
+import {CHARACTER_CATALOG} from './characters.js?v=audience-silence-1';
+import {MATERIALS} from './inventions.js?v=audience-silence-1';
+import {ROUTES,FACTIONS} from './data.js?v=audience-silence-1';
+import {campaignDate} from './campaign-date.js?v=audience-silence-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=audience-silence-1';
 
 const month=s=>s.year*12+s.month;
 const owned=s=>s.regions.filter(r=>r.owner===s.player);

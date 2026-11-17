@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=reported-contact-1';
-import {proposeAgreement} from '../agreements.js?v=reported-contact-1';
-import {placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=reported-contact-1';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=reported-contact-1';
-import {propose} from '../han/frontier.js?v=reported-contact-1';
-import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=reported-contact-1';
-import {ownMarketIntelligence} from '../trade-intelligence.js?v=reported-contact-1';
+import {newGame,upgradeSave} from '../engine.js?v=audience-silence-1';
+import {proposeAgreement} from '../agreements.js?v=audience-silence-1';
+import {placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=audience-silence-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=audience-silence-1';
+import {propose} from '../han/frontier.js?v=audience-silence-1';
+import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=audience-silence-1';
+import {ownMarketIntelligence} from '../trade-intelligence.js?v=audience-silence-1';
 
 test('a Roman buyer keeps a dated foreign quote and supply band without a live warehouse leak',()=>{
  let s=newGame('armenia');s.relations['armenia:parthia']=45;

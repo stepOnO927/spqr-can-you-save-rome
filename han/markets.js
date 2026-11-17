@@ -1,11 +1,11 @@
-import {COMMODITIES,marketPrice,produceMarketGood} from '../market-goods.js?v=reported-contact-1';
-import {REGIONS,ROUTES} from './data.js?v=reported-contact-1';
-import {atWar,propose,relation,shiftRelation,treaty} from './frontier.js?v=reported-contact-1';
-import {legOpen,tradePath} from './silk-road.js?v=reported-contact-1';
+import {COMMODITIES,marketPrice,produceMarketGood} from '../market-goods.js?v=audience-silence-1';
+import {REGIONS,ROUTES} from './data.js?v=audience-silence-1';
+import {atWar,propose,relation,shiftRelation,treaty} from './frontier.js?v=audience-silence-1';
+import {legOpen,tradePath} from './silk-road.js?v=audience-silence-1';
 import {createMarketMerchant} from './field-identities.js';
-import {roll,log} from './util.js?v=reported-contact-1';
-import {agriculturalDisruption,agriculturalProduction} from '../war-economy.js?v=reported-contact-1';
-import {merchantMarketObservation} from '../trade-intelligence.js?v=reported-contact-1';
+import {roll,log} from './util.js?v=audience-silence-1';
+import {agriculturalDisruption,agriculturalProduction} from '../war-economy.js?v=audience-silence-1';
+import {merchantMarketObservation} from '../trade-intelligence.js?v=audience-silence-1';
 
 const month=s=>s.year*12+s.month;
 const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));

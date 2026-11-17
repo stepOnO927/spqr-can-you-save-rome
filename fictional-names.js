@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG} from './characters.js?v=reported-contact-1';
+import {CHARACTER_CATALOG} from './characters.js?v=audience-silence-1';
 
 // Original game people and naming pools, not transcriptions of documented
 // individuals. The pools reflect each implemented court's naming tradition.

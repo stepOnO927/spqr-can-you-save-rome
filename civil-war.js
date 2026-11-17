@@ -1,7 +1,7 @@
-import {isDeliveredReport} from './person-knowledge.js?v=reported-contact-1';
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=reported-contact-1';
-import {reportedControl} from './control-intelligence.js?v=reported-contact-1';
-import {assignFictionalFieldCommander} from './dynasties.js?v=reported-contact-1';
+import {isDeliveredReport} from './person-knowledge.js?v=audience-silence-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=audience-silence-1';
+import {reportedControl} from './control-intelligence.js?v=audience-silence-1';
+import {assignFictionalFieldCommander} from './dynasties.js?v=audience-silence-1';
 
 // Alternate-history claimant commands use real game theaters and armies.
 // The setup is a simulation, not a reconstruction of a historical campaign.

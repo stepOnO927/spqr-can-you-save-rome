@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=reported-contact-1';
-import {createCharacterUI} from '../map-lab/character-ui.js?v=reported-contact-1';
-import {addReport,queueMission} from '../character-system.js?v=reported-contact-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=reported-contact-1';
-import {createFictionalPerson} from '../dynasties.js?v=reported-contact-1';
+import {newGame,upgradeSave} from '../engine.js?v=audience-silence-1';
+import {createCharacterUI} from '../map-lab/character-ui.js?v=audience-silence-1';
+import {addReport,queueMission} from '../character-system.js?v=audience-silence-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=audience-silence-1';
+import {createFictionalPerson} from '../dynasties.js?v=audience-silence-1';
 
 // A small DOM stub exercises the real handler without requiring a network listener.
 // It does not replace a browser or layout test.

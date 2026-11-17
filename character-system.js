@@ -1,18 +1,18 @@
-import {isDeliveredReport} from './person-knowledge.js?v=reported-contact-1';
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=reported-contact-1';
-import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=reported-contact-1';
-import {generateFictionalName} from './fictional-names.js?v=reported-contact-1';
-import {FACTIONS,ROUTES} from './data.js?v=reported-contact-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=reported-contact-1';
-import {potentialConspirators} from './conspiracies.js?v=reported-contact-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=reported-contact-1';
-import {reportedControl} from './control-intelligence.js?v=reported-contact-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=reported-contact-1';
-import {activeAgreement} from './agreements.js?v=reported-contact-1';
-import {activeModifiers} from './inventions.js?v=reported-contact-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=reported-contact-1';
-import {namedReportSubjects,reportedPersonalContacts} from './person-knowledge.js?v=reported-contact-1';
-export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=reported-contact-1';
+import {isDeliveredReport} from './person-knowledge.js?v=audience-silence-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=audience-silence-1';
+import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=audience-silence-1';
+import {generateFictionalName} from './fictional-names.js?v=audience-silence-1';
+import {FACTIONS,ROUTES} from './data.js?v=audience-silence-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=audience-silence-1';
+import {potentialConspirators} from './conspiracies.js?v=audience-silence-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=audience-silence-1';
+import {reportedControl} from './control-intelligence.js?v=audience-silence-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=audience-silence-1';
+import {activeAgreement} from './agreements.js?v=audience-silence-1';
+import {activeModifiers} from './inventions.js?v=audience-silence-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=audience-silence-1';
+import {namedReportSubjects,reportedPersonalContacts} from './person-knowledge.js?v=audience-silence-1';
+export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=audience-silence-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.

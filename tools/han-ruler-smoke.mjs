@@ -81,8 +81,8 @@ try{
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('parthia');await page.locator('#begin').click();await page.locator('#save').click();
  await page.evaluate(async()=>{
-  const {recordBirth}=await import('/han/dynasty.js?v=reported-contact-1');
-  const {advanceForeignRulers}=await import('/han/rulers.js?v=reported-contact-1');
+  const {recordBirth}=await import('/han/dynasty.js?v=audience-silence-1');
+  const {advanceForeignRulers}=await import('/han/rulers.js?v=audience-silence-1');
   const key='spqr-han-save-browser',s=JSON.parse(localStorage.getItem(key)),old=s.rulers.parthia.personId,id='original-parthian-queen-browser';
   s.persons[id]={id,name:['Varda of Parthia','安息的瓦尔达'],faction:'parthia',role:'princess',record:'fictional',birth:s.year-25,sex:'f',father:old,alive:true,competence:80,military:70};
   if(!recordBirth(s,{id,father:old,birth:s.year-25,birthSurname:null,sex:'f'}).ok)throw Error('queen birth record failed');

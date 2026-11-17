@@ -1,10 +1,10 @@
-import {COMMODITIES,marketPrice} from '../market-goods.js?v=reported-contact-1';
-import {activeEasternMarketHouse,activeEasternMerchantPrivilege,answerEasternMerchantProposal,answerEasternMerchantProtection,cancelEasternSale,cancelEasternSupplyContract,easternMarketOffers,fundEasternMarketHouse,grantEasternMerchantPrivilege,MARKET_HOUSE_COST,MARKET_HOUSE_MONTHS,MERCHANT_PROTECTION_COST,placeEasternTrade,postEasternSale,proposeEasternSupplyContract,quoteEasternTrade,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy,TARIFF_POLICIES} from './markets.js?v=reported-contact-1';
-import {atWar,propose,treaty} from './frontier.js?v=reported-contact-1';
-import {FACTIONS} from './data.js?v=reported-contact-1';
-import {campaignDate} from '../campaign-date.js?v=reported-contact-1';
-import {ownMarketIntelligence} from '../trade-intelligence.js?v=reported-contact-1';
-import {protectRoute,ROUTE_PROTECTION_COST} from './silk-road.js?v=reported-contact-1';
+import {COMMODITIES,marketPrice} from '../market-goods.js?v=audience-silence-1';
+import {activeEasternMarketHouse,activeEasternMerchantPrivilege,answerEasternMerchantProposal,answerEasternMerchantProtection,cancelEasternSale,cancelEasternSupplyContract,easternMarketOffers,fundEasternMarketHouse,grantEasternMerchantPrivilege,MARKET_HOUSE_COST,MARKET_HOUSE_MONTHS,MERCHANT_PROTECTION_COST,placeEasternTrade,postEasternSale,proposeEasternSupplyContract,quoteEasternTrade,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy,TARIFF_POLICIES} from './markets.js?v=audience-silence-1';
+import {atWar,propose,treaty} from './frontier.js?v=audience-silence-1';
+import {FACTIONS} from './data.js?v=audience-silence-1';
+import {campaignDate} from '../campaign-date.js?v=audience-silence-1';
+import {ownMarketIntelligence} from '../trade-intelligence.js?v=audience-silence-1';
+import {protectRoute,ROUTE_PROTECTION_COST} from './silk-road.js?v=audience-silence-1';
 import {merchantPortraitSrc} from './merchant-portrait.js';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

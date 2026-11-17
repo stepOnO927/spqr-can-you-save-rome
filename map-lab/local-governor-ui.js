@@ -1,9 +1,9 @@
-import {isDeliveredReport} from '../person-knowledge.js?v=reported-contact-1';
-import {campaignYear,campaignDate} from '../campaign-date.js?v=reported-contact-1';
-import {reportedControl} from '../control-intelligence.js?v=reported-contact-1';
-import {FACTIONS} from '../data.js?v=reported-contact-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=reported-contact-1';
-import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=reported-contact-1';
+import {isDeliveredReport} from '../person-knowledge.js?v=audience-silence-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=audience-silence-1';
+import {reportedControl} from '../control-intelligence.js?v=audience-silence-1';
+import {FACTIONS} from '../data.js?v=audience-silence-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=audience-silence-1';
+import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=audience-silence-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
