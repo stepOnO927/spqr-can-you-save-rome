@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,recruit} from '../engine.js?v=faces-wheels-1';
-import {CHARACTER_CATALOG,successorFor} from '../characters.js?v=faces-wheels-1';
+import {newGame,upgradeSave,recruit} from '../engine.js?v=guardian-wheels-merge-2';
+import {CHARACTER_CATALOG,successorFor} from '../characters.js?v=succession-ui-recovery-1';
 import {STARTING_COMMANDERS,NAME_POOLS,generateFictionalName} from '../fictional-names.js?v=faces-wheels-1';
-import {templatesFor,recruitFormation} from '../legion-designer.js?v=faces-wheels-1';
+import {templatesFor,recruitFormation} from '../legion-designer.js?v=guardian-wheels-merge-1';
 
 test('opening officers have distinct saved identities without changing the opening random sequence',()=>{
  const s=newGame('caesar');assert.equal(s.world.dynasties.seed,786509145);

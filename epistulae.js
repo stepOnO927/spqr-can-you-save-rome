@@ -1,12 +1,12 @@
-import {ROUTES, FACTIONS} from './data.js?v=faces-wheels-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-wheels-1';
-import {AGREEMENT_TYPES} from './agreements.js?v=faces-wheels-1';
-import {formatChronicleEntry} from './chronicle.js?v=faces-wheels-1';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=faces-wheels-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=faces-wheels-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=faces-wheels-1';
-import {canMediate,requestMediation} from './civil-war.js?v=faces-wheels-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=faces-wheels-1';
+import {ROUTES, FACTIONS} from './data.js?v=phase-x-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=succession-ui-recovery-1';
+import {AGREEMENT_TYPES} from './agreements.js?v=agreement-courier-1';
+import {formatChronicleEntry} from './chronicle.js?v=succession-ui-recovery-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=guardian-wheels-merge-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=born-portraits-eleven-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
+import {canMediate,requestMediation} from './civil-war.js?v=mutual-audience-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=mutual-audience-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');

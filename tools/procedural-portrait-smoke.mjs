@@ -9,7 +9,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  const ids=await page.evaluate(async()=>{
-  const engine=await import('/engine.js?v=faces-wheels-1'),dynasties=await import('/dynasties.js?v=faces-wheels-1'),characters=await import('/character-system.js?v=faces-wheels-1');
+  const engine=await import('/engine.js?v=phase-x-1'),dynasties=await import('/dynasties.js?v=phase-x-1'),characters=await import('/character-system.js?v=phase-x-1');
   const s=engine.newGame('caesar'),own=dynasties.createFictionalPerson(s,{name:['Gaius Furius Crispus','盖乌斯·弗里乌斯·克里斯普斯'],faction:'caesar',birthYear:-82,location:'cisalpine',sex:'male',role:['Fictional field commander','虚构野战指挥官'],militaryOnly:true});
   const legion=s.armies.find(a=>a.id==='xiii');legion.characterId=own;legion.commander=[...s.world.dynasties.catalog[own].name];
   const foreign=dynasties.createFictionalPerson(s,{name:['Theon of Alexandria','亚历山大里亚的提翁'],faction:'egypt',birthYear:-75,location:'roma'});
@@ -26,7 +26,7 @@ try{
  assert.equal(await page.locator('#command-detail .portrait-procedural').count(),0);
  await page.locator('#save').click();
  const observed=await page.evaluate(async foreign=>{
-  const diplomacy=await import('/personal-diplomacy.js?v=faces-wheels-1');
+  const diplomacy=await import('/personal-diplomacy.js?v=phase-x-1');
   const s=JSON.parse(localStorage.getItem('spqr-save-1'));
   if(!diplomacy.requestPersonalMeeting(s,'caesar',foreign,'egypt').ok)throw Error('meeting request unavailable');
   s.world.intelSeed=1000;diplomacy.advancePersonalDiplomacy(s);diplomacy.advancePersonalDiplomacy(s);
@@ -41,7 +41,7 @@ try{
  await page.locator('#load').click();await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator(`[data-character="${ids.foreign}"]`).first().click();
  assert.equal(await page.locator('#command-detail .portrait-procedural').first().evaluate(el=>el.outerHTML),art);
  const romanLeader=await page.evaluate(async()=>{
-  const engine=await import('/engine.js?v=faces-wheels-1'),dynasties=await import('/dynasties.js?v=faces-wheels-1'),characters=await import('/characters.js?v=faces-wheels-1');
+  const engine=await import('/engine.js?v=phase-x-1'),dynasties=await import('/dynasties.js?v=phase-x-1'),characters=await import('/characters.js?v=phase-x-1');
   const s=engine.newGame('caesar'),id=dynasties.createFictionalPerson(s,{name:['Lucius Aemilius','卢基乌斯·埃米利乌斯'],faction:'caesar',birthYear:-84,location:'cisalpine',sex:'male'});
   s.world.characters[id].influence=90;
   for(const historic of ['caesar','antony','lepidus'])s.world.characters[historic].alive=false;

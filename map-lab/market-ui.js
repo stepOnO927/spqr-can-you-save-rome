@@ -1,7 +1,7 @@
 import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,postTradeSale,cancelTradeSale,proposeSupplyContract,cancelSupplyContract,setTradeTariffPolicy,setTradeExportRestriction,TARIFF_POLICIES,marketPrice,tradeRouteName,activeMerchantPrivilege,grantMerchantPrivilege} from '../trade-markets.js?v=faces-wheels-1';
-import {activeAgreement} from '../agreements.js?v=faces-wheels-1';
-import {REGIONS,FACTIONS} from '../data.js?v=faces-wheels-1';
-import {campaignDate} from '../campaign-date.js?v=faces-wheels-1';
+import {activeAgreement} from '../agreements.js?v=agreement-courier-1';
+import {REGIONS,FACTIONS} from '../data.js?v=phase-x-1';
+import {campaignDate} from '../campaign-date.js?v=calendar-1';
 import {ownMarketIntelligence} from '../trade-intelligence.js?v=faces-wheels-1';
 
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

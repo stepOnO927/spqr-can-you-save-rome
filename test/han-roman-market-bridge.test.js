@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-wheels-1';
-import {attachHanWorld,hanWorld,advanceHanWorld,romanView,buyEasternImport} from '../han/world.js?v=faces-wheels-1';
+import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
+import {attachHanWorld,hanWorld,advanceHanWorld,romanView,buyEasternImport} from '../han/world.js?v=guardian-wheels-merge-2';
 import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-wheels-1';
-import {advanceDate} from '../han/util.js?v=faces-wheels-1';
-import {eastPanel} from '../han/east-ui.js?v=faces-wheels-1';
-import {setRelation} from '../han/frontier.js?v=faces-wheels-1';
-import {propose} from '../han/frontier.js?v=faces-wheels-1';
-import {proposeAgreement} from '../agreements.js?v=faces-wheels-1';
+import {advanceDate} from '../han/util.js?v=han-1';
+import {eastPanel} from '../han/east-ui.js?v=guardian-wheels-merge-2';
+import {setRelation} from '../han/frontier.js?v=han-1';
+import {propose} from '../han/frontier.js?v=han-1';
+import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
 import {postTradeSale,advanceMarketAI,advanceMarkets} from '../trade-markets.js?v=faces-wheels-1';
 
 test('the attached eastern world trades autonomously without publishing private orders to Rome',()=>{

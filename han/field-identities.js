@@ -1,5 +1,5 @@
-import {FACTIONS} from './data.js?v=faces-wheels-1';
-import {recordBirth} from './dynasty.js?v=faces-wheels-1';
+import {FACTIONS} from './data.js?v=han-1';
+import {recordBirth} from './dynasty.js?v=han-1';
 import {ensureHanPortraitSeed} from './court-portrait.js';
 
 // Original game names. These are cultural reconstructions, never documented

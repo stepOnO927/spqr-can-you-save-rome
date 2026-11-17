@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=faces-wheels-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=faces-wheels-1';
-import {initializeChronicle,syncChronicleDispatches} from '../chronicle.js?v=faces-wheels-1';
+import {newGame} from '../engine.js?v=guardian-wheels-merge-2';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
+import {initializeChronicle,syncChronicleDispatches} from '../chronicle.js?v=succession-ui-recovery-1';
 
 test('a reported foreign treaty reaches the chronicle only after contact, and secret treaties remain hidden',()=>{
  const s=newGame('caesar');initializeChronicle(s);const end=s.year*12+s.month+24;

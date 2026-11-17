@@ -1,7 +1,7 @@
-import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=faces-wheels-1';
-import {wartimePolicy} from './epistulae-personnel.js?v=faces-wheels-1';
-import {CHARACTER_CATALOG} from './characters.js?v=faces-wheels-1';
-import {campaignDate} from './campaign-date.js?v=faces-wheels-1';
+import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=guardian-wheels-merge-1';
+import {wartimePolicy} from './epistulae-personnel.js?v=guardian-wheels-merge-1';
+import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
+import {campaignDate} from './campaign-date.js?v=calendar-1';
 
 const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const local=(value,zh)=>Array.isArray(value)?value[zh?1:0]:value;

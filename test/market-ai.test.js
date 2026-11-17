@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-wheels-1';
-import {proposeAgreement} from '../agreements.js?v=faces-wheels-1';
+import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
+import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
 import {advanceMarketAI,advanceMarketDiplomacy,advanceMarkets,quoteTrade} from '../trade-markets.js?v=faces-wheels-1';
 
 const tradeState=player=>{

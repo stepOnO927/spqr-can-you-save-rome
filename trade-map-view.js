@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=faces-wheels-1';
-import {REGIONS as EASTERN_REGIONS} from './han/data.js?v=faces-wheels-1';
+import {ROUTES} from './data.js?v=phase-x-1';
+import {REGIONS as EASTERN_REGIONS} from './han/data.js?v=han-1';
 import {marketPrice} from './market-goods.js?v=faces-wheels-1';
 
 const easternPoints=new Map(EASTERN_REGIONS.filter(r=>Number.isFinite(r.lon)&&Number.isFinite(r.lat)).map(r=>[r.id,[r.lon,r.lat]]));

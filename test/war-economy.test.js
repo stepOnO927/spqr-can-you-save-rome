@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,forecastEconomy,projectTaxPath,upgradeSave} from '../engine.js?v=faces-wheels-1';
+import {newGame,forecastEconomy,projectTaxPath,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
 import {advanceMarkets} from '../trade-markets.js?v=faces-wheels-1';
-import {newHanGame,tick as tickHan,loadHanSave,serialize} from '../han/engine.js?v=faces-wheels-1';
+import {newHanGame,tick as tickHan,loadHanSave,serialize} from '../han/engine.js?v=guardian-wheels-merge-2';
 import {advanceEasternMarkets} from '../han/markets.js?v=faces-wheels-1';
 import {agriculturalDisruption,agriculturalProduction,grainProvisionFactor} from '../war-economy.js?v=faces-wheels-1';
 

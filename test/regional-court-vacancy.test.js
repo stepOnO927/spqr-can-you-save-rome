@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-wheels-1';
-import {assignSuccession,knownLeaders,leadershipTitle,CHARACTER_CATALOG} from '../characters.js?v=faces-wheels-1';
-import {advanceGovernments,deriveGovernment} from '../governance.js?v=faces-wheels-1';
-import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=faces-wheels-1';
-import {createFictionalPerson} from '../dynasties.js?v=faces-wheels-1';
-import {proceduralPortraitSvg} from '../portrait-registry.js?v=faces-wheels-1';
+import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
+import {assignSuccession,knownLeaders,leadershipTitle,CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
+import {advanceGovernments,deriveGovernment} from '../governance.js?v=guardian-wheels-merge-1';
+import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=guardian-wheels-merge-1';
+import {createFictionalPerson} from '../dynasties.js?v=guardian-wheels-merge-1';
+import {proceduralPortraitSvg} from '../portrait-registry.js?v=born-portraits-eleven-1';
 const states={armenia:'artavasdes',numidia:'juba',galatia:'deiotarus',bosporus:'pharnaces'};
 const high=Array.from({length:100000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296>.98);
 function setup(faction){const s=newGame('caesar'),id=states[faction];s.wars=[];s.world.characters[id].alive=false;s.world.characters[id].health='deceased';assignSuccession(s,faction);s.factions[faction].treasury=100;s.factions[faction].stability=60;s.world.dynasties.seed=1;return s}

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-wheels-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=guardian-wheels-merge-2';
 import {advanceEasternMarkets,answerEasternMerchantProposal,placeEasternTrade,quoteEasternTrade} from '../han/markets.js?v=faces-wheels-1';
 import {createMarketMerchant} from '../han/field-identities.js';
-import {setRelation} from '../han/frontier.js?v=faces-wheels-1';
+import {setRelation} from '../han/frontier.js?v=han-1';
 
 const request={seller:'kangju',buyer:'han',origin:'kangju',destination:'dunhuang',commodity:'horses',quantity:1};
 function deliveredRoute(){

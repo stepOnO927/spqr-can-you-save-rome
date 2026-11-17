@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-wheels-1';
-import {newHanGame,loadHanSave} from '../han/engine.js?v=faces-wheels-1';
+import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
+import {newHanGame,loadHanSave} from '../han/engine.js?v=guardian-wheels-merge-2';
 import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-wheels-1';
-import {propose,setRelation} from '../han/frontier.js?v=faces-wheels-1';
+import {propose,setRelation} from '../han/frontier.js?v=han-1';
 import {COMMODITIES} from '../market-goods.js?v=faces-wheels-1';
-import {advanceDate} from '../han/util.js?v=faces-wheels-1';
+import {advanceDate} from '../han/util.js?v=han-1';
 
 test('livestock, copper, woollen cloth and jade have measured regional markets in old saves',()=>{
  const roman=newGame('caesar'),romanCash=roman.factions.caesar.treasury;

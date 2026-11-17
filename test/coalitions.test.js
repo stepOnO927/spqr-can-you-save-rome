@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,diplomacy,isWar,upgradeSave,tick} from '../engine.js?v=faces-wheels-1';
-import {formCoalition,leaveCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,perceivedBalance} from '../coalitions.js?v=faces-wheels-1';
-import {addReport} from '../character-system.js?v=faces-wheels-1';
+import {newGame,estimatedStrength,diplomacy,isWar,upgradeSave,tick} from '../engine.js?v=guardian-wheels-merge-2';
+import {formCoalition,leaveCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,perceivedBalance} from '../coalitions.js?v=mutual-audience-1';
+import {addReport} from '../character-system.js?v=guardian-wheels-merge-1';
 
 function setup(){const s=newGame('caesar');s.relations['caesar:egypt']=40;s.relations['caesar:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;return s}
 test('three states form a coalition from their own border intelligence, pay and coordinate defense',()=>{

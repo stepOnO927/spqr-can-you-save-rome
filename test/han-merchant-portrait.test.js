@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-wheels-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=guardian-wheels-merge-2';
 import {createMarketMerchant} from '../han/field-identities.js';
 import {merchantPortraitSrc} from '../han/merchant-portrait.js';
 

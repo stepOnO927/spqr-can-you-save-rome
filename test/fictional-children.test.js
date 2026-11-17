@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-wheels-1';
-import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=faces-wheels-1';
+import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
+import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=guardian-wheels-merge-1';
 import {generateFictionalChildName} from '../fictional-names.js?v=faces-wheels-1';
-import {proceduralPortraitSvg,observedProceduralPortrait} from '../portrait-registry.js?v=faces-wheels-1';
-import {appointOffice,dismissOffice} from '../office-system.js?v=faces-wheels-1';
-import {addReport} from '../character-system.js?v=faces-wheels-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=faces-wheels-1';
+import {proceduralPortraitSvg,observedProceduralPortrait} from '../portrait-registry.js?v=born-portraits-eleven-1';
+import {appointOffice,dismissOffice} from '../office-system.js?v=guardian-wheels-merge-1';
+import {addReport} from '../character-system.js?v=guardian-wheels-merge-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=guardian-wheels-merge-1';
 
 test('Han children keep a recorded family and use Han names across saves',()=>{
  const s=newGame('han');

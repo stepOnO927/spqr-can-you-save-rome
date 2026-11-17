@@ -1,9 +1,9 @@
 import {COMMODITIES,marketPrice,produceMarketGood} from '../market-goods.js?v=faces-wheels-1';
-import {REGIONS,ROUTES} from './data.js?v=faces-wheels-1';
-import {atWar,propose,relation,shiftRelation,treaty} from './frontier.js?v=faces-wheels-1';
-import {legOpen,tradePath} from './silk-road.js?v=faces-wheels-1';
+import {REGIONS,ROUTES} from './data.js?v=han-1';
+import {atWar,propose,relation,shiftRelation,treaty} from './frontier.js?v=han-1';
+import {legOpen,tradePath} from './silk-road.js?v=han-1';
 import {createMarketMerchant} from './field-identities.js';
-import {roll,log} from './util.js?v=faces-wheels-1';
+import {roll,log} from './util.js?v=han-1';
 import {agriculturalDisruption,agriculturalProduction} from '../war-economy.js?v=faces-wheels-1';
 import {merchantMarketObservation} from '../trade-intelligence.js?v=faces-wheels-1';
 

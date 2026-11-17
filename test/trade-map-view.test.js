@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-wheels-1';
+import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
 import {placeTradeOrder} from '../trade-markets.js?v=faces-wheels-1';
-import {proposeAgreement} from '../agreements.js?v=faces-wheels-1';
+import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
 import {buildTradeMapView} from '../trade-map-view.js?v=faces-wheels-1';
 
 const points={cisalpine:[11.6,44.75],narbo:[3.3,43.4],roma:[12.45,42.1],hanGuanzhong:[108.95,34.27],hanHexi:[94.66,40.14],shanshanOasis:[89.5,40.5],media:[48.518,34.804],parthia:[44.5,33.1]};

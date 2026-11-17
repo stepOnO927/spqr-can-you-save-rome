@@ -11,8 +11,8 @@ try{
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
  await page.locator('#save').click();
  await page.evaluate(async()=>{
-  const {loadHanSave,serialize,SAVE_KEY}=await import('/han/engine.js?v=faces-wheels-1');
-  const {setRelation}=await import('/han/frontier.js?v=faces-wheels-1');
+  const {loadHanSave,serialize,SAVE_KEY}=await import('/han/engine.js?v=phase-x-1');
+  const {setRelation}=await import('/han/frontier.js?v=phase-x-1');
   const state=loadHanSave(localStorage.getItem(SAVE_KEY('browser')));
   setRelation(state,'han','kangju',70);
   localStorage.setItem(SAVE_KEY('browser'),serialize(state));
