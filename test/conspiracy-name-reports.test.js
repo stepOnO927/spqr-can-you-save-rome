@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-eleven-1';
-import {createFictionalPerson} from '../dynasties.js?v=born-portraits-eleven-1';
-import {addReport} from '../character-system.js?v=born-portraits-eleven-1';
+import {newGame,upgradeSave} from '../engine.js?v=guardian-playability-1';
+import {createFictionalPerson} from '../dynasties.js?v=guardian-playability-1';
+import {addReport} from '../character-system.js?v=guardian-playability-1';
 import {reportedPersonName,storedCorrespondentName} from '../person-knowledge.js?v=mutual-audience-1';
 test('a conspiracy accusation records the observed name and does not use a later hidden name',()=>{
  let s=newGame('caesar');const id=createFictionalPerson(s,{name:['First name','最初姓名'],faction:'caesar',birthYear:-80});

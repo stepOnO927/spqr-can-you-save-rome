@@ -1,4 +1,4 @@
-import {newGame,tick} from '../engine.js?v=born-portraits-eleven-1';
+import {newGame,tick} from '../engine.js?v=guardian-playability-1';
 import assert from 'node:assert/strict';
 import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';

@@ -1,4 +1,4 @@
-import {reportedArmies} from './character-system.js?v=born-portraits-eleven-1';
+import {reportedArmies} from './character-system.js?v=guardian-playability-1';
 
 // UI projections only: the simulation and local saves still contain the true state.
 export function visibleArmyForPlayer(state,player,id){
