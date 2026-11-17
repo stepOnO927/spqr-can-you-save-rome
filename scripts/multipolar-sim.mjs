@@ -1,7 +1,7 @@
-import {newGame,tick} from '../engine.js?v=audience-silence-1';
+import {newGame,tick} from '../engine.js?v=mutual-audience-1';
 import assert from 'node:assert/strict';
-import {proposeAgreement} from '../agreements.js?v=audience-silence-1';
-import {warningLedger} from '../warning-ledger.js?v=audience-silence-1';
+import {proposeAgreement} from '../agreements.js?v=mutual-audience-1';
+import {warningLedger} from '../warning-ledger.js?v=mutual-audience-1';
 
 // Identical unforced openings, different seeded random streams; both the
 // fully automated world and an ordinary passive Roman player are exercised.

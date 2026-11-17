@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=audience-silence-1';
-import {createFictionalPerson} from '../dynasties.js?v=audience-silence-1';
-import {buildChessboard} from '../chessboard.js?v=audience-silence-1';
-import {addReport} from '../character-system.js?v=audience-silence-1';
-import {proposeAgreement} from '../agreements.js?v=audience-silence-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=audience-silence-1';
-import {renderChessboard} from '../chessboard-ui.js?v=audience-silence-1';
+import {newGame,upgradeSave} from '../engine.js?v=mutual-audience-1';
+import {createFictionalPerson} from '../dynasties.js?v=mutual-audience-1';
+import {buildChessboard} from '../chessboard.js?v=mutual-audience-1';
+import {addReport} from '../character-system.js?v=mutual-audience-1';
+import {proposeAgreement} from '../agreements.js?v=mutual-audience-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=mutual-audience-1';
+import {renderChessboard} from '../chessboard-ui.js?v=mutual-audience-1';
 
 test('the board does not read hidden foreign plans, plots, armies, personal loyalties or secret treaties',()=>{
  const s=newGame('caesar'),before=buildChessboard(s);s.world.conspiracies={senate:{person:'cato',participants:['cato']}};s.world.strategicPlans={senate:{goal:'secret'}};s.world.doubleAgents=[{person:'antony',allegiance:'senate'}];

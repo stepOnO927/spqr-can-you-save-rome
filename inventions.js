@@ -1,7 +1,7 @@
 // Campaign abstractions of documented ancient practices, not claims of first invention in 49 BCE.
 // Research unlocks a local project; only completed buildings affect the simulation.
-import {ROUTES} from './data.js?v=audience-silence-1';
-import {initializeMarkets} from './trade-markets.js?v=audience-silence-1';
+import {ROUTES} from './data.js?v=mutual-audience-1';
+import {initializeMarkets} from './trade-markets.js?v=mutual-audience-1';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const sum=(items,key)=>items.reduce((n,x)=>n+(x[key]||0),0);

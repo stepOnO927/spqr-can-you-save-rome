@@ -1,7 +1,7 @@
-import {syncChronicleDispatches} from './chronicle.js?v=audience-silence-1';
-import {CHARACTER_CATALOG} from './characters.js?v=audience-silence-1';
-import {initializeDynasties} from './dynasties.js?v=audience-silence-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=audience-silence-1';
+import {syncChronicleDispatches} from './chronicle.js?v=mutual-audience-1';
+import {CHARACTER_CATALOG} from './characters.js?v=mutual-audience-1';
+import {initializeDynasties} from './dynasties.js?v=mutual-audience-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=mutual-audience-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 

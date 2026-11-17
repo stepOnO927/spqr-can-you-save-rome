@@ -1,7 +1,7 @@
-import {campaignYear,campaignDate} from './campaign-date.js?v=audience-silence-1';
-import {ROUTES,FACTIONS} from './data.js?v=audience-silence-1';
-import {CHARACTER_CATALOG} from './characters.js?v=audience-silence-1';
-import {reportedControl} from './control-intelligence.js?v=audience-silence-1';
+import {campaignYear,campaignDate} from './campaign-date.js?v=mutual-audience-1';
+import {ROUTES,FACTIONS} from './data.js?v=mutual-audience-1';
+import {CHARACTER_CATALOG} from './characters.js?v=mutual-audience-1';
+import {reportedControl} from './control-intelligence.js?v=mutual-audience-1';
 
 const copy=x=>JSON.parse(JSON.stringify(x));
 const name=(id,lang)=>FACTIONS[id]?.short?.[lang==='zh'?1:0]||id;

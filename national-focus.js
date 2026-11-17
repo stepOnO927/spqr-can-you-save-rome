@@ -1,11 +1,11 @@
-import {FOCUS_TREES,TREE_ALIASES,BRANCHES,ICONS} from './imperium-focus-data.js?v=audience-silence-1';
-import {ROUTES,FACTIONS} from './data.js?v=audience-silence-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=audience-silence-1';
-import {proposeAgreement} from './agreements.js?v=audience-silence-1';
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=audience-silence-1';
-import {successionCandidates} from './governance.js?v=audience-silence-1';
-import {reportedControl} from './control-intelligence.js?v=audience-silence-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=audience-silence-1';
+import {FOCUS_TREES,TREE_ALIASES,BRANCHES,ICONS} from './imperium-focus-data.js?v=mutual-audience-1';
+import {ROUTES,FACTIONS} from './data.js?v=mutual-audience-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=mutual-audience-1';
+import {proposeAgreement} from './agreements.js?v=mutual-audience-1';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=mutual-audience-1';
+import {successionCandidates} from './governance.js?v=mutual-audience-1';
+import {reportedControl} from './control-intelligence.js?v=mutual-audience-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=mutual-audience-1';
 
 // IMPERIUM national focus engine. One primary focus per state progresses with
 // the monthly tick. Costs are paid when a focus starts and shown beforehand;

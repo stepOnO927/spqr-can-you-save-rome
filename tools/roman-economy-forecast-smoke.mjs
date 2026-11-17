@@ -8,8 +8,8 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  const expected=await page.evaluate(async()=>{
-  const {newGame,forecastEconomy}=await import('/engine.js?v=audience-silence-1');
-  const {proposeAgreement}=await import('/agreements.js?v=audience-silence-1');
+  const {newGame,forecastEconomy}=await import('/engine.js?v=mutual-audience-1');
+  const {proposeAgreement}=await import('/agreements.js?v=mutual-audience-1');
   const s=newGame('caesar');for(const r of s.regions.filter(r=>r.owner==='caesar'))s.markets.regions[r.id].goods.grain.stock=0;
   const before=forecastEconomy(s).treasury;
   s.relations['caesar:egypt']=80;

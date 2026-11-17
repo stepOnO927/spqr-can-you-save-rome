@@ -1,6 +1,6 @@
-import {ROUTES} from './data.js?v=audience-silence-1';
-import {REGIONS as EASTERN_REGIONS} from './han/data.js?v=audience-silence-1';
-import {marketPrice} from './market-goods.js?v=audience-silence-1';
+import {ROUTES} from './data.js?v=mutual-audience-1';
+import {REGIONS as EASTERN_REGIONS} from './han/data.js?v=mutual-audience-1';
+import {marketPrice} from './market-goods.js?v=mutual-audience-1';
 
 const easternPoints=new Map(EASTERN_REGIONS.filter(r=>Number.isFinite(r.lon)&&Number.isFinite(r.lat)).map(r=>[r.id,[r.lon,r.lat]]));
 const visibleStatus=new Set(['traveling','blocked']);

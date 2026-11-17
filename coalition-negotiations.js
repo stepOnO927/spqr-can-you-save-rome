@@ -1,8 +1,8 @@
-import {coalitionInterest,formCoalition} from './coalitions.js?v=audience-silence-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=audience-silence-1';
-import {reportedControl} from './control-intelligence.js?v=audience-silence-1';
-import {ROUTES} from './data.js?v=audience-silence-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=audience-silence-1';
+import {coalitionInterest,formCoalition} from './coalitions.js?v=mutual-audience-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=mutual-audience-1';
+import {reportedControl} from './control-intelligence.js?v=mutual-audience-1';
+import {ROUTES} from './data.js?v=mutual-audience-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=mutual-audience-1';
 
 const relation=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;
 function canWrite(s,actor,target){

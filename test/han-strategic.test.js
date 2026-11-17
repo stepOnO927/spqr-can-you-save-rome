@@ -1,12 +1,12 @@
 // MANDATE OF HEAVEN — strategic acceptance tests 11–20.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,tick,moveArmy} from '../han/engine.js?v=audience-silence-1';
-import {ROUTES,REGIONS,OASIS} from '../han/data.js?v=audience-silence-1';
-import {PRESETS,templateStats,supplyFor,resolveBattle,marchMonths,recruitQuote,recruit,validateMix,saveTemplate} from '../han/military.js?v=audience-silence-1';
-import {propose,proposalScore,protectorateAction,access,declareWar,knownStrength,aiMilitary,observe,relation} from '../han/frontier.js?v=audience-silence-1';
-import {tradePath,legOpen,advanceSilk,embassyConditions,sendTradeEmbassy} from '../han/silk-road.js?v=audience-silence-1';
-import {monthIndex} from '../han/util.js?v=audience-silence-1';
+import {newHanGame,tick,moveArmy} from '../han/engine.js?v=mutual-audience-1';
+import {ROUTES,REGIONS,OASIS} from '../han/data.js?v=mutual-audience-1';
+import {PRESETS,templateStats,supplyFor,resolveBattle,marchMonths,recruitQuote,recruit,validateMix,saveTemplate} from '../han/military.js?v=mutual-audience-1';
+import {propose,proposalScore,protectorateAction,access,declareWar,knownStrength,aiMilitary,observe,relation} from '../han/frontier.js?v=mutual-audience-1';
+import {tradePath,legOpen,advanceSilk,embassyConditions,sendTradeEmbassy} from '../han/silk-road.js?v=mutual-audience-1';
+import {monthIndex} from '../han/util.js?v=mutual-audience-1';
 
 const game=(p='han',o={})=>newHanGame(p,{seed:5,...o});
 const army=(s,owner,region,tpl,men=10000)=>{const t=PRESETS[tpl];const a={id:'t'+Math.random().toString(36).slice(2),owner,region,men,morale:70,training:50,supply:100,template:{id:t.id,name:t.name,mix:{...t.mix}},commander:null,move:null};s.armies.push(a);return a};

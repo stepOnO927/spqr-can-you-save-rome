@@ -1,4 +1,4 @@
-import {ROUTES,FACTIONS} from './data.js?v=audience-silence-1';
+import {ROUTES,FACTIONS} from './data.js?v=mutual-audience-1';
 
 // Public announcements are learned by participants and adjacent observers.
 // Snapshots are not live links: an observer who loses contact keeps old news.

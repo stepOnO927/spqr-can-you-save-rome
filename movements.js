@@ -1,10 +1,10 @@
-import {FACTIONS,ROUTES} from './data.js?v=audience-silence-1';
-import {CHARACTER_CATALOG} from './characters.js?v=audience-silence-1';
-import {createFictionalPerson} from './dynasties.js?v=audience-silence-1';
-import {generateFictionalName} from './fictional-names.js?v=audience-silence-1';
-import {hasNationalIdea} from './national-ideas.js?v=audience-silence-1';
-import {activeAgreement,terminateAgreement} from './agreements.js?v=audience-silence-1';
-import {reportedPersonalContact} from './person-knowledge.js?v=audience-silence-1';
+import {FACTIONS,ROUTES} from './data.js?v=mutual-audience-1';
+import {CHARACTER_CATALOG} from './characters.js?v=mutual-audience-1';
+import {createFictionalPerson} from './dynasties.js?v=mutual-audience-1';
+import {generateFictionalName} from './fictional-names.js?v=mutual-audience-1';
+import {hasNationalIdea} from './national-ideas.js?v=mutual-audience-1';
+import {activeAgreement,terminateAgreement} from './agreements.js?v=mutual-audience-1';
+import {reportedPersonalContact} from './person-knowledge.js?v=mutual-audience-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};

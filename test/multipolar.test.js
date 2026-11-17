@@ -1,19 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=audience-silence-1';
-import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=audience-silence-1';
-import {warningLedger} from '../warning-ledger.js?v=audience-silence-1';
-import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=audience-silence-1';
-import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=audience-silence-1';
-import {observeAttackPattern} from '../strategic-planning.js?v=audience-silence-1';
-import {buildChessboard} from '../chessboard.js?v=audience-silence-1';
-import {renderChessboard} from '../chessboard-ui.js?v=audience-silence-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=audience-silence-1';
-import {advanceAgreements,proposeAgreement} from '../agreements.js?v=audience-silence-1';
-import {advanceGovernments} from '../governance.js?v=audience-silence-1';
-import {advanceMovements} from '../movements.js?v=audience-silence-1';
-import {newRevolutionScenario} from '../scenarios.js?v=audience-silence-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=mutual-audience-1';
+import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=mutual-audience-1';
+import {warningLedger} from '../warning-ledger.js?v=mutual-audience-1';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=mutual-audience-1';
+import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=mutual-audience-1';
+import {observeAttackPattern} from '../strategic-planning.js?v=mutual-audience-1';
+import {buildChessboard} from '../chessboard.js?v=mutual-audience-1';
+import {renderChessboard} from '../chessboard-ui.js?v=mutual-audience-1';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=mutual-audience-1';
+import {advanceAgreements,proposeAgreement} from '../agreements.js?v=mutual-audience-1';
+import {advanceGovernments} from '../governance.js?v=mutual-audience-1';
+import {advanceMovements} from '../movements.js?v=mutual-audience-1';
+import {newRevolutionScenario} from '../scenarios.js?v=mutual-audience-1';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
@@ -303,6 +303,6 @@ test('old saves without a warning queue keep working and do not duplicate existi
  for(let i=0;i<3;i++)tick(save,{autoplayPlayer:true});assert.ok(Array.isArray(save.warningLetters));
  // The warning layer reuses courier, report and memory helpers; it does not call
  // the existing war, breach, aid or claimant-support decision paths.
- const source=fs.readFileSync(new URL('../strategic-warnings.js?v=audience-silence-1',import.meta.url),'utf8');
+ const source=fs.readFileSync(new URL('../strategic-warnings.js?v=mutual-audience-1',import.meta.url),'utf8');
  assert.doesNotMatch(source,/diplomacy\(|proposeAgreement|terminateAgreement|supportClaimant|wars\.push|alliances\.push|opportunistic_war|treaty_breach/);
 });

@@ -5,10 +5,10 @@
 // Hidden attributes (corruption, true ambition) are never shown to the player
 // without evidence: knowledge lives in s.court.knowledge and is only filled
 // by audits, long service in office, or exposed schemes.
-import {OFFICES,COURT_FACTIONS,REGIONS as STATIC_REGIONS} from './data.js?v=audience-silence-1';
-import {crown,eligibility,isLiuClan,claimStrength,recognition,establishRegency,deposeAndReplace,seizeThrone,addClaimant,yearsBetween,enforceDynasticInvariants} from './dynasty.js?v=audience-silence-1';
-import {roll,clamp,log as appendLog,name} from './util.js?v=audience-silence-1';
-import {PERSON} from './people.js?v=audience-silence-1';
+import {OFFICES,COURT_FACTIONS,REGIONS as STATIC_REGIONS} from './data.js?v=mutual-audience-1';
+import {crown,eligibility,isLiuClan,claimStrength,recognition,establishRegency,deposeAndReplace,seizeThrone,addClaimant,yearsBetween,enforceDynasticInvariants} from './dynasty.js?v=mutual-audience-1';
+import {roll,clamp,log as appendLog,name} from './util.js?v=mutual-audience-1';
+import {PERSON} from './people.js?v=mutual-audience-1';
 
 function log(s,text,meta={}){
  if(s.player==='han')return appendLog(s,text,meta);
