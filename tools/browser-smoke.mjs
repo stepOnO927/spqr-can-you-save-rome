@@ -130,10 +130,11 @@ try{
  await page.locator('[data-army="xiii"]').click({force:true});
  assert.match(await page.locator('.selected-army').innerText(),/第十三军团/);
  assert.match(await page.locator('.selected-army').innerText(),/上次报告.*当前位置、兵力和状态未知/);
- // Only Roman commands are playable; old foreign saves remain intact but cannot be loaded.
+ // Roman commands and seeded local city-states are offered here. Existing
+ // foreign-major saves remain intact but cannot be loaded through this menu.
  await page.evaluate(async()=>{const {newDynastyScenario}=await import('/engine.js?v=world-kings-local-play-1');localStorage.setItem('spqr-save-3',JSON.stringify(newDynastyScenario()))});
  const foreignSave=await page.evaluate(()=>localStorage.getItem('spqr-save-3'));
- await page.locator('#new').click();assert.deepEqual(await page.locator('#faction-choice option').evaluateAll(options=>options.map(o=>o.value)),['caesar','senate']);assert.equal(await page.locator('#dynasty-scenario, #start-dynasty').count(),0);
+ await page.locator('#new').click();const choices=await page.locator('#faction-choice option').evaluateAll(options=>options.map(o=>o.value));assert.deepEqual(choices.slice(0,2),['caesar','senate']);assert.ok(choices.some(id=>id.startsWith('generated:')));assert.ok(!choices.includes('egypt'));assert.equal(await page.locator('#dynasty-scenario, #start-dynasty').count(),0);
  await page.locator('#slot-choice').selectOption('3');await page.locator('[data-slot="load"]').click();assert.match(await page.locator('.toast').innerText(),/非罗马势力/);assert.equal(await page.evaluate(()=>localStorage.getItem('spqr-save-3')),foreignSave);
  await page.locator('#close-setup').click();await page.locator('#new').click();await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#faction-choice').selectOption('caesar');await page.locator('.setup-advanced').evaluate(el=>el.open=true);await page.locator('#campaign-guide').uncheck();await page.locator('#start-campaign').click();
  assert.equal(await page.locator('[data-army="italy"]').count(),1,'frontier armies can be reported');
