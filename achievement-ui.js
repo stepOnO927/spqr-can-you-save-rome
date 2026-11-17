@@ -6,14 +6,24 @@ import {eventText} from './campaign-reports.js?v=11';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function civilWarNote(summary,zh){const outcome=summary.civilWarOutcome;if(!outcome)return '';const victor=esc(FACTIONS[outcome.winner]?.short?.[zh?1:0]||outcome.winner);return `<p class="ending-world-result">${zh?`罗马内战：${victor}获胜。`:`Roman civil war: ${victor} prevailed.`}</p>`}
 function victoryReason(outcome,zh){if(outcome?.kind==='settlement')return zh?'双方达成政治和议。':'A political settlement ended the war.';if(outcome?.basis==='field-collapse')return zh?'敌方核心军团被击溃，余下野战兵力不足；己方控制关键目标，内战已有军事结局。':'The enemy core army and remaining field force were broken while your command held its strategic objective.';return zh?'敌方主力瓦解，战略目标已经实现。':'The opposing command has collapsed and the strategic campaign is won.'}
+function defeatEconomyReview(state,zh){
+ const faction=state.factions?.[state.player];
+ if(!faction)return '';
+ const food=Number(faction.food),treasury=Number(faction.treasury),observations=[];
+ if(Number.isFinite(food)&&food<0)observations.push(zh?`终局存粮 ${food}；长期缺粮会削弱军队并可能使其溃散。`:`Final food ${food}; prolonged shortages weaken armies and can dissolve them.`);
+ if(Number.isFinite(treasury)&&treasury<0)observations.push(zh?`终局国库 ${treasury}；赤字损害稳定与士气，也限制征兵和建设。`:`Final treasury ${treasury}; debt harms stability and morale and limits recruiting and construction.`);
+ if(!observations.length)return '';
+ return `<p class="ending-result-reason">${zh?'资源复盘：':'Resource review: '}${observations.join(' ')} ${zh?'下次可提前检查月度收支，保护产粮领土，调整军队与舰队开支，并衡量临时征粮的代价。这些选择都不能保证胜利。':'In a future campaign, review the monthly budget early, protect food-producing territory, adjust army and fleet costs, and weigh the cost of emergency provisions. None of these choices guarantees victory.'}</p>`;
+}
 function defeatReason(state,zh){
  const outcome=state.campaignOutcome;
- if(state.achievementState?.result!=='defeat'||outcome?.loser!==state.player)return '';
+ if(state.achievementState?.result!=='defeat'||outcome&&outcome.loser!==state.player)return '';
+ if(!outcome){const field=(state.armies||[]).filter(a=>a.owner===state.player&&a.men>0).reduce((n,a)=>n+a.men,0).toLocaleString(),territories=(state.regions||[]).filter(r=>r.owner===state.player).length;return `<p class="ending-result-reason">${zh?`战败时仍有 ${territories} 处领土、${field} 名野战兵力；这份存档没有记录更详细的终局判定依据。`:`At defeat, your command held ${territories} territories and ${field} field troops. This save has no more detailed result basis.`}</p>${defeatEconomyReview(state,zh)}`}
  if(outcome.kind==='settlement')return `<p class="ending-result-reason">${outcome.playerAccepted?(zh?'你接受了对方提出的内战和议。战争以政治解决告终，这在战役规则中算作己方战败；领土和国库并未全部丧失。':'You accepted the rival’s civil settlement. The political agreement ended the war and counts as a campaign defeat, even though you retained territory and treasury.'):(zh?'内战以对方有利的政治和议告终。这份旧存档没有记录玩家是否亲自同意；剩余领土和国库并不代表内战胜利。':'The civil war ended in the rival’s favor through a political settlement. This older save does not record whether you personally agreed; retained territory and treasury do not amount to victory.')}</p>`;
  if(outcome.kind!=='military')return '';
  const field=(state.armies||[]).filter(a=>a.owner===state.player&&a.men>0).reduce((n,a)=>n+a.men,0).toLocaleString();
  const cause=outcome.basis==='field-collapse'?(zh?'核心军队与野战主力被击溃；对方控制决定性目标并赢得战斗。仍持有领土和储备，不能代替战场上的有效兵力。':'Your core army and field force were broken while the rival held its decisive objective and won battles. Remaining territory and reserves could not replace an effective field force.'):outcome.basis==='territorial-rout'?(zh?'关键领土与野战兵力同时失守，对方控制决定性目标并赢得战斗。':'Strategic territory and field strength were lost while the rival held its decisive objective and won battles.'):outcome.basis==='collapse'?(zh?'己方已失去全部领土，野战兵力不足以维持指挥。':'Your command lost all territory and had too few field troops to continue.'):(zh?'对方已取得军事胜利；该存档没有保留更详细的判定依据。':'The rival won the military campaign; this save has no further basis recorded.');
- return `<p class="ending-result-reason">${zh?'结局依据 · 残存己方野战兵力':'Why the campaign ended · surviving field troops'}: ${field}. ${cause}</p>`;
+ return `<p class="ending-result-reason">${zh?'结局依据 · 残存己方野战兵力':'Why the campaign ended · surviving field troops'}: ${field}. ${cause}</p>${defeatEconomyReview(state,zh)}`;
 }
 export function campaignSettlementHtml(state,lang){
  const offer=state.pendingCivilSettlement;

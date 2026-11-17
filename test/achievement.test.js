@@ -40,6 +40,21 @@ test('a military victory remains silent while play continues, then reveals once 
 test('a terminal defeat finalizes without a victory award',()=>{
  const s=newGrandGame('senate'),p=profile();s.terminalResult='defeat';tick(s);assert.equal(s.achievementState.finalized,true);assert.equal(s.achievementState.result,'defeat');assert.equal(s.achievementState.completed.victory,undefined);recordCampaign(p,s);assert.equal(p.achievements.some(a=>a.id==='victory'),false);
 });
+test('military defeat explains observed shortages without presenting them as a certain cause',()=>{
+ const s=newGrandGame('caesar');s.factions.caesar.food=-100;s.factions.caesar.treasury=-100;
+ for(const r of s.regions)if(r.owner==='caesar')r.owner='senate';
+ s.campaignOutcome={kind:'military',winner:'senate',loser:'caesar',basis:'collapse'};
+ assert.equal(endCampaign(s,'defeat').ok,true);
+ const en=campaignEndingHtml(s,'en'),zh=campaignEndingHtml(s,'zh');
+ assert.match(en,/lost all territory/);assert.match(en,/Final food -100/);assert.match(en,/Final treasury -100/);assert.match(en,/None of these choices guarantees victory/);
+ assert.match(zh,/失去全部领土/);assert.match(zh,/终局存粮 -100/);assert.match(zh,/终局国库 -100/);assert.match(zh,/不能保证胜利/);
+});
+test('older defeat saves without an outcome basis still receive a factual final review',()=>{
+ const s=newGrandGame('senate');s.factions.senate.food=-8;s.factions.senate.treasury=-3;
+ assert.equal(endCampaign(s,'defeat').ok,true);
+ assert.match(campaignEndingHtml(s,'en'),/This save has no more detailed result basis/);
+ assert.match(campaignEndingHtml(s,'zh'),/没有记录更详细的终局判定依据/);
+});
 test('formally ending a wiped-out command records defeat',()=>{
  const s=newGrandGame('senate');for(const r of s.regions)if(r.owner==='senate')r.owner='caesar';s.armies=s.armies.filter(a=>a.owner!=='senate');const done=endCampaign(s,'retired');assert.equal(done.ok,true);assert.equal(done.state.result,'defeat');assert.equal(revealedAchievements(s).some(a=>a.id==='victory'),false)
 });

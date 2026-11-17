@@ -7,7 +7,7 @@ import {newGame,newGrandGame,convertToGrandMap,upgradeSave,tick,moveArmy,preview
 import {importCampaign,downloadCampaign} from './save-files.js?v=29';
 import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js?v=14';
 import {endCampaign} from './achievement-system.js?v=5';
-import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from './achievement-ui.js?v=12';
+import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from './achievement-ui.js?v=13';
 import {budgetHtml} from './budget-ui.js?v=32';
 import {holdPosition,strategicRetreat,armySupply} from './grand-operations.js?v=37';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from './development-ui.js?v=59';

@@ -12,7 +12,7 @@ import {holdPosition,strategicRetreat,armySupply,encircled} from '../grand-opera
 import {importCampaign,downloadCampaign} from '../save-files.js?v=29';
 import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js?v=14';
 import {endCampaign} from '../achievement-system.js?v=5';
-import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../achievement-ui.js?v=12';
+import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../achievement-ui.js?v=13';
 import {nationalBudget} from '../national-budget.js?v=27';
 import {budgetHtml} from '../budget-ui.js?v=32';
 import republicanRoads from '../republican-roads.js?v=1';
