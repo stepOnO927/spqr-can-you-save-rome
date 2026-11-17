@@ -166,3 +166,23 @@ test('diplomatic history follows the existing courier, independent replies and p
  restored.victory=true;
  assert.ok(finalizeCampaign(restored).archive.causalChains.some(c=>c.id===chain.id&&c.factions.includes('egypt')));
 });
+test('Han continuity ambitions require sustained government and retain earned older milestones',()=>{
+ const han=newHanGame('han',{seed:91});
+ assert.equal(hanChoose(han,'dynasty'),true);
+ han.factions.han.stability=80;
+ assert.equal(hanStatus(han).done,false);
+ const chosen={...han.nationalAmbition.chosenAt};
+ assert.equal(hanChoose(han,'dynasty'),true);
+ assert.deepEqual(han.nationalAmbition.chosenAt,chosen,'clicking the same goal must not restart its clock');
+ han.year+=3;
+ assert.equal(hanStatus(han).done,true);
+ const oasis=newHanGame('shanshan',{seed:91});
+ hanChoose(oasis,'independence');oasis.factions.shanshan.stability=80;
+ assert.equal(hanStatus(oasis).done,false);
+ oasis.year+=2;
+ assert.equal(hanStatus(oasis).done,true);
+ const legacy=newHanGame('shanshan',{seed:91});
+ hanChoose(legacy,'independence');delete legacy.nationalAmbition.version;
+ legacy.experience||={};legacy.experience.milestones=[{id:'ambition:independence'}];
+ assert.equal(hanStatus(legacy).done,true,'an earned milestone in an older save remains earned');
+});
