@@ -2,3 +2,7 @@
 .map-wrap{position:relative}.territory-alert{top:.75rem;bottom:auto;left:.75rem;max-width:min(25rem,48%)}
 .map-area.changed{stroke:#e4bd78;stroke-width:3;filter:drop-shadow(0 0 3px #e4bd78)}.territory-alert .faction-mark{flex:none}
 .report-filters input{display:block;width:100%;margin-top:.25rem;background:#222d2c;color:#efe6d3;border:1px solid #716c5a;padding:.45rem}
+
+.prebattle-intel dt.corridor-label,.prebattle-intel dd.corridor-detail{grid-column:1 / -1}
+.prebattle-intel dt.corridor-label{margin-top:.3rem;color:#f2bb92;font-weight:700}
+.prebattle-intel dd.corridor-detail{text-align:left;line-height:1.55;background:#503b2a55;padding:.45rem .55rem;border-left:2px solid #d79968}

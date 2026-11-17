@@ -26,6 +26,15 @@ export function firstHostileOnRoute(s,armyId,destination,plan){
  const regionId=step?.id||destination;
  return {regionId,adjacent:adjacent(unit.region,s).some(x=>x.to===regionId),travelMonths:step?plan.path.slice(0,plan.path.indexOf(step)+1).reduce((total,x)=>total+x.months,0):plan.months};
 }
+function supplyExposure(s,unit,target,plan){
+ if(!s.grandMap||target.owner===unit.owner||plan?.path?.at(-1)?.sea||plan?.sea)return null;
+ const approaches=adjacent(target.id,s).filter(edge=>!edge.sea&&region(s,edge.to)?.owner===unit.owner);
+ if(approaches.length!==1)return null;
+ const approach=region(s,approaches[0].to);
+ const hostileFlanks=adjacent(approach.id,s).filter(edge=>!edge.sea&&edge.to!==target.id&&isWar(s,unit.owner,region(s,edge.to)?.owner)).length;
+ if(!hostileFlanks)return null;
+ return {approachId:approach.id,approachName:[...approach.name],hostileFlanks};
+}
 export function assessment(s,armyId,regionId,plan=null){
  const unit=army(s,armyId),target=region(s,regionId);
  if(!unit||!target||unit.owner!==s.player)return null;
@@ -36,7 +45,7 @@ export function assessment(s,armyId,regionId,plan=null){
  return {friendly:unit.men,morale:unit.morale,commander:[...unit.commander],terrain:target.terrain,fort:fortReport?.defensive.fort??null,fortReport,
   regionId,owner:target.owner,report,sighting:sighting?{year:sighting.year,month:sighting.month,region:sighting.region}:null,
   risk:!report||['unknown','rumor','disputed','outdated'].includes(confidence)?'high uncertainty':report.max>unit.men?'high':'uncertain',
-  food,supply:Math.round(100*Math.min(1,Math.max(.65,food/20))*(unit.operationalSupply??1)),travelMonths:plan?.months??1,landing:!!(plan?.path?.at(-1)?.sea??plan?.sea),reinforcementRisk:'possible',reports:reports.slice(0,4)};
+  food,supply:Math.round(100*Math.min(1,Math.max(.65,food/20))*(unit.operationalSupply??1)),travelMonths:plan?.months??1,landing:!!(plan?.path?.at(-1)?.sea??plan?.sea),supplyExposure:supplyExposure(s,unit,target,plan),reinforcementRisk:'possible',reports:reports.slice(0,4)};
 }
 function available(s,unit,target){return !!(unit&&target&&!unit.move&&!unit.siege&&!unit.reconPending&&unit.men>0&&adjacent(unit.region,s).some(x=>x.to===target.id)&&isWar(s,unit.owner,target.owner));}
 export function sendScouts(s,armyId,regionId,actor=s.player){

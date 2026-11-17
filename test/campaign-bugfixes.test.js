@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import {newGame,newGrandGame,army,region,resolveBattle,moveArmy,diplomacy,isWar,tick,recruit,previewMarch,upgradeSave,aiTurn,nationalBudget,armySupply} from '../engine.js';
 import {recordMovement,eventText,recordEvent} from '../campaign-reports.js';
 import {chronicleHtml,battleReportHtml,eventDate} from '../reports-ui.js';
-import {requestReinforcements,probePositions,latestRecon,advanceRecon} from '../reconnaissance.js';
+import {requestReinforcements,probePositions,latestRecon,advanceRecon,assessment} from '../reconnaissance.js';
 import {militaryResult,settlementEligible} from '../campaign-outcome.js';
 import {campaignVictoryHtml} from '../achievement-ui.js';
 import {budgetHtml} from '../budget-ui.js';
-import {afterActionHtml} from '../recon-ui.js';
+import {afterActionHtml,intelligenceHtml} from '../recon-ui.js';
 import {battleSideForPlayer} from '../visibility.js';
 
 test('co-located armies defend together and preserve their separate losses',()=>{
@@ -84,6 +84,28 @@ test('two legal march orders arrive as one battle during a real month',()=>{
  assert.equal(battles[0].attacker.men,11200);
  assert.equal(battles[0].attacker.formations.length,2);
  assert.equal(support.move,null);
+});
+
+test('prebattle review identifies a vulnerable single land corridor without enemy counts',()=>{
+ const s=newGrandGame('caesar'),unit=army(s,'xiii'),enemy=army(s,'pompey');
+ for(const id of ['italiaN','t013','t012'])region(s,id).owner='caesar';
+ unit.region='t012';enemy.region='t014';enemy.men=9000;
+ const plan=previewMarch(s,unit.id,'t014');assert.equal(plan.ok,true);
+ const intel=assessment(s,unit.id,'t014',plan);
+ assert.equal(intel.supplyExposure.approachId,'t012');
+ assert.equal(intel.supplyExposure.hostileFlanks>=1,true);
+ assert.match(intelligenceHtml(intel,region(s,'t014'),'en'),/Single supply corridor.*Perusia/s);
+ assert.match(intelligenceHtml(intel,region(s,'t014'),'zh'),/单线补给风险.*佩鲁西亚/s);
+ assert.doesNotMatch(intelligenceHtml(intel,region(s,'t014'),'en'),/9,000/);
+ assert.equal(assessment(s,unit.id,'t011',previewMarch(s,unit.id,'t011')).supplyExposure,null,'a second friendly approach removes this warning');
+ assert.equal(moveArmy(s,unit.id,'t014').ok,true);
+ assert.equal(unit.attackIntel.supplyExposure.approachId,'t012');
+ region(s,'t012').owner='senate';
+ resolveBattle(s,unit,enemy,region(s,'t014'));
+ const battle=s.battles[0];
+ assert.match(afterActionHtml(battle,'caesar','en'),/only friendly land approach through Perusia could be cut/);
+ assert.match(afterActionHtml(battle,'caesar','zh'),/经过佩鲁西亚的唯一己方陆路存在被切断的风险/);
+ assert.equal(upgradeSave(structuredClone(s)).battles[0].preBattleIntel.supplyExposure.approachId,'t012');
 });
 
 test('a surrounded defender has its rout losses recorded instead of vanishing after battle',()=>{
