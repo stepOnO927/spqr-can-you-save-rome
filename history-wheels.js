@@ -66,7 +66,7 @@ function financialSender(s){
 function note(s,chain,en,zh){
  const id=`wheel:${chain.id}:${chain.events.length+1}`;
  chain.events.push({id,parentId:chain.events.at(-1)?.id||null,year:s.year,month:s.month,en,zh});
- s.log.unshift({year:s.year,month:s.month,en,zh,kind:'government',topic:'economy',eventId:id,characterId:chain.senderId||null});
+ s.log.unshift({year:s.year,month:s.month,en,zh,kind:chain.type==='commander_petition'?'character':'government',topic:chain.type==='commander_petition'?'commander':'economy',eventId:id,characterId:chain.characterId||chain.senderId||null});
  s.log=s.log.slice(0,80);
 }
 function retireFinancialRequest(s,chain,treasury,forecast){

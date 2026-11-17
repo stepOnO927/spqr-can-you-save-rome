@@ -95,6 +95,7 @@ test('a battle-tested commander petitions through the real loyalty and treasury 
  s.month++;advanceWheels(s,{forecast:forecastEconomy});
  const chain=s.historyWheels.chains.find(c=>c.type==='commander_petition');
  assert.ok(chain);assert.equal(chain.cause.armyId,unit.id);assert.equal(chain.characterId,officer.id);
+ assert.ok(s.log.some(e=>e.eventId===chain.events[0].id&&e.kind==='character'&&e.characterId===officer.id));
  const letter=s.mail.messages.find(m=>m.id===chain.letterId);
  assert.ok(letter);assert.equal(letter.senderId,officer.id);
  letter.delivery='received';letter.arrival=s.year*12+s.month;
