@@ -142,11 +142,11 @@ export function grantMerchantPrivilege(s,id,duration=12){
 function merchantFor(s,buyer,location,destination){
  const markets=s.markets,previous=markets.merchants[buyer]||[],available=availableMerchant(s,buyer,location,destination);
  if(available){s.world.characters[available].marketHome=location;return available}
- const identity=generateFictionalName(s,{originFaction:buyer,location});
- const id=createFictionalPerson(s,{...identity,faction:buyer,birthYear:s.year-35,location,sex:'unknown',role:['Fictional merchant','虚构商人'],wealth:0});
+ const homeland=s.regions.find(r=>r.owner===buyer)?.id||destination;
+ const identity=generateFictionalName(s,{originFaction:buyer,location:homeland});
+ const id=createFictionalPerson(s,{...identity,faction:buyer,birthYear:s.year-35,location,sex:'unknown',role:['Fictional merchant','虚构商人'],wealth:0,origin:'market_merchant'});
  const person=s.world.characters[id];person.institutionalOnly=true;person.profession='merchant';person.title=['Caravan merchant','商队商人'];person.marketHome=location;
  markets.merchants[buyer]=[...previous,id];
- recordLifeEvent(s,id,'Entered the campaign market network.','加入战役商贸网络。');
  return id;
 }
 

@@ -16,6 +16,11 @@ test('a merchant who changes allegiance cannot be dispatched by the old faction 
  let s=deal();
  const first=placeTradeOrder(s,request);assert.equal(first.ok,true,first.reason);
  const id=first.shipment.merchantId,person=s.world.characters[id];
+ assert.equal(person.faction,request.buyer);
+ assert.equal(person.location,request.origin);
+ assert.equal(s.regions.find(r=>r.id===person.homeland)?.owner,request.buyer,'a foreign hiring market is not a birth origin');
+ assert.ok(s.world.dynasties.lives[id].some(entry=>entry.en.includes('fictional merchant')));
+ assert.ok(!s.world.dynasties.lives[id].some(entry=>entry.en==='Born in the simulated campaign.'));
  for(let i=0;i<first.quote.months*2;i++){if(++s.month>12){s.month=1;s.year++}advanceMarkets(s)}
  assert.equal(first.shipment.status,'delivered');
  assert.equal(person.location,request.origin);

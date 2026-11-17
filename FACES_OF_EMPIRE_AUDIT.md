@@ -11,6 +11,10 @@ saved roster. A merchant who changes faction after a completed caravan cannot
 be hired again by the old buyer, even when an older save still lists that ID.
 The regression places a real first and second order across save/load. The
 complete 1,240-test local suite and 120-month Roman/Han market simulation pass.
+The same first-order case now checks that a merchant hired at a foreign seller
+market retains a home in the buyer's realm and receives an entry event rather
+than a fictitious current-year birth event. Existing saved birthplaces and
+life entries are left as recorded.
 
 Breakaway courts now pass their recorded parent faction's naming tradition to
 children. In particular, a Roman civil-war household keeps its paternal family

@@ -92,6 +92,7 @@ export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,
  s.world.characters[id].portraitSeed=portraitSeedFor(id,s.world.characters[id],d.catalog[id]);
  for(const parent of [...parents,...adoptiveParents])if(s.world.characters[parent])s.world.characters[parent].children.push(id);
  if(origin==='court_nominee')record(s,id,'Entered this campaign as a fictional court nominee; no historical identity or family relationship is asserted.','作为虚构宫廷人选进入本次战役；不代表历史人物或历史亲属关系。');
+ else if(origin==='market_merchant')record(s,id,'Entered the campaign market network as a fictional merchant.','作为虚构商人加入战役商贸网络。');
  else record(s,id,'Born in the simulated campaign.','出生于模拟战役。');
  if(origin==='birth'&&birthYear===s.year)assignBornPortrait(s,id);if(origin==='court_nominee')assignCourtPortrait(s,id);return id;
 }
