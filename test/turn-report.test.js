@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,moveArmy,tick,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
+import {newGame,moveArmy,tick,upgradeSave} from '../engine.js?v=missing-fate-privacy-1';
 import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from '../map-lab/turn-report.js?v=fort-intel-1';
 import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
 import {FACTIONS} from '../data.js';

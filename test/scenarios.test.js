@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newScenario} from '../scenarios.js?v=guardian-wheels-merge-2';
-import {tick,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
+import {newScenario} from '../scenarios.js?v=missing-fate-privacy-1';
+import {tick,upgradeSave} from '../engine.js?v=missing-fate-privacy-1';
 import {potentialConspirators} from '../conspiracies.js?v=mutual-audience-1';
 import {leaveCoalition} from '../coalitions.js?v=mutual-audience-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=born-portraits-eleven-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=missing-fate-privacy-1';
 import {advancePersonalPlans} from '../personal-plans.js?v=multipolar-2';
 
 test('both Roman sides can start and reload each required scenario',()=>{

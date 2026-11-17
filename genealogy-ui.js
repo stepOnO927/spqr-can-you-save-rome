@@ -1,11 +1,11 @@
 import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=mutual-audience-1';
 import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=succession-ui-recovery-1';
-import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=guardian-wheels-merge-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=guardian-wheels-merge-1';
+import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=missing-fate-privacy-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=missing-fate-privacy-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=born-portraits-eleven-1';
-import {visiblePersonName} from './character-system.js?v=guardian-wheels-merge-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=guardian-wheels-merge-1';
+import {fictionalPortraitKey} from './portrait-registry.js?v=missing-fate-privacy-1';
+import {visiblePersonName} from './character-system.js?v=missing-fate-privacy-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=missing-fate-privacy-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);
@@ -31,7 +31,7 @@ const portrait=(id,state)=>{
 const dates=(c,zh)=>{
  const birth=c.birthYear!=null?era(c.birthYear,zh):CHARACTER_CATALOG[c.id]?.birth;
  const estimate=Array.isArray(birth)?(zh?`约前${Math.abs(birth[0])}${birth[0]===birth[1]?'':`–${Math.abs(birth[1])}`}年`:`about ${Math.abs(birth[0])}${birth[0]===birth[1]?'':`–${Math.abs(birth[1])}`} BCE`):birth||'?';
- return c.deathYear==null?estimate:`${estimate} – ${era(c.deathYear,zh)} ${zh?'（模拟）':'(simulated)'}`;
+ return c.missing||c.deathYear==null?estimate:`${estimate} – ${era(c.deathYear,zh)} ${zh?'（模拟）':'(simulated)'}`;
 };
 const era=(year,zh)=>year<0?(zh?`前${Math.abs(year)}年`:`${Math.abs(year)} BCE`):(zh?`公元${year+1}年`:`${year+1} CE`);
 
@@ -112,8 +112,9 @@ export function bindGenealogy(root,s,zh=false,onChange=()=>{}){
   root.querySelector('[data-asylum-request]').onclick=()=>{const lead=asylumLeads[Number(root.querySelector('[data-asylum-claimant]').value)],result=requestClaimantAsylum(s,lead?.id,lead?.faction);if(result.ok)onChange();else{const reasons={unknown:['No eligible reported claimant is available.','没有符合条件的已报告竞争者。'],war:['War prevents an asylum request.','战争期间不能提出庇护。'],pending:['An envoy is already awaiting a reply.','已有使者等待答复。'],already:['This claimant already has asylum.','这位竞争者已获庇护。'],treasury:['You need 6 treasury.','国库至少需要6。']};root.querySelector('[data-asylum-feedback]').textContent=(reasons[result.reason]||['Request unavailable.','请求不可用。'])[zh?1:0]}};
  }
  const ownFamilies=Object.values(s.world.dynasties.families).filter(f=>Object.values(s.world.characters).some(c=>c.alive&&c.faction===s.player&&c.familyId===f.id));
+ const ownLoans=(s.world.dynasties.familyLoans||[]).filter(loan=>loan.faction===s.player&&loan.remaining>0);
  if(ownFamilies.length){
-  root.querySelector('.gene-tools').insertAdjacentHTML('beforebegin',`<div class="rule-block"><h4>${zh?'家族财产与国库':'FAMILY PROPERTY & TREASURY'}</h4><p class="hint">${zh?'私人财产不自动进入国库。捐助可能遭拒；借款须偿还本金加2；强制征收降低稳定度和家族忠诚。每家族每六个月最多请求一次。':'Private property never enters the treasury automatically. Donations may be refused. Loans repay principal plus 2. A compulsory levy lowers stability and family loyalty. Each family can be approached once every six months.'}</p><select data-resource-family>${ownFamilies.map(f=>`<option value="${escape(f.id)}">${escape(f.name?.[zh?1:0]||f.id)} · ${zh?'家族公产':'pooled'} ${f.wealth||0}</option>`).join('')}</select><div class="dynasty-choices"><button data-resource-action="donation">${zh?'请求捐助 · 最多8':'Request donation · up to 8'}</button><button data-resource-action="loan">${zh?'家族借款 · 最多12':'Family loan · up to 12'}</button><button data-resource-action="levy">${zh?'强制征收 · 最多8':'Compulsory levy · up to 8'}</button></div><p data-resource-feedback role="status"></p></div>`);
+  root.querySelector('.gene-tools').insertAdjacentHTML('beforebegin',`<div class="rule-block"><h4>${zh?'家族财产与国库':'FAMILY PROPERTY & TREASURY'}</h4><p class="hint">${zh?'私人财产不自动进入国库。捐助可能遭拒；借款须偿还本金加2，国库有钱时每月自动偿还1；强制征收降低稳定度和家族忠诚。每家族每六个月最多请求一次。':'Private property never enters the treasury automatically. Donations may be refused. Loans repay principal plus 2 automatically at 1 per month when the treasury has funds. A compulsory levy lowers stability and family loyalty. Each family can be approached once every six months.'}</p><select data-resource-family>${ownFamilies.map(f=>`<option value="${escape(f.id)}">${escape(f.name?.[zh?1:0]||f.id)} · ${zh?'家族公产':'pooled'} ${f.wealth||0}</option>`).join('')}</select><div class="dynasty-choices"><button data-resource-action="donation">${zh?'请求捐助 · 最多8':'Request donation · up to 8'}</button><button data-resource-action="loan">${zh?'家族借款 · 最多12':'Family loan · up to 12'}</button><button data-resource-action="levy">${zh?'强制征收 · 最多8':'Compulsory levy · up to 8'}</button></div><div data-family-loans>${ownLoans.length?ownLoans.map(loan=>`<p>${escape(s.world.dynasties.families[loan.familyId]?.name?.[zh?1:0]||loan.familyId)} · ${zh?'剩余欠款':'Outstanding'}: ${escape(loan.remaining)} · ${zh?'本金':'Principal'}: ${escape(loan.principal??'?')}</p>`).join(''):`<p>${zh?'没有未偿还家族借款。':'No outstanding family loans.'}</p>`}</div><p data-resource-feedback role="status"></p></div>`);
   root.querySelectorAll('[data-resource-action]').forEach(button=>button.onclick=()=>{const result=requestFamilyResources(s,root.querySelector('[data-resource-family]').value,button.dataset.resourceAction);if(result.ok)onChange();else{const reasons={cooldown:["This family was approached recently.","近期已向该家族提出过请求。"],wealth:["This family has less than 4 private wealth available.","该家族可用私人财产不足4。"],declined:["The family declined. Try again after six months.","家族拒绝了请求；六个月后可再试。"],terms:["This family has an unpaid loan or will not accept the terms.","该家族仍有未还借款或不接受条款。"]};root.querySelector('[data-resource-feedback]').textContent=(reasons[result.reason]||["Action unavailable.","行动不可用。"])[zh?1:0]}});
  }
  const guardians=Object.values(s.world.characters).filter(c=>c.faction===s.player&&c.alive&&!c.missing&&isKnownAdult(s,c.id));
