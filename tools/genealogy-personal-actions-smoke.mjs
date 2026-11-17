@@ -71,7 +71,7 @@ try{
  await page.locator('#step').click();await page.locator('#step').click();
  await page.locator('[data-tab="government"]').click();
  await page.locator(`[data-gene-person="${actorId}"]`).click();
- assert.match(await page.locator('[data-gene-meeting-history]').innerText(),/未能见面/);
+ assert.match(await page.locator('[data-gene-meeting-history]').innerText(),/没有答复/);
  state=await save();
  assert.equal(state.meetings[0].status,'no_contact');
 
@@ -99,6 +99,34 @@ try{
  assert.match(await page.locator('[data-gene-meeting-history]').innerText(),/报告中的人物/);
  state=await save();
  assert.deepEqual(state.meetings[0].reportedName,['Reported Person','报告中的人物']);
+ // An undated forwarded name stays usable as a lead without revealing the hidden name.
+ actorId=await page.evaluate(async()=>{
+  const {newGame,upgradeSave}=await import('/engine.js?v=audience-silence-1');
+  const {createFictionalPerson}=await import('/dynasties.js?v=audience-silence-1');
+  const {addReport}=await import('/character-system.js?v=audience-silence-1');
+  let s=newGame('caesar');
+  const actor=createFictionalPerson(s,{name:['Test traveler','测试旅人'],faction:'caesar',birthYear:-80,location:'cisalpine'});
+  const target=createFictionalPerson(s,{name:['Hidden','秘密姓名'],faction:'egypt',birthYear:-75,location:'egypt'});
+  addReport(s,'caesar','egypt',{kind:'leaders',leaders:[target],source:'exchange',observationUndated:true,peopleNames:{[target]:['Undated name','旧报告姓名']}});
+  s=upgradeSave(structuredClone(s));
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
+  return actor;
+ });
+ await open();
+ const undated=page.locator('[data-gene-meeting-target] option').filter({hasText:'旧报告姓名'});
+ assert.equal(await undated.count(),1);
+ assert.match(await undated.innerText(),/报告日期未知/);
+ assert.doesNotMatch(await page.locator('[data-gene-meeting-target]').innerText(),/秘密姓名|NaN|undefined/);
+ await page.locator('[data-gene-meeting-target]').selectOption(await undated.getAttribute('value'));
+ await page.locator('[data-gene-meeting]').click();
+ await page.locator('[data-gene-meeting-feedback] button').click();
+ state=await save();
+ assert.deepEqual(state.meetings[0].reportedName,['Undated name','旧报告姓名']);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('[data-slot="load"]').click();
+ await page.locator('[data-tab="government"]').click();
+ await page.locator(`[data-gene-person="${actorId}"]`).click();
+ assert.match(await page.locator('[data-gene-meeting-history]').innerText(),/旧报告姓名/);
  assert.deepEqual(errors,[]);
  console.log('Personal travel and delayed audiences work from the family tree with saved reported names and no hidden-name leak.');
 }finally{await browser.close()}

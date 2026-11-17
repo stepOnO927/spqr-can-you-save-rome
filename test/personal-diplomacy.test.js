@@ -145,3 +145,12 @@ test('journey planning uses reported control and only discovers a hidden enemy o
 test('a stale reported court remains addressable after the real faction ceases to exist',()=>{
  const s=newGame('senate');s.knowledge.senate.egypt_claimant={reportedLeaders:['ptolemy'],reports:[],sightings:{}};assert.equal(s.factions.egypt_claimant,undefined);assert.equal(requestPersonalMeeting(s,'cicero','ptolemy','egypt_claimant').ok,true);assert.equal(s.meetings[0].status,'pending');advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);assert.equal(s.meetings[0].status,'no_contact');
 });
+
+test('silence conceals missed meetings in new and legacy chronicles',()=>{
+ const logs=[];for(const [seed,away] of [[1972,false],[1000,true]]){
+  let s=newGame('senate');s.world.characters.cicero.location='egypt';s.world.characters.cleopatra.location=away?'parthia':'egypt';s.world.intelSeed=seed;assert.equal(requestPersonalMeeting(s,'cicero','cleopatra').ok,true);advancePersonalDiplomacy(s);advancePersonalDiplomacy(s);
+  assert.equal(s.meetings[0].status,away?'no_contact':'no_reply');logs.push([s.log[0].en,s.log[0].zh]);
+  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual([s.log[0].en,s.log[0].zh],logs[logs.length-1]);
+ }assert.deepEqual(logs[0],logs[1]);
+ const legacy=newGame('senate');legacy.log.unshift({en:'Personal audience: no contact.',zh:'未能见到对方；对方可能不在、无法会面或局势有变。'});const loaded=upgradeSave(JSON.parse(JSON.stringify(legacy)));assert.deepEqual([loaded.log[0].en,loaded.log[0].zh],logs[0]);
+});

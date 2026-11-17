@@ -129,6 +129,8 @@ export function upgradeSave(s){
  try{
  if(s.version===2){const old=s.relations||{},oldAllies=s.alliances||[];s.relations=Object.fromEntries(Object.entries(old).map(([id,value])=>[pair('caesar',id),value]));s.alliances=oldAllies.map(id=>['caesar',id]);s.version=3}
  if(s.version!==3)throw new Error('Unsupported save');
+ // Older audience entries distinguished hidden absence from unanswered mail.
+ for(const event of s.log||[])if(event.en==='Personal audience: no contact.'&&event.zh==='未能见到对方；对方可能不在、无法会面或局势有变。'){event.en='Personal audience: no reply.';event.zh='个人会面请求没有收到答复。'}
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
  migrateRegionalPowers(s);migrateEasternTheaters(s);migrateHanFrontier(s);initializeDynasties(s);seedOpeningCommanders(s);seedHanCommanders(s);seedHanCourt(s);seedHanFrontierPeople(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeChronicle(s);initializeAgreements(s);initializeMarkets(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeMissionIdentities(s);upgradeHanWorld(s);initializeMail(s);syncAgentReleaseLetters(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);syncAgreementLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
