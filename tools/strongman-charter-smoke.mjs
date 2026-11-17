@@ -9,8 +9,8 @@ try {
   await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
   await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
   const setup=await page.evaluate(async()=>{
-    const {newGame}=await import('/engine.js?v=world-kings-expedition-1');
-    const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-expedition-1');
+    const {newGame}=await import('/engine.js?v=world-kings-audience-1');
+    const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-audience-1');
     const {advanceLocalEntities}=await import('/local-polities.js');
     const state=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:2});
     const chief=state.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.type==='strongman'&&entity.procedural&&state.regions.find(region=>region.id===entity.theater).owner==='caesar');

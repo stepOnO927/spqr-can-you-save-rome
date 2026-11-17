@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=world-kings-expedition-1';
-import {SUBJECT_TYPES} from './suzerainty.js?v=world-kings-expedition-1';
+import {ROUTES} from './data.js?v=world-kings-audience-1';
+import {SUBJECT_TYPES} from './suzerainty.js?v=world-kings-audience-1';
 import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS} from './local-generation.js';
 // Read-only startup and deep state checks. Never migrates or mutates a save.
 export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){

@@ -1,9 +1,9 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-expedition-1';
-import {createFictionalPerson} from '../dynasties.js?v=world-kings-expedition-1';
-import {addReport} from '../character-system.js?v=world-kings-expedition-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=world-kings-expedition-1';
-import {reportedPersonName,visiblePersonName} from '../person-knowledge.js?v=world-kings-expedition-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-audience-1';
+import {createFictionalPerson} from '../dynasties.js?v=world-kings-audience-1';
+import {addReport} from '../character-system.js?v=world-kings-audience-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=world-kings-audience-1';
+import {reportedPersonName,visiblePersonName} from '../person-knowledge.js?v=world-kings-audience-1';
 test('an actual meeting observes a new name while preserving the earlier addressed name',()=>{
  let s=newGame('caesar');s.wars=[];s.world.characters['fictional:1'].location='egypt';const id=createFictionalPerson(s,{name:['Old report','旧报告姓名'],faction:'egypt',birthYear:-75,location:'egypt'});addReport(s,'caesar','egypt',{kind:'leaders',leaders:[id],source:'spy'});
  assert.ok(requestPersonalMeeting(s,'fictional:1',id,'egypt').ok);s.world.dynasties.catalog[id].name=['Name at meeting','会面时姓名'];assert.deepEqual(visiblePersonName(s,'caesar',id),['Old report','旧报告姓名']);
