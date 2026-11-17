@@ -931,13 +931,13 @@ export function aiTurn(s,owner){
         if(f.treasury<8+civilianReserve&&canFundProbe()&&probePositions(s,a.id,step,owner).ok)break;
       }
       const defenders=report?.min!=null&&report.age<=5?Math.round((report.min+report.max)/2):willingToRisk(report,a.men)?a.men:prior;
-      if(defenders>a.men*1.35||f.food<0||s.grandMap&&destination.owner===owner&&armySupply(s,{...a,region:step})<.45)continue;
       const leadPlan=s.grandMap&&destination.owner!==owner?previewMarch(s,a.id,step):null;
       const support=leadPlan?.ok&&leadPlan.path?.length===1&&!leadPlan.path[0].sea?available.find(other=>{
         if(other.id===a.id||reservedSupport.has(other.id)||other.move||other.men<=1200||other.aiGarrisonRegion===other.region||protectedJunctions.has(other.region)||armySupply(s,other)<.5)return false;
         const plan=previewMarch(s,other.id,step);
         return plan.ok&&plan.path?.length===1&&!plan.path[0].sea&&plan.months===leadPlan.months;
       }):null;
+      if(defenders>(a.men+(support?.men||0))*1.35||f.food<0||s.grandMap&&destination.owner===owner&&armySupply(s,{...a,region:step})<.45)continue;
       const ordered=moveArmy(s,a.id,step);if(ordered.ok){
         a.coordinated=false;
         if(support&&moveArmy(s,support.id,step).ok){reservedSupport.add(support.id);a.coordinated=true;support.coordinated=true}

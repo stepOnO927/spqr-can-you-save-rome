@@ -323,6 +323,22 @@ test('AI co-located field armies leave together when their march times match',()
  assert.equal(lead.move.remaining,support.move.remaining);
 });
 
+test('AI counts a supporting formation only when it can actually join the attack',()=>{
+ const make=()=>{
+  const s=newGrandGame('egypt');
+  for(const id of ['italiaN','t010','t011','t012','t013'])region(s,id).owner='caesar';
+  const lead=army(s,'xiii'),support=army(s,'viii');
+  lead.region='t012';lead.men=4000;support.region='t011';support.men=3500;s.month=1;
+  s.militaryRecon=[{owner:'caesar',regionId:'t014',source:'scouts',min:5800,max:6200,year:s.year,month:s.month}];
+  return {s,lead,support};
+ };
+ const joined=make();aiTurn(joined.s,'caesar');
+ assert.equal(joined.lead.move?.to,'t014');assert.equal(joined.support.move?.to,'t014');
+ const unavailable=make();unavailable.support.trainingRemaining=2;aiTurn(unavailable.s,'caesar');
+ assert.notEqual(unavailable.lead.move?.to,'t014');
+ assert.equal(unavailable.support.move,null);
+});
+
 test('outnumbered AI reinforces the exposed front instead of the first map cell',()=>{
  const s=newGrandGame('egypt'),caesar=s.factions.caesar;
  s.month=4;caesar.treasury=80;caesar.food=100;
