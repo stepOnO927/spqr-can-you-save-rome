@@ -302,12 +302,5 @@ export function aiReorganize(s,owner,{exclude=new Set(),log=()=>{}}={}){
  const pref=s.world.aiFormationPlans?.[owner]?.preferred;if(!pref)return null;const f=s.factions[owner];if(f.treasury<35)return null;
  const t=formationState(s).templates[pref],target=t&&templateStats(t).personnel;
  const candidate=s.armies.filter(a=>a.owner===owner&&!exclude.has(a.id)&&!a.move&&!a.siege&&!a.reorg&&a.men>1200&&(!a.formation||a.formation.templateId!==pref&&a.men<target*.7||a.formation.templateId===pref&&a.formation.version!==t.version)).sort((a,b)=>a.men-b.men)[0];
- if(!candidate)return null;
- const quote=reorganizationQuote(s,owner,candidate.id,pref),atWar=s.wars.some(w=>w.includes(owner));
- if(!quote.ok)return null;
- // Standard and guided courts keep a defensive reserve. The aggressive hard
- // and expert planners retain their existing risk-taking behavior.
- const cautious=['travel','beginner','standard'].includes(s.difficulty||'standard');
- if(cautious&&(quote.partial||f.treasury-quote.treasury<(atWar?50:25)||f.food-quote.food<(atWar?20:10)))return null;
- const r=reorganizeArmy(s,owner,candidate.id,pref,{allowPartial:!cautious,log});return r.ok?candidate.id:null;
+ if(!candidate)return null;const r=reorganizeArmy(s,owner,candidate.id,pref,{log});return r.ok?candidate.id:null;
 }
