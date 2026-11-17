@@ -9,7 +9,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  const option=page.locator('#faction-choice option[value^="generated:"]').first();
- await option.waitFor();const id=await option.getAttribute('value');assert.ok(id);
+ await option.waitFor({state:'attached'});const id=await option.getAttribute('value');assert.ok(id);
  await page.selectOption('#faction-choice',id);
  await page.click('#start-campaign');
  await page.locator('.local-council').waitFor();
