@@ -6,6 +6,7 @@ import {playableLocalCities,startLocalCampaign,localCampaignCity,localRecruit,lo
 import {armyExpeditionSupply} from '../expedition-supply.js';
 import {validPlayableCampaign} from '../local-campaign-save.js';
 import {importSaves} from '../save-transfer.js';
+import {localCouncilHtml} from '../local-campaign-ui.js';
 
 const opening=()=>{const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:273});const city=playableLocalCities(state)[0];assert.ok(city);const host=state.regions.find(region=>region.id===city.theater);const owner=host.owner;startLocalCampaign(state,city.id);return {state,city,host,owner}};
 
@@ -18,6 +19,14 @@ test('generated city is a playable site without transferring its host theater',(
  assert.equal(validPlayableCampaign(state),true);
  assert.equal(localRecruit(state),true);
  assert.equal(city.population,localCampaignCity(state).population);
+});
+
+test('an absent trade agreement is not mistaken for a future expiry in BCE',()=>{
+ const {state}=opening();
+ assert.match(localCouncilHtml(state),/No active trade compact/);
+ assert.match(localCouncilHtml(state),/data-local-trade[^>]*>OFFER TRADE/);
+ assert.equal(localTradeOffer(state),true);
+ assert.match(localCouncilHtml(state),/data-local-trade[^>]*disabled/);
 });
 
 test('city trade moves actual goods and qualifies a surviving city for victory',()=>{
