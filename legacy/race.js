@@ -1,4 +1,4 @@
-import {claimReward} from './legacy-core.js?v=15';
+import {claimReward} from './legacy-core.js?v=16';
 
 export const DRIVERS=['Aurelia','Titus','Livia','Marcellus'];
 export function settleRace(profile,race){

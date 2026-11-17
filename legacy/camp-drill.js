@@ -1,4 +1,4 @@
-import {claimReward} from './legacy-core.js?v=15';
+import {claimReward} from './legacy-core.js?v=16';
 
 // A fictional civic exercise about evidence, provisions and duty of care.
 // It grants no advantage in the war campaign.

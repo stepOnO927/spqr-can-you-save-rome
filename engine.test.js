@@ -103,7 +103,9 @@ test('a depleted local army cannot suppress a collapsing province forever',()=>{
   };
   const weak=upgradeSave(JSON.parse(JSON.stringify(setup(100,50))));tick(weak);
   assert.equal(region(weak,'gaul').owner,'rebels');
-  assert.ok(weak.armies.some(a=>a.owner==='rebels'&&a.region==='gaul'&&a.men===2400));
+  const uprising=weak.battles.find(b=>b.region==='gaul'&&b.attacker.owner==='rebels');
+  assert.ok(uprising?.attackerWins);
+  assert.ok(weak.armies.some(a=>a.owner==='rebels'&&a.region==='gaul'&&a.men===uprising.attacker.remaining));
   const strong=setup(3000,60);tick(strong);
   assert.equal(region(strong,'gaul').owner,'caesar');
 });

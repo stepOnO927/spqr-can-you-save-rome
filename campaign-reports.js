@@ -50,9 +50,9 @@ export function recordDiplomacy(s,actor,target,action){
   if(!own(s,actor,target))return null;
   return recordEvent(s,{type:'diplomacy',category:'diplomatic',severity:action==='war'?'critical':action==='improve'?'routine':'major',factionId:actor,affectedFactionIds:[actor,target],targetFactionId:target,action,notify:action!=='improve'});
 }
-export function recordRebellion(s,r,previousOwner,armyId){
+export function recordRebellion(s,r,previousOwner,armyId,outcome='succeeded',battleId=null){
   if(previousOwner!==s.player)return null;
-  return recordEvent(s,{type:'rebellion',category:'political',severity:'critical',factionId:'rebels',affectedFactionIds:[previousOwner,'rebels'],regionId:r.id,armyId,previousOwner,newOwner:'rebels'});
+  return recordEvent(s,{type:'rebellion',category:'political',severity:'critical',factionId:'rebels',affectedFactionIds:[previousOwner,'rebels'],regionId:r.id,armyId,previousOwner,newOwner:outcome==='repelled'?previousOwner:'rebels',outcome,battleId});
 }
 export function objectiveDefinitions(s){
   if(s.legacyScenario==='scenario-rubicon')return [
@@ -129,7 +129,7 @@ export function eventText(s,e,lang='en'){
   if(e.type==='warContribution')return {title:z?'战时城镇筹款':'Wartime municipal contributions',description:z?`${e.regions||0}个城镇筹得${e.income||0}国库；地方忠诚、满意度和国家稳定度下降。`:`${e.regions||0} communities raised ${e.income||0} treasury; local loyalty, satisfaction and national stability fell.`};
   if(e.type==='emergencyProvisions')return {title:z?'紧急征集粮食':'Emergency provisions',description:z?`${e.regions||0}处己方城镇提供${e.food||0}粮食；地方忠诚、满意度、国家稳定度及短期产量下降。`:`${e.regions||0} friendly communities provided ${e.food||0} food; local loyalty, satisfaction, national stability and short-term production fell.`};
   if(e.type==='aerariumSeizure')return {title:z?'动用罗马公共金库':'Roman public reserve taken',description:z?`取得${e.income||0}国库；合法性与罗马地方支持下降。`:`Received ${e.income||0} treasury; legitimacy and local support in Rome fell.`};
-  if(e.type==='rebellion')return {title:z?`${r}爆发叛乱`:`Rebellion in ${r}`,description:z?`${r}脱离${old}控制。`:`${r} broke from ${old} control.`};
+  if(e.type==='rebellion')return {title:z?`${r}爆发叛乱`:`Rebellion in ${r}`,description:e.outcome==='repelled'?(z?'当地驻军击退起义；控制权未变。':'The local garrison repelled the uprising; control did not change.'):(z?`${r}脱离${old}控制。`:`${r} broke from ${old} control.`)};
   if(e.type==='armyDestroyed'){const name=e.armyName?.[z?1:0]||e.armyId;return {title:z?`${name}在${r}覆灭`:`${name} destroyed at ${r}`,description:z?'军队已从战场序列移除。':'The army is no longer in the field.'};}
   if(e.type==='construction'){const name=BUILDINGS.find(x=>x.id===e.buildingId)?.name?.[z?1:0]||e.buildingId;return {title:z?`${r}建成${name}`:`${name} completed in ${r}`,description:''};}
   if(e.type==='research'){const name=[...MATERIALS,...IDEAS].find(x=>x.id===e.innovationId)?.name?.[z?1:0]||e.innovationId;return {title:z?`研究完成：${name}`:`Research completed: ${name}`,description:''};}

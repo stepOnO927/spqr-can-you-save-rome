@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,moveArmy,tick,upgradeSave,diplomacy,resolveBattle,region} from '../engine.js';
+import {newGame,newGrandGame,moveArmy,tick,upgradeSave,diplomacy,resolveBattle,region} from '../engine.js';
 import {eventText,markRead,unreadCount,recordEvent,latestCritical,updateObjectives} from '../campaign-reports.js';
 import {chronicleHtml,notificationsHtml,battleReportHtml} from '../reports-ui.js';
 
@@ -50,6 +50,28 @@ test('rebellion and defeat are reported without inventing foreign intelligence',
  assert.equal(diplomacy(foreign,'egypt','parthia','war'),true);
  foreign.wars.push(['numidia','mauretania']);resolveBattle(foreign,foreign.armies.find(a=>a.id==='mauretaniaarmy'),foreign.armies.find(a=>a.id==='numidiaarmy'),region(foreign,'numidia'));
  assert.equal(foreign.campaignEvents.length,count);
+});
+test('a weak local garrison contests an uprising through real combat instead of automatic transfer',()=>{
+ const s=newGrandGame('caesar'),province=region(s,'gaul');s.seed=7;province.loyalty=0;s.factions.caesar.stability=0;
+ for(const id of ['xiii','viii']){const unit=s.armies.find(a=>a.id===id);unit.region='gaul';unit.men=2000;unit.morale=20}
+ tick(s);
+ const battle=s.battles.find(b=>b.region==='gaul'&&b.attacker.owner==='rebels'),event=s.campaignEvents.find(e=>e.type==='rebellion'&&e.regionId==='gaul');
+ assert.ok(battle);assert.equal(battle.defender.formations.length,2);assert.equal(battle.attackerWins,false);
+ assert.equal(province.owner,'caesar');assert.equal(event.outcome,'repelled');assert.equal(event.battleId,battle.id);
+ assert.equal(s.campaignEvents.some(e=>e.type==='control'&&e.regionId==='gaul'&&e.newOwner==='rebels'),false);
+ assert.match(eventText(s,event,'en').description,/repelled the uprising/);
+ assert.match(eventText(s,event,'zh').description,/击退起义/);
+ assert.match(battleReportHtml(s,battle,'en'),/Friendly participating formations/);
+ assert.equal(upgradeSave(structuredClone(s)).campaignEvents.find(e=>e.id===event.id).outcome,'repelled');
+});
+test('an outmatched local guard can lose its province to an uprising battle',()=>{
+ const s=newGrandGame('caesar'),province=region(s,'gaul');province.loyalty=0;s.factions.caesar.stability=0;
+ const guard=s.armies.find(a=>a.id==='viii');guard.region='gaul';guard.men=100;guard.morale=20;
+ tick(s);
+ const battle=s.battles.find(b=>b.region==='gaul'&&b.attacker.owner==='rebels');
+ assert.ok(battle);assert.equal(battle.attackerWins,true);assert.equal(province.owner,'rebels');
+ assert.equal(s.campaignEvents.find(e=>e.type==='rebellion'&&e.regionId==='gaul').outcome,'succeeded');
+ assert.ok(s.campaignEvents.some(e=>e.type==='control'&&e.regionId==='gaul'&&e.battleId===battle.id));
 });
 
 test('notification expiry does not erase chronicle and read state survives save/load',()=>{

@@ -6,8 +6,8 @@ import {queueMission,advanceOperations,advanceAgentRequests,advanceCharacters,ad
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=6';
 import {advanceConspiracies} from './conspiracies.js?v=7';
 import {IDEAS,MATERIALS,BUILDINGS,initializeDevelopment,advanceDevelopment,activeEffects,localBuildingEffects,settleGranaryReserves,migrateGranaryReserves,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,scholarVisitCheck,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,researchTerms,adoptIdea,ideaAdoptionPlan,ideaCompatibility,ideaSlotExpansionCheck,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials} from './development.js?v=53';
-import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=11';
-import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=13';
+import {initializeReports,recordEvent,recordControl,recordBattle,recordSiege,recordMovement,recordDiplomacy,recordRebellion,updateObjectives,beginBriefing,finishBriefing} from './campaign-reports.js?v=12';
+import {advanceRecon,assessment,sendScouts,probePositions,latestRecon,requestReinforcements} from './reconnaissance.js?v=14';
 import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=37';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion,provincialRitesCredit,foodShortageTier} from './local-society.js?v=9';
@@ -587,14 +587,31 @@ function seasonalWaterStress(s){
 function rebellion(s){
   // A few starving stragglers cannot police a province indefinitely. Compare
   // the local force's morale-adjusted strength with half the uprising levy.
-  const localOrderStrength=r=>s.armies.filter(a=>a.region===r.id&&a.owner===r.owner&&a.men>0).reduce((total,a)=>total+a.men*Math.max(0,Math.min(100,a.morale??50))/100,0);
+  const localDefenders=r=>s.armies.filter(a=>a.region===r.id&&a.owner===r.owner&&a.men>0&&!a.move);
+  const localOrderStrength=r=>localDefenders(r).reduce((total,a)=>total+a.men*Math.max(0,Math.min(100,a.morale??50))/100,0);
   const candidate=s.regions.find(r=>r.owner!=='rebels'&&r.loyalty<25&&s.factions[r.owner].stability<60&&localOrderStrength(r)<1200);
   if(!candidate)return;
   const previousOwner=candidate.owner;
-  candidate.owner='rebels';candidate.loyalty=45;
-  s.armies.push({id:`rebel${s.nextArmy++}`,name:['Provincial uprising','行省起义军'],owner:'rebels',region:candidate.id,men:2400,morale:59,skill:1,experience:0,commander:['Local leaders','地方首领'],move:null,siege:null});
-  if(!isWar(s,'rebels',previousOwner))s.wars.push(['rebels',previousOwner]);recordRebellion(s,candidate,previousOwner,s.armies.at(-1).id);recordControl(s,candidate,previousOwner,'rebellion',{armyId:s.armies.at(-1).id});
-  if(previousOwner===s.player)log(s,`${candidate.name[0]} has risen in rebellion and formed an armed faction.`,`${candidate.name[1]}爆发叛乱，形成了武装派系。`);
+  const defenders=localDefenders(candidate);
+  const uprising={id:`rebel${s.nextArmy++}`,name:['Provincial uprising','行省起义军'],owner:'rebels',region:candidate.id,men:2400,morale:59,skill:1,experience:0,commander:['Local leaders','地方首领'],move:null,siege:null};
+  s.armies.push(uprising);
+  if(!isWar(s,'rebels',previousOwner))s.wars.push(['rebels',previousOwner]);
+  if(defenders.length){
+    const succeeded=resolveBattle(s,uprising,defenders[0],candidate);
+    const battleId=s.battles[0].id;
+    if(!succeeded){
+      // A repelled cell disperses unless it can withdraw into rebel territory.
+      if(uprising.region===candidate.id)s.armies=s.armies.filter(a=>a.id!==uprising.id);
+      candidate.loyalty=Math.max(candidate.loyalty,30);
+    }
+    recordRebellion(s,candidate,previousOwner,uprising.id,succeeded?'succeeded':'repelled',battleId);
+    if(previousOwner===s.player)log(s,succeeded?`${candidate.name[0]} rose in rebellion and defeated the local garrison.`:`The local garrison repelled an uprising in ${candidate.name[0]}.`,succeeded?`${candidate.name[1]}爆发叛乱，击败当地驻军。`:`当地驻军击退了${candidate.name[1]}的叛乱。`);
+  }else{
+    candidate.owner='rebels';candidate.loyalty=45;
+    recordRebellion(s,candidate,previousOwner,uprising.id);
+    recordControl(s,candidate,previousOwner,'rebellion',{armyId:uprising.id});
+    if(previousOwner===s.player)log(s,`${candidate.name[0]} has risen in rebellion and formed an armed faction.`,`${candidate.name[1]}爆发叛乱，形成了武装派系。`);
+  }
 }
 
 function shortestStep(s,start,goal,owner,unit){

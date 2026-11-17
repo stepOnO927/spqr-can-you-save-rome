@@ -1,4 +1,4 @@
-import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=15';
+import {BUILDINGS,GOODS,loadProfile,saveProfile,exportProfile,importProfile,purchase,applyCosmetic,createScenario,claimReward} from './legacy-core.js?v=16';
 import {PETITIONS,decidePetition,availablePetitions} from './civic.js?v=10';
 import {ARTIFACTS} from './museum.js?v=8';
 import {DRIVERS,startRace,settleRace} from './race.js?v=10';
@@ -6,7 +6,7 @@ import {availableActivities,resolveActivity} from './activities.js?v=9';
 import {harborDossier,beginHarborDossier,corroborateHarborDossier,closeHarborDossier,HARBOR_COSTS} from './intelligence-case.js?v=4';
 import {boundaryCase,beginBoundaryCase,corroborateBoundaryCase,closeBoundaryCase,BOUNDARY_COSTS} from './legal-case.js?v=1';
 import {palaceCouncil,conveneCouncil,draftCharter,settleCouncil,COUNCIL_COST,COUNCIL_AUDIENCES,COUNCIL_CHARTERS,COUNCIL_RESPONSES} from './palace-council.js?v=4';
-import {newGrandGame} from '../engine.js?v=217';
+import {newGrandGame} from '../engine.js?v=218';
 import {stageHandoff} from '../view-handoff.js';
 import {achievementDefinition} from '../achievement-system.js?v=5';
 import {archivePanelHtml} from './archive-ui.js?v=2';
