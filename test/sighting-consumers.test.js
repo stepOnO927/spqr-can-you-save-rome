@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,sendInquiry} from '../engine.js?v=guardian-wheels-merge-1';
+import {newGame,upgradeSave,sendInquiry} from '../engine.js?v=guardian-wheels-merge-2';
 import {buildChessboard} from '../chessboard.js?v=guardian-wheels-merge-1';
 import {createPlan,assignRole,assessPlan} from '../battle-plans.js?v=guardian-wheels-merge-1';
 import {reportedFrontierThreats} from '../frontier-response.js?v=mutual-audience-1';

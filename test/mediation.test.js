@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,upgradeSave,isWar} from '../engine.js?v=guardian-wheels-merge-1';
+import {newGame,region,upgradeSave,isWar} from '../engine.js?v=guardian-wheels-merge-2';
 import {contestLeadership,advanceDisputes,addReport} from '../character-system.js?v=guardian-wheels-merge-1';
 import {requestMediation,advanceMediations,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=mutual-audience-1';
 

@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,sendInquiry} from '../engine.js?v=guardian-wheels-merge-1';
+import {newGame,upgradeSave,tick,sendInquiry} from '../engine.js?v=guardian-wheels-merge-2';
 import {receivedMail} from '../epistulae.js?v=guardian-wheels-merge-1';
 import {advanceMailReports} from '../mail-reports.js?v=guardian-wheels-merge-1';
 const replies=s=>receivedMail(s).filter(m=>m.context?.kind==='inquiry_result');

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-1';
+import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
 import {advanceMailReports} from '../mail-reports.js?v=guardian-wheels-merge-1';
 import {receivedMail} from '../epistulae.js?v=guardian-wheels-merge-1';
 

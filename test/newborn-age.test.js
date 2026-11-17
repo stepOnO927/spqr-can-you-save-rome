@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-1';
+import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
 import {createFictionalPerson} from '../dynasties.js?v=guardian-wheels-merge-1';
 import {ageRange} from '../characters.js?v=succession-ui-recovery-1';
 

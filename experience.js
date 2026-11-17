@@ -3,7 +3,7 @@
 import {receivedMail,sendLetter} from './epistulae.js?v=guardian-wheels-merge-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {treeFor,canStartFocus,focusCost} from './national-focus.js?v=guardian-wheels-merge-1';
-import {initializeWheels,ambitionStatus} from './history-wheels.js?v=guardian-wheels-merge-1';
+import {initializeWheels,ambitionStatus} from './history-wheels.js?v=guardian-wheels-merge-2';
 
 const label=(en,zh)=>[en,zh];
 const month=s=>s.year*12+s.month;

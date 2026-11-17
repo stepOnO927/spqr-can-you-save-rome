@@ -15,7 +15,7 @@ import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedC
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=mutual-audience-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=guardian-wheels-merge-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=succession-ui-recovery-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=guardian-wheels-merge-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=guardian-wheels-merge-2';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
@@ -38,7 +38,7 @@ import {offerPoliticalContact,advancePoliticalContacts} from './political-contac
 import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=guardian-wheels-merge-1';
 import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=guardian-wheels-merge-1';
 import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
-import {initializeWheels,advanceWheels} from './history-wheels.js?v=guardian-wheels-merge-1';
+import {initializeWheels,advanceWheels} from './history-wheels.js?v=guardian-wheels-merge-2';
 export {queueMission};
 export {personalDiplomaticCredit};
 export {replyToLetter};

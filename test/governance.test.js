@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=guardian-wheels-merge-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
 import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js?v=guardian-wheels-merge-1';
 import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js?v=succession-ui-recovery-1';
 import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=guardian-wheels-merge-1';

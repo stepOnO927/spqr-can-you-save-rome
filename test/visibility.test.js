@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js?v=guardian-wheels-merge-1';
+import {newGame,resolveBattle,region,tick,upgradeSave,diplomacy,setTax,isWar} from '../engine.js?v=guardian-wheels-merge-2';
 import {observeArmies,reportedArmies} from '../character-system.js?v=guardian-wheels-merge-1';
 import {battleSideForPlayer,visibleLogText,visibleArmyForPlayer,visibleSummaryEvidence} from '../visibility.js?v=guardian-wheels-merge-1';
 

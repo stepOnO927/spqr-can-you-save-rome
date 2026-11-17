@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-1';
+import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
 import {authorityForTheater} from '../map-lab/authority-view.js?v=guardian-wheels-merge-1';
 
 test('foreign authority uses only the viewer’s most recent observed report',()=>{
