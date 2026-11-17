@@ -161,3 +161,27 @@ Each image is permanently reserved to the corresponding recorded opening consula
 # Fictional opening senators (2026-11-14)
 
 The twelve `fictional-senator-*` portraits are original AI-generated game artwork, created individually for the simulation's fictional opening senators. They are not historical likenesses or evidence of real individuals. Each has a 512-pixel master and 128- and 64-pixel versions resized from the same original. Their use in play is restricted to an unambiguously identified original senator; foreign portraits additionally require a recorded meeting.
+
+
+## Additional campaign-born portraits (2026-11-15)
+
+Four original fictional Roman people (`born-f5`, `born-f6`, `born-m5` and `born-m6`) were generated with the built-in image generation tool. Each childhood portrait used existing game art only as a style reference and was prompted to depict a different person; its matching infant and adult portraits were generated from that individual childhood image. These are invented game illustrations, not historical likenesses. The assets include 512-pixel masters and 128- and 64-pixel derivatives; the original PNGs are retained locally in `outputs/born-portrait-originals-expanded-20261115/`. Each saved identity keeps the same reserved portrait set across ages. Existing saves may reserve the new sets for identifiable documented births on the next turn without changing earlier claims; a portrait is never reassigned after death.
+
+### Four additional campaign-born people (2026-11-15)
+
+The built-in image generation tool produced four original fictional Roman portrait studies: `born-m7`, `born-m8`, `born-f7` and `born-f8`. These are invented game characters, not images of historical people. Each prompt requested a single individual shown at infant, child and adult ages, in modest Roman linen, with a subdued background, warm light, realistic painterly treatment and no text or symbols. The identities were distinguished by (m7) curly auburn hair and freckles, (m8) short sandy-brown hair and a narrow face, (f7) dark curls and a rounded face, and (f8) chestnut hair and a long face. The `born-m8` person uses a subtle fictional chin mark in later life; it is not a simulated injury or a historical medical claim.
+
+The three square panels from each original study were separately cropped into 512-pixel masters and 128- and 64-pixel game images. Original generated triptychs are retained locally in `outputs/born-portrait-originals-eight-20261115/`. Existing saves may assign these previously unused identities only to eligible recorded simulated births during a subsequent month. Earlier portrait claims remain reserved and are never reassigned, including after death. Foreign viewers require a recorded meeting snapshot; that image does not establish current age, health, location or authority.
+
+### Two additional campaign-born people (2026-11-15)
+
+`born-f9` and `born-m9` are original fictional Roman characters, not historical people or verified likenesses. The built-in image generation tool created the adult portraits separately using existing game portraits only as style references. The woman was prompted with dark braided curls, olive complexion and a muted terracotta mantle; the man with short dark wavy hair, a short beard and a muted green mantle. Each matching child and toddler image was then generated separately using that person's adult image as the reference, with age-appropriate features and simple period-inspired clothing. All prompts requested a square head-and-shoulders composition, subdued brown-olive background, warm light, painterly realism, and no text, frame or watermark.
+
+The original PNGs are retained locally in `outputs/born-portraits-nine-originals/`; the 512-pixel masters and 128- and 64-pixel derivatives are in this directory. The same saved person retains their reserved set across life stages; old claims are not replaced and portraits are never reused after death. Existing saves can assign an unused set only to an eligible, documented simulated birth on a later simulation advance. Foreign viewers see a fictional portrait only through a dated personal meeting snapshot.
+
+
+## Further campaign-born portraits (2026-11-17)
+
+The four individual fictional people `born-f10`, `born-m10`, `born-f11` and `born-m11` were created using the built-in image-generation tool. They are original game illustrations, not depictions of historical people or verified likenesses. Each prompt requested one invented Roman person in three consistent life stages, as separate head-and-shoulders compositions with plain linen clothing, subdued olive backgrounds and warm light, without text or symbols. The four prompts distinguished the people through hair, facial features, complexion and muted clothing colors.
+
+Each generated triptych was divided into toddler, child and adult square images; the 512-pixel master and 128- and 64-pixel versions of each stage are included here. Original triptychs are retained locally under `outputs/born-portrait-originals-eleven-20261117/`. Each set remains reserved for one identifiable simulated birth in a save, and is never reused after death. Existing saves can assign unused sets to recorded births on a subsequent month without replacing older claims; foreign viewers need a dated meeting snapshot. The pool remains finite, so births beyond its capacity may still lack an individual image.

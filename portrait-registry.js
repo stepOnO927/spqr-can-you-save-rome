@@ -27,9 +27,9 @@ const INSTITUTION_PORTRAITS=[
  ['scenario_civic',0,'Gaius Sennius',-85,'fictional-sennius'],
  ['scenario_civic',1,'Mara',-85,'fictional-mara']
 ];
-// Limited individual artwork for campaign-born Roman people. A saved claim
-// binds each pair of childhood/adult assets to one person and their parentage.
-const BORN_PORTRAITS={male:['born-m1','born-m2','born-m3','born-m4','born-m5','born-m6','born-m7','born-m8','born-m9'],female:['born-f1','born-f2','born-f3','born-f4','born-f5','born-f6','born-f7','born-f8','born-f9']};
+// Each pair is one fictional person at two life stages. Claims belong to a
+// save, are never recycled after death, and do not consume simulation RNG.
+const BORN_PORTRAITS={male:['born-m1','born-m2','born-m3','born-m4','born-m5','born-m6','born-m7','born-m8','born-m9','born-m10','born-m11'],female:['born-f1','born-f2','born-f3','born-f4','born-f5','born-f6','born-f7','born-f8','born-f9','born-f10','born-f11']};
 // Each portrait is reserved permanently for the first documented fictional
 // nominee of that court in a save; names alone never establish identity.
 const COURT_PORTRAITS={
