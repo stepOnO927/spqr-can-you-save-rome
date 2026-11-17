@@ -131,11 +131,11 @@ export function previewMarch(s,armyId,destination){
 export function moveArmy(s,armyId,destination){
   const estimate=previewMarch(s,armyId,destination);
   if(!estimate.ok)return estimate;
-  if(s.grandMap){const a=army(s,armyId),first=estimate.path[0];let transport=null;if(first.sea){transport=commitArmyTransport(s,a,region(s,a.region),region(s,first.id));if(!transport.ok)return transport;s.factions[a.owner].treasury-=8}a.stance=null;a.prepared=0;a.move={to:first.id,remaining:first.months,sea:first.sea,path:estimate.path.slice(1),final:destination,...(transport?{transportFleetId:transport.fleetId,transportReady:false}:{})};a.attackIntel=region(s,first.id).owner!==a.owner?assessment(s,armyId,first.id,{months:first.months,sea:first.sea}):null;if(a.owner===s.player)log(s,`${a.name[0]} began a ${estimate.path.length}-territory march toward ${region(s,destination).name[0]}.`,`${a.name[1]}开始向${region(s,destination).name[1]}行军，途经${estimate.path.length}个战区。`);return {ok:true,path:estimate.path.map(x=>x.id),months:estimate.months}}
+  if(s.grandMap){const a=army(s,armyId),first=estimate.path[0];let transport=null;if(first.sea){transport=commitArmyTransport(s,a,region(s,a.region),region(s,first.id));if(!transport.ok)return transport;s.factions[a.owner].treasury-=8}a.coordinated=false;a.stance=null;a.prepared=0;a.move={to:first.id,remaining:first.months,sea:first.sea,path:estimate.path.slice(1),final:destination,...(transport?{transportFleetId:transport.fleetId,transportReady:false}:{})};a.attackIntel=region(s,first.id).owner!==a.owner?assessment(s,armyId,first.id,{months:first.months,sea:first.sea}):null;if(a.owner===s.player)log(s,`${a.name[0]} began a ${estimate.path.length}-territory march toward ${region(s,destination).name[0]}.`,`${a.name[1]}开始向${region(s,destination).name[1]}行军，途经${estimate.path.length}个战区。`);return {ok:true,path:estimate.path.map(x=>x.id),months:estimate.months}}
   const a=army(s,armyId),target=region(s,destination),link=adjacent(a.region).find(e=>e.to===destination);
   if(link.sea)s.factions[a.owner].treasury-=8;
   const months=estimate.months;
-  a.move={to:destination,remaining:months,sea:link.sea};
+  a.coordinated=false;a.move={to:destination,remaining:months,sea:link.sea};
   a.attackIntel=estimate.hostile?assessment(s,armyId,destination,estimate):null;
   if(a.owner===s.player)log(s,`${a.name[0]} marched toward ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}向${target.name[1]}行军（${months}个月）。`);
   return {ok:true};
@@ -475,7 +475,8 @@ export function resolveBattle(s,attacker,defender,target,options={}){
     const retreat=adjacent(target.id,s).map(e=>region(s,e.to)).find(r=>r.owner===attacker.owner)?.id;
     for(const unit of attackers){unit.siege=null;unit.region=retreat||unit.region}
   }
-  for(const unit of attackers){unit.move=null;unit.experience=Math.min(5,unit.experience+1);unit.attackIntel=null}
+  for(const unit of attackers){unit.move=null;unit.coordinated=false;unit.experience=Math.min(5,unit.experience+1);unit.attackIntel=null}
+  for(const unit of defenders)unit.coordinated=false;
   for(const unit of defenders)unit.experience=Math.min(5,unit.experience+1);
   if(attacker.owner===s.player||defender.owner===s.player){const playerAttacks=attacker.owner===s.player,ownLoss=playerAttacks?lossA:lossD,playerPrevailed=playerAttacks?attackerWins:!attackerWins,location=meeting?'opposing marches':target.name[0],locationZh=meeting?'反向行军途中':target.name[1];log(s,`${FACTIONS[s.player].short[0]} ${playerPrevailed?'prevailed':'was repulsed'} at ${location}. Casualties: own ${ownLoss.toLocaleString()}; enemy unknown.`,`${FACTIONS[s.player].short[1]}在${locationZh}${playerPrevailed?'占优':'失利'}。己方伤亡：${ownLoss.toLocaleString()}；敌方伤亡未知。`)}
   report.ownerAfter=target.owner;
@@ -497,7 +498,7 @@ function arrive(s,a){
   if(enemy){resolveBattle(s,a,enemy,target);return}
   if(target.owner!==a.owner&&a.men<500){a.move=null;a.attackIntel=null;if(a.owner===s.player)log(s,`${a.name[0]} lacks the force to occupy ${target.name[0]}.`,`${a.name[1]}兵力不足，无法占领${target.name[1]}。`);return}
   const siegeReduction=localBuildingEffects(region(s,a.region)).siegeReduction||0;
-  const from=a.region;a.region=target.id;a.move=null;a.attackIntel=null;recordMovement(s,a,from);
+  const from=a.region;a.region=target.id;a.move=null;a.coordinated=false;a.attackIntel=null;recordMovement(s,a,from);
   if(target.owner!==a.owner){
     if(target.fort>0){a.siege={region:target.id,remaining:Math.max(1,target.fort*2-siegeReduction)};recordSiege(s,target,a,'begun');if(a.owner===s.player||target.owner===s.player)log(s,`${a.name[0]} began a siege at ${target.name[0]}.`,`${a.name[1]}开始围攻${target.name[1]}。`)}
     else {const previousOwner=target.owner,witnessed=a.owner===s.player||target.owner===s.player;target.owner=a.owner;target.loyalty=38;recordControl(s,target,previousOwner,'occupation',{armyId:a.id,attacker:a.owner});if(witnessed)log(s,`${FACTIONS[a.owner].short[0]} occupied ${target.name[0]}.`,`${FACTIONS[a.owner].short[1]}占领了${target.name[1]}。`)}
@@ -931,8 +932,18 @@ export function aiTurn(s,owner){
       }
       const defenders=report?.min!=null&&report.age<=5?Math.round((report.min+report.max)/2):willingToRisk(report,a.men)?a.men:prior;
       if(defenders>a.men*1.35||f.food<0||s.grandMap&&destination.owner===owner&&armySupply(s,{...a,region:step})<.45)continue;
-      const support=s.grandMap&&destination.owner!==owner?available.find(other=>other.id!==a.id&&!reservedSupport.has(other.id)&&!other.move&&other.region!==a.region&&other.men>1200&&armySupply(s,other)>=.5&&grandAdjacent(other.region).some(edge=>edge.to===step)):null;
-      a.coordinated=!!support;const ordered=moveArmy(s,a.id,step);if(ordered.ok){if(support)reservedSupport.add(support.id);break}a.coordinated=false}}
+      const leadPlan=s.grandMap&&destination.owner!==owner?previewMarch(s,a.id,step):null;
+      const support=leadPlan?.ok&&leadPlan.path?.length===1&&!leadPlan.path[0].sea?available.find(other=>{
+        if(other.id===a.id||reservedSupport.has(other.id)||other.move||other.men<=1200||other.aiGarrisonRegion===other.region||protectedJunctions.has(other.region)||armySupply(s,other)<.5)return false;
+        const plan=previewMarch(s,other.id,step);
+        return plan.ok&&plan.path?.length===1&&!plan.path[0].sea&&plan.months===leadPlan.months;
+      }):null;
+      const ordered=moveArmy(s,a.id,step);if(ordered.ok){
+        a.coordinated=false;
+        if(support&&moveArmy(s,support.id,step).ok){reservedSupport.add(support.id);a.coordinated=true;support.coordinated=true}
+        break;
+      }
+    }}
   }
   if(f.stability<45&&f.treasury>25){f.treasury-=10;f.stability+=3}
   if(owner!=='rebels' && s.month===8 && f.treasury>=25){const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);if(enemy&&enemy!=='rebels')queueMission(s,owner,enemy,'spy','strength')}

@@ -283,6 +283,46 @@ test('a Roman AI still protects its strategic city after gaining territorial par
  assert.equal(guard.region,'roma');assert.equal(guard.move,null);
 });
 
+test('AI actually orders its adjacent support into the same battle month',()=>{
+ const s=newGrandGame('egypt');
+ for(const id of ['italiaN','t010','t011','t012','t013'])region(s,id).owner='caesar';
+ const lead=army(s,'xiii'),support=army(s,'viii'),defender=army(s,'italy');
+ lead.region='t012';support.region='t011';defender.region='t014';s.month=1;
+ aiTurn(s,'caesar');
+ assert.equal(lead.move?.to,'t014');assert.equal(support.move?.to,'t014');
+ assert.equal(lead.move.remaining,support.move.remaining);
+ const restored=upgradeSave(structuredClone(s));
+ assert.equal(army(restored,'viii').move?.to,'t014');
+ tick(restored);
+ const battle=restored.battles.find(b=>b.region==='t014'&&b.attacker.owner==='caesar');
+ assert.ok(battle,'both orders must resolve through real combat');
+ assert.deepEqual(battle.attacker.formations.map(f=>f.id).sort(),['viii','xiii']);
+ assert.equal(battle.attacker.men,12600);
+ assert.equal(army(restored,'xiii').coordinated,false);
+ assert.equal(army(restored,'viii').coordinated,false);
+});
+
+test('AI keeps a designated rear garrison out of an otherwise possible joint assault',()=>{
+ const s=newGrandGame('egypt');
+ for(const id of ['italiaN','t010','t011','t012','t013'])region(s,id).owner='caesar';
+ const lead=army(s,'xiii'),guard=army(s,'viii');
+ lead.region='t012';guard.region='t011';guard.aiGarrisonRegion='t011';s.month=1;
+ aiTurn(s,'caesar');
+ assert.equal(lead.move?.to,'t014');
+ assert.equal(guard.move,null);
+});
+
+test('AI co-located field armies leave together when their march times match',()=>{
+ const s=newGrandGame('egypt');
+ for(const id of ['italiaN','t010','t011','t012','t013'])region(s,id).owner='caesar';
+ const lead=army(s,'xiii'),support=army(s,'viii');
+ lead.region='t012';support.region='t012';s.month=1;
+ aiTurn(s,'caesar');
+ assert.equal(lead.move?.to,'t014');
+ assert.equal(support.move?.to,'t014');
+ assert.equal(lead.move.remaining,support.move.remaining);
+});
+
 test('outnumbered AI reinforces the exposed front instead of the first map cell',()=>{
  const s=newGrandGame('egypt'),caesar=s.factions.caesar;
  s.month=4;caesar.treasury=80;caesar.food=100;
