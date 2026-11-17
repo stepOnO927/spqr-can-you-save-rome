@@ -5,9 +5,9 @@
 // Hidden attributes (corruption, true ambition) are never shown to the player
 // without evidence: knowledge lives in s.court.knowledge and is only filled
 // by audits, long service in office, or exposed schemes.
-import {OFFICES,COURT_FACTIONS,REGIONS as STATIC_REGIONS} from './data.js?v=world-kings-bilateral-1';
-import {crown,eligibility,isLiuClan,claimStrength,recognition,establishRegency,deposeAndReplace,seizeThrone,addClaimant,yearsBetween,enforceDynasticInvariants} from './dynasty.js?v=world-kings-bilateral-1';
-import {roll,clamp,log,name} from './util.js?v=world-kings-bilateral-1';
+import {OFFICES,COURT_FACTIONS,REGIONS as STATIC_REGIONS} from './data.js?v=world-kings-local-play-1';
+import {crown,eligibility,isLiuClan,claimStrength,recognition,establishRegency,deposeAndReplace,seizeThrone,addClaimant,yearsBetween,enforceDynasticInvariants} from './dynasty.js?v=world-kings-local-play-1';
+import {roll,clamp,log,name} from './util.js?v=world-kings-local-play-1';
 
 const alive=(s,id)=>!!s.persons[id]?.alive;
 export const age=(s,id)=>yearsBetween(s.persons[id]?.birth??s.year,s.year);

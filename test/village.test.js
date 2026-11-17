@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame, tick, upgradeSave} from '../engine.js?v=world-kings-bilateral-1';
+import {newGame, tick, upgradeSave} from '../engine.js?v=world-kings-local-play-1';
 import {localEntity, localEntityRevenue, villageDevelopment} from '../local-polities.js';
 import {villageProjectQuote, startVillageProject, villageFoodQuote, takeVillageFood, advanceVillages} from '../local-villages.js';
 import {armyExpeditionSupply, advanceExpeditionSupply} from '../expedition-supply.js';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-bilateral-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-local-play-1';
 
 test('fictional village has civilian needs and save-compatible development', () => {
   const state = newGame('caesar'), entity = localEntity(state, 'ravenna-farms'), v = entity.village;

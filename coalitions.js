@@ -1,9 +1,9 @@
-import {isDeliveredReport} from './person-knowledge.js?v=world-kings-bilateral-1';
-import {ROUTES} from './data.js?v=world-kings-bilateral-1';
-import {reportedControl} from './control-intelligence.js?v=world-kings-bilateral-1';
-import {activeAgreement} from './agreements.js?v=world-kings-bilateral-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=world-kings-bilateral-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=world-kings-bilateral-1';
+import {isDeliveredReport} from './person-knowledge.js?v=world-kings-local-play-1';
+import {ROUTES} from './data.js?v=world-kings-local-play-1';
+import {reportedControl} from './control-intelligence.js?v=world-kings-local-play-1';
+import {activeAgreement} from './agreements.js?v=world-kings-local-play-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=world-kings-local-play-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=world-kings-local-play-1';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const rel=(s,a,b)=>s.relations[pair(a,b)]??0;

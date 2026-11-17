@@ -1,8 +1,8 @@
 import {localEntity, localContactQuote, offerLocalContact, localSiegeQuote, besiegeLocalEntity, localAdministrationQuote, startLocalAdministration} from '../local-polities.js';
 import {localSecurity} from '../local-resistance.js';
 import {renderFootholdPanel} from './foothold-ui.js';
-import {FACTIONS} from '../data.js?v=world-kings-bilateral-1';
-import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-bilateral-1';
+import {FACTIONS} from '../data.js?v=world-kings-local-play-1';
+import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-local-play-1';
 
 export function renderTribalEntity({state, id, actor, language, panel, refresh}) {
   const entity = localEntity(state, id), zh = language === 'zh';

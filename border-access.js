@@ -1,5 +1,5 @@
-import {activeAgreement,proposeAgreement} from './agreements.js?v=world-kings-bilateral-1';
-import {subjectRelation} from './suzerainty.js?v=world-kings-bilateral-1';
+import {activeAgreement,proposeAgreement} from './agreements.js?v=world-kings-local-play-1';
+import {subjectRelation} from './suzerainty.js?v=world-kings-local-play-1';
 
 export const BORDER_ACCESS_CATEGORIES = Object.freeze([
   'closed', 'civilian', 'commercial', 'diplomatic',
@@ -141,6 +141,9 @@ export function militaryAccessStatus(state, actor, theaterId, reportedOwner) {
   const target = state.regions.find(region => region.id === theaterId);
   if (!target) return {allowed: false, reason: 'no_theater'};
   const owner = reportedOwner === undefined ? target.owner : reportedOwner;
+  // A city militia may leave and return to its own site inside a foreign
+  // theater. This grants no passage through the rest of the host's domain.
+  if(state.localCampaign?.id===actor&&target.id===state.regions.find(region=>region.localEntities?.some(entity=>entity.id===actor&&entity.controller===actor))?.id)return {allowed:true,basis:'local_home',owner};
   if (!owner) return {allowed: true, basis: 'unconfirmed', owner: null};
   if (owner === actor) return {allowed: true, basis: 'own', owner};
   if (atWar(state, actor, owner)) return {allowed: true, basis: 'war', owner};

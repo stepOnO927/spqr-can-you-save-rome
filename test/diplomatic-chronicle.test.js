@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=world-kings-bilateral-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=world-kings-bilateral-1';
-import {initializeChronicle,syncChronicleDispatches} from '../chronicle.js?v=world-kings-bilateral-1';
+import {newGame} from '../engine.js?v=world-kings-local-play-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=world-kings-local-play-1';
+import {initializeChronicle,syncChronicleDispatches} from '../chronicle.js?v=world-kings-local-play-1';
 
 test('a reported foreign treaty reaches the chronicle only after contact, and secret treaties remain hidden',()=>{
  const s=newGame('caesar');initializeChronicle(s);const end=s.year*12+s.month+24;

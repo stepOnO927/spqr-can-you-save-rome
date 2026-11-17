@@ -1,4 +1,4 @@
-import {ROUTES} from './data.js?v=world-kings-bilateral-1';
+import {ROUTES} from './data.js?v=world-kings-local-play-1';
 
 const now=state=>state.year*12+state.month;
 const hostile=(state,a,b)=>a!==b&&(state.wars||[]).some(pair=>pair.includes(a)&&pair.includes(b));

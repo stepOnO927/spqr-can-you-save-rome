@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from './characters.js?v=world-kings-bilateral-1';
-import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=world-kings-bilateral-1';
+import {CHARACTER_CATALOG} from './characters.js?v=world-kings-local-play-1';
+import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=world-kings-local-play-1';
 
 const date=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');

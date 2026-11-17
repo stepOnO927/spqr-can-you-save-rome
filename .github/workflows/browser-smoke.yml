@@ -75,6 +75,7 @@ jobs:
               node tools/local-trade-smoke.mjs
               node tools/local-administrator-smoke.mjs
               node tools/generated-local-polities-smoke.mjs
+              node tools/local-campaign-smoke.mjs
               node tools/village-petition-smoke.mjs
               node tools/strongman-charter-smoke.mjs
               node tools/nomadic-camp-smoke.mjs

@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=world-kings-bilateral-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=world-kings-bilateral-1';
+import {ROUTES} from './data.js?v=world-kings-local-play-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=world-kings-local-play-1';
 
 const now=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');

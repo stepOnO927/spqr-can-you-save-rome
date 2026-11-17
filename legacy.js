@@ -1,7 +1,7 @@
-import {storedCorrespondentName} from './person-knowledge.js?v=world-kings-bilateral-1';
-import {syncChronicleDispatches} from './chronicle.js?v=world-kings-bilateral-1';
-import {CHARACTER_CATALOG} from './characters.js?v=world-kings-bilateral-1';
-import {initializeDynasties} from './dynasties.js?v=world-kings-bilateral-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=world-kings-local-play-1';
+import {syncChronicleDispatches} from './chronicle.js?v=world-kings-local-play-1';
+import {CHARACTER_CATALOG} from './characters.js?v=world-kings-local-play-1';
+import {initializeDynasties} from './dynasties.js?v=world-kings-local-play-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 

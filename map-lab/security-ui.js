@@ -1,9 +1,9 @@
-import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=world-kings-bilateral-1';
-import {campaignYear,campaignDate} from '../campaign-date.js?v=world-kings-bilateral-1';
-import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=world-kings-bilateral-1';
-import {reassurePerson} from '../conspiracies.js?v=world-kings-bilateral-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=world-kings-bilateral-1';
-import {FACTIONS} from '../data.js?v=world-kings-bilateral-1';
+import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=world-kings-local-play-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=world-kings-local-play-1';
+import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=world-kings-local-play-1';
+import {reassurePerson} from '../conspiracies.js?v=world-kings-local-play-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=world-kings-local-play-1';
+import {FACTIONS} from '../data.js?v=world-kings-local-play-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function renderSecurity({panel,state,language,refresh}){

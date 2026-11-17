@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=world-kings-bilateral-1';
-import {militaryAccessStatus} from './border-access.js?v=world-kings-bilateral-1';
+import {ROUTES} from './data.js?v=world-kings-local-play-1';
+import {militaryAccessStatus} from './border-access.js?v=world-kings-local-play-1';
 import {footholdConnected} from './foothold.js';
 import {villageFoodQuote, takeVillageFood} from './local-villages.js';
 
@@ -33,6 +33,8 @@ export function armyExpeditionSupply(state, army, connected = supplyNetwork(stat
   const region = state.regions.find(place => place.id === army?.region), faction = state.factions[army?.owner];
   if (!region || !faction || !army?.men || state.dlc) return {status: 'unavailable'};
   const localLoad = state.armies.filter(unit => unit.owner === army.owner && unit.region === region.id && unit.men > 0).reduce((sum, unit) => sum + unit.men, 0);
+  const home=state.localCampaign?.id===army.owner&&region.localEntities?.find(entity=>entity.id===army.owner&&entity.controller===army.owner);
+  if(home&&localLoad<=Math.max(100,Math.floor(home.population*.15))&&home.food>=2)return {status:'full',basis:'local_home'};
   const capacity = Math.max(0, region.supply || 0) * 1000;
   if (region.owner === army.owner && region.administrativeStatus === 'integrated' && localLoad <= capacity) return {status: 'full'};
   const depot = (region.localEntities || []).find(entity => entity.foothold?.owner === army.owner && entity.foothold.level >= 1 && entity.foothold.stockFood >= Math.max(1, Math.ceil(army.men / 5000)) && footholdConnected(state, entity.id, army.owner));
