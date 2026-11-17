@@ -1,9 +1,9 @@
-import {isDeliveredReport} from '../person-knowledge.js?v=mutual-audience-1';
-import {campaignYear,campaignDate} from '../campaign-date.js?v=mutual-audience-1';
-import {reportedControl} from '../control-intelligence.js?v=mutual-audience-1';
-import {FACTIONS} from '../data.js?v=mutual-audience-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=mutual-audience-1';
-import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=mutual-audience-1';
+import {isDeliveredReport} from '../person-knowledge.js?v=born-portraits-eleven-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=born-portraits-eleven-1';
+import {reportedControl} from '../control-intelligence.js?v=born-portraits-eleven-1';
+import {FACTIONS} from '../data.js?v=born-portraits-eleven-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=born-portraits-eleven-1';
+import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=born-portraits-eleven-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 

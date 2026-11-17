@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,forecastEconomy,projectTaxPath,upgradeSave} from '../engine.js?v=mutual-audience-1';
-import {advanceMarkets} from '../trade-markets.js?v=mutual-audience-1';
-import {newHanGame,tick as tickHan,loadHanSave,serialize} from '../han/engine.js?v=mutual-audience-1';
-import {advanceEasternMarkets} from '../han/markets.js?v=mutual-audience-1';
-import {agriculturalDisruption,agriculturalProduction,grainProvisionFactor} from '../war-economy.js?v=mutual-audience-1';
+import {newGame,forecastEconomy,projectTaxPath,upgradeSave} from '../engine.js?v=born-portraits-eleven-1';
+import {advanceMarkets} from '../trade-markets.js?v=born-portraits-eleven-1';
+import {newHanGame,tick as tickHan,loadHanSave,serialize} from '../han/engine.js?v=born-portraits-eleven-1';
+import {advanceEasternMarkets} from '../han/markets.js?v=born-portraits-eleven-1';
+import {agriculturalDisruption,agriculturalProduction,grainProvisionFactor} from '../war-economy.js?v=born-portraits-eleven-1';
 
 test('scarce owned grain raises Roman army costs in both forecast and actual budget',()=>{
  const ample=newGame('caesar'),scarce=upgradeSave(structuredClone(ample));

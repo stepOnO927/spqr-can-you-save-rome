@@ -1,19 +1,19 @@
 // MANDATE OF HEAVEN — campaign engine. Independent of the Roman engine: the
 // Roman campaign, its saves and its modules are untouched. Han saves use
 // their own storage keys and carry dlc:'mandate-of-heaven'.
-import {START,REGIONS,FACTIONS,PLAYABLE,OASIS,OFFICES} from './data.js?v=mutual-audience-1';
+import {START,REGIONS,FACTIONS,PLAYABLE,OASIS,OFFICES} from './data.js?v=born-portraits-eleven-1';
 import {EURASIAN_FACTIONS,EURASIAN_RULERS} from './eurasia-data.js';
 import {initDependencies,advanceDependencies,changeDependency} from './dependencies.js';
-import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=mutual-audience-1';
-import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,statusOf,yearsBetween,claimStrength} from './dynasty.js?v=mutual-audience-1';
-import {initCourt,ensureCourtCareers,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,adminCapacity,emperorAuthority} from './court.js?v=mutual-audience-1';
-import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=mutual-audience-1';
-import {initSilk,advanceSilk} from './silk-road.js?v=mutual-audience-1';
-import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=mutual-audience-1';
-import {agriculturalProduction,grainProvisionFactor} from '../war-economy.js?v=mutual-audience-1';
-import {advanceFocus,focusState} from './focus.js?v=mutual-audience-1';
-import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=mutual-audience-1';
-import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=mutual-audience-1';
+import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=born-portraits-eleven-1';
+import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,statusOf,yearsBetween,claimStrength} from './dynasty.js?v=born-portraits-eleven-1';
+import {initCourt,ensureCourtCareers,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,adminCapacity,emperorAuthority} from './court.js?v=born-portraits-eleven-1';
+import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=born-portraits-eleven-1';
+import {initSilk,advanceSilk} from './silk-road.js?v=born-portraits-eleven-1';
+import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=born-portraits-eleven-1';
+import {agriculturalProduction,grainProvisionFactor} from '../war-economy.js?v=born-portraits-eleven-1';
+import {advanceFocus,focusState} from './focus.js?v=born-portraits-eleven-1';
+import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=born-portraits-eleven-1';
+import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=born-portraits-eleven-1';
 import {CULTURAL_NAME_POOLS,ensureFieldCommanders} from './field-identities.js';
 import {ensureHanPortraitSeed,ensureHanPortraitSeeds} from './court-portrait.js';
 import {ensureForeignRulers,advanceForeignRulers,rulerGovernanceFactor} from './rulers.js';

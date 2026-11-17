@@ -1,10 +1,10 @@
-import {isDeliveredReport} from './person-knowledge.js?v=mutual-audience-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=mutual-audience-1';
-import {startDynasticWar} from './civil-war.js?v=mutual-audience-1';
-import {ROUTES} from './data.js?v=mutual-audience-1';
-import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,factionNameStyle,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=mutual-audience-1';
-import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=mutual-audience-1';
-import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=mutual-audience-1';
+import {isDeliveredReport} from './person-knowledge.js?v=born-portraits-eleven-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=born-portraits-eleven-1';
+import {startDynasticWar} from './civil-war.js?v=born-portraits-eleven-1';
+import {ROUTES} from './data.js?v=born-portraits-eleven-1';
+import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,factionNameStyle,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=born-portraits-eleven-1';
+import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=born-portraits-eleven-1';
+import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=born-portraits-eleven-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.

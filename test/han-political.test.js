@@ -1,12 +1,12 @@
 // MANDATE OF HEAVEN — political acceptance tests 21–30.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,tick,serialize,loadHanSave} from '../han/engine.js?v=mutual-audience-1';
-import {appoint,dismiss,adminCapacity,recomputeInfluence,advanceAmbitions,ambitionOptions,issueEdict,startAudit,knownAttributes,answerDebate,respondToDisaster,emperorAuthority,onUsurpation,advanceCourt,answerPolicyAdvice} from '../han/court.js?v=mutual-audience-1';
-import {seizeThrone,statusOf,isLiuClan} from '../han/dynasty.js?v=mutual-audience-1';
-import {startFocus,focusState,advanceFocus,aiChooseFocus,TREES} from '../han/focus.js?v=mutual-audience-1';
-import {protectorateAction} from '../han/frontier.js?v=mutual-audience-1';
-import {PERSON,LATER_HISTORY} from '../han/people.js?v=mutual-audience-1';
+import {newHanGame,tick,serialize,loadHanSave} from '../han/engine.js?v=born-portraits-eleven-1';
+import {appoint,dismiss,adminCapacity,recomputeInfluence,advanceAmbitions,ambitionOptions,issueEdict,startAudit,knownAttributes,answerDebate,respondToDisaster,emperorAuthority,onUsurpation,advanceCourt,answerPolicyAdvice} from '../han/court.js?v=born-portraits-eleven-1';
+import {seizeThrone,statusOf,isLiuClan} from '../han/dynasty.js?v=born-portraits-eleven-1';
+import {startFocus,focusState,advanceFocus,aiChooseFocus,TREES} from '../han/focus.js?v=born-portraits-eleven-1';
+import {protectorateAction} from '../han/frontier.js?v=born-portraits-eleven-1';
+import {PERSON,LATER_HISTORY} from '../han/people.js?v=born-portraits-eleven-1';
 
 const game=(o={})=>newHanGame('han',{seed:21,start:'accession',...o});
 

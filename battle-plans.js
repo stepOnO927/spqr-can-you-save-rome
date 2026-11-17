@@ -1,10 +1,10 @@
-import {ROUTES,REGIONS} from './data.js?v=mutual-audience-1';
-import {reportedControl,reportedFortification,observeFortification} from './control-intelligence.js?v=mutual-audience-1';
-import {activeAgreement} from './agreements.js?v=mutual-audience-1';
-import {politicalAmbition} from './conspiracies.js?v=mutual-audience-1';
-import {focusModifiers} from './national-focus.js?v=mutual-audience-1';
-import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=mutual-audience-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=mutual-audience-1';
+import {ROUTES,REGIONS} from './data.js?v=born-portraits-eleven-1';
+import {reportedControl,reportedFortification,observeFortification} from './control-intelligence.js?v=born-portraits-eleven-1';
+import {activeAgreement} from './agreements.js?v=born-portraits-eleven-1';
+import {politicalAmbition} from './conspiracies.js?v=born-portraits-eleven-1';
+import {focusModifiers} from './national-focus.js?v=born-portraits-eleven-1';
+import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=born-portraits-eleven-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=born-portraits-eleven-1';
 
 // OPERATIONAL BATTLE PLANNER. Plans are an order layer over the existing War
 // Council orders: every movement goes through issueMilitaryOrder/moveArmy, so

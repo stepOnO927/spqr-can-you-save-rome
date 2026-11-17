@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=mutual-audience-1';
-import {tutorialTurnProgress,createTutorial} from '../map-lab/tutorial.js?v=mutual-audience-1';
+import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=born-portraits-eleven-1';
+import {tutorialTurnProgress,createTutorial} from '../map-lab/tutorial.js?v=born-portraits-eleven-1';
 
 test('tutorial report follows the selected army, not an unrelated battle',()=>{
  let s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii');

@@ -1,8 +1,8 @@
-import {isDeliveredReport,reportedPersonalContact} from './person-knowledge.js?v=mutual-audience-1';
-import {FACTIONS,ROUTES} from './data.js?v=mutual-audience-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=mutual-audience-1';
-import {reportedMovements,movementReportLeaderName} from './movements.js?v=mutual-audience-1';
-import {visiblePersonName} from './character-system.js?v=mutual-audience-1';
+import {isDeliveredReport,reportedPersonalContact} from './person-knowledge.js?v=born-portraits-eleven-1';
+import {FACTIONS,ROUTES} from './data.js?v=born-portraits-eleven-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=born-portraits-eleven-1';
+import {reportedMovements,movementReportLeaderName} from './movements.js?v=born-portraits-eleven-1';
+import {visiblePersonName} from './character-system.js?v=born-portraits-eleven-1';
 
 const opening=['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair=(a,b)=>[a,b].sort().join(':');

@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG} from './characters.js?v=mutual-audience-1';
+import {CHARACTER_CATALOG} from './characters.js?v=born-portraits-eleven-1';
 
 export const namedReportSubjects=r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:r.kind==='conspiracy'&&r.value==='suspected'&&typeof r.character==='string'?[r.character]:r.kind?.startsWith('office_')||r.kind==='succession'?[r.value]:[];
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);

@@ -1,6 +1,6 @@
-import {reportedControl} from '../control-intelligence.js?v=mutual-audience-1';
-import {deriveGovernment} from '../governance.js?v=mutual-audience-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=mutual-audience-1';
+import {reportedControl} from '../control-intelligence.js?v=born-portraits-eleven-1';
+import {deriveGovernment} from '../governance.js?v=born-portraits-eleven-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=born-portraits-eleven-1';
 
 // Project government authority from the viewer's own state or dated reports.
 // The theater-level political authority is not a claim of presence in a city.

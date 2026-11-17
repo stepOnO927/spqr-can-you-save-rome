@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=mutual-audience-1';
-import {recruit,templatesFor} from '../han/military.js?v=mutual-audience-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=born-portraits-eleven-1';
+import {recruit,templatesFor} from '../han/military.js?v=born-portraits-eleven-1';
 import {fieldCulture,ensureFieldCommanders,createMarketMerchant} from '../han/field-identities.js';
-import {birthRecordValid} from '../han/dynasty.js?v=mutual-audience-1';
+import {birthRecordValid} from '../han/dynasty.js?v=born-portraits-eleven-1';
 import {ensureForeignRulers} from '../han/rulers.js';
 
 test('every opening eastern army has a saved person and distinct cultural identity',()=>{

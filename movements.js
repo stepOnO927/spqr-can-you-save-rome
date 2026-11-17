@@ -1,10 +1,10 @@
-import {FACTIONS,ROUTES} from './data.js?v=mutual-audience-1';
-import {CHARACTER_CATALOG} from './characters.js?v=mutual-audience-1';
-import {createFictionalPerson} from './dynasties.js?v=mutual-audience-1';
-import {generateFictionalName} from './fictional-names.js?v=mutual-audience-1';
-import {hasNationalIdea} from './national-ideas.js?v=mutual-audience-1';
-import {activeAgreement,terminateAgreement} from './agreements.js?v=mutual-audience-1';
-import {reportedPersonalContact} from './person-knowledge.js?v=mutual-audience-1';
+import {FACTIONS,ROUTES} from './data.js?v=born-portraits-eleven-1';
+import {CHARACTER_CATALOG} from './characters.js?v=born-portraits-eleven-1';
+import {createFictionalPerson} from './dynasties.js?v=born-portraits-eleven-1';
+import {generateFictionalName} from './fictional-names.js?v=born-portraits-eleven-1';
+import {hasNationalIdea} from './national-ideas.js?v=born-portraits-eleven-1';
+import {activeAgreement,terminateAgreement} from './agreements.js?v=born-portraits-eleven-1';
+import {reportedPersonalContact} from './person-knowledge.js?v=born-portraits-eleven-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};

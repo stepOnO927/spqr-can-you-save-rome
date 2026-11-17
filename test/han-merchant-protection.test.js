@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=mutual-audience-1';
-import {advanceEasternMarkets,answerEasternMerchantProtection,MERCHANT_PROTECTION_COST,placeEasternTrade} from '../han/markets.js?v=mutual-audience-1';
-import {roll} from '../han/util.js?v=mutual-audience-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=born-portraits-eleven-1';
+import {advanceEasternMarkets,answerEasternMerchantProtection,MERCHANT_PROTECTION_COST,placeEasternTrade} from '../han/markets.js?v=born-portraits-eleven-1';
+import {roll} from '../han/util.js?v=born-portraits-eleven-1';
 
 function raid(s,request){
  const placed=placeEasternTrade(s,request);assert.equal(placed.ok,true,placed.reason);

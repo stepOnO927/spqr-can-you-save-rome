@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=mutual-audience-1';
-import {newHanGame,loadHanSave} from '../han/engine.js?v=mutual-audience-1';
-import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=mutual-audience-1';
-import {propose,setRelation} from '../han/frontier.js?v=mutual-audience-1';
-import {COMMODITIES} from '../market-goods.js?v=mutual-audience-1';
-import {advanceDate} from '../han/util.js?v=mutual-audience-1';
+import {newGame,upgradeSave} from '../engine.js?v=born-portraits-eleven-1';
+import {newHanGame,loadHanSave} from '../han/engine.js?v=born-portraits-eleven-1';
+import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=born-portraits-eleven-1';
+import {propose,setRelation} from '../han/frontier.js?v=born-portraits-eleven-1';
+import {COMMODITIES} from '../market-goods.js?v=born-portraits-eleven-1';
+import {advanceDate} from '../han/util.js?v=born-portraits-eleven-1';
 
 test('livestock, copper, woollen cloth and jade have measured regional markets in old saves',()=>{
  const roman=newGame('caesar'),romanCash=roman.factions.caesar.treasury;
