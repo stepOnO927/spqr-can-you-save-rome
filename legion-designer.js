@@ -302,5 +302,10 @@ export function aiReorganize(s,owner,{exclude=new Set(),log=()=>{}}={}){
  const pref=s.world.aiFormationPlans?.[owner]?.preferred;if(!pref)return null;const f=s.factions[owner];if(f.treasury<35)return null;
  const t=formationState(s).templates[pref],target=t&&templateStats(t).personnel;
  const candidate=s.armies.filter(a=>a.owner===owner&&!exclude.has(a.id)&&!a.move&&!a.siege&&!a.reorg&&a.men>1200&&(!a.formation||a.formation.templateId!==pref&&a.men<target*.7||a.formation.templateId===pref&&a.formation.version!==t.version)).sort((a,b)=>a.men-b.men)[0];
- if(!candidate)return null;const r=reorganizeArmy(s,owner,candidate.id,pref,{log});return r.ok?candidate.id:null;
+ if(!candidate)return null;
+ const quote=reorganizationQuote(s,owner,candidate.id,pref),atWar=s.wars.some(w=>w.includes(owner)),reserve=atWar?50:25;
+ // A partial refit strands a field army in training. AI courts preserve enough
+ // treasury and food to react to a battle instead of spending their war chest.
+ if(!quote.ok||quote.partial||f.treasury-quote.treasury<reserve||f.food-quote.food<(atWar?20:10))return null;
+ const r=reorganizeArmy(s,owner,candidate.id,pref,{allowPartial:false,log});return r.ok?candidate.id:null;
 }

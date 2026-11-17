@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave,resolveBattle,previewMarch,forecastEconomy,issueMilitaryOrder} from '../engine.js?v=born-portraits-eleven-1';
-import {COMPONENTS,PRESETS,templatesFor,templateStats,saveTemplate,duplicateTemplate,renameTemplate,validateTemplate,compareTemplates,reorganizeArmy,reorganizationQuote,recruitFormation,recruitmentQuote,formationCombatFactor,formationUpkeepDelta,commanderSpecialty,commandConcentration,outdatedArmies,aiDesignFormations,availableComponents,cultureOf,formationState} from '../legion-designer.js?v=born-portraits-eleven-1';
+import {COMPONENTS,PRESETS,templatesFor,templateStats,saveTemplate,duplicateTemplate,renameTemplate,validateTemplate,compareTemplates,reorganizeArmy,reorganizationQuote,recruitFormation,recruitmentQuote,formationCombatFactor,formationUpkeepDelta,commanderSpecialty,commandConcentration,outdatedArmies,aiDesignFormations,aiReorganize,availableComponents,cultureOf,formationState} from '../legion-designer.js?v=born-portraits-eleven-1';
 import {focusState} from '../national-focus.js?v=born-portraits-eleven-1';
 
 const roundTrip=s=>upgradeSave(JSON.parse(JSON.stringify(s)));
@@ -107,4 +107,16 @@ test('old saves keep their armies, treasury and territories; legacy armies are u
  const up=roundTrip(s);assert.equal(JSON.stringify(up.armies),armies);assert.equal(up.factions.caesar.treasury,treasury);assert.equal(JSON.stringify(up.regions.map(r=>r.owner)),regions);
  assert.equal(up.world.imperiumVersion,1);assert.ok(templatesFor(up,'caesar').length>=3);assert.ok(up.armies.every(a=>!a.formation));
  tick(up);assert.ok(up.world.nationalFocus);
+});
+
+test('AI refits preserve a war chest and never begin a partial conversion',()=>{
+ const strained=newGame('caesar');aiDesignFormations(strained,'caesar');
+ aiReorganize(strained,'caesar');
+ assert.ok(strained.factions.caesar.treasury>=50);
+ assert.ok(strained.armies.filter(a=>a.owner==='caesar'&&a.reorg).every(a=>a.reorg.fill===1));
+ const funded=newGame('caesar');funded.factions.caesar.treasury=300;aiDesignFormations(funded,'caesar');
+ const refit=aiReorganize(funded,'caesar');
+ assert.ok(refit,'a funded court may still reorganize');
+ assert.ok(funded.factions.caesar.treasury>=50);
+ assert.equal(funded.armies.find(a=>a.id===refit).reorg.fill,1);
 });
