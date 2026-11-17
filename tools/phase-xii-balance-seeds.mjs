@@ -13,6 +13,8 @@ const duration=requested?Number(requested.slice('--months='.length)):null;
 if(requested&&(!Number.isInteger(duration)||duration<1||duration>240))throw new Error('Use --months=1..240');
 const long=process.argv.includes('--long')||requested!=null,months=duration??(long?72:36),seeds=long?12:5,legacySeeds=process.argv.includes('--legacy-seeds');
 const outcomes={};
+// Count the battle outcome, not how or why the AI issued the march orders.
+const groupedAssaults={caesar:0,senate:0};
 for(let seed=1;seed<=seeds;seed++){
  const state=newGrandGame('egypt'),variantSeed=legacySeeds?seed:Math.imul(seed,0x9e3779b1)>>>0;state.seed=variantSeed;
  const foodProjects=new Set();
@@ -28,6 +30,9 @@ for(let seed=1;seed<=seeds;seed++){
  const caesar=state.regions.filter(r=>r.owner==='caesar').length;
  const senate=state.regions.filter(r=>r.owner==='senate').length;
  const winner=state.civilWarOutcome?.winner||'ongoing';outcomes[winner]=(outcomes[winner]||0)+1;
- console.log(`seed ${seed} (${variantSeed}): Caesar ${caesar}, Senate ${senate}, Rome ${region(state,'roma').owner}, Caesar field ${state.armies.filter(a=>a.owner==='caesar').reduce((men,a)=>men+a.men,0)}, food projects Caesar ${[...foodProjects].filter(x=>x.startsWith('caesar:')).length}/Senate ${[...foodProjects].filter(x=>x.startsWith('senate:')).length}, civil war ${state.civilWarOutcome?`${state.civilWarOutcome.kind}:${state.civilWarOutcome.winner}`:'ongoing'}`);
+ const grouped={caesar:0,senate:0};for(const battle of state.battles||[])if(grouped[battle.attacker.owner]!=null&&battle.attacker.formations?.length>1)grouped[battle.attacker.owner]++;
+ for(const id of ['caesar','senate'])groupedAssaults[id]+=grouped[id];
+ console.log(`seed ${seed} (${variantSeed}): Caesar ${caesar}, Senate ${senate}, Rome ${region(state,'roma').owner}, Caesar field ${state.armies.filter(a=>a.owner==='caesar').reduce((men,a)=>men+a.men,0)}, food projects Caesar ${[...foodProjects].filter(x=>x.startsWith('caesar:')).length}/Senate ${[...foodProjects].filter(x=>x.startsWith('senate:')).length}, grouped assault battles Caesar ${grouped.caesar}/Senate ${grouped.senate}, civil war ${state.civilWarOutcome?`${state.civilWarOutcome.kind}:${state.civilWarOutcome.winner}`:'ongoing'}`);
 }
 console.log(`${months}-month ${legacySeeds?'legacy adjacent':'spaced'}-seed outcomes: ${JSON.stringify(outcomes)}`);
+console.log(`Grouped Roman assault battles in this cohort: ${JSON.stringify(groupedAssaults)}`);
