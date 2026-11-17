@@ -84,7 +84,7 @@ const validCampaignPlayer=validPlayableCampaign;
 let mailOpen=false,mailFilter='inbox',mailQuery='',mailSort='newest',mailSender='',selectedMail=null;
 const received=receiveHandoff(sessionStorage,'campaign',upgradeSave);
 setupRequired=!received;setupOpen=setupRequired;
-if(received){state=received;selectedRegion=localCampaignCity(state)?.theater||state.regions.find(r=>r.owner===state.player)?.id||state.regions[0]?.id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;chosenFaction=state.player;chosenDifficulty=state.difficulty||'standard';chosenHandicap=!!state.economicHandicap}
+if(received){state=received;selectedRegion=localCampaignCity(state)?.theater||state.regions.find(r=>r.owner===state.player)?.id||state.regions[0]?.id;selectedArmy=state.armies.find(a=>a.owner===state.player)?.id||null;chosenFaction=state.player;chosenDifficulty=state.difficulty||'standard';chosenHandicap=!!state.economicHandicap;panelOpen=!!localCampaignCity(state)}
 initializeExperience(state,{guided:!!state.tutorial?.running,presentation:state.tutorial?.running?'beginner':'veteran'});
 let lastTutorialState=state.experience?.guide?.running?'running':state.experience?.guide?.skipped?'skipped':'completed';
 if(received&&['#government','#focus','#legions','#plans'].includes(location.hash)){tab=location.hash.slice(1);panelOpen=true;history.replaceState(null,'',location.pathname+location.search)}
