@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGrandGame,upgradeSave,warContributionPlan,collectWarContributions,emergencyProvisionsPlan,collectEmergencyProvisions,nationalBudget,tick,aiTurn} from '../engine.js';
+import {newGrandGame,upgradeSave,warContributionPlan,collectWarContributions,emergencyProvisionsPlan,collectEmergencyProvisions,nationalBudget,tick,aiTurn,seizeAerarium} from '../engine.js';
 import {budgetHtml} from '../budget-ui.js';
 import {eventText} from '../campaign-reports.js';
 
@@ -40,6 +40,8 @@ test('the contribution decision and limits are visible in both languages',()=>{
 test('an AI can raise the same contributions but avoids a garrison it cannot feed',()=>{
  const state=newGrandGame('egypt');state.factions.caesar.treasury=5;state.factions.caesar.food=20;
  const army=state.armies.find(unit=>unit.id==='xiii');army.region='roma';state.regions.find(site=>site.id==='roma').owner='caesar';
+ assert.equal(seizeAerarium(state,'caesar').ok,true);
+ state.factions.caesar.treasury=5;
  aiTurn(state,'caesar');
  assert.equal(state.lastWarContribution.caesar,state.year*12+state.month);
  assert.equal(state.armies.some(unit=>unit.owner==='caesar'&&unit.aiGarrisonRegion==='roma'),false);

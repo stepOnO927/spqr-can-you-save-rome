@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,army,region,resolveBattle,moveArmy,diplomacy,isWar,tick,recruit,previewMarch,upgradeSave,aiTurn,nationalBudget,armySupply} from '../engine.js';
+import {newGame,newGrandGame,army,region,resolveBattle,moveArmy,diplomacy,isWar,tick,recruit,previewMarch,upgradeSave,aiTurn,nationalBudget,armySupply,seizeAerarium} from '../engine.js';
 import {recordMovement,eventText,recordEvent} from '../campaign-reports.js';
 import {chronicleHtml,battleReportHtml,eventDate} from '../reports-ui.js';
 import {requestReinforcements,probePositions,latestRecon,advanceRecon,assessment} from '../reconnaissance.js';
@@ -283,6 +283,21 @@ test('a Roman AI still protects its strategic city after gaining territorial par
  assert.equal(guard.region,'roma');assert.equal(guard.move,null);
 });
 
+test('Caesar AI may claim Rome public reserves before a cash shortfall blocks normal recruitment',()=>{
+ const s=newGrandGame('egypt');region(s,'roma').owner='caesar';s.factions.caesar.treasury=20;
+ assert.ok(nationalBudget(s,'caesar').projectedNet<0);
+ aiTurn(s,'caesar');
+ assert.equal(s.aerariumSeizure?.income,85);
+ assert.equal(s.aerariumSeizure.owner,'caesar');
+ const restored=upgradeSave(structuredClone(s)),claim=structuredClone(restored.aerariumSeizure);
+ aiTurn(restored,'caesar');
+ assert.deepEqual(restored.aerariumSeizure,claim,'the public reserve is claimed exactly once after reload');
+ const funded=newGrandGame('egypt');region(funded,'roma').owner='caesar';funded.factions.caesar.treasury=100;
+ aiTurn(funded,'caesar');assert.equal(funded.aerariumSeizure,undefined,'a solvent command keeps the option available');
+ const elsewhere=newGrandGame('egypt');elsewhere.factions.caesar.treasury=20;
+ aiTurn(elsewhere,'caesar');assert.equal(elsewhere.aerariumSeizure,undefined,'the AI cannot raid Rome without controlling it');
+});
+
 test('AI actually orders its adjacent support into the same battle month',()=>{
  const s=newGrandGame('egypt');
  for(const id of ['italiaN','t010','t011','t012','t013'])region(s,id).owner='caesar';
@@ -365,10 +380,11 @@ test('AI does not count an army besieging enemy land as a friendly frontier defe
  assert.equal(upgradeSave(structuredClone(s)).armies.find(a=>a.id===relief.id).region,'t048');
 });
 
-test('cash-poor AI sends a nearby relief column to Rome without conjuring a levy',()=>{
+test('cash-poor AI sends a nearby relief column after Rome public reserves are spent',()=>{
  const s=newGrandGame('egypt'),main=army(s,'xiii'),relief=army(s,'viii');
  region(s,'roma').owner='caesar';region(s,'t014').owner='caesar';
  main.region='roma';main.move=null;relief.region='t014';relief.move=null;
+ assert.equal(seizeAerarium(s,'caesar').ok,true);
  s.factions.caesar.treasury=0;
  s.lastWarContribution={caesar:s.year*12+s.month};
  aiTurn(s,'caesar');
@@ -439,9 +455,10 @@ test('Ostia does not count as Roma for Caesarian victory or settlement',()=>{
  assert.equal(militaryResult(s,'caesar'),null);
  assert.equal(settlementEligible(s,'caesar','senate'),false);
  region(s,'roma').owner='caesar';
+ assert.equal(militaryResult(s,'caesar'),null,'a funded Senate can replace a broken field force');
+ s.factions.senate.treasury=0;s.factions.senate.manpower=0;
  assert.equal(militaryResult(s,'caesar')?.basis,'field-collapse');
  assert.equal(settlementEligible(s,'caesar','senate'),true);
- s.factions.senate.treasury=0;s.factions.senate.manpower=0;
  tick(s);
  assert.equal(s.campaignOutcome?.winner,'caesar');
  assert.equal(s.campaignOutcome?.basis,'field-collapse');
@@ -452,12 +469,14 @@ test('Ostia does not count as Roma for Caesarian victory or settlement',()=>{
  assert.match(campaignVictoryHtml(s,'zh'),/敌方核心军团被击溃/);
  assert.doesNotMatch(campaignVictoryHtml(s,'en'),/ending-achievements/);
 });
-test('a broken core field army can end either Roman war without conquering most provinces',()=>{
+test('a broken core field army ends either Roman war only when the rival cannot immediately replace it',()=>{
  const caesar=newGrandGame('caesar');
  region(caesar,'roma').owner='caesar';
  caesar.armies=caesar.armies.filter(a=>a.owner!=='senate'||a.id==='pompey');army(caesar,'pompey').men=400;
  caesar.battles=[{attacker:{owner:'caesar'},defender:{owner:'senate'},attackerWins:true}];
  assert.equal(caesar.regions.filter(r=>r.owner==='senate').length,72);
+ assert.equal(militaryResult(caesar,'caesar'),null,'territory and funded reserves can sustain the coalition');
+ caesar.factions.senate.treasury=23;
  assert.equal(militaryResult(caesar,'caesar')?.basis,'field-collapse');
  const s=newGrandGame('egypt');
  region(s,'t006').owner='senate';
@@ -465,6 +484,8 @@ test('a broken core field army can end either Roman war without conquering most 
  s.battles=[{attacker:{owner:'senate'},defender:{owner:'caesar'},attackerWins:true}];
  assert.equal(militaryResult(s,'senate'),null,'a neighboring city does not replace Cisalpine');
  region(s,'cisalpine').owner='senate';
+ assert.equal(militaryResult(s,'senate'),null,'Caesar can still raise a new field force');
+ s.factions.caesar.food=5;
  assert.equal(militaryResult(s,'senate')?.basis,'field-collapse');
  army(s,'viii').men=5000;
  assert.equal(militaryResult(s,'senate'),null,'the coalition still has a fighting field force');

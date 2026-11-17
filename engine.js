@@ -14,7 +14,7 @@ import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligi
 import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=50';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
-import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=4';
+import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=5';
 import {nationalBudget} from './national-budget.js?v=27';
 export {nationalBudget} from './national-budget.js?v=27';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
@@ -685,7 +685,10 @@ export function aiTurn(s,owner){
   };
   if(alert&&f.treasury>=40&&f.food>=6&&f.manpower>=3000)raiseAt(alert.regionId);
   const outnumbered=s.wars.some(w=>w.includes(owner)&&s.regions.filter(r=>r.owner===w.find(id=>id!==owner)).length>owned.length*1.5);
-  if(owner==='caesar'&&f.treasury< -40&&nationalBudget(s,owner).projectedNet<0)seizeAerarium(s,owner);
+  // Once Rome is held, the public reserve can fund a real field decision.
+  // Waiting for deep debt made this one-time, costly option irrelevant to the
+  // garrison and reinforcement decisions for which the player can use it.
+  if(owner==='caesar'&&f.treasury<24&&nationalBudget(s,owner).projectedNet<0)seizeAerarium(s,owner);
   if(owner!=='rebels'&&f.treasury<30&&nationalBudget(s,owner).projectedNet<0)collectWarContributions(s,owner);
   const emergencyProvisionsUsed=owner!=='rebels'&&f.food<24&&nationalBudget(s,owner).foodNet<0&&collectEmergencyProvisions(s,owner).ok;
   const civilianReserve=outnumbered?24+3*Math.max(0,-nationalBudget(s,owner).projectedNet):0;

@@ -20,7 +20,10 @@ export function militaryResult(s,id){
  const coreId=enemy==='caesar'?'xiii':'pompey';
  const coreBroken=!s.armies.some(a=>a.id===coreId&&a.owner===enemy&&a.men>=500);
  const territorialRout=remaining<=Math.floor(base.territories*.35);
- const decisive=strategic(s,id)&&(id!=='senate'||s.regions.find(r=>r.id==='roma')?.owner==='senate')&&battleWon(s,id)&&fieldBroken&&(territorialRout||coreBroken)&&troops(s,id)>=1000;
+ // Breaking the named field army is not a final military collapse if its
+ // government can immediately pay, feed and man another ordinary levy.
+ const reserves=s.factions[enemy],canRaiseArmy=remaining>0&&reserves?.treasury>=24&&reserves?.food>=6&&reserves?.manpower>=3000;
+ const decisive=strategic(s,id)&&(id!=='senate'||s.regions.find(r=>r.id==='roma')?.owner==='senate')&&battleWon(s,id)&&fieldBroken&&(territorialRout||coreBroken&&!canRaiseArmy)&&troops(s,id)>=1000;
  return collapsed||decisive?{kind:'military',winner:id,loser:enemy,year:s.year,month:s.month,enemyTerritories:remaining,enemyFieldStrength:field,basis:collapsed?'collapse':territorialRout?'territorial-rout':'field-collapse'}:null;
 }
 

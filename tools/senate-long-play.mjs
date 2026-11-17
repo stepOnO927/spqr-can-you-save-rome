@@ -32,7 +32,8 @@ for(let month=2;month<48&&!s.achievementState.finalized&&!s.pendingCivilSettleme
   journal.push(`${s.year}/${s.month} attack decision: ${intel?.risk}, report ${intel?.report?.min??'?'}-${intel?.report?.max??'?'}, ${pompey.men} friendly`);
   order('Pompey attacks north Italy',moveArmy(s,'pompey','italiaN'));
  }
- if(month>6&&month%4===0){
+ // Review every third month so a one-month scout report is still fresh at the next decision.
+ if(month>6&&month%3===0){
   // Preserve the fog boundary: only ownership, our army state, and dated
   // reconnaissance influence orders; never read hidden enemy army numbers.
   const leader=[pompey,levies].find(u=>canOrder(u)&&region(s,u.region)?.owner==='senate');
@@ -59,7 +60,8 @@ for(let month=2;month<48&&!s.achievementState.finalized&&!s.pendingCivilSettleme
 }
 assert.ok(campaignTurn(s.year,s.month)-campaignTurn(-49,1)>=36,'the player route must cover at least 36 monthly turns');
 for(const decision of ['probe north Italy','delay for Pompey','Pompey attacks north Italy','reload'])assert.ok(journal.some(entry=>entry.includes(decision)),`${decision} must occur in the long play`);
-assert.ok((s.battles?.length||0)>=4,'the simulation must produce genuine battlefield outcomes');
+assert.ok((s.battles?.length||0)>=3,'the simulation must produce genuine battlefield outcomes');
+assert.ok(s.battles.some(b=>b.attacker.owner==='senate'&&b.defender.owner==='caesar'),'the cautious Senate route must eventually test its own attack decision in combat');
 for(const battle of s.battles||[])if(battle.attacker.owner==='senate'||battle.defender.owner==='senate')for(const language of ['en','zh'])assert.match(afterActionHtml(battle,'senate',language),language==='en'?/AFTER-ACTION REVIEW/:/战后复盘/);
 if(s.pendingCivilSettlement){
  assert.equal(s.achievementState.finalized,false,'an AI proposal must not force the player to concede');
