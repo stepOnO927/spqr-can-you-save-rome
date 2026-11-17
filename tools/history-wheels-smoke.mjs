@@ -8,8 +8,8 @@ try{
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
   await page.locator('.setup-panel').waitFor();
-  await page.locator('.setup-advanced').evaluate(el=>el.open=true);
   await page.locator('#faction-choice').selectOption(side);
+  await page.locator('.setup-advanced summary').click();
   await page.locator('#campaign-guide').uncheck();
   await page.locator('#start-campaign').click();
   await page.locator('#campaign-progress').click();
