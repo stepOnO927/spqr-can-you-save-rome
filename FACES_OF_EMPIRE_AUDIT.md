@@ -6,6 +6,15 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `82bd70a9` is integrated, including player-known coalition
+history and the new national-ambition/causal-campaign system. The Roman and
+Han experience panels retain their expansion controls while exposing the new
+ambitions; official campaign finalization archives the causal chains. All
+shared browser module imports use the new `faces-wheels-1` cache key. The
+combined local suite passes 1,248/1,248 cases; the 120-month Roman/Han market
+simulation and the new long-campaign scenario script pass. GitHub browser and
+quality checks for this merge are pending.
+
 Roman-network merchant selection now checks current allegiance as well as the
 saved roster. A merchant who changes faction after a completed caravan cannot
 be hired again by the old buyer, even when an older save still lists that ID.

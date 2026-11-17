@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-eleven-1';
-import {newHanGame,loadHanSave} from '../han/engine.js?v=born-portraits-eleven-1';
-import {MATERIALS,canConstruct,startConstruction} from '../inventions.js?v=born-portraits-eleven-1';
-import {placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=born-portraits-eleven-1';
-import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=born-portraits-eleven-1';
-import {advanceDate} from '../han/util.js?v=born-portraits-eleven-1';
-import {COMMODITIES,marketPrice} from '../market-goods.js?v=born-portraits-eleven-1';
-import {constructionMaterialText,inventionReason} from '../map-lab/invention-ui.js?v=born-portraits-eleven-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-wheels-1';
+import {newHanGame,loadHanSave} from '../han/engine.js?v=faces-wheels-1';
+import {MATERIALS,canConstruct,startConstruction} from '../inventions.js?v=faces-wheels-1';
+import {placeTradeOrder,advanceMarkets} from '../trade-markets.js?v=faces-wheels-1';
+import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-wheels-1';
+import {advanceDate} from '../han/util.js?v=faces-wheels-1';
+import {COMMODITIES,marketPrice} from '../market-goods.js?v=faces-wheels-1';
+import {constructionMaterialText,inventionReason} from '../map-lab/invention-ui.js?v=faces-wheels-1';
 
 test('quarried stone is a measured good in both campaigns and old saves',()=>{
  assert.deepEqual(COMMODITIES.stone.unit,['20 tons','二十吨']);

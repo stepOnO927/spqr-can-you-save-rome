@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portraits-eleven-1';
-import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=born-portraits-eleven-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=born-portraits-eleven-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-wheels-1';
+import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=faces-wheels-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=faces-wheels-1';
 
 function memoryStorage() {
   const values=new Map();

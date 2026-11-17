@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=born-portraits-eleven-1';
-import {drawMap} from '../han/map.js?v=born-portraits-eleven-1';
-import {propose,setRelation} from '../han/frontier.js?v=born-portraits-eleven-1';
-import {placeEasternTrade} from '../han/markets.js?v=born-portraits-eleven-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-wheels-1';
+import {drawMap} from '../han/map.js?v=faces-wheels-1';
+import {propose,setRelation} from '../han/frontier.js?v=faces-wheels-1';
+import {placeEasternTrade} from '../han/markets.js?v=faces-wheels-1';
 
 const tradeMap=s=>drawMap(s,{mode:'trade',visibleArmy:army=>army.owner===s.player});
 

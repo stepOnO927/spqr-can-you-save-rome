@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=born-portraits-eleven-1';
-import {activeEasternMarketHouse,advanceEasternMarkets,fundEasternMarketHouse,MARKET_HOUSE_COST,MARKET_HOUSE_MONTHS,placeEasternTrade,quoteEasternTrade} from '../han/markets.js?v=born-portraits-eleven-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-wheels-1';
+import {activeEasternMarketHouse,advanceEasternMarkets,fundEasternMarketHouse,MARKET_HOUSE_COST,MARKET_HOUSE_MONTHS,placeEasternTrade,quoteEasternTrade} from '../han/markets.js?v=faces-wheels-1';
 import {createMarketMerchant} from '../han/field-identities.js';
-import {roll} from '../han/util.js?v=born-portraits-eleven-1';
+import {roll} from '../han/util.js?v=faces-wheels-1';
 
 function setup(){
  const s=newHanGame('han',{seed:113});s.tradeMarkets.embeddedRoman=true;

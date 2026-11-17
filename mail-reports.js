@@ -1,10 +1,10 @@
-import {sendLetter,initializeMail} from './epistulae.js?v=born-portraits-eleven-1';
-import {reportedArmies} from './character-system.js?v=born-portraits-eleven-1';
-import {CHARACTER_CATALOG} from './characters.js?v=born-portraits-eleven-1';
-import {MATERIALS} from './inventions.js?v=born-portraits-eleven-1';
-import {ROUTES,FACTIONS} from './data.js?v=born-portraits-eleven-1';
-import {campaignDate} from './campaign-date.js?v=born-portraits-eleven-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=born-portraits-eleven-1';
+import {sendLetter,initializeMail} from './epistulae.js?v=faces-wheels-1';
+import {reportedArmies} from './character-system.js?v=faces-wheels-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-wheels-1';
+import {MATERIALS} from './inventions.js?v=faces-wheels-1';
+import {ROUTES,FACTIONS} from './data.js?v=faces-wheels-1';
+import {campaignDate} from './campaign-date.js?v=faces-wheels-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=faces-wheels-1';
 
 const month=s=>s.year*12+s.month;
 const owned=s=>s.regions.filter(r=>r.owner===s.player);

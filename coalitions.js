@@ -1,9 +1,9 @@
-import {isDeliveredReport} from './person-knowledge.js?v=born-portraits-eleven-1';
-import {ROUTES} from './data.js?v=born-portraits-eleven-1';
-import {reportedControl} from './control-intelligence.js?v=born-portraits-eleven-1';
-import {activeAgreement} from './agreements.js?v=born-portraits-eleven-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=born-portraits-eleven-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=born-portraits-eleven-1';
+import {isDeliveredReport} from './person-knowledge.js?v=faces-wheels-1';
+import {ROUTES} from './data.js?v=faces-wheels-1';
+import {reportedControl} from './control-intelligence.js?v=faces-wheels-1';
+import {activeAgreement} from './agreements.js?v=faces-wheels-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=faces-wheels-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=faces-wheels-1';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const rel=(s,a,b)=>s.relations[pair(a,b)]??0;

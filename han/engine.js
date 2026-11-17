@@ -1,22 +1,23 @@
 // MANDATE OF HEAVEN — campaign engine. Independent of the Roman engine: the
 // Roman campaign, its saves and its modules are untouched. Han saves use
 // their own storage keys and carry dlc:'mandate-of-heaven'.
-import {START,REGIONS,FACTIONS,PLAYABLE,OASIS,OFFICES} from './data.js?v=born-portraits-eleven-1';
+import {START,REGIONS,FACTIONS,PLAYABLE,OASIS,OFFICES} from './data.js?v=faces-wheels-1';
 import {EURASIAN_FACTIONS,EURASIAN_RULERS} from './eurasia-data.js';
 import {initDependencies,advanceDependencies,changeDependency} from './dependencies.js';
-import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=born-portraits-eleven-1';
-import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,statusOf,yearsBetween,claimStrength} from './dynasty.js?v=born-portraits-eleven-1';
-import {initCourt,ensureCourtCareers,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,adminCapacity,emperorAuthority} from './court.js?v=born-portraits-eleven-1';
-import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=born-portraits-eleven-1';
-import {initSilk,advanceSilk} from './silk-road.js?v=born-portraits-eleven-1';
-import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=born-portraits-eleven-1';
-import {agriculturalProduction,grainProvisionFactor} from '../war-economy.js?v=born-portraits-eleven-1';
-import {advanceFocus,focusState} from './focus.js?v=born-portraits-eleven-1';
-import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=born-portraits-eleven-1';
-import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=born-portraits-eleven-1';
+import {PEOPLE,PERSON,SURNAMES,GIVEN} from './people.js?v=faces-wheels-1';
+import {recordBirth,crown,enforceDynasticInvariants,isLiuClan,eligibility,statusOf,yearsBetween,claimStrength} from './dynasty.js?v=faces-wheels-1';
+import {initCourt,ensureCourtCareers,advanceCourt,resolveSuccession,computeMandate,recomputeInfluence,appoint,adminCapacity,emperorAuthority} from './court.js?v=faces-wheels-1';
+import {initIntel,initProtectorate,advanceFrontier,atWar,relation,setRelation,access,observe} from './frontier.js?v=faces-wheels-1';
+import {initSilk,advanceSilk} from './silk-road.js?v=faces-wheels-1';
+import {initializeEasternMarkets,advanceEasternMarkets} from './markets.js?v=faces-wheels-1';
+import {agriculturalProduction,grainProvisionFactor} from '../war-economy.js?v=faces-wheels-1';
+import {advanceFocus,focusState} from './focus.js?v=faces-wheels-1';
+import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=faces-wheels-1';
+import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=faces-wheels-1';
 import {CULTURAL_NAME_POOLS,ensureFieldCommanders} from './field-identities.js';
 import {ensureHanPortraitSeed,ensureHanPortraitSeeds} from './court-portrait.js';
 import {ensureForeignRulers,advanceForeignRulers,rulerGovernanceFactor} from './rulers.js';
+import {initialize as initializeAmbition} from './ambitions.js?v=faces-wheels-1';
 
 export const DLC_ID='mandate-of-heaven',SAVE_VERSION='han-1';
 export const SCENARIOS={
@@ -95,6 +96,7 @@ export function newHanGame(player='han',{scenario='historical',difficulty='stand
  if(difficulty==='beginner'&&player)s.factions[player].treasury+=100;
  ensureFieldCommanders(s);ensureHanPortraitSeeds(s);computeMandate(s);recomputeInfluence(s);observe(s);
  if(start!=='roman')log(s,['Liu Shi has taken the throne. The court looks to the regents named by Emperor Xuan.','刘奭已即位，朝廷仰赖宣帝遗诏所命辅政大臣。'],{kind:'throne'});
+ if(player)initializeAmbition(s);
  return s;
 }
 function applyUsurperScenario(s){
@@ -358,6 +360,7 @@ export function loadHanSave(raw){
  s.version=SAVE_VERSION;s.throne.claimants||=[];s.throne.support||={};s.throne.history||=[];
  const fixes=enforceDynasticInvariants(s,{log:(t,m)=>{if(s.player==='han')log(s,t,{...m,kind:'throne'})}});
  s.loadFixes=fixes;initializeEasternMarkets(s);ensureFieldCommanders(s);ensureHanPortraitSeeds(s);computeMandate(s);
+ if(s.player)initializeAmbition(s);
  if(s.player&&!s.finalized&&!s.regions.some(r=>r.owner===s.player)&&!s.armies.some(a=>a.owner===s.player&&a.men>0))settleCampaign(s);
  return s;
 }

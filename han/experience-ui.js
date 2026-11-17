@@ -1,10 +1,11 @@
 import {analytics} from '../analytics.js';
-import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=born-portraits-eleven-1';
-import {treeFor,focusState,focusStatus,startFocus} from './focus.js?v=born-portraits-eleven-1';
-import {OFFICES,FACTIONS} from './data.js?v=born-portraits-eleven-1';
-import {appoint} from './court.js?v=born-portraits-eleven-1';
-import {answerProposal,atWar,propose,treaty,relation,TREATY_TYPES} from './frontier.js?v=born-portraits-eleven-1';
-import {neighbours} from './military.js?v=born-portraits-eleven-1';
+import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=faces-wheels-1';
+import {treeFor,focusState,focusStatus,startFocus} from './focus.js?v=faces-wheels-1';
+import {OFFICES,FACTIONS} from './data.js?v=faces-wheels-1';
+import {appoint} from './court.js?v=faces-wheels-1';
+import {answerProposal,atWar,propose,treaty,relation,TREATY_TYPES} from './frontier.js?v=faces-wheels-1';
+import {neighbours} from './military.js?v=faces-wheels-1';
+import {AMBITIONS,available as availableAmbitions,initialize as initializeAmbition,choose as chooseAmbition,status as ambitionStatus} from './ambitions.js?v=faces-wheels-1';
 
 let panel='',lastResult='',preferredTarget='';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -19,6 +20,11 @@ export function renderExperience(s,lang,{navigate,render,message}){
  const owned=s.regions.find(r=>r.owner===s.player),friendly=s.armies.find(a=>a.owner===s.player&&a.men>0),safe=friendly&&neighbours(friendly.region).map(id=>s.regions.find(r=>r.id===(typeof id==='string'?id:id.id))).find(r=>r?.owner===s.player);
  const targets={region:owned&&`#map [data-region="${owned.id}"]`,army:friendly&&`#overview [data-select-army="${friendly.id}"]`,supply:'#han-inspect-supply',order:safe&&`#map [data-region="${safe.id}"]`,advance:'#advance',report:'[data-han-open="report"]',court:'[data-han-open="court"]',direction:'[data-han-open="direction"]'};
  root.innerHTML=`<div class="han-experience-summary"><strong>${D('Current objective','当前目标')}</strong><span>${T(o.immediate,lang)}</span><div><button id="han-whatnow">${D('WHAT NOW?','下一步做什么？')}</button><button id="han-progress">${D('Progress','战役进度')}</button></div>${e.guided&&!e.paused&&l?`<p>${D('Hands-on guide','互动教学')} ${l.index+1}/${l.total}: ${T(l.title,lang)} <button data-han-open="${l.target}">${D('Show me','指给我看')}</button></p>`:''}</div>${panel?`<div class="han-experience-backdrop"><section class="han-experience-dialog" role="dialog" aria-modal="true"><header><h2>${D('Campaign guidance','战役指南')}</h2><button id="han-experience-close" aria-label="${D('Close','关闭')}">×</button></header>${lastResult?`<p class="han-result" role="status">${esc(lastResult)}</p>`:''}${panelHtml(s,lang,panel,choices,o,e)}<button id="han-experience-done">${D('Back to campaign','返回战役')}</button></section></div>`:''}`;
+ if(panel==='progress'){
+  const a=initializeAmbition(s),progress=ambitionStatus(s),dialog=root.querySelector('.han-experience-dialog');
+  dialog?.querySelector('h3')?.insertAdjacentHTML('beforebegin',`<section class="han-ambitions"><h3>${D('National ambitions','国家野心')}</h3><p>${D('Choose a long-term aim. These are milestones, not final victory conditions.','选择长期目标。这些是里程碑，不代替最终胜利条件。')}</p><div class="han-directions">${availableAmbitions(s).map(id=>`<button data-han-ambition="${id}" class="${a.id===id?'active':''}">${T(AMBITIONS[id],lang)}</button>`).join('')}</div><label>${D('Custom target','自定义目标')} <select id="han-custom-target"><option value="treasury:${s.player==='han'?900:100}">${s.player==='han'?D('900 treasury','国库达到900'):D('100 treasury','国库达到100')}</option><option value="stability:70">${D('70 stability','稳定度达到70')}</option><option value="regions:2">${D('Gain 2 regions','新增2个地区')}</option></select></label>${progress?`<p><b>${T(progress.title,lang)}</b><br>${T(progress.progress,lang)} · ${progress.done?D('Milestone reached','里程碑已达成'):D('In progress','进行中')}</p>`:''}</section>`);
+  root.querySelectorAll('[data-han-ambition]').forEach(b=>b.onclick=()=>{const [metric,target]=b.dataset.hanAmbition==='custom'?(root.querySelector('#han-custom-target')?.value||'treasury:100').split(':'):[];chooseAmbition(s,b.dataset.hanAmbition,{metric,target});render()});
+ }
  const open=(kind,id)=>{if(kind==='diplomacy'&&id)preferredTarget=id;if(['army','region'].includes(kind)){panel='';navigate(kind,id);return}if(kind==='supply'||kind==='order'){panel='';navigate('army');return}panel=kind==='direction'?'progress':kind;if(kind==='report')act(s,'report');if(kind==='realm')act(s,'realm');if(kind==='route')act(s,'route');render()};
  root.querySelector('#han-whatnow')?.addEventListener('click',()=>open('next'));root.querySelector('#han-progress')?.addEventListener('click',()=>open('progress'));
  root.querySelectorAll('[data-han-open]').forEach(b=>b.onclick=()=>{const kind=b.dataset.hanOpen;if(['region','army','supply','order','advance'].includes(kind)){if(kind==='supply'||kind==='order')open(kind);else if(kind==='army')open('army');else if(kind==='region'){panel='';render()}if(kind==='advance'){panel='';render()}const el=document.querySelector(targets[kind]);el?.scrollIntoView({block:'center',behavior:'smooth'});el?.focus?.();return}open(kind,b.dataset.hanRegion)});
