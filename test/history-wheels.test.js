@@ -18,9 +18,12 @@ test('national ambitions are selected, measurable and save compatible',()=>{
    assert.ok(status.title[0]&&status.progress[1]);
    assert.equal(typeof status.done,'boolean');
   }
+  chooseAmbition(s,'cultural');
+  assert.match(ambitionStatus(s).progress[0],side==='senate'?/\/1 cultural/:/\/2 cultural/);
+  chooseAmbition(s,'custom');
   const saved=upgradeSave(JSON.parse(JSON.stringify(s)));
   assert.equal(saved.historyWheels.ambition,'custom');
-  assert.equal(saved.historyWheels.changes.length,availableAmbitions(s).length);
+  assert.equal(saved.historyWheels.changes.length,availableAmbitions(s).length+2);
  }
  const old=newGame('caesar');delete old.historyWheels;old.factions.caesar.treasury=37;
  const migrated=upgradeSave(JSON.parse(JSON.stringify(old)));

@@ -3,6 +3,7 @@
 import {sendLetter} from './epistulae.js?v=born-portraits-eleven-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {reassurePerson} from './conspiracies.js?v=mutual-audience-1';
+import {focusById,treeFor} from './national-focus.js?v=born-portraits-eleven-1';
 
 const L=(en,zh)=>[en,zh];
 const date=s=>s.year*12+s.month;
@@ -15,7 +16,7 @@ export const AMBITIONS={
  cultural:{name:L('Cultural golden age','文明盛世'),note:L('Fund scholarship and lasting national projects.','支持学术及长期国家建设。')},
  custom:{name:L('Custom objective','自定义国家目标'),note:L('Choose a measurable treasury, stability or territory target.','选择可衡量的国库、稳定度或战区目标。')}
 };
-export const availableAmbitions=s=>Object.keys(AMBITIONS).filter(id=>id!=='dynastic'||!['senate','caesar'].includes(s.player));
+export const availableAmbitions=s=>Object.keys(AMBITIONS).filter(id=>(id!=='dynastic'||!['senate','caesar'].includes(s.player))&&(id!=='cultural'||(treeFor(s.player)||[]).some(f=>f.branch==='cultural')));
 export function initializeWheels(s){
  s.historyWheels||={version:1,ambition:'',chosenAt:null,changes:[],chains:[],nextId:1,pressureMonths:0,lastMonth:null};
  const w=s.historyWheels;w.chains||=[];w.changes||=[];w.nextId||=1;return w;
@@ -38,15 +39,18 @@ export function chooseAmbition(s,id,options={}){
 export function ambitionStatus(s){
  const w=initializeWheels(s),f=s.factions[s.player],own=s.regions.filter(r=>r.owner===s.player),forces=s.armies.filter(a=>a.owner===s.player&&a.men>0),atWar=s.wars.some(war=>war.includes(s.player));
  const agreements=(s.agreements||[]).filter(a=>a.status==='active'&&a.parties?.includes(s.player)).length;
- const focus=s.world?.nationalFocus?.[s.player],completed=focus?.completed?.length||0;
+ const focus=s.world?.nationalFocus?.[s.player];
+ const political=(focus?.completed||[]).filter(id=>focusById(s.player,id)?.branch==='political').length;
+ const cultural=(focus?.completed||[]).filter(id=>focusById(s.player,id)?.branch==='cultural').length;
+ const culturalGoal=Math.min(2,(treeFor(s.player)||[]).filter(f=>f.branch==='cultural').length);
  const meanLoyalty=own.length?Math.round(own.reduce((n,r)=>n+r.loyalty,0)/own.length):0;
  const rows={
   military:{title:L('Maintain a supplied field army and secure peace or victory','保持有补给的野战军，并争取和平或胜利'),progress:L(`${forces.length} armies · ${f.food} food · ${atWar?'war':'peace'}`,`${forces.length} 支军队 · 粮食 ${f.food} · ${atWar?'交战中':'和平'}`),done:forces.length>0&&f.food>=20&&(!atWar||s.victory)},
   diplomatic:{title:L('Conclude two agreements or establish durable peace','达成两项协定，或建立持久和平'),progress:L(`${agreements}/2 agreements · ${s.world?.peacefulSettlementMonths||0}/12 peace months`,`${agreements}/2 项协定 · 和平 ${s.world?.peacefulSettlementMonths||0}/12 月`),done:agreements>=2||!!s.peacefulVictory},
   economic:{title:L('Hold 100 treasury with loyal provinces','国库达到100，同时维持行省忠诚'),progress:L(`${f.treasury}/100 treasury · ${meanLoyalty}/55 loyalty`,`国库 ${f.treasury}/100 · 忠诚度 ${meanLoyalty}/55`),done:f.treasury>=100&&meanLoyalty>=55},
-  reform:{title:L('Complete a national focus and stabilize the government','完成国家方针并稳定政府'),progress:L(`${completed}/1 focus · ${f.stability}/65 stability · ${f.legitimacy}/55 legitimacy`,`方针 ${completed}/1 · 稳定度 ${f.stability}/65 · 合法性 ${f.legitimacy}/55`),done:completed>0&&f.stability>=65&&f.legitimacy>=55},
+  reform:{title:L('Complete a political focus and stabilize the government','完成政治方针并稳定政府'),progress:L(`${political}/1 political focus · ${f.stability}/65 stability · ${f.legitimacy}/55 legitimacy`,`政治方针 ${political}/1 · 稳定度 ${f.stability}/65 · 合法性 ${f.legitimacy}/55`),done:political>0&&f.stability>=65&&f.legitimacy>=55},
   dynastic:{title:L('Preserve a recognized succession and stable government','维护公认继承与稳定政府'),progress:L(`${f.stability}/65 stability · ${f.legitimacy}/60 legitimacy`,`稳定度 ${f.stability}/65 · 合法性 ${f.legitimacy}/60`),done:f.stability>=65&&f.legitimacy>=60&&!!s.world?.governments?.[s.player]?.succession},
-  cultural:{title:L('Complete two national projects while maintaining stability','完成两项国家工程并维持稳定'),progress:L(`${completed}/2 projects · ${f.stability}/55 stability`,`工程 ${completed}/2 · 稳定度 ${f.stability}/55`),done:completed>=2&&f.stability>=55},
+  cultural:{title:L(`Complete ${culturalGoal} cultural ${culturalGoal===1?'focus':'focuses'} while maintaining stability`,`完成${culturalGoal}项文化方针并维持稳定`),progress:L(`${cultural}/${culturalGoal} cultural focuses · ${f.stability}/55 stability`,`文化方针 ${cultural}/${culturalGoal} · 稳定度 ${f.stability}/55`),done:culturalGoal>0&&cultural>=culturalGoal&&f.stability>=55},
   custom:(()=>{const c=w.custom||{metric:'treasury',target:100,baseline:0};const value=c.metric==='treasury'?f.treasury:c.metric==='stability'?f.stability:own.length-c.baseline;const unit=c.metric==='treasury'?L('treasury','国库'):c.metric==='stability'?L('stability','稳定度'):L('additional territories','新增战区');return {title:L(`Reach ${c.target} ${unit[0]}`,`达到 ${c.target} ${unit[1]}`),progress:L(`${value}/${c.target} ${unit[0]}`,`${value}/${c.target} ${unit[1]}`),done:value>=c.target}})()
  };
  return w.ambition?{id:w.ambition,...rows[w.ambition]}:null;
