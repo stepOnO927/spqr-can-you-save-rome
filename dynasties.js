@@ -52,10 +52,14 @@ export function initializeDynasties(s){
   d.families[c.familyId]||={id:c.familyId,name:CHARACTER_CATALOG[id]?.name||[id,id],wealth:0,reputation:50,influence:20,leader:id,patrons:[]};
   d.lives[id]||=[];
  }
- for(const family of Object.values(d.families)){
-  const members=Object.values(s.world.characters).filter(c=>c.familyId===family.id&&c.alive);
-  family.leader=members.sort((a,b)=>(b.influence||0)-(a.influence||0))[0]?.id||null;
+ // Select each family's leader in one pass; ties retain character order.
+ const familyLeaders=new Map();
+ for(const c of Object.values(s.world.characters)){
+  if(!c.alive)continue;
+  const leader=familyLeaders.get(c.familyId);
+  if(!leader||(c.influence||0)>(leader.influence||0))familyLeaders.set(c.familyId,c);
  }
+ for(const family of Object.values(d.families))family.leader=familyLeaders.get(family.id)?.id||null;
  // The only opening kinship modeled here is an explicitly documented sibling
  // relationship; all other unknown parents and spouses stay unknown.
  if(!d.historicalSeeded&&s.world.characters.cleopatra&&s.world.characters.arsinoe){
