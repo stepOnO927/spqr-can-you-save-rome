@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
+import {newGame,upgradeSave} from '../engine.js?v=missing-fate-privacy-1';
 import {assignSuccession,eligibleLiuImperial,leadershipTitle,successorFor,CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from '../dynasties.js?v=guardian-wheels-merge-1';
-import {renderGenealogy} from '../genealogy-ui.js?v=guardian-wheels-merge-1';
-import {deriveGovernment} from '../governance.js?v=guardian-wheels-merge-1';
-import {proceduralPortraitSvg} from '../portrait-registry.js?v=born-portraits-eleven-1';
+import {createFictionalPerson} from '../dynasties.js?v=missing-fate-privacy-1';
+import {renderGenealogy} from '../genealogy-ui.js?v=missing-fate-privacy-1';
+import {deriveGovernment} from '../governance.js?v=missing-fate-privacy-1';
+import {proceduralPortraitSvg} from '../portrait-registry.js?v=missing-fate-privacy-1';
 
 test('each Republican command can elevate an original adult political leader after historical successors are lost',()=>{
  for(const [faction,historical] of [['caesar',['caesar','antony','lepidus']],['senate',['pompey','cato','scipio','labienus','cicero']]]){

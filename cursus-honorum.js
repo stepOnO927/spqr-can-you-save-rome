@@ -1,7 +1,7 @@
 import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from './dynasties.js?v=guardian-wheels-merge-1';
-import {initializeOffices,appointOffice} from './office-system.js?v=guardian-wheels-merge-1';
-import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=born-portraits-eleven-1';
+import {createFictionalPerson} from './dynasties.js?v=missing-fate-privacy-1';
+import {initializeOffices,appointOffice} from './office-system.js?v=missing-fate-privacy-1';
+import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=missing-fate-privacy-1';
 import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 
 const ROMAN=new Set(['caesar','senate']);

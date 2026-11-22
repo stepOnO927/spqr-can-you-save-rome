@@ -1,4 +1,4 @@
-import {OFFICE_TYPES,initializeOffices,officeCandidates,appointOffice,dismissOffice} from '../office-system.js?v=guardian-wheels-merge-1';
+import {OFFICE_TYPES,initializeOffices,officeCandidates,appointOffice,dismissOffice} from '../office-system.js?v=missing-fate-privacy-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=guardian-wheels-merge-2';
-import {drawMap} from '../han/map.js?v=guardian-wheels-merge-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=missing-fate-privacy-1';
+import {drawMap} from '../han/map.js?v=missing-fate-privacy-1';
 import {propose,setRelation} from '../han/frontier.js?v=han-1';
 import {placeEasternTrade} from '../han/markets.js?v=faces-wheels-1';
 

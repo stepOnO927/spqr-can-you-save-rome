@@ -8,8 +8,8 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const engine=await import('/engine.js?v=guardian-wheels-merge-2');
-  const politics=await import('/cursus-honorum.js?v=guardian-wheels-merge-1');
+  const engine=await import('/engine.js?v=missing-fate-privacy-1');
+  const politics=await import('/cursus-honorum.js?v=missing-fate-privacy-1');
   const state=engine.newGame('senate'),c=politics.initializeCursus(state);
   c.talents.push({actor:'senate',id:c.varroId,field:'provincial',regionId:'roma',year:state.year,month:state.month});
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));

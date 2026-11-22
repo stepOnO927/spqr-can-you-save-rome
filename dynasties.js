@@ -3,7 +3,7 @@ import {CHARACTER_CATALOG,ageRange} from './characters.js?v=succession-ui-recove
 import {startDynasticWar} from './civil-war.js?v=mutual-audience-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,factionNameStyle,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=faces-wheels-1';
-import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=born-portraits-eleven-1';
+import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=missing-fate-privacy-1';
 import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=mutual-audience-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
