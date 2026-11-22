@@ -1,13 +1,13 @@
-import {earnedEpithets,legendName} from './legend.js?v=mission-history-1';
+import {earnedEpithets,legendName} from './legend.js?v=agent-handover-1';
 import {ROUTES, FACTIONS} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=mission-history-1';
-import {AGREEMENT_TYPES} from './agreements.js?v=mission-history-1';
-import {formatChronicleEntry} from './chronicle.js?v=mission-history-1';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=mission-history-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=agent-handover-1';
+import {AGREEMENT_TYPES} from './agreements.js?v=agent-handover-1';
+import {formatChronicleEntry} from './chronicle.js?v=agent-handover-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=agent-handover-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=born-portrait-thirteen-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {canMediate,requestMediation} from './civil-war.js?v=mission-history-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=mission-history-1';
+import {canMediate,requestMediation} from './civil-war.js?v=agent-handover-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=agent-handover-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');

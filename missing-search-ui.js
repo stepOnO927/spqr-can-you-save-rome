@@ -1,4 +1,4 @@
-import {fundMissingSearch,hasMissingSearchDestination} from './character-system.js?v=mission-history-1';
+import {fundMissingSearch,hasMissingSearchDestination} from './character-system.js?v=agent-handover-1';
 
 // The panel uses only the player's existing contact status, not the hidden fate.
 export function renderMissingSearch(s,id,zh=false){

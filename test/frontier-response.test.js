@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,tick,issueMilitaryOrder,upgradeSave} from '../engine.js?v=mission-history-1';
-import {reportedFrontierThreats,respondToFrontierReports} from '../frontier-response.js?v=mission-history-1';
+import {newGame,tick,issueMilitaryOrder,upgradeSave} from '../engine.js?v=agent-handover-1';
+import {reportedFrontierThreats,respondToFrontierReports} from '../frontier-response.js?v=agent-handover-1';
 function setup(){const s=newGame('caesar');s.relations['armenia:parthia']=-40;s.knowledge.armenia.parthia.sightings={reported:{id:'reported',owner:'parthia',region:'parthia',year:s.year,month:s.month,strengthBand:[4000,8000]}};return s}
 const respond=s=>respondToFrontierReports(s,'armenia',{issueOrder:issueMilitaryOrder});
 test('an AI court defends its own frontier from a dated sighting and later releases the stance',()=>{

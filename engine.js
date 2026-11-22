@@ -1,45 +1,45 @@
-import {advanceAgreementProposals,sendAgreementProposal} from './agreement-negotiations.js?v=mission-history-1';
-import {isDeliveredReport} from './person-knowledge.js?v=mission-history-1';
-import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=mission-history-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=mission-history-1';
-import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=mission-history-1';
-import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=mission-history-1';
-import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=mission-history-1';
+import {advanceAgreementProposals,sendAgreementProposal} from './agreement-negotiations.js?v=agent-handover-1';
+import {isDeliveredReport} from './person-knowledge.js?v=agent-handover-1';
+import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=agent-handover-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=agent-handover-1';
+import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=agent-handover-1';
+import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=agent-handover-1';
+import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=agent-handover-1';
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
-import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=mission-history-1';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,snapshotReportedPeople,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=mission-history-1';
-import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=mission-history-1';
-import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=mission-history-1';
-import {advanceConspiracies} from './conspiracies.js?v=mission-history-1';
-import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=mission-history-1';
-import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=mission-history-1';
-import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=mission-history-1';
-import {advanceLegend} from './legend.js?v=mission-history-1';
-import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=mission-history-1';
-import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=mission-history-1';
+import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=agent-handover-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,offerAgentHandover,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,snapshotReportedPeople,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives} from './character-system.js?v=agent-handover-1';
+import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=agent-handover-1';
+import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=agent-handover-1';
+import {advanceConspiracies} from './conspiracies.js?v=agent-handover-1';
+import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=agent-handover-1';
+import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=agent-handover-1';
+import {initializeDynasties,seedOpeningFictionalHouseholds,advanceDynasties,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=agent-handover-1';
+import {advanceLegend} from './legend.js?v=agent-handover-1';
+import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=agent-handover-1';
+import {advanceHanWorld,upgradeHanWorld} from './han/world.js?v=agent-handover-1';
 import {evaluateStrategicPlan,assessAttack,strategicPersonality,observeAttackPattern} from './strategic-planning.js?v=multipolar-2';
 import {advancePersonalPlans} from './personal-plans.js?v=multipolar-2';
 import {initializeInventions,advanceInventions,aiInnovation,activeModifiers as inventionModifiers,buildingModifiers} from './inventions.js?v=mission-discount-1';
-import {advanceFocuses,focusModifiers} from './national-focus.js?v=mission-history-1';
-import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=mission-history-1';
-import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=mission-history-1';
+import {advanceFocuses,focusModifiers} from './national-focus.js?v=agent-handover-1';
+import {seedTemplates,formationCombatFactor,formationMarchDelta,formationSiegeReduction,formationUpkeepDelta,observeFormationRecon,advanceReorganizations,aiDesignFormations,aiRecruitFormation,aiReorganize,advanceCommandInfluence} from './legion-designer.js?v=agent-handover-1';
+import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js?v=agent-handover-1';
 // IMPERIUM systems are on by default. A scenario or an isolated legacy test may set
 // world.imperium.enabled=false to run the pre-expansion AI unchanged.
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
-import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=mission-history-1';
-import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=mission-history-1';
-import {respondToFrontierReports} from './frontier-response.js?v=mission-history-1';
-import {advanceStrategicWarnings} from './strategic-warnings.js?v=mission-history-1';
+import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=agent-handover-1';
+import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=agent-handover-1';
+import {respondToFrontierReports} from './frontier-response.js?v=agent-handover-1';
+import {advanceStrategicWarnings} from './strategic-warnings.js?v=agent-handover-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
-import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=mission-history-1';
-import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=mission-history-1';
-import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=mission-history-1';
-import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=mission-history-1';
-import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=mission-history-1';
-import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=mission-history-1';
-import {initializeWheels,advanceWheels} from './history-wheels.js?v=mission-history-1';
+import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower} from './coalitions.js?v=agent-handover-1';
+import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=agent-handover-1';
+import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=agent-handover-1';
+import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=agent-handover-1';
+import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=agent-handover-1';
+import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=agent-handover-1';
+import {initializeWheels,advanceWheels} from './history-wheels.js?v=agent-handover-1';
 export {queueMission};
 export {personalDiplomaticCredit};
 export {replyToLetter};
@@ -727,8 +727,14 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   // A faction may write about its own captured personnel, without exposing a
   // letter to the player until its outward journey reaches the holder.
   if(owner!=='rebels'&&s.month%6===3&&f.treasury>35){
-    const captive=s.world.captives.find(c=>c.owner===owner&&c.holder!==owner&&s.factions[c.holder]&&c.state==='held'&&!s.releaseRequests.some(r=>r.captiveId===c.id&&((s.year-r.year)*12+s.month-r.month<12)));
+    const captive=s.world.captives.find(c=>c.owner===owner&&c.holder!==owner&&s.factions[c.holder]&&c.state==='held'&&!s.releaseRequests.some(r=>r.captiveId===c.id&&!r.initiatedByHolder&&((s.year-r.year)*12+s.month-r.month<12)));
     if(captive)requestAgentRelease(s,owner,captive.id);
+  }
+  // Courts may independently return a detained foreign agent as a diplomatic
+  // gesture. Pending requests en route are not visible to the holder.
+  if(owner!=='rebels'&&s.month%6===4&&strategicRoll(s,owner,527)<.25){
+    const captive=s.world.captives.find(c=>c.holder===owner&&c.owner!==owner&&c.state==='held'&&FACTIONS[c.owner]&&!isWar(s,owner,c.owner)&&relation(s,owner,c.owner)>=20&&!s.releaseRequests.some(r=>r.captiveId===c.id&&r.holder===owner&&['awaiting_decision','returning'].includes(r.status)));
+    if(captive)offerAgentHandover(s,owner,captive.id);
   }
   if(['caesar','senate'].includes(owner)&&s.month===2&&f.treasury>40&&s.wars.some(w=>w.includes(owner)))queueMission(s,owner,owner,'counter','counter_spies');
   if(owner!=='rebels'&&s.difficulty==='expert'&&s.month===4&&f.treasury>65&&strategicRoll(s,owner,212)<.3){
