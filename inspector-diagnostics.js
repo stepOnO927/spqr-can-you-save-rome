@@ -145,7 +145,8 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
   const assignedSettlementOfficials=new Set();
   for(const [entityId,post] of Object.entries(s.world?.localAdministrators||{})){
    const entity=s.regions.flatMap(region=>region.localEntities||[]).find(site=>site.id===entityId),person=s.world?.characters?.[post?.person],key=`${post?.faction}:${post?.person}`;
-   if(!entity||['village','nomadic','wilderness'].includes(entity.type)||!factionIds.has(post?.faction)||entity.controller!==post.faction||!person||person.faction!==post.faction||assignedSettlementOfficials.has(key))add('warning','invalid-local-administrator',`world.localAdministrators.${entityId}`,String(post?.person));
+   const villageInvalid=entity?.type==='village'&&(!entity.village||s.regions.find(region=>region.id===entity.theater)?.owner!==post.faction||entity.foothold?.owner!==post.faction||!Number.isInteger(entity.foothold.level)||entity.foothold.level<1);
+   if(!entity||['nomadic','wilderness'].includes(entity.type)||villageInvalid||!factionIds.has(post?.faction)||entity.controller!==post.faction||!person||person.faction!==post.faction||assignedSettlementOfficials.has(key))add('warning','invalid-local-administrator',`world.localAdministrators.${entityId}`,String(post?.person));
    assignedSettlementOfficials.add(key);
   }
   const generation=s.world?.localGeneration;

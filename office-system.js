@@ -56,10 +56,11 @@ export function dismissGovernor(s,theater){
 }
 export function governorLoyaltyEffect(s,theater){return s.month%3===0&&localGovernor(s,theater)?1:0}
 const localSite=(s,id)=>s.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id===id);
-const administrativeSite=entity=>!!entity&&!['village','nomadic','wilderness'].includes(entity.type);
+const administrativeSite=entity=>!!entity&&!['nomadic','wilderness'].includes(entity.type);
 function eligibleSettlementOfficial(s,entity,actor,id){
  const c=s.world.characters[id];
- return !!(administrativeSite(entity)&&entity.controller===actor&&s.factions[actor]&&CHARACTER_CATALOG[id]&&c?.faction===actor&&c.location===entity.theater&&c.alive&&!c.missing&&!c.travel&&c.loyalty>=40&&!['seriously_ill','dying','deceased'].includes(c.health)&&isKnownAdult(s,id)&&!(s.world.leadership[actor]||[]).includes(id)&&!s.armies.some(army=>army.characterId===id));
+ const villageReady=entity?.type!=='village'||!!(entity.village&&s.regions.find(region=>region.id===entity.theater)?.owner===actor&&entity.foothold?.owner===actor&&entity.foothold.level>=1);
+ return !!(administrativeSite(entity)&&villageReady&&entity.controller===actor&&s.factions[actor]&&CHARACTER_CATALOG[id]&&c?.faction===actor&&c.location===entity.theater&&c.alive&&!c.missing&&!c.travel&&c.loyalty>=40&&!['seriously_ill','dying','deceased'].includes(c.health)&&isKnownAdult(s,id)&&!(s.world.leadership[actor]||[]).includes(id)&&!s.armies.some(army=>army.characterId===id));
 }
 export function localAdministrator(s,entityId){
  const post=s.world?.localAdministrators?.[entityId];if(!post)return null;
@@ -99,12 +100,14 @@ export function advanceOffices(s){
   if(faction!==s.player&&(s.month===1||s.month===7)&&s.factions[faction]?.treasury>=5&&s.regions.some(r=>r.owner===faction)){
    const vacancy=OFFICE_TYPES.find(office=>!offices[faction][office]&&officeCandidates(s,faction,office).length);
    const site=s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.controller===faction&&['occupied','administered'].includes(entity.administrativeStatus)&&(entity.resistance||0)>=45&&!localAdministrator(s,entity.id)&&localAdministratorCandidates(s,entity.id,faction).length).sort((a,b)=>(b.resistance||0)-(a.resistance||0)||a.id.localeCompare(b.id))[0];
+   const village=s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.type==='village'&&entity.controller===faction&&entity.foothold?.owner===faction&&entity.foothold.level>=1&&(entity.village?.localIssue==='occupation'||Math.min(entity.village?.security??100,entity.village?.satisfaction??100)<60)&&!localAdministrator(s,entity.id)&&localAdministratorCandidates(s,entity.id,faction).length).sort((a,b)=>Math.min(a.village?.security??100,a.village?.satisfaction??100)-Math.min(b.village?.security??100,b.village?.satisfaction??100)||a.id.localeCompare(b.id))[0];
    // Choose from the faction's own present people and theaters only. A weak
    // theater takes priority; otherwise establish a local post after one central
    // office. Both branches spend the same five treasury and fill at most one.
    const theater=s.regions.filter(r=>r.owner===faction&&!localGovernor(s,r.id)&&governorCandidates(s,r.id,faction).length).sort((a,b)=>a.loyalty-b.loyalty||a.id.localeCompare(b.id))[0];
    const centralCount=OFFICE_TYPES.filter(office=>offices[faction][office]).length,existingLocal=Object.values(s.world.localGovernors).some(post=>post.faction===faction);
    if(site){const id=localAdministratorCandidates(s,site.id,faction).sort((a,b)=>s.world.characters[b].loyalty-s.world.characters[a].loyalty||a.localeCompare(b))[0];appointLocalAdministrator(s,site.id,id,faction)}
+   else if(village){const id=localAdministratorCandidates(s,village.id,faction).sort((a,b)=>s.world.characters[b].loyalty-s.world.characters[a].loyalty||a.localeCompare(b))[0];appointLocalAdministrator(s,village.id,id,faction)}
    else if(theater&&(!vacancy||theater.loyalty<=60||centralCount>0&&!existingLocal)){
     const id=governorCandidates(s,theater.id,faction).sort((a,b)=>s.world.characters[b].loyalty-s.world.characters[a].loyalty||a.localeCompare(b))[0];appointGovernorFor(s,theater.id,id,faction);
    }else if(vacancy){const id=officeCandidates(s,faction,vacancy).sort((a,b)=>s.world.characters[b].loyalty-s.world.characters[a].loyalty)[0];appointOffice(s,vacancy,id,faction)}

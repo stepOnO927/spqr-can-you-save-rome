@@ -1,5 +1,7 @@
 import {localEntity, villageDevelopment} from './local-polities.js';
 import {sendLetter} from './epistulae.js?v=world-kings-estate-village-1';
+import {localAdministrator} from './office-system.js?v=world-kings-estate-village-1';
+import {CHARACTER_CATALOG} from './characters.js?v=world-kings-estate-village-1';
 
 const clamp = value => Math.max(0, Math.min(100, value));
 function villageEvent(state, region, entity) {
@@ -32,7 +34,7 @@ function villageEvent(state, region, entity) {
         body:road?[`The residents ask for a road. Funding a three-month project costs 14 treasury and 2 food; it improves market access and regional supply.`,`村民请求修路。三个月工程需14国库、2粮食；完工后改善市场通达与战区补给。`]:[`The village asks for relief from high taxes. A local grant costs 5 treasury and improves satisfaction; it does not change the realm-wide tax policy.`,`村民请求缓解高税负。地方补助需5国库并提高满意度；不会改变全国税率。`],
         options:road?['fund_village_road','decline']:['relieve_village_tax','decline'],
         context:{kind:'village_petition',villageId:entity.id,issue:kind,region:region.id}});
-      if (sent.ok) {sent.letter.senderName=[...village.leader]; village.lastPetitionAt={year:state.year,month:state.month};}
+      if (sent.ok) {const official=localAdministrator(state,entity.id);sent.letter.senderName=[...(CHARACTER_CATALOG[official]?.name||village.leader)]; village.lastPetitionAt={year:state.year,month:state.month};}
     }
   }
   return kind;
@@ -125,6 +127,7 @@ export function advanceVillages(state) {
       entity.militaryOccupier = occupier;
       entity.administrativeStatus = entity.legalSovereign === occupier ? 'integrated' : 'occupied';
       village.project = null;
+      if (state.world?.localAdministrators) delete state.world.localAdministrators[entity.id];
       village.satisfaction = clamp(village.satisfaction - occupationShock);
       village.security = clamp(village.security - occupationShock);
       village.localIssue = 'occupation';
@@ -166,15 +169,21 @@ export function advanceVillages(state) {
       if (village.satisfaction >= 65) village.localIssue = null;
     }
     if (state.month % 3 === 0 && village.shrine > 0 && village.storedFood >= village.foodNeed * 2) village.satisfaction = clamp(village.satisfaction + 1);
+    if (state.month % 3 === 0 && localAdministrator(state, entity.id)) {
+      village.security = clamp(village.security + 2);
+      village.satisfaction = clamp(village.satisfaction + 1);
+      if (village.localIssue === 'occupation' && village.security >= 60 && village.satisfaction >= 60) village.localIssue = null;
+    }
     const event=villageEvent(state, region, entity);
-    if (event && !['tax_complaint','road_request'].includes(event) && entity.controller===state.player && region.owner===state.player) reports.push({name:entity.name,kind:event});
+    if (event && !['tax_complaint','road_request'].includes(event) && entity.controller===state.player && region.owner===state.player) reports.push({name:entity.name,kind:event,officialName:CHARACTER_CATALOG[localAdministrator(state,entity.id)]?.name||null});
   }
   if(reports.length){
     const en={harvest:'harvest gathering',merchants:'merchant arrival',festival:'community festival'};
     const zh={harvest:'丰收聚会',merchants:'商人抵达',festival:'社区节庆'};
-    sendLetter(state,{senderInstitution:state.player,senderFaction:state.player,recipient:state.player,category:'government',priority:'routine',
+    const sent=sendLetter(state,{senderInstitution:state.player,senderFaction:state.player,recipient:state.player,category:'government',priority:'routine',
       subject:['Village developments','村落近况'],
-      body:[`Local reports for this half-year: ${reports.map(item=>`${item.name[0]} — ${en[item.kind]}`).join('; ')}.`,`本半年村落近况：${reports.map(item=>`${item.name[1]}——${zh[item.kind]}`).join('；')}。`],
+      body:[`Local reports for this half-year: ${reports.map(item=>`${item.name[0]} — ${en[item.kind]}${item.officialName?` (reported by ${item.officialName[0]})`:''}`).join('; ')}.`,`本半年村落近况：${reports.map(item=>`${item.name[1]}——${zh[item.kind]}${item.officialName?`（${item.officialName[1]}呈报）`:''}`).join('；')}。`],
       options:['acknowledge'],context:{kind:'village_digest',year:state.year,month:state.month,sites:reports.map(item=>item.name[0])}});
+    if(sent.ok&&reports.length===1&&reports[0].officialName)sent.letter.senderName=[...reports[0].officialName];
   }
 }

@@ -10,15 +10,18 @@ try {
   await page.goto(`${base}/map-lab/`, {waitUntil: 'domcontentloaded'});
   const resources = await page.evaluate(async () => {
     const {newGame} = await import('/engine.js?v=world-kings-estate-village-1');
+    const {createFictionalPerson} = await import('/dynasties.js?v=world-kings-estate-village-1');
     const state = newGame('caesar');
+    const official = createFictionalPerson(state, {name: ['Test steward', '测试村官'], faction: 'caesar', birthYear: -85, location: 'cisalpine', origin: 'court_nominee'});
     sessionStorage.setItem('spqr-view-handoff-v1', JSON.stringify({target: 'atlas', state}));
-    return {treasury: state.factions.caesar.treasury, food: state.factions.caesar.food};
+    return {treasury: state.factions.caesar.treasury, food: state.factions.caesar.food, official};
   });
   await page.reload({waitUntil: 'domcontentloaded'});
   const marker = page.locator('.city-marker[data-city="RAVENNA FARMS"]');
   await marker.waitFor({state: 'visible'});
   await marker.evaluate(node => node.click());
   assert.match(await page.locator('#command-detail').innerText(), /FORWARD FOOTHOLD/);
+  assert.equal(await page.locator('#settlement-administrator-appoint').isDisabled(), true);
   assert.match(await page.locator('#foothold-build').innerText(), /Build level 1 · 8 treasury \/ 3 food/);
   await page.locator('#foothold-build').click();
   await page.locator('#save').click();
@@ -29,7 +32,16 @@ try {
   assert.equal(saved.factions.caesar.food, resources.food - 3);
   await page.locator('#advance').click();
   assert.match(await page.locator('#command-detail').innerText(), /stored food 0\/8/);
+  await page.locator('#settlement-administrator-choice').selectOption(resources.official);
+  await page.locator('#settlement-administrator-appoint').click();
+  assert.match(await page.locator('.local-administrator-panel').innerText(), /Current: Test steward/);
   await page.locator('#save').click();
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('spqr-save-1')).world.localAdministrators['ravenna-farms'].person), resources.official);
+  await page.reload({waitUntil: 'domcontentloaded'});
+  await page.locator('#load').click();
+  await marker.waitFor({state: 'visible'});
+  await marker.evaluate(node => node.click());
+  assert.match(await page.locator('.local-administrator-panel').innerText(), /Current: Test steward/);
   const localFood = await page.evaluate(() => JSON.parse(localStorage.getItem('spqr-save-1')).regions.flatMap(region => region.localEntities || []).find(entity => entity.id === 'ravenna-farms').village.storedFood);
   await page.locator('#foothold-stock').click();
   await page.locator('#save').click();
@@ -46,6 +58,7 @@ try {
   assert.equal(village.foothold, null);
   assert.equal(village.lastFootholdLoss.reason, 'abandoned');
   assert.equal(village.lastFootholdLoss.shipmentFood, 4);
+  assert.equal(saved.world.localAdministrators['ravenna-farms'], undefined);
   assert.deepEqual(errors, []);
   console.log('A controlled village funds a bounded outpost, dispatches real food and can abandon the camp with its cargo.');
 } finally { await browser.close(); }

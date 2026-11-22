@@ -129,6 +129,7 @@ export function abandonFoothold(state, entityId, actor = state.player) {
   if (!foothold || foothold.owner !== actor) return {ok: false, reason: 'unavailable'};
   entity.lastFootholdLoss = {owner: actor, level: foothold.level, stockFood: foothold.stockFood, shipmentFood: (foothold.shipments || []).reduce((sum, item) => sum + item.food, 0), year: state.year, month: state.month, reason: 'abandoned'};
   entity.foothold = null;
+  if (entity.type === 'village' && state.world?.localAdministrators) delete state.world.localAdministrators[entityId];
   return {ok: true};
 }
 
@@ -158,7 +159,7 @@ export function advanceFootholds(state) {
     const foothold = entity.foothold;
     if (!foothold) continue;
     const actor = foothold.owner;
-    if (!hasLocalRight(state, entity, actor)) { entity.lastFootholdLoss = {owner: actor, level: foothold.level, stockFood: foothold.stockFood, shipmentFood: (Array.isArray(foothold.shipments) ? foothold.shipments : []).reduce((sum, item) => sum + item.food, 0), year: state.year, month: state.month}; entity.foothold = null; continue; }
+    if (!hasLocalRight(state, entity, actor)) { entity.lastFootholdLoss = {owner: actor, level: foothold.level, stockFood: foothold.stockFood, shipmentFood: (Array.isArray(foothold.shipments) ? foothold.shipments : []).reduce((sum, item) => sum + item.food, 0), year: state.year, month: state.month}; entity.foothold = null; if (entity.type === 'village' && state.world?.localAdministrators) delete state.world.localAdministrators[entity.id]; continue; }
     const capacity = footholdStorageCapacity(entity);
     if (foothold.stockFood > capacity) { entity.lastFootholdSpillage = {food: foothold.stockFood - capacity, year: state.year, month: state.month}; foothold.stockFood = capacity; }
     if (!Array.isArray(foothold.shipments)) foothold.shipments = [];
