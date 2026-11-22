@@ -164,3 +164,5 @@ body.grand-campaign.atlas-focus .grand-site:is(:hover,:focus-visible):before{con
  #mobile-actions #return-campaign{grid-column:1/-1;padding:8px}
 }
 .selection .supply-risk{display:block;margin:9px 0 0;padding:7px 9px;background:#8e48332e;border-left:3px solid #c78062;color:#f1d8bd;font:11px/1.45 Manrope,'Microsoft YaHei',sans-serif}
+.court-mediation{margin:12px 0;padding:11px;border:1px solid #a78d5d;background:#1d302f;color:#f2e6ca;line-height:1.45}.court-mediation h3{margin:0 0 6px;color:#e5c88b}.court-mediation p{margin:6px 0}.court-mediation-reason{font-size:11px;color:#d4c39d}
+.court-mediation button{padding:7px 10px;border:1px solid #e8d2a0;background:#d4b879;color:#1e2b2a;font-weight:700;cursor:pointer}.court-mediation button:disabled{opacity:.55;cursor:default}

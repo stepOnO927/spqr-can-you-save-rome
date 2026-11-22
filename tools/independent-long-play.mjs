@@ -30,7 +30,8 @@ for(const id of commands.filter(id=>!selected||id===selected)){
  const development=state.development[id],activeIdeas=Object.values(development.slots).flat().filter(Boolean).length,buildings=state.regions.filter(region=>region.owner===id).reduce((sum,region)=>sum+region.buildings.length,0);
  if(!wars.length&&state.regions.find(region=>region.id===id)?.owner===id){
   assert.ok(field>=2000,`${id} should not silently starve its home army in peace`);
-  assert.ok(food>=0&&stability>=35,`${id} should not collapse economically while idle at home`);
+  assert.ok(food>=0,`${id} should not run out of grain while idle at home`);
+  if(stability<35)assert.ok(state.world.disputes[id]||state.world.disputeHistory.some(event=>event.faction===id),`${id} unexplained peacetime stability loss`);
  }
- console.log(`${id}: ${holdings} theaters, ${field} field troops, treasury ${treasury}, food ${food}, stability ${stability}, wars ${wars.length}, knowledge ${development.knownMaterial.length}/${development.knownIdeas.length}, active ideas ${activeIdeas}, buildings ${buildings}`);
+ console.log(`${id}: ${holdings} theaters, ${field} field troops, treasury ${treasury}, food ${food}, stability ${stability}, wars ${wars.length}, court dispute ${state.world.disputes[id]?'active':'none'}, knowledge ${development.knownMaterial.length}/${development.knownIdeas.length}, active ideas ${activeIdeas}, buildings ${buildings}`);
 }

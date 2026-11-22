@@ -186,6 +186,30 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
 }}
 export function contestLeadership(s,faction,claimant){initializeWorld(s);const leaders=s.world.leadership[faction]||[],person=s.world.characters[claimant],egypt=faction==='egypt'&&leaders.length>1&&leaders.includes(claimant),parthia=faction==='parthia'&&claimant==='pacorus'&&leaders.includes('orodes')&&!leaders.includes(claimant)&&person?.loyalty<40;if((!egypt&&!parthia)||!s.regions.some(r=>r.owner===faction)||!claimantAvailable(person)||(s.world.claimants[faction]||[]).includes(claimant))return false;if(egypt)s.world.leadership[faction]=leaders.filter(id=>id!==claimant);const claimants=s.world.claimants[faction]||=[];claimants.push(claimant);s.world.disputes[faction]={months:0};if(s.factions[faction])s.factions[faction].stability=Math.max(0,s.factions[faction].stability-5);if(faction===s.player)notify(s,'A leadership dispute has created a rival claimant.','执政权争议产生了一位竞争者。');return true}
 
+// A ruler can fund one attempt at reconciling a live domestic claimant before
+// the next six-month court review. It changes the actual dispute odds, but
+// neither success nor the review date is guaranteed by the decision.
+export function courtMediationPlan(s,actor){
+ initializeWorld(s);
+ if(actor!==s.player||!['egypt','parthia'].includes(actor))return {ok:false,reason:'command'};
+ const dispute=s.world.disputes[actor],claimants=s.world.claimants[actor]||[];
+ if(!dispute||!claimants.some(id=>claimantAvailable(s.world.characters[id])))return {ok:false,reason:'dispute'};
+ if(!(s.world.leadership[actor]||[]).some(id=>s.world.characters[id]?.alive))return {ok:false,reason:'vacancy'};
+ if(dispute.mediationPending)return {ok:false,reason:'pending'};
+ const now=s.year*12+s.month,last=dispute.lastMediationAt;
+ if(Number.isFinite(last)&&now-last<6)return {ok:false,reason:'cooldown',waitMonths:6-(now-last)};
+ if(s.factions[actor].treasury<15)return {ok:false,reason:'treasury'};
+ return {ok:true,cost:15,monthsToReview:Math.max(1,6-(dispute.months||0))};
+}
+export function mediateCourtDispute(s,actor){
+ const plan=courtMediationPlan(s,actor);if(!plan.ok)return plan;
+ const dispute=s.world.disputes[actor];
+ s.factions[actor].treasury-=plan.cost;
+ dispute.mediationPending=true;dispute.lastMediationAt=s.year*12+s.month;
+ notify(s,'Court mediation was funded. The next court review may reconcile the rival claim; success is uncertain.','已出资调解宫廷争议。下次宫廷审议可能化解竞争主张，结果仍有风险。');
+ return plan;
+}
+
 // Alternate-history court outcomes use existing characters and never update a foreign observer's reports directly.
 export function advanceDisputes(s){initializeWorld(s);for(const faction of ['egypt','parthia'])advanceFactionDispute(s,faction)}
 function advanceFactionDispute(s,faction){
@@ -199,6 +223,7 @@ function advanceFactionDispute(s,faction){
  if(dispute.duration%3===0){s.factions[faction].stability=Math.max(0,s.factions[faction].stability-1);s.factions[faction].treasury=Math.max(-100,s.factions[faction].treasury-3)}
  if(++dispute.months<6)return;dispute.months=0;
  if(!leaders.length){
+  dispute.mediationPending=false;
   // A rival's claim is not automatically recognized when the incumbent dies.
   // An unnamed authority governs during the vacancy; existing claimants may
   // eventually establish control, influenced by already accepted support.
@@ -206,10 +231,13 @@ function advanceFactionDispute(s,faction){
   if(candidate&&rand(s)<Math.min(.8,.5+(dispute.support?.[candidate]||0)/100)){s.world.leadership[faction]=[candidate];s.world.claimants[faction]=claimants.filter(id=>id!==candidate);s.factions[faction].stability=Math.max(0,s.factions[faction].stability-2);s.world.disputeHistory.unshift({faction,claimant:candidate,outcome:'succession',year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);if(!s.world.claimants[faction].length)delete s.world.disputes[faction];else{dispute.support={};delete dispute.vacancySince}if(faction===s.player)notify(s,'A claimant established authority after the simulated succession dispute.','一位竞争者在游戏继承争议后确立了执政权。')}
   return
  }
- const claimant=claimants.find(id=>claimantAvailable(s.world.characters[id]));if(!claimant)return;const person=s.world.characters[claimant];const stability=s.factions[faction].stability,support=dispute.support?.[claimant]||0,q=rand(s);let outcome;
- if(stability>=45&&person.loyalty>=55&&support===0&&q<.12){s.world.leadership[faction]=faction==='egypt'?[...leaders,claimant]:leaders;s.world.claimants[faction]=claimants.filter(id=>id!==claimant);s.factions[faction].stability=Math.min(100,stability+2);outcome='reconciliation';delete s.world.disputes[faction]}
+ const claimant=claimants.find(id=>claimantAvailable(s.world.characters[id]));if(!claimant)return;const person=s.world.characters[claimant];const stability=s.factions[faction].stability,support=dispute.support?.[claimant]||0,q=rand(s),mediated=!!dispute.mediationPending;dispute.mediationPending=false;let outcome;
+ const voluntaryChance=stability>=45&&person.loyalty>=55&&support===0?.12:0;
+ const mediationChance=mediated?Math.max(.08,Math.min(.28,(person.loyalty-35)/150-support/300)):0;
+ if(q<voluntaryChance+mediationChance){s.world.leadership[faction]=faction==='egypt'?[...leaders,claimant]:leaders;s.world.claimants[faction]=claimants.filter(id=>id!==claimant);s.factions[faction].stability=Math.min(100,stability+2);outcome='reconciliation';delete s.world.disputes[faction]}
  else if(q<(stability<45?.22:.08)+support/100){s.world.leadership[faction]=[claimant];s.world.claimants[faction]=[...new Set([...claimants.filter(id=>id!==claimant),...leaders.filter(id=>s.world.characters[id]?.alive)])];s.factions[faction].stability=Math.max(0,stability-4);outcome='takeover';dispute.support={}}
- if(outcome){s.world.disputeHistory.unshift({faction,claimant,outcome,year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);if(faction===s.player)notify(s,outcome==='reconciliation'?(faction==='egypt'?'A simulated court settlement restored joint rule.':'A simulated settlement ended the dynastic challenge.'):'A simulated court struggle changed the ruling authority.',outcome==='reconciliation'?(faction==='egypt'?'游戏中的宫廷和解恢复了共同统治。':'游戏中的宫廷和解结束了王朝挑战。'):'游戏中的宫廷斗争改变了执政者。')}
+ if(outcome){s.world.disputeHistory.unshift({faction,claimant,outcome,mediated,year:s.year,month:s.month});s.world.disputeHistory=s.world.disputeHistory.slice(0,30);if(faction===s.player)notify(s,outcome==='reconciliation'?(faction==='egypt'?'A simulated court settlement restored joint rule.':'A simulated settlement ended the dynastic challenge.'):'A simulated court struggle changed the ruling authority.',outcome==='reconciliation'?(faction==='egypt'?'游戏中的宫廷和解恢复了共同统治。':'游戏中的宫廷和解结束了王朝挑战。'):'游戏中的宫廷斗争改变了执政者。')}
+ else if(mediated&&faction===s.player)notify(s,'The court review did not settle the rival claim.','本次宫廷审议未能化解竞争主张。');
 }
 // Simulation probabilities only; these do not assert historical diagnoses.
 export function illnessRisk(s,id){initializeWorld(s);const c=s.world.characters[id];if(!c)return 0;const age=ageRange(id,s.year)?.[0],military=s.armies.some(a=>a.characterId===id),shortage=(s.factions[c.faction]?.food??0)<0,site=s.regions.find(r=>r.id===c.location),risk=site?localBuildingEffects(site).healthRisk||0:0;return Math.max(0,Math.min(.18,(age>=65?.04:.018)+(military?.01:0)+(shortage?.025:0)+(c.travel?.01:0)+Math.min(.02,c.wounds*.01)+risk))}
