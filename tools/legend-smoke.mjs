@@ -14,10 +14,10 @@ try{
  await page.locator('#start-campaign').click();
  assert.equal(await page.locator('#start-campaign').count(),0);
  const result=await page.evaluate(async()=>{
-  const {newGame,upgradeSave}=await import('/engine.js?v=meeting-report-names-1');
-  const {createFictionalPerson}=await import('/dynasties.js?v=meeting-report-names-1');
-  const {setLegendMode,recordLegendEvidence,advanceLegend,legendName,legendDossier}=await import('/legend.js?v=meeting-report-names-1');
-  const {renderGenealogyDossier}=await import('/genealogy-ui.js?v=meeting-report-names-1');
+  const {newGame,upgradeSave}=await import('/engine.js?v=meeting-history-consistency-1');
+  const {createFictionalPerson}=await import('/dynasties.js?v=meeting-history-consistency-1');
+  const {setLegendMode,recordLegendEvidence,advanceLegend,legendName,legendDossier}=await import('/legend.js?v=meeting-history-consistency-1');
+  const {renderGenealogyDossier}=await import('/genealogy-ui.js?v=meeting-history-consistency-1');
   let s=newGame('caesar');setLegendMode(s,'homage');
   const id=createFictionalPerson(s,{name:['Lucius Varro','卢基乌斯·瓦罗'],faction:'caesar',birthYear:-80,location:'cisalpine'});
   for(let i=0;i<3;i++)recordLegendEvidence(s,id,'maneuver',{reference:'browser:'+i,detail:['Outmaneuvered a rival court.','智胜对手宫廷。']});

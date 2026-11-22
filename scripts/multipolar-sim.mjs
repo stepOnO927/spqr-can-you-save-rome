@@ -1,6 +1,6 @@
-import {newGame,tick} from '../engine.js?v=meeting-report-names-1';
+import {newGame,tick} from '../engine.js?v=meeting-history-consistency-1';
 import assert from 'node:assert/strict';
-import {proposeAgreement} from '../agreements.js?v=meeting-report-names-1';
+import {proposeAgreement} from '../agreements.js?v=meeting-history-consistency-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
 
 // Identical unforced openings, different seeded random streams; both the
