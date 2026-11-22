@@ -82,6 +82,9 @@ export function initializeEasternMarkets(s){
  while(markets.merchantProtectionRequests.some(request=>request.id===`eastern-protection:${markets.nextProtectionRequest}`))markets.nextProtectionRequest++;
  markets.courtEscortSpent??=0;
  markets.marketHouses||={};markets.marketHouseSpent??=0;markets.marketHouseRent??=0;
+ if(!Array.isArray(markets.merchantLoans))markets.merchantLoans=[];
+ if(!Number.isSafeInteger(markets.nextMerchantLoan)||markets.nextMerchantLoan<1)markets.nextMerchantLoan=1;
+ while(markets.merchantLoans.some(loan=>loan.id===`eastern-merchant-loan:${markets.nextMerchantLoan}`))markets.nextMerchantLoan++;
  if(!Array.isArray(markets.merchantProposals))markets.merchantProposals=[];
  if(!Number.isSafeInteger(markets.nextMerchantProposal)||markets.nextMerchantProposal<1)markets.nextMerchantProposal=1;
  while(markets.merchantProposals.some(proposal=>proposal.id===`eastern-merchant-proposal:${markets.nextMerchantProposal}`))markets.nextMerchantProposal++;
@@ -218,6 +221,52 @@ function investEasternMarketHouse(s,id,regionId,faction){
 export function fundEasternMarketHouse(s,id,regionId){
  if(!s.player)return {ok:false,reason:'invalid'};
  return investEasternMarketHouse(s,id,regionId,s.player);
+}
+
+export function quoteEasternMerchantLoan(s,id,principal){
+ const markets=initializeEasternMarkets(s),person=s.persons?.[id],faction=s.player;
+ if(s.finalized||!faction||![4,8].includes(principal)||!person?.alive||person.profession!=='merchant'||person.faction!==faction||!Array.isArray(person.name)||person.name.length!==2||person.name.some(value=>typeof value!=='string'||!value.trim())||!(markets.merchants[faction]||[]).includes(id)||(person.marketReputation||0)<1||!Number.isFinite(person.wealth)||person.wealth<principal+2||markets.merchantLoans.some(loan=>loan.merchantId===id&&loan.faction===faction&&['active','overdue'].includes(loan.status)))return {ok:false,reason:'merchant'};
+ const interest=Math.ceil(principal/4);
+ return {ok:true,principal,interest,total:principal+interest,dueAt:month(s)+12};
+}
+
+export function requestEasternMerchantLoan(s,id,principal){
+ const quote=quoteEasternMerchantLoan(s,id,principal);if(!quote.ok)return quote;
+ const markets=s.tradeMarkets,person=s.persons[id],faction=s.player;
+ let loanId;do{loanId=`eastern-merchant-loan:${markets.nextMerchantLoan++}`}while(markets.merchantLoans.some(loan=>loan.id===loanId));
+ person.wealth-=principal;s.factions[faction].treasury+=principal;
+ const loan={id:loanId,merchantId:id,faction,principal,interest:quote.interest,paid:0,outstanding:quote.total,createdAt:month(s),dueAt:quote.dueAt,status:'active'};
+ markets.merchantLoans.push(loan);
+ (person.history||=[]).push({year:s.year,month:s.month,kind:'merchant_loan',loan:loanId,principal,dueAt:quote.dueAt});
+ log(s,[`${person.name[0]} advanced ${principal}¤ to the court; ${quote.total}¤ is due in twelve months.`,`${person.name[1]}向朝廷借出${principal}¤；十二个月后应还${quote.total}¤。`],{kind:'trade'});
+ return {ok:true,loan};
+}
+
+function payEasternMerchantLoan(s,loan,amount){
+ if(amount<=0)return 0;
+ const person=s.persons[loan.merchantId];
+ s.factions[loan.faction].treasury-=amount;person.wealth=(person.wealth||0)+amount;
+ loan.paid+=amount;loan.outstanding-=amount;
+ (loan.payments||=[]).push({year:s.year,month:s.month,amount});
+ if(loan.outstanding===0){loan.status='repaid';loan.settledAt=month(s);(person.history||=[]).push({year:s.year,month:s.month,kind:'merchant_loan_repaid',loan:loan.id,amount:loan.paid})}
+ if(loan.faction===s.player)log(s,[`${person.name[0]}'s court loan received ${amount}¤; ${loan.outstanding}¤ remains.`,`${person.name[1]}的朝廷借款已偿还${amount}¤；尚欠${loan.outstanding}¤。`],{kind:'trade'});
+ return amount;
+}
+
+export function repayEasternMerchantLoan(s,id){
+ const loan=initializeEasternMarkets(s).merchantLoans.find(item=>item.id===id);
+ if(s.finalized||!loan||loan.faction!==s.player||!['active','overdue'].includes(loan.status)||!s.persons[loan.merchantId]||s.factions[loan.faction].treasury<loan.outstanding)return {ok:false,reason:'treasury'};
+ payEasternMerchantLoan(s,loan,loan.outstanding);
+ return {ok:true,loan};
+}
+
+function advanceEasternMerchantLoans(s,now){
+ for(const loan of s.tradeMarkets.merchantLoans){
+  if(!['active','overdue'].includes(loan.status)||now<loan.dueAt||!s.persons[loan.merchantId]||!s.factions[loan.faction])continue;
+  const treasury=s.factions[loan.faction].treasury,available=Math.max(0,Math.floor(treasury)-30);
+  payEasternMerchantLoan(s,loan,Math.min(loan.outstanding,available));
+  if(loan.outstanding>0&&loan.overdueAt==null){loan.status='overdue';loan.overdueAt=now;s.factions[loan.faction].stability=Math.max(0,(s.factions[loan.faction].stability||0)-2);s.persons[loan.merchantId].loyalty=Math.max(0,(s.persons[loan.merchantId].loyalty||0)-10);if(loan.faction===s.player)log(s,[`${s.persons[loan.merchantId].name[0]}'s loan is overdue; court stability and merchant loyalty fell.`,`拖欠${s.persons[loan.merchantId].name[1]}的借款，朝廷稳定度与商人忠诚下降。`],{kind:'trade'})}
+ }
 }
 
 function settleMerchantProtection(s,request,decision){
@@ -632,6 +681,7 @@ export function advanceEasternMarkets(s){
  for(const proposal of markets.merchantProposals)if(proposal.status==='pending'&&(now>=proposal.expiresAt||!s.persons[proposal.merchantId]?.alive||s.persons[proposal.merchantId].faction!==proposal.faction||region(s,proposal.origin)?.owner!==proposal.seller||region(s,proposal.destination)?.owner!==proposal.buyer||!tradeTreaty(s,proposal.seller,proposal.buyer)||atWar(s,proposal.seller,proposal.buyer))){proposal.status='expired';proposal.answeredAt=now}
  markets.merchantProposals=markets.merchantProposals.filter(proposal=>proposal.status==='pending'||now-(proposal.answeredAt??proposal.createdAt)<24);
  for(const sale of markets.saleOrders)if(sale.status==='open'&&region(s,sale.origin)?.owner!==sale.seller){markets.regions[sale.origin].goods[sale.commodity].stock+=sale.available;sale.available=0;sale.status='seized'}
+ advanceEasternMerchantLoans(s,now);
  advanceMerchantReturns(s,now);
  for(const r of s.regions)for(const [good,item] of Object.entries(markets.regions[r.id].goods)){
   const produced=produceMarketGood(markets.regions[r.id],good,good==='grain'?agriculturalProduction(s,r,item.production):item.production);

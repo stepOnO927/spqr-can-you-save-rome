@@ -110,6 +110,13 @@ try{
  assert.match(await page.locator('.market-receipts').innerText(),/Goods.*Transport.*Tariffs.*Total/);
  assert.match(await page.locator('.market-receipts').innerText(),/Destination stock \d+ → \d+.*Local price \d+ → \d+/s);
  assert.match(await page.locator('.market-receipts').innerText(),/49 BCE/);
+ await page.locator('#save').click();const creditBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ await page.locator(`[data-east-merchant-loan="${manualCarrier}"][data-principal="4"]`).click();
+ assert.match(await page.locator('#message').innerText(),/Merchant advance received/);
+ await page.locator('#save').click();const creditAfter=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ assert.equal(creditAfter.factions.han.treasury,creditBefore.factions.han.treasury+4);
+ assert.equal(creditAfter.persons[manualCarrier].wealth,creditBefore.persons[manualCarrier].wealth-4);
+ assert.equal(creditAfter.tradeMarkets.merchantLoans[0].outstanding,5);
  await page.locator('.territory[data-region="dunhuang"]').click({force:true});await page.locator('#trade-panel').click();
  assert.equal(await page.locator('#east-remount-assign').isDisabled(),false);
  await page.locator('#save').click();const before=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
@@ -122,6 +129,9 @@ try{
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('.territory[data-region="dunhuang"]').click({force:true});await page.locator('#trade-panel').click();
  assert.equal(await page.locator('#east-remount-assign').isDisabled(),true);
  assert.match(await page.locator('#inspector').innerText(),/Reputation 1.*Known routes 1/s);
+ assert.match(await page.locator('#inspector').innerText(),/Merchant credit.*Outstanding 5/s);
+ await page.locator('[data-east-repay-loan]').click();assert.match(await page.locator('#message').innerText(),/Merchant loan repaid/);
+ await page.locator('#save').click();assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')))).tradeMarkets.merchantLoans[0].status,'repaid');
   await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/关市与商队/);
   await page.locator('#mode').selectOption('trade');
  assert.match(await page.locator('#overview').innerText(),/外国库存未知/);
@@ -132,6 +142,7 @@ try{
  assert.match(await page.locator('.market-intelligence').innerText(),/成交单价.*所见供给/);
  assert.match(await page.locator('#inspector').innerText(),/拨付军马/);
  assert.match(await page.locator('#inspector').innerText(),/商人特权/);
+ assert.match(await page.locator('#inspector').innerText(),/商人借款/);
  await page.locator('[data-merchant-person] summary').first().click();
  assert.match(await page.locator('[data-merchant-person]').first().innerText(),/文化来源.*故乡.*约龄.*运抵批次 1.*本战役原创/s);
  assert.match(await page.locator('[data-merchant-person]').first().innerText(),/故乡: 长安/);

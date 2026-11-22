@@ -1426,6 +1426,16 @@ market quote and dispatch. A listed batch uses its posted unit price and
 reserved inventory, closes when filled, and cannot be silently turned into a
 recurring contract. The Han Chromium market flow uses an actual posted lot and
 checks its carrier, sale-order link, and filled status in the saved shipment.
+Named Han-campaign merchants can now lend four or eight of their own wealth to
+the player's court for twelve months. Principal enters the real treasury and
+the merchant's wealth falls by the same amount; repayment transfers principal
+plus a stated fee back from the treasury. Automatic collection preserves a
+thirty-unit operating reserve, records partial payments and arrears, and
+penalizes stability and merchant loyalty only once per overdue loan. Early
+repayment, saved debt history, Chronicle entries, bilingual market controls,
+and no-double-payment tests cover the actual political finance path. This is
+court credit rather than a merchant-owned speculative caravan; the latter
+remains unfinished.
 
 ## Existing foundations
 
