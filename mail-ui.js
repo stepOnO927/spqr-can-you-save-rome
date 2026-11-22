@@ -11,6 +11,7 @@ const date=(m,lang)=>m.sentDateKnown===false?(lang==='zh'?'日期未记录':'dat
 Object.assign(choices,{yes:['Vote yes','赞成'],no:['Vote no','反对'],abstain:['Abstain','弃权'],send_coalition_aid:['Send 8 treasury and 6 food','派出8国库和6粮食']});
 Object.assign(choices,{fund_village_road:['Fund road · 14 treasury / 2 food','拨款修路 · 14国库 / 2粮食'],relieve_village_tax:['Grant local relief · 5 treasury','地方减负 · 5国库']});
 Object.assign(choices,{grant_local_charter:['Grant household charter · 5 treasury','批准地方家族特许 · 5国库']});
+Object.assign(choices,{accept_local_trade:['Accept food compact · future purchases cost 3 treasury','接受粮食协定 · 后续每次采购需3国库']});
 Object.assign(choices,{release_agent:['Approve agent handover','同意交接']});
 const priority={critical:0,important:1,routine:2};
 

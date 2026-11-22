@@ -407,6 +407,18 @@ export function advanceLocalEntities(state) {
         if(sent.ok){sent.letter.senderName=[...entity.ruler.name];entity.lastCharterPetitionAt={year:state.year,month:state.month};entity.charterPetitionMailId=sent.letter.id}
       }
     }
+    if(entity.procedural&&['city_state','microstate','tribe'].includes(entity.type)&&state.month===4&&entity.strategy>=3&&entity.controller===entity.id&&!entity.siege&&!entity.pending&&state.factions[state.player]&&!(entity.tradeRights?.[state.player]>now(state))){
+      const buyer=state.factions[state.player],reserve=Math.max(4,Math.ceil(entity.population/3000));
+      const last=entity.lastTradePetitionAt;
+      if(buyer.food<20&&buyer.treasury>=6&&entity.food>=reserve+4&&entity.treasury>=3&&localTradeOpen(state,entity,state.player)&&(!last||now(state)-(last.year*12+last.month)>=12)){
+        const sent=sendLetter(state,{senderFaction:state.player,senderInstitution:state.player,recipient:state.player,category:'government',priority:'routine',source:entity.theater,
+          subject:[`Food compact proposed by ${entity.name[0]}`,`${entity.name[1]}提出粮食贸易`],
+          body:[`${entity.ruler.name[0]}, a fictional local ruler in this campaign, proposes a two-year compact. While the commercial route and both reserves remain sufficient, the court may buy 2 local food for 3 treasury each quarter. Acceptance grants no military access or political title.`,`本局虚构地方领袖${entity.ruler.name[1]}提议订立两年粮食协定。仅当商路及双方储备允许时，本方每季度可用3国库购入当地2粮食。接受不授予军队通行或法理归属。`],
+          options:['accept_local_trade','refuse'],expires:now(state)+6,
+          context:{kind:'local_trade_petition',polityId:entity.id,host:state.player,rulerName:[...entity.ruler.name]}});
+        if(sent.ok){sent.letter.senderName=[...entity.ruler.name];entity.lastTradePetitionAt={year:state.year,month:state.month};entity.tradePetitionMailId=sent.letter.id}
+      }
+    }
     if(entity.procedural&&!entity.proceduralVillage&&entity.controller===entity.id&&!entity.siege){
       if(entity.type==='strongman'&&state.month%3===0&&(entity.lastVillageLevy?.year!==state.year||entity.lastVillageLevy?.month!==state.month)){
         entity.lastVillageLevy={year:state.year,month:state.month};

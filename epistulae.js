@@ -9,6 +9,7 @@ import {canMediate,requestMediation} from './civil-war.js?v=world-kings-neighbor
 import {voteCoalitionMotion} from './coalition-motions.js?v=world-kings-neighbor-trade-1';
 import {storedCorrespondentName} from './person-knowledge.js?v=world-kings-neighbor-trade-1';
 import {answerCoalitionAidRequest,COALITION_AID} from './coalition-assistance.js?v=world-kings-neighbor-trade-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-neighbor-trade-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
@@ -275,6 +276,17 @@ export function replyToLetter(s, id, choice, actions, details={}) {
       const village=place.localEntities.find(site=>site.sponsor===chief.id)?.village;
       if(village)village.satisfaction=Math.min(100,village.satisfaction+3);
     }
+  } else if (m.context?.kind === 'local_trade_petition') {
+    const entity=s.regions.flatMap(region=>region.localEntities||[]).find(site=>site.id===m.context.polityId);
+    const now=monthIndex(s.year,s.month),reserve=Math.max(4,Math.ceil((entity?.population||3000)/3000));
+    const neighbors=ROUTES.some(([a,b])=>a===entity?.theater&&s.regions.find(region=>region.id===b)?.owner===s.player||b===entity?.theater&&s.regions.find(region=>region.id===a)?.owner===s.player);
+    const nearby=s.regions.find(region=>region.id===entity?.theater)?.owner===s.player||neighbors;
+    if(!entity||m.context.host!==s.player||entity.tradePetitionMailId!==m.id||entity.controller!==entity.id||entity.siege||entity.pending||!nearby||!nonMilitaryAccessStatus(s,s.player,entity.theater,s.regions.find(region=>region.id===entity.theater)?.owner,'commercial').allowed||entity.tradeRights?.[s.player]>now)return {ok:false,reason:'changed_state'};
+    if(choice==='accept_local_trade'){
+      if(entity.food<reserve+2||s.factions[s.player].treasury<3)return {ok:false,reason:'resources'};
+      entity.tradeRights||={};entity.tradeRights[s.player]=now+24;
+    }
+    entity.lastOutcome={actor:s.player,proposal:'trade_petition',accepted:choice==='accept_local_trade',year:s.year,month:s.month};
   } else if(m.context?.kind==='aid_request'){
     if(choice==='send_aid'){
       if(s.factions[s.player].treasury<5)return {ok:false,reason:'treasury'};

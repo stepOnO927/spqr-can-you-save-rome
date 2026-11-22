@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-neighbor-trade-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-neighbor-trade-1';
 import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS,generatedLocalPolities} from '../local-generation.js';
-import {localOfferChance,advanceLocalEntities,localEntity,offerLocalContact,localSiegeQuote,besiegeLocalEntity} from '../local-polities.js';
+import {localOfferChance,advanceLocalEntities,advanceLocalTrade,localEntity,offerLocalContact,localSiegeQuote,besiegeLocalEntity} from '../local-polities.js';
 import {advanceVillages} from '../local-villages.js';
 import {advanceLocalResistance} from '../local-resistance.js';
-import {receivedMail,replyToLetter} from '../epistulae.js?v=world-kings-neighbor-trade-1';
+import {receivedMail,replyToLetter,advanceMail} from '../epistulae.js?v=world-kings-neighbor-trade-1';
 import {inspectState} from '../inspector-diagnostics.js?v=world-kings-neighbor-trade-1';
 
 const start=(mode,seed)=>configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:seed});
@@ -248,6 +248,52 @@ test('an old charter petition cannot be granted after the host theater changes h
  assert.ok(letter);letter.delivery='received';s.regions.find(region=>region.id===chief.theater).owner='senate';
  assert.equal(replyToLetter(s,letter.id,'grant_local_charter',{}).reason,'changed_state');
  assert.equal(chief.localCharter,undefined);
+});
+
+test('a capable generated polity can request player-approved, funded food trade',()=>{
+ const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ assert.ok(entity);
+ const theater=s.regions.find(region=>region.id===entity.theater);
+ theater.owner='caesar';entity.strategy=2;entity.food=30;entity.treasury=12;
+ s.factions.caesar.food=10;s.factions.caesar.treasury=40;s.month=4;
+ advanceLocalEntities(s);
+ assert.ok(!s.mail.messages.some(mail=>mail.context?.kind==='local_trade_petition'&&mail.context.polityId===entity.id),'a weak council does not initiate this negotiation');
+ entity.strategy=5;advanceLocalEntities(s);
+ const letter=s.mail.messages.find(mail=>mail.context?.kind==='local_trade_petition'&&mail.context.polityId===entity.id);
+ assert.ok(letter);assert.deepEqual(letter.senderName,entity.ruler.name);
+ assert.ok(letter.arrival>s.year*12+s.month,'the proposal travels by courier');
+ assert.equal(entity.tradeRights?.caesar,undefined);
+ assert.equal(inspectState(s).filter(item=>item.code==='invalid-local-trade-petition').length,0);
+ assert.equal(localEntity(upgradeSave(structuredClone(s)),entity.id).tradePetitionMailId,letter.id);
+ advanceLocalEntities(s);
+ assert.equal(s.mail.messages.filter(mail=>mail.context?.kind==='local_trade_petition'&&mail.context.polityId===entity.id).length,1);
+ s.month=letter.arrival-s.year*12;advanceMail(s);
+ assert.ok(receivedMail(s).some(mail=>mail.id===letter.id));
+ assert.equal(replyToLetter(s,letter.id,'accept_local_trade',{}).ok,true);
+ assert.ok(entity.tradeRights.caesar>s.year*12+s.month);
+ assert.equal(entity.controller,entity.id);assert.equal(theater.owner,'caesar');
+ const before={localFood:entity.food,localTreasury:entity.treasury,courtFood:s.factions.caesar.food,courtTreasury:s.factions.caesar.treasury};
+ s.month=9;advanceLocalTrade(s);
+ assert.equal(entity.food,before.localFood-2);assert.equal(entity.treasury,before.localTreasury+3);
+ assert.equal(s.factions.caesar.food,before.courtFood+2);assert.equal(s.factions.caesar.treasury,before.courtTreasury-3);
+ const restored=upgradeSave(structuredClone(s));assert.equal(localEntity(restored,entity.id).tradeRights.caesar,entity.tradeRights.caesar);
+ restored.regions.flatMap(region=>region.localEntities||[]).find(site=>site.id===entity.id).lastTradePetitionAt.month=13;
+ assert.ok(inspectState(restored).some(item=>item.code==='invalid-local-trade-petition'));
+});
+
+test('a local trade petition cannot bypass closed commerce or a changed court',()=>{
+ const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const theater=s.regions.find(region=>region.id===entity.theater);
+ theater.owner='caesar';entity.strategy=5;entity.food=30;entity.treasury=12;
+ s.factions.caesar.food=10;s.factions.caesar.treasury=40;s.month=4;advanceLocalEntities(s);
+ const letter=s.mail.messages.find(mail=>mail.context?.kind==='local_trade_petition'&&mail.context.polityId===entity.id);
+ assert.ok(letter);letter.delivery='received';
+ theater.owner='senate';s.borderPolicies.senate.commercial='closed';
+ assert.equal(replyToLetter(s,letter.id,'accept_local_trade',{}).reason,'changed_state');
+ assert.equal(letter.responses.length,0);assert.equal(entity.tradeRights?.caesar,undefined);
+ theater.owner='caesar';s.borderPolicies.senate.commercial='open';
+ assert.equal(replyToLetter(s,letter.id,'refuse',{}).ok,true);
+ assert.equal(entity.tradeRights?.caesar,undefined);
 });
 
 test('occupation transfers a dependent village and a successful local revolt restores personal control',()=>{
