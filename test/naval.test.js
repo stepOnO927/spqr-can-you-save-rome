@@ -59,6 +59,69 @@ test('harbor congestion delays real cargo and payment, survives reload, and impr
  assert.equal(s.naval.reports.filter(r=>r.kind==='harbor-congestion').length,1);
 });
 
+test('a delayed grain shipment is linked to shortage only when it could cover the actual deficit',()=>{
+ let s=newGrandGame('senate');s.wars=[];s.naval.pirates=[];s.factions.senate.treasury=500;s.factions.senate.food=0;
+ const port=s.regions.find(r=>r.id==='t016');port.civicSatisfaction=25;
+ const chosen=['african-oil','egypt-italy','levant-luxury'];
+ for(const route of s.naval.routes)if(!chosen.includes(route.id))route.pausedBy=[s.regions.find(r=>r.id===route.from)?.owner].filter(Boolean);
+ advanceNaval(s);
+ const grain=s.naval.voyages.find(v=>v.routeId==='egypt-italy');assert.ok(grain&&grain.cargo>0);const cargo=grain.cargo;
+ s.naval.voyages=[...s.naval.voyages.filter(v=>v!==grain),grain];
+ for(const voyage of s.naval.voyages){voyage.path=[];voyage.zone=portZone(port.id)}
+ s.month++;advanceNaval(s);assert.equal(grain.congestedMonths,1);
+ s.factions.senate.food=-nationalBudget(s,'senate').foodNet-2;
+ const withoutEconomy=upgradeSave(JSON.parse(JSON.stringify(s)));
+ advanceNaval(withoutEconomy);
+ assert.equal(withoutEconomy.naval.reports.some(r=>r.kind==='interrupted-grain-shortage'),false,'a negative store alone is not evidence of a monthly shortage penalty');
+ const noShortage=upgradeSave(JSON.parse(JSON.stringify(s)));
+ noShortage.factions.senate.food+=grain.cargo;
+ const delivered=noShortage.naval.voyages.find(v=>v.id===grain.id);delivered.phase='return';delivered.cargo=0;
+ const tooSmall=upgradeSave(JSON.parse(JSON.stringify(s)));
+ tooSmall.factions.senate.food-=grain.cargo+1;
+ const armyId=s.armies.find(a=>a.owner==='senate').id;
+ tick(s);tick(noShortage);tick(tooSmall);
+ const incident=s.naval.reports.find(r=>r.kind==='interrupted-grain-shortage');
+ assert.equal(incident?.cause,'congestion');assert.equal(incident?.cargo,cargo);assert.equal(incident?.deficit,2);
+ assert.equal(noShortage.naval.reports.some(r=>r.kind==='interrupted-grain-shortage'),false);
+ assert.equal(tooSmall.naval.reports.some(r=>r.kind==='interrupted-grain-shortage'),false,'do not blame a shipment too small to avert the shortage');
+ assert.equal(noShortage.factions.senate.stability-s.factions.senate.stability,1);
+ assert.ok(noShortage.armies.find(a=>a.id===armyId).men>s.armies.find(a=>a.id===armyId).men,'the ordinary food shortage already caused casualties');
+ for(const [lang,title,cause] of [['en','INTERRUPTED GRAIN SHIPMENT','Harbor congestion delayed delivery'],['zh','受阻粮运与粮荒','港口拥堵推迟了交付']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:s,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+  assert.match(content.innerHTML,new RegExp(title));assert.match(content.innerHTML,new RegExp(cause));
+ }
+ const foreignView=upgradeSave(JSON.parse(JSON.stringify(s)));foreignView.player='egypt';
+ const foreignContent={innerHTML:''},foreignRoot={innerHTML:'',querySelector:()=>foreignContent,querySelectorAll:()=>[]};
+ renderNavalPanel({state:foreignView,lang:'en',root:foreignRoot,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+ assert.doesNotMatch(foreignContent.innerHTML,/INTERRUPTED GRAIN SHIPMENT/,'the seller cannot inspect the buyer’s food deficit');
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(s.naval.reports.filter(r=>r.kind==='interrupted-grain-shortage').length,1);
+ assert.equal(s.naval.voyages.find(v=>v.id===grain.id).shortageReported,true);
+ tick(s);assert.equal(s.naval.reports.filter(r=>r.kind==='interrupted-grain-shortage').length,1);
+});
+
+test('a real naval blockade can delay grain long enough to cause a dated shortage report',()=>{
+ const s=newGrandGame('senate');s.naval.pirates=[];s.factions.senate.treasury=500;s.factions.senate.food=0;
+ for(const route of s.naval.routes)if(route.id!=='egypt-italy')route.pausedBy=[s.regions.find(r=>r.id===route.from)?.owner].filter(Boolean);
+ advanceNaval(s);
+ const grain=s.naval.voyages.find(v=>v.routeId==='egypt-italy');assert.ok(grain);
+ const blockader=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ blockader.zone=portZone('t016');blockader.port=null;blockader.reserve=false;blockader.mobilizing=0;
+ assert.equal(orderFleet(s,'caesar',blockader.id,'blockade','t016').ok,true);
+ assert.equal(isPortBlockaded(s,'t016'),true);
+ grain.path=[];grain.zone=portZone('t016');s.month++;advanceNaval(s);
+ assert.equal(grain.blockedMonths,1);assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'blockade');
+ s.factions.senate.food=-nationalBudget(s,'senate').foodNet-2;
+ tick(s);
+ const report=s.naval.reports.find(r=>r.kind==='interrupted-grain-shortage');
+ assert.equal(report?.cause,'blockade');assert.equal(report?.deficit,2);
+ assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.paid,0);
+ const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+ renderNavalPanel({state:s,lang:'zh',root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+ assert.match(content.innerHTML,/舰队封锁阻止了交付/);
+});
+
 test('fleet pursuit follows only fresh reported positions and survives a save',()=>{
  let s=newGrandGame('senate');
  const own=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');

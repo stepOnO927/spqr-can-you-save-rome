@@ -165,6 +165,24 @@ function finishTradeHome(s,v){
 export function harborTradeCapacity(s,port){
  return 2+(port.buildings?.includes('warehouse')?1:0)+(port.buildings?.includes('dockyard')?1:0)+(navalJobEffect(s,port.owner,'harbor',port.id)>0?1:0);
 }
+function reportInterruptedGrainShortages(s,log){
+ const reportedBuyers=new Set();
+ for(const v of s.naval.voyages){
+  if(v.good!=='grain'||v.phase!=='outbound'||v.path.length||v.shortageReported||reportedBuyers.has(v.buyer)||!(v.blockedMonths>0||v.congestedMonths>0))continue;
+  const buyer=s.factions[v.buyer],from=s.regions.find(r=>r.id===v.from),to=s.regions.find(r=>r.id===v.to);
+  const shortage=buyer?.lastFoodShortage;
+  if(!shortage||shortage.year!==s.year||shortage.month!==s.month||!Number.isFinite(shortage.deficit)||shortage.deficit<=0||from?.owner!==v.seller||to?.owner!==v.buyer||atWar(s,v.buyer,v.seller))continue;
+  const route=s.naval.routes.find(r=>r.id===v.routeId),relations=s.relations?.[[v.buyer,v.seller].sort().join(':')]??0;
+  if(!route||relations<=-40||route.pausedBy?.includes(v.buyer)||route.pausedBy?.includes(v.seller))continue;
+  const affordable=v.buyer===v.seller?v.cargo:Math.floor(Math.max(0,buyer.treasury-tradeCashFloor(s,v.buyer,'grain'))/v.price);
+  const deficit=shortage.deficit;
+  if(Math.min(v.cargo,affordable,tradeNeed(s,route,v.buyer,v.seller))<deficit)continue;
+  v.shortageReported=true;
+  reportedBuyers.add(v.buyer);
+  report(s,{kind:'interrupted-grain-shortage',owner:v.buyer,port:v.to,zone:v.zone,deficit,cargo:v.cargo,cause:v.blockedMonths>0?'blockade':'congestion'});
+  if(v.buyer===s.player)log(s,'Delayed imported grain could have covered this month’s food deficit; the usual shortage rules were applied.','延误的进口粮食原本足以填补本月粮食缺口；本月已按常规粮荒规则结算。');
+ }
+}
 function advanceTradeVoyages(s,log){
  const n=s.naval,unloaded=new Map();
  // Voyages already delayed at the quay get the first available berth.
@@ -845,7 +863,7 @@ function updatePursuitOrders(s,log){
   if(f.owner===s.player)log(s,'Fleet pursuit changed course after a new dated sighting. The target may have moved again.','舰队根据新的注明日期的目击报告改航；目标仍可能再次移动。');
  }
 }
-export function advanceNaval(s,log=()=>{}){initializeNaval(s);if(!s.naval)return;const n=s.naval,avoidedNavalBattles=new Set();advanceWagons(s,log);consumeMaritimeProvisions(s);produceGoods(s);for(const j of [...n.jobs]){const p=s.world?.characters?.[j.characterId],budget=s.factions[j.owner];if(!p?.alive||p.faction!==j.owner||j.port&&s.regions.find(r=>r.id===j.port)?.owner!==j.owner){n.jobs.splice(n.jobs.indexOf(j),1);continue}if(j.remaining>0){j.remaining--;continue}budget.treasury=Math.max(-100,budget.treasury-1);if(budget.treasury<0)p.loyalty=Math.max(0,p.loyalty-1);j.experience=(j.experience||0)+1;if(j.experience%12===0){const skill=navalSkill(p,j.kind);p.navalSkills[j.kind]=Math.min(100,skill+2)}}
+export function advanceNaval(s,log=()=>{}){initializeNaval(s);if(!s.naval)return;const n=s.naval,avoidedNavalBattles=new Set();reportInterruptedGrainShortages(s,log);advanceWagons(s,log);consumeMaritimeProvisions(s);produceGoods(s);for(const j of [...n.jobs]){const p=s.world?.characters?.[j.characterId],budget=s.factions[j.owner];if(!p?.alive||p.faction!==j.owner||j.port&&s.regions.find(r=>r.id===j.port)?.owner!==j.owner){n.jobs.splice(n.jobs.indexOf(j),1);continue}if(j.remaining>0){j.remaining--;continue}budget.treasury=Math.max(-100,budget.treasury-1);if(budget.treasury<0)p.loyalty=Math.max(0,p.loyalty-1);j.experience=(j.experience||0)+1;if(j.experience%12===0){const skill=navalSkill(p,j.kind);p.navalSkills[j.kind]=Math.min(100,skill+2)}}
  for(const f of n.fleets)finalizeDestroyedFleet(s,f,log);
 for(const q of [...n.queues]){
  const yard=s.regions.find(r=>r.id===q.port);
