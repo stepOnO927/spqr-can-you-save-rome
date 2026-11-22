@@ -95,7 +95,7 @@ try{
  assert.equal(await page.locator('.rubicon-label').textContent(),firstLanguage==='zh-CN'?'卢比孔河 · 约':'RVBICO · ~');
  assert.deepEqual(['alps','apennines','adriatic','tyrrhenian'].map(id=>inSea(physicalLabels.find(item=>item.id===id).point)),[false,false,true,true],'Overview labels must align with the coastline source used to make the rendered masks');
  if(process.env.SPQR_ATLAS_ZH_OVERVIEW_SCREENSHOT&&firstLanguage==='zh-CN')await page.screenshot({path:process.env.SPQR_ATLAS_ZH_OVERVIEW_SCREENSHOT});
- assert.match(await page.locator('.map-key').innerText(),firstLanguage==='zh-CN'?/城市 · 颜色表示控制阵营/:/City · color shows controller/);
+ assert.match(await page.locator('.map-key').innerText(),firstLanguage==='zh-CN'?/城市 \/ 地点 · 颜色表示控制阵营/:/City \/ site · color shows controller/);
  for(const [site,owner] of [['cisalpine','caesar'],['italiaN','senate']]){
   const accent=await page.locator(`[data-site="${site}"]`).evaluate(el=>el.style.getPropertyValue('--site-accent'));
   assert.equal(accent,identity(owner).map,`${owner} settlement must match its faction map color`);
@@ -137,7 +137,7 @@ try{
  await page.locator('#language').click();
  assert.deepEqual(await overviewNames(),firstLanguage==='zh-CN'?['A L P E S','APENNINVS','MARE ADRIATICVM','MARE TYRRHENVM']:['阿尔卑斯山','亚平宁山脉','亚得里亚海','第勒尼安海']);
  assert.equal(await page.locator('.rubicon-label').textContent(),firstLanguage==='zh-CN'?'RVBICO · ~':'卢比孔河 · 约');
- assert.match(await page.locator('.map-key').innerText(),firstLanguage==='zh-CN'?/City · color shows controller/:/城市 · 颜色表示控制阵营/);
+ assert.match(await page.locator('.map-key').innerText(),firstLanguage==='zh-CN'?/City \/ site · color shows controller/:/城市 \/ 地点 · 颜色表示控制阵营/);
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Coastal shelf \(about 0–200 m\)/:/近岸浅海（约0–200米）/);
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Modern rivers & natural lakes/:/现代河道与天然湖泊/);
  assert.match(await page.locator('.file-transfer a').innerText(),firstLanguage==='zh-CN'?/LEGACY HUB/:/罗马遗产/);
@@ -339,8 +339,9 @@ try{
   if(screenshot){await page.waitForTimeout(4000);await page.screenshot({path:screenshot})}
  }
  assert.equal(external.includes('s3.amazonaws.com'),false,'Remaining regional terrain unexpectedly needed the network');
- await page.locator('#resources-help').click();assert.match(await page.locator('.national-budget').innerText(),/Home domain dues · game estimate/);
- await page.locator('#language').click();assert.match(await page.locator('.national-budget').innerText(),/本土领地储粮 · 游戏估算/);
+ const budgetLanguage=await page.locator('html').getAttribute('lang');
+ await page.locator('#resources-help').click();assert.match(await page.locator('.national-budget').innerText(),budgetLanguage==='zh-CN'?/本土领地收入 · 游戏估算/:/Home domain dues · game estimate/);
+ await page.locator('#language').click();assert.match(await page.locator('.national-budget').innerText(),budgetLanguage==='zh-CN'?/Home domain stores · game estimate/:/本土领地储粮 · 游戏估算/);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'the translated budget must not overflow the screen');
  if(process.env.SPQR_ATLAS_BUDGET_SCREENSHOT)await page.screenshot({path:process.env.SPQR_ATLAS_BUDGET_SCREENSHOT});
  await page.locator('#language').click();
