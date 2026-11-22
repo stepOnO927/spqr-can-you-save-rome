@@ -4,6 +4,14 @@ import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';
 import {religionPanel} from './local-society.js?v=9';
 import {techIllustration} from './tech-art.js?v=22';
+const materialFamilies=[
+ {id:'water',name:['Water Management','水利管理'],items:['water-control','dam-engineering','reservoir-design','aqueduct-refinement','urban-drainage','sewer-improvement']},
+ {id:'military',name:['Military Infrastructure','军事设施'],items:['barracks-design','stone-fortification','training-ground','supply-organization','armory-craft','siege-machinery']},
+ {id:'industry',name:['Industry & Resources','工业与资源'],items:['quarrying','metal-extraction','metalworking','craft-workshops','grain-storage','grain-processing']},
+ {id:'civic',name:['Civic Infrastructure','市政设施'],items:['stone-inscription','public-square-planning','library-organization','bath-construction','administrative-building']},
+ {id:'trade',name:['Trade & Transportation','贸易与交通'],items:['roadmaking','road-milestones','bridge-engineering','port-facilities','warehouse-management','shipyard-craft','improved-shipbuilding','naval-equipment','repair-facilities','maritime-warehousing','military-transport-organization']}
+];
+const materialFamilyById=new Map(materialFamilies.flatMap(family=>family.items.map(id=>[id,family.id])));
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const factionLabel=(id,zh)=>esc(FACTIONS[id]?.short?.[zh?1:0]||id);
 const knowledgeLabel=(branch,id,zh)=>esc((branch==='material'?MATERIALS:IDEAS).find(item=>item.id===id)?.name[zh?1:0]||id);
@@ -54,9 +62,10 @@ function treeLanes(list,zh,render){
  const byId=new Map(list.map(x=>[x.id,x])),depthCache=new Map();
  const depth=id=>{if(depthCache.has(id))return depthCache.get(id);const item=byId.get(id),parents=(item?.prerequisites||[]).filter(x=>byId.has(x));const value=parents.length?Math.max(...parents.map(x=>depth(x)))+1:0;depthCache.set(id,value);return value};
  const root=id=>{let item=byId.get(id);while(item?.prerequisites?.some(x=>byId.has(x)))item=byId.get(item.prerequisites.find(x=>byId.has(x)));return item?.id||id};
- const groups=new Map();for(const item of list){const key=item.category||root(item.id);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(item)}
- return [...groups].map(([key,items])=>{const title=byId.get(key)?.name[zh?1:0]||IDEA_CATEGORIES.find(c=>c.id===key)?.name[zh?1:0]||key,levels=[...new Set(items.map(x=>depth(x.id)))].sort((a,b)=>a-b);
-  return `<section class="dev-tree-lane"><h3>${esc(title)}</h3><div class="dev-tree-steps"><svg class="dev-tree-links" aria-hidden="true"></svg>${levels.map(level=>`<div class="dev-tree-tier"><small>${enzh(zh,'Stage','阶段')} ${level+1}</small>${items.filter(x=>depth(x.id)===level).map(render).join('')}</div>`).join('')}</div></section>`;
+ const groups=new Map();for(const item of list){const key=item.category||materialFamilyById.get(item.id)||root(item.id);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(item)}
+ const order=(list[0]?.category?IDEA_CATEGORIES:materialFamilies).map(group=>group.id);
+ return [...groups].sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0])).map(([key,items])=>{const title=(items[0].category?IDEA_CATEGORIES:materialFamilies).find(f=>f.id===key)?.name[zh?1:0]||byId.get(key)?.name[zh?1:0]||key,levels=[...new Set(items.map(x=>depth(x.id)))].sort((a,b)=>a-b);
+  return `<section class="dev-tree-lane" data-dev-lane="${esc(key)}"><h3>${esc(title)}</h3><div class="dev-tree-steps"><svg class="dev-tree-links" aria-hidden="true"></svg>${levels.map(level=>`<div class="dev-tree-tier"><small>${enzh(zh,'Stage','阶段')} ${level+1}</small>${items.filter(x=>depth(x.id)===level).map(render).join('')}</div>`).join('')}</div></section>`;
  }).join('');
 }
 function materialUnlock(item,zh){const buildings=BUILDINGS.filter(b=>b.tech===item.id);if(buildings.length)return buildings.map(b=>b.name[zh?1:0]).join(' · ');return ({'improved-shipbuilding':['Faster ship construction','缩短造船时间'],'naval-equipment':['Heavy warship construction','大型战船建造'],'maritime-warehousing':['More cargo per shipment','每航次增载货物'],'military-transport-organization':['Greater troop capacity per transport','每艘运输船增载士兵']})[item.id]?.[zh?1:0]||item.name[zh?1:0]}
@@ -164,8 +173,26 @@ export function developmentPanel(s,lang,branch){
   return `<div class="dev-zoom"><span>${zh?'后续阶段':'LATER STAGES'}</span><button data-tree-pan="left" aria-label="${zh?'查看前一阶段':'Show earlier stages'}">←</button><button data-tree-pan="right" aria-label="${zh?'查看后一阶段':'Show later stages'}">→</button><span>${zh?'缩放':'ZOOM'}</span><button data-tree-zoom="out" aria-label="${zh?'缩小':'Zoom out'}">−</button><button data-tree-zoom="in" aria-label="${zh?'放大':'Zoom in'}">+</button></div>`+developmentPanelContent(s,lang,branch)+figurePanel(s,zh)+reference;
 }
 let linkResizeObserver;
-export function bindDevelopmentTreeNavigation(root){
+export function bindDevelopmentTreeNavigation(root,lang='en'){
  const tree=root.querySelector('.dev-tree');if(!tree)return;
+ root.querySelector('.dev-lane-nav')?.remove();
+ const inspector=tree.closest('.inspector, .selection'),nav=document.createElement('nav');
+ nav.className='dev-lane-nav';nav.setAttribute('aria-label',lang==='zh'?'研究分支':'Research branches');
+ for(const lane of tree.querySelectorAll('.dev-tree-lane')){
+  const button=document.createElement('button');button.type='button';button.dataset.devJump=lane.dataset.devLane;
+  button.textContent=lane.querySelector('h3').textContent;
+  button.onclick=()=>{inspector.scrollTop+=lane.getBoundingClientRect().top-inspector.getBoundingClientRect().top-nav.getBoundingClientRect().height-12;tree.scrollLeft=0;update()};
+  nav.append(button);
+ }
+ tree.before(nav);
+ tree.addEventListener('click',event=>{
+  const link=event.target.closest('.dev-prereq-link');if(!link)return;
+  const target=tree.querySelector(link.getAttribute('href'));if(!target)return;
+  event.preventDefault();
+  inspector.scrollTop+=target.getBoundingClientRect().top-nav.getBoundingClientRect().bottom-10;
+  tree.scrollLeft+=target.getBoundingClientRect().left-tree.getBoundingClientRect().left-12;
+  target.tabIndex=-1;target.focus({preventScroll:true});update();
+ });
  const previous=root.querySelector('[data-tree-pan="left"]'),next=root.querySelector('[data-tree-pan="right"]');
  const update=()=>{previous.disabled=tree.scrollLeft<=1;next.disabled=tree.scrollLeft+tree.clientWidth>=tree.scrollWidth-1};
  previous.onclick=()=>{tree.scrollLeft-=Math.max(240,tree.clientWidth*.8)};

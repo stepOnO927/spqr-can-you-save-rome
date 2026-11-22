@@ -16,6 +16,10 @@ const stepMonth=async()=>{
   await page.locator('#step').click();
   if(reopen)await page.locator('.rail-item.active').click();
 };
+const openAtlasDevelopment=async()=>{
+  if(page.viewportSize().width<=700)await page.locator('#mobile-menu').click();
+  await page.locator('#development').click();
+};
 try{
   await page.route('http://spqr.test/**',async route=>{
     const pathname=new URL(route.request().url()).pathname;
@@ -45,15 +49,15 @@ try{
   await page.locator('.dev-tree-links path[data-from="legion-training"][data-to="reserve-mobilization"]').waitFor();
   assert.equal(await page.locator('.dev-tree-links path[data-from="legion-training"][data-to="reserve-mobilization"]').count(),1);
   assert.equal(await page.locator('[data-tree-pan="left"]').isDisabled(),true);
-  assert.equal(await page.locator('[data-tree-pan="right"]').isEnabled(),true);
-  await page.locator('[data-tree-pan="right"]').click();
-  console.log('Phase XIV: panning tree');
-  await page.waitForFunction(()=>document.querySelector('.dev-tree')?.scrollLeft>100);
-  await page.screenshot({path:'outputs/phase-xiv-later-stage.png'});
-  console.log('Phase XIV: later-stage screenshot saved');
-  await page.locator('[data-tree-pan="left"]').click();
-  console.log('Phase XIV: returned to earlier stage');
-  assert.ok(await page.locator('.dev-tree').evaluate(element=>element.scrollLeft)<2);
+  const treeOverflow=await page.locator('.dev-tree').evaluate(element=>element.scrollWidth>element.clientWidth+1);
+  assert.equal(await page.locator('[data-tree-pan="right"]').isEnabled(),treeOverflow);
+  if(treeOverflow){
+    await page.locator('[data-tree-pan="right"]').click();
+    await page.waitForFunction(()=>document.querySelector('.dev-tree')?.scrollLeft>0);
+    await page.screenshot({path:'outputs/phase-xiv-later-stage.png'});
+    await page.locator('[data-tree-pan="left"]').click();
+    assert.ok(await page.locator('.dev-tree').evaluate(element=>element.scrollLeft)<2);
+  }
   const ideaCards=await page.locator('.dev-tree [data-tech-node]').evaluateAll(cards=>Object.fromEntries(cards.map(card=>[card.id,{text:card.textContent,source:card.querySelector('a[target="_blank"]')?.href||''}])));
   console.log('Phase XIV: collected',Object.keys(ideaCards).length,'idea cards');
   const ideaText=id=>ideaCards[`tech-${id}`]?.text||'';
@@ -233,11 +237,18 @@ try{
   assert.equal(await page.locator('[data-decline-offer-seller="egypt"]').count(),0);
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),offered);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
-  await page.locator('#development').click();
+  await openAtlasDevelopment();
   await page.locator('.dev-tree-links path[data-from="water-control"][data-to="urban-drainage"]').waitFor();
-  assert.equal(await page.locator('[data-tree-pan="right"]').isEnabled(),true);
-  await page.locator('[data-tree-pan="right"]').click();
-  await page.waitForFunction(()=>document.querySelector('.dev-tree')?.scrollLeft>100);
+  await page.locator('[data-dev-jump="trade"]').click();
+  await page.waitForFunction(()=>document.querySelector('.selection')?.scrollTop>0);
+  await page.locator('[data-dev-lane="military"] .dev-prereq-link[href="#tech-metal-extraction"]').click();
+  await page.waitForFunction(()=>{const card=document.querySelector('#tech-metal-extraction'),nav=document.querySelector('.dev-lane-nav');return card&&nav&&card.getBoundingClientRect().top>=nav.getBoundingClientRect().bottom});
+  const atlasTreePosition=await page.locator('.dev-tree').evaluate(tree=>({scrollLeft:tree.scrollLeft,rightAvailable:tree.scrollLeft+tree.clientWidth<tree.scrollWidth-1}));
+  assert.equal(await page.locator('[data-tree-pan="right"]').isEnabled(),atlasTreePosition.rightAvailable);
+  if(atlasTreePosition.rightAvailable){
+    await page.locator('[data-tree-pan="right"]').click();
+    await page.waitForFunction(previous=>document.querySelector('.dev-tree')?.scrollLeft>previous,atlasTreePosition.scrollLeft);
+  }
   assert.equal(await page.locator('[data-accept-offer-seller="egypt"]').count(),1);
   await page.locator('[data-accept-offer-seller="egypt"]').click();
   assert.equal(await page.locator('[data-accept-offer-seller="egypt"]').count(),0);
@@ -256,7 +267,7 @@ try{
   }
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),requested);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
-  await page.locator('#development').click();
+  await openAtlasDevelopment();
   assert.equal(await page.locator('[data-accept-purchase-buyer="caesar"]').count(),1);
   await page.locator('[data-accept-purchase-buyer="caesar"]').click();
   assert.equal(await page.locator('[data-accept-purchase-buyer="caesar"]').count(),0);
@@ -276,7 +287,7 @@ try{
   }
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),exchange);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
-  await page.locator('#development').click();
+  await openAtlasDevelopment();
   assert.equal(await page.locator('[data-accept-exchange-request]').count(),1);
   await page.locator('[data-accept-exchange-request]').click();
   assert.equal(await page.locator('[data-accept-exchange-request]').count(),0);
@@ -297,7 +308,7 @@ try{
   }
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),agreement);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
-  await page.locator('#development').click();
+  await openAtlasDevelopment();
   await page.locator('[data-negotiate-knowledge-agreement="caesar"]').click();
   assert.equal(await page.locator('[data-cancel-knowledge-agreement="caesar"]').count(),1);
   const proposed=newGrandGame('egypt');proposed.relations['caesar:egypt']=50;
@@ -317,7 +328,7 @@ try{
   }
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),proposed);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
-  await page.locator('#development').click();
+  await openAtlasDevelopment();
   assert.match(await page.locator('.dev-build-row').filter({has:page.locator('[data-accept-knowledge-agreement-request="caesar"]')}).innerText(),/知识共享提议/);
   await page.locator('[data-accept-knowledge-agreement-request="caesar"]').click();
   assert.equal(await page.locator('[data-cancel-knowledge-agreement="caesar"]').count(),1);
@@ -357,12 +368,12 @@ try{
   }
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),merchantCampaign);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
-  await page.locator('#development').click();
+  await openAtlasDevelopment();
   assert.match(await page.locator('#tech-water-control').innerText(),/商贸研究线索/);
   const atlasScholar=newGrandGame('caesar');atlasScholar.wars=[];atlasScholar.relations['caesar:egypt']=25;atlasScholar.factions.caesar.treasury=300;atlasScholar.development.egypt.knownMaterial.push('quarrying');
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),atlasScholar);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
-  await page.locator('#development').click();
+  await openAtlasDevelopment();
   await page.locator('[data-scholar-topic="egypt"]').selectOption('material:quarrying');
   await page.locator('[data-invite-scholar="egypt"]').click();
   assert.match(await page.locator('#command-detail').innerText(),/采石.*个月后抵达/);
@@ -380,7 +391,7 @@ try{
   }
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),scholarRequest);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
-  await page.locator('#development').click();
+  await openAtlasDevelopment();
   assert.match(await page.locator('#command-detail').innerText(),/技术指导请求来自[\s\S]*水利管理/);
   await page.locator('[data-accept-scholar-host="senate"]').click();
   assert.equal(await page.locator('[data-accept-scholar-host="senate"]').count(),0);
@@ -406,7 +417,7 @@ try{
   const atlasFigure=newGrandGame('egypt');atlasFigure.relations['egypt:senate']=60;atlasFigure.factions.egypt.treasury=300;atlasFigure.seed=1;
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),atlasFigure);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
-  await page.locator('#development').click();
+  await openAtlasDevelopment();
   assert.equal(await page.locator('[data-recruit-figure="varro"]').isEnabled(),true);
   await page.locator('[data-recruit-figure="varro"]').click();
   assert.match(await page.locator('#command-detail').innerText(),/1个月后答复/);
@@ -424,7 +435,7 @@ try{
   await page.evaluate(()=>localStorage.setItem('spqr-lang','zh'));
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),blockedTrade);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
-  await page.locator('#development').click();
+  await openAtlasDevelopment();
   await page.locator('[data-trade-seller="egypt"][data-trade-id="water-control"]').click();
   assert.match(await page.locator('#command-detail').innerText(),/没有可通行的知识传递路线/);
   const incomingKnowledge=newGrandGame('caesar');incomingKnowledge.relations['caesar:egypt']=60;incomingKnowledge.factions.caesar.treasury=300;
@@ -440,7 +451,7 @@ try{
     assert.equal(await page.locator('[data-trade-seller="egypt"][data-trade-id="water-control"]').isDisabled(),true);
     await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),incomingKnowledge);
     await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
-    await page.locator('#development').click();
+    await openAtlasDevelopment();
     assert.equal(await page.locator('[data-research="water-control"]').isDisabled(),true);
     assert.match(await page.locator('[data-research="water-control"]').innerText(),language==='zh'?/传输中/:/In transit/);
   }
@@ -448,7 +459,7 @@ try{
   assert.equal(researchInnovation(underway,'caesar','material','water-control').ok,true);
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),underway);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
-  await page.locator('#development').click();
+  await openAtlasDevelopment();
   assert.equal(await page.locator('[data-trade-seller="egypt"][data-trade-id="water-control"]').isDisabled(),true);
   assert.deepEqual(errors,[]);
   console.log('Phase XIV browser smoke passed: research, adoption, construction, knowledge agreements and consent-based trades in both languages.');

@@ -10,7 +10,7 @@ import {endCampaign} from './achievement-system.js?v=5';
 import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from './achievement-ui.js?v=14';
 import {budgetHtml} from './budget-ui.js?v=36';
 import {holdPosition,strategicRetreat,armySupply,encircled} from './grand-operations.js?v=40';
-import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from './development-ui.js?v=63';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from './development-ui.js?v=64';
 import {drawMap,mapPoint} from './map.js?v=68';
 import {avoidGrandLabelCollisions} from './map-label-layout.js?v=3';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=14';
@@ -149,6 +149,7 @@ function render(){
   document.querySelector('.map-wrap').insertAdjacentHTML('beforeend',`<div class="map-tools"><button id="political" class="${mapMode==='political'?'active':''}">${t('political')}</button><button id="terrain-map" class="${mapMode==='terrain'?'active':''}">${t('terrainMap')}</button><button id="zoom-in">+</button><button id="zoom-out">−</button></div>${ordering?`<div class="march-prompt">${t('target')} <label>${t('chooseDestination')} <select id="march-destination"><option value="">—</option>${destinations.map(r=>`<option value="${r.id}">${esc(n(r.name))}</option>`).join('')}</select></label> <button id="cancel-march">${t('cancel')}</button></div>`:''}<div class="map-attribution">${t(state.grandMap?'mapNote':'legacyMapNote')}</div>`);
   document.querySelector('.inspector').classList.toggle('closed',!panelOpen);
   document.querySelector('.inspector').classList.toggle('wide',tab==='development'||tab==='ideas');
+  document.querySelector('.inspector').classList.toggle('research',tab==='development');
   if(document.querySelector('.dev-cards'))document.querySelector('.dev-cards').style.zoom=treeZoom;
   document.querySelector('.inspector').insertAdjacentHTML('afterbegin',`<button id="close-panel" class="panel-close" aria-label="${t('close')}">×</button>`);
   if(tab==='map' && selectedRegion==='illyricum')document.querySelector('.inspector .region-title')?.insertAdjacentHTML('afterend',`<p class="map-group-note">${lang==='zh'?'史料说明：凯撒时代的伊利里库姆是东亚得里亚海的指挥范围，确切边界不明；游戏控制方仅为战役简化。':'Historical note: Caesar’s Illyricum was an eastern Adriatic command with no securely defined boundary; the game owner is a campaign abstraction.'}</p>`);
@@ -196,7 +197,7 @@ function bind(){
   document.querySelectorAll('[data-dismiss-alert]').forEach(el=>el.onclick=()=>{dismissedAlert=el.dataset.dismissAlert;render()});
   document.querySelectorAll('.report-card[data-event-id]').forEach(el=>el.onclick=e=>{if(e.target.closest('button'))return;const item=state.campaignEvents.find(x=>x.id===el.dataset.eventId);if(item?.regionId)focusRegion(item.regionId)});
   document.querySelectorAll('[data-tree-zoom]').forEach(el=>el.onclick=()=>{treeZoom=Math.max(.75,Math.min(1.3,treeZoom+(el.dataset.treeZoom==='in'?.1:-.1)));const tree=document.querySelector('.dev-cards');tree.style.zoom=treeZoom;tree.dispatchEvent(new Event('scroll'))});
-  bindDevelopmentTreeNavigation(document);
+  bindDevelopmentTreeNavigation(document,lang);
   document.querySelectorAll('[data-dev-branch]').forEach(el=>el.onclick=()=>{devBranch=el.dataset.devBranch;render()});
   document.querySelectorAll('[data-research]').forEach(el=>el.onclick=()=>{const r=researchInnovation(state,state.player,el.dataset.researchBranch,el.dataset.research);if(!r.ok)flash(`${lang==='zh'?'无法研究':'Research unavailable'}: ${r.reason}`);else render()});
   document.querySelectorAll('[data-recruit-figure]').forEach(el=>el.onclick=()=>{const r=recruitFigure(state,state.player,el.dataset.recruitFigure);if(!r.ok)flash(`${lang==='zh'?'无法邀请':'Invitation unavailable'}: ${r.reason}`);else render()});
