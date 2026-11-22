@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-estate-village-1';
-import {proposeCommercialLeague,answerCommercialLeagueOffer,advanceCommercialLeagueOffers,advanceCommercialLeagues,leaveCommercialLeague,proposeCommercialLeaguesAI} from '../commercial-leagues.js?v=world-kings-estate-village-1';
-import {syncCommercialLeagueLetters,replyToLetter} from '../epistulae.js?v=world-kings-estate-village-1';
+import {newGame,upgradeSave} from '../engine.js?v=portrait-fourteen-1';
+import {proposeCommercialLeague,answerCommercialLeagueOffer,advanceCommercialLeagueOffers,advanceCommercialLeagues,leaveCommercialLeague,proposeCommercialLeaguesAI} from '../commercial-leagues.js?v=portrait-fourteen-1';
+import {syncCommercialLeagueLetters,replyToLetter} from '../epistulae.js?v=portrait-fourteen-1';
 import {knownOrganizations,organizationMapColor} from '../map-lab/organization-map.js';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=world-kings-estate-village-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=portrait-fourteen-1';
 
 const roll=()=>.5;
 function arrange(leader='caesar'){

@@ -1,4 +1,4 @@
-import {commercialContact,initializeCommercialLeagues,admitCommercialLeagueMember,expelCommercialLeagueMember,dissolveCommercialLeague} from './commercial-leagues.js?v=world-kings-estate-village-1';
+import {commercialContact,initializeCommercialLeagues,admitCommercialLeagueMember,expelCommercialLeagueMember,dissolveCommercialLeague} from './commercial-leagues.js?v=portrait-fourteen-1';
 
 const now=s=>s.year*12+s.month;
 const relation=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;

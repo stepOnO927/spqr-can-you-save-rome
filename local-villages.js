@@ -1,7 +1,7 @@
 import {localEntity, villageDevelopment} from './local-polities.js';
-import {sendLetter} from './epistulae.js?v=world-kings-estate-village-1';
-import {localAdministrator} from './office-system.js?v=world-kings-estate-village-1';
-import {CHARACTER_CATALOG} from './characters.js?v=world-kings-estate-village-1';
+import {sendLetter} from './epistulae.js?v=portrait-fourteen-1';
+import {localAdministrator} from './office-system.js?v=portrait-fourteen-1';
+import {CHARACTER_CATALOG} from './characters.js?v=portrait-fourteen-1';
 
 const clamp = value => Math.max(0, Math.min(100, value));
 function villageEvent(state, region, entity) {

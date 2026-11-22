@@ -1,9 +1,9 @@
-import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=world-kings-estate-village-1';
-import {campaignDate} from '../campaign-date.js?v=world-kings-estate-village-1';
-import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease,offerAgentHandover} from '../character-system.js?v=world-kings-estate-village-1';
-import {reassurePerson} from '../conspiracies.js?v=world-kings-estate-village-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=world-kings-estate-village-1';
-import {FACTIONS} from '../data.js?v=world-kings-estate-village-1';
+import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=portrait-fourteen-1';
+import {campaignDate} from '../campaign-date.js?v=portrait-fourteen-1';
+import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease,offerAgentHandover} from '../character-system.js?v=portrait-fourteen-1';
+import {reassurePerson} from '../conspiracies.js?v=portrait-fourteen-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=portrait-fourteen-1';
+import {FACTIONS} from '../data.js?v=portrait-fourteen-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function renderSecurity({panel,state,language,refresh}){

@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-estate-village-1';
-import {fictionalPortraitKey} from '../portrait-registry.js?v=world-kings-estate-village-1';
+import {newGame,upgradeSave} from '../engine.js?v=portrait-fourteen-1';
+import {fictionalPortraitKey} from '../portrait-registry.js?v=portrait-fourteen-1';
 
 test('opening portrait identity checks both saved names and rejects contradictory details',()=>{
  let s=newGame('caesar'),id='fictional:1',c=s.world.characters[id],entry=s.world.dynasties.catalog[id];assert.equal(fictionalPortraitKey(s,id),'fictional-varenus');
