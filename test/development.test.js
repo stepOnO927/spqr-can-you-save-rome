@@ -41,6 +41,26 @@ test('agreed grain-dues commutation converts only real surplus after paid adopti
  const unsupported=structuredClone(saved);for(const r of unsupported.regions.filter(r=>r.owner==='caesar'))r.civicSatisfaction=40;assert.equal(nationalBudget(unsupported,'caesar').grainCommutation,0);
 });
 
+test('AI funds grain commutation only when it can collect agreed cash dues',()=>{
+ const opening=newGrandGame('caesar');
+ for(const condition of ['ready','low-stores','no-surplus','no-support','thin-harvest']){
+  const s=upgradeSave(structuredClone(opening)),owner='egypt',d=development(s,owner);
+  d.knownIdeas.push('grain-dues-commutation');d.slots.economy=[null];s.factions[owner].treasury=700;s.month=1;
+  if(condition==='low-stores')s.factions[owner].food=34;
+  if(condition==='no-surplus')for(const r of s.regions.filter(r=>r.owner===owner))r.food=0;
+  if(condition==='no-support')for(const r of s.regions.filter(r=>r.owner===owner))r.civicSatisfaction=40;
+  if(condition==='thin-harvest'){
+   const owned=s.regions.filter(r=>r.owner===owner);
+   for(const r of owned)r.civicSatisfaction=40;
+   owned[0].civicSatisfaction=80;owned[0].loyalty=80;owned[0].food=.5;
+  }
+  const useful=condition==='ready';assert.equal(nationalBudget(s,owner).foodNet>0,condition!=='no-surplus');
+  aiTurn(s,owner);
+  assert.equal(d.adoption?.ideaId,useful?'grain-dues-commutation':undefined,condition);
+  if(useful){for(let i=0;i<2;i++)advanceDevelopment(s);assert.ok(nationalBudget(s,owner).grainCommutation>0)}
+ }
+});
+
 test('paid field reserve command helps only supplied joint defense and survives a save',()=>{
  const s=newGrandGame('caesar'),idea=IDEAS.find(item=>item.id==='field-reserve-command');
  assert.deepEqual(idea.prerequisites,['frontier-defense']);

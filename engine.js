@@ -749,7 +749,9 @@ export function aiTurn(s,owner){
     const administration=institutions.some(id=>['senatorial-consultation','central-administration','maritime-administration'].includes(id))||owned.some(r=>r.buildings?.includes('administration'));
     const education=institutions.some(id=>['rhetorical-education','civic-education','naval-engineering-education'].includes(id))||owned.some(r=>r.buildings?.includes('library'));
     const hasProductiveEstate=owned.some(productiveEstateRegion);
-    const locallyUseful=i=>hasProductiveEstate||!['estate-labor-control','negotiated-crop-shares','seasonal-labor-contracts'].includes(i.id);
+    const commutableHarvest=owned.filter(r=>r.food>=.5&&r.tax>0&&r.loyalty>=55&&(r.civicSatisfaction??r.loyalty)>=55).reduce((sum,r)=>sum+r.food,0);
+    const commutationReady=f.food>=35&&budget.foodNet>0&&Math.floor(commutableHarvest)>0;
+    const locallyUseful=i=>i.id==='grain-dues-commutation'?commutationReady:hasProductiveEstate||!['estate-labor-control','negotiated-crop-shares','seasonal-labor-contracts'].includes(i.id);
     const categoryHasRoom=category=>{
       const slots=d.slots[category],known=d.knownIdeas.filter(id=>IDEAS.find(i=>i.id===id)?.category===category).length;
       if(slots.some(v=>!v))return !d.knownIdeas.some(id=>IDEAS.find(i=>i.id===id)?.category===category&&!slots.includes(id));
@@ -763,6 +765,7 @@ export function aiTurn(s,owner){
       if(i.id==='provincial-tax-review'&&f.tax==='high')score+=3;
       if(i.id==='diplomatic-accommodation'&&!atWar||i.id==='hardline-diplomacy'&&atWar)score+=3;
       if(i.id==='tax-farming'&&budget.projectedNet<0&&!unsettled||i.id==='public-works'&&unsettled)score+=3;
+      if(i.id==='grain-dues-commutation'&&budget.projectedNet<0&&commutationReady)score+=3;
       if(i.id==='cultural-accommodation'&&unsettled||i.id==='rhetorical-education'&&!unsettled)score+=3;
       if(i.id==='provincial-rites-charter'&&s.religion?.[owner]?.policy==='local-rites')score+=3;
       if(i.originCulture&&owner!==i.origin&&HOME_CULTURE[owner]===i.originCulture&&atWar&&owned.some(r=>r.culture===i.originCulture&&(r.civicSatisfaction??r.loyalty??0)>=45))score+=6;
