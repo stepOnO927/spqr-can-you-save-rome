@@ -167,6 +167,10 @@ function navigateExperience(kind,id){
  else if(kind==='direction'){render();document.querySelector('#campaign-progress')?.click();return}
  else if(kind==='time'||kind==='advance'){render();document.querySelector('#step')?.focus();return}
  render();
+ if(kind==='focus'&&id){
+  document.querySelector('[data-imp-open-focus]')?.click();
+  document.querySelector(`#imp-tree [data-imp-focus="${CSS.escape(id)}"]`)?.click();
+ }
 }
 function render(){syncChronicleDispatches(state);
   analytics.setGameRunning(!setupOpen&&!state.defeat);
