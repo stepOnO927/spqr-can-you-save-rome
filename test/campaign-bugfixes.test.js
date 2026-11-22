@@ -10,6 +10,41 @@ import {budgetHtml} from '../budget-ui.js';
 import {afterActionHtml,intelligenceHtml} from '../recon-ui.js';
 import {battleSideForPlayer} from '../visibility.js';
 
+test('Roman AI does not open an optional foreign front during the civil war',()=>{
+ const setup=atWar=>{
+  const s=newGrandGame('egypt');s.month=6;s.seed=49049;
+  if(!atWar)s.wars=[];
+  region(s,'numidia').owner='senate';
+  s.relations['mauretania:senate']=-80;
+  s.factions.senate.treasury=500;s.factions.senate.food=500;
+  s.alliances.push(['senate','galatia']);
+  return s;
+ };
+ const wartime=setup(true),peacetime=setup(false);
+ for(let review=0;review<3;review++){aiTurn(wartime,'senate');aiTurn(peacetime,'senate')}
+ assert.equal(isWar(wartime,'senate','mauretania'),false);
+ assert.equal(isWar(wartime,'galatia','mauretania'),false);
+ assert.equal(isWar(peacetime,'senate','mauretania'),true,'the same frontier can still trigger a war after peace');
+ assert.equal(isWar(peacetime,'galatia','mauretania'),true,'an ally still joins a declared war');
+});
+
+test('a recorded civil-war result cannot be reopened or settled again, including an old save',()=>{
+ const s=newGrandGame('egypt');
+ s.civilWarOutcome={kind:'settlement',winner:'senate',loser:'caesar',year:-47,month:6};
+ s.wars=[];
+ const treasury=s.factions.senate.treasury;
+ assert.equal(diplomacy(s,'senate','caesar','war'),false);
+ assert.equal(s.factions.senate.treasury,treasury);
+ const stale=structuredClone(s);stale.wars.push(['senate','caesar']);
+ assert.equal(diplomacy(stale,'senate','caesar','settlement'),false);
+ assert.equal(stale.factions.senate.treasury,treasury);
+ const restored=upgradeSave(stale);
+ assert.equal(isWar(restored,'senate','caesar'),false);
+ assert.deepEqual(restored.civilWarOutcome,s.civilWarOutcome);
+ const roman=newGrandGame('senate');roman.campaignOutcome={kind:'military',winner:'senate',loser:'caesar',year:-47,month:6};roman.wars=[];
+ assert.equal(diplomacy(roman,'caesar','senate','war'),false);
+});
+
 test('co-located armies defend together and preserve their separate losses',()=>{
  const setup=reinforce=>{
   const s=newGrandGame('caesar');s.seed=17;

@@ -23,6 +23,9 @@ try{
  await page.locator('#upload-save-file').setInputFiles({name:'victory.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(s))});
  await page.locator('#victory-continue').waitFor();assert.equal(await page.locator('.ending-achievements').count(),0);
  await page.locator('#victory-continue').click();assert.equal(await page.locator('.campaign-ending').count(),0);
+ await page.locator('#factions').click();await page.locator('.faction-directory [data-faction="caesar"]').click();
+ assert.equal(await page.locator('[data-diplomacy="war"]').count(),0);
+ assert.match(await page.locator('#command-detail').innerText(),/civil war formally ended|内战已经正式结束/i);
  await page.locator('#resources-help').click();assert.match(await page.locator('.national-budget').innerText(),/MONTHLY NATIONAL BUDGET|每月国家预算/);
  assert.match(await page.locator('.national-budget').innerText(),/本月已付建造费\s+-23|Construction paid this month\s+-23/);
  assert.match(await page.locator('.national-budget').innerText(),/本月已付研究费\s+-17|Research paid this month\s+-17/);
@@ -61,6 +64,10 @@ try{
  await civil.reload();await civil.locator('#victory-language').waitFor();
  const mainBefore=await civil.locator('.victory-choice').innerText();await civil.locator('#victory-language').click();const mainAfter=await civil.locator('.victory-choice').innerText();
  assert.notEqual(mainBefore,mainAfter);assert.match(mainBefore+mainAfter,/core army/);assert.match(mainBefore+mainAfter,/核心军团/);
+ await civil.locator('#victory-continue').click();await civil.locator('[data-tab="government"]').click();
+ const concluded= civil.locator('[data-dip="senate"][data-act="war"]');
+ assert.equal(await concluded.isDisabled(),true);assert.match(await concluded.innerText(),/内战已结束/);
+ await civil.locator('#lang').click();assert.equal(await concluded.isDisabled(),true);assert.match(await concluded.innerText(),/Civil war concluded/);
  const offered=newGrandGame('senate');
  for(const site of offered.regions.filter(r=>r.owner==='senate').slice(0,48))site.owner='caesar';
  offered.regions.find(r=>r.id==='roma').owner='caesar';

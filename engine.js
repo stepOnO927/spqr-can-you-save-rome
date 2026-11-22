@@ -36,6 +36,7 @@ const log = (s,en,zh) => {s.log.unshift({month:s.month,year:s.year,en,zh});s.log
 export const isWar = (s,a,b) => a!==b && s.wars.some(w=>w.includes(a)&&w.includes(b));
 export const PLAYABLE = ['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair = (a,b) => [a,b].sort().join(':');
+const romanCivilResult = s => [s.civilWarOutcome,s.campaignOutcome].find(result=>['caesar','senate'].includes(result?.winner)&&result.loser===(result.winner==='caesar'?'senate':'caesar'));
 export const relation = (s,a,b) => s.relations[pair(a,b)] ?? 0;
 export const isAllied = (s,a,b) => s.alliances.some(p=>p.includes(a)&&p.includes(b));
 const strength = (s,id) => s.armies.filter(a=>a.owner===id).reduce((v,a)=>v+a.men,0);
@@ -109,8 +110,7 @@ export function upgradeSave(s){
   if(completed?.finalized&&completed.result==='retired'&&completed.summary?.winner===s.civilWarOutcome.winner){completed.summary.civilWarOutcome=s.civilWarOutcome;completed.summary.winner=null;completed.summary.method=null}
  }
  if(s.victory&&!s.campaignOutcome)s.campaignOutcome={kind:'military',winner:s.player,loser:s.player==='caesar'?'senate':'caesar',year:s.year,month:s.month,legacy:true};
- const civilResult=s.civilWarOutcome||s.campaignOutcome;
- if(civilResult?.kind==='military'&&['caesar','senate'].includes(civilResult.winner)&&['caesar','senate'].includes(civilResult.loser)&&isWar(s,'caesar','senate'))concludePeace(s,'caesar','senate');
+ if(romanCivilResult(s)&&isWar(s,'caesar','senate'))concludePeace(s,'caesar','senate');
  migrateRegionalPowers(s);migrateCyrene(s);initializeReports(s);updateObjectives(s,true);initializeFigures(initializeDevelopment(refreshReportConfidence(initializeGovernments(s))));initializeLocalSociety(s);initializeNaval(s);migrateGranaryReserves(s,(state,owner)=>nationalBudget(state,owner).foodCapacity);initializeAchievements(s);s.briefingBaseline ||= beginBriefing(s);return s;
 }
 
@@ -303,7 +303,9 @@ export function respondCivilSettlement(s,accept){
 export function diplomacy(s, actor, target, action){
   if(actor===target || !s.factions[actor] || !s.factions[target] || actor==='rebels' || target==='rebels'&&action!=='war' || !s.regions.some(r=>r.owner===actor) || !s.regions.some(r=>r.owner===target))return false;
   const key=pair(actor,target);
+  const resolvedRomanPair=key===pair('caesar','senate')&&romanCivilResult(s);
   if(action==='settlement'&&['caesar','senate'].includes(actor)&&target===(actor==='caesar'?'senate':'caesar')&&isWar(s,actor,target)){
+    if(resolvedRomanPair)return false;
     if(s.pendingCivilSettlement)return false;
     const offerKey=pair(actor,target),now=s.year*12+s.month,last=s.lastSettlementOffer?.[offerKey]??-Infinity;
     if(s.factions[actor].treasury<4||now-last<3)return false;
@@ -320,6 +322,7 @@ export function diplomacy(s, actor, target, action){
   if(action==='alliance' && !isWar(s,actor,target) && relation(s,actor,target)+personalDiplomaticCredit(s,actor,target)+royalCourtCredit(s,actor,target)+provincialRitesCredit(s,actor,target)>=30 && !isAllied(s,actor,target) && !s.wars.some(w=>(w.includes(actor)&&isAllied(s,target,w.find(x=>x!==actor)))||(w.includes(target)&&isAllied(s,actor,w.find(x=>x!==target))))){s.alliances.push([actor,target]);log(s,`${FACTIONS[actor].short[0]} allied with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}与${FACTIONS[target].short[1]}结盟。`);recordDiplomacy(s,actor,target,action);return true}
   if(action==='break' && isAllied(s,actor,target)){s.alliances=s.alliances.filter(p=>!(p.includes(actor)&&p.includes(target)));s.relations[key]=relation(s,actor,target)-20;log(s,`${FACTIONS[actor].short[0]} broke its alliance with ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}解除了与${FACTIONS[target].short[1]}的同盟。`);recordDiplomacy(s,actor,target,action);return true}
   if(action==='war' && !isWar(s,actor,target)){
+    if(resolvedRomanPair)return false;
     if(isAllied(s,actor,target))return false;
     s.wars.push([actor,target]);const firstNewWar=s.wars.length;
     if(target!=='rebels'){
@@ -996,7 +999,7 @@ export function aiTurn(s,owner){
     if(!INDEPENDENT_COMMANDS.has(owner)&&!enemy && f.treasury>35){const neighbor=owned.flatMap(r=>adjacent(r.id,s).map(e=>region(s,e.to))).find(r=>r.owner!==owner&&r.owner!=='rebels'&&relation(s,owner,r.owner)>=0&&!isAllied(s,owner,r.owner));if(neighbor && rnd(s)<.2)diplomacy(s,owner,neighbor.owner,'improve')}
   }
   if(INDEPENDENT_COMMANDS.has(owner))independentPosture(s,owner,owned);
-  else if(owner!=='rebels' && s.month%6===0 && f.treasury>40 && f.food>10 && strength(s,owner)>2000){
+  else if(owner!=='rebels' && !s.wars.some(w=>w.includes(owner)) && s.month%6===0 && f.treasury>40 && f.food>10 && strength(s,owner)>2000){
     const border=owned.flatMap(r=>adjacent(r.id,s).map(e=>region(s,e.to))).find(r=>r.owner!==owner&&r.owner!=='rebels'&&!isWar(s,owner,r.owner)&&!isAllied(s,owner,r.owner)&&strength(s,owner)>estimatedStrength(s,owner,r.owner)*1.5&&relation(s,owner,r.owner)<0);
     if(border&&rnd(s)<.18)diplomacy(s,owner,border.owner,'war');
   }
