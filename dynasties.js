@@ -1,9 +1,9 @@
-import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=estate-courier-1';
+import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=estate-records-1';
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=saved-age-consistency-1';
-import {startDynasticWar} from './civil-war.js?v=estate-courier-1';
+import {startDynasticWar} from './civil-war.js?v=estate-records-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {assignBornPortrait,assignCourtPortrait,assignLegendPortrait} from './portrait-registry.js?v=born-portrait-thirteen-1';
-import {initializeLegend,recordLegendEvidence} from './legend.js?v=estate-courier-1';
+import {initializeLegend,recordLegendEvidence} from './legend.js?v=estate-records-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -332,7 +332,7 @@ export function settleInheritance(s,id){
  c.inheritanceSettled=true;const potentiallyAvailable=x=>{const person=s.world.characters[x];return !!person&&(person.faction!==c.faction||person.alive)},heirs=c.children.filter(potentiallyAvailable),will=c.will?.beneficiary;
  const eligibleWill=will&&potentiallyAvailable(will)?will:null,wealth=Math.max(0,Math.floor(c.wealth||0));
  if(eligibleWill&&heirs.some(x=>x!==eligibleWill)&&(!heirs.includes(eligibleWill)||s.world.characters[eligibleWill].faction!==c.faction)&&wealth>0){
-  d.inheritanceDisputes.push({id:`estate:${id}`,deceased:id,faction:c.faction,beneficiary:eligibleWill,beneficiaryName:storedCorrespondentName(eligibleWill,c.will.beneficiaryName),heirs:heirs.filter(x=>x!==eligibleWill),estate:wealth,share:c.will.share,status:'pending',year:s.year,month:s.month});
+  d.inheritanceDisputes.push({id:`estate:${id}`,deceased:id,faction:c.faction,beneficiary:eligibleWill,beneficiaryName:storedCorrespondentName(eligibleWill,c.will.beneficiaryName),heirs:heirs.filter(x=>x!==eligibleWill),heirNames:Object.fromEntries(heirs.filter(x=>x!==eligibleWill).map(heir=>[heir,[...(visiblePersonName(s,c.faction,heir)||['Unrecorded name','姓名未记录'])]])),estate:wealth,share:c.will.share,status:'pending',year:s.year,month:s.month});
   c.wealth=0;record(s,id,'Died; the contested private estate is held pending a ruling.','去世；有争议的私人遗产待裁决。');
   if(c.faction===s.player)note(s,`The private estate of ${CHARACTER_CATALOG[id].name[0]} is disputed; the court may uphold the will, divide it, or favor the children.`,` ${CHARACTER_CATALOG[id].name[1]}的私人遗产发生争议；宫廷可维持遗嘱、分割遗产或支持子女。`);
   return;

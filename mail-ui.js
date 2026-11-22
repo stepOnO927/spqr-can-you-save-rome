@@ -1,5 +1,5 @@
-import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=estate-courier-1';
-import {wartimePolicy} from './epistulae-personnel.js?v=estate-courier-1';
+import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=estate-records-1';
+import {wartimePolicy} from './epistulae-personnel.js?v=estate-records-1';
 import {CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
 
