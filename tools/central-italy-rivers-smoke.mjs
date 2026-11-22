@@ -6,6 +6,7 @@ import rivers from '../central-italy-rivers.js';
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const output=resolve(root,'outputs','central-italy-rivers-review');
+const atlasUrl=process.env.SPQR_ATLAS_URL||'http://spqr.test/map-lab/';
 await mkdir(output,{recursive:true});
 if(rivers.features.length<400||new Set(rivers.features.map(feature=>feature.properties.id)).size!==rivers.features.length||!['tiber','arno'].every(river=>rivers.features.some(feature=>feature.properties.river===river)))throw Error('Bundled central Italian river coverage is missing or duplicated');
 const browser=await chromium.launch({headless:true,executablePath:process.env.SPQR_CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -14,7 +15,7 @@ const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
- await page.route('**/*',async route=>{
+ if(!process.env.SPQR_ATLAS_URL)await page.route('**/*',async route=>{
   const url=new URL(route.request().url());
   if(url.protocol==='blob:'){await route.continue();return}
   if(url.hostname!=='spqr.test'){await route.abort();return}
@@ -25,16 +26,16 @@ try{
   try{await route.fulfill({status:200,contentType:mime,body:await readFile(file)})}
   catch{await route.fulfill({status:404,body:'Not found'})}
  });
- await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.goto(atlasUrl,{waitUntil:'domcontentloaded'});
  await page.locator('#start-free').click();
  await page.locator('.maplibregl-canvas').waitFor();
  await page.locator('#map-mode').selectOption('terrain');
  for(const [name,center] of [['rome',[12.48,41.93]],['florence',[11.25,43.77]]]){
-  await page.evaluate(async center=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center,zoom:9.05})},center);
+  await page.evaluate(async center=>{const {map}=await import(document.querySelector('script[type="module"]').src);window.__spqrRiverStable=0;map.jumpTo({center,zoom:9.05})},center);
   await page.locator('#map-charting').waitFor({state:'visible',timeout:3000}).catch(()=>{});
   await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
   await page.waitForTimeout(2800);
-  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&getComputedStyle(document.querySelector('#map-charting')).display==='none'&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
+  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);const ready=!map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&getComputedStyle(document.querySelector('#map-charting')).display==='none'&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99;if(!ready){window.__spqrRiverStable=0;return false}if(!window.__spqrRiverStable)window.__spqrRiverStable=performance.now();return performance.now()-window.__spqrRiverStable>1500},null,{timeout:30000,polling:100});
   const state=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {zoom:map.getZoom(),source:!!map.getSource('central-italy-rivers'),layer:!!map.getLayer('waterways-central-italy'),charted:document.querySelector('#map-charting').hidden,note:document.querySelector('#map-mode-note').textContent}});
   if(!state.source||!state.layer||!state.charted||!state.note.includes('现代河网'))throw Error(`${name}: ${JSON.stringify(state)}`);
   await page.screenshot({path:resolve(output,`${name}-new.png`)});
