@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=focus-agreement-consent-1';
-import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=focus-agreement-consent-1';
-import {drawMap} from '../map.js?v=focus-agreement-consent-1';
-import {advanceMovements} from '../movements.js?v=focus-agreement-consent-1';
-import {buildChessboard} from '../chessboard.js?v=focus-agreement-consent-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=focus-agreement-consent-1';
-import {observeBalanceOfPower} from '../coalitions.js?v=focus-agreement-consent-1';
+import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=relationship-knowledge-1';
+import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=relationship-knowledge-1';
+import {drawMap} from '../map.js?v=relationship-knowledge-1';
+import {advanceMovements} from '../movements.js?v=relationship-knowledge-1';
+import {buildChessboard} from '../chessboard.js?v=relationship-knowledge-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=relationship-knowledge-1';
+import {observeBalanceOfPower} from '../coalitions.js?v=relationship-knowledge-1';
 
 test('undelivered frontier control cannot reveal contacts, chessboard threats or AI balance',()=>{
  const base=newGame('caesar');delete base.controlKnowledge.caesar.italiaN;

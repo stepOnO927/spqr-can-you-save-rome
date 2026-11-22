@@ -1,4 +1,4 @@
-import {AGREEMENT_TYPES,activeAgreement,checkAgreement,proposeAgreement} from './agreements.js?v=focus-agreement-consent-1';
+import {AGREEMENT_TYPES,activeAgreement,checkAgreement,proposeAgreement} from './agreements.js?v=relationship-knowledge-1';
 
 const COURIER_COST=2;
 const proposalDefinition=type=>type==='full_alliance'?{cost:0}:AGREEMENT_TYPES[type];

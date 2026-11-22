@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=focus-agreement-consent-1';
-import {sendCoalitionInvitation,advanceCoalitionInvitations,answerCoalitionInvitation} from '../coalition-negotiations.js?v=focus-agreement-consent-1';
-import {receivedMail,replyToLetter,syncCoalitionLetters} from '../epistulae.js?v=focus-agreement-consent-1';
+import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=relationship-knowledge-1';
+import {sendCoalitionInvitation,advanceCoalitionInvitations,answerCoalitionInvitation} from '../coalition-negotiations.js?v=relationship-knowledge-1';
+import {receivedMail,replyToLetter,syncCoalitionLetters} from '../epistulae.js?v=relationship-knowledge-1';
 
 function setup(){
  const s=newGame('caesar');s.relations['caesar:egypt']=40;s.relations['egypt:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;

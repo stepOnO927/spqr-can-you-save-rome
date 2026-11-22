@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=focus-agreement-consent-1';
-import {sendCoalitionInvitation,advanceCoalitionInvitations} from '../coalition-negotiations.js?v=focus-agreement-consent-1';
+import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=relationship-knowledge-1';
+import {sendCoalitionInvitation,advanceCoalitionInvitations} from '../coalition-negotiations.js?v=relationship-knowledge-1';
 import {initializeChronicle,syncChronicleDispatches} from '../chronicle.js?v=saved-age-consistency-1';
 
 function setup(){
