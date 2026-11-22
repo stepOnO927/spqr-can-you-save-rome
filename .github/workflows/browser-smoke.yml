@@ -76,6 +76,8 @@ jobs:
               node tools/procedural-portrait-smoke.mjs
               ;;
             2)
+              node tools/han-regional-administrator-smoke.mjs
+              node tools/commander-age-uncertainty-smoke.mjs
               node tools/cursus-applicant-smoke.mjs
               node tools/han-court-smoke.mjs
               node tools/han-court-alliance-smoke.mjs
@@ -87,7 +89,6 @@ jobs:
               node tools/fictional-family-age-smoke.mjs
               node tools/family-loan-visibility-smoke.mjs
               node tools/contact-credit-privacy-smoke.mjs
-              node tools/commander-age-uncertainty-smoke.mjs
               node tools/claimant-aid-forces-smoke.mjs
               node tools/foreign-name-privacy-smoke.mjs
               node tools/campaign-intelligence-privacy-smoke.mjs
@@ -120,7 +121,6 @@ jobs:
               node tools/stone-construction-smoke.mjs
               node tools/han-smoke.mjs
               node tools/han-market-smoke.mjs
-              node tools/han-regional-administrator-smoke.mjs
               node tools/han-merchant-venture-smoke.mjs
               node tools/roman-eastern-import-smoke.mjs
               node tools/roman-eastern-export-smoke.mjs
