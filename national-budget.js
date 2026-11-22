@@ -1,5 +1,5 @@
 import {officeEffects} from './office-system.js';
-import {activeEffects,localBuildingEffects,taxReviewExpense,templeGuaranteeExpense,GRANARY_RESERVE_CAPACITY} from './development.js?v=58';
+import {activeEffects,localBuildingEffects,taxReviewExpense,templeGuaranteeExpense,GRANARY_RESERVE_CAPACITY,IDEA_SLOT_ADMIN_UPKEEP} from './development.js?v=59';
 import {fleetUpkeepDue} from './naval.js?v=55';
 import {productiveEstateRegion} from './local-society.js?v=9';
 
@@ -20,7 +20,7 @@ export function nationalBudget(s,id){
  const navyUpkeep=(s.naval?.fleets||[]).filter(v=>v.owner===id&&Object.values(v.ships||{}).some(Boolean)).reduce((n,v)=>n+fleetUpkeepDue(v),0);
  const tradeImportPaid=(s.naval?.routes||[]).reduce((sum,route)=>sum+(route.last?.buyer===id&&route.last.seller!==id&&route.last.year===s.year&&route.last.month===s.month?route.last.paid||0:0),0);
  const navalJobs=(s.naval?.jobs||[]).filter(v=>v.owner===id&&v.remaining<=0).length;
- const administrationExpense=Object.values(s.development?.[id]?.slots||{}).reduce((n,slots)=>n+Math.max(0,slots.length-1),0),reviewExpense=id==='rebels'?0:taxReviewExpense(s,id),templeExpense=id==='rebels'?0:templeGuaranteeExpense(s,id);
+ const administrationExpense=Object.values(s.development?.[id]?.slots||{}).reduce((n,slots)=>n+Math.max(0,slots.length-1)*IDEA_SLOT_ADMIN_UPKEEP,0),reviewExpense=id==='rebels'?0:taxReviewExpense(s,id),templeExpense=id==='rebels'?0:templeGuaranteeExpense(s,id);
  const policy=s.religion?.[id],religiousExpense=(policy?.policy==='civic-patronage'||policy?.transition?.policy==='civic-patronage'&&policy.transition.remaining<=1)&&f.treasury>0?1:0;
  const estateFood=effects.estateLabor?Math.min(4,owned.filter(productiveEstateRegion).length):0;
  const tenantFood=effects.tenantShares?Math.min(3,owned.filter(productiveEstateRegion).length):0;

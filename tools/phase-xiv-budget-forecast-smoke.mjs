@@ -37,6 +37,8 @@ try{
   await page.locator('[data-tab="ideas"]').click();
   assert.equal(await page.locator('[data-select-idea]').count(),50);
   assert.equal(await page.locator('.dev-idea-detail:visible').count(),5);
+  assert.match(await page.locator('.dev-category').first().locator('.dev-expansion').innerText(),lang==='zh'?/完工后：每月增加 1¤ 行政维护费[\s\S]*已知理念 1\/2[\s\S]*行政或教育制度/:/After completion: \+ 1¤ administrative upkeep \/ month[\s\S]*Known ideas 1\/2[\s\S]*Administration or education/);
+  if(lang==='en')await page.screenshot({path:`outputs/phase-xiv-slot-requirements-main-${width}.png`});
   const expected=lang==='zh'?/过渡完成后预计国库 \/ 月.*\+2 → -1¤.*每月赤字/:/Projected treasury \/ month after transition.*\+2 → -1¤.*Monthly deficit/;
   assert.match(await page.locator('#tech-parthian-arrow-trains .dev-budget-preview').innerText(),expected);
   await page.locator('[data-select-idea="legion-training"]').click();
@@ -57,6 +59,8 @@ try{
   await page.locator('[data-dev-page="ideas"]').click();
   assert.equal(await page.locator('[data-select-idea]').count(),50);
   assert.equal(await page.locator('.dev-idea-detail:visible').count(),5);
+  assert.match(await page.locator('.dev-category').first().locator('.dev-expansion').innerText(),lang==='zh'?/已知理念 1\/2[\s\S]*行政或教育制度/:/Known ideas 1\/2[\s\S]*Administration or education/);
+  if(lang==='en')await page.screenshot({path:`outputs/phase-xiv-slot-requirements-atlas-${width}.png`});
   assert.match(await page.locator('#tech-parthian-arrow-trains .dev-budget-preview').innerText(),expected);
   await page.locator('[data-select-idea="legion-training"]').click();
   assert.equal(await page.locator('#tech-legion-training').isVisible(),true);

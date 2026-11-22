@@ -8,6 +8,7 @@ export const IDEA_CATEGORIES = [
   {id:'economy',name:['Economy & Society','经济与社会']},
   {id:'culture',name:['Education, Culture & Belief','教育、文化与信仰']}
 ];
+export const IDEA_SLOT_ADMIN_UPKEEP=1;
 const appianSource='https://whc.unesco.org/en/list/1708';
 const gracchusMilestonesSource='https://penelope.uchicago.edu/Thayer/E/Roman/Texts/Plutarch/Lives/Caius_Gracchus%2A.html';
 const miningSource='https://oxrep.web.ox.ac.uk/mines-database';
@@ -377,15 +378,17 @@ export function cancelIdeaAdoption(s,owner){
 }
 export function ideaSlotExpansionCheck(s,owner,category){
   const d=development(s,owner),slots=d.slots[category],f=s.factions[owner];
-  if(!slots||slots.length>=3||d.expansion)return {ok:false,reason:'capacity'};
+  if(!slots||slots.length>=3)return {ok:false,reason:'capacity'};
   const known=d.knownIdeas.filter(id=>IDEAS.find(i=>i.id===id)?.category===category).length;
-  if(known<slots.length+1)return {ok:false,reason:'knowledge'};
   const active=Object.values(d.slots).flat().filter(Boolean),owned=s.regions.filter(r=>r.owner===owner);
   const administration=active.some(id=>['senatorial-consultation','central-administration','maritime-administration'].includes(id))||owned.some(r=>r.buildings?.includes('administration'));
   const education=active.some(id=>['rhetorical-education','civic-education','naval-engineering-education'].includes(id))||owned.some(r=>r.buildings?.includes('library'));
-  if(slots.length===1&&!administration&&!education||slots.length===2&&(!administration||!education||f.stability<55))return {ok:false,reason:'institution'};
   const cost=slots.length===1?35:60,months=slots.length===1?6:9;
-  return f.treasury<cost?{ok:false,reason:'treasury',cost,months}:{ok:true,cost,months};
+  const requirements={known,requiredKnown:slots.length+1,administration,education,stability:f.stability,requiredStability:slots.length===2?55:0,treasury:f.treasury,cost,months,monthlyUpkeep:IDEA_SLOT_ADMIN_UPKEEP};
+  if(d.expansion)return {...requirements,ok:false,reason:'capacity'};
+  if(known<requirements.requiredKnown)return {...requirements,ok:false,reason:'knowledge'};
+  if(slots.length===1&&!administration&&!education||slots.length===2&&(!administration||!education||f.stability<55))return {...requirements,ok:false,reason:'institution'};
+  return f.treasury<cost?{...requirements,ok:false,reason:'treasury'}:{...requirements,ok:true};
 }
 export function expandIdeaSlot(s,owner,category){
   const check=ideaSlotExpansionCheck(s,owner,category);if(!check.ok)return check;
@@ -760,7 +763,7 @@ export function advanceDevelopment(s,log=()=>{}){
       const local=localBuildingEffects(r);for(const k of ['stone','timber','metal'])added[k]+=local[k]||0;
     }
     for(const k of Object.keys(added))d.materials[k]=Math.min(100,d.materials[k]+added[k]);
-    f.treasury-=Object.values(d.slots).reduce((n,slots)=>n+Math.max(0,slots.length-1),0)+taxReviewExpense(s,owner)+templeGuaranteeExpense(s,owner);
+    f.treasury-=Object.values(d.slots).reduce((n,slots)=>n+Math.max(0,slots.length-1)*IDEA_SLOT_ADMIN_UPKEEP,0)+taxReviewExpense(s,owner)+templeGuaranteeExpense(s,owner);
     const relationEffect=activeEffects(s,owner).relations||0;
     if(relationEffect)for(const other of Object.keys(s.development).filter(id=>id!==owner&&!s.wars.some(w=>w.includes(owner)&&w.includes(id)))){
       const key=[owner,other].sort().join(':');s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+relationEffect));

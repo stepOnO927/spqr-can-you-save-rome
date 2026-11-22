@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,region,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials,resolveBattle} from '../engine.js';
-import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves,advanceDevelopment,mineMetalOutput,localBuildingEffects,templeGuaranteeExpense} from '../development.js';
+import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,ideaSlotExpansionCheck,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves,advanceDevelopment,mineMetalOutput,localBuildingEffects,templeGuaranteeExpense} from '../development.js';
 import {advanceNaval} from '../naval.js';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js';
 import {edgeMonths,grandRoute,armySupply} from '../grand-operations.js';
@@ -1196,6 +1196,24 @@ test('ideas remain in their category, conflicting policies are rejected, expansi
   assert.equal(d.slots.government.length,2);assert.equal(d.slots.military.length,1);
   assert.equal(adoptIdea(s,'caesar','provincial-autonomy',1).ok,true);months(s,3);
   assert.equal(d.slots.government[1],'provincial-autonomy');
+});
+
+test('idea slot expansion shows its real requirements, upkeep and dated progress in both languages',()=>{
+  const s=newGame('caesar'),d=development(s,'caesar');s.factions.caesar.treasury=500;
+  d.knownIdeas.push('legion-training');
+  let plan=ideaSlotExpansionCheck(s,'caesar','military');
+  assert.equal(plan.reason,'knowledge');assert.equal(plan.known,1);assert.equal(plan.requiredKnown,2);assert.equal(plan.monthlyUpkeep,1);
+  assert.match(ideasPanel(s,'en'),/Known ideas 1\/2[\s\S]*Administration or education[\s\S]*Treasury 500\/35¤/);
+  assert.match(ideasPanel(s,'zh'),/已知理念 1\/2[\s\S]*行政或教育制度[\s\S]*国库 500\/35¤/);
+  d.knownIdeas.push('frontier-defense');
+  plan=ideaSlotExpansionCheck(s,'caesar','military');assert.equal(plan.reason,'institution');
+  d.slots.government[0]='senatorial-consultation';
+  plan=ideaSlotExpansionCheck(s,'caesar','military');assert.equal(plan.ok,true);
+  assert.match(ideasPanel(s,'en'),/After completion: \+ 1¤ administrative upkeep \/ month/);
+  assert.match(ideasPanel(s,'zh'),/完工后：每月增加 1¤ 行政维护费/);
+  assert.equal(expandIdeaSlot(s,'caesar','military').ok,true);
+  assert.match(ideasPanel(s,'en'),/Slot expansion in progress · 6m remaining/);
+  assert.match(ideasPanel(s,'zh'),/栏位扩建中 · 6个月剩余/);
 });
 
 test('a conflicting idea may replace its own slot but cannot coexist or be equipped twice',()=>{
