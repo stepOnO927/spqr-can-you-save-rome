@@ -1,5 +1,5 @@
 import {ROUTES} from './data.js?v=phase-x-1';
-import {unlockedComponents,focusModifiers} from './national-focus.js?v=reported-identity-snapshot-1';
+import {unlockedComponents,focusModifiers} from './national-focus.js?v=born-portrait-thirteen-1';
 import {politicalAmbition} from './conspiracies.js?v=saved-age-consistency-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=saved-age-consistency-1';
