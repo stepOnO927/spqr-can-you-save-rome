@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission,sendInquiry,tick} from '../engine.js?v=family-finance-zero-1';
-import {createFictionalPerson} from '../dynasties.js?v=family-finance-zero-1';
-import {genealogyMeetingContacts} from '../genealogy-personal-actions.js?v=family-finance-zero-1';
-import {addReport,reportedPersonName,advanceOperations} from '../character-system.js?v=family-finance-zero-1';
-import {requestPersonalMeeting} from '../personal-diplomacy.js?v=family-finance-zero-1';
+import {newGame,upgradeSave,queueMission,sendInquiry,tick} from '../engine.js?v=finance-history-merge-1';
+import {createFictionalPerson} from '../dynasties.js?v=finance-history-merge-1';
+import {genealogyMeetingContacts} from '../genealogy-personal-actions.js?v=finance-history-merge-1';
+import {addReport,reportedPersonName,advanceOperations} from '../character-system.js?v=finance-history-merge-1';
+import {requestPersonalMeeting} from '../personal-diplomacy.js?v=finance-history-merge-1';
 import {visiblePersonName} from '../person-knowledge.js?v=mutual-audience-1';
 
 test('meeting recipients come from reports rather than a foreign court’s hidden state',()=>{

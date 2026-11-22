@@ -15,6 +15,9 @@ try{
   assert.equal(await page.locator('[data-ambition="economic"]').isVisible(),true);
   await page.locator('[data-ambition="economic"]').click();
   assert.match(await page.locator('.wheels-ambition').innerText(),/100/);
+  assert.match(await page.locator('.wheels-ambition').innerText(),/Changing ambition costs 3 stability and 2 legitimacy/);
+  await page.locator('[data-ambition="military"]').click();
+  await page.locator('[data-ambition="economic"]').click();
   await page.locator('#experience-close').click();
   await page.locator('#what-now').click();
   const project=page.locator('.experience-cards article').filter({hasText:'Complete an economic project'});
@@ -27,13 +30,14 @@ try{
   await page.locator('[data-slot="save"]').click();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
   assert.equal(saved.historyWheels.ambition,'economic');
+  assert.deepEqual(saved.historyWheels.changes.at(-1).cost,{stability:3,legitimacy:2});
   if(side==='caesar'){
    await page.evaluate(async()=>{
     const s=JSON.parse(localStorage.getItem('spqr-save-1'));
     const unit=s.armies.find(a=>a.id==='viii'),officer=s.world.characters.antony;
     unit.characterId='antony';officer.location=unit.region;officer.battlesCommanded=2;officer.loyalty=35;
     s.month++;
-    const {advanceWheels}=await import('/history-wheels.js?v=family-finance-zero-1');
+    const {advanceWheels}=await import('/history-wheels.js?v=finance-history-merge-1');
     advanceWheels(s);
     const chain=s.historyWheels.chains.find(c=>c.type==='commander_petition');
     const letter=s.mail.messages.find(m=>m.id===chain.letterId);
@@ -64,9 +68,13 @@ try{
  assert.equal(await han.locator('[data-han-ambition="dynasty"]').isVisible(),true);
  await han.locator('[data-han-ambition="dynasty"]').click();
  assert.match(await han.locator('.han-ambitions').innerText(),/Liu/);
+ assert.match(await han.locator('.han-ambitions').innerText(),/Changing ambition costs 3 stability/);
+ await han.locator('[data-han-ambition="reform"]').click();
+ await han.locator('[data-han-ambition="dynasty"]').click();
  await han.locator('#han-experience-close').click();
  await han.locator('#save').click();
  assert.equal(await han.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')).nationalAmbition.id),'dynasty');
+ assert.deepEqual(await han.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')).nationalAmbition.changes.at(-1).cost),{stability:3});
  await han.reload();await han.locator('#factionSelect').selectOption('shanshan');await han.locator('#begin').click();
  await han.locator('#han-progress').click();
  assert.equal(await han.locator('[data-han-ambition="dynasty"]').count(),0);

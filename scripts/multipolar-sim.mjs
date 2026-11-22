@@ -1,4 +1,4 @@
-import {newGame,tick} from '../engine.js?v=family-finance-zero-1';
+import {newGame,tick} from '../engine.js?v=finance-history-merge-1';
 import assert from 'node:assert/strict';
 import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';

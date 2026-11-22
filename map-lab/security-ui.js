@@ -1,6 +1,6 @@
 import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=mutual-audience-1';
 import {campaignDate} from '../campaign-date.js?v=calendar-1';
-import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=family-finance-zero-1';
+import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=finance-history-merge-1';
 import {reassurePerson} from '../conspiracies.js?v=mutual-audience-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
