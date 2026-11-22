@@ -54,11 +54,13 @@ test('Chorasmian and Caucasian originals retain distinct reconstructed cultures 
  assert.deepEqual(people.map(([id])=>[id,s.persons[id].name,s.persons[id].culture,s.persons[id].appearanceSeed]),people);
 });
 
-test('Han civil war and uprising commanders retain Han identity without inventing a rebel king',()=>{
+test('Han civil war, loyalist and uprising commanders retain Han identity without inventing a rebel king',()=>{
  let s=newHanGame('han',{seed:41});
+ s.factions.han_loyalist={id:'han_loyalist',treasury:60,grain:100,manpower:1000,horses:0,stability:50};
  s.factions.rival_court={id:'rival_court',treasury:60,grain:100,manpower:1000,horses:0,stability:50};
  s.factions.rebels={id:'rebels',treasury:0,grain:20,manpower:0,horses:0,stability:30};
- const armies=['rival_court','rebels'].map((owner,i)=>({id:`civil-${i}`,owner,region:'changan',men:600,morale:50,supply:70,commander:null}));
+ const armies=['han_loyalist','rival_court','rebels'].map((owner,i)=>({id:`civil-${i}`,owner,region:'changan',men:600,morale:50,supply:70,commander:null}));
+ assert.equal(fieldCulture('usurper-fictional-pang-chong'),'han');
  s.armies.push(...armies);
  s.rulers.rebels={id:'old-rebel-king',personId:'old-rebel-king',name:['Old rebel king','旧叛王']};
  s.persons['old-rebel-king']={id:'old-rebel-king',name:['Old rebel king','旧叛王'],faction:'rebels',record:'fictional',alive:true};

@@ -6,6 +6,12 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Han loyalist and original usurper splinter forces now inherit Han cultural
+names for newly generated commanders and merchants, as the civil-war court
+and uprising already do. The field-identity regression covers generated
+loyalist commanders and saved identity; 5/5 focused tests pass. Cloud checks
+for this increment are pending.
+
 Main through `d70efdbf` is integrated. Missing-person family event counts
 and detail history now hide events after contact was lost and future-dated
 events; the expansion's age-aware portraits and genealogy controls remain.
