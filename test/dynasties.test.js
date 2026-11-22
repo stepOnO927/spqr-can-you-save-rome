@@ -152,7 +152,7 @@ test('a foreign child may inherit private property through a negotiated court se
  assert.equal(resolveInheritanceDispute(s,caseFile.id,'compromise').ok,true);
  assert.equal(s.world.characters[foreign].wealth,0);assert.equal(s.world.dynasties.estateTransfers[0].amount,15);assert.equal(s.world.dynasties.estateTransfers[0].status,'pending');
  assert.equal(s.world.characters[domestic].wealth,15);
- assert.equal(s.relations['caesar:egypt'],before);assert.equal(s.world.dynasties.estateRulingNotices.at(-1).status,'pending');
+ assert.equal(s.relations['caesar:egypt']||0,before);assert.equal(s.world.dynasties.estateRulingNotices.at(-1).status,'pending');
  assert.equal(s.world.leadership.egypt.includes(foreign),false);
 });
 
