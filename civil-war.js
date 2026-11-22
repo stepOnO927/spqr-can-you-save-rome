@@ -1,4 +1,4 @@
-import {isDeliveredReport} from './person-knowledge.js?v=dynastic-reported-leads-1';
+import {isDeliveredReport} from './person-knowledge.js?v=commander-name-snapshot-1';
 import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=saved-age-consistency-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 

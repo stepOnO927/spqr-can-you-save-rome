@@ -7,7 +7,7 @@ page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  const target=await page.evaluate(async()=>{
-  const {newGame,adjacent,previewMarch}=await import('/engine.js?v=dynastic-reported-leads-1');
+  const {newGame,adjacent,previewMarch}=await import('/engine.js?v=commander-name-snapshot-1');
   const state=newGame('caesar'),army=state.armies.find(unit=>unit.id==='xiii');
   state.training=true;state.difficulty='beginner';army.men=200;army.morale=10;
   const route=adjacent(army.region).map(link=>({to:link.to,plan:previewMarch(state,army.id,link.to)})).find(row=>row.plan.ok&&row.plan.hostile);
