@@ -1,6 +1,7 @@
 import {adjacent, army, region, isWar} from './engine.js';
 import {activeEffects} from './development.js?v=53';
 import {recordEvent} from './campaign-reports.js?v=12';
+import {armySupply} from './grand-operations.js?v=37';
 
 const draw=s=>{s.reconSeed??=((s.seed??1)^0x9e3779b9)>>>0;s.reconSeed=(Math.imul(s.reconSeed,1664525)+1013904223)>>>0;return s.reconSeed/4294967296};
 const turn=s=>s.year*12+s.month;
@@ -45,7 +46,7 @@ export function assessment(s,armyId,regionId,plan=null){
  return {friendly:unit.men,morale:unit.morale,commander:[...unit.commander],terrain:target.terrain,fort:fortReport?.defensive.fort??null,fortReport,
   regionId,owner:target.owner,report,sighting:sighting?{year:sighting.year,month:sighting.month,region:sighting.region}:null,
   risk:!report||['unknown','rumor','disputed','outdated'].includes(confidence)?'high uncertainty':report.max>unit.men?'high':'uncertain',
-  food,supply:Math.round(100*Math.min(1,Math.max(.65,food/20))*(unit.operationalSupply??1)),travelMonths:plan?.months??1,landing:!!(plan?.path?.at(-1)?.sea??plan?.sea),supplyExposure:supplyExposure(s,unit,target,plan),reinforcementRisk:'possible',reports:reports.slice(0,4)};
+  food,supply:Math.round(100*Math.min(1,Math.max(.65,food/20))*armySupply(s,unit)),travelMonths:plan?.months??1,landing:!!(plan?.path?.at(-1)?.sea??plan?.sea),supplyExposure:supplyExposure(s,unit,target,plan),reinforcementRisk:'possible',reports:reports.slice(0,4)};
 }
 function available(s,unit,target){return !!(unit&&target&&!unit.move&&!unit.siege&&!unit.reconPending&&unit.men>0&&adjacent(unit.region,s).some(x=>x.to===target.id)&&isWar(s,unit.owner,target.owner));}
 export function sendScouts(s,armyId,regionId,actor=s.player){

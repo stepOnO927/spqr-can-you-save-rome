@@ -13,6 +13,12 @@ if(process.env.SPQR_LONG_PLAY_SEED){const seed=Number(process.env.SPQR_LONG_PLAY
 const months=Math.max(48,Math.min(120,Number(process.env.SPQR_LONG_PLAY_MONTHS)||48));
 const secondFront=process.env.SPQR_CAESAR_SECOND_FRONT==='1';
 const supportItaly=process.env.SPQR_CAESAR_SUPPORT_ITALY==='1';
+const supportHold=process.env.SPQR_CAESAR_SUPPORT_HOLD||'';
+if(supportHold&&!['cisalpine','t014'].includes(supportHold))throw new Error('Unsupported VIII holding point.');
+const fastAdvance=process.env.SPQR_CAESAR_FAST_ADVANCE==='1';
+const followThrough=process.env.SPQR_CAESAR_FOLLOW_THROUGH==='1';
+const westernCampaign=process.env.SPQR_CAESAR_WESTERN_CAMPAIGN==='1';
+const fieldPriority=process.env.SPQR_CAESAR_FIELD_PRIORITY==='1';
 const defendNorthernCorridor=process.env.SPQR_CAESAR_DEFEND_CORRIDOR==='1';
 const combinedInvestment=process.env.SPQR_CAESAR_COMBINED_INVEST==='1';
 const investFood=combinedInvestment||process.env.SPQR_CAESAR_INVEST_FOOD==='1';
@@ -23,13 +29,13 @@ const seekOstia=process.env.SPQR_CAESAR_OSTIA==='1';
 const takeOstiaWithSupport=process.env.SPQR_CAESAR_SUPPORT_OSTIA==='1';
 const useAerarium=process.env.SPQR_CAESAR_AERARIUM==='1';
 const seekSettlement=process.env.SPQR_CAESAR_SEEK_SETTLEMENT==='1';
-const journal=[],snapshots=[],seen=new Set(),grainDeliveries=[],corridor=['cisalpine','italiaN','t013','t012','t014','roma',...(seekOstia?['t016']:[])];
+const journal=[],snapshots=[],seen=new Set(),grainDeliveries=[],corridor=['cisalpine','italiaN','t013','t012','t014','roma',...(seekOstia||followThrough?['t016']:[]),...(followThrough?['t017','t018','t019','t021','t022']:[])];
 const settlementAudit=[];
 let peakIrrigation=0,everHeldOstia=region(s,'t016').owner==='caesar';
 let heldRome=false;
 const record=(label,result)=>{if(result?.ok)journal.push(`${s.year}/${s.month} ${label}`);return !!result?.ok};
 assert.equal(record('reserve Adriatic fleet',reserveFleet(s,'caesar','caesar-adriatic')),true);
-for(const unit of s.armies.filter(a=>a.owner==='caesar'&&a.id!=='xiii'&&!(a.id==='viii'&&(secondFront||supportItaly))))record(`hold ${unit.id}`,holdPosition(s,unit.id));
+for(const unit of s.armies.filter(a=>a.owner==='caesar'&&a.id!=='xiii'&&!(a.id==='viii'&&(secondFront||supportItaly||westernCampaign))))record(`hold ${unit.id}`,holdPosition(s,unit.id));
 assert.equal(assessment(s,'xiii','italiaN').risk,'high uncertainty');
 assert.equal(record('scout northern Italy',sendScouts(s,'xiii','italiaN')),true);
 tick(s);
@@ -100,7 +106,8 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
    const supportRoute=['narbo','t049','cisalpine','italiaN','t013','t012','t014','roma'];
    const at=supportRoute.indexOf(supporting.region);
    const destination=at>=0&&at<supportRoute.length-1?supportRoute[at+1]:null;
-   if(destination&&region(s,destination).owner==='caesar'&&previewMarch(s,supporting.id,destination).ok)record(`VIII supports Italy at ${destination}`,moveArmy(s,supporting.id,destination));
+   if(supporting.region===supportHold&&supporting.stance!=='hold')record(`VIII holds ${supportHold}`,holdPosition(s,supporting.id));
+   else if(supporting.region!==supportHold&&destination&&region(s,destination).owner==='caesar'&&previewMarch(s,supporting.id,destination).ok)record(`VIII supports Italy at ${destination}`,moveArmy(s,supporting.id,destination));
    else if(takeOstiaWithSupport&&supporting.region==='roma'&&region(s,'roma').owner==='caesar'&&region(s,'t016').owner!=='caesar'&&previewMarch(s,supporting.id,'t016').ok){
     const intel=assessment(s,supporting.id,'t016'),report=intel.report;
     if(!report||report.age>3)record('VIII scouts Ostia',sendScouts(s,supporting.id,'t016'));
@@ -112,16 +119,23 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
    else if(takeOstiaWithSupport&&supporting.region==='t016'&&supporting.stance!=='hold')record('VIII secures Ostia',holdPosition(s,supporting.id));
   }
  }
- if(secondFront){
+ if(secondFront||westernCampaign){
   const western=army(s,'viii'),available=western&&western.men>=600&&!western.move&&!western.siege&&!western.reconPending&&!western.trainingRemaining;
   if(available&&region(s,western.region)?.owner==='caesar'){
-   const target=adjacent(western.region,s).map(edge=>region(s,edge.to)).find(site=>site?.owner==='senate'&&previewMarch(s,western.id,site.id).ok);
+   const westernRoute=['narbo','t048','t060','hispaniaN','t052','t053','t054'];
+   const westernIndex=westernRoute.indexOf(western.region),westernNext=westernCampaign&&westernIndex>=0?westernRoute[westernIndex+1]:null;
+   const target=westernNext&&previewMarch(s,western.id,westernNext).ok?region(s,westernNext):adjacent(western.region,s).map(edge=>region(s,edge.to)).find(site=>site?.owner==='senate'&&previewMarch(s,western.id,site.id).ok);
    if(target){
-    const intel=assessment(s,western.id,target.id),report=intel?.report;
-    if(!report||report.age>3)record(`VIII scouts ${target.id}`,sendScouts(s,western.id,target.id));
-    else if(report.max!=null&&report.max<=western.men*.9&&western.morale>=50)record(`VIII attacks ${target.id} (${intel.risk})`,moveArmy(s,western.id,target.id));
-    else if(western.men<7500&&canFeedReinforcements())record('reinforce VIII',requestReinforcements(s,western.id));
-    else record(`VIII delays ${target.id}`,delayAttack(s,western.id,target.id));
+    if(target.owner==='caesar')record(`VIII advances west to ${target.id}`,moveArmy(s,western.id,target.id));
+    else if(fieldPriority&&month<=8&&western.men<7000&&f.treasury>=24&&f.food>=12&&f.manpower>=3000)record('reinforce VIII for western campaign',requestReinforcements(s,western.id));
+    else{
+     const intel=assessment(s,western.id,target.id),report=intel?.report;
+     if((!report||report.age>3)&&fastAdvance&&target.terrain!=='urban'&&western.men>=4000&&western.morale>=50)record(`VIII accepts unscouted risk at ${target.id}`,moveArmy(s,western.id,target.id));
+     else if(!report||report.age>3)record(`VIII scouts ${target.id}`,sendScouts(s,western.id,target.id));
+     else if(report.max!=null&&report.max<=western.men*.9&&western.morale>=50)record(`VIII attacks ${target.id} (${intel.risk})`,moveArmy(s,western.id,target.id));
+     else if(western.men<7500&&canFeedReinforcements())record('reinforce VIII',requestReinforcements(s,western.id));
+     else record(`VIII delays ${target.id}`,delayAttack(s,western.id,target.id));
+    }
    }
   }
  }
@@ -130,10 +144,11 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
   const romeNeedsGarrison=region(s,'roma').owner!=='caesar'||!s.armies.some(a=>a.owner==='caesar'&&a.id!==legion.id&&a.region==='roma');
   const northernRoute=['roma','t014','t012'],northernIndex=northernRoute.indexOf(legion.region);
   const counterattack=defendNorthernCorridor&&heldRome&&region(s,'roma').owner==='caesar'&&northernIndex>=0;
-  const next=counterattack?(northernRoute[northernIndex+1]||null):(legion.region==='t016'&&romeNeedsGarrison?'roma':legion.region==='roma'&&region(s,'t016').owner==='caesar'?null:routeNext);
+  const next=counterattack?(northernRoute[northernIndex+1]||null):(legion.region==='t016'&&romeNeedsGarrison&&!followThrough?'roma':legion.region==='roma'&&region(s,'t016').owner==='caesar'&&!followThrough?null:routeNext);
   if(next&&previewMarch(s,legion.id,next).ok){
    const target=region(s,next),intel=target.owner!=='caesar'?assessment(s,legion.id,next):null,report=intel?.report;
    if(!intel)record(`march ${next}`,moveArmy(s,legion.id,next));
+   else if((!report||report.age>3)&&fastAdvance&&target.terrain!=='urban'&&legion.men>=5000&&legion.morale>=50)record(`accept unscouted corridor risk at ${next}`,moveArmy(s,legion.id,next));
    else if(!report||report.age>3){
     const scouts=sendScouts(s,legion.id,next);
     if(!record(`scout ${next}`,scouts)){
@@ -150,7 +165,7 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
    else record(`delay ${next}`,delayAttack(s,legion.id,next));
   }
   const supportApproachingRome=supportItaly&&army(s,'viii')?.owner==='caesar'&&army(s,'viii')?.men>=3000&&['t014','roma'].includes(army(s,'viii')?.region);
-  if(legion.region==='roma'&&region(s,'roma').owner==='caesar'&&!supportApproachingRome&&!s.armies.some(a=>a.owner==='caesar'&&a.id!==legion.id&&a.region==='roma')&&f.treasury>=24&&f.food>=9&&f.manpower>=3000)record('raise Roman garrison',recruit(s,'roma','caesar')?{ok:true}:{ok:false});
+  if(legion.region==='roma'&&region(s,'roma').owner==='caesar'&&!fieldPriority&&!supportApproachingRome&&!s.armies.some(a=>a.owner==='caesar'&&a.id!==legion.id&&a.region==='roma')&&f.treasury>=24&&f.food>=9&&f.manpower>=3000)record('raise Roman garrison',recruit(s,'roma','caesar')?{ok:true}:{ok:false});
  }
  tick(s);
  everHeldOstia ||= region(s,'t016').owner==='caesar';

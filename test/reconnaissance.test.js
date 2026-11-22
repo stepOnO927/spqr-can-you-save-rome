@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,army,moveArmy,previewMarch,region,tick,upgradeSave,aiTurn,resolveBattle,adoptIdea,researchInnovation} from '../engine.js';
+import {newGame,newGrandGame,army,armySupply,moveArmy,previewMarch,region,tick,upgradeSave,aiTurn,resolveBattle,adoptIdea,researchInnovation} from '../engine.js';
 import {assessment,firstHostileOnRoute,sendScouts,probePositions,latestRecon,reconReports,delayAttack,markReconRegion,advanceRecon} from '../reconnaissance.js';
 import {development,activeEffects,IDEAS,ideaAdoptionPlan} from '../development.js';
 import {developmentPanel} from '../development-ui.js';
@@ -24,6 +24,20 @@ test('a march to friendly territory assesses the first hostile theater along its
  region(s,'t011').owner='caesar';
  plan=previewMarch(s,'xiii','t010');
  assert.equal(firstHostileOnRoute(s,'xiii','t010',plan),null);
+});
+
+test('prebattle supply follows current territory control rather than the previous monthly cache',()=>{
+ const s=newGrandGame('caesar'),unit=army(s,'xiii');
+ for(const site of s.regions)if(site.owner==='caesar')site.owner='senate';
+ region(s,'t012').owner='caesar';region(s,'t012').food=0;
+ unit.region='t012';unit.operationalSupply=1;s.factions.caesar.food=80;
+ assert.equal(armySupply(s,unit),.18);
+ assert.equal(assessment(s,'xiii','t014').supply,18);
+ assert.match(intelligenceHtml(assessment(s,'xiii','t014'),region(s,'t014'),'en'),/Commander \/ supply[\s\S]*\/ 18%/);
+ region(s,'roma').owner='caesar';unit.region='roma';unit.operationalSupply=.18;
+ assert.equal(armySupply(s,unit),1);
+ assert.equal(assessment(s,'xiii','t017').supply,100);
+ assert.equal(assessment(upgradeSave(JSON.parse(JSON.stringify(s))),'xiii','t017').supply,100);
 });
 
 test('enemy fortification remains hidden until a dated military report is available',()=>{

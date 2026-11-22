@@ -93,6 +93,8 @@ try{
  await page.locator('[data-army="xiii"]').click();await page.locator('#lab-orders select').selectOption('t014');await page.locator('#lab-orders button').click();
  const secondCorridor=await page.locator('.prebattle-intel').innerText();
  assert.match(firstCorridor+secondCorridor,/Single supply corridor/);assert.match(firstCorridor+secondCorridor,/单线补给风险/);
+ assert.match(firstCorridor+secondCorridor,/A scout report takes at least one month/);
+ assert.match(firstCorridor+secondCorridor,/斥候回报至少要等一个月/);
  if(process.env.SPQR_CORRIDOR_SCREENSHOT)await page.screenshot({path:process.env.SPQR_CORRIDOR_SCREENSHOT});
  await page.locator('#attack-anyway').click();await page.locator('#advance').click();
  if(!await page.locator('#recent-battle').isVisible())await page.locator('#brief-toggle').click();
@@ -129,6 +131,9 @@ try{
  assert.match(await page.locator('#command-detail').innerText(),/Operational supply\s+18% · Route cut off/);
  assert.match(await page.locator('#selection-detail .supply-risk').first().innerText(),/300 soldiers and up to 5 morale/);
  assert.match(await page.locator('#selection-detail .supply-risk').last().innerText(),/National food is below zero/);
+ await page.locator('#lab-orders select').selectOption('t014');await page.locator('#lab-orders button').click();
+ assert.match(await page.locator('.prebattle-intel').innerText(),/Commander \/ supply[\s\S]*\/ 12%/);
+ await page.locator('#screen-cancel').click();
  await page.locator('#language').click();
  assert.match(await page.locator('#command-detail').innerText(),/实际补给\s+18% · 补给线被切断/);
  assert.match(await page.locator('#selection-detail .supply-risk').first().innerText(),/300名士兵、至多5点士气/);
@@ -149,6 +154,9 @@ try{
  assert.match(await page.locator('.operational-actions').innerText(),/300名士兵、至多5点士气/);
  await page.locator('#lang').click();
  assert.match(await page.locator('.operational-actions').innerText(),/Actual supply: 18% · Supply route cut off/);
+ await page.locator('#order').click();await page.locator('#march-destination').selectOption('t014');
+ assert.match(await page.locator('.march-review').innerText(),/Commander \/ supply[\s\S]*\/ 12%/,'the prebattle estimate must use current supply and current national food');
+ await page.locator('[data-review="cancel"]').click();
  await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state})),sourced);
  await page.reload();await page.locator('[data-tab="military"]').click();await page.locator('[data-select-army="xiii"]').click();
  assert.match(await page.locator('.operational-actions').innerText(),/Supply route open/);
