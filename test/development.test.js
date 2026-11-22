@@ -524,7 +524,8 @@ test('granaries hold finite provincial food, buffer shortages, and migrate old n
 test('scholarly patronage connects an owned collection to future idea research only',()=>{
  const id='philosophical-patronage',s=newGrandGame('senate'),d=development(s,'senate'),idea=IDEAS.find(x=>x.id===id);
  s.wars=[];s.factions.senate.treasury=500;s.factions.senate.food=500;
- assert.match(idea.source.url,/attalus\.org\/cicero\/atticus4/);
+ assert.match(idea.source.url,/en\.wikisource\.org\/wiki\/Letters_to_Atticus\/4\.8a/);
+ assert.match(idea.source.title,/Cicero, Letters to Atticus 4\.8a/);
  assert.match(developmentPanel(s,'en','idea'),/Philosophical and Scholarly Patronage/);
  assert.match(developmentPanel(s,'zh','idea'),/哲学与学术赞助/);
  assert.match(developmentPanel(s,'en','idea'),/National-idea research discount \+3/);
@@ -1105,7 +1106,9 @@ test('ancestral rites patronage has a real provincial tradeoff, upkeep, and a pr
 });
 test('civic exercise trains recruits only in integrated towns and charges upkeep',()=>{
  const idea=IDEAS.find(x=>x.id==='civic-exercise');
- assert.match(idea.source.url,/gutenberg.org/);assert.match(idea.context[0],/criticizes excessive Spartan severity/);
+ assert.match(idea.source.url,/classics\.mit\.edu\/Aristotle\/politics\.8\.eight\.html/);
+ assert.match(idea.source.title,/Aristotle, Politics VIII\.4/);
+ assert.match(idea.context[0],/criticizes excessive Spartan severity/);
  const base=newGrandGame('egypt'),inactive=upgradeSave(JSON.parse(JSON.stringify(base))),active=upgradeSave(JSON.parse(JSON.stringify(base)));
  const local=active.regions.find(r=>r.id==='egypt');
  development(active,'egypt').slots.culture[0]=idea.id;
