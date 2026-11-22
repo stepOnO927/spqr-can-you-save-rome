@@ -1,12 +1,13 @@
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 
 // Public announcements are learned by participants and adjacent observers.
 // Snapshots are not live links: an observer who loses contact keeps old news.
 export function initializeDiplomaticKnowledge(s){s.world.diplomaticKnowledge||={};return s}
 function hasContact(s,viewer,parties){
  if(parties.includes(viewer))return true;
- const owned=new Set(s.regions.filter(r=>r.owner===viewer).map(r=>r.id)),reports=s.controlKnowledge?.[viewer]||{};
- return ROUTES.some(([a,b])=>owned.has(a)&&parties.includes(reports[b]?.owner)||owned.has(b)&&parties.includes(reports[a]?.owner));
+ const owned=new Set(s.regions.filter(r=>r.owner===viewer).map(r=>r.id));
+ return ROUTES.some(([a,b])=>owned.has(a)&&parties.includes(reportedControl(s,viewer,b)?.owner)||owned.has(b)&&parties.includes(reportedControl(s,viewer,a)?.owner));
 }
 function currentDocuments(s,viewer){
  const result=[];
