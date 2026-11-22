@@ -1,11 +1,11 @@
-import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=saved-age-consistency-1';
-import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=saved-age-consistency-1';
-import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=saved-age-consistency-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=saved-age-consistency-1';
-import {FACTIONS} from './data.js?v=phase-x-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=missing-fate-privacy-1';
-import {visiblePersonName} from './character-system.js?v=succession-lead-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=succession-lead-1';
+import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=world-kings-neighbor-trade-1';
+import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=world-kings-neighbor-trade-1';
+import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=world-kings-neighbor-trade-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=world-kings-neighbor-trade-1';
+import {FACTIONS} from './data.js?v=world-kings-neighbor-trade-1';
+import {fictionalPortraitKey} from './portrait-registry.js?v=world-kings-neighbor-trade-1';
+import {visiblePersonName} from './character-system.js?v=world-kings-neighbor-trade-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=world-kings-neighbor-trade-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=succession-lead-1';
-import {createFictionalPerson} from '../dynasties.js?v=saved-age-consistency-1';
-import {ageRange} from '../characters.js?v=saved-age-consistency-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-neighbor-trade-1';
+import {createFictionalPerson} from '../dynasties.js?v=world-kings-neighbor-trade-1';
+import {ageRange} from '../characters.js?v=world-kings-neighbor-trade-1';
 
 test('a newborn has no negative age, including after loading a save',()=>{
  const state=newGame('caesar');
