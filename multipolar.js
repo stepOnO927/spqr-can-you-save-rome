@@ -1,4 +1,4 @@
-import {isDeliveredReport} from './person-knowledge.js?v=name-disagreement-1';
+import {isDeliveredReport} from './person-knowledge.js?v=frontier-review-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
@@ -18,7 +18,12 @@ export function opportunityEvidenceSignature(s,actor){
  const wars=reportedDiplomacy(s,actor).filter(x=>x.kind==='war'&&x.status==='active').map(x=>x.id).sort();
  const agreements=(s.agreements||[]).filter(x=>x.parties.includes(actor)&&x.status==='active').map(x=>[x.id,x.type]).sort();
  const ownArmies=s.armies.filter(a=>a.owner===actor&&a.men>0).map(a=>[a.id,a.region,Math.floor(a.men/5000)]).sort();
- return JSON.stringify([evidence,wars,agreements,ownArmies,Math.floor(f.treasury/25),Math.floor(f.food/25),Math.floor(f.stability/10)]);
+ // A changed report at an actual frontier can alter the set of opportunities.
+ // Record only the observer's reported controller, never a foreign live owner.
+ const owned=new Set(s.regions.filter(r=>r.owner===actor).map(r=>r.id)),border=new Set();
+ for(const [a,b] of ROUTES){if(owned.has(a)&&!owned.has(b))border.add(b);if(owned.has(b)&&!owned.has(a))border.add(a)}
+ const frontier=[...border].sort().map(id=>[id,reportedControl(s,actor,id)?.owner??null]);
+ return JSON.stringify([evidence,wars,agreements,ownArmies,frontier,Math.floor(f.treasury/25),Math.floor(f.food/25),Math.floor(f.stability/10)]);
 }
 // These are estimates from the actor's own evidence, not foreign hidden state.
 // No sighting does not mean that a frontier is undefended.

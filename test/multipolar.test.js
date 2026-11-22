@@ -1,19 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=name-disagreement-1';
-import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=name-disagreement-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=frontier-review-1';
+import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=frontier-review-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
-import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=name-disagreement-1';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=frontier-review-1';
 import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=name-disagreement-1';
-import {renderChessboard} from '../chessboard-ui.js?v=name-disagreement-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=name-disagreement-1';
+import {buildChessboard} from '../chessboard.js?v=frontier-review-1';
+import {renderChessboard} from '../chessboard-ui.js?v=frontier-review-1';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=frontier-review-1';
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=agreement-courier-1';
-import {advanceGovernments} from '../governance.js?v=name-disagreement-1';
-import {advanceMovements} from '../movements.js?v=name-disagreement-1';
-import {newRevolutionScenario} from '../scenarios.js?v=name-disagreement-1';
+import {advanceGovernments} from '../governance.js?v=frontier-review-1';
+import {advanceMovements} from '../movements.js?v=frontier-review-1';
+import {newRevolutionScenario} from '../scenarios.js?v=frontier-review-1';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
@@ -29,6 +29,16 @@ test('new reports trigger reassessment without revealing hidden foreign changes'
  assert.equal(opportunityEvidenceSignature(copy,'parthia'),signature);
  addReport(copy,'parthia','armenia',{kind:'stability',value:'fragile',source:'spy',confidence:'rumor'});
  assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),signature);
+});
+
+test('a reported frontier change triggers review without exposing an unseen change',()=>{
+ const s=newGame('caesar'),copy=structuredClone(s),signature=opportunityEvidenceSignature(s,'parthia');
+ const region=copy.regions.find(r=>r.id==='armenia');assert.ok(region);
+ region.owner='egypt';
+ assert.equal(opportunityEvidenceSignature(copy,'parthia'),signature);
+ copy.controlKnowledge.parthia.armenia={owner:'egypt',year:copy.year,month:copy.month};
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),signature);
+ assert.ok(assessOpportunities(copy,'parthia',estimatedStrength).some(x=>x.target==='egypt'&&x.border));
 });
 
 test('AI cannot use sightings before delivery or treat old observations as fresh',()=>{
@@ -301,6 +311,6 @@ test('old saves without a warning queue keep working and do not duplicate existi
  for(let i=0;i<3;i++)tick(save,{autoplayPlayer:true});assert.ok(Array.isArray(save.warningLetters));
  // The warning layer reuses courier, report and memory helpers; it does not call
  // the existing war, breach, aid or claimant-support decision paths.
- const source=fs.readFileSync(new URL('../strategic-warnings.js?v=name-disagreement-1',import.meta.url),'utf8');
+ const source=fs.readFileSync(new URL('../strategic-warnings.js?v=frontier-review-1',import.meta.url),'utf8');
  assert.doesNotMatch(source,/diplomacy\(|proposeAgreement|terminateAgreement|supportClaimant|wars\.push|alliances\.push|opportunistic_war|treaty_breach/);
 });

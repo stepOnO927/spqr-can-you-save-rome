@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=name-disagreement-1';
-import {contestLeadership,advanceDisputes,queueMission,advanceOperations,addReport,supportClaimant} from '../character-system.js?v=name-disagreement-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=frontier-review-1';
+import {contestLeadership,advanceDisputes,queueMission,advanceOperations,addReport,supportClaimant} from '../character-system.js?v=frontier-review-1';
 import {knownLeaders,assignSuccession} from '../characters.js?v=saved-age-consistency-1';
-import {deriveGovernment} from '../governance.js?v=name-disagreement-1';
+import {deriveGovernment} from '../governance.js?v=frontier-review-1';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 

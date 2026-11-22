@@ -16,6 +16,8 @@ The current implementation does not yet provide tactical synchronization of acce
 
 Between quarterly reviews, a court also reevaluates when its own reported stability or troop sightings change, when it learns of a war, when one of its own agreements changes, or when its own army positions or broad resource bands change. The signature is built from the court's own information and bounded recent records; hidden foreign changes alone cannot trigger a review. This does not yet cover every kind of intelligence or deliver the full multipolar acceptance scenario.
 
+A change in the reported controller of a neighboring theater also triggers a review. The signature uses the observer's control reports, so an unobserved change in a foreign theater does not wake the planner or disclose its controller.
+
 ## Coalition invitations
 
 Courts select prospective partners from their own known contacts rather than reading the candidates' private threat assessments. An invitation costs the sender 3 treasury, travels for two months and can be lost or declined. AI recipients decide from their own resources, relations and perceived danger. The player can send invitations from the government panel, or receive and answer AI invitations in the mailbox. A human answer travels back for two months; if the player accepted, a separate confirmation then takes another two months and may be lost. Only a delivered, successful confirmation forms the coalition and charges each member 5 treasury; acceptance itself does not declare war. The existing coalition system handles membership and defense obligations, and invitation history is saved with a twelve-month repeat limit.
