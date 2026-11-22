@@ -70,10 +70,23 @@ assert.ok(hanDelivered>=4,'the direct Han market must complete physical deliveri
 // A resale counts only when the seller physically received the same good in an
 // earlier paid caravan and the second caravan also completed its own settlement.
 let autonomous=newHanGame(null,{seed:49});
+const easternGoods=Object.keys(autonomous.tradeMarkets.regions[autonomous.regions[0].id].goods);
+// Inventory, reserved sale lots, and in-flight cargo are three locations for
+// the same units. Grain and iron consumed by manufacturing appear in the raw
+// input ledger; the finished goods appear in their own production ledger.
+const goodsBalance=(campaign,good)=>{
+ const markets=campaign.tradeMarkets,items=Object.values(markets.regions).map(market=>market.goods[good]);
+ const total=field=>items.reduce((sum,item)=>sum+(item[field]||0),0);
+ const reserved=markets.saleOrders.filter(order=>order.status==='open'&&order.commodity===good).reduce((sum,order)=>sum+order.available,0);
+ const traveling=markets.shipments.filter(shipment=>['traveling','blocked'].includes(shipment.status)&&shipment.commodity===good).reduce((sum,shipment)=>sum+shipment.quantity,0);
+ return {physical:total('stock')+reserved+traveling,produced:total('produced'),consumed:total('consumed'),discarded:total('surplusDiscarded'),manufactured:total('usedForManufacture'),military:total('usedForRecruitment')+total('usedForMilitary'),lost:markets.lostGoods[good]||0,requisitioned:good==='horses'?markets.requisitionedHorses:0};
+};
+const openingGoods=Object.fromEntries(easternGoods.map(good=>[good,goodsBalance(autonomous,good).physical]));
 for(let i=0;i<120;i++){
  const before=autonomous.year*12+autonomous.month;tickHan(autonomous);
  assert.equal(autonomous.year*12+autonomous.month,before+1,'autonomous eastern time stalled');
  if(i===59)autonomous=loadHanSave(JSON.parse(JSON.stringify(autonomous)));
+ for(const good of easternGoods){const balance=goodsBalance(autonomous,good);assert.equal(balance.physical+balance.consumed+balance.discarded+balance.manufactured+balance.military+balance.lost+balance.requisitioned,openingGoods[good]+balance.produced,`${good} units were created or lost after month ${i+1}`)}
 }
 const paid=autonomous.tradeMarkets.transactions.filter(x=>x.price>0),shipmentById=new Map(autonomous.tradeMarkets.shipments.map(x=>[x.id,x]));
 const dated=tx=>tx.year*12+tx.month;

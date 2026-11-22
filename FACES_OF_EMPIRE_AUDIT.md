@@ -1368,6 +1368,14 @@ general Roman–Han settlement, broader commodity resale and merchant financing,
 broader player and merchant competition, and the full acceptance
 scenarios are still outstanding. New names
 and emblems are game reconstructions, not documented personal identities.
+The 120-month all-AI eastern campaign now checks per-commodity conservation
+after every month and after a save/reload at month 60. It counts local stock,
+reserved player sale lots, in-flight cargo, measured production, consumption,
+manufacturing inputs, military use, losses and discarded surplus. The seed-49
+run balanced all goods for 120 consecutive turns while completing 131 paid
+deliveries and five physically received silk resales. This establishes a
+repeatable autonomous intermediary path, though other commodity chains and
+merchant-financed trade still need coverage and implementation.
 Han civil-war and peasant-uprising field commanders now use the Han cultural
 pool instead of the default Tarim oasis pool. A temporary uprising no longer
 acquires a fictitious foreign monarch. Old saves drop that erroneous ruler
