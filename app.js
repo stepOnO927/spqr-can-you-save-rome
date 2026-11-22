@@ -9,7 +9,7 @@ import {loadProfile,saveProfile,recordCampaign} from './legacy/legacy-core.js?v=
 import {endCampaign} from './achievement-system.js?v=5';
 import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from './achievement-ui.js?v=14';
 import {budgetHtml} from './budget-ui.js?v=36';
-import {holdPosition,strategicRetreat,armySupply,encircled} from './grand-operations.js?v=38';
+import {holdPosition,strategicRetreat,armySupply,encircled} from './grand-operations.js?v=39';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from './development-ui.js?v=63';
 import {drawMap,mapPoint} from './map.js?v=68';
 import {avoidGrandLabelCollisions} from './map-label-layout.js?v=3';
@@ -136,6 +136,14 @@ function render(){
     const nationalWarning=state.factions[state.player].food<0?`<p class="supply-risk">${lang==='zh'?'国库粮食已不足；即使当地补给充足，全国缺粮仍会造成额外损失。':'National food is below zero; shortages can cause additional losses even when local supply is sound.'}</p>`:'';
     const orders=operationalArmy.move||operationalArmy.siege?'':`<button id="hold-position" ${operationalArmy.stance==='hold'?'disabled':''}>${operationalArmy.stance==='hold'?(lang==='zh'?`坚守中 · 准备${operationalArmy.prepared||0}/3`:`HOLDING · PREP ${operationalArmy.prepared||0}/3`):(lang==='zh'?'坚守阵地':'HOLD POSITION')}</button><button id="coordinate-attack">${operationalArmy.coordinated?(lang==='zh'?'取消协同':'CANCEL COORDINATION'):(lang==='zh'?'筹划侧击':'PLAN FLANKING')}</button><select id="retreat-destination"><option value="">${lang==='zh'?'撤退目的地':'Retreat destination'}</option>${exits.map(link=>`<option value="${link.to}">${esc(n(region(state,link.to).name))}</option>`).join('')}</select><button id="retreat-army">${lang==='zh'?'战略撤退':'RETREAT'}</button>`;
     document.querySelector('.inspector .panel-heading').insertAdjacentHTML('afterend',`<div class="operational-actions"><h3>${lang==='zh'?'作战态势':'OPERATIONS'}</h3><p>${lang==='zh'?'实际补给':'Actual supply'}: ${Math.round(supply*100)}% · ${status}</p>${localWarning}${nationalWarning}${orders}</div>`);
+    const retreatControl=document.querySelector('#retreat-army');
+    if(retreatControl){
+      const used=operationalArmy.lastStrategicRetreat?.year===state.year&&operationalArmy.lastStrategicRetreat.month===state.month;
+      const note=lang==='zh'?'每支军队每月只能撤至一块相邻己方领土；消耗4点士气，若目的地仍被切断补给则消耗8点。':'Each army may retreat to one adjacent friendly territory per month. It costs 4 morale, or 8 if the destination remains cut off.';
+      const message=used?(lang==='zh'?'本月已经撤退。':'Already retreated this month. ')+note:note;
+      retreatControl.disabled=used||!exits.length;retreatControl.title=message;
+      retreatControl.insertAdjacentHTML('afterend',`<p class="retreat-rule">${message}</p>`);
+    }
   }
   const a=army(state,selectedArmy),destinations=ordering&&a?adjacent(a.region,state).map(x=>region(state,x.to)):[];
   document.querySelector('.map-wrap').insertAdjacentHTML('beforeend',`<div class="map-tools"><button id="political" class="${mapMode==='political'?'active':''}">${t('political')}</button><button id="terrain-map" class="${mapMode==='terrain'?'active':''}">${t('terrainMap')}</button><button id="zoom-in">+</button><button id="zoom-out">−</button></div>${ordering?`<div class="march-prompt">${t('target')} <label>${t('chooseDestination')} <select id="march-destination"><option value="">—</option>${destinations.map(r=>`<option value="${r.id}">${esc(n(r.name))}</option>`).join('')}</select></label> <button id="cancel-march">${t('cancel')}</button></div>`:''}<div class="map-attribution">${t(state.grandMap?'mapNote':'legacyMapNote')}</div>`);

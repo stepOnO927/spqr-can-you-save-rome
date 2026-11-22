@@ -167,6 +167,24 @@ try{
  await page.locator('#new').click();await page.locator('#faction-choice').selectOption('senate');await page.locator('#start-campaign').click();
  await page.locator('[data-map-group="cisalpine"]').first().evaluate(el=>el.dispatchEvent(new MouseEvent('click',{bubbles:true})));
  assert.match(await page.locator('.inspector .detail-list').innerText(),/Fortification\s+Unknown/,'main campaign must not expose an enemy fort');
+ const pocket=newGrandGame('caesar');for(const site of pocket.regions)if(site.owner==='caesar')site.owner='senate';
+ for(const id of ['t034','t035'])region(pocket,id).owner='caesar';army(pocket,'xiii').region='t034';army(pocket,'xiii').morale=70;
+ await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),pocket);
+ await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.locator('[data-army="xiii"]').evaluate(el=>el.click());
+ assert.match(await page.locator('.operational-orders .retreat-rule').innerText(),/4 morale, or 8 if the destination remains cut off/);
+ await page.locator('.operational-orders select').selectOption('t035');await page.getByRole('button',{name:'RETREAT',exact:true}).click();
+ assert.equal(await page.getByRole('button',{name:'RETREAT',exact:true}).isDisabled(),true);
+ assert.match(await page.locator('.operational-orders .retreat-rule').innerText(),/Already retreated this month/);
+ await page.locator('#language').click();assert.match(await page.locator('.operational-orders .retreat-rule').innerText(),/每支军队每月只能撤/);
+ await page.locator('#save').click();await page.locator('#load').click();await page.locator('[data-army="xiii"]').evaluate(el=>el.click());
+ assert.equal(await page.getByRole('button',{name:'战略撤退'}).isDisabled(),true);
+ army(pocket,'xiii').region='t035';army(pocket,'xiii').lastStrategicRetreat={year:pocket.year,month:pocket.month};
+ await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state})),pocket);
+ await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});await page.locator('[data-tab="military"]').click();await page.locator('[data-select-army="xiii"]').click();
+ assert.equal(await page.locator('#retreat-army').isDisabled(),true);
+ assert.match(await page.locator('.operational-actions .retreat-rule').innerText(),/本月已经撤退/);
+ assert.match(await page.locator('.operational-actions .retreat-rule').innerText(),/每支军队每月只能撤/);
  assert.deepEqual(errors,[]);
  console.log('Phase XI Atlas and campaign pre-battle, Senate Standard EN/ZH tutorial and combat smoke passed.');
 }finally{await browser.close()}
