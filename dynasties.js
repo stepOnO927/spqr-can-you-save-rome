@@ -313,7 +313,9 @@ export function advanceEstateTransfers(s){
  const d=s.world.dynasties;
  for(const transfer of d.estateTransfers){
   if(transfer.status==='no_reply'&&transfer.faction!==s.player){const age=(s.year-transfer.noReplyYear)*12+s.month-transfer.noReplyMonth,family=d.families[transfer.familyId];if(Number.isFinite(age)&&age>=6&&family){family.wealth=(Number.isFinite(family.wealth)?family.wealth:0)+transfer.amount;transfer.status='reclaimed';transfer.resolvedYear=s.year;transfer.resolvedMonth=s.month}continue}
-  if(transfer.status!=='pending'||--transfer.remaining>0)continue;
+  // Transfers created by a death earlier in this same turn start travelling
+  // next month, just like one the player sends after the turn is complete.
+  if(transfer.status!=='pending'||transfer.year===s.year&&transfer.month===s.month||--transfer.remaining>0)continue;
   const recipient=s.world.characters[transfer.recipient],war=s.wars.some(w=>w.includes(transfer.faction)&&w.includes(transfer.recipientFaction));
   if(familyCourierArrives(s,transfer)&&recipient?.alive&&recipient.faction===transfer.recipientFaction&&s.factions[transfer.recipientFaction]&&!war){
    recipient.wealth+=transfer.amount;transfer.status='delivered';transfer.resolvedYear=s.year;transfer.resolvedMonth=s.month;

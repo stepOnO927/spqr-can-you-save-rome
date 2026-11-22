@@ -34,7 +34,7 @@ test('an unreported death abroad does not block a will or expose survival when t
   s=upgradeSave(structuredClone(s));const family=s.world.characters[own].familyId,before=s.world.dynasties.families[family].wealth;
   s.world.characters[own].alive=false;settleInheritance(s,own);
   const transfer=s.world.dynasties.estateTransfers[0];assert.equal(transfer.status,'pending');assert.equal(transfer.amount,24);assert.equal(s.world.characters[foreign].wealth,0);assert.equal(s.world.dynasties.families[family].wealth,before);
-  if(!living){for(let i=0;i<4;i++)advanceEstateTransfers(s);assert.equal(transfer.status,'no_reply');assert.equal(s.world.characters[foreign].wealth,0);assert.equal(reclaimEstateTransfer(s,transfer.id).ok,true);assert.equal(s.world.dynasties.families[family].wealth,before+24)}
+  if(!living){for(let i=0;i<4;i++){if(++s.month>12){s.month=1;s.year++}advanceEstateTransfers(s)}assert.equal(transfer.status,'no_reply');assert.equal(s.world.characters[foreign].wealth,0);assert.equal(reclaimEstateTransfer(s,transfer.id).ok,true);assert.equal(s.world.dynasties.families[family].wealth,before+24)}
  }
 });
 test('a death known within the testator’s own court still prevents naming the deceased',()=>{
@@ -48,6 +48,6 @@ test('unobserved foreign inheritance disputes do not announce private deaths to 
 
 test('an inheritance record uses the recipient court’s reported name of the deceased',()=>{
  let {s,own,foreign}=foreignSpouses();s.world.characters[foreign].wealth=12;assert.ok(makeWill(s,foreign,own).ok);s.world.characters[foreign].alive=false;settleInheritance(s,foreign);assert.equal(s.world.characters[own].wealth,24);let delivered;
- for(let seed=1;seed<100&&!delivered;seed++){const candidate=upgradeSave(structuredClone(s)),transfer=candidate.world.dynasties.estateTransfers[0];transfer.courierSeed=seed;for(let i=0;i<4;i++)advanceEstateTransfers(candidate);if(transfer.status==='delivered')delivered=candidate}
+ for(let seed=1;seed<100&&!delivered;seed++){const candidate=upgradeSave(structuredClone(s)),transfer=candidate.world.dynasties.estateTransfers[0];transfer.courierSeed=seed;for(let i=0;i<4;i++){if(++candidate.month>12){candidate.month=1;candidate.year++}advanceEstateTransfers(candidate)}if(transfer.status==='delivered')delivered=candidate}
  assert.ok(delivered);const event=delivered.world.dynasties.lives[own].at(-1);assert.match(event.zh,/报告姓名/);assert.doesNotMatch(event.zh,/秘密姓名/);assert.equal(delivered.world.characters[own].wealth,36);
 });
