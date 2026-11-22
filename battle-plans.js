@@ -1,10 +1,10 @@
 import {ROUTES,REGIONS} from './data.js?v=phase-x-1';
-import {reportedControl,reportedFortification,observeFortification} from './control-intelligence.js?v=statement-verification-1';
-import {activeAgreement} from './agreements.js?v=statement-verification-1';
-import {politicalAmbition} from './conspiracies.js?v=statement-verification-1';
-import {focusModifiers} from './national-focus.js?v=statement-verification-1';
-import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=statement-verification-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=statement-verification-1';
+import {reportedControl,reportedFortification,observeFortification} from './control-intelligence.js?v=observed-identity-1';
+import {activeAgreement} from './agreements.js?v=observed-identity-1';
+import {politicalAmbition} from './conspiracies.js?v=observed-identity-1';
+import {focusModifiers} from './national-focus.js?v=observed-identity-1';
+import {armyStats,commanderSpecialty,commandConcentration} from './legion-designer.js?v=observed-identity-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=observed-identity-1';
 
 // OPERATIONAL BATTLE PLANNER. Plans are an order layer over the existing War
 // Council orders: every movement goes through issueMilitaryOrder/moveArmy, so

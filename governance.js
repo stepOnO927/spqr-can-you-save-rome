@@ -1,9 +1,9 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=statement-verification-1';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=observed-identity-1';
 import {initializeWorld,successorFor,CHARACTER_CATALOG,characterAgeRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=saved-age-consistency-1';
-import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=statement-verification-1';
+import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=observed-identity-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {startDynasticWar} from './civil-war.js?v=statement-verification-1';
-import {courtNomineeName,recordLegendEvidence} from './legend.js?v=statement-verification-1';
+import {startDynasticWar} from './civil-war.js?v=observed-identity-1';
+import {courtNomineeName,recordLegendEvidence} from './legend.js?v=observed-identity-1';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';

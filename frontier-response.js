@@ -1,5 +1,5 @@
 import {ROUTES} from './data.js?v=phase-x-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=statement-verification-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=observed-identity-1';
 
 const now=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');
