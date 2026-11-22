@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,upgradeSave} from '../engine.js?v=estate-courier-1';
+import {newGame,upgradeSave} from '../engine.js?v=estate-records-1';
 import {assignSuccession} from '../characters.js?v=saved-age-consistency-1';
-import {advanceGovernments} from '../governance.js?v=estate-courier-1';
-import {advanceDynasties,createFictionalPerson} from '../dynasties.js?v=estate-courier-1';
+import {advanceGovernments} from '../governance.js?v=estate-records-1';
+import {advanceDynasties,createFictionalPerson} from '../dynasties.js?v=estate-records-1';
 import {fictionalPortraitKey,observedFictionalPortrait,assignCourtPortrait} from '../portrait-registry.js?v=born-portrait-thirteen-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=estate-courier-1';
-import {addReport} from '../character-system.js?v=estate-courier-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=estate-records-1';
+import {addReport} from '../character-system.js?v=estate-records-1';
 
 const rulers={armenia:'artavasdes',numidia:'juba',galatia:'deiotarus',bosporus:'pharnaces'};
 function nominee(faction){const s=newGame('caesar');s.world.characters[rulers[faction]].alive=false;s.world.characters[rulers[faction]].health='deceased';assignSuccession(s,faction);s.wars=[];s.factions[faction].treasury=100;s.factions[faction].stability=60;s.world.dynasties.seed=1;for(let i=0;i<7;i++){s.month++;advanceGovernments(s)}return [s,s.world.leadership[faction][0]]}

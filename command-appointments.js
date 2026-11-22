@@ -1,6 +1,6 @@
 import {CHARACTER_CATALOG,initializeWorld,characterAgeRange} from './characters.js?v=saved-age-consistency-1';
-import {officeOf} from './office-system.js?v=estate-courier-1';
-import {recordLifeEvent} from './dynasties.js?v=estate-courier-1';
+import {officeOf} from './office-system.js?v=estate-records-1';
+import {recordLifeEvent} from './dynasties.js?v=estate-records-1';
 
 // Theater-level appointments are simulated, not claims about historical commands.
 export function availableCommanders(s,armyId){

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=estate-courier-1';
-import {proposeAgreement,terminateAgreement} from '../agreements.js?v=estate-courier-1';
-import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=estate-courier-1';
+import {newGame,upgradeSave} from '../engine.js?v=estate-records-1';
+import {proposeAgreement,terminateAgreement} from '../agreements.js?v=estate-records-1';
+import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=estate-records-1';
 
 test('only participants or nearby observers learn public agreements; secret terms stay private',()=>{
  const s=newGame('caesar');s.relations['armenia:parthia']=60;const pub=proposeAgreement(s,'armenia','parthia','trade'),secret=proposeAgreement(s,'armenia','parthia','intelligence',{secret:true});assert.ok(pub.ok&&secret.ok);
