@@ -1,0 +1,40 @@
+/* Interpretive Republican Rome backdrop. Unlockable landmarks remain live DOM buttons. */
+.city-ground{
+ background:
+  linear-gradient(180deg,rgba(24,37,33,.12),rgba(24,37,33,.08) 54%,rgba(13,30,26,.26)),
+  url('./assets/republican-rome-city.webp') center 48%/cover no-repeat;
+ border:5px ridge #bd9b67;
+ box-shadow:inset 0 0 55px #1c322b88,0 25px 60px #0009;
+}
+.city-ground::before{
+ background:linear-gradient(90deg,#15221c45,transparent 28% 72%,#15221c3d);
+}
+.city-building.built{
+ background:linear-gradient(155deg,#f2e5c9 0 47%,#b49b78 48% 100%);
+ box-shadow:8px 9px 0 #40372d88,0 12px 18px #111a1599,0 0 0 3px #d9bb7545;
+}
+.city-building.foundation{
+ background:#1d3028b8;
+ border-color:#e5cc91;
+ box-shadow:5px 7px 0 #15231e88,0 8px 18px #111a1599;
+ backdrop-filter:blur(2px);
+}
+.city-building.foundation::before{background:#534b3ad9}
+.city-building:focus-visible{outline:3px solid #fff5d5;outline-offset:5px;z-index:12}
+.city-watermark{text-shadow:0 2px 5px #101a17,0 0 9px #101a17}
+@media(max-width:750px){
+ .city-ground{background-position:65% center;background-size:auto 100%}
+ .city-building.built{box-shadow:4px 6px 0 #40372d88,0 8px 14px #111a1599}
+ .city-building.palace{left:50%;top:7%}
+ .city-building.temple{left:25%;top:20%}
+ .city-building.court{left:72%;top:20%}
+ .city-building.camp{left:15%;top:34%}
+ .city-building.curia{left:50%;top:34%}
+ .city-building.museum{left:82%;top:34%}
+ .city-building.archive{left:25%;top:50%}
+ .city-building.arch{left:72%;top:50%}
+ .city-building.intelligence{left:15%;top:67%}
+ .city-building.library{left:50%;top:67%}
+ .city-building.harbor{left:82%;top:67%}
+ .city-building.circus{left:78%;top:82%}
+}

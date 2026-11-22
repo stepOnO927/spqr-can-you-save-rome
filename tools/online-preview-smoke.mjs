@@ -15,13 +15,15 @@ try{
  await page.locator('.maplibregl-canvas').waitFor({timeout:30000});
  await page.evaluate(async()=>{window.__spqrSmokeMap=(await import(document.querySelector('script[type="module"]').src)).map});
  await page.waitForFunction(()=>window.__spqrSmokeMap.isStyleLoaded()&&window.__spqrSmokeMap.areTilesLoaded(),null,{timeout:30000});
- const local=await page.evaluate(()=>{const map=window.__spqrSmokeMap;return {zoom:map.getZoom(),hasSea:!!map.getLayer('sea-final'),hasDetailedTerrain:!!map.getLayer('land-elevation-higher'),hasNaval:!!document.querySelector('#naval')}});
- if(!local.hasSea||!local.hasDetailedTerrain||!local.hasNaval)throw Error(`Deployed branch is missing expected features: ${JSON.stringify(local)}`);
+ const local=await page.evaluate(()=>{const map=window.__spqrSmokeMap;return {zoom:map.getZoom(),hasSea:!!map.getLayer('sea-final'),hasDetailedTerrain:!!map.getLayer('land-elevation-higher'),hasNaval:!!document.querySelector('#naval'),hasPaperGrain:map.hasImage('land-grain')||map.hasImage('sea-grain')}});
+ if(!local.hasSea||!local.hasDetailedTerrain||!local.hasNaval||local.hasPaperGrain)throw Error(`Deployed branch is missing expected features or still drawing decorative grain: ${JSON.stringify(local)}`);
  await page.locator('#map-mode').selectOption('terrain');
  await page.evaluate(()=>window.__spqrSmokeMap.jumpTo({center:[12.6,44.1],zoom:9.05}));
  await page.locator('#map-charting').waitFor({state:'hidden',timeout:30000});
  const terrain=await (await page.waitForFunction(()=>{const map=window.__spqrSmokeMap;const result={zoom:map.getZoom(),center:map.getCenter().toArray(),detailLoaded:map.isSourceLoaded('elevation-higher'),seaLoaded:map.isSourceLoaded('ocean')};return map.areTilesLoaded()&&result.detailLoaded&&result.seaLoaded&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99?result:false},null,{timeout:30000})).jsonValue();
  if(!terrain.detailLoaded||!terrain.seaLoaded)throw Error(`Hosted atlas tiles did not settle: ${JSON.stringify({terrain,missing:missing.slice(0,20),errors})}`);
+ if(await page.locator('html').getAttribute('lang')!=='zh-CN')await page.locator('#language').click();
+ if(await page.locator('html').getAttribute('lang')!=='zh-CN')throw Error('Chinese language switch failed');
  await page.locator('#language').click();
  if(await page.locator('html').getAttribute('lang')!=='en')throw Error('English language switch failed');
  if(errors.length||missing.length)throw Error(`Hosted atlas errors: ${JSON.stringify({errors,missing})}`);
