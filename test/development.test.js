@@ -741,6 +741,43 @@ test('grain stores move real food rather than creating a monthly harvest',()=>{
  assert.equal(region(captured,sites[1].id).grainReserve,0);
 });
 
+test('a constructed warehouse stores real local grain and transfers its stock on capture',()=>{
+ const s=newGrandGame('egypt'),site=region(s,'egypt'),f=s.factions.egypt;
+ development(s,'egypt').knownMaterial.push('warehouse-management');
+ f.treasury=500;f.food=50;
+ const before=nationalBudget(s,'egypt');
+ assert.equal(startConstruction(s,'egypt',site.id,'warehouse').ok,true);
+ assert.ok(!site.buildings.includes('warehouse'));
+ months(s,3);
+ assert.ok(site.buildings.includes('warehouse'));
+ const after=nationalBudget(s,'egypt');
+ assert.equal(after.foodCapacity,before.foodCapacity+40);
+ assert.equal(after.foodNet,before.foodNet,'the warehouse does not produce a harvest');
+ assert.equal(localBuildingEffects(site).localFoodCapacity,20);
+ site.grainReserve=0;f.food=50;
+ const total=()=>f.food+site.grainReserve;
+ const initial=total();assert.equal(settleGranaryReserves(s,'egypt'),2);
+ assert.equal(total(),initial);
+ assert.match(constructionPanel(s,'en',site),/Provincial grain reserve: 2\/20/);
+ assert.match(constructionPanel(s,'zh',site),/地方粮仓储备: 2\/20/);
+ const saved=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(region(saved,site.id).grainReserve,2);
+ const captured=structuredClone(saved),capturedSite=region(captured,site.id);
+ capturedSite.owner='senate';captured.factions.senate.food=-2;
+ assert.equal(settleGranaryReserves(captured,'egypt'),0);
+ assert.equal(settleGranaryReserves(captured,'senate'),2);
+ assert.equal(captured.factions.senate.food,0);
+ assert.equal(capturedSite.grainReserve,0);
+ const old=newGrandGame('egypt'),oldSite=region(old,'egypt');
+ oldSite.buildings.push('warehouse');delete oldSite.grainReserve;
+ old.factions.egypt.food=50;
+ const migrated=upgradeSave(JSON.parse(JSON.stringify(old)));
+ assert.equal(region(migrated,oldSite.id).grainReserve||0,0);
+ assert.equal(migrated.factions.egypt.food,50);
+ assert.equal(settleGranaryReserves(migrated,'egypt'),2);
+ assert.equal(migrated.factions.egypt.food+region(migrated,oldSite.id).grainReserve,50);
+});
+
 test('granaries hold finite provincial food, buffer shortages, and migrate old national storage without duplication',()=>{
  const built=newGrandGame('egypt');
  assert.equal(startConstruction(built,'egypt','egypt','granary').ok,true);
