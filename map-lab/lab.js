@@ -46,7 +46,7 @@ import {queueShip,cancelShipConstruction,appointFleet,dismissFleetCommander,appo
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
 let objectivesOpen=true;let currentMapMode='political';let focusPreviousMode=null;let reliefEnabled=localStorage.getItem('spqr-relief-v2')==='on';
-let lang=localStorage.getItem('spqr-lang')==='en'?'en':'zh';
+let lang=localStorage.getItem('spqr-lang')==='zh'?'zh':'en';
 let devBranch='material';
 let treeZoom=1;
 

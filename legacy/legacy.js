@@ -17,7 +17,7 @@ import {commissionMerchantReport,acquireTyrianCloth,settleHarborExchange} from '
 import {CAMP_DRILL_STAGES,CAMP_DRILL_GRADES,beginCampDrill,answerCampDrill} from './camp-drill.js?v=2';
 import {MUSEUM_HALLS,museumHallFor,museumPrestige,curateArtifact,removeFeaturedArtifact} from './museum-curation.js?v=1';
 
-let profile=loadProfile(),lang=localStorage.getItem('spqr-lang')==='en'?'en':'zh',panel='city',selected='curia',filter='all',race=null,notice='';
+let profile=loadProfile(),lang=localStorage.getItem('spqr-lang')==='zh'?'zh':'en',panel='city',selected='curia',filter='all',race=null,notice='';
 let libraryBranch='material',librarySelection='roadmaking';
 const n=value=>value?.[lang==='zh'?1:0]||'';
 const t=(en,zh)=>lang==='zh'?zh:en;
