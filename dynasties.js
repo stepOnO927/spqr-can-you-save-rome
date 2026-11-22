@@ -44,7 +44,7 @@ function ensureCatalog(s){
 
 export function initializeDynasties(s){
  const d=s.world.dynasties||= {families:{},lives:{},catalog:{},marriages:[],memories:[],rulers:[],seed:220049,nextPerson:1,nextFamily:1};
- d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.estateTransfers||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.familyAccords||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);initializeLegend(s);
+ d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.inheritanceDisputes||=[];d.estateTransfers||=[];d.estateRulingNotices||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.familyAccords||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);initializeLegend(s);
  for(const [id,c] of Object.entries(s.world.characters)){
   c.parents||=[];c.adoptiveParents||=[];c.children||=[];c.spouse||=null;c.wealth??=0;
   c.sex||=(['cleopatra','arsinoe'].includes(id)?'female':CHARACTER_CATALOG[id]?.fictional?'unknown':'male');
@@ -326,6 +326,25 @@ export function advanceEstateTransfers(s){
  }
 }
 
+// A court cannot provoke a foreign reaction until the ruling is conveyed and acknowledged.
+function queueEstateRulingNotice(s,caseFile,person,loyaltyDelta,relationDelta,name){
+ const d=s.world.dynasties;let next=Number.isSafeInteger(d.nextEstateNotice)&&d.nextEstateNotice>0?d.nextEstateNotice:1;while(d.estateRulingNotices.some(x=>x.id===`estate-notice:${next}`))next++;d.nextEstateNotice=next+1;
+ d.estateRulingNotices.push({id:`estate-notice:${next}`,faction:caseFile.faction,recipient:person.id,recipientFaction:person.faction,recipientName:[...storedCorrespondentName(person.id,name)],loyaltyDelta,relationDelta,status:'pending',remaining:4,year:s.year,month:s.month,courierSeed:Math.floor(roll(s)*0x100000000)});
+}
+export function retryEstateRulingNotice(s,id){
+ const d=initializeDynasties(s),notice=d.estateRulingNotices.find(x=>x.id===id&&x.faction===s.player&&x.status==='no_reply');if(!notice)return {ok:false,reason:'unavailable'};notice.status='pending';notice.remaining=4;notice.year=s.year;notice.month=s.month;notice.courierSeed=Math.floor(roll(s)*0x100000000);return {ok:true};
+}
+export function advanceEstateRulingNotices(s){
+ for(const notice of s.world.dynasties.estateRulingNotices){
+  if(notice.status!=='pending'||notice.year===s.year&&notice.month===s.month||--notice.remaining>0)continue;
+  const person=s.world.characters[notice.recipient],war=s.wars.some(w=>w.includes(notice.faction)&&w.includes(notice.recipientFaction));
+  const refuses=((Math.imul((notice.courierSeed??s.seed??0)^0x72538a91,0x9e3779b1)>>>0)%100)<10;
+  if(familyCourierArrives(s,notice)&&!refuses&&person?.alive&&!person.missing&&person.faction===notice.recipientFaction&&s.factions[notice.recipientFaction]&&!war){
+   person.loyalty=Math.max(0,Math.min(100,person.loyalty+notice.loyaltyDelta));if(notice.relationDelta){const key=pair(notice.faction,notice.recipientFaction);s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+notice.relationDelta))}notice.status='delivered';notice.resolvedYear=s.year;notice.resolvedMonth=s.month;if(notice.faction===s.player)note(s,'A reply arrived about an inheritance ruling.','关于遗产裁决的回信已送达。');if(person.faction===s.player)note(s,'A foreign court sent a notice about an inheritance ruling.','外国宫廷送来了遗产裁决通知。');
+  }else{notice.status='no_reply';notice.resolvedYear=s.year;notice.resolvedMonth=s.month;if(notice.faction===s.player)note(s,'No reply arrived to an inheritance ruling notice.','遗产裁决通知未收到回信。')}
+ }
+}
+
 export function settleInheritance(s,id){
  const d=initializeDynasties(s),c=s.world.characters[id];if(!c||c.inheritanceSettled)return;
  activateGuardianships(s,id);
@@ -361,9 +380,9 @@ export function resolveInheritanceDispute(s,disputeId,choice){
  else if(beneficiaryAvailable)transferEstateShare(s,deceased,beneficiary.id,rest,storedCorrespondentName(beneficiary.id,caseFile.beneficiaryName));
  else d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest;
  if(choice==='compromise'){faction.treasury-=6;faction.stability=Math.min(100,faction.stability+2)}
- if(choice==='will'){for(const heir of heirs)heir.loyalty=Math.max(0,heir.loyalty-8);if(faction)faction.stability=Math.max(0,faction.stability-2)}
- if(choice==='heirs'&&beneficiaryAvailable){beneficiary.loyalty=Math.max(0,beneficiary.loyalty-10);if(faction)faction.stability=Math.max(0,faction.stability-1)}
- if(beneficiaryAvailable&&beneficiary.faction!==caseFile.faction){const key=pair(beneficiary.faction,caseFile.faction);s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+(choice==='heirs'?-4:2)))}
+ if(choice==='will'){for(const heir of heirs){if(heir.faction===caseFile.faction)heir.loyalty=Math.max(0,heir.loyalty-8);else queueEstateRulingNotice(s,caseFile,heir,-8,0,caseFile.heirNames?.[heir.id])}if(faction)faction.stability=Math.max(0,faction.stability-2)}
+ if(choice==='heirs'&&beneficiaryAvailable){if(beneficiary.faction===caseFile.faction)beneficiary.loyalty=Math.max(0,beneficiary.loyalty-10);if(faction)faction.stability=Math.max(0,faction.stability-1)}
+ if(beneficiaryAvailable&&beneficiary.faction!==caseFile.faction)queueEstateRulingNotice(s,caseFile,beneficiary,choice==='heirs'?-10:0,choice==='heirs'?-4:2,caseFile.beneficiaryName);
  d.memories.push({familyId:s.world.characters[caseFile.deceased].familyId,targetFamilyId:beneficiary?.familyId,kind:`inheritance_${choice}`,year:s.year,month:s.month,weight:choice==='compromise'?2:-6});
  caseFile.status='resolved';caseFile.choice=choice;caseFile.resolvedYear=s.year;caseFile.resolvedMonth=s.month;
  const labels={will:['will upheld','维持遗嘱'],compromise:['estate divided','分割遗产'],heirs:['children favored','支持子女']};
@@ -414,6 +433,7 @@ export function advanceDynasties(s){
  advanceAsylumRequests(s);
  advanceFamilyAccords(s);
  advanceEstateTransfers(s);
+ advanceEstateRulingNotices(s);
  for(const loan of d.familyLoans.filter(x=>x.remaining>0)){
   const treasury=s.factions[loan.faction]?.treasury||0;if(treasury<1)continue;
   s.factions[loan.faction].treasury--;d.families[loan.familyId].wealth++;loan.remaining--;

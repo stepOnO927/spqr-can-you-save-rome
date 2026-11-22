@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=world-kings-estate-village-1';
-import {createFictionalPerson,makeWill,settleInheritance,resolveInheritanceDispute,advanceEstateTransfers,advanceDynasties,retryEstateTransfer,reclaimEstateTransfer} from '../dynasties.js?v=world-kings-estate-village-1';
+import {createFictionalPerson,makeWill,settleInheritance,resolveInheritanceDispute,advanceEstateTransfers,advanceEstateRulingNotices,retryEstateRulingNotice,advanceDynasties,retryEstateTransfer,reclaimEstateTransfer} from '../dynasties.js?v=world-kings-estate-village-1';
 import {addReport} from '../character-system.js?v=world-kings-estate-village-1';
 import {renderGenealogy} from '../genealogy-ui.js?v=world-kings-estate-village-1';
 
@@ -42,3 +42,15 @@ test('an AI court reclaims an unanswered cross-border share without announcing i
 test('old saves without a transfer ledger keep their existing estate cases',()=>{
  const {s,parent}=disputed(),estate=resolve(s,parent);delete s.world.dynasties.estateTransfers;delete s.world.dynasties.nextEstateTransfer;const loaded=upgradeSave(structuredClone(s));assert.deepEqual(loaded.world.dynasties.estateTransfers,[]);assert.equal(loaded.world.dynasties.inheritanceDisputes.find(x=>x.id===estate.id).status,'pending');assert.ok(resolveInheritanceDispute(loaded,estate.id,'compromise').ok);assert.equal(loaded.world.dynasties.estateTransfers[0].amount,15);
 });
+
+
+test('foreign reactions wait for an acknowledged ruling notice and preserve uncertainty across saves',()=>{
+ const {s,parent,child,foreign}=disputed(),estate=resolve(s,parent),loyalty=s.world.characters[foreign].loyalty,relations=s.relations['caesar:egypt']||0;assert.ok(resolveInheritanceDispute(s,estate.id,'heirs').ok);
+ const notice=s.world.dynasties.estateRulingNotices[0];assert.ok(notice);assert.equal(s.world.characters[foreign].loyalty,loyalty);assert.equal(s.relations['caesar:egypt']||0,relations);advanceEstateRulingNotices(s);assert.equal(notice.remaining,4);
+ const base=upgradeSave(structuredClone(s));let delivered,lost;for(let seed=1;seed<500&&(!delivered||!lost);seed++){const candidate=upgradeSave(structuredClone(base)),n=candidate.world.dynasties.estateRulingNotices[0];n.courierSeed=seed;for(let i=0;i<4;i++){if(++candidate.month>12){candidate.month=1;candidate.year++}advanceEstateRulingNotices(candidate)}if(n.status==='delivered')delivered=candidate;else if(n.status==='no_reply')lost=candidate}
+ assert.ok(delivered);assert.ok(lost);assert.equal(delivered.world.characters[foreign].loyalty,loyalty-10);assert.equal(delivered.relations['caesar:egypt'],relations-4);assert.equal(lost.world.characters[foreign].loyalty,loyalty);assert.equal(lost.relations['caesar:egypt']||0,relations);
+ const dead=upgradeSave(structuredClone(base));dead.world.characters[foreign].alive=false;dead.world.dynasties.estateRulingNotices[0].courierSeed=lost.world.dynasties.estateRulingNotices[0].courierSeed;for(let i=0;i<4;i++){if(++dead.month>12){dead.month=1;dead.year++}advanceEstateRulingNotices(dead)}assert.equal(dead.world.dynasties.estateRulingNotices[0].status,'no_reply');assert.equal(dead.relations['caesar:egypt']||0,relations);
+ const n=lost.world.dynasties.estateRulingNotices[0];assert.ok(retryEstateRulingNotice(lost,n.id).ok);assert.equal(n.status,'pending');assert.equal(n.remaining,4);assert.equal(retryEstateRulingNotice(lost,n.id).ok,false);assert.ok(child);
+});
+
+test('old saves without a ruling notice ledger are upgraded',()=>{const {s}=disputed();delete s.world.dynasties.estateRulingNotices;const loaded=upgradeSave(structuredClone(s));assert.deepEqual(loaded.world.dynasties.estateRulingNotices,[])});
