@@ -6,6 +6,28 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Wang Zhengjun and Empress Dowager Wang now have distinct, original portrait
+art in the 49 BCE Han campaign. The images are artistic reconstructions,
+not documented likenesses. Optimized 512, 128 and 64 pixel versions follow
+the existing Han portrait convention. The Han overview now shows both saved
+people with their current role, campaign status, age estimate and recorded
+spouse, without treating them as ministers or adding fake actions. An old
+save receives the portrait only if the saved historical name and birth match;
+a changed identity does not acquire historical artwork. The focused ruler
+tests pass 20/20. The art prompts specified two distinct Western Han court
+women, restrained 49 BCE clothing, a dark backdrop and readable 64-pixel
+faces; they explicitly disclaimed authentic likenesses. Source PNGs were
+generated with the built-in image tool and optimized to local JPEG assets.
+The branch passes `npm test` 1,376/1,376. Chromium checks follow.
+
+Main through `0153e3e4` (#338) is integrated. A missing-person dossier can
+now fund a search at a real treasury cost and carry that choice across saves.
+The next attempt occurs sooner and has a better chance, without guaranteeing
+discovery or leaking a concealed death. Both the genealogy and terrain-map
+person panels expose the action. The existing fictional field commander
+replacement remains in place. A new browser smoke checks the funding flow,
+save and load; hosted verification follows.
+
 Main through `ba79aafd` (#337) is integrated. Searches for missing people
 now use a saved per-person random stream and may find no conclusive news for
 either a living or deceased subject; that failure cannot disclose a hidden

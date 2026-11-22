@@ -124,6 +124,19 @@ try{
  assert.match(await card.innerText(),/artistic reconstruction/);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
  assert.equal(await card.locator('img').first().getAttribute('src'),'../assets/portraits/han-antiochus-commagene-128.jpg');
+ await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
+ await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
+ const household=page.locator('.han-household');
+ for(const id of ['wang-zhengjun','empress-dowager-wang']){
+  const person=household.locator(`[data-household-person="${id}"]`);
+  assert.equal(await person.count(),1);
+  assert.equal(await person.locator('img').getAttribute('src'),`../assets/portraits/han-${id}-64.jpg`);
+  assert.equal(await person.locator('img').evaluate(img=>img.complete&&img.naturalWidth===64),true);
+ }
+ assert.match(await household.innerText(),/Han imperial household/);
+ await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
+ assert.equal(await household.locator('[data-household-person] img').count(),2);
+ await page.locator('#lang').click();assert.match(await household.innerText(),/汉室人物/);
  assert.deepEqual(errors,[]);
  console.log('Han ruler browser smoke passed: foreign and original Liu succession, portrait, save/load and both languages.');
 }finally{await browser.close()}

@@ -9,6 +9,16 @@ import {birthRecordValid,recordBirth,eligibility,crown,seizeThrone} from '../han
 import {courtPortraitSrc} from '../han/court-portrait.js';
 import {roll} from '../han/util.js';
 
+test('named Han household members retain distinct historical art across saves',()=>{
+ const s=newHanGame('han',{seed:146,start:'han'}),ids=['wang-zhengjun','empress-dowager-wang'];
+ for(const id of ids){assert.equal(s.persons[id].portrait,`han-${id}`);assert.equal(courtPortraitSrc(s.persons[id],128,s),`../assets/portraits/han-${id}-128.jpg`);assert.match(ownRulerHtml(s,0),new RegExp(`data-household-person="${id}"`))}
+ assert.match(ownRulerHtml(s,0),/Han imperial household/);assert.match(ownRulerHtml(s,0),/artistic reconstruction/);
+ assert.match(ownRulerHtml(s,1),/汉室人物/);assert.match(ownRulerHtml(s,1),/艺术复原/);
+ const saved=JSON.parse(serialize(s));for(const id of ids)delete saved.persons[id].portrait;
+ const restored=loadHanSave(JSON.stringify(saved));for(const id of ids)assert.equal(restored.persons[id].portrait,`han-${id}`);
+ saved.persons['wang-zhengjun'].name=['Alternate court person','架空宫廷人物'];const alternate=loadHanSave(JSON.stringify(saved));assert.equal(alternate.persons['wang-zhengjun'].portrait,undefined,'old saves cannot attach historical art to a changed identity');
+});
+
 test('simulated Liu children keep their parents, culture and dated birth through a legacy save',()=>{
  let s=newHanGame('han',{seed:146,start:'han'});
  tick(s);

@@ -4,6 +4,13 @@ import {statusOf,STATUS_NAMES} from './dynasty.js';
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=(x,lang)=>Array.isArray(x)?x[lang]||x[0]:x;
+function hanHouseholdHtml(s,lang){
+ const people=['wang-zhengjun','empress-dowager-wang'].map(id=>s.persons[id]).filter(p=>p?.faction==='han');
+ if(!people.length)return '';
+ const cards=people.map(p=>{const portrait=courtPortraitSrc(p,64,s),role=p.id==='wang-zhengjun'?(p.empress?(lang?'皇后':'Empress'):(lang?'宫廷妃嫔':'Court consort')):(lang?'王太后':'Empress dowager'),relative=p.spouse?.map(id=>s.persons[id]).find(Boolean),age=Number.isFinite(p.birth)?Math.max(0,(p.alive?s.year:p.death??s.year)-p.birth):null;
+  return `<article class="han-household-card" data-household-person="${esc(p.id)}"><div class="ruler-card-head">${portrait?`<img src="${esc(portrait)}" alt="" width="64" height="64">`:''}<div><strong>${esc(label(p.name,lang))}</strong><small>${esc(role)} · ${p.alive?(lang?'本局在世':'Alive in this campaign'):(lang?'本局已故':'Deceased in this campaign')}</small></div></div><p>${lang?'固定编号':'Stable ID'}: ${esc(p.id)} · ${lang?'约龄':'Approximate age'}: ${age??(lang?'未知':'Unknown')}</p>${relative?`<p>${lang?'已记载配偶':'Recorded spouse'}: ${esc(label(relative.name,lang))}</p>`:''}${p.note?`<p>${esc(label(p.note,lang))}</p>`:''}<p class="muted">${lang?'历史人物；肖像是艺术复原，当前职务与生死由战役状态决定。':'Historical person; the portrait is artistic reconstruction. Office and survival follow the campaign state.'}</p></article>`}).join('');
+ return `<section class="han-household"><h3>${lang?'汉室人物':'Han imperial household'}</h3>${cards}</section>`;
+}
 export function ownRulerHtml(s,lang=0){
  const f=s.player,r=s.rulers?.[f],p=f==='han'?s.persons[s.throne?.orthodox||s.throne?.occupant]:s.persons[r?.personId||r?.id];
  if(!p)return `<p class="muted">${lang?'当前君主未详。':'Current ruler uncertain.'}</p>`;
@@ -16,5 +23,5 @@ export function ownRulerHtml(s,lang=0){
  const regent=f==='han'?null:foreignRegent(s,f),regentImage=regent&&regentPortrait(s,f),governor=regent||p;
  const regency=regent?`<div class="ruler-card-head" data-regent="${esc(regent.id)}">${regentImage?`<img src="${esc(regentImage)}" alt="" width="48" height="48">`:''}<div><strong>${esc(label(regent.name,lang))}</strong><small>${lang?'宫廷摄政；君主成年前行使政务与军务权力。原创人物与肖像为游戏创作。':'Court regent; exercises civil and military authority until the ruler comes of age. Original person and portrait are game artwork.'}</small></div></div>`:'';
  const culture=Array.isArray(p.culture)?`<p>${lang?'文化':'Culture'}: ${esc(label(p.culture,lang))}</p>`:'';
- return `<article class="ruler-card" data-ruler="${esc(p.id)}"><div class="ruler-card-head">${portrait?`<img src="${esc(portrait)}" alt="" width="72" height="72">`:''}<div><strong>${esc(label(p.name,lang))}</strong><small>${esc(title)}</small></div></div><p>${esc(kin)}</p>${culture}<p class="muted">${esc(origin)}</p>${regency}${f==='han'?'':`<p>${lang?'税务治理效果（模拟）':'Tax administration (simulated)'}: ×${rulerGovernanceFactor(s,f).toFixed(2)}</p>`}${governor.record==='fictional'?`<p>${lang?'军事判断':'Military judgment'}: ${governor.military??'—'} · ${lang?'政务能力':'Governance'}: ${governor.competence??'—'}</p>`:''}</article>`;
+ return `<article class="ruler-card" data-ruler="${esc(p.id)}"><div class="ruler-card-head">${portrait?`<img src="${esc(portrait)}" alt="" width="72" height="72">`:''}<div><strong>${esc(label(p.name,lang))}</strong><small>${esc(title)}</small></div></div><p>${esc(kin)}</p>${culture}<p class="muted">${esc(origin)}</p>${regency}${f==='han'?'':`<p>${lang?'税务治理效果（模拟）':'Tax administration (simulated)'}: ×${rulerGovernanceFactor(s,f).toFixed(2)}</p>`}${governor.record==='fictional'?`<p>${lang?'军事判断':'Military judgment'}: ${governor.military??'—'} · ${lang?'政务能力':'Governance'}: ${governor.competence??'—'}</p>`:''}</article>${f==='han'?hanHouseholdHtml(s,lang):''}`;
 }
