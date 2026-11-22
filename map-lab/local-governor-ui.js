@@ -1,9 +1,9 @@
-import {isDeliveredReport} from '../person-knowledge.js?v=missing-leader-1';
+import {isDeliveredReport} from '../person-knowledge.js?v=missing-health-1';
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
-import {reportedControl} from '../control-intelligence.js?v=missing-leader-1';
+import {reportedControl} from '../control-intelligence.js?v=missing-health-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=missing-leader-1';
-import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=missing-leader-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=missing-health-1';
+import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=missing-health-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 

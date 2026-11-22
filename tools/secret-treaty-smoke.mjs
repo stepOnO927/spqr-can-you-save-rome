@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
- const chosen=await page.evaluate(async()=>{const {newGame,tick}=await import('/engine.js?v=missing-leader-1'),{proposeAgreement}=await import('/agreements.js?v=missing-leader-1'),{queueMission}=await import('/character-system.js?v=missing-leader-1');
+ const chosen=await page.evaluate(async()=>{const {newGame,tick}=await import('/engine.js?v=missing-health-1'),{proposeAgreement}=await import('/agreements.js?v=missing-health-1'),{queueMission}=await import('/character-system.js?v=missing-health-1');
   function fixture(seed){const s=newGame('caesar');s.difficulty='beginner';s.wars=[];s.relations['egypt:parthia']=60;s.world.intelSeed=seed;proposeAgreement(s,'egypt','parthia','defensive',{secret:true});return s}
   for(let i=1;i<=80;i++){const seed=(i*99173)>>>0,s=fixture(seed);if(!queueMission(s,'caesar','egypt','spy','secret_treaty').ok)continue;for(let n=0;n<4;n++)tick(s);if(s.knowledge.caesar.egypt.reports.some(r=>r.kind==='secret_treaty'&&r.value==='parthia')){sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:fixture(seed)}));return seed}}return null;
  });assert.ok(chosen,'no deterministic successful investigation found');

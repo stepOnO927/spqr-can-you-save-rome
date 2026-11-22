@@ -1,8 +1,8 @@
-import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=missing-leader-1';
+import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=missing-health-1';
 import {campaignDate} from '../campaign-date.js?v=calendar-1';
-import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=missing-leader-1';
-import {reassurePerson} from '../conspiracies.js?v=missing-leader-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=missing-leader-1';
+import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=missing-health-1';
+import {reassurePerson} from '../conspiracies.js?v=missing-health-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=missing-health-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
