@@ -1,5 +1,5 @@
 // A planning range based only on dated sightings, never the hidden enemy roster.
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=family-action-continuity-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=family-legend-merge-1';
 export function estimateAttackLosses({attacker,food,originSupply,destination,fortBand,sightings,year,month}){
  const date={year,month},usable=(sightings||[]).filter(x=>isDeliveredReport(date,x)&&Array.isArray(x.strengthBand)&&x.strengthBand.length===2&&x.strengthBand.every(Number.isFinite)).map(x=>({...x,age:sightingAge(date,x)})).filter(x=>x.age>=0&&x.age<=6);
  if(!attacker?.men||!usable.length)return {available:false};

@@ -1,6 +1,6 @@
-import {isDeliveredReport} from './person-knowledge.js?v=family-action-continuity-1';
+import {isDeliveredReport} from './person-knowledge.js?v=family-legend-merge-1';
 import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=saved-age-consistency-1';
-import {reportedControl} from './control-intelligence.js?v=family-action-continuity-1';
+import {reportedControl} from './control-intelligence.js?v=family-legend-merge-1';
 
 // Alternate-history claimant commands use real game theaters and armies.
 // The setup is a simulation, not a reconstruction of a historical campaign.

@@ -1,12 +1,13 @@
+import {earnedEpithets,legendName} from './legend.js?v=family-legend-merge-1';
 import {ROUTES, FACTIONS} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=saved-age-consistency-1';
 import {AGREEMENT_TYPES} from './agreements.js?v=agreement-courier-1';
 import {formatChronicleEntry} from './chronicle.js?v=saved-age-consistency-1';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=family-action-continuity-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=family-legend-merge-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=born-portrait-thirteen-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {canMediate,requestMediation} from './civil-war.js?v=family-action-continuity-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=family-action-continuity-1';
+import {canMediate,requestMediation} from './civil-war.js?v=family-legend-merge-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=family-legend-merge-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
@@ -97,7 +98,7 @@ export function sendLetter(s, spec) {
   const id = 'mail:' + mail.nextId++;
   const letter = {
     id, threadId:spec.threadId || id, senderId:senderId || null, senderInstitution:senderInstitution || null,
-    senderFaction, recipient, senderName:senderId ? name(senderId) : name(senderFaction),
+    senderFaction, recipient, senderName:senderId && category==='personal' && senderFaction===recipient && earnedEpithets(s,senderId,recipient).length ? [legendName(s,senderId,'en',recipient),legendName(s,senderId,'zh',recipient)] : senderId ? name(senderId) : name(senderFaction),
     senderPortrait:portrait(s,senderId),
     subject:spec.subject, body:spec.body, category, priority:spec.priority || 'routine',
     created:{year:s.year, month:s.month}, arrival:sent + travel, courierSeed:(s.seed??0)>>>0,

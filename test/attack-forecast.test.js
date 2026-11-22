@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region} from '../engine.js?v=family-action-continuity-1';
-import {reportedArmies} from '../character-system.js?v=family-action-continuity-1';
-import {estimateAttackLosses} from '../attack-forecast.js?v=family-action-continuity-1';
+import {newGame,region} from '../engine.js?v=family-legend-merge-1';
+import {reportedArmies} from '../character-system.js?v=family-legend-merge-1';
+import {estimateAttackLosses} from '../attack-forecast.js?v=family-legend-merge-1';
 
 test('dated observations reveal a broad strength band but no exact enemy count',()=>{
  const s=newGame('caesar'),report=reportedArmies(s,'caesar').find(x=>x.region==='italiaN'),actual=s.armies.find(x=>x.id===report.id);
