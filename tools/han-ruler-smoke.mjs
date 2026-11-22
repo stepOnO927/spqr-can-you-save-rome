@@ -12,6 +12,7 @@ try{
  const card=page.locator('.ruler-card');
  assert.match(await card.innerText(),/King of Kangju/);
  assert.match(await card.innerText(),/personal name is unrecorded/);
+ assert.match(await card.innerText(),/Culture: Kangju \(game reconstruction\)/);
  assert.equal(await card.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0),true);
  await page.locator('#save').click();
  await page.evaluate(()=>{const key='spqr-han-save-browser',s=JSON.parse(localStorage.getItem(key));s.persons[s.rulers.kangju.personId].alive=false;s.persons[s.rulers.kangju.personId].death=s.year;localStorage.setItem(key,JSON.stringify(s))});
@@ -23,6 +24,7 @@ try{
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
  assert.equal(await card.getAttribute('data-ruler'),name);
  await page.locator('#lang').click();assert.match(await card.innerText(),/本战役原创人物/);
+ assert.match(await card.innerText(),/文化: 康居（游戏复原）/);
  const rulerImage=await card.locator('img').first().getAttribute('src');
  await page.locator('#lang').click();await page.locator('#save').click();
  await page.evaluate(async()=>{
@@ -105,6 +107,12 @@ try{
  await page.locator('#lang').click();assert.match(await card.innerText(),/安息女王/);
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
  assert.match(await card.innerText(),/Ruling queen of Parthia/);
+ await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
+ await page.locator('#factionSelect').selectOption('sogd_samarkand');await page.locator('#begin').click();
+ assert.match(await card.innerText(),/Culture: Sogdian \(game reconstruction\)/);
+ await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
+ assert.match(await card.innerText(),/Culture: Sogdian \(game reconstruction\)/);
+ await page.locator('#lang').click();assert.match(await card.innerText(),/文化: 粟特（游戏复原）/);
  assert.deepEqual(errors,[]);
  console.log('Han ruler browser smoke passed: foreign and original Liu succession, portrait, save/load and both languages.');
 }finally{await browser.close()}

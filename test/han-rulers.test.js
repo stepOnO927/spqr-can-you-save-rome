@@ -93,6 +93,10 @@ test('undocumented opening rulers remain unnamed until an actual succession',()=
  assert.equal(s.rulers.parthia.id,'orodes-ii');
  assert.match(ownRulerHtml(s,0),/personal name is unrecorded/);
  assert.match(ownRulerHtml(s,1),/史料未载此时王名/);
+ const sogd=newHanGame('sogd_samarkand',{seed:112});
+ assert.match(ownRulerHtml(sogd,0),/Culture: Sogdian \(game reconstruction\)/);
+ assert.match(ownRulerHtml(sogd,1),/文化: 粟特（游戏复原）/);
+ assert.match(ownRulerHtml(loadHanSave(serialize(sogd)),0),/Culture: Sogdian \(game reconstruction\)/);
  const missingPerson=structuredClone(s);delete missingPerson.persons[missingPerson.rulers.gumo.personId];
  const migrated=loadHanSave(serialize(missingPerson));
  assert.equal(migrated.persons[migrated.rulers.gumo.personId].titleOnly,true);
