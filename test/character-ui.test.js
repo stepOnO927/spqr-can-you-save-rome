@@ -352,12 +352,16 @@ test('envoy relation missions explain the delayed diplomatic benefit before conf
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0],subject=box.querySelector('#mission-subject');assert.match(box.innerHTML,/改善关系（仅使者）/);subject.value='relations';box.missions.find(x=>x.dataset.mission==='envoy').onclick();const feedback=box.querySelector('#mission-feedback');assert.match(feedback.textContent,/双方关系最多提高8/);assert.match(feedback.textContent,/可能拒绝/);feedback.children[0].onclick();assert.equal(s.operations[0].subject,'relations');assert.equal(s.operations[0].type,'envoy');assert.ok(s.operations[0].remaining>=3)}finally{globalThis.document=prior}
 });
 
-test('personal trust displays complete fictional IDs and hides foreign-only relationships after loading',()=>{
+test('character dossiers show own trust and dated foreign contact without hidden live trust',()=>{
  const prior=globalThis.document,panel=new Element();let s=newGame('caesar');
  s.world.personalRelations={'fictional:1:fictional:2':{trust:41,meetings:2},'fictional:1:fictional:3':{trust:23,meetings:1},'fictional:3:fictional:4':{trust:88,meetings:3}};
  s=upgradeSave(JSON.parse(JSON.stringify(s)));globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
- try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('fictional:1');let html=panel.children.map(x=>x.innerHTML).join('');assert.match(html,/莉维娅·玛尔基娅: 41/);assert.match(html,/姓名未记录: 23/);
-  panel.children=[];ui.show('fictional:3');html=panel.children.map(x=>x.innerHTML).join('');assert.match(html,/普布利乌斯·瓦雷努斯: 23/);assert.doesNotMatch(html,/: 88/);
+ try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}});ui.show('fictional:1');let html=panel.children.map(x=>x.innerHTML).join('');assert.match(html,/莉维娅·玛尔基娅: 41/);assert.doesNotMatch(html,/: 23/);
+  panel.children=[];ui.show('fictional:3');html=panel.children.map(x=>x.innerHTML).join('');assert.doesNotMatch(html,/: 23|: 88/);
+  s.meetings.push({actor:'caesar',targetFaction:'senate',person:'fictional:1',target:'fictional:3',status:'met',year:s.year,month:s.month,contactCredit:2});
+  panel.children=[];ui.show('fictional:3');const recorded=panel.children.map(x=>x.innerHTML).join('');assert.match(recorded,/普布利乌斯·瓦雷努斯/);assert.match(recorded,/联系加成 2\/10/);assert.doesNotMatch(recorded,/: 23|: 88/);
+  s.world.personalRelations['fictional:1:fictional:3']={trust:99,meetings:999};s.meetings.push({actor:'caesar',targetFaction:'senate',person:'fictional:1',target:'fictional:3',status:'met',year:s.year+1,month:s.month,contactCredit:9});
+  panel.children=[];ui.show('fictional:3');html=panel.children.map(x=>x.innerHTML).join('');assert.equal(html,recorded);
  }finally{globalThis.document=prior}
 });
 

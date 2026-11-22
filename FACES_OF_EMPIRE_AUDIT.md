@@ -6,6 +6,13 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `86ffaf43` is integrated. Its foreign-relationship privacy
+change now renders only the player's own trust or a dated, recorded personal
+contact; the merge's overlapping character-panel line had omitted the display
+helper, which is restored. The shared agreement cache keys remain unified.
+Focused character, identity, meeting and module tests pass 76/76 after
+integration.
+
 Three attested opening western rulers in the Han campaign now have distinct
 fixed portraits: the already available Orodes II and Artavasdes II artwork is
 reused, and Antiochus I of Commagene has a new optimized 512/128/64 image
