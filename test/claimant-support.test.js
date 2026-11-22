@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-commander-snapshot-1';
-import {addReport,reportedClaimants,supportClaimant,claimantRepresentatives,contestLeadership,advanceOperations,advanceDisputes} from '../character-system.js?v=faces-commander-snapshot-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=faces-commander-snapshot-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
+import {addReport,reportedClaimants,supportClaimant,claimantRepresentatives,contestLeadership,advanceOperations,advanceDisputes} from '../character-system.js?v=faces-name-disagreement-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=faces-name-disagreement-1';
 
 const report=s=>addReport(s,s.player,'egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy',confidence:'unverified'});
 test('offers require a reported claimant but do not expose whether that report is true',()=>{

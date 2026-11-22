@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=faces-commander-snapshot-1';
-import {newHanGame,tick as tickHan,loadHanSave} from '../han/engine.js?v=faces-commander-snapshot-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
+import {newHanGame,tick as tickHan,loadHanSave} from '../han/engine.js?v=faces-name-disagreement-1';
 import {rulerPortrait} from '../han/rulers.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';
 import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';

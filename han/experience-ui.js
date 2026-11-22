@@ -1,11 +1,11 @@
 import {analytics} from '../analytics.js';
-import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=faces-commander-snapshot-1';
+import {DIRECTIONS,init,act,control,lesson,replay,refresh,recommendations,objectives} from './experience.js?v=faces-name-disagreement-1';
 import {treeFor,focusState,focusStatus,startFocus} from './focus.js?v=han-1';
 import {OFFICES,FACTIONS} from './data.js?v=han-1';
 import {appoint} from './court.js?v=han-1';
 import {answerProposal,atWar,propose,treaty,relation,TREATY_TYPES} from './frontier.js?v=han-1';
 import {neighbours} from './military.js?v=han-1';
-import {AMBITIONS,available as availableAmbitions,initialize as initializeAmbition,choose as chooseAmbition,status as ambitionStatus,AMBITION_CHANGE_STABILITY_COST} from './ambitions.js?v=faces-commander-snapshot-1';
+import {AMBITIONS,available as availableAmbitions,initialize as initializeAmbition,choose as chooseAmbition,status as ambitionStatus,AMBITION_CHANGE_STABILITY_COST} from './ambitions.js?v=faces-name-disagreement-1';
 
 let panel='',lastResult='',preferredTarget='';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

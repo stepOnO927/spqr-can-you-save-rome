@@ -1,10 +1,10 @@
-import {reportedPeople,isDeliveredReport} from './person-knowledge.js?v=faces-commander-snapshot-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-commander-snapshot-1';
-import {startDynasticWar} from './civil-war.js?v=faces-commander-snapshot-1';
+import {reportedPeople,isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-name-disagreement-1';
+import {startDynasticWar} from './civil-war.js?v=faces-name-disagreement-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,factionNameStyle,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=faces-wheels-1';
 import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=missing-fate-privacy-1';
-import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=faces-commander-snapshot-1';
+import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=faces-name-disagreement-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.

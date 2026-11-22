@@ -1,4 +1,4 @@
-import {coalitionInterest,formCoalition} from './coalitions.js?v=faces-commander-snapshot-1';
+import {coalitionInterest,formCoalition} from './coalitions.js?v=faces-name-disagreement-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 import {ROUTES} from './data.js?v=phase-x-1';

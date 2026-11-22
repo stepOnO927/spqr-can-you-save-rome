@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-commander-snapshot-1';
-import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=faces-commander-snapshot-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=faces-commander-snapshot-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
+import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=faces-name-disagreement-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=faces-name-disagreement-1';
 
 function memoryStorage() {
   const values=new Map();

@@ -1,5 +1,5 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=faces-commander-snapshot-1';
-import {startPoliticalWar} from './civil-war.js?v=faces-commander-snapshot-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
+import {startPoliticalWar} from './civil-war.js?v=faces-name-disagreement-1';
 import {personalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 

@@ -9,7 +9,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=faces-commander-snapshot-1');
+  const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
   const state=newGame('caesar');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
  });
@@ -77,7 +77,7 @@ try{
  // A long border closure must leave a readable refund rather than a ghost
  // shipment that remains in the transit list indefinitely.
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=faces-commander-snapshot-1');
+  const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
   const {proposeAgreement}=await import('/agreements.js?v=agreement-courier-1');
   const {placeTradeOrder,advanceMarkets}=await import('/trade-markets.js?v=faces-wheels-1');
   const state=newGame('han');state.relations['han:parthia']=45;
@@ -102,7 +102,7 @@ try{
  // A direct Han player can buy from Parthia through the existing oasis and
  // Central Asian network without receiving a fictitious direct border.
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=faces-commander-snapshot-1'),{proposeAgreement}=await import('/agreements.js?v=agreement-courier-1');
+  const {newGame}=await import('/engine.js?v=faces-name-disagreement-1'),{proposeAgreement}=await import('/agreements.js?v=agreement-courier-1');
   const state=newGame('han');state.relations['han:parthia']=45;
   if(!proposeAgreement(state,'han','parthia','trade').ok)throw Error('Han-Parthia treaty unavailable');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
@@ -126,7 +126,7 @@ try{
  // A delivered horse batch becomes visible mounted scouts when Han raises
  // a force in the receiving theater.
  await page.evaluate(async()=>{
-  const {newGame,recruit}=await import('/engine.js?v=faces-commander-snapshot-1');
+  const {newGame,recruit}=await import('/engine.js?v=faces-name-disagreement-1');
   const state=newGame('han');state.markets.regions.hanHexi.goods.horses.stock=1;
   if(!recruit(state,'hanHexi'))throw Error('Han recruitment failed');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
@@ -135,7 +135,7 @@ try{
  await page.locator('[data-army="levy1"]').evaluate(element=>element.click());
  assert.match(await page.locator('#command-detail').innerText(),/Mounted scouts|骑乘侦察兵/);
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=faces-commander-snapshot-1');
+  const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
   const {advanceMarkets}=await import('/trade-markets.js?v=faces-wheels-1');
   const state=newGame('caesar');state.armies.find(a=>a.owner==='senate').siege={region:'cisalpine',remaining:100};
   advanceMarkets(state);
@@ -147,7 +147,7 @@ try{
  await page.locator('#language').click();
  assert.match(await page.locator('.market-panel').innerText(),/Sieged markets this month.*grain output halved/s);
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=faces-commander-snapshot-1');
+  const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
   const state=newGame('caesar');
   state.markets.transactions.push({shipment:'foreign-sale',seller:'caesar',buyer:'armenia',origin:'narbo',destination:'armenia',commodity:'grain',quantity:1,price:2,transport:1,tariffs:[],year:-49,month:1,marketEffect:{stockBefore:987654,stockAfter:987655,priceBefore:9,priceAfter:8}});
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));

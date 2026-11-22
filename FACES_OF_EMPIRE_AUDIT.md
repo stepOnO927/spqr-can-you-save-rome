@@ -6,6 +6,12 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `480a52ca` is integrated. Conflicting reports of one person's
+name in the same latest month remain visibly uncertain; the atlas identity
+panel cannot call that disagreement corroborated. The reported-name browser
+scenario is retained. Focused reported-name, ruler and module checks pass
+21/21, and the full local suite passes 1,285/1,285. Cloud checks follow.
+
 Foreign sovereign throne records now preserve stable sex, birth, culture and
 homeland alongside the saved name and portrait seed. When an older save has a
 throne link but is missing its person record, migration restores the identity

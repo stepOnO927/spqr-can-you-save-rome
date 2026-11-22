@@ -1,12 +1,12 @@
-import {CHARACTER_CATALOG} from './characters.js?v=faces-commander-snapshot-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 
 export const namedReportSubjects=r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:r.kind==='conspiracy'&&r.value==='suspected'&&typeof r.character==='string'?[r.character]:r.kind?.startsWith('office_')||r.kind==='succession'?[r.value]:[];
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
 const validName=name=>Array.isArray(name)&&name.length===2&&name.every(x=>typeof x==='string'&&x.length>0);
 const nameDate=r=>Number.isFinite(r.year)&&Number.isInteger(r.month)?r.year*12+r.month:null;
-// A dated observation outranks an undated lead. Conflicting undated names
-// have no known chronological order and cannot identify a single name.
-function selectName(records){const dated=records.filter(r=>nameDate(r)!=null).sort((a,b)=>nameDate(b)-nameDate(a));if(dated.length)return dated[0];return new Set(records.map(r=>JSON.stringify(r.name))).size===1?records[0]:null}
+// A dated observation outranks an undated lead. Conflicting names from the
+// same latest month have no established order; preserve the disagreement.
+function selectName(records){const dated=records.filter(r=>nameDate(r)!=null).sort((a,b)=>nameDate(b)-nameDate(a));if(dated.length){const newest=dated.filter(r=>nameDate(r)===nameDate(dated[0]));return new Set(newest.map(r=>JSON.stringify(r.name))).size>1?{disputed:true}:newest[0]}return new Set(records.map(r=>JSON.stringify(r.name))).size===1?records[0]:null}
 // Undated legacy entries were already present in the player's records. A
 // dated entry, however, cannot be delivered or observed in the future.
 export function isDeliveredReport(s,r){
@@ -52,13 +52,17 @@ function personNameRecords(s,actor,target,id){
 }
 export function reportedPersonName(s,actor,target,id){
  const found=selectName(personNameRecords(s,actor,target,id));
- return found?{name:[...found.name],year:found.year,month:found.month}:null;
+ return found&&!found.disputed?{name:[...found.name],year:found.year,month:found.month}:null;
+}
+export function hasReportedNameConflict(s,actor,id){
+ const records=Object.keys(s.knowledge?.[actor]||{}).flatMap(target=>personNameRecords(s,actor,target,id));return selectName(records)?.disputed===true;
 }
 export function visiblePersonName(s,actor,id){
  const person=CHARACTER_CATALOG[id];if(!person)return null;
  if(!person.fictional||s.world.characters[id]?.faction===actor)return person.name;
  const records=Object.keys(s.knowledge?.[actor]||{}).flatMap(target=>personNameRecords(s,actor,target,id));
- return selectName(records)?.name||s.meetings?.filter(m=>m.actor===actor&&m.target===id&&isCompletedMeeting(s,m)&&validName(m.reportedName)).sort((a,b)=>((b.resolvedYear??b.year)-(a.resolvedYear??a.year))*12+(b.resolvedMonth??b.month)-(a.resolvedMonth??a.month))[0]?.reportedName||['Unrecorded name','姓名未记录'];
+ const selection=selectName(records);if(selection?.disputed)return ['Name reports differ','姓名报告不一致'];
+ return selection?.name||s.meetings?.filter(m=>m.actor===actor&&m.target===id&&isCompletedMeeting(s,m)&&validName(m.reportedName)).sort((a,b)=>((b.resolvedYear??b.year)-(a.resolvedYear??a.year))*12+(b.resolvedMonth??b.month)-(a.resolvedMonth??a.month))[0]?.reportedName||['Unrecorded name','姓名未记录'];
 }
 // Old foreign letters never acquire a fictional person's later or hidden name.
 export function storedCorrespondentName(id,snapshot){
