@@ -2,7 +2,7 @@
 
 状态：**仅准备；尚未部署、切换域名或更改 GitHub 仓库可见性。** 在 Cloudflare 公网站点完整测试并获得明确切换批准前，仓库必须保持公开，现有 GitHub Pages 保持运行。
 
-当前审查分支增加商业同盟成员议事、增员邀请及其主战役和地图入口。1,356 项本地 Node 规则测试通过；本提交的 GitHub 托管页面打包、浏览器流程和公开文件清单尚待验证，故不能把旧提交的结果视为新代码的验收。
+当前审查分支增加商业同盟成员议事、增员邀请及其主战役和地图入口。代码提交 `5147fe10` 的 [GitHub 托管规则检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45082160751)通过 1,357/1,357 项；[Pages 打包和三入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45082160721)、[36 个月浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45082160719)、[Poki 打包](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45082160729)和[三组深度浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45082160709)全部通过。第一组实际操作同盟议事、主战役和地图入口、提议、存读档、组织地图及来信答复。`dist/` 有 335 个公开运行文件，5.02 MiB 总量，最大单文件 1.06 MiB，低于 25 MiB 限制；公开路径门禁通过。这仍是 GitHub 托管的打包与浏览器测试，**不是 Cloudflare 实际站点验收**。
 
 ## 运行入口与依赖审计
 
