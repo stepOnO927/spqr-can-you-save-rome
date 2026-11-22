@@ -11,6 +11,17 @@ const browser=await chromium.launch({headless:true,executablePath:process.env.SP
 const page=await browser.newPage({viewport:{width:1440,height:900}});
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
+const collisions=async()=>page.evaluate(()=>{
+ const rect=el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}};
+ const overlap=(a,b)=>a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom;
+ const labels=[...document.querySelectorAll('.grand-region-label')].map(el=>({name:el.textContent,box:rect(el)}));
+ const units=[...document.querySelectorAll('#map-svg .unit')].map(el=>({name:el.getAttribute('data-army'),box:rect(el)}));
+ return labels.flatMap(label=>units.filter(unit=>overlap(label.box,unit.box)).map(unit=>[label.name,unit.name]));
+});
+const waterLabels=async()=>page.evaluate(()=>{
+ const coast=document.querySelector('#landclip path');
+ return [...document.querySelectorAll('.grand-region-label')].filter(el=>!coast.isPointInFill(new DOMPoint(Number(el.getAttribute('x')),Number(el.getAttribute('y'))-4))).map(el=>el.textContent);
+});
 try{
  await page.route('**/*',async route=>{
   const url=new URL(route.request().url());
@@ -31,10 +42,22 @@ try{
  await page.locator('.grand-region-label').first().waitFor();
  const label=page.locator('.grand-region-label').first();
  assert.equal(await label.evaluate(el=>getComputedStyle(el).strokeWidth),'1.5px');
+ const englishCollisions=await collisions();
+ const englishWater=await waterLabels();
+ assert.deepEqual(englishCollisions,[]);
+ assert.deepEqual(englishWater,[]);
  await page.screenshot({path:resolve(output,'english.png')});
  await page.locator('#lang').click();
  assert.ok((await label.textContent()).length>0);
+ const chineseCollisions=await collisions();
+ const chineseWater=await waterLabels();
+ assert.deepEqual(chineseCollisions,[]);
+ assert.deepEqual(chineseWater,[]);
  await page.screenshot({path:resolve(output,'chinese.png')});
+ await page.locator('#terrain-map').click();
+ assert.deepEqual(await collisions(),[]);
+ assert.deepEqual(await waterLabels(),[]);
+ await page.locator('#political').click();
  for(let i=0;i<4;i++)await page.locator('#zoom-in').click();
  const place=page.locator('.grand-place text').first();
  await place.waitFor();
@@ -43,6 +66,16 @@ try{
  await page.setViewportSize({width:390,height:844});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  await page.screenshot({path:resolve(output,'mobile.png')});
- console.log(JSON.stringify({errors,output}));
+ await page.setViewportSize({width:1440,height:900});
+ for(let i=0;i<4;i++)await page.locator('#zoom-out').click();
+ for(let month=0;month<6;month++){
+  await page.locator('#step').click();
+  assert.deepEqual(await collisions(),[],`month ${month+1}: a regional name covers an army`);
+  assert.deepEqual(await waterLabels(),[],`month ${month+1}: a regional name moved into the sea`);
+ }
+ if(await page.locator('[data-dismiss-alert]').count())await page.locator('[data-dismiss-alert]').click();
+ await page.screenshot({path:resolve(output,'chinese-six-months.png')});
+ const layoutTimings=await page.evaluate(async()=>{const {avoidGrandLabelCollisions}=await import('/map-label-layout.js?v=3'),svg=document.querySelector('#map-svg'),times=[];for(let i=0;i<5;i++){const start=performance.now();avoidGrandLabelCollisions(svg);times.push(Math.round((performance.now()-start)*10)/10)}return times});
+ console.log(JSON.stringify({errors,output,englishCollisions,chineseCollisions,englishWater,chineseWater,layoutTimings}));
  if(errors.length)process.exitCode=1;
 }finally{await browser.close()}
