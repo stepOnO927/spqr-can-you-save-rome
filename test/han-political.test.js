@@ -1,7 +1,7 @@
 // MANDATE OF HEAVEN — political acceptance tests 21–30.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,tick,serialize,loadHanSave} from '../han/engine.js?v=faces-dynastic-leads-1';
+import {newHanGame,tick,serialize,loadHanSave} from '../han/engine.js?v=faces-commander-snapshot-1';
 import {appoint,dismiss,adminCapacity,recomputeInfluence,advanceAmbitions,ambitionOptions,issueEdict,startAudit,knownAttributes,answerDebate,respondToDisaster,emperorAuthority,onUsurpation,advanceCourt,answerPolicyAdvice} from '../han/court.js?v=han-1';
 import {seizeThrone,statusOf,isLiuClan} from '../han/dynasty.js?v=han-1';
 import {startFocus,focusState,advanceFocus,aiChooseFocus,TREES} from '../han/focus.js?v=han-1';

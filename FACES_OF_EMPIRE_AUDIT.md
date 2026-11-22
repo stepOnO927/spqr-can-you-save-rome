@@ -6,6 +6,13 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `53878f45` is integrated. Observed commanders now keep the
+reported bilingual name in a dated sighting, foreign family correspondence
+and the atlas inspection panel. The new cloud browser scenario is retained;
+focused commander, family, concluded-campaign and module checks pass 11/11.
+The full local TAP suite passes 1,283/1,283; cloud checks for this merge remain
+to be verified.
+
 The independent Han campaign already begins in January 49 BCE with Emperor
 Xuan on the throne and Liu Shi as crown prince; its country-selection copy
 incorrectly claimed a 48 BCE Emperor Yuan start. The English and Chinese

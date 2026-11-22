@@ -1,17 +1,17 @@
-import {namedReportSubjects,reportedPersonalContacts,reportedPeople,isDeliveredReport} from './person-knowledge.js?v=faces-dynastic-leads-1';
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=faces-dynastic-leads-1';
-import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=faces-dynastic-leads-1';
+import {namedReportSubjects,reportedPersonalContacts,reportedPeople,isDeliveredReport} from './person-knowledge.js?v=faces-commander-snapshot-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=faces-commander-snapshot-1';
+import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=faces-commander-snapshot-1';
 import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=faces-dynastic-leads-1';
-import {potentialConspirators} from './conspiracies.js?v=faces-dynastic-leads-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=faces-dynastic-leads-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=faces-commander-snapshot-1';
+import {potentialConspirators} from './conspiracies.js?v=faces-commander-snapshot-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=faces-commander-snapshot-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=faces-dynastic-leads-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=faces-commander-snapshot-1';
 import {activeAgreement} from './agreements.js?v=agreement-courier-1';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=faces-dynastic-leads-1';
-export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=faces-dynastic-leads-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=faces-commander-snapshot-1';
+export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=faces-commander-snapshot-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -522,8 +522,8 @@ export function observeArmies(s){
    (k.sightingHistory||=[]).unshift({...old,checkedYear:s.year,checkedMonth:s.month});k.sightingHistory=k.sightingHistory.slice(0,30);delete k.sightings[id];
   }
   for(const unit of s.armies){if(unit.owner===viewer||unit.move||!s.knowledge[viewer]?.[unit.owner]||!visible(unit.region))continue;
-   const k=s.knowledge[viewer][unit.owner],commanderId=CHARACTER_CATALOG[unit.characterId]?unit.characterId:null;k.sightings[unit.id]={id:unit.id,name:[...unit.name],owner:unit.owner,region:unit.region,year:s.year,month:s.month,commanderId,strengthBand:[Math.max(0,Math.floor(unit.men*.7/1000)*1000),Math.max(1000,Math.ceil(unit.men*1.3/1000)*1000)],...(unit.formation?.profile?{profile:unit.formation.profile}:{})};
-   if(commanderId){k.commanderReports=(k.commanderReports||[]).filter(r=>r.commanderId!==commanderId||r.armyId!==unit.id);k.commanderReports.unshift({commanderId,armyId:unit.id,armyName:[...unit.name],region:unit.region,year:s.year,month:s.month});k.commanderReports=k.commanderReports.slice(0,30)}
+   const k=s.knowledge[viewer][unit.owner],commanderId=CHARACTER_CATALOG[unit.characterId]?unit.characterId:null,observedName=CHARACTER_CATALOG[commanderId]?.name,commanderName=Array.isArray(observedName)&&observedName.length===2&&observedName.every(x=>typeof x==='string'&&x.trim())?[...observedName]:null;k.sightings[unit.id]={id:unit.id,name:[...unit.name],owner:unit.owner,region:unit.region,year:s.year,month:s.month,commanderId,...(commanderName?{commanderName:[...commanderName]}:{}),strengthBand:[Math.max(0,Math.floor(unit.men*.7/1000)*1000),Math.max(1000,Math.ceil(unit.men*1.3/1000)*1000)],...(unit.formation?.profile?{profile:unit.formation.profile}:{})};
+   if(commanderId){k.commanderReports=(k.commanderReports||[]).filter(r=>r.commanderId!==commanderId||r.armyId!==unit.id);k.commanderReports.unshift({commanderId,...(commanderName?{commanderName:[...commanderName]}:{}),armyId:unit.id,armyName:[...unit.name],region:unit.region,year:s.year,month:s.month});k.commanderReports=k.commanderReports.slice(0,30)}
   }
  }
 }

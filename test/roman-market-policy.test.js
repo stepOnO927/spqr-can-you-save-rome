@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-dynastic-leads-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-commander-snapshot-1';
 import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
 import {advanceMarketAI,advanceMarkets,placeTradeOrder,postTradeSale,quoteTrade,setTradeExportRestriction,setTradeTariffPolicy} from '../trade-markets.js?v=faces-wheels-1';
 

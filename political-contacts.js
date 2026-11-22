@@ -1,6 +1,6 @@
-import {isDeliveredReport,reportedPersonalContact} from './person-knowledge.js?v=faces-dynastic-leads-1';
-import {initializeWorld} from './characters.js?v=faces-dynastic-leads-1';
-import {politicalAmbition} from './conspiracies.js?v=faces-dynastic-leads-1';
+import {isDeliveredReport,reportedPersonalContact} from './person-knowledge.js?v=faces-commander-snapshot-1';
+import {initializeWorld} from './characters.js?v=faces-commander-snapshot-1';
+import {politicalAmbition} from './conspiracies.js?v=faces-commander-snapshot-1';
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const pair=(a,b)=>[a,b].sort().join(':');
 const current=s=>s.year*12+s.month;

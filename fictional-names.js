@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG} from './characters.js?v=faces-dynastic-leads-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-commander-snapshot-1';
 
 // Original game people and naming pools, not transcriptions of documented
 // individuals. The pools reflect each implemented court's naming tradition.

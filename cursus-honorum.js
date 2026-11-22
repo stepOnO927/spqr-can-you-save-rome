@@ -1,6 +1,6 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=faces-dynastic-leads-1';
-import {createFictionalPerson} from './dynasties.js?v=faces-dynastic-leads-1';
-import {initializeOffices,appointOffice} from './office-system.js?v=faces-dynastic-leads-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=faces-commander-snapshot-1';
+import {createFictionalPerson} from './dynasties.js?v=faces-commander-snapshot-1';
+import {initializeOffices,appointOffice} from './office-system.js?v=faces-commander-snapshot-1';
 import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=missing-fate-privacy-1';
 import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 

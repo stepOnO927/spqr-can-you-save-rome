@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=faces-dynastic-leads-1';
-import {createFictionalPerson} from '../dynasties.js?v=faces-dynastic-leads-1';
-import {addReport,reportedHealthSubjects,previewMission,queueMission,visiblePersonName} from '../character-system.js?v=faces-dynastic-leads-1';
-import {identityKnowledge} from '../map-lab/identity-knowledge.js?v=faces-dynastic-leads-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-commander-snapshot-1';
+import {createFictionalPerson} from '../dynasties.js?v=faces-commander-snapshot-1';
+import {addReport,reportedHealthSubjects,previewMission,queueMission,visiblePersonName} from '../character-system.js?v=faces-commander-snapshot-1';
+import {identityKnowledge} from '../map-lab/identity-knowledge.js?v=faces-commander-snapshot-1';
 
 test('a delivered succession report creates an investigable identity lead without revealing true office',()=>{
  let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Nikaia','尼凯娅'],faction:'egypt',birthYear:s.year-30});

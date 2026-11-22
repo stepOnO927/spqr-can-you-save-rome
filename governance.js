@@ -1,9 +1,9 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=faces-dynastic-leads-1';
-import {initializeWorld,successorFor,assignSuccession,mauretanianSeatHolders,eligibleLiuImperial,CHARACTER_CATALOG,characterAgeRange,successionModel} from './characters.js?v=faces-dynastic-leads-1';
-import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=faces-dynastic-leads-1';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=faces-commander-snapshot-1';
+import {initializeWorld,successorFor,assignSuccession,mauretanianSeatHolders,eligibleLiuImperial,CHARACTER_CATALOG,characterAgeRange,successionModel} from './characters.js?v=faces-commander-snapshot-1';
+import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=faces-commander-snapshot-1';
 import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {startDynasticWar} from './civil-war.js?v=faces-dynastic-leads-1';
+import {startDynasticWar} from './civil-war.js?v=faces-commander-snapshot-1';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
