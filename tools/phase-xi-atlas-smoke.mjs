@@ -201,6 +201,12 @@ try{
  assert.ok(await page.locator('.supply-isolated').count());
  region(bottleneckCampaign,'t008').buildings.push('supply-depot');
  await page.evaluate(()=>document.querySelector('#selection-title').textContent='Awaiting depot import');
+ await page.locator('#upload-save-file').setInputFiles({name:'empty-depot.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(bottleneckCampaign))});
+ await page.waitForFunction(()=>document.querySelector('#selection-title')?.textContent==='Save imported');
+ assert.equal(await page.locator('.supply-source').count(),0,'an empty depot must not invent a supply source');
+ assert.ok(await page.locator('.supply-isolated').count());
+ region(bottleneckCampaign,'t008').grainReserve=4;
+ await page.evaluate(()=>document.querySelector('#selection-title').textContent='Awaiting stocked depot import');
  await page.locator('#upload-save-file').setInputFiles({name:'depot-restores-supply.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(bottleneckCampaign))});
  await page.waitForFunction(()=>document.querySelector('#selection-title')?.textContent==='Save imported');
  assert.equal(await page.locator('.supply-source').count(),1,'the completed inland depot must appear as a real mapped source');

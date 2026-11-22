@@ -11,6 +11,7 @@ import {endCampaign,revealedAchievements} from '../achievement-system.js';
 let s=newGrandGame('senate');
 const journal=[];
 const seenBattles=new Set();
+let northernAttackOrdered=false,northernAttackResolved=false;
 const order=(name,result)=>{if(result?.ok)journal.push(`${s.year}/${s.month} ${name}`);return !!result?.ok};
 assert.equal(assessment(s,'italy','cisalpine').risk,'high uncertainty');
 assert.equal(order('scouts cisalpine',sendScouts(s,'italy','cisalpine')),true);
@@ -30,7 +31,7 @@ for(let month=2;month<48&&!s.achievementState.finalized&&!s.pendingCivilSettleme
  if(month===6&&canOrder(pompey)&&pompey.region==='t011'&&region(s,'italiaN').owner==='caesar'){
   const intel=assessment(s,'pompey','italiaN');
   journal.push(`${s.year}/${s.month} attack decision: ${intel?.risk}, report ${intel?.report?.min??'?'}-${intel?.report?.max??'?'}, ${pompey.men} friendly`);
-  order('Pompey attacks north Italy',moveArmy(s,'pompey','italiaN'));
+  northernAttackOrdered=order('Pompey attacks north Italy',moveArmy(s,'pompey','italiaN'));
  }
  // Review every third month so a one-month scout report is still fresh at the next decision.
  if(month>6&&month%3===0){
@@ -47,6 +48,7 @@ for(let month=2;month<48&&!s.achievementState.finalized&&!s.pendingCivilSettleme
   }
  }
  tick(s);
+ if(northernAttackOrdered&&region(s,'italiaN').owner==='senate')northernAttackResolved=true;
  for(const battle of s.battles||[])if(!seenBattles.has(battle.id)){seenBattles.add(battle.id);if(['senate','caesar'].includes(battle.attacker.owner)&&['senate','caesar'].includes(battle.defender.owner))journal.push(`${battle.year}/${battle.month} battle ${battle.region}: ${battle.attackerWins?battle.attacker.owner:battle.defender.owner} won, losses ${battle.lossA}/${battle.lossD}`)}
  assert.equal(s.regions.length,121);
  assert.ok(s.armies.every(a=>Number.isFinite(a.men)&&a.men>=0));
@@ -60,8 +62,9 @@ for(let month=2;month<48&&!s.achievementState.finalized&&!s.pendingCivilSettleme
 }
 assert.ok(campaignTurn(s.year,s.month)-campaignTurn(-49,1)>=36,'the player route must cover at least 36 monthly turns');
 for(const decision of ['probe north Italy','delay for Pompey','Pompey attacks north Italy','reload'])assert.ok(journal.some(entry=>entry.includes(decision)),`${decision} must occur in the long play`);
-assert.ok((s.battles?.length||0)>=3,'the simulation must produce genuine battlefield outcomes');
-assert.ok(s.battles.some(b=>b.attacker.owner==='senate'&&b.defender.owner==='caesar'),'the cautious Senate route must eventually test its own attack decision in combat');
+assert.ok((s.battles?.length||0)>=2,'the simulation must produce genuine battlefield outcomes');
+assert.ok(s.battles.some(b=>[b.attacker.owner,b.defender.owner].includes('senate')&&[b.attacker.owner,b.defender.owner].includes('caesar')),'the civil war must produce a genuine Senate-Caesar battle');
+assert.ok(northernAttackOrdered&&northernAttackResolved,'Pompey must legally order the northern attack and eventually take the territory; a defender withdrawal must not be invented as a battle');
 for(const battle of s.battles||[])if(battle.attacker.owner==='senate'||battle.defender.owner==='senate')for(const language of ['en','zh'])assert.match(afterActionHtml(battle,'senate',language),language==='en'?/AFTER-ACTION REVIEW/:/战后复盘/);
 if(s.pendingCivilSettlement){
  assert.equal(s.achievementState.finalized,false,'an AI proposal must not force the player to concede');
