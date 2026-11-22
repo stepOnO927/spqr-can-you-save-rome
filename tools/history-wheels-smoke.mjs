@@ -16,6 +16,13 @@ try{
   await page.locator('[data-ambition="economic"]').click();
   assert.match(await page.locator('.wheels-ambition').innerText(),/100/);
   await page.locator('#experience-close').click();
+  await page.locator('#what-now').click();
+  const project=page.locator('.experience-cards article').filter({hasText:'Complete an economic project'});
+  assert.equal(await project.count(),1);
+  await project.locator('button[data-recommend]').click();
+  assert.equal(await page.locator('[data-tab="focus"].active').count(),1);
+  assert.equal(await page.locator('#imp-tree .imp-node.sel').count(),1);
+  await page.locator('[data-imp-close-focus]').click();
   await page.locator('#new').click();
   await page.locator('[data-slot="save"]').click();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));

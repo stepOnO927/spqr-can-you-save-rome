@@ -38,6 +38,7 @@ jobs:
               node tools/inspector-smoke.mjs
               node tools/hundred-days-smoke.mjs
               node tools/roman-hundred-days-smoke.mjs
+              node tools/history-wheels-smoke.mjs
               node tools/training-combat-smoke.mjs
               node tools/save-transfer-controls-smoke.mjs
               node tools/storage-denied-smoke.mjs
@@ -55,6 +56,7 @@ jobs:
               node tools/player-coalition-mail-smoke.mjs
               node tools/family-courier-smoke.mjs
               node tools/family-reply-smoke.mjs
+              node tools/marriage-correspondence-smoke.mjs
               node tools/asylum-courier-smoke.mjs
               node tools/agreement-courier-smoke.mjs
               node tools/alliance-courier-smoke.mjs

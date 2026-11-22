@@ -3,6 +3,7 @@
 import {receivedMail,sendLetter} from './epistulae.js?v=world-kings-city-diplomacy-2';
 import {CHARACTER_CATALOG} from './characters.js?v=world-kings-city-diplomacy-2';
 import {treeFor,canStartFocus,focusCost} from './national-focus.js?v=world-kings-city-diplomacy-2';
+import {initializeWheels,economicProjectStatus} from './history-wheels.js?v=world-kings-city-diplomacy-2';
 
 const label=(en,zh)=>[en,zh];
 const month=s=>s.year*12+s.month;
@@ -80,10 +81,16 @@ export function recommendations(s){
  if(!x.actions.chronicle&&month(s)>x.started)choices.push(suggestion('report',72,['Review the last turn','查看上月结果'],['Time advanced; consequences may be recorded.','时间已推进，结果可能已入史录。'],['Chronicle','编年史'],['Free','免费'],['See confirmed developments','查看已确认进展'],['Reports can reflect limited knowledge','报告受己方认知限制'],{kind:'chronicle'}));
  const availableFocus=x.direction!=='military'?(treeFor(s.player)||[]).find(item=>!canStartFocus(s,s.player,item.id)):null;if(availableFocus){const cost=focusCost(s,s.player,availableFocus.id);choices.push(suggestion('focus',55,['Review a viable national focus','查看可启动的国家方针'],['This project meets its current prerequisites.','这项方针目前满足前置条件。'],availableFocus.name,[`${cost.treasury} treasury · ${availableFocus.months} months`,`${cost.treasury}国库 · ${availableFocus.months}个月`],['See the listed project effects','查看列出的项目效果'],['Starting it spends resources and time','启动后消耗资源与时间'],{kind:'focus',id:availableFocus.id}))}
  if(f.treasury<25||f.food<15)choices.push(suggestion('budget',70,['Review next month’s budget','查看下月预算'],['A core resource is running low.','核心资源储备偏低。'],['Government · treasury','政府 · 国库'],['Free to review','查看免费'],['Adjust feasible policies','调整可行政策'],['War and events can change the forecast','战争与事件会改变预测'],{kind:'government'}));
+ if(initializeWheels(s).ambition==='economic'&&!economicProjectStatus(s).done){
+  const tree=treeFor(s.player)||[],direct=tree.find(item=>item.branch==='economic'&&!canStartFocus(s,s.player,item.id));
+  const prior=tree.filter(item=>item.branch==='economic').flatMap(item=>item.prereq||[]).map(id=>tree.find(item=>item.id===id)).find(item=>item&&!canStartFocus(s,s.player,item.id));
+  const candidate=direct||prior,cost=candidate?focusCost(s,s.player,candidate.id):null;
+  choices.push(suggestion('economic_project',64,['Complete an economic project','完成一项经济建设'],['Treasury growth alone does not fulfill this newly chosen ambition. Finish an economic focus, trade pact or building.','仅靠国库自然增长不能完成新选的富国目标。需完成经济方针、贸易协定或建筑。'],candidate?.name||['Government · development','政府 · 发展'],cost?[`${cost.treasury} treasury · ${candidate.months} months`,`${cost.treasury}国库 · ${candidate.months}个月`]:['Review available project costs','查看可用项目费用'],['A completed project advances the economic ambition','项目完成后推进富国目标'],['Funding a project may delay the treasury target','项目支出可能推迟国库目标'],candidate?{kind:'focus',id:candidate.id}:{kind:'government'}));
+ }
  if(!choices.length||choices.length<3)choices.push(suggestion('development',35,['Review government and development','查看政府与发展'],['A quiet month allows institution building.','平静月份适合建设制度。'],['Government','政府'],['Costs vary by action','费用视操作而定'],['Improve stability and capacity','改善稳定度与能力'],['Policy tradeoffs still apply','政策仍有取舍'],{kind:'government'}));
  choices.push(suggestion('time',15,['Advance time when ready','准备好后推进时间'],['Orders, finances and other courts resolve each month.','命令、财政及其他政体按月结算。'],['Time control','时间控制'],['One month','一个月'],['See the consequences of your choices','观察决策结果'],['Unanswered opportunities may change','未处理机会可能变化'],{kind:'time'}));
  const ranked=choices.sort((a,b)=>b.priority-a.priority),picked=[ranked[0]];
- const development=ranked.find(item=>['focus','budget','province','development'].includes(item.id)&&!picked.includes(item))||suggestion('development',35,['Review government and development','查看政府与发展'],['Inspect current policy before spending.','先检查现行政策，再决定是否支出。'],['Government','政府'],['Free to inspect','查看免费'],['Find a viable economic action','寻找可行的经济行动'],['Changing policy may have tradeoffs','调整政策可能有代价'],{kind:'government'});
+ const development=ranked.find(item=>['focus','budget','province','development','economic_project'].includes(item.id)&&!picked.includes(item))||suggestion('development',35,['Review government and development','查看政府与发展'],['Inspect current policy before spending.','先检查现行政策，再决定是否支出。'],['Government','政府'],['Free to inspect','查看免费'],['Find a viable economic action','寻找可行的经济行动'],['Changing policy may have tradeoffs','调整政策可能有代价'],{kind:'government'});
  picked.push(development);
  picked.push(ranked.find(item=>['direction','peace','army','time','report'].includes(item.id)&&!picked.includes(item))||ranked.find(item=>!picked.includes(item))||suggestion('time',15,['Advance when ready','准备好后推进'],['Orders resolve over time.','命令会随时间结算。'],['Time control','时间控制'],['One month','一个月'],['See actual results','查看实际结果'],['Circumstances can change','局势可能变化'],{kind:'time'}));
  return picked;

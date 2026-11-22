@@ -98,8 +98,9 @@ export function seedOpeningFictionalHouseholds(s){
  d.openingFictionalSeeded=true;
 }
 
-export function proposeMarriage(s,aId,bId,{knownNames={}}={}){
+export function proposeMarriage(s,aId,bId,{knownNames={},delivered=false}={}){
  initializeDynasties(s);const a=s.world.characters[aId],b=s.world.characters[bId];
+ if(!delivered&&a&&b&&a.faction!==b.faction&&(a.faction===s.player||b.faction===s.player))return {ok:false,reason:'correspondence'};
  if(!eligibleAdult(s,aId)||!eligibleAdult(s,bId)||aId===bId||a.spouse||b.spouse)return {ok:false,reason:'eligibility'};
  if(a.sex!=='unknown'&&b.sex!=='unknown'&&a.sex===b.sex)return {ok:false,reason:'legal_status'};
  if(a.familyId===b.familyId||a.parents.includes(bId)||b.parents.includes(aId)||a.adoptiveParents.includes(bId)||b.adoptiveParents.includes(aId)||a.parents.some(id=>b.parents.includes(id))||a.adoptiveParents.some(id=>b.adoptiveParents.includes(id)))return {ok:false,reason:'kinship'};
@@ -145,7 +146,7 @@ function advanceMarriageOffers(s){
   if(--offer.months>0)continue;
   const own=s.world.characters[offer.own],foreign=s.world.characters[offer.foreign];
   const host=offer.host??s.player,valid=familyCourierArrives(s,offer)&&own?.alive&&own.faction===host&&foreign?.alive&&!own.spouse&&!foreign.spouse&&foreign.faction===offer.reportedFaction&&!s.wars.some(w=>w.includes(host)&&w.includes(foreign.faction));
-  const result=valid?proposeMarriage(s,offer.own,offer.foreign,{knownNames:{[offer.foreign]:storedCorrespondentName(offer.foreign,offer.reportedName)}}):{ok:false,reason:'no_reply'};
+  const result=valid?proposeMarriage(s,offer.own,offer.foreign,{delivered:true,knownNames:{[offer.foreign]:storedCorrespondentName(offer.foreign,offer.reportedName)}}):{ok:false,reason:'no_reply'};
   offer.status=result.ok?'accepted':result.reason==='declined'?'declined':'no_reply';offer.resolvedYear=s.year;offer.resolvedMonth=s.month;
   if(host===s.player&&offer.status!=='accepted')note(s,offer.status==='declined'?'The foreign court declined the marriage proposal.':'No marriage reply arrived; the letter may have been lost or the original report may have been outdated.',offer.status==='declined'?'外国宫廷拒绝了婚事。':'未收到婚事回信；书信可能遗失，原情报也可能过时。');
  }

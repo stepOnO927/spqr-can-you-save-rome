@@ -13,6 +13,10 @@ import {ROLES,ROLE_NAMES,MODES,plansFor,planById,createPlan,assignRole,removeRol
 export const IMPERIUM_TABS=[['focus','✠'],['legions','▤'],['plans','➶']];
 export const IMPERIUM_LABELS={en:{focus:'Strategy',legions:'Legions',plans:'Operations'},zh:{focus:'国家方针',legions:'军团编制',plans:'作战计划'}};
 const ui={focusOpen:false,zoom:.82,pan:[24,24],selected:null,draft:null,draftFor:null,compare:[],plan:null,drawing:null,addRole:'offensive',addArmy:'',addTarget:''};
+export function openFocusProject(state,id){
+ if(!focusById(state.player,id))return false;
+ ui.selected=id;ui.focusOpen=true;return true;
+}
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const L=(lang,pair)=>Array.isArray(pair)?pair[lang==='zh'?1:0]:pair;
 const rname=(id,lang)=>L(lang,REGIONS.find(r=>r.id===id)?.name)||id;
