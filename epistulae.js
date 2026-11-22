@@ -796,6 +796,8 @@ export function advanceMail(s, actions = {}) {
   }
   for (const m of mail.messages) {
     if (m.delivery !== 'traveling' || m.arrival > now || ['strategic_reply','peace_reply'].includes(m.context?.kind)) continue;
+    if(m.context?.kind==='treaty'&&(!s.factions[m.senderFaction]||!s.factions[m.recipient]||!AGREEMENT_TYPES[m.context.treatyType])){m.delivery='expired';continue}
+    if(m.context?.kind==='allied_support'&&!s.factions[m.recipient]){m.delivery='expired';continue}
     if(!s.factions[m.recipient]){m.delivery='lost';continue}
     if(courierLost(s,m)){m.delivery='lost';continue}
     m.delivery = 'received';
