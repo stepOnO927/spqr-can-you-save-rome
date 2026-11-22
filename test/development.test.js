@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials,resolveBattle} from '../engine.js';
+import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,region,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials,resolveBattle} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves,advanceDevelopment,mineMetalOutput,localBuildingEffects,templeGuaranteeExpense} from '../development.js';
 import {advanceNaval} from '../naval.js';
 import {developmentPanel,ideasPanel,constructionPanel} from '../development-ui.js';
@@ -8,6 +8,58 @@ import {edgeMonths,grandRoute,armySupply} from '../grand-operations.js';
 import {techIllustration} from '../tech-art.js';
 import {faithSatisfaction,advanceDemography,advanceReligion} from '../local-society.js';
 import {nationalBudget} from '../national-budget.js';
+import {afterActionHtml} from '../recon-ui.js';
+
+test('paid field reserve command helps only supplied joint defense and survives a save',()=>{
+ const s=newGrandGame('caesar'),idea=IDEAS.find(item=>item.id==='field-reserve-command');
+ assert.deepEqual(idea.prerequisites,['frontier-defense']);
+ assert.equal(researchInnovation(s,'caesar','idea',idea.id).reason,'prerequisite');
+ assert.equal(researchInnovation(s,'caesar','idea','frontier-defense').ok,true);
+ for(let i=0;i<3;i++)advanceDevelopment(s);
+ assert.equal(researchInnovation(s,'caesar','idea',idea.id).ok,true);
+ for(let i=0;i<idea.months;i++)advanceDevelopment(s);
+ assert.ok(development(s,'caesar').knownIdeas.includes(idea.id));
+ assert.equal(activeEffects(s,'caesar').combinedDefense||0,0,'research alone does not equip the doctrine');
+ const known=structuredClone(s);
+ const adoption=ideaAdoptionPlan(s,'caesar',idea.id);
+ assert.equal(adoption.ok,true);
+ assert.equal(adoptIdea(s,'caesar',idea.id).ok,true);
+ assert.equal(activeEffects(s,'caesar').combinedDefense||0,0,'adoption is not instant');
+ for(let i=0;i<adoption.months;i++)advanceDevelopment(s);
+ assert.equal(activeEffects(s,'caesar').combinedDefense,.05);
+ assert.equal(activeEffects(s,'caesar').upkeep,2);
+ const restored=upgradeSave(structuredClone(s));
+ assert.equal(nationalBudget(known,'caesar').projectedNet-nationalBudget(restored,'caesar').projectedNet,2);
+ const fight=(state,{second=true,isolated=false,meeting=false,hostile=false}={})=>{
+  const battleState=upgradeSave(structuredClone(state)),target=region(battleState,isolated?'t012':'roma');
+  target.owner='caesar';target.food=isolated?0:target.food;
+  if(isolated)for(const site of battleState.regions)if(site.id!==target.id&&site.owner==='caesar')site.owner='senate';
+  const attacker=battleState.armies.find(unit=>unit.id==='pompey'),defender=battleState.armies.find(unit=>unit.id==='xiii');
+  attacker.region='t014';attacker.men=11000;defender.region=target.id;defender.men=6000;
+  battleState.factions.caesar.food=battleState.factions.senate.food=80;
+  if(second){assert.equal(recruit(battleState,target.id,'caesar'),true)}
+  if(hostile)target.owner='senate';
+  battleState.seed=17;
+  resolveBattle(battleState,attacker,defender,target,{meeting});
+  return battleState.battles[0];
+ };
+ const before=fight(known),after=fight(restored);
+ assert.equal(before.fieldReserveFactor,0);
+ assert.equal(after.fieldReserveFactor,.05);
+ assert.ok(Math.abs(after.defender.power/before.defender.power-1.05)<.001);
+ assert.equal(fight(restored,{second:false}).fieldReserveFactor,0);
+ assert.equal(fight(restored,{isolated:true}).fieldReserveFactor,0);
+ assert.equal(fight(restored,{meeting:true}).fieldReserveFactor,0);
+ assert.equal(fight(restored,{hostile:true}).fieldReserveFactor,0);
+ assert.match(ideasPanel(restored,'en'),/Field Reserve Command/);
+ assert.match(ideasPanel(restored,'en'),/Joint defense in an owned theater with supply ≥65%/);
+ assert.match(ideasPanel(restored,'zh'),/野战预备队指挥/);
+ assert.match(ideasPanel(restored,'zh'),/己方战区两军合防且补给≥65%的防御/);
+ assert.notEqual(techIllustration(idea),techIllustration(IDEAS.find(item=>item.id==='field-march-coordination')));
+ assert.match(afterActionHtml(after,'caesar','en'),/Friendly reserves strengthened the supplied joint defense/);
+ assert.match(afterActionHtml(after,'caesar','zh'),/己方预备队在足够补给下加强了两军合防/);
+ assert.equal(upgradeSave(structuredClone(restored)).development.caesar.slots.military[0],idea.id);
+});
 
 test('peaceful AI courts do not adopt an unfunded idea and bankrupt themselves over six years',()=>{
  let state=newGrandGame('egypt');
@@ -48,7 +100,6 @@ test('Mauretanian AI can learn and adopt a shared North African scout practice o
  assert.equal(activeEffects(loaded,'mauretania').scoutReliability,.08);
 });
 import {budgetHtml} from '../budget-ui.js';
-import {afterActionHtml} from '../recon-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
@@ -960,7 +1011,7 @@ test('local rites affect a neighboring court only through an influential shared 
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,48);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,49);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);

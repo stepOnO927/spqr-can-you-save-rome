@@ -75,6 +75,9 @@ try{
   assert.match(ideaText('provincial-tax-review'),/integration ≥65, monthly satisfaction and loyalty losses each fall by 1/);
   assert.match(ideaText('field-march-coordination'),/Coordinated Field Marches[\s\S]*Land march reduction \+1/);
   assert.match(ideaLinks['tech-field-march-coordination'],/Civil_Wars\/1B/);
+  assert.match(ideaText('field-reserve-command'),/Field Reserve Command[\s\S]*Joint defense in an owned theater with supply ≥65% \+5%/);
+  assert.match(ideaLinks['tech-field-reserve-command'],/Gallic_War\/7G/);
+  await page.locator('#tech-field-reserve-command').screenshot({path:'outputs/field-reserve-card.png'});
   assert.match(ideaText('court-informant-patronage'),/Court Informant Patronage[\s\S]*Concurrent spy and counterintelligence missions \+1/);
   assert.match(ideaLinks['tech-court-informant-patronage'],/Frontinus\/Strategemata/);
   assert.match(ideaText('galatian-auxiliary-muster'),/Galatian Auxiliary Muster[\s\S]*Recruit morale in Galatian territory with integration and satisfaction ≥45 \+6/);
@@ -126,6 +129,7 @@ try{
   assert.match(await page.locator('#tech-provincial-autonomy').innerText(),/国库 \/ 月 −2/);
   assert.match(await page.locator('#tech-provincial-tax-review').innerText(),/行政融合度≥65且实行高税时/);
   assert.match(await page.locator('#tech-field-march-coordination').innerText(),/野战行军调度[\s\S]*陆路行军缩减 \+1/);
+  assert.match(await page.locator('#tech-field-reserve-command').innerText(),/野战预备队指挥[\s\S]*己方战区两军合防且补给≥65%的防御 \+5%/);
   assert.match(await page.locator('#tech-philosophical-patronage').innerText(),/哲学与学术赞助[\s\S]*理念研究折扣 \+3/);
   assert.match(await page.locator('#tech-court-informant-patronage').innerText(),/宫廷情报人员扶持[\s\S]*同时进行的间谍与反谍任务 \+1/);
   assert.match(await page.locator('#tech-galatian-auxiliary-muster').innerText(),/加拉太辅助兵征募[\s\S]*加拉太领土融合度与满意度均≥45的新兵士气 \+6/);
