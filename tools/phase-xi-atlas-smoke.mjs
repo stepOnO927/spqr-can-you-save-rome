@@ -185,6 +185,26 @@ try{
  assert.equal(await page.locator('#retreat-army').isDisabled(),true);
  assert.match(await page.locator('.operational-actions .retreat-rule').innerText(),/本月已经撤退/);
  assert.match(await page.locator('.operational-actions .retreat-rule').innerText(),/每支军队每月只能撤/);
+ const bottleneckCampaign=newGrandGame('caesar');for(const site of bottleneckCampaign.regions)if(site.owner==='caesar')site.owner='senate';
+ for(const id of ['cisalpine','t005','t008'])region(bottleneckCampaign,id).owner='caesar';
+ army(bottleneckCampaign,'xiii').region='t008';army(bottleneckCampaign,'viii').region='t008';
+ await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),bottleneckCampaign);
+ await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#map-mode').selectOption('supply');
+ assert.equal(await page.locator('.supply-bottleneck').count(),2);
+ assert.match(await page.locator('.legend').innerText(),/关键补给节点/);
+ await page.locator('#language').click();assert.match(await page.locator('.legend').innerText(),/Critical supply node/);
+ assert.match(await page.locator('.supply-bottleneck').first().getAttribute('title'),/currently connected friendly army/);
+ region(bottleneckCampaign,'cisalpine').owner='senate';
+ await page.locator('#upload-save-file').setInputFiles({name:'cut-corridor.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(bottleneckCampaign))});
+ await page.waitForFunction(()=>document.querySelector('#selection-title')?.textContent==='Save imported');
+ assert.equal(await page.locator('.supply-bottleneck').count(),0);
+ assert.ok(await page.locator('.supply-isolated').count());
+ region(bottleneckCampaign,'t008').buildings.push('supply-depot');
+ await page.evaluate(()=>document.querySelector('#selection-title').textContent='Awaiting depot import');
+ await page.locator('#upload-save-file').setInputFiles({name:'depot-restores-supply.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(bottleneckCampaign))});
+ await page.waitForFunction(()=>document.querySelector('#selection-title')?.textContent==='Save imported');
+ assert.equal(await page.locator('.supply-source').count(),1,'the completed inland depot must appear as a real mapped source');
+ assert.equal(await page.locator('.supply-isolated').count(),0);
  assert.deepEqual(errors,[]);
  console.log('Phase XI Atlas and campaign pre-battle, Senate Standard EN/ZH tutorial and combat smoke passed.');
 }finally{await browser.close()}

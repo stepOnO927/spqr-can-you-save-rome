@@ -22,7 +22,7 @@ export function grandRoute(s,unit,destination,isWar){
  const path=[];let node=destination;while(node!==start){const entry=previous.get(node);path.unshift({id:node,sea:entry.edge.sea,months:edgeMonths(entry.edge,regions[node],regions[entry.from],fieldMarch),distance:entry.edge.distance,road:entry.edge.road,river:entry.edge.river,mountain:entry.edge.mountain});node=entry.from}
  return {path,months:path.reduce((n,x)=>n+x.months,0),sea:path.some(x=>x.sea),supplyConcern:path.some(x=>regions[x.id].supply<7),hostile:path.some(x=>regions[x.id].owner!==unit.owner)};
 }
-function supplySources(s,owner,established=false){return s.regions.filter(r=>r.owner===owner&&(
+export function supplySources(s,owner,established=false){return s.regions.filter(r=>r.owner===owner&&(
  r.terrain==='urban'||(r.buildings||[]).some(x=>['granary','supply-depot'].includes(x))||
  r.port&&(!established||r.food>=.6)||
  // Smaller inland commands recruit and provision at their home theater.
@@ -48,9 +48,15 @@ export function supplyNetwork(s,owner,established=false){
  return distance;
 }
 export function supplyBottlenecks(s,owner){
- const owned=s.regions.filter(r=>r.owner===owner),sources=supplySources(s,owner),positions=new Set(s.armies.filter(a=>a.owner===owner&&a.men>0).map(a=>a.region));
+ const owned=s.regions.filter(r=>r.owner===owner),sources=supplySources(s,owner);
+ const connected=supplyNetwork(s,owner),positions=new Set(s.armies.filter(a=>a.owner===owner&&a.men>0&&connected.has(a.region)).map(a=>a.region));
  const vital=new Set();if(!sources.length||!positions.size)return vital;
- for(const candidate of owned){if(sources.some(r=>r.id===candidate.id))continue;const seen=new Set(sources.map(r=>r.id).filter(id=>id!==candidate.id)),queue=[...seen];while(queue.length){const id=queue.shift();for(const edge of grandAdjacent(id)){const next=s.regions.find(r=>r.id===edge.to);if(next?.owner!==owner||next.id===candidate.id||seen.has(next.id)||edge.sea)continue;seen.add(next.id);queue.push(next.id)}}if([...positions].some(id=>id!==candidate.id&&!seen.has(id)))vital.add(candidate.id)}
+ const regions=byId(s);
+ for(const candidate of owned){
+  const seen=new Set(sources.map(r=>r.id).filter(id=>id!==candidate.id)),queue=[...seen];
+  while(queue.length){const id=queue.shift();for(const edge of grandAdjacent(id)){const next=regions[edge.to];if(next?.owner!==owner||next.id===candidate.id||seen.has(next.id)||edge.sea)continue;seen.add(next.id);queue.push(next.id)}}
+  if([...positions].some(id=>id!==candidate.id&&!seen.has(id)))vital.add(candidate.id);
+ }
  return vital;
 }
 export function armySupply(s,unit){if(!s.grandMap)return 1;const site=s.regions.find(r=>r.id===unit.region);if(!site)return 0;const network=supplyNetwork(s,unit.owner);let distance=network.get(site.id);if(distance==null&&unit.siege)distance=Math.min(...grandAdjacent(site.id).map(e=>network.get(e.to)).filter(Number.isFinite).map(x=>x+1),Infinity);

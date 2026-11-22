@@ -168,3 +168,5 @@ body.grand-campaign.atlas-focus .grand-site:is(:hover,:focus-visible):before{con
 .court-mediation button{padding:7px 10px;border:1px solid #e8d2a0;background:#d4b879;color:#1e2b2a;font-weight:700;cursor:pointer}.court-mediation button:disabled{opacity:.55;cursor:default}
 
 .operational-orders .retreat-rule{flex-basis:100%;margin:2px 0 0;color:#d9c7a4;font:10px/1.45 Manrope,'Microsoft YaHei',sans-serif}
+
+.supply-bottleneck{width:20px;height:20px;display:grid;place-items:center;border:1px solid #f4d48a;background:#382c22e8;color:#ffd899;font:bold 16px Georgia,serif;box-shadow:0 1px 5px #000a;pointer-events:auto}
