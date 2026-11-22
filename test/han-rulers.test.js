@@ -199,6 +199,29 @@ test('a legacy female sovereign loses an inherited male title without changing h
  assert.equal(rulerPortrait(restored,'parthia'),portrait);
 });
 
+test('a missing foreign queen record restores stable identity from the saved throne and genealogy',()=>{
+ const original=newHanGame('han',{seed:810});
+ for(const faction of PLAYABLE.filter(f=>f!=='han'))original.persons[original.rulers[faction].personId].alive=false;
+ advanceForeignRulers(original);
+ const faction=PLAYABLE.find(f=>/^Queen|^Ruling queen/.test(original.rulers[f]?.title?.[0]||''));
+ assert.ok(faction,'the simulated succession must include a queen');
+ const ruler=original.rulers[faction],id=ruler.personId,person=original.persons[id],portrait=rulerPortrait(original,faction);
+ assert.equal(person.sex,'f');assert.ok(person.birth!=null);
+ for(const legacy of [false,true,'conflict']){
+  const saved=structuredClone(original);delete saved.persons[id];
+  if(legacy===true)for(const field of ['sex','birth','culture','homeland'])delete saved.rulers[faction][field];
+  if(legacy==='conflict'){saved.rulers[faction].sex='m';saved.rulers[faction].birth=1000}
+  const loaded=loadHanSave(serialize(saved)),restored=loaded.persons[id];
+  assert.deepEqual(restored.name,person.name);
+  assert.equal(restored.sex,'f');assert.equal(restored.birth,person.birth);
+  assert.deepEqual(restored.culture,person.culture);
+  if(!legacy)assert.equal(restored.homeland,person.homeland);
+  assert.deepEqual(loaded.rulers[faction].title,ruler.title);
+  assert.equal(rulerPortrait(loaded,faction),portrait);
+  assert.equal(birthRecordValid(loaded,id),true);
+ }
+});
+
 test('a minor foreign heir keeps the throne while a named regent actually governs',()=>{
  let s=newHanGame('armenia',{seed:706}),old=s.rulers.armenia,id='original-armenian-heir';
  s.persons[id]={id,name:['Aram of Artaxata','阿尔塔克萨塔的阿拉姆'],faction:'armenia',role:'prince',record:'fictional',birth:s.year-8,sex:'m',father:old.personId,mother:null,alive:true,competence:99,military:99};

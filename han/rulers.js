@@ -60,7 +60,7 @@ function seat(s,f,p,old=null){
  if(old&&(p.record==='fictional'||p.record==='simulated'))(p.history||=[]).push({year:s.year,month:s.month,kind:'succession',predecessor:old.id});
  const title=rulerTitle(f,p);
  if(['fictional','simulated'].includes(p.record))p.title=[...title];
- s.rulers[f]={id:p.id,personId:p.id,name:[...p.name],title,faction:f,record:p.record,titleOnly:!!p.titleOnly,attested:p.record==='historical'&&!p.titleOnly,source:p.source||null,portraitSeed:p.portraitSeed??hash(`${s.seed}:${p.id}:portrait`),since:{year:s.year,month:s.month},predecessor:old?.id||null};
+ s.rulers[f]={id:p.id,personId:p.id,name:[...p.name],title,faction:f,record:p.record,titleOnly:!!p.titleOnly,attested:p.record==='historical'&&!p.titleOnly,source:p.source||null,sex:p.sex??null,birth:p.birth??null,culture:Array.isArray(p.culture)?[...p.culture]:null,homeland:p.homeland??null,portraitSeed:p.portraitSeed??hash(`${s.seed}:${p.id}:portrait`),since:{year:s.year,month:s.month},predecessor:old?.id||null};
  if(old){const stability=s.factions[f]?.stability;if(stability!=null)s.factions[f].stability=clamp(stability-(p.father===old.id||p.mother===old.id?2:5));
   if(f===s.player)log(s,[`${p.name[0]} succeeds ${old.name[0]} as ${title[0]}.`,`${p.name[1]}继${old.name[1]}为${title[1]}。`],{kind:'succession',faction:f,who:p.id});}
  return s.rulers[f];
@@ -76,10 +76,17 @@ export function ensureForeignRulers(s){
   const saved=s.rulers[f];
   if(saved){
    const id=saved.personId||saved.id;
-   if(!s.persons[id]){const attested=EURASIAN_RULERS.find(r=>r.id===id);s.persons[id]={id,name:[...(saved.name||attested?.name||[id,id])],faction:f,role:'ruler',record:saved.record||attested?.record||'fictional',titleOnly:!!saved.titleOnly||saved.record==='reconstruction',source:saved.source||attested?.source||null,sex:'m',birth:null,death:null,alive:true,simulatedAge:50,ageBaseYear:s.year,ambition:50,competence:55,military:55,portraitSeed:saved.portraitSeed??hash(`${s.seed}:${id}:portrait`)}}
+   if(!s.persons[id]){
+    const attested=EURASIAN_RULERS.find(r=>r.id===id),lineage=s.genealogy?.[id],pool=CULTURAL_NAME_POOLS[fieldCulture(f)]||CULTURAL_NAME_POOLS.oasis;
+    const sex=['m','f'].includes(lineage?.sex)?lineage.sex:['m','f'].includes(saved.sex)?saved.sex:attested?'m':/^(Queen|Ruling queen)/i.test(saved.title?.[0]||'')?'f':null;
+    const birth=Number.isFinite(lineage?.birth)?lineage.birth:Number.isFinite(saved.birth)?saved.birth:null;
+    const homeland=saved.homeland??null;
+    s.persons[id]={id,name:[...(saved.name||attested?.name||[id,id])],faction:f,role:'ruler',profession:'ruler',record:saved.record||attested?.record||'fictional',titleOnly:!!saved.titleOnly||saved.record==='reconstruction',title:[...(saved.title||rulerTitle(f,{sex}))],source:saved.source||attested?.source||null,sex,birth,father:lineage?.father??null,mother:lineage?.mother??null,culture:Array.isArray(saved.culture)?[...saved.culture]:[...pool.culture],homeland,location:homeland,death:null,alive:true,...(birth==null?{simulatedAge:50,ageBaseYear:s.year}:{}),ambition:50,competence:55,military:55,portraitSeed:saved.portraitSeed??hash(`${s.seed}:${id}:portrait`)};
+   }
    const person=s.persons[id],former=rulerTitle(f),current=rulerTitle(f,person);
    saved.personId=id;if(!saved.title||person.sex==='f'&&JSON.stringify(saved.title)===JSON.stringify(former))saved.title=[...current];
    if(person.sex==='f'&&['fictional','simulated'].includes(person.record)&&(!person.title||JSON.stringify(person.title)===JSON.stringify(former)))person.title=[...current];
+   saved.sex=person.sex??null;saved.birth=person.birth??null;saved.culture=Array.isArray(person.culture)?[...person.culture]:null;saved.homeland=person.homeland??null;
    saved.titleOnly??=!!person.titleOnly;saved.portraitSeed??=person.portraitSeed??hash(`${s.seed}:${id}:portrait`);ensureRegency(s,f);continue;
   }
   const p=Object.values(s.persons).find(x=>x.faction===f&&x.role==='ruler'&&x.alive)||(()=>{const historical=EURASIAN_RULERS.find(r=>r.faction===f);if(!historical)return !FACTIONS[f]||FACTIONS[f].dynamic?makeRuler(s,f):makeTitleOnlyRuler(s,f);const person={...historical,name:[...historical.name],role:'ruler',sex:'m',birth:null,death:null,alive:true,simulatedAge:50,ageBaseYear:s.year,ambition:55,competence:60,military:60,portraitSeed:hash(`${s.seed}:${historical.id}:portrait`)};s.persons[person.id]=person;return person})();

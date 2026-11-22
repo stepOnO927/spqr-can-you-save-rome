@@ -6,6 +6,15 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Foreign sovereign throne records now preserve stable sex, birth, culture and
+homeland alongside the saved name and portrait seed. When an older save has a
+throne link but is missing its person record, migration restores the identity
+from that link and the surviving genealogy; the genealogy wins if duplicate
+fields conflict. It no longer silently makes a missing female sovereign male.
+Focused ruler, field-identity and Liu-dynasty checks pass 37/37; the complete
+local suite passes 1,284/1,284. The browser ruler flow now covers a missing
+queen person record after save/load. Cloud regression for this update follows.
+
 Main through `53878f45` is integrated. Observed commanders now keep the
 reported bilingual name in a dated sighting, foreign family correspondence
 and the atlas inspection panel. The new cloud browser scenario is retained;

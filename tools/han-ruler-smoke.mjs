@@ -23,6 +23,18 @@ try{
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
  assert.equal(await card.getAttribute('data-ruler'),name);
  await page.locator('#lang').click();assert.match(await card.innerText(),/本战役原创人物/);
+ const rulerImage=await card.locator('img').first().getAttribute('src');
+ await page.locator('#lang').click();await page.locator('#save').click();
+ await page.evaluate(async()=>{
+  const {rulerTitle}=await import('/han/rulers.js');
+  const key='spqr-han-save-browser',s=JSON.parse(localStorage.getItem(key)),r=s.rulers.kangju,p=s.persons[r.personId];
+  p.sex='f';s.genealogy[p.id].sex='f';p.title=rulerTitle('kangju',p);r.title=[...p.title];r.sex='f';
+  delete s.persons[p.id];localStorage.setItem(key,JSON.stringify(s));
+ });
+ await page.locator('#load').click();
+ assert.equal(await card.getAttribute('data-ruler'),name);
+ assert.match(await card.innerText(),/Queen of Kangju/);
+ assert.equal(await card.locator('img').first().getAttribute('src'),rulerImage);
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('armenia');await page.locator('#begin').click();await page.locator('#save').click();
  await page.evaluate(async()=>{
