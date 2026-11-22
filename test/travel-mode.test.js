@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=family-legend-merge-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=family-legend-merge-1';
-import {OFFICE_TYPES,canHoldOffice,localGovernor} from '../office-system.js?v=family-legend-merge-1';
+import {newGame,forecastEconomy,upgradeSave} from '../engine.js?v=will-controls-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=will-controls-1';
+import {OFFICE_TYPES,canHoldOffice,localGovernor} from '../office-system.js?v=will-controls-1';
 import {featherAdvice} from '../feather.js?v=travel-1';
 
 for(const faction of ['caesar','senate'])test(`Travel opens a staffed, well supplied ${faction} campaign and survives saving`,()=>{
