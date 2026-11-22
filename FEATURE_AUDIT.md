@@ -5,6 +5,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 | Feature | Player entry | Browser coverage |
 | --- | --- | --- |
 | New campaign, difficulty, tutorial and save/load | Opening setup | `tools/onboarding-smoke.mjs` |
+| Long intelligence operation history | Terrain map → foreign faction → Letters & Intelligence | `tools/mission-history-smoke.mjs` verifies active missions and reports remain visible with 120 prior operations, loads older entries on demand, dispatches another mission, and checks save/load without deleting history. |
 | Roman elections and change of office | Terrain map → Factions → Roman faction → Government tree | `tools/election-results-smoke.mjs` supports a candidate, advances the consul, praetor and quaestor elections, checks selected-office results and the quaestor's next term, and saves/reloads; other offices and outcomes remain to be checked |
 | Incoming captured-agent requests | Terrain map → Mail → received request | `tools/agent-release-mail-smoke.mjs` checks arrival, response, delayed handover and save/load; `test/agent-release-mail.test.js` covers loss, refusal, ignoring, repeat requests and the security-panel path |
 | Conspiracy report identity | Terrain map → own faction → internal security | `tools/conspiracy-name-smoke.mjs` checks separately recorded names, legacy reports, undelivered reports and save/load; allegations remain unverified |
