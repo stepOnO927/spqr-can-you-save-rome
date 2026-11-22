@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=missing-health-1';
+import {newGame,upgradeSave} from '../engine.js?v=search-uncertainty-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=born-portrait-thirteen-1';
 
 test('opening portrait identity checks both saved names and rejects contradictory details',()=>{

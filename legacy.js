@@ -1,7 +1,7 @@
-import {storedCorrespondentName} from './person-knowledge.js?v=missing-health-1';
-import {syncChronicleDispatches} from './chronicle.js?v=missing-health-1';
-import {CHARACTER_CATALOG} from './characters.js?v=missing-health-1';
-import {initializeDynasties} from './dynasties.js?v=missing-health-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=search-uncertainty-1';
+import {syncChronicleDispatches} from './chronicle.js?v=search-uncertainty-1';
+import {CHARACTER_CATALOG} from './characters.js?v=search-uncertainty-1';
+import {initializeDynasties} from './dynasties.js?v=search-uncertainty-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 

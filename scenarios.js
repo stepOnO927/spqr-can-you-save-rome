@@ -1,7 +1,7 @@
-import {newGame,estimatedStrength} from './engine.js?v=missing-health-1';
-import {createFictionalPerson} from './dynasties.js?v=missing-health-1';
-import {formCoalition} from './coalitions.js?v=missing-health-1';
-import {observeDiplomacy} from './diplomatic-knowledge.js?v=missing-health-1';
+import {newGame,estimatedStrength} from './engine.js?v=search-uncertainty-1';
+import {createFictionalPerson} from './dynasties.js?v=search-uncertainty-1';
+import {formCoalition} from './coalitions.js?v=search-uncertainty-1';
+import {observeDiplomacy} from './diplomatic-knowledge.js?v=search-uncertainty-1';
 
 // A fictional political crisis in the 49 BCE campaign. Conditions make
 // collective opposition plausible, but do not preselect a war or outcome.
