@@ -98,7 +98,7 @@ export function renderEasternMarketPanel({root,state:s,lang=0,selected=null,onOr
  const offerSelect=root.querySelector('#east-market-offer'),destinationSelect=root.querySelector('#east-market-destination'),quantityInput=root.querySelector('#east-market-quantity'),premiumInput=root.querySelector('#east-market-bid-premium'),carrierSelect=root.querySelector('#east-market-carrier'),quoteText=root.querySelector('#east-market-quote'),orderButton=root.querySelector('#east-market-order');
  for(const button of root.querySelectorAll('[data-east-cancel-contract]'))button.onclick=()=>{const feedback=root.querySelector('#east-contract-feedback');feedback.textContent=lang?'确认撤回？外交关系会下降，在途商队仍按原条件结算。':'Withdraw? Relations will fall; caravans already underway retain their terms. ';const confirm=document.createElement('button');confirm.type='button';confirm.textContent=lang?'确认撤回':'Confirm withdrawal';feedback.append(confirm);confirm.onclick=()=>onContract(cancelEasternSupplyContract(s,button.dataset.eastCancelContract))};
  if(!offerSelect)return;
- const request=()=>{const o=offers[Number(offerSelect.value)];return {seller:o.seller,buyer:s.player,origin:o.origin,destination:destinationSelect.value,commodity:o.commodity,quantity:Number(quantityInput.value),bidPremium:Number(premiumInput.value),...(carrierSelect.value?{carrierId:carrierSelect.value}:{})}};
+ const request=()=>{const o=offers[Number(offerSelect.value)];return {seller:o.seller,buyer:s.player,origin:o.origin,destination:destinationSelect.value,commodity:o.commodity,quantity:Number(quantityInput.value),bidPremium:Number(premiumInput.value),...(o.saleOrderId?{saleOrderId:o.saleOrderId}:{}),...(carrierSelect.value?{carrierId:carrierSelect.value}:{})}};
  const contractButton=root.querySelector('#east-contract-create'),interval=root.querySelector('#east-contract-interval'),duration=root.querySelector('#east-contract-duration');
  const refresh=()=>{
   const selectedOffer=offers[Number(offerSelect.value)],maximum=Math.ceil(COMMODITIES[selectedOffer.commodity].basePrice*.5);
@@ -110,7 +110,7 @@ export function renderEasternMarketPanel({root,state:s,lang=0,selected=null,onOr
   }).join('');
   if(candidates.includes(chosen))carrierSelect.value=chosen;
   const q=quoteEasternTrade(s,request());orderButton.disabled=!q.ok;
-  contractButton.disabled=!q.ok||Number(interval.value)>Number(duration.value)||Number(premiumInput.value)>0||!!carrierSelect.value;
+  contractButton.disabled=!q.ok||Number(interval.value)>Number(duration.value)||Number(premiumInput.value)>0||!!carrierSelect.value||!!selectedOffer.saleOrderId;
   if(!q.ok){quoteText.textContent=marketReasonName(q.reason,lang);return}
   quoteText.innerHTML=`<p>${lang?'总价':'Total'} ${q.total} · ${lang?'行程':'Travel'} ${q.months} ${lang?'个月':'months'} · ${lang?'运费':'Transport'} ${q.transport} · ${lang?'过境税':'Tariffs'} ${q.tariffs.reduce((n,t)=>n+t.amount,0)}${Number(premiumInput.value)>0?` · ${lang?'每批加价':'Bid premium per batch'} +${premiumInput.value}¤`:''}${q.merchantId?` · ${lang?'承运商人':'Carrier'} ${name(s.persons[q.merchantId]?.name,lang)} · ${lang?'线路经验':'Route experience'} ${q.merchantExperience}`:''}</p><details><summary>${lang?'查看路线':'Inspect route'}</summary>${q.path.map(id=>name(s.regions.find(r=>r.id===id)?.name||id,lang)).join(' → ')}</details>`;
  };

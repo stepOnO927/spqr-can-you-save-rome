@@ -1421,6 +1421,11 @@ carrier fails validation before any goods or treasury move. The chosen person
 and terms survive saving, while recurring contract installments retain their
 automatic carrier assignment. This adds player-facing merchant competition;
 merchant-financed trade remains a separate unfinished mechanic.
+Foreign reserved sale lots now pass their saved order ID through the player's
+market quote and dispatch. A listed batch uses its posted unit price and
+reserved inventory, closes when filled, and cannot be silently turned into a
+recurring contract. The Han Chromium market flow uses an actual posted lot and
+checks its carrier, sale-order link, and filled status in the saved shipment.
 
 ## Existing foundations
 

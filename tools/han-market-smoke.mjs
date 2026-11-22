@@ -10,14 +10,18 @@ try{
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
  await page.locator('#save').click();
- const manualCarrier=await page.evaluate(async()=>{
+ const {manualCarrier,listingId}=await page.evaluate(async()=>{
   const {loadHanSave,serialize}=await import('/han/engine.js?v=faces-name-disagreement-1');
   const {createMarketMerchant}=await import('/han/field-identities.js');
+  const {postEasternSale}=await import('/han/markets.js?v=faces-wheels-1');
   const state=loadHanSave(localStorage.getItem('spqr-han-save-browser'));
   const manual=createMarketMerchant(state,'han','kangju'),recommended=createMarketMerchant(state,'han','kangju');
   state.persons[manual].specialization='silk';state.persons[recommended].specialization='horses';
   state.tradeMarkets.merchants.han=[manual,recommended];
-  localStorage.setItem('spqr-han-save-browser',serialize(state));return manual;
+  state.player='kangju';const listing=postEasternSale(state,{origin:'kangju',commodity:'horses',quantity:1,unitPrice:17});
+  if(!listing.ok)throw Error(`Kangju listing unavailable: ${listing.reason}`);
+  state.player='han';localStorage.setItem('spqr-han-save-browser',serialize(state));
+  return {manualCarrier:manual,listingId:listing.order.id};
  });
  await page.locator('#load').click();
  await page.locator('#mode').selectOption('trade');
@@ -46,8 +50,8 @@ try{
  assert.equal(await page.locator('#east-market-tariff').inputValue(),'high');
  await page.locator('#east-market-partner').selectOption('kangju');await page.locator('#east-market-propose').click();
  assert.match(await page.locator('#message').innerText(),/accepted/);
- const value=await page.locator('#east-market-offer option').evaluateAll(options=>options.find(o=>o.textContent.includes('Kangju')&&o.textContent.includes('Horses'))?.value);
- assert.ok(value,'Kangju horses should become available after a market agreement');
+ const value=await page.locator('#east-market-offer option').evaluateAll(options=>options.find(o=>o.textContent.includes('Kangju')&&o.textContent.includes('Horses')&&o.textContent.includes('@ 17'))?.value);
+ assert.ok(value,'the reserved Kangju horse lot should become available after a market agreement');
  await page.locator('#east-market-offer').selectOption(value);
  await page.locator('#east-market-destination').selectOption('dunhuang');
  assert.equal(await page.locator('#east-market-carrier option').count(),3);
@@ -56,6 +60,7 @@ try{
  const quoteText=await page.locator('#east-market-quote').innerText(),months=Number(quoteText.match(/Travel (\d+) months/)?.[1]);
  assert.ok(months>0,quoteText);
  const normalTotal=Number(quoteText.match(/Total (\d+)/)?.[1]);assert.ok(normalTotal>0);
+ assert.equal(await page.locator('#east-contract-create').isDisabled(),true,'a one-time listed lot cannot become a recurring supply agreement');
  await page.locator('#east-market-bid-premium').fill('1');
  const bidQuote=await page.locator('#east-market-quote').innerText();
  assert.match(bidQuote,/Bid premium per batch \+1¤/);
@@ -65,7 +70,10 @@ try{
  await page.locator('#east-market-order').click();
  assert.match(await page.locator('#message').innerText(),/Merchant dispatched/);
  await page.locator('#save').click();
- assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')))).tradeMarkets.shipments[0].merchantId,manualCarrier);
+ const placed=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ assert.equal(placed.tradeMarkets.shipments[0].merchantId,manualCarrier);
+ assert.equal(placed.tradeMarkets.shipments[0].saleOrderId,listingId);
+ assert.equal(placed.tradeMarkets.saleOrders.find(order=>order.id===listingId).status,'filled');
  assert.equal(await page.locator('.trade-caravan').count(),1);
   assert.match(await page.locator('.route.trade-active title').first().textContent(),/Known cargo: Horses × 1/);
  await page.locator('.trade-caravan').click();
