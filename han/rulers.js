@@ -51,7 +51,8 @@ function ensureRegency(s,f){
 function makeTitleOnlyRuler(s,f){
  const court=FACTIONS[f];let id=`unrecorded-ruler-${f}`,suffix=1;while(s.persons[id])id=`unrecorded-ruler-${f}-${++suffix}`;
  const name=[`Unnamed ruler of ${court.name[0]}`,`${court.name[1]}未载名的统治者`];
- const p={id,name,faction:f,role:'ruler',record:'reconstruction',titleOnly:true,source:court.source||null,sex:null,birth:null,death:null,alive:true,simulatedAge:50,ageBaseYear:s.year,
+ const pool=CULTURAL_NAME_POOLS[fieldCulture(f)]||CULTURAL_NAME_POOLS.oasis;
+ const p={id,name,faction:f,role:'ruler',profession:'ruler',title:rulerTitle(f),record:'reconstruction',titleOnly:true,source:court.source||null,culture:[...pool.culture],homeland:null,location:null,sex:null,birth:null,death:null,alive:true,simulatedAge:50,ageBaseYear:s.year,
   ambition:50,competence:50,military:50,loyalty:100,portraitSeed:hash(`${s.seed}:${id}:portrait`),note:['The polity is documented, but no contemporary personal name is asserted.','政体见于史料，不推定此时统治者的姓名。']};
  s.persons[id]=p;return p;
 }
@@ -84,6 +85,7 @@ export function ensureForeignRulers(s){
     s.persons[id]={id,name:[...(saved.name||attested?.name||[id,id])],faction:f,role:'ruler',profession:'ruler',record:saved.record||attested?.record||'fictional',titleOnly:!!saved.titleOnly||saved.record==='reconstruction',title:[...(saved.title||rulerTitle(f,{sex}))],source:saved.source||attested?.source||null,sex,birth,father:lineage?.father??null,mother:lineage?.mother??null,culture:Array.isArray(saved.culture)?[...saved.culture]:[...pool.culture],homeland,location:homeland,death:null,alive:true,...(birth==null?{simulatedAge:50,ageBaseYear:s.year}:{}),ambition:50,competence:55,military:55,portraitSeed:saved.portraitSeed??hash(`${s.seed}:${id}:portrait`)};
    }
    const person=s.persons[id],former=rulerTitle(f),current=rulerTitle(f,person);
+   if(person.titleOnly||saved.titleOnly){person.culture??=[...(CULTURAL_NAME_POOLS[fieldCulture(f)]||CULTURAL_NAME_POOLS.oasis).culture];person.profession??='ruler';person.homeland??=null;person.location??=null}
    saved.personId=id;if(!saved.title||person.sex==='f'&&JSON.stringify(saved.title)===JSON.stringify(former))saved.title=[...current];
    if(person.sex==='f'&&['fictional','simulated'].includes(person.record)&&(!person.title||JSON.stringify(person.title)===JSON.stringify(former)))person.title=[...current];
    saved.sex=person.sex??null;saved.birth=person.birth??null;saved.culture=Array.isArray(person.culture)?[...person.culture]:null;saved.homeland=person.homeland??null;

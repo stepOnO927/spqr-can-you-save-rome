@@ -12,6 +12,11 @@ merchants and later rulers. An older save carrying only the previous generic
 steppe or oasis default is corrected for these known title-only entries;
 saved explicit affiliations and names are retained. The Han identity, court
 and 120-month eastern suites pass 25/25.
+Other opening title-only eastern rulers now also save their court's
+reconstructed culture and profession. Old records missing those fields gain
+them on load, while an unknown birthplace remains unknown. Focused ruler and
+field-identity tests pass 26/26; the earlier full serial suite passed
+1,311/1,311 before this second identity fix.
 
 The Theban temple's persistent officials now carry an Egyptian temple
 cultural identity rather than inheriting the Greek-speaking Ptolemaic court

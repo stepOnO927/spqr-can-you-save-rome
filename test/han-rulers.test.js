@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize,tick,elevateEmpress} from '../han/engine.js';
 import {PLAYABLE} from '../han/data.js';
 import {advanceForeignRulers,rulerPortrait,rulerTitle,regentPortrait,rulerMilitaryJudgment,rulerGovernanceFactor} from '../han/rulers.js';
+import {CULTURAL_NAME_POOLS,fieldCulture} from '../han/field-identities.js';
 import {ownRulerHtml} from '../han/ruler-ui.js';
 import {birthRecordValid,recordBirth,eligibility,crown,seizeThrone} from '../han/dynasty.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';
@@ -84,6 +85,10 @@ test('undocumented opening rulers remain unnamed until an actual succession',()=
   const ruler=s.rulers[f],person=s.persons[ruler.personId];
   assert.equal(person.titleOnly,true,f);assert.equal(person.record,'reconstruction',f);
   assert.match(person.name[0],/^Unnamed ruler of /,f);
+  assert.deepEqual(person.culture,CULTURAL_NAME_POOLS[fieldCulture(f)].culture,f);
+  assert.deepEqual(ruler.culture,person.culture,f);
+  assert.equal(person.profession,'ruler',f);
+  assert.equal(person.homeland,null,'an unknown birthplace stays unknown');
  }
  assert.equal(s.rulers.parthia.id,'orodes-ii');
  assert.match(ownRulerHtml(s,0),/personal name is unrecorded/);
@@ -91,7 +96,15 @@ test('undocumented opening rulers remain unnamed until an actual succession',()=
  const missingPerson=structuredClone(s);delete missingPerson.persons[missingPerson.rulers.gumo.personId];
  const migrated=loadHanSave(serialize(missingPerson));
  assert.equal(migrated.persons[migrated.rulers.gumo.personId].titleOnly,true);
+ assert.deepEqual(migrated.persons[migrated.rulers.gumo.personId].culture,CULTURAL_NAME_POOLS.oasis.culture);
  assert.match(ownRulerHtml(migrated,0),/personal name is unrecorded/);
+ const older=structuredClone(s),oldId=older.rulers.sogd_samarkand.personId;
+ delete older.persons[oldId].culture;delete older.persons[oldId].profession;
+ older.rulers.sogd_samarkand.culture=null;
+ const repaired=loadHanSave(serialize(older));
+ assert.deepEqual(repaired.persons[oldId].culture,CULTURAL_NAME_POOLS.sogdian.culture);
+ assert.deepEqual(repaired.rulers.sogd_samarkand.culture,CULTURAL_NAME_POOLS.sogdian.culture);
+ assert.equal(repaired.persons[oldId].homeland,null);
  const old=s.rulers.gumo;s.persons[old.personId].alive=false;s.persons[old.personId].death=s.year;
  advanceForeignRulers(s);
  const next=s.rulers.gumo,person=s.persons[next.personId];
