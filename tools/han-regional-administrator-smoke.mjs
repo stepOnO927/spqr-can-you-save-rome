@@ -8,7 +8,7 @@ try{
  await page.addInitScript(()=>{localStorage.setItem('spqr-han-lang','en');Date.now=()=>500});
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
- await page.locator('#map [data-region="hongnong"]').click();
+ await page.locator('#map path.territory[data-region="hongnong"]').click();
  const profile=page.locator('.han-regional-administrator'),id=await profile.getAttribute('data-administrator');
  assert.ok(id?.startsWith('regional-administrator:'));
  assert.match(await profile.innerText(),/Commandery administrator.*Original game character/s);
@@ -22,7 +22,7 @@ try{
  assert.equal(saved.persons[id].record,'fictional');
  assert.equal(saved.factions.han.treasury,before.factions.han.treasury-15);
  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
- await page.locator('#map [data-region="hongnong"]').click();assert.equal(await profile.getAttribute('data-administrator'),id);
+ await page.locator('#map path.territory[data-region="hongnong"]').click();assert.equal(await profile.getAttribute('data-administrator'),id);
  assert.equal(await page.locator('#han-audit-administrator').isDisabled(),true);
  await page.locator('#lang').click();assert.match(await profile.innerText(),/郡守.*游戏原创人物/s);
  assert.deepEqual(errors,[]);
