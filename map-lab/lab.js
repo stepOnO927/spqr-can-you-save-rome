@@ -52,7 +52,7 @@ let treeZoom=1;
 
 function showRegion(r){
   showRegionBase(r);
-  if(r&&state.grandMap){const grid=document.querySelector('#command-detail .detail-grid');if(grid)grid.insertAdjacentHTML('beforeend',`<span>${lang==='zh'?'人口估计':'Population estimate'}</span><b>${r.population?.toLocaleString()||'—'}</b><span>${lang==='zh'?'地方文化':'Local culture'}</span><b>${esc(cultureLabel(r.culture,lang))}</b><span>${lang==='zh'?'民众满意度':'Civic satisfaction'}</span><b>${r.owner===state.player?r.civicSatisfaction+'%':lang==='zh'?'未知':'Unknown'}</b>`)}
+  if(r&&state.grandMap){const grid=document.querySelector('#command-detail .detail-grid');if(grid)grid.insertAdjacentHTML('beforeend',`<span>${lang==='zh'?'人口估计':'Population estimate'}</span><b>${r.owner===state.player?(r.population?.toLocaleString()||'—'):(lang==='zh'?'未调查':'Unsurveyed')}</b><span>${lang==='zh'?'地方文化':'Local culture'}</span><b>${esc(cultureLabel(r.culture,lang))}</b><span>${lang==='zh'?'民众满意度':'Civic satisfaction'}</span><b>${r.owner===state.player?r.civicSatisfaction+'%':lang==='zh'?'未知':'Unknown'}</b>`)}
   if(!r||r.owner!==state.player)return;
   const panel=document.querySelector('#command-detail');
   panel.insertAdjacentHTML('beforeend',constructionPanel(state,lang,r));
