@@ -1,7 +1,7 @@
 import {GRAND_SITES,GRAND_ROUTES} from './grand-map-data.js';
 import {activeEffects,localBuildingEffects,recordMerchantContact} from './development.js?v=60';
 import {officeOf} from './office-system.js';
-import {nationalBudget} from './national-budget.js?v=30';
+import {nationalBudget} from './national-budget.js?v=31';
 
 // Sea areas and costs are game-scale approximations of the 49 BCE Mediterranean.
 export const SEA_ZONES=[
@@ -141,6 +141,12 @@ function tradeExposure(s,route,zone,buyer,seller){
  const security=Math.max(0,Math.min(100,100-piracy+escorts.length*16-raiders.length*28+(activeEffects(s,buyer).navalSecurity||0)+navalJobEffect(s,buyer,'harbor',route.to)*4-(atWar(s,buyer,seller)?35:0)));
  return {security,piracy,pirates,raiders};
 }
+function navigationTroubleRisk(s,v){
+ const elapsed=(s.year-(s.startYear??-49))*12+s.month-(s.startMonth??1);
+ if(elapsed<12||v.navigationDelayed)return 0;
+ const winter=[12,1,2].includes(s.month),administrator=navalJobEffect(s,v.vesselOwner,'trade');
+ return Math.max(.005,(winter?.06:.02)-administrator*.005);
+}
 function tradeHome(s,v){
  return s.regions.find(r=>r.id===v.from&&r.owner===v.vesselOwner)||s.regions.filter(r=>r.owner===v.vesselOwner&&r.port).map(r=>({r,path:seaRoute(v.zone,portZone(r.id))})).filter(x=>x.path).sort((a,b)=>a.path.length-b.path.length)[0]?.r||null;
 }
@@ -168,7 +174,10 @@ export function harborTradeCapacity(s,port){
 function reportInterruptedGrainShortages(s,log){
  const byBuyer=new Map();
  for(const v of s.naval.voyages){
-  if(v.good!=='grain'||v.phase!=='outbound'||v.path.length||v.shortageReported||v.cargo<=0||!Number.isFinite(v.price)||v.price<=0||!(v.blockedMonths>0||v.congestedMonths>0))continue;
+  // Trade arrives after the month's food calculation. A navigation delay
+  // affects a shortage only from the following economic month onward.
+  const navigationWaiting=Number.isFinite(v.navigationDelayYear)&&Number.isFinite(v.navigationDelayMonth)&&v.navigationDelayYear*12+v.navigationDelayMonth<s.year*12+s.month&&v.path.length===1&&v.zone===portZone(v.to);
+  if(v.good!=='grain'||v.phase!=='outbound'||v.shortageReported||v.cargo<=0||!Number.isFinite(v.price)||v.price<=0||!(v.blockedMonths>0||v.congestedMonths>0||navigationWaiting)||v.path.length&&!navigationWaiting)continue;
   const buyer=s.factions[v.buyer],from=s.regions.find(r=>r.id===v.from),to=s.regions.find(r=>r.id===v.to);
   const shortage=buyer?.lastFoodShortage;
   if(!shortage||shortage.year!==s.year||shortage.month!==s.month||!Number.isFinite(shortage.deficit)||shortage.deficit<=0||from?.owner!==v.seller||to?.owner!==v.buyer||atWar(s,v.buyer,v.seller))continue;
@@ -195,8 +204,8 @@ function reportInterruptedGrainShortages(s,log){
   }
   if(possible<deficit)continue;
   for(const v of contributing)v.shortageReported=true;
-  const ports=[...new Set(contributing.map(v=>v.to))],causes=[...new Set(contributing.map(v=>v.blockedMonths>0?'blockade':'congestion'))];
-  report(s,{kind:'interrupted-grain-shortage',owner,port:ports[0],ports,zone:contributing[0].zone,deficit,cargo:contributing.reduce((sum,v)=>sum+v.cargo,0),shipments:contributing.length,cause:causes.length===1?causes[0]:'mixed'});
+  const ports=[...new Set(contributing.map(v=>v.to))],causes=[...new Set(contributing.map(v=>v.blockedMonths>0?'blockade':v.congestedMonths>0?'congestion':'navigation'))];
+  report(s,{kind:'interrupted-grain-shortage',owner,port:ports[0],ports,zone:contributing[0].zone,deficit,cargo:contributing.reduce((sum,v)=>sum+v.cargo,0),shipments:contributing.length,cause:causes.length===1?causes[0]:'mixed',...(causes.length>1?{causes}:{})});
   if(owner===s.player)log(s,contributing.length===1?'Delayed imported grain could have covered this month’s food deficit; the usual shortage rules were applied.':'Delayed imported grain shipments could jointly have covered this month’s food deficit; the usual shortage rules were applied.',contributing.length===1?'延误的进口粮食原本足以填补本月粮食缺口；本月已按常规粮荒规则结算。':'多笔延误的进口粮食合计原本足以填补本月粮食缺口；本月已按常规粮荒规则结算。');
  }
 }
@@ -208,7 +217,8 @@ function advanceTradeVoyages(s,log){
   const route=n.routes.find(r=>r.id===v.routeId),owner=s.factions[v.vesselOwner];
   if(!owner){n.voyages.splice(n.voyages.indexOf(v),1);continue}
   owner.treasury=Math.max(-100,owner.treasury-SHIPS.merchant.upkeep);
-  if(v.path.length)v.zone=v.path.shift();
+  const sailed=v.path.length>0;
+  if(sailed)v.zone=v.path.shift();
   if(v.phase==='return'){if(!v.path.length)finishTradeHome(s,v);continue}
   if(!route){sendTradeHome(s,v);continue}
   const {security,piracy,pirates,raiders}=tradeExposure(s,route,v.zone,v.buyer,v.seller);
@@ -224,6 +234,16 @@ function advanceTradeVoyages(s,log){
    if(pirate&&rng(s)<piracy/100){captured=Math.min(v.cargo,route.volume);v.cargo-=captured;pirate.cargo||={};pirate.cargo[v.good]=(pirate.cargo[v.good]||0)+captured;pirate.wealth+=captured;pirate.pressure=Math.min(70,pirate.pressure+2);report(s,{kind:'pirate-raid',zone:v.zone,owner:v.vesselOwner,good:v.good,captured})}
    tradeRecord(s,route,v.buyer,v.seller,'piracy',security,v.price,{captured,zone:v.zone});sendTradeHome(s,v);
    if(v.vesselOwner===s.player)log(s,'Pirates struck a merchant vessel and seized cargo.','海盗袭击商船并夺走货物。');continue;
+  }
+  const navigationRisk=sailed?navigationTroubleRisk(s,v):0;
+  if(navigationRisk>0&&rng(s)<navigationRisk){
+   // Revisit this sea zone next month. Cargo and the merchant remain at sea;
+   // the extra leg is part of the saved route and cannot be rolled twice.
+   v.navigationDelayed=true;v.navigationDelayYear=s.year;v.navigationDelayMonth=s.month;v.path.unshift(v.zone);
+   tradeRecord(s,route,v.buyer,v.seller,'navigation',security,v.price,{cargo:v.cargo,zone:v.zone,eta:v.path.length});
+   report(s,{kind:'navigation-delay',zone:v.zone,owner:v.buyer,seller:v.seller,vesselOwner:v.vesselOwner,from:v.from,to:v.to,good:v.good,amount:v.cargo,delay:1});
+   if([v.buyer,v.seller,v.vesselOwner].includes(s.player))log(s,'Navigation trouble delayed a merchant vessel; its cargo remains aboard and payment awaits arrival.','航行问题耽误了一艘商船；货物仍在船上，付款要等到抵港。');
+   continue;
   }
   if(v.path.length){tradeRecord(s,route,v.buyer,v.seller,'enroute',security,v.price,{cargo:v.cargo,zone:v.zone,eta:v.path.length});continue}
   const from=s.regions.find(r=>r.id===v.from),to=s.regions.find(r=>r.id===v.to),relations=s.relations?.[[v.buyer,v.seller].sort().join(':')]??0;

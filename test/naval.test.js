@@ -20,6 +20,59 @@ function tradeArrival(s,id,maxMonths=8){
  assert.fail(`No delivered voyage for ${id} within ${maxMonths} months`);
 }
 
+test('navigation trouble delays a real merchant delivery without losing cargo or double charging',()=>{
+ let s=newGrandGame('senate');s.seed=1;s.year=-48;s.wars=[];s.naval.pirates=[];
+ s.factions.senate.treasury=500;s.factions.senate.food=0;
+ for(const route of s.naval.routes)if(route.id!=='egypt-italy')route.pausedBy=[s.regions.find(r=>r.id===route.from)?.owner].filter(Boolean);
+ for(let month=1;month<=5;month++){s.month=month;advanceNaval(s)}
+ const route=state=>state.naval.routes.find(r=>r.id==='egypt-italy');
+ const sailing=s.naval.voyages.find(v=>v.routeId==='egypt-italy'&&v.phase==='outbound');
+ assert.deepEqual(sailing.path,['tyrrhenian'],'the actual grain ship is one sea leg from port');
+ const beforeCargo=sailing.cargo,beforeFood=s.factions.senate.food;
+ const onTime=upgradeSave(JSON.parse(JSON.stringify(s)));
+ onTime.naval.voyages.find(v=>v.id===sailing.id).navigationDelayed=true;
+ s.month=6;onTime.month=6;advanceNaval(s);advanceNaval(onTime);
+ const delayed=s.naval.voyages.find(v=>v.id===sailing.id);
+ assert.equal(route(s).last.reason,'navigation');assert.equal(route(s).last.amount,0);assert.equal(route(s).last.paid,0);
+ assert.equal(delayed.cargo,beforeCargo);assert.equal(delayed.navigationDelayed,true);assert.deepEqual(delayed.path,['tyrrhenian']);
+ assert.equal(s.factions.senate.food,beforeFood);
+ assert.equal(route(onTime).last.reason,'delivered');assert.equal(route(onTime).last.amount,beforeCargo);
+ assert.equal(onTime.factions.senate.food-beforeFood,beforeCargo);
+ assert.equal(s.factions.senate.treasury-onTime.factions.senate.treasury,route(onTime).last.paid,'routine monthly costs continue, but the delayed buyer has not paid for cargo');
+ assert.equal(onTime.factions.egypt.treasury-s.factions.egypt.treasury,route(onTime).last.paid,'the seller has not received early payment');
+ const incident=s.naval.reports.find(r=>r.kind==='navigation-delay'&&r.owner==='senate');
+ assert.equal(incident?.month,6);assert.equal(incident?.year,-48);assert.equal(incident?.amount,beforeCargo);
+ for(const [lang,title,status] of [['en','MERCHANT NAVIGATION DELAY','Navigation trouble at sea'],['zh','商船航行受阻','海上航行受阻']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:s,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+  assert.match(content.innerHTML,new RegExp(title));
+  renderNavalPanel({state:s,lang,root,section:'trade',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+  assert.match(content.innerHTML,new RegExp(status));
+ }
+ const outsider=upgradeSave(JSON.parse(JSON.stringify(s)));outsider.player='caesar';
+ const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+ renderNavalPanel({state:outsider,lang:'en',root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+ assert.doesNotMatch(content.innerHTML,/MERCHANT NAVIGATION DELAY/);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.deepEqual(s.naval.voyages.find(v=>v.id===sailing.id).path,['tyrrhenian']);
+ const crisisFood=-nationalBudget(s,'senate').foodNet-2;
+ s.factions.senate.food=crisisFood;onTime.factions.senate.food=crisisFood+beforeCargo;
+ tick(s);tick(onTime);
+ const shortage=s.naval.reports.find(r=>r.kind==='interrupted-grain-shortage'&&r.owner==='senate');
+ assert.equal(shortage?.month,7,'June navigation delay can affect the following month, after the real food calculation');
+ assert.equal(shortage?.cause,'navigation');assert.equal(shortage?.deficit,2);
+ assert.equal(onTime.factions.senate.lastFoodShortage,undefined);
+ assert.equal(onTime.factions.senate.stability-s.factions.senate.stability,1);
+ for(const [lang,cause] of [['en','Navigation trouble kept the ship from arriving on time'],['zh','航行问题使商船未能按时抵港']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:s,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+  assert.match(content.innerHTML,new RegExp(cause));
+ }
+ assert.equal(route(s).last.reason,'delivered');assert.equal(route(s).last.amount,beforeCargo);
+ assert.equal(s.naval.reports.filter(r=>r.kind==='navigation-delay'&&r.owner==='senate').length,1);
+ assert.equal(s.naval.reports.filter(r=>r.kind==='interrupted-grain-shortage'&&r.owner==='senate').length,1);
+});
+
 test('harbor congestion delays real cargo and payment, survives reload, and improves with a warehouse',()=>{
  let s=newGrandGame('senate');s.wars=[];s.naval.pirates=[];s.factions.senate.treasury=500;
  const port=s.regions.find(r=>r.id==='t016');port.civicSatisfaction=25;

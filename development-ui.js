@@ -4,7 +4,7 @@ import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';
 import {religionPanel} from './local-society.js?v=9';
 import {techIllustration,buildingIllustration} from './tech-art.js?v=23';
-import {nationalBudget} from './national-budget.js?v=30';
+import {nationalBudget} from './national-budget.js?v=31';
 const materialFamilies=[
  {id:'water',name:['Water Management','水利管理'],items:['water-control','dam-engineering','reservoir-design','aqueduct-refinement','urban-drainage','sewer-improvement']},
  {id:'military',name:['Military Infrastructure','军事设施'],items:['barracks-design','stone-fortification','training-ground','supply-organization','armory-craft','siege-machinery']},

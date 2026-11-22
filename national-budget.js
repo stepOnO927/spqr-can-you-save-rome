@@ -1,6 +1,6 @@
 import {officeEffects} from './office-system.js';
 import {activeEffects,localBuildingEffects,taxReviewExpense,templeGuaranteeExpense,GRANARY_RESERVE_CAPACITY,IDEA_SLOT_ADMIN_UPKEEP} from './development.js?v=60';
-import {fleetUpkeepDue} from './naval.js?v=55';
+import {fleetUpkeepDue} from './naval.js?v=62';
 import {productiveEstateRegion} from './local-society.js?v=9';
 
 // These six small playable kingdoms have a home-domain reserve outside the
