@@ -19,7 +19,8 @@ const officeLabel=(s,c,zh)=>{
  const office=Object.entries(s.world.offices?.[faction]||{}).find(([,person])=>person===c.id)?.[0];
  if(office)parts.push(({finance:["Finance officer","财务专员"],supply:["Supply officer","粮秣专员"],administration:["Administrator","政务专员"]}[office]||[office,office])[zh?1:0]);
  if(Object.values(s.world.localGovernors||{}).some(post=>post.person===c.id&&post.faction===faction))parts.push(zh?'地方行政官':'Local governor');
- if(Object.entries(s.world.localAdministrators||{}).some(([entityId,post])=>post.person===c.id&&post.faction===faction&&localAdministrator(s,entityId)===c.id))parts.push(zh?'城镇行政官':'Settlement administrator');
+ const settlementPost=Object.entries(s.world.localAdministrators||{}).find(([entityId,post])=>post.person===c.id&&post.faction===faction&&localAdministrator(s,entityId)===c.id);
+ if(settlementPost){const site=s.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id===settlementPost[0]);parts.push(site?.type==='village'?(zh?'村落行政官':'Village administrator'):(zh?'城镇行政官':'Settlement administrator'))}
  if(s.armies.some(a=>a.owner===faction&&a.characterId===c.id&&a.men>0))parts.push(zh?'军队统帅':'Army commander');
  return parts.join(zh?'、':', ');
 };

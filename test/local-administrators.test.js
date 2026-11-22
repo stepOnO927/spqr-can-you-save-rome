@@ -8,6 +8,7 @@ import {inspectState} from '../inspector-diagnostics.js?v=world-kings-estate-vil
 import {createFictionalPerson} from '../dynasties.js?v=world-kings-estate-village-1';
 import {startFoothold,advanceFootholds,abandonFoothold} from '../foothold.js';
 import {advanceVillages} from '../local-villages.js';
+import {renderGenealogy} from '../genealogy-ui.js?v=world-kings-estate-village-1';
 
 function occupiedTown(){
  const state=newGame('senate'),town=localEntity(state,'capua');
@@ -74,6 +75,7 @@ test('a paid village administrator needs a real outpost, improves civilian condi
  const cash=state.factions.caesar.treasury;
  assert.deepEqual(appointLocalAdministrator(state,site.id,id),{ok:true,cost:5});
  assert.equal(state.factions.caesar.treasury,cash-5);
+ assert.match(renderGenealogy(state),/Village administrator/);
  site.village.security=59;site.village.satisfaction=59;site.village.localIssue='occupation';
  const control=structuredClone(state);delete control.world.localAdministrators[site.id];
  state.month=3;control.month=3;advanceVillages(state);advanceVillages(control);
