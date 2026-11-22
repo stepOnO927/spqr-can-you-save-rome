@@ -31,6 +31,16 @@ test('new reports trigger reassessment without revealing hidden foreign changes'
  assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),signature);
 });
 
+test('a delivered strength report triggers review while an undelivered one does not',()=>{
+ const s=newGame('caesar'),copy=structuredClone(s),before=opportunityEvidenceSignature(s,'parthia');
+ const report={kind:'strength',value:17000,source:'spy',year:s.year+1,month:s.month,observationYear:s.year,observationMonth:s.month};
+ copy.knowledge.parthia.armenia.reports.push(report);
+ assert.equal(opportunityEvidenceSignature(copy,'parthia'),before);
+ report.year=s.year;
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),before);
+ assert.notEqual(estimatedStrength(copy,'parthia','armenia'),estimatedStrength(s,'parthia','armenia'));
+});
+
 test('a reported frontier change triggers review without exposing an unseen change',()=>{
  const s=newGame('caesar'),copy=structuredClone(s),signature=opportunityEvidenceSignature(s,'parthia');
  const region=copy.regions.find(r=>r.id==='armenia');assert.ok(region);

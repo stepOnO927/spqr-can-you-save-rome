@@ -11,7 +11,7 @@ const pair=(a,b)=>[a,b].sort().join(':'),now=s=>s.year*12+s.month;
 export function opportunityEvidenceSignature(s,actor){
  const f=s.factions[actor];if(!f)return '';
  const evidence=Object.entries(s.knowledge?.[actor]||{}).sort(([a],[b])=>a.localeCompare(b)).map(([target,k])=>{
-  const reports=(k.reports||[]).filter(r=>isDeliveredReport(s,r)&&r.kind==='stability').slice(-32).map(r=>[r.value,r.confidence,r.observationYear??r.year,r.observationMonth??r.month]).sort();
+  const reports=(k.reports||[]).filter(r=>isDeliveredReport(s,r)&&['stability','strength'].includes(r.kind)).slice(-32).map(r=>[r.kind,r.value,r.confidence,r.originSource??r.source??null,r.observationYear??r.year,r.observationMonth??r.month]).sort();
   const sightings=Object.values(k.sightings||{}).filter(x=>isDeliveredReport(s,x)).sort((a,b)=>((b.observationYear??b.year)*12+(b.observationMonth??b.month))-((a.observationYear??a.year)*12+(a.observationMonth??a.month))).slice(0,32).map(x=>[x.id,x.region,x.year,x.month,x.observationYear??x.year,x.observationMonth??x.month,x.receivedYear??null,x.receivedMonth??null]).sort();
   return [target,reports,sightings];
  });
