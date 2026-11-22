@@ -80,6 +80,19 @@ try{
  await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
  const traded=await page.evaluate(id=>{const state=JSON.parse(localStorage.getItem('spqr-save-1'));return {city:state.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id===id),count:state.localCampaign.tradeCompleted}},neighborCity.id);
  assert.equal(traded.city.lastTrade.actor,'armenia');assert.ok(traded.count>0);
+ const peerState=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:273});
+ startLocalCampaign(peerState,'generated:narbo');
+ await page.evaluate(value=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:value})),peerState);
+ await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
+ await page.locator('[data-local-peer-partner]').selectOption('massilia');
+ await page.locator('[data-local-peer-trade]').click();
+ assert.match(await page.locator('.local-council').innerText(),/Envoys to Massilia return in 2 month/);
+ await page.locator('#step').click();await page.locator('#step').click();
+ await page.locator('#mail-open').click();assert.match(await page.locator('.mailbox').innerText(),/City envoy returned/);await page.locator('#mail-close').click();
+ for(let month=0;month<4;month++)await page.locator('#step').click();
+ await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
+ const peerResult=await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-save-1'));return {rights:state.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='generated:narbo').peerTradeRights?.massilia,trades:state.localCampaign.tradeCompleted}});
+ assert.ok(peerResult.rights);assert.ok(peerResult.trades>0);
  const petitioner=configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:8});
  const polity=petitioner.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.procedural&&['city_state','microstate','tribe'].includes(entity.type));
  assert.ok(polity);petitioner.regions.find(region=>region.id===polity.theater).owner='caesar';
@@ -122,5 +135,5 @@ try{
  await page.locator('.local-council').waitFor();
  assert.match(await page.locator('.local-council').innerText(),/Massilia/);
  assert.equal(errors.length,0,errors.join('\n'));
- console.log('Local campaign, protection, independence, neighboring trade, incoming polity petition and historical Massilia passed');
+ console.log('Local campaign, protection, independence, neighboring and peer-city trade, incoming polity petition and historical Massilia passed');
 }finally{await browser.close()}

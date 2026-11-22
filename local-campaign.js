@@ -1,8 +1,9 @@
 import {FACTIONS,ROUTES} from './data.js?v=world-kings-estate-village-1';
 import {localEntity,localTradeOpen} from './local-polities.js';
 import {initializeControlKnowledge,reportedControl} from './control-intelligence.js?v=world-kings-estate-village-1';
-import {initializeLocalDiscovery} from './local-discovery.js?v=world-kings-estate-village-1';
+import {initializeLocalDiscovery,localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS,recordLocalDiscovery} from './local-discovery.js?v=world-kings-estate-village-1';
 import {sendLetter} from './epistulae.js?v=world-kings-estate-village-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-estate-village-1';
 
 const date=state=>state.year*12+state.month;
 const relation=(state,a,b)=>state.relations[[a,b].sort().join(':')]??0;
@@ -15,6 +16,18 @@ export function localTradePartners(state,city=localCampaignCity(state)){
  const known=[hostOf(state,city),...neighbors.map(id=>reportedControl(state,city.id,id)?.owner)];
  return [...new Set(known)].filter(actor=>actor&&actor!==city.id&&actor!=='rebels'&&FACTIONS[actor]&&!state.wars.some(war=>war.includes(city.id)&&war.includes(actor)));
 }
+
+const adjacentTheaters=(a,b)=>a===b||ROUTES.some(([from,to])=>from===a&&to===b||from===b&&to===a);
+export function localPeerCities(state,city=localCampaignCity(state)){
+ if(!city)return [];
+ return state.regions.flatMap(region=>region.localEntities||[]).filter(peer=>peer.id!==city.id&&peer.type==='city_state'&&adjacentTheaters(city.theater,peer.theater)&&localDiscoveryLevel(state,city.id,peer.id)>=LOCAL_DISCOVERY_LEVELS.identified);
+}
+const peerRouteOpen=(state,city,peer)=>{
+ if(!adjacentTheaters(city.theater,peer.theater))return false;
+ if(city.theater===peer.theater)return true;
+ // A land or sea route needs commercial access through both actual theaters.
+ return [city.theater,peer.theater].every(theaterId=>nonMilitaryAccessStatus(state,city.id,theaterId,undefined,'commercial').allowed);
+};
 
 export function registerLocalCampaign(state){
  const city=localCampaignCity(state);
@@ -30,13 +43,14 @@ export function startLocalCampaign(state,id){
  city.militia-=field;
  state.player=id;
  state.scenario='local_city';
- state.localCampaign={id,startedAt:date(state),survived:0,tradeOffer:null,protectionOffer:null,independenceOffer:null,tradeCompleted:0};
+ state.localCampaign={id,startedAt:date(state),survived:0,tradeOffer:null,peerTradeOffer:null,protectionOffer:null,independenceOffer:null,tradeCompleted:0};
  state.factions[id]={treasury:city.treasury,food:city.food,manpower:Math.floor(city.population*.05),stability:65,legitimacy:60,tax:'normal',research:0};
  state.armies.push({id:`local-field:${id}`,name:['City militia','城邦民兵'],owner:id,region:city.theater,men:field,morale:62,skill:Math.max(1,Math.floor(city.strategy/2)),experience:0,commander:[...city.civicOfficers?.captain?.name||city.ruler.name],move:null,siege:null});
  state.world.leadership[id]=[];
  state.knowledge[id]=Object.fromEntries(Object.keys(state.factions).map(target=>[target,{reportedLeaders:[],reports:[],sightings:{}}]));
  for(const targets of Object.values(state.knowledge))targets[id]||={reportedLeaders:[],reports:[],sightings:{}};
  initializeControlKnowledge(state);initializeLocalDiscovery(state);
+ for(const peer of state.regions.flatMap(region=>region.localEntities||[]))if(peer.id!==city.id&&peer.type==='city_state'&&adjacentTheaters(city.theater,peer.theater))recordLocalDiscovery(state,id,peer.id,LOCAL_DISCOVERY_LEVELS.identified,'local_council_contact');
  registerLocalCampaign(state);
  return state;
 }
@@ -54,15 +68,23 @@ export function localRecruit(state){
 
 export function localTradeOffer(state,partnerId=null){
  const city=localCampaignCity(state),f=state.factions[state.player],host=partnerId||(city&&hostOf(state,city));
- if(!city||city.controller!==city.id||!f||!host||!localTradePartners(state,city).includes(host)||f.treasury<3||state.localCampaign.tradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||city.tradeRights?.[host]>date(state))return false;
+ if(!city||city.controller!==city.id||!f||!host||!localTradePartners(state,city).includes(host)||f.treasury<3||state.localCampaign.tradeOffer||state.localCampaign.peerTradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||city.tradeRights?.[host]>date(state))return false;
  f.treasury-=3;city.treasury=f.treasury;
  state.localCampaign.tradeOffer={host,remaining:2};
  return true;
 }
 
+export function localPeerTradeOffer(state,peerId){
+ const city=localCampaignCity(state),f=state.factions[state.player],peer=localPeerCities(state,city).find(item=>item.id===peerId);
+ if(!city||city.controller!==city.id||!f||!peer||f.treasury<3||state.localCampaign.tradeOffer||state.localCampaign.peerTradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||city.peerTradeRights?.[peerId]>date(state)||state.wars.some(war=>war.includes(city.id)&&war.includes(peerId)))return false;
+ f.treasury-=3;city.treasury=f.treasury;
+ state.localCampaign.peerTradeOffer={host:peerId,remaining:2};
+ return true;
+}
+
 export function localProtectionOffer(state){
  const city=localCampaignCity(state),f=state.factions[state.player],host=city&&hostOf(state,city);
- if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||city.overlord||f.treasury<6||state.localCampaign.tradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||state.wars.some(war=>war.includes(city.id)&&war.includes(host)))return false;
+ if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||city.overlord||f.treasury<6||state.localCampaign.tradeOffer||state.localCampaign.peerTradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||state.wars.some(war=>war.includes(city.id)&&war.includes(host)))return false;
  f.treasury-=6;city.treasury=f.treasury;
  state.localCampaign.protectionOffer={host,remaining:3};
  return true;
@@ -70,7 +92,7 @@ export function localProtectionOffer(state){
 
 export function localIndependenceOffer(state){
  const city=localCampaignCity(state),f=state.factions[state.player],host=city?.overlord;
- if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||f.treasury<4||state.localCampaign.tradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||state.wars.some(war=>war.includes(city.id)&&war.includes(host)))return false;
+ if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||f.treasury<4||state.localCampaign.tradeOffer||state.localCampaign.peerTradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||state.wars.some(war=>war.includes(city.id)&&war.includes(host)))return false;
  f.treasury-=4;city.treasury=f.treasury;
  state.localCampaign.independenceOffer={host,remaining:2};
  return true;
@@ -102,6 +124,16 @@ export function advanceLocalCampaign(state){
   reportOffer(state,city,host,'trade',accepted);
   campaign.tradeOffer=null;
  }
+ if(campaign.peerTradeOffer&&--campaign.peerTradeOffer.remaining<=0){
+  const peer=localEntity(state,campaign.peerTradeOffer.host),reserve=peer&&Math.max(4,Math.ceil((peer.population||3000)/3000));
+  const accepted=!!(peer&&peer.type==='city_state'&&peer.controller===peer.id&&!peer.siege&&peer.food>=reserve+4&&peerRouteOpen(state,city,peer)&&relation(state,city.id,peer.id)>=-25+Math.min(15,peer.strategy||0)&&!state.wars.some(war=>war.includes(city.id)&&war.includes(peer.id)));
+  if(accepted){city.peerTradeRights||={};city.peerTradeRights[peer.id]=date(state)+24}
+  const name=peer?.name||[campaign.peerTradeOffer.host,campaign.peerTradeOffer.host];
+  state.log.unshift({year:state.year,month:state.month,en:`${name[0]} ${accepted?'accepted':'declined'} the city-to-city food compact.`,zh:`${name[1]}${accepted?'接受':'拒绝'}了城邦间粮食贸易协定。`});
+  const sent=sendLetter(state,{senderInstitution:city.id,senderFaction:city.id,recipient:city.id,category:'government',priority:'important',source:city.theater,destination:city.theater,subject:['City envoy returned','城邦使者回报'],body:[`${name[0]} ${accepted?'accepted a two-year food compact; actual quarterly shipments still require food, treasury and an open route.':'declined the proposal; no goods or rights were transferred.'}`,`${name[1]}${accepted?'接受为期两年的粮食协定；每季度实际交易仍须有粮食、国库与通商路线。':'拒绝提议；未转移物资或授予贸易权。'}`],options:['acknowledge'],context:{kind:'local_peer_trade_result',polityId:city.id,host:peer?.id||campaign.peerTradeOffer.host,accepted}});
+  if(sent.ok){sent.letter.arrival=date(state);sent.letter.delivery='received';sent.letter.senderName=['City envoys','城邦使者']}
+  campaign.peerTradeOffer=null;
+ }
  if(campaign.protectionOffer&&--campaign.protectionOffer.remaining<=0){
   const host=campaign.protectionOffer.host,capacity=state.armies.filter(army=>army.owner===host&&army.men>0).reduce((sum,army)=>sum+army.men,0);
   const accepted=hostOf(state,city)===host&&city.controller===city.id&&!city.overlord&&state.factions[host]?.treasury>=10&&state.factions[host]?.stability>=45&&capacity>=city.militia*2&&relation(state,city.id,host)>=-35&&!state.wars.some(war=>war.includes(city.id)&&war.includes(host));
@@ -123,6 +155,13 @@ export function advanceLocalCampaign(state){
   campaign.independenceOffer=null;
  }
  if(city.lastTrade?.year===state.year&&city.lastTrade?.month===state.month)campaign.tradeCompleted+=city.lastTrade.count||1;
+ if(state.month%3===0)for(const [peerId,until] of Object.entries(city.peerTradeRights||{})){
+  const peer=localEntity(state,peerId),reserve=peer&&Math.max(4,Math.ceil((peer.population||3000)/3000));
+  if(!peer||until<=date(state)||peer.controller!==peer.id||peer.siege||peer.food-2<reserve||city.treasury<3||!peerRouteOpen(state,city,peer)||state.wars.some(war=>war.includes(city.id)&&war.includes(peer.id)))continue;
+  peer.food-=2;peer.treasury+=3;city.treasury-=3;city.food+=2;
+  campaign.tradeCompleted++;
+  state.log.unshift({year:state.year,month:state.month,en:`${city.name[0]} bought 2 food from ${peer.name[0]} for 3 treasury.`,zh:`${city.name[1]}向${peer.name[1]}支付3国库，购得2粮食。`});
+ }
  f.treasury=city.treasury;f.food=city.food;
  f.manpower=Math.min(Math.floor(city.population*.12),f.manpower+Math.max(5,Math.floor(city.population/800)));
  if(campaign.survived>=24&&campaign.tradeCompleted>0&&f.treasury>=0&&f.food>=4&&f.stability>=45&&!state.victory){state.victory=true;state.log.unshift({year:state.year,month:state.month,en:'The city council secured two years of autonomy and a working trade compact. The campaign may continue.',zh:'城邦议会维持两年自治，并建立有效贸易协定；战役仍可继续。'})}

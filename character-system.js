@@ -478,19 +478,23 @@ export function relieveIncapacitatedCommanders(s){
  initializeWorld(s);for(const unit of s.armies){const person=s.world.characters[unit.characterId];if(!person)continue;const lost=!person.alive||person.health==='deceased'||!!person.missing,ill=['seriously_ill','dying'].includes(person.health);if(!lost&&!ill)continue;if(!lost)person.location=unit.region;unit.characterId=null;unit.commander=['Unnamed officer','未具名军官'];if(!lost&&unit.owner===s.player)notify(s,`${CHARACTER_CATALOG[person.id].name[0]} cannot command because of simulated illness; an unnamed officer takes over.`,`${CHARACTER_CATALOG[person.id].name[1]}因游戏中的重病无法指挥，暂由未具名军官接替。`)}
 }
 
-// A missing commander may re-establish contact after three months in the nearest
-// controlled theater. This is a coarse game abstraction, not a precise escape route.
+// Searches can fail for living and deceased people alike. A separate stream
+// prevents hidden results from changing unrelated random events.
+function missingSearchRoll(s,person){
+ const missing=person.missing;if(!Number.isInteger(missing.searchSeed)){let h=((s.seed??1)^0x5d167a3b)>>>0;for(const ch of `${person.id}:${missing.year??0}:${missing.month??0}`)h=Math.imul(h^ch.charCodeAt(0),16777619)>>>0;missing.searchSeed=h}
+ missing.searchSeed=(Math.imul(missing.searchSeed,1664525)+1013904223)>>>0;return missing.searchSeed/4294967296;
+}
 export function advanceMissingCommanders(s){
  initializeWorld(s);for(const person of Object.values(s.world.characters)){
   const missing=person.missing;if(!missing)continue;
   if(s.year===missing.year&&s.month===missing.month)continue;
-  missing.remaining=Math.max(0,missing.remaining-1);if(missing.remaining)continue;
+  missing.remaining=Math.max(0,(Number.isFinite(missing.remaining)?missing.remaining:3)-1);if(missing.remaining)continue;
   const queue=[missing.origin],seen=new Set(queue);let destination=null;
   for(let i=0;i<queue.length;i++){const id=queue[i],r=s.regions.find(x=>x.id===id);if(r?.owner===person.faction){destination=r;break}for(const edge of ROUTES){const next=edge[0]===id?edge[1]:edge[1]===id?edge[0]:null;if(next&&!seen.has(next)){seen.add(next);queue.push(next)}}}
   if(!destination)continue;
+  if(missingSearchRoll(s,person)>=.3){missing.remaining=3;if(person.faction===s.player)notify(s,`The search for ${CHARACTER_CATALOG[person.id].name[0]} produced no conclusive news; it will continue.`,`对${CHARACTER_CATALOG[person.id].name[1]}的搜寻暂无线索；搜寻将继续。`,{characterId:person.id});continue}
   if(!person.alive){
-   // Search can fail; an unconfirmed death must not resolve succession.
-   if(rand(s)>=.3){missing.remaining=3;continue}
+   // A successful search confirms death before public effects occur.
    delete person.missing;const unprocessed=!person.inheritanceSettled;settleInheritance(s,person.id);if(unprocessed&&s.factions[person.faction])s.factions[person.faction].stability=Math.max(0,s.factions[person.faction].stability-3);if((s.world.leadership[person.faction]||[]).includes(person.id))assignSuccession(s,person.faction);
    if(person.faction===s.player)notify(s,`${CHARACTER_CATALOG[person.id].name[0]} was confirmed dead after a search; succession was updated.`,`${CHARACTER_CATALOG[person.id].name[1]}经搜寻确认在游戏中去世；继任局势已更新。`,{characterId:person.id});continue;
   }

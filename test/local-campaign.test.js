@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
 import {configureStartingDifficulty} from '../difficulty.js';
-import {playableLocalCities,startLocalCampaign,localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localProtectionOffer,localIndependenceOffer,advanceLocalCampaign} from '../local-campaign.js';
+import {playableLocalCities,startLocalCampaign,localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localPeerCities,localPeerTradeOffer,localProtectionOffer,localIndependenceOffer,advanceLocalCampaign} from '../local-campaign.js';
 import {receivedMail} from '../epistulae.js';
 import {armyExpeditionSupply} from '../expedition-supply.js';
 import {validPlayableCampaign} from '../local-campaign-save.js';
@@ -99,6 +99,58 @@ test('a generated city can negotiate a funded trade compact with a reachable nei
  assert.equal(city.lastTrade.food,2);assert.equal(city.lastTrade.price,3);
  assert.ok(state.localCampaign.tradeCompleted>0);
  assert.ok(receivedMail(state).some(letter=>letter.context?.proposal==='trade'&&letter.context.host==='armenia'&&letter.context.accepted));
+});
+
+test('generated city can make a real finite-resource compact with another autonomous city',()=>{
+ const state=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:273});
+ const city=playableLocalCities(state).find(item=>item.id==='generated:narbo');
+ startLocalCampaign(state,city.id);
+ const peer=localPeerCities(state).find(item=>item.id==='massilia');
+ assert.ok(peer);assert.match(localCouncilHtml(state),/SEND CITY TRADE ENVOYS/);
+ assert.equal(localPeerTradeOffer(state,'generated:africa'),false,'uncontacted distant city is not eligible');
+ const cash=state.factions[city.id].treasury;
+ assert.equal(localPeerTradeOffer(state,peer.id),true);
+ assert.equal(state.factions[city.id].treasury,cash-3);
+ assert.equal(localTradeOffer(state),false,'a second mission must wait');
+ assert.equal(validPlayableCampaign(upgradeSave(structuredClone(state))),true);
+ tick(state);assert.equal(city.peerTradeRights?.[peer.id],undefined);
+ tick(state);assert.ok(city.peerTradeRights?.[peer.id]>state.year*12+state.month);
+ assert.ok(receivedMail(state).some(letter=>letter.context?.kind==='local_peer_trade_result'&&letter.context.host===peer.id&&letter.context.accepted));
+ const before={cityFood:state.factions[city.id].food,cityCash:state.factions[city.id].treasury,peerFood:peer.food,peerCash:peer.treasury,trades:state.localCampaign.tradeCompleted};
+ for(let i=0;i<4;i++)tick(state);
+ assert.ok(state.localCampaign.tradeCompleted>before.trades);
+ assert.ok(peer.food<before.peerFood+8,'peer food is a finite source');
+ assert.ok(peer.treasury>=before.peerCash+3);
+ assert.ok(state.factions[city.id].food>=before.cityFood);
+});
+
+test('peer compact stops when food reserve or city treasury cannot fund a shipment',()=>{
+ const state=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:273}),city=playableLocalCities(state).find(item=>item.id==='generated:narbo');
+ startLocalCampaign(state,city.id);const peer=localPeerCities(state).find(item=>item.id==='massilia'),reserve=Math.max(4,Math.ceil((peer.population||3000)/3000));
+ city.peerTradeRights={[peer.id]:state.year*12+20};state.month=3;peer.food=reserve+1;
+ const before=state.localCampaign.tradeCompleted;advanceLocalCampaign(state);
+ assert.equal(state.localCampaign.tradeCompleted,before);assert.equal(peer.food,reserve+1);
+ state.month=6;peer.food=reserve+4;state.factions[city.id].treasury=city.treasury=2;advanceLocalCampaign(state);
+ assert.equal(state.localCampaign.tradeCompleted,before);
+ state.month=9;state.factions[city.id].treasury=city.treasury=3;const food=city.food,cash=peer.treasury;advanceLocalCampaign(state);
+ assert.equal(state.localCampaign.tradeCompleted,before+1);assert.equal(city.food,food+2);assert.equal(peer.food,reserve+2);assert.equal(peer.treasury,cash+3);assert.equal(state.factions[city.id].treasury,0);
+});
+
+test('city trade envoy fails if peer loses autonomy or a crossing closes',()=>{
+ const make=()=>{const state=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:273}),city=playableLocalCities(state).find(item=>item.id==='generated:narbo');startLocalCampaign(state,city.id);return {state,city,peer:localPeerCities(state).find(item=>item.id==='massilia')}};
+ const fallen=make();assert.equal(localPeerTradeOffer(fallen.state,fallen.peer.id),true);fallen.peer.controller='senate';tick(fallen.state);tick(fallen.state);
+ assert.equal(fallen.city.peerTradeRights?.[fallen.peer.id],undefined);
+ assert.ok(receivedMail(fallen.state).some(letter=>letter.context?.kind==='local_peer_trade_result'&&!letter.context.accepted));
+ const corrupt=make().state;corrupt.localCampaign.peerTradeOffer={host:'__proto__',remaining:1};assert.equal(validPlayableCampaign(corrupt),false);
+});
+
+test('adjacent city trade checks commercial borders at reply without exposing a hidden change at dispatch',()=>{
+ const make=()=>{const state=configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:5});startLocalCampaign(state,'generated:anatolia');const peer=localPeerCities(state).find(item=>item.id==='generated:bosporus');assert.ok(peer);return {state,peer}};
+ const blocked=make();blocked.state.borderPolicies.bosporus.commercial='closed';assert.equal(localPeerTradeOffer(blocked.state,blocked.peer.id),true);
+ tick(blocked.state);tick(blocked.state);assert.ok(receivedMail(blocked.state).some(letter=>letter.context?.kind==='local_peer_trade_result'&&!letter.context.accepted));
+ const delayed=make();assert.equal(localPeerTradeOffer(delayed.state,delayed.peer.id),true);delayed.state.borderPolicies.bosporus.commercial='closed';tick(delayed.state);tick(delayed.state);
+ assert.equal(delayed.state.regions.flatMap(region=>region.localEntities||[]).find(item=>item.id===delayed.state.player).peerTradeRights?.[delayed.peer.id],undefined);
+ assert.ok(receivedMail(delayed.state).some(letter=>letter.context?.kind==='local_peer_trade_result'&&!letter.context.accepted));
 });
 
 test('stale neighboring control does not leak a new owner or create trade across a closed route',()=>{
