@@ -1,4 +1,4 @@
-import {recordExpense} from './expense-ledger.js?v=1';
+import {recordExpense} from './expense-ledger.js?v=2';
 
 // Phase XIV. All numbers below are game balance values, not historical measurements.
 export const IDEA_CATEGORIES = [
@@ -359,14 +359,14 @@ function ideaLocalAdoptionGate(s,owner,idea){
 export function adoptIdea(s,owner,ideaId,slot=0){
   const plan=ideaAdoptionPlan(s,owner,ideaId,slot);if(!plan.ok)return {ok:false,reason:plan.reason,...(plan.with?{with:plan.with}:{})};
   const d=development(s,owner),idea=IDEAS.find(x=>x.id===ideaId),f=s.factions[owner];
-  f.treasury-=plan.cost;d.adoption={ideaId,category:idea.category,slot,remaining:plan.months,old:plan.old};
+  f.treasury-=plan.cost;recordExpense(s,owner,'policy',plan.cost);d.adoption={ideaId,category:idea.category,slot,remaining:plan.months,old:plan.old};
   if(plan.stabilityLoss)f.stability=Math.max(0,f.stability-plan.stabilityLoss);
   return {ok:true};
 }
 export function removeIdea(s,owner,category,slot=0){
   const d=development(s,owner),current=d.slots[category]?.[slot],f=s.factions[owner];
   if(!current||d.adoption||f.treasury<5)return {ok:false,reason:'unavailable'};
-  f.treasury-=5;d.adoption={ideaId:null,category,slot,remaining:2,old:current};return {ok:true};
+  f.treasury-=5;recordExpense(s,owner,'policy',5);d.adoption={ideaId:null,category,slot,remaining:2,old:current};return {ok:true};
 }
 export function cancelIdeaAdoption(s,owner){
   const d=development(s,owner);
@@ -388,7 +388,7 @@ export function ideaSlotExpansionCheck(s,owner,category){
 }
 export function expandIdeaSlot(s,owner,category){
   const check=ideaSlotExpansionCheck(s,owner,category);if(!check.ok)return check;
-  const d=development(s,owner);s.factions[owner].treasury-=check.cost;d.expansion={category,remaining:check.months};return {ok:true,cost:check.cost,months:check.months};
+  const d=development(s,owner);s.factions[owner].treasury-=check.cost;recordExpense(s,owner,'policy',check.cost);d.expansion={category,remaining:check.months};return {ok:true,cost:check.cost,months:check.months};
 }
 export function constructionCheck(s,owner,regionId,buildingId){
   const d=development(s,owner),r=s.regions.find(x=>x.id===regionId),b=BUILDINGS.find(x=>x.id===buildingId),f=s.factions[owner];

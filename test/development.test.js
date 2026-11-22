@@ -816,7 +816,7 @@ test('Achaean assembly practice is local, paid, slow to adopt and culturally gat
 test('monthly budget records paid construction and research orders without double counting',()=>{
  const s=newGrandGame('senate');s.factions.senate.treasury=500;
  const projected=nationalBudget(s,'senate').projectedNet;
- assert.deepEqual(expensesThisMonth(s,'senate'),{construction:0,research:0});
+ assert.deepEqual(expensesThisMonth(s,'senate'),{construction:0,research:0,policy:0});
  const researchBefore=s.factions.senate.treasury;
  assert.equal(researchInnovation(s,'senate','material','water-control').ok,true);
  const researchCost=researchBefore-s.factions.senate.treasury;
@@ -825,10 +825,10 @@ test('monthly budget records paid construction and research orders without doubl
  const secondCost=constructionCheck(s,'senate','italiaS','road').cost;
  assert.equal(startConstruction(s,'senate','italiaS','road').ok,true);
  const constructionTotal=constructionCost+secondCost;
- assert.deepEqual(expensesThisMonth(s,'senate'),{construction:constructionTotal,research:researchCost});
+ assert.deepEqual(expensesThisMonth(s,'senate'),{construction:constructionTotal,research:researchCost,policy:0});
  assert.equal(researchInnovation(s,'senate','material','water-control').ok,false);
  assert.equal(startConstruction(s,'senate','roma','road').ok,false);
- assert.deepEqual(expensesThisMonth(s,'senate'),{construction:constructionTotal,research:researchCost});
+ assert.deepEqual(expensesThisMonth(s,'senate'),{construction:constructionTotal,research:researchCost,policy:0});
  assert.equal(nationalBudget(s,'senate').projectedNet,projected,'one-time orders must remain separate from the monthly projection');
  for(const [lang,construction,research] of [['en','Construction paid this month','Research paid this month'],['zh','本月已付建造费','本月已付研究费']]){
   const html=budgetHtml(s,lang);
@@ -836,9 +836,31 @@ test('monthly budget records paid construction and research orders without doubl
   assert.match(html,new RegExp(`${research}</td><td>-${researchCost}`));
  }
  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
- assert.deepEqual(expensesThisMonth(restored,'senate'),{construction:constructionTotal,research:researchCost});
+ assert.deepEqual(expensesThisMonth(restored,'senate'),{construction:constructionTotal,research:researchCost,policy:0});
  tick(restored);
- assert.deepEqual(expensesThisMonth(restored,'senate'),{construction:0,research:0});
+ assert.deepEqual(expensesThisMonth(restored,'senate'),{construction:0,research:0,policy:0});
+});
+
+test('idea transitions and slot expansion appear once in the monthly budget, including old saves',()=>{
+ const s=newGrandGame('senate'),d=development(s,'senate');s.factions.senate.treasury=500;
+ d.knownIdeas.push('senatorial-consultation','central-administration');
+ s.regions.find(r=>r.owner==='senate').buildings.push('administration');
+ s.expenseLedger={year:s.year,month:s.month,owners:{senate:{construction:7,research:3}}};
+ assert.equal(adoptIdea(s,'senate','senatorial-consultation').ok,true);
+ assert.equal(expandIdeaSlot(s,'senate','government').ok,true);
+ assert.deepEqual(expensesThisMonth(s,'senate'),{construction:7,research:3,policy:47});
+ assert.equal(adoptIdea(s,'senate','senatorial-consultation').ok,false);
+ assert.equal(expandIdeaSlot(s,'senate','government').ok,false);
+ assert.equal(expensesThisMonth(s,'senate').policy,47);
+ for(const [lang,label] of [['en','Idea and slot changes paid this month'],['zh','本月已付理念与槽位变更费']])assert.match(budgetHtml(s,lang),new RegExp(`${label}</td><td>-47`));
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(expensesThisMonth(restored,'senate').policy,47);
+ tick(restored);assert.equal(expensesThisMonth(restored,'senate').policy,0);
+ const removal=newGrandGame('senate'),removalDevelopment=development(removal,'senate');
+ removalDevelopment.knownIdeas.push('senatorial-consultation');removalDevelopment.slots.government[0]='senatorial-consultation';
+ assert.equal(removeIdea(removal,'senate','government').ok,true);
+ assert.equal(removeIdea(removal,'senate','government').ok,false);
+ assert.equal(expensesThisMonth(removal,'senate').policy,5);
 });
 
 test('every development node has its own interpretive illustration',()=>{
