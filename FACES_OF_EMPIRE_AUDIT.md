@@ -6,6 +6,13 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The Han campaign's opening title-only Kangju and Dayuan kings now use the
+same distinct reconstructed cultures as their courts' persistent commanders,
+merchants and later rulers. An older save carrying only the previous generic
+steppe or oasis default is corrected for these known title-only entries;
+saved explicit affiliations and names are retained. The Han identity, court
+and 120-month eastern suites pass 25/25.
+
 The Theban temple's persistent officials now carry an Egyptian temple
 cultural identity rather than inheriting the Greek-speaking Ptolemaic court
 label. New and legacy temple records keep their existing names and other

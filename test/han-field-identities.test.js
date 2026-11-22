@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-name-disagreement-1';
 import {recruit,templatesFor} from '../han/military.js?v=han-1';
-import {fieldCulture,ensureFieldCommanders,createMarketMerchant} from '../han/field-identities.js';
+import {CULTURAL_NAME_POOLS,fieldCulture,ensureFieldCommanders,createMarketMerchant} from '../han/field-identities.js';
 import {birthRecordValid} from '../han/dynasty.js?v=han-1';
 import {ensureForeignRulers} from '../han/rulers.js';
 
@@ -39,6 +39,24 @@ test('every opening eastern army has a saved person and distinct cultural identi
  const snapshots=s.armies.map(a=>[a.id,a.commander,s.persons[a.commander].name]);
  s=loadHanSave(serialize(s));ensureFieldCommanders(s);
  assert.deepEqual(s.armies.map(a=>[a.id,a.commander,s.persons[a.commander].name]),snapshots);
+});
+
+test('unnamed opening kings use their own court culture and older saved identities survive',()=>{
+ let s=newHanGame('han',{seed:23});
+ for(const [id,style] of [['kangju-king','kangju'],['dayuan-king','bactrian'],['shanshan-king','oasis']]){
+  assert.deepEqual(s.persons[id].culture,CULTURAL_NAME_POOLS[style].culture);
+  assert.equal(s.persons[id].titleOnly,true);
+ }
+ const name=[...s.persons['kangju-king'].name];
+ s.persons['kangju-king'].culture=[...CULTURAL_NAME_POOLS.steppe.culture];
+ s.persons['dayuan-king'].culture=[...CULTURAL_NAME_POOLS.oasis.culture];
+ s.persons['shanshan-king'].culture=['Recorded local affiliation','已记录地方文化'];
+ s=loadHanSave(serialize(s));
+ assert.deepEqual(s.persons['kangju-king'].culture,CULTURAL_NAME_POOLS.kangju.culture);
+ assert.deepEqual(s.persons['kangju-king'].name,name);
+ assert.deepEqual(s.persons['dayuan-king'].culture,CULTURAL_NAME_POOLS.bactrian.culture);
+ assert.deepEqual(s.persons['shanshan-king'].culture,['Recorded local affiliation','已记录地方文化']);
+ assert.deepEqual(loadHanSave(serialize(s)).persons['kangju-king'].culture,CULTURAL_NAME_POOLS.kangju.culture);
 });
 
 test('recruitment immediately assigns a persistent officer and never replaces an existing commander',()=>{

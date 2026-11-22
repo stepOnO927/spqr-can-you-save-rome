@@ -14,7 +14,7 @@ import {agriculturalProduction,grainProvisionFactor} from '../war-economy.js?v=f
 import {advanceFocus,focusState} from './focus.js?v=han-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
-import {CULTURAL_NAME_POOLS,ensureFieldCommanders} from './field-identities.js';
+import {CULTURAL_NAME_POOLS,ensureFieldCommanders,fieldCulture} from './field-identities.js';
 import {ensureHanPortraitSeed,ensureHanPortraitSeeds} from './court-portrait.js';
 import {ensureForeignRulers,advanceForeignRulers,rulerGovernanceFactor} from './rulers.js';
 import {initialize as initializeAmbition,advance as advanceAmbition} from './ambitions.js?v=faces-name-disagreement-1';
@@ -28,7 +28,8 @@ export const SCENARIOS={
 
 const STARTING_OFFICES={chengxiang:'yu-dingguo',yushi:'chen-wannian',dasima:'shi-gao',qianjiangjun:'xiao-wangzhi',zhongshu:'hong-gong',dasinong:null,zongzheng:'liu-xiang',duhu:null,hexi:'fictional-zhao-lie',jingzhao:null};
 const RES={han:{treasury:600,grain:500,manpower:60000,horses:20000,stability:62},huhanye:{treasury:40,grain:40,manpower:30000,horses:60000,stability:55},zhizhi:{treasury:60,grain:60,manpower:40000,horses:80000,stability:60},wusun:{treasury:40,grain:50,manpower:25000,horses:60000,stability:50},wusun_lesser:{treasury:30,grain:40,manpower:18000,horses:40000,stability:55},kangju:{treasury:60,grain:60,manpower:30000,horses:50000,stability:55},dayuan:{treasury:70,grain:90,manpower:20000,horses:30000,stability:60}};
-const startingCulture=p=>p.culture||CULTURAL_NAME_POOLS[FACTIONS[p.faction||'han']?.culture||'han']?.culture||CULTURAL_NAME_POOLS.han.culture;
+const legacyStartingCulture=p=>CULTURAL_NAME_POOLS[FACTIONS[p.faction||'han']?.culture||'han']?.culture||CULTURAL_NAME_POOLS.han.culture;
+const startingCulture=p=>p.culture||CULTURAL_NAME_POOLS[fieldCulture(p.faction||'han')]?.culture||legacyStartingCulture(p);
 const ARMY=(owner,region,template,men,commander=null)=>({owner,region,template,men,commander});
 const OPENING_ARMIES=[
  ARMY('han','changan','field',20000,'feng-fengshi'),ARMY('han','henan','field',12000),ARMY('han','shuofang','garrison',8000),ARMY('han','yunzhong','garrison',6000),
@@ -336,7 +337,11 @@ export function loadHanSave(raw){
  if(!s||s.dlc!==DLC_ID)throw new Error('Not a Mandate of Heaven save');
  // canonical historical birth records always come from the static record
  for(const p of PEOPLE){const rec=s.genealogy[p.id];if(rec&&(rec.father!==p.father||rec.birthSurname!==p.birthSurname||rec.sex!==p.sex||rec.birth!==p.birth)){delete s.genealogy[p.id];recordBirth(s,{id:p.id,father:p.father,mother:p.mother,birthSurname:p.birthSurname,birth:p.birth,sex:p.sex})}
-  if(s.persons[p.id]){const person=s.persons[p.id];person.birthSurname=p.birthSurname;person.culture??=[...startingCulture(p)];person.homeland??=null;person.location??=null;person.profession??=person.role??p.role??null;if(p.portrait&&!person.portrait&&person.birth===p.birth&&person.name?.[0]===p.name[0])person.portrait=p.portrait}}
+  if(s.persons[p.id]){const person=s.persons[p.id];person.birthSurname=p.birthSurname;
+   // Earlier title-only court records inherited a coarse military culture.
+   // Correct that known default without replacing a player's saved identity.
+   if(p.titleOnly&&!p.culture&&Array.isArray(person.culture)&&JSON.stringify(person.culture)===JSON.stringify(legacyStartingCulture(p)))person.culture=[...startingCulture(p)];
+   person.culture??=[...startingCulture(p)];person.homeland??=null;person.location??=null;person.profession??=person.role??p.role??null;if(p.portrait&&!person.portrait&&person.birth===p.birth&&person.name?.[0]===p.name[0])person.portrait=p.portrait}}
  for(const r of REGIONS)if(!s.regions.some(x=>x.id===r.id))s.regions.push({...r,siege:null,unrest:0});
  for(const [id,f] of Object.entries(FACTIONS))if(!f.dynamic&&!s.factions[id])s.factions[id]={id,treasury:20,grain:30,manpower:6000,horses:3000,stability:55};
  // Older campaign officials retain their names and any recorded origin;
