@@ -1,6 +1,6 @@
-import {CHARACTER_CATALOG} from './characters.js?v=search-uncertainty-1';
-import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=search-uncertainty-1';
-import {recordLegendEvidence} from './legend.js?v=search-uncertainty-1';
+import {CHARACTER_CATALOG} from './characters.js?v=fund-search-1';
+import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=fund-search-1';
+import {recordLegendEvidence} from './legend.js?v=fund-search-1';
 
 const date=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');

@@ -1,6 +1,6 @@
-import {newGame,tick} from '../engine.js?v=search-uncertainty-1';
+import {newGame,tick} from '../engine.js?v=fund-search-1';
 import assert from 'node:assert/strict';
-import {proposeAgreement} from '../agreements.js?v=search-uncertainty-1';
+import {proposeAgreement} from '../agreements.js?v=fund-search-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
 
 // Identical unforced openings, different seeded random streams; both the

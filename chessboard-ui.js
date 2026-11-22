@@ -1,5 +1,5 @@
-import {buildChessboard} from './chessboard.js?v=search-uncertainty-1';
-import {focusReportsFor,focusById} from './national-focus.js?v=search-uncertainty-1';
+import {buildChessboard} from './chessboard.js?v=fund-search-1';
+import {focusReportsFor,focusById} from './national-focus.js?v=fund-search-1';
 import {warningLedger} from './warning-ledger.js?v=warning-privacy-1';
 import {FACTIONS,REGIONS} from './data.js?v=phase-x-1';
 

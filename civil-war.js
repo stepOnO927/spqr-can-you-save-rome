@@ -1,6 +1,6 @@
-import {isDeliveredReport} from './person-knowledge.js?v=search-uncertainty-1';
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=search-uncertainty-1';
-import {reportedControl} from './control-intelligence.js?v=search-uncertainty-1';
+import {isDeliveredReport} from './person-knowledge.js?v=fund-search-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=fund-search-1';
+import {reportedControl} from './control-intelligence.js?v=fund-search-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 
 // Alternate-history claimant commands use real game theaters and armies.
