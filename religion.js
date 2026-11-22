@@ -1,5 +1,5 @@
-import {createFictionalPerson,initializeDynasties} from './dynasties.js?v=finance-history-merge-1';
-import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
+import {createFictionalPerson,initializeDynasties} from './dynasties.js?v=world-kings-neighbor-trade-1';
+import {hasNationalIdea} from './national-ideas.js?v=world-kings-neighbor-trade-1';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
