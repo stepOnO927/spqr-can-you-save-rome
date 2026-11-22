@@ -6,11 +6,12 @@ import {fileURLToPath} from 'node:url';
 import {newGrandGame} from '../engine.js';
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
+const base=process.env.SPQR_PREVIEW_URL||'http://spqr.test/';
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1366,height:768}});
 page.setDefaultTimeout(20000);
 const errors=[];page.on('pageerror',error=>errors.push(error.message));
-await page.route('http://spqr.test/**',async route=>{
+if(!process.env.SPQR_PREVIEW_URL)await page.route('http://spqr.test/**',async route=>{
  const pathname=new URL(route.request().url()).pathname;
  const file=resolve(root,'.'+(pathname.endsWith('/')?pathname+'index.html':pathname));
  if(!file.startsWith(root))return route.abort();
@@ -18,12 +19,12 @@ await page.route('http://spqr.test/**',async route=>{
  try{await route.fulfill({status:200,contentType:mime,body:await readFile(file)})}catch{await route.fulfill({status:404,body:'Not found'})}
 });
 const openPanel=async(state,view,language)=>{
- await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
+ await page.goto(new URL('/',base).href,{waitUntil:'domcontentloaded'});
  await page.evaluate(value=>localStorage.setItem('spqr-lang',value),language);
  await page.reload({waitUntil:'domcontentloaded'});
  if(view==='atlas'){
   await page.evaluate(campaign=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:campaign})),state);
-  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+  await page.goto(new URL('/map-lab/',base).href,{waitUntil:'domcontentloaded'});
   await page.locator('#development').click();
   return '#command-detail';
  }
