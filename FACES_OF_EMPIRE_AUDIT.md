@@ -6,6 +6,17 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `ba79aafd` (#337) is integrated. Searches for missing people
+now use a saved per-person random stream and may find no conclusive news for
+either a living or deceased subject; that failure cannot disclose a hidden
+death or perturb unrelated events. Missing records without a countdown start
+a recoverable search. The bilingual help text, deterministic test fixtures and
+browser expectation follow the same rules. The focused missing-person,
+module-version and multipolar checks pass 41/41. Full `npm test` passes
+1,372/1,372; the 120-month market simulation passes with 137 autonomous
+deliveries, six merchant-owned ventures and three multi-leg ventures. Cloud
+verification for this integration follows.
+
 Main through `b3036943` (#336) is integrated. A missing person's health
 continues to change on a saved per-person random stream without exposing
 private outcomes or shifting unrelated random events. Confirmation applies

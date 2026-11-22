@@ -32,23 +32,23 @@ test('a missing leader temporarily cannot govern, then may re-establish contact 
  let s=newGame('senate'),a=s.armies.find(x=>x.id==='xiii'),d=s.armies.find(x=>x.id==='pompey'),r=region(s,'roma');a.men=500000;
  for(const edge of adjacent('roma'))region(s,edge.to).owner='caesar';resolveBattle(s,a,d,r);
  assert.equal(s.world.characters.pompey.location,null);assert.equal(deriveGovernment(s,'senate').kind,'acting_command');assert.deepEqual(s.world.leadership.senate,['pompey']);
- s=upgradeSave(JSON.parse(JSON.stringify(s)));for(let i=0;i<2;i++){s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.pompey.location,null)}
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));s.world.characters.pompey.missing.searchSeed=0;for(let i=0;i<2;i++){s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.pompey.location,null)}
  s.month++;advanceMissingCommanders(s);assert.ok(s.world.characters.pompey.location);assert.equal(s.world.characters.pompey.missing,undefined);assert.equal(deriveGovernment(s,'senate').kind,'normal');
  assert.ok(s.log.some(x=>x.zh.includes('重新取得联系')));assert.equal(s.knowledge.caesar.senate.reports.length,0);
 });
 test('a missing person cannot return without controlled territory or be chosen for succession',()=>{
- const s=newGame('caesar');s.world.characters.antony.missing={origin:'cisalpine',remaining:1,year:s.year,month:s.month};s.world.characters.antony.location=null;
+ const s=newGame('caesar');s.world.characters.antony.missing={origin:'cisalpine',remaining:1,year:s.year,month:s.month,searchSeed:0};s.world.characters.antony.location=null;
  for(const r of s.regions)if(r.owner==='caesar')r.owner='senate';s.world.characters.caesar.alive=false;
  s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.antony.location,null);assert.equal(s.world.characters.antony.missing.remaining,0);
  assert.equal(deriveGovernment(s,'caesar').kind,'vacant');assert.ok(!successorFor(s,'caesar').includes('antony'));
  region(s,'gaul').owner='caesar';s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.antony.location,'gaul');
 });
-test('health events pause while a commander is missing',()=>{
+test('missing commander health remains private until contact resumes',()=>{
  const s=newGame('senate'),c=s.world.characters.cicero;c.location=null;c.health='dying';c.missing={origin:'roma',remaining:1,year:-50,month:12};s.world.intelSeed=0;
- advanceCharacters(s);assert.equal(c.health,'dying');assert.equal(c.alive,true);assert.ok(!s.log.some(x=>x.en.includes('Cicero')&&x.en.includes('died')));
+ advanceCharacters(s);assert.equal(c.location,null);assert.ok(c.missing);assert.ok(!s.log.some(x=>x.en.includes('Cicero')&&x.en.includes('died')));
 });
 test('normal campaign months advance loss of contact and restore the leader after the third month',()=>{
- const s=newGame('caesar'),person=s.world.characters.caesar,army=s.armies.find(x=>x.id==='xiii');army.characterId=null;army.commander=['Unnamed officer','未具名军官'];person.location=null;person.missing={origin:'cisalpine',remaining:3,year:s.year,month:s.month};
+ const s=newGame('caesar'),person=s.world.characters.caesar,army=s.armies.find(x=>x.id==='xiii');army.characterId=null;army.commander=['Unnamed officer','未具名军官'];person.location=null;person.missing={origin:'cisalpine',remaining:3,year:s.year,month:s.month,searchSeed:0};
  tick(s);assert.equal(person.location,null);assert.equal(s.world.governments.caesar.kind,'acting_command');tick(s);assert.equal(person.location,null);tick(s);assert.equal(person.missing,undefined);assert.ok(person.location);assert.equal(s.world.governments.caesar.kind,'normal');
 });
 test('appointments reject remote, occupied, travelling, incapacitated and foreign people without spending resources',()=>{
@@ -74,7 +74,7 @@ test('death leaves the army rating intact and an eligible successor can be assig
  assert.equal(s.world.characters.caesar.alive,false);namedReplacement(s,unit);assert.equal(unit.skill,skill);assert.equal(appointCommander(s,unit.id,'antony').ok,true);assert.equal(unit.skill,skill);assert.equal(unit.characterId,'antony');
 });
 test('a missing commander in an old save is detached without revealing a location',()=>{
- let s=newGame('caesar'),person=s.world.characters.caesar;person.location=null;person.missing={origin:'cisalpine',remaining:3,year:s.year,month:s.month};s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);
+ let s=newGame('caesar'),person=s.world.characters.caesar;person.location=null;person.missing={origin:'cisalpine',remaining:3,year:s.year,month:s.month,searchSeed:0};s=upgradeSave(JSON.parse(JSON.stringify(s)));tick(s);
  assert.equal(s.world.characters.caesar.location,null);namedReplacement(s,s.armies.find(a=>a.id==='xiii'));assert.equal(s.world.governments.caesar.kind,'acting_command');
 });
 test('unseen foreign illness does not create a public report of a command change',()=>{

@@ -44,7 +44,7 @@ try{
  await page.locator('#help-search').fill('王朝竞争');assert.match(await page.locator('#help-results').innerText(),/埃及两位共同统治者都可能成为竞争者/);assert.match(await page.locator('#help-results').innerText(),/有独立档案的虚构军官指挥/);
  await page.locator('#help-search').fill('将领忠诚');assert.match(await page.locator('#help-results').innerText(),/可能倒戈/);
  await page.locator('#help-search').fill('对手掌握的情报');assert.match(await page.locator('#help-results').innerText(),/两年后逐渐失去影响/);
- await page.locator('#help-search').fill('人物健康与继任');assert.match(await page.locator('#help-results').innerText(),/三个月后可重新取得联系/);
+ await page.locator('#help-search').fill('人物健康与继任');assert.match(await page.locator('#help-results').innerText(),/三个月后开始搜寻/);
  assert.match(await page.locator('#help-results').innerText(),/重病或垂危的将领会在行军或战斗前卸下军职/);assert.match(await page.locator('#help-results').innerText(),/年龄估计上限低于16岁/);assert.match(await page.locator('#help-results').innerText(),/不是对宫廷历史成年年龄的断言/);
  await page.locator('#language').click();await page.locator('#help-search').fill('captured agents');assert.match(await page.locator('#help-results').innerText(),/8 treasury/);await page.locator('#language').click();
  await page.locator('#factions').click();await page.locator('[data-faction="senate"]').click();
