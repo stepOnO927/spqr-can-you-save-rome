@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=economic-project-1';
-import {queueMission,advanceOperations,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=missing-fate-privacy-1';
+import {newGame,upgradeSave} from '../engine.js?v=marriage-economy-merge-1';
+import {queueMission,advanceOperations,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=marriage-economy-merge-1';
 import {successorFor} from '../characters.js?v=succession-ui-recovery-1';
-import {availableCommanders} from '../command-appointments.js?v=missing-fate-privacy-1';
+import {availableCommanders} from '../command-appointments.js?v=marriage-economy-merge-1';
 
 test('a captured spy retains one named identity through captivity, save and release',()=>{
  let s=newGame('caesar');const dispatch=queueMission(s,'caesar','egypt','spy','health');

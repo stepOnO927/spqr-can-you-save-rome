@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=economic-project-1';
-import {initializeReligion,religiousPolicy,advanceReligion,religiousTaxCost,populationFactor} from '../religion.js?v=missing-fate-privacy-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=marriage-economy-merge-1';
+import {initializeReligion,religiousPolicy,advanceReligion,religiousTaxCost,populationFactor} from '../religion.js?v=marriage-economy-merge-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from '../dynasties.js?v=missing-fate-privacy-1';
+import {createFictionalPerson} from '../dynasties.js?v=marriage-economy-merge-1';
 
 test('49 BCE institutions use existing characters and populations, without an anachronistic church',()=>{
  const s=newGame('senate'),list=s.world.religiousInstitutions;

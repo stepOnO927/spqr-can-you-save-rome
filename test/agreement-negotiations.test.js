@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,canFormAlliance,diplomacy} from '../engine.js?v=economic-project-1';
+import {newGame,upgradeSave,tick,canFormAlliance,diplomacy} from '../engine.js?v=marriage-economy-merge-1';
 import {sendAgreementProposal,advanceAgreementProposals} from '../agreement-negotiations.js?v=agreement-courier-1';
-import {syncAgreementLetters,receivedMail} from '../epistulae.js?v=missing-fate-privacy-1';
+import {syncAgreementLetters,receivedMail} from '../epistulae.js?v=marriage-economy-merge-1';
 const step=s=>{s.month++;if(s.month>12){s.month=1;s.year++}advanceAgreementProposals(s,{checkAlliance:canFormAlliance,concludeAlliance:(state,a,b)=>diplomacy(state,a,b,'alliance',{priorConsent:true})});syncAgreementLetters(s)};
 function fixture(seed,relation=60){const s=newGame('caesar');s.seed=seed;s.relations['caesar:egypt']=relation;s.factions.caesar.treasury=100;return s}
 function outcomes(relation=60){const values=new Map();for(let seed=1;seed<500&&values.size<3;seed++){const s=fixture((seed*1000003)>>>0,relation),start=sendAgreementProposal(s,'caesar','egypt','trade');assert.ok(start.ok);for(let i=0;i<4;i++)step(s);const x=s.world.agreementLetters[0];if(!values.has(x.status))values.set(x.status,{s,seed:(seed*1000003)>>>0})}return values}

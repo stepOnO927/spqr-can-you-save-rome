@@ -9,8 +9,8 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  const shipmentId=await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=economic-project-1');
-  const {attachHanWorld,advanceHanWorld}=await import('/han/world.js?v=missing-fate-privacy-1');
+  const {newGame}=await import('/engine.js?v=marriage-economy-merge-1');
+  const {attachHanWorld,advanceHanWorld}=await import('/han/world.js?v=marriage-economy-merge-1');
   const {proposeAgreement}=await import('/agreements.js?v=agreement-courier-1');
   const {postTradeSale,advanceMarketAI,advanceMarkets}=await import('/trade-markets.js?v=faces-wheels-1');
   const {advanceDate}=await import('/han/util.js?v=han-1');

@@ -1,6 +1,6 @@
 import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=succession-ui-recovery-1';
-import {officeOf} from './office-system.js?v=missing-fate-privacy-1';
-import {recordLifeEvent,assignFictionalFieldCommander} from './dynasties.js?v=missing-fate-privacy-1';
+import {officeOf} from './office-system.js?v=marriage-economy-merge-1';
+import {recordLifeEvent,assignFictionalFieldCommander} from './dynasties.js?v=marriage-economy-merge-1';
 
 // Theater-level appointments are simulated, not claims about historical commands.
 export function availableCommanders(s,armyId){

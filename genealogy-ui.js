@@ -1,11 +1,11 @@
 import {isDeliveredReport} from './person-knowledge.js?v=mutual-audience-1';
 import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,leadershipTitle,ageRange} from './characters.js?v=succession-ui-recovery-1';
-import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=missing-fate-privacy-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=missing-fate-privacy-1';
+import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=marriage-economy-merge-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=marriage-economy-merge-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {fictionalPortraitKey,proceduralPortraitSvg} from './portrait-registry.js?v=missing-fate-privacy-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=missing-fate-privacy-1';
-import {visiblePersonName} from './character-system.js?v=missing-fate-privacy-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=marriage-economy-merge-1';
+import {visiblePersonName} from './character-system.js?v=marriage-economy-merge-1';
 import {storedCorrespondentName} from './person-knowledge.js?v=mutual-audience-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

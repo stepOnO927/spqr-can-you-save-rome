@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=economic-project-1';
-import {initializeCursus,cultivateOfficial,proposeCooperation,advanceCursus} from '../cursus-honorum.js?v=missing-fate-privacy-1';
+import {newGame,upgradeSave} from '../engine.js?v=marriage-economy-merge-1';
+import {initializeCursus,cultivateOfficial,proposeCooperation,advanceCursus} from '../cursus-honorum.js?v=marriage-economy-merge-1';
 
 function setup(){
  const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;

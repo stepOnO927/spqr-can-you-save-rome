@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,region,isWar,sendInquiry,tick} from '../engine.js?v=economic-project-1';
+import {newGame,upgradeSave,region,isWar,sendInquiry,tick} from '../engine.js?v=marriage-economy-merge-1';
 import {startDynasticWar,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=mutual-audience-1';
 import {assignSuccession} from '../characters.js?v=succession-ui-recovery-1';
-import {egyptianClaimantCandidate,advanceCharacters,contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,queueMission} from '../character-system.js?v=missing-fate-privacy-1';
+import {egyptianClaimantCandidate,advanceCharacters,contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,queueMission} from '../character-system.js?v=marriage-economy-merge-1';
 // These tests pin pre-IMPERIUM subsystem behaviour with engineered random seeds;
 // they run with the expansion's AI layer switched off (world.imperium.enabled=false).
 const legacyIsolated=g=>{g.world.imperium={enabled:false};return g};

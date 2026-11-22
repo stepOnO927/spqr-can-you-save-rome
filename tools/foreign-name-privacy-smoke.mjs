@@ -7,7 +7,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  const id=await page.evaluate(async()=>{
-  const {newGame,upgradeSave}=await import('/engine.js?v=economic-project-1'),{createFictionalPerson}=await import('/dynasties.js?v=missing-fate-privacy-1'),{addReport}=await import('/character-system.js?v=missing-fate-privacy-1');
+  const {newGame,upgradeSave}=await import('/engine.js?v=marriage-economy-merge-1'),{createFictionalPerson}=await import('/dynasties.js?v=marriage-economy-merge-1'),{addReport}=await import('/character-system.js?v=marriage-economy-merge-1');
   let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Reported name','报告姓名'],faction:'egypt',birthYear:-75,location:'egypt'});addReport(s,'caesar','egypt',{kind:'leaders',leaders:[id],source:'spy'});s.world.dynasties.catalog[id].name=['Secret renamed','秘密改名'];s=upgradeSave(structuredClone(s));sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));return id;
  });
  await page.goto(base+'/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('#factions').click();await page.locator('[data-faction="egypt"]').click();await page.locator('[data-page="intelligence"]').click();

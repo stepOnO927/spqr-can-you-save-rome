@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=economic-project-1';
-import {authorityForTheater} from '../map-lab/authority-view.js?v=missing-fate-privacy-1';
-import {addReport} from '../character-system.js?v=missing-fate-privacy-1';
+import {newGame,upgradeSave} from '../engine.js?v=marriage-economy-merge-1';
+import {authorityForTheater} from '../map-lab/authority-view.js?v=marriage-economy-merge-1';
+import {addReport} from '../character-system.js?v=marriage-economy-merge-1';
 
 test('foreign authority uses only the viewer’s most recent observed report',()=>{
  let s=newGame('senate');s.year=-48;s.month=7;

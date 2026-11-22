@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=missing-fate-privacy-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=marriage-economy-merge-1';
 import {activeEasternMarketHouse,advanceEasternMarkets,fundEasternMarketHouse,MARKET_HOUSE_COST,MARKET_HOUSE_MONTHS,placeEasternTrade,quoteEasternTrade} from '../han/markets.js?v=faces-wheels-1';
 import {createMarketMerchant} from '../han/field-identities.js';
 import {roll} from '../han/util.js?v=han-1';
