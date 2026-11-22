@@ -6,13 +6,21 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `255ffe16` is integrated. Its dated investigation subject-name
+snapshot and recorded-name display were restored where overlapping long lines
+had silently retained the expansion's older mission and character-panel code.
+The targeted privacy, character and module suite passes 76/76; the complete
+serial suite passes 1,317/1,317. The 120-month Roman/Han market simulation
+again completes with 48 and 124 delivered shipments respectively.
+
 The current cloud Browser smoke group 3 exposed an intermittent succession
 fixture: a `dying` leader has a 45% *annual* simulated death chance, so 48
 monthly advances do not guarantee death. The browser fixture now fixes its
 existing simulation RNG seed at a value that reaches the death and exercises
 the designated successor; production mortality probabilities are unchanged.
-The headless engine reproduces death in month four with that seed. A new cloud
-browser run must confirm the complete UI flow.
+The headless engine reproduces death in month four with that seed. Head
+`81e3e0fc` passed all five GitHub Actions, including all three Browser smoke
+groups and the complete UI succession flow.
 
 Main through `86ffaf43` is integrated. Its foreign-relationship privacy
 change now renders only the player's own trust or a dated, recorded personal

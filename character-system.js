@@ -1,4 +1,4 @@
-import {namedReportSubjects,reportedPersonalContacts,reportedPeople,isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
+import {namedReportSubjects,reportedPersonalContacts,reportedPeople,isDeliveredReport,visiblePersonName} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {recordLegendEvidence} from './legend.js?v=names-of-legend-1';
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=faces-name-disagreement-1';
 import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=faces-name-disagreement-1';
@@ -225,9 +225,11 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
 export function queueMission(s,actor,target,type,subject='health',partnerId=null,characterId=null){
  const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;
  const {duration,partner,cost}=plan,subjectCharacter=['health','age','location'].includes(subject)?(characterId===''?null:(characterId||(['health','location'].includes(subject)&&type!=='exchange'?reportedHealthSubjects(s,actor,target)[0]:null)||null)):null;
+ const subjectName=subjectCharacter&&visiblePersonName(s,actor,subjectCharacter);
+ const knownName=Array.isArray(subjectName)&&subjectName.length===2&&!['Unrecorded name','Name reports differ'].includes(subjectName[0])?subjectName:null;
  s.factions[actor].treasury-=cost;
  let id;do{id=`mission:${s.nextOperationId||1}`;s.nextOperationId=(s.nextOperationId||1)+1}while(s.operations.some(x=>x.id===id));
- const op={id,actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month};
+ const op={id,actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,...(knownName?{subjectName:[...knownName]}:{}),remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month};
  const agentId=nameMissionActor(s,op);s.operations.unshift(op);
  if(actor!==target&&['envoy','travelers'].includes(type))registerMissionPersonnel(s,op);
  if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months. ${CHARACTER_CATALOG[agentId].name[0]} leads it.`,`已派出${({spy:'间谍',counter:'内部调查',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月；由${CHARACTER_CATALOG[agentId].name[1]}负责。`,{characterId:agentId});return {ok:true,duration,agentId};
@@ -409,12 +411,14 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   // An audience may be with a representative. Only record a personal observation
   // when someone actually in office and named in the report could attend.
   const met=(report.leaders||[]).find(candidate=>{const p=s.world.characters[candidate];return (s.world.leadership[op.target]||[]).includes(candidate)&&p?.alive&&p.faction===op.target&&!p.travel&&!p.missing&&s.regions.some(r=>r.id===p.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===candidate&&a.move)&&!['seriously_ill','dying','deceased'].includes(p.health)});
-  if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=apparentAgeRange(met,s.year,s);
-   addReport(s,op.actor,op.target,{kind:'location',character:met,value:p.location,source:'audience',confidence:'unverified',reliability:'moderate'});
-   addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,source:'audience',confidence:'unverified',reliability:'low'});
-   if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,source:'audience',confidence:'unverified',reliability:'low'});
+  if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=apparentAgeRange(met,s.year,s),peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[met]},s);
+   addReport(s,op.actor,op.target,{kind:'location',character:met,value:p.location,peopleNames,source:'audience',confidence:'unverified',reliability:'moderate'});
+   addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,peopleNames,source:'audience',confidence:'unverified',reliability:'low'});
+   if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,peopleNames,source:'audience',confidence:'unverified',reliability:'low'});
   }
  }
+ if(report.character&&report.character===op.subjectCharacter&&Array.isArray(op.subjectName)&&op.subjectName.length===2&&op.subjectName.every(x=>typeof x==='string'&&x.length>0))report.peopleNames={[report.character]:[...op.subjectName]};
+ else if(report.character&&op.subjectCharacter===null&&report.character===healthId)report.peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[report.character]},s);
  addReport(s,op.actor,op.target,report);if(op.actor===s.player)notify(s,`An intelligence report from ${FACTIONS[op.target].short[0]} has arrived.`,`一份来自${FACTIONS[op.target].short[1]}的情报报告已送达。`);
 }}
 export function contestLeadership(s,faction,claimant){
