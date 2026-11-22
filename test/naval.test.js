@@ -100,6 +100,29 @@ test('boarding can capture a named commander who stays captive through save relo
  assert.equal(setFleetTactic(s,'senate',own.id,'boarding').ok,true);advanceNaval(s);const capture=s.naval.captives.find(c=>c.characterId==='antony');assert.ok(capture);assert.equal(capture.status,'held');assert.equal(s.world.characters.antony.missing.capturedBy,'senate');assert.equal(enemy.commanderId,null);assert.equal(s.naval.reports.find(r=>r.kind==='battle').capturedCommander.characterId,'antony');
  advanceMissingCommanders(s);assert.equal(s.world.characters.antony.missing.capturedBy,'senate');s=upgradeSave(JSON.parse(JSON.stringify(s)));s.wars=[];s.factions.caesar.treasury=50;assert.equal(ransomFleetCommander(s,'caesar','antony').ok,true);assert.equal(ransomFleetCommander(s,'caesar','antony').ok,false);assert.equal(s.naval.captives.find(c=>c.characterId==='antony').status,'returning');advanceNaval(s);assert.ok(s.world.characters.antony.missing);advanceNaval(s);assert.equal(s.naval.captives.find(c=>c.characterId==='antony').status,'released');assert.equal(s.world.characters.antony.missing,undefined);
 });
+test('a commander is reported missing when his entire fleet sinks without capture',()=>{
+ let s=newGrandGame('senate');const own=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ own.port=null;own.ships={trireme:4};own.sailors=720;
+ enemy.port=null;enemy.zone=own.zone;enemy.hull=1;enemy.commanderId='antony';s.seed=83;
+ resolveBattle(s,own,enemy,own.zone,()=>{});
+ assert.equal(Object.values(enemy.ships).reduce((n,count)=>n+count,0),0);
+ assert.equal(enemy.commanderId,null);
+ assert.equal(s.world.characters.antony.location,null);
+ assert.equal(s.world.characters.antony.missing.remaining,3);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(s.naval.fleets.find(f=>f.id===enemy.id).commanderId,null);
+ for(let i=0;i<3;i++){s.month++;advanceMissingCommanders(s)}
+ assert.equal(s.world.characters.antony.missing,undefined);
+ assert.ok(s.world.characters.antony.location);
+});
+test('an old save releases a commander stranded on a fleet with no ships',()=>{
+ let s=newGrandGame('caesar');const fleet=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ fleet.ships={};fleet.hull=0;fleet.port=null;fleet.commanderId='antony';
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ advanceNaval(s);
+ assert.equal(s.naval.fleets.find(f=>f.id===fleet.id).commanderId,null);
+ assert.equal(s.world.characters.antony.missing.remaining,3);
+});
 test('AI reserves an unaffordable docked fleet and recommissions it after a dated hostile sighting',()=>{
  let s=newGrandGame('senate');s.factions.caesar.treasury=90;const id='caesar-adriatic',full=fleetUpkeepDue(s.naval.fleets.find(f=>f.id===id));advanceNaval(s);let f=s.naval.fleets.find(x=>x.id===id);assert.equal(f.reserve,true);assert.equal(f.order,null);assert.ok(fleetUpkeepDue(f)<full);
  s=upgradeSave(JSON.parse(JSON.stringify(s)));f=s.naval.fleets.find(x=>x.id===id);s.factions.caesar.treasury=45;s.naval.intel.caesar={'senate-adriatic':{owner:'senate',zone:f.zone,year:s.year,month:s.month,source:'sighting',range:[1,5],confidence:'low'}};advanceNaval(s);assert.equal(f.reserve,true);assert.ok(!f.mobilizing);
@@ -1133,6 +1156,17 @@ test('weak pirate patrols can be repelled without automatically recovering seize
  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
  renderNavalPanel({state:old,lang:'en',root,section:'reports'});
  assert.match(content.innerHTML,/Outcome unrecorded/);
+});
+test('pirate combat releases a commander when the last patrol ship sinks',()=>{
+ const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic'),pirates=s.naval.pirates.find(p=>p.zone==='adriatic');
+ s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';
+ fleet.port=null;fleet.zone='adriatic';fleet.ships={light:1};fleet.sailors=65;fleet.hull=1;fleet.commanderId='cicero';fleet.order={kind:'patrol',target:'adriatic',path:[]};
+ pirates.ships=8;pirates.pressure=70;
+ advanceNaval(s);
+ assert.ok(s.naval.reports.some(r=>r.kind==='pirate-clash'&&r.participants.includes(fleet.id)));
+ assert.equal(Object.values(fleet.ships).reduce((n,count)=>n+count,0),0);
+ assert.equal(fleet.commanderId,null);
+ assert.equal(s.world.characters.cicero.missing.remaining,3);
 });
 test('two patrol fleets share a real pirate engagement and record their own losses',()=>{
  const s=newGrandGame('senate'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first),pirates=s.naval.pirates.find(p=>p.zone==='adriatic');

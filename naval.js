@@ -444,6 +444,16 @@ function exposedShipType(target,attackerTactic='formation',defenderTactic='forma
  return warships[0]||slow[0]||null;
 }
 function damageFleet(s,target,amount,attackerTactic='formation',defenderTactic='formation'){if(amount<=0)return {sunk:0,type:null,sailors:0};const before=ships(target),beforeTypes={...target.ships},crew=target.sailors;target.hull=Math.max(0,target.hull-amount);target.sailors=Math.max(0,target.sailors-Math.round(amount*6));target.morale=Math.max(5,target.morale-Math.ceil(amount/3));let type=null,sunk=0;if(target.hull<45&&before>0){type=exposedShipType(target,attackerTactic,defenderTactic);if(type)target.ships[type]--;sunk=type?1:0}if(target.hull===0||ships(target)===0){sunk=before;type=null;target.hull=0;target.ships={};if(target.order?.kind==='supply')report(s,{kind:'supply-loss',owner:target.owner,port:target.order.targetPort,cargo:target.order.cargo||0,reason:'fleet sunk'});target.order=null}const byType={};for(const [ship,count] of Object.entries(beforeTypes)){const lost=count-(target.ships[ship]||0);if(lost>0)byType[ship]=lost}return {sunk,type,sailors:crew-target.sailors,...(sunk?{byType}:{})}}
+function finalizeDestroyedFleet(s,f,log){
+ if(ships(f))return;
+ const id=f.commanderId,person=s.world?.characters?.[id];
+ if(id&&person?.alive&&!person.missing){
+  const origin=s.regions.filter(r=>r.owner===f.owner&&r.port).map(r=>({id:r.id,distance:seaRoute(f.zone,portZone(r.id))?.length??Infinity})).sort((a,b)=>a.distance-b.distance)[0]?.id||s.regions.find(r=>r.owner===f.owner)?.id||s.regions[0]?.id||null;
+  person.location=null;person.missing={origin,remaining:3,year:s.year,month:s.month};
+  if(f.owner===s.player)log(s,'The fleet was lost; its commander is missing.','舰队全灭，舰长失联。');
+ }
+ f.commanderId=null;f.pendingCommanderId=null;f.pendingMonths=0;
+}
 function disruptTransport(s,f,armyId,{defeated=false,hullDamage=0,sailorLoss=0,originalSailors=0}={}){
  const army=s.armies.find(x=>x.id===armyId);if(!army||!army.move?.sea)return null;
  const capacityLost=fleetCapacity(f,s)<army.men;
@@ -526,6 +536,7 @@ export function resolveBattle(s,a,b,zone,log){
  for(const f of [a,b]){if(f.hull<12&&f.commanderId){const person=s.world?.characters?.[f.commanderId];if(person?.health==='healthy')person.health='wounded'}if(f.commanderId){const person=s.world?.characters?.[f.commanderId];if(person?.alive){const skill=navalSkill(person,'commander');person.navalSkills.commander=Math.min(100,skill+2)}}const loss=f===a?aLoss:bLoss,before=f===a?beforeA:beforeB;const disruption=disruptTransport(s,f,transported[f.id],{defeated:f===defeated,hullDamage:before.hull-f.hull,sailorLoss:loss.sailors,originalSailors:before.sailors});if(disruption)transportDisruptions[f.id]=disruption}
  report(s,{kind:'battle',zone,participants:[a.id,b.id],snapshots:{[a.id]:beforeA,[b.id]:beforeB},winner:victor.owner,losses:{[a.id]:aLoss,[b.id]:bLoss},observedLosses:{[a.owner]:observedBattleLosses(bLoss),[b.owner]:observedBattleLosses(aLoss)},captured,capturedCommander,tactics,maneuver:{[a.id]:Math.round(maneuver[a.id]*100),[b.id]:Math.round(maneuver[b.id]*100)},weather:Math.round(weather*100),damage:{[a.id]:beforeA.hull-a.hull,[b.id]:beforeB.hull-b.hull},transportDisruptions});
  for(const owner of [a.owner,b.owner])observe(s,owner,owner===a.owner?b:a,'battle');
+ finalizeDestroyedFleet(s,a,log);finalizeDestroyedFleet(s,b,log);
 }
 function resolveCoordinatedBattle(s,sideA,sideB,zone,log){
  const all=[...sideA,...sideB],tactics=Object.fromEntries(all.map(f=>[f.id,battleTactic(s,f)]));
@@ -570,6 +581,7 @@ function resolveCoordinatedBattle(s,sideA,sideB,zone,log){
  report(s,{kind:'battle',zone,participants:all.map(f=>f.id),snapshots,winner:winners[0].owner,losses,observedLosses:{[sideA[0].owner]:observedBattleLosses(sumLoss(sideB)),[sideB[0].owner]:observedBattleLosses(sumLoss(sideA))},captured,capturedCommander,tactics,maneuver:Object.fromEntries(all.map(f=>[f.id,Math.round(maneuvers[f.id]*100)])),weather:Math.round(weather*100),damage:Object.fromEntries(all.map(f=>[f.id,snapshots[f.id].hull-f.hull])),transportDisruptions,coordinated:true});
  for(const observer of sideA)for(const seen of sideB)observe(s,observer.owner,seen,'battle');
  for(const observer of sideB)for(const seen of sideA)observe(s,observer.owner,seen,'battle');
+ for(const f of all)finalizeDestroyedFleet(s,f,log);
 }
 function resolvePirateClash(s,p,eligible,log){
  const lead=eligible[0],patrol=eligible.filter(f=>f.owner===lead.owner&&!f.port&&!f.reserve&&!f.mobilizing&&f.hull>0&&f.sailors>0);
@@ -593,6 +605,7 @@ function resolvePirateClash(s,p,eligible,log){
  const recovered=victory?pirateRecover(s,p,lead.owner):null;
  const casualties=Object.values(losses).reduce((sum,loss)=>sum+(loss.sailors||0),0);
  report(s,{kind:'pirate-clash',zone:p.zone,owner:lead.owner,participants:patrol.map(f=>f.id),snapshots,outcome:victory?'victory':'repelled',strengthBefore:before,losses,damage,sailors:casualties,pirateShipsLost:sunk,recovered,weather:Math.round(weather*100)});
+ for(const f of patrol)finalizeDestroyedFleet(s,f,log);
  if(lead.owner===s.player)log(s,victory?(recovered?`Patrols defeated pirates and recovered ${recovered.amount} ${recovered.good}.`:'Patrols defeated pirate vessels.'): 'Patrols were repelled by pirates; sailors were lost.',victory?(recovered?`巡逻舰击败海盗，收回${recovered.amount}份${recovered.good}。`:'巡逻舰击败海盗船。'):'巡逻舰被海盗击退，水手有所伤亡。');
  if(p.pressure<8&&rng(s)<.3)p.zone=byId[p.zone].links[Math.floor(rng(s)*byId[p.zone].links.length)];
 }
@@ -812,6 +825,7 @@ function updatePursuitOrders(s,log){
  }
 }
 export function advanceNaval(s,log=()=>{}){initializeNaval(s);if(!s.naval)return;const n=s.naval,avoidedNavalBattles=new Set();advanceWagons(s,log);consumeMaritimeProvisions(s);produceGoods(s);for(const j of [...n.jobs]){const p=s.world?.characters?.[j.characterId],budget=s.factions[j.owner];if(!p?.alive||p.faction!==j.owner||j.port&&s.regions.find(r=>r.id===j.port)?.owner!==j.owner){n.jobs.splice(n.jobs.indexOf(j),1);continue}if(j.remaining>0){j.remaining--;continue}budget.treasury=Math.max(-100,budget.treasury-1);if(budget.treasury<0)p.loyalty=Math.max(0,p.loyalty-1);j.experience=(j.experience||0)+1;if(j.experience%12===0){const skill=navalSkill(p,j.kind);p.navalSkills[j.kind]=Math.min(100,skill+2)}}
+ for(const f of n.fleets)finalizeDestroyedFleet(s,f,log);
 for(const q of [...n.queues]){
  const yard=s.regions.find(r=>r.id===q.port);
  if(yard?.owner!==q.owner||!yard.buildings?.includes('shipyard')){
@@ -861,6 +875,7 @@ for(const q of [...n.queues]){
   if(oldPort&&f.owner===s.player)log(s,'The return harbor was lost; the fleet diverted to another friendly port.','返航港口失守，舰队改驶另一友方港口。');
  }
  for(const f of n.fleets){if(!ships(f))continue;const budget=s.factions[f.owner];if(f.pendingCommanderId){f.pendingMonths--;if(f.pendingMonths<=0){const person=s.world?.characters?.[f.pendingCommanderId];if(person?.alive&&person.faction===f.owner&&!person.missing){f.commanderId=f.pendingCommanderId;f.morale=Math.min(100,f.morale+2)}f.pendingCommanderId=null;f.pendingMonths=0}}const upkeep=fleetUpkeepDue(f);budget.treasury=Math.max(-100,budget.treasury-upkeep);if(budget.treasury<0){f.morale=Math.max(10,f.morale-3);const commander=s.world?.characters?.[f.commanderId];if(commander)commander.loyalty=Math.max(0,commander.loyalty-1)}if(f.port){const dock=s.regions.find(r=>r.id===f.port);f.supply=Math.min(100,f.supply+25+(dock?.buildings?.includes('naval-depot')?12:0)+navalJobEffect(s,f.owner,'harbor',f.port)*4);if(!f.reserve&&dock?.buildings?.includes('shipyard')&&f.hull<100&&budget.treasury>=3&&(s.development?.[f.owner]?.materials?.timber||0)>=1){budget.treasury-=3;s.development[f.owner].materials.timber--;f.hull=Math.min(100,f.hull+8+(dock.buildings.includes('dockyard')?8:0)+(activeEffects(s,f.owner).navalRepair||0)+navalJobEffect(s,f.owner,'engineer',f.port)*3)}const crewNeeded=Object.entries(f.ships).reduce((n,[type,count])=>n+(SHIPS[type]?.crew||0)*count,0)-f.sailors;if(!f.reserve&&crewNeeded>0&&budget.treasury>=2&&budget.manpower>0){const recruited=Math.min(30,crewNeeded,budget.manpower);budget.treasury-=2;budget.manpower-=recruited;f.sailors+=recruited}if(!f.reserve&&dock?.buildings?.includes('naval-training'))f.experience=Math.min(100,f.experience+2)}else{f.supply=Math.max(0,f.supply-8+(activeEffects(s,f.owner).navalSupply||0));if(f.supply===0)f.morale=Math.max(10,f.morale-3)}maritimeHazards(s,f,log);const order=f.order;if(!order)continue;if(order.path.length){for(let step=0;step<fleetSpeed(f)&&order.path.length;step++){f.zone=order.path.shift();if(order.kind==='transport')order.departed=true}f.port=null}else if(order.targetPort){f.zone=portZone(order.targetPort);if(order.kind==='return'||order.kind==='transport'){f.port=order.targetPort;if(order.kind==='return'&&order.cargo){budget.food=Math.min(budget.foodCapacity||100,budget.food+order.cargo);report(s,{kind:'supply-return',owner:f.owner,port:order.targetPort,cargo:order.cargo})}if(order.kind==='return'&&order.armyId)completeTransportReturn(s,f,order,log);if(order.kind==='transport'){const a=s.armies.find(x=>x.id===order.armyId);if(a?.move)a.move.transportReady=true}f.order=null}}if(order.kind==='recon'&&!order.path.length){resolveReconOrder(s,f,avoidedNavalBattles,log);f.order=null}}
+ for(const f of n.fleets)finalizeDestroyedFleet(s,f,log);
   // Sharing a sea zone does not expose a fleet sheltered in harbor to an
   // open-water encounter. It must sortie before a patrol can engage it.
   const resolvedEncounters=new Set();
