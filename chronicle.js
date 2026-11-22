@@ -1,7 +1,7 @@
 import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
-import {reportedControl} from './control-intelligence.js?v=family-contact-1';
+import {CHARACTER_CATALOG} from './characters.js?v=missing-leader-1';
+import {reportedControl} from './control-intelligence.js?v=missing-leader-1';
 
 const copy=x=>JSON.parse(JSON.stringify(x));
 const name=(id,lang)=>FACTIONS[id]?.short?.[lang==='zh'?1:0]||id;

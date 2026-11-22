@@ -1,6 +1,6 @@
-import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=family-contact-1';
-import {wartimePolicy} from './epistulae-personnel.js?v=family-contact-1';
-import {CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
+import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=missing-leader-1';
+import {wartimePolicy} from './epistulae-personnel.js?v=missing-leader-1';
+import {CHARACTER_CATALOG} from './characters.js?v=missing-leader-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
 
 const safe=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
