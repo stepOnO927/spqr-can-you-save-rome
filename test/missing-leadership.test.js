@@ -1,8 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=agent-handover-1';
-import {advanceMissingCommanders} from '../character-system.js?v=agent-handover-1';
-import {deriveGovernment,advanceGovernments,planSuccession,supportSuccessor} from '../governance.js?v=agent-handover-1';
-import {assignSuccession} from '../characters.js?v=agent-handover-1';
+import {newGame,upgradeSave} from '../engine.js?v=portrait-fourteen-1';
+import {advanceMissingCommanders} from '../character-system.js?v=portrait-fourteen-1';
+import {deriveGovernment,advanceGovernments,planSuccession,supportSuccessor} from '../governance.js?v=portrait-fourteen-1';
+import {assignSuccession} from '../characters.js?v=portrait-fourteen-1';
 
 function fixture(){const s=newGame('senate'),c=s.world.characters.pompey,unit=s.armies.find(a=>a.characterId==='pompey');if(unit){unit.characterId=null;unit.commander=['Unnamed officer','未具名军官']}c.location=null;c.missing={origin:'roma',remaining:3,year:s.year,month:s.month};return s}
 function month(s){if(++s.month>12){s.month=1;s.year++}}

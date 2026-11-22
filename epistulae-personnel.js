@@ -1,6 +1,6 @@
-import {CHARACTER_CATALOG} from './characters.js?v=agent-handover-1';
-import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=agent-handover-1';
-import {recordLegendEvidence} from './legend.js?v=agent-handover-1';
+import {CHARACTER_CATALOG} from './characters.js?v=portrait-fourteen-1';
+import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=portrait-fourteen-1';
+import {recordLegendEvidence} from './legend.js?v=portrait-fourteen-1';
 
 const date=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');

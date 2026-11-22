@@ -47,7 +47,7 @@ try{
     const unit=s.armies.find(a=>a.id==='viii'),officer=s.world.characters.antony;
     unit.characterId='antony';officer.location=unit.region;officer.battlesCommanded=2;officer.loyalty=35;
     s.month++;
-    const {advanceWheels}=await import('/history-wheels.js?v=agent-handover-1');
+    const {advanceWheels}=await import('/history-wheels.js?v=portrait-fourteen-1');
     advanceWheels(s);
     const chain=s.historyWheels.chains.find(c=>c.type==='commander_petition');
     const letter=s.mail.messages.find(m=>m.id===chain.letterId);
