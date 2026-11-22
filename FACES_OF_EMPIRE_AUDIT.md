@@ -6,6 +6,17 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `ab33a983` (#341) is integrated. The Internal Security panel
+keeps recent conspiracy reports visible and lets players open older dated
+reports. The existing reply text still does not claim that an undelivered
+answer reached the other court. The expanded browser smoke checks historical
+name snapshots across the older reports and save/load. A pre-existing
+40-CPU-ms Han turn performance gate failed twice on single samples even
+though its focused run passed; five direct probes ranged from 22.88 to
+43.62 ms. The gate still enforces 40 ms, now on the median of five paired
+24-month samples. Full `npm test` passes 1,383/1,383; hosted browser
+verification follows.
+
 Main through `5b9b5f42` (#340) is integrated. A faction may arrange a
 voluntary, delayed handover of a known detained foreign agent; AI courts can
 make the same choice, and an undelivered release request remains hidden from

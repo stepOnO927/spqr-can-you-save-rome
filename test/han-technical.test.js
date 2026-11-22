@@ -87,16 +87,21 @@ test('35. the eastern map stays responsive and draws only reported control',()=>
 });
 
 test('36. the NPC East does not freeze the browser',()=>{
- const a=newGame('caesar'),b=roman();
  const cpuMs=()=>{const {user,system}=process.cpuUsage();return (user+system)/1000};
- // Compile both turn paths before timing so the comparison measures monthly
- // simulation work rather than whichever module the runtime compiles first.
- for(let i=0;i<3;i++){romanTick(a);romanTick(b)}
- let t0=cpuMs();for(let i=0;i<24;i++)romanTick(a);const base=(cpuMs()-t0)/24;
- t0=cpuMs();for(let i=0;i<24;i++)romanTick(b);const withDlc=(cpuMs()-t0)/24;
+ const deltas=[];
+ for(let trial=0;trial<5;trial++){
+  const a=newGame('caesar'),b=roman();
+  // Warm both paths before each sample, then compare the same 24 months.
+  for(let i=0;i<3;i++){romanTick(a);romanTick(b)}
+  let t0=cpuMs();for(let i=0;i<24;i++)romanTick(a);const base=(cpuMs()-t0)/24;
+  t0=cpuMs();for(let i=0;i<24;i++)romanTick(b);const withDlc=(cpuMs()-t0)/24;
+  deltas.push(withDlc-base);
+ }
+ const median=deltas.sort((a,b)=>a-b)[2];
  // The additional saved court, market, correspondence and manufactured
  // military-goods simulation must remain below 8% of the 500 ms turn interval.
- assert.ok(withDlc-base<40,`expansion adds ${(withDlc-base).toFixed(2)} CPU ms per month`);
+ // The median rejects sustained regressions without making one GC spike fail.
+ assert.ok(median<40,`expansion adds a median ${median.toFixed(2)} CPU ms per month (${deltas.map(x=>x.toFixed(2)).join(', ')})`);
 });
 
 test('37. no placeholder mechanics: every eastern button and edict works',()=>{
