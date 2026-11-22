@@ -1,9 +1,10 @@
-import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from './dynasties.js?v=finance-history-merge-1';
-import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
-import {activeAgreement,terminateAgreement} from './agreements.js?v=agreement-courier-1';
-import {reportedPersonalContact} from './person-knowledge.js?v=mutual-audience-1';
+import {FACTIONS,ROUTES} from './data.js?v=world-kings-neighbor-trade-1';
+import {CHARACTER_CATALOG} from './characters.js?v=world-kings-neighbor-trade-1';
+import {createFictionalPerson} from './dynasties.js?v=world-kings-neighbor-trade-1';
+import {hasNationalIdea} from './national-ideas.js?v=world-kings-neighbor-trade-1';
+import {activeAgreement,terminateAgreement} from './agreements.js?v=world-kings-neighbor-trade-1';
+import {transferTerritory} from './territory.js';
+import {reportedPersonalContact} from './person-knowledge.js?v=world-kings-neighbor-trade-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
@@ -46,7 +47,7 @@ function raiseUprising(s,m,r){
  const soldiers=Math.min(3000,m.supporters,r.population.total),food=Math.min(8,Math.max(0,government.food));government.food-=food;r.population.total-=soldiers;m.supporters-=soldiers;m.recruited=soldiers;
  s.factions[id]={treasury:m.funds,food,manpower:0,stability:45,legitimacy:35,tax:'normal',research:0};m.funds=0;
  for(const personId of m.network){const member=s.world.characters[personId];if(member?.alive&&member.faction===m.parent&&!s.armies.some(a=>a.characterId===personId))member.faction=id}
- leader.faction=id;leader.location=r.id;s.world.leadership[id]=[m.leader];r.owner=id;r.loyalty=45;
+ leader.faction=id;leader.location=r.id;s.world.leadership[id]=[m.leader];transferTerritory(s,r.id,id,'secession');r.loyalty=45;
  s.armies.push({id:`movement_army:${s.nextArmy++}`,name:['Movement militia','运动民兵'],owner:id,region:r.id,men:soldiers,morale:58,skill:1,experience:0,commander:CHARACTER_CATALOG[m.leader]?.name||['Local organizer','地方组织者'],characterId:m.leader,move:null,siege:null});
  if(!war(s,id,m.parent))s.wars.push([id,m.parent]);
  for(const targets of Object.values(s.knowledge))targets[id]||={reportedLeaders:[],reports:[],sightings:{}};
@@ -111,7 +112,7 @@ function foldForce(s,m,installLeader,{inheritWars=false}={}){
  // A settlement cannot silently end or transfer unrelated foreign wars.
  const enemies=s.wars.filter(w=>w.includes(id)&&!w.includes(parent)).map(w=>w.find(x=>x!==id));if(enemies.length&&!inheritWars)return false;
  const government=s.factions[parent],rival=s.factions[id];
- for(const r of s.regions)if(r.owner===id)r.owner=parent;
+ for(const r of s.regions)if(r.owner===id)transferTerritory(s,r.id,parent,'command_merger');
  for(const a of s.armies)if(a.owner===id){a.owner=parent;a.move=null;a.siege=null;a.order=null}
  government.treasury+=rival.treasury;government.food+=rival.food;government.manpower+=rival.manpower;
  for(const c of Object.values(s.world.characters))if(c.faction===id)c.faction=parent;

@@ -1,4 +1,5 @@
-import {REGIONS,ROUTES} from './data.js?v=phase-x-1';
+import {REGIONS,ROUTES} from './data.js?v=world-kings-neighbor-trade-1';
+import {discoverFrontierLocalities,discoverLocalEntitiesInTheater} from './local-discovery.js?v=world-kings-neighbor-trade-1';
 
 // Opening control is common campaign knowledge, not a reconstruction of the
 // current world in an old save. Later observations belong to each faction.
@@ -34,6 +35,7 @@ export function observeControl(s){
   // A lost friendly theater is known to have changed hands even when the last
   // neighboring friendly theater is lost in the same monthly resolution.
   for(const r of s.regions)if(observed.has(r.id)||reports[r.id]?.owner===viewer){reports[r.id]={owner:r.owner,year:s.year,month:s.month};if(observed.has(r.id))observeFortification(s,viewer,r.id)}
+  discoverFrontierLocalities(s,viewer);
  }
 }
 
@@ -48,7 +50,7 @@ export function reportedControl(s,viewer,id){
 // location is outside the observer's normal monthly frontier observation.
 export function observeArrival(s,viewer,id){
  initializeControlKnowledge(s);const r=s.regions.find(x=>x.id===id);
- if(r&&s.controlKnowledge[viewer]){s.controlKnowledge[viewer][id]={owner:r.owner,year:s.year,month:s.month,source:'arrival'};observeFortification(s,viewer,id,'arrival')}
+ if(r&&s.controlKnowledge[viewer]){s.controlKnowledge[viewer][id]={owner:r.owner,year:s.year,month:s.month,source:'arrival'};observeFortification(s,viewer,id,'arrival');discoverLocalEntitiesInTheater(s,viewer,id,4,'arrival')}
 }
 
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
@@ -83,6 +85,7 @@ export function advanceControlScouts(s){
    op.status='complete';
    // Do not overwrite more recent frontier intelligence or current own control.
    if(r?.owner!==op.actor&&(!report||sealed.year*12+sealed.month>=report.year*12+report.month))s.controlKnowledge[op.actor][op.region]=sealed;
+   discoverLocalEntitiesInTheater(s,op.actor,op.region,3,'travelers');
    if(op.actor===s.player)log(s,'A traveler control report arrived; it is unverified and may be outdated.','收到一份商旅控制报告；未经核实，且可能过时。');
   }
   delete op.sealed;op.resolvedYear=s.year;op.resolvedMonth=s.month;

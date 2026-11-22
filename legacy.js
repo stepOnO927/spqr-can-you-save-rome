@@ -1,7 +1,7 @@
-import {storedCorrespondentName} from './person-knowledge.js?v=mutual-audience-1';
-import {syncChronicleDispatches} from './chronicle.js?v=succession-ui-recovery-1';
-import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {initializeDynasties} from './dynasties.js?v=finance-history-merge-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=world-kings-neighbor-trade-1';
+import {syncChronicleDispatches} from './chronicle.js?v=world-kings-neighbor-trade-1';
+import {CHARACTER_CATALOG} from './characters.js?v=world-kings-neighbor-trade-1';
+import {initializeDynasties} from './dynasties.js?v=world-kings-neighbor-trade-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 

@@ -26,6 +26,7 @@
 2. 在 Cloudflare Pages 新建 **Git 集成**项目，授权该仓库。配置：生产分支 `main`、根目录仓库根目录、框架 `None`、构建命令 `npm run build:pages`、输出目录 `dist`、Node.js 22。Cloudflare 账号中的项目名及将来的正式域名尚待确定，不写入源码。
 3. 开启预览分支部署；先在 Cloudflare 提供的 `*.pages.dev` 地址测试 `/`、`/map-lab/`、`/han/`。检查 Network 面板无本地 404、地图 worker 正常加载、肖像显示、主战役与地图之间切换、行军/回合/外交/情报/Han/存读档及跨域导入。
 4. 在 Cloudflare Pages 项目设置中启用 **Web Analytics 一次**。Pages 会自动注入 beacon；`dist/` 已移除源 HTML 里用于旧站点的手动 beacon。检查新域名页面中恰好一个 beacon，并在 Analytics 面板确认新主机名收到流量。将来自新域名的数据与旧域名分开核对。
+   游戏内的公开分析渠道已识别 `<project>.pages.dev` 为 production、`<preview>.<project>.pages.dev` 为 staging。确定正式自定义域名后，把它准确填入 `analytics-settings.js` 的 `hostnames.production`，再通过测试与构建；未知域名默认仍属于 development preview。已在主分支配置的生产 GA4 ID `G-3VDCWZRJCL` 保留，仍受玩家同意开关控制；staging ID 与自建会话端点为空。上线后应确认 GA4 的新主机名数据及同意状态符合预期。
 5. 在正式域名上再次测试、确认原 GitHub Pages 可访问，并获得**明确切换批准**后，才切换 DNS/入口。确认公开 Cloudflare 站点稳定，再单独申请更改仓库为 private 的批准。不要重命名仓库或删除旧部署。
 
 Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/configuration/git-integration/github-integration/)、[构建配置](https://developers.cloudflare.com/pages/configuration/build-configuration/)、[静态 HTML 设置](https://developers.cloudflare.com/pages/framework-guides/deploy-anything/)、[平台限制](https://developers.cloudflare.com/pages/platform/limits/)、[Web Analytics](https://developers.cloudflare.com/pages/how-to/web-analytics/)。当前官方限制包括单个静态文件最多 25 MiB、Free 项目最多 20,000 文件、构建最多 20 分钟；每次部署前应复核。
@@ -38,6 +39,13 @@ Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/c
 - 最终分支的本地实际 Chromium：三个入口返回 200，主战役、Map Lab、Han 的推进与存读档、跨域导出导入及未知键拒绝均通过；页面脚本错误和站内资源 404 均为零。
 - 仓库原有浏览器长流程测试：最终本地 `dist/` 运行通过，覆盖地图、行军、外交信件、情报、回合及视图切换；CI 和 Cloudflare 真实地址仍需复测。
 - 原 GitHub Pages 的 `/` 与 `/map-lab/` 在准备阶段 HTTP HEAD 均返回 200。本分支未修改 GitHub Pages 配置、`main`、仓库可见性或现有部署。Cloudflare 真实部署尚未创建，因此不能把本地验证当作线上验收。
+
+### 11 月 15 日增量验证
+
+- 草稿 PR #242 的 GitHub Actions `Cloudflare Pages package` 在 `94b19751` 上通过：`dist/` 有 293 个公开文件，总计 4.57 MiB，单个最大文件 1.06 MiB，低于 25 MiB 上限。云端 Chromium 验证主战役、Map Lab、Han、存档、跨源导入、未知键拒绝及站内资源请求均通过。
+- 同一提交的 `SPQR quality` 和 `Poki release validation` 通过；三组较长的浏览器回归在记录本条时仍运行。此前的独立村落提交已通过三组浏览器回归，包括地图村落标记与建设操作。最新地区化名称与难度数值提交 `8347a782` 仍须完成云端复验。
+- 这些均是 GitHub 托管的测试，不是 Cloudflare Pages 实际公网站点验收。GitHub Pages、仓库公开状态和旧部署未改动。
+- 11 月 15 日只读复核：GitHub API 报告 `private=false`、默认分支 `main`、`has_pages=true`；旧站 `/` 与 `/map-lab/` 的 HTTP HEAD 均返回 200。这里没有对旧部署执行任何写操作。
 
 ## 切换验收清单
 

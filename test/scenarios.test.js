@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newScenario} from '../scenarios.js?v=office-age-verified-1';
-import {tick,upgradeSave} from '../engine.js?v=office-age-verified-1';
-import {potentialConspirators} from '../conspiracies.js?v=mutual-audience-1';
-import {leaveCoalition} from '../coalitions.js?v=mutual-audience-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=missing-fate-privacy-1';
-import {advancePersonalPlans} from '../personal-plans.js?v=multipolar-2';
+import {newScenario} from '../scenarios.js?v=world-kings-neighbor-trade-1';
+import {tick,upgradeSave} from '../engine.js?v=world-kings-neighbor-trade-1';
+import {potentialConspirators} from '../conspiracies.js?v=world-kings-neighbor-trade-1';
+import {leaveCoalition} from '../coalitions.js?v=world-kings-neighbor-trade-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=world-kings-neighbor-trade-1';
+import {advancePersonalPlans} from '../personal-plans.js?v=world-kings-neighbor-trade-1';
 
 test('both Roman sides can start and reload each required scenario',()=>{
  for(const player of ['caesar','senate'])for(const kind of ['historical','ambitious_general','three_state_coalition','civic_movement','revolution']){

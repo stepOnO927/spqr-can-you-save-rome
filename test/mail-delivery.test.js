@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=office-age-verified-1';
-import {sendLetter,advanceMail,replyToLetter,receivedMail} from '../epistulae.js?v=finance-history-merge-1';
-import {mailboxHtml} from '../mail-ui.js?v=finance-history-merge-1';
+import {newGame} from '../engine.js?v=world-kings-neighbor-trade-1';
+import {sendLetter,advanceMail,replyToLetter,receivedMail} from '../epistulae.js?v=world-kings-neighbor-trade-1';
+import {mailboxHtml} from '../mail-ui.js?v=world-kings-neighbor-trade-1';
 
 const send=(s,from,to,context,options=[])=>sendLetter(s,{senderInstitution:from,senderFaction:from,recipient:to,category:'diplomatic',subject:['Letter','信'],body:['A message','消息'],context,options}).letter;
 const advanceTo=(s,n,actions={})=>{s.year=Math.floor((n-1)/12);s.month=n-s.year*12;advanceMail(s,actions)};
@@ -42,4 +42,17 @@ test('ignoring a diplomatic letter sends no answer and has no foreign effect',()
  assert.equal(replyToLetter(s,m.id,'ignore',{}).ok,true);
  assert.equal(s.mail.messages.length,count);assert.equal(JSON.stringify(s.relations),before);
  advanceTo(s,s.year*12+s.month+12);assert.equal(JSON.stringify(s.relations),before);
+});
+
+test('an old treaty letter cannot bind a court that vanished during delivery',()=>{
+ const s=newGame('caesar'),m=send(s,'egypt','senate',{kind:'treaty',treatyType:'non_aggression'},['accept']);
+ m.courierRisk=0;m.arrival=s.year*12+s.month;
+ delete s.factions.egypt;
+ let calls=0;
+ advanceMail(s,{proposeAgreement:()=>{calls++;return {ok:true}}});
+ assert.equal(m.delivery,'expired');
+ assert.equal(m.responses.length,0);
+ advanceMail(s,{proposeAgreement:()=>{calls++;return {ok:true}}});
+ assert.equal(m.delivery,'expired');
+ assert.equal(calls,0);
 });
