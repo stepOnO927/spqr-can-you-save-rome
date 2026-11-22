@@ -16,6 +16,13 @@ try{
   await page.locator('[data-ambition="economic"]').click();
   assert.match(await page.locator('.wheels-ambition').innerText(),/100/);
   await page.locator('#experience-close').click();
+  await page.locator('#what-now').click();
+  const project=page.locator('.experience-cards article').filter({hasText:'Complete an economic project'});
+  assert.equal(await project.count(),1);
+  await project.locator('button[data-recommend]').click();
+  assert.equal(await page.locator('[data-tab="focus"].active').count(),1);
+  assert.equal(await page.locator('#imp-tree .imp-node.sel').count(),1);
+  await page.locator('[data-imp-close-focus]').click();
   await page.locator('#new').click();
   await page.locator('[data-slot="save"]').click();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
@@ -26,7 +33,7 @@ try{
     const unit=s.armies.find(a=>a.id==='viii'),officer=s.world.characters.antony;
     unit.characterId='antony';officer.location=unit.region;officer.battlesCommanded=2;officer.loyalty=35;
     s.month++;
-    const {advanceWheels}=await import('/history-wheels.js?v=missing-fate-privacy-1');
+    const {advanceWheels}=await import('/history-wheels.js?v=economic-project-1');
     advanceWheels(s);
     const chain=s.historyWheels.chains.find(c=>c.type==='commander_petition');
     const letter=s.mail.messages.find(m=>m.id===chain.letterId);

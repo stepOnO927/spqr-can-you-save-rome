@@ -10,7 +10,7 @@ import {identity,factionMark} from './identity.js?v=phase-x-1';
 import {reportedControl,reportedFortification} from './control-intelligence.js?v=fort-intel-1';
 import {CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=phase-x-1';
-import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, inquiryCost, answerPeaceOffer,answerStrategicOffer,replyToLetter,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=missing-fate-privacy-1';
+import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,setTax,diplomacy,sendInquiry, inquiryCost, answerPeaceOffer,answerStrategicOffer,replyToLetter,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=economic-project-1';
 import {receivedMail,unreadCount,markRead,archiveLetter,markAllRead} from './epistulae.js?v=missing-fate-privacy-1';
 import {mailboxHtml} from './mail-ui.js?v=missing-fate-privacy-1';
 import {setWartimePolicy} from './epistulae-personnel.js?v=missing-fate-privacy-1';
@@ -36,12 +36,12 @@ import {renderChessboard} from './chessboard-ui.js?v=missing-fate-privacy-1';
 import {configureStartingDifficulty} from './difficulty.js?v=missing-fate-privacy-1';
 import {featherAdvice} from './feather.js?v=travel-2';
 import {IDEAS,startResearch,equipIdea} from './inventions.js?v=mission-discount-1';
-import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium} from './imperium-ui.js?v=missing-fate-privacy-1';
+import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium,openFocusProject} from './imperium-ui.js?v=economic-project-3';
 import {attachHanWorld,hanWorld,sendEmbassyToSeres} from './han/world.js?v=missing-fate-privacy-1';
 import {eastMap,eastPanel,eastToolbar} from './han/east-ui.js?v=missing-fate-privacy-1';
-import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=missing-fate-privacy-1';
-import {renderExperienceUi,closeExperience} from './experience-ui.js?v=missing-fate-privacy-1';
-import {financeDecision,commanderDecision,AMBITIONS} from './history-wheels.js?v=missing-fate-privacy-1';
+import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=economic-project-1';
+import {renderExperienceUi,closeExperience} from './experience-ui.js?v=economic-project-1';
+import {financeDecision,commanderDecision,AMBITIONS} from './history-wheels.js?v=economic-project-1';
 
 const ui={
   en:{subtitle:'A republic at war with itself',campaign:'49 BCE · Caesar’s Civil War',historical:'Historical campaign',schematic:'Schematic operational map · theaters and routes are gameplay abstractions',new:'New campaign',save:'Save',load:'Load',pause:'Pause',play:'Play',speed:'Speed',month:'MONTH',treasury:'TREASURY',food:'FOOD',manpower:'MANPOWER',stability:'STABILITY',legitimacy:'LEGITIMACY',strength:'FIELD STRENGTH',map:'Campaign',military:'Military',government:'Government',chronicle:'Chronicle',sources:'Sources',select:'Select a theater or army',selected:'SELECTED THEATER',owner:'Command',terrain:'Terrain',city:'Principal city',supply:'Supply limit',loyalty:'Local loyalty',fort:'Fortification',recruit:'Raise legion · 24¤ / 3,000 men / 6 grain',recruitFail:'Insufficient resources or this theater is not yours.',army:'SELECTED ARMY',men:'Soldiers',morale:'Morale',commander:'Commander',order:'Order march',cancel:'Cancel order',target:'Select an adjacent theater on the map.',invalid:'No legal march route. War is required to enter another command’s theater.',marching:'Marching',siege:'Besieging',available:'Ready',armies:'Field armies',tax:'Tax policy',low:'Low',normal:'Normal',high:'High',taxText:'Higher taxes raise revenue but erode local loyalty. Low taxes recover loyalty.',revolt:'Rebellion',revoltText:'A disloyal, undefended theater can secede when stability is low. The rebels gain land and an army.',war:'Civil war',warText:'Caesar and Pompey command opposing Roman factions. Their colors show military control during the conflict, not separate sovereign states.',log:'Campaign dispatches',sourceNote:'Historical framework: Caesar crossed the Rubicon in January 49 BCE. Theater ownership, troop totals, income, travel times, and battle ratings are simplified gameplay estimates. The coast is hand-drawn and schematic; it does not encode ancient administrative borders.',instructions:'Choose an army, select Order march, then click a connected theater. Advance time to resolve travel and combat.',savePrompt:'Choose save slot 1–3',saved:'Campaign saved in slot',loaded:'Campaign loaded from slot',empty:'That slot is empty.',victory:'Opposing Roman command defeated · the campaign continues',noArmy:'No field army selected',atWar:'At war',neutral:'Independent',terrainNames:{plain:'Plain',hills:'Hills',forest:'Forest',urban:'Urban',desert:'Desert'},sourceTitle:'Research and accuracy notes',open:'Open source ↗',legend:'CAMPAIGN CONTROL',sea:'Sea crossing · 8¤',land:'Land route',clear:'Clear selection'},
@@ -162,7 +162,7 @@ function navigateExperience(kind,id){
  if(kind==='army'||kind==='supply'){const a=state.armies.find(x=>x.id===id&&x.owner===state.player)||state.armies.find(x=>x.owner===state.player&&x.men>0);if(a){selectedArmy=a.id;selectedRegion=a.region;tab='map';panelOpen=true}}
  else if(kind==='region'){if(state.regions.some(r=>r.id===id&&r.owner===state.player)){selectedRegion=id;tab='map';panelOpen=true}}
  else if(kind==='mail'||kind==='reply'){mailOpen=true;selectedMail=receivedMail(state).find(m=>m.id===id)?.id||receivedMail(state).find(m=>!m.archived)?.id||null;if(selectedMail)markRead(state,selectedMail)}
- else if(['focus','government','military','chronicle'].includes(kind)){tab=kind;panelOpen=true;}
+ else if(['focus','government','military','chronicle'].includes(kind)){tab=kind;panelOpen=true;if(kind==='focus'&&id)openFocusProject(state,id);}
  else if(kind==='map'){tab='map';panelOpen=true}
  else if(kind==='direction'){render();document.querySelector('#campaign-progress')?.click();return}
  else if(kind==='time'||kind==='advance'){render();document.querySelector('#step')?.focus();return}
