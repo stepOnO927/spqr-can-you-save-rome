@@ -15,15 +15,17 @@ export function opportunityEvidenceSignature(s,actor){
   const sightings=Object.values(k.sightings||{}).filter(x=>isDeliveredReport(s,x)).sort((a,b)=>((b.observationYear??b.year)*12+(b.observationMonth??b.month))-((a.observationYear??a.year)*12+(a.observationMonth??a.month))).slice(0,32).map(x=>[x.id,x.region,x.year,x.month,x.observationYear??x.year,x.observationMonth??x.month,x.receivedYear??null,x.receivedMonth??null]).sort();
   return [target,reports,sightings];
  });
- const wars=reportedDiplomacy(s,actor).filter(x=>x.kind==='war'&&x.status==='active').map(x=>x.id).sort();
+ const diplomacy=reportedDiplomacy(s,actor).filter(x=>x.status==='active'&&now(s)-(x.year*12+x.month)>=0&&now(s)-(x.year*12+x.month)<=24).map(x=>[x.id,x.kind,x.type??null]).sort();
  const agreements=(s.agreements||[]).filter(x=>x.parties.includes(actor)&&x.status==='active').map(x=>[x.id,x.type]).sort();
+ const relations=Object.entries(s.relations||{}).filter(([key])=>key.split(':').includes(actor)).sort(([a],[b])=>a.localeCompare(b));
+ const alliances=(s.alliances||[]).filter(x=>x.includes(actor)).map(x=>[...x].sort()).sort();
  const ownArmies=s.armies.filter(a=>a.owner===actor&&a.men>0).map(a=>[a.id,a.region,Math.floor(a.men/5000)]).sort();
  // A changed report at an actual frontier can alter the set of opportunities.
  // Record only the observer's reported controller, never a foreign live owner.
  const owned=new Set(s.regions.filter(r=>r.owner===actor).map(r=>r.id)),border=new Set();
  for(const [a,b] of ROUTES){if(owned.has(a)&&!owned.has(b))border.add(b);if(owned.has(b)&&!owned.has(a))border.add(a)}
  const frontier=[...border].sort().map(id=>[id,reportedControl(s,actor,id)?.owner??null]);
- return JSON.stringify([evidence,wars,agreements,ownArmies,frontier,Math.floor(f.treasury/25),Math.floor(f.food/25),Math.floor(f.stability/10)]);
+ return JSON.stringify([evidence,diplomacy,agreements,relations,alliances,ownArmies,frontier,Math.floor(f.treasury/25),Math.floor(f.food/25),Math.floor(f.stability/10)]);
 }
 // These are estimates from the actor's own evidence, not foreign hidden state.
 // No sighting does not mean that a frontier is undefended.

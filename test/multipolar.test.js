@@ -41,6 +41,16 @@ test('a reported frontier change triggers review without exposing an unseen chan
  assert.ok(assessOpportunities(copy,'parthia',estimatedStrength).some(x=>x.target==='egypt'&&x.border));
 });
 
+test('relations and alliances trigger only the participating court’s review',()=>{
+ const s=newGame('caesar'),copy=structuredClone(s),parthia=opportunityEvidenceSignature(s,'parthia'),caesar=opportunityEvidenceSignature(s,'caesar');
+ copy.relations['armenia:parthia']=(copy.relations['armenia:parthia']||0)+10;
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),parthia);
+ assert.equal(opportunityEvidenceSignature(copy,'caesar'),caesar);
+ const after=opportunityEvidenceSignature(copy,'parthia');copy.alliances.push(['armenia','parthia']);
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),after);
+ assert.equal(opportunityEvidenceSignature(copy,'caesar'),caesar);
+});
+
 test('AI cannot use sightings before delivery or treat old observations as fresh',()=>{
  const s=newGame('caesar');s.knowledge.parthia.armenia.sightings={};
  const assessment=x=>assessOpportunities(x,'parthia',estimatedStrength).find(a=>a.target==='armenia');
