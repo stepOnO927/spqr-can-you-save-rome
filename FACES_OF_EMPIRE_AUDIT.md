@@ -6,6 +6,20 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+New persistent Roman and foreign court actors without an explicit culture now
+receive their faction's structured cultural identity, including for a
+breakaway court's parent culture. Their bilingual own-court dossier shows the
+saved cultural origin, homeland and role. An explicit culture remains
+authoritative, and old saved entries are not rewritten. Focused identity,
+genealogy, court and browser coverage accompanies the change.
+
+Head `cc6bd218` passed all five GitHub Actions workflows, including all
+three browser groups. Group 3 confirmed a foreign spouse's will can be
+inspected, revoked and reloaded without exposing an unreported death. The
+120-month market acceptance simulation passed with 49 Roman-network and
+124 direct-Han delivered shipments, stable records across a midcampaign
+save/load, and the scheduled Liu succession.
+
 Main through `92c02356` is integrated. The age-range adoption rule, reviewable
 and revocable personal wills, beneficiary-name snapshots, and bilingual family
 tree controls coexist with the expansion's character legends. The prior merge

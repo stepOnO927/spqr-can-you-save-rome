@@ -7,6 +7,24 @@ import {proceduralPortraitSvg,observedProceduralPortrait} from '../portrait-regi
 import {appointOffice,dismissOffice} from '../office-system.js?v=faces-name-disagreement-1';
 import {addReport} from '../character-system.js?v=faces-name-disagreement-1';
 import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=faces-name-disagreement-1';
+import {renderGenealogyDossier} from '../genealogy-ui.js?v=faces-name-disagreement-1';
+
+test('new court actors retain reconstructed cultural identity without rewriting old saves',()=>{
+ let s=newGame('caesar');
+ const roman=createFictionalPerson(s,{name:['Roman actor','罗马人物'],faction:'caesar',birthYear:-80,location:'cisalpine'});
+ const greek=createFictionalPerson(s,{name:['Court actor','宫廷人物'],faction:'egypt',birthYear:-80,location:'egypt'});
+ const eastern=createFictionalPerson(s,{name:['Eastern actor','东方人物'],faction:'parthia',birthYear:-80,location:'parthia'});
+ assert.deepEqual(s.world.dynasties.catalog[roman].culture,['Roman','罗马']);
+ assert.match(s.world.dynasties.catalog[greek].culture[0],/Ptolemaic Egyptian court/);
+ assert.match(s.world.dynasties.catalog[eastern].culture[0],/game reconstruction/);
+ assert.match(renderGenealogyDossier(s,roman),/Cultural origin: Roman/);
+ const egypt=newGame('egypt'),ownGreek=createFictionalPerson(egypt,{name:['Own court actor','己方宫廷人物'],faction:'egypt',birthYear:-80,location:'egypt'});
+ assert.match(renderGenealogyDossier(egypt,ownGreek,true),/文化来源: 托勒密埃及宫廷/);
+ s.world.dynasties.catalog[roman].culture=['Simulated','模拟'];
+ s=upgradeSave(structuredClone(s));
+ assert.deepEqual(s.world.dynasties.catalog[roman].culture,['Simulated','模拟']);
+ assert.deepEqual(s.world.dynasties.catalog[greek].culture,['Ptolemaic Egyptian court (Greek-speaking)','托勒密埃及宫廷（希腊语）']);
+});
 
 test('Han children keep a recorded family and use Han names across saves',()=>{
  const s=newGame('han');

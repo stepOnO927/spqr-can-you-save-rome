@@ -80,8 +80,11 @@ export function initializeDynasties(s){
  return d;
 }
 
-export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员'],culture=['Simulated','模拟'],homeland=null,ambition,personalitySeed,militaryOnly=false,origin='birth',regnalName=null,homage=null,appearance=null}){
+export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员'],culture=null,homeland=null,ambition,personalitySeed,militaryOnly=false,origin='birth',regnalName=null,homage=null,appearance=null}){
  const d=initializeDynasties(s);
+ // Unspecified culture follows the person's political court. The saved
+ // catalog keeps that reconstruction stable if the faction later changes.
+ const recordedCulture=Array.isArray(culture)?culture:NAME_POOLS[factionNameStyle(s,faction)]?.culture||NAME_POOLS.regional.culture;
  // Reserve identities mentioned anywhere in older saves, including reports
  // and relationships whose original person or family is no longer present.
  const snapshot=JSON.stringify({state:s,parents,adoptiveParents,familyId}),people=new Set([...snapshot.matchAll(/(?:^|[^A-Za-z0-9_:])fictional:(\d+)(?!\d)/g)].map(m=>m[1])),families=new Set([...snapshot.matchAll(/family:fictional:(\d+)(?!\d)/g)].map(m=>m[1]));
@@ -89,7 +92,7 @@ export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,
  const personNo=nextFree(d.nextPerson,people);d.nextPerson=personNo+1;const id=`fictional:${personNo}`;
  let family=familyId;if(!family){const familyNo=nextFree(d.nextFamily,families);d.nextFamily=familyNo+1;family=`family:fictional:${familyNo}`}
  if(!d.families[family])d.families[family]={id:family,name:Array.isArray(name)?name:[name,name],wealth:0,reputation:50,influence:20,leader:id,patrons:[]};
- d.catalog[id]={name:Array.isArray(name)?name:[name,name],birth:[birthYear,birthYear],faction,role,culture,source:null,fictional:true,...(regnalName?{regnalName:[...regnalName]}:{}),...(homage?{homage:structuredClone(homage)}:{}),...(appearance?{appearance:structuredClone(appearance)}:{})};
+ d.catalog[id]={name:Array.isArray(name)?name:[name,name],birth:[birthYear,birthYear],faction,role,culture:[...recordedCulture],source:null,fictional:true,...(regnalName?{regnalName:[...regnalName]}:{}),...(homage?{homage:structuredClone(homage)}:{}),...(appearance?{appearance:structuredClone(appearance)}:{})};
  CHARACTER_CATALOG[id]=structuredClone(d.catalog[id]);
  s.world.characters[id]={id,faction,health:'healthy',location,homeland:homeland||location,alive:true,loyalty:65,influence:20,wealth,parents:[...parents],adoptiveParents:[...adoptiveParents],children:[],spouse:null,familyId:family,birthYear,sex,education:0,ambition:ambition??Math.floor(20+roll(s)*60),personalitySeed:personalitySeed??Math.floor(roll(s)*0xffffffff),militaryOnly,wounds:0,illnessEpisodes:0};
  s.world.characters[id].portraitSeed=portraitSeedFor(id,s.world.characters[id],d.catalog[id]);
