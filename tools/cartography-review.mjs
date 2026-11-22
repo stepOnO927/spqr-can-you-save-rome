@@ -29,6 +29,7 @@ try{
  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-free').click();
  await page.locator('.maplibregl-canvas').waitFor();
+ if(await page.locator('html').getAttribute('lang')!=='zh-CN')await page.locator('#language').click();
  await page.evaluate(async()=>{window.__reviewMap=(await import(document.querySelector('script[type="module"]').src)).map});
  await page.locator('#map-mode').selectOption('terrain');
  for(const [name,center] of [['ariminum',[12.6,44.1]],['alexandria',[29.91,31.2]]]){
@@ -37,7 +38,6 @@ try{
    map.setPaintProperty('coastal-halo','line-width',['interpolate',['linear'],['zoom'],4,2,8,9,9,14]);
    map.setPaintProperty('coastal-halo','line-blur',['interpolate',['linear'],['zoom'],4,1,9,6]);
    map.setPaintProperty('coastal-halo','line-opacity',['interpolate',['linear'],['zoom'],4,.04,7,.13,9,.22]);
-   map.setPaintProperty('sea-cartographic-grain','fill-opacity',['interpolate',['linear'],['zoom'],7,0,8,.6,9,1]);
   });
   const jumpStarted=Date.now();
   const events=await page.evaluate(async center=>{const {map}=await import(document.querySelector('script[type="module"]').src),log=[];for(const type of ['movestart','move','moveend'])map.once(type,()=>log.push({type,center:map.getCenter().toArray(),zoom:map.getZoom()}));map.jumpTo({center,zoom:9.05});return log},center);
@@ -70,7 +70,6 @@ try{
    map.setPaintProperty('coastal-halo','line-width',['interpolate',['linear'],['zoom'],4,2,8,3,9,4]);
    map.setPaintProperty('coastal-halo','line-blur',['interpolate',['linear'],['zoom'],4,1,9,1]);
    map.setPaintProperty('coastal-halo','line-opacity',['interpolate',['linear'],['zoom'],4,.04,7,.1,9,.07]);
-   map.setPaintProperty('sea-cartographic-grain','fill-opacity',['interpolate',['linear'],['zoom'],7,0,8,.25,9,.32]);
   });
   await page.waitForTimeout(900);
   await page.screenshot({path:resolve(output,`${name}-trial.png`)});
