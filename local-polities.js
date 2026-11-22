@@ -1,5 +1,5 @@
 import {ROUTES} from './data.js?v=world-kings-regional-types-1';
-import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-regional-types-1';
+import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,historicalCivicLeadership,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-regional-types-1';
 import {sendLetter} from './epistulae.js?v=world-kings-regional-types-1';
 import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-regional-types-1';
 import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from './local-discovery.js?v=world-kings-regional-types-1';
@@ -163,6 +163,7 @@ export function generateOpeningLocalPolities(state,difficulty,seed){
   const entity=localEntity(state,id);if(!entity)continue;
   const profile=historicalLocalProfile(hash(id),difficulty,entity.type,id==='massilia'?1.15:1);
   Object.assign(entity,profile,{seed:hash(`${id}:decisions`)});
+  if(id==='massilia')Object.assign(entity,historicalCivicLeadership(hash(id),difficulty,state.year));
  }
  const candidates=generatedLocalPolities(number,difficulty,new Set(state.regions.map(region=>region.id)),state.year);
  for(const template of candidates){

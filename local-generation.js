@@ -181,8 +181,8 @@ function profile(rng,type,scale,band,regional=DEFAULT_GENERATION_PROFILE){
  return {population,militia,treasury,food,fort,strategy:integer(rng,...band.skill)};
 }
 
-function civicOfficers(seed,theater,band,rulerName){
- const rng={value:siteSeed(seed,`${theater}:council`)},names=rulersFor(theater),chosen=new Set();
+function civicOfficers(seed,theater,band,rulerName,names=rulersFor(theater)){
+ const rng={value:siteSeed(seed,`${theater}:council`)},chosen=new Set();
  const appoint=role=>{
   let index=integer(rng,0,names.length-1);
   while(chosen.has(index)||rulerName[0].endsWith(` ${names[index][0]}`))index=(index+1)%names.length;
@@ -190,6 +190,19 @@ function civicOfficers(seed,theater,band,rulerName){
   return {id:`local-officer:${theater}:${role}`,name:[...names[index]],skill:integer(rng,...band.skill),fictional:true};
  };
  return {steward:appoint('steward'),captain:appoint('captain')};
+}
+
+// Massilia is an attested city, while its opening speaker and named staff are
+// explicitly fictional game characters. Caesar records the city's own
+// decision-making in 49 BCE but does not name a January council speaker.
+export function historicalCivicLeadership(seed,difficulty,startYear=-49){
+ const band=LOCAL_GENERATION_BANDS[difficulty]||LOCAL_GENERATION_BANDS.standard;
+ const rng={value:siteSeed(seed,'massilia:leadership')},names=REGIONAL_RULERS.hellenic;
+ const person=names[integer(rng,0,names.length-1)];
+ const name=[`Council Speaker ${person[0]}`,`${person[1]}议事会发言人`];
+ return {ruler:{id:'local-ruler:massilia',name,birthYear:startYear-integer(rng,28,64),
+  personality:PERSONALITIES[integer(rng,0,PERSONALITIES.length-1)],fictional:true},
+  civicOfficers:civicOfficers(seed,'narbo',band,name,names)};
 }
 
 export function generatedLocalPolities(seed,difficulty,availableTheaters,startYear=-49){

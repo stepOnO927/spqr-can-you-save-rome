@@ -8,7 +8,7 @@ const date=state=>state.year*12+state.month;
 const relation=(state,a,b)=>state.relations[[a,b].sort().join(':')]??0;
 const hostOf=(state,city)=>state.regions.find(region=>region.id===city.theater)?.owner;
 export const localCampaignCity=state=>state.localCampaign?.id===state.player?localEntity(state,state.player):null;
-export const playableLocalCities=state=>state.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&entity.type==='city_state'&&entity.controller===entity.id);
+export const playableLocalCities=state=>state.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.type==='city_state'&&entity.controller===entity.id&&(entity.procedural||entity.id==='massilia'&&entity.historical&&entity.ruler?.fictional));
 export function localTradePartners(state,city=localCampaignCity(state)){
  if(!city)return [];
  const neighbors=ROUTES.filter(([a,b])=>a===city.theater||b===city.theater).map(([a,b])=>a===city.theater?b:a);

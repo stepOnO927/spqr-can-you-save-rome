@@ -10,7 +10,7 @@ import {importSaves} from '../save-transfer.js';
 import {localCouncilHtml} from '../local-campaign-ui.js';
 import {advanceLocalEntities,advanceLocalTrade} from '../local-polities.js';
 
-const opening=(difficulty='standard')=>{const state=configureStartingDifficulty(newGame('caesar'),difficulty,false,{localSeed:273});const city=playableLocalCities(state)[0];assert.ok(city);const host=state.regions.find(region=>region.id===city.theater);const owner=host.owner;startLocalCampaign(state,city.id);return {state,city,host,owner}};
+const opening=(difficulty='standard')=>{const state=configureStartingDifficulty(newGame('caesar'),difficulty,false,{localSeed:273});const city=playableLocalCities(state).find(entity=>entity.procedural);assert.ok(city);const host=state.regions.find(region=>region.id===city.theater);const owner=host.owner;startLocalCampaign(state,city.id);return {state,city,host,owner}};
 
 test('generated city is a playable site without transferring its host theater',()=>{
  const {state,city,host,owner}=opening(),f=state.factions[state.player];
@@ -23,9 +23,32 @@ test('generated city is a playable site without transferring its host theater',(
  assert.equal(city.population,localCampaignCity(state).population);
 });
 
+test('historical Massilia starts a city campaign with explicitly simulated leadership and transferable saves',()=>{
+ const make=(difficulty='standard',seed=273)=>configureStartingDifficulty(newGame('caesar'),difficulty,false,{localSeed:seed});
+ const state=make(),city=playableLocalCities(state).find(entity=>entity.id==='massilia');
+ assert.ok(city);assert.equal(city.historical,true);assert.equal(city.procedural,undefined);
+ assert.equal(city.ruler.fictional,true);assert.deepEqual(city.ruler,playableLocalCities(make()).find(entity=>entity.id==='massilia').ruler);
+ assert.notDeepEqual(city.ruler,playableLocalCities(make('standard',274)).find(entity=>entity.id==='massilia').ruler);
+ assert.equal(state.world.localRulers[city.ruler.id].polityId,'massilia');
+ const host=state.regions.find(region=>region.id===city.theater),owner=host.owner;
+ startLocalCampaign(state,city.id);
+ assert.equal(state.player,'massilia');assert.equal(host.owner,owner);assert.equal(city.controller,'massilia');
+ assert.equal(validPlayableCampaign(state),true);
+ assert.match(localCouncilHtml(state),/HISTORICAL CITY · SIMULATED LEADERSHIP/);
+ assert.match(localCouncilHtml(state),/not verified historical identities or counts/);
+ const storage=new Map(),wrapper={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)};
+ assert.deepEqual(importSaves({format:'spqr-save-transfer',version:1,saves:{'spqr-save-1':JSON.stringify(state)}},wrapper).imported,['spqr-save-1']);
+ const restored=upgradeSave(JSON.parse(storage.get('spqr-save-1')));
+ assert.equal(restored.player,'massilia');assert.equal(validPlayableCampaign(restored),true);
+ assert.deepEqual(localCampaignCity(restored).ruler,city.ruler);
+ assert.equal(restored.regions.find(region=>region.id===city.theater).owner,owner);
+ const legacy=upgradeSave(JSON.parse(JSON.stringify(newGame('caesar'))));
+ assert.equal(legacy.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='massilia').ruler,undefined);
+});
+
 test('every generated city-state at expert difficulty can start and save its own campaign',()=>{
  const seed=273,preview=configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:seed});
- const choices=playableLocalCities(preview).map(city=>city.id);
+ const choices=playableLocalCities(preview).filter(city=>city.procedural).map(city=>city.id);
  assert.ok(choices.length>=2,'expert should expose more than the first generated city');
  for(const id of choices){
   const state=configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:seed});
@@ -58,7 +81,7 @@ test('city trade moves actual goods and qualifies a surviving city for victory',
 });
 
 test('a generated city can negotiate a funded trade compact with a reachable neighboring court',()=>{
- const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),city=playableLocalCities(state)[0];
+ const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),city=playableLocalCities(state).find(entity=>entity.procedural);
  assert.equal(city.theater,'anatolia');startLocalCampaign(state,city.id);
  assert.ok(localTradePartners(state).includes('armenia'));
  assert.match(localCouncilHtml(state),/data-local-trade-partner/);
@@ -79,7 +102,7 @@ test('a generated city can negotiate a funded trade compact with a reachable nei
 });
 
 test('stale neighboring control does not leak a new owner or create trade across a closed route',()=>{
- const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),city=playableLocalCities(state)[0];
+ const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),city=playableLocalCities(state).find(entity=>entity.procedural);
  startLocalCampaign(state,city.id);
  assert.equal(localTradeOffer(state,'armenia'),true);
  state.regions.find(region=>region.id==='armenia').owner='parthia';
@@ -91,7 +114,7 @@ test('stale neighboring control does not leak a new owner or create trade across
 });
 
 test('a save keeps a paid envoy after its recipient court dissolves',()=>{
- const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),city=playableLocalCities(state)[0];
+ const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),city=playableLocalCities(state).find(entity=>entity.procedural);
  startLocalCampaign(state,city.id);
  assert.equal(localTradeOffer(state,'armenia'),true);
  delete state.factions.armenia;
@@ -107,7 +130,7 @@ test('a save keeps a paid envoy after its recipient court dissolves',()=>{
 });
 
 test('two funded compacts count both actual shipments in one quarter',()=>{
- const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),city=playableLocalCities(state)[0];
+ const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),city=playableLocalCities(state).find(entity=>entity.procedural);
  startLocalCampaign(state,city.id);
  state.month=3;city.food=30;city.tradeRights={senate:state.year*12+15,armenia:state.year*12+15};
  const senateFood=state.factions.senate.food,armenianFood=state.factions.armenia.food;

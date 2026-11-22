@@ -48,7 +48,7 @@ try{
  await page.locator('.local-council').waitFor();
  assert.ok((await page.locator('.local-council').innerText()).includes('Completed trades'));
  const prepared=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:273});
- const preparedCity=playableLocalCities(prepared)[0],preparedHost=prepared.regions.find(region=>region.id===preparedCity.theater).owner;
+ const preparedCity=playableLocalCities(prepared).find(entity=>entity.procedural),preparedHost=prepared.regions.find(region=>region.id===preparedCity.theater).owner;
  startLocalCampaign(prepared,preparedCity.id);assert.equal(localProtectionOffer(prepared),true);
  for(let month=0;month<3;month++)tick(prepared);
  assert.equal(preparedCity.overlord,preparedHost);
@@ -65,7 +65,7 @@ try{
  await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
  const released=await page.evaluate(id=>JSON.parse(localStorage.getItem('spqr-save-1')).regions.flatMap(region=>region.localEntities||[]).find(city=>city.id===id).overlord,preparedCity.id);
  assert.equal(released,null);
- const neighbor=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),neighborCity=playableLocalCities(neighbor)[0];
+ const neighbor=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),neighborCity=playableLocalCities(neighbor).find(entity=>entity.procedural);
  startLocalCampaign(neighbor,neighborCity.id);
  await page.evaluate(value=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:value})),neighbor);
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
@@ -105,6 +105,22 @@ try{
  // marker handler after confirming the map rendered it.
  await polityMarker.waitFor({state:'visible'});await polityMarker.evaluate(marker=>marker.click());
  assert.match(await page.locator('#command-detail').innerText(),/Local trade compact active/);
+ await page.locator('.mast a').click();await page.waitForURL(base+'/');
+ await page.locator('#new').click();
+ await page.selectOption('#faction-choice','massilia');
+ await page.click('#start-campaign');
+ await page.locator('.local-council').waitFor();
+ assert.match(await page.locator('.local-council').innerText(),/HISTORICAL CITY · SIMULATED LEADERSHIP/);
+ assert.match(await page.locator('.local-council').innerText(),/not verified historical identities or counts/);
+ await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')).player),'massilia');
+ await page.locator('#open-atlas').click();await page.waitForURL('**/map-lab/');
+ const massiliaMarker=page.locator('.city-marker[data-city="MASSILIA"]');
+ await massiliaMarker.waitFor({state:'visible'});await massiliaMarker.evaluate(marker=>marker.click());
+ assert.match(await page.locator('#command-detail').innerText(),/City council|CITY COUNCIL|You govern an autonomous city/);
+ await page.locator('.mast a').click();await page.waitForURL(base+'/');
+ await page.locator('.local-council').waitFor();
+ assert.match(await page.locator('.local-council').innerText(),/Massilia/);
  assert.equal(errors.length,0,errors.join('\n'));
- console.log('Local campaign, protection, independence, neighboring trade and incoming polity trade petition passed');
+ console.log('Local campaign, protection, independence, neighboring trade, incoming polity petition and historical Massilia passed');
 }finally{await browser.close()}
