@@ -1,6 +1,6 @@
 import {localEntity, villageDevelopment} from '../local-polities.js';
 import {villageProjectQuote, startVillageProject, villageFoodQuote, takeVillageFood} from '../local-villages.js';
-import {FACTIONS} from '../data.js?v=portrait-fourteen-1';
+import {FACTIONS} from '../data.js?v=intelligence-archive-1';
 import {renderFootholdPanel} from './foothold-ui.js';
 
 export function renderVillage({state, id, actor, language, panel, refresh}) {

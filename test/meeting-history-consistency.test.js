@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=portrait-fourteen-1';
-import {createFictionalPerson} from '../dynasties.js?v=portrait-fourteen-1';
-import {audiencePublicRecord} from '../personal-diplomacy.js?v=portrait-fourteen-1';
+import {newGame,upgradeSave} from '../engine.js?v=intelligence-archive-1';
+import {createFictionalPerson} from '../dynasties.js?v=intelligence-archive-1';
+import {audiencePublicRecord} from '../personal-diplomacy.js?v=intelligence-archive-1';
 
 test('meeting history distinguishes the addressed and observed names without revealing a future outcome',()=>{
  let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Private','秘密姓名'],faction:'egypt',birthYear:-75});

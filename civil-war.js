@@ -1,7 +1,7 @@
-import {isDeliveredReport} from './person-knowledge.js?v=portrait-fourteen-1';
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=portrait-fourteen-1';
-import {reportedControl} from './control-intelligence.js?v=portrait-fourteen-1';
-import {ROUTES} from './data.js?v=portrait-fourteen-1';
+import {isDeliveredReport} from './person-knowledge.js?v=intelligence-archive-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=intelligence-archive-1';
+import {reportedControl} from './control-intelligence.js?v=intelligence-archive-1';
+import {ROUTES} from './data.js?v=intelligence-archive-1';
 import {transferTerritory} from './territory.js';
 
 // Alternate-history claimant commands use real game theaters and armies.

@@ -1,4 +1,4 @@
-import {fundMissingSearch,hasMissingSearchDestination} from './character-system.js?v=portrait-fourteen-1';
+import {fundMissingSearch,hasMissingSearchDestination} from './character-system.js?v=intelligence-archive-1';
 
 // The panel uses only the player's existing contact status, not the hidden fate.
 export function renderMissingSearch(s,id,zh=false){

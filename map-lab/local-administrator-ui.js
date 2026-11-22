@@ -1,5 +1,5 @@
-import {CHARACTER_CATALOG} from '../characters.js?v=portrait-fourteen-1';
-import {localAdministrator,localAdministratorCandidates,appointLocalAdministrator,dismissLocalAdministrator} from '../office-system.js?v=portrait-fourteen-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=intelligence-archive-1';
+import {localAdministrator,localAdministratorCandidates,appointLocalAdministrator,dismissLocalAdministrator} from '../office-system.js?v=intelligence-archive-1';
 
 // A settlement post is distinct from the theater governor and grants no title.
 export function renderLocalAdministratorPanel({state,entity,actor,language,panel,refresh}){

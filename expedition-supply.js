@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=portrait-fourteen-1';
-import {militaryAccessStatus} from './border-access.js?v=portrait-fourteen-1';
+import {ROUTES} from './data.js?v=intelligence-archive-1';
+import {militaryAccessStatus} from './border-access.js?v=intelligence-archive-1';
 import {footholdConnected} from './foothold.js';
 import {villageFoodQuote, takeVillageFood} from './local-villages.js';
 

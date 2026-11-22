@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,moveArmy,tick,upgradeSave} from '../engine.js?v=portrait-fourteen-1';
-import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from '../map-lab/turn-report.js?v=portrait-fourteen-1';
-import {reportedControl} from '../control-intelligence.js?v=portrait-fourteen-1';
+import {newGame,moveArmy,tick,upgradeSave} from '../engine.js?v=intelligence-archive-1';
+import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from '../map-lab/turn-report.js?v=intelligence-archive-1';
+import {reportedControl} from '../control-intelligence.js?v=intelligence-archive-1';
 import {FACTIONS} from '../data.js';
 
 test('a delayed control report retains its observation date and does not reveal later hidden changes',()=>{

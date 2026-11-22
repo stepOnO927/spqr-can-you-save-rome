@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=portrait-fourteen-1';
+import {newGame,upgradeSave} from '../engine.js?v=intelligence-archive-1';
 import {localEntity} from '../local-polities.js';
 import {advanceLocalResistance} from '../local-resistance.js';
-import {advanceOffices,appointLocalAdministrator,dismissLocalAdministrator,localAdministrator,localAdministratorCandidates,officeOf,officeCandidates} from '../office-system.js?v=portrait-fourteen-1';
-import {inspectState} from '../inspector-diagnostics.js?v=portrait-fourteen-1';
-import {createFictionalPerson} from '../dynasties.js?v=portrait-fourteen-1';
+import {advanceOffices,appointLocalAdministrator,dismissLocalAdministrator,localAdministrator,localAdministratorCandidates,officeOf,officeCandidates} from '../office-system.js?v=intelligence-archive-1';
+import {inspectState} from '../inspector-diagnostics.js?v=intelligence-archive-1';
+import {createFictionalPerson} from '../dynasties.js?v=intelligence-archive-1';
 import {startFoothold,advanceFootholds,abandonFoothold} from '../foothold.js';
 import {advanceVillages} from '../local-villages.js';
-import {renderGenealogy} from '../genealogy-ui.js?v=portrait-fourteen-1';
+import {renderGenealogy} from '../genealogy-ui.js?v=intelligence-archive-1';
 
 function occupiedTown(){
  const state=newGame('senate'),town=localEntity(state,'capua');

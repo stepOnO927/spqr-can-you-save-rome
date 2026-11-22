@@ -1,8 +1,8 @@
-import {CHARACTER_CATALOG} from './characters.js?v=portrait-fourteen-1';
-import {FACTIONS} from './data.js?v=portrait-fourteen-1';
-import {campaignDate} from './campaign-date.js?v=portrait-fourteen-1';
-import {reportedHealthSubjects,reportedPersonName} from './character-system.js?v=portrait-fourteen-1';
-import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,audiencePublicRecord} from './personal-diplomacy.js?v=portrait-fourteen-1';
+import {CHARACTER_CATALOG} from './characters.js?v=intelligence-archive-1';
+import {FACTIONS} from './data.js?v=intelligence-archive-1';
+import {campaignDate} from './campaign-date.js?v=intelligence-archive-1';
+import {reportedHealthSubjects,reportedPersonName} from './character-system.js?v=intelligence-archive-1';
+import {previewPersonTravel,startPersonTravel,setJourneyHalt,requestPersonalMeeting,audiencePublicRecord} from './personal-diplomacy.js?v=intelligence-archive-1';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=(pair,zh)=>Array.isArray(pair)?pair[zh?1:0]:'';

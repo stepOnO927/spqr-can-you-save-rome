@@ -9,8 +9,8 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  const name=await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=portrait-fourteen-1');
-  const {configureStartingDifficulty}=await import('/difficulty.js?v=portrait-fourteen-1');
+  const {newGame}=await import('/engine.js?v=intelligence-archive-1');
+  const {configureStartingDifficulty}=await import('/difficulty.js?v=intelligence-archive-1');
   const s=configureStartingDifficulty(newGame('senate'),'expert',false,{localSeed:2});s.wars=[];
   const camp=s.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='generated-nomad:western-pasture');
   if(!camp||s.localDiscovery.senate[camp.id]?.seenTheater!=='numidia')throw Error('frontier camp not discovered');

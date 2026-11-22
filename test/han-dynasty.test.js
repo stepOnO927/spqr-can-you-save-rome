@@ -3,10 +3,10 @@
 // orthodox Han emperor.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,tick,serialize,loadHanSave} from '../han/engine.js?v=portrait-fourteen-1';
-import {statusOf,crown,eligibility,isLiuClan,changeSurname,marry,adopt,seizeThrone,deposeAndReplace,establishRegency,enforceDynasticInvariants,recordBirth,PROCESSES} from '../han/dynasty.js?v=portrait-fourteen-1';
-import {resolveSuccession,advanceDispute,startDynasticWar,settleThroneWars,recomputeInfluence,onUsurpation} from '../han/court.js?v=portrait-fourteen-1';
-import {applyEffects,TREES} from '../han/focus.js?v=portrait-fourteen-1';
+import {newHanGame,tick,serialize,loadHanSave} from '../han/engine.js?v=intelligence-archive-1';
+import {statusOf,crown,eligibility,isLiuClan,changeSurname,marry,adopt,seizeThrone,deposeAndReplace,establishRegency,enforceDynasticInvariants,recordBirth,PROCESSES} from '../han/dynasty.js?v=intelligence-archive-1';
+import {resolveSuccession,advanceDispute,startDynasticWar,settleThroneWars,recomputeInfluence,onUsurpation} from '../han/court.js?v=intelligence-archive-1';
+import {applyEffects,TREES} from '../han/focus.js?v=intelligence-archive-1';
 
 const game=(o={})=>newHanGame('han',{seed:11,start:'accession',...o});
 const backAll=(s,id,v=90)=>{s.throne.support[id]=Object.fromEntries(Object.keys(s.court.factions).map(f=>[f,v]))};
