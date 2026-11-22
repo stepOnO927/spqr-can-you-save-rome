@@ -22,6 +22,7 @@ try{
   await project.locator('button[data-recommend]').click();
   assert.equal(await page.locator('[data-tab="focus"].active').count(),1);
   assert.equal(await page.locator('#imp-tree .imp-node.sel').count(),1);
+  await page.locator('[data-imp-close-focus]').click();
   await page.locator('#new').click();
   await page.locator('[data-slot="save"]').click();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
