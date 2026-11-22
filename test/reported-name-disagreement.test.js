@@ -1,9 +1,9 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=fund-search-1';
-import {createFictionalPerson} from '../dynasties.js?v=fund-search-1';
-import {addReport} from '../character-system.js?v=fund-search-1';
-import {reportedPersonName,visiblePersonName,hasReportedNameConflict} from '../person-knowledge.js?v=fund-search-1';
-import {identityKnowledge} from '../map-lab/identity-knowledge.js?v=fund-search-1';
+import {newGame,upgradeSave} from '../engine.js?v=mission-history-1';
+import {createFictionalPerson} from '../dynasties.js?v=mission-history-1';
+import {addReport} from '../character-system.js?v=mission-history-1';
+import {reportedPersonName,visiblePersonName,hasReportedNameConflict} from '../person-knowledge.js?v=mission-history-1';
+import {identityKnowledge} from '../map-lab/identity-knowledge.js?v=mission-history-1';
 
 test('simultaneous conflicting name reports remain visibly uncertain until a newer observation',()=>{
  let s=newGame('caesar'),id=createFictionalPerson(s,{name:['Hidden actual','隐藏姓名'],faction:'egypt',birthYear:s.year-30});s.month=2;

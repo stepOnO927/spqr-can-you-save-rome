@@ -1,6 +1,6 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=fund-search-1';
-import {createFictionalPerson} from './dynasties.js?v=fund-search-1';
-import {initializeOffices,appointOffice} from './office-system.js?v=fund-search-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=mission-history-1';
+import {createFictionalPerson} from './dynasties.js?v=mission-history-1';
+import {initializeOffices,appointOffice} from './office-system.js?v=mission-history-1';
 import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=born-portrait-thirteen-1';
 
 const ROMAN=new Set(['caesar','senate']);

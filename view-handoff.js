@@ -1,4 +1,4 @@
-import {snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=fund-search-1';
+import {snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=mission-history-1';
 // A one-use transfer between views in the same tab; saved game slots are untouched.
 export const HANDOFF_KEY = 'spqr-view-handoff-v1';
 

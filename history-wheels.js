@@ -1,10 +1,10 @@
 // The Wheels of History reads the existing simulation. It never resolves an
 // economy, battle, treaty or appointment of its own.
-import {sendLetter} from './epistulae.js?v=fund-search-1';
-import {CHARACTER_CATALOG,successionModel} from './characters.js?v=fund-search-1';
-import {reassurePerson} from './conspiracies.js?v=fund-search-1';
-import {focusById,treeFor} from './national-focus.js?v=fund-search-1';
-import {successionCandidates,validSuccessionPlan} from './governance.js?v=fund-search-1';
+import {sendLetter} from './epistulae.js?v=mission-history-1';
+import {CHARACTER_CATALOG,successionModel} from './characters.js?v=mission-history-1';
+import {reassurePerson} from './conspiracies.js?v=mission-history-1';
+import {focusById,treeFor} from './national-focus.js?v=mission-history-1';
+import {successionCandidates,validSuccessionPlan} from './governance.js?v=mission-history-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 
 const L=(en,zh)=>[en,zh];
