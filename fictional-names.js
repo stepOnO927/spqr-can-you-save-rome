@@ -7,6 +7,7 @@ export const NAME_POOLS=Object.freeze({
  roman:{culture:['Roman','罗马'],given:[['Gaius','盖乌斯'],['Lucius','卢基乌斯'],['Marcus','马库斯'],['Publius','普布利乌斯'],['Aulus','奥卢斯']],family:[['Furius','弗里乌斯'],['Valerius','瓦勒里乌斯'],['Aemilius','埃米利乌斯'],['Cassius','卡西乌斯'],['Fabius','法比乌斯']],epithet:[['Naso','纳索'],['Crispus','克里斯普斯'],['Luscus','卢斯库斯'],['Varro','瓦罗']]},
  han:{culture:['Han Chinese','汉'],family:[['Zhao','赵'],['Xu','徐'],['Cai','蔡'],['Wang','王'],['Li','李'],['Zhang','张']],given:[['He','和'],['Jian','俭'],['Ming','明'],['Huan','桓'],['Cheng','成'],['Yan','延']]},
  greek_egyptian:{culture:['Ptolemaic Egyptian court (Greek-speaking)','托勒密埃及宫廷（希腊语）'],given:[['Kleon','克勒翁'],['Theon','提翁'],['Nikandros','尼坎德罗斯'],['Philotas','菲洛塔斯'],['Damon','达蒙']],female:[['Kleio','克勒伊奥'],['Thaleia','塔莉娅'],['Dione','狄俄涅']],place:['Alexandria','亚历山大里亚']},
+ egyptian:{culture:['Egyptian temple community (game reconstruction)','埃及神庙社群（游戏复原）'],given:[['Psenamun','普塞纳蒙'],['Petosiris','佩托西里斯'],['Horos','霍罗斯'],['Psenthotes','普森托特斯'],['Nesmin','内斯明']],female:[['Taimhotep','塔伊姆霍特普'],['Tares','塔雷斯'],['Tesenouphis','特塞努菲斯'],['Tanetnet','塔内特内特']],place:['Thebes','底比斯']},
  numidian:{culture:['Numidian (game reconstruction)','努米底亚（游戏复原）'],given:[['Mastan','马斯坦'],['Iftas','伊夫塔斯'],['Mazir','马齐尔'],['Adun','阿敦']],place:['Cirta','瑟尔塔']},
  mauretanian:{culture:['Mauretanian (game reconstruction)','毛里塔尼亚（游戏复原）'],given:[['Bostar','博斯塔尔'],['Maza','马扎'],['Izel','伊泽尔'],['Tamar','塔马尔']],place:['Iol','伊奥尔']},
  armenian:{culture:['Armenian (game reconstruction)','亚美尼亚（游戏复原）'],given:[['Arsham','阿尔沙姆'],['Vardan','瓦尔丹'],['Artanes','阿尔塔涅斯'],['Tigran','提格兰']],place:['Artaxata','阿尔塔克萨塔']},
@@ -35,12 +36,12 @@ export function factionNameStyle(s,faction){
  return FACTION_NAME_CULTURE[faction]||FACTION_NAME_CULTURE[parent]||'regional';
 }
 
-export function generateFictionalName(s,{originFaction,location=null}={}){
- const style=factionNameStyle(s,originFaction),pool=NAME_POOLS[style],used=new Set(Object.keys(s.world?.characters||{}).filter(id=>s.world.characters[id]?.alive).map(id=>(s.world?.dynasties?.catalog?.[id]||CHARACTER_CATALOG[id])?.name?.[0]).filter(Boolean));
+export function generateFictionalName(s,{originFaction,location=null,cultureStyle=null,sex='unknown'}={}){
+ const style=cultureStyle&&NAME_POOLS[cultureStyle]?cultureStyle:factionNameStyle(s,originFaction),pool=NAME_POOLS[style],used=new Set(Object.keys(s.world?.characters||{}).filter(id=>s.world.characters[id]?.alive).map(id=>(s.world?.dynasties?.catalog?.[id]||CHARACTER_CATALOG[id])?.name?.[0]).filter(Boolean));
  const serial=s.world?.dynasties?.nextPerson||1,candidates=[];
  if(style==='roman')for(const given of pool.given)for(const family of pool.family)for(const epithet of pool.epithet)candidates.push([`${given[0]} ${family[0]} ${epithet[0]}`,`${given[1]}·${family[1]}·${epithet[1]}`]);
  else if(style==='han')for(const family of pool.family)for(const given of pool.given)candidates.push([`${family[0]} ${given[0]}`,`${family[1]}${given[1]}`]);
- else for(const given of pool.given)candidates.push([`${given[0]} of ${pool.place[0]}`,`${pool.place[1]}的${given[1]}`]);
+ else for(const given of sex==='female'&&pool.female?.length?pool.female:pool.given)candidates.push([`${given[0]} of ${pool.place[0]}`,`${pool.place[1]}的${given[1]}`]);
  const start=serial%candidates.length;
  for(let step=0;step<candidates.length;step++){const name=candidates[(start+step)%candidates.length];if(!used.has(name[0]))return {name,culture:pool.culture,homeland:location}}
  // A locative remains intelligible when a small pool is exhausted. The saved

@@ -1,4 +1,6 @@
 import {createFictionalPerson,initializeDynasties} from './dynasties.js?v=faces-name-disagreement-1';
+import {NAME_POOLS,generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
@@ -6,7 +8,7 @@ const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.l
 const rand=s=>{s.world.religionSeed=(Math.imul(s.world.religionSeed,1664525)+1013904223)>>>0;return s.world.religionSeed/4294967296};
 const templates=[
  {id:'roman_college',region:'roma',name:['Public priestly college','公共祭司团'],description:['A simulated public priestly college rooted in Roman civic religion.','植根于罗马公民宗教的模拟公共祭司团。'],kind:'public_college',names:[['Aulus Fabius','奥卢斯·法比乌斯'],['Claudia Flavia','克劳狄娅·弗拉维娅']]},
- {id:'theban_temples',region:'egyptUpper',name:['Theban temple network','底比斯神庙网络'],description:['A simulated network of Egyptian temple communities.','埃及神庙共同体的模拟网络。'],kind:'temple_network',names:[['Psenamun','普塞纳蒙'],['Taimhotep','塔伊姆霍特普']]},
+ {id:'theban_temples',region:'egyptUpper',name:['Theban temple network','底比斯神庙网络'],description:['A simulated network of Egyptian temple communities.','埃及神庙共同体的模拟网络。'],kind:'temple_network',culture:NAME_POOLS.egyptian.culture,names:[['Psenamun','普塞纳蒙'],['Taimhotep','塔伊姆霍特普']]},
  {id:'syrian_association',region:'syria',name:['Syrian civic association','叙利亚公民协会'],description:['A simulated local religious and charitable association.','当地宗教与慈善协会的模拟组织。'],kind:'local_association',names:[['Maron','马隆'],['Helena of Antioch','安条克的海伦娜']]}
 ];
 
@@ -29,12 +31,16 @@ export function initializeReligion(s){
   for(const t of templates){
    if(s.world.religiousInstitutions.some(o=>o.id===t.id))continue;
    const r=s.regions.find(x=>x.id===t.region),faction=r?.owner;if(!r||!s.factions[faction]||faction==='rebels')continue;
-   const council=t.names.map((name,i)=>{const id=createFictionalPerson(s,{name,faction,birthYear:s.year-(i?34:48),location:r.id,sex:i?'female':'male',role:['Simulated religious official','模拟宗教人士']});s.world.characters[id].institutionalOnly=true;s.world.characters[id].ambition=Math.floor(20+rand(s)*60);return id});
+   const council=t.names.map((name,i)=>{const id=createFictionalPerson(s,{name,faction,birthYear:s.year-(i?34:48),location:r.id,sex:i?'female':'male',role:['Simulated religious official','模拟宗教人士'],...(t.culture?{culture:t.culture}:{})});s.world.characters[id].institutionalOnly=true;s.world.characters[id].ambition=Math.floor(20+rand(s)*60);return id});
    s.world.religiousInstitutions.push({id:t.id,name:t.name,description:t.description,kind:t.kind,region:r.id,followers:Math.floor(r.population.total*.08),wealth:12,leader:council[0],council,influence:25,legitimacy:60,relations:{[faction]:15},recognizedBy:[],privilegedBy:[],factions:{traditional:50,civic:50},dispute:0,corruption:t.id==='roman_college'?25:t.id==='theban_temples'?35:15,history:[]});
   }
   s.world.dynasties.seed=householdSeed;
   s.world.religionSeeded=true;
  }
+ // Existing temple records establish a local Egyptian affiliation. Correct
+ // only the old generic or Greek-court default; retain any explicit culture.
+ const temple=s.world.religiousInstitutions.find(o=>o.id==='theban_temples');
+ for(const id of temple?.council||[]){const entry=s.world.dynasties.catalog[id],prior=entry?.culture?.[0];if(entry?.fictional&&(prior==='Simulated'||prior===NAME_POOLS.greek_egyptian.culture[0])){entry.culture=[...NAME_POOLS.egyptian.culture];if(CHARACTER_CATALOG[id])CHARACTER_CATALOG[id].culture=[...entry.culture]}}
  // Priorities are institutional tendencies, not moral judgments about a
  // religion. Old saves receive defaults without changing their finances.
  for(const o of s.world.religiousInstitutions){o.priorities||=(o.kind==='temple_network'?['relief','infrastructure']:o.kind==='public_college'?['relief','education']:['education','relief']);o.institutionalLoyalty??=50;o.works??=0}
@@ -78,6 +84,20 @@ export function advanceReligion(s){
  for(const o of s.world.religiousInstitutions){
   const r=s.regions.find(x=>x.id===o.region),government=r&&s.factions[r.owner];if(!r||!government)continue;
   if(!s.world.characters[o.leader]?.alive)o.leader=o.council.find(id=>s.world.characters[id]?.alive)||null;
+  if(o.id==='theban_temples'){
+   const now=s.year*12+s.month,vacancy=o.council.findIndex(id=>!s.world.characters[id]?.alive);
+   if(vacancy<0)delete o.vacancySince;
+   else{o.vacancySince??=now;
+    // A replacement needs a recorded vacancy and the temple's own funds.
+    // One appointment per January leaves real succession gaps in the record.
+    if(s.month===1&&now>o.vacancySince&&o.wealth>=6&&r.owner!=='rebels'){
+     const sex=vacancy===1?'female':'male',identity=generateFictionalName(s,{originFaction:r.owner,location:r.id,cultureStyle:'egyptian',sex});
+     const id=createFictionalPerson(s,{...identity,faction:r.owner,birthYear:s.year-35,location:r.id,sex,role:['Simulated temple official','模拟神庙人员'],origin:'institution_recruit'});
+     s.world.characters[id].institutionalOnly=true;o.wealth-=6;o.council[vacancy]=id;if(!o.leader)o.leader=id;
+     o.history.push({action:'appointment',person:id,cost:6,year:s.year,month:s.month});o.history=o.history.slice(-30);o.vacancySince=now;
+    }
+   }
+  }
   const relation=o.relations[r.owner]??0;
   if(s.month===1)o.institutionalLoyalty=clamp(o.institutionalLoyalty+Math.sign(relation),0,100);
   if(o.privilegedBy.includes(r.owner))o.wealth++;

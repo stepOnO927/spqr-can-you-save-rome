@@ -6,6 +6,20 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The Theban temple's persistent officials now carry an Egyptian temple
+cultural identity rather than inheriting the Greek-speaking Ptolemaic court
+label. New and legacy temple records keep their existing names and other
+explicit identities. A dead seat remains vacant until a later January; the
+temple can then spend six of its own wealth on one culturally named, saved
+replacement. The deceased person's record remains intact. Focused religion,
+identity, genealogy and module tests pass 27/27; the existing institution
+portrait browser flow now checks the replacement's bilingual dossier and
+save/load identity. A separate female replacement case verifies the same
+name-pool and save rules. These names are game reconstructions, not claims about
+documented 49 BCE officeholders. The distinction between Egyptian and Greek
+names in Ptolemaic records is supported by the [Oxford CSAD discussion of
+Egyptian names and bilingual identities](https://www.csad.ox.ac.uk/sitefiles/csad-newsletter-29-indesign.accessible.pdf).
+
 Main through `3fcfc89b` is integrated. The secret-diplomacy merge retained
 some AI logic but initially lost its imported proposal command, mission
 validation and results, delivered evidence links, atlas controls and browser

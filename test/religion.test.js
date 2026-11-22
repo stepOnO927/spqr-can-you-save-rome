@@ -32,6 +32,42 @@ test('a privilege can be revoked and a deceased institutional leader leaves a re
  const s=newGame('senate'),o=s.world.religiousInstitutions.find(x=>x.id==='roman_college');assert.ok(religiousPolicy(s,'senate',o.id,'privilege').ok);const relation=o.relations.senate;assert.ok(religiousPolicy(s,'senate',o.id,'revoke').ok);assert.equal(religiousTaxCost(s,'senate'),0);assert.equal(o.relations.senate,relation-8);
  s.world.characters[o.leader].alive=false;advanceReligion(s);assert.equal(o.leader,o.council[1]);s.world.characters[o.leader].alive=false;advanceReligion(s);assert.equal(o.leader,null);
 });
+test('the Theban temple keeps Egyptian identities and funds a delayed replacement',()=>{
+ let s=newGame('egypt'),o=s.world.religiousInstitutions.find(x=>x.id==='theban_temples'),former=o.council[0];
+ assert.deepEqual(s.world.dynasties.catalog[former].culture,['Egyptian temple community (game reconstruction)','埃及神庙社群（游戏复原）']);
+ s.world.characters[former].alive=false;s.month=6;advanceReligion(s);
+ assert.equal(o.leader,o.council[1]);assert.equal(o.council[0],former);
+ const wealth=o.wealth;o.wealth=5;s.year++;s.month=1;advanceReligion(s);
+ assert.equal(o.council[0],former,'a vacancy cannot create an unfunded replacement');
+ o.wealth=wealth;s.year++;s.month=1;advanceReligion(s);
+ const next=o.council[0];assert.notEqual(next,former);assert.equal(o.wealth,wealth-6);
+ assert.ok(s.world.characters[former]);assert.equal(s.world.characters[next].institutionalOnly,true);
+ assert.match(s.world.dynasties.catalog[next].name[0],/ of Thebes$/);
+ assert.deepEqual(s.world.dynasties.catalog[next].culture,['Egyptian temple community (game reconstruction)','埃及神庙社群（游戏复原）']);
+ assert.match(s.world.dynasties.lives[next][0].en,/Joined a local institution/);
+ assert.ok(o.history.some(event=>event.action==='appointment'&&event.person===next&&event.cost===6));
+ const nextName=[...s.world.dynasties.catalog[next].name];
+ s=upgradeSave(structuredClone(s));o=s.world.religiousInstitutions.find(x=>x.id==='theban_temples');advanceReligion(s);
+ assert.equal(o.council[0],next);assert.deepEqual(s.world.dynasties.catalog[next].name,nextName);
+});
+test('a female Theban replacement uses the Egyptian pool and a persistent gender',()=>{
+ let s=newGame('egypt'),o=s.world.religiousInstitutions.find(x=>x.id==='theban_temples'),former=o.council[1];
+ s.world.characters[former].alive=false;s.month=6;advanceReligion(s);s.year++;s.month=1;advanceReligion(s);
+ const next=o.council[1];assert.notEqual(next,former);assert.equal(s.world.characters[next].sex,'female');
+ assert.match(s.world.dynasties.catalog[next].name[0],/^(Taimhotep|Tares|Tesenouphis|Tanetnet) of Thebes$/);
+ s=upgradeSave(structuredClone(s));o=s.world.religiousInstitutions.find(x=>x.id==='theban_temples');
+ assert.equal(o.council[1],next);assert.equal(s.world.characters[next].sex,'female');
+});
+test('older Theban temple saves correct a generic court label without changing explicit identity',()=>{
+ let s=newGame('egypt'),o=s.world.religiousInstitutions.find(x=>x.id==='theban_temples');
+ const [generic,explicit]=o.council,name=s.world.dynasties.catalog[generic].name;
+ s.world.dynasties.catalog[generic].culture=['Simulated','模拟'];
+ s.world.dynasties.catalog[explicit].culture=['Recorded local identity','已记录地方身份'];
+ s=upgradeSave(structuredClone(s));o=s.world.religiousInstitutions.find(x=>x.id==='theban_temples');
+ assert.deepEqual(s.world.dynasties.catalog[generic].name,name);
+ assert.equal(s.world.dynasties.catalog[generic].culture[0],'Egyptian temple community (game reconstruction)');
+ assert.deepEqual(s.world.dynasties.catalog[explicit].culture,['Recorded local identity','已记录地方身份']);
+});
 test('population hardship affects subsequent tax potential and investigation is delayed and uncertain',()=>{
  const s=newGame('senate'),o=s.world.religiousInstitutions.find(x=>x.id==='roman_college'),r=s.regions.find(x=>x.id==='roma');assert.equal(populationFactor(r),1);
  assert.ok(religiousPolicy(s,'senate',o.id,'investigate').ok);assert.equal(s.world.religionReports.senate,undefined);s.factions.senate.food=-1;s.month=11;advanceReligion(s);s.month=12;advanceReligion(s);assert.ok(r.population.total<r.population.baseline);assert.ok(populationFactor(r)<1);s.month=1;s.year++;advanceReligion(s);assert.ok(['suspected','no_evidence'].includes(s.world.religionReports.senate[0].value));assert.equal(s.world.religionReports.senate[0].confidence,'unverified');
