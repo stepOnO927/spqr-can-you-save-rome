@@ -1,5 +1,5 @@
-import {newScenario} from '../scenarios.js?v=focus-agreement-consent-1';
-import {tick,diplomacy,isWar} from '../engine.js?v=focus-agreement-consent-1';
+import {newScenario} from '../scenarios.js?v=relationship-knowledge-1';
+import {tick,diplomacy,isWar} from '../engine.js?v=relationship-knowledge-1';
 
 // Paired seeds give each difficulty the same initial state and random streams.
 // The player is passive, so these are comparable simulations, not matches
