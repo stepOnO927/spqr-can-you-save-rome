@@ -30,6 +30,7 @@ try{
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
  });
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>typeof document.querySelector('#map-mode')?.onchange==='function');
  await page.locator('#map-mode').selectOption('organization');
  assert.match(await page.locator('#map-mode-details').innerText(),/League of Three Ports/);
  assert.match(await page.locator('#map-mode-details').innerText(),/公库/);
