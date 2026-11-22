@@ -84,7 +84,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const archives=()=>{try{const entries=JSON.parse(localStorage.getItem('spqr-legacy-archive')||'[]');return Array.isArray(entries)?entries:[]}catch{return []}};
 
 let toastTimer;
-function flash(message,sticky=false){clearTimeout(toastTimer);toast=message;render();if(!sticky)toastTimer=setTimeout(()=>{toast='';render()},3200)}
+function flash(message,sticky=false){clearTimeout(toastTimer);toast=message;render();if(!sticky)toastTimer=setTimeout(()=>{toast='';document.querySelector('.toast')?.remove()},3200)}
 function date(){const era=state.year<0?(lang==='zh'?`${campaignYear(state.year,'zh')}`:`${campaignYear(state.year)}`):(lang==='zh'?`公元${state.year+1}年`:`${state.year+1} CE`);return lang==='zh'?`${era} ${state.month}月`:`${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][state.month-1]} ${era}`}
 function recordDate(e){return lang==='zh'?`${e.year<0?'公元前'+Math.abs(e.year):'公元'+(e.year+1)}年${e.month}月`:`${e.month}/${e.year<0?campaignYear(e.year):(e.year+1)+' CE'}`}
 function recruitProblem(r){if(!r||r.owner!==state.player)return lang==='zh'?'无法征召：该战区不属于你。':'Cannot recruit: this theater is not yours.';const f=state.factions[state.player];const missing=[];if(f.treasury<24)missing.push(lang==='zh'?'国库至少需要24':'24 treasury required');if(f.manpower<3000)missing.push(lang==='zh'?'人力至少需要3,000':'3,000 manpower required');if(f.food<6)missing.push(lang==='zh'?'粮食至少需要6':'6 food required');return missing.length?(lang==='zh'?'无法征召：':'Cannot recruit: ')+missing.join(lang==='zh'?'；':'; '):''}
