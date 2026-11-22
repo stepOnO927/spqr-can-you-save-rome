@@ -1,5 +1,5 @@
-import {reportedControl} from '../control-intelligence.js?v=commander-age-1';
-import {deriveGovernment} from '../governance.js?v=commander-age-1';
+import {reportedControl} from '../control-intelligence.js?v=estate-courier-1';
+import {deriveGovernment} from '../governance.js?v=estate-courier-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=saved-age-consistency-1';
 
 // Project government authority from the viewer's own state or dated reports.

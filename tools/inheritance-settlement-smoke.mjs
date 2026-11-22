@@ -6,7 +6,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  async function setup(noClaimants){return page.evaluate(async noClaimants=>{
-  const {newGame}=await import('/engine.js?v=commander-age-1'),{createFictionalPerson,makeWill,settleInheritance}=await import('/dynasties.js?v=commander-age-1');
+  const {newGame}=await import('/engine.js?v=estate-courier-1'),{createFictionalPerson,makeWill,settleInheritance}=await import('/dynasties.js?v=estate-courier-1');
   const s=newGame('caesar'),parent=createFictionalPerson(s,{name:['Testator','立遗嘱者'],faction:'caesar',birthYear:-90,wealth:35}),family=s.world.characters[parent].familyId;
   const heir=createFictionalPerson(s,{name:['Child','子女'],faction:'caesar',birthYear:-66,parents:[parent],familyId:family}),beneficiary=createFictionalPerson(s,{name:['Beneficiary','受益人'],faction:'caesar',birthYear:-70});
   makeWill(s,parent,beneficiary);s.world.characters[parent].alive=false;settleInheritance(s,parent);if(noClaimants){s.world.characters[heir].alive=false;s.world.characters[beneficiary].alive=false;s.factions.caesar.treasury=0}
@@ -15,6 +15,6 @@ try{
  const normal=await setup(false);await page.reload();await page.locator('[data-tab="government"]').click();assert.match(await page.locator('.genealogy').innerText(),/待决私人遗产/);await page.locator('[data-ruling="compromise"]').click();await page.locator('#new').click();await page.locator('[data-slot="save"]').click();let saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(saved.factions.caesar.treasury,normal.cash-6);assert.equal(saved.world.dynasties.inheritanceDisputes.find(x=>x.id===normal.estate).status,'resolved');assert.equal(saved.world.characters[normal.heir].wealth+saved.world.characters[normal.beneficiary].wealth+saved.world.dynasties.families[normal.family].wealth,35);
  await page.locator('#new').click();await page.locator('[data-slot="load"]').click();await page.locator('[data-tab="government"]').click();assert.equal(await page.locator('[data-ruling]').count(),0);
- const unclaimed=await setup(true);await page.reload();await page.locator('[data-tab="government"]').click();assert.match(await page.locator('.genealogy').innerText(),/无人领取的遗产转入家族公产/);await page.locator('[data-ruling="will"]').click();await page.locator('#new').click();await page.locator('[data-slot="save"]').click();saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
+ const unclaimed=await setup(true);await page.reload();await page.locator('[data-tab="government"]').click();assert.match(await page.locator('.genealogy').innerText(),/本方已知无人领取时遗产转入家族公产/);await page.locator('[data-ruling="will"]').click();await page.locator('#new').click();await page.locator('[data-slot="save"]').click();saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-save-1')));
  assert.equal(saved.world.dynasties.inheritanceDisputes.find(x=>x.id===unclaimed.estate).choice,'family');assert.equal(saved.world.dynasties.families[unclaimed.family].wealth,35);assert.equal(saved.factions.caesar.treasury,0);assert.deepEqual(errors,[]);console.log('Contested and unclaimed private estates settle through the player interface and survive saving.');
 }finally{await browser.close()}
