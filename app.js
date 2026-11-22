@@ -10,7 +10,7 @@ import {endCampaign} from './achievement-system.js?v=5';
 import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from './achievement-ui.js?v=14';
 import {budgetHtml} from './budget-ui.js?v=36';
 import {holdPosition,strategicRetreat,armySupply,encircled} from './grand-operations.js?v=40';
-import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from './development-ui.js?v=65';
+import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,bindIdeaSelection,openInscriptionEditor} from './development-ui.js?v=66';
 import {drawMap,mapPoint} from './map.js?v=68';
 import {avoidGrandLabelCollisions} from './map-label-layout.js?v=3';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=14';
@@ -198,6 +198,7 @@ function bind(){
   document.querySelectorAll('.report-card[data-event-id]').forEach(el=>el.onclick=e=>{if(e.target.closest('button'))return;const item=state.campaignEvents.find(x=>x.id===el.dataset.eventId);if(item?.regionId)focusRegion(item.regionId)});
   document.querySelectorAll('[data-tree-zoom]').forEach(el=>el.onclick=()=>{treeZoom=Math.max(.75,Math.min(1.3,treeZoom+(el.dataset.treeZoom==='in'?.1:-.1)));const tree=document.querySelector('.dev-cards');tree.style.zoom=treeZoom;tree.dispatchEvent(new Event('scroll'))});
   bindDevelopmentTreeNavigation(document,lang);
+  bindIdeaSelection(document);
   document.querySelectorAll('[data-dev-branch]').forEach(el=>el.onclick=()=>{devBranch=el.dataset.devBranch;render()});
   document.querySelectorAll('[data-research]').forEach(el=>el.onclick=()=>{const r=researchInnovation(state,state.player,el.dataset.researchBranch,el.dataset.research);if(!r.ok)flash(`${lang==='zh'?'无法研究':'Research unavailable'}: ${r.reason}`);else render()});
   document.querySelectorAll('[data-recruit-figure]').forEach(el=>el.onclick=()=>{const r=recruitFigure(state,state.player,el.dataset.recruitFigure);if(!r.ok)flash(`${lang==='zh'?'无法邀请':'Invitation unavailable'}: ${r.reason}`);else render()});

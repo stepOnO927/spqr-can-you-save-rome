@@ -35,16 +35,36 @@ try{
   await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('#entry-file').setInputFiles({name:'parthia.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(state))});
   await page.locator('[data-tab="ideas"]').click();
+  assert.equal(await page.locator('[data-select-idea]').count(),50);
+  assert.equal(await page.locator('.dev-idea-detail:visible').count(),5);
   const expected=lang==='zh'?/过渡完成后预计国库 \/ 月.*\+2 → -1¤.*每月赤字/:/Projected treasury \/ month after transition.*\+2 → -1¤.*Monthly deficit/;
   assert.match(await page.locator('#tech-parthian-arrow-trains .dev-budget-preview').innerText(),expected);
-  if(lang==='en')await page.locator('#tech-parthian-arrow-trains').screenshot({path:`outputs/phase-xiv-budget-forecast-main-${width}.png`});
+  await page.locator('[data-select-idea="legion-training"]').click();
+  assert.equal(await page.locator('#tech-parthian-arrow-trains').isVisible(),false);
+  assert.equal(await page.locator('#tech-legion-training').isVisible(),true);
+  await page.locator('[data-select-idea="reserve-mobilization"]').click();
+  await page.locator('#tech-reserve-mobilization .dev-prereq-link[href="#tech-legion-training"]').click();
+  assert.equal(await page.locator('#tech-legion-training').isVisible(),true);
+  await page.locator('[data-select-idea="parthian-arrow-trains"]').click();
+  if(lang==='en'){
+   await page.locator('#tech-parthian-arrow-trains').screenshot({path:`outputs/phase-xiv-budget-forecast-main-${width}.png`});
+   await page.screenshot({path:`outputs/phase-xiv-ideas-loadout-main-${width}.png`});
+  }
   await page.evaluate(value=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:value})),state);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
   if(width<=700)await page.locator('#mobile-menu').click();
   await page.locator('#development').click();
   await page.locator('[data-dev-page="ideas"]').click();
+  assert.equal(await page.locator('[data-select-idea]').count(),50);
+  assert.equal(await page.locator('.dev-idea-detail:visible').count(),5);
   assert.match(await page.locator('#tech-parthian-arrow-trains .dev-budget-preview').innerText(),expected);
-  if(lang==='en')await page.locator('#tech-parthian-arrow-trains').screenshot({path:`outputs/phase-xiv-budget-forecast-atlas-${width}.png`});
+  await page.locator('[data-select-idea="legion-training"]').click();
+  assert.equal(await page.locator('#tech-legion-training').isVisible(),true);
+  await page.locator('[data-select-idea="parthian-arrow-trains"]').click();
+  if(lang==='en'){
+   await page.locator('#tech-parthian-arrow-trains').screenshot({path:`outputs/phase-xiv-budget-forecast-atlas-${width}.png`});
+   await page.screenshot({path:`outputs/phase-xiv-ideas-loadout-atlas-${width}.png`});
+  }
  }
- console.log(`Phase XIV budget forecast passed in both languages at ${width}px across campaign and atlas.`);
+ console.log(`Phase XIV idea loadout and budget forecast passed in both languages at ${width}px across campaign and atlas.`);
 }finally{await browser.close()}

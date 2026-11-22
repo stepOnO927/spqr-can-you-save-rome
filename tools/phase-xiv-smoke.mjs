@@ -16,6 +16,7 @@ const stepMonth=async()=>{
   await page.locator('#step').click();
   if(reopen)await page.locator('.rail-item.active').click();
 };
+const selectIdea=async id=>page.locator(`[data-select-idea="${id}"]`).click();
 const openAtlasDevelopment=async()=>{
   if(page.viewportSize().width<=700)await page.locator('#mobile-menu').click();
   await page.locator('#development').click();
@@ -99,7 +100,12 @@ try{
   await page.locator('[data-tab="ideas"]').click();
   assert.equal(await page.locator('.dev-category:not(.religion-panel)').count(),5);
   assert.equal(await page.locator('.religion-panel').count(),1);
+  assert.equal(await page.locator('[data-select-idea]').count(),50);
+  assert.equal(await page.locator('.dev-idea-detail:visible').count(),5);
+  await selectIdea('legion-training');
+  console.log('Phase XIV: selected legion training');
   await page.locator('[data-adopt-idea="legion-training"]').first().click();
+  console.log('Phase XIV: started legion training adoption');
   for(let i=0;i<2;i++)await stepMonth();
   assert.match(await page.locator('.dev-slot').first().innerText(),/Legion Field Training/);
   await page.locator('[data-tab="map"]').click();
@@ -151,6 +157,7 @@ try{
     await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
     await page.locator('#entry-file').setInputFiles({name:`replace-${lang}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(replacing))});
     await page.locator('[data-tab="ideas"]').click();
+    await selectIdea('diplomatic-accommodation');
     const replacement=page.locator('[data-adopt-idea="diplomatic-accommodation"][data-slot="0"]');
     assert.equal(await replacement.isEnabled(),true,lang);
     assert.equal(await page.locator('[data-adopt-idea="diplomatic-accommodation"][data-slot="1"]').isDisabled(),true,lang);
@@ -169,6 +176,7 @@ try{
     await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
     await page.locator('#entry-file').setInputFiles({name:`rites-${lang}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(rites))});
     await page.locator('[data-tab="ideas"]').click();
+    await selectIdea('ancestral-rites');
     const button=page.locator('[data-adopt-idea="ancestral-rites"][data-slot="0"]');
     assert.equal(await button.isEnabled(),true,lang);
     await button.click();
@@ -182,11 +190,13 @@ try{
     await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
     await page.locator('#entry-file').setInputFiles({name:`estate-${lang}.json`,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(estate))});
     await page.locator('[data-tab="ideas"]').click();
+    await selectIdea('estate-labor-control');
     const button=page.locator('[data-adopt-idea="estate-labor-control"][data-slot="0"]');
     assert.equal(await button.isEnabled(),true,lang);
     await button.click();
     for(let i=0;i<2;i++)await stepMonth();
     assert.match(await page.locator('.dev-category:not(.religion-panel)').nth(3).locator('.dev-slot').first().innerText(),lang==='zh'?/庄园劳役约束/:/Restrictive Estate Labor/);
+    await selectIdea('negotiated-crop-shares');
     const alternative=page.locator('[data-adopt-idea="negotiated-crop-shares"][data-slot="0"]');
     assert.equal(await alternative.isEnabled(),true,lang);
     await alternative.click();
