@@ -115,6 +115,14 @@ test('a commander is reported missing when his entire fleet sinks without captur
  assert.equal(s.world.characters.antony.missing,undefined);
  assert.ok(s.world.characters.antony.location);
 });
+test('a lost friendly commander receives a bilingual campaign notice',()=>{
+ const s=newGrandGame('senate'),own=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic'),notices=[];
+ own.port=null;own.ships={light:1};own.sailors=65;own.hull=1;own.commanderId='cicero';
+ enemy.port=null;enemy.zone=own.zone;enemy.ships={trireme:4};enemy.sailors=720;
+ resolveBattle(s,own,enemy,own.zone,(_state,en,zh)=>notices.push({en,zh}));
+ assert.equal(own.commanderId,null);
+ assert.ok(notices.some(({en,zh})=>en.includes('commander is missing')&&zh.includes('舰长失联')));
+});
 test('an old save releases a commander stranded on a fleet with no ships',()=>{
  let s=newGrandGame('caesar');const fleet=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
  fleet.ships={};fleet.hull=0;fleet.port=null;fleet.commanderId='antony';
