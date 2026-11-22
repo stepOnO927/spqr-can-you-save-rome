@@ -1,9 +1,9 @@
 import {ROUTES,FACTIONS,REGIONS} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
+import {reportedControl} from './control-intelligence.js?v=family-action-continuity-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=family-action-continuity-1';
 import {activeAgreement} from './agreements.js?v=agreement-courier-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
-import {isDeliveredReport} from './person-knowledge.js?v=control-delivery-1';
+import {isDeliveredReport} from './person-knowledge.js?v=family-action-continuity-1';
 
 // Scout-based strategic warnings between friendly courts.
 // A sender may only forward a dated sighting from its own knowledge. The letter
