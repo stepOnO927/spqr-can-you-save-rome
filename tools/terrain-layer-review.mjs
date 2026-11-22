@@ -28,10 +28,14 @@ try{
  await page.locator('#start-free').click();
  await page.locator('.maplibregl-canvas').waitFor();
  await page.locator('#map-mode').selectOption('terrain');
+ let priorCenter=[12.4,43.2],priorZoom=5.45;
  for(const [name,center,detail] of [['ariminum',[12.6,44.1],'land-elevation-higher'],['po-delta',[12.5,44.8],'land-elevation-higher'],['alexandria',[29.91,31.2],'land-elevation-egypt-higher']]){
   await page.evaluate(async center=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center,zoom:9.05})},center);
-  // A local jump can finish before the temporary charting curtain appears.
-  await page.locator('#map-charting').waitFor({state:'visible',timeout:3000}).catch(()=>{});
+  // Only long jumps show the curtain. For those, wait for its appearance
+  // before checking idle state so a delayed dark frame cannot be captured.
+  if(Math.abs(center[0]-priorCenter[0])+Math.abs(center[1]-priorCenter[1])>=2||Math.abs(9.05-priorZoom)>=1.5)
+   await page.locator('#map-charting').waitFor({state:'visible',timeout:5000});
+  priorCenter=center;priorZoom=9.05;
   await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
   await page.locator('#map-charting').waitFor({state:'hidden',timeout:30000});
   await page.waitForTimeout(1000);
