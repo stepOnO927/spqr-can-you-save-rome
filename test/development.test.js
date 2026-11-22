@@ -29,6 +29,19 @@ test('every building reference has a distinct drawing and names its cited histor
   assert.match(html,/data-building-reference="naval-training"/);
  }
 });
+test('period engineering references name the checked source instead of only its host',()=>{
+ for(const [id,title] of [
+  ['roadmaking','UNESCO, Via Appia. Regina Viarum'],
+  ['bridge-engineering','UNESCO, Via Appia. Regina Viarum'],
+  ['stone-fortification','Musée d’Archéologie nationale, Vercingetorix and Alesia'],
+  ['supply-organization','Javier Salido Dominguez, Architecture in the Service of the Roman Army (2015)']
+ ]){
+  const item=MATERIALS.find(x=>x.id===id);
+  assert.equal(item.source.title,title);
+  assert.match(item.source.url,/^https:\/\//);
+  assert.match(developmentPanel(newGrandGame('senate'),'en','material'),new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+ }
+});
 
 test('agreed grain-dues commutation converts only real surplus after paid adoption',()=>{
  const idea=IDEAS.find(x=>x.id==='grain-dues-commutation'),s=newGrandGame('caesar');

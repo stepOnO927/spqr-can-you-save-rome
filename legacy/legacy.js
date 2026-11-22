@@ -11,7 +11,7 @@ import {stageHandoff} from '../view-handoff.js';
 import {achievementDefinition} from '../achievement-system.js?v=5';
 import {archivePanelHtml} from './archive-ui.js?v=2';
 import {triumphalArchHtml} from './arch-ui.js?v=1';
-import {libraryCodexHtml,bindLibraryCodex} from './library-codex.js?v=10';
+import {libraryCodexHtml,bindLibraryCodex} from './library-codex.js?v=11';
 import {harborOfficeHtml} from './harbor-ui.js?v=1';
 import {commissionMerchantReport,acquireTyrianCloth,settleHarborExchange} from './harbor-trade.js?v=1';
 import {CAMP_DRILL_STAGES,CAMP_DRILL_GRADES,beginCampDrill,answerCampDrill} from './camp-drill.js?v=2';
