@@ -91,6 +91,8 @@ for(let i=0;i<120;i++){
 const paid=autonomous.tradeMarkets.transactions.filter(x=>x.price>0),shipmentById=new Map(autonomous.tradeMarkets.shipments.map(x=>[x.id,x]));
 const ventures=autonomous.tradeMarkets.shipments.filter(x=>x.financierId);
 assert.ok(ventures.length>=2,'named merchants should fund actual autonomous caravans in an ordinary ten-year eastern campaign');
+const multiLegVentures=ventures.filter(x=>x.status==='delivered'&&x.path.length>=3);
+assert.ok(multiLegVentures.length>=1,'a named merchant should independently deliver and settle cargo beyond an adjacent market');
 for(const shipment of ventures){
  assert.ok(autonomous.persons[shipment.financierId]?.name?.[0]);
  assert.ok(shipment.financeCost>0&&shipment.resalePrice>shipment.financeCost);
@@ -112,4 +114,4 @@ for(const tx of resales){
  assert.equal(autonomous.persons[shipment.merchantId]?.profession,'merchant');
  assert.equal(autonomous.tradeMarkets.transactions.filter(entry=>entry.shipment===tx.shipment).length,1,'a resale must settle once');
 }
-console.log(JSON.stringify({...summary,han:{months:120,year:han.year,month:han.month,emperor:han.throne.occupant,markets:Object.keys(han.tradeMarkets.regions).length,shipments:han.tradeMarkets.shipments.length,delivered:hanDelivered},autonomous:{months:120,delivered:paid.length,resales:resales.length,goods:[...new Set(resales.map(x=>x.commodity))],merchantVentures:ventures.length}}));
+console.log(JSON.stringify({...summary,han:{months:120,year:han.year,month:han.month,emperor:han.throne.occupant,markets:Object.keys(han.tradeMarkets.regions).length,shipments:han.tradeMarkets.shipments.length,delivered:hanDelivered},autonomous:{months:120,delivered:paid.length,resales:resales.length,goods:[...new Set(resales.map(x=>x.commodity))],merchantVentures:ventures.length,multiLegVentures:multiLegVentures.length}}));

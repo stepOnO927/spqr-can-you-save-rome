@@ -21,6 +21,16 @@ export const MARKET_HOUSE_MONTHS=24;
 const initialOwner=new Map(REGIONS.map(r=>[r.id,r.owner]));
 const network=new Map(REGIONS.map(r=>[r.id,[]]));
 for(const link of ROUTES){network.get(link.a)?.push({next:link.b,months:link.months});network.get(link.b)?.push({next:link.a,months:link.months})}
+// A merchant can seek a public buyer beyond the next market. These are only
+// route candidates: the actual treaty, passage, demand and funded bid are
+// still checked by quoteEasternTrade before any money or stock changes.
+const ventureMarkets=new Map(REGIONS.map(r=>{
+ const visited=new Map([[r.id,0]]),queue=[r.id];
+ for(const current of queue){const depth=visited.get(current);if(depth>=3)continue;
+  for(const link of network.get(current)||[])if(!visited.has(link.next)){visited.set(link.next,depth+1);queue.push(link.next)}
+ }
+ return [r.id,queue.slice(1)];
+}));
 
 // AI route estimates use its dated control reports and the opening map where
 // no report exists. Hidden enemy armies can still stop the actual shipment.
@@ -657,8 +667,9 @@ function advanceEasternMarketAI(s){
 }
 
 // Successful carriers can risk accumulated personal wealth on a small public
-// treaty bid, including from a foreign market where their previous caravan
-// ended. An unknown change of controller cannot direct their choice.
+// treaty bid across up to three actual legs, including from a foreign market
+// where their previous caravan ended. An unknown change of controller cannot
+// direct their choice.
 export function advanceEasternMerchantVentures(s){
  const markets=initializeEasternMarkets(s),orders=[];
  if(s.finalized||s.month%3!==0)return orders;
@@ -669,11 +680,11 @@ export function advanceEasternMerchantVentures(s){
    if(!person?.alive||person.faction!==faction||!site?.owner||site.owner===s.player||!item||!COMMODITIES[good]||(person.marketReputation||0)<1||(person.wealth||0)<4||markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status)))continue;
    if(item.stock<=Math.max(4,item.production*2,item.consumption*3))continue;
    const options=[];
-   for(const link of network.get(origin)||[]){
-    const destination=region(s,link.next),buyer=destination?.owner,seller=site.owner;
+   for(const destinationId of ventureMarkets.get(origin)||[]){
+    const destination=region(s,destinationId),buyer=destination?.owner,seller=site.owner;
     if(!buyer||buyer===seller||buyer===s.player||seller===s.player||!s.factions[buyer]||((s.intel?.[faction]?.[destination.id]?.owner??initialOwner.get(destination.id))!==buyer)||!tradeTreaty(s,faction,buyer)||!tradeTreaty(s,faction,seller)||atWar(s,faction,buyer)||atWar(s,faction,seller))continue;
     const request={seller,buyer,origin,destination:destination.id,commodity:good,quantity:1,financierId:id},quote=quoteEasternTrade(s,request);
-    if(quote.ok)options.push({request,quote});
+    if(quote.ok&&quote.path.length<=4)options.push({request,quote});
    }
    options.sort((a,b)=>b.quote.margin-a.quote.margin||a.quote.months-b.quote.months);
    if(!options.length)continue;

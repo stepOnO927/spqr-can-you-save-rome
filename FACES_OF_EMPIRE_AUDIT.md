@@ -15,7 +15,8 @@ reload. Loss of the commandery or an intervening change of office cancels the
 search. Autonomous Han courts fund one weak or proven-corrupt office search
 when the treasury permits. Focused unit tests cover timing, cancellation, tax
 effect and privacy; the cloud Chromium smoke now exercises the bilingual
-player flow, save/load and actual change of office. Cloud results are pending.
+player flow, save/load and actual change of office. Chromium group 2 passed in
+GitHub Actions run 45055145162.
 
 Han commanderies now have persistent, distinctly named original game
 administrators with appointment histories and stable portrait seeds. Their
@@ -1470,6 +1471,12 @@ purchase. The source court receives the merchant's money immediately; customs
 and transport settle through the existing route ledger. The destination buyer
 pays the merchant only on arrival. If raiders destroy the cargo, the buyer's
 reserved bid is refunded and the merchant loses the paid goods and carriage.
+Autonomous merchants now consider treaty buyers up to three real route legs
+away, instead of stopping at the adjacent market. Each candidate still passes
+the existing passage, war, demand, capital and route quote before dispatch.
+The ten-year no-player simulation now requires a completed multi-leg private
+delivery and balances its goods and payments; a focused case checks a stale
+control report, the two-leg journey and one settlement after reload.
 Saved shipments record financier, cost, bid and settlement; the bilingual
 market screen offers eligible player merchants an actual action with quoted
 capital, travel time and margin. AI merchants may invest at treaty markets,
@@ -1479,7 +1486,7 @@ all-AI campaign completes three such merchant-owned deliveries while balancing
 every commodity after every turn. Unit checks cover payment conservation,
 customs, raid loss, invalid requests, foreign sourcing and save/load. The new
 Chromium flow verifies a player-ordered venture and its bilingual receipt in
-GitHub Actions; cloud results remain to be collected. Wider private-network
+GitHub Actions run 45055145162 passed all three browser groups. Wider private-network
 competition and additional commodity resale chains remain open.
 
 ## Existing foundations

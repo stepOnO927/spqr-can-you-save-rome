@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-name-disagreement-1';
 import {createMarketMerchant} from '../han/field-identities.js';
 import {propose,setRelation} from '../han/frontier.js?v=han-1';
-import {advanceEasternMarkets,placeEasternTrade,quoteEasternTrade} from '../han/markets.js?v=faces-wheels-1';
+import {advanceEasternMarkets,advanceEasternMerchantVentures,placeEasternTrade,quoteEasternTrade} from '../han/markets.js?v=faces-wheels-1';
 import {roll} from '../han/util.js?v=han-1';
 
 const next=s=>{if(++s.month>12){s.month=1;s.year++}advanceEasternMarkets(s)};
@@ -80,6 +80,37 @@ test('an AI merchant invests on a known adjacent treaty bid without a player ord
  const loaded=loadHanSave(serialize(s));next(loaded);
  assert.equal(loaded.tradeMarkets.shipments.find(x=>x.id===shipments[0].id).status,'delivered');
  assert.equal(loaded.tradeMarkets.regions.kangju.goods.horses.stock,1);
+});
+
+test('an AI merchant can fund a two-leg venture to a reported treaty buyer',()=>{
+ let s=newHanGame('han',{seed:49});s.month=3;
+ setRelation(s,'dayuan','qiuci',80);assert.equal(propose(s,'dayuan','qiuci','market').proposal.status,'accepted');
+ const id=createMarketMerchant(s,'dayuan','dayuan'),merchant=s.persons[id];merchant.wealth=100;merchant.marketReputation=1;merchant.specialization='horses';
+ s.tradeMarkets.merchants.dayuan=[id];s.tradeMarkets.regions.dayuan.goods.horses.stock=20;
+ Object.assign(s.tradeMarkets.regions.qiuci.goods.horses,{stock:0,production:0,consumption:0});
+ const before={seller:s.factions.dayuan.treasury,buyer:s.factions.qiuci.treasury,merchant:merchant.wealth};
+ s.intel.dayuan||={};s.intel.dayuan.qiuci={owner:'kangju',armies:[],month:s.month,year:s.year};
+ assert.deepEqual(advanceEasternMerchantVentures(s),[],'a conflicting control report cannot direct the venture');
+ assert.deepEqual({seller:s.factions.dayuan.treasury,buyer:s.factions.qiuci.treasury,merchant:merchant.wealth},before);
+ s.intel.dayuan.qiuci.owner='qiuci';
+ const [shipment]=advanceEasternMerchantVentures(s);assert.ok(shipment);
+ assert.deepEqual(shipment.path,['dayuan','shule','qiuci']);assert.equal(shipment.financierId,id);
+ assert.equal(s.factions.dayuan.treasury,before.seller+shipment.price);assert.equal(s.factions.qiuci.treasury,before.buyer-shipment.resalePrice);
+ s=loadHanSave(serialize(s));for(let i=0;i<shipment.legs.reduce((sum,leg)=>sum+leg.months,0);i++)next(s);
+ const saved=s.tradeMarkets.shipments.find(entry=>entry.id===shipment.id);
+ assert.equal(saved.status,'delivered');assert.equal(saved.buyerEscrow,0);
+ assert.equal(s.tradeMarkets.regions.qiuci.goods.horses.stock,1);
+ assert.equal(s.tradeMarkets.transactions.filter(entry=>entry.shipment===shipment.id).length,1);
+});
+
+test('war prevents a distant merchant venture before any payment or cargo moves',()=>{
+ const s=newHanGame('han',{seed:49});s.month=3;setRelation(s,'dayuan','qiuci',80);assert.equal(propose(s,'dayuan','qiuci','market').proposal.status,'accepted');
+ const id=createMarketMerchant(s,'dayuan','dayuan'),merchant=s.persons[id];merchant.wealth=100;merchant.marketReputation=1;merchant.specialization='horses';
+ s.tradeMarkets.merchants.dayuan=[id];s.tradeMarkets.regions.dayuan.goods.horses.stock=20;
+ Object.assign(s.tradeMarkets.regions.qiuci.goods.horses,{stock:0,production:0,consumption:0});
+ s.wars.push(['dayuan','qiuci']);const before={seller:s.factions.dayuan.treasury,buyer:s.factions.qiuci.treasury,merchant:merchant.wealth,stock:s.tradeMarkets.regions.dayuan.goods.horses.stock};
+ assert.deepEqual(advanceEasternMerchantVentures(s),[]);
+ assert.deepEqual({seller:s.factions.dayuan.treasury,buyer:s.factions.qiuci.treasury,merchant:merchant.wealth,stock:s.tradeMarkets.regions.dayuan.goods.horses.stock},before);
 });
 
 test('a merchant venture pays actual transit customs and balances all money over a long route',()=>{
