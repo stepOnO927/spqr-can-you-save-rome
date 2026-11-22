@@ -1,12 +1,12 @@
-import {legendDossier,legendName,grantLegendHonor,EPITHETS} from './legend.js?v=estate-records-1';
-import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=estate-records-1';
+import {legendDossier,legendName,grantLegendHonor,EPITHETS} from './legend.js?v=estate-notice-1';
+import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=estate-notice-1';
 import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=saved-age-consistency-1';
-import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,revokeWill,resolveInheritanceDispute,retryEstateTransfer,reclaimEstateTransfer,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=estate-records-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=estate-records-1';
+import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,revokeWill,resolveInheritanceDispute,retryEstateTransfer,reclaimEstateTransfer,retryEstateRulingNotice,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=estate-notice-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=estate-notice-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=born-portrait-thirteen-1';
-import {visiblePersonName} from './character-system.js?v=estate-records-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=estate-records-1';
+import {visiblePersonName} from './character-system.js?v=estate-notice-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=estate-notice-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);
@@ -131,6 +131,11 @@ export function bindGenealogy(root,s,zh=false,onChange=()=>{}){
   root.querySelector('.gene-tools').insertAdjacentHTML('beforebegin',`<div class="rule-block" data-estate-transfers><h4>${zh?'跨境遗产交接':'CROSS-BORDER ESTATE HANDOVERS'}</h4><p class="hint">${zh?'份额在完成交接前保留在托管中。通常需四个月；没有回信可能是书信遗失、联系人不可用或局势变化，并不证明原因。未答复时可以重试，或将托管份额收回家族公产。':'Shares stay in escrow until handover is completed. Replies normally take four months; silence may reflect lost correspondence, an unavailable contact or changed circumstances and does not establish the cause. After no reply, retry or return the held share to the family estate.'}</p>${estateTransfers.map(x=>`<p data-estate-transfer="${escape(x.id)}">${escape(storedCorrespondentName(x.recipient,x.recipientName)[zh?1:0])} · ${zh?'份额':'Share'} ${escape(x.amount)} · ${escape(status[x.status]?.[zh?1:0]||(zh?'未知':'Unknown'))}${x.status==='pending'?` · ${escape(x.remaining)} ${zh?'个月':'months'}`:''}${x.status==='no_reply'?` <button data-estate-retry="${escape(x.id)}">${zh?'重新寄送':'Retry'}</button> <button data-estate-reclaim="${escape(x.id)}">${zh?'收回托管份额':'Reclaim held share'}</button>`:''}</p>`).join('')}<p data-estate-transfer-feedback role="status"></p></div>`);
   root.querySelectorAll('[data-estate-retry]').forEach(button=>button.onclick=()=>{const result=retryEstateTransfer(s,button.dataset.estateRetry);if(result.ok)onChange();else root.querySelector('[data-estate-transfer-feedback]').textContent=zh?'无法重试此交接。':'This handover cannot be retried.'});
   root.querySelectorAll('[data-estate-reclaim]').forEach(button=>button.onclick=()=>{const result=reclaimEstateTransfer(s,button.dataset.estateReclaim);if(result.ok)onChange();else root.querySelector('[data-estate-transfer-feedback]').textContent=zh?'无法收回此份额。':'This share cannot be reclaimed.'});
+ }
+ const estateNotices=(s.world.dynasties.estateRulingNotices||[]).filter(x=>x.faction===s.player),shownNotices=[...estateNotices.filter(x=>x.status==='pending'||x.status==='no_reply'),...estateNotices.filter(x=>x.status==='delivered').slice(-10)];
+ if(shownNotices.length){
+  root.querySelector('.gene-tools').insertAdjacentHTML('beforebegin',`<div class="rule-block" data-estate-notices><h4>${zh?'跨境裁决通知':'CROSS-BORDER RULING NOTICES'}</h4><p class="hint">${zh?'外国人物及其宫廷只有在通知和回信抵达后才会产生可见反应，通常需要四个月。书信可能遗失，或对方不愿、不能回复；无回信不能说明原因。':'A foreign response becomes visible only after notification and a reply, normally four months. Letters can be lost or a recipient may decline or be unable to reply; silence does not establish why.'}</p>${shownNotices.map(x=>`<p data-estate-notice="${escape(x.id)}">${escape(storedCorrespondentName(x.recipient,x.recipientName)[zh?1:0])} · ${escape(x.status==='pending'?(zh?'等待回信':'Awaiting reply'):x.status==='delivered'?(zh?'已收到回信':'Reply received'):(zh?'未收到回信':'No reply'))}${x.status==='pending'?` · ${escape(x.remaining)} ${zh?'个月':'months'}`:''}${x.status==='no_reply'?` <button data-estate-notice-retry="${escape(x.id)}">${zh?'重新寄送':'Retry'}</button>`:''}</p>`).join('')}<p data-estate-notice-feedback role="status"></p></div>`);
+  root.querySelectorAll('[data-estate-notice-retry]').forEach(button=>button.onclick=()=>{const result=retryEstateRulingNotice(s,button.dataset.estateNoticeRetry);if(result.ok)onChange();else root.querySelector('[data-estate-notice-feedback]').textContent=zh?'无法重寄此通知。':'This notice cannot be retried.'});
  }
  const ownFamilies=Object.values(s.world.dynasties.families).filter(f=>Object.values(s.world.characters).some(c=>c.alive&&c.faction===s.player&&c.familyId===f.id));
  const ownLoans=(s.world.dynasties.familyLoans||[]).filter(loan=>loan.faction===s.player&&loan.remaining>0);
