@@ -95,6 +95,7 @@ jobs:
               node tools/peace-mail-courier-smoke.mjs
               node tools/imperium-smoke.mjs
               node tools/fort-intelligence-smoke.mjs
+              node tools/control-delivery-smoke.mjs
               node tools/warning-ledger-smoke.mjs
               node tools/chronicle-person-smoke.mjs
               node tools/unknown-person-smoke.mjs

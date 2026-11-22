@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,diplomacy,answerPeaceOffer,replyToLetter,upgradeSave,isWar} from '../engine.js?v=frontier-review-1';
-import {syncPeaceLetters,receivedMail,advanceMail,sendLetter} from '../epistulae.js?v=frontier-review-1';
-import {mailboxHtml} from '../mail-ui.js?v=frontier-review-1';
+import {newGame,tick,diplomacy,answerPeaceOffer,replyToLetter,upgradeSave,isWar} from '../engine.js?v=control-delivery-1';
+import {syncPeaceLetters,receivedMail,advanceMail,sendLetter} from '../epistulae.js?v=control-delivery-1';
+import {mailboxHtml} from '../mail-ui.js?v=control-delivery-1';
 
 function arrival(seed){
  const s=newGame('caesar');s.seed=seed;assert.ok(diplomacy(s,'parthia','caesar','war'));
