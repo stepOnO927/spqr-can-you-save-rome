@@ -8,6 +8,7 @@ import {rememberPoliticalEvent} from './political-memory.js?v=world-kings-region
 import {canMediate,requestMediation} from './civil-war.js?v=world-kings-regional-types-1';
 import {voteCoalitionMotion} from './coalition-motions.js?v=world-kings-regional-types-1';
 import {storedCorrespondentName} from './person-knowledge.js?v=world-kings-regional-types-1';
+import {earnedEpithets,legendName} from './legend.js?v=world-kings-regional-types-1';
 import {answerCoalitionAidRequest,COALITION_AID} from './coalition-assistance.js?v=world-kings-regional-types-1';
 
 const monthIndex = (year, month) => year * 12 + month;
@@ -99,7 +100,7 @@ export function sendLetter(s, spec) {
   const id = 'mail:' + mail.nextId++;
   const letter = {
     id, threadId:spec.threadId || id, senderId:senderId || null, senderInstitution:senderInstitution || null,
-    senderFaction, recipient, senderName:senderId ? name(senderId) : name(senderFaction),
+    senderFaction, recipient, senderName:senderId && category==='personal' && senderFaction===recipient && earnedEpithets(s,senderId,recipient).length ? [legendName(s,senderId,'en',recipient),legendName(s,senderId,'zh',recipient)] : senderId ? name(senderId) : name(senderFaction),
     senderPortrait:portrait(s,senderId),
     subject:spec.subject, body:spec.body, category, priority:spec.priority || 'routine',
     created:{year:s.year, month:s.month}, arrival:sent + travel, courierSeed:(s.seed??0)>>>0,

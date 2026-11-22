@@ -1,4 +1,5 @@
 import {isDeliveredReport} from './person-knowledge.js?v=world-kings-regional-types-1';
+import {advanceLegend} from './legend.js?v=world-kings-regional-types-1';
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=world-kings-regional-types-1';
 import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncCoalitionAdmissionLetters,syncCoalitionMotionLetters,syncCoalitionAidLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=world-kings-regional-types-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=world-kings-regional-types-1';
@@ -597,7 +598,7 @@ export function resolveBattle(s,attacker,defender,target){
   const lossA=Math.min(attacker.men,Math.round(defender.men*(attackerWins?.19:.31)*(powerD/powerA)**.25));
   const lossD=Math.min(defender.men,Math.round(attacker.men*(attackerWins?.34:.19)*(powerA/powerD)**.25));
   s.nextBattle??=(s.battles?.length||0)+1;
-  const report={id:`battle:${s.nextBattle++}`,year:s.year,month:s.month,region:target.id,attacker:{id:attacker.id,name:[...attacker.name],commander:[...attacker.commander],owner:attacker.owner,men:attacker.men,morale:attacker.morale,food:s.factions[attacker.owner].food,power:Math.round(powerA),supply:supplyA,command:commandA},defender:{id:defender.id,name:[...defender.name],commander:[...defender.commander],owner:defender.owner,men:defender.men,morale:defender.morale,food:s.factions[defender.owner].food,power:Math.round(powerD),supply:supplyD,command:commandD,stance:stanceD},terrain:target.terrain,fort:target.fort,roll,attackerWins,lossA,lossD};
+  const report={id:`battle:${s.nextBattle++}`,year:s.year,month:s.month,region:target.id,attacker:{id:attacker.id,name:[...attacker.name],commander:[...attacker.commander],characterId:attacker.characterId||null,owner:attacker.owner,men:attacker.men,morale:attacker.morale,food:s.factions[attacker.owner].food,power:Math.round(powerA),supply:supplyA,command:commandA},defender:{id:defender.id,name:[...defender.name],commander:[...defender.commander],characterId:defender.characterId||null,owner:defender.owner,men:defender.men,morale:defender.morale,food:s.factions[defender.owner].food,power:Math.round(powerD),supply:supplyD,command:commandD,stance:stanceD},terrain:target.terrain,fort:target.fort,roll,attackerWins,lossA,lossD};
   (s.battles ||= []).unshift(report);
   attacker.men-=lossA;defender.men-=lossD;for(const unit of [attacker,defender]){const person=s.world.characters[unit.characterId];if(person?.alive)person.battlesCommanded=(Number.isFinite(person.battlesCommanded)?person.battlesCommanded:0)+1}battlefieldWound(s,attacker);battlefieldWound(s,defender);
   attacker.morale=Math.max(20,attacker.morale+(attackerWins?7:-16));
@@ -1048,6 +1049,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   advanceRomanDefeat(s);if(!s.defeat){advanceRomanVictory(s);advancePeacefulSettlement(s)}
   advanceHanWorld(s);
   advanceWheels(s,{forecast:forecastEconomy});
+  advanceLegend(s);
   chronicleLetters(s,recordCampaignTurn(s,chronicleBefore));
   advanceMailReports(s);
   return s;

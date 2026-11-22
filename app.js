@@ -1,3 +1,4 @@
+import {setLegendMode} from './legend.js?v=world-kings-regional-types-1';
 import './version-ui.js';
 import {analytics} from './analytics.js';
 import {sendAgreementProposal} from './agreement-negotiations.js?v=world-kings-regional-types-1';

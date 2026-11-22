@@ -12,7 +12,7 @@ function step(s,n=1){for(let i=0;i<n;i++){s.month++;if(s.month>12){s.month=1;s.y
 test('regional courts may recover after a delay using explicitly fictional nominees and real funds',()=>{
  for(const [faction,original] of Object.entries(states)){
   const s=setup(faction);assert.equal(deriveGovernment(s,faction).kind,'vacant');const balance=s.factions[faction].treasury;step(s,6);assert.deepEqual(s.world.leadership[faction],[]);assert.equal(s.factions[faction].treasury,balance);
-  step(s);const id=s.world.leadership[faction][0],person=s.world.characters[id];assert.match(id,/^fictional:/);assert.equal(CHARACTER_CATALOG[id].fictional,true);assert.match(CHARACTER_CATALOG[id].name[0],/^Fictional /);assert.deepEqual(person.parents,[]);assert.deepEqual(person.adoptiveParents,[]);assert.equal(s.factions[faction].treasury,balance-5);assert.equal(deriveGovernment(s,faction).kind,'normal');
+  step(s);const id=s.world.leadership[faction][0],person=s.world.characters[id];assert.match(id,/^fictional:/);assert.equal(CHARACTER_CATALOG[id].fictional,true);assert.ok(CHARACTER_CATALOG[id].regnalName?.[0]);assert.deepEqual(person.parents,[]);assert.deepEqual(person.adoptiveParents,[]);assert.equal(s.factions[faction].treasury,balance-5);assert.equal(deriveGovernment(s,faction).kind,'normal');
   const life=s.world.dynasties.lives[id];assert.ok(life.some(x=>/fictional court nominee/.test(x.en)));assert.ok(!life.some(x=>x.en==='Born in the simulated campaign.'));
   assert.deepEqual(knownLeaders(s,'caesar',faction),[original]);assert.ok(!reportedHealthSubjects(s,'caesar',faction).includes(id));assert.ok(!s.log.some(x=>x.en.includes(CHARACTER_CATALOG[id].name[0])));
  }
