@@ -653,6 +653,33 @@ test('a year-long closed route expires pending knowledge without trapping resear
  assert.equal(researchInnovation(restored,'caesar','material','water-control').ok,true);
 });
 
+test('knowledge trade controls follow the real civilian route in both languages',()=>{
+ const s=newGrandGame('caesar');s.wars=[];s.relations['caesar:egypt']=50;
+ s.factions.caesar.treasury=500;s.factions.egypt.treasury=500;
+ const owners=new Map(s.regions.map(r=>[r.id,r.owner]));
+ for(const region of s.regions)region.owner='rebels';
+ s.regions.find(r=>r.id==='cisalpine').owner='caesar';s.regions.find(r=>r.id==='egypt').owner='egypt';
+ const closed=upgradeSave(structuredClone(s));
+ assert.equal(knowledgeTrade(closed,'caesar','egypt','material','water-control').reason,'access');
+ assert.equal(sellKnowledge(closed,'caesar','egypt','material','roadmaking').reason,'access');
+ for(const [lang,note] of [['en','No civilian route'],['zh','民间通道中断']]){
+  const html=developmentPanel(closed,lang,'material');
+  assert.match(html,new RegExp(note));
+  assert.match(html,/data-trade-seller="egypt"[^>]*disabled/);
+  assert.match(html,/data-exchange-partner='egypt'[^>]*disabled/);
+  assert.match(html,/data-sell-buyer="egypt"[^>]*disabled/);
+ }
+ closed.development.caesar.offers.push({seller:'egypt',branch:'material',id:'water-control',remaining:4});
+ for(const lang of ['en','zh'])assert.match(developmentPanel(closed,lang,'material'),/data-accept-offer-seller="egypt"[^>]*disabled/);
+ for(const region of closed.regions)region.owner=owners.get(region.id);
+ const open=developmentPanel(closed,'en','material');
+ assert.doesNotMatch(open,/data-trade-seller="egypt"[^>]*disabled/);
+ assert.doesNotMatch(open,/data-exchange-partner='egypt'[^>]*disabled/);
+ assert.doesNotMatch(open,/data-sell-buyer="egypt"[^>]*disabled/);
+ assert.doesNotMatch(open,/data-accept-offer-seller="egypt"[^>]*disabled/);
+ assert.equal(knowledgeTrade(closed,'caesar','egypt','material','water-control').ok,true);
+});
+
 test('granaries hold finite provincial food, buffer shortages, and migrate old national storage without duplication',()=>{
  const built=newGrandGame('egypt');
  assert.equal(startConstruction(built,'egypt','egypt','granary').ok,true);

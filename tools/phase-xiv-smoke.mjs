@@ -440,14 +440,14 @@ try{
   await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
   await page.locator('#entry-file').setInputFiles({name:'blocked-knowledge.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(blockedTrade))});
   await page.locator('[data-tab="development"]').click();
-  await page.locator('[data-trade-seller="egypt"][data-trade-id="water-control"]').click();
-  assert.match(await page.locator('.toast').innerText(),/No civilian route for knowledge transfer/);
+  assert.equal(await page.locator('[data-trade-seller="egypt"][data-trade-id="water-control"]').isDisabled(),true);
+  assert.match(await page.locator('.inspector').innerText(),/No civilian route/);
   await page.evaluate(()=>localStorage.setItem('spqr-lang','zh'));
   await page.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state})),blockedTrade);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
   await openAtlasDevelopment();
-  await page.locator('[data-trade-seller="egypt"][data-trade-id="water-control"]').click();
-  assert.match(await page.locator('#command-detail').innerText(),/没有可通行的知识传递路线/);
+  assert.equal(await page.locator('[data-trade-seller="egypt"][data-trade-id="water-control"]').isDisabled(),true);
+  assert.match(await page.locator('#command-detail').innerText(),/民间通道中断/);
   const incomingKnowledge=newGrandGame('caesar');incomingKnowledge.relations['caesar:egypt']=60;incomingKnowledge.factions.caesar.treasury=300;
   assert.equal(knowledgeTrade(incomingKnowledge,'caesar','egypt','material','water-control').ok,true);
   for(const language of ['en','zh']){
