@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=marriage-economy-merge-1';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=finance-history-merge-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 import {assignSuccession,successionModel} from '../characters.js?v=succession-ui-recovery-1';
-import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=marriage-economy-merge-1';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=marriage-economy-merge-1';
-import {canHoldOffice} from '../office-system.js?v=marriage-economy-merge-1';
-import {renderGenealogy} from '../genealogy-ui.js?v=life-record-dates-1';
-import {finalizeCampaign} from '../legacy.js?v=marriage-economy-merge-1';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=finance-history-merge-1';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=finance-history-merge-1';
+import {canHoldOffice} from '../office-system.js?v=finance-history-merge-1';
+import {renderGenealogy} from '../genealogy-ui.js?v=finance-history-merge-1';
+import {finalizeCampaign} from '../legacy.js?v=finance-history-merge-1';
 import {startDynasticWar} from '../civil-war.js?v=mutual-audience-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=missing-fate-privacy-1';
 import fs from 'node:fs';
@@ -411,3 +411,5 @@ test('AI families can marry and have children in an extended seeded campaign',()
 });
 
 test('player cross-border marriage cannot bypass delayed correspondence',()=>{const s=newGame('caesar'),a=createFictionalPerson(s,{name:['A','甲'],faction:'caesar',birthYear:-80,sex:'male'}),b=createFictionalPerson(s,{name:['B','乙'],faction:'egypt',birthYear:-78,sex:'female'});for(const change of [()=>{},()=>{s.world.characters[b].alive=false},()=>{s.world.characters[b].spouse='cleopatra'}]){change();assert.equal(proposeMarriage(s,a,b).reason,'correspondence');assert.equal(s.world.characters[a].spouse,null)}});
+
+test('family finance respects zero loyalty, reputation and influence',()=>{const s=newGame('caesar'),leader=s.world.characters['fictional:1'],family=s.world.dynasties.families[leader.familyId];family.leader=leader.id;family.wealth=20;family.reputation=0;family.influence=0;leader.loyalty=0;const treasury=s.factions.caesar.treasury;assert.equal(requestFamilyResources(s,family.id,'loan').reason,'terms');assert.equal(s.factions.caesar.treasury,treasury);s.world.dynasties.seed=1;assert.ok(requestFamilyResources(s,family.id,'donation').ok);assert.equal(family.reputation,2);assert.equal(family.influence,3);assert.equal(leader.loyalty,2)});
