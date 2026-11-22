@@ -31,6 +31,36 @@ test('new reports trigger reassessment without revealing hidden foreign changes'
  assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),signature);
 });
 
+test('a delivered strength report triggers review while an undelivered one does not',()=>{
+ const s=newGame('caesar'),copy=structuredClone(s),before=opportunityEvidenceSignature(s,'parthia');
+ const report={kind:'strength',value:17000,source:'spy',year:s.year+1,month:s.month,observationYear:s.year,observationMonth:s.month};
+ copy.knowledge.parthia.armenia.reports.push(report);
+ assert.equal(opportunityEvidenceSignature(copy,'parthia'),before);
+ report.year=s.year;
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),before);
+ assert.notEqual(estimatedStrength(copy,'parthia','armenia'),estimatedStrength(s,'parthia','armenia'));
+});
+
+test('a reported frontier change triggers review without exposing an unseen change',()=>{
+ const s=newGame('caesar'),copy=structuredClone(s),signature=opportunityEvidenceSignature(s,'parthia');
+ const region=copy.regions.find(r=>r.id==='armenia');assert.ok(region);
+ region.owner='egypt';
+ assert.equal(opportunityEvidenceSignature(copy,'parthia'),signature);
+ copy.controlKnowledge.parthia.armenia={owner:'egypt',year:copy.year,month:copy.month};
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),signature);
+ assert.ok(assessOpportunities(copy,'parthia',estimatedStrength).some(x=>x.target==='egypt'&&x.border));
+});
+
+test('relations and alliances trigger only the participating court’s review',()=>{
+ const s=newGame('caesar'),copy=structuredClone(s),parthia=opportunityEvidenceSignature(s,'parthia'),caesar=opportunityEvidenceSignature(s,'caesar');
+ copy.relations['armenia:parthia']=(copy.relations['armenia:parthia']||0)+10;
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),parthia);
+ assert.equal(opportunityEvidenceSignature(copy,'caesar'),caesar);
+ const after=opportunityEvidenceSignature(copy,'parthia');copy.alliances.push(['armenia','parthia']);
+ assert.notEqual(opportunityEvidenceSignature(copy,'parthia'),after);
+ assert.equal(opportunityEvidenceSignature(copy,'caesar'),caesar);
+});
+
 test('AI cannot use sightings before delivery or treat old observations as fresh',()=>{
  const s=newGame('caesar');s.knowledge.parthia.armenia.sightings={};
  const assessment=x=>assessOpportunities(x,'parthia',estimatedStrength).find(a=>a.target==='armenia');

@@ -6,6 +6,20 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `03213276` is integrated. Its strategic planner now refreshes
+only on delivered strength, frontier-control, or relevant diplomatic evidence;
+three focused AI evidence regressions survive the merge. The focused
+strategic suite passes 31/31. The full local suite passes 1,288/1,288 when
+run serially. A parallel run passed 1,287/1,288, with only the existing
+NPC-East CPU timing threshold exceeded on this Windows host; its isolated
+file passes 9/9. Cloud checks for the merge follow.
+
+The prior head `205e3f9f` passed all five GitHub Actions workflows, including
+all three browser groups. The reported-name browser flow now creates its
+intended third, same-month conflicting report; a prior merge had dropped that
+fixture while keeping its conflict assertions. Group 3 confirmed dated
+report inspection and save/load without revealing the hidden current name.
+
 Main through `480a52ca` is integrated. Conflicting reports of one person's
 name in the same latest month remain visibly uncertain; the atlas identity
 panel cannot call that disagreement corroborated. The reported-name browser
