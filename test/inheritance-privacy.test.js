@@ -51,3 +51,17 @@ test('an inheritance record uses the recipient court’s reported name of the de
  for(let seed=1;seed<100&&!delivered;seed++){const candidate=upgradeSave(structuredClone(s)),transfer=candidate.world.dynasties.estateTransfers[0];transfer.courierSeed=seed;for(let i=0;i<4;i++){if(++candidate.month>12){candidate.month=1;candidate.year++}advanceEstateTransfers(candidate)}if(transfer.status==='delivered')delivered=candidate}
  assert.ok(delivered);const event=delivered.world.dynasties.lives[own].at(-1);assert.match(event.zh,/报告姓名/);assert.doesNotMatch(event.zh,/秘密姓名/);assert.equal(delivered.world.characters[own].wealth,36);
 });
+
+
+test('final archive retains recorded estate information without revealing a foreign identity or courier secrets',async()=>{
+ const {s,own,foreign}=foreignSpouses();assert.ok(makeWill(s,own,foreign).ok);
+ createFictionalPerson(s,{name:['Child','子女'],faction:'caesar',birthYear:-60,parents:[own]});
+ s.world.characters[own].alive=false;settleInheritance(s,own);
+ const dispute=s.world.dynasties.inheritanceDisputes.at(-1);assert.ok(dispute);
+ const {resolveInheritanceDispute}=await import('../dynasties.js?v=estate-courier-1');assert.ok(resolveInheritanceDispute(s,dispute.id,'will').ok);
+ s.world.dynasties.inheritanceDisputes.push({...dispute,id:'old-case',beneficiaryName:undefined});
+ s.victory=true;const {finalizeCampaign}=await import('../legacy.js?v=estate-courier-1');const archive=finalizeCampaign(s).archive;
+ assert.deepEqual(archive.inheritanceCases[0].beneficiaryName,['Reported','报告姓名']);assert.deepEqual(archive.inheritanceCases[1].beneficiaryName,['Unrecorded name','姓名未记录']);
+ assert.equal(archive.estateTransfers[0].status,'pending');assert.equal(archive.estateTransfers[0].amount,24);assert.deepEqual(archive.estateTransfers[0].recipientName,['Reported','报告姓名']);
+ assert.equal('courierSeed' in archive.estateTransfers[0],false);assert.doesNotMatch(JSON.stringify([archive.inheritanceCases,archive.estateTransfers]),/秘密姓名/);
+});
