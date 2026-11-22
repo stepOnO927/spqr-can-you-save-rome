@@ -4,6 +4,28 @@ import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.j
 import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=world-kings-regional-types-1';
 import {drawMap} from '../map.js?v=world-kings-regional-types-1';
 import {advanceMovements} from '../movements.js?v=world-kings-regional-types-1';
+import {buildChessboard} from '../chessboard.js?v=world-kings-regional-types-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=world-kings-regional-types-1';
+import {observeBalanceOfPower} from '../coalitions.js?v=world-kings-regional-types-1';
+
+test('undelivered frontier control cannot reveal contacts, chessboard threats or AI balance',()=>{
+ const base=newGame('caesar');delete base.controlKnowledge.caesar.italiaN;
+ base.relations['caesar:parthia']=-40;base.wars.push(['armenia','parthia']);
+ const future=structuredClone(base);future.controlKnowledge.caesar.italiaN={owner:'parthia',year:future.year,month:future.month,receivedYear:future.year+1,receivedMonth:future.month};
+ assert.equal(reportedControl(future,'caesar','italiaN'),null);
+ assert.deepEqual(buildChessboard(future),buildChessboard(base));
+ observeDiplomacy(base);observeDiplomacy(future);
+ assert.deepEqual(future.world.diplomaticKnowledge.caesar,base.world.diplomaticKnowledge.caesar);
+ observeBalanceOfPower(base);observeBalanceOfPower(future);
+ assert.deepEqual(future.world.balanceOfPower.caesar,base.world.balanceOfPower.caesar);
+ future.year++;assert.equal(reportedControl(future,'caesar','italiaN').owner,'parthia');
+ observeDiplomacy(future);assert.ok(Object.values(future.world.diplomaticKnowledge.caesar).some(x=>x.kind==='war'&&x.parties.includes('parthia')&&x.parties.includes('armenia')));
+});
+
+test('old undated control records remain available after save migration',()=>{
+ const s=newGame('caesar');s.controlKnowledge.caesar.parthia={owner:'egypt'};
+ const restored=upgradeSave(structuredClone(s));assert.deepEqual(reportedControl(restored,'caesar','parthia'),{owner:'egypt'});
+});
 
 test('remote control changes do not automatically change a faction’s map or turn knowledge',()=>{
  let s=newGame('caesar');const before=reportedControl(s,'caesar','parthia');

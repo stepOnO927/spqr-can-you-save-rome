@@ -63,13 +63,13 @@ test('an exiled army can continue fighting after its side loses its last theater
 });
 test('the rival is discoverable only from the observer’s records and a stale lead permits a delayed unanswered letter',()=>{
  const s=outbreak();assert.deepEqual(knownDynasticFactions(s,'caesar'),[]);assert.equal(sendInquiry(s,'caesar','egypt_claimant').reason,'unavailable');
- s.controlKnowledge.caesar.egyptUpper={owner:'egypt_claimant',year:-49,month:2,source:'travelers'};assert.deepEqual(knownDynasticFactions(s,'caesar'),['egypt_claimant']);
+ s.controlKnowledge.caesar.egyptUpper={owner:'egypt_claimant',year:s.year,month:s.month,source:'travelers'};assert.deepEqual(knownDynasticFactions(s,'caesar'),['egypt_claimant']);
  region(s,'egyptUpper').owner='egypt';s.armies=s.armies.filter(a=>a.owner!=='egypt_claimant');resolveDynasticWars(s);
  assert.deepEqual(knownDynasticFactions(s,'caesar'),['egypt_claimant']);assert.equal(sendInquiry(s,'caesar','egypt_claimant').ok,true);
  const letter=s.inquiries[0];for(let i=0;i<letter.duration;i++)tick(s);assert.equal(letter.status,'no_reply');
 });
 test('a stale rival report permits the same mission preview and does not reveal a defeated faction',()=>{
- const a=outbreak();a.controlKnowledge.caesar.egyptUpper={owner:'egypt_claimant',year:-49,month:2,source:'travelers'};
+ const a=outbreak();a.controlKnowledge.caesar.egyptUpper={owner:'egypt_claimant',year:a.year,month:a.month,source:'travelers'};
  const b=upgradeSave(JSON.parse(JSON.stringify(a)));region(b,'egyptUpper').owner='egypt';b.armies=b.armies.filter(x=>x.owner!=='egypt_claimant');resolveDynasticWars(b);
  assert.deepEqual(previewMission(a,'caesar','egypt_claimant','spy','leaders'),previewMission(b,'caesar','egypt_claimant','spy','leaders'));
  assert.deepEqual(previewMission(a,'caesar','egypt_claimant','envoy','leaders'),previewMission(b,'caesar','egypt_claimant','envoy','leaders'));

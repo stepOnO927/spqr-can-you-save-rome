@@ -32,7 +32,7 @@ export function initializeCoalitionCharters(s){
 export function observeBalanceOfPower(s){
  s.world.balanceOfPower||={};
  for(const [actor,reports] of Object.entries(s.controlKnowledge||{})){
-  if(!s.factions[actor])continue;const counts={};for(const r of Object.values(reports||{}))if(r.owner&&r.owner!==actor)counts[r.owner]=(counts[r.owner]||0)+1;
+  if(!s.factions[actor])continue;const counts={};for(const id of Object.keys(reports||{})){const r=reportedControl(s,actor,id);if(r?.owner&&r.owner!==actor)counts[r.owner]=(counts[r.owner]||0)+1}
   const records=s.world.balanceOfPower[actor]||={};for(const target of new Set([...Object.keys(counts),...Object.keys(records)])){const count=counts[target]||0;
    const old=records[target];if(!old)records[target]={observedTerritories:count,reportedGrowth:0,year:s.year,month:s.month};
    else if(now(s)-(old.year*12+old.month)>=6)records[target]={observedTerritories:count,reportedGrowth:Math.max(-5,Math.min(5,count-old.observedTerritories)),year:s.year,month:s.month};
