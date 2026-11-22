@@ -1,19 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=will-controls-1';
-import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=will-controls-1';
+import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrder,diplomacy} from '../engine.js?v=secret-diplomacy-1';
+import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=secret-diplomacy-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
-import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=will-controls-1';
-import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=will-controls-1';
+import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=secret-diplomacy-1';
+import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=secret-diplomacy-1';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
-import {buildChessboard} from '../chessboard.js?v=will-controls-1';
-import {renderChessboard} from '../chessboard-ui.js?v=will-controls-1';
-import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=will-controls-1';
+import {buildChessboard} from '../chessboard.js?v=secret-diplomacy-1';
+import {renderChessboard} from '../chessboard-ui.js?v=secret-diplomacy-1';
+import {addReport,supportClaimant,requestAgentRelease,advanceAgentRequests} from '../character-system.js?v=secret-diplomacy-1';
 import {advanceAgreements,proposeAgreement} from '../agreements.js?v=agreement-courier-1';
-import {advanceGovernments} from '../governance.js?v=will-controls-1';
-import {advanceMovements} from '../movements.js?v=will-controls-1';
-import {newRevolutionScenario} from '../scenarios.js?v=will-controls-1';
+import {advanceAgreementProposals} from '../agreement-negotiations.js?v=agreement-courier-1';
+import {advanceGovernments} from '../governance.js?v=secret-diplomacy-1';
+import {advanceMovements} from '../movements.js?v=secret-diplomacy-1';
+import {newRevolutionScenario} from '../scenarios.js?v=secret-diplomacy-1';
 
 test('opportunities use the observer’s reports, not hidden military or political state',()=>{
  const s=newGame('caesar'),other=JSON.parse(JSON.stringify(s));
@@ -211,11 +212,16 @@ test('non-Roman courts can offer support to reported claimants and exchange capt
 });
 
 test('AI courts can negotiate real aid based on a reported third-party war',()=>{
- const s=newGame('caesar');s.difficulty='expert';s.month=3;s.relations['armenia:parthia']=40;s.wars.push(['armenia','senate']);
- s.factions.parthia.food=100;s.factions.parthia.treasury=100;observeDiplomacy(s);tick(s);
- const aid=s.agreements.find(x=>x.type==='military_support'&&x.parties.includes('parthia')&&x.parties.includes('armenia'));
- assert.ok(aid);assert.equal(aid.terms.provider,'parthia');assert.equal(aid.terms.recipient,'armenia');
- const before=s.factions.armenia.food;s.month=6;advanceAgreements(s);assert.equal(s.factions.armenia.food,before+2);
+ let accepted=null;const outcomes=new Set();
+ for(let seed=1;seed<=60;seed++){const s=newGame('caesar');s.seed=seed;s.difficulty='expert';s.month=3;s.relations['armenia:parthia']=40;s.wars.push(['armenia','senate']);
+  s.factions.parthia.food=100;s.factions.parthia.treasury=100;observeDiplomacy(s);tick(s);
+  const offer=s.world.agreementLetters.find(x=>x.actor==='parthia'&&x.target==='armenia'&&x.type==='military_support');assert.ok(offer);assert.equal(offer.status,'pending');assert.ok(!s.agreements.some(x=>x.id===offer.agreement));
+  for(let i=0;i<4;i++){s.month++;advanceAgreementProposals(s)}outcomes.add(offer.status);if(offer.status==='accepted'&&!accepted)accepted=s;
+  if(accepted&&outcomes.size>1)break;
+ }
+ assert.ok(accepted);assert.ok(outcomes.size>1,'letters may also be refused or lost');const aid=accepted.agreements.find(x=>x.type==='military_support'&&x.parties.includes('parthia')&&x.parties.includes('armenia'));
+ assert.equal(aid.terms.provider,'parthia');assert.equal(aid.terms.recipient,'armenia');
+ const before=accepted.factions.armenia.food;accepted.month=9;advanceAgreements(accepted);assert.equal(accepted.factions.armenia.food,before+2);
 });
 
 // Scout-based allied warnings. Setup: the Senate is at war with Caesar and is
@@ -331,6 +337,6 @@ test('old saves without a warning queue keep working and do not duplicate existi
  for(let i=0;i<3;i++)tick(save,{autoplayPlayer:true});assert.ok(Array.isArray(save.warningLetters));
  // The warning layer reuses courier, report and memory helpers; it does not call
  // the existing war, breach, aid or claimant-support decision paths.
- const source=fs.readFileSync(new URL('../strategic-warnings.js?v=will-controls-1',import.meta.url),'utf8');
+ const source=fs.readFileSync(new URL('../strategic-warnings.js?v=secret-diplomacy-1',import.meta.url),'utf8');
  assert.doesNotMatch(source,/diplomacy\(|proposeAgreement|terminateAgreement|supportClaimant|wars\.push|alliances\.push|opportunistic_war|treaty_breach/);
 });
