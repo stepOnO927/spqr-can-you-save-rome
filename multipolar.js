@@ -1,8 +1,8 @@
-import {isDeliveredReport} from './person-knowledge.js?v=fund-search-1';
+import {isDeliveredReport} from './person-knowledge.js?v=mission-history-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=fund-search-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=fund-search-1';
-import {activeAgreement} from './agreements.js?v=fund-search-1';
+import {reportedControl} from './control-intelligence.js?v=mission-history-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=mission-history-1';
+import {activeAgreement} from './agreements.js?v=mission-history-1';
 import {politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 
 const pair=(a,b)=>[a,b].sort().join(':'),now=s=>s.year*12+s.month;

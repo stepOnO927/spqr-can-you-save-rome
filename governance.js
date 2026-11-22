@@ -1,9 +1,9 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=fund-search-1';
-import {initializeWorld,successorFor,CHARACTER_CATALOG,characterAgeRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=fund-search-1';
-import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=fund-search-1';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=mission-history-1';
+import {initializeWorld,successorFor,CHARACTER_CATALOG,characterAgeRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=mission-history-1';
+import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=mission-history-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {startDynasticWar} from './civil-war.js?v=fund-search-1';
-import {courtNomineeName,recordLegendEvidence} from './legend.js?v=fund-search-1';
+import {startDynasticWar} from './civil-war.js?v=mission-history-1';
+import {courtNomineeName,recordLegendEvidence} from './legend.js?v=mission-history-1';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';

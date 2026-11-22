@@ -1,9 +1,9 @@
-import {isDeliveredReport,reportedPersonalContact} from './person-knowledge.js?v=fund-search-1';
+import {isDeliveredReport,reportedPersonalContact} from './person-knowledge.js?v=mission-history-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=fund-search-1';
-import {reportedMovements,movementReportLeaderName} from './movements.js?v=fund-search-1';
-import {visiblePersonName} from './character-system.js?v=fund-search-1';
-import {reportedControl} from './control-intelligence.js?v=fund-search-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=mission-history-1';
+import {reportedMovements,movementReportLeaderName} from './movements.js?v=mission-history-1';
+import {visiblePersonName} from './character-system.js?v=mission-history-1';
+import {reportedControl} from './control-intelligence.js?v=mission-history-1';
 
 const opening=['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair=(a,b)=>[a,b].sort().join(':');

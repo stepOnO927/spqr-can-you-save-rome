@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=fund-search-1';
-import {contestLeadership,advanceDisputes,queueMission,advanceOperations,addReport,supportClaimant} from '../character-system.js?v=fund-search-1';
-import {knownLeaders,assignSuccession} from '../characters.js?v=fund-search-1';
-import {deriveGovernment} from '../governance.js?v=fund-search-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=mission-history-1';
+import {contestLeadership,advanceDisputes,queueMission,advanceOperations,addReport,supportClaimant} from '../character-system.js?v=mission-history-1';
+import {knownLeaders,assignSuccession} from '../characters.js?v=mission-history-1';
+import {deriveGovernment} from '../governance.js?v=mission-history-1';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 
