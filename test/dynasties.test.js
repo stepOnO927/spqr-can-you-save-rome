@@ -410,3 +410,5 @@ test('AI families can marry and have children in an extended seeded campaign',()
  assert.equal(s.year,-19);assert.ok(s.world.dynasties.marriages.some(m=>s.world.characters[m.a].faction==='senate'));
  assert.ok(Object.values(s.world.characters).some(c=>c.parents.length>0));
 });
+
+test('player cross-border marriage cannot bypass delayed correspondence',()=>{const s=newGame('caesar'),a=createFictionalPerson(s,{name:['A','甲'],faction:'caesar',birthYear:-80,sex:'male'}),b=createFictionalPerson(s,{name:['B','乙'],faction:'egypt',birthYear:-78,sex:'female'});for(const change of [()=>{},()=>{s.world.characters[b].alive=false},()=>{s.world.characters[b].spouse='cleopatra'}]){change();assert.equal(proposeMarriage(s,a,b).reason,'correspondence');assert.equal(s.world.characters[a].spouse,null)}});

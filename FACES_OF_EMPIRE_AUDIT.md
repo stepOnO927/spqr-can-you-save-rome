@@ -6,14 +6,23 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `7eef7218` is integrated. Cross-border player marriage now
+requires a delivered envoy reply, including from the genealogy detail panel;
+the panel explains that requirement in English and Chinese. The new browser
+correspondence scenario is in the smoke workflow. Focused dynasty and cache
+version checks pass 38/38, and the full local suite passes 1,254/1,254.
+The 120-month Roman/Han market run, Wheels long-campaign scenarios, IMPERIUM
+simulation, and multipolar simulation pass. GitHub browser and quality checks
+for this merge are pending.
+
 Main through `234b67d4` is integrated. Roman economic ambition now requires a
 real post-selection investment while older saves retain their prior progress.
 The expanded engine retains its military-supply and Han integration exports,
 and the project button uses the same engine module instance as the campaign.
 The focused economic-ambition and module-version checks pass 11/11. The full
 local suite passes 1,253/1,253; the 120-month Roman/Han market simulation and
-Wheels long-campaign scenarios pass. GitHub checks for this latest merge are
-pending.
+Wheels long-campaign scenarios pass. GitHub browser, Wheels, quality, Pages,
+and Poki checks passed for commit `d7265ebf`.
 
 Main through `c8715173` is integrated. Its missing-person death-date privacy
 fix remains in the genealogy display and procedural portraits: an unreported
