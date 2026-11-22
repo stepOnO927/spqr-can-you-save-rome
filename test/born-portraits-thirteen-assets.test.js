@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {createHash} from 'node:crypto';
+function jpegSize(bytes){assert.equal(bytes.readUInt16BE(0),0xffd8);let at=2;while(at<bytes.length){assert.equal(bytes[at],0xff);while(bytes[at]===0xff)at++;const marker=bytes[at++];if(marker===0xd9||marker===0xda)break;const length=bytes.readUInt16BE(at);if([0xc0,0xc1,0xc2,0xc3].includes(marker))return [bytes.readUInt16BE(at+5),bytes.readUInt16BE(at+3)];at+=length}throw Error('JPEG frame missing')}
+test('new portrait artwork has the requested dimensions and twelve distinct images per size',()=>{
+ for(const [suffix,size] of [['master',512],['128',128],['64',64]]){const hashes=new Set();for(const id of ['f12','f13','m12','m13'])for(const stage of ['infant','child','adult']){const data=fs.readFileSync(`assets/portraits/born-${id}-${stage}-${suffix}.jpg`);assert.deepEqual(jpegSize(data),[size,size]);hashes.add(createHash('sha256').update(data).digest('hex'))}assert.equal(hashes.size,12)}
+});

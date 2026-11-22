@@ -1,10 +1,10 @@
-import {isDeliveredReport} from './person-knowledge.js?v=faces-reported-identity-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-reported-identity-1';
-import {startDynasticWar} from './civil-war.js?v=faces-reported-identity-1';
+import {isDeliveredReport} from './person-knowledge.js?v=faces-born-portrait-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-born-portrait-1';
+import {startDynasticWar} from './civil-war.js?v=faces-born-portrait-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,factionNameStyle,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=faces-wheels-1';
 import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=missing-fate-privacy-1';
-import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=faces-reported-identity-1';
+import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=faces-born-portrait-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -441,7 +441,7 @@ export function advanceDynasties(s){
  const d=initializeDynasties(s);reconcileGuardianships(s);
  // Old saves keep their existing identities. Allocate only to identifiable
  // campaign-born children with a recorded birth and known parents, once.
- if((d.bornPortraitPoolVersion||0)<7){d.bornPortraitClaims||={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id);d.bornPortraitPoolVersion=7}
+ if((d.bornPortraitPoolVersion||0)<8){d.bornPortraitClaims||={};for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))if((d.lives[id]||[]).some(event=>event.simulated&&event.en==='Born in the simulated campaign.'))assignBornPortrait(s,id);d.bornPortraitPoolVersion=8}
  if(!d.courtPortraitPoolVersion){for(const id of Object.keys(s.world.characters).sort((a,b)=>(Number(a.split(':')[1])||0)-(Number(b.split(':')[1])||0)))assignCourtPortrait(s,id);d.courtPortraitPoolVersion=1}
  advanceMarriageOffers(s);
  advanceAsylumRequests(s);

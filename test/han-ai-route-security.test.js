@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-reported-identity-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-born-portrait-1';
 import {advanceEasternMarkets} from '../han/markets.js?v=faces-wheels-1';
 import {advanceSilk,protectRoute,ROUTE_PROTECTION_COST} from '../han/silk-road.js?v=han-1';
 import {roll} from '../han/util.js?v=han-1';

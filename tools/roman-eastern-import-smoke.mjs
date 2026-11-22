@@ -9,8 +9,8 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=faces-reported-identity-1');
-  const {attachHanWorld}=await import('/han/world.js?v=faces-reported-identity-1');
+  const {newGame}=await import('/engine.js?v=faces-born-portrait-1');
+  const {attachHanWorld}=await import('/han/world.js?v=faces-born-portrait-1');
   const s=newGame('caesar'),w=attachHanWorld(s,{seed:43}),id='eastern-shipment:browser-import';
   s.regions.find(r=>r.id==='syria').owner='caesar';s.regions.find(r=>r.id==='egypt').owner='senate';s.factions.caesar.treasury=100;
   w.state.tradeMarkets.shipments.push({id,buyer:'external',seller:'han',destination:'mediterranean_gate',commodity:'silk',quantity:1,price:7,status:'delivered',deliveredAt:s.year*12+s.month});

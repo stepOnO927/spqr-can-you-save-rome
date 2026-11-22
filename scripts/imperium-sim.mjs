@@ -1,4 +1,4 @@
-import {newGame,tick,upgradeSave} from '../engine.js?v=faces-reported-identity-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=faces-born-portrait-1';
 import assert from 'node:assert/strict';
 // IMPERIUM Grandmaster observation: fully automated campaigns over 36+ months.
 // Reports what every AI actually did with focuses, formations and operations,

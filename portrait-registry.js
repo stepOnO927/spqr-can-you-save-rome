@@ -29,7 +29,7 @@ const INSTITUTION_PORTRAITS=[
 ];
 // Each pair is one fictional person at two life stages. Claims belong to a
 // save, are never recycled after death, and do not consume simulation RNG.
-const BORN_PORTRAITS={male:['born-m1','born-m2','born-m3','born-m4','born-m5','born-m6','born-m7','born-m8','born-m9','born-m10','born-m11'],female:['born-f1','born-f2','born-f3','born-f4','born-f5','born-f6','born-f7','born-f8','born-f9','born-f10','born-f11']};
+const BORN_PORTRAITS={male:['born-m1','born-m2','born-m3','born-m4','born-m5','born-m6','born-m7','born-m8','born-m9','born-m10','born-m11','born-m12','born-m13'],female:['born-f1','born-f2','born-f3','born-f4','born-f5','born-f6','born-f7','born-f8','born-f9','born-f10','born-f11','born-f12','born-f13']};
 // Each portrait is reserved permanently for the first documented fictional
 // nominee of that court in a save; names alone never establish identity.
 const COURT_PORTRAITS={

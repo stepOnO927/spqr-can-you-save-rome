@@ -1,5 +1,5 @@
-import {OFFICE_TYPES,initializeOffices,officeCandidates,appointOffice,dismissOffice} from '../office-system.js?v=faces-reported-identity-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=faces-reported-identity-1';
+import {OFFICE_TYPES,initializeOffices,officeCandidates,appointOffice,dismissOffice} from '../office-system.js?v=faces-born-portrait-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=faces-born-portrait-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels={finance:['Finance officer','财务专员'],supply:['Supply officer','粮秣专员'],administration:['Administration officer','政务专员']};

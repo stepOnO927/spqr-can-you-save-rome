@@ -6,6 +6,13 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `7eb1ab85` is integrated. It adds two more individual portrait
+sets per sex for campaign-born children, their three life stages, and a
+versioned old-save migration that preserves earlier portrait claims. The
+new browser smoke remains in the cloud workflow. Focused portrait, character,
+module, and Roman–Han checks pass 91/91; the full local suite passes
+1,277/1,277. Cloud checks follow.
+
 The first Browser smoke run after the `e6ed4cde` merge passed groups 1 and
 2 but failed the new dated-report scenario in group 3. That smoke assumed a
 mismatched fixed portrait must become a silhouette; the expansion correctly

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-reported-identity-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=faces-born-portrait-1';
 import {recruit,templatesFor} from '../han/military.js?v=han-1';
 import {fieldCulture,ensureFieldCommanders,createMarketMerchant} from '../han/field-identities.js';
 import {birthRecordValid} from '../han/dynasty.js?v=han-1';

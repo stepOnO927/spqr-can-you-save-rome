@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=faces-reported-identity-1';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=faces-reported-identity-1';
-import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=faces-reported-identity-1';
-import {deriveGovernment} from '../governance.js?v=faces-reported-identity-1';
-import {successorFor} from '../characters.js?v=faces-reported-identity-1';
+import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=faces-born-portrait-1';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=faces-born-portrait-1';
+import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=faces-born-portrait-1';
+import {deriveGovernment} from '../governance.js?v=faces-born-portrait-1';
+import {successorFor} from '../characters.js?v=faces-born-portrait-1';
 const namedReplacement=(s,unit)=>{assert.match(unit.characterId,/^fictional:\d+$/);assert.deepEqual(unit.commander,s.world.dynasties.catalog[unit.characterId].name);assert.equal(s.world.characters[unit.characterId].militaryOnly,true);return unit.characterId};
 
 test('a local friendly person may command a vacant army and the appointment survives saving',()=>{

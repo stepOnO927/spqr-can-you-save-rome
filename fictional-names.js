@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG} from './characters.js?v=faces-reported-identity-1';
+import {CHARACTER_CATALOG} from './characters.js?v=faces-born-portrait-1';
 
 // Original game people and naming pools, not transcriptions of documented
 // individuals. The pools reflect each implemented court's naming tradition.

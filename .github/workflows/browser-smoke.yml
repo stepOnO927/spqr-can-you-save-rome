@@ -142,6 +142,7 @@ jobs:
               node tools/born-portraits-eight-smoke.mjs
               node tools/born-portraits-nine-smoke.mjs
               node tools/born-portraits-eleven-smoke.mjs
+              node tools/born-portraits-thirteen-smoke.mjs
               node tools/inheritance-settlement-smoke.mjs
               node tools/inheritance-privacy-smoke.mjs
               node tools/satisfaction-map-smoke.mjs
