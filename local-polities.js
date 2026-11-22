@@ -407,6 +407,21 @@ export function advanceLocalEntities(state) {
           options:['grant_local_charter','refuse'],context:{kind:'strongman_charter_request',polityId:entity.id,host:region.owner}});
         if(sent.ok){sent.letter.senderName=[...entity.ruler.name];entity.lastCharterPetitionAt={year:state.year,month:state.month};entity.charterPetitionMailId=sent.letter.id}
       }
+      const npcHost=region.owner,npcLast=entity.lastNpcCharterAt;
+      if(state.month===4&&npcHost!==state.player&&state.factions[npcHost]?.treasury>=10&&state.factions[npcHost].stability>=45&&entity.controller===entity.id&&!entity.siege&&!entity.pending&&!entity.localCharter?.active&&!entity.npcCharterOffer&&(!entity.allegiance||entity.allegiance===npcHost)&&entity.strategy>=4&&entity.treasury>=6&&entity.militia>=Math.max(200,entity.population*.08)&&localDiscoveryLevel(state,npcHost,entity.id)>=LOCAL_DISCOVERY_LEVELS.identified&&(!npcLast||now(state)-(npcLast.year*12+npcLast.month)>=12)){
+        entity.npcCharterOffer={host:npcHost,remaining:2,sentYear:state.year,sentMonth:state.month,lastAdvancedAt:now(state)};
+        entity.lastNpcCharterAt={year:state.year,month:state.month};
+      }
+      if(entity.npcCharterOffer&&entity.npcCharterOffer.lastAdvancedAt!==now(state)){
+        entity.npcCharterOffer.lastAdvancedAt=now(state);
+        if(--entity.npcCharterOffer.remaining<=0){
+          const offer=entity.npcCharterOffer,hostCourt=state.factions[offer.host];
+          const accepted=region.owner===offer.host&&entity.controller===entity.id&&!entity.siege&&!entity.pending&&!entity.localCharter?.active&&(!entity.allegiance||entity.allegiance===offer.host)&&hostCourt?.treasury>=10&&hostCourt.stability>=45&&entity.treasury>=3;
+          if(accepted){hostCourt.treasury-=5;entity.localCharter={host:offer.host,active:true,granted:{year:state.year,month:state.month},arrears:0,lastPayment:null};entity.administrativeStatus='chartered_household';const village=region.localEntities.find(site=>site.sponsor===entity.id)?.village;if(village)village.satisfaction=Math.min(100,village.satisfaction+3)}
+          entity.lastNpcCharterOutcome={host:offer.host,accepted:!!accepted,year:state.year,month:state.month};
+          entity.npcCharterOffer=null;
+        }
+      }
     }
     if(entity.procedural&&['city_state','microstate','tribe'].includes(entity.type)&&state.month===4&&entity.strategy>=3&&entity.controller===entity.id&&!entity.siege&&!entity.pending&&!entity.tradePetitionReply&&state.factions[state.player]&&!(entity.tradeRights?.[state.player]>now(state))){
       const buyer=state.factions[state.player],reserve=Math.max(4,Math.ceil(entity.population/3000));

@@ -252,6 +252,47 @@ test('an old charter petition cannot be granted after the host theater changes h
  assert.equal(chief.localCharter,undefined);
 });
 
+test('a known strongman can secure a delayed household charter from a nonplayer host',()=>{
+ const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:2});
+ const chief=generated(s).find(entity=>entity.type==='strongman'&&s.regions.find(region=>region.id===entity.theater).owner==='caesar');
+ assert.ok(chief);chief.strategy=5;chief.treasury=12;chief.militia=Math.max(chief.militia,Math.ceil(chief.population*.1));
+ const village=localEntity(s,`generated-village:${chief.theater}`),legal=chief.legalSovereign;
+ village.village.storedFood=village.village.foodNeed*2;
+ s.factions.caesar.treasury=40;s.factions.caesar.stability=70;s.month=4;
+ s.localDiscovery.caesar[chief.id]={level:0,year:s.year,month:s.month,source:'unknown'};
+ advanceLocalEntities(s);assert.equal(chief.npcCharterOffer,undefined);
+ s.localDiscovery.caesar[chief.id]={level:3,year:s.year,month:s.month,source:'frontier'};
+ advanceLocalEntities(s);
+ assert.equal(chief.npcCharterOffer.host,'caesar');assert.equal(chief.localCharter,undefined);
+ assert.equal(localEntity(upgradeSave(structuredClone(s)),chief.id).npcCharterOffer.remaining,2);
+ assert.equal(inspectState(s).filter(item=>item.code==='invalid-local-npc-charter-offer').length,0);
+ s.month=5;advanceLocalEntities(s);assert.equal(chief.npcCharterOffer.remaining,1);
+ advanceLocalEntities(s);assert.equal(chief.npcCharterOffer.remaining,1);
+ s.month=6;advanceLocalEntities(s);
+ assert.equal(chief.npcCharterOffer,null);assert.equal(chief.lastNpcCharterOutcome.accepted,true);
+ assert.equal(chief.localCharter.host,'caesar');assert.equal(chief.localCharter.active,true);
+ assert.equal(s.factions.caesar.treasury,35);assert.equal(chief.controller,chief.id);
+ assert.equal(chief.legalSovereign,legal);assert.equal(chief.access.caesar,undefined);
+ assert.equal(village.controller,chief.id);assert.equal(village.village.satisfaction,65);
+ assert.ok(!s.log.some(item=>item.en?.includes(chief.name[0])),'the player does not learn foreign charter terms instantly');
+ s.month=12;const treasury=s.factions.caesar.treasury;advanceLocalEntities(s);
+ assert.equal(s.factions.caesar.treasury,treasury+2);
+ const restored=upgradeSave(structuredClone(s));assert.deepEqual(localEntity(restored,chief.id).localCharter,chief.localCharter);
+ chief.lastNpcCharterAt.month=13;assert.ok(inspectState(s).some(item=>item.code==='invalid-local-npc-charter-date'));
+});
+
+test('a nonplayer household charter fails if the host loses the theater in transit',()=>{
+ const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:2});
+ const chief=generated(s).find(entity=>entity.type==='strongman'&&s.regions.find(region=>region.id===entity.theater).owner==='caesar');
+ assert.ok(chief);chief.strategy=5;chief.treasury=12;chief.militia=Math.max(chief.militia,Math.ceil(chief.population*.1));
+ s.factions.caesar.treasury=40;s.factions.caesar.stability=70;s.month=4;advanceLocalEntities(s);
+ assert.equal(chief.npcCharterOffer.host,'caesar');
+ s.regions.find(region=>region.id===chief.theater).owner='senate';
+ s.month=5;advanceLocalEntities(s);s.month=6;advanceLocalEntities(s);
+ assert.equal(chief.lastNpcCharterOutcome.accepted,false);assert.equal(chief.localCharter,undefined);
+ assert.equal(s.factions.caesar.treasury,40);
+});
+
 test('a capable generated polity can request player-approved, funded food trade',()=>{
  const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
  assert.ok(entity);

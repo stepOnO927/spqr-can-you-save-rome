@@ -23,6 +23,21 @@ test('generated city is a playable site without transferring its host theater',(
  assert.equal(city.population,localCampaignCity(state).population);
 });
 
+test('every generated city-state at expert difficulty can start and save its own campaign',()=>{
+ const seed=273,preview=configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:seed});
+ const choices=playableLocalCities(preview).map(city=>city.id);
+ assert.ok(choices.length>=2,'expert should expose more than the first generated city');
+ for(const id of choices){
+  const state=configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:seed});
+  const city=playableLocalCities(state).find(item=>item.id===id),host=state.regions.find(region=>region.id===city.theater),owner=host.owner;
+  startLocalCampaign(state,id);
+  assert.equal(state.player,id);assert.equal(localCampaignCity(state)?.id,id);
+  assert.equal(host.owner,owner);assert.equal(city.controller,id);
+  assert.equal(validPlayableCampaign(state),true);
+  assert.equal(validPlayableCampaign(upgradeSave(structuredClone(state))),true);
+ }
+});
+
 test('an absent trade agreement is not mistaken for a future expiry in BCE',()=>{
  const {state}=opening();
  assert.match(localCouncilHtml(state),/No active trade compact/);
