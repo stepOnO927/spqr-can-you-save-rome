@@ -39,8 +39,8 @@ import {IDEAS,startResearch,equipIdea} from './inventions.js?v=mission-discount-
 import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium,openFocusProject} from './imperium-ui.js?v=saved-age-consistency-1';
 import {attachHanWorld,hanWorld,sendEmbassyToSeres} from './han/world.js?v=saved-age-consistency-1';
 import {eastMap,eastPanel,eastToolbar} from './han/east-ui.js?v=saved-age-consistency-1';
-import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=saved-age-consistency-1';
-import {renderExperienceUi,closeExperience} from './experience-ui.js?v=saved-age-consistency-1';
+import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=saved-age-merge-1';
+import {renderExperienceUi,closeExperience} from './experience-ui.js?v=saved-age-merge-1';
 import {financeDecision,commanderDecision,AMBITIONS} from './history-wheels.js?v=saved-age-consistency-1';
 
 const ui={

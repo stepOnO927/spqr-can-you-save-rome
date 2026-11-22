@@ -1,4 +1,4 @@
-import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=saved-age-consistency-1';
+import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=saved-age-merge-1';
 import {AMBITIONS,availableAmbitions,ambitionStatus,chooseAmbition,initializeWheels,AMBITION_CHANGE_COST} from './history-wheels.js?v=saved-age-consistency-1';
 
 let open='';
