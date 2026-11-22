@@ -1,6 +1,7 @@
 import {FACTIONS} from './data.js?v=han-1';
 import {recordBirth} from './dynasty.js?v=han-1';
 import {ensureHanPortraitSeed} from './court-portrait.js';
+import {log} from './util.js?v=han-1';
 
 // Original game names. These are cultural reconstructions, never documented
 // people or claims that a particular historical army had this commander.
@@ -96,10 +97,7 @@ export function ensureRegionalAdministrators(s){
  for(const site of s.regions){
   const appointed=site.administratorId&&s.persons[site.administratorId],eligible=site.owner==='han'&&site.kind==='commandery';
   if(site.administratorId&&(!eligible||!appointed?.alive||appointed.faction!=='han'||appointed.regionalOffice!==site.id)){
-   if(appointed?.regionalOffice===site.id){
-    appointed.regionalOffice=null;
-    (appointed.career||=[]).push({year:s.year,month:s.month,kind:'regional_service_ended',region:site.id});
-   }
+   if(appointed?.regionalOffice===site.id)endRegionalService(s,site,appointed);
    site.administratorId=null;
   }
   if(eligible&&!site.administratorId)vacancies.push(site);
@@ -121,6 +119,45 @@ export function regionalAdministrationFactor(s,site){
  const person=s.persons[site?.administratorId];
  if(site?.owner!=='han'||!person?.alive||person.faction!=='han'||person.regionalOffice!==site.id)return 1;
  return Math.max(.85,Math.min(1.1,1+((person.competence??50)-50)/500-(person.corruption??0)/1000));
+}
+
+function endRegionalService(s,site,person){
+ person.regionalOffice=null;
+ person.profession='official';
+ person.title=['Former commandery administrator','前郡守'];
+ (person.career||=[]).push({year:s.year,month:s.month,kind:'regional_service_ended',region:site.id});
+}
+
+// A replacement is a paid three-month search, not an instant reroll. The
+// incumbent continues governing until the new original character arrives.
+export function requestRegionalReplacement(s,regionId,{autonomous=false}={}){
+ const site=s.regions.find(r=>r.id===regionId),person=s.persons[site?.administratorId],court=s.court;
+ if((!autonomous&&s.player!=='han')||s.finalized)return {ok:false,reason:'authority'};
+ if(!court||site?.owner!=='han'||site.kind!=='commandery'||!person?.alive||person.regionalOffice!==regionId)return {ok:false,reason:'unavailable'};
+ court.regionalRecommendations||=[];
+ if(court.regionalRecommendations.some(request=>request.region===regionId&&request.status==='pending'))return {ok:false,reason:'pending'};
+ const cost=15;if(s.factions.han.treasury<cost)return {ok:false,reason:'treasury'};
+ s.factions.han.treasury-=cost;
+ const request={id:`regional-recommendation:${s.year}:${s.month}:${regionId}:${court.regionalRecommendations.length+1}`,region:regionId,formerId:person.id,remaining:3,status:'pending',requested:{year:s.year,month:s.month},cost};
+ court.regionalRecommendations.push(request);
+ if(s.player==='han')log(s,['A successor is being sought for %REGION%; 15 spent from the treasury.','%REGION%郡守继任人选开始察举；国库支出15。'],{region:regionId,kind:'court'});
+ return {ok:true,request,cost,months:3};
+}
+
+export function advanceRegionalReplacements(s){
+ for(const request of s.court?.regionalRecommendations||[]){
+  if(request.status!=='pending'||(request.requested.year===s.year&&request.requested.month===s.month))continue;
+  const site=s.regions.find(r=>r.id===request.region);
+  if(site?.owner!=='han'||site.kind!=='commandery'||site.administratorId!==request.formerId){request.status='cancelled';request.resolved={year:s.year,month:s.month};if(s.player==='han')log(s,['The search for an administrator of %REGION% ended because the office changed.','%REGION%郡守职位发生变化，继任察举中止。'],{region:request.region,kind:'court'});continue}
+  if(--request.remaining>0)continue;
+  const former=s.persons[site.administratorId];
+  if(former?.regionalOffice===site.id)endRegionalService(s,site,former);
+  site.administratorId=null;
+  ensureRegionalAdministrators(s);
+  request.status='arrived';request.personId=site.administratorId;request.resolved={year:s.year,month:s.month};
+  if(s.player==='han')log(s,['%NAME% takes office as administrator of %REGION%.','%NAME%出任%REGION%郡守。'],{who:request.personId,region:site.id,kind:'court'});
+ }
+ return s;
 }
 
 // Commercial agents use the same cultural pools but a separate persistent ID

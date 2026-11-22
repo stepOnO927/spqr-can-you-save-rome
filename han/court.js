@@ -86,7 +86,7 @@ export function appoint(s,office,personId,{actor='emperor',logFn=null}={}){
  if(o.requiresLiu&&!isLiuClan(s,personId))return {ok:false,reason:'requires_liu_clan'};
  if(p.eunuch&&['chengxiang','yushi','dasima'].includes(office))return {ok:false,reason:'eunuch_bar'};
  if(s.court.offices[office]===personId&&p.office===office)return {ok:false,reason:'already'};
- if(p.regionalOffice){const site=s.regions.find(region=>region.id===p.regionalOffice);if(site?.administratorId===personId)site.administratorId=null;(p.career||=[]).push({year:s.year,month:s.month,kind:'regional_service_ended',region:p.regionalOffice});p.regionalOffice=null}
+ if(p.regionalOffice){const site=s.regions.find(region=>region.id===p.regionalOffice);if(site?.administratorId===personId)site.administratorId=null;(p.career||=[]).push({year:s.year,month:s.month,kind:'regional_service_ended',region:p.regionalOffice});p.regionalOffice=null;p.profession='official';p.title=[...o.name]}
  if(p.office&&p.office!==office)s.court.offices[p.office]=null;
  const prev=s.court.offices[office];
  // the court reacts: the displaced official's faction resents the change
@@ -276,7 +276,9 @@ function advanceAudits(s){
 // year in office; corruption and ambition only through evidence.
 export function knownAttributes(s,id,viewer='han'){
  const p=s.persons[id];if(!p)return null;const k=s.court.knowledge[id]||{};
- const served=p.officeSince?(s.year*12+s.month)-(p.officeSince.year*12+p.officeSince.month):0;
+ const regional=p.regionalOffice&&p.career?.findLast(event=>event.kind==='regional_appointment'&&event.region===p.regionalOffice);
+ const since=p.office?p.officeSince:regional;
+ const served=since?(s.year*12+s.month)-(since.year*12+since.month):0;
  return {competence:served>=12||p.historicalReputation?p.competence:null,corruption:k.corruption||'unknown',ambition:k.ambition||(p.scheme?'exposed':'unknown')};
 }
 

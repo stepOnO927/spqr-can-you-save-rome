@@ -14,7 +14,7 @@ import {agriculturalProduction,grainProvisionFactor} from '../war-economy.js?v=f
 import {advanceFocus,focusState} from './focus.js?v=han-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
-import {CULTURAL_NAME_POOLS,ensureFieldCommanders,ensureRegionalAdministrators,fieldCulture,regionalAdministrationFactor} from './field-identities.js';
+import {CULTURAL_NAME_POOLS,ensureFieldCommanders,ensureRegionalAdministrators,fieldCulture,regionalAdministrationFactor,requestRegionalReplacement,advanceRegionalReplacements} from './field-identities.js';
 import {ensureHanPortraitSeed,ensureHanPortraitSeeds} from './court-portrait.js';
 import {ensureForeignRulers,advanceForeignRulers,rulerGovernanceFactor} from './rulers.js';
 import {initialize as initializeAmbition,advance as advanceAmbition} from './ambitions.js?v=faces-name-disagreement-1';
@@ -301,6 +301,10 @@ function hanAI(s){
  if(s.player==='han')return;
  if(s.pendingEmpress&&s.month>=5)elevateEmpress(s,s.pendingEmpress);
  if(!s.throne.heir&&s.throne.orthodox){const sons=Object.values(s.persons).filter(p=>p.alive&&p.father===s.throne.orthodox&&eligibility(s,p.id).ok);if(sons[0])s.throne.heir=sons[0].id}
+ if(s.month===1&&s.factions.han.treasury>=100){
+  const weak=s.regions.filter(site=>site.owner==='han'&&site.kind==='commandery'&&s.persons[site.administratorId]?.alive&&((s.persons[site.administratorId].competence??50)<50||s.court.knowledge?.[site.administratorId]?.corruption==='proven')).sort((a,b)=>b.tax-a.tax||a.id.localeCompare(b.id));
+  if(weak[0])requestRegionalReplacement(s,weak[0].id,{autonomous:true});
+ }
 }
 
 function settleCampaign(s){
@@ -319,7 +323,7 @@ export function tick(s){
  if(s.finalized)return s;
  advanceDate(s);
  scheduledEvents(s);movement(s);battles(s);sieges(s);supply(s);ensureRegionalAdministrators(s);economy(s);lives(s);advanceForeignRulers(s);
- hanAI(s);advanceCourt(s);advanceRecommendations(s);
+ hanAI(s);advanceCourt(s);advanceRecommendations(s);advanceRegionalReplacements(s);
  advanceFrontier(s,{issueMove:(a,to)=>moveArmy(s,a.id,to,{owner:a.owner})});
  advanceEasternMarkets(s);advanceSilk(s);advanceDependencies(s);advanceFocus(s);ensureFieldCommanders(s);
  if(s.throne.dynasty&&!s.throne.dynasty.orthodox)s.usurperMonths=(s.usurperMonths||0)+1;

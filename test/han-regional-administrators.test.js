@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,tick} from '../han/engine.js?v=faces-name-disagreement-1';
-import {ensureRegionalAdministrators,regionalAdministrationFactor} from '../han/field-identities.js';
+import {ensureRegionalAdministrators,regionalAdministrationFactor,requestRegionalReplacement,advanceRegionalReplacements} from '../han/field-identities.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';
 import {applyEffects,focusById} from '../han/focus.js?v=han-1';
-import {appoint,startAudit} from '../han/court.js?v=han-1';
+import {appoint,startAudit,knownAttributes} from '../han/court.js?v=han-1';
 
 test('Han commanderies begin with distinct saved original administrators and portraits',()=>{
  const s=newHanGame('han',{seed:49}),sites=s.regions.filter(r=>r.owner==='han'&&r.kind==='commandery');
@@ -69,4 +69,49 @@ test('a regional review selects a real administrator in a BCE year',()=>{
  const target=s.persons[s.court.audits[0].target];
  assert.ok(target?.regionalOffice);
  assert.equal(s.factions.han.treasury,before,'the focus pays exactly the audit cost');
+});
+
+test('a paid successor search replaces a real governor after three months and survives a save',()=>{
+ let s=newHanGame('han',{seed:49}),site=s.regions.find(r=>r.id==='hongnong'),former=site.administratorId,treasury=s.factions.han.treasury;
+ s.persons[former].competence=0;const previousTaxFactor=regionalAdministrationFactor(s,site);
+ const requested=requestRegionalReplacement(s,site.id);
+ assert.equal(requested.ok,true);assert.equal(s.factions.han.treasury,treasury-15);
+ assert.equal(requestRegionalReplacement(s,site.id).reason,'pending');
+ tick(s);assert.equal(site.administratorId,former);assert.equal(requested.request.remaining,2);
+ s=loadHanSave(JSON.parse(JSON.stringify(s)));site=s.regions.find(r=>r.id==='hongnong');
+ tick(s);assert.equal(site.administratorId,former);
+ tick(s);assert.notEqual(site.administratorId,former);
+ const successor=s.persons[site.administratorId],retired=s.persons[former],record=s.court.regionalRecommendations.at(-1);
+ assert.equal(record.status,'arrived');assert.equal(record.personId,successor.id);
+ assert.equal(successor.regionalOffice,site.id);assert.equal(successor.record,'fictional');
+ assert.ok(regionalAdministrationFactor(s,site)>previousTaxFactor,'the new officeholder changes real tax collection');
+ assert.match(courtPortraitSrc(successor,128,s),/data-station%3D%22official%22/);
+ assert.equal(retired.regionalOffice,null);assert.equal(retired.title[0],'Former commandery administrator');
+ assert.ok(retired.career.some(event=>event.kind==='regional_service_ended'&&event.region===site.id));
+ assert.ok(s.log.some(event=>event.who===successor.id&&event.region===site.id));
+ const saved=loadHanSave(JSON.parse(JSON.stringify(s)));assert.equal(saved.regions.find(r=>r.id===site.id).administratorId,successor.id);
+});
+
+test('a lost commandery cancels its paid successor search without generating a new governor',()=>{
+ const s=newHanGame('han',{seed:49}),site=s.regions.find(r=>r.id==='hongnong'),request=requestRegionalReplacement(s,site.id).request,former=site.administratorId;
+ site.owner='kangju';s.month++;advanceRegionalReplacements(s);
+ assert.equal(request.status,'cancelled');assert.equal(request.personId,undefined);
+ ensureRegionalAdministrators(s);assert.equal(site.administratorId,null);assert.equal(s.persons[former].regionalOffice,null);
+});
+
+test('a changed incumbent cancels the search instead of ejecting the new appointee',()=>{
+ const s=newHanGame('han',{seed:49}),site=s.regions.find(r=>r.id==='hongnong'),request=requestRegionalReplacement(s,site.id).request;
+ s.persons[site.administratorId].alive=false;ensureRegionalAdministrators(s);const interim=site.administratorId;
+ s.month++;advanceRegionalReplacements(s);
+ assert.equal(request.status,'cancelled');assert.equal(site.administratorId,interim);
+});
+
+test('regional service reveals competence only after a year; AI funds one weak-office succession',()=>{
+ const s=newHanGame('kangju',{seed:49}),site=s.regions.find(r=>r.id==='hongnong'),person=s.persons[site.administratorId];
+ assert.equal(knownAttributes(s,person.id).competence,null);
+ s.year++;assert.equal(knownAttributes(s,person.id).competence,person.competence);
+ s.month=12;for(const region of s.regions.filter(r=>r.owner==='han'&&r.kind==='commandery'))s.persons[region.administratorId].competence=70;
+ person.competence=0;s.factions.han.treasury=120;
+ tick(s);const request=s.court.regionalRecommendations.find(entry=>entry.region===site.id&&entry.status==='pending');
+ assert.ok(request);assert.equal(request.remaining,3);assert.equal(s.player,'kangju');assert.equal(s.log.some(event=>event.who===person.id&&event.kind==='court'),false);
 });

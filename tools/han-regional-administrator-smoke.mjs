@@ -25,6 +25,19 @@ try{
  await page.locator('#map path.territory[data-region="hongnong"]').click();assert.equal(await profile.getAttribute('data-administrator'),id);
  assert.equal(await page.locator('#han-audit-administrator').isDisabled(),true);
  await page.locator('#lang').click();assert.match(await profile.innerText(),/郡守.*游戏原创人物/s);
+ const former=id,treasury=saved.factions.han.treasury;
+ await page.locator('#han-replace-administrator').click();assert.match(await profile.innerText(),/继任察举：剩余3个月/);
+ await page.locator('#save').click();saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ assert.equal(saved.factions.han.treasury,treasury-15);assert.equal(saved.court.regionalRecommendations.at(-1).status,'pending');
+ await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();await page.locator('#map path.territory[data-region="hongnong"]').click();
+ assert.equal(await page.locator('#han-replace-administrator').isDisabled(),true);
+ for(let month=0;month<3;month++)await page.locator('#advance').click();
+ await page.locator('#map path.territory[data-region="hongnong"]').click();const successor=await profile.getAttribute('data-administrator');
+ assert.ok(successor&&successor!==former);assert.equal(await profile.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0),true);
+ await page.locator('#save').click();saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')));
+ assert.equal(saved.regions.find(r=>r.id==='hongnong').administratorId,successor);
+ assert.equal(saved.court.regionalRecommendations.at(-1).personId,successor);
+ assert.ok(saved.persons[former].career.some(event=>event.kind==='regional_service_ended'&&event.region==='hongnong'));
  assert.deepEqual(errors,[]);
- console.log('Han commandery administrator has a saved identity and portrait; a paid audit survives reload in both languages.');
+ console.log('Han administrator audit and paid three-month successor search survive reload; the new original person takes office.');
 }finally{await browser.close()}

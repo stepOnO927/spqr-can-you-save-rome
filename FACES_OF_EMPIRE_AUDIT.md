@@ -6,6 +6,17 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The Han region inspector now shows a saved administrator's appointment,
+portrait, family record, known competence, audit finding and tax responsibility
+together. A player can fund a three-month successor search for 15 treasury;
+the incumbent governs during the search, and the arriving original character
+changes real tax collection. The request, office history and successor survive
+reload. Loss of the commandery or an intervening change of office cancels the
+search. Autonomous Han courts fund one weak or proven-corrupt office search
+when the treasury permits. Focused unit tests cover timing, cancellation, tax
+effect and privacy; the cloud Chromium smoke now exercises the bilingual
+player flow, save/load and actual change of office. Cloud results are pending.
+
 Han commanderies now have persistent, distinctly named original game
 administrators with appointment histories and stable portrait seeds. Their
 competence and corruption change real local tax yield; a paid investigation
