@@ -1,4 +1,4 @@
-import {newGame} from '../engine.js?v=faces-family-age-1';
+import {newGame} from '../engine.js?v=faces-reported-identity-1';
 import {inspectState} from '../inspector-diagnostics.js';
 import assert from 'node:assert/strict';
 

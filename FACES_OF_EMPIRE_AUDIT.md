@@ -6,6 +6,13 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `e6ed4cde` is integrated. Its opening portrait identity checks
+require both saved language forms, the original faction, and compatible sex,
+without removing the expansion's claimed court portraits. The dated-report
+browser scenario remains in the cloud workflow. Focused character, portrait,
+module, and Roman–Han checks pass 78/78; the full local suite passes
+1,275/1,275. Cloud checks for this merge are pending.
+
 The Roman embassy's return report now uses the government encountered on
 arrival. An orthodox Liu emperor is named only when a verified Liu actually
 occupies the throne; a non-Liu takeover is reported as such, and an unknown

@@ -1,10 +1,10 @@
 // These are fictional characters, not reconstructions of historical people.
 // Match all fields against the active save: generated IDs can be reused in old saves.
 const OPENING_PORTRAITS={
- 'fictional:1':['Publius Varenus',-77,'fictional-varenus'],
- 'fictional:2':['Livia Marcia',-74,'fictional-livia'],
- 'fictional:3':['Aulus Cassianus',-79,'fictional-cassianus'],
- 'fictional:4':['Marcia Valeria',-76,'fictional-valeria']
+ 'fictional:1':['Publius Varenus',-77,'fictional-varenus','普布利乌斯·瓦雷努斯','male','caesar'],
+ 'fictional:2':['Livia Marcia',-74,'fictional-livia','莉维娅·玛尔基娅','female','caesar'],
+ 'fictional:3':['Aulus Cassianus',-79,'fictional-cassianus','奥卢斯·卡西亚努斯','male','senate'],
+ 'fictional:4':['Marcia Valeria',-76,'fictional-valeria','玛尔基娅·瓦莱里娅','female','senate']
 };
 // Scenario IDs vary between saves. The scenario role, saved name and birth
 // year must all match before an individual portrait can be assigned.
@@ -187,7 +187,7 @@ export function fictionalPortraitKey(state,id){
  const cursus=cursusPortraitKey(state,id);if(cursus)return cursus;
  const court=courtPortraitKey(state,id);if(court)return court;
  const born=bornPortraitKey(state,id);if(born)return born;
- if(entry&&saved?.fictional&&saved.name?.[0]===entry[0]&&person?.birthYear===entry[1])return entry[2];
+ if(entry&&saved?.fictional&&saved.name?.[0]===entry[0]&&saved.name?.[1]===entry[3]&&person?.birthYear===entry[1]&&(saved.faction==null||saved.faction===entry[5])&&(person.sex==null||person.sex==='unknown'||person.sex===entry[4]))return entry[2];
  if(state.scenario==='ambitious_general'&&state.scenarioGeneral===id&&saved?.fictional&&saved.name?.[0]==='Lucius Valerius Varus'&&person?.birthYear===-86)return 'fictional-varus';
  if(saved?.fictional&&person?.institutionalOnly){for(const [institution,seat,name,birth,key] of INSTITUTION_PORTRAITS){const office=state.world?.religiousInstitutions?.find(o=>o.id===institution);if(office?.council?.[seat]===id&&saved.name?.[0]===name&&person.birthYear===birth)return key}}
  const scenario=state.world?.dynasties?.scenario;if(!scenario||!saved?.fictional)return null;

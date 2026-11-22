@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,queueMission,upgradeSave} from '../engine.js?v=faces-family-age-1';
-import {advanceMailReports} from '../mail-reports.js?v=faces-family-age-1';
-import {receivedMail} from '../epistulae.js?v=faces-family-age-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=faces-family-age-1';
+import {newGame,queueMission,upgradeSave} from '../engine.js?v=faces-reported-identity-1';
+import {advanceMailReports} from '../mail-reports.js?v=faces-reported-identity-1';
+import {receivedMail} from '../epistulae.js?v=faces-reported-identity-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=faces-reported-identity-1';
 
 test('only received mission outcomes enter the inbox, once, and survive a save',()=>{
  const s=newGame(),date={resolvedYear:s.year,resolvedMonth:s.month};
