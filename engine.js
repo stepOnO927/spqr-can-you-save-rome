@@ -773,9 +773,9 @@ export function aiTurn(s,owner){
       let monthlyNet;
       try{monthlyNet=nationalBudget(s,owner).projectedNet}
       finally{slots[slot]=previous}
-      // A peacetime court may accept upkeep above current income only when
-      // the treasury left after adoption can carry it for a ten-year campaign.
-      return monthlyNet>=0||f.treasury-plan.cost>=20-120*monthlyNet;
+      // A peacetime court needs room for future civil investment. An idea
+      // that consumes its last monthly surplus requires a substantial reserve.
+      return monthlyNet>=1||f.treasury-plan.cost>=80-120*monthlyNet;
     };
     if(!d.research&&f.treasury>55+civilianReserve&&s.month%4===0){
       const ideaTurn=s.month%8===4;
@@ -791,6 +791,7 @@ export function aiTurn(s,owner){
       const materials=MATERIALS.filter(i=>!d.knownMaterial.includes(i.id)&&i.prerequisites.every(id=>d.knownMaterial.includes(id))&&f.treasury>=researchTerms(s,owner,'material',i.id).cost).sort((a,b)=>Number(!!researchTerms(s,owner,'material',b.id).merchant)-Number(!!researchTerms(s,owner,'material',a.id).merchant));
       const visitor=d.visitingScholars.find(v=>v.travelRemaining===0&&v.remaining>0&&(v.branch==='material'?materials:ideas).some(item=>item.id===v.id));
       if(visitor)researchInnovation(s,owner,visitor.branch,visitor.id);
+      else if(!atWar&&budget.projectedNet<=1&&materials.some(item=>item.id==='craft-workshops')&&f.treasury>=researchTerms(s,owner,'material','craft-workshops').cost+20)researchInnovation(s,owner,'material','craft-workshops');
       else if(materials.length&&researchTerms(s,owner,'material',materials[0].id).merchant)researchInnovation(s,owner,'material',materials[0].id);
       else if(ideaTurn&&ideas.length)researchInnovation(s,owner,'idea',ideas[0].id);
       else if(materials.length)researchInnovation(s,owner,'material',materials[0].id);
@@ -829,7 +830,10 @@ export function aiTurn(s,owner){
       .filter(project=>project.check.ok)
       .sort((a,b)=>(b.b.effects.food||0)-(a.b.effects.food||0)||adjacent(b.site.id,s).filter(link=>region(s,link.to)?.owner===owner).length-adjacent(a.site.id,s).filter(link=>region(s,link.to)?.owner===owner).length):[];
     const foodProject=foodProjects.find(project=>f.treasury>=project.check.cost+(atWar?Math.max(24,6*Math.max(0,-budget.projectedNet)):12));
+    const workshop=!atWar&&budget.projectedNet<=1&&d.knownMaterial.includes('craft-workshops')&&f.treasury>=42
+      ?owned.map(site=>({site,check:constructionCheck(s,owner,site.id,'workshop')})).find(project=>project.check.ok&&f.treasury>=project.check.cost+24):null;
     if(foodProject)startConstruction(s,owner,foodProject.site.id,foodProject.b.id);
+    else if(workshop)startConstruction(s,owner,workshop.site.id,'workshop');
     else if(!foodProjects.length&&f.treasury>120+infrastructureReserve){for(const kind of ['stone','timber','metal'])if(d.materials[kind]<5)purchaseMaterials(s,owner,kind,5);const project=owned.flatMap(site=>BUILDINGS.map(b=>({site,b}))).find(({site,b})=>constructionCheck(s,owner,site.id,b.id).ok);if(project)startConstruction(s,owner,project.site.id,project.b.id)}
     if(s.month%12===0&&f.treasury>75+civilianReserve){for(const seller of Object.keys(s.development)){
       if(seller===owner||isWar(s,owner,seller)||relation(s,owner,seller)<0)continue;
