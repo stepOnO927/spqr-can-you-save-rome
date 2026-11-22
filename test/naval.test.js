@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGrandGame,tick,moveArmy,cancelMarch,previewMarch,upgradeSave,aiTurn,startConstruction} from '../engine.js';
-import {SEA_ZONES,seaRoute,portZone,isPortBlockaded,queueShip,cancelShipConstruction,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply,harborTradeCapacity} from '../naval.js';
+import {SEA_ZONES,seaRoute,portZone,isPortBlockaded,queueShip,cancelShipConstruction,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply,harborTradeCapacity,settleMerchantDispute} from '../naval.js';
 import {tradeCard,renderNavalPanel} from '../map-lab/naval-ui.js';
 import {developmentPanel,constructionPanel} from '../development-ui.js';
 import {advanceDevelopment} from '../development.js';
@@ -101,6 +101,71 @@ test('a navigation delay before the final sea zone explains a later real food sh
  assert.equal(onTime.factions.senate.lastFoodShortage,undefined);
  assert.equal(onTime.factions.senate.stability-s.factions.senate.stability,1);
  assert.equal(s.naval.reports.filter(r=>r.kind==='interrupted-grain-shortage'&&r.owner==='senate').length,1);
+});
+
+test('a foreign merchant nonpayment creates one saved claim with a real optional settlement',()=>{
+ let s=newGrandGame('senate');s.wars=[];s.naval.pirates=[];s.factions.senate.treasury=500;s.factions.senate.food=0;
+ for(const route of s.naval.routes)if(route.id!=='egypt-italy')route.pausedBy=[s.regions.find(r=>r.id===route.from)?.owner].filter(Boolean);
+ advanceNaval(s);
+ const ship=s.naval.voyages.find(v=>v.routeId==='egypt-italy'&&v.phase==='outbound');
+ assert.ok(ship?.cargo>0,'the trade contract has dispatched a crewed cargo vessel');
+ ship.zone=portZone(ship.to);ship.path=[];
+ const key=['senate','egypt'].sort().join(':'),beforeRelations=s.relations[key]??0;
+ s.factions.senate.treasury=0;s.month++;
+ advanceNaval(s);
+ const claim=s.naval.disputes[0];
+ assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'payment');
+ assert.equal(ship.phase,'return');assert.equal(ship.cargo,claim.cargo);
+ assert.equal(claim.buyer,'senate');assert.equal(claim.seller,'egypt');
+ assert.equal(claim.status,'open');assert.equal(claim.month,s.month);
+ assert.equal(claim.compensation,Math.ceil(ship.cargo*ship.price/4));
+ assert.equal(s.relations[key],beforeRelations-3);
+ assert.equal(s.naval.reports.filter(r=>r.kind==='merchant-dispute'&&r.disputeId===claim.id).length,1);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(s.naval.disputes[0].status,'open');
+ const screen=(player,lang,section)=>{s.player=player;const content={innerHTML:'',insertAdjacentHTML(_position,html){this.innerHTML+=html}},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};renderNavalPanel({state:s,lang,root,section,onAction:()=>{},onZone:()=>{},onPort:()=>{}});return content.innerHTML};
+ assert.match(screen('senate','en','trade'),/MERCHANT CLAIMS/);
+ assert.match(screen('senate','zh','trade'),/商船交易争议/);
+ for(let i=0;i<12;i++)s.naval.disputes.push({...claim,id:`closed-${i}`,status:'settled'});
+ assert.match(screen('senate','en','trade'),new RegExp(`data-settle-dispute="${claim.id}"`),'an old open claim remains actionable after many settled records');
+ s.naval.disputes.length=1;
+ assert.match(screen('egypt','en','reports'),/MERCHANT PAYMENT DISPUTE/);
+ assert.doesNotMatch(screen('egypt','en','trade'),/data-settle-dispute/,'the seller cannot spend the buyer treasury');
+ assert.doesNotMatch(screen('caesar','en','reports'),/MERCHANT PAYMENT DISPUTE/,'an uninvolved faction receives no claim report');
+ s.player='senate';
+ assert.equal(settleMerchantDispute(s,'egypt',claim.id).ok,false,'only the buyer may settle');
+ assert.equal(settleMerchantDispute(s,'senate',claim.id).reason,'treasury');
+ s.factions.senate.treasury=20;
+ const beforeSeller=s.factions.egypt.treasury;
+ assert.deepEqual(settleMerchantDispute(s,'senate',claim.id),{ok:true,paid:claim.compensation});
+ assert.equal(s.factions.senate.treasury,20-claim.compensation);
+ assert.equal(s.factions.egypt.treasury,beforeSeller+claim.compensation);
+ assert.equal(s.relations[key],beforeRelations);
+ assert.equal(s.naval.disputes[0].status,'settled');
+ assert.equal(settleMerchantDispute(s,'senate',claim.id).ok,false,'a reload or repeated click cannot pay twice');
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(s.naval.disputes[0].status,'settled');
+ assert.equal(s.naval.reports.filter(r=>r.kind==='merchant-dispute-settled'&&r.disputeId===claim.id).length,1);
+ const old=JSON.parse(JSON.stringify(s));delete old.naval.disputes;delete old.naval.nextDispute;
+ assert.deepEqual(upgradeSave(old).naval.disputes,[],'older campaigns gain an empty dispute ledger without losing trade state');
+});
+
+test('a solvent AI buyer honors an older claim without spending the player treasury',()=>{
+ const s=newGrandGame('egypt');s.wars=[];s.naval.pirates=[];s.factions.senate.treasury=500;s.factions.senate.food=0;
+ for(const route of s.naval.routes)if(route.id!=='egypt-italy')route.pausedBy=[s.regions.find(r=>r.id===route.from)?.owner].filter(Boolean);
+ advanceNaval(s);
+ const ship=s.naval.voyages.find(v=>v.routeId==='egypt-italy'&&v.phase==='outbound');assert.ok(ship);
+ ship.zone=portZone(ship.to);ship.path=[];s.factions.senate.treasury=0;s.month++;advanceNaval(s);
+ const claim=s.naval.disputes[0];assert.equal(claim.status,'open');
+ s.factions.senate.treasury=100;
+ const withoutSettlement=upgradeSave(JSON.parse(JSON.stringify(s)));
+ withoutSettlement.naval.disputes[0].status='settled';
+ s.month++;withoutSettlement.month++;
+ advanceNaval(s);advanceNaval(withoutSettlement);
+ assert.equal(claim.status,'settled');
+ assert.equal(s.factions.egypt.treasury-withoutSettlement.factions.egypt.treasury,claim.compensation,'the player seller receives only the claim above ordinary monthly costs');
+ assert.equal(withoutSettlement.factions.senate.treasury-s.factions.senate.treasury,claim.compensation,'the AI buyer pays from its own treasury');
+ assert.equal(s.naval.reports.filter(r=>r.kind==='merchant-dispute-settled'&&r.disputeId===claim.id).length,1);
 });
 
 test('harbor congestion delays real cargo and payment, survives reload, and improves with a warehouse',()=>{

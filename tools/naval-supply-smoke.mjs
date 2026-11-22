@@ -137,6 +137,46 @@ try{
  assert.match(await page.locator('.naval-content').innerText(),/粮车补给送达/);
  await page.locator('[data-naval-tab="fleets"]').click();
  assert.match(await page.locator('.naval-content').innerText(),/内陆粮车/);
+ await page.evaluate(async()=>{
+  const {newGrandGame}=await import('../engine.js?v=242');
+  const {advanceNaval,portZone}=await import('../naval.js?v=64');
+  const state=newGrandGame('senate');state.wars=[];state.naval.pirates=[];state.factions.senate.treasury=500;state.factions.senate.food=0;
+  for(const route of state.naval.routes)if(route.id!=='egypt-italy')route.pausedBy=[state.regions.find(region=>region.id===route.from)?.owner].filter(Boolean);
+  advanceNaval(state);
+  const ship=state.naval.voyages.find(v=>v.routeId==='egypt-italy'&&v.phase==='outbound');
+  ship.zone=portZone(ship.to);ship.path=[];state.factions.senate.treasury=0;state.month++;advanceNaval(state);
+  state.factions.senate.treasury=20;
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
+ });
+ await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.locator('.grand-site').first().waitFor();await page.locator('#naval').click();
+ await page.locator('[data-naval-tab="trade"]').click();
+ assert.match(await page.locator('.naval-content').innerText(),/MERCHANT CLAIMS/);
+ assert.match(await page.locator('.naval-content').innerText(),/No payment on arrival; cargo returned/);
+ assert.equal(await page.locator('[data-settle-dispute]').count(),1);
+ await page.locator('#language').click();
+ assert.match(await page.locator('.naval-content').innerText(),/商船交易争议/);
+ await page.locator('[data-settle-dispute]').click();
+ assert.match(await page.locator('.naval-content').innerText(),/已结清/);
+ assert.equal(await page.locator('[data-settle-dispute]').count(),0);
+ await page.locator('[data-naval-tab="reports"]').click();
+ assert.match(await page.locator('.naval-content').innerText(),/运费索赔结清/);
+ await page.evaluate(async()=>{
+  const {newGrandGame}=await import('../engine.js?v=242');
+  const {advanceNaval}=await import('../naval.js?v=64');
+  const state=newGrandGame('senate');state.wars=[];state.factions.senate.treasury=300;state.factions.senate.food=100;
+  for(const route of state.naval.routes)if(route.id!=='egypt-papyrus')route.pausedBy=[state.regions.find(region=>region.id===route.from)?.owner].filter(Boolean);
+  for(let month=2;month<=9;month++){state.month=month;advanceNaval(state)}
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
+ });
+ await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
+ await page.locator('.grand-site').first().waitFor();await page.locator('#naval').click();
+ await page.locator('[data-naval-tab="reports"]').click();
+ assert.match(await page.locator('.naval-content').innerText(),/SUCCESSFUL MERCHANT EXPEDITION/);
+ assert.match(await page.locator('.naval-content').innerText(),/Water Management/);
+ await page.locator('#language').click();
+ assert.match(await page.locator('.naval-content').innerText(),/商船远航成果/);
+ assert.match(await page.locator('.naval-content').innerText(),/水利管理/);
  assert.deepEqual(errors,[]);
  console.log('Naval supply browser smoke passed in English and Chinese');
 }finally{await browser.close()}

@@ -69,7 +69,7 @@ const additionalRoutes=[
  ['narbo-wine','narbo','t016','wine',2],['african-oil','africa','t016','oil',2],['eastern-stone','t091','t016','stone',1],['aegean-textiles','egypt','anatolia','textiles',2],['egypt-papyrus','egypt','t016','papyrus',2],['levant-luxury','t114','t016','luxury',1],['western-horses','mauretania','t016','horses',1],['pontic-timber','t092','t016','timber',2],['hispanic-metal','hispaniaN','t016','metal',1]
 ];
 const marketGoods=new Set(['wine','oil','textiles','papyrus','luxury','horses']);
-function ensureTrade(s){s.naval.stock||={};s.naval.voyages||=[];s.naval.nextVoyage||=1;for(const owner of Object.keys(s.factions)){s.naval.stock[owner]||={wine:0,oil:0,textiles:0,papyrus:0,luxury:0,horses:0}}for(const [id,from,to,good,volume] of additionalRoutes)if(!s.naval.routes.some(r=>r.id===id))s.naval.routes.push({id,from,to,good,volume,last:null});for(const route of s.naval.routes)route.pausedBy=Array.isArray(route.pausedBy)?[...new Set(route.pausedBy.filter(id=>typeof id==='string'&&s.factions[id]))]:[]}
+function ensureTrade(s){s.naval.stock||={};s.naval.voyages||=[];s.naval.nextVoyage||=1;if(!Array.isArray(s.naval.disputes))s.naval.disputes=[];s.naval.nextDispute||=1;for(const owner of Object.keys(s.factions)){s.naval.stock[owner]||={wine:0,oil:0,textiles:0,papyrus:0,luxury:0,horses:0}}for(const [id,from,to,good,volume] of additionalRoutes)if(!s.naval.routes.some(r=>r.id===id))s.naval.routes.push({id,from,to,good,volume,last:null});for(const route of s.naval.routes)route.pausedBy=Array.isArray(route.pausedBy)?[...new Set(route.pausedBy.filter(id=>typeof id==='string'&&s.factions[id]))]:[]}
 function seedMarketMerchants(s){
  const ports=[...new Set(s.naval.routes.filter(route=>{const from=s.regions.find(r=>r.id===route.from),to=s.regions.find(r=>r.id===route.to);return from&&to&&(from.owner!==to.owner||marketGoods.has(route.good))}).map(route=>route.from))];
  for(const id of ports){
@@ -109,6 +109,30 @@ function tradeRecord(s,route,buyer,seller,reason,security,price,extra={}){
   route.last.marketBenefit=(route.last.marketBenefit||0)+(extra.marketBenefit||0);return;
  }
  route.last={year:s.year,month:s.month,buyer,seller,reason,security,unitPrice:price,amount:0,paid:0,captured:0,...extra};
+}
+function openMerchantDispute(s,v,reason){
+ if(v.buyer===v.seller||!v.cargo||!Number.isFinite(v.price)||v.price<=0)return null;
+ const compensation=Math.max(1,Math.ceil(v.cargo*v.price/4));
+ const dispute={id:`merchant-dispute-${s.naval.nextDispute++}`,voyageId:v.id,routeId:v.routeId,buyer:v.buyer,seller:v.seller,from:v.from,to:v.to,good:v.good,cargo:v.cargo,price:v.price,compensation,reason,year:s.year,month:s.month,status:'open'};
+ s.naval.disputes.push(dispute);
+ const key=[v.buyer,v.seller].sort().join(':');
+ const before=s.relations[key]??0;s.relations[key]=Math.max(-100,before-3);dispute.relationLoss=before-s.relations[key];
+ report(s,{kind:'merchant-dispute',owner:v.buyer,seller:v.seller,from:v.from,to:v.to,good:v.good,cargo:v.cargo,compensation,reason,disputeId:dispute.id});
+ return dispute;
+}
+export function settleMerchantDispute(s,actor,id){
+ initializeNaval(s);
+ const dispute=s.naval?.disputes?.find(d=>d.id===id);
+ if(!dispute||dispute.buyer!==actor||dispute.status!=='open')return {ok:false,reason:'dispute'};
+ const buyer=s.factions[actor],seller=s.factions[dispute.seller];
+ if(!buyer||!seller||atWar(s,actor,dispute.seller))return {ok:false,reason:'diplomacy'};
+ if(buyer.treasury<dispute.compensation)return {ok:false,reason:'treasury'};
+ buyer.treasury-=dispute.compensation;seller.treasury+=dispute.compensation;
+ const key=[actor,dispute.seller].sort().join(':');
+ s.relations[key]=Math.min(100,(s.relations[key]??0)+(dispute.relationLoss??3));
+ dispute.status='settled';dispute.settledYear=s.year;dispute.settledMonth=s.month;
+ report(s,{kind:'merchant-dispute-settled',owner:actor,seller:dispute.seller,from:dispute.from,to:dispute.to,good:dispute.good,compensation:dispute.compensation,disputeId:id});
+ return {ok:true,paid:dispute.compensation};
 }
 function tradeGrainNeed(s,buyer,good,seller){
  if(good!=='grain')return Infinity;
@@ -270,7 +294,8 @@ function advanceTradeVoyages(s,log){
   const amount=marketGoods.has(v.good)?wanted:tradeAccountMove(s,v.buyer,v.good,wanted,true),paid=v.buyer===v.seller?0:amount*v.price;v.cargo-=amount;s.factions[v.buyer].treasury-=paid;s.factions[v.seller].treasury+=paid;
   if(amount&&marketGoods.has(v.good))to.civicSatisfaction=Math.min(80,(to.civicSatisfaction??to.loyalty??70)+amount);
   const reason=amount?'delivered':!open?'closed':!need?'stocked':affordable<1?(floor?'war-reserve':'payment'):'capacity';tradeRecord(s,route,v.buyer,v.seller,reason,security,v.price,{amount,paid,marketBenefit:marketGoods.has(v.good)?amount:0,zone:v.zone});
-  if(amount){const lead=recordMerchantContact(s,route);if(lead?.buyer===s.player)log(s,`Merchant contact brought a research lead on ${lead.name[0]}. It expires in six months; research is still required.`,`商贸往来带来了${lead.name[1]}的研究线索。线索六个月后失效，仍须投入研究。`)}
+  if(['payment','war-reserve'].includes(reason)&&v.buyer!==v.seller){openMerchantDispute(s,v,reason);if([v.buyer,v.seller].includes(s.player))log(s,'A merchant shipment reached port but the buyer did not pay; the cargo is returning and a freight claim is open.','商船抵港后买方未付款；货物正在返航，运费索赔已登记。')}
+  if(amount){const lead=recordMerchantContact(s,route);if(lead){report(s,{kind:'merchant-expedition',owner:lead.buyer,seller:lead.seller,from:v.from,to:v.to,good:v.good,amount,paid,leadId:lead.id,leadName:lead.name,expiresTurn:lead.expiresTurn});if(lead.buyer===s.player)log(s,`Merchant contact brought a research lead on ${lead.name[0]}. It expires in six months; research is still required.`,`商贸往来带来了${lead.name[1]}的研究线索。线索六个月后失效，仍须投入研究。`)}}
   sendTradeHome(s,v);
  }
 }
@@ -901,6 +926,16 @@ function updatePursuitOrders(s,log){
   if(f.owner===s.player)log(s,'Fleet pursuit changed course after a new dated sighting. The target may have moved again.','舰队根据新的注明日期的目击报告改航；目标仍可能再次移动。');
  }
 }
+function settleAIMerchantDisputes(s){
+ const reviewed=new Set();
+ for(const dispute of s.naval.disputes){
+  const buyer=dispute.buyer;
+  if(dispute.status!=='open'||buyer===s.player||reviewed.has(buyer)||s.year*12+s.month<=dispute.year*12+dispute.month)continue;
+  reviewed.add(buyer);
+  if(s.factions[buyer]?.treasury<dispute.compensation+30||nationalBudget(s,buyer).projectedNet<0)continue;
+  settleMerchantDispute(s,buyer,dispute.id);
+ }
+}
 export function advanceNaval(s,log=()=>{}){initializeNaval(s);if(!s.naval)return;const n=s.naval,avoidedNavalBattles=new Set();reportInterruptedGrainShortages(s,log);advanceWagons(s,log);consumeMaritimeProvisions(s);produceGoods(s);for(const j of [...n.jobs]){const p=s.world?.characters?.[j.characterId],budget=s.factions[j.owner];if(!p?.alive||p.faction!==j.owner||j.port&&s.regions.find(r=>r.id===j.port)?.owner!==j.owner){n.jobs.splice(n.jobs.indexOf(j),1);continue}if(j.remaining>0){j.remaining--;continue}budget.treasury=Math.max(-100,budget.treasury-1);if(budget.treasury<0)p.loyalty=Math.max(0,p.loyalty-1);j.experience=(j.experience||0)+1;if(j.experience%12===0){const skill=navalSkill(p,j.kind);p.navalSkills[j.kind]=Math.min(100,skill+2)}}
  for(const f of n.fleets)finalizeDestroyedFleet(s,f,log);
 for(const q of [...n.queues]){
@@ -971,6 +1006,7 @@ for(const q of [...n.queues]){
  finishMaritimeSupply(s,log);
  for(const p of n.pirates){const patrol=n.fleets.filter(f=>f.zone===p.zone&&!f.port&&!f.reserve&&!f.mobilizing&&f.hull>0&&f.sailors>0&&['patrol','escort','intercept'].includes(f.order?.kind)&&ships(f));if(patrol.length){if(p.ships>0&&p.pressure>=24){for(const owner of new Set(patrol.map(f=>f.owner))){if(p.ships<=0||p.pressure<24)break;resolvePirateClash(s,p,patrol.filter(f=>f.owner===owner),log)}}else p.pressure=Math.max(0,p.pressure-patrol.length*5)}else p.pressure=p.ships>0?Math.min(70,p.pressure+1):Math.max(0,p.pressure-2);if(p.backer&&rng(s)<.05){const sponsor=p.backer;p.backer=null;s.factions[sponsor].legitimacy=Math.max(0,s.factions[sponsor].legitimacy-3);for(const r of n.routes.filter(r=>routeZones(r).includes(p.zone))){const victim=s.regions.find(x=>x.id===r.to)?.owner;if(victim&&victim!==sponsor){const key=[sponsor,victim].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]??0)-4)}}report(s,{kind:'scandal',zone:p.zone,owner:sponsor});if(sponsor===s.player)log(s,'Secret pirate support was exposed; legitimacy fell.','秘密资助海盗曝光，合法性下降。')}}
  advanceTradeVoyages(s,log);for(const route of [...n.routes].sort((a,b)=>(a.lastDispatch?a.lastDispatch.year*12+a.lastDispatch.month:-Infinity)-(b.lastDispatch?b.lastDispatch.year*12+b.lastDispatch.month:-Infinity)))dispatchTradeVoyage(s,route,log);
+ settleAIMerchantDisputes(s);
  for(const f of n.fleets)if(f.order?.kind==='blockade'&&!blockadePower(f)){f.order=null;if(f.owner===s.player)log(s,'The blockade ended: the fleet lacks fit, crewed warships.','封锁已结束：舰队缺少可用且有足够水手的战船。')}
  for(const f of n.fleets){if(f.mobilizing){f.mobilizing--;if(f.mobilizing<=0){f.mobilizing=0;f.reserve=false;f.morale=Math.min(100,f.morale+2);if(f.owner===s.player)log(s,'The fleet has completed mobilization and can receive orders.','舰队完成整备，可以接受命令。')}}}
  for(const owner of Object.keys(s.factions).filter(x=>x!==s.player&&x!=='rebels')){const transportQueued=aiTransportShipbuilding(s,owner);for(const f of n.fleets.filter(x=>x.owner===owner&&ships(x)))aiNavalOrders(s,owner,f);if(!transportQueued&&s.month===1&&s.factions[owner].treasury>90&&aiNavalCashflow(s,owner)>0){const dock=s.regions.find(r=>r.owner===owner&&r.buildings?.includes('shipyard'));if(dock)queueShip(s,owner,dock.id,'light')}}

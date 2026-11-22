@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {newGame,newGrandGame,upgradeSave,tick,aiTurn,setTax,recruit,region,moveArmy,previewMarch,diplomacy,relation,royalCourtCredit,provincialRitesCredit,setReligiousPolicy,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,constructionCheck,knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,purchaseMaterials,resolveBattle} from '../engine.js';
 import {IDEA_CATEGORIES,IDEAS,MATERIALS,BUILDINGS,development,activeEffects,ideaCompatibility,ideaAdoptionPlan,ideaSlotExpansionCheck,scholarVisitTopics,researchTerms,recordMerchantContact,settleGranaryReserves,advanceDevelopment,mineMetalOutput,localBuildingEffects,templeGuaranteeExpense} from '../development.js';
 import {advanceNaval} from '../naval.js';
+import {renderNavalPanel} from '../map-lab/naval-ui.js';
 test('road milestone encyclopedia attributes its ancient account to Plutarch',()=>{
  const milestone=MATERIALS.find(item=>item.id==='road-milestones');
  assert.equal(milestone.source.title,'Plutarch, Life of Caius Gracchus 7.2');
@@ -806,6 +807,15 @@ test('two paid foreign shipments create a dated research lead, not free knowledg
  for(const month of [6,7,8,9]){restored.month=month;advanceNaval(restored)}
  const lead=restored.development.senate.merchantLeads.find(x=>x.id==='water-control');
  assert.ok(lead);assert.equal(lead.seller,'egypt');assert.ok(lead.month>=6&&lead.month<=9,'the lead follows two paid deliveries in distinct months');
+ const expedition=restored.naval.reports.filter(r=>r.kind==='merchant-expedition'&&r.owner==='senate');
+ assert.equal(expedition.length,1,'only the real paid arrival that grants a lead creates the event');
+ assert.equal(expedition[0].leadId,lead.id);assert.equal(expedition[0].expiresTurn,lead.expiresTurn);
+ assert.ok(expedition[0].paid>0&&expedition[0].amount>0);
+ const reportText=(state,lang)=>{const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};renderNavalPanel({state,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});return content.innerHTML};
+ assert.match(reportText(restored,'en'),/SUCCESSFUL MERCHANT EXPEDITION/);
+ assert.match(reportText(restored,'zh'),/商船远航成果/);
+ const sellerView=upgradeSave(JSON.parse(JSON.stringify(restored)));sellerView.player='egypt';
+ assert.doesNotMatch(reportText(sellerView,'en'),/SUCCESSFUL MERCHANT EXPEDITION/,'the research lead belongs to the buyer');
  assert.ok(!restored.development.senate.knownMaterial.includes('water-control'));
  const terms=researchTerms(restored,'senate','material','water-control');
  assert.equal(terms.cost,normal.cost-3);assert.equal(terms.months,normal.months-1);
