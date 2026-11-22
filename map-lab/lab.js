@@ -1,53 +1,53 @@
-import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=world-kings-claimants-1';
-import {sendAgreementProposal} from '../agreement-negotiations.js?v=world-kings-claimants-1';
+import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=world-kings-command-age-1';
+import {sendAgreementProposal} from '../agreement-negotiations.js?v=world-kings-command-age-1';
 import {localStore as localStorage,sessionStore as sessionStorage} from '../safe-storage.js';
-import {campaignYear,campaignDate} from '../campaign-date.js?v=world-kings-claimants-1';
-import {estimateAttackLosses} from '../attack-forecast.js?v=world-kings-claimants-1';
-import {marchReason as sharedMarchReason} from '../movement-help.js?v=world-kings-claimants-1';
-import {renderTerritoryFacts} from './territory-facts.js?v=world-kings-claimants-1';
-import {placeLeaderLabels} from './leader-layout.js?v=world-kings-claimants-1';
-import {createInventionUI} from './invention-ui.js?v=world-kings-claimants-1';
-import {buildingModifiers} from '../inventions.js?v=world-kings-claimants-1';
-import {authorityForTheater} from './authority-view.js?v=world-kings-claimants-1';
-import {renderMediation} from './mediation-ui.js?v=world-kings-claimants-1';
-import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from './turn-report.js?v=world-kings-claimants-1';
-import {syncChronicleDispatches} from '../chronicle.js?v=world-kings-claimants-1';
-import {renderChronicle} from './chronicle-ui.js?v=world-kings-claimants-1';
-import {formatChronicleEntry} from '../chronicle.js?v=world-kings-claimants-1';
-import {knownDynasticFactions} from '../civil-war.js?v=world-kings-claimants-1';
-import {reportedControl,reportedFortification,requestControlReport} from '../control-intelligence.js?v=world-kings-claimants-1';
-import {renderLocalGovernor} from './local-governor-ui.js?v=world-kings-claimants-1';
-import {renderSecurity} from './security-ui.js?v=world-kings-claimants-1';
-import {renderOffices} from './offices-ui.js?v=world-kings-claimants-1';
-import {renderCursus} from './cursus-ui.js?v=world-kings-claimants-1';
-import {officeEffects} from '../office-system.js?v=world-kings-claimants-1';
-import {populationFactor,religiousTaxCost} from '../religion.js?v=world-kings-claimants-1';
-import {satisfactionForOutline} from './satisfaction-map.js?v=world-kings-claimants-1';
-import {suzeraintyColor} from './suzerainty-map.js?v=world-kings-claimants-1';
-import {accessMapColor,accessMapEntries} from './access-map.js?v=world-kings-claimants-1';
-import {knownOrganizations,organizationMapColor,organizationsForOwner} from './organization-map.js?v=world-kings-claimants-1';
-import {frontierEntries,frontierOutlineColor} from './frontier-map.js?v=world-kings-claimants-1';
-import {explorationEntries,explorationOutlineColor} from './exploration-map.js?v=world-kings-claimants-1';
-import {renameCoalition,leaveCoalition} from '../coalitions.js?v=world-kings-claimants-1';
-import {eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from '../coalition-admissions.js?v=world-kings-claimants-1';
-import {proposeCoalitionMotion} from '../coalition-motions.js?v=world-kings-claimants-1';
-import {coalitionCouncilHtml} from '../coalition-council-ui.js?v=world-kings-claimants-1';
-import {sendCoalitionAidRequest} from '../coalition-assistance.js?v=world-kings-claimants-1';
-import {activeAgreement} from '../agreements.js?v=world-kings-claimants-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-claimants-1';
-import {localCampaignCity} from '../local-campaign.js?v=world-kings-claimants-1';
-import {localCouncilHtml,bindLocalCouncil} from '../local-campaign-ui.js?v=world-kings-claimants-1';
-import {validPlayableCampaign} from '../local-campaign-save.js?v=world-kings-claimants-1';
-import {featherAdvice} from '../feather.js?v=world-kings-claimants-1';
-import {waitForMapIdle} from './capture-wait.js?v=world-kings-claimants-1';
-import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=world-kings-claimants-1';
-import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=world-kings-claimants-1';
-import historical from '../historical-territories.js?v=world-kings-claimants-1';
-import republicanRoads from '../republican-roads.js?v=world-kings-claimants-1';
-import rivers from '../rivers.js?v=world-kings-claimants-1';
-import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, startExpedition, cancelExpedition, resumeExpedition, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, answerBorderIncident, queueMission, setTax, personalDiplomaticCredit, administrationQuote, startAdministration} from '../engine.js?v=world-kings-claimants-1';
-import {renderRoutePlanner} from './route-ui.js?v=world-kings-claimants-1';
-import {setBorderPolicy} from '../border-access.js?v=world-kings-claimants-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=world-kings-command-age-1';
+import {estimateAttackLosses} from '../attack-forecast.js?v=world-kings-command-age-1';
+import {marchReason as sharedMarchReason} from '../movement-help.js?v=world-kings-command-age-1';
+import {renderTerritoryFacts} from './territory-facts.js?v=world-kings-command-age-1';
+import {placeLeaderLabels} from './leader-layout.js?v=world-kings-command-age-1';
+import {createInventionUI} from './invention-ui.js?v=world-kings-command-age-1';
+import {buildingModifiers} from '../inventions.js?v=world-kings-command-age-1';
+import {authorityForTheater} from './authority-view.js?v=world-kings-command-age-1';
+import {renderMediation} from './mediation-ui.js?v=world-kings-command-age-1';
+import {captureOwnOrders,ownOrderUpdates,formatOwnOrder,controlReportChanges,formatControlReport} from './turn-report.js?v=world-kings-command-age-1';
+import {syncChronicleDispatches} from '../chronicle.js?v=world-kings-command-age-1';
+import {renderChronicle} from './chronicle-ui.js?v=world-kings-command-age-1';
+import {formatChronicleEntry} from '../chronicle.js?v=world-kings-command-age-1';
+import {knownDynasticFactions} from '../civil-war.js?v=world-kings-command-age-1';
+import {reportedControl,reportedFortification,requestControlReport} from '../control-intelligence.js?v=world-kings-command-age-1';
+import {renderLocalGovernor} from './local-governor-ui.js?v=world-kings-command-age-1';
+import {renderSecurity} from './security-ui.js?v=world-kings-command-age-1';
+import {renderOffices} from './offices-ui.js?v=world-kings-command-age-1';
+import {renderCursus} from './cursus-ui.js?v=world-kings-command-age-1';
+import {officeEffects} from '../office-system.js?v=world-kings-command-age-1';
+import {populationFactor,religiousTaxCost} from '../religion.js?v=world-kings-command-age-1';
+import {satisfactionForOutline} from './satisfaction-map.js?v=world-kings-command-age-1';
+import {suzeraintyColor} from './suzerainty-map.js?v=world-kings-command-age-1';
+import {accessMapColor,accessMapEntries} from './access-map.js?v=world-kings-command-age-1';
+import {knownOrganizations,organizationMapColor,organizationsForOwner} from './organization-map.js?v=world-kings-command-age-1';
+import {frontierEntries,frontierOutlineColor} from './frontier-map.js?v=world-kings-command-age-1';
+import {explorationEntries,explorationOutlineColor} from './exploration-map.js?v=world-kings-command-age-1';
+import {renameCoalition,leaveCoalition} from '../coalitions.js?v=world-kings-command-age-1';
+import {eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from '../coalition-admissions.js?v=world-kings-command-age-1';
+import {proposeCoalitionMotion} from '../coalition-motions.js?v=world-kings-command-age-1';
+import {coalitionCouncilHtml} from '../coalition-council-ui.js?v=world-kings-command-age-1';
+import {sendCoalitionAidRequest} from '../coalition-assistance.js?v=world-kings-command-age-1';
+import {activeAgreement} from '../agreements.js?v=world-kings-command-age-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-command-age-1';
+import {localCampaignCity} from '../local-campaign.js?v=world-kings-command-age-1';
+import {localCouncilHtml,bindLocalCouncil} from '../local-campaign-ui.js?v=world-kings-command-age-1';
+import {validPlayableCampaign} from '../local-campaign-save.js?v=world-kings-command-age-1';
+import {featherAdvice} from '../feather.js?v=world-kings-command-age-1';
+import {waitForMapIdle} from './capture-wait.js?v=world-kings-command-age-1';
+import {stageHandoff,receiveHandoff} from '../view-handoff.js?v=world-kings-command-age-1';
+import {battleSideForPlayer,visibleLogText,visibleSummaryEvidence} from '../visibility.js?v=world-kings-command-age-1';
+import historical from '../historical-territories.js?v=world-kings-command-age-1';
+import republicanRoads from '../republican-roads.js?v=world-kings-command-age-1';
+import rivers from '../rivers.js?v=world-kings-command-age-1';
+import {forecastEconomy,projectTaxPath,newGame, moveArmy, issueMilitaryOrder, startExpedition, cancelExpedition, resumeExpedition, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, diplomacy, sendInquiry, inquiryCost, answerPeaceOffer, answerBorderIncident, queueMission, setTax, personalDiplomaticCredit, administrationQuote, startAdministration} from '../engine.js?v=world-kings-command-age-1';
+import {renderRoutePlanner} from './route-ui.js?v=world-kings-command-age-1';
+import {setBorderPolicy} from '../border-access.js?v=world-kings-command-age-1';
 import {renderFootholdPanel} from './foothold-ui.js';
 import {armyExpeditionSupply} from '../expedition-supply.js';
 import {showIncomingTitleTerms,showOutgoingTitleTerms,bindPeaceTitleChoice} from './peace-title-ui.js';
@@ -58,19 +58,19 @@ import '../version-ui.js';
 import {analytics} from '../analytics.js';
 import {renderWildernessEntity} from './wilderness-ui.js';
 import {localEntity,localContactQuote,offerLocalContact,localSubmissionQuote,offerLocalSubmission,localSiegeQuote,besiegeLocalEntity,localAdministrationQuote,startLocalAdministration} from '../local-polities.js';
-import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-claimants-1';
-import {FACTIONS} from '../data.js?v=world-kings-claimants-1';
-import {identity,factionMark} from '../identity.js?v=world-kings-claimants-1';
-import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=world-kings-claimants-1';
-import {createCharacterUI} from './character-ui.js?v=world-kings-claimants-1';
-import {fictionalPortraitKey} from '../portrait-registry.js?v=world-kings-claimants-1';
-import {renderAidRequest} from '../strategic-aid-ui.js?v=world-kings-claimants-1';
-import {reportedArmies,visiblePersonName} from '../character-system.js?v=world-kings-claimants-1';
-import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=world-kings-claimants-1';
-import {friendlyPersonnelInTheater} from './personnel.js?v=world-kings-claimants-1';
-import {leadershipIntelligence} from './intelligence-summary.js?v=world-kings-claimants-1';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=world-kings-claimants-1';
-import {receivedMail,unreadCount} from '../epistulae.js?v=world-kings-claimants-1';
+import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-command-age-1';
+import {FACTIONS} from '../data.js?v=world-kings-command-age-1';
+import {identity,factionMark} from '../identity.js?v=world-kings-command-age-1';
+import {CHARACTER_CATALOG,knownLeaders,leadershipTitle,HISTORICAL_BIO} from '../characters.js?v=world-kings-command-age-1';
+import {createCharacterUI} from './character-ui.js?v=world-kings-command-age-1';
+import {fictionalPortraitKey} from '../portrait-registry.js?v=world-kings-command-age-1';
+import {renderAidRequest} from '../strategic-aid-ui.js?v=world-kings-command-age-1';
+import {reportedArmies,visiblePersonName} from '../character-system.js?v=world-kings-command-age-1';
+import {createTutorial,tutorialTurnProgress} from './tutorial.js?v=world-kings-command-age-1';
+import {friendlyPersonnelInTheater} from './personnel.js?v=world-kings-command-age-1';
+import {leadershipIntelligence} from './intelligence-summary.js?v=world-kings-command-age-1';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=world-kings-command-age-1';
+import {receivedMail,unreadCount} from '../epistulae.js?v=world-kings-command-age-1';
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGame();
@@ -290,7 +290,7 @@ function showArmy(unit){
  const expedition=armyExpeditionSupply(state,unit),supplyText={full:lang==='zh'?'补给充足':'Fully supplied',depot:lang==='zh'?'由前沿仓库供给':'Supplied from forward depot',village_support:lang==='zh'?'从村落限量购粮，须保留村民口粮':'Limited village purchases preserve civilian food',partial:lang==='zh'?'补给不足，持续将造成减员':'Partial supply; prolonged strain causes losses',local_purchase:lang==='zh'?'依赖地方采购，每月消耗3国库':'Local purchases cost 3 treasury per month',cut_off:lang==='zh'?'补给线中断，持续将造成减员':'Supply line cut; prolonged isolation causes losses'}[expedition.status];if(supplyText){const note=document.createElement('p');note.className='battle-note';note.textContent=(lang==='zh'?'远征补给：':'Expedition supply: ')+supplyText;document.querySelector('#command-detail').append(note)}
  const itinerary=unit.expedition;if(Array.isArray(itinerary?.nodes)&&['active','paused','completed'].includes(itinerary.status)){const box=document.createElement('div');box.className='mission-box';const title=document.createElement('strong');title.textContent=lang==='zh'?'逐段远征':'LEG-BY-LEG EXPEDITION';const next=itinerary.nodes[itinerary.nextIndex],reason={permission:lang==='zh'?'通行权或控制报告变化':'Access or control report changed',battle:lang==='zh'?'战斗后等待复核':'Stopped after battle',siege:lang==='zh'?'围城中':'Siege in progress',supply:lang==='zh'?'补给线中断':'Supply line cut',battle_plan:lang==='zh'?'作战计划接管军队':'Army is under a battle plan',diverted:lang==='zh'?'军队偏离路线':'Army left the route',transport:lang==='zh'?'海运费用不足':'Insufficient sea transport funds'}[itinerary.reason]||itinerary.reason||'';const status=document.createElement('p');status.textContent=itinerary.status==='completed'?(lang==='zh'?'已抵达目的地。':'Destination reached.'):`${lang==='zh'?'目的地':'Destination'} ${n(region(state,itinerary.destination)?.name)||itinerary.destination} · ${lang==='zh'?'下一站':'Next stop'} ${n(region(state,next)?.name)||next} · ${itinerary.status==='paused'?(lang==='zh'?'暂停':'Paused')+(reason?'：'+reason:''):(lang==='zh'?'行进中':'In progress')}`;box.append(title,status);if(itinerary.status!=='completed'){const stop=document.createElement('button');stop.textContent=lang==='zh'?'停止后续行程':'STOP FUTURE LEGS';stop.onclick=()=>{if(cancelExpedition(state,unit.id).ok)showArmy(unit)};box.append(stop);if(itinerary.status==='paused'&&!unit.move&&!unit.siege){const resume=document.createElement('button');resume.textContent=lang==='zh'?'重新核实并继续':'RECHECK AND RESUME';resume.onclick=()=>{resumeExpedition(state,unit.id);renderArmies();showArmy(unit);renderHud()};box.append(resume)}}document.querySelector('#command-detail').append(box)}
  const supplyButton=document.createElement('button');supplyButton.id='inspect-army-supply';supplyButton.type='button';supplyButton.textContent=lang==='zh'?'查看补给':'INSPECT SUPPLY';supplyButton.onclick=()=>{const food=state.factions[state.player].food,limit=loc.supply*1000;const note=document.createElement('p');note.id='army-supply-explanation';note.className='battle-note';note.textContent=lang==='zh'?'己方粮食 '+food+'；当地承载约 '+limit.toLocaleString()+' 人。粮食低于20会削弱战力；超出当地承载需留意补给。':'Faction food '+food+'; local capacity about '+limit.toLocaleString()+' soldiers. Food below 20 weakens combat strength; exceeding local capacity strains supply.';document.querySelector('#army-supply-explanation')?.remove();document.querySelector('#command-detail').append(note);emit('supply',unit.id)};document.querySelector('#command-detail').append(supplyButton); if(unit.characterId){const btn=document.createElement('button');btn.className='identity-focus-map';btn.textContent=lang==='zh'?'查看指挥官':'VIEW COMMANDER';btn.onclick=()=>characterUI.show(unit.characterId);document.querySelector('#command-detail').prepend(btn)}
- if(!unit.move&&!unit.siege){const options=availableCommanders(state,unit.id),box=document.createElement('div');box.className='mission-box';box.innerHTML=`<strong>${lang==='zh'?'任命指挥官':'APPOINT COMMANDER'}</strong><p>${lang==='zh'?'仅可任命同战区、未指挥其他军队、没有行政任命且能够履职的己方人物。原指挥官卸任后留在战区；军队基础指挥评级不变；人物每指挥一场战斗可使自身指挥战力提高2%，最多10%，健康也影响战斗。':'Choose an available friendly person in the same theater who holds no administrative assignment. The former commander remains in the theater. The army’s base rating stays unchanged. A person gains 2% command power per battle, up to 10%, and health also affects combat.'}</p>`+(options.length?`<select id="commander-choice" aria-label="${lang==='zh'?'指挥官人选':'Commander candidate'}">${options.map(id=>`<option value="${esc(id)}">${esc(n(visiblePersonName(state,state.player,id)))}</option>`).join('')}</select><button id="commander-appoint">${lang==='zh'?'任命':'APPOINT'}</button><div id="commander-feedback" role="status"></div>`:`<p>${lang==='zh'?'此战区没有可用人选。':'No eligible person is available in this theater.'}</p>`);document.querySelector('#command-detail').append(box);const action=box.querySelector('#commander-appoint');if(action)action.onclick=()=>{const id=box.querySelector('#commander-choice').value,out=box.querySelector('#commander-feedback');out.textContent=(lang==='zh'?'确认任命：':'Confirm appointment: ')+n(visiblePersonName(state,state.player,id))+' ';const confirm=document.createElement('button');confirm.textContent=lang==='zh'?'确认':'CONFIRM';out.append(confirm);confirm.onclick=()=>{if(appointCommander(state,unit.id,id).ok){analytics.track('official_appointed');renderArmies();showArmy(unit)}else out.textContent=lang==='zh'?'无法任命，请检查人物和军队状态。':'Unavailable; check the person and army.'}}}
+ if(!unit.move&&!unit.siege){const options=availableCommanders(state,unit.id),box=document.createElement('div');box.className='mission-box';box.innerHTML=`<strong>${lang==='zh'?'任命指挥官':'APPOINT COMMANDER'}</strong><p>${lang==='zh'?'仅可任命同战区、未指挥其他军队、没有行政任命且能够履职的己方人物。游戏规则要求年龄至少20岁；年龄范围跨越20岁或模拟人物年龄未知时不能任命。历史人物若完全缺少年龄资料仍可选择，并标记为年龄未知。原指挥官卸任后留在战区；军队基础指挥评级不变；每场指挥战斗提高2%指挥战力，最多10%，健康也影响战斗。':'Choose an available friendly person in the same theater who holds no administrative assignment. The game requires age 20 or older; uncertain ranges crossing 20 and fictional people with unknown ages are ineligible. Historical figures with no age information may still be selected and are marked age unknown. The former commander remains in the theater; the army’s base rating stays unchanged. A person gains 2% command power per battle, up to 10%; health also affects combat.'}</p>`+(options.length?`<select id="commander-choice" aria-label="${lang==='zh'?'指挥官人选':'Commander candidate'}">${options.map(id=>`<option value="${esc(id)}">${esc(n(visiblePersonName(state,state.player,id)))}${characterAgeRange(state,id)?'':(lang==='zh'?' · 年龄未知':' · age unknown')}</option>`).join('')}</select><button id="commander-appoint">${lang==='zh'?'任命':'APPOINT'}</button><div id="commander-feedback" role="status"></div>`:`<p>${lang==='zh'?'此战区没有可用人选。':'No eligible person is available in this theater.'}</p>`);document.querySelector('#command-detail').append(box);const action=box.querySelector('#commander-appoint');if(action)action.onclick=()=>{const id=box.querySelector('#commander-choice').value,out=box.querySelector('#commander-feedback');out.textContent=(lang==='zh'?'确认任命：':'Confirm appointment: ')+n(visiblePersonName(state,state.player,id))+' ';const confirm=document.createElement('button');confirm.textContent=lang==='zh'?'确认':'CONFIRM';out.append(confirm);confirm.onclick=()=>{if(appointCommander(state,unit.id,id).ok){analytics.track('official_appointed');renderArmies();showArmy(unit)}else out.textContent=lang==='zh'?'无法任命，请检查人物和军队状态。':'Unavailable; check the person and army.'}}}
  if(unit.characterId&&!unit.move&&!unit.siege){const box=document.createElement('div');box.className='mission-box';box.innerHTML=`<button id="commander-release">${lang==='zh'?'解除当前指挥':'RELIEVE COMMANDER'}</button><div id="commander-release-feedback" role="status"></div>`;document.querySelector('#command-detail').append(box);box.querySelector('#commander-release').onclick=()=>{const out=box.querySelector('#commander-release-feedback');out.textContent=lang==='zh'?'确认解除指挥；人物仍在此战区。':'Confirm relief; the person remains in this theater. ';const confirm=document.createElement('button');confirm.textContent=lang==='zh'?'确认':'CONFIRM';out.append(confirm);confirm.onclick=()=>{if(releaseCommander(state,unit.id).ok){renderArmies();showArmy(unit)}else out.textContent=lang==='zh'?'无法解除，请检查军队状态。':'Unavailable; check the army.'}}}
  const controls=document.querySelector('#lab-orders');controls.replaceChildren();
  if(unit.owner!==state.player){controls.textContent=lang==='zh'?'这支军队由另一势力控制，无法下令。':'This army belongs to another faction and cannot receive your orders.';return}
@@ -487,9 +487,9 @@ const helpEntries=[
  {kind:'game',en:'Provincial loyalty and unrest',zh:'地方忠诚与叛乱',enBody:'Theater loyalty affects tax income. High taxes lower it; low taxes restore it. Below 25 loyalty and 60 stability, an undefended theater may rebel.',zhBody:'战区忠诚度影响税收。高税会降低忠诚度，低税可恢复。当忠诚低于25、稳定度低于60且没有守军时，战区可能叛乱。'},
  {kind:'game',en:'Turns, saving and objectives',zh:'回合、存档与目标',enBody:'Advance one month to resolve movement, economy, sieges and AI. The Chronicle records events. Select a save slot and press Save or Load. Click an objective for guidance; it will not issue orders.',zhBody:'推进一个月以结算行军、经济、围攻与AI行动。战报记录事件；选择存档栏后点击保存或读取。点击目标可查看指引，不会自动下令。'},
  {kind:'game',en:'Terrain relief and performance',zh:'地形光影与性能',enBody:'Use REL beside the zoom controls to toggle the hillshade overlay. Turning it off may reduce rendering load; satellite landcover, political control and gameplay remain. Your browser remembers the setting.',zhBody:'使用缩放按钮旁的“光影”切换山地阴影。关闭可能减轻渲染负担；卫星地表、政治控制和游戏规则仍然保留。浏览器会记住此设置。'},
- {kind:'game',en:'Appointing a commander',zh:'任命军队指挥官',enBody:'Select a stationary friendly army to appoint an available person in the same theater or relieve its commander. The former commander remains in the theater; the army’s base command rating stays unchanged, health affects combat, and no person may command two armies. Commanded battles increase that person’s power by 2% each, up to 10%, and the experience remains when reassigned.',zhBody:'选择未行动的己方军队，可任命同战区的可用己方人物，也可解除当前指挥。原指挥官留在战区；军队基础指挥评级不变，人物健康影响战斗，一人不能同时指挥两支军队。人物每指挥一场战斗可提高2%指挥战力，最多10%，转任后仍保留。'},
+ {kind:'game',en:'Appointing a commander',zh:'任命军队指挥官',enBody:'Select a stationary friendly army to appoint an available person in the same theater or relieve its commander. This game rule requires a confirmed age of at least 20 when an age range is known; fictional people with unknown ages are ineligible, while historical figures without age information remain selectable and are labeled unknown. The former commander remains in the theater; the army’s base command rating stays unchanged, health affects combat, and no person may command two armies. Commanded battles increase that person’s power by 2% each, up to 10%, and the experience remains when reassigned.',zhBody:'选择未行动的己方军队，可任命同战区的可用己方人物，也可解除当前指挥。游戏规则要求已知年龄范围能确认年满20岁；模拟人物年龄未知时不能任命，历史人物完全没有年龄资料时仍可选择并标记未知。原指挥官留在战区；军队基础指挥评级不变，人物健康影响战斗，一人不能同时指挥两支军队。人物每指挥一场战斗可提高2%指挥战力，最多10%，转任后仍保留。'},
  {kind:'game',en:'Theater administrators',zh:'战区行政官',enBody:'Select a city in your controlled theater to appoint an eligible person located there for 5 treasury. The appointment adds one theater loyalty each quarter; dismissal is free. Health, loyalty, availability and control determine whether the assignment continues. The role is a game abstraction, not a historical city office or proof of presence in that city. Foreign local appointments are known only through potentially outdated reports.',zhBody:'选择己方控制战区中的城市，可以花费5国库任命位于该战区的合格人物；任职期间每季度增加该战区1点忠诚，解除免费。健康、忠诚、人员状态或控制权变化可能使其卸任。这是游戏中的战区职务，不是历史城市官职，也不代表此人就在城内；外国地方任命只能通过可能过时的报告了解。'},
- {kind:'game',en:'Administrative assignments',zh:'行政任命',control:'#factions',enBody:'Open your faction to appoint finance, supply and administration officers. Appointment costs 5 treasury; dismissal is free. Capable friendly people need at least 40 loyalty and cannot command an army, hold another assignment or travel independently while appointed. An unavailable official loses the assignment before the next monthly economy.',zhBody:'打开己方势力，可任命财务、粮秣和政务专员。任命消耗5国库，解除免费。人选必须有至少40忠诚、能够履职，不能指挥军队或兼任其他职位；任职期间不能独立旅行。无法履职的官员会在下次月度经济结算前卸任。'},
+ {kind:'game',en:'Administrative assignments',zh:'行政任命',control:'#factions',enBody:'Open your faction to appoint finance, supply and administration officers. Appointment costs 5 treasury; dismissal is free. Capable friendly people need a confirmed age of at least 25 and at least 40 loyalty; they cannot command an army, hold another assignment or travel independently while appointed. An unavailable official loses the assignment before the next monthly economy.',zhBody:'打开己方势力，可任命财务、粮秣和政务专员。任命消耗5国库，解除免费。人选须能确认年满25岁、至少40忠诚并能够履职，不能指挥军队或兼任其他职位；任职期间不能独立旅行。无法履职的官员会在下次月度经济结算前卸任。'},
  {kind:'game',en:'Commander loyalty',zh:'将领忠诚',control:'#factions',enBody:'Friendly character profiles have simulated loyalty, separate from theater loyalty. Low faction stability reduces personal loyalty each year. During the Roman civil war, a non-leading officer without an army may defect when loyalty reaches 20 or below.',zhBody:'己方人物档案中的模拟忠诚度与战区忠诚度不同。势力稳定度低时，个人忠诚每年下降。罗马内战期间，忠诚不高于20、未领导派系且未指挥军队的官员可能倒戈。'},
  {kind:'game',en:'Reports and uncertainty',zh:'情报报告与不确定性',control:'#factions',enBody:'Open Factions, choose another power, then Letters & Intelligence. Reports show source, observation date, reliability and confidence. Political stability, reported people’s theater locations and possible succession plans can be investigated; location reports are dated leads, not live positions; no identifiable names do not prove absence or erase the last named leader report, and no information does not prove no plan exists. Conflicting reports remain visible; old reports may be wrong. Your save contains the true simulated world and is not a secrecy boundary.',zhBody:'打开“势力”，选择其他势力，再打开“书信与情报”。报告显示来源、观察日期、可靠性和可信度；可以调查政治稳定度、已报告人物的战区位置和可能的继任安排；位置是带日期的线索，并非实时追踪；没有可核实的姓名不代表无人执政或没有竞争者，也不会覆盖旧领袖报告；没有消息不等于没有计划。本方继任安排可以撤回，已付费用不退；没有有效指定时按影响力选择。冲突报告会保留，旧报告可能错误。本地存档包含真实模拟状态，并非保密边界。'},
  {kind:'game',en:'Letters and direct questions',zh:'书信与直接询问',control:'#factions',enBody:'A direct inquiry normally costs 3 treasury (less with the intelligence networks idea) and takes 2–5 months. Audience replies may invite a later request or defer it; neither guarantees a meeting. A letter or reply may be lost; war increases the risk on the return journey. The court may refuse, and its answer is unverified. An envoy can also travel to improve relations; reception may be refused. Other diplomatic buttons currently resolve immediately.',zhBody:'直接询问通常消耗3国库（启用情报网络后减少），需要2至5个月。会面答复可能邀请另行请求或暂缓，不保证见面。信件或回信可能遗失，交战会增加返程风险；对方可能拒答，官方答复未经独立核实。也可派遣使者历时数月改善关系，但可能被拒；其他外交按钮目前即时结算。'},

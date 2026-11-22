@@ -1,5 +1,5 @@
-import {militaryAccessStatus,nonMilitaryAccessStatus} from '../border-access.js?v=world-kings-claimants-1';
-import {reportedControl} from '../control-intelligence.js?v=world-kings-claimants-1';
+import {militaryAccessStatus,nonMilitaryAccessStatus} from '../border-access.js?v=world-kings-command-age-1';
+import {reportedControl} from '../control-intelligence.js?v=world-kings-command-age-1';
 
 export const ACCESS_MAP_COLORS=Object.freeze({
  own:'#a74737',military:'#78a88b',limited:'#c5a45c',war:'#668ca4',commercial:'#a87c61',closed:'#59666b',unknown:'#777b76',mixed:'#b39757'

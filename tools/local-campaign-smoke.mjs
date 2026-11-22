@@ -1,11 +1,11 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-import {newGame,tick} from '../engine.js?v=world-kings-claimants-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-claimants-1';
-import {playableLocalCities,startLocalCampaign,localProtectionOffer} from '../local-campaign.js?v=world-kings-claimants-1';
+import {newGame,tick} from '../engine.js?v=world-kings-command-age-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-command-age-1';
+import {playableLocalCities,startLocalCampaign,localProtectionOffer} from '../local-campaign.js?v=world-kings-command-age-1';
 import {advanceLocalEntities} from '../local-polities.js';
-import {advanceMail,courierMonths} from '../epistulae.js?v=world-kings-claimants-1';
-import {initializeLocalDiscovery} from '../local-discovery.js?v=world-kings-claimants-1';
+import {advanceMail,courierMonths} from '../epistulae.js?v=world-kings-command-age-1';
+import {initializeLocalDiscovery} from '../local-discovery.js?v=world-kings-command-age-1';
 
 const browser=await chromium.launch({headless:true,...(process.env.SPQR_BROWSER_EXECUTABLE?{executablePath:process.env.SPQR_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];

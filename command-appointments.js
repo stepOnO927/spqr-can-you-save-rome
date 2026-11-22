@@ -1,12 +1,12 @@
-import {CHARACTER_CATALOG,initializeWorld} from './characters.js?v=world-kings-claimants-1';
-import {officeOf} from './office-system.js?v=world-kings-claimants-1';
-import {recordLifeEvent} from './dynasties.js?v=world-kings-claimants-1';
+import {CHARACTER_CATALOG,initializeWorld,characterAgeRange} from './characters.js?v=world-kings-command-age-1';
+import {officeOf} from './office-system.js?v=world-kings-command-age-1';
+import {recordLifeEvent} from './dynasties.js?v=world-kings-command-age-1';
 
 // Theater-level appointments are simulated, not claims about historical commands.
 export function availableCommanders(s,armyId){
  initializeWorld(s);const unit=s.armies.find(a=>a.id===armyId);
  if(!unit||unit.owner!==s.player||unit.men<=0||unit.move||unit.siege)return [];
- return Object.values(s.world.characters).filter(c=>c.faction===s.player&&(c.birthYear==null||s.year-c.birthYear>=20)&&c.alive&&c.location===unit.region&&!c.travel&&!c.missing&&!officeOf(s,s.player,c.id)&&!['seriously_ill','dying','deceased'].includes(c.health)&&!s.armies.some(a=>a.characterId===c.id)).map(c=>c.id);
+ return Object.values(s.world.characters).filter(c=>{const catalog=CHARACTER_CATALOG[c.id],age=characterAgeRange(s,c.id),ageEligible=age?age[0]>=20:!!catalog&&!catalog.fictional;return c.faction===s.player&&ageEligible&&c.alive&&c.location===unit.region&&!c.travel&&!c.missing&&!officeOf(s,s.player,c.id)&&!['seriously_ill','dying','deceased'].includes(c.health)&&!s.armies.some(a=>a.characterId===c.id)}).map(c=>c.id);
 }
 export function appointCommander(s,armyId,id){
  if(!availableCommanders(s,armyId).includes(id))return {ok:false,reason:'unavailable'};

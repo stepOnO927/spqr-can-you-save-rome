@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-claimants-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-claimants-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-command-age-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-command-age-1';
 import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS,LOCAL_REGION_PROFILES,LOCAL_GENERATION_SITES,INDEPENDENT_VILLAGE_SITES,NOMADIC_RANGES,WILDERNESS_SITES,generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites} from '../local-generation.js';
 import {localOfferChance,advanceLocalEntities,advanceLocalTrade,localEntity,localTradeOpen,offerLocalContact,localSiegeQuote,besiegeLocalEntity} from '../local-polities.js';
 import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from '../local-discovery.js';
 import {advanceVillages} from '../local-villages.js';
 import {advanceLocalResistance} from '../local-resistance.js';
-import {receivedMail,replyToLetter,advanceMail} from '../epistulae.js?v=world-kings-claimants-1';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-claimants-1';
+import {receivedMail,replyToLetter,advanceMail} from '../epistulae.js?v=world-kings-command-age-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-command-age-1';
 import {mailboxHtml} from '../mail-ui.js';
 
 const start=(mode,seed)=>configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:seed});

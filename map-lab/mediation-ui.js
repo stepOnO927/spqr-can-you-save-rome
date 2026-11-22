@@ -1,5 +1,5 @@
-import {campaignYear,campaignDate} from '../campaign-date.js?v=world-kings-claimants-1';
-import {canMediate,requestMediation} from '../civil-war.js?v=world-kings-claimants-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=world-kings-command-age-1';
+import {canMediate,requestMediation} from '../civil-war.js?v=world-kings-command-age-1';
 
 export function renderMediation({panel,state,target,language,refresh}){
  if(!['egypt','parthia'].includes(target))return;

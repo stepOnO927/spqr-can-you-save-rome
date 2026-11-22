@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=world-kings-claimants-1';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=world-kings-claimants-1';
-import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=world-kings-claimants-1';
-import {deriveGovernment} from '../governance.js?v=world-kings-claimants-1';
-import {successorFor} from '../characters.js?v=world-kings-claimants-1';
+import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=world-kings-command-age-1';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=world-kings-command-age-1';
+import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=world-kings-command-age-1';
+import {deriveGovernment} from '../governance.js?v=world-kings-command-age-1';
+import {successorFor} from '../characters.js?v=world-kings-command-age-1';
+import {createFictionalPerson} from '../dynasties.js?v=world-kings-command-age-1';
 
 test('a local friendly person may command a vacant army and the appointment survives saving',()=>{
  let s=newGame('senate');assert.equal(recruit(s,'roma'),true);const unit=s.armies.find(a=>a.id==='levy1');
@@ -54,6 +55,14 @@ test('appointments reject remote, occupied, travelling, incapacitated and foreig
  s.world.characters.cato.travel={destination:'epirus'};s.world.characters.scipio.health='seriously_ill';s.world.characters.labienus.location='epirus';
  for(const id of ['cato','scipio','labienus','pompey','cleopatra'])assert.equal(appointCommander(s,unit.id,id).ok,false);
  unit.move={to:'italiaS',remaining:1};assert.deepEqual(availableCommanders(s,unit.id),[]);assert.equal(s.factions.senate.treasury,cash);
+});
+test('commander eligibility respects saved fictional ages and historical uncertainty',()=>{
+ let s=newGame('senate');const army=s.armies.find(a=>a.id==='pompey');
+ const young=createFictionalPerson(s,{name:['Young','年轻人物'],faction:'senate',birthYear:s.year-19,location:'roma'}),adult=createFictionalPerson(s,{name:['Adult','成年人物'],faction:'senate',birthYear:s.year-20,location:'roma'}),unknown=createFictionalPerson(s,{name:['Unknown age','未知年龄'],faction:'senate',birthYear:s.year-30,location:'roma'});
+ s.world.characters[unknown].birthYear=null;for(const id of ['ptolemy','cleopatra']){s.world.characters[id].faction='senate';s.world.characters[id].location='roma'}
+ let candidates=availableCommanders(s,army.id);for(const id of [young,unknown,'ptolemy','cleopatra'])assert.ok(!candidates.includes(id),id+' must not be eligible');assert.ok(candidates.includes(adult));assert.ok(candidates.includes('scipio'),'historical figure with no estimated age stays playable');
+ assert.equal(appointCommander(s,army.id,'ptolemy').ok,false);assert.equal(appointCommander(s,army.id,young).ok,false);s=upgradeSave(JSON.parse(JSON.stringify(s)));s.year++;
+ candidates=availableCommanders(s,army.id);assert.ok(candidates.includes(young));assert.ok(!candidates.includes(unknown));assert.equal(appointCommander(s,army.id,young).ok,true);
 });
 test('a seriously ill commander is relieved before the army moves or fights',()=>{
  const s=newGame('caesar'),unit=s.armies.find(a=>a.id==='xiii'),person=s.world.characters.caesar,skill=unit.skill;unit.move={to:'italiaN',remaining:1};person.health='seriously_ill';tick(s);
