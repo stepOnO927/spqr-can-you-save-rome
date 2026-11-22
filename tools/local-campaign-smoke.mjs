@@ -101,7 +101,9 @@ try{
  assert.ok(accepted>petitioner.year*12+petitioner.month);
  await page.locator('#open-atlas').click();await page.waitForURL('**/map-lab/');
  const polityMarker=page.locator(`.city-marker[data-city="${polity.name[0].toUpperCase()}"]`);
- await polityMarker.waitFor({state:'visible'});await polityMarker.click();
+ // A seeded polity can lie outside the opening viewport. Exercise its real
+ // marker handler after confirming the map rendered it.
+ await polityMarker.waitFor({state:'visible'});await polityMarker.evaluate(marker=>marker.click());
  assert.match(await page.locator('#command-detail').innerText(),/Local trade compact active/);
  assert.equal(errors.length,0,errors.join('\n'));
  console.log('Local campaign, protection, independence, neighboring trade and incoming polity trade petition passed');
