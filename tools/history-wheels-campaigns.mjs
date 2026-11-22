@@ -101,7 +101,7 @@ function caesarPlayerStrategy(seed,plan){
    const result=issueMilitaryOrder(s,a.id,'reinforce');if(result.ok)actions.push({month:i,kind:'reinforce',army:a.id,menBefore:a.men-1000});
   }
   const before=date(s);tick(s);if(date(s)===before)break;
-  if(seed===1&&['guard','muster','travel_guard'].includes(plan))battleTrace.push({month:date(s)-begin,territory:s.regions.filter(r=>regionsBefore[r.id]!==r.owner).map(r=>({region:r.id,from:regionsBefore[r.id],to:r.owner})),battles:(s.battles||[]).slice(0,(s.battles?.length||0)-battlesBefore).map(b=>({region:b.region,attacker:b.attacker.owner,attackerId:b.attacker.id,attackerMen:b.attacker.men,defender:b.defender.owner,defenderId:b.defender.id,defenderMen:b.defender.men,attackerWins:b.attackerWins,lossA:b.lossA,lossD:b.lossD,powerA:b.attacker.power,powerD:b.defender.power})),caesarMen:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),senateMen:s.armies.filter(a=>a.owner==='senate').reduce((n,a)=>n+a.men,0),senateArmies:s.armies.filter(a=>a.owner==='senate'&&a.men>0).length});
+  if(seed===1&&['guard','muster','travel_guard'].includes(plan)||seed===4&&plan==='levy_guard')battleTrace.push({month:date(s)-begin,territory:s.regions.filter(r=>regionsBefore[r.id]!==r.owner).map(r=>({region:r.id,from:regionsBefore[r.id],to:r.owner})),battles:(s.battles||[]).slice(0,(s.battles?.length||0)-battlesBefore).map(b=>({region:b.region,attacker:b.attacker.owner,attackerId:b.attacker.id,attackerMen:b.attacker.men,defender:b.defender.owner,defenderId:b.defender.id,defenderMen:b.defender.men,attackerWins:b.attackerWins,lossA:b.lossA,lossD:b.lossD,powerA:b.attacker.power,powerD:b.defender.power})),caesarMen:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),senateMen:s.armies.filter(a=>a.owner==='senate').reduce((n,a)=>n+a.men,0),senateArmies:s.armies.filter(a=>a.owner==='senate'&&a.men>0).length});
   if(i<3||i%6===5||s.defeat)trace.push({month:date(s)-begin,regions:s.regions.filter(r=>r.owner==='caesar').length,armies:s.armies.filter(a=>a.owner==='caesar'&&a.men>0).length,men:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,wars:s.wars.filter(w=>w.includes('caesar')).length});
   if(s.defeat)break;
  }
@@ -112,6 +112,7 @@ for(const plan of ['guard','levy_guard','peace_guard','tax_guard','tax_levy_guar
  playerStrategySweep[plan]=Array.from({length:6},(_,i)=>caesarPlayerStrategy(i+1,plan));
 }
 console.log('WHEELS_CAESAR_PLAYER_STRATEGIES '+JSON.stringify(playerStrategySweep));
+console.log('WHEELS_SEED4_LEVY_GUARD '+JSON.stringify(playerStrategySweep.levy_guard[3]));
 for(const plan of ['levy_guard','travel_guard']){
  const runs=playerStrategySweep[plan];
  assert.ok(runs.every(run=>run.months===36&&!run.defeat&&run.trace.at(-1).regions>=1&&run.trace.at(-1).armies>=1&&run.trace.at(-1).treasury>=0&&run.trace.at(-1).food>=0),`${plan} should preserve a supplied Roman command across all six 36-month cloud seeds`);
