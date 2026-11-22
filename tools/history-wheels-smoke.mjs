@@ -12,6 +12,16 @@ try{
   await page.locator('.setup-advanced summary').click();
   await page.locator('#campaign-guide').uncheck();
   await page.locator('#start-campaign').click();
+  if(side==='caesar'){
+   await page.locator('#what-now').click();
+   const reserve=page.locator('.experience-cards article').filter({hasText:'Consider raising a frontier reserve'});
+   assert.equal(await reserve.count(),1);
+   assert.match(await reserve.innerText(),/24 treasury.*6 food.*3,000 manpower/);
+   const destination=(await reserve.locator('dd').first().innerText()).trim();
+   await reserve.locator('button[data-recommend]').click();
+   assert.ok((await page.locator('.region-title').innerText()).includes(destination));
+   assert.equal(await page.locator('#recruit').isEnabled(),true);
+  }
   await page.locator('#campaign-progress').click();
   assert.equal(await page.locator('[data-ambition="economic"]').isVisible(),true);
   await page.locator('[data-ambition="economic"]').click();

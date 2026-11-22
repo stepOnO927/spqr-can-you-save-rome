@@ -40,8 +40,8 @@ import {IDEAS,startResearch,equipIdea} from './inventions.js?v=mission-discount-
 import {attachHanWorld,hanWorld,sendEmbassyToSeres,buyEasternImport} from './han/world.js?v=office-age-verified-1';
 import {eastMap,eastPanel,eastToolbar} from './han/east-ui.js?v=office-age-verified-1';
 import {IMPERIUM_TABS,IMPERIUM_LABELS,focusPanel,focusScreen,designerScreen,plannerPanel,planOverlay,bindImperium,openFocusProject} from './imperium-ui.js?v=office-age-verified-1';
-import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=office-age-verified-1';
-import {renderExperienceUi,closeExperience} from './experience-ui.js?v=office-age-verified-1';
+import {initializeExperience,recordExperience,refreshExperience} from './experience.js?v=wheels-guidance-1';
+import {renderExperienceUi,closeExperience} from './experience-ui.js?v=wheels-guidance-1';
 import {financeDecision,commanderDecision,AMBITIONS} from './history-wheels.js?v=office-age-verified-1';
 
 const ui={

@@ -6,6 +6,11 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `fb292e7c` is integrated. The affordable frontier-reserve
+recommendation now uses the same shared Roman experience module as the
+expansion UI. The full local simulation suite passes 1,264/1,264 after this
+merge; GitHub browser verification is pending.
+
 The first browser pass at `e60bf2b2` passed both new Han court scenarios but
 caught a merged UI regression: the expanded command panel lost its distinct
 Western Han appointments heading. The faction-specific bilingual heading is

@@ -1,4 +1,4 @@
-import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=office-age-verified-1';
+import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=wheels-guidance-1';
 import {AMBITIONS,availableAmbitions,ambitionStatus,chooseAmbition,initializeWheels,AMBITION_CHANGE_COST} from './history-wheels.js?v=office-age-verified-1';
 
 let open='';
