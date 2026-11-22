@@ -14,7 +14,7 @@ import {loadProfile,saveProfile,recordCampaign} from '../legacy/legacy-core.js?v
 import {endCampaign} from '../achievement-system.js?v=5';
 import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../achievement-ui.js?v=14';
 import {nationalBudget} from '../national-budget.js?v=27';
-import {budgetHtml} from '../budget-ui.js?v=33';
+import {budgetHtml} from '../budget-ui.js?v=34';
 import republicanRoads from '../republican-roads.js?v=1';
 import {physicalStyle} from './physical-style.js?v=43';
 import {physicalLabels} from './physical-labels.js?v=5';

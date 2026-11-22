@@ -47,3 +47,22 @@ test('the food budget explains its deficit and dates the current-rate shortage i
  assert.match(withGranaryZh,/行省粮仓储粮<\/td><td>8/);
  assert.match(withGranaryZh,/行省粮仓可能延后缺粮/);
 });
+
+test('the treasury budget dates debt risk and explains an existing deficit in both languages',()=>{
+ const state=newGrandGame('caesar'),f=state.factions.caesar;
+ f.treasury=28;
+ const budget=nationalBudget(state,'caesar');
+ assert.ok(budget.projectedNet<0);
+ const months=Math.floor(f.treasury/-budget.projectedNet)+1;
+ assert.match(budgetHtml(state,'en'),new RegExp(`treasury may fall below zero in about ${months} month`));
+ assert.match(budgetHtml(state,'zh'),new RegExp(`国库约${months}个月后会低于零`));
+ f.treasury=-1;
+ assert.match(budgetHtml(state,'en'),/continued debt reduces stability and army morale each month/);
+ assert.match(budgetHtml(state,'zh'),/持续负债会每月削弱稳定度与军队士气/);
+ assert.doesNotMatch(budgetHtml(state,'en'),/treasury may fall below zero in about/);
+ f.treasury=28;
+ state.armies.forEach(a=>{if(a.owner==='caesar')a.men=0});
+ for(const site of state.regions.filter(r=>r.owner==='caesar'))site.tax+=5;
+ assert.ok(nationalBudget(state,'caesar').projectedNet>=0);
+ assert.doesNotMatch(budgetHtml(state,'en'),/treasury may fall below zero in about/);
+});

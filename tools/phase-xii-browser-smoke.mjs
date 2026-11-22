@@ -19,7 +19,7 @@ try{
  const settlementLabel=await page.locator('[data-diplomacy="settlement"]').innerText();
  await page.locator('#language').click();const translatedSettlement=await page.locator('[data-diplomacy="settlement"]').innerText();
  assert.notEqual(settlementLabel,translatedSettlement);assert.match(settlementLabel+translatedSettlement,/内战和议/);assert.match(settlementLabel+translatedSettlement,/civil settlement/);
- const s=newGrandGame('senate');s.victory=true;s.campaignOutcome={kind:'settlement',winner:'senate',loser:'caesar',year:s.year,month:s.month};s.expenseLedger={year:s.year,month:s.month,owners:{senate:{construction:23,research:17,policy:11}}};
+ const s=newGrandGame('senate');s.victory=true;s.campaignOutcome={kind:'settlement',winner:'senate',loser:'caesar',year:s.year,month:s.month};s.expenseLedger={year:s.year,month:s.month,owners:{senate:{construction:23,research:17,policy:11}}};s.factions.senate.treasury=-1;
  await page.locator('#upload-save-file').setInputFiles({name:'victory.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(s))});
  await page.locator('#victory-continue').waitFor();assert.equal(await page.locator('.ending-achievements').count(),0);
  await page.locator('#victory-continue').click();assert.equal(await page.locator('.campaign-ending').count(),0);
@@ -28,7 +28,7 @@ try{
  assert.match(await page.locator('.national-budget').innerText(),/本月已付研究费\s+-17|Research paid this month\s+-17/);
  assert.match(await page.locator('.national-budget').innerText(),/本月已付理念与槽位变更费\s+-11|Idea and slot changes paid this month\s+-11/);
  const firstBudget=await page.locator('.national-budget').innerText();await page.locator('#language').click();const translatedBudget=await page.locator('.national-budget').innerText();
- assert.notEqual(firstBudget,translatedBudget);assert.match(translatedBudget,/本月已付建造费\s+-23|Construction paid this month\s+-23/);assert.match(translatedBudget,/本月已付研究费\s+-17|Research paid this month\s+-17/);assert.match(translatedBudget,/本月已付理念与槽位变更费\s+-11|Idea and slot changes paid this month\s+-11/);
+ assert.notEqual(firstBudget,translatedBudget);assert.match(translatedBudget,/本月已付建造费\s+-23|Construction paid this month\s+-23/);assert.match(translatedBudget,/本月已付研究费\s+-17|Research paid this month\s+-17/);assert.match(translatedBudget,/本月已付理念与槽位变更费\s+-11|Idea and slot changes paid this month\s+-11/);assert.match(firstBudget+translatedBudget,/Treasury is already below zero/);assert.match(firstBudget+translatedBudget,/国库已经低于零/);
  await page.locator('#end-campaign').click();const beforeLanguage=await page.locator('.ending-summary').innerText();assert.match(beforeLanguage,/Negotiated settlement|政治和议/);
  await page.locator('#ending-language').click();const afterLanguage=await page.locator('.ending-summary').innerText();assert.match(afterLanguage,/Negotiated settlement|政治和议/);assert.notEqual(afterLanguage,beforeLanguage);
  const decisive=newGrandGame('caesar');
