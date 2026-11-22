@@ -19,6 +19,7 @@ try{
  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-free').click();
  await page.locator('.maplibregl-canvas').waitFor();
+ if(await page.locator('html').getAttribute('lang')!=='zh-CN')await page.locator('#language').click();
  const details=page.locator('#map .maplibregl-ctrl-attrib'),summary=details.locator('summary');
  await details.waitFor();
  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.loaded()&&map.areTilesLoaded()},null,{timeout:30000});
@@ -26,6 +27,9 @@ try{
  assert.equal(await details.evaluate(el=>el.open),false);
  assert.ok(await details.evaluate(el=>el.getBoundingClientRect().width)<50,'collapsed credit should not cover the map');
  assert.match(await summary.getAttribute('aria-label'),/地图数据来源/);
+ await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[12.6,43.9],zoom:6.35})});
+ await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.areTilesLoaded()&&document.querySelector('#map-charting').hidden},null,{timeout:30000});
+ assert.equal(await details.evaluate(el=>el.open),false,'charting another area must not expand attribution over the map');
  await page.screenshot({path:path.join(root,'outputs','atlas-attribution-collapsed.png')});
  await summary.click();
  await page.waitForTimeout(250);
@@ -37,16 +41,14 @@ try{
  await page.locator('#language').click();
  assert.match(await summary.getAttribute('aria-label'),/View map data sources/);
  await page.setViewportSize({width:390,height:844});
- assert.ok(await details.evaluate(el=>el.getBoundingClientRect().width)<50);
- assert.equal(await summary.evaluate(el=>{const control=el.getBoundingClientRect(),brief=document.querySelector('.brief').getBoundingClientRect(),selection=document.querySelector('.selection').getBoundingClientRect(),buttons=document.querySelector('.map-controls').getBoundingClientRect();return [brief,selection,buttons].some(box=>control.left<box.right&&control.right>box.left&&control.top<box.bottom&&control.bottom>box.top)}),false,'source button remains outside the mobile panels and map controls');
+ await page.waitForFunction(()=>{const el=document.querySelector('#map .maplibregl-ctrl-attrib summary'),control=el?.getBoundingClientRect();if(!control||control.width>=50)return false;return ['.brief','.selection','.map-controls'].every(selector=>{const box=document.querySelector(selector).getBoundingClientRect();return control.right<=box.left||control.left>=box.right||control.bottom<=box.top||control.top>=box.bottom})},null,{timeout:5000});
  await page.screenshot({path:path.join(root,'outputs','atlas-attribution-mobile.png')});
  await summary.click();
  assert.equal(await details.evaluate(el=>el.open),true);
  assert.ok(await details.evaluate(el=>el.getBoundingClientRect().width)<=390);
  await summary.press('Enter');
  await page.setViewportSize({width:320,height:700});
- assert.ok(await details.evaluate(el=>el.getBoundingClientRect().width)<50);
- assert.equal(await summary.evaluate(el=>{const control=el.getBoundingClientRect(),brief=document.querySelector('.brief').getBoundingClientRect(),buttons=document.querySelector('.map-controls').getBoundingClientRect();return [brief,buttons].some(box=>control.left<box.right&&control.right>box.left&&control.top<box.bottom&&control.bottom>box.top)}),false,'source button stays clear at 320 pixels');
+ await page.waitForFunction(()=>{const el=document.querySelector('#map .maplibregl-ctrl-attrib summary'),control=el?.getBoundingClientRect();if(!control||control.width>=50)return false;return ['.brief','.map-controls'].every(selector=>{const box=document.querySelector(selector).getBoundingClientRect();return control.right<=box.left||control.left>=box.right||control.bottom<=box.top||control.top>=box.bottom})},null,{timeout:5000});
  assert.deepEqual(errors,[]);
  console.log('Atlas credits stay compact, open by mouse and keyboard, and retain full sources in both languages.');
 }finally{await browser.close()}
