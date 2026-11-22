@@ -1,7 +1,7 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=world-kings-meeting-1';
-import {createFictionalPerson} from './dynasties.js?v=world-kings-meeting-1';
-import {initializeOffices,appointOffice} from './office-system.js?v=world-kings-meeting-1';
-import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=world-kings-meeting-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=world-kings-stops-1';
+import {createFictionalPerson} from './dynasties.js?v=world-kings-stops-1';
+import {initializeOffices,appointOffice} from './office-system.js?v=world-kings-stops-1';
+import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=world-kings-stops-1';
 
 const ROMAN=new Set(['caesar','senate']);
 const clamp=n=>Math.max(0,Math.min(100,Math.round(n)));

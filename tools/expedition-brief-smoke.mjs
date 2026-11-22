@@ -17,7 +17,7 @@ try{
  const brief=page.locator('.route-brief').first();
  await brief.locator('summary').click();
  const text=await brief.innerText();
- for(const phrase of ['Territorial objective: Further Gaul','Home base: Cisalpine Gaul','Supply requirement','Political access by leg','Known risks'])assert.ok(text.includes(phrase),phrase);
+ for(const phrase of ['Territorial objective: Further Gaul','Home base: Cisalpine Gaul','Planned theater stops','Own forward outposts','Administration of own controlled theaters','Supply requirement','Political access by leg','Known risks'])assert.ok(text.includes(phrase),phrase);
  await page.locator('.route-choice').first().getByRole('button',{name:'START EXPEDITION'}).click();
  assert.match(await page.locator('#command-detail').innerText(),/LEG-BY-LEG EXPEDITION/);
  await page.locator('#save').click();

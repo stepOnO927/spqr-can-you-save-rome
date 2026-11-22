@@ -8,9 +8,9 @@
 //
 // Every AI decision uses the deciding faction's own intelligence picture
 // (s.intel[faction]); nobody reads the true map.
-import {OASIS,STEPPE,FACTIONS,PLAYABLE} from './data.js?v=world-kings-meeting-1';
-import {neighbours,templateStats,routeBetween,marchMonths} from './military.js?v=world-kings-meeting-1';
-import {roll,clamp,log,monthIndex} from './util.js?v=world-kings-meeting-1';
+import {OASIS,STEPPE,FACTIONS,PLAYABLE} from './data.js?v=world-kings-stops-1';
+import {neighbours,templateStats,routeBetween,marchMonths} from './military.js?v=world-kings-stops-1';
+import {roll,clamp,log,monthIndex} from './util.js?v=world-kings-stops-1';
 
 const key=(a,b)=>[a,b].sort().join(':');
 export const relation=(s,a,b)=>a===b?100:(s.relations[key(a,b)]??0);

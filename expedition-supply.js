@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=world-kings-meeting-1';
-import {militaryAccessStatus} from './border-access.js?v=world-kings-meeting-1';
+import {ROUTES} from './data.js?v=world-kings-stops-1';
+import {militaryAccessStatus} from './border-access.js?v=world-kings-stops-1';
 import {footholdConnected} from './foothold.js';
 import {villageFoodQuote, takeVillageFood} from './local-villages.js';
 

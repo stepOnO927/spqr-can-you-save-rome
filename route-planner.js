@@ -1,6 +1,6 @@
-import {ROUTES,REGIONS} from './data.js?v=world-kings-meeting-1';
-import {reportedControl} from './control-intelligence.js?v=world-kings-meeting-1';
-import {militaryAccessStatus} from './border-access.js?v=world-kings-meeting-1';
+import {ROUTES,REGIONS} from './data.js?v=world-kings-stops-1';
+import {reportedControl} from './control-intelligence.js?v=world-kings-stops-1';
+import {militaryAccessStatus} from './border-access.js?v=world-kings-stops-1';
 
 const graph = new Map();
 for (const [from, to, type] of ROUTES) {
@@ -41,8 +41,17 @@ export function expeditionBrief(state,armyId,route){
  const reported=id=>reportedControl(state,actor,id)?.owner||null;
  const home=route.nodes.find(id=>own(id)?.administrativeStatus==='integrated')||null;
  const staging=[];
+ const outposts=[];
+ const administration=[];
  for(const id of route.nodes){
-  const region=own(id);if(!region)continue;
+  const theater=state.regions.find(region=>region.id===id),region=own(id);
+  if(!theater)continue;
+  for(const entity of theater.localEntities||[]){
+   const post=entity.foothold;
+   if(post?.owner===actor&&post.level>=1)outposts.push({theater:id,entityId:entity.id,level:post.level,storedFood:post.stockFood||0});
+  }
+  if(!region)continue;
+  if(region.administrativeStatus!=='integrated')administration.push({theater:id,status:region.administrativeStatus||'unadministered'});
   const depot=(region.localEntities||[]).find(entity=>entity.foothold?.owner===actor&&entity.foothold.level>=1&&entity.foothold.stockFood>0);
   if(region.administrativeStatus==='integrated'||depot)staging.push({theater:id,kind:depot?'depot':'integrated',depotId:depot?.id||null,storedFood:depot?.foothold.stockFood||0});
  }
@@ -54,7 +63,8 @@ export function expeditionBrief(state,armyId,route){
   if(leg.sea)risk.push({theater:leg.to,kind:'sea'});
  }
  if(route.seaCost>state.factions[actor].treasury)risk.push({theater:null,kind:'transport'});
- return {objective:route.nodes.at(-1),homeBase:home,staging,
+ return {objective:route.nodes.at(-1),homeBase:home,staging,outposts,administration,
+  stops:(route.legs||[]).map(leg=>({theater:leg.to,months:leg.months,sea:leg.sea,reportedOwner:reported(leg.to),baselineSupply:(openingSupply.get(leg.to)||0)*1000})),
   monthlyDepotFood:Math.max(1,Math.ceil(army.men/5000)),armyMen:army.men,
   factionFood:state.factions[actor].food,seaCost:route.seaCost,
   politicalAccess:(route.legs||[]).map(leg=>({theater:leg.to,reportedOwner:reported(leg.to),status:leg.status})),

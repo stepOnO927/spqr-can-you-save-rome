@@ -45,6 +45,8 @@ test('expedition brief ties objective and staging to the real route and own stor
  assert.equal(route.brief.armyMen,7200);
  assert.equal(route.brief.monthlyDepotFood,2);
  assert.ok(route.brief.staging.some(point=>point.theater==='cisalpine'&&point.kind==='integrated'));
+ assert.deepEqual(route.brief.stops.map(stop=>stop.theater),route.nodes.slice(1));
+ assert.equal(route.brief.stops.reduce((sum,stop)=>sum+stop.months,0),route.months);
  assert.deepEqual(route.brief.politicalAccess.map(leg=>leg.theater),route.nodes.slice(1));
  assert.equal(route.brief.seaCost,route.seaCost);
 });
@@ -58,4 +60,19 @@ test('foreign current supply changes do not leak into distant route briefs',()=>
  assert.deepEqual(after,before);
  assert.equal(after.recommended.brief.homeBase,'numidia');
  assert.ok(after.recommended.brief.risk.some(item=>item.kind==='support_unconfirmed'));
+});
+
+test('expedition brief lists only own outposts and known administrative work',()=>{
+ const state=newGame('caesar'),narbo=state.regions.find(region=>region.id==='narbo');
+ narbo.owner='caesar';narbo.administrativeStatus='occupied';
+ narbo.localEntities.push({id:'route-test-outpost',foothold:{owner:'caesar',level:2,stockFood:5}});
+ const route=planRoutes(state,'xiii','gaul').routes.find(item=>item.nodes.includes('narbo'));
+ assert.ok(route);
+ assert.ok(route.brief.administration.some(item=>item.theater==='narbo'&&item.status==='occupied'));
+ assert.ok(route.brief.outposts.some(item=>item.entityId==='route-test-outpost'&&item.storedFood===5));
+ const foreign=state.regions.find(region=>region.id==='gaul');
+ foreign.localEntities.push({id:'hidden-outpost',foothold:{owner:'senate',level:4,stockFood:999}});
+ const privateBrief=planRoutes(state,'xiii','gaul').routes.find(item=>item.nodes.includes('narbo')).brief;
+ assert.equal(JSON.stringify(privateBrief).includes('hidden-outpost'),false);
+ assert.equal(JSON.stringify(privateBrief).includes('999'),false);
 });

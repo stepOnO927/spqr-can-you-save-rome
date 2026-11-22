@@ -1,8 +1,8 @@
-import {ROUTES} from './data.js?v=world-kings-meeting-1';
-import {reportedControl} from './control-intelligence.js?v=world-kings-meeting-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=world-kings-meeting-1';
-import {admitCoalitionMember,coalitionInterest} from './coalitions.js?v=world-kings-meeting-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=world-kings-meeting-1';
+import {ROUTES} from './data.js?v=world-kings-stops-1';
+import {reportedControl} from './control-intelligence.js?v=world-kings-stops-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=world-kings-stops-1';
+import {admitCoalitionMember,coalitionInterest} from './coalitions.js?v=world-kings-stops-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=world-kings-stops-1';
 
 const now=s=>s.year*12+s.month;
 const relation=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;

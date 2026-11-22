@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=world-kings-meeting-1';
+import {newGame} from '../engine.js?v=world-kings-stops-1';
 import {frontierEntries,frontierOutlineColor} from '../map-lab/frontier-map.js';
 import {explorationEntries,explorationOutlineColor} from '../map-lab/exploration-map.js';
 
