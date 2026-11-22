@@ -6,6 +6,20 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `b3036943` (#336) is integrated. A missing person's health
+continues to change on a saved per-person random stream without exposing
+private outcomes or shifting unrelated random events. Confirmation applies
+the deferred stability, inheritance and succession effects once. AI strategy
+now selects the actual acting authority when a nominal leader is missing;
+the character panel explains the delayed health knowledge in both languages.
+The new health, leadership and cache-version checks pass 8/8. Full `npm test`
+passed 1,370/1,370 on rerun; the first run narrowly exceeded the existing
+40 ms eastern turn CPU threshold at 41.71 ms under parallel test load. That
+performance file passed alone, and the complete suite passed on the next run.
+The 120-month market simulation passed with 137 autonomous deliveries, six
+merchant-owned ventures and three multi-leg ventures. Cloud browser checks
+for this merge follow.
+
 Main through `54fe85a2` (#335) is integrated. An unconfirmed death of a
 missing Roman leader now keeps the nominal seat and succession controls in
 the same observable state as a living missing leader. Searches may fail and
