@@ -707,6 +707,7 @@ export function advanceMail(s, actions = {}) {
     if(m.recipient===s.player&&m.context?.kind==='support_result'&&m.context.transfer>0){s.factions[s.player].treasury+=m.context.transfer;m.context.transfer=0}
     if(m.recipient!==s.player&&m.context?.kind==='allied_support'){
       const enemy=m.context.enemy,ally=m.recipient,relation=s.relations[pair(ally,s.player)]||0;
+      if(!s.factions[ally]){m.delivery='expired';continue}
       const help=relation>=20&&s.factions[ally].treasury>=12&&atWar(s,s.player,enemy);
       if(help)s.factions[ally].treasury-=5;
       const senderId=senderFor(s,ally);
@@ -716,7 +717,9 @@ export function advanceMail(s, actions = {}) {
         body:help?['The allied court has sent 5 treasury units in support.','盟邦已送出 5 单位国库援助。']:['The allied court cannot offer support at present.','盟邦目前无法提供援助。'],options:['acknowledge'],context:{kind:'support_result',transfer:help?5:0}});
     }
     if (m.recipient !== s.player && m.context?.kind === 'treaty' && actions.proposeAgreement) {
-      const key = pair(m.senderFaction, m.recipient),def=AGREEMENT_TYPES[m.context.treatyType],willingness=(s.relations[key] || 0)>=def.threshold&&s.factions[m.senderFaction].treasury>=def.cost;
+      const sender=s.factions[m.senderFaction],recipient=s.factions[m.recipient],def=AGREEMENT_TYPES[m.context.treatyType];
+      if(!sender||!recipient||!def){m.delivery='expired';continue}
+      const key=pair(m.senderFaction,m.recipient),willingness=(s.relations[key]||0)>=def.threshold&&sender.treasury>=def.cost;
       m.responses.push({choice:willingness ? 'accept' : 'reject', year:s.year, month:s.month, ai:true,
         arrival:now + courierMonths(s,m.destination,m.source), resolved:false});
     }
