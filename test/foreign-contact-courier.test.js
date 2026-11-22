@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=claimant-force-accounting-1';
-import {initializeCursus,cultivateOfficial,proposeCooperation,advanceCursus} from '../cursus-honorum.js?v=claimant-force-accounting-1';
+import {newGame,upgradeSave} from '../engine.js?v=commander-age-1';
+import {initializeCursus,cultivateOfficial,proposeCooperation,advanceCursus} from '../cursus-honorum.js?v=commander-age-1';
 
 function setup(){
  const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;

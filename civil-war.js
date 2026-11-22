@@ -1,6 +1,6 @@
-import {isDeliveredReport} from './person-knowledge.js?v=claimant-force-accounting-1';
+import {isDeliveredReport} from './person-knowledge.js?v=commander-age-1';
 import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=saved-age-consistency-1';
-import {reportedControl} from './control-intelligence.js?v=claimant-force-accounting-1';
+import {reportedControl} from './control-intelligence.js?v=commander-age-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 
 // Alternate-history claimant commands use real game theaters and armies.

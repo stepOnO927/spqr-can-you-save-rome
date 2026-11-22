@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=claimant-force-accounting-1';
-import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=claimant-force-accounting-1';
-import {drawMap} from '../map.js?v=claimant-force-accounting-1';
-import {advanceMovements} from '../movements.js?v=claimant-force-accounting-1';
-import {buildChessboard} from '../chessboard.js?v=claimant-force-accounting-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=claimant-force-accounting-1';
-import {observeBalanceOfPower} from '../coalitions.js?v=claimant-force-accounting-1';
+import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=commander-age-1';
+import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=commander-age-1';
+import {drawMap} from '../map.js?v=commander-age-1';
+import {advanceMovements} from '../movements.js?v=commander-age-1';
+import {buildChessboard} from '../chessboard.js?v=commander-age-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=commander-age-1';
+import {observeBalanceOfPower} from '../coalitions.js?v=commander-age-1';
 
 test('undelivered frontier control cannot reveal contacts, chessboard threats or AI balance',()=>{
  const base=newGame('caesar');delete base.controlKnowledge.caesar.italiaN;
