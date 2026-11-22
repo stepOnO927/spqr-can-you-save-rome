@@ -247,3 +247,21 @@ test('five-year campaign keeps message identities, categories and delivery state
   assert.deepEqual(loaded.mail.reportSnapshot,s.mail.reportSnapshot);
   assert.match(mailboxHtml(loaded,{lang:'zh'}),/帝国来信/);
 });
+
+test('an outdated foreign treaty expires safely when either court disappears before arrival',()=>{
+ for(const vanished of ['egypt','parthia']){
+  const s=state(),sent=treatyLetter(s,'egypt','parthia');
+  assert.equal(sent.ok,true);sent.letter.courierRisk=0;sent.letter.arrival=s.year*12+s.month+1;
+  delete s.factions[vanished];advance(s,1,{proposeAgreement:()=>{throw Error('a vanished court cannot conclude a treaty')}});
+  assert.equal(sent.letter.delivery,'expired');assert.equal(sent.letter.responses.length,0);
+ }
+});
+test('an allied support request expires if its receiving court disappears in transit',()=>{
+ const s=state(),sent=sendLetter(s,{senderInstitution:'caesar',senderFaction:'caesar',recipient:'egypt',
+  category:'diplomatic',subject:['Support','援助'],body:['Please send aid.','请提供援助。'],
+  context:{kind:'allied_support',enemy:'senate'}});
+ assert.equal(sent.ok,true);sent.letter.courierRisk=0;sent.letter.arrival=s.year*12+s.month+1;
+ delete s.factions.egypt;advance(s,1);
+ assert.equal(sent.letter.delivery,'expired');
+ assert.equal(s.mail.messages.filter(m=>m.context?.kind==='support_result').length,0);
+});
