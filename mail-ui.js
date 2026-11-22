@@ -1,5 +1,5 @@
-import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=saved-age-consistency-1';
-import {wartimePolicy} from './epistulae-personnel.js?v=saved-age-consistency-1';
+import {receivedMail,unreadCount,gatheringPlan} from './epistulae.js?v=family-age-consistency-1';
+import {wartimePolicy} from './epistulae-personnel.js?v=family-age-consistency-1';
 import {CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
 

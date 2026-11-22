@@ -1,8 +1,8 @@
 import {reportedControl,observeArrival} from './control-intelligence.js?v=fort-intel-1';
 import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=succession-lead-1';
-import {officeOf} from './office-system.js?v=saved-age-consistency-1';
+import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=family-age-consistency-1';
+import {officeOf} from './office-system.js?v=family-age-consistency-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=missing-fate-privacy-1';
 import {isCompletedMeeting} from './person-knowledge.js?v=saved-age-consistency-1';
 
