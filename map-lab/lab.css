@@ -64,7 +64,7 @@
 /* Grand campaign cartography: sites and borders share coordinates with the campaign map. */
 .grand-site{position:absolute;border:0;background:#f4e4bcdf;color:#3b3329;border-radius:2px;padding:2px 4px 2px 7px;font:italic 10px Georgia,'Noto Serif SC',serif;white-space:nowrap;box-shadow:0 1px 4px #1e272888;cursor:pointer}.grand-site:before{content:'◆';position:absolute;left:-8px;top:0;color:#f3dda0;font-size:11px;text-shadow:0 0 3px #292d26}.grand-site:hover{background:#fff5d7;color:#812d25}.low-zoom .grand-site{display:none}.low-zoom .grand-site[data-site="roma"],.low-zoom .grand-site[data-site="cisalpine"],.low-zoom .grand-site[data-site="illyricum"],.low-zoom .grand-site[data-site="egypt"]{display:block}.grand-campaign .outlying-theater{display:none}body:not(.grand-campaign) .grand-site{display:none}.operational-orders{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.operational-orders button,.operational-orders select{background:#e1d2b1;color:#4d3525;border:1px solid #967951;padding:7px;font:10px Arial,sans-serif}.grand-campaign .caveat{color:#d8c8a7}
 .supply-source,.supply-isolated{background:#e9e0bd;color:#315746;border:2px solid #598670;border-radius:50%;width:20px;height:20px;text-align:center;line-height:16px;font:bold 14px Arial,sans-serif;box-shadow:0 1px 4px #0008}.supply-isolated{background:#8c382b;color:#fff0d3;border-color:#ffe6b5}
-.mid-zoom:not(.low-zoom) .grand-site:not(.major){display:none}.route-breakdown{display:block;margin-top:6px;color:#735438;font:11px/1.4 Georgia,serif}
+.regional-zoom:not(.low-zoom) .grand-site:not(.major){display:none}.route-breakdown{display:block;margin-top:6px;color:#735438;font:11px/1.4 Georgia,serif}
 .grand-campaign .city-marker{display:none}.grand-campaign .city-marker.guide-highlight{display:flex}
 .grand-campaign .grand-site{background:#20342edf;color:#f4e7c8;border:1px solid #bda36b9c;padding:3px 6px 3px 8px;font:600 11px/1.2 Georgia,'Noto Serif SC',serif;text-shadow:0 1px 2px #071917;box-shadow:0 2px 7px #0b1d20a8}.grand-campaign .grand-site:before{color:#eac985;top:2px}.grand-campaign .grand-site:hover,.grand-campaign .grand-site:focus-visible{background:#f7ead0;color:#322b24;text-shadow:none;outline:2px solid #d5b66d;outline-offset:2px}
 .grand-campaign .grand-site{border-left:3px solid var(--site-accent,#eac985)}.grand-campaign .grand-site:before{color:var(--site-accent,#eac985)}
@@ -118,6 +118,11 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
 .grand-campaign .grand-site.near-army:before{content:''}
 .grand-campaign .grand-site.near-army:is(:hover,:focus){width:auto;height:auto;padding:3px 6px 3px 8px;border-radius:2px;font-size:11px;z-index:6}
 .grand-campaign .grand-site.near-army:is(:hover,:focus):before{content:'◆'}
+/* Regional view keeps every settlement discoverable while giving only one secondary name per theater. */
+.grand-campaign.mid-zoom:not(.regional-zoom) .grand-site:not(.major):not(.landmark){width:10px;height:10px;padding:0;border:2px solid var(--site-accent,#eac985);border-radius:50%;background:#1b2928;box-shadow:0 0 0 2px #f1dfb4b0,0 2px 5px #0b1d20a8;font-size:0;text-shadow:none}
+.grand-campaign.mid-zoom:not(.regional-zoom) .grand-site:not(.major):not(.landmark):before{content:''}
+.grand-campaign.mid-zoom:not(.regional-zoom) .grand-site:not(.major):not(.landmark):is(:hover,:focus){width:auto;height:auto;padding:3px 6px 3px 8px;border-radius:2px;font-size:11px;z-index:6}
+.grand-campaign.mid-zoom:not(.regional-zoom) .grand-site:not(.major):not(.landmark):is(:hover,:focus):before{content:'◆'}
 .army:is(.spaced-right,.spaced-left):after{content:'';position:absolute;bottom:0;width:var(--standard-displacement);border-bottom:1px dashed #f0d8a5b8;pointer-events:none}
 .army.spaced-right:after{right:100%}
 .army.spaced-left:after{left:100%}

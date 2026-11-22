@@ -38,10 +38,14 @@ try{
     const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(image,0,0);
     const box=map.getContainer().getBoundingClientRect();
     const at=coordinate=>{const p=map.project(coordinate);return [...ctx.getImageData(Math.round(box.left+p.x),Math.round(box.top+p.y),1,1).data]};
-    return {land:at([8.2,44.8]),sea:at([8.2,43.6]),raster:map.getLayer('overview-land-raster-0-1')?.maxzoom,vector:map.getLayer('land-base')?.minzoom};
+    const visibleSite=element=>{const rect=element.getBoundingClientRect();return getComputedStyle(element).display!=='none'&&rect.right>box.left&&rect.left<box.right&&rect.bottom>box.top&&rect.top<box.bottom};
+    const compact=[...document.querySelectorAll('.grand-site:not(.major):not(.landmark)')].filter(visibleSite);
+    const landmarks=[...document.querySelectorAll('.grand-site.landmark')].filter(visibleSite);
+    return {land:at([8.2,44.8]),sea:at([8.2,43.6]),raster:map.getLayer('overview-land-raster-0-1')?.maxzoom,vector:map.getLayer('land-base')?.minzoom,compactSites:compact.length,compactWidths:compact.map(element=>Math.round(element.getBoundingClientRect().width)),landmarks:landmarks.length};
    },png.toString('base64'));
    assert.ok(sample.land[0]>sample.sea[0]+55&&sample.sea[0]<100,`${name}: ${JSON.stringify(sample)}`);
    assert.equal(sample.raster,6.5);assert.equal(sample.vector,5.85);
+   if(zoom===6.48||zoom===6.52){assert.ok(sample.compactSites>=5&&sample.compactWidths.every(width=>width===10),`${name}: secondary sites should remain compact`);assert.ok(sample.landmarks>=1,`${name}: a regional city should retain its name`)}
    console.log(name,JSON.stringify(sample));
   }
   await page.close();

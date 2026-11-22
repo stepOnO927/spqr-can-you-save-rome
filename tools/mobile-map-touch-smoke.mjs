@@ -21,6 +21,7 @@ try {
     try { await route.fulfill({ status: 200, contentType: type, body: await readFile(file) }); }
     catch { await route.fulfill({ status: 404, body: 'Not found' }); }
   });
+  await page.addInitScript(() => localStorage.setItem('spqr-lang', 'zh'));
   await page.goto('http://spqr.test/map-lab/', { waitUntil: 'domcontentloaded' });
   await page.locator('#start-free').tap();
   await page.waitForFunction(async () => {
