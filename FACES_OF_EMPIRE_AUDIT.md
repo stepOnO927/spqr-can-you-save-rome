@@ -6,13 +6,31 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Han ministers now form campaign-specific court alliances after a year of
+shared service in the same political group. Alliances persist in saves, end
+when a member leaves office or the court, raise a sponsored edict's measured
+support, and can impede an investigation when the ally has enough court
+control. The dossier shows the relationship in both languages while continuing
+to hide unproven personal traits. A focused simulation test and browser smoke
+cover those consequences and save/load behavior. The full local simulation
+suite passes 1,261/1,261; GitHub browser verification is pending.
+
+Test H now includes two 120-month integrations driven by the actual Roman
+monthly turn with the Han world attached. Both seeds keep the Roman and Han
+calendars synchronized, persist every eastern person's name and portrait
+identity through a midcampaign save, complete paid eastern shipments, and
+reconcile transport spending with merchant and market-house receipts.
+The focused integration and module-version checks pass 3/3, and the full
+local suite passes 1,260/1,260. GitHub checks for this additional gate remain
+pending.
+
 Main through `5064061b` is integrated. Foreign treaty and aid couriers expire
 when a receiving court disappears, and changing a Roman or Han national
 ambition has a displayed, saved political cost. The expansion's campaign
 progress panel retains its controls and now explains the cost in both
 languages. Focused correspondence, ambition, and module-version tests pass
-30/30, and the full local suite passes 1,258/1,258. GitHub checks for this
-merge are pending.
+30/30, and the full local suite passes 1,258/1,258. All five GitHub checks
+passed for commit `de0dee99`, including all three browser groups.
 
 Han loyalist and original usurper splinter forces now inherit Han cultural
 names for newly generated commanders and merchants, as the civil-war court

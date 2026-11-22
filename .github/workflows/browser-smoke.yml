@@ -76,6 +76,7 @@ jobs:
             2)
               node tools/cursus-applicant-smoke.mjs
               node tools/han-court-smoke.mjs
+              node tools/han-court-alliance-smoke.mjs
               node tools/genealogy-dossier-smoke.mjs
               node tools/genealogy-personal-actions-smoke.mjs
               node tools/guardianship-playability-smoke.mjs

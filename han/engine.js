@@ -353,6 +353,7 @@ export function loadHanSave(raw){
  initDependencies(s);
  s.court.recommendations||=[];
  s.court.policyAdvice||=null;s.court.adviceHistory||=[];
+ s.court.alliances||=[];
  // Older saves did not date opening appointments. Begin the observation clock
  // at load instead of exposing a guessed historical tenure or private skill.
  for(const [office,id] of Object.entries(s.court?.offices||{}))if(id&&s.persons[id]?.alive&&s.persons[id].office===office)s.persons[id].officeSince??={year:s.year,month:s.month};

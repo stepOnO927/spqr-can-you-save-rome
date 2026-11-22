@@ -44,7 +44,7 @@ const officials=s=>Object.values(s.persons).filter(p=>p.alive&&p.faction===govFa
 export const govFaction=s=>'han';
 
 export function initCourt(s,offices){
- s.court={offices:{...offices},factions:Object.fromEntries(Object.keys(COURT_FACTIONS).map(k=>[k,{influence:20}])),control:{},favor:{},knowledge:{},edicts:[],audits:[],enmity:{},pendingDisaster:null,policyAdvice:null,adviceHistory:[],debates:[],nextId:1,schemes:[],implemented:[]};
+ s.court={offices:{...offices},factions:Object.fromEntries(Object.keys(COURT_FACTIONS).map(k=>[k,{influence:20}])),control:{},favor:{},knowledge:{},edicts:[],audits:[],alliances:[],enmity:{},pendingDisaster:null,policyAdvice:null,adviceHistory:[],debates:[],nextId:1,schemes:[],implemented:[]};
  for(const [office,id] of Object.entries(offices))if(id&&s.persons[id]){s.persons[id].office=office;s.persons[id].officeSince??={year:s.year,month:s.month}}
  recomputeInfluence(s);ensureCourtCareers(s,{opening:true});return s.court;
 }
@@ -97,6 +97,27 @@ export function appoint(s,office,personId,{actor='emperor',logFn=null}={}){
 export function dismiss(s,office){const id=s.court.offices[office];if(!id)return {ok:false};s.court.offices[office]=null;if(s.persons[id]){s.persons[id].office=null;if(!Array.isArray(s.persons[id].career))s.persons[id].career=[];s.court.enmity[id]=(s.court.enmity[id]||0)+20}recomputeInfluence(s);log(s,['%NAME% is dismissed as '+OFFICES[office].name[0]+'.','%NAME%被免去'+OFFICES[office].name[1]+'。'],{who:id,kind:'court',office});return {ok:true,id}}
 export const officeHolder=(s,office)=>{const id=s.court.offices[office];return id&&alive(s,id)?s.persons[id]:null};
 
+const monthIndex=s=>s.year*12+s.month;
+const inCourt=(s,id)=>{const p=s.persons[id];return !!(p?.alive&&p.faction==='han'&&p.office&&s.court.offices[p.office]===id)};
+export function courtAllies(s,id){return (s.court.alliances||[]).filter(a=>!a.ended&&(a.a===id||a.b===id)&&inCourt(s,a.a)&&inCourt(s,a.b)).map(a=>a.a===id?a.b:a.a)}
+function advanceCourtAlliances(s){
+ const alliances=s.court.alliances||=[];
+ for(const alliance of alliances)if(!alliance.ended&&(!inCourt(s,alliance.a)||!inCourt(s,alliance.b)||s.persons[alliance.a].courtFaction!==s.persons[alliance.b].courtFaction))alliance.ended={year:s.year,month:s.month};
+ if(s.month!==1)return;
+ const occupied=new Set(alliances.filter(a=>!a.ended).flatMap(a=>[a.a,a.b]));
+ const ministers=Object.values(s.court.offices).filter(id=>id&&inCourt(s,id)&&!occupied.has(id)&&s.persons[id].courtFaction&&s.persons[id].officeSince&&monthIndex(s)-(s.persons[id].officeSince.year*12+s.persons[id].officeSince.month)>=12);
+ const pairs=[];
+ for(let i=0;i<ministers.length;i++)for(let j=i+1;j<ministers.length;j++){
+  const a=s.persons[ministers[i]],b=s.persons[ministers[j]];
+  if(a.courtFaction!==b.courtFaction||a.id===b.id)continue;
+  pairs.push({a:a.id,b:b.id,weight:(OFFICES[a.office]?.rank||0)+(OFFICES[b.office]?.rank||0)+(s.court.favor[a.id]||0)/10+(s.court.favor[b.id]||0)/10});
+ }
+ pairs.sort((a,b)=>b.weight-a.weight||a.a.localeCompare(b.a)||a.b.localeCompare(b.b));
+ const pair=pairs[0];if(!pair)return;
+ alliances.push({a:pair.a,b:pair.b,formed:{year:s.year,month:s.month}});
+ log(s,['%NAME% and %NAME2% form a court alliance after serving together.','%NAME%与%NAME2%长期共事后结成朝廷同盟。'],{who:pair.a,who2:pair.b,kind:'court'});
+}
+
 // ---------- edicts: orders take time and need support ----------
 export const EDICTS={
  tax_relief:{name:['Remit land tax','减免田租'],months:2,cost:{treasury:0},favours:['ru'],harms:['haoqiang'],effect:'tax_relief'},
@@ -119,7 +140,7 @@ export function issueEdict(s,type,{region=null,owner='han',sponsorId=null}={}){
  if(s.court.edicts.some(x=>x.type===type&&x.status==='implementing'))return {ok:false,reason:'already'};
  if((e.cost.treasury||0)>f.treasury||(e.cost.grain||0)>f.grain)return {ok:false,reason:'cost'};
  f.treasury-=e.cost.treasury||0;f.grain-=e.cost.grain||0;
- const support=edictSupport(s,type),cap=adminCapacity(s);
+ const support=Math.min(100,edictSupport(s,type)+(sponsorId&&courtAllies(s,sponsorId).length?6:0)),cap=adminCapacity(s);
  const needed=Math.max(1,Math.round(e.months*(1.6-cap/100)));
  const ed={id:s.court.nextId++,type,region,sponsorId,support,needed,progress:0,status:'implementing',start:{year:s.year,month:s.month}};
  s.court.edicts.push(ed);log(s,sponsorId?['%NAME% begins implementing '+e.name[0]+'. Court support: '+support+'%.','%NAME%奉诏推行'+e.name[1]+'。朝廷支持：'+support+'%。']:['Edict issued: '+e.name[0]+'. Implementation needs court support ('+support+'%).','下诏：'+e.name[1]+'。推行需朝廷支持（'+support+'%）。'],{who:sponsorId,kind:'court',edict:ed.id});
@@ -142,7 +163,7 @@ function applyEdict(s,ed){
 }
 function advanceEdicts(s){
  for(const ed of s.court.edicts.filter(x=>x.status==='implementing')){
-  ed.support=Math.round(ed.support*0.7+edictSupport(s,ed.type)*0.3);
+  ed.support=Math.round(ed.support*0.7+Math.min(100,edictSupport(s,ed.type)+(ed.sponsorId&&courtAllies(s,ed.sponsorId).length?6:0))*0.3);
   if(ed.support<30&&roll(s,'edict'+ed.id)<0.25){ed.status='stalled';log(s,['Officials obstruct the edict “'+EDICTS[ed.type].name[0]+'”; it stalls.','百官阻挠诏令“'+EDICTS[ed.type].name[1]+'”，推行停滞。'],{who:ed.sponsorId,kind:'court',edict:ed.id});continue}
   ed.progress+=ed.support>=50?1:0.5;
   if(ed.progress>=ed.needed){ed.status='done';applyEdict(s,ed);log(s,ed.sponsorId?['%NAME% completes '+EDICTS[ed.type].name[0]+'.','%NAME%完成'+EDICTS[ed.type].name[1]+'。']:['Edict implemented: '+EDICTS[ed.type].name[0]+'.','诏令推行完毕：'+EDICTS[ed.type].name[1]+'。'],{who:ed.sponsorId,kind:'court',edict:ed.id})}
@@ -226,6 +247,8 @@ function advanceAudits(s){
   // a powerful corrupt official interferes
   if(corr>40&&(s.court.control[t.id]||0)>40&&roll(s,'interfere'+a.id)<0.3){a.interfered=true;a.evidence=Math.max(0,a.evidence-10);log(s,['The investigation of %NAME% meets obstruction: witnesses withdraw.','稽查%NAME%受阻：证人翻供。'],{who:t.id,kind:'audit'})}
   a.evidence+=Math.round(skill/12+corr/8*(0.5+roll(s,'ev'+a.id)));
+  const ally=courtAllies(s,t.id).sort((x,y)=>(s.court.control[y]||0)-(s.court.control[x]||0))[0];
+  if(ally&&(s.court.control[ally]||0)>=25){a.evidence=Math.max(0,a.evidence-3);a.protectedBy=ally}
   if(a.months>=4){
    if(corr>=35&&a.evidence>=30){a.status='proven';const recovered=Math.round(corr*0.8);s.factions.han.treasury+=recovered;
     s.court.knowledge[t.id]={...(s.court.knowledge[t.id]||{}),corruption:'proven',evidence:a.evidence};t.corruption=Math.round(corr*0.4);
@@ -505,6 +528,7 @@ export function advanceCourt(s){
  advanceDispute(s);settleThroneWars(s);
  enforceDynasticInvariants(s,{log:(t,m)=>log(s,t,{...m,kind:'throne'})});
  computeMandate(s);
+ advanceCourtAlliances(s);
  advancePolicyAdvice(s);
 }
 export {STATIC_REGIONS};

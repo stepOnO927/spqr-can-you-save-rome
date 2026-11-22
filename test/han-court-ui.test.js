@@ -4,10 +4,39 @@ import {readFileSync} from 'node:fs';
 import {newHanGame,loadHanSave,serialize,generateOfficial,tick} from '../han/engine.js';
 import {hanCourtHtml} from '../han/court-ui.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';
-import {appoint,dismiss,startAudit,answerPolicyAdvice} from '../han/court.js';
+import {appoint,dismiss,startAudit,answerPolicyAdvice,courtAllies,edictSupport,issueEdict} from '../han/court.js';
 import {log} from '../han/util.js';
 
 const MINISTERS=['shi-gao','xiao-wangzhi','hong-gong','yu-dingguo','chen-wannian','liu-xiang','zhou-kan','shi-xian','feng-fengshi','gan-yanshou','chen-tang','feng-liao'];
+
+test('serving ministers form saved alliances that support edicts and hinder audits',()=>{
+ let s=newHanGame('han',{seed:500,start:'roman'});
+ for(let i=0;i<12;i++)tick(s);
+ assert.deepEqual(courtAllies(s,'yu-dingguo'),['liu-xiang']);
+ assert.deepEqual(s.court.alliances[0].formed,{year:-48,month:1});
+ const en=hanCourtHtml(s,0,'yu-dingguo'),zh=hanCourtHtml(s,1,'yu-dingguo');
+ assert.match(en,/Campaign court allies/);assert.ok(en.includes(s.persons['liu-xiang'].name[0]));
+ assert.match(zh,/本局朝廷盟友/);assert.ok(zh.includes(s.persons['liu-xiang'].name[1]));
+ assert.match(en,/form a court alliance after serving together/);
+ assert.match(en,/Loyalty<\/dt><dd>Not reliably known/);
+ const base=edictSupport(s,'appointment_reform');
+ const edict=issueEdict(s,'appointment_reform',{sponsorId:'yu-dingguo'});
+ assert.equal(edict.ok,true);assert.equal(edict.edict.support,Math.min(100,base+6));
+ const protectedState=structuredClone(s),unprotected=structuredClone(s);
+ unprotected.court.alliances=[];
+ for(const state of [protectedState,unprotected]){
+  state.persons['yu-dingguo'].corruption=60;
+  assert.equal(startAudit(state,'yu-dingguo').ok,true);
+  tick(state);
+ }
+ assert.equal(protectedState.court.audits.at(-1).protectedBy,'liu-xiang');
+ assert.equal(unprotected.court.audits.at(-1).evidence-protectedState.court.audits.at(-1).evidence,3);
+ s=loadHanSave(serialize(s));assert.deepEqual(courtAllies(s,'yu-dingguo'),['liu-xiang']);
+ assert.equal(dismiss(s,'zongzheng').ok,true);assert.deepEqual(courtAllies(s,'yu-dingguo'),[]);
+ tick(s);assert.deepEqual(s.court.alliances[0].ended,{year:s.year,month:s.month});
+ const old=structuredClone(s);delete old.court.alliances;
+ assert.deepEqual(loadHanSave(serialize(old)).court.alliances,[]);
+});
 
 test('twelve opening officials have individual portraits and bilingual profiles without hidden attributes',()=>{
  const state=newHanGame('han',{seed:7});
