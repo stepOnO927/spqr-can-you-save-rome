@@ -6,6 +6,13 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `3a2d8455` (#339) is integrated. The foreign intelligence
+panel now limits old operation rows but retains active missions and reports,
+with a control to load earlier history. The branch's saved agent name remains
+visible on each operation row; a focused test caught and prevented its loss
+while integrating upstream pagination. The focused character UI tests pass
+75/75, and full `npm test` passes 1,377/1,377. Browser verification follows.
+
 Wang Zhengjun and Empress Dowager Wang now have distinct, original portrait
 art in the 49 BCE Han campaign. The images are artistic reconstructions,
 not documented likenesses. Optimized 512, 128 and 64 pixel versions follow
