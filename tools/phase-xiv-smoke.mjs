@@ -37,7 +37,8 @@ try{
   await page.locator('.dev-tree-links path[data-from="water-control"][data-to="urban-drainage"]').waitFor();
   assert.ok(await page.locator('.dev-tree-links path[data-from="water-control"][data-to="urban-drainage"]').getAttribute('d'));
   await page.locator('.dev-reference summary').click();
-  assert.match(await page.locator('.dev-reference').innerText(),/Provincial grain reserve \+24/);
+  assert.match(await page.locator('.dev-reference').innerText(),/Provincial grain-store capacity \+24/);
+  assert.match(await page.locator('.dev-reference').innerText(),/Provincial grain-store capacity \+12/);
   assert.match(await page.locator('.dev-reference').innerText(),/A game depot stores and contributes finite food/);
   assert.match(await page.locator('#tech-port-facilities').innerText(),/Port[\s\S]*Naval Supply Depot[\s\S]*Base build cost 23¤[\s\S]*coast/);
   assert.match(await page.locator('#tech-stone-fortification').innerText(),/Fortification[\s\S]*Coastal Fortification/);
@@ -124,7 +125,8 @@ try{
   assert.match(await page.locator('.inspector h2').innerText(),/文明发展/);
   await page.locator('[data-dev-branch="material"]').click();
   await page.locator('.dev-reference summary').click();
-  assert.match(await page.locator('.dev-reference').innerText(),/当地粮仓储量 \+24/);
+  assert.match(await page.locator('.dev-reference').innerText(),/地方储粮容量 \+24/);
+  assert.match(await page.locator('.dev-reference').innerText(),/地方储粮容量 \+12/);
   assert.match(await page.locator('.dev-reference').innerText(),/游戏军需仓储存并提供有限粮食/);
   assert.match(await page.locator('#tech-port-facilities').innerText(),/港口[\s\S]*海军补给站[\s\S]*基础建造费 23¤[\s\S]*海岸/);
   assert.match(await page.locator('#tech-road-milestones').innerText(),/道路里程碑[\s\S]*当地已建道路/);

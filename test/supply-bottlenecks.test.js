@@ -26,7 +26,13 @@ test('the sole supply port and its road corridor are both critical to a connecte
 
 test('a local granary removes false bottlenecks and an already stranded force creates none',()=>{
  const s=narrowFront();region(s,'t008').buildings.push('granary');
+ assert.deepEqual([...supplyBottlenecks(s,'caesar')].sort(),['cisalpine','t005'],'an empty store cannot supply an isolated front');
+ region(s,'t008').grainReserve=4;
  assert.deepEqual([...supplyBottlenecks(s,'caesar')],[],'an independent source at the army removes the port and corridor dependency');
+ const depot=narrowFront();region(depot,'t008').buildings.push('supply-depot');
+ assert.deepEqual([...supplyBottlenecks(depot,'caesar')].sort(),['cisalpine','t005']);
+ region(depot,'t008').grainReserve=2;
+ assert.deepEqual([...supplyBottlenecks(depot,'caesar')],[],'a stocked depot is also a finite inland source');
  const isolated=narrowFront();region(isolated,'t005').owner='senate';
  assert.deepEqual([...supplyBottlenecks(isolated,'caesar')],[],'an already cut-off army cannot create a new prospective bottleneck');
 });

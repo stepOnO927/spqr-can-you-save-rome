@@ -42,10 +42,10 @@ test('the food budget explains its deficit and dates the current-rate shortage i
  assert.equal(stored.granaryFood,8);
  assert.ok(stored.foodNet<0);
  const withGranary=budgetHtml(state,'en'),withGranaryZh=budgetHtml(state,'zh');
- assert.match(withGranary,/Food held in provincial granaries<\/td><td>8/);
- assert.match(withGranary,/provincial granaries may delay the shortage/i);
- assert.match(withGranaryZh,/行省粮仓储粮<\/td><td>8/);
- assert.match(withGranaryZh,/行省粮仓可能延后缺粮/);
+ assert.match(withGranary,/Food held in provincial grain stores<\/td><td>8/);
+ assert.match(withGranary,/provincial grain stores may delay the shortage/i);
+ assert.match(withGranaryZh,/行省储粮设施存粮<\/td><td>8/);
+ assert.match(withGranaryZh,/行省储粮设施可能延后缺粮/);
 });
 
 test('the treasury budget dates debt risk and explains an existing deficit in both languages',()=>{

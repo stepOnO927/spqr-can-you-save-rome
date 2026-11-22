@@ -1,6 +1,6 @@
 import {GRAND_ROUTES} from './grand-map-data.js';
-import {accessibleFleet,isPortBlockaded} from './naval.js?v=62';
-import {activeEffects,localBuildingEffects} from './development.js?v=60';
+import {accessibleFleet,isPortBlockaded} from './naval.js?v=63';
+import {activeEffects,localBuildingEffects} from './development.js?v=61';
 
 const byId=s=>Object.fromEntries(s.regions.map(r=>[r.id,r]));
 const OPENING_LIFT={caesar:1,senate:2,egypt:2,numidia:1,mauretania:1,armenia:0,parthia:0,galatia:0,bosporus:1,rebels:0};
@@ -22,8 +22,10 @@ export function grandRoute(s,unit,destination,isWar){
  const path=[];let node=destination;while(node!==start){const entry=previous.get(node);path.unshift({id:node,sea:entry.edge.sea,months:edgeMonths(entry.edge,regions[node],regions[entry.from],fieldMarch),distance:entry.edge.distance,road:entry.edge.road,river:entry.edge.river,mountain:entry.edge.mountain});node=entry.from}
  return {path,months:path.reduce((n,x)=>n+x.months,0),sea:path.some(x=>x.sea),supplyConcern:path.some(x=>regions[x.id].supply<7),hostile:path.some(x=>regions[x.id].owner!==unit.owner)};
 }
+// A rural store anchors supply only while it holds real grain. Towns and
+// functioning ports retain their separate distribution roles.
 export function supplySources(s,owner,established=false){return s.regions.filter(r=>r.owner===owner&&(
- r.terrain==='urban'||(r.buildings||[]).some(x=>['granary','supply-depot'].includes(x))||
+ r.terrain==='urban'||((r.buildings||[]).some(x=>['granary','supply-depot'].includes(x))&&Number(r.grainReserve)>0)||
  r.port&&(!established||r.food>=.6)||
  // Smaller inland commands recruit and provision at their home theater.
  // They still need local production and national reserves for an established line.
@@ -60,7 +62,7 @@ export function supplyBottlenecks(s,owner){
  return vital;
 }
 export function armySupply(s,unit){if(!s.grandMap)return 1;const site=s.regions.find(r=>r.id===unit.region);if(!site)return 0;const network=supplyNetwork(s,unit.owner);let distance=network.get(site.id);if(distance==null&&unit.siege)distance=Math.min(...grandAdjacent(site.id).map(e=>network.get(e.to)).filter(Number.isFinite).map(x=>x+1),Infinity);
- let base=!Number.isFinite(distance)?site.food>=1?.36:.18:Math.max(.38,Math.min(1,1-distance*.075+(site.food>=1?.08:0)+((site.buildings||[]).includes('supply-depot')?.2:0)));
+ let base=!Number.isFinite(distance)?site.food>=1?.36:.18:Math.max(.38,Math.min(1,1-distance*.075+(site.food>=1?.08:0)+((site.buildings||[]).includes('supply-depot')&&Number(site.grainReserve)>0?.2:0)));
  const established=supplyNetwork(s,unit.owner,true);
  if(!established.has(site.id)&&!(unit.siege&&grandAdjacent(site.id).some(e=>established.has(e.to))))base=Math.min(base,.68);
  if(site.owner===unit.owner&&site.culture==='armenia'&&site.terrain==='hills'&&Number.isFinite(distance))base=Math.min(1,base+(activeEffects(s,unit.owner).armenianHighlandSupply||0));

@@ -1,6 +1,6 @@
 import {officeEffects} from './office-system.js';
-import {activeEffects,localBuildingEffects,taxReviewExpense,templeGuaranteeExpense,GRANARY_RESERVE_CAPACITY,IDEA_SLOT_ADMIN_UPKEEP} from './development.js?v=60';
-import {fleetUpkeepDue} from './naval.js?v=62';
+import {activeEffects,localBuildingEffects,taxReviewExpense,templeGuaranteeExpense,grainStorageCapacity,IDEA_SLOT_ADMIN_UPKEEP} from './development.js?v=61';
+import {fleetUpkeepDue} from './naval.js?v=63';
 import {productiveEstateRegion} from './local-society.js?v=9';
 
 // These six small playable kingdoms have a home-domain reserve outside the
@@ -27,7 +27,7 @@ export function nationalBudget(s,id){
  const seasonalFood=effects.seasonalLabor?Math.min(3,owned.filter(productiveEstateRegion).length):0;
  const bosporanFood=effects.bosporanGrainStewardship?Math.min(2,owned.filter(r=>r.culture==='bosporus'&&r.port&&r.food>=2).length):0;
  const requisitionLoss=owned.reduce((n,r)=>n+(r.foodRequisitionRemaining>0?Math.min(r.food,r.foodRequisitionLoss||0):0),0);
- const granaryFood=owned.reduce((n,r)=>n+(r.buildings?.includes('granary')?Math.max(0,Math.min(GRANARY_RESERVE_CAPACITY,Math.floor(Number(r.grainReserve)||0))):0),0);
+ const granaryFood=owned.reduce((n,r)=>n+Math.max(0,Math.min(grainStorageCapacity(r),Math.floor(Number(r.grainReserve)||0))),0);
  const foodProduction=owned.reduce((n,r)=>n+r.food,0)+estateFood+seasonalFood,troopFood=troops/1200,regionalFood=units*2,foodConsumption=troopFood+regionalFood;
  const officeFood=offices.food,ideaFood=(effects.food||0)+bosporanFood,buildingFood=buildings.reduce((n,e)=>n+(e.food||0),0);
  const foodNetBeforeCommutation=Math.round(foodProduction-foodConsumption-tenantFood-requisitionLoss)+homeFood+officeFood+ideaFood+buildingFood;

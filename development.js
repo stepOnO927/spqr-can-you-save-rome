@@ -108,7 +108,7 @@ export const BUILDINGS = [
   {id:'fort',name:['Fortification','防御工事'],tech:'stone-fortification',cost:28,months:5,materials:{stone:4,timber:2,metal:2},upkeep:2,effects:{fort:1},terrain:['hills','plain','urban']},
   {id:'quarry',name:['Quarry','采石场'],tech:'quarrying',cost:18,months:3,materials:{timber:2},upkeep:1,effects:{stone:2},terrain:['hills']},
   {id:'mine',name:['Mine','矿场'],tech:'metal-extraction',cost:24,months:5,materials:{stone:2,timber:2},upkeep:2,effects:{metal:2,loyalty:-1},terrain:['hills']},
-  {id:'granary',name:['Granary','粮仓'],tech:'grain-storage',cost:18,months:3,materials:{stone:1,timber:2},upkeep:1,effects:{food:1,foodCapacity:21,localFoodCapacity:24},terrain:['plain','urban','hills','desert']},
+  {id:'granary',name:['Granary','粮仓'],tech:'grain-storage',cost:18,months:3,materials:{stone:1,timber:2},upkeep:1,effects:{foodCapacity:21,localFoodCapacity:24},terrain:['plain','urban','hills','desert']},
   {id:'drain',name:['Urban Drainage','城市排水'],tech:'urban-drainage',cost:30,months:5,materials:{stone:4,timber:1},upkeep:2,effects:{loyalty:2,stability:1},terrain:['urban']}
 ];
 // Further historically plausible families. Each entry has a distinct bilingual
@@ -149,7 +149,7 @@ const additionalBuildings=[
  ['aqueduct',['Aqueduct Improvement','渡槽改进'],'aqueduct-refinement',29,5,{stone:5,metal:1},2,{food:1,loyalty:1},['plain','urban','hills'],'water'],
  ['sewer',['Sewer Improvement','下水道改进'],'sewer-improvement',32,6,{stone:5,metal:1},3,{loyalty:2,stability:1,healthRisk:-.004},['urban','desert','plain','hills'],'urban'],
  ['training-camp',['Training Camp','训练场'],'training-ground',20,3,{timber:2,metal:1},2,{recruitMorale:4},['plain','hills','urban']],
- ['supply-depot',['Supply Depot','军需仓'],'supply-organization',20,3,{timber:3,stone:1},2,{foodCapacity:25,food:1},['plain','hills','urban']],
+ ['supply-depot',['Supply Depot','军需仓'],'supply-organization',20,3,{timber:3,stone:1},2,{foodCapacity:25,localFoodCapacity:12},['plain','hills','urban']],
  ['armory',['Armory','军械库'],'armory-craft',24,4,{stone:2,timber:2,metal:2},2,{recruitCost:3},['plain','hills','urban']],
  ['siege-workshop',['Siege Workshop','攻城作坊'],'siege-machinery',26,4,{stone:2,timber:3,metal:2},2,{siegeReduction:1},['plain','hills','urban']],
  ['metalworks',['Metalworking Facility','金属加工场'],'metalworking',23,4,{stone:2,timber:2,metal:1},2,{constructionDiscount:2},['plain','hills','urban']],
@@ -798,16 +798,17 @@ export function mineMetalOutput(r){const population=r.population;return !Number.
 export function localBuildingEffects(r){const out={};for(const id of r.buildings||[]){const b=BUILDINGS.find(x=>x.id===id);if(!b)continue;for(const [k,v] of Object.entries(b.effects))out[k]=(out[k]||0)+(id==='mine'&&k==='metal'?mineMetalOutput(r):id==='grain-mill'&&k==='food'?Math.min(v,Math.max(0,Number(r.food)||0)):v);out.upkeep=(out.upkeep||0)+b.upkeep}return out}
 
 export const GRANARY_RESERVE_CAPACITY=24;
-const storedGrain=site=>Math.max(0,Math.min(GRANARY_RESERVE_CAPACITY,Math.floor(Number(site.grainReserve)||0)));
+export const grainStorageCapacity=site=>Math.max(0,localBuildingEffects(site).localFoodCapacity||0);
+const storedGrain=site=>Math.max(0,Math.min(grainStorageCapacity(site),Math.floor(Number(site.grainReserve)||0)));
 // Transfer actual state food into a provincial store; no food is created by storage.
 export function settleGranaryReserves(s,owner){
- const treasury=s.factions[owner],stores=s.regions.filter(r=>r.owner===owner&&r.buildings?.includes('granary'));
+ const treasury=s.factions[owner],stores=s.regions.filter(r=>r.owner===owner&&grainStorageCapacity(r)>0);
  if(!treasury||!stores.length)return 0;
  let transferred=0;
  if(treasury.food<0){
   for(const site of stores){const reserve=storedGrain(site),amount=Math.min(4,reserve,-treasury.food);site.grainReserve=reserve-amount;treasury.food+=amount;transferred+=amount;if(treasury.food>=0)break}
  }else if(treasury.food>30){
-  for(const site of stores){const reserve=storedGrain(site),amount=Math.min(2,GRANARY_RESERVE_CAPACITY-reserve,Math.max(0,treasury.food-25));site.grainReserve=reserve+amount;treasury.food-=amount;transferred+=amount;if(treasury.food<=25)break}
+  for(const site of stores){const reserve=storedGrain(site),amount=Math.min(2,grainStorageCapacity(site)-reserve,Math.max(0,treasury.food-25));site.grainReserve=reserve+amount;treasury.food-=amount;transferred+=amount;if(treasury.food<=25)break}
  }
  return transferred;
 }

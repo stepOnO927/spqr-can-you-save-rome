@@ -20,7 +20,7 @@ for(let seed=1;seed<=seeds;seed++){
  const foodProjects=new Set();
  for(let month=0;month<months&&!state.civilWarOutcome;month++){
   tick(state);
-  for(const site of state.regions)if(['caesar','senate'].includes(site.owner)&&['irrigation','grain-mill','granary'].includes(site.construction?.buildingId))foodProjects.add(`${site.owner}:${site.id}:${site.construction.buildingId}`);
+  for(const site of state.regions)if(['caesar','senate'].includes(site.owner)&&['irrigation','grain-mill'].includes(site.construction?.buildingId))foodProjects.add(`${site.owner}:${site.id}:${site.construction.buildingId}`);
   assert.ok(isWar(state,'caesar','senate')||state.civilWarOutcome?.winner,'the civil war cannot disappear without a formal result');
   if(state.civilWarOutcome)assert.equal(isWar(state,'caesar','senate'),false,'a concluded civil war must no longer be an active war');
   assert.equal(state.regions.length,121);
