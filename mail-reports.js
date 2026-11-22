@@ -1,11 +1,11 @@
-import {sendLetter,initializeMail} from './epistulae.js?v=dated-subject-names-1';
-import {reportedArmies} from './character-system.js?v=dated-subject-names-1';
+import {sendLetter,initializeMail} from './epistulae.js?v=statement-verification-1';
+import {reportedArmies} from './character-system.js?v=statement-verification-1';
 import {CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
 import {MATERIALS} from './inventions.js?v=mission-discount-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {campaignDate} from './campaign-date.js?v=calendar-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=dated-subject-names-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=statement-verification-1';
 
 const month=s=>s.year*12+s.month;
 const owned=s=>s.regions.filter(r=>r.owner===s.player);

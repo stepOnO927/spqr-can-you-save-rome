@@ -1,10 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=dated-subject-names-1';
-import {createFictionalPerson} from '../dynasties.js?v=dated-subject-names-1';
-import {addReport} from '../character-system.js?v=dated-subject-names-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=dated-subject-names-1';
-import {advanceMailReports} from '../mail-reports.js?v=dated-subject-names-1';
-import {receivedMail} from '../epistulae.js?v=dated-subject-names-1';
+import {newGame,upgradeSave} from '../engine.js?v=statement-verification-1';
+import {createFictionalPerson} from '../dynasties.js?v=statement-verification-1';
+import {addReport} from '../character-system.js?v=statement-verification-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=statement-verification-1';
+import {advanceMailReports} from '../mail-reports.js?v=statement-verification-1';
+import {receivedMail} from '../epistulae.js?v=statement-verification-1';
 const replies=s=>receivedMail(s).filter(m=>m.context?.kind==='personal_audience_result');
 function fixture(seed,away=false){
  const s=newGame('caesar');s.wars=[];s.world.characters['fictional:1'].location='egypt';

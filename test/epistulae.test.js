@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js?v=dated-subject-names-1';
-import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js?v=dated-subject-names-1';
-import {setWartimePolicy} from '../epistulae-personnel.js?v=dated-subject-names-1';
-import {initializeMailReports,advanceMailReports} from '../mail-reports.js?v=dated-subject-names-1';
-import {mailboxHtml} from '../mail-ui.js?v=dated-subject-names-1';
+import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js?v=statement-verification-1';
+import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js?v=statement-verification-1';
+import {setWartimePolicy} from '../epistulae-personnel.js?v=statement-verification-1';
+import {initializeMailReports,advanceMailReports} from '../mail-reports.js?v=statement-verification-1';
+import {mailboxHtml} from '../mail-ui.js?v=statement-verification-1';
 
 const state = () => {
   const factions = Object.fromEntries(['caesar','senate','egypt','parthia'].map(id => [id,{treasury:100}]));

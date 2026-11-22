@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=dated-subject-names-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=dated-subject-names-1';
+import {newGame} from '../engine.js?v=statement-verification-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=statement-verification-1';
 import {initializeChronicle,syncChronicleDispatches} from '../chronicle.js?v=saved-age-consistency-1';
 
 test('a reported foreign treaty reaches the chronicle only after contact, and secret treaties remain hidden',()=>{
