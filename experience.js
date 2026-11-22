@@ -1,9 +1,9 @@
 // The First Hundred Days: guidance reads observable campaign state. It never
 // issues orders or uses unreported foreign strength, locations or intentions.
-import {receivedMail,sendLetter} from './epistulae.js?v=world-kings-city-diplomacy-2';
-import {CHARACTER_CATALOG} from './characters.js?v=world-kings-city-diplomacy-2';
-import {treeFor,canStartFocus,focusCost} from './national-focus.js?v=world-kings-city-diplomacy-2';
-import {initializeWheels,economicProjectStatus} from './history-wheels.js?v=world-kings-city-diplomacy-2';
+import {receivedMail,sendLetter} from './epistulae.js?v=world-kings-neighbor-trade-1';
+import {CHARACTER_CATALOG} from './characters.js?v=world-kings-neighbor-trade-1';
+import {treeFor,canStartFocus,focusCost} from './national-focus.js?v=world-kings-neighbor-trade-1';
+import {initializeWheels,economicProjectStatus} from './history-wheels.js?v=world-kings-neighbor-trade-1';
 
 const label=(en,zh)=>[en,zh];
 const month=s=>s.year*12+s.month;

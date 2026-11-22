@@ -2,13 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js';
 import {configureStartingDifficulty} from '../difficulty.js';
-import {playableLocalCities,startLocalCampaign,localCampaignCity,localRecruit,localTradeOffer,localProtectionOffer,localIndependenceOffer} from '../local-campaign.js';
+import {playableLocalCities,startLocalCampaign,localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localProtectionOffer,localIndependenceOffer,advanceLocalCampaign} from '../local-campaign.js';
 import {receivedMail} from '../epistulae.js';
 import {armyExpeditionSupply} from '../expedition-supply.js';
 import {validPlayableCampaign} from '../local-campaign-save.js';
 import {importSaves} from '../save-transfer.js';
 import {localCouncilHtml} from '../local-campaign-ui.js';
-import {advanceLocalEntities} from '../local-polities.js';
+import {advanceLocalEntities,advanceLocalTrade} from '../local-polities.js';
 
 const opening=(difficulty='standard')=>{const state=configureStartingDifficulty(newGame('caesar'),difficulty,false,{localSeed:273});const city=playableLocalCities(state)[0];assert.ok(city);const host=state.regions.find(region=>region.id===city.theater);const owner=host.owner;startLocalCampaign(state,city.id);return {state,city,host,owner}};
 
@@ -40,6 +40,51 @@ test('city trade moves actual goods and qualifies a surviving city for victory',
  assert.ok(state.factions[owner].food>before);
  assert.equal(state.victory,true);
  assert.equal(host.owner,owner);
+});
+
+test('a generated city can negotiate a funded trade compact with a reachable neighboring court',()=>{
+ const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:4}),city=playableLocalCities(state)[0];
+ assert.equal(city.theater,'anatolia');startLocalCampaign(state,city.id);
+ assert.ok(localTradePartners(state).includes('armenia'));
+ assert.match(localCouncilHtml(state),/data-local-trade-partner/);
+ assert.equal(localTradeOffer(state,'parthia'),false,'a distant court is not an eligible route');
+ const cash=state.factions[city.id].treasury;
+ assert.equal(localTradeOffer(state,'armenia'),true);
+ assert.equal(state.factions[city.id].treasury,cash-3);
+ assert.equal(state.localCampaign.tradeOffer.host,'armenia');
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(state))).localCampaign.tradeOffer.host,'armenia');
+ tick(state);assert.equal(city.tradeRights?.armenia,undefined);
+ tick(state);assert.ok(city.tradeRights.armenia>state.year*12+state.month);
+ assert.match(localCouncilHtml(state),/A nearby trade compact is active/);
+ for(let i=0;i<4;i++)tick(state);
+ assert.equal(city.lastTrade.actor,'armenia');
+ assert.equal(city.lastTrade.food,2);assert.equal(city.lastTrade.price,3);
+ assert.ok(state.localCampaign.tradeCompleted>0);
+ assert.ok(receivedMail(state).some(letter=>letter.context?.proposal==='trade'&&letter.context.host==='armenia'&&letter.context.accepted));
+});
+
+test('stale neighboring control does not leak a new owner or create trade across a closed route',()=>{
+ const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:4}),city=playableLocalCities(state)[0];
+ startLocalCampaign(state,city.id);
+ assert.equal(localTradeOffer(state,'armenia'),true);
+ state.regions.find(region=>region.id==='armenia').owner='parthia';
+ assert.ok(localTradePartners(state).includes('armenia'),'a dated contact remains until new evidence arrives');
+ assert.ok(!localTradePartners(state).includes('parthia'),'the actual new owner is not silently disclosed');
+ tick(state);tick(state);
+ assert.equal(city.tradeRights?.armenia,undefined);
+ assert.ok(receivedMail(state).some(letter=>letter.context?.proposal==='trade'&&letter.context.host==='armenia'&&!letter.context.accepted));
+});
+
+test('two funded compacts count both actual shipments in one quarter',()=>{
+ const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:4}),city=playableLocalCities(state)[0];
+ startLocalCampaign(state,city.id);
+ state.month=3;city.food=30;city.tradeRights={senate:state.year*12+15,armenia:state.year*12+15};
+ const senateFood=state.factions.senate.food,armenianFood=state.factions.armenia.food;
+ advanceLocalTrade(state);advanceLocalCampaign(state);
+ assert.equal(city.lastTrade.count,2);
+ assert.equal(state.localCampaign.tradeCompleted,2);
+ assert.equal(state.factions.senate.food,senateFood+2);
+ assert.equal(state.factions.armenia.food,armenianFood+2);
 });
 
 test('a city can seek delayed protection without surrendering self-government',()=>{

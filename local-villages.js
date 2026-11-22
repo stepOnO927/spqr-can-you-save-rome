@@ -1,5 +1,5 @@
 import {localEntity, villageDevelopment} from './local-polities.js';
-import {sendLetter} from './epistulae.js?v=world-kings-city-diplomacy-2';
+import {sendLetter} from './epistulae.js?v=world-kings-neighbor-trade-1';
 
 const clamp = value => Math.max(0, Math.min(100, value));
 function villageEvent(state, region, entity) {

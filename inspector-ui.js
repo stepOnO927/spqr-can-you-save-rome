@@ -1,7 +1,7 @@
-import {newGame,upgradeSave,tick,recruit,moveArmy,previewMarch,setTax,projectTaxPath} from './engine.js?v=world-kings-city-diplomacy-2';
+import {newGame,upgradeSave,tick,recruit,moveArmy,previewMarch,setTax,projectTaxPath} from './engine.js?v=world-kings-neighbor-trade-1';
 import {newHanGame,tick as hanTick,serialize as hanSerialize,loadHanSave} from './han/engine.js';
 import {isLiuClan} from './han/dynasty.js';
-import {REGIONS,ROUTES,FACTIONS} from './data.js?v=world-kings-city-diplomacy-2';
+import {REGIONS,ROUTES,FACTIONS} from './data.js?v=world-kings-neighbor-trade-1';
 import {FEATURES} from './feature-registry.js';
 import {inspectState} from './inspector-diagnostics.js';
 

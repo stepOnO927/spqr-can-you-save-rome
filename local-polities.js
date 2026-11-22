@@ -1,7 +1,7 @@
-import {ROUTES} from './data.js?v=world-kings-city-diplomacy-2';
-import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-city-diplomacy-2';
-import {sendLetter} from './epistulae.js?v=world-kings-city-diplomacy-2';
-import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-city-diplomacy-2';
+import {ROUTES} from './data.js?v=world-kings-neighbor-trade-1';
+import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-neighbor-trade-1';
+import {sendLetter} from './epistulae.js?v=world-kings-neighbor-trade-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-neighbor-trade-1';
 
 // Settlement control is stored inside its host theater. An autonomous city
 // does not transfer the whole theater, and its point is not a border polygon.
@@ -69,7 +69,7 @@ const roll = entity => {
 };
 const host = (state, entity) => state.regions.find(region => region.id === entity.theater);
 export const localEntity = (state, id) => state.regions.flatMap(region => region.localEntities || []).find(entity => entity.id === id) || null;
-function localTradeOpen(state,entity,actor){
+export function localTradeOpen(state,entity,actor){
  const theater=host(state,entity),neighbors=ROUTES.filter(([a,b])=>a===entity.theater||b===entity.theater).map(([a,b])=>a===entity.theater?b:a);
  return !!(theater&&state.factions[actor]&&(theater.owner===actor||state.regions.some(region=>neighbors.includes(region.id)&&region.owner===actor))&&nonMilitaryAccessStatus(state,actor,entity.theater,theater.owner,'commercial').allowed);
 }
@@ -345,7 +345,8 @@ export function advanceLocalTrade(state){
    const reserve=Math.max(4,Math.ceil((entity.population||3000)/3000));
    if(until<=now(state)||entity.food-2<reserve||state.factions[actor]?.treasury<3||!localTradeOpen(state,entity,actor))continue;
    entity.food-=2;entity.treasury+=3;state.factions[actor].treasury-=3;state.factions[actor].food+=2;
-   entity.lastTrade={actor,year:state.year,month:state.month,food:2,price:3};
+   const count=entity.lastTrade?.year===state.year&&entity.lastTrade?.month===state.month?(entity.lastTrade.count||1)+1:1;
+   entity.lastTrade={actor,year:state.year,month:state.month,food:2,price:3,count};
    if(actor===state.player)state.log.unshift({year:state.year,month:state.month,en:`A commercial compact brought 2 food from ${entity.name[0]} for 3 treasury.`,zh:`地方贸易协定从${entity.name[1]}购得2粮食，支付3国库。`});
   }
  }

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=world-kings-city-diplomacy-2';
-import {sendLetter,advanceMail,replyToLetter,receivedMail} from '../epistulae.js?v=world-kings-city-diplomacy-2';
-import {mailboxHtml} from '../mail-ui.js?v=world-kings-city-diplomacy-2';
+import {newGame} from '../engine.js?v=world-kings-neighbor-trade-1';
+import {sendLetter,advanceMail,replyToLetter,receivedMail} from '../epistulae.js?v=world-kings-neighbor-trade-1';
+import {mailboxHtml} from '../mail-ui.js?v=world-kings-neighbor-trade-1';
 
 const send=(s,from,to,context,options=[])=>sendLetter(s,{senderInstitution:from,senderFaction:from,recipient:to,category:'diplomatic',subject:['Letter','信'],body:['A message','消息'],context,options}).letter;
 const advanceTo=(s,n,actions={})=>{s.year=Math.floor((n-1)/12);s.month=n-s.year*12;advanceMail(s,actions)};
@@ -50,10 +50,9 @@ test('an old treaty letter cannot bind a court that vanished during delivery',()
  delete s.factions.egypt;
  let calls=0;
  advanceMail(s,{proposeAgreement:()=>{calls++;return {ok:true}}});
- assert.equal(m.delivery,'received');
- assert.equal(m.responses[0]?.choice,'failed');
- m.responses[0].arrival=s.year*12+s.month;
+ assert.equal(m.delivery,'expired');
+ assert.equal(m.responses.length,0);
  advanceMail(s,{proposeAgreement:()=>{calls++;return {ok:true}}});
- assert.equal(m.responses[0].outcome,'failed');
+ assert.equal(m.delivery,'expired');
  assert.equal(calls,0);
 });

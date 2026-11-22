@@ -1,10 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,sendInquiry} from '../engine.js?v=world-kings-city-diplomacy-2';
-import {buildChessboard} from '../chessboard.js?v=world-kings-city-diplomacy-2';
-import {createPlan,assignRole,assessPlan} from '../battle-plans.js?v=world-kings-city-diplomacy-2';
-import {reportedFrontierThreats} from '../frontier-response.js?v=world-kings-city-diplomacy-2';
-import {scoreFocus,focusReportsFor,legitimateFocusView} from '../national-focus.js?v=world-kings-city-diplomacy-2';
-import {templatesFor,evaluateTemplate} from '../legion-designer.js?v=world-kings-city-diplomacy-2';
+import {newGame,upgradeSave,sendInquiry} from '../engine.js?v=world-kings-neighbor-trade-1';
+import {buildChessboard} from '../chessboard.js?v=world-kings-neighbor-trade-1';
+import {createPlan,assignRole,assessPlan} from '../battle-plans.js?v=world-kings-neighbor-trade-1';
+import {reportedFrontierThreats} from '../frontier-response.js?v=world-kings-neighbor-trade-1';
+import {scoreFocus,focusReportsFor,legitimateFocusView} from '../national-focus.js?v=world-kings-neighbor-trade-1';
+import {templatesFor,evaluateTemplate} from '../legion-designer.js?v=world-kings-neighbor-trade-1';
 
 function setup(){const s=newGame('caesar');s.difficulty='expert';for(const k of Object.values(s.knowledge.caesar))k.sightings={};s.factions.caesar.treasury=600;s.factions.caesar.food=300;
  const p=createPlan(s,'caesar',{name:'Test',mode:'manual',objective:'italiaN'}).plan;assert.ok(assignRole(s,'caesar',p.id,{armyId:'xiii',role:'offensive',path:['italiaN']}).ok);

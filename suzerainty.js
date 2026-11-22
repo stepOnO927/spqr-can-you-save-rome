@@ -1,4 +1,4 @@
-import {ROUTES} from './data.js?v=world-kings-city-diplomacy-2';
+import {ROUTES} from './data.js?v=world-kings-neighbor-trade-1';
 
 // State-level dependency is a treaty between governments. It never changes
 // ownership of regions, an army's commander, or a subject's private treasury.

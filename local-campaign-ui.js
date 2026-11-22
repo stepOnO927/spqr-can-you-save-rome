@@ -1,5 +1,5 @@
-import {localCampaignCity,localRecruit,localTradeOffer,localProtectionOffer,localIndependenceOffer} from './local-campaign.js?v=world-kings-city-diplomacy-2';
-import {FACTIONS} from './data.js?v=world-kings-city-diplomacy-2';
+import {localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localProtectionOffer,localIndependenceOffer} from './local-campaign.js?v=world-kings-neighbor-trade-1';
+import {FACTIONS} from './data.js?v=world-kings-neighbor-trade-1';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
@@ -10,19 +10,25 @@ function localCouncilBaseHtml(state,language='en'){
 }
 
 export function localCouncilHtml(state,language='en'){
- const base=localCouncilBaseHtml(state,language),city=localCampaignCity(state);if(!city)return base;
+ let base=localCouncilBaseHtml(state,language);const city=localCampaignCity(state);if(!city)return base;
  const zh=language==='zh',f=state.factions[state.player],campaign=state.localCampaign,host=state.regions.find(region=>region.id===city.theater)?.owner;
  const status=campaign.independenceOffer?(zh?`独立请愿正在送达；剩余${campaign.independenceOffer.remaining}个月。`:`Independence petition in transit: ${campaign.independenceOffer.remaining} months remaining.`):city.overlord?(zh?`受${escape(FACTIONS[city.overlord]?.short[1]||city.overlord)}庇护；每年缴纳1国库，城邦保持自治。`:`Protected by ${escape(FACTIONS[city.overlord]?.short[0]||city.overlord)}; one treasury is paid yearly and the city remains self-governing.`):campaign.protectionOffer?(zh?`庇护请求正在送达；剩余${campaign.protectionOffer.remaining}个月。`:`Protection request in transit: ${campaign.protectionOffer.remaining} months remaining.`):(zh?'仍为独立城邦，可以向战区控制者请求庇护。':'The city remains independent and may request protection from the theater ruler.');
  const busy=!!campaign.tradeOffer||!!campaign.protectionOffer||!!campaign.independenceOffer,atWar=state.wars.some(war=>war.includes(city.id)&&war.includes(city.overlord||host));
  const unavailable=city.controller!==city.id||!!city.overlord||f.treasury<6||busy||!host||atWar;
  const releaseUnavailable=city.controller!==city.id||!city.overlord||f.treasury<4||busy||atWar;
+ const now=state.year*12+state.month,neighbors=localTradePartners(state,city).filter(actor=>actor!==host&&!(city.tradeRights?.[actor]>now));
+ const activeNeighbors=Object.entries(city.tradeRights||{}).filter(([actor,expiry])=>actor!==host&&expiry>now&&FACTIONS[actor]);
+ if(activeNeighbors.length)base=base.replace(zh?'尚无有效贸易协定。':'No active trade compact.',zh?'已与附近政权签订贸易协定。':'A nearby trade compact is active.');
+ const neighborStatus=activeNeighbors.map(([actor,expiry])=>`${escape(FACTIONS[actor].short[zh?1:0])} · ${expiry-now} ${zh?'个月':'months'}`).join('、');
+ const neighborTrade=`${neighborStatus?`<p class="hint">${zh?'其他贸易协定':'Other trade compacts'}: ${neighborStatus}</p>`:''}${neighbors.length?`<label>${zh?'附近贸易对象':'Nearby trade partner'} <select data-local-trade-partner>${neighbors.map(actor=>`<option value="${escape(actor)}">${escape(FACTIONS[actor]?.short[zh?1:0]||actor)}</option>`).join('')}</select></label><p class="hint">${zh?'名单依据已收到的战区控制报告；路线与对方财政将在回信时核实。':'The list follows received control reports; the route and the other court’s finances are checked when it replies.'}</p><button type="button" class="action" data-local-trade-neighbor ${city.controller!==city.id||f.treasury<3||busy?'disabled':''}>${zh?'向附近政权提出贸易 · 3国库 / 2个月':'OFFER TRADE TO NEARBY COURT · 3 TREASURY / 2 MONTHS'}</button>`:''}`;
  const button=`<p class="hint">${status}</p><div class="transfer-actions"><button type="button" class="action" data-local-protection ${unavailable?'disabled':''}>${zh?'请求庇护 · 6国库 / 3个月':'REQUEST PROTECTION · 6 TREASURY / 3 MONTHS'}</button>${city.overlord?`<button type="button" class="action" data-local-independence ${releaseUnavailable?'disabled':''}>${zh?'请愿独立 · 4国库 / 2个月':'PETITION FOR INDEPENDENCE · 4 TREASURY / 2 MONTHS'}</button>`:''}</div>`;
- return base.replace('</section>',`${button}</section>`);
+ return base.replace('</section>',`${neighborTrade}${button}</section>`);
 }
 
 export function bindLocalCouncil(root,state,refresh){
  root.querySelector('[data-local-recruit]')?.addEventListener('click',()=>{if(localRecruit(state))refresh()});
  root.querySelector('[data-local-trade]')?.addEventListener('click',()=>{if(localTradeOffer(state))refresh()});
+ root.querySelector('[data-local-trade-neighbor]')?.addEventListener('click',()=>{if(localTradeOffer(state,root.querySelector('[data-local-trade-partner]')?.value))refresh()});
  root.querySelector('[data-local-protection]')?.addEventListener('click',()=>{if(localProtectionOffer(state))refresh()});
  root.querySelector('[data-local-independence]')?.addEventListener('click',()=>{if(localIndependenceOffer(state))refresh()});
 }

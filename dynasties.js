@@ -1,8 +1,8 @@
-import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=world-kings-city-diplomacy-2';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=world-kings-city-diplomacy-2';
-import {startDynasticWar} from './civil-war.js?v=world-kings-city-diplomacy-2';
-import {ROUTES} from './data.js?v=world-kings-city-diplomacy-2';
-import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=world-kings-city-diplomacy-2';
+import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=world-kings-neighbor-trade-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=world-kings-neighbor-trade-1';
+import {startDynasticWar} from './civil-war.js?v=world-kings-neighbor-trade-1';
+import {ROUTES} from './data.js?v=world-kings-neighbor-trade-1';
+import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=world-kings-neighbor-trade-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.

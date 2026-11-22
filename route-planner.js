@@ -1,6 +1,6 @@
-import {ROUTES,REGIONS} from './data.js?v=world-kings-city-diplomacy-2';
-import {reportedControl} from './control-intelligence.js?v=world-kings-city-diplomacy-2';
-import {militaryAccessStatus} from './border-access.js?v=world-kings-city-diplomacy-2';
+import {ROUTES,REGIONS} from './data.js?v=world-kings-neighbor-trade-1';
+import {reportedControl} from './control-intelligence.js?v=world-kings-neighbor-trade-1';
+import {militaryAccessStatus} from './border-access.js?v=world-kings-neighbor-trade-1';
 
 const graph = new Map();
 for (const [from, to, type] of ROUTES) {

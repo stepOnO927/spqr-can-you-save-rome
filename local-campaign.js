@@ -1,14 +1,20 @@
-import {FACTIONS} from './data.js?v=world-kings-city-diplomacy-2';
-import {localEntity} from './local-polities.js';
-import {initializeControlKnowledge} from './control-intelligence.js?v=world-kings-city-diplomacy-2';
-import {initializeLocalDiscovery} from './local-discovery.js?v=world-kings-city-diplomacy-2';
-import {sendLetter} from './epistulae.js?v=world-kings-city-diplomacy-2';
+import {FACTIONS,ROUTES} from './data.js?v=world-kings-neighbor-trade-1';
+import {localEntity,localTradeOpen} from './local-polities.js';
+import {initializeControlKnowledge,reportedControl} from './control-intelligence.js?v=world-kings-neighbor-trade-1';
+import {initializeLocalDiscovery} from './local-discovery.js?v=world-kings-neighbor-trade-1';
+import {sendLetter} from './epistulae.js?v=world-kings-neighbor-trade-1';
 
 const date=state=>state.year*12+state.month;
 const relation=(state,a,b)=>state.relations[[a,b].sort().join(':')]??0;
 const hostOf=(state,city)=>state.regions.find(region=>region.id===city.theater)?.owner;
 export const localCampaignCity=state=>state.localCampaign?.id===state.player?localEntity(state,state.player):null;
 export const playableLocalCities=state=>state.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&entity.type==='city_state'&&entity.controller===entity.id);
+export function localTradePartners(state,city=localCampaignCity(state)){
+ if(!city)return [];
+ const neighbors=ROUTES.filter(([a,b])=>a===city.theater||b===city.theater).map(([a,b])=>a===city.theater?b:a);
+ const known=[hostOf(state,city),...neighbors.map(id=>reportedControl(state,city.id,id)?.owner)];
+ return [...new Set(known)].filter(actor=>actor&&actor!==city.id&&actor!=='rebels'&&FACTIONS[actor]&&!state.wars.some(war=>war.includes(city.id)&&war.includes(actor)));
+}
 
 export function registerLocalCampaign(state){
  const city=localCampaignCity(state);
@@ -46,9 +52,9 @@ export function localRecruit(state){
  return true;
 }
 
-export function localTradeOffer(state){
- const city=localCampaignCity(state),f=state.factions[state.player],host=city&&hostOf(state,city);
- if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||f.treasury<3||state.localCampaign.tradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||city.tradeRights?.[host]>date(state))return false;
+export function localTradeOffer(state,partnerId=null){
+ const city=localCampaignCity(state),f=state.factions[state.player],host=partnerId||(city&&hostOf(state,city));
+ if(!city||city.controller!==city.id||!f||!host||!localTradePartners(state,city).includes(host)||f.treasury<3||state.localCampaign.tradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||city.tradeRights?.[host]>date(state))return false;
  f.treasury-=3;city.treasury=f.treasury;
  state.localCampaign.tradeOffer={host,remaining:2};
  return true;
@@ -71,6 +77,7 @@ export function localIndependenceOffer(state){
 }
 
 function reportOffer(state,city,host,proposal,accepted){
+ if(!state.factions[host])return;
  const trade=proposal==='trade',subject=trade?['Reply to the city trade proposal','城邦贸易提议答复']:['Reply to the protection request','城邦庇护请求答复'];
  const body=trade?[accepted?`${FACTIONS[host]?.name[0]||host} accepts a two-year food compact. Each completed exchange moves 2 food from the city for 3 treasury, subject to the real route and reserves.`:`${FACTIONS[host]?.name[0]||host} declines the food compact. No goods or treaty rights were created.`,accepted?`${FACTIONS[host]?.name[1]||host}接受为期两年的粮食贸易协定。每次实际交易从城邦交付2粮食并获得3国库，仍须满足路线与储备条件。`:`${FACTIONS[host]?.name[1]||host}拒绝粮食贸易提议；未转移物资或授予协定权利。`]:[accepted?`${FACTIONS[host]?.name[0]||host} accepts a protective relationship. The city keeps its ruler, resources and self-government; it owes one treasury each year while protected.`:`${FACTIONS[host]?.name[0]||host} declines to protect the city. Its local government remains independent.`,accepted?`${FACTIONS[host]?.name[1]||host}接受庇护关系。城邦保留领袖、资源和自治；庇护期间每年缴纳1国库。`:`${FACTIONS[host]?.name[1]||host}拒绝庇护城邦；地方政府继续独立。`];
  if(proposal==='independence'){
@@ -89,9 +96,9 @@ export function advanceLocalCampaign(state){
  if(city.controller!==city.id){state.defeat=true;return state}
  campaign.survived++;
  if(campaign.tradeOffer&&--campaign.tradeOffer.remaining<=0){
-  const host=campaign.tradeOffer.host,accepted=hostOf(state,city)===host&&state.factions[host]?.treasury>=6&&city.food>=6&&relation(state,city.id,host)>=-35&&!state.wars.some(war=>war.includes(city.id)&&war.includes(host));
+  const host=campaign.tradeOffer.host,accepted=localTradeOpen(state,city,host)&&state.factions[host]?.treasury>=6&&city.food>=6&&relation(state,city.id,host)>=-35&&!state.wars.some(war=>war.includes(city.id)&&war.includes(host));
   if(accepted){city.tradeRights||={};city.tradeRights[host]=date(state)+24;state.log.unshift({year:state.year,month:state.month,en:`${city.name[0]} concluded a two-year food compact with ${FACTIONS[host]?.short[0]||host}.`,zh:`${city.name[1]}与${FACTIONS[host]?.short[1]||host}订立两年粮食贸易协定。`})}
-  else state.log.unshift({year:state.year,month:state.month,en:'The city trade proposal was declined.',zh:'城邦贸易提议未能达成。'});
+  else state.log.unshift({year:state.year,month:state.month,en:state.factions[host]?'The city trade proposal was declined.':'The city trade envoy found no surviving court to answer.',zh:state.factions[host]?'城邦贸易提议未能达成。':'城邦贸易使者抵达时，受信政权已不存在。'});
   reportOffer(state,city,host,'trade',accepted);
   campaign.tradeOffer=null;
  }
@@ -115,7 +122,7 @@ export function advanceLocalCampaign(state){
   reportOffer(state,city,host,'independence',accepted);
   campaign.independenceOffer=null;
  }
- if(city.lastTrade?.year===state.year&&city.lastTrade?.month===state.month)campaign.tradeCompleted++;
+ if(city.lastTrade?.year===state.year&&city.lastTrade?.month===state.month)campaign.tradeCompleted+=city.lastTrade.count||1;
  f.treasury=city.treasury;f.food=city.food;
  f.manpower=Math.min(Math.floor(city.population*.12),f.manpower+Math.max(5,Math.floor(city.population/800)));
  if(campaign.survived>=24&&campaign.tradeCompleted>0&&f.treasury>=0&&f.food>=4&&f.stability>=45&&!state.victory){state.victory=true;state.log.unshift({year:state.year,month:state.month,en:'The city council secured two years of autonomy and a working trade compact. The campaign may continue.',zh:'城邦议会维持两年自治，并建立有效贸易协定；战役仍可继续。'})}

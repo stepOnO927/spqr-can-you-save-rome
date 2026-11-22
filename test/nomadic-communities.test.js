@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-city-diplomacy-2';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-city-diplomacy-2';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-neighbor-trade-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-neighbor-trade-1';
 import {NOMADIC_GENERATION_BANDS,generatedNomadicCommunities} from '../local-generation.js';
 import {advanceNomadicCommunities} from '../nomadic-communities.js';
 import {localEntity,localContactQuote,offerLocalContact,advanceLocalEntities,localSiegeQuote} from '../local-polities.js';
-import {discoverFrontierLocalities} from '../local-discovery.js?v=world-kings-city-diplomacy-2';
-import {explorationEntries} from '../map-lab/exploration-map.js?v=world-kings-city-diplomacy-2';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-city-diplomacy-2';
-import {ROUTES} from '../data.js?v=world-kings-city-diplomacy-2';
+import {discoverFrontierLocalities} from '../local-discovery.js?v=world-kings-neighbor-trade-1';
+import {explorationEntries} from '../map-lab/exploration-map.js?v=world-kings-neighbor-trade-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-neighbor-trade-1';
+import {ROUTES} from '../data.js?v=world-kings-neighbor-trade-1';
 
 const start=(mode,seed,player='senate')=>configureStartingDifficulty(newGame(player),mode,false,{localSeed:seed});
 const nomads=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.proceduralNomad);

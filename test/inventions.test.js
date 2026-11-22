@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-city-diplomacy-2';
-import {MATERIALS,IDEAS,CATEGORIES,activeModifiers,buildingModifiers,startResearch,startConstruction,equipIdea,removeIdea,expandSlot,requestKnowledge,offerKnowledge,inviteScholars,canEquip} from '../inventions.js?v=world-kings-city-diplomacy-2';
+import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-neighbor-trade-1';
+import {MATERIALS,IDEAS,CATEGORIES,activeModifiers,buildingModifiers,startResearch,startConstruction,equipIdea,removeIdea,expandSlot,requestKnowledge,offerKnowledge,inviteScholars,canEquip} from '../inventions.js?v=world-kings-neighbor-trade-1';
 
 const advance=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 test('material research unlocks a local building, with separate construction and real income',()=>{

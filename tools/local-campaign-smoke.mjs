@@ -1,8 +1,8 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-import {newGame,tick} from '../engine.js?v=world-kings-city-diplomacy-2';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-city-diplomacy-2';
-import {playableLocalCities,startLocalCampaign,localProtectionOffer} from '../local-campaign.js?v=world-kings-city-diplomacy-2';
+import {newGame,tick} from '../engine.js?v=world-kings-neighbor-trade-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-neighbor-trade-1';
+import {playableLocalCities,startLocalCampaign,localProtectionOffer} from '../local-campaign.js?v=world-kings-neighbor-trade-1';
 
 const browser=await chromium.launch({headless:true,...(process.env.SPQR_BROWSER_EXECUTABLE?{executablePath:process.env.SPQR_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];
@@ -62,6 +62,21 @@ try{
  await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
  const released=await page.evaluate(id=>JSON.parse(localStorage.getItem('spqr-save-1')).regions.flatMap(region=>region.localEntities||[]).find(city=>city.id===id).overlord,preparedCity.id);
  assert.equal(released,null);
+ const neighbor=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:4}),neighborCity=playableLocalCities(neighbor)[0];
+ startLocalCampaign(neighbor,neighborCity.id);
+ await page.evaluate(value=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:value})),neighbor);
+ await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
+ await page.locator('[data-local-trade-partner]').selectOption('armenia');
+ await page.locator('[data-local-trade-neighbor]').click();
+ assert.match(await page.locator('.local-council').innerText(),/Trade proposal in transit/);
+ await page.locator('#step').click();await page.locator('#step').click();
+ await page.locator('#mail-open').click();
+ assert.match(await page.locator('.mailbox').innerText(),/Reply to the city trade proposal/);
+ await page.locator('#mail-close').click();
+ for(let month=0;month<4;month++)await page.locator('#step').click();
+ await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
+ const traded=await page.evaluate(id=>{const state=JSON.parse(localStorage.getItem('spqr-save-1'));return {city:state.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id===id),count:state.localCampaign.tradeCompleted}},neighborCity.id);
+ assert.equal(traded.city.lastTrade.actor,'armenia');assert.ok(traded.count>0);
  assert.equal(errors.length,0,errors.join('\n'));
- console.log('Local campaign, protection and independence replies, save, Map Lab handoff and return passed');
+ console.log('Local campaign, protection, independence and neighboring trade replies, save, Map Lab handoff and return passed');
 }finally{await browser.close()}
