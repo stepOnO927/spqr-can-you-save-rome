@@ -1,6 +1,6 @@
-import {REGIONS,ROUTES} from './data.js?v=world-kings-observed-1';
-import {discoverFrontierLocalities,discoverLocalEntitiesInTheater} from './local-discovery.js?v=world-kings-observed-1';
-import {isDeliveredReport} from './person-knowledge.js?v=world-kings-observed-1';
+import {REGIONS,ROUTES} from './data.js?v=world-kings-meeting-1';
+import {discoverFrontierLocalities,discoverLocalEntitiesInTheater} from './local-discovery.js?v=world-kings-meeting-1';
+import {isDeliveredReport} from './person-knowledge.js?v=world-kings-meeting-1';
 
 // Opening control is common campaign knowledge, not a reconstruction of the
 // current world in an old save. Later observations belong to each faction.

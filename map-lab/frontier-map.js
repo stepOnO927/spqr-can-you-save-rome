@@ -1,5 +1,5 @@
-import {ROUTES} from '../data.js?v=world-kings-observed-1';
-import {reportedControl} from '../control-intelligence.js?v=world-kings-observed-1';
+import {ROUTES} from '../data.js?v=world-kings-meeting-1';
+import {reportedControl} from '../control-intelligence.js?v=world-kings-meeting-1';
 
 const COLORS={interior:'#668a78',own_frontier:'#a74737',hostile:'#bd7054',foreign:'#c5a45c',unknown:'#777b76',distant:'#59666b',mixed:'#b39757'};
 

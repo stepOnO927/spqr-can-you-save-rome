@@ -1,8 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-observed-1';
-import {createFictionalPerson,reportedDynasticContacts,offerForeignMarriage} from '../dynasties.js?v=world-kings-observed-1';
-import {observeArmies,reportedArmies} from '../character-system.js?v=world-kings-observed-1';
-import {reportedPersonName,visiblePersonName} from '../person-knowledge.js?v=world-kings-observed-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-meeting-1';
+import {createFictionalPerson,reportedDynasticContacts,offerForeignMarriage} from '../dynasties.js?v=world-kings-meeting-1';
+import {observeArmies,reportedArmies} from '../character-system.js?v=world-kings-meeting-1';
+import {reportedPersonName,visiblePersonName} from '../person-knowledge.js?v=world-kings-meeting-1';
 
 test('a reported commander name is a dated snapshot usable for subsequent correspondence',()=>{
  let s=newGame('senate');s.wars=[];s.relations['caesar:senate']=20;const id=createFictionalPerson(s,{name:['Observed commander','报告指挥官'],faction:'caesar',birthYear:s.year-30,sex:'female'}),unit=s.armies.find(a=>a.id==='xiii');unit.characterId=id;observeArmies(s);

@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=world-kings-observed-1';
-import historical from './historical-territories.js?v=world-kings-observed-1';
+import {ROUTES} from './data.js?v=world-kings-meeting-1';
+import historical from './historical-territories.js?v=world-kings-meeting-1';
 
 // state.regions remains the only mutable territory registry. This module
 // enriches those records without maintaining a second ownership table.
