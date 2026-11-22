@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
-import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,orderFleet,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions,seizeAerarium,researchInnovation,startConstruction,constructionCheck,setTax,diplomacy} from '../engine.js';
+import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,orderFleet,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions,seizeAerarium,researchInnovation,adoptIdea,startConstruction,constructionCheck,setTax,diplomacy} from '../engine.js';
 import {assessment,sendScouts,probePositions,delayAttack,latestRecon,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {revealedAchievements} from '../achievement-system.js';
@@ -24,6 +24,8 @@ const defendNorthernCorridor=process.env.SPQR_CAESAR_DEFEND_CORRIDOR==='1';
 const combinedInvestment=process.env.SPQR_CAESAR_COMBINED_INVEST==='1';
 const investFood=combinedInvestment||process.env.SPQR_CAESAR_INVEST_FOOD==='1';
 const investCash=combinedInvestment||process.env.SPQR_CAESAR_INVEST_CASH==='1';
+const commuteGrain=process.env.SPQR_CAESAR_COMMUTE_GRAIN==='1';
+if(commuteGrain&&!investFood)throw new Error('Grain commutation comparison requires a food-investment route.');
 if(investCash&&investFood&&!combinedInvestment)throw new Error('Choose one economic investment strategy per comparison run.');
 const warTax=process.env.SPQR_CAESAR_WAR_TAX==='1';
 const seekOstia=process.env.SPQR_CAESAR_OSTIA==='1';
@@ -96,18 +98,24 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
    }
   }
  }
+ if(commuteGrain){
+  const d=s.development.caesar,idea='grain-dues-commutation';
+  const irrigated=s.regions.filter(r=>r.owner==='caesar'&&(r.buildings.includes('irrigation')||r.construction?.buildingId==='irrigation')).length;
+  if(irrigated>=2&&d.knownMaterial.includes('water-control')&&!d.knownIdeas.includes(idea)&&!d.research&&f.treasury>=35&&f.food>=30)record('study agreed grain dues',researchInnovation(s,'caesar','idea',idea));
+  else if(d.knownIdeas.includes(idea)&&!d.slots.economy.includes(idea)&&!d.adoption)record('adopt agreed grain dues',adoptIdea(s,'caesar',idea,0));
+ }
  if(investFood){
   const budget=nationalBudget(s,'caesar'),knowledge=s.development.caesar;
   if(budget.foodNet<2&&!knowledge.knownMaterial.includes('water-control')&&!knowledge.research&&f.treasury>=60)record('study water management',researchInnovation(s,'caesar','material','water-control'));
-  if(budget.foodNet<2&&knowledge.knownMaterial.includes('water-control')&&f.treasury>=58){
+  if(budget.foodNet<2&&knowledge.knownMaterial.includes('water-control')&&f.treasury>=(commuteGrain&&knowledge.slots.economy.includes('grain-dues-commutation')?22:58)){
    const invested=s.regions.filter(r=>r.owner==='caesar'&&(r.buildings.includes('irrigation')||r.construction?.buildingId==='irrigation')).length;
-   if(invested<4){
+   if(invested<4&&(!commuteGrain||invested<2||knowledge.slots.economy.includes('grain-dues-commutation'))){
     const site=s.regions.find(r=>r.owner==='caesar'&&constructionCheck(s,'caesar',r.id,'irrigation').ok);
     if(site)record(`irrigate ${site.id}`,startConstruction(s,'caesar',site.id,'irrigation'));
    }
   }
  }
- if(f.treasury<30&&nationalBudget(s,'caesar').projectedNet<0)record('collect wartime contributions',collectWarContributions(s,'caesar'));
+ if(f.treasury<30&&nationalBudget(s,'caesar').projectedNet<0||commuteGrain&&f.treasury<40&&nationalBudget(s,'caesar').foodNet<=0&&s.regions.filter(r=>r.owner==='caesar'&&(r.buildings.includes('irrigation')||r.construction?.buildingId==='irrigation')).length<3)record('collect wartime contributions',collectWarContributions(s,'caesar'));
  if(useAerarium&&f.treasury<40&&region(s,'roma').owner==='caesar'&&!s.aerariumSeizure)record('take Rome public reserve',seizeAerarium(s,'caesar'));
  if(f.food<24&&nationalBudget(s,'caesar').foodNet<0)record('gather emergency provisions',collectEmergencyProvisions(s,'caesar'));
  // A player may propose an end to the war after visibly taking Rome. The

@@ -1,9 +1,9 @@
-import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,knowledgeTransitStatus,KNOWLEDGE_BLOCKED_LIMIT,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=55';
+import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,knowledgeTransitStatus,KNOWLEDGE_BLOCKED_LIMIT,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=56';
 import {FIGURE_ROLES,initializeFigures,figureStatus,figureActive} from './great-figures.js';
 import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';
 import {religionPanel} from './local-society.js?v=9';
-import {techIllustration} from './tech-art.js?v=21';
+import {techIllustration} from './tech-art.js?v=22';
 const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const factionLabel=(id,zh)=>esc(FACTIONS[id]?.short?.[zh?1:0]||id);
 const knowledgeLabel=(branch,id,zh)=>esc((branch==='material'?MATERIALS:IDEAS).find(item=>item.id===id)?.name[zh?1:0]||id);
@@ -20,6 +20,7 @@ const enzh=(zh,en,cn)=>zh?cn:en;
 function effectsText(e,zh){return Object.entries(e||{}).map(([key,value])=>{
  if(key==='localFoodCapacity')return `<span class="dev-effect positive">${zh?'当地粮仓储量':'Provincial grain reserve'} +${value}</span>`;
  if(key==='ideaResearchDiscount')return `<span class="dev-effect positive">${zh?'理念研究折扣':'National-idea research discount'} +${value}</span>`;
+ if(key==='grainCommutation')return `<span class="dev-effect positive">${zh?'存粮≥35且有稳定产粮地时：每月最多+3国库':'Stores ≥35 and supportive grain districts: up to +3 treasury / month'}</span><span class="dev-effect negative">${zh?'等量减少当月国家粮食收入；无粮食盈余时暂停':'Equal reduction in state food income; pauses without a food surplus'}</span>`;
  if(key==='egyptianDecrees')return `<span class="dev-effect positive">${zh?'埃及文化领土行政融合度 / 月 +1':'Integration in Egyptian-culture territories / month +1'}</span>`;
  if(key==='hellenicCouncil')return `<span class="dev-effect positive">${zh?'希腊文化领土且融合度≥45：当地满意度 / 季 +1':'Hellenic-culture territory with integration ≥45: local satisfaction / quarter +1'}</span>`;
  if(key==='culturalAccommodation')return `<span class="dev-effect positive">${zh?'异文化领土且融合度≥45：当地满意度 / 季 +1':'Different-culture territory with integration ≥45: local satisfaction / quarter +1'}</span>`;

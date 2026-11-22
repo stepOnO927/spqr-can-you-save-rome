@@ -9,6 +9,37 @@ import {techIllustration} from '../tech-art.js';
 import {faithSatisfaction,advanceDemography,advanceReligion} from '../local-society.js';
 import {nationalBudget} from '../national-budget.js';
 import {afterActionHtml} from '../recon-ui.js';
+import {budgetHtml} from '../budget-ui.js';
+
+test('agreed grain-dues commutation converts only real surplus after paid adoption',()=>{
+ const idea=IDEAS.find(x=>x.id==='grain-dues-commutation'),s=newGrandGame('caesar');
+ assert.match(idea.source.url,/verres23_4/);assert.ok(techIllustration(idea).includes('<svg'));
+ s.wars=[];s.factions.caesar.treasury=500;s.factions.caesar.food=80;
+ for(const id of ['cisalpine','t002','t004','t005'])s.regions.find(r=>r.id===id).food=2;
+ const baseline=nationalBudget(s,'caesar');assert.ok(baseline.foodNet>=3);
+ assert.equal(researchInnovation(s,'caesar','idea',idea.id).ok,true);
+ for(let i=0;i<idea.months;i++)advanceDevelopment(s);
+ assert.ok(development(s,'caesar').knownIdeas.includes(idea.id));
+ assert.equal(nationalBudget(s,'caesar').grainCommutation,0,'research alone cannot change revenue');
+ assert.equal(adoptIdea(s,'caesar',idea.id,0).ok,true);
+ assert.equal(nationalBudget(s,'caesar').grainCommutation,0,'adoption takes time');
+ for(let i=0;i<2;i++)advanceDevelopment(s);
+ const active=nationalBudget(s,'caesar');
+ assert.equal(active.grainCommutation,3);assert.equal(active.landNet,baseline.landNet+3);assert.equal(active.foodNet,baseline.foodNet-3);
+ const saved=upgradeSave(structuredClone(s));assert.equal(nationalBudget(saved,'caesar').grainCommutation,3);
+ const activeTurn=upgradeSave(structuredClone(saved)),controlTurn=upgradeSave(structuredClone(saved));
+ controlTurn.development.caesar.slots.economy[0]=null;
+ tick(activeTurn);tick(controlTurn);
+ assert.equal(activeTurn.factions.caesar.treasury,controlTurn.factions.caesar.treasury+3);
+ assert.equal(activeTurn.factions.caesar.food,controlTurn.factions.caesar.food-3);
+ for(const [lang,name,cash,grain] of [['en','Grain Dues Commutation','Grain dues paid in cash','Grain dues retained locally'],['zh','粮赋折现协定','粮赋折现收入','粮赋折现减少入库粮']]){
+  assert.match(developmentPanel(saved,lang,'idea'),new RegExp(name));
+  assert.match(budgetHtml(saved,lang),new RegExp(cash));assert.match(budgetHtml(saved,lang),new RegExp(grain));
+ }
+ const dry=structuredClone(saved);dry.factions.caesar.food=34;assert.equal(nationalBudget(dry,'caesar').grainCommutation,0);
+ const harvest=structuredClone(saved);for(const r of harvest.regions.filter(r=>r.owner==='caesar'))r.food=0;assert.equal(nationalBudget(harvest,'caesar').grainCommutation,0);
+ const unsupported=structuredClone(saved);for(const r of unsupported.regions.filter(r=>r.owner==='caesar'))r.civicSatisfaction=40;assert.equal(nationalBudget(unsupported,'caesar').grainCommutation,0);
+});
 
 test('paid field reserve command helps only supplied joint defense and survives a save',()=>{
  const s=newGrandGame('caesar'),idea=IDEAS.find(item=>item.id==='field-reserve-command');
@@ -115,7 +146,6 @@ test('Mauretanian AI can learn and adopt a shared North African scout practice o
  assert.equal(loaded.development.mauretania.slots.military[0],'numidian-mounted-scouts');
  assert.equal(activeEffects(loaded,'mauretania').scoutReliability,.08);
 });
-import {budgetHtml} from '../budget-ui.js';
 import {expensesThisMonth} from '../expense-ledger.js';
 const months=(s,n)=>{for(let i=0;i<n;i++)tick(s)};
 
@@ -1076,7 +1106,7 @@ test('local rites affect a neighboring court only through an influential shared 
 
 test('five categories begin with one independent inactive slot and research alone has no effect',()=>{
   const s=newGame();s.wars=[];s.alliances.push(['caesar','senate']);const d=development(s,'caesar');
-  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,49);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
+  assert.equal(IDEA_CATEGORIES.length,5);assert.equal(IDEAS.length,50);assert.equal(MATERIALS.length,34);assert.equal(BUILDINGS.length,33);
   assert.deepEqual(Object.values(d.slots).map(x=>x.length),[1,1,1,1,1]);
   assert.equal(researchInnovation(s,'caesar','idea','legion-training').ok,true);
   assert.equal(activeEffects(s,'caesar').recruitMorale,undefined);

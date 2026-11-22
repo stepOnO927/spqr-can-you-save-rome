@@ -1,6 +1,6 @@
 import {officeEffects} from './office-system.js';
-import {activeEffects,localBuildingEffects,taxReviewExpense,templeGuaranteeExpense,GRANARY_RESERVE_CAPACITY} from './development.js?v=53';
-import {fleetUpkeepDue} from './naval.js?v=50';
+import {activeEffects,localBuildingEffects,taxReviewExpense,templeGuaranteeExpense,GRANARY_RESERVE_CAPACITY} from './development.js?v=56';
+import {fleetUpkeepDue} from './naval.js?v=55';
 import {productiveEstateRegion} from './local-society.js?v=9';
 
 // These six small playable kingdoms have a home-domain reserve outside the
@@ -30,7 +30,12 @@ export function nationalBudget(s,id){
  const granaryFood=owned.reduce((n,r)=>n+(r.buildings?.includes('granary')?Math.max(0,Math.min(GRANARY_RESERVE_CAPACITY,Math.floor(Number(r.grainReserve)||0))):0),0);
  const foodProduction=owned.reduce((n,r)=>n+r.food,0)+estateFood+seasonalFood,troopFood=troops/1200,regionalFood=units*2,foodConsumption=troopFood+regionalFood;
  const officeFood=offices.food,ideaFood=(effects.food||0)+bosporanFood,buildingFood=buildings.reduce((n,e)=>n+(e.food||0),0);
- const foodNet=Math.round(foodProduction-foodConsumption-tenantFood-requisitionLoss)+homeFood+officeFood+ideaFood+buildingFood;
+ const foodNetBeforeCommutation=Math.round(foodProduction-foodConsumption-tenantFood-requisitionLoss)+homeFood+officeFood+ideaFood+buildingFood;
+ // Cash replaces a bounded part of the current grain due. It cannot be
+ // collected without supportive producing communities or a food surplus.
+ const commutableHarvest=owned.filter(r=>r.food>=.5&&r.tax>0&&r.loyalty>=55&&(r.civicSatisfaction??r.loyalty)>=55).reduce((n,r)=>n+r.food,0);
+ const grainCommutation=effects.grainCommutation&&f.food>=35?Math.min(3,Math.max(0,foodNetBeforeCommutation),Math.floor(commutableHarvest)):0;
+ const foodNet=foodNetBeforeCommutation-grainCommutation;
  const manpowerNet=Math.round(units*170*(s.grandMap?Math.max(.6,Math.min(1.2,owned.reduce((n,r)=>n+(r.civicSatisfaction??60),0)/Math.max(1,owned.length)/60)):1))+(effects.manpower||0);
- return {tax,armyUpkeep,homeIncome,homeFood,officeIncome,ideaIncome,buildingIncome,buildingUpkeep,ideaUpkeep,landNet,navyUpkeep,navalJobs,tradeImportPaid,administrationExpense,reviewExpense,templeExpense,religiousExpense,projectedNet:landNet-navyUpkeep-navalJobs-administrationExpense-reviewExpense-templeExpense-religiousExpense,foodProduction,troopFood,regionalFood,granaryFood,requisitionLoss,estateFood,seasonalFood,tenantFood,officeFood,ideaFood,buildingFood,foodConsumption,foodNet,manpowerNet,stability:offices.stability+(effects.stability||0)+buildings.reduce((n,e)=>n+(e.stability||0),0),legitimacy:buildings.reduce((n,e)=>n+(e.legitimacy||0),0),foodCapacity:100+units*25+buildings.reduce((n,e)=>n+(e.foodCapacity||0),0)};
+ return {tax,armyUpkeep,homeIncome,homeFood,officeIncome,ideaIncome,buildingIncome,buildingUpkeep,ideaUpkeep,landNet:landNet+grainCommutation,grainCommutation,navyUpkeep,navalJobs,tradeImportPaid,administrationExpense,reviewExpense,templeExpense,religiousExpense,projectedNet:landNet+grainCommutation-navyUpkeep-navalJobs-administrationExpense-reviewExpense-templeExpense-religiousExpense,foodProduction,troopFood,regionalFood,granaryFood,requisitionLoss,estateFood,seasonalFood,tenantFood,officeFood,ideaFood,buildingFood,foodConsumption,foodNet,manpowerNet,stability:offices.stability+(effects.stability||0)+buildings.reduce((n,e)=>n+(e.stability||0),0),legitimacy:buildings.reduce((n,e)=>n+(e.legitimacy||0),0),foodCapacity:100+units*25+buildings.reduce((n,e)=>n+(e.foodCapacity||0),0)};
 }
