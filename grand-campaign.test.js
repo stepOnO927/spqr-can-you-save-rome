@@ -214,10 +214,11 @@ test('foreign historical specialist answers before paid travel, survives reload 
  const months=s.greatFigures.journeys[0].remaining;
  for(let i=0;i<months;i++)advanceFigures(s);
  assert.equal(figureActive(s,'egypt','scholar'),true);
- const known=s.development.egypt.knownMaterial.includes('roadmaking');assert.equal(known,false);
- const terms=researchTerms(s,'egypt','material','roadmaking'),base=MATERIALS.find(item=>item.id==='roadmaking');
+ const known=s.development.egypt.knownMaterial.includes('grain-processing');assert.equal(known,false);
+ const terms=researchTerms(s,'egypt','material','grain-processing'),base=MATERIALS.find(item=>item.id==='grain-processing');
  assert.equal(terms.cost,Math.max(8,base.cost-3));assert.equal(terms.months,Math.max(1,base.months-1));
- const before=s.factions.egypt.treasury;const research=researchInnovation(s,'egypt','material','roadmaking');
+ assert.equal(researchTerms(s,'egypt','material','roadmaking').scholar,false,'Varro does not advise road engineering');
+ const before=s.factions.egypt.treasury;const research=researchInnovation(s,'egypt','material','grain-processing');
  assert.equal(research.ok,true);assert.equal(s.factions.egypt.treasury,before-terms.cost);assert.equal(s.development.egypt.research.remaining,terms.months);
 });
 test('a declined or invalid foreign invitation spends only its courier fee once',()=>{

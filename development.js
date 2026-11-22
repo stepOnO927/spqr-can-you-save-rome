@@ -231,7 +231,7 @@ const materialPrerequisites={'stone-fortification':['barracks-design'],'metal-ex
 const ideaPrerequisites={'reserve-mobilization':['legion-training'],'field-march-coordination':['legion-training'],'field-reserve-command':['frontier-defense'],'provincial-autonomy':['senatorial-consultation'],'commercial-agreements':['diplomatic-accommodation'],'estate-organization':['public-works'],'estate-labor-control':['estate-organization'],'negotiated-crop-shares':['estate-organization'],'seasonal-labor-contracts':['estate-organization'],'civic-education':['rhetorical-education']};
 for(const item of MATERIALS)item.prerequisites=materialPrerequisites[item.id]||item.prerequisites||[];
 for(const item of IDEAS)item.prerequisites=ideaPrerequisites[item.id]||[];
-import {figureActive} from './great-figures.js';
+import {figureActive,scholarExpertise,VARRO_RESEARCH_EXPERTISE} from './great-figures.js';
 import {FACTIONS,ROUTES} from './data.js';
 import {GRAND_ROUTES} from './grand-map-data.js';
 const ids = x => x.map(item=>item.id);
@@ -286,9 +286,9 @@ export function recordMerchantContact(s,route){
 }
 export function researchTerms(s,owner,branch,id){
  const item=(branch==='material'?MATERIALS:branch==='idea'?IDEAS:[]).find(x=>x.id===id);if(!item)return null;
- const visitor=!!visitingScholarFor(s,owner,branch,id),merchant=merchantResearchLead(s,owner,branch,id),scholar=figureActive(s,owner,'scholar');
+ const visitor=!!visitingScholarFor(s,owner,branch,id),merchant=merchantResearchLead(s,owner,branch,id),scholar=scholarExpertise(s,owner,branch,id);
  const effects=activeEffects(s,owner);
- return {cost:Math.max(8,item.cost-(effects.researchDiscount||0)-(branch==='idea'?(effects.ideaResearchDiscount||0):0)-(scholar?3:0)-(visitor?3:0)-(merchant?3:0)),months:Math.max(1,item.months-(scholar?1:0)-(visitor?1:0)-(merchant?1:0)),merchant};
+ return {cost:Math.max(8,item.cost-(effects.researchDiscount||0)-(branch==='idea'?(effects.ideaResearchDiscount||0):0)-(scholar?3:0)-(visitor?3:0)-(merchant?3:0)),months:Math.max(1,item.months-(scholar?1:0)-(visitor?1:0)-(merchant?1:0)),merchant,scholar};
 }
 export function activeEffects(s,id){
   const d=development(s,id),result={};if(!d)return result;
@@ -330,7 +330,7 @@ function adoptionSpecialist(idea){
  if(idea.category==='government'||idea.id==='cultural-accommodation')return 'statesman';
  if(idea.id==='public-works')return 'engineer';
  if(religiousAdoptionIdeas.has(idea.id))return 'religious';
- if(idea.category==='culture')return 'scholar';
+ if(VARRO_RESEARCH_EXPERTISE.idea.has(idea.id))return 'scholar';
  return null;
 }
 export function ideaAdoptionPlan(s,owner,ideaId,slot=0){

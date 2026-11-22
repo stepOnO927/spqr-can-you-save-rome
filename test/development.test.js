@@ -442,6 +442,33 @@ test('policy adoption uses the figure whose expertise matches the actual policy'
  assert.match(ideasPanel(s,'zh'),/顾问: 学者 · −1个月/);
 });
 
+test('Varro advises agriculture and language research, not unrelated engineering or cultural policies',()=>{
+ const s=newGrandGame('senate'),plain=newGrandGame('senate');
+ s.world.characters.varro.location='roma';
+ s.greatFigures.assignments.senate.scholar='varro';
+ for(const [branch,id] of [['material','grain-storage'],['material','grain-processing'],['idea','estate-organization'],['idea','seasonal-labor-contracts'],['idea','rhetorical-education']]){
+  const advised=researchTerms(s,'senate',branch,id),ordinary=researchTerms(plain,'senate',branch,id);
+  assert.equal(advised.scholar,true,id);
+  assert.equal(advised.cost,Math.max(8,ordinary.cost-3),id);
+  assert.equal(advised.months,Math.max(1,ordinary.months-1),id);
+ }
+ for(const [branch,id] of [['material','roadmaking'],['material','shipyard-craft'],['idea','naval-engineering-education'],['idea','ancestral-rites']]){
+  const advised=researchTerms(s,'senate',branch,id),ordinary=researchTerms(plain,'senate',branch,id);
+  assert.equal(advised.scholar,false,id);
+  assert.equal(advised.cost,ordinary.cost,id);
+  assert.equal(advised.months,ordinary.months,id);
+ }
+ const known=s.development.senate.knownIdeas;
+ known.push('seasonal-labor-contracts','naval-engineering-education');
+ assert.equal(ideaAdoptionPlan(s,'senate','seasonal-labor-contracts').adviserActive,true);
+ assert.equal(ideaAdoptionPlan(s,'senate','naval-engineering-education').adviserActive,false);
+ assert.match(developmentPanel(s,'en','material'),/Varro advises this subject: cost up to −3¤ \/ time up to −1m/);
+ assert.match(developmentPanel(s,'zh','material'),/瓦罗在此领域提供指导：费用最多 −3¤ \/ 时间最多 −1月/);
+ const restored=upgradeSave(structuredClone(s));
+ assert.equal(researchTerms(restored,'senate','material','grain-processing').scholar,true);
+ assert.equal(researchTerms(restored,'senate','material','roadmaking').scholar,false);
+});
+
 test('knowledge trade requires a civilian corridor and never charges for an impossible transfer',()=>{
  const s=newGrandGame('caesar');s.relations['caesar:egypt']=60;
  s.factions.caesar.treasury=150;s.factions.egypt.treasury=150;

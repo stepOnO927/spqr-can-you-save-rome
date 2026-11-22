@@ -3,6 +3,12 @@ import {CHARACTER_CATALOG} from './characters.js';
 // These are attested people. Their appointments, journeys and effects are
 // campaign abstractions, not claims about where they served in 49 BCE.
 export const FIGURE_ROLES={military:{name:['Military leadership','军事统帅'],candidates:['antony','labienus']},statesman:{name:['Statesmanship','政治家'],candidates:['lepidus','cato']},engineer:{name:['Engineering','工程专家'],candidates:['mamurra']},scholar:{name:['Scholarship','学者'],candidates:['varro']},religious:{name:['Civic religion','宗教公职'],candidates:['cicero']}};
+// Varro's later surviving works discuss estate labor, grain handling and Latin
+// learning. These subjects model his expertise, not inventions he completed in 49 BCE.
+export const VARRO_RESEARCH_EXPERTISE={
+ material:new Set(['grain-storage','grain-processing']),
+ idea:new Set(['estate-organization','seasonal-labor-contracts','rhetorical-education'])
+};
 export function initializeFigures(state){
  state.greatFigures||={assignments:{},journeys:[],invitations:[]};
  const records=state.greatFigures;
@@ -73,3 +79,8 @@ export function advanceFigures(state,log=()=>{}){
  }
 }
 export function figureActive(state,owner,role){const id=initializeFigures(state).assignments[owner]?.[role],person=state.world?.characters?.[id];return !!(id&&person?.alive&&!person.missing&&!person.travel&&person.faction===owner&&state.regions.some(r=>r.id===person.location&&r.owner===owner))}
+export function scholarExpertise(state,owner,branch,id){
+ if(!figureActive(state,owner,'scholar'))return false;
+ const scholar=state.greatFigures.assignments[owner].scholar;
+ return scholar==='varro'&&!!VARRO_RESEARCH_EXPERTISE[branch]?.has(id);
+}
