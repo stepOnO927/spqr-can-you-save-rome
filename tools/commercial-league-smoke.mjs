@@ -34,6 +34,23 @@ try{
  await page.locator('#map-mode').selectOption('organization');
  assert.match(await page.locator('#map-mode-details').innerText(),/League of Three Ports/);
  assert.match(await page.locator('#map-mode-details').innerText(),/公库/);
+ const dissolution=page.locator('#map-mode-details [data-commercial-motion][data-motion-kind="dissolution"]');
+ await dissolution.click();assert.match(await dissolution.innerText(),/确认提出解散表决/);await dissolution.click();
+ assert.match(await page.locator('#map-mode-details').innerText(),/待表决/);
+ await page.evaluate(async()=>{
+  const {newGame}=await import('/engine.js?v=world-kings-estate-village-1'),league=await import('/commercial-leagues.js?v=world-kings-estate-village-1');
+  const s=newGame('caesar');
+  for(const [a,b] of [['caesar','egypt'],['caesar','numidia'],['egypt','numidia']])s.relations[[a,b].sort().join(':')]=40;
+  s.world.diplomaticKnowledge.caesar={egypt:{kind:'agreement',status:'active',parties:['caesar','egypt']},numidia:{kind:'agreement',status:'active',parties:['caesar','numidia']}};
+  if(!league.proposeCommercialLeague(s,'caesar',['egypt','numidia']).ok)throw Error('Cannot set up campaign council');
+  for(let i=0;i<4;i++){s.month++;league.advanceCommercialLeagueOffers(s,()=>.5)}
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));
+ });
+ await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+ await page.locator('[data-tab="government"]').click();
+ assert.match(await page.locator('[data-commercial-motion][data-motion-kind="dissolution"]').locator('..').innerText(),/成员议事/);
+ const campaignDissolution=page.locator('[data-commercial-motion][data-motion-kind="dissolution"]');await campaignDissolution.click();await campaignDissolution.click();
+ assert.match(await page.locator('.rule-block').filter({hasText:'成员议事'}).last().innerText(),/待表决/);
  await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=world-kings-estate-village-1');
   const league=await import('/commercial-leagues.js?v=world-kings-estate-village-1');

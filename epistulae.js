@@ -7,6 +7,7 @@ import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registr
 import {rememberPoliticalEvent} from './political-memory.js?v=world-kings-estate-village-1';
 import {canMediate,requestMediation} from './civil-war.js?v=world-kings-estate-village-1';
 import {voteCoalitionMotion} from './coalition-motions.js?v=world-kings-estate-village-1';
+import {voteCommercialLeagueMotion,answerCommercialLeagueAdmission} from './commercial-league-politics.js?v=world-kings-estate-village-1';
 import {storedCorrespondentName} from './person-knowledge.js?v=world-kings-estate-village-1';
 import {earnedEpithets,legendName} from './legend.js?v=world-kings-estate-village-1';
 import {answerCoalitionAidRequest,COALITION_AID} from './coalition-assistance.js?v=world-kings-estate-village-1';
@@ -89,7 +90,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A sealed aid reply can outlive the court that dispatched it; its arrival
   // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result','commercial_league_offer','commercial_league_result','coalition_defense_call','agreement_result','asylum_result','coalition_aid_result','family_marriage_result','family_accord_result','agent_release_request','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerAidSender=['aid_result','coalition_offer','coalition_result','commercial_league_offer','commercial_league_result','commercial_league_admission','commercial_league_admission_result','commercial_league_motion','commercial_league_motion_result','coalition_defense_call','agreement_result','asylum_result','coalition_aid_result','family_marriage_result','family_accord_result','agent_release_request','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -186,6 +187,10 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     ok = actions.answerCoalitionInvitation?.(s,m.context.invitationId,choice).ok === true;
   } else if (m.context?.kind === 'commercial_league_offer') {
     ok = actions.answerCommercialLeagueOffer?.(s,m.context.offerId,choice).ok === true;
+  } else if (m.context?.kind === 'commercial_league_admission') {
+    ok = answerCommercialLeagueAdmission(s,m.context.admissionId,choice).ok === true;
+  } else if (m.context?.kind === 'commercial_league_motion') {
+    ok = voteCommercialLeagueMotion(s,m.context.motionId,s.player,choice).ok === true;
   } else if (m.context?.kind === 'coalition_admission') {
     ok = actions.answerCoalitionAdmission?.(s,m.context.admissionId,choice).ok === true;
   } else if (m.context?.kind === 'coalition_motion') {
@@ -399,6 +404,42 @@ export function syncCommercialLeagueLetters(s){
   if(o.phase==='delivered'&&o.playerDecision==='accepted'&&!o.resultMailId){
    const accepted=o.status==='accepted',result=sendLetter(s,{senderInstitution:o.leader,senderFaction:o.leader,recipient:s.player,category:'diplomatic',priority:'important',subject:accepted?['Commercial league formed','商业同盟已成立']:['Commercial league not formed','商业同盟未成立'],body:accepted?[`${o.name} is active. The agreed 3-treasury membership contribution was collected.`,`“${o.name}”已成立，约定的3国库会费已划拨。`]:[`${o.name} did not form; no membership contribution was collected.`,`“${o.name}”未能成立，没有扣除会费。`],options:[],context:{kind:'commercial_league_result',offerId:o.id}});
    if(result.ok){o.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['commercial-result:'+o.id]=true}
+  }
+ }
+}
+
+export function syncCommercialLeagueAdmissionLetters(s){
+ const mail=initializeMail(s);
+ for(const x of s.world?.commercialLeagueAdmissions||[]){
+  if(x.humanRecipient!==s.player)continue;
+  const c=s.world.commercialLeagues.find(item=>item.id===x.leagueId),label=c?.name||x.leagueId,leader=name(x.leader);
+  if(x.status==='pending'&&x.phase==='awaiting_player'&&!x.mailId){
+   const result=sendLetter(s,{senderInstitution:x.leader,senderFaction:x.leader,recipient:s.player,category:'diplomatic',priority:'important',subject:['Commercial league membership invitation','商业同盟增员邀请'],body:[`${leader[0]} invites us to join ${label}. Replying does not enroll us: membership needs a later confirmation and costs 3 treasury only if concluded. Each member retains its own government, armies and territory.`,`${leader[1]}邀请本方加入“${label}”。回信不会立即加入：须等待确认，最终加入时才支付3国库。各成员保留自己的政权、军队和领土。`],options:['accept_commercial_admission','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,x.remaining-1),context:{kind:'commercial_league_admission',admissionId:x.id}});
+   if(result.ok){x.mailId=result.letter.id;result.letter.created={...x.sent};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['commercial-admission:'+x.id]=true}
+  }
+  if(x.phase==='delivered'&&x.playerDecision==='accepted'&&!x.resultMailId){
+   const accepted=x.status==='accepted',result=sendLetter(s,{senderInstitution:x.leader,senderFaction:x.leader,recipient:s.player,category:'diplomatic',priority:'important',subject:accepted?['Commercial league membership confirmed','商业同盟成员资格已确认']:['Commercial league membership not concluded','未能加入商业同盟'],body:accepted?[`Membership in ${label} is confirmed; 3 treasury was paid.`,`本方加入“${label}”已获确认，支付了3国库。`]:[`The invitation to ${label} did not conclude; no membership fee was paid.`,`加入“${label}”的邀请未能达成协议，没有扣除会费。`],options:[],context:{kind:'commercial_league_admission_result',admissionId:x.id}});
+   if(result.ok){x.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['commercial-admission-result:'+x.id]=true}
+  }
+ }
+}
+
+export function syncCommercialLeagueMotionLetters(s){
+ const mail=initializeMail(s);
+ for(const m of s.world?.commercialLeagueMotions||[]){
+  if(!m.electorate.includes(s.player))continue;
+  const c=s.world.commercialLeagues.find(item=>item.id===m.leagueId),label=c?.name||m.leagueId,who=name(m.target);
+  const issue={admission:[`inviting ${who[0]} to join, subject to its own consent`,`邀请${who[1]}加入，仍须对方同意`],leadership:[`appointing ${who[0]} as coordinator`,`由${who[1]}担任召集者`],expulsion:[`expelling ${who[0]}`,`将${who[1]}除名`],dissolution:['dissolving the league','解散同盟']}[m.kind];
+  if(m.status==='voting'&&monthIndex(s.year,s.month)>=m.noticeAt&&!m.votes[s.player]&&!m.mailId){
+   const threshold=m.kind==='admission'?m.electorate.length:m.kind==='leadership'?Math.floor(m.electorate.length/2)+1:Math.ceil(m.electorate.length*2/3);
+   const result=sendLetter(s,{senderInstitution:m.sponsor,senderFaction:m.sponsor,recipient:s.player,category:'diplomatic',priority:'important',subject:['Commercial league council ballot','商业同盟成员表决'],body:[`${label} votes on ${issue[0]}. ${threshold} of ${m.electorate.length} members must approve. Vote before the deadline; silence counts as abstention.`,`${label}就${issue[1]}表决。${m.electorate.length}名成员中须${threshold}名赞成；截止前投票，未答复按弃权处理。`],options:['yes','no','abstain'],expires:m.closesAt-1,context:{kind:'commercial_league_motion',motionId:m.id}});
+   if(result.ok){m.mailId=result.letter.id;result.letter.created={...m.opened};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['commercial-motion:'+m.id]=true}
+  }
+  if(m.status!=='voting'&&!m.resultMailId){
+   const sender=m.sponsor===s.player?m.electorate.find(id=>id!==s.player&&s.factions[id]):m.sponsor;
+   if(!sender)continue;
+   const yes=Object.values(m.votes).filter(v=>v==='yes').length,result=sendLetter(s,{senderInstitution:sender,senderFaction:sender,recipient:s.player,category:'diplomatic',priority:'important',subject:['Commercial league council decision','商业同盟议事结果'],body:[`${label}: the ${m.kind} motion ${m.status==='passed'?'passed':m.status==='lapsed'?'lapsed':'failed'}; ${yes} of ${m.electorate.length} approved.${m.kind==='admission'&&m.status==='passed'?' An invitation was sent; membership still depends on the recipient.':''}`,`${label}：${{admission:'增员',leadership:'改选',expulsion:'除名',dissolution:'解散'}[m.kind]}议案${m.status==='passed'?'通过':m.status==='lapsed'?'失效':'未通过'}；${m.electorate.length}名成员中${yes}名赞成。${m.kind==='admission'&&m.status==='passed'?'邀请已寄出，成员资格仍须受邀方同意。':''}`],options:[],context:{kind:'commercial_league_motion_result',motionId:m.id}});
+   if(result.ok){m.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['commercial-motion-result:'+m.id]=true}
   }
  }
 }

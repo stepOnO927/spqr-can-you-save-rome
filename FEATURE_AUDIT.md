@@ -4,6 +4,7 @@ This is an incremental audit of the current 49 BCE Roman campaign. A feature is 
 
 | Feature | Player entry | Browser coverage |
 | --- | --- | --- |
+| Commercial league council | Campaign → Government → commercial league; terrain map → Organizations; ballot and invitation letters in Mail | `tools/commercial-league-smoke.mjs` exercises council proposals in both views; `test/commercial-league-politics.test.js` verifies unanimous admission, explicit human vote and consent, delayed confirmation, leadership, expulsion, dissolution, dues, reserve and old saves. Hosted browser verification is pending on this head. |
 | New campaign, difficulty, tutorial and save/load | Opening setup | `tools/onboarding-smoke.mjs` |
 | Long intelligence operation history | Terrain map → foreign faction → Letters & Intelligence | `tools/mission-history-smoke.mjs` verifies active missions and reports remain visible with 120 prior operations, loads older entries on demand, dispatches another mission, and checks save/load without deleting history. |
 | Roman elections and change of office | Terrain map → Factions → Roman faction → Government tree | `tools/election-results-smoke.mjs` supports a candidate, advances the consul, praetor and quaestor elections, checks selected-office results and the quaestor's next term, and saves/reloads; other offices and outcomes remain to be checked |

@@ -11,6 +11,12 @@ const alive=(s,id)=>id!=='rebels'&&!!s.factions[id]&&s.regions.some(r=>r.owner==
 export function initializeCommercialLeagues(s){
  s.world||={};s.world.commercialLeagues||=[];s.world.commercialLeagueOffers||=[];
  s.world.nextCommercialLeagueId||=1;s.world.nextCommercialLeagueOfferId||=1;
+ for(const c of s.world.commercialLeagues){
+  c.admissions||=[];c.departures||=[];c.motions||=[];c.disagreements||=[];c.transfers||=[];
+  c.financialCommitments||=Object.fromEntries(c.parties.map(id=>[id,3]));
+  if(c.charter?.admission==='founders_unanimous')c.charter.admission='unanimous_member_vote_and_invitee_consent';
+  if(c.charter){c.charter.expulsion||='two_thirds_member_vote';c.charter.leadership||='member_majority';c.charter.dissolution||='two_thirds_member_vote_or_term'}
+ }
  return s;
 }
 
@@ -55,8 +61,8 @@ function formLeague(s,o){
  for(const id of parties)s.factions[id].treasury-=3;
  const id=`commercial:${s.world.nextCommercialLeagueId++}`;
  const league={id,kind:'organization',type:'commercial',name:o.name,leader:o.leader,parties,foundingMembers:[...parties],start:{year:s.year,month:s.month},expiresAt:now(s)+36,status:'active',cohesion:70,reserve:9,
-  charter:{purpose:'mutual_food_trade',admission:'founders_unanimous',decision:'sovereign_members',militaryObligations:'none',diplomaticObligations:'none',dues:3,trade:'quarterly_surplus_transfer',withdrawal:'any_member',dissolution:'below_three_members_or_term'},
-  requirements:{contact:true,peace:true,treasury:3},goals:['balance_member_food_supply'],financialCommitments:Object.fromEntries(parties.map(id=>[id,3])),disagreements:[],transfers:[]};
+  charter:{purpose:'mutual_food_trade',admission:'unanimous_member_vote_and_invitee_consent',decision:'sovereign_members',militaryObligations:'none',diplomaticObligations:'none',dues:3,trade:'quarterly_surplus_transfer',withdrawal:'any_member',expulsion:'two_thirds_member_vote',leadership:'member_majority',dissolution:'two_thirds_member_vote_or_term'},
+  requirements:{contact:true,peace:true,treasury:3},goals:['balance_member_food_supply'],financialCommitments:Object.fromEntries(parties.map(id=>[id,3])),admissions:[],departures:[],motions:[],disagreements:[],transfers:[]};
  s.world.commercialLeagues.push(league);return league;
 }
 
@@ -102,11 +108,47 @@ function dissolve(s,c){
  if(c.reserve&&s.factions[c.parties[0]]){s.factions[c.parties[0]].treasury+=c.reserve;c.reserve=0}
 }
 
+export function dissolveCommercialLeague(s,id,reason='council_vote'){
+ const c=s.world?.commercialLeagues?.find(x=>x.id===id&&x.status==='active');
+ if(!c)return {ok:false,reason:'unavailable'};
+ dissolve(s,c);c.dissolution={year:s.year,month:s.month,reason};return {ok:true,league:c};
+}
+
+export function renameCommercialLeague(s,id,actor,name){
+ const c=s.world?.commercialLeagues?.find(x=>x.id===id&&x.status==='active');
+ if(!c||c.leader!==actor)return {ok:false,reason:'authority'};
+ const clean=normalizeCoalitionName(name);
+ if(!clean)return {ok:false,reason:'name'};
+ c.name=clean;return {ok:true,name:clean};
+}
+
+export function admitCommercialLeagueMember(s,id,target,{consentingPlayer=false,introducedBy=null}={}){
+ const c=s.world?.commercialLeagues?.find(x=>x.id===id&&x.status==='active'&&now(s)<x.expiresAt);
+ if(!c||c.parties.length>=5||c.parties.includes(target)||!alive(s,target)||s.factions[target].treasury<3)return {ok:false,reason:'membership'};
+ if(target===s.player&&!consentingPlayer)return {ok:false,reason:'player_decision'};
+ if(c.parties.some(id=>atWar(s,id,target))||relation(s,c.leader,target)<10&&!consentingPlayer)return {ok:false,reason:'relations'};
+ s.factions[target].treasury-=3;c.reserve+=3;c.parties.push(target);
+ c.financialCommitments||={};c.financialCommitments[target]=3;
+ c.admissions||=[];c.admissions.push({member:target,introducedBy:introducedBy||c.leader,year:s.year,month:s.month});
+ c.cohesion=Math.max(0,c.cohesion-2);return {ok:true,league:c};
+}
+
+export function expelCommercialLeagueMember(s,id,target,motionId){
+ const c=s.world?.commercialLeagues?.find(x=>x.id===id&&x.status==='active');
+ if(!c||c.parties.length<4||target===c.leader||!c.parties.includes(target))return {ok:false,reason:'membership'};
+ const refund=Math.floor(c.reserve/c.parties.length);
+ c.parties=c.parties.filter(x=>x!==target);s.factions[target].treasury+=refund;c.reserve-=refund;
+ c.departures||=[];c.departures.push({actor:target,year:s.year,month:s.month,reason:'expelled',motionId});
+ c.disagreements||=[];c.disagreements.push({year:s.year,month:s.month,kind:'expulsion',member:target});
+ c.cohesion=Math.max(0,c.cohesion-12);return {ok:true,league:c};
+}
+
 export function leaveCommercialLeague(s,id,member){
  const c=s.world?.commercialLeagues?.find(x=>x.id===id&&x.status==='active'&&x.parties.includes(member));
  if(!c)return {ok:false,reason:'membership'};
  c.parties=c.parties.filter(x=>x!==member);
  const refund=Math.floor(c.reserve/(c.parties.length+1));s.factions[member].treasury+=refund;c.reserve-=refund;
+ c.departures||=[];c.departures.push({actor:member,year:s.year,month:s.month,reason:'withdrawn'});
  c.disagreements.push({year:s.year,month:s.month,kind:'withdrawal',member});c.cohesion=Math.max(0,c.cohesion-15);
  if(c.parties.length<3)dissolve(s,c);
  return {ok:true};
