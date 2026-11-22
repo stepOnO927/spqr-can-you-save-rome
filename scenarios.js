@@ -1,4 +1,4 @@
-import {newGame,estimatedStrength} from './engine.js?v=finance-history-merge-1';
+import {newGame,estimatedStrength} from './engine.js?v=office-age-verified-1';
 import {createFictionalPerson} from './dynasties.js?v=finance-history-merge-1';
 import {formCoalition} from './coalitions.js?v=mutual-audience-1';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';

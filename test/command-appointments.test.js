@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=finance-history-merge-1';
-import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=finance-history-merge-1';
-import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=finance-history-merge-1';
+import {newGame,recruit,upgradeSave,tick,resolveBattle,region,adjacent} from '../engine.js?v=office-age-verified-1';
+import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=office-age-verified-1';
+import {commandFactor,advanceMissingCommanders,advanceCharacters} from '../character-system.js?v=office-age-verified-1';
 import {deriveGovernment} from '../governance.js?v=finance-history-merge-1';
 import {successorFor} from '../characters.js?v=succession-ui-recovery-1';
 
