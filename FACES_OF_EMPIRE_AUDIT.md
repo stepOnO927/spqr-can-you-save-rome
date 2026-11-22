@@ -6,6 +6,14 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `5b9b5f42` (#340) is integrated. A faction may arrange a
+voluntary, delayed handover of a known detained foreign agent; AI courts can
+make the same choice, and an undelivered release request remains hidden from
+the holder. The branch retains named saved captive persons and clears their
+detention status only when a handover actually succeeds. Focused captive,
+character UI and handover tests pass 92/92; full `npm test` passes
+1,383/1,383. Hosted browser verification follows.
+
 Main through `3a2d8455` (#339) is integrated. The foreign intelligence
 panel now limits old operation rows but retains active missions and reports,
 with a control to load earlier history. The branch's saved agent name remains

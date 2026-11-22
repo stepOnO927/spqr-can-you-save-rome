@@ -8,7 +8,7 @@ import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessio
 import {REGIONS, ROUTES, FACTIONS, INITIAL_ARMIES} from './data.js?v=phase-x-1';
 import {agriculturalProduction,grainProvisionFactor} from './war-economy.js?v=faces-wheels-1';
 import {initializeWorld,OPENING_LEADERS,CHARACTER_CATALOG,snapshotFictionalCatalog,restoreFictionalCatalog} from './characters.js?v=faces-name-disagreement-1';
-import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives,upgradeMissionIdentities,snapshotReportedPeople} from './character-system.js?v=faces-name-disagreement-1';
+import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,offerAgentHandover,advanceCharacters,advanceMissingCommanders,advanceDisputes,battlefieldWound,commandFactor,linkCommanders,relieveIncapacitatedCommanders,publicLeaderClaim,addReport,observeArmies,supportClaimant,refreshReportConfidence,reportedHealthSubjects,claimantRepresentatives,upgradeMissionIdentities,snapshotReportedPeople} from './character-system.js?v=faces-name-disagreement-1';
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=faces-name-disagreement-1';
 import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=faces-name-disagreement-1';
 import {advanceConspiracies} from './conspiracies.js?v=faces-name-disagreement-1';
@@ -801,8 +801,14 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
   // A faction may write about its own captured personnel, without exposing a
   // letter to the player until its outward journey reaches the holder.
   if(owner!=='rebels'&&s.month%6===3&&f.treasury>35){
-    const captive=s.world.captives.find(c=>c.owner===owner&&c.holder!==owner&&s.factions[c.holder]&&c.state==='held'&&!s.releaseRequests.some(r=>r.captiveId===c.id&&((s.year-r.year)*12+s.month-r.month<12)));
+    const captive=s.world.captives.find(c=>c.owner===owner&&c.holder!==owner&&s.factions[c.holder]&&c.state==='held'&&!s.releaseRequests.some(r=>r.captiveId===c.id&&!r.initiatedByHolder&&((s.year-r.year)*12+s.month-r.month<12)));
     if(captive)requestAgentRelease(s,owner,captive.id);
+  }
+  // Courts may independently return a detained foreign agent as a diplomatic
+  // gesture. Pending requests en route are not visible to the holder.
+  if(owner!=='rebels'&&s.month%6===4&&strategicRoll(s,owner,527)<.25){
+    const captive=s.world.captives.find(c=>c.holder===owner&&c.owner!==owner&&c.state==='held'&&FACTIONS[c.owner]&&!isWar(s,owner,c.owner)&&relation(s,owner,c.owner)>=20&&!s.releaseRequests.some(r=>r.captiveId===c.id&&r.holder===owner&&['awaiting_decision','returning'].includes(r.status)));
+    if(captive)offerAgentHandover(s,owner,captive.id);
   }
   if(['caesar','senate'].includes(owner)&&s.month===2&&f.treasury>40&&s.wars.some(w=>w.includes(owner)))queueMission(s,owner,owner,'counter','counter_spies');
   if(owner!=='rebels'&&s.difficulty==='expert'&&s.month===4&&f.treasury>65&&strategicRoll(s,owner,212)<.3){
