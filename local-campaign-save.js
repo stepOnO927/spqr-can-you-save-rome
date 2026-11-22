@@ -1,4 +1,4 @@
-import {FACTIONS} from './data.js?v=world-kings-local-supplies-1';
+import {FACTIONS} from './data.js?v=world-kings-local-protection-1';
 
 export function validPlayableCampaign(data){
  if(!data||!Array.isArray(data.regions)||!data.regions.length||!Array.isArray(data.armies)||!data.factions?.[data.player])return false;

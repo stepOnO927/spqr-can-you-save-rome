@@ -1,4 +1,4 @@
-import {eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from './coalition-admissions.js?v=world-kings-local-supplies-1';
+import {eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from './coalition-admissions.js?v=world-kings-local-protection-1';
 
 const date=s=>s.year*12+s.month;
 const relation=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;

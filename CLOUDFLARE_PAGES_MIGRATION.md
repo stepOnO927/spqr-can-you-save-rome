@@ -47,6 +47,12 @@ Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/c
 - 这些均是 GitHub 托管的测试，不是 Cloudflare Pages 实际公网站点验收。GitHub Pages、仓库公开状态和旧部署未改动。
 - 11 月 15 日只读复核：GitHub API 报告 `private=false`、默认分支 `main`、`has_pages=true`；旧站 `/` 与 `/map-lab/` 的 HTTP HEAD 均返回 200。这里没有对旧部署执行任何写操作。
 
+### 11 月 22 日增量验证
+
+- 草稿 [PR #307](https://github.com/stepOnO927/spqr-can-you-save-rome/pull/307) 在 `89a0ee75` 上的 [规则检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/44991607932)、[Pages 打包](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/44991607895)、[Poki 打包](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/44991607921)、[单浏览器检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/44991607985)和[三组浏览器回归](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/44991607893)均通过。可选 extended 作业按配置跳过；Vercel 的另一个外部部署状态因速率限制失败，不是本次 Cloudflare Pages 包的测试结果。
+- 同一提交的完整 Node 规则测试 1,245/1,245 通过。Pages 输出有 311 个公开文件、总计 4.77 MiB、最大单文件 1.06 MiB；云端浏览器验证 `/`、`/map-lab/`、`/han/`、主战役与存档、跨域导入、未知存档键拒绝及无页面脚本错误或站内资源加载失败。Map Lab 的地方贸易和紧急粮食请求也经过云端浏览器流程。
+- 只读复核：GitHub API 仍报告仓库为 public，默认分支仍是 `main`；旧 GitHub Pages 的 `/` 与 `/map-lab/` HTTP HEAD 均返回 200。没有修改现有发布。Cloudflare 真实部署及其正式域名验收仍未进行，仓库转为 private 和 DNS 切换也未进行。
+
 ## 切换验收清单
 
 - [ ] 准备分支审查、CI 通过；仅在准备工作获准后合并到 `main`。

@@ -1,8 +1,8 @@
-import {ROUTES} from './data.js?v=world-kings-local-supplies-1';
-import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-local-supplies-1';
-import {sendLetter} from './epistulae.js?v=world-kings-local-supplies-1';
-import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-local-supplies-1';
-import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from './local-discovery.js?v=world-kings-local-supplies-1';
+import {ROUTES} from './data.js?v=world-kings-local-protection-1';
+import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-local-protection-1';
+import {sendLetter} from './epistulae.js?v=world-kings-local-protection-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-local-protection-1';
+import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from './local-discovery.js?v=world-kings-local-protection-1';
 
 // Settlement control is stored inside its host theater. An autonomous city
 // does not transfer the whole theater, and its point is not a border polygon.
@@ -64,6 +64,7 @@ export const LOCAL_ENTITY_TEMPLATES = Object.freeze([
 ]);
 
 const now = state => state.year * 12 + state.month;
+const threatenedByHostEnemy=(state,entity,host)=>state.armies.some(army=>army.region===entity.theater&&army.owner!==host&&army.men>entity.militia&&army.men>0&&state.wars.some(war=>war.includes(host)&&war.includes(army.owner)));
 const SUPPLY_FOOD = 6, SUPPLY_PRICE = 10, SUPPLY_COURIER = 2;
 const roll = entity => {
   entity.seed = (Math.imul(entity.seed, 1664525) + 1013904223) >>> 0;
@@ -475,6 +476,26 @@ export function advanceLocalEntities(state) {
         if(accepted){entity.tradeRights||={};entity.tradeRights[offer.host]=now(state)+24}
         entity.lastNpcTradeOutcome={host:offer.host,accepted:!!accepted,year:state.year,month:state.month};
         entity.npcTradeOffer=null;
+      }
+    }
+    if(entity.procedural&&['city_state','microstate','tribe'].includes(entity.type)&&state.month===4&&entity.strategy>=3&&entity.controller===entity.id&&!entity.overlord&&!entity.siege&&!entity.pending&&!entity.npcProtectorateOffer&&state.localCampaign?.id!==entity.id){
+      const patron=region.owner,court=state.factions[patron],last=entity.lastNpcProtectorateAt;
+      const threat=threatenedByHostEnemy(state,entity,patron);
+      if(patron!==state.player&&court?.treasury>=12&&court.stability>=45&&entity.treasury>=2&&threat&&localDiscoveryLevel(state,patron,entity.id)>=LOCAL_DISCOVERY_LEVELS.identified&&(!last||now(state)-(last.year*12+last.month)>=12)){
+        entity.treasury-=2;
+        entity.npcProtectorateOffer={host:patron,remaining:3,sentYear:state.year,sentMonth:state.month,lastAdvancedAt:now(state)};
+        entity.lastNpcProtectorateAt={year:state.year,month:state.month};
+      }
+    }
+    if(entity.npcProtectorateOffer&&entity.npcProtectorateOffer.lastAdvancedAt!==now(state)){
+      entity.npcProtectorateOffer.lastAdvancedAt=now(state);
+      if(--entity.npcProtectorateOffer.remaining<=0){
+        const offer=entity.npcProtectorateOffer,court=state.factions[offer.host];
+        const threat=threatenedByHostEnemy(state,entity,offer.host);
+        const accepted=region.owner===offer.host&&entity.controller===entity.id&&!entity.overlord&&!entity.siege&&!entity.pending&&court?.treasury>=10&&court.stability>=45&&threat;
+        if(accepted){court.treasury-=6;entity.treasury+=6;entity.overlord=offer.host}
+        entity.lastNpcProtectorateOutcome={host:offer.host,accepted:!!accepted,year:state.year,month:state.month};
+        entity.npcProtectorateOffer=null;
       }
     }
     if(entity.procedural&&!entity.proceduralVillage&&entity.controller===entity.id&&!entity.siege){

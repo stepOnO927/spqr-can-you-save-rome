@@ -1,5 +1,5 @@
-import {campaignYear,campaignDate} from '../campaign-date.js?v=world-kings-local-supplies-1';
-import {canMediate,requestMediation} from '../civil-war.js?v=world-kings-local-supplies-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=world-kings-local-protection-1';
+import {canMediate,requestMediation} from '../civil-war.js?v=world-kings-local-protection-1';
 
 export function renderMediation({panel,state,target,language,refresh}){
  if(!['egypt','parthia'].includes(target))return;

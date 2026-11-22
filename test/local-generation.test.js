@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-local-supplies-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-local-supplies-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-local-protection-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-local-protection-1';
 import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS,generatedLocalPolities} from '../local-generation.js';
 import {localOfferChance,advanceLocalEntities,advanceLocalTrade,localEntity,localTradeOpen,offerLocalContact,localSiegeQuote,besiegeLocalEntity} from '../local-polities.js';
 import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from '../local-discovery.js';
 import {advanceVillages} from '../local-villages.js';
 import {advanceLocalResistance} from '../local-resistance.js';
-import {receivedMail,replyToLetter,advanceMail} from '../epistulae.js?v=world-kings-local-supplies-1';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-local-supplies-1';
+import {receivedMail,replyToLetter,advanceMail} from '../epistulae.js?v=world-kings-local-protection-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-local-protection-1';
 import {mailboxHtml} from '../mail-ui.js';
 
 const start=(mode,seed)=>configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:seed});
@@ -442,6 +442,51 @@ test('a nonplayer court may no longer need food when a local offer reaches it',(
  s.factions.senate.food=40;s.month=5;advanceLocalEntities(s);s.month=6;advanceLocalEntities(s);
  assert.equal(entity.lastNpcTradeOutcome.accepted,false);assert.equal(entity.tradeRights?.senate,undefined);
  assert.equal(inspectState(s).filter(item=>item.code==='invalid-local-npc-trade-outcome').length,0);
+});
+
+test('a threatened autonomous polity can seek a funded nonplayer protector without transferring local control',()=>{
+ const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const theater=s.regions.find(region=>region.id===entity.theater),host='senate',threat=Object.keys(s.factions).find(id=>id!==host&&id!==s.player);
+ const originalTitle=entity.legalSovereign;
+ theater.owner=host;entity.strategy=5;entity.treasury=20;s.factions[host].treasury=40;s.factions[host].stability=80;
+ s.localDiscovery[host][entity.id]={level:LOCAL_DISCOVERY_LEVELS.identified,year:s.year,month:s.month,source:'frontier'};
+ s.armies=s.armies.filter(army=>army.region!==entity.theater);
+ s.armies.push({id:'test-local-threat',owner:threat,region:entity.theater,men:entity.militia+10000,morale:80,skill:2,experience:1,move:null,siege:null});
+ s.wars.push([host,threat]);
+ s.month=4;advanceLocalEntities(s);
+ assert.equal(entity.npcProtectorateOffer.host,host);assert.equal(entity.npcProtectorateOffer.remaining,3);
+ assert.equal(entity.treasury,18,'the local court funds its own envoy');assert.equal(entity.overlord,null);
+ const restored=localEntity(upgradeSave(structuredClone(s)),entity.id);
+ assert.equal(restored.npcProtectorateOffer.remaining,3);
+ assert.equal(inspectState(s).filter(item=>item.code==='invalid-local-npc-protectorate-offer').length,0);
+ s.month=5;advanceLocalEntities(s);advanceLocalEntities(s);assert.equal(entity.npcProtectorateOffer.remaining,2,'one month cannot deliver several replies');
+ s.month=6;advanceLocalEntities(s);assert.equal(entity.npcProtectorateOffer.remaining,1);
+ const before={host:s.factions[host].treasury,local:entity.treasury};
+ s.month=7;advanceLocalEntities(s);
+ assert.equal(entity.npcProtectorateOffer,null);assert.equal(entity.overlord,host);assert.equal(entity.controller,entity.id);
+ assert.equal(entity.legalSovereign,originalTitle);assert.equal(s.factions[host].treasury,before.host-6);
+ assert.equal(entity.treasury,before.local+6);assert.equal(entity.lastNpcProtectorateOutcome.accepted,true);
+ assert.ok(!s.log.some(item=>item.en?.includes(entity.name[0])),'hidden nonplayer business stays out of the player chronicle');
+ assert.equal(localEntity(upgradeSave(structuredClone(s)),entity.id).overlord,host);
+ entity.lastNpcProtectorateAt.month=13;
+ assert.ok(inspectState(s).some(item=>item.code==='invalid-local-npc-protectorate-date'));
+});
+
+test('a vanished hostile army cancels a local protection petition',()=>{
+ const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const theater=s.regions.find(region=>region.id===entity.theater),host='senate',threat=Object.keys(s.factions).find(id=>id!==host&&id!==s.player);
+ theater.owner=host;entity.strategy=5;entity.treasury=20;s.factions[host].treasury=40;s.factions[host].stability=80;
+ s.localDiscovery[host][entity.id]={level:LOCAL_DISCOVERY_LEVELS.identified,year:s.year,month:s.month,source:'frontier'};
+ s.armies=s.armies.filter(army=>army.region!==entity.theater);
+ s.armies.push({id:'test-local-threat',owner:threat,region:entity.theater,men:entity.militia+10000,morale:80,skill:2,experience:1,move:null,siege:null});
+ s.wars.push([host,threat]);
+ s.month=4;advanceLocalEntities(s);assert.ok(entity.npcProtectorateOffer);
+ s.armies=s.armies.filter(army=>army.id!=='test-local-threat');
+ for(const month of [5,6]){s.month=month;advanceLocalEntities(s)}
+ const beforeHost=s.factions[host].treasury;s.month=7;advanceLocalEntities(s);
+ assert.equal(entity.lastNpcProtectorateOutcome.accepted,false);assert.equal(entity.overlord,null);
+ assert.equal(s.factions[host].treasury,beforeHost,'the host pays only when it accepts');
+ assert.equal(inspectState(s).filter(item=>item.code==='invalid-local-npc-protectorate-outcome').length,0);
 });
 
 test('occupation transfers a dependent village and a successful local revolt restores personal control',()=>{
