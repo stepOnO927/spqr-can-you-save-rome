@@ -1,7 +1,7 @@
 import {isDeliveredReport} from './person-knowledge.js?v=world-kings-estate-village-1';
 import {advanceLegend} from './legend.js?v=world-kings-estate-village-1';
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=world-kings-estate-village-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncCoalitionDefenseLetters,syncCoalitionAdmissionLetters,syncCoalitionMotionLetters,syncCoalitionAidLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=world-kings-estate-village-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncCommercialLeagueLetters,syncCoalitionDefenseLetters,syncCoalitionAdmissionLetters,syncCoalitionMotionLetters,syncCoalitionAidLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=world-kings-estate-village-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=world-kings-estate-village-1';
 import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=world-kings-estate-village-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=world-kings-estate-village-1';
@@ -37,6 +37,7 @@ import {advanceStrategicWarnings} from './strategic-warnings.js?v=world-kings-es
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=world-kings-estate-village-1';
 import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,initializeCoalitionCharters,recordCoalitionSeparatePeace,queueCoalitionDefenseCalls} from './coalitions.js?v=world-kings-estate-village-1';
 import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=world-kings-estate-village-1';
+import {initializeCommercialLeagues,advanceCommercialLeagueOffers,advanceCommercialLeagues,proposeCommercialLeaguesAI} from './commercial-leagues.js?v=world-kings-estate-village-1';
 import {initializeCoalitionAdmissions,advanceCoalitionAdmissions,proposeCoalitionAdmissionsAI} from './coalition-admissions.js?v=world-kings-estate-village-1';
 import {initializeCoalitionMotions,advanceCoalitionMotions,proposeCoalitionMotionsAI} from './coalition-motions.js?v=world-kings-estate-village-1';
 import {initializeCoalitionAssistance,advanceCoalitionAidRequests,proposeCoalitionAidAI} from './coalition-assistance.js?v=world-kings-estate-village-1';
@@ -114,7 +115,7 @@ export function newGame(player='caesar'){
   // A new campaign starts with frontier observations, not every foreign army's
   // exact opening location. Existing saves keep their accumulated sightings.
   for(const targets of Object.values(s.knowledge))for(const knowledge of Object.values(targets))knowledge.sightings={};
-  initializeTerritories(s);initializeLocalEntities(s,{opening:true});initializeBorderPolicies(s);linkCommanders(s);observeArmies(s);observeControl(s);initializeLocalDiscovery(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeCoalitionAdmissions(s);initializeCoalitionMotions(s);initializeCoalitionAssistance(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);initializeMail(s);initializeWheels(s);return initializeGovernments(s);
+  initializeTerritories(s);initializeLocalEntities(s,{opening:true});initializeBorderPolicies(s);linkCommanders(s);observeArmies(s);observeControl(s);initializeLocalDiscovery(s);initializeDynasties(s);seedOpeningFictionalHouseholds(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeCommercialLeagues(s);initializeCoalitionAdmissions(s);initializeCoalitionMotions(s);initializeCoalitionAssistance(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);initializeMail(s);initializeWheels(s);return initializeGovernments(s);
 }
 
 export function newDynastyScenario(){const s=newGame('egypt');createDisputedHeirScenario(s);return s}
@@ -159,7 +160,7 @@ export function upgradeSave(s){
  // Older audience entries distinguished hidden absence from unanswered mail.
  for(const event of s.log||[])if(event.en==='Personal audience: no contact.'&&event.zh==='未能见到对方；对方可能不在、无法会面或局势有变。'){event.en='Personal audience: no reply.';event.zh='个人会面请求没有收到答复。'}
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeTerritories(s);migrateVillageRecords(s);initializeLocalRulers(s);registerLocalCampaign(s);initializeBorderPolicies(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeLocalDiscovery(s);initializeCoalitionCharters(s);initializeCoalitionAdmissions(s);initializeCoalitionMotions(s);initializeCoalitionAssistance(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);initializeWheels(s);syncAgentReleaseLetters(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);syncCoalitionDefenseLetters(s);syncCoalitionAdmissionLetters(s);syncCoalitionMotionLetters(s);syncCoalitionAidLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);initializeTerritories(s);migrateVillageRecords(s);initializeLocalRulers(s);registerLocalCampaign(s);initializeBorderPolicies(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeLocalDiscovery(s);initializeCoalitionCharters(s);initializeCommercialLeagues(s);initializeCoalitionAdmissions(s);initializeCoalitionMotions(s);initializeCoalitionAssistance(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);initializeWheels(s);syncAgentReleaseLetters(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);syncCommercialLeagueLetters(s);syncCoalitionDefenseLetters(s);syncCoalitionAdmissionLetters(s);syncCoalitionMotionLetters(s);syncCoalitionAidLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
@@ -1043,7 +1044,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   const warsBefore=s.wars.map(w=>w.slice());
   s.month++;if(s.month>12){s.month=1;s.year++}
   refreshReportConfidence(s);
-  advanceInventions(s);advanceOffices(s);economy(s);advanceAgreements(s);advanceCoalitions(s);advanceReligion(s);
+  advanceInventions(s);advanceOffices(s);economy(s);advanceAgreements(s);advanceCoalitions(s);advanceCommercialLeagues(s);advanceReligion(s);
   const playerCity=localCampaignCity(s);if(playerCity){playerCity.treasury=s.factions[s.player].treasury;playerCity.food=s.factions[s.player].food}
   if(imperiumOn(s))advanceFocuses(s,{autoplayPlayer,log,sendInquiry});advanceReorganizations(s,{log});
   // Travel and sieges resolve before new AI orders.
@@ -1072,11 +1073,12 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   advanceStrategicWarnings(s,{autoplayPlayer,letterMonths,issueOrder:issueMilitaryOrder,log});
   advanceStrategicOffers(s,{autoplayPlayer});
   advanceCoalitionInvitations(s,estimatedStrength,strategicRoll,{autoplayPlayer});
+  advanceCommercialLeagueOffers(s,strategicRoll,{autoplayPlayer});proposeCommercialLeaguesAI(s,strategicRoll,{autoplayPlayer});
   advanceCoalitionAdmissions(s,estimatedStrength,strategicRoll,{autoplayPlayer});proposeCoalitionAdmissionsAI(s,{autoplayPlayer});
   advanceCoalitionMotions(s,{autoplayPlayer});proposeCoalitionMotionsAI(s,{autoplayPlayer});
   advanceCoalitionAidRequests(s,strategicRoll,{autoplayPlayer});proposeCoalitionAidAI(s,{autoplayPlayer});
   advanceAgreementProposals(s,{autoplayPlayer,checkAlliance:canFormAlliance,concludeAlliance:(state,actor,target)=>diplomacy(state,actor,target,'alliance',{priorConsent:true})});syncAgreementLetters(s);
-  if(!autoplayPlayer){syncCoalitionLetters(s);syncCoalitionDefenseLetters(s);syncCoalitionAdmissionLetters(s);syncCoalitionMotionLetters(s);syncCoalitionAidLetters(s)}
+  if(!autoplayPlayer){syncCoalitionLetters(s);syncCommercialLeagueLetters(s);syncCoalitionDefenseLetters(s);syncCoalitionAdmissionLetters(s);syncCoalitionMotionLetters(s);syncCoalitionAidLetters(s)}
   advanceMail(s,{proposeAgreement,diplomacy});
   for(const owner of Object.keys(s.factions).filter(id=>autoplayPlayer||id!==s.player)){
     const override=autoplayPlayer&&owner===s.player&&playerDifficulty;if(!override){aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner);continue}

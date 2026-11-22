@@ -89,7 +89,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A sealed aid reply can outlive the court that dispatched it; its arrival
   // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result','coalition_defense_call','agreement_result','asylum_result','coalition_aid_result','family_marriage_result','family_accord_result','agent_release_request','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerAidSender=['aid_result','coalition_offer','coalition_result','commercial_league_offer','commercial_league_result','coalition_defense_call','agreement_result','asylum_result','coalition_aid_result','family_marriage_result','family_accord_result','agent_release_request','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -184,6 +184,8 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     ok = actions.answerAgreementProposal?.(s,m.context.proposalId,choice).ok === true;
   } else if (m.context?.kind === 'coalition_offer') {
     ok = actions.answerCoalitionInvitation?.(s,m.context.invitationId,choice).ok === true;
+  } else if (m.context?.kind === 'commercial_league_offer') {
+    ok = actions.answerCommercialLeagueOffer?.(s,m.context.offerId,choice).ok === true;
   } else if (m.context?.kind === 'coalition_admission') {
     ok = actions.answerCoalitionAdmission?.(s,m.context.admissionId,choice).ok === true;
   } else if (m.context?.kind === 'coalition_motion') {
@@ -334,7 +336,7 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     resolved:!delayed});
   if(m.context?.kind==='personal_age'&&choice==='ask_why')replyNotice(s,m,['Why I asked','为何相问'],['I wished to know you better, and meant no offense.','只盼多了解阁下，并无冒犯之意。']);
   if(m.context?.kind==='personal_flavor'&&choice==='grant_favor')replyNotice(s,m,['A note of thanks','致谢短笺'],['I am grateful for the court’s assistance.','承蒙朝廷资助，谨致谢意。']);
-  if(!['ignore','acknowledge','seek_allies'].includes(choice)&&!['coalition_offer','agreement_offer','agent_release_request'].includes(m.context?.kind)){
+  if(!['ignore','acknowledge','seek_allies'].includes(choice)&&!['coalition_offer','commercial_league_offer','agreement_offer','agent_release_request'].includes(m.context?.kind)){
     const leader=senderFor(s,s.player),to=m.senderFaction;
     const phrase={accept:['We accept the proposed accord.','本朝接受所议协定。'],join_war:['We have agreed to enter the war.','本朝同意加入战争。'],send_war_aid:['We have dispatched treasury and food in support.','本朝已派出国库和粮食援助。'],refuse:['We decline the request.','本朝谢绝此项请求。'],reject:['We decline the proposed accord.','本朝谢绝所议协定。'],negotiate:['We request further negotiations.','本朝请求继续商议。'],condemn:['We condemn this declaration.','本朝谴责此项宣战。'],apologize:['We regret the strain between our courts.','两国关系紧张，本朝深表遗憾。'],defend:['Our court maintains its position.','本朝坚持原有立场。'],welcome:['We welcome this correspondence.','本朝欣然收到来函。'],send_aid:['We have committed five treasury units in support.','本朝决定提供五单位国库援助。'],concede:['We accept the requested settlement.','本朝同意所请和解。']}[choice]||[choice.replaceAll('_',' '),choice];
     if(to!==s.player){const sent=sendLetter(s,{senderId:leader,senderInstitution:leader?null:s.player,senderFaction:s.player,recipient:to,source:m.destination,destination:m.source,
@@ -381,6 +383,22 @@ export function syncCoalitionLetters(s){
     body:accepted?[`${organization} against ${target[0]} has been concluded. The agreed 5-treasury membership cost has been paid.`, `针对${target[1]}的“${organization}”已经成立，约定的5国库会费已支付。`]:[`The proposed ${organization} could not be concluded; no membership cost was paid.`,`拟议中的“${organization}”未能成立；没有支付会费。`],
     options:[],context:{kind:'coalition_result',invitationId:x.id}});
    if(result.ok){x.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-result:'+x.id]=true}
+  }
+ }
+}
+
+export function syncCommercialLeagueLetters(s){
+ const mail=initializeMail(s);
+ for(const o of s.world?.commercialLeagueOffers||[]){
+  if(o.humanRecipient!==s.player)continue;
+  if(o.status==='pending'&&o.phase==='awaiting_player'&&!o.mailId){
+   const founder=name(o.leader),other=name(o.members.find(id=>id!==s.player));
+   const result=sendLetter(s,{senderInstitution:o.leader,senderFaction:o.leader,recipient:s.player,category:'diplomatic',priority:'important',subject:['Commercial league invitation','商业同盟邀请'],body:[`${founder[0]} invites us and ${other[0]} to join ${o.name}. Replying does not form the league. If all parties agree and confirmation arrives, each pays 3 treasury. Members retain their own armies and governments. Every three months, a member with at least 35 food may sell 3 food for 2 treasury to a member with at most 24 food; the league reserve pays transport.`,`${founder[1]}邀请本方与${other[1]}加入“${o.name}”。回信不会立即成立同盟；须全体同意并送达确认后，各方才支付3国库。成员保留自己的军队与政权。每三个月，粮食不少于35的成员可向粮食不多于24的成员出售3粮食，买方支付2国库，同盟储备支付运输费。`],options:['accept_commercial_league','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,o.remaining-1),context:{kind:'commercial_league_offer',offerId:o.id}});
+   if(result.ok){o.mailId=result.letter.id;result.letter.created={...o.sent};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['commercial-offer:'+o.id]=true}
+  }
+  if(o.phase==='delivered'&&o.playerDecision==='accepted'&&!o.resultMailId){
+   const accepted=o.status==='accepted',result=sendLetter(s,{senderInstitution:o.leader,senderFaction:o.leader,recipient:s.player,category:'diplomatic',priority:'important',subject:accepted?['Commercial league formed','商业同盟已成立']:['Commercial league not formed','商业同盟未成立'],body:accepted?[`${o.name} is active. The agreed 3-treasury membership contribution was collected.`,`“${o.name}”已成立，约定的3国库会费已划拨。`]:[`${o.name} did not form; no membership contribution was collected.`,`“${o.name}”未能成立，没有扣除会费。`],options:[],context:{kind:'commercial_league_result',offerId:o.id}});
+   if(result.ok){o.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['commercial-result:'+o.id]=true}
   }
  }
 }

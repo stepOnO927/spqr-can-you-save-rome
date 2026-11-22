@@ -29,6 +29,7 @@ import {knownOrganizations,organizationMapColor,organizationsForOwner} from './o
 import {frontierEntries,frontierOutlineColor} from './frontier-map.js?v=world-kings-estate-village-1';
 import {explorationEntries,explorationOutlineColor} from './exploration-map.js?v=world-kings-estate-village-1';
 import {renameCoalition,leaveCoalition,answerCoalitionDefenseCall} from '../coalitions.js?v=world-kings-estate-village-1';
+import {leaveCommercialLeague} from '../commercial-leagues.js?v=world-kings-estate-village-1';
 import {eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from '../coalition-admissions.js?v=world-kings-estate-village-1';
 import {proposeCoalitionMotion} from '../coalition-motions.js?v=world-kings-estate-village-1';
 import {coalitionCouncilHtml} from '../coalition-council-ui.js?v=world-kings-estate-village-1';
@@ -203,6 +204,11 @@ function renderOrganizationMapDetails(host){
  const chooser=document.createElement('select');chooser.setAttribute('aria-label',zh?'选择组织':'Select organization');
  for(const item of organizations){const option=document.createElement('option');option.value=item.id;option.textContent=item.name||item.id;chooser.append(option)}chooser.value=selected.id;
  chooser.onchange=()=>{currentOrganizationId=chooser.value;updateControl();renderHud()};box.append(chooser);
+ if(selected.type==='commercial'){
+  const info=document.createElement('div');info.innerHTML=`<strong>${esc(selected.name||selected.id)}</strong><p>${zh?'成员':'Members'}: ${selected.parties.map(id=>esc(n(FACTIONS[id]?.short)||id)).join(zh?'、':', ')}</p><p>${zh?'召集者':'Coordinator'}: ${esc(n(FACTIONS[selected.leader]?.short)||selected.leader)} · ${zh?'报告':'Report'}: ${esc(campaignDate(selected.month,selected.year,lang))}${selected.own?' · '+(zh?'本方成员':'member'):''}</p>${selected.own?`<p>${zh?'凝聚度':'Cohesion'} ${selected.cohesion}/100 · ${zh?'公库':'Reserve'} ${selected.reserve}¤</p>`:''}<p>${zh?'成员各自保有领土、军队与外交权。':'Members keep their own territory, armies and diplomacy.'}</p>`;box.append(info);
+  if(selected.own){const leave=document.createElement('button');leave.textContent=zh?'退出商业同盟':'LEAVE COMMERCIAL LEAGUE';leave.onclick=()=>{if(leaveCommercialLeague(state,selected.id,state.player).ok){renderHud();updateControl()}};box.append(leave)}
+  host.append(box);return;
+ }
  const info=document.createElement('div');info.innerHTML=`<strong>${esc(selected.name||selected.id)}</strong><p>${zh?'成员':'Members'}: ${selected.parties.map(id=>esc(n(FACTIONS[id]?.short)||id)).join(zh?'、':', ')}</p><p>${zh?'盟主':'Leader'}: ${esc(n(FACTIONS[selected.leader]?.short)||selected.leader)} · ${zh?'共同目标':'Shared threat'}: ${esc(n(FACTIONS[selected.target]?.short)||selected.target)}</p><p>${zh?'报告':'Report'}: ${esc(campaignDate(selected.month,selected.year,lang))}${selected.own?' · '+(zh?'本方成员':'member'):''}</p>${selected.own?`<p>${zh?'凝聚度':'Cohesion'}: ${selected.cohesion}/100 · ${zh?'各成员仍独立统治与调动军队':'Members retain independent government and armies'}</p>`:''}`;box.append(info);
  if(selected.own&&selected.leader===state.player){const name=document.createElement('input'),rename=document.createElement('button'),status=document.createElement('span');name.value=selected.name||'';name.maxLength=48;name.setAttribute('aria-label',zh?'组织名称':'Organization name');rename.textContent=zh?'命名组织':'RENAME ORGANIZATION';rename.onclick=()=>{const result=renameCoalition(state,selected.id,state.player,name.value);if(result.ok){renderHud();updateControl()}else status.textContent=zh?'名称需为3至48个字符，且不能包含控制字符或尖括号。':'Use 3–48 characters without control characters or angle brackets.'};box.append(name,rename,status)}
   if(selected.own&&selected.leader===state.player&&selected.parties.length<5){
