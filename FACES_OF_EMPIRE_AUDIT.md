@@ -6,13 +6,22 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The Roman embassy's return report now uses the government encountered on
+arrival. An orthodox Liu emperor is named only when a verified Liu actually
+occupies the throne; a non-Liu takeover is reported as such, and an unknown
+ruler remains unknown. The bilingual message is queued at the visit and
+retains its wording through save/load. The focused Roman–Han integration
+checks pass 3/3, and the full local suite passes 1,274/1,274. Cloud
+verification for this addition is pending.
+
 Main through `51440ac9` is integrated. A fictional person's missing saved
 birth year no longer falls back to a stale catalog age for marriage,
 guardianship, or minority government decisions. Existing guardianships with
 unknown age remain until an actual disqualifying event. The new family-age
 browser smoke stays in the cloud workflow. Focused governance, dynasty,
 identity, and module checks pass 78/78; the full local simulation suite passes
-1,273/1,273. Cloud checks for this merge are pending.
+1,273/1,273. All five GitHub checks passed for `33a293e2`, including all
+three Browser smoke groups.
 
 The seed-1 opening campaign had 23 numbered fictional names among 65 people,
 mostly from the shared oasis pool. Newly appointed field commanders and
@@ -21,7 +30,7 @@ unused pool names run out. The opening has 65 distinct fictional names and no
 numeric suffixes. This is a game reconstruction, not an attested personal-name
 formula. Existing saved names are left intact. Focused identity, market, and
 portrait checks pass 49/49; the full local simulation suite passes 1,271/1,271.
-Cloud checks are pending.
+The same five GitHub checks passed at the later merge head `33a293e2`.
 
 The first browser run after the `9c585d58` integration caught a real atlas
 regression: a delivered succession report created an investigable lead, but

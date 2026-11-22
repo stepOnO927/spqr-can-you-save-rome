@@ -42,6 +42,12 @@ const fill=(h,e,lang)=>{const n=id=>h.persons[id]?.name?.[lang]||id;const f=id=>
  return String(e.text[lang]).replace('%NAME2%',n(e.who2)).replace('%NAME%',n(e.who)).replace('%REGION%',e.region?reg(e.region):'').replace('%FACTION2%',f(e.faction2)).replace('%FACTION%',f(e.faction))};
 function relayDelay(h){return h.silk.contact.anxi.level==='trade'?RELAY_MONTHS.trade:RELAY_MONTHS.hearsay}
 function snapshotOf(h){const e=h.throne.orthodox||h.throne.occupant;return {year:h.year,month:h.month,owners:Object.fromEntries(h.regions.map(r=>[r.id,r.owner])),emperor:e,emperorName:e?h.persons[e]?.name:null,dynasty:h.throne.dynasty.name,dynastyOrthodox:!!h.throne.dynasty.orthodox,orthodoxIsLiu:!h.throne.orthodox||isLiuClan(h,h.throne.orthodox)}}
+function embassyReturnText(h){
+ const id=h.throne.occupant||h.throne.orthodox,person=h.persons[id];
+ if(person?.alive&&person.name?.[0]&&person.name?.[1]&&h.throne.orthodox===id&&isLiuClan(h,id))return {en:`Our envoys reached the court of the Seres, ruled by ${person.name[0]}. They report an emperor of the house of Liu.`,zh:`我方使者抵达赛里斯朝廷，其君为${person.name[1]}。使者回报皇帝出自刘氏。`};
+ if(person?.alive&&person.name?.[0]&&person.name?.[1])return {en:`Our envoys reached the court of the Seres, now held by ${person.name[0]}. They could not verify an orthodox Liu emperor.`,zh:`我方使者抵达赛里斯朝廷，现由${person.name[1]}掌权。使者未能确认有正统刘氏皇帝在位。`};
+ return {en:'Our envoys reached the court of the Seres but could not verify who rules it.',zh:'我方使者抵达赛里斯朝廷，但未能确认当前统治者。'};
+}
 
 function ensureBridge(w){
  if(w.bridge?.settled)return w.bridge;
@@ -134,9 +140,9 @@ export function advanceHanWorld(s){
  settleRomanImports(s,w);
  // the Roman embassy, if any
  if(w.embassy?.status==='travelling'&&now>=w.embassy.arrive){w.embassy.status='arrived';h.silk.contact.lijian={level:'embassy',heardAt:mi(h.year,h.month)};
-  const e=h.throne.orthodox;const welcome=h.relations&&e;w.embassy.reception=welcome?'received':'unclear';
+  const ruler=h.persons[h.throne.occupant||h.throne.orthodox];w.embassy.reception=ruler?.alive?'received':'unclear';
   h.log.push({year:h.year,month:h.month,text:['Envoys from Lijian in the far west reach the Han court (alternate history).','极西犁靬之国使者抵达汉廷（架空历史）。'],kind:'frontier'});
-  w.queue.push({arrive:now+delay,kind:'embassy_return',en:`Our envoys reached the court of the Seres${e?`, ruled by ${h.persons[e].name[0]}`:''}. They report a vast realm and an emperor of the house of Liu.`,zh:`我方使者已抵达赛里斯朝廷${e?`，其君为${h.persons[e].name[1]}`:''}。使者回报其国广大，皇帝出自刘氏。`,origin:{year:h.year,month:h.month}})}
+  w.queue.push({arrive:now+delay,kind:'embassy_return',...embassyReturnText(h),origin:{year:h.year,month:h.month}})}
  // reports arrive
  for(const item of w.queue.filter(x=>x.arrive<=now)){
   if(item.kind==='snapshot'){w.known.snapshot={...item.snapshot,via:'merchants',received:{year:s.year,month:s.month}};continue}

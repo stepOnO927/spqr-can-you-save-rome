@@ -2,6 +2,28 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js?v=faces-family-age-1';
 import {attachHanWorld,hanWorld} from '../han/world.js?v=faces-family-age-1';
+import {advanceHanWorld} from '../han/world.js?v=faces-family-age-1';
+import {advanceDate} from '../han/util.js?v=han-1';
+import {seizeThrone} from '../han/dynasty.js?v=han-1';
+
+test('embassy reply reports the government encountered, including a saved non-Liu takeover',()=>{
+ const visit=usurper=>{
+  let s=newGame('caesar');const w=attachHanWorld(s,{seed:17}),h=w.state;
+  if(usurper){h.court.control['fictional-pang-chong']=80;assert.equal(seizeThrone(h,'fictional-pang-chong').ok,true)}
+  w.embassy={status:'travelling',arrive:s.year*12+s.month+1,by:'caesar'};
+  advanceDate(s);advanceHanWorld(s);
+  const queued=w.queue.find(x=>x.kind==='embassy_return');assert.ok(queued);
+  assert.equal(w.embassy.reception,'received');
+  s=upgradeSave(structuredClone(s));
+  assert.deepEqual(hanWorld(s).queue.find(x=>x.kind==='embassy_return'),queued);
+  return queued;
+ };
+ const orthodox=visit(false),takeover=visit(true);
+ assert.match(orthodox.en,/house of Liu/);assert.match(orthodox.zh,/皇帝出自刘氏/);
+ assert.match(takeover.en,/Pang Chong/);assert.match(takeover.zh,/庞崇/);
+ assert.match(takeover.en,/could not verify an orthodox Liu emperor/);
+ assert.doesNotMatch(takeover.zh,/皇帝出自刘氏/);
+});
 
 for(const seed of [49,73])test(`120 Roman turns advance the attached Han world and survive a midcampaign save (seed ${seed})`,()=>{
  let s=newGame('parthia');attachHanWorld(s,{seed});
