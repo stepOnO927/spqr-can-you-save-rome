@@ -6,6 +6,13 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `3a8f2e75` (#342) is integrated. Internal Security conspiracy
+reports show separate observation and receipt dates, the original source,
+forwarding and confidence without treating a corroborated claim as proof.
+An expanded browser smoke checks dated forwarded and legacy reports across
+save/load. The focused agent-release and character UI tests pass 79/79;
+full `npm test` passes 1,383/1,383. Hosted browser verification follows.
+
 Main through `ab33a983` (#341) is integrated. The Internal Security panel
 keeps recent conspiracy reports visible and lets players open older dated
 reports. The existing reply text still does not claim that an undelivered
