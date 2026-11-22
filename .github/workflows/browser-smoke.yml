@@ -118,6 +118,7 @@ jobs:
               node tools/stone-construction-smoke.mjs
               node tools/han-smoke.mjs
               node tools/han-market-smoke.mjs
+              node tools/han-merchant-venture-smoke.mjs
               node tools/roman-eastern-import-smoke.mjs
               node tools/roman-eastern-export-smoke.mjs
               node tools/han-supply-contract-smoke.mjs

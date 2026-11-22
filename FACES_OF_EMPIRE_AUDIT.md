@@ -13,8 +13,9 @@ seller payment, a saved merchant, zero remaining escrow and save/load halfway
 through the run. The fixed 49 seed completes 131 paid deliveries including
 five documented silk resale chains; separate exploratory 1 and 82 seeds
 completed 18 such chains each. This demonstrates multiple autonomous
-intermediary transactions in normal long campaigns. Broader commodity chains
-and merchant-financed speculation remain unverified.
+intermediary transactions in normal long campaigns. A later merchant-venture
+increment also completed three self-financed deliveries in this 120-month seed;
+broader commodity resale chains remain unverified.
 
 Main through `69ed42e9` is integrated. Its `identityObserved` provenance now
 survives general and audience observations as well as an ally's delayed
@@ -1266,7 +1267,7 @@ market panel. The Roman-facing market also saves delivered route experience,
 uses it for carrier selection and bounded transport discounts, and shows it
 alongside reputation in its bilingual panel. This is an initial consequence of merchant experience, while
 individual merchant negotiation, broader independent investment and competing private
-commercial networks remain open.
+commercial networks were open at that stage. Self-financed caravans are added below.
 Eastern merchant characters now also react to a route they personally lost
 cargo on. A less risk-tolerant merchant with at least two wealth pays two of
 their own wealth for an escort on a later caravan along that same route. That
@@ -1314,7 +1315,8 @@ the direct Han offer closes. Both legs use stock, treaties, routes, escrow,
 named carriers and seller payment; existing 120-month conservation checks
 remain in place. Per-quarter route caching keeps the enlarged buyer pool
 within the market test's prior runtime. Wider autonomous intermediary volume
-and merchant financing are still open.
+and merchant financing were still open at that stage; the self-funded caravan
+path below addresses the first investment route.
 The ten-year full campaign exposed a circular silk trade between Shule and
 Dayuan: both courts replenished a target stock but neither consumed the luxury
 good. Populous courts now consume one real silk batch per market month when
@@ -1364,7 +1366,7 @@ Chromium scenarios pass with the expansion's shared module imports.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,
-general Roman–Han settlement, broader commodity resale and merchant financing,
+general Roman–Han settlement, broader commodity resale and private network depth,
 broader player and merchant competition, and the full acceptance
 scenarios are still outstanding. New names
 and emblems are game reconstructions, not documented personal identities.
@@ -1374,8 +1376,9 @@ reserved player sale lots, in-flight cargo, measured production, consumption,
 manufacturing inputs, military use, losses and discarded surplus. The seed-49
 run balanced all goods for 120 consecutive turns while completing 131 paid
 deliveries and five physically received silk resales. This establishes a
-repeatable autonomous intermediary path, though other commodity chains and
-merchant-financed trade still need coverage and implementation.
+repeatable autonomous intermediary path. The later merchant-venture path adds
+three self-funded deliveries in this same 120-month seed; other commodity
+chains and wider private network behavior still need coverage.
 Han civil-war and peasant-uprising field commanders now use the Han cultural
 pool instead of the default Tarim oasis pool. A temporary uprising no longer
 acquires a fictitious foreign monarch. Old saves drop that erroneous ruler
@@ -1420,7 +1423,7 @@ affect the paid transport and modeled road risk. A busy, absent or defected
 carrier fails validation before any goods or treasury move. The chosen person
 and terms survive saving, while recurring contract installments retain their
 automatic carrier assignment. This adds player-facing merchant competition;
-merchant-financed trade remains a separate unfinished mechanic.
+the self-funded venture below extends that merchant role beyond carriage.
 Foreign reserved sale lots now pass their saved order ID through the player's
 market quote and dispatch. A listed batch uses its posted unit price and
 reserved inventory, closes when filled, and cannot be silently turned into a
@@ -1434,8 +1437,26 @@ thirty-unit operating reserve, records partial payments and arrears, and
 penalizes stability and merchant loyalty only once per overdue loan. Early
 repayment, saved debt history, Chronicle entries, bilingual market controls,
 and no-double-payment tests cover the actual political finance path. This is
-court credit rather than a merchant-owned speculative caravan; the latter
-remains unfinished.
+court credit; the distinct merchant-owned caravan path is described next.
+
+Named merchants with earned reputation and personal capital can now buy one
+batch of real stock and fund a caravan on their own account. An accessible
+destination court reserves its current bid from actual treasury before the
+purchase. The source court receives the merchant's money immediately; customs
+and transport settle through the existing route ledger. The destination buyer
+pays the merchant only on arrival. If raiders destroy the cargo, the buyer's
+reserved bid is refunded and the merchant loses the paid goods and carriage.
+Saved shipments record financier, cost, bid and settlement; the bilingual
+market screen offers eligible player merchants an actual action with quoted
+capital, travel time and margin. AI merchants may invest at treaty markets,
+including while returning through a foreign market. They cannot initiate a
+purchase from or charge the player without an order. The seed-49, 120-month
+all-AI campaign completes three such merchant-owned deliveries while balancing
+every commodity after every turn. Unit checks cover payment conservation,
+customs, raid loss, invalid requests, foreign sourcing and save/load. The new
+Chromium flow verifies a player-ordered venture and its bilingual receipt in
+GitHub Actions; cloud results remain to be collected. Wider private-network
+competition and additional commodity resale chains remain open.
 
 ## Existing foundations
 

@@ -89,6 +89,19 @@ for(let i=0;i<120;i++){
  for(const good of easternGoods){const balance=goodsBalance(autonomous,good);assert.equal(balance.physical+balance.consumed+balance.discarded+balance.manufactured+balance.military+balance.lost+balance.requisitioned,openingGoods[good]+balance.produced,`${good} units were created or lost after month ${i+1}`)}
 }
 const paid=autonomous.tradeMarkets.transactions.filter(x=>x.price>0),shipmentById=new Map(autonomous.tradeMarkets.shipments.map(x=>[x.id,x]));
+const ventures=autonomous.tradeMarkets.shipments.filter(x=>x.financierId);
+assert.ok(ventures.length>=2,'named merchants should fund actual autonomous caravans in an ordinary ten-year eastern campaign');
+for(const shipment of ventures){
+ assert.ok(autonomous.persons[shipment.financierId]?.name?.[0]);
+ assert.ok(shipment.financeCost>0&&shipment.resalePrice>shipment.financeCost);
+ if(shipment.status==='delivered'){
+  assert.equal(shipment.buyerEscrow,0);assert.equal(shipment.escrow,0);
+  const receipts=autonomous.tradeMarkets.transactions.filter(x=>x.shipment===shipment.id);
+  assert.equal(receipts.length,1,'a self-funded sale must settle once');
+  assert.equal(receipts[0].resalePrice,shipment.resalePrice);
+ }
+}
+for(const shipment of han.tradeMarkets.shipments.filter(x=>x.financierId))assert.ok(shipment.seller!=='han'&&shipment.buyer!=='han','AI venture must not spend or sell player goods without an order');
 const dated=tx=>tx.year*12+tx.month;
 const resales=paid.filter(tx=>autonomous.tradeMarkets.regions[tx.origin]?.goods[tx.commodity]?.production===0&&paid.some(earlier=>earlier.destination===tx.origin&&earlier.buyer===tx.seller&&earlier.commodity===tx.commodity&&dated(earlier)<dated(tx)));
 assert.ok(resales.length>=4,'independent courts should complete several physical intermediary resales over ten years');
@@ -99,4 +112,4 @@ for(const tx of resales){
  assert.equal(autonomous.persons[shipment.merchantId]?.profession,'merchant');
  assert.equal(autonomous.tradeMarkets.transactions.filter(entry=>entry.shipment===tx.shipment).length,1,'a resale must settle once');
 }
-console.log(JSON.stringify({...summary,han:{months:120,year:han.year,month:han.month,emperor:han.throne.occupant,markets:Object.keys(han.tradeMarkets.regions).length,shipments:han.tradeMarkets.shipments.length,delivered:hanDelivered},autonomous:{months:120,delivered:paid.length,resales:resales.length,goods:[...new Set(resales.map(x=>x.commodity))]}}));
+console.log(JSON.stringify({...summary,han:{months:120,year:han.year,month:han.month,emperor:han.throne.occupant,markets:Object.keys(han.tradeMarkets.regions).length,shipments:han.tradeMarkets.shipments.length,delivered:hanDelivered},autonomous:{months:120,delivered:paid.length,resales:resales.length,goods:[...new Set(resales.map(x=>x.commodity))],merchantVentures:ventures.length}}));
