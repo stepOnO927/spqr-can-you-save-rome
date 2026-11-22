@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js?v=saved-age-consistency-1';
-import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js?v=saved-age-consistency-1';
+import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js?v=succession-lead-1';
 import {setWartimePolicy} from '../epistulae-personnel.js?v=saved-age-consistency-1';
-import {initializeMailReports,advanceMailReports} from '../mail-reports.js?v=saved-age-consistency-1';
+import {initializeMailReports,advanceMailReports} from '../mail-reports.js?v=succession-lead-1';
 import {mailboxHtml} from '../mail-ui.js?v=saved-age-consistency-1';
 
 const state = () => {

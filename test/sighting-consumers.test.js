@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,sendInquiry} from '../engine.js?v=saved-age-consistency-1';
-import {buildChessboard} from '../chessboard.js?v=saved-age-consistency-1';
+import {newGame,upgradeSave,sendInquiry} from '../engine.js?v=succession-lead-1';
+import {buildChessboard} from '../chessboard.js?v=succession-lead-1';
 import {createPlan,assignRole,assessPlan} from '../battle-plans.js?v=saved-age-consistency-1';
 import {reportedFrontierThreats} from '../frontier-response.js?v=saved-age-consistency-1';
 import {scoreFocus,focusReportsFor,legitimateFocusView} from '../national-focus.js?v=saved-age-consistency-1';

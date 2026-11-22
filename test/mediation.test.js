@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,upgradeSave,isWar} from '../engine.js?v=saved-age-consistency-1';
-import {contestLeadership,advanceDisputes,addReport} from '../character-system.js?v=saved-age-consistency-1';
+import {newGame,region,upgradeSave,isWar} from '../engine.js?v=succession-lead-1';
+import {contestLeadership,advanceDisputes,addReport} from '../character-system.js?v=succession-lead-1';
 import {requestMediation,advanceMediations,resolveDynasticWars,settleDynasticWar} from '../civil-war.js?v=saved-age-consistency-1';
 
 const rolls=seed=>{const out=[];for(let i=0;i<3;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;out.push(seed/4294967296)}return out};

@@ -127,7 +127,7 @@ export function reportedHealthSubjects(s,actor,target){
  // A later partial roster is not evidence that names in earlier reports vanished.
  // Preserve these as investigable leads only, not as current rulers or verified identities.
  const meetings=(s.meetings||[]).filter(m=>isCompletedMeeting(s,m)&&((m.actor===actor&&m.targetFaction===target)||(m.targetFaction===actor&&m.actor===target))).map(m=>m.actor===actor?m.target:m.person);
- const leads=reports.filter(r=>isDeliveredReport(s,r)).flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['health','age','location','conspiracy'].includes(r.kind)?[r.character]:r.kind.startsWith('office_')?[r.value]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:[]);
+ const leads=reports.filter(r=>isDeliveredReport(s,r)).flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['health','age','location','conspiracy'].includes(r.kind)?[r.character]:r.kind.startsWith('office_')||r.kind==='succession'?[r.value]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:[]);
  return [...new Set([...(knowledge?.reportedLeaders||[]),...reportedClaimants(s,actor,target),...Object.values(knowledge?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...leads,...meetings].filter(id=>CHARACTER_CATALOG[id]))];
 }
 export function claimantRepresentatives(s,actor,claimant){

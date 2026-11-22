@@ -4,8 +4,8 @@ import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,r
 import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=saved-age-consistency-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=missing-fate-privacy-1';
-import {visiblePersonName} from './character-system.js?v=saved-age-consistency-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=saved-age-consistency-1';
+import {visiblePersonName} from './character-system.js?v=succession-lead-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=succession-lead-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);
