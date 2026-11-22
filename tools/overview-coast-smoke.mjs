@@ -25,7 +25,8 @@ try{
   await page.addInitScript(language=>localStorage.setItem('spqr-lang',language),language);
   await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
   await page.locator('#start-overlay:not([hidden])').waitFor();await page.locator('#start-free').click();
-  for(const zoom of [5.78,5.92,6.48,6.52,5.78]){
+  const namedByZoom=new Map();
+  for(const zoom of [5.78,5.92,6.48,6.52,6.89,6.91,5.78]){
    await page.evaluate(async zoom=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[8.2,44.2],zoom})},zoom);
    await page.waitForFunction(()=>document.querySelector('#map-charting')?.hidden!==false&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99,null,{timeout:15000});
    await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.loaded()&&!map.isMoving()},null,{timeout:30000});
@@ -41,13 +42,25 @@ try{
     const visibleSite=element=>{const rect=element.getBoundingClientRect();return getComputedStyle(element).display!=='none'&&rect.right>box.left&&rect.left<box.right&&rect.bottom>box.top&&rect.top<box.bottom};
     const compact=[...document.querySelectorAll('.grand-site:not(.major):not(.landmark)')].filter(visibleSite);
     const landmarks=[...document.querySelectorAll('.grand-site.landmark')].filter(visibleSite);
-    return {land:at([8.2,44.8]),sea:at([8.2,43.6]),raster:map.getLayer('overview-land-raster-0-1')?.maxzoom,vector:map.getLayer('land-base')?.minzoom,compactSites:compact.length,compactWidths:compact.map(element=>Math.round(element.getBoundingClientRect().width)),landmarks:landmarks.length};
+    const named=[...document.querySelectorAll('.grand-site')].filter(visibleSite).map(element=>element.getBoundingClientRect()).filter(rect=>rect.width>18);
+    const labelClashes=named.flatMap((a,i)=>named.slice(i+1).filter(b=>a.left<b.right+4&&a.right+4>b.left&&a.top<b.bottom+4&&a.bottom+4>b.top)).length;
+    return {land:at([8.2,44.8]),sea:at([8.2,43.6]),raster:map.getLayer('overview-land-raster-0-1')?.maxzoom,vector:map.getLayer('land-base')?.minzoom,compactSites:compact.length,compactWidths:compact.map(element=>Math.round(element.getBoundingClientRect().width)),landmarks:landmarks.length,namedSites:named.length,labelClashes};
    },png.toString('base64'));
    assert.ok(sample.land[0]>sample.sea[0]+55&&sample.sea[0]<100,`${name}: ${JSON.stringify(sample)}`);
    assert.equal(sample.raster,6.5);assert.equal(sample.vector,5.85);
-   if(zoom===6.48||zoom===6.52){assert.ok(sample.compactSites>=5&&sample.compactWidths.every(width=>width===10),`${name}: secondary sites should remain compact`);assert.ok(sample.landmarks>=1,`${name}: a regional city should retain its name`)}
+   if(zoom>=6.48&&zoom<=6.91){assert.ok(sample.landmarks>=1,`${name}: a regional city should retain its name`);assert.equal(sample.labelClashes,0,`${name}: displayed settlement names should not overlap`);namedByZoom.set(zoom,sample.namedSites)}
+   if(zoom===6.48||zoom===6.52)assert.ok(sample.compactWidths.filter(width=>width===10).length>=5,`${name}: crowded sites should remain discoverable as compact markers`);
+   if(zoom===6.52)assert.ok(Math.abs(sample.namedSites-namedByZoom.get(6.48))<=2,`${name}: names should not appear in a batch at the old zoom threshold`);
+   if(zoom===6.91)assert.ok(Math.abs(sample.namedSites-namedByZoom.get(6.89))<=2,`${name}: names should not appear in a batch at the new zoom threshold`);
    console.log(name,JSON.stringify(sample));
   }
+  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[8.2,44.2],zoom:6.48})});
+  await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.loaded()&&!map.isMoving()});
+  const compactSite=await page.evaluate(()=>[...document.querySelectorAll('.grand-site.near-site')].find(element=>{const box=element.getBoundingClientRect();return box.left>400&&box.right<1050&&box.top>160&&box.bottom<600})?.dataset.site);
+  assert.ok(compactSite,`${language}: a compact regional site should be reachable in open map space`);
+  const site=page.locator(`.grand-site[data-site="${compactSite}"]`),place=await site.textContent();
+  await site.hover();assert.ok((await site.boundingBox()).width>18,`${language}: hover should reveal the compact site's name`);
+  await site.click();assert.equal(await page.locator('#selection-title').textContent(),place);
   await page.close();
  }
  assert.deepEqual(imageFailures,[]);assert.deepEqual(errors,[]);

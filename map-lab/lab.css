@@ -113,16 +113,15 @@ body.atlas-focus .mast,body.atlas-focus .brief,body.atlas-focus .selection,body.
 .brief,.selection{background:linear-gradient(135deg,#1c2928,#182321)}
 #locator{background:#172b2c}
 
-/* A nearby standard takes visual priority; the city remains clickable and named. */
-.grand-campaign .grand-site.near-army{width:14px;height:14px;padding:0;border:2px solid var(--site-accent,#eac985);border-radius:50%;background:#1b2928;box-shadow:0 0 0 2px #f1dfb4b0,0 2px 5px #0b1d20a8;font-size:0;text-shadow:none}
-.grand-campaign .grand-site.near-army:before{content:''}
-.grand-campaign .grand-site.near-army:is(:hover,:focus){width:auto;height:auto;padding:3px 6px 3px 8px;border-radius:2px;font-size:11px;z-index:6}
-.grand-campaign .grand-site.near-army:is(:hover,:focus):before{content:'◆'}
-/* Regional view keeps every settlement discoverable while giving only one secondary name per theater. */
-.grand-campaign.mid-zoom:not(.regional-zoom) .grand-site:not(.major):not(.landmark){width:10px;height:10px;padding:0;border:2px solid var(--site-accent,#eac985);border-radius:50%;background:#1b2928;box-shadow:0 0 0 2px #f1dfb4b0,0 2px 5px #0b1d20a8;font-size:0;text-shadow:none}
-.grand-campaign.mid-zoom:not(.regional-zoom) .grand-site:not(.major):not(.landmark):before{content:''}
-.grand-campaign.mid-zoom:not(.regional-zoom) .grand-site:not(.major):not(.landmark):is(:hover,:focus){width:auto;height:auto;padding:3px 6px 3px 8px;border-radius:2px;font-size:11px;z-index:6}
-.grand-campaign.mid-zoom:not(.regional-zoom) .grand-site:not(.major):not(.landmark):is(:hover,:focus):before{content:'◆'}
+/* Army standards and higher-priority city names take visual priority; compact sites stay interactive. */
+.grand-campaign .grand-site:is(.near-army,.near-site){width:14px;height:14px;padding:0;border:2px solid var(--site-accent,#eac985);border-radius:50%;background:#1b2928;box-shadow:0 0 0 2px #f1dfb4b0,0 2px 5px #0b1d20a8;font-size:0;text-shadow:none}
+.grand-campaign .grand-site:is(.near-army,.near-site):before{content:''}
+.grand-campaign .grand-site:is(.near-army,.near-site):is(:hover,:focus){width:auto;height:auto;padding:3px 6px 3px 8px;border-radius:2px;font-size:11px;z-index:6}
+.grand-campaign .grand-site:is(.near-army,.near-site):is(:hover,:focus):before{content:'◆'}
+/* Defer lower-priority names gradually as the camera reveals more settlements. */
+.grand-campaign .grand-site.near-site{width:10px;height:10px}
+.grand-campaign .grand-site.near-site:after{content:'';position:absolute;inset:-7px}
+.grand-campaign .grand-site.near-site:is(:hover,:focus):after{content:none}
 .army:is(.spaced-right,.spaced-left):after{content:'';position:absolute;bottom:0;width:var(--standard-displacement);border-bottom:1px dashed #f0d8a5b8;pointer-events:none}
 .army.spaced-right:after{right:100%}
 .army.spaced-left:after{left:100%}
