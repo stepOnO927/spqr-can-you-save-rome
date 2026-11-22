@@ -142,6 +142,7 @@ jobs:
               node tools/captive-release-smoke.mjs
               node tools/inquiry-price-smoke.mjs
               node tools/mission-discount-smoke.mjs
+              node tools/succession-intelligence-lead-smoke.mjs
               node tools/office-age-uncertainty-smoke.mjs
               node tools/merge-map-switch-smoke.mjs
               node tools/scenario-systems-smoke.mjs
