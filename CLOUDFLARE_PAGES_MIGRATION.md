@@ -33,6 +33,8 @@ Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/c
 
 ## 最近一次托管验证（2026-11-22）
 
+- 审查提交 `f208cb28` 的 [质量检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45008544011)通过 1,260/1,260 项 Node 测试；[36 个月战役检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45008543987)通过，包含固定种子随机地方政权的重放；[Pages 打包与入口浏览器检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45008544063)、[Poki 打包](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45008544120)和[三组深度浏览器回归](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45008544002)全部通过。公开目录共 323 个文件、4.85 MiB，最大单文件 1.06 MiB；三个入口、跨域存档导入、本地资源请求均通过。第二组浏览器流程还覆盖随机地方政权、村落、城邦玩法、游牧与荒野地图操作。
+- 同期只读复核：GitHub API 显示仓库可见性为 public、默认分支为 `main`；旧 GitHub Pages 的 `/` 与 `/map-lab/` 均返回 HTTP 200。准备分支没有修改旧站的发布源或部署。
 - 审查提交 `774be9f7` 的 GitHub Actions [质量检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45002415327)通过 1,253/1,253 项 Node 测试；[Pages 打包](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45002415318)、Poki 打包、[入口浏览器检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45002415372)及[三组深度浏览器检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45002415315)均通过。
 - `dist/` 共 323 个公开文件，4.84 MiB，最大单文件 1.06 MiB，低于 25 MiB 限制；入口浏览器检查覆盖 `/`、`/map-lab/`、`/han/`、存档、跨域导入和本地资源加载。构建脚本的公开路径审计继续拒绝测试、工具、内部文档和敏感配置。
 - 旧 GitHub Pages 的 `/` 与 `/map-lab/` 在只读请求中仍返回 HTTP 200；仓库仍为 public，PR #307 仍为草稿。Cloudflare 真实地址、正式域名及 analytics 单 beacon 仍须在建站后实测，尚无上线或切换批准。
