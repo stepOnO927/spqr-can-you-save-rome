@@ -1,5 +1,5 @@
-import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=wheels-guidance-1';
-import {AMBITIONS,availableAmbitions,ambitionStatus,chooseAmbition,initializeWheels,AMBITION_CHANGE_COST} from './history-wheels.js?v=finance-history-merge-1';
+import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=saved-age-merge-1';
+import {AMBITIONS,availableAmbitions,ambitionStatus,chooseAmbition,initializeWheels,AMBITION_CHANGE_COST} from './history-wheels.js?v=saved-age-consistency-1';
 
 let open='';
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
