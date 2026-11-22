@@ -55,6 +55,7 @@ jobs:
               node tools/player-aid-letter-smoke.mjs
               node tools/player-coalition-mail-smoke.mjs
               node tools/family-courier-smoke.mjs
+              node tools/dynastic-intelligence-contact-smoke.mjs
               node tools/family-reply-smoke.mjs
               node tools/marriage-correspondence-smoke.mjs
               node tools/asylum-courier-smoke.mjs

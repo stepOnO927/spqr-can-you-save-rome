@@ -5,9 +5,9 @@ const browser=await chromium.launch({headless:true,...(process.env.SPQR_BROWSER_
 const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 const base=`http://127.0.0.1:${process.env.SPQR_SMOKE_PORT||5173}`;
-// Seed 14 places both a city and a chief in Caesar's opening discoveries,
+// Seed 3 places both a city and a chief in Caesar's opening discoveries,
 // while Senate also controls a generated independent village.
-const fixtureSeed=14;
+const fixtureSeed=3;
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
