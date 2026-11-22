@@ -755,7 +755,16 @@ export function aiTurn(s,owner){
     const locallyUseful=i=>i.id==='grain-dues-commutation'?commutationReady:hasProductiveEstate||!['estate-labor-control','negotiated-crop-shares','seasonal-labor-contracts'].includes(i.id);
     const categoryHasRoom=category=>{
       const slots=d.slots[category],known=d.knownIdeas.filter(id=>IDEAS.find(i=>i.id===id)?.category===category).length;
-      if(slots.some(v=>!v))return !d.knownIdeas.some(id=>IDEAS.find(i=>i.id===id)?.category===category&&!slots.includes(id));
+      if(slots.some(v=>!v)){
+        const empty=slots.indexOf(null),unworkable=new Set(['cultural-base','local-support','priesthood','building','conflict']);
+        return !d.knownIdeas.some(id=>{
+          const idea=IDEAS.find(i=>i.id===id);
+          if(idea?.category!==category||slots.includes(id)||!locallyUseful(idea))return false;
+          // A learned policy whose required building, community or compatible
+          // institution is gone cannot fill this slot in the present state.
+          return !unworkable.has(ideaAdoptionPlan(s,owner,id,empty).reason);
+        });
+      }
       return slots.length<3&&known===slots.length&&(slots.length===1?administration||education:administration&&education&&f.stability>=55);
     };
     const ideaScore=i=>{

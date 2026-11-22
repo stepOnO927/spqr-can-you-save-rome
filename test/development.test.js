@@ -1765,6 +1765,42 @@ test('AI adopts a compatible known policy when an earlier one conflicts',()=>{
  assert.equal(d.adoption?.ideaId,'public-works');
  assert.equal(d.adoption?.category,'economy');
 });
+test('AI studies a usable replacement when its only learned idea needs a lost institution',()=>{
+ const prepare=known=>{
+  const s=newGame('senate'),d=development(s,'egypt');
+  s.month=4;s.factions.egypt.treasury=500;d.knownMaterial=MATERIALS.map(item=>item.id);
+  for(const [category,id] of Object.entries({military:'frontier-defense',government:'public-legal-reference',diplomacy:'diplomatic-accommodation',economy:'tax-farming'})){
+   d.knownIdeas.push(id);d.slots[category][0]=id;
+  }
+  d.knownIdeas.push(known);return s;
+ };
+ let s=prepare('philosophical-patronage'),d=development(s,'egypt');
+ assert.equal(ideaAdoptionPlan(s,'egypt','philosophical-patronage').reason,'building');
+ const before=s.factions.egypt.treasury;
+ aiTurn(s,'egypt');
+ assert.equal(d.research?.branch,'idea');assert.equal(IDEAS.find(item=>item.id===d.research.id)?.category,'culture');
+ assert.notEqual(d.research.id,'philosophical-patronage');assert.ok(s.factions.egypt.treasury<before,'replacement research is paid');
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));d=development(s,'egypt');
+ for(let month=0;month<5;month++)tick(s);
+ assert.equal(d.slots.culture[0],'rhetorical-education','the AI researches, adopts and activates a viable culture policy after reload');
+ assert.equal(d.knownIdeas.includes('philosophical-patronage'),true,'previous knowledge remains available if the institution returns');
+ const ready=prepare('rhetorical-education'),readyDevelopment=development(ready,'egypt');
+ aiTurn(ready,'egypt');
+ assert.equal(readyDevelopment.research,null,'an already adoptable idea does not trigger redundant research');
+ assert.equal(readyDevelopment.adoption?.ideaId,'rhetorical-education');
+});
+test('foreign practice without a supportive local community does not occupy the AI research lane',()=>{
+ const s=newGrandGame('egypt'),d=development(s,'caesar');
+ s.month=4;s.factions.caesar.treasury=500;d.knownMaterial=MATERIALS.map(item=>item.id);
+ for(const [category,id] of Object.entries({government:'central-administration',diplomacy:'hardline-diplomacy',economy:'public-works',culture:'rhetorical-education'})){
+  d.knownIdeas.push(id);d.slots[category][0]=id;
+ }
+ d.knownIdeas.push('numidian-mounted-scouts');
+ assert.equal(ideaAdoptionPlan(s,'caesar','numidian-mounted-scouts').reason,'cultural-base');
+ aiTurn(s,'caesar');
+ assert.equal(d.research?.id,'legion-training');
+ assert.equal(d.slots.military[0],null);
+});
 test('AI researches a second idea, pays for institutional capacity, then adopts it after a save',()=>{
  const s=newGrandGame('egypt'),d=development(s,'senate');
  s.factions.senate.treasury=1000;s.month=4;
