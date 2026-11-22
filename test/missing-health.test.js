@@ -1,8 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick} from '../engine.js?v=portrait-fourteen-1';
-import {advanceCharacters,advanceMissingCommanders} from '../character-system.js?v=portrait-fourteen-1';
-import {deriveGovernment} from '../governance.js?v=portrait-fourteen-1';
-import {renderGenealogyDossier} from '../genealogy-ui.js?v=portrait-fourteen-1';
+import {newGame,upgradeSave,tick} from '../engine.js?v=intelligence-archive-1';
+import {advanceCharacters,advanceMissingCommanders} from '../character-system.js?v=intelligence-archive-1';
+import {deriveGovernment} from '../governance.js?v=intelligence-archive-1';
+import {renderGenealogyDossier} from '../genealogy-ui.js?v=intelligence-archive-1';
 
 const sample=i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;const seedWhere=fn=>Array.from({length:10000},(_,i)=>i).find(i=>fn(sample(i)));
 function month(s){if(++s.month>12){s.month=1;s.year++}}

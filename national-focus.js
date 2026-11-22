@@ -1,11 +1,11 @@
 import {FOCUS_TREES,TREE_ALIASES,BRANCHES,ICONS} from './imperium-focus-data.js?v=imperium-1';
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {sendAgreementProposal} from './agreement-negotiations.js?v=portrait-fourteen-1';
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=portrait-fourteen-1';
-import {successionCandidates} from './governance.js?v=portrait-fourteen-1';
-import {reportedControl} from './control-intelligence.js?v=portrait-fourteen-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=portrait-fourteen-1';
+import {sendAgreementProposal} from './agreement-negotiations.js?v=intelligence-archive-1';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=intelligence-archive-1';
+import {successionCandidates} from './governance.js?v=intelligence-archive-1';
+import {reportedControl} from './control-intelligence.js?v=intelligence-archive-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=intelligence-archive-1';
 
 // IMPERIUM national focus engine. One primary focus per state progresses with
 // the monthly tick. Costs are paid when a focus starts and shown beforehand;

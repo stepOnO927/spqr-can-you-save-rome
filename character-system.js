@@ -1,16 +1,16 @@
-import {recordLegendEvidence} from './legend.js?v=portrait-fourteen-1';
-import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=portrait-fourteen-1';
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=portrait-fourteen-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=portrait-fourteen-1';
+import {recordLegendEvidence} from './legend.js?v=intelligence-archive-1';
+import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=intelligence-archive-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=intelligence-archive-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=intelligence-archive-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=portrait-fourteen-1';
-import {potentialConspirators} from './conspiracies.js?v=portrait-fourteen-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=portrait-fourteen-1';
-import {reportedControl} from './control-intelligence.js?v=portrait-fourteen-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=portrait-fourteen-1';
-import {activeAgreement} from './agreements.js?v=portrait-fourteen-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=intelligence-archive-1';
+import {potentialConspirators} from './conspiracies.js?v=intelligence-archive-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=intelligence-archive-1';
+import {reportedControl} from './control-intelligence.js?v=intelligence-archive-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=intelligence-archive-1';
+import {activeAgreement} from './agreements.js?v=intelligence-archive-1';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=portrait-fourteen-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=intelligence-archive-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -124,7 +124,12 @@ export function addReport(s,actor,target,report){
  else r.peopleNames=snapshotReportedPeople(r);
  // An older forwarded message may be useful evidence but must not replace a newer report.
  const newerLeader=r.kind==='leaders'&&k.reports.some(x=>isDeliveredReport(s,x)&&x.kind==='leaders'&&knownReport(x)&&reportAge(s,x)<reportAge(s,r));
- k.reports.unshift(r);k.reports=k.reports.slice(0,30);
+ k.reports.unshift(r);
+ // Preserve delivered history separately from the bounded active evidence set.
+ // A future-dated record stays active until delivery, even when older reports
+ // are archived; moving it early would prevent its eventual use by the AI.
+ let delivered=0;const kept=[],archived=[];for(const item of k.reports){if(isDeliveredReport(s,item)&&++delivered>30)archived.push(item);else kept.push(item)}
+ k.reports=kept;if(archived.length){if(!Array.isArray(k.reportArchive))k.reportArchive=[];k.reportArchive.push(...archived.reverse())}
  // Recalculate after trimming so a source that is no longer retained cannot
  // silently keep a current report marked as independently corroborated.
  refreshKnowledge(s,k);
