@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,isWar,upgradeSave} from '../engine.js?v=meeting-report-names-1';
-import {proposeAgreement} from '../agreements.js?v=meeting-report-names-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=meeting-report-names-1';
-import {buildChessboard} from '../chessboard.js?v=meeting-report-names-1';
-import {receivedMail} from '../epistulae.js?v=meeting-report-names-1';
-import {mailboxHtml} from '../mail-ui.js?v=meeting-report-names-1';
+import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,isWar,upgradeSave} from '../engine.js?v=meeting-history-consistency-1';
+import {proposeAgreement} from '../agreements.js?v=meeting-history-consistency-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=meeting-history-consistency-1';
+import {buildChessboard} from '../chessboard.js?v=meeting-history-consistency-1';
+import {receivedMail} from '../epistulae.js?v=meeting-history-consistency-1';
+import {mailboxHtml} from '../mail-ui.js?v=meeting-history-consistency-1';
 
 function setup(seed){
  const s=newGame('caesar');s.seed=seed;s.wars.push(['egypt','senate']);s.relations['egypt:parthia']=40;
