@@ -354,6 +354,22 @@ test('an acceptance reveals no secret change and creates no right across closed 
  assert.ok(receivedMail(s).some(mail=>mail.context?.kind==='local_trade_reply_result'&&mail.context.polityId===entity.id&&!mail.context.accepted));
 });
 
+test('an unrelated access negotiation does not cancel an accepted local food compact',()=>{
+ const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ s.regions.find(region=>region.id===entity.theater).owner='caesar';
+ entity.strategy=5;entity.food=30;entity.treasury=12;
+ s.factions.caesar.food=10;s.factions.caesar.treasury=40;s.month=4;advanceLocalEntities(s);
+ const letter=s.mail.messages.find(mail=>mail.context?.kind==='local_trade_petition'&&mail.context.polityId===entity.id);
+ assert.ok(letter);s.month=letter.arrival-s.year*12;advanceMail(s);
+ assert.equal(replyToLetter(s,letter.id,'accept_local_trade',{}).ok,true);
+ entity.pending={actor:'mauretania',proposal:'access',remaining:5};
+ const months=entity.tradePetitionReply.remaining;
+ for(let month=0;month<months;month++){if(++s.month>12){s.month=1;s.year++}advanceLocalEntities(s)}
+ assert.equal(entity.pending.proposal,'access');
+ assert.ok(entity.tradeRights.caesar>s.year*12+s.month);
+ assert.ok(receivedMail(s).some(mail=>mail.context?.kind==='local_trade_reply_result'&&mail.context.accepted));
+});
+
 test('refusing a generated locality trade petition creates no right',()=>{
  const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
  s.regions.find(region=>region.id===entity.theater).owner='caesar';entity.strategy=5;entity.food=30;entity.treasury=12;
@@ -399,8 +415,10 @@ test('a known hungry nonplayer neighbor can conclude its own delayed local food 
  assert.equal(inspectState(s).filter(item=>item.code==='invalid-local-npc-trade-offer').length,0);
  s.month=5;advanceLocalEntities(s);assert.equal(entity.npcTradeOffer.remaining,1);assert.equal(entity.tradeRights?.senate,undefined);
  advanceLocalEntities(s);assert.equal(entity.npcTradeOffer.remaining,1,'the envoy advances only once per month');
+ entity.pending={actor:'mauretania',proposal:'access',remaining:2};
  s.month=6;advanceLocalEntities(s);
  assert.equal(entity.npcTradeOffer,null);assert.equal(entity.lastNpcTradeOutcome.accepted,true);
+ assert.equal(entity.pending.proposal,'access','a separate access negotiation remains open');
  assert.ok(entity.tradeRights.senate>s.year*12+s.month);
  s.month=9;
  for(const site of s.regions.flatMap(region=>region.localEntities||[]))if(site!==entity)site.tradeRights={};

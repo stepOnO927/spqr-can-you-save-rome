@@ -439,7 +439,7 @@ export function advanceLocalEntities(state) {
       entity.tradePetitionReply.lastAdvancedAt=now(state);
       if(--entity.tradePetitionReply.remaining<=0){
         const reply=entity.tradePetitionReply,buyer=state.factions[reply.host],reserve=Math.max(4,Math.ceil((entity.population||3000)/3000));
-        const concluded=reply.accepted&&entity.controller===entity.id&&!entity.siege&&!entity.pending&&buyer?.treasury>=3&&entity.food>=reserve+2&&localTradeOpen(state,entity,reply.host)&&!(entity.tradeRights?.[reply.host]>now(state));
+        const concluded=reply.accepted&&entity.controller===entity.id&&!entity.siege&&buyer?.treasury>=3&&entity.food>=reserve+2&&localTradeOpen(state,entity,reply.host)&&!(entity.tradeRights?.[reply.host]>now(state));
         if(concluded){entity.tradeRights||={};entity.tradeRights[reply.host]=now(state)+24}
         entity.lastOutcome={actor:reply.host,proposal:'trade_petition',accepted:!!concluded,year:state.year,month:state.month};
         entity.tradePetitionReply=null;
@@ -464,7 +464,7 @@ export function advanceLocalEntities(state) {
       entity.npcTradeOffer.lastAdvancedAt=now(state);
       if(--entity.npcTradeOffer.remaining<=0){
         const offer=entity.npcTradeOffer,buyer=state.factions[offer.host],reserve=Math.max(4,Math.ceil((entity.population||3000)/3000));
-        const accepted=entity.controller===entity.id&&!entity.siege&&!entity.pending&&buyer?.food<20&&buyer.treasury>=6&&entity.food>=reserve+2&&localTradeOpen(state,entity,offer.host)&&!(entity.tradeRights?.[offer.host]>now(state));
+        const accepted=entity.controller===entity.id&&!entity.siege&&buyer?.food<20&&buyer.treasury>=6&&entity.food>=reserve+2&&localTradeOpen(state,entity,offer.host)&&!(entity.tradeRights?.[offer.host]>now(state));
         if(accepted){entity.tradeRights||={};entity.tradeRights[offer.host]=now(state)+24}
         entity.lastNpcTradeOutcome={host:offer.host,accepted:!!accepted,year:state.year,month:state.month};
         entity.npcTradeOffer=null;
