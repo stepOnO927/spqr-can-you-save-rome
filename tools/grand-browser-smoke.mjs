@@ -138,8 +138,10 @@ await page.evaluate(()=>localStorage.setItem('spqr-lang','zh'));await page.goto(
 await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});await page.locator('.grand-site').first().waitFor();
 const routeReload=newGrandGame('senate'),routeReloadBytes=Buffer.from(JSON.stringify(routeReload));
 await page.locator('#upload-save-file').setInputFiles({name:'broken.json',mimeType:'application/json',buffer:Buffer.from('{')});
+await page.locator('#status').filter({hasText:/存档文件无法读取/}).waitFor();
 assert.match(await page.locator('#status').innerText(),/存档文件无法读取/);
 await page.locator('#upload-save-file').setInputFiles({name:'route-reload.json',mimeType:'application/json',buffer:routeReloadBytes});
+await page.waitForFunction(()=>document.querySelector('#status')?.style.display==='none');
 assert.equal(await page.locator('#status').evaluate(el=>el.style.display),'none','A successful upload must clear the previous error');
 await page.locator('[data-army="italy"]').evaluate(el=>el.click());
 assert.ok(await page.locator('.reachable-destination').count()>0,'Selected army should show possible destinations');

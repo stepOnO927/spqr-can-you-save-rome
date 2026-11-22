@@ -43,12 +43,17 @@ try{
   await page.waitForFunction(word=>window.raceLabels?.some(label=>label.includes(word)),canvasWord);
   const hud=await page.locator('#race-hud').textContent();
   assert.ok(hud.includes(hudWord),`${language} HUD did not use the selected language`);
+  assert.ok(hud.includes(language==='zh'?'观众支持':'FAVOR'),`${language} HUD omitted crowd favor`);
+  assert.match(await page.locator('.race-card small').last().textContent(),language==='zh'?/观众支持高时/:/Strong crowd favor/);
   if(language==='zh'){
    assert.ok(!hud.includes('SPEED'));
    await page.locator('#nav-lang').click();
   }
  }
+ await page.setViewportSize({width:390,height:844});
  await page.locator('#nav-race').click();
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'the race page must fit a phone viewport');
+ await page.screenshot({path:resolve(root,'outputs','legacy-race-mobile.png')});
  await page.evaluate(()=>{let virtualTime=performance.now();window.requestAnimationFrame=callback=>setTimeout(()=>callback(virtualTime+=50),0);window.cancelAnimationFrame=id=>clearTimeout(id)});
  await page.locator('#race-start').click();
  await page.waitForFunction(()=>document.querySelector('#race-result')?.textContent.includes('5/5'),null,{timeout:30000});

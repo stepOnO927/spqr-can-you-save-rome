@@ -4,7 +4,7 @@ import {loadProfile,saveProfile,exportProfile,importProfile,purchase,recordCampa
 import {archivePanelHtml} from './archive-ui.js';
 import {triumphalArchHtml} from './arch-ui.js';
 import {decidePetition,availablePetitions} from './civic.js';
-import {DRIVERS,selectableDrivers,raceRivals,settleRace} from './race.js';
+import {DRIVERS,selectableDrivers,raceRivals,isOnRaceTrack,advanceTrackProgress,settleRace} from './race.js';
 import {ACTIVITIES,availableActivities,resolveActivity} from './activities.js';
 import {ARTIFACTS} from './museum.js';
 import {MUSEUM_HALLS,museumHallFor,museumPrestige,curateArtifact,removeFeaturedArtifact} from './museum-curation.js';
@@ -351,6 +351,26 @@ test('the villa case branches into delayed reprisal or relief with durable conse
 });
 test('race places, trophy, last place punishment and reward guard persist',()=>{
  const p=loadProfile(memory());const race={id:'race-test',driver:'Aurelia',place:1,lastDriver:'Lucius'};assert.equal(settleRace(p,race).payout,100);assert.ok(p.collectibles.includes('race-cup'));assert.ok(p.race.eliminated.includes('Lucius'));assert.equal(settleRace(p,race).ok,false);const last=settleRace(p,{id:'race-last',driver:'Aurelia',place:5,lastDriver:'Aurelia'});assert.equal(last.payout,0);assert.ok(p.race.eliminated.includes('Aurelia'));
+});
+test('race laps require continuous movement on the track and crowd favor pays only once',()=>{
+ const cx=380,cy=215,rx=260,ry=145,point=(angle,radius=1)=>[cx+rx*radius*Math.cos(angle),cy+ry*radius*Math.sin(angle)];
+ const advance=(progress,angle,radius)=>advanceTrackProgress(progress,...point(angle,radius),cx,cy,rx,ry);
+ assert.equal(isOnRaceTrack(...point(0,.8),cx,cy,rx,ry),false,'the painted inner field is outside the track');
+ assert.equal(isOnRaceTrack(...point(Math.PI/2,.8),cx,cy,rx,ry),true,'the narrow vertical oval still has a valid lane');
+ assert.ok(Math.abs(advance(0,.12,1)-.12)<1e-10);
+ assert.equal(advance(0,.12,.6),0,'crossing the central field cannot advance a lap');
+ assert.equal(advance(0,Math.PI,1),0,'rejoining halfway ahead cannot skip the missed track');
+ assert.equal(advance(0,-.12,1),0,'driving backwards cannot advance a lap');
+ const near=2*Math.PI-.08,wrapped=advance(near,.04,1);
+ assert.ok(wrapped>2*Math.PI&&wrapped<2*Math.PI+.05,'a genuine finish-line crossing counts');
+ const p=loadProfile(memory()),prior=p.coins;
+ assert.equal(settleRace(p,{id:'clean-race',driver:'Aurelia',place:1,lastDriver:'Lucius',favor:90}).payout,110);
+ assert.equal(p.coins,prior+110);
+ assert.equal(settleRace(p,{id:'clean-race',driver:'Aurelia',place:1,lastDriver:'Lucius',favor:100}).ok,false);
+ assert.equal(p.coins,prior+110);
+ const restored=importProfile(exportProfile(p));
+ assert.equal(settleRace(restored,{id:'clean-race',driver:'Aurelia',place:1,lastDriver:'Lucius',favor:100}).ok,false);
+ assert.equal(restored.coins,prior+110);
 });
 test('eliminated drivers do not return in later races or after a profile reload',()=>{
  const p=loadProfile(memory());assert.deepEqual(raceRivals('Aurelia',p.race.eliminated),['Lucius','Nero','Flavia','Sabina']);
