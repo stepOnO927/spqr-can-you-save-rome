@@ -156,6 +156,7 @@ function travelQuote(s,path,quantity,price,buyer,seller){
 
 export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId,contractId,bidPremium=0}){
  const markets=initializeEasternMarkets(s),from=region(s,origin),to=region(s,destination),stock=markets.regions[origin]?.goods?.[commodity];
+ if(s.finalized)return {ok:false,reason:'finalized'};
  const external=buyer==='external'&&seller==='han'&&destination==='mediterranean_gate'&&to?.owner==null;
  if(!COMMODITIES[commodity]||!Number.isSafeInteger(quantity)||quantity<1||quantity>20||!Number.isSafeInteger(bidPremium)||bidPremium<0||bidPremium>Math.ceil(COMMODITIES[commodity].basePrice*.5)||!from||!to||from.owner!==seller||!s.factions[seller]||!external&&(to.owner!==buyer||!s.factions[buyer])||origin===destination)return {ok:false,reason:'invalid'};
  const sale=saleOrderId?markets.saleOrders.find(x=>x.id===saleOrderId):null;
@@ -614,7 +615,7 @@ function updateEmergencyExportRestrictions(s){
 }
 
 export function advanceEasternMarkets(s){
- const markets=initializeEasternMarkets(s),now=month(s);if(markets.lastTick===now)return markets;
+ const markets=initializeEasternMarkets(s),now=month(s);if(s.finalized||markets.lastTick===now)return markets;
  markets.lastTick=now;
  for(const [key,at] of Object.entries(markets.recentSales))if(!Number.isFinite(at)||now-at<0||now-at>=24)delete markets.recentSales[key];
  for(const request of markets.merchantProtectionRequests)if(request.status==='pending'&&(now-request.createdAt>=12||!s.persons[request.merchantId]?.alive||s.persons[request.merchantId].faction!==request.faction)){request.status='expired';request.answeredAt=now}

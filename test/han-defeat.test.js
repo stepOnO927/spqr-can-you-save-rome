@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,tick,loadHanSave,serialize} from '../han/engine.js';
+import {advanceEasternMarkets,placeEasternTrade,quoteEasternTrade} from '../han/markets.js?v=faces-wheels-1';
+import {marketReasonName} from '../han/market-ui.js';
 
 test('a conquered player realm settles once and the date cannot advance afterward',()=>{
  const s=newHanGame('shanshan',{seed:20});
@@ -36,4 +38,21 @@ test('actual siege loss records the lost region for a visible warning',()=>{
  tick(s);
  assert.equal(r.owner,'zhizhi');assert.equal(s.lastPlayerTerritoryLoss?.region,'shanshan');
  assert.equal(s.lastPlayerTerritoryLoss?.to,'zhizhi');
+});
+
+test('a concluded campaign cannot dispatch or advance a paid caravan',()=>{
+ const s=newHanGame('han',{seed:26}),request={seller:'han',buyer:'han',origin:'hongnong',destination:'changan',commodity:'grain',quantity:1};
+ s.tradeMarkets.regions.hongnong.goods.grain.stock=20;
+ assert.equal(quoteEasternTrade(s,request).ok,true);
+ s.finalized={outcome:'defeat',reason:'army_collapse'};
+ const stock=s.tradeMarkets.regions.hongnong.goods.grain.stock,cash=s.factions.han.treasury,shipments=s.tradeMarkets.shipments.length,lastTick=s.tradeMarkets.lastTick;
+ assert.equal(quoteEasternTrade(s,request).reason,'finalized');
+ assert.equal(placeEasternTrade(s,request).reason,'finalized');
+ assert.equal(marketReasonName('finalized',0),'Campaign has ended');
+ assert.equal(marketReasonName('finalized',1),'战役已经结束');
+ advanceEasternMarkets(s);
+ assert.equal(s.tradeMarkets.regions.hongnong.goods.grain.stock,stock);
+ assert.equal(s.factions.han.treasury,cash);
+ assert.equal(s.tradeMarkets.shipments.length,shipments);
+ assert.equal(s.tradeMarkets.lastTick,lastTick);
 });

@@ -6,6 +6,12 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The concluded Han campaign now rejects new caravan quotes and dispatches,
+and the eastern market tick leaves its stock, treasury, and shipment ledger
+untouched. Both languages explain the closed market. The focused defeat and
+market tests pass 45/45; the full local simulation suite passes 1,266/1,266.
+Cloud browser checks are pending.
+
 Main through `1f4eaf06` is integrated. Fictional characters now use their
 saved birth year consistently in health progression, apparent-age reporting,
 and character dossiers. The focused age and module tests pass 25/25, and the
