@@ -161,3 +161,4 @@ body.grand-campaign.atlas-focus .grand-site:is(:hover,:focus-visible):before{con
  #mobile-actions .hud-button,#mobile-actions a{min-width:0;margin:0;text-align:center;white-space:normal;font-size:10px}
  #mobile-actions #return-campaign{grid-column:1/-1;padding:8px}
 }
+.selection .supply-risk{display:block;margin:9px 0 0;padding:7px 9px;background:#8e48332e;border-left:3px solid #c78062;color:#f1d8bd;font:11px/1.45 Manrope,'Microsoft YaHei',sans-serif}
