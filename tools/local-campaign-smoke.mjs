@@ -4,7 +4,7 @@ import {newGame,tick} from '../engine.js?v=world-kings-neighbor-trade-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-neighbor-trade-1';
 import {playableLocalCities,startLocalCampaign,localProtectionOffer} from '../local-campaign.js?v=world-kings-neighbor-trade-1';
 import {advanceLocalEntities} from '../local-polities.js';
-import {advanceMail} from '../epistulae.js?v=world-kings-neighbor-trade-1';
+import {advanceMail,courierMonths} from '../epistulae.js?v=world-kings-neighbor-trade-1';
 import {initializeLocalDiscovery} from '../local-discovery.js?v=world-kings-neighbor-trade-1';
 
 const browser=await chromium.launch({headless:true,...(process.env.SPQR_BROWSER_EXECUTABLE?{executablePath:process.env.SPQR_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -95,6 +95,7 @@ try{
  assert.match(await page.locator('.mail-letter').innerText(),/Food compact proposed by/);
  await page.locator('[data-mail-reply="accept_local_trade"]').click();
  await page.locator('#mail-close').click();
+ for(let month=0;month<courierMonths(petitioner,petition.destination,petition.source);month++)await page.locator('#step').click();
  await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
  const accepted=await page.evaluate(id=>JSON.parse(localStorage.getItem('spqr-save-1')).regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id===id).tradeRights.caesar,polity.id);
  assert.ok(accepted>petitioner.year*12+petitioner.month);

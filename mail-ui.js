@@ -11,18 +11,19 @@ const date=(m,lang)=>m.sentDateKnown===false?(lang==='zh'?'日期未记录':'dat
 Object.assign(choices,{yes:['Vote yes','赞成'],no:['Vote no','反对'],abstain:['Abstain','弃权'],send_coalition_aid:['Send 8 treasury and 6 food','派出8国库和6粮食']});
 Object.assign(choices,{fund_village_road:['Fund road · 14 treasury / 2 food','拨款修路 · 14国库 / 2粮食'],relieve_village_tax:['Grant local relief · 5 treasury','地方减负 · 5国库']});
 Object.assign(choices,{grant_local_charter:['Grant household charter · 5 treasury','批准地方家族特许 · 5国库']});
-Object.assign(choices,{accept_local_trade:['Accept food compact · future purchases cost 3 treasury','接受粮食协定 · 后续每次采购需3国库']});
+Object.assign(choices,{accept_local_trade:['Send acceptance · compact starts when reply arrives','寄出同意书 · 回信送达后协定生效']});
 Object.assign(choices,{release_agent:['Approve agent handover','同意交接']});
 const priority={critical:0,important:1,routine:2};
+const senderKey=m=>['strongman_charter_request','local_trade_petition'].includes(m.context?.kind)?m.context.polityId:m.senderId||m.senderFaction;
 
 export function mailboxHtml(s,{lang='en',filter='inbox',query='',sort='newest',sender='',selected=null}={}){
  const zh=lang==='zh',all=s.mail?.messages||[],now=s.year*12+s.month;
  let letters=filter==='sent'?all.filter(m=>m.senderFaction===s.player&&m.recipient!==s.player):receivedMail(s).filter(m=>filter==='archive'?m.archived:!m.archived&&(filter==='inbox'||filter==='unread'&&!m.read||m.category===filter));
  if(query){const q=query.toLocaleLowerCase();letters=letters.filter(m=>[m.senderName,m.subject,m.body,m.eventId].some(v=>String(local(v,zh)||'').toLocaleLowerCase().includes(q)))}
- if(sender)letters=letters.filter(m=>(m.senderId||m.senderFaction)===sender);
+ if(sender)letters=letters.filter(m=>senderKey(m)===sender);
  letters.sort((a,b)=>sort==='oldest'?a.arrival-b.arrival:sort==='priority'?(priority[a.priority]??2)-(priority[b.priority]??2)||b.arrival-a.arrival:b.arrival-a.arrival);
  const current=letters.find(m=>m.id===selected)||letters[0]||null;
- const senders=[...new Map(receivedMail(s).map(m=>[m.senderId||m.senderFaction,m.senderName])).entries()];
+ const senders=[...new Map(receivedMail(s).map(m=>[senderKey(m),m.senderName])).entries()];
  const thread=current?all.filter(m=>m.threadId===current.threadId&&m.id!==current.id&&(m.recipient===s.player&&m.delivery==='received'||m.senderFaction===s.player&&m.recipient!==s.player)).sort((a,b)=>a.created.year-b.created.year||a.created.month-b.created.month):[];
  const response=current?(current.recipient===s.player?current.responses.find(r=>!r.ai):current.responses.find(r=>r.ai&&r.resolved&&r.outcome!=='lost'&&Number.isFinite(r.arrival)&&r.arrival<=now)):null;
  const peaceInquiry=current?.context?.kind==='peace'?(s.inquiries||[]).find(x=>x.mailId===current.id):null;

@@ -8,6 +8,7 @@ import {advanceVillages} from '../local-villages.js';
 import {advanceLocalResistance} from '../local-resistance.js';
 import {receivedMail,replyToLetter,advanceMail} from '../epistulae.js?v=world-kings-neighbor-trade-1';
 import {inspectState} from '../inspector-diagnostics.js?v=world-kings-neighbor-trade-1';
+import {mailboxHtml} from '../mail-ui.js';
 
 const start=(mode,seed)=>configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:seed});
 const generated=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&!entity.proceduralVillage&&!entity.proceduralNomad&&!entity.proceduralWilderness);
@@ -269,11 +270,25 @@ test('a capable generated polity can request player-approved, funded food trade'
  assert.equal(s.mail.messages.filter(mail=>mail.context?.kind==='local_trade_petition'&&mail.context.polityId===entity.id).length,1);
  s.month=letter.arrival-s.year*12;advanceMail(s);
  assert.ok(receivedMail(s).some(mail=>mail.id===letter.id));
+ assert.match(mailboxHtml(s,{sender:entity.id}),/Food compact proposed by/);
  assert.equal(replyToLetter(s,letter.id,'accept_local_trade',{}).ok,true);
+ assert.equal(entity.tradeRights?.caesar,undefined,'the pact waits for the return courier');
+ const replyMonths=entity.tradePetitionReply.remaining;
+ advanceLocalEntities(s);
+ assert.equal(entity.tradePetitionReply.remaining,replyMonths,'the return courier cannot travel twice in one month');
+ assert.equal(localEntity(upgradeSave(structuredClone(s)),entity.id).tradePetitionReply.remaining,replyMonths);
+ assert.equal(inspectState(s).filter(item=>item.code==='invalid-local-trade-reply').length,0);
+ for(let month=0;month<replyMonths;month++){
+  if(++s.month>12){s.month=1;s.year++}
+  advanceLocalEntities(s);
+  if(month<replyMonths-1)assert.equal(entity.tradeRights?.caesar,undefined);
+ }
  assert.ok(entity.tradeRights.caesar>s.year*12+s.month);
+ assert.ok(receivedMail(s).some(mail=>mail.context?.kind==='local_trade_reply_result'&&mail.context.polityId===entity.id&&mail.context.accepted));
  assert.equal(entity.controller,entity.id);assert.equal(theater.owner,'caesar');
+ while(s.month%3!==0||s.localTradeLastAdvancedAt===s.year*12+s.month){if(++s.month>12){s.month=1;s.year++}}
  const before={localFood:entity.food,localTreasury:entity.treasury,courtFood:s.factions.caesar.food,courtTreasury:s.factions.caesar.treasury};
- s.month=9;advanceLocalTrade(s);
+ advanceLocalTrade(s);
  assert.equal(entity.food,before.localFood-2);assert.equal(entity.treasury,before.localTreasury+3);
  assert.equal(s.factions.caesar.food,before.courtFood+2);assert.equal(s.factions.caesar.treasury,before.courtTreasury-3);
  const restored=upgradeSave(structuredClone(s));assert.equal(localEntity(restored,entity.id).tradeRights.caesar,entity.tradeRights.caesar);
@@ -281,7 +296,7 @@ test('a capable generated polity can request player-approved, funded food trade'
  assert.ok(inspectState(restored).some(item=>item.code==='invalid-local-trade-petition'));
 });
 
-test('a local trade petition cannot bypass closed commerce or a changed court',()=>{
+test('an acceptance reveals no secret change and creates no right across closed commerce',()=>{
  const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
  const theater=s.regions.find(region=>region.id===entity.theater);
  theater.owner='caesar';entity.strategy=5;entity.food=30;entity.treasury=12;
@@ -289,11 +304,40 @@ test('a local trade petition cannot bypass closed commerce or a changed court',(
  const letter=s.mail.messages.find(mail=>mail.context?.kind==='local_trade_petition'&&mail.context.polityId===entity.id);
  assert.ok(letter);letter.delivery='received';
  theater.owner='senate';s.borderPolicies.senate.commercial='closed';
- assert.equal(replyToLetter(s,letter.id,'accept_local_trade',{}).reason,'changed_state');
- assert.equal(letter.responses.length,0);assert.equal(entity.tradeRights?.caesar,undefined);
- theater.owner='caesar';s.borderPolicies.senate.commercial='open';
- assert.equal(replyToLetter(s,letter.id,'refuse',{}).ok,true);
+ assert.equal(replyToLetter(s,letter.id,'accept_local_trade',{}).ok,true,'dispatch does not inspect secret current control');
  assert.equal(entity.tradeRights?.caesar,undefined);
+ const replyMonths=entity.tradePetitionReply.remaining;
+ for(let month=0;month<replyMonths;month++){if(++s.month>12){s.month=1;s.year++}advanceLocalEntities(s)}
+ assert.equal(entity.tradePetitionReply,null);assert.equal(entity.tradeRights?.caesar,undefined);
+ assert.ok(receivedMail(s).some(mail=>mail.context?.kind==='local_trade_reply_result'&&mail.context.polityId===entity.id&&!mail.context.accepted));
+});
+
+test('refusing a generated locality trade petition creates no right',()=>{
+ const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ s.regions.find(region=>region.id===entity.theater).owner='caesar';entity.strategy=5;entity.food=30;entity.treasury=12;
+ s.factions.caesar.food=10;s.factions.caesar.treasury=40;s.month=4;advanceLocalEntities(s);
+ const letter=s.mail.messages.find(mail=>mail.context?.kind==='local_trade_petition'&&mail.context.polityId===entity.id);
+ assert.ok(letter);s.month=letter.arrival-s.year*12;advanceMail(s);
+ assert.equal(replyToLetter(s,letter.id,'refuse',{}).ok,true);
+ const months=entity.tradePetitionReply.remaining;
+ for(let month=0;month<months;month++){if(++s.month>12){s.month=1;s.year++}advanceLocalEntities(s)}
+ assert.equal(entity.tradeRights?.caesar,undefined);
+ assert.equal(entity.lastOutcome.accepted,false);
+});
+
+test('a commercial route closing while the acceptance returns prevents a stale compact',()=>{
+ const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const theater=s.regions.find(region=>region.id===entity.theater);
+ theater.owner='caesar';entity.strategy=5;entity.food=30;entity.treasury=12;
+ s.factions.caesar.food=10;s.factions.caesar.treasury=40;s.month=4;advanceLocalEntities(s);
+ const letter=s.mail.messages.find(mail=>mail.context?.kind==='local_trade_petition'&&mail.context.polityId===entity.id);
+ assert.ok(letter);s.month=letter.arrival-s.year*12;advanceMail(s);
+ assert.equal(replyToLetter(s,letter.id,'accept_local_trade',{}).ok,true);
+ const replyMonths=entity.tradePetitionReply.remaining;
+ theater.owner='senate';s.borderPolicies.senate.commercial='closed';
+ for(let month=0;month<replyMonths;month++){if(++s.month>12){s.month=1;s.year++}advanceLocalEntities(s)}
+ assert.equal(entity.tradeRights?.caesar,undefined);
+ assert.equal(entity.lastOutcome.accepted,false);
 });
 
 test('occupation transfers a dependent village and a successful local revolt restores personal control',()=>{

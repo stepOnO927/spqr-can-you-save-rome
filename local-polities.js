@@ -407,16 +407,33 @@ export function advanceLocalEntities(state) {
         if(sent.ok){sent.letter.senderName=[...entity.ruler.name];entity.lastCharterPetitionAt={year:state.year,month:state.month};entity.charterPetitionMailId=sent.letter.id}
       }
     }
-    if(entity.procedural&&['city_state','microstate','tribe'].includes(entity.type)&&state.month===4&&entity.strategy>=3&&entity.controller===entity.id&&!entity.siege&&!entity.pending&&state.factions[state.player]&&!(entity.tradeRights?.[state.player]>now(state))){
+    if(entity.procedural&&['city_state','microstate','tribe'].includes(entity.type)&&state.month===4&&entity.strategy>=3&&entity.controller===entity.id&&!entity.siege&&!entity.pending&&!entity.tradePetitionReply&&state.factions[state.player]&&!(entity.tradeRights?.[state.player]>now(state))){
       const buyer=state.factions[state.player],reserve=Math.max(4,Math.ceil(entity.population/3000));
       const last=entity.lastTradePetitionAt;
       if(buyer.food<20&&buyer.treasury>=6&&entity.food>=reserve+4&&entity.treasury>=3&&localTradeOpen(state,entity,state.player)&&(!last||now(state)-(last.year*12+last.month)>=12)){
         const sent=sendLetter(state,{senderFaction:state.player,senderInstitution:state.player,recipient:state.player,category:'government',priority:'routine',source:entity.theater,
           subject:[`Food compact proposed by ${entity.name[0]}`,`${entity.name[1]}提出粮食贸易`],
-          body:[`${entity.ruler.name[0]}, a fictional local ruler in this campaign, proposes a two-year compact. While the commercial route and both reserves remain sufficient, the court may buy 2 local food for 3 treasury each quarter. Acceptance grants no military access or political title.`,`本局虚构地方领袖${entity.ruler.name[1]}提议订立两年粮食协定。仅当商路及双方储备允许时，本方每季度可用3国库购入当地2粮食。接受不授予军队通行或法理归属。`],
+          body:[`${entity.ruler.name[0]}, a fictional local ruler in this campaign, proposes a two-year compact. Your answer must travel back; the court can buy 2 local food for 3 treasury each quarter only after acceptance arrives and the commercial route and both reserves remain sufficient. The compact grants no military access or political title.`,`本局虚构地方领袖${entity.ruler.name[1]}提议订立两年粮食协定。本方回信须送抵当地；此后仅当商路及双方储备允许时，本方每季度可用3国库购入当地2粮食。协定不授予军队通行或法理归属。`],
           options:['accept_local_trade','refuse'],expires:now(state)+6,
           context:{kind:'local_trade_petition',polityId:entity.id,host:state.player,rulerName:[...entity.ruler.name]}});
         if(sent.ok){sent.letter.senderName=[...entity.ruler.name];entity.lastTradePetitionAt={year:state.year,month:state.month};entity.tradePetitionMailId=sent.letter.id}
+      }
+    }
+    if(entity.tradePetitionReply&&entity.tradePetitionReply.lastAdvancedAt!==now(state)){
+      entity.tradePetitionReply.lastAdvancedAt=now(state);
+      if(--entity.tradePetitionReply.remaining<=0){
+        const reply=entity.tradePetitionReply,buyer=state.factions[reply.host],reserve=Math.max(4,Math.ceil((entity.population||3000)/3000));
+        const concluded=reply.accepted&&entity.controller===entity.id&&!entity.siege&&!entity.pending&&buyer?.treasury>=3&&entity.food>=reserve+2&&localTradeOpen(state,entity,reply.host)&&!(entity.tradeRights?.[reply.host]>now(state));
+        if(concluded){entity.tradeRights||={};entity.tradeRights[reply.host]=now(state)+24}
+        entity.lastOutcome={actor:reply.host,proposal:'trade_petition',accepted:!!concluded,year:state.year,month:state.month};
+        entity.tradePetitionReply=null;
+        if(reply.host===state.player&&buyer){
+          const status=concluded?['Your acceptance reached the local ruler. The two-year food compact is now active; each quarterly exchange still needs an open route and funded reserves.','本方同意书已送达地方领袖。两年粮食协定现已生效；每季度交易仍须商路畅通且双方有足够储备。']:reply.accepted?['The acceptance reached the locality, but changed control, a closed route or depleted reserves prevented the compact. No trade right was created.','同意书抵达当地，但控制权、商路或储备已变化，协定未能成立；未获得贸易权利。']:['Your refusal reached the local ruler. No trade right was created.','本方拒绝书已送达地方领袖；未获得贸易权利。'];
+          const sent=sendLetter(state,{senderFaction:reply.host,senderInstitution:reply.host,recipient:reply.host,category:'government',priority:'routine',source:entity.theater,
+            subject:[`Reply delivered to ${entity.name[0]}`,`致${entity.name[1]}的回信已送达`],body:status,options:['acknowledge'],
+            context:{kind:'local_trade_reply_result',polityId:entity.id,host:reply.host,accepted:!!concluded}});
+          if(sent.ok){sent.letter.arrival=now(state);sent.letter.delivery='received'}
+        }
       }
     }
     if(entity.procedural&&!entity.proceduralVillage&&entity.controller===entity.id&&!entity.siege){
