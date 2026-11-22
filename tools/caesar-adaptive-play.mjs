@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
-import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions,seizeAerarium,diplomacy,respondCivilSettlement} from '../engine.js';
+import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch,recruit,holdPosition,reserveFleet,nationalBudget,collectWarContributions,collectEmergencyProvisions,seizeAerarium,diplomacy,respondCivilSettlement,researchInnovation,constructionCheck,startConstruction} from '../engine.js';
 import {assessment,sendScouts,probePositions,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {campaignEndingHtml} from '../achievement-ui.js';
@@ -18,6 +18,7 @@ s.seed=selectedSeed;
 const limit=Math.max(36,Math.min(120,Number(process.env.SPQR_ADAPTIVE_MONTHS)||120));
 const front=process.env.SPQR_ADAPTIVE_FRONT||'west';
 assert.ok(['west','italy'].includes(front));
+const invest=process.env.SPQR_ADAPTIVE_INVEST==='1';
 const log=[],snapshots=[],seenBattles=new Set(),orders=new Map(),goals=new Map();
 let lastRecruitTurn=-Infinity,groupedAssaultBattles=0;
 const act=(label,result)=>{if(result?.ok){log.push(`${s.year}/${s.month} ${label}`);return true}return false};
@@ -76,6 +77,21 @@ function command(unit){
   attackTogether(`attacks (${intel.risk})`);orders.delete(`${unit.id}:${target.id}`);
  }else orders.set(`${unit.id}:${target.id}`,waited+1);
 }
+function maintainEconomy(){
+ if(!invest)return;
+ const faction=s.factions.caesar,knowledge=s.development.caesar,budget=nationalBudget(s,'caesar');
+ const foodWorks=s.regions.filter(site=>site.owner==='caesar'&&['irrigation','grain-mill'].some(id=>site.buildings.includes(id)||site.construction?.buildingId===id)).length;
+ const craftWorks=s.regions.filter(site=>site.owner==='caesar'&&(site.buildings.includes('workshop')||site.construction?.buildingId==='workshop')).length;
+ const needFood=budget.foodNet<1&&foodWorks<3;
+ const research=needFood&&!knowledge.knownMaterial.includes('water-control')?'water-control':!needFood&&budget.projectedNet<-2&&craftWorks<4&&!knowledge.knownMaterial.includes('craft-workshops')?'craft-workshops':null;
+ if(research&&!knowledge.research&&faction.treasury>=70)act(`research ${research}`,researchInnovation(s,'caesar','material',research));
+ const building=needFood&&knowledge.knownMaterial.includes('water-control')?'irrigation':!needFood&&budget.projectedNet<-2&&knowledge.knownMaterial.includes('craft-workshops')&&craftWorks<4?'workshop':null;
+ if(!building||faction.treasury<60)return;
+ const safety=site=>Math.min(12,routeDistance(site.id,nearestHostile(site.id)));
+ const sites=s.regions.filter(site=>site.owner==='caesar'&&site.loyalty>=50).sort((a,b)=>safety(b)-safety(a)||b.loyalty-a.loyalty);
+ const site=sites.find(candidate=>constructionCheck(s,'caesar',candidate.id,building).ok);
+ if(site)act(`build ${building} ${site.id}`,startConstruction(s,'caesar',site.id,building));
+}
 
 act('reserve Adriatic fleet',reserveFleet(s,'caesar','caesar-adriatic'));
 for(let elapsed=0;elapsed<limit&&!s.achievementState.finalized;elapsed++){
@@ -88,6 +104,7 @@ for(let elapsed=0;elapsed<limit&&!s.achievementState.finalized;elapsed++){
  if(f.treasury<35&&budget.projectedNet<0)act('collect war contributions',collectWarContributions(s,'caesar'));
  if(f.food<18&&budget.foodNet<0)act('collect emergency provisions',collectEmergencyProvisions(s,'caesar'));
  if(owner('roma')==='caesar'&&!s.aerariumSeizure&&f.treasury<55)act('take the Aerarium',seizeAerarium(s,'caesar'));
+ maintainEconomy();
  const turn=s.year*12+s.month;
  if(fieldMen()<5000&&f.treasury>=24&&f.food>=12&&f.manpower>=3000&&turn-lastRecruitTurn>=6){
   const sites=s.regions.filter(site=>site.owner==='caesar'&&site.loyalty>=45&&site.food>0).sort((a,b)=>{
@@ -123,7 +140,7 @@ for(let elapsed=0;elapsed<limit&&!s.achievementState.finalized;elapsed++){
  }
  if(!s.achievementState.finalized)assert.deepEqual(revealedAchievements(s),[]);
 }
-const result={seed:selectedSeed,front,date:`${s.year}/${s.month}`,finalized:s.achievementState.finalized,outcome:s.campaignOutcome?.winner||s.achievementState.result||'ongoing',civilWarKind:s.campaignOutcome?.kind||s.civilWarOutcome?.kind||null,territories:s.regions.filter(site=>site.owner==='caesar').length,rome:owner('roma'),treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:fieldMen(),battles:seenBattles.size,groupedAssaultBattles,snapshots,log};
+const result={seed:selectedSeed,front,invest,date:`${s.year}/${s.month}`,finalized:s.achievementState.finalized,outcome:s.campaignOutcome?.winner||s.achievementState.result||'ongoing',civilWarKind:s.campaignOutcome?.kind||s.civilWarOutcome?.kind||null,territories:s.regions.filter(site=>site.owner==='caesar').length,rome:owner('roma'),treasury:s.factions.caesar.treasury,food:s.factions.caesar.food,field:fieldMen(),battles:seenBattles.size,groupedAssaultBattles,snapshots,log};
 if(process.env.SPQR_ADAPTIVE_FINALIZE==='1'&&s.victory&&!s.achievementState.finalized){
  assert.deepEqual(revealedAchievements(s),[],'continuing after victory must keep achievements private');
  const finished=endCampaign(s,'retired');assert.equal(finished.ok,true);
