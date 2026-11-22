@@ -6,6 +6,14 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The current cloud Browser smoke group 3 exposed an intermittent succession
+fixture: a `dying` leader has a 45% *annual* simulated death chance, so 48
+monthly advances do not guarantee death. The browser fixture now fixes its
+existing simulation RNG seed at a value that reaches the death and exercises
+the designated successor; production mortality probabilities are unchanged.
+The headless engine reproduces death in month four with that seed. A new cloud
+browser run must confirm the complete UI flow.
+
 Main through `86ffaf43` is integrated. Its foreign-relationship privacy
 change now renders only the player's own trust or a dated, recorded personal
 contact; the merge's overlapping character-panel line had omitted the display
