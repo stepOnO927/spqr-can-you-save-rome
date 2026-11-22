@@ -1,9 +1,9 @@
-import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=control-delivery-1';
+import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=family-legend-merge-1';
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=saved-age-consistency-1';
-import {startDynasticWar} from './civil-war.js?v=control-delivery-1';
+import {startDynasticWar} from './civil-war.js?v=family-legend-merge-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {assignBornPortrait,assignCourtPortrait,assignLegendPortrait} from './portrait-registry.js?v=born-portrait-thirteen-1';
-import {initializeLegend,recordLegendEvidence} from './legend.js?v=names-of-legend-1';
+import {initializeLegend,recordLegendEvidence} from './legend.js?v=family-legend-merge-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
@@ -248,7 +248,8 @@ function advanceFamilyAccords(s){
 export function adoptHeir(s,parentId,childId){
  initializeDynasties(s);const parent=s.world.characters[parentId],child=s.world.characters[childId];
  if(!eligibleAdult(s,parentId)||!child?.alive||childId===parentId||parent.faction!==child.faction||parent.children.includes(childId)||child.parents.includes(parentId)||child.adoptiveParents.length)return {ok:false,reason:'eligibility'};
- const age=personAge(s,childId),senior=personAge(s,parentId);if(!Number.isFinite(age)||age<0||!Number.isFinite(senior)||senior-age<16)return {ok:false,reason:'age'};
+ const childAge=eligibilityAgeRange(s,childId),parentAge=eligibilityAgeRange(s,parentId);
+ if(!childAge||!parentAge||childAge[0]<0||parentAge[0]-childAge[1]<16)return {ok:false,reason:'age'};
  child.adoptiveParents.push(parentId);parent.children.push(childId);child.familyId=parent.familyId;
  record(s,childId,`Adopted by ${CHARACTER_CATALOG[parentId].name[0]}; this did not confer office.`,`由${CHARACTER_CATALOG[parentId].name[1]}收养；收养不授予官职。`);
  record(s,parentId,`Adopted ${CHARACTER_CATALOG[childId].name[0]}.`,`收养了${CHARACTER_CATALOG[childId].name[1]}。`);
