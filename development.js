@@ -1,4 +1,4 @@
-import {recordExpense} from './expense-ledger.js?v=2';
+import {recordExpense} from './expense-ledger.js?v=3';
 
 // Phase XIV. All numbers below are game balance values, not historical measurements.
 export const IDEA_CATEGORIES = [
@@ -421,7 +421,7 @@ export function purchaseMaterials(s,owner,kind,amount=5){
   if(!d||!f||!unit||!Number.isInteger(amount)||amount<1||amount>20)return {ok:false,reason:'unavailable'};
   const quantity=Math.min(amount,100-(d.materials[kind]||0));if(quantity<1)return {ok:false,reason:'capacity'};
   const cost=unit*quantity;if(f.treasury<cost)return {ok:false,reason:'treasury'};
-  f.treasury-=cost;d.materials[kind]+=quantity;return {ok:true,cost,quantity};
+  f.treasury-=cost;recordExpense(s,owner,'materials',cost);d.materials[kind]+=quantity;return {ok:true,cost,quantity};
 }
 function knowledgeCorridor(s,sender,receiver){
  // Either court may send a civilian courier to hand over the agreed material.

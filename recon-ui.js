@@ -1,4 +1,4 @@
-import {reconReports} from './reconnaissance.js?v=14';
+import {reconReports} from './reconnaissance.js?v=15';
 
 const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const date=(y,m,z)=>y==null?'—':z?`${y<0?'公元前':'公元'}${Math.abs(y)}年${m}月`:`${m}/${Math.abs(y)} ${y<0?'BCE':'CE'}`;

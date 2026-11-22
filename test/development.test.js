@@ -938,7 +938,7 @@ test('Achaean assembly practice is local, paid, slow to adopt and culturally gat
 test('monthly budget records paid construction and research orders without double counting',()=>{
  const s=newGrandGame('senate');s.factions.senate.treasury=500;
  const projected=nationalBudget(s,'senate').projectedNet;
- assert.deepEqual(expensesThisMonth(s,'senate'),{construction:0,research:0,policy:0});
+ assert.deepEqual(expensesThisMonth(s,'senate'),{construction:0,research:0,policy:0,materials:0});
  const researchBefore=s.factions.senate.treasury;
  assert.equal(researchInnovation(s,'senate','material','water-control').ok,true);
  const researchCost=researchBefore-s.factions.senate.treasury;
@@ -947,10 +947,10 @@ test('monthly budget records paid construction and research orders without doubl
  const secondCost=constructionCheck(s,'senate','italiaS','road').cost;
  assert.equal(startConstruction(s,'senate','italiaS','road').ok,true);
  const constructionTotal=constructionCost+secondCost;
- assert.deepEqual(expensesThisMonth(s,'senate'),{construction:constructionTotal,research:researchCost,policy:0});
+ assert.deepEqual(expensesThisMonth(s,'senate'),{construction:constructionTotal,research:researchCost,policy:0,materials:0});
  assert.equal(researchInnovation(s,'senate','material','water-control').ok,false);
  assert.equal(startConstruction(s,'senate','roma','road').ok,false);
- assert.deepEqual(expensesThisMonth(s,'senate'),{construction:constructionTotal,research:researchCost,policy:0});
+ assert.deepEqual(expensesThisMonth(s,'senate'),{construction:constructionTotal,research:researchCost,policy:0,materials:0});
  assert.equal(nationalBudget(s,'senate').projectedNet,projected,'one-time orders must remain separate from the monthly projection');
  for(const [lang,construction,research] of [['en','Construction paid this month','Research paid this month'],['zh','本月已付建造费','本月已付研究费']]){
   const html=budgetHtml(s,lang);
@@ -958,9 +958,26 @@ test('monthly budget records paid construction and research orders without doubl
   assert.match(html,new RegExp(`${research}</td><td>-${researchCost}`));
  }
  const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
- assert.deepEqual(expensesThisMonth(restored,'senate'),{construction:constructionTotal,research:researchCost,policy:0});
+ assert.deepEqual(expensesThisMonth(restored,'senate'),{construction:constructionTotal,research:researchCost,policy:0,materials:0});
  tick(restored);
- assert.deepEqual(expensesThisMonth(restored,'senate'),{construction:0,research:0,policy:0});
+ assert.deepEqual(expensesThisMonth(restored,'senate'),{construction:0,research:0,policy:0,materials:0});
+});
+
+test('construction-material purchases appear once in the monthly budget and survive reload',()=>{
+ const s=newGrandGame('senate'),d=development(s,'senate');s.factions.senate.treasury=100;
+ const projected=nationalBudget(s,'senate').projectedNet,startingTreasury=s.factions.senate.treasury;
+ assert.deepEqual([purchaseMaterials(s,'senate','stone',5),purchaseMaterials(s,'senate','timber',5),purchaseMaterials(s,'senate','metal',2)].map(result=>result.cost),[10,10,8]);
+ assert.equal(startingTreasury-s.factions.senate.treasury,28);
+ assert.deepEqual(expensesThisMonth(s,'senate'),{construction:0,research:0,policy:0,materials:28});
+ assert.equal(nationalBudget(s,'senate').projectedNet,projected,'one-time procurement must not change the projected monthly rate');
+ for(const [lang,label] of [['en','Construction materials bought this month'],['zh','本月已付建筑材料采购费']])assert.match(budgetHtml(s,lang),new RegExp(`${label}</td><td>-28`));
+ const before=JSON.stringify(d.materials);s.factions.senate.treasury=0;
+ assert.equal(purchaseMaterials(s,'senate','stone').reason,'treasury');
+ assert.equal(JSON.stringify(d.materials),before);
+ assert.equal(expensesThisMonth(s,'senate').materials,28,'failed orders cannot record another charge');
+ const restored=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(expensesThisMonth(restored,'senate').materials,28);
+ tick(restored);assert.equal(expensesThisMonth(restored,'senate').materials,0);
 });
 
 test('idea transitions and slot expansion appear once in the monthly budget, including old saves',()=>{
@@ -970,7 +987,7 @@ test('idea transitions and slot expansion appear once in the monthly budget, inc
  s.expenseLedger={year:s.year,month:s.month,owners:{senate:{construction:7,research:3}}};
  assert.equal(adoptIdea(s,'senate','senatorial-consultation').ok,true);
  assert.equal(expandIdeaSlot(s,'senate','government').ok,true);
- assert.deepEqual(expensesThisMonth(s,'senate'),{construction:7,research:3,policy:47});
+ assert.deepEqual(expensesThisMonth(s,'senate'),{construction:7,research:3,policy:47,materials:0});
  assert.equal(adoptIdea(s,'senate','senatorial-consultation').ok,false);
  assert.equal(expandIdeaSlot(s,'senate','government').ok,false);
  assert.equal(expensesThisMonth(s,'senate').policy,47);

@@ -105,6 +105,9 @@ try{
   if(await page.locator('[data-buy-material="stone"]').isEnabled()){
     await page.locator('[data-buy-material="stone"]').click();
     assert.notEqual(await page.locator('.dev-construction .dev-meta').first().innerText(),stoneBefore);
+    await page.locator('[data-tab="government"]').click();
+    assert.match(await page.locator('.national-budget').innerText(),/Construction materials bought this month\s+-10/);
+    await page.locator('[data-tab="map"]').click();
   }
   await page.locator('#lang').click();
   await page.locator('[data-tab="development"]').click();

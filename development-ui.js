@@ -1,4 +1,4 @@
-import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,knowledgeTransitStatus,KNOWLEDGE_BLOCKED_LIMIT,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=57';
+import {IDEAS,IDEA_CATEGORIES,MATERIALS,BUILDINGS,development,activeEffects,constructionCheck,ideaAdoptionPlan,ideaSlotExpansionCheck,localBuildingEffects,mineMetalOutput,knowledgeAgreementCheck,knowledgeTransitStatus,KNOWLEDGE_BLOCKED_LIMIT,scholarVisitCheck,scholarVisitTopics,researchTerms} from './development.js?v=58';
 import {FIGURE_ROLES,initializeFigures,figureStatus,figureActive} from './great-figures.js';
 import {CHARACTER_CATALOG} from './characters.js';
 import {FACTIONS} from './data.js';

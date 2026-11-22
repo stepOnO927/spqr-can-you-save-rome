@@ -1,4 +1,4 @@
-import {eventText,unreadCount} from './campaign-reports.js?v=12';
+import {eventText,unreadCount} from './campaign-reports.js?v=13';
 import {FACTIONS} from './data.js';
 import {battleSideForPlayer} from './visibility.js';
 import {afterActionHtml} from './recon-ui.js?v=13';
