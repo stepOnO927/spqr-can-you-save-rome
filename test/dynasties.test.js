@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=faces-name-disagreement-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=faces-name-disagreement-1';
+import {CHARACTER_CATALOG,ageRange} from '../characters.js?v=faces-name-disagreement-1';
 import {assignSuccession,successionModel} from '../characters.js?v=faces-name-disagreement-1';
 import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=faces-name-disagreement-1';
 import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=faces-name-disagreement-1';
@@ -30,6 +30,15 @@ test('marriage, adoption and wills change legal relationships and private assets
  s.world.characters[a].alive=false;settleInheritance(s,a);
  assert.equal(s.world.characters[child].wealth,40);assert.equal(s.factions.egypt.treasury,treasury);
  assert.equal(s.world.dynasties.lives[child].some(e=>e.en.includes('Inherited')),true);
+});
+
+test('adoption requires an age gap supported by the full historical range',()=>{
+ const s=newGame('caesar'),range=ageRange('caesar',s.year);assert.ok(range&&range[1]>range[0]);
+ const uncertainAge=range[1]-16,confirmedAge=range[0]-16;
+ const uncertain=createFictionalPerson(s,{name:['Uncertain gap','年龄差不确定'],faction:'caesar',birthYear:s.year-uncertainAge});
+ const confirmed=createFictionalPerson(s,{name:['Confirmed gap','年龄差明确'],faction:'caesar',birthYear:s.year-confirmedAge});
+ assert.equal(adoptHeir(s,'caesar',uncertain).reason,'age');
+ assert.equal(adoptHeir(s,'caesar',confirmed).ok,true);
 });
 
 test('foreign marriage requires a reported contact, a paid envoy and a delayed answer',()=>{

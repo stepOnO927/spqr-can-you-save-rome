@@ -6,6 +6,21 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `92c02356` is integrated. The age-range adoption rule, reviewable
+and revocable personal wills, beneficiary-name snapshots, and bilingual family
+tree controls coexist with the expansion's character legends. The prior merge
+had retained the will panel but dropped its underlying commands; this branch
+restores them and the browser flow that signs, inspects, revokes, saves, and
+reloads a will. Focused family, inheritance, and cache-version tests pass
+47/47. The full serial suite passed 1,299/1,300; the sole failure was the
+existing NPC-East CPU timing assertion at 41.00 ms against a 40 ms limit on
+this Windows host. Its isolated nine-test file then passed 9/9. Cloud checks
+for this integration follow.
+
+The prior head `8be6c020` passed all five GitHub Actions workflows, including
+all three browser groups; the full local serial suite passed 1,297/1,297.
+This is evidence for that commit, before integrating `92c02356`.
+
 Main through `3933b0d8` is integrated. Its optional Names of Legend mode,
 earned epithets, regnal names, dated public evidence, honors and a verified
 red-beard portrait now coexist with the expansion's saved cultural names,
