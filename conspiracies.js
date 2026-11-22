@@ -1,7 +1,7 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=world-kings-neighbor-trade-1';
-import {startPoliticalWar} from './civil-war.js?v=world-kings-neighbor-trade-1';
-import {personalMemoryAdjustment} from './political-memory.js?v=world-kings-neighbor-trade-1';
-import {hasNationalIdea} from './national-ideas.js?v=world-kings-neighbor-trade-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=world-kings-local-supplies-1';
+import {startPoliticalWar} from './civil-war.js?v=world-kings-local-supplies-1';
+import {personalMemoryAdjustment} from './political-memory.js?v=world-kings-local-supplies-1';
+import {hasNationalIdea} from './national-ideas.js?v=world-kings-local-supplies-1';
 
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};

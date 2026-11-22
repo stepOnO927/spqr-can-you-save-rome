@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-neighbor-trade-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-local-supplies-1';
 import {advanceLocalEntities,advanceLocalTrade,localContactQuote,localEntity,offerLocalContact} from '../local-polities.js';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-neighbor-trade-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-local-supplies-1';
 
 function compact(){
  const state=newGame('caesar'),city=localEntity(state,'massilia');
@@ -40,7 +40,7 @@ test('a closed or hostile commercial route and civilian reserve stop a local tra
 });
 
 test('a food-short AI government seeks a nearby independent market',()=>{
- const state=newGame('senate');state.month=2;state.factions.caesar.food=0;state.factions.caesar.treasury=100;
+ const state=newGame('senate');state.month=2;state.factions.caesar.food=12;state.factions.caesar.treasury=100;
  tick(state);
  assert.equal(localEntity(state,'massilia').pending?.proposal,'trade');
  assert.equal(localEntity(state,'massilia').pending?.actor,'caesar');

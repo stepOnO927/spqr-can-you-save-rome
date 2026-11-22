@@ -1,8 +1,8 @@
-import {ROUTES} from './data.js?v=world-kings-neighbor-trade-1';
-import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-neighbor-trade-1';
-import {sendLetter} from './epistulae.js?v=world-kings-neighbor-trade-1';
-import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-neighbor-trade-1';
-import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from './local-discovery.js?v=world-kings-neighbor-trade-1';
+import {ROUTES} from './data.js?v=world-kings-local-supplies-1';
+import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-local-supplies-1';
+import {sendLetter} from './epistulae.js?v=world-kings-local-supplies-1';
+import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-local-supplies-1';
+import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from './local-discovery.js?v=world-kings-local-supplies-1';
 
 // Settlement control is stored inside its host theater. An autonomous city
 // does not transfer the whole theater, and its point is not a border polygon.
@@ -64,6 +64,7 @@ export const LOCAL_ENTITY_TEMPLATES = Object.freeze([
 ]);
 
 const now = state => state.year * 12 + state.month;
+const SUPPLY_FOOD = 6, SUPPLY_PRICE = 10, SUPPLY_COURIER = 2;
 const roll = entity => {
   entity.seed = (Math.imul(entity.seed, 1664525) + 1013904223) >>> 0;
   return entity.seed / 4294967296;
@@ -206,11 +207,14 @@ function reportLocalOffer(state,entity,pending,accepted){
  const zhName=entity.name[1],enName=entity.name[0];
  const ruler=state.world?.localRulers?.[entity.ruler?.id];
  const officialEn=ruler?.name?.[0]||'the local council',officialZh=ruler?.name?.[1]||'当地议事机构';
- const kind=pending.proposal==='access'?'access':pending.proposal==='trade'?'trade':pending.proposal==='protectorate'?'protectorate':pending.proposal==='service'?'service':pending.proposal==='recognition'?'recognition':pending.proposal==='pasture'?'pasture':'submission';
- const subject={access:[`Access reply from ${enName}`,`${zhName}的通行答复`],trade:[`Trade reply from ${enName}`,`${zhName}的贸易答复`],protectorate:[`Protectorate reply from ${enName}`,`${zhName}的附属答复`],service:[`Service reply from ${enName}`,`${zhName}的效忠答复`],recognition:[`Title reply from ${enName}`,`${zhName}的称号答复`],pasture:[`Pasture reply from ${enName}`,`${zhName}的牧地答复`],submission:[`Submission reply from ${enName}`,`${zhName}的归降答复`]}[kind];
+ const kind=pending.proposal==='access'?'access':pending.proposal==='trade'?'trade':pending.proposal==='supplies'?'supplies':pending.proposal==='protectorate'?'protectorate':pending.proposal==='service'?'service':pending.proposal==='recognition'?'recognition':pending.proposal==='pasture'?'pasture':'submission';
+ const subject={access:[`Access reply from ${enName}`,`${zhName}的通行答复`],trade:[`Trade reply from ${enName}`,`${zhName}的贸易答复`],supplies:[`Supply reply from ${enName}`,`${zhName}的粮食答复`],protectorate:[`Protectorate reply from ${enName}`,`${zhName}的附属答复`],service:[`Service reply from ${enName}`,`${zhName}的效忠答复`],recognition:[`Title reply from ${enName}`,`${zhName}的称号答复`],pasture:[`Pasture reply from ${enName}`,`${zhName}的牧地答复`],submission:[`Submission reply from ${enName}`,`${zhName}的归降答复`]}[kind];
  const outcome=accepted?['accepted','接受']:['refused','拒绝'];
- const body=[`Our envoy reports that ${officialEn} has ${outcome[0]} the ${kind} proposal at ${enName}.`,
-  `我方使者回报：${officialZh}已${outcome[1]}向${zhName}提出的${{access:'通行',trade:'地方贸易',protectorate:'自治附属',service:'个人效忠',recognition:'承认地方称号',pasture:'牧地协定',submission:'归降'}[kind]}提议。`];
+ const body=kind==='supplies'?(accepted?
+  [`${officialEn} supplied 6 food from ${enName}'s finite stores for the 10 treasury held in escrow. The 2-treasury courier fee was spent. No passage or political title changed.`,`${officialZh}从${zhName}有限的存粮中交付6粮食，收取预存的10国库；2国库信使费用已支出。通行权及法理归属均未改变。`]:
+  [`${officialEn} did not supply food from ${enName}. The 10-treasury price held in escrow was returned; the 2-treasury courier fee was spent.`,`${officialZh}未能从${zhName}交付粮食；预存的10国库货款已退回，2国库信使费用已支出。`]):
+  [`Our envoy reports that ${officialEn} has ${outcome[0]} the ${kind} proposal at ${enName}.`,
+   `我方使者回报：${officialZh}已${outcome[1]}向${zhName}提出的${{access:'通行',trade:'地方贸易',protectorate:'自治附属',service:'个人效忠',recognition:'承认地方称号',pasture:'牧地协定',submission:'归降'}[kind]}提议。`];
  const sent=sendLetter(state,{senderFaction:pending.actor,senderInstitution:pending.actor,recipient:pending.actor,category:'government',
   subject,body,options:['acknowledge'],source:entity.theater,priority:'routine',
   eventId:`local:${entity.id}:${kind}:${pending.sentYear}:${pending.sentMonth}`,
@@ -223,15 +227,17 @@ function reportLocalOffer(state,entity,pending,accepted){
 
 export function localContactQuote(state, id, actor = state.player, proposal = 'access') {
   const entity = localEntity(state, id), faction = state.factions[actor];
-  if (!entity || !faction || !['access', 'trade','protectorate','service','recognition','pasture'].includes(proposal)) return {ok: false, reason: 'unavailable'};
-  if(proposal==='trade'&&!['city_state','microstate','tribe'].includes(entity.type))return {ok:false,reason:'unavailable'};
+  if (!entity || !faction || !['access', 'trade','supplies','protectorate','service','recognition','pasture'].includes(proposal)) return {ok: false, reason: 'unavailable'};
+  if(['trade','supplies'].includes(proposal)&&!['city_state','microstate','tribe'].includes(entity.type))return {ok:false,reason:'unavailable'};
   if((['service','recognition'].includes(proposal)&&entity.type!=='strongman')||(proposal==='pasture'&&entity.type!=='nomadic')||(entity.type==='nomadic'&&proposal!=='pasture')||(proposal==='protectorate'&&entity.type==='strongman'))return {ok:false,reason:'unavailable'};
   if (entity.controller !== entity.id) return {ok: false, reason: 'controlled'};
   if (entity.pending || entity.siege) return {ok: false, reason: 'busy'};
   const theater = host(state, entity), neighbors = ROUTES.filter(([a, b]) => a === entity.theater || b === entity.theater).map(([a, b]) => a === entity.theater ? b : a);
   if (theater.owner !== actor && !state.regions.some(region => neighbors.includes(region.id) && region.owner === actor)) return {ok: false, reason: 'no_contact'};
-  if(proposal==='trade'&&!localTradeOpen(state,entity,actor))return {ok:false,reason:'trade_route_closed'};
+  if(['trade','supplies'].includes(proposal)&&!localTradeOpen(state,entity,actor))return {ok:false,reason:'trade_route_closed'};
   if(proposal==='trade'&&entity.food-2<Math.max(4,Math.ceil((entity.population||3000)/3000)))return {ok:false,reason:'no_surplus'};
+  if(proposal==='supplies'&&entity.food-SUPPLY_FOOD<Math.max(4,Math.ceil((entity.population||3000)/3000)))return {ok:false,reason:'no_surplus'};
+  if(proposal==='supplies'&&faction.food>=20)return {ok:false,reason:'no_need'};
   if (proposal === 'recognition' && (theater.owner !== actor || entity.allegiance && entity.allegiance !== actor)) return {ok: false, reason: 'no_authority'};
   if (entity.lastOfferAt[actor] != null && now(state) - entity.lastOfferAt[actor] < 6) return {ok: false, reason: 'cooldown'};
   if (proposal === 'access' && entity.overlord === actor) return {ok: false, reason: 'already_subject'};
@@ -241,7 +247,7 @@ export function localContactQuote(state, id, actor = state.player, proposal = 'a
   if(proposal==='service'&&entity.allegiance)return {ok:false,reason:'already_affiliated'};
   if(proposal==='recognition'&&entity.recognizedBy===actor)return {ok:false,reason:'already_recognized'};
   if(proposal==='pasture'&&entity.pastureRights?.[actor]>now(state))return {ok:false,reason:'already_granted'};
-  const cost = proposal === 'access' ? 8 : proposal==='trade'?10:proposal==='service'?12:proposal==='recognition'?8:proposal==='pasture'?6:16;
+  const cost = proposal === 'access' ? 8 : proposal==='trade'?10:proposal==='supplies'?SUPPLY_PRICE+SUPPLY_COURIER:proposal==='service'?12:proposal==='recognition'?8:proposal==='pasture'?6:16;
   if (faction.treasury < cost) return {ok: false, reason: 'resources'};
   return {ok: true, cost, months: proposal === 'protectorate' ? 3 : 2};
 }
@@ -252,7 +258,7 @@ export function offerLocalContact(state, id, actor = state.player, proposal = 'a
   const entity = localEntity(state, id);
   state.factions[actor].treasury -= quote.cost;
   entity.lastOfferAt[actor] = now(state);
-  entity.pending = {actor, proposal, remaining: quote.months, sentYear: state.year, sentMonth: state.month};
+  entity.pending = {actor, proposal, remaining: quote.months, sentYear: state.year, sentMonth: state.month,...(proposal==='supplies'?{escrow:SUPPLY_PRICE,lastAdvancedAt:now(state)}:{})};
   return {ok: true, months: quote.months};
 }
 
@@ -331,6 +337,7 @@ export function localOfferChance(state,entity,actor,proposal){
  if(proposal==='recognition')return Math.max(.1,Math.min(.85,.58-.025*skill+(host(state,entity)?.owner===actor ? .12 : 0)+(entity.treasury<10 ? .06 : 0)));
  if(proposal==='pasture')return Math.max(.12,Math.min(.9,.65-.035*skill+(host(state,entity)?.owner===actor ? .1 : 0)+(entity.waterSecurity<60 ? .08 : 0)));
  if(proposal==='trade')return Math.max(.1,Math.min(.85,.6-(skill-2)*.025+(entity.food<8?-.18:0)+(host(state,entity)?.owner===actor ? .08 : 0)));
+ if(proposal==='supplies')return Math.max(.08,Math.min(.85,.67-(skill-2)*.025+(host(state,entity)?.owner===actor ? .08 : 0)-(entity.food<16 ? .12 : 0)));
  return Math.max(.04,Math.min(.75,.22+(pressure>=2?.045*skill:-.028*skill)+(entity.food<8?.06:0)));
 }
 
@@ -484,14 +491,18 @@ export function advanceLocalEntities(state) {
         entity.treasury-=12;entity.food-=2;entity.fort++;entity.lastFortified={year:state.year,month:state.month};
       }
     }
-    if (entity.pending && --entity.pending.remaining <= 0) {
+    const canAdvancePending=entity.pending&&(entity.pending.proposal!=='supplies'||entity.pending.lastAdvancedAt!==now(state));
+    if(canAdvancePending&&entity.pending.proposal==='supplies')entity.pending.lastAdvancedAt=now(state);
+    if (canAdvancePending && --entity.pending.remaining <= 0) {
       const pending=entity.pending,{actor, proposal, expectedController} = pending;
       const submission = proposal === 'submission';
-      const accepted = submission ? entity.type === 'roman_town' && entity.controller === expectedController && state.wars.some(pair => pair.includes(actor) && pair.includes(expectedController)) && host(state, entity)?.owner === actor && !entity.siege && state.armies.some(army => army.owner === actor && army.region === entity.theater && !army.move && army.men >= Math.max(1000, entity.militia)) && roll(entity) < 0.6 : entity.controller === entity.id && !entity.siege && roll(entity) < localOfferChance(state,entity,actor,proposal);
-      entity.lastOutcome = {actor, proposal, accepted, year: state.year, month: state.month};
+      const buyer=state.factions[actor],supplyReady=proposal!=='supplies'||pending.escrow===SUPPLY_PRICE&&buyer?.food<20&&entity.food-SUPPLY_FOOD>=Math.max(4,Math.ceil((entity.population||3000)/3000))&&localTradeOpen(state,entity,actor);
+      const accepted = submission ? entity.type === 'roman_town' && entity.controller === expectedController && state.wars.some(pair => pair.includes(actor) && pair.includes(expectedController)) && host(state, entity)?.owner === actor && !entity.siege && state.armies.some(army => army.owner === actor && army.region === entity.theater && !army.move && army.men >= Math.max(1000, entity.militia)) && roll(entity) < 0.6 : entity.controller === entity.id && !entity.siege && supplyReady && roll(entity) < localOfferChance(state,entity,actor,proposal);
+      entity.lastOutcome = {actor, proposal, accepted, year: state.year, month: state.month,...(proposal==='supplies'?{food:accepted?SUPPLY_FOOD:0,price:accepted?SUPPLY_PRICE:0,refunded:accepted?0:pending.escrow===SUPPLY_PRICE&&buyer?SUPPLY_PRICE:0}:{})};
       entity.pending = null;
       if (accepted && proposal === 'access') entity.access[actor] = now(state) + 24;
       if (accepted && proposal === 'trade') {entity.tradeRights||={};entity.tradeRights[actor]=now(state)+24;}
+      if(proposal==='supplies'&&pending.escrow===SUPPLY_PRICE&&buyer){if(accepted){entity.food-=SUPPLY_FOOD;entity.treasury+=SUPPLY_PRICE;buyer.food+=SUPPLY_FOOD}else buyer.treasury+=SUPPLY_PRICE}
       if (accepted && proposal === 'protectorate') entity.overlord = actor;
       if (accepted && proposal === 'service') {entity.allegiance=actor;entity.access[actor]=now(state)+24;}
       if (accepted && proposal === 'recognition') {entity.recognizedBy=actor;entity.titleRecognizedAt={year:state.year,month:state.month};const village=region.localEntities?.find(site=>site.sponsor===entity.id)?.village;if(village){village.satisfaction=Math.min(100,village.satisfaction+3);village.security=Math.min(100,village.security+2)}}

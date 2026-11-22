@@ -12,9 +12,9 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  const generated=await page.evaluate(async(seed)=>{
-  const {newGame}=await import('/engine.js?v=world-kings-neighbor-trade-1');
-  const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-neighbor-trade-1');
-  const {localDiscoveryLevel}=await import('/local-discovery.js?v=world-kings-neighbor-trade-1');
+  const {newGame}=await import('/engine.js?v=world-kings-local-supplies-1');
+  const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-local-supplies-1');
+  const {localDiscoveryLevel}=await import('/local-discovery.js?v=world-kings-local-supplies-1');
   const {advanceVillages}=await import('/local-villages.js');
   const s=configureStartingDifficulty(newGame('caesar'),'hard',false,{localSeed:seed});
   const entities=s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&!entity.proceduralVillage&&!entity.proceduralNomad&&!entity.proceduralWilderness);
@@ -54,7 +54,7 @@ try{
  assert.ok(villagePanel.includes(String(generated.villagePopulation)));
  assert.equal(await page.locator('#village-granary').isDisabled(),true);
  await page.locator('#save').click();
- await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=world-kings-neighbor-trade-1');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:newGame('caesar')}))});
+ await page.evaluate(async()=>{const {newGame}=await import('/engine.js?v=world-kings-local-supplies-1');sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:newGame('caesar')}))});
  await page.reload();await page.locator('.city-marker').first().waitFor();assert.equal(await marker.count(),0);
  await page.locator('#load').click();await marker.waitFor({state:'visible'});
  await marker.click();assert.ok((await page.locator('#command-detail').innerText()).includes(generated.population.toLocaleString('en-US')));
@@ -62,8 +62,8 @@ try{
  await chiefMarker.click();assert.match(await page.locator('#command-detail').innerText(),/Offer takes 2 more months/);
  await villageMarker.click();assert.match(await page.locator('#command-detail').innerText(),/Personal service does not transfer the village/);assert.match(await page.locator('#command-detail').innerText(),/Harvest gathering used one local food/);
  const independent=await page.evaluate(async(seed)=>{
-  const {newGame}=await import('/engine.js?v=world-kings-neighbor-trade-1');
-  const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-neighbor-trade-1');
+  const {newGame}=await import('/engine.js?v=world-kings-local-supplies-1');
+  const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-local-supplies-1');
   const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:seed});
   const village=s.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.proceduralIndependentVillage&&entity.controller===s.player);
   if(!village)throw Error('no owned independent village');

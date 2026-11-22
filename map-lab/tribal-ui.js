@@ -1,8 +1,8 @@
 import {localEntity, localContactQuote, offerLocalContact, localSiegeQuote, besiegeLocalEntity, localAdministrationQuote, startLocalAdministration} from '../local-polities.js';
 import {localSecurity} from '../local-resistance.js';
 import {renderFootholdPanel} from './foothold-ui.js';
-import {FACTIONS} from '../data.js?v=world-kings-neighbor-trade-1';
-import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-neighbor-trade-1';
+import {FACTIONS} from '../data.js?v=world-kings-local-supplies-1';
+import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-local-supplies-1';
 
 export function renderTribalEntity({state, id, actor, language, panel, refresh}) {
   const entity = localEntity(state, id), zh = language === 'zh';
@@ -37,7 +37,7 @@ export function renderTribalEntity({state, id, actor, language, panel, refresh})
   if(entity.allegiance===actor){const relation=document.createElement('p');relation.textContent=zh?'首领已向本方个人效忠；其部曲和村落仍由地方掌管，法理归属未变。':'The chief has entered our personal service; the retinue and village remain locally controlled, and legal title is unchanged.';section.append(relation)}
   if(entity.type==='strongman'&&entity.recognizedBy===actor){const recognition=document.createElement('p');recognition.textContent=zh?'本方已承认地方称号；此举没有授予军队通行，也没有转移村落或战区控制。':'We recognized the local title. This grants no army passage and transfers neither the village nor the theater.';section.append(recognition)}
   if(entity.type==='strongman'&&entity.localCharter?.host===actor){const charter=document.createElement('p');charter.textContent=entity.localCharter.active?(zh?`地方家族特许有效 · 每半年缴纳2国库 · 欠缴 ${entity.localCharter.arrears}/2；当地控制和法理归属未转移。`:`Household charter active · 2 treasury due each half-year · arrears ${entity.localCharter.arrears}/2; local control and legal title remain separate.`):(zh?'地方家族特许已终止。':'Household charter ended.');section.append(charter)}
-  if(entity.lastOutcome?.actor===actor){const outcome=document.createElement('p');outcome.textContent=entity.lastOutcome.proposal==='siege'?(zh?'围城已结束，地方被占领。':'Siege ended in occupation.'):entity.lastOutcome.accepted?(zh?'地方提议已获接受。':'Local offer accepted.'):(zh?'地方提议已遭拒绝。':'Local offer refused.');section.append(outcome)}
+  if(entity.lastOutcome?.actor===actor){const outcome=document.createElement('p');outcome.textContent=entity.lastOutcome.proposal==='siege'?(zh?'围城已结束，地方被占领。':'Siege ended in occupation.'):entity.lastOutcome.proposal==='supplies'?entity.lastOutcome.accepted?(zh?'地方已交付6粮食，收取10国库货款；2国库信使费已支出。':'Local stores supplied 6 food for 10 treasury; the 2-treasury courier fee was spent.'):(zh?'地方未交付粮食；10国库货款退回，2国库信使费已支出。':'No food was supplied; 10 treasury was refunded and the 2-treasury courier fee was spent.'):entity.lastOutcome.accepted?(zh?'地方提议已获接受。':'Local offer accepted.'):(zh?'地方提议已遭拒绝。':'Local offer refused.');section.append(outcome)}
   if (entity.controller === actor) {
     const security = localSecurity(state, entity), note = document.createElement('p');
     note.textContent = zh ? `地方阻力 ${entity.resistance ?? 0}/100 · 驻军${security.garrison ? '已到位' : '不足'} · 联络线${security.connected ? '畅通' : '中断'}` : `Local resistance ${entity.resistance ?? 0}/100 · garrison ${security.garrison ? 'present' : 'insufficient'} · supply link ${security.connected ? 'open' : 'cut'}`;
@@ -49,6 +49,7 @@ export function renderTribalEntity({state, id, actor, language, panel, refresh})
   const actions = entity.type==='nomadic'?[{id:'nomad-pasture',label:zh?'商谈牧地协定 · 6国库':'NEGOTIATE PASTURE COMPACT · 6 TREASURY',quote:localContactQuote(state,id,actor,'pasture'),run:()=>offerLocalContact(state,id,actor,'pasture')}]:[
     {id: 'tribal-access', label: zh ? '商谈地方通行 · 8国库' : 'NEGOTIATE LOCAL ACCESS · 8 TREASURY', quote: localContactQuote(state, id, actor, 'access'), run: () => offerLocalContact(state, id, actor, 'access')},
     ...(['city_state','microstate','tribe'].includes(entity.type)?[{id:'tribal-trade',label:zh?'商谈地方贸易 · 10国库':'NEGOTIATE LOCAL TRADE · 10 TREASURY',quote:localContactQuote(state,id,actor,'trade'),run:()=>offerLocalContact(state,id,actor,'trade')}]:[]),
+    ...(['city_state','microstate','tribe'].includes(entity.type)?[{id:'tribal-supplies',label:zh?'请求紧急粮食 · 12国库（拒绝退10）':'REQUEST 6 EMERGENCY FOOD · 12 TREASURY (10 REFUNDED IF REFUSED)',quote:localContactQuote(state,id,actor,'supplies'),run:()=>offerLocalContact(state,id,actor,'supplies')}]:[]),
     ...(entity.type==='strongman'?[{id:'tribal-recognition',label:zh?'承认地方称号 · 8国库':'RECOGNIZE LOCAL TITLE · 8 TREASURY',quote:localContactQuote(state,id,actor,'recognition'),run:()=>offerLocalContact(state,id,actor,'recognition')}]:[]),
     entity.type==='strongman'?{id:'tribal-service',label:zh?'邀请首领效忠 · 12国库':'INVITE CHIEF INTO SERVICE · 12 TREASURY',quote:localContactQuote(state,id,actor,'service'),run:()=>offerLocalContact(state,id,actor,'service')}:{id: 'tribal-protectorate', label: zh ? '提议自治附属 · 16国库' : 'OFFER AUTONOMOUS PROTECTORATE · 16 TREASURY', quote: localContactQuote(state, id, actor, 'protectorate'), run: () => offerLocalContact(state, id, actor, 'protectorate')},
     {id: 'tribal-siege', label: entity.type==='strongman'?(zh?'讨伐地方豪强 · 8粮食':'ASSAULT CHIEF’S HOLD · 8 FOOD'):(zh ? '围攻地方城镇 · 8粮食' : 'BESIEGE LOCAL TOWN · 8 FOOD'), quote: localSiegeQuote(state, id, army?.id, actor), run: () => besiegeLocalEntity(state, id, army?.id, actor)}
