@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=world-kings-massilia-1';
-import {militaryAccessStatus} from './border-access.js?v=world-kings-massilia-1';
+import {ROUTES} from './data.js?v=world-kings-observed-1';
+import {militaryAccessStatus} from './border-access.js?v=world-kings-observed-1';
 import {footholdConnected} from './foothold.js';
 import {villageFoodQuote, takeVillageFood} from './local-villages.js';
 

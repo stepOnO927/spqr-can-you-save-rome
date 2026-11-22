@@ -1,7 +1,7 @@
-import {newGame,estimatedStrength} from './engine.js?v=world-kings-massilia-1';
-import {createFictionalPerson} from './dynasties.js?v=world-kings-massilia-1';
-import {formCoalition} from './coalitions.js?v=world-kings-massilia-1';
-import {observeDiplomacy} from './diplomatic-knowledge.js?v=world-kings-massilia-1';
+import {newGame,estimatedStrength} from './engine.js?v=world-kings-observed-1';
+import {createFictionalPerson} from './dynasties.js?v=world-kings-observed-1';
+import {formCoalition} from './coalitions.js?v=world-kings-observed-1';
+import {observeDiplomacy} from './diplomatic-knowledge.js?v=world-kings-observed-1';
 
 // A fictional political crisis in the 49 BCE campaign. Conditions make
 // collective opposition plausible, but do not preselect a war or outcome.

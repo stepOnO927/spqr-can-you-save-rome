@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-massilia-1';
-import {localDiscoveryLevel,recordLocalDiscovery} from '../local-discovery.js?v=world-kings-massilia-1';
-import {observeArrival,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=world-kings-massilia-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-observed-1';
+import {localDiscoveryLevel,recordLocalDiscovery} from '../local-discovery.js?v=world-kings-observed-1';
+import {observeArrival,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=world-kings-observed-1';
 import {localEntity} from '../local-polities.js';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-massilia-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-observed-1';
 
 test('opening local knowledge distinguishes nearby, public Roman and distant minor polities',()=>{
  const s=newGame('caesar');

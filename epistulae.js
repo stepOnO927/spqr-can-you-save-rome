@@ -1,15 +1,15 @@
-import {ROUTES, FACTIONS} from './data.js?v=world-kings-massilia-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=world-kings-massilia-1';
-import {AGREEMENT_TYPES} from './agreements.js?v=world-kings-massilia-1';
-import {formatChronicleEntry} from './chronicle.js?v=world-kings-massilia-1';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=world-kings-massilia-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=world-kings-massilia-1';
-import {rememberPoliticalEvent} from './political-memory.js?v=world-kings-massilia-1';
-import {canMediate,requestMediation} from './civil-war.js?v=world-kings-massilia-1';
-import {voteCoalitionMotion} from './coalition-motions.js?v=world-kings-massilia-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=world-kings-massilia-1';
-import {earnedEpithets,legendName} from './legend.js?v=world-kings-massilia-1';
-import {answerCoalitionAidRequest,COALITION_AID} from './coalition-assistance.js?v=world-kings-massilia-1';
+import {ROUTES, FACTIONS} from './data.js?v=world-kings-observed-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=world-kings-observed-1';
+import {AGREEMENT_TYPES} from './agreements.js?v=world-kings-observed-1';
+import {formatChronicleEntry} from './chronicle.js?v=world-kings-observed-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=world-kings-observed-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=world-kings-observed-1';
+import {rememberPoliticalEvent} from './political-memory.js?v=world-kings-observed-1';
+import {canMediate,requestMediation} from './civil-war.js?v=world-kings-observed-1';
+import {voteCoalitionMotion} from './coalition-motions.js?v=world-kings-observed-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=world-kings-observed-1';
+import {earnedEpithets,legendName} from './legend.js?v=world-kings-observed-1';
+import {answerCoalitionAidRequest,COALITION_AID} from './coalition-assistance.js?v=world-kings-observed-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');

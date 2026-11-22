@@ -1,4 +1,4 @@
-import {isDeliveredReport,hasReportedNameConflict} from '../person-knowledge.js?v=world-kings-massilia-1';
+import {isDeliveredReport,hasReportedNameConflict} from '../person-knowledge.js?v=world-kings-observed-1';
 // Project identity presentation only from the viewer's own records. Historical
 // artwork is interpretive even when several reports agree on a name.
 export function identityKnowledge(s,id){

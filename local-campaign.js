@@ -1,8 +1,8 @@
-import {FACTIONS,ROUTES} from './data.js?v=world-kings-massilia-1';
+import {FACTIONS,ROUTES} from './data.js?v=world-kings-observed-1';
 import {localEntity,localTradeOpen} from './local-polities.js';
-import {initializeControlKnowledge,reportedControl} from './control-intelligence.js?v=world-kings-massilia-1';
-import {initializeLocalDiscovery} from './local-discovery.js?v=world-kings-massilia-1';
-import {sendLetter} from './epistulae.js?v=world-kings-massilia-1';
+import {initializeControlKnowledge,reportedControl} from './control-intelligence.js?v=world-kings-observed-1';
+import {initializeLocalDiscovery} from './local-discovery.js?v=world-kings-observed-1';
+import {sendLetter} from './epistulae.js?v=world-kings-observed-1';
 
 const date=state=>state.year*12+state.month;
 const relation=(state,a,b)=>state.relations[[a,b].sort().join(':')]??0;

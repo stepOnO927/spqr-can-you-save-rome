@@ -1,5 +1,5 @@
-import {localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localProtectionOffer,localIndependenceOffer} from './local-campaign.js?v=world-kings-massilia-1';
-import {FACTIONS} from './data.js?v=world-kings-massilia-1';
+import {localCampaignCity,localRecruit,localTradeOffer,localTradePartners,localProtectionOffer,localIndependenceOffer} from './local-campaign.js?v=world-kings-observed-1';
+import {FACTIONS} from './data.js?v=world-kings-observed-1';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 

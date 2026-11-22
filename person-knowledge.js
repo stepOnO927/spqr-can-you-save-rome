@@ -1,4 +1,4 @@
-import {CHARACTER_CATALOG} from './characters.js?v=world-kings-massilia-1';
+import {CHARACTER_CATALOG} from './characters.js?v=world-kings-observed-1';
 
 export const namedReportSubjects=r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:r.kind==='authority'&&r.value&&typeof r.value==='object'?r.value.actors||[]:r.kind==='conspiracy'&&r.value==='suspected'&&typeof r.character==='string'?[r.character]:r.kind?.startsWith('office_')||r.kind==='succession'?[r.value]:[];
 const reportAge=(s,r)=>(s.year-(r.observationYear??r.year))*12+s.month-(r.observationMonth??r.month);
@@ -40,7 +40,11 @@ export function reportedPersonalContacts(s,actor,other){
 export const reportedPersonalContact=(s,actor,own,other)=>reportedPersonalContacts(s,actor,other).get(own)||null;
 function personNameRecords(s,actor,target,id){
  const reports=s.knowledge?.[actor]?.[target]?.reports||[];
- const records=reports.filter(r=>isDeliveredReport(s,r)&&(!Number.isFinite(reportAge(s,r))||reportAge(s,r)>=0)&&namedReportSubjects(r).includes(id)&&validName(r.peopleNames?.[id])).map(r=>({name:r.peopleNames[id],year:r.observationYear??r.year,month:r.observationMonth??r.month}));
+ // A named health/location report may merely repeat the name used when the
+ // mission was sent. Only an actual identity observation establishes a new
+ // dated name; old reports without that provenance stay conservative.
+ const observedSubject=r=>r.identityObserved===true&&['health','age','location'].includes(r.kind)&&r.character===id;
+ const records=reports.filter(r=>isDeliveredReport(s,r)&&(!Number.isFinite(reportAge(s,r))||reportAge(s,r)>=0)&&(namedReportSubjects(r).includes(id)||observedSubject(r))&&validName(r.peopleNames?.[id])).map(r=>({name:r.peopleNames[id],year:r.observationYear??r.year,month:r.observationMonth??r.month}));
  // A commander identification is a dated observer-owned snapshot. Older
  // sightings lacking a saved name cannot be filled from the live catalog.
  const k=s.knowledge?.[actor]?.[target];for(const r of [...Object.values(k?.sightings||{}),...(k?.commanderReports||[])])if(isDeliveredReport(s,r)&&r.commanderId===id&&validName(r.commanderName))records.push({name:r.commanderName,year:r.observationYear??r.year,month:r.observationMonth??r.month});

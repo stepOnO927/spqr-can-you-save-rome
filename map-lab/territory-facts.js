@@ -1,6 +1,6 @@
-import {campaignYear,campaignDate} from '../campaign-date.js?v=world-kings-massilia-1';
-import {MATERIALS} from '../inventions.js?v=world-kings-massilia-1';
-import {FACTIONS} from '../data.js?v=world-kings-massilia-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=world-kings-observed-1';
+import {MATERIALS} from '../inventions.js?v=world-kings-observed-1';
+import {FACTIONS} from '../data.js?v=world-kings-observed-1';
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 export function renderTerritoryFacts({state, territory, language = 'en', sightings = []}) {

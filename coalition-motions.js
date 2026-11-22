@@ -1,4 +1,4 @@
-import {eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from './coalition-admissions.js?v=world-kings-massilia-1';
+import {eligibleCoalitionAdmissionTargets,sendCoalitionAdmission} from './coalition-admissions.js?v=world-kings-observed-1';
 
 const date=s=>s.year*12+s.month;
 const relation=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;

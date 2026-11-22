@@ -1,5 +1,5 @@
 import {localEntity} from './local-polities.js';
-import {recordLocalDiscovery} from './local-discovery.js?v=world-kings-massilia-1';
+import {recordLocalDiscovery} from './local-discovery.js?v=world-kings-observed-1';
 
 const now=state=>state.year*12+state.month;
 const sites=state=>state.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.type==='wilderness'&&entity.proceduralWilderness);
