@@ -52,6 +52,9 @@ export function initializeWorld(s){
 }
 // Birthdays are not specified in the catalog: either side of the birthday may apply.
 export function ageRange(id,year){const b=CHARACTER_CATALOG[id]?.birth;if(!b||!Number.isFinite(year)||!Number.isFinite(b[0])||!Number.isFinite(b[1])||year<b[0])return null;return [Math.max(0,year-b[1]-1),year-b[0]]}
+// Simulated people use their saved birth year, not a stale catalog entry.
+export function characterAgeRange(s,id,year=s.year){if(!CHARACTER_CATALOG[id]?.fictional)return ageRange(id,year);const birth=s.world?.characters?.[id]?.birthYear;if(!Number.isFinite(birth)||!Number.isFinite(year)||year<birth)return null;return [year-birth,year-birth]}
+
 export const successionModel=(faction,s)=>['caesar','senate'].includes(faction)?(s?.world?.romanRegimes?.[faction]||'republican_command'):faction==='egypt'?'ptolemaic_court':faction==='parthia'?'arsacid_nobility':faction==='mauretania'?'separate_kingdoms':'regional_dynasty';
 export function successorFor(s,faction){const fictional=['egypt','parthia','armenia','numidia','mauretania','galatia','bosporus'].includes(faction)||['roman_principate','later_empire'].includes(successionModel(faction,s))?Object.values(s.world.characters).filter(c=>CHARACTER_CATALOG[c.id]?.fictional&&c.faction===faction&&!c.institutionalOnly&&c.birthYear!=null&&s.year-c.birthYear>=18).map(c=>c.id):[];return [...new Set([...(SUCCESSORS[faction]||[]),...fictional])].filter(id=>s.world.characters[id]?.alive&&!s.world.characters[id].missing&&!s.world.characters[id].asylumHost&&s.world.characters[id].faction===faction&&!(s.world.leadership[faction]||[]).includes(id)).sort((a,b)=>(s.world.characters[b].influence??50)-(s.world.characters[a].influence??50));}
 // These keys identify separate simulated offices, not a claim that the two

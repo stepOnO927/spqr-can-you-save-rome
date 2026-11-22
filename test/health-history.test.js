@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=world-kings-neighbor-trade-1';
-import {battlefieldWound,advanceCharacters,illnessRisk} from '../character-system.js?v=world-kings-neighbor-trade-1';
+import {battlefieldWound,advanceCharacters,illnessRisk,apparentAgeRange} from '../character-system.js?v=world-kings-neighbor-trade-1';
+import {characterAgeRange,ageRange} from '../characters.js?v=world-kings-neighbor-trade-1';
+import {createFictionalPerson} from '../dynasties.js?v=world-kings-neighbor-trade-1';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=world-kings-neighbor-trade-1';
 import {syncChronicleDispatches,filterChronicle} from '../chronicle.js?v=world-kings-neighbor-trade-1';
 
@@ -19,4 +21,13 @@ test('wounded travelers move more slowly and older saves retain their wounded st
 test('wounds and serious illness can recover in a non-January month without revealing foreign health',()=>{
  const s=newGame('caesar');s.month=7;s.world.characters.caesar.health='wounded';s.world.intelSeed=1972;advanceCharacters(s);assert.equal(s.world.characters.caesar.health,'recovering');const message=s.log.find(x=>x.characterId==='caesar'&&x.zh.includes('健康状态发生变化'));assert.match(message.zh,/受伤 → 康复中/);assert.match(message.en,/wounded to recovering/);syncChronicleDispatches(s);assert.ok(filterChronicle(s.chronicle.entries,{kind:'character',character:'caesar'}).some(x=>x.zh.includes('受伤 → 康复中')));
  const foreign=newGame('caesar');foreign.month=7;for(const c of Object.values(foreign.world.characters))if(c.id!=='orodes')c.missing={};foreign.world.characters.orodes.health='seriously_ill';const seed=Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>.04&&q<.05});foreign.world.intelSeed=seed;advanceCharacters(foreign);assert.equal(foreign.world.characters.orodes.health,'recovering');assert.equal(foreign.knowledge.caesar.parthia.reports.length,0);assert.equal(foreign.log.length,0);
+});
+
+test('simulated age and health use the saved birth year, including after loading an older save',()=>{
+ let s=newGame('senate');const id=createFictionalPerson(s,{name:['Test elder','测试长者'],faction:'senate',birthYear:s.year-70});
+ assert.deepEqual(characterAgeRange(s,id),[70,70]);assert.ok(illnessRisk(s,id)>.03);
+ s.world.characters[id].birthYear=null;s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(characterAgeRange(s,id),null);assert.equal(apparentAgeRange(id,s.year,s),null);assert.equal(illnessRisk(s,id),.018);
+ s.world.characters[id].birthYear=s.year-30;assert.deepEqual(characterAgeRange(s,id),[30,30]);assert.deepEqual(apparentAgeRange(id,s.year,s),[25,35]);
+ assert.deepEqual(characterAgeRange(s,'cicero'),ageRange('cicero',s.year));
 });

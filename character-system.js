@@ -1,5 +1,5 @@
 import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts} from './person-knowledge.js?v=world-kings-neighbor-trade-1';
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=world-kings-neighbor-trade-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=world-kings-neighbor-trade-1';
 import {settleInheritance,dynastyRoll} from './dynasties.js?v=world-kings-neighbor-trade-1';
 import {FACTIONS,ROUTES} from './data.js?v=world-kings-neighbor-trade-1';
 import {deriveGovernment,validSuccessionPlan} from './governance.js?v=world-kings-neighbor-trade-1';
@@ -13,7 +13,7 @@ import {registerMissionPersonnel} from './epistulae-personnel.js?v=world-kings-n
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
-export function apparentAgeRange(id,year){const age=ageRange(id,year);return age?[Math.max(0,Math.floor((age[0]-5)/5)*5),Math.ceil((age[1]+5)/5)*5]:null}
+export function apparentAgeRange(id,year,s){const age=s?characterAgeRange(s,id,year):ageRange(id,year);return age?[Math.max(0,Math.floor((age[0]-5)/5)*5),Math.ceil((age[1]+5)/5)*5]:null}
 const claimantAvailable=c=>!!c?.alive&&!c.missing&&!c.travel&&!c.asylumHost&&!['seriously_ill','dying','deceased'].includes(c.health);
 const rand=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 const notify=(s,en,zh,metadata={})=>{s.log.unshift({year:s.year,month:s.month,en,zh,...metadata});s.log=s.log.slice(0,80)};
@@ -374,7 +374,7 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   // An audience may be with a representative. Only record a personal observation
   // when someone actually in office and named in the report could attend.
   const met=(report.leaders||[]).find(candidate=>{const p=s.world.characters[candidate];return (s.world.leadership[op.target]||[]).includes(candidate)&&p?.alive&&p.faction===op.target&&!p.travel&&!p.missing&&s.regions.some(r=>r.id===p.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===candidate&&a.move)&&!['seriously_ill','dying','deceased'].includes(p.health)});
-  if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=apparentAgeRange(met,s.year);
+  if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=apparentAgeRange(met,s.year,s);
    addReport(s,op.actor,op.target,{kind:'location',character:met,value:p.location,source:'audience',confidence:'unverified',reliability:'moderate'});
    addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,source:'audience',confidence:'unverified',reliability:'low'});
    if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,source:'audience',confidence:'unverified',reliability:'low'});
@@ -440,7 +440,7 @@ export function egyptianClaimantCandidate(s,roll){
  if(leaders.length<2||!candidates.length)return null;const weights=candidates.map(id=>Math.max(1,101-(s.world.characters[id].loyalty??75))),total=weights.reduce((a,b)=>a+b,0);let value=Math.max(0,Math.min(.999999,roll))*total;for(let i=0;i<candidates.length;i++){value-=weights[i];if(value<0)return candidates[i]}return candidates.at(-1);
 }
 // Simulation probabilities only; these do not assert historical diagnoses.
-export function illnessRisk(s,id){initializeWorld(s);const c=s.world.characters[id];if(!c)return 0;const age=ageRange(id,s.year)?.[0],military=s.armies.some(a=>a.characterId===id),shortage=(s.factions[c.faction]?.food??0)<0;return Math.min(.18,(age>=65?.04:.018)+(military?.01:0)+(shortage?.025:0)+(c.travel?.01:0)+Math.min(.02,c.wounds*.01))}
+export function illnessRisk(s,id){initializeWorld(s);const c=s.world.characters[id];if(!c)return 0;const age=characterAgeRange(s,id)?.[0],military=s.armies.some(a=>a.characterId===id),shortage=(s.factions[c.faction]?.food??0)<0;return Math.min(.18,(age>=65?.04:.018)+(military?.01:0)+(shortage?.025:0)+(c.travel?.01:0)+Math.min(.02,c.wounds*.01))}
 // Alternate-history defection is restricted to unattached Roman officers, never fabricated identities.
 export function considerDefection(s,id){
  initializeWorld(s);const c=s.world.characters[id],from=c?.faction,to=from==='caesar'?'senate':from==='senate'?'caesar':null;
@@ -450,7 +450,7 @@ export function considerDefection(s,id){
 }
 // Convert competing annual probabilities into a monthly chance while preserving their relative likelihood.
 function monthlyOutcome(r,choices){const annual=choices.reduce((sum,choice)=>sum+choice[1],0);if(!annual)return null;const monthly=1-Math.pow(1-annual,1/12);if(r>=monthly)return null;let threshold=0;for(const [outcome,probability] of choices){threshold+=monthly*probability/annual;if(r<threshold)return outcome}return choices.at(-1)[0]}
-export function advanceCharacters(s){initializeWorld(s);for(const [id,c] of Object.entries(s.world.characters)){if(!c.alive||!c.faction||c.missing)continue;const previous=c.health,age=ageRange(id,s.year)?.[0],illChance=illnessRisk(s,id),frailChance=age>=65?.025:0,choices={dying:[['deceased',.45]],seriously_ill:[['dying',.22],['recovering',.35]],healthy:[['frail',frailChance],['ill',illChance]],frail:[['seriously_ill',.08]],ill:[['seriously_ill',.22],['recovering',.55]],wounded:[['recovering',.55]],recovering:[['healthy',.75]]}[previous]||[];c.health=monthlyOutcome(CHARACTER_CATALOG[id]?.fictional?dynastyRoll(s):rand(s),choices)||previous;
+export function advanceCharacters(s){initializeWorld(s);for(const [id,c] of Object.entries(s.world.characters)){if(!c.alive||!c.faction||c.missing)continue;const previous=c.health,age=characterAgeRange(s,id)?.[0],illChance=illnessRisk(s,id),frailChance=age>=65?.025:0,choices={dying:[['deceased',.45]],seriously_ill:[['dying',.22],['recovering',.35]],healthy:[['frail',frailChance],['ill',illChance]],frail:[['seriously_ill',.08]],ill:[['seriously_ill',.22],['recovering',.55]],wounded:[['recovering',.55]],recovering:[['healthy',.75]]}[previous]||[];c.health=monthlyOutcome(CHARACTER_CATALOG[id]?.fictional?dynastyRoll(s):rand(s),choices)||previous;
  if(s.month===1)c.loyalty=Math.max(0,Math.min(100,c.loyalty+(s.factions[c.faction]?.stability<35?-4:1)));
  if((previous==='healthy'&&c.health==='ill')||(previous==='frail'&&c.health==='seriously_ill'))c.illnessEpisodes++;
  if(c.health==='deceased'){c.alive=false;c.deathYear=s.year;c.deathMonth=s.month;settleInheritance(s,id);if(s.factions[c.faction])s.factions[c.faction].stability=Math.max(0,s.factions[c.faction].stability-3);const lead=s.world.leadership[c.faction]||[];if(lead.includes(id))assignSuccession(s,c.faction);for(const a of s.armies.filter(a=>a.characterId===id)){a.characterId=null;a.commander=['Unnamed officer','未具名军官']}if(c.faction===s.player)notify(s,`${CHARACTER_CATALOG[id].name[0]} died in the simulation; the succession situation was updated.`,`${CHARACTER_CATALOG[id].name[1]}在模拟中去世，继任局势已更新。`)}
