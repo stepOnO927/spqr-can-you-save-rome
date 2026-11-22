@@ -4,7 +4,7 @@ import {ROUTES} from './data.js?v=phase-x-1';
 import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=faces-name-disagreement-1';
 import {officeOf} from './office-system.js?v=faces-name-disagreement-1';
 import {fictionalPortraitKey,portraitSeedFor,portraitStation} from './portrait-registry.js?v=missing-fate-privacy-1';
-import {isCompletedMeeting} from './person-knowledge.js?v=faces-name-disagreement-1';
+import {isCompletedMeeting,isDeliveredReport,storedCorrespondentName} from './person-knowledge.js?v=faces-name-disagreement-1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 // A commander in transit has not arrived in a theater where an audience can occur.
@@ -12,6 +12,14 @@ const commandingMarch=(s,id)=>s.armies.some(a=>a.characterId===id&&a.move);
 const random=s=>{s.world.intelSeed=(Math.imul(s.world.intelSeed,1664525)+1013904223)>>>0;return s.world.intelSeed/4294967296};
 // Silence never reveals whether the intended recipient was reachable.
 export const audiencePublicStatus=status=>status==='no_contact'?'no_reply':status;
+// The request keeps its addressed name. Only a completed, delivered meeting
+// may expose the separate name observed when both people actually met.
+export function audiencePublicRecord(s,m){
+ const delivered=isDeliveredReport(s,{year:m.resolvedYear??m.year,month:m.resolvedMonth??m.month});
+ const status=m.status==='pending'||!delivered||m.status==='met'&&!isCompletedMeeting(s,m)?'pending':audiencePublicStatus(m.status);
+ const requestName=storedCorrespondentName(m.target,m.reportedName),observed=status==='met'&&Array.isArray(m.observedName)&&m.observedName.length===2&&m.observedName.every(x=>typeof x==='string'&&x.length>0)?storedCorrespondentName(m.target,m.observedName):null;
+ return {status,requestName,observedName:observed,remaining:status==='pending'&&m.status==='pending'&&Number.isFinite(m.remaining)?m.remaining:null};
+}
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
 
 // Credit reflects the sender's own recent contacts, not the foreign person's
