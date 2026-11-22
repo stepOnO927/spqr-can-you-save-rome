@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=phase-x-1';
-import {newHanGame,tick as tickHan,loadHanSave} from '../han/engine.js?v=phase-x-1';
-import {rulerPortrait} from '../han/rulers.js?v=phase-x-1';
-import {courtPortraitSrc} from '../han/court-portrait.js?v=phase-x-1';
-import {proposeAgreement} from '../agreements.js?v=phase-x-1';
-import {advanceMarketAI} from '../trade-markets.js?v=phase-x-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=guardian-wheels-merge-2';
+import {newHanGame,tick as tickHan,loadHanSave} from '../han/engine.js?v=guardian-wheels-merge-2';
+import {rulerPortrait} from '../han/rulers.js';
+import {courtPortraitSrc} from '../han/court-portrait.js';
+import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
+import {advanceMarketAI} from '../trade-markets.js?v=faces-wheels-1';
 
 const state=newGame('han');
 for(const [a,b] of [['senate','egypt'],['armenia','parthia'],['armenia','galatia'],['senate','galatia']]){

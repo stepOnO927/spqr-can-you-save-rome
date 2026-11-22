@@ -1,10 +1,10 @@
 // Cloud-only diagnostic playthroughs. Report observed state, not invented stories.
 import assert from 'node:assert/strict';
-import {newGame,tick} from '../engine.js';
-import {configureStartingDifficulty} from '../difficulty.js';
-import {chooseAmbition,ambitionStatus} from '../history-wheels.js';
-import {newHanGame,tick as tickHan} from '../han/engine.js';
-import {choose as chooseHanAmbition,status as hanAmbitionStatus} from '../han/ambitions.js';
+import {newGame,tick} from '../engine.js?v=guardian-wheels-merge-2';
+import {configureStartingDifficulty} from '../difficulty.js?v=guardian-wheels-merge-1';
+import {chooseAmbition,ambitionStatus} from '../history-wheels.js?v=guardian-wheels-merge-2';
+import {newHanGame,tick as tickHan} from '../han/engine.js?v=guardian-wheels-merge-2';
+import {choose as chooseHanAmbition,status as hanAmbitionStatus} from '../han/ambitions.js?v=guardian-wheels-merge-2';
 
 const date=s=>s.year*12+s.month;
 function roman(side,months,seed,{autoplay=false,difficulty='standard',aiLevel=null}={}){

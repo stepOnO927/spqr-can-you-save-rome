@@ -83,8 +83,8 @@ try{
  const result=await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('spqr-han-save-browser'));return {pending:state.court.pendingDisaster,influence:state.court.factions.waiqi.influence}});
  assert.equal(result.pending,null);assert.ok(result.influence<prior,'chosen faction should lose influence');
  const generated=await page.evaluate(async()=>{
-  const {generateOfficial}=await import('/han/engine.js');
-  const {appoint}=await import('/han/court.js');
+  const {generateOfficial}=await import('/han/engine.js?v=guardian-wheels-merge-2');
+  const {appoint}=await import('/han/court.js?v=han-1');
   const key='spqr-han-save-browser',state=JSON.parse(localStorage.getItem(key));
   const person=generateOfficial(state,'dasinong');
   if(!appoint(state,'dasinong',person.id).ok)throw Error('generated official appointment failed');

@@ -26,7 +26,7 @@ try{
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('armenia');await page.locator('#begin').click();await page.locator('#save').click();
  await page.evaluate(async()=>{
-  const {recordBirth}=await import('/han/dynasty.js');
+  const {recordBirth}=await import('/han/dynasty.js?v=han-1');
   const {advanceForeignRulers}=await import('/han/rulers.js');
   const key='spqr-han-save-browser',s=JSON.parse(localStorage.getItem(key)),old=s.rulers.armenia.personId,id='original-armenian-browser-heir';
   s.persons[id]={id,name:['Aram of Artaxata','阿尔塔克萨塔的阿拉姆'],faction:'armenia',role:'prince',record:'fictional',birth:s.year-8,sex:'m',father:old,alive:true,competence:60,military:50};
@@ -47,7 +47,7 @@ try{
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();await page.locator('#save').click();
  await page.evaluate(async()=>{
-  const {recordBirth,crown}=await import('/han/dynasty.js');
+  const {recordBirth,crown}=await import('/han/dynasty.js?v=han-1');
   const key='spqr-han-save-browser',s=JSON.parse(localStorage.getItem(key));
   const id='simulated-liu-browser',father='liu-shi';
   s.persons[id]={id,name:['Liu Yi','刘翊'],surname:'Liu',birthSurname:'Liu',sex:'m',birth:-60,father,mother:null,record:'simulated',faction:'han',role:'prince',alive:true,spouse:[]};
@@ -68,7 +68,7 @@ try{
  await page.locator('#lang').click();assert.match(await card.innerText(),/刘翊/);
  await page.locator('#save').click();
  await page.evaluate(async()=>{
-  const {seizeThrone}=await import('/han/dynasty.js');
+  const {seizeThrone}=await import('/han/dynasty.js?v=han-1');
   const key='spqr-han-save-browser',s=JSON.parse(localStorage.getItem(key));
   s.court.control['shi-gao']=80;
   if(!seizeThrone(s,'shi-gao').ok)throw Error('non-Liu founding failed');
@@ -81,8 +81,8 @@ try{
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('parthia');await page.locator('#begin').click();await page.locator('#save').click();
  await page.evaluate(async()=>{
-  const {recordBirth}=await import('/han/dynasty.js?v=phase-x-1');
-  const {advanceForeignRulers}=await import('/han/rulers.js?v=phase-x-1');
+  const {recordBirth}=await import('/han/dynasty.js?v=han-1');
+  const {advanceForeignRulers}=await import('/han/rulers.js');
   const key='spqr-han-save-browser',s=JSON.parse(localStorage.getItem(key)),old=s.rulers.parthia.personId,id='original-parthian-queen-browser';
   s.persons[id]={id,name:['Varda of Parthia','安息的瓦尔达'],faction:'parthia',role:'princess',record:'fictional',birth:s.year-25,sex:'f',father:old,alive:true,competence:80,military:70};
   if(!recordBirth(s,{id,father:old,birth:s.year-25,birthSurname:null,sex:'f'}).ok)throw Error('queen birth record failed');

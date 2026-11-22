@@ -6,6 +6,16 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+GitHub checks for `ca6dd798` passed Wheels browser, quality, Pages package,
+and Poki validation. Browser group 3 passed; groups 1 and 2 exposed two smoke
+failures. The new portrait smoke imported a second copy of the mutable character
+catalog, so its fictional successor was invisible to the succession routine.
+The guardianship smoke assumed a 45% annual death risk was a monthly guarantee.
+Scripts now import each game module under the same cache key as the runtime;
+the module-version regression checks this per target. Node reproduction finds
+the fictional Roman successor and the seeded ward's real guardian activation.
+GitHub browser reruns are required before treating these fixes as verified.
+
 Main through `35e94d10` is integrated. The family-loan display and its browser
 scenario are preserved alongside the expansion's genealogy controls. Han and
 oasis national ambitions now advance through sustained monthly evidence before

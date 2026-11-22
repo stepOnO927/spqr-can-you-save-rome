@@ -1,4 +1,4 @@
-import {newGame} from '../engine.js';
+import {newGame} from '../engine.js?v=guardian-wheels-merge-2';
 import {inspectState} from '../inspector-diagnostics.js';
 import assert from 'node:assert/strict';
 

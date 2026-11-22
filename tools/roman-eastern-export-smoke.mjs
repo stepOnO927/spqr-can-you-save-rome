@@ -9,11 +9,11 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  const shipmentId=await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=phase-x-1');
-  const {attachHanWorld,advanceHanWorld}=await import('/han/world.js?v=phase-x-1');
-  const {proposeAgreement}=await import('/agreements.js?v=phase-x-1');
-  const {postTradeSale,advanceMarketAI,advanceMarkets}=await import('/trade-markets.js?v=phase-x-1');
-  const {advanceDate}=await import('/han/util.js?v=phase-x-1');
+  const {newGame}=await import('/engine.js?v=guardian-wheels-merge-2');
+  const {attachHanWorld,advanceHanWorld}=await import('/han/world.js?v=guardian-wheels-merge-2');
+  const {proposeAgreement}=await import('/agreements.js?v=agreement-courier-1');
+  const {postTradeSale,advanceMarketAI,advanceMarkets}=await import('/trade-markets.js?v=faces-wheels-1');
+  const {advanceDate}=await import('/han/util.js?v=han-1');
   const s=newGame('caesar'),w=attachHanWorld(s,{seed:49});
   s.regions.find(r=>r.id==='syria').owner='caesar';s.relations['caesar:parthia']=70;
   if(!proposeAgreement(s,'caesar','parthia','trade').ok)throw Error('Trade access unavailable');
