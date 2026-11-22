@@ -77,7 +77,7 @@ try{
    await page.locator('#language').click();
    if(await page.locator('[data-physical-label="northern-adriatic"]').textContent()!=='Northern Adriatic')throw Error('Northern Adriatic label must translate to English');
    await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[12.55,44.05],zoom:9.2})});
-   await page.waitForFunction(()=>document.querySelector('#map-charting').hidden,null,{timeout:12000});
+   await page.waitForFunction(()=>{const map=window.__reviewMap;return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
    for(const [id,name] of [['caesena','Caesena'],['pisaurum','Pisaurum']]){
     const marker=page.locator(`[data-ancient-place="${id}"]`);
     if(await marker.isHidden()||await marker.textContent()!==name)throw Error(`${name}: local ancient-place label missing in English: ${JSON.stringify(await marker.evaluate(el=>({hidden:el.hidden,text:el.textContent,display:getComputedStyle(el).display,box:el.getBoundingClientRect().toJSON()})))}`);
@@ -106,7 +106,7 @@ try{
   return {egyptSea:await read([29.8,31.6]),egyptLand:await read([29.8,30.9]),italySea:await read([13,44.3]),italyLand:await read([12.4,43.8])};
  });
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[8.8,43.9],zoom:9.05})});
- await page.waitForFunction(()=>document.querySelector('#map-charting').hidden,null,{timeout:12000});
+ await page.waitForFunction(()=>{const map=window.__reviewMap;return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
  if(await page.locator('[data-physical-label="ligurian"]').isHidden()||await page.locator('[data-physical-label="ligurian"]').textContent()!=='Ligurian Sea')throw Error('Ligurian Sea must be named on the English Italian close map');
  const ligurianBox=await page.locator('[data-physical-label="ligurian"]').boundingBox();
  if(!ligurianBox||ligurianBox.x<380||ligurianBox.y<110||ligurianBox.x+ligurianBox.width>1080||ligurianBox.y+ligurianBox.height>700)throw Error(`Ligurian Sea label is outside unobstructed water: ${JSON.stringify(ligurianBox)}`);
@@ -127,7 +127,7 @@ try{
  await page.locator('#language').click();
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[12.48,44.96],zoom:9.05})});
  await page.waitForTimeout(3500);
- try{await page.waitForFunction(()=>!window.__reviewMap.isMoving()&&window.__reviewMap.areTilesLoaded()&&document.querySelector('#map-charting').hidden,null,{timeout:30000})}catch(error){
+ try{await page.waitForFunction(()=>!window.__reviewMap.isMoving()&&window.__reviewMap.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99,null,{timeout:30000})}catch(error){
   const status=await page.evaluate(()=>{const map=window.__reviewMap,cache=map.style?.sourceCaches?.['elevation-higher'];return {center:map.getCenter().toArray(),zoom:map.getZoom(),moving:map.isMoving(),tiles:map.areTilesLoaded(),loaded:map.loaded(),curtain:document.querySelector('#map-charting').hidden,opacity:getComputedStyle(document.querySelector('#map')).opacity,unloaded:Object.keys(map.getStyle().sources).filter(id=>!map.isSourceLoaded(id)),terrainTiles:Object.entries(cache?._tiles||{}).map(([key,tile])=>({key,state:tile.state,error:String(tile.error||'')})).slice(0,30)}});
   await page.screenshot({path:resolve(output,'po-delta-timeout.png')});
   throw Error(`Po delta did not settle: ${JSON.stringify(status)}; terrain requests ${JSON.stringify(failedTiles.slice(-20))}; ${error.message}`)

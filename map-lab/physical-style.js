@@ -139,7 +139,7 @@ export const physicalStyle={
   // Draw the coastal glow above the final ocean fill; otherwise the sea mask
   // erases its seaward half. It follows shoreline geometry, not a depth claim.
   {id:'coastal-halo',type:'line',source:'land',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#a6c9c0','line-width':['interpolate',['linear'],['zoom'],4,2,8,5,9,7],'line-blur':['interpolate',['linear'],['zoom'],4,1,9,2],'line-opacity':['interpolate',['linear'],['zoom'],4,.04,7,.12,9,.11]}},
-  {id:'coastline-finish',type:'line',source:'land',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#f0e4c4','line-width':['interpolate',['linear'],['zoom'],4,1,8,2,9,2.3],'line-opacity':['interpolate',['linear'],['zoom'],4,.9,8,.82,9,.87]}},
+  {id:'coastline-finish',type:'line',source:'land',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#f0e4c4','line-width':['interpolate',['linear'],['zoom'],4,1,8,2,9,1.3],'line-opacity':['interpolate',['linear'],['zoom'],4,.9,8,.82,9,.87]}},
   // This visual band follows an undated reference line, not an ancient land mask.
   {id:'po-historic-band',type:'line',source:'po-historic-coast',filter:['==',['get','kind'],'historical-shore'],minzoom:8.2,layout:{visibility:'none','line-join':'round','line-cap':'round'},paint:{'line-color':'#a5b599','line-width':['interpolate',['linear'],['zoom'],8.2,9,9,22],'line-blur':['interpolate',['linear'],['zoom'],8.2,3,9,6],'line-opacity':.26}},
   {id:'po-historic-shore',type:'line',source:'po-historic-coast',filter:['==',['get','kind'],'historical-shore'],minzoom:8.2,layout:{visibility:'none'},paint:{'line-color':'#84694d','line-width':['interpolate',['linear'],['zoom'],8.2,1,9,1.6],'line-opacity':.78,'line-dasharray':[3,2]}}
