@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn,startConstruction} from '../engine.js';
-import {SEA_ZONES,seaRoute,portZone,isPortBlockaded,queueShip,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply} from '../naval.js';
+import {SEA_ZONES,seaRoute,portZone,isPortBlockaded,queueShip,cancelShipConstruction,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply} from '../naval.js';
 import {tradeCard,renderNavalPanel} from '../map-lab/naval-ui.js';
 import {developmentPanel,constructionPanel} from '../development-ui.js';
 import {advanceDevelopment} from '../development.js';
@@ -222,6 +222,57 @@ test('light-only fleets use ship speed and merchant hulls set cargo capacity',()
 });
 test('shipbuilding spends treasury, materials, crew and time at a real shipyard',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.owner==='senate'),before={treasury:s.factions.senate.treasury,timber:s.development.senate.materials.timber,crew:s.factions.senate.manpower};const result=queueShip(s,'senate','italiaS','merchant');assert.equal(result.ok,true);assert.equal(s.factions.senate.treasury,before.treasury-17);assert.equal(s.development.senate.materials.timber,before.timber-2);assert.equal(s.factions.senate.manpower,before.crew-45);assert.equal(queueShip(s,'senate','italiaS','trireme').ok,false);for(let i=0;i<result.months-1;i++)advanceNaval(s);assert.equal(f.ships.merchant||0,0);advanceNaval(s);assert.equal(f.ships.merchant,1)
+});
+test('shipyard labor pauses a paid hull and resumes after save reload; cancellation returns only reserved crew',()=>{
+ const s=newGrandGame('senate'),port=s.regions.find(r=>r.id==='italiaS'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic'),messages=[];
+ const before={treasury:s.factions.senate.treasury,timber:s.development.senate.materials.timber,manpower:s.factions.senate.manpower};
+ const order=queueShip(s,'senate',port.id,'merchant');assert.equal(order.ok,true);
+ port.population=100;
+ for(let i=0;i<3;i++)advanceNaval(s,(_state,en,zh)=>messages.push({en,zh}));
+ assert.equal(s.naval.queues[0].remaining,order.months);
+ assert.equal(s.naval.queues[0].stalledReason,'workers');
+ assert.equal(fleet.ships.merchant||0,0);
+ assert.equal(messages.filter(m=>m.en.includes('Shipbuilding paused')).length,1);
+ assert.ok(messages.some(m=>m.zh.includes('造船暂停')));
+ const loaded=upgradeSave(JSON.parse(JSON.stringify(s))),loadedPort=loaded.regions.find(r=>r.id===port.id),loadedQueue=loaded.naval.queues[0],continued=[];
+ assert.equal(loadedQueue.stalledReason,'workers');
+ loadedPort.population=800;
+ advanceNaval(loaded,(_state,en,zh)=>continued.push({en,zh}));
+ assert.equal(loadedQueue.remaining,order.months-1);
+ assert.equal(loadedQueue.stalledReason,null);
+ assert.ok(continued.some(m=>m.en.includes('Shipbuilding resumed')&&m.zh.includes('造船继续')));
+ for(let i=1;i<order.months;i++)advanceNaval(loaded);
+ assert.equal(loaded.naval.fleets.find(f=>f.id===fleet.id).ships.merchant,1);
+ assert.equal(loaded.naval.queues.length,0);
+ const second=newGrandGame('senate'),secondPort=second.regions.find(r=>r.id===port.id);
+ assert.equal(queueShip(second,'senate',secondPort.id,'merchant').ok,true);
+ secondPort.population=100;advanceNaval(second);
+ const treasuryAtCancel=second.factions.senate.treasury,timberAtCancel=second.development.senate.materials.timber;
+ const canceled=cancelShipConstruction(second,'senate',secondPort.id);
+ assert.deepEqual(canceled,{ok:true,crewReturned:45});
+ assert.equal(second.naval.queues.length,0);
+ assert.equal(second.factions.senate.manpower,before.manpower);
+ assert.equal(second.factions.senate.treasury,treasuryAtCancel);
+ assert.equal(second.development.senate.materials.timber,timberAtCancel);
+ assert.equal(cancelShipConstruction(second,'senate',secondPort.id).ok,false);
+ assert.equal(second.factions.senate.manpower,before.manpower);
+});
+test('losing a shipyard building cancels its unfinished hull without launching it',()=>{
+ const s=newGrandGame('senate'),port=s.regions.find(r=>r.id==='italiaS'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ assert.equal(queueShip(s,'senate',port.id,'merchant').ok,true);
+ port.buildings=port.buildings.filter(id=>id!=='shipyard');
+ advanceNaval(s);
+ assert.equal(s.naval.queues.length,0);
+ assert.equal(fleet.ships.merchant||0,0);
+});
+test('zero residents block ship orders while a legacy port without population keeps its prior default',()=>{
+ const s=newGrandGame('senate'),port=s.regions.find(r=>r.id==='italiaS');
+ port.population=0;
+ assert.equal(queueShip(s,'senate',port.id,'merchant').reason,'workers');
+ delete port.population;
+ assert.equal(queueShip(s,'senate',port.id,'merchant').ok,true);
+ for(let i=0;i<3;i++)advanceNaval(s);
+ assert.equal(s.naval.queues.length,0);
 });
 test('a newly built ship joins a damaged fleet at full condition after launch',()=>{
  const s=newGrandGame('senate'),f=s.naval.fleets.find(x=>x.id==='senate-adriatic');
