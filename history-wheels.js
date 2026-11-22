@@ -23,24 +23,27 @@ export function initializeWheels(s){
  s.historyWheels||={version:1,ambition:'',chosenAt:null,changes:[],chains:[],nextId:1,pressureMonths:0,lastMonth:null};
  const w=s.historyWheels;w.chains||=[];w.changes||=[];w.nextId||=1;return w;
 }
+export const AMBITION_CHANGE_COST={stability:3,legitimacy:2};
 export function chooseAmbition(s,id,options={}){
  if(!availableAmbitions(s).includes(id))return false;
- const w=initializeWheels(s),allowed={treasury:[50,100,150],stability:[60,70,80],regions:[1,2,3]};
+ const w=initializeWheels(s),old=w.ambition,allowed={treasury:[50,100,150],stability:[60,70,80],regions:[1,2,3]};
  if(id==='custom'){
   const metric=options.metric||'treasury',target=Number(options.target)||100;
   if(!allowed[metric]?.includes(target))return false;
+  if(old==='custom'&&w.custom?.metric===metric&&w.custom?.target===target)return true;
   w.custom={metric,target,baseline:metric==='regions'?s.regions.filter(r=>r.owner===s.player).length:0};
  }
- if(w.ambition===id&&id!=='custom')return true;
+ if(old===id&&id!=='custom')return true;
  if(id==='military')w.militaryBaseline={regions:s.regions.filter(r=>r.owner===s.player).length,wins:(s.battles||[]).filter(b=>(b.attacker?.owner===s.player&&b.attackerWins)||(b.defender?.owner===s.player&&!b.attackerWins)).length};
  if(id==='economic'){
   const owned=s.regions.filter(r=>r.owner===s.player);
   w.economicBaseline={regions:owned.map(r=>r.id),buildings:owned.flatMap(r=>(r.buildings||[]).map(id=>`${r.id}:${id}`)),focusIds:(s.world?.nationalFocus?.[s.player]?.completed||[]).filter(fid=>focusById(s.player,fid)?.branch==='economic'),agreementIds:(s.agreements||[]).filter(a=>a.status==='active'&&a.type==='trade'&&a.parties?.includes(s.player)).map(a=>a.id)};
  }
- const old=w.ambition;w.ambition=id;w.chosenAt={year:s.year,month:s.month};
- w.changes.push({id:`ambition:${w.nextId++}`,from:old,to:id,year:s.year,month:s.month});
- // A change of plans is visible to the court, but does not invent a resource loss.
- s.log.unshift({year:s.year,month:s.month,en:`The court adopted ${AMBITIONS[id].name[0]} as its national ambition.`,zh:`朝廷将“${AMBITIONS[id].name[1]}”定为国家野心。`,kind:'government',topic:'ambition'});
+ const changing=!!old,f=s.factions[s.player];
+ if(changing&&f){f.stability=Math.max(0,(f.stability??0)-AMBITION_CHANGE_COST.stability);f.legitimacy=Math.max(0,(f.legitimacy??0)-AMBITION_CHANGE_COST.legitimacy)}
+ w.ambition=id;w.chosenAt={year:s.year,month:s.month};
+ w.changes.push({id:`ambition:${w.nextId++}`,from:old,to:id,year:s.year,month:s.month,...(changing?{cost:{...AMBITION_CHANGE_COST}}:{})});
+ s.log.unshift({year:s.year,month:s.month,en:changing?`The court changed its national ambition to ${AMBITIONS[id].name[0]}; administrative disruption reduced stability by 3 and legitimacy by 2.`:`The court adopted ${AMBITIONS[id].name[0]} as its national ambition.`,zh:changing?`朝廷改以“${AMBITIONS[id].name[1]}”为国家野心；行政调整使稳定度降低3、合法性降低2。`:`朝廷将“${AMBITIONS[id].name[1]}”定为国家野心。`,kind:'government',topic:'ambition'});
  s.log=s.log.slice(0,80);return true;
 }
 export function economicProjectStatus(s){
