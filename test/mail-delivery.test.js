@@ -43,3 +43,17 @@ test('ignoring a diplomatic letter sends no answer and has no foreign effect',()
  assert.equal(s.mail.messages.length,count);assert.equal(JSON.stringify(s.relations),before);
  advanceTo(s,s.year*12+s.month+12);assert.equal(JSON.stringify(s.relations),before);
 });
+
+test('an old treaty letter cannot bind a court that vanished during delivery',()=>{
+ const s=newGame('caesar'),m=send(s,'egypt','senate',{kind:'treaty',treatyType:'non_aggression'},['accept']);
+ m.courierRisk=0;m.arrival=s.year*12+s.month;
+ delete s.factions.egypt;
+ let calls=0;
+ advanceMail(s,{proposeAgreement:()=>{calls++;return {ok:true}}});
+ assert.equal(m.delivery,'received');
+ assert.equal(m.responses[0]?.choice,'failed');
+ m.responses[0].arrival=s.year*12+s.month;
+ advanceMail(s,{proposeAgreement:()=>{calls++;return {ok:true}}});
+ assert.equal(m.responses[0].outcome,'failed');
+ assert.equal(calls,0);
+});

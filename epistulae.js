@@ -796,6 +796,7 @@ export function advanceMail(s, actions = {}) {
   }
   for (const m of mail.messages) {
     if (m.delivery !== 'traveling' || m.arrival > now || ['strategic_reply','peace_reply'].includes(m.context?.kind)) continue;
+    if(!s.factions[m.recipient]){m.delivery='lost';continue}
     if(courierLost(s,m)){m.delivery='lost';continue}
     m.delivery = 'received';
     if(m.recipient===s.player&&m.context?.kind==='support_result'&&m.context.transfer>0){s.factions[s.player].treasury+=m.context.transfer;m.context.transfer=0}
@@ -810,8 +811,9 @@ export function advanceMail(s, actions = {}) {
         body:help?['The allied court has sent 5 treasury units in support.','盟邦已送出 5 单位国库援助。']:['The allied court cannot offer support at present.','盟邦目前无法提供援助。'],options:['acknowledge'],context:{kind:'support_result',transfer:help?5:0}});
     }
     if (m.recipient !== s.player && m.context?.kind === 'treaty' && actions.proposeAgreement) {
-      const key = pair(m.senderFaction, m.recipient),def=AGREEMENT_TYPES[m.context.treatyType],willingness=(s.relations[key] || 0)>=def.threshold&&s.factions[m.senderFaction].treasury>=def.cost;
-      m.responses.push({choice:willingness ? 'accept' : 'reject', year:s.year, month:s.month, ai:true,
+      const key = pair(m.senderFaction, m.recipient),def=AGREEMENT_TYPES[m.context.treatyType],sender=s.factions[m.senderFaction];
+      const willingness=sender&&def&&(s.relations[key] || 0)>=def.threshold&&sender.treasury>=def.cost;
+      m.responses.push({choice:!sender||!def?'failed':willingness?'accept':'reject', year:s.year, month:s.month, ai:true,
         arrival:now + courierMonths(s,m.destination,m.source), resolved:false});
     }
     if (m.recipient === s.player && m.priority === 'routine' && mail.preferences.autoArchiveRoutine) {
