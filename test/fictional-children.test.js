@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=missing-fate-privacy-1';
+import {newGame,upgradeSave} from '../engine.js?v=economic-project-1';
 import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=missing-fate-privacy-1';
 import {generateFictionalChildName} from '../fictional-names.js?v=faces-wheels-1';
 import {proceduralPortraitSvg,observedProceduralPortrait} from '../portrait-registry.js?v=missing-fate-privacy-1';

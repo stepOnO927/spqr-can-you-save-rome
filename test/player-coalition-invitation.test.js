@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=missing-fate-privacy-1';
+import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=economic-project-1';
 import {sendCoalitionInvitation,advanceCoalitionInvitations,answerCoalitionInvitation} from '../coalition-negotiations.js?v=mutual-audience-1';
 import {receivedMail,replyToLetter,syncCoalitionLetters} from '../epistulae.js?v=missing-fate-privacy-1';
 

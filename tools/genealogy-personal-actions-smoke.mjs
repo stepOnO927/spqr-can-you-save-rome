@@ -12,7 +12,7 @@ try{
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  const inject=async hidden=>{
   actorId=await page.evaluate(async hidden=>{
-   const {newGame}=await import('/engine.js?v=missing-fate-privacy-1');
+   const {newGame}=await import('/engine.js?v=economic-project-1');
    const {createFictionalPerson}=await import('/dynasties.js?v=missing-fate-privacy-1');
    const state=newGame('caesar');
    const id=createFictionalPerson(state,{name:['Test traveler','测试旅人'],faction:'caesar',birthYear:-80,location:'cisalpine'});
@@ -77,7 +77,7 @@ try{
 
  // A delivered fictional name remains the one used in an audience request.
  actorId=await page.evaluate(async()=>{
-  const {newGame,upgradeSave}=await import('/engine.js?v=missing-fate-privacy-1');
+  const {newGame,upgradeSave}=await import('/engine.js?v=economic-project-1');
   const {createFictionalPerson}=await import('/dynasties.js?v=missing-fate-privacy-1');
   const {addReport}=await import('/character-system.js?v=missing-fate-privacy-1');
   let s=newGame('caesar');
@@ -101,7 +101,7 @@ try{
  assert.deepEqual(state.meetings[0].reportedName,['Reported Person','报告中的人物']);
  // An undated forwarded name stays usable as a lead without revealing the hidden name.
  actorId=await page.evaluate(async()=>{
-  const {newGame,upgradeSave}=await import('/engine.js?v=missing-fate-privacy-1');
+  const {newGame,upgradeSave}=await import('/engine.js?v=economic-project-1');
   const {createFictionalPerson}=await import('/dynasties.js?v=missing-fate-privacy-1');
   const {addReport}=await import('/character-system.js?v=missing-fate-privacy-1');
   let s=newGame('caesar');

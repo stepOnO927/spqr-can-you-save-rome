@@ -21,7 +21,7 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));
  await page.goto(base+'/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=missing-fate-privacy-1');
+  const {newGame}=await import('/engine.js?v=economic-project-1');
   const s=newGame('caesar');s.wars=[];for(const army of s.armies){army.move=null;army.siege=null}
   s.inventions.caesar.knownMaterial.push('water');
   Object.assign(s.markets.regions.narbo.goods.stone,{stock:0,production:0,consumption:0});

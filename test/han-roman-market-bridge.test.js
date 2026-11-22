@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=missing-fate-privacy-1';
+import {newGame,upgradeSave} from '../engine.js?v=economic-project-1';
 import {attachHanWorld,hanWorld,advanceHanWorld,romanView,buyEasternImport} from '../han/world.js?v=missing-fate-privacy-1';
 import {placeEasternTrade,advanceEasternMarkets} from '../han/markets.js?v=faces-wheels-1';
 import {advanceDate} from '../han/util.js?v=han-1';

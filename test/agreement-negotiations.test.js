@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,canFormAlliance,diplomacy} from '../engine.js?v=missing-fate-privacy-1';
+import {newGame,upgradeSave,tick,canFormAlliance,diplomacy} from '../engine.js?v=economic-project-1';
 import {sendAgreementProposal,advanceAgreementProposals} from '../agreement-negotiations.js?v=agreement-courier-1';
 import {syncAgreementLetters,receivedMail} from '../epistulae.js?v=missing-fate-privacy-1';
 const step=s=>{s.month++;if(s.month>12){s.month=1;s.year++}advanceAgreementProposals(s,{checkAlliance:canFormAlliance,concludeAlliance:(state,a,b)=>diplomacy(state,a,b,'alliance',{priorConsent:true})});syncAgreementLetters(s)};

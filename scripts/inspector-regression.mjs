@@ -1,4 +1,4 @@
-import {newGame} from '../engine.js?v=missing-fate-privacy-1';
+import {newGame} from '../engine.js?v=economic-project-1';
 import {inspectState} from '../inspector-diagnostics.js';
 import assert from 'node:assert/strict';
 

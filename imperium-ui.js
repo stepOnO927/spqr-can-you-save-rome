@@ -13,6 +13,10 @@ import {ROLES,ROLE_NAMES,MODES,plansFor,planById,createPlan,assignRole,removeRol
 export const IMPERIUM_TABS=[['focus','✠'],['legions','▤'],['plans','➶']];
 export const IMPERIUM_LABELS={en:{focus:'Strategy',legions:'Legions',plans:'Operations'},zh:{focus:'国家方针',legions:'军团编制',plans:'作战计划'}};
 const ui={focusOpen:false,zoom:.82,pan:[24,24],selected:null,draft:null,draftFor:null,compare:[],plan:null,drawing:null,addRole:'offensive',addArmy:'',addTarget:''};
+export function openFocusProject(state,id){
+ if(!focusById(state.player,id))return false;
+ ui.selected=id;ui.focusOpen=true;return true;
+}
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const L=(lang,pair)=>Array.isArray(pair)?pair[lang==='zh'?1:0]:pair;
 const rname=(id,lang)=>L(lang,REGIONS.find(r=>r.id===id)?.name)||id;
@@ -240,7 +244,7 @@ export function bindImperium({state,lang,render,flash,log}){
   all('[data-imp-approve]').forEach(el=>el.onclick=()=>{const r=approvePlan(state,owner,plan.id,{log});if(!r.ok)flash(r.reason);render()});
   all('[data-imp-pause]').forEach(el=>el.onclick=()=>{pausePlan(state,owner,plan.id);render()});
   all('[data-imp-cancel-plan]').forEach(el=>el.onclick=()=>{cancelPlan(state,owner,plan.id);ui.drawing=null;render()});
-  all('[data-imp-rec]').forEach(el=>el.onclick=async()=>{const {issueMilitaryOrder}=await import('./engine.js?v=missing-fate-privacy-1');const r=approveRecommendation(state,owner,plan.id,Number(el.dataset.impRec),{issueOrder:issueMilitaryOrder});if(!r.ok)flash(r.reason||'');render()});
+  all('[data-imp-rec]').forEach(el=>el.onclick=async()=>{const {issueMilitaryOrder}=await import('./engine.js?v=economic-project-1');const r=approveRecommendation(state,owner,plan.id,Number(el.dataset.impRec),{issueOrder:issueMilitaryOrder});if(!r.ok)flash(r.reason||'');render()});
  }
  // Route drawing captures map clicks before the normal region selection.
  if(ui.drawing){all('[data-map-group]').forEach(el=>el.addEventListener('click',e=>{e.stopImmediatePropagation();e.preventDefault();const a=state.armies.find(x=>x.id===ui.drawing.armyId);if(!a)return;const last=ui.drawing.path.at(-1)||a.region,ids=el.dataset.mapGroup.split(','),next=ids.find(id=>legalStep(state,owner,last,id).ok);

@@ -7,6 +7,9 @@ import {newHanGame,tick as hanTick,serialize,loadHanSave} from '../han/engine.js
 import {available as hanAvailable,choose as hanChoose,status as hanStatus,advance as advanceHanAmbition} from '../han/ambitions.js';
 import {finalizeCampaign} from '../legacy.js';
 import {planSuccession} from '../governance.js';
+import {startFocus} from '../national-focus.js';
+import {proposeAgreement} from '../agreements.js';
+import {recommendations} from '../experience.js';
 import {sendCoalitionInvitation,advanceCoalitionInvitations,answerCoalitionInvitation} from '../coalition-negotiations.js';
 
 test('national ambitions are selected, measurable and save compatible',()=>{
@@ -193,4 +196,26 @@ test('Han continuity ambitions need an unbroken record and preserve older milest
  hanChoose(legacy,'independence');delete legacy.nationalAmbition.version;
  legacy.experience||={};legacy.experience.milestones=[{id:'ambition:independence'}];
  assert.equal(hanStatus(legacy).done,true,'older earned milestones must remain earned');
+});
+
+test('economic ambition requires a real investment after selection while older saves keep progress',()=>{
+ const s=newGame('egypt');chooseAmbition(s,'economic');
+ s.factions.egypt.treasury=120;for(const r of s.regions.filter(r=>r.owner==='egypt'))r.loyalty=65;
+ assert.equal(ambitionStatus(s).done,false,'natural treasury growth alone is not a completed project');
+ assert.ok(recommendations(s).some(r=>r.id==='economic_project'&&r.target.kind==='focus'),'guidance should open a real prerequisite project');
+ assert.equal(startFocus(s,'egypt','egy_house_ptolemy').ok,true);
+ for(let i=0;i<2;i++)tick(s);
+ assert.equal(startFocus(s,'egypt','egy_nile_administration').ok,true);
+ for(let i=0;i<4;i++)tick(s);
+ s.factions.egypt.treasury=120;for(const r of s.regions.filter(r=>r.owner==='egypt'))r.loyalty=65;
+ assert.equal(ambitionStatus(s).done,true,'a completed economic focus counts');
+ assert.equal(ambitionStatus(upgradeSave(JSON.parse(JSON.stringify(s)))).done,true);
+ const trade=newGame('egypt');chooseAmbition(trade,'economic');
+ trade.relations['egypt:parthia']=80;
+ assert.equal(proposeAgreement(trade,'egypt','parthia','trade').ok,true);
+ trade.factions.egypt.treasury=120;for(const r of trade.regions.filter(r=>r.owner==='egypt'))r.loyalty=65;
+ assert.equal(ambitionStatus(trade).done,true,'a newly concluded active trade agreement counts');
+ const old=newGame('egypt');chooseAmbition(old,'economic');delete old.historyWheels.economicBaseline;
+ old.factions.egypt.treasury=120;for(const r of old.regions.filter(r=>r.owner==='egypt'))r.loyalty=65;
+ assert.equal(ambitionStatus(old).done,true,'old saves retain the earlier goal rule');
 });

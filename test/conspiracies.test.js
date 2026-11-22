@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=missing-fate-privacy-1';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=economic-project-1';
 import {knownLeaders} from '../characters.js?v=succession-ui-recovery-1';
 import {advanceOperations,availableAgents} from '../character-system.js?v=missing-fate-privacy-1';
 import {advanceConspiracies,reassurePerson,politicalAmbition,potentialConspirators} from '../conspiracies.js?v=mutual-audience-1';

@@ -1,8 +1,8 @@
 // Cloud-only diagnostic playthroughs. Report observed state, not invented stories.
 import assert from 'node:assert/strict';
-import {newGame,tick} from '../engine.js?v=missing-fate-privacy-1';
+import {newGame,tick} from '../engine.js?v=economic-project-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=missing-fate-privacy-1';
-import {chooseAmbition,ambitionStatus} from '../history-wheels.js?v=missing-fate-privacy-1';
+import {chooseAmbition,ambitionStatus} from '../history-wheels.js?v=economic-project-1';
 import {newHanGame,tick as tickHan} from '../han/engine.js?v=missing-fate-privacy-1';
 import {choose as chooseHanAmbition,status as hanAmbitionStatus} from '../han/ambitions.js?v=guardian-wheels-merge-2';
 

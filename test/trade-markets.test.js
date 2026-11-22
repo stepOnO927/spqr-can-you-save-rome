@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,recruit,resolveBattle} from '../engine.js?v=missing-fate-privacy-1';
+import {newGame,upgradeSave,recruit,resolveBattle} from '../engine.js?v=economic-project-1';
 import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
 import {COMMODITIES,initializeMarkets,quoteTrade,placeTradeOrder,advanceMarkets,proposeSupplyContract,cancelSupplyContract,grantMerchantPrivilege,activeMerchantPrivilege} from '../trade-markets.js?v=faces-wheels-1';
 import {previewPersonTravel} from '../personal-diplomacy.js?v=missing-fate-privacy-1';

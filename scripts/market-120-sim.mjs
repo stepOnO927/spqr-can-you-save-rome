@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=missing-fate-privacy-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=economic-project-1';
 import {newHanGame,tick as tickHan,loadHanSave} from '../han/engine.js?v=missing-fate-privacy-1';
 import {rulerPortrait} from '../han/rulers.js';
 import {courtPortraitSrc} from '../han/court-portrait.js';

@@ -6,6 +6,15 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `234b67d4` is integrated. Roman economic ambition now requires a
+real post-selection investment while older saves retain their prior progress.
+The expanded engine retains its military-supply and Han integration exports,
+and the project button uses the same engine module instance as the campaign.
+The focused economic-ambition and module-version checks pass 11/11. The full
+local suite passes 1,253/1,253; the 120-month Roman/Han market simulation and
+Wheels long-campaign scenarios pass. GitHub checks for this latest merge are
+pending.
+
 Main through `c8715173` is integrated. Its missing-person death-date privacy
 fix remains in the genealogy display and procedural portraits: an unreported
 death does not reveal a year or age while the person is still missing. The
