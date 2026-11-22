@@ -73,6 +73,36 @@ test('navigation trouble delays a real merchant delivery without losing cargo or
  assert.equal(s.naval.reports.filter(r=>r.kind==='interrupted-grain-shortage'&&r.owner==='senate').length,1);
 });
 
+test('a navigation delay before the final sea zone explains a later real food shortage',()=>{
+ let s=newGrandGame('senate');s.wars=[];s.naval.pirates=[];s.factions.senate.treasury=500;s.factions.senate.food=0;
+ for(const route of s.naval.routes)if(route.id!=='egypt-italy')route.pausedBy=[s.regions.find(r=>r.id===route.from)?.owner].filter(Boolean);
+ s.year=-48;s.month=5;advanceNaval(s);
+ const sailing=s.naval.voyages.find(v=>v.routeId==='egypt-italy'&&v.phase==='outbound');
+ assert.ok(sailing&&sailing.cargo>0,'a crewed Egyptian grain ship must actually leave port');
+ sailing.zone='central';sailing.path=['sicilian','tyrrhenian'];
+ s.naval.fleets=[];
+ const onTime=upgradeSave(JSON.parse(JSON.stringify(s)));
+ onTime.naval.voyages.find(v=>v.id===sailing.id).navigationDelayed=true;
+ s.month=6;onTime.month=6;s.seed=1972;onTime.seed=1972;
+ advanceNaval(s);advanceNaval(onTime);
+ const delayed=s.naval.voyages.find(v=>v.id===sailing.id);
+ assert.equal(s.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'navigation');
+ assert.equal(delayed.zone,'sicilian');assert.deepEqual(delayed.path,['sicilian','tyrrhenian']);
+ s.month=7;onTime.month=7;advanceNaval(s);advanceNaval(onTime);
+ assert.equal(onTime.naval.routes.find(r=>r.id==='egypt-italy').last.reason,'delivered');
+ assert.equal(delayed.zone,'sicilian');assert.deepEqual(delayed.path,['tyrrhenian']);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ const crisisFood=-nationalBudget(s,'senate').foodNet-2;
+ s.factions.senate.food=crisisFood;onTime.factions.senate.food=crisisFood+sailing.cargo;
+ tick(s);tick(onTime);
+ const shortage=s.naval.reports.find(r=>r.kind==='interrupted-grain-shortage'&&r.owner==='senate');
+ assert.equal(shortage?.month,8);
+ assert.equal(shortage?.cause,'navigation');assert.equal(shortage?.deficit,2);
+ assert.equal(onTime.factions.senate.lastFoodShortage,undefined);
+ assert.equal(onTime.factions.senate.stability-s.factions.senate.stability,1);
+ assert.equal(s.naval.reports.filter(r=>r.kind==='interrupted-grain-shortage'&&r.owner==='senate').length,1);
+});
+
 test('harbor congestion delays real cargo and payment, survives reload, and improves with a warehouse',()=>{
  let s=newGrandGame('senate');s.wars=[];s.naval.pirates=[];s.factions.senate.treasury=500;
  const port=s.regions.find(r=>r.id==='t016');port.civicSatisfaction=25;

@@ -174,9 +174,10 @@ export function harborTradeCapacity(s,port){
 function reportInterruptedGrainShortages(s,log){
  const byBuyer=new Map();
  for(const v of s.naval.voyages){
-  // Trade arrives after the month's food calculation. A navigation delay
-  // affects a shortage only from the following economic month onward.
-  const navigationWaiting=Number.isFinite(v.navigationDelayYear)&&Number.isFinite(v.navigationDelayMonth)&&v.navigationDelayYear*12+v.navigationDelayMonth<s.year*12+s.month&&v.path.length===1&&v.zone===portZone(v.to);
+  // Trade arrives after the month's food calculation. Once the delayed ship
+  // has one leg left, an undelayed ship would already have delivered. This
+  // also applies when that final leg starts in a different sea zone.
+  const navigationWaiting=Number.isFinite(v.navigationDelayYear)&&Number.isFinite(v.navigationDelayMonth)&&v.navigationDelayYear*12+v.navigationDelayMonth<s.year*12+s.month&&v.path.length===1;
   if(v.good!=='grain'||v.phase!=='outbound'||v.shortageReported||v.cargo<=0||!Number.isFinite(v.price)||v.price<=0||!(v.blockedMonths>0||v.congestedMonths>0||navigationWaiting)||v.path.length&&!navigationWaiting)continue;
   const buyer=s.factions[v.buyer],from=s.regions.find(r=>r.id===v.from),to=s.regions.find(r=>r.id===v.to);
   const shortage=buyer?.lastFoodShortage;

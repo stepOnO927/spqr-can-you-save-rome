@@ -14,7 +14,8 @@ try{
  await context.route('http://spqr.test/**',async route=>{const url=new URL(route.request().url());if(url.hostname==='spqr.test'&&url.pathname==='/map-lab/vendor/maplibre-gl.js'){await route.fulfill({status:200,contentType:'text/javascript',body:mapMock});return}const relative=url.pathname==='/'?'index.html':url.pathname==='/map-lab/'?'map-lab/index.html':url.pathname.slice(1),target=path.resolve(root,relative);if(!target.startsWith(root+path.sep)){await route.abort();return}try{const body=await readFile(target),ext=path.extname(target),contentType={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml'}[ext]||'application/octet-stream';await route.fulfill({status:200,contentType,body})}catch{await route.fulfill({status:404,body:'Not found'})}});
  const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
  await page.goto('http://spqr.test/',{waitUntil:'domcontentloaded'});
- await page.locator('#entry-senate').click();await page.waitForURL('**/map-lab/');await page.locator('.grand-site').first().waitFor();
+ await page.locator('#entry-senate').click();await page.waitForURL('**/map-lab/');
+ try{await page.locator('.grand-site').first().waitFor({timeout:10000})}catch(error){throw new Error(`Atlas did not load: ${error.message}\nBrowser errors: ${errors.join(' | ')}`)}
  await page.locator('#naval').click();
  await page.locator('.naval-content').waitFor({timeout:10000});
  assert.match(await page.locator('.naval-content').innerText(),/MARITIME ARMY SUPPLY/);
@@ -40,6 +41,14 @@ try{
  assert.match(await page.locator('.naval-content').innerText(),/Arrivals per month 2/);
  await page.locator('[data-toggle-trade="egypt-italy"]').click();
  assert.match(await page.locator('[data-toggle-trade="egypt-italy"]').innerText(),/PAUSE IMPORTS/);
+ await page.locator('[data-naval-tab="jobs"]').click();
+ const tradeCandidate=await page.locator('[data-job-person="trade"] option[value]:not([value=""])').first().getAttribute('value');
+ assert.ok(tradeCandidate,'the Senate must have an available trade administrator candidate');
+ await page.locator('[data-job-person="trade"]').selectOption(tradeCandidate);
+ await page.locator('[data-appoint-job="trade"]').click();
+ assert.equal(await page.locator('[data-dismiss-job="trade"]').count(),1,'the appointed official is visible in the job roster');
+ await page.locator('[data-dismiss-job="trade"]').click();
+ assert.equal(await page.locator('[data-dismiss-job="trade"]').count(),0,'dismissal uses the engine export and updates the roster');
  const reports=await page.evaluate(async()=>{
   const {newGrandGame}=await import('../engine.js?v=196');
   const {advanceNaval,reserveFleet,mobilizeFleet}=await import('../naval.js?v=44');
