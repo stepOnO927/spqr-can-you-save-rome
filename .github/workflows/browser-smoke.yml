@@ -85,6 +85,7 @@ jobs:
               node tools/fictional-family-age-smoke.mjs
               node tools/family-loan-visibility-smoke.mjs
               node tools/contact-credit-privacy-smoke.mjs
+              node tools/claimant-aid-forces-smoke.mjs
               node tools/foreign-name-privacy-smoke.mjs
               node tools/campaign-intelligence-privacy-smoke.mjs
               node tools/strategy-board-name-privacy-smoke.mjs

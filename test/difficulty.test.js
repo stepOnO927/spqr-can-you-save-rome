@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=meeting-history-consistency-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=meeting-history-consistency-1';
-import {newScenario} from '../scenarios.js?v=meeting-history-consistency-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=claimant-force-accounting-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=claimant-force-accounting-1';
+import {newScenario} from '../scenarios.js?v=claimant-force-accounting-1';
 
 test('difficulty does not secretly penalize the player economy',()=>{
  const states=['standard','hard','expert'].map(difficulty=>{const s=newGame('caesar');s.difficulty=difficulty;tick(s);return s});

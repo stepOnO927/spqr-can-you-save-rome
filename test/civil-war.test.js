@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,resolveBattle,upgradeSave,isWar,tick,sendInquiry} from '../engine.js?v=meeting-history-consistency-1';
-import {contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,previewMission,queueMission} from '../character-system.js?v=meeting-history-consistency-1';
-import {knownDynasticFactions,resolveDynasticWars} from '../civil-war.js?v=meeting-history-consistency-1';
-import {reportedControl} from '../control-intelligence.js?v=meeting-history-consistency-1';
+import {newGame,region,resolveBattle,upgradeSave,isWar,tick,sendInquiry} from '../engine.js?v=claimant-force-accounting-1';
+import {contestLeadership,advanceDisputes,addReport,supportClaimant,advanceOperations,previewMission,queueMission} from '../character-system.js?v=claimant-force-accounting-1';
+import {knownDynasticFactions,resolveDynasticWars,startDynasticWar} from '../civil-war.js?v=claimant-force-accounting-1';
+import {reportedControl} from '../control-intelligence.js?v=claimant-force-accounting-1';
 
 const seedFor=(min,max)=>Array.from({length:100000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=min&&q<max});
 function outbreak(parent='egypt'){
@@ -22,6 +22,27 @@ test('a garrison in the potential breakaway theater prevents the territory from 
  const s=newGame();contestLeadership(s,'egypt','cleopatra');s.factions.egypt.stability=30;s.world.disputes.egypt.months=5;s.world.disputes.egypt.duration=11;
  s.armies.find(a=>a.id==='egyptguard').region='egyptUpper';s.world.intelSeed=seedFor(.7,.8);advanceDisputes(s);
  assert.equal(region(s,'egyptUpper').owner,'egypt');assert.equal(s.factions.egypt_claimant,undefined);
+});
+test('a distant field army is not teleported into a claimant force',()=>{
+ let s=newGame('caesar');assert.ok(contestLeadership(s,'egypt','cleopatra'));const guard=s.armies.find(a=>a.id==='egyptguard');guard.region='gaul';s.factions.egypt.manpower=600;const before=guard.men;
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(startDynasticWar(s,'egypt','cleopatra'),true);
+ assert.equal(s.armies.find(a=>a.id==='egyptguard').men,before);assert.equal(s.armies.find(a=>a.owner==='egypt_claimant').men,600);assert.equal(s.factions.egypt.manpower,0);
+});
+test('a small nearby detachment does not mask a larger eligible local force',()=>{
+ const s=newGame('caesar');assert.ok(contestLeadership(s,'egypt','cleopatra'));const guard=s.armies.find(a=>a.id==='egyptguard'),before=guard.men;
+ s.armies.unshift({...guard,id:'small-local',men:100,characterId:null});s.factions.egypt.manpower=0;
+ assert.equal(startDynasticWar(s,'egypt','cleopatra'),true);assert.equal(s.armies.find(a=>a.id==='small-local').men,100);assert.equal(guard.men,before-Math.floor(before*.2));assert.equal(s.armies.find(a=>a.owner==='egypt_claimant').men,Math.floor(before*.2));
+});
+test('delivered military backing can form the claimant force without duplicating troops',()=>{
+ let s=newGame('caesar');assert.ok(contestLeadership(s,'egypt','cleopatra'));const guard=s.armies.find(a=>a.id==='egyptguard');guard.region='gaul';s.factions.egypt.manpower=0;const before=guard.men,romanManpower=s.factions.caesar.manpower;
+ addReport(s,'caesar','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy'});assert.ok(supportClaimant(s,'caesar','egypt','cleopatra',null,'military').ok);s.world.intelSeed=1000;for(let i=0;i<4;i++)advanceOperations(s);
+ assert.equal(s.operations[0].status,'complete');assert.equal(s.factions.caesar.manpower,romanManpower-1000);assert.equal(s.world.disputes.egypt.militaryAid.cleopatra,1000);
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(startDynasticWar(s,'egypt','cleopatra'),true);
+ assert.equal(s.armies.find(a=>a.id==='egyptguard').men,before);assert.equal(s.armies.find(a=>a.owner==='egypt_claimant').men,1000);assert.equal(s.world.disputes.egypt.militaryAid.cleopatra,undefined);
+});
+test('a claimant cannot raise a force from an unrelated army when no reserve exists',()=>{
+ const s=newGame('caesar');assert.ok(contestLeadership(s,'egypt','cleopatra'));const guard=s.armies.find(a=>a.id==='egyptguard');guard.region='gaul';s.factions.egypt.manpower=0;const before={men:guard.men,treasury:s.factions.egypt.treasury,food:s.factions.egypt.food};
+ assert.equal(startDynasticWar(s,'egypt','cleopatra'),false);assert.equal(guard.men,before.men);assert.equal(s.factions.egypt.treasury,before.treasury);assert.equal(s.factions.egypt.food,before.food);assert.equal(s.factions.egypt_claimant,undefined);
 });
 test('a claimant who wins the actual field battle takes the realm without instantly updating foreign reports',()=>{
  const s=outbreak(),rival=s.armies.find(a=>a.owner==='egypt_claimant'),guard=s.armies.find(a=>a.owner==='egypt');rival.men=100000;s.wars.push(['egypt_claimant','senate']);

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=meeting-history-consistency-1';
-import {createFictionalPerson} from '../dynasties.js?v=meeting-history-consistency-1';
-import {chronicleCharacterName} from '../map-lab/chronicle-ui.js?v=meeting-history-consistency-1';
+import {newGame,upgradeSave} from '../engine.js?v=claimant-force-accounting-1';
+import {createFictionalPerson} from '../dynasties.js?v=claimant-force-accounting-1';
+import {chronicleCharacterName} from '../map-lab/chronicle-ui.js?v=claimant-force-accounting-1';
 
 test('chronicle filters use the recorded name rather than a hidden live fictional name',()=>{
  let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Old name','旧姓名'],faction:'egypt',birthYear:-75});s.chronicle.entries.unshift({id:999,characterId:id,personName:['Known name','已知姓名']});
