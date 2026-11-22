@@ -2,6 +2,7 @@ import {isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement
 import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=faces-name-disagreement-1';
 import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 import {assignFictionalFieldCommander} from './dynasties.js?v=faces-name-disagreement-1';
+import {ROUTES} from './data.js?v=phase-x-1';
 
 // Alternate-history claimant commands use real game theaters and armies.
 // The setup is a simulation, not a reconstruction of a historical campaign.
@@ -39,8 +40,12 @@ export function knownDynasticFactions(s,viewer){
 export function startDynasticWar(s,parent,claimant){
  const cfg=CONFIG[parent],dispute=s.world.disputes?.[parent],person=s.world.characters?.[claimant],base=s.factions[parent],home=cfg?.theater?s.regions.find(r=>r.id===cfg.theater):s.regions.find(r=>r.owner===parent&&r.id!=='roma'&&!s.armies.some(a=>a.region===r.id&&a.men>0));
  if(!cfg||!dispute||dispute.war||s.factions[cfg.rival]||!person?.alive||person.missing||person.travel||person.asylumHost||!base||!home||home.owner!==parent||!(s.world.claimants[parent]||[]).includes(claimant)||s.armies.some(a=>a.characterId===claimant)||s.armies.some(a=>a.region===home.id&&a.men>0))return false;
- const guard=s.armies.find(a=>a.owner===parent&&a.men>0&&!a.move&&!a.siege),defectors=guard?Math.min(1000,Math.floor(guard.men*.2)):0,recruits=Math.min(1000,Math.max(0,base.manpower));
- if(defectors+recruits<500)return false;
+ // A local detachment can defect across an adjacent land frontier; a distant
+ // field army cannot have soldiers teleported to the claimant's theater.
+ const adjacent=new Set(ROUTES.filter(([a,b,kind])=>kind!=='sea'&&(a===home.id||b===home.id)).map(([a,b])=>a===home.id?b:a));
+ const guard=s.armies.filter(a=>a.owner===parent&&a.men>0&&!a.move&&!a.siege&&adjacent.has(a.region)&&s.regions.some(r=>r.id===a.region&&r.owner===parent)).sort((a,b)=>b.men-a.men||a.id.localeCompare(b.id))[0],defectors=guard?Math.min(1000,Math.floor(guard.men*.2)):0,recruits=Math.min(1000,Math.max(0,base.manpower));
+ const reserve=dispute.militaryAid?.[claimant],aid=Number.isFinite(reserve)?Math.max(0,reserve):0;
+ if(defectors+recruits+aid<500)return false;
  if(guard)guard.men-=defectors;base.manpower-=recruits;
  const treasury=Math.min(15,Math.max(0,base.treasury)),food=Math.min(12,Math.max(0,base.food));base.treasury-=treasury;base.food-=food;
  // A later rebellion reuses the public faction slot but is a different court.
@@ -49,7 +54,6 @@ export function startDynasticWar(s,parent,claimant){
  s.factions[cfg.rival]={treasury,food,manpower:0,stability:45,legitimacy:35,tax:'normal',research:0};
  person.faction=cfg.rival;person.location=home.id;home.owner=cfg.rival;home.loyalty=45;
  s.world.leadership[cfg.rival]=[claimant];
- const aid=dispute.militaryAid?.[claimant]||0;
  const age=ageRange(claimant,s.year),minor=age!==null&&age[0]<16;
  // A claimant who may be a minor remains the political figurehead; a saved
  // fictional officer leads the army instead of implying the child commands it.
