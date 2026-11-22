@@ -16,3 +16,8 @@ test('a missing leader can die privately, with succession and stability deferred
 test('illness can improve during missing time and is shown only when contact resumes',()=>{
  const s=newGame('caesar'),c=s.world.characters.antony,total=1-Math.pow(1-.77,1/12),seed=seedWhere(q=>q>=total*.22/.77&&q<total);c.health='ill';c.location=null;c.missing={origin:'cisalpine',remaining:1,year:s.year-1,month:12,healthSeed:seed};advanceCharacters(s);assert.equal(c.health,'recovering');assert.match(renderGenealogyDossier(s,'antony',true),/游戏健康: 未知/);month(s);advanceMissingCommanders(s);assert.equal(c.missing,undefined);assert.match(renderGenealogyDossier(s,'antony',true),/游戏健康: 康复中/);
 });
+
+
+test('a hidden health outcome does not consume unrelated random streams',()=>{
+ const start=newGame('senate'),c=start.world.characters.pompey;c.missing={origin:'roma',remaining:5,year:start.year-1,month:12,healthSeed:seedWhere(q=>q<1-Math.pow(1-.45,1/12))};c.health='dying';const a=upgradeSave(structuredClone(start)),b=upgradeSave(structuredClone(start));b.world.characters.pompey.health='healthy';advanceCharacters(a);advanceCharacters(b);assert.equal(a.world.characters.pompey.alive,false);assert.equal(b.world.characters.pompey.alive,true);assert.equal(a.world.intelSeed,b.world.intelSeed);assert.equal(a.world.dynasties.seed,b.world.dynasties.seed);
+});
