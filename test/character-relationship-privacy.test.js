@@ -17,6 +17,6 @@ test('foreign dossier relationships are limited to completed meetings observed b
 });
 
 test('a missing friendly person does not expose live own-court trust',()=>{
- const s=newGame('caesar');s.world.personalRelations['caesar:antony']={trust:71,meetings:1};assert.ok(visiblePersonalRelationships(s,'caesar',true).some(x=>x.other==='antony'&&x.trust===71));
+ const s=newGame('caesar');s.world.personalRelations[['caesar','antony'].sort().join(':')]={trust:71,meetings:1};assert.ok(visiblePersonalRelationships(s,'caesar',true).some(x=>x.other==='antony'&&x.trust===71));
  s.world.characters.caesar.missing={year:s.year,month:s.month};assert.ok(!visiblePersonalRelationships(s,'caesar',true).some(x=>x.kind==='own'));
 });
