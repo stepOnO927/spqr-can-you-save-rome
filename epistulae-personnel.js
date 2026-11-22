@@ -1,5 +1,6 @@
 import {CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
 import {createFictionalPerson,recordLifeEvent} from './dynasties.js?v=control-delivery-1';
+import {recordLegendEvidence} from './legend.js?v=names-of-legend-1';
 
 const date=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');
@@ -106,6 +107,7 @@ function incident(s,p,policy,eventId){
   }
   p.history.push({status:p.status,year:s.year,month:s.month,eventId});
   s.mail.personnelIncidents.push({eventId,characterId:p.characterId,kind:'envoy',policy,host,origin,year:s.year,month:s.month});
+  if(policy==='execute'){const ruler=(s.world.leadership[host]||[]).find(id=>s.world.characters[id]?.alive);if(ruler)recordLegendEvidence(s,ruler,'execution',{reference:`envoy:${eventId}:${p.characterId}`,audiences:[host,origin],detail:['An envoy was killed under the court’s harsh wartime policy.','一名使者在宫廷严厉战时政策下遇害。']})}
   if(host===s.player||origin===s.player){
     const who=CHARACTER_CATALOG[p.characterId]?.name||[p.characterId,p.characterId];
     const words=policy==='safe_departure'?[info=>`${info} received safe conduct to depart.`,info=>`${info}获准安全离境。`]

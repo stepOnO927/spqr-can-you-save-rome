@@ -33,10 +33,10 @@ const BORN_PORTRAITS={male:['born-m1','born-m2','born-m3','born-m4','born-m5','b
 // Each portrait is reserved permanently for the first documented fictional
 // nominee of that court in a save; names alone never establish identity.
 const COURT_PORTRAITS={
- armenia:['Fictional Armenian court nominee 1','虚构亚美尼亚宫廷人选1','fictional-court-armenia'],
- numidia:['Fictional Numidian court nominee 1','虚构努米底亚宫廷人选1','fictional-court-numidia'],
- galatia:['Fictional Galatian court nominee 1','虚构加拉太宫廷人选1','fictional-court-galatia'],
- bosporus:['Fictional Bosporan court nominee 1','虚构博斯普鲁斯宫廷人选1','fictional-court-bosporus']
+ armenia:['Fictional Armenian court nominee 1','虚构亚美尼亚宫廷人选1','fictional-court-armenia','Aram of Artaxata','阿尔塔克萨塔的阿拉姆'],
+ numidia:['Fictional Numidian court nominee 1','虚构努米底亚宫廷人选1','fictional-court-numidia','Iarbas of Cirta','奇尔塔的伊阿尔巴斯'],
+ galatia:['Fictional Galatian court nominee 1','虚构加拉太宫廷人选1','fictional-court-galatia','Brennos of Ancyra','安基拉的布伦诺斯'],
+ bosporus:['Fictional Bosporan court nominee 1','虚构博斯普鲁斯宫廷人选1','fictional-court-bosporus','Dynamis of Pantikapaion','潘提卡帕伊翁的狄娜米斯']
 };
 // These paintings belong to the original fictional consular applicants,
 // not to every later person who happens to receive the same generated name.
@@ -106,13 +106,24 @@ function cursusPortraitKey(state,id){
 }
 export function assignCourtPortrait(state,id){
  const d=state.world?.dynasties,c=state.world?.characters?.[id],saved=d?.catalog?.[id],entry=COURT_PORTRAITS[saved?.faction];
- if(!entry||!c||!saved?.fictional||saved.name?.[0]!==entry[0]||saved.name?.[1]!==entry[1]||!Number.isInteger(c.birthYear)||!(d.lives?.[id]||[]).some(e=>e.simulated&&e.en?.startsWith('Entered this campaign as a fictional court nominee;')))return null;
+ if(!entry||!c||!saved?.fictional||!([entry[0],entry[1]].every((v,i)=>saved.name?.[i]===v)||[entry[3],entry[4]].every((v,i)=>saved.name?.[i]===v))||!Number.isInteger(c.birthYear)||!(d.lives?.[id]||[]).some(e=>e.simulated&&e.en?.startsWith('Entered this campaign as a fictional court nominee;')))return null;
  d.courtPortraitClaims||={};if(d.courtPortraitClaims[id]||Object.values(d.courtPortraitClaims).some(x=>x?.key===entry[2]))return null;
  d.courtPortraitClaims[id]={key:entry[2],name:[...saved.name],faction:saved.faction,birthYear:c.birthYear};return entry[2];
 }
 function courtPortraitKey(state,id){
  const d=state.world?.dynasties,claim=d?.courtPortraitClaims?.[id],c=state.world?.characters?.[id],saved=d?.catalog?.[id],entry=COURT_PORTRAITS[claim?.faction];
- if(!entry||!c||!saved?.fictional||saved.faction!==claim.faction||claim.key!==entry[2]||c.birthYear!==claim.birthYear||JSON.stringify(saved.name)!==JSON.stringify(claim.name)||claim.name?.[0]!==entry[0]||claim.name?.[1]!==entry[1])return null;
+ if(!entry||!c||!saved?.fictional||saved.faction!==claim.faction||claim.key!==entry[2]||c.birthYear!==claim.birthYear||JSON.stringify(saved.name)!==JSON.stringify(claim.name)||!([entry[0],entry[1]].every((v,i)=>claim.name?.[i]===v)||[entry[3],entry[4]].every((v,i)=>claim.name?.[i]===v)))return null;
+ return claim.key;
+}
+export function assignLegendPortrait(state,id){
+ const d=state.world?.dynasties,c=state.world?.characters?.[id],saved=d?.catalog?.[id],key='fictional-legend-redbeard';
+ if(!d||!c||!saved?.fictional||saved.role?.[0]!=='Fictional court nominee in this campaign'||saved.appearance?.verifiedPortrait!==key||saved.appearance?.redBeard!==true||c.sex!=='male'||!Number.isInteger(c.birthYear)||!(d.lives?.[id]||[]).some(e=>e.simulated&&e.en?.startsWith('Entered this campaign as a fictional court nominee;')))return null;
+ d.legendPortraitClaims||={};if(d.legendPortraitClaims[id]||Object.values(d.legendPortraitClaims).some(x=>x?.key===key))return null;
+ d.legendPortraitClaims[id]={key,name:[...saved.name],faction:saved.faction,birthYear:c.birthYear,sex:c.sex};return key;
+}
+function legendPortraitKey(state,id){
+ const claim=state.world?.dynasties?.legendPortraitClaims?.[id],c=state.world?.characters?.[id],saved=state.world?.dynasties?.catalog?.[id];
+ if(!claim||claim.key!=='fictional-legend-redbeard'||!c||!saved?.fictional||saved.appearance?.verifiedPortrait!==claim.key||saved.appearance?.redBeard!==true||c.sex!=='male'||claim.sex!=='male'||saved.faction!==claim.faction||c.birthYear!==claim.birthYear||JSON.stringify(saved.name)!==JSON.stringify(claim.name))return null;
  return claim.key;
 }
 export function assignBornPortrait(state,id){
@@ -133,6 +144,7 @@ export function fictionalPortraitKey(state,id){
  const entry=OPENING_PORTRAITS[id],person=state.world?.characters?.[id],saved=state.world?.dynasties?.catalog?.[id];
  const senator=senatorPortraitKey(state,id);if(senator)return senator;
  const cursus=cursusPortraitKey(state,id);if(cursus)return cursus;
+ const legend=legendPortraitKey(state,id);if(legend)return legend;
  const court=courtPortraitKey(state,id);if(court)return court;
  const born=bornPortraitKey(state,id);if(born)return born;
  if(entry&&saved?.fictional&&saved.name?.[0]===entry[0]&&saved.name?.[1]===entry[3]&&person?.birthYear===entry[1]&&(saved.faction==null||saved.faction===entry[5])&&(person.sex==null||person.sex==='unknown'||person.sex===entry[4]))return entry[2];
@@ -145,6 +157,6 @@ export function fictionalPortraitKey(state,id){
 // Foreign artwork becomes available only from this viewer's completed meeting
 // snapshot. It must not be recomputed from the person's current hidden state.
 export function observedFictionalPortrait(state,id){
- const allowed=new Set([...Object.values(OPENING_PORTRAITS).map(x=>x[2]),...Object.values(SCENARIO_PORTRAITS).map(x=>x[2]),...INSTITUTION_PORTRAITS.map(x=>x[4]),...Object.values(COURT_PORTRAITS).map(x=>x[2]),...CURSUS_PORTRAITS.map(x=>x.key),...SENATOR_PORTRAITS.map(x=>'fictional-senator-'+x[6]),...Object.values(BORN_PORTRAITS).flatMap(keys=>keys.flatMap(key=>[key+'-infant',key+'-child',key+'-adult'])),'fictional-varus']),now=state.year*12+state.month;
+ const allowed=new Set([...Object.values(OPENING_PORTRAITS).map(x=>x[2]),...Object.values(SCENARIO_PORTRAITS).map(x=>x[2]),...INSTITUTION_PORTRAITS.map(x=>x[4]),...Object.values(COURT_PORTRAITS).map(x=>x[2]),'fictional-legend-redbeard',...CURSUS_PORTRAITS.map(x=>x.key),...SENATOR_PORTRAITS.map(x=>'fictional-senator-'+x[6]),...Object.values(BORN_PORTRAITS).flatMap(keys=>keys.flatMap(key=>[key+'-infant',key+'-child',key+'-adult'])),'fictional-varus']),now=state.year*12+state.month;
  return (state.meetings||[]).map(m=>({m,key:m.actor===state.player&&m.target===id?m.portraitKey:m.targetFaction===state.player&&m.person===id?m.personPortraitKey:null})).filter(({m,key})=>m.status==='met'&&allowed.has(key)&&Number.isFinite(m.resolvedYear??m.year)&&Number.isInteger(m.resolvedMonth??m.month)&&(m.resolvedMonth??m.month)>=1&&(m.resolvedMonth??m.month)<=12&&(m.resolvedYear??m.year)*12+(m.resolvedMonth??m.month)<=now).sort((a,b)=>((b.m.resolvedYear??b.m.year)*12+(b.m.resolvedMonth??b.m.month))-((a.m.resolvedYear??a.m.year)*12+(a.m.resolvedMonth??a.m.month)))[0]?.key||null;
 }
