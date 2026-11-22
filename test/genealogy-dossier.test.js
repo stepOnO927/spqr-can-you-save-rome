@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=marriage-economy-merge-1';
-import {createFictionalPerson} from '../dynasties.js?v=marriage-economy-merge-1';
-import {renderGenealogy,renderGenealogyDossier} from '../genealogy-ui.js?v=marriage-economy-merge-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-city-diplomacy-2';
+import {createFictionalPerson} from '../dynasties.js?v=world-kings-city-diplomacy-2';
+import {renderGenealogy,renderGenealogyDossier} from '../genealogy-ui.js?v=world-kings-city-diplomacy-2';
 
 test('own historical character separates simulated health and commands from historical reference',()=>{
  let s=newGame('caesar'),c=s.world.characters.caesar;c.health='seriously_ill';c.loyalty=23;c.location='cisalpine';

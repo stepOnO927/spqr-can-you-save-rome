@@ -1,7 +1,7 @@
-import {newGame,tick} from '../engine.js?v=marriage-economy-merge-1';
+import {newGame,tick} from '../engine.js?v=world-kings-city-diplomacy-2';
 import assert from 'node:assert/strict';
-import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
-import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
+import {proposeAgreement} from '../agreements.js?v=world-kings-city-diplomacy-2';
+import {warningLedger} from '../warning-ledger.js?v=world-kings-city-diplomacy-2';
 
 // Identical unforced openings, different seeded random streams; both the
 // fully automated world and an ordinary passive Roman player are exercised.

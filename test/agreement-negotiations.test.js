@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,canFormAlliance,diplomacy} from '../engine.js?v=marriage-economy-merge-1';
-import {sendAgreementProposal,advanceAgreementProposals} from '../agreement-negotiations.js?v=agreement-courier-1';
-import {syncAgreementLetters,receivedMail} from '../epistulae.js?v=marriage-economy-merge-1';
+import {newGame,upgradeSave,tick,canFormAlliance,diplomacy} from '../engine.js?v=world-kings-city-diplomacy-2';
+import {sendAgreementProposal,advanceAgreementProposals} from '../agreement-negotiations.js?v=world-kings-city-diplomacy-2';
+import {syncAgreementLetters,receivedMail} from '../epistulae.js?v=world-kings-city-diplomacy-2';
 const step=s=>{s.month++;if(s.month>12){s.month=1;s.year++}advanceAgreementProposals(s,{checkAlliance:canFormAlliance,concludeAlliance:(state,a,b)=>diplomacy(state,a,b,'alliance',{priorConsent:true})});syncAgreementLetters(s)};
 function fixture(seed,relation=60){const s=newGame('caesar');s.seed=seed;s.relations['caesar:egypt']=relation;s.factions.caesar.treasury=100;return s}
 function outcomes(relation=60){const values=new Map();for(let seed=1;seed<500&&values.size<3;seed++){const s=fixture((seed*1000003)>>>0,relation),start=sendAgreementProposal(s,'caesar','egypt','trade');assert.ok(start.ok);for(let i=0;i<4;i++)step(s);const x=s.world.agreementLetters[0];if(!values.has(x.status))values.set(x.status,{s,seed:(seed*1000003)>>>0})}return values}
@@ -21,8 +21,8 @@ test('old saves without proposal queues remain playable and the real monthly tic
 });
 
 test('every agreement type can be concluded by a delivered proposal with its original terms',async()=>{
- const {AGREEMENT_TYPES,visibleAgreements}=await import('../agreements.js?v=agreement-courier-1');const seed=outcomes().get('accepted').seed;
- for(const [type,def] of Object.entries(AGREEMENT_TYPES)){const s=fixture(seed),cash=s.factions.caesar.treasury;assert.ok(sendAgreementProposal(s,'caesar','egypt',type,{secret:true}).ok,type);for(let i=0;i<4;i++)step(s);const letter=s.world.agreementLetters[0];assert.equal(letter.status,'accepted',type);const agreement=s.agreements.find(x=>x.id===letter.agreement);assert.equal(agreement.type,type);assert.equal(agreement.diplomaticCost,def.cost);assert.equal(agreement.duration,def.duration);assert.equal(s.factions.caesar.treasury,cash-2-def.cost);assert.equal(visibleAgreements(s,'parthia').some(x=>x.id===agreement.id),false);assert.equal(receivedMail(s).find(x=>x.context?.kind==='agreement_result')?.confidentiality,'secret')}
+ const {AGREEMENT_TYPES,visibleAgreements}=await import('../agreements.js?v=world-kings-city-diplomacy-2');const seed=outcomes().get('accepted').seed;
+ for(const [type,def] of Object.entries(AGREEMENT_TYPES)){const s=fixture(seed),cash=s.factions.caesar.treasury,subjectType=['protectorate','client_kingdom'].includes(type);assert.ok(sendAgreementProposal(s,'caesar','egypt',type,{secret:!subjectType}).ok,type);for(let i=0;i<4;i++)step(s);const letter=s.world.agreementLetters[0];assert.equal(letter.status,'accepted',type);const agreement=s.agreements.find(x=>x.id===letter.agreement);assert.equal(agreement.type,type);assert.equal(agreement.diplomaticCost,def.cost);assert.equal(agreement.duration,def.duration);assert.equal(s.factions.caesar.treasury,cash-2-def.cost);assert.equal(visibleAgreements(s,'parthia').some(x=>x.id===agreement.id),subjectType);assert.equal(receivedMail(s).find(x=>x.context?.kind==='agreement_result')?.confidentiality,subjectType?'ordinary':'secret')}
 });
 
 test('a sealed acceptance does not re-evaluate the recipient’s private opinion during its return journey',()=>{
@@ -39,4 +39,17 @@ test('full alliances require a delivered response and preserve sealed consent',(
  assert.ok(s.alliances.some(a=>a.includes('caesar')&&a.includes('egypt')));
  assert.equal(s.factions.caesar.treasury,cash-2);
  assert.equal(receivedMail(s).filter(x=>x.context?.kind==='agreement_result').length,1);
+});
+
+test('a courier preserves limited military-access terms until a valid reply concludes them',()=>{
+ const seed=outcomes().get('accepted').seed,s=fixture(seed);
+ const access={permittedParty:'caesar',permittedTerritories:['egypt'],restrictions:[]};
+ assert.equal(sendAgreementProposal(s,'caesar','egypt','military_access',{access:{permittedParty:'caesar',permittedTerritories:['syria']}}).reason,'invalid');
+ assert.equal(sendAgreementProposal(s,'caesar','egypt','military_access',{access}).ok,true);
+ access.permittedTerritories[0]='syria';
+ assert.equal(s.world.agreementLetters[0].access.permittedTerritories[0],'egypt');
+ for(let i=0;i<4;i++)step(s);
+ assert.equal(s.world.agreementLetters[0].status,'accepted');
+ const agreement=s.agreements.find(x=>x.type==='military_access');
+ assert.deepEqual(agreement.terms.access,{permittedParty:'caesar',permittedTerritories:['egypt'],restrictions:[]});
 });

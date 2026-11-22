@@ -7,7 +7,7 @@ page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  const target=await page.evaluate(async()=>{
-  const {newGame,adjacent,previewMarch}=await import('/engine.js?v=marriage-economy-merge-1');
+  const {newGame,adjacent,previewMarch}=await import('/engine.js?v=world-kings-city-diplomacy-2');
   const state=newGame('caesar'),army=state.armies.find(unit=>unit.id==='xiii');
   state.training=true;state.difficulty='beginner';army.men=200;army.morale=10;
   const route=adjacent(army.region).map(link=>({to:link.to,plan:previewMarch(state,army.id,link.to)})).find(row=>row.plan.ok&&row.plan.hostile);
@@ -23,7 +23,7 @@ try{
  await page.locator(`#map [data-army="${target.army}"]`).click();
  await page.locator('#lab-orders select').selectOption(target.destination);
  assert.match(await page.locator('.preview-detail').innerText(),/Reported enemy|已报告敌军/);
- await page.locator('#lab-orders button').click();
+ await page.locator('#lab-orders').getByRole('button',{name:/^(?:CONFIRM ORDER|确认命令)$/}).click();
  await page.locator('#save').click();
  let saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-training-save-1')));
  assert.ok(saved.trainingCheckpoint,'Training attack has no recovery checkpoint');

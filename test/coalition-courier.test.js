@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=marriage-economy-merge-1';
-import {sendCoalitionInvitation,advanceCoalitionInvitations} from '../coalition-negotiations.js?v=mutual-audience-1';
-import {initializeChronicle,syncChronicleDispatches} from '../chronicle.js?v=succession-ui-recovery-1';
+import {newGame,estimatedStrength,upgradeSave} from '../engine.js?v=world-kings-city-diplomacy-2';
+import {sendCoalitionInvitation,advanceCoalitionInvitations} from '../coalition-negotiations.js?v=world-kings-city-diplomacy-2';
+import {initializeChronicle,syncChronicleDispatches} from '../chronicle.js?v=world-kings-city-diplomacy-2';
 
 function setup(){
  const s=newGame('caesar');s.relations['caesar:egypt']=40;s.relations['caesar:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;

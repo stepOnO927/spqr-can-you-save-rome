@@ -1,5 +1,5 @@
-import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=marriage-economy-merge-1';
-import {AMBITIONS,availableAmbitions,ambitionStatus,chooseAmbition,initializeWheels} from './history-wheels.js?v=marriage-economy-merge-1';
+import {DIRECTIONS,refreshExperience,tutorialStep,tutorialLessons,recommendations,objectives,setDirection,setGuide,replayLesson,recordExperience} from './experience.js?v=world-kings-city-diplomacy-2';
+import {AMBITIONS,availableAmbitions,ambitionStatus,chooseAmbition,initializeWheels} from './history-wheels.js?v=world-kings-city-diplomacy-2';
 
 let open='';
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

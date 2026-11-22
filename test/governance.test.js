@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=marriage-economy-merge-1';
-import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js?v=marriage-economy-merge-1';
-import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js?v=succession-ui-recovery-1';
-import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=marriage-economy-merge-1';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=marriage-economy-merge-1';
-import {createFictionalPerson} from '../dynasties.js?v=marriage-economy-merge-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-city-diplomacy-2';
+import {deriveGovernment,advanceGovernments,appointDeputy,eligibleDeputies,planSuccession,supportSuccessor,validSuccessionPlan,withdrawSuccessionPlan} from '../governance.js?v=world-kings-city-diplomacy-2';
+import {assignSuccession,knownLeaders,leadershipTitle} from '../characters.js?v=world-kings-city-diplomacy-2';
+import {advanceCharacters,commandFactor,queueMission,advanceOperations} from '../character-system.js?v=world-kings-city-diplomacy-2';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=world-kings-city-diplomacy-2';
+import {createFictionalPerson} from '../dynasties.js?v=world-kings-city-diplomacy-2';
 
 test('a sick Roman commander retains nominal office while an available officer acts temporarily',()=>{
  const s=newGame('caesar');s.world.characters.caesar.health='seriously_ill';const g=deriveGovernment(s,'caesar');assert.equal(g.kind,'acting_command');assert.deepEqual(g.nominal,['caesar']);assert.deepEqual(g.acting,['antony']);assert.deepEqual(s.world.leadership.caesar,['caesar']);

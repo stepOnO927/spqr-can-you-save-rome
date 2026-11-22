@@ -1,7 +1,7 @@
-import {newGame,estimatedStrength} from './engine.js?v=marriage-economy-merge-1';
-import {createFictionalPerson} from './dynasties.js?v=marriage-economy-merge-1';
-import {formCoalition} from './coalitions.js?v=mutual-audience-1';
-import {observeDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
+import {newGame,estimatedStrength} from './engine.js?v=world-kings-city-diplomacy-2';
+import {createFictionalPerson} from './dynasties.js?v=world-kings-city-diplomacy-2';
+import {formCoalition} from './coalitions.js?v=world-kings-city-diplomacy-2';
+import {observeDiplomacy} from './diplomatic-knowledge.js?v=world-kings-city-diplomacy-2';
 
 // A fictional political crisis in the 49 BCE campaign. Conditions make
 // collective opposition plausible, but do not preselect a war or outcome.
