@@ -124,7 +124,11 @@ export function addReport(s,actor,target,report){
  else r.peopleNames=snapshotReportedPeople(r);
  // An older forwarded message may be useful evidence but must not replace a newer report.
  const newerLeader=r.kind==='leaders'&&k.reports.some(x=>isDeliveredReport(s,x)&&x.kind==='leaders'&&knownReport(x)&&reportAge(s,x)<reportAge(s,r));
- k.reports.unshift(r);k.reports=k.reports.slice(0,30);
+ k.reports.unshift(r);
+ // Keep active evidence bounded while retaining delivered reports as history.
+ // Undelivered records remain active until their scheduled receipt.
+ let delivered=0;const kept=[],archived=[];for(const item of k.reports){if(isDeliveredReport(s,item)&&++delivered>30)archived.push(item);else kept.push(item)}
+ k.reports=kept;if(archived.length){if(!Array.isArray(k.reportArchive))k.reportArchive=[];k.reportArchive.push(...archived.reverse())}
  // Recalculate after trimming so a source that is no longer retained cannot
  // silently keep a current report marked as independently corroborated.
  refreshKnowledge(s,k);

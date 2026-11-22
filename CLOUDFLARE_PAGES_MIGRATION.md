@@ -4,6 +4,8 @@
 
 当前审查分支增加商业同盟成员议事、增员邀请及其主战役和地图入口。代码提交 `5147fe10` 的 [GitHub 托管规则检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45082160751)通过 1,357/1,357 项；[Pages 打包和三入口浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45082160721)、[36 个月浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45082160719)、[Poki 打包](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45082160729)和[三组深度浏览器](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45082160709)全部通过。第一组实际操作同盟议事、主战役和地图入口、提议、存读档、组织地图及来信答复。`dist/` 有 335 个公开运行文件，5.02 MiB 总量，最大单文件 1.06 MiB，低于 25 MiB 限制；公开路径门禁通过。这仍是 GitHub 托管的打包与浏览器测试，**不是 Cloudflare 实际站点验收**。
 
+公开 `main` 的长期情报归档随后已合入审查分支；合并后的完整 Node 规则检查成功退出，GitHub 托管页面包和浏览器复验仍待运行。上一提交的 335 个文件与大小仅证明 `5147fe10`，不能替代新合并提交的清单。
+
 ## 运行入口与依赖审计
 
 | URL | 入口 | 主要依赖 |
