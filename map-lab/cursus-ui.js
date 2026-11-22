@@ -1,9 +1,9 @@
-import {initializeCursus,MAGISTRACIES,ASSEMBLIES,officeEligibility,obedience,institutionalBalance,campaignPhase,campaignEstimate,senateAssessment,seekSenatorEndorsement,campaignFor,supportCandidate,investigateCandidate,proposeMeasure,previewGovernmentInquiry,investigateGovernment,governmentReport,reportedOfficialName,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment} from '../cursus-honorum.js?v=world-kings-regional-density-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=world-kings-regional-density-1';
-import {FACTIONS} from '../data.js?v=world-kings-regional-density-1';
-import {appointOffice,officeCandidates,OFFICE_TYPES} from '../office-system.js?v=world-kings-regional-density-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=world-kings-regional-density-1';
-import {campaignDate} from '../campaign-date.js?v=world-kings-regional-density-1';
+import {initializeCursus,MAGISTRACIES,ASSEMBLIES,officeEligibility,obedience,institutionalBalance,campaignPhase,campaignEstimate,senateAssessment,seekSenatorEndorsement,campaignFor,supportCandidate,investigateCandidate,proposeMeasure,previewGovernmentInquiry,investigateGovernment,governmentReport,reportedOfficialName,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment} from '../cursus-honorum.js?v=world-kings-regional-types-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=world-kings-regional-types-1';
+import {FACTIONS} from '../data.js?v=world-kings-regional-types-1';
+import {appointOffice,officeCandidates,OFFICE_TYPES} from '../office-system.js?v=world-kings-regional-types-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=world-kings-regional-types-1';
+import {campaignDate} from '../campaign-date.js?v=world-kings-regional-types-1';
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const knownArt=new Set(['caesar','pompey','cleopatra','arsinoe','orodes','artavasdes','ptolemy','juba','bocchus','bogud','pacorus','antony','cato','scipio','labienus','cicero','lepidus','deiotarus','pharnaces']);

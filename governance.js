@@ -1,8 +1,8 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=world-kings-regional-density-1';
-import {initializeWorld,successorFor,CHARACTER_CATALOG,characterAgeRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=world-kings-regional-density-1';
-import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=world-kings-regional-density-1';
-import {FACTIONS} from './data.js?v=world-kings-regional-density-1';
-import {startDynasticWar} from './civil-war.js?v=world-kings-regional-density-1';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=world-kings-regional-types-1';
+import {initializeWorld,successorFor,CHARACTER_CATALOG,characterAgeRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=world-kings-regional-types-1';
+import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=world-kings-regional-types-1';
+import {FACTIONS} from './data.js?v=world-kings-regional-types-1';
+import {startDynasticWar} from './civil-war.js?v=world-kings-regional-types-1';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';

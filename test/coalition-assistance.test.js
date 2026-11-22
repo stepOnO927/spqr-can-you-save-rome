@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,estimatedStrength,tick} from '../engine.js?v=world-kings-regional-density-1';
-import {formCoalition} from '../coalitions.js?v=world-kings-regional-density-1';
-import {COALITION_AID,sendCoalitionAidRequest,advanceCoalitionAidRequests,proposeCoalitionAidAI} from '../coalition-assistance.js?v=world-kings-regional-density-1';
-import {syncCoalitionAidLetters,receivedMail,replyToLetter} from '../epistulae.js?v=world-kings-regional-density-1';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-regional-density-1';
+import {newGame,upgradeSave,estimatedStrength,tick} from '../engine.js?v=world-kings-regional-types-1';
+import {formCoalition} from '../coalitions.js?v=world-kings-regional-types-1';
+import {COALITION_AID,sendCoalitionAidRequest,advanceCoalitionAidRequests,proposeCoalitionAidAI} from '../coalition-assistance.js?v=world-kings-regional-types-1';
+import {syncCoalitionAidLetters,receivedMail,replyToLetter} from '../epistulae.js?v=world-kings-regional-types-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-regional-types-1';
 
 const roll=()=>.5;
 function council(){

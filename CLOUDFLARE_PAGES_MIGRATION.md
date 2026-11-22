@@ -31,6 +31,12 @@
 
 Cloudflare Pages 文档：[Git 集成](https://developers.cloudflare.com/pages/configuration/git-integration/github-integration/)、[构建配置](https://developers.cloudflare.com/pages/configuration/build-configuration/)、[静态 HTML 设置](https://developers.cloudflare.com/pages/framework-guides/deploy-anything/)、[平台限制](https://developers.cloudflare.com/pages/platform/limits/)、[Web Analytics](https://developers.cloudflare.com/pages/how-to/web-analytics/)。当前官方限制包括单个静态文件最多 25 MiB、Free 项目最多 20,000 文件、构建最多 20 分钟；每次部署前应复核。
 
+## 最近一次托管验证（2026-11-22）
+
+- 审查提交 `774be9f7` 的 GitHub Actions [质量检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45002415327)通过 1,253/1,253 项 Node 测试；[Pages 打包](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45002415318)、Poki 打包、[入口浏览器检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45002415372)及[三组深度浏览器检查](https://github.com/stepOnO927/spqr-can-you-save-rome/actions/runs/45002415315)均通过。
+- `dist/` 共 323 个公开文件，4.84 MiB，最大单文件 1.06 MiB，低于 25 MiB 限制；入口浏览器检查覆盖 `/`、`/map-lab/`、`/han/`、存档、跨域导入和本地资源加载。构建脚本的公开路径审计继续拒绝测试、工具、内部文档和敏感配置。
+- 旧 GitHub Pages 的 `/` 与 `/map-lab/` 在只读请求中仍返回 HTTP 200；仓库仍为 public，PR #307 仍为草稿。Cloudflare 真实地址、正式域名及 analytics 单 beacon 仍须在建站后实测，尚无上线或切换批准。
+
 ## 准备阶段验证记录（2026-11-14）
 
 - 最终分支 `node --test --test-reporter=dot`：退出码 0，全部本地 Node 测试通过；PR 的 CI 仍需再次确认。

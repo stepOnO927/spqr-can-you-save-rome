@@ -33,29 +33,31 @@ export const WILDERNESS_SITES=Object.freeze([
  {theater:'media',coordinates:[48.1,35.8],kind:'mountain_barrier',passability:'impassable',settlement:'none',occupancy:'unknown'}
 ]);
 
+// These are candidate locations and plausible government forms, not a roster
+// of pre-existing states. Multi-form sites draw their type for each new seed.
 export const LOCAL_GENERATION_SITES=Object.freeze([
  {theater:'narbo',type:'city_state',coordinates:[3.1,43.2],scale:.9},
  {theater:'sicilia',type:'city_state',coordinates:[14.3,37.7],scale:1},
- {theater:'achaia',type:'city_state',coordinates:[22.7,37.5],scale:1},
+ {theater:'achaia',type:'city_state',eligibleTypes:['city_state','microstate'],coordinates:[22.7,37.5],scale:1},
  {theater:'anatolia',type:'city_state',coordinates:[27.8,38.5],scale:1.05},
- {theater:'bosporus',type:'city_state',coordinates:[35.8,45.2],scale:.8},
+ {theater:'bosporus',type:'city_state',eligibleTypes:['city_state','microstate'],coordinates:[35.8,45.2],scale:.8},
  {theater:'africa',type:'city_state',coordinates:[10.5,36.8],scale:1},
- {theater:'illyricum',type:'tribe',coordinates:[16.1,43.3],scale:.85},
+ {theater:'illyricum',type:'tribe',eligibleTypes:['tribe','strongman'],coordinates:[16.1,43.3],scale:.85},
  {theater:'hispaniaN',type:'tribe',coordinates:[.6,41.7],scale:.9},
- {theater:'hispaniaS',type:'tribe',coordinates:[-4.3,37.5],scale:.9},
+ {theater:'hispaniaS',type:'tribe',eligibleTypes:['tribe','strongman'],coordinates:[-4.3,37.5],scale:.9},
  {theater:'galatia',type:'tribe',coordinates:[32.6,39.2],scale:1},
  {theater:'numidia',type:'tribe',coordinates:[6.1,35.4],scale:.75},
  {theater:'syria',type:'microstate',coordinates:[38.8,36.4],scale:1},
  {theater:'armenia',type:'microstate',coordinates:[43.3,40.1],scale:.85},
- {theater:'media',type:'microstate',coordinates:[47.5,34.8],scale:.9},
+ {theater:'media',type:'microstate',eligibleTypes:['microstate','tribe'],coordinates:[47.5,34.8],scale:.9},
  {theater:'mauretania',type:'microstate',coordinates:[.5,35.6],scale:.8},
- {theater:'egyptUpper',type:'microstate',coordinates:[31.9,25.4],scale:.8},
+ {theater:'egyptUpper',type:'microstate',eligibleTypes:['microstate','strongman'],coordinates:[31.9,25.4],scale:.8},
  {theater:'gaul',type:'strongman',coordinates:[1.5,46.0],scale:.8},
  {theater:'cisalpine',type:'strongman',coordinates:[10.3,45.1],scale:.8},
  {theater:'italiaN',type:'strongman',coordinates:[11.5,44.3],scale:.9},
  {theater:'egypt',type:'strongman',coordinates:[30.6,29.8],scale:1},
- {theater:'parthia',type:'strongman',coordinates:[53.4,34.6],scale:.85},
- {theater:'epirus',type:'strongman',coordinates:[20.3,39.7],scale:.75}
+ {theater:'parthia',type:'strongman',eligibleTypes:['strongman','tribe'],coordinates:[53.4,34.6],scale:.85},
+ {theater:'epirus',type:'strongman',eligibleTypes:['strongman','tribe'],coordinates:[20.3,39.7],scale:.75}
 ]);
 
 const STEMS=Object.freeze([
@@ -103,14 +105,14 @@ const REGION_GROUP=Object.freeze({
 });
 // Gameplay weights for broad geography, not claims about attested population
 // or borders. Sparse theaters can still be drawn, but have fewer candidates.
-const DEFAULT_GENERATION_PROFILE=Object.freeze({political:1,village:1,nomad:1,wilderness:1,population:1,food:1,trade:1});
+const DEFAULT_GENERATION_PROFILE=Object.freeze({political:1,village:1,nomad:1,wilderness:1,population:1,food:1,trade:1,city_state:1,microstate:1,tribe:1,strongman:1});
 const REGIONAL_GENERATION_BASE=Object.freeze({
- western:{political:1.05,village:1,nomad:.7,wilderness:1,population:1,food:1,trade:1.05},
- iberian:{political:.85,village:.8,nomad:.7,wilderness:1.15,population:.9,food:.9,trade:.85},
- hellenic:{political:1.35,village:1.2,nomad:.8,wilderness:.75,population:1.1,food:1,trade:1.25},
- eastern:{political:.95,village:.9,nomad:1,wilderness:1.2,population:1,food:.85,trade:1.05},
- african:{political:.75,village:.65,nomad:1.3,wilderness:1.35,population:.85,food:.8,trade:.9},
- nile:{political:.8,village:1.25,nomad:.8,wilderness:1.2,population:1.15,food:1.3,trade:1.05}
+ western:{political:1.05,village:1,nomad:.7,wilderness:1,population:1,food:1,trade:1.05,tribe:1.1,strongman:1.1},
+ iberian:{political:.85,village:.8,nomad:.7,wilderness:1.15,population:.9,food:.9,trade:.85,tribe:1.2,strongman:.8},
+ hellenic:{political:1.35,village:1.2,nomad:.8,wilderness:.75,population:1.1,food:1,trade:1.25,city_state:1.4,microstate:.85,strongman:.75},
+ eastern:{political:.95,village:.9,nomad:1,wilderness:1.2,population:1,food:.85,trade:1.05,microstate:1.2,tribe:.8},
+ african:{political:.75,village:.65,nomad:1.3,wilderness:1.35,population:.85,food:.8,trade:.9,tribe:1.1,strongman:1.15},
+ nile:{political:.8,village:1.25,nomad:.8,wilderness:1.2,population:1.15,food:1.3,trade:1.05,microstate:.7,strongman:1.2}
 });
 const THEATER_GENERATION_ADJUSTMENTS=Object.freeze({
  cisalpine:{political:.7,village:1.3},italiaN:{political:.5,village:1.6,population:1.15,food:1.15,trade:1.2},
@@ -160,6 +162,14 @@ const range=(rng,low,high)=>low+next(rng)*(high-low);
 const siteSeed=(seed,theater)=>[...theater].reduce((value,char)=>Math.imul(value^char.charCodeAt(0),16777619)>>>0,seed>>>0);
 const mixedSeed=(seed,salt)=>{let value=siteSeed(seed,salt);value=Math.imul(value^(value>>>16),0x7feb352d);value=Math.imul(value^(value>>>15),0x846ca68b);return (value^(value>>>16))>>>0};
 const weightedOrder=(seed,sites,weight)=>sites.map((site,index)=>({site,index,priority:-Math.log(Math.max((mixedSeed(seed,site.id||site.theater)+.5)/4294967296,Number.MIN_VALUE))/Math.max(.1,weight(site))})).sort((a,b)=>a.priority-b.priority||a.index-b.index).map(entry=>entry.site);
+function generatedType(site,seed){
+ const types=site.eligibleTypes||[site.type];
+ if(types.length===1)return site.type;
+ const regional=regionProfile(site.theater),weights=types.map(type=>regional[type]),total=weights.reduce((sum,value)=>sum+value,0);
+ let draw=(mixedSeed(seed,`${site.theater}:type`)+.5)/4294967296*total;
+ for(let index=0;index<types.length-1;index++){draw-=weights[index];if(draw<0)return types[index]}
+ return types.at(-1);
+}
 
 function profile(rng,type,scale,band,regional=DEFAULT_GENERATION_PROFILE){
  const [low,high,wealth,foodValue]=BASE[type];
@@ -184,7 +194,7 @@ function civicOfficers(seed,theater,band,rulerName){
 
 export function generatedLocalPolities(seed,difficulty,availableTheaters,startYear=-49){
  const band=LOCAL_GENERATION_BANDS[difficulty]||LOCAL_GENERATION_BANDS.standard;
- const rng={value:seed>>>0},sites=weightedOrder(seed,LOCAL_GENERATION_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site})),site=>regionProfile(site.theater).political);
+ const rng={value:seed>>>0},sites=weightedOrder(seed,LOCAL_GENERATION_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site,type:generatedType(site,seed)})),site=>regionProfile(site.theater).political);
  const count=Math.min(sites.length,integer({value:mixedSeed(seed,'polity-count')},...band.count)),used=new Set(),usedRulers=new Set();
  const result=[];
  const selected=[];

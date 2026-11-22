@@ -1,4 +1,4 @@
-import {ROUTES,FACTIONS} from './data.js?v=world-kings-regional-density-1';
+import {ROUTES,FACTIONS} from './data.js?v=world-kings-regional-types-1';
 
 // Public announcements are learned by participants and adjacent observers.
 // Snapshots are not live links: an observer who loses contact keeps old news.

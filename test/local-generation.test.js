@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-regional-density-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-regional-density-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-regional-types-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-regional-types-1';
 import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS,LOCAL_REGION_PROFILES,LOCAL_GENERATION_SITES,INDEPENDENT_VILLAGE_SITES,NOMADIC_RANGES,WILDERNESS_SITES,generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites} from '../local-generation.js';
 import {localOfferChance,advanceLocalEntities,advanceLocalTrade,localEntity,localTradeOpen,offerLocalContact,localSiegeQuote,besiegeLocalEntity} from '../local-polities.js';
 import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from '../local-discovery.js';
 import {advanceVillages} from '../local-villages.js';
 import {advanceLocalResistance} from '../local-resistance.js';
-import {receivedMail,replyToLetter,advanceMail} from '../epistulae.js?v=world-kings-regional-density-1';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-regional-density-1';
+import {receivedMail,replyToLetter,advanceMail} from '../epistulae.js?v=world-kings-regional-types-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-regional-types-1';
 import {mailboxHtml} from '../mail-ui.js';
 
 const start=(mode,seed)=>configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:seed});
@@ -32,8 +32,26 @@ test('regional weights vary seeded polity, village, and wilderness density witho
  assert.ok(hits.wilderness.egyptUpper>hits.wilderness.hispaniaN);
  for(const theater of new Set([...polities,...villages,...wilderness])){
   const profile=LOCAL_REGION_PROFILES[theater];
-  for(const key of ['political','village','nomad','wilderness','population','food','trade'])assert.ok(profile[key]>=.3&&profile[key]<=2,`${theater} ${key}`);
+  for(const key of ['political','village','nomad','wilderness','population','food','trade','city_state','microstate','tribe','strongman'])assert.ok(profile[key]>=.3&&profile[key]<=2,`${theater} ${key}`);
  }
+});
+
+test('plausible local power types vary by seed and stay stable across difficulty and saves',()=>{
+ for(const candidate of LOCAL_GENERATION_SITES.filter(site=>site.eligibleTypes)){
+  const seen=new Set(),available=new Set([candidate.theater]);
+  for(let seed=1;seed<=128;seed++){
+   const first=generatedLocalPolities(seed,'travel',available)[0],harder=generatedLocalPolities(seed,'expert',available)[0];
+   assert.ok(candidate.eligibleTypes.includes(first.type));
+   assert.equal(first.type,harder.type,`${candidate.theater} ${seed}`);
+   assert.equal(first.id,harder.id);
+   assert.equal(first.government,first.type==='strongman'?'personal_following':first.type==='city_state'?'civic_council':first.type==='tribe'?'tribal_assembly':'local_dynasty');
+   assert.equal(Boolean(first.civicOfficers),first.type!=='strongman');
+   seen.add(first.type);
+  }
+  assert.deepEqual([...seen].sort(),[...candidate.eligibleTypes].sort(),candidate.theater);
+ }
+ const base=start('expert',41),saved=upgradeSave(structuredClone(base));
+ assert.deepEqual(generated(saved).map(entity=>[entity.id,entity.type]),generated(base).map(entity=>[entity.id,entity.type]));
 });
 
 test('fictional local names vary by seed and broad theater without repeating one global style',()=>{

@@ -1,4 +1,4 @@
-import {reportedDiplomacy} from '../diplomatic-knowledge.js?v=world-kings-regional-density-1';
+import {reportedDiplomacy} from '../diplomatic-knowledge.js?v=world-kings-regional-types-1';
 
 // A nonmember sees only a dated diplomatic report. A member may inspect its
 // own current charter even before the monthly report cycle runs.
