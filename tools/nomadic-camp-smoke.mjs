@@ -9,9 +9,9 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  const name=await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=world-kings-local-protection-1');
-  const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-local-protection-1');
-  const s=configureStartingDifficulty(newGame('senate'),'expert',false,{localSeed:1});s.wars=[];
+  const {newGame}=await import('/engine.js?v=world-kings-regional-density-1');
+  const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-regional-density-1');
+  const s=configureStartingDifficulty(newGame('senate'),'expert',false,{localSeed:2});s.wars=[];
   const camp=s.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='generated-nomad:western-pasture');
   if(!camp||s.localDiscovery.senate[camp.id]?.seenTheater!=='numidia')throw Error('frontier camp not discovered');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));

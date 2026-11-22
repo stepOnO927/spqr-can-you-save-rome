@@ -1,7 +1,7 @@
 // Han ambitions are goals over the existing court, frontier, silk and focus
 // systems. They do not alter the Liu succession rules or simulate new effects.
-import {isLiuClan} from './dynasty.js?v=world-kings-local-protection-1';
-import {focusById} from './focus.js?v=world-kings-local-protection-1';
+import {isLiuClan} from './dynasty.js?v=world-kings-regional-density-1';
+import {focusById} from './focus.js?v=world-kings-regional-density-1';
 
 const L=(en,zh)=>[en,zh];
 export const AMBITIONS={

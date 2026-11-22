@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-local-protection-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-local-protection-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-regional-density-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-regional-density-1';
 import {NOMADIC_GENERATION_BANDS,generatedNomadicCommunities} from '../local-generation.js';
 import {advanceNomadicCommunities} from '../nomadic-communities.js';
 import {localEntity,localContactQuote,offerLocalContact,advanceLocalEntities,localSiegeQuote} from '../local-polities.js';
-import {discoverFrontierLocalities} from '../local-discovery.js?v=world-kings-local-protection-1';
-import {explorationEntries} from '../map-lab/exploration-map.js?v=world-kings-local-protection-1';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-local-protection-1';
-import {ROUTES} from '../data.js?v=world-kings-local-protection-1';
+import {discoverFrontierLocalities} from '../local-discovery.js?v=world-kings-regional-density-1';
+import {explorationEntries} from '../map-lab/exploration-map.js?v=world-kings-regional-density-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-regional-density-1';
+import {ROUTES} from '../data.js?v=world-kings-regional-density-1';
 
 const start=(mode,seed,player='senate')=>configureStartingDifficulty(newGame(player),mode,false,{localSeed:seed});
 const nomads=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.proceduralNomad);
@@ -45,7 +45,7 @@ test('the same seasonal range samples stronger people, reserves and judgment on 
 });
 
 test('a mobile camp follows seasonal land points while distant viewers keep only the old sighting',()=>{
- const s=start('expert',1),camp=localEntity(s,'generated-nomad:western-pasture');assert.ok(camp);
+ const s=start('expert',2),camp=localEntity(s,'generated-nomad:western-pasture');assert.ok(camp);
  const old=s.localDiscovery.senate[camp.id];assert.equal(old.seenTheater,'numidia');
  s.month=4;const moves=advanceNomadicCommunities(s);assert.ok(moves.some(move=>move.id===camp.id&&move.to==='mauretania'));
  assert.equal(camp.theater,'mauretania');assert.equal(localEntity(s,camp.id),camp);
@@ -60,7 +60,7 @@ test('a mobile camp follows seasonal land points while distant viewers keep only
 });
 
 test('war blocks a migration until the destination court makes a paid pasture compact',()=>{
- const s=start('expert',1),camp=localEntity(s,'generated-nomad:western-pasture'),originalHerds=camp.herds;
+ const s=start('expert',2),camp=localEntity(s,'generated-nomad:western-pasture'),originalHerds=camp.herds;
  s.wars.push(['numidia','mauretania']);s.month=4;
  assert.ok(!advanceNomadicCommunities(s).some(move=>move.id===camp.id));assert.equal(camp.theater,'numidia');assert.equal(camp.herds,originalHerds-1);
  assert.equal(localContactQuote(s,camp.id,'mauretania','access').ok,false);

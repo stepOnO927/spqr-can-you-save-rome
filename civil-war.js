@@ -1,6 +1,6 @@
-import {isDeliveredReport} from './person-knowledge.js?v=world-kings-local-protection-1';
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=world-kings-local-protection-1';
-import {reportedControl} from './control-intelligence.js?v=world-kings-local-protection-1';
+import {isDeliveredReport} from './person-knowledge.js?v=world-kings-regional-density-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=world-kings-regional-density-1';
+import {reportedControl} from './control-intelligence.js?v=world-kings-regional-density-1';
 import {transferTerritory} from './territory.js';
 
 // Alternate-history claimant commands use real game theaters and armies.

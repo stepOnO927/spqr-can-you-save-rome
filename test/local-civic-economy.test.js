@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-local-protection-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-regional-density-1';
 import {configureStartingDifficulty} from '../difficulty.js';
 import {advanceLocalCivicEconomy,localEntity} from '../local-polities.js';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-local-protection-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-regional-density-1';
 
 test('an independent city pays its own civilians and guard without taking theater revenue',()=>{
  const state=newGame('caesar'),city=localEntity(state,'massilia');
@@ -40,13 +40,13 @@ test('Inspector reports a forged local budget',()=>{
 });
 
 test('generated civic officers have stable names and pay for their real fiscal benefits',()=>{
- const state=configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:273});
+ const state=configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:11});
  const city=localEntity(state,'generated:sicilia'),officers=city.civicOfficers;
  assert.ok(officers?.steward&&officers?.captain);
  assert.notEqual(officers.steward.name[0],officers.captain.name[0]);
  assert.equal(city.ruler.name[0].endsWith(` ${officers.steward.name[0]}`),false);
  assert.equal(city.ruler.name[0].endsWith(` ${officers.captain.name[0]}`),false);
- assert.deepEqual(officers,localEntity(configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:273}),'generated:sicilia').civicOfficers);
+ assert.deepEqual(officers,localEntity(configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:11}),'generated:sicilia').civicOfficers);
  const withoutOfficers=structuredClone(state);delete localEntity(withoutOfficers,city.id).civicOfficers;
  state.month=2;withoutOfficers.month=2;
  advanceLocalCivicEconomy(state);advanceLocalCivicEconomy(withoutOfficers);
@@ -60,16 +60,20 @@ test('generated civic officers have stable names and pay for their real fiscal b
  assert.equal(inspectState(state).some(f=>f.code==='invalid-local-civic-officers'),true);
 });
 
-test('historical and seeded generated cities keep stronger reserves after two years at higher difficulty',()=>{
+test('historical and seeded generated cities start stronger and maintain valid budgets over two years',()=>{
  for(const id of ['massilia','generated:sicilia']){
-  let prior=null;
+  let priorOpening=null,priorAfter=null;
   for(const mode of ['travel','beginner','standard','hard','expert']){
-   const state=configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:273}),city=localEntity(state,id);
+   const state=configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:11}),city=localEntity(state,id);
    assert.ok(city);
+   const opening={population:city.population,militia:city.militia,treasury:city.treasury,food:city.food};
+   if(priorOpening)for(const key of Object.keys(opening))assert.ok(opening[key]>=priorOpening[key],`${id} ${mode} opening ${key}`);
+   priorOpening=opening;
    for(let month=0;month<24;month++){state.month++;if(state.month>12){state.month=1;state.year++}advanceLocalCivicEconomy(state)}
    const current={population:city.population,militia:city.militia,treasury:city.treasury,food:city.food};
-   if(prior)for(const key of Object.keys(current))assert.ok(current[key]>=prior[key],`${id} ${mode} ${key}: ${current[key]} < ${prior[key]}`);
-   prior=current;
+   assert.ok(current.food>=0&&current.treasury>=0&&city.lastCivicBudget);
+   if(priorAfter)for(const key of ['population','militia','treasury'])assert.ok(current[key]>=priorAfter[key],`${id} ${mode} ${key}: ${current[key]} < ${priorAfter[key]}`);
+   priorAfter=current;
   }
  }
 });

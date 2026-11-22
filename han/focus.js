@@ -3,11 +3,11 @@
 // still need court support, negotiations the other court may refuse,
 // protectorate standing, regional works, faction influence. Completion never
 // guarantees political success, and no focus can touch the throne directly.
-import {issueEdict,recomputeInfluence,startAudit} from './court.js?v=world-kings-local-protection-1';
-import {propose,shiftRelation} from './frontier.js?v=world-kings-local-protection-1';
-import {addClaimant,isLiuClan} from './dynasty.js?v=world-kings-local-protection-1';
-import {OASIS} from './data.js?v=world-kings-local-protection-1';
-import {clamp,log} from './util.js?v=world-kings-local-protection-1';
+import {issueEdict,recomputeInfluence,startAudit} from './court.js?v=world-kings-regional-density-1';
+import {propose,shiftRelation} from './frontier.js?v=world-kings-regional-density-1';
+import {addClaimant,isLiuClan} from './dynasty.js?v=world-kings-regional-density-1';
+import {OASIS} from './data.js?v=world-kings-regional-density-1';
+import {clamp,log} from './util.js?v=world-kings-regional-density-1';
 
 const F=(id,branch,en,zh,months,cost,prereq,effects,{exclusive=[],desc=null}={})=>({id,branch,name:[en,zh],months,cost,prereq,effects,exclusive,desc});
 export const BRANCHES={A:['Imperial Authority','皇权'],B:['Government & Scholarship','朝政与经学'],C:['Agriculture & State Finance','农政与国计'],D:['The Western Regions','西域经营'],E:['The Northern Frontier','北疆'],F:['Alternate History','架空天命'],X:['Steppe Confederation','草原联盟'],W:['Kunmi Politics','昆弥政治'],O:['Oasis Statecraft','城郭之道'],K:['Kangju Statecraft','康居之道']};

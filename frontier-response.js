@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=world-kings-local-protection-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=world-kings-local-protection-1';
+import {ROUTES} from './data.js?v=world-kings-regional-density-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=world-kings-regional-density-1';
 
 const now=s=>s.year*12+s.month;
 const pair=(a,b)=>[a,b].sort().join(':');

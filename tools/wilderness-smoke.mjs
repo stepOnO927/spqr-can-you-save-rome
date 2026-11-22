@@ -9,8 +9,8 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  const name=await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=world-kings-local-protection-1');
-  const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-local-protection-1');
+  const {newGame}=await import('/engine.js?v=world-kings-regional-density-1');
+  const {configureStartingDifficulty}=await import('/difficulty.js?v=world-kings-regional-density-1');
   const state=configureStartingDifficulty(newGame('senate'),'expert',false,{localSeed:1});state.wars=[];
   const site=state.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id==='generated-wilderness:hispaniaN');
   if(!site||state.localDiscovery.senate[site.id]?.level<3)throw Error('wilderness not known');

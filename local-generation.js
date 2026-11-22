@@ -101,6 +101,30 @@ const REGION_GROUP=Object.freeze({
  africa:'african',numidia:'african',mauretania:'african',
  egypt:'nile',egyptUpper:'nile'
 });
+// Gameplay weights for broad geography, not claims about attested population
+// or borders. Sparse theaters can still be drawn, but have fewer candidates.
+const DEFAULT_GENERATION_PROFILE=Object.freeze({political:1,village:1,nomad:1,wilderness:1,population:1,food:1,trade:1});
+const REGIONAL_GENERATION_BASE=Object.freeze({
+ western:{political:1.05,village:1,nomad:.7,wilderness:1,population:1,food:1,trade:1.05},
+ iberian:{political:.85,village:.8,nomad:.7,wilderness:1.15,population:.9,food:.9,trade:.85},
+ hellenic:{political:1.35,village:1.2,nomad:.8,wilderness:.75,population:1.1,food:1,trade:1.25},
+ eastern:{political:.95,village:.9,nomad:1,wilderness:1.2,population:1,food:.85,trade:1.05},
+ african:{political:.75,village:.65,nomad:1.3,wilderness:1.35,population:.85,food:.8,trade:.9},
+ nile:{political:.8,village:1.25,nomad:.8,wilderness:1.2,population:1.15,food:1.3,trade:1.05}
+});
+const THEATER_GENERATION_ADJUSTMENTS=Object.freeze({
+ cisalpine:{political:.7,village:1.3},italiaN:{political:.5,village:1.6,population:1.15,food:1.15,trade:1.2},
+ gaul:{political:1.1,wilderness:1.45},illyricum:{village:.75,wilderness:1.5},
+ sicilia:{political:1.6,village:1.35},bosporus:{political:.95,village:.7,trade:1.15},
+ egypt:{political:.65,village:1.45,nomad:.35,wilderness:.4},
+ egyptUpper:{political:.45,village:.5,nomad:1.15,wilderness:1.8,population:.8,food:.9,trade:.7},
+ numidia:{village:.7,nomad:1.4},mauretania:{political:.55,village:.5,nomad:1.5},
+ media:{political:.6,village:.55,nomad:1.4,wilderness:1.5,food:.7},
+ parthia:{political:.65,village:.55,nomad:1.45,wilderness:1.35}
+});
+const configuredTheaters=new Set([...LOCAL_GENERATION_SITES,...INDEPENDENT_VILLAGE_SITES,...WILDERNESS_SITES,...NOMADIC_RANGES.flatMap(range=>range.camps)].map(site=>site.theater));
+export const LOCAL_REGION_PROFILES=Object.freeze(Object.fromEntries([...configuredTheaters].map(theater=>[theater,Object.freeze({...DEFAULT_GENERATION_PROFILE,...REGIONAL_GENERATION_BASE[REGION_GROUP[theater]],...THEATER_GENERATION_ADJUSTMENTS[theater]})])));
+const regionProfile=theater=>LOCAL_REGION_PROFILES[theater]||DEFAULT_GENERATION_PROFILE;
 const stemsFor=theater=>REGIONAL_NAMES[REGION_GROUP[theater]]||STEMS;
 const TITLES=Object.freeze({
  city_state:[['Free Port','自由港'],['Harbor Council','港口议事城'],['Maritime Commune','海滨公社']],
@@ -134,13 +158,15 @@ const next=state=>{state.value=(Math.imul(state.value,1664525)+1013904223)>>>0;r
 const integer=(rng,low,high)=>low+Math.floor(next(rng)*(high-low+1));
 const range=(rng,low,high)=>low+next(rng)*(high-low);
 const siteSeed=(seed,theater)=>[...theater].reduce((value,char)=>Math.imul(value^char.charCodeAt(0),16777619)>>>0,seed>>>0);
+const mixedSeed=(seed,salt)=>{let value=siteSeed(seed,salt);value=Math.imul(value^(value>>>16),0x7feb352d);value=Math.imul(value^(value>>>15),0x846ca68b);return (value^(value>>>16))>>>0};
+const weightedOrder=(seed,sites,weight)=>sites.map((site,index)=>({site,index,priority:-Math.log(Math.max((mixedSeed(seed,site.id||site.theater)+.5)/4294967296,Number.MIN_VALUE))/Math.max(.1,weight(site))})).sort((a,b)=>a.priority-b.priority||a.index-b.index).map(entry=>entry.site);
 
-function profile(rng,type,scale,band){
+function profile(rng,type,scale,band,regional=DEFAULT_GENERATION_PROFILE){
  const [low,high,wealth,foodValue]=BASE[type];
- const population=Math.round(integer(rng,low,high)*scale*band.population/100)*100;
+ const population=Math.round(integer(rng,low,high)*scale*band.population*regional.population/100)*100;
  const militia=Math.max(100,Math.round(population*range(rng,...band.militia)/50)*50);
- const treasury=Math.max(3,Math.round(population/450*wealth*band.wealth*range(rng,.8,1.2)));
- const food=Math.max(4,Math.round(population/650*foodValue*band.wealth*range(rng,.8,1.2)));
+ const treasury=Math.max(3,Math.round(population/450*wealth*band.wealth*regional.trade*range(rng,.8,1.2)));
+ const food=Math.max(4,Math.round(population/650*foodValue*band.wealth*regional.food*range(rng,.8,1.2)));
  const fort=Math.max(0,Math.min(3,(['tribe','strongman'].includes(type)?0:1)+(band.skill[0]>=3?1:0)+(band.skill[0]>=4&&next(rng)>.5?1:0)));
  return {population,militia,treasury,food,fort,strategy:integer(rng,...band.skill)};
 }
@@ -158,9 +184,8 @@ function civicOfficers(seed,theater,band,rulerName){
 
 export function generatedLocalPolities(seed,difficulty,availableTheaters,startYear=-49){
  const band=LOCAL_GENERATION_BANDS[difficulty]||LOCAL_GENERATION_BANDS.standard;
- const rng={value:seed>>>0},sites=LOCAL_GENERATION_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site}));
- for(let i=sites.length-1;i>0;i--){const j=integer(rng,0,i);[sites[i],sites[j]]=[sites[j],sites[i]]}
- const count=Math.min(sites.length,integer(rng,...band.count)),used=new Set(),usedRulers=new Set();
+ const rng={value:seed>>>0},sites=weightedOrder(seed,LOCAL_GENERATION_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site})),site=>regionProfile(site.theater).political);
+ const count=Math.min(sites.length,integer({value:mixedSeed(seed,'polity-count')},...band.count)),used=new Set(),usedRulers=new Set();
  const result=[];
  const selected=[];
  const quota=count===1?[sites.find(site=>['city_state','microstate'].includes(site.type))?.type||'city_state']:
@@ -172,20 +197,21 @@ export function generatedLocalPolities(seed,difficulty,availableTheaters,startYe
  for(const type of quota){const index=sites.findIndex(site=>site.type===type);if(index>=0)selected.push(...sites.splice(index,1))}
  selected.push(...sites.slice(0,count-selected.length));
  for(const site of selected){
+  const localRng={value:siteSeed(seed,`${site.theater}:identity`)};
   let name,english;
-  do{const stems=stemsFor(site.theater),stem=stems[integer(rng,0,stems.length-1)],title=TITLES[site.type][integer(rng,0,TITLES[site.type].length-1)];name=[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`];english=name[0]}while(used.has(english));
+  do{const stems=stemsFor(site.theater),stem=stems[integer(localRng,0,stems.length-1)],title=TITLES[site.type][integer(localRng,0,TITLES[site.type].length-1)];name=[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`];english=name[0]}while(used.has(english));
   used.add(english);
   let rulerName,rulerKey;
-  do{const names=rulersFor(site.theater),person=names[integer(rng,0,names.length-1)],title=RULER_TITLES[site.type];rulerName=[`${title[0]} ${person[0]}`,`${person[1]}${title[1]}`];rulerKey=rulerName[0]}while(usedRulers.has(rulerKey));
+  do{const names=rulersFor(site.theater),person=names[integer(localRng,0,names.length-1)],title=RULER_TITLES[site.type];rulerName=[`${title[0]} ${person[0]}`,`${person[1]}${title[1]}`];rulerKey=rulerName[0]}while(usedRulers.has(rulerKey));
   usedRulers.add(rulerKey);
-  const age=integer(rng,28,64);
+  const age=integer(localRng,28,64);
   result.push({id:`generated:${site.theater}`,type:site.type,theater:site.theater,coordinates:site.coordinates,name,
    historical:false,procedural:true,spatialAccuracy:'fictional_approximate_point',
    description:site.type==='strongman'?['Fictional local strongman and armed household generated for this campaign; personal control is not a recognized sovereign border.','本局生成的架空地方豪强及其部曲；个人控制不等于获得承认的主权边界。']:['Fictional autonomous polity generated for this campaign; the point is approximate and does not define a border.','本局生成的架空自治政权；地点为近似点，不代表真实历史边界。'],
-   ruler:{id:`local-ruler:${site.theater}`,name:rulerName,birthYear:startYear-age,personality:PERSONALITIES[integer(rng,0,PERSONALITIES.length-1)],fictional:true},
+   ruler:{id:`local-ruler:${site.theater}`,name:rulerName,birthYear:startYear-age,personality:PERSONALITIES[integer(localRng,0,PERSONALITIES.length-1)],fictional:true},
    government:site.type==='strongman'?'personal_following':site.type==='city_state'?'civic_council':site.type==='tribe'?'tribal_assembly':'local_dynasty',
-   maxFootholdLevel:site.type==='strongman'?2:site.type==='tribe'?2:3,...profile({value:siteSeed(seed,site.theater)},site.type,site.scale,band),
-   ...(site.type==='strongman'?{}:{civicOfficers:civicOfficers(seed,site.theater,band,rulerName)}),seed:integer(rng,0,0xffffffff)});
+   maxFootholdLevel:site.type==='strongman'?2:site.type==='tribe'?2:3,...profile({value:siteSeed(seed,site.theater)},site.type,site.scale,band,regionProfile(site.theater)),
+   ...(site.type==='strongman'?{}:{civicOfficers:civicOfficers(seed,site.theater,band,rulerName)}),seed:integer(localRng,0,0xffffffff)});
  }
  return result;
 }
@@ -194,16 +220,16 @@ export function generatedIndependentVillages(seed,difficulty,availableTheaters){
  const band=LOCAL_GENERATION_BANDS[difficulty]||LOCAL_GENERATION_BANDS.standard;
  const countBand=VILLAGE_GENERATION_BANDS[difficulty]||VILLAGE_GENERATION_BANDS.standard;
  const rng={value:(seed^0x27d4eb2d)>>>0};
- const sites=INDEPENDENT_VILLAGE_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site}));
- for(let i=sites.length-1;i>0;i--){const j=integer(rng,0,i);[sites[i],sites[j]]=[sites[j],sites[i]]}
- const count=Math.min(sites.length,integer(rng,...countBand));
+ const sites=weightedOrder(rng.value,INDEPENDENT_VILLAGE_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site})),site=>regionProfile(site.theater).village);
+ const count=Math.min(sites.length,integer({value:mixedSeed(seed,'village-count')},...countBand));
+ next(rng);
  const used=new Set();
  return sites.slice(0,count).map(site=>{
   let name;
   do{const stems=stemsFor(site.theater),stem=stems[integer(rng,0,stems.length-1)],title=VILLAGE_TITLES[integer(rng,0,VILLAGE_TITLES.length-1)];name=[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`]}while(used.has(name[0]));
   used.add(name[0]);
   const names=rulersFor(site.theater),head=names[integer(rng,0,names.length-1)];
-  const population=Math.round(integer(rng,350,850)*band.population/50)*50;
+  const regional=regionProfile(site.theater),population=Math.round(integer(rng,350,850)*band.population*regional.population/50)*50;
   const foodNeed=Math.max(2,Math.ceil(population/350));
   const storedFood=Math.min(12,foodNeed*3);
   return {id:`generated-independent-village:${site.theater}`,type:'village',theater:site.theater,coordinates:[...site.coordinates],
@@ -218,15 +244,15 @@ export function generatedIndependentVillages(seed,difficulty,availableTheaters){
 
 export function generatedNomadicCommunities(seed,difficulty,availableTheaters,startYear=-49){
  const band=LOCAL_GENERATION_BANDS[difficulty]||LOCAL_GENERATION_BANDS.standard,countBand=NOMADIC_GENERATION_BANDS[difficulty]||NOMADIC_GENERATION_BANDS.standard;
- const rng={value:(seed^0x9e3779b9)>>>0},ranges=NOMADIC_RANGES.filter(range=>range.camps.every(camp=>availableTheaters.has(camp.theater))).map(range=>({...range}));
- for(let i=ranges.length-1;i>0;i--){const j=integer(rng,0,i);[ranges[i],ranges[j]]=[ranges[j],ranges[i]]}
- const count=Math.min(ranges.length,integer(rng,...countBand));
+ const rng={value:(seed^0x9e3779b9)>>>0},ranges=weightedOrder(rng.value,NOMADIC_RANGES.filter(range=>range.camps.every(camp=>availableTheaters.has(camp.theater))).map(range=>({...range})),route=>route.camps.reduce((total,camp)=>total+regionProfile(camp.theater).nomad,0)/route.camps.length);
+ const count=Math.min(ranges.length,integer({value:mixedSeed(seed,'nomad-count')},...countBand));
+ next(rng);
  return ranges.slice(0,count).map(route=>{
   const stems=stemsFor(route.camps[0].theater),names=rulersFor(route.camps[0].theater),stem=stems[integer(rng,0,stems.length-1)],title=NOMAD_TITLES[integer(rng,0,NOMAD_TITLES.length-1)],person=names[integer(rng,0,names.length-1)];
-  const population=Math.round(integer(rng,1000,3200)*band.population/100)*100;
+  const regional=regionProfile(route.camps[0].theater),population=Math.round(integer(rng,1000,3200)*band.population*regional.population/100)*100;
   const militia=Math.max(100,Math.round(population*range(rng,...band.militia)/50)*50);
-  const treasury=Math.max(3,Math.round(population/550*band.wealth*range(rng,.8,1.2)));
-  const food=Math.max(4,Math.round(population/800*band.wealth*range(rng,.8,1.2)));
+  const treasury=Math.max(3,Math.round(population/550*band.wealth*regional.trade*range(rng,.8,1.2)));
+  const food=Math.max(4,Math.round(population/800*band.wealth*regional.food*range(rng,.8,1.2)));
   const camps=route.camps.map(camp=>({theater:camp.theater,coordinates:[...camp.coordinates]}));
   return {id:`generated-nomad:${route.id}`,type:'nomadic',theater:camps[0].theater,coordinates:[...camps[0].coordinates],name:[`${stem[0]} ${title[0]}`,`${stem[1]}${title[1]}`],
    historical:false,procedural:true,proceduralNomad:true,spatialAccuracy:'fictional_approximate_point',
@@ -238,9 +264,9 @@ export function generatedNomadicCommunities(seed,difficulty,availableTheaters,st
 }
 
 export function generatedWildernessSites(seed,availableTheaters){
- const rng={value:(seed^0x85ebca6b)>>>0},sites=WILDERNESS_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site}));
- for(let i=sites.length-1;i>0;i--){const j=integer(rng,0,i);[sites[i],sites[j]]=[sites[j],sites[i]]}
- const count=Math.min(sites.length,integer(rng,3,4));
+ const rng={value:(seed^0x85ebca6b)>>>0},sites=weightedOrder(rng.value,WILDERNESS_SITES.filter(site=>availableTheaters.has(site.theater)).map(site=>({...site})),site=>regionProfile(site.theater).wilderness);
+ const count=Math.min(sites.length,integer({value:mixedSeed(seed,'wilderness-count')},3,4));
+ next(rng);
  return sites.slice(0,count).map((site,index)=>{
   const label=WILDERNESS_NAMES[integer(rng,0,WILDERNESS_NAMES.length-1)],kind=WILDERNESS_KINDS[site.kind];
   return {id:`generated-wilderness:${site.theater}`,type:'wilderness',theater:site.theater,coordinates:[...site.coordinates],

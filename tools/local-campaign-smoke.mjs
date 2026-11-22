@@ -1,11 +1,11 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-import {newGame,tick} from '../engine.js?v=world-kings-local-protection-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-local-protection-1';
-import {playableLocalCities,startLocalCampaign,localProtectionOffer} from '../local-campaign.js?v=world-kings-local-protection-1';
+import {newGame,tick} from '../engine.js?v=world-kings-regional-density-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-regional-density-1';
+import {playableLocalCities,startLocalCampaign,localProtectionOffer} from '../local-campaign.js?v=world-kings-regional-density-1';
 import {advanceLocalEntities} from '../local-polities.js';
-import {advanceMail,courierMonths} from '../epistulae.js?v=world-kings-local-protection-1';
-import {initializeLocalDiscovery} from '../local-discovery.js?v=world-kings-local-protection-1';
+import {advanceMail,courierMonths} from '../epistulae.js?v=world-kings-regional-density-1';
+import {initializeLocalDiscovery} from '../local-discovery.js?v=world-kings-regional-density-1';
 
 const browser=await chromium.launch({headless:true,...(process.env.SPQR_BROWSER_EXECUTABLE?{executablePath:process.env.SPQR_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];
@@ -65,7 +65,7 @@ try{
  await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
  const released=await page.evaluate(id=>JSON.parse(localStorage.getItem('spqr-save-1')).regions.flatMap(region=>region.localEntities||[]).find(city=>city.id===id).overlord,preparedCity.id);
  assert.equal(released,null);
- const neighbor=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:4}),neighborCity=playableLocalCities(neighbor)[0];
+ const neighbor=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),neighborCity=playableLocalCities(neighbor)[0];
  startLocalCampaign(neighbor,neighborCity.id);
  await page.evaluate(value=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:value})),neighbor);
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
@@ -80,7 +80,7 @@ try{
  await page.locator('#new').click();await page.locator('[data-slot="save"]').click();
  const traded=await page.evaluate(id=>{const state=JSON.parse(localStorage.getItem('spqr-save-1'));return {city:state.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.id===id),count:state.localCampaign.tradeCompleted}},neighborCity.id);
  assert.equal(traded.city.lastTrade.actor,'armenia');assert.ok(traded.count>0);
- const petitioner=configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:4});
+ const petitioner=configureStartingDifficulty(newGame('caesar'),'expert',false,{localSeed:8});
  const polity=petitioner.regions.flatMap(region=>region.localEntities||[]).find(entity=>entity.procedural&&['city_state','microstate','tribe'].includes(entity.type));
  assert.ok(polity);petitioner.regions.find(region=>region.id===polity.theater).owner='caesar';
  polity.strategy=5;polity.food=30;polity.treasury=12;petitioner.factions.caesar.food=10;petitioner.factions.caesar.treasury=40;petitioner.month=4;

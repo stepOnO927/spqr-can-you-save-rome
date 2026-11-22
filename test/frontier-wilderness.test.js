@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-local-protection-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-local-protection-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-regional-density-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-regional-density-1';
 import {generatedWildernessSites} from '../local-generation.js';
 import {localEntity} from '../local-polities.js';
 import {wildernessSurveyQuote,startWildernessSurvey,advanceWildernessSurveys} from '../frontier-wilderness.js';
 import {footholdQuote,startFoothold} from '../foothold.js';
-import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-local-protection-1';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-local-protection-1';
+import {localDiscoveryLevel} from '../local-discovery.js?v=world-kings-regional-density-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-regional-density-1';
 
 const start=(seed=1)=>configureStartingDifficulty(newGame('senate'),'expert',false,{localSeed:seed});
 const wilds=state=>state.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.proceduralWilderness);
@@ -61,7 +61,7 @@ test('survey costs resources, needs a local party, pauses when it leaves and pre
 });
 
 test('impassable local features cannot be surveyed or settled',()=>{
- const state=start(1),site=localEntity(state,'generated-wilderness:media');assert.ok(site);
+ const state=start(3),site=localEntity(state,'generated-wilderness:media');assert.ok(site);
  state.armies.push({owner:'senate',region:'media',men:2000,move:null});
  assert.equal(wildernessSurveyQuote(state,site.id,'senate').reason,'unavailable');
  assert.equal(startWildernessSurvey(state,site.id,'senate').ok,false);

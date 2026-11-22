@@ -1,10 +1,10 @@
 // Hands-on guidance for the independent Han and Silk Road campaigns.
 // All goals and routes are derived from the player's current state.
-import {treeFor,focusState,focusStatus} from './focus.js?v=world-kings-local-protection-1';
-import {neighbours} from './military.js?v=world-kings-local-protection-1';
-import {atWar,treaty} from './frontier.js?v=world-kings-local-protection-1';
-import {OFFICES,FACTIONS} from './data.js?v=world-kings-local-protection-1';
-import {initialize as initializeAmbition,status as ambitionStatus} from './ambitions.js?v=world-kings-local-protection-1';
+import {treeFor,focusState,focusStatus} from './focus.js?v=world-kings-regional-density-1';
+import {neighbours} from './military.js?v=world-kings-regional-density-1';
+import {atWar,treaty} from './frontier.js?v=world-kings-regional-density-1';
+import {OFFICES,FACTIONS} from './data.js?v=world-kings-regional-density-1';
+import {initialize as initializeAmbition,status as ambitionStatus} from './ambitions.js?v=world-kings-regional-density-1';
 
 const L=(en,zh)=>[en,zh],now=s=>s.year*12+s.month;
 export const DIRECTIONS={administration:L('Court and administration','朝廷与行政'),trade:L('Trade and diplomacy','贸易与外交'),frontier:L('Frontier readiness','边疆战备')};

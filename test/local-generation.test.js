@@ -1,20 +1,40 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-local-protection-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-local-protection-1';
-import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS,generatedLocalPolities} from '../local-generation.js';
+import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-regional-density-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-regional-density-1';
+import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS,LOCAL_REGION_PROFILES,LOCAL_GENERATION_SITES,INDEPENDENT_VILLAGE_SITES,NOMADIC_RANGES,WILDERNESS_SITES,generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites} from '../local-generation.js';
 import {localOfferChance,advanceLocalEntities,advanceLocalTrade,localEntity,localTradeOpen,offerLocalContact,localSiegeQuote,besiegeLocalEntity} from '../local-polities.js';
 import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from '../local-discovery.js';
 import {advanceVillages} from '../local-villages.js';
 import {advanceLocalResistance} from '../local-resistance.js';
-import {receivedMail,replyToLetter,advanceMail} from '../epistulae.js?v=world-kings-local-protection-1';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-local-protection-1';
+import {receivedMail,replyToLetter,advanceMail} from '../epistulae.js?v=world-kings-regional-density-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-regional-density-1';
 import {mailboxHtml} from '../mail-ui.js';
 
 const start=(mode,seed)=>configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:seed});
 const generated=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&!entity.proceduralVillage&&!entity.proceduralNomad&&!entity.proceduralWilderness);
 const villages=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.proceduralVillage&&!entity.proceduralIndependentVillage);
 const independentVillages=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.proceduralIndependentVillage);
+
+test('regional weights vary seeded polity, village, and wilderness density without fixing any one opening',()=>{
+ const polities=new Set(LOCAL_GENERATION_SITES.map(site=>site.theater)),villages=new Set(INDEPENDENT_VILLAGE_SITES.map(site=>site.theater)),wilderness=new Set(WILDERNESS_SITES.map(site=>site.theater)),nomads=new Set(NOMADIC_RANGES.flatMap(range=>range.camps.map(camp=>camp.theater)));
+ const hits={political:{},village:{},wilderness:{}},counts={political:new Set(),village:new Set(),nomad:new Set(),wilderness:new Set()};
+ for(let seed=1;seed<=512;seed++){
+  const powers=generatedLocalPolities(seed,'standard',polities),hamlets=generatedIndependentVillages(seed,'standard',villages),camps=generatedNomadicCommunities(seed,'hard',nomads),wilds=generatedWildernessSites(seed,wilderness);
+  counts.political.add(powers.length);counts.village.add(hamlets.length);counts.nomad.add(camps.length);counts.wilderness.add(wilds.length);
+  for(const entity of powers)hits.political[entity.theater]=(hits.political[entity.theater]||0)+1;
+  for(const entity of hamlets)hits.village[entity.theater]=(hits.village[entity.theater]||0)+1;
+  for(const entity of wilds)hits.wilderness[entity.theater]=(hits.wilderness[entity.theater]||0)+1;
+ }
+ for(const values of Object.values(counts))assert.equal(values.size,2,'neighboring seeds must sample both values in each count band');
+ assert.ok(hits.political.sicilia>hits.political.africa*1.4);
+ assert.ok(hits.village.achaia>hits.village.media*1.5);
+ assert.ok(hits.wilderness.egyptUpper>hits.wilderness.hispaniaN);
+ for(const theater of new Set([...polities,...villages,...wilderness])){
+  const profile=LOCAL_REGION_PROFILES[theater];
+  for(const key of ['political','village','nomad','wilderness','population','food','trade'])assert.ok(profile[key]>=.3&&profile[key]<=2,`${theater} ${key}`);
+ }
+});
 
 test('fictional local names vary by seed and broad theater without repeating one global style',()=>{
  const theaters=['hispaniaN','achaia','syria','numidia'];
@@ -88,7 +108,7 @@ test('campaigns vary by seed, replay the same seed, and keep all generated value
 });
 
 test('a generated independent village follows host control while retaining its legal title',()=>{
- const s=start('hard',2),village=independentVillages(s)[0],host=s.regions.find(region=>region.id===village.theater);
+ const s=start('hard',9),village=independentVillages(s)[0],host=s.regions.find(region=>region.id===village.theater);
  const original=host.owner,conqueror=Object.keys(s.factions).find(id=>id!==original&&id!=='rebels');
  assert.equal(village.controller,original);
  host.owner=conqueror;
@@ -100,7 +120,7 @@ test('a generated independent village follows host control while retaining its l
 });
 
 test('higher council skill weighs local strength and nearby military pressure in negotiations',()=>{
- const s=start('expert',100),e=generated(s)[0];
+ const s=start('expert',100),e=generated(s).find(entity=>entity.type==='city_state');
  e.strategy=1;e.treasury=40;
  const noPressure=localOfferChance(s,e,'caesar','protectorate');
  e.strategy=5;assert.ok(localOfferChance(s,e,'caesar','protectorate')<noPressure);
@@ -110,7 +130,7 @@ test('higher council skill weighs local strength and nearby military pressure in
 });
 
 test('capable local councils spend their own reserves to mobilize under a stronger nearby army',()=>{
- const s=start('expert',2),e=generated(s)[0];e.strategy=5;e.treasury=Math.max(20,e.treasury);e.food=Math.max(10,e.food);
+ const s=start('expert',9),e=generated(s)[0];e.strategy=5;e.treasury=Math.max(20,e.treasury);e.food=Math.max(10,e.food);
  s.armies.push({owner:'caesar',region:e.theater,men:e.militia*3,move:null});s.month=3;
  const before={militia:e.militia,treasury:e.treasury,food:e.food};advanceLocalEntities(s);
  assert.ok(e.militia>before.militia);assert.ok(e.militia<=Math.floor(e.population*.22));
@@ -123,14 +143,14 @@ test('capable local councils spend their own reserves to mobilize under a strong
 });
 
 test('a well funded council can improve its fort once in a quiet year',()=>{
- const s=start('expert',2),e=generated(s)[0];s.armies=s.armies.filter(army=>army.region!==e.theater);
+ const s=start('expert',9),e=generated(s)[0];s.armies=s.armies.filter(army=>army.region!==e.theater);
  e.strategy=5;e.fort=1;e.treasury=30;e.food=10;s.month=12;
  advanceLocalEntities(s);assert.equal(e.fort,2);assert.equal(e.treasury,18);assert.equal(e.food,8);
  advanceLocalEntities(s);assert.equal(e.fort,2);assert.equal(e.treasury,18);assert.equal(e.food,8);
 });
 
 test('a generated ruler stays identified in the saved outcome and the player receives one delayed envoy report',()=>{
- const s=start('expert',2),e=localEntity(s,'generated:narbo');
+ const s=start('expert',9),e=localEntity(s,'generated:narbo');
  assert.ok(e?.ruler?.name?.[0]);
  assert.equal(offerLocalContact(s,e.id,'caesar','access').ok,true);
  assert.equal(receivedMail(s).filter(m=>m.context?.kind==='local_contact_result').length,0);
@@ -151,7 +171,7 @@ test('a generated ruler stays identified in the saved outcome and the player rec
 });
 
 test('a strongman draws only civilian surplus once each quarter and keeps a separate legal title',()=>{
- const s=start('standard',2),chief=generated(s).find(e=>e.type==='strongman'),village=localEntity(s,`generated-village:${chief.theater}`);
+ const s=start('standard',9),chief=generated(s).find(e=>e.type==='strongman'),village=localEntity(s,`generated-village:${chief.theater}`);
  assert.ok(chief&&village);s.month=3;
  village.village.storedFood=village.village.foodNeed*2+1;
  const food=chief.food,satisfaction=village.village.satisfaction;
@@ -163,7 +183,7 @@ test('a strongman draws only civilian surplus once each quarter and keeps a sepa
 });
 
 test('service is delayed, costs treasury, and never annexes the chief or village',()=>{
- const s=start('standard',2),chief=generated(s).find(e=>e.type==='strongman'),village=localEntity(s,`generated-village:${chief.theater}`);
+ const s=start('standard',9),chief=generated(s).find(e=>e.type==='strongman'),village=localEntity(s,`generated-village:${chief.theater}`);
  const actor=s.regions.find(r=>r.id===chief.theater).owner,legal=chief.legalSovereign,before=s.factions[actor].treasury;
  assert.equal(offerLocalContact(s,chief.id,actor,'protectorate').ok,false);
  assert.equal(offerLocalContact(s,chief.id,actor,'service').ok,true);
@@ -178,7 +198,7 @@ test('service is delayed, costs treasury, and never annexes the chief or village
 });
 
 test('a host court can recognize a chief title without gaining passage or village control',()=>{
- const s=start('hard',2),chief=generated(s).find(entity=>entity.type==='strongman'),village=localEntity(s,`generated-village:${chief.theater}`);
+ const s=start('hard',9),chief=generated(s).find(entity=>entity.type==='strongman'),village=localEntity(s,`generated-village:${chief.theater}`);
  const actor=s.regions.find(region=>region.id===chief.theater).owner,treasury=s.factions[actor].treasury;
  chief.seed=0;
  const before=localOfferChance(s,chief,actor,'service');
@@ -202,7 +222,7 @@ test('a host court can recognize a chief title without gaining passage or villag
 });
 
 test('hard nonplayer court initiates a paid title negotiation with a local chief',()=>{
- const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:2});
+ const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:9});
  const chief=generated(s).find(entity=>entity.type==='strongman'&&s.regions.find(region=>region.id===entity.theater).owner==='caesar');
  assert.ok(chief);
  s.factions.caesar.treasury=100;
@@ -214,7 +234,7 @@ test('hard nonplayer court initiates a paid title negotiation with a local chief
 });
 
 test('a strongman requests a local charter without gaining sovereignty or army passage',()=>{
- const s=start('hard',2),chief=generated(s).find(entity=>entity.type==='strongman'&&s.regions.find(region=>region.id===entity.theater).owner==='caesar');
+ const s=start('hard',9),chief=generated(s).find(entity=>entity.type==='strongman'&&s.regions.find(region=>region.id===entity.theater).owner==='caesar');
  assert.ok(chief);chief.strategy=5;chief.treasury=10;chief.militia=Math.max(chief.militia,Math.ceil(chief.population*.1));
  const village=localEntity(s,`generated-village:${chief.theater}`),legal=chief.legalSovereign;
  s.month=4;advanceLocalEntities(s);
@@ -243,7 +263,7 @@ test('a strongman requests a local charter without gaining sovereignty or army p
 });
 
 test('an old charter petition cannot be granted after the host theater changes hands',()=>{
- const s=start('hard',2),chief=generated(s).find(entity=>entity.type==='strongman'&&s.regions.find(region=>region.id===entity.theater).owner==='caesar');
+ const s=start('hard',9),chief=generated(s).find(entity=>entity.type==='strongman'&&s.regions.find(region=>region.id===entity.theater).owner==='caesar');
  assert.ok(chief);chief.strategy=5;chief.treasury=10;chief.militia=Math.max(chief.militia,Math.ceil(chief.population*.1));
  s.month=4;advanceLocalEntities(s);
  const letter=s.mail.messages.find(mail=>mail.context?.kind==='strongman_charter_request'&&mail.context.polityId===chief.id);
@@ -253,7 +273,7 @@ test('an old charter petition cannot be granted after the host theater changes h
 });
 
 test('a known strongman can secure a delayed household charter from a nonplayer host',()=>{
- const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:2});
+ const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:9});
  const chief=generated(s).find(entity=>entity.type==='strongman'&&s.regions.find(region=>region.id===entity.theater).owner==='caesar');
  assert.ok(chief);chief.strategy=5;chief.treasury=12;chief.militia=Math.max(chief.militia,Math.ceil(chief.population*.1));
  const village=localEntity(s,`generated-village:${chief.theater}`),legal=chief.legalSovereign;
@@ -282,7 +302,7 @@ test('a known strongman can secure a delayed household charter from a nonplayer 
 });
 
 test('a nonplayer household charter fails if the host loses the theater in transit',()=>{
- const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:2});
+ const s=configureStartingDifficulty(newGame('senate'),'hard',false,{localSeed:9});
  const chief=generated(s).find(entity=>entity.type==='strongman'&&s.regions.find(region=>region.id===entity.theater).owner==='caesar');
  assert.ok(chief);chief.strategy=5;chief.treasury=12;chief.militia=Math.max(chief.militia,Math.ceil(chief.population*.1));
  s.factions.caesar.treasury=40;s.factions.caesar.stability=70;s.month=4;advanceLocalEntities(s);
@@ -294,7 +314,7 @@ test('a nonplayer household charter fails if the host loses the theater in trans
 });
 
 test('a capable generated polity can request player-approved, funded food trade',()=>{
- const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const s=start('expert',8),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
  assert.ok(entity);
  const theater=s.regions.find(region=>region.id===entity.theater);
  theater.owner='caesar';entity.strategy=2;entity.food=30;entity.treasury=12;
@@ -339,7 +359,7 @@ test('a capable generated polity can request player-approved, funded food trade'
 });
 
 test('an acceptance reveals no secret change and creates no right across closed commerce',()=>{
- const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const s=start('expert',8),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
  const theater=s.regions.find(region=>region.id===entity.theater);
  theater.owner='caesar';entity.strategy=5;entity.food=30;entity.treasury=12;
  s.factions.caesar.food=10;s.factions.caesar.treasury=40;s.month=4;advanceLocalEntities(s);
@@ -355,7 +375,7 @@ test('an acceptance reveals no secret change and creates no right across closed 
 });
 
 test('an unrelated access negotiation does not cancel an accepted local food compact',()=>{
- const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const s=start('expert',8),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
  s.regions.find(region=>region.id===entity.theater).owner='caesar';
  entity.strategy=5;entity.food=30;entity.treasury=12;
  s.factions.caesar.food=10;s.factions.caesar.treasury=40;s.month=4;advanceLocalEntities(s);
@@ -371,7 +391,7 @@ test('an unrelated access negotiation does not cancel an accepted local food com
 });
 
 test('refusing a generated locality trade petition creates no right',()=>{
- const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const s=start('expert',8),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
  s.regions.find(region=>region.id===entity.theater).owner='caesar';entity.strategy=5;entity.food=30;entity.treasury=12;
  s.factions.caesar.food=10;s.factions.caesar.treasury=40;s.month=4;advanceLocalEntities(s);
  const letter=s.mail.messages.find(mail=>mail.context?.kind==='local_trade_petition'&&mail.context.polityId===entity.id);
@@ -384,7 +404,7 @@ test('refusing a generated locality trade petition creates no right',()=>{
 });
 
 test('a commercial route closing while the acceptance returns prevents a stale compact',()=>{
- const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const s=start('expert',8),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
  const theater=s.regions.find(region=>region.id===entity.theater);
  theater.owner='caesar';entity.strategy=5;entity.food=30;entity.treasury=12;
  s.factions.caesar.food=10;s.factions.caesar.treasury=40;s.month=4;advanceLocalEntities(s);
@@ -399,7 +419,7 @@ test('a commercial route closing while the acceptance returns prevents a stale c
 });
 
 test('a known hungry nonplayer neighbor can conclude its own delayed local food compact',()=>{
- const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const s=start('expert',8),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
  const theater=s.regions.find(region=>region.id===entity.theater);theater.owner='senate';
  entity.strategy=5;entity.food=30;entity.treasury=12;
  for(const court of Object.values(s.factions))court.food=100;
@@ -433,7 +453,7 @@ test('a known hungry nonplayer neighbor can conclude its own delayed local food 
 });
 
 test('a nonplayer court may no longer need food when a local offer reaches it',()=>{
- const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const s=start('expert',8),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
  s.regions.find(region=>region.id===entity.theater).owner='senate';entity.strategy=5;entity.food=30;
  for(const court of Object.values(s.factions))court.food=100;
  s.factions.senate.food=10;s.factions.senate.treasury=40;s.month=4;
@@ -445,7 +465,7 @@ test('a nonplayer court may no longer need food when a local offer reaches it',(
 });
 
 test('a threatened autonomous polity can seek a funded nonplayer protector without transferring local control',()=>{
- const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const s=start('expert',8),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
  const theater=s.regions.find(region=>region.id===entity.theater),host='senate',threat=Object.keys(s.factions).find(id=>id!==host&&id!==s.player);
  const originalTitle=entity.legalSovereign;
  theater.owner=host;entity.strategy=5;entity.treasury=20;s.factions[host].treasury=40;s.factions[host].stability=80;
@@ -473,7 +493,7 @@ test('a threatened autonomous polity can seek a funded nonplayer protector witho
 });
 
 test('a vanished hostile army cancels a local protection petition',()=>{
- const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const s=start('expert',8),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
  const theater=s.regions.find(region=>region.id===entity.theater),host='senate',threat=Object.keys(s.factions).find(id=>id!==host&&id!==s.player);
  theater.owner=host;entity.strategy=5;entity.treasury=20;s.factions[host].treasury=40;s.factions[host].stability=80;
  s.localDiscovery[host][entity.id]={level:LOCAL_DISCOVERY_LEVELS.identified,year:s.year,month:s.month,source:'frontier'};
@@ -490,7 +510,7 @@ test('a vanished hostile army cancels a local protection petition',()=>{
 });
 
 test('occupation transfers a dependent village and a successful local revolt restores personal control',()=>{
- const s=start('standard',2),chief=generated(s).find(e=>e.type==='strongman'),village=localEntity(s,`generated-village:${chief.theater}`),host=s.regions.find(r=>r.id===chief.theater),actor=host.owner;
+ const s=start('standard',9),chief=generated(s).find(e=>e.type==='strongman'),village=localEntity(s,`generated-village:${chief.theater}`),host=s.regions.find(r=>r.id===chief.theater),actor=host.owner;
  chief.controller=actor;chief.militaryOccupier=actor;chief.administrativeStatus='occupied';chief.resistance=100;
  village.controller=actor;village.lastPatronController=actor;village.militaryOccupier=actor;
  s.armies=s.armies.filter(a=>a.region!==chief.theater);
@@ -502,7 +522,7 @@ test('occupation transfers a dependent village and a successful local revolt res
 });
 
 test('an army-backed assault occupies the chief and village without annexing the host theater',()=>{
- const s=start('hard',2),chief=generated(s).find(e=>e.type==='strongman'),village=localEntity(s,`generated-village:${chief.theater}`),host=s.regions.find(r=>r.id===chief.theater),actor=host.owner;
+ const s=start('hard',9),chief=generated(s).find(e=>e.type==='strongman'),village=localEntity(s,`generated-village:${chief.theater}`),host=s.regions.find(r=>r.id===chief.theater),actor=host.owner;
  const army=s.armies.find(a=>a.owner===actor&&a.region===chief.theater&&a.men>=chief.militia*1.5&&!a.move);
  assert.ok(army);const owner=host.owner,legal=chief.legalSovereign,food=s.factions[actor].food;
  const quote=localSiegeQuote(s,chief.id,army.id,actor);assert.equal(quote.ok,true);

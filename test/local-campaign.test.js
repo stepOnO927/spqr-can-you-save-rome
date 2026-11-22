@@ -58,7 +58,7 @@ test('city trade moves actual goods and qualifies a surviving city for victory',
 });
 
 test('a generated city can negotiate a funded trade compact with a reachable neighboring court',()=>{
- const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:4}),city=playableLocalCities(state)[0];
+ const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),city=playableLocalCities(state)[0];
  assert.equal(city.theater,'anatolia');startLocalCampaign(state,city.id);
  assert.ok(localTradePartners(state).includes('armenia'));
  assert.match(localCouncilHtml(state),/data-local-trade-partner/);
@@ -79,7 +79,7 @@ test('a generated city can negotiate a funded trade compact with a reachable nei
 });
 
 test('stale neighboring control does not leak a new owner or create trade across a closed route',()=>{
- const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:4}),city=playableLocalCities(state)[0];
+ const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),city=playableLocalCities(state)[0];
  startLocalCampaign(state,city.id);
  assert.equal(localTradeOffer(state,'armenia'),true);
  state.regions.find(region=>region.id==='armenia').owner='parthia';
@@ -91,7 +91,7 @@ test('stale neighboring control does not leak a new owner or create trade across
 });
 
 test('a save keeps a paid envoy after its recipient court dissolves',()=>{
- const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:4}),city=playableLocalCities(state)[0];
+ const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),city=playableLocalCities(state)[0];
  startLocalCampaign(state,city.id);
  assert.equal(localTradeOffer(state,'armenia'),true);
  delete state.factions.armenia;
@@ -107,7 +107,7 @@ test('a save keeps a paid envoy after its recipient court dissolves',()=>{
 });
 
 test('two funded compacts count both actual shipments in one quarter',()=>{
- const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:4}),city=playableLocalCities(state)[0];
+ const state=configureStartingDifficulty(newGame('caesar'),'standard',false,{localSeed:6}),city=playableLocalCities(state)[0];
  startLocalCampaign(state,city.id);
  state.month=3;city.food=30;city.tradeRights={senate:state.year*12+15,armenia:state.year*12+15};
  const senateFood=state.factions.senate.food,armenianFood=state.factions.armenia.food;
