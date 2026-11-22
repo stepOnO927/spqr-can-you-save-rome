@@ -6,6 +6,18 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `3933b0d8` is integrated. Its optional Names of Legend mode,
+earned epithets, regnal names, dated public evidence, honors and a verified
+red-beard portrait now coexist with the expansion's saved cultural names,
+procedural artwork and existing court portrait claims. Historical mode is
+the default; an homage remains explicitly fictional. New evidence hooks
+cover captive release, cross-court marriage, inheritance, family resources,
+Roman reform, regent usurpation and envoy execution. The setup choice,
+bilingual dossier, saved state and cloud browser scenario are retained.
+Focused legend, regional-court, portrait, chronicle and module-version tests
+pass 32/32; the complete local serial TAP suite passes 1,297/1,297.
+Cloud checks follow.
+
 Main through `8abab357` is integrated. Undelivered control reports no longer
 inform the campaign map, strategic chessboard, diplomatic contact or AI
 balance review. The merge dropped the new chessboard guard and two regression

@@ -81,6 +81,7 @@ jobs:
               node tools/han-court-alliance-smoke.mjs
               node tools/han-court-autonomy-smoke.mjs
               node tools/genealogy-dossier-smoke.mjs
+              node tools/legend-smoke.mjs
               node tools/genealogy-personal-actions-smoke.mjs
               node tools/guardianship-playability-smoke.mjs
               node tools/fictional-family-age-smoke.mjs

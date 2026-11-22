@@ -3,7 +3,8 @@ import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-name-disagreem
 import {startDynasticWar} from './civil-war.js?v=faces-name-disagreement-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,factionNameStyle,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=faces-wheels-1';
-import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=missing-fate-privacy-1';
+import {portraitSeedFor,assignBornPortrait,assignCourtPortrait,assignLegendPortrait} from './portrait-registry.js?v=missing-fate-privacy-1';
+import {initializeLegend,recordLegendEvidence} from './legend.js?v=names-of-legend-1';
 import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=faces-name-disagreement-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
@@ -45,7 +46,7 @@ function ensureCatalog(s){
 
 export function initializeDynasties(s){
  const d=s.world.dynasties||= {families:{},lives:{},catalog:{},marriages:[],memories:[],rulers:[],seed:220049,nextPerson:1,nextFamily:1};
- d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.rulingHouses||={};d.houseTransitions||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.familyAccords||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);
+ d.families||={};d.lives||={};d.catalog||={};d.marriages||=[];d.memories||=[];d.rulers||=[];d.rulingHouses||={};d.houseTransitions||=[];d.inheritanceDisputes||=[];d.familyLoans||=[];d.marriageOffers||=[];d.asylumRequests||=[];d.familyAccords||=[];d.seed??=220049;d.nextPerson||=1;d.nextFamily||=1;ensureCatalog(s);initializeLegend(s);
  for(const [id,c] of Object.entries(s.world.characters)){
   if(CHARACTER_CATALOG[id]?.fictional)c.portraitSeed??=portraitSeedFor(id,c,CHARACTER_CATALOG[id]);
   c.parents||=[];c.adoptiveParents||=[];c.children||=[];c.spouse||=null;c.wealth??=0;
@@ -79,7 +80,7 @@ export function initializeDynasties(s){
  return d;
 }
 
-export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员'],culture=['Simulated','模拟'],homeland=null,ambition,personalitySeed,militaryOnly=false,origin='birth'}){
+export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,parents=[],adoptiveParents=[],wealth=0,location=null,sex='unknown',role=['Court member','宫廷成员'],culture=['Simulated','模拟'],homeland=null,ambition,personalitySeed,militaryOnly=false,origin='birth',regnalName=null,homage=null,appearance=null}){
  const d=initializeDynasties(s);
  // Reserve identities mentioned anywhere in older saves, including reports
  // and relationships whose original person or family is no longer present.
@@ -88,7 +89,7 @@ export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,
  const personNo=nextFree(d.nextPerson,people);d.nextPerson=personNo+1;const id=`fictional:${personNo}`;
  let family=familyId;if(!family){const familyNo=nextFree(d.nextFamily,families);d.nextFamily=familyNo+1;family=`family:fictional:${familyNo}`}
  if(!d.families[family])d.families[family]={id:family,name:Array.isArray(name)?name:[name,name],wealth:0,reputation:50,influence:20,leader:id,patrons:[]};
- d.catalog[id]={name:Array.isArray(name)?name:[name,name],birth:[birthYear,birthYear],faction,role,culture,source:null,fictional:true};
+ d.catalog[id]={name:Array.isArray(name)?name:[name,name],birth:[birthYear,birthYear],faction,role,culture,source:null,fictional:true,...(regnalName?{regnalName:[...regnalName]}:{}),...(homage?{homage:structuredClone(homage)}:{}),...(appearance?{appearance:structuredClone(appearance)}:{})};
  CHARACTER_CATALOG[id]=structuredClone(d.catalog[id]);
  s.world.characters[id]={id,faction,health:'healthy',location,homeland:homeland||location,alive:true,loyalty:65,influence:20,wealth,parents:[...parents],adoptiveParents:[...adoptiveParents],children:[],spouse:null,familyId:family,birthYear,sex,education:0,ambition:ambition??Math.floor(20+roll(s)*60),personalitySeed:personalitySeed??Math.floor(roll(s)*0xffffffff),militaryOnly,wounds:0,illnessEpisodes:0};
  s.world.characters[id].portraitSeed=portraitSeedFor(id,s.world.characters[id],d.catalog[id]);
@@ -96,7 +97,7 @@ export function createFictionalPerson(s,{name,faction,birthYear=s.year,familyId,
  if(origin==='court_nominee')record(s,id,'Entered this campaign as a fictional court nominee; no historical identity or family relationship is asserted.','作为虚构宫廷人选进入本次战役；不代表历史人物或历史亲属关系。');
  else if(origin==='market_merchant')record(s,id,'Entered the campaign market network as a fictional merchant.','作为虚构商人加入战役商贸网络。');
  else record(s,id,'Born in the simulated campaign.','出生于模拟战役。');
- if(origin==='birth'&&birthYear===s.year)assignBornPortrait(s,id);if(origin==='court_nominee')assignCourtPortrait(s,id);return id;
+ if(origin==='birth'&&birthYear===s.year)assignBornPortrait(s,id);if(origin==='court_nominee'){assignCourtPortrait(s,id);if(assignLegendPortrait(s,id)&&appearance?.redBeard)recordLegendEvidence(s,id,'appearance_redbeard',{reference:`portrait:${id}`,audiences:[faction],detail:['A verified portrait depicts a copper-red beard.','已核对的肖像描绘了红褐色胡须。']})}return id;
 }
 
 export function seedOpeningFictionalHouseholds(s){
@@ -193,7 +194,7 @@ export function proposeMarriage(s,aId,bId,{knownNames={},delivered=false}={}){
  a.spouse=bId;b.spouse=aId;s.world.dynasties.marriages.push({a:aId,b:bId,reportedNames:[[...display(aId)],[...display(bId)]],year:s.year,month:s.month,simulated:true});
  for(const id of [aId,bId])record(s,id,`Married ${display(id===aId?bId:aId)[0]}.`,`与${display(id===aId?bId:aId)[1]}结婚。`);
  familyOf(s,aId).influence=Math.min(100,familyOf(s,aId).influence+3);familyOf(s,bId).influence=Math.min(100,familyOf(s,bId).influence+3);
- if(a.faction!==b.faction){const key=pair(a.faction,b.faction);s.relations[key]=Math.min(100,(s.relations[key]||0)+4)}
+ if(a.faction!==b.faction){const key=pair(a.faction,b.faction);s.relations[key]=Math.min(100,(s.relations[key]||0)+4);const ref=`marriage:${pair(aId,bId)}:${s.year}:${s.month}`;for(const id of [aId,bId])recordLegendEvidence(s,id,'maneuver',{reference:ref+':'+id,audiences:[a.faction,b.faction],detail:['Concluded a cross-court marriage.','达成跨宫廷婚姻。']})}
  if(a.faction===s.player||b.faction===s.player)note(s,`${display(aId)[0]} and ${display(bId)[0]} married in the simulation.`,`模拟战役中，${display(aId)[1]}与${display(bId)[1]}结婚。`);
  return {ok:true};
 }
@@ -394,7 +395,7 @@ export function resolveInheritanceDispute(s,disputeId,choice){
  if(heirs.length){const portion=Math.floor(rest/heirs.length);for(const heir of heirs)heir.wealth+=portion;d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest-portion*heirs.length}
  else if(beneficiary?.alive)beneficiary.wealth+=rest;
  else d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest;
- if(choice==='compromise'){faction.treasury-=6;faction.stability=Math.min(100,faction.stability+2)}
+ if(choice==='compromise'){faction.treasury-=6;faction.stability=Math.min(100,faction.stability+2);const ruler=(s.world.leadership[caseFile.faction]||[]).find(id=>s.world.characters[id]?.alive);if(ruler)recordLegendEvidence(s,ruler,'fair_ruling',{reference:`inheritance:${caseFile.id}`,audiences:[caseFile.faction],detail:['Divided a contested private estate after a court ruling.','经宫廷裁决分割有争议的私人遗产。']})}
  if(choice==='will'){for(const heir of heirs)heir.loyalty=Math.max(0,heir.loyalty-8);if(faction)faction.stability=Math.max(0,faction.stability-2)}
  if(choice==='heirs'&&beneficiary?.alive){beneficiary.loyalty=Math.max(0,beneficiary.loyalty-10);if(faction)faction.stability=Math.max(0,faction.stability-1)}
  if(beneficiary?.alive&&beneficiary.faction!==caseFile.faction){const key=pair(beneficiary.faction,caseFile.faction);s.relations[key]=Math.max(-100,Math.min(100,(s.relations[key]||0)+(choice==='heirs'?-4:2)))}
@@ -420,9 +421,9 @@ export function requestFamilyResources(s,familyId,choice){
  let rest=amount,pooled=Math.min(rest,family.wealth||0);family.wealth-=pooled;rest-=pooled;
  for(const person of members){const taken=Math.min(rest,Math.max(0,Math.floor(person.wealth||0)));person.wealth-=taken;rest-=taken;if(!rest)break}
  government.treasury+=amount;family.lastResourceRequest=monthIndex;
- if(choice==='donation'){family.influence=Math.min(100,(family.influence??20)+3);family.reputation=Math.min(100,(family.reputation??50)+2);leader.loyalty=Math.min(100,(leader.loyalty??50)+2)}
+ if(choice==='donation'){family.influence=Math.min(100,(family.influence??20)+3);family.reputation=Math.min(100,(family.reputation??50)+2);leader.loyalty=Math.min(100,(leader.loyalty??50)+2);recordLegendEvidence(s,leader.id,'generosity',{reference:`donation:${familyId}:${monthIndex}`,audiences:[faction],detail:[`Contributed ${amount} private wealth to the treasury.`,`向国库捐出${amount}私人财富。`]});recordLegendEvidence(s,leader.id,'patronage',{reference:`patronage:${familyId}:${monthIndex}`,audiences:[faction]})}
  if(choice==='loan'){d.familyLoans.push({familyId,faction,principal:amount,remaining:amount+2,year:s.year,month:s.month});family.influence=Math.min(100,(family.influence??20)+2)}
- if(choice==='levy'){government.stability=Math.max(0,government.stability-4);family.reputation=Math.max(0,(family.reputation??50)-5);for(const member of members)member.loyalty=Math.max(0,(member.loyalty||50)-8);d.memories.push({familyId,kind:'forced_levy',year:s.year,month:s.month,weight:-10})}
+ if(choice==='levy'){government.stability=Math.max(0,government.stability-4);family.reputation=Math.max(0,(family.reputation??50)-5);for(const member of members)member.loyalty=Math.max(0,(member.loyalty||50)-8);d.memories.push({familyId,kind:'forced_levy',year:s.year,month:s.month,weight:-10});const ruler=(s.world.leadership[faction]||[]).find(id=>s.world.characters[id]?.alive);if(ruler){const detail=[`Compelled ${amount} private wealth from a family.`,`向家族强制征收${amount}私人财富。`];recordLegendEvidence(s,ruler,'forced_levy',{reference:`levy:${familyId}:${monthIndex}`,audiences:[faction],detail});recordLegendEvidence(s,ruler,'severe_rule',{reference:`levy-rule:${familyId}:${monthIndex}`,audiences:[faction],detail})}}
  const labels={donation:['voluntary contribution','自愿捐助'],loan:['family loan','家族借款'],levy:['compulsory levy','强制征收']};
  record(s,leader.id,`The family provided ${amount} to the treasury as a ${labels[choice][0]}.`,`家族以${labels[choice][1]}形式向国库提供${amount}。`);
  note(s,`A ${labels[choice][0]} transferred ${amount} private wealth to the treasury.`,`一笔${labels[choice][1]}将${amount}私人财富转入国库。`);

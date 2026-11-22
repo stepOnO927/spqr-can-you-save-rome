@@ -1,4 +1,5 @@
 import {namedReportSubjects,reportedPersonalContacts,reportedPeople,isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
+import {recordLegendEvidence} from './legend.js?v=names-of-legend-1';
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=faces-name-disagreement-1';
 import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=faces-name-disagreement-1';
 import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
@@ -104,7 +105,7 @@ export function advanceAgentRequests(s,{autoplayPlayer=false}={}){initializeWorl
  if(request.phase==='return'){
   if(!c||c.state!=='held'||c.holder!==request.holder||q<.2){request.status='no_reply';request.phase='lost';continue}
   request.status=request.decision==='release'?'released':'refused';request.phase='delivered';
-  if(request.status==='released'){releaseAgent(s,c)}continue;
+  if(request.status==='released'){releaseAgent(s,c);const ruler=(s.world.leadership[request.holder]||[]).find(id=>s.world.characters[id]?.alive);if(ruler)recordLegendEvidence(s,ruler,'mercy',{reference:`agent-release:${request.captiveId}:${request.year}:${request.month}`,audiences:[request.holder,request.actor],detail:['Released a captive agent after a completed handover.','完成交接后释放一名被俘情报人员。']})}continue;
  }
  const war=s.wars.some(w=>w.includes(request.actor)&&w.includes(request.holder));if(!c||c.state!=='held'||!s.regions.some(r=>r.owner===request.holder)||q<.2)request.status='no_reply';else if(q<(war?.65:.45))request.status='refused';else{request.status='released';releaseAgent(s,c)}if(request.actor===s.player)notify(s,request.status==='released'?`${CHARACTER_CATALOG[c.personId]?.name?.[0]||'The agent'} was released and is available again.`:request.status==='refused'?'The court refused to release the agent.':'No response arrived; the correspondence may have been lost.',request.status==='released'?`${CHARACTER_CATALOG[c.personId]?.name?.[1]||'情报人员'}获释，情报人手恢复。`:request.status==='refused'?'对方拒绝释放人员。':'未收到回信；书信可能遗失。');
 }}

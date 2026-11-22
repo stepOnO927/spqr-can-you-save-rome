@@ -4,6 +4,7 @@ import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dyn
 import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
 import {startDynasticWar} from './civil-war.js?v=faces-name-disagreement-1';
+import {courtNomineeName,recordLegendEvidence} from './legend.js?v=names-of-legend-1';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
@@ -52,6 +53,7 @@ export function reformRomanGovernment(s,target){
  const cost=target==='roman_principate'?35:45;if(f.treasury<cost)return {ok:false,reason:'treasury'};
  f.treasury-=cost;f.stability=Math.max(0,f.stability-5);s.world.romanRegimes||={};s.world.romanRegimes[faction]=target;
  s.world.romanReforms||=[];s.world.romanReforms.push({faction,target,year:s.year,month:s.month,simulated:true});
+ const ruler=(s.world.leadership[faction]||[]).find(id=>s.world.characters[id]?.alive);if(ruler)recordLegendEvidence(s,ruler,'reform',{reference:`roman-reform:${target}:${s.year}:${s.month}`,audiences:[faction],detail:['Established a new constitutional settlement.','确立新的宪制安排。']});
  s.log.unshift({year:s.year,month:s.month,en:target==='roman_principate'?'A postwar constitutional settlement established a simulated Principate. Dynastic claims now matter alongside appointments, army backing and recognition.':'A later imperial reform established co-emperor appointments and rival court succession in this alternate campaign.',zh:target==='roman_principate'?'战后宪制和解在架空战役中建立元首制。王朝主张与任命、军队支持及承认共同影响继任。':'架空战役中的后期帝国改革允许任命共治皇帝，并可能出现竞争宫廷。'});s.log=s.log.slice(0,80);
  return {ok:true,cost};
 }
@@ -152,9 +154,10 @@ function advanceRegionalVacancy(s,faction,autoplayPlayer){
  if(dynastyRoll(s)>=chance)return;
  const serials=s.world.courtNomineeSerials||={},serial=(serials[faction]||0)+1;serials[faction]=serial;
  const place=s.regions.find(r=>r.owner===faction)?.id;
- const sex=serial===1?(faction==='bosporus'?'female':'male'):'unknown';
+ const sex=serial===1?(faction==='bosporus'?'female':'male'):faction==='bosporus'&&serial%4===2?'male':'unknown';
  const name=generateFictionalName(s,{originFaction:faction,location:place});
- const id=createFictionalPerson(s,{...name,faction,birthYear:s.year-35,location:place,sex,role:['Fictional court nominee in this campaign','本战役虚构宫廷人选'],origin:'court_nominee'});
+ const generated=courtNomineeName(s,faction,serial,()=>dynastyRoll(s));
+ const id=createFictionalPerson(s,{...name,name:generated?.name||name.name,regnalName:generated?.regnalName||null,homage:generated?.homage||null,appearance:generated?.appearance||null,faction,birthYear:s.year-35,location:place,sex,role:['Fictional court nominee in this campaign','本战役虚构宫廷人选'],origin:'court_nominee'});
  f.treasury-=5;assignSuccession(s,faction);delete vacancies[faction];
 }
 
@@ -172,7 +175,7 @@ export function advanceGovernments(s,{autoplayPlayer=false}={}){
    if((['egypt','parthia'].includes(faction)||['roman_principate','later_empire'].includes(successionModel(faction,s)))&&personAge(s,ward)!==null&&personAge(s,ward)<16&&tenure.months>=6&&(regent.ambition??0)>=75&&s.factions[faction].stability<35&&dynastyRoll(s)<.12){
     s.world.claimants[faction]||=[];if(!s.world.claimants[faction].includes(regent.id))s.world.claimants[faction].push(regent.id);
     s.world.disputes[faction]||={months:0,support:{}};s.world.disputes[faction].support||={};s.world.disputes[faction].support[regent.id]=Math.max(30,s.world.disputes[faction].support[regent.id]||0);
-    if(startDynasticWar(s,faction,regent.id)){tenure.usurpation=true;if(faction===s.player)s.log.unshift({year:s.year,month:s.month,en:'The regent raised a rival court and seized a province with an army.',zh:'摄政者另立宫廷，率军夺取一处行省。'})}
+    if(startDynasticWar(s,faction,regent.id)){tenure.usurpation=true;recordLegendEvidence(s,regent.id,'usurpation',{reference:`regency-usurpation:${faction}:${s.year}:${s.month}`,audiences:[faction],detail:['Raised a rival court and seized a province.','另立宫廷并夺取行省。']});recordLegendEvidence(s,regent.id,'power_bid',{reference:`regency-bid:${faction}:${s.year}:${s.month}`,audiences:[faction]});if(faction===s.player)s.log.unshift({year:s.year,month:s.month,en:'The regent raised a rival court and seized a province with an army.',zh:'摄政者另立宫廷，率军夺取一处行省。'})}
    }
   }else if(s.world.regencies[faction]&&s.world.regencies[faction].endedYear==null){s.world.regencies[faction].endedYear=s.year;s.world.regencies[faction].endedMonth=s.month}
   for(const id of after.nominal.filter(id=>!before.nominal.includes(id)))recordLifeEvent(s,id,`Assumed political leadership of ${FACTIONS[faction]?.short[0]||faction} in the simulation.`,`在模拟中成为${FACTIONS[faction]?.short[1]||faction}的政治领袖。`);
