@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js?v=born-portrait-thirteen-1';
-import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js?v=born-portrait-thirteen-1';
-import {setWartimePolicy} from '../epistulae-personnel.js?v=born-portrait-thirteen-1';
-import {initializeMailReports,advanceMailReports} from '../mail-reports.js?v=born-portrait-thirteen-1';
-import {mailboxHtml} from '../mail-ui.js?v=born-portrait-thirteen-1';
+import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js?v=dynastic-reported-leads-1';
+import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js?v=dynastic-reported-leads-1';
+import {setWartimePolicy} from '../epistulae-personnel.js?v=dynastic-reported-leads-1';
+import {initializeMailReports,advanceMailReports} from '../mail-reports.js?v=dynastic-reported-leads-1';
+import {mailboxHtml} from '../mail-ui.js?v=dynastic-reported-leads-1';
 
 const state = () => {
   const factions = Object.fromEntries(['caesar','senate','egypt','parthia'].map(id => [id,{treasury:100}]));

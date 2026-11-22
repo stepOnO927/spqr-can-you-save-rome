@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission,sendInquiry,tick} from '../engine.js?v=born-portrait-thirteen-1';
-import {createFictionalPerson} from '../dynasties.js?v=born-portrait-thirteen-1';
-import {genealogyMeetingContacts} from '../genealogy-personal-actions.js?v=born-portrait-thirteen-1';
-import {addReport,reportedPersonName,advanceOperations} from '../character-system.js?v=born-portrait-thirteen-1';
-import {requestPersonalMeeting} from '../personal-diplomacy.js?v=born-portrait-thirteen-1';
-import {visiblePersonName} from '../person-knowledge.js?v=saved-age-consistency-1';
+import {newGame,upgradeSave,queueMission,sendInquiry,tick} from '../engine.js?v=dynastic-reported-leads-1';
+import {createFictionalPerson} from '../dynasties.js?v=dynastic-reported-leads-1';
+import {genealogyMeetingContacts} from '../genealogy-personal-actions.js?v=dynastic-reported-leads-1';
+import {addReport,reportedPersonName,advanceOperations} from '../character-system.js?v=dynastic-reported-leads-1';
+import {requestPersonalMeeting} from '../personal-diplomacy.js?v=dynastic-reported-leads-1';
+import {visiblePersonName} from '../person-knowledge.js?v=dynastic-reported-leads-1';
 
 test('meeting recipients come from reports rather than a foreign court’s hidden state',()=>{
  let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Hidden Person','秘密人物'],faction:'egypt',birthYear:-75,location:'egypt'});

@@ -16,6 +16,14 @@ export function isDeliveredReport(s,r){
 // Sightings retain when a force was observed, even when a report arrives later.
 export function sightingAge(s,r){return s.year*12+s.month-((r.observationYear??r.year)*12+(r.observationMonth??r.month))}
 export function isCompletedMeeting(s,m){const year=m?.resolvedYear??m?.year,month=m?.resolvedMonth??m?.month;return m?.status==='met'&&Number.isFinite(year)&&Number.isInteger(month)&&month>=1&&month<=12&&year*12+month<=s.year*12+s.month}
+// Names in delivered reports and observations are leads, not proof of current
+// office, allegiance, health or willingness to answer a diplomatic letter.
+export function reportedPeople(s,actor,target){
+ const knowledge=s.knowledge?.[actor]?.[target],reports=knowledge?.reports||[];
+ const meetings=(s.meetings||[]).filter(m=>isCompletedMeeting(s,m)&&((m.actor===actor&&m.targetFaction===target)||(m.targetFaction===actor&&m.actor===target))).map(m=>m.actor===actor?m.target:m.person);
+ const leads=reports.filter(r=>isDeliveredReport(s,r)).flatMap(r=>[...namedReportSubjects(r),...(['health','age','location','conspiracy'].includes(r.kind)?[r.character]:[])]);
+ return [...new Set([...(knowledge?.reportedLeaders||[]),...Object.values(knowledge?.sightings||{}).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...(knowledge?.commanderReports||[]).filter(x=>isDeliveredReport(s,x)).map(x=>x.commanderId),...leads,...meetings].filter(id=>CHARACTER_CATALOG[id]))];
+}
 // A contact can be used by either participant's faction. Never reconstruct
 // a foreign relationship from its live trust value: older meetings without a
 // saved estimate retain one conservative contact point.
