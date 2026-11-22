@@ -893,6 +893,10 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     if(captive)requestAgentRelease(s,owner,captive.id);
   }
   if(['caesar','senate'].includes(owner)&&s.month===2&&f.treasury>40&&s.wars.some(w=>w.includes(owner)))queueMission(s,owner,owner,'counter','counter_spies');
+  if(owner!=='rebels'&&s.difficulty==='expert'&&s.month===4&&f.treasury>65&&strategicRoll(s,owner,212)<.3){
+    const rival=[...new Set(reportedNeighbors().map(x=>x.owner))].filter(id=>id!==owner&&id!=='rebels'&&s.factions[id]&&(isWar(s,owner,id)||relation(s,owner,id)<-15)).sort((a,b)=>relation(s,owner,a)-relation(s,owner,b)||a.localeCompare(b))[0];
+    if(rival)queueMission(s,owner,rival,'spy','secret_treaty');
+  }
   if(owner!=='rebels' && s.month===8 && f.treasury>=25){const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);if(enemy&&enemy!=='rebels')queueMission(s,owner,enemy,'spy','strength')}
   // Rival Roman commands investigate and act on their own reports, not on the
   // concealed state of the Egyptian court. An old report may lead nowhere.
@@ -925,16 +929,19 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
       const ownEnemies=s.wars.filter(w=>w.includes(owner)).map(w=>w.find(x=>x!==owner)),known=reportedDiplomacy(s,owner);const sharedEnemy=ownEnemies.some(enemy=>known.some(doc=>doc.kind==='war'&&doc.status==='active'&&doc.parties.includes(partner)&&doc.parties.includes(enemy))); 
       const partnerAtWar=known.some(doc=>doc.kind==='war'&&doc.status==='active'&&doc.parties.includes(partner)&&!doc.parties.includes(owner));
       const type=sharedEnemy&&relation(s,owner,partner)>=30?'defensive':partnerAtWar&&relation(s,owner,partner)>=25&&f.treasury>=60&&f.food>=40?'military_support':'trade';
+      // In October, reserve an available neutral frontier for the wartime
+      // non-aggression proposal below instead of blocking it with another letter.
+      if(s.month===10&&s.wars.some(w=>w.includes(owner))&&relation(s,owner,partner)>=0&&!isAllied(s,owner,partner)&&!activeAgreement(s,owner,partner,'non_aggression'))continue;
       if(activeAgreement(s,owner,partner,type)||relation(s,owner,partner)<({trade:10,military_support:25,defensive:30}[type]))continue;
-      proposeAgreement(s,owner,partner,type);break;
+      if(sendAgreementProposal(s,owner,partner,type,{secret:sharedEnemy&&strategicRoll(s,owner,211)<.35}).ok)break;
     }
   }
   // A government at war can spend real diplomatic resources to secure a
   // temporary neutral frontier. The prospective partner can decline, and a
   // player is never bound without their decision.
   if(owner!=='rebels'&&['hard','expert'].includes(s.difficulty)&&s.month===10&&f.treasury>45&&s.wars.some(w=>w.includes(owner))){
-    const neutral=[...new Set(reportedNeighbors().map(r=>r.owner))].filter(id=>id!==owner&&(autoplayPlayer||id!==s.player)&&id!=='rebels'&&s.factions[id]&&!isWar(s,owner,id)&&!isAllied(s,owner,id)&&!activeAgreement(s,owner,id,'non_aggression')&&relation(s,owner,id)>=0).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b))[0];
-    if(neutral)proposeAgreement(s,owner,neutral,'non_aggression');
+    const neutral=[...new Set(reportedNeighbors().map(r=>r.owner))].filter(id=>id!==owner&&(autoplayPlayer||id!==s.player)&&id!=='rebels'&&s.factions[id]&&!isWar(s,owner,id)&&!isAllied(s,owner,id)&&!activeAgreement(s,owner,id,'non_aggression')&&relation(s,owner,id)>=0&&!(s.world.agreementLetters||[]).some(x=>x.actor===owner&&x.target===id&&x.status==='pending')).sort((a,b)=>relation(s,owner,b)-relation(s,owner,a)||a.localeCompare(b))[0];
+    if(neutral)sendAgreementProposal(s,owner,neutral,'non_aggression');
   }
   if(owner!=='rebels'&&['standard','hard','expert'].includes(level)&&s.month===5&&f.treasury>45&&(level!=='standard'||s.year%2===0&&s.wars.some(w=>w.includes(owner)))){
     const threats=[...new Set(reportedNeighbors().map(r=>r.owner))].filter(id=>id!==owner&&id!=='rebels'&&s.factions[id]&&coalitionInterest(s,owner,id,estimatedStrength).interested);

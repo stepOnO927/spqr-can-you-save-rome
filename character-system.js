@@ -86,7 +86,7 @@ const validStrengthRange=r=>r.kind==='strength'&&Array.isArray(r.range)&&r.range
 const strengthRange=r=>validStrengthRange(r)?r.range:Number.isFinite(r.value)?[r.value,r.value]:null;
 const reportValue=x=>JSON.stringify((x.kind==='leaders'||x.kind==='claimants')?[...new Set(x.leaders||[])].sort():x.kind==='strength'&&validStrengthRange(x)?x.range:x.kind==='authority'&&x.value&&typeof x.value==='object'?{kind:x.value.kind,actors:[...new Set(x.value.actors||[])].sort()}:x.value);
 // Partially overlapping age estimates are compatible, but do not independently verify the same range.
-const evidenceRelation=(a,b)=>{if((a.observationYear??a.year)!==(b.observationYear??b.year)||(a.observationMonth??a.month)!==(b.observationMonth??b.month))return 'different_time';if(['leaders','claimants'].includes(a.kind)){const aa=new Set(a.leaders||[]),bb=new Set(b.leaders||[]),same=reportValue(a)===reportValue(b);if((a.exhaustive&&[...bb].some(id=>!aa.has(id)))||(b.exhaustive&&[...aa].some(id=>!bb.has(id))))return 'conflict';if(same&&(!a.exhaustive||b.exhaustive))return 'support';return 'compatible'}if(reportValue(a)===reportValue(b))return 'support';if(a.kind==='strength'){const aa=strengthRange(a),bb=strengthRange(b);if(aa&&bb&&Math.max(aa[0],bb[0])<=Math.min(aa[1],bb[1]))return 'compatible'}if(a.kind==='age'&&Array.isArray(a.value)&&Array.isArray(b.value)&&a.value.length===2&&b.value.length===2&&a.value.every(Number.isFinite)&&b.value.every(Number.isFinite)&&Math.max(a.value[0],b.value[0])<=Math.min(a.value[1],b.value[1]))return 'compatible';return 'conflict'};
+const evidenceRelation=(a,b)=>{if((a.observationYear??a.year)!==(b.observationYear??b.year)||(a.observationMonth??a.month)!==(b.observationMonth??b.month))return 'different_time';if(['leaders','claimants'].includes(a.kind)){const aa=new Set(a.leaders||[]),bb=new Set(b.leaders||[]),same=reportValue(a)===reportValue(b);if((a.exhaustive&&[...bb].some(id=>!aa.has(id)))||(b.exhaustive&&[...aa].some(id=>!bb.has(id))))return 'conflict';if(same&&(!a.exhaustive||b.exhaustive))return 'support';return 'compatible'}if(reportValue(a)===reportValue(b))return 'support';if(a.kind==='secret_treaty')return 'compatible';if(a.kind==='strength'){const aa=strengthRange(a),bb=strengthRange(b);if(aa&&bb&&Math.max(aa[0],bb[0])<=Math.min(aa[1],bb[1]))return 'compatible'}if(a.kind==='age'&&Array.isArray(a.value)&&Array.isArray(b.value)&&a.value.length===2&&b.value.length===2&&a.value.every(Number.isFinite)&&b.value.every(Number.isFinite)&&Math.max(a.value[0],b.value[0])<=Math.min(a.value[1],b.value[1]))return 'compatible';return 'conflict'};
 const sameSubject=(a,b)=>a.kind===b.kind&&a.character===b.character;
 function refreshKnowledge(s,k){
  const reports=k.reports||[];for(const item of reports){if(!isDeliveredReport(s,item))continue;if(!knownReport(item)||!Number.isFinite(reportAge(s,item))){item.verified=false;item.confidence=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';continue}if(reportAge(s,item)>24)continue;const group=reports.filter(x=>isDeliveredReport(s,x)&&knownReport(x)&&sameSubject(item,x)&&reportAge(s,x)>=0&&reportAge(s,x)<=24),disputed=group.some(x=>evidenceRelation(item,x)==='conflict')||group.some(x=>evidenceRelation(item,x)!=='different_time'&&x.baseConfidence==='disputed'),families=new Set(group.filter(x=>evidenceRelation(item,x)==='support').map(sourceFamily).filter(f=>f!=='unknown')).size,base=(item.baseConfidence||item.confidence)==='rumor'?'rumor':'unverified';item.confidence=disputed?'disputed':families>=3?'confirmed':families>=2?'credible':base;item.verified=!disputed&&families>=3}
@@ -167,7 +167,7 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
  initializeWorld(s);const cfg=configs[type];if(!cfg||!s.factions[actor]||!FACTIONS[target]||(actor===target)!==(type==='counter')||target==='rebels'||!s.regions.some(r=>r.owner===actor))return {ok:false,reason:'unavailable'};
  if(target.endsWith('_claimant')&&!knownDynasticFactions(s,actor).includes(target))return {ok:false,reason:'unavailable'};
  const theater=subject.startsWith('office_theater:')?subject.slice('office_theater:'.length):null;
- if(!theater&&!['health','age','location','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','relations','stance','clashes','office_finance','office_supply','office_administration','availability','counter_spies'].includes(subject))return {ok:false,reason:'subject'};
+ if(!theater&&!['health','age','location','leaders','authority','strength','claimants','stability','succession','conspiracy','contacts','secret_treaty','relations','stance','clashes','office_finance','office_supply','office_administration','availability','counter_spies'].includes(subject))return {ok:false,reason:'subject'};
  if(theater&&!reportedOfficeTheaters(s,actor,target).includes(theater))return {ok:false,reason:'subject'};
  if(subject.startsWith('office_')&&(!['spy','exchange'].includes(type)||!['caesar','senate'].includes(target)))return {ok:false,reason:'subject'};
  if(subject==='location'&&!['spy','travelers','exchange'].includes(type))return {ok:false,reason:'subject'};
@@ -177,6 +177,7 @@ export function previewMission(s,actor,target,type,subject='health',partnerId=nu
  if(subject==='relations'&&type!=='envoy')return {ok:false,reason:'subject'};
  if(subject==='stance'&&!['envoy','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(subject==='contacts'&&(!['spy','exchange'].includes(type)||!['egypt','parthia'].includes(target)))return {ok:false,reason:'subject'};
+ if(subject==='secret_treaty'&&!['spy','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(type==='counter'&&!['conspiracy','counter_spies'].includes(subject)||subject==='counter_spies'&&type!=='counter'||subject==='conspiracy'&&!['spy','counter','exchange'].includes(type))return {ok:false,reason:'subject'};
  if(type==='audience'&&subject!=='leaders')return {ok:false,reason:'subject'};
  if(['health','age','location'].includes(subject)&&characterId&&!reportedHealthSubjects(s,actor,target).includes(characterId))return {ok:false,reason:'identity'};
@@ -278,6 +279,12 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   const recent=!!s.world.disputes[op.target]?.war||s.world.disputeHistory.some(event=>event.faction===op.target&&['clashes','civil_war'].includes(event.outcome)&&(s.year-event.year)*12+s.month-event.month>=0&&(s.year-event.year)*12+s.month-event.month<=12);
   const reported=recent&&q>=.55||contested&&!recent&&q<.45;
   report={kind:'clashes',value:reported?'reported':'unknown',source,confidence:low?'rumor':'unverified',reliability:low?'low':'moderate'};
+ }
+ else if(op.subject==='secret_treaty'){
+  // A dated lead does not reveal treaty terms or prove that no treaty exists.
+  const agreement=(s.agreements||[]).find(t=>t.secret&&t.status==='active'&&t.parties?.includes(op.target)&&!t.parties.includes(op.actor)&&t.expiresAt>s.year*12+s.month&&!s.wars.some(w=>t.parties.every(id=>w.includes(id)))&&t.parties.some(id=>id!==op.target&&FACTIONS[id]));
+  const partner=q>=.6?agreement?.parties.find(id=>id!==op.target):null;
+  report={kind:'secret_treaty',value:partner||'unknown',source,confidence:'unverified',reliability:'moderate'};
  }
  else if(op.subject==='contacts'){
   // Only accepted support offers are simulated contacts. A lack of evidence is
