@@ -154,6 +154,7 @@ jobs:
               node tools/civic-portrait-smoke.mjs
               node tools/dossier-rumor-smoke.mjs
               node tools/captive-release-smoke.mjs
+              node tools/voluntary-agent-handover-smoke.mjs
               node tools/inquiry-price-smoke.mjs
               node tools/mission-discount-smoke.mjs
               node tools/succession-intelligence-lead-smoke.mjs
