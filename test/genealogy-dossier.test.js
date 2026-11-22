@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,upgradeSave} from '../engine.js?v=marriage-economy-merge-1';
 import {createFictionalPerson} from '../dynasties.js?v=marriage-economy-merge-1';
-import {renderGenealogy,renderGenealogyDossier} from '../genealogy-ui.js?v=marriage-economy-merge-1';
+import {renderGenealogy,renderGenealogyDossier} from '../genealogy-ui.js?v=life-record-dates-1';
 
 test('own historical character separates simulated health and commands from historical reference',()=>{
  let s=newGame('caesar'),c=s.world.characters.caesar;c.health='seriously_ill';c.loyalty=23;c.location='cisalpine';
@@ -21,3 +21,5 @@ test('foreign people cannot be inspected through the own family dossier; fiction
 test('a deceased person is not described as holding a stale current office',()=>{
  const s=newGame('caesar'),c=s.world.characters.caesar;c.alive=false;c.deathYear=s.year;c.health='deceased';const html=renderGenealogyDossier(s,'caesar',true);assert.match(html,/模拟去世时年龄/);assert.match(html,/游戏健康: 已故/);assert.match(html,/军事指挥: 无/);const tree=renderGenealogy(s,true),person=tree.match(/<button class="gene-person" data-gene-person="caesar"[\s\S]*?<\/button>/)?.[0];assert.match(person,/已故（无现职）/);assert.doesNotMatch(person,/军队统帅/);
 });
+
+test('future and unreported missing-person life events do not appear in family counts',()=>{const s=newGame('caesar'),c=s.world.characters.caesar;s.world.dynasties.lives.caesar=[{year:s.year,month:s.month,en:'Visible past',zh:'已知过去'},{year:s.year+1,month:s.month,en:'Future secret',zh:'未来秘密'}];let html=renderGenealogy(s,true);assert.match(html,/模拟记事 1/);c.missing={year:s.year,month:s.month};html=renderGenealogy(s,true);const card=html.match(/<button class="gene-person" data-gene-person="caesar"[\s\S]*?<\/button>/)?.[0];assert.doesNotMatch(card,/模拟记事/)});
