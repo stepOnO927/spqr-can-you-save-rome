@@ -395,12 +395,12 @@ export function resolveInheritanceDispute(s,disputeId,choice){
 export function requestFamilyResources(s,familyId,choice){
  const d=initializeDynasties(s),family=d.families[familyId],faction=s.player,government=s.factions[faction];
  if(!family||!government||!['donation','loan','levy'].includes(choice))return {ok:false,reason:'unavailable'};
- const members=Object.values(s.world.characters).filter(c=>c.alive&&c.faction===faction&&c.familyId===familyId).sort((a,b)=>(b.wealth||0)-(a.wealth||0));
+ const members=Object.values(s.world.characters).filter(c=>c.alive&&!c.missing&&c.faction===faction&&c.familyId===familyId).sort((a,b)=>(b.wealth||0)-(a.wealth||0));
  if(!members.length)return {ok:false,reason:'unavailable'};
  const monthIndex=s.year*12+s.month;if((family.lastResourceRequest??-Infinity)+6>monthIndex)return {ok:false,reason:'cooldown'};
  const available=(family.wealth||0)+members.reduce((sum,c)=>sum+Math.max(0,Math.floor(c.wealth||0)),0);
  const amount=Math.min(choice==='loan'?12:8,available);if(amount<4)return {ok:false,reason:'wealth'};
- const leader=s.world.characters[family.leader]||members[0];
+ const leader=members.find(c=>c.id===family.leader)||members[0];
  if(choice==='donation'&&roll(s)>=Math.max(.2,Math.min(.85,.35+(leader.loyalty??50)/250+(family.reputation??50)/500))){family.lastResourceRequest=monthIndex;record(s,leader.id,'The family declined a request for a voluntary contribution.','家族拒绝了自愿捐助请求。');return {ok:false,reason:'declined'}}
  if(choice==='loan'&&((leader.loyalty??50)<25||d.familyLoans.some(x=>x.familyId===familyId&&x.remaining>0)))return {ok:false,reason:'terms'};
  let rest=amount,pooled=Math.min(rest,family.wealth||0);family.wealth-=pooled;rest-=pooled;
