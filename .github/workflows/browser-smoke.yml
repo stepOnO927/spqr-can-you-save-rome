@@ -88,6 +88,7 @@ jobs:
               node tools/genealogy-dossier-smoke.mjs
               node tools/genealogy-personal-actions-smoke.mjs
               node tools/guardianship-playability-smoke.mjs
+              node tools/fictional-family-age-smoke.mjs
               node tools/family-loan-visibility-smoke.mjs
               node tools/contact-credit-privacy-smoke.mjs
               node tools/foreign-name-privacy-smoke.mjs
