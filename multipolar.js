@@ -1,8 +1,8 @@
-import {isDeliveredReport} from './person-knowledge.js?v=secret-diplomacy-1';
+import {isDeliveredReport} from './person-knowledge.js?v=focus-agreement-consent-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=secret-diplomacy-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=secret-diplomacy-1';
-import {activeAgreement} from './agreements.js?v=agreement-courier-1';
+import {reportedControl} from './control-intelligence.js?v=focus-agreement-consent-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=focus-agreement-consent-1';
+import {activeAgreement} from './agreements.js?v=focus-agreement-consent-1';
 import {politicalMemoryAdjustment} from './political-memory.js?v=grand-chessboard-2';
 
 const pair=(a,b)=>[a,b].sort().join(':'),now=s=>s.year*12+s.month;
