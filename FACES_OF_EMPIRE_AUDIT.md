@@ -6,6 +6,11 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `02fda9c7` is integrated. Its Roman AI battle-risk correction and
+cloud-only campaign survival diagnostics remain intact alongside the eastern
+expansion. The full local simulation suite passes 1,264/1,264 after the
+integration; GitHub browser and Wheels checks are pending.
+
 The Han chief censor can now independently open a treasury-funded inquiry
 after a rival minister gains visible court control. Selection uses office,
 political group, and court influence, not the target's secret corruption.
