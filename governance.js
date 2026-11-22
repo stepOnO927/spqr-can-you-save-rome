@@ -1,18 +1,18 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=succession-lead-1';
-import {initializeWorld,successorFor,assignSuccession,mauretanianSeatHolders,eligibleLiuImperial,CHARACTER_CATALOG,ageRange,successionModel} from './characters.js?v=succession-lead-1';
-import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=succession-lead-1';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=faces-family-age-1';
+import {initializeWorld,successorFor,assignSuccession,mauretanianSeatHolders,eligibleLiuImperial,CHARACTER_CATALOG,characterAgeRange,successionModel} from './characters.js?v=faces-family-age-1';
+import {recordLifeEvent,dynastyRoll,personAge,createFictionalPerson} from './dynasties.js?v=faces-family-age-1';
 import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {startDynasticWar} from './civil-war.js?v=succession-lead-1';
+import {startDynasticWar} from './civil-war.js?v=faces-family-age-1';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';
 // Sixteen is a simulation threshold, not a historical claim about when a
 // particular court recognized majority. Uncertain ages are not forced into it.
 const republican=(s,faction)=>roman(faction)&&successionModel(faction,s)==='republican_command';
-const definitelyMinor=(s,faction,id)=>{const age=ageRange(id,s.year);return !republican(s,faction)&&age!==null&&age[1]<16};
+const definitelyMinor=(s,faction,id)=>{const age=characterAgeRange(s,id);return !republican(s,faction)&&age!==null&&age[1]<16};
 // A possible minor is not appointed as a temporary deputy when age is uncertain.
-const possiblyMinor=(s,faction,id)=>{const age=ageRange(id,s.year);return !republican(s,faction)&&age!==null&&age[0]<16};
+const possiblyMinor=(s,faction,id)=>{const age=characterAgeRange(s,id);return !republican(s,faction)&&age!==null&&age[0]<16};
 // A deputy must be reachable in a controlled theater. A location stored on a
 // marching army is its last theater, not the person's present location.
 export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>{

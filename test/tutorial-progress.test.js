@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=succession-lead-1';
+import {newGame,resolveBattle,upgradeSave} from '../engine.js?v=faces-family-age-1';
 import {tutorialTurnProgress,createTutorial} from '../map-lab/tutorial.js?v=reported-contact-1';
 
 test('tutorial report follows the selected army, not an unrelated battle',()=>{

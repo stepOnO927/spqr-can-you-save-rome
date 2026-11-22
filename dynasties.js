@@ -1,18 +1,20 @@
-import {isDeliveredReport} from './person-knowledge.js?v=succession-lead-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=succession-lead-1';
-import {startDynasticWar} from './civil-war.js?v=succession-lead-1';
+import {isDeliveredReport} from './person-knowledge.js?v=faces-family-age-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=faces-family-age-1';
+import {startDynasticWar} from './civil-war.js?v=faces-family-age-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {STARTING_COMMANDERS,FACTION_NAME_CULTURE,NAME_POOLS,factionNameStyle,generateFictionalName,generateFictionalChildName} from './fictional-names.js?v=faces-wheels-1';
 import {portraitSeedFor,assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=missing-fate-privacy-1';
-import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=succession-lead-1';
+import {visiblePersonName,storedCorrespondentName} from './person-knowledge.js?v=faces-family-age-1';
 
 // Family records are campaign facts. The encyclopedia remains an independent
 // account of documented history. In particular, names never establish kinship.
 const roll=s=>{const d=s.world.dynasties;d.seed=(Math.imul(d.seed,1664525)+1013904223)>>>0;return d.seed/4294967296};
 export const dynastyRoll=roll;
 const note=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};
-const born=(s,id)=>s.world.characters[id]?.birthYear??CHARACTER_CATALOG[id]?.birth?.[1]??null;
-export const personAge=(s,id)=>{const year=born(s,id);return year==null?null:s.year-year};
+// Fictional birth years are campaign state; a stale catalog entry must not
+// fill a missing value from an older save. Historical estimates stay separate.
+const born=(s,id)=>CHARACTER_CATALOG[id]?.fictional?(s.world.characters[id]?.birthYear??null):(s.world.characters[id]?.birthYear??CHARACTER_CATALOG[id]?.birth?.[1]??null);
+export const personAge=(s,id)=>{const year=born(s,id);return Number.isFinite(year)&&Number.isFinite(s.year)&&s.year>=year?s.year-year:null};
 // Fictional birthdays are campaign facts; historical birth estimates are
 // ranges. Do not turn an unknown or ambiguous age into a child or adult.
 const eligibilityAgeRange=(s,id)=>{if(CHARACTER_CATALOG[id]?.fictional){const age=personAge(s,id);return Number.isFinite(age)&&age>=0?[age,age]:null}return ageRange(id,s.year)};
@@ -432,7 +434,7 @@ function reconcileGuardianships(s){
  for(const child of Object.values(s.world.characters)){
   if(!child.guardian&&!child.guardianNominee)continue;const age=eligibilityAgeRange(s,child.id),agedOut=!!age&&age[0]>=16;
   if(!child.alive||agedOut){if(child.guardian&&child.alive)record(s,child.id,'The simulated guardianship ended when the ward reached the age threshold.','达到模拟年龄门槛，监护安排已结束。');delete child.guardian;delete child.guardianNominee;continue}
-  const guardian=s.world.characters[child.guardian];if(child.guardian&&(!eligibleAdult(s,guardian?.id)||guardian.faction!==child.faction)){delete child.guardian;record(s,child.id,'The simulated guardianship ended or is no longer available.','模拟监护安排已结束或不再可用。')}
+  const guardian=s.world.characters[child.guardian],guardianAge=guardian&&eligibilityAgeRange(s,guardian.id);if(child.guardian&&(!guardian?.alive||guardian.missing||guardian.faction!==child.faction||(guardianAge&&guardianAge[0]<18))){delete child.guardian;record(s,child.id,'The simulated guardianship ended or is no longer available.','模拟监护安排已结束或不再可用。')}
  }
 }
 export function advanceDynasties(s){

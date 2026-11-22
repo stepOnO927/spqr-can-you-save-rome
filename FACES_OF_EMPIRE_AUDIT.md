@@ -6,6 +6,14 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `51440ac9` is integrated. A fictional person's missing saved
+birth year no longer falls back to a stale catalog age for marriage,
+guardianship, or minority government decisions. Existing guardianships with
+unknown age remain until an actual disqualifying event. The new family-age
+browser smoke stays in the cloud workflow. Focused governance, dynasty,
+identity, and module checks pass 78/78; the full local simulation suite passes
+1,273/1,273. Cloud checks for this merge are pending.
+
 The seed-1 opening campaign had 23 numbered fictional names among 65 people,
 mostly from the shared oasis pool. Newly appointed field commanders and
 merchants now use their saved home region as a geographic game byname once
