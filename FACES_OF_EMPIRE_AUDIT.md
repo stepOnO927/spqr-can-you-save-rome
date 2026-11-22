@@ -6,6 +6,13 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `d96bd3a7` is integrated. Administrative appointments now
+require a confirmed age of at least 25, including in the expanded Han-aware
+office system. Main's bilingual explanation, regression test, and browser
+scenario remain active. The integration caught an obsolete Roman-only helper
+name before push; focused office and travel checks pass 11/11, and the full
+local suite passes 1,263/1,263. GitHub checks for this merge are pending.
+
 Main through `d440b569` is integrated. The family-finance correction preserves
 literal zero loyalty, influence, and reputation; its unit and browser
 regressions remain in the branch. Shared module imports now use the same cache

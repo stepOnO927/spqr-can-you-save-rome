@@ -11,7 +11,7 @@ try{
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
  await page.locator('#save').click();
  await page.evaluate(async()=>{
-  const {loadHanSave,serialize,SAVE_KEY}=await import('/han/engine.js?v=finance-history-merge-1');
+  const {loadHanSave,serialize,SAVE_KEY}=await import('/han/engine.js?v=office-age-verified-1');
   const {setRelation}=await import('/han/frontier.js?v=han-1');
   const state=loadHanSave(localStorage.getItem(SAVE_KEY('browser')));
   setRelation(state,'han','kangju',70);

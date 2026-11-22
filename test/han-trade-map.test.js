@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=finance-history-merge-1';
-import {drawMap} from '../han/map.js?v=finance-history-merge-1';
+import {newHanGame,loadHanSave,serialize} from '../han/engine.js?v=office-age-verified-1';
+import {drawMap} from '../han/map.js?v=office-age-verified-1';
 import {propose,setRelation} from '../han/frontier.js?v=han-1';
 import {placeEasternTrade} from '../han/markets.js?v=faces-wheels-1';
 

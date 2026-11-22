@@ -118,7 +118,7 @@ try{
  assert.match(await page.locator('.market-receipts').innerText(),/公元前49年/);
  assert.match(await page.locator('.market-receipts').innerText(),/目的地库存 \d+ → \d+.*当地市价 \d+ → \d+/s);
  await page.evaluate(async()=>{
-  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=finance-history-merge-1');
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=office-age-verified-1');
   const {propose,declareWar}=await import('/han/frontier.js?v=han-1');
   const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=faces-wheels-1');
   const state=newHanGame('han',{seed:77});
@@ -136,7 +136,7 @@ try{
  assert.match(await page.locator('.market-receipts').innerText(),/Returned after blockade.*Goods returned to.*Refund.*Transport spent/s);
  assert.match(await page.locator('.market-intelligence').innerText(),/Own caravan blocked/);
  await page.evaluate(async()=>{
-  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=finance-history-merge-1');
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=office-age-verified-1');
   const {advanceEasternMarkets}=await import('/han/markets.js?v=faces-wheels-1');
   const state=newHanGame('han',{seed:79});state.wars.push(['han','zhizhi']);
   const invader=state.armies.find(a=>a.owner==='zhizhi');invader.region='changan';invader.move=null;
@@ -148,7 +148,7 @@ try{
  await page.locator('#lang').click();
  assert.match(await page.locator('#inspector').innerText(),/敌军围困使本地本月谷物产量减半/);
  await page.evaluate(async()=>{
-  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=finance-history-merge-1');
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=office-age-verified-1');
   const state=newHanGame('han',{seed:79});
   state.tradeMarkets.transactions.push({shipment:'foreign-sale',seller:'han',buyer:'kangju',origin:'changan',destination:'kangju',commodity:'silk',quantity:1,price:8,transport:2,tariffs:[],year:-49,month:1,marketEffect:{stockBefore:987654,stockAfter:987655,priceBefore:9,priceAfter:8}});
   localStorage.setItem(SAVE_KEY('browser'),serialize(state));
@@ -157,7 +157,7 @@ try{
  assert.match(await page.locator('.market-receipts').innerText(),/公元前49年/);
  assert.doesNotMatch(await page.locator('.market-receipts').innerText(),/987654|987655/,'foreign destination stock is private');
  await page.evaluate(async()=>{
-  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=finance-history-merge-1');
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=office-age-verified-1');
   const {propose}=await import('/han/frontier.js?v=han-1');
   const {placeEasternTrade}=await import('/han/markets.js?v=faces-wheels-1');
   const {createMarketMerchant}=await import('/han/field-identities.js');
@@ -173,7 +173,7 @@ try{
  await page.locator('#lang').click();
  assert.match(await page.locator('#inspector').innerText(),/Merchant-funded escort 2¤.*Raided routes 1/s);
   await page.evaluate(async()=>{
-   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=finance-history-merge-1');
+   const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=office-age-verified-1');
    const {advanceSilk}=await import('/han/silk-road.js?v=han-1');
    const {advanceEasternMarkets}=await import('/han/markets.js?v=faces-wheels-1');
    const {roll}=await import('/han/util.js?v=han-1');
@@ -190,7 +190,7 @@ try{
   await page.locator('#load').click();await page.locator('#advance').click();await page.locator('#save').click();
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')).silk.protectionSpent),20);
  await page.evaluate(async()=>{
-  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=finance-history-merge-1');
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=office-age-verified-1');
   const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=faces-wheels-1');
   const {roll}=await import('/han/util.js?v=han-1');
   const state=newHanGame('han',{seed:49});state.tradeMarkets.embeddedRoman=true;
@@ -215,7 +215,7 @@ try{
  assert.equal(await page.locator('[data-east-protection]').count(),0);
  await page.locator('#lang').click();assert.match(await page.locator('#inspector').innerText(),/商人护路请求.*暂无待答复请求/s);
  await page.evaluate(async()=>{
-  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=finance-history-merge-1');
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=office-age-verified-1');
   const {createMarketMerchant}=await import('/han/field-identities.js');
   const state=newHanGame('han',{seed:113}),id=createMarketMerchant(state,'han','changan'),person=state.persons[id];
   state.tradeMarkets.merchants.han=[id];person.wealth=6;person.marketReputation=2;
@@ -235,7 +235,7 @@ try{
  assert.equal(houseSave.persons[houseSave.tradeMarkets.marketHouses.changan.merchantId].wealth,0);
  await page.locator('#lang').click();
  await page.evaluate(async()=>{
-  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=finance-history-merge-1');
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=office-age-verified-1');
   const {setRelation}=await import('/han/frontier.js?v=han-1');
   const {createMarketMerchant}=await import('/han/field-identities.js');
   const {placeEasternTrade,advanceEasternMarkets}=await import('/han/markets.js?v=faces-wheels-1');
@@ -268,7 +268,7 @@ try{
  assert.match(chineseMarket,/定期供货约定.*履行中.*承揽商人/s);
  await page.locator('#lang').click();
  await page.evaluate(async()=>{
-  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=finance-history-merge-1');
+  const {newHanGame,serialize,SAVE_KEY}=await import('/han/engine.js?v=office-age-verified-1');
   const {advanceEasternMarkets}=await import('/han/markets.js?v=faces-wheels-1');
   const state=newHanGame('han',{seed:117});state.tradeMarkets.embeddedRoman=true;
   state.treaties.push({type:'market',parties:['han','parthia']});state.wars.push(['parthia','armenia'],['yuezhi','kangju']);

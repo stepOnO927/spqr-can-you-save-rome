@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,queueMission,upgradeSave} from '../engine.js?v=finance-history-merge-1';
-import {advanceMailReports} from '../mail-reports.js?v=finance-history-merge-1';
-import {receivedMail} from '../epistulae.js?v=finance-history-merge-1';
+import {newGame,queueMission,upgradeSave} from '../engine.js?v=office-age-verified-1';
+import {advanceMailReports} from '../mail-reports.js?v=office-age-verified-1';
+import {receivedMail} from '../epistulae.js?v=office-age-verified-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
 
 test('only received mission outcomes enter the inbox, once, and survive a save',()=>{

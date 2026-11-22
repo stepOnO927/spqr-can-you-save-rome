@@ -1,8 +1,8 @@
 import {ROUTES} from './data.js?v=phase-x-1';
-import {unlockedComponents,focusModifiers} from './national-focus.js?v=finance-history-merge-1';
+import {unlockedComponents,focusModifiers} from './national-focus.js?v=office-age-verified-1';
 import {politicalAmbition} from './conspiracies.js?v=mutual-audience-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
-import {assignFictionalFieldCommander} from './dynasties.js?v=finance-history-merge-1';
+import {assignFictionalFieldCommander} from './dynasties.js?v=office-age-verified-1';
 import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=mutual-audience-1';
 
 // LEGION DESIGNER. Templates are data; an army carries a snapshot of the
