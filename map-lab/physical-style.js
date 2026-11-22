@@ -6,6 +6,7 @@ import poRiverDetail from '../po-river-detail.js';
 import lakes from '../mediterranean-lakes.js';
 import gardaLakeDetail from '../garda-lake-detail.js';
 import poHistoricCoast from '../po-historic-coast.js';
+import ravennaLandforms from './ravenna-paleolandforms.js?v=1';
 import historical from '../historical-territories.js';
 import egyptContours from './egypt-contours.js?v=1';
 import italyContours from './italy-contours.js?v=1';
@@ -51,6 +52,7 @@ export const physicalStyle={
   rivers:{type:'geojson',data:rivers,attribution:'Hydrography: Natural Earth 1:10m, public domain'},
   'po-river-detail':{type:'geojson',data:poRiverDetail,attribution:euHydroAttribution},
   'po-historic-coast':{type:'geojson',data:poHistoricCoast,attribution:'Approximate undated historical shoreline: Ancient World Mapping Center and OpenStreetMap contributors, ODbL 1.0; adapted Po crop'},
+  'ravenna-paleolandforms':{type:'geojson',data:ravennaLandforms,attribution:'Michele Abballe, PalaeoDEMs of the hinterland of Ravenna, Roman-period (~100 CE) palaeoLandforms; CC0, DOI 10.5281/zenodo.14534157'},
   'nile-delta':{type:'geojson',data:nileDelta,attribution:'Approximate Nile Delta between Natural Earth river branches'},
   'nile-delta-wash':{type:'image',url:'./nile-delta-wash.png',coordinates:[[29.8,31.7],[32,31.7],[32,30],[29.8,30]]},
   lakes:{type:'geojson',data:lakes},
@@ -100,6 +102,9 @@ export const physicalStyle={
   {id:'italy-contours-minor',type:'line',source:'italy-contours',minzoom:8.3,filter:['<',['get','height'],1000],paint:{'line-color':'#6d694c','line-width':['interpolate',['linear'],['zoom'],8.3,.35,9.2,.65],'line-opacity':['interpolate',['linear'],['zoom'],8.3,0,9.2,.11]}},
   {id:'italy-contours-major',type:'line',source:'italy-contours',minzoom:8.3,filter:['>=',['get','height'],1000],paint:{'line-color':'#565e4a','line-width':['interpolate',['linear'],['zoom'],8.3,.45,9.2,.85],'line-opacity':['interpolate',['linear'],['zoom'],8.3,0,9.2,.14]}},
   {id:'land-wash',type:'fill',source:'land',paint:{'fill-color':'#d6d2b2','fill-opacity':.08}},
+  // A local archaeological reconstruction of ridges, not a shore mask.
+  {id:'ravenna-ridge-fill',type:'fill',source:'ravenna-paleolandforms',minzoom:8.2,layout:{visibility:'none'},paint:{'fill-color':['match',['get','kind'],'beach-ridge','#b38d65','#758975'],'fill-opacity':['interpolate',['linear'],['zoom'],8.2,.08,9,.23]}},
+  {id:'ravenna-ridge-edge',type:'line',source:'ravenna-paleolandforms',minzoom:8.2,layout:{visibility:'none','line-join':'round','line-cap':'round'},paint:{'line-color':['match',['get','kind'],'beach-ridge','#8c6d4c','#60775e'],'line-width':['interpolate',['linear'],['zoom'],8.2,.45,9,.9],'line-opacity':['interpolate',['linear'],['zoom'],8.2,.13,9,.35]}},
   {id:'natural-lakes',type:'fill',source:'lakes',filter:['!=',['get','name'],'Lago di Garda'],paint:{'fill-color':'#5b9093','fill-opacity':.88}},
   {id:'garda-overview',type:'fill',source:'lakes',maxzoom:8,filter:['==',['get','name'],'Lago di Garda'],paint:{'fill-color':'#5b9093','fill-opacity':.88}},
   {id:'garda-close',type:'fill',source:'garda-lake-detail',minzoom:8,paint:{'fill-color':'#5b9093','fill-opacity':.88}},
