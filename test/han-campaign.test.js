@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,forecastEconomy,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=office-age-verified-1';
-import {assignSuccession,eligibleLiuImperial,CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from '../dynasties.js?v=office-age-verified-1';
-import {officeCandidates,appointOffice,dismissOffice,advanceOffices} from '../office-system.js?v=office-age-verified-1';
+import {newGame,tick,forecastEconomy,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=saved-age-consistency-1';
+import {assignSuccession,eligibleLiuImperial,CHARACTER_CATALOG} from '../characters.js?v=saved-age-consistency-1';
+import {createFictionalPerson} from '../dynasties.js?v=saved-age-consistency-1';
+import {officeCandidates,appointOffice,dismissOffice,advanceOffices} from '../office-system.js?v=saved-age-consistency-1';
 
 test('Han begins with a productive core, reserves and frontier defense that consume real upkeep',()=>{
  const s=newGame('han'),han=s.factions.han,egypt=s.factions.egypt;

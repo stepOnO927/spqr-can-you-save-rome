@@ -55,6 +55,8 @@ export function initializeWorld(s){
 }
 // Birthdays are not specified in the catalog: either side of the birthday may apply.
 export function ageRange(id,year){const b=CHARACTER_CATALOG[id]?.birth;if(!b||!Number.isFinite(year)||!Number.isFinite(b[0])||!Number.isFinite(b[1])||year<b[0])return null;return [Math.max(0,year-b[1]-1),year-b[0]]}
+// Simulated people use their saved birth year, not a stale catalog entry.
+export function characterAgeRange(s,id,year=s.year){if(!CHARACTER_CATALOG[id]?.fictional)return ageRange(id,year);const birth=s.world?.characters?.[id]?.birthYear;if(!Number.isFinite(birth)||!Number.isFinite(year)||year<birth)return null;return [year-birth,year-birth]}
 export const successionModel=(faction,s)=>['caesar','senate'].includes(faction)?(s?.world?.romanRegimes?.[faction]||'republican_command'):faction==='han'?'liu_imperial':faction==='egypt'?'ptolemaic_court':faction==='parthia'?'arsacid_nobility':faction==='mauretania'?'separate_kingdoms':'regional_dynasty';
 // An orthodox successor needs a male biological line to a documented imperial
 // Liu and a Liu birth name. Adoption, office or marriage cannot create that line.

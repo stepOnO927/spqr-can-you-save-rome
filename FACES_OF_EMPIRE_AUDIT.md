@@ -6,6 +6,12 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `1f4eaf06` is integrated. Fictional characters now use their
+saved birth year consistently in health progression, apparent-age reporting,
+and character dossiers. The focused age and module tests pass 25/25, and the
+full local simulation suite passes 1,265/1,265. GitHub browser verification
+for this integration is pending.
+
 Main through `fb292e7c` is integrated. The affordable frontier-reserve
 recommendation now uses the same shared Roman experience module as the
 expansion UI. The full local simulation suite passes 1,264/1,264 after this

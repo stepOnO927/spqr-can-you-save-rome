@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=office-age-verified-1';
-import {assignSuccession,knownLeaders,leadershipTitle,CHARACTER_CATALOG} from '../characters.js?v=succession-ui-recovery-1';
-import {advanceGovernments,deriveGovernment} from '../governance.js?v=office-age-verified-1';
-import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=office-age-verified-1';
-import {createFictionalPerson} from '../dynasties.js?v=office-age-verified-1';
+import {newGame,upgradeSave} from '../engine.js?v=saved-age-consistency-1';
+import {assignSuccession,knownLeaders,leadershipTitle,CHARACTER_CATALOG} from '../characters.js?v=saved-age-consistency-1';
+import {advanceGovernments,deriveGovernment} from '../governance.js?v=saved-age-consistency-1';
+import {queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=saved-age-consistency-1';
+import {createFictionalPerson} from '../dynasties.js?v=saved-age-consistency-1';
 import {proceduralPortraitSvg} from '../portrait-registry.js?v=missing-fate-privacy-1';
 const states={armenia:'artavasdes',numidia:'juba',galatia:'deiotarus',bosporus:'pharnaces'};
 const high=Array.from({length:100000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296>.98);

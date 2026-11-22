@@ -1,4 +1,4 @@
-import {newGame} from '../engine.js?v=office-age-verified-1';
+import {newGame} from '../engine.js?v=saved-age-consistency-1';
 import {inspectState} from '../inspector-diagnostics.js';
 import assert from 'node:assert/strict';
 

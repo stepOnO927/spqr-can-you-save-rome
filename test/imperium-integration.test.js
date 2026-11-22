@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,estimatedStrength} from '../engine.js?v=office-age-verified-1';
-import {startFocus,focusState,treeFor,scoreFocus,focusReportsFor} from '../national-focus.js?v=office-age-verified-1';
-import {templatesFor,reorganizeArmy,commandConcentration} from '../legion-designer.js?v=office-age-verified-1';
-import {createPlan,assignRole,approvePlan,planById} from '../battle-plans.js?v=office-age-verified-1';
-import {assessOpportunities} from '../multipolar.js?v=mutual-audience-1';
-import {finalizeCampaign} from '../legacy.js?v=office-age-verified-1';
+import {newGame,tick,upgradeSave,estimatedStrength} from '../engine.js?v=saved-age-consistency-1';
+import {startFocus,focusState,treeFor,scoreFocus,focusReportsFor} from '../national-focus.js?v=saved-age-consistency-1';
+import {templatesFor,reorganizeArmy,commandConcentration} from '../legion-designer.js?v=saved-age-consistency-1';
+import {createPlan,assignRole,approvePlan,planById} from '../battle-plans.js?v=saved-age-consistency-1';
+import {assessOpportunities} from '../multipolar.js?v=saved-age-consistency-1';
+import {finalizeCampaign} from '../legacy.js?v=saved-age-consistency-1';
 
 const run=(s,id,actor=s.player)=>{const f=treeFor(actor).find(x=>x.id===id);const r=startFocus(s,actor,id);assert.ok(r.ok,`${id}: ${r.reason}`);for(let i=0;i<f.months;i++)tick(s)};
 

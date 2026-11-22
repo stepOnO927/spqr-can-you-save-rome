@@ -1,6 +1,6 @@
-import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=succession-ui-recovery-1';
-import {createFictionalPerson} from './dynasties.js?v=office-age-verified-1';
-import {initializeOffices,appointOffice} from './office-system.js?v=office-age-verified-1';
+import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
+import {createFictionalPerson} from './dynasties.js?v=saved-age-consistency-1';
+import {initializeOffices,appointOffice} from './office-system.js?v=saved-age-consistency-1';
 import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=missing-fate-privacy-1';
 import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 
