@@ -219,3 +219,31 @@ test('economic ambition requires a real investment after selection while older s
  old.factions.egypt.treasury=120;for(const r of old.regions.filter(r=>r.owner==='egypt'))r.loyalty=65;
  assert.equal(ambitionStatus(old).done,true,'old saves retain the earlier goal rule');
 });
+
+test('changing national ambition has a visible political cost while first choice is free',()=>{
+ const roman=newGame('egypt'),f=roman.factions.egypt;
+ const initial={stability:f.stability,legitimacy:f.legitimacy};
+ assert.equal(chooseAmbition(roman,'military'),true);
+ assert.equal(f.stability,initial.stability);assert.equal(f.legitimacy,initial.legitimacy);
+ assert.equal(chooseAmbition(roman,'economic'),true);
+ assert.equal(f.stability,Math.max(0,initial.stability-3));
+ assert.equal(f.legitimacy,Math.max(0,initial.legitimacy-2));
+ assert.deepEqual(roman.historyWheels.changes.at(-1).cost,{stability:3,legitimacy:2});
+ assert.match(roman.log[0].en,/administrative disruption/);
+ assert.match(roman.log[0].zh,/稳定度降低3/);
+ const after={stability:f.stability,legitimacy:f.legitimacy,count:roman.historyWheels.changes.length};
+ assert.equal(chooseAmbition(roman,'economic'),true);
+ assert.deepEqual({stability:f.stability,legitimacy:f.legitimacy,count:roman.historyWheels.changes.length},after);
+ assert.equal(chooseAmbition(roman,'custom',{metric:'treasury',target:100}),true);
+ const customCount=roman.historyWheels.changes.length,customStability=f.stability;
+ assert.equal(chooseAmbition(roman,'custom',{metric:'treasury',target:100}),true);
+ assert.equal(roman.historyWheels.changes.length,customCount);
+ assert.equal(f.stability,customStability);
+ assert.equal(upgradeSave(JSON.parse(JSON.stringify(roman))).historyWheels.changes.at(-1).cost.stability,3);
+ const han=newHanGame('han'),court=han.factions.han,opening=court.stability;
+ assert.equal(hanChoose(han,'frontier'),true);assert.equal(court.stability,opening);
+ assert.equal(hanChoose(han,'reform'),true);assert.equal(court.stability,Math.max(0,opening-3));
+ assert.deepEqual(han.nationalAmbition.changes.at(-1).cost,{stability:3});
+ const changed=court.stability;assert.equal(hanChoose(han,'reform'),true);assert.equal(court.stability,changed);
+ assert.equal(loadHanSave(serialize(han)).nationalAmbition.changes.at(-1).cost.stability,3);
+});
