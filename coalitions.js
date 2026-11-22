@@ -56,9 +56,16 @@ export function coalitionInterest(s,actor,target,estimateStrength){
  const perceivedThreat=enemy||balance.border&&(rel(s,actor,target)<-15||balance.estimate>balance.own*1.35||balance.ratio>1&&balance.pressure>=6.5);
  return {interested:perceivedThreat&&!activeAgreement(s,actor,target,'non_aggression'),border:balance.border,enemy,estimate:balance.estimate,balance};
 }
-export function formCoalition(s,leader,members,target,estimateStrength,{allowPlayer=false,consentingPlayer=false}={}){
+export function normalizeCoalitionName(name){
+ if(typeof name!=='string')return null;
+ const clean=name.trim().replace(/\s+/g,' ');
+ return clean.length>=3&&clean.length<=48&&!/[<>\u0000-\u001f]/u.test(clean)?clean:null;
+}
+export function formCoalition(s,leader,members,target,estimateStrength,{allowPlayer=false,consentingPlayer=false,name=null}={}){
  const parties=[...new Set([leader,...members])];
  if(parties.length<3||parties.length>5||parties.includes(target)||typeof estimateStrength!=='function')return {ok:false,reason:'members'};
+ const chosenName=name===null?`Defensive Coalition ${s.nextCoalitionId||1}`:normalizeCoalitionName(name);
+ if(!chosenName)return {ok:false,reason:'name'};
  if(!allowPlayer&&leader!==s.player&&parties.includes(s.player))return {ok:false,reason:'player_decision'};
  if(parties.some(id=>!s.factions[id]||!s.regions.some(r=>r.owner===id)||s.factions[id].treasury<5))return {ok:false,reason:'resources'};
  if(!s.factions[target]||parties.some((id,i)=>parties.slice(i+1).some(other=>war(s,id,other))||s.alliances.some(a=>a.includes(id)&&a.includes(target))))return {ok:false,reason:'conflict'};
@@ -71,15 +78,14 @@ export function formCoalition(s,leader,members,target,estimateStrength,{allowPla
  if(consentingPlayer&&contributions[s.player])contributions[s.player].policy='diplomacy';
  const trust=Object.fromEntries(parties.flatMap((a,i)=>parties.slice(i+1).map(b=>[pair(a,b),Math.round((rel(s,a,b)+100)/2)])));
  const id=s.nextCoalitionId||1;
- const c={id:`coalition:${id}`,name:`Defensive Coalition ${id}`,kind:'defensive',foundingMembers:[...parties],charter:{purpose:'defend_against_threat',admission:'invitation_and_consent',decision:'independent_members',dues:'contribution_policy',expulsion:'member_majority',dissolution:'two_thirds_member_vote',contributionChanges:'member_majority',separatePeace:'permitted_with_notice'},leader,parties,target,objective:'defend_against_threat',start:{year:s.year,month:s.month},expiresAt:now(s)+36,status:'active',cohesion:70,trust,contributions,admissions:[],departures:[],motions:[],separatePeaces:[],obligations:['defend_members'],jointPlan:{target,kind:'coordinate_defense'},disagreements:[]};
+ const c={id:`coalition:${id}`,name:chosenName,kind:'defensive',foundingMembers:[...parties],charter:{purpose:'defend_against_threat',admission:'invitation_and_consent',decision:'independent_members',dues:'contribution_policy',expulsion:'member_majority',dissolution:'two_thirds_member_vote',contributionChanges:'member_majority',separatePeace:'permitted_with_notice'},leader,parties,target,objective:'defend_against_threat',start:{year:s.year,month:s.month},expiresAt:now(s)+36,status:'active',cohesion:70,trust,contributions,admissions:[],departures:[],motions:[],separatePeaces:[],obligations:['defend_members'],jointPlan:{target,kind:'coordinate_defense'},disagreements:[]};
  s.nextCoalitionId=(s.nextCoalitionId||1)+1;s.coalitions.push(c);return {ok:true,coalition:c};
 }
 export function renameCoalition(s,id,actor,name){
  const c=(s.coalitions||[]).find(x=>x.id===id&&x.status==='active');
  if(!c||c.leader!==actor)return {ok:false,reason:'authority'};
- if(typeof name!=='string')return {ok:false,reason:'name'};
- const clean=name.trim().replace(/\s+/g,' ');
- if(clean.length<3||clean.length>48||/[<>\u0000-\u001f]/u.test(clean))return {ok:false,reason:'name'};
+ const clean=normalizeCoalitionName(name);
+ if(!clean)return {ok:false,reason:'name'};
  c.name=clean;return {ok:true,name:clean};
 }
 export function admitCoalitionMember(s,id,leader,member,estimateStrength,{consentingPlayer=false}={}){

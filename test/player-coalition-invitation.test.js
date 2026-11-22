@@ -14,9 +14,9 @@ function reply(s,choice){const letter=receivedMail(s).find(m=>m.context?.kind===
 
 test('invitation and confirmation travel before a consenting player pays or joins',()=>{
  let s=setup();const treasury=s.factions.caesar.treasury,wars=structuredClone(s.wars);step(s);assert.equal(receivedMail(s).filter(m=>m.context?.kind==='coalition_offer').length,0);step(s);
- assert.equal(receivedMail(s).filter(m=>m.context?.kind==='coalition_offer').length,1);assert.ok(reply(s,'accept_coalition').ok);assert.equal(s.factions.caesar.treasury,treasury);assert.deepEqual(s.wars,wars);
+ assert.equal(receivedMail(s).filter(m=>m.context?.kind==='coalition_offer').length,1);assert.ok(receivedMail(s).find(m=>m.context?.kind==='coalition_offer').body[0].includes(s.world.coalitionInvitations[0].name));assert.ok(reply(s,'accept_coalition').ok);assert.equal(s.factions.caesar.treasury,treasury);assert.deepEqual(s.wars,wars);
  s=upgradeSave(structuredClone(s));step(s);step(s);assert.equal(s.factions.caesar.treasury,treasury);assert.equal(s.coalitions?.length||0,0);step(s);step(s);
- assert.equal(s.world.coalitionInvitations[0].status,'accepted');assert.equal(s.factions.caesar.treasury,treasury-5);assert.equal(s.coalitions[0].contributions.caesar.policy,'diplomacy');assert.deepEqual(s.wars,wars);
+ assert.equal(s.world.coalitionInvitations[0].status,'accepted');assert.equal(s.factions.caesar.treasury,treasury-5);assert.equal(s.coalitions[0].name,s.world.coalitionInvitations[0].name);assert.equal(s.coalitions[0].contributions.caesar.policy,'diplomacy');assert.deepEqual(s.wars,wars);
  assert.equal(receivedMail(s).filter(m=>m.context?.kind==='coalition_result').length,1);syncCoalitionLetters(s);assert.equal(receivedMail(s).filter(m=>m.context?.kind==='coalition_result').length,1);
 });
 test('lost invitations, refusals and insufficient resources never enroll the player',()=>{

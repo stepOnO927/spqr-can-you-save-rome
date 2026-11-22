@@ -367,18 +367,18 @@ export function syncCoalitionLetters(s){
  for(const x of s.world?.coalitionInvitations||[]){
   if(x.humanRecipient!==s.player)continue;
   if(x.status==='pending'&&x.phase==='awaiting_player'&&!x.mailId){
-   const leader=name(x.leader),target=name(x.target),other=name(x.members.find(id=>id!==s.player));
+   const leader=name(x.leader),target=name(x.target),other=name(x.members.find(id=>id!==s.player)),organization=x.name||'a defensive coalition';
    const result=sendLetter(s,{senderId:null,senderInstitution:x.leader,senderFaction:x.leader,recipient:s.player,category:'diplomatic',priority:'important',
     subject:['Defensive coalition invitation','防御联盟邀请'],
-    body:[`${leader[0]} invites us and ${other[0]} to defend against ${target[0]}. Accepting sends a reply; formation requires all parties and a later confirmation. Membership costs 5 treasury only if concluded. Members are obliged to defend each other if the named threat attacks; accepting does not declare war now. Letters may be lost.`,`${leader[1]}邀请本方与${other[1]}共同防范${target[1]}。接受仅寄出回信；须各方同意并收到后续确认方能成立，成立时支付5国库。若该威胁攻击成员，各方负有防御义务；接受本身不会立即宣战。信件可能遗失。`],
+    body:[`${leader[0]} invites us and ${other[0]} to form ${organization} against ${target[0]}. Accepting sends a reply; formation requires all parties and a later confirmation. Membership costs 5 treasury only if concluded. Members are obliged to defend each other if the named threat attacks; accepting does not declare war now. Letters may be lost.`,`${leader[1]}邀请本方与${other[1]}成立“${organization}”，共同防范${target[1]}。接受仅寄出回信；须各方同意并收到后续确认方能成立，成立时支付5国库。若该威胁攻击成员，各方负有防御义务；接受本身不会立即宣战。信件可能遗失。`],
     options:['accept_coalition','refuse','ignore'],expires:monthIndex(s.year,s.month)+Math.max(0,x.remaining-1),context:{kind:'coalition_offer',invitationId:x.id}});
    if(result.ok){x.mailId=result.letter.id;result.letter.created={...x.sent};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-offer:'+x.id]=true}
   }
   if(x.phase==='delivered'&&x.playerDecision==='accepted'&&['accepted','lapsed'].includes(x.status)&&!x.resultMailId&&!mail.generated['coalition-result:'+x.id]){
-   const target=name(x.target),accepted=x.status==='accepted';
+   const target=name(x.target),accepted=x.status==='accepted',organization=x.name||'defensive coalition';
    const result=sendLetter(s,{senderId:null,senderInstitution:x.leader,senderFaction:x.leader,recipient:s.player,category:'diplomatic',priority:'important',
     subject:accepted?['Defensive coalition concluded','防御联盟已成立']:['Coalition not concluded','联盟未能成立'],
-    body:accepted?[`The defensive coalition against ${target[0]} has been concluded. The agreed 5-treasury membership cost has been paid.`, `针对${target[1]}的防御联盟已经成立，约定的5国库会费已支付。`]:['The proposed coalition could not be concluded; no membership cost was paid.','拟议联盟未能成立；没有支付会费。'],
+    body:accepted?[`${organization} against ${target[0]} has been concluded. The agreed 5-treasury membership cost has been paid.`, `针对${target[1]}的“${organization}”已经成立，约定的5国库会费已支付。`]:[`The proposed ${organization} could not be concluded; no membership cost was paid.`,`拟议中的“${organization}”未能成立；没有支付会费。`],
     options:[],context:{kind:'coalition_result',invitationId:x.id}});
    if(result.ok){x.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-result:'+x.id]=true}
   }

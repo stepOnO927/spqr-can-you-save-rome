@@ -1,17 +1,19 @@
-import {coalitionInterest,formCoalition} from './coalitions.js?v=world-kings-regional-types-1';
+import {coalitionInterest,formCoalition,normalizeCoalitionName} from './coalitions.js?v=world-kings-regional-types-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=world-kings-regional-types-1';
 import {reportedControl} from './control-intelligence.js?v=world-kings-regional-types-1';
 import {ROUTES} from './data.js?v=world-kings-regional-types-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=world-kings-regional-types-1';
 
 const relation=(s,a,b)=>s.relations[[a,b].sort().join(':')]??0;
+const AI_NAMES=['Concord of the Three Courts','Frontier Concord','League of the Crossroads','Council of the Rivers','Eastern Courts League','Western Courts League','Alliance of the Three Courts','Compact of the Frontier','League of the Sea Roads','Concord of the Hills','Council of the Border Courts','Pact of the Open Roads'];
+function invitationName(s,leader,target,id){let value=((s.seed??0)^Math.imul(id,2654435761))>>>0;for(const char of `${leader}:${target}`)value=Math.imul(value^char.charCodeAt(0),16777619)>>>0;return AI_NAMES[value%AI_NAMES.length]}
 function canWrite(s,actor,target){
  return reportedDiplomacy(s,actor).some(d=>d.status==='active'&&d.parties.includes(actor)&&d.parties.includes(target))||s.regions.filter(r=>r.owner===actor).some(r=>ROUTES.some(([a,b])=>{const next=a===r.id?b:b===r.id?a:null;return next&&reportedControl(s,actor,next)?.owner===target}));
 }
 
 // A sender can address known courts without learning their private views.
 // The invitation expense is separate from the five-treasury membership cost.
-export function sendCoalitionInvitation(s,leader,members,target,{autoplayPlayer=false}={}){
+export function sendCoalitionInvitation(s,leader,members,target,{autoplayPlayer=false,name=null}={}){
  const parties=[leader,...members];
  if(parties.length!==3||new Set([...parties,target]).size!==4||parties.some(x=>!s.factions[x]||x==='rebels')||!s.factions[target]||target==='rebels')return {ok:false,reason:'members'};
  if(members.some(id=>!canWrite(s,leader,id)))return {ok:false,reason:'contact'};
@@ -19,8 +21,14 @@ export function sendCoalitionInvitation(s,leader,members,target,{autoplayPlayer=
  s.world.coalitionInvitations||=[];
  if(s.world.coalitionInvitations.some(x=>x.leader===leader&&x.target===target&&x.status==='pending'))return {ok:false,reason:'pending'};
  if(s.world.coalitionInvitations.some(x=>x.leader===leader&&x.target===target&&s.year*12+s.month-(x.sent.year*12+x.sent.month)<12))return {ok:false,reason:'cooldown'};
- const id=s.world.nextCoalitionInvitation||1;s.world.nextCoalitionInvitation=id+1;s.factions[leader].treasury-=3;
- s.world.coalitionInvitations.push({id,leader,members:[...members],target,status:'pending',phase:'outbound',remaining:2,sent:{year:s.year,month:s.month},...(!autoplayPlayer&&leader!==s.player&&members.includes(s.player)?{humanRecipient:s.player}:{})});
+ const id=s.world.nextCoalitionInvitation||1;
+ if(name!==null&&typeof name!=='string')return {ok:false,reason:'name'};
+ const chosenName=name?.trim()
+  ?normalizeCoalitionName(name)
+  :(leader!==s.player||autoplayPlayer?invitationName(s,leader,target,id):`Defensive Coalition ${id}`);
+ if(!chosenName)return {ok:false,reason:'name'};
+ s.world.nextCoalitionInvitation=id+1;s.factions[leader].treasury-=3;
+ s.world.coalitionInvitations.push({id,leader,members:[...members],target,name:chosenName,status:'pending',phase:'outbound',remaining:2,sent:{year:s.year,month:s.month},...(!autoplayPlayer&&leader!==s.player&&members.includes(s.player)?{humanRecipient:s.player}:{})});
  if(s.world.coalitionInvitations.length>100){const oldest=s.world.coalitionInvitations.findIndex(x=>x.status!=='pending');if(oldest>=0)s.world.coalitionInvitations.splice(oldest,1)}
  return {ok:true,id,cost:3,months:4};
 }
@@ -58,7 +66,7 @@ export function advanceCoalitionInvitations(s,estimateStrength,roll,{autoplayPla
    if(roll(s,x.leader,x.id+120)<.1){x.status='no_reply';x.phase='lost';delete x.provisional;continue}
    x.status=x.provisional==='accepted'?'accepted':'lapsed';delete x.provisional;
    if(x.status==='accepted'){
-    const result=formCoalition(s,x.leader,x.members,x.target,estimateStrength,{allowPlayer:true,consentingPlayer:true});
+    const result=formCoalition(s,x.leader,x.members,x.target,estimateStrength,{allowPlayer:true,consentingPlayer:true,name:x.name??null});
     if(result.ok){x.coalition=result.coalition.id;for(const member of x.members){rememberPoliticalEvent(s,x.leader,member,'cooperation_accepted',2);rememberPoliticalEvent(s,member,x.leader,'cooperation_accepted',2)}}else x.status='lapsed';
    }
    x.delivered={year:s.year,month:s.month};x.phase='delivered';continue;
@@ -70,7 +78,7 @@ export function advanceCoalitionInvitations(s,estimateStrength,roll,{autoplayPla
   if(x.humanRecipient&&x.playerDecision==='accepted'){x.provisional=outcome;x.phase='confirmation';x.remaining=2;delete x.sealed;continue}
   x.status=outcome;
   if(x.status==='accepted'){
-   const result=formCoalition(s,x.leader,x.members,x.target,estimateStrength,{allowPlayer:autoplayPlayer||x.leader===s.player});
+   const result=formCoalition(s,x.leader,x.members,x.target,estimateStrength,{allowPlayer:autoplayPlayer||x.leader===s.player,name:x.name??null});
    if(result.ok){x.coalition=result.coalition.id;for(const member of x.members){rememberPoliticalEvent(s,x.leader,member,'cooperation_accepted',2);rememberPoliticalEvent(s,member,x.leader,'cooperation_accepted',2)}}else x.status='lapsed';
   }
   x.delivered={year:s.year,month:s.month};delete x.sealed;x.phase='delivered';
