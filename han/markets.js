@@ -154,7 +154,7 @@ function travelQuote(s,path,quantity,price,buyer,seller){
  return {legs,months,transport,tariffs,total:price+transport+tariffs.reduce((n,t)=>n+t.amount,0)};
 }
 
-export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId,contractId,bidPremium=0}){
+export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,quantity,saleOrderId,contractId,bidPremium=0,carrierId=null}){
  const markets=initializeEasternMarkets(s),from=region(s,origin),to=region(s,destination),stock=markets.regions[origin]?.goods?.[commodity];
  if(s.finalized)return {ok:false,reason:'finalized'};
  const external=buyer==='external'&&seller==='han'&&destination==='mediterranean_gate'&&to?.owner==null;
@@ -168,7 +168,9 @@ export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,q
  if(!sale&&stock.stock<quantity)return {ok:false,reason:'unavailable'};
  const path=tradePath(s,origin,destination,external?seller:buyer);if(!path)return {ok:false,reason:'route'};
  const unitPrice=(contract?.unitPrice??sale?.unitPrice??marketPrice(markets.regions[origin],commodity))+bidPremium,price=unitPrice*quantity,travel=travelQuote(s,path,quantity,price,buyer,seller);
- const carrier=availableMerchant(s,external?seller:buyer,origin,destination,commodity),experience=carrier?merchantRouteExperience(s.persons[carrier],origin,destination):0;
+ const sponsor=external?seller:buyer,candidates=availableMerchants(s,sponsor,origin,destination,commodity);
+ if(carrierId!=null&&(!carrierId||!candidates.includes(carrierId)))return {ok:false,reason:'merchant'};
+ const carrier=carrierId||candidates[0]||null,experience=carrier?merchantRouteExperience(s.persons[carrier],origin,destination):0;
  const merchantSpecialist=!!carrier&&s.persons[carrier].specialization===commodity;
  const privilegeDiscount=carrier&&activeEasternMerchantPrivilege(s,carrier,external?seller:buyer)?markets.merchantPrivileges[carrier].transportDiscount:0;
  const house=markets.marketHouses[destination]?activeEasternMarketHouse(s,destination,buyer):null,discount=Math.max(privilegeDiscount,experience?Math.min(.15,.05*experience):0,merchantSpecialist?.05:0);
@@ -182,10 +184,15 @@ export function quoteEasternTrade(s,{seller,buyer,origin,destination,commodity,q
 const merchantRouteKey=(origin,destination)=>`${origin}:${destination}`;
 function merchantRouteExperience(person,origin,destination){return Math.max(0,Math.min(3,Number(person?.marketRoutes?.[merchantRouteKey(origin,destination)])||0))}
 
-function availableMerchant(s,buyer,location,destination,commodity){
+function availableMerchants(s,buyer,location,destination,commodity){
  const markets=s.tradeMarkets,ids=markets.merchants[buyer]||[],free=ids.filter(id=>{const person=s.persons[id];return person?.alive&&person.faction===buyer&&person.location===location&&!person.marketReturn&&!markets.shipments.some(x=>x.merchantId===id&&['traveling','blocked'].includes(x.status))});
  free.sort((a,b)=>Number(activeEasternMerchantPrivilege(s,b,buyer))-Number(activeEasternMerchantPrivilege(s,a,buyer))||merchantRouteExperience(s.persons[b],location,destination)-merchantRouteExperience(s.persons[a],location,destination)||Number(s.persons[b].specialization===commodity)-Number(s.persons[a].specialization===commodity)||(s.persons[b].marketReputation||0)-(s.persons[a].marketReputation||0));
- return free[0]||null;
+ return free;
+}
+
+export function easternAvailableMerchants(s,buyer,origin,destination,commodity){
+ initializeEasternMarkets(s);
+ return buyer===s.player?availableMerchants(s,buyer,origin,destination,commodity):[];
 }
 
 export function activeEasternMerchantPrivilege(s,id,faction){
@@ -244,7 +251,7 @@ export function grantEasternMerchantPrivilege(s,id,duration=12){
 }
 
 function merchantFor(s,buyer,location,destination,commodity){
- const markets=s.tradeMarkets,ids=markets.merchants[buyer]||[],free=availableMerchant(s,buyer,location,destination,commodity);
+ const markets=s.tradeMarkets,ids=markets.merchants[buyer]||[],free=availableMerchants(s,buyer,location,destination,commodity)[0];
  if(free){s.persons[free].marketHome=location;return free}
  const id=createMarketMerchant(s,buyer,location);s.persons[id].marketHome=location;markets.merchants[buyer]=[...ids,id];return id;
 }
@@ -271,7 +278,8 @@ function advanceMerchantReturns(s,now){
 export function placeEasternTrade(s,request){
  const quote=quoteEasternTrade(s,request);if(!quote.ok)return quote;
  if(request.maxTotal!=null&&quote.total>request.maxTotal)return {ok:false,reason:'price'};
- const markets=s.tradeMarkets,external=request.buyer==='external',merchantId=merchantFor(s,external?request.seller:request.buyer,request.origin,request.destination,request.commodity);
+ const markets=s.tradeMarkets,external=request.buyer==='external',merchantId=quote.merchantId||merchantFor(s,external?request.seller:request.buyer,request.origin,request.destination,request.commodity);
+ s.persons[merchantId].marketHome=request.origin;
  const sale=request.saleOrderId?markets.saleOrders.find(x=>x.id===request.saleOrderId):null;
  const observation=request.buyer===s.player&&request.seller!==s.player?merchantMarketObservation(markets.regions[request.origin],request.commodity,{reserved:sale?.available||0,unitPrice:quote.unitPrice,year:s.year,month:s.month}):null;
  const privilege=markets.merchantPrivileges[merchantId];

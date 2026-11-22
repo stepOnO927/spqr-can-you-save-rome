@@ -1413,6 +1413,15 @@ kingship](https://www.iranicaonline.org/articles/kingship/kingship-iii-in-the-pa
 and its account of the [later Sasanian Queen of Queens
 title](https://www.iranicaonline.org/articles/women-i/).
 
+Players can now assign an available named merchant to a one-time eastern
+caravan. The market form lists actual quoted totals for merchants at the
+origin; the selected carrier's specialization, route experience and privilege
+affect the paid transport and modeled road risk. A busy, absent or defected
+carrier fails validation before any goods or treasury move. The chosen person
+and terms survive saving, while recurring contract installments retain their
+automatic carrier assignment. This adds player-facing merchant competition;
+merchant-financed trade remains a separate unfinished mechanic.
+
 ## Existing foundations
 
 | System | Reusable implementation | Limitation for Faces of Empire |

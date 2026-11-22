@@ -9,6 +9,17 @@ try{
  await page.addInitScript(()=>{localStorage.setItem('spqr-han-lang','en');Date.now=()=>123456});
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
+ await page.locator('#save').click();
+ const manualCarrier=await page.evaluate(async()=>{
+  const {loadHanSave,serialize}=await import('/han/engine.js?v=faces-name-disagreement-1');
+  const {createMarketMerchant}=await import('/han/field-identities.js');
+  const state=loadHanSave(localStorage.getItem('spqr-han-save-browser'));
+  const manual=createMarketMerchant(state,'han','kangju'),recommended=createMarketMerchant(state,'han','kangju');
+  state.persons[manual].specialization='silk';state.persons[recommended].specialization='horses';
+  state.tradeMarkets.merchants.han=[manual,recommended];
+  localStorage.setItem('spqr-han-save-browser',serialize(state));return manual;
+ });
+ await page.locator('#load').click();
  await page.locator('#mode').selectOption('trade');
  assert.match(await page.locator('#overview').innerText(),/Foreign inventory is unknown/);
  assert.ok(await page.locator('.trade-market.own').count()>0);
@@ -39,6 +50,9 @@ try{
  assert.ok(value,'Kangju horses should become available after a market agreement');
  await page.locator('#east-market-offer').selectOption(value);
  await page.locator('#east-market-destination').selectOption('dunhuang');
+ assert.equal(await page.locator('#east-market-carrier option').count(),3);
+ await page.locator('#east-market-carrier').selectOption(manualCarrier);
+ assert.match(await page.locator('#east-market-quote').innerText(),/Carrier/);
  const quoteText=await page.locator('#east-market-quote').innerText(),months=Number(quoteText.match(/Travel (\d+) months/)?.[1]);
  assert.ok(months>0,quoteText);
  const normalTotal=Number(quoteText.match(/Total (\d+)/)?.[1]);assert.ok(normalTotal>0);
@@ -50,6 +64,8 @@ try{
  assert.equal(await page.locator('#east-market-order').isDisabled(),false);
  await page.locator('#east-market-order').click();
  assert.match(await page.locator('#message').innerText(),/Merchant dispatched/);
+ await page.locator('#save').click();
+ assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('spqr-han-save-browser')))).tradeMarkets.shipments[0].merchantId,manualCarrier);
  assert.equal(await page.locator('.trade-caravan').count(),1);
   assert.match(await page.locator('.route.trade-active title').first().textContent(),/Known cargo: Horses × 1/);
  await page.locator('.trade-caravan').click();

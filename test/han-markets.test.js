@@ -2,13 +2,36 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newHanGame,loadHanSave,serialize,tick} from '../han/engine.js?v=faces-name-disagreement-1';
 import {declareWar,propose,setRelation} from '../han/frontier.js?v=han-1';
-import {activeEasternMerchantPrivilege,advanceEasternMarkets,advanceHanMilitarySupply,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-wheels-1';
+import {activeEasternMerchantPrivilege,advanceEasternMarkets,advanceHanMilitarySupply,cancelEasternSale,grantEasternMerchantPrivilege,placeEasternTrade,postEasternSale,quoteEasternTrade,easternAvailableMerchants,easternMarketOffers,proposeEasternSupplyContract,cancelEasternSupplyContract,requisitionEasternHorses,setEasternExportRestriction,setEasternTariffPolicy} from '../han/markets.js?v=faces-wheels-1';
 import {recruit,recruitQuote,provisionArmy} from '../han/military.js?v=han-1';
 import {advanceSilk,protectRoute,ROUTE_PROTECTION_COST} from '../han/silk-road.js?v=han-1';
 import {roll} from '../han/util.js?v=han-1';
 import {createMarketMerchant} from '../han/field-identities.js';
 
 const next=s=>{if(++s.month>12){s.month=1;s.year++}advanceEasternMarkets(s)};
+
+test('player carrier choice changes the paid route and cannot dispatch an unavailable merchant',()=>{
+ let s=newHanGame('han',{seed:216});s.tradeMarkets.embeddedRoman=true;s.factions.han.treasury=1000;
+ const request={seller:'han',buyer:'han',origin:'dunhuang',destination:'changan',commodity:'silk',quantity:20};
+ s.tradeMarkets.regions.dunhuang.goods.silk.stock=50;
+ const general=createMarketMerchant(s,'han','dunhuang'),specialist=createMarketMerchant(s,'han','dunhuang');
+ s.persons[general].specialization='horses';s.persons[specialist].specialization='silk';s.tradeMarkets.merchants.han=[general,specialist];
+ assert.deepEqual(easternAvailableMerchants(s,'han','dunhuang','changan','silk'),[specialist,general]);
+ assert.deepEqual(easternAvailableMerchants(s,'parthia','dunhuang','changan','silk'),[],'foreign carriers are not presented as player choices');
+ const automatic=quoteEasternTrade(s,request),chosen=quoteEasternTrade(s,{...request,carrierId:general});
+ assert.equal(automatic.merchantId,specialist);assert.equal(chosen.merchantId,general);
+ assert.ok(chosen.transport>automatic.transport,'carrier specialization changes a real transport charge');
+ const before={cash:s.factions.han.treasury,stock:s.tradeMarkets.regions.dunhuang.goods.silk.stock};
+ assert.equal(placeEasternTrade(s,{...request,carrierId:'merchant:missing'}).reason,'merchant');
+ assert.equal(s.factions.han.treasury,before.cash);assert.equal(s.tradeMarkets.regions.dunhuang.goods.silk.stock,before.stock);
+ const sent=placeEasternTrade(s,{...request,carrierId:general});assert.equal(sent.ok,true,sent.reason);
+ assert.equal(sent.shipment.merchantId,general);assert.equal(sent.shipment.transport,chosen.transport);
+ assert.equal(s.factions.han.treasury,before.cash-chosen.total);assert.equal(s.tradeMarkets.regions.dunhuang.goods.silk.stock,before.stock-20);
+ assert.equal(quoteEasternTrade(s,{...request,carrierId:general}).reason,'merchant','busy carriers cannot be selected twice');
+ assert.equal(quoteEasternTrade(s,request).merchantId,specialist,'another free carrier remains available');
+ s=loadHanSave(serialize(s));assert.equal(s.tradeMarkets.shipments.find(x=>x.id===sent.shipment.id).merchantId,general);
+ assert.equal(quoteEasternTrade(s,{...request,carrierId:general}).reason,'merchant');
+});
 
 test('named merchant specialization chooses the carrier and survives a saved caravan',()=>{
  let s=newHanGame('han',{seed:215});s.tradeMarkets.embeddedRoman=true;s.factions.han.treasury=1000;
