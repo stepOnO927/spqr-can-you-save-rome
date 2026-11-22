@@ -1,7 +1,7 @@
-import {newGame,estimatedStrength} from './engine.js?v=family-legend-merge-1';
-import {createFictionalPerson} from './dynasties.js?v=family-legend-merge-1';
-import {formCoalition} from './coalitions.js?v=family-legend-merge-1';
-import {observeDiplomacy} from './diplomatic-knowledge.js?v=family-legend-merge-1';
+import {newGame,estimatedStrength} from './engine.js?v=will-controls-1';
+import {createFictionalPerson} from './dynasties.js?v=will-controls-1';
+import {formCoalition} from './coalitions.js?v=will-controls-1';
+import {observeDiplomacy} from './diplomatic-knowledge.js?v=will-controls-1';
 
 // A fictional political crisis in the 49 BCE campaign. Conditions make
 // collective opposition plausible, but do not preselect a war or outcome.
