@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,sendInquiry} from '../engine.js?v=finance-history-merge-1';
-import {buildChessboard} from '../chessboard.js?v=finance-history-merge-1';
+import {newGame,upgradeSave,sendInquiry} from '../engine.js?v=office-age-verified-1';
+import {buildChessboard} from '../chessboard.js?v=office-age-verified-1';
 import {createPlan,assignRole,assessPlan} from '../battle-plans.js?v=finance-history-merge-1';
 import {reportedFrontierThreats} from '../frontier-response.js?v=mutual-audience-1';
 import {scoreFocus,focusReportsFor,legitimateFocusView} from '../national-focus.js?v=finance-history-merge-1';

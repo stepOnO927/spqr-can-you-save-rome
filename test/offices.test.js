@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=finance-history-merge-1';
-import {appointOffice,dismissOffice,officeCandidates,officeEffects,advanceOffices} from '../office-system.js?v=finance-history-merge-1';
-import {availableCommanders} from '../command-appointments.js?v=finance-history-merge-1';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=finance-history-merge-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=office-age-verified-1';
+import {appointOffice,dismissOffice,officeCandidates,officeEffects,advanceOffices} from '../office-system.js?v=office-age-verified-1';
+import {availableCommanders} from '../command-appointments.js?v=office-age-verified-1';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=office-age-verified-1';
 
 test('appointments cost treasury and affect the actual monthly economy',()=>{
  const s=newGame('senate');assert.equal(appointOffice(s,'finance','cicero').ok,true);assert.equal(appointOffice(s,'supply','cato').ok,true);
@@ -31,3 +31,5 @@ test('AI fills an available assignment with its own personnel without publishing
  assert.ok(s.world.offices.senate.finance);assert.equal(s.factions.senate.treasury,before-5);assert.equal(s.world.characters[s.world.offices.senate.finance].faction,'senate');assert.ok(!s.log.some(x=>x.en.includes('administrative assignment')));
 });
 
+
+test('appointments require a confirmed eligible age in new and older saves',async()=>{const {createFictionalPerson}=await import('../dynasties.js');let s=newGame('senate');const adult=createFictionalPerson(s,{name:['Adult','成年人'],faction:'senate',birthYear:s.year-25}),young=createFictionalPerson(s,{name:['Young','年轻人'],faction:'senate',birthYear:s.year-24}),unknown=createFictionalPerson(s,{name:['Unknown age','年龄未知'],faction:'senate',birthYear:s.year-30});s.world.characters[unknown].birthYear=null;s=upgradeSave(structuredClone(s));const ids=officeCandidates(s,'senate','finance');assert.ok(ids.includes(adult));assert.ok(ids.includes('cicero'));assert.ok(!ids.includes(young));assert.ok(!ids.includes(unknown));assert.equal(appointOffice(s,'finance',unknown).reason,'unavailable');s.world.offices.senate.finance=unknown;advanceOffices(s);assert.equal(s.world.offices.senate.finance,undefined)});
