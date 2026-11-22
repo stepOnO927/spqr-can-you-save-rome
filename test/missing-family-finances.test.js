@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=family-contact-1';
-import {createFictionalPerson,requestFamilyResources} from '../dynasties.js?v=family-contact-1';
+import {newGame,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
+import {createFictionalPerson,requestFamilyResources} from '../dynasties.js?v=faces-name-disagreement-1';
 
 function setup(){const s=newGame('caesar'),absent=createFictionalPerson(s,{name:['Missing','失联家主'],faction:'caesar',birthYear:-85,wealth:900}),familyId=s.world.characters[absent].familyId,present=createFictionalPerson(s,{name:['Available','可联系人'],faction:'caesar',birthYear:-65,wealth:4,familyId});const family=s.world.dynasties.families[familyId];family.wealth=0;family.leader=absent;s.world.characters[absent].loyalty=0;s.world.characters[absent].missing={origin:'roma',remaining:2,year:s.year,month:s.month};s.world.characters[present].loyalty=70;return {s,absent,present,familyId}}
 

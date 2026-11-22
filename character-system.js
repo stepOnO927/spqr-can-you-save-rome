@@ -509,12 +509,20 @@ export function relieveIncapacitatedCommanders(s){
 // controlled theater. This is a coarse game abstraction, not a precise escape route.
 export function advanceMissingCommanders(s){
  initializeWorld(s);for(const person of Object.values(s.world.characters)){
-  const missing=person.missing;if(!missing)continue;if(!person.alive){delete person.missing;continue}
+  const missing=person.missing;if(!missing)continue;
   if(s.year===missing.year&&s.month===missing.month)continue;
   missing.remaining=Math.max(0,missing.remaining-1);if(missing.remaining)continue;
   const queue=[missing.origin],seen=new Set(queue);let destination=null;
   for(let i=0;i<queue.length;i++){const id=queue[i],r=s.regions.find(x=>x.id===id);if(r?.owner===person.faction){destination=r;break}for(const edge of ROUTES){const next=edge[0]===id?edge[1]:edge[1]===id?edge[0]:null;if(next&&!seen.has(next)){seen.add(next);queue.push(next)}}}
-  if(!destination)continue;person.location=destination.id;delete person.missing;
+  if(!destination)continue;
+  if(!person.alive){
+   // A failed search conveys no certainty. A successful search confirms the
+   // death before succession and inheritance can proceed.
+   if(rand(s)>=.3){missing.remaining=3;continue}
+   delete person.missing;settleInheritance(s,person.id);if((s.world.leadership[person.faction]||[]).includes(person.id))assignSuccession(s,person.faction);
+   if(person.faction===s.player)notify(s,`${CHARACTER_CATALOG[person.id].name[0]} was confirmed dead after a search; succession was updated.`,`${CHARACTER_CATALOG[person.id].name[1]}经搜寻确认在游戏中去世；继任局势已更新。`,{characterId:person.id});continue;
+  }
+  person.location=destination.id;delete person.missing;
   if(person.faction===s.player)notify(s,`${CHARACTER_CATALOG[person.id].name[0]} re-established contact in ${destination.name[0]}.`,`${CHARACTER_CATALOG[person.id].name[1]}在${destination.name[1]}重新取得联系。`);
  }
 }

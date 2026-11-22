@@ -6,6 +6,17 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `54fe85a2` (#335) is integrated. An unconfirmed death of a
+missing Roman leader now keeps the nominal seat and succession controls in
+the same observable state as a living missing leader. Searches may fail and
+retry; confirmation resolves inheritance and succession. The merge preserves
+the Han Liu eligibility rule, family-wealth privacy, the map's missing-person
+wording, and a new Chromium regression in browser group 2. The focused tests
+pass 6/6; full `npm test` passed 1,366/1,366 on two consecutive reruns. The
+120-month market simulation still balances 137 autonomous deliveries,
+including six merchant-owned ventures and three multi-leg ventures. Cloud
+browser checks for this merge remain to run.
+
 The Han region inspector now shows a saved administrator's appointment,
 portrait, family record, known competence, audit finding and tax responsibility
 together. A player can fund a three-month successor search for 15 treasury;

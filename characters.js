@@ -81,13 +81,13 @@ export function successorFor(s,faction){
 // Separate offices survive ruler changes and remain stable across old saves.
 export function mauretanianSeatHolders(s){const seats=s.world?.constituentSeats?.mauretania||{};return {bocchus:seats.bocchus??'bocchus',bogud:seats.bogud??'bogud'}}
 export function assignSuccession(s,faction){
- const previous=s.world.leadership[faction]||[],current=previous.filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&(faction!=='han'||eligibleLiuImperial(s,id)));
+ const previous=s.world.leadership[faction]||[],current=previous.filter(id=>(s.world.characters[id]?.alive||s.world.characters[id]?.missing)&&s.world.characters[id].faction===faction&&(faction!=='han'||eligibleLiuImperial(s,id)));
  const model=successionModel(faction,s),imperial=['roman_principate','later_empire'].includes(model);
  if(model==='separate_kingdoms'){
   const seats=mauretanianSeatHolders(s),reserved=new Set(Object.values(seats).filter(id=>current.includes(id))),assigned=new Set(),leaders=[];
   for(const seat of ['bocchus','bogud']){
-   const holder=seats[seat],person=s.world.characters[holder];let next=current.includes(holder)&&!assigned.has(holder)?holder:null;
-   if(!next&&person&&!person.alive){
+   const holder=seats[seat],person=s.world.characters[holder];let next=(current.includes(holder)||person?.missing&&person.faction===faction)&&!assigned.has(holder)?holder:null;
+   if(!next&&person&&!person.alive&&!person.missing){
     // Only recorded biological or adoptive descendants can inherit this seat.
     // A surviving ruler of the other seat is never silently given both crowns.
     const queue=(person.children||[]).map(id=>({id,parent:holder})),seen=new Set([holder]);

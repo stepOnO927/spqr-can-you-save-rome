@@ -26,7 +26,7 @@ export const eligibleDeputies=(s,faction)=>successorFor(s,faction).filter(id=>{
 
 // This describes the simulated arrangement, not a historical medical or constitutional claim.
 export function deriveGovernment(s,faction){
- initializeWorld(s);const nominal=(s.world.leadership[faction]||[]).filter(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction&&(faction!=='han'||eligibleLiuImperial(s,id)));
+ initializeWorld(s);const nominal=(s.world.leadership[faction]||[]).filter(id=>(s.world.characters[id]?.alive||s.world.characters[id]?.missing)&&s.world.characters[id].faction===faction&&(faction!=='han'||eligibleLiuImperial(s,id)));
  // These are separate kingdoms represented by one campaign faction. Never
  // invent a single shared regency, even if both kings are absent or dead.
  if(faction==='mauretania'){
@@ -96,7 +96,7 @@ export function withdrawSuccessionPlan(s){
 }
 
 export function planSuccession(s,id){
- initializeGovernments(s);const faction=s.player;if(!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive)||!successionCandidates(s,faction).includes(id))return {ok:false,reason:'unavailable'};
+ initializeGovernments(s);const faction=s.player;if(!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive||s.world.characters[cid]?.missing)||!successionCandidates(s,faction).includes(id))return {ok:false,reason:'unavailable'};
  if(s.world.successionPlans[faction]===id)return {ok:false,reason:'already'};if(s.factions[faction].treasury<5)return {ok:false,reason:'treasury'};
  s.factions[faction].treasury-=5;s.world.successionPlans[faction]=id;recordLifeEvent(s,id,'Designated as a possible successor; succession remains uncertain.','被指定为可能继任者；最终继任仍未确定。');s.log.unshift({year:s.year,month:s.month,en:`${CHARACTER_CATALOG[id].name[0]} was designated as a possible successor in the simulation.`,zh:`${CHARACTER_CATALOG[id].name[1]}在游戏中被指定为可能的继任者。`});s.log=s.log.slice(0,80);return {ok:true,cost:5};
 }
@@ -104,7 +104,7 @@ export function planSuccession(s,id){
 // Influence is a game abstraction, not a claim about a historical person's power.
 export function supportSuccessor(s,id){
  initializeGovernments(s);const faction=s.player,candidates=successorFor(s,faction),person=s.world.characters[id];
- if(!candidates.includes(id)||!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive))return {ok:false,reason:'unavailable'};
+ if(!candidates.includes(id)||!(s.world.leadership[faction]||[]).some(cid=>s.world.characters[cid]?.alive||s.world.characters[cid]?.missing))return {ok:false,reason:'unavailable'};
  if(person.influence>=100)return {ok:false,reason:'maximum'};if(s.factions[faction].treasury<8)return {ok:false,reason:'treasury'};
  s.factions[faction].treasury-=8;person.influence=Math.min(100,person.influence+15);person.ambition=Math.min(100,politicalAmbition(s,id)+5);improveLeaderTrust(s,id);recordLifeEvent(s,id,'Received political backing in the simulated campaign.','在模拟战役中获得政治支持。');
  for(const other of candidates.filter(candidate=>candidate!==id)){const rival=s.world.characters[other];rival.loyalty=Math.max(0,rival.loyalty-3)}
@@ -140,7 +140,7 @@ const regionalCourts=new Set(['egypt','parthia','armenia','numidia','galatia','b
 function advanceRegionalVacancy(s,faction,autoplayPlayer){
  if(!regionalCourts.has(faction)||faction===s.player&&!autoplayPlayer)return;
  const vacancies=s.world.courtVacancies||={},now=s.year*12+s.month;
- if((s.world.leadership[faction]||[]).some(id=>s.world.characters[id]?.alive&&s.world.characters[id].faction===faction)){delete vacancies[faction];return}
+ if((s.world.leadership[faction]||[]).some(id=>(s.world.characters[id]?.alive||s.world.characters[id]?.missing)&&s.world.characters[id].faction===faction)){delete vacancies[faction];return}
  // An unresolved claimant must retain autonomy; do not appoint over them.
  if(s.world.disputes?.[faction]?.war||(s.world.claimants?.[faction]||[]).some(id=>s.world.characters[id]?.alive))return;
  assignSuccession(s,faction);
