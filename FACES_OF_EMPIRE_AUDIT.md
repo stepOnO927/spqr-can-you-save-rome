@@ -6,6 +6,12 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `d440b569` is integrated. The family-finance correction preserves
+literal zero loyalty, influence, and reputation; its unit and browser
+regressions remain in the branch. Shared module imports now use the same cache
+version as main. The full local simulation suite passes 1,262/1,262 after
+this integration; GitHub checks are pending.
+
 Han ministers now form campaign-specific court alliances after a year of
 shared service in the same political group. Alliances persist in saves, end
 when a member leaves office or the court, raise a sponsored edict's measured

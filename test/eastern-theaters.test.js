@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=marriage-economy-merge-1';
+import {newGame,region,adjacent,upgradeSave} from '../engine.js?v=finance-history-merge-1';
 import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
 import historical from '../historical-territories.js?v=phase-x-1';
 

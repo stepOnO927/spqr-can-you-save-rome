@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=marriage-economy-merge-1';
-import {addReport} from '../character-system.js?v=marriage-economy-merge-1';
+import {newGame,upgradeSave} from '../engine.js?v=finance-history-merge-1';
+import {addReport} from '../character-system.js?v=finance-history-merge-1';
 import {identityKnowledge} from '../map-lab/identity-knowledge.js?v=mutual-audience-1';
 
 test('identity presentation follows the observer’s records, not hidden foreign state',()=>{

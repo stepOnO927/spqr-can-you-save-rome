@@ -1,16 +1,16 @@
 import {namedReportSubjects,reportedPersonalContacts,isDeliveredReport,isCompletedMeeting} from './person-knowledge.js?v=mutual-audience-1';
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange} from './characters.js?v=succession-ui-recovery-1';
-import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=marriage-economy-merge-1';
+import {settleInheritance,dynastyRoll,assignFictionalFieldCommander,createFictionalPerson} from './dynasties.js?v=finance-history-merge-1';
 import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=marriage-economy-merge-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=finance-history-merge-1';
 import {potentialConspirators} from './conspiracies.js?v=mutual-audience-1';
 import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=mutual-audience-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=marriage-economy-merge-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=finance-history-merge-1';
 import {activeAgreement} from './agreements.js?v=agreement-courier-1';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=marriage-economy-merge-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=finance-history-merge-1';
 export {reportedPersonName,visiblePersonName} from './person-knowledge.js?v=mutual-audience-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.

@@ -1,7 +1,7 @@
 import {isDeliveredReport} from './person-knowledge.js?v=mutual-audience-1';
 import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=succession-ui-recovery-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
-import {assignFictionalFieldCommander} from './dynasties.js?v=marriage-economy-merge-1';
+import {assignFictionalFieldCommander} from './dynasties.js?v=finance-history-merge-1';
 
 // Alternate-history claimant commands use real game theaters and armies.
 // The setup is a simulation, not a reconstruction of a historical campaign.

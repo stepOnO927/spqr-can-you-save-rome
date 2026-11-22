@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=marriage-economy-merge-1';
-import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=marriage-economy-merge-1';
+import {newGame,upgradeSave} from '../engine.js?v=finance-history-merge-1';
+import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=finance-history-merge-1';
 import {generateFictionalChildName} from '../fictional-names.js?v=faces-wheels-1';
 import {proceduralPortraitSvg,observedProceduralPortrait} from '../portrait-registry.js?v=missing-fate-privacy-1';
-import {appointOffice,dismissOffice} from '../office-system.js?v=marriage-economy-merge-1';
-import {addReport} from '../character-system.js?v=marriage-economy-merge-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=marriage-economy-merge-1';
+import {appointOffice,dismissOffice} from '../office-system.js?v=finance-history-merge-1';
+import {addReport} from '../character-system.js?v=finance-history-merge-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=finance-history-merge-1';
 
 test('Han children keep a recorded family and use Han names across saves',()=>{
  const s=newGame('han');

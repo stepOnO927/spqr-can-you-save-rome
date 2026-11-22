@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=marriage-economy-merge-1';
-import {appointOffice,officeEffects} from '../office-system.js?v=marriage-economy-merge-1';
-import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=marriage-economy-merge-1';
+import {newGame,tick,upgradeSave,forecastEconomy} from '../engine.js?v=finance-history-merge-1';
+import {appointOffice,officeEffects} from '../office-system.js?v=finance-history-merge-1';
+import {initializeCursus,officeEligibility,changeObedience,supportCandidate,investigateCandidate,resolveElection,advanceCursus,investigateGovernment,governmentReport,officialKnowledge,knownForeignOfficial,contactOfficial,cultivateOfficial,proposeCooperation,searchTalent,requestRecommendation,retainOfficial,reviewApplicant,appointmentApplicationStatus,offerEmployment,obedience,institutionalBalance,campaignPhase,campaignFor,campaignEstimate,senateAssessment,seekSenatorEndorsement,proposeMeasure} from '../cursus-honorum.js?v=finance-history-merge-1';
 import {FACTION_NAME_CULTURE,NAME_POOLS} from '../fictional-names.js?v=faces-wheels-1';
 
 // Later contact scenarios need a delivered report; a failed inquiry is retried.

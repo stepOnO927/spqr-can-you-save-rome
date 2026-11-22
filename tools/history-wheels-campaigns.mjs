@@ -1,10 +1,10 @@
 // Cloud-only diagnostic playthroughs. Report observed state, not invented stories.
 import assert from 'node:assert/strict';
-import {newGame,tick} from '../engine.js?v=marriage-economy-merge-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=marriage-economy-merge-1';
-import {chooseAmbition,ambitionStatus} from '../history-wheels.js?v=marriage-economy-merge-1';
-import {newHanGame,tick as tickHan} from '../han/engine.js?v=marriage-economy-merge-1';
-import {choose as chooseHanAmbition,status as hanAmbitionStatus} from '../han/ambitions.js?v=guardian-wheels-merge-2';
+import {newGame,tick} from '../engine.js?v=finance-history-merge-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=finance-history-merge-1';
+import {chooseAmbition,ambitionStatus} from '../history-wheels.js?v=finance-history-merge-1';
+import {newHanGame,tick as tickHan} from '../han/engine.js?v=finance-history-merge-1';
+import {choose as chooseHanAmbition,status as hanAmbitionStatus} from '../han/ambitions.js?v=finance-history-merge-1';
 
 const date=s=>s.year*12+s.month;
 function roman(side,months,seed,{autoplay=false,difficulty='standard',aiLevel=null}={}){
