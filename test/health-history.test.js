@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=estate-notice-1';
-import {battlefieldWound,advanceCharacters,illnessRisk,apparentAgeRange} from '../character-system.js?v=estate-notice-1';
+import {newGame,upgradeSave} from '../engine.js?v=family-contact-1';
+import {battlefieldWound,advanceCharacters,illnessRisk,apparentAgeRange} from '../character-system.js?v=family-contact-1';
 import {characterAgeRange,ageRange} from '../characters.js?v=saved-age-consistency-1';
-import {createFictionalPerson} from '../dynasties.js?v=estate-notice-1';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=estate-notice-1';
+import {createFictionalPerson} from '../dynasties.js?v=family-contact-1';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=family-contact-1';
 import {syncChronicleDispatches,filterChronicle} from '../chronicle.js?v=saved-age-consistency-1';
 
 test('battle wounds are persisted, affect risk, and notify only the owner',()=>{
