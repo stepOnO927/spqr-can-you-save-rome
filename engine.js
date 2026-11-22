@@ -14,7 +14,7 @@ import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligi
 import {initializeFigures,advanceFigures} from './great-figures.js';
 import {initializeNaval,advanceNaval,commitArmyTransport,cancelArmyTransport} from './naval.js?v=56';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
-import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=5';
+import {militaryResult,settlementEligible,publicSettlementTerms,setCampaignOutcome} from './campaign-outcome.js?v=6';
 import {nationalBudget} from './national-budget.js?v=28';
 export {nationalBudget} from './national-budget.js?v=28';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
@@ -996,8 +996,9 @@ export function aiTurn(s,owner){
   if(owner!=='rebels' && s.month===12){
     const enemy=s.wars.find(w=>w.includes(owner))?.find(x=>x!==owner);
     if(enemy && ['caesar','senate'].includes(owner)&&enemy===(owner==='caesar'?'senate':'caesar')){
-      const strategic=region(s,owner==='caesar'?'roma':'cisalpine')?.owner===owner;
-      if(strategic&&f.treasury>=4&&f.stability>=30&&f.legitimacy>=35&&strength(s,owner)>=estimatedStrength(s,owner,enemy)*1.4)diplomacy(s,owner,enemy,'settlement');
+      const publicTerms=publicSettlementTerms(s,owner,enemy);
+      const visibleCase=publicTerms?.strategicReady&&publicTerms.initial-publicTerms.held>=publicTerms.requiredLosses;
+      if(visibleCase&&f.treasury>=4&&f.stability>=30&&f.legitimacy>=35&&strength(s,owner)>=estimatedStrength(s,owner,enemy)*1.4)diplomacy(s,owner,enemy,'settlement');
     }else if(enemy && (f.food<0||f.treasury<0||f.stability<35) && strength(s,owner)>=estimatedStrength(s,owner,enemy)*.6)diplomacy(s,owner,enemy,'peace');
     if(!INDEPENDENT_COMMANDS.has(owner)&&!enemy && f.treasury>35){const neighbor=owned.flatMap(r=>adjacent(r.id,s).map(e=>region(s,e.to))).find(r=>r.owner!==owner&&r.owner!=='rebels'&&relation(s,owner,r.owner)>=0&&!isAllied(s,owner,r.owner));if(neighbor && rnd(s)<.2)diplomacy(s,owner,neighbor.owner,'improve')}
   }

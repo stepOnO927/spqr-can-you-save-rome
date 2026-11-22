@@ -471,6 +471,9 @@ test('Roman AI does not pay for a settlement proposal while only a nearby cell i
  const s=newGrandGame('egypt'),caesar=s.factions.caesar;
  s.month=12;caesar.treasury=200;army(s,'xiii').men=100000;
  region(s,'t016').owner='caesar';
+ // Meet the public territorial threshold so the named objective is the
+ // remaining difference between holding Ostia and holding Rome.
+ for(const site of s.regions.filter(r=>r.owner==='senate'&&r.id!=='roma').slice(0,9))site.owner='caesar';
  assert.equal(region(s,'roma').owner,'senate');
  aiTurn(s,'caesar');
  assert.equal(s.lastSettlementOffer,undefined);

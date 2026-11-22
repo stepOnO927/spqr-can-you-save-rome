@@ -4,6 +4,7 @@ import {newGrandGame,upgradeSave,tick,army,region,adjacent,moveArmy,previewMarch
 import {assessment,sendScouts,probePositions,delayAttack,latestRecon,requestReinforcements} from '../reconnaissance.js';
 import {afterActionHtml} from '../recon-ui.js';
 import {revealedAchievements} from '../achievement-system.js';
+import {publicSettlementTerms} from '../campaign-outcome.js';
 
 // A player-like Caesarian route: gather a dated report, prepare the XIII,
 // advance through Italy when the available evidence justifies the risk, and
@@ -118,10 +119,12 @@ for(let month=1;month<months&&!s.achievementState.finalized;month++){
  if(f.treasury<30&&nationalBudget(s,'caesar').projectedNet<0||commuteGrain&&f.treasury<40&&nationalBudget(s,'caesar').foodNet<=0&&s.regions.filter(r=>r.owner==='caesar'&&(r.buildings.includes('irrigation')||r.construction?.buildingId==='irrigation')).length<3)record('collect wartime contributions',collectWarContributions(s,'caesar'));
  if(useAerarium&&f.treasury<40&&region(s,'roma').owner==='caesar'&&!s.aerariumSeizure)record('take Rome public reserve',seizeAerarium(s,'caesar'));
  if(f.food<24&&nationalBudget(s,'caesar').foodNet<0)record('gather emergency provisions',collectEmergencyProvisions(s,'caesar'));
- // A player may propose an end to the war after visibly taking Rome. The
- // offer costs treasury and can be refused; this route never inspects the
- // opponent's concealed eligibility or troop counts before deciding.
- if(seekSettlement&&month%3===0&&region(s,'roma').owner==='caesar'&&f.treasury>=4&&!s.campaignOutcome){
+ // A player considers an end to the war after taking Rome and observing
+ // enough opposing territorial losses on the public political map. The
+ // offer costs treasury and can still be refused by an unseen field force.
+ const settlementTerms=seekSettlement?publicSettlementTerms(s,'caesar','senate'):null;
+ const publicCase=settlementTerms?.strategicReady&&settlementTerms.initial-settlementTerms.held>=settlementTerms.requiredLosses;
+ if(seekSettlement&&month%3===0&&publicCase&&f.treasury>=4&&f.legitimacy>=35&&f.stability>=30&&!s.campaignOutcome){
   const accepted=diplomacy(s,'caesar','senate','settlement');
   journal.push(`${s.year}/${s.month} propose civil settlement: ${accepted?'accepted':'refused'}`);
   if(process.env.SPQR_CAESAR_SETTLEMENT_AUDIT==='1')settlementAudit.push({date:`${s.year}/${s.month}`,accepted,caesarTroops:s.armies.filter(a=>a.owner==='caesar').reduce((n,a)=>n+a.men,0),senateTroops:s.armies.filter(a=>a.owner==='senate').reduce((n,a)=>n+a.men,0),senateTerritories:s.regions.filter(r=>r.owner==='senate').length,legitimacy:f.legitimacy,stability:f.stability});

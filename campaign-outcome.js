@@ -37,6 +37,16 @@ export function settlementEligible(s,actor,target){
  return lost>=Math.max(2,Math.ceil(base.territories*.12))&&troops(s,target)<=base.troops*.7&&troops(s,actor)>=troops(s,target)*1.4&&s.factions[actor].legitimacy>=35&&s.factions[actor].stability>=30;
 }
 
+// These are public map and own-government facts only. A rival's actual army
+// count is deliberately absent; the acceptance rule still checks it privately.
+export function publicSettlementTerms(s,actor,target){
+ if(!roman(actor)||target!==rival(actor)||!s.wars?.some(w=>w.includes(actor)&&w.includes(target)))return null;
+ const initial=opening(s,target).territories,held=holdings(s,target),requiredLosses=Math.max(2,Math.ceil(initial*.12));
+ const strategicReady=strategic(s,actor)&&(actor!=='senate'||s.regions.find(r=>r.id==='roma')?.owner==='senate');
+ const now=s.year*12+s.month,last=s.lastSettlementOffer?.[[actor,target].sort().join(':')];
+ return {strategicReady,initial,held,requiredLosses,legitimacy:s.factions[actor].legitimacy,stability:s.factions[actor].stability,treasury:s.factions[actor].treasury,waitMonths:Number.isFinite(last)?Math.max(0,3-(now-last)):0};
+}
+
 export function setCampaignOutcome(s,outcome){
  if(roman(outcome.winner)&&roman(outcome.loser)&&!roman(s.player)){
   if(s.civilWarOutcome)return false;

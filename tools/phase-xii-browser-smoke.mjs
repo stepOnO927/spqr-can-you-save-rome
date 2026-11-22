@@ -17,8 +17,10 @@ try{
  assert.equal(await page.locator('[data-diplomacy="peace"]').count(),0);
  assert.equal(await page.locator('[data-diplomacy="settlement"]').count(),1);
  const settlementLabel=await page.locator('[data-diplomacy="settlement"]').innerText();
- await page.locator('#language').click();const translatedSettlement=await page.locator('[data-diplomacy="settlement"]').innerText();
+ const atlasAdvice=await page.locator('#settlement-advice').innerText();
+ await page.locator('#language').click();const translatedSettlement=await page.locator('[data-diplomacy="settlement"]').innerText(),translatedAtlasAdvice=await page.locator('#settlement-advice').innerText();
  assert.notEqual(settlementLabel,translatedSettlement);assert.match(settlementLabel+translatedSettlement,/内战和议/);assert.match(settlementLabel+translatedSettlement,/civil settlement/);
+ assert.match(atlasAdvice+translatedAtlasAdvice,/territorial losses since the opening/i);assert.match(atlasAdvice+translatedAtlasAdvice,/领土损失/);assert.match(atlasAdvice+translatedAtlasAdvice,/field force remains uncertain/i);
  const s=newGrandGame('senate');s.victory=true;s.campaignOutcome={kind:'settlement',winner:'senate',loser:'caesar',year:s.year,month:s.month};s.expenseLedger={year:s.year,month:s.month,owners:{senate:{construction:23,research:17,policy:11}}};s.factions.senate.treasury=-1;
  await page.locator('#upload-save-file').setInputFiles({name:'victory.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(s))});
  await page.locator('#victory-continue').waitFor();assert.equal(await page.locator('.ending-achievements').count(),0);
@@ -57,8 +59,11 @@ try{
  assert.equal(await civil.locator('[data-dip="caesar"][data-act="peace"]').count(),0);
  assert.equal(await civil.locator('[data-dip="caesar"][data-act="settlement"]').count(),1);
  assert.match(await civil.locator('[data-dip="caesar"][data-act="settlement"]').innerText(),/civil settlement|内战和议/);
+ const mainAdvice=await civil.locator('.settlement-advice').innerText();
  await civil.locator('#lang').click();
  assert.match(await civil.locator('[data-dip="caesar"][data-act="settlement"]').innerText(),/内战和议|civil settlement/);
+ const translatedMainAdvice=await civil.locator('.settlement-advice').innerText();
+ assert.match(mainAdvice+translatedMainAdvice,/territorial losses since the opening/i);assert.match(mainAdvice+translatedMainAdvice,/领土损失/);
  const mainVictory=newGrandGame('caesar');mainVictory.victory=true;mainVictory.campaignOutcome={kind:'military',basis:'field-collapse',winner:'caesar',loser:'senate',year:mainVictory.year,month:mainVictory.month};
  await civil.evaluate(state=>sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state})),mainVictory);
  await civil.reload();await civil.locator('#victory-language').waitFor();
