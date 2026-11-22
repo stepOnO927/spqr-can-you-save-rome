@@ -6,6 +6,16 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The 120-month acceptance script now runs a third, entirely autonomous eastern
+campaign with no player trade orders. It checks each intermediary resale
+against an earlier paid physical receipt in the same market, one completed
+seller payment, a saved merchant, zero remaining escrow and save/load halfway
+through the run. The fixed 49 seed completes 131 paid deliveries including
+five documented silk resale chains; separate exploratory 1 and 82 seeds
+completed 18 such chains each. This demonstrates multiple autonomous
+intermediary transactions in normal long campaigns. Broader commodity chains
+and merchant-financed speculation remain unverified.
+
 Main through `69ed42e9` is integrated. Its `identityObserved` provenance now
 survives general and audience observations as well as an ally's delayed
 forwarding, while a targeted investigation still keeps the name known at
@@ -1354,7 +1364,7 @@ Chromium scenarios pass with the expansion's shared module imports.
 
 The expansion remains incomplete: wider Central Asian name datasets and
 characters, other major fixed portraits, additional routes to fictional sovereignty,
-general Roman–Han settlement, autonomous intermediary resale at scale,
+general Roman–Han settlement, broader commodity resale and merchant financing,
 broader player and merchant competition, and the full acceptance
 scenarios are still outstanding. New names
 and emblems are game reconstructions, not documented personal identities.

@@ -66,4 +66,24 @@ assert.equal(han.rulers.parthia.personId,openingParthian,'the Parthian ruler cha
 assert.equal(han.tradeMarkets.transportSpent+han.tradeMarkets.merchantFees+han.tradeMarkets.marketHouseRent,han.tradeMarkets.transactions.reduce((sum,x)=>sum+(x.transport||0),0),'Han transport payments must have one destination');
 const hanDelivered=han.tradeMarkets.transactions.filter(x=>!['lost','stranded'].includes(x.status)).length;
 assert.ok(hanDelivered>=4,'the direct Han market must complete physical deliveries');
-console.log(JSON.stringify({...summary,han:{months:120,year:han.year,month:han.month,emperor:han.throne.occupant,markets:Object.keys(han.tradeMarkets.regions).length,shipments:han.tradeMarkets.shipments.length,delivered:hanDelivered}}));
+// Run the entire eastern network without a player placing an opening order.
+// A resale counts only when the seller physically received the same good in an
+// earlier paid caravan and the second caravan also completed its own settlement.
+let autonomous=newHanGame(null,{seed:49});
+for(let i=0;i<120;i++){
+ const before=autonomous.year*12+autonomous.month;tickHan(autonomous);
+ assert.equal(autonomous.year*12+autonomous.month,before+1,'autonomous eastern time stalled');
+ if(i===59)autonomous=loadHanSave(JSON.parse(JSON.stringify(autonomous)));
+}
+const paid=autonomous.tradeMarkets.transactions.filter(x=>x.price>0),shipmentById=new Map(autonomous.tradeMarkets.shipments.map(x=>[x.id,x]));
+const dated=tx=>tx.year*12+tx.month;
+const resales=paid.filter(tx=>autonomous.tradeMarkets.regions[tx.origin]?.goods[tx.commodity]?.production===0&&paid.some(earlier=>earlier.destination===tx.origin&&earlier.buyer===tx.seller&&earlier.commodity===tx.commodity&&dated(earlier)<dated(tx)));
+assert.ok(resales.length>=4,'independent courts should complete several physical intermediary resales over ten years');
+for(const tx of resales){
+ const shipment=shipmentById.get(tx.shipment);
+ assert.equal(shipment?.status,'delivered');assert.equal(shipment.escrow,0);
+ assert.equal(shipment.price,tx.price);assert.equal(shipment.quantity,tx.quantity);
+ assert.equal(autonomous.persons[shipment.merchantId]?.profession,'merchant');
+ assert.equal(autonomous.tradeMarkets.transactions.filter(entry=>entry.shipment===tx.shipment).length,1,'a resale must settle once');
+}
+console.log(JSON.stringify({...summary,han:{months:120,year:han.year,month:han.month,emperor:han.throne.occupant,markets:Object.keys(han.tradeMarkets.regions).length,shipments:han.tradeMarkets.shipments.length,delivered:hanDelivered},autonomous:{months:120,delivered:paid.length,resales:resales.length,goods:[...new Set(resales.map(x=>x.commodity))]}}));
