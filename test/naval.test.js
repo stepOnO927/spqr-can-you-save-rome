@@ -761,6 +761,28 @@ test('a hostile naval blockade cuts port army supply until the blockade ends',()
  const normal=armySupply(s,unit);assert.equal(orderFleet(s,'caesar',enemy.id,'blockade','italiaS').ok,true);assert.ok(armySupply(s,unit)<normal);
  assert.equal(orderFleet(s,'caesar',enemy.id,'intercept','aegean').ok,true);assert.equal(armySupply(s,unit),normal);
 });
+test('transports alone cannot impose a blockade and obsolete blockade orders end',()=>{
+ const s=newGrandGame('caesar'),fleet=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ s.naval.fleets=s.naval.fleets.filter(f=>f.owner==='caesar');
+ fleet.port=null;fleet.zone=portZone('italiaS');fleet.ships={transport:2};fleet.sailors=140;
+ assert.deepEqual(orderFleet(s,'caesar',fleet.id,'blockade','italiaS'),{ok:false,reason:'warships'});
+ fleet.order={kind:'blockade',target:'italiaS',targetPort:'italiaS',path:[]};
+ assert.equal(isPortBlockaded(s,'italiaS'),false);
+ const notices=[];advanceNaval(s,(_,en,zh)=>notices.push({en,zh}));
+ assert.equal(fleet.order,null,'an old save or battle-damaged fleet must release a powerless blockade');
+ assert.match(notices[0].en,/blockade ended/);assert.match(notices[0].zh,/封锁已结束/);
+ fleet.ships.trireme=1;fleet.sailors=230;
+ assert.equal(orderFleet(s,'caesar',fleet.id,'blockade','italiaS').ok,true);
+ assert.equal(isPortBlockaded(s,'italiaS'),true);
+ fleet.sailors=80;
+ assert.equal(isPortBlockaded(s,'italiaS'),false,'undercrewed warships cannot blockade');
+ advanceNaval(s);
+ assert.equal(fleet.order,null);
+ const ai=newGrandGame('senate'),transportOnly=ai.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ transportOnly.ships={transport:2};transportOnly.sailors=140;transportOnly.port=null;transportOnly.zone=portZone('italiaS');transportOnly.order=null;ai.factions.caesar.treasury=200;
+ advanceNaval(ai);
+ assert.notEqual(transportOnly.order?.kind,'blockade','the AI must not spend a turn issuing a powerless blockade');
+});
 test('coastal fortifications resist light blockades but not a supplied warship squadron',()=>{
  const s=newGrandGame('senate'),port=s.regions.find(r=>r.id==='t016'),unit=s.armies.find(a=>a.id==='italy'),enemy=s.naval.fleets.find(f=>f.owner==='caesar');
  unit.region=port.id;enemy.zone=portZone(port.id);enemy.port=null;enemy.ships={light:1};enemy.sailors=65;

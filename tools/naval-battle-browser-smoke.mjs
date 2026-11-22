@@ -55,4 +55,12 @@ for(const [lang,label] of [['en',/troop voyage was aborted/],['zh',/运兵行动
  await page.evaluate(async({state,language})=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js');renderNavalPanel({state,lang:language,root:document.querySelector('#root'),section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}})},{state:convoyState,language:lang});
  const text=await page.locator('.naval-content').innerText();assert.match(text,label);assert.match(text,lang==='en'?/Army casualties: 630/:/陆军伤亡: 630/);
 }
+for(const [lang,label] of [['en',/A blockade needs crewed, supplied and seaworthy warships/],['zh',/封锁需要有足够水手、补给和船况的战船/]]){
+ const state=newGrandGame('caesar'),fleet=state.naval.fleets.find(f=>f.id==='caesar-adriatic');fleet.ships={transport:2};fleet.sailors=140;fleet.port=null;fleet.zone='adriatic';
+ await page.evaluate(async({state,language})=>{const {renderNavalPanel}=await import('/map-lab/naval-ui.js'),{orderFleet}=await import('/naval.js');renderNavalPanel({state,lang:language,root:document.querySelector('#root'),section:'fleets',onAction:(action,id,kind,target)=>action==='order'?orderFleet(state,state.player,id,kind,target):{ok:true},onZone:()=>{},onPort:()=>{}})},{state,language:lang});
+ await page.locator('[data-order-kind="caesar-adriatic"]').selectOption('blockade');
+ await page.locator('[data-order-target="caesar-adriatic"]').selectOption('italiaS');
+ await page.locator('[data-order="caesar-adriatic"]').click();
+ assert.match(await page.locator('#naval-feedback').innerText(),label);
+}
 assert.deepEqual(errors,[]);await browser.close();console.log('Naval battle, interrupted troop transport, pirate defeat, and dated fleet pursuit passed in English and Chinese; older saves remain readable.');

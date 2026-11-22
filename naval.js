@@ -46,18 +46,20 @@ export const fleetCargoCapacity=f=>(f.ships.merchant||0)*SHIPS.merchant.capacity
 export const fleetSpeed=f=>Math.max(1,Math.min(...Object.entries(f.ships).filter(([,count])=>count>0).map(([type])=>SHIPS[type]?.speed||1)));
 export const fleetUpkeep=f=>Object.entries(f.ships).reduce((n,[id,count])=>n+(SHIPS[id]?.upkeep||0)*count,0);
 export const fleetUpkeepDue=f=>(f.reserve&&f.port&&fleetUpkeep(f)>0?Math.max(1,Math.ceil(fleetUpkeep(f)*.15)):fleetUpkeep(f))+(f.commanderId?1:0);
+const BLOCKADE_WARSHIPS=['light','trireme','quadrireme','quinquereme'];
+function blockadePower(f){
+ const crew=BLOCKADE_WARSHIPS.reduce((n,type)=>n+(f.ships[type]||0)*SHIPS[type].crew,0);
+ if(!crew||f.sailors<crew/2||f.hull<20||f.supply<20)return 0;
+ const strength=BLOCKADE_WARSHIPS.reduce((n,type)=>n+(f.ships[type]||0)*SHIPS[type].power,0);
+ return strength*Math.min(1,f.hull/50,f.sailors/crew);
+}
 export function portZone(id){const s=site(id);if(!s)return null;if(['italiaS','illyricum','epirus'].includes(id))return 'adriatic';if(id==='egypt')return 'alexandrian';if(id==='sicilia')return 'sicilian';if(id==='t016'||s.macro==='roma')return 'tyrrhenian';if(s.macro==='cisalpine'&&s.lon>11)return 'adriatic';if(s.macro==='italiaN'&&s.lon>11)return 'adriatic';if(s.macro==='africa'||s.macro==='numidia'||s.macro==='mauretania')return 'african';if(s.macro==='achaia'||s.macro==='anatolia')return 'aegean';if(s.macro==='syria')return 'eastern';return SEA_ZONES.reduce((best,z)=>Math.hypot((s.lon-z.point[0])*Math.cos(s.lat*Math.PI/180),s.lat-z.point[1])<Math.hypot((s.lon-best.point[0])*Math.cos(s.lat*Math.PI/180),s.lat-best.point[1])?z:best).id}
 // Harbor works can resist a light close blockade, but cannot protect ships
 // elsewhere in the same broad sea zone. Only crewed warships on station count.
 export function isPortBlockaded(s,portId){
  const port=s.regions.find(r=>r.id===portId);if(!port?.port)return false;
  const defense=localBuildingEffects(port).navalDefense||0;
- const power=(s.naval?.fleets||[]).filter(f=>f.order?.kind==='blockade'&&f.order.targetPort===portId&&f.zone===portZone(portId)&&!f.port&&!f.reserve&&!f.mobilizing&&f.hull>=20&&f.supply>=20&&atWar(s,f.owner,port.owner)).reduce((total,f)=>{
-  const warships=['light','trireme','quadrireme','quinquereme'],crew=warships.reduce((n,type)=>n+(f.ships[type]||0)*SHIPS[type].crew,0);
-  if(!crew||f.sailors<crew/2)return total;
-  const strength=warships.reduce((n,type)=>n+(f.ships[type]||0)*SHIPS[type].power,0);
-  return total+strength*Math.min(1,f.hull/50,f.sailors/crew);
- },0);
+ const power=(s.naval?.fleets||[]).filter(f=>f.order?.kind==='blockade'&&f.order.targetPort===portId&&f.zone===portZone(portId)&&!f.port&&!f.reserve&&!f.mobilizing&&atWar(s,f.owner,port.owner)).reduce((total,f)=>total+blockadePower(f),0);
  return power>defense;
 }
 export function seaRoute(from,to){if(!byId[from]||!byId[to])return null;if(from===to)return [];const previous=new Map([[from,null]]),queue=[from];while(queue.length){const id=queue.shift();for(const next of byId[id].links){if(previous.has(next))continue;previous.set(next,id);if(next===to){const path=[];let at=to;while(at!==from){path.unshift(at);at=previous.get(at)}return path}queue.push(next)}}return null}
@@ -253,6 +255,7 @@ export function orderFleet(s,owner,id,kind,target){
  if(['return','blockade','supply'].includes(kind)){
   const r=s.regions.find(x=>x.id===target&&x.port);
   if(!r||kind==='return'&&r.owner!==owner||kind==='blockade'&&!atWar(s,owner,r.owner)||kind==='supply'&&r.owner!==owner)return {ok:false,reason:'port'};
+  if(kind==='blockade'&&!blockadePower(f))return {ok:false,reason:'warships'};
   targetPort=target;targetZone=portZone(target);
  }
  if(kind==='supply'){
@@ -769,7 +772,7 @@ function aiNavalOrders(s,owner,f){
  if(treasury>=wartimeReserve){const group=aiCoordinatedPursuitTarget(s,owner,f);if(group){const sent=issueCoordinatedPursuit(s,owner,group);if(sent.ok)return sent}}
  const pirate=s.naval.pirates.find(p=>p.zone===f.zone&&p.pressure>18);if(pirate&&(f.ships.trireme||f.ships.light||f.ships.quadrireme||f.ships.quinquereme))return orderFleet(s,owner,f.id,'patrol',f.zone);
  const pursuit=aiPursuitTarget(s,owner,f);if(pursuit){const order=orderFleet(s,owner,f.id,'intercept',pursuit.zone);if(order.ok)f.order.reportId=pursuit.id;return order}
- const known=reportedHostileFleets(s,owner),enemyPort=s.regions.find(r=>r.port&&atWar(s,owner,r.owner)&&seaRoute(f.zone,portZone(r.id))?.length<=1&&!known.some(x=>x.zone===portZone(r.id)&&x.range[1]>(ships(f)*1.5)));if(enemyPort&&combatPower(s,f)>4)return orderFleet(s,owner,f.id,'blockade',enemyPort.id);
+ const known=reportedHostileFleets(s,owner),enemyPort=s.regions.find(r=>r.port&&atWar(s,owner,r.owner)&&seaRoute(f.zone,portZone(r.id))?.length<=1&&!known.some(x=>x.zone===portZone(r.id)&&x.range[1]>(ships(f)*1.5)));if(enemyPort&&blockadePower(f)>0&&combatPower(s,f)>4)return orderFleet(s,owner,f.id,'blockade',enemyPort.id);
 }
 function updatePursuitOrders(s,log){
  for(const f of s.naval.fleets){
@@ -844,6 +847,7 @@ for(const q of [...n.queues]){
  finishMaritimeSupply(s,log);
  for(const p of n.pirates){const patrol=n.fleets.filter(f=>f.zone===p.zone&&!f.port&&!f.reserve&&!f.mobilizing&&f.hull>0&&f.sailors>0&&['patrol','escort','intercept'].includes(f.order?.kind)&&ships(f));if(patrol.length){if(p.ships>0&&p.pressure>=24)resolvePirateClash(s,p,patrol,log);else p.pressure=Math.max(0,p.pressure-patrol.length*5)}else p.pressure=p.ships>0?Math.min(70,p.pressure+1):Math.max(0,p.pressure-2);if(p.backer&&rng(s)<.05){const sponsor=p.backer;p.backer=null;s.factions[sponsor].legitimacy=Math.max(0,s.factions[sponsor].legitimacy-3);for(const r of n.routes.filter(r=>routeZones(r).includes(p.zone))){const victim=s.regions.find(x=>x.id===r.to)?.owner;if(victim&&victim!==sponsor){const key=[sponsor,victim].sort().join(':');s.relations[key]=Math.max(-100,(s.relations[key]??0)-4)}}report(s,{kind:'scandal',zone:p.zone,owner:sponsor});if(sponsor===s.player)log(s,'Secret pirate support was exposed; legitimacy fell.','秘密资助海盗曝光，合法性下降。')}}
  advanceTradeVoyages(s,log);for(const route of [...n.routes].sort((a,b)=>(a.lastDispatch?a.lastDispatch.year*12+a.lastDispatch.month:-Infinity)-(b.lastDispatch?b.lastDispatch.year*12+b.lastDispatch.month:-Infinity)))dispatchTradeVoyage(s,route,log);
+ for(const f of n.fleets)if(f.order?.kind==='blockade'&&!blockadePower(f)){f.order=null;if(f.owner===s.player)log(s,'The blockade ended: the fleet lacks fit, crewed warships.','封锁已结束：舰队缺少可用且有足够水手的战船。')}
  for(const f of n.fleets){if(f.mobilizing){f.mobilizing--;if(f.mobilizing<=0){f.mobilizing=0;f.reserve=false;f.morale=Math.min(100,f.morale+2);if(f.owner===s.player)log(s,'The fleet has completed mobilization and can receive orders.','舰队完成整备，可以接受命令。')}}}
  for(const owner of Object.keys(s.factions).filter(x=>x!==s.player&&x!=='rebels')){for(const f of n.fleets.filter(x=>x.owner===owner&&ships(x)))aiNavalOrders(s,owner,f);if(s.month===1&&s.factions[owner].treasury>90&&aiNavalCashflow(s,owner)>0){const dock=s.regions.find(r=>r.owner===owner&&r.buildings?.includes('shipyard'));if(dock)queueShip(s,owner,dock.id,'light')}}
  for(const owner of Object.keys(s.factions).filter(x=>x!==s.player&&x!=='rebels'))aiWagonOrders(s,owner);
