@@ -1,6 +1,6 @@
-import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=saved-age-consistency-1';
+import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=dynastic-reported-leads-1';
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=saved-age-consistency-1';
-import {startDynasticWar} from './civil-war.js?v=saved-age-consistency-1';
+import {startDynasticWar} from './civil-war.js?v=dynastic-reported-leads-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=born-portrait-thirteen-1';
 
@@ -124,7 +124,7 @@ export function reportedDynasticContacts(s,viewer=s.player){
  initializeDynasties(s);const contacts=[];
  for(const [faction,k] of Object.entries(s.knowledge?.[viewer]||{})){
   if(faction===viewer||faction==='rebels')continue;
-  const ids=[...(k.reportedLeaders||[]),...(k.reports||[]).filter(r=>isDeliveredReport(s,r)).flatMap(r=>['leaders','claimants'].includes(r.kind)?r.leaders||[]:['age','health','location'].includes(r.kind)&&r.character?[r.character]:[])];
+  const ids=reportedPeople(s,viewer,faction);
   for(const id of new Set(ids))if(CHARACTER_CATALOG[id])contacts.push({id,faction});
  }
  return contacts;

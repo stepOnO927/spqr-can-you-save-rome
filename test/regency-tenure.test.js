@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=born-portrait-thirteen-1';
-import {advanceGovernments,deriveGovernment} from '../governance.js?v=born-portrait-thirteen-1';
-import {createFictionalPerson} from '../dynasties.js?v=born-portrait-thirteen-1';
+import {newGame,upgradeSave} from '../engine.js?v=dynastic-reported-leads-1';
+import {advanceGovernments,deriveGovernment} from '../governance.js?v=dynastic-reported-leads-1';
+import {createFictionalPerson} from '../dynasties.js?v=dynastic-reported-leads-1';
 
 function fixture(){const s=newGame('caesar');s.world.romanRegimes={caesar:'roman_principate'};s.world.appointments.caesar='lepidus';s.world.characters.caesar.health='seriously_ill';s.wars=[];return s}
 test('a renewed illness starts a new regency instead of inheriting the previous tenure',()=>{
