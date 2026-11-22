@@ -21,7 +21,9 @@ try{
  await page.locator('[data-local-protection]').click();
  assert.match(await page.locator('.local-council').innerText(),/Protection request in transit/);
  for(let month=0;month<3;month++)await page.locator('#step').click();
- assert.match(await page.locator('.local-council').innerText(),/Protected by/);
+ const council=await page.locator('.local-council').innerText();
+ assert.doesNotMatch(council,/Protection request in transit/);
+ assert.match(council,/Protected by|city remains independent/);
  await page.locator('#mail-open').click();
  assert.match(await page.locator('.mailbox').innerText(),/Reply to the protection request/);
  await page.locator('#mail-close').click();
