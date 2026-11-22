@@ -1,10 +1,74 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame, tick, upgradeSave} from '../engine.js?v=world-kings-command-age-1';
+import {newGame, tick, upgradeSave} from '../engine.js?v=world-kings-village-foothold-1';
 import {localEntity, localEntityRevenue, villageDevelopment} from '../local-polities.js';
 import {villageProjectQuote, startVillageProject, villageFoodQuote, takeVillageFood, advanceVillages} from '../local-villages.js';
 import {armyExpeditionSupply, advanceExpeditionSupply} from '../expedition-supply.js';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-command-age-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-village-foothold-1';
+import {footholdQuote, footholdShipmentQuote, footholdStorageCapacity, startFoothold, stockFoothold, advanceFootholds, resupplyAtFoothold, abandonFoothold} from '../foothold.js';
+
+test('a controlled village supports a paid, finite outpost that can be abandoned', () => {
+  const state = newGame('caesar'), entity = localEntity(state, 'ravenna-farms');
+  const army = state.armies.find(unit => unit.id === 'xiii');
+  const before = {treasury: state.factions.caesar.treasury, food: state.factions.caesar.food, localFood: entity.village.storedFood};
+  assert.equal(footholdQuote(state, entity.id, 'senate').reason, 'no_rights');
+  assert.equal(footholdQuote(state, entity.id).ok, true);
+  assert.equal(startFoothold(state, entity.id).ok, true);
+  assert.equal(state.factions.caesar.treasury, before.treasury - 8);
+  assert.equal(state.factions.caesar.food, before.food - 3);
+  advanceFootholds(state);
+  assert.equal(entity.foothold.level, 1);
+  assert.equal(footholdStorageCapacity(entity), 8);
+  assert.equal(stockFoothold(state, entity.id, 'caesar', 4).ok, true);
+  assert.equal(stockFoothold(state, entity.id, 'caesar', 4).ok, true);
+  assert.equal(footholdShipmentQuote(state, entity.id, 'caesar', 1).reason, 'capacity');
+  assert.equal(entity.village.storedFood, before.localFood);
+  advanceFootholds(state);
+  assert.equal(entity.foothold.stockFood, 8);
+  army.morale = 60;
+  assert.equal(resupplyAtFoothold(state, entity.id, army.id).ok, true);
+  assert.equal(entity.foothold.stockFood, 6);
+  assert.equal(footholdShipmentQuote(state, entity.id, 'caesar', 2).ok, true);
+  assert.equal(footholdShipmentQuote(state, entity.id, 'caesar', 4).reason, 'capacity');
+  const loaded = upgradeSave(JSON.parse(JSON.stringify(state)));
+  assert.equal(localEntity(loaded, entity.id).foothold.stockFood, 6);
+  assert.equal(inspectState(loaded).filter(item => item.code === 'invalid-foothold' || item.code === 'foothold-overcommitted').length, 0);
+  entity.foothold.stockFood = 9;
+  assert.ok(inspectState(state).some(item => item.code === 'invalid-foothold'));
+  entity.foothold.stockFood = 6;
+  assert.equal(abandonFoothold(state, entity.id).ok, true);
+  assert.equal(entity.foothold, null);
+  assert.deepEqual([entity.lastFootholdLoss.reason, entity.lastFootholdLoss.stockFood], ['abandoned', 6]);
+  assert.equal(abandonFoothold(state, entity.id).ok, false);
+  assert.equal(footholdQuote(state, entity.id).ok, true);
+});
+
+test('a village outpost is lost when a new theater controller takes the village', () => {
+  const state = newGame('senate'), entity = localEntity(state, 'ravenna-farms');
+  assert.equal(startFoothold(state, entity.id, 'caesar').ok, true);
+  advanceFootholds(state);
+  state.regions.find(region => region.id === entity.theater).owner = 'senate';
+  advanceVillages(state);
+  assert.equal(entity.controller, 'senate');
+  advanceFootholds(state);
+  assert.equal(entity.foothold, null);
+  assert.equal(entity.lastFootholdLoss.owner, 'caesar');
+});
+
+test('a shrinking village cannot receive cargo beyond its local storage capacity', () => {
+  const state = newGame('caesar'), entity = localEntity(state, 'ravenna-farms');
+  assert.equal(startFoothold(state, entity.id).ok, true);
+  advanceFootholds(state);
+  assert.equal(stockFoothold(state, entity.id, 'caesar', 4).ok, true);
+  assert.equal(stockFoothold(state, entity.id, 'caesar', 4).ok, true);
+  entity.village.population = 350;
+  assert.equal(footholdStorageCapacity(entity), 4);
+  advanceFootholds(state);
+  assert.equal(entity.foothold.stockFood, 4);
+  assert.equal(entity.lastShipmentLoss.reason, 'capacity');
+  assert.equal(entity.lastShipmentLoss.food, 4);
+  assert.equal(inspectState(state).filter(item => item.code === 'invalid-foothold' || item.code === 'foothold-overcommitted').length, 0);
+});
 
 test('fictional village has civilian needs and save-compatible development', () => {
   const state = newGame('caesar'), entity = localEntity(state, 'ravenna-farms'), v = entity.village;

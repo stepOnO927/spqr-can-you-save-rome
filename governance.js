@@ -1,9 +1,9 @@
-import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=world-kings-command-age-1';
-import {initializeWorld,successorFor,CHARACTER_CATALOG,characterAgeRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=world-kings-command-age-1';
-import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=world-kings-command-age-1';
-import {FACTIONS} from './data.js?v=world-kings-command-age-1';
-import {startDynasticWar} from './civil-war.js?v=world-kings-command-age-1';
-import {courtNomineeName,recordLegendEvidence} from './legend.js?v=world-kings-command-age-1';
+import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=world-kings-village-foothold-1';
+import {initializeWorld,successorFor,CHARACTER_CATALOG,characterAgeRange,successionModel,assignSuccession,mauretanianSeatHolders} from './characters.js?v=world-kings-village-foothold-1';
+import {recordLifeEvent,dynastyRoll,personAge,isKnownAdult,createFictionalPerson} from './dynasties.js?v=world-kings-village-foothold-1';
+import {FACTIONS} from './data.js?v=world-kings-village-foothold-1';
+import {startDynasticWar} from './civil-war.js?v=world-kings-village-foothold-1';
+import {courtNomineeName,recordLegendEvidence} from './legend.js?v=world-kings-village-foothold-1';
 
 const unable=c=>!c?.alive||!!c.missing||['seriously_ill','dying','deceased'].includes(c.health);
 const roman=faction=>faction==='caesar'||faction==='senate';

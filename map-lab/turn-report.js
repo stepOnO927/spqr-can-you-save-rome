@@ -1,5 +1,5 @@
-import {campaignYear,campaignDate} from '../campaign-date.js?v=world-kings-command-age-1';
-import {reportedControl} from '../control-intelligence.js?v=world-kings-command-age-1';
+import {campaignYear,campaignDate} from '../campaign-date.js?v=world-kings-village-foothold-1';
+import {reportedControl} from '../control-intelligence.js?v=world-kings-village-foothold-1';
 
 // Preserve the observation date and provenance, not just the controller: a
 // traveler arriving now may describe an earlier and possibly mistaken sighting.

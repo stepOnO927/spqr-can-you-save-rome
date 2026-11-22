@@ -1,0 +1,51 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+
+const browser = await chromium.launch({headless: true, args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']});
+const page = await browser.newPage({viewport: {width: 1600, height: 1000}}), errors = [];
+page.on('pageerror', error => errors.push(error.message));
+const base = `http://127.0.0.1:${process.env.SPQR_SMOKE_PORT || 5173}`;
+try {
+  await page.addInitScript(() => localStorage.setItem('spqr-lang', 'en'));
+  await page.goto(`${base}/map-lab/`, {waitUntil: 'domcontentloaded'});
+  const resources = await page.evaluate(async () => {
+    const {newGame} = await import('/engine.js?v=world-kings-village-foothold-1');
+    const state = newGame('caesar');
+    sessionStorage.setItem('spqr-view-handoff-v1', JSON.stringify({target: 'atlas', state}));
+    return {treasury: state.factions.caesar.treasury, food: state.factions.caesar.food};
+  });
+  await page.reload({waitUntil: 'domcontentloaded'});
+  const marker = page.locator('.city-marker[data-city="RAVENNA FARMS"]');
+  await marker.waitFor({state: 'visible'});
+  await marker.evaluate(node => node.click());
+  assert.match(await page.locator('#command-detail').innerText(), /FORWARD FOOTHOLD/);
+  assert.match(await page.locator('#foothold-build').innerText(), /Build level 1 · 8 treasury \/ 3 food/);
+  await page.locator('#foothold-build').click();
+  await page.locator('#save').click();
+  let saved = await page.evaluate(() => JSON.parse(localStorage.getItem('spqr-save-1')));
+  let village = saved.regions.flatMap(region => region.localEntities || []).find(entity => entity.id === 'ravenna-farms');
+  assert.equal(village.foothold.project.targetLevel, 1);
+  assert.equal(saved.factions.caesar.treasury, resources.treasury - 8);
+  assert.equal(saved.factions.caesar.food, resources.food - 3);
+  await page.locator('#advance').click();
+  assert.match(await page.locator('#command-detail').innerText(), /stored food 0\/8/);
+  await page.locator('#save').click();
+  const localFood = await page.evaluate(() => JSON.parse(localStorage.getItem('spqr-save-1')).regions.flatMap(region => region.localEntities || []).find(entity => entity.id === 'ravenna-farms').village.storedFood);
+  await page.locator('#foothold-stock').click();
+  await page.locator('#save').click();
+  saved = await page.evaluate(() => JSON.parse(localStorage.getItem('spqr-save-1')));
+  village = saved.regions.flatMap(region => region.localEntities || []).find(entity => entity.id === 'ravenna-farms');
+  assert.equal(village.foothold.shipments[0].food, 4);
+  assert.equal(village.village.storedFood, localFood);
+  await page.locator('#foothold-abandon').click();
+  assert.match(await page.locator('#foothold-abandon').innerText(), /CONFIRM: LOSE OUTPOST/);
+  await page.locator('#foothold-abandon').click();
+  await page.locator('#save').click();
+  saved = await page.evaluate(() => JSON.parse(localStorage.getItem('spqr-save-1')));
+  village = saved.regions.flatMap(region => region.localEntities || []).find(entity => entity.id === 'ravenna-farms');
+  assert.equal(village.foothold, null);
+  assert.equal(village.lastFootholdLoss.reason, 'abandoned');
+  assert.equal(village.lastFootholdLoss.shipmentFood, 4);
+  assert.deepEqual(errors, []);
+  console.log('A controlled village funds a bounded outpost, dispatches real food and can abandon the camp with its cargo.');
+} finally { await browser.close(); }

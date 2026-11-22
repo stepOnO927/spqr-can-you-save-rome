@@ -3,16 +3,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {newGame,tick as romanTick,upgradeSave,PLAYABLE as ROMAN_PLAYABLE} from '../engine.js?v=world-kings-command-age-1';
-import {REGIONS as ROMAN_REGIONS} from '../data.js?v=world-kings-command-age-1';
-import {finalizeCampaign} from '../legacy.js?v=world-kings-command-age-1';
-import {REGIONS} from '../han/data.js?v=world-kings-command-age-1';
-import {drawMap} from '../han/map.js?v=world-kings-command-age-1';
-import {validateTrees} from '../han/focus.js?v=world-kings-command-age-1';
-import {EDICTS} from '../han/court.js?v=world-kings-command-age-1';
-import {isLiuClan} from '../han/dynasty.js?v=world-kings-command-age-1';
-import {attachHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=world-kings-command-age-1';
-import {eastPanel,eastMap} from '../han/east-ui.js?v=world-kings-command-age-1';
+import {newGame,tick as romanTick,upgradeSave,PLAYABLE as ROMAN_PLAYABLE} from '../engine.js?v=world-kings-village-foothold-1';
+import {REGIONS as ROMAN_REGIONS} from '../data.js?v=world-kings-village-foothold-1';
+import {finalizeCampaign} from '../legacy.js?v=world-kings-village-foothold-1';
+import {REGIONS} from '../han/data.js?v=world-kings-village-foothold-1';
+import {drawMap} from '../han/map.js?v=world-kings-village-foothold-1';
+import {validateTrees} from '../han/focus.js?v=world-kings-village-foothold-1';
+import {EDICTS} from '../han/court.js?v=world-kings-village-foothold-1';
+import {isLiuClan} from '../han/dynasty.js?v=world-kings-village-foothold-1';
+import {attachHanWorld,hanWorld,romanView,sendEmbassyToSeres,embassyConditions,RELAY_MONTHS} from '../han/world.js?v=world-kings-village-foothold-1';
+import {eastPanel,eastMap} from '../han/east-ui.js?v=world-kings-village-foothold-1';
 
 const roman=(o={})=>{const s=newGame(o.player||'caesar');if(o.dlc!==false)attachHanWorld(s,{seed:7});return s};
 

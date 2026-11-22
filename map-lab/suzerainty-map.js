@@ -1,4 +1,4 @@
-import {subjectRelation} from '../suzerainty.js?v=world-kings-command-age-1';
+import {subjectRelation} from '../suzerainty.js?v=world-kings-village-foothold-1';
 
 // The atlas receives reported controllers, never hidden current foreign
 // theater ownership. A treaty alone does not paint unseen land as known.

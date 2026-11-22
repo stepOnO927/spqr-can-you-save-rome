@@ -1,6 +1,6 @@
-import {ROUTES} from './data.js?v=world-kings-command-age-1';
+import {ROUTES} from './data.js?v=world-kings-village-foothold-1';
 import {localEntity} from './local-polities.js';
-import {militaryAccessStatus} from './border-access.js?v=world-kings-command-age-1';
+import {militaryAccessStatus} from './border-access.js?v=world-kings-village-foothold-1';
 
 const costs = Object.freeze({
   1: {treasury: 8, food: 3, months: 1, garrison: 1000},
@@ -12,6 +12,17 @@ const now = state => state.year * 12 + state.month;
 const maxLevel = entity => entity.maxFootholdLevel ?? (({city_state: 4, microstate: 3, strongman: 2, village: 2, tribe: 1, wilderness: 1, nomadic: 1})[entity.type] || 0);
 const host = (state, entity) => state.regions.find(region => region.id === entity.theater);
 const garrison = (state, entity, actor, minimum) => state.armies.some(army => army.owner === actor && army.region === entity.theater && army.men >= minimum && !army.move);
+export function footholdStorageCapacity(entity) {
+  const level = entity?.foothold?.level || 0;
+  if (!level) return 0;
+  const ordinary = level * 12;
+  if (entity.type !== 'village') return ordinary;
+  const village = entity.village || {};
+  const population = Number.isFinite(village.population) ? Math.max(0, village.population) : 0;
+  const granary = Number.isFinite(village.granary) ? Math.max(0, village.granary) : 0;
+  const local = Math.max(4, Math.floor(population / 150) * 2 + granary * 2);
+  return Math.min(ordinary, local);
+}
 const hasLocalRight = (state, entity, actor) => entity.controller === actor || entity.controller === entity.id && (entity.overlord === actor || entity.access?.[actor] > now(state)) || entity.proceduralWilderness && entity.wilderness?.surveyedBy?.[actor] && host(state, entity)?.owner === actor && entity.access?.[actor] > now(state);
 const supplyPassable = (state, actor, region) => {
   const access = militaryAccessStatus(state, actor, region.id, region.owner);
@@ -48,7 +59,7 @@ export function footholdShipmentQuote(state, entityId, actor = state.player, foo
   const route = footholdSupplyRoute(state, entityId, actor);
   if (!route) return {ok: false, reason: 'route_cut'};
   const committed = (Array.isArray(foothold.shipments) ? foothold.shipments : []).reduce((total, shipment) => total + shipment.food, 0);
-  if (foothold.stockFood + committed + food > foothold.level * 12) return {ok: false, reason: 'capacity'};
+  if (foothold.stockFood + committed + food > footholdStorageCapacity(entity)) return {ok: false, reason: 'capacity'};
   if (faction.food < food || faction.treasury < route.treasury) return {ok: false, reason: 'resources'};
   return {ok: true, food, route};
 }
@@ -113,6 +124,14 @@ export function startFoothold(state, entityId, actor = state.player) {
   return {ok: true, ...quote};
 }
 
+export function abandonFoothold(state, entityId, actor = state.player) {
+  const entity = localEntity(state, entityId), foothold = entity?.foothold;
+  if (!foothold || foothold.owner !== actor) return {ok: false, reason: 'unavailable'};
+  entity.lastFootholdLoss = {owner: actor, level: foothold.level, stockFood: foothold.stockFood, shipmentFood: (foothold.shipments || []).reduce((sum, item) => sum + item.food, 0), year: state.year, month: state.month, reason: 'abandoned'};
+  entity.foothold = null;
+  return {ok: true};
+}
+
 export function stockFoothold(state, entityId, actor = state.player, food = 1) {
   const quote = footholdShipmentQuote(state, entityId, actor, food);
   if (!quote.ok) return quote;
@@ -140,6 +159,8 @@ export function advanceFootholds(state) {
     if (!foothold) continue;
     const actor = foothold.owner;
     if (!hasLocalRight(state, entity, actor)) { entity.lastFootholdLoss = {owner: actor, level: foothold.level, stockFood: foothold.stockFood, shipmentFood: (Array.isArray(foothold.shipments) ? foothold.shipments : []).reduce((sum, item) => sum + item.food, 0), year: state.year, month: state.month}; entity.foothold = null; continue; }
+    const capacity = footholdStorageCapacity(entity);
+    if (foothold.stockFood > capacity) { entity.lastFootholdSpillage = {food: foothold.stockFood - capacity, year: state.year, month: state.month}; foothold.stockFood = capacity; }
     if (!Array.isArray(foothold.shipments)) foothold.shipments = [];
     for (const shipment of [...(foothold.shipments || [])]) {
       if (!footholdShipmentRouteOpen(state, entity.id, shipment)) {
@@ -149,7 +170,9 @@ export function advanceFootholds(state) {
       } else {
         shipment.blockedMonths = 0;
         if (--shipment.remaining > 0) continue;
-        foothold.stockFood += shipment.food;
+        const delivered = Math.min(shipment.food, Math.max(0, footholdStorageCapacity(entity) - foothold.stockFood));
+        foothold.stockFood += delivered;
+        if (delivered < shipment.food) entity.lastShipmentLoss = {id: shipment.id, owner: actor, food: shipment.food - delivered, year: state.year, month: state.month, reason: 'capacity'};
       }
       foothold.shipments.splice(foothold.shipments.indexOf(shipment), 1);
     }

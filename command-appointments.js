@@ -1,6 +1,6 @@
-import {CHARACTER_CATALOG,initializeWorld,characterAgeRange} from './characters.js?v=world-kings-command-age-1';
-import {officeOf} from './office-system.js?v=world-kings-command-age-1';
-import {recordLifeEvent} from './dynasties.js?v=world-kings-command-age-1';
+import {CHARACTER_CATALOG,initializeWorld,characterAgeRange} from './characters.js?v=world-kings-village-foothold-1';
+import {officeOf} from './office-system.js?v=world-kings-village-foothold-1';
+import {recordLifeEvent} from './dynasties.js?v=world-kings-village-foothold-1';
 
 // Theater-level appointments are simulated, not claims about historical commands.
 export function availableCommanders(s,armyId){

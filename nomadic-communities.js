@@ -1,4 +1,4 @@
-import {ROUTES} from './data.js?v=world-kings-command-age-1';
+import {ROUTES} from './data.js?v=world-kings-village-foothold-1';
 
 const now=state=>state.year*12+state.month;
 const hostile=(state,a,b)=>a!==b&&(state.wars||[]).some(pair=>pair.includes(a)&&pair.includes(b));

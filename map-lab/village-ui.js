@@ -1,6 +1,7 @@
 import {localEntity, villageDevelopment} from '../local-polities.js';
 import {villageProjectQuote, startVillageProject, villageFoodQuote, takeVillageFood} from '../local-villages.js';
-import {FACTIONS} from '../data.js?v=world-kings-command-age-1';
+import {FACTIONS} from '../data.js?v=world-kings-village-foothold-1';
+import {renderFootholdPanel} from './foothold-ui.js';
 
 export function renderVillage({state, id, actor, language, panel, refresh}) {
   const entity = localEntity(state, id), zh = language === 'zh';
@@ -43,4 +44,5 @@ export function renderVillage({state, id, actor, language, panel, refresh}) {
   ];
   for (const action of actions) { const button = document.createElement('button'); button.id = action.id; button.disabled = !action.quote.ok; button.textContent = action.label; button.onclick = () => {if (action.run().ok) refresh();}; section.append(button); }
   panel.append(section);
+  renderFootholdPanel({state, entity, actor, language, panel: section, refresh});
 }
