@@ -56,6 +56,11 @@ try{
   }
   await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[8.2,44.2],zoom:6.48})});
   await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.loaded()&&!map.isMoving()});
+  const controlHit=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);for(let y=180;y<610;y+=35)for(let x=420;x<1070;x+=35){if(document.elementFromPoint(x,y)!==map.getCanvas())continue;const feature=map.queryRenderedFeatures([x,y],{layers:['grand-control']})[0];if(feature)return {x,y,id:feature.properties.id}}return null});
+  assert.ok(controlHit,`${language}: a transparent political catchment must remain selectable`);
+  const beforeControl=await page.locator('#selection-title').textContent();
+  await page.mouse.click(controlHit.x,controlHit.y);
+  assert.notEqual(await page.locator('#selection-title').textContent(),beforeControl,`${language}: map-cell selection must open a place`);
   const compactSite=await page.evaluate(()=>[...document.querySelectorAll('.grand-site.near-site')].find(element=>{const box=element.getBoundingClientRect();return box.left>400&&box.right<1050&&box.top>160&&box.bottom<600})?.dataset.site);
   assert.ok(compactSite,`${language}: a compact regional site should be reachable in open map space`);
   const site=page.locator(`.grand-site[data-site="${compactSite}"]`),place=await site.textContent();
