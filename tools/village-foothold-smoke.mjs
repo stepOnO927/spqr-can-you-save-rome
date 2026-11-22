@@ -38,9 +38,8 @@ try {
   await page.locator('#save').click();
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('spqr-save-1')).world.localAdministrators['ravenna-farms'].person), resources.official);
   await page.reload({waitUntil: 'domcontentloaded'});
-  // A fresh Map Lab visit shows the start dialog above the load control.
-  await page.locator('#start-overlay').evaluate(node => { node.hidden = true; });
-  await page.locator('#load').click();
+  await page.locator('#start-save-slot').selectOption('1');
+  await page.locator('#start-load').click();
   await marker.waitFor({state: 'visible'});
   await marker.evaluate(node => node.click());
   assert.match(await page.locator('.local-administrator-panel').innerText(), /Current: Test steward/);
