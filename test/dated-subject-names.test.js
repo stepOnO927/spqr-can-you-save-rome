@@ -12,10 +12,10 @@ test('targeted investigations retain the name known at dispatch, including after
  initial.world.dynasties.catalog[id].name=['Hidden later','后来秘密姓名'];initial=upgradeSave(JSON.parse(JSON.stringify(initial)));
  let checked=false;
  for(let seed=1;seed<=100&&!checked;seed++){
-  const s=upgradeSave(JSON.parse(JSON.stringify(initial)));s.world.intelSeed=seed*100000+17;
-  for(let i=0;i<4;i++)advanceOperations(s);
+  const s=upgradeSave(JSON.parse(JSON.stringify(initial))),legacy=upgradeSave(JSON.parse(JSON.stringify(initial)));delete legacy.operations[0].subjectName;s.world.intelSeed=legacy.world.intelSeed=seed*100000+17;
+  for(let i=0;i<4;i++){advanceOperations(s);advanceOperations(legacy)}
   const report=s.knowledge.caesar.egypt.reports.find(r=>r.kind==='health'&&r.character===id);
-  if(report){assert.deepEqual(report.peopleNames[id],['Known then','当时姓名']);checked=true}
+  if(report){const oldReport=legacy.knowledge.caesar.egypt.reports.find(r=>r.kind==='health'&&r.character===id);assert.deepEqual(report.peopleNames[id],['Known then','当时姓名']);assert.ok(oldReport);assert.equal(oldReport.peopleNames[id],undefined);checked=true}
  }
  assert.ok(checked,'at least one investigation should deliver a report');
 });
