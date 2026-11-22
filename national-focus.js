@@ -1,7 +1,7 @@
 import {FOCUS_TREES,TREE_ALIASES,BRANCHES,ICONS} from './imperium-focus-data.js?v=imperium-1';
 import {ROUTES,FACTIONS} from './data.js?v=phase-x-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {proposeAgreement} from './agreements.js?v=agreement-courier-1';
+import {sendAgreementProposal} from './agreement-negotiations.js?v=focus-agreement-consent-1';
 import {politicalAmbition,improveLeaderTrust} from './conspiracies.js?v=faces-name-disagreement-1';
 import {successionCandidates} from './governance.js?v=faces-name-disagreement-1';
 import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
@@ -122,7 +122,7 @@ export function cancelFocus(s,actor,{log=()=>{},reason='cancelled'}={}){
 const factionCharacters=(s,actor)=>Object.values(s.world.characters).filter(c=>c.alive&&c.faction===actor);
 const frontier=(s,actor)=>s.regions.filter(r=>r.owner===actor&&ROUTES.some(([a,b])=>(a===r.id||b===r.id)&&s.regions.find(x=>x.id===(a===r.id?b:a))?.owner!==actor));
 const contacts=(s,actor)=>Object.keys(s.factions).filter(o=>o!==actor&&o!=='rebels'&&holds(s,o)&&(s.regions.some(r=>r.owner===o&&ROUTES.some(([a,b])=>(a===r.id||b===r.id)&&s.regions.find(x=>x.id===(a===r.id?b:a))?.owner===actor))||(s.agreements||[]).some(t=>t.status==='active'&&t.parties.includes(o)&&t.parties.includes(actor))));
-export function applyFocusEffects(s,actor,f,{log=()=>{},sendInquiry=null}={}){
+export function applyFocusEffects(s,actor,f,{log=()=>{},sendInquiry=null,autoplayPlayer=false}={}){
  const st=focusState(s,actor),fac=s.factions[actor],notes=[];
  for(const e of f.effects){
   if(e.res)for(const [k,v] of Object.entries(e.res)){if(k in fac)fac[k]=k==='stability'||k==='legitimacy'?Math.max(0,Math.min(100,fac[k]+v)):fac[k]+v}
@@ -147,7 +147,7 @@ export function applyFocusEffects(s,actor,f,{log=()=>{},sendInquiry=null}={}){
   if(e.foreignTrust){const leaders=new Set(s.world.leadership?.[e.foreignTrust.faction]||[]);for(const c of factionCharacters(s,e.foreignTrust.faction).filter(c=>!leaders.has(c.id)))c.loyalty=Math.max(0,Math.min(100,(c.loyalty??60)-Math.round(e.foreignTrust.n/2)));rememberPoliticalEvent(s,e.foreignTrust.faction,actor,'clemency',e.foreignTrust.n/2)}
   // Diplomatic effects open a proposal; the other court decides with existing rules.
   if(e.peaceLetter&&isWar(s,actor,e.peaceLetter)&&sendInquiry){const r=sendInquiry(s,actor,e.peaceLetter,'peace');notes.push(['peace_letter',e.peaceLetter,r.ok?'sent':r.reason])}
-  if(e.propose)for(const target of e.propose.targets){if(!holds(s,target)||isWar(s,actor,target))continue;const [from,to]=e.propose.reverse?[target,actor]:[actor,target];const r=proposeAgreement(s,from,to,e.propose.type);notes.push(['proposal',target,e.propose.type,r.ok?'accepted':r.reason])}
+  if(e.propose)for(const target of e.propose.targets){if(!holds(s,target)||isWar(s,actor,target))continue;const [from,to]=e.propose.reverse?[target,actor]:[actor,target];if(!autoplayPlayer&&from===s.player&&actor!==s.player){notes.push(['proposal',target,e.propose.type,'player_decision']);continue}const r=sendAgreementProposal(s,from,to,e.propose.type);notes.push(['proposal',target,e.propose.type,r.ok?'sent':r.reason])}
   if(e.perceive)for(const o of contacts(s,actor)){rememberPoliticalEvent(s,o,actor,'strategic_threat',-e.perceive);notes.push(['perceived',o])}
   if(e.succession&&leader){const heir=(successionCandidates(s,actor)||[]).find(id=>id&&id!==leader&&s.world.characters[id]?.alive);if(heir){s.world.successionPlans||={};s.world.successionPlans[actor]=heir;notes.push(['succession',heir])}else notes.push(['succession',null])}
  }
@@ -177,7 +177,7 @@ export function advanceFocuses(s,{autoplayPlayer=false,log=()=>{},sendInquiry=nu
    if(a.suspended){a.suspended=false;st.history.push({id:a.id,event:'resumed',year:s.year,month:s.month})}
    a.progress++;
    if(a.progress>=a.months){
-    st.completed.push(a.id);st.active=null;const notes=applyFocusEffects(s,actor,f,{log,sendInquiry});
+    st.completed.push(a.id);st.active=null;const notes=applyFocusEffects(s,actor,f,{log,sendInquiry,autoplayPlayer});
     st.history.push({id:a.id,event:'completed',year:s.year,month:s.month,notes});
     observeFocus(s,actor,f);generalsReact(s,actor,f,{log});
     if(actor===s.player)log(s,`National focus completed: ${f.name[0]}.`,`国家方针完成：${f.name[1]}。`,{kind:'focus',focus:f.id});

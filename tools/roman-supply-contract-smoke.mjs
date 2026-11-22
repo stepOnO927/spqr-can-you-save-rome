@@ -10,7 +10,7 @@ try{
  await page.goto(`${base}/`,{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
-  const {proposeAgreement}=await import('/agreements.js?v=agreement-courier-1');
+  const {proposeAgreement}=await import('/agreements.js?v=focus-agreement-consent-1');
   const s=newGame('caesar');s.wars=[];s.relations['caesar:senate']=70;
   if(!proposeAgreement(s,'caesar','senate','trade').ok)throw Error('Trade access unavailable');
   s.factions.caesar.treasury=200;

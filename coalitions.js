@@ -1,7 +1,7 @@
 import {isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
-import {activeAgreement} from './agreements.js?v=agreement-courier-1';
+import {activeAgreement} from './agreements.js?v=focus-agreement-consent-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
 

@@ -6,6 +6,16 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `158be62d` is integrated. Its focus-driven treaty consent and
+delivered confirmation now remain active in the expansion's runtime. The
+overlapping module-version merge had retained the new mail and agreement
+handlers but left the focus applying treaties directly; this is corrected.
+Campaign, atlas, scripts and browser smoke use one cached instance of the
+agreement modules. Focus, diplomatic proposal and module-version checks pass;
+the full serial suite passes 1,314/1,314 on rerun. Its first local pass had
+one failure, but the truncated console output did not retain its name; cloud
+browser and quality checks remain the next gates for this integration.
+
 The Han campaign's opening title-only Kangju and Dayuan kings now use the
 same distinct reconstructed cultures as their courts' persistent commanders,
 merchants and later rulers. An older save carrying only the previous generic

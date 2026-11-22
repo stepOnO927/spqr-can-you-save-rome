@@ -78,7 +78,7 @@ try{
  // shipment that remains in the transit list indefinitely.
  await page.evaluate(async()=>{
   const {newGame}=await import('/engine.js?v=faces-name-disagreement-1');
-  const {proposeAgreement}=await import('/agreements.js?v=agreement-courier-1');
+  const {proposeAgreement}=await import('/agreements.js?v=focus-agreement-consent-1');
   const {placeTradeOrder,advanceMarkets}=await import('/trade-markets.js?v=faces-wheels-1');
   const state=newGame('han');state.relations['han:parthia']=45;
   if(!proposeAgreement(state,'han','parthia','trade').ok)throw Error('Trade treaty unavailable');
@@ -102,7 +102,7 @@ try{
  // A direct Han player can buy from Parthia through the existing oasis and
  // Central Asian network without receiving a fictitious direct border.
  await page.evaluate(async()=>{
-  const {newGame}=await import('/engine.js?v=faces-name-disagreement-1'),{proposeAgreement}=await import('/agreements.js?v=agreement-courier-1');
+  const {newGame}=await import('/engine.js?v=faces-name-disagreement-1'),{proposeAgreement}=await import('/agreements.js?v=focus-agreement-consent-1');
   const state=newGame('han');state.relations['han:parthia']=45;
   if(!proposeAgreement(state,'han','parthia','trade').ok)throw Error('Han-Parthia treaty unavailable');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));

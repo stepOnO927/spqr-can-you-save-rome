@@ -1,4 +1,4 @@
-import {advanceAgreementProposals,sendAgreementProposal} from './agreement-negotiations.js?v=agreement-courier-1';
+import {advanceAgreementProposals,sendAgreementProposal} from './agreement-negotiations.js?v=focus-agreement-consent-1';
 import {isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=faces-name-disagreement-1';
 import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=faces-name-disagreement-1';
@@ -29,7 +29,7 @@ import {advanceBattlePlans,aiBattlePlans,planControlled} from './battle-plans.js
 const imperiumOn=s=>s.world?.imperium?.enabled!==false;
 // IMPERIUM: completed national focuses add to the same modifier table as policies.
 const activeModifiers=(s,id)=>{const out={...inventionModifiers(s,id)};for(const [k,v] of Object.entries(focusModifiers(s,id)))out[k]=(out[k]||0)+v;return out};
-import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=agreement-courier-1';
+import {initializeAgreements,activeAgreement,advanceAgreements,proposeAgreement,terminateAgreement,fullAllianceTerms} from './agreements.js?v=focus-agreement-consent-1';
 import {initializeMarkets,advanceMarkets,advanceMarketAI,advanceMarketDiplomacy} from './trade-markets.js?v=faces-wheels-1';
 import {RATION_SOLDIER_MONTHS} from './market-goods.js?v=faces-wheels-1';
 import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?v=faces-name-disagreement-1';
@@ -931,7 +931,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   advanceStrategicWarnings(s,{autoplayPlayer,letterMonths,issueOrder:issueMilitaryOrder,log});
   advanceStrategicOffers(s,{autoplayPlayer});
   advanceCoalitionInvitations(s,estimatedStrength,strategicRoll,{autoplayPlayer});
-  advanceAgreementProposals(s,{checkAlliance:canFormAlliance,concludeAlliance:(state,actor,target)=>diplomacy(state,actor,target,'alliance',{priorConsent:true})});syncAgreementLetters(s);
+  advanceAgreementProposals(s,{autoplayPlayer,checkAlliance:canFormAlliance,concludeAlliance:(state,actor,target)=>diplomacy(state,actor,target,'alliance',{priorConsent:true})});syncAgreementLetters(s);
   if(!autoplayPlayer)syncCoalitionLetters(s);
   advanceMail(s,{proposeAgreement,diplomacy});
   for(const owner of Object.keys(s.factions).filter(id=>autoplayPlayer||id!==s.player)){

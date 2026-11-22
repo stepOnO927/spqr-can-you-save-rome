@@ -1,7 +1,7 @@
 import '../version-ui.js';
 import {analytics} from '../analytics.js';
 import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=faces-name-disagreement-1';
-import {sendAgreementProposal} from '../agreement-negotiations.js?v=agreement-courier-1';
+import {sendAgreementProposal} from '../agreement-negotiations.js?v=focus-agreement-consent-1';
 import {localStore as localStorage,sessionStore as sessionStorage} from '../safe-storage.js';
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
 import {estimateAttackLosses} from '../attack-forecast.js';
@@ -25,7 +25,7 @@ import {renderCursus} from './cursus-ui.js?v=faces-name-disagreement-1';
 import {officeEffects} from '../office-system.js?v=faces-name-disagreement-1';
 import {populationFactor,religiousTaxCost} from '../religion.js?v=faces-name-disagreement-1';
 import {satisfactionForOutline} from './satisfaction-map.js?v=faces-name-disagreement-1';
-import {activeAgreement} from '../agreements.js?v=agreement-courier-1';
+import {activeAgreement} from '../agreements.js?v=focus-agreement-consent-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=faces-name-disagreement-1';
 import {featherAdvice} from '../feather.js?v=travel-2';
 import {waitForMapIdle} from './capture-wait.js?v=phase-x-1';

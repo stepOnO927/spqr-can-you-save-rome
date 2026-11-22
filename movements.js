@@ -3,7 +3,7 @@ import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {createFictionalPerson} from './dynasties.js?v=faces-name-disagreement-1';
 import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
-import {activeAgreement,terminateAgreement} from './agreements.js?v=agreement-courier-1';
+import {activeAgreement,terminateAgreement} from './agreements.js?v=focus-agreement-consent-1';
 import {reportedPersonalContact} from './person-knowledge.js?v=faces-name-disagreement-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
