@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave,tick,sendInquiry} from '../engine.js?v=missing-health-1';
-import {receivedMail} from '../epistulae.js?v=missing-health-1';
-import {advanceMailReports} from '../mail-reports.js?v=missing-health-1';
+import {newGame,upgradeSave,tick,sendInquiry} from '../engine.js?v=search-uncertainty-1';
+import {receivedMail} from '../epistulae.js?v=search-uncertainty-1';
+import {advanceMailReports} from '../mail-reports.js?v=search-uncertainty-1';
 const replies=s=>receivedMail(s).filter(m=>m.context?.kind==='inquiry_result');
 function trial(sealed,desired){const start=newGame('caesar');start.wars=[];sendInquiry(start,'caesar','egypt','successor');start.inquiries[0].remaining=1;start.inquiries[0].sealed=sealed;for(let i=1;i<100;i++){const s=upgradeSave(JSON.parse(JSON.stringify(start)));s.seed=(i*7000013)>>>0;tick(s);if(s.inquiries[0].status===desired)return s}throw Error('No deterministic outcome: '+desired)}
 test('a received official response is a dated unverified letter that survives save/load',()=>{

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newScenario} from '../scenarios.js?v=missing-health-1';
-import {tick,upgradeSave} from '../engine.js?v=missing-health-1';
-import {potentialConspirators} from '../conspiracies.js?v=missing-health-1';
-import {leaveCoalition} from '../coalitions.js?v=missing-health-1';
+import {newScenario} from '../scenarios.js?v=search-uncertainty-1';
+import {tick,upgradeSave} from '../engine.js?v=search-uncertainty-1';
+import {potentialConspirators} from '../conspiracies.js?v=search-uncertainty-1';
+import {leaveCoalition} from '../coalitions.js?v=search-uncertainty-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=born-portrait-thirteen-1';
 import {advancePersonalPlans} from '../personal-plans.js?v=multipolar-2';
 
