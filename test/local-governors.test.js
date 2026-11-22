@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=saved-age-consistency-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=succession-lead-1';
 import {appointGovernor,dismissGovernor,governorCandidates,localGovernor,officeOf,officeCandidates,advanceOffices,governorLoyaltyEffect} from '../office-system.js?v=saved-age-consistency-1';
-import {previewPersonTravel} from '../personal-diplomacy.js?v=saved-age-consistency-1';
+import {previewPersonTravel} from '../personal-diplomacy.js?v=succession-lead-1';
 import {availableCommanders} from '../command-appointments.js?v=saved-age-consistency-1';
 
 test('a local administrator costs resources and improves only that theater quarterly',()=>{

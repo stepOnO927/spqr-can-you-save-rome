@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=saved-age-consistency-1';
+import {newGame,upgradeSave} from '../engine.js?v=succession-lead-1';
 import {initializeCursus,investigateGovernment,governmentReport,reportedOfficialName,officialKnowledge,offerEmployment,advanceCursus} from '../cursus-honorum.js?v=saved-age-consistency-1';
 function setup(){const s=newGame('caesar'),c=initializeCursus(s);s.month=3;s.factions.caesar.treasury=500;c.intel.caesar={parthia:{stage:2,reports:[]}};return {s,c,id:c.foreignPosts.parthia.administration}}
 function step(s){s.world.intelSeed=1000;s.month++;advanceCursus(s)}
