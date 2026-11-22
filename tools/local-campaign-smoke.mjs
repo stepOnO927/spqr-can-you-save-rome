@@ -17,6 +17,14 @@ try{
  await page.locator('[data-local-trade]').click();
  if(await page.locator('[data-local-recruit]').isEnabled())await page.locator('[data-local-recruit]').click();
  await page.locator('#step').click();
+ await page.locator('#step').click();
+ await page.locator('[data-local-protection]').click();
+ assert.match(await page.locator('.local-council').innerText(),/Protection request in transit/);
+ for(let month=0;month<3;month++)await page.locator('#step').click();
+ assert.match(await page.locator('.local-council').innerText(),/Protected by/);
+ await page.locator('#mail-open').click();
+ assert.match(await page.locator('.mailbox').innerText(),/Reply to the protection request/);
+ await page.locator('#mail-close').click();
  await page.locator('#new').click();
  await page.locator('[data-slot="save"]').click();
  const cityName=await page.evaluate(id=>JSON.parse(localStorage.getItem('spqr-save-1')).regions.flatMap(region=>region.localEntities||[]).find(city=>city.id===id).name[0].toUpperCase(),id);
@@ -32,5 +40,5 @@ try{
  await page.locator('.local-council').waitFor();
  assert.ok((await page.locator('.local-council').innerText()).includes('Completed trades'));
  assert.equal(errors.length,0,errors.join('\n'));
- console.log('Local campaign start, council, save, Map Lab handoff and return passed');
+ console.log('Local campaign, protection reply, save, Map Lab handoff and return passed');
 }finally{await browser.close()}

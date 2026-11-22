@@ -2,6 +2,10 @@
 
 This file tracks the four supplied specifications as one development goal. The expansion is **in progress**. A functioning slice is not a claim of world coverage.
 
+## 21 November checkpoint
+
+- Merged current `main` through `c8715173`, retaining its missing-person death-date privacy fix in the family dossier and portrait registry. The generated-city campaign now lets its council pay six treasury to request protection from its current theater ruler. The request takes three months; the host considers actual theater control, relations, war, treasury, stability and available force before accepting. Acceptance keeps the city's government and resources local while the existing annual tribute rule applies. A refused request creates no protection. Trade proposals now also receive a delayed accepted or refused mailbox reply; a hostile or depleted host can decline. Trade and protection cannot be pending together. City saves preserve the pending request, reject malformed imported missions and still accept older saves without the new field. Main-campaign and Map Lab councils show the status. Focused city, privacy and shared-module checks pass 25/25; the full serial suite passes 1,209/1,209. Hosted browser/package checks remain pending for this review head. Shared browser imports use `world-kings-city-diplomacy-1`.
+
 ## 16 November checkpoint
 
 - Integrated `main` through `35e94d10`: family-loan balances, sustained Han/oasis ambition milestones and reported-risk standard Caesar AI are retained alongside the local city campaign and the map-marker click fix. The Han ambition turn call and its import are reconciled; 58 focused dynasty, history, Han and cache-version cases pass, as does the serial full suite at 1,205/1,205. `build:pages` still packages 311 public files at 4.74 MiB, largest 1.06 MiB. Hosted checks are pending for this merge.

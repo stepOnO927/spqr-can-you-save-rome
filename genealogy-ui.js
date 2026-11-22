@@ -1,12 +1,12 @@
-import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=world-kings-guardian-1';
-import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=world-kings-guardian-1';
-import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=world-kings-guardian-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=world-kings-guardian-1';
-import {FACTIONS} from './data.js?v=world-kings-guardian-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=world-kings-guardian-1';
-import {visiblePersonName} from './character-system.js?v=world-kings-guardian-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=world-kings-guardian-1';
-import {localAdministrator} from './office-system.js?v=world-kings-guardian-1';
+import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=world-kings-city-diplomacy-1';
+import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=world-kings-city-diplomacy-1';
+import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=world-kings-city-diplomacy-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=world-kings-city-diplomacy-1';
+import {FACTIONS} from './data.js?v=world-kings-city-diplomacy-1';
+import {fictionalPortraitKey} from './portrait-registry.js?v=world-kings-city-diplomacy-1';
+import {visiblePersonName} from './character-system.js?v=world-kings-city-diplomacy-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=world-kings-city-diplomacy-1';
+import {localAdministrator} from './office-system.js?v=world-kings-city-diplomacy-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);
@@ -33,7 +33,7 @@ const portrait=(id,state)=>{
 const dates=(c,zh)=>{
  const birth=c.birthYear!=null?era(c.birthYear,zh):CHARACTER_CATALOG[c.id]?.birth;
  const estimate=Array.isArray(birth)?(zh?`约前${Math.abs(birth[0])}${birth[0]===birth[1]?'':`–${Math.abs(birth[1])}`}年`:`about ${Math.abs(birth[0])}${birth[0]===birth[1]?'':`–${Math.abs(birth[1])}`} BCE`):birth||'?';
- return c.deathYear==null?estimate:`${estimate} – ${era(c.deathYear,zh)} ${zh?'（模拟）':'(simulated)'}`;
+ return c.missing||c.deathYear==null?estimate:`${estimate} – ${era(c.deathYear,zh)} ${zh?'（模拟）':'(simulated)'}`;
 };
 const era=(year,zh)=>year<0?(zh?`前${Math.abs(year)}年`:`${Math.abs(year)} BCE`):(zh?`公元${year+1}年`:`${year+1} CE`);
 

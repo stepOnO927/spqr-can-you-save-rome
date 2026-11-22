@@ -1,4 +1,4 @@
-import {strategicPersonality} from './strategic-planning.js?v=world-kings-guardian-1';
+import {strategicPersonality} from './strategic-planning.js?v=world-kings-city-diplomacy-1';
 // Personal political plans belong to actual commanders and spend their private
 // resources. Ambition is a tendency, never an automatic order to rebel.
 const pair=(a,b)=>[a,b].sort().join(':');
