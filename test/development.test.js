@@ -56,8 +56,8 @@ test('paid field reserve command helps only supplied joint defense and survives 
  assert.match(ideasPanel(restored,'zh'),/野战预备队指挥/);
  assert.match(ideasPanel(restored,'zh'),/己方战区两军合防且补给≥65%的防御/);
  assert.notEqual(techIllustration(idea),techIllustration(IDEAS.find(item=>item.id==='field-march-coordination')));
- assert.match(afterActionHtml(after,'caesar','en'),/Friendly reserves strengthened the supplied joint defense/);
- assert.match(afterActionHtml(after,'caesar','zh'),/己方预备队在足够补给下加强了两军合防/);
+ assert.match(afterActionHtml(after,'caesar','en'),/Friendly reserves strengthened the supplied joint defense \(\+5% defensive power\)/);
+ assert.match(afterActionHtml(after,'caesar','zh'),/己方预备队在足够补给下加强了两军合防（防御战力 \+5%）/);
  assert.equal(upgradeSave(structuredClone(restored)).development.caesar.slots.military[0],idea.id);
 });
 
