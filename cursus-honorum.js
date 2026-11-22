@@ -1,6 +1,6 @@
 import {initializeWorld,CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
-import {createFictionalPerson} from './dynasties.js?v=saved-age-consistency-1';
-import {initializeOffices,appointOffice} from './office-system.js?v=saved-age-consistency-1';
+import {createFictionalPerson} from './dynasties.js?v=family-age-consistency-1';
+import {initializeOffices,appointOffice} from './office-system.js?v=family-age-consistency-1';
 import {assignCursusPortraits,assignSenatorPortraits} from './portrait-registry.js?v=missing-fate-privacy-1';
 
 const ROMAN=new Set(['caesar','senate']);
