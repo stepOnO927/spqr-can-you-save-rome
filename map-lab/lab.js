@@ -16,7 +16,7 @@ import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from '../
 import {nationalBudget} from '../national-budget.js?v=27';
 import {budgetHtml} from '../budget-ui.js?v=34';
 import republicanRoads from '../republican-roads.js?v=1';
-import {physicalStyle} from './physical-style.js?v=44';
+import {physicalStyle} from './physical-style.js?v=45';
 import {physicalLabels} from './physical-labels.js?v=5';
 import {ancientPlaceLabels} from './ancient-place-labels.js';
 import {newGame,newGrandGame, moveArmy, previewMarch, tick, adjacent, region, isWar, isAllied, relation, upgradeSave, recruit, trainArmy, diplomacy, respondCivilSettlement, sendInquiry, queueMission, setTax, warContributionPlan, collectWarContributions, emergencyProvisionsPlan, collectEmergencyProvisions, aerariumPlan, seizeAerarium, personalDiplomaticCredit,royalCourtCredit,provincialRitesCredit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,knowledgeTrade,sellKnowledge,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,acceptKnowledgeExchange,declineKnowledgeExchange,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,setReligiousPolicy,purchaseMaterials,recruitFigure} from '../engine.js?v=219';
@@ -221,13 +221,13 @@ map.on('load',refreshPhysicalLabels);
 map.on('moveend',clipPhysicalLabels);
 map.on('load',clipPhysicalLabels);
 refreshPhysicalLabels();
-const locator=document.createElement('aside');locator.id='locator';locator.hidden=true;locator.innerHTML='<strong class="locator-title"></strong><div class="locator-map"><img src="./italy-locator.svg?v=2" alt=""><span id="locator-position"></span></div>';document.body.append(locator);
+const locator=document.createElement('aside');locator.id='locator';locator.hidden=true;locator.innerHTML='<strong class="locator-title"></strong><div class="locator-map"><img src="./italy-locator.svg?v=3" alt=""><span id="locator-position"></span></div>';document.body.append(locator);
 const locatorBounds={italy:{west:4,east:23,south:35,north:48},mediterranean:{west:-20,east:60,south:18,north:58}};
 function updateLocator(){
  const center=map.getCenter?.(),zoom=map.getZoom?.()||0,broad=locatorBounds.mediterranean;
  if(!center||zoom<7||center.lng<broad.west||center.lng>broad.east||center.lat<broad.south||center.lat>broad.north){locator.hidden=true;return}
  const italy=locatorBounds.italy,isItaly=center.lng>=italy.west&&center.lng<=italy.east&&center.lat>=italy.south&&center.lat<=italy.north;
- const bounds=isItaly?italy:broad,source=isItaly?'./italy-locator.svg?v=2':'./mediterranean-locator.svg?v=3';
+ const bounds=isItaly?italy:broad,source=isItaly?'./italy-locator.svg?v=3':'./mediterranean-locator.svg?v=3';
  locator.hidden=false;
  const image=locator.querySelector('img');if(image.getAttribute('src')!==source)image.setAttribute('src',source);
  locator.querySelector('.locator-title').textContent=isItaly?(lang==='zh'?'当前位置 · 意大利':'YOUR POSITION · ITALY'):(lang==='zh'?'地中海 · 当前位置':'MEDITERRANEAN · POSITION');

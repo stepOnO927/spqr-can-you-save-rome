@@ -11,7 +11,7 @@ import {campaignEndingHtml,campaignVictoryHtml,campaignSettlementHtml} from './a
 import {budgetHtml} from './budget-ui.js?v=34';
 import {holdPosition,strategicRetreat,armySupply,encircled} from './grand-operations.js?v=37';
 import {developmentPanel,ideasPanel,constructionPanel,bindDevelopmentTreeNavigation,openInscriptionEditor} from './development-ui.js?v=59';
-import {drawMap,mapPoint} from './map.js?v=65';
+import {drawMap,mapPoint} from './map.js?v=66';
 import {avoidGrandLabelCollisions} from './map-label-layout.js?v=3';
 import {chronicleHtml,notificationsHtml,briefingHtml,battleReportHtml,reportLabel,eventDate} from './reports-ui.js?v=14';
 import {unreadCount,markRead,latestCritical,eventText} from './campaign-reports.js?v=12';
