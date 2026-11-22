@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js?v=missing-fate-privacy-1';
-import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js?v=missing-fate-privacy-1';
-import {setWartimePolicy} from '../epistulae-personnel.js?v=missing-fate-privacy-1';
-import {initializeMailReports,advanceMailReports} from '../mail-reports.js?v=missing-fate-privacy-1';
-import {mailboxHtml} from '../mail-ui.js?v=missing-fate-privacy-1';
+import {initializeMail,sendLetter,advanceMail,receivedMail,unreadCount,markRead,archiveLetter,replyToLetter,treatyLetter,warLetters,syncPeaceLetters,chronicleLetters} from '../epistulae.js?v=marriage-economy-merge-1';
+import {newGame,diplomacy,tick,upgradeSave,answerPeaceOffer,queueMission} from '../engine.js?v=marriage-economy-merge-1';
+import {setWartimePolicy} from '../epistulae-personnel.js?v=marriage-economy-merge-1';
+import {initializeMailReports,advanceMailReports} from '../mail-reports.js?v=marriage-economy-merge-1';
+import {mailboxHtml} from '../mail-ui.js?v=marriage-economy-merge-1';
 
 const state = () => {
   const factions = Object.fromEntries(['caesar','senate','egypt','parthia'].map(id => [id,{treasury:100}]));
