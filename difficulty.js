@@ -1,5 +1,5 @@
-import {createFictionalPerson} from './dynasties.js?v=commander-name-snapshot-1';
-import {initializeOffices,OFFICE_TYPES,canHoldOffice,localGovernor} from './office-system.js?v=commander-name-snapshot-1';
+import {createFictionalPerson} from './dynasties.js?v=name-disagreement-1';
+import {initializeOffices,OFFICE_TYPES,canHoldOffice,localGovernor} from './office-system.js?v=name-disagreement-1';
 
 // Both campaign views use the same one-time setup. Difficulty affects AI
 // decisions; the separate economic handicap is explicitly opt-in.
