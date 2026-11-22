@@ -8,7 +8,8 @@ import {choose as chooseHanAmbition,status as hanAmbitionStatus} from '../han/am
 
 const date=s=>s.year*12+s.month;
 function roman(side,months,seed,{autoplay=false,difficulty='standard',aiLevel=null}={}){
- const s=configureStartingDifficulty(newGame(side),difficulty);s.seed=seed;s.world.intelSeed=seed;
+ const s=configureStartingDifficulty(newGame(side),difficulty,false,{localSeed:seed});s.seed=seed;s.world.intelSeed=seed;
+ assert.equal(s.world.localGeneration.seed,seed,'the sampled local world must use the reported sweep seed');
  chooseAmbition(s,side==='egypt'?'economic':'military');
  const begin=date(s),openingTreasury=s.factions[side].treasury,openingForecast=forecastEconomy(s,side).treasury,openingWars=s.wars.length;
  const trace=[];
@@ -54,7 +55,8 @@ console.log('WHEELS_ROMAN_SURVIVAL_SWEEP '+JSON.stringify(survivalSweep));
 
 // Player-directed opening alternatives. No local simulation: GitHub Actions runs this file.
 function caesarPlayerStrategy(seed,plan){
- const s=configureStartingDifficulty(newGame('caesar'),plan.includes('travel')?'travel':'standard');s.seed=seed;s.world.intelSeed=seed;
+ const s=configureStartingDifficulty(newGame('caesar'),plan.includes('travel')?'travel':'standard',false,{localSeed:seed});s.seed=seed;s.world.intelSeed=seed;
+ assert.equal(s.world.localGeneration.seed,seed,'the player strategy and local world must share one seed');
  chooseAmbition(s,'military');
  const begin=date(s),opening={treasury:s.factions.caesar.treasury,armies:s.armies.filter(a=>a.owner==='caesar').map(a=>({id:a.id,region:a.region,men:a.men}))};
  const actions=[];
