@@ -8,6 +8,8 @@ The Chessboard's Multipolar Power Network projects reported conflicts, public ag
 
 A spy can investigate secret agreements, producing a dated, unverified lead identifying one reported partner or no reliable information. A partner can forward its own existing lead through the ordinary delayed exchange. The power network displays delivered leads without disclosing treaty terms or asserting that they remain active; no finding is not evidence of absence. AI courts may make some defensive proposals secret, and these AI-to-AI agreement proposals now use the same delayed, fallible courier process as other agreement letters. This does not provide full clandestine negotiation or prove all desired strategic chains.
 
+National-focus treaty effects also send proposals through the courier. When an AI writes to the human player, the letter requires an explicit decision; acceptance sends a reply, and the treaty forms only if a later confirmation arrives. Either journey may fail and refusal or silence creates no treaty. AI-only mode continues to make its own decisions. A reverse focus cannot silently send a letter or spend funds on behalf of a human player.
+
 ## Validation and limits
 
 Run `node scripts/multipolar-sim.mjs` for six seeds across the ordinary all-AI opening, a passive-Rome game and a fictional regional-tension opening. No additional war or alliance is forced. In the present 24-month sample the ordinary openings did not produce an opportunistic declaration; the pressure opening produced both declarations and non-declarations. This does not establish that all requested chain reactions or diplomacy actions are implemented.

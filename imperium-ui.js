@@ -1,12 +1,12 @@
 import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
-import {reportedControl} from './control-intelligence.js?v=secret-diplomacy-1';
+import {reportedControl} from './control-intelligence.js?v=focus-agreement-consent-1';
 import {REGIONS,ROUTES,FACTIONS} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
-import {mapPoint} from './map.js?v=secret-diplomacy-1';
+import {mapPoint} from './map.js?v=focus-agreement-consent-1';
 import {BRANCH_NAMES,PATH_NAMES} from './imperium-focus-data.js?v=imperium-1';
-import {treeFor,focusStatus,focusState,canStartFocus,startFocus,cancelFocus,focusCost,focusReportsFor,focusById} from './national-focus.js?v=secret-diplomacy-1';
-import {COMPONENTS,CULTURE_NAMES,templatesFor,templateStats,saveTemplate,duplicateTemplate,deleteTemplate,validateTemplate,availableComponents,cultureOf,reorganizationQuote,reorganizeArmy,recruitmentQuote,recruitFormation,commanderSpecialty,commandConcentration,seedTemplates,formationState,outdatedArmies} from './legion-designer.js?v=secret-diplomacy-1';
-import {ROLES,ROLE_NAMES,MODES,plansFor,planById,createPlan,assignRole,removeRole,approvePlan,pausePlan,cancelPlan,editPlan,assessPlan,adviserCounsel,approveRecommendation,legalStep} from './battle-plans.js?v=secret-diplomacy-1';
+import {treeFor,focusStatus,focusState,canStartFocus,startFocus,cancelFocus,focusCost,focusReportsFor,focusById} from './national-focus.js?v=focus-agreement-consent-1';
+import {COMPONENTS,CULTURE_NAMES,templatesFor,templateStats,saveTemplate,duplicateTemplate,deleteTemplate,validateTemplate,availableComponents,cultureOf,reorganizationQuote,reorganizeArmy,recruitmentQuote,recruitFormation,commanderSpecialty,commandConcentration,seedTemplates,formationState,outdatedArmies} from './legion-designer.js?v=focus-agreement-consent-1';
+import {ROLES,ROLE_NAMES,MODES,plansFor,planById,createPlan,assignRole,removeRole,approvePlan,pausePlan,cancelPlan,editPlan,assessPlan,adviserCounsel,approveRecommendation,legalStep} from './battle-plans.js?v=focus-agreement-consent-1';
 
 // IMPERIUM screens: national strategy tree, legion designer, operational planner.
 // UI state is local to this module; game state changes only through engine APIs.
@@ -62,7 +62,7 @@ export function describeEffect(e,lang){
  if(e.succession)return zh?'通过继承系统安排继承人':'Designates a successor through the succession system';
  if(e.relation)return e.relation.map(r=>`${fname(r.target,lang)} ${zh?'关系':'relations'} ${sign(r.n)}`).join(zh?'，':', ');
  if(e.peaceLetter)return zh?`若处于战争，向${fname(e.peaceLetter,lang)}寄出议和书信（由对方决定）`:`If at war, sends a peace letter to ${fname(e.peaceLetter,lang)} (they decide)`;
- if(e.propose)return zh?`向${e.propose.targets.map(x=>fname(x,lang)).join('、')}提出协定（对方可拒绝）`:`Proposes an agreement to ${e.propose.targets.map(x=>fname(x,lang)).join(', ')} (they may refuse)`;
+ if(e.propose){const targets=e.propose.targets.map(x=>fname(x,lang)).join('、');return zh?`${e.propose.reverse?'邀请'+targets+'提出协定':'向'+targets+'提出协定'}：寄信方支付2国库，往返约4个月；可能遗失或遭拒，成立时另付条约费用。`:`${e.propose.reverse?'Invites a proposal from':'Proposes an agreement to'} ${targets}: the sender pays 2 treasury for a roughly four-month exchange; letters may be lost or refused, and the treaty has a separate cost.`}
  if(e.foreignTrust)return zh?`${fname(e.foreignTrust.faction,lang)}人物对其领袖的忠诚略降`:`${fname(e.foreignTrust.faction,lang)} figures become slightly less loyal to their leaders`;
  if(e.loyalty)return zh?`已控制战区忠诚度 ${sign(e.loyalty)}`:`Held theaters’ loyalty ${sign(e.loyalty)}`;
  if(e.regionLoyalty)return `${rname(e.regionLoyalty.region,lang)} ${zh?'忠诚度':'loyalty'} ${sign(e.regionLoyalty.n)}`;
@@ -244,7 +244,7 @@ export function bindImperium({state,lang,render,flash,log}){
   all('[data-imp-approve]').forEach(el=>el.onclick=()=>{const r=approvePlan(state,owner,plan.id,{log});if(!r.ok)flash(r.reason);render()});
   all('[data-imp-pause]').forEach(el=>el.onclick=()=>{pausePlan(state,owner,plan.id);render()});
   all('[data-imp-cancel-plan]').forEach(el=>el.onclick=()=>{cancelPlan(state,owner,plan.id);ui.drawing=null;render()});
-  all('[data-imp-rec]').forEach(el=>el.onclick=async()=>{const {issueMilitaryOrder}=await import('./engine.js?v=secret-diplomacy-1');const r=approveRecommendation(state,owner,plan.id,Number(el.dataset.impRec),{issueOrder:issueMilitaryOrder});if(!r.ok)flash(r.reason||'');render()});
+  all('[data-imp-rec]').forEach(el=>el.onclick=async()=>{const {issueMilitaryOrder}=await import('./engine.js?v=focus-agreement-consent-1');const r=approveRecommendation(state,owner,plan.id,Number(el.dataset.impRec),{issueOrder:issueMilitaryOrder});if(!r.ok)flash(r.reason||'');render()});
  }
  // Route drawing captures map clicks before the normal region selection.
  if(ui.drawing){all('[data-map-group]').forEach(el=>el.addEventListener('click',e=>{e.stopImmediatePropagation();e.preventDefault();const a=state.armies.find(x=>x.id===ui.drawing.armyId);if(!a)return;const last=ui.drawing.path.at(-1)||a.region,ids=el.dataset.mapGroup.split(','),next=ids.find(id=>legalStep(state,owner,last,id).ok);

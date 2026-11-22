@@ -1,13 +1,13 @@
-import {earnedEpithets,legendName} from './legend.js?v=secret-diplomacy-1';
+import {earnedEpithets,legendName} from './legend.js?v=focus-agreement-consent-1';
 import {ROUTES, FACTIONS} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=saved-age-consistency-1';
-import {AGREEMENT_TYPES} from './agreements.js?v=agreement-courier-1';
+import {AGREEMENT_TYPES} from './agreements.js?v=focus-agreement-consent-1';
 import {formatChronicleEntry} from './chronicle.js?v=saved-age-consistency-1';
-import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=secret-diplomacy-1';
+import {initializePersonnel,applyWarPersonnel} from './epistulae-personnel.js?v=focus-agreement-consent-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from './portrait-registry.js?v=born-portrait-thirteen-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {canMediate,requestMediation} from './civil-war.js?v=secret-diplomacy-1';
-import {storedCorrespondentName} from './person-knowledge.js?v=secret-diplomacy-1';
+import {canMediate,requestMediation} from './civil-war.js?v=focus-agreement-consent-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=focus-agreement-consent-1';
 
 const monthIndex = (year, month) => year * 12 + month;
 const pair = (a, b) => [a, b].sort().join(':');
@@ -87,7 +87,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A sealed aid reply can outlive the court that dispatched it; its arrival
   // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result','asylum_result','family_marriage_result','family_accord_result','agent_release_request','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_offer','agreement_confirmation','agreement_result','asylum_result','family_marriage_result','family_accord_result','agent_release_request','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -178,6 +178,8 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     const request=(s.releaseRequests||[]).find(r=>r.mailId===m.id&&r.holder===s.player&&r.status==='awaiting_decision');
     if(!request)return {ok:false,reason:'unavailable'};
     if(choice!=='ignore')ok=actions.answerAgentRelease?.(s,request.captiveId,choice==='release_agent'?'release':choice).ok===true;
+  } else if (m.context?.kind === 'agreement_offer') {
+    ok = actions.answerAgreementProposal?.(s,m.context.proposalId,choice).ok === true;
   } else if (m.context?.kind === 'coalition_offer') {
     ok = actions.answerCoalitionInvitation?.(s,m.context.invitationId,choice).ok === true;
   } else if (m.context?.kind === 'peace') {
@@ -292,7 +294,7 @@ export function replyToLetter(s, id, choice, actions, details={}) {
     resolved:!delayed});
   if(m.context?.kind==='personal_age'&&choice==='ask_why')replyNotice(s,m,['Why I asked','为何相问'],['I wished to know you better, and meant no offense.','只盼多了解阁下，并无冒犯之意。']);
   if(m.context?.kind==='personal_flavor'&&choice==='grant_favor')replyNotice(s,m,['A note of thanks','致谢短笺'],['I am grateful for the court’s assistance.','承蒙朝廷资助，谨致谢意。']);
-  if(!['ignore','acknowledge','seek_allies'].includes(choice)&&!['coalition_offer','agent_release_request'].includes(m.context?.kind)){
+  if(!['ignore','acknowledge','seek_allies'].includes(choice)&&!['coalition_offer','agreement_offer','agent_release_request'].includes(m.context?.kind)){
     const leader=senderFor(s,s.player),to=m.senderFaction;
     const phrase={accept:['We accept the proposed accord.','本朝接受所议协定。'],join_war:['We have agreed to enter the war.','本朝同意加入战争。'],send_war_aid:['We have dispatched treasury and food in support.','本朝已派出国库和粮食援助。'],refuse:['We decline the request.','本朝谢绝此项请求。'],reject:['We decline the proposed accord.','本朝谢绝所议协定。'],negotiate:['We request further negotiations.','本朝请求继续商议。'],condemn:['We condemn this declaration.','本朝谴责此项宣战。'],apologize:['We regret the strain between our courts.','两国关系紧张，本朝深表遗憾。'],defend:['Our court maintains its position.','本朝坚持原有立场。'],welcome:['We welcome this correspondence.','本朝欣然收到来函。'],send_aid:['We have committed five treasury units in support.','本朝决定提供五单位国库援助。'],concede:['We accept the requested settlement.','本朝同意所请和解。']}[choice]||[choice.replaceAll('_',' '),choice];
     if(to!==s.player){const sent=sendLetter(s,{senderId:leader,senderInstitution:leader?null:s.player,senderFaction:s.player,recipient:to,source:m.destination,destination:m.source,
@@ -379,6 +381,18 @@ export function syncFamilyReplies(s){
 // A proposal's two journeys have already completed; do not roll a second delivery.
 export function syncAgreementLetters(s){
  const mail=initializeMail(s),types={full_alliance:['Full alliance','全面同盟'],non_aggression:['Non-aggression pact','互不侵犯条约'],military_access:['Military access','军事通行权'],trade:['Trade agreement','贸易协定'],intelligence:['Intelligence sharing','情报共享'],defensive:['Defensive alliance','防御同盟'],offensive:['Offensive alliance','进攻同盟'],military_support:['Wartime aid agreement','战时援助协定'],political:['Political cooperation','政治合作'],guarantee:['Independence guarantee','独立保障']};
+ const terms={full_alliance:['The alliance can involve both sides in wars.','同盟可能使双方卷入战争。'],non_aggression:['Both parties promise not to declare war on each other.','双方承诺互不宣战。'],military_access:['Both sides receive military passage.','双方获得军事通行权。'],trade:['Each side receives one treasury per month while eligible.','条件满足时双方每月各增1国库。'],intelligence:['The agreement permits requests to share existing intelligence.','协议允许请求共享已有情报。'],defensive:['A defensive obligation may bring us into war if the partner is attacked.','若对方遭攻击，防御义务可能使本方参战。'],offensive:['If the partner declares war, this agreement may bring us into that war unless other commitments prevent it.','若对方宣战，此协议可能使本方参战；其他承诺可能阻止参战。'],military_support:['The sender offers wartime treasury and food, subject to its reserves.','来信方将在条件允许时提供战时国库和粮食援助。'],political:['Each side may pay one treasury every six months for stability.','双方可能每半年各支付1国库以提高稳定度。'],guarantee:['The sender guarantees our independence and may defend us.','来信方保障本方独立，并可能提供防御。']};
+ for(const x of s.world?.agreementLetters||[]){
+  if(x.target!==s.player||x.actor===s.player)continue;const label=types[x.type]||['Diplomatic agreement','外交条约'],detail=terms[x.type]||['Conditions are described in the proposal.','条件以提议为准。'];
+  if(x.status==='pending'&&x.phase==='awaiting_player'&&!x.incomingMailId){
+   const result=sendLetter(s,{senderId:null,senderInstitution:x.actor,senderFaction:x.actor,recipient:s.player,category:'diplomatic',priority:'important',subject:['Agreement proposal','条约提议'],body:[`${name(x.actor)[0]} proposes ${label[0]}. ${detail[0]} Accepting sends a reply; the agreement takes effect only after a later confirmation. Letters may be lost. The sender pays the treaty cost.`,`${name(x.actor)[1]}提出${label[1]}。${detail[1]}接受仅寄出答复；须收到后续确认才会生效。书信可能遗失，条约费用由来信方支付。`],options:['accept_agreement','refuse','ignore'],confidentiality:x.secret?'secret':'ordinary',expires:monthIndex(s.year,s.month)+Math.max(0,x.remaining-1),context:{kind:'agreement_offer',proposalId:x.id}});
+   if(result.ok){x.incomingMailId=result.letter.id;result.letter.created={...x.sent};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
+  }
+  if(x.playerDecision==='accepted'&&x.phase==='delivered'&&['accepted','lapsed'].includes(x.status)&&!x.confirmationMailId){
+   const accepted=x.status==='accepted',result=sendLetter(s,{senderId:null,senderInstitution:x.actor,senderFaction:x.actor,recipient:s.player,category:'diplomatic',priority:'important',subject:accepted?['Agreement confirmed','条约已确认']:['Agreement not concluded','条约未能成立'],body:accepted?[`The proposed ${label[0]} is now in effect.`,`${label[1]}现已生效。`]:[`The proposed ${label[0]} could not be concluded under current conditions.`,`${label[1]}未能在当前条件下成立。`],options:[],confidentiality:x.secret?'secret':'ordinary',context:{kind:'agreement_confirmation',proposalId:x.id}});
+   if(result.ok){x.confirmationMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received'}
+  }
+ }
  for(const x of s.world?.agreementLetters||[]){if(x.actor!==s.player||x.phase!=='delivered'||!['accepted','refused'].includes(x.status)||x.mailId||mail.generated['agreement-result:'+x.id])continue;
   const terms=types[x.type]||['Diplomatic agreement','外交条约'],accepted=x.status==='accepted',result=sendLetter(s,{senderId:null,senderInstitution:x.target,senderFaction:x.target,recipient:s.player,category:'diplomatic',priority:'important',subject:accepted?['Agreement concluded','条约已达成']:['Agreement declined','条约遭拒'],body:accepted?[`The proposed ${terms[0]} has been concluded; its treaty cost has been paid.`,`提出的${terms[1]}已经达成，条约费用已支付。`]:[`The proposed ${terms[0]} was declined; no treaty cost was paid.`,`提出的${terms[1]}遭到拒绝，未支付条约费用。`],options:[],confidentiality:x.secret?'secret':'ordinary',context:{kind:'agreement_result',proposalId:x.id}});
   if(result.ok){x.mailId=result.letter.id;result.letter.created=x.answered||{...x.delivered};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['agreement-result:'+x.id]=true}
