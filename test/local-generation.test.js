@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-city-diplomacy-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-city-diplomacy-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-city-diplomacy-2';
+import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-city-diplomacy-2';
 import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS,generatedLocalPolities} from '../local-generation.js';
 import {localOfferChance,advanceLocalEntities,localEntity,offerLocalContact,localSiegeQuote,besiegeLocalEntity} from '../local-polities.js';
 import {advanceVillages} from '../local-villages.js';
 import {advanceLocalResistance} from '../local-resistance.js';
-import {receivedMail,replyToLetter} from '../epistulae.js?v=world-kings-city-diplomacy-1';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-city-diplomacy-1';
+import {receivedMail,replyToLetter} from '../epistulae.js?v=world-kings-city-diplomacy-2';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-city-diplomacy-2';
 
 const start=(mode,seed)=>configureStartingDifficulty(newGame('caesar'),mode,false,{localSeed:seed});
 const generated=s=>s.regions.flatMap(region=>region.localEntities||[]).filter(entity=>entity.procedural&&!entity.proceduralVillage&&!entity.proceduralNomad&&!entity.proceduralWilderness);

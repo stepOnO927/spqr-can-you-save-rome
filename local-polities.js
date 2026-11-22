@@ -1,7 +1,7 @@
-import {ROUTES} from './data.js?v=world-kings-city-diplomacy-1';
-import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-city-diplomacy-1';
-import {sendLetter} from './epistulae.js?v=world-kings-city-diplomacy-1';
-import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-city-diplomacy-1';
+import {ROUTES} from './data.js?v=world-kings-city-diplomacy-2';
+import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-city-diplomacy-2';
+import {sendLetter} from './epistulae.js?v=world-kings-city-diplomacy-2';
+import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-city-diplomacy-2';
 
 // Settlement control is stored inside its host theater. An autonomous city
 // does not transfer the whole theater, and its point is not a border polygon.
@@ -381,6 +381,11 @@ export function advanceLocalCivicEconomy(state){
 
 export function advanceLocalEntities(state) {
   for (const region of state.regions) for (const entity of region.localEntities || []) {
+    if(entity.overlord&&!state.factions[entity.overlord]){
+      const former=entity.overlord;entity.overlord=null;
+      entity.lastProtectorateEnd={year:state.year,month:state.month,former,reason:'protector_dissolved'};
+      if(state.localCampaign?.id===entity.id){state.localCampaign.independenceOffer=null;state.log.unshift({year:state.year,month:state.month,en:`${entity.name[0]} no longer owes tribute after its protector's court dissolved.`,zh:`${entity.name[1]}的庇护国政权消亡，年度贡金义务终止。`})}
+    }
     if(entity.type==='strongman'&&entity.procedural){
       const charter=entity.localCharter;
       if(charter?.active&&(region.owner!==charter.host||entity.controller!==entity.id||!state.factions[charter.host]||entity.allegiance&&entity.allegiance!==charter.host)){

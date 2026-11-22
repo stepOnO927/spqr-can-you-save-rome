@@ -1,8 +1,8 @@
-import {FACTIONS} from './data.js?v=world-kings-city-diplomacy-1';
+import {FACTIONS} from './data.js?v=world-kings-city-diplomacy-2';
 import {localEntity} from './local-polities.js';
-import {initializeControlKnowledge} from './control-intelligence.js?v=world-kings-city-diplomacy-1';
-import {initializeLocalDiscovery} from './local-discovery.js?v=world-kings-city-diplomacy-1';
-import {sendLetter} from './epistulae.js?v=world-kings-city-diplomacy-1';
+import {initializeControlKnowledge} from './control-intelligence.js?v=world-kings-city-diplomacy-2';
+import {initializeLocalDiscovery} from './local-discovery.js?v=world-kings-city-diplomacy-2';
+import {sendLetter} from './epistulae.js?v=world-kings-city-diplomacy-2';
 
 const date=state=>state.year*12+state.month;
 const relation=(state,a,b)=>state.relations[[a,b].sort().join(':')]??0;
@@ -24,7 +24,7 @@ export function startLocalCampaign(state,id){
  city.militia-=field;
  state.player=id;
  state.scenario='local_city';
- state.localCampaign={id,startedAt:date(state),survived:0,tradeOffer:null,protectionOffer:null,tradeCompleted:0};
+ state.localCampaign={id,startedAt:date(state),survived:0,tradeOffer:null,protectionOffer:null,independenceOffer:null,tradeCompleted:0};
  state.factions[id]={treasury:city.treasury,food:city.food,manpower:Math.floor(city.population*.05),stability:65,legitimacy:60,tax:'normal',research:0};
  state.armies.push({id:`local-field:${id}`,name:['City militia','城邦民兵'],owner:id,region:city.theater,men:field,morale:62,skill:Math.max(1,Math.floor(city.strategy/2)),experience:0,commander:[...city.civicOfficers?.captain?.name||city.ruler.name],move:null,siege:null});
  state.world.leadership[id]=[];
@@ -48,7 +48,7 @@ export function localRecruit(state){
 
 export function localTradeOffer(state){
  const city=localCampaignCity(state),f=state.factions[state.player],host=city&&hostOf(state,city);
- if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||f.treasury<3||state.localCampaign.tradeOffer||state.localCampaign.protectionOffer||city.tradeRights?.[host]>date(state))return false;
+ if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||f.treasury<3||state.localCampaign.tradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||city.tradeRights?.[host]>date(state))return false;
  f.treasury-=3;city.treasury=f.treasury;
  state.localCampaign.tradeOffer={host,remaining:2};
  return true;
@@ -56,15 +56,29 @@ export function localTradeOffer(state){
 
 export function localProtectionOffer(state){
  const city=localCampaignCity(state),f=state.factions[state.player],host=city&&hostOf(state,city);
- if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||city.overlord||f.treasury<6||state.localCampaign.tradeOffer||state.localCampaign.protectionOffer||state.wars.some(war=>war.includes(city.id)&&war.includes(host)))return false;
+ if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||city.overlord||f.treasury<6||state.localCampaign.tradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||state.wars.some(war=>war.includes(city.id)&&war.includes(host)))return false;
  f.treasury-=6;city.treasury=f.treasury;
  state.localCampaign.protectionOffer={host,remaining:3};
+ return true;
+}
+
+export function localIndependenceOffer(state){
+ const city=localCampaignCity(state),f=state.factions[state.player],host=city?.overlord;
+ if(!city||city.controller!==city.id||!f||!host||!state.factions[host]||f.treasury<4||state.localCampaign.tradeOffer||state.localCampaign.protectionOffer||state.localCampaign.independenceOffer||state.wars.some(war=>war.includes(city.id)&&war.includes(host)))return false;
+ f.treasury-=4;city.treasury=f.treasury;
+ state.localCampaign.independenceOffer={host,remaining:2};
  return true;
 }
 
 function reportOffer(state,city,host,proposal,accepted){
  const trade=proposal==='trade',subject=trade?['Reply to the city trade proposal','城邦贸易提议答复']:['Reply to the protection request','城邦庇护请求答复'];
  const body=trade?[accepted?`${FACTIONS[host]?.name[0]||host} accepts a two-year food compact. Each completed exchange moves 2 food from the city for 3 treasury, subject to the real route and reserves.`:`${FACTIONS[host]?.name[0]||host} declines the food compact. No goods or treaty rights were created.`,accepted?`${FACTIONS[host]?.name[1]||host}接受为期两年的粮食贸易协定。每次实际交易从城邦交付2粮食并获得3国库，仍须满足路线与储备条件。`:`${FACTIONS[host]?.name[1]||host}拒绝粮食贸易提议；未转移物资或授予协定权利。`]:[accepted?`${FACTIONS[host]?.name[0]||host} accepts a protective relationship. The city keeps its ruler, resources and self-government; it owes one treasury each year while protected.`:`${FACTIONS[host]?.name[0]||host} declines to protect the city. Its local government remains independent.`,accepted?`${FACTIONS[host]?.name[1]||host}接受庇护关系。城邦保留领袖、资源和自治；庇护期间每年缴纳1国库。`:`${FACTIONS[host]?.name[1]||host}拒绝庇护城邦；地方政府继续独立。`];
+ if(proposal==='independence'){
+  subject.splice(0,2,'Reply to the independence petition','城邦独立请愿答复');
+  body.splice(0,2,
+   accepted?`${FACTIONS[host]?.name[0]||host} releases the city from protection. Annual tribute ends; the city keeps its local government and legal site title.`:`${FACTIONS[host]?.name[0]||host} declines the petition. Protection and annual tribute continue.`,
+   accepted?`${FACTIONS[host]?.name[1]||host}同意结束庇护关系。年度贡金停止；城邦保留地方政府与当地法理归属。`:`${FACTIONS[host]?.name[1]||host}拒绝请愿；庇护与年度贡金继续。`);
+ }
  const sent=sendLetter(state,{senderInstitution:host,senderFaction:host,recipient:city.id,category:'government',priority:'important',source:city.theater,destination:city.theater,subject,body,options:['acknowledge'],context:{kind:'local_city_offer_result',polityId:city.id,host,proposal,accepted}});
  if(sent.ok){sent.letter.arrival=date(state);sent.letter.delivery='received';sent.letter.senderName=[...(FACTIONS[host]?.name||[host,host])]}
 }
@@ -88,6 +102,18 @@ export function advanceLocalCampaign(state){
   else state.log.unshift({year:state.year,month:state.month,en:'The city protection request was declined.',zh:'城邦庇护请求被拒绝。'});
   reportOffer(state,city,host,'protection',accepted);
   campaign.protectionOffer=null;
+ }
+ if(campaign.independenceOffer&&--campaign.independenceOffer.remaining<=0){
+  const host=campaign.independenceOffer.host,hostForce=state.armies.filter(army=>army.owner===host&&army.region===city.theater&&army.men>0).reduce((sum,army)=>sum+army.men,0);
+  const cityForce=city.militia+state.armies.filter(army=>army.owner===city.id&&army.region===city.theater&&army.men>0).reduce((sum,army)=>sum+army.men,0);
+  const trustNeeded={travel:10,beginner:15,standard:25,hard:35,expert:45}[state.difficulty]??25;
+  const consent=relation(state,city.id,host)>=trustNeeded&&f.stability>=55;
+  const cannotEnforce=hostOf(state,city)!==host&&hostForce<cityForce*.6;
+  const accepted=city.controller===city.id&&city.overlord===host&&!!state.factions[host]&&!state.wars.some(war=>war.includes(city.id)&&war.includes(host))&&(consent||cannotEnforce);
+  if(accepted){city.overlord=null;state.log.unshift({year:state.year,month:state.month,en:`${city.name[0]} gained independence by agreement with ${FACTIONS[host]?.short[0]||host}; annual tribute ended.`,zh:`${city.name[1]}经${FACTIONS[host]?.short[1]||host}同意恢复独立；年度贡金停止。`})}
+  else {const key=[city.id,host].sort().join(':');state.relations[key]=Math.max(-100,relation(state,city.id,host)-3);state.log.unshift({year:state.year,month:state.month,en:'The city independence petition was declined.',zh:'城邦独立请愿遭拒。'})}
+  reportOffer(state,city,host,'independence',accepted);
+  campaign.independenceOffer=null;
  }
  if(city.lastTrade?.year===state.year&&city.lastTrade?.month===state.month)campaign.tradeCompleted++;
  f.treasury=city.treasury;f.food=city.food;

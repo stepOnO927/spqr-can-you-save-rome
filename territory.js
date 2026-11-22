@@ -1,5 +1,5 @@
-import {ROUTES} from './data.js?v=world-kings-city-diplomacy-1';
-import historical from './historical-territories.js?v=world-kings-city-diplomacy-1';
+import {ROUTES} from './data.js?v=world-kings-city-diplomacy-2';
+import historical from './historical-territories.js?v=world-kings-city-diplomacy-2';
 
 // state.regions remains the only mutable territory registry. This module
 // enriches those records without maintaining a second ownership table.

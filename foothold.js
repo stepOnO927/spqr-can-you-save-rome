@@ -1,6 +1,6 @@
-import {ROUTES} from './data.js?v=world-kings-city-diplomacy-1';
+import {ROUTES} from './data.js?v=world-kings-city-diplomacy-2';
 import {localEntity} from './local-polities.js';
-import {militaryAccessStatus} from './border-access.js?v=world-kings-city-diplomacy-1';
+import {militaryAccessStatus} from './border-access.js?v=world-kings-city-diplomacy-2';
 
 const costs = Object.freeze({
   1: {treasury: 8, food: 3, months: 1, garrison: 1000},

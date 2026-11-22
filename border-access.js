@@ -1,5 +1,5 @@
-import {activeAgreement,proposeAgreement} from './agreements.js?v=world-kings-city-diplomacy-1';
-import {subjectRelation} from './suzerainty.js?v=world-kings-city-diplomacy-1';
+import {activeAgreement,proposeAgreement} from './agreements.js?v=world-kings-city-diplomacy-2';
+import {subjectRelation} from './suzerainty.js?v=world-kings-city-diplomacy-2';
 
 export const BORDER_ACCESS_CATEGORIES = Object.freeze([
   'closed', 'civilian', 'commercial', 'diplomatic',

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave,queueMission} from '../engine.js?v=world-kings-city-diplomacy-1';
-import {observeArmies,reportedArmies,reportedHealthSubjects} from '../character-system.js?v=world-kings-city-diplomacy-1';
-import {requestPersonalMeeting} from '../personal-diplomacy.js?v=world-kings-city-diplomacy-1';
+import {newGame,upgradeSave,queueMission} from '../engine.js?v=world-kings-city-diplomacy-2';
+import {observeArmies,reportedArmies,reportedHealthSubjects} from '../character-system.js?v=world-kings-city-diplomacy-2';
+import {requestPersonalMeeting} from '../personal-diplomacy.js?v=world-kings-city-diplomacy-2';
 
 test('frontier observations record a dated commander without tracking unseen changes',()=>{
  let s=newGame('senate'),unit=s.armies.find(a=>a.id==='xiii');let sighting=reportedArmies(s,'senate').find(a=>a.id==='xiii');assert.equal(sighting.commanderId,'caesar');

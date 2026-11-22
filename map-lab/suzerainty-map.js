@@ -1,4 +1,4 @@
-import {subjectRelation} from '../suzerainty.js?v=world-kings-city-diplomacy-1';
+import {subjectRelation} from '../suzerainty.js?v=world-kings-city-diplomacy-2';
 
 // The atlas receives reported controllers, never hidden current foreign
 // theater ownership. A treaty alone does not paint unseen land as known.

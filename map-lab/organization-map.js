@@ -1,4 +1,4 @@
-import {reportedDiplomacy} from '../diplomatic-knowledge.js?v=world-kings-city-diplomacy-1';
+import {reportedDiplomacy} from '../diplomatic-knowledge.js?v=world-kings-city-diplomacy-2';
 
 // A nonmember sees only a dated diplomatic report. A member may inspect its
 // own current charter even before the monthly report cycle runs.
