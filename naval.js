@@ -166,21 +166,38 @@ export function harborTradeCapacity(s,port){
  return 2+(port.buildings?.includes('warehouse')?1:0)+(port.buildings?.includes('dockyard')?1:0)+(navalJobEffect(s,port.owner,'harbor',port.id)>0?1:0);
 }
 function reportInterruptedGrainShortages(s,log){
- const reportedBuyers=new Set();
+ const byBuyer=new Map();
  for(const v of s.naval.voyages){
-  if(v.good!=='grain'||v.phase!=='outbound'||v.path.length||v.shortageReported||reportedBuyers.has(v.buyer)||!(v.blockedMonths>0||v.congestedMonths>0))continue;
+  if(v.good!=='grain'||v.phase!=='outbound'||v.path.length||v.shortageReported||v.cargo<=0||!Number.isFinite(v.price)||v.price<=0||!(v.blockedMonths>0||v.congestedMonths>0))continue;
   const buyer=s.factions[v.buyer],from=s.regions.find(r=>r.id===v.from),to=s.regions.find(r=>r.id===v.to);
   const shortage=buyer?.lastFoodShortage;
   if(!shortage||shortage.year!==s.year||shortage.month!==s.month||!Number.isFinite(shortage.deficit)||shortage.deficit<=0||from?.owner!==v.seller||to?.owner!==v.buyer||atWar(s,v.buyer,v.seller))continue;
   const route=s.naval.routes.find(r=>r.id===v.routeId),relations=s.relations?.[[v.buyer,v.seller].sort().join(':')]??0;
-  if(!route||relations<=-40||route.pausedBy?.includes(v.buyer)||route.pausedBy?.includes(v.seller))continue;
-  const affordable=v.buyer===v.seller?v.cargo:Math.floor(Math.max(0,buyer.treasury-tradeCashFloor(s,v.buyer,'grain'))/v.price);
-  const deficit=shortage.deficit;
-  if(Math.min(v.cargo,affordable,tradeNeed(s,route,v.buyer,v.seller))<deficit)continue;
-  v.shortageReported=true;
-  reportedBuyers.add(v.buyer);
-  report(s,{kind:'interrupted-grain-shortage',owner:v.buyer,port:v.to,zone:v.zone,deficit,cargo:v.cargo,cause:v.blockedMonths>0?'blockade':'congestion'});
-  if(v.buyer===s.player)log(s,'Delayed imported grain could have covered this month’s food deficit; the usual shortage rules were applied.','延误的进口粮食原本足以填补本月粮食缺口；本月已按常规粮荒规则结算。');
+  if(!route||route.from!==v.from||route.to!==v.to||route.good!==v.good||relations<=-40||route.pausedBy?.includes(v.buyer)||route.pausedBy?.includes(v.seller))continue;
+  const need=tradeNeed(s,route,v.buyer,v.seller);
+  if(need<=0)continue;
+  if(!byBuyer.has(v.buyer))byBuyer.set(v.buyer,[]);
+  byBuyer.get(v.buyer).push(v);
+ }
+ for(const [owner,voyages] of byBuyer){
+  const buyer=s.factions[owner],deficit=buyer.lastFoodShortage.deficit;
+  // A common food demand and cash pool must not be counted once per ship.
+  // Cheapest-first asks whether a legal order of the already waiting cargo
+  // could avert the recorded deficit; it does not change actual deliveries.
+  let demand=tradeGrainNeed(s,owner,'grain',voyages[0].seller);
+  let cash=Math.max(0,buyer.treasury-tradeCashFloor(s,owner,'grain'));
+  let possible=0;const contributing=[];
+  for(const v of voyages.sort((a,b)=>a.price-b.price||String(a.id).localeCompare(String(b.id)))){
+   const amount=Math.min(v.cargo,demand,Math.floor(cash/v.price),deficit-possible);
+   if(amount<=0)continue;
+   contributing.push(v);possible+=amount;demand-=amount;cash-=amount*v.price;
+   if(possible>=deficit)break;
+  }
+  if(possible<deficit)continue;
+  for(const v of contributing)v.shortageReported=true;
+  const ports=[...new Set(contributing.map(v=>v.to))],causes=[...new Set(contributing.map(v=>v.blockedMonths>0?'blockade':'congestion'))];
+  report(s,{kind:'interrupted-grain-shortage',owner,port:ports[0],ports,zone:contributing[0].zone,deficit,cargo:contributing.reduce((sum,v)=>sum+v.cargo,0),shipments:contributing.length,cause:causes.length===1?causes[0]:'mixed'});
+  if(owner===s.player)log(s,contributing.length===1?'Delayed imported grain could have covered this month’s food deficit; the usual shortage rules were applied.':'Delayed imported grain shipments could jointly have covered this month’s food deficit; the usual shortage rules were applied.',contributing.length===1?'延误的进口粮食原本足以填补本月粮食缺口；本月已按常规粮荒规则结算。':'多笔延误的进口粮食合计原本足以填补本月粮食缺口；本月已按常规粮荒规则结算。');
  }
 }
 function advanceTradeVoyages(s,log){

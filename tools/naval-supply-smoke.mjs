@@ -103,10 +103,18 @@ try{
   const state=newGrandGame('senate'),army=state.armies.find(a=>a.id==='italy');
   state.wars=[];state.factions.senate.treasury=200;army.region='t023';army.operationalSupply=.3;
   state.naval.provisions.t016={owner:'senate',food:10};
+  state.naval.reports.unshift({id:'combined-grain-smoke',kind:'interrupted-grain-shortage',owner:'senate',port:'t016',ports:['t016'],zone:'tyrrhenian',deficit:3,cargo:4,shipments:2,cause:'congestion',year:-49,month:1});
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state}));
  });
  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('.grand-site').first().waitFor();await page.locator('#naval').click();
+ await page.locator('[data-naval-tab="reports"]').click();
+ assert.match(await page.locator('.naval-content').innerText(),/INTERRUPTED GRAIN SHIPMENTS/);
+ assert.match(await page.locator('.naval-content').innerText(),/Together these shipments could have covered/);
+ await page.locator('#language').click();
+ assert.match(await page.locator('.naval-content').innerText(),/这些粮船合计原本足以填补/);
+ await page.locator('#language').click();
+ await page.locator('[data-naval-tab="fleets"]').click();
  assert.match(await page.locator('.naval-content').innerText(),/INLAND SUPPLY WAGONS/);
  assert.match(await page.locator('.naval-content').innerText(),/four to eight friendly land links/);
  await page.locator('[data-wagon-target="t016"]').selectOption('t023');

@@ -122,6 +122,56 @@ test('a real naval blockade can delay grain long enough to cause a dated shortag
  assert.match(content.innerHTML,/舰队封锁阻止了交付/);
 });
 
+test('two delayed grain voyages can jointly cover one actual shortage without duplicating rewards or reports',()=>{
+ let s=newGrandGame('senate');s.wars=[];s.naval.pirates=[];s.factions.senate.treasury=500;s.factions.senate.food=0;
+ const first=s.naval.routes.find(r=>r.id==='egypt-italy');first.volume=2;
+ s.naval.routes.push({id:'egypt-second-grain',from:'egypt',to:'t016',good:'grain',volume:2,last:null});
+ const chosen=['african-oil','levant-luxury','egypt-italy','egypt-second-grain'];
+ for(const route of s.naval.routes)if(!chosen.includes(route.id))route.pausedBy=[s.regions.find(r=>r.id===route.from)?.owner].filter(Boolean);
+ advanceNaval(s);
+ const incoming=chosen.map(id=>s.naval.voyages.find(v=>v.routeId===id));assert.ok(incoming.every(Boolean));
+ assert.deepEqual(incoming.filter(v=>v.good==='grain').map(v=>v.cargo),[2,2]);
+ s.naval.voyages=[...incoming.filter(v=>v.good!=='grain'),...incoming.filter(v=>v.good==='grain')];
+ for(const voyage of s.naval.voyages){voyage.path=[];voyage.zone=portZone('t016')}
+ s.month++;advanceNaval(s);
+ const waiting=s.naval.voyages.filter(v=>v.good==='grain');assert.equal(waiting.length,2);
+ assert.ok(waiting.every(v=>v.congestedMonths===1),'both real voyages must wait for a berth');
+ s.factions.senate.food=-nationalBudget(s,'senate').foodNet-3;
+ const delivered=upgradeSave(JSON.parse(JSON.stringify(s)));
+ delivered.factions.senate.food+=4;
+ for(const voyage of delivered.naval.voyages.filter(v=>v.good==='grain')){voyage.phase='return';voyage.cargo=0}
+ tick(s);tick(delivered);
+ const incidents=s.naval.reports.filter(r=>r.kind==='interrupted-grain-shortage');
+ assert.equal(incidents.length,1);assert.equal(incidents[0].deficit,3);
+ assert.equal(incidents[0].cargo,4);assert.equal(incidents[0].shipments,2);
+ assert.equal(delivered.naval.reports.some(r=>r.kind==='interrupted-grain-shortage'),false);
+ assert.equal(delivered.factions.senate.stability-s.factions.senate.stability,1);
+ assert.ok(waiting.every(v=>v.shortageReported));
+ const underfunded=upgradeSave(JSON.parse(JSON.stringify(s)));
+ underfunded.naval.reports=underfunded.naval.reports.filter(r=>r.kind!=='interrupted-grain-shortage');
+ for(const voyage of underfunded.naval.voyages.filter(v=>v.good==='grain'))voyage.shortageReported=false;
+ underfunded.factions.senate.treasury=2*waiting[0].price;
+ advanceNaval(underfunded);
+ assert.equal(underfunded.naval.reports.some(r=>r.kind==='interrupted-grain-shortage'),false,'two individually affordable ships cannot both spend the same treasury');
+ for(const [lang,title] of [['en','INTERRUPTED GRAIN SHIPMENTS'],['zh','受阻粮运与粮荒']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:s,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+  assert.match(content.innerHTML,new RegExp(title));
+  assert.match(content.innerHTML,new RegExp(lang==='en'?'Together these shipments could have covered':'这些粮船合计原本足以填补'));
+ }
+ const mixed=upgradeSave(JSON.parse(JSON.stringify(s)));
+ mixed.naval.reports.find(r=>r.kind==='interrupted-grain-shortage').cause='mixed';
+ for(const [lang,cause] of [['en','Fleet blockade and harbor congestion jointly delayed delivery'],['zh','舰队封锁和港口拥堵共同推迟了交付']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:mixed,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+  assert.match(content.innerHTML,new RegExp(cause));
+ }
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(s.naval.reports.filter(r=>r.kind==='interrupted-grain-shortage').length,1);
+ assert.equal(s.naval.voyages.filter(v=>v.good==='grain'&&v.shortageReported).length,2);
+ tick(s);assert.equal(s.naval.reports.filter(r=>r.kind==='interrupted-grain-shortage').length,1);
+});
+
 test('fleet pursuit follows only fresh reported positions and survives a save',()=>{
  let s=newGrandGame('senate');
  const own=s.naval.fleets.find(f=>f.id==='senate-adriatic'),enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
