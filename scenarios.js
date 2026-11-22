@@ -1,5 +1,5 @@
-import {newGame,estimatedStrength} from './engine.js?v=reported-identity-snapshot-1';
-import {createFictionalPerson} from './dynasties.js?v=reported-identity-snapshot-1';
+import {newGame,estimatedStrength} from './engine.js?v=born-portrait-thirteen-1';
+import {createFictionalPerson} from './dynasties.js?v=born-portrait-thirteen-1';
 import {formCoalition} from './coalitions.js?v=saved-age-consistency-1';
 import {observeDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
 
