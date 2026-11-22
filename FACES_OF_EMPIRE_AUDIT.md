@@ -6,6 +6,12 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The first browser pass at `e60bf2b2` passed both new Han court scenarios but
+caught a merged UI regression: the expanded command panel lost its distinct
+Western Han appointments heading. The faction-specific bilingual heading is
+restored while retaining main's confirmed-age guidance. The existing Han map
+smoke will recheck the full appointment flow on GitHub.
+
 Main through `02fda9c7` is integrated. Its Roman AI battle-risk correction and
 cloud-only campaign survival diagnostics remain intact alongside the eastern
 expansion. The full local simulation suite passes 1,264/1,264 after the
