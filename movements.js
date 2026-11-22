@@ -1,10 +1,10 @@
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
-import {createFictionalPerson} from './dynasties.js?v=saved-age-consistency-1';
+import {CHARACTER_CATALOG} from './characters.js?v=succession-lead-1';
+import {createFictionalPerson} from './dynasties.js?v=succession-lead-1';
 import {generateFictionalName} from './fictional-names.js?v=faces-wheels-1';
 import {hasNationalIdea} from './national-ideas.js?v=grand-chessboard-2';
 import {activeAgreement,terminateAgreement} from './agreements.js?v=agreement-courier-1';
-import {reportedPersonalContact} from './person-knowledge.js?v=saved-age-consistency-1';
+import {reportedPersonalContact} from './person-knowledge.js?v=succession-lead-1';
 
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const log=(s,en,zh)=>{s.log.unshift({year:s.year,month:s.month,en,zh});s.log=s.log.slice(0,80)};

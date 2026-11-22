@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=saved-age-consistency-1';
-import {addReport,reportEvidence,queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=saved-age-consistency-1';
-import {leadershipIntelligence} from '../map-lab/intelligence-summary.js?v=saved-age-consistency-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=succession-lead-1';
+import {addReport,reportEvidence,queueMission,advanceOperations,reportedHealthSubjects} from '../character-system.js?v=succession-lead-1';
+import {leadershipIntelligence} from '../map-lab/intelligence-summary.js?v=succession-lead-1';
 
 test('evidence identifies independent support and conflicts without counting forwarded duplicates',()=>{
  const s=newGame('caesar'),target='egypt';const initial=addReport(s,'caesar',target,{kind:'health',character:'cleopatra',value:'ill',source:'spy',confidence:'unverified'});

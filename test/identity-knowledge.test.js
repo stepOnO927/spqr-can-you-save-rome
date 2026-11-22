@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=saved-age-consistency-1';
-import {addReport} from '../character-system.js?v=saved-age-consistency-1';
-import {identityKnowledge} from '../map-lab/identity-knowledge.js?v=saved-age-consistency-1';
+import {newGame,upgradeSave} from '../engine.js?v=succession-lead-1';
+import {addReport} from '../character-system.js?v=succession-lead-1';
+import {identityKnowledge} from '../map-lab/identity-knowledge.js?v=succession-lead-1';
 
 test('identity presentation follows the observer’s records, not hidden foreign state',()=>{
  const s=newGame('senate');assert.equal(identityKnowledge(s,'pacorus').kind,'unknown');assert.equal(identityKnowledge(s,'cleopatra').kind,'reported');assert.equal(identityKnowledge(s,'cicero').kind,'own');s.world.characters.pacorus.health='dying';s.world.leadership.parthia=['pacorus'];assert.equal(identityKnowledge(s,'pacorus').kind,'unknown');

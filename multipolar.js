@@ -1,4 +1,4 @@
-import {isDeliveredReport} from './person-knowledge.js?v=saved-age-consistency-1';
+import {isDeliveredReport} from './person-knowledge.js?v=succession-lead-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
 import {reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';

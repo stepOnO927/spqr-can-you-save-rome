@@ -1,4 +1,4 @@
-import {isDeliveredReport} from '../person-knowledge.js?v=saved-age-consistency-1';
+import {isDeliveredReport} from '../person-knowledge.js?v=succession-lead-1';
 // A presentation projection of one observer's reports, never the simulated court.
 const key=ids=>JSON.stringify([...new Set(ids||[])].sort());
 const observed=r=>(r.observationYear??r.year)*12+(r.observationMonth??r.month);

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=saved-age-consistency-1';
-import {attachHanWorld,hanWorld} from '../han/world.js?v=saved-age-consistency-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=succession-lead-1';
+import {attachHanWorld,hanWorld} from '../han/world.js?v=succession-lead-1';
 
 for(const seed of [49,73])test(`120 Roman turns advance the attached Han world and survive a midcampaign save (seed ${seed})`,()=>{
  let s=newGame('parthia');attachHanWorld(s,{seed});

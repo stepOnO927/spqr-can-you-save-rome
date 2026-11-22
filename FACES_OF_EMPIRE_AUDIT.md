@@ -6,6 +6,14 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `9c585d58` is integrated. A delivered succession report can now
+identify a fictional successor for a follow-up health or location inquiry;
+an unknown or undelivered report cannot create that lead. The new browser
+smoke remains in the cloud workflow. Focused module, intelligence, health, and
+market checks pass 49/49; the full local simulation suite passes 1,269/1,269.
+Cloud checks for this merge are pending. The preceding head `2a2f54e4` passed all five GitHub checks,
+including all three Browser smoke groups.
+
 New eastern merchant NPCs now keep a culturally chosen cargo specialty in
 their saved profile. When merchants are equally available on a route, cargo
 expertise selects the carrier; a specialist reduces the real prepaid transport
