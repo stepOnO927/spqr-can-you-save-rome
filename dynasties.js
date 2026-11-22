@@ -332,7 +332,7 @@ export function settleInheritance(s,id){
  c.inheritanceSettled=true;const potentiallyAvailable=x=>{const person=s.world.characters[x];return !!person&&(person.faction!==c.faction||person.alive)},heirs=c.children.filter(potentiallyAvailable),will=c.will?.beneficiary;
  const eligibleWill=will&&potentiallyAvailable(will)?will:null,wealth=Math.max(0,Math.floor(c.wealth||0));
  if(eligibleWill&&heirs.some(x=>x!==eligibleWill)&&(!heirs.includes(eligibleWill)||s.world.characters[eligibleWill].faction!==c.faction)&&wealth>0){
-  d.inheritanceDisputes.push({id:`estate:${id}`,deceased:id,faction:c.faction,beneficiary:eligibleWill,beneficiaryName:storedCorrespondentName(eligibleWill,c.will.beneficiaryName),heirs:heirs.filter(x=>x!==eligibleWill),estate:wealth,share:c.will.share,status:'pending',year:s.year,month:s.month});
+  d.inheritanceDisputes.push({id:`estate:${id}`,deceased:id,faction:c.faction,beneficiary:eligibleWill,beneficiaryName:storedCorrespondentName(eligibleWill,c.will.beneficiaryName),heirs:heirs.filter(x=>x!==eligibleWill),heirNames:Object.fromEntries(heirs.filter(x=>x!==eligibleWill).map(heir=>[heir,[...(visiblePersonName(s,c.faction,heir)||['Unrecorded name','姓名未记录'])]])),estate:wealth,share:c.will.share,status:'pending',year:s.year,month:s.month});
   c.wealth=0;record(s,id,'Died; the contested private estate is held pending a ruling.','去世；有争议的私人遗产待裁决。');
   if(c.faction===s.player)note(s,`The private estate of ${CHARACTER_CATALOG[id].name[0]} is disputed; the court may uphold the will, divide it, or favor the children.`,` ${CHARACTER_CATALOG[id].name[1]}的私人遗产发生争议；宫廷可维持遗嘱、分割遗产或支持子女。`);
   return;
@@ -357,7 +357,7 @@ export function resolveInheritanceDispute(s,disputeId,choice){
  const willAmount=beneficiaryAvailable?(choice==='will'?Math.floor(caseFile.estate*caseFile.share):choice==='compromise'?Math.floor(caseFile.estate*.5):0):0;
  if(beneficiaryAvailable)transferEstateShare(s,deceased,beneficiary.id,willAmount,storedCorrespondentName(beneficiary.id,caseFile.beneficiaryName));
  const rest=caseFile.estate-willAmount;
- if(heirs.length){const portion=Math.floor(rest/heirs.length);for(const heir of heirs)transferEstateShare(s,deceased,heir.id,portion);d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest-portion*heirs.length}
+ if(heirs.length){const portion=Math.floor(rest/heirs.length);for(const heir of heirs){const recordedName=caseFile.heirNames?.[heir.id]||(heir.faction===caseFile.faction?visiblePersonName(s,caseFile.faction,heir.id):storedCorrespondentName(heir.id,null));transferEstateShare(s,deceased,heir.id,portion,recordedName)}d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest-portion*heirs.length}
  else if(beneficiaryAvailable)transferEstateShare(s,deceased,beneficiary.id,rest,storedCorrespondentName(beneficiary.id,caseFile.beneficiaryName));
  else d.families[s.world.characters[caseFile.deceased].familyId].wealth+=rest;
  if(choice==='compromise'){faction.treasury-=6;faction.stability=Math.min(100,faction.stability+2)}
