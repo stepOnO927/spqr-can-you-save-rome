@@ -1,8 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=intelligence-archive-1';
-import {createFictionalPerson} from '../dynasties.js?v=intelligence-archive-1';
-import {addReport} from '../character-system.js?v=intelligence-archive-1';
-import {reportedPersonName,storedCorrespondentName} from '../person-knowledge.js?v=intelligence-archive-1';
+import {newGame,upgradeSave} from '../engine.js?v=archived-leads-1';
+import {createFictionalPerson} from '../dynasties.js?v=archived-leads-1';
+import {addReport} from '../character-system.js?v=archived-leads-1';
+import {reportedPersonName,storedCorrespondentName} from '../person-knowledge.js?v=archived-leads-1';
 test('a conspiracy accusation records the observed name and does not use a later hidden name',()=>{
  let s=newGame('caesar');const id=createFictionalPerson(s,{name:['First name','最初姓名'],faction:'caesar',birthYear:-80});
  const report=addReport(s,'caesar','caesar',{kind:'conspiracy',character:id,value:'suspected',source:'counter'});

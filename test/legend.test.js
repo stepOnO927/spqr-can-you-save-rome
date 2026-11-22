@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=intelligence-archive-1';
-import {createFictionalPerson} from '../dynasties.js?v=intelligence-archive-1';
-import {assignLegendPortrait,fictionalPortraitKey} from '../portrait-registry.js?v=intelligence-archive-1';
-import {setLegendMode,courtNomineeName,advanceLegend,recordLegendEvidence,earnedEpithets,legendName,legendDossier,grantLegendHonor,EPITHETS} from '../legend.js?v=intelligence-archive-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=intelligence-archive-1';
-import {renderGenealogyDossier} from '../genealogy-ui.js?v=intelligence-archive-1';
-import {sendLetter} from '../epistulae.js?v=intelligence-archive-1';
-import {requestAgentRelease,advanceAgentRequests,answerAgentRelease} from '../character-system.js?v=intelligence-archive-1';
+import {newGame,upgradeSave} from '../engine.js?v=archived-leads-1';
+import {createFictionalPerson} from '../dynasties.js?v=archived-leads-1';
+import {assignLegendPortrait,fictionalPortraitKey} from '../portrait-registry.js?v=archived-leads-1';
+import {setLegendMode,courtNomineeName,advanceLegend,recordLegendEvidence,earnedEpithets,legendName,legendDossier,grantLegendHonor,EPITHETS} from '../legend.js?v=archived-leads-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=archived-leads-1';
+import {renderGenealogyDossier} from '../genealogy-ui.js?v=archived-leads-1';
+import {sendLetter} from '../epistulae.js?v=archived-leads-1';
+import {requestAgentRelease,advanceAgentRequests,answerAgentRelease} from '../character-system.js?v=archived-leads-1';
 const sample=(s,faction=s.player,props={})=>createFictionalPerson(s,{name:['Baldwin of Artaxata','阿尔塔克萨塔的鲍德温'],faction,birthYear:s.year-35,location:s.regions.find(r=>r.owner===faction)?.id||null,sex:'male',origin:'court_nominee',...props});
 test('historical mode is default, homage is optional, and catalog identities remain unchanged',()=>{
  const s=newGame('caesar'),historical=[...CHARACTER_CATALOG.caesar.name];
