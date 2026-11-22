@@ -1,8 +1,8 @@
 import {ROUTES} from './data.js?v=phase-x-1';
-import {unlockedComponents,focusModifiers} from './national-focus.js?v=search-uncertainty-1';
-import {politicalAmbition} from './conspiracies.js?v=search-uncertainty-1';
-import {reportedControl} from './control-intelligence.js?v=search-uncertainty-1';
-import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=search-uncertainty-1';
+import {unlockedComponents,focusModifiers} from './national-focus.js?v=fund-search-1';
+import {politicalAmbition} from './conspiracies.js?v=fund-search-1';
+import {reportedControl} from './control-intelligence.js?v=fund-search-1';
+import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=fund-search-1';
 
 // LEGION DESIGNER. Templates are data; an army carries a snapshot of the
 // composition it was actually organized into, so editing a template never

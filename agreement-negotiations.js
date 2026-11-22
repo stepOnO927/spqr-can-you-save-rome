@@ -1,4 +1,4 @@
-import {AGREEMENT_TYPES,activeAgreement,checkAgreement,proposeAgreement} from './agreements.js?v=search-uncertainty-1';
+import {AGREEMENT_TYPES,activeAgreement,checkAgreement,proposeAgreement} from './agreements.js?v=fund-search-1';
 
 const COURIER_COST=2;
 const proposalDefinition=type=>type==='full_alliance'?{cost:0}:AGREEMENT_TYPES[type];

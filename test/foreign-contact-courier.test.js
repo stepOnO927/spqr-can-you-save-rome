@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=search-uncertainty-1';
-import {initializeCursus,cultivateOfficial,proposeCooperation,advanceCursus} from '../cursus-honorum.js?v=search-uncertainty-1';
+import {newGame,upgradeSave} from '../engine.js?v=fund-search-1';
+import {initializeCursus,cultivateOfficial,proposeCooperation,advanceCursus} from '../cursus-honorum.js?v=fund-search-1';
 
 function setup(){
  const s=newGame('senate'),c=initializeCursus(s),id=c.foreignPosts.parthia.administration;

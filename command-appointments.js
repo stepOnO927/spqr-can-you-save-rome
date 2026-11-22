@@ -1,6 +1,6 @@
-import {CHARACTER_CATALOG,initializeWorld,characterAgeRange} from './characters.js?v=search-uncertainty-1';
-import {officeOf} from './office-system.js?v=search-uncertainty-1';
-import {recordLifeEvent} from './dynasties.js?v=search-uncertainty-1';
+import {CHARACTER_CATALOG,initializeWorld,characterAgeRange} from './characters.js?v=fund-search-1';
+import {officeOf} from './office-system.js?v=fund-search-1';
+import {recordLifeEvent} from './dynasties.js?v=fund-search-1';
 
 // Theater-level appointments are simulated, not claims about historical commands.
 export function availableCommanders(s,armyId){
