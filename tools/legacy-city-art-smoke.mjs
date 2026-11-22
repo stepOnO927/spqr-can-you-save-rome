@@ -19,7 +19,7 @@ try{
   const mime={'.js':'text/javascript','.html':'text/html','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png'}[extname(file)]||'application/octet-stream';
   try{await route.fulfill({status:200,contentType:mime,body:await readFile(file)})}catch{await route.fulfill({status:404,body:'Not found'})}
  });
- await page.addInitScript(()=>{localStorage.setItem('spqr-lang','en');localStorage.setItem('spqr-legacy-profile-v1',JSON.stringify({coins:2000,buildings:[],rewards:['founder-grant']}))});
+ await page.addInitScript(()=>{if(!localStorage.getItem('spqr-lang'))localStorage.setItem('spqr-lang','en');if(!localStorage.getItem('spqr-legacy-profile-v1'))localStorage.setItem('spqr-legacy-profile-v1',JSON.stringify({coins:2000,buildings:[],rewards:['founder-grant']}))});
  await page.goto('http://spqr.test/legacy/',{waitUntil:'domcontentloaded'});
  assert.ok((await page.locator('.city-ground').evaluate(el=>getComputedStyle(el).backgroundImage)).includes('republican-rome-city.webp'));
  await page.screenshot({path:resolve(output,'desktop-foundations.png')});
@@ -30,6 +30,9 @@ try{
  assert.equal(await page.locator('.city-building.museum.built').count(),1);
  assert.equal(await page.locator('.city-building.temple.built').count(),1);
  await page.screenshot({path:resolve(output,'desktop-grown.png')});
+ await page.reload({waitUntil:'domcontentloaded'});
+ assert.equal(await page.locator('.city-building.museum.built').count(),1,'Purchased museum must remain on the city after reload');
+ assert.equal(await page.locator('.city-building.temple.built').count(),1,'Purchased temple must remain on the city after reload');
  await page.locator('#nav-lang').click();
  assert.equal(await page.locator('html').getAttribute('lang'),'zh-CN');
  await page.setViewportSize({width:390,height:844});
