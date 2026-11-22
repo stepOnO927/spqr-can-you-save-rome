@@ -1,8 +1,9 @@
 import {isDeliveredReport,reportedPersonalContact} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
 import {reportedMovements,movementReportLeaderName} from './movements.js?v=faces-name-disagreement-1';
 import {visiblePersonName} from './character-system.js?v=faces-name-disagreement-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 
 const opening=['caesar','senate','egypt','numidia','mauretania','armenia','parthia','galatia','bosporus'];
 const pair=(a,b)=>[a,b].sort().join(':');
@@ -28,7 +29,7 @@ export function buildChessboard(s,viewer=s.player){
  const docs=reportedDiplomacy(s,viewer).filter(d=>d.status==='active'&&!d.parties.includes(viewer));
  const factionIds=new Set(opening);for(const d of docs)for(const id of [...d.parties,d.target].filter(Boolean))factionIds.add(id);
  for(const w of s.wars.filter(x=>x.includes(viewer)))for(const id of w)factionIds.add(id);
- for(const k of Object.values(s.controlKnowledge?.[viewer]||{}))if(k.owner&&FACTIONS[k.owner])factionIds.add(k.owner);
+ for(const id of Object.keys(s.controlKnowledge?.[viewer]||{})){const k=reportedControl(s,viewer,id);if(k?.owner&&FACTIONS[k.owner])factionIds.add(k.owner)}
  for(const id of [...factionIds].filter(id=>id!==viewer&&FACTIONS[id]).slice(0,14)){
   const relation=s.relations[pair(viewer,id)]??0,enemy=atWar(s,viewer,id),id2='f:'+id;
   add(id2,'faction',name(id),'reported',[[`Official relationship with your command: ${relation}. Other information may be old or absent.`,`与本方的官方关系：${relation}。其他情报可能过时或缺失。`]]);
@@ -92,7 +93,7 @@ export function buildChessboard(s,viewer=s.player){
  const loaded=ownArmies.find(a=>{const r=s.regions.find(x=>x.id===a.region);return r&&a.men>r.supply*1000});if(loaded)risks.push({level:'watch',text:['An army exceeds its theater’s listed supply limit. This is a warning, not a prediction.','一支军队超过战区列示的补给上限。这是警示而非预测。'],evidence:['Own army and theater records','本方军队与战区记录']});
  const ownReports=s.knowledge?.[viewer]?.[viewer]?.reports||[];if(ownReports.some(r=>isDeliveredReport(s,r)&&r.kind==='conspiracy'&&r.character&&age(s,r)>=0&&age(s,r)<=24))risks.push({level:'rumor',text:['An unverified internal report alleges a plot. The accusation may be wrong.','一份未经核实的内部报告声称存在阴谋；指控可能有误。'],evidence:['Dated intelligence report','有日期的情报报告']});
  if(docs.some(d=>d.kind==='coalition'&&d.target===viewer))risks.push({level:'reported',text:['A reported coalition names your command as a concern. Its current cohesion and intentions are unknown.','有报告称某联盟将本方列为防范对象；其当前凝聚力和意图未知。'],evidence:['Public coalition report; may be stale','公开联盟报告，可能过时']});
- const ownPlaces=new Set(ownRegions.map(r=>r.id)),frontier=new Set();for(const [a,b] of ROUTES){const other=ownPlaces.has(a)?b:ownPlaces.has(b)?a:null,reported=other&&s.controlKnowledge?.[viewer]?.[other]?.owner;if(reported&&reported!==viewer&&(atWar(s,viewer,reported)||(s.relations[pair(viewer,reported)]??0)<=-20))frontier.add(reported)}
+ const ownPlaces=new Set(ownRegions.map(r=>r.id)),frontier=new Set();for(const [a,b] of ROUTES){const other=ownPlaces.has(a)?b:ownPlaces.has(b)?a:null,reported=other&&reportedControl(s,viewer,other)?.owner;if(reported&&reported!==viewer&&(atWar(s,viewer,reported)||(s.relations[pair(viewer,reported)]??0)<=-20))frontier.add(reported)}
  if(frontier.size>=2)risks.push({level:'estimate',text:['Several reported frontier powers are hostile or at war with your command. They could seek cooperation, but this is not evidence of a coalition.','多个边境报告中的势力与本方敌对或交战；它们可能寻求合作，但这并非联盟已经形成的证据。'],evidence:['Own relations and dated frontier reports; control may be stale','本方关系与有日期的边境报告；控制情况可能过时']});
  const militaryAgreement=(s.agreements||[]).some(t=>t.status==='active'&&(['defensive','offensive'].includes(t.type)||t.type==='guarantee'&&(t.terms?.recipient||t.parties[1])===viewer)&&t.parties.includes(viewer)&&now<t.expiresAt&&!atWar(s,t.parties[0],t.parties[1]));
  if(!s.alliances.some(a=>a.includes(viewer))&&!coalitions.some(c=>c.own)&&!militaryAgreement)risks.push({level:'estimate',text:['Few formal military commitments are known to support your command. Isolation is possible, not inevitable.','已知支持本方的正式军事承诺较少；可能面临孤立，但并非必然。'],evidence:['Own diplomatic commitments','本方外交承诺']});

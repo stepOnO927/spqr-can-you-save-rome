@@ -1,7 +1,7 @@
 import {ROUTES} from './data.js?v=phase-x-1';
 import {unlockedComponents,focusModifiers} from './national-focus.js?v=faces-name-disagreement-1';
 import {politicalAmbition} from './conspiracies.js?v=faces-name-disagreement-1';
-import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 import {assignFictionalFieldCommander} from './dynasties.js?v=faces-name-disagreement-1';
 import {isDeliveredReport,sightingAge} from './person-knowledge.js?v=faces-name-disagreement-1';
 

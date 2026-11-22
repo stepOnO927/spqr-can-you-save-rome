@@ -1,4 +1,4 @@
-import {reportedControl,observeArrival} from './control-intelligence.js?v=fort-intel-1';
+import {reportedControl,observeArrival} from './control-intelligence.js?v=control-delivery-1';
 import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=faces-name-disagreement-1';

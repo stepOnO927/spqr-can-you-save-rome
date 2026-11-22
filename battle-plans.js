@@ -1,5 +1,5 @@
 import {ROUTES,REGIONS} from './data.js?v=phase-x-1';
-import {reportedControl,reportedFortification,observeFortification} from './control-intelligence.js?v=fort-intel-1';
+import {reportedControl,reportedFortification,observeFortification} from './control-intelligence.js?v=control-delivery-1';
 import {activeAgreement} from './agreements.js?v=agreement-courier-1';
 import {politicalAmbition} from './conspiracies.js?v=faces-name-disagreement-1';
 import {focusModifiers} from './national-focus.js?v=faces-name-disagreement-1';

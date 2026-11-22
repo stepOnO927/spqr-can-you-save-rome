@@ -1,4 +1,5 @@
 import {REGIONS,ROUTES} from './data.js?v=phase-x-1';
+import {isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
 
 // Opening control is common campaign knowledge, not a reconstruction of the
 // current world in an old save. Later observations belong to each faction.
@@ -33,7 +34,7 @@ export function observeControl(s){
   for(const [a,b] of ROUTES){if(owned.has(a))observed.add(b);if(owned.has(b))observed.add(a)}
   // A lost friendly theater is known to have changed hands even when the last
   // neighboring friendly theater is lost in the same monthly resolution.
-  for(const r of s.regions)if(observed.has(r.id)||reports[r.id]?.owner===viewer){reports[r.id]={owner:r.owner,year:s.year,month:s.month};if(observed.has(r.id))observeFortification(s,viewer,r.id)}
+  for(const r of s.regions)if(observed.has(r.id)||(isDeliveredReport(s,reports[r.id])&&reports[r.id]?.owner===viewer)){reports[r.id]={owner:r.owner,year:s.year,month:s.month};if(observed.has(r.id))observeFortification(s,viewer,r.id)}
  }
 }
 
@@ -41,7 +42,8 @@ export function reportedControl(s,viewer,id){
  initializeControlKnowledge(s);
  const r=s.regions.find(x=>x.id===id);if(!r)return null;
  if(r.owner===viewer)return {owner:viewer,year:s.year,month:s.month,own:true};
- return s.controlKnowledge[viewer]?.[id]||null;
+ const report=s.controlKnowledge[viewer]?.[id];
+ return isDeliveredReport(s,report)?report:null;
 }
 
 // The force arriving at a theater can observe its controller, even when the
@@ -72,11 +74,11 @@ export function advanceControlScouts(s){
   if(op.status!=='pending')continue;
   op.remaining--;
   if(op.remaining===2&&!op.sealed){
-   const r=s.regions.find(x=>x.id===op.region),q=random(s),old=s.controlKnowledge[op.actor]?.[op.region];
+   const r=s.regions.find(x=>x.id===op.region),q=random(s),old=reportedControl(s,op.actor,op.region);
    op.sealed=!r||q<.18?{lost:true}:{owner:q<.4&&old?old.owner:r.owner,year:s.year,month:s.month,source:'travelers'};
   }
   if(op.remaining>0)continue;
-  const sealed=op.sealed,report=s.controlKnowledge[op.actor]?.[op.region],r=s.regions.find(x=>x.id===op.region);
+  const sealed=op.sealed,report=reportedControl(s,op.actor,op.region),r=s.regions.find(x=>x.id===op.region);
   const lost=!sealed||sealed.lost||random(s)<.15;
   if(lost){op.status='no_reply';if(op.actor===s.player)log(s,'No traveler report arrived; the journey or return message may have been lost.','没有收到商旅报告；行程或回信可能遗失。')}
   else{

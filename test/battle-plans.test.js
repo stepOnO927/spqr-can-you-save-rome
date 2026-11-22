@@ -120,7 +120,7 @@ test('with spare forces and stale intelligence, expert AI adds reconnaissance an
 });
 
 test('an AI ally coordinates with a live allied operation against the same objective',async()=>{
- const {observeControl}=await import('../control-intelligence.js?v=fort-intel-1');
+ const {observeControl}=await import('../control-intelligence.js?v=control-delivery-1');
  const s=newGame('senate');s.difficulty='expert';
  s.regions.find(r=>r.id==='africa').owner='caesar';s.wars.push(['caesar','numidia']);s.alliances.push(['numidia','senate']);observeControl(s);
  for(const a of s.armies.filter(a=>a.owner==='numidia'))a.men=15000;

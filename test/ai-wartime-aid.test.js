@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {newGame,tick,sendStrategicOffer,advanceStrategicOffers,answerStrategicOffer,replyToLetter,upgradeSave} from '../engine.js?v=faces-name-disagreement-1';
 import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=control-delivery-1';
 import {buildChessboard} from '../chessboard.js?v=faces-name-disagreement-1';
 import {receivedMail} from '../epistulae.js?v=faces-name-disagreement-1';
 import {mailboxHtml} from '../mail-ui.js?v=faces-name-disagreement-1';

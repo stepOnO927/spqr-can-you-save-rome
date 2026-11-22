@@ -1,9 +1,9 @@
 import {isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 import {activeAgreement} from './agreements.js?v=agreement-courier-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
 
 const pair=(a,b)=>[a,b].sort().join(':');
 const rel=(s,a,b)=>s.relations[pair(a,b)]??0;
@@ -17,7 +17,7 @@ const near=(s,actor,target)=>s.regions.filter(r=>r.owner===actor).some(r=>ROUTES
 export function observeBalanceOfPower(s){
  s.world.balanceOfPower||={};
  for(const [actor,reports] of Object.entries(s.controlKnowledge||{})){
-  if(!s.factions[actor])continue;const counts={};for(const r of Object.values(reports||{}))if(r.owner&&r.owner!==actor)counts[r.owner]=(counts[r.owner]||0)+1;
+  if(!s.factions[actor])continue;const counts={};for(const id of Object.keys(reports||{})){const r=reportedControl(s,actor,id);if(r?.owner&&r.owner!==actor)counts[r.owner]=(counts[r.owner]||0)+1}
   const records=s.world.balanceOfPower[actor]||={};for(const target of new Set([...Object.keys(counts),...Object.keys(records)])){const count=counts[target]||0;
    const old=records[target];if(!old)records[target]={observedTerritories:count,reportedGrowth:0,year:s.year,month:s.month};
    else if(now(s)-(old.year*12+old.month)>=6)records[target]={observedTerritories:count,reportedGrowth:Math.max(-5,Math.min(5,count-old.observedTerritories)),year:s.year,month:s.month};

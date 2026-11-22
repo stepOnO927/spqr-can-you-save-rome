@@ -12,7 +12,7 @@ import {queueMission,advanceOperations,advanceAgentRequests,requestAgentRelease,
 import {advanceOffices,officeEffects,governorLoyaltyEffect} from './office-system.js?v=faces-name-disagreement-1';
 import {initializeCursus,advanceCursus} from './cursus-honorum.js?v=faces-name-disagreement-1';
 import {advanceConspiracies} from './conspiracies.js?v=faces-name-disagreement-1';
-import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=fort-intel-1';
+import {initializeControlKnowledge,observeControl,advanceControlScouts,reportedControl,reportedFortification,observeArrival} from './control-intelligence.js?v=control-delivery-1';
 import {resolveDynasticWars,canMediate,requestMediation,advanceMediations} from './civil-war.js?v=faces-name-disagreement-1';
 import {initializeDynasties,seedOpeningFictionalHouseholds,seedOpeningCommanders,seedHanCommanders,seedHanCourt,seedHanFrontierPeople,advanceDynasties,assignFictionalFieldCommander,createDisputedHeirScenario,recordLifeEvent} from './dynasties.js?v=faces-name-disagreement-1';
 import {initializeChronicle,captureCampaignState,recordCampaignTurn} from './chronicle.js?v=faces-name-disagreement-1';
@@ -40,7 +40,7 @@ import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-n
 import {offerPoliticalContact,advancePoliticalContacts} from './political-contacts.js?v=faces-name-disagreement-1';
 import {initializeReligion,advanceReligion,populationFactor,religiousTaxCost,religiousPolicy} from './religion.js?v=faces-name-disagreement-1';
 import {initializeMovements,advanceMovements,reportedMovements,offerMovementSupport,recognizeMovement} from './movements.js?v=faces-name-disagreement-1';
-import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
+import {initializeDiplomaticKnowledge,observeDiplomacy,reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
 import {initializeWheels,advanceWheels} from './history-wheels.js?v=faces-name-disagreement-1';
 export {queueMission};
 export {personalDiplomaticCredit};

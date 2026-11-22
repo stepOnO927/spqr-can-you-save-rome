@@ -5,7 +5,7 @@ import {createFictionalPerson} from '../dynasties.js?v=faces-name-disagreement-1
 import {buildChessboard} from '../chessboard.js?v=faces-name-disagreement-1';
 import {addReport} from '../character-system.js?v=faces-name-disagreement-1';
 import {proposeAgreement} from '../agreements.js?v=agreement-courier-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=control-delivery-1';
 import {renderChessboard} from '../chessboard-ui.js?v=faces-name-disagreement-1';
 
 test('the board does not read hidden foreign plans, plots, armies, personal loyalties or secret treaties',()=>{

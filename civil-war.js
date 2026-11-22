@@ -1,6 +1,6 @@
 import {isDeliveredReport} from './person-knowledge.js?v=faces-name-disagreement-1';
 import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=faces-name-disagreement-1';
-import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 import {assignFictionalFieldCommander} from './dynasties.js?v=faces-name-disagreement-1';
 
 // Alternate-history claimant commands use real game theaters and armies.

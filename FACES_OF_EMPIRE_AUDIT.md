@@ -6,6 +6,17 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `8abab357` is integrated. Undelivered control reports no longer
+inform the campaign map, strategic chessboard, diplomatic contact or AI
+balance review. The merge dropped the new chessboard guard and two regression
+cases where cache-version lines conflicted; they have been restored. A cloud
+browser scenario checks the same hidden-to-delivered transition. Focused
+control and strategic tests pass 42/42. The expanded civil-war fixtures use
+actually delivered observation dates, and control, diplomacy and person
+knowledge imports now agree on one browser cache version. Focused civil-war,
+control and module-version checks pass 25/25; the complete local serial TAP
+suite passes 1,290/1,290. Cloud checks follow.
+
 Main through `03213276` is integrated. Its strategic planner now refreshes
 only on delivered strength, frontier-control, or relevant diplomatic evidence;
 three focused AI evidence regressions survive the merge. The focused

@@ -1,5 +1,5 @@
 import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
-import {reportedControl} from './control-intelligence.js?v=fort-intel-1';
+import {reportedControl} from './control-intelligence.js?v=control-delivery-1';
 import {REGIONS,ROUTES,FACTIONS} from './data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {mapPoint} from './map.js?v=faces-name-disagreement-1';

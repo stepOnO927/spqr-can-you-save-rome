@@ -5,7 +5,7 @@ import {newGame,tick,estimatedStrength,sendInquiry,upgradeSave,issueMilitaryOrde
 import {advanceStrategicWarnings,warningCandidates} from '../strategic-warnings.js?v=faces-name-disagreement-1';
 import {warningLedger} from '../warning-ledger.js?v=warning-privacy-1';
 import {assessOpportunities,opportunityEvidenceSignature} from '../multipolar.js?v=faces-name-disagreement-1';
-import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=diplomatic-chronicle-1';
+import {observeDiplomacy,reportedDiplomacy} from '../diplomatic-knowledge.js?v=control-delivery-1';
 import {observeAttackPattern} from '../strategic-planning.js?v=multipolar-2';
 import {buildChessboard} from '../chessboard.js?v=faces-name-disagreement-1';
 import {renderChessboard} from '../chessboard-ui.js?v=faces-name-disagreement-1';

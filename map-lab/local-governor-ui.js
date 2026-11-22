@@ -1,6 +1,6 @@
 import {isDeliveredReport} from '../person-knowledge.js?v=faces-name-disagreement-1';
 import {campaignYear,campaignDate} from '../campaign-date.js?v=calendar-1';
-import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
+import {reportedControl} from '../control-intelligence.js?v=control-delivery-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=faces-name-disagreement-1';
 import {localGovernor,governorCandidates,appointGovernor,dismissGovernor} from '../office-system.js?v=faces-name-disagreement-1';

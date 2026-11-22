@@ -7,7 +7,7 @@ import {campaignYear,campaignDate} from './campaign-date.js?v=calendar-1';
 import {stageHandoff,receiveHandoff} from './view-handoff.js?v=faces-name-disagreement-1';
 import {visibleLogText,visibleArmyForPlayer} from './visibility.js?v=faces-name-disagreement-1';
 import {identity,factionMark} from './identity.js?v=phase-x-1';
-import {reportedControl,reportedFortification} from './control-intelligence.js?v=fort-intel-1';
+import {reportedControl,reportedFortification} from './control-intelligence.js?v=control-delivery-1';
 import {CHARACTER_CATALOG} from './characters.js?v=faces-name-disagreement-1';
 import {REGIONS,ROUTES,FACTIONS,SOURCES} from './data.js?v=phase-x-1';
 import {forecastEconomy,projectTaxPath,newGame,upgradeSave,tick,moveArmy,recruit,recruitEquipmentStock,provisionRomanArmy,setTax,diplomacy,sendInquiry, inquiryCost, answerPeaceOffer,answerStrategicOffer,replyToLetter,region,army,adjacent,isWar,isAllied,relation,PLAYABLE,estimatedStrength} from './engine.js?v=faces-name-disagreement-1';
@@ -32,7 +32,7 @@ import {reportedHealthSubjects,claimantRepresentatives,visiblePersonName,answerA
 import {religiousPolicy} from './religion.js?v=faces-name-disagreement-1';
 import {respondToMovement,reportedMovements,movementReportLeaderName,offerMovementSupport,recognizeMovement} from './movements.js?v=faces-name-disagreement-1';
 import {newScenario} from './scenarios.js?v=faces-name-disagreement-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=diplomatic-chronicle-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=control-delivery-1';
 import {renderChessboard} from './chessboard-ui.js?v=faces-name-disagreement-1';
 import {configureStartingDifficulty} from './difficulty.js?v=faces-name-disagreement-1';
 import {featherAdvice} from './feather.js?v=travel-2';

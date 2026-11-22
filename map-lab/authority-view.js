@@ -1,4 +1,4 @@
-import {reportedControl} from '../control-intelligence.js?v=fort-intel-1';
+import {reportedControl} from '../control-intelligence.js?v=control-delivery-1';
 import {deriveGovernment} from '../governance.js?v=faces-name-disagreement-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=faces-name-disagreement-1';
 
