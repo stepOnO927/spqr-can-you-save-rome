@@ -1,7 +1,7 @@
-import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=relationship-knowledge-1';
+import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=dated-subject-names-1';
 import {campaignDate} from '../campaign-date.js?v=calendar-1';
-import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=relationship-knowledge-1';
-import {reassurePerson} from '../conspiracies.js?v=relationship-knowledge-1';
+import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease} from '../character-system.js?v=dated-subject-names-1';
+import {reassurePerson} from '../conspiracies.js?v=dated-subject-names-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=saved-age-consistency-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 
