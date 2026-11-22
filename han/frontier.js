@@ -92,6 +92,7 @@ export const TREATY_TYPES={
  hostage:['Hostage exchange','遣质子'],caravan:['Caravan agreement','商队协议'],market:['Frontier markets','关市互市'],protection:['Protection','请求保护'],recognition:['Recognition of a ruler','承认君位']
 };
 export function propose(s,from,to,type,{terms={}}={}){
+ if(s.finalized)return {ok:false,reason:'finalized'};
  if(!TREATY_TYPES[type]||from===to)return {ok:false,reason:'invalid'};
  if(treaty(s,type,from,to))return {ok:false,reason:'exists'};
  const p={id:s.nextProposal=(s.nextProposal||1)+1,from,to,type,terms,month:monthIndex(s),status:'pending'};s.proposals.push(p);
@@ -129,8 +130,8 @@ export function acceptProposal(s,p){
  if(OASIS.includes(p.from)&&p.to==='han'){const st=s.protectorate.oasis[p.from];st.han=clamp(st.han+10)}
  log(s,['%FACTION% accepts: '+TREATY_TYPES[p.type][0]+'.','%FACTION%接受：'+TREATY_TYPES[p.type][1]+'。'],{faction:p.to,kind:'diplomacy'});
 }
-export function answerProposal(s,id,accept){const p=s.proposals.find(x=>x.id===id&&x.status==='pending');if(!p)return {ok:false};if(accept)acceptProposal(s,p);else{p.status='rejected';shiftRelation(s,p.from,p.to,-3)}return {ok:true}}
-export function declareWar(s,a,b){if(atWar(s,a,b)||a===b)return {ok:false};s.wars.push([a,b]);s.treaties=s.treaties.filter(t=>!(t.parties.includes(a)&&t.parties.includes(b)));setRelation(s,a,b,Math.min(-40,relation(s,a,b)-40));
+export function answerProposal(s,id,accept){if(s.finalized)return {ok:false,reason:'finalized'};const p=s.proposals.find(x=>x.id===id&&x.status==='pending');if(!p)return {ok:false};if(accept)acceptProposal(s,p);else{p.status='rejected';shiftRelation(s,p.from,p.to,-3)}return {ok:true}}
+export function declareWar(s,a,b){if(s.finalized)return {ok:false,reason:'finalized'};if(atWar(s,a,b)||a===b)return {ok:false};s.wars.push([a,b]);s.treaties=s.treaties.filter(t=>!(t.parties.includes(a)&&t.parties.includes(b)));setRelation(s,a,b,Math.min(-40,relation(s,a,b)-40));
  // defensive coalitions: oasis states rally against an aggressor that attacks one of them
  if(OASIS.includes(b))for(const o of OASIS)if(o!==b&&o!==a&&relation(s,o,b)>20&&relation(s,o,a)<10&&roll(s,'coal'+o+a)<0.5){if(!s.coalitions.some(c=>c.against===a&&c.members.includes(o))){const c=s.coalitions.find(c=>c.against===a)||(s.coalitions.push({against:a,members:[b]}),s.coalitions[s.coalitions.length-1]);c.members.push(o);shiftRelation(s,o,a,-15)}}
  log(s,['%FACTION% declares war on %FACTION2%.','%FACTION%向%FACTION2%宣战。'],{faction:a,faction2:b,kind:'war'});return {ok:true}}
@@ -171,6 +172,7 @@ function steppeDecides(s,f){
  if(f==='kangju'&&r<0.03&&relation(s,'kangju','wusun')<0)shiftRelation(s,'kangju','zhizhi',3);
 }
 export function answerRequest(s,id,accept){
+ if(s.finalized)return {ok:false,reason:'finalized'};
  const q=s.pendingRequests.find(x=>x.id===id);if(!q)return {ok:false};
  if(accept&&s.factions.han.grain>=q.amount){s.factions.han.grain-=q.amount;s.factions[q.from].grain+=q.amount;shiftRelation(s,q.from,'han',12)}else shiftRelation(s,q.from,'han',-8);
  s.pendingRequests=s.pendingRequests.filter(x=>x.id!==id);return {ok:true};

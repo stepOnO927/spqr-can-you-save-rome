@@ -6,13 +6,24 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The independent Han campaign already begins in January 49 BCE with Emperor
+Xuan on the throne and Liu Shi as crown prince; its country-selection copy
+incorrectly claimed a 48 BCE Emperor Yuan start. The English and Chinese
+opening text now match the actual saved campaign date, and the court browser
+check asserts that opening date. After a Han campaign is finalized, direct
+army, recruitment, tax, dynastic, court and diplomatic actions now reject
+changes to the saved result. The focused Han political, dynasty, market and
+defeat checks pass 77/77; a complete local TAP run also passes. Cloud browser
+verification for this update remains pending.
+
 Main through `95a1f4d6` is integrated. Delivered character intelligence now
 feeds health investigations and foreign family contacts through one shared
 lead list; the new contact browser smoke is retained. Roman–Han trade and
 embassy actions now close after victory, peaceful victory, or defeat while
 historical eastern reports remain readable. The focused regressions pass
-29/29 and the complete local `npm test` suite passes. Cloud workflow
-verification for this update is pending.
+29/29 and the complete local `npm test` suite passes. Five GitHub Actions
+workflows passed at `0ef7a9ef`, including all three Browser smoke groups;
+the contact browser log confirms the proposal, save/load and delayed reply.
 
 Main through `7eb1ab85` is integrated. It adds two more individual portrait
 sets per sex for campaign-born children, their three life stages, and a

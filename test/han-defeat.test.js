@@ -1,8 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newHanGame,tick,loadHanSave,serialize} from '../han/engine.js';
+import {newHanGame,tick,moveArmy,setTaxLevel,designateHeir,elevateEmpress,recommendOfficial,loadHanSave,serialize} from '../han/engine.js';
 import {advanceEasternMarkets,placeEasternTrade,quoteEasternTrade} from '../han/markets.js?v=faces-wheels-1';
 import {marketReasonName} from '../han/market-ui.js';
+import {recruit,recruitQuote,saveTemplate} from '../han/military.js?v=han-1';
+import {propose,answerProposal,declareWar,answerRequest} from '../han/frontier.js?v=han-1';
+import {appoint,dismiss} from '../han/court.js?v=han-1';
+
+test('a finalized Han campaign rejects core orders and preserves its saved result',()=>{
+ let s=newHanGame('han',{seed:26});s.finalized={outcome:'defeat',reason:'army_collapse',year:s.year,month:s.month};
+ s.proposals.push({id:123,from:'kangju',to:'han',type:'market',status:'pending'});
+ s.pendingRequests.push({id:456,from:'huhanye',to:'han',kind:'grain_aid',amount:20});
+ s=loadHanSave(serialize(s));const before=serialize(s);
+ for(const result of [moveArmy(s,'a1','hongnong'),setTaxLevel(s,'high'),designateHeir(s,'liu-shi'),elevateEmpress(s,'wang-zhengjun'),saveTemplate(s,'han',{name:'Test',mix:{}}),recruitQuote(s,'han','changan','field',500),recruit(s,'han','changan','field',{men:500}),propose(s,'han','kangju','market'),answerProposal(s,123,true),declareWar(s,'han','kangju'),answerRequest(s,456,true),appoint(s,'dasinong','shi-gao'),dismiss(s,'chengxiang'),recommendOfficial(s,'dasinong')]){
+  assert.equal(result.ok,false);assert.equal(result.reason,'finalized');
+ }
+ tick(s);assert.equal(serialize(s),before);
+});
 
 test('a conquered player realm settles once and the date cannot advance afterward',()=>{
  const s=newHanGame('shanshan',{seed:20});

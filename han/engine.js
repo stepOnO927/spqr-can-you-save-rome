@@ -114,6 +114,7 @@ function applyDisputedScenario(s){
 
 // ---------- orders ----------
 export function moveArmy(s,armyId,to,{owner=s.player}={}){
+ if(s.finalized)return {ok:false,reason:'finalized'};
  const a=s.armies.find(x=>x.id===armyId);if(!a||a.owner!==owner||a.men<=0)return {ok:false,reason:'invalid'};
  if(a.forming)return {ok:false,reason:'forming'};
  const link=routeBetween(a.region,to);if(!link)return {ok:false,reason:'not_adjacent'};
@@ -121,14 +122,15 @@ export function moveArmy(s,armyId,to,{owner=s.player}={}){
  if(dest.owner&&dest.owner!==owner&&!atWar(s,owner,dest.owner)&&!access(s,owner,dest.owner))return {ok:false,reason:'no_access'};
  a.move={to,months:marchMonths(s,a,to),from:a.region};return {ok:true,months:a.move.months};
 }
-export function setTaxLevel(s,level){if(!['low','normal','high'].includes(level))return {ok:false};s.taxLevel=level;return {ok:true}}
+export function setTaxLevel(s,level){if(s.finalized)return {ok:false,reason:'finalized'};if(!['low','normal','high'].includes(level))return {ok:false};s.taxLevel=level;return {ok:true}}
 export function designateHeir(s,id){
+ if(s.finalized)return {ok:false,reason:'finalized'};
  if(s.player!=='han'&&s.player!=='han_loyalist')return {ok:false,reason:'not_han'};
  const e=eligibility(s,id);if(!e.ok)return {ok:false,reason:e.reasons[0]};
  s.throne.heir=id;s.throne.support[id]||={};for(const f of Object.keys(s.court.factions))s.throne.support[id][f]=Math.max(s.throne.support[id][f]||0,55);
  log(s,['%NAME% is named heir apparent.','立%NAME%为皇太子。'],{who:id,kind:'throne'});return {ok:true};
 }
-export function elevateEmpress(s,id){const p=s.persons[id];if(!p||p.sex!=='f'||!p.alive)return {ok:false};for(const q of Object.values(s.persons))q.empress=false;p.empress=true;s.pendingEmpress=null;s.court.factions.waiqi.influence+=5;if(s.player==='han')log(s,['%NAME% is made empress.','立%NAME%为皇后。'],{who:id,kind:'court'});return {ok:true}}
+export function elevateEmpress(s,id){if(s.finalized)return {ok:false,reason:'finalized'};const p=s.persons[id];if(!p||p.sex!=='f'||!p.alive)return {ok:false};for(const q of Object.values(s.persons))q.empress=false;p.empress=true;s.pendingEmpress=null;s.court.factions.waiqi.influence+=5;if(s.player==='han')log(s,['%NAME% is made empress.','立%NAME%为皇后。'],{who:id,kind:'court'});return {ok:true}}
 
 // ---------- monthly simulation ----------
 function economy(s){
@@ -267,6 +269,7 @@ export function generateOfficial(s,office){
  return s.persons[id];
 }
 export function recommendOfficial(s,office){
+ if(s.finalized)return {ok:false,reason:'finalized'};
  if(s.player!=='han'||!OFFICES[office]||OFFICES[office].requiresLiu)return {ok:false,reason:'authority'};
  s.court.recommendations||=[];
  if(s.court.recommendations.some(x=>x.office===office&&x.status==='pending'))return {ok:false,reason:'pending'};

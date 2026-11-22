@@ -10,7 +10,12 @@ try{
  // minister, recommendation or yearly proposal under test.
  await page.addInitScript(()=>{localStorage.setItem('spqr-han-lang','en');Date.now=()=>500});
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
+ assert.match(await page.locator('#setup').innerText(),/January 49 BCE.*Emperor Xuan/);
+ await page.locator('#lang').click();
+ assert.match(await page.locator('#setup').innerText(),/公元前49年1月.*汉宣帝在位/);
+ await page.locator('#lang').click();
  await page.locator('#factionSelect').selectOption('han');await page.locator('#begin').click();
+ assert.match(await page.locator('#campaignTitle').innerText(),/49 BCE · month 1/);
  await page.locator('#court-panel').click();
  assert.equal(await page.locator('[data-court-person]').count(),13);
  assert.equal(await page.locator('[data-court-person] img').evaluateAll(images=>images.every(image=>image.complete&&image.naturalWidth>0)),true);

@@ -78,6 +78,7 @@ export function templateStats(t){
 export function templatesFor(s,owner){const culture=cultureOf(owner);return [...Object.values(PRESETS).filter(p=>p.culture===culture),...Object.values(s.templates||{}).filter(t=>t.owner===owner)]}
 export function templateById(s,owner,id){return PRESETS[id]&&PRESETS[id].culture===cultureOf(owner)?PRESETS[id]:(s.templates?.[id]?.owner===owner?s.templates[id]:null)}
 export function saveTemplate(s,owner,{name,mix}){
+ if(s.finalized)return {ok:false,reason:'finalized'};
  const culture=cultureOf(owner),errors=validateMix(culture,mix);if(errors.length)return {ok:false,errors};
  s.templates||={};const id=`t${s.nextTemplate=(s.nextTemplate||1)+1}`;
  s.templates[id]={id,owner,culture,name:[String(name||'Custom').slice(0,40),String(name||'自定义编制').slice(0,40)],mix:{...mix},preset:false};return {ok:true,id};
@@ -85,6 +86,7 @@ export function saveTemplate(s,owner,{name,mix}){
 
 // Recruitment: real costs and real requirements.
 export function recruitQuote(s,owner,regionId,templateId,men=5000){
+ if(s.finalized)return {ok:false,reason:'finalized',problems:['finalized']};
  const t=templateById(s,owner,templateId),r=s.regions.find(x=>x.id===regionId),f=s.factions[owner];
  if(!t||!r||!f)return {ok:false,reason:'unknown'};
  const st=templateStats(t),k=men/1000;

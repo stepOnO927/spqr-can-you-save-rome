@@ -80,6 +80,7 @@ export function recomputeInfluence(s){
 
 // ---------- appointments ----------
 export function appoint(s,office,personId,{actor='emperor',logFn=null}={}){
+ if(s.finalized)return {ok:false,reason:'finalized'};
  const o=OFFICES[office],p=s.persons[personId];if(!o||!p||!p.alive)return {ok:false,reason:'invalid'};
  if(p.faction!==govFaction(s))return {ok:false,reason:'foreign'};
  if(o.requiresLiu&&!isLiuClan(s,personId))return {ok:false,reason:'requires_liu_clan'};
@@ -94,7 +95,7 @@ export function appoint(s,office,personId,{actor='emperor',logFn=null}={}){
  if(!Array.isArray(p.career))p.career=[];log(s,['%NAME% appointed '+o.name[0]+'.','%NAME%任'+o.name[1]+'。'],{who:personId,kind:'court',office});
  return {ok:true,displaced:prev||null};
 }
-export function dismiss(s,office){const id=s.court.offices[office];if(!id)return {ok:false};s.court.offices[office]=null;if(s.persons[id]){s.persons[id].office=null;if(!Array.isArray(s.persons[id].career))s.persons[id].career=[];s.court.enmity[id]=(s.court.enmity[id]||0)+20}recomputeInfluence(s);log(s,['%NAME% is dismissed as '+OFFICES[office].name[0]+'.','%NAME%被免去'+OFFICES[office].name[1]+'。'],{who:id,kind:'court',office});return {ok:true,id}}
+export function dismiss(s,office){if(s.finalized)return {ok:false,reason:'finalized'};const id=s.court.offices[office];if(!id)return {ok:false};s.court.offices[office]=null;if(s.persons[id]){s.persons[id].office=null;if(!Array.isArray(s.persons[id].career))s.persons[id].career=[];s.court.enmity[id]=(s.court.enmity[id]||0)+20}recomputeInfluence(s);log(s,['%NAME% is dismissed as '+OFFICES[office].name[0]+'.','%NAME%被免去'+OFFICES[office].name[1]+'。'],{who:id,kind:'court',office});return {ok:true,id}}
 export const officeHolder=(s,office)=>{const id=s.court.offices[office];return id&&alive(s,id)?s.persons[id]:null};
 
 const monthIndex=s=>s.year*12+s.month;
