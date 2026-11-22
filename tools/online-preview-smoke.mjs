@@ -20,8 +20,7 @@ try{
  await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:[12.6,44.1],zoom:9.05})});
  await page.locator('#map-charting').waitFor({state:'visible',timeout:3000});
  await page.locator('#map-charting').waitFor({state:'hidden',timeout:30000});
- await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return map.areTilesLoaded()&&map.isSourceLoaded('elevation-higher')&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
- const terrain=await page.evaluate(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return {zoom:map.getZoom(),center:map.getCenter().toArray(),detailLoaded:map.isSourceLoaded('elevation-higher'),seaLoaded:map.isSourceLoaded('ocean')}});
+ const terrain=await (await page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);const result={zoom:map.getZoom(),center:map.getCenter().toArray(),detailLoaded:map.isSourceLoaded('elevation-higher'),seaLoaded:map.isSourceLoaded('ocean')};return map.areTilesLoaded()&&result.detailLoaded&&result.seaLoaded&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99?result:false},null,{timeout:30000})).jsonValue();
  if(!terrain.detailLoaded||!terrain.seaLoaded)throw Error(`Hosted atlas tiles did not settle: ${JSON.stringify({terrain,missing:missing.slice(0,20),errors})}`);
  await page.locator('#language').click();
  if(await page.locator('html').getAttribute('lang')!=='en')throw Error('English language switch failed');
