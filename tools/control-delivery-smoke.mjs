@@ -8,7 +8,7 @@ try{
   await page.evaluate(async mode=>{const {newGame}=await import('/engine.js?v=control-delivery-1'),s=newGame('caesar');for(const id of ['parthia','media']){delete s.controlKnowledge.caesar[id];
    if(mode!=='unknown')s.controlKnowledge.caesar[id]={owner:'egypt',year:s.year,month:s.month,receivedYear:mode==='future'?s.year+1:s.year,receivedMonth:s.month};}
    sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));},mode);
-  await page.reload();return page.locator('[data-map-group~="parthia"]').first().getAttribute('fill');
+  await page.reload();return page.locator('[data-map-group*="parthia"]').first().getAttribute('fill');
  }
  const unknown=await open('unknown'),future=await open('future'),delivered=await open('delivered');
  assert.ok(unknown);assert.equal(future,unknown);assert.notEqual(delivered,unknown);assert.deepEqual(errors,[]);
