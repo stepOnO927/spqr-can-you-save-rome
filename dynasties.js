@@ -1,6 +1,6 @@
-import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=name-disagreement-1';
+import {visiblePersonName,storedCorrespondentName,isDeliveredReport,reportedPeople} from './person-knowledge.js?v=frontier-review-1';
 import {CHARACTER_CATALOG,ageRange} from './characters.js?v=saved-age-consistency-1';
-import {startDynasticWar} from './civil-war.js?v=name-disagreement-1';
+import {startDynasticWar} from './civil-war.js?v=frontier-review-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=born-portrait-thirteen-1';
 
