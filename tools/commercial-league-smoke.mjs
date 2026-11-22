@@ -27,7 +27,7 @@ try{
   const s=JSON.parse(localStorage.getItem('spqr-save-1'));
   for(let i=0;i<4;i++){s.month++;advanceCommercialLeagueOffers(s,()=>.5)}
   if(!s.world.commercialLeagues.length)throw Error('League failed to form in browser setup');
-  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'map-lab',state:s}));
+  sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'atlas',state:s}));
  });
  await page.goto('http://127.0.0.1:5173/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#map-mode').selectOption('organization');
