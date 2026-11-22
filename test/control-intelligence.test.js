@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=mission-history-1';
-import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=mission-history-1';
-import {drawMap} from '../map.js?v=mission-history-1';
-import {advanceMovements} from '../movements.js?v=mission-history-1';
-import {buildChessboard} from '../chessboard.js?v=mission-history-1';
-import {observeDiplomacy} from '../diplomatic-knowledge.js?v=mission-history-1';
-import {observeBalanceOfPower} from '../coalitions.js?v=mission-history-1';
+import {newGame,region,tick,upgradeSave,previewMarch,moveArmy} from '../engine.js?v=agent-handover-1';
+import {observeControl,reportedControl,requestControlReport,advanceControlScouts} from '../control-intelligence.js?v=agent-handover-1';
+import {drawMap} from '../map.js?v=agent-handover-1';
+import {advanceMovements} from '../movements.js?v=agent-handover-1';
+import {buildChessboard} from '../chessboard.js?v=agent-handover-1';
+import {observeDiplomacy} from '../diplomatic-knowledge.js?v=agent-handover-1';
+import {observeBalanceOfPower} from '../coalitions.js?v=agent-handover-1';
 
 test('undelivered frontier control cannot reveal contacts, chessboard threats or AI balance',()=>{
  const base=newGame('caesar');delete base.controlKnowledge.caesar.italiaN;

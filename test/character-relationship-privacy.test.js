@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=mission-history-1';
-import {visiblePersonalRelationships} from '../map-lab/character-ui.js?v=mission-history-1';
+import {newGame,upgradeSave} from '../engine.js?v=agent-handover-1';
+import {visiblePersonalRelationships} from '../map-lab/character-ui.js?v=agent-handover-1';
 
 test('foreign dossier relationships are limited to completed meetings observed by the player',()=>{
  let s=newGame('caesar');s.world.personalRelations['caesar:cleopatra']={trust:87,meetings:42};

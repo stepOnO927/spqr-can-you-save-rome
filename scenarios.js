@@ -1,7 +1,7 @@
-import {newGame,estimatedStrength} from './engine.js?v=mission-history-1';
-import {createFictionalPerson} from './dynasties.js?v=mission-history-1';
-import {formCoalition} from './coalitions.js?v=mission-history-1';
-import {observeDiplomacy} from './diplomatic-knowledge.js?v=mission-history-1';
+import {newGame,estimatedStrength} from './engine.js?v=agent-handover-1';
+import {createFictionalPerson} from './dynasties.js?v=agent-handover-1';
+import {formCoalition} from './coalitions.js?v=agent-handover-1';
+import {observeDiplomacy} from './diplomatic-knowledge.js?v=agent-handover-1';
 
 // A fictional political crisis in the 49 BCE campaign. Conditions make
 // collective opposition plausible, but do not preselect a war or outcome.
