@@ -1,16 +1,16 @@
-import {recordLegendEvidence} from './legend.js?v=family-contact-1';
-import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=family-contact-1';
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=saved-age-consistency-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=family-contact-1';
+import {recordLegendEvidence} from './legend.js?v=missing-leader-1';
+import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=missing-leader-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=missing-leader-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=missing-leader-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=family-contact-1';
-import {potentialConspirators} from './conspiracies.js?v=family-contact-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=family-contact-1';
-import {reportedControl} from './control-intelligence.js?v=family-contact-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=family-contact-1';
-import {activeAgreement} from './agreements.js?v=family-contact-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=missing-leader-1';
+import {potentialConspirators} from './conspiracies.js?v=missing-leader-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=missing-leader-1';
+import {reportedControl} from './control-intelligence.js?v=missing-leader-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=missing-leader-1';
+import {activeAgreement} from './agreements.js?v=missing-leader-1';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=family-contact-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=missing-leader-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -477,12 +477,20 @@ export function relieveIncapacitatedCommanders(s){
 // controlled theater. This is a coarse game abstraction, not a precise escape route.
 export function advanceMissingCommanders(s){
  initializeWorld(s);for(const person of Object.values(s.world.characters)){
-  const missing=person.missing;if(!missing)continue;if(!person.alive){delete person.missing;continue}
+  const missing=person.missing;if(!missing)continue;
   if(s.year===missing.year&&s.month===missing.month)continue;
   missing.remaining=Math.max(0,missing.remaining-1);if(missing.remaining)continue;
   const queue=[missing.origin],seen=new Set(queue);let destination=null;
   for(let i=0;i<queue.length;i++){const id=queue[i],r=s.regions.find(x=>x.id===id);if(r?.owner===person.faction){destination=r;break}for(const edge of ROUTES){const next=edge[0]===id?edge[1]:edge[1]===id?edge[0]:null;if(next&&!seen.has(next)){seen.add(next);queue.push(next)}}}
-  if(!destination)continue;person.location=destination.id;delete person.missing;
+  if(!destination)continue;
+  if(!person.alive){
+   // A failed search conveys no certainty. On a later successful search the
+   // death becomes known and only then can succession and inheritance proceed.
+   if(rand(s)>=.3){missing.remaining=3;continue}
+   delete person.missing;settleInheritance(s,person.id);if((s.world.leadership[person.faction]||[]).includes(person.id))assignSuccession(s,person.faction);
+   if(person.faction===s.player)notify(s,`${CHARACTER_CATALOG[person.id].name[0]} was confirmed dead after a search; succession was updated.`,`${CHARACTER_CATALOG[person.id].name[1]}经搜寻确认在游戏中去世；继任局势已更新。`,{characterId:person.id});continue;
+  }
+  person.location=destination.id;delete person.missing;
   if(person.faction===s.player)notify(s,`${CHARACTER_CATALOG[person.id].name[0]} re-established contact in ${destination.name[0]}.`,`${CHARACTER_CATALOG[person.id].name[1]}在${destination.name[1]}重新取得联系。`);
  }
 }
