@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=claimant-force-accounting-1';
-import {proposeAgreement,terminateAgreement} from '../agreements.js?v=claimant-force-accounting-1';
-import {addReport,queueMission,advanceOperations,intelligencePartners,intelligencePartnerAccess,reportEvidence,refreshReportConfidence} from '../character-system.js?v=claimant-force-accounting-1';
+import {newGame,upgradeSave} from '../engine.js?v=commander-age-1';
+import {proposeAgreement,terminateAgreement} from '../agreements.js?v=commander-age-1';
+import {addReport,queueMission,advanceOperations,intelligencePartners,intelligencePartnerAccess,reportEvidence,refreshReportConfidence} from '../character-system.js?v=commander-age-1';
 
 function setup(seed){const s=newGame('caesar');s.world.intelSeed=seed;s.relations['caesar:parthia']=40;assert.ok(proposeAgreement(s,'caesar','parthia','trade').ok);addReport(s,'parthia','egypt',{kind:'health',character:'ptolemy',value:'ill',source:'spy',confidence:'unverified'});return s}
 function advance(s,n){for(let i=0;i<n;i++){s.month++;advanceOperations(s)}}

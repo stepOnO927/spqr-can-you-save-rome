@@ -5,7 +5,7 @@ page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','zh'));await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const e=await import('/engine.js?v=claimant-force-accounting-1'),a=await import('/agreements.js?v=claimant-force-accounting-1'),d=await import('/diplomatic-knowledge.js?v=claimant-force-accounting-1');
+  const e=await import('/engine.js?v=commander-age-1'),a=await import('/agreements.js?v=commander-age-1'),d=await import('/diplomatic-knowledge.js?v=commander-age-1');
   for(let seed=1;seed<200;seed++){
    const s=e.newGame('caesar');s.seed=seed;s.wars.push(['egypt','parthia']);s.relations['caesar:egypt']=40;a.proposeAgreement(s,'egypt','caesar','trade');d.observeDiplomacy(s);
    assertOffer(e.sendStrategicOffer(s,'egypt','caesar','parthia').ok);for(let i=0;i<2;i++){s.month++;e.advanceStrategicOffers(s)}
