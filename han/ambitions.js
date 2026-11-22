@@ -16,16 +16,20 @@ export const AMBITIONS={
 };
 export function available(s){return s.player==='han'?['frontier','diplomacy','prosperity','reform','dynasty','culture','custom']:['independence','diplomacy','prosperity','frontier','custom']}
 export function initialize(s){s.nationalAmbition||={id:'',chosenAt:null,changes:[],custom:null};return s.nationalAmbition}
+export const AMBITION_CHANGE_STABILITY_COST=3;
 export function choose(s,id,options={}){
  if(!available(s).includes(id))return false;
  const a=initialize(s),old=a.id;
  if(id==='custom'){
   const metric=options.metric||'treasury',target=Number(options.target)||100;
   if(!({treasury:s.player==='han'?[700,900,1200]:[50,100,200],stability:[60,70,80],regions:[1,2,3]}[metric]||[]).includes(target))return false;
+  if(old==='custom'&&a.custom?.metric===metric&&a.custom?.target===target)return true;
   a.custom={metric,target,baseline:s.regions.filter(r=>r.owner===s.player).length};
  }
  if(old===id&&id!=='custom')return true;
- a.id=id;a.version=2;a.chosenAt={year:s.year,month:s.month};a.continuity={months:0,lastMonth:s.year*12+s.month};a.changes.push({from:old,to:id,year:s.year,month:s.month});
+ const changing=!!old,f=s.factions[s.player];
+ if(changing&&f)f.stability=Math.max(0,(f.stability??0)-AMBITION_CHANGE_STABILITY_COST);
+ a.id=id;a.version=2;a.chosenAt={year:s.year,month:s.month};a.continuity={months:0,lastMonth:s.year*12+s.month};a.changes.push({from:old,to:id,year:s.year,month:s.month,...(changing?{cost:{stability:AMBITION_CHANGE_STABILITY_COST}}:{})});
  return true;
 }
 function maintained(s,id){
