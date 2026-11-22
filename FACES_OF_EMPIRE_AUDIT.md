@@ -6,6 +6,18 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The first Browser smoke run after the `e6ed4cde` merge passed groups 1 and
+2 but failed the new dated-report scenario in group 3. That smoke assumed a
+mismatched fixed portrait must become a silhouette; the expansion correctly
+uses a distinct procedural portrait for the saved person. Its assertion now
+checks that no fixed portrait is reused and the procedural one is present.
+The merge also omitted the new per-report click binding in the intelligence
+list; clicking an older report now opens its own saved reported name rather
+than the live identity. Focused character, portrait, module, and Roman–Han
+checks pass 78/78. The full local suite passes 1,275/1,275 on recheck; an
+earlier full pass exceeded the parallel CPU benchmark once, while its
+standalone rerun passed. Cloud re-verification is required.
+
 Main through `e6ed4cde` is integrated. Its opening portrait identity checks
 require both saved language forms, the original faction, and compatible sex,
 without removing the expansion's claimed court portraits. The dated-report
