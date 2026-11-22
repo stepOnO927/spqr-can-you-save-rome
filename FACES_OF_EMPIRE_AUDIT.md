@@ -6,6 +6,18 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Three attested opening western rulers in the Han campaign now have distinct
+fixed portraits: the already available Orodes II and Artavasdes II artwork is
+reused, and Antiochus I of Commagene has a new optimized 512/128/64 image
+set. The new portrait was generated as restrained, historically inspired
+game art, then cropped for small counters; it is an artistic reconstruction,
+not a documented likeness. [UNESCO's Nemrut Dağ account](https://whc.unesco.org/en/list/448/)
+describes Antiochus's Hellenistic monument and its Persian and Macedonian
+ancestry, which informed the design prompt. Old saves gain fixed artwork only
+when the saved historical name and faction still match the attested record;
+custom portraits and changed identities are preserved. Ruler tests pass
+19/19; the cloud browser flow checks all three image files and reload.
+
 Main through `158be62d` is integrated. Its focus-driven treaty consent and
 delivered confirmation now remain active in the expansion's runtime. The
 overlapping module-version merge had retained the new mail and agreement

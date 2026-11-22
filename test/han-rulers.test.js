@@ -74,6 +74,15 @@ test('foreign rulers keep historical identities and unknown opening names distin
  assert.equal(s.rulers.commagene.id,'antiochus-i-commagene');
  assert.equal(s.rulers.kangju.id,'kangju-king');
  assert.equal(s.persons['kangju-king'].titleOnly,true);
+ for(const [f,id,art] of [['parthia','orodes-ii','orodes'],['armenia','artavasdes-ii','artavasdes'],['commagene','antiochus-i-commagene','han-antiochus-commagene']]){
+  assert.equal(s.persons[id].portrait,art,f);
+  assert.equal(rulerPortrait(s,f),`../assets/portraits/${art}-128.jpg`);
+ }
+ const older=structuredClone(s);delete older.persons['orodes-ii'].portrait;
+ assert.equal(loadHanSave(serialize(older)).persons['orodes-ii'].portrait,'orodes');
+ older.persons['orodes-ii'].name=['Other campaign ruler','另一战役统治者'];
+ older.rulers.parthia.name=[...older.persons['orodes-ii'].name];
+ assert.equal(loadHanSave(serialize(older)).persons['orodes-ii'].portrait,undefined,'a changed saved identity cannot claim the historical artwork');
  assert.match(ownRulerHtml(s,0),/King of Kings/);
  assert.match(ownRulerHtml(s,1),/万王之王/);
  assert.match(ownRulerHtml(s,1),/艺术复原/);

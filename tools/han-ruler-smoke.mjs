@@ -39,6 +39,8 @@ try{
  assert.equal(await card.locator('img').first().getAttribute('src'),rulerImage);
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('armenia');await page.locator('#begin').click();await page.locator('#save').click();
+ assert.equal(await card.locator('img').first().getAttribute('src'),'../assets/portraits/artavasdes-128.jpg');
+ assert.equal(await card.locator('img').first().evaluate(img=>img.complete&&img.naturalWidth===128),true);
  await page.evaluate(async()=>{
   const {recordBirth}=await import('/han/dynasty.js?v=han-1');
   const {advanceForeignRulers}=await import('/han/rulers.js');
@@ -94,6 +96,8 @@ try{
  assert.doesNotMatch(await card.innerText(),/汉皇帝/);
  await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
  await page.locator('#factionSelect').selectOption('parthia');await page.locator('#begin').click();await page.locator('#save').click();
+ assert.equal(await card.locator('img').first().getAttribute('src'),'../assets/portraits/orodes-128.jpg');
+ assert.equal(await card.locator('img').first().evaluate(img=>img.complete&&img.naturalWidth===128),true);
  await page.evaluate(async()=>{
   const {recordBirth}=await import('/han/dynasty.js?v=han-1');
   const {advanceForeignRulers}=await import('/han/rulers.js');
@@ -113,6 +117,13 @@ try{
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
  assert.match(await card.innerText(),/Culture: Sogdian \(game reconstruction\)/);
  await page.locator('#lang').click();assert.match(await card.innerText(),/文化: 粟特（游戏复原）/);
+ await page.goto(base+'/han/',{waitUntil:'domcontentloaded'});
+ await page.locator('#factionSelect').selectOption('commagene');await page.locator('#begin').click();
+ assert.equal(await card.locator('img').first().getAttribute('src'),'../assets/portraits/han-antiochus-commagene-128.jpg');
+ assert.equal(await card.locator('img').first().evaluate(img=>img.complete&&img.naturalWidth===128),true);
+ assert.match(await card.innerText(),/artistic reconstruction/);
+ await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();
+ assert.equal(await card.locator('img').first().getAttribute('src'),'../assets/portraits/han-antiochus-commagene-128.jpg');
  assert.deepEqual(errors,[]);
  console.log('Han ruler browser smoke passed: foreign and original Liu succession, portrait, save/load and both languages.');
 }finally{await browser.close()}
