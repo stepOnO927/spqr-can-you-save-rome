@@ -1,7 +1,7 @@
 import {setLegendMode} from './legend.js?v=world-kings-regional-types-1';
 import './version-ui.js';
 import {analytics} from './analytics.js';
-import {sendAgreementProposal} from './agreement-negotiations.js?v=world-kings-regional-types-1';
+import {sendAgreementProposal,answerAgreementProposal} from './agreement-negotiations.js?v=world-kings-regional-types-1';
 import {SUBJECT_TYPES,subjectAidQuote,requestSubjectAid} from './suzerainty.js?v=world-kings-regional-types-1';
 import {localStore as localStorage,sessionStore as sessionStorage} from './safe-storage.js';
 import {startupDiagnostics} from './inspector-diagnostics.js';
@@ -321,11 +321,11 @@ function bind(){
   document.querySelector('#mail-representative')?.addEventListener('change',e=>{const button=document.querySelector('[data-mail-reply=representative]');if(button)button.disabled=!e.target.value});
   document.querySelectorAll('[data-mail-reply]').forEach(el=>el.onclick=()=>{
    const choice=el.dataset.mailReply;
-   if(['join_war','send_war_aid','send_coalition_aid','accept_coalition','accept_admission'].includes(choice)&&!el.dataset.confirmed){
+   if(['join_war','send_war_aid','send_coalition_aid','accept_coalition','accept_admission','accept_agreement'].includes(choice)&&!el.dataset.confirmed){
     el.dataset.confirmed='true';
-    el.textContent=choice==='send_war_aid'?(lang==='zh'?'确认派出12国库与8粮食':'Confirm sending 12 treasury and 8 food'):choice==='send_coalition_aid'?(lang==='zh'?'确认派出8国库与6粮食':'Confirm sending 8 treasury and 6 food'):['accept_coalition','accept_admission'].includes(choice)?(lang==='zh'?'确认接受邀请；获确认时支付5国库':'Confirm invitation; 5 treasury if confirmed'):(lang==='zh'?'确认加入战争':'Confirm joining the war');return;
+    el.textContent=choice==='accept_agreement'?(lang==='zh'?'确认答复；收到确认后才生效':'Confirm reply; effective only after confirmation'):choice==='send_war_aid'?(lang==='zh'?'确认派出12国库与8粮食':'Confirm sending 12 treasury and 8 food'):choice==='send_coalition_aid'?(lang==='zh'?'确认派出8国库与6粮食':'Confirm sending 8 treasury and 6 food'):['accept_coalition','accept_admission'].includes(choice)?(lang==='zh'?'确认接受邀请；获确认时支付5国库':'Confirm invitation; 5 treasury if confirmed'):(lang==='zh'?'确认加入战争':'Confirm joining the war');return;
    }
-   const result=replyToLetter(state,el.dataset.mailId,choice,{proposeAgreement,sendInquiry,answerPeaceOffer,answerStrategicOffer,answerCoalitionInvitation,answerCoalitionAdmission,answerAgentRelease,recruit,startVillageProject,setTax,financeDecision,commanderDecision},{representativeId:document.querySelector('#mail-representative')?.value});
+   const result=replyToLetter(state,el.dataset.mailId,choice,{proposeAgreement,sendInquiry,answerPeaceOffer,answerStrategicOffer,answerCoalitionInvitation,answerCoalitionAdmission,answerAgreementProposal,answerAgentRelease,recruit,startVillageProject,setTax,financeDecision,commanderDecision},{representativeId:document.querySelector('#mail-representative')?.value});
    if(!result.ok){flash(result.reason==='representative'?(lang==='zh'?'代表已不符合条件，请重新选择。':'The representative is no longer available; choose again.'):result.reason==='location'?(lang==='zh'?'地点未知或人物正在途中，暂不能安排会面。':'A participant has no known stationary location; the meeting cannot be scheduled.'):(lang==='zh'?'当前条件不足，无法寄出该答复。':'The reply cannot be sent under current conditions.'));return}
    if(receivedMail(state).find(m=>m.id===el.dataset.mailId)?.responses.length)recordExperience(state,'reply',choice);
    if(result.open==='military'||result.open==='government'){mailOpen=false;tab=result.open;panelOpen=true}else if(result.open){mailOpen=false;selectedRegion=result.open;tab='map';panelOpen=true}render();

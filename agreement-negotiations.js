@@ -22,14 +22,33 @@ export function sendAgreementProposal(s,actor,target,type,{secret=false,access=n
 
 // The recipient's evaluation is sealed while the answer returns. Both legs
 // can fail; no private reason is exposed when a letter never arrives.
-export function advanceAgreementProposals(s,{checkAlliance=()=>false,concludeAlliance=()=>false}={}){
- for(const letter of s.world?.agreementLetters||[]){if(letter.status!=='pending'||--letter.remaining>0)continue;
+export function answerAgreementProposal(s,id,decision){
+ const letter=(s.world?.agreementLetters||[]).find(x=>x.id===id&&x.status==='pending'&&x.phase==='awaiting_player'&&x.target===s.player);
+ if(!letter||!['accept_agreement','refuse','ignore'].includes(decision))return {ok:false,reason:'unavailable'};
+ const outcome=decision==='accept_agreement'?'accepted':decision==='refuse'?'refused':'no_reply';
+ letter.playerDecision=outcome;letter.sealed={outcome,year:s.year,month:s.month};letter.phase='return';letter.remaining=2;return {ok:true};
+}
+
+export function advanceAgreementProposals(s,{checkAlliance=()=>false,concludeAlliance=()=>false,autoplayPlayer=false}={}){
+ for(const letter of s.world?.agreementLetters||[]){
+  if(letter.status==='pending'&&letter.phase==='awaiting_player'){
+   if(--letter.remaining<=0){letter.playerDecision='no_reply';letter.sealed={outcome:'no_reply',year:s.year,month:s.month};letter.phase='return';letter.remaining=2}continue;
+  }
+  if(letter.status!=='pending'||--letter.remaining>0)continue;
   if(letter.phase==='outbound'){
+   if(roll(letter,0x349a61f3)<.1){letter.sealed={outcome:'no_reply',year:s.year,month:s.month};letter.phase='return';letter.remaining=2;continue}
+   if(!autoplayPlayer&&letter.target===s.player&&letter.actor!==s.player){letter.phase='awaiting_player';letter.remaining=6;continue}
    const result=letter.type==='full_alliance'?{ok:checkAlliance(s,letter.actor,letter.target),reason:'declined'}:checkAgreement(s,letter.actor,letter.target,letter.type,{access:letter.access});
-   const outcome=roll(letter,0x349a61f3)<.1?'no_reply':!result.ok?(result.reason==='declined'?'refused':'unavailable'):roll(letter,0x92f03d41)<.15?'refused':'accepted';
+   const outcome=!result.ok?(result.reason==='declined'?'refused':'unavailable'):roll(letter,0x92f03d41)<.15?'refused':'accepted';
    letter.sealed={outcome,year:s.year,month:s.month};letter.phase='return';letter.remaining=2;continue;
   }
+  if(letter.phase==='confirmation'){
+   if(roll(letter,0x2195b3c7)<.1){letter.status='no_reply';letter.phase='lost';continue}
+   const result=letter.type==='full_alliance'?{ok:concludeAlliance(s,letter.actor,letter.target)}:proposeAgreement(s,letter.actor,letter.target,letter.type,{secret:letter.secret,priorConsent:true,access:letter.access});
+   letter.status=result.ok?'accepted':'lapsed';if(result.agreement)letter.agreement=result.agreement.id;letter.delivered={year:s.year,month:s.month};letter.phase='delivered';continue;
+  }
   const outcome=roll(letter,0x8de729b5)<.1?'no_reply':letter.sealed?.outcome||'no_reply';
+  if(letter.playerDecision==='accepted'&&outcome==='accepted'){letter.phase='confirmation';letter.remaining=2;letter.answered={year:letter.sealed.year,month:letter.sealed.month};delete letter.sealed;continue}
   if(outcome==='accepted'){const result=letter.type==='full_alliance'?{ok:concludeAlliance(s,letter.actor,letter.target)}:proposeAgreement(s,letter.actor,letter.target,letter.type,{secret:letter.secret,priorConsent:true,access:letter.access});letter.status=result.ok?'accepted':'lapsed';if(result.agreement)letter.agreement=result.agreement.id}
   else letter.status=outcome==='refused'?'refused':'no_reply';
   letter.answered=letter.sealed?{year:letter.sealed.year,month:letter.sealed.month}:null;delete letter.sealed;letter.phase='delivered';letter.delivered={year:s.year,month:s.month};

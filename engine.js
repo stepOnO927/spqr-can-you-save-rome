@@ -1070,7 +1070,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   advanceCoalitionAdmissions(s,estimatedStrength,strategicRoll,{autoplayPlayer});proposeCoalitionAdmissionsAI(s,{autoplayPlayer});
   advanceCoalitionMotions(s,{autoplayPlayer});proposeCoalitionMotionsAI(s,{autoplayPlayer});
   advanceCoalitionAidRequests(s,strategicRoll,{autoplayPlayer});proposeCoalitionAidAI(s,{autoplayPlayer});
-  advanceAgreementProposals(s,{checkAlliance:canFormAlliance,concludeAlliance:(state,actor,target)=>diplomacy(state,actor,target,'alliance',{priorConsent:true})});syncAgreementLetters(s);
+  advanceAgreementProposals(s,{autoplayPlayer,checkAlliance:canFormAlliance,concludeAlliance:(state,actor,target)=>diplomacy(state,actor,target,'alliance',{priorConsent:true})});syncAgreementLetters(s);
   if(!autoplayPlayer){syncCoalitionLetters(s);syncCoalitionAdmissionLetters(s);syncCoalitionMotionLetters(s);syncCoalitionAidLetters(s)}
   advanceMail(s,{proposeAgreement,diplomacy});
   for(const owner of Object.keys(s.factions).filter(id=>autoplayPlayer||id!==s.player)){

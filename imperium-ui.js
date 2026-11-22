@@ -62,7 +62,7 @@ export function describeEffect(e,lang){
  if(e.succession)return zh?'通过继承系统安排继承人':'Designates a successor through the succession system';
  if(e.relation)return e.relation.map(r=>`${fname(r.target,lang)} ${zh?'关系':'relations'} ${sign(r.n)}`).join(zh?'，':', ');
  if(e.peaceLetter)return zh?`若处于战争，向${fname(e.peaceLetter,lang)}寄出议和书信（由对方决定）`:`If at war, sends a peace letter to ${fname(e.peaceLetter,lang)} (they decide)`;
- if(e.propose)return zh?`向${e.propose.targets.map(x=>fname(x,lang)).join('、')}提出协定（对方可拒绝）`:`Proposes an agreement to ${e.propose.targets.map(x=>fname(x,lang)).join(', ')} (they may refuse)`;
+ if(e.propose){const targets=e.propose.targets.map(x=>fname(x,lang)).join('、');return zh?`${e.propose.reverse?'邀请'+targets+'提出协定':'向'+targets+'提出协定'}：寄信方支付2国库，往返约4个月；可能遗失或遭拒，成立时另付条约费用。`:`${e.propose.reverse?'Invites a proposal from':'Proposes an agreement to'} ${targets}: the sender pays 2 treasury for a roughly four-month exchange; letters may be lost or refused, and the treaty has a separate cost.`}
  if(e.foreignTrust)return zh?`${fname(e.foreignTrust.faction,lang)}人物对其领袖的忠诚略降`:`${fname(e.foreignTrust.faction,lang)} figures become slightly less loyal to their leaders`;
  if(e.loyalty)return zh?`已控制战区忠诚度 ${sign(e.loyalty)}`:`Held theaters’ loyalty ${sign(e.loyalty)}`;
  if(e.regionLoyalty)return `${rname(e.regionLoyalty.region,lang)} ${zh?'忠诚度':'loyalty'} ${sign(e.regionLoyalty.n)}`;
