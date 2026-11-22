@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame} from '../engine.js?v=finance-history-merge-1';
+import {newGame} from '../engine.js?v=office-age-verified-1';
 import {sendLetter,advanceMail,replyToLetter,receivedMail} from '../epistulae.js?v=finance-history-merge-1';
 import {mailboxHtml} from '../mail-ui.js?v=finance-history-merge-1';
 

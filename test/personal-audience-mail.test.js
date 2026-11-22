@@ -1,9 +1,9 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=finance-history-merge-1';
+import {newGame,upgradeSave} from '../engine.js?v=office-age-verified-1';
 import {createFictionalPerson} from '../dynasties.js?v=finance-history-merge-1';
-import {addReport} from '../character-system.js?v=finance-history-merge-1';
-import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=finance-history-merge-1';
-import {advanceMailReports} from '../mail-reports.js?v=finance-history-merge-1';
+import {addReport} from '../character-system.js?v=office-age-verified-1';
+import {requestPersonalMeeting,advancePersonalDiplomacy} from '../personal-diplomacy.js?v=office-age-verified-1';
+import {advanceMailReports} from '../mail-reports.js?v=office-age-verified-1';
 import {receivedMail} from '../epistulae.js?v=finance-history-merge-1';
 const replies=s=>receivedMail(s).filter(m=>m.context?.kind==='personal_audience_result');
 function fixture(seed,away=false){
