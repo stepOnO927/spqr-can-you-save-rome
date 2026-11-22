@@ -34,7 +34,7 @@ const portrait=(id,state)=>{
 const dates=(c,zh)=>{
  const birth=c.birthYear!=null?era(c.birthYear,zh):CHARACTER_CATALOG[c.id]?.birth;
  const estimate=Array.isArray(birth)?(zh?`约前${Math.abs(birth[0])}${birth[0]===birth[1]?'':`–${Math.abs(birth[1])}`}年`:`about ${Math.abs(birth[0])}${birth[0]===birth[1]?'':`–${Math.abs(birth[1])}`} BCE`):birth||'?';
- return c.deathYear==null?estimate:`${estimate} – ${era(c.deathYear,zh)} ${zh?'（模拟）':'(simulated)'}`;
+ return c.missing||c.deathYear==null?estimate:`${estimate} – ${era(c.deathYear,zh)} ${zh?'（模拟）':'(simulated)'}`;
 };
 const era=(year,zh)=>year<0?(zh?`前${Math.abs(year)}年`:`${Math.abs(year)} BCE`):(zh?`公元${year+1}年`:`${year+1} CE`);
 

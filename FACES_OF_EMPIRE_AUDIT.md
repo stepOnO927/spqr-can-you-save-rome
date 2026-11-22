@@ -6,6 +6,16 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `c8715173` is integrated. Its missing-person death-date privacy
+fix remains in the genealogy display and procedural portraits: an unreported
+death does not reveal a year or age while the person is still missing. The
+expansion's portrait and ruler controls remain in the same panels. Cache keys
+for all runtime and smoke imports follow the current main modules, and the
+module-version regression checks each imported target separately. The full
+local suite passes 1,252/1,252; the 120-month Roman/Han market simulation and
+Wheels long-campaign scenarios pass. The corrected browser checks still need
+GitHub verification.
+
 GitHub checks for `ca6dd798` passed Wheels browser, quality, Pages package,
 and Poki validation. Browser group 3 passed; groups 1 and 2 exposed two smoke
 failures. The new portrait smoke imported a second copy of the mutable character

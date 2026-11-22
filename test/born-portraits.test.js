@@ -60,3 +60,5 @@ test('foreign portraits remain the dated meeting snapshot, not live aging',()=>{
 test('a meeting portrait of an infant remains a dated snapshot after the child grows up',()=>{
  let s=newGame('caesar');const id=child(s,'Observed infant','female'),seen=fictionalPortraitKey(s,id);assert.match(seen,/-infant$/);s.world.characters[id].faction='senate';assert.equal(observedFictionalPortrait(s,id),null);s.meetings.push({actor:'caesar',target:id,status:'met',resolvedYear:s.year,resolvedMonth:s.month,portraitKey:seen});s=upgradeSave(structuredClone(s));s.year+=20;assert.equal(observedFictionalPortrait(s,id),seen);assert.equal(fictionalPortraitKey(s,id),seen.replace('-infant','-adult'));
 });
+
+test('a missing person portrait does not expose an undisclosed death',()=>{const s=newGame('caesar'),id=child(s,'Missing','female');s.year+=20;s.world.characters[id].missing={year:s.year,month:s.month};const before=fictionalPortraitKey(s,id);s.world.characters[id].alive=false;s.world.characters[id].deathYear=s.year-15;assert.equal(fictionalPortraitKey(s,id),before)});

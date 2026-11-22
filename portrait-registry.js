@@ -127,7 +127,7 @@ export function assignBornPortrait(state,id){
 function bornPortraitKey(state,id){
  const claim=state.world?.dynasties?.bornPortraitClaims?.[id],c=state.world?.characters?.[id],saved=state.world?.dynasties?.catalog?.[id];
  if(!claim||!c||!saved?.fictional||!BORN_PORTRAITS[claim.sex]?.includes(claim.key)||c.sex!==claim.sex||c.birthYear!==claim.birthYear||!Array.isArray(claim.name)||claim.name[0]!==saved.name?.[0]||claim.name[1]!==saved.name?.[1]||!Array.isArray(claim.parents)||!Array.isArray(c.parents)||JSON.stringify(claim.parents)!==JSON.stringify(c.parents))return null;
- const age=(c.alive?state.year:c.deathYear)-c.birthYear;if(!Number.isFinite(age)||age<0)return null;
+ const age=(c.missing||c.alive?state.year:c.deathYear)-c.birthYear;if(!Number.isFinite(age)||age<0)return null;
  return claim.key+(age<5?'-infant':age<18?'-child':'-adult');
 }
 export function portraitSeedFor(id,person,entry){
