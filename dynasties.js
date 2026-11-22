@@ -1,6 +1,6 @@
-import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=mutual-audience-1';
-import {CHARACTER_CATALOG,ageRange} from './characters.js?v=succession-ui-recovery-1';
-import {startDynasticWar} from './civil-war.js?v=mutual-audience-1';
+import {visiblePersonName,storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=saved-age-consistency-1';
+import {CHARACTER_CATALOG,ageRange} from './characters.js?v=saved-age-consistency-1';
+import {startDynasticWar} from './civil-war.js?v=saved-age-consistency-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {assignBornPortrait,assignCourtPortrait} from './portrait-registry.js?v=missing-fate-privacy-1';
 

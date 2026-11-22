@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=office-age-verified-1';
-import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=finance-history-merge-1';
+import {newGame,upgradeSave} from '../engine.js?v=saved-age-consistency-1';
+import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=saved-age-consistency-1';
 import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=missing-fate-privacy-1';
 
 const child=(s,name,sex)=>createFictionalPerson(s,{name:[name,name],faction:'caesar',birthYear:s.year,parents:['caesar'],sex});
