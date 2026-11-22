@@ -1,8 +1,8 @@
-import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=agent-handover-1';
+import {isDeliveredReport,storedCorrespondentName} from '../person-knowledge.js?v=portrait-fourteen-1';
 import {campaignDate} from '../campaign-date.js?v=calendar-1';
-import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease,offerAgentHandover} from '../character-system.js?v=agent-handover-1';
-import {reassurePerson} from '../conspiracies.js?v=agent-handover-1';
-import {CHARACTER_CATALOG} from '../characters.js?v=agent-handover-1';
+import {queueMission,missionCost,availableAgents,counterWatchRemaining,answerAgentRelease,offerAgentHandover} from '../character-system.js?v=portrait-fourteen-1';
+import {reassurePerson} from '../conspiracies.js?v=portrait-fourteen-1';
+import {CHARACTER_CATALOG} from '../characters.js?v=portrait-fourteen-1';
 import {FACTIONS} from '../data.js?v=phase-x-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

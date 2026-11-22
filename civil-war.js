@@ -1,6 +1,6 @@
-import {isDeliveredReport} from './person-knowledge.js?v=agent-handover-1';
-import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=agent-handover-1';
-import {reportedControl} from './control-intelligence.js?v=agent-handover-1';
+import {isDeliveredReport} from './person-knowledge.js?v=portrait-fourteen-1';
+import {CHARACTER_CATALOG,ageRange,assignSuccession} from './characters.js?v=portrait-fourteen-1';
+import {reportedControl} from './control-intelligence.js?v=portrait-fourteen-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 
 // Alternate-history claimant commands use real game theaters and armies.

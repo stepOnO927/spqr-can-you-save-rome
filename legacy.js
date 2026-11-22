@@ -1,7 +1,7 @@
-import {storedCorrespondentName} from './person-knowledge.js?v=agent-handover-1';
-import {syncChronicleDispatches} from './chronicle.js?v=agent-handover-1';
-import {CHARACTER_CATALOG} from './characters.js?v=agent-handover-1';
-import {initializeDynasties} from './dynasties.js?v=agent-handover-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=portrait-fourteen-1';
+import {syncChronicleDispatches} from './chronicle.js?v=portrait-fourteen-1';
+import {CHARACTER_CATALOG} from './characters.js?v=portrait-fourteen-1';
+import {initializeDynasties} from './dynasties.js?v=portrait-fourteen-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 
