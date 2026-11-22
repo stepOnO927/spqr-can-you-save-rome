@@ -252,7 +252,7 @@ function prepareExchange(s,op){
   if(rand(s)<refusal)return {available:false,declined:true};
  }
  if(!prior)return {available:false};
- return {available:true,report:{kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,peopleNames:structuredClone(prior.peopleNames||{}),range:validStrengthRange(prior)?[...prior.range]:undefined,exhaustive:prior.exhaustive===true,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,observationUndated:!Number.isFinite(observedAt(prior)),confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'}};
+ return {available:true,report:{kind:prior.kind,character:prior.character,...(prior.identityObserved===true?{identityObserved:true}:{}),value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,peopleNames:structuredClone(prior.peopleNames||{}),range:validStrengthRange(prior)?[...prior.range]:undefined,exhaustive:prior.exhaustive===true,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,observationUndated:!Number.isFinite(observedAt(prior)),confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'}};
 }
 export function advanceOperations(s){initializeWorld(s);for(const op of s.operations){if(op.status!=='pending')continue;op.remaining--;
  if(op.type==='exchange'&&!op.exchangeSealed&&op.remaining<=Math.floor((op.duration||configs.exchange.months)/2))op.exchangeSealed=prepareExchange(s,op);
@@ -412,13 +412,13 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   // when someone actually in office and named in the report could attend.
   const met=(report.leaders||[]).find(candidate=>{const p=s.world.characters[candidate];return (s.world.leadership[op.target]||[]).includes(candidate)&&p?.alive&&p.faction===op.target&&!p.travel&&!p.missing&&s.regions.some(r=>r.id===p.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===candidate&&a.move)&&!['seriously_ill','dying','deceased'].includes(p.health)});
   if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=apparentAgeRange(met,s.year,s),peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[met]},s);
-   addReport(s,op.actor,op.target,{kind:'location',character:met,value:p.location,peopleNames,source:'audience',confidence:'unverified',reliability:'moderate'});
-   addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,peopleNames,source:'audience',confidence:'unverified',reliability:'low'});
-   if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,peopleNames,source:'audience',confidence:'unverified',reliability:'low'});
+   addReport(s,op.actor,op.target,{kind:'location',character:met,value:p.location,peopleNames,identityObserved:true,source:'audience',confidence:'unverified',reliability:'moderate'});
+   addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,peopleNames,identityObserved:true,source:'audience',confidence:'unverified',reliability:'low'});
+   if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,peopleNames,identityObserved:true,source:'audience',confidence:'unverified',reliability:'low'});
   }
  }
  if(report.character&&report.character===op.subjectCharacter&&Array.isArray(op.subjectName)&&op.subjectName.length===2&&op.subjectName.every(x=>typeof x==='string'&&x.length>0))report.peopleNames={[report.character]:[...op.subjectName]};
- else if(report.character&&op.subjectCharacter===null&&report.character===healthId)report.peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[report.character]},s);
+ else if(report.character&&op.subjectCharacter===null&&report.character===healthId){report.peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[report.character]},s);report.identityObserved=true}
  addReport(s,op.actor,op.target,report);if(op.actor===s.player)notify(s,`An intelligence report from ${FACTIONS[op.target].short[0]} has arrived.`,`一份来自${FACTIONS[op.target].short[1]}的情报报告已送达。`);
 }}
 export function contestLeadership(s,faction,claimant){

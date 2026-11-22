@@ -21,7 +21,7 @@ test('old saves without proposal queues remain playable and the real monthly tic
 });
 
 test('every agreement type can be concluded by a delivered proposal with its original terms',async()=>{
- const {AGREEMENT_TYPES,visibleAgreements}=await import('../agreements.js?v=statement-verification-1');const seed=outcomes().get('accepted').seed;
+ const {AGREEMENT_TYPES,visibleAgreements}=await import('../agreements.js?v=observed-identity-1');const seed=outcomes().get('accepted').seed;
  for(const [type,def] of Object.entries(AGREEMENT_TYPES)){const s=fixture(seed),cash=s.factions.caesar.treasury;assert.ok(sendAgreementProposal(s,'caesar','egypt',type,{secret:true}).ok,type);for(let i=0;i<4;i++)step(s);const letter=s.world.agreementLetters[0];assert.equal(letter.status,'accepted',type);const agreement=s.agreements.find(x=>x.id===letter.agreement);assert.equal(agreement.type,type);assert.equal(agreement.diplomaticCost,def.cost);assert.equal(agreement.duration,def.duration);assert.equal(s.factions.caesar.treasury,cash-2-def.cost);assert.equal(visibleAgreements(s,'parthia').some(x=>x.id===agreement.id),false);assert.equal(receivedMail(s).find(x=>x.context?.kind==='agreement_result')?.confidentiality,'secret')}
 });
 

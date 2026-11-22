@@ -6,6 +6,14 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `69ed42e9` is integrated. Its `identityObserved` provenance now
+survives general and audience observations as well as an ally's delayed
+forwarding, while a targeted investigation still keeps the name known at
+dispatch without claiming a new observation. The overlap merge had lost the
+observation marks and forwarding field; restoring them makes the new identity,
+meeting, character-panel, statement and module checks pass 82/82. Cloud checks
+for this integration follow.
+
 Main through `76b1b03c` is integrated. Its public diplomatic statement
 reports now expose their existing follow-up investigation action in the
 expansion's character panel. An overlapping long UI line had omitted `stance`
