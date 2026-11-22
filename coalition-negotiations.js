@@ -1,6 +1,6 @@
-import {coalitionInterest,formCoalition} from './coalitions.js?v=estate-records-1';
-import {reportedDiplomacy} from './diplomatic-knowledge.js?v=estate-records-1';
-import {reportedControl} from './control-intelligence.js?v=estate-records-1';
+import {coalitionInterest,formCoalition} from './coalitions.js?v=estate-notice-1';
+import {reportedDiplomacy} from './diplomatic-knowledge.js?v=estate-notice-1';
+import {reportedControl} from './control-intelligence.js?v=estate-notice-1';
 import {ROUTES} from './data.js?v=phase-x-1';
 import {rememberPoliticalEvent} from './political-memory.js?v=grand-chessboard-2';
 

@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=estate-records-1';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=estate-notice-1';
 import {CHARACTER_CATALOG,ageRange} from '../characters.js?v=saved-age-consistency-1';
 import {assignSuccession,successionModel} from '../characters.js?v=saved-age-consistency-1';
-import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=estate-records-1';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=estate-records-1';
-import {canHoldOffice} from '../office-system.js?v=estate-records-1';
-import {renderGenealogy} from '../genealogy-ui.js?v=estate-records-1';
-import {finalizeCampaign} from '../legacy.js?v=estate-records-1';
-import {startDynasticWar} from '../civil-war.js?v=estate-records-1';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=estate-notice-1';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=estate-notice-1';
+import {canHoldOffice} from '../office-system.js?v=estate-notice-1';
+import {renderGenealogy} from '../genealogy-ui.js?v=estate-notice-1';
+import {finalizeCampaign} from '../legacy.js?v=estate-notice-1';
+import {startDynasticWar} from '../civil-war.js?v=estate-notice-1';
 import {fictionalPortraitKey} from '../portrait-registry.js?v=born-portrait-thirteen-1';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -152,7 +152,7 @@ test('a foreign child may inherit private property through a negotiated court se
  assert.equal(resolveInheritanceDispute(s,caseFile.id,'compromise').ok,true);
  assert.equal(s.world.characters[foreign].wealth,0);assert.equal(s.world.dynasties.estateTransfers[0].amount,15);assert.equal(s.world.dynasties.estateTransfers[0].status,'pending');
  assert.equal(s.world.characters[domestic].wealth,15);
- assert.equal(s.relations['caesar:egypt'],before+2);
+ assert.equal(s.relations['caesar:egypt']||0,before);assert.equal(s.world.dynasties.estateRulingNotices.at(-1).status,'pending');
  assert.equal(s.world.leadership.egypt.includes(foreign),false);
 });
 
