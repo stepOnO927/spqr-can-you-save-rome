@@ -261,10 +261,16 @@ export function makeWill(s,id,beneficiary,share=1){
  // The testator knows the condition of their own court, not whether a
  // relative abroad has died without a delivered report. A will is only a
  // nomination; actual survival is checked when the estate is settled.
- if(!eligibleAdult(s,id)||!heir||(!heir.alive&&heir.faction===c.faction)||id===beneficiary||share<=0||share>1)return {ok:false,reason:'eligibility'};
+ if(!eligibleAdult(s,id)||!heir||(!heir.alive&&heir.faction===c.faction)||id===beneficiary||!Number.isFinite(share)||share<=0||share>1)return {ok:false,reason:'eligibility'};
  if(c.faction!==heir.faction){if(c.spouse!==beneficiary&&!c.children.includes(beneficiary))return {ok:false,reason:'foreign_heir'};if(s.wars.some(w=>w.includes(c.faction)&&w.includes(heir.faction))||(s.relations[pair(c.faction,heir.faction)]??0)<0)return {ok:false,reason:'diplomacy'}}
  const beneficiaryName=visiblePersonName(s,c.faction,beneficiary)||['Unrecorded name','姓名未记录'];
- c.will={beneficiary,share};record(s,id,`Named ${beneficiaryName[0]} in a personal will.`,`在个人遗嘱中指定${beneficiaryName[1]}。`);return {ok:true};
+ c.will={beneficiary,share,beneficiaryName:[...beneficiaryName],year:s.year,month:s.month};record(s,id,`Named ${beneficiaryName[0]} in a personal will.`,`在个人遗嘱中指定${beneficiaryName[1]}。`);return {ok:true};
+}
+
+export function revokeWill(s,id){
+ initializeDynasties(s);const c=s.world.characters[id];
+ if(!eligibleAdult(s,id)||!c.will)return {ok:false,reason:'unavailable'};
+ delete c.will;record(s,id,'Revoked the personal will.','撤回了个人遗嘱。');return {ok:true};
 }
 
 export function nominateGuardian(s,parentId,childId,guardianId){
