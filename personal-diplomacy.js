@@ -1,10 +1,10 @@
-import {reportedControl,observeArrival} from './control-intelligence.js?v=dated-subject-names-1';
+import {reportedControl,observeArrival} from './control-intelligence.js?v=statement-verification-1';
 import {initializeWorld, CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
 import {ROUTES} from './data.js?v=phase-x-1';
-import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=dated-subject-names-1';
-import {officeOf} from './office-system.js?v=dated-subject-names-1';
+import {addReport,reportedHealthSubjects,reportedPersonName,apparentAgeRange} from './character-system.js?v=statement-verification-1';
+import {officeOf} from './office-system.js?v=statement-verification-1';
 import {fictionalPortraitKey} from './portrait-registry.js?v=born-portrait-thirteen-1';
-import {isCompletedMeeting} from './person-knowledge.js?v=dated-subject-names-1';
+import {isCompletedMeeting} from './person-knowledge.js?v=statement-verification-1';
 
 const atWar=(s,a,b)=>a!==b&&s.wars.some(w=>w.includes(a)&&w.includes(b));
 // A commander in transit has not arrived in a theater where an audience can occur.
