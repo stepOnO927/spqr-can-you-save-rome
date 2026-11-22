@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave} from '../engine.js?v=observed-identity-1';
-import {configureStartingDifficulty} from '../difficulty.js?v=observed-identity-1';
-import {newScenario} from '../scenarios.js?v=observed-identity-1';
+import {newGame,tick,upgradeSave} from '../engine.js?v=meeting-report-names-1';
+import {configureStartingDifficulty} from '../difficulty.js?v=meeting-report-names-1';
+import {newScenario} from '../scenarios.js?v=meeting-report-names-1';
 
 test('difficulty does not secretly penalize the player economy',()=>{
  const states=['standard','hard','expert'].map(difficulty=>{const s=newGame('caesar');s.difficulty=difficulty;tick(s);return s});

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=observed-identity-1';
-import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=observed-identity-1';
-import {templatesFor,recruitFormation} from '../legion-designer.js?v=observed-identity-1';
+import {newGame,tick,upgradeSave,issueMilitaryOrder,estimatedStrength} from '../engine.js?v=meeting-report-names-1';
+import {createPlan,assignRole,approvePlan,pausePlan,cancelPlan,editPlan,planById,plansFor,validatePath,findRoute,assessPlan,adviserCounsel,planControlled,approveRecommendation,aiBattlePlans} from '../battle-plans.js?v=meeting-report-names-1';
+import {templatesFor,recruitFormation} from '../legion-designer.js?v=meeting-report-names-1';
 import {ROUTES} from '../data.js?v=phase-x-1';
 
 const roundTrip=s=>upgradeSave(JSON.parse(JSON.stringify(s)));
@@ -120,7 +120,7 @@ test('with spare forces and stale intelligence, expert AI adds reconnaissance an
 });
 
 test('an AI ally coordinates with a live allied operation against the same objective',async()=>{
- const {observeControl}=await import('../control-intelligence.js?v=observed-identity-1');
+ const {observeControl}=await import('../control-intelligence.js?v=meeting-report-names-1');
  const s=newGame('senate');s.difficulty='expert';
  s.regions.find(r=>r.id==='africa').owner='caesar';s.wars.push(['caesar','numidia']);s.alliances.push(['numidia','senate']);observeControl(s);
  for(const a of s.armies.filter(a=>a.owner==='numidia'))a.men=15000;
