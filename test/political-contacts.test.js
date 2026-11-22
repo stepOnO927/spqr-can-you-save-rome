@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=statement-verification-1';
-import {addReport,claimantRepresentatives} from '../character-system.js?v=statement-verification-1';
-import {offerPoliticalContact,advancePoliticalContacts} from '../political-contacts.js?v=statement-verification-1';
+import {newGame,upgradeSave} from '../engine.js?v=observed-identity-1';
+import {addReport,claimantRepresentatives} from '../character-system.js?v=observed-identity-1';
+import {offerPoliticalContact,advancePoliticalContacts} from '../political-contacts.js?v=observed-identity-1';
 
 const seedFor=(f)=>Array.from({length:10000},(_,i)=>i).find(i=>{const a=(Math.imul(i,1664525)+1013904223)>>>0,b=(Math.imul(a,1664525)+1013904223)>>>0;return f(a/4294967296,b/4294967296)});
 function setup(player='caesar'){

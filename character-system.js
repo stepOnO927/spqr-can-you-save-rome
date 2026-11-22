@@ -1,16 +1,16 @@
-import {recordLegendEvidence} from './legend.js?v=statement-verification-1';
-import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=statement-verification-1';
+import {recordLegendEvidence} from './legend.js?v=observed-identity-1';
+import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=observed-identity-1';
 import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=saved-age-consistency-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=statement-verification-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=observed-identity-1';
 import {FACTIONS,ROUTES} from './data.js?v=phase-x-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=statement-verification-1';
-import {potentialConspirators} from './conspiracies.js?v=statement-verification-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=statement-verification-1';
-import {reportedControl} from './control-intelligence.js?v=statement-verification-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=statement-verification-1';
-import {activeAgreement} from './agreements.js?v=statement-verification-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=observed-identity-1';
+import {potentialConspirators} from './conspiracies.js?v=observed-identity-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=observed-identity-1';
+import {reportedControl} from './control-intelligence.js?v=observed-identity-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=observed-identity-1';
+import {activeAgreement} from './agreements.js?v=observed-identity-1';
 import {activeModifiers} from './inventions.js?v=mission-discount-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=statement-verification-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=observed-identity-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -218,7 +218,7 @@ function prepareExchange(s,op){
   if(rand(s)<refusal)return {available:false,declined:true};
  }
  if(!prior)return {available:false};
- return {available:true,report:{kind:prior.kind,character:prior.character,value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,peopleNames:structuredClone(prior.peopleNames||{}),range:validStrengthRange(prior)?[...prior.range]:undefined,exhaustive:prior.exhaustive===true,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,observationUndated:!Number.isFinite(observedAt(prior)),confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'}};
+ return {available:true,report:{kind:prior.kind,character:prior.character,...(prior.identityObserved===true?{identityObserved:true}:{}),value:Array.isArray(prior.value)?[...prior.value]:prior.kind==='authority'&&prior.value&&typeof prior.value==='object'?{...prior.value,actors:[...(prior.value.actors||[])]}:prior.value,leaders:prior.leaders?[...prior.leaders]:undefined,peopleNames:structuredClone(prior.peopleNames||{}),range:validStrengthRange(prior)?[...prior.range]:undefined,exhaustive:prior.exhaustive===true,source:'exchange',originSource:sourceFamily(prior),fromFaction:partner,observationYear:prior.observationYear??prior.year,observationMonth:prior.observationMonth??prior.month,observationUndated:!Number.isFinite(observedAt(prior)),confidence:prior.confidence==='disputed'?'disputed':prior.confidence==='rumor'?'rumor':'unverified',reliability:prior.reliability||'unknown'}};
 }
 export function advanceOperations(s){initializeWorld(s);for(const op of s.operations){if(op.status!=='pending')continue;op.remaining--;
  if(op.type==='exchange'&&!op.exchangeSealed&&op.remaining<=Math.floor((op.duration||configs.exchange.months)/2))op.exchangeSealed=prepareExchange(s,op);
@@ -380,13 +380,13 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   const met=(report.leaders||[]).find(candidate=>{const p=s.world.characters[candidate];return (s.world.leadership[op.target]||[]).includes(candidate)&&p?.alive&&p.faction===op.target&&!p.travel&&!p.missing&&s.regions.some(r=>r.id===p.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===candidate&&a.move)&&!['seriously_ill','dying','deceased'].includes(p.health)});
   if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=apparentAgeRange(met,s.year,s);
    const peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[met]});
-   addReport(s,op.actor,op.target,{kind:'location',character:met,value:p.location,peopleNames,source:'audience',confidence:'unverified',reliability:'moderate'});
-   addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,peopleNames,source:'audience',confidence:'unverified',reliability:'low'});
-   if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,peopleNames,source:'audience',confidence:'unverified',reliability:'low'});
+   addReport(s,op.actor,op.target,{kind:'location',character:met,value:p.location,peopleNames,identityObserved:true,source:'audience',confidence:'unverified',reliability:'moderate'});
+   addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,peopleNames,identityObserved:true,source:'audience',confidence:'unverified',reliability:'low'});
+   if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,peopleNames,identityObserved:true,source:'audience',confidence:'unverified',reliability:'low'});
   }
  }
  if(report.character&&report.character===op.subjectCharacter&&Array.isArray(op.subjectName)&&op.subjectName.length===2&&op.subjectName.every(x=>typeof x==='string'&&x.length>0))report.peopleNames={[report.character]:[...op.subjectName]};
- else if(report.character&&op.subjectCharacter===null&&report.character===healthId)report.peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[report.character]});
+ else if(report.character&&op.subjectCharacter===null&&report.character===healthId){report.peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[report.character]});report.identityObserved=true}
  addReport(s,op.actor,op.target,report);if(op.actor===s.player)notify(s,`An intelligence report from ${FACTIONS[op.target].short[0]} has arrived.`,`一份来自${FACTIONS[op.target].short[1]}的情报报告已送达。`);
 }}
 export function contestLeadership(s,faction,claimant){

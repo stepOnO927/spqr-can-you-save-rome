@@ -1,7 +1,7 @@
-import {storedCorrespondentName} from './person-knowledge.js?v=statement-verification-1';
+import {storedCorrespondentName} from './person-knowledge.js?v=observed-identity-1';
 import {syncChronicleDispatches} from './chronicle.js?v=saved-age-consistency-1';
 import {CHARACTER_CATALOG} from './characters.js?v=saved-age-consistency-1';
-import {initializeDynasties} from './dynasties.js?v=statement-verification-1';
+import {initializeDynasties} from './dynasties.js?v=observed-identity-1';
 
 export function canFinalizeCampaign(s){return !!(s.victory||s.defeat||s.peacefulVictory||s.world?.dynasties?.scenario?.stage==='resolved')}
 
