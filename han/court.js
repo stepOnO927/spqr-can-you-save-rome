@@ -86,6 +86,7 @@ export function appoint(s,office,personId,{actor='emperor',logFn=null}={}){
  if(o.requiresLiu&&!isLiuClan(s,personId))return {ok:false,reason:'requires_liu_clan'};
  if(p.eunuch&&['chengxiang','yushi','dasima'].includes(office))return {ok:false,reason:'eunuch_bar'};
  if(s.court.offices[office]===personId&&p.office===office)return {ok:false,reason:'already'};
+ if(p.regionalOffice){const site=s.regions.find(region=>region.id===p.regionalOffice);if(site?.administratorId===personId)site.administratorId=null;(p.career||=[]).push({year:s.year,month:s.month,kind:'regional_service_ended',region:p.regionalOffice});p.regionalOffice=null}
  if(p.office&&p.office!==office)s.court.offices[p.office]=null;
  const prev=s.court.offices[office];
  // the court reacts: the displaced official's faction resents the change

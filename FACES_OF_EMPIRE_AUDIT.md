@@ -6,6 +6,19 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Han commanderies now have persistent, distinctly named original game
+administrators with appointment histories and stable portrait seeds. Their
+competence and corruption change real local tax yield; a paid investigation
+targets the saved person. Converting a kingdom to a commandery appoints an
+actual administrator and names that person in the Chronicle. Conquest, death
+and promotion end the regional tenure before a replacement is made. The own
+region panel displays the officer in English and Chinese; old saves gain new
+administrators without replacing any existing people. This covers Han direct
+commandery administration, not every other polity's provincial office.
+The regional-review focus previously selected no target in BCE years because
+its negative year yielded a negative array index. It now starts a real audit
+of a named administrator and does not reimburse a duplicate failed audit.
+
 The 120-month acceptance script now runs a third, entirely autonomous eastern
 campaign with no player trade orders. It checks each intermediary resale
 against an earlier paid physical receipt in the same market, one completed

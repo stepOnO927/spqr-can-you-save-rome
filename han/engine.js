@@ -14,7 +14,7 @@ import {agriculturalProduction,grainProvisionFactor} from '../war-economy.js?v=f
 import {advanceFocus,focusState} from './focus.js?v=han-1';
 import {PRESETS,marchMonths,routeBetween,supplyFor,resolveBattle,templateStats} from './military.js?v=han-1';
 import {roll,clamp,log,advanceDate,monthIndex} from './util.js?v=han-1';
-import {CULTURAL_NAME_POOLS,ensureFieldCommanders,fieldCulture} from './field-identities.js';
+import {CULTURAL_NAME_POOLS,ensureFieldCommanders,ensureRegionalAdministrators,fieldCulture,regionalAdministrationFactor} from './field-identities.js';
 import {ensureHanPortraitSeed,ensureHanPortraitSeeds} from './court-portrait.js';
 import {ensureForeignRulers,advanceForeignRulers,rulerGovernanceFactor} from './rulers.js';
 import {initialize as initializeAmbition,advance as advanceAmbition} from './ambitions.js?v=faces-name-disagreement-1';
@@ -95,7 +95,7 @@ export function newHanGame(player='han',{scenario='historical',difficulty='stand
  if(scenario==='usurper')applyUsurperScenario(s);
  if(scenario==='disputed')applyDisputedScenario(s);
  if(difficulty==='beginner'&&player)s.factions[player].treasury+=100;
- ensureFieldCommanders(s);ensureHanPortraitSeeds(s);computeMandate(s);recomputeInfluence(s);observe(s);
+ ensureFieldCommanders(s);ensureRegionalAdministrators(s);ensureHanPortraitSeeds(s);computeMandate(s);recomputeInfluence(s);observe(s);
  if(start!=='roman')log(s,['Liu Shi has taken the throne. The court looks to the regents named by Emperor Xuan.','刘奭已即位，朝廷仰赖宣帝遗诏所命辅政大臣。'],{kind:'throne'});
  if(player)initializeAmbition(s);
  return s;
@@ -140,7 +140,7 @@ function economy(s){
   if(f.defeated)continue;const own=s.regions.filter(r=>r.owner===id);if(!own.length)continue;
   const taxRate=id==='han'||id==='han_loyalist'||id==='rival_court'?{low:0.7,normal:1,high:1.3}[s.taxLevel]*(s.taxRelief>0?0.6:1)+(focusState(s,id).mod.tax||0):1;
   const loyaltyF=r=>0.4+r.loyalty/150;
-  const income=own.reduce((a,r)=>a+r.tax*loyaltyF(r),0)*0.12*(id==='han'?0.5+capacity:rulerGovernanceFactor(s,id))*taxRate*(s.throne.paralysis>0&&id==='han'?0.6:1);
+  const income=own.reduce((a,r)=>a+r.tax*loyaltyF(r)*(id==='han'?regionalAdministrationFactor(s,r):1),0)*0.12*(id==='han'?0.5+capacity:rulerGovernanceFactor(s,id))*taxRate*(s.throne.paralysis>0&&id==='han'?0.6:1);
   const grain=own.reduce((a,r)=>a+agriculturalProduction(s,r,r.grain+(r.irrigation||0))*loyaltyF(r),0)*0.27;
   const armies=s.armies.filter(a=>a.owner===id&&a.men>0);
   // Local militias and pastoral hosts serve from their own households or
@@ -222,7 +222,7 @@ function sieges(s){
 function mortality(age,health=60){const base=age<30?0.0006:age<45?0.0015:age<55?0.003:age<65?0.006:age<75?0.012:0.025;return base*(1.6-health/100)}
 function aiCourtCandidate(s,office){
  const military=!!OFFICES[office]?.military;
- const eligible=Object.values(s.persons).filter(p=>p.alive&&p.faction==='han'&&!p.office&&p.id!==s.throne.orthodox&&
+ const eligible=Object.values(s.persons).filter(p=>p.alive&&p.faction==='han'&&!p.office&&!p.regionalOffice&&p.id!==s.throne.orthodox&&
   (military?['general','official'].includes(p.role):p.role==='official')&&
   (!OFFICES[office].requiresLiu||isLiuClan(s,p.id))&&
   (!p.eunuch||!['chengxiang','yushi','dasima'].includes(office))&&
@@ -318,7 +318,7 @@ function settleCampaign(s){
 export function tick(s){
  if(s.finalized)return s;
  advanceDate(s);
- scheduledEvents(s);movement(s);battles(s);sieges(s);supply(s);economy(s);lives(s);advanceForeignRulers(s);
+ scheduledEvents(s);movement(s);battles(s);sieges(s);supply(s);ensureRegionalAdministrators(s);economy(s);lives(s);advanceForeignRulers(s);
  hanAI(s);advanceCourt(s);advanceRecommendations(s);
  advanceFrontier(s,{issueMove:(a,to)=>moveArmy(s,a.id,to,{owner:a.owner})});
  advanceEasternMarkets(s);advanceSilk(s);advanceDependencies(s);advanceFocus(s);ensureFieldCommanders(s);
@@ -368,7 +368,7 @@ export function loadHanSave(raw){
  ensureCourtCareers(s);
  s.version=SAVE_VERSION;s.throne.claimants||=[];s.throne.support||={};s.throne.history||=[];
  const fixes=enforceDynasticInvariants(s,{log:(t,m)=>{if(s.player==='han')log(s,t,{...m,kind:'throne'})}});
- s.loadFixes=fixes;initializeEasternMarkets(s);ensureFieldCommanders(s);ensureHanPortraitSeeds(s);computeMandate(s);
+ s.loadFixes=fixes;initializeEasternMarkets(s);ensureFieldCommanders(s);ensureRegionalAdministrators(s);ensureHanPortraitSeeds(s);computeMandate(s);
  if(s.player)initializeAmbition(s);
  if(s.player&&!s.finalized&&!s.regions.some(r=>r.owner===s.player)&&!s.armies.some(a=>a.owner===s.player&&a.men>0))settleCampaign(s);
  return s;

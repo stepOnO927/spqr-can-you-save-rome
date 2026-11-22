@@ -89,6 +89,40 @@ export function assignFieldCommander(s,army){
 
 export function ensureFieldCommanders(s){for(const army of s.armies)if(army.men>0&&(!army.commander||!s.persons[army.commander]?.alive))assignFieldCommander(s,army);return s}
 
+// A Han commandery has an actual officeholder. These original game people
+// represent unnamed local administrations, not attested historical governors.
+export function ensureRegionalAdministrators(s){
+ const vacancies=[];
+ for(const site of s.regions){
+  const appointed=site.administratorId&&s.persons[site.administratorId],eligible=site.owner==='han'&&site.kind==='commandery';
+  if(site.administratorId&&(!eligible||!appointed?.alive||appointed.faction!=='han'||appointed.regionalOffice!==site.id)){
+   if(appointed?.regionalOffice===site.id){
+    appointed.regionalOffice=null;
+    (appointed.career||=[]).push({year:s.year,month:s.month,kind:'regional_service_ended',region:site.id});
+   }
+   site.administratorId=null;
+  }
+  if(eligible&&!site.administratorId)vacancies.push(site);
+ }
+ if(!vacancies.length)return s;
+ const pool=POOLS.han,used=new Set(Object.values(s.persons).map(p=>p.name?.[0]).filter(Boolean));
+ s.nextRegionalAdministrator=Number.isSafeInteger(s.nextRegionalAdministrator)&&s.nextRegionalAdministrator>0?s.nextRegionalAdministrator:1;
+ for(const site of vacancies){
+  let id;do{id=`regional-administrator:${s.nextRegionalAdministrator++}`}while(s.persons[id]||s.genealogy?.[id]);
+  const serial=s.nextRegionalAdministrator-1,name=originalName(pool,serial%pool.names.length,used,homeLabel(s,site.id,'han'),serial),birth=s.year-35;
+  used.add(name[0]);
+  const person={id,name:[...name],surname:name[0].split(' ')[0],birthSurname:name[0].split(' ')[0],record:'fictional',culture:[...pool.culture],faction:'han',role:'official',profession:'regional administrator',regionalOffice:site.id,title:['Commandery administrator','郡守'],homeland:site.id,location:site.id,sex:'m',birth,death:null,alive:true,ambition:35,competence:45+serial%26,loyalty:65,corruption:serial%25,military:30,spouse:[],career:[{year:s.year,month:s.month,kind:'regional_appointment',region:site.id,who:id}]};
+  s.persons[id]=person;recordBirth(s,{id,birthSurname:person.birthSurname,birth,sex:'m'});ensureHanPortraitSeed(person);site.administratorId=id;
+ }
+ return s;
+}
+
+export function regionalAdministrationFactor(s,site){
+ const person=s.persons[site?.administratorId];
+ if(site?.owner!=='han'||!person?.alive||person.faction!=='han'||person.regionalOffice!==site.id)return 1;
+ return Math.max(.85,Math.min(1.1,1+((person.competence??50)-50)/500-(person.corruption??0)/1000));
+}
+
 // Commercial agents use the same cultural pools but a separate persistent ID
 // namespace. A market record never claims these original game people are
 // documented historical merchants.
