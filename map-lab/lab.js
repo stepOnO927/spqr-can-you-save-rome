@@ -688,7 +688,7 @@ map.on('load',()=>{
  };
  syncSiteCrowding=()=>{
   const zoom=map.getZoom?.(),canProject=typeof map.project==='function';
-  const candidates=state.grandMap&&canProject&&zoom>=4.8&&zoom<6.5?armyMarkers.filter(mark=>mark.unitRegion&&mark.displayPoint).map(mark=>mark.displayPoint):[];
+  const candidates=state.grandMap&&canProject&&zoom>=4.8?armyMarkers.filter(mark=>mark.unitRegion&&mark.displayPoint).map(mark=>mark.displayPoint):[];
   for(const {site,element,attached} of siteMarkers){
    const point=attached&&candidates.length?map.project([site.lon,site.lat]):null;
    element.classList.toggle('near-army',!!point&&candidates.some(flag=>Math.abs(point.x-flag.x)<52&&Math.abs(point.y-flag.y)<38));
