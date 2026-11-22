@@ -9,11 +9,15 @@ try{
  await page.goto(`http://127.0.0.1:${process.env.SPQR_SMOKE_PORT||5173}/`,{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
   const engine=await import('/engine.js?v=world-kings-estate-village-1');
-  const {formCoalition}=await import('/coalitions.js?v=world-kings-estate-village-1');
+  const {formCoalition,advanceCoalitionDefenseCalls,answerCoalitionDefenseCall}=await import('/coalitions.js?v=world-kings-estate-village-1');
   const s=engine.newGame('caesar');
   s.relations['caesar:egypt']=40;s.relations['caesar:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;
   if(!formCoalition(s,'caesar',['egypt','numidia'],'senate',engine.estimatedStrength).ok)throw Error('coalition not formed');
+  s.wars=[];
   if(!engine.diplomacy(s,'senate','egypt','war'))throw Error('coalition war not started');
+  s.month+=2;advanceCoalitionDefenseCalls(s);
+  const call=s.world.coalitionDefenseCalls.find(x=>x.member==='caesar');
+  if(!call||!answerCoalitionDefenseCall(s,call.id,'accept').ok)throw Error('player defense decision failed');
   if(!engine.diplomacy(s,'caesar','senate','peace',{acceptedByPlayer:true}))throw Error('separate peace not reached');
   if(engine.isWar(s,'caesar','senate')||!engine.isWar(s,'egypt','senate'))throw Error('bilateral peace changed ally war');
   sessionStorage.setItem('spqr-view-handoff-v1',JSON.stringify({target:'campaign',state:s}));

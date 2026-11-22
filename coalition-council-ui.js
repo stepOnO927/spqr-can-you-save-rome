@@ -9,7 +9,7 @@ export function coalitionCouncilHtml(s,lang,factionName,esc,campaignDate,onlyId=
  if(!owned.length)return '';
  const date=index=>campaignDate(((index-1)%12+12)%12+1,Math.floor((index-1)/12),lang);
  const option=id=>`<option value="${esc(id)}">${esc(factionName(id))}</option>`;
- return `<div class="rule-block"><h3>${zh?'联盟议事':'Coalition council'}</h3><p>${zh?'普通议案由全体成员过半赞成通过；解散须三分之二赞成。通知下月送达，未投票按弃权。成员保持独立主权。成员可单独议和；若盟友仍在作战，本方与他们的关系和联盟凝聚力会下降，本方十二个月内不再因联盟义务自动重返同一战争。':'Ordinary motions need a majority of all members; dissolution needs two thirds. Notices arrive next month, and silence counts as abstention. Members remain sovereign. Separate peace is allowed; while allies continue the war, relations and cohesion fall, and the peacemaker is excused from a renewed coalition call to arms for twelve months.'}</p>${owned.map(c=>{
+ return `<div class="rule-block"><h3>${zh?'联盟议事':'Coalition council'}</h3><p>${zh?'普通议案由全体成员过半赞成通过；解散须三分之二赞成。通知下月送达，未投票按弃权。成员保持独立主权。协防请求送达后各国分别决定；不答复视为拒绝。单独议和会损害关系与凝聚力。':'Ordinary motions need a majority of all members; dissolution needs two thirds. Notices arrive next month, and silence counts as abstention. Members remain sovereign. Each court decides separately after a defense request arrives; silence declines it. Separate peace is allowed but harms relations and cohesion.'}</p>${owned.map(c=>{
   const pending=(s.world.coalitionMotions||[]).find(m=>m.coalitionId===c.id&&m.status==='voting');
   const expellable=c.parties.filter(id=>id!==s.player&&id!==c.leader);
   const helpers=c.parties.filter(id=>id!==s.player);
@@ -17,6 +17,8 @@ export function coalitionCouncilHtml(s,lang,factionName,esc,campaignDate,onlyId=
   const current=c.contributions?.[s.player]?.policy;
   const available=Object.keys(policies).filter(policy=>policy!==current&&(policy!=='funding'||s.factions[s.player].treasury>35)&&(policy!=='supplies'||s.factions[s.player].food>25));
   const headline=`<p><b>${esc(c.name||c.id)}</b> · ${zh?'盟主':'Leader'} ${esc(factionName(c.leader))} · ${zh?'当前承担':'Current contribution'} ${esc(label(policies,current,zh))}</p>`;
+  const calls=(s.world?.coalitionDefenseCalls||[]).filter(call=>call.coalitionId===c.id&&(call.member===s.player||call.defender===s.player)).slice(-4);
+  const callNotice=calls.map(call=>`<p>${zh?'协防请求':'Defense request'} · ${esc(factionName(call.defender))} → ${esc(factionName(call.member))} · ${esc(factionName(call.aggressor))} · ${esc(({travelling:zh?'使者途中':'Couriers travelling',awaiting_player:zh?'等待本方决定':'Awaiting your decision',accepted:zh?'已参战':'Joined',refused:zh?'已拒绝':'Declined',lapsed:zh?'已失效':'Lapsed',already_fighting:zh?'已在作战':'Already fighting'})[call.status]||call.status)}${call.member===s.player&&call.status==='awaiting_player'?` · ${zh?'截止':'Deadline'} ${esc(date(call.expiresAt))}<br><button class="action" data-coalition-defense="${call.id}" data-decision="accept">${zh?'接受协防':'JOIN DEFENSE'}</button> <button class="action" data-coalition-defense="${call.id}" data-decision="refuse">${zh?'拒绝协防':'DECLINE'}</button>`:''}</p>`).join('');
   const peace=(c.separatePeaces||[]).filter(x=>x.member===s.player&&x.until>s.year*12+s.month).at(-1);
   const peaceNotice=peace?`<p>${zh?'本方单独议和；免于联盟自动参战至':'Your separate peace exempts coalition call to arms until'} ${esc(date(peace.until))}</p>`:'';
   const ballot=pending?`<p>${zh?'议案表决中':'Ballot open'} · ${esc(label(kinds,pending.kind,zh))} · ${pending.kind==='contribution'?esc(label(policies,pending.policy,zh)):pending.kind==='dissolution'?'':esc(factionName(pending.target))} · ${zh?'截止':'Closes'} ${esc(date(pending.closesAt))}</p>`:'';
@@ -24,6 +26,6 @@ export function coalitionCouncilHtml(s,lang,factionName,esc,campaignDate,onlyId=
   const aid=helpers.length?`<label>${zh?'求援盟友':'Request from ally'} <select id="coalition-aid-${esc(c.id)}">${helpers.map(option).join('')}</select></label> <button class="action" data-coalition-aid="${esc(c.id)}">${zh?'请求8国库与6粮食 · 派信2国库':'Request 8 treasury and 6 food · 2 treasury courier'}</button>`:'';
   const aidHistory=(s.world.coalitionAidRequests||[]).filter(x=>x.coalitionId===c.id&&x.requester===s.player).slice(-2).map(x=>`<p>${zh?'求援':'Aid request'} · ${esc(factionName(x.recipient))} · ${esc(({pending:zh?'等待回信':'Awaiting reply',accepted:zh?'已抵达':'Delivered',refused:zh?'遭拒':'Refused',no_reply:zh?'无回信或遗失':'No reply or lost',lapsed:zh?'失效':'Lapsed'})[x.status]||x.status)}</p>`).join('');
   const history=(c.motions||[]).slice(-3).map(m=>`<p>${esc(label(kinds,m.kind,zh))} · ${m.kind==='contribution'?esc(label(policies,m.policy,zh)):m.kind==='dissolution'?'':esc(factionName(m.target))} · ${m.status==='passed'?(zh?'通过':'Passed'):m.status==='lapsed'?(zh?'失效':'Lapsed'):(zh?'未通过':'Rejected')} · ${m.yes}/${m.eligible}</p>`).join('');
-  return headline+peaceNotice+ballot+controls+aid+history+aidHistory;
+  return headline+callNotice+peaceNotice+ballot+controls+aid+history+aidHistory;
  }).join('')}</div>`;
 }

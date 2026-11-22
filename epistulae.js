@@ -89,7 +89,7 @@ export function sendLetter(s, spec) {
   const {senderId, senderInstitution, senderFaction, recipient, category = 'personal'} = spec;
   // A sealed aid reply can outlive the court that dispatched it; its arrival
   // must not disclose that court's subsequent hidden disappearance.
-  const formerAidSender=['aid_result','coalition_offer','coalition_result','agreement_result','asylum_result','coalition_aid_result','family_marriage_result','family_accord_result','agent_release_request','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
+  const formerAidSender=['aid_result','coalition_offer','coalition_result','coalition_defense_call','agreement_result','asylum_result','coalition_aid_result','family_marriage_result','family_accord_result','agent_release_request','inquiry_result','personal_audience_result'].includes(spec.context?.kind)&&!senderId&&senderInstitution===senderFaction&&!!FACTIONS[senderFaction];
   if ((!s.factions?.[senderFaction]&&!formerAidSender) || !s.factions?.[recipient] || (senderFaction === recipient && category === 'diplomatic')) return {ok:false, reason:'faction'};
   if (senderId && (!s.world?.characters?.[senderId]||!s.world.characters[senderId].alive||s.world.characters[senderId].faction!==senderFaction)) return {ok:false, reason:'sender'};
   if (!senderId && senderInstitution !== senderFaction) return {ok:false, reason:'sender'};
@@ -382,6 +382,16 @@ export function syncCoalitionLetters(s){
     options:[],context:{kind:'coalition_result',invitationId:x.id}});
    if(result.ok){x.resultMailId=result.letter.id;result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-result:'+x.id]=true}
   }
+ }
+}
+
+export function syncCoalitionDefenseLetters(s){
+ const mail=initializeMail(s);
+ for(const call of s.world?.coalitionDefenseCalls||[]){
+  if(call.member!==s.player||call.status!=='awaiting_player'||call.mailId||mail.generated['coalition-defense:'+call.id])continue;
+  const coalition=(s.coalitions||[]).find(c=>c.id===call.coalitionId),defender=name(call.defender),aggressor=name(call.aggressor);
+  const result=sendLetter(s,{senderInstitution:call.defender,senderFaction:call.defender,recipient:s.player,category:'diplomatic',priority:'important',subject:['Coalition defense request','联盟协防请求'],body:[`${defender[0]} asks us to join its defense against ${aggressor[0]} under ${coalition?.name||'the coalition'} charter. Decide in the coalition council by the deadline. Our armies and territory remain under our own command.`,`${defender[1]}依“${coalition?.name||'联盟'}”章程请求本方协防，对抗${aggressor[1]}。请在截止前于联盟议事中决定。本方军队和领土仍由本方指挥。`],options:['acknowledge'],expires:call.expiresAt,context:{kind:'coalition_defense_call',callId:call.id}});
+  if(result.ok){call.mailId=result.letter.id;result.letter.created={...call.sent};result.letter.arrival=monthIndex(s.year,s.month);result.letter.delivery='received';mail.generated['coalition-defense:'+call.id]=true}
  }
 }
 

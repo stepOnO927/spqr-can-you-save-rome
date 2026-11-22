@@ -1,16 +1,54 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,estimatedStrength,diplomacy,isWar,upgradeSave,tick} from '../engine.js?v=world-kings-estate-village-1';
-import {formCoalition,leaveCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,perceivedBalance} from '../coalitions.js?v=world-kings-estate-village-1';
+import {formCoalition,leaveCoalition,advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,perceivedBalance,answerCoalitionDefenseCall} from '../coalitions.js?v=world-kings-estate-village-1';
 import {addReport} from '../character-system.js?v=world-kings-estate-village-1';
+import {syncCoalitionDefenseLetters,receivedMail} from '../epistulae.js?v=world-kings-estate-village-1';
+import {coalitionCouncilHtml} from '../coalition-council-ui.js?v=world-kings-estate-village-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-estate-village-1';
 
 function setup(){const s=newGame('caesar');s.relations['caesar:egypt']=40;s.relations['caesar:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;return s}
 test('three states form a coalition from their own border intelligence, pay and coordinate defense',()=>{
  let s=setup();const result=formCoalition(s,'caesar',['egypt','numidia'],'senate',estimatedStrength);assert.ok(result.ok,JSON.stringify(result));
  const c=result.coalition;assert.equal(c.parties.length,3);assert.equal(s.factions.egypt.treasury,80);assert.equal(c.jointPlan.target,'senate');
  s=upgradeSave(JSON.parse(JSON.stringify(s)));const coalition=s.coalitions[0];s.month=3;const before=s.factions.caesar.treasury;advanceCoalitions(s);assert.ok(s.factions.caesar.treasury>before);assert.ok(coalition.contributions.egypt.paid>0);
- assert.ok(diplomacy(s,'senate','egypt','war'));assert.ok(isWar(s,'senate','numidia'));assert.ok(isWar(s,'senate','caesar'));
+ assert.ok(diplomacy(s,'senate','egypt','war'));assert.ok(!isWar(s,'senate','numidia'));assert.ok(isWar(s,'senate','caesar'));
+ assert.equal(s.world.coalitionDefenseCalls[0].member,'numidia');
+ s.month+=2;advanceCoalitions(s);assert.equal(s.world.coalitionDefenseCalls[0].status,'refused');assert.ok(!isWar(s,'senate','numidia'));
  assert.ok(leaveCoalition(s,coalition.id,'egypt').ok);assert.equal(coalition.status,'dissolved');assert.equal(s.diplomaticCredibility.egypt,85);assert.equal(s.relations['caesar:egypt'],25);
+});
+test('a dated defense request lets the player choose war or refusal without changing allied sovereignty',()=>{
+ const make=()=>{const s=setup(),c=formCoalition(s,'caesar',['egypt','numidia'],'senate',estimatedStrength).coalition;assert.ok(c);s.wars=[];assert.ok(diplomacy(s,'senate','egypt','war'));const call=s.world.coalitionDefenseCalls.find(x=>x.member==='caesar');assert.ok(call);assert.ok(!isWar(s,'senate','caesar'));s.month+=2;advanceCoalitions(s);syncCoalitionDefenseLetters(s);assert.equal(call.status,'awaiting_player');assert.ok(receivedMail(s).some(m=>m.context?.kind==='coalition_defense_call'&&m.context.callId===call.id));return {s,c,call}};
+ const refused=make(),before=refused.c.cohesion;
+ assert.match(coalitionCouncilHtml(refused.s,'en',id=>id,x=>x,(_,year)=>String(year)),/JOIN DEFENSE/);
+ assert.equal(answerCoalitionDefenseCall(refused.s,refused.call.id,'refuse').status,'refused');assert.ok(!isWar(refused.s,'senate','caesar'));assert.ok(refused.c.cohesion<before);
+ const accepted=make(),egyptOwner=accepted.s.regions.find(r=>r.id==='egypt').owner,armyOwners=accepted.s.armies.map(a=>a.owner);
+ const saved=upgradeSave(structuredClone(accepted.s));assert.equal(saved.world.coalitionDefenseCalls.find(x=>x.id===accepted.call.id).status,'awaiting_player');
+ assert.equal(answerCoalitionDefenseCall(accepted.s,accepted.call.id,'accept').status,'accepted');assert.ok(isWar(accepted.s,'senate','caesar'));
+ assert.equal(accepted.s.regions.find(r=>r.id==='egypt').owner,egyptOwner);assert.deepEqual(accepted.s.armies.map(a=>a.owner),armyOwners);
+});
+test('AI defense decisions depend on resources, relations and existing commitments',()=>{
+ const make=(relation,treasury)=>{const s=setup();s.relations['egypt:numidia']=relation;s.factions.numidia.treasury=treasury;formCoalition(s,'caesar',['egypt','numidia'],'senate',estimatedStrength);diplomacy(s,'senate','egypt','war');s.month+=2;advanceCoalitions(s);return s};
+ const willing=make(40,55);assert.equal(willing.world.coalitionDefenseCalls.find(x=>x.member==='numidia').status,'accepted');assert.ok(isWar(willing,'senate','numidia'));
+ const poor=make(40,7);assert.equal(poor.world.coalitionDefenseCalls.find(x=>x.member==='numidia').status,'refused');assert.ok(!isWar(poor,'senate','numidia'));
+});
+test('defense requests are unique, expire without a player answer, and reject late acceptance',()=>{
+ const s=setup();formCoalition(s,'caesar',['egypt','numidia'],'senate',estimatedStrength);s.wars=[];
+ assert.ok(diplomacy(s,'senate','egypt','war'));
+ const call=s.world.coalitionDefenseCalls.find(x=>x.member==='caesar');
+ assert.equal(s.world.coalitionDefenseCalls.filter(x=>x.member==='caesar').length,1);
+ s.month+=2;advanceCoalitions(s);assert.equal(call.status,'awaiting_player');
+ s.month+=6;assert.equal(answerCoalitionDefenseCall(s,call.id,'accept').ok,false);
+ advanceCoalitions(s);assert.equal(call.status,'refused');assert.ok(!isWar(s,'caesar','senate'));
+ const bad=structuredClone(s);bad.world.coalitionDefenseCalls[0].arrivesAt=-1;
+ assert.ok(inspectState(bad).some(x=>x.code==='invalid-coalition-defense-call'));
+});
+test('a defense request lapses when its coalition or original war ends',()=>{
+ const s=setup(),c=formCoalition(s,'caesar',['egypt','numidia'],'senate',estimatedStrength).coalition;s.wars=[];
+ assert.ok(diplomacy(s,'senate','egypt','war'));
+ const call=s.world.coalitionDefenseCalls.find(x=>x.member==='caesar');
+ c.status='dissolved';s.month+=2;advanceCoalitions(s);
+ assert.equal(call.status,'lapsed');assert.equal(answerCoalitionDefenseCall(s,call.id,'accept').ok,false);
 });
 test('coalitions require distinct willing states and never enroll the player without a decision',()=>{
  const s=setup();assert.equal(formCoalition(s,'egypt',['numidia','caesar'],'senate',estimatedStrength).reason,'player_decision');

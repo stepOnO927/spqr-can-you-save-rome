@@ -9,6 +9,7 @@ function atWarTogether(){
  const s=newGame('caesar');s.relations['caesar:egypt']=40;s.relations['caesar:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;
  const result=formCoalition(s,'caesar',['egypt','numidia'],'senate',estimatedStrength);assert.ok(result.ok,JSON.stringify(result));
  assert.equal(diplomacy(s,'senate','egypt','war'),true);
+ s.wars.push(['numidia','senate']); // An independent decision to participate.
  assert.equal(isWar(s,'numidia','senate'),true);
  return {s,c:result.coalition};
 }
@@ -36,7 +37,8 @@ test('a new attack cannot automatically re-enlist a peacemaker during the charte
  assert.equal(diplomacy(s,'numidia','senate','peace',{acceptedByPlayer:true}),true);
  s.year++;assert.equal(coalitionPeaceExemption(s,c,'egypt','senate'),false);
  assert.equal(diplomacy(s,'senate','numidia','war'),true);
- assert.equal(isWar(s,'egypt','senate'),true);
+ assert.equal(isWar(s,'egypt','senate'),false);
+ assert.ok(s.world.coalitionDefenseCalls.some(call=>call.member==='egypt'&&call.status==='travelling'));
 });
 
 test('old saves gain charter rule, council explains it, and malformed records are reported',()=>{

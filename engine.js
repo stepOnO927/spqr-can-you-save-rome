@@ -1,7 +1,7 @@
 import {isDeliveredReport} from './person-knowledge.js?v=world-kings-estate-village-1';
 import {advanceLegend} from './legend.js?v=world-kings-estate-village-1';
 import {advancePersonalDiplomacy,personalDiplomaticCredit} from './personal-diplomacy.js?v=world-kings-estate-village-1';
-import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncCoalitionAdmissionLetters,syncCoalitionMotionLetters,syncCoalitionAidLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=world-kings-estate-village-1';
+import {initializeMail,advanceMail,warLetters,replyToLetter,sendLetter,syncPeaceLetters,syncStrategicOfferLetters,syncCoalitionLetters,syncCoalitionDefenseLetters,syncCoalitionAdmissionLetters,syncCoalitionMotionLetters,syncCoalitionAidLetters,syncAgreementLetters,syncFamilyReplies,syncAgentReleaseLetters,strategicLetterSenderSnapshot,chronicleLetters} from './epistulae.js?v=world-kings-estate-village-1';
 import {advancePersonnel,reconcilePeacePersonnel} from './epistulae-personnel.js?v=world-kings-estate-village-1';
 import {initializeMailReports,advanceMailReports} from './mail-reports.js?v=world-kings-estate-village-1';
 import {initializeGovernments,advanceGovernments,deriveGovernment,validSuccessionPlan} from './governance.js?v=world-kings-estate-village-1';
@@ -35,7 +35,7 @@ import {assessOpportunities,opportunityEvidenceSignature} from './multipolar.js?
 import {respondToFrontierReports} from './frontier-response.js?v=world-kings-estate-village-1';
 import {advanceStrategicWarnings} from './strategic-warnings.js?v=world-kings-estate-village-1';
 import {rememberPoliticalEvent,politicalMemoryAdjustment} from './political-memory.js?v=world-kings-estate-village-1';
-import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,initializeCoalitionCharters,recordCoalitionSeparatePeace,coalitionPeaceExemption} from './coalitions.js?v=world-kings-estate-village-1';
+import {advanceCoalitions,coalitionInterest,coalitionMilitaryObjective,observeBalanceOfPower,initializeCoalitionCharters,recordCoalitionSeparatePeace,queueCoalitionDefenseCalls} from './coalitions.js?v=world-kings-estate-village-1';
 import {sendCoalitionInvitation,advanceCoalitionInvitations} from './coalition-negotiations.js?v=world-kings-estate-village-1';
 import {initializeCoalitionAdmissions,advanceCoalitionAdmissions,proposeCoalitionAdmissionsAI} from './coalition-admissions.js?v=world-kings-estate-village-1';
 import {initializeCoalitionMotions,advanceCoalitionMotions,proposeCoalitionMotionsAI} from './coalition-motions.js?v=world-kings-estate-village-1';
@@ -159,7 +159,7 @@ export function upgradeSave(s){
  // Older audience entries distinguished hidden absence from unanswered mail.
  for(const event of s.log||[])if(event.en==='Personal audience: no contact.'&&event.zh==='未能见到对方；对方可能不在、无法会面或局势有变。'){event.en='Personal audience: no reply.';event.zh='个人会面请求没有收到答复。'}
  if(!s.chronicleVisibilityVersion){for(const event of s.log||[])event.legacyUnverified=true;s.chronicleVisibilityVersion=1}
- migrateRegionalPowers(s);migrateEasternTheaters(s);initializeTerritories(s);migrateVillageRecords(s);initializeLocalRulers(s);registerLocalCampaign(s);initializeBorderPolicies(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeLocalDiscovery(s);initializeCoalitionCharters(s);initializeCoalitionAdmissions(s);initializeCoalitionMotions(s);initializeCoalitionAssistance(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);initializeWheels(s);syncAgentReleaseLetters(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);syncCoalitionAdmissionLetters(s);syncCoalitionMotionLetters(s);syncCoalitionAidLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
+ migrateRegionalPowers(s);migrateEasternTheaters(s);initializeTerritories(s);migrateVillageRecords(s);initializeLocalRulers(s);registerLocalCampaign(s);initializeBorderPolicies(s);initializeDynasties(s);initializeReligion(s);initializeMovements(s);initializeDiplomaticKnowledge(s);initializeControlKnowledge(s);initializeLocalDiscovery(s);initializeCoalitionCharters(s);initializeCoalitionAdmissions(s);initializeCoalitionMotions(s);initializeCoalitionAssistance(s);initializeChronicle(s);initializeAgreements(s);initializeInventions(s);migrateImperium(s);migrateBattleIds(s);upgradeHanWorld(s);initializeMail(s);initializeWheels(s);syncAgentReleaseLetters(s);syncPeaceLetters(s);syncStrategicOfferLetters(s);syncCoalitionLetters(s);syncCoalitionDefenseLetters(s);syncCoalitionAdmissionLetters(s);syncCoalitionMotionLetters(s);syncCoalitionAidLetters(s);if(s.world?.cursus)initializeCursus(s);return refreshReportConfidence(initializeGovernments(s));
  }catch(error){restoreFictionalCatalog(priorCatalog);throw error}
 }
 
@@ -355,10 +355,7 @@ export function diplomacy(s, actor, target, action, options={}){
       const ally=treaty.parties.find(x=>x!==supported);
       if(ally!==opponent&&!isWar(s,ally,opponent)&&!isAllied(s,ally,opponent)&&!activeAgreement(s,ally,opponent,'non_aggression'))s.wars.push([ally,opponent]);
     }
-    for(const coalition of s.coalitions||[]){
-      if(coalition.status!=='active'||coalition.target!==actor||!coalition.parties.includes(target))continue;
-      for(const member of coalition.parties)if(s.factions[member]&&member!==target&&!coalitionPeaceExemption(s,coalition,member,actor)&&!isWar(s,member,actor)&&!isAllied(s,member,actor)&&!activeAgreement(s,member,actor,'non_aggression'))s.wars.push([member,actor]);
-    }
+    queueCoalitionDefenseCalls(s,target,actor);
     s.relations[key]=-60;
     s.factions[actor].legitimacy=Math.max(0,s.factions[actor].legitimacy-5);
     if(actor===s.player||target===s.player)log(s,`${FACTIONS[actor].short[0]} declared war on ${FACTIONS[target].short[0]}.`,`${FACTIONS[actor].short[1]}向${FACTIONS[target].short[1]}宣战。`,{other:actor===s.player?target:actor});
@@ -1073,7 +1070,7 @@ export function tick(s,{autoplayPlayer=false,playerDifficulty=null}={}){
   advanceCoalitionMotions(s,{autoplayPlayer});proposeCoalitionMotionsAI(s,{autoplayPlayer});
   advanceCoalitionAidRequests(s,strategicRoll,{autoplayPlayer});proposeCoalitionAidAI(s,{autoplayPlayer});
   advanceAgreementProposals(s,{autoplayPlayer,checkAlliance:canFormAlliance,concludeAlliance:(state,actor,target)=>diplomacy(state,actor,target,'alliance',{priorConsent:true})});syncAgreementLetters(s);
-  if(!autoplayPlayer){syncCoalitionLetters(s);syncCoalitionAdmissionLetters(s);syncCoalitionMotionLetters(s);syncCoalitionAidLetters(s)}
+  if(!autoplayPlayer){syncCoalitionLetters(s);syncCoalitionDefenseLetters(s);syncCoalitionAdmissionLetters(s);syncCoalitionMotionLetters(s);syncCoalitionAidLetters(s)}
   advanceMail(s,{proposeAgreement,diplomacy});
   for(const owner of Object.keys(s.factions).filter(id=>autoplayPlayer||id!==s.player)){
     const override=autoplayPlayer&&owner===s.player&&playerDifficulty;if(!override){aiTurn(s,owner,{autoplayPlayer});if(owner!=='rebels')aiInnovation(s,owner);continue}

@@ -41,6 +41,12 @@ export function inspectState(s,{mode=s?.dlc?'han':'roman',isLiuClan}={}){
    const base=`coalitions[${i}].separatePeaces[${j}]`;
    if(!factionIds.has(peace?.member)||peace?.target!==c.target||!c.foundingMembers?.includes(peace.member)&&!c.parties?.includes(peace.member)||!Number.isInteger(peace?.year)||!Number.isInteger(peace?.month)||peace.month<1||peace.month>12||!Number.isInteger(peace?.until)||peace.until<=peace.year*12+peace.month||!Array.isArray(peace?.remainingBelligerents)||peace.remainingBelligerents.some(id=>!factionIds.has(id)||id===peace.member))add('warning','invalid-coalition-separate-peace',base,String(peace?.member));
   }
+  const defenseCallIds=new Set();
+  for(const [i,call] of (s.world?.coalitionDefenseCalls||[]).entries()){
+   const base=`world.coalitionDefenseCalls[${i}]`,coalition=(s.coalitions||[]).find(c=>c.id===call?.coalitionId),sentAt=call?.sent?.year*12+call?.sent?.month;
+   if(!Number.isInteger(call?.id)||defenseCallIds.has(call.id))add('warning','invalid-coalition-defense-call',base,String(call?.id));else defenseCallIds.add(call.id);
+   if(!coalition||!Object.hasOwn(FACTIONS,call?.defender)||!Object.hasOwn(FACTIONS,call?.aggressor)||!Object.hasOwn(FACTIONS,call?.member)||call.member===call.defender||call.aggressor!==coalition.target||!['travelling','awaiting_player','accepted','refused','lapsed','already_fighting'].includes(call?.status)||!Number.isInteger(call?.sent?.year)||!Number.isInteger(call?.sent?.month)||call.sent.month<1||call.sent.month>12||!Number.isInteger(call?.arrivesAt)||call.arrivesAt<sentAt+1||!Number.isInteger(call?.expiresAt)||call.expiresAt<=call.arrivesAt||call.mailId!=null&&typeof call.mailId!=='string')add('warning','invalid-coalition-defense-call',base,String(call?.coalitionId));
+  }
   const admissionIds=new Set();
   for(const [i,invitation] of (s.world?.coalitionAdmissions||[]).entries()){
    const base=`world.coalitionAdmissions[${i}]`,coalition=(s.coalitions||[]).find(c=>c.id===invitation?.coalitionId);

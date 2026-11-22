@@ -20,6 +20,7 @@ export function initializeCoalitionCharters(s){
   c.charter||={purpose:'defend_against_threat',admission:'invitation_and_consent',decision:'independent_members',dues:'contribution_policy'};
   c.charter.expulsion||='member_majority';c.charter.dissolution||='two_thirds_member_vote';c.charter.contributionChanges||='member_majority';
   c.charter.separatePeace||='permitted_with_notice';
+  c.charter.participation||='request_and_consent';
   c.admissions||=[];
   c.motions||=[];
   c.separatePeaces||=[];
@@ -78,7 +79,7 @@ export function formCoalition(s,leader,members,target,estimateStrength,{allowPla
  if(consentingPlayer&&contributions[s.player])contributions[s.player].policy='diplomacy';
  const trust=Object.fromEntries(parties.flatMap((a,i)=>parties.slice(i+1).map(b=>[pair(a,b),Math.round((rel(s,a,b)+100)/2)])));
  const id=s.nextCoalitionId||1;
- const c={id:`coalition:${id}`,name:chosenName,kind:'defensive',foundingMembers:[...parties],charter:{purpose:'defend_against_threat',admission:'invitation_and_consent',decision:'independent_members',dues:'contribution_policy',expulsion:'member_majority',dissolution:'two_thirds_member_vote',contributionChanges:'member_majority',separatePeace:'permitted_with_notice'},leader,parties,target,objective:'defend_against_threat',start:{year:s.year,month:s.month},expiresAt:now(s)+36,status:'active',cohesion:70,trust,contributions,admissions:[],departures:[],motions:[],separatePeaces:[],obligations:['defend_members'],jointPlan:{target,kind:'coordinate_defense'},disagreements:[]};
+ const c={id:`coalition:${id}`,name:chosenName,kind:'defensive',foundingMembers:[...parties],charter:{purpose:'defend_against_threat',admission:'invitation_and_consent',decision:'independent_members',dues:'contribution_policy',expulsion:'member_majority',dissolution:'two_thirds_member_vote',contributionChanges:'member_majority',separatePeace:'permitted_with_notice',participation:'request_and_consent'},leader,parties,target,objective:'defend_against_threat',start:{year:s.year,month:s.month},expiresAt:now(s)+36,status:'active',cohesion:70,trust,contributions,admissions:[],departures:[],motions:[],separatePeaces:[],obligations:['defend_members'],jointPlan:{target,kind:'coordinate_defense'},disagreements:[]};
  s.nextCoalitionId=(s.nextCoalitionId||1)+1;s.coalitions.push(c);return {ok:true,coalition:c};
 }
 export function renameCoalition(s,id,actor,name){
@@ -125,6 +126,56 @@ export function coalitionPeaceExemption(s,c,member,target){
  if(c?.status!=='active'||now(s)>=c.expiresAt||c.target!==target||c.charter?.separatePeace!=='permitted_with_notice')return false;
  return (c.separatePeaces||[]).some(x=>x.member===member&&x.target===target&&Number.isInteger(x.until)&&now(s)<x.until);
 }
+// A defensive charter asks each member to decide. A declaration against one
+// member never changes another sovereign state's war status on its own.
+export function queueCoalitionDefenseCalls(s,defender,aggressor){
+ s.world.coalitionDefenseCalls||=[];let queued=0;
+ for(const c of s.coalitions||[]){
+  if(c.status!=='active'||c.kind!=='defensive'||now(s)>=c.expiresAt||c.target!==aggressor||!c.parties.includes(defender))continue;
+  for(const member of c.parties){
+   if(member===defender||!s.factions[member]||war(s,member,aggressor)||coalitionPeaceExemption(s,c,member,aggressor))continue;
+   if(s.world.coalitionDefenseCalls.some(call=>call.coalitionId===c.id&&call.member===member&&call.aggressor===aggressor&&['travelling','awaiting_player'].includes(call.status)))continue;
+   const id=s.world.nextCoalitionDefenseCallId||1;s.world.nextCoalitionDefenseCallId=id+1;
+   s.world.coalitionDefenseCalls.push({id,coalitionId:c.id,defender,aggressor,member,sent:{year:s.year,month:s.month},arrivesAt:now(s)+2,expiresAt:now(s)+8,status:'travelling'});queued++;
+  }
+ }
+ if(s.world.coalitionDefenseCalls.length>100)s.world.coalitionDefenseCalls=s.world.coalitionDefenseCalls.filter(call=>['travelling','awaiting_player'].includes(call.status)).concat(s.world.coalitionDefenseCalls.filter(call=>!['travelling','awaiting_player'].includes(call.status)).slice(-40));
+ return queued;
+}
+const validDefenseCall=(s,call)=>{
+ const c=(s.coalitions||[]).find(item=>item.id===call.coalitionId);
+ return !!(c&&c.status==='active'&&now(s)<c.expiresAt&&!coalitionPeaceExemption(s,c,call.member,call.aggressor)&&c.parties.includes(call.defender)&&c.parties.includes(call.member)&&c.target===call.aggressor&&s.factions[call.member]&&s.factions[call.aggressor]&&war(s,call.defender,call.aggressor));
+};
+function decideDefenseCall(s,call,accept){
+ const c=(s.coalitions||[]).find(item=>item.id===call.coalitionId);
+ if(!validDefenseCall(s,call)){call.status='lapsed';return {ok:false,reason:'lapsed'}}
+ if(war(s,call.member,call.aggressor)){call.status='already_fighting';return {ok:true,status:call.status}}
+ if(accept&&(s.alliances.some(a=>a.includes(call.member)&&a.includes(call.aggressor))||activeAgreement(s,call.member,call.aggressor,'non_aggression')))return {ok:false,reason:'treaty'};
+ call.status=accept?'accepted':'refused';call.decided={year:s.year,month:s.month};
+ if(accept){s.wars.push([call.member,call.aggressor]);c.cohesion=Math.min(100,c.cohesion+3)}
+ else {c.cohesion=Math.max(0,c.cohesion-6);const key=pair(call.member,call.defender);s.relations[key]=Math.max(-100,rel(s,call.member,call.defender)-4)}
+ if(call.member===s.player||call.defender===s.player)s.log.unshift({year:s.year,month:s.month,en:accept?`${call.member} joined the defense of ${call.defender} against ${call.aggressor}.`:`${call.member} declined ${call.defender}'s coalition defense request.`,zh:accept?`${call.member}决定协防${call.defender}，对抗${call.aggressor}。`:`${call.member}拒绝了${call.defender}的联盟协防请求。`});
+ return {ok:true,status:call.status};
+}
+export function answerCoalitionDefenseCall(s,id,decision){
+ const call=(s.world?.coalitionDefenseCalls||[]).find(item=>item.id===id&&item.member===s.player&&item.status==='awaiting_player');
+ if(!call||now(s)>=call.expiresAt||!['accept','refuse'].includes(decision))return {ok:false,reason:'unavailable'};
+ return decideDefenseCall(s,call,decision==='accept');
+}
+export function advanceCoalitionDefenseCalls(s){
+ for(const call of s.world?.coalitionDefenseCalls||[]){
+  if(!['travelling','awaiting_player'].includes(call.status))continue;
+  if(!validDefenseCall(s,call)){call.status='lapsed';continue}
+  if(call.status==='travelling'&&now(s)>=call.arrivesAt){
+   if(call.member===s.player){call.status='awaiting_player';continue}
+   const f=s.factions[call.member],relationToDefender=rel(s,call.member,call.defender),policy=(s.coalitions||[]).find(c=>c.id===call.coalitionId)?.contributions?.[call.member]?.policy;
+   const willing=relationToDefender>=0&&f.stability>=35&&f.treasury>=8&&f.food>=4&&s.wars.filter(w=>w.includes(call.member)).length<2&&(policy==='military'||relationToDefender>=20);
+   decideDefenseCall(s,call,willing&&!s.alliances.some(a=>a.includes(call.member)&&a.includes(call.aggressor))&&!activeAgreement(s,call.member,call.aggressor,'non_aggression'));continue;
+  }
+  if(call.status==='awaiting_player'&&now(s)>=call.expiresAt)decideDefenseCall(s,call,false);
+ }
+ return s;
+}
 export function advanceCoalitions(s){
  for(const c of s.coalitions||[]){
   if(c.status!=='active')continue;
@@ -137,6 +188,7 @@ export function advanceCoalitions(s){
   if(c.cohesion<15){c.status='fractured';continue}
   if(s.month%3===0&&s.factions[c.leader])for(const id of c.parties){const f=s.factions[id],p=c.contributions[id];if(id===c.leader||!f||!p)continue;if(p.policy==='funding'&&f.treasury>35){f.treasury--;s.factions[c.leader].treasury++;p.paid++}else if(p.policy==='supplies'&&f.food>25){f.food-=2;s.factions[c.leader].food+=2;p.supplies=(p.supplies||0)+2}else if(p.policy==='diplomacy'){const k=pair(id,c.leader);s.relations[k]=Math.min(100,rel(s,id,c.leader)+1)}}
  }
+ advanceCoalitionDefenseCalls(s);
 }
 
 // Members pursuing a military contribution retain their own armies and
