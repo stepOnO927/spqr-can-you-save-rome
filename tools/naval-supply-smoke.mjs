@@ -31,11 +31,13 @@ try{
  assert.match(await page.locator('.naval-content').innerText(),/军需载量 6粮/);
  await page.locator('[data-naval-tab="trade"]').click();
  assert.match(await page.locator('.naval-content').innerText(),/商船逐月航行，抵港后才付款/);
+ assert.match(await page.locator('.naval-content').innerText(),/每月卸货船数 2/);
  await page.locator('[data-toggle-trade="egypt-italy"]').click();
  assert.match(await page.locator('.naval-content').innerText(),/已按你的命令暂停/);
  assert.match(await page.locator('[data-toggle-trade="egypt-italy"]').innerText(),/恢复商路/);
  await page.locator('#language').click();
  assert.match(await page.locator('.naval-content').innerText(),/Paused by your order/);
+ assert.match(await page.locator('.naval-content').innerText(),/Arrivals per month 2/);
  await page.locator('[data-toggle-trade="egypt-italy"]').click();
  assert.match(await page.locator('[data-toggle-trade="egypt-italy"]').innerText(),/PAUSE IMPORTS/);
  const reports=await page.evaluate(async()=>{

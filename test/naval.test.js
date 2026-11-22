@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGrandGame,tick,moveArmy,cancelMarch,previewMarch,upgradeSave,aiTurn,startConstruction} from '../engine.js';
-import {SEA_ZONES,seaRoute,portZone,isPortBlockaded,queueShip,cancelShipConstruction,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply} from '../naval.js';
+import {SEA_ZONES,seaRoute,portZone,isPortBlockaded,queueShip,cancelShipConstruction,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply,harborTradeCapacity} from '../naval.js';
 import {tradeCard,renderNavalPanel} from '../map-lab/naval-ui.js';
 import {developmentPanel,constructionPanel} from '../development-ui.js';
 import {advanceDevelopment} from '../development.js';
@@ -19,6 +19,45 @@ function tradeArrival(s,id,maxMonths=8){
  }
  assert.fail(`No delivered voyage for ${id} within ${maxMonths} months`);
 }
+
+test('harbor congestion delays real cargo and payment, survives reload, and improves with a warehouse',()=>{
+ let s=newGrandGame('senate');s.wars=[];s.naval.pirates=[];s.factions.senate.treasury=500;
+ const port=s.regions.find(r=>r.id==='t016');port.civicSatisfaction=25;
+ const chosen=['african-oil','egypt-papyrus','levant-luxury'];
+ for(const route of s.naval.routes)if(!chosen.includes(route.id))route.pausedBy=[s.regions.find(r=>r.id===route.from)?.owner].filter(Boolean);
+ advanceNaval(s);
+ const incoming=chosen.map(id=>s.naval.voyages.find(v=>v.routeId===id));
+ assert.ok(incoming.every(Boolean),'three real cargo voyages depart');
+ s.naval.voyages=[...incoming.filter(v=>v.routeId!=='egypt-papyrus'),incoming.find(v=>v.routeId==='egypt-papyrus')];
+ for(const voyage of s.naval.voyages){voyage.path=[];voyage.zone=portZone(port.id)}
+ const withWarehouse=upgradeSave(JSON.parse(JSON.stringify(s)));
+ withWarehouse.regions.find(r=>r.id===port.id).buildings.push('warehouse');
+ assert.equal(harborTradeCapacity(s,port),2);
+ assert.equal(harborTradeCapacity(withWarehouse,withWarehouse.regions.find(r=>r.id===port.id)),3);
+ s.month++;withWarehouse.month++;
+ advanceNaval(s);advanceNaval(withWarehouse);
+ const route=state=>state.naval.routes.find(r=>r.id==='egypt-papyrus');
+ assert.equal(route(s).last.reason,'congestion');assert.equal(route(s).last.paid,0);
+ assert.equal(route(withWarehouse).last.reason,'delivered');
+ assert.ok(route(withWarehouse).last.paid>0);
+ assert.equal(s.factions.senate.treasury-withWarehouse.factions.senate.treasury,route(withWarehouse).last.paid);
+ assert.equal(withWarehouse.factions.egypt.treasury-s.factions.egypt.treasury,route(withWarehouse).last.paid);
+ const waiting=s.naval.voyages.find(v=>v.routeId==='egypt-papyrus'&&v.phase==='outbound');
+ assert.equal(waiting.congestedMonths,1);assert.equal(waiting.cargo,2);
+ assert.equal(s.naval.reports.filter(r=>r.kind==='harbor-congestion').length,1);
+ for(const [lang,title,status] of [['en','HARBOR CONGESTION','Waiting for a free harbor berth'],['zh','港口拥堵','等待空闲港口泊位']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:s,lang,root,section:'reports',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+  assert.match(content.innerHTML,new RegExp(title));
+  renderNavalPanel({state:s,lang,root,section:'trade',onAction:()=>{},onZone:()=>{},onPort:()=>{}});
+  assert.match(content.innerHTML,new RegExp(status));
+ }
+ s=upgradeSave(JSON.parse(JSON.stringify(s)));
+ assert.equal(s.naval.voyages.find(v=>v.id===waiting.id).congestedMonths,1);
+ s.month++;advanceNaval(s);
+ assert.equal(route(s).last.reason,'delivered');assert.ok(route(s).last.paid>0);
+ assert.equal(s.naval.reports.filter(r=>r.kind==='harbor-congestion').length,1);
+});
 
 test('fleet pursuit follows only fresh reported positions and survives a save',()=>{
  let s=newGrandGame('senate');

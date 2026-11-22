@@ -162,9 +162,14 @@ function finishTradeHome(s,v){
  else{const port=v.returnPort&&s.regions.find(r=>r.id===v.returnPort)?.owner===v.vesselOwner?v.returnPort:null,f=makeFleet(`fleet-${n.nextFleet++}`,[`Merchant at ${site(port)?.site[0]||v.zone}`,`${site(port)?.site[1]||v.zone}商船`],v.vesselOwner,port,{merchant:1});f.zone=v.zone;f.sailors=v.crew;n.fleets.push(f)}
  n.voyages.splice(n.voyages.indexOf(v),1);
 }
+export function harborTradeCapacity(s,port){
+ return 2+(port.buildings?.includes('warehouse')?1:0)+(port.buildings?.includes('dockyard')?1:0)+(navalJobEffect(s,port.owner,'harbor',port.id)>0?1:0);
+}
 function advanceTradeVoyages(s,log){
- const n=s.naval;
- for(const v of [...n.voyages]){
+ const n=s.naval,unloaded=new Map();
+ // Voyages already delayed at the quay get the first available berth.
+ const voyages=[...n.voyages].sort((a,b)=>(b.congestedMonths||0)-(a.congestedMonths||0));
+ for(const v of voyages){
   const route=n.routes.find(r=>r.id===v.routeId),owner=s.factions[v.vesselOwner];
   if(!owner){n.voyages.splice(n.voyages.indexOf(v),1);continue}
   owner.treasury=Math.max(-100,owner.treasury-SHIPS.merchant.upkeep);
@@ -196,6 +201,14 @@ function advanceTradeVoyages(s,log){
    continue;
   }
   v.blockedMonths=0;
+  const used=unloaded.get(v.to)||0;
+  if(used>=harborTradeCapacity(s,to)){
+   v.congestedMonths=Math.max(0,v.congestedMonths||0)+1;
+   tradeRecord(s,route,v.buyer,v.seller,'congestion',security,v.price,{cargo:v.cargo,zone:v.zone,waitingMonths:v.congestedMonths});
+   if(v.congestedMonths===1){report(s,{kind:'harbor-congestion',owner:v.buyer,seller:v.seller,port:v.to,zone:v.zone,good:v.good,amount:v.cargo});if([v.buyer,v.seller,v.vesselOwner].includes(s.player))log(s,'Merchant cargo is waiting for a free berth; delivery and payment are delayed.','商货正在等待空闲泊位，交付与付款因此延后。')}
+   continue;
+  }
+  unloaded.set(v.to,used+1);v.congestedMonths=0;
   const floor=tradeCashFloor(s,v.buyer,v.good),affordable=v.buyer===v.seller?v.cargo:Math.floor(Math.max(0,s.factions[v.buyer].treasury-floor)/v.price);
   const need=tradeNeed(s,route,v.buyer,v.seller),wanted=open?Math.min(v.cargo,affordable,need):0;
   const amount=marketGoods.has(v.good)?wanted:tradeAccountMove(s,v.buyer,v.good,wanted,true),paid=v.buyer===v.seller?0:amount*v.price;v.cargo-=amount;s.factions[v.buyer].treasury-=paid;s.factions[v.seller].treasury+=paid;
@@ -207,6 +220,7 @@ function advanceTradeVoyages(s,log){
 }
 function dispatchTradeVoyage(s,route,log){
  const n=s.naval,from=s.regions.find(r=>r.id===route.from),to=s.regions.find(r=>r.id===route.to);if(!from||!to)return;
+ if(n.voyages.some(v=>v.routeId===route.id&&v.phase==='outbound'&&!v.path.length&&v.congestedMonths>0))return;
  if(route.lastDispatch?.year===s.year&&route.lastDispatch?.month===s.month||route.last?.year===s.year&&route.last?.month===s.month&&['raid','piracy','closed'].includes(route.last.reason))return;
  const zones=routeZones(route),originZone=zones[0],vessel=n.fleets.find(f=>(f.owner===from.owner||f.owner===to.owner)&&(f.ships.merchant||0)>0&&f.sailors>=SHIPS.merchant.crew&&f.zone===originZone&&(!f.port||f.port===route.from)&&!f.reserve&&!f.mobilizing&&!f.order?.cargo&&f.hull>20);
  if(!vessel&&n.voyages.some(v=>v.routeId===route.id&&v.phase==='outbound'))return;

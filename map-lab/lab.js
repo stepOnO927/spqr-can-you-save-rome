@@ -38,8 +38,8 @@ import {leadershipIntelligence} from './intelligence-summary.js?v=2';
 import {availableCommanders,appointCommander,releaseCommander} from '../command-appointments.js?v=9';
 import {assessment,firstHostileOnRoute,sendScouts,probePositions,delayAttack,markReconRegion,requestReinforcements,latestRecon} from '../reconnaissance.js?v=15';
 import {intelligenceHtml,afterActionHtml,fortificationText,reconSummaryHtml,reconLabel,reconDate} from '../recon-ui.js?v=13';
-import {renderNavalPanel} from './naval-ui.js?v=79';
-import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=58';
+import {renderNavalPanel} from './naval-ui.js?v=80';
+import {SEA_ZONES,reportedHostileFleets,toggleTradeRoute} from '../naval.js?v=59';
 import {maritimeMapIntel} from './maritime-map-intel.js?v=1';
 import {queueShip,cancelShipConstruction,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,supportPirates,dispatchWagonSupply} from '../engine.js?v=236';
 
