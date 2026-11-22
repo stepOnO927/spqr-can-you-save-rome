@@ -42,9 +42,9 @@ test('a missing person cannot return without controlled territory or be chosen f
  assert.equal(deriveGovernment(s,'caesar').kind,'vacant');assert.ok(!successorFor(s,'caesar').includes('antony'));
  region(s,'gaul').owner='caesar';s.month++;advanceMissingCommanders(s);assert.equal(s.world.characters.antony.location,'gaul');
 });
-test('health events pause while a commander is missing',()=>{
- const s=newGame('senate'),c=s.world.characters.cicero;c.location=null;c.health='dying';c.missing={origin:'roma',remaining:1,year:-50,month:12};s.world.intelSeed=0;
- advanceCharacters(s);assert.equal(c.health,'dying');assert.equal(c.alive,true);assert.ok(!s.log.some(x=>x.en.includes('Cicero')&&x.en.includes('died')));
+test('a missing commander’s health can change without revealing the outcome',()=>{
+ const s=newGame('senate'),c=s.world.characters.cicero,threshold=1-Math.pow(1-.45,1/12),seed=Array.from({length:10000},(_,i)=>i).find(i=>((Math.imul(i,1664525)+1013904223)>>>0)/4294967296<threshold);c.location=null;c.health='dying';c.missing={origin:'roma',remaining:2,year:-50,month:12,healthSeed:seed};
+ advanceCharacters(s);assert.equal(c.health,'deceased');assert.equal(c.alive,false);assert.ok(c.missing);assert.ok(!s.log.some(x=>x.en.includes('Cicero')&&x.en.includes('died')));
 });
 test('normal campaign months advance loss of contact and restore the leader after the third month',()=>{
  const s=newGame('caesar'),person=s.world.characters.caesar,army=s.armies.find(x=>x.id==='xiii');army.characterId=null;army.commander=['Unnamed officer','未具名军官'];person.location=null;person.missing={origin:'cisalpine',remaining:3,year:s.year,month:s.month};

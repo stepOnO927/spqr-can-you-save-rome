@@ -807,7 +807,7 @@ function aiTurn(s,owner,{autoplayPlayer=false}={}){
     const signature=enemies.join(':');
     const previous=s.world.strategicPlans[owner],now=s.year*12+s.month;
     if(!previous||previous.signature!==signature||now-previous.date>=(strongPlanning?3:6)){
-      s.world.strategicPersonalities||={};const leader=(s.world.leadership[owner]||[]).find(id=>s.world.characters[id]?.alive)||null,profile=s.world.strategicPersonalities[owner];
+      s.world.strategicPersonalities||={};const leader=deriveGovernment(s,owner).acting[0]||null,profile=s.world.strategicPersonalities[owner];
       if(!profile||profile.leader!==leader){s.world.personalities||={};if(leader)s.world.personalities[leader]||=strategicPersonality(s.world.characters[leader]);s.world.strategicPersonalities[owner]={leader,personality:leader?s.world.personalities[leader]:strategicPersonality(null)}}
       const commitments=s.alliances.filter(a=>a.includes(owner)).length+(s.coalitions||[]).filter(c=>c.status==='active'&&c.parties.includes(owner)).length+(s.agreements||[]).filter(t=>t.status==='active'&&t.parties.includes(owner)).length;
       strategy={...evaluateStrategicPlan({treasury:f.treasury,food:f.food,stability:f.stability,ownStrength:strength(s,owner),enemies:enemies.map(id=>({id,estimatedStrength:estimatedStrength(s,owner,id)})),personality:s.world.strategicPersonalities[owner].personality,commitments}),signature,date:now};
