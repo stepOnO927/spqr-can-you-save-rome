@@ -48,16 +48,9 @@ function ensureRegency(s,f){
  r.regentId=regent.id;
  if(f===s.player)log(s,[`${regent.name[0]} governs ${FACTIONS[f]?.name?.[0]||f} as regent for the minor ${p.name[0]}.`,`${regent.name[1]}为年幼的${p.name[1]}摄政，治理${FACTIONS[f]?.name?.[1]||f}。`],{kind:'regency',faction:f,who:regent.id});
 }
-function makeTitleOnlyRuler(s,f){
- const court=FACTIONS[f];let id=`unrecorded-ruler-${f}`,suffix=1;while(s.persons[id])id=`unrecorded-ruler-${f}-${++suffix}`;
- const name=[`Unnamed ruler of ${court.name[0]}`,`${court.name[1]}未载名的统治者`];
- const pool=CULTURAL_NAME_POOLS[fieldCulture(f)]||CULTURAL_NAME_POOLS.oasis;
- const p={id,name,faction:f,role:'ruler',profession:'ruler',title:rulerTitle(f),record:'reconstruction',titleOnly:true,source:court.source||null,culture:[...pool.culture],homeland:null,location:null,sex:null,birth:null,death:null,alive:true,simulatedAge:50,ageBaseYear:s.year,
-  ambition:50,competence:50,military:50,loyalty:100,portraitSeed:hash(`${s.seed}:${id}:portrait`),note:['The polity is documented, but no contemporary personal name is asserted.','政体见于史料，不推定此时统治者的姓名。']};
- s.persons[id]=p;return p;
-}
 function seat(s,f,p,old=null){
  if(old?.regentId&&s.persons[old.regentId]?.regentFor===old.personId)delete s.persons[old.regentId].regentFor;
+ if(!old&&p.record==='fictional')(p.history||=[]).push({year:s.year,month:s.month,kind:'opening_reign',faction:f});
  if(old&&(p.record==='fictional'||p.record==='simulated'))(p.history||=[]).push({year:s.year,month:s.month,kind:'succession',predecessor:old.id});
  const title=rulerTitle(f,p);
  if(['fictional','simulated'].includes(p.record))p.title=[...title];
@@ -85,6 +78,8 @@ export function ensureForeignRulers(s){
     s.persons[id]={id,name:[...(saved.name||attested?.name||[id,id])],faction:f,role:'ruler',profession:'ruler',record:saved.record||attested?.record||'fictional',titleOnly:!!saved.titleOnly||saved.record==='reconstruction',title:[...(saved.title||rulerTitle(f,{sex}))],source:saved.source||attested?.source||null,sex,birth,father:lineage?.father??null,mother:lineage?.mother??null,culture:Array.isArray(saved.culture)?[...saved.culture]:[...pool.culture],homeland,location:homeland,death:null,alive:true,...(birth==null?{simulatedAge:50,ageBaseYear:s.year}:{}),ambition:50,competence:55,military:55,portraitSeed:saved.portraitSeed??hash(`${s.seed}:${id}:portrait`)};
    }
    const person=s.persons[id],former=rulerTitle(f),current=rulerTitle(f,person);
+   person.culture??=Array.isArray(saved.culture)?[...saved.culture]:[...(CULTURAL_NAME_POOLS[fieldCulture(f)]||CULTURAL_NAME_POOLS.oasis).culture];
+   person.profession??='ruler';
    // A historical artwork belongs to the recorded person, not merely a
    // reused throne ID. Preserve a saved custom portrait and altered identity.
    const attested=EURASIAN_RULERS.find(r=>r.id===id&&r.faction===f);
@@ -95,7 +90,7 @@ export function ensureForeignRulers(s){
    saved.sex=person.sex??null;saved.birth=person.birth??null;saved.culture=Array.isArray(person.culture)?[...person.culture]:null;saved.homeland=person.homeland??null;
    saved.titleOnly??=!!person.titleOnly;saved.portraitSeed??=person.portraitSeed??hash(`${s.seed}:${id}:portrait`);ensureRegency(s,f);continue;
   }
-  const p=Object.values(s.persons).find(x=>x.faction===f&&x.role==='ruler'&&x.alive)||(()=>{const historical=EURASIAN_RULERS.find(r=>r.faction===f);if(!historical)return !FACTIONS[f]||FACTIONS[f].dynamic?makeRuler(s,f):makeTitleOnlyRuler(s,f);const person={...historical,name:[...historical.name],role:'ruler',sex:'m',birth:null,death:null,alive:true,simulatedAge:50,ageBaseYear:s.year,ambition:55,competence:60,military:60,portraitSeed:hash(`${s.seed}:${historical.id}:portrait`)};s.persons[person.id]=person;return person})();
+  const p=Object.values(s.persons).find(x=>x.faction===f&&x.role==='ruler'&&x.alive)||(()=>{const historical=EURASIAN_RULERS.find(r=>r.faction===f);if(!historical)return makeRuler(s,f);const person={...historical,name:[...historical.name],role:'ruler',profession:'ruler',culture:[...(CULTURAL_NAME_POOLS[fieldCulture(f)]||CULTURAL_NAME_POOLS.oasis).culture],homeland:null,location:null,sex:'m',birth:null,death:null,alive:true,simulatedAge:50,ageBaseYear:s.year,ambition:55,competence:60,military:60,portraitSeed:hash(`${s.seed}:${historical.id}:portrait`)};s.persons[person.id]=person;return person})();
   seat(s,f,p);ensureRegency(s,f);
  }
 }

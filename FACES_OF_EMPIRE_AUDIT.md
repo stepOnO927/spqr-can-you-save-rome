@@ -6,6 +6,25 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `62010d8a` (#343) is integrated. The new fourteenth pair of
+campaign-born portraits and its save migration were added to the branch's
+existing procedural portrait system, preserving both. Portrait, court, ruler
+and field-identity focused tests pass 47/47; full `npm test` passes 1,385/1,385.
+The browser scripts use the same module version as the campaign. Hosted
+browser checks follow.
+
+New 49 BCE Han campaigns now seat original, culturally named people in courts
+whose ruler's personal name is not attested. A seed-172 audit found 55 active
+eastern courts, 55 distinct ruler names and no title-only opening ruler; 48
+of those rulers are labeled fictional game characters. Documented opening
+rulers keep their historical identities and portraits. Original rulers have
+stable IDs, dates of accession, saved culture and portrait seeds, and real
+governance effects. Existing title-only saves retain their recorded identities
+and names; migration repairs only missing/default culture information. The
+Han ruler browser smoke now checks a named Kangju opening ruler and its saved
+successor instead of expecting an anonymous title. Focused ruler and field
+identity tests pass 28/28; hosted browser verification follows.
+
 Main through `3a8f2e75` (#342) is integrated. Internal Security conspiracy
 reports show separate observation and receipt dates, the original source,
 forwarding and confidence without treating a corroborated claim as proof.

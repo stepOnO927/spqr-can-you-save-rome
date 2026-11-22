@@ -54,6 +54,10 @@ export function newHanGame(player='han',{scenario='historical',difficulty='stand
  for(const id of Object.keys(FACTIONS))if(!FACTIONS[id].dynamic)s.factions[id]={id,...(RES[id]||{treasury:20,grain:30,manpower:6000,horses:3000,stability:55})};
  // people and their birth records (historical records come from people.js)
  for(const p of PEOPLE){
+  // A title without a documented personal name is not an acting person in a
+  // new campaign. Give that court a clearly fictional, culturally named ruler
+  // below; loading an older save still preserves its title-only record.
+  if(p.titleOnly)continue;
   // anyone with a recorded death in or before January 48 BCE is dead at the start
   s.persons[p.id]={...p,name:[...p.name],culture:[...startingCulture(p)],homeland:p.homeland??null,location:p.location??null,profession:p.profession??p.role??null,alive:p.death==null||p.death>startYear,spouse:[...(p.spouse||[])]};
   recordBirth(s,{id:p.id,father:p.father,mother:p.mother,birthSurname:p.birthSurname,birth:p.birth,sex:p.sex});

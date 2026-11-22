@@ -11,14 +11,16 @@ try{
  await page.locator('#factionSelect').selectOption('kangju');await page.locator('#begin').click();
  const card=page.locator('.ruler-card');
  assert.match(await card.innerText(),/King of Kangju/);
- assert.match(await card.innerText(),/personal name is unrecorded/);
+ assert.match(await card.innerText(),/Original campaign character/);
+ const openingName=await card.locator('strong').first().innerText();
+ assert.ok(openingName&&!openingName.startsWith('Unnamed ruler'));
  assert.match(await card.innerText(),/Culture: Kangju \(game reconstruction\)/);
  assert.equal(await card.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0),true);
  await page.locator('#save').click();
  await page.evaluate(()=>{const key='spqr-han-save-browser',s=JSON.parse(localStorage.getItem(key));s.persons[s.rulers.kangju.personId].alive=false;s.persons[s.rulers.kangju.personId].death=s.year;localStorage.setItem(key,JSON.stringify(s))});
  await page.locator('#load').click();await page.locator('#advance').click();
  assert.match(await card.innerText(),/Original campaign character/);
- assert.match(await card.innerText(),/(Father|Predecessor): King of Kangju/);
+ assert.ok((await card.innerText()).includes(`Predecessor: ${openingName}`));
  assert.equal(await card.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0),true);
  const name=await card.getAttribute('data-ruler');
  await page.locator('#save').click();await page.reload({waitUntil:'domcontentloaded'});await page.locator('#load').click();

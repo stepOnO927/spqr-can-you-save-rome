@@ -5,6 +5,7 @@ import {recruit,templatesFor} from '../han/military.js?v=han-1';
 import {CULTURAL_NAME_POOLS,fieldCulture,ensureFieldCommanders,createMarketMerchant} from '../han/field-identities.js';
 import {birthRecordValid} from '../han/dynasty.js?v=han-1';
 import {ensureForeignRulers} from '../han/rulers.js';
+import {PERSON} from '../han/people.js';
 
 test('opening Central Asian field people use saved geographic bynames instead of serial numbers',()=>{
  let s=newHanGame('han',{seed:1});
@@ -41,15 +42,22 @@ test('every opening eastern army has a saved person and distinct cultural identi
  assert.deepEqual(s.armies.map(a=>[a.id,a.commander,s.persons[a.commander].name]),snapshots);
 });
 
-test('unnamed opening kings use their own court culture and older saved identities survive',()=>{
+test('named opening kings use their court culture while legacy unnamed identities survive',()=>{
  let s=newHanGame('han',{seed:23});
- for(const [id,style] of [['kangju-king','kangju'],['dayuan-king','bactrian'],['shanshan-king','oasis']]){
-  assert.deepEqual(s.persons[id].culture,CULTURAL_NAME_POOLS[style].culture);
-  assert.equal(s.persons[id].titleOnly,true);
+ for(const [f,style] of [['kangju','kangju'],['dayuan','bactrian'],['shanshan','oasis']]){
+  const person=s.persons[s.rulers[f].personId];
+  assert.deepEqual(person.culture,CULTURAL_NAME_POOLS[style].culture);
+  assert.equal(person.record,'fictional');
+  assert.equal(person.titleOnly,undefined);
+ }
+ // Recreate a title-only older save. Migration must retain its recorded ID
+ // and name, repairing only the old coarse default culture.
+ for(const [f,id] of [['kangju','kangju-king'],['dayuan','dayuan-king'],['shanshan','shanshan-king']]){
+  delete s.persons[s.rulers[f].personId];
+  s.persons[id]={...PERSON[id],name:[...PERSON[id].name],record:'reconstruction',culture:[...CULTURAL_NAME_POOLS[f==='dayuan'?'oasis':'steppe'].culture],alive:true};
+  s.rulers[f]={id,personId:id,name:[...PERSON[id].name],titleOnly:true,record:'reconstruction',faction:f};
  }
  const name=[...s.persons['kangju-king'].name];
- s.persons['kangju-king'].culture=[...CULTURAL_NAME_POOLS.steppe.culture];
- s.persons['dayuan-king'].culture=[...CULTURAL_NAME_POOLS.oasis.culture];
  s.persons['shanshan-king'].culture=['Recorded local affiliation','已记录地方文化'];
  s=loadHanSave(serialize(s));
  assert.deepEqual(s.persons['kangju-king'].culture,CULTURAL_NAME_POOLS.kangju.culture);

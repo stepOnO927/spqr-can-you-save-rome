@@ -82,8 +82,8 @@ test('foreign rulers keep historical identities and unknown opening names distin
  assert.equal(s.rulers.parthia.id,'orodes-ii');
  assert.equal(s.rulers.armenia.id,'artavasdes-ii');
  assert.equal(s.rulers.commagene.id,'antiochus-i-commagene');
- assert.equal(s.rulers.kangju.id,'kangju-king');
- assert.equal(s.persons['kangju-king'].titleOnly,true);
+ assert.equal(s.rulers.kangju.record,'fictional');
+ assert.deepEqual(s.persons[s.rulers.kangju.personId].culture,CULTURAL_NAME_POOLS.kangju.culture);
  for(const [f,id,art] of [['parthia','orodes-ii','orodes'],['armenia','artavasdes-ii','artavasdes'],['commagene','antiochus-i-commagene','han-antiochus-commagene']]){
   assert.equal(s.persons[id].portrait,art,f);
   assert.equal(rulerPortrait(s,f),`../assets/portraits/${art}-128.jpg`);
@@ -98,36 +98,57 @@ test('foreign rulers keep historical identities and unknown opening names distin
  assert.match(ownRulerHtml(s,1),/艺术复原/);
 });
 
-test('undocumented opening rulers remain unnamed until an actual succession',()=>{
+test('every opening eastern court has a distinct persistent person without claiming an undocumented historical name',()=>{
+ const s=newHanGame('han',{seed:172});
+ const rulers=Object.values(s.rulers).filter(r=>s.factions[r.faction]&&!s.factions[r.faction].defeated);
+ const names=new Set();
+ for(const ruler of rulers){
+  const person=s.persons[ruler.personId];
+  assert.ok(person?.alive&&person.name?.[0]&&person.name?.[1],ruler.faction);
+  assert.ok(person.culture?.[0]&&ruler.title?.[0]&&ruler.portraitSeed!=null,ruler.faction);
+  assert.notEqual(person.titleOnly,true,ruler.faction);
+  assert.equal(names.has(person.name[0]),false,ruler.faction);
+  names.add(person.name[0]);
+  if(person.record==='fictional'){
+   assert.match(person.note[0],/Original character/,ruler.faction);
+   assert.ok(person.history.some(event=>event.kind==='opening_reign'),ruler.faction);
+  }
+ }
+ const restored=loadHanSave(serialize(s));
+ assert.deepEqual(restored.rulers,s.rulers);
+ for(const ruler of rulers)assert.deepEqual(restored.persons[ruler.personId],s.persons[ruler.personId]);
+});
+
+test('undocumented opening courts receive named game characters and preserve legacy title-only records',()=>{
  const s=newHanGame('gumo',{seed:112});
  for(const f of ['gumo','sogd_samarkand','atropatene']){
   const ruler=s.rulers[f],person=s.persons[ruler.personId];
-  assert.equal(person.titleOnly,true,f);assert.equal(person.record,'reconstruction',f);
-  assert.match(person.name[0],/^Unnamed ruler of /,f);
+  assert.equal(person.titleOnly,undefined,f);assert.equal(person.record,'fictional',f);
+  assert.ok(person.name[0]&&person.name[1],f);
   assert.deepEqual(person.culture,CULTURAL_NAME_POOLS[fieldCulture(f)].culture,f);
   assert.deepEqual(ruler.culture,person.culture,f);
   assert.equal(person.profession,'ruler',f);
-  assert.equal(person.homeland,null,'an unknown birthplace stays unknown');
+  assert.equal(person.homeland,s.regions.find(r=>r.owner===f)?.id,f);
  }
  assert.equal(s.rulers.parthia.id,'orodes-ii');
- assert.match(ownRulerHtml(s,0),/personal name is unrecorded/);
- assert.match(ownRulerHtml(s,1),/史料未载此时王名/);
+ assert.match(ownRulerHtml(s,0),/Original campaign character/);
+ assert.match(ownRulerHtml(s,1),/本战役原创人物/);
  const sogd=newHanGame('sogd_samarkand',{seed:112});
  assert.match(ownRulerHtml(sogd,0),/Culture: Sogdian \(game reconstruction\)/);
  assert.match(ownRulerHtml(sogd,1),/文化: 粟特（游戏复原）/);
  assert.match(ownRulerHtml(loadHanSave(serialize(sogd)),0),/Culture: Sogdian \(game reconstruction\)/);
  const missingPerson=structuredClone(s);delete missingPerson.persons[missingPerson.rulers.gumo.personId];
  const migrated=loadHanSave(serialize(missingPerson));
- assert.equal(migrated.persons[migrated.rulers.gumo.personId].titleOnly,true);
+ assert.equal(migrated.persons[migrated.rulers.gumo.personId].record,'fictional');
  assert.deepEqual(migrated.persons[migrated.rulers.gumo.personId].culture,CULTURAL_NAME_POOLS.oasis.culture);
- assert.match(ownRulerHtml(migrated,0),/personal name is unrecorded/);
+ assert.match(ownRulerHtml(migrated,0),/Original campaign character/);
  const older=structuredClone(s),oldId=older.rulers.sogd_samarkand.personId;
  delete older.persons[oldId].culture;delete older.persons[oldId].profession;
  older.rulers.sogd_samarkand.culture=null;
  const repaired=loadHanSave(serialize(older));
  assert.deepEqual(repaired.persons[oldId].culture,CULTURAL_NAME_POOLS.sogdian.culture);
  assert.deepEqual(repaired.rulers.sogd_samarkand.culture,CULTURAL_NAME_POOLS.sogdian.culture);
- assert.equal(repaired.persons[oldId].homeland,null);
+ assert.equal(repaired.persons[oldId].homeland,sogd.regions.find(r=>r.owner==='sogd_samarkand')?.id);
  const old=s.rulers.gumo;s.persons[old.personId].alive=false;s.persons[old.personId].death=s.year;
  advanceForeignRulers(s);
  const next=s.rulers.gumo,person=s.persons[next.personId];
