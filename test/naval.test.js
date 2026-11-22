@@ -1125,6 +1125,28 @@ test('two patrol fleets share a real pirate engagement and record their own loss
  for(const f of [first,second])assert.ok(clashes[0].losses[f.id]&&clashes[0].snapshots[f.id]);
  assert.equal(pirates.ships,8-clashes[0].pirateShipsLost);
 });
+test('patrols from separate states can each confront pirates in shared waters',()=>{
+ let s=newGrandGame('egypt'),senate=s.naval.fleets.find(f=>f.id==='senate-adriatic'),egypt=s.naval.fleets.find(f=>f.id==='egypt-grain'),pirates=s.naval.pirates.find(p=>p.zone==='adriatic');
+ s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';
+ senate.ships={light:1};senate.sailors=65;senate.port=null;senate.zone='adriatic';
+ egypt.ships={trireme:2};egypt.sailors=360;egypt.port=null;egypt.zone='adriatic';
+ pirates.ships=12;pirates.pressure=70;s.seed=2257;
+ for(const f of [senate,egypt])assert.equal(orderFleet(s,f.owner,f.id,'patrol','adriatic').ok,true);
+ advanceNaval(s);
+ const clashes=s.naval.reports.filter(r=>r.kind==='pirate-clash'&&r.zone==='adriatic');
+ assert.deepEqual(new Set(clashes.map(r=>r.owner)),new Set(['senate','egypt']));
+ for(const r of clashes){
+  assert.deepEqual(r.participants,[r.owner==='senate'?senate.id:egypt.id]);
+  assert.ok(r.losses[r.participants[0]].sailors>0,'Each patrol must bear its own actual battle losses');
+ }
+ s=upgradeSave(structuredClone(s));
+ for(const [lang,title] of [['en','Pirate clash'],['zh','海盗交战']]){
+  const content={innerHTML:''},root={innerHTML:'',querySelector:()=>content,querySelectorAll:()=>[]};
+  renderNavalPanel({state:s,lang,root,section:'reports'});
+  assert.match(content.innerHTML,new RegExp(title));
+  assert.equal((content.innerHTML.match(/class="naval-card"/g)||[]).filter(Boolean).length,1,'A player sees only their own clash');
+ }
+});
 test('naval AI assigns orders to each available fleet instead of only its first',()=>{
  const s=newGrandGame('caesar'),first=s.naval.fleets.find(f=>f.owner==='senate'),second=structuredClone(first);second.id='senate-east';second.zone='eastern';second.port=null;s.naval.fleets.push(second);
  advanceNaval(s);assert.equal(first.order?.kind,'patrol');assert.equal(second.order?.kind,'patrol');
