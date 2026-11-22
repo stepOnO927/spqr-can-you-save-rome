@@ -8,8 +8,8 @@ try{
  await page.addInitScript(()=>localStorage.setItem('spqr-lang','en'));
  await page.goto(`http://127.0.0.1:${process.env.SPQR_SMOKE_PORT||5173}/`,{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const engine=await import('/engine.js?v=world-kings-stops-1');
-  const {formCoalition}=await import('/coalitions.js?v=world-kings-stops-1');
+  const engine=await import('/engine.js?v=world-kings-sea-1');
+  const {formCoalition}=await import('/coalitions.js?v=world-kings-sea-1');
   const s=engine.newGame('caesar');
   s.relations['caesar:egypt']=40;s.relations['caesar:numidia']=40;s.relations['egypt:senate']=-30;s.relations['numidia:senate']=-30;
   if(!formCoalition(s,'caesar',['egypt','numidia'],'senate',engine.estimatedStrength).ok)throw Error('coalition not formed');

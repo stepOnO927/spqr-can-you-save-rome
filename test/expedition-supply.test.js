@@ -106,3 +106,34 @@ test('AI relief route does not cross an uncontrolled theater', () => {
   assert.equal(army.expeditionSupply.status, 'cut_off');
   assert.equal(army.move?.to, undefined);
 });
+
+test('AI uses a paid sea link to leave a strained island garrison', () => {
+  const state = newGame('caesar'), army = state.armies.find(unit => unit.id === 'pompey');
+  army.region = 'sicilia';
+  const island = state.regions.find(place => place.id === 'sicilia');
+  island.supply = 1; island.administrativeStatus = 'occupied';
+  state.world.imperium = {enabled: false}; state.wars = [];
+  state.factions.senate.treasury = 500;
+  tick(state);
+  assert.equal(army.expeditionSupply.status, 'partial');
+  const fare = previewMarch(state, army.id, 'africa').seaCost;
+  const control = upgradeSave(JSON.parse(JSON.stringify(state)));
+  control.world.lastSupplyRecovery = {[army.id]: 999999};
+  tick(state); tick(control);
+  assert.equal(army.move?.sea, true);
+  assert.ok(['africa', 'italiaS'].includes(army.move.to));
+  assert.equal(state.regions.find(place => place.id === army.move.to).owner, 'senate');
+  assert.equal(control.factions.senate.treasury - state.factions.senate.treasury, fare);
+});
+
+test('AI does not order a sea relief trip it cannot pay for', () => {
+  const state = newGame('caesar'), army = state.armies.find(unit => unit.id === 'pompey');
+  army.region = 'sicilia';
+  const island = state.regions.find(place => place.id === 'sicilia');
+  island.supply = 1; island.administrativeStatus = 'occupied';
+  state.world.imperium = {enabled: false}; state.wars = [];
+  state.factions.senate.treasury = -100;
+  tick(state); tick(state);
+  assert.equal(army.expeditionSupply.status, 'partial');
+  assert.equal(army.move, null);
+});
