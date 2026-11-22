@@ -50,12 +50,14 @@ test('intelligence agreement enables existing delayed exchange, preserving repor
 test('hard AI can negotiate with another known neighbor without binding the player',()=>{
  const s=newGame('caesar');s.difficulty='hard';s.month=3;friendly(s,'senate','egypt');
  tick(s);
- assert.ok(s.agreements.some(t=>t.type==='trade'&&t.parties.includes('senate')&&t.parties.includes('egypt')));
+ assert.ok(s.world.agreementLetters.some(t=>t.type==='trade'&&t.actor==='senate'&&t.target==='egypt'&&t.status==='pending'));
+ assert.ok(!s.agreements.some(t=>t.type==='trade'&&t.parties.includes('senate')&&t.parties.includes('egypt')));
  assert.ok(s.agreements.every(t=>!t.parties.includes('caesar')));
 });
 test('a hard AI at war can seek a temporary neutral frontier without binding the player',()=>{
  const s=newGame('caesar');s.difficulty='hard';s.month=9;s.factions.senate.treasury=150;tick(s);
- assert.ok(s.agreements.some(t=>t.type==='non_aggression'&&t.parties.includes('senate')&&!t.parties.includes('caesar')));
+ assert.ok(s.world.agreementLetters.some(t=>t.type==='non_aggression'&&t.actor==='senate'&&t.target!=='caesar'&&t.status==='pending'));
+ assert.ok(!s.agreements.some(t=>t.type==='non_aggression'&&t.parties.includes('senate')&&!t.parties.includes('caesar')));
 });
 
 test('an independence guarantee binds its provider only when its recipient is attacked',()=>{

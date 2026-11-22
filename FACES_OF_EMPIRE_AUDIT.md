@@ -6,6 +6,15 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `3fcfc89b` is integrated. The secret-diplomacy merge retained
+some AI logic but initially lost its imported proposal command, mission
+validation and results, delivered evidence links, atlas controls and browser
+workflow entry where long cache-version lines overlapped. These are restored
+without replacing the expansion's UI and report snapshots. AI proposals now
+wait for courier acceptance rather than instantly creating treaties. The
+focused agreement, secret-intelligence, AI and module suite passes 48/48;
+the full serial TAP suite passes 1,307/1,307. Cloud checks follow.
+
 New persistent Roman and foreign court actors without an explicit culture now
 receive their faction's structured cultural identity, including for a
 breakaway court's parent culture. Their bilingual own-court dossier shows the
