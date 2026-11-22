@@ -42,7 +42,7 @@ import {queueShip,appointFleet,dismissFleetCommander,appointNavalJob,dismissNava
 
 const received=receiveHandoff(sessionStorage,'atlas',upgradeSave);
 let state = received || newGrandGame();
-let objectivesOpen=true;let currentMapMode='political';let focusPreviousMode=null;const savedRelief=localStorage.getItem('spqr-relief-v2');let reliefEnabled=savedRelief==='on',automaticRelief=savedRelief===null;
+let objectivesOpen=true;let currentMapMode='political';let focusPreviousMode=null;let reliefEnabled=localStorage.getItem('spqr-relief-v2')==='on';
 let lang=localStorage.getItem('spqr-lang')==='en'?'en':'zh';
 let devBranch='material';
 let treeZoom=1;
@@ -259,7 +259,7 @@ const namedPoints={cisalpine:[11.6,44.75],narbo:[3.3,43.4],italiaN:[13.05,44.0],
 const campaignCenter=faction=>['caesar','senate'].includes(faction)?[12.4,43.2]:namedPoints[faction]||[12.4,43.2];
 if(received&&!['caesar','senate'].includes(state.player))map.flyTo({center:campaignCenter(state.player),zoom:5.45});
 let reliefRestoreTimer=null,reliefVisible=reliefEnabled;
-const reliefWanted=()=>reliefEnabled||automaticRelief&&map.getZoom()>=8.2;
+const reliefWanted=()=>reliefEnabled;
 function localReliefLayer(){
  const bounds=map.getBounds?.(),zoom=map.getZoom?.()||0;
  if(!bounds||zoom<8)return null;
@@ -342,7 +342,7 @@ const terrainName=id=>lang==='zh'?({plain:'平原',hills:'丘陵',forest:'森林
 const marchReason=reason=>({adjacent:lang==='zh'?'目的地不相邻':'Destination is not adjacent',peace:lang==='zh'?'尚未与该势力交战':'Not at war with this faction',transport:lang==='zh'?'海运需要8国库':'Sea transport requires 8 treasury',unavailable:lang==='zh'?'军队正行军或围攻':'Army is marching or besieging'})[reason]||'';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function inspect(title,description){document.querySelector('#selection-title').textContent=title;document.querySelector('#selection-detail').textContent=description;document.querySelector('#lab-orders').replaceChildren();document.querySelector('#command-detail').replaceChildren()}
-function showSettings(){activeInfo={type:'settings'};activeArmy=null;activeBattle=null;activeFaction=null;clearReach();const zh=lang==='zh';inspect(zh?'设置与制作信息':'SETTINGS & CREDITS',zh?'调整地图外观并查看创作者。':'Adjust the map and meet its creator.');document.querySelector('#command-detail').innerHTML=`<div class="settings-card"><h3>${zh?'地图外观':'MAP APPEARANCE'}</h3><p>${zh?'近景停住地图时自动显示山体阴影；拖动时暂停。手动开关的选择会保留。':'Hill shading appears automatically on a settled close map and pauses while moving. Your manual choice is saved.'}</p><button id="settings-relief" type="button" aria-pressed="${reliefWanted()}">${zh?'山体阴影':'HILL SHADING'} · ${reliefWanted()?(zh?'开':'ON'):(zh?'关':'OFF')}</button></div><div class="settings-card"><h3>${zh?'创作者':'CREATOR'}</h3><strong>stephen chu</strong><a href="https://github.com/stepOnO927" target="_blank" rel="noopener noreferrer">github.com/stepOnO927 ↗</a></div>`;document.querySelector('#settings-relief').onclick=()=>{document.querySelector('#relief-toggle').click();showSettings()}}
+function showSettings(){activeInfo={type:'settings'};activeArmy=null;activeBattle=null;activeFaction=null;clearReach();const zh=lang==='zh';inspect(zh?'设置与制作信息':'SETTINGS & CREDITS',zh?'调整地图外观并查看创作者。':'Adjust the map and meet its creator.');document.querySelector('#command-detail').innerHTML=`<div class="settings-card"><h3>${zh?'地图外观':'MAP APPEARANCE'}</h3><p>${zh?'山体阴影默认关闭，让地形色层与海岸更清晰。可随时开启；你的选择会保留。开启后拖动地图时会暂时停用阴影。':'Hill shading is off by default for clearer terrain colors and coastlines. Turn it on any time; your choice is saved. Shading pauses while the map moves.'}</p><button id="settings-relief" type="button" aria-pressed="${reliefWanted()}">${zh?'山体阴影':'HILL SHADING'} · ${reliefWanted()?(zh?'开':'ON'):(zh?'关':'OFF')}</button></div><div class="settings-card"><h3>${zh?'创作者':'CREATOR'}</h3><strong>stephen chu</strong><a href="https://github.com/stepOnO927" target="_blank" rel="noopener noreferrer">github.com/stepOnO927 ↗</a></div>`;document.querySelector('#settings-relief').onclick=()=>{document.querySelector('#relief-toggle').click();showSettings()}}
 settingsButton.onclick=showSettings;
 function showNaval(section='fleets'){
  activeInfo={type:'naval',section};activeArmy=null;activeBattle=null;activeFaction=null;previewDestination='';clearReach();currentMapMode='maritime';renderArmies();renderHud();
@@ -696,7 +696,7 @@ map.on('idle',()=>{if(reliefWanted()&&reliefVisible)showRelief(true)});
 map.on('load',()=>{map.on('movestart',pauseReliefWhileMoving);map.on('moveend',restoreReliefAfterMoving);map.on('dragend',restoreReliefAfterMoving);map.on('zoomend',restoreReliefAfterMoving)});
 function zoomClass(){document.body.classList.toggle('low-zoom',map.getZoom()<5.2);document.body.classList.toggle('mid-zoom',map.getZoom()<6.5);document.body.classList.toggle('leader-overview',map.getZoom()<4.8)}map.on('zoom',zoomClass);map.on('zoomend',renderTerrainLegend);map.on('moveend',renderTerrainLegend);zoomClass();
 document.querySelector('#relief-toggle').onclick=()=>{
- reliefEnabled=!reliefWanted();automaticRelief=false;
+ reliefEnabled=!reliefWanted();
  localStorage.setItem('spqr-relief-v2',reliefEnabled?'on':'off');
  clearTimeout(reliefRestoreTimer);
  showRelief(reliefEnabled);
