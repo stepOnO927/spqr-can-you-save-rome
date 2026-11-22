@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=world-kings-village-foothold-1';
-import {CHARACTER_CATALOG,ageRange} from '../characters.js?v=world-kings-village-foothold-1';
-import {assignSuccession,successionModel} from '../characters.js?v=world-kings-village-foothold-1';
-import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=world-kings-village-foothold-1';
-import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=world-kings-village-foothold-1';
-import {canHoldOffice} from '../office-system.js?v=world-kings-village-foothold-1';
-import {renderGenealogy} from '../genealogy-ui.js?v=world-kings-village-foothold-1';
-import {finalizeCampaign} from '../legacy.js?v=world-kings-village-foothold-1';
-import {startDynasticWar} from '../civil-war.js?v=world-kings-village-foothold-1';
-import {fictionalPortraitKey} from '../portrait-registry.js?v=world-kings-village-foothold-1';
+import {newGame,newDynastyScenario,upgradeSave,tick} from '../engine.js?v=world-kings-estate-village-1';
+import {CHARACTER_CATALOG,ageRange} from '../characters.js?v=world-kings-estate-village-1';
+import {assignSuccession,successionModel} from '../characters.js?v=world-kings-estate-village-1';
+import {deriveGovernment,advanceGovernments,secureRegency,reformRomanGovernment,appointCoEmperor,planSuccession,validSuccessionPlan} from '../governance.js?v=world-kings-estate-village-1';
+import {initializeDynasties,createFictionalPerson,proposeMarriage,reportedDynasticContacts,offerForeignMarriage,offerFamilyAccord,requestClaimantAsylum,adoptHeir,makeWill,settleInheritance,resolveInheritanceDispute,nominateGuardian,requestFamilyResources,advanceDynasties,decideDisputedHeir,personAge} from '../dynasties.js?v=world-kings-estate-village-1';
+import {canHoldOffice} from '../office-system.js?v=world-kings-estate-village-1';
+import {renderGenealogy} from '../genealogy-ui.js?v=world-kings-estate-village-1';
+import {finalizeCampaign} from '../legacy.js?v=world-kings-estate-village-1';
+import {startDynasticWar} from '../civil-war.js?v=world-kings-estate-village-1';
+import {fictionalPortraitKey} from '../portrait-registry.js?v=world-kings-estate-village-1';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 
@@ -150,7 +150,7 @@ test('a foreign child may inherit private property through a negotiated court se
  const caseFile=s.world.dynasties.inheritanceDisputes.at(-1),before=s.relations['caesar:egypt']||0;
  assert.ok(caseFile.heirs.includes(domestic));
  assert.equal(resolveInheritanceDispute(s,caseFile.id,'compromise').ok,true);
- assert.equal(s.world.characters[foreign].wealth,15);
+ assert.equal(s.world.characters[foreign].wealth,0);assert.equal(s.world.dynasties.estateTransfers[0].amount,15);assert.equal(s.world.dynasties.estateTransfers[0].status,'pending');
  assert.equal(s.world.characters[domestic].wealth,15);
  assert.equal(s.relations['caesar:egypt'],before+2);
  assert.equal(s.world.leadership.egypt.includes(foreign),false);

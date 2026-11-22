@@ -1,4 +1,4 @@
-import {FACTIONS} from './data.js?v=world-kings-village-foothold-1';
+import {FACTIONS} from './data.js?v=world-kings-estate-village-1';
 
 export function validPlayableCampaign(data){
  if(!data||!Array.isArray(data.regions)||!data.regions.length||!Array.isArray(data.armies)||!data.factions?.[data.player])return false;

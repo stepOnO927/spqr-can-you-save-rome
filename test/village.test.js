@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame, tick, upgradeSave} from '../engine.js?v=world-kings-village-foothold-1';
+import {newGame, tick, upgradeSave} from '../engine.js?v=world-kings-estate-village-1';
 import {localEntity, localEntityRevenue, villageDevelopment} from '../local-polities.js';
 import {villageProjectQuote, startVillageProject, villageFoodQuote, takeVillageFood, advanceVillages} from '../local-villages.js';
 import {armyExpeditionSupply, advanceExpeditionSupply} from '../expedition-supply.js';
-import {inspectState} from '../inspector-diagnostics.js?v=world-kings-village-foothold-1';
+import {inspectState} from '../inspector-diagnostics.js?v=world-kings-estate-village-1';
 import {footholdQuote, footholdShipmentQuote, footholdStorageCapacity, startFoothold, stockFoothold, advanceFootholds, resupplyAtFoothold, abandonFoothold} from '../foothold.js';
 
 test('a controlled village supports a paid, finite outpost that can be abandoned', () => {

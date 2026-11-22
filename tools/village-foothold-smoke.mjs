@@ -9,7 +9,7 @@ try {
   await page.addInitScript(() => localStorage.setItem('spqr-lang', 'en'));
   await page.goto(`${base}/map-lab/`, {waitUntil: 'domcontentloaded'});
   const resources = await page.evaluate(async () => {
-    const {newGame} = await import('/engine.js?v=world-kings-village-foothold-1');
+    const {newGame} = await import('/engine.js?v=world-kings-estate-village-1');
     const state = newGame('caesar');
     sessionStorage.setItem('spqr-view-handoff-v1', JSON.stringify({target: 'atlas', state}));
     return {treasury: state.factions.caesar.treasury, food: state.factions.caesar.food};

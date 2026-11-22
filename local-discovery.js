@@ -1,4 +1,4 @@
-import {ROUTES} from './data.js?v=world-kings-village-foothold-1';
+import {ROUTES} from './data.js?v=world-kings-estate-village-1';
 
 export const LOCAL_DISCOVERY_LEVELS=Object.freeze({unknown:0,geographic:1,contacted:2,identified:3,surveyed:4,documented:5});
 
