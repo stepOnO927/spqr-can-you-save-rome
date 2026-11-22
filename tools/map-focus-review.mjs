@@ -7,9 +7,9 @@ import {fileURLToPath} from 'node:url';
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const output=resolve(root,'outputs','cartography-review');
 await mkdir(output,{recursive:true});
-const width=Number(process.env.SPQR_MAP_WIDTH)||1440,close=process.env.SPQR_MAP_FOCUS_CLOSE==='1',suffix=(close?'-local':'')+(width<=700?`-${width}`:'');
+const width=Number(process.env.SPQR_MAP_WIDTH)||1440,height=Number(process.env.SPQR_MAP_HEIGHT)||(width<=700?844:900),close=process.env.SPQR_MAP_FOCUS_CLOSE==='1',suffix=(close?'-local':'')+(width<=700?`-${width}`:height<=720?`-${width}x${height}`:'');
 const browser=await chromium.launch({headless:true,executablePath:process.env.SPQR_CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const page=await browser.newPage({viewport:{width,height:width<=700?844:900}}),errors=[];
+const page=await browser.newPage({viewport:{width,height}}),errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 try{
  await page.route('**/*',async route=>{
@@ -23,6 +23,20 @@ try{
  });
  await page.goto('http://spqr.test/map-lab/',{waitUntil:'domcontentloaded'});
  await page.locator('#start-free').click();
+ if(width>600&&width<=1350&&height<=720){
+  const brief=page.locator('.brief'),toggle=page.locator('#brief-toggle');
+  assert.equal(await brief.isVisible(),true,'the campaign briefing remains available at entry');
+  await page.locator('#development').click();
+  assert.equal(await brief.isVisible(),false,'opening Development exposes more of the map');
+  assert.equal(await toggle.getAttribute('aria-expanded'),'false');
+  await page.screenshot({path:resolve(output,`atlas-development${suffix}.png`)});
+  await toggle.click();
+  assert.equal(await brief.isVisible(),true,'the player can reopen the briefing');
+  await page.locator('[data-dev-page="ideas"]').click();
+  assert.equal(await brief.isVisible(),true,'changing Development tabs respects the manual choice');
+  await page.locator('#language').click();
+  assert.match(await toggle.getAttribute('aria-label'),/Collapse campaign briefing/);
+ }
  const ready=()=>page.waitForFunction(async()=>{const {map}=await import(document.querySelector('script[type="module"]').src);return !map.isMoving()&&map.areTilesLoaded()&&document.querySelector('#map-charting').hidden&&Number(getComputedStyle(document.querySelector('#map')).opacity)>.99},null,{timeout:30000});
  await page.evaluate(async close=>{const {map}=await import(document.querySelector('script[type="module"]').src);map.jumpTo({center:close?[12.6,44.1]:[13.8,42.3],zoom:close?9.05:5.7})},close);
  await page.waitForTimeout(2700);await ready();await page.waitForTimeout(750);

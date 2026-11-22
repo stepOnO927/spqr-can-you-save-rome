@@ -65,7 +65,9 @@ function showRegion(r){
   panel.querySelectorAll('[data-buy-material]').forEach(button=>button.onclick=()=>{const result=purchaseMaterials(state,state.player,button.dataset.buyMaterial);if(result.ok){renderHud();showRegion(r)}});
 }
 function showDevelopment(page='research'){
+  const entering=activeInfo?.type!=='development';
   activeInfo={type:'development',page};activeFaction=null;activeBattle=null;activeArmy=null;clearReach();
+  if(entering&&crowdedAtlas.matches&&!briefManuallyToggled)setBriefCollapsed(true);
   inspect(lang==='zh'?'文明发展':'Development',lang==='zh'?'研究、国家理念与国际知识交易':'Research, national ideas and knowledge trade');
   const panel=document.querySelector('#command-detail');
   panel.innerHTML=`<div class="dev-page-tabs"><button data-dev-page="research">${lang==='zh'?'发明树':'INVENTION TREE'}</button><button data-dev-page="ideas">${lang==='zh'?'国家理念':'NATIONAL IDEAS'}</button></div>`+(page==='ideas'?ideasPanel(state,lang):developmentPanel(state,lang,devBranch));
@@ -616,6 +618,7 @@ function renderTerrainLegend(){
 }
 function renderHud(){
  renderHudBase();
+ setBriefCollapsed(document.querySelector('.brief').classList.contains('collapsed'));
  if(state.scenarioLabel){
   document.querySelector('.brief h1').textContent=n(state.scenarioLabel);
   document.querySelector('.brief > p').textContent=state.legacyScenario==='scenario-rubicon'
@@ -791,9 +794,12 @@ document.querySelector('#download-save').onclick=()=>downloadCampaign(state);doc
 document.querySelector('#map-mode').onchange=e=>{currentMapMode=e.target.value;renderArmies();renderHud()};
 document.querySelector('#objective-toggle').onclick=()=>{objectivesOpen=!objectivesOpen;renderHud()};
 
-document.querySelector('#brief-toggle').onclick=()=>{const b=document.querySelector('.brief');b.classList.toggle('collapsed');document.querySelector('#brief-toggle').textContent=b.classList.contains('collapsed')?'›':'‹';document.querySelector('#brief-toggle').setAttribute('aria-expanded',String(!b.classList.contains('collapsed')))};
+let briefManuallyToggled=false;
+function setBriefCollapsed(collapsed){const brief=document.querySelector('.brief'),toggle=document.querySelector('#brief-toggle');brief.classList.toggle('collapsed',collapsed);toggle.textContent=collapsed?'›':'‹';toggle.setAttribute('aria-expanded',String(!collapsed));toggle.setAttribute('aria-label',lang==='zh'?(collapsed?'展开战役简报':'收起战役简报'):(collapsed?'Expand campaign briefing':'Collapse campaign briefing'))}
+document.querySelector('#brief-toggle').onclick=()=>{briefManuallyToggled=true;setBriefCollapsed(!document.querySelector('.brief').classList.contains('collapsed'))};
 const compactAtlas=matchMedia('(max-width:600px)');
-function foldBriefForCompact(){if(!compactAtlas.matches)return;const brief=document.querySelector('.brief'),toggle=document.querySelector('#brief-toggle');brief.classList.add('collapsed');toggle.textContent='›';toggle.setAttribute('aria-expanded','false')}
+const crowdedAtlas=matchMedia('(max-width:1350px) and (max-height:720px)');
+function foldBriefForCompact(){if(compactAtlas.matches&&!briefManuallyToggled)setBriefCollapsed(true)}
 foldBriefForCompact();compactAtlas.addEventListener('change',foldBriefForCompact);
 
 document.querySelector('#factions').onclick=factionDirectory;
