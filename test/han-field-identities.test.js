@@ -6,6 +6,23 @@ import {fieldCulture,ensureFieldCommanders,createMarketMerchant} from '../han/fi
 import {birthRecordValid} from '../han/dynasty.js?v=han-1';
 import {ensureForeignRulers} from '../han/rulers.js';
 
+test('opening Central Asian field people use saved geographic bynames instead of serial numbers',()=>{
+ let s=newHanGame('han',{seed:1});
+ const fictional=Object.values(s.persons).filter(person=>person.record==='fictional');
+ assert.ok(fictional.length>=60);
+ assert.equal(fictional.filter(person=>/\(\d+\)$/.test(person.name[0])).length,0);
+ const army=s.armies.find(unit=>unit.owner==='shache'),id=army.commander,name=s.persons[id].name;
+ assert.match(name[0],/ of Shache$/);assert.match(name[1],/^莎车的/);
+ const merchantId=createMarketMerchant(s,'shanshan','kangju'),merchant=s.persons[merchantId];
+ assert.match(merchant.name[0],/ of Wuni$/);
+ assert.equal(merchant.homeland,'shanshan');assert.equal(merchant.location,'kangju');
+ s=loadHanSave(serialize(s));
+ assert.deepEqual(s.persons[id].name,name);assert.deepEqual(s.persons[merchantId].name,merchant.name);
+ // Migration keeps an older campaign's already recorded name unchanged.
+ s.persons[id].name=['Kava (19)','卡瓦（19）'];
+ assert.deepEqual(loadHanSave(serialize(s)).persons[id].name,['Kava (19)','卡瓦（19）']);
+});
+
 test('every opening eastern army has a saved person and distinct cultural identity',()=>{
  let s=newHanGame('han',{seed:17});
  const ids=new Set();

@@ -54,6 +54,27 @@ export function fieldCulture(faction){
  return POOLS[FACTIONS[faction]?.culture]?FACTIONS[faction].culture:'oasis';
 }
 
+function homeLabel(s,regionId,faction){
+ const site=s.regions.find(r=>r.id===regionId),label=site?.seat||site?.name||FACTIONS[faction]?.name;
+ return Array.isArray(label)&&label.length===2?label:null;
+}
+
+function originalName(pool,start,used,place,serial){
+ for(let i=0;i<pool.names.length;i++){
+  const choice=pool.names[(start+i)%pool.names.length];
+  if(!used.has(choice[0]))return choice;
+ }
+ // A geographic byname distinguishes original game characters from different
+ // courts. It is a UI convention, not an attested ancient naming practice.
+ if(place)for(let i=0;i<pool.names.length;i++){
+  const choice=pool.names[(start+i)%pool.names.length];
+  const candidate=[`${choice[0]} of ${place[0]}`,`${place[1]}的${choice[1]}`];
+  if(!used.has(candidate[0]))return candidate;
+ }
+ const choice=pool.names[start];
+ return [`${choice[0]} (${serial})`,`${choice[1]}（${serial}）`];
+}
+
 export function assignFieldCommander(s,army){
  if(!army||army.men<=0)return null;
  if(army.commander&&s.persons[army.commander]?.alive)return army.commander;
@@ -61,8 +82,7 @@ export function assignFieldCommander(s,army){
  s.nextFieldPerson=Number.isSafeInteger(s.nextFieldPerson)&&s.nextFieldPerson>0?s.nextFieldPerson:1;
  let id;do{id=`field:${s.nextFieldPerson++}`}while(s.persons[id]);
  const start=(s.nextFieldPerson-1)%pool.names.length;
- let name=null;for(let i=0;i<pool.names.length;i++){const choice=pool.names[(start+i)%pool.names.length];if(!used.has(choice[0])){name=choice;break}}
- if(!name){const choice=pool.names[start];name=[`${choice[0]} (${s.nextFieldPerson-1})`,`${choice[1]}（${s.nextFieldPerson-1}）`]}
+ const name=originalName(pool,start,used,homeLabel(s,army.region,army.owner),s.nextFieldPerson-1);
  const birth=s.year-35,person={id,name:[...name],record:'fictional',culture:[...pool.culture],faction:army.owner,role:'general',profession:'general',title:['Field commander','野战指挥官'],homeland:army.region,location:army.region,sex:'m',birth,death:null,alive:true,ambition:35,competence:55,loyalty:65,military:50,spouse:[],history:[{year:s.year,month:s.month,kind:'appointed',army:army.id}]};
  s.persons[id]=person;recordBirth(s,{id,birthSurname:null,birth,sex:'m'});ensureHanPortraitSeed(person);army.commander=id;return id;
 }
@@ -77,11 +97,10 @@ export function createMarketMerchant(s,faction,location){
  s.nextMerchantPerson=Number.isSafeInteger(s.nextMerchantPerson)&&s.nextMerchantPerson>0?s.nextMerchantPerson:1;
  let id;do{id=`merchant:${s.nextMerchantPerson++}`}while(s.persons[id]);
  const serial=s.nextMerchantPerson-1,start=serial%pool.names.length;
- let name=null;for(let i=0;i<pool.names.length;i++){const candidate=pool.names[(start+i)%pool.names.length];if(!used.has(candidate[0])){name=candidate;break}}
- if(!name){const candidate=pool.names[start];name=[`${candidate[0]} (${serial})`,`${candidate[1]}（${serial}）`]}
  // A foreign market is the place of hiring, not evidence that the merchant
  // was born there. Generate a home in the merchant's own realm when possible.
  const homeland=s.regions.find(r=>r.owner===faction)?.id||location;
+ const name=originalName(pool,start,used,homeLabel(s,homeland,faction),serial);
  const birth=s.year-35,specialties=MERCHANT_SPECIALTIES[culture]||MERCHANT_SPECIALTIES.oasis,person={id,name:[...name],record:'fictional',culture:[...pool.culture],faction,role:'merchant',profession:'merchant',title:['Caravan merchant','商队商人'],homeland,location,sex:'unknown',birth,death:null,alive:true,ambition:40,competence:55,loyalty:60,wealth:0,specialization:specialties[serial%specialties.length],riskTolerance:[35,50,65,80][serial%4],spouse:[],history:[{year:s.year,month:s.month,kind:'entered_market',region:location}],appearanceSeed:serial*2654435761>>>0};
  s.persons[id]=person;recordBirth(s,{id,birthSurname:null,birth,sex:'unknown'});return id;
 }

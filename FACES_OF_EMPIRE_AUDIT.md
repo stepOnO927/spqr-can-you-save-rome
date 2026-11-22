@@ -6,13 +6,22 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The seed-1 opening campaign had 23 numbered fictional names among 65 people,
+mostly from the shared oasis pool. Newly appointed field commanders and
+merchants now use their saved home region as a geographic game byname once
+unused pool names run out. The opening has 65 distinct fictional names and no
+numeric suffixes. This is a game reconstruction, not an attested personal-name
+formula. Existing saved names are left intact. Focused identity, market, and
+portrait checks pass 49/49; the full local simulation suite passes 1,271/1,271.
+Cloud checks are pending.
+
 The first browser run after the `9c585d58` integration caught a real atlas
 regression: a delivered succession report created an investigable lead, but
 the intelligence panel did not render its clickable person card. The panel
 now renders that card in both languages, retaining its saved reported name.
-A focused DOM regression and the full 1,270/1,270 local simulation suite pass;
-the cloud browser sequence must recheck the profile, paid investigation,
-save/load, and outcome before this item is closed.
+A focused DOM regression and the full 1,270/1,270 local simulation suite pass.
+All five GitHub checks passed at `adbdc3be`, including all three Browser smoke
+groups and the successor profile, investigation, save/load, and outcome.
 
 Main through `9c585d58` is integrated. A delivered succession report can now
 identify a fictional successor for a follow-up health or location inquiry;
