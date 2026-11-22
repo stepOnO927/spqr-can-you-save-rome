@@ -384,7 +384,10 @@ function updateControl(){
   map.setPaintProperty('grand-border','line-opacity',0);
   const macroBorders=[];for(const feature of historical.features){const macros=feature.properties.regions||[],owners=[...new Set(state.regions.filter(r=>macros.includes(r.macro)).map(r=>r.owner))];if(macros.length)macroBorders.push(feature.properties.id,identity(owners.length===1?owners[0]:'shared').map)}
   map.setPaintProperty('province-outline','line-color',['match',['get','id'],...macroBorders,'#aa9c75']);
-  map.setPaintProperty('province-outline','line-opacity',currentMapMode==='terrain'?['interpolate',['linear'],['zoom'],6,.12,8.5,0]:['interpolate',['linear'],['zoom'],5.5,.5,7,.3,8.5,0]);
+  // The broad macro polygons are only suitable for the campaign overview.
+  // Their straight edges cut through the Po plain and coast at regional zoom;
+  // the site banners remain the unambiguous control markers there.
+  map.setPaintProperty('province-outline','line-opacity',currentMapMode==='terrain'?['interpolate',['linear'],['zoom'],5.2,.14,5.75,0]:['interpolate',['linear'],['zoom'],5.2,.5,5.75,0]);
   map.setPaintProperty('control','fill-color',['match',['get','id'],...macroBorders,'#aa9c75']);
   map.setPaintProperty('control','fill-opacity',0);return;
  }
