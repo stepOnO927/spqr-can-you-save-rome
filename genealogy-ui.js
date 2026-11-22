@@ -1,13 +1,13 @@
-import {legendDossier,legendName,grantLegendHonor,EPITHETS} from './legend.js?v=portrait-fourteen-1';
-import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=portrait-fourteen-1';
-import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=portrait-fourteen-1';
-import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,revokeWill,resolveInheritanceDispute,retryEstateTransfer,reclaimEstateTransfer,retryEstateRulingNotice,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=portrait-fourteen-1';
-import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=portrait-fourteen-1';
+import {legendDossier,legendName,grantLegendHonor,EPITHETS} from './legend.js?v=intelligence-archive-1';
+import {storedCorrespondentName,isDeliveredReport} from './person-knowledge.js?v=intelligence-archive-1';
+import {CHARACTER_CATALOG,successionModel,HISTORICAL_BIO,ageRange} from './characters.js?v=intelligence-archive-1';
+import {personAge,isKnownMinor,isKnownAdult,proposeMarriage,adoptHeir,makeWill,revokeWill,resolveInheritanceDispute,retryEstateTransfer,reclaimEstateTransfer,retryEstateRulingNotice,nominateGuardian,requestFamilyResources,reportedDynasticContacts,offerForeignMarriage,requestClaimantAsylum,offerFamilyAccord} from './dynasties.js?v=intelligence-archive-1';
+import {deriveGovernment,secureRegency,reformRomanGovernment,appointCoEmperor,successionCandidates,planSuccession,withdrawSuccessionPlan,validSuccessionPlan} from './governance.js?v=intelligence-archive-1';
 import {FACTIONS} from './data.js?v=phase-x-1';
-import {fictionalPortraitKey} from './portrait-registry.js?v=portrait-fourteen-1';
-import {visiblePersonName} from './character-system.js?v=portrait-fourteen-1';
-import {renderMissingSearch,bindMissingSearch} from './missing-search-ui.js?v=portrait-fourteen-1';
-import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=portrait-fourteen-1';
+import {fictionalPortraitKey} from './portrait-registry.js?v=intelligence-archive-1';
+import {visiblePersonName} from './character-system.js?v=intelligence-archive-1';
+import {renderMissingSearch,bindMissingSearch} from './missing-search-ui.js?v=intelligence-archive-1';
+import {bindGenealogyPersonalActions} from './genealogy-personal-actions.js?v=intelligence-archive-1';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const name=(id,zh)=>CHARACTER_CATALOG[id]?.name?.[zh?1:0]||(String(id).startsWith('fictional:')?(zh?'身份未记录的人物':'Unidentified person'):id);

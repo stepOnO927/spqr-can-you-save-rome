@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=portrait-fourteen-1';
-import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=portrait-fourteen-1';
-import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=portrait-fourteen-1';
+import {newGame,upgradeSave} from '../engine.js?v=intelligence-archive-1';
+import {createFictionalPerson,advanceDynasties} from '../dynasties.js?v=intelligence-archive-1';
+import {fictionalPortraitKey,observedFictionalPortrait} from '../portrait-registry.js?v=intelligence-archive-1';
 
 const child=(s,name,sex)=>createFictionalPerson(s,{name:[name,name],faction:'caesar',birthYear:s.year,parents:['caesar'],sex});
 test('a natural birth through the family simulation reserves a portrait',()=>{

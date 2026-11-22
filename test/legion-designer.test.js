@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,tick,upgradeSave,resolveBattle,previewMarch,forecastEconomy,issueMilitaryOrder} from '../engine.js?v=portrait-fourteen-1';
-import {COMPONENTS,PRESETS,templatesFor,templateStats,saveTemplate,duplicateTemplate,renameTemplate,validateTemplate,compareTemplates,reorganizeArmy,reorganizationQuote,recruitFormation,recruitmentQuote,formationCombatFactor,formationUpkeepDelta,commanderSpecialty,commandConcentration,outdatedArmies,aiDesignFormations,availableComponents,cultureOf,formationState} from '../legion-designer.js?v=portrait-fourteen-1';
-import {focusState} from '../national-focus.js?v=portrait-fourteen-1';
+import {newGame,tick,upgradeSave,resolveBattle,previewMarch,forecastEconomy,issueMilitaryOrder} from '../engine.js?v=intelligence-archive-1';
+import {COMPONENTS,PRESETS,templatesFor,templateStats,saveTemplate,duplicateTemplate,renameTemplate,validateTemplate,compareTemplates,reorganizeArmy,reorganizationQuote,recruitFormation,recruitmentQuote,formationCombatFactor,formationUpkeepDelta,commanderSpecialty,commandConcentration,outdatedArmies,aiDesignFormations,availableComponents,cultureOf,formationState} from '../legion-designer.js?v=intelligence-archive-1';
+import {focusState} from '../national-focus.js?v=intelligence-archive-1';
 
 const roundTrip=s=>upgradeSave(JSON.parse(JSON.stringify(s)));
 const tpl=(s,owner,name)=>templatesFor(s,owner).find(t=>t.name===name);
