@@ -535,6 +535,8 @@ The western-front long-play route itself had a second strategic defect: after ta
 
 Run `node tools/audit-po-coast.mjs` and `node tools/audit-nile-coast.mjs` after changing the delta generalization; they sample the complementary land and sea masks for gaps and overlaps.
 
+A matched 1440 × 900 local-scale art review compared Rome, Florence and Ariminum at zoom 9.05 with current, stronger-contour, muted warm and two stronger elevation palettes. The stronger contour lines exposed polygon corners and were rejected. A warm earth-tone altitude progression at 82% color-relief opacity makes the Apennines more legible beside the pale Tiber/Adriatic plains; it changes only the Italian close-view DEM color layers, not the shoreline masks or faction colors. The local trial images are under ignored `outputs/italy-contour-style-trial/`. `node tools/cartography-review.mjs` verified matched Ariminum/Alexandria jumps, settled detailed tiles and bilingual charting; `node tools/coast-mask-smoke.mjs` verified distinct rendered land and sea at Liguria, Alexandria, the Aegean and North Africa. This is a regional art pass, not a full map redesign or an actual-device drag-performance result.
+
 Run `node tools/overview-coast-smoke.mjs` after changes to the overview images or zoom thresholds; it catches blank map frames at the image/vector transition in both languages.
 
 Run `node tools/cartography-review.mjs` after changing close-map colors, coast styling or transition behavior; it compares matched Ariminum and Alexandria views and checks bilingual charting, dragging and screenshot timing.

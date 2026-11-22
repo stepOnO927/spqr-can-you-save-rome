@@ -21,6 +21,9 @@ const nileDelta={type:'Feature',properties:{name:'Nile Delta (approximate)'},geo
 // At local scale, separate lowland, upland and exposed rock more clearly.
 // These are modern elevation bands, not reconstructed ancient land cover.
 const localElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e5d9b8',0,'#dfd5b1',100,'#c6cba1',300,'#a7b88d',700,'#829c7d',1200,'#6c8676',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
+// Central Italy uses a warmer height progression so the Apennines read as
+// terrain beside the Tiber and Adriatic plains. Modern elevation only.
+const italyElevationPalette=['interpolate',['linear'],['elevation'],-100,'#ead9b6',0,'#e3d3af',100,'#d2c7a0',300,'#b6ae88',700,'#9b8d6e',1200,'#85765e',1800,'#9a876e',2600,'#c4ad8d',3500,'#eee1ca'];
 // Around the Nile Delta the local DEM changes mostly within 0–50 m. Use
 // narrower earth-tone intervals there so real low relief remains legible.
 const egyptElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e8ddb9',0,'#e3d9b6',10,'#dfd0aa',25,'#d7c399',50,'#cbb288',100,'#bea178',300,'#aa8d6c',700,'#887866',1200,'#69796f',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
@@ -84,11 +87,11 @@ export const physicalStyle={
   {id:'relief-gaul-ultra',type:'hillshade',source:'elevation-gaul-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'land-elevation-gaul-higher',type:'color-relief',source:'elevation-gaul-higher',minzoom:9,paint:{'color-relief-opacity':.94,'color-relief-color':localElevationPalette}},
   {id:'relief-gaul-higher',type:'hillshade',source:'elevation-gaul-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  // The central Mediterranean detail source covers Italian close views. Keep
-  // its color texture light; other ranges need stronger altitude contrast.
-  {id:'land-elevation-ultra',type:'color-relief',source:'elevation-ultra',minzoom:8,paint:{'color-relief-opacity':.24,'color-relief-color':localElevationPalette}},
+  // Make the mountains legible at native local resolution without drawing
+  // the angular, low-density contour polygons as prominent outlines.
+  {id:'land-elevation-ultra',type:'color-relief',source:'elevation-ultra',minzoom:8,paint:{'color-relief-opacity':.82,'color-relief-color':italyElevationPalette}},
   {id:'relief-ultra',type:'hillshade',source:'elevation-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
-  {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':.24,'color-relief-color':localElevationPalette}},
+  {id:'land-elevation-higher',type:'color-relief',source:'elevation-higher',minzoom:9,paint:{'color-relief-opacity':.82,'color-relief-color':italyElevationPalette}},
   {id:'relief-higher',type:'hillshade',source:'elevation-higher',minzoom:9,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
   {id:'land-elevation-egypt-ultra',type:'color-relief',source:'elevation-egypt-ultra',minzoom:8,paint:{'color-relief-opacity':.94,'color-relief-color':egyptElevationPalette}},
   {id:'relief-egypt-ultra',type:'hillshade',source:'elevation-egypt-ultra',minzoom:8,paint:{'hillshade-exaggeration':.08,'hillshade-shadow-color':'#a39e86','hillshade-highlight-color':'#f2eddc','hillshade-accent-color':'#c4baa0'}},
