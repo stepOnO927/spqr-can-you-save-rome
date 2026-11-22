@@ -142,6 +142,19 @@ test('an unknown succession report does not reveal the actual candidate',()=>{
  const prior=globalThis.document,s=newGame('senate');s.world.leadership.egypt=['ptolemy'];s.world.successionPlans.egypt='cleopatra';addReport(s,'senate','egypt',{kind:'succession',value:'unknown',source:'envoy',confidence:'unverified',reliability:'moderate'});globalThis.document={createElement:tag=>new Element(tag)};
  try{for(const language of ['en','zh']){const content=new Element(),ui=createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}});ui.addMissions(content,'egypt');const html=content.children[0].querySelector('#mission-records').innerHTML;assert.match(html,language==='zh'?/继任安排报告：没有可靠消息/:/Reported succession plan: No reliable information/);assert.doesNotMatch(html,/Cleopatra|克娄巴特拉/)}}finally{globalThis.document=prior}
 });
+test('a named succession report exposes its saved person card in both languages',()=>{
+ const prior=globalThis.document,s=newGame('caesar'),id=createFictionalPerson(s,{name:['Nikaia','尼凯娅'],faction:'egypt',birthYear:s.year-30,location:'egypt'});
+ s.world.successionPlans.egypt=null;
+ addReport(s,'caesar','egypt',{kind:'succession',value:id,source:'spy',confidence:'unverified',reliability:'moderate'});
+ globalThis.document={createElement:tag=>new Element(tag)};
+ try{for(const language of ['en','zh']){
+  const content=new Element();createCharacterUI({getState:()=>s,getLanguage:()=>language,inspect:()=>{}}).addMissions(content,'egypt');
+  const html=content.children[0].querySelector('#mission-records').innerHTML;
+  assert.match(html,new RegExp(`data-character="${id}"`));
+  assert.match(html,language==='zh'?/报告中的继任人/:/Reported successor/);
+  assert.match(html,language==='zh'?/尼凯娅/:/Nikaia/);
+ }}finally{globalThis.document=prior}
+});
 test('foreign character profiles show recorded claims without revealing actual health',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');s.world.characters.cleopatra.health='seriously_ill';addReport(s,'senate','egypt',{kind:'health',character:'cleopatra',value:'healthy',source:'envoy',confidence:'unverified'});globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
  try{const ui=createCharacterUI({getState:()=>s,getLanguage:()=> 'en',inspect:()=>{}});ui.show('cleopatra');const dossier=panel.children.find(x=>x.className==='help-list');assert.match(dossier.innerHTML,/Healthy · Investigated court: Egypt · Envoy/);assert.match(dossier.innerHTML,/Unverified/);assert.doesNotMatch(dossier.innerHTML,/Seriously ill|battle wounds|Illness episodes/);assert.match(panel.innerHTML,/Simulated health<\/span><b>Unknown/);assert.match(dossier.innerHTML,/HISTORICAL ENCYCLOPEDIA \(NOT GAME INTELLIGENCE\)/)}finally{globalThis.document=prior}

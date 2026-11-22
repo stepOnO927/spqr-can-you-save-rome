@@ -6,6 +6,14 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+The first browser run after the `9c585d58` integration caught a real atlas
+regression: a delivered succession report created an investigable lead, but
+the intelligence panel did not render its clickable person card. The panel
+now renders that card in both languages, retaining its saved reported name.
+A focused DOM regression and the full 1,270/1,270 local simulation suite pass;
+the cloud browser sequence must recheck the profile, paid investigation,
+save/load, and outcome before this item is closed.
+
 Main through `9c585d58` is integrated. A delivered succession report can now
 identify a fictional successor for a follow-up health or location inquiry;
 an unknown or undelivered report cannot create that lead. The new browser
