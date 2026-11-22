@@ -28,6 +28,11 @@ test('a distant field army is not teleported into a claimant force',()=>{
  s=upgradeSave(JSON.parse(JSON.stringify(s)));assert.equal(startDynasticWar(s,'egypt','cleopatra'),true);
  assert.equal(s.armies.find(a=>a.id==='egyptguard').men,before);assert.equal(s.armies.find(a=>a.owner==='egypt_claimant').men,600);assert.equal(s.factions.egypt.manpower,0);
 });
+test('a small nearby detachment does not mask a larger eligible local force',()=>{
+ const s=newGame('caesar');assert.ok(contestLeadership(s,'egypt','cleopatra'));const guard=s.armies.find(a=>a.id==='egyptguard'),before=guard.men;
+ s.armies.unshift({...guard,id:'small-local',men:100,characterId:null});s.factions.egypt.manpower=0;
+ assert.equal(startDynasticWar(s,'egypt','cleopatra'),true);assert.equal(s.armies.find(a=>a.id==='small-local').men,100);assert.equal(guard.men,before-Math.floor(before*.2));assert.equal(s.armies.find(a=>a.owner==='egypt_claimant').men,Math.floor(before*.2));
+});
 test('delivered military backing can form the claimant force without duplicating troops',()=>{
  let s=newGame('caesar');assert.ok(contestLeadership(s,'egypt','cleopatra'));const guard=s.armies.find(a=>a.id==='egyptguard');guard.region='gaul';s.factions.egypt.manpower=0;const before=guard.men,romanManpower=s.factions.caesar.manpower;
  addReport(s,'caesar','egypt',{kind:'claimants',leaders:['cleopatra'],source:'spy'});assert.ok(supportClaimant(s,'caesar','egypt','cleopatra',null,'military').ok);s.world.intelSeed=1000;for(let i=0;i<4;i++)advanceOperations(s);

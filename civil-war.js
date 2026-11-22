@@ -42,7 +42,7 @@ export function startDynasticWar(s,parent,claimant){
  // A local detachment can defect across an adjacent land frontier; a distant
  // field army cannot have soldiers teleported to the claimant's theater.
  const adjacent=new Set(ROUTES.filter(([a,b,kind])=>kind!=='sea'&&(a===home.id||b===home.id)).map(([a,b])=>a===home.id?b:a));
- const guard=s.armies.find(a=>a.owner===parent&&a.men>0&&!a.move&&!a.siege&&adjacent.has(a.region)&&s.regions.some(r=>r.id===a.region&&r.owner===parent)),defectors=guard?Math.min(1000,Math.floor(guard.men*.2)):0,recruits=Math.min(1000,Math.max(0,base.manpower));
+ const guard=s.armies.filter(a=>a.owner===parent&&a.men>0&&!a.move&&!a.siege&&adjacent.has(a.region)&&s.regions.some(r=>r.id===a.region&&r.owner===parent)).sort((a,b)=>b.men-a.men||a.id.localeCompare(b.id))[0],defectors=guard?Math.min(1000,Math.floor(guard.men*.2)):0,recruits=Math.min(1000,Math.max(0,base.manpower));
  const reserve=dispute.militaryAid?.[claimant],aid=Number.isFinite(reserve)?Math.max(0,reserve):0;
  if(defectors+recruits+aid<500)return false;
  if(guard)guard.men-=defectors;base.manpower-=recruits;
