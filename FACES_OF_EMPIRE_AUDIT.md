@@ -6,6 +6,14 @@ Baseline: `7924545` on `main` (2026-11-11). Counts below come from importing
 
 ## Progress on the draft branch
 
+Main through `76b1b03c` is integrated. Its public diplomatic statement
+reports now expose their existing follow-up investigation action in the
+expansion's character panel. An overlapping long UI line had omitted `stance`
+from the report-verification button gate. The new focused UI regression checks
+that selecting the recorded statement preselects the investigation without
+spending treasury or dispatching a mission. Character, statement, dated-name
+and module checks pass 79/79; cloud quality and browser checks follow.
+
 Main through `255ffe16` is integrated. Its dated investigation subject-name
 snapshot and recorded-name display were restored where overlapping long lines
 had silently retained the expansion's older mission and character-panel code.

@@ -392,6 +392,23 @@ test('diplomatic statements display the source and warn they do not prove privat
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).addMissions(content,'egypt');const box=content.children[0],html=box.querySelector('#mission-records').innerHTML;assert.match(box.innerHTML,/公开外交表态（使者或伙伴转交）/);assert.match(html,/公开外交表态：克娄巴特拉七世 · 愿意接触（不保证真实意图或未来行动）/);assert.match(html,/个人会面/);assert.match(html,/未经核实/)}finally{globalThis.document=prior}
 });
 
+test('a recorded diplomatic statement can preselect a follow-up investigation without spending resources',()=>{
+ const prior=globalThis.document,s=newGame('senate'),content=new Element();
+ addReport(s,'senate','egypt',{kind:'stance',character:'cleopatra',value:'receptive',source:'meeting',confidence:'unverified'});
+ globalThis.document={createElement:tag=>new Element(tag)};
+ try{
+  createCharacterUI({getState:()=>s,getLanguage:()=> 'en',inspect:()=>{}}).addMissions(content,'egypt');
+  const box=content.children[0],records=box.querySelector('#mission-records'),buttons=records.querySelectorAll('[data-verify-report]');
+  assert.equal(buttons.length,1);
+  const cash=s.factions.senate.treasury,missions=s.operations.length;
+  buttons[0].onclick();
+  assert.equal(box.querySelector('#mission-subject').value,'stance');
+  assert.match(box.querySelector('#mission-feedback').textContent,/Selected this report’s subject/);
+  assert.equal(s.factions.senate.treasury,cash);
+  assert.equal(s.operations.length,missions);
+ }finally{globalThis.document=prior}
+});
+
 test('foreign dossiers show only recorded statements, with date and uncertainty',()=>{
  const prior=globalThis.document,panel=new Element(),s=newGame('senate');addReport(s,'senate','egypt',{kind:'stance',character:'cleopatra',value:'guarded',source:'meeting',observationYear:-50,observationMonth:2});addReport(s,'caesar','egypt',{kind:'stance',character:'cleopatra',value:'receptive',source:'meeting'});globalThis.document={querySelector:()=>panel,createElement:tag=>new Element(tag)};
  try{createCharacterUI({getState:()=>s,getLanguage:()=> 'zh',inspect:()=>{}}).show('cleopatra');const html=panel.children.find(x=>x.className==='help-list').innerHTML;assert.match(html,/已记录的公开表态/);assert.match(html,/谨慎戒备 · 个人会面 · 2\/50 BCE · 未经核实/);assert.match(html,/不证明私下意图或未来行动/);assert.doesNotMatch(html,/愿意接触/)}finally{globalThis.document=prior}
