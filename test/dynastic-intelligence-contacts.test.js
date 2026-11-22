@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-regional-types-1';
-import {createFictionalPerson,reportedDynasticContacts,offerForeignMarriage,advanceDynasties} from '../dynasties.js?v=world-kings-regional-types-1';
-import {addReport,reportedHealthSubjects} from '../character-system.js?v=world-kings-regional-types-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-massilia-1';
+import {createFictionalPerson,reportedDynasticContacts,offerForeignMarriage,advanceDynasties} from '../dynasties.js?v=world-kings-massilia-1';
+import {addReport,reportedHealthSubjects} from '../character-system.js?v=world-kings-massilia-1';
 
 test('delivered succession and governing reports become shared diplomatic leads, not facts about the foreign court',()=>{
  let s=newGame('caesar');const id=createFictionalPerson(s,{name:['Reported person','报告人物'],faction:'egypt',birthYear:s.year-30,sex:'female',location:'egypt'}),ours='fictional:1';

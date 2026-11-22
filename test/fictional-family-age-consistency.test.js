@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=world-kings-regional-types-1';
-import {createFictionalPerson,personAge,isKnownAdult,isKnownMinor,proposeMarriage,adoptHeir,nominateGuardian,advanceDynasties} from '../dynasties.js?v=world-kings-regional-types-1';
-import {deriveGovernment} from '../governance.js?v=world-kings-regional-types-1';
+import {newGame,upgradeSave} from '../engine.js?v=world-kings-massilia-1';
+import {createFictionalPerson,personAge,isKnownAdult,isKnownMinor,proposeMarriage,adoptHeir,nominateGuardian,advanceDynasties} from '../dynasties.js?v=world-kings-massilia-1';
+import {deriveGovernment} from '../governance.js?v=world-kings-massilia-1';
 
 test('a missing fictional birth year cannot authorize new family actions using a stale catalog',()=>{
  let s=newGame('caesar'),adult=createFictionalPerson(s,{name:['Unknown age','年龄未知'],faction:'caesar',birthYear:s.year-40}),partner=createFictionalPerson(s,{name:['Partner','配偶人选'],faction:'caesar',birthYear:s.year-30}),child=createFictionalPerson(s,{name:['Child','子女'],faction:'caesar',birthYear:s.year-8,parents:[adult]});

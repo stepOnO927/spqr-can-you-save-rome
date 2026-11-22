@@ -1,16 +1,16 @@
-import {recordLegendEvidence} from './legend.js?v=world-kings-regional-types-1';
-import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=world-kings-regional-types-1';
-import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=world-kings-regional-types-1';
-import {settleInheritance,dynastyRoll} from './dynasties.js?v=world-kings-regional-types-1';
-import {FACTIONS,ROUTES} from './data.js?v=world-kings-regional-types-1';
-import {deriveGovernment,validSuccessionPlan} from './governance.js?v=world-kings-regional-types-1';
-import {potentialConspirators} from './conspiracies.js?v=world-kings-regional-types-1';
-import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=world-kings-regional-types-1';
-import {reportedControl} from './control-intelligence.js?v=world-kings-regional-types-1';
-import {canHoldOffice,localGovernor} from './office-system.js?v=world-kings-regional-types-1';
-import {activeAgreement} from './agreements.js?v=world-kings-regional-types-1';
-import {activeModifiers} from './inventions.js?v=world-kings-regional-types-1';
-import {registerMissionPersonnel} from './epistulae-personnel.js?v=world-kings-regional-types-1';
+import {recordLegendEvidence} from './legend.js?v=world-kings-massilia-1';
+import {namedReportSubjects,reportedPersonName,visiblePersonName,isDeliveredReport,isCompletedMeeting,reportedPersonalContacts,reportedPeople} from './person-knowledge.js?v=world-kings-massilia-1';
+import {CHARACTER_CATALOG,OPENING_LEADERS,initializeWorld,assignSuccession,ageRange,characterAgeRange} from './characters.js?v=world-kings-massilia-1';
+import {settleInheritance,dynastyRoll} from './dynasties.js?v=world-kings-massilia-1';
+import {FACTIONS,ROUTES} from './data.js?v=world-kings-massilia-1';
+import {deriveGovernment,validSuccessionPlan} from './governance.js?v=world-kings-massilia-1';
+import {potentialConspirators} from './conspiracies.js?v=world-kings-massilia-1';
+import {knownDynasticFactions,startDynasticWar} from './civil-war.js?v=world-kings-massilia-1';
+import {reportedControl} from './control-intelligence.js?v=world-kings-massilia-1';
+import {canHoldOffice,localGovernor} from './office-system.js?v=world-kings-massilia-1';
+import {activeAgreement} from './agreements.js?v=world-kings-massilia-1';
+import {activeModifiers} from './inventions.js?v=world-kings-massilia-1';
+import {registerMissionPersonnel} from './epistulae-personnel.js?v=world-kings-massilia-1';
 const names=(ids,lang)=>ids.map(id=>CHARACTER_CATALOG[id]?.name[lang]).filter(Boolean).join(lang?'、':', ');
 // A visual impression is less precise than the historical birth estimate.
 // Unknown birth dates remain unknown, rather than becoming invented ages.
@@ -192,7 +192,9 @@ export function queueMission(s,actor,target,type,subject='health',partnerId=null
  const plan=previewMission(s,actor,target,type,subject,partnerId,characterId);if(!plan.ok)return plan;
  const {duration,partner,cost}=plan,subjectCharacter=['health','age','location'].includes(subject)?(characterId===''?null:(characterId||(['health','location'].includes(subject)&&type!=='exchange'?reportedHealthSubjects(s,actor,target)[0]:null)||null)):null;
  s.factions[actor].treasury-=cost;
- const operation={id:`mission:${s.nextOperationId||1}`,actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month};
+ const subjectName=subjectCharacter&&visiblePersonName(s,actor,subjectCharacter);
+ const knownName=Array.isArray(subjectName)&&subjectName.length===2&&!['Unrecorded name','Name reports differ'].includes(subjectName[0])?subjectName:null;
+ const operation={id:`mission:${s.nextOperationId||1}`,actor,target,type,subject,...(partner?{partner}:{}),...(target.endsWith('_claimant')&&type!=='exchange'?{targetGeneration:s.world.dynasticGenerations?.[target]||0}:{}),subjectCharacter,...(knownName?{subjectName:[...knownName]}:{}),remaining:duration,duration,status:'pending',sentYear:s.year,sentMonth:s.month};
  s.nextOperationId=(s.nextOperationId||1)+1;s.operations.unshift(operation);
  if(actor!==target&&['envoy','travelers'].includes(type))registerMissionPersonnel(s,operation);
  if(actor===s.player)notify(s,`${type} mission dispatched; estimated ${duration} months.`,`已派出${({spy:'间谍',counter:'内部调查',envoy:'使者',travelers:'商旅',audience:'会面请求',exchange:'情报交换'})[type]}，预计${duration}个月。`);return {ok:true,duration};
@@ -376,11 +378,14 @@ export function advanceOperations(s){initializeWorld(s);for(const op of s.operat
   // when someone actually in office and named in the report could attend.
   const met=(report.leaders||[]).find(candidate=>{const p=s.world.characters[candidate];return (s.world.leadership[op.target]||[]).includes(candidate)&&p?.alive&&p.faction===op.target&&!p.travel&&!p.missing&&s.regions.some(r=>r.id===p.location&&r.owner===op.target)&&!s.armies.some(a=>a.characterId===candidate&&a.move)&&!['seriously_ill','dying','deceased'].includes(p.health)});
   if(met){const p=s.world.characters[met],visible=['wounded','frail'].includes(p.health)?p.health:'unknown',age=apparentAgeRange(met,s.year,s);
-   addReport(s,op.actor,op.target,{kind:'location',character:met,value:p.location,source:'audience',confidence:'unverified',reliability:'moderate'});
-   addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,source:'audience',confidence:'unverified',reliability:'low'});
-   if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,source:'audience',confidence:'unverified',reliability:'low'});
+   const peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[met]});
+   addReport(s,op.actor,op.target,{kind:'location',character:met,value:p.location,peopleNames,source:'audience',confidence:'unverified',reliability:'moderate'});
+   addReport(s,op.actor,op.target,{kind:'health',character:met,value:visible,peopleNames,source:'audience',confidence:'unverified',reliability:'low'});
+   if(age)addReport(s,op.actor,op.target,{kind:'age',character:met,value:age,peopleNames,source:'audience',confidence:'unverified',reliability:'low'});
   }
  }
+ if(report.character&&report.character===op.subjectCharacter&&Array.isArray(op.subjectName)&&op.subjectName.length===2&&op.subjectName.every(x=>typeof x==='string'&&x.length>0))report.peopleNames={[report.character]:[...op.subjectName]};
+ else if(report.character&&op.subjectCharacter===null&&report.character===healthId)report.peopleNames=snapshotReportedPeople({kind:'leaders',leaders:[report.character]});
  addReport(s,op.actor,op.target,report);if(op.actor===s.player)notify(s,`An intelligence report from ${FACTIONS[op.target].short[0]} has arrived.`,`一份来自${FACTIONS[op.target].short[1]}的情报报告已送达。`);
 }}
 export function contestLeadership(s,faction,claimant){
