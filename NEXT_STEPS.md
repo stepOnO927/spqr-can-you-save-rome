@@ -535,6 +535,8 @@ A matched Ostia route took the harbor and received three paid Egyptian grain del
 
 ## Release checks
 
+The atlas now uses a compact command prompt while no army or city is selected. A selection restores the full detail panel, including orders; the prompt stays compact after an English or Chinese language switch. This frees roughly 40–50 vertical pixels and 40 horizontal pixels of the close map at 1440 × 900 without hiding the month controls. The 390 px bilingual touch/save/load flow and fresh native Ariminum terrain capture pass with no page errors. A separate 250 m DEM linework experiment looked like scattered scratches or a grey contour mesh at Rome and Ariminum, so its scripts and image layer were not merged. The map's overall art direction, geographic coverage and real-device performance remain unfinished.
+
 ### Latest atlas performance isolation
 
 An isolated trial removed the two optional land and sea printing-grain layers at 1920 × 1080. The software-rendered sample moved from 4.14 pan / 3.48 zoom animation callbacks per second to 4.49 / 3.11; the mixed result does not justify removing the visual texture. The trial stayed in ignored local output and was not merged. The broader rendering bottleneck and close-map appearance remain open.

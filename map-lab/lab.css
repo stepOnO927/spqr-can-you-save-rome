@@ -178,3 +178,15 @@ body.grand-campaign.atlas-focus .grand-site:is(:hover,:focus-visible):before{con
 /* Let the atlas show multiple research stages without losing its map context. */
 .selection:has(.dev-tree){width:min(900px,calc(100vw - 90px));max-height:calc(100vh - 155px);overflow:auto}
 @media(max-width:600px){.selection:has(.dev-tree){width:auto;max-height:78vh}}
+
+/* Keep the idle command prompt compact so the terrain stays visible. */
+.selection.idle{width:260px;min-height:0;padding:10px 12px}
+.selection.idle .kicker{display:none}
+.selection.idle h2{margin:0 0 2px;font-size:19px}
+.selection.idle p{font-size:10px;line-height:1.35}
+.selection.idle .time-controls{margin-top:8px}
+.selection.idle .time-controls button{padding:6px 5px;font-size:8px}
+@media(max-width:600px){
+ .selection.idle{width:auto;padding:9px 12px}
+ .selection.idle h2{font-size:18px}
+}
