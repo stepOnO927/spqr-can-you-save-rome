@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGrandGame,tick,moveArmy,previewMarch,upgradeSave,aiTurn,startConstruction} from '../engine.js';
+import {newGrandGame,tick,moveArmy,cancelMarch,previewMarch,upgradeSave,aiTurn,startConstruction} from '../engine.js';
 import {SEA_ZONES,seaRoute,portZone,isPortBlockaded,queueShip,cancelShipConstruction,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,navalJobEffect,advanceNaval,resolveBattle,reportedHostileFleets,reportedNonHostileFleets,accessibleFleet,supportPirates,toggleTradeRoute,fleetSpeed,fleetCargoCapacity,fleetUpkeep,fleetUpkeepDue,wagonSupplyPlan,dispatchWagonSupply} from '../naval.js';
 import {tradeCard,renderNavalPanel} from '../map-lab/naval-ui.js';
 import {developmentPanel,constructionPanel} from '../development-ui.js';
@@ -357,6 +357,32 @@ test('later-campaign storms damage real fleets and AI can order a blockade witho
 });
 test('sea transport needs an idle fleet and arrives with its vessels',()=>{
  const s=newGrandGame('senate'),army=s.armies.find(a=>a.id==='italy');army.region='italiaS';const target='t075',fleet=s.naval.fleets.find(f=>f.owner==='senate');s.naval.fleets.find(f=>f.owner==='caesar').zone='ligurian';assert.equal(previewMarch(s,army.id,target).ok,true);assert.equal(moveArmy(s,army.id,target).ok,true);assert.equal(fleet.order.kind,'transport');assert.equal(accessibleFleet(s,'senate','italiaS',army.men),undefined);for(let i=0;i<4&&army.region!==target;i++)tick(s);assert.equal(army.region,target);assert.equal(fleet.port,target)
+});
+test('cancelling before embarkation releases the transport; a sailed convoy cannot be cancelled from shore',()=>{
+ const s=newGrandGame('senate'),unit=s.armies.find(a=>a.id==='italy'),fleet=s.naval.fleets.find(f=>f.id==='senate-adriatic');
+ unit.region='italiaS';s.naval.fleets=s.naval.fleets.filter(f=>f.owner==='senate');
+ const cash=s.factions.senate.treasury;
+ assert.equal(moveArmy(s,unit.id,'t075').ok,true);
+ assert.equal(fleet.order?.departed,false);assert.equal(fleet.port,null);
+ const saved=upgradeSave(structuredClone(s)),restoredArmy=saved.armies.find(a=>a.id===unit.id),restoredFleet=saved.naval.fleets.find(f=>f.id===fleet.id);
+ assert.equal(cancelMarch(saved,unit.id).ok,true);
+ assert.equal(restoredArmy.move,null);assert.equal(restoredArmy.attackIntel,null);
+ assert.equal(restoredFleet.order,null);assert.equal(restoredFleet.port,'italiaS');
+ assert.equal(saved.factions.senate.treasury,cash-8,'the committed passage fee is not refunded');
+ assert.equal(moveArmy(saved,unit.id,'t075').ok,true,'the freed ships can take another valid order');
+ advanceNaval(saved);
+ assert.equal(restoredFleet.order?.departed,true);
+ const underway=upgradeSave(structuredClone(saved));
+ assert.deepEqual(cancelMarch(underway,unit.id),{ok:false,reason:'departed'});
+ assert.equal(underway.armies.find(a=>a.id===unit.id).move?.transportFleetId,fleet.id);
+ assert.equal(underway.naval.fleets.find(f=>f.id===fleet.id).order?.kind,'transport');
+});
+test('ordinary land march cancellation clears the order',()=>{
+ const s=newGrandGame('caesar'),unit=s.armies.find(a=>a.id==='xiii');
+ assert.equal(moveArmy(s,unit.id,'italiaN').ok,true);
+ assert.equal(cancelMarch(s,unit.id).ok,true);
+ assert.equal(unit.move,null);
+ assert.deepEqual(cancelMarch(s,unit.id),{ok:false,reason:'order'});
 });
 test('naval contact produces uncertain dated enemy intelligence and a battle report',()=>{
   const s=newGrandGame('senate'),fleet=s.naval.fleets.find(f=>f.owner==='senate');s.naval.fleets.find(f=>f.owner==='caesar').port=null;assert.deepEqual(reportedHostileFleets(s,'senate'),[]);assert.equal(orderFleet(s,'senate',fleet.id,'intercept','adriatic').ok,true);advanceNaval(s);assert.ok(s.naval.reports.some(r=>r.kind==='battle'));const sighting=reportedHostileFleets(s,'senate').find(r=>r.owner==='caesar');assert.ok(sighting);assert.equal(sighting.month,s.month);assert.ok(sighting.range[0]<sighting.range[1])

@@ -12,13 +12,13 @@ import {grandRegionsFrom,GRAND_ROUTES} from './grand-map-data.js';
 import {grandAdjacent,grandRoute,edgeMonths,armySupply,advanceOperationalState,encircled,flankFactor,canEmbark,supplyBottlenecks,strategicRetreat} from './grand-operations.js?v=37';
 import {initializeLocalSociety,faithSatisfaction,advanceDemography,advanceReligion,setReligiousPolicy,productiveEstateRegion,provincialRitesCredit,foodShortageTier} from './local-society.js?v=9';
 import {initializeFigures,advanceFigures} from './great-figures.js';
-import {initializeNaval,advanceNaval,commitArmyTransport} from './naval.js?v=51';
+import {initializeNaval,advanceNaval,commitArmyTransport,cancelArmyTransport} from './naval.js?v=52';
 import {initializeAchievements,evaluateAchievements,endCampaign} from './achievement-system.js?v=5';
 import {militaryResult,settlementEligible,setCampaignOutcome} from './campaign-outcome.js?v=5';
 import {nationalBudget} from './national-budget.js?v=27';
 export {nationalBudget} from './national-budget.js?v=27';
 export {endCampaign,revealedAchievements} from './achievement-system.js?v=5';
-export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,cancelShipConstruction,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates,dispatchWagonSupply} from './naval.js?v=51';
+export {SEA_ZONES,SHIPS,NAVAL_JOBS,NAVAL_TACTICS,portZone,seaRoute,fleet,queueShip,cancelShipConstruction,appointFleet,dismissFleetCommander,appointNavalJob,dismissNavalJob,orderFleet,reserveFleet,mobilizeFleet,setFleetTactic,ransomFleetCommander,reportedHostileFleets,reportedNonHostileFleets,supportPirates,dispatchWagonSupply} from './naval.js?v=52';
 export {recruitFigure,figureStatus,figureActive} from './great-figures.js';
 export {holdPosition,strategicRetreat,armySupply,encircled,supplyNetwork,navalCapacity,availableNavalLift,supplyBottlenecks} from './grand-operations.js?v=37';
 export {knowledgeTrade,sellKnowledge,proposeKnowledgeSale,proposeKnowledgePurchase,acceptKnowledgePurchase,declineKnowledgePurchase,acceptKnowledgeOffer,declineKnowledgeOffer,exchangeKnowledge,proposeKnowledgeExchange,acceptKnowledgeExchange,declineKnowledgeExchange,knowledgeAgreementCheck,proposeKnowledgeAgreement,negotiateKnowledgeAgreement,acceptKnowledgeAgreement,declineKnowledgeAgreement,cancelKnowledgeAgreement,inviteForeignScholars,acceptScholarVisit,declineScholarVisit,researchInnovation,adoptIdea,removeIdea,cancelIdeaAdoption,expandIdeaSlot,startConstruction,constructionCheck,purchaseMaterials};
@@ -139,6 +139,16 @@ export function moveArmy(s,armyId,destination){
   a.attackIntel=estimate.hostile?assessment(s,armyId,destination,estimate):null;
   if(a.owner===s.player)log(s,`${a.name[0]} marched toward ${target.name[0]} (${months} month${months>1?'s':''}).`,`${a.name[1]}向${target.name[1]}行军（${months}个月）。`);
   return {ok:true};
+}
+
+export function cancelMarch(s,armyId){
+ const unit=army(s,armyId);
+ if(!unit?.move)return {ok:false,reason:'order'};
+ const transport=cancelArmyTransport(s,unit);
+ if(!transport.ok)return transport;
+ unit.move=null;unit.attackIntel=null;
+ if(unit.owner===s.player)log(s,`${unit.name[0]}'s march was cancelled.`,`${unit.name[1]}的行军已取消。`);
+ return {ok:true};
 }
 
 export function recruit(s,regionId,owner=s.player){
