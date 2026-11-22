@@ -582,6 +582,35 @@ test('pausing imports after departure returns undelivered cargo without charging
  for(let i=0;i<3;i++){s.month++;advanceNaval(s)}
  assert.equal(s.factions.egypt.food,60);assert.equal(s.naval.voyages.filter(v=>v.routeId===route.id).length,0);
 });
+test('a merchant withdraws from a sustained blockade instead of paying upkeep offshore forever',()=>{
+ let s=newGrandGame('senate');s.naval.routes=s.naval.routes.filter(r=>r.id==='egypt-italy');s.naval.pirates=[];s.factions.senate.food=0;s.factions.egypt.food=60;
+ const route=s.naval.routes[0],enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');
+ advanceNaval(s);assert.equal(s.naval.voyages.filter(v=>v.routeId===route.id).length,1);
+ enemy.zone=portZone(route.to);enemy.port=null;enemy.reserve=false;enemy.mobilizing=0;enemy.order={kind:'blockade',target:route.to,targetPort:route.to,path:[]};
+ for(let i=0;i<10&&s.naval.voyages.find(v=>v.routeId===route.id)?.blockedMonths!==1;i++){s.month++;advanceNaval(s)}
+ assert.equal(s.naval.voyages.find(v=>v.routeId===route.id)?.blockedMonths,1);assert.equal(route.last.reason,'blockade');assert.equal(s.factions.senate.food,0);
+ s=upgradeSave(structuredClone(s));s.month++;advanceNaval(s);
+ assert.equal(s.naval.voyages.find(v=>v.routeId===route.id)?.phase,'return');assert.equal(s.naval.routes.find(r=>r.id===route.id).last.reason,'blockade');
+ for(let i=0;i<10&&s.naval.voyages.some(v=>v.routeId===route.id);i++){s.month++;advanceNaval(s)}
+ assert.equal(s.naval.voyages.some(v=>v.routeId===route.id),false);assert.equal(s.factions.egypt.food,60);assert.equal(s.factions.senate.food,0);
+});
+test('lifting a short blockade lets the waiting merchant deliver its saved cargo once',()=>{
+ const s=newGrandGame('senate');s.naval.routes=s.naval.routes.filter(r=>r.id==='egypt-italy');s.naval.pirates=[];s.factions.senate.food=0;s.factions.egypt.food=60;
+ const route=s.naval.routes[0],enemy=s.naval.fleets.find(f=>f.id==='caesar-adriatic');s.naval.fleets.find(f=>f.id==='egypt-grain').ships.merchant=1;advanceNaval(s);
+ enemy.zone=portZone(route.to);enemy.port=null;enemy.reserve=false;enemy.mobilizing=0;enemy.order={kind:'blockade',target:route.to,targetPort:route.to,path:[]};
+ for(let i=0;i<10&&s.naval.voyages.find(v=>v.routeId===route.id)?.blockedMonths!==1;i++){s.month++;advanceNaval(s)}
+ const voyage=s.naval.voyages.find(v=>v.routeId===route.id);assert.equal(voyage?.blockedMonths,1);
+ enemy.order=null;s.month++;advanceNaval(s);
+ assert.equal(route.last.reason,'delivered');assert.equal(route.last.amount,4);assert.equal(voyage.blockedMonths,0);
+ assert.equal(s.factions.senate.food,4);assert.equal(s.factions.egypt.food,56);
+});
+test('a captured destination recalls merchant cargo even if its harbor is blockaded',()=>{
+ const s=newGrandGame('senate');s.naval.routes=s.naval.routes.filter(r=>r.id==='egypt-italy');s.naval.pirates=[];s.factions.senate.food=0;s.factions.egypt.food=60;
+ const route=s.naval.routes[0];advanceNaval(s);assert.equal(s.naval.voyages.filter(v=>v.routeId===route.id).length,1);
+ s.regions.find(r=>r.id===route.to).owner='caesar';
+ for(let i=0;i<10&&s.naval.voyages.find(v=>v.routeId===route.id)?.phase!=='return';i++){s.month++;advanceNaval(s)}
+ assert.equal(s.naval.voyages.find(v=>v.routeId===route.id)?.phase,'return');assert.equal(route.last.reason,'closed');assert.equal(s.factions.senate.food,0);
+});
 test('a merchant return diverts from a captured origin harbor with its cargo intact',()=>{
  const s=newGrandGame('egypt');s.naval.pirates=[];s.factions.senate.food=0;s.factions.egypt.food=60;
  const route=s.naval.routes.find(r=>r.id==='egypt-italy');advanceNaval(s);assert.ok(s.naval.voyages.some(v=>v.routeId===route.id));

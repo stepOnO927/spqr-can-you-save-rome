@@ -186,9 +186,16 @@ function advanceTradeVoyages(s,log){
    if(v.vesselOwner===s.player)log(s,'Pirates struck a merchant vessel and seized cargo.','海盗袭击商船并夺走货物。');continue;
   }
   if(v.path.length){tradeRecord(s,route,v.buyer,v.seller,'enroute',security,v.price,{cargo:v.cargo,zone:v.zone,eta:v.path.length});continue}
-  if(isPortBlockaded(s,v.to)){tradeRecord(s,route,v.buyer,v.seller,'blockade',0,v.price,{cargo:v.cargo,zone:v.zone});continue}
   const from=s.regions.find(r=>r.id===v.from),to=s.regions.find(r=>r.id===v.to),relations=s.relations?.[[v.buyer,v.seller].sort().join(':')]??0;
   const open=from?.owner===v.seller&&to?.owner===v.buyer&&!atWar(s,v.buyer,v.seller)&&relations>-40&&!route.pausedBy?.includes(v.buyer)&&!route.pausedBy?.includes(v.seller);
+  if(!open){tradeRecord(s,route,v.buyer,v.seller,'closed',security,v.price,{cargo:v.cargo,zone:v.zone});sendTradeHome(s,v);continue}
+  if(isPortBlockaded(s,v.to)){
+   v.blockedMonths=(v.blockedMonths||0)+1;
+   tradeRecord(s,route,v.buyer,v.seller,'blockade',0,v.price,{cargo:v.cargo,zone:v.zone});
+   if(v.blockedMonths>=2){sendTradeHome(s,v);if([v.buyer,v.seller,v.vesselOwner].includes(s.player))log(s,'A sustained blockade turned a merchant shipment back without delivery or payment.','持续封锁迫使商船返航，货物未交付，也未付款。')}
+   continue;
+  }
+  v.blockedMonths=0;
   const floor=tradeCashFloor(s,v.buyer,v.good),affordable=v.buyer===v.seller?v.cargo:Math.floor(Math.max(0,s.factions[v.buyer].treasury-floor)/v.price);
   const need=tradeNeed(s,route,v.buyer,v.seller),wanted=open?Math.min(v.cargo,affordable,need):0;
   const amount=marketGoods.has(v.good)?wanted:tradeAccountMove(s,v.buyer,v.good,wanted,true),paid=v.buyer===v.seller?0:amount*v.price;v.cargo-=amount;s.factions[v.buyer].treasury-=paid;s.factions[v.seller].treasury+=paid;
