@@ -54,9 +54,12 @@ try{
    const index=y*width+x,elevation=Math.max(0,values[index]);
    let upper=palette.findIndex(stop=>stop[0]>=elevation);if(upper<1)upper=elevation<=0?1:palette.length-1;
    const lower=palette[upper-1],high=palette[upper],mix=Math.max(0,Math.min(1,(elevation-lower[0])/(high[0]-lower[0])));
-   const west=Math.max(0,values[y*width+Math.max(0,x-1)]),east=Math.max(0,values[y*width+Math.min(width-1,x+1)]);
-   const north=Math.max(0,values[Math.max(0,y-1)*width+x]),south=Math.max(0,values[Math.min(height-1,y+1)*width+x]);
-   const light=Math.max(.73,Math.min(1.15,.96+(west-east)*.00028+(south-north)*.00022));
+   // Sample a wider slope so individual DEM pixels do not read as crumpled foil
+   // at the campaign-map scale. Keep the underlying elevation and coastline.
+   const slopeRadius=4;
+   const west=Math.max(0,values[y*width+Math.max(0,x-slopeRadius)]),east=Math.max(0,values[y*width+Math.min(width-1,x+slopeRadius)]);
+   const north=Math.max(0,values[Math.max(0,y-slopeRadius)*width+x]),south=Math.max(0,values[Math.min(height-1,y+slopeRadius)*width+x]);
+   const light=Math.max(.84,Math.min(1.10,.97+(west-east)*.00028/slopeRadius+(south-north)*.00022/slopeRadius));
    for(let c=0;c<3;c++)pixels[index*4+c]=Math.round((lower[1][c]+(high[1][c]-lower[1][c])*mix)*light);
    pixels[index*4+3]=255;
   }
