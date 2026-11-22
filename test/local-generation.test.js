@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {newGame,tick,upgradeSave} from '../engine.js?v=world-kings-neighbor-trade-1';
 import {configureStartingDifficulty} from '../difficulty.js?v=world-kings-neighbor-trade-1';
 import {LOCAL_GENERATION_BANDS,VILLAGE_GENERATION_BANDS,generatedLocalPolities} from '../local-generation.js';
-import {localOfferChance,advanceLocalEntities,advanceLocalTrade,localEntity,offerLocalContact,localSiegeQuote,besiegeLocalEntity} from '../local-polities.js';
+import {localOfferChance,advanceLocalEntities,advanceLocalTrade,localEntity,localTradeOpen,offerLocalContact,localSiegeQuote,besiegeLocalEntity} from '../local-polities.js';
+import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from '../local-discovery.js';
 import {advanceVillages} from '../local-villages.js';
 import {advanceLocalResistance} from '../local-resistance.js';
 import {receivedMail,replyToLetter,advanceMail} from '../epistulae.js?v=world-kings-neighbor-trade-1';
@@ -338,6 +339,50 @@ test('a commercial route closing while the acceptance returns prevents a stale c
  for(let month=0;month<replyMonths;month++){if(++s.month>12){s.month=1;s.year++}advanceLocalEntities(s)}
  assert.equal(entity.tradeRights?.caesar,undefined);
  assert.equal(entity.lastOutcome.accepted,false);
+});
+
+test('a known hungry nonplayer neighbor can conclude its own delayed local food compact',()=>{
+ const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ const theater=s.regions.find(region=>region.id===entity.theater);theater.owner='senate';
+ entity.strategy=5;entity.food=30;entity.treasury=12;
+ for(const court of Object.values(s.factions))court.food=100;
+ s.factions.senate.food=10;s.factions.senate.treasury=40;s.month=4;
+ s.localDiscovery.senate[entity.id]={level:0,year:s.year,month:s.month,source:'unknown'};
+ assert.equal(localTradeOpen(s,entity,'senate'),true);
+ advanceLocalEntities(s);assert.equal(entity.npcTradeOffer,undefined,'a court cannot negotiate with an unknown locality');
+ s.localDiscovery.senate[entity.id]={level:LOCAL_DISCOVERY_LEVELS.identified,year:s.year,month:s.month,source:'frontier'};
+ advanceLocalEntities(s);
+ assert.equal(localDiscoveryLevel(s,'senate',entity.id),LOCAL_DISCOVERY_LEVELS.identified);
+ assert.equal(entity.npcTradeOffer.host,'senate');assert.equal(entity.tradeRights?.senate,undefined);
+ assert.equal(localEntity(upgradeSave(structuredClone(s)),entity.id).npcTradeOffer.remaining,2);
+ assert.equal(inspectState(s).filter(item=>item.code==='invalid-local-npc-trade-offer').length,0);
+ s.month=5;advanceLocalEntities(s);assert.equal(entity.npcTradeOffer.remaining,1);assert.equal(entity.tradeRights?.senate,undefined);
+ advanceLocalEntities(s);assert.equal(entity.npcTradeOffer.remaining,1,'the envoy advances only once per month');
+ s.month=6;advanceLocalEntities(s);
+ assert.equal(entity.npcTradeOffer,null);assert.equal(entity.lastNpcTradeOutcome.accepted,true);
+ assert.ok(entity.tradeRights.senate>s.year*12+s.month);
+ s.month=9;
+ for(const site of s.regions.flatMap(region=>region.localEntities||[]))if(site!==entity)site.tradeRights={};
+ const before={localFood:entity.food,localTreasury:entity.treasury,courtFood:s.factions.senate.food,courtTreasury:s.factions.senate.treasury};
+ advanceLocalTrade(s);
+ assert.equal(entity.food,before.localFood-2);assert.equal(entity.treasury,before.localTreasury+3);
+ assert.equal(s.factions.senate.food,before.courtFood+2);assert.equal(s.factions.senate.treasury,before.courtTreasury-3);
+ assert.ok(!s.log.some(item=>item.en?.includes(`from ${entity.name[0]}`)),'a foreign compact is not revealed in the player chronicle');
+ assert.equal(localEntity(upgradeSave(structuredClone(s)),entity.id).lastNpcTradeOutcome.host,'senate');
+ entity.lastNpcTradeOfferAt.month=13;
+ assert.ok(inspectState(s).some(item=>item.code==='invalid-local-npc-trade-date'));
+});
+
+test('a nonplayer court may no longer need food when a local offer reaches it',()=>{
+ const s=start('expert',4),entity=generated(s).find(site=>['city_state','microstate','tribe'].includes(site.type));
+ s.regions.find(region=>region.id===entity.theater).owner='senate';entity.strategy=5;entity.food=30;
+ for(const court of Object.values(s.factions))court.food=100;
+ s.factions.senate.food=10;s.factions.senate.treasury=40;s.month=4;
+ s.localDiscovery.senate[entity.id]={level:3,year:s.year,month:s.month,source:'frontier'};
+ advanceLocalEntities(s);assert.equal(entity.npcTradeOffer.host,'senate');
+ s.factions.senate.food=40;s.month=5;advanceLocalEntities(s);s.month=6;advanceLocalEntities(s);
+ assert.equal(entity.lastNpcTradeOutcome.accepted,false);assert.equal(entity.tradeRights?.senate,undefined);
+ assert.equal(inspectState(s).filter(item=>item.code==='invalid-local-npc-trade-outcome').length,0);
 });
 
 test('occupation transfers a dependent village and a successful local revolt restores personal control',()=>{

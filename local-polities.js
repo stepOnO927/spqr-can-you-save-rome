@@ -2,6 +2,7 @@ import {ROUTES} from './data.js?v=world-kings-neighbor-trade-1';
 import {generatedLocalPolities,generatedIndependentVillages,generatedNomadicCommunities,generatedWildernessSites,historicalLocalProfile,LOCAL_GENERATION_BANDS} from './local-generation.js?v=world-kings-neighbor-trade-1';
 import {sendLetter} from './epistulae.js?v=world-kings-neighbor-trade-1';
 import {nonMilitaryAccessStatus} from './border-access.js?v=world-kings-neighbor-trade-1';
+import {localDiscoveryLevel,LOCAL_DISCOVERY_LEVELS} from './local-discovery.js?v=world-kings-neighbor-trade-1';
 
 // Settlement control is stored inside its host theater. An autonomous city
 // does not transfer the whole theater, and its point is not a border polygon.
@@ -434,6 +435,24 @@ export function advanceLocalEntities(state) {
             context:{kind:'local_trade_reply_result',polityId:entity.id,host:reply.host,accepted:!!concluded}});
           if(sent.ok){sent.letter.arrival=now(state);sent.letter.delivery='received'}
         }
+      }
+    }
+    if(entity.procedural&&['city_state','microstate','tribe'].includes(entity.type)&&state.month===4&&entity.strategy>=3&&entity.controller===entity.id&&!entity.siege&&!entity.pending&&!entity.npcTradeOffer){
+      const last=entity.lastNpcTradeOfferAt,reserve=Math.max(4,Math.ceil(entity.population/3000));
+      if(entity.food>=reserve+4&&(!last||now(state)-(last.year*12+last.month)>=12)){
+        const candidates=Object.entries(state.factions).filter(([actor,buyer])=>actor!==state.player&&buyer.food<20&&buyer.treasury>=6&&!(entity.tradeRights?.[actor]>now(state))&&localDiscoveryLevel(state,actor,entity.id)>=LOCAL_DISCOVERY_LEVELS.identified&&localTradeOpen(state,entity,actor));
+        candidates.sort(([a,buyerA],[b,buyerB])=>buyerA.food-buyerB.food||a.localeCompare(b));
+        if(candidates.length){entity.npcTradeOffer={host:candidates[0][0],remaining:2,sentYear:state.year,sentMonth:state.month,lastAdvancedAt:now(state)};entity.lastNpcTradeOfferAt={year:state.year,month:state.month}}
+      }
+    }
+    if(entity.npcTradeOffer&&entity.npcTradeOffer.lastAdvancedAt!==now(state)){
+      entity.npcTradeOffer.lastAdvancedAt=now(state);
+      if(--entity.npcTradeOffer.remaining<=0){
+        const offer=entity.npcTradeOffer,buyer=state.factions[offer.host],reserve=Math.max(4,Math.ceil((entity.population||3000)/3000));
+        const accepted=entity.controller===entity.id&&!entity.siege&&!entity.pending&&buyer?.food<20&&buyer.treasury>=6&&entity.food>=reserve+2&&localTradeOpen(state,entity,offer.host)&&!(entity.tradeRights?.[offer.host]>now(state));
+        if(accepted){entity.tradeRights||={};entity.tradeRights[offer.host]=now(state)+24}
+        entity.lastNpcTradeOutcome={host:offer.host,accepted:!!accepted,year:state.year,month:state.month};
+        entity.npcTradeOffer=null;
       }
     }
     if(entity.procedural&&!entity.proceduralVillage&&entity.controller===entity.id&&!entity.siege){
