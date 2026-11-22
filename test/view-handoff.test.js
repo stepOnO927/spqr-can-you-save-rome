@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=observed-identity-1';
+import {newGame,upgradeSave} from '../engine.js?v=meeting-report-names-1';
 import {HANDOFF_KEY,stageHandoff,receiveHandoff} from '../view-handoff.js?v=saved-age-consistency-1';
 import {CHARACTER_CATALOG} from '../characters.js?v=saved-age-consistency-1';
 

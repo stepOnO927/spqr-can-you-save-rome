@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=observed-identity-1';
-import {queueMission,advanceOperations} from '../character-system.js?v=observed-identity-1';
+import {newGame,upgradeSave} from '../engine.js?v=meeting-report-names-1';
+import {queueMission,advanceOperations} from '../character-system.js?v=meeting-report-names-1';
 
 const seedFor=(lo,hi)=>Array.from({length:10000},(_,i)=>i).find(i=>{const q=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;return q>=lo&&q<hi});
 function investigate(health,q,type='travelers',change=()=>{}){
