@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newGame,upgradeSave} from '../engine.js?v=family-age-consistency-1';
-import {createFictionalPerson} from '../dynasties.js?v=family-age-consistency-1';
-import {addReport,reportedHealthSubjects,previewMission,queueMission,visiblePersonName} from '../character-system.js?v=family-age-consistency-1';
+import {newGame,upgradeSave} from '../engine.js?v=reported-identity-snapshot-1';
+import {createFictionalPerson} from '../dynasties.js?v=reported-identity-snapshot-1';
+import {addReport,reportedHealthSubjects,previewMission,queueMission,visiblePersonName} from '../character-system.js?v=reported-identity-snapshot-1';
 import {identityKnowledge} from '../map-lab/identity-knowledge.js?v=succession-lead-1';
 
 test('a delivered succession report creates an investigable identity lead without revealing true office',()=>{
