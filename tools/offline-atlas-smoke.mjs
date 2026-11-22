@@ -133,13 +133,13 @@ try{
  if(page.viewportSize().width<=600)await page.locator('#brief-toggle').click();
  await selectMapMode('terrain');
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/近岸浅海（约0–200米）/:/Coastal shelf \(about 0–200 m\)/);
- assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/河流与天然湖泊/:/Rivers & natural lakes/);
+ assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/现代河道与天然湖泊/:/Modern rivers & natural lakes/);
  await page.locator('#language').click();
  assert.deepEqual(await overviewNames(),firstLanguage==='zh-CN'?['A L P E S','APENNINVS','MARE ADRIATICVM','MARE TYRRHENVM']:['阿尔卑斯山','亚平宁山脉','亚得里亚海','第勒尼安海']);
  assert.equal(await page.locator('.rubicon-label').textContent(),firstLanguage==='zh-CN'?'RVBICO · ~':'卢比孔河 · 约');
  assert.match(await page.locator('.map-key').innerText(),firstLanguage==='zh-CN'?/City · color shows controller/:/城市 · 颜色表示控制阵营/);
  assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Coastal shelf \(about 0–200 m\)/:/近岸浅海（约0–200米）/);
- assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Rivers & natural lakes/:/河流与天然湖泊/);
+ assert.match(await page.locator('.legend').innerText(),firstLanguage==='zh-CN'?/Modern rivers & natural lakes/:/现代河道与天然湖泊/);
  assert.match(await page.locator('.file-transfer a').innerText(),firstLanguage==='zh-CN'?/LEGACY HUB/:/罗马遗产/);
  await selectMapMode('political');
  const crowdedSite=page.locator('.grand-site.near-army:visible').first();

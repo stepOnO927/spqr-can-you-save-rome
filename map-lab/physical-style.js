@@ -3,6 +3,7 @@ import ocean from '../mediterranean-ocean.js?v=5';
 import bathymetry from '../mediterranean-bathymetry.js?v=2';
 import rivers from '../mediterranean-rivers.js';
 import poRiverDetail from '../po-river-detail.js';
+import centralItalyRivers from '../central-italy-rivers.js?v=1';
 import lakes from '../mediterranean-lakes.js';
 import gardaLakeDetail from '../garda-lake-detail.js';
 import poHistoricCoast from '../po-historic-coast.js';
@@ -25,7 +26,7 @@ const localElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e5d9b
 const egyptElevationPalette=['interpolate',['linear'],['elevation'],-100,'#e8ddb9',0,'#e3d9b6',10,'#dfd0aa',25,'#d7c399',50,'#cbb288',100,'#bea178',300,'#aa8d6c',700,'#887866',1200,'#69796f',1800,'#8b9384',2600,'#b9b8a5',3500,'#e4dfcc'];
 const regionalElevationPalette=['interpolate',['linear'],['elevation'],-100,'#ded6b8',0,'#d8d2b0',100,'#c3c9a1',300,'#a3b68d',700,'#849f80',1200,'#6d8979',1800,'#838e83',2600,'#b0b2a4',3500,'#ded9c7'];
 const terrainAttribution='Elevation: Mapzen Terrain Tiles; Copernicus EU-DEM, NOAA ETOPO1 and USGS SRTM/GMTED2010 contributors';
-const euHydroAttribution="Modern Po and Garda: European Union's Copernicus Land Monitoring Service information, EU-Hydro v1.3, DOI 10.2909/393359a7-7ebd-4a52-80ac-1a18d5f3db9c; adapted crops";
+const euHydroAttribution="Modern Po, Tiber, Arno and Garda: European Union's Copernicus Land Monitoring Service information, EU-Hydro v1.3, DOI 10.2909/393359a7-7ebd-4a52-80ac-1a18d5f3db9c; adapted crops";
 
 // GSHHG land and ocean derive from the same L1 shoreline. The ocean mask is deliberately
 // above the elevation layer so relief never turns the sea into apparent land.
@@ -51,6 +52,7 @@ export const physicalStyle={
   historical:{type:'geojson',data:historical},
   rivers:{type:'geojson',data:rivers,attribution:'Hydrography: Natural Earth 1:10m, public domain'},
   'po-river-detail':{type:'geojson',data:poRiverDetail,attribution:euHydroAttribution},
+  'central-italy-rivers':{type:'geojson',data:centralItalyRivers,attribution:euHydroAttribution},
   'po-historic-coast':{type:'geojson',data:poHistoricCoast,attribution:'Approximate undated historical shoreline: Ancient World Mapping Center and OpenStreetMap contributors, ODbL 1.0; adapted Po crop'},
   'ravenna-paleolandforms':{type:'geojson',data:ravennaLandforms,attribution:'Michele Abballe, PalaeoDEMs of the hinterland of Ravenna, Roman-period (~100 CE) palaeoLandforms; CC0, DOI 10.5281/zenodo.14534157'},
   'nile-delta':{type:'geojson',data:nileDelta,attribution:'Approximate Nile Delta between Natural Earth river branches'},
@@ -114,7 +116,9 @@ export const physicalStyle={
   {id:'waterways-major',type:'line',source:'rivers',filter:['all',['<=',['get','rank'],6],['!=',['get','name'],'Po']],paint:{'line-color':'#5c9293','line-opacity':.88,'line-width':['interpolate',['linear'],['zoom'],4,.65,7,1.15,9,2]}},
   {id:'waterways-po-overview',type:'line',source:'rivers',maxzoom:8.1,filter:['==',['get','name'],'Po'],paint:{'line-color':'#5c9293','line-opacity':.88,'line-width':['interpolate',['linear'],['zoom'],4,.65,7,1.15,8.1,1.4]}},
   {id:'waterways-po-close',type:'line',source:'po-river-detail',minzoom:8.1,paint:{'line-color':'#5c9293','line-opacity':.78,'line-width':['interpolate',['linear'],['zoom'],8.1,1,8.6,1.2,9.2,1.55]}},
-  {id:'waterways-minor',type:'line',source:'rivers',minzoom:7,filter:['>',['get','rank'],6],paint:{'line-color':'#67999a','line-opacity':.72,'line-width':['interpolate',['linear'],['zoom'],7,.55,9,1.05]}},
+  {id:'waterways-minor',type:'line',source:'rivers',minzoom:7,filter:['all',['>',['get','rank'],6],['!=',['get','name'],'Tevere']],paint:{'line-color':'#67999a','line-opacity':.72,'line-width':['interpolate',['linear'],['zoom'],7,.55,9,1.05]}},
+  {id:'waterways-tiber-overview',type:'line',source:'rivers',minzoom:7,maxzoom:8.1,filter:['==',['get','name'],'Tevere'],paint:{'line-color':'#67999a','line-opacity':.72,'line-width':['interpolate',['linear'],['zoom'],7,.55,8.1,.95]}},
+  {id:'waterways-central-italy',type:'line',source:'central-italy-rivers',minzoom:8.1,layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#5c9293','line-opacity':.78,'line-width':['interpolate',['linear'],['zoom'],8.1,.85,9.2,1.45]}},
   // These broad historical polygons orient the overview, but their straight
   // source edges should not masquerade as surveyed provincial borders locally.
   {id:'control',type:'fill',source:'historical',filter:['!=',['get','id'],'roman-extent'],paint:{'fill-color':['match',['get','id'],'gaul','#ad4d3d','narbo','#ad4d3d','italy','#b0a480','greece','#778994','sicilia','#778994','hispania','#778994','asia','#778994','syria','#778994','africa','#778994','#aa9c75'],'fill-opacity':['interpolate',['linear'],['zoom'],6,.30,7,.18,8.5,0]}},
