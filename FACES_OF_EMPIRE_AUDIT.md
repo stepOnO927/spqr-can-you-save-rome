@@ -18,7 +18,10 @@ tests pass 20/20. The art prompts specified two distinct Western Han court
 women, restrained 49 BCE clothing, a dark backdrop and readable 64-pixel
 faces; they explicitly disclaimed authentic likenesses. Source PNGs were
 generated with the built-in image tool and optimized to local JPEG assets.
-The branch passes `npm test` 1,376/1,376. Chromium checks follow.
+The branch passes `npm test` 1,376/1,376. The first Pages package check
+found that its build script omitted 64-pixel portraits from `dist`; the
+asset selection now includes both 64 and 128-pixel display versions.
+Hosted package verification follows.
 
 Main through `0153e3e4` (#338) is integrated. A missing-person dossier can
 now fund a search at a real treasury cost and carry that choice across saves.
